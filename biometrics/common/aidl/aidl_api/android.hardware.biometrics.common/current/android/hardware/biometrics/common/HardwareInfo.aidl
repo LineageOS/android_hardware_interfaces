@@ -15,18 +15,11 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.biometrics.fingerprint;
+package android.hardware.biometrics.common;
 @VintfStability
-interface ISession {
-  android.hardware.biometrics.common.ICancellationSignal enroll(in int cookie, in android.hardware.keymaster.HardwareAuthToken hat);
-  android.hardware.biometrics.common.ICancellationSignal authenticate(in int cookie, in long keystoreOperationId);
-  android.hardware.biometrics.common.ICancellationSignal detectInteraction(in int cookie);
-  void enumerateEnrollments(in int cookie);
-  void removeEnrollments(in int cookie, in int[] enrollmentIds);
-  void getAuthenticatorId(in int cookie);
-  void invalidateAuthenticatorId(in int cookie, in android.hardware.keymaster.HardwareAuthToken hat);
-  void resetLockout(in int cookie, in android.hardware.keymaster.HardwareAuthToken hat);
-  void onPointerDown(in int pointerId, in int x, in int y, in float minor, in float major);
-  void onPointerUp(in int pointerId);
-  void onUiReady();
+parcelable HardwareInfo {
+  String deviceName;
+  String hardwareVersion;
+  String firmwareVersion;
+  String serialNumber;
 }

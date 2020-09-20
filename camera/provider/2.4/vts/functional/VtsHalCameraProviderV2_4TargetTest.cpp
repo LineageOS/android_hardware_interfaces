@@ -1670,7 +1670,7 @@ bool CameraHidlTest::isSecureOnly(sp<ICameraProvider> provider, const hidl_strin
     Return<void> ret;
     ::android::sp<ICameraDevice> device3_x;
     bool retVal = false;
-    if (getCameraDeviceVersion(mProviderType, name) == CAMERA_DEVICE_API_VERSION_1_0) {
+    if (getCameraDeviceVersion(name, mProviderType) == CAMERA_DEVICE_API_VERSION_1_0) {
         return false;
     }
     ret = provider->getCameraDeviceInterface_V3_x(name, [&](auto status, const auto& device) {

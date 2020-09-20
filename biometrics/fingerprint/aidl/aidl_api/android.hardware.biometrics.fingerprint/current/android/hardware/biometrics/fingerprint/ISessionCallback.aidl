@@ -26,4 +26,6 @@ interface ISessionCallback {
   void onInteractionDetected();
   void onEnrollmentsEnumerated(in int[] enrollmentIds);
   void onEnrollmentsRemoved(in int[] enrollmentIds);
+  void onAuthenticatorIdRetrieved(in long authenticatorId);
+  void onAuthenticatorIdInvalidated();
 }
