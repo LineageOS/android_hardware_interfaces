@@ -27,7 +27,61 @@ interface ISession {
 
     ICancellationSignal enroll(in int cookie, in HardwareAuthToken hat);
 
-    ICancellationSignal authenticate(in int cookie, in long keystoreOperationId);
+    /**
+     * authenticate:
+     *
+     * A request to start looking for fingerprints to authenticate.
+     *
+     * Once the HAL is able to start processing the authentication request, it must
+     * notify framework via ISessionCallback#onStateChanged with
+     * SessionState::AUTHENTICATING.
+     *
+     * At any point during authentication, if a non-recoverable error occurs,
+     * the HAL must notify the framework via ISessionCallback#onError with
+     * the applicable authentication-specific error, and then send
+     * ISessionCallback#onStateChanged(cookie, SessionState::IDLING).
+     *
+     * During authentication, the implementation may notify the framework
+     * via ISessionCallback#onAcquired with messages that may be used to guide
+     * the user. This callback can be invoked multiple times if necessary.
+     *
+     * The HAL must notify the framework of accepts/rejects via
+     * ISessionCallback#onAuthentication*.
+     *
+     * The authentication lifecycle ends when either
+     *   1) A fingerprint is accepted, and ISessionCallback#onAuthenticationSucceeded
+     *      is invoked, or
+     *   2) Any non-recoverable error occurs (such as lockout). See the full
+     *      list of authentication-specific errors in the Error enum.
+     *
+     * Note that it is now the HAL's responsibility to keep track of lockout
+     * states. See IFingerprint#setLockoutCallback and ISession#resetLockout.
+     *
+     * Note that upon successful authentication, ONLY sensors configured as
+     * SensorStrength::STRONG are allowed to create and send a
+     * HardwareAuthToken to the framework. See the Android CDD for more
+     * details. For SensorStrength::STRONG sensors, the HardwareAuthToken's
+     * "challenge" field must be set with the operationId passed in during
+     * #authenticate. If the sensor is NOT SensorStrength::STRONG, the
+     * HardwareAuthToken MUST be null.
+     *
+     * @param cookie An identifier used to track subsystem operations related
+     *               to this call path. The framework will guarantee that it is
+     *               unique per ISession.
+     * @param operationId For sensors configured as SensorStrength::STRONG,
+     *                    this must be used ONLY upon successful authentication
+     *                    and wrapped in the HardwareAuthToken's "challenge"
+     *                    field and sent to the framework via
+     *                    ISessionCallback#onAuthenticated. The operationId is
+     *                    an opaque identifier created from a separate secure
+     *                    subsystem such as, but not limited to KeyStore/KeyMaster.
+     *                    The HardwareAuthToken can then be used as an attestation
+     *                    for the provided operation. For example, this is used
+     *                    to unlock biometric-bound auth-per-use keys (see
+     *                    setUserAuthenticationParameters in
+     *                    KeyGenParameterSpec.Builder and KeyProtection.Builder.
+     */
+    ICancellationSignal authenticate(in int cookie, in long operationId);
 
     ICancellationSignal detectInteraction(in int cookie);
 

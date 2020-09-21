@@ -22,7 +22,8 @@ interface ISessionCallback {
   void onAcquired(in android.hardware.biometrics.fingerprint.AcquiredInfo info, in int vendorCode);
   void onError(in android.hardware.biometrics.fingerprint.Error error, in int vendorCode);
   void onEnrollmentProgress(in int enrollmentId, int remaining, int vendorCode);
-  void onAuthenticated(in int enrollmentId, in android.hardware.keymaster.HardwareAuthToken hat);
+  void onAuthenticationSucceeded(in int enrollmentId, in android.hardware.keymaster.HardwareAuthToken hat);
+  void onAuthenticationFailed();
   void onInteractionDetected();
   void onEnrollmentsEnumerated(in int[] enrollmentIds);
   void onEnrollmentsRemoved(in int[] enrollmentIds);

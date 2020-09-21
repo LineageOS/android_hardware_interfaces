@@ -65,8 +65,12 @@ class SessionCallback : public BnSessionCallback {
         return ndk::ScopedAStatus::ok();
     }
 
-    ndk::ScopedAStatus onAuthenticated(int32_t /*enrollmentId*/,
+    ndk::ScopedAStatus onAuthenticationSucceeded(int32_t /*enrollmentId*/,
                                        const keymaster::HardwareAuthToken& /*hat*/) override {
+        return ndk::ScopedAStatus::ok();
+    }
+
+    ndk::ScopedAStatus onAuthenticationFailed() override {
         return ndk::ScopedAStatus::ok();
     }
 
