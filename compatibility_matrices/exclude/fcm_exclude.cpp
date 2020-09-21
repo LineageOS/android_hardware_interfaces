@@ -43,10 +43,6 @@ bool ShouldCheckMissingHalsInFcm(const std::string& package) {
     };
 
     static std::vector<std::string> excluded_exact{
-            // TODO(b/110261831): reduce items in this list
-            "android.hardware.tv.cec@2.0",
-            "android.hardware.tv.tuner@1.0",
-
             // Packages without top level interfaces (including types-only packages) are exempted.
             // HIDL
             "android.hardware.cas.native@1.0",
