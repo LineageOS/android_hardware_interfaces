@@ -49,13 +49,13 @@ using android::hardware::MQDescriptorUnsync;
 using android::hardware::MessageQueue;
 
 struct TestMsgQ : public ITestMsgQ {
-    typedef MessageQueue<int32_t, kSynchronizedReadWrite> MessageQueueSync;
-    typedef MessageQueue<int32_t, kUnsynchronizedWrite> MessageQueueUnsync;
+    typedef MessageQueue<uint16_t, kSynchronizedReadWrite> MessageQueueSync;
+    typedef MessageQueue<uint16_t, kUnsynchronizedWrite> MessageQueueUnsync;
 
     TestMsgQ() : mFmqSynchronized(nullptr), mFmqUnsynchronized(nullptr) {}
 
     // Methods from ::android::hardware::tests::msgq::V1_0::ITestMsgQ follow.
-    Return<bool> configureFmqSyncReadWrite(const MQDescriptorSync<int32_t>& mqDesc) override;
+    Return<bool> configureFmqSyncReadWrite(const MQDescriptorSync<uint16_t>& mqDesc) override;
     Return<void> getFmqUnsyncWrite(bool configureFmq, getFmqUnsyncWrite_cb _hidl_cb) override;
     Return<bool> requestWriteFmqSync(int32_t count) override;
     Return<bool> requestReadFmqSync(int32_t count) override;
@@ -73,7 +73,7 @@ private:
     /*
      * Utility function to verify data read from the fast message queue.
      */
-    bool verifyData(int32_t* data, int count) {
+    bool verifyData(uint16_t* data, int count) {
         for (int i = 0; i < count; i++) {
             if (data[i] != i) return false;
         }
