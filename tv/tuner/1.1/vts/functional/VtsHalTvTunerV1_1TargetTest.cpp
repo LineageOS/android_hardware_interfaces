@@ -35,6 +35,9 @@ void TunerFilterHidlTest::configSingleFilterInDemuxTest(FilterConfig filterConf,
     ASSERT_TRUE(mFilterTests.openFilterInDemux(filterConf.type, filterConf.bufferSize));
     ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId_64bit(filterId));
     ASSERT_TRUE(mFilterTests.configFilter(filterConf.settings, filterId));
+    if (filterConf.type.mainType == DemuxFilterMainType::IP) {
+        ASSERT_TRUE(mFilterTests.configIpFilterCid(filterConf.ipCid, filterId));
+    }
     ASSERT_TRUE(mFilterTests.getFilterMQDescriptor(filterId));
     ASSERT_TRUE(mFilterTests.startFilter(filterId));
     ASSERT_TRUE(mFilterTests.stopFilter(filterId));
@@ -90,6 +93,12 @@ TEST_P(TunerFilterHidlTest, StartFilterInDemux) {
     description("Open and start a filter in Demux.");
     // TODO use parameterized tests
     configSingleFilterInDemuxTest(filterArray[TS_VIDEO0], frontendArray[DVBT]);
+}
+
+TEST_P(TunerFilterHidlTest, ConfigIpFilterInDemuxWithCid) {
+    description("Open and configure an ip filter in Demux.");
+    // TODO use parameterized tests
+    configSingleFilterInDemuxTest(filterArray[IP_IP0], frontendArray[DVBT]);
 }
 
 TEST_P(TunerRecordHidlTest, RecordDataFlowWithTsRecordFilterTest) {

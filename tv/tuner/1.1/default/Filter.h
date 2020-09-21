@@ -76,6 +76,8 @@ class Filter : public V1_1::IFilter {
 
     virtual Return<Result> close() override;
 
+    virtual Return<Result> configureIpCid(uint32_t ipCid) override;
+
     /**
      * To create a FilterMQ and its Event Flag.
      *
@@ -111,6 +113,7 @@ class Filter : public V1_1::IFilter {
     sp<V1_1::IFilterCallback> mCallback_1_1 = nullptr;
 
     uint64_t mFilterId;
+    uint32_t mCid = static_cast<uint32_t>(V1_1::Constant::INVALID_IP_FILTER_CONTEXT_ID);
     uint32_t mBufferSize;
     DemuxFilterType mType;
     bool mIsMediaFilter = false;

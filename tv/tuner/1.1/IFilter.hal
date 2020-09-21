@@ -40,4 +40,15 @@ interface IFilter extends @1.0::IFilter {
      * @return filterId the hardware resource Id for the filter.
      */
     getId64Bit() generates (Result result, uint64_t filterId);
+
+    /**
+     * Configure additional Context ID on the IP filter.
+     *
+     * @param ipCid Context Id of the IP filter.
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    configureIpCid(uint32_t ipCid) generates (Result result);
 };

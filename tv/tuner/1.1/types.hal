@@ -35,6 +35,11 @@ enum Constant : @1.0::Constant {
      * An invalid frenquency that can be used as the default value of the frontend setting.
      */
     INVALID_FRONTEND_SETTING_FREQUENCY = 0xFFFFFFFF,
+    /**
+     * An invalid context id that can be used as the default value of the unconfigured id. It can
+     * be used to reset the configured ip context id.
+     */
+    INVALID_IP_FILTER_CONTEXT_ID = 0xFFFFFFFF,
 };
 
 @export
