@@ -18,6 +18,9 @@ package android.hardware.biometrics.fingerprint;
 
 @VintfStability
 oneway interface IRevokeChallengeCallback {
+    /**
+     * Notifies the framework when a challenge has been revoked.
+     */
     void onChallengeRevoked(in int sensorId, in int userId, in long challenge);
 }
 

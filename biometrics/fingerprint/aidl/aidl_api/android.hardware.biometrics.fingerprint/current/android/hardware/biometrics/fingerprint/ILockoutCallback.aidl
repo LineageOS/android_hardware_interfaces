@@ -17,6 +17,8 @@
 
 package android.hardware.biometrics.fingerprint;
 @VintfStability
-interface IResetLockoutCallback {
-  oneway void onLockoutReset(in int sensorId, in int userId, in long durationMilli);
+interface ILockoutCallback {
+  oneway void onLockoutTimed(in int sensorId, in int userId, in long durationMillis);
+  oneway void onLockoutPermanent(in int sensorId, in int userId);
+  oneway void onLockoutCleared(in int sensorId, in int userId);
 }
