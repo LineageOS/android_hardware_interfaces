@@ -95,55 +95,46 @@ interface ISession {
      *
      * A request to start looking for fingerprints to authenticate.
      *
-     * Once the HAL is able to start processing the authentication request, it must
-     * notify framework via ISessionCallback#onStateChanged with
-     * SessionState::AUTHENTICATING.
+     * Once the HAL is able to start processing the authentication request, it must notify framework
+     * via ISessionCallback#onStateChanged with SessionState::AUTHENTICATING.
      *
-     * At any point during authentication, if a non-recoverable error occurs,
-     * the HAL must notify the framework via ISessionCallback#onError with
-     * the applicable authentication-specific error, and then send
-     * ISessionCallback#onStateChanged(cookie, SessionState::IDLING) if no
+     * At any point during authentication, if a non-recoverable error occurs, the HAL must notify
+     * the framework via ISessionCallback#onError with the applicable authentication-specific error,
+     * and then send ISessionCallback#onStateChanged(cookie, SessionState::IDLING) if no
      * subsequent operation is in the queue.
      *
-     * During authentication, the implementation may notify the framework
-     * via ISessionCallback#onAcquired with messages that may be used to guide
-     * the user. This callback can be invoked multiple times if necessary.
+     * During authentication, the implementation may notify the framework via
+     * ISessionCallback#onAcquired with messages that may be used to guide the user. This callback
+     * can be invoked multiple times if necessary.
      *
-     * The HAL must notify the framework of accepts/rejects via
-     * ISessionCallback#onAuthentication*.
+     * The HAL must notify the framework of accepts/rejects via ISessionCallback#onAuthentication*.
      *
      * The authentication lifecycle ends when either
-     *   1) A fingerprint is accepted, and ISessionCallback#onAuthenticationSucceeded
-     *      is invoked, or
-     *   2) Any non-recoverable error occurs (such as lockout). See the full
-     *      list of authentication-specific errors in the Error enum.
+     *   1) A fingerprint is accepted, and ISessionCallback#onAuthenticationSucceeded is invoked, or
+     *   2) Any non-recoverable error occurs (such as lockout). See the full list of
+     *      authentication-specific errors in the Error enum.
      *
-     * Note that it is now the HAL's responsibility to keep track of lockout
-     * states. See IFingerprint#setLockoutCallback and ISession#resetLockout.
+     * Note that upon successful authentication, the lockout counter for this (sensorId, userId)
+     * pair must be cleared.
      *
-     * Note that upon successful authentication, ONLY sensors configured as
-     * SensorStrength::STRONG are allowed to create and send a
-     * HardwareAuthToken to the framework. See the Android CDD for more
-     * details. For SensorStrength::STRONG sensors, the HardwareAuthToken's
-     * "challenge" field must be set with the operationId passed in during
-     * #authenticate. If the sensor is NOT SensorStrength::STRONG, the
-     * HardwareAuthToken MUST be null.
+     * Note that upon successful authentication, ONLY sensors configured as SensorStrength::STRONG
+     * are allowed to create and send a HardwareAuthToken to the framework. See the Android CDD for
+     * more details. For SensorStrength::STRONG sensors, the HardwareAuthToken's "challenge" field
+     * must be set with the operationId passed in during #authenticate. If the sensor is NOT
+     * SensorStrength::STRONG, the HardwareAuthToken MUST be null.
      *
-     * @param cookie An identifier used to track subsystem operations related
-     *               to this call path. The client must guarantee that it is
-     *               unique per ISession.
-     * @param operationId For sensors configured as SensorStrength::STRONG,
-     *                    this must be used ONLY upon successful authentication
-     *                    and wrapped in the HardwareAuthToken's "challenge"
-     *                    field and sent to the framework via
-     *                    ISessionCallback#onAuthenticated. The operationId is
-     *                    an opaque identifier created from a separate secure
-     *                    subsystem such as, but not limited to KeyStore/KeyMaster.
-     *                    The HardwareAuthToken can then be used as an attestation
-     *                    for the provided operation. For example, this is used
+     * @param cookie An identifier used to track subsystem operations related to this call path. The
+     *               client must guarantee that it is unique per ISession.
+     * @param operationId For sensors configured as SensorStrength::STRONG, this must be used ONLY
+     *                    upon successful authentication and wrapped in the HardwareAuthToken's
+     *                    "challenge" field and sent to the framework via
+     *                    ISessionCallback#onAuthenticated. The operationId is an opaque identifier
+     *                    created from a separate secure subsystem such as, but not limited to
+     *                    KeyStore/KeyMaster. The HardwareAuthToken can then be used as an
+     *                    attestation for the provided operation. For example, this is used
      *                    to unlock biometric-bound auth-per-use keys (see
-     *                    setUserAuthenticationParameters in
-     *                    KeyGenParameterSpec.Builder and KeyProtection.Builder.
+     *                    setUserAuthenticationParameters in KeyGenParameterSpec.Builder and
+     *                    KeyProtection.Builder.
      */
     ICancellationSignal authenticate(in int cookie, in long operationId);
 
@@ -300,17 +291,43 @@ interface ISession {
     /**
      * resetLockout:
      *
-     * Requests the implementation to clear the lockout counter. Upon receiving
-     * this request, the implementation must perform the following:
+     * Requests the implementation to clear the lockout counter. Upon receiving this request, the
+     * implementation must perform the following:
      *   1) Verify the authenticity and integrity of the provided HAT
-     *   2) Verify that the timestamp provided within the HAT is relatively
-     *      recent (e.g. on the order of minutes, not hours).
-     * If either of the checks fail, the HAL must invoke ISessionCallback#onError
-     * with Error::UNABLE_TO_PROCESS and return to SessionState::IDLING
-     * if no subsequent work is in the queue.
+     *   2) Verify that the timestamp provided within the HAT is relatively recent (e.g. on the
+     *      order of minutes, not hours).
+     * If either of the checks fail, the HAL must invoke ISessionCallback#onError with
+     * Error::UNABLE_TO_PROCESS and return to SessionState::IDLING if no subsequent work is in the
+     * queue.
      *
-     * Upon successful verification, the HAL must clear the lockout counter
-     * and notify the framework via ILockoutCallback#onLockoutChanged(sensorId, userId, 0).
+     * Upon successful verification, the HAL must clear the lockout counter and notify the framework
+     * via ISessionCallback#onLockoutCleared.
+     *
+     * Note that lockout is user AND sensor specific. In other words, there is a separate lockout
+     * state for each (user, sensor) pair. For example, the following is a valid state on a
+     * multi-sensor device:
+     * ------------------------------------------------------------------
+     * | SensorId | UserId | FailedAttempts | LockedOut | LockedUntil   |
+     * |----------|--------|----------------|-----------|---------------|
+     * | 0        | 0      | 1              | false     | x             |
+     * | 1        | 0      | 5              | true      | <future_time> |
+     * | 0        | 10     | 0              | false     | x             |
+     * | 1        | 10     | 0              | false     | x             |
+     * ------------------------------------------------------------------
+     *
+     * Lockout may be cleared in the following ways:
+     *   1) ISession#resetLockout
+     *   2) After a period of time, according to a rate-limiter.
+     *
+     * Note that the "FailedAttempts" counter must be cleared upon successful fingerprint
+     * authentication. For example, if SensorId=0 UserId=0 FailedAttempts=1, and a successful
+     * fingerprint authentication occurs, the counter for that (SensorId, UserId) pair must be reset
+     * to 0.
+     *
+     * In addition, lockout states MUST persist after device reboots, HAL crashes, etc.
+     *
+     * See the Android CDD section 7.3.10 for the full set of lockout and rate-limiting
+     * requirements.
      *
      * @param cookie An identifier used to track subsystem operations related
      *               to this call path. The client must guarantee that it is
@@ -318,7 +335,6 @@ interface ISession {
      * @param hat HardwareAuthToken See above documentation.
      */
     void resetLockout(in int cookie, in HardwareAuthToken hat);
-
 
     /**
      * Methods for notifying the under-display fingerprint sensor about external events.

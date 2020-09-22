@@ -24,6 +24,9 @@ interface ISessionCallback {
   void onEnrollmentProgress(in int enrollmentId, int remaining);
   void onAuthenticationSucceeded(in int enrollmentId, in android.hardware.keymaster.HardwareAuthToken hat);
   void onAuthenticationFailed();
+  void onLockoutTimed(in long durationMillis);
+  void onLockoutPermanent();
+  void onLockoutCleared();
   void onInteractionDetected();
   void onEnrollmentsEnumerated(in int[] enrollmentIds);
   void onEnrollmentsRemoved(in int[] enrollmentIds);

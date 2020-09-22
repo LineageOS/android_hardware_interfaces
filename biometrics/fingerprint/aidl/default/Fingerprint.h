@@ -28,9 +28,6 @@ class Fingerprint : public BnFingerprint {
                                      const std::shared_ptr<ISessionCallback>& cb,
                                      std::shared_ptr<ISession>* _aidl_return) override;
 
-    ndk::ScopedAStatus setLockoutCallback(
-            const std::shared_ptr<ILockoutCallback>& cb) override;
-
     ndk::ScopedAStatus generateChallenge(
             int32_t sensorId, int32_t userId, int32_t timeoutSec,
             const std::shared_ptr<IGenerateChallengeCallback>& cb) override;

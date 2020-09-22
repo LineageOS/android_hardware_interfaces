@@ -20,10 +20,15 @@ package android.hardware.biometrics.fingerprint;
 @Backing(type="byte")
 enum Error {
     /**
+     * Used for testing, and to keep subsequent numbering consistent with older HIDLs.
+     */
+    // NO_ERROR = 0,
+
+    /**
      * A hardware error has occurred that cannot be resolved. For example, I2C failure or a broken
      * sensor.
      */
-    HW_UNAVAILABLE,
+    HW_UNAVAILABLE = 1,
 
     /**
      * The implementation is unable to process the request. For example, invalid arguments were
@@ -53,21 +58,19 @@ enum Error {
     UNABLE_TO_REMOVE,
 
     /**
-     * Authentication is locked out due to too many unsuccessful attempts. This is a rate-limiting
-     * lockout, and authentication can be restarted after a period of time. See the Android CDD for
-     * the full set of lockout and rate-limiting requirements.
+     * Reserved to maintain backwards compatibility. See ISessionCallback#onLockoutTimed instead.
      */
-    LOCKOUT,
-
-    /**
-     * Authenticatio nis disabled until the user unlocks with their device credential
-     * (PIN/Pattern/Password). See ISession#resetLockout.
-     */
-    LOCKOUT_PERMANENT,
+    // LOCKOUT = 7,
 
     /**
      * Used to enable vendor-specific error messages.
      */
-    VENDOR,
+    VENDOR = 8,
+
+    /**
+     * Reserved to maintain backwards compatibility. See ISessionCallback#onLockoutPermanent
+     * instead.
+     */
+    // LOCKOUT_PERMANENT = 9,
 }
 

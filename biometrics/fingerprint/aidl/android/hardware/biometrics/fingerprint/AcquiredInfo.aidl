@@ -50,6 +50,12 @@ enum AcquiredInfo {
     TOO_FAST,
 
     /**
+     * Vendor-specific acquisition message. See ISessionCallback#onAcquired vendorCode
+     * documentation.
+     */
+    VENDOR,
+
+    /**
      * This message represents the earliest message sent at the beginning of the authentication
      * pipeline. It is expected to be used to measure latency. For example, in a camera-based
      * authentication system it's expected to be sent prior to camera initialization. Note this
@@ -57,11 +63,5 @@ enum AcquiredInfo {
      * latency based on the time between the last START message and the onAuthenticated callback.
      */
     START,
-
-    /**
-     * Vendor-specific acquisition message. See ISessionCallback#onAcquired vendorCode
-     * documentation.
-     */
-    VENDOR
 }
 

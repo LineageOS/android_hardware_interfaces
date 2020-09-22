@@ -74,6 +74,18 @@ class SessionCallback : public BnSessionCallback {
         return ndk::ScopedAStatus::ok();
     }
 
+    ndk::ScopedAStatus onLockoutTimed(int64_t /*durationMillis*/) override {
+        return ndk::ScopedAStatus::ok();
+    }
+
+    ndk::ScopedAStatus onLockoutPermanent() override {
+        return ndk::ScopedAStatus::ok();
+    }
+
+    ndk::ScopedAStatus onLockoutCleared() override {
+        return ndk::ScopedAStatus::ok();
+    }
+
     ndk::ScopedAStatus onInteractionDetected() override { return ndk::ScopedAStatus::ok(); }
 
     ndk::ScopedAStatus onEnrollmentsEnumerated(
