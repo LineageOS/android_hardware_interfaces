@@ -20,6 +20,7 @@ import @1.0::Constant;
 import @1.0::DemuxFilterMmtpRecordEvent;
 import @1.0::DemuxFilterTsRecordEvent;
 import @1.0::FrontendDvbcSpectralInversion;
+import @1.0::FrontendDvbtConstellation;
 import @1.0::FrontendDvbtTransmissionMode;
 import android.hidl.safe_union@1.0;
 import android.hidl.safe_union@1.0::Monostate;
@@ -106,16 +107,6 @@ enum FrontendDvbsScanType : uint32_t {
 };
 
 /**
- *  Rotation status for a DVBT Frontend.
- */
-@export
-enum FrontendDvbtRotation : uint32_t {
-    UNDEFINED,
-    NOT_ROTATED,
-    ROTATED,
-};
-
-/**
  * AFT flag for an Analog Frontend.
  */
 @export
@@ -131,10 +122,19 @@ enum FrontendAnalogAftFlag : uint32_t {
 @export
 enum FrontendDvbtTransmissionMode : @1.0::FrontendDvbtTransmissionMode {
     MODE_8K_E = 1 << 7,
-
     MODE_16K_E = 1 << 8,
-
     MODE_32K_E = 1 << 9,
+};
+
+/**
+ *  Extended Constellation for DVBT.
+ */
+@export
+enum FrontendDvbtConstellation : @1.0::FrontendDvbtConstellation {
+    CONSTELLATION_QPSK_R = 1 << 5,
+    CONSTELLATION_16QAM_R = 1 << 6,
+    CONSTELLATION_64QAM_R = 1 << 7,
+    CONSTELLATION_256QAM_R = 1 << 8,
 };
 
 /**
@@ -148,7 +148,7 @@ struct FrontendDvbsSettingsExt {
  *  Extended Signal Settings for a DVBT Frontend.
  */
 struct FrontendDvbtSettingsExt {
-    FrontendDvbtRotation rotation;
+    FrontendDvbtConstellation constellation;
 
     FrontendDvbtTransmissionMode transmissionMode;
 };
