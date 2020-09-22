@@ -22,9 +22,12 @@ import android.hardware.common.GrantorDescriptor;
  * For use with libfmq. This is created from an instance of AidlMessageQueue,
  * and is used to pass information required to create another instance of that
  * queue for fast communication.
+ * T - is used to specify the type of the payload
+ * Flavor - is used to specify the type of the queue using
+ * android.hardware.common.SynchronizedReadWrite or UnsynchronizedWrite
  */
 @VintfStability
-parcelable MQDescriptor {
+parcelable MQDescriptor<T, Flavor> {
     /*
      * Describes each of the grantors for the message queue. They are used to
      * get the readptr, writeptr, dataptr, and the optional EventFlag word
