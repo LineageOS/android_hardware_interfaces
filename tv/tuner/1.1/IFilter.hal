@@ -51,4 +51,23 @@ interface IFilter extends @1.0::IFilter {
      *         UNKNOWN_ERROR if failed for other reasons.
      */
     configureIpCid(uint32_t ipCid) generates (Result result);
+
+    /**
+     * Get the shared AV memory handle. Use IFilter.releaseAvHandle to release the handle.
+     *
+     * When media filters are opened, call this API to initialize the share memory handle if it's
+     * needed.
+     *
+     * If DemuxFilterMediaEvent.avMemory contains file descriptor, share memory should be ignored.
+     *
+     * @return avMemory A handle associated to the shared memory for audio or video.
+     *         avMemory.data[0] is normally an fd for ION memory. When the avMemory->numFd is 0, the
+     *         share memory is not initialized and does not contain valid fd.
+     *         avMemory.data[avMemory.numFds] is an index used as a parameter of
+     *         C2DataIdInfo to build C2 buffer in Codec. No C2 buffer would be created if the index
+     *         does not exist.
+     * @return avMemSize the size of the shared av memory. It should be ignored when the share
+     *         memory is not initialized.
+     */
+    getAvSharedHandle() generates (Result result, handle avMemory, uint64_t avMemSize);
 };
