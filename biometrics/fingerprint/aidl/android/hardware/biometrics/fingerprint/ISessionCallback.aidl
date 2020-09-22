@@ -23,14 +23,48 @@ import android.hardware.keymaster.HardwareAuthToken;
 
 @VintfStability
 interface ISessionCallback {
+    /**
+     * Used to notify the framework of session state changes. See ISession for more information.
+     */
     void onStateChanged(in int cookie, in SessionState state);
 
+    /**
+     * This method must only be used to notify the framework during the following states:
+     *   1) SessionState::ENROLLING
+     *   2) SessionState::AUTHENTICATING
+     *   3) SessionState::DETECTING_INTERACTION
+     *
+     * These messages may be used to provide user guidance multiple times if necessary per
+     * operation.
+     *
+     * @param info See the AcquiredInfo enum.
+     * @param vendorCode Only valid if info == AcquiredInfo::VENDOR.
+     */
     void onAcquired(in AcquiredInfo info, in int vendorCode);
 
+    /**
+     * This method must only be used to notify the framework during the following states:
+     *   1) SessionState::ENROLLING
+     *   2) SessionState::AUTHENTICATING
+     *   3) SessionState::DETECTING_INTERACTION
+     *   4) SessionState::INVALIDATING_AUTHENTICATOR_ID
+     *   5) SessionState::RESETTING_LOCKOUT
+     *
+     * These messages may be used to notify the framework or user that a non-recoverable error
+     * has occurred. The operation is finished, and the HAL must proceed with the next operation
+     * or return to SessionState::IDLING if the queue is empty.
+     *
+     * Note that cancellation (see common::ICancellationSignal) and preemption most be followed with
+     * an Error::CANCELED message.
+     *
+     * @param error See the Error enum.
+     * @param vendorCode Only valid if error == Error::VENDOR.
+     */
     void onError(in Error error, in int vendorCode);
 
     /**
-     * Used to notify the framework of enrollment progress. Enrollment completes when remaining==0,
+     * This method must only be used to notify the framework during the following state:
+     *   1) SessionState::ENROLLING
      *
      * @param enrollmentId Unique stable identifier for the enrollment that's being added by this
      *                     ISession#enroll invocation.
@@ -39,6 +73,8 @@ interface ISessionCallback {
     void onEnrollmentProgress(in int enrollmentId, int remaining);
 
     /**
+     * This method must only be used to notify the framework during SessionState::AUTHENTICATING.
+     *
      * Used to notify the framework upon successful authentication. Note that the authentication
      * lifecycle ends when either 1) a fingerprint is accepted, or 2) an error such as
      * Error::LOCKOUT occurred. The authentication lifecycle does NOT end when a fingerprint is
@@ -53,6 +89,8 @@ interface ISessionCallback {
     void onAuthenticationSucceeded(in int enrollmentId, in HardwareAuthToken hat);
 
     /**
+     * This method must only be used to notify the framework during SessionState::AUTHENTICATING.
+     *
      * Used to notify the framework upon rejected attempts. Note that the authentication
      * lifecycle ends when either 1) a fingerprint is accepted, or 2) an error such as
      * Error::LOCKOUT occurred. The authentication lifecycle does NOT end when a fingerprint is
@@ -60,19 +98,50 @@ interface ISessionCallback {
      */
     void onAuthenticationFailed();
 
+    /**
+     * This method must only be used to notify the framework during
+     * SessionState::DETECTING_INTERACTION
+     *
+     * Notifies the framework that user interaction occurred. See ISession#detectInteraction.
+     */
     void onInteractionDetected();
 
+    /**
+     * This method must only be used to notify the framework during
+     * SessionState::ENUMERATING_ENROLLMENTS.
+     *
+     * Notifies the framework of the current enrollments. See ISession#enumerateEnrollments.
+     *
+     * @param enrollmentIds A list of enrollments for the session's (userId, sensorId) pair.
+     */
     void onEnrollmentsEnumerated(in int[] enrollmentIds);
 
+    /**
+     * This method must only be used to notify the framework during
+     * SessionState::REMOVING_ENROLLMENTS.
+     *
+     * Notifies the framework that the specified enrollments are removed.
+     *
+     * @param enrollmentIds The enrollments that were removed.
+     */
     void onEnrollmentsRemoved(in int[] enrollmentIds);
 
     /**
-     * A callback invoked when ISession#getAuthenticatorId is invoked.
+     * This method must only be used to notify the framework during
+     * SessionState::GETTING_AUTHENTICATOR_ID.
+     *
+     * Notifies the framework with the authenticatorId corresponding to this session's
+     * (userId, sensorId) pair.
+     *
+     * @param authenticatorId See the above documentation.
      */
     void onAuthenticatorIdRetrieved(in long authenticatorId);
 
     /**
-     * A callback invoked when ISession#invalidateAuthenticatorId has completed.
+     * This method must only be used to notify the framework during
+     * SessionState::INVALIDATING_AUTHENTICATOR_ID.
+     *
+     * See ISession#invalidateAuthenticatorId for more information.
      */
     void onAuthenticatorIdInvalidated();
 }

@@ -80,7 +80,7 @@ interface ISession {
      *
      * When a finger is successfully added and before the framework is notified
      * of remaining=0, the implementation MUST update and associate this
-     * (sensorId, user) pair with a new new entropy-encoded random identifier.
+     * (sensorId, userId) pair with a new new entropy-encoded random identifier.
      * See ISession#getAuthenticatorId for more information.
      *
      * @param cookie An identifier used to track subsystem operations related
@@ -147,10 +147,75 @@ interface ISession {
      */
     ICancellationSignal authenticate(in int cookie, in long operationId);
 
+    /**
+     * detectInteraction:
+     *
+     * A request to start looking for fingerprints without performing matching.
+     *
+     * Once the HAL is able to start processing this request, it must notify the framework via
+     * ISessionCallback#onStateChanged with SessionState::DETECTING_INTERACTION.
+     *
+     * The framework will use this method in cases where determing user presence is required, but
+     * identifying/authentication is not. For example, when the device is encrypted (first boot) or
+     * in lockdown mode.
+     *
+     * At any point during detectInteraction, if a non-recoverable error occurs, the HAL must notify
+     * the framework via ISessionCallback#onError with the applicable error, and then send
+     * ISessionCallback#onStateChanged(cookie, SessionState::IDLING) if no subsequent operation is
+     * in the queue.
+     *
+     * The implementation must only check for a fingerprint-like image was detected (e.g. to
+     * minimize interactions due to non-fingerprint objects), and the lockout counter must not
+     * be modified.
+     *
+     * Upon detecting any fingerprint, the implementation must invoke
+     * ISessionCallback#onInteractionDetected.
+     *
+     * The lifecycle of this operation ends when either
+     * 1) Any fingerprint is detected and the framework is notified via
+     *    ISessionCallback#onInteractiondetected
+     * 2) The operation was cancelled by the framework (see ICancellationSignal)
+     * 3) The HAL ends the operation, for example when a subsequent operation pre-empts this one.
+     *
+     * Note that if the operation is canceled, the implementation must notify the framework via
+     * ISessionCallback#onError with Error::CANCELED.
+     *
+     * @param cookie An identifier used to track subsystem operations related to this call path.
+     *               The framework will guarantee that it is unique per ISession.
+     */
     ICancellationSignal detectInteraction(in int cookie);
 
+    /*
+     * enumerateEnrollments:
+     *
+     * A request to enumerate (list) the enrollments for this (sensorId, userId) pair. The
+     * framework typically uses this to ensure that its cache is in sync with the HAL.
+     *
+     * Once the HAL is able to start processing this request, it must notify the framework via
+     * ISessionCallback#onStateChanged with SessionState::ENUMERATING_ENROLLMENTS.
+     *
+     * The implementation must then notify the framework with a list of enrollments applicable
+     * for the current session via ISessionCallback#onEnrollmentsEnumerated.
+     *
+     * @param cookie An identifier used to track subsystem operations related to this call path.
+     *               The framework will guarantee that it is unique per ISession.
+     */
     void enumerateEnrollments(in int cookie);
 
+    /**
+     * removeEnrollments:
+     *
+     * A request to remove the enrollments for this (sensorId, userId) pair.
+     *
+     * Once the HAL is able to start processing this request, it must notify the framework via
+     * ISessionCallback#onStateChanged with SessionState::REMOVING_ENROLLMENTS.
+     *
+     * After removing the enrollmentIds from everywhere necessary (filesystem, secure subsystems,
+     * etc), the implementation must notify the framework via ISessionCallback#onEnrollmentsRemoved.
+     *
+     * @param cookie An identifier used to track subsystem operations related to this call path.
+     *               The framework will guarantee that it is unique per ISession.
+     */
     void removeEnrollments(in int cookie, in int[] enrollmentIds);
 
     /**
@@ -259,10 +324,54 @@ interface ISession {
      * Methods for notifying the under-display fingerprint sensor about external events.
      */
 
+    /**
+     * onPointerDown:
+     *
+     * This method only applies to sensors that are configured as
+     * FingerprintSensorType::UNDER_DISPLAY_*. If invoked erroneously by the framework for sensors
+     * of other types, the HAL must treat this as a no-op and return immediately.
+     *
+     * For sensors of type FingerprintSensorType::UNDER_DISPLAY_*, this method is used to notify the
+     * HAL of display touches. This method can be invoked when the session is in one of the
+     * following states: SessionState::ENROLLING, SessionState::AUTHENTICATING, or
+     * SessionState::DETECTING_INTERACTION.
+     *
+     * Note that the framework will only invoke this method if the event occurred on the display
+     * on which this sensor is located.
+     *
+     * Note that for sensors which require illumination such as
+     * FingerprintSensorType::UNDER_DISPLAY_OPTICAL, and where illumination is handled below
+     * the framework, this is a good time to start illuminating.
+     *
+     * @param pointerId See android.view.MotionEvent#getPointerId
+     * @param x The distance in pixels from the left edge of the display.
+     * @param y The distance in pixels from the top edge of the display.
+     * @param minor See android.view.MotionEvent#getTouchMinor
+     * @param major See android.view.MotionEvent#getTouchMajor
+     */
     void onPointerDown(in int pointerId, in int x, in int y, in float minor, in float major);
 
+    /**
+     * onPointerUp:
+     *
+     * This method only applies to sensors that are configured as
+     * FingerprintSensorType::UNDER_DISPLAY_*. If invoked for sensors of other types, the HAL must
+     * treat this as a no-op and return immediately.
+     *
+     * @param pointerId See android.view.MotionEvent#getPointerId
+     */
     void onPointerUp(in int pointerId);
 
+    /*
+     * onUiReady:
+     *
+     * This method only applies to sensors that are configured as
+     * FingerprintSensorType::UNDER_DISPLAY_OPTICAL. If invoked for sensors of other types, the HAL
+     * must treat this as a no-op and return immediately.
+     *
+     * For FingerprintSensorType::UNDER_DISPLAY_OPTICAL where illumination is handled above the
+     * HAL, the framework will invoke this method to notify that the illumination has started.
+     */
     void onUiReady();
 }
 
