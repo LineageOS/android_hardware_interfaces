@@ -18,5 +18,5 @@
 package android.hardware.biometrics.fingerprint;
 @VintfStability
 interface IGenerateChallengeCallback {
-  oneway void onChallengeGenerated(in int sensorId, in int userId, in long keystoreOperationId, in long challenge);
+  oneway void onChallengeGenerated(in int sensorId, in int userId, in long challenge);
 }
