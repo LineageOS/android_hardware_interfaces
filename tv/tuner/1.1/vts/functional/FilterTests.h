@@ -46,6 +46,7 @@ using android::hardware::Return;
 using android::hardware::Void;
 using android::hardware::tv::tuner::V1_0::DemuxFilterEvent;
 using android::hardware::tv::tuner::V1_0::DemuxFilterMainType;
+using android::hardware::tv::tuner::V1_0::DemuxFilterMediaEvent;
 using android::hardware::tv::tuner::V1_0::DemuxFilterSettings;
 using android::hardware::tv::tuner::V1_0::DemuxFilterStatus;
 using android::hardware::tv::tuner::V1_0::DemuxFilterType;
@@ -93,7 +94,14 @@ class FilterCallback : public IFilterCallback {
     }
 
     virtual Return<void> onFilterEvent(
-            const android::hardware::tv::tuner::V1_0::DemuxFilterEvent& /*filterEvent*/) override {
+            const android::hardware::tv::tuner::V1_0::DemuxFilterEvent& filterEvent) override {
+        android::Mutex::Autolock autoLock(mMsgLock);
+        // Temprarily we treat the first coming back filter data on the matching pid a success
+        // once all of the MQ are cleared, means we got all the expected output
+        mFilterEvent = filterEvent;
+        readFilterEventData();
+        mPidFilterOutputCount++;
+        mMsgCondition.signal();
         return Void();
     }
 
@@ -104,8 +112,13 @@ class FilterCallback : public IFilterCallback {
     void setFilterId(uint32_t filterId) { mFilterId = filterId; }
     void setFilterInterface(sp<IFilter> filter) { mFilter = filter; }
     void setFilterEventType(FilterEventType type) { mFilterEventType = type; }
+    void setSharedHandle(hidl_handle sharedHandle) { mAvSharedHandle = sharedHandle; }
+    void setMemSize(uint64_t size) { mAvSharedMemSize = size; }
 
-    bool readFilterEventData();
+    void testFilterDataOutput();
+
+    void readFilterEventData();
+    bool dumpAvData(DemuxFilterMediaEvent event);
 
   private:
     uint32_t mFilterId;
@@ -113,6 +126,9 @@ class FilterCallback : public IFilterCallback {
     FilterEventType mFilterEventType;
     DemuxFilterEvent mFilterEvent;
     DemuxFilterEventExt mFilterEventExt;
+
+    hidl_handle mAvSharedHandle = NULL;
+    uint64_t mAvSharedMemSize = -1;
 
     android::Mutex mMsgLock;
     android::Mutex mFilterOutputLock;
@@ -127,10 +143,12 @@ class FilterTests {
     void setDemux(sp<IDemux> demux) { mDemux = demux; }
     sp<IFilter> getFilterById(uint64_t filterId) { return mFilters[filterId]; }
 
-    std::map<uint64_t, sp<FilterCallback>> getFilterCallbacks() { return mFilterCallbacks; }
+    map<uint64_t, sp<FilterCallback>> getFilterCallbacks() { return mFilterCallbacks; }
 
     AssertionResult openFilterInDemux(DemuxFilterType type, uint32_t bufferSize);
     AssertionResult getNewlyOpenedFilterId_64bit(uint64_t& filterId);
+    AssertionResult getSharedAvMemoryHandle(uint64_t filterId);
+    AssertionResult releaseShareAvHandle(uint64_t filterId);
     AssertionResult configFilter(DemuxFilterSettings setting, uint64_t filterId);
     AssertionResult configIpFilterCid(uint32_t ipCid, uint64_t filterId);
     AssertionResult getFilterMQDescriptor(uint64_t filterId);
@@ -193,12 +211,14 @@ class FilterTests {
     sp<ITuner> mService;
     sp<IFilter> mFilter;
     sp<IDemux> mDemux;
-    std::map<uint64_t, sp<IFilter>> mFilters;
-    std::map<uint64_t, sp<FilterCallback>> mFilterCallbacks;
+    map<uint64_t, sp<IFilter>> mFilters;
+    map<uint64_t, sp<FilterCallback>> mFilterCallbacks;
 
     sp<FilterCallback> mFilterCallback;
     MQDesc mFilterMQDescriptor;
     vector<uint64_t> mUsedFilterIds;
+
+    hidl_handle mAvSharedHandle = NULL;
 
     uint64_t mFilterId = -1;
 };
