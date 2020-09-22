@@ -179,6 +179,17 @@ Return<Result> Filter::close() {
     return mDemux->removeFilter(mFilterId);
 }
 
+Return<Result> Filter::configureIpCid(uint32_t ipCid) {
+    ALOGV("%s", __FUNCTION__);
+
+    if (mType.mainType != DemuxFilterMainType::IP) {
+        return Result::INVALID_STATE;
+    }
+
+    mCid = ipCid;
+    return Result::SUCCESS;
+}
+
 bool Filter::createFilterMQ() {
     ALOGV("%s", __FUNCTION__);
 

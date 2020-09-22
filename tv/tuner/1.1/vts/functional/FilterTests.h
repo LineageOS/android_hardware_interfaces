@@ -132,6 +132,7 @@ class FilterTests {
     AssertionResult openFilterInDemux(DemuxFilterType type, uint32_t bufferSize);
     AssertionResult getNewlyOpenedFilterId_64bit(uint64_t& filterId);
     AssertionResult configFilter(DemuxFilterSettings setting, uint64_t filterId);
+    AssertionResult configIpFilterCid(uint32_t ipCid, uint64_t filterId);
     AssertionResult getFilterMQDescriptor(uint64_t filterId);
     AssertionResult startFilter(uint64_t filterId);
     AssertionResult stopFilter(uint64_t filterId);
