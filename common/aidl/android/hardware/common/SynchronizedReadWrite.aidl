@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 
-package android.hardware.tv.tuner@1.1;
+package android.hardware.common;
 
-import @1.0::IFilterCallback;
-import @1.0::DemuxFilterEvent;
-import DemuxFilterEventExt;
-
-interface IFilterCallback extends @1.0::IFilterCallback {
-    /**
-     * Notify the client that a new filter event happened.
-     *
-     * @param filterEvent a v1_0 filter event.
-     * @param filterEventExt a v1_1 extended filter event.
-     */
-    oneway onFilterEvent_1_1(DemuxFilterEvent filterEvent, DemuxFilterEventExt filterEventExt);
-};
+/*
+ * For use with android.hardware.common.MQDescriptor to specify which type of
+ * queue to use. SynchronizedReadWrite is single reader, single writer, with no
+ * overflow. All messages written need to be read.
+ */
+@VintfStability
+enum SynchronizedReadWrite {
+    EMPTY,
+}

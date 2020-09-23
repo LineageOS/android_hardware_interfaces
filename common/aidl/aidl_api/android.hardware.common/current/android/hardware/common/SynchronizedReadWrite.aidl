@@ -15,8 +15,8 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.biometrics.fingerprint;
+package android.hardware.common;
 @VintfStability
-interface IGenerateChallengeCallback {
-  oneway void onChallengeGenerated(in int sensorId, in int userId, in long challenge);
+enum SynchronizedReadWrite {
+  EMPTY = 0,
 }

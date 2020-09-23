@@ -82,12 +82,14 @@ interface ISession {
      * The following only applies to sensors that are configured as
      * SensorStrength::STRONG.
      *
-     * When invoked by the framework, the HAL implementation must perform the
+     * When invoked by the framework, the implementation must perform the
      * following sequence of events:
      *   1) Verify the authenticity and integrity of the provided HAT
-     *   2) Update the authenticatorId with a new entropy-encoded random number
-     *   3) Persist the new authenticatorId to non-ephemeral storage
-     *   4) Notify the framework that the above is completed, via
+     *   2) Verify that the timestamp provided within the HAT is relatively
+     *      recent (e.g. on the order of minutes, not hours).
+     *   3) Update the authenticatorId with a new entropy-encoded random number
+     *   4) Persist the new authenticatorId to non-ephemeral storage
+     *   5) Notify the framework that the above is completed, via
      *      ISessionCallback#onAuthenticatorInvalidated
      *
      * A practical use case of invalidation would be when the user adds a new
@@ -105,6 +107,26 @@ interface ISession {
      */
     void invalidateAuthenticatorId(in int cookie, in HardwareAuthToken hat);
 
+    /**
+     * resetLockout:
+     *
+     * Requests the implementation to clear the lockout counter. Upon receiving
+     * this request, the implementation must perform the following:
+     *   1) Verify the authenticity and integrity of the provided HAT
+     *   2) Verify that the timestamp provided within the HAT is relatively
+     *      recent (e.g. on the order of minutes, not hours).
+     *
+     * Upon successful verification, the HAL must notify the framework via
+     * ILockoutCallback#onLockoutChanged(sensorId, userId, 0).
+     *
+     * If verification was uncessful, the HAL must notify the framework via
+     * ILockoutCallback#onLockoutChanged(sensorId, userId, remaining_time).
+     *
+     * @param cookie An identifier used to track subsystem operations related
+     *               to this call path. The framework will guarantee that it is
+     *               unique per ISession.
+     * @param hat HardwareAuthToken See above documentation.
+     */
     void resetLockout(in int cookie, in HardwareAuthToken hat);
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
-package android.hardware.biometrics.fingerprint;
+package android.hardware.common;
 
+/*
+ * For use with android.hardware.common.MQDescriptor to specify which type of
+ * queue to use. UnsynchronizedWrite is single writer, multiple reader, with
+ * overflow. If messages are not read fast enough, they can be overwritten.
+ */
 @VintfStability
-oneway interface IResetLockoutCallback {
-    void onLockoutReset(in int sensorId, in int userId, in long durationMilli);
+enum UnsynchronizedWrite {
+    EMPTY,
 }
-
