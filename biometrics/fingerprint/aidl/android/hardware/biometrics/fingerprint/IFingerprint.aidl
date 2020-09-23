@@ -17,7 +17,6 @@
 package android.hardware.biometrics.fingerprint;
 
 import android.hardware.biometrics.fingerprint.IGenerateChallengeCallback;
-import android.hardware.biometrics.fingerprint.ILockoutCallback;
 import android.hardware.biometrics.fingerprint.IRevokeChallengeCallback;
 import android.hardware.biometrics.fingerprint.ISession;
 import android.hardware.biometrics.fingerprint.ISessionCallback;
@@ -71,36 +70,6 @@ interface IFingerprint {
      * @return A new session
      */
     ISession createSession(in int sensorId, in int userId, in ISessionCallback cb);
-
-    /**
-     * setLockoutCallback:
-     *
-     * Sets a callback to notify the framework lockout changes. Note
-     * that lockout is user AND sensor specific. In other words, there is a
-     * separate lockout state for each (user, sensor) pair. For example, the
-     * following is a valid state on a multi-sensor device:
-     * ------------------------------------------------------------------
-     * | SensorId | UserId | FailedAttempts | LockedOut | LockedUntil   |
-     * |----------|--------|----------------|-----------|---------------|
-     * | 0        | 0      | 1              | false     | x             |
-     * | 1        | 0      | 5              | true      | <future_time> |
-     * | 0        | 10     | 0              | false     | x             |
-     * | 1        | 10     | 0              | false     | x             |
-     * ------------------------------------------------------------------
-     *
-     * Lockout may be cleared in the following ways:
-     *   1) ISession#resetLockout
-     *   2) After a period of time, according to a rate-limiter.
-     *
-     * In addition, lockout states MUST persist after device reboots, HAL
-     * crashes, etc.
-     *
-     * See the Android CDD section 7.3.10 for the full set of lockout and
-     * rate-limiting requirements.
-     *
-     * @param cb Used to notify the framework of lockout changes.
-     */
-    void setLockoutCallback(in ILockoutCallback cb);
 
     /**
      * generateChallenge:
