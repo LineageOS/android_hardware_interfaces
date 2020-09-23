@@ -18,6 +18,10 @@
 
 namespace {
 
+AssertionResult TunerBroadcastHidlTest::filterDataOutputTest() {
+    return filterDataOutputTestBase(mFilterTests);
+}
+
 void TunerFilterHidlTest::configSingleFilterInDemuxTest(FilterConfig filterConf,
                                                         FrontendConfig frontendConf) {
     uint32_t feId;
@@ -35,9 +39,44 @@ void TunerFilterHidlTest::configSingleFilterInDemuxTest(FilterConfig filterConf,
     ASSERT_TRUE(mFilterTests.openFilterInDemux(filterConf.type, filterConf.bufferSize));
     ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId_64bit(filterId));
     ASSERT_TRUE(mFilterTests.configFilter(filterConf.settings, filterId));
+    if (filterConf.type.mainType == DemuxFilterMainType::IP) {
+        ASSERT_TRUE(mFilterTests.configIpFilterCid(filterConf.ipCid, filterId));
+    }
     ASSERT_TRUE(mFilterTests.getFilterMQDescriptor(filterId));
     ASSERT_TRUE(mFilterTests.startFilter(filterId));
     ASSERT_TRUE(mFilterTests.stopFilter(filterId));
+    ASSERT_TRUE(mFilterTests.closeFilter(filterId));
+    ASSERT_TRUE(mDemuxTests.closeDemux());
+    ASSERT_TRUE(mFrontendTests.closeFrontend());
+}
+
+void TunerBroadcastHidlTest::mediaFilterUsingSharedMemoryTest(FilterConfig filterConf,
+                                                              FrontendConfig frontendConf) {
+    uint32_t feId;
+    uint32_t demuxId;
+    sp<IDemux> demux;
+    uint64_t filterId;
+
+    mFrontendTests.getFrontendIdByType(frontendConf.type, feId);
+    ASSERT_TRUE(feId != INVALID_ID);
+    ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
+    ASSERT_TRUE(mFrontendTests.setFrontendCallback());
+    ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
+    ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
+    mFrontendTests.setDemux(demux);
+    mFilterTests.setDemux(demux);
+    ASSERT_TRUE(mFilterTests.openFilterInDemux(filterConf.type, filterConf.bufferSize));
+    ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId_64bit(filterId));
+    ASSERT_TRUE(mFilterTests.getSharedAvMemoryHandle(filterId));
+    ASSERT_TRUE(mFilterTests.configFilter(filterConf.settings, filterId));
+    ASSERT_TRUE(mFilterTests.getFilterMQDescriptor(filterId));
+    ASSERT_TRUE(mFilterTests.startFilter(filterId));
+    // tune test
+    ASSERT_TRUE(mFrontendTests.tuneFrontend(frontendConf, true /*testWithDemux*/));
+    ASSERT_TRUE(filterDataOutputTest());
+    ASSERT_TRUE(mFrontendTests.stopTuneFrontend(true /*testWithDemux*/));
+    ASSERT_TRUE(mFilterTests.stopFilter(filterId));
+    ASSERT_TRUE(mFilterTests.releaseShareAvHandle(filterId));
     ASSERT_TRUE(mFilterTests.closeFilter(filterId));
     ASSERT_TRUE(mDemuxTests.closeDemux());
     ASSERT_TRUE(mFrontendTests.closeFrontend());
@@ -92,6 +131,12 @@ TEST_P(TunerFilterHidlTest, StartFilterInDemux) {
     configSingleFilterInDemuxTest(filterArray[TS_VIDEO0], frontendArray[DVBT]);
 }
 
+TEST_P(TunerFilterHidlTest, ConfigIpFilterInDemuxWithCid) {
+    description("Open and configure an ip filter in Demux.");
+    // TODO use parameterized tests
+    configSingleFilterInDemuxTest(filterArray[IP_IP0], frontendArray[DVBT]);
+}
+
 TEST_P(TunerRecordHidlTest, RecordDataFlowWithTsRecordFilterTest) {
     description("Feed ts data from frontend to recording and test with ts record filter");
     recordSingleFilterTest(filterArray[TS_RECORD0], frontendArray[DVBT], dvrArray[DVR_RECORD0]);
@@ -106,6 +151,16 @@ TEST_P(TunerFrontendHidlTest, BlindScanFrontendWithEndFrequency) {
     description("Run an blind frontend scan with specific setting and check lock scanMessage");
     mFrontendTests.scanTest(frontendScanArray[SCAN_DVBT], FrontendScanType::SCAN_BLIND);
 }
+
+TEST_P(TunerBroadcastHidlTest, MediaFilterWithSharedMemoryHandle) {
+    description("Test the Media Filter with shared memory handle");
+    mediaFilterUsingSharedMemoryTest(filterArray[TS_VIDEO0], frontendArray[DVBT]);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, TunerBroadcastHidlTest,
+        testing::ValuesIn(android::hardware::getAllHalInstanceNames(ITuner::descriptor)),
+        android::hardware::PrintInstanceNameToString);
 
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, TunerFrontendHidlTest,

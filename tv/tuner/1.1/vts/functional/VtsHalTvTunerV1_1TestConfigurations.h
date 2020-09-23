@@ -26,6 +26,8 @@ using android::hardware::tv::tuner::V1_0::DemuxAlpFilterType;
 using android::hardware::tv::tuner::V1_0::DemuxFilterMainType;
 using android::hardware::tv::tuner::V1_0::DemuxFilterSettings;
 using android::hardware::tv::tuner::V1_0::DemuxFilterType;
+using android::hardware::tv::tuner::V1_0::DemuxIpAddress;
+using android::hardware::tv::tuner::V1_0::DemuxIpFilterSettings;
 using android::hardware::tv::tuner::V1_0::DemuxIpFilterType;
 using android::hardware::tv::tuner::V1_0::DemuxMmtpFilterType;
 using android::hardware::tv::tuner::V1_0::DemuxRecordScIndexType;
@@ -64,6 +66,7 @@ typedef enum {
     TS_SECTION0,
     TS_TS0,
     TS_RECORD0,
+    IP_IP0,
     FILTER_MAX,
 } Filter;
 
@@ -88,6 +91,7 @@ struct FilterConfig {
     uint32_t bufferSize;
     DemuxFilterType type;
     DemuxFilterSettings settings;
+    uint32_t ipCid;
 
     bool operator<(const FilterConfig& /*c*/) const { return false; }
 };
@@ -227,6 +231,19 @@ inline void initFilterConfig() {
     filterArray[TS_RECORD0].settings.ts().filterSettings.record({
             .scIndexType = DemuxRecordScIndexType::NONE,
     });
+    // IP filter setting
+    filterArray[IP_IP0].type.mainType = DemuxFilterMainType::IP;
+    filterArray[IP_IP0].type.subType.ipFilterType(DemuxIpFilterType::IP);
+    uint8_t src[4] = {192, 168, 1, 1};
+    uint8_t dest[4] = {192, 168, 1, 2};
+    DemuxIpAddress ipAddress;
+    ipAddress.srcIpAddress.v4(src);
+    ipAddress.dstIpAddress.v4(dest);
+    DemuxIpFilterSettings ipSettings{
+            .ipAddr = ipAddress,
+    };
+    filterArray[IP_IP0].settings.ip(ipSettings);
+    filterArray[IP_IP0].ipCid = 1;
 };
 
 /** Configuration array for the dvr test */

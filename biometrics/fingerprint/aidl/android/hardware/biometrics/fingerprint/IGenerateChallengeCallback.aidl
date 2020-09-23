@@ -18,6 +18,9 @@ package android.hardware.biometrics.fingerprint;
 
 @VintfStability
 oneway interface IGenerateChallengeCallback {
-    void onChallengeGenerated(in int sensorId, in int userId, in long keystoreOperationId, in long challenge);
+    /**
+     * Notifies the framework when a challenge is successfully generated.
+     */
+    void onChallengeGenerated(in int sensorId, in int userId, in long challenge);
 }
 

@@ -16,22 +16,70 @@
 
 #include "FilterTests.h"
 
-bool FilterCallback::readFilterEventData() {
-    bool result = false;
-    ALOGW("[vts] reading from filter FMQ or buffer %d", mFilterId);
+void FilterCallback::testFilterDataOutput() {
+    android::Mutex::Autolock autoLock(mMsgLock);
+    while (mPidFilterOutputCount < 1) {
+        if (-ETIMEDOUT == mMsgCondition.waitRelative(mMsgLock, WAIT_TIMEOUT)) {
+            EXPECT_TRUE(false) << "filter output matching pid does not output within timeout";
+            return;
+        }
+    }
+    mPidFilterOutputCount = 0;
+    ALOGW("[vts] pass and stop");
+}
+
+void FilterCallback::readFilterEventData() {
+    ALOGW("[vts] reading filter event");
     // todo separate filter handlers
+    for (int i = 0; i < mFilterEvent.events.size(); i++) {
+        auto event = mFilterEvent.events[i];
+        switch (event.getDiscriminator()) {
+            case DemuxFilterEvent::Event::hidl_discriminator::media:
+                ALOGD("[vts] Media filter event, avMemHandle numFds=%d.",
+                      event.media().avMemory.getNativeHandle()->numFds);
+                dumpAvData(event.media());
+                break;
+            default:
+                break;
+        }
+    }
     for (int i = 0; i < mFilterEventExt.events.size(); i++) {
         auto eventExt = mFilterEventExt.events[i];
         switch (eventExt.getDiscriminator()) {
             case DemuxFilterEventExt::Event::hidl_discriminator::tsRecord:
-                ALOGW("[vts] Extended TS record filter event, pts=%" PRIu64 ".",
+                ALOGD("[vts] Extended TS record filter event, pts=%" PRIu64 ".",
                       eventExt.tsRecord().pts);
                 break;
             default:
                 break;
         }
     }
-    return result;
+}
+
+bool FilterCallback::dumpAvData(DemuxFilterMediaEvent event) {
+    uint32_t length = event.dataLength;
+    uint32_t offset = event.offset;
+    // read data from buffer pointed by a handle
+    hidl_handle handle = event.avMemory;
+    if (handle.getNativeHandle()->numFds == 0) {
+        if (mAvSharedHandle == NULL) {
+            return false;
+        }
+        handle = mAvSharedHandle;
+    }
+
+    int av_fd = handle.getNativeHandle()->data[0];
+    uint8_t* buffer =
+            static_cast<uint8_t*>(mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_SHARED, av_fd, 0));
+    if (buffer == MAP_FAILED) {
+        ALOGE("[vts] fail to allocate av buffer, errno=%d", errno);
+        return false;
+    }
+    uint8_t output[length + 1];
+    memcpy(output, buffer + offset, length);
+    // print buffer and check with golden output.
+    ::close(av_fd);
+    return true;
 }
 
 AssertionResult FilterTests::openFilterInDemux(DemuxFilterType type, uint32_t bufferSize) {
@@ -81,10 +129,53 @@ AssertionResult FilterTests::getNewlyOpenedFilterId_64bit(uint64_t& filterId) {
     return AssertionResult(status == Result::SUCCESS);
 }
 
+AssertionResult FilterTests::getSharedAvMemoryHandle(uint64_t filterId) {
+    EXPECT_TRUE(mFilters[filterId]) << "Open media filter first.";
+    Result status = Result::UNKNOWN_ERROR;
+    sp<android::hardware::tv::tuner::V1_1::IFilter> filter_v1_1 =
+            android::hardware::tv::tuner::V1_1::IFilter::castFrom(mFilters[filterId]);
+    if (filter_v1_1 != NULL) {
+        filter_v1_1->getAvSharedHandle([&](Result r, hidl_handle avMemory, uint64_t avMemSize) {
+            status = r;
+            if (status == Result::SUCCESS) {
+                mFilterCallbacks[mFilterId]->setSharedHandle(avMemory);
+                mFilterCallbacks[mFilterId]->setMemSize(avMemSize);
+                mAvSharedHandle = avMemory;
+            }
+        });
+    }
+    return AssertionResult(status == Result::SUCCESS);
+}
+
+AssertionResult FilterTests::releaseShareAvHandle(uint64_t filterId) {
+    Result status;
+    EXPECT_TRUE(mFilters[filterId]) << "Open media filter first.";
+    EXPECT_TRUE(mAvSharedHandle) << "No shared av handle to release.";
+    status = mFilters[filterId]->releaseAvHandle(mAvSharedHandle, 0 /*dataId*/);
+
+    return AssertionResult(status == Result::SUCCESS);
+}
+
 AssertionResult FilterTests::configFilter(DemuxFilterSettings setting, uint64_t filterId) {
     Result status;
     EXPECT_TRUE(mFilters[filterId]) << "Test with getNewlyOpenedFilterId first.";
     status = mFilters[filterId]->configure(setting);
+
+    return AssertionResult(status == Result::SUCCESS);
+}
+
+AssertionResult FilterTests::configIpFilterCid(uint32_t ipCid, uint64_t filterId) {
+    Result status;
+    EXPECT_TRUE(mFilters[filterId]) << "Open Ip filter first.";
+
+    sp<android::hardware::tv::tuner::V1_1::IFilter> filter_v1_1 =
+            android::hardware::tv::tuner::V1_1::IFilter::castFrom(mFilters[filterId]);
+    if (filter_v1_1 != NULL) {
+        status = filter_v1_1->configureIpCid(ipCid);
+    } else {
+        ALOGW("[vts] Can't cast IFilter into v1_1.");
+        return failure();
+    }
 
     return AssertionResult(status == Result::SUCCESS);
 }
