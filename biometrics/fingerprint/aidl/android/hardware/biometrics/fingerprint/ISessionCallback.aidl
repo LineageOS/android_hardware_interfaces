@@ -38,7 +38,10 @@ interface ISessionCallback {
      * operation.
      *
      * @param info See the AcquiredInfo enum.
-     * @param vendorCode Only valid if info == AcquiredInfo::VENDOR.
+     * @param vendorCode Only valid if info == AcquiredInfo::VENDOR. The vendorCode must be used to
+     *                   index into the configuration
+     *                   com.android.internal.R.array.fingerprint_acquired_vendor that's installed
+     *                   on the vendor partition.
      */
     void onAcquired(in AcquiredInfo info, in int vendorCode);
 
@@ -58,7 +61,10 @@ interface ISessionCallback {
      * an Error::CANCELED message.
      *
      * @param error See the Error enum.
-     * @param vendorCode Only valid if error == Error::VENDOR.
+     * @param vendorCode Only valid if error == Error::VENDOR. The vendorCode must be used to index
+     *                   into the configuration
+     *                   com.android.internal.R.fingerprint_error_vendor that's installed on the
+     *                   vendor partition.
      */
     void onError(in Error error, in int vendorCode);
 
