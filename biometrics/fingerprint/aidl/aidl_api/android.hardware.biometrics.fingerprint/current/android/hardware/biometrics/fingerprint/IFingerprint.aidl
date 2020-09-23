@@ -20,7 +20,6 @@ package android.hardware.biometrics.fingerprint;
 interface IFingerprint {
   android.hardware.biometrics.fingerprint.SensorProps[] getSensorProps();
   android.hardware.biometrics.fingerprint.ISession createSession(in int sensorId, in int userId, in android.hardware.biometrics.fingerprint.ISessionCallback cb);
-  void setLockoutCallback(in android.hardware.biometrics.fingerprint.ILockoutCallback cb);
   void generateChallenge(in int sensorId, in int userId, in int timeoutSec, in android.hardware.biometrics.fingerprint.IGenerateChallengeCallback cb);
   void revokeChallenge(in int sensorId, in int userId, in long challenge, in android.hardware.biometrics.fingerprint.IRevokeChallengeCallback cb);
 }

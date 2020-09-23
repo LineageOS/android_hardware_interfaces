@@ -60,13 +60,29 @@ class SessionCallback : public BnSessionCallback {
         return ndk::ScopedAStatus::ok();
     }
 
-    ndk::ScopedAStatus onEnrollmentProgress(int32_t /*enrollmentId*/, int32_t /*remaining*/,
-                                            int32_t /*vendorCode*/) override {
+    ndk::ScopedAStatus onEnrollmentProgress(int32_t /*enrollmentId*/,
+                                            int32_t /*remaining*/) override {
         return ndk::ScopedAStatus::ok();
     }
 
-    ndk::ScopedAStatus onAuthenticated(int32_t /*enrollmentId*/,
+    ndk::ScopedAStatus onAuthenticationSucceeded(int32_t /*enrollmentId*/,
                                        const keymaster::HardwareAuthToken& /*hat*/) override {
+        return ndk::ScopedAStatus::ok();
+    }
+
+    ndk::ScopedAStatus onAuthenticationFailed() override {
+        return ndk::ScopedAStatus::ok();
+    }
+
+    ndk::ScopedAStatus onLockoutTimed(int64_t /*durationMillis*/) override {
+        return ndk::ScopedAStatus::ok();
+    }
+
+    ndk::ScopedAStatus onLockoutPermanent() override {
+        return ndk::ScopedAStatus::ok();
+    }
+
+    ndk::ScopedAStatus onLockoutCleared() override {
         return ndk::ScopedAStatus::ok();
     }
 
