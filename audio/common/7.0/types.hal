@@ -112,12 +112,28 @@ typedef string AudioFormat;
 typedef string AudioChannelMask;
 
 /**
- * Basic configuration applicable to any stream of audio.
+ * Base configuration attributes applicable to any stream of audio.
  */
-struct AudioBasicConfig {
+struct AudioConfigBase {
+    AudioFormat format;                 // 'DEFAULT' means 'unspecified'
     uint32_t sampleRateHz;              // 0 means 'unspecified'
     vec<AudioChannelMask> channelMask;  // empty means 'unspecified'
-    AudioFormat format;                 // 'DEFAULT' means 'unspecified'
+};
+
+/**
+ * Configurations supported for a certain audio format.
+ */
+struct AudioProfile {
+    AudioFormat format;
+    /** List of the sample rates (in Hz) supported by the profile. */
+    vec<uint32_t> sampleRates;
+    /**
+     * List of channel masks supported by the profile. Every subvector might be
+     * comprised of several individual channel mask entries for non-traditional
+     * channel masks, e.g. a combination "OUT_FRONT_LEFT,OUT_FRONT_CENTER" which
+     * doesn't have a corresponding predefined channel mask.
+     */
+    vec<vec<AudioChannelMask>> channelMasks;
 };
 
 /**
@@ -137,17 +153,20 @@ enum AudioMode : int32_t {
 };
 
 /**
+ * Audio device specifies type (or category) of audio I/O device
+ * (e.g. speaker or headphones).
+ * See 'audioDevice' in audio_policy_configuration.xsd for the
+ * list of allowed values.
+ */
+typedef string AudioDevice;
+
+/**
  * Specifies a device address in case when several devices of the same type
  * can be connected (e.g. BT A2DP, USB).
  */
 struct DeviceAddress {
-    /**
-     * Audio device specifies type (or category) of audio I/O device
-     * (e.g. speaker or headphones).
-     * See 'audioDevice' in audio_policy_configuration.xsd for the
-     * list of allowed values.
-     */
-    string deviceType;
+    /** The type of the device. */
+    AudioDevice deviceType;
     safe_union Address {
         /**
          * The address may be left unspecified if 'device' specifies
@@ -209,7 +228,7 @@ enum AudioEncapsulationMode : int32_t {
  * Additional information about the stream passed to hardware decoders.
  */
 struct AudioOffloadInfo {
-    AudioBasicConfig base;
+    AudioConfigBase base;
     AudioStreamType streamType;
     uint32_t bitRatePerSecond;
     int64_t durationMicroseconds;  // -1 if unknown
@@ -227,7 +246,7 @@ struct AudioOffloadInfo {
  * Commonly used audio stream configuration parameters.
  */
 struct AudioConfig {
-    AudioBasicConfig base;
+    AudioConfigBase base;
     AudioOffloadInfo offloadInfo;
     uint64_t frameCount;
 };
@@ -372,9 +391,9 @@ struct AudioPortConfig {
     /**
      * Basic parameters: sampling rate, format, channel mask. Only some of the
      * parameters (or none) may be set. See the documentation of the
-     * AudioBasicConfig struct.
+     * AudioConfigBase struct.
      */
-    AudioBasicConfig config;
+    AudioConfigBase config;
     /** Associated gain control. */
     safe_union OptionalGain {
         Monostate unspecified;
@@ -401,13 +420,6 @@ struct AudioPort {
      */
     string name;
     /** List of audio profiles supported by the port. */
-    struct AudioProfile {
-        AudioFormat format;
-        /** List of the sample rates supported by the profile. */
-        vec<uint32_t> sampleRates;
-        /** List of channel masks supported by the profile. */
-        vec<AudioChannelMask> channelMasks;
-    };
     vec<AudioProfile> profiles;
     /** List of gain controls attached to the port. */
     vec<AudioGain> gains;

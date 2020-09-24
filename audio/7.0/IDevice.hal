@@ -117,7 +117,7 @@ interface IDevice {
             AudioIoHandle ioHandle,
             DeviceAddress device,
             AudioConfig config,
-            bitfield<AudioOutputFlag> flags,
+            vec<AudioInOutFlag> flags,
             SourceMetadata sourceMetadata) generates (
                     Result retval,
                     IStreamOut outStream,
@@ -142,7 +142,7 @@ interface IDevice {
             AudioIoHandle ioHandle,
             DeviceAddress device,
             AudioConfig config,
-            bitfield<AudioInputFlag> flags,
+            vec<AudioInOutFlag> flags,
             SinkMetadata sinkMetadata) generates (
                     Result retval,
                     IStreamIn inStream,
