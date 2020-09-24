@@ -58,6 +58,7 @@ bool ShouldCheckMissingHalsInFcm(const std::string& package) {
             // Fastboot HAL is only used by recovery. Recovery is owned by OEM. Framework
             // does not depend on this HAL, hence it is not declared in any manifests or matrices.
             "android.hardware.fastboot@1.0",
+            "android.hardware.fastboot@1.1",
     };
 
     auto package_has_prefix = [&](const std::string& prefix) {
