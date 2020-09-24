@@ -34,28 +34,28 @@ enum Error {
      * The implementation is unable to process the request. For example, invalid arguments were
      * supplied.
      */
-    UNABLE_TO_PROCESS,
+    UNABLE_TO_PROCESS = 2,
 
     /**
      * The current operation took too long to complete.
      */
-    TIMEOUT,
+    TIMEOUT = 3,
 
     /**
      * No space available to store additional enrollments.
      */
-    NO_SPACE,
+    NO_SPACE = 4,
 
     /**
      * The operation was canceled. See common::ICancellationSignal.
      */
-    CANCELED,
+    CANCELED = 5,
 
     /**
      * The implementation was unable to remove an enrollment.
      * See ISession#removeEnrollments.
      */
-    UNABLE_TO_REMOVE,
+    UNABLE_TO_REMOVE = 6,
 
     /**
      * Reserved to maintain backwards compatibility. See ISessionCallback#onLockoutTimed instead.

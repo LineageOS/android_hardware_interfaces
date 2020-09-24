@@ -27,8 +27,7 @@ parcelable SensorProps {
     CommonProps commonProps;
 
     /**
-     * A statically configured sensor type representing this fingerprint
-     * sensor.
+     * A statically configured sensor type representing this fingerprint sensor.
      */
     FingerprintSensorType sensorType;
 
@@ -39,32 +38,29 @@ parcelable SensorProps {
     boolean supportsNavigationGestures;
 
     /**
-     * The location of the center of the sensor if applicable. For example,
-     * sensors of FingerprintSensorType::UNDER_DISPLAY_* would report this
-     * value as the distance in pixels, measured from the left edge of the
-     * screen.
+     * The location of the center of the sensor if applicable. For example, sensors of
+     * FingerprintSensorType::UNDER_DISPLAY_* would report this value as the distance in pixels,
+     * measured from the left edge of the screen.
      */
     int sensorLocationX;
 
     /**
-     * The location of the center of the sensor if applicable. For example,
-     * sensors of FingerprintSensorType::UNDER_DISPLAY_* would report this
-     * value as the distance in pixels, measured from the top edge of the
-     * screen.
+     * The location of the center of the sensor if applicable. For example, sensors of
+     * FingerprintSensorType::UNDER_DISPLAY_* would report this value as the distance in pixels,
+     * measured from the top edge of the screen.
      */
     int sensorLocationY;
 
     /**
      * The radius of the sensor if applicable. For example, sensors of
-     * FingerprintSensorType::UNDER_DISPLAY_* would report this value as
-     * the radius of the sensor, in pixels.
+     * FingerprintSensorType::UNDER_DISPLAY_* would report this value as the radius of the sensor,
+     * in pixels.
      */
     int sensorRadius;
 
     /**
-     * For sensors of FingerprintSensorType::UNDER_DISPLAY_*, this must
-     * correspond to the android.hardware.DisplayManager#getDisplay Android
-     * API.
+     * For sensors of FingerprintSensorType::UNDER_DISPLAY_*, this must correspond to the
+     * android.hardware.DisplayManager#getDisplay Android API.
      */
     int displayId;
 }

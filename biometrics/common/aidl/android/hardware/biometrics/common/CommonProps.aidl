@@ -22,29 +22,26 @@ import android.hardware.biometrics.common.SensorStrength;
 @VintfStability
 parcelable CommonProps {
     /**
-     * A statically configured unique ID that identifies a single biometric
-     * sensor. IDs must start at zero and increment by one for each unique
-     * sensor. Note that ID allocations are shared between all biometric
-     * modalities (e.g. fingerprint, face, iris), and a single ID must never
+     * A statically configured unique ID that identifies a single biometric sensor. IDs must start
+     * at zero and increment by one for each unique sensor. Note that ID allocations are shared
+     * between all biometric modalities (e.g. fingerprint, face, iris), and a single ID must never
      * be claimed by more than a single sensor.
      */
     int sensorId;
 
     /**
-     * A statically configured strength for this sensor. See the SensorStrength
-     * interface for more information.
+     * A statically configured strength for this sensor. See the SensorStrength interface for more
+     * information.
      */
     SensorStrength sensorStrength;
 
     /**
-     * The maximum number of enrollments that a single user can have.
-     * Statically configured.
+     * The maximum number of enrollments that a single user can have. Statically configured.
      */
     int maxEnrollmentsPerUser;
 
     /**
-     * A list of hardware information for subsystems that pertain to this
-     * biometric sensor.
+     * A list of hardware information for subsystems that pertain to this biometric sensor.
      */
     HardwareInfo[] hardwareInfo;
 }
