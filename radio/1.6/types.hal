@@ -395,3 +395,25 @@ struct LinkCapacityEstimate {
     */
    uint32_t secondaryUplinkCapacityKbps;
 };
+
+enum DataThrottlingAction : int32_t {
+    /* Clear all existing data throttling. */
+    NO_DATA_THROTTLING = 0,
+
+    /**
+     * Enact secondary carrier data throttling and remove any existing data
+     * throttling on anchor carrier.
+     */
+    THROTTLE_SECONDARY_CARRIER = 1,
+
+    /**
+     * Enact anchor carrier data throttling and disable data on secondary
+     * carrier if currently enabled.
+     */
+    THROTTLE_ANCHOR_CARRIER = 2,
+
+    /**
+     * Immediately hold on to current level of throttling.
+     */
+    HOLD = 3
+};
