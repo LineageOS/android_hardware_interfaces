@@ -16,14 +16,50 @@
 
 package android.hardware.wifi.hostapd@1.3;
 
-import @1.2::IHostapd;
 import @1.2::HostapdStatus;
+import @1.2::IHostapd.IfaceParams;
+import @1.2::IHostapd.NetworkParams;
+import @1.2::IHostapd;
 import IHostapdCallback;
 
 /**
  * Top-level object for managing SoftAPs.
  */
 interface IHostapd extends @1.2::IHostapd {
+    /**
+     * Parameters to use for setting up the access point network.
+     */
+    struct NetworkParams {
+        /**
+         * Baseline information as defined in HAL 1.2.
+         */
+        @1.2::IHostapd.NetworkParams V1_2;
+
+        /**
+         * Enable the interworking service and set access network type to
+         * CHARGEABLE_PUBLIC_NETWORK when set to true.
+         */
+        bool isMetered;
+    };
+
+    /**
+     * Adds a new access point for hostapd to control.
+     *
+     * This should trigger the setup of an access point with the specified
+     * interface and network params.
+     *
+     * @param ifaceParams AccessPoint Params for the access point.
+     * @param nwParams Network Params for the access point.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |HostapdStatusCode.SUCCESS|,
+     *         |HostapdStatusCode.FAILURE_ARGS_INVALID|,
+     *         |HostapdStatusCode.FAILURE_UNKNOWN|,
+     *         |HostapdStatusCode.FAILURE_IFACE_EXISTS|
+     */
+    addAccessPoint_1_3(@1.2::IHostapd.IfaceParams ifaceParams, NetworkParams nwParams)
+        generates (HostapdStatus status);
+
     /**
      * Register for callbacks from the hostapd service.
      *
