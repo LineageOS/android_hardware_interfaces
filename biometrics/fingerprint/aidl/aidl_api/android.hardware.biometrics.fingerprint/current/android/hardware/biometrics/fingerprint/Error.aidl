@@ -18,13 +18,11 @@
 package android.hardware.biometrics.fingerprint;
 @Backing(type="byte") @VintfStability
 enum Error {
-  HW_UNAVAILABLE = 0,
-  UNABLE_TO_PROCESS = 1,
-  TIMEOUT = 2,
-  NO_SPACE = 3,
-  CANCELED = 4,
-  UNABLE_TO_REMOVE = 5,
-  LOCKOUT = 6,
-  LOCKOUT_PERMANENT = 7,
+  HW_UNAVAILABLE = 1,
+  UNABLE_TO_PROCESS = 2,
+  TIMEOUT = 3,
+  NO_SPACE = 4,
+  CANCELED = 5,
+  UNABLE_TO_REMOVE = 6,
   VENDOR = 8,
 }

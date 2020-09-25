@@ -1480,6 +1480,33 @@ enum VehicleProperty : int32_t {
         | VehiclePropertyType:INT32_VEC
         | VehicleArea:GLOBAL),
 
+    /**
+     * Defines a custom OEM partner input event.
+     *
+     * This input event must be used by OEM partners who wish to propagate events not supported
+     * by Android. It is composed by an array of int32 values only.
+     *
+     * The Android properties are:
+     *
+     * int32Values[0] : Input code identifying the function representing this event. Valid event
+     *                  types are defined by CustomInputType.CUSTOM_EVENT_F1 up to
+     *                  CustomInputType.CUSTOM_EVENT_F10. They represent the custom event to be
+     *                  defined by OEM partners.
+     * int32Values[1] : target display type defined in VehicleDisplay. Events not tied to specific
+     *                  display must be sent to VehicleDisplay#MAIN.
+     * int32Values[2] : repeat counter, if 0 then event is not repeated. Values 1 or above means
+     *                  how many times this event repeated.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @data_enum CustomInputType
+     * @access VehiclePropertyAccess:READ
+     */
+    HW_CUSTOM_INPUT = (
+        0X0A30
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32_VEC
+        | VehicleArea:GLOBAL),
+
     /***************************************************************************
      * Most Car Cabin properties have both a POSition and MOVE parameter.  These
      * are used to control the various movements for seats, doors, and windows
@@ -4856,3 +4883,26 @@ enum ProcessTerminationReason : int32_t {
     */
    MEMORY_OVERUSE = 3,
 };
+
+/**
+ * Input code values for HW_CUSTOM_INPUT.
+ */
+enum CustomInputType : int32_t {
+    /**
+     * Ten functions representing the custom input code to be defined and implemented by OEM
+     * partners.
+     *
+     * OEMs need to formally contact Android team if more than 10 functions are required.
+     */
+    CUSTOM_EVENT_F1 = 1001,
+    CUSTOM_EVENT_F2 = 1002,
+    CUSTOM_EVENT_F3 = 1003,
+    CUSTOM_EVENT_F4 = 1004,
+    CUSTOM_EVENT_F5 = 1005,
+    CUSTOM_EVENT_F6 = 1006,
+    CUSTOM_EVENT_F7 = 1007,
+    CUSTOM_EVENT_F8 = 1008,
+    CUSTOM_EVENT_F9 = 1009,
+    CUSTOM_EVENT_F10 = 1010,
+};
+
