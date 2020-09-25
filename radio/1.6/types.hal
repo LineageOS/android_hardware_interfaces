@@ -16,6 +16,8 @@
 
 package android.hardware.radio@1.6;
 
+import @1.0::RadioError;
+import @1.0::RadioResponseType;
 import @1.5::SetupDataCallResult;
 
 import android.hidl.safe_union@1.0::Monostate;
@@ -96,6 +98,29 @@ enum QosFilterDirection : int32_t {
 enum QosPortRange : int32_t {
     MIN = 20,
     MAX = 65535
+};
+
+enum RadioError : @1.0::RadioError {
+    /** 1X voice and SMS are not allowed simulteneously. */
+    SIMULTANEOUS_SMS_AND_CALL_NOT_ALLOWED = 67,
+
+    /** Access is barred. */
+    ACCESS_BARRED = 68,
+
+    /**
+     * SMS is blocked due to call control, e.g., resource unavailable
+     * in the SMR entity.
+     */
+    BLOCKED_DUE_TO_CALL = 69
+};
+
+/**
+ * Overwritten from @1.0::RadioResponseInfo in order to update the RadioError to 1.6 version.
+ */
+struct RadioResponseInfo {
+    RadioResponseType type;               // Response type
+    int32_t serial;                       // Serial number of the request
+    RadioError error;                     // Response error
 };
 
 /**
