@@ -41,10 +41,6 @@ VehiclePropValuePool* VehicleHalServer::getValuePool() const {
     return mValuePool;
 }
 
-EmulatedUserHal* VehicleHalServer::getEmulatedUserHal() {
-    return &mEmulatedUserHal;
-}
-
 void VehicleHalServer::setValuePool(VehiclePropValuePool* valuePool) {
     if (!valuePool) {
         LOG(WARNING) << __func__ << ": Setting value pool to nullptr!";
@@ -185,22 +181,6 @@ VehicleHalServer::VehiclePropValuePtr VehicleHalServer::createHwInputKeyProp(
 }
 
 StatusCode VehicleHalServer::onSetProperty(const VehiclePropValue& value, bool updateStatus) {
-    if (mEmulatedUserHal.isSupported(value.prop)) {
-        LOG(INFO) << "onSetProperty(): property " << value.prop << " will be handled by UserHal";
-
-        const auto& ret = mEmulatedUserHal.onSetProperty(value);
-        if (!ret.ok()) {
-            LOG(ERROR) << "onSetProperty(): HAL returned error: " << ret.error().message();
-            return StatusCode(ret.error().code());
-        }
-        auto updatedValue = ret.value().get();
-        if (updatedValue != nullptr) {
-            LOG(INFO) << "onSetProperty(): updating property returned by HAL: "
-                      << toString(*updatedValue);
-            onPropertyValueFromCar(*updatedValue, updateStatus);
-        }
-        return StatusCode::OK;
-    }
     LOG(DEBUG) << "onSetProperty(" << value.prop << ")";
 
     // Some properties need to be treated non-trivially
