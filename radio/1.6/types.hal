@@ -157,7 +157,7 @@ struct QosFilter {
     QosFilterDirection direction;
 
     /**
-     * Specified the order in which the filter needs to be matched.
+     * Specifies the order in which the filter needs to be matched.
      * A lower numerical(positive) value has a higher precedence.
      * Set -1 when unspecified.
      */
@@ -176,6 +176,30 @@ struct QosSession {
     vec<QosFilter> qosFilters;
 };
 
+/** The allowed failure modes on an IWLAN handover failure. */
+enum HandoverFailureMode : int32_t {
+    /**
+     * On data handover failure, fallback to the source data transport when the
+     * fail cause is due to a hand off preference change.
+     */
+    LEGACY = 0,
+
+    /** On data handover failure, fallback to the source data transport. */
+    DO_FALLBACK = 1,
+
+    /**
+     * On data handover failure, retry the handover instead of falling back to
+     * the source data transport.
+     */
+    NO_FALLBACK_RETRY_HANDOVER = 2,
+
+    /**
+     * On data handover failure, setup a new data connection by sending a normal
+     * request to the underlying data service.
+     */
+    NO_FALLBACK_RETRY_SETUP_NORMAL = 3
+};
+
 struct SetupDataCallResult {
     @1.5::SetupDataCallResult base;
 
@@ -187,4 +211,7 @@ struct SetupDataCallResult {
      * PDNs that support dedicated bearers.
      */
     vec<QosSession> qosSessions;
+
+    /** Specifies the fallback mode on an IWLAN handover failure. */
+    HandoverFailureMode handoverFailureMode;
 };
