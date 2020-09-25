@@ -27,6 +27,7 @@ using ::android::sp;
 
 struct Baz : public IBaz {
     // Methods from ::android::hardware::tests::baz::V1_0::IBase follow.
+    Return<bool> isJava() override;
     Return<void> someBaseMethod() override;
     Return<bool> someBoolMethod(bool x) override;
     Return<void> someBoolArrayMethod(const hidl_array<bool, 3>& x,
