@@ -233,7 +233,7 @@ TEST_P(HealthHidlTest, getHealthInfo_2_1) {
         ASSERT_EQ(Result::SUCCESS, result);
 
         EXPECT_TRUE(IsEnum(value.batteryCapacityLevel)) << " BatteryCapacityLevel";
-        EXPECT_GE(value.batteryChargeTimeToFullNowSeconds, 0);
+        EXPECT_GE(value.batteryChargeTimeToFullNowSeconds, -1);
 
         EXPECT_GE(value.batteryFullChargeDesignCapacityUah, 0)
                 << "batteryFullChargeDesignCapacityUah should not be negative";

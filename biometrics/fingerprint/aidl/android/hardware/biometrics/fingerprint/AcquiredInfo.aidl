@@ -19,13 +19,49 @@ package android.hardware.biometrics.fingerprint;
 @VintfStability
 @Backing(type="byte")
 enum AcquiredInfo {
+    /**
+     * A high quality fingerprint image was detected, no further user interaction is necessary.
+     */
     GOOD,
+
+    /**
+     * Not enough of a fingerprint was detected. Reposition the finger, or a longer swipe needed.
+     */
     PARTIAL,
+
+    /**
+     * Image doesn't contain enough detail for recognition.
+     */
     INSUFFICIENT,
+
+    /**
+     * The sensor needs to be cleaned.
+     */
     SENSOR_DIRTY,
+
+    /**
+     * For swipe-type sensors, the swipe was too slow and not enough data was collected.
+     */
     TOO_SLOW,
+
+    /**
+     * For swipe-type sensors, the swipe was too fast and not enough data was collected.
+     */
     TOO_FAST,
+
+    /**
+     * Vendor-specific acquisition message. See ISessionCallback#onAcquired vendorCode
+     * documentation.
+     */
+    VENDOR,
+
+    /**
+     * This message represents the earliest message sent at the beginning of the authentication
+     * pipeline. It is expected to be used to measure latency. For example, in a camera-based
+     * authentication system it's expected to be sent prior to camera initialization. Note this
+     * should be sent whenever authentication is started or restarted. The framework may measure
+     * latency based on the time between the last START message and the onAuthenticated callback.
+     */
     START,
-    VENDOR
 }
 
