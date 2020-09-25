@@ -101,6 +101,8 @@ interface IBase {
         DoubleThreeDim double3;
     };
 
+    isJava() generates (bool isJava);
+
     someBaseMethod();
 
     someBoolMethod(bool x) generates (bool y);
