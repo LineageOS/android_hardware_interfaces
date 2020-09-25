@@ -24,6 +24,6 @@ enum AcquiredInfo {
   SENSOR_DIRTY = 3,
   TOO_SLOW = 4,
   TOO_FAST = 5,
-  START = 6,
-  VENDOR = 7,
+  VENDOR = 6,
+  START = 7,
 }

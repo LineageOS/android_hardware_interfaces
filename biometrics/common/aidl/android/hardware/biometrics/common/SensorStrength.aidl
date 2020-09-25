@@ -20,22 +20,21 @@ package android.hardware.biometrics.common;
 @Backing(type="byte")
 enum SensorStrength {
     /**
-     * A sensor that meets the requirements for Class 1 biometrics as defined
-     * in the CDD. This does not correspond to a public BiometricManager.Authenticators
-     * constant. Sensors of this strength are not available to applications  ia the
-     * public API surface.
+     * A sensor that meets the requirements for Class 1 biometrics as defined in the CDD. This does
+     * not correspond to a public BiometricManager.Authenticators constant. Sensors of this strength
+     * are not available to applications via the public API surface.
      */
     CONVENIENCE,
 
     /**
-     * A sensor that meets the requirements for Class 2 biometrics as defined
-     * in the CDD. Corresponds to BiometricManager.Authenticators.BIOMETRIC_WEAK.
+     * A sensor that meets the requirements for Class 2 biometrics as defined in the CDD.
+     * Corresponds to BiometricManager.Authenticators.BIOMETRIC_WEAK.
      */
     WEAK,
 
     /**
-     * A sensor that meets the requirements for Class 3 biometrics as defined
-     * in the CDD. Corresponds to BiometricManager.Authenticators.BIOMETRIC_STRONG.
+     * A sensor that meets the requirements for Class 3 biometrics as defined in the CDD.
+     * Corresponds to BiometricManager.Authenticators.BIOMETRIC_STRONG.
      *
      * Notably, this is the only strength that allows generation/verification of
      * HardwareAuthToken(s).

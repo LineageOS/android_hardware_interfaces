@@ -21,8 +21,12 @@ interface ISessionCallback {
   void onStateChanged(in int cookie, in android.hardware.biometrics.fingerprint.SessionState state);
   void onAcquired(in android.hardware.biometrics.fingerprint.AcquiredInfo info, in int vendorCode);
   void onError(in android.hardware.biometrics.fingerprint.Error error, in int vendorCode);
-  void onEnrollmentProgress(in int enrollmentId, int remaining, int vendorCode);
-  void onAuthenticated(in int enrollmentId, in android.hardware.keymaster.HardwareAuthToken hat);
+  void onEnrollmentProgress(in int enrollmentId, int remaining);
+  void onAuthenticationSucceeded(in int enrollmentId, in android.hardware.keymaster.HardwareAuthToken hat);
+  void onAuthenticationFailed();
+  void onLockoutTimed(in long durationMillis);
+  void onLockoutPermanent();
+  void onLockoutCleared();
   void onInteractionDetected();
   void onEnrollmentsEnumerated(in int[] enrollmentIds);
   void onEnrollmentsRemoved(in int[] enrollmentIds);

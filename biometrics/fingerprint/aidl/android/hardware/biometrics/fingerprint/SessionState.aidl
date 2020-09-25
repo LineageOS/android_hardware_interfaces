@@ -19,13 +19,49 @@ package android.hardware.biometrics.fingerprint;
 @VintfStability
 @Backing(type="byte")
 enum SessionState {
+    /**
+     * The HAL is not processing any session requests.
+     */
     IDLING,
+
+    /**
+     * The HAL is processing the ISession#enroll request.
+     */
     ENROLLING,
+
+    /**
+     * The HAL is processing the ISession#authenticate request.
+     */
     AUTHENTICATING,
+
+    /**
+     * The HAL is processing the ISession#detectInteraction request.
+     */
     DETECTING_INTERACTION,
+
+    /**
+     * The HAL is processing the ISession#enumerateEnrollments request.
+     */
     ENUMERATING_ENROLLMENTS,
+
+    /**
+     * The HAL is processing the ISession#removeEnrollments request.
+     */
     REMOVING_ENROLLMENTS,
+
+    /**
+     * The HAL is processing the ISession#getAuthenticatorId request.
+     */
     GETTING_AUTHENTICATOR_ID,
+
+    /**
+     * The HAL is processing the ISession#invalidateAuthenticatorId request.
+     */
+    INVALIDATING_AUTHENTICATOR_ID,
+
+    /**
+     * The HAL is processing the ISession#resetLockout request.
+     */
     RESETTING_LOCKOUT
 }
 
