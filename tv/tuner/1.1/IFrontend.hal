@@ -37,7 +37,7 @@ interface IFrontend extends @1.0::IFrontend {
      *
      * @param settings Signal delivery information the frontend uses to
      * search and lock the signal.
-     * @param settingsExt Extended information that would be used in the 1.1 Frontend to
+     * @param settingsExt1_1 v1_1 Extended information that would be used in the 1.1 Frontend to
      * search and lock the signal in a better way.
      *
      * @return result Result status of the operation.
@@ -45,7 +45,7 @@ interface IFrontend extends @1.0::IFrontend {
      *         INVALID_STATE if tuning can't be applied at current stage,
      *         UNKNOWN_ERROR if tuning failed for other reasons.
      */
-    tune_1_1(FrontendSettings settings, FrontendSettingsExt settingsExt)
+    tune_1_1(FrontendSettings settings, FrontendSettingsExt1_1 settingsExt1_1)
         generates (Result result);
 
     /**
@@ -59,15 +59,15 @@ interface IFrontend extends @1.0::IFrontend {
      * @param settings Signal delivery information which the frontend uses to
      * scan the signal.
      * @param type the type which the frontend uses to scan the signal.
-     * @param settingsExt Extended information that would be used in the 1.1 Frontend to
+     * @param settingsExt1_1 v1_1 Extended information that would be used in the 1.1 Frontend to
      * search and lock the signal in a better way.
      * @return result Result status of the operation.
      *         SUCCESS if successful,
      *         INVALID_STATE if tuning can't be applied at current stage,
      *         UNKNOWN_ERROR if tuning failed for other reasons.
      */
-    scan_1_1(FrontendSettings settings, FrontendScanType type, FrontendSettingsExt settingsExt)
-        generates (Result result);
+    scan_1_1(FrontendSettings settings, FrontendScanType type,
+        FrontendSettingsExt1_1 settingsExt1_1) generates (Result result);
 
     /**
      * Link Conditional Access Modules (CAM) to Frontend support Common Interface (CI) bypass mode.

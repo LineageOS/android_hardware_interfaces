@@ -44,14 +44,14 @@ class Frontend : public V1_1::IFrontend {
     virtual Return<Result> tune(const FrontendSettings& settings) override;
 
     virtual Return<Result> tune_1_1(const FrontendSettings& settings,
-                                    const V1_1::FrontendSettingsExt& settingsExt) override;
+                                    const V1_1::FrontendSettingsExt1_1& settingsExt1_1) override;
 
     virtual Return<Result> stopTune() override;
 
     virtual Return<Result> scan(const FrontendSettings& settings, FrontendScanType type) override;
 
     virtual Return<Result> scan_1_1(const FrontendSettings& settings, FrontendScanType type,
-                                    const V1_1::FrontendSettingsExt& settingsExt) override;
+                                    const V1_1::FrontendSettingsExt1_1& settingsExt1_1) override;
 
     virtual Return<Result> stopScan() override;
 
