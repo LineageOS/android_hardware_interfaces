@@ -12,6 +12,6 @@ cc_test {
         "android.hardware.automotive.occupant_awareness-cpp",
     ],
     test_suites: [
-        "vts-core",
+        "vts",
     ],
 }
