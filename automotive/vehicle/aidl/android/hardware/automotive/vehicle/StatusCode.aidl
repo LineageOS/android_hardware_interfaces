@@ -1,0 +1,48 @@
+/*
+ * Copyright (C) 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.automotive.vehicle;
+
+/**
+ * Error codes used in vehicle HAL interface.
+ */
+// @VintfStability
+@Backing(type="int")
+enum StatusCode {
+    OK = 0,
+    /**
+     * Try again.
+     */
+    TRY_AGAIN = 1,
+    /**
+     * Invalid argument provided.
+     */
+    INVALID_ARG = 2,
+    /**
+     * This code must be returned when device that associated with the vehicle
+     * property is not available. For example, when client tries to set HVAC
+     * temperature when the whole HVAC unit is turned OFF.
+     */
+    NOT_AVAILABLE = 3,
+    /**
+     * Access denied
+     */
+    ACCESS_DENIED = 4,
+    /**
+     * Something unexpected has happened in Vehicle HAL
+     */
+    INTERNAL_ERROR = 5,
+}
