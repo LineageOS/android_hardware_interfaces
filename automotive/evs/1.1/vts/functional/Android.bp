@@ -38,7 +38,7 @@ cc_test {
         "android.hardware.graphics.common@1.2",
         "android.hardware.camera.device@3.2",
     ],
-    test_suites: ["vts-core"],
+    test_suites: ["vts"],
     cflags: [
         "-O0",
         "-g",
