@@ -33,7 +33,7 @@ cc_test {
         "android.hidl.memory@1.0",
         "libhidlmemory",
     ],
-    test_suites: ["general-tests", "vts-core"],
+    test_suites: ["general-tests", "vts"],
     cflags: [
         "-O0",
         "-g",
