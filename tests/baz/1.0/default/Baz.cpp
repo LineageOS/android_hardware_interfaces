@@ -43,6 +43,12 @@ Return<void> BazCallback::hey() {
 }
 
 // Methods from ::android::hardware::tests::baz::V1_0::IBase follow.
+Return<bool> Baz::isJava() {
+    LOG(INFO) << "Baz::isJava";
+
+    return false;
+}
+
 Return<void> Baz::someBaseMethod() {
     LOG(INFO) << "Baz::someBaseMethod";
 
@@ -331,7 +337,7 @@ Return<void> Baz::dieNow() {
 Return<IBaz::SomeEnum> Baz::useAnEnum(IBaz::SomeEnum zzz) {
     LOG(INFO) << "useAnEnum " << (int)zzz;
 
-    return SomeEnum::goober;
+    return SomeEnum::quux;
 }
 
 Return<void> Baz::haveSomeStrings(const hidl_array<hidl_string, 3>& array,
