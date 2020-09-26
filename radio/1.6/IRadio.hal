@@ -35,6 +35,36 @@ import @1.5::LinkAddress;
  */
 interface IRadio extends @1.5::IRadio {
     /**
+     * Toggle radio on and off (for "airplane" mode)
+     * If the radio is turned off/on the radio modem subsystem
+     * is expected return to an initialized state. For instance,
+     * any voice and data calls must be terminated and all associated
+     * lists emptied.
+     *
+     * When setting radio power on to exit from airplane mode to place an emergency call on this
+     * logical modem, powerOn, forEmergencyCall and preferredForEmergencyCall must be true. In
+     * this case, this modem is optimized to scan only emergency call bands, until:
+     * 1) Emergency call is completed; or
+     * 2) Another setRadioPower_1_5 is issued with forEmergencyCall being false or
+     * preferredForEmergencyCall being false; or
+     * 3) Timeout after 30 seconds if dial or emergencyDial is not called.
+     * Once one of these conditions is reached, the modem should move into normal operation.
+     *
+     * @param serial Serial number of request.
+     * @param powerOn To turn on radio -> on = true, to turn off radio -> on = false.
+     * @param forEmergencyCall To indication to radio if this request is due to emergency call.
+     *      No effect if powerOn is false.
+     * @param preferredForEmergencyCall indicate whether the following emergency call will be sent
+     *      on this modem or not. No effect if forEmergencyCall is false, or powerOn is false.
+     *
+     * Response callback is IRadioConfigResponse. setRadioPowerResponse_1_6.
+
+     * Note this API is the same as the 1.5
+     */
+    oneway setRadioPower_1_6(int32_t serial, bool powerOn, bool forEmergencyCall,
+            bool preferredForEmergencyCall);
+
+    /**
      * Returns the data call list. An entry is added when a setupDataCall() is issued and removed
      * on a deactivateDataCall(). The list is emptied when setRadioPower()  off/on issued or when
      * the vendor HAL or modem crashes.
