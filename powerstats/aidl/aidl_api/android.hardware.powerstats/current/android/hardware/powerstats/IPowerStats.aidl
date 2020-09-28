@@ -18,8 +18,10 @@
 package android.hardware.powerstats;
 @VintfStability
 interface IPowerStats {
-  android.hardware.powerstats.EnergyData[] getEnergyData(in int[] railIndices);
   android.hardware.powerstats.PowerEntityInfo[] getPowerEntityInfo();
-  android.hardware.powerstats.PowerEntityStateResidencyResult[] getPowerEntityStateResidencyData(in int[] powerEntityIds);
-  android.hardware.powerstats.RailInfo[] getRailInfo();
+  android.hardware.powerstats.StateResidencyResult[] getPowerEntityStateResidency(in int[] powerEntityIds);
+  android.hardware.powerstats.EnergyConsumerId[] getEnergyConsumerInfo();
+  android.hardware.powerstats.EnergyConsumerResult[] getEnergyConsumed(in android.hardware.powerstats.EnergyConsumerId[] energyConsumerIds);
+  android.hardware.powerstats.ChannelInfo[] getEnergyMeterInfo();
+  android.hardware.powerstats.EnergyMeasurement[] readEnergyMeters(in int[] channelIds);
 }
