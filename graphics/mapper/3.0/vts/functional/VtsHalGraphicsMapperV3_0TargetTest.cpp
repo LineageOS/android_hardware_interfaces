@@ -458,6 +458,7 @@ TEST_P(GraphicsMapperHidlTest, IsSupportedY16) {
     ASSERT_NO_FATAL_FAILURE(supported = mGralloc->isSupported(info));
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GraphicsMapperHidlTest);
 INSTANTIATE_TEST_CASE_P(
         PerInstance, GraphicsMapperHidlTest,
         testing::Combine(
