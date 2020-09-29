@@ -44,49 +44,23 @@ interface IStream {
     getBufferSize() generates (uint64_t bufferSize);
 
     /**
-     * Return supported native sampling rates of the stream for a given format.
-     * A supported native sample rate is a sample rate that can be efficiently
-     * played by the hardware (typically without sample-rate conversions).
+     * Return supported audio profiles for this particular stream. This method
+     * is normally called for streams opened on devices that use dynamic
+     * profiles, e.g. HDMI and USB interfaces. Please note that supported
+     * profiles of the stream may differ from the capabilities of the connected
+     * physical device.
      *
-     * This function is only called for dynamic profile. If called for
-     * non-dynamic profile is should return NOT_SUPPORTED or the same list
-     * as in audio_policy_configuration.xml.
-     *
-     * Calling this method is equivalent to getting
-     * AUDIO_PARAMETER_STREAM_SUP_SAMPLING_RATES on the legacy HAL.
-     *
-     *
-     * @param format audio format for which the sample rates are supported.
-     * @return retval operation completion status.
-     *                Must be OK if the format is supported.
-     * @return sampleRateHz supported sample rates.
-     */
-    getSupportedSampleRates(AudioFormat format)
-            generates (Result retval, vec<uint32_t> sampleRates);
-
-    /**
-     * Return supported channel masks of the stream. Calling this method is
-     * equivalent to getting AUDIO_PARAMETER_STREAM_SUP_CHANNELS on the legacy
-     * HAL.
-     *
-     * @param format audio format for which the channel masks are supported.
-     * @return retval operation completion status.
-     *                Must be OK if the format is supported.
-     * @return masks supported audio masks.
-     */
-    getSupportedChannelMasks(AudioFormat format)
-            generates (Result retval, vec<vec<AudioChannelMask>> masks);
-
-    /**
-     * Return supported audio formats of the stream. Calling this method is
-     * equivalent to getting AUDIO_PARAMETER_STREAM_SUP_FORMATS on the legacy
-     * HAL.
+     * For devices with fixed configurations, e.g. built-in audio devices, all
+     * the profiles are specified in the audio_policy_configuration.xml
+     * file. For such devices, this method must return the configuration from
+     * the config file, or NOT_SUPPORTED retval.
      *
      * @return retval operation completion status.
-     * @return formats supported audio formats.
+     * @return formats supported audio profiles.
      *                 Must be non empty if retval is OK.
      */
-    getSupportedFormats() generates (Result retval, vec<AudioFormat> formats);
+    getSupportedProfiles()
+            generates (Result retval, vec<AudioProfile> profiles);
 
     /**
      * Retrieves basic stream configuration: sample rate, audio format,
@@ -94,18 +68,18 @@ interface IStream {
      *
      * @return config basic stream configuration.
      */
-    getAudioProperties() generates (AudioBasicConfig config);
+    getAudioProperties() generates (AudioConfigBase config);
 
     /**
      * Sets stream parameters. Only sets parameters that are specified.
-     * See the description of AudioBasicConfig for the details.
+     * See the description of AudioConfigBase for the details.
      *
      * Optional method. If implemented, only called on a stopped stream.
      *
      * @param config basic stream configuration.
      * @return retval operation completion status.
      */
-    setAudioProperties(AudioBasicConfig config) generates (Result retval);
+    setAudioProperties(AudioConfigBase config) generates (Result retval);
 
     /**
      * Applies audio effect to the stream.
