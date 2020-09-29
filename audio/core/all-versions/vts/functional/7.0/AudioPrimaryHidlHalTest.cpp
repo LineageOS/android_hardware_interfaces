@@ -16,3 +16,101 @@
 
 // pull in all the <= 6.0 tests
 #include "6.0/AudioPrimaryHidlHalTest.cpp"
+
+static std::vector<AudioConfig> combineAudioConfig(std::vector<xsd::AudioChannelMask> channelMasks,
+                                                   std::vector<int64_t> sampleRates,
+                                                   const std::string& format) {
+    std::vector<AudioConfig> configs;
+    configs.reserve(channelMasks.size() * sampleRates.size());
+    for (auto channelMask : channelMasks) {
+        for (auto sampleRate : sampleRates) {
+            AudioConfig config{};
+            // leave offloadInfo to 0
+            config.base.channelMask.resize(1);
+            config.base.channelMask[0] = toString(channelMask);
+            config.base.sampleRateHz = sampleRate;
+            config.base.format = format;
+            configs.push_back(config);
+        }
+    }
+    return configs;
+}
+
+const std::vector<DeviceConfigParameter>& getOutputDeviceConfigParameters() {
+    static std::vector<DeviceConfigParameter> parameters = [] {
+        std::vector<DeviceConfigParameter> result;
+        const std::vector<AudioInOutFlag> offloadFlags = {
+                toString(xsd::AudioInOutFlag::AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD),
+                toString(xsd::AudioInOutFlag::AUDIO_OUTPUT_FLAG_DIRECT)};
+        for (const auto& device : getDeviceParameters()) {
+            auto module =
+                    getCachedPolicyConfig().getModuleFromName(std::get<PARAM_DEVICE_NAME>(device));
+            for (const auto& mixPort : module->getFirstMixPorts()->getMixPort()) {
+                if (mixPort.getRole() != xsd::Role::source) continue;  // not an output profile
+                auto xsdFlags = mixPort.getFlags();
+                const bool isOffload =
+                        std::find(xsdFlags.begin(), xsdFlags.end(),
+                                  xsd::AudioInOutFlag::AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD) !=
+                        xsdFlags.end();
+                std::vector<AudioInOutFlag> flags;
+                if (!isOffload) {
+                    for (auto flag : xsdFlags) {
+                        if (flag != xsd::AudioInOutFlag::AUDIO_OUTPUT_FLAG_PRIMARY) {
+                            flags.push_back(toString(flag));
+                        }
+                    }
+                } else {
+                    flags = offloadFlags;
+                }
+                for (const auto& profile : mixPort.getProfile()) {
+                    auto configs =
+                            combineAudioConfig(profile.getChannelMasks(),
+                                               profile.getSamplingRates(), profile.getFormat());
+                    for (auto& config : configs) {
+                        // Some combinations of flags declared in the config file require special
+                        // treatment.
+                        if (isOffload) {
+                            config.offloadInfo.base = config.base;
+                            config.offloadInfo.streamType =
+                                    toString(xsd::AudioStreamType::AUDIO_STREAM_MUSIC);
+                            config.offloadInfo.usage = toString(xsd::AudioUsage::AUDIO_USAGE_MEDIA);
+                            config.offloadInfo.bitRatePerSecond = 320;
+                            config.offloadInfo.durationMicroseconds = -1;
+                            config.offloadInfo.bitWidth = 16;
+                            config.offloadInfo.bufferSize = 256;  // arbitrary value
+                        }
+                        result.emplace_back(device, config, flags);
+                    }
+                }
+            }
+        }
+        return result;
+    }();
+    return parameters;
+}
+
+const std::vector<DeviceConfigParameter>& getInputDeviceConfigParameters() {
+    static std::vector<DeviceConfigParameter> parameters = [] {
+        std::vector<DeviceConfigParameter> result;
+        for (const auto& device : getDeviceParameters()) {
+            auto module =
+                    getCachedPolicyConfig().getModuleFromName(std::get<PARAM_DEVICE_NAME>(device));
+            for (const auto& mixPort : module->getFirstMixPorts()->getMixPort()) {
+                if (mixPort.getRole() != xsd::Role::sink) continue;  // not an input profile
+                std::vector<AudioInOutFlag> flags;
+                std::transform(mixPort.getFlags().begin(), mixPort.getFlags().end(), flags.begin(),
+                               [](auto flag) { return toString(flag); });
+                for (const auto& profile : mixPort.getProfile()) {
+                    auto configs =
+                            combineAudioConfig(profile.getChannelMasks(),
+                                               profile.getSamplingRates(), profile.getFormat());
+                    for (const auto& config : configs) {
+                        result.emplace_back(device, config, flags);
+                    }
+                }
+            }
+        }
+        return result;
+    }();
+    return parameters;
+}

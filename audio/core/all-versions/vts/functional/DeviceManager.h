@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-// Code in this file uses 'environment'
-#ifndef AUDIO_PRIMARY_HIDL_HAL_TEST
-#error Must be included from AudioPrimaryHidlTest.h
-#endif
+#pragma once
+
+// Note: it is assumed that this file is included from AudioPrimaryHidlTest.h
+// and thus it doesn't have all '#include' and 'using' directives required
+// for a standalone compilation.
 
 template <class Derived, class Key, class Interface>
 class InterfaceManager {
