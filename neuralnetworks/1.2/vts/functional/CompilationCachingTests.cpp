@@ -1209,6 +1209,7 @@ std::string printCompilationCachingTest(
     return gtestCompliantName(getName(namedDevice) + "_" + type);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(CompilationCachingTest);
 INSTANTIATE_TEST_SUITE_P(TestCompilationCaching, CompilationCachingTest,
                          testing::Combine(kNamedDeviceChoices, kOperandTypeChoices),
                          printCompilationCachingTest);
@@ -1365,6 +1366,7 @@ std::string printCompilationCachingSecurityTest(
     return gtestCompliantName(getName(namedDevice) + "_" + type + "_" + std::to_string(seed));
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(CompilationCachingSecurityTest);
 INSTANTIATE_TEST_SUITE_P(TestCompilationCaching, CompilationCachingSecurityTest,
                          testing::Combine(kNamedDeviceChoices, kOperandTypeChoices,
                                           testing::Range(0U, 10U)),
