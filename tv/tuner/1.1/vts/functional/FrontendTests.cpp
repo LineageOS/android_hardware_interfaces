@@ -48,7 +48,7 @@ Return<void> FrontendCallback::onScanMessage(FrontendScanMessageType type,
 }
 
 void FrontendCallback::tuneTestOnLock(sp<IFrontend>& frontend, FrontendSettings settings,
-                                      FrontendSettingsExt settingsExt) {
+                                      FrontendSettingsExt1_1 settingsExt1_1) {
     sp<android::hardware::tv::tuner::V1_1::IFrontend> frontend_1_1;
     frontend_1_1 = android::hardware::tv::tuner::V1_1::IFrontend::castFrom(frontend);
     if (frontend_1_1 == nullptr) {
@@ -56,7 +56,7 @@ void FrontendCallback::tuneTestOnLock(sp<IFrontend>& frontend, FrontendSettings 
         return;
     }
 
-    Result result = frontend_1_1->tune_1_1(settings, settingsExt);
+    Result result = frontend_1_1->tune_1_1(settings, settingsExt1_1);
     EXPECT_TRUE(result == Result::SUCCESS);
 
     android::Mutex::Autolock autoLock(mMsgLock);
@@ -88,7 +88,7 @@ void FrontendCallback::scanTest(sp<IFrontend>& frontend, FrontendConfig config,
         resetBlindScanStartingFrequency(config, targetFrequency - 100);
     }
 
-    Result result = frontend_1_1->scan_1_1(config.settings, type, config.settingsExt);
+    Result result = frontend_1_1->scan_1_1(config.settings, type, config.settingsExt1_1);
     EXPECT_TRUE(result == Result::SUCCESS);
 
     bool scanMsgLockedReceived = false;
@@ -108,7 +108,7 @@ wait:
     if (mScanMessageType != FrontendScanMessageType::END) {
         if (mScanMessageType == FrontendScanMessageType::LOCKED) {
             scanMsgLockedReceived = true;
-            Result result = frontend_1_1->scan_1_1(config.settings, type, config.settingsExt);
+            Result result = frontend_1_1->scan_1_1(config.settings, type, config.settingsExt1_1);
             EXPECT_TRUE(result == Result::SUCCESS);
         }
 
@@ -380,7 +380,7 @@ AssertionResult FrontendTests::tuneFrontend(FrontendConfig config, bool testWith
             return failure();
         }
     }
-    mFrontendCallback->tuneTestOnLock(mFrontend, config.settings, config.settingsExt);
+    mFrontendCallback->tuneTestOnLock(mFrontend, config.settings, config.settingsExt1_1);
     return AssertionResult(true);
 }
 

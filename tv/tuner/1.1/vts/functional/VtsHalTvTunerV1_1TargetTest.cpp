@@ -142,13 +142,13 @@ TEST_P(TunerRecordHidlTest, RecordDataFlowWithTsRecordFilterTest) {
     recordSingleFilterTest(filterArray[TS_RECORD0], frontendArray[DVBT], dvrArray[DVR_RECORD0]);
 }
 
-TEST_P(TunerFrontendHidlTest, TuneFrontendWithFrontendSettingsExt) {
-    description("Tune one Frontend with specific setting and check Lock event");
+TEST_P(TunerFrontendHidlTest, TuneFrontendWithFrontendSettingsExt1_1) {
+    description("Tune one Frontend with v1_1 extended setting and check Lock event");
     mFrontendTests.tuneTest(frontendArray[DVBT]);
 }
 
 TEST_P(TunerFrontendHidlTest, BlindScanFrontendWithEndFrequency) {
-    description("Run an blind frontend scan with specific setting and check lock scanMessage");
+    description("Run an blind frontend scan with v1_1 extended setting and check lock scanMessage");
     mFrontendTests.scanTest(frontendScanArray[SCAN_DVBT], FrontendScanType::SCAN_BLIND);
 }
 
