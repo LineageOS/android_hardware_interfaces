@@ -58,6 +58,10 @@ class Frontend : public V1_1::IFrontend {
     virtual Return<void> getStatus(const hidl_vec<FrontendStatusType>& statusTypes,
                                    getStatus_cb _hidl_cb) override;
 
+    virtual Return<void> getStatusExt1_1(
+            const hidl_vec<V1_1::FrontendStatusTypeExt1_1>& statusTypes,
+            V1_1::IFrontend::getStatusExt1_1_cb _hidl_cb) override;
+
     virtual Return<Result> setLna(bool bEnable) override;
 
     virtual Return<Result> setLnb(uint32_t lnb) override;

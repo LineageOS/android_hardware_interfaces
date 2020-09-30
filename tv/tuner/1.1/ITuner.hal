@@ -16,6 +16,7 @@
 
 package android.hardware.tv.tuner@1.1;
 
+import @1.0::FrontendId;
 import @1.0::ITuner;
 import @1.0::Result;
 
@@ -23,4 +24,10 @@ import @1.0::Result;
  * Top level interface to manage Frontend, Demux and Decrambler hardware
  * resources which are needed for Android TV.
  */
-interface ITuner extends @1.0::ITuner {};
+interface ITuner extends @1.0::ITuner {
+    /**
+     * Get Dtmb Frontend Capabilities. If no dtmb exists, Result::UNAVAILABLE would be returned.
+     */
+    getFrontendDtmbCapabilities(FrontendId frontendId)
+        generates (Result result, FrontendDtmbCapabilities caps);
+};

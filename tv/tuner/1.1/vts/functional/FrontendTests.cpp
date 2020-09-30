@@ -243,118 +243,92 @@ AssertionResult FrontendTests::stopScanFrontend() {
     EXPECT_TRUE(mFrontend) << "Test with openFrontendById first.";
     Result status;
     status = mFrontend->stopScan();
+
     return AssertionResult(status == Result::SUCCESS);
 }
 
-void FrontendTests::verifyFrontendStatus(vector<FrontendStatusType> statusTypes,
-                                         vector<FrontendStatus> expectStatuses) {
+AssertionResult FrontendTests::getFrontendDtmbCaps(uint32_t id) {
+    Result status;
+    mService->getFrontendDtmbCapabilities(
+            id, [&](Result result, const FrontendDtmbCapabilities& /*caps*/) { status = result; });
+    return AssertionResult(status == Result::SUCCESS);
+}
+
+void FrontendTests::verifyFrontendStatusExt1_1(vector<FrontendStatusTypeExt1_1> statusTypes,
+                                               vector<FrontendStatusExt1_1> expectStatuses) {
     ASSERT_TRUE(mFrontend) << "Frontend is not opened yet.";
     Result status;
-    vector<FrontendStatus> realStatuses;
+    vector<FrontendStatusExt1_1> realStatuses;
 
-    mFrontend->getStatus(statusTypes, [&](Result result, const hidl_vec<FrontendStatus>& statuses) {
-        status = result;
-        realStatuses = statuses;
-    });
+    sp<android::hardware::tv::tuner::V1_1::IFrontend> frontend_1_1;
+    frontend_1_1 = android::hardware::tv::tuner::V1_1::IFrontend::castFrom(mFrontend);
+    if (frontend_1_1 == nullptr) {
+        EXPECT_TRUE(false) << "Couldn't get 1.1 IFrontend from the Hal implementation.";
+        return;
+    }
+
+    frontend_1_1->getStatusExt1_1(
+            statusTypes, [&](Result result, const hidl_vec<FrontendStatusExt1_1>& statuses) {
+                status = result;
+                realStatuses = statuses;
+            });
 
     ASSERT_TRUE(realStatuses.size() == statusTypes.size());
     for (int i = 0; i < statusTypes.size(); i++) {
-        FrontendStatusType type = statusTypes[i];
+        FrontendStatusTypeExt1_1 type = statusTypes[i];
         switch (type) {
-            case FrontendStatusType::DEMOD_LOCK: {
-                ASSERT_TRUE(realStatuses[i].isDemodLocked() == expectStatuses[i].isDemodLocked());
+            case FrontendStatusTypeExt1_1::MODULATIONS: {
+                // TODO: verify modulations
                 break;
             }
-            case FrontendStatusType::SNR: {
-                ASSERT_TRUE(realStatuses[i].snr() == expectStatuses[i].snr());
+            case FrontendStatusTypeExt1_1::BERS: {
+                ASSERT_TRUE(std::equal(realStatuses[i].bers().begin(), realStatuses[i].bers().end(),
+                                       expectStatuses[i].bers().begin()));
                 break;
             }
-            case FrontendStatusType::BER: {
-                ASSERT_TRUE(realStatuses[i].ber() == expectStatuses[i].ber());
+            case FrontendStatusTypeExt1_1::CODERATES: {
+                ASSERT_TRUE(std::equal(realStatuses[i].codeRates().begin(),
+                                       realStatuses[i].codeRates().end(),
+                                       expectStatuses[i].codeRates().begin()));
                 break;
             }
-            case FrontendStatusType::PER: {
-                ASSERT_TRUE(realStatuses[i].per() == expectStatuses[i].per());
+            case FrontendStatusTypeExt1_1::GUARD_INTERVAL: {
+                // TODO: verify interval
                 break;
             }
-            case FrontendStatusType::PRE_BER: {
-                ASSERT_TRUE(realStatuses[i].preBer() == expectStatuses[i].preBer());
+            case FrontendStatusTypeExt1_1::TRANSMISSION_MODE: {
+                // TODO: verify tranmission mode
                 break;
             }
-            case FrontendStatusType::SIGNAL_QUALITY: {
-                ASSERT_TRUE(realStatuses[i].signalQuality() == expectStatuses[i].signalQuality());
+            case FrontendStatusTypeExt1_1::UEC: {
+                ASSERT_TRUE(realStatuses[i].uec() == expectStatuses[i].uec());
                 break;
             }
-            case FrontendStatusType::SIGNAL_STRENGTH: {
-                ASSERT_TRUE(realStatuses[i].signalStrength() == expectStatuses[i].signalStrength());
+            case FrontendStatusTypeExt1_1::T2_SYSTEM_ID: {
+                ASSERT_TRUE(realStatuses[i].systemId() == expectStatuses[i].systemId());
                 break;
             }
-            case FrontendStatusType::SYMBOL_RATE: {
-                ASSERT_TRUE(realStatuses[i].symbolRate() == expectStatuses[i].symbolRate());
+            case FrontendStatusTypeExt1_1::INTERLEAVINGS: {
+                ASSERT_TRUE(std::equal(realStatuses[i].interleaving().begin(),
+                                       realStatuses[i].interleaving().end(),
+                                       expectStatuses[i].interleaving().begin()));
                 break;
             }
-            case FrontendStatusType::FEC: {
-                ASSERT_TRUE(realStatuses[i].innerFec() == expectStatuses[i].innerFec());
+            case FrontendStatusTypeExt1_1::ISDBT_SEGMENTS: {
+                ASSERT_TRUE(std::equal(realStatuses[i].isdbtSegment().begin(),
+                                       realStatuses[i].isdbtSegment().end(),
+                                       expectStatuses[i].isdbtSegment().begin()));
                 break;
             }
-            case FrontendStatusType::MODULATION: {
-                // TODO: check modulation status
+            case FrontendStatusTypeExt1_1::TS_DATA_RATES: {
+                ASSERT_TRUE(std::equal(realStatuses[i].tsDataRate().begin(),
+                                       realStatuses[i].tsDataRate().end(),
+                                       expectStatuses[i].tsDataRate().begin()));
                 break;
             }
-            case FrontendStatusType::SPECTRAL: {
-                ASSERT_TRUE(realStatuses[i].inversion() == expectStatuses[i].inversion());
-                break;
-            }
-            case FrontendStatusType::LNB_VOLTAGE: {
-                ASSERT_TRUE(realStatuses[i].lnbVoltage() == expectStatuses[i].lnbVoltage());
-                break;
-            }
-            case FrontendStatusType::PLP_ID: {
-                ASSERT_TRUE(realStatuses[i].plpId() == expectStatuses[i].plpId());
-                break;
-            }
-            case FrontendStatusType::EWBS: {
-                ASSERT_TRUE(realStatuses[i].isEWBS() == expectStatuses[i].isEWBS());
-                break;
-            }
-            case FrontendStatusType::AGC: {
-                ASSERT_TRUE(realStatuses[i].agc() == expectStatuses[i].agc());
-                break;
-            }
-            case FrontendStatusType::LNA: {
-                ASSERT_TRUE(realStatuses[i].isLnaOn() == expectStatuses[i].isLnaOn());
-                break;
-            }
-            case FrontendStatusType::LAYER_ERROR: {
-                vector<bool> realLayberError = realStatuses[i].isLayerError();
-                vector<bool> expectLayerError = expectStatuses[i].isLayerError();
-                ASSERT_TRUE(realLayberError.size() == expectLayerError.size());
-                for (int i = 0; i < realLayberError.size(); i++) {
-                    ASSERT_TRUE(realLayberError[i] == expectLayerError[i]);
-                }
-                break;
-            }
-            case FrontendStatusType::MER: {
-                ASSERT_TRUE(realStatuses[i].mer() == expectStatuses[i].mer());
-                break;
-            }
-            case FrontendStatusType::FREQ_OFFSET: {
-                ASSERT_TRUE(realStatuses[i].freqOffset() == expectStatuses[i].freqOffset());
-                break;
-            }
-            case FrontendStatusType::HIERARCHY: {
-                ASSERT_TRUE(realStatuses[i].hierarchy() == expectStatuses[i].hierarchy());
-                break;
-            }
-            case FrontendStatusType::RF_LOCK: {
-                ASSERT_TRUE(realStatuses[i].isRfLocked() == expectStatuses[i].isRfLocked());
-                break;
-            }
-            case FrontendStatusType::ATSC3_PLP_INFO:
-                // TODO: verify plpinfo
-                break;
-            default:
+            default: {
                 continue;
+            }
         }
     }
     ASSERT_TRUE(status == Result::SUCCESS);
@@ -425,7 +399,7 @@ void FrontendTests::tuneTest(FrontendConfig frontendConf) {
     ASSERT_TRUE(openFrontendById(feId));
     ASSERT_TRUE(setFrontendCallback());
     ASSERT_TRUE(tuneFrontend(frontendConf, false /*testWithDemux*/));
-    verifyFrontendStatus(frontendConf.tuneStatusTypes, frontendConf.expectTuneStatuses);
+    verifyFrontendStatusExt1_1(frontendConf.tuneStatusTypes, frontendConf.expectTuneStatuses);
     ASSERT_TRUE(stopTuneFrontend(false /*testWithDemux*/));
     ASSERT_TRUE(closeFrontend());
 }
@@ -439,4 +413,15 @@ void FrontendTests::scanTest(FrontendConfig frontendConf, FrontendScanType scanT
     ASSERT_TRUE(scanFrontend(frontendConf, scanType));
     ASSERT_TRUE(stopScanFrontend());
     ASSERT_TRUE(closeFrontend());
+}
+
+void FrontendTests::getFrontendDtmbCapsTest() {
+    uint32_t feId;
+    getFrontendIdByType(
+            static_cast<FrontendType>(android::hardware::tv::tuner::V1_1::FrontendType::DTMB),
+            feId);
+    if (feId != INVALID_ID) {
+        ALOGD("[vts] Found DTMB Frontend");
+        ASSERT_TRUE(getFrontendDtmbCaps(feId));
+    }
 }

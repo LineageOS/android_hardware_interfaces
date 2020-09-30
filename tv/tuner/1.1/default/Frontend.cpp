@@ -259,6 +259,83 @@ Return<void> Frontend::getStatus(const hidl_vec<FrontendStatusType>& statusTypes
     return Void();
 }
 
+Return<void> Frontend::getStatusExt1_1(const hidl_vec<V1_1::FrontendStatusTypeExt1_1>& statusTypes,
+                                       V1_1::IFrontend::getStatusExt1_1_cb _hidl_cb) {
+    ALOGV("%s", __FUNCTION__);
+
+    vector<V1_1::FrontendStatusExt1_1> statuses;
+    for (int i = 0; i < statusTypes.size(); i++) {
+        V1_1::FrontendStatusTypeExt1_1 type = statusTypes[i];
+        V1_1::FrontendStatusExt1_1 status;
+        // assign randomly selected values for testing.
+        switch (type) {
+            case V1_1::FrontendStatusTypeExt1_1::MODULATIONS: {
+                vector<V1_1::FrontendModulation> modulations;
+                V1_1::FrontendModulation modulation;
+                modulation.isdbt(FrontendIsdbtModulation::MOD_16QAM);  // value = 1 << 3
+                modulations.push_back(modulation);
+                status.modulations(modulations);
+                break;
+            }
+            case V1_1::FrontendStatusTypeExt1_1::BERS: {
+                vector<uint32_t> bers = {1};
+                status.bers(bers);
+                break;
+            }
+            case V1_1::FrontendStatusTypeExt1_1::CODERATES: {
+                // value = 1 << 39
+                vector<V1_1::FrontendInnerFec> codeRates = {V1_1::FrontendInnerFec::FEC_6_15};
+                status.codeRates(codeRates);
+                break;
+            }
+            case V1_1::FrontendStatusTypeExt1_1::GUARD_INTERVAL: {
+                V1_1::FrontendGuardInterval interval;
+                interval.dvbt(FrontendDvbtGuardInterval::INTERVAL_1_32);  // value = 1 << 1
+                status.interval(interval);
+                break;
+            }
+            case V1_1::FrontendStatusTypeExt1_1::TRANSMISSION_MODE: {
+                V1_1::FrontendTransmissionMode transMode;
+                transMode.dvbt(V1_1::FrontendDvbtTransmissionMode::AUTO);  // value = 1 << 0
+                status.transmissionMode(transMode);
+                break;
+            }
+            case V1_1::FrontendStatusTypeExt1_1::UEC: {
+                status.uec(4);
+                break;
+            }
+            case V1_1::FrontendStatusTypeExt1_1::T2_SYSTEM_ID: {
+                status.systemId(5);
+                break;
+            }
+            case V1_1::FrontendStatusTypeExt1_1::INTERLEAVINGS: {
+                V1_1::FrontendInterleaveMode interleave;
+                interleave.atsc3(FrontendAtsc3TimeInterleaveMode::AUTO);
+                vector<V1_1::FrontendInterleaveMode> interleaving = {interleave};
+                status.interleaving(interleaving);
+                break;
+            }
+            case V1_1::FrontendStatusTypeExt1_1::ISDBT_SEGMENTS: {
+                vector<uint8_t> segments = {2, 3};
+                status.isdbtSegment(segments);
+                break;
+            }
+            case V1_1::FrontendStatusTypeExt1_1::TS_DATA_RATES: {
+                vector<uint32_t> dataRates = {4, 5};
+                status.tsDataRate(dataRates);
+                break;
+            }
+            default: {
+                continue;
+            }
+        }
+        statuses.push_back(status);
+    }
+    _hidl_cb(Result::SUCCESS, statuses);
+
+    return Void();
+}
+
 Return<Result> Frontend::setLna(bool /* bEnable */) {
     ALOGV("%s", __FUNCTION__);
 
