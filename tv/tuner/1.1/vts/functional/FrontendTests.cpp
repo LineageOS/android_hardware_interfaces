@@ -47,6 +47,51 @@ Return<void> FrontendCallback::onScanMessage(FrontendScanMessageType type,
     return Void();
 }
 
+Return<void> FrontendCallback::onScanMessageExt1_1(FrontendScanMessageTypeExt1_1 type,
+                                                   const FrontendScanMessageExt1_1& message) {
+    android::Mutex::Autolock autoLock(mMsgLock);
+    ALOGD("[vts] frontend ext1_1 scan message. Type: %d", type);
+    switch (type) {
+        case FrontendScanMessageTypeExt1_1::MODULATION:
+            readFrontendScanMessageExt1_1Modulation(message);
+            break;
+        default:
+            break;
+    }
+    return Void();
+}
+
+void FrontendCallback::readFrontendScanMessageExt1_1Modulation(FrontendModulation modulation) {
+    switch (modulation.getDiscriminator()) {
+        case FrontendModulation::hidl_discriminator::dvbc:
+            ALOGD("[vts] frontend ext1_1 scan message modulation dvbc: %d", modulation.dvbc());
+            break;
+        case FrontendModulation::hidl_discriminator::dvbs:
+            ALOGD("[vts] frontend ext1_1 scan message modulation dvbs: %d", modulation.dvbs());
+            break;
+        case FrontendModulation::hidl_discriminator::isdbs:
+            ALOGD("[vts] frontend ext1_1 scan message modulation isdbs: %d", modulation.isdbs());
+            break;
+        case FrontendModulation::hidl_discriminator::isdbs3:
+            ALOGD("[vts] frontend ext1_1 scan message modulation isdbs3: %d", modulation.isdbs3());
+            break;
+        case FrontendModulation::hidl_discriminator::isdbt:
+            ALOGD("[vts] frontend ext1_1 scan message modulation isdbt: %d", modulation.isdbt());
+            break;
+        case FrontendModulation::hidl_discriminator::atsc:
+            ALOGD("[vts] frontend ext1_1 scan message modulation atsc: %d", modulation.atsc());
+            break;
+        case FrontendModulation::hidl_discriminator::atsc3:
+            ALOGD("[vts] frontend ext1_1 scan message modulation atsc3: %d", modulation.atsc3());
+            break;
+        case FrontendModulation::hidl_discriminator::dvbt:
+            ALOGD("[vts] frontend ext1_1 scan message modulation dvbt: %d", modulation.dvbt());
+            break;
+        default:
+            break;
+    }
+}
+
 void FrontendCallback::tuneTestOnLock(sp<IFrontend>& frontend, FrontendSettings settings,
                                       FrontendSettingsExt1_1 settingsExt1_1) {
     sp<android::hardware::tv::tuner::V1_1::IFrontend> frontend_1_1;
