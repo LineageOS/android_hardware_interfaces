@@ -33,7 +33,7 @@ namespace implementation {
 Tuner::Tuner() {
     // Static Frontends array to maintain local frontends information
     // Array index matches their FrontendId in the default impl
-    mFrontendSize = 8;
+    mFrontendSize = 9;
     mFrontends[0] = new Frontend(FrontendType::DVBT, 0, this);
     mFrontends[1] = new Frontend(FrontendType::ATSC, 1, this);
     mFrontends[2] = new Frontend(FrontendType::DVBC, 2, this);
@@ -42,6 +42,8 @@ Tuner::Tuner() {
     mFrontends[5] = new Frontend(FrontendType::ISDBT, 5, this);
     mFrontends[6] = new Frontend(FrontendType::ANALOG, 6, this);
     mFrontends[7] = new Frontend(FrontendType::ATSC, 7, this);
+    mFrontends[8] =
+            new Frontend(static_cast<V1_0::FrontendType>(V1_1::FrontendType::DTMB), 8, this);
 
     FrontendInfo::FrontendCapabilities caps;
     caps = FrontendInfo::FrontendCapabilities();
@@ -221,6 +223,20 @@ Return<void> Tuner::openLnbByName(const hidl_string& /*lnbName*/, openLnbByName_
     sp<V1_0::ILnb> lnb = new Lnb();
 
     _hidl_cb(Result::SUCCESS, 1234, lnb);
+    return Void();
+}
+
+Return<void> Tuner::getFrontendDtmbCapabilities(uint32_t frontendId,
+                                                getFrontendDtmbCapabilities_cb _hidl_cb) {
+    ALOGV("%s", __FUNCTION__);
+
+    if (mFrontends[frontendId] != nullptr &&
+        (mFrontends[frontendId]->getFrontendType() ==
+         static_cast<V1_0::FrontendType>(V1_1::FrontendType::DTMB))) {
+        _hidl_cb(Result::SUCCESS, mDtmbCaps);
+    } else {
+        _hidl_cb(Result::UNAVAILABLE, mDtmbCaps);
+    }
     return Void();
 }
 
