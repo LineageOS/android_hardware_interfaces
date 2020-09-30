@@ -72,7 +72,7 @@ Return<Result> Frontend::tune(const FrontendSettings& /* settings */) {
 }
 
 Return<Result> Frontend::tune_1_1(const FrontendSettings& settings,
-                                  const V1_1::FrontendSettingsExt& /*settingsExt*/) {
+                                  const V1_1::FrontendSettingsExt1_1& /*settingsExt1_1*/) {
     ALOGV("%s", __FUNCTION__);
     return tune(settings);
 }
@@ -122,7 +122,7 @@ Return<Result> Frontend::scan(const FrontendSettings& settings, FrontendScanType
 }
 
 Return<Result> Frontend::scan_1_1(const FrontendSettings& settings, FrontendScanType type,
-                                  const V1_1::FrontendSettingsExt& /*settingsExt*/) {
+                                  const V1_1::FrontendSettingsExt1_1& /*settingsExt1_1*/) {
     ALOGV("%s", __FUNCTION__);
     return scan(settings, type);
 }

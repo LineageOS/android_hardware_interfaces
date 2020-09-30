@@ -48,7 +48,7 @@ using android::hardware::tv::tuner::V1_0::FrontendStatusType;
 using android::hardware::tv::tuner::V1_0::FrontendType;
 using android::hardware::tv::tuner::V1_0::PlaybackSettings;
 using android::hardware::tv::tuner::V1_0::RecordSettings;
-using android::hardware::tv::tuner::V1_1::FrontendSettingsExt;
+using android::hardware::tv::tuner::V1_1::FrontendSettingsExt1_1;
 
 using namespace std;
 
@@ -100,7 +100,7 @@ struct FrontendConfig {
     bool isSoftwareFe;
     FrontendType type;
     FrontendSettings settings;
-    FrontendSettingsExt settingsExt;
+    FrontendSettingsExt1_1 settingsExt1_1;
     vector<FrontendStatusType> tuneStatusTypes;
     vector<FrontendStatus> expectTuneStatuses;
 };
@@ -141,7 +141,7 @@ inline void initFrontendConfig() {
     frontendArray[DVBT].tuneStatusTypes = types;
     frontendArray[DVBT].expectTuneStatuses = statuses;
     frontendArray[DVBT].isSoftwareFe = true;
-    frontendArray[DVBT].settingsExt.settingExt.dvbt({
+    frontendArray[DVBT].settingsExt1_1.settingExt.dvbt({
             .transmissionMode =
                     android::hardware::tv::tuner::V1_1::FrontendDvbtTransmissionMode::MODE_8K_E,
     });
@@ -164,8 +164,8 @@ inline void initFrontendScanConfig() {
             .isHighPriority = true,
             .standard = FrontendDvbtStandard::T,
     });
-    frontendScanArray[SCAN_DVBT].settingsExt.endFrequency = 800000;
-    frontendScanArray[SCAN_DVBT].settingsExt.settingExt.dvbt({
+    frontendScanArray[SCAN_DVBT].settingsExt1_1.endFrequency = 800000;
+    frontendScanArray[SCAN_DVBT].settingsExt1_1.settingExt.dvbt({
             .transmissionMode =
                     android::hardware::tv::tuner::V1_1::FrontendDvbtTransmissionMode::MODE_8K_E,
     });

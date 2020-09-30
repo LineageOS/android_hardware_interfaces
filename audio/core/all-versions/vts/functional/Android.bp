@@ -19,9 +19,6 @@ cc_defaults {
     defaults: ["VtsHalTargetTestDefaults"],
     static_libs: [
         "android.hardware.audio.common.test.utility",
-        "libaudiofoundation",
-        "libaudiopolicycomponents",
-        "libmedia_helper",
         "libxml2",
     ],
     shared_libs: [
@@ -44,6 +41,9 @@ cc_test {
         "2.0/AudioPrimaryHidlHalTest.cpp",
     ],
     static_libs: [
+        "libaudiofoundation",
+        "libaudiopolicycomponents",
+        "libmedia_helper",
         "android.hardware.audio@2.0",
         "android.hardware.audio.common@2.0",
     ],
@@ -67,6 +67,9 @@ cc_test {
         "4.0/AudioPrimaryHidlHalTest.cpp",
     ],
     static_libs: [
+        "libaudiofoundation",
+        "libaudiopolicycomponents",
+        "libmedia_helper",
         "android.hardware.audio@4.0",
         "android.hardware.audio.common@4.0",
     ],
@@ -90,6 +93,9 @@ cc_test {
         "5.0/AudioPrimaryHidlHalTest.cpp",
     ],
     static_libs: [
+        "libaudiofoundation",
+        "libaudiopolicycomponents",
+        "libmedia_helper",
         "android.hardware.audio@5.0",
         "android.hardware.audio.common@5.0",
     ],
@@ -113,6 +119,9 @@ cc_test {
         "6.0/AudioPrimaryHidlHalTest.cpp",
     ],
     static_libs: [
+        "libaudiofoundation",
+        "libaudiopolicycomponents",
+        "libmedia_helper",
         "android.hardware.audio@6.0",
         "android.hardware.audio.common@6.0",
     ],
@@ -130,7 +139,6 @@ cc_test {
 }
 
 cc_test {
-    enabled: false,
     name: "VtsHalAudioV7_0TargetTest",
     defaults: ["VtsHalAudioTargetTest_defaults"],
     srcs: [
@@ -139,6 +147,7 @@ cc_test {
     static_libs: [
         "android.hardware.audio@7.0",
         "android.hardware.audio.common@7.0",
+        "android.hardware.audio.common@7.0-enums",
     ],
     cflags: [
         "-DMAJOR_VERSION=7",
