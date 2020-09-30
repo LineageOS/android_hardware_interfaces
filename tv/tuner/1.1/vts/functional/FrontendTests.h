@@ -72,7 +72,7 @@ class FrontendCallback : public IFrontendCallback {
                                        const FrontendScanMessage& message) override;
 
     void tuneTestOnLock(sp<IFrontend>& frontend, FrontendSettings settings,
-                        FrontendSettingsExt settingsExt);
+                        FrontendSettingsExt1_1 settingsExt1_1);
     void scanTest(sp<IFrontend>& frontend, FrontendConfig config, FrontendScanType type);
 
     // Helper methods

@@ -155,15 +155,40 @@
             <xs:element name="item" type="xs:token" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
-    <xs:simpleType name="audioInOutFlags">
+    <xs:simpleType name="audioInOutFlag">
         <xs:annotation>
             <xs:documentation xml:lang="en">
-                "|" separated list of audio_output_flags_t or audio_input_flags_t.
+              The flags indicate suggested stream attributes supported by the profile.
             </xs:documentation>
         </xs:annotation>
         <xs:restriction base="xs:string">
-            <xs:pattern value="|[_A-Z]+(\|[_A-Z]+)*"/>
+            <xs:enumeration value="AUDIO_OUTPUT_FLAG_DIRECT" />
+            <xs:enumeration value="AUDIO_OUTPUT_FLAG_PRIMARY" />
+            <xs:enumeration value="AUDIO_OUTPUT_FLAG_FAST" />
+            <xs:enumeration value="AUDIO_OUTPUT_FLAG_DEEP_BUFFER" />
+            <xs:enumeration value="AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD" />
+            <xs:enumeration value="AUDIO_OUTPUT_FLAG_NON_BLOCKING" />
+            <xs:enumeration value="AUDIO_OUTPUT_FLAG_HW_AV_SYNC" />
+            <xs:enumeration value="AUDIO_OUTPUT_FLAG_TTS" />
+            <xs:enumeration value="AUDIO_OUTPUT_FLAG_RAW" />
+            <xs:enumeration value="AUDIO_OUTPUT_FLAG_SYNC" />
+            <xs:enumeration value="AUDIO_OUTPUT_FLAG_IEC958_NONAUDIO" />
+            <xs:enumeration value="AUDIO_OUTPUT_FLAG_DIRECT_PCM" />
+            <xs:enumeration value="AUDIO_OUTPUT_FLAG_MMAP_NOIRQ" />
+            <xs:enumeration value="AUDIO_OUTPUT_FLAG_VOIP_RX" />
+            <xs:enumeration value="AUDIO_OUTPUT_FLAG_INCALL_MUSIC" />
+            <xs:enumeration value="AUDIO_INPUT_FLAG_FAST" />
+            <xs:enumeration value="AUDIO_INPUT_FLAG_HW_HOTWORD" />
+            <xs:enumeration value="AUDIO_INPUT_FLAG_RAW" />
+            <xs:enumeration value="AUDIO_INPUT_FLAG_SYNC" />
+            <xs:enumeration value="AUDIO_INPUT_FLAG_MMAP_NOIRQ" />
+            <xs:enumeration value="AUDIO_INPUT_FLAG_VOIP_TX" />
+            <xs:enumeration value="AUDIO_INPUT_FLAG_HW_AV_SYNC" />
+            <xs:enumeration value="AUDIO_INPUT_FLAG_DIRECT" />
         </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="audioInOutFlags">
+        <xs:list itemType="audioInOutFlag" />
     </xs:simpleType>
     <xs:simpleType name="role">
         <xs:restriction base="xs:string">

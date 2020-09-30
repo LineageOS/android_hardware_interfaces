@@ -177,7 +177,8 @@ class ComposerResources {
     bool mustValidateDisplay(Display display);
 
     // When a buffer in the cache is replaced by a new one, we must keep it
-    // alive until it has been replaced in ComposerHal.
+    // alive until it has been replaced in ComposerHal because it is still using
+    // the old buffer.
     class ReplacedHandle {
       public:
         explicit ReplacedHandle(bool isBuffer) : mIsBuffer(isBuffer) {}
