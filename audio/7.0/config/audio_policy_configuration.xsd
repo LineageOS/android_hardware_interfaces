@@ -159,9 +159,13 @@
         <xs:annotation>
             <xs:documentation xml:lang="en">
               The flags indicate suggested stream attributes supported by the profile.
+              Use of AUDIO_{INPUT|OUTPUT}_FLAG_NONE in the XML file isn't required
+              as empty flag lists are allowed. However these constants are useful for
+              representing an empty enum value.
             </xs:documentation>
         </xs:annotation>
         <xs:restriction base="xs:string">
+            <xs:enumeration value="AUDIO_OUTPUT_FLAG_NONE" />
             <xs:enumeration value="AUDIO_OUTPUT_FLAG_DIRECT" />
             <xs:enumeration value="AUDIO_OUTPUT_FLAG_PRIMARY" />
             <xs:enumeration value="AUDIO_OUTPUT_FLAG_FAST" />
@@ -177,6 +181,7 @@
             <xs:enumeration value="AUDIO_OUTPUT_FLAG_MMAP_NOIRQ" />
             <xs:enumeration value="AUDIO_OUTPUT_FLAG_VOIP_RX" />
             <xs:enumeration value="AUDIO_OUTPUT_FLAG_INCALL_MUSIC" />
+            <xs:enumeration value="AUDIO_INPUT_FLAG_NONE" />
             <xs:enumeration value="AUDIO_INPUT_FLAG_FAST" />
             <xs:enumeration value="AUDIO_INPUT_FLAG_HW_HOTWORD" />
             <xs:enumeration value="AUDIO_INPUT_FLAG_RAW" />
@@ -251,8 +256,8 @@
             <xs:enumeration value="AUDIO_DEVICE_OUT_BLUETOOTH_A2DP"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_HEADPHONES"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_SPEAKER"/>
-            <xs:enumeration value="AUDIO_DEVICE_OUT_AUX_DIGITAL"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_HDMI"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_AUX_DIGITAL"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_ANLG_DOCK_HEADSET"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_DGTL_DOCK_HEADSET"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_USB_ACCESSORY"/>
@@ -271,6 +276,8 @@
             <xs:enumeration value="AUDIO_DEVICE_OUT_USB_HEADSET"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_HEARING_AID"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_ECHO_CANCELLER"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_BLE_HEADSET"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_BLE_SPEAKER"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_DEFAULT"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_STUB"/>
 
@@ -279,8 +286,8 @@
             <xs:enumeration value="AUDIO_DEVICE_IN_BUILTIN_MIC"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_WIRED_HEADSET"/>
-            <xs:enumeration value="AUDIO_DEVICE_IN_AUX_DIGITAL"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_HDMI"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_AUX_DIGITAL"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_VOICE_CALL"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_TELEPHONY_RX"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_BACK_MIC"/>
@@ -302,6 +309,7 @@
             <xs:enumeration value="AUDIO_DEVICE_IN_BLUETOOTH_BLE"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_HDMI_ARC"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_ECHO_REFERENCE"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_BLE_HEADSET"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_DEFAULT"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_STUB"/>
         </xs:restriction>
@@ -321,7 +329,6 @@
     </xs:simpleType>
     <xs:simpleType name="audioFormat">
         <xs:restriction base="xs:string">
-            <xs:enumeration value="AUDIO_FORMAT_DEFAULT" />
             <xs:enumeration value="AUDIO_FORMAT_PCM_16_BIT" />
             <xs:enumeration value="AUDIO_FORMAT_PCM_8_BIT"/>
             <xs:enumeration value="AUDIO_FORMAT_PCM_32_BIT"/>
@@ -342,22 +349,14 @@
             <xs:enumeration value="AUDIO_FORMAT_AAC_LD"/>
             <xs:enumeration value="AUDIO_FORMAT_AAC_HE_V2"/>
             <xs:enumeration value="AUDIO_FORMAT_AAC_ELD"/>
-            <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_MAIN"/>
-            <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_LC"/>
-            <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_SSR"/>
-            <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_LTP"/>
-            <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_HE_V1"/>
-            <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_SCALABLE"/>
-            <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_ERLC"/>
-            <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_LD"/>
-            <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_HE_V2"/>
-            <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_ELD"/>
-            <xs:enumeration value="AUDIO_FORMAT_VORBIS"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_XHE"/>
             <xs:enumeration value="AUDIO_FORMAT_HE_AAC_V1"/>
             <xs:enumeration value="AUDIO_FORMAT_HE_AAC_V2"/>
+            <xs:enumeration value="AUDIO_FORMAT_VORBIS"/>
             <xs:enumeration value="AUDIO_FORMAT_OPUS"/>
             <xs:enumeration value="AUDIO_FORMAT_AC3"/>
             <xs:enumeration value="AUDIO_FORMAT_E_AC3"/>
+            <xs:enumeration value="AUDIO_FORMAT_E_AC3_JOC"/>
             <xs:enumeration value="AUDIO_FORMAT_DTS"/>
             <xs:enumeration value="AUDIO_FORMAT_DTS_HD"/>
             <xs:enumeration value="AUDIO_FORMAT_IEC61937"/>
@@ -377,17 +376,26 @@
             <xs:enumeration value="AUDIO_FORMAT_ALAC"/>
             <xs:enumeration value="AUDIO_FORMAT_APE"/>
             <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_MAIN"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_LC"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_SSR"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_LTP"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_HE_V1"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_SCALABLE"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_ERLC"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_LD"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_HE_V2"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_ELD"/>
+            <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_XHE"/>
             <xs:enumeration value="AUDIO_FORMAT_SBC"/>
             <xs:enumeration value="AUDIO_FORMAT_APTX"/>
             <xs:enumeration value="AUDIO_FORMAT_APTX_HD"/>
             <xs:enumeration value="AUDIO_FORMAT_AC4"/>
             <xs:enumeration value="AUDIO_FORMAT_LDAC"/>
-            <xs:enumeration value="AUDIO_FORMAT_E_AC3_JOC"/>
+            <xs:enumeration value="AUDIO_FORMAT_MAT"/>
             <xs:enumeration value="AUDIO_FORMAT_MAT_1_0"/>
             <xs:enumeration value="AUDIO_FORMAT_MAT_2_0"/>
             <xs:enumeration value="AUDIO_FORMAT_MAT_2_1"/>
-            <xs:enumeration value="AUDIO_FORMAT_AAC_XHE"/>
-            <xs:enumeration value="AUDIO_FORMAT_AAC_ADTS_XHE"/>
             <xs:enumeration value="AUDIO_FORMAT_AAC_LATM"/>
             <xs:enumeration value="AUDIO_FORMAT_AAC_LATM_LC"/>
             <xs:enumeration value="AUDIO_FORMAT_AAC_LATM_HE_V1"/>
@@ -397,6 +405,7 @@
             <xs:enumeration value="AUDIO_FORMAT_LHDC"/>
             <xs:enumeration value="AUDIO_FORMAT_LHDC_LL"/>
             <xs:enumeration value="AUDIO_FORMAT_APTX_TWSP"/>
+            <xs:enumeration value="AUDIO_FORMAT_LC3"/>
         </xs:restriction>
     </xs:simpleType>
     <xs:simpleType name="extendableAudioFormat">
@@ -465,9 +474,13 @@
             </xs:documentation>
         </xs:annotation>
         <xs:restriction base="xs:string">
+            <xs:enumeration value="AUDIO_CHANNEL_NONE"/>
             <xs:enumeration value="AUDIO_CHANNEL_OUT_MONO"/>
             <xs:enumeration value="AUDIO_CHANNEL_OUT_STEREO"/>
             <xs:enumeration value="AUDIO_CHANNEL_OUT_2POINT1"/>
+            <xs:enumeration value="AUDIO_CHANNEL_OUT_TRI"/>
+            <xs:enumeration value="AUDIO_CHANNEL_OUT_TRI_BACK"/>
+            <xs:enumeration value="AUDIO_CHANNEL_OUT_3POINT1"/>
             <xs:enumeration value="AUDIO_CHANNEL_OUT_2POINT0POINT2"/>
             <xs:enumeration value="AUDIO_CHANNEL_OUT_2POINT1POINT2"/>
             <xs:enumeration value="AUDIO_CHANNEL_OUT_3POINT0POINT2"/>
@@ -538,11 +551,19 @@
         <xs:attribute name="samplingRates" type="samplingRates" use="optional"/>
         <xs:attribute name="channelMasks" type="channelMasks" use="optional"/>
     </xs:complexType>
-    <xs:simpleType name="gainMode">
+    <xs:simpleType name="audioGainMode">
         <xs:restriction base="xs:string">
             <xs:enumeration value="AUDIO_GAIN_MODE_JOINT"/>
             <xs:enumeration value="AUDIO_GAIN_MODE_CHANNELS"/>
             <xs:enumeration value="AUDIO_GAIN_MODE_RAMP"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="audioGainModeMaskUnrestricted">
+        <xs:list itemType="audioGainMode" />
+    </xs:simpleType>
+    <xs:simpleType name='audioGainModeMask'>
+        <xs:restriction base='audioGainModeMaskUnrestricted'>
+            <xs:minLength value='1' />
         </xs:restriction>
     </xs:simpleType>
     <xs:complexType name="gains">
@@ -550,7 +571,7 @@
             <xs:element name="gain" minOccurs="0" maxOccurs="unbounded">
                 <xs:complexType>
                     <xs:attribute name="name" type="xs:token" use="required"/>
-                    <xs:attribute name="mode" type="gainMode" use="required"/>
+                    <xs:attribute name="mode" type="audioGainModeMask" use="required"/>
                     <xs:attribute name="channel_mask" type="audioChannelMask" use="optional"/>
                     <xs:attribute name="minValueMB" type="xs:int" use="optional"/>
                     <xs:attribute name="maxValueMB" type="xs:int" use="optional"/>
@@ -668,8 +689,6 @@
             <xs:enumeration value="AUDIO_STREAM_TTS"/>
             <xs:enumeration value="AUDIO_STREAM_ACCESSIBILITY"/>
             <xs:enumeration value="AUDIO_STREAM_ASSISTANT"/>
-            <xs:enumeration value="AUDIO_STREAM_REROUTING"/>
-            <xs:enumeration value="AUDIO_STREAM_PATCH"/>
         </xs:restriction>
     </xs:simpleType>
     <xs:simpleType name="audioSource">
