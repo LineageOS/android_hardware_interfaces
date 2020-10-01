@@ -19,9 +19,26 @@ package android.hardware.tv.tuner@1.1;
 import @1.0::Constant;
 import @1.0::DemuxFilterMmtpRecordEvent;
 import @1.0::DemuxFilterTsRecordEvent;
+import @1.0::FrontendAtsc3Bandwidth;
+import @1.0::FrontendAtsc3Modulation;
+import @1.0::FrontendAtsc3TimeInterleaveMode;
+import @1.0::FrontendAtscModulation;
+import @1.0::FrontendDvbcModulation;
+import @1.0::FrontendDvbtBandwidth;
 import @1.0::FrontendDvbcSpectralInversion;
+import @1.0::FrontendDvbsModulation;
 import @1.0::FrontendDvbtConstellation;
 import @1.0::FrontendDvbtTransmissionMode;
+import @1.0::FrontendDvbtGuardInterval;
+import @1.0::FrontendInnerFec;
+import @1.0::FrontendIsdbs3Modulation;
+import @1.0::FrontendIsdbsModulation;
+import @1.0::FrontendIsdbtBandwidth;
+import @1.0::FrontendIsdbtGuardInterval;
+import @1.0::FrontendIsdbtMode;
+import @1.0::FrontendIsdbtModulation;
+import @1.0::FrontendStatusType;
+import @1.0::FrontendType;
 import android.hidl.safe_union@1.0;
 import android.hidl.safe_union@1.0::Monostate;
 
@@ -64,8 +81,7 @@ enum Constant64Bit : uint64_t {
 struct DemuxFilterRecordEventExt {
     /**
      * The Presentation Time Stamp(PTS) for the audio or video frame. It is based on 90KHz
-     * and has the same format as the PTS in ISO/IEC 13818-1. It is used only for the SC and
-     * the SC_HEVC.
+     * and has the same format as the PTS in ISO/IEC 13818-1.
      */
     uint64_t pts;
 
@@ -147,6 +163,8 @@ enum FrontendDvbtConstellation : @1.0::FrontendDvbtConstellation {
  */
 struct FrontendDvbsSettingsExt1_1 {
     FrontendDvbsScanType scanType;
+
+    bool isDiseqcRxMessage;
 };
 
 /**
@@ -181,5 +199,326 @@ struct FrontendSettingsExt1_1 {
         FrontendDvbsSettingsExt1_1 dvbs;
 
         FrontendDvbtSettingsExt1_1 dvbt;
+
+        FrontendDtmbSettings dtmb;
     } settingExt;
+};
+
+/**
+ *  Extended Frontend Type.
+ */
+@export
+enum FrontendType : @1.0::FrontendType {
+    /**
+     * DTMB (Digital Terrestrial Multimedia Broadcast) standard.
+     */
+    DTMB,
+};
+
+/**
+ *  Bandwidth Type for DTMB.
+ */
+@export
+enum FrontendDtmbBandwidth : uint32_t {
+    UNDEFINED = 0,
+    /**
+     * hardware is able to detect and set Bandwidth automatically
+     */
+    AUTO = 1 << 0,
+    BANDWIDTH_8MHZ = 1 << 1,
+    BANDWIDTH_6MHZ = 1 << 2,
+};
+
+/**
+ *  TimeInterleaveMode Type for DTMB.
+ */
+@export
+enum FrontendDtmbTimeInterleaveMode : uint32_t {
+    UNDEFINED = 0,
+    /**
+     * hardware is able to detect and set time interleave mode automatically
+     */
+    AUTO = 1 << 0,
+    TIMER_INT_240 = 1 << 1,
+    TIMER_INT_720 = 1 << 2,
+};
+
+/**
+ *  FrontendDtmbModulation Type for DTMB.
+ */
+@export
+enum FrontendDtmbModulation : uint32_t {
+    UNDEFINED = 0,
+    /**
+     * hardware is able to detect and set Constellation automatically
+     */
+    AUTO = 1 << 0,
+    CONSTELLATION_4QAM = 1 << 1,
+    CONSTELLATION_4QAM_NR = 1 << 2,
+    CONSTELLATION_16QAM = 1 << 3,
+    CONSTELLATION_32QAM = 1 << 4,
+    CONSTELLATION_64QAM = 1 << 5,
+};
+
+/**
+ *  CODERATE Type for DTMB.
+ */
+@export
+enum FrontendDtmbCodeRate : uint32_t {
+    UNDEFINED = 0,
+    /**
+     * hardware is able to detect and set code rate automatically
+     */
+    AUTO = 1 << 0,
+    CODERATE_2_5 = 1 << 1,
+    CODERATE_3_5 = 1 << 2,
+    CODERATE_4_5 = 1 << 3,
+};
+
+/**
+ *  Guard Interval Type for DTMB.
+ */
+@export
+enum FrontendDtmbGuardInterval : uint32_t {
+    UNDEFINED = 0,
+    /**
+     * hardware is able to detect and set Guard Interval automatically
+     */
+    AUTO = 1 << 0,
+    PN_420_VARIOUS = 1 << 1,
+    PN_595_CONST = 1 << 2,
+    PN_945_VARIOUS = 1 << 3,
+    PN_420_CONST = 1 << 4,
+    PN_945_CONST = 1 << 5,
+    PN_RESERVED = 1 << 6,
+};
+
+/**
+ *  Transmission Mode for DTMB.
+ */
+@export
+enum FrontendDtmbTransmissionMode : uint32_t {
+    UNDEFINED = 0,
+    /**
+     * hardware is able to detect and set Transmission Mode automatically
+     */
+    AUTO = 1 << 0,
+    C1 = 1 << 1,
+    C3780 = 1 << 2,
+};
+
+/**
+ *  Signal Setting for DTMB Frontend.
+ */
+struct FrontendDtmbSettings {
+    uint32_t frequency;
+
+    FrontendDtmbTransmissionMode transmissionMode;
+
+    FrontendDtmbBandwidth bandwidth;
+
+    FrontendDtmbModulation modulation;
+
+    FrontendDtmbCodeRate codeRate;
+
+    FrontendDtmbGuardInterval guardInterval;
+
+    FrontendDtmbTimeInterleaveMode interleaveMode;
+};
+
+/**
+ *  Capabilities for DTMB Frontend.
+ */
+struct FrontendDtmbCapabilities {
+    bitfield<FrontendDtmbTransmissionMode> transmissionModeCap;
+
+    bitfield<FrontendDtmbBandwidth> bandwidthCap;
+
+    bitfield<FrontendDtmbModulation> modulationCap;
+
+    bitfield<FrontendDtmbCodeRate> codeRateCap;
+
+    bitfield<FrontendDtmbGuardInterval> guardIntervalCap;
+
+    bitfield<FrontendDtmbTimeInterleaveMode> interleaveModeCap;
+};
+
+safe_union FrontendModulation {
+    @1.0::FrontendDvbcModulation dvbc;
+
+    @1.0::FrontendDvbsModulation dvbs;
+
+    FrontendDvbtConstellation dvbt;
+
+    @1.0::FrontendIsdbsModulation isdbs;
+
+    @1.0::FrontendIsdbs3Modulation isdbs3;
+
+    @1.0::FrontendIsdbtModulation isdbt;
+
+    @1.0::FrontendAtscModulation atsc;
+
+    @1.0::FrontendAtsc3Modulation atsc3;
+
+    FrontendDtmbModulation dtmb;
+};
+
+safe_union FrontendInterleaveMode {
+    @1.0::FrontendAtsc3TimeInterleaveMode atsc3;
+
+    FrontendDtmbTimeInterleaveMode dtmb;
+};
+
+@export
+enum FrontendInnerFec : @1.0::FrontendInnerFec {
+    FEC_2_15 = 1 << 36,
+    FEC_3_15 = 1 << 37,
+    FEC_5_15 = 1 << 38,
+    FEC_6_15 = 1 << 39,
+    FEC_9_15 = 1 << 40,
+    FEC_10_15 = 1 << 41,
+    FEC_12_15 = 1 << 42,
+    FEC_13_15 = 1 << 43,
+    FEC_18_30 = 1 << 44,
+    FEC_20_30 = 1 << 45,
+    FEC_90_180 = 1 << 46,
+    FEC_96_180 = 1 << 47,
+    FEC_104_180 = 1 << 48,
+    FEC_128_180 = 1 << 49,
+    FEC_132_180 = 1 << 50,
+    FEC_135_180 = 1 << 51,
+    FEC_140_180 = 1 << 52,
+};
+
+safe_union FrontendBandwidth {
+    @1.0::FrontendAtsc3Bandwidth atsc3;
+
+    @1.0::FrontendDvbtBandwidth dvbt;
+
+    @1.0::FrontendIsdbtBandwidth isdbt;
+
+    FrontendDtmbBandwidth dtmb;
+};
+
+safe_union FrontendGuardInterval {
+    @1.0::FrontendDvbtGuardInterval dvbt;
+
+    @1.0::FrontendIsdbtGuardInterval isdbt;
+
+    FrontendDtmbGuardInterval dtmb;
+};
+
+safe_union FrontendTransmissionMode {
+    FrontendDvbtTransmissionMode dvbt;
+
+    @1.0::FrontendIsdbtMode isdbt;
+
+    FrontendDtmbTransmissionMode dtmb;
+};
+
+@export
+enum FrontendStatusTypeExt1_1 : uint32_t {
+    /**
+     * Modulation Types.
+     */
+    MODULATIONS = @1.0::FrontendStatusType:ATSC3_PLP_INFO + 1,
+    /**
+     * Bit Error Ratios.
+     */
+    BERS,
+    /**
+     * Code Rates.
+     */
+    CODERATES,
+    /**
+     * Extended Bandwidth.
+     */
+    BANDWIDTH,
+    /**
+     * Extended Guard Intervals.
+     */
+    GUARD_INTERVAL,
+    /**
+     * Extended Transmission Mode.
+     */
+    TRANSMISSION_MODE,
+    /**
+     * Uncorrectable Error Counts of the frontend's Physical Layer Pipe (PLP)
+     * since the last tune operation.
+     */
+    UEC,
+    /**
+     * DVB-T2 System Id.
+     */
+    T2_SYSTEM_ID,
+    /**
+     * Frontend Interleaving Modes.
+     */
+    INTERLEAVINGS,
+    /**
+     * Segments in ISDB-T Specification of all the channels.
+     */
+    ISDBT_SEGMENTS,
+    /**
+     * Transport Stream Data Rate in BPS of the current channel.
+     */
+    TS_DATA_RATES,
+};
+
+safe_union FrontendStatusExt1_1 {
+    /**
+     * Extended modulation status.
+     */
+    vec<FrontendModulation> modulations;
+
+    /**
+     * Extended bit error ratio status.
+     */
+    vec<uint32_t> bers;
+
+    /**
+     * Extended code rate status.
+     */
+    vec<FrontendInnerFec> codeRates;
+
+    /**
+     * Extended bandwidth status.
+     */
+    FrontendBandwidth bandwidth;
+
+    /**
+     * Extended guard interval status.
+     */
+    FrontendGuardInterval interval;
+
+    /**
+     * Extended transmission mode status.
+     */
+    FrontendTransmissionMode transmissionMode;
+
+    /**
+     * Uncorrectable Error Counts of the frontend's Physical Layer Pipe (PLP)
+     * since the last tune operation.
+     */
+    uint32_t uec;
+
+    /**
+     * The current DVB-T2 system id status.
+     */
+    uint16_t systemId;
+
+    /**
+     * Frontend Interleaving Modes.
+     */
+    vec<FrontendInterleaveMode> interleaving;
+
+    /**
+     * Segments in ISDB-T Specification of all the channels.
+     */
+    vec<uint8_t> isdbtSegment;
+
+    /**
+     * Transport Stream Data Rate in BPS of the current channel.
+     */
+    vec<uint32_t> tsDataRate;
 };
