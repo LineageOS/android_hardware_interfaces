@@ -15,9 +15,9 @@
  */
 
 #include <android-base/logging.h>
-#include <android/hardware/tv/tuner/1.0/IFrontendCallback.h>
 #include <android/hardware/tv/tuner/1.0/types.h>
 #include <android/hardware/tv/tuner/1.1/IFrontend.h>
+#include <android/hardware/tv/tuner/1.1/IFrontendCallback.h>
 #include <android/hardware/tv/tuner/1.1/ITuner.h>
 #include <binder/MemoryDealer.h>
 #include <gtest/gtest.h>
@@ -54,8 +54,12 @@ using android::hardware::tv::tuner::V1_0::FrontendScanMessage;
 using android::hardware::tv::tuner::V1_0::FrontendScanMessageType;
 using android::hardware::tv::tuner::V1_0::FrontendScanType;
 using android::hardware::tv::tuner::V1_0::IFrontend;
-using android::hardware::tv::tuner::V1_0::IFrontendCallback;
 using android::hardware::tv::tuner::V1_0::Result;
+using android::hardware::tv::tuner::V1_1::FrontendDtmbCapabilities;
+using android::hardware::tv::tuner::V1_1::FrontendModulation;
+using android::hardware::tv::tuner::V1_1::FrontendScanMessageExt1_1;
+using android::hardware::tv::tuner::V1_1::FrontendScanMessageTypeExt1_1;
+using android::hardware::tv::tuner::V1_1::IFrontendCallback;
 using android::hardware::tv::tuner::V1_1::ITuner;
 
 using ::testing::AssertionResult;
@@ -70,6 +74,8 @@ class FrontendCallback : public IFrontendCallback {
     virtual Return<void> onEvent(FrontendEventType frontendEventType) override;
     virtual Return<void> onScanMessage(FrontendScanMessageType type,
                                        const FrontendScanMessage& message) override;
+    virtual Return<void> onScanMessageExt1_1(FrontendScanMessageTypeExt1_1 type,
+                                             const FrontendScanMessageExt1_1& message) override;
 
     void tuneTestOnLock(sp<IFrontend>& frontend, FrontendSettings settings,
                         FrontendSettingsExt1_1 settingsExt1_1);
@@ -80,6 +86,8 @@ class FrontendCallback : public IFrontendCallback {
     void resetBlindScanStartingFrequency(FrontendConfig& config, uint32_t resetingFreq);
 
   private:
+    void readFrontendScanMessageExt1_1Modulation(FrontendModulation modulation);
+
     bool mEventReceived = false;
     bool mScanMessageReceived = false;
     bool mLockMsgReceived = false;
@@ -109,14 +117,16 @@ class FrontendTests {
     AssertionResult scanFrontend(FrontendConfig config, FrontendScanType type);
     AssertionResult stopScanFrontend();
     AssertionResult tuneFrontend(FrontendConfig config, bool testWithDemux);
-    void verifyFrontendStatus(vector<FrontendStatusType> statusTypes,
-                              vector<FrontendStatus> expectStatuses);
+    void verifyFrontendStatusExt1_1(vector<FrontendStatusTypeExt1_1> statusTypes,
+                                    vector<FrontendStatusExt1_1> expectStatuses);
     AssertionResult stopTuneFrontend(bool testWithDemux);
     AssertionResult closeFrontend();
+    AssertionResult getFrontendDtmbCaps(uint32_t);
 
     void getFrontendIdByType(FrontendType feType, uint32_t& feId);
     void tuneTest(FrontendConfig frontendConf);
     void scanTest(FrontendConfig frontend, FrontendScanType type);
+    void getFrontendDtmbCapsTest();
 
     void setDvrTests(DvrTests dvrTests) { mDvrTests = dvrTests; }
     void setDemux(sp<IDemux> demux) { mDvrTests.setDemux(demux); }

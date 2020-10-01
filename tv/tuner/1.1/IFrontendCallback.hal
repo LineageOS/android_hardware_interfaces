@@ -16,18 +16,17 @@
 
 package android.hardware.tv.tuner@1.1;
 
-import @1.0::FrontendId;
-import @1.0::ITuner;
-import @1.0::Result;
+import @1.0::IFrontendCallback;
+import FrontendScanMessageExt1_1;
+import FrontendScanMessageTypeExt1_1;
 
-/**
- * Top level interface to manage Frontend, Demux and Decrambler hardware
- * resources which are needed for Android TV.
- */
-interface ITuner extends @1.0::ITuner {
+interface IFrontendCallback extends @1.0::IFrontendCallback {
     /**
-     * Get Dtmb Frontend Capabilities. If no dtmb exists, Result::UNAVAILABLE would be returned.
+     * The callback function that must be called by HAL implementation to notify
+     * the client of the v1_1 extended scan messages.
+     *
+     * @param type the type of v1_1 extended scan message.
+     * @param message the v1_1 extended scan message sent by HAL to the client.
      */
-    getFrontendDtmbCapabilities(FrontendId frontendId)
-        generates (Result result, FrontendDtmbCapabilities caps);
+    onScanMessageExt1_1(FrontendScanMessageTypeExt1_1 type, FrontendScanMessageExt1_1 messageExt);
 };

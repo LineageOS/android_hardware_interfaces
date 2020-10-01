@@ -7,6 +7,7 @@ hidl_interface {
         "IFilter.hal",
         "IFrontend.hal",
         "IFilterCallback.hal",
+        "IFrontendCallback.hal",
         "ITuner.hal",
         "types.hal",
     ],

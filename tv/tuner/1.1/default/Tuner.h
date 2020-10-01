@@ -62,6 +62,9 @@ class Tuner : public ITuner {
     virtual Return<void> openLnbByName(const hidl_string& lnbName,
                                        openLnbByName_cb _hidl_cb) override;
 
+    virtual Return<void> getFrontendDtmbCapabilities(
+            uint32_t frontendId, getFrontendDtmbCapabilities_cb _hidl_cb) override;
+
     sp<Frontend> getFrontendById(uint32_t frontendId);
 
     void setFrontendAsDemuxSource(uint32_t frontendId, uint32_t demuxId);
@@ -76,6 +79,7 @@ class Tuner : public ITuner {
     // Static mFrontends array to maintain local frontends information
     map<uint32_t, sp<Frontend>> mFrontends;
     map<uint32_t, FrontendInfo::FrontendCapabilities> mFrontendCaps;
+    V1_1::FrontendDtmbCapabilities mDtmbCaps;
     map<uint32_t, uint32_t> mFrontendToDemux;
     map<uint32_t, sp<Demux>> mDemuxes;
     // To maintain how many Frontends we have

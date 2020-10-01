@@ -43,12 +43,12 @@ using android::hardware::tv::tuner::V1_0::FrontendDvbtSettings;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtStandard;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtTransmissionMode;
 using android::hardware::tv::tuner::V1_0::FrontendSettings;
-using android::hardware::tv::tuner::V1_0::FrontendStatus;
-using android::hardware::tv::tuner::V1_0::FrontendStatusType;
 using android::hardware::tv::tuner::V1_0::FrontendType;
 using android::hardware::tv::tuner::V1_0::PlaybackSettings;
 using android::hardware::tv::tuner::V1_0::RecordSettings;
 using android::hardware::tv::tuner::V1_1::FrontendSettingsExt1_1;
+using android::hardware::tv::tuner::V1_1::FrontendStatusExt1_1;
+using android::hardware::tv::tuner::V1_1::FrontendStatusTypeExt1_1;
 
 using namespace std;
 
@@ -101,8 +101,8 @@ struct FrontendConfig {
     FrontendType type;
     FrontendSettings settings;
     FrontendSettingsExt1_1 settingsExt1_1;
-    vector<FrontendStatusType> tuneStatusTypes;
-    vector<FrontendStatus> expectTuneStatuses;
+    vector<FrontendStatusTypeExt1_1> tuneStatusTypes;
+    vector<FrontendStatusExt1_1> expectTuneStatuses;
 };
 
 struct DvrConfig {
@@ -132,11 +132,11 @@ inline void initFrontendConfig() {
             .standard = FrontendDvbtStandard::T,
     };
     frontendArray[DVBT].type = FrontendType::DVBT, frontendArray[DVBT].settings.dvbt(dvbtSettings);
-    vector<FrontendStatusType> types;
-    types.push_back(FrontendStatusType::DEMOD_LOCK);
-    FrontendStatus status;
-    status.isDemodLocked(true);
-    vector<FrontendStatus> statuses;
+    vector<FrontendStatusTypeExt1_1> types;
+    types.push_back(FrontendStatusTypeExt1_1::UEC);
+    FrontendStatusExt1_1 status;
+    status.uec(4);
+    vector<FrontendStatusExt1_1> statuses;
     statuses.push_back(status);
     frontendArray[DVBT].tuneStatusTypes = types;
     frontendArray[DVBT].expectTuneStatuses = statuses;
