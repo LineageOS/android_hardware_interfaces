@@ -79,7 +79,11 @@ cc_test {
             suffix: "64",
         },
     },
-    test_suites: ["general-tests"],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+    auto_gen_config: false,
 
     // Allow dlsym'ing self for statically linked passthrough implementations
     ldflags: ["-rdynamic"],
