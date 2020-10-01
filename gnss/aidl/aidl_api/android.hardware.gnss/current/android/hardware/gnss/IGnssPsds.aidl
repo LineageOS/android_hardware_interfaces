@@ -18,6 +18,6 @@
 package android.hardware.gnss;
 @VintfStability
 interface IGnssPsds {
-  boolean injectPsdsData(in android.hardware.gnss.PsdsType psdsType, in byte[] psdsData);
-  boolean setCallback(in android.hardware.gnss.IGnssPsdsCallback callback);
+  void injectPsdsData(in android.hardware.gnss.PsdsType psdsType, in byte[] psdsData);
+  void setCallback(in android.hardware.gnss.IGnssPsdsCallback callback);
 }

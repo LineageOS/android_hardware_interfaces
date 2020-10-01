@@ -16,11 +16,14 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.gnss;
-@VintfStability
-interface IGnss {
-  void setCallback(in android.hardware.gnss.IGnssCallback callback);
-  void close();
-  android.hardware.gnss.IGnssPsds getExtensionPsds();
-  android.hardware.gnss.IGnssConfiguration getExtensionGnssConfiguration();
-  const int ERROR_INVALID_ARGUMENT = 1;
+@Backing(type="int") @VintfStability
+enum GnssConstellationType {
+  UNKNOWN = 0,
+  GPS = 1,
+  SBAS = 2,
+  GLONASS = 3,
+  QZSS = 4,
+  BEIDOU = 5,
+  GALILEO = 6,
+  IRNSS = 7,
 }

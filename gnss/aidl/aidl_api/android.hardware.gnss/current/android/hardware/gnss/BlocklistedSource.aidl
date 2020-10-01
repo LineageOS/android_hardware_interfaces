@@ -17,10 +17,7 @@
 
 package android.hardware.gnss;
 @VintfStability
-interface IGnss {
-  void setCallback(in android.hardware.gnss.IGnssCallback callback);
-  void close();
-  android.hardware.gnss.IGnssPsds getExtensionPsds();
-  android.hardware.gnss.IGnssConfiguration getExtensionGnssConfiguration();
-  const int ERROR_INVALID_ARGUMENT = 1;
+parcelable BlocklistedSource {
+  android.hardware.gnss.GnssConstellationType constellation;
+  int svid;
 }

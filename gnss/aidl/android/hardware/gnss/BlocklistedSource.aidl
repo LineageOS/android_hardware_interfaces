@@ -14,24 +14,23 @@
  * limitations under the License.
  */
 
-#pragma once
+package android.hardware.gnss;
 
-#include <aidl/android/hardware/gnss/BnGnssPsds.h>
+import android.hardware.gnss.GnssConstellationType;
 
-namespace aidl::android::hardware::gnss {
+/**
+ * Represents a blocklisted source.
+ */
+@VintfStability
+parcelable BlocklistedSource {
+    /**
+     * Defines the constellation of the given satellite(s).
+     */
+    GnssConstellationType constellation;
 
-struct GnssPsds : public BnGnssPsds {
-  public:
-    ndk::ScopedAStatus setCallback(const std::shared_ptr<IGnssPsdsCallback>& callback) override;
-    ndk::ScopedAStatus injectPsdsData(PsdsType psdsType,
-                                      const std::vector<uint8_t>& psdsData) override;
-
-  private:
-    // Guarded by mMutex
-    static std::shared_ptr<IGnssPsdsCallback> sCallback;
-
-    // Synchronization lock for sCallback
-    mutable std::mutex mMutex;
-};
-
-}  // namespace aidl::android::hardware::gnss
+    /**
+     * Satellite (space vehicle) ID number, as defined in GnssSvInfo::svid, or 0 to blocklist all
+     * svid's for the specified constellation.
+     */
+    int svid;
+}

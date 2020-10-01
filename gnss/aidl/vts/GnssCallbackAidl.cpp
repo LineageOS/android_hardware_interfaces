@@ -14,24 +14,11 @@
  * limitations under the License.
  */
 
-#pragma once
+#include "GnssCallbackAidl.h"
+#include <log/log.h>
 
-#include <aidl/android/hardware/gnss/BnGnssPsds.h>
-
-namespace aidl::android::hardware::gnss {
-
-struct GnssPsds : public BnGnssPsds {
-  public:
-    ndk::ScopedAStatus setCallback(const std::shared_ptr<IGnssPsdsCallback>& callback) override;
-    ndk::ScopedAStatus injectPsdsData(PsdsType psdsType,
-                                      const std::vector<uint8_t>& psdsData) override;
-
-  private:
-    // Guarded by mMutex
-    static std::shared_ptr<IGnssPsdsCallback> sCallback;
-
-    // Synchronization lock for sCallback
-    mutable std::mutex mMutex;
-};
-
-}  // namespace aidl::android::hardware::gnss
+android::binder::Status GnssCallbackAidl::gnssSetCapabilitiesCb(const int capabilities) {
+    ALOGI("Capabilities received %d", capabilities);
+    capabilities_cbq_.store(capabilities);
+    return android::binder::Status::ok();
+}
