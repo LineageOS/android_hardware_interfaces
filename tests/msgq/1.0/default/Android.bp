@@ -79,7 +79,7 @@ cc_test {
             suffix: "64",
         },
     },
-    test_suites: ["device-tests"],
+    test_suites: ["general-tests"],
 
     // Allow dlsym'ing self for statically linked passthrough implementations
     ldflags: ["-rdynamic"],
