@@ -202,7 +202,9 @@ Return<void> SafeUnion::setInterfaceB(const InterfaceTypeSafeUnion& myUnion, con
     return Void();
 }
 
-Return<void> SafeUnion::setInterfaceC(const InterfaceTypeSafeUnion& myUnion, const sp<::android::hardware::tests::safeunion::V1_0::IOtherInterface>& c, setInterfaceC_cb _hidl_cb) {
+Return<void> SafeUnion::setInterfaceC(const InterfaceTypeSafeUnion& myUnion,
+                                      const sp<::android::hidl::base::V1_0::IBase>& c,
+                                      setInterfaceC_cb _hidl_cb) {
     LOG(INFO) << "SERVER(SafeUnion) setInterfaceC(myUnion, " << toString(c) << ")";
 
     InterfaceTypeSafeUnion myNewUnion = myUnion;
