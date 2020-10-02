@@ -17,8 +17,7 @@
 
 package android.hardware.powerstats;
 @VintfStability
-parcelable PowerEntityInfo {
+parcelable StateResidencyResult {
   int powerEntityId;
-  String powerEntityName;
-  android.hardware.powerstats.StateInfo[] states;
+  android.hardware.powerstats.StateResidency[] stateResidencyData;
 }

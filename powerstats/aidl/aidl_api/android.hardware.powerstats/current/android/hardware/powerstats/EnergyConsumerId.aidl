@@ -16,9 +16,8 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.powerstats;
-@VintfStability
-parcelable EnergyData {
-  int railIndex;
-  long timestampMs;
-  long energyUWs;
+@Backing(type="int") @VintfStability
+enum EnergyConsumerId {
+  DISPLAY = 0,
+  GPS = 1,
 }

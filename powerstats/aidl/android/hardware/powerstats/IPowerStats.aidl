@@ -16,26 +16,16 @@
 
 package android.hardware.powerstats;
 
-import android.hardware.powerstats.EnergyData;
+import android.hardware.powerstats.ChannelInfo;
+import android.hardware.powerstats.EnergyConsumerId;
+import android.hardware.powerstats.EnergyConsumerResult;
+import android.hardware.powerstats.EnergyMeasurement;
 import android.hardware.powerstats.PowerEntityInfo;
-import android.hardware.powerstats.PowerEntityStateResidencyResult;
-import android.hardware.powerstats.RailInfo;
+import android.hardware.powerstats.StateResidencyResult;
 
 @VintfStability
 interface IPowerStats {
     /**
-     * Rail level energy measurements for low frequency clients:
-     * Reports accumulated energy since boot on each rail.
-     *
-     * @param railIndices Indices of rails for which data is required.
-     *     To get data for all rails pass an empty vector. Rail name to
-     *     index mapping can be queried from getRailInfo() API.
-     * @return Energy values since boot for all requested rails.
-     */
-    EnergyData[] getEnergyData(in int[] railIndices);
-
-    /**
-     * PowerEntity information:
      * Reports information related to all supported PowerEntity(s) for which
      * data is available. A PowerEntity is defined as a platform subsystem,
      * peripheral, or power domain that impacts the total device power
@@ -46,29 +36,64 @@ interface IPowerStats {
     PowerEntityInfo[] getPowerEntityInfo();
 
     /**
-     * PowerEntity residencies for low frequency clients:
      * Reports accumulated residency data for each specified PowerEntity.
      * Each PowerEntity may reside in one of multiple states. It may also
-     * transition to another state. Residency data is an accumulation of time
-     * that a specified PowerEntity resided in each of its possible states,
-     * the number of times that each state was entered, and a timestamp
-     * corresponding to the last time that state was entered. Data is
-     * accumulated starting from the last time the PowerEntity was reset.
+     * transition from one state to another. StateResidency is defined as
+     * an accumulation of time that a PowerEntity resided in each
+     * of its possible states, the number of times that each state was
+     * entered, and a timestamp corresponding to the last time that state
+     * was entered. Data is accumulated starting from the last time the
+     * PowerEntity was reset.
      *
-     * @param powerEntityId collection of IDs of PowerEntity(s) for which
-     *     residency data is requested. PowerEntity name to ID mapping may
-     *     be queried from getPowerEntityInfo(). To get state residency
-     *     data for all PowerEntity(s) pass an empty vector.
-     * @return state residency data for each specified
-     *     PowerEntity that provides state residency data.
+     * @param powerEntityIds IDs of PowerEntities for which data is required.
+     *     To get data for all PowerEntities pass an empty vector. PowerEntity name to
+     *     ID mapping can be queried from getPowerEntityInfo() API.
+     * @return StateResidency since boot for all requested PowerEntity(s).
      */
-    PowerEntityStateResidencyResult[] getPowerEntityStateResidencyData(in int[] powerEntityIds);
+    StateResidencyResult[] getPowerEntityStateResidency(in int[] powerEntityIds);
 
     /**
-     * Rail information:
-     * Reports information related to the rails being monitored.
+     * Reports a list of IDs corresponding to all enabled EnergyConsumers.
      *
-     * @return Information about monitored rails.
+     * @return list of EnergyConsumersIds that are available.
      */
-    RailInfo[] getRailInfo();
+    EnergyConsumerId[] getEnergyConsumerInfo();
+
+    /**
+     * Returns any available energy consumption results.
+     *
+     * @param energyConsumerIds IDs of EnergyConsumers for which data is requested.
+     *     To get data for all EnergyConsumers pass an empty list.
+     * @return List of EnergyConsumerResults reporting energy consumed since boot for each requested
+     *     EnergyConsumerId.
+     *
+     * Returns the following service-specific exceptions:
+     *     STATUS_FAILED_TRANSACTION if any of the requested energy results is unavailable
+     *     STATUS_BAD_VALUE if an invalid EnergyConsumer Id is provided
+     */
+    EnergyConsumerResult[] getEnergyConsumed(in EnergyConsumerId[] energyConsumerIds);
+
+    /**
+     * Reports channels monitored by Energy Meters.
+     * Each channel has a name, which may correspond to the name of a power rail on the device,
+     * and an Id which is used to relate EnergyMeasurements returned by readEnergyMeters() with a
+     * given ChannelInfo.
+     *
+     * @return Information about channels monitored by Energy Meters.
+     */
+    ChannelInfo[] getEnergyMeterInfo();
+
+    /**
+     * Reports accumulated energy since boot for each specified channel.
+     *
+     * @param channelIds IDs of channels for which data is requested.
+     *     To get data for all channels pass an empty list. Channel name to
+     *     ID mapping can be queried from getEnergyMeterInfo() API.
+     * @return Energy measured since boot for all requested channels.
+     *
+     * Returns the following service-specific exceptions:
+     *     STATUS_FAILED_TRANSACTION if any of the requested energy measurements are unavailable
+     *     STATUS_BAD_VALUE if an invalid channelId is provided
+     */
+    EnergyMeasurement[] readEnergyMeters(in int[] channelIds);
 }

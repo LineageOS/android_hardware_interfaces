@@ -16,24 +16,17 @@
 
 package android.hardware.powerstats;
 
-import android.hardware.powerstats.StateInfo;
+import android.hardware.powerstats.StateResidency;
 
-/**
- * PowerEntityInfo contains information, such as the ID, name, and type of a
- * given PowerEntity.
- */
 @VintfStability
-parcelable PowerEntityInfo {
+parcelable StateResidencyResult {
     /**
-     * Unique ID corresponding to the PowerEntity
+     * ID of the corresponding PowerEntity
      */
     int powerEntityId;
     /**
-     * Unique name of the PowerEntity. Vendor/device specific. Opaque to framework.
+     * Residency data for each state the PowerEntity's state space
      */
-    String powerEntityName;
-    /**
-     * List of states that the PowerEntity may reside in
-     */
-    StateInfo[] states;
+    StateResidency[] stateResidencyData;
 }
+
