@@ -23,27 +23,40 @@ namespace android {
 namespace hardware {
 namespace powerstats {
 
-ndk::ScopedAStatus PowerStats::getEnergyData(const std::vector<int32_t>& in_railIndices,
-                                             std::vector<EnergyData>* _aidl_return) {
-    (void)in_railIndices;
-    (void)_aidl_return;
-    return ndk::ScopedAStatus::ok();
-}
-
 ndk::ScopedAStatus PowerStats::getPowerEntityInfo(std::vector<PowerEntityInfo>* _aidl_return) {
     (void)_aidl_return;
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus PowerStats::getPowerEntityStateResidencyData(
+ndk::ScopedAStatus PowerStats::getPowerEntityStateResidency(
         const std::vector<int32_t>& in_powerEntityIds,
-        std::vector<PowerEntityStateResidencyResult>* _aidl_return) {
+        std::vector<StateResidencyResult>* _aidl_return) {
     (void)in_powerEntityIds;
     (void)_aidl_return;
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus PowerStats::getRailInfo(std::vector<RailInfo>* _aidl_return) {
+ndk::ScopedAStatus PowerStats::getEnergyConsumerInfo(std::vector<EnergyConsumerId>* _aidl_return) {
+    (void)_aidl_return;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus PowerStats::getEnergyConsumed(
+        const std::vector<EnergyConsumerId>& in_energyConsumerIds,
+        std::vector<EnergyConsumerResult>* _aidl_return) {
+    (void)in_energyConsumerIds;
+    (void)_aidl_return;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus PowerStats::getEnergyMeterInfo(std::vector<ChannelInfo>* _aidl_return) {
+    (void)_aidl_return;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus PowerStats::readEnergyMeters(const std::vector<int32_t>& in_channelIds,
+                                                std::vector<EnergyMeasurement>* _aidl_return) {
+    (void)in_channelIds;
     (void)_aidl_return;
     return ndk::ScopedAStatus::ok();
 }
