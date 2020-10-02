@@ -139,6 +139,24 @@ enum FrontendAnalogAftFlag : uint32_t {
 };
 
 /**
+ * Time Interleave Mode for DVBC Frontend.
+ */
+@export
+enum FrontendCableTimeInterleaveMode : uint32_t {
+    UNDEFINED = 0,
+    AUTO = 1 << 0,
+    INTERLEAVING_128_1_0 = 1 << 1,
+    INTERLEAVING_128_1_1 = 1 << 2,
+    INTERLEAVING_64_2 = 1 << 3,
+    INTERLEAVING_32_4 = 1 << 4,
+    INTERLEAVING_16_8 = 1 << 5,
+    INTERLEAVING_8_16 = 1 << 6,
+    INTERLEAVING_128_2 = 1 << 7,
+    INTERLEAVING_128_3 = 1 << 8,
+    INTERLEAVING_128_4 = 1 << 9,
+};
+
+/**
  *  Extended Transmission Mode for DVBT.
  */
 @export
@@ -185,6 +203,13 @@ struct FrontendAnalogSettingsExt1_1 {
 };
 
 /**
+ *  Extended Signal Settings for DVBC Frontend.
+ */
+struct FrontendDvbcSettingsExt1_1 {
+    FrontendCableTimeInterleaveMode interleaveMode;
+};
+
+/**
  *  Extended Signal Settings for Frontend.
  */
 struct FrontendSettingsExt1_1 {
@@ -196,6 +221,8 @@ struct FrontendSettingsExt1_1 {
         Monostate noinit;
 
         FrontendAnalogSettingsExt1_1 analog;
+
+        FrontendDvbcSettingsExt1_1 dvbc;
 
         FrontendDvbsSettingsExt1_1 dvbs;
 
@@ -366,6 +393,8 @@ safe_union FrontendModulation {
 
 safe_union FrontendInterleaveMode {
     @1.0::FrontendAtsc3TimeInterleaveMode atsc3;
+
+    FrontendCableTimeInterleaveMode dvbc;
 
     FrontendDtmbTimeInterleaveMode dtmb;
 };
