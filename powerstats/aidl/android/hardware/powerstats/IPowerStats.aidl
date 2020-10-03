@@ -26,58 +26,70 @@ import android.hardware.powerstats.StateResidencyResult;
 @VintfStability
 interface IPowerStats {
     /**
-     * Reports information related to all supported PowerEntity(s) for which
-     * data is available. A PowerEntity is defined as a platform subsystem,
-     * peripheral, or power domain that impacts the total device power
-     * consumption.
+     * Return information related to all supported PowerEntity(s) for which state residency data
+     * is available.
+     *
+     * A PowerEntity is defined as a platform subsystem, peripheral, or power domain that impacts
+     * the total device power consumption.
      *
      * @return List of information on each PowerEntity
      */
     PowerEntityInfo[] getPowerEntityInfo();
 
     /**
-     * Reports accumulated residency data for each specified PowerEntity.
+     * Reports the accumulated state residency for each requested PowerEntity.
+     *
      * Each PowerEntity may reside in one of multiple states. It may also
      * transition from one state to another. StateResidency is defined as
      * an accumulation of time that a PowerEntity resided in each
      * of its possible states, the number of times that each state was
      * entered, and a timestamp corresponding to the last time that state
-     * was entered. Data is accumulated starting from the last time the
-     * PowerEntity was reset.
+     * was entered.
      *
-     * @param powerEntityIds IDs of PowerEntities for which data is required.
-     *     To get data for all PowerEntities pass an empty vector. PowerEntity name to
-     *     ID mapping can be queried from getPowerEntityInfo() API.
-     * @return StateResidency since boot for all requested PowerEntity(s).
+     * Data is accumulated starting at device boot.
+     *
+     * @param powerEntityIds List of IDs of PowerEntities for which data is requested.
+     *     Passing an empty list will return state residency for all available PowerEntitys.
+     *     ID of each PowerEntity is contained in PowerEntityInfo.
+     *
+     * @return StateResidency since boot for each requested PowerEntity
+     *
+     * Returns the following service-specific exceptions in order of highest priority:
+     *  - STATUS_BAD_VALUE if an invalid powerEntityId is provided
+     *  - STATUS_FAILED_TRANSACTION if any StateResidencyResult fails to be returned
      */
-    StateResidencyResult[] getPowerEntityStateResidency(in int[] powerEntityIds);
+    StateResidencyResult[] getStateResidency(in int[] powerEntityIds);
 
     /**
-     * Reports a list of IDs corresponding to all enabled EnergyConsumers.
+     * Return the list IDs for all supported EnergyConsumers for which energy consumption data is
+     * available.
      *
-     * @return list of EnergyConsumersIds that are available.
+     * An EnergyConsumer is a device subsystem or peripheral that consumes energy. Energy
+     * consumption data may be used by framework for the purpose of power attribution.
+     *
+     * @return List of EnergyConsumersIds that are available.
      */
     EnergyConsumerId[] getEnergyConsumerInfo();
 
     /**
-     * Returns any available energy consumption results.
+     * Reports the energy consumed since boot by each requested EnergyConsumer.
      *
-     * @param energyConsumerIds IDs of EnergyConsumers for which data is requested.
-     *     To get data for all EnergyConsumers pass an empty list.
-     * @return List of EnergyConsumerResults reporting energy consumed since boot for each requested
-     *     EnergyConsumerId.
+     * @param energyConsumerIds List of IDs of EnergyConsumers for which data is requested.
+     *     Passing an empty list will return state residency for all available EnergyConsumers.
      *
-     * Returns the following service-specific exceptions:
-     *     STATUS_FAILED_TRANSACTION if any of the requested energy results is unavailable
-     *     STATUS_BAD_VALUE if an invalid EnergyConsumer Id is provided
+     * @return Energy consumed since boot for each requested EnergyConsumer
+     *
+     * Returns the following service-specific exceptions in order of highest priority:
+     *  - STATUS_BAD_VALUE if an invalid energyConsumerId is provided
+     *  - STATUS_FAILED_TRANSACTION if any EnergyConsumerResult fails to be returned
      */
     EnergyConsumerResult[] getEnergyConsumed(in EnergyConsumerId[] energyConsumerIds);
 
     /**
-     * Reports channels monitored by Energy Meters.
-     * Each channel has a name, which may correspond to the name of a power rail on the device,
-     * and an Id which is used to relate EnergyMeasurements returned by readEnergyMeters() with a
-     * given ChannelInfo.
+     * Return information related to all channels monitored by Energy Meters.
+     *
+     * An Energy Meter is a device that monitors energy and may support monitoring multiple
+     * channels simultaneously. A channel may correspond a bus, sense resistor, or power rail.
      *
      * @return Information about channels monitored by Energy Meters.
      */
@@ -87,13 +99,14 @@ interface IPowerStats {
      * Reports accumulated energy since boot for each specified channel.
      *
      * @param channelIds IDs of channels for which data is requested.
-     *     To get data for all channels pass an empty list. Channel name to
-     *     ID mapping can be queried from getEnergyMeterInfo() API.
-     * @return Energy measured since boot for all requested channels.
+     *     Passing an empty list will return energy measurements for all available channels.
+     *     ID of each channel is contained in ChannelInfo.
      *
-     * Returns the following service-specific exceptions:
-     *     STATUS_FAILED_TRANSACTION if any of the requested energy measurements are unavailable
-     *     STATUS_BAD_VALUE if an invalid channelId is provided
+     * @return Energy measured since boot for each requested channel
+     *
+     * Returns the following service-specific exceptions in order of highest priority:
+     *  - STATUS_BAD_VALUE if an invalid channelId is provided
+     *  - STATUS_FAILED_TRANSACTION if any EnergyMeasurement fails to be returned
      */
     EnergyMeasurement[] readEnergyMeters(in int[] channelIds);
 }

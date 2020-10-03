@@ -21,11 +21,11 @@ import android.hardware.powerstats.StateResidency;
 @VintfStability
 parcelable StateResidencyResult {
     /**
-     * ID of the corresponding PowerEntity
+     * ID of the PowerEntity associated with this result
      */
     int powerEntityId;
     /**
-     * Residency data for each state the PowerEntity's state space
+     * Residency for each state in the PowerEntity's state space
      */
     StateResidency[] stateResidencyData;
 }

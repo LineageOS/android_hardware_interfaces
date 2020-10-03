@@ -19,13 +19,13 @@ package android.hardware.powerstats;
 @VintfStability
 parcelable StateInfo {
     /**
-     * ID corresponding to the state. Unique for a given PowerEntityInfo
+     * Unique (for a given PowerEntityInfo) ID of this StateInfo
      */
     int stateId;
     /**
      * Unique (for a given PowerEntityInfo) name of the state. Vendor/device specific.
-     * Opaque to framework.
+     * Opaque to framework
      */
-    String stateName;
+    @utf8InCpp String stateName;
 }
 
