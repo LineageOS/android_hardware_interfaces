@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,19 @@
  * limitations under the License.
  */
 
-package android.hardware.tests.safeunion@1.0;
+package android.hardware.powerstats;
 
-interface IOtherInterface {
-    concatTwoStrings(string a, string b) generates (string result);
-};
+@VintfStability
+parcelable ChannelInfo {
+    /**
+     * Unique ID
+     */
+    int channelId;
+    /**
+     * Unique name of the ChannelInfo:
+     *
+     * Vendor/device specific. Opaque to framework
+     */
+    String channelName;
+}
+
