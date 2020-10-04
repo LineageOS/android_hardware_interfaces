@@ -16,20 +16,26 @@
 
 package android.hardware.powerstats;
 
+/**
+ * Contains residency data for a single state
+ */
 @VintfStability
-parcelable EnergyData {
+parcelable StateResidency {
     /**
-     * Index corresponding to the rail. This index matches
-     * the index returned in RailInfo
+     * ID of the corresponding StateInfo
      */
-    int railIndex;
+    int stateId;
     /**
-     * Time since device boot(CLOCK_BOOTTIME) in milli-seconds
+     * Total time in milliseconds that the corresponding PowerEntity resided
+     * in since device boot
      */
-    long timestampMs;
+    long totalTimeInStateMs;
     /**
-     * Accumulated energy since device boot in microwatt-seconds (uWs)
+     * Total number of times that the state was entered since device boot
      */
-    long energyUWs;
+    long totalStateEntryCount;
+    /**
+     * Last time this state was entered. Time in milliseconds since device boot
+     */
+    long lastEntryTimestampMs;
 }
-

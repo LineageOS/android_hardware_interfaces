@@ -17,8 +17,9 @@
 
 package android.hardware.powerstats;
 @VintfStability
-parcelable PowerEntityInfo {
-  int powerEntityId;
-  String powerEntityName;
-  android.hardware.powerstats.StateInfo[] states;
+parcelable StateResidency {
+  int stateId;
+  long totalTimeInStateMs;
+  long totalStateEntryCount;
+  long lastEntryTimestampMs;
 }
