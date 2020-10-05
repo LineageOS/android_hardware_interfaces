@@ -1,6 +1,5 @@
 cc_test {
     name: "VtsHalAudioPolicyV1_0TargetTest",
-    defaults: ["vts_target_tests_defaults"],
     srcs: [
         "ValidateEngineConfiguration.cpp",
     ],
