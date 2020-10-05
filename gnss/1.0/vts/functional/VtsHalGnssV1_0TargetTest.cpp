@@ -39,6 +39,10 @@ using android::hardware::gnss::V1_0::IGnssDebug;
 using android::hardware::gnss::V1_0::IGnssMeasurement;
 using android::sp;
 
+/*
+ * Since Utils.cpp depends on Gnss Hal 2.0, the tests for Gnss Hal 1.0 will use
+ * there own version of IsAutomotiveDevice() instead of the common version.
+ */
 static bool IsAutomotiveDevice() {
     char buffer[PROPERTY_VALUE_MAX] = {0};
     property_get("ro.hardware.type", buffer, "");
@@ -492,9 +496,9 @@ TEST_P(GnssHalTest, GetAllExtensions) {
  * Verifies that modern hardware supports measurement capabilities.
  */
 TEST_P(GnssHalTest, MeasurementCapabilites) {
-  if (info_called_count_ > 0 && last_info_.yearOfHw >= 2016) {
-    EXPECT_TRUE(last_capabilities_ & IGnssCallback::Capabilities::MEASUREMENTS);
-  }
+    if (!IsAutomotiveDevice() && info_called_count_ > 0 && last_info_.yearOfHw >= 2016) {
+        EXPECT_TRUE(last_capabilities_ & IGnssCallback::Capabilities::MEASUREMENTS);
+    }
 }
 
 /*
