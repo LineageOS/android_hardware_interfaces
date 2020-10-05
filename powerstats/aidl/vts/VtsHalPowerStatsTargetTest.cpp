@@ -115,9 +115,9 @@ TEST_P(PowerStatsAidl, ValidateStateUniqueIds) {
     }
 }
 
-TEST_P(PowerStatsAidl, TestGetStateResidencyData) {
-    std::vector<StateResidencyResult> data;
-    ASSERT_TRUE(powerstats->getPowerEntityStateResidency({}, &data).isOk());
+TEST_P(PowerStatsAidl, TestGetStateResidency) {
+    std::vector<StateResidencyResult> results;
+    ASSERT_TRUE(powerstats->getStateResidency({}, &results).isOk());
 }
 
 TEST_P(PowerStatsAidl, TestGetEnergyMeterInfo) {

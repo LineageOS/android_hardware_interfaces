@@ -22,20 +22,20 @@ package android.hardware.powerstats;
 @VintfStability
 parcelable StateResidency {
     /**
-     * ID of the corresponding StateInfo
+     * ID of the state associated with this residency
      */
     int stateId;
     /**
      * Total time in milliseconds that the corresponding PowerEntity resided
-     * in since device boot
+     * in this state since boot
      */
     long totalTimeInStateMs;
     /**
-     * Total number of times that the state was entered since device boot
+     * Total number of times that the state was entered since boot
      */
     long totalStateEntryCount;
     /**
-     * Last time this state was entered. Time in milliseconds since device boot
+     * Last time this state was entered. Time in milliseconds since boot
      */
     long lastEntryTimestampMs;
 }

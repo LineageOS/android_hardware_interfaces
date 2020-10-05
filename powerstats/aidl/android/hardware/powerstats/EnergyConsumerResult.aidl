@@ -21,15 +21,15 @@ import android.hardware.powerstats.EnergyConsumerId;
 @VintfStability
 parcelable EnergyConsumerResult {
     /**
-     * Unique ID associated with the given EnergyMeterInfo
+     * ID of the EnergyConsumer associated with this result
      */
     EnergyConsumerId energyConsumerId;
     /**
-     * Time since device boot in milliseconds
+     * Time since boot in milliseconds
      */
     long timestampMs;
     /**
-     * Accumulated energy since device boot in microwatt-seconds (uWs)
+     * Accumulated energy since boot in microwatt-seconds (uWs)
      */
     long energyUWs;
 }
