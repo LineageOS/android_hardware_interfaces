@@ -19,7 +19,7 @@ package android.hardware.powerstats;
 @VintfStability
 interface IPowerStats {
   android.hardware.powerstats.PowerEntityInfo[] getPowerEntityInfo();
-  android.hardware.powerstats.StateResidencyResult[] getPowerEntityStateResidency(in int[] powerEntityIds);
+  android.hardware.powerstats.StateResidencyResult[] getStateResidency(in int[] powerEntityIds);
   android.hardware.powerstats.EnergyConsumerId[] getEnergyConsumerInfo();
   android.hardware.powerstats.EnergyConsumerResult[] getEnergyConsumed(in android.hardware.powerstats.EnergyConsumerId[] energyConsumerIds);
   android.hardware.powerstats.ChannelInfo[] getEnergyMeterInfo();

@@ -28,9 +28,8 @@ ndk::ScopedAStatus PowerStats::getPowerEntityInfo(std::vector<PowerEntityInfo>* 
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus PowerStats::getPowerEntityStateResidency(
-        const std::vector<int32_t>& in_powerEntityIds,
-        std::vector<StateResidencyResult>* _aidl_return) {
+ndk::ScopedAStatus PowerStats::getStateResidency(const std::vector<int32_t>& in_powerEntityIds,
+                                                 std::vector<StateResidencyResult>* _aidl_return) {
     (void)in_powerEntityIds;
     (void)_aidl_return;
     return ndk::ScopedAStatus::ok();

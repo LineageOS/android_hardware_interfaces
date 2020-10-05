@@ -19,15 +19,15 @@ package android.hardware.powerstats;
 @VintfStability
 parcelable EnergyMeasurement {
     /**
-     * Unique ID corresponding to the given ChannelInfo
+     * ID of the Channel associated with this measurement
      */
     int channelId;
     /**
-     * Time since device boot(CLOCK_BOOTTIME) in milli-seconds
+     * Time since boot in milliseconds
      */
     long timestampMs;
     /**
-     * Accumulated energy since device boot in microwatt-seconds (uWs)
+     * Accumulated energy since boot in microwatt-seconds (uWs)
      */
     long energyUWs;
 }

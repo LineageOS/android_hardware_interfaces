@@ -28,9 +28,8 @@ class PowerStats : public BnPowerStats {
     PowerStats() = default;
     // Methods from aidl::android::hardware::powerstats::IPowerStats
     ndk::ScopedAStatus getPowerEntityInfo(std::vector<PowerEntityInfo>* _aidl_return) override;
-    ndk::ScopedAStatus getPowerEntityStateResidency(
-            const std::vector<int32_t>& in_powerEntityIds,
-            std::vector<StateResidencyResult>* _aidl_return) override;
+    ndk::ScopedAStatus getStateResidency(const std::vector<int32_t>& in_powerEntityIds,
+                                         std::vector<StateResidencyResult>* _aidl_return) override;
     ndk::ScopedAStatus getEnergyConsumerInfo(std::vector<EnergyConsumerId>* _aidl_return) override;
     ndk::ScopedAStatus getEnergyConsumed(const std::vector<EnergyConsumerId>& in_energyConsumerIds,
                                          std::vector<EnergyConsumerResult>* _aidl_return) override;
