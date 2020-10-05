@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package android.hardware.powerstats;
+package android.hardware.power.stats;
 
-import android.hardware.powerstats.ChannelInfo;
-import android.hardware.powerstats.EnergyConsumerId;
-import android.hardware.powerstats.EnergyConsumerResult;
-import android.hardware.powerstats.EnergyMeasurement;
-import android.hardware.powerstats.PowerEntityInfo;
-import android.hardware.powerstats.StateResidencyResult;
+import android.hardware.power.stats.ChannelInfo;
+import android.hardware.power.stats.EnergyConsumerId;
+import android.hardware.power.stats.EnergyConsumerResult;
+import android.hardware.power.stats.EnergyMeasurement;
+import android.hardware.power.stats.PowerEntityInfo;
+import android.hardware.power.stats.StateResidencyResult;
 
 @VintfStability
 interface IPowerStats {

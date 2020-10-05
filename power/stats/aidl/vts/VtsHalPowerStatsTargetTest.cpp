@@ -16,16 +16,16 @@
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
 
-#include <aidl/android/hardware/powerstats/IPowerStats.h>
+#include <aidl/android/hardware/power/stats/IPowerStats.h>
 #include <android-base/properties.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 
-using aidl::android::hardware::powerstats::ChannelInfo;
-using aidl::android::hardware::powerstats::EnergyMeasurement;
-using aidl::android::hardware::powerstats::IPowerStats;
-using aidl::android::hardware::powerstats::PowerEntityInfo;
-using aidl::android::hardware::powerstats::StateResidencyResult;
+using aidl::android::hardware::power::stats::ChannelInfo;
+using aidl::android::hardware::power::stats::EnergyMeasurement;
+using aidl::android::hardware::power::stats::IPowerStats;
+using aidl::android::hardware::power::stats::PowerEntityInfo;
+using aidl::android::hardware::power::stats::StateResidencyResult;
 
 using ndk::SpAIBinder;
 

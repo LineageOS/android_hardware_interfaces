@@ -15,9 +15,10 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.powerstats;
+package android.hardware.power.stats;
 @VintfStability
-parcelable StateResidencyResult {
-  int powerEntityId;
-  android.hardware.powerstats.StateResidency[] stateResidencyData;
+parcelable EnergyConsumerResult {
+  android.hardware.power.stats.EnergyConsumerId energyConsumerId;
+  long timestampMs;
+  long energyUWs;
 }

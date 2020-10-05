@@ -21,7 +21,8 @@
 namespace aidl {
 namespace android {
 namespace hardware {
-namespace powerstats {
+namespace power {
+namespace stats {
 
 ndk::ScopedAStatus PowerStats::getPowerEntityInfo(std::vector<PowerEntityInfo>* _aidl_return) {
     (void)_aidl_return;
@@ -60,7 +61,8 @@ ndk::ScopedAStatus PowerStats::readEnergyMeters(const std::vector<int32_t>& in_c
     return ndk::ScopedAStatus::ok();
 }
 
-}  // namespace powerstats
+}  // namespace stats
+}  // namespace power
 }  // namespace hardware
 }  // namespace android
 }  // namespace aidl
