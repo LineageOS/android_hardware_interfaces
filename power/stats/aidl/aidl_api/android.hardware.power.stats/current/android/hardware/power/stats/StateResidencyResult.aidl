@@ -15,13 +15,9 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.powerstats;
+package android.hardware.power.stats;
 @VintfStability
-interface IPowerStats {
-  android.hardware.powerstats.PowerEntityInfo[] getPowerEntityInfo();
-  android.hardware.powerstats.StateResidencyResult[] getStateResidency(in int[] powerEntityIds);
-  android.hardware.powerstats.EnergyConsumerId[] getEnergyConsumerInfo();
-  android.hardware.powerstats.EnergyConsumerResult[] getEnergyConsumed(in android.hardware.powerstats.EnergyConsumerId[] energyConsumerIds);
-  android.hardware.powerstats.ChannelInfo[] getEnergyMeterInfo();
-  android.hardware.powerstats.EnergyMeasurement[] readEnergyMeters(in int[] channelIds);
+parcelable StateResidencyResult {
+  int powerEntityId;
+  android.hardware.power.stats.StateResidency[] stateResidencyData;
 }

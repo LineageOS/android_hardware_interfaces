@@ -23,7 +23,7 @@ cc_test {
         "libbinder_ndk",
     ],
     static_libs: [
-        "android.hardware.powerstats-ndk_platform",
+        "android.hardware.power.stats-ndk_platform",
     ],
     test_suites: [
         "general-tests",
