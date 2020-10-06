@@ -17,23 +17,29 @@
 
 #include "ContextHub.h"
 
-#include <android/hardware/contexthub/1.1/IContexthub.h>
+#include <android/hardware/contexthub/1.2/IContexthub.h>
 
 namespace android {
 namespace hardware {
 namespace contexthub {
-namespace V1_1 {
+namespace V1_2 {
 namespace implementation {
 
 class Contexthub
     : public ::android::hardware::contexthub::V1_X::implementation::ContextHub<IContexthub> {
+    using SettingValue = ::android::hardware::contexthub::V1_1::SettingValue;
+    using SettingV1_1 = ::android::hardware::contexthub::V1_1::Setting;
+
   public:
     // Methods from V1_1::IContexthub
-    Return<void> onSettingChanged(Setting setting, SettingValue newValue) override;
+    Return<void> onSettingChanged(SettingV1_1 setting, SettingValue newValue) override;
+
+    // Methods from V1_2::IContexthub
+    Return<void> onSettingChanged_1_2(Setting setting, SettingValue newValue) override;
 };
 
 }  // namespace implementation
-}  // namespace V1_1
+}  // namespace V1_2
 }  // namespace contexthub
 }  // namespace hardware
 }  // namespace android
