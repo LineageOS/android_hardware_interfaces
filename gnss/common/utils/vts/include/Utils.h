@@ -49,6 +49,8 @@ struct Utils {
     static const MeasurementCorrections_1_1 getMockMeasurementCorrections_1_1();
 
     static GnssConstellationType_1_0 mapConstellationType(GnssConstellationType_2_0 constellation);
+
+    static bool isAutomotiveDevice();
 };
 
 }  // namespace common

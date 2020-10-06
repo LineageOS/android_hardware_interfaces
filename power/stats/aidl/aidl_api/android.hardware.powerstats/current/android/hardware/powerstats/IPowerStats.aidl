@@ -17,7 +17,11 @@
 
 package android.hardware.powerstats;
 @VintfStability
-parcelable StateInfo {
-  int stateId;
-  String stateName;
+interface IPowerStats {
+  android.hardware.powerstats.PowerEntityInfo[] getPowerEntityInfo();
+  android.hardware.powerstats.StateResidencyResult[] getStateResidency(in int[] powerEntityIds);
+  android.hardware.powerstats.EnergyConsumerId[] getEnergyConsumerInfo();
+  android.hardware.powerstats.EnergyConsumerResult[] getEnergyConsumed(in android.hardware.powerstats.EnergyConsumerId[] energyConsumerIds);
+  android.hardware.powerstats.ChannelInfo[] getEnergyMeterInfo();
+  android.hardware.powerstats.EnergyMeasurement[] readEnergyMeters(in int[] channelIds);
 }
