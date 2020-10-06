@@ -15,7 +15,6 @@ cc_defaults {
 cc_defaults {
     name: "VtsHalTargetTestDefaults",
     defaults: [
-        "vts_target_tests_defaults",
         "hidl_defaults",
     ],
 
