@@ -16,26 +16,17 @@
 
 package android.hardware.powerstats;
 
-/**
- * Contains residency data for a single state
- */
+import android.hardware.powerstats.StateResidency;
+
 @VintfStability
-parcelable StateResidency {
+parcelable StateResidencyResult {
     /**
-     * ID of the corresponding StateInfo
+     * ID of the PowerEntity associated with this result
      */
-    int stateId;
+    int powerEntityId;
     /**
-     * Total time in milliseconds that the corresponding PowerEntity resided
-     * in since device boot
+     * Residency for each state in the PowerEntity's state space
      */
-    long totalTimeInStateMs;
-    /**
-     * Total number of times that the state was entered since device boot
-     */
-    long totalStateEntryCount;
-    /**
-     * Last time this state was entered. Time in milliseconds since device boot
-     */
-    long lastEntryTimestampMs;
+    StateResidency[] stateResidencyData;
 }
+

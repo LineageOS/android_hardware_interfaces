@@ -16,17 +16,21 @@
 
 package android.hardware.powerstats;
 
-import android.hardware.powerstats.StateResidency;
+import android.hardware.powerstats.EnergyConsumerId;
 
 @VintfStability
-parcelable StateResidencyResult {
+parcelable EnergyConsumerResult {
     /**
-     * ID of the corresponding PowerEntity
+     * ID of the EnergyConsumer associated with this result
      */
-    int powerEntityId;
+    EnergyConsumerId energyConsumerId;
     /**
-     * Residency data for each state the PowerEntity's state space
+     * Time since boot in milliseconds
      */
-    StateResidency[] stateResidencyData;
+    long timestampMs;
+    /**
+     * Accumulated energy since boot in microwatt-seconds (uWs)
+     */
+    long energyUWs;
 }
 

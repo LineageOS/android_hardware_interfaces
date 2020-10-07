@@ -16,21 +16,26 @@
 
 package android.hardware.powerstats;
 
-import android.hardware.powerstats.EnergyConsumerId;
-
+/**
+ * Contains residency data for a single state
+ */
 @VintfStability
-parcelable EnergyConsumerResult {
+parcelable StateResidency {
     /**
-     * Unique ID associated with the given EnergyMeterInfo
+     * ID of the state associated with this residency
      */
-    EnergyConsumerId energyConsumerId;
+    int stateId;
     /**
-     * Time since device boot in milliseconds
+     * Total time in milliseconds that the corresponding PowerEntity resided
+     * in this state since boot
      */
-    long timestampMs;
+    long totalTimeInStateMs;
     /**
-     * Accumulated energy since device boot in microwatt-seconds (uWs)
+     * Total number of times that the state was entered since boot
      */
-    long energyUWs;
+    long totalStateEntryCount;
+    /**
+     * Last time this state was entered. Time in milliseconds since boot
+     */
+    long lastEntryTimestampMs;
 }
-
