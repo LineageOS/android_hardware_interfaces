@@ -51,9 +51,12 @@ Return<void> FrontendCallback::onScanMessageExt1_1(FrontendScanMessageTypeExt1_1
                                                    const FrontendScanMessageExt1_1& message) {
     android::Mutex::Autolock autoLock(mMsgLock);
     ALOGD("[vts] frontend ext1_1 scan message. Type: %d", type);
-    switch (type) {
-        case FrontendScanMessageTypeExt1_1::MODULATION:
-            readFrontendScanMessageExt1_1Modulation(message);
+    switch (message.getDiscriminator()) {
+        case FrontendScanMessageExt1_1::hidl_discriminator::modulation:
+            readFrontendScanMessageExt1_1Modulation(message.modulation());
+            break;
+        case FrontendScanMessageExt1_1::hidl_discriminator::isHighPriority:
+            ALOGD("[vts] frontend ext1_1 scan message high priority: %d", message.isHighPriority());
             break;
         default:
             break;
