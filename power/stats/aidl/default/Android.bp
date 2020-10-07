@@ -13,15 +13,15 @@
 // limitations under the License.
 
 cc_binary {
-    name: "android.hardware.powerstats-service.example",
+    name: "android.hardware.power.stats-service.example",
     relative_install_path: "hw",
-    init_rc: ["powerstats-default.rc"],
-    vintf_fragments: ["powerstats-default.xml"],
+    init_rc: ["power.stats-default.rc"],
+    vintf_fragments: ["power.stats-default.xml"],
     vendor: true,
     shared_libs: [
         "libbase",
         "libbinder_ndk",
-        "android.hardware.powerstats-ndk_platform",
+        "android.hardware.power.stats-ndk_platform",
     ],
     srcs: [
         "main.cpp",
