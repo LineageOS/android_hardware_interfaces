@@ -381,7 +381,7 @@
         </interface>
     </hal>
     <hal format="aidl" optional="true">
-        <name>android.hardware.powerstats</name>
+        <name>android.hardware.power.stats</name>
         <interface>
             <name>IPowerStats</name>
             <instance>default</instance>

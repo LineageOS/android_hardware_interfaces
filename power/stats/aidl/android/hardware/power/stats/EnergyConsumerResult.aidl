@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-package android.hardware.powerstats;
+package android.hardware.power.stats;
 
-import android.hardware.powerstats.StateInfo;
+import android.hardware.power.stats.EnergyConsumerId;
 
 @VintfStability
-parcelable PowerEntityInfo {
+parcelable EnergyConsumerResult {
     /**
-     * Unique ID of this PowerEntityInfo
+     * ID of the EnergyConsumer associated with this result
      */
-    int powerEntityId;
+    EnergyConsumerId energyConsumerId;
     /**
-     * Unique name of the PowerEntity. Vendor/device specific. Opaque to framework
+     * Time since boot in milliseconds
      */
-    @utf8InCpp String powerEntityName;
+    long timestampMs;
     /**
-     * List of states that the PowerEntity may reside in
+     * Accumulated energy since boot in microwatt-seconds (uWs)
      */
-    StateInfo[] states;
+    long energyUWs;
 }
+
