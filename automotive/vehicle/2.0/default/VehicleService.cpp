@@ -31,7 +31,7 @@ using namespace android::hardware::automotive::vehicle::V2_0;
 
 int main(int /* argc */, char* /* argv */ []) {
     auto store = std::make_unique<VehiclePropertyStore>();
-    auto connector = impl::makeEmulatedPassthroughConnector();
+    auto connector = std::make_unique<impl::EmulatedVehicleConnector>();
     auto userHal = connector->getEmulatedUserHal();
     auto hal = std::make_unique<impl::EmulatedVehicleHal>(store.get(), connector.get(), userHal);
     auto emulator = std::make_unique<impl::VehicleEmulator>(hal.get());
