@@ -35,13 +35,33 @@ namespace V2_0 {
 
 namespace impl {
 
-class EmulatedPassthroughConnector : public PassthroughConnector {
-  public:
-    bool onDump(const hidl_handle& fd, const hidl_vec<hidl_string>& options) override;
-};
+EmulatedUserHal* EmulatedVehicleConnector::getEmulatedUserHal() {
+    return &mEmulatedUserHal;
+}
 
-bool EmulatedPassthroughConnector::onDump(const hidl_handle& handle,
-                                          const hidl_vec<hidl_string>& options) {
+StatusCode EmulatedVehicleConnector::onSetProperty(const VehiclePropValue& value,
+                                                   bool updateStatus) {
+    if (mEmulatedUserHal.isSupported(value.prop)) {
+        LOG(INFO) << "onSetProperty(): property " << value.prop << " will be handled by UserHal";
+
+        const auto& ret = mEmulatedUserHal.onSetProperty(value);
+        if (!ret.ok()) {
+            LOG(ERROR) << "onSetProperty(): HAL returned error: " << ret.error().message();
+            return StatusCode(ret.error().code());
+        }
+        auto updatedValue = ret.value().get();
+        if (updatedValue != nullptr) {
+            LOG(INFO) << "onSetProperty(): updating property returned by HAL: "
+                      << toString(*updatedValue);
+            onPropertyValueFromCar(*updatedValue, updateStatus);
+        }
+        return StatusCode::OK;
+    }
+    return this->VehicleHalServer::onSetProperty(value, updateStatus);
+}
+
+bool EmulatedVehicleConnector::onDump(const hidl_handle& handle,
+                                      const hidl_vec<hidl_string>& options) {
     int fd = handle->data[0];
 
     if (options.size() > 0) {
@@ -66,10 +86,6 @@ bool EmulatedPassthroughConnector::onDump(const hidl_handle& handle,
     dprintf(fd, "\n");
 
     return true;
-}
-
-PassthroughConnectorPtr makeEmulatedPassthroughConnector() {
-    return std::make_unique<EmulatedPassthroughConnector>();
 }
 
 }  // namespace impl
