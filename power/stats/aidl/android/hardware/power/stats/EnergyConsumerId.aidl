@@ -14,18 +14,11 @@
  * limitations under the License.
  */
 
-package android.hardware.powerstats;
+package android.hardware.power.stats;
 
 @VintfStability
-parcelable StateInfo {
-    /**
-     * Unique (for a given PowerEntityInfo) ID of this StateInfo
-     */
-    int stateId;
-    /**
-     * Unique (for a given PowerEntityInfo) name of the state. Vendor/device specific.
-     * Opaque to framework
-     */
-    @utf8InCpp String stateName;
+@Backing(type="int")
+enum EnergyConsumerId {
+    DISPLAY = 0,
+    GPS = 1,
 }
-

@@ -15,9 +15,10 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.powerstats;
+package android.hardware.power.stats;
 @VintfStability
-parcelable ChannelInfo {
-  int channelId;
-  @utf8InCpp String channelName;
+parcelable PowerEntityInfo {
+  int powerEntityId;
+  @utf8InCpp String powerEntityName;
+  android.hardware.power.stats.StateInfo[] states;
 }
