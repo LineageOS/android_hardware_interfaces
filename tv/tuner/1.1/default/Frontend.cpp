@@ -122,9 +122,12 @@ Return<Result> Frontend::scan(const FrontendSettings& settings, FrontendScanType
             V1_1::IFrontendCallback::castFrom(mCallback);
     if (frontendCallback_v1_1 != NULL) {
         V1_1::FrontendScanMessageExt1_1 msg;
-        msg.dvbc(FrontendDvbcModulation::MOD_16QAM);
+        msg.modulation().dvbc(FrontendDvbcModulation::MOD_16QAM);
         frontendCallback_v1_1->onScanMessageExt1_1(V1_1::FrontendScanMessageTypeExt1_1::MODULATION,
                                                    msg);
+        msg.isHighPriority(true);
+        frontendCallback_v1_1->onScanMessageExt1_1(
+                V1_1::FrontendScanMessageTypeExt1_1::HIGH_PRIORITY, msg);
     } else {
         ALOGD("[Filter] Couldn't cast to V1_1 IFrontendCallback");
     }

@@ -555,6 +555,11 @@ safe_union FrontendStatusExt1_1 {
 
 enum FrontendScanMessageTypeExt1_1 : uint32_t {
     MODULATION = @1.0::FrontendScanMessageType:ATSC3_PLP_INFO + 1,
+    HIGH_PRIORITY,
 };
 
-typedef FrontendModulation FrontendScanMessageExt1_1;
+safe_union FrontendScanMessageExt1_1 {
+    FrontendModulation modulation;
+
+    bool isHighPriority;
+};

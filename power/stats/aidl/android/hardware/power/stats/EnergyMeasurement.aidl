@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package android.hardware.powerstats;
-
-import android.hardware.powerstats.EnergyConsumerId;
+package android.hardware.power.stats;
 
 @VintfStability
-parcelable EnergyConsumerResult {
+parcelable EnergyMeasurement {
     /**
-     * ID of the EnergyConsumer associated with this result
+     * ID of the Channel associated with this measurement
      */
-    EnergyConsumerId energyConsumerId;
+    int channelId;
     /**
      * Time since boot in milliseconds
      */
