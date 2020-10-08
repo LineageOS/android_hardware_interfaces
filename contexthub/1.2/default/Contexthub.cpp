@@ -13,27 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
+#include "Contexthub.h"
 
-#include "ContextHub.h"
-
-#include <android/hardware/contexthub/1.1/IContexthub.h>
+#include <vector>
 
 namespace android {
 namespace hardware {
 namespace contexthub {
-namespace V1_1 {
+namespace V1_2 {
 namespace implementation {
 
-class Contexthub
-    : public ::android::hardware::contexthub::V1_X::implementation::ContextHub<IContexthub> {
-  public:
-    // Methods from V1_1::IContexthub
-    Return<void> onSettingChanged(Setting setting, SettingValue newValue) override;
-};
+Return<void> Contexthub::onSettingChanged(SettingV1_1 /*setting*/, SettingValue /*newValue*/) {
+    return Void();
+}
+
+Return<void> Contexthub::onSettingChanged_1_2(Setting /*setting*/, SettingValue /*newValue*/) {
+    return Void();
+}
 
 }  // namespace implementation
-}  // namespace V1_1
+}  // namespace V1_2
 }  // namespace contexthub
 }  // namespace hardware
 }  // namespace android
