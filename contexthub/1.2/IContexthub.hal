@@ -13,27 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
 
-#include "ContextHub.h"
+package android.hardware.contexthub@1.2;
 
-#include <android/hardware/contexthub/1.1/IContexthub.h>
+import @1.1::IContexthub;
+import @1.1::SettingValue;
 
-namespace android {
-namespace hardware {
-namespace contexthub {
-namespace V1_1 {
-namespace implementation {
-
-class Contexthub
-    : public ::android::hardware::contexthub::V1_X::implementation::ContextHub<IContexthub> {
-  public:
-    // Methods from V1_1::IContexthub
-    Return<void> onSettingChanged(Setting setting, SettingValue newValue) override;
+interface IContexthub extends @1.1::IContexthub {
+    /**
+     * Notification sent by the framework to indicate that the user
+     * has changed a setting.
+     *
+     * @param setting User setting that has been modified.
+     * @param newValue The update value of the user setting.
+     */
+    onSettingChanged_1_2(Setting setting, @1.1::SettingValue newValue);
 };
-
-}  // namespace implementation
-}  // namespace V1_1
-}  // namespace contexthub
-}  // namespace hardware
-}  // namespace android

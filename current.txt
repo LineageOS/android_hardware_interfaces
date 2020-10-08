@@ -778,6 +778,8 @@ cd84ab19c590e0e73dd2307b591a3093ee18147ef95e6d5418644463a6620076 android.hardwar
 # HALs released in Android S
 # NOTE: waiting to freeze HALs until later in the release
 # NOTE: new HALs are recommended to be in AIDL
+6e64b33f1b720b66b0deb5e08dee37a99deaa94e2e9ebf7806703cabab56e21d android.hardware.contexthub@1.2::IContexthub
+3fb83f4539cab2c7bf9fdbecf7265d1c1dd6e8de9694046fe512b493c127ccea android.hardware.contexthub@1.2::types
 57d183b10b13ec0a8e542c0b3d61991ae541c60e85dbbc5499bb21dfd068cbb8 android.hardware.wifi.supplicant@1.4::types
 17818b6b1952a75e4364ae82c534b9d2f5c0a9765a56256b16faa5a5cf45d3a8 android.hardware.wifi.supplicant@1.4::ISupplicant
 8342b5f6ec8f48ad2b741128aede010995d0b5709257b7ec09bb469b4f61ef1a android.hardware.wifi.supplicant@1.4::ISupplicantStaIface

@@ -15,11 +15,11 @@
  */
 
 cc_binary {
-    name: "android.hardware.contexthub@1.1-service.mock",
+    name: "android.hardware.contexthub@1.2-service.mock",
     defaults: ["hidl_defaults"],
     vendor: true,
     relative_install_path: "hw",
-    init_rc: ["android.hardware.contexthub@1.1-service.rc"],
+    init_rc: ["android.hardware.contexthub@1.2-service.rc"],
     srcs: [
         "Contexthub.cpp",
         "service.cpp",
@@ -31,6 +31,7 @@ cc_binary {
     shared_libs: [
         "android.hardware.contexthub@1.0",
         "android.hardware.contexthub@1.1",
+        "android.hardware.contexthub@1.2",
         "libbase",
         "libcutils",
         "libhardware",
@@ -41,5 +42,5 @@ cc_binary {
     header_libs: [
         "android.hardware.contexthub@1.X-common-impl",
     ],
-    vintf_fragments: ["android.hardware.contexthub@1.1.xml"],
+    vintf_fragments: ["android.hardware.contexthub@1.2.xml"],
 }
