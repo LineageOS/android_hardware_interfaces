@@ -77,11 +77,22 @@ interface IFrontend extends @1.0::IFrontend {
      * directly from the frontend.
      *
      * @param ciCamId specify CI-CAM Id to link.
+     * @return ltsId Local Transport Stream Id.
      * @return result Result status of the operation.
      *         SUCCESS if successful,
      *         UNKNOWN_ERROR if failed for other reasons.
      */
-    linkCiCam(uint32_t ciCamId) generates (Result result);
+    linkCiCam(uint32_t ciCamId) generates (Result result, uint32_t ltsId);
+
+    /**
+     * Unlink Conditional Access Modules (CAM) to Frontend.
+     *
+     * @param ciCamId specify CI-CAM Id to unlink.
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    unlinkCiCam(uint32_t ciCamId) generates (Result result);
 
     /**
      * Get the v1_1 extended statuses of the frontend.
