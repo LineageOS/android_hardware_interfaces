@@ -1,0 +1,14 @@
+cc_test {
+    name: "VtsHalBluetoothAudioV2_1TargetTest",
+    defaults: ["VtsHalTargetTestDefaults"],
+    srcs: ["VtsHalBluetoothAudioV2_1TargetTest.cpp"],
+    static_libs: [
+        "android.hardware.audio.common@5.0",
+        "android.hardware.bluetooth.audio@2.1",
+        "android.hardware.bluetooth.audio@2.0",
+    ],
+    shared_libs: [
+        "libfmq",
+    ],
+    test_suites: ["general-tests", "vts"],
+}
