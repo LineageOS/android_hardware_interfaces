@@ -282,8 +282,17 @@ TEST_P(SupplicantP2pIfaceHidlTest, Connect) {
         mac_addr_, ISupplicantP2pIface::WpsProvisionMethod::PBC,
         kTestConnectPin, false, false, kTestConnectGoIntent,
         [](const SupplicantStatus& status, const hidl_string& /* pin */) {
-            // After enabling auto-join, it will succeed always.
-            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+            /*
+             * Before R, auto-join is not enabled and it is not going to work
+             * with fake values. After enabling auto-join, it will succeed
+             * always.
+             */
+            LOG(INFO) << "ISupplicantP2pIface::connect() ret: "
+                      << toString(status);
+            if (SupplicantStatusCode::FAILURE_UNKNOWN != status.code &&
+                SupplicantStatusCode::SUCCESS != status.code) {
+                FAIL();
+            }
         });
 }
 
@@ -295,12 +304,26 @@ TEST_P(SupplicantP2pIfaceHidlTest, CancelConnect) {
         mac_addr_, ISupplicantP2pIface::WpsProvisionMethod::PBC,
         kTestConnectPin, false, false, kTestConnectGoIntent,
         [](const SupplicantStatus& status, const hidl_string& /* pin */) {
-            // After enabling auto-join, it will succeed always.
-            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+            /*
+             * Before R, auto-join is not enabled and it is not going to work
+             * with fake values. After enabling auto-join, it will succeed
+             * always.
+             */
+            LOG(INFO) << "ISupplicantP2pIface::connect() ret: "
+                      << toString(status);
+            if (SupplicantStatusCode::FAILURE_UNKNOWN != status.code &&
+                SupplicantStatusCode::SUCCESS != status.code) {
+                FAIL();
+            }
         });
 
     p2p_iface_->cancelConnect([](const SupplicantStatus& status) {
-        EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+        LOG(INFO) << "ISupplicantP2pIface::cancelConnect() ret: "
+                  << toString(status);
+        if (SupplicantStatusCode::FAILURE_UNKNOWN != status.code &&
+            SupplicantStatusCode::SUCCESS != status.code) {
+            FAIL();
+        }
     });
 }
 
