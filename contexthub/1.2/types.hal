@@ -13,27 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
 
-#include "ContextHub.h"
+package android.hardware.contexthub@1.2;
 
-#include <android/hardware/contexthub/1.1/IContexthub.h>
+import @1.1::Setting;
 
-namespace android {
-namespace hardware {
-namespace contexthub {
-namespace V1_1 {
-namespace implementation {
-
-class Contexthub
-    : public ::android::hardware::contexthub::V1_X::implementation::ContextHub<IContexthub> {
-  public:
-    // Methods from V1_1::IContexthub
-    Return<void> onSettingChanged(Setting setting, SettingValue newValue) override;
+/**
+ * Used to indicate the type of user setting that has changed.
+ */
+enum Setting : @1.1::Setting {
+    /**
+     * Indicates that the WiFi capabilities can be used in CHRE. This setting
+     * follows the overall availability of WiFi-related functionality within
+     * the Android framework, for example if WiFi is disabled for connectivity
+     * purposes but is enabled for location purposes (scanning), then
+     * WIFI_AVAILABLE is enabled.
+     */
+    WIFI_AVAILABLE,
+    AIRPLANE_MODE,
 };
-
-}  // namespace implementation
-}  // namespace V1_1
-}  // namespace contexthub
-}  // namespace hardware
-}  // namespace android
