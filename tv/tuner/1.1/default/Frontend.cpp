@@ -364,10 +364,19 @@ Return<Result> Frontend::setLnb(uint32_t /* lnb */) {
     return Result::SUCCESS;
 }
 
-Return<Result> Frontend::linkCiCam(uint32_t ciCamId) {
+Return<void> Frontend::linkCiCam(uint32_t ciCamId, linkCiCam_cb _hidl_cb) {
     ALOGV("%s", __FUNCTION__);
 
     mCiCamId = ciCamId;
+    _hidl_cb(Result::SUCCESS, 0 /*ltsId*/);
+
+    return Void();
+}
+
+Return<Result> Frontend::unlinkCiCam(uint32_t /*ciCamId*/) {
+    ALOGV("%s", __FUNCTION__);
+
+    mCiCamId = -1;
 
     return Result::SUCCESS;
 }

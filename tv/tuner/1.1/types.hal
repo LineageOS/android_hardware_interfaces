@@ -58,6 +58,11 @@ enum Constant : @1.0::Constant {
      * be used to reset the configured ip context id.
      */
     INVALID_IP_FILTER_CONTEXT_ID = 0xFFFFFFFF,
+    /**
+     * An invalid local transport stream id used as the return value on a failed operation of
+     * IFrontend.linkCiCam.
+     */
+    INVALID_LTS_ID = 0xFFFFFFFF,
 };
 
 @export

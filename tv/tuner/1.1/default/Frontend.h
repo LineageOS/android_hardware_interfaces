@@ -66,7 +66,9 @@ class Frontend : public V1_1::IFrontend {
 
     virtual Return<Result> setLnb(uint32_t lnb) override;
 
-    virtual Return<Result> linkCiCam(uint32_t ciCamId) override;
+    virtual Return<void> linkCiCam(uint32_t ciCamId, linkCiCam_cb _hidl_cb) override;
+
+    virtual Return<Result> unlinkCiCam(uint32_t ciCamId) override;
 
     FrontendType getFrontendType();
 
