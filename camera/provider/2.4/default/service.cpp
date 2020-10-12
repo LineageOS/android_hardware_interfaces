@@ -22,6 +22,8 @@
 
 #include <android/hardware/camera/provider/2.4/ICameraProvider.h>
 #include <binder/ProcessState.h>
+#include <cutils/memory.h>
+#include <cutils/properties.h>
 #include <hidl/LegacySupport.h>
 
 using android::status_t;
@@ -41,6 +43,12 @@ int main()
     // The camera HAL may communicate to other vendor components via
     // /dev/vndbinder
     android::ProcessState::initWithDriver("/dev/vndbinder");
+
+    // b/166675194
+    if (property_get_bool("ro.vendor.camera.provider24.disable_mem_init", false)) {
+        process_disable_memory_mitigations();
+    }
+
     status_t status;
     if (kLazyService) {
         status = defaultLazyPassthroughServiceImplementation<ICameraProvider>("legacy/0",
