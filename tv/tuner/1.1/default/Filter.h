@@ -82,6 +82,8 @@ class Filter : public V1_1::IFilter {
 
     virtual Return<void> getAvSharedHandle(getAvSharedHandle_cb _hidl_cb) override;
 
+    virtual Return<Result> configureAvStreamType(const V1_1::AvStreamType& avStreamType) override;
+
     /**
      * To create a FilterMQ and its Event Flag.
      *
@@ -225,6 +227,9 @@ class Filter : public V1_1::IFilter {
     hidl_handle mSharedAvMemHandle;
     bool mUsingSharedAvMem = true;
     uint32_t mSharedAvMemOffset = 0;
+
+    uint32_t mAudioStreamType;
+    uint32_t mVideoStreamType;
 };
 
 }  // namespace implementation

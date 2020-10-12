@@ -69,6 +69,7 @@ void TunerBroadcastHidlTest::mediaFilterUsingSharedMemoryTest(FilterConfig filte
     ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId_64bit(filterId));
     ASSERT_TRUE(mFilterTests.getSharedAvMemoryHandle(filterId));
     ASSERT_TRUE(mFilterTests.configFilter(filterConf.settings, filterId));
+    ASSERT_TRUE(mFilterTests.configAvFilterStreamType(filterConf.streamType, filterId));
     ASSERT_TRUE(mFilterTests.getFilterMQDescriptor(filterId));
     ASSERT_TRUE(mFilterTests.startFilter(filterId));
     // tune test

@@ -70,4 +70,15 @@ interface IFilter extends @1.0::IFilter {
      *         memory is not initialized.
      */
     getAvSharedHandle() generates (Result result, handle avMemory, uint64_t avMemSize);
+
+    /**
+     * Configure A/V filter’s stream type. This API only applies to A/V filters.
+     *
+     * @param avStreamType the stream type for A/V.
+     * @return return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if configure can't be applied,
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    configureAvStreamType(AvStreamType avStreamType) generates (Result result);
 };

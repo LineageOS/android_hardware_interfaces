@@ -46,9 +46,12 @@ using android::hardware::tv::tuner::V1_0::FrontendSettings;
 using android::hardware::tv::tuner::V1_0::FrontendType;
 using android::hardware::tv::tuner::V1_0::PlaybackSettings;
 using android::hardware::tv::tuner::V1_0::RecordSettings;
+using android::hardware::tv::tuner::V1_1::AudioStreamType;
+using android::hardware::tv::tuner::V1_1::AvStreamType;
 using android::hardware::tv::tuner::V1_1::FrontendSettingsExt1_1;
 using android::hardware::tv::tuner::V1_1::FrontendStatusExt1_1;
 using android::hardware::tv::tuner::V1_1::FrontendStatusTypeExt1_1;
+using android::hardware::tv::tuner::V1_1::VideoStreamType;
 
 using namespace std;
 
@@ -91,6 +94,7 @@ struct FilterConfig {
     uint32_t bufferSize;
     DemuxFilterType type;
     DemuxFilterSettings settings;
+    AvStreamType streamType;
     uint32_t ipCid;
 
     bool operator<(const FilterConfig& /*c*/) const { return false; }
@@ -184,6 +188,7 @@ inline void initFilterConfig() {
     filterArray[TS_VIDEO1].bufferSize = FMQ_SIZE_16M;
     filterArray[TS_VIDEO1].settings.ts().tpid = 256;
     filterArray[TS_VIDEO1].settings.ts().filterSettings.av({.isPassthrough = false});
+    filterArray[TS_VIDEO1].streamType.video(VideoStreamType::MPEG1);
     // TS AUDIO filter setting
     filterArray[TS_AUDIO0].type.mainType = DemuxFilterMainType::TS;
     filterArray[TS_AUDIO0].type.subType.tsFilterType(DemuxTsFilterType::AUDIO);
@@ -195,6 +200,7 @@ inline void initFilterConfig() {
     filterArray[TS_AUDIO1].bufferSize = FMQ_SIZE_16M;
     filterArray[TS_AUDIO1].settings.ts().tpid = 257;
     filterArray[TS_AUDIO1].settings.ts().filterSettings.av({.isPassthrough = false});
+    filterArray[TS_VIDEO1].streamType.audio(AudioStreamType::MP3);
     // TS PES filter setting
     filterArray[TS_PES0].type.mainType = DemuxFilterMainType::TS;
     filterArray[TS_PES0].type.subType.tsFilterType(DemuxTsFilterType::PES);
