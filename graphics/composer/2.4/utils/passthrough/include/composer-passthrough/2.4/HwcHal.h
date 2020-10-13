@@ -306,15 +306,12 @@ class HwcHalImpl : public V2_3::passthrough::detail::HwcHalImpl<Hal> {
             return false;
         }
 
-        if (!BaseType2_1::initDispatch(HWC2_FUNCTION_GET_DISPLAY_VSYNC_PERIOD,
-                                       &mDispatch.getDisplayVsyncPeriod) ||
-            !BaseType2_1::initDispatch(HWC2_FUNCTION_SET_ACTIVE_CONFIG_WITH_CONSTRAINTS,
-                                       &mDispatch.setActiveConfigWithConstraints)) {
-            return false;
-        }
-
         this->initOptionalDispatch(HWC2_FUNCTION_GET_DISPLAY_CONNECTION_TYPE,
                                    &mDispatch.getDisplayConnectionType);
+        this->initOptionalDispatch(HWC2_FUNCTION_GET_DISPLAY_VSYNC_PERIOD,
+                                   &mDispatch.getDisplayVsyncPeriod);
+        this->initOptionalDispatch(HWC2_FUNCTION_SET_ACTIVE_CONFIG_WITH_CONSTRAINTS,
+                                   &mDispatch.setActiveConfigWithConstraints);
         this->initOptionalDispatch(HWC2_FUNCTION_SET_AUTO_LOW_LATENCY_MODE,
                                    &mDispatch.setAutoLowLatencyMode);
         this->initOptionalDispatch(HWC2_FUNCTION_GET_SUPPORTED_CONTENT_TYPES,

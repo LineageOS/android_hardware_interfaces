@@ -294,6 +294,9 @@ class HwcHalImpl : public V2_2::passthrough::detail::HwcHalImpl<Hal> {
             (brightness < 0.0f && brightness != -1.0f)) {
             return Error::BAD_PARAMETER;
         }
+        if (!mDispatch.setDisplayBrightness) {
+            return Error::UNSUPPORTED;
+        }
         int32_t error = mDispatch.setDisplayBrightness(mDevice, display, brightness);
         return static_cast<Error>(error);
     }
@@ -301,13 +304,6 @@ class HwcHalImpl : public V2_2::passthrough::detail::HwcHalImpl<Hal> {
   protected:
     bool initDispatch() override {
         if (!BaseType2_2::initDispatch()) {
-            return false;
-        }
-
-        if (!BaseType2_1::initDispatch(HWC2_FUNCTION_GET_DISPLAY_CAPABILITIES,
-                                       &mDispatch.getDisplayCapabilities) ||
-            !BaseType2_1::initDispatch(HWC2_FUNCTION_SET_DISPLAY_BRIGHTNESS,
-                                       &mDispatch.setDisplayBrightness)) {
             return false;
         }
 
@@ -321,10 +317,14 @@ class HwcHalImpl : public V2_2::passthrough::detail::HwcHalImpl<Hal> {
                                    &mDispatch.setDisplayedContentSamplingEnabled);
         this->initOptionalDispatch(HWC2_FUNCTION_GET_DISPLAYED_CONTENT_SAMPLE,
                                    &mDispatch.getDisplayedContentSample);
+        this->initOptionalDispatch(HWC2_FUNCTION_GET_DISPLAY_CAPABILITIES,
+                                   &mDispatch.getDisplayCapabilities);
         this->initOptionalDispatch(HWC2_FUNCTION_SET_LAYER_PER_FRAME_METADATA_BLOBS,
                                    &mDispatch.setLayerPerFrameMetadataBlobs);
         this->initOptionalDispatch(HWC2_FUNCTION_GET_DISPLAY_BRIGHTNESS_SUPPORT,
                                    &mDispatch.getDisplayBrightnessSupport);
+        this->initOptionalDispatch(HWC2_FUNCTION_SET_DISPLAY_BRIGHTNESS,
+                                   &mDispatch.setDisplayBrightness);
         return true;
     }
 
