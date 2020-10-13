@@ -15,9 +15,8 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.common;
+package android.hardware.common.fmq;
 @VintfStability
-parcelable GrantorDescriptor {
-  int offset;
-  long extent;
+enum UnsynchronizedWrite {
+  EMPTY = 0,
 }
