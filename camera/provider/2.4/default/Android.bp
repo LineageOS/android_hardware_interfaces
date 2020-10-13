@@ -76,7 +76,7 @@ cc_library_shared {
     header_libs: [
         "camera.device@3.4-external-impl_headers",
         "camera.device@3.5-external-impl_headers",
-        "camera.device@3.6-external-impl_headers"
+        "camera.device@3.6-external-impl_headers",
     ],
     export_include_dirs: ["."],
 }
@@ -150,6 +150,7 @@ cc_defaults {
         "android.hidl.memory@1.0",
         "libbinder",
         "libcamera_metadata",
+        "libcutils",
         "libhardware",
         "libhidlbase",
         "liblog",
