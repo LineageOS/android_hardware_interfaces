@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package android.hardware.common;
+package android.hardware.common.fmq;
 
-import android.hardware.common.GrantorDescriptor;
+import android.hardware.common.fmq.GrantorDescriptor;
 
 /*
  * For use with libfmq. This is created from an instance of AidlMessageQueue,
