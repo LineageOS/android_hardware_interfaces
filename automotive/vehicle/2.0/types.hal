@@ -2921,6 +2921,65 @@ enum VehicleProperty : int32_t {
         | VehicleArea:GLOBAL),
 
     /**
+     * Defines a request to apply power policy.
+     *
+     * VHAL sets this property to change car power policy. Car power policy service subscribes to
+     * this property and actually changes the power policy.
+     * The request is made by setting the VehiclePropValue with the ID of a power policy which is
+     * defined at /vendor/etc/power_policy.xml. If the given ID is not defined, car power policy
+     * service ignores the request and the current power policy is maintained.
+     *
+     *   string: "sample_policy_id" // power policy ID
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     */
+    POWER_POLICY_REQ = (
+        0x0F21
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:STRING
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Defines a request to set the power polic group used to decide a default power policy per
+     * power status transition.
+     *
+     * VHAL sets this property with the ID of a power policy group in order to set the default power
+     * policy applied at power status transition. Power policy groups are defined at
+     * /vendor/etc/power_policy.xml. If the given ID is not defined, car power policy service
+     * ignores the request.
+     * Car power policy service subscribes to this property and sets the power policy group.
+     * The actual application of power policy takes place when the system power status changes and
+     * there is a valid mapped power policy for the new power status.
+     *
+     *   string: "sample_policy_group_id" // power policy group ID
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     */
+    POWER_POLICY_GROUP_REQ = (
+        0x0F22
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:STRING
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Notifies the current power policy to VHAL layer.
+     *
+     * Car power policy service sets this property when the current power policy is changed.
+     *
+     *   string: "sample_policy_id" // power policy ID
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    CURRENT_POWER_POLICY = (
+        0x0F23
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:STRING
+        | VehicleArea:GLOBAL),
+
+    /**
      * Defines an event that car watchdog updates to tell it's alive.
      *
      * Car watchdog sets this property to system uptime in milliseconds at every 3 second.
@@ -2938,8 +2997,8 @@ enum VehicleProperty : int32_t {
     /**
      * Defines a process terminated by car watchdog and the reason of termination.
      *
-     * int32Values[0]: 1         // ProcessTerminationReason showing why a process is terminated.
-     * string: "/system/bin/log" // Process execution command.
+     *   int32Values[0]: 1         // ProcessTerminationReason showing why a process is terminated.
+     *   string: "/system/bin/log" // Process execution command.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:WRITE
