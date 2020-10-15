@@ -1,0 +1,22 @@
+aidl_interface {
+    name: "android.hardware.biometrics.face",
+    vendor_available: true,
+    srcs: [
+        "android/hardware/biometrics/face/**/*.aidl",
+    ],
+    imports: [
+        "android.hardware.biometrics.common",
+        "android.hardware.common",
+        "android.hardware.keymaster",
+    ],
+    stability: "vintf",
+    backend: {
+        java: {
+            enabled: false,
+            platform_apis: false,
+        },
+        cpp: {
+            enabled: false,
+        },
+    },
+}

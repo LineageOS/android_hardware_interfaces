@@ -1095,6 +1095,30 @@ const ConfigDeclaration kVehicleProperties[]{
         {
                 .config =
                         {
+                                .prop = toInt(VehicleProperty::POWER_POLICY_REQ),
+                                .access = VehiclePropertyAccess::READ,
+                                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                        },
+        },
+        {
+                .config =
+                        {
+                                .prop = toInt(VehicleProperty::POWER_POLICY_GROUP_REQ),
+                                .access = VehiclePropertyAccess::READ,
+                                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                        },
+        },
+        {
+                .config =
+                        {
+                                .prop = toInt(VehicleProperty::CURRENT_POWER_POLICY),
+                                .access = VehiclePropertyAccess::READ_WRITE,
+                                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                        },
+        },
+        {
+                .config =
+                        {
                                 .prop = toInt(VehicleProperty::WATCHDOG_ALIVE),
                                 .access = VehiclePropertyAccess::WRITE,
                                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
