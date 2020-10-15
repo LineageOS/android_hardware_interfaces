@@ -36,7 +36,6 @@ using android::hardware::hidl_vec;
 using android::hardware::Return;
 using android::hardware::Void;
 using android::hardware::tetheroffload::config::V1_0::IOffloadConfig;
-using android::hardware::tetheroffload::control::V1_0::IOffloadControl;
 using android::hardware::tetheroffload::control::V1_0::ITetheringOffloadCallback;
 using android::hardware::tetheroffload::control::V1_0::NatTimeoutUpdate;
 using android::hardware::tetheroffload::control::V1_0::OffloadCallbackEvent;
@@ -64,7 +63,8 @@ class OffloadControlTestBase : public testing::TestWithParam<std::tuple<std::str
 
     // Called once in setup stage to retrieve correct version of
     // IOffloadControl object.
-    virtual sp<IOffloadControl> createControl(const std::string& serviceName) = 0;
+    virtual sp<android::hardware::tetheroffload::control::V1_0::IOffloadControl> createControl(
+            const std::string& serviceName) = 0;
 
     // The IOffloadConfig HAL is tested more thoroughly elsewhere. Here the
     // class just setup everything correctly and verify basic readiness.
@@ -100,6 +100,6 @@ class OffloadControlTestBase : public testing::TestWithParam<std::tuple<std::str
     };
 
     sp<IOffloadConfig> config;
-    sp<IOffloadControl> control;
+    sp<android::hardware::tetheroffload::control::V1_0::IOffloadControl> control;
     sp<TetheringOffloadCallback> control_cb;
 };
