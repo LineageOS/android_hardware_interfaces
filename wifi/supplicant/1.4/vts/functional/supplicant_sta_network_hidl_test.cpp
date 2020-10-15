@@ -90,6 +90,18 @@ TEST_P(SupplicantStaNetworkHidlTest, RegisterCallback_1_4) {
         });
 }
 
+/*
+ * enable SAE H2E (Hash-to-Element) only mode
+ */
+TEST_P(SupplicantStaNetworkHidlTest, EnableSaeH2eOnlyMode) {
+    v1_4->enableSaeH2eOnlyMode(true, [&](const SupplicantStatus& status) {
+        EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+    });
+    v1_4->enableSaeH2eOnlyMode(false, [&](const SupplicantStatus& status) {
+        EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+    });
+}
+
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SupplicantStaNetworkHidlTest);
 INSTANTIATE_TEST_CASE_P(
     PerInstance, SupplicantStaNetworkHidlTest,
