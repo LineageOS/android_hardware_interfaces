@@ -228,6 +228,27 @@ Return<void> Filter::getAvSharedHandle(getAvSharedHandle_cb _hidl_cb) {
     return Void();
 }
 
+Return<Result> Filter::configureAvStreamType(const V1_1::AvStreamType& avStreamType) {
+    ALOGV("%s", __FUNCTION__);
+
+    if (!mIsMediaFilter) {
+        return Result::UNAVAILABLE;
+    }
+
+    switch (avStreamType.getDiscriminator()) {
+        case V1_1::AvStreamType::hidl_discriminator::audio:
+            mAudioStreamType = static_cast<uint32_t>(avStreamType.audio());
+            break;
+        case V1_1::AvStreamType::hidl_discriminator::video:
+            mVideoStreamType = static_cast<uint32_t>(avStreamType.video());
+            break;
+        default:
+            break;
+    }
+
+    return Result::SUCCESS;
+}
+
 bool Filter::createFilterMQ() {
     ALOGV("%s", __FUNCTION__);
 

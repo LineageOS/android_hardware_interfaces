@@ -1,0 +1,16 @@
+cc_test {
+    name: "VtsHalBiometricsFaceTargetTest",
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    srcs: ["VtsHalBiometricsFaceTargetTest.cpp"],
+    shared_libs: [
+        "libbinder_ndk",
+        "android.hardware.biometrics.face-ndk_platform",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+}

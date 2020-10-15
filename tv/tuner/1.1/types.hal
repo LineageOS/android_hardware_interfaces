@@ -568,3 +568,130 @@ safe_union FrontendScanMessageExt1_1 {
 
     bool isHighPriority;
 };
+
+@export
+enum VideoStreamType : uint32_t {
+    UNDEFINED,
+    /*
+     * ITU-T | ISO/IEC Reserved
+     */
+    RESERVED,
+    /*
+     * ISO/IEC 11172
+     */
+    MPEG1,
+    /*
+     * ITU-T Rec.H.262 and ISO/IEC 13818-2
+     */
+    MPEG2,
+    /*
+     * ISO/IEC 14496-2 (MPEG-4 H.263 based video)
+     */
+    MPEG4P2,
+    /*
+     * ITU-T Rec.H.264 and ISO/IEC 14496-10
+     */
+    AVC,
+    /*
+     * ITU-T Rec. H.265 and ISO/IEC 23008-2
+     */
+    HEVC,
+    /*
+     * Microsoft VC.1
+     */
+    VC1,
+    /*
+     * Google VP8
+     */
+    VP8,
+    /*
+     * Google VP9
+     */
+    VP9,
+    /*
+     * AOMedia Video 1
+     */
+    AV1,
+    /*
+     * Chinese Standard
+     */
+    AVS,
+    /*
+     * New Chinese Standard
+     */
+    AVS2,
+};
+
+@export
+enum AudioStreamType : uint32_t {
+    UNDEFINED,
+    /*
+     * Uncompressed Audio
+     */
+    PCM,
+    /*
+     * MPEG Audio Layer III versions
+     */
+    MP3,
+    /*
+     * ISO/IEC 11172 Audio
+     */
+    MPEG1,
+    /*
+     * ISO/IEC 13818-3
+     */
+    MPEG2,
+    /*
+     * ISO/IEC 23008-3 (MPEG-H Part 3)
+     */
+    MPEGH,
+    /*
+     * ISO/IEC 14496-3
+     */
+    AAC,
+    /*
+     * Dolby Digital
+     */
+    AC3,
+    /*
+     * Dolby Digital Plus
+     */
+    EAC3,
+    /*
+     * Dolby AC-4
+     */
+    AC4,
+    /*
+     * Basic DTS
+     */
+    DTS,
+    /*
+     * High Resolution DTS
+     */
+    DTS_HD,
+    /*
+     * Windows Media Audio
+     */
+    WMA,
+    /*
+     * Opus Interactive Audio Codec
+     */
+    OPUS,
+    /*
+     * VORBIS Interactive Audio Codec
+     */
+    VORBIS,
+    /*
+     * SJ/T 11368-2006
+     */
+    DRA,
+};
+
+/**
+ *  Stream type for A/V filter.
+ */
+safe_union AvStreamType {
+    VideoStreamType video;
+
+    AudioStreamType audio;
+};

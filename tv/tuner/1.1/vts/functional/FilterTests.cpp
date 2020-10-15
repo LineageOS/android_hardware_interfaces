@@ -164,6 +164,20 @@ AssertionResult FilterTests::configFilter(DemuxFilterSettings setting, uint64_t 
     return AssertionResult(status == Result::SUCCESS);
 }
 
+AssertionResult FilterTests::configAvFilterStreamType(AvStreamType type, uint64_t filterId) {
+    Result status;
+    EXPECT_TRUE(mFilters[filterId]) << "Test with getNewlyOpenedFilterId first.";
+    sp<android::hardware::tv::tuner::V1_1::IFilter> filter_v1_1 =
+            android::hardware::tv::tuner::V1_1::IFilter::castFrom(mFilters[filterId]);
+    if (filter_v1_1 != NULL) {
+        status = filter_v1_1->configureAvStreamType(type);
+    } else {
+        ALOGW("[vts] Can't cast IFilter into v1_1.");
+        return failure();
+    }
+    return AssertionResult(status == Result::SUCCESS);
+}
+
 AssertionResult FilterTests::configIpFilterCid(uint32_t ipCid, uint64_t filterId) {
     Result status;
     EXPECT_TRUE(mFilters[filterId]) << "Open Ip filter first.";

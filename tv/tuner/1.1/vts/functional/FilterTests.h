@@ -54,6 +54,7 @@ using android::hardware::tv::tuner::V1_0::DemuxTsFilterType;
 using android::hardware::tv::tuner::V1_0::IDemux;
 using android::hardware::tv::tuner::V1_0::IFilter;
 using android::hardware::tv::tuner::V1_0::Result;
+using android::hardware::tv::tuner::V1_1::AvStreamType;
 using android::hardware::tv::tuner::V1_1::DemuxFilterEventExt;
 using android::hardware::tv::tuner::V1_1::IFilterCallback;
 using android::hardware::tv::tuner::V1_1::ITuner;
@@ -150,6 +151,7 @@ class FilterTests {
     AssertionResult getSharedAvMemoryHandle(uint64_t filterId);
     AssertionResult releaseShareAvHandle(uint64_t filterId);
     AssertionResult configFilter(DemuxFilterSettings setting, uint64_t filterId);
+    AssertionResult configAvFilterStreamType(AvStreamType type, uint64_t filterId);
     AssertionResult configIpFilterCid(uint32_t ipCid, uint64_t filterId);
     AssertionResult getFilterMQDescriptor(uint64_t filterId);
     AssertionResult startFilter(uint64_t filterId);

@@ -1,0 +1,18 @@
+cc_binary {
+    name: "android.hardware.biometrics.face-service.example",
+    relative_install_path: "hw",
+    init_rc: ["face-default.rc"],
+    vintf_fragments: ["face-default.xml"],
+    vendor: true,
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "android.hardware.biometrics.face-ndk_platform",
+        "android.hardware.biometrics.common-unstable-ndk_platform",
+    ],
+    srcs: [
+        "main.cpp",
+        "Face.cpp",
+        "Session.cpp",
+    ],
+}
