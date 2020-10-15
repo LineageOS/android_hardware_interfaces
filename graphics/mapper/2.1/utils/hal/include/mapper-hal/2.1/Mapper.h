@@ -46,7 +46,7 @@ class MapperImpl : public V2_0::hal::detail::MapperImpl<Interface, Hal> {
             return Error::BAD_BUFFER;
         }
 
-        return mHal->validateBufferSize(bufferHandle, descriptorInfo, stride);
+        return this->mHal->validateBufferSize(bufferHandle, descriptorInfo, stride);
     }
 
     Return<void> getTransportSize(void* buffer, IMapper::getTransportSize_cb hidl_cb) {
@@ -58,7 +58,7 @@ class MapperImpl : public V2_0::hal::detail::MapperImpl<Interface, Hal> {
 
         uint32_t numFds = 0;
         uint32_t numInts = 0;
-        Error error = mHal->getTransportSize(bufferHandle, &numFds, &numInts);
+        Error error = this->mHal->getTransportSize(bufferHandle, &numFds, &numInts);
         hidl_cb(error, numFds, numInts);
         return Void();
     }
@@ -66,7 +66,7 @@ class MapperImpl : public V2_0::hal::detail::MapperImpl<Interface, Hal> {
     Return<void> createDescriptor_2_1(const IMapper::BufferDescriptorInfo& descriptorInfo,
                                       IMapper::createDescriptor_2_1_cb hidl_cb) override {
         BufferDescriptor descriptor;
-        Error error = mHal->createDescriptor_2_1(descriptorInfo, &descriptor);
+        Error error = this->mHal->createDescriptor_2_1(descriptorInfo, &descriptor);
         hidl_cb(error, descriptor);
         return Void();
     }
@@ -74,7 +74,6 @@ class MapperImpl : public V2_0::hal::detail::MapperImpl<Interface, Hal> {
    private:
     using BaseType2_0 = V2_0::hal::detail::MapperImpl<Interface, Hal>;
     using BaseType2_0::getImportedBuffer;
-    using BaseType2_0::mHal;
 };
 
 }  // namespace detail
