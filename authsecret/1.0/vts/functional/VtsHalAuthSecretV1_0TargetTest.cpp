@@ -34,9 +34,17 @@ class AuthSecretHidlTest : public testing::TestWithParam<std::string> {
         authsecret = IAuthSecret::getService(GetParam());
         ASSERT_NE(authsecret, nullptr);
 
+        // Notify LSS to generate PIN code '1234' and corresponding secret.
+        (void)system("cmd lock_settings set-pin 1234");
+
         // All tests must enroll the correct secret first as this cannot be changed
         // without a factory reset and the order of tests could change.
         authsecret->primaryUserCredential(CORRECT_SECRET);
+    }
+
+    static void TearDownTestSuite() {
+        // clean up PIN code after testing
+        (void)system("cmd lock_settings clear --old 1234");
     }
 
     sp<IAuthSecret> authsecret;
