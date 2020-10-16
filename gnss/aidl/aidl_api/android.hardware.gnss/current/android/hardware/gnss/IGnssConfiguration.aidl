@@ -17,10 +17,19 @@
 
 package android.hardware.gnss;
 @VintfStability
-interface IGnss {
-  void setCallback(in android.hardware.gnss.IGnssCallback callback);
-  void close();
-  android.hardware.gnss.IGnssPsds getExtensionPsds();
-  android.hardware.gnss.IGnssConfiguration getExtensionGnssConfiguration();
-  const int ERROR_INVALID_ARGUMENT = 1;
+interface IGnssConfiguration {
+  void setSuplVersion(in int version);
+  void setSuplMode(in int mode);
+  void setLppProfile(in int lppProfile);
+  void setGlonassPositioningProtocol(in int protocol);
+  void setEmergencySuplPdn(in boolean enable);
+  void setEsExtensionSec(in int emergencyExtensionSeconds);
+  void setBlocklist(in android.hardware.gnss.BlocklistedSource[] blocklist);
+  const int SUPL_MODE_MSB = 1;
+  const int SUPL_MODE_MSA = 2;
+  const int LPP_PROFILE_USER_PLANE = 1;
+  const int LPP_PROFILE_CONTROL_PLANE = 2;
+  const int GLONASS_POS_PROTOCOL_RRC_CPLANE = 1;
+  const int GLONASS_POS_PROTOCOL_RRLP_UPLANE = 2;
+  const int GLONASS_POS_PROTOCOL_LPP_UPLANE = 4;
 }

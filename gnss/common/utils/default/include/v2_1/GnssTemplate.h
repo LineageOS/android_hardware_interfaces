@@ -127,12 +127,13 @@ struct GnssTemplate : public T_IGnss {
     std::atomic<long> mMinIntervalMs;
     sp<GnssConfiguration> mGnssConfiguration;
     std::atomic<bool> mIsActive;
-    std::atomic<bool> mHardwareModeOn;
+    std::atomic<bool> mHardwareModeChecked;
     std::atomic<int> mGnssFd;
     std::thread mThread;
 
     mutable std::mutex mMutex;
-    hidl_vec<GnssSvInfo> filterBlacklistedSatellitesV2_1(hidl_vec<GnssSvInfo> gnssSvInfoList);
+    virtual hidl_vec<GnssSvInfo> filterBlocklistedSatellitesV2_1(
+            hidl_vec<GnssSvInfo> gnssSvInfoList);
 };
 
 template <class T_IGnss>
@@ -148,7 +149,7 @@ template <class T_IGnss>
 GnssTemplate<T_IGnss>::GnssTemplate()
     : mMinIntervalMs(1000),
       mGnssConfiguration{new GnssConfiguration()},
-      mHardwareModeOn(false),
+      mHardwareModeChecked(false),
       mGnssFd(-1) {}
 
 template <class T_IGnss>
@@ -159,16 +160,18 @@ GnssTemplate<T_IGnss>::~GnssTemplate() {
 template <class T_IGnss>
 std::unique_ptr<V2_0::GnssLocation> GnssTemplate<T_IGnss>::getLocationFromHW() {
     char inputBuffer[INPUT_BUFFER_SIZE];
-    if (mGnssFd == -1) {
+    if (!mHardwareModeChecked) {
         mGnssFd = open(GNSS_PATH, O_RDWR | O_NONBLOCK);
+        if (mGnssFd == -1) {
+            ALOGW("Failed to open /dev/gnss0 errno: %d", errno);
+        }
+        mHardwareModeChecked = true;
     }
 
     if (mGnssFd == -1) {
-        ALOGW("Failed to open /dev/gnss0 errno: %d", errno);
         return nullptr;
     }
-    // Indicates it is a hardwareMode, don't report the default location.
-    mHardwareModeOn = true;
+
     int bytes_write = write(mGnssFd, CMD_GET_LOCATION, strlen(CMD_GET_LOCATION));
     if (bytes_write <= 0) {
         return nullptr;
@@ -206,14 +209,12 @@ Return<bool> GnssTemplate<T_IGnss>::start() {
     mIsActive = true;
     mThread = std::thread([this]() {
         while (mIsActive == true) {
-            auto svStatus = filterBlacklistedSatellitesV2_1(Utils::getMockSvInfoListV2_1());
+            auto svStatus = filterBlocklistedSatellitesV2_1(Utils::getMockSvInfoListV2_1());
             this->reportSvStatus(svStatus);
             auto currentLocation = getLocationFromHW();
-            if (mHardwareModeOn) {
-                if (currentLocation != nullptr) {
-                    // Only report location if the return from hardware is valid
-                    this->reportLocation(*currentLocation);
-                }
+            if (mGnssFd != -1 && currentLocation != nullptr) {
+                // Only report location if the return from hardware is valid
+                this->reportLocation(*currentLocation);
             } else {
                 if (sGnssCallback_2_1 != nullptr || sGnssCallback_2_0 != nullptr) {
                     const auto location = Utils::getMockLocationV2_0();
@@ -230,8 +231,9 @@ Return<bool> GnssTemplate<T_IGnss>::start() {
 }
 
 template <class T_IGnss>
-hidl_vec<GnssSvInfo> GnssTemplate<T_IGnss>::filterBlacklistedSatellitesV2_1(
+hidl_vec<GnssSvInfo> GnssTemplate<T_IGnss>::filterBlocklistedSatellitesV2_1(
         hidl_vec<GnssSvInfo> gnssSvInfoList) {
+    ALOGD("filterBlocklistedSatellitesV2_1");
     for (uint32_t i = 0; i < gnssSvInfoList.size(); i++) {
         if (mGnssConfiguration->isBlacklistedV2_1(gnssSvInfoList[i])) {
             gnssSvInfoList[i].v2_0.v1_0.svFlag &=
