@@ -27,13 +27,11 @@ class CancellationSignal : public common::BnCancellationSignal {
 
 Session::Session(std::shared_ptr<ISessionCallback> cb) : cb_(std::move(cb)) {}
 
-ndk::ScopedAStatus Session::generateChallenge(int32_t /*cookie*/, int32_t /*sensorId*/,
-                                              int32_t /*userId*/, int32_t /*timeoutSec*/) {
+ndk::ScopedAStatus Session::generateChallenge(int32_t /*cookie*/, int32_t /*timeoutSec*/) {
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Session::revokeChallenge(int32_t /*cookie*/, int32_t /*sensorId*/,
-                                            int32_t /*userId*/, int64_t /*challenge*/) {
+ndk::ScopedAStatus Session::revokeChallenge(int32_t /*cookie*/, int64_t /*challenge*/) {
     return ndk::ScopedAStatus::ok();
 }
 
