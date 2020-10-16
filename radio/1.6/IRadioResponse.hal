@@ -16,7 +16,8 @@
 
 package android.hardware.radio@1.6;
 
-import @1.0::RadioResponseInfo;
+import @1.0::SendSmsResult;
+import @1.6::RadioResponseInfo;
 import @1.5::IRadioResponse;
 import @1.6::SetupDataCallResult;
 
@@ -54,4 +55,137 @@ interface IRadioResponse extends @1.5::IRadioResponse {
      *   RadioError:SIM_ABSENT
      */
     oneway getDataCallListResponse_1_6(RadioResponseInfo info, vec<SetupDataCallResult> dcResponse);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param sms Response to sms sent as defined by SendSmsResult in types.hal
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:SMS_SEND_FAIL_RETRY
+     *   RadioError:NETWORK_REJECT
+     *   RadioError:INVALID_STATE
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:NO_MEMORY
+     *   RadioError:REQUEST_RATE_LIMITED
+     *   RadioError:INVALID_SMS_FORMAT
+     *   RadioError:SYSTEM_ERR
+     *   RadioError:ENCODING_ERR
+     *   RadioError:INVALID_SMSC_ADDRESS
+     *   RadioError:MODEM_ERR
+     *   RadioError:NETWORK_ERR
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:INVALID_MODEM_STATE
+     *   RadioError:NETWORK_NOT_READY
+     *   RadioError:OPERATION_NOT_ALLOWED
+     *   RadioError:NO_RESOURCES
+     *   RadioError:CANCELLED
+     *   RadioError:SIM_ABSENT
+     *   RadioError:ACCESS_BARRED
+     *   RadioError:BLOCKED_DUE_TO_CALL
+     */
+    oneway sendSmsResponse_1_6(RadioResponseInfo info, SendSmsResult sms);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param sms Response to sms sent as defined by SendSmsResult in types.hal
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:SMS_SEND_FAIL_RETRY
+     *   RadioError:NETWORK_REJECT
+     *   RadioError:INVALID_STATE
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:NO_MEMORY
+     *   RadioError:REQUEST_RATE_LIMITED
+     *   RadioError:INVALID_SMS_FORMAT
+     *   RadioError:SYSTEM_ERR
+     *   RadioError:FDN_CHECK_FAILURE
+     *   RadioError:ENCODING_ERR
+     *   RadioError:INVALID_SMSC_ADDRESS
+     *   RadioError:MODEM_ERR
+     *   RadioError:NETWORK_ERR
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:INVALID_MODEM_STATE
+     *   RadioError:NETWORK_NOT_READY
+     *   RadioError:OPERATION_NOT_ALLOWED
+     *   RadioError:NO_RESOURCES
+     *   RadioError:CANCELLED
+     *   RadioError:SIM_ABSENT
+     *   RadioError:ACCESS_BARRED
+     *   RadioError:BLOCKED_DUE_TO_CALL
+     */
+    oneway sendSMSExpectMoreResponse_1_6(RadioResponseInfo info, SendSmsResult sms);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param sms Sms result struct as defined by SendSmsResult in types.hal
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:SMS_SEND_FAIL_RETRY
+     *   RadioError:NETWORK_REJECT
+     *   RadioError:INVALID_STATE
+     *   RadioError:NO_MEMORY
+     *   RadioError:REQUEST_RATE_LIMITED
+     *   RadioError:INVALID_SMS_FORMAT
+     *   RadioError:SYSTEM_ERR
+     *   RadioError:FDN_CHECK_FAILURE
+     *   RadioError:MODEM_ERR
+     *   RadioError:NETWORK_ERR
+     *   RadioError:ENCODING_ERR
+     *   RadioError:INVALID_SMSC_ADDRESS
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:SYSTEM_ERR
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:OPERATION_NOT_ALLOWED
+     *   RadioError:ENCODING_ERR
+     *   RadioError:NO_RESOURCES
+     *   RadioError:CANCELLED
+     *   RadioError:SIM_ABSENT
+     *   RadioError:SIMULTANEOUS_SMS_AND_CALL_NOT_ALLOWED
+     *   RadioError:ACCESS_BARRED
+     *   RadioError:BLOCKED_DUE_TO_CALL
+     */
+    oneway sendCdmaSmsResponse_1_6(RadioResponseInfo info, SendSmsResult sms);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param sms Response to sms sent as defined by SendSmsResult in types.hal
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:SMS_SEND_FAIL_RETRY
+     *   RadioError:NETWORK_REJECT
+     *   RadioError:INVALID_STATE
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:NO_MEMORY
+     *   RadioError:REQUEST_RATE_LIMITED
+     *   RadioError:INVALID_SMS_FORMAT
+     *   RadioError:SYSTEM_ERR
+     *   RadioError:FDN_CHECK_FAILURE
+     *   RadioError:ENCODING_ERR
+     *   RadioError:INVALID_SMSC_ADDRESS
+     *   RadioError:MODEM_ERR
+     *   RadioError:NETWORK_ERR
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:INVALID_MODEM_STATE
+     *   RadioError:NETWORK_NOT_READY
+     *   RadioError:OPERATION_NOT_ALLOWED
+     *   RadioError:NO_RESOURCES
+     *   RadioError:CANCELLED
+     *   RadioError:SIM_ABSENT
+     *   RadioError:SIMULTANEOUS_SMS_AND_CALL_NOT_ALLOWED
+     *   RadioError:ACCESS_BARRED
+     *   RadioError:BLOCKED_DUE_TO_CALL
+     */
+    oneway sendCdmaSmsExpectMoreResponse_1_6(RadioResponseInfo info, SendSmsResult sms);
 };
