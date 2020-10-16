@@ -19,6 +19,7 @@ package android.hardware.tv.tuner@1.1;
 import @1.0::Constant;
 import @1.0::DemuxFilterMmtpRecordEvent;
 import @1.0::DemuxFilterTsRecordEvent;
+import @1.0::DemuxScIndex;
 import @1.0::FrontendAtsc3Bandwidth;
 import @1.0::FrontendAtsc3Modulation;
 import @1.0::FrontendAtsc3TimeInterleaveMode;
@@ -694,4 +695,31 @@ safe_union AvStreamType {
     VideoStreamType video;
 
     AudioStreamType audio;
+};
+
+/**
+ * Indexes can be tagged by start point of slice groups according to ISO/IEC 14496-10.
+ */
+@export
+enum DemuxScIndex : @1.0::DemuxScIndex {
+    /**
+     * All blocks are coded as I blocks.
+     */
+    I_SLICE = 1 << 4,
+    /**
+     * Blocks are coded as I or P blocks.
+     */
+    P_SLICE = 1 << 5,
+    /**
+     * Blocks are coded as I, P or B blocks.
+     */
+    B_SLICE = 1 << 6,
+    /**
+     * A so-called switching I slice that is coded.
+     */
+    SI_SLICE = 1 << 7,
+    /**
+     * A so-called switching P slice that is coded.
+     */
+    SP_SLICE = 1 << 8,
 };
