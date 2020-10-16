@@ -17,27 +17,28 @@
 #define LOG_TAG "GnssPsdsAidl"
 
 #include "GnssPsds.h"
-
+#include <aidl/android/hardware/gnss/BnGnss.h>
 #include <log/log.h>
 
 namespace aidl::android::hardware::gnss {
 
 std::shared_ptr<IGnssPsdsCallback> GnssPsds::sCallback = nullptr;
 
-ndk::ScopedAStatus GnssPsds::setCallback(const std::shared_ptr<IGnssPsdsCallback>& callback,
-                                         bool* success) {
+ndk::ScopedAStatus GnssPsds::setCallback(const std::shared_ptr<IGnssPsdsCallback>& callback) {
     ALOGD("setCallback");
     std::unique_lock<std::mutex> lock(mMutex);
     sCallback = callback;
-    *success = true;
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus GnssPsds::injectPsdsData(PsdsType psdsType, const std::vector<uint8_t>& psdsData,
-                                            bool* success) {
+ndk::ScopedAStatus GnssPsds::injectPsdsData(PsdsType psdsType,
+                                            const std::vector<uint8_t>& psdsData) {
     ALOGD("injectPsdsData. psdsType: %d, psdsData: %d bytes", static_cast<int>(psdsType),
           static_cast<int>(psdsData.size()));
-    *success = (psdsData.size() > 0);
-    return ndk::ScopedAStatus::ok();
+    if (psdsData.size() > 0) {
+        return ndk::ScopedAStatus::ok();
+    } else {
+        return ndk::ScopedAStatus::fromServiceSpecificError(IGnss::ERROR_INVALID_ARGUMENT);
+    }
 }
 }  // namespace aidl::android::hardware::gnss

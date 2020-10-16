@@ -32,18 +32,14 @@ interface IGnssPsds {
      * @param psdsType Type of PSDS data.
      * @param psdsData GNSS PSDS data. Framework must not parse the data since the data format is
      *                 opaque to framework.
-     *
-     * @return True if the operation is successful.
      */
-    boolean injectPsdsData(in PsdsType psdsType, in byte[] psdsData);
+    void injectPsdsData(in PsdsType psdsType, in byte[] psdsData);
 
     /**
      * Opens the PSDS interface and provides the callback routines to the implementation of this
      * interface.
      *
      * @param callback Handle to the IGnssPsdsCallback interface.
-     *
-     * @return True if the operation is successful.
      */
-    boolean setCallback(in IGnssPsdsCallback callback);
+    void setCallback(in IGnssPsdsCallback callback);
 }

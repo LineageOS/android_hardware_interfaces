@@ -18,13 +18,50 @@
 
 #include "Gnss.h"
 #include <log/log.h>
+#include "GnssConfiguration.h"
 #include "GnssPsds.h"
 
 namespace aidl::android::hardware::gnss {
 
+std::shared_ptr<IGnssCallback> Gnss::sGnssCallback = nullptr;
+
+ndk::ScopedAStatus Gnss::setCallback(const std::shared_ptr<IGnssCallback>& callback) {
+    ALOGD("Gnss::setCallback");
+    if (callback == nullptr) {
+        ALOGE("%s: Null callback ignored", __func__);
+        return ndk::ScopedAStatus::fromExceptionCode(STATUS_INVALID_OPERATION);
+    }
+
+    sGnssCallback = callback;
+
+    int capabilities = (int)IGnssCallback::CAPABILITY_SATELLITE_BLOCKLIST;
+    auto status = sGnssCallback->gnssSetCapabilitiesCb(capabilities);
+    if (!status.isOk()) {
+        ALOGE("%s: Unable to invoke callback.gnssSetCapabilities", __func__);
+    }
+
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Gnss::close() {
+    ALOGD("Gnss::close");
+    sGnssCallback = nullptr;
+    return ndk::ScopedAStatus::ok();
+}
+
 ndk::ScopedAStatus Gnss::getExtensionPsds(std::shared_ptr<IGnssPsds>* iGnssPsds) {
     ALOGD("Gnss::getExtensionPsds");
     *iGnssPsds = SharedRefBase::make<GnssPsds>();
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Gnss::getExtensionGnssConfiguration(
+        std::shared_ptr<IGnssConfiguration>* iGnssConfiguration) {
+    ALOGD("Gnss::getExtensionGnssConfiguration");
+    if (mGnssConfiguration == nullptr) {
+        mGnssConfiguration = SharedRefBase::make<GnssConfiguration>();
+    }
+    *iGnssConfiguration = mGnssConfiguration;
     return ndk::ScopedAStatus::ok();
 }
 

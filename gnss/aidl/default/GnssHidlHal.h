@@ -16,25 +16,25 @@
 
 #pragma once
 
-#include <aidl/android/hardware/gnss/BnGnss.h>
-#include <aidl/android/hardware/gnss/BnGnssConfiguration.h>
-#include <aidl/android/hardware/gnss/BnGnssPsds.h>
+#include "Gnss.h"
 #include "GnssConfiguration.h"
+#include "v2_1/GnssTemplate.h"
 
 namespace aidl::android::hardware::gnss {
 
-class Gnss : public BnGnss {
-  public:
-    ndk::ScopedAStatus setCallback(const std::shared_ptr<IGnssCallback>& callback) override;
-    ndk::ScopedAStatus close() override;
-    ndk::ScopedAStatus getExtensionPsds(std::shared_ptr<IGnssPsds>* iGnssPsds) override;
-    ndk::ScopedAStatus getExtensionGnssConfiguration(
-            std::shared_ptr<IGnssConfiguration>* iGnssConfiguration) override;
+using ::android::hardware::gnss::common::implementation::GnssTemplate;
+using GnssSvInfo = ::android::hardware::gnss::V2_1::IGnssCallback::GnssSvInfo;
 
-    std::shared_ptr<GnssConfiguration> mGnssConfiguration;
+class GnssHidlHal : public GnssTemplate<::android::hardware::gnss::V2_1::IGnss> {
+  public:
+    GnssHidlHal(const std::shared_ptr<Gnss>& gnssAidl);
 
   private:
-    static std::shared_ptr<IGnssCallback> sGnssCallback;
+    hidl_vec<GnssSvInfo> filterBlocklistedSatellitesV2_1(
+            hidl_vec<GnssSvInfo> gnssSvInfoList) override;
+
+    std::shared_ptr<Gnss> mGnssAidl;
+    std::shared_ptr<GnssConfiguration> mGnssConfigurationAidl;
 };
 
 }  // namespace aidl::android::hardware::gnss
