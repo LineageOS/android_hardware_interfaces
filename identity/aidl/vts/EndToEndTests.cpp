@@ -29,7 +29,7 @@
 #include <map>
 #include <tuple>
 
-#include "VtsIdentityTestUtils.h"
+#include "Util.h"
 
 namespace android::hardware::identity {
 
@@ -50,18 +50,20 @@ using ::android::hardware::keymaster::VerificationToken;
 
 using test_utils::validateAttestationCertificate;
 
-class IdentityAidl : public testing::TestWithParam<std::string> {
+class EndToEndTests : public testing::TestWithParam<std::string> {
   public:
     virtual void SetUp() override {
         credentialStore_ = android::waitForDeclaredService<IIdentityCredentialStore>(
                 String16(GetParam().c_str()));
         ASSERT_NE(credentialStore_, nullptr);
+        halApiVersion_ = credentialStore_->getInterfaceVersion();
     }
 
     sp<IIdentityCredentialStore> credentialStore_;
+    int halApiVersion_;
 };
 
-TEST_P(IdentityAidl, hardwareInformation) {
+TEST_P(EndToEndTests, hardwareInformation) {
     HardwareInformation info;
     ASSERT_TRUE(credentialStore_->getHardwareInformation(&info).isOk());
     ASSERT_GT(info.credentialStoreName.size(), 0);
@@ -69,20 +71,21 @@ TEST_P(IdentityAidl, hardwareInformation) {
     ASSERT_GE(info.dataChunkSize, 256);
 }
 
-tuple<bool, string, vector<uint8_t>, vector<uint8_t>> extractFromTestCredentialData(
-        const vector<uint8_t>& credentialData) {
+tuple<bool, string, vector<uint8_t>, vector<uint8_t>, vector<uint8_t>>
+extractFromTestCredentialData(const vector<uint8_t>& credentialData) {
     string docType;
     vector<uint8_t> storageKey;
     vector<uint8_t> credentialPrivKey;
+    vector<uint8_t> sha256Pop;
 
     auto [item, _, message] = cppbor::parse(credentialData);
     if (item == nullptr) {
-        return make_tuple(false, docType, storageKey, credentialPrivKey);
+        return make_tuple(false, docType, storageKey, credentialPrivKey, sha256Pop);
     }
 
     const cppbor::Array* arrayItem = item->asArray();
     if (arrayItem == nullptr || arrayItem->size() != 3) {
-        return make_tuple(false, docType, storageKey, credentialPrivKey);
+        return make_tuple(false, docType, storageKey, credentialPrivKey, sha256Pop);
     }
 
     const cppbor::Tstr* docTypeItem = (*arrayItem)[0]->asTstr();
@@ -92,7 +95,7 @@ tuple<bool, string, vector<uint8_t>, vector<uint8_t>> extractFromTestCredentialD
     const cppbor::Bstr* encryptedCredentialKeysItem = (*arrayItem)[2]->asBstr();
     if (docTypeItem == nullptr || testCredentialItem == nullptr ||
         encryptedCredentialKeysItem == nullptr) {
-        return make_tuple(false, docType, storageKey, credentialPrivKey);
+        return make_tuple(false, docType, storageKey, credentialPrivKey, sha256Pop);
     }
 
     docType = docTypeItem->value();
@@ -103,28 +106,38 @@ tuple<bool, string, vector<uint8_t>, vector<uint8_t>> extractFromTestCredentialD
     optional<vector<uint8_t>> decryptedCredentialKeys =
             support::decryptAes128Gcm(hardwareBoundKey, encryptedCredentialKeys, docTypeVec);
     if (!decryptedCredentialKeys) {
-        return make_tuple(false, docType, storageKey, credentialPrivKey);
+        return make_tuple(false, docType, storageKey, credentialPrivKey, sha256Pop);
     }
 
     auto [dckItem, dckPos, dckMessage] = cppbor::parse(decryptedCredentialKeys.value());
     if (dckItem == nullptr) {
-        return make_tuple(false, docType, storageKey, credentialPrivKey);
+        return make_tuple(false, docType, storageKey, credentialPrivKey, sha256Pop);
     }
     const cppbor::Array* dckArrayItem = dckItem->asArray();
-    if (dckArrayItem == nullptr || dckArrayItem->size() != 2) {
-        return make_tuple(false, docType, storageKey, credentialPrivKey);
+    if (dckArrayItem == nullptr) {
+        return make_tuple(false, docType, storageKey, credentialPrivKey, sha256Pop);
+    }
+    if (dckArrayItem->size() < 2) {
+        return make_tuple(false, docType, storageKey, credentialPrivKey, sha256Pop);
     }
     const cppbor::Bstr* storageKeyItem = (*dckArrayItem)[0]->asBstr();
     const cppbor::Bstr* credentialPrivKeyItem = (*dckArrayItem)[1]->asBstr();
     if (storageKeyItem == nullptr || credentialPrivKeyItem == nullptr) {
-        return make_tuple(false, docType, storageKey, credentialPrivKey);
+        return make_tuple(false, docType, storageKey, credentialPrivKey, sha256Pop);
     }
     storageKey = storageKeyItem->value();
     credentialPrivKey = credentialPrivKeyItem->value();
-    return make_tuple(true, docType, storageKey, credentialPrivKey);
+    if (dckArrayItem->size() == 3) {
+        const cppbor::Bstr* sha256PopItem = (*dckArrayItem)[2]->asBstr();
+        if (sha256PopItem == nullptr) {
+            return make_tuple(false, docType, storageKey, credentialPrivKey, sha256Pop);
+        }
+        sha256Pop = sha256PopItem->value();
+    }
+    return make_tuple(true, docType, storageKey, credentialPrivKey, sha256Pop);
 }
 
-TEST_P(IdentityAidl, createAndRetrieveCredential) {
+TEST_P(EndToEndTests, createAndRetrieveCredential) {
     // First, generate a key-pair for the reader since its public key will be
     // part of the request data.
     vector<uint8_t> readerKey;
@@ -277,8 +290,9 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
 
     // Extract doctype, storage key, and credentialPrivKey from credentialData... this works
     // only because we asked for a test-credential meaning that the HBK is all zeroes.
-    auto [exSuccess, exDocType, exStorageKey, exCredentialPrivKey] =
+    auto [exSuccess, exDocType, exStorageKey, exCredentialPrivKey, exSha256Pop] =
             extractFromTestCredentialData(credentialData);
+
     ASSERT_TRUE(exSuccess);
     ASSERT_EQ(exDocType, "org.iso.18013-5.2019.mdl");
     // ... check that the public key derived from the private key matches what was
@@ -290,6 +304,13 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
             support::ecKeyPairGetPublicKey(exCredentialKeyPair.value());
     ASSERT_TRUE(exCredentialPubKey);
     ASSERT_EQ(exCredentialPubKey.value(), credentialPubKey.value());
+
+    // Starting with API version 3 (feature version 202101) we require SHA-256(ProofOfProvisioning)
+    // to be in CredentialKeys (which is stored encrypted in CredentialData). Check
+    // that it's there with the expected value.
+    if (halApiVersion_ >= 3) {
+        ASSERT_EQ(exSha256Pop, support::sha256(proofOfProvisioning.value()));
+    }
 
     // Now that the credential has been provisioned, read it back and check the
     // correct data is returned.
@@ -498,13 +519,11 @@ TEST_P(IdentityAidl, createAndRetrieveCredential) {
     EXPECT_EQ(mac, calculatedMac);
 }
 
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(IdentityAidl);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(EndToEndTests);
 INSTANTIATE_TEST_SUITE_P(
-        Identity, IdentityAidl,
+        Identity, EndToEndTests,
         testing::ValuesIn(android::getAidlHalInstanceNames(IIdentityCredentialStore::descriptor)),
         android::PrintInstanceNameToString);
-// INSTANTIATE_TEST_SUITE_P(Identity, IdentityAidl,
-// testing::Values("android.hardware.identity.IIdentityCredentialStore/default"));
 
 }  // namespace android::hardware::identity
 

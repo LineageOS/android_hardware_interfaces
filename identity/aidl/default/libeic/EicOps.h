@@ -207,14 +207,17 @@ bool eicOpsCreateCredentialKey(uint8_t privateKey[EIC_P256_PRIV_KEY_SIZE], const
 // Generate an X.509 certificate for the key identified by |publicKey| which
 // must be of the form returned by eicOpsCreateEcKey().
 //
+// If proofOfBinding is not NULL, it will be included as an OCTET_STRING
+// X.509 extension at OID 1.3.6.1.4.1.11129.2.1.26.
+//
 // The certificate will be signed by the key identified by |signingKey| which
 // must be of the form returned by eicOpsCreateEcKey().
 //
 bool eicOpsSignEcKey(const uint8_t publicKey[EIC_P256_PUB_KEY_SIZE],
                      const uint8_t signingKey[EIC_P256_PRIV_KEY_SIZE], unsigned int serial,
                      const char* issuerName, const char* subjectName, time_t validityNotBefore,
-                     time_t validityNotAfter, uint8_t* cert,
-                     size_t* certSize);  // inout
+                     time_t validityNotAfter, const uint8_t* proofOfBinding,
+                     size_t proofOfBindingSize, uint8_t* cert, size_t* certSize);  // inout
 
 // Uses |privateKey| to create an ECDSA signature of some data (the SHA-256 must
 // be given by |digestOfData|). Returns the signature in |signature|.

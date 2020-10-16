@@ -45,6 +45,7 @@
 
 #include "EicOps.h"
 
+using ::std::map;
 using ::std::optional;
 using ::std::string;
 using ::std::tuple;
@@ -212,7 +213,8 @@ bool eicOpsCreateEcKey(uint8_t privateKey[EIC_P256_PRIV_KEY_SIZE],
         return false;
     }
     if (privKey.value().size() != EIC_P256_PRIV_KEY_SIZE) {
-        eicDebug("Private key is not %zd bytes long as expected", (size_t)EIC_P256_PRIV_KEY_SIZE);
+        eicDebug("Private key is %zd bytes, expected %zd", privKey.value().size(),
+                 (size_t)EIC_P256_PRIV_KEY_SIZE);
         return false;
     }
 
@@ -224,7 +226,7 @@ bool eicOpsCreateEcKey(uint8_t privateKey[EIC_P256_PRIV_KEY_SIZE],
     }
     // ecKeyPairGetPublicKey() returns 0x04 | x | y, we don't want the leading 0x04.
     if (pubKey.value().size() != EIC_P256_PUB_KEY_SIZE + 1) {
-        eicDebug("Private key is %zd bytes long, expected %zd", pubKey.value().size(),
+        eicDebug("Public key is %zd bytes long, expected %zd", pubKey.value().size(),
                  (size_t)EIC_P256_PRIV_KEY_SIZE + 1);
         return false;
     }
@@ -272,7 +274,8 @@ bool eicOpsCreateCredentialKey(uint8_t privateKey[EIC_P256_PRIV_KEY_SIZE], const
         return false;
     }
     if (privKey.value().size() != EIC_P256_PRIV_KEY_SIZE) {
-        eicDebug("Private key is not %zd bytes long as expected", (size_t)EIC_P256_PRIV_KEY_SIZE);
+        eicDebug("Private key is %zd bytes, expected %zd", privKey.value().size(),
+                 (size_t)EIC_P256_PRIV_KEY_SIZE);
         return false;
     }
 
@@ -284,8 +287,8 @@ bool eicOpsCreateCredentialKey(uint8_t privateKey[EIC_P256_PRIV_KEY_SIZE], const
 bool eicOpsSignEcKey(const uint8_t publicKey[EIC_P256_PUB_KEY_SIZE],
                      const uint8_t signingKey[EIC_P256_PRIV_KEY_SIZE], unsigned int serial,
                      const char* issuerName, const char* subjectName, time_t validityNotBefore,
-                     time_t validityNotAfter, uint8_t* cert,
-                     size_t* certSize) {  // inout
+                     time_t validityNotAfter, const uint8_t* proofOfBinding,
+                     size_t proofOfBindingSize, uint8_t* cert, size_t* certSize) {  // inout
     vector<uint8_t> signingKeyVec(EIC_P256_PRIV_KEY_SIZE);
     memcpy(signingKeyVec.data(), signingKey, EIC_P256_PRIV_KEY_SIZE);
 
@@ -293,12 +296,18 @@ bool eicOpsSignEcKey(const uint8_t publicKey[EIC_P256_PUB_KEY_SIZE],
     pubKeyVec[0] = 0x04;
     memcpy(pubKeyVec.data() + 1, publicKey, EIC_P256_PUB_KEY_SIZE);
 
-    std::string serialDecimal = android::base::StringPrintf("%d", serial);
+    string serialDecimal = android::base::StringPrintf("%d", serial);
+
+    map<string, vector<uint8_t>> extensions;
+    if (proofOfBinding != nullptr) {
+        vector<uint8_t> proofOfBindingVec(proofOfBinding, proofOfBinding + proofOfBindingSize);
+        extensions["1.3.6.1.4.1.11129.2.1.26"] = proofOfBindingVec;
+    }
 
     optional<vector<uint8_t>> certVec =
             android::hardware::identity::support::ecPublicKeyGenerateCertificate(
                     pubKeyVec, signingKeyVec, serialDecimal, issuerName, subjectName,
-                    validityNotBefore, validityNotAfter);
+                    validityNotBefore, validityNotAfter, extensions);
     if (!certVec) {
         eicDebug("Error generating certificate");
         return false;
