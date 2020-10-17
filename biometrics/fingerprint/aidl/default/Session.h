@@ -28,14 +28,19 @@ class Session : public BnSession {
   public:
     explicit Session(std::shared_ptr<ISessionCallback> cb);
 
+    ndk::ScopedAStatus generateChallenge(int32_t cookie, int32_t timeoutSec) override;
+
+    ndk::ScopedAStatus revokeChallenge(int32_t cookie, int64_t challenge) override;
+
     ndk::ScopedAStatus enroll(int32_t cookie, const keymaster::HardwareAuthToken& hat,
                               std::shared_ptr<common::ICancellationSignal>* return_val) override;
 
-    ndk::ScopedAStatus authenticate(int32_t cookie, int64_t keystoreOperationId,
-                                    std::shared_ptr<common::ICancellationSignal>* return_val) override;
+    ndk::ScopedAStatus authenticate(
+            int32_t cookie, int64_t keystoreOperationId,
+            std::shared_ptr<common::ICancellationSignal>* return_val) override;
 
-    ndk::ScopedAStatus detectInteraction(int32_t cookie,
-                                         std::shared_ptr<common::ICancellationSignal>* return_val) override;
+    ndk::ScopedAStatus detectInteraction(
+            int32_t cookie, std::shared_ptr<common::ICancellationSignal>* return_val) override;
 
     ndk::ScopedAStatus enumerateEnrollments(int32_t cookie) override;
 
@@ -45,7 +50,7 @@ class Session : public BnSession {
     ndk::ScopedAStatus getAuthenticatorId(int32_t cookie) override;
 
     ndk::ScopedAStatus invalidateAuthenticatorId(int32_t cookie,
-                                    const keymaster::HardwareAuthToken& hat) override;
+                                                 const keymaster::HardwareAuthToken& hat) override;
 
     ndk::ScopedAStatus resetLockout(int32_t cookie,
                                     const keymaster::HardwareAuthToken& hat) override;

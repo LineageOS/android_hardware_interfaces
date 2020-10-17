@@ -29,6 +29,16 @@ interface ISessionCallback {
     void onStateChanged(in int cookie, in SessionState state);
 
     /**
+     * Notifies the framework when a challenge is successfully generated.
+     */
+    void onChallengeGenerated(in long challenge);
+
+    /**
+     * Notifies the framework when a challenge has been revoked.
+     */
+    void onChallengeRevoked(in long challenge);
+
+    /**
      * This method must only be used to notify the framework during the following states:
      *   1) SessionState::ENROLLING
      *   2) SessionState::AUTHENTICATING

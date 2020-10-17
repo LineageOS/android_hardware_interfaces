@@ -27,14 +27,6 @@ class Fingerprint : public BnFingerprint {
     ndk::ScopedAStatus createSession(int32_t sensorId, int32_t userId,
                                      const std::shared_ptr<ISessionCallback>& cb,
                                      std::shared_ptr<ISession>* _aidl_return) override;
-
-    ndk::ScopedAStatus generateChallenge(
-            int32_t sensorId, int32_t userId, int32_t timeoutSec,
-            const std::shared_ptr<IGenerateChallengeCallback>& cb) override;
-
-    ndk::ScopedAStatus revokeChallenge(
-            int32_t sensorId, int32_t userId, int64_t challenge,
-            const std::shared_ptr<IRevokeChallengeCallback>& cb) override;
 };
 
 }  // namespace aidl::android::hardware::biometrics::fingerprint

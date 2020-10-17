@@ -47,6 +47,62 @@ interface ISession {
      */
 
     /**
+     * generateChallenge:
+     *
+     * Begins a secure transaction request. Note that the challenge by itself is not useful. It only
+     * becomes useful when wrapped in a verifiable message such as a HardwareAuthToken.
+     *
+     * Canonical example:
+     *   1) User requests an operation, such as fingerprint enrollment.
+     *   2) Fingerprint enrollment cannot happen until the user confirms their lockscreen credential
+     *      (PIN/Pattern/Password).
+     *   3) However, the biometric subsystem does not want just "any" proof of credential
+     *      confirmation. It needs proof that the user explicitly authenticated credential in order
+     *      to allow addition of biometric enrollments.
+     * To secure this path, the following path is taken:
+     *   1) Upon user requesting fingerprint enroll, the framework requests
+     *      IFingerprint#generateChallenge
+     *   2) Framework sends the challenge to the credential subsystem, and upon credential
+     *      confirmation, a HAT is created, containing the challenge in the "challenge" field.
+     *   3) Framework sends the HAT to the HAL, e.g. ISession#enroll.
+     *   4) Implementation verifies the authenticity and integrity of the HAT.
+     *   5) Implementation now has confidence that the user entered their credential to allow
+     *      biometric enrollment.
+     *
+     * Note that the interface allows multiple in-flight challenges. For example, invoking
+     * generateChallenge(0, 0, timeoutSec, cb) twice does not invalidate the first challenge. The
+     * challenge is invalidated only when:
+     *   1) The provided timeout expires, or
+     *   2) IFingerprint#revokeChallenge is invoked
+     *
+     * For example, the following is a possible table of valid challenges:
+     * ----------------------------------------------
+     * | SensorId | UserId | ValidUntil | Challenge |
+     * |----------|--------|------------|-----------|
+     * | 0        | 0      | <Time1>    | <Random1> |
+     * | 0        | 0      | <Time2>    | <Random2> |
+     * | 1        | 0      | <Time3>    | <Random3> |
+     * | 0        | 10     | <Time4>    | <Random4> |
+     * ----------------------------------------------
+     *
+     * @param cookie A unique number identifying this operation
+     * @param timeoutSec Duration for which the challenge is valid for
+     */
+    void generateChallenge(in int cookie, in int timeoutSec);
+
+    /**
+     * revokeChallenge:
+     *
+     * Revokes a challenge that was previously generated. Note that if an invalid combination of
+     * parameters is requested, the implementation must still notify the framework using the
+     * provided callback.
+     *
+     * @param cookie A unique number identifying this operation
+     * @param challenge Challenge that should be revoked.
+     */
+    void revokeChallenge(in int cookie, in long challenge);
+
+    /**
      * enroll:
      *
      * A request to add a fingerprint enrollment.
