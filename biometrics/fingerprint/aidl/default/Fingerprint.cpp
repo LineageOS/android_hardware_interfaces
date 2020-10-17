@@ -60,17 +60,4 @@ ndk::ScopedAStatus Fingerprint::createSession(int32_t /*sensorId*/, int32_t /*us
     *return_val = SharedRefBase::make<Session>(cb);
     return ndk::ScopedAStatus::ok();
 }
-
-ndk::ScopedAStatus Fingerprint::generateChallenge(
-        int32_t /*sensorId*/, int32_t /*userId*/, int32_t /*timeoutSec*/,
-        const std::shared_ptr<IGenerateChallengeCallback>& /*cb*/) {
-    return ndk::ScopedAStatus::ok();
-}
-
-ndk::ScopedAStatus Fingerprint::revokeChallenge(
-        int32_t /*sensorId*/, int32_t /*userId*/, int64_t /*challenge*/,
-        const std::shared_ptr<IRevokeChallengeCallback>& /*cb*/) {
-    return ndk::ScopedAStatus::ok();
-}
-
 }  // namespace aidl::android::hardware::biometrics::fingerprint

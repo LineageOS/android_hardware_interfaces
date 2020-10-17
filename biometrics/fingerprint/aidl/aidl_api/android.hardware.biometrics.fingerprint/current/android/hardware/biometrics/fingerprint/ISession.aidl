@@ -18,6 +18,8 @@
 package android.hardware.biometrics.fingerprint;
 @VintfStability
 interface ISession {
+  void generateChallenge(in int cookie, in int timeoutSec);
+  void revokeChallenge(in int cookie, in long challenge);
   android.hardware.biometrics.common.ICancellationSignal enroll(in int cookie, in android.hardware.keymaster.HardwareAuthToken hat);
   android.hardware.biometrics.common.ICancellationSignal authenticate(in int cookie, in long operationId);
   android.hardware.biometrics.common.ICancellationSignal detectInteraction(in int cookie);
