@@ -16,22 +16,17 @@
 
 #pragma once
 
-#include <aidl/android/hardware/gnss/BnGnssPsds.h>
+#include <android/hardware/gnss/BnGnssCallback.h>
+#include "GnssCallbackEventQueue.h"
 
-namespace aidl::android::hardware::gnss {
-
-struct GnssPsds : public BnGnssPsds {
+/* Callback class for data & Event. */
+class GnssCallbackAidl : public android::hardware::gnss::BnGnssCallback {
   public:
-    ndk::ScopedAStatus setCallback(const std::shared_ptr<IGnssPsdsCallback>& callback) override;
-    ndk::ScopedAStatus injectPsdsData(PsdsType psdsType,
-                                      const std::vector<uint8_t>& psdsData) override;
+    GnssCallbackAidl() : capabilities_cbq_("capabilities"){};
+    ~GnssCallbackAidl(){};
 
-  private:
-    // Guarded by mMutex
-    static std::shared_ptr<IGnssPsdsCallback> sCallback;
+    android::binder::Status gnssSetCapabilitiesCb(const int capabilities) override;
 
-    // Synchronization lock for sCallback
-    mutable std::mutex mMutex;
+    int last_capabilities_;
+    android::hardware::gnss::common::GnssCallbackEventQueue<int> capabilities_cbq_;
 };
-
-}  // namespace aidl::android::hardware::gnss

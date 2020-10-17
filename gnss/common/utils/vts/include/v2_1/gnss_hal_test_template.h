@@ -119,7 +119,7 @@ class GnssHalTestTemplate : public testing::TestWithParam<std::string> {
      * SetUpGnssCallback:
      *   Set GnssCallback and verify the result.
      */
-    void SetUpGnssCallback();
+    virtual void SetUpGnssCallback();
 
     /*
      * StartAndCheckFirstLocation:

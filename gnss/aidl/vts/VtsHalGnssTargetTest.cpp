@@ -13,60 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <aidl/Gtest.h>
-#include <aidl/Vintf.h>
+
+#include "gnss_hal_test.h"
 
 #include <android/hardware/gnss/IGnss.h>
-#include <android/hardware/gnss/IGnssPsds.h>
 #include <binder/IServiceManager.h>
 #include <binder/ProcessState.h>
 
 using android::ProcessState;
-using android::sp;
-using android::String16;
-using android::binder::Status;
-using android::hardware::gnss::IGnss;
-using android::hardware::gnss::IGnssPsds;
-using android::hardware::gnss::PsdsType;
 
-class GnssAidlHalTest : public testing::TestWithParam<std::string> {
-  public:
-    virtual void SetUp() override {
-        gnss_hal_ = android::waitForDeclaredService<IGnss>(String16(GetParam().c_str()));
-        ASSERT_NE(gnss_hal_, nullptr);
-    }
-
-    sp<IGnss> gnss_hal_;
-};
-
-/*
- * SetupTeardownCreateCleanup:
- * Requests the gnss HAL then calls cleanup
- *
- * Empty test fixture to verify basic Setup & Teardown
- */
-TEST_P(GnssAidlHalTest, SetupTeardownCreateCleanup) {}
-
-/*
- * TestPsdsExtension:
- * 1. Gets the PsdsExtension and verifies that it returns a non-null extension.
- * 2. Injects empty PSDS data and verifies that it returns false.
- */
-TEST_P(GnssAidlHalTest, TestPsdsExtension) {
-    sp<IGnssPsds> iGnssPsds;
-    auto status = gnss_hal_->getExtensionPsds(&iGnssPsds);
-    ASSERT_TRUE(status.isOk());
-    ASSERT_TRUE(iGnssPsds != nullptr);
-
-    bool success;
-    status = iGnssPsds->injectPsdsData(PsdsType::LONG_TERM, std::vector<uint8_t>(), &success);
-    ASSERT_TRUE(status.isOk());
-    ASSERT_FALSE(success);
-}
-
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GnssAidlHalTest);
-INSTANTIATE_TEST_SUITE_P(, GnssAidlHalTest,
-                         testing::ValuesIn(android::getAidlHalInstanceNames(IGnss::descriptor)),
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GnssHalTest);
+INSTANTIATE_TEST_SUITE_P(, GnssHalTest,
+                         testing::ValuesIn(android::getAidlHalInstanceNames(IGnssAidl::descriptor)),
                          android::PrintInstanceNameToString);
 
 int main(int argc, char** argv) {

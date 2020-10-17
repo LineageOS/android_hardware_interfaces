@@ -14,24 +14,15 @@
  * limitations under the License.
  */
 
-#pragma once
+#include <android/hardware/radio/1.6/types.h>
 
-#include <aidl/android/hardware/gnss/BnGnssPsds.h>
+#include "vts_test_util.h"
 
-namespace aidl::android::hardware::gnss {
-
-struct GnssPsds : public BnGnssPsds {
-  public:
-    ndk::ScopedAStatus setCallback(const std::shared_ptr<IGnssPsdsCallback>& callback) override;
-    ndk::ScopedAStatus injectPsdsData(PsdsType psdsType,
-                                      const std::vector<uint8_t>& psdsData) override;
-
-  private:
-    // Guarded by mMutex
-    static std::shared_ptr<IGnssPsdsCallback> sCallback;
-
-    // Synchronization lock for sCallback
-    mutable std::mutex mMutex;
-};
-
-}  // namespace aidl::android::hardware::gnss
+/*
+ * Check multiple radio error codes which are possibly returned because of the different
+ * vendor/devices implementations. It allows optional checks for general errors or/and oem errors.
+ */
+::testing::AssertionResult CheckAnyOfErrors(
+        ::android::hardware::radio::V1_6::RadioError err,
+        std::vector<::android::hardware::radio::V1_6::RadioError> generalError,
+        CheckFlag flag = CHECK_DEFAULT);
