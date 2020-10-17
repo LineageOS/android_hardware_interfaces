@@ -25,6 +25,16 @@ enum SessionState {
     IDLING,
 
     /**
+     * The HAL is processing the ISession#generateChallenge request.
+     */
+    GENERATING_CHALLENGE,
+
+    /**
+     * The HAL is processing the ISession#revokeChallenge request.
+     */
+    REVOKING_CHALLENGE,
+
+    /**
      * The HAL is processing the ISession#enroll request.
      */
     ENROLLING,
