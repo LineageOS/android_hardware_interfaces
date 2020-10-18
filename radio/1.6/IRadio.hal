@@ -16,6 +16,9 @@
 
 package android.hardware.radio@1.6;
 
+
+import @1.0::CdmaSmsMessage;
+import @1.0::GsmSmsMessage;
 import @1.2::DataRequestReason;
 import @1.5::IRadio;
 import @1.5::AccessNetwork;
@@ -87,4 +90,65 @@ interface IRadio extends @1.5::IRadio {
     oneway setupDataCall_1_6(int32_t serial, AccessNetwork accessNetwork,
             DataProfileInfo dataProfileInfo, bool roamingAllowed,
             DataRequestReason reason, vec<LinkAddress> addresses, vec<string> dnses);
+
+    /**
+     * Send an SMS message
+     *
+     * @param serial Serial number of request.
+     * @param message GsmSmsMessage as defined in types.hal
+     *
+     * Response function is IRadioResponse.sendSmsResponse_1_6()
+     *
+     * Note this API is the same as the 1.0
+     *
+     * Based on the return error, caller decides to resend if sending sms
+     * fails. RadioError:SMS_SEND_FAIL_RETRY means retry (i.e. error cause is 332)
+     * and RadioError:GENERIC_FAILURE means no retry (i.e. error cause is 500)
+     */
+    oneway sendSms_1_6(int32_t serial, GsmSmsMessage message);
+
+    /**
+     * Send an SMS message. Identical to sendSms_1_6,
+     * except that more messages are expected to be sent soon. If possible,
+     * keep SMS relay protocol link open (eg TS 27.005 AT+CMMS command)
+     *
+     * @param serial Serial number of request.
+     * @param message GsmSmsMessage as defined in types.hal
+     *
+     * Response function is IRadioResponse.sendSMSExpectMoreResponse_1_6()
+     *
+     * Note this API is the same as the 1.0
+     *
+     * Based on the return error, caller decides to resend if sending sms
+     * fails. RadioError:SMS_SEND_FAIL_RETRY means retry (i.e. error cause is 332)
+     * and RadioError:GENERIC_FAILURE means no retry (i.e. error cause is 500)
+     */
+    oneway sendSMSExpectMore_1_6(int32_t serial, GsmSmsMessage message);
+
+    /**
+     * Send a CDMA SMS message
+     *
+     * @param serial Serial number of request.
+     * @param sms Cdma Sms to be sent described by CdmaSmsMessage in types.hal
+     *
+     * Response callback is IRadioResponse.sendCdmaSmsResponse_1_6()
+     *
+     * Note this API is the same as the 1.0
+     *
+     */
+    oneway sendCdmaSms_1_6(int32_t serial, CdmaSmsMessage sms);
+
+    /**
+     * Send an SMS message. Identical to sendCdmaSms_1_6,
+     * except that more messages are expected to be sent soon.
+     *
+     * @param serial Serial number of request.
+     * @param sms Cdma Sms to be sent described by CdmaSmsMessage in types.hal
+     *
+     * Response callback is IRadioResponse.sendCdmaSMSExpectMoreResponse_1_6()
+     *
+     * Note this API is the same as the 1.5
+     *
+     */
+    oneway sendCdmaSmsExpectMore_1_6(int32_t serial, CdmaSmsMessage sms);
 };

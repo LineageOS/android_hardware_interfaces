@@ -14,19 +14,11 @@
  * limitations under the License.
  */
 
-#pragma once
+#include "GnssCallbackAidl.h"
+#include <log/log.h>
 
-#include <aidl/android/hardware/biometrics/fingerprint/BnFingerprint.h>
-
-namespace aidl::android::hardware::biometrics::fingerprint {
-
-class Fingerprint : public BnFingerprint {
-  public:
-    ndk::ScopedAStatus getSensorProps(std::vector<SensorProps>* _aidl_return) override;
-
-    ndk::ScopedAStatus createSession(int32_t sensorId, int32_t userId,
-                                     const std::shared_ptr<ISessionCallback>& cb,
-                                     std::shared_ptr<ISession>* _aidl_return) override;
-};
-
-}  // namespace aidl::android::hardware::biometrics::fingerprint
+android::binder::Status GnssCallbackAidl::gnssSetCapabilitiesCb(const int capabilities) {
+    ALOGI("Capabilities received %d", capabilities);
+    capabilities_cbq_.store(capabilities);
+    return android::binder::Status::ok();
+}

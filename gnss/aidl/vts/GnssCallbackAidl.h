@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
-package android.hardware.biometrics.fingerprint;
+#pragma once
 
-@VintfStability
-oneway interface IRevokeChallengeCallback {
-    /**
-     * Notifies the framework when a challenge has been revoked.
-     */
-    void onChallengeRevoked(in int sensorId, in int userId, in long challenge);
-}
+#include <android/hardware/gnss/BnGnssCallback.h>
+#include "GnssCallbackEventQueue.h"
 
+/* Callback class for data & Event. */
+class GnssCallbackAidl : public android::hardware::gnss::BnGnssCallback {
+  public:
+    GnssCallbackAidl() : capabilities_cbq_("capabilities"){};
+    ~GnssCallbackAidl(){};
+
+    android::binder::Status gnssSetCapabilitiesCb(const int capabilities) override;
+
+    int last_capabilities_;
+    android::hardware::gnss::common::GnssCallbackEventQueue<int> capabilities_cbq_;
+};

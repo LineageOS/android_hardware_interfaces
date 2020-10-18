@@ -22,10 +22,9 @@ namespace aidl::android::hardware::gnss {
 
 struct GnssPsds : public BnGnssPsds {
   public:
-    ndk::ScopedAStatus setCallback(const std::shared_ptr<IGnssPsdsCallback>& callback,
-                                   bool* success) override;
-    ndk::ScopedAStatus injectPsdsData(PsdsType psdsType, const std::vector<uint8_t>& psdsData,
-                                      bool* success) override;
+    ndk::ScopedAStatus setCallback(const std::shared_ptr<IGnssPsdsCallback>& callback) override;
+    ndk::ScopedAStatus injectPsdsData(PsdsType psdsType,
+                                      const std::vector<uint8_t>& psdsData) override;
 
   private:
     // Guarded by mMutex

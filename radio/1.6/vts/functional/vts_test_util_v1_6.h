@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-#pragma once
+#include <android/hardware/radio/1.6/types.h>
 
-#include <aidl/android/hardware/biometrics/fingerprint/BnFingerprint.h>
+#include "vts_test_util.h"
 
-namespace aidl::android::hardware::biometrics::fingerprint {
-
-class Fingerprint : public BnFingerprint {
-  public:
-    ndk::ScopedAStatus getSensorProps(std::vector<SensorProps>* _aidl_return) override;
-
-    ndk::ScopedAStatus createSession(int32_t sensorId, int32_t userId,
-                                     const std::shared_ptr<ISessionCallback>& cb,
-                                     std::shared_ptr<ISession>* _aidl_return) override;
-};
-
-}  // namespace aidl::android::hardware::biometrics::fingerprint
+/*
+ * Check multiple radio error codes which are possibly returned because of the different
+ * vendor/devices implementations. It allows optional checks for general errors or/and oem errors.
+ */
+::testing::AssertionResult CheckAnyOfErrors(
+        ::android::hardware::radio::V1_6::RadioError err,
+        std::vector<::android::hardware::radio::V1_6::RadioError> generalError,
+        CheckFlag flag = CHECK_DEFAULT);

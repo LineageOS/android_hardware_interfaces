@@ -15,8 +15,21 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.biometrics.fingerprint;
+package android.hardware.gnss;
 @VintfStability
-interface IRevokeChallengeCallback {
-  oneway void onChallengeRevoked(in int sensorId, in int userId, in long challenge);
+interface IGnssConfiguration {
+  void setSuplVersion(in int version);
+  void setSuplMode(in int mode);
+  void setLppProfile(in int lppProfile);
+  void setGlonassPositioningProtocol(in int protocol);
+  void setEmergencySuplPdn(in boolean enable);
+  void setEsExtensionSec(in int emergencyExtensionSeconds);
+  void setBlocklist(in android.hardware.gnss.BlocklistedSource[] blocklist);
+  const int SUPL_MODE_MSB = 1;
+  const int SUPL_MODE_MSA = 2;
+  const int LPP_PROFILE_USER_PLANE = 1;
+  const int LPP_PROFILE_CONTROL_PLANE = 2;
+  const int GLONASS_POS_PROTOCOL_RRC_CPLANE = 1;
+  const int GLONASS_POS_PROTOCOL_RRLP_UPLANE = 2;
+  const int GLONASS_POS_PROTOCOL_LPP_UPLANE = 4;
 }

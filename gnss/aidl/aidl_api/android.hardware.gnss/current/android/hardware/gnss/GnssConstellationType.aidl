@@ -15,8 +15,15 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.biometrics.fingerprint;
-@VintfStability
-interface IGenerateChallengeCallback {
-  oneway void onChallengeGenerated(in int sensorId, in int userId, in long challenge);
+package android.hardware.gnss;
+@Backing(type="int") @VintfStability
+enum GnssConstellationType {
+  UNKNOWN = 0,
+  GPS = 1,
+  SBAS = 2,
+  GLONASS = 3,
+  QZSS = 4,
+  BEIDOU = 5,
+  GALILEO = 6,
+  IRNSS = 7,
 }
