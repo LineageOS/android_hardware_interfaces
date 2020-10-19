@@ -65,12 +65,165 @@ TEST_P(RadioHidlTest_v1_6, setupDataCall_1_6) {
     EXPECT_EQ(serial, radioRsp_v1_6->rspInfo.serial);
 
     if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_6->rspInfo.error,
-                                     {RadioError::SIM_ABSENT, RadioError::RADIO_NOT_AVAILABLE,
-                                      RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW}));
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_v1_6->rspInfo.error,
+                {::android::hardware::radio::V1_6::RadioError::SIM_ABSENT,
+                 ::android::hardware::radio::V1_6::RadioError::RADIO_NOT_AVAILABLE,
+                 ::android::hardware::radio::V1_6::RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW}));
     } else if (cardStatus.base.base.base.cardState == CardState::PRESENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_6->rspInfo.error,
-                                     {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE,
-                                      RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW}));
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_v1_6->rspInfo.error,
+                {::android::hardware::radio::V1_6::RadioError::NONE,
+                 ::android::hardware::radio::V1_6::RadioError::RADIO_NOT_AVAILABLE,
+                 ::android::hardware::radio::V1_6::RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW}));
+    }
+}
+
+/*
+ * Test IRadio_1_6.sendSms() for the response returned.
+ */
+TEST_P(RadioHidlTest_v1_6, sendSms_1_6) {
+    LOG(DEBUG) << "sendSms";
+    serial = GetRandomSerialNumber();
+    GsmSmsMessage msg;
+    msg.smscPdu = "";
+    msg.pdu = "01000b916105770203f3000006d4f29c3e9b01";
+
+    radio_v1_6->sendSms(serial, msg);
+
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_6->rspInfo.serial);
+
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_v1_6->rspInfo.error,
+            {::android::hardware::radio::V1_6::RadioError::INVALID_ARGUMENTS,
+             ::android::hardware::radio::V1_6::RadioError::INVALID_STATE,
+             ::android::hardware::radio::V1_6::RadioError::SIM_ABSENT},
+            CHECK_GENERAL_ERROR));
+        EXPECT_EQ(0, radioRsp_v1_6->sendSmsResult.errorCode);
+    }
+    LOG(DEBUG) << "sendSms finished";
+}
+
+/*
+ * Test IRadio_1_6.sendSMSExpectMore() for the response returned.
+ */
+TEST_P(RadioHidlTest_v1_6, sendSMSExpectMore_1_6) {
+    LOG(DEBUG) << "sendSMSExpectMore";
+    serial = GetRandomSerialNumber();
+    GsmSmsMessage msg;
+    msg.smscPdu = "";
+    msg.pdu = "01000b916105770203f3000006d4f29c3e9b01";
+
+    radio_v1_6->sendSMSExpectMore(serial, msg);
+
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_6->rspInfo.serial);
+
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_v1_6->rspInfo.error,
+            {::android::hardware::radio::V1_6::RadioError::INVALID_ARGUMENTS,
+             ::android::hardware::radio::V1_6::RadioError::INVALID_STATE,
+             ::android::hardware::radio::V1_6::RadioError::SIM_ABSENT},
+            CHECK_GENERAL_ERROR));
+    }
+    LOG(DEBUG) << "sendSMSExpectMore finished";
+}
+
+/*
+ * Test IRadio_1_6.sendCdmaSms() for the response returned.
+ */
+TEST_P(RadioHidlTest_v1_6, sendCdmaSms_1_6) {
+    LOG(DEBUG) << "sendCdmaSms";
+    serial = GetRandomSerialNumber();
+
+    // Create a CdmaSmsAddress
+    CdmaSmsAddress cdmaSmsAddress;
+    cdmaSmsAddress.digitMode = CdmaSmsDigitMode::FOUR_BIT;
+    cdmaSmsAddress.numberMode = CdmaSmsNumberMode::NOT_DATA_NETWORK;
+    cdmaSmsAddress.numberType = CdmaSmsNumberType::UNKNOWN;
+    cdmaSmsAddress.numberPlan = CdmaSmsNumberPlan::UNKNOWN;
+    cdmaSmsAddress.digits = (std::vector<uint8_t>){11, 1, 6, 5, 10, 7, 7, 2, 10, 3, 10, 3};
+
+    // Create a CdmaSmsSubAddress
+    CdmaSmsSubaddress cdmaSmsSubaddress;
+    cdmaSmsSubaddress.subaddressType = CdmaSmsSubaddressType::NSAP;
+    cdmaSmsSubaddress.odd = false;
+    cdmaSmsSubaddress.digits = (std::vector<uint8_t>){};
+
+    // Create a CdmaSmsMessage
+    android::hardware::radio::V1_0::CdmaSmsMessage cdmaSmsMessage;
+    cdmaSmsMessage.teleserviceId = 4098;
+    cdmaSmsMessage.isServicePresent = false;
+    cdmaSmsMessage.serviceCategory = 0;
+    cdmaSmsMessage.address = cdmaSmsAddress;
+    cdmaSmsMessage.subAddress = cdmaSmsSubaddress;
+    cdmaSmsMessage.bearerData =
+        (std::vector<uint8_t>){15, 0, 3, 32, 3, 16, 1, 8, 16, 53, 76, 68, 6, 51, 106, 0};
+
+    radio_v1_6->sendCdmaSms(serial, cdmaSmsMessage);
+
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_6->rspInfo.serial);
+
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_v1_6->rspInfo.error,
+            {::android::hardware::radio::V1_6::RadioError::INVALID_ARGUMENTS,
+             ::android::hardware::radio::V1_6::RadioError::INVALID_STATE,
+             ::android::hardware::radio::V1_6::RadioError::SIM_ABSENT},
+            CHECK_GENERAL_ERROR));
+    }
+    LOG(DEBUG) << "sendCdmaSms finished";
+}
+
+/*
+ * Test IRadio_1_6.sendCdmaSmsExpectMore() for the response returned.
+ */
+TEST_P(RadioHidlTest_v1_6, sendCdmaSmsExpectMore_1_6) {
+    serial = GetRandomSerialNumber();
+
+    // Create a CdmaSmsAddress
+    CdmaSmsAddress cdmaSmsAddress;
+    cdmaSmsAddress.digitMode = CdmaSmsDigitMode::FOUR_BIT;
+    cdmaSmsAddress.numberMode = CdmaSmsNumberMode::NOT_DATA_NETWORK;
+    cdmaSmsAddress.numberType = CdmaSmsNumberType::UNKNOWN;
+    cdmaSmsAddress.numberPlan = CdmaSmsNumberPlan::UNKNOWN;
+    cdmaSmsAddress.digits = (std::vector<uint8_t>){11, 1, 6, 5, 10, 7, 7, 2, 10, 3, 10, 3};
+
+    // Create a CdmaSmsSubAddress
+    CdmaSmsSubaddress cdmaSmsSubaddress;
+    cdmaSmsSubaddress.subaddressType = CdmaSmsSubaddressType::NSAP;
+    cdmaSmsSubaddress.odd = false;
+    cdmaSmsSubaddress.digits = (std::vector<uint8_t>){};
+
+    // Create a CdmaSmsMessage
+    android::hardware::radio::V1_0::CdmaSmsMessage cdmaSmsMessage;
+    cdmaSmsMessage.teleserviceId = 4098;
+    cdmaSmsMessage.isServicePresent = false;
+    cdmaSmsMessage.serviceCategory = 0;
+    cdmaSmsMessage.address = cdmaSmsAddress;
+    cdmaSmsMessage.subAddress = cdmaSmsSubaddress;
+    cdmaSmsMessage.bearerData =
+            (std::vector<uint8_t>){15, 0, 3, 32, 3, 16, 1, 8, 16, 53, 76, 68, 6, 51, 106, 0};
+
+    radio_v1_6->sendCdmaSmsExpectMore(serial, cdmaSmsMessage);
+
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_6->rspInfo.serial);
+
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_v1_6->rspInfo.error,
+                {::android::hardware::radio::V1_6::RadioError::INVALID_ARGUMENTS,
+                 ::android::hardware::radio::V1_6::RadioError::INVALID_STATE,
+                 ::android::hardware::radio::V1_6::RadioError::SIM_ABSENT},
+                CHECK_GENERAL_ERROR));
     }
 }
