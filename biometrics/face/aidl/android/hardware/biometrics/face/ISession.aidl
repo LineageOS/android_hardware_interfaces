@@ -68,11 +68,9 @@ interface ISession {
      * ----------------------------------------------
      *
      * @param cookie A unique number identifying this operation
-     * @param sensorId Sensor to associate the challenge with
-     * @param userId User to associate the challenge with
      * @param timeoutSec Duration for which the challenge is valid for
      */
-    void generateChallenge(in int cookie, in int sensorId, in int userId, in int timeoutSec);
+    void generateChallenge(in int cookie, in int timeoutSec);
 
     /**
      * revokeChallenge:
@@ -82,11 +80,9 @@ interface ISession {
      * provided callback.
      *
      * @param cookie A unique number identifying this operation
-     * @param sensorId Sensor that the revocation should apply to.
-     * @param userId User that the revocation should apply to.
      * @param challenge Challenge that should be revoked.
      */
-    void revokeChallenge(in int cookie, in int sensorId, in int userId, in long challenge);
+    void revokeChallenge(in int cookie, in long challenge);
 
     /**
      * enroll:
