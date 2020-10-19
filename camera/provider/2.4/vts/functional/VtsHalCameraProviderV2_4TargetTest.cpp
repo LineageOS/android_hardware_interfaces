@@ -4453,9 +4453,12 @@ void CameraHidlTest::processCaptureRequestInternal(uint64_t bufferUsage,
                             nullptr};
         } else {
             allocateGraphicBuffer(testStream.width, testStream.height,
-                    android_convertGralloc1To0Usage(halStreamConfig.streams[0].producerUsage,
-                        halStreamConfig.streams[0].consumerUsage),
-                    halStreamConfig.streams[0].overrideFormat, &buffer_handle);
+                                  /* We don't look at halStreamConfig.streams[0].consumerUsage
+                                   * since that is 0 for output streams
+                                   */
+                                  android_convertGralloc1To0Usage(
+                                          halStreamConfig.streams[0].producerUsage, bufferUsage),
+                                  halStreamConfig.streams[0].overrideFormat, &buffer_handle);
             outputBuffer = {halStreamConfig.streams[0].id,
                             bufferId,
                             buffer_handle,
