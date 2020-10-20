@@ -21,12 +21,19 @@
 
 using ::android::sp;
 using ::android::hardware::wifi::supplicant::V1_4::ISupplicant;
+using ::android::hardware::wifi::supplicant::V1_4::ISupplicantP2pIface;
 using ::android::hardware::wifi::supplicant::V1_4::ISupplicantStaIface;
 
 sp<ISupplicantStaIface> getSupplicantStaIface_1_4(
     const android::sp<android::hardware::wifi::supplicant::V1_4::ISupplicant>&
         supplicant) {
     return ISupplicantStaIface::castFrom(getSupplicantStaIface(supplicant));
+}
+
+sp<ISupplicantP2pIface> getSupplicantP2pIface_1_4(
+    const android::sp<android::hardware::wifi::supplicant::V1_4::ISupplicant>&
+        supplicant) {
+    return ISupplicantP2pIface::castFrom(getSupplicantP2pIface(supplicant));
 }
 
 sp<ISupplicant> getSupplicant_1_4(const std::string& supplicant_instance_name,
