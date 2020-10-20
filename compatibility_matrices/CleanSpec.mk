@@ -45,6 +45,3 @@
 #$(call add-clean-step, rm -rf $(PRODUCT_OUT)/data/*)
 
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/etc/vintf/compatibility_matrix.device.xml)
-$(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/etc/vintf/compatibility_matrix.legacy.xml)
-$(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/etc/vintf/compatibility_matrix.1.xml)
-$(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/etc/vintf/compatibility_matrix.2.xml)
