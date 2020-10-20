@@ -25,8 +25,6 @@ namespace audio::policy::configuration::V7_0 {
 
 static inline size_t getChannelCount(AudioChannelMask mask) {
     switch (mask) {
-        case AudioChannelMask::AUDIO_CHANNEL_NONE:
-            return 0;
         case AudioChannelMask::AUDIO_CHANNEL_OUT_MONO:
         case AudioChannelMask::AUDIO_CHANNEL_IN_MONO:
         case AudioChannelMask::AUDIO_CHANNEL_INDEX_MASK_1:
@@ -44,12 +42,9 @@ static inline size_t getChannelCount(AudioChannelMask mask) {
         case AudioChannelMask::AUDIO_CHANNEL_OUT_2POINT1:
         case AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO_HAPTIC_A:
         case AudioChannelMask::AUDIO_CHANNEL_OUT_MONO_HAPTIC_AB:
-        case AudioChannelMask::AUDIO_CHANNEL_OUT_TRI:
-        case AudioChannelMask::AUDIO_CHANNEL_OUT_TRI_BACK:
         case AudioChannelMask::AUDIO_CHANNEL_INDEX_MASK_3:
             return 3;
         case AudioChannelMask::AUDIO_CHANNEL_OUT_2POINT0POINT2:
-        case AudioChannelMask::AUDIO_CHANNEL_OUT_3POINT1:
         case AudioChannelMask::AUDIO_CHANNEL_OUT_QUAD:
         case AudioChannelMask::AUDIO_CHANNEL_OUT_QUAD_BACK:
         case AudioChannelMask::AUDIO_CHANNEL_OUT_QUAD_SIDE:
@@ -163,8 +158,6 @@ static inline bool isOutputDevice(AudioDevice device) {
         case AudioDevice::AUDIO_DEVICE_OUT_USB_HEADSET:
         case AudioDevice::AUDIO_DEVICE_OUT_HEARING_AID:
         case AudioDevice::AUDIO_DEVICE_OUT_ECHO_CANCELLER:
-        case AudioDevice::AUDIO_DEVICE_OUT_BLE_HEADSET:
-        case AudioDevice::AUDIO_DEVICE_OUT_BLE_SPEAKER:
         case AudioDevice::AUDIO_DEVICE_OUT_DEFAULT:
         case AudioDevice::AUDIO_DEVICE_OUT_STUB:
             return true;
@@ -196,7 +189,6 @@ static inline bool isOutputDevice(AudioDevice device) {
         case AudioDevice::AUDIO_DEVICE_IN_BLUETOOTH_BLE:
         case AudioDevice::AUDIO_DEVICE_IN_HDMI_ARC:
         case AudioDevice::AUDIO_DEVICE_IN_ECHO_REFERENCE:
-        case AudioDevice::AUDIO_DEVICE_IN_BLE_HEADSET:
         case AudioDevice::AUDIO_DEVICE_IN_DEFAULT:
         case AudioDevice::AUDIO_DEVICE_IN_STUB:
             return false;
