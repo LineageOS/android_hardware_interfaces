@@ -26,6 +26,7 @@
 #include <android/hardware/wifi/1.4/IWifiChipEventCallback.h>
 #include <android/hardware/wifi/1.4/types.h>
 #include <android/hardware/wifi/1.5/IWifiChip.h>
+#include <android/hardware/wifi/1.5/types.h>
 
 #include "wifi_legacy_hal.h"
 
@@ -122,11 +123,19 @@ bool convertHidlNanConfigRequestToLegacy(
     legacy_hal::NanConfigRequest* legacy_request);
 bool convertHidlNanEnableRequest_1_4ToLegacy(
     const V1_4::NanEnableRequest& hidl_request1,
-    const V1_2::NanConfigRequestSupplemental& hidl_request2,
+    const NanConfigRequestSupplemental& hidl_request2,
     legacy_hal::NanEnableRequest* legacy_request);
 bool convertHidlNanConfigRequest_1_4ToLegacy(
     const V1_4::NanConfigRequest& hidl_request1,
-    const V1_2::NanConfigRequestSupplemental& hidl_request2,
+    const NanConfigRequestSupplemental& hidl_request2,
+    legacy_hal::NanConfigRequest* legacy_request);
+bool convertHidlNanEnableRequest_1_5ToLegacy(
+    const V1_4::NanEnableRequest& hidl_request1,
+    const NanConfigRequestSupplemental& hidl_request2,
+    legacy_hal::NanEnableRequest* legacy_request);
+bool convertHidlNanConfigRequest_1_5ToLegacy(
+    const V1_4::NanConfigRequest& hidl_request1,
+    const NanConfigRequestSupplemental& hidl_request2,
     legacy_hal::NanConfigRequest* legacy_request);
 bool convertHidlNanPublishRequestToLegacy(
     const NanPublishRequest& hidl_request,

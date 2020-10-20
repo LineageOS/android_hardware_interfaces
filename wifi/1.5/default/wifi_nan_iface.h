@@ -18,8 +18,8 @@
 #define WIFI_NAN_IFACE_H_
 
 #include <android-base/macros.h>
-#include <android/hardware/wifi/1.0/IWifiNanIfaceEventCallback.h>
-#include <android/hardware/wifi/1.4/IWifiNanIface.h>
+#include <android/hardware/wifi/1.5/IWifiNanIface.h>
+#include <android/hardware/wifi/1.5/IWifiNanIfaceEventCallback.h>
 
 #include "hidl_callback_util.h"
 #include "wifi_iface_util.h"
@@ -36,7 +36,7 @@ using namespace android::hardware::wifi::V1_2;
 /**
  * HIDL interface object used to control a NAN Iface instance.
  */
-class WifiNanIface : public V1_4::IWifiNanIface {
+class WifiNanIface : public V1_5::IWifiNanIface {
    public:
     WifiNanIface(const std::string& ifname, bool is_dedicated_iface,
                  const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
@@ -112,6 +112,19 @@ class WifiNanIface : public V1_4::IWifiNanIface {
         uint16_t cmd_id, const V1_4::NanConfigRequest& msg1,
         const V1_2::NanConfigRequestSupplemental& msg2,
         configRequest_1_4_cb hidl_status_cb) override;
+    Return<void> registerEventCallback_1_5(
+        const sp<IWifiNanIfaceEventCallback>& callback,
+        registerEventCallback_1_5_cb hidl_status_cb) override;
+    Return<void> enableRequest_1_5(
+        uint16_t cmd_id, const V1_4::NanEnableRequest& msg1,
+        const NanConfigRequestSupplemental& msg2,
+        enableRequest_1_4_cb hidl_status_cb) override;
+    Return<void> configRequest_1_5(
+        uint16_t cmd_id, const V1_4::NanConfigRequest& msg1,
+        const NanConfigRequestSupplemental& msg2,
+        configRequest_1_4_cb hidl_status_cb) override;
+    Return<void> getCapabilitiesRequest_1_5(
+        uint16_t cmd_id, getCapabilitiesRequest_cb hidl_status_cb) override;
 
    private:
     // Corresponding worker functions for the HIDL methods.
@@ -158,11 +171,22 @@ class WifiNanIface : public V1_4::IWifiNanIface {
     WifiStatus configRequest_1_4Internal(
         uint16_t cmd_id, const V1_4::NanConfigRequest& msg,
         const V1_2::NanConfigRequestSupplemental& msg2);
+    WifiStatus registerEventCallback_1_5Internal(
+        const sp<IWifiNanIfaceEventCallback>& callback);
+    WifiStatus enableRequest_1_5Internal(
+        uint16_t cmd_id, const V1_4::NanEnableRequest& msg1,
+        const NanConfigRequestSupplemental& msg2);
+    WifiStatus configRequest_1_5Internal(
+        uint16_t cmd_id, const V1_4::NanConfigRequest& msg,
+        const NanConfigRequestSupplemental& msg2);
+    WifiStatus getCapabilitiesRequest_1_5Internal(uint16_t cmd_id);
 
     // all 1_0 and descendant callbacks
     std::set<sp<V1_0::IWifiNanIfaceEventCallback>> getEventCallbacks();
     // all 1_2 and descendant callbacks
     std::set<sp<V1_2::IWifiNanIfaceEventCallback>> getEventCallbacks_1_2();
+    // all 1_5 and descendant callbacks
+    std::set<sp<IWifiNanIfaceEventCallback>> getEventCallbacks_1_5();
 
     std::string ifname_;
     bool is_dedicated_iface_;
@@ -173,6 +197,8 @@ class WifiNanIface : public V1_4::IWifiNanIface {
         event_cb_handler_;
     hidl_callback_util::HidlCallbackHandler<V1_2::IWifiNanIfaceEventCallback>
         event_cb_handler_1_2_;
+    hidl_callback_util::HidlCallbackHandler<IWifiNanIfaceEventCallback>
+        event_cb_handler_1_5_;
 
     DISALLOW_COPY_AND_ASSIGN(WifiNanIface);
 };
