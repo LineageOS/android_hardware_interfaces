@@ -13,6 +13,46 @@
 // limitations under the License.
 
 vintf_compatibility_matrix {
+    name: "framework_compatibility_matrix.legacy.xml",
+    stem: "compatibility_matrix.legacy.xml",
+    srcs: [
+        "compatibility_matrix.legacy.xml",
+    ],
+    kernel_configs: [
+        // legacy uses O kernel requirements
+        "kernel_config_o_3.18",
+        "kernel_config_o_4.4",
+        "kernel_config_o_4.9",
+    ],
+}
+
+vintf_compatibility_matrix {
+    name: "framework_compatibility_matrix.1.xml",
+    stem: "compatibility_matrix.1.xml",
+    srcs: [
+        "compatibility_matrix.1.xml",
+    ],
+    kernel_configs: [
+        "kernel_config_o_3.18",
+        "kernel_config_o_4.4",
+        "kernel_config_o_4.9",
+    ],
+}
+
+vintf_compatibility_matrix {
+    name: "framework_compatibility_matrix.2.xml",
+    stem: "compatibility_matrix.2.xml",
+    srcs: [
+        "compatibility_matrix.2.xml",
+    ],
+    kernel_configs: [
+        "kernel_config_o_mr1_3.18",
+        "kernel_config_o_mr1_4.4",
+        "kernel_config_o_mr1_4.9",
+    ],
+}
+
+vintf_compatibility_matrix {
     name: "framework_compatibility_matrix.3.xml",
     stem: "compatibility_matrix.3.xml",
     srcs: [
