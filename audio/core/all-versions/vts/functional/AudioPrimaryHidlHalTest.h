@@ -1150,7 +1150,7 @@ static void testSetAudioProperties(IStream* stream) {
             for (const auto& channelMask : profile.channelMasks) {
                 AudioConfigBase config{.format = profile.format,
                                        .sampleRateHz = sampleRate,
-                                       .channelMask = {{channelMask}}};
+                                       .channelMask = channelMask};
                 auto ret = stream->setAudioProperties(config);
                 EXPECT_TRUE(ret.isOk());
                 EXPECT_EQ(Result::OK, ret) << config.format << "; " << config.sampleRateHz << "; "
