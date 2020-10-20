@@ -41,7 +41,6 @@ namespace wifi {
 namespace V1_5 {
 namespace implementation {
 
-using android::hardware::wifi::V1_2::IWifiNanIfaceEventCallback;
 using android::hardware::wifi::V1_2::NanDataPathConfirmInd;
 
 bool CaptureIfaceEventHandlers(
@@ -56,9 +55,10 @@ class MockNanIfaceEventCallback : public IWifiNanIfaceEventCallback {
    public:
     MockNanIfaceEventCallback() = default;
 
-    MOCK_METHOD3(notifyCapabilitiesResponse,
-                 Return<void>(uint16_t, const WifiNanStatus&,
-                              const NanCapabilities&));
+    MOCK_METHOD3(
+        notifyCapabilitiesResponse,
+        Return<void>(uint16_t, const WifiNanStatus&,
+                     const android::hardware::wifi::V1_0::NanCapabilities&));
     MOCK_METHOD2(notifyEnableResponse,
                  Return<void>(uint16_t, const WifiNanStatus&));
     MOCK_METHOD2(notifyConfigResponse,
@@ -108,6 +108,9 @@ class MockNanIfaceEventCallback : public IWifiNanIfaceEventCallback {
                  Return<void>(const NanDataPathConfirmInd&));
     MOCK_METHOD1(eventDataPathScheduleUpdate,
                  Return<void>(const NanDataPathScheduleUpdateInd&));
+    MOCK_METHOD3(notifyCapabilitiesResponse_1_5,
+                 Return<void>(uint16_t, const WifiNanStatus&,
+                              const NanCapabilities&));
 };
 
 class WifiNanIfaceTest : public Test {
