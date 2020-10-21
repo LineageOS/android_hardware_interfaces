@@ -17,6 +17,9 @@
 package android.hardware.wifi@1.5;
 
 import @1.0::WifiBand;
+import @1.0::NanCipherSuiteType;
+import @1.0::NanCapabilities;
+import @1.2::NanConfigRequestSupplemental;
 
 /**
  * Wifi bands defined in 80211 spec.
@@ -34,4 +37,33 @@ enum WifiBand : @1.0::WifiBand {
      * 2.4 GHz + 5 GHz with DFS + 6 GHz + 60 GHz.
      */
     BAND_24GHZ_5GHZ_WITH_DFS_6GHZ_60GHZ = 31,
+};
+
+/**
+ * NAN configuration request parameters added in the 1.2 HAL. These are supplemental to previous
+ * versions.
+ */
+struct NanConfigRequestSupplemental {
+    /**
+     * Baseline information as defined in HAL 1.2.
+     */
+    @1.2::NanConfigRequestSupplemental V1_2;
+    /**
+     * Controls whether NAN instant communication mode is enabled.
+     */
+    bool enableInstantCommunicationMode;
+};
+
+/**
+ * NDP Capabilities response.
+ */
+struct NanCapabilities {
+    /**
+     * Baseline information as defined in HAL 1.0.
+     */
+    @1.0::NanCapabilities V1_0;
+    /**
+     * Flag to indicate id instant communication mode is supported.
+     */
+    bool instantCommunicationModeSupportFlag;
 };

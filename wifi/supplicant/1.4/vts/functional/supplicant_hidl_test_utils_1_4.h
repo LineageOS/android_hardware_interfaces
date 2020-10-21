@@ -18,10 +18,15 @@
 #define SUPPLICANT_HIDL_TEST_UTILS_1_4_H
 
 #include <android/hardware/wifi/supplicant/1.4/ISupplicant.h>
+#include <android/hardware/wifi/supplicant/1.4/ISupplicantP2pIface.h>
 #include <android/hardware/wifi/supplicant/1.4/ISupplicantStaIface.h>
 
 android::sp<android::hardware::wifi::supplicant::V1_4::ISupplicantStaIface>
 getSupplicantStaIface_1_4(
+    const android::sp<android::hardware::wifi::supplicant::V1_4::ISupplicant>&
+        supplicant);
+android::sp<android::hardware::wifi::supplicant::V1_4::ISupplicantP2pIface>
+getSupplicantP2pIface_1_4(
     const android::sp<android::hardware::wifi::supplicant::V1_4::ISupplicant>&
         supplicant);
 android::sp<android::hardware::wifi::supplicant::V1_4::ISupplicant>
