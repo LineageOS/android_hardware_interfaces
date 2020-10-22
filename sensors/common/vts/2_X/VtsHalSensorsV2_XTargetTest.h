@@ -226,6 +226,7 @@ class SensorsHidlTest : public SensorsHidlTestBaseV2_X {
     void activateAllSensors(bool enable);
     std::vector<SensorInfoType> getNonOneShotSensors();
     std::vector<SensorInfoType> getNonOneShotAndNonSpecialSensors();
+    std::vector<SensorInfoType> getNonOneShotAndNonOnChangeAndNonSpecialSensors();
     std::vector<SensorInfoType> getOneShotSensors();
     std::vector<SensorInfoType> getInjectEventSensors();
     int32_t getInvalidSensorHandle();
@@ -319,6 +320,19 @@ std::vector<SensorInfoType> SensorsHidlTest::getNonOneShotAndNonSpecialSensors()
     for (const SensorInfoType& info : getSensorsList()) {
         SensorFlagBits reportMode = extractReportMode(info.flags);
         if (reportMode != SensorFlagBits::ONE_SHOT_MODE &&
+            reportMode != SensorFlagBits::SPECIAL_REPORTING_MODE) {
+            sensors.push_back(info);
+        }
+    }
+    return sensors;
+}
+
+std::vector<SensorInfoType> SensorsHidlTest::getNonOneShotAndNonOnChangeAndNonSpecialSensors() {
+    std::vector<SensorInfoType> sensors;
+    for (const SensorInfoType& info : getSensorsList()) {
+        SensorFlagBits reportMode = extractReportMode(info.flags);
+        if (reportMode != SensorFlagBits::ONE_SHOT_MODE &&
+            reportMode != SensorFlagBits::ON_CHANGE_MODE &&
             reportMode != SensorFlagBits::SPECIAL_REPORTING_MODE) {
             sensors.push_back(info);
         }
@@ -726,8 +740,8 @@ TEST_P(SensorsHidlTest, NoStaleEvents) {
     EventCallback callback;
     getEnvironment()->registerCallback(&callback);
 
-    // This test is not valid for one-shot or special-report-mode sensors
-    const std::vector<SensorInfoType> sensors = getNonOneShotAndNonSpecialSensors();
+    // This test is not valid for one-shot, on-change or special-report-mode sensors
+    const std::vector<SensorInfoType> sensors = getNonOneShotAndNonOnChangeAndNonSpecialSensors();
     milliseconds maxMinDelay(0);
     for (const SensorInfoType& sensor : sensors) {
         milliseconds minDelay = duration_cast<milliseconds>(microseconds(sensor.minDelay));
@@ -750,10 +764,7 @@ TEST_P(SensorsHidlTest, NoStaleEvents) {
                      << " handle=0x" << std::hex << std::setw(8) << std::setfill('0')
                      << sensor.sensorHandle << std::dec << " type=" << static_cast<int>(sensor.type)
                      << " name=" << sensor.name);
-        // Some on-change sensors may not report an event without stimulus
-        if (extractReportMode(sensor.flags) != SensorFlagBits::ON_CHANGE_MODE) {
-            ASSERT_GE(callback.getEvents(sensor.sensorHandle).size(), 1);
-        }
+
         if (callback.getEvents(sensor.sensorHandle).size() >= 1) {
             lastEventTimestampMap[sensor.sensorHandle] =
                     callback.getEvents(sensor.sensorHandle).back().timestamp;
@@ -779,10 +790,7 @@ TEST_P(SensorsHidlTest, NoStaleEvents) {
         if (lastEventTimestampMap.find(sensor.sensorHandle) == lastEventTimestampMap.end()) {
             continue;
         }
-        // Skip on-change sensors that do not consistently report an initial event
-        if (callback.getEvents(sensor.sensorHandle).size() < 1) {
-            continue;
-        }
+
         // Ensure that the first event received is not stale by ensuring that its timestamp is
         // sufficiently different from the previous event
         const EventType newEvent = callback.getEvents(sensor.sensorHandle).front();
