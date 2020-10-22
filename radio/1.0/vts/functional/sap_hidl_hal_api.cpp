@@ -61,10 +61,11 @@ TEST_P(SapHidlTest, apduReq) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(sapCb->sapResponseToken, token);
 
-    ASSERT_TRUE(
-        CheckAnyOfErrors(sapCb->sapResultCode,
-                         {SapResultCode::GENERIC_FAILURE, SapResultCode::CARD_ALREADY_POWERED_OFF,
-                          SapResultCode::CARD_NOT_ACCESSSIBLE, SapResultCode::CARD_REMOVED}));
+    ASSERT_TRUE(CheckAnyOfErrors(
+            sapCb->sapResultCode,
+            {SapResultCode::GENERIC_FAILURE, SapResultCode::CARD_ALREADY_POWERED_OFF,
+             SapResultCode::CARD_NOT_ACCESSSIBLE, SapResultCode::CARD_REMOVED,
+             SapResultCode::SUCCESS}));
     LOG(DEBUG) << "apduReq finished";
 }
 
@@ -79,10 +80,10 @@ TEST_P(SapHidlTest, transferAtrReq) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(sapCb->sapResponseToken, token);
 
-    ASSERT_TRUE(
-        CheckAnyOfErrors(sapCb->sapResultCode,
-                         {SapResultCode::GENERIC_FAILURE, SapResultCode::DATA_NOT_AVAILABLE,
-                          SapResultCode::CARD_ALREADY_POWERED_OFF, SapResultCode::CARD_REMOVED}));
+    ASSERT_TRUE(CheckAnyOfErrors(sapCb->sapResultCode,
+                                 {SapResultCode::GENERIC_FAILURE, SapResultCode::DATA_NOT_AVAILABLE,
+                                  SapResultCode::CARD_ALREADY_POWERED_OFF,
+                                  SapResultCode::CARD_REMOVED, SapResultCode::SUCCESS}));
     LOG(DEBUG) << "transferAtrReq finished";
 }
 
@@ -98,10 +99,11 @@ TEST_P(SapHidlTest, powerReq) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(sapCb->sapResponseToken, token);
 
-    ASSERT_TRUE(CheckAnyOfErrors(
-        sapCb->sapResultCode, {SapResultCode::GENERIC_FAILURE, SapResultCode::CARD_NOT_ACCESSSIBLE,
-                               SapResultCode::CARD_ALREADY_POWERED_OFF, SapResultCode::CARD_REMOVED,
-                               SapResultCode::CARD_ALREADY_POWERED_ON}));
+    ASSERT_TRUE(
+            CheckAnyOfErrors(sapCb->sapResultCode,
+                             {SapResultCode::GENERIC_FAILURE, SapResultCode::CARD_NOT_ACCESSSIBLE,
+                              SapResultCode::CARD_ALREADY_POWERED_OFF, SapResultCode::CARD_REMOVED,
+                              SapResultCode::CARD_ALREADY_POWERED_ON, SapResultCode::SUCCESS}));
     LOG(DEBUG) << "powerReq finished";
 }
 
@@ -117,9 +119,10 @@ TEST_P(SapHidlTest, resetSimReq) {
     EXPECT_EQ(sapCb->sapResponseToken, token);
 
     ASSERT_TRUE(
-        CheckAnyOfErrors(sapCb->sapResultCode,
-                         {SapResultCode::GENERIC_FAILURE, SapResultCode::CARD_NOT_ACCESSSIBLE,
-                          SapResultCode::CARD_ALREADY_POWERED_OFF, SapResultCode::CARD_REMOVED}));
+            CheckAnyOfErrors(sapCb->sapResultCode,
+                             {SapResultCode::GENERIC_FAILURE, SapResultCode::CARD_NOT_ACCESSSIBLE,
+                              SapResultCode::CARD_ALREADY_POWERED_OFF, SapResultCode::CARD_REMOVED,
+                              SapResultCode::SUCCESS}));
     LOG(DEBUG) << "resetSimReq finished";
 }
 
@@ -134,8 +137,9 @@ TEST_P(SapHidlTest, transferCardReaderStatusReq) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(sapCb->sapResponseToken, token);
 
-    ASSERT_TRUE(CheckAnyOfErrors(
-        sapCb->sapResultCode, {SapResultCode::GENERIC_FAILURE, SapResultCode::DATA_NOT_AVAILABLE}));
+    ASSERT_TRUE(CheckAnyOfErrors(sapCb->sapResultCode,
+                                 {SapResultCode::GENERIC_FAILURE, SapResultCode::DATA_NOT_AVAILABLE,
+                                  SapResultCode::SUCCESS}));
     LOG(DEBUG) << "transferCardReaderStatusReq finished";
 }
 
@@ -151,6 +155,7 @@ TEST_P(SapHidlTest, setTransferProtocolReq) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(sapCb->sapResponseToken, token);
 
-    EXPECT_EQ(SapResultCode::NOT_SUPPORTED, sapCb->sapResultCode);
+    ASSERT_TRUE(CheckAnyOfErrors(sapCb->sapResultCode,
+                                 {SapResultCode::NOT_SUPPORTED, SapResultCode::SUCCESS}));
     LOG(DEBUG) << "setTransferProtocolReq finished";
 }
