@@ -22,6 +22,10 @@ AssertionResult TunerBroadcastHidlTest::filterDataOutputTest() {
     return filterDataOutputTestBase(mFilterTests);
 }
 
+AssertionResult TunerRecordHidlTest::filterDataOutputTest() {
+    return filterDataOutputTestBase(mFilterTests);
+}
+
 void TunerFilterHidlTest::configSingleFilterInDemuxTest(FilterConfig filterConf,
                                                         FrontendConfig frontendConf) {
     uint32_t feId;
@@ -115,6 +119,7 @@ void TunerRecordHidlTest::recordSingleFilterTest(FilterConfig filterConf,
     ASSERT_TRUE(mFilterTests.startFilter(filterId));
     ASSERT_TRUE(mFrontendTests.tuneFrontend(frontendConf, true /*testWithDemux*/));
     mDvrTests.testRecordOutput();
+    ASSERT_TRUE(filterDataOutputTest());
     mDvrTests.stopRecordThread();
     ASSERT_TRUE(mFrontendTests.stopTuneFrontend(true /*testWithDemux*/));
     ASSERT_TRUE(mFilterTests.stopFilter(filterId));

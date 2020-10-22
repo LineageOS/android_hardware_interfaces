@@ -340,17 +340,17 @@ void Filter::filterThreadLoop() {
 
             while (mFilterThreadRunning) {
                 std::lock_guard<std::mutex> lock(mFilterEventLock);
-                if (mFilterEvent.events.size() == 0) {
+                if (mFilterEvent.events.size() == 0 && mFilterEventExt.events.size() == 0) {
                     continue;
                 }
                 // After successfully write, send a callback and wait for the read to be done
-                if (mCallback != nullptr) {
-                    mCallback->onFilterEvent(mFilterEvent);
-                    mFilterEvent.events.resize(0);
-                } else if (mCallback_1_1 != nullptr) {
+                if (mCallback_1_1 != nullptr) {
                     mCallback_1_1->onFilterEvent_1_1(mFilterEvent, mFilterEventExt);
                     mFilterEventExt.events.resize(0);
+                } else if (mCallback != nullptr) {
+                    mCallback->onFilterEvent(mFilterEvent);
                 }
+                mFilterEvent.events.resize(0);
                 break;
             }
             // We do not wait for the last read to be done
@@ -659,6 +659,8 @@ Result Filter::startRecordFilterHandler() {
     V1_1::DemuxFilterRecordEventExt recordEventExt;
     recordEventExt = {
             .pts = (mPts == 0) ? time(NULL) * 900000 : mPts,
+            .firstMbInSlice = 0,     // random address
+            .mpuSequenceNumber = 1,  // random sequence number
     };
 
     int size;
