@@ -30,10 +30,11 @@ void RadioHidlTest_v1_6::SetUp() {
 
     radio_v1_6->setResponseFunctions(radioRsp_v1_6, radioInd_v1_6);
 
-    getDataCallList();
-    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo.type);
-    EXPECT_EQ(serial, radioRsp_v1_6->rspInfo.serial);
-    EXPECT_EQ(::android::hardware::radio::V1_6::RadioError::NONE, radioRsp_v1_6->rspInfo.error);
+    updateSimCardStatus();
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo_v1_0.type);
+    EXPECT_EQ(serial, radioRsp_v1_6->rspInfo_v1_0.serial);
+    EXPECT_EQ(::android::hardware::radio::V1_0::RadioError::NONE,
+              radioRsp_v1_6->rspInfo_v1_0.error);
 
     sp<::android::hardware::radio::config::V1_1::IRadioConfig> radioConfig =
             ::android::hardware::radio::config::V1_1::IRadioConfig::getService();
@@ -71,6 +72,12 @@ std::cv_status RadioHidlTest_v1_6::wait() {
     }
     count_--;
     return status;
+}
+
+void RadioHidlTest_v1_6::updateSimCardStatus() {
+    serial = GetRandomSerialNumber();
+    radio_v1_6->getIccCardStatus(serial);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
 }
 
 void RadioHidlTest_v1_6::getDataCallList() {
