@@ -227,3 +227,35 @@ TEST_P(RadioHidlTest_v1_6, sendCdmaSmsExpectMore_1_6) {
                 CHECK_GENERAL_ERROR));
     }
 }
+
+/*
+ * Test IRadio.setRadioPower_1_6() for the response returned by
+ * IRadio.setRadioPowerResponse_1_6().
+ */
+TEST_P(RadioHidlTest_v1_6, setRadioPower_1_6_emergencyCall_cancelled) {
+    // Set radio power to off.
+    serial = GetRandomSerialNumber();
+    radio_v1_6->setRadioPower_1_6(serial, false, false, false);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_6->rspInfo.serial);
+    EXPECT_EQ(::android::hardware::radio::V1_6::RadioError::NONE, radioRsp_v1_6->rspInfo.error);
+
+    // Set radio power to on with forEmergencyCall being true. This should put modem to only scan
+    // emergency call bands.
+    serial = GetRandomSerialNumber();
+    radio_v1_6->setRadioPower_1_6(serial, true, true, true);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_6->rspInfo.serial);
+    EXPECT_EQ(::android::hardware::radio::V1_6::RadioError::NONE, radioRsp_v1_6->rspInfo.error);
+
+    // Set radio power to on with forEmergencyCall being false. This should put modem in regular
+    // operation modem.
+    serial = GetRandomSerialNumber();
+    radio_v1_6->setRadioPower_1_6(serial, true, false, false);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_6->rspInfo.serial);
+    EXPECT_EQ(::android::hardware::radio::V1_6::RadioError::NONE, radioRsp_v1_6->rspInfo.error);
+}

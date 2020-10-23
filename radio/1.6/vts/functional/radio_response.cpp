@@ -1032,12 +1032,22 @@ Return<void> RadioResponse_v1_6::supplySimDepersonalizationResponse(
 }
 
 Return<void> RadioResponse_v1_6::getIccCardStatusResponse_1_5(
-        const ::android::hardware::radio::V1_0::RadioResponseInfo& /*info*/,
-        const ::android::hardware::radio::V1_5::CardStatus& /*card_status*/) {
+        const ::android::hardware::radio::V1_0::RadioResponseInfo& info,
+        const ::android::hardware::radio::V1_5::CardStatus& card_status) {
+    rspInfo_v1_0 = info;
+    cardStatus = card_status;
+    parent_v1_6.notify(info.serial);
     return Void();
 }
 
 /* 1.6 Apis */
+Return<void> RadioResponse_v1_6::setRadioPowerResponse_1_6(
+        const ::android::hardware::radio::V1_6::RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_v1_6.notify(info.serial);
+    return Void();
+}
+
 Return<void> RadioResponse_v1_6::setupDataCallResponse_1_6(
         const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
         const android::hardware::radio::V1_6::SetupDataCallResult& /* dcResponse */) {
