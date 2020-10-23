@@ -111,7 +111,22 @@ enum RadioError : @1.0::RadioError {
      * SMS is blocked due to call control, e.g., resource unavailable
      * in the SMR entity.
      */
-    BLOCKED_DUE_TO_CALL = 69
+    BLOCKED_DUE_TO_CALL = 69,
+
+    /**
+     * Returned from setRadioPowerResponse when detecting RF HW issues. Some RF
+     * Front-End(RFFE) components like antenna are considered critical for modem
+     * to provide telephony service. This RadioError is used when modem detect
+     * such RFFE problem.
+     */
+    RF_HARDWARE_ISSUE = 70,
+
+    /**
+     * Returned from setRadioPowerResponse when detecting no RF calibration
+     * issue. Unlike RF_HARDWARE_ISSUE, this is a SW problem and no HW repair is
+     * needed.
+     */
+    NO_RF_CALIBRATION_INFO = 71,
 };
 
 /**
