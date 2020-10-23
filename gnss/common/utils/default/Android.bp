@@ -29,6 +29,7 @@ cc_library_static {
         "v2_1/GnssDebug.cpp",
         "v2_1/GnssMeasurement.cpp",
         "v2_1/GnssMeasurementCorrections.cpp",
+        "MockLocation.cpp",
         "Utils.cpp",
         "NmeaFixInfo.cpp",
     ],

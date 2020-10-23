@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef android_hardware_gnss_common_Constants_H_
-#define android_hardware_gnss_common_Constants_H_
+#ifndef android_hardware_gnss_common_MockLocation_H_
+#define android_hardware_gnss_common_MockLocation_H_
 
 #include <cstdint>
 
@@ -24,17 +24,13 @@ namespace hardware {
 namespace gnss {
 namespace common {
 
-const float kMockSpeedMetersPerSec = 0;
-const float kMockBearingDegrees = 0;
-const float kMockHorizontalAccuracyMeters = 5;
-const float kMockVerticalAccuracyMeters = 5;
-const float kMockSpeedAccuracyMetersPerSecond = 1;
-const float kMockBearingAccuracyDegrees = 90;
-const int64_t kMockTimestamp = 1519930775453L;
+extern float gMockLatitudeDegrees;
+extern float gMockLongitudeDegrees;
+extern float gMockAltitudeMeters;
 
 }  // namespace common
 }  // namespace gnss
 }  // namespace hardware
 }  // namespace android
 
-#endif  // android_hardware_gnss_common_Constants_H_
+#endif  // android_hardware_gnss_common_MockLocation_H_
