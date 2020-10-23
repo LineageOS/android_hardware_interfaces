@@ -6,6 +6,6 @@ cc_library_static {
     vendor_available: true,
     recovery_available: true,
     cflags: ["-Werror"],
-    include_dirs: ["system/core/base/include"],
+    include_dirs: ["system/libbase/include"],
     header_libs: ["libhealthd_headers"],
 }
