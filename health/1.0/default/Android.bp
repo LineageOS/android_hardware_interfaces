@@ -4,7 +4,7 @@ cc_library_static {
     recovery_available: true,
     srcs: ["convert.cpp"],
     include_dirs: [
-        "system/core/base/include",
+        "system/libbase/include",
     ],
     header_libs: ["libhealthd_headers"],
     export_header_lib_headers: ["libhealthd_headers"],
