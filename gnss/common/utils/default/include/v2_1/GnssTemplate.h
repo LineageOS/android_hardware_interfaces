@@ -33,6 +33,7 @@
 #include "GnssDebug.h"
 #include "GnssMeasurement.h"
 #include "GnssMeasurementCorrections.h"
+#include "MockLocation.h"
 #include "NmeaFixInfo.h"
 #include "Utils.h"
 
@@ -113,11 +114,16 @@ struct GnssTemplate : public T_IGnss {
     getExtensionMeasurementCorrections_1_1() override;
     Return<sp<V2_1::IGnssAntennaInfo>> getExtensionGnssAntennaInfo() override;
 
+    Return<void> debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) override;
+
   private:
     std::unique_ptr<V2_0::GnssLocation> getLocationFromHW();
     void reportLocation(const V2_0::GnssLocation&) const;
     void reportLocation(const V1_0::GnssLocation&) const;
     void reportSvStatus(const hidl_vec<GnssSvInfo>&) const;
+
+    Return<void> help(const hidl_handle& fd);
+    Return<void> setLocation(const hidl_handle& fd, const hidl_vec<hidl_string>& options);
 
     static sp<V2_1::IGnssCallback> sGnssCallback_2_1;
     static sp<V2_0::IGnssCallback> sGnssCallback_2_0;
@@ -637,6 +643,61 @@ void GnssTemplate<T_IGnss>::reportLocation(const V2_0::GnssLocation& location) c
     if (!ret.isOk()) {
         ALOGE("%s: Unable to invoke callback v2.0", __func__);
     }
+}
+
+template <class T_IGnss>
+Return<void> GnssTemplate<T_IGnss>::setLocation(const hidl_handle& fd,
+                                                const hidl_vec<hidl_string>& options) {
+    auto lat = gMockLatitudeDegrees;
+    auto lon = gMockLongitudeDegrees;
+    auto ele = gMockAltitudeMeters;
+
+    for (size_t i = 1; i < options.size(); ++i) {
+        std::string option = options[i];
+        if (option.rfind("lat=", 0) == 0) {
+            option = option.substr(4);
+            lat = stof(option);
+        } else if (option.rfind("lon=", 0) == 0) {
+            option = option.substr(4);
+            lon = stof(option);
+        } else if (option.rfind("ele=", 0) == 0) {
+            option = option.substr(4);
+            ele = stof(option);
+        } else {
+            dprintf(fd->data[0], "unsupported location argument: %s\n", option.c_str());
+        }
+    }
+
+    gMockLatitudeDegrees = lat;
+    gMockLongitudeDegrees = lon;
+    gMockAltitudeMeters = ele;
+
+    dprintf(fd->data[0], "mock location updated to lat=%f lon=%f ele=%f\n", gMockLatitudeDegrees,
+            gMockLongitudeDegrees, gMockAltitudeMeters);
+
+    return Void();
+}
+
+template <class T_IGnss>
+Return<void> GnssTemplate<T_IGnss>::help(const hidl_handle& fd) {
+    dprintf(fd->data[0],
+            "invalid option for Gnss HAL; valid options are:\n"
+            "location lat=.. lon=.. ele=..\n");
+    return Void();
+}
+
+template <class T_IGnss>
+Return<void> GnssTemplate<T_IGnss>::debug(const hidl_handle& fd,
+                                          const hidl_vec<hidl_string>& options) {
+    if (options.size() == 0) {
+        return help(fd);
+    } else if (options[0] == "location") {
+        return setLocation(fd, options);
+    } else {
+        return help(fd);
+    }
+
+    return Void();
 }
 
 }  // namespace android::hardware::gnss::common::implementation

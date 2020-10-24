@@ -27,6 +27,18 @@ import @1.6::SetupDataCallResult;
 interface IRadioResponse extends @1.5::IRadioResponse {
     /**
      * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:RF_HARDWARE_ISSUE
+     *   RadioError:NO_RF_CALIBRATION_INFO
+     */
+    oneway setRadioPowerResponse_1_6(RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
      * @param dcResponse SetupDataCallResult defined in types.hal
      *
      * Valid errors returned:

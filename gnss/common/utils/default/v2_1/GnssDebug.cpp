@@ -19,6 +19,7 @@
 #include <log/log.h>
 
 #include "Constants.h"
+#include "MockLocation.h"
 #include "v2_1/GnssDebug.h"
 
 using namespace ::android::hardware::gnss::common;
@@ -29,9 +30,9 @@ namespace android::hardware::gnss::V1_1::implementation {
 Return<void> GnssDebug::getDebugData(V1_0::IGnssDebug::getDebugData_cb _hidl_cb) {
     PositionDebug positionDebug = {
             .valid = true,
-            .latitudeDegrees = kMockLatitudeDegrees,
-            .longitudeDegrees = kMockLongitudeDegrees,
-            .altitudeMeters = kMockAltitudeMeters,
+            .latitudeDegrees = gMockLatitudeDegrees,
+            .longitudeDegrees = gMockLongitudeDegrees,
+            .altitudeMeters = gMockAltitudeMeters,
             .speedMetersPerSec = kMockSpeedMetersPerSec,
             .bearingDegrees = kMockBearingDegrees,
             .horizontalAccuracyMeters = kMockHorizontalAccuracyMeters,
