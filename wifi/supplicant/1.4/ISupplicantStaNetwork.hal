@@ -17,6 +17,7 @@
 package android.hardware.wifi.supplicant@1.4;
 
 import @1.3::ISupplicantStaNetwork;
+import @1.4::ISupplicantStaNetworkCallback;
 import @1.0::SupplicantStatus;
 
 /**
@@ -123,4 +124,23 @@ interface ISupplicantStaNetwork extends @1.3::ISupplicantStaNetwork {
      * @return enabled true if set, false otherwise.
      */
     getEdmg() generates (SupplicantStatus status, bool enabled);
+
+    /**
+     * Register for callbacks from this network.
+     *
+     * These callbacks are invoked for events that are specific to this network.
+     * Registration of multiple callback objects is supported. These objects must
+     * be automatically deleted when the corresponding client process is dead or
+     * if this network is removed.
+     *
+     * @param callback An instance of the |ISupplicantStaNetworkCallback| HIDL
+     *        interface object.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    registerCallback_1_4(ISupplicantStaNetworkCallback callback)
+        generates (SupplicantStatus status);
 };
