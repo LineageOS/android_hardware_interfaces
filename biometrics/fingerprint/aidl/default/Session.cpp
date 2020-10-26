@@ -55,15 +55,27 @@ ndk::ScopedAStatus Session::detectInteraction(
 }
 
 ndk::ScopedAStatus Session::enumerateEnrollments(int32_t /*cookie*/) {
+    if (cb_) {
+        cb_->onStateChanged(0, SessionState::ENUMERATING_ENROLLMENTS);
+        cb_->onEnrollmentsEnumerated(std::vector<int32_t>());
+    }
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::removeEnrollments(int32_t /*cookie*/,
                                               const std::vector<int32_t>& /*enrollmentIds*/) {
+    if (cb_) {
+        cb_->onStateChanged(0, SessionState::REMOVING_ENROLLMENTS);
+        cb_->onEnrollmentsRemoved(std::vector<int32_t>());
+    }
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::getAuthenticatorId(int32_t /*cookie*/) {
+    if (cb_) {
+        cb_->onStateChanged(0, SessionState::GETTING_AUTHENTICATOR_ID);
+        cb_->onAuthenticatorIdRetrieved(0 /* authenticatorId */);
+    }
     return ndk::ScopedAStatus::ok();
 }
 
