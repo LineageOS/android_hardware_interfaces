@@ -84,6 +84,8 @@ class Filter : public V1_1::IFilter {
 
     virtual Return<Result> configureAvStreamType(const V1_1::AvStreamType& avStreamType) override;
 
+    virtual Return<Result> configureScramblingEvent(uint32_t statuses) override;
+
     /**
      * To create a FilterMQ and its Event Flag.
      *
@@ -230,6 +232,9 @@ class Filter : public V1_1::IFilter {
 
     uint32_t mAudioStreamType;
     uint32_t mVideoStreamType;
+
+    // Scrambling status to be monitored
+    uint32_t mStatuses = 0;
 };
 
 }  // namespace implementation

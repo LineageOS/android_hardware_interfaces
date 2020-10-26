@@ -28,6 +28,18 @@ void FilterCallback::testFilterDataOutput() {
     ALOGW("[vts] pass and stop");
 }
 
+void FilterCallback::testFilterScramblingEvent() {
+    android::Mutex::Autolock autoLock(mMsgLock);
+    while (mScramblingStatusEvent < 1) {
+        if (-ETIMEDOUT == mMsgCondition.waitRelative(mMsgLock, WAIT_TIMEOUT)) {
+            EXPECT_TRUE(false) << "scrambling event does not output within timeout";
+            return;
+        }
+    }
+    mScramblingStatusEvent = 0;
+    ALOGW("[vts] pass and stop");
+}
+
 void FilterCallback::readFilterEventData() {
     ALOGW("[vts] reading filter event");
     // todo separate filter handlers
@@ -55,6 +67,9 @@ void FilterCallback::readFilterEventData() {
                       ", firstMbInSlice=%d, mpuSequenceNumber=%d",
                       eventExt.mmtpRecord().pts, eventExt.mmtpRecord().firstMbInSlice,
                       eventExt.mmtpRecord().mpuSequenceNumber);
+                break;
+            case DemuxFilterEventExt::Event::hidl_discriminator::scramblingStatus:
+                mScramblingStatusEvent++;
                 break;
             default:
                 break;
@@ -237,6 +252,22 @@ AssertionResult FilterTests::closeFilter(uint64_t filterId) {
         }
         mFilterCallbacks.erase(filterId);
         mFilters.erase(filterId);
+    }
+    return AssertionResult(status == Result::SUCCESS);
+}
+
+AssertionResult FilterTests::configureScramblingEvent(uint64_t filterId, uint32_t statuses) {
+    EXPECT_TRUE(mFilters[filterId]) << "Test with getNewlyOpenedFilterId first.";
+    Result status;
+
+    sp<android::hardware::tv::tuner::V1_1::IFilter> filter_v1_1 =
+            android::hardware::tv::tuner::V1_1::IFilter::castFrom(mFilters[filterId]);
+    if (filter_v1_1 != NULL) {
+        status = filter_v1_1->configureScramblingEvent(statuses);
+        mFilterCallbacks[filterId]->testFilterScramblingEvent();
+    } else {
+        ALOGW("[vts] Can't cast IFilter into v1_1.");
+        return failure();
     }
     return AssertionResult(status == Result::SUCCESS);
 }

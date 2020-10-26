@@ -81,4 +81,21 @@ interface IFilter extends @1.0::IFilter {
      *         UNKNOWN_ERROR if failed for other reasons.
      */
     configureAvStreamType(AvStreamType avStreamType) generates (Result result);
+
+    /**
+     * Configure the filter to monitor specific Scrambling Status.
+     *
+     * Scrambling Status should be sent through the filer callback at the following two scenarios:
+     *   1. When this method is called, the first detected scrambling status should be sent.
+     *   2. When the filter transits into the monitored statuses configured through this method,
+     *      event should be sent.
+     *
+     * @param statuses Scrambling Statuses to monitor. Set corresponding bit to monitor. Reset to
+     *        stop monitoring.
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if configure can't be applied,
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    configureScramblingEvent(bitfield<ScramblingStatus> statuses) generates (Result result);
 };

@@ -117,6 +117,7 @@ class FilterCallback : public IFilterCallback {
     void setMemSize(uint64_t size) { mAvSharedMemSize = size; }
 
     void testFilterDataOutput();
+    void testFilterScramblingEvent();
 
     void readFilterEventData();
     bool dumpAvData(DemuxFilterMediaEvent event);
@@ -136,6 +137,7 @@ class FilterCallback : public IFilterCallback {
     android::Condition mMsgCondition;
 
     int mPidFilterOutputCount = 0;
+    int mScramblingStatusEvent = 0;
 };
 
 class FilterTests {
@@ -153,6 +155,7 @@ class FilterTests {
     AssertionResult configFilter(DemuxFilterSettings setting, uint64_t filterId);
     AssertionResult configAvFilterStreamType(AvStreamType type, uint64_t filterId);
     AssertionResult configIpFilterCid(uint32_t ipCid, uint64_t filterId);
+    AssertionResult configureScramblingEvent(uint64_t filterId, uint32_t statuses);
     AssertionResult getFilterMQDescriptor(uint64_t filterId);
     AssertionResult startFilter(uint64_t filterId);
     AssertionResult stopFilter(uint64_t filterId);
