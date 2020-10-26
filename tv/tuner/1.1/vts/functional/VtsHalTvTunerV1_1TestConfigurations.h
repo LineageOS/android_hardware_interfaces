@@ -96,6 +96,7 @@ struct FilterConfig {
     DemuxFilterSettings settings;
     AvStreamType streamType;
     uint32_t ipCid;
+    uint32_t statuses;
 
     bool operator<(const FilterConfig& /*c*/) const { return false; }
 };
@@ -187,6 +188,7 @@ inline void initFilterConfig() {
     filterArray[TS_VIDEO0].bufferSize = FMQ_SIZE_16M;
     filterArray[TS_VIDEO0].settings.ts().tpid = 256;
     filterArray[TS_VIDEO0].settings.ts().filterSettings.av({.isPassthrough = false});
+    filterArray[TS_VIDEO0].statuses = 1;
     filterArray[TS_VIDEO1].type.mainType = DemuxFilterMainType::TS;
     filterArray[TS_VIDEO1].type.subType.tsFilterType(DemuxTsFilterType::VIDEO);
     filterArray[TS_VIDEO1].bufferSize = FMQ_SIZE_16M;
