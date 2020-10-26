@@ -1055,6 +1055,12 @@ Return<void> RadioResponse_v1_6::setupDataCallResponse_1_6(
     parent_v1_6.notify(info.serial);
     return Void();
 }
+Return<void> RadioResponse_v1_6::enableNrDualConnectivityResponse(
+        const ::android::hardware::radio::V1_6::RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_v1_6.notify(info.serial);
+    return Void();
+}
 
 Return<void> RadioResponse_v1_6::getDataCallListResponse_1_6(
         const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
@@ -1096,6 +1102,14 @@ Return<void> RadioResponse_v1_6::sendCdmaSmsExpectMoreResponse_1_6(
         const SendSmsResult& sms) {
     rspInfo = info;
     sendSmsResult = sms;
+    parent_v1_6.notify(info.serial);
+    return Void();
+}
+
+Return<void> RadioResponse_v1_6::isNrDualConnectivityEnabledResponse(
+        const ::android::hardware::radio::V1_6::RadioResponseInfo& info, bool isEnabled) {
+    rspInfo = info;
+    isNRDualConnectivityEnabled = isEnabled;
     parent_v1_6.notify(info.serial);
     return Void();
 }
