@@ -302,6 +302,12 @@ Return<void> Frontend::getStatusExt1_1(const hidl_vec<V1_1::FrontendStatusTypeEx
                 status.codeRates(codeRates);
                 break;
             }
+            case V1_1::FrontendStatusTypeExt1_1::BANDWIDTH: {
+                V1_1::FrontendBandwidth bandwidth;
+                bandwidth.dvbt(FrontendDvbtBandwidth::BANDWIDTH_8MHZ);
+                status.bandwidth(bandwidth);
+                break;
+            }
             case V1_1::FrontendStatusTypeExt1_1::GUARD_INTERVAL: {
                 V1_1::FrontendGuardInterval interval;
                 interval.dvbt(FrontendDvbtGuardInterval::INTERVAL_1_32);  // value = 1 << 1
@@ -337,6 +343,24 @@ Return<void> Frontend::getStatusExt1_1(const hidl_vec<V1_1::FrontendStatusTypeEx
             case V1_1::FrontendStatusTypeExt1_1::TS_DATA_RATES: {
                 vector<uint32_t> dataRates = {4, 5};
                 status.tsDataRate(dataRates);
+                break;
+            }
+            case V1_1::FrontendStatusTypeExt1_1::ROLL_OFF: {
+                V1_1::FrontendRollOff rollOff;
+                rollOff.dvbs(FrontendDvbsRolloff::ROLLOFF_0_35);
+                status.rollOff(rollOff);
+                break;
+            }
+            case V1_1::FrontendStatusTypeExt1_1::IS_MISO: {
+                status.isMiso(true);
+                break;
+            }
+            case V1_1::FrontendStatusTypeExt1_1::IS_LINEAR: {
+                status.isLinear(true);
+                break;
+            }
+            case V1_1::FrontendStatusTypeExt1_1::IS_SHORT_FRAMES: {
+                status.isShortFrames(true);
                 break;
             }
             default: {

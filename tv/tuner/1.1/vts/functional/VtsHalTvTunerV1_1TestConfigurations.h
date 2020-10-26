@@ -138,10 +138,14 @@ inline void initFrontendConfig() {
     frontendArray[DVBT].type = FrontendType::DVBT, frontendArray[DVBT].settings.dvbt(dvbtSettings);
     vector<FrontendStatusTypeExt1_1> types;
     types.push_back(FrontendStatusTypeExt1_1::UEC);
+    types.push_back(FrontendStatusTypeExt1_1::IS_MISO);
+    vector<FrontendStatusExt1_1> statuses;
     FrontendStatusExt1_1 status;
     status.uec(4);
-    vector<FrontendStatusExt1_1> statuses;
     statuses.push_back(status);
+    status.isMiso(true);
+    statuses.push_back(status);
+
     frontendArray[DVBT].tuneStatusTypes = types;
     frontendArray[DVBT].expectTuneStatuses = statuses;
     frontendArray[DVBT].isSoftwareFe = true;
