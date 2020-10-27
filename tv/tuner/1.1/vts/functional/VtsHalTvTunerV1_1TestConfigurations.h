@@ -96,6 +96,7 @@ struct FilterConfig {
     DemuxFilterSettings settings;
     AvStreamType streamType;
     uint32_t ipCid;
+    uint32_t statuses;
 
     bool operator<(const FilterConfig& /*c*/) const { return false; }
 };
@@ -138,10 +139,14 @@ inline void initFrontendConfig() {
     frontendArray[DVBT].type = FrontendType::DVBT, frontendArray[DVBT].settings.dvbt(dvbtSettings);
     vector<FrontendStatusTypeExt1_1> types;
     types.push_back(FrontendStatusTypeExt1_1::UEC);
+    types.push_back(FrontendStatusTypeExt1_1::IS_MISO);
+    vector<FrontendStatusExt1_1> statuses;
     FrontendStatusExt1_1 status;
     status.uec(4);
-    vector<FrontendStatusExt1_1> statuses;
     statuses.push_back(status);
+    status.isMiso(true);
+    statuses.push_back(status);
+
     frontendArray[DVBT].tuneStatusTypes = types;
     frontendArray[DVBT].expectTuneStatuses = statuses;
     frontendArray[DVBT].isSoftwareFe = true;
@@ -183,6 +188,7 @@ inline void initFilterConfig() {
     filterArray[TS_VIDEO0].bufferSize = FMQ_SIZE_16M;
     filterArray[TS_VIDEO0].settings.ts().tpid = 256;
     filterArray[TS_VIDEO0].settings.ts().filterSettings.av({.isPassthrough = false});
+    filterArray[TS_VIDEO0].statuses = 1;
     filterArray[TS_VIDEO1].type.mainType = DemuxFilterMainType::TS;
     filterArray[TS_VIDEO1].type.subType.tsFilterType(DemuxTsFilterType::VIDEO);
     filterArray[TS_VIDEO1].bufferSize = FMQ_SIZE_16M;

@@ -20,14 +20,18 @@ import @1.0::Constant;
 import @1.0::DemuxFilterMmtpRecordEvent;
 import @1.0::DemuxFilterTsRecordEvent;
 import @1.0::DemuxScIndex;
+import @1.0::FrontendIsdbs3Rolloff;
 import @1.0::FrontendAtsc3Bandwidth;
 import @1.0::FrontendAtsc3Modulation;
 import @1.0::FrontendAtsc3TimeInterleaveMode;
+import @1.0::FrontendIsdbsRolloff;
 import @1.0::FrontendAtscModulation;
+import @1.0::FrontendDvbcAnnex;
 import @1.0::FrontendDvbcModulation;
-import @1.0::FrontendDvbtBandwidth;
 import @1.0::FrontendDvbcSpectralInversion;
 import @1.0::FrontendDvbsModulation;
+import @1.0::FrontendDvbsRolloff;
+import @1.0::FrontendDvbtBandwidth;
 import @1.0::FrontendDvbtConstellation;
 import @1.0::FrontendDvbtTransmissionMode;
 import @1.0::FrontendDvbtGuardInterval;
@@ -121,12 +125,33 @@ struct DemuxFilterEventExt {
         DemuxFilterRecordEventExt tsRecord;
 
         DemuxFilterRecordEventExt mmtpRecord;
+
+        ScramblingStatus scramblingStatus;
     };
 
     /**
      * An array of events
      */
     vec<Event> events;
+};
+
+/**
+ * Scrambling Status Type.
+ */
+@export
+enum ScramblingStatus : uint32_t {
+    /**
+     * Content’s scrambling status is unknown
+     */
+    UNKNOWN = 1 << 0,
+    /**
+     * Content is not scrambled.
+     */
+    NOT_SCRAMBLED = 1 << 1,
+    /**
+     * Content is scrambled.
+     */
+    SCRAMBLED = 1 << 2,
 };
 
 typedef FrontendDvbcSpectralInversion FrontendSpectralInversion;
@@ -477,6 +502,14 @@ safe_union FrontendTransmissionMode {
     FrontendDtmbTransmissionMode dtmb;
 };
 
+safe_union FrontendRollOff {
+    @1.0::FrontendDvbsRolloff dvbs;
+
+    @1.0::FrontendIsdbsRolloff isdbs;
+
+    @1.0::FrontendIsdbs3Rolloff isdbs3;
+};
+
 @export
 enum FrontendStatusTypeExt1_1 : uint32_t {
     /**
@@ -524,6 +557,22 @@ enum FrontendStatusTypeExt1_1 : uint32_t {
      * Transport Stream Data Rate in BPS of the current channel.
      */
     TS_DATA_RATES,
+    /**
+     * Roll Off Type status of the frontend.
+     */
+    ROLL_OFF,
+    /**
+     * If the frontend currently supports MISO or not.
+     */
+    IS_MISO,
+    /**
+     * If the frontend code rate is linear or not.
+     */
+    IS_LINEAR,
+    /**
+     * If short frames is enabled or not.
+     */
+    IS_SHORT_FRAMES,
 };
 
 safe_union FrontendStatusExt1_1 {
@@ -582,15 +631,34 @@ safe_union FrontendStatusExt1_1 {
      * Transport Stream Data Rate in BPS of the current channel.
      */
     vec<uint32_t> tsDataRate;
+    /**
+     * Roll Off Type status of the frontend.
+     */
+    FrontendRollOff rollOff;
+    /**
+     * If the frontend currently supports MISO or not.
+     */
+    bool isMiso;
+    /**
+     * If the frontend code rate is linear or not.
+     */
+    bool isLinear;
+    /**
+     * If short frames is enabled or not.
+     */
+    bool isShortFrames;
 };
 
 enum FrontendScanMessageTypeExt1_1 : uint32_t {
     MODULATION = @1.0::FrontendScanMessageType:ATSC3_PLP_INFO + 1,
+    DVBC_ANNEX,
     HIGH_PRIORITY,
 };
 
 safe_union FrontendScanMessageExt1_1 {
     FrontendModulation modulation;
+
+    @1.0::FrontendDvbcAnnex annex;
 
     bool isHighPriority;
 };
