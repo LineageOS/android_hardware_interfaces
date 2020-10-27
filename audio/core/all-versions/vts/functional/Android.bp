@@ -128,3 +128,26 @@ cc_test {
     // TODO(b/146104851): Add auto-gen rules and remove it.
     test_config: "VtsHalAudioV6_0TargetTest.xml",
 }
+
+cc_test {
+    name: "VtsHalAudioV7_0TargetTest",
+    defaults: ["VtsHalAudioTargetTest_defaults"],
+    srcs: [
+        "7.0/AudioPrimaryHidlHalTest.cpp",
+    ],
+    static_libs: [
+        "android.hardware.audio@7.0",
+        "android.hardware.audio.common@7.0",
+    ],
+    cflags: [
+        "-DMAJOR_VERSION=7",
+        "-DMINOR_VERSION=0",
+        "-include common/all-versions/VersionMacro.h",
+    ],
+    data: [
+        ":audio_policy_configuration_V7_0",
+    ],
+    // Use test_config for vts suite.
+    // TODO(b/146104851): Add auto-gen rules and remove it.
+    test_config: "VtsHalAudioV7_0TargetTest.xml",
+}
