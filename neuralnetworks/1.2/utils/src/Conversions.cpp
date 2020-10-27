@@ -257,16 +257,15 @@ GeneralResult<Extension::OperandTypeInformation> convert(
     };
 }
 
-GeneralResult<NativeHandle> convert(const hidl_handle& handle) {
-    auto* cloned = native_handle_clone(handle.getNativeHandle());
-    return ::android::NativeHandle::create(cloned, /*ownsHandle=*/true);
+GeneralResult<SharedHandle> convert(const hidl_handle& hidlHandle) {
+    return hal::utils::sharedHandleFromNativeHandle(hidlHandle.getNativeHandle());
 }
 
 GeneralResult<std::vector<Extension>> convert(const hidl_vec<hal::V1_2::Extension>& extensions) {
     return convertVec(extensions);
 }
 
-GeneralResult<std::vector<NativeHandle>> convert(const hidl_vec<hidl_handle>& handles) {
+GeneralResult<std::vector<SharedHandle>> convert(const hidl_vec<hidl_handle>& handles) {
     return convertVec(handles);
 }
 
@@ -487,18 +486,15 @@ nn::GeneralResult<Extension::OperandTypeInformation> convert(
     };
 }
 
-nn::GeneralResult<hidl_handle> convert(const nn::NativeHandle& handle) {
-    const auto hidlHandle = hidl_handle(handle->handle());
-    // Copy memory to force the native_handle_t to be copied.
-    auto copiedHandle = hidlHandle;
-    return copiedHandle;
+nn::GeneralResult<hidl_handle> convert(const nn::SharedHandle& handle) {
+    return hal::utils::hidlHandleFromSharedHandle(handle);
 }
 
 nn::GeneralResult<hidl_vec<Extension>> convert(const std::vector<nn::Extension>& extensions) {
     return convertVec(extensions);
 }
 
-nn::GeneralResult<hidl_vec<hidl_handle>> convert(const std::vector<nn::NativeHandle>& handles) {
+nn::GeneralResult<hidl_vec<hidl_handle>> convert(const std::vector<nn::SharedHandle>& handles) {
     return convertVec(handles);
 }
 
