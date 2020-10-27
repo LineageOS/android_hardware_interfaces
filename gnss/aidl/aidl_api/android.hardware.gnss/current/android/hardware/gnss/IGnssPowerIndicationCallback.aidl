@@ -17,13 +17,13 @@
 
 package android.hardware.gnss;
 @VintfStability
-interface IGnss {
-  void setCallback(in android.hardware.gnss.IGnssCallback callback);
-  void close();
-  android.hardware.gnss.IGnssPsds getExtensionPsds();
-  android.hardware.gnss.IGnssConfiguration getExtensionGnssConfiguration();
-  android.hardware.gnss.IGnssPowerIndication getExtensionGnssPowerIndication();
-  const int ERROR_INVALID_ARGUMENT = 1;
-  const int ELAPSED_REALTIME_HAS_TIMESTAMP_NS = 1;
-  const int ELAPSED_REALTIME_HAS_TIME_UNCERTAINTY_NS = 2;
+interface IGnssPowerIndicationCallback {
+  void setCapabilitiesCb(in int capabilities);
+  oneway void gnssPowerStatsCb(in android.hardware.gnss.GnssPowerStats gnssPowerStats);
+  const int CAPABILITY_TOTAL = 1;
+  const int CAPABILITY_SINGLEBAND_TRACKING = 2;
+  const int CAPABILITY_MULTIBAND_TRACKING = 4;
+  const int CAPABILITY_SINGLEBAND_ACQUISITION = 8;
+  const int CAPABILITY_MULTIBAND_ACQUISITION = 16;
+  const int CAPABILITY_OTHER_MODES = 32;
 }
