@@ -58,6 +58,9 @@ Return<void> FrontendCallback::onScanMessageExt1_1(FrontendScanMessageTypeExt1_1
         case FrontendScanMessageExt1_1::hidl_discriminator::isHighPriority:
             ALOGD("[vts] frontend ext1_1 scan message high priority: %d", message.isHighPriority());
             break;
+        case FrontendScanMessageExt1_1::hidl_discriminator::annex:
+            ALOGD("[vts] frontend ext1_1 scan message dvbc annex: %hhu", message.annex());
+            break;
         default:
             break;
     }
@@ -372,6 +375,22 @@ void FrontendTests::verifyFrontendStatusExt1_1(vector<FrontendStatusTypeExt1_1> 
                 ASSERT_TRUE(std::equal(realStatuses[i].tsDataRate().begin(),
                                        realStatuses[i].tsDataRate().end(),
                                        expectStatuses[i].tsDataRate().begin()));
+                break;
+            }
+            case FrontendStatusTypeExt1_1::ROLL_OFF: {
+                // TODO: verify roll off
+                break;
+            }
+            case FrontendStatusTypeExt1_1::IS_MISO: {
+                ASSERT_TRUE(realStatuses[i].isMiso() == expectStatuses[i].isMiso());
+                break;
+            }
+            case FrontendStatusTypeExt1_1::IS_LINEAR: {
+                ASSERT_TRUE(realStatuses[i].isLinear() == expectStatuses[i].isLinear());
+                break;
+            }
+            case FrontendStatusTypeExt1_1::IS_SHORT_FRAMES: {
+                ASSERT_TRUE(realStatuses[i].isShortFrames() == expectStatuses[i].isShortFrames());
                 break;
             }
             default: {

@@ -181,4 +181,28 @@ interface IRadio extends @1.5::IRadio {
      *
      */
     oneway sendCdmaSmsExpectMore_1_6(int32_t serial, CdmaSmsMessage sms);
+
+    /**
+     * Enable or disable E-UTRA-NR dual connectivity. If disabled then UE will not connect
+     * to secondary carrier.
+     *
+     * @param serial Serial number of request.
+     * @param nrDualConnectivityState expected NR dual connectivity state.
+     * 1. Enable NR dual connectivity {NrDualConnectivityState:ENABLE}
+     * 2. Disable NR dual connectivity {NrDualConnectivityState:DISABLE}
+     * 3. Disable NR dual connectivity and force secondary cell to be released
+     * {NrDualConnectivityState:DISABLE_IMMEDIATE}
+
+     * Response callback is IRadioResponse.enableNRDualConnectivityResponse()
+     */
+    oneway enableNrDualConnectivity(int32_t serial,
+            NrDualConnectivityState nrDualConnectivityState);
+
+    /**
+     * Is E-UTRA-NR Dual Connectivity enabled
+     *
+     * @param serial Serial number of request.
+     * Response callback is IRadioResponse.isNRDualConnectivityEnabledResponse()
+     */
+    oneway isNrDualConnectivityEnabled(int32_t serial);
 };
