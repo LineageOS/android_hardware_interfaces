@@ -15,9 +15,15 @@
  */
 
 #include <android/hardware/neuralnetworks/1.3/types.h>
+#include "ControlFlow.h"
 #include "TestHarness.h"
 
 namespace android::hardware::neuralnetworks::V1_3 {
+
+static_assert(static_cast<uint64_t>(LoopTimeoutDurationNs::DEFAULT) ==
+              nn::operation_while::kTimeoutNsDefault);
+static_assert(static_cast<uint64_t>(LoopTimeoutDurationNs::MAXIMUM) ==
+              nn::operation_while::kTimeoutNsMaximum);
 
 // Make sure that the HIDL enums are compatible with the values defined in
 // frameworks/ml/nn/tools/test_generator/test_harness/include/TestHarness.h.
