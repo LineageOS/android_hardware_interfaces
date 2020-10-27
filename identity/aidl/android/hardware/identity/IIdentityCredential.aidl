@@ -55,7 +55,7 @@ interface IIdentityCredential {
      * This method may only be called once per instance. If called more than once, STATUS_FAILED
      * will be returned.
      *
-     * @return the unencrypted key-pair in PKCS#8 format.
+     * @return the private key, in DER format as specified in RFC 5915.
      */
     byte[] createEphemeralKeyPair();
 
@@ -88,10 +88,10 @@ interface IIdentityCredential {
      * The setRequestedNamespaces() and setVerificationToken() methods will be called before
      * this method is called.
      *
-     * This method be called after createEphemeralKeyPair(), setReaderEphemeralPublicKey(),
-     * createAuthChallenge() and before startRetrieveEntry(). This method call is followed by
-     * multiple calls of startRetrieveEntryValue(), retrieveEntryValue(), and finally
-     * finishRetrieval().
+     * This method is called after createEphemeralKeyPair(), setReaderEphemeralPublicKey(),
+     * createAuthChallenge() (note that those calls are optional) and before startRetrieveEntry().
+     * This method call is followed by multiple calls of startRetrieveEntryValue(),
+     * retrieveEntryValue(), and finally finishRetrieval().
      *
      * It is permissible to perform data retrievals multiple times using the same instance (e.g.
      * startRetrieval(), then multiple calls of startRetrieveEntryValue(), retrieveEntryValue(),
@@ -343,12 +343,13 @@ interface IIdentityCredential {
      *
      *  - signature: must be set to ECDSA.
      *
-     *  - subject: CN shall be set to "Android Identity Credential Authentication Key".
+     *  - subject: CN shall be set to "Android Identity Credential Authentication Key". (fixed
+     *    value: same on all certs)
      *
-     *  - issuer: shall be set to "credentialStoreName (credentialStoreAuthorName)" using the
-     *    values returned in HardwareInformation.
+     *  - issuer: CN shall be set to "Android Identity Credential Key". (fixed value:
+     *    same on all certs)
      *
-     *  - validity: should be from current time and one year in the future.
+     *  - validity: should be from current time and one year in the future (365 days).
      *
      *  - subjectPublicKeyInfo: must contain attested public key.
      *

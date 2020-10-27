@@ -103,7 +103,6 @@ class IdentityCredential : public BnIdentityCredential {
     map<int32_t, int> profileIdToAccessCheckResult_;
     vector<uint8_t> signingKeyBlob_;
     vector<uint8_t> sessionTranscript_;
-    std::unique_ptr<cppbor::Item> sessionTranscriptItem_;
     vector<uint8_t> itemsRequest_;
     vector<int32_t> requestCountsRemaining_;
     map<string, set<string>> requestedNameSpacesAndNames_;
