@@ -200,4 +200,26 @@ interface IRadioResponse extends @1.5::IRadioResponse {
      *   RadioError:BLOCKED_DUE_TO_CALL
      */
     oneway sendCdmaSmsExpectMoreResponse_1_6(RadioResponseInfo info, SendSmsResult sms);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     */
+    oneway enableNrDualConnectivityResponse(RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * @param isEnabled Indicates whether NR dual connectivity is enabled or not, True if enabled
+     *        else false.
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     */
+    oneway isNrDualConnectivityEnabledResponse(RadioResponseInfo info, bool isEnabled);
 };
