@@ -255,3 +255,24 @@ struct SetupDataCallResult {
     /** Specifies the fallback mode on an IWLAN handover failure. */
     HandoverFailureMode handoverFailureMode;
 };
+
+/**
+ * NR Dual connectivity state
+ */
+enum NrDualConnectivityState: int32_t {
+    /**
+     * Enable NR dual connectivity. Enabled state does not mean dual connectivity
+     * is active. It means device is allowed to connect to both primary and secondary.
+     */
+    ENABLE = 1,
+    /**
+     * Disable NR dual connectivity. Disabled state does not mean secondary cell is released.
+     * Modem will release it only if current bearer is released to avoid radio link failure.
+     */
+    DISABLE = 2,
+    /**
+     * Disable NR dual connectivity and force secondary cell to be released if dual connectivity
+     * was active. This may result in radio link failure.
+     */
+    DISABLE_IMMEDIATE= 3,
+};
