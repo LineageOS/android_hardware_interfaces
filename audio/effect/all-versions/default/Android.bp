@@ -56,7 +56,7 @@ cc_library_shared {
         "-DMAJOR_VERSION=2",
         "-DMINOR_VERSION=0",
         "-include common/all-versions/VersionMacro.h",
-    ]
+    ],
 }
 
 cc_library_shared {
@@ -71,7 +71,7 @@ cc_library_shared {
         "-DMAJOR_VERSION=4",
         "-DMINOR_VERSION=0",
         "-include common/all-versions/VersionMacro.h",
-    ]
+    ],
 }
 
 cc_library_shared {
@@ -86,7 +86,7 @@ cc_library_shared {
         "-DMAJOR_VERSION=5",
         "-DMINOR_VERSION=0",
         "-include common/all-versions/VersionMacro.h",
-    ]
+    ],
 }
 
 cc_library_shared {
@@ -101,10 +101,11 @@ cc_library_shared {
         "-DMAJOR_VERSION=6",
         "-DMINOR_VERSION=0",
         "-include common/all-versions/VersionMacro.h",
-    ]
+    ],
 }
 
 cc_library_shared {
+    enabled: false,
     name: "android.hardware.audio.effect@7.0-impl",
     defaults: ["android.hardware.audio.effect-impl_default"],
     shared_libs: [
@@ -116,5 +117,5 @@ cc_library_shared {
         "-DMAJOR_VERSION=7",
         "-DMINOR_VERSION=0",
         "-include common/all-versions/VersionMacro.h",
-    ]
+    ],
 }
