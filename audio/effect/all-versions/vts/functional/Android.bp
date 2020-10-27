@@ -113,3 +113,23 @@ cc_test {
         "-include common/all-versions/VersionMacro.h",
     ]
 }
+
+cc_test {
+    name: "VtsHalAudioEffectV7_0TargetTest",
+    defaults: ["VtsHalAudioEffectTargetTest_default"],
+    // Use test_config for vts suite.
+    // TODO(b/146104851): Add auto-gen rules and remove it.
+    test_config: "VtsHalAudioEffectV7_0TargetTest.xml",
+    static_libs: [
+        "android.hardware.audio.common@7.0",
+        "android.hardware.audio.effect@7.0",
+    ],
+    data: [
+        ":audio_effects_conf_V7_0",
+    ],
+    cflags: [
+        "-DMAJOR_VERSION=7",
+        "-DMINOR_VERSION=0",
+        "-include common/all-versions/VersionMacro.h",
+    ]
+}
