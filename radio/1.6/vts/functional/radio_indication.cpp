@@ -25,6 +25,11 @@ Return<void> RadioIndication_v1_6::dataCallListChanged_1_6(
     return Void();
 }
 
+Return<void> RadioIndication_v1_6::unthrottleApn(RadioIndicationType /*type*/,
+                                                 const ::android::hardware::hidl_string& /*apn*/) {
+    return Void();
+}
+
 /* 1.5 Apis */
 Return<void> RadioIndication_v1_6::uiccApplicationsEnablementChanged(RadioIndicationType /*type*/,
                                                                      bool /*enabled*/) {
