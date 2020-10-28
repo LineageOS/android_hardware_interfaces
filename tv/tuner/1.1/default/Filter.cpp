@@ -249,6 +249,28 @@ Return<Result> Filter::configureAvStreamType(const V1_1::AvStreamType& avStreamT
     return Result::SUCCESS;
 }
 
+Return<Result> Filter::configureScramblingEvent(uint32_t statuses) {
+    ALOGV("%s", __FUNCTION__);
+
+    mStatuses = statuses;
+    if (mCallback_1_1 != nullptr) {
+        // Assuming current status is always NOT_SCRAMBLED
+        V1_1::DemuxFilterEventExt filterEventExt;
+        V1_1::DemuxFilterEventExt::Event event;
+        event.scramblingStatus(V1_1::ScramblingStatus::NOT_SCRAMBLED);
+        int size = filterEventExt.events.size();
+        filterEventExt.events.resize(size + 1);
+        filterEventExt.events[size] = event;
+        DemuxFilterEvent emptyFilterEvent;
+
+        mCallback_1_1->onFilterEvent_1_1(emptyFilterEvent, filterEventExt);
+        mFilterEventExt.events.resize(0);
+    } else {
+        return Result::INVALID_STATE;
+    }
+    return Result::SUCCESS;
+}
+
 bool Filter::createFilterMQ() {
     ALOGV("%s", __FUNCTION__);
 
