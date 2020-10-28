@@ -38,6 +38,7 @@ extern WifiSupplicantHidlEnvironment* gEnv;
 class SupplicantHidlTest : public ::testing::VtsHalHidlTargetTestBase {
    public:
     virtual void SetUp() override {
+        sleep(3);
         startSupplicantAndWaitForHidlService();
         supplicant_ = getSupplicant_1_1();
         ASSERT_NE(supplicant_.get(), nullptr);
