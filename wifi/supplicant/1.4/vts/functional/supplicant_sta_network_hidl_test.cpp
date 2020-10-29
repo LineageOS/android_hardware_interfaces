@@ -42,6 +42,10 @@ using ::android::hardware::wifi::supplicant::V1_0::SupplicantStatusCode;
 using ::android::hardware::wifi::supplicant::V1_4::
     ISupplicantStaNetworkCallback;
 using ::android::hardware::wifi::V1_0::IWifi;
+using SupplicantStatusV1_4 =
+    ::android::hardware::wifi::supplicant::V1_4::SupplicantStatus;
+using SupplicantStatusCodeV1_4 =
+    ::android::hardware::wifi::supplicant::V1_4::SupplicantStatusCode;
 
 class SupplicantStaNetworkHidlTest : public SupplicantHidlTestBaseV1_4 {
    public:
@@ -85,8 +89,8 @@ class NetworkCallback : public ISupplicantStaNetworkCallback {
  */
 TEST_P(SupplicantStaNetworkHidlTest, RegisterCallback_1_4) {
     v1_4->registerCallback_1_4(
-        new NetworkCallback(), [](const SupplicantStatus& status) {
-            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+        new NetworkCallback(), [](const SupplicantStatusV1_4& status) {
+            EXPECT_EQ(SupplicantStatusCodeV1_4::SUCCESS, status.code);
         });
 }
 
@@ -94,11 +98,11 @@ TEST_P(SupplicantStaNetworkHidlTest, RegisterCallback_1_4) {
  * enable SAE H2E (Hash-to-Element) only mode
  */
 TEST_P(SupplicantStaNetworkHidlTest, EnableSaeH2eOnlyMode) {
-    v1_4->enableSaeH2eOnlyMode(true, [&](const SupplicantStatus& status) {
-        EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+    v1_4->enableSaeH2eOnlyMode(true, [&](const SupplicantStatusV1_4& status) {
+        EXPECT_EQ(SupplicantStatusCodeV1_4::SUCCESS, status.code);
     });
-    v1_4->enableSaeH2eOnlyMode(false, [&](const SupplicantStatus& status) {
-        EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+    v1_4->enableSaeH2eOnlyMode(false, [&](const SupplicantStatusV1_4& status) {
+        EXPECT_EQ(SupplicantStatusCodeV1_4::SUCCESS, status.code);
     });
 }
 
