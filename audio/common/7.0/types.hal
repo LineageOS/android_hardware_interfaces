@@ -118,9 +118,9 @@ typedef string AudioChannelMask;
  * Base configuration attributes applicable to any stream of audio.
  */
 struct AudioConfigBase {
-    AudioFormat format;                 // 'DEFAULT' means 'unspecified'
+    AudioFormat format;                 // empty means 'unspecified'
     uint32_t sampleRateHz;              // 0 means 'unspecified'
-    vec<AudioChannelMask> channelMask;  // empty means 'unspecified'
+    AudioChannelMask channelMask;       // empty means 'unspecified'
 };
 
 /**
@@ -167,10 +167,18 @@ struct DeviceAddress {
     AudioDevice deviceType;
     safe_union Address {
         /**
-         * The address may be left unspecified if 'device' specifies
-         * a physical device unambiguously.
+         * String uniquely identifying the device among other devices
+         * of the same type. Can be empty in case there is only one device
+         * of this type.
+         *
+         * Depending on the device type, its id may be assigned by the framework
+         * (this is done for REMOTE_SUBMIX), or specified in the audio policy
+         * configuration file (typically done for BUS devices), or assigned
+         * by the HAL service. In any case, both framework and HAL must
+         * never attempt to parse the value of the id. If the address must
+         * be parsed, one of the members below must be used instead of 'id'.
          */
-        Monostate unspecified;
+        string id;
         /** IEEE 802 MAC address. Set for Bluetooth devices. */
         uint8_t[6] mac;
         /** IPv4 Address. Set for IPv4 devices. */
@@ -182,10 +190,6 @@ struct DeviceAddress {
             int32_t card;
             int32_t device;
         } alsa;
-        /** Arbitrary BUS device unique address. Not interpreted by the framework. */
-        string bus;
-        /** Arbitrary REMOTE_SUBMIX device unique address. Not interpreted by the HAL. */
-        string rSubmix;
     } address;
 };
 
@@ -349,9 +353,9 @@ struct AudioGainConfig {
     /**
      * Gain values in millibels for each channel ordered from LSb to MSb in
      * channel mask. The number of values is 1 in joint mode or
-     * popcount(channel_mask).
+     * the number of channels in the channel mask.
      */
-    int32_t[4 * 8] values;
+    vec<int32_t> values;
     uint32_t rampDurationMs;  // ramp duration in ms
 };
 
@@ -409,7 +413,7 @@ struct AudioPortConfig {
      * parameters (or none) may be set. See the documentation of the
      * AudioConfigBase struct.
      */
-    AudioConfigBase config;
+    AudioConfigBase base;
     /** Associated gain control. */
     safe_union OptionalGain {
         Monostate unspecified;
@@ -439,6 +443,8 @@ struct AudioPort {
     vec<AudioProfile> profiles;
     /** List of gain controls attached to the port. */
     vec<AudioGain> gains;
+    /** Parameters that depend on the actual port role. */
+    AudioPortExtendedInfo ext;
     /**
      * Current configuration of the audio port, may have all the fields left
      * unspecified.

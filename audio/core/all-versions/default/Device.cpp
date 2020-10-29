@@ -283,8 +283,10 @@ std::tuple<Result, AudioPatchHandle> Device::createOrUpdateAudioPatch(
         const hidl_vec<AudioPortConfig>& sinks) {
     Result retval(Result::NOT_SUPPORTED);
     if (version() >= AUDIO_DEVICE_API_VERSION_3_0) {
-        std::unique_ptr<audio_port_config[]> halSources(HidlUtils::audioPortConfigsToHal(sources));
-        std::unique_ptr<audio_port_config[]> halSinks(HidlUtils::audioPortConfigsToHal(sinks));
+        std::unique_ptr<audio_port_config[]> halSources;
+        HidlUtils::audioPortConfigsToHal(sources, &halSources);
+        std::unique_ptr<audio_port_config[]> halSinks;
+        HidlUtils::audioPortConfigsToHal(sinks, &halSinks);
         audio_patch_handle_t halPatch = static_cast<audio_patch_handle_t>(patch);
         retval = analyzeStatus("create_audio_patch",
                                mDevice->create_audio_patch(mDevice, sources.size(), &halSources[0],
