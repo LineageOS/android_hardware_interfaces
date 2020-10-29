@@ -30,7 +30,6 @@ enum Result : int32_t {
     NOT_SUPPORTED
 };
 
-@export(name="audio_drain_type_t", value_prefix="AUDIO_DRAIN_")
 enum AudioDrain : int32_t {
     /** drain() returns when all data has been played. */
     ALL,
@@ -315,7 +314,7 @@ enum TimestretchMode : int32_t {
  * Behavior when the values for speed and / or pitch are out
  * of applicable range.
  */
-@export(name="audio_timestretch_fallback_mode_t", value_prefix="AUDIO_TIMESTRETCH_FALLBACK_")
+@export(name="", value_prefix="HAL_AUDIO_TIMESTRETCH_FALLBACK_")
 enum TimestretchFallbackMode : int32_t {
     // Need to be in sync with AUDIO_FALLBACK_MODE_* constants in
     // frameworks/base/media/java/android/media/PlaybackParams.java
