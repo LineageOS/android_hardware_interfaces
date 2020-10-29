@@ -46,6 +46,7 @@ cc_defaults {
     vendor_available: true,
     srcs: [
         "HidlUtils.cpp",
+        "UuidUtils.cpp",
     ],
 
     export_include_dirs: ["."],
