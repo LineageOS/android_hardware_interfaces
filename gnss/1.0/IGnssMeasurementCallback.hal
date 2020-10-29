@@ -106,8 +106,63 @@ interface IGnssMeasurementCallback {
         STATE_GLO_TOD_KNOWN          = 1 << 15,
     };
 
-    /**
+     /**
      * Flags indicating the Accumulated Delta Range's states.
+     *
+     * See the table below for a detailed interpretation of each state.
+     *
+     * +---------------------+-------------------+-----------------------------+
+     * | ADR_STATE           | Time of relevance | Interpretation              |
+     * +---------------------+-------------------+-----------------------------+
+     * | UNKNOWN             | ADR(t)            | No valid carrier phase      |
+     * |                     |                   | information is available    |
+     * |                     |                   | at time t.                  |
+     * +---------------------+-------------------+-----------------------------+
+     * | VALID               | ADR(t)            | Valid carrier phase         |
+     * |                     |                   | information is available    |
+     * |                     |                   | at time t. This indicates   |
+     * |                     |                   | that this measurement can   |
+     * |                     |                   | be used as a reference for  |
+     * |                     |                   | future measurements.        |
+     * |                     |                   | However, to compare it to   |
+     * |                     |                   | previous measurements to    |
+     * |                     |                   | compute delta range,        |
+     * |                     |                   | other bits should be        |
+     * |                     |                   | checked. Specifically, it   |
+     * |                     |                   | can be used for delta range |
+     * |                     |                   | computation if it is valid  |
+     * |                     |                   | and has no reset or cycle   |
+     * |                     |                   | slip at this epoch i.e.     |
+     * |                     |                   | if VALID_BIT == 1 &&        |
+     * |                     |                   | CYCLE_SLIP_BIT == 0 &&      |
+     * |                     |                   | RESET_BIT == 0.             |
+     * +---------------------+-------------------+-----------------------------+
+     * | RESET               | ADR(t) - ADR(t-1) | Carrier phase accumulation  |
+     * |                     |                   | has been restarted between  |
+     * |                     |                   | current time t and previous |
+     * |                     |                   | time t-1. This indicates    |
+     * |                     |                   | that this measurement can   |
+     * |                     |                   | be used as a reference for  |
+     * |                     |                   | future measurements, but it |
+     * |                     |                   | should not be compared to   |
+     * |                     |                   | previous measurements to    |
+     * |                     |                   | compute delta range.        |
+     * +---------------------+-------------------+-----------------------------+
+     * | CYCLE_SLIP          | ADR(t) - ADR(t-1) | Cycle slip(s) have been     |
+     * |                     |                   | detected between the        |
+     * |                     |                   | current time t and previous |
+     * |                     |                   | time t-1. This indicates    |
+     * |                     |                   | that this measurement can   |
+     * |                     |                   | be used as a reference for  |
+     * |                     |                   | future measurements.        |
+     * |                     |                   | Clients can use a           |
+     * |                     |                   | measurement with a cycle    |
+     * |                     |                   | slip to compute delta range |
+     * |                     |                   | against previous            |
+     * |                     |                   | measurements at their own   |
+     * |                     |                   | risk.                       |
+     * +---------------------+-------------------+-----------------------------+
+     *
      */
     @export(name="", value_prefix="GNSS_")
     enum GnssAccumulatedDeltaRangeState : uint16_t {

@@ -20,8 +20,18 @@ import @1.0::IGnssMeasurementCallback;
 
 /** The callback interface to report measurements from the HAL. */
 interface IGnssMeasurementCallback extends @1.0::IGnssMeasurementCallback {
-    /**
+     /**
      * Flags indicating the Accumulated Delta Range's states.
+     *
+     * See the table below for a detailed interpretation of each state. This is
+     * a continuation of the table from 1.1/IGnssMeasurementCallback.hal.
+     *
+     * +---------------------+-------------------+-----------------------------+
+     * | ADR_STATE           | Time of relevance | Interpretation              |
+     * +---------------------+-------------------+-----------------------------+
+     * | HALF_CYCLE_RESOLVED | ADR(t)            | Half cycle ambiguity is     |
+     * |                     |                   | resolved at time t.         |
+     * +---------------------+-------------------+-----------------------------+
      */
     enum GnssAccumulatedDeltaRangeState
             : @1.0::IGnssMeasurementCallback.GnssAccumulatedDeltaRangeState {
