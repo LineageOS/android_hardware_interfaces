@@ -20,6 +20,7 @@
 #include <android/hardware/wifi/1.0/IWifi.h>
 #include <android/hardware/wifi/supplicant/1.0/ISupplicantStaNetwork.h>
 #include <android/hardware/wifi/supplicant/1.3/ISupplicantStaNetwork.h>
+#include <android/hardware/wifi/supplicant/1.4/ISupplicantStaNetwork.h>
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
@@ -90,6 +91,8 @@ class SupplicantStaNetworkHidlTest : public SupplicantHidlTestBaseV1_0 {
          */
         v1_3 = ::android::hardware::wifi::supplicant::V1_3::
             ISupplicantStaNetwork::castFrom(sta_network_);
+        v1_4 = ::android::hardware::wifi::supplicant::V1_4::
+            ISupplicantStaNetwork::castFrom(sta_network_);
 
         ssid_.assign(kTestSsidStr, kTestSsidStr + strlen(kTestSsidStr));
     }
@@ -111,6 +114,8 @@ class SupplicantStaNetworkHidlTest : public SupplicantHidlTestBaseV1_0 {
 
     sp<::android::hardware::wifi::supplicant::V1_3::ISupplicantStaNetwork>
         v1_3 = nullptr;
+    sp<::android::hardware::wifi::supplicant::V1_4::ISupplicantStaNetwork>
+        v1_4 = nullptr;
     // ISupplicantStaNetwork object used for all tests in this fixture.
     sp<ISupplicantStaNetwork> sta_network_;
     // SSID to use for various tests.
@@ -151,8 +156,12 @@ TEST_P(SupplicantStaNetworkHidlTest, Create) {
  */
 TEST_P(SupplicantStaNetworkHidlTest, RegisterCallback) {
     sta_network_->registerCallback(
-        new NetworkCallback(), [](const SupplicantStatus& status) {
-            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+        new NetworkCallback(), [&](const SupplicantStatus& status) {
+            if (nullptr != v1_4) {
+                EXPECT_EQ(SupplicantStatusCode::FAILURE_UNKNOWN, status.code);
+            } else {
+                EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+            }
         });
 }
 
