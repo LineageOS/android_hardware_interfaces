@@ -143,4 +143,22 @@ interface ISupplicantStaNetwork extends @1.3::ISupplicantStaNetwork {
      */
     registerCallback_1_4(ISupplicantStaNetworkCallback callback)
         generates (SupplicantStatus status);
+
+    /**
+     * Set whether to enable SAE H2E (Hash-to-Element) only mode.
+     *
+     * When enabled, only SAE H2E network is allowed; othewise
+     * H&P (Hunting and Pecking) and H2E are both allowed.
+     * H&P only mode is not supported.
+     * If this API is not called before connecting to a SAE
+     * network, the behavior is undefined.
+     *
+     * @param enable true to set, false otherwise.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    enableSaeH2eOnlyMode(bool enable) generates (SupplicantStatus status);
 };

@@ -78,6 +78,7 @@ typedef string AudioSource;
  */
 typedef int32_t AudioSession;
 
+@export(name="", value_prefix="HAL_AUDIO_SESSION_")
 enum AudioSessionConsts : int32_t {
     /**
      * Session for effects attached to a particular sink or source audio device
@@ -137,7 +138,7 @@ struct AudioProfile {
  * Major modes for a mobile device. The current mode setting affects audio
  * routing.
  */
-@export(name="audio_mode_t", value_prefix="AUDIO_MODE_")
+@export(name="", value_prefix="HAL_AUDIO_MODE_")
 enum AudioMode : int32_t {
     NORMAL           = 0,
     RINGTONE         = 1,
@@ -219,6 +220,27 @@ enum AudioEncapsulationMode : int32_t {
      *  Handle-based payload with metadata
      */
     HANDLE            = 2,
+};
+
+/**
+ * Enumeration of metadata types permitted for use by
+ * encapsulation mode audio streams.
+ */
+@export(name="audio_encapsulation_metadata_type_t", value_prefix="AUDIO_ENCAPSULATION_METADATA_TYPE_")
+enum AudioEncapsulationMetadataType : int32_t {
+    /**
+     * No metadata.
+     */
+    NONE              = 0,
+    /**
+     * Encapsulation metadata type for framework tuner information.
+     */
+    FRAMEWORK_TUNER   = 1,
+    /**
+     * Encapsulation metadata type for DVB AD descriptor.
+     * This metadata is formatted per ETSI TS 101 154 Table E.1: AD_descriptor.
+     */
+    DVB_AD_DESCRIPTOR = 2,
 };
 
 /**
