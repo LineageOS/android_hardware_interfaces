@@ -1113,3 +1113,32 @@ Return<void> RadioResponse_v1_6::isNrDualConnectivityEnabledResponse(
     parent_v1_6.notify(info.serial);
     return Void();
 }
+
+Return<void> RadioResponse_v1_6::allocatePduSessionIdResponse(
+        const ::android::hardware::radio::V1_6::RadioResponseInfo& info, int32_t id) {
+    rspInfo = info;
+    allocatedPduSessionId = id;
+    parent_v1_6.notify(info.serial);
+    return Void();
+}
+
+Return<void> RadioResponse_v1_6::releasePduSessionIdResponse(
+        const ::android::hardware::radio::V1_6::RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_v1_6.notify(info.serial);
+    return Void();
+}
+
+Return<void> RadioResponse_v1_6::beginHandoverResponse(
+        const ::android::hardware::radio::V1_6::RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_v1_6.notify(info.serial);
+    return Void();
+}
+
+Return<void> RadioResponse_v1_6::cancelHandoverResponse(
+        const ::android::hardware::radio::V1_6::RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_v1_6.notify(info.serial);
+    return Void();
+}
