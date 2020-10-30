@@ -166,11 +166,15 @@ enum RestrictedState : int32_t {
 };
 
 enum CardState : int32_t {
+    /* card is physically absent from device. (Some old modems use CardState.ABSENT when the SIM
+       is powered off. This is no longer correct, however the platform will still support this
+       legacy behavior.) */
     ABSENT,
+    /* card is inserted in the device */
     PRESENT,
     ERROR,
-    RESTRICTED,                           // card is present but not usable due to carrier
-                                          // restrictions
+    /* card is present but not usable due to carrier restrictions */
+    RESTRICTED,
 };
 
 enum PinState : int32_t {

@@ -207,6 +207,22 @@ interface IRadioResponse extends @1.5::IRadioResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:SIM_ERR (indicates a timeout or other issue making the SIM unresponsive)
+     *
+     * Note that this differs from setSimCardPowerResponse_1_1 in that the response
+     * should only be sent once the request from setSimCardPower_1_6 is complete
+     * (the SIM has finished powering on or off).
+     */
+    oneway setSimCardPowerResponse_1_6(RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
      */
     oneway enableNrDualConnectivityResponse(RadioResponseInfo info);
