@@ -1097,6 +1097,13 @@ Return<void> RadioResponse_v1_6::sendCdmaSmsResponse_1_6(
     return Void();
 }
 
+Return<void> RadioResponse_v1_6::setSimCardPowerResponse_1_6(
+        const ::android::hardware::radio::V1_6::RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_v1_6.notify(info.serial);
+    return Void();
+}
+
 Return<void> RadioResponse_v1_6::sendCdmaSmsExpectMoreResponse_1_6(
         const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
         const SendSmsResult& sms) {
