@@ -19,6 +19,7 @@ package android.hardware.radio@1.6;
 
 import @1.0::CdmaSmsMessage;
 import @1.0::GsmSmsMessage;
+import @1.1::CardPowerState;
 import @1.2::DataRequestReason;
 import @1.5::IRadio;
 import @1.5::AccessNetwork;
@@ -183,6 +184,42 @@ interface IRadio extends @1.5::IRadio {
     oneway sendCdmaSmsExpectMore_1_6(int32_t serial, CdmaSmsMessage sms);
 
     /**
+     * Set SIM card power state.
+     * Request is used to power off or power on the card. It should not generate
+     * a CardState.CARDSTATE_ABSENT indication, since the SIM is still physically
+     * inserted.
+     *
+     * @param serial Serial number of request
+     * @param powerUp POWER_DOWN if powering down the SIM card,
+     *                POWER_UP if powering up the SIM card,
+     *                POWER_UP_PASS_THROUGH if powering up the SIM card in
+     *                                      pass through mode.
+     *
+     * When SIM card is in POWER_UP_PASS_THROUGH, the modem does not send
+     * any command to it (for example SELECT of MF, or TERMINAL
+     * CAPABILITY), and the SIM card is controlled completely by Telephony
+     * sending APDUs directly. The SIM card state must be
+     * RIL_CARDSTATE_PRESENT and the number of card apps will be 0.
+     * No new error code is generated. Emergency calls are supported in
+     * the same way as if the SIM card is absent.
+     * Pass-through mode is valid only for the specific card session where
+     * it is activated, and normal behavior occurs at the next SIM
+     * initialization, unless POWER_UP_PASS_THROUGH is requested again.
+     *
+     * The device is required to power down the SIM card before it can
+     * switch the mode between POWER_UP and POWER_UP_PASS_THROUGH.
+     * At device power up, the SIM interface is powered up automatically.
+     * Each subsequent request to this method is processed only after the
+     * completion of the previous one.
+     *
+     * Response callback is IRadioResponse.setSimCardPowerResponse_1_6().
+     * Note that this differs from setSimCardPower_1_1 in that the response
+     * callback should only be sent once the device has finished executing
+     * the request (the SIM has finished powering on or off).
+     */
+    oneway setSimCardPower_1_6(int32_t serial, CardPowerState powerUp);
+
+    /**
      * Enable or disable E-UTRA-NR dual connectivity. If disabled then UE will not connect
      * to secondary carrier.
      *
@@ -205,4 +242,67 @@ interface IRadio extends @1.5::IRadio {
      * Response callback is IRadioResponse.isNRDualConnectivityEnabledResponse()
      */
     oneway isNrDualConnectivityEnabled(int32_t serial);
+
+    /**
+     * Reserves an unallocated pdu session id from the pool of ids.
+     *
+     * The allocated id is returned in the response.
+     *
+     * When the id is no longer needed, call releasePduSessionId to
+     * return it to the pool.
+     *
+     * Reference: 3GPP TS 24.007 section 11.2.3.1b
+     *
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.allocatePduSessionIdResponse()
+     */
+    oneway allocatePduSessionId(int32_t serial);
+
+    /**
+     * Releases a pdu session id that was previously allocated using
+     * allocatePduSessionId.
+     *
+     * Reference: 3GPP TS 24.007 section 11.2.3.1b
+     * @param serial Serial number of request.
+     * @param id Pdu session id to release.
+     *
+     * Response function is IRadioResponse.releasePduSessionIdResponse()
+     */
+    oneway releasePduSessionId(int32_t serial, int32_t id);
+
+    /**
+     * Indicates that a handover to the IWLAN transport has begun.
+     *
+     * Any resources being transferred to the IWlan transport cannot be released while a
+     * handover is underway. For example, if a pdu session id needs to be
+     * transferred to IWlan, then, the modem should not release the id while
+     * the handover is in progress.
+     *
+     * If a handover was unsuccessful, then the framework calls IRadio::cancelHandover.
+     * The modem retains ownership over any of the resources being transferred to IWlan.
+     *
+     * If a handover was successful, the framework calls IRadio::deactivateDataCall with reason
+     * HANDOVER. The IWlan transport now owns the transferred resources and is responsible for
+     * releasing them.
+     *
+     * @param serial Serial number of request.
+     * @param id callId The identifier of the data call which is provided in SetupDataCallResult
+     *
+     * Response function is IRadioResponse.beginHandoverResponse()
+     */
+    oneway beginHandover(int32_t serial, int32_t callId);
+
+    /**
+     * Indicates that a handover was cancelled after a call to IRadio::beginHandover.
+     *
+     * Since the handover was unsuccessful, the modem retains ownership over any of the resources
+     * being transferred and is still responsible for releasing them.
+     *
+     * @param serial Serial number of request.
+     * @param id callId The identifier of the data call which is provided in SetupDataCallResult
+     *
+     * Response function is IRadioResponse.cancelHandoverResponse()
+     */
+    oneway cancelHandover(int32_t serial, int32_t callId);
 };
