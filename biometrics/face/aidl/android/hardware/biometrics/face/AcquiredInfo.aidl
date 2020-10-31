@@ -198,10 +198,9 @@ enum AcquiredInfo {
     /**
      * This message represents the earliest message sent at the beginning of the authentication
      * pipeline. It is expected to be used to measure latency. For example, in a camera-based
-     * authentication system it's expected to be sent prior to camera initialization. Note this
-     * should be sent whenever authentication is restarted (see IBiometricsFace#userActivity).
-     * The framework will measure latency based on the time between the last START message and the
-     * onAuthenticated callback.
+     * authentication system it's expected to be sent prior to camera initialization. The framework
+     * will measure latency based on the time between the last START message and the onAuthenticated
+     * callback.
      */
     START = 20,
 
@@ -213,7 +212,12 @@ enum AcquiredInfo {
     /**
      * Vendor-specific acquisition message. See ISessionCallback#onAcquired vendorCode
      * documentation.
-    */
-    VENDOR = 22
+     */
+    VENDOR = 22,
+
+    /**
+     * The first frame from the camera has been received.
+     */
+    FIRST_FRAME_RECEIVED = 23
 }
 

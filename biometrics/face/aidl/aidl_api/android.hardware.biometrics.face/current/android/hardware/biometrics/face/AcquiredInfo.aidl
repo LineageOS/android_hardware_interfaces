@@ -41,4 +41,5 @@ enum AcquiredInfo {
   START = 20,
   SENSOR_DIRTY = 21,
   VENDOR = 22,
+  FIRST_FRAME_RECEIVED = 23,
 }
