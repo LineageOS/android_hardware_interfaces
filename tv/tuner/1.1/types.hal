@@ -72,6 +72,18 @@ enum Constant : @1.0::Constant {
      * IFrontend.linkCiCam.
      */
     INVALID_LTS_ID = 0xFFFFFFFF,
+    /**
+     * An invalid frontend ID.
+     */
+    INVALID_FRONTEND_ID = 0xFFFFFFFF,
+    /**
+     * An invalid LNB ID.
+     */
+    INVALID_LNB_ID = 0xFFFFFFFF,
+    /**
+     * An invalid key token. It is used to remove the current key from the descrambler.
+     */
+    INVALID_KEYTOKEN = 0x00,
 };
 
 @export
