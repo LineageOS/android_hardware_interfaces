@@ -437,6 +437,7 @@ TEST_P(RadioHidlTest_v1_5, togglingUiccApplicationsSimAbsent) {
 TEST_P(RadioHidlTest_v1_5, togglingUiccApplicationsSimPresent) {
     // This test case only test SIM ABSENT case.
     if (cardStatus.base.base.base.cardState != CardState::PRESENT) return;
+    if (cardStatus.applications.size() == 0) return;
 
     // Disable Uicc applications.
     serial = GetRandomSerialNumber();
