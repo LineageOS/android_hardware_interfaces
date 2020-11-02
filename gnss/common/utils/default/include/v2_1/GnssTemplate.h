@@ -689,6 +689,10 @@ Return<void> GnssTemplate<T_IGnss>::help(const hidl_handle& fd) {
 template <class T_IGnss>
 Return<void> GnssTemplate<T_IGnss>::debug(const hidl_handle& fd,
                                           const hidl_vec<hidl_string>& options) {
+    if (fd == nullptr || fd->numFds == 0) {
+        return Void();
+    }
+
     if (options.size() == 0) {
         return help(fd);
     } else if (options[0] == "location") {
