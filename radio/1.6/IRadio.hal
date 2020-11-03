@@ -242,4 +242,67 @@ interface IRadio extends @1.5::IRadio {
      * Response callback is IRadioResponse.isNRDualConnectivityEnabledResponse()
      */
     oneway isNrDualConnectivityEnabled(int32_t serial);
+
+    /**
+     * Reserves an unallocated pdu session id from the pool of ids.
+     *
+     * The allocated id is returned in the response.
+     *
+     * When the id is no longer needed, call releasePduSessionId to
+     * return it to the pool.
+     *
+     * Reference: 3GPP TS 24.007 section 11.2.3.1b
+     *
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.allocatePduSessionIdResponse()
+     */
+    oneway allocatePduSessionId(int32_t serial);
+
+    /**
+     * Releases a pdu session id that was previously allocated using
+     * allocatePduSessionId.
+     *
+     * Reference: 3GPP TS 24.007 section 11.2.3.1b
+     * @param serial Serial number of request.
+     * @param id Pdu session id to release.
+     *
+     * Response function is IRadioResponse.releasePduSessionIdResponse()
+     */
+    oneway releasePduSessionId(int32_t serial, int32_t id);
+
+    /**
+     * Indicates that a handover to the IWLAN transport has begun.
+     *
+     * Any resources being transferred to the IWlan transport cannot be released while a
+     * handover is underway. For example, if a pdu session id needs to be
+     * transferred to IWlan, then, the modem should not release the id while
+     * the handover is in progress.
+     *
+     * If a handover was unsuccessful, then the framework calls IRadio::cancelHandover.
+     * The modem retains ownership over any of the resources being transferred to IWlan.
+     *
+     * If a handover was successful, the framework calls IRadio::deactivateDataCall with reason
+     * HANDOVER. The IWlan transport now owns the transferred resources and is responsible for
+     * releasing them.
+     *
+     * @param serial Serial number of request.
+     * @param id callId The identifier of the data call which is provided in SetupDataCallResult
+     *
+     * Response function is IRadioResponse.beginHandoverResponse()
+     */
+    oneway beginHandover(int32_t serial, int32_t callId);
+
+    /**
+     * Indicates that a handover was cancelled after a call to IRadio::beginHandover.
+     *
+     * Since the handover was unsuccessful, the modem retains ownership over any of the resources
+     * being transferred and is still responsible for releasing them.
+     *
+     * @param serial Serial number of request.
+     * @param id callId The identifier of the data call which is provided in SetupDataCallResult
+     *
+     * Response function is IRadioResponse.cancelHandoverResponse()
+     */
+    oneway cancelHandover(int32_t serial, int32_t callId);
 };
