@@ -10,6 +10,7 @@ hidl_interface {
         "ISupplicantStaIface.hal",
         "ISupplicantStaNetwork.hal",
         "ISupplicantStaNetworkCallback.hal",
+        "ISupplicantStaIfaceCallback.hal",
     ],
     interfaces: [
         "android.hardware.wifi.supplicant@1.0",

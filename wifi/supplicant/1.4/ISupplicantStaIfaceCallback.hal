@@ -1,0 +1,40 @@
+/*
+ * Copyright 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi.supplicant@1.4;
+
+import @1.3::ISupplicantStaIfaceCallback;
+import @1.0::ISupplicantStaIfaceCallback.State;
+import @1.0::Bssid;
+
+/**
+ * Callback Interface exposed by the supplicant service
+ * for each station mode interface (ISupplicantStaIface).
+ *
+ * Clients need to host an instance of this HIDL interface object and
+ * pass a reference of the object to the supplicant via the
+ * corresponding |ISupplicantStaIface.registerCallback_1_4| method.
+ */
+interface ISupplicantStaIfaceCallback extends @1.3::ISupplicantStaIfaceCallback {
+    /**
+     * Used to indicate a Hotspot 2.0 terms and conditions acceptance is requested from the user
+     * before allowing the device to get internet access.
+     *
+     * @param bssid BSSID of the access point.
+     * @param url URL of the T&C server.
+     */
+    oneway onHs20TermsAndConditionsAcceptanceRequestedNotification(Bssid bssid, string url);
+};
