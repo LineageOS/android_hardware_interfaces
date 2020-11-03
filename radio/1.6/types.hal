@@ -254,6 +254,14 @@ struct SetupDataCallResult {
 
     /** Specifies the fallback mode on an IWLAN handover failure. */
     HandoverFailureMode handoverFailureMode;
+
+    /**
+     * The allocated pdu session id for this data call.
+     * A value of -1 means no pdu session id was attached to this call.
+     *
+     * Reference: 3GPP TS 24.007 section 11.2.3.1b
+     */
+    int32_t pduSessionId;
 };
 
 /**
