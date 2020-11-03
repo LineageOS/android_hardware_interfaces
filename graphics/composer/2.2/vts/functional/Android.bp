@@ -27,6 +27,7 @@ cc_test {
         "libEGL",
         "libGLESv1_CM",
         "libGLESv2",
+        "libbase",
         "libfmq",
         "libgui",
         "libhidlbase",

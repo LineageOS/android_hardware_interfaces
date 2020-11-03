@@ -17,6 +17,7 @@
 #define LOG_TAG "graphics_composer_hidl_hal_test"
 
 #include <android-base/logging.h>
+#include <android-base/properties.h>
 #include <composer-vts/2.1/ComposerVts.h>
 #include <composer-vts/2.1/GraphicsComposerCallback.h>
 #include <composer-vts/2.1/TestCommandReader.h>
@@ -1100,3 +1101,15 @@ INSTANTIATE_TEST_SUITE_P(
 }  // namespace graphics
 }  // namespace hardware
 }  // namespace android
+
+int main(int argc, char** argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+
+    using namespace std::chrono_literals;
+    if (!android::base::WaitForProperty("init.svc.surfaceflinger", "stopped", 10s)) {
+        ALOGE("Failed to stop init.svc.surfaceflinger");
+        return -1;
+    }
+
+    return RUN_ALL_TESTS();
+}
