@@ -241,7 +241,7 @@ interface IRadioResponse extends @1.5::IRadioResponse {
 
     /**
      * @param info Response info struct containing response type, serial no. and error
-     * @param id The allocated id. On an error, this is set to -1
+     * @param id The allocated id. On an error, this is set to 0.
      *
      * Valid errors returned:
      *   RadioError:NONE
@@ -275,7 +275,7 @@ interface IRadioResponse extends @1.5::IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:INVALID_CALL_ID
      */
-    oneway beginHandoverResponse(RadioResponseInfo info);
+    oneway startHandoverResponse(RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
