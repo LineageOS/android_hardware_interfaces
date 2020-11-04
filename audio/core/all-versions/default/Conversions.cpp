@@ -93,52 +93,6 @@ status_t deviceAddressFromHal(audio_devices_t device, const char* halAddress,
     return OK;
 }
 
-AudioMicrophoneChannelMapping halToChannelMapping(audio_microphone_channel_mapping_t mapping) {
-    switch (mapping) {
-        case AUDIO_MICROPHONE_CHANNEL_MAPPING_UNUSED:
-            return AudioMicrophoneChannelMapping::UNUSED;
-        case AUDIO_MICROPHONE_CHANNEL_MAPPING_DIRECT:
-            return AudioMicrophoneChannelMapping::DIRECT;
-        case AUDIO_MICROPHONE_CHANNEL_MAPPING_PROCESSED:
-            return AudioMicrophoneChannelMapping::PROCESSED;
-        default:
-            ALOGE("Invalid channel mapping type: %d", mapping);
-            return AudioMicrophoneChannelMapping::UNUSED;
-    }
-}
-
-AudioMicrophoneLocation halToLocation(audio_microphone_location_t location) {
-    switch (location) {
-        default:
-        case AUDIO_MICROPHONE_LOCATION_UNKNOWN:
-            return AudioMicrophoneLocation::UNKNOWN;
-        case AUDIO_MICROPHONE_LOCATION_MAINBODY:
-            return AudioMicrophoneLocation::MAINBODY;
-        case AUDIO_MICROPHONE_LOCATION_MAINBODY_MOVABLE:
-            return AudioMicrophoneLocation::MAINBODY_MOVABLE;
-        case AUDIO_MICROPHONE_LOCATION_PERIPHERAL:
-            return AudioMicrophoneLocation::PERIPHERAL;
-    }
-}
-
-AudioMicrophoneDirectionality halToDirectionality(audio_microphone_directionality_t dir) {
-    switch (dir) {
-        default:
-        case AUDIO_MICROPHONE_DIRECTIONALITY_UNKNOWN:
-            return AudioMicrophoneDirectionality::UNKNOWN;
-        case AUDIO_MICROPHONE_DIRECTIONALITY_OMNI:
-            return AudioMicrophoneDirectionality::OMNI;
-        case AUDIO_MICROPHONE_DIRECTIONALITY_BI_DIRECTIONAL:
-            return AudioMicrophoneDirectionality::BI_DIRECTIONAL;
-        case AUDIO_MICROPHONE_DIRECTIONALITY_CARDIOID:
-            return AudioMicrophoneDirectionality::CARDIOID;
-        case AUDIO_MICROPHONE_DIRECTIONALITY_HYPER_CARDIOID:
-            return AudioMicrophoneDirectionality::HYPER_CARDIOID;
-        case AUDIO_MICROPHONE_DIRECTIONALITY_SUPER_CARDIOID:
-            return AudioMicrophoneDirectionality::SUPER_CARDIOID;
-    }
-}
-
 bool halToMicrophoneCharacteristics(MicrophoneInfo* pDst,
                                     const struct audio_microphone_characteristic_t& src) {
     bool status = false;
@@ -150,15 +104,15 @@ bool halToMicrophoneCharacteristics(MicrophoneInfo* pDst,
         }
         pDst->channelMapping.resize(AUDIO_CHANNEL_COUNT_MAX);
         for (size_t ch = 0; ch < pDst->channelMapping.size(); ch++) {
-            pDst->channelMapping[ch] = halToChannelMapping(src.channel_mapping[ch]);
+            pDst->channelMapping[ch] = AudioMicrophoneChannelMapping(src.channel_mapping[ch]);
         }
-        pDst->location = halToLocation(src.location);
+        pDst->location = AudioMicrophoneLocation(src.location);
         pDst->group = (AudioMicrophoneGroup)src.group;
         pDst->indexInTheGroup = (uint32_t)src.index_in_the_group;
         pDst->sensitivity = src.sensitivity;
         pDst->maxSpl = src.max_spl;
         pDst->minSpl = src.min_spl;
-        pDst->directionality = halToDirectionality(src.directionality);
+        pDst->directionality = AudioMicrophoneDirectionality(src.directionality);
         pDst->frequencyResponse.resize(src.num_frequency_responses);
         for (size_t k = 0; k < src.num_frequency_responses; k++) {
             pDst->frequencyResponse[k].frequency = src.frequency_responses[0][k];

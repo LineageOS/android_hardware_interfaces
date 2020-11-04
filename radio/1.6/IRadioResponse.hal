@@ -290,4 +290,20 @@ interface IRadioResponse extends @1.5::IRadioResponse {
      *   RadioError:INVALID_CALL_ID
      */
     oneway cancelHandoverResponse(RadioResponseInfo info);
+
+    /**
+     * Callback of IRadio.setAllowedNetworkTypeBitmap(int, bitfield<RadioAccessFamily>)
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:OPERATION_NOT_ALLOWED
+     *   RadioError:MODE_NOT_SUPPORTED
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:MODEM_ERR
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:NO_RESOURCES
+     */
+    oneway setAllowedNetworkTypeBitmapResponse(RadioResponseInfo info);
 };
