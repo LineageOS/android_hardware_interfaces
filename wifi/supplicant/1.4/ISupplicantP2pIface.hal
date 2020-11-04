@@ -17,7 +17,6 @@
 package android.hardware.wifi.supplicant@1.4;
 
 import @1.2::ISupplicantP2pIface;
-import @1.0::SupplicantStatus;
 
 /**
  * Interface exposed by the supplicant for each P2P mode network
