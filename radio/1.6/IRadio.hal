@@ -230,9 +230,9 @@ interface IRadio extends @1.5::IRadio {
      * 3. Disable NR dual connectivity and force secondary cell to be released
      * {NrDualConnectivityState:DISABLE_IMMEDIATE}
 
-     * Response callback is IRadioResponse.enableNRDualConnectivityResponse()
+     * Response callback is IRadioResponse.setNRDualConnectivityStateResponse()
      */
-    oneway enableNrDualConnectivity(int32_t serial,
+    oneway setNrDualConnectivityState(int32_t serial,
             NrDualConnectivityState nrDualConnectivityState);
 
     /**

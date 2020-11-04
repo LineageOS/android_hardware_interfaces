@@ -260,13 +260,13 @@ TEST_P(RadioHidlTest_v1_6, setRadioPower_1_6_emergencyCall_cancelled) {
 }
 
 /*
- * Test IRadio.enableNrDualConnectivity() for the response returned.
+ * Test IRadio.setNrDualConnectivityState() for the response returned.
  */
-TEST_P(RadioHidlTest_v1_6, enableNrDualConnectivity) {
+TEST_P(RadioHidlTest_v1_6, setNrDualConnectivityState) {
     serial = GetRandomSerialNumber();
 
     Return<void> res =
-            radio_v1_6->enableNrDualConnectivity(serial, NrDualConnectivityState::DISABLE);
+            radio_v1_6->setNrDualConnectivityState(serial, NrDualConnectivityState::DISABLE);
     ASSERT_OK(res);
 
     EXPECT_EQ(std::cv_status::no_timeout, wait());
