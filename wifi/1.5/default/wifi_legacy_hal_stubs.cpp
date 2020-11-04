@@ -147,6 +147,8 @@ bool initHalFuncTableWithStubs(wifi_hal_fn* hal_fn) {
     populateStubFor(&hal_fn->wifi_get_supported_iface_name);
     populateStubFor(&hal_fn->wifi_early_initialize);
     populateStubFor(&hal_fn->wifi_get_chip_feature_set);
+    populateStubFor(&hal_fn->wifi_multi_sta_set_primary_connection);
+    populateStubFor(&hal_fn->wifi_multi_sta_set_use_case);
 
     return true;
 }
