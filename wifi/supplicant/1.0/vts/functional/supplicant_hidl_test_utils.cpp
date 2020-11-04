@@ -48,6 +48,26 @@ using ::android::wifi_system::InterfaceTool;
 using ::android::wifi_system::SupplicantManager;
 
 namespace {
+bool waitForSupplicantState(bool is_running) {
+    SupplicantManager supplicant_manager;
+    int count = 50; /* wait at most 5 seconds for completion */
+    while (count-- > 0) {
+        if (supplicant_manager.IsSupplicantRunning() == is_running) {
+            return true;
+        }
+        usleep(100000);
+    }
+    LOG(ERROR) << "Supplicant not " << is_running ? "running" : "stopped";
+    return false;
+}
+
+// Helper function to wait for supplicant to be started by framework on wifi
+// enable.
+bool waitForSupplicantStart() { return waitForSupplicantState(true); }
+
+// Helper function to wait for supplicant to be stopped by framework on wifi
+// disable.
+bool waitForSupplicantStop() { return waitForSupplicantState(false); }
 
 // Helper function to initialize the driver and firmware to STA mode
 // using the vendor HAL HIDL interface.
@@ -117,6 +137,18 @@ std::string getP2pIfaceName() {
     return buffer.data();
 }
 }  // namespace
+
+bool startWifiFramework() {
+    std::system("svc wifi enable");
+    std::system("cmd wifi set-scan-always-available enabled");
+    return waitForSupplicantStart();  // wait for wifi to start.
+}
+
+bool stopWifiFramework() {
+    std::system("svc wifi disable");
+    std::system("cmd wifi set-scan-always-available disabled");
+    return waitForSupplicantStop();  // wait for wifi to shutdown.
+}
 
 void stopSupplicant() { stopSupplicant(""); }
 
