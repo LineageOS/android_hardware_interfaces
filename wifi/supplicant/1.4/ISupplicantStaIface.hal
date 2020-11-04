@@ -17,6 +17,7 @@
 package android.hardware.wifi.supplicant@1.4;
 
 import @1.0::SupplicantStatus;
+import ISupplicantStaIfaceCallback;
 import @1.3::ISupplicantStaIface;
 
 /**
@@ -36,4 +37,22 @@ interface ISupplicantStaIface extends @1.3::ISupplicantStaIface {
     getConnectionCapabilities_1_4()
         generates (SupplicantStatus status, ConnectionCapabilities capabilities);
 
+    /**
+     * Register for callbacks from this interface.
+     *
+     * These callbacks are invoked for events that are specific to this interface.
+     * Registration of multiple callback objects is supported. These objects must
+     * be automatically deleted when the corresponding client process is dead or
+     * if this interface is removed.
+     *
+     * @param callback An instance of the |ISupplicantStaIfaceCallback| HIDL
+     *        interface object.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     */
+    registerCallback_1_4(ISupplicantStaIfaceCallback callback)
+        generates (SupplicantStatus status);
 };
