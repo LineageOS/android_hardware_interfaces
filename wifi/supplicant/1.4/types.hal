@@ -16,6 +16,7 @@
 
 package android.hardware.wifi.supplicant@1.4;
 
+import @1.0::SupplicantStatusCode;
 import @1.3::ConnectionCapabilities;
 
 /**
@@ -49,4 +50,24 @@ struct ConnectionCapabilities {
      * detailed network mode for legacy network
      */
     LegacyMode legacyMode;
+};
+
+/**
+ * Enum values indicating the status of any supplicant operation.
+ */
+enum SupplicantStatusCode : @1.0::SupplicantStatusCode {
+    FAILURE_UNSUPPORTED,
+};
+
+/**
+ * Generic structure to return the status of any supplicant operation.
+ */
+struct SupplicantStatus {
+  SupplicantStatusCode code;
+  /**
+   * A vendor specific error message to provide more information beyond the
+   * status code.
+   * This will be used for debbuging purposes only.
+   */
+  string debugMessage;
 };

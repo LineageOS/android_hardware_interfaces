@@ -33,6 +33,11 @@ using ::android::hardware::wifi::supplicant::V1_0::SupplicantStatus;
 using ::android::hardware::wifi::supplicant::V1_0::SupplicantStatusCode;
 using ::android::hardware::wifi::supplicant::V1_4::ISupplicantP2pIface;
 
+using SupplicantStatusV1_4 =
+    ::android::hardware::wifi::supplicant::V1_4::SupplicantStatus;
+using SupplicantStatusCodeV1_4 =
+    ::android::hardware::wifi::supplicant::V1_4::SupplicantStatusCode;
+
 class SupplicantP2pIfaceHidlTest : public SupplicantHidlTestBaseV1_4 {
    public:
     virtual void SetUp() override {
@@ -50,18 +55,18 @@ class SupplicantP2pIfaceHidlTest : public SupplicantHidlTestBaseV1_4 {
  * SetGetEdmg
  */
 TEST_P(SupplicantP2pIfaceHidlTest, SetGetEdmg) {
-    p2p_iface_->setEdmg(true, [&](const SupplicantStatus& status) {
-        EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+    p2p_iface_->setEdmg(true, [&](const SupplicantStatusV1_4& status) {
+        EXPECT_EQ(SupplicantStatusCodeV1_4::SUCCESS, status.code);
     });
-    p2p_iface_->getEdmg([&](const SupplicantStatus& status, bool enable) {
-        EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+    p2p_iface_->getEdmg([&](const SupplicantStatusV1_4& status, bool enable) {
+        EXPECT_EQ(SupplicantStatusCodeV1_4::SUCCESS, status.code);
         EXPECT_EQ(true, enable);
     });
-    p2p_iface_->setEdmg(false, [&](const SupplicantStatus& status) {
-        EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+    p2p_iface_->setEdmg(false, [&](const SupplicantStatusV1_4& status) {
+        EXPECT_EQ(SupplicantStatusCodeV1_4::SUCCESS, status.code);
     });
-    p2p_iface_->getEdmg([&](const SupplicantStatus& status, bool enable) {
-        EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+    p2p_iface_->getEdmg([&](const SupplicantStatusV1_4& status, bool enable) {
+        EXPECT_EQ(SupplicantStatusCodeV1_4::SUCCESS, status.code);
         EXPECT_EQ(false, enable);
     });
 }
