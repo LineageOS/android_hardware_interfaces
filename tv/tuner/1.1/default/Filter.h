@@ -227,7 +227,7 @@ class Filter : public V1_1::IFilter {
 
     // Shared A/V memory handle
     hidl_handle mSharedAvMemHandle;
-    bool mUsingSharedAvMem = true;
+    bool mUsingSharedAvMem = false;
     uint32_t mSharedAvMemOffset = 0;
 
     uint32_t mAudioStreamType;
