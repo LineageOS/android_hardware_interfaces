@@ -17,6 +17,8 @@
 package android.hardware.wifi.hostapd@1.3;
 
 import @1.2::HostapdStatus;
+import @1.2::IHostapd.BandMask;
+import @1.2::IHostapd.HwModeParams;
 import @1.2::IHostapd.IfaceParams;
 import @1.2::IHostapd.NetworkParams;
 import @1.2::IHostapd;
@@ -26,6 +28,28 @@ import IHostapdCallback;
  * Top-level object for managing SoftAPs.
  */
 interface IHostapd extends @1.2::IHostapd {
+
+    enum BandMask : @1.2::IHostapd.BandMask {
+        /**
+         * 60 GHz band.
+         */
+        BAND_60_GHZ = 1 << 3,
+    };
+
+    /**
+     * Parameters to control the HW mode for the interface.
+     */
+    struct HwModeParams {
+        /**
+         * Baseline information as defined in HAL 1.2.
+         */
+        @1.2::IHostapd.HwModeParams V1_2;
+
+        /**
+         * Enable EDMG (802.11ay), this option is only allowed for the 60GHz band.
+         */
+        bool enableEdmg;
+    };
 
     /**
      * Parameters to control the channel selection for the interface.
@@ -52,10 +76,20 @@ interface IHostapd extends @1.2::IHostapd {
          * Channel number (IEEE 802.11) to use for the interface.
          * If ACS is enabled, this field is ignored.
          *
+         * If |enableEdmg| is true, the channel must be set. Refer to
+         * P802.11ay_D4.0 29.3.4.
+         *
          * Note: It is used instead of V1_0::ChannelParams.channel inside
          * V1_3::IfaceParams.V1_2.V1_1.V1_0.
          */
         uint32_t channel;
+
+        /**
+         * Band to use for the SoftAp operations.
+         * Note: It is used instead of V1_2::ChannelParams.bandMask inside
+         * V1_3::IfaceParams.V1_2.channelParams
+         */
+        bitfield<BandMask> bandMask;
     };
 
     /**
@@ -66,6 +100,11 @@ interface IHostapd extends @1.2::IHostapd {
          * Baseline information as defined in HAL 1.2.
          */
         @1.2::IHostapd.IfaceParams V1_2;
+
+        /**
+         * Additional Hw mode params for the interface
+         */
+        HwModeParams hwModeParams;
 
         /**
          * The list of the channel params for the dual interfaces.
