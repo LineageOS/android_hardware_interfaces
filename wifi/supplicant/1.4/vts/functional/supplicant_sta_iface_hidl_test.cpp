@@ -50,6 +50,11 @@ using ::android::hardware::wifi::supplicant::V1_4::ISupplicant;
 using ::android::hardware::wifi::supplicant::V1_4::ISupplicantStaIface;
 using ::android::hardware::wifi::supplicant::V1_4::ISupplicantStaIfaceCallback;
 
+using SupplicantStatusV1_4 =
+    ::android::hardware::wifi::supplicant::V1_4::SupplicantStatus;
+using SupplicantStatusCodeV1_4 =
+    ::android::hardware::wifi::supplicant::V1_4::SupplicantStatusCode;
+
 class SupplicantStaIfaceHidlTest : public SupplicantHidlTestBaseV1_4 {
    public:
     virtual void SetUp() override {
@@ -195,9 +200,9 @@ class IfaceCallback : public ISupplicantStaIfaceCallback {
  */
 TEST_P(SupplicantStaIfaceHidlTest, GetConnectionCapabilities) {
     sta_iface_->getConnectionCapabilities_1_4(
-        [&](const SupplicantStatus& status,
+        [&](const SupplicantStatusV1_4& status,
             ConnectionCapabilities /* capabilities */) {
-            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+            EXPECT_EQ(SupplicantStatusCodeV1_4::SUCCESS, status.code);
         });
 }
 
@@ -206,8 +211,8 @@ TEST_P(SupplicantStaIfaceHidlTest, GetConnectionCapabilities) {
  */
 TEST_P(SupplicantStaIfaceHidlTest, RegisterCallback_1_4) {
     sta_iface_->registerCallback_1_4(
-        new IfaceCallback(), [](const SupplicantStatus& status) {
-            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+        new IfaceCallback(), [](const SupplicantStatusV1_4& status) {
+            EXPECT_EQ(SupplicantStatusCodeV1_4::SUCCESS, status.code);
         });
 }
 
