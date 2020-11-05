@@ -20,6 +20,7 @@ import @1.0::Constant;
 import @1.0::DemuxFilterMmtpRecordEvent;
 import @1.0::DemuxFilterTsRecordEvent;
 import @1.0::DemuxScIndex;
+import @1.0::DemuxTsIndex;
 import @1.0::FrontendIsdbs3Rolloff;
 import @1.0::FrontendAtsc3Bandwidth;
 import @1.0::FrontendAtsc3Modulation;
@@ -51,11 +52,11 @@ import android.hidl.safe_union@1.0::Monostate;
 @export
 enum Constant : @1.0::Constant {
     /**
-     * An invalid mpuSequenceNumber in DemuxFilterRecordEventExt.
+     * An invalid mpuSequenceNumber.
      */
     INVALID_MMTP_RECORD_EVENT_MPT_SEQUENCE_NUM = 0xFFFFFFFF,
     /**
-     * An invalid first macroblock address in DemuxFilterRecordEventExt.
+     * An invalid first macroblock address.
      */
     INVALID_FIRST_MACROBLOCK_IN_SLICE = 0xFFFFFFFF,
     /**
@@ -103,9 +104,25 @@ enum Constant64Bit : uint64_t {
 };
 
 /**
- * Extended Demux Filter Record Event.
+ * Extended Demux Filter TS Record Event.
  */
-struct DemuxFilterRecordEventExt {
+struct DemuxFilterTsRecordEventExt {
+    /**
+     * The Presentation Time Stamp(PTS) for the audio or video frame. It is based on 90KHz
+     * and has the same format as the PTS in ISO/IEC 13818-1.
+     */
+    uint64_t pts;
+
+    /**
+     * Specifies the address of the first macroblock in the slice defined in ITU-T Rec. H.264.
+     */
+    uint32_t firstMbInSlice;
+};
+
+/**
+ * Extended Demux Filter MMTP Record Event.
+ */
+struct DemuxFilterMmtpRecordEventExt {
     /**
      * The Presentation Time Stamp(PTS) for the audio or video frame. It is based on 90KHz
      * and has the same format as the PTS in ISO/IEC 13818-1.
@@ -121,6 +138,11 @@ struct DemuxFilterRecordEventExt {
      * Specifies the address of the first macroblock in the slice defined in ITU-T Rec. H.264.
      */
     uint32_t firstMbInSlice;
+
+    /**
+     * TS index mask.
+     */
+    bitfield<@1.1::DemuxTsIndex> tsIndexMask;
 };
 
 /**
@@ -130,13 +152,13 @@ struct DemuxFilterEventExt {
     safe_union Event {
         /**
          * No extended record filter Event. This is used by the tsRecord or mmtpRecord filter event
-         * that does not contain the DemuxFilterRecordEventExt information.
+         * that does not contain the DemuxFilterTs/MmtpRecordEventExt information.
          */
         Monostate noinit;
 
-        DemuxFilterRecordEventExt tsRecord;
+        DemuxFilterTsRecordEventExt tsRecord;
 
-        DemuxFilterRecordEventExt mmtpRecord;
+        DemuxFilterMmtpRecordEventExt mmtpRecord;
 
         ScramblingStatus scramblingStatus;
     };
@@ -827,4 +849,28 @@ enum DemuxScIndex : @1.0::DemuxScIndex {
      * A so-called switching P slice that is coded.
      */
     SP_SLICE = 1 << 8,
+};
+
+@export
+enum DemuxTsIndex : @1.0::DemuxTsIndex {
+    /**
+     * Index the address of MMT Packet Table(MPT).
+     */
+    MPT_INDEX_MPT = 1 << 16,
+    /**
+     * Index the address of Video.
+     */
+    MPT_INDEX_VIDEO = 1 << 17,
+    /**
+     * Index the address of Audio.
+     */
+    MPT_INDEX_AUDIO = 1 << 18,
+    /**
+     * Index to indicate this is a target of timestamp extraction for video.
+     */
+    MPT_INDEX_TIMESTAMP_TARGET_VIDEO = 1 << 19,
+    /**
+     * Index to indicate this is a target of timestamp extraction for audio.
+     */
+    MPT_INDEX_TIMESTAMP_TARGET_AUDIO = 1 << 20,
 };
