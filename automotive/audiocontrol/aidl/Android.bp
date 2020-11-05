@@ -1,0 +1,13 @@
+// This is the expected build file, but it may not be right in all cases
+
+aidl_interface {
+    name: "android.hardware.automotive.audiocontrol",
+    vendor_available: true,
+    srcs: ["android/hardware/automotive/audiocontrol/*.aidl"],
+    stability: "vintf",
+    backend: {
+        java: {
+            sdk_version: "module_current",
+        },
+    },
+}
