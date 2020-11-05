@@ -26,6 +26,53 @@ import IHostapdCallback;
  * Top-level object for managing SoftAPs.
  */
 interface IHostapd extends @1.2::IHostapd {
+
+    /**
+     * Parameters to control the channel selection for the interface.
+     */
+    struct ChannelParams {
+        /**
+         * Baseline information as defined in HAL 1.2.
+         *
+         * Includes bandMask and acsChannelFreqRangesMhz
+         */
+        @1.2::IHostapd.ChannelParams V1_2;
+
+        /**
+         * Whether to enable ACS (Automatic Channel Selection) or not.
+         * The channel can be selected automatically at run time by setting
+         * this flag, which must enable the ACS survey based algorithm.
+         *
+         * Note: It is used instead of V1_0::ChannelParams.enableAcs inside
+         * V1_3::IfaceParams.V1_2.V1_1.V1_0.
+         */
+        bool enableAcs;
+
+        /**
+         * Channel number (IEEE 802.11) to use for the interface.
+         * If ACS is enabled, this field is ignored.
+         *
+         * Note: It is used instead of V1_0::ChannelParams.channel inside
+         * V1_3::IfaceParams.V1_2.V1_1.V1_0.
+         */
+        uint32_t channel;
+    };
+
+    /**
+     * Parameters to use for setting up the dual access point interfaces.
+     */
+    struct IfaceParams {
+        /**
+         * Baseline information as defined in HAL 1.2.
+         */
+        @1.2::IHostapd.IfaceParams V1_2;
+
+        /**
+         * The list of the channel params for the dual interfaces.
+         */
+        vec<ChannelParams> channelParamsList;
+    };
+
     /**
      * Parameters to use for setting up the access point network.
      */
@@ -57,7 +104,7 @@ interface IHostapd extends @1.2::IHostapd {
      *         |HostapdStatusCode.FAILURE_UNKNOWN|,
      *         |HostapdStatusCode.FAILURE_IFACE_EXISTS|
      */
-    addAccessPoint_1_3(@1.2::IHostapd.IfaceParams ifaceParams, NetworkParams nwParams)
+    addAccessPoint_1_3(IfaceParams ifaceParams, NetworkParams nwParams)
         generates (HostapdStatus status);
 
     /**
