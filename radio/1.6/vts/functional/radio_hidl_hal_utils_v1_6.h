@@ -808,6 +808,9 @@ class RadioIndication_v1_6 : public ::android::hardware::radio::V1_6::IRadioIndi
             RadioIndicationType type,
             const hidl_vec<::android::hardware::radio::V1_6::SetupDataCallResult>& dcList);
 
+    Return<void> unthrottleApn(RadioIndicationType type,
+                               const ::android::hardware::hidl_string& apn);
+
     /* 1.5 Api */
     Return<void> uiccApplicationsEnablementChanged(RadioIndicationType type, bool enabled);
 
