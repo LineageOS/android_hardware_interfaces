@@ -40,4 +40,17 @@ interface IRadioIndication extends @1.5::IRadioIndication {
      *        3. Unsolicited disconnect from either modem or network side.
      */
     oneway dataCallListChanged_1_6(RadioIndicationType type, vec<SetupDataCallResult> dcList);
+
+    /**
+     * The modem can explicitly set SetupDataCallResult::suggestedRetryTime after a failure in
+     * IRadio@1.6::SetupDataCall. During that time, no new calls are allowed to
+     * IRadio@1.6::SetupDataCall that use the same APN.
+     *
+     * When IRadioIndication@1.6::unthrottleApn is sent, AOSP will no longer throttle calls
+     * to IRadio@1.6::SetupDataCall for the given APN.
+     *
+     * @param type Type of radio indication
+     * @param apn Apn to unthrottle
+     */
+    oneway unthrottleApn(RadioIndicationType type, string apn);
 };
