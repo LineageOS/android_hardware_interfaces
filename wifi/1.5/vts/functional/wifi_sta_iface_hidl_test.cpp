@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Staache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@
 
 #include <android-base/logging.h>
 
-#include <android/hardware/wifi/1.3/IWifi.h>
-#include <android/hardware/wifi/1.3/IWifiStaIface.h>
+#include <android/hardware/wifi/1.5/IWifi.h>
+#include <android/hardware/wifi/1.5/IWifiChip.h>
 #include <android/hardware/wifi/1.5/IWifiStaIface.h>
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
@@ -33,7 +33,8 @@ using ::android::sp;
 using ::android::hardware::hidl_array;
 using ::android::hardware::wifi::V1_0::WifiStatus;
 using ::android::hardware::wifi::V1_0::WifiStatusCode;
-using ::android::hardware::wifi::V1_3::IWifiStaIface;
+using ::android::hardware::wifi::V1_5::IWifiChip;
+using ::android::hardware::wifi::V1_5::IWifiStaIface;
 
 /**
  * Fixture to use for all STA Iface HIDL interface tests.
@@ -59,6 +60,15 @@ class WifiStaIfaceHidlTest : public ::testing::TestWithParam<std::string> {
         return (status_and_caps.second & cap_mask) != 0;
     }
 
+    WifiStatusCode createStaIface(sp<IWifiStaIface>* sta_iface) {
+        sp<IWifiChip> wifi_chip =
+            IWifiChip::castFrom(getWifiChip(GetInstanceName()));
+        EXPECT_NE(nullptr, wifi_chip.get());
+        const auto& status_and_iface = HIDL_INVOKE(wifi_chip, createStaIface);
+        *sta_iface = IWifiStaIface::castFrom(status_and_iface.second);
+        return status_and_iface.first.code;
+    }
+
     sp<IWifiStaIface> wifi_sta_iface_;
 
    private:
@@ -66,47 +76,33 @@ class WifiStaIfaceHidlTest : public ::testing::TestWithParam<std::string> {
 };
 
 /*
- * GetFactoryMacAddress:
- * Ensures that calls to get factory MAC address will retrieve a non-zero MAC
- * and return a success status code.
- */
-TEST_P(WifiStaIfaceHidlTest, GetFactoryMacAddress) {
-    std::pair<WifiStatus, hidl_array<uint8_t, 6> > status_and_mac =
-        HIDL_INVOKE(wifi_sta_iface_, getFactoryMacAddress);
-    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_mac.first.code);
-    hidl_array<uint8_t, 6> all_zero{};
-    EXPECT_NE(all_zero, status_and_mac.second);
-}
-
-/*
- * GetLinkLayerStats_1_3
- * Ensures that calls to get link layer stats V1_3 will retrieve a non-empty
+ * GetLinkLayerStats_1_5
+ * Ensures that calls to get link layer stats V1_5 will retrieve a non-empty
  * StaLinkLayerStats after link layer stats collection is enabled.
  */
-TEST_P(WifiStaIfaceHidlTest, GetLinkLayerStats_1_3) {
+TEST_P(WifiStaIfaceHidlTest, GetLinkLayerStats_1_5) {
     if (!isCapabilitySupported(
             IWifiStaIface::StaIfaceCapabilityMask::LINK_LAYER_STATS)) {
         // No-op if link layer stats is not supported.
         return;
     }
+
     // Enable link layer stats collection.
     EXPECT_EQ(WifiStatusCode::SUCCESS,
               HIDL_INVOKE(wifi_sta_iface_, enableLinkLayerStatsCollection, true)
                   .code);
     // Retrieve link layer stats.
     const auto& status_and_stats =
-        HIDL_INVOKE(wifi_sta_iface_, getLinkLayerStats_1_3);
-    sp<android::hardware::wifi::V1_5::IWifiStaIface> staIface1_5 =
-        android::hardware::wifi::V1_5::IWifiStaIface::castFrom(wifi_sta_iface_);
-    if (staIface1_5.get() == nullptr) {
-        EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_stats.first.code);
-        EXPECT_GT(status_and_stats.second.timeStampInMs, 0u);
-    } else {
-        // not supported on 1.5 HAL.
-        EXPECT_EQ(WifiStatusCode::ERROR_NOT_SUPPORTED,
-                  status_and_stats.first.code);
+        HIDL_INVOKE(wifi_sta_iface_, getLinkLayerStats_1_5);
+    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_stats.first.code);
+    EXPECT_GT(status_and_stats.second.timeStampInMs, 0u);
+    // Try to create 2nd iface. If yes, it should fill in the duty cycle field.
+    sp<IWifiStaIface> iface;
+    auto status = createStaIface(&iface);
+    if (status == WifiStatusCode::SUCCESS) {
+        EXPECT_GT(status_and_stats.second.iface.timeSliceDutyCycleInPercent,
+                  0u);
     }
-
     // Disable link layer stats collection.
     EXPECT_EQ(
         WifiStatusCode::SUCCESS,
@@ -117,5 +113,5 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiStaIfaceHidlTest);
 INSTANTIATE_TEST_SUITE_P(
     PerInstance, WifiStaIfaceHidlTest,
     testing::ValuesIn(android::hardware::getAllHalInstanceNames(
-        ::android::hardware::wifi::V1_3::IWifi::descriptor)),
+        ::android::hardware::wifi::V1_5::IWifi::descriptor)),
     android::hardware::PrintInstanceNameToString);
