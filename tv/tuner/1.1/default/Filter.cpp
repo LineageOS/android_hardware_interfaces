@@ -209,6 +209,7 @@ Return<void> Filter::getAvSharedHandle(getAvSharedHandle_cb _hidl_cb) {
 
     if (mSharedAvMemHandle.getNativeHandle() != nullptr) {
         _hidl_cb(Result::SUCCESS, mSharedAvMemHandle, BUFFER_SIZE_16M);
+        mUsingSharedAvMem = true;
         return Void();
     }
 
@@ -225,6 +226,7 @@ Return<void> Filter::getAvSharedHandle(getAvSharedHandle_cb _hidl_cb) {
     ::close(av_fd);
 
     _hidl_cb(Result::SUCCESS, mSharedAvMemHandle, BUFFER_SIZE_16M);
+    mUsingSharedAvMem = true;
     return Void();
 }
 
@@ -678,11 +680,10 @@ Result Filter::startRecordFilterHandler() {
     recordEvent = {
             .byteNumber = mRecordFilterOutput.size(),
     };
-    V1_1::DemuxFilterRecordEventExt recordEventExt;
+    V1_1::DemuxFilterTsRecordEventExt recordEventExt;
     recordEventExt = {
             .pts = (mPts == 0) ? time(NULL) * 900000 : mPts,
             .firstMbInSlice = 0,     // random address
-            .mpuSequenceNumber = 1,  // random sequence number
     };
 
     int size;
