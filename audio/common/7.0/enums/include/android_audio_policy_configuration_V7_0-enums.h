@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef AUDIO_POLICY_CONFIGURATION_V7_0_ENUMS_H
-#define AUDIO_POLICY_CONFIGURATION_V7_0_ENUMS_H
+#ifndef ANDROID_AUDIO_POLICY_CONFIGURATION_V7_0_ENUMS_H
+#define ANDROID_AUDIO_POLICY_CONFIGURATION_V7_0_ENUMS_H
 
 #include <sys/types.h>
 
-#include <audio_policy_configuration_V7_0.h>
+#include <android_audio_policy_configuration_V7_0.h>
 
-namespace audio::policy::configuration::V7_0 {
+namespace android::audio::policy::configuration::V7_0 {
 
 static inline size_t getChannelCount(AudioChannelMask mask) {
     switch (mask) {
@@ -210,6 +210,6 @@ static inline bool isOutputDevice(const std::string& device) {
     return isOutputDevice(stringToAudioDevice(device));
 }
 
-}  // namespace audio::policy::configuration::V7_0
+}  // namespace android::audio::policy::configuration::V7_0
 
-#endif  // AUDIO_POLICY_CONFIGURATION_V7_0_ENUMS_H
+#endif  // ANDROID_AUDIO_POLICY_CONFIGURATION_V7_0_ENUMS_H
