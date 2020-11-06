@@ -23,6 +23,8 @@
 #include <android/hardware/wifi/supplicant/1.3/ISupplicantStaIfaceCallback.h>
 #include <android/hardware/wifi/supplicant/1.3/ISupplicantStaNetwork.h>
 #include <android/hardware/wifi/supplicant/1.3/types.h>
+#include <android/hardware/wifi/supplicant/1.4/ISupplicantStaIface.h>
+#include <android/hardware/wifi/supplicant/1.4/types.h>
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/HidlSupport.h>
@@ -61,6 +63,10 @@ class SupplicantStaIfaceHidlTest : public SupplicantHidlTestBaseV1_3 {
         SupplicantHidlTestBaseV1_3::SetUp();
         sta_iface_ = getSupplicantStaIface_1_3(supplicant_);
         ASSERT_NE(sta_iface_.get(), nullptr);
+
+        /* Variable used to check the underlying HAL version. */
+        sta_iface_v1_4_ = ::android::hardware::wifi::supplicant::V1_4::
+            ISupplicantStaIface::castFrom(sta_iface_);
     }
 
     int64_t pmkCacheExpirationTimeInSec;
@@ -108,6 +114,8 @@ class SupplicantStaIfaceHidlTest : public SupplicantHidlTestBaseV1_3 {
    protected:
     // ISupplicantStaIface object used for all tests in this fixture.
     sp<ISupplicantStaIface> sta_iface_;
+    sp<::android::hardware::wifi::supplicant::V1_4::ISupplicantStaIface>
+        sta_iface_v1_4_ = nullptr;
 
     bool isDppSupported() {
         uint32_t keyMgmtMask = 0;
@@ -342,9 +350,12 @@ TEST_P(SupplicantStaIfaceHidlTest, GetConnectionCapabilities) {
  * GetWpaDriverCapabilities
  */
 TEST_P(SupplicantStaIfaceHidlTest, GetWpaDriverCapabilities) {
+    SupplicantStatusCode expectedCode =
+        (nullptr != sta_iface_v1_4_) ? SupplicantStatusCode::FAILURE_UNKNOWN
+                                     : SupplicantStatusCode::SUCCESS;
     sta_iface_->getWpaDriverCapabilities(
         [&](const SupplicantStatus& status, uint32_t) {
-            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+            EXPECT_EQ(expectedCode, status.code);
         });
 }
 
@@ -355,12 +366,26 @@ TEST_P(SupplicantStaIfaceHidlTest, SetMboCellularDataStatus) {
     uint32_t driverCapMask = 0;
 
     // Get MBO support from the device.
-    sta_iface_->getWpaDriverCapabilities(
-        [&](const SupplicantStatus& status, uint32_t driverCapMaskInternal) {
-            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+    if (nullptr != sta_iface_v1_4_) {
+        sta_iface_v1_4_->getWpaDriverCapabilities_1_4(
+            [&](const ::android::hardware::wifi::supplicant::V1_4::
+                    SupplicantStatus& status,
+                uint32_t driverCapMaskInternal) {
+                EXPECT_EQ(::android::hardware::wifi::supplicant::V1_4::
+                              SupplicantStatusCode::SUCCESS,
+                          status.code);
 
-            driverCapMask = driverCapMaskInternal;
-        });
+                driverCapMask = driverCapMaskInternal;
+            });
+    } else {
+        sta_iface_->getWpaDriverCapabilities(
+            [&](const SupplicantStatus& status,
+                uint32_t driverCapMaskInternal) {
+                EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+
+                driverCapMask = driverCapMaskInternal;
+            });
+    }
 
     SupplicantStatusCode expectedStatusCode =
         (driverCapMask & WpaDriverCapabilitiesMask::MBO)

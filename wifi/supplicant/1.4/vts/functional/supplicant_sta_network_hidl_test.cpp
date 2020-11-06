@@ -46,11 +46,15 @@ using SupplicantStatusV1_4 =
     ::android::hardware::wifi::supplicant::V1_4::SupplicantStatus;
 using SupplicantStatusCodeV1_4 =
     ::android::hardware::wifi::supplicant::V1_4::SupplicantStatusCode;
+using WpaDriverCapabilitiesMaskV1_4 =
+    ::android::hardware::wifi::supplicant::V1_4::WpaDriverCapabilitiesMask;
 
 class SupplicantStaNetworkHidlTest : public SupplicantHidlTestBaseV1_4 {
    public:
     virtual void SetUp() override {
         SupplicantHidlTestBaseV1_4::SetUp();
+        sta_iface_ = getSupplicantStaIface_1_4(supplicant_);
+        ASSERT_NE(nullptr, sta_iface_.get());
         sta_network_ = createSupplicantStaNetwork(supplicant_);
         ASSERT_NE(sta_network_.get(), nullptr);
         /* variable used to check if the underlying HAL version is 1.4 or
@@ -61,10 +65,21 @@ class SupplicantStaNetworkHidlTest : public SupplicantHidlTestBaseV1_4 {
     }
 
    protected:
+    sp<::android::hardware::wifi::supplicant::V1_4::ISupplicantStaIface>
+        sta_iface_;
     sp<::android::hardware::wifi::supplicant::V1_4::ISupplicantStaNetwork>
         v1_4 = nullptr;
     // ISupplicantStaNetwork object used for all tests in this fixture.
     sp<ISupplicantStaNetwork> sta_network_;
+    bool isSaePkSupported() {
+        uint32_t caps;
+        sta_iface_->getWpaDriverCapabilities_1_4(
+            [&](const SupplicantStatusV1_4& status, uint32_t capsInternal) {
+                EXPECT_EQ(SupplicantStatusCodeV1_4::SUCCESS, status.code);
+                caps = capsInternal;
+            });
+        return !!(caps & WpaDriverCapabilitiesMaskV1_4::SAE_PK);
+    }
 };
 
 class NetworkCallback : public ISupplicantStaNetworkCallback {
@@ -103,6 +118,22 @@ TEST_P(SupplicantStaNetworkHidlTest, EnableSaeH2eOnlyMode) {
     });
     v1_4->enableSaeH2eOnlyMode(false, [&](const SupplicantStatusV1_4& status) {
         EXPECT_EQ(SupplicantStatusCodeV1_4::SUCCESS, status.code);
+    });
+}
+
+/*
+ * enable SAE PK only mode
+ */
+TEST_P(SupplicantStaNetworkHidlTest, EnableSaePkOnlyMode) {
+    LOG(INFO) << "SAE-PK Supported: " << isSaePkSupported();
+    SupplicantStatusCodeV1_4 expectedCode =
+        isSaePkSupported() ? SupplicantStatusCodeV1_4::SUCCESS
+                           : SupplicantStatusCodeV1_4::FAILURE_UNSUPPORTED;
+    v1_4->enableSaePkOnlyMode(true, [&](const SupplicantStatusV1_4& status) {
+        EXPECT_EQ(expectedCode, status.code);
+    });
+    v1_4->enableSaePkOnlyMode(false, [&](const SupplicantStatusV1_4& status) {
+        EXPECT_EQ(expectedCode, status.code);
     });
 }
 

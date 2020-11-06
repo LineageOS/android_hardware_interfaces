@@ -73,4 +73,15 @@ interface ISupplicantStaIface extends @1.3::ISupplicantStaIface {
      */
     initiateVenueUrlAnqpQuery(MacAddress macAddress)
         generates (SupplicantStatus status);
+
+    /**
+     * Get wpa driver capabilities.
+     *
+     * @return status Status of the operation, and a bitmap of wpa driver features.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     */
+    getWpaDriverCapabilities_1_4() generates (SupplicantStatus status,
+        bitfield<WpaDriverCapabilitiesMask> driverCapabilitiesMask);
 };
