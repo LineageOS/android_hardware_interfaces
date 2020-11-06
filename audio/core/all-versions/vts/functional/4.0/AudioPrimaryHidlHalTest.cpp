@@ -17,7 +17,7 @@
 #include "AudioPrimaryHidlHalTest.h"
 
 #if MAJOR_VERSION >= 7
-#include <audio_policy_configuration_V7_0.h>
+#include <android_audio_policy_configuration_V7_0.h>
 #include <xsdc/XsdcSupport.h>
 
 using android::xsdc_enum_range;
@@ -236,7 +236,7 @@ TEST_P(InputStreamTest, updateSinkMetadata) {
 #if MAJOR_VERSION <= 6
     hidl_enum_range<AudioSource> range;
 #elif MAJOR_VERSION >= 7
-    xsdc_enum_range<audio::policy::configuration::V7_0::AudioSource> range;
+    xsdc_enum_range<android::audio::policy::configuration::V7_0::AudioSource> range;
 #endif
     // Test all possible track configuration
     for (auto source : range) {
@@ -272,8 +272,8 @@ TEST_P(OutputStreamTest, updateSourceMetadata) {
     hidl_enum_range<AudioUsage> usageRange;
     hidl_enum_range<AudioContentType> contentRange;
 #elif MAJOR_VERSION >= 7
-    xsdc_enum_range<audio::policy::configuration::V7_0::AudioUsage> usageRange;
-    xsdc_enum_range<audio::policy::configuration::V7_0::AudioContentType> contentRange;
+    xsdc_enum_range<android::audio::policy::configuration::V7_0::AudioUsage> usageRange;
+    xsdc_enum_range<android::audio::policy::configuration::V7_0::AudioContentType> contentRange;
 #endif
     // Test all possible track configuration
     for (auto usage : usageRange) {
