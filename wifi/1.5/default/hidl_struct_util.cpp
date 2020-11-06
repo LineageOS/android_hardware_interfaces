@@ -866,46 +866,48 @@ bool convertLegacyLinkLayerRadioStatsToHidl(
 
 bool convertLegacyLinkLayerStatsToHidl(
     const legacy_hal::LinkLayerStats& legacy_stats,
-    V1_3::StaLinkLayerStats* hidl_stats) {
+    StaLinkLayerStats* hidl_stats) {
     if (!hidl_stats) {
         return false;
     }
     *hidl_stats = {};
     // iface legacy_stats conversion.
-    hidl_stats->iface.beaconRx = legacy_stats.iface.beacon_rx;
-    hidl_stats->iface.avgRssiMgmt = legacy_stats.iface.rssi_mgmt;
-    hidl_stats->iface.wmeBePktStats.rxMpdu =
+    hidl_stats->iface.V1_0.beaconRx = legacy_stats.iface.beacon_rx;
+    hidl_stats->iface.V1_0.avgRssiMgmt = legacy_stats.iface.rssi_mgmt;
+    hidl_stats->iface.V1_0.wmeBePktStats.rxMpdu =
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].rx_mpdu;
-    hidl_stats->iface.wmeBePktStats.txMpdu =
+    hidl_stats->iface.V1_0.wmeBePktStats.txMpdu =
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].tx_mpdu;
-    hidl_stats->iface.wmeBePktStats.lostMpdu =
+    hidl_stats->iface.V1_0.wmeBePktStats.lostMpdu =
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].mpdu_lost;
-    hidl_stats->iface.wmeBePktStats.retries =
+    hidl_stats->iface.V1_0.wmeBePktStats.retries =
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].retries;
-    hidl_stats->iface.wmeBkPktStats.rxMpdu =
+    hidl_stats->iface.V1_0.wmeBkPktStats.rxMpdu =
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].rx_mpdu;
-    hidl_stats->iface.wmeBkPktStats.txMpdu =
+    hidl_stats->iface.V1_0.wmeBkPktStats.txMpdu =
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].tx_mpdu;
-    hidl_stats->iface.wmeBkPktStats.lostMpdu =
+    hidl_stats->iface.V1_0.wmeBkPktStats.lostMpdu =
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].mpdu_lost;
-    hidl_stats->iface.wmeBkPktStats.retries =
+    hidl_stats->iface.V1_0.wmeBkPktStats.retries =
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].retries;
-    hidl_stats->iface.wmeViPktStats.rxMpdu =
+    hidl_stats->iface.V1_0.wmeViPktStats.rxMpdu =
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].rx_mpdu;
-    hidl_stats->iface.wmeViPktStats.txMpdu =
+    hidl_stats->iface.V1_0.wmeViPktStats.txMpdu =
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].tx_mpdu;
-    hidl_stats->iface.wmeViPktStats.lostMpdu =
+    hidl_stats->iface.V1_0.wmeViPktStats.lostMpdu =
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].mpdu_lost;
-    hidl_stats->iface.wmeViPktStats.retries =
+    hidl_stats->iface.V1_0.wmeViPktStats.retries =
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].retries;
-    hidl_stats->iface.wmeVoPktStats.rxMpdu =
+    hidl_stats->iface.V1_0.wmeVoPktStats.rxMpdu =
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].rx_mpdu;
-    hidl_stats->iface.wmeVoPktStats.txMpdu =
+    hidl_stats->iface.V1_0.wmeVoPktStats.txMpdu =
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].tx_mpdu;
-    hidl_stats->iface.wmeVoPktStats.lostMpdu =
+    hidl_stats->iface.V1_0.wmeVoPktStats.lostMpdu =
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].mpdu_lost;
-    hidl_stats->iface.wmeVoPktStats.retries =
+    hidl_stats->iface.V1_0.wmeVoPktStats.retries =
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].retries;
+    hidl_stats->iface.timeSliceDutyCycleInPercent =
+        legacy_stats.iface.info.time_slicing_duty_cycle_percent;
     // radio legacy_stats conversion.
     std::vector<V1_3::StaLinkLayerRadioStats> hidl_radios_stats;
     for (const auto& legacy_radio_stats : legacy_stats.radios) {
@@ -2784,6 +2786,17 @@ legacy_hal::wifi_interface_type convertHidlIfaceTypeToLegacy(
             return legacy_hal::WIFI_INTERFACE_TYPE_P2P;
         case IfaceType::NAN:
             return legacy_hal::WIFI_INTERFACE_TYPE_NAN;
+    }
+    CHECK(false);
+}
+
+legacy_hal::wifi_multi_sta_use_case convertHidlMultiStaUseCaseToLegacy(
+    IWifiChip::MultiStaUseCase use_case) {
+    switch (use_case) {
+        case IWifiChip::MultiStaUseCase::DUAL_STA_TRANSIENT_PREFER_PRIMARY:
+            return legacy_hal::WIFI_DUAL_STA_TRANSIENT_PREFER_PRIMARY;
+        case IWifiChip::MultiStaUseCase::DUAL_STA_NON_TRANSIENT_UNBIASED:
+            return legacy_hal::WIFI_DUAL_STA_NON_TRANSIENT_UNBIASED;
     }
     CHECK(false);
 }

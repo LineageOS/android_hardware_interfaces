@@ -154,6 +154,8 @@ TEST_F(HidlStructUtilTest, canConvertLegacyLinkLayerStatsToHidl) {
     legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].mpdu_lost = rand();
     legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].retries = rand();
 
+    legacy_stats.iface.info.time_slicing_duty_cycle_percent = rand();
+
     for (auto& radio : legacy_stats.radios) {
         radio.stats.on_time = rand();
         radio.stats.tx_time = rand();
@@ -182,46 +184,49 @@ TEST_F(HidlStructUtilTest, canConvertLegacyLinkLayerStatsToHidl) {
         radio.channel_stats.push_back(channel_stat2);
     }
 
-    V1_3::StaLinkLayerStats converted{};
+    V1_5::StaLinkLayerStats converted{};
     hidl_struct_util::convertLegacyLinkLayerStatsToHidl(legacy_stats,
                                                         &converted);
-    EXPECT_EQ(legacy_stats.iface.beacon_rx, converted.iface.beaconRx);
-    EXPECT_EQ(legacy_stats.iface.rssi_mgmt, converted.iface.avgRssiMgmt);
+    EXPECT_EQ(legacy_stats.iface.beacon_rx, converted.iface.V1_0.beaconRx);
+    EXPECT_EQ(legacy_stats.iface.rssi_mgmt, converted.iface.V1_0.avgRssiMgmt);
     EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].rx_mpdu,
-              converted.iface.wmeBePktStats.rxMpdu);
+              converted.iface.V1_0.wmeBePktStats.rxMpdu);
     EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].tx_mpdu,
-              converted.iface.wmeBePktStats.txMpdu);
+              converted.iface.V1_0.wmeBePktStats.txMpdu);
     EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].mpdu_lost,
-              converted.iface.wmeBePktStats.lostMpdu);
+              converted.iface.V1_0.wmeBePktStats.lostMpdu);
     EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].retries,
-              converted.iface.wmeBePktStats.retries);
+              converted.iface.V1_0.wmeBePktStats.retries);
 
     EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].rx_mpdu,
-              converted.iface.wmeBkPktStats.rxMpdu);
+              converted.iface.V1_0.wmeBkPktStats.rxMpdu);
     EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].tx_mpdu,
-              converted.iface.wmeBkPktStats.txMpdu);
+              converted.iface.V1_0.wmeBkPktStats.txMpdu);
     EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].mpdu_lost,
-              converted.iface.wmeBkPktStats.lostMpdu);
+              converted.iface.V1_0.wmeBkPktStats.lostMpdu);
     EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].retries,
-              converted.iface.wmeBkPktStats.retries);
+              converted.iface.V1_0.wmeBkPktStats.retries);
 
     EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].rx_mpdu,
-              converted.iface.wmeViPktStats.rxMpdu);
+              converted.iface.V1_0.wmeViPktStats.rxMpdu);
     EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].tx_mpdu,
-              converted.iface.wmeViPktStats.txMpdu);
+              converted.iface.V1_0.wmeViPktStats.txMpdu);
     EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].mpdu_lost,
-              converted.iface.wmeViPktStats.lostMpdu);
+              converted.iface.V1_0.wmeViPktStats.lostMpdu);
     EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].retries,
-              converted.iface.wmeViPktStats.retries);
+              converted.iface.V1_0.wmeViPktStats.retries);
 
     EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].rx_mpdu,
-              converted.iface.wmeVoPktStats.rxMpdu);
+              converted.iface.V1_0.wmeVoPktStats.rxMpdu);
     EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].tx_mpdu,
-              converted.iface.wmeVoPktStats.txMpdu);
+              converted.iface.V1_0.wmeVoPktStats.txMpdu);
     EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].mpdu_lost,
-              converted.iface.wmeVoPktStats.lostMpdu);
+              converted.iface.V1_0.wmeVoPktStats.lostMpdu);
     EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].retries,
-              converted.iface.wmeVoPktStats.retries);
+              converted.iface.V1_0.wmeVoPktStats.retries);
+
+    EXPECT_EQ(legacy_stats.iface.info.time_slicing_duty_cycle_percent,
+              converted.iface.timeSliceDutyCycleInPercent);
 
     EXPECT_EQ(legacy_stats.radios.size(), converted.radios.size());
     for (size_t i = 0; i < legacy_stats.radios.size(); i++) {

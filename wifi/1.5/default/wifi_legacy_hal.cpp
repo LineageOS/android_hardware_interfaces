@@ -1510,6 +1510,17 @@ wifi_error WifiLegacyHal::getSupportedIfaceName(uint32_t iface_type,
     return res;
 }
 
+wifi_error WifiLegacyHal::multiStaSetPrimaryConnection(
+    const std::string& ifname) {
+    return global_func_table_.wifi_multi_sta_set_primary_connection(
+        global_handle_, getIfaceHandle(ifname));
+}
+
+wifi_error WifiLegacyHal::multiStaSetUseCase(wifi_multi_sta_use_case use_case) {
+    return global_func_table_.wifi_multi_sta_set_use_case(global_handle_,
+                                                          use_case);
+}
+
 void WifiLegacyHal::invalidate() {
     global_handle_ = nullptr;
     iface_name_to_handle_.clear();
