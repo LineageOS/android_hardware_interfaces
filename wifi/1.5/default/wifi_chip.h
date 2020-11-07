@@ -163,6 +163,12 @@ class WifiChip : public V1_5::IWifiChip {
     Return<void> registerEventCallback_1_4(
         const sp<V1_4::IWifiChipEventCallback>& event_callback,
         registerEventCallback_1_4_cb hidl_status_cb) override;
+    Return<void> setMultiStaPrimaryConnection(
+        const hidl_string& ifname,
+        setMultiStaPrimaryConnection_cb hidl_status_cb) override;
+    Return<void> setMultiStaUseCase(
+        MultiStaUseCase use_case,
+        setMultiStaUseCase_cb hidl_status_cb) override;
 
    private:
     void invalidateAndRemoveAllIfaces();
@@ -201,9 +207,9 @@ class WifiChip : public V1_5::IWifiChip {
     std::pair<WifiStatus, sp<IWifiP2pIface>> getP2pIfaceInternal(
         const std::string& ifname);
     WifiStatus removeP2pIfaceInternal(const std::string& ifname);
-    std::pair<WifiStatus, sp<V1_3::IWifiStaIface>> createStaIfaceInternal();
+    std::pair<WifiStatus, sp<V1_5::IWifiStaIface>> createStaIfaceInternal();
     std::pair<WifiStatus, std::vector<hidl_string>> getStaIfaceNamesInternal();
-    std::pair<WifiStatus, sp<V1_3::IWifiStaIface>> getStaIfaceInternal(
+    std::pair<WifiStatus, sp<V1_5::IWifiStaIface>> getStaIfaceInternal(
         const std::string& ifname);
     WifiStatus removeStaIfaceInternal(const std::string& ifname);
     std::pair<WifiStatus, sp<V1_0::IWifiRttController>>
@@ -233,6 +239,8 @@ class WifiChip : public V1_5::IWifiChip {
     createRttControllerInternal_1_4(const sp<IWifiIface>& bound_iface);
     WifiStatus registerEventCallbackInternal_1_4(
         const sp<V1_4::IWifiChipEventCallback>& event_callback);
+    WifiStatus setMultiStaPrimaryConnectionInternal(const std::string& ifname);
+    WifiStatus setMultiStaUseCaseInternal(MultiStaUseCase use_case);
 
     WifiStatus handleChipConfiguration(
         std::unique_lock<std::recursive_mutex>* lock, ChipModeId mode_id);

@@ -678,6 +678,20 @@ Return<void> WifiChip::registerEventCallback_1_4(
                            hidl_status_cb, event_callback);
 }
 
+Return<void> WifiChip::setMultiStaPrimaryConnection(
+    const hidl_string& ifname, setMultiStaPrimaryConnection_cb hidl_status_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                           &WifiChip::setMultiStaPrimaryConnectionInternal,
+                           hidl_status_cb, ifname);
+}
+
+Return<void> WifiChip::setMultiStaUseCase(
+    MultiStaUseCase use_case, setMultiStaUseCase_cb hidl_status_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                           &WifiChip::setMultiStaUseCaseInternal,
+                           hidl_status_cb, use_case);
+}
+
 void WifiChip::invalidateAndRemoveAllIfaces() {
     invalidateAndClearAll(ap_ifaces_);
     invalidateAndClearAll(nan_ifaces_);
@@ -1016,7 +1030,7 @@ WifiStatus WifiChip::removeP2pIfaceInternal(const std::string& ifname) {
     return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
-std::pair<WifiStatus, sp<V1_3::IWifiStaIface>>
+std::pair<WifiStatus, sp<V1_5::IWifiStaIface>>
 WifiChip::createStaIfaceInternal() {
     if (!canCurrentModeSupportIfaceOfTypeWithCurrentIfaces(IfaceType::STA)) {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
@@ -1050,7 +1064,7 @@ WifiChip::getStaIfaceNamesInternal() {
     return {createWifiStatus(WifiStatusCode::SUCCESS), getNames(sta_ifaces_)};
 }
 
-std::pair<WifiStatus, sp<V1_3::IWifiStaIface>> WifiChip::getStaIfaceInternal(
+std::pair<WifiStatus, sp<V1_5::IWifiStaIface>> WifiChip::getStaIfaceInternal(
     const std::string& ifname) {
     const auto iface = findUsingName(sta_ifaces_, ifname);
     if (!iface.get()) {
@@ -1293,6 +1307,19 @@ WifiStatus WifiChip::registerEventCallbackInternal_1_4(
         return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
     }
     return createWifiStatus(WifiStatusCode::SUCCESS);
+}
+
+WifiStatus WifiChip::setMultiStaPrimaryConnectionInternal(
+    const std::string& ifname) {
+    auto legacy_status =
+        legacy_hal_.lock()->multiStaSetPrimaryConnection(ifname);
+    return createWifiStatusFromLegacyError(legacy_status);
+}
+
+WifiStatus WifiChip::setMultiStaUseCaseInternal(MultiStaUseCase use_case) {
+    auto legacy_status = legacy_hal_.lock()->multiStaSetUseCase(
+        hidl_struct_util::convertHidlMultiStaUseCaseToLegacy(use_case));
+    return createWifiStatusFromLegacyError(legacy_status);
 }
 
 WifiStatus WifiChip::handleChipConfiguration(

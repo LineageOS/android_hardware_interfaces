@@ -50,6 +50,10 @@ using ::android::hardware::wifi::supplicant::V1_4::ISupplicant;
 using ::android::hardware::wifi::supplicant::V1_4::ISupplicantStaIface;
 using ::android::hardware::wifi::supplicant::V1_4::ISupplicantStaIfaceCallback;
 
+namespace {
+constexpr uint8_t kTestMacAddr[] = {0x56, 0x67, 0x67, 0xf4, 0x56, 0x92};
+}  // namespace
+
 using SupplicantStatusV1_4 =
     ::android::hardware::wifi::supplicant::V1_4::SupplicantStatus;
 using SupplicantStatusCodeV1_4 =
@@ -61,11 +65,15 @@ class SupplicantStaIfaceHidlTest : public SupplicantHidlTestBaseV1_4 {
         SupplicantHidlTestBaseV1_4::SetUp();
         sta_iface_ = getSupplicantStaIface_1_4(supplicant_);
         ASSERT_NE(sta_iface_.get(), nullptr);
+
+        memcpy(mac_addr_.data(), kTestMacAddr, mac_addr_.size());
     }
 
    protected:
     // ISupplicantStaIface object used for all tests in this fixture.
     sp<ISupplicantStaIface> sta_iface_;
+    // MAC address to use for various tests.
+    std::array<uint8_t, 6> mac_addr_;
 };
 
 class IfaceCallback : public ISupplicantStaIfaceCallback {
@@ -79,7 +87,8 @@ class IfaceCallback : public ISupplicantStaIfaceCallback {
     }
     Return<void> onAnqpQueryDone(
         const hidl_array<uint8_t, 6>& /* bssid */,
-        const ISupplicantStaIfaceCallback::AnqpData& /* data */,
+        const ::android::hardware::wifi::supplicant::V1_0::
+            ISupplicantStaIfaceCallback::AnqpData& /* data */,
         const ISupplicantStaIfaceCallback::Hs20AnqpData& /* hs20Data */)
         override {
         return Void();
@@ -193,6 +202,14 @@ class IfaceCallback : public ISupplicantStaIfaceCallback {
         const hidl_vec<uint8_t>& /* ssid */, bool /* filsHlpSent */) override {
         return Void();
     }
+    Return<void> onAnqpQueryDone_1_4(
+        const hidl_array<uint8_t, 6>& /* bssid */,
+        const ::android::hardware::wifi::supplicant::V1_4::
+            ISupplicantStaIfaceCallback::AnqpData& /* data */,
+        const ISupplicantStaIfaceCallback::Hs20AnqpData& /* hs20Data */)
+        override {
+        return Void();
+    }
 };
 
 /*
@@ -212,6 +229,28 @@ TEST_P(SupplicantStaIfaceHidlTest, GetConnectionCapabilities) {
 TEST_P(SupplicantStaIfaceHidlTest, RegisterCallback_1_4) {
     sta_iface_->registerCallback_1_4(
         new IfaceCallback(), [](const SupplicantStatusV1_4& status) {
+            EXPECT_EQ(SupplicantStatusCodeV1_4::SUCCESS, status.code);
+        });
+}
+
+/*
+ * InitiateVenueUrlAnqpQuery.
+ */
+TEST_P(SupplicantStaIfaceHidlTest, InitiateVenueUrlAnqpQuery) {
+    sta_iface_->initiateVenueUrlAnqpQuery(
+        mac_addr_, [](const SupplicantStatusV1_4& status) {
+            // These requests will fail unless the BSSID mentioned is actually
+            // present in scan results.
+            EXPECT_EQ(SupplicantStatusCodeV1_4::FAILURE_UNKNOWN, status.code);
+        });
+}
+
+/*
+ * GetWpaDriverCapabilities
+ */
+TEST_P(SupplicantStaIfaceHidlTest, GetWpaDriverCapabilities) {
+    sta_iface_->getWpaDriverCapabilities_1_4(
+        [&](const SupplicantStatusV1_4& status, uint32_t) {
             EXPECT_EQ(SupplicantStatusCodeV1_4::SUCCESS, status.code);
         });
 }
