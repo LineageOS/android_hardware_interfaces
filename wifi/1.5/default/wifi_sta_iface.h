@@ -19,7 +19,7 @@
 
 #include <android-base/macros.h>
 #include <android/hardware/wifi/1.0/IWifiStaIfaceEventCallback.h>
-#include <android/hardware/wifi/1.3/IWifiStaIface.h>
+#include <android/hardware/wifi/1.5/IWifiStaIface.h>
 
 #include "hidl_callback_util.h"
 #include "wifi_iface_util.h"
@@ -35,7 +35,7 @@ using namespace android::hardware::wifi::V1_0;
 /**
  * HIDL interface object used to control a STA Iface instance.
  */
-class WifiStaIface : public V1_3::IWifiStaIface {
+class WifiStaIface : public V1_5::IWifiStaIface {
    public:
     WifiStaIface(const std::string& ifname,
                  const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
@@ -78,6 +78,8 @@ class WifiStaIface : public V1_3::IWifiStaIface {
         getLinkLayerStats_cb hidl_status_cb) override;
     Return<void> getLinkLayerStats_1_3(
         getLinkLayerStats_1_3_cb hidl_status_cb) override;
+    Return<void> getLinkLayerStats_1_5(
+        getLinkLayerStats_1_5_cb hidl_status_cb) override;
     Return<void> startRssiMonitoring(
         uint32_t cmd_id, int32_t max_rssi, int32_t min_rssi,
         startRssiMonitoring_cb hidl_status_cb) override;
@@ -138,6 +140,8 @@ class WifiStaIface : public V1_3::IWifiStaIface {
     std::pair<WifiStatus, V1_0::StaLinkLayerStats> getLinkLayerStatsInternal();
     std::pair<WifiStatus, V1_3::StaLinkLayerStats>
     getLinkLayerStatsInternal_1_3();
+    std::pair<WifiStatus, V1_5::StaLinkLayerStats>
+    getLinkLayerStatsInternal_1_5();
     WifiStatus startRssiMonitoringInternal(uint32_t cmd_id, int32_t max_rssi,
                                            int32_t min_rssi);
     WifiStatus stopRssiMonitoringInternal(uint32_t cmd_id);

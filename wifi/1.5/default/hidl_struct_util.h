@@ -69,6 +69,8 @@ bool convertLegacyWifiMacInfosToHidl(
         hidl_radio_mode_infos);
 legacy_hal::wifi_interface_type convertHidlIfaceTypeToLegacy(
     IfaceType hidl_interface_type);
+legacy_hal::wifi_multi_sta_use_case convertHidlMultiStaUseCaseToLegacy(
+    IWifiChip::MultiStaUseCase use_case);
 
 // STA iface conversion methods.
 bool convertLegacyFeaturesToHidlStaCapabilities(
@@ -96,7 +98,7 @@ bool convertLegacyVectorOfCachedGscanResultsToHidl(
     std::vector<StaScanData>* hidl_scan_datas);
 bool convertLegacyLinkLayerStatsToHidl(
     const legacy_hal::LinkLayerStats& legacy_stats,
-    V1_3::StaLinkLayerStats* hidl_stats);
+    StaLinkLayerStats* hidl_stats);
 bool convertLegacyRoamingCapabilitiesToHidl(
     const legacy_hal::wifi_roaming_capabilities& legacy_caps,
     StaRoamingCapabilities* hidl_caps);

@@ -382,6 +382,10 @@ class WifiLegacyHal {
     virtual wifi_error deleteVirtualInterface(const std::string& ifname);
     wifi_error getSupportedIfaceName(uint32_t iface_type, std::string& ifname);
 
+    // STA + STA functions
+    virtual wifi_error multiStaSetPrimaryConnection(const std::string& ifname);
+    virtual wifi_error multiStaSetUseCase(wifi_multi_sta_use_case use_case);
+
    private:
     // Retrieve interface handles for all the available interfaces.
     wifi_error retrieveIfaceHandles();

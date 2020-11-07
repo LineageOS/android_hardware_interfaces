@@ -245,6 +245,16 @@ TEST_P(SupplicantStaIfaceHidlTest, InitiateVenueUrlAnqpQuery) {
         });
 }
 
+/*
+ * GetWpaDriverCapabilities
+ */
+TEST_P(SupplicantStaIfaceHidlTest, GetWpaDriverCapabilities) {
+    sta_iface_->getWpaDriverCapabilities_1_4(
+        [&](const SupplicantStatusV1_4& status, uint32_t) {
+            EXPECT_EQ(SupplicantStatusCodeV1_4::SUCCESS, status.code);
+        });
+}
+
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SupplicantStaIfaceHidlTest);
 INSTANTIATE_TEST_CASE_P(
     PerInstance, SupplicantStaIfaceHidlTest,

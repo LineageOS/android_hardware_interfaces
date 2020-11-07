@@ -40,5 +40,5 @@ interface IWifiNanIfaceEventCallback extends @1.2::IWifiNanIfaceEventCallback {
      * @param capabilities Capability data.
      */
     oneway notifyCapabilitiesResponse_1_5(CommandIdShort id, WifiNanStatus status,
-                                    NanCapabilities capabilities);
+        NanCapabilities capabilities);
 };
