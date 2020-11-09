@@ -217,6 +217,13 @@ interface IRadio extends @1.5::IRadio {
      * Each subsequent request to this method is processed only after the
      * completion of the previous one.
      *
+     * When the SIM is in POWER_DOWN, the modem should send an empty vector of
+     * AppStatus in CardStatus.applications. If a SIM in the POWER_DOWN state
+     * is removed and a new SIM is inserted, the new SIM should be in POWER_UP
+     * mode by default. If the device is turned off or restarted while the SIM
+     * is in POWER_DOWN, then the SIM should turn on normally in POWER_UP mode
+     * when the device turns back on.
+     *
      * Response callback is IRadioResponse.setSimCardPowerResponse_1_6().
      * Note that this differs from setSimCardPower_1_1 in that the response
      * callback should only be sent once the device has finished executing
