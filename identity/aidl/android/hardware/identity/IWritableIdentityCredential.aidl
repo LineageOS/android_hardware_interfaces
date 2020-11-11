@@ -37,12 +37,12 @@ interface IWritableIdentityCredential {
      *
      *  - signature: must be set to ECDSA.
      *
-     *  - subject: CN shall be set to "Android Identity Credential Key".
+     *  - subject: CN shall be set to "Android Identity Credential Key". (fixed value:
+     *    same on all certs)
      *
-     *  - issuer: shall be set to "credentialStoreName (credentialStoreAuthorName)" using the
-     *    values returned in HardwareInformation.
+     *  - issuer: Same as the subject field of the batch attestation key.
      *
-     *  - validity: should be from current time and expire at the same time as the
+     *  - validity: Should be set to current time and expire at the same time as the
      *    attestation batch certificate used.
      *
      *  - subjectPublicKeyInfo: must contain attested public key.
@@ -55,19 +55,14 @@ interface IWritableIdentityCredential {
      *
      *  - The attestationSecurityLevel field must be set to either Software (0),
      *    TrustedEnvironment (1), or StrongBox (2) depending on how attestation is
-     *    implemented. Only the default AOSP implementation of this HAL may use
-     *    value 0 (additionally, this implementation must not be used on production
-     *    devices).
+     *    implemented.
      *
-     *  - The keymasterVersion field in the attestation extension must be set to (10*major + minor)
-     *    where major and minor are the Identity Credential interface major and minor versions.
-     *    Specifically for this version of the interface (1.0) this value is 10.
+     *  - The keymasterVersion field in the attestation extension must be set to the.
+     *    same value as used for Android Keystore keys.
      *
      *  - The keymasterSecurityLevel field in the attestation extension must be set to
      *    either Software (0), TrustedEnvironment (1), or StrongBox (2) depending on how
-     *    the Trusted Application backing the HAL implementation is implemented. Only
-     *    the default AOSP implementation of this HAL may use value 0 (additionally, this
-     *    implementation must not be used on production devices)
+     *    the Trusted Application backing the HAL implementation is implemented.
      *
      *  - The attestationChallenge field must be set to the passed-in challenge.
      *
@@ -81,7 +76,8 @@ interface IWritableIdentityCredential {
      *
      *    - Tag::IDENTITY_CREDENTIAL_KEY which indicates that the key is an Identity
      *      Credential key (which can only sign/MAC very specific messages) and not an Android
-     *      Keystore key (which can be used to sign/MAC anything).
+     *      Keystore key (which can be used to sign/MAC anything). This must not be set
+     *      for test credentials.
      *
      *    - Tag::PURPOSE must be set to SIGN
      *
@@ -95,10 +91,13 @@ interface IWritableIdentityCredential {
      *
      *    - Tag::EC_CURVE must be set to P_256
      *
-     * Additional authorizations may be needed in the softwareEnforced and teeEnforced
-     * fields - the above is not an exhaustive list. Specifically, authorizations containing
-     * information about the root of trust, OS version, verified boot state, and so on should
-     * be included.
+     *    - Tag::ROOT_OF_TRUST must be set
+     *
+     *    - Tag::OS_VERSION and Tag::OS_PATCHLEVEL must be set
+     *
+     * Additional authorizations may be appear in the softwareEnforced and teeEnforced
+     * fields. For example if the device has a boot or vendor partitions, then BOOT_PATCHLEVEL
+     * and VENDOR_PATCHLEVEL should be set.
      *
      * Since the chain is required to be generated using Keymaster Attestation, the returned
      * certificate chain has the following properties:
@@ -112,8 +111,8 @@ interface IWritableIdentityCredential {
      * As with any user of attestation, the Issuing Authority (as a relying party) wishing
      * to issue a credential to a device using these APIs, must carefully examine the
      * returned certificate chain for all of the above (and more). In particular, the Issuing
-     * Authority should check the root of trust, verified boot state, patch level,
-     * application id, etc.
+     * Authority should check the root of trust (which include verified boot state), patch level,
+     * attestation application id, etc.
      *
      * This all depends on the needs of the Issuing Authority and the kind of credential but
      * in general an Issuing Authority should never issue a credential to a device without
