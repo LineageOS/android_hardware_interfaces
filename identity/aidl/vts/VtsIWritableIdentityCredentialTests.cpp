@@ -61,7 +61,8 @@ TEST_P(IdentityCredentialTests, verifyAttestationWithEmptyChallenge) {
     ASSERT_TRUE(credentialStore_->getHardwareInformation(&hwInfo).isOk());
 
     sp<IWritableIdentityCredential> writableCredential;
-    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_));
+    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_,
+                                                    false /* testCredential */));
 
     vector<uint8_t> attestationChallenge;
     vector<Certificate> attestationCertificate;
@@ -82,12 +83,13 @@ TEST_P(IdentityCredentialTests, verifyAttestationSuccessWithChallenge) {
     ASSERT_TRUE(credentialStore_->getHardwareInformation(&hwInfo).isOk());
 
     sp<IWritableIdentityCredential> writableCredential;
-    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_));
+    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_,
+                                                    false /* testCredential */));
 
     string challenge = "NotSoRandomChallenge1NotSoRandomChallenge1NotSoRandomChallenge1";
     vector<uint8_t> attestationChallenge(challenge.begin(), challenge.end());
     vector<Certificate> attestationCertificate;
-    vector<uint8_t> attestationApplicationId = {};
+    vector<uint8_t> attestationApplicationId = {1};
 
     result = writableCredential->getAttestationCertificate(
             attestationApplicationId, attestationChallenge, &attestationCertificate);
@@ -95,27 +97,27 @@ TEST_P(IdentityCredentialTests, verifyAttestationSuccessWithChallenge) {
     EXPECT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage()
                                << endl;
 
-    EXPECT_TRUE(test_utils::validateAttestationCertificate(
-            attestationCertificate, attestationChallenge, attestationApplicationId, hwInfo));
+    test_utils::validateAttestationCertificate(attestationCertificate, attestationChallenge,
+                                               attestationApplicationId, false);
 }
 
 TEST_P(IdentityCredentialTests, verifyAttestationDoubleCallFails) {
     Status result;
 
-    HardwareInformation hwInfo;
-    ASSERT_TRUE(credentialStore_->getHardwareInformation(&hwInfo).isOk());
-
     sp<IWritableIdentityCredential> writableCredential;
-    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_));
+    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_,
+                                                    false /* testCredential */));
 
     string challenge = "NotSoRandomChallenge1";
-    test_utils::AttestationData attData(writableCredential, challenge, {});
-    ASSERT_TRUE(test_utils::validateAttestationCertificate(
-            attData.attestationCertificate, attData.attestationChallenge,
-            attData.attestationApplicationId, hwInfo));
+    test_utils::AttestationData attData(writableCredential, challenge,
+                                        {1} /* atteestationApplicationId */);
+    test_utils::validateAttestationCertificate(attData.attestationCertificate,
+                                               attData.attestationChallenge,
+                                               attData.attestationApplicationId, false);
 
     string challenge2 = "NotSoRandomChallenge2";
-    test_utils::AttestationData attData2(writableCredential, challenge2, {});
+    test_utils::AttestationData attData2(writableCredential, challenge2,
+                                         {} /* atteestationApplicationId */);
     EXPECT_FALSE(attData2.result.isOk()) << attData2.result.exceptionCode() << "; "
                                          << attData2.result.exceptionMessage() << endl;
     EXPECT_EQ(binder::Status::EX_SERVICE_SPECIFIC, attData2.result.exceptionCode());
@@ -125,7 +127,8 @@ TEST_P(IdentityCredentialTests, verifyAttestationDoubleCallFails) {
 TEST_P(IdentityCredentialTests, verifyStartPersonalization) {
     Status result;
     sp<IWritableIdentityCredential> writableCredential;
-    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_));
+    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_,
+                                                    false /* testCredential */));
 
     // First call should go through
     const vector<int32_t> entryCounts = {2, 4};
@@ -147,7 +150,8 @@ TEST_P(IdentityCredentialTests, verifyStartPersonalization) {
 TEST_P(IdentityCredentialTests, verifyStartPersonalizationMin) {
     Status result;
     sp<IWritableIdentityCredential> writableCredential;
-    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_));
+    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_,
+                                                    false /* testCredential */));
 
     // Verify minimal number of profile count and entry count
     const vector<int32_t> entryCounts = {1, 1};
@@ -160,7 +164,8 @@ TEST_P(IdentityCredentialTests, verifyStartPersonalizationMin) {
 TEST_P(IdentityCredentialTests, verifyStartPersonalizationOne) {
     Status result;
     sp<IWritableIdentityCredential> writableCredential;
-    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_));
+    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_,
+                                                    false /* testCredential */));
 
     // Verify minimal number of profile count and entry count
     const vector<int32_t> entryCounts = {1};
@@ -173,7 +178,8 @@ TEST_P(IdentityCredentialTests, verifyStartPersonalizationOne) {
 TEST_P(IdentityCredentialTests, verifyStartPersonalizationLarge) {
     Status result;
     sp<IWritableIdentityCredential> writableCredential;
-    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_));
+    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_,
+                                                    false /* testCredential */));
 
     // Verify set a large number of profile count and entry count is ok
     const vector<int32_t> entryCounts = {3000};
@@ -186,7 +192,8 @@ TEST_P(IdentityCredentialTests, verifyStartPersonalizationLarge) {
 TEST_P(IdentityCredentialTests, verifyProfileNumberMismatchShouldFail) {
     Status result;
     sp<IWritableIdentityCredential> writableCredential;
-    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_));
+    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_,
+                                                    false /* testCredential */));
 
     // Enter mismatched entry and profile numbers
     const vector<int32_t> entryCounts = {5, 6};
@@ -224,7 +231,8 @@ TEST_P(IdentityCredentialTests, verifyProfileNumberMismatchShouldFail) {
 TEST_P(IdentityCredentialTests, verifyDuplicateProfileId) {
     Status result;
     sp<IWritableIdentityCredential> writableCredential;
-    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_));
+    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_,
+                                                    false /* testCredential */));
 
     const vector<int32_t> entryCounts = {3, 6};
     writableCredential->setExpectedProofOfProvisioningSize(123456);
@@ -283,10 +291,12 @@ TEST_P(IdentityCredentialTests, verifyOneProfileAndEntryPass) {
     ASSERT_TRUE(credentialStore_->getHardwareInformation(&hwInfo).isOk());
 
     sp<IWritableIdentityCredential> writableCredential;
-    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_));
+    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_,
+                                                    false /* testCredential */));
 
     string challenge = "NotSoRandomChallenge1";
-    test_utils::AttestationData attData(writableCredential, challenge, {});
+    test_utils::AttestationData attData(writableCredential, challenge,
+                                        {} /* atteestationApplicationId */);
     EXPECT_TRUE(attData.result.isOk())
             << attData.result.exceptionCode() << "; " << attData.result.exceptionMessage() << endl;
 
@@ -294,7 +304,7 @@ TEST_P(IdentityCredentialTests, verifyOneProfileAndEntryPass) {
     ASSERT_TRUE(readerCertificate1);
 
     const vector<int32_t> entryCounts = {1u};
-    size_t expectedPoPSize = 186 + readerCertificate1.value().size();
+    size_t expectedPoPSize = 185 + readerCertificate1.value().size();
     // OK to fail, not available in v1 HAL
     writableCredential->setExpectedProofOfProvisioningSize(expectedPoPSize);
     result = writableCredential->startPersonalization(1, entryCounts);
@@ -308,7 +318,7 @@ TEST_P(IdentityCredentialTests, verifyOneProfileAndEntryPass) {
     ASSERT_TRUE(secureProfiles);
 
     const vector<test_utils::TestEntryData> testEntries1 = {
-            {"Name Space", "Last name", string("Turing"), vector<int32_t>{0, 1}},
+            {"Name Space", "Last name", string("Turing"), vector<int32_t>{1}},
     };
 
     map<const test_utils::TestEntryData*, vector<vector<uint8_t>>> encryptedBlobs;
@@ -347,11 +357,11 @@ TEST_P(IdentityCredentialTests, verifyOneProfileAndEntryPass) {
             "      {\n"
             "        'name' : 'Last name',\n"
             "        'value' : 'Turing',\n"
-            "        'accessControlProfiles' : [0, 1, ],\n"
+            "        'accessControlProfiles' : [1, ],\n"
             "      },\n"
             "    ],\n"
             "  },\n"
-            "  true,\n"
+            "  false,\n"
             "]",
             cborPretty);
 
@@ -370,10 +380,12 @@ TEST_P(IdentityCredentialTests, verifyManyProfilesAndEntriesPass) {
     ASSERT_TRUE(credentialStore_->getHardwareInformation(&hwInfo).isOk());
 
     sp<IWritableIdentityCredential> writableCredential;
-    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_));
+    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_,
+                                                    false /* testCredential */));
 
     string challenge = "NotSoRandomChallenge";
-    test_utils::AttestationData attData(writableCredential, challenge, {});
+    test_utils::AttestationData attData(writableCredential, challenge,
+                                        {} /* atteestationApplicationId */);
     EXPECT_TRUE(attData.result.isOk())
             << attData.result.exceptionCode() << "; " << attData.result.exceptionMessage() << endl;
 
@@ -510,7 +522,7 @@ TEST_P(IdentityCredentialTests, verifyManyProfilesAndEntriesPass) {
             "      },\n"
             "    ],\n"
             "  },\n"
-            "  true,\n"
+            "  false,\n"
             "]",
             cborPretty);
 
@@ -529,10 +541,12 @@ TEST_P(IdentityCredentialTests, verifyEmptyNameSpaceMixedWithNonEmptyWorks) {
     ASSERT_TRUE(credentialStore_->getHardwareInformation(&hwInfo).isOk());
 
     sp<IWritableIdentityCredential> writableCredential;
-    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_));
+    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_,
+                                                    false /* testCredential */));
 
     string challenge = "NotSoRandomChallenge";
-    test_utils::AttestationData attData(writableCredential, challenge, {});
+    test_utils::AttestationData attData(writableCredential, challenge,
+                                        {} /* atteestationApplicationId */);
     ASSERT_TRUE(attData.result.isOk())
             << attData.result.exceptionCode() << "; " << attData.result.exceptionMessage() << endl;
 
@@ -591,10 +605,12 @@ TEST_P(IdentityCredentialTests, verifyInterleavingEntryNameSpaceOrderingFails) {
     ASSERT_TRUE(credentialStore_->getHardwareInformation(&hwInfo).isOk());
 
     sp<IWritableIdentityCredential> writableCredential;
-    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_));
+    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_,
+                                                    false /* testCredential */));
 
     string challenge = "NotSoRandomChallenge";
-    test_utils::AttestationData attData(writableCredential, challenge, {});
+    test_utils::AttestationData attData(writableCredential, challenge,
+                                        {} /* atteestationApplicationId */);
     ASSERT_TRUE(attData.result.isOk())
             << attData.result.exceptionCode() << "; " << attData.result.exceptionMessage() << endl;
 
@@ -667,7 +683,8 @@ TEST_P(IdentityCredentialTests, verifyInterleavingEntryNameSpaceOrderingFails) {
 
 TEST_P(IdentityCredentialTests, verifyAccessControlProfileIdOutOfRange) {
     sp<IWritableIdentityCredential> writableCredential;
-    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_));
+    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_,
+                                                    false /* testCredential */));
 
     const vector<int32_t> entryCounts = {1};
     writableCredential->setExpectedProofOfProvisioningSize(123456);
