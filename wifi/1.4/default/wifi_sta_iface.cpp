@@ -636,6 +636,10 @@ std::pair<WifiStatus, std::array<uint8_t, 6>>
 WifiStaIface::getFactoryMacAddressInternal() {
     std::array<uint8_t, 6> mac =
         iface_util_.lock()->getFactoryMacAddress(ifname_);
+    if (mac[0] == 0 && mac[1] == 0 && mac[2] == 0 && mac[3] == 0 &&
+        mac[4] == 0 && mac[5] == 0) {
+        return {createWifiStatus(WifiStatusCode::ERROR_UNKNOWN), mac};
+    }
     return {createWifiStatus(WifiStatusCode::SUCCESS), mac};
 }
 
