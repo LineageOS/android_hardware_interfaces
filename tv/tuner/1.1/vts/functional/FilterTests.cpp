@@ -40,6 +40,18 @@ void FilterCallback::testFilterScramblingEvent() {
     ALOGW("[vts] pass and stop");
 }
 
+void FilterCallback::testStartIdAfterReconfigure() {
+    android::Mutex::Autolock autoLock(mMsgLock);
+    while (!mStartIdReceived) {
+        if (-ETIMEDOUT == mMsgCondition.waitRelative(mMsgLock, WAIT_TIMEOUT)) {
+            EXPECT_TRUE(false) << "does not receive start id within timeout";
+            return;
+        }
+    }
+    mStartIdReceived = false;
+    ALOGW("[vts] pass and stop");
+}
+
 void FilterCallback::readFilterEventData() {
     ALOGW("[vts] reading filter event");
     // todo separate filter handlers
@@ -71,6 +83,10 @@ void FilterCallback::readFilterEventData() {
             case DemuxFilterEventExt::Event::hidl_discriminator::scramblingStatus:
                 mScramblingStatusEvent++;
                 break;
+            case DemuxFilterEventExt::Event::hidl_discriminator::startId:
+                ALOGD("[vts] Extended restart filter event, startId=%d", eventExt.startId());
+                mStartIdReceived = true;
+                break;
             default:
                 break;
         }
@@ -90,8 +106,8 @@ bool FilterCallback::dumpAvData(DemuxFilterMediaEvent event) {
     }
 
     int av_fd = handle.getNativeHandle()->data[0];
-    uint8_t* buffer =
-            static_cast<uint8_t*>(mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_SHARED, av_fd, 0));
+    uint8_t* buffer = static_cast<uint8_t*>(
+            mmap(NULL, length + offset, PROT_READ | PROT_WRITE, MAP_SHARED, av_fd, 0));
     if (buffer == MAP_FAILED) {
         ALOGE("[vts] fail to allocate av buffer, errno=%d", errno);
         return false;
@@ -270,4 +286,10 @@ AssertionResult FilterTests::configureScramblingEvent(uint64_t filterId, uint32_
         return failure();
     }
     return AssertionResult(status == Result::SUCCESS);
+}
+
+AssertionResult FilterTests::startIdTest(uint64_t filterId) {
+    EXPECT_TRUE(mFilterCallbacks[filterId]) << "Test with getNewlyOpenedFilterId first.";
+    mFilterCallbacks[filterId]->testStartIdAfterReconfigure();
+    return AssertionResult(true);
 }

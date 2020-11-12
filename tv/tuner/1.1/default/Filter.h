@@ -235,6 +235,9 @@ class Filter : public V1_1::IFilter {
 
     // Scrambling status to be monitored
     uint32_t mStatuses = 0;
+
+    bool mConfigured = false;
+    int mStartId = 0;
 };
 
 }  // namespace implementation

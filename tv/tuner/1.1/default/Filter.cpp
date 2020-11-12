@@ -131,6 +131,7 @@ Return<Result> Filter::configure(const DemuxFilterSettings& settings) {
             break;
     }
 
+    mConfigured = true;
     return Result::SUCCESS;
 }
 
@@ -144,8 +145,6 @@ Return<Result> Filter::stop() {
     ALOGV("%s", __FUNCTION__);
 
     mFilterThreadRunning = false;
-
-    std::lock_guard<std::mutex> lock(mFilterThreadLock);
 
     return Result::SUCCESS;
 }
@@ -321,8 +320,17 @@ void Filter::filterThreadLoop() {
             usleep(1000 * 1000);
             continue;
         }
+
         // After successfully write, send a callback and wait for the read to be done
         if (mCallback_1_1 != nullptr) {
+            if (mConfigured) {
+                DemuxFilterEvent emptyEvent;
+                V1_1::DemuxFilterEventExt startEvent;
+                startEvent.events.resize(1);
+                startEvent.events[0].startId(mStartId++);
+                mCallback_1_1->onFilterEvent_1_1(emptyEvent, startEvent);
+                mConfigured = false;
+            }
             mCallback_1_1->onFilterEvent_1_1(mFilterEvent, mFilterEventExt);
             mFilterEventExt.events.resize(0);
         } else if (mCallback != nullptr) {

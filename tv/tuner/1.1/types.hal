@@ -161,6 +161,14 @@ struct DemuxFilterEventExt {
         DemuxFilterMmtpRecordEventExt mmtpRecord;
 
         ScramblingStatus scramblingStatus;
+
+        /**
+         * An unique ID to mark the start point of receiving the valid filter events after
+         * reconfiguring the filter. It must be sent at least once in the first event after the
+         * filter is restarted. 0 is reserved for the newly opened filter's first start, which is
+         * optional for HAL to send.
+         */
+        uint32_t startId;
     };
 
     /**
