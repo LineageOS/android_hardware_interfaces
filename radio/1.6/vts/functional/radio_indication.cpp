@@ -124,6 +124,12 @@ Return<void> RadioIndication_v1_6::currentLinkCapacityEstimate(
     return Void();
 }
 
+Return<void> RadioIndication_v1_6::currentLinkCapacityEstimate_1_6(
+        RadioIndicationType /*type*/,
+        const ::android::hardware::radio::V1_6::LinkCapacityEstimate& /*lce*/) {
+    return Void();
+}
+
 Return<void> RadioIndication_v1_6::currentPhysicalChannelConfigs(
         RadioIndicationType /*type*/,
         const ::android::hardware::hidl_vec<
