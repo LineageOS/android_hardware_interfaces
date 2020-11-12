@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+#include <string>
+
+#include <android-base/logging.h>
+#include <cutils/properties.h>
+
 #include "wifi_feature_flags.h"
 
 namespace android {
@@ -131,7 +136,7 @@ struct ChipIfaceCombination
 #define AP IfaceType::AP
 #define P2P IfaceType::P2P
 #define NAN IfaceType::NAN
-static const std::vector<IWifiChip::ChipMode> kChipModes{
+static const std::vector<IWifiChip::ChipMode> kChipModesPrimary{
     {kMainModeId,
      ChipIfaceCombination::make_vec({WIFI_HAL_INTERFACE_COMBINATIONS})},
 #ifdef WIFI_HAL_INTERFACE_COMBINATIONS_AP
@@ -146,6 +151,50 @@ static const std::vector<IWifiChip::ChipMode> kChipModesSecondary{
                              {WIFI_HAL_INTERFACE_COMBINATIONS_SECONDARY_CHIP})},
 #endif
 };
+
+constexpr char kDebugPresetInterfaceCombinationIdxProperty[] =
+    "persist.vendor.debug.wifi.hal.preset_interface_combination_idx";
+// List of pre-defined interface combinations that can be enabled at runtime via
+// setting the property: "kDebugPresetInterfaceCombinationIdxProperty" to the
+// corresponding index value.
+static const std::vector<
+    std::pair<std::string, std::vector<IWifiChip::ChipMode>>>
+    kDebugChipModes{
+        // Legacy combination - No STA/AP concurrencies.
+        // 0 - (1 AP) or (1 STA + 1 of (P2P or NAN))
+        {"No STA/AP Concurrency",
+         {{kMainModeId,
+           ChipIfaceCombination::make_vec(
+               {{{{AP}, 1}}, {{{STA}, 1}, {{P2P, NAN}, 1}}})}}},
+
+        // STA + AP concurrency
+        // 1 - (1 STA + 1 AP) or (1 STA + 1 of (P2P or NAN))
+        {"STA + AP Concurrency",
+         {{kMainModeId,
+           ChipIfaceCombination::make_vec(
+               {{{{STA}, 1}, {{AP}, 1}}, {{{STA}, 1}, {{P2P, NAN}, 1}}})}}},
+
+        // STA + STA concurrency
+        // 2 - (1 STA + 1 AP) or (2 STA + 1 of (P2P or NAN))
+        {"Dual STA Concurrency",
+         {{kMainModeId,
+           ChipIfaceCombination::make_vec(
+               {{{{STA}, 1}, {{AP}, 1}}, {{{STA}, 2}, {{P2P, NAN}, 1}}})}}},
+
+        // AP + AP + STA concurrency
+        // 3 - (1 STA + 2 AP) or (1 STA + 1 of (P2P or NAN))
+        {"Dual AP Concurrency",
+         {{kMainModeId,
+           ChipIfaceCombination::make_vec(
+               {{{{STA}, 1}, {{AP}, 2}}, {{{STA}, 1}, {{P2P, NAN}, 1}}})}}},
+
+        // STA + STA concurrency and AP + AP + STA concurrency
+        // 4 - (1 STA + 2 AP) or (2 STA + 1 of (P2P or NAN))
+        {"Dual STA & Dual AP Concurrency",
+         {{kMainModeId,
+           ChipIfaceCombination::make_vec(
+               {{{{STA}, 1}, {{AP}, 2}}, {{{STA}, 2}, {{P2P, NAN}, 1}}})}}}};
+
 #undef STA
 #undef AP
 #undef P2P
@@ -161,9 +210,31 @@ static const std::vector<IWifiChip::ChipMode> kChipModesSecondary{
 
 WifiFeatureFlags::WifiFeatureFlags() {}
 
+std::vector<IWifiChip::ChipMode> WifiFeatureFlags::getChipModesForPrimary() {
+    std::array<char, PROPERTY_VALUE_MAX> buffer;
+    auto res = property_get(kDebugPresetInterfaceCombinationIdxProperty,
+                            buffer.data(), nullptr);
+    // Debug propety not set, use the device preset interface combination.
+    if (res <= 0) return kChipModesPrimary;
+
+    // Debug propety set, use one of the debug preset interface combination.
+    unsigned long idx = std::stoul(buffer.data());
+    if (idx >= kDebugChipModes.size()) {
+        LOG(ERROR) << "Invalid index set in property: "
+                   << kDebugPresetInterfaceCombinationIdxProperty;
+        return kChipModesPrimary;
+    }
+    std::string name;
+    std::vector<IWifiChip::ChipMode> chip_modes;
+    std::tie(name, chip_modes) = kDebugChipModes[idx];
+    LOG(INFO) << "Using debug chip mode: <" << name << "> set via property: "
+              << kDebugPresetInterfaceCombinationIdxProperty;
+    return chip_modes;
+}
+
 std::vector<IWifiChip::ChipMode> WifiFeatureFlags::getChipModes(
     bool is_primary) {
-    return (is_primary) ? kChipModes : kChipModesSecondary;
+    return (is_primary) ? getChipModesForPrimary() : kChipModesSecondary;
 }
 
 }  // namespace feature_flags
