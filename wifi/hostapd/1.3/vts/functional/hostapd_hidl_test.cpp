@@ -468,5 +468,5 @@ INSTANTIATE_TEST_CASE_P(
         testing::ValuesIn(
             android::hardware::getAllHalInstanceNames(IWifi::descriptor)),
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(
-            android::hardware::wifi::hostapd::V1_2::IHostapd::descriptor))),
+            android::hardware::wifi::hostapd::V1_3::IHostapd::descriptor))),
     android::hardware::PrintInstanceTupleNameToString<>);

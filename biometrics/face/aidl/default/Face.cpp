@@ -46,6 +46,11 @@ ndk::ScopedAStatus Face::getSensorProps(std::vector<SensorProps>* return_val) {
     props.commonProps = std::move(commonProps);
     props.sensorType = kSensorType;
     props.halControlsPreview = kHalControlsPreview;
+    props.enrollPreviewWidth = 1080;
+    props.enrollPreviewHeight = 1920;
+    props.enrollTranslationX = 100.f;
+    props.enrollTranslationY = 50.f;
+    props.enrollPreviewScale = 1.f;
 
     *return_val = {std::move(props)};
     return ndk::ScopedAStatus::ok();
