@@ -417,7 +417,7 @@ const ConfigDeclaration kVehicleProperties[]{
                          .minSampleRate = 1.0f,
                          .maxSampleRate = 2.0f,
                  },
-         .initialValue = {.floatValues = {100.0f}}},  // units in meters
+         .initialValue = {.floatValues = {50000.0f}}},  // units in meters
 
         {.config =
                  {
