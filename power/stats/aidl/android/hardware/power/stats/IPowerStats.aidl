@@ -96,7 +96,7 @@ interface IPowerStats {
     ChannelInfo[] getEnergyMeterInfo();
 
     /**
-     * Reports accumulated energy since boot for each specified channel.
+     * Reports accumulated energy for each specified channel.
      *
      * @param channelIds IDs of channels for which data is requested.
      *     Passing an empty list will return energy measurements for all available channels.
