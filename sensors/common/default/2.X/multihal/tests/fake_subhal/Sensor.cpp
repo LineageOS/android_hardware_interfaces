@@ -71,9 +71,10 @@ const SensorInfo& Sensor::getSensorInfo() const {
     return mSensorInfo;
 }
 
-void Sensor::batch(int32_t samplingPeriodNs) {
-    samplingPeriodNs =
-            std::clamp(samplingPeriodNs, mSensorInfo.minDelay * 1000, mSensorInfo.maxDelay * 1000);
+void Sensor::batch(int64_t samplingPeriodNs) {
+    samplingPeriodNs = std::clamp(samplingPeriodNs,
+                                  static_cast<int64_t>(mSensorInfo.minDelay) * 1000,
+                                  static_cast<int64_t>(mSensorInfo.maxDelay) * 1000);
 
     if (mSamplingPeriodNs != samplingPeriodNs) {
         mSamplingPeriodNs = samplingPeriodNs;
@@ -317,17 +318,6 @@ AmbientTempSensor::AmbientTempSensor(int32_t sensorHandle, ISensorsEventCallback
     mSensorInfo.name = "Ambient Temp Sensor";
     mSensorInfo.type = SensorType::AMBIENT_TEMPERATURE;
     mSensorInfo.typeAsString = SENSOR_STRING_TYPE_AMBIENT_TEMPERATURE;
-    mSensorInfo.maxRange = 80.0f;
-    mSensorInfo.resolution = 0.01f;
-    mSensorInfo.power = 0.001f;
-    mSensorInfo.minDelay = 40 * 1000;  // microseconds
-}
-
-DeviceTempSensor::DeviceTempSensor(int32_t sensorHandle, ISensorsEventCallback* callback)
-    : ContinuousSensor(sensorHandle, callback) {
-    mSensorInfo.name = "Device Temp Sensor";
-    mSensorInfo.type = SensorType::TEMPERATURE;
-    mSensorInfo.typeAsString = SENSOR_STRING_TYPE_TEMPERATURE;
     mSensorInfo.maxRange = 80.0f;
     mSensorInfo.resolution = 0.01f;
     mSensorInfo.power = 0.001f;

@@ -206,7 +206,6 @@ class ContinuousSensorsSubHal : public SubHalVersion {
         ISensorsSubHalBase::AddSensor<GyroSensor>();
         ISensorsSubHalBase::AddSensor<MagnetometerSensor>();
         ISensorsSubHalBase::AddSensor<PressureSensor>();
-        ISensorsSubHalBase::AddSensor<DeviceTempSensor>();
     }
 };
 
@@ -231,7 +230,6 @@ class AllSensorsSubHal : public SubHalVersion {
         ISensorsSubHalBase::AddSensor<GyroSensor>();
         ISensorsSubHalBase::AddSensor<MagnetometerSensor>();
         ISensorsSubHalBase::AddSensor<PressureSensor>();
-        ISensorsSubHalBase::AddSensor<DeviceTempSensor>();
         ISensorsSubHalBase::AddSensor<AmbientTempSensor>();
         ISensorsSubHalBase::AddSensor<LightSensor>();
         ISensorsSubHalBase::AddSensor<ProximitySensor>();
