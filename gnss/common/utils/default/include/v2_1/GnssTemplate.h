@@ -651,6 +651,8 @@ Return<void> GnssTemplate<T_IGnss>::setLocation(const hidl_handle& fd,
     auto lat = gMockLatitudeDegrees;
     auto lon = gMockLongitudeDegrees;
     auto ele = gMockAltitudeMeters;
+    auto bea = gMockBearingDegrees;
+    auto spd = gMockSpeedMetersPerSec;
 
     for (size_t i = 1; i < options.size(); ++i) {
         std::string option = options[i];
@@ -663,6 +665,12 @@ Return<void> GnssTemplate<T_IGnss>::setLocation(const hidl_handle& fd,
         } else if (option.rfind("ele=", 0) == 0) {
             option = option.substr(4);
             ele = stof(option);
+        } else if (option.rfind("bea=", 0) == 0) {
+            option = option.substr(4);
+            bea = stof(option);
+        } else if (option.rfind("spd=", 0) == 0) {
+            option = option.substr(4);
+            spd = stof(option);
         } else {
             dprintf(fd->data[0], "unsupported location argument: %s\n", option.c_str());
         }
@@ -671,9 +679,12 @@ Return<void> GnssTemplate<T_IGnss>::setLocation(const hidl_handle& fd,
     gMockLatitudeDegrees = lat;
     gMockLongitudeDegrees = lon;
     gMockAltitudeMeters = ele;
+    gMockBearingDegrees = bea;
+    gMockSpeedMetersPerSec = spd;
 
-    dprintf(fd->data[0], "mock location updated to lat=%f lon=%f ele=%f\n", gMockLatitudeDegrees,
-            gMockLongitudeDegrees, gMockAltitudeMeters);
+    dprintf(fd->data[0], "mock location updated to lat=%f lon=%f ele=%f bea=%f spd=%f\n",
+            gMockLatitudeDegrees, gMockLongitudeDegrees, gMockAltitudeMeters, gMockBearingDegrees,
+            gMockSpeedMetersPerSec);
 
     return Void();
 }
@@ -682,7 +693,7 @@ template <class T_IGnss>
 Return<void> GnssTemplate<T_IGnss>::help(const hidl_handle& fd) {
     dprintf(fd->data[0],
             "invalid option for Gnss HAL; valid options are:\n"
-            "location lat=.. lon=.. ele=..\n");
+            "location [lat=..] [lon=..] [ele=..] [bea=..] [spd=..]\n");
     return Void();
 }
 
