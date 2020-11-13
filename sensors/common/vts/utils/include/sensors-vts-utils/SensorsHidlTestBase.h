@@ -109,7 +109,6 @@ static SensorFlagBits expectedReportModeForType(SensorTypeT type) {
         case SensorTypeT::MAGNETIC_FIELD:
         case SensorTypeT::ORIENTATION:
         case SensorTypeT::PRESSURE:
-        case SensorTypeT::TEMPERATURE:
         case SensorTypeT::GRAVITY:
         case SensorTypeT::LINEAR_ACCELERATION:
         case SensorTypeT::ROTATION_VECTOR:
@@ -144,6 +143,10 @@ static SensorFlagBits expectedReportModeForType(SensorTypeT type) {
         case SensorTypeT::WRIST_TILT_GESTURE:
         case SensorTypeT::DYNAMIC_SENSOR_META:
             return SensorFlagBits::SPECIAL_REPORTING_MODE;
+
+        case SensorTypeT::TEMPERATURE:
+            ALOGW("Device temperature sensor is deprecated, ignoring for test");
+            return (SensorFlagBits)-1;
 
         default:
             ALOGW("Type %d is not implemented in expectedReportModeForType", (int)type);
@@ -334,7 +337,7 @@ class SensorsHidlTestBase : public testing::TestWithParam<std::string> {
         usleep(500000);  // sleep 0.5 sec to wait for change rate to happen
         events1 = collectEvents(collectionTimeoutUs, minNEvent, getEnvironment());
 
-        // second collection, without stop sensor
+        // second collection, without stopping the sensor
         ASSERT_EQ(batch(handle, secondCollectionPeriod, batchingPeriodInNs), Result::OK);
 
         usleep(500000);  // sleep 0.5 sec to wait for change rate to happen
