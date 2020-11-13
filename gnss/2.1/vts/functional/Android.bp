@@ -18,6 +18,7 @@ cc_test {
     name: "VtsHalGnssV2_1TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
+        "gnss_hal_test.cpp",
         "gnss_hal_test_cases.cpp",
         "VtsHalGnssV2_1TargetTest.cpp",
     ],
@@ -30,6 +31,9 @@ cc_test {
         "android.hardware.gnss@2.0",
         "android.hardware.gnss@2.1",
         "android.hardware.gnss@common-vts-lib",
+    ],
+    shared_libs: [
+        "libvintf",
     ],
     test_suites: [
         "general-tests",

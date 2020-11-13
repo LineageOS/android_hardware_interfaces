@@ -39,5 +39,36 @@ parcelable SensorProps {
      * the framework.
      */
     boolean halControlsPreview;
+
+    /**
+     * For implementations where the HAL manages the preview, this is the width, in pixels, of each
+     * frame that the camera is set up to output.
+     */
+    int enrollPreviewWidth;
+
+    /**
+     * For implementations where the HAL manages the preview, this is the height, in pixels, of
+     * each frame that the camera is set up to output.
+     */
+    int enrollPreviewHeight;
+
+    /**
+     * For implementations where the HAL manages the preview, this is the distance in pixels that
+     * the enrollment preview should be translated. This is typically used by devices where the
+     * camera used for enrollment preview is not centered.
+     */
+    float enrollTranslationX;
+
+    /**
+     * For implementations where the HAL manages the preview, this is the distance in pixels that
+     * the enrollment preview should be translated.
+     */
+    float enrollTranslationY;
+
+    /**
+     * For implementations where the HAL manages the preview, this is the scale factor that should
+     * be applied when configuring the preview texture.
+     */
+    float enrollPreviewScale;
 }
 

@@ -1156,3 +1156,10 @@ Return<void> RadioResponse_v1_6::setAllowedNetworkTypeBitmapResponse(
     parent_v1_6.notify(info.serial);
     return Void();
 }
+
+Return<void> RadioResponse_v1_6::setDataThrottlingResponse(
+        const ::android::hardware::radio::V1_6::RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_v1_6.notify(info.serial);
+    return Void();
+}
