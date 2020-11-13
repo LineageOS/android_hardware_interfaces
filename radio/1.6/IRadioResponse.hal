@@ -306,4 +306,15 @@ interface IRadioResponse extends @1.5::IRadioResponse {
      *   RadioError:NO_RESOURCES
      */
     oneway setAllowedNetworkTypeBitmapResponse(RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     *  Valid errors returned:
+     *  RadioError:NONE
+     *  RadioError:RADIO_NOT_AVAILABLE
+     *  RadioError:MODEM_ERR
+     *  RadioError:INVALID_ARGUMENTS
+     */
+    oneway setDataThrottlingResponse(RadioResponseInfo info);
 };

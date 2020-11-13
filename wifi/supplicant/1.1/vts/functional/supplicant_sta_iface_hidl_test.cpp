@@ -20,6 +20,7 @@
 #include <android/hardware/wifi/1.0/IWifi.h>
 #include <android/hardware/wifi/1.1/IWifi.h>
 #include <android/hardware/wifi/supplicant/1.1/ISupplicantStaIface.h>
+#include <android/hardware/wifi/supplicant/1.2/ISupplicantStaIface.h>
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
@@ -45,11 +46,16 @@ class SupplicantStaIfaceHidlTest : public SupplicantHidlTestBaseV1_1 {
         SupplicantHidlTestBaseV1_1::SetUp();
         sta_iface_ = getSupplicantStaIface_1_1(supplicant_);
         ASSERT_NE(sta_iface_.get(), nullptr);
+
+        v1_2 = ::android::hardware::wifi::supplicant::V1_2::
+            ISupplicantStaIface::castFrom(sta_iface_);
     }
 
    protected:
     // ISupplicantStaIface object used for all tests in this fixture.
     sp<ISupplicantStaIface> sta_iface_;
+    sp<::android::hardware::wifi::supplicant::V1_2::ISupplicantStaIface> v1_2 =
+        nullptr;
 };
 
 class IfaceCallback : public ISupplicantStaIfaceCallback {
@@ -133,10 +139,13 @@ class IfaceCallback : public ISupplicantStaIfaceCallback {
  * RegisterCallback_1_1
  */
 TEST_P(SupplicantStaIfaceHidlTest, RegisterCallback_1_1) {
-    sta_iface_->registerCallback_1_1(
-        new IfaceCallback(), [](const SupplicantStatus& status) {
-            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
-        });
+    SupplicantStatusCode expectedCode =
+        (nullptr != v1_2) ? SupplicantStatusCode::FAILURE_UNKNOWN
+                          : SupplicantStatusCode::SUCCESS;
+    sta_iface_->registerCallback_1_1(new IfaceCallback(),
+                                     [&](const SupplicantStatus& status) {
+                                         EXPECT_EQ(expectedCode, status.code);
+                                     });
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SupplicantStaIfaceHidlTest);

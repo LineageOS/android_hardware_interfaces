@@ -22,6 +22,7 @@
 #include <VtsCoreUtil.h>
 #include <android/hardware/wifi/1.0/IWifi.h>
 #include <android/hardware/wifi/supplicant/1.0/ISupplicantStaIface.h>
+#include <android/hardware/wifi/supplicant/1.1/ISupplicantStaIface.h>
 
 #include "supplicant_hidl_call_util.h"
 #include "supplicant_hidl_test_utils.h"
@@ -73,11 +74,16 @@ class SupplicantStaIfaceHidlTest : public SupplicantHidlTestBaseV1_0 {
         sta_iface_ = getSupplicantStaIface(supplicant_);
         ASSERT_NE(sta_iface_.get(), nullptr);
 
+        v1_1 = ::android::hardware::wifi::supplicant::V1_1::
+            ISupplicantStaIface::castFrom(sta_iface_);
+
         memcpy(mac_addr_.data(), kTestMacAddr, mac_addr_.size());
     }
 
    protected:
     bool isP2pOn_ = false;
+    sp<::android::hardware::wifi::supplicant::V1_1::ISupplicantStaIface> v1_1 =
+        nullptr;
     // ISupplicantStaIface object used for all tests in this fixture.
     sp<ISupplicantStaIface> sta_iface_;
     // MAC address to use for various tests.
@@ -175,10 +181,13 @@ TEST_P(SupplicantStaIfaceHidlTest, Create) {
  * RegisterCallback
  */
 TEST_P(SupplicantStaIfaceHidlTest, RegisterCallback) {
-    sta_iface_->registerCallback(
-        new IfaceCallback(), [](const SupplicantStatus& status) {
-            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
-        });
+    SupplicantStatusCode expectedCode =
+        (nullptr != v1_1) ? SupplicantStatusCode::FAILURE_UNKNOWN
+                          : SupplicantStatusCode::SUCCESS;
+    sta_iface_->registerCallback(new IfaceCallback(),
+                                 [&](const SupplicantStatus& status) {
+                                     EXPECT_EQ(expectedCode, status.code);
+                                 });
 }
 
 /*

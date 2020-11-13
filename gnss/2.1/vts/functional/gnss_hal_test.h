@@ -22,4 +22,11 @@
 using android::hardware::gnss::V2_1::IGnss;
 
 // The main test class for GNSS HAL.
-class GnssHalTest : public GnssHalTestTemplate<IGnss> {};
+class GnssHalTest : public GnssHalTestTemplate<IGnss> {
+  public:
+    /**
+     * IsGnssHalVersion_2_1:
+     * returns  true if the GNSS HAL version is exactly 2.1.
+     */
+    bool IsGnssHalVersion_2_1() const;
+};
