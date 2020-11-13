@@ -32,7 +32,7 @@ namespace sensors {
 namespace V2_X {
 namespace implementation {
 
-static constexpr float kDefaultMaxDelayUs = 10 * 1000 * 1000;
+static constexpr int32_t kDefaultMaxDelayUs = 10 * 1000 * 1000;
 
 class ISensorsEventCallback {
   public:
@@ -54,7 +54,7 @@ class Sensor {
     virtual ~Sensor();
 
     const SensorInfo& getSensorInfo() const;
-    void batch(int32_t samplingPeriodNs);
+    void batch(int64_t samplingPeriodNs);
     virtual void activate(bool enable);
     Result flush();
 
@@ -111,11 +111,6 @@ class GyroSensor : public Sensor {
 class AmbientTempSensor : public OnChangeSensor {
   public:
     AmbientTempSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
-};
-
-class DeviceTempSensor : public OnChangeSensor {
-  public:
-    DeviceTempSensor(int32_t sensorHandle, ISensorsEventCallback* callback);
 };
 
 class PressureSensor : public Sensor {
