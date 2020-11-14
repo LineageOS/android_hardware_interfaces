@@ -1260,9 +1260,27 @@ bool CameraHidlTest::DeviceCb::processCaptureResultLocked(const CaptureResult& r
             ADD_FAILURE();
             return notify;
         }
-        request->collectedResult.append(
-                reinterpret_cast<const camera_metadata_t*>(
-                    resultMetadata.data()));
+
+        // Verify no duplicate tags between partial results
+        const camera_metadata_t* partialMetadata =
+                reinterpret_cast<const camera_metadata_t*>(resultMetadata.data());
+        const camera_metadata_t* collectedMetadata = request->collectedResult.getAndLock();
+        camera_metadata_ro_entry_t searchEntry, foundEntry;
+        for (size_t i = 0; i < get_camera_metadata_size(partialMetadata); i++) {
+            if (0 != get_camera_metadata_ro_entry(partialMetadata, i, &searchEntry)) {
+                ADD_FAILURE();
+                request->collectedResult.unlock(collectedMetadata);
+                return notify;
+            }
+            if (-ENOENT !=
+                find_camera_metadata_ro_entry(collectedMetadata, searchEntry.tag, &foundEntry)) {
+                ADD_FAILURE();
+                request->collectedResult.unlock(collectedMetadata);
+                return notify;
+            }
+        }
+        request->collectedResult.unlock(collectedMetadata);
+        request->collectedResult.append(partialMetadata);
 
         isPartialResult =
             (results.partialResult < request->numPartialResults);
