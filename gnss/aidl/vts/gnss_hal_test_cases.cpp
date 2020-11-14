@@ -46,7 +46,7 @@ TEST_P(GnssHalTest, TestPsdsExtension) {
     ASSERT_TRUE(iGnssPsds != nullptr);
 
     status = iGnssPsds->injectPsdsData(PsdsType::LONG_TERM, std::vector<uint8_t>());
-    ASSERT_TRUE(status.isOk());
+    ASSERT_FALSE(status.isOk());
 }
 
 /*

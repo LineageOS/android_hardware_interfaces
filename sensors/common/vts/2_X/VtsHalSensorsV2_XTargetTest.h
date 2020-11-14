@@ -845,7 +845,11 @@ void SensorsHidlTest::verifyRegisterDirectChannel(
         std::shared_ptr<SensorsTestSharedMemory<SensorTypeVersion, EventType>> mem,
         int32_t* directChannelHandle, bool supportsSharedMemType, bool supportsAnyDirectChannel) {
     char* buffer = mem->getBuffer();
-    memset(buffer, 0xff, mem->getSize());
+    size_t size = mem->getSize();
+
+    if (supportsSharedMemType) {
+        memset(buffer, 0xff, size);
+    }
 
     registerDirectChannel(mem->getSharedMemInfo(), [&](Result result, int32_t channelHandle) {
         if (supportsSharedMemType) {
