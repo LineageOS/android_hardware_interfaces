@@ -24,8 +24,6 @@ namespace hardware {
 namespace gnss {
 namespace common {
 
-const float kMockSpeedMetersPerSec = 0;
-const float kMockBearingDegrees = 0;
 const float kMockHorizontalAccuracyMeters = 5;
 const float kMockVerticalAccuracyMeters = 5;
 const float kMockSpeedAccuracyMetersPerSecond = 1;
