@@ -26,6 +26,8 @@ import @1.0::Result;
  * To access the v1.1 IFilter APIs, the implementation can cast the IFilter
  * interface returned from the @1.0::IDemux openFilter into a v1.1 IFiler
  * using V1_1::IFilter::castFrom(V1_0::IFilter).
+ *
+ * Note that reconfiguring Filter must happen after the Filter is stopped.
  */
 interface IFilter extends @1.0::IFilter {
     /**
