@@ -56,7 +56,6 @@ using android::hardware::tv::tuner::V1_0::IFilter;
 using android::hardware::tv::tuner::V1_0::Result;
 using android::hardware::tv::tuner::V1_1::AvStreamType;
 using android::hardware::tv::tuner::V1_1::DemuxFilterEventExt;
-using android::hardware::tv::tuner::V1_1::DemuxFilterMonitorEvent;
 using android::hardware::tv::tuner::V1_1::IFilterCallback;
 using android::hardware::tv::tuner::V1_1::ITuner;
 
@@ -119,7 +118,6 @@ class FilterCallback : public IFilterCallback {
 
     void testFilterDataOutput();
     void testFilterScramblingEvent();
-    void testFilterIpCidEvent();
     void testStartIdAfterReconfigure();
 
     void readFilterEventData();
@@ -141,7 +139,6 @@ class FilterCallback : public IFilterCallback {
 
     int mPidFilterOutputCount = 0;
     int mScramblingStatusEvent = 0;
-    int mIpCidEvent = 0;
     bool mStartIdReceived = false;
 };
 
@@ -160,7 +157,7 @@ class FilterTests {
     AssertionResult configFilter(DemuxFilterSettings setting, uint64_t filterId);
     AssertionResult configAvFilterStreamType(AvStreamType type, uint64_t filterId);
     AssertionResult configIpFilterCid(uint32_t ipCid, uint64_t filterId);
-    AssertionResult configureMonitorEvent(uint64_t filterId, uint32_t monitorEventTypes);
+    AssertionResult configureScramblingEvent(uint64_t filterId, uint32_t statuses);
     AssertionResult getFilterMQDescriptor(uint64_t filterId);
     AssertionResult startFilter(uint64_t filterId);
     AssertionResult stopFilter(uint64_t filterId);
