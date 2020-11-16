@@ -292,16 +292,9 @@ interface ISession {
      *
      * When invoked by the framework, the implementation must perform the following sequence of
      * events:
-     *   1) Verify the authenticity and integrity of the provided HAT. If this check fails, the HAL
-     *      must invoke ISessionCallback#onError with Error::UNABLE_TO_PROCESS and return to
-     *      SessionState::IDLING if no subsequent work is in the queue.
-     *   2) Verify that the timestamp provided within the HAT is relatively recent (e.g. on the
-     *      order of minutes, not hours). If this check fails, the HAL must invoke
-     *      ISessionCallback#onError with Error::UNABLE_TO_PROCESS and return to
-     *      SessionState::IDLING if no subsequent work is in the queue.
-     *   3) Update the authenticatorId with a new entropy-encoded random number
-     *   4) Persist the new authenticatorId to non-ephemeral storage
-     *   5) Notify the framework that the above is completed, via
+     *   1) Update the authenticatorId with a new entropy-encoded random number
+     *   2) Persist the new authenticatorId to non-ephemeral storage
+     *   3) Notify the framework that the above is completed, via
      *      ISessionCallback#onAuthenticatorInvalidated
      *
      * A practical use case of invalidation would be when the user adds a new enrollment to a sensor
