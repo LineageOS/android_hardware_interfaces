@@ -46,8 +46,8 @@ void TunerFilterHidlTest::configSingleFilterInDemuxTest(FilterConfig filterConf,
     if (filterConf.type.mainType == DemuxFilterMainType::IP) {
         ASSERT_TRUE(mFilterTests.configIpFilterCid(filterConf.ipCid, filterId));
     }
-    if (filterConf.monitorEventTypes > 0) {
-        ASSERT_TRUE(mFilterTests.configureMonitorEvent(filterId, filterConf.monitorEventTypes));
+    if (filterConf.statuses > 0) {
+        ASSERT_TRUE(mFilterTests.configureScramblingEvent(filterId, filterConf.statuses));
     }
     ASSERT_TRUE(mFilterTests.getFilterMQDescriptor(filterId));
     ASSERT_TRUE(mFilterTests.startFilter(filterId));

@@ -250,49 +250,25 @@ Return<Result> Filter::configureAvStreamType(const V1_1::AvStreamType& avStreamT
     return Result::SUCCESS;
 }
 
-Return<Result> Filter::configureMonitorEvent(uint32_t monitorEventTypes) {
+Return<Result> Filter::configureScramblingEvent(uint32_t statuses) {
     ALOGV("%s", __FUNCTION__);
 
-    DemuxFilterEvent emptyFilterEvent;
-    V1_1::DemuxFilterMonitorEvent monitorEvent;
-    V1_1::DemuxFilterEventExt eventExt;
+    mStatuses = statuses;
+    if (mCallback_1_1 != nullptr) {
+        // Assuming current status is always NOT_SCRAMBLED
+        V1_1::DemuxFilterEventExt filterEventExt;
+        V1_1::DemuxFilterEventExt::Event event;
+        event.scramblingStatus(V1_1::ScramblingStatus::NOT_SCRAMBLED);
+        int size = filterEventExt.events.size();
+        filterEventExt.events.resize(size + 1);
+        filterEventExt.events[size] = event;
+        DemuxFilterEvent emptyFilterEvent;
 
-    uint32_t newScramblingStatus =
-            monitorEventTypes & V1_1::DemuxFilterMonitorEventType::SCRAMBLING_STATUS;
-    uint32_t newIpCid = monitorEventTypes & V1_1::DemuxFilterMonitorEventType::IP_CID_CHANGE;
-
-    // if scrambling status monitoring flipped, record the new state and send msg on enabling
-    if (newScramblingStatus ^ mScramblingStatusMonitored) {
-        mScramblingStatusMonitored = newScramblingStatus;
-        if (mScramblingStatusMonitored) {
-            if (mCallback_1_1 != nullptr) {
-                // Assuming current status is always NOT_SCRAMBLED
-                monitorEvent.scramblingStatus(V1_1::ScramblingStatus::NOT_SCRAMBLED);
-                eventExt.events.resize(1);
-                eventExt.events[0].monitorEvent(monitorEvent);
-                mCallback_1_1->onFilterEvent_1_1(emptyFilterEvent, eventExt);
-            } else {
-                return Result::INVALID_STATE;
-            }
-        }
+        mCallback_1_1->onFilterEvent_1_1(emptyFilterEvent, filterEventExt);
+        mFilterEventExt.events.resize(0);
+    } else {
+        return Result::INVALID_STATE;
     }
-
-    // if ip cid monitoring flipped, record the new state and send msg on enabling
-    if (newIpCid ^ mIpCidMonitored) {
-        mIpCidMonitored = newIpCid;
-        if (mIpCidMonitored) {
-            if (mCallback_1_1 != nullptr) {
-                // Return random cid
-                monitorEvent.cid(1);
-                eventExt.events.resize(1);
-                eventExt.events[0].monitorEvent(monitorEvent);
-                mCallback_1_1->onFilterEvent_1_1(emptyFilterEvent, eventExt);
-            } else {
-                return Result::INVALID_STATE;
-            }
-        }
-    }
-
     return Result::SUCCESS;
 }
 
