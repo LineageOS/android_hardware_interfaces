@@ -18,6 +18,7 @@
 
 #include <android/hardware/vibrator/BnVibratorCallback.h>
 #include <android/hardware/vibrator/IVibrator.h>
+#include <android/hardware/vibrator/IVibratorManager.h>
 #include <binder/IServiceManager.h>
 #include <binder/ProcessState.h>
 
@@ -34,6 +35,7 @@ using android::hardware::vibrator::CompositePrimitive;
 using android::hardware::vibrator::Effect;
 using android::hardware::vibrator::EffectStrength;
 using android::hardware::vibrator::IVibrator;
+using android::hardware::vibrator::IVibratorManager;
 using std::chrono::high_resolution_clock;
 
 const std::vector<Effect> kEffects{android::enum_range<Effect>().begin(),
@@ -77,10 +79,28 @@ class CompletionCallback : public BnVibratorCallback {
     std::function<void()> mCallback;
 };
 
-class VibratorAidl : public testing::TestWithParam<std::string> {
+class VibratorAidl : public testing::TestWithParam<std::tuple<int32_t, int32_t>> {
   public:
     virtual void SetUp() override {
-        vibrator = android::waitForDeclaredService<IVibrator>(String16(GetParam().c_str()));
+        int32_t managerIdx = std::get<0>(GetParam());
+        int32_t vibratorId = std::get<1>(GetParam());
+        auto managerAidlNames = android::getAidlHalInstanceNames(IVibratorManager::descriptor);
+
+        if (managerIdx < 0) {
+            // Testing a unmanaged vibrator, using vibratorId as index from registered HALs
+            auto vibratorAidlNames = android::getAidlHalInstanceNames(IVibrator::descriptor);
+            ASSERT_LT(vibratorId, vibratorAidlNames.size());
+            auto vibratorName = String16(vibratorAidlNames[vibratorId].c_str());
+            vibrator = android::waitForDeclaredService<IVibrator>(vibratorName);
+        } else {
+            // Testing a managed vibrator, using vibratorId to retrieve it from the manager
+            ASSERT_LT(managerIdx, managerAidlNames.size());
+            auto managerName = String16(managerAidlNames[managerIdx].c_str());
+            auto vibratorManager = android::waitForDeclaredService<IVibratorManager>(managerName);
+            auto vibratorResult = vibratorManager->getVibrator(vibratorId, &vibrator);
+            ASSERT_TRUE(vibratorResult.isOk());
+        }
+
         ASSERT_NE(vibrator, nullptr);
         ASSERT_TRUE(vibrator->getCapabilities(&capabilities).isOk());
     }
@@ -518,10 +538,41 @@ TEST_P(VibratorAidl, AlwaysOn) {
     }
 }
 
+std::vector<std::tuple<int32_t, int32_t>> GenerateVibratorMapping() {
+    std::vector<std::tuple<int32_t, int32_t>> tuples;
+    auto managerAidlNames = android::getAidlHalInstanceNames(IVibratorManager::descriptor);
+    std::vector<int32_t> vibratorIds;
+
+    for (int i = 0; i < managerAidlNames.size(); i++) {
+        auto managerName = String16(managerAidlNames[i].c_str());
+        auto vibratorManager = android::waitForDeclaredService<IVibratorManager>(managerName);
+        if (vibratorManager->getVibratorIds(&vibratorIds).isOk()) {
+            for (auto& vibratorId : vibratorIds) {
+                tuples.push_back(std::make_tuple(i, vibratorId));
+            }
+        }
+    }
+
+    auto vibratorAidlNames = android::getAidlHalInstanceNames(IVibrator::descriptor);
+    for (int i = 0; i < vibratorAidlNames.size(); i++) {
+        tuples.push_back(std::make_tuple(-1, i));
+    }
+
+    return tuples;
+}
+
+std::string PrintGeneratedTest(const testing::TestParamInfo<VibratorAidl::ParamType>& info) {
+    const auto& [managerIdx, vibratorId] = info.param;
+    if (managerIdx < 0) {
+        return std::string("TOP_LEVEL_VIBRATOR_") + std::to_string(vibratorId);
+    }
+    return std::string("MANAGER_") + std::to_string(managerIdx) + "_VIBRATOR_ID_" +
+           std::to_string(vibratorId);
+}
+
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(VibratorAidl);
-INSTANTIATE_TEST_SUITE_P(Vibrator, VibratorAidl,
-                         testing::ValuesIn(android::getAidlHalInstanceNames(IVibrator::descriptor)),
-                         android::PrintInstanceNameToString);
+INSTANTIATE_TEST_SUITE_P(Vibrator, VibratorAidl, testing::ValuesIn(GenerateVibratorMapping()),
+                         PrintGeneratedTest);
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
