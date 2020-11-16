@@ -28,6 +28,19 @@ namespace V2_0 {
 namespace implementation {
 
 struct SensorsV2_0 : public ::android::hardware::sensors::V2_X::implementation::Sensors<ISensors> {
+  Return<void>
+  getSensorsList(V2_0::ISensors::getSensorsList_cb _hidl_cb) override {
+    std::vector<V1_0::SensorInfo> sensors;
+    for (const auto &sensor : mSensors) {
+      sensors.push_back(V2_1::implementation::convertToOldSensorInfo(
+          sensor.second->getSensorInfo()));
+    }
+
+    // Call the HIDL callback with the SensorInfo
+    _hidl_cb(sensors);
+
+    return Void();
+  }
 };
 
 }  // namespace implementation
