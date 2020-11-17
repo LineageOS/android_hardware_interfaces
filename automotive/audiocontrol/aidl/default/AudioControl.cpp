@@ -23,7 +23,7 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
-#include <audio_policy_configuration_V7_0.h>
+#include <android_audio_policy_configuration_V7_0.h>
 #include <private/android_filesystem_config.h>
 
 #include <stdio.h>
@@ -35,7 +35,7 @@ using ::android::base::ParseInt;
 using ::std::string;
 
 namespace xsd {
-using namespace audio::policy::configuration::V7_0;
+using namespace ::android::audio::policy::configuration::V7_0;
 }
 
 namespace {
