@@ -15,10 +15,18 @@
 cc_test {
     name: "VtsHalTetheroffloadControlV1_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
-    srcs: ["VtsHalTetheroffloadControlV1_0TargetTest.cpp"],
+    local_include_dirs: ["include"],
+    srcs: [
+        "VtsHalTetheroffloadControlV1_0TargetTest.cpp",
+        "OffloadControlTestBase.cpp",
+        "OffloadControlTestUtils.cpp",
+    ],
     static_libs: [
         "android.hardware.tetheroffload.config@1.0",
         "android.hardware.tetheroffload.control@1.0",
     ],
-    test_suites: ["general-tests", "vts"],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
 }
