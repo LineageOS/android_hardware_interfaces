@@ -521,7 +521,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.usb.gadget</name>
-        <version>1.0-1</version>
+        <version>1.0-2</version>
         <interface>
             <name>IUsbGadget</name>
             <instance>default</instance>
@@ -531,6 +531,13 @@
         <name>android.hardware.vibrator</name>
         <interface>
             <name>IVibrator</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.vibrator</name>
+        <interface>
+            <name>IVibratorManager</name>
             <instance>default</instance>
         </interface>
     </hal>

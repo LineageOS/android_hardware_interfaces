@@ -25,7 +25,8 @@ interface IFilterCallback extends @1.0::IFilterCallback {
      * Notify the client that a new filter event happened.
      *
      * @param filterEvent a v1_0 filter event.
-     * @param filterEventExt a v1_1 extended filter event.
+     * @param filterEventExt a v1_1 extended filter event. Send an empty filterEvent along with
+     *                       startId or scramblingStatus filterEventExt
      */
     oneway onFilterEvent_1_1(DemuxFilterEvent filterEvent, DemuxFilterEventExt filterEventExt);
 };

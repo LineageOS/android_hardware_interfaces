@@ -46,11 +46,44 @@ void TunerFilterHidlTest::configSingleFilterInDemuxTest(FilterConfig filterConf,
     if (filterConf.type.mainType == DemuxFilterMainType::IP) {
         ASSERT_TRUE(mFilterTests.configIpFilterCid(filterConf.ipCid, filterId));
     }
-    if (filterConf.statuses > 0) {
-        ASSERT_TRUE(mFilterTests.configureScramblingEvent(filterId, filterConf.statuses));
+    if (filterConf.monitorEventTypes > 0) {
+        ASSERT_TRUE(mFilterTests.configureMonitorEvent(filterId, filterConf.monitorEventTypes));
     }
     ASSERT_TRUE(mFilterTests.getFilterMQDescriptor(filterId));
     ASSERT_TRUE(mFilterTests.startFilter(filterId));
+    ASSERT_TRUE(mFilterTests.stopFilter(filterId));
+    ASSERT_TRUE(mFilterTests.closeFilter(filterId));
+    ASSERT_TRUE(mDemuxTests.closeDemux());
+    ASSERT_TRUE(mFrontendTests.closeFrontend());
+}
+
+void TunerFilterHidlTest::reconfigSingleFilterInDemuxTest(FilterConfig filterConf,
+                                                          FilterConfig filterReconf,
+                                                          FrontendConfig frontendConf) {
+    uint32_t feId;
+    uint32_t demuxId;
+    sp<IDemux> demux;
+    uint64_t filterId;
+
+    mFrontendTests.getFrontendIdByType(frontendConf.type, feId);
+    ASSERT_TRUE(feId != INVALID_ID);
+    ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
+    ASSERT_TRUE(mFrontendTests.setFrontendCallback());
+    ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
+    ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
+    mFrontendTests.setDemux(demux);
+    mFilterTests.setDemux(demux);
+    ASSERT_TRUE(mFilterTests.openFilterInDemux(filterConf.type, filterConf.bufferSize));
+    ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId_64bit(filterId));
+    ASSERT_TRUE(mFilterTests.configFilter(filterConf.settings, filterId));
+    ASSERT_TRUE(mFilterTests.getFilterMQDescriptor(filterId));
+    ASSERT_TRUE(mFilterTests.startFilter(filterId));
+    ASSERT_TRUE(mFilterTests.stopFilter(filterId));
+    ASSERT_TRUE(mFilterTests.configFilter(filterReconf.settings, filterId));
+    ASSERT_TRUE(mFilterTests.startFilter(filterId));
+    ASSERT_TRUE(mFrontendTests.tuneFrontend(frontendConf, true /*testWithDemux*/));
+    ASSERT_TRUE(mFilterTests.startIdTest(filterId));
+    ASSERT_TRUE(mFrontendTests.stopTuneFrontend(true /*testWithDemux*/));
     ASSERT_TRUE(mFilterTests.stopFilter(filterId));
     ASSERT_TRUE(mFilterTests.closeFilter(filterId));
     ASSERT_TRUE(mDemuxTests.closeDemux());
@@ -144,6 +177,13 @@ TEST_P(TunerFilterHidlTest, ConfigIpFilterInDemuxWithCid) {
     description("Open and configure an ip filter in Demux.");
     // TODO use parameterized tests
     configSingleFilterInDemuxTest(filterArray[IP_IP0], frontendArray[DVBT]);
+}
+
+TEST_P(TunerFilterHidlTest, ReonfigFilterToReceiveStartId) {
+    description("Recofigure and restart a filter to test start id.");
+    // TODO use parameterized tests
+    reconfigSingleFilterInDemuxTest(filterArray[TS_VIDEO0], filterArray[TS_VIDEO1],
+                                    frontendArray[DVBT]);
 }
 
 TEST_P(TunerRecordHidlTest, RecordDataFlowWithTsRecordFilterTest) {

@@ -24,21 +24,22 @@
 
 namespace android::nn {
 
-Result<OperationType> convert(const hal::V1_1::OperationType& operationType);
-Result<Capabilities> convert(const hal::V1_1::Capabilities& capabilities);
-Result<Operation> convert(const hal::V1_1::Operation& operation);
-Result<Model> convert(const hal::V1_1::Model& model);
-Result<ExecutionPreference> convert(const hal::V1_1::ExecutionPreference& executionPreference);
+GeneralResult<OperationType> convert(const hal::V1_1::OperationType& operationType);
+GeneralResult<Capabilities> convert(const hal::V1_1::Capabilities& capabilities);
+GeneralResult<Operation> convert(const hal::V1_1::Operation& operation);
+GeneralResult<Model> convert(const hal::V1_1::Model& model);
+GeneralResult<ExecutionPreference> convert(
+        const hal::V1_1::ExecutionPreference& executionPreference);
 
 }  // namespace android::nn
 
 namespace android::hardware::neuralnetworks::V1_1::utils {
 
-nn::Result<OperationType> convert(const nn::OperationType& operationType);
-nn::Result<Capabilities> convert(const nn::Capabilities& capabilities);
-nn::Result<Operation> convert(const nn::Operation& operation);
-nn::Result<Model> convert(const nn::Model& model);
-nn::Result<ExecutionPreference> convert(const nn::ExecutionPreference& executionPreference);
+nn::GeneralResult<OperationType> convert(const nn::OperationType& operationType);
+nn::GeneralResult<Capabilities> convert(const nn::Capabilities& capabilities);
+nn::GeneralResult<Operation> convert(const nn::Operation& operation);
+nn::GeneralResult<Model> convert(const nn::Model& model);
+nn::GeneralResult<ExecutionPreference> convert(const nn::ExecutionPreference& executionPreference);
 
 }  // namespace android::hardware::neuralnetworks::V1_1::utils
 
