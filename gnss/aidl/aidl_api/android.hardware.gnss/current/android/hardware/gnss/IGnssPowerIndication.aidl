@@ -17,13 +17,7 @@
 
 package android.hardware.gnss;
 @VintfStability
-interface IGnss {
-  void setCallback(in android.hardware.gnss.IGnssCallback callback);
-  void close();
-  android.hardware.gnss.IGnssPsds getExtensionPsds();
-  android.hardware.gnss.IGnssConfiguration getExtensionGnssConfiguration();
-  android.hardware.gnss.IGnssPowerIndication getExtensionGnssPowerIndication();
-  const int ERROR_INVALID_ARGUMENT = 1;
-  const int ELAPSED_REALTIME_HAS_TIMESTAMP_NS = 1;
-  const int ELAPSED_REALTIME_HAS_TIME_UNCERTAINTY_NS = 2;
+interface IGnssPowerIndication {
+  void setCallback(in android.hardware.gnss.IGnssPowerIndicationCallback callback);
+  oneway void requestGnssPowerStats();
 }
