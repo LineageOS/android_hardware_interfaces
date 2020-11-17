@@ -127,6 +127,36 @@ bool WifiIfaceUtil::setUpState(const std::string& iface_name, bool request_up) {
 unsigned WifiIfaceUtil::ifNameToIndex(const std::string& iface_name) {
     return if_nametoindex(iface_name.c_str());
 }
+
+bool WifiIfaceUtil::createBridge(const std::string& br_name) {
+    if (!iface_tool_.lock()->createBridge(br_name)) {
+        return false;
+    }
+
+    if (!iface_tool_.lock()->SetUpState(br_name.c_str(), true)) {
+        LOG(ERROR) << "bridge SetUpState(true) failed.";
+    }
+    return true;
+}
+
+bool WifiIfaceUtil::deleteBridge(const std::string& br_name) {
+    if (!iface_tool_.lock()->SetUpState(br_name.c_str(), false)) {
+        LOG(INFO) << "SetUpState(false) failed for bridge=" << br_name.c_str();
+    }
+
+    return iface_tool_.lock()->deleteBridge(br_name);
+}
+
+bool WifiIfaceUtil::addIfaceToBridge(const std::string& br_name,
+                                     const std::string& if_name) {
+    return iface_tool_.lock()->addIfaceToBridge(br_name, if_name);
+}
+
+bool WifiIfaceUtil::removeIfaceFromBridge(const std::string& br_name,
+                                          const std::string& if_name) {
+    return iface_tool_.lock()->removeIfaceFromBridge(br_name, if_name);
+}
+
 }  // namespace iface_util
 }  // namespace implementation
 }  // namespace V1_5

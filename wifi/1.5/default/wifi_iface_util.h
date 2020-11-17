@@ -59,6 +59,16 @@ class WifiIfaceUtil {
     virtual bool setUpState(const std::string& iface_name, bool request_up);
     virtual unsigned ifNameToIndex(const std::string& iface_name);
 
+    virtual bool createBridge(const std::string& br_name);
+
+    virtual bool deleteBridge(const std::string& br_name);
+
+    virtual bool addIfaceToBridge(const std::string& br_name,
+                                  const std::string& if_name);
+
+    virtual bool removeIfaceFromBridge(const std::string& br_name,
+                                       const std::string& if_name);
+
    private:
     std::array<uint8_t, 6> createRandomMacAddress();
 
