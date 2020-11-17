@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 
-package android.hardware.keymaster;
+package android.hardware.keymint;
+
+import android.hardware.keymint.KeyParameter;
 
 /**
- * Device security levels.
+ * Identifies the key authorization parameters to be used with keyMint.  This is usually
+ * provided as an array of KeyParameters to IKeyMintDevice or Operation.
  */
 @VintfStability
-@Backing(type="int")
-enum SecurityLevel {
-    SOFTWARE = 0,
-    TRUSTED_ENVIRONMENT = 1,
+parcelable KeyParameterArray {
     /**
-     * STRONGBOX specifies that the secure hardware satisfies the requirements specified in CDD
-     * 9.11.2.
+     * Identify list of key parameters corresponding to a particular key blob.
      */
-    STRONGBOX = 2,
+    KeyParameter[] params;
 }

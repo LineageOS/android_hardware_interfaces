@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package android.hardware.keymaster;
+package android.hardware.keymint;
+
 
 /**
- * Device security levels.
+ * Formats for key import and export.
  */
 @VintfStability
 @Backing(type="int")
-enum SecurityLevel {
-    SOFTWARE = 0,
-    TRUSTED_ENVIRONMENT = 1,
-    /**
-     * STRONGBOX specifies that the secure hardware satisfies the requirements specified in CDD
-     * 9.11.2.
-     */
-    STRONGBOX = 2,
+enum KeyFormat {
+    /** X.509 certificate format, for public key export. */
+    X509 = 0,
+    /** PCKS#8 format, asymmetric key pair import. */
+    PKCS8 = 1,
+    /** Raw bytes, for symmetric key import. */
+    RAW = 3,
 }

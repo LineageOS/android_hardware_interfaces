@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package android.hardware.keymaster;
+package android.hardware.keymint;
 
 /**
- * Device security levels.
+ * Hardware authentication type, used by HardwareAuthTokens to specify the mechanism used to
+ * authentiate the user, and in KeyCharacteristics to specify the allowable mechanisms for
+ * authenticating to activate a key.
  */
 @VintfStability
 @Backing(type="int")
-enum SecurityLevel {
-    SOFTWARE = 0,
-    TRUSTED_ENVIRONMENT = 1,
-    /**
-     * STRONGBOX specifies that the secure hardware satisfies the requirements specified in CDD
-     * 9.11.2.
-     */
-    STRONGBOX = 2,
+enum HardwareAuthenticatorType {
+    NONE = 0,
+    PASSWORD = 1 << 0,
+    FINGERPRINT = 1 << 1,
+    // Additional entries must be powers of 2.
+    ANY = 0xFFFFFFFF,
 }
