@@ -20,7 +20,7 @@
 namespace aidl::android::hardware::biometrics::face {
 
 const int kSensorId = 0;
-const common::SensorStrength kSensorStrength = common::SensorStrength::WEAK;
+const common::SensorStrength kSensorStrength = common::SensorStrength::STRONG;
 const int kMaxEnrollmentsPerUser = 5;
 const FaceSensorType kSensorType = FaceSensorType::RGB;
 const bool kHalControlsPreview = true;
