@@ -14,19 +14,30 @@
  * limitations under the License.
  */
 
-package android.hardware.keymaster;
+package android.hardware.keymint;
+
 
 /**
- * Device security levels.
+ * Possible purposes of a key (or pair).
  */
 @VintfStability
-@Backing(type="int")
-enum SecurityLevel {
-    SOFTWARE = 0,
-    TRUSTED_ENVIRONMENT = 1,
-    /**
-     * STRONGBOX specifies that the secure hardware satisfies the requirements specified in CDD
-     * 9.11.2.
-     */
-    STRONGBOX = 2,
+@Backing(type = "int")
+enum KeyPurpose {
+    /* Usable with RSA, EC and AES keys. */
+    ENCRYPT = 0,
+
+    /* Usable with RSA, EC and AES keys. */
+    DECRYPT = 1,
+
+    /* Usable with RSA, EC and HMAC keys. */
+    SIGN = 2,
+
+    /* Usable with RSA, EC and HMAC keys. */
+    VERIFY = 3,
+
+    /* 4 is reserved */
+    /* Usable with wrapping keys. */
+    WRAP_KEY = 5,
+
+    /* TODO(seleneh) add AGREE_KEY and ATTEST_KEY and their corresponding codes and tests later*/
 }

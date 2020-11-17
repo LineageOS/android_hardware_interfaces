@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-package android.hardware.keymaster;
+package android.hardware.keymint;
+
 
 /**
- * Device security levels.
+ * Digests provided by keyMint implementations.
  */
 @VintfStability
 @Backing(type="int")
-enum SecurityLevel {
-    SOFTWARE = 0,
-    TRUSTED_ENVIRONMENT = 1,
-    /**
-     * STRONGBOX specifies that the secure hardware satisfies the requirements specified in CDD
-     * 9.11.2.
-     */
-    STRONGBOX = 2,
+enum Digest {
+    NONE = 0,
+    MD5 = 1,
+    SHA1 = 2,
+    SHA_2_224 = 3,
+    SHA_2_256 = 4,
+    SHA_2_384 = 5,
+    SHA_2_512 = 6,
 }

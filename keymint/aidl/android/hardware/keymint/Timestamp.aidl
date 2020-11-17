@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-package android.hardware.keymaster;
+package android.hardware.keymint;
 
 /**
- * Device security levels.
+ * Time in milliseconds since some arbitrary point in time.  Time must be monotonically increasing,
+ * and a secure environment's notion of "current time" must not repeat until the Android device
+ * reboots, or until at least 50 million years have elapsed (note that this requirement is satisfied
+ * by setting the clock to zero during each boot, and then counting time accurately).
  */
 @VintfStability
-@Backing(type="int")
-enum SecurityLevel {
-    SOFTWARE = 0,
-    TRUSTED_ENVIRONMENT = 1,
-    /**
-     * STRONGBOX specifies that the secure hardware satisfies the requirements specified in CDD
-     * 9.11.2.
-     */
-    STRONGBOX = 2,
+parcelable Timestamp {
+    long milliSeconds;
 }
