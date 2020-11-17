@@ -161,8 +161,8 @@ nn::GeneralResult<std::vector<bool>> ResilientDevice::getSupportedOperations(
 
 nn::GeneralResult<nn::SharedPreparedModel> ResilientDevice::prepareModel(
         const nn::Model& model, nn::ExecutionPreference preference, nn::Priority priority,
-        nn::OptionalTimePoint deadline, const std::vector<nn::NativeHandle>& modelCache,
-        const std::vector<nn::NativeHandle>& dataCache, const nn::CacheToken& token) const {
+        nn::OptionalTimePoint deadline, const std::vector<nn::SharedHandle>& modelCache,
+        const std::vector<nn::SharedHandle>& dataCache, const nn::CacheToken& token) const {
     auto self = shared_from_this();
     ResilientPreparedModel::Factory makePreparedModel =
             [device = std::move(self), model, preference, priority, deadline, modelCache, dataCache,
@@ -174,8 +174,8 @@ nn::GeneralResult<nn::SharedPreparedModel> ResilientDevice::prepareModel(
 }
 
 nn::GeneralResult<nn::SharedPreparedModel> ResilientDevice::prepareModelFromCache(
-        nn::OptionalTimePoint deadline, const std::vector<nn::NativeHandle>& modelCache,
-        const std::vector<nn::NativeHandle>& dataCache, const nn::CacheToken& token) const {
+        nn::OptionalTimePoint deadline, const std::vector<nn::SharedHandle>& modelCache,
+        const std::vector<nn::SharedHandle>& dataCache, const nn::CacheToken& token) const {
     auto self = shared_from_this();
     ResilientPreparedModel::Factory makePreparedModel =
             [device = std::move(self), deadline, modelCache, dataCache,
@@ -202,8 +202,8 @@ nn::GeneralResult<nn::SharedBuffer> ResilientDevice::allocate(
 nn::GeneralResult<nn::SharedPreparedModel> ResilientDevice::prepareModelInternal(
         bool blocking, const nn::Model& model, nn::ExecutionPreference preference,
         nn::Priority priority, nn::OptionalTimePoint deadline,
-        const std::vector<nn::NativeHandle>& modelCache,
-        const std::vector<nn::NativeHandle>& dataCache, const nn::CacheToken& token) const {
+        const std::vector<nn::SharedHandle>& modelCache,
+        const std::vector<nn::SharedHandle>& dataCache, const nn::CacheToken& token) const {
     const auto fn = [&model, preference, priority, deadline, &modelCache, &dataCache,
                      token](const nn::IDevice& device) {
         return device.prepareModel(model, preference, priority, deadline, modelCache, dataCache,
@@ -214,8 +214,8 @@ nn::GeneralResult<nn::SharedPreparedModel> ResilientDevice::prepareModelInternal
 
 nn::GeneralResult<nn::SharedPreparedModel> ResilientDevice::prepareModelFromCacheInternal(
         bool blocking, nn::OptionalTimePoint deadline,
-        const std::vector<nn::NativeHandle>& modelCache,
-        const std::vector<nn::NativeHandle>& dataCache, const nn::CacheToken& token) const {
+        const std::vector<nn::SharedHandle>& modelCache,
+        const std::vector<nn::SharedHandle>& dataCache, const nn::CacheToken& token) const {
     const auto fn = [deadline, &modelCache, &dataCache, token](const nn::IDevice& device) {
         return device.prepareModelFromCache(deadline, modelCache, dataCache, token);
     };

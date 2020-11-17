@@ -53,15 +53,6 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> convert
     return hal::utils::makeExecutionFailure(convertExecutionResultsHelper(outputShapes, timing));
 }
 
-nn::GeneralResult<hidl_vec<hidl_handle>> convertSyncFences(
-        const std::vector<nn::SyncFence>& syncFences) {
-    hidl_vec<hidl_handle> handles(syncFences.size());
-    for (size_t i = 0; i < syncFences.size(); ++i) {
-        handles[i] = NN_TRY(V1_2::utils::convert(syncFences[i].getHandle()));
-    }
-    return handles;
-}
-
 nn::GeneralResult<std::pair<nn::Timing, nn::Timing>> convertFencedExecutionCallbackResults(
         const V1_2::Timing& timingLaunched, const V1_2::Timing& timingFenced) {
     return std::make_pair(NN_TRY(validatedConvertToCanonical(timingLaunched)),
@@ -221,7 +212,7 @@ PreparedModel::executeFenced(const nn::Request& request, const std::vector<nn::S
             NN_TRY(hal::utils::flushDataFromPointerToShared(&request, &maybeRequestInShared));
 
     const auto hidlRequest = NN_TRY(convert(requestInShared));
-    const auto hidlWaitFor = NN_TRY(convertSyncFences(waitFor));
+    const auto hidlWaitFor = NN_TRY(hal::utils::convertSyncFences(waitFor));
     const auto hidlMeasure = NN_TRY(V1_2::utils::convert(measure));
     const auto hidlDeadline = NN_TRY(convert(deadline));
     const auto hidlLoopTimeoutDuration = NN_TRY(convert(loopTimeoutDuration));

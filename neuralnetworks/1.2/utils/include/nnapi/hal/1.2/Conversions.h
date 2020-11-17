@@ -44,11 +44,11 @@ GeneralResult<Timing> convert(const hal::V1_2::Timing& timing);
 GeneralResult<Extension> convert(const hal::V1_2::Extension& extension);
 GeneralResult<Extension::OperandTypeInformation> convert(
         const hal::V1_2::Extension::OperandTypeInformation& operandTypeInformation);
-GeneralResult<NativeHandle> convert(const hardware::hidl_handle& handle);
+GeneralResult<SharedHandle> convert(const hardware::hidl_handle& handle);
 
 GeneralResult<std::vector<Extension>> convert(
         const hardware::hidl_vec<hal::V1_2::Extension>& extensions);
-GeneralResult<std::vector<NativeHandle>> convert(
+GeneralResult<std::vector<SharedHandle>> convert(
         const hardware::hidl_vec<hardware::hidl_handle>& handles);
 GeneralResult<std::vector<OutputShape>> convert(
         const hardware::hidl_vec<hal::V1_2::OutputShape>& outputShapes);
@@ -77,10 +77,10 @@ nn::GeneralResult<Timing> convert(const nn::Timing& timing);
 nn::GeneralResult<Extension> convert(const nn::Extension& extension);
 nn::GeneralResult<Extension::OperandTypeInformation> convert(
         const nn::Extension::OperandTypeInformation& operandTypeInformation);
-nn::GeneralResult<hidl_handle> convert(const nn::NativeHandle& handle);
+nn::GeneralResult<hidl_handle> convert(const nn::SharedHandle& handle);
 
 nn::GeneralResult<hidl_vec<Extension>> convert(const std::vector<nn::Extension>& extensions);
-nn::GeneralResult<hidl_vec<hidl_handle>> convert(const std::vector<nn::NativeHandle>& handles);
+nn::GeneralResult<hidl_vec<hidl_handle>> convert(const std::vector<nn::SharedHandle>& handles);
 nn::GeneralResult<hidl_vec<OutputShape>> convert(const std::vector<nn::OutputShape>& outputShapes);
 
 }  // namespace android::hardware::neuralnetworks::V1_2::utils
