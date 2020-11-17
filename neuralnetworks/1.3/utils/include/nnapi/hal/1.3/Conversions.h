@@ -25,54 +25,54 @@
 
 namespace android::nn {
 
-Result<OperandType> convert(const hal::V1_3::OperandType& operandType);
-Result<OperationType> convert(const hal::V1_3::OperationType& operationType);
-Result<Priority> convert(const hal::V1_3::Priority& priority);
-Result<Capabilities> convert(const hal::V1_3::Capabilities& capabilities);
-Result<Capabilities::OperandPerformance> convert(
+GeneralResult<OperandType> convert(const hal::V1_3::OperandType& operandType);
+GeneralResult<OperationType> convert(const hal::V1_3::OperationType& operationType);
+GeneralResult<Priority> convert(const hal::V1_3::Priority& priority);
+GeneralResult<Capabilities> convert(const hal::V1_3::Capabilities& capabilities);
+GeneralResult<Capabilities::OperandPerformance> convert(
         const hal::V1_3::Capabilities::OperandPerformance& operandPerformance);
-Result<Operation> convert(const hal::V1_3::Operation& operation);
-Result<Operand::LifeTime> convert(const hal::V1_3::OperandLifeTime& operandLifeTime);
-Result<Operand> convert(const hal::V1_3::Operand& operand);
-Result<Model> convert(const hal::V1_3::Model& model);
-Result<Model::Subgraph> convert(const hal::V1_3::Subgraph& subgraph);
-Result<BufferDesc> convert(const hal::V1_3::BufferDesc& bufferDesc);
-Result<BufferRole> convert(const hal::V1_3::BufferRole& bufferRole);
-Result<Request> convert(const hal::V1_3::Request& request);
-Result<Request::MemoryPool> convert(const hal::V1_3::Request::MemoryPool& memoryPool);
-Result<OptionalTimePoint> convert(const hal::V1_3::OptionalTimePoint& optionalTimePoint);
-Result<OptionalTimeoutDuration> convert(
+GeneralResult<Operation> convert(const hal::V1_3::Operation& operation);
+GeneralResult<Operand::LifeTime> convert(const hal::V1_3::OperandLifeTime& operandLifeTime);
+GeneralResult<Operand> convert(const hal::V1_3::Operand& operand);
+GeneralResult<Model> convert(const hal::V1_3::Model& model);
+GeneralResult<Model::Subgraph> convert(const hal::V1_3::Subgraph& subgraph);
+GeneralResult<BufferDesc> convert(const hal::V1_3::BufferDesc& bufferDesc);
+GeneralResult<BufferRole> convert(const hal::V1_3::BufferRole& bufferRole);
+GeneralResult<Request> convert(const hal::V1_3::Request& request);
+GeneralResult<Request::MemoryPool> convert(const hal::V1_3::Request::MemoryPool& memoryPool);
+GeneralResult<OptionalTimePoint> convert(const hal::V1_3::OptionalTimePoint& optionalTimePoint);
+GeneralResult<OptionalTimeoutDuration> convert(
         const hal::V1_3::OptionalTimeoutDuration& optionalTimeoutDuration);
-Result<ErrorStatus> convert(const hal::V1_3::ErrorStatus& errorStatus);
+GeneralResult<ErrorStatus> convert(const hal::V1_3::ErrorStatus& errorStatus);
 
-Result<std::vector<BufferRole>> convert(
+GeneralResult<std::vector<BufferRole>> convert(
         const hardware::hidl_vec<hal::V1_3::BufferRole>& bufferRoles);
 
 }  // namespace android::nn
 
 namespace android::hardware::neuralnetworks::V1_3::utils {
 
-nn::Result<OperandType> convert(const nn::OperandType& operandType);
-nn::Result<OperationType> convert(const nn::OperationType& operationType);
-nn::Result<Priority> convert(const nn::Priority& priority);
-nn::Result<Capabilities> convert(const nn::Capabilities& capabilities);
-nn::Result<Capabilities::OperandPerformance> convert(
+nn::GeneralResult<OperandType> convert(const nn::OperandType& operandType);
+nn::GeneralResult<OperationType> convert(const nn::OperationType& operationType);
+nn::GeneralResult<Priority> convert(const nn::Priority& priority);
+nn::GeneralResult<Capabilities> convert(const nn::Capabilities& capabilities);
+nn::GeneralResult<Capabilities::OperandPerformance> convert(
         const nn::Capabilities::OperandPerformance& operandPerformance);
-nn::Result<Operation> convert(const nn::Operation& operation);
-nn::Result<OperandLifeTime> convert(const nn::Operand::LifeTime& operandLifeTime);
-nn::Result<Operand> convert(const nn::Operand& operand);
-nn::Result<Model> convert(const nn::Model& model);
-nn::Result<Subgraph> convert(const nn::Model::Subgraph& subgraph);
-nn::Result<BufferDesc> convert(const nn::BufferDesc& bufferDesc);
-nn::Result<BufferRole> convert(const nn::BufferRole& bufferRole);
-nn::Result<Request> convert(const nn::Request& request);
-nn::Result<Request::MemoryPool> convert(const nn::Request::MemoryPool& memoryPool);
-nn::Result<OptionalTimePoint> convert(const nn::OptionalTimePoint& optionalTimePoint);
-nn::Result<OptionalTimeoutDuration> convert(
+nn::GeneralResult<Operation> convert(const nn::Operation& operation);
+nn::GeneralResult<OperandLifeTime> convert(const nn::Operand::LifeTime& operandLifeTime);
+nn::GeneralResult<Operand> convert(const nn::Operand& operand);
+nn::GeneralResult<Model> convert(const nn::Model& model);
+nn::GeneralResult<Subgraph> convert(const nn::Model::Subgraph& subgraph);
+nn::GeneralResult<BufferDesc> convert(const nn::BufferDesc& bufferDesc);
+nn::GeneralResult<BufferRole> convert(const nn::BufferRole& bufferRole);
+nn::GeneralResult<Request> convert(const nn::Request& request);
+nn::GeneralResult<Request::MemoryPool> convert(const nn::Request::MemoryPool& memoryPool);
+nn::GeneralResult<OptionalTimePoint> convert(const nn::OptionalTimePoint& optionalTimePoint);
+nn::GeneralResult<OptionalTimeoutDuration> convert(
         const nn::OptionalTimeoutDuration& optionalTimeoutDuration);
-nn::Result<ErrorStatus> convert(const nn::ErrorStatus& errorStatus);
+nn::GeneralResult<ErrorStatus> convert(const nn::ErrorStatus& errorStatus);
 
-nn::Result<hidl_vec<BufferRole>> convert(const std::vector<nn::BufferRole>& bufferRoles);
+nn::GeneralResult<hidl_vec<BufferRole>> convert(const std::vector<nn::BufferRole>& bufferRoles);
 
 }  // namespace android::hardware::neuralnetworks::V1_3::utils
 
