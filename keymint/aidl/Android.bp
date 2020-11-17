@@ -1,22 +1,21 @@
 aidl_interface {
-    name: "android.hardware.keymaster",
+    name: "android.hardware.keymint",
     vendor_available: true,
     srcs: [
-        "android/hardware/keymaster/*.aidl",
+        "android/hardware/keymint/*.aidl",
     ],
     stability: "vintf",
     backend: {
         java: {
-            platform_apis: true,
+            sdk_version: "module_current",
         },
         ndk: {
             vndk: {
                 enabled: true,
             },
         },
+        rust: {
+            enabled: true,
+        },
     },
-    versions: [
-        "1",
-        "2",
-    ],
 }

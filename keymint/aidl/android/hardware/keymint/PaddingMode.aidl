@@ -14,19 +14,23 @@
  * limitations under the License.
  */
 
-package android.hardware.keymaster;
+package android.hardware.keymint;
 
 /**
- * Device security levels.
+ * TODO(seleneh) update the description.
+ *
+ * Padding modes that may be applied to plaintext for encryption operations.  This list includes
+ * padding modes for both symmetric and asymmetric algorithms.  Note that implementations should not
+ * provide all possible combinations of algorithm and padding, only the
+ * cryptographically-appropriate pairs.
  */
 @VintfStability
 @Backing(type="int")
-enum SecurityLevel {
-    SOFTWARE = 0,
-    TRUSTED_ENVIRONMENT = 1,
-    /**
-     * STRONGBOX specifies that the secure hardware satisfies the requirements specified in CDD
-     * 9.11.2.
-     */
-    STRONGBOX = 2,
+enum PaddingMode {
+    NONE = 1, /* deprecated */
+    RSA_OAEP = 2,
+    RSA_PSS = 3,
+    RSA_PKCS1_1_5_ENCRYPT = 4,
+    RSA_PKCS1_1_5_SIGN = 5,
+    PKCS7 = 64,
 }

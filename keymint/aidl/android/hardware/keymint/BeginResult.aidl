@@ -14,19 +14,26 @@
  * limitations under the License.
  */
 
-package android.hardware.keymaster;
+package android.hardware.keymint;
+
+
+import android.hardware.keymint.IKeyMintOperation;
+import android.hardware.keymint.KeyParameter;
+
 
 /**
- * Device security levels.
+ * This is all the results returned by the IKeyMintDevice begin() function.
  */
 @VintfStability
-@Backing(type="int")
-enum SecurityLevel {
-    SOFTWARE = 0,
-    TRUSTED_ENVIRONMENT = 1,
+parcelable BeginResult {
+    /* This is the challenge used in verifyAuthorization.  It must be a nonce. */
+    long challenge;
+
     /**
-     * STRONGBOX specifies that the secure hardware satisfies the requirements specified in CDD
-     * 9.11.2.
+     * begin() uses this field to return additional data from the operation
+     * initialization, notably to return the IV or nonce from operations
+     * that generate an IV or nonce.
      */
-    STRONGBOX = 2,
+    KeyParameter[] params;
+    IKeyMintOperation operation;
 }

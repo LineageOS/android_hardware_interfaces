@@ -14,19 +14,26 @@
  * limitations under the License.
  */
 
-package android.hardware.keymaster;
+package android.hardware.keymint;
+
 
 /**
- * Device security levels.
+ * Symmetric block cipher modes provided by IKeyMintDevice implementations.
  */
 @VintfStability
 @Backing(type="int")
-enum SecurityLevel {
-    SOFTWARE = 0,
-    TRUSTED_ENVIRONMENT = 1,
-    /**
-     * STRONGBOX specifies that the secure hardware satisfies the requirements specified in CDD
-     * 9.11.2.
+enum BlockMode {
+    /*
+     * Unauthenticated modes, usable only for encryption/decryption and not generally recommended
+     * except for compatibility with existing other protocols.
      */
-    STRONGBOX = 2,
+    ECB = 1,
+    CBC = 2,
+    CTR = 3,
+
+    /*
+     * Authenticated modes, usable for encryption/decryption and signing/verification.  Recommended
+     * over unauthenticated modes for all purposes.
+     */
+    GCM = 32,
 }
