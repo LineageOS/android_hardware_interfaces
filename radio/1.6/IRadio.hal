@@ -327,10 +327,24 @@ interface IRadio extends @1.5::IRadio {
      * @param serial Serial number of request.
      * @param networkTypeBitmap a 32-bit bearer bitmap of RadioAccessFamily
      *
-     * Response callbask is IRadioResponse.setNetworkTypeBitmapResponse()
+     * Response callback is IRadioResponse.setNetworkTypeBitmapResponse()
      */
     oneway setAllowedNetworkTypeBitmap(
             uint32_t serial, bitfield<RadioAccessFamily> networkTypeBitmap);
+
+    /**
+     * Requests bitmap representing the currently allowed network types.
+     *
+     * Requests the bitmap set by the corresponding method
+     * setAllowedNetworkTypeBitmap, which sets a strict set of RATs for the
+     * radio to use. Differs from getPreferredNetworkType and getPreferredNetworkTypeBitmap
+     * in that those request *preferences*.
+     *
+     * @param serial Serial number of request.
+     *
+     * Response callback is IRadioResponse.getNetworkTypeBitmapResponse()
+     */
+    oneway getAllowedNetworkTypeBitmap(uint32_t serial);
 
     /**
      * Control data throttling at modem.
