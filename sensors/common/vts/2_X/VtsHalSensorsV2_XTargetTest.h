@@ -366,7 +366,7 @@ int32_t SensorsHidlTest::getInvalidSensorHandle() {
     for (const SensorInfoType& sensor : getSensorsList()) {
         maxHandle = std::max(maxHandle, sensor.sensorHandle);
     }
-    return maxHandle + 1;
+    return maxHandle + 42;
 }
 
 // Test if sensor list returned is valid
