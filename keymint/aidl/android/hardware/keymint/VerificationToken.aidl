@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package android.hardware.keymaster;
+package android.hardware.keymint;
 
-import android.hardware.keymaster.SecurityLevel;
-import android.hardware.keymaster.Timestamp;
+import android.hardware.keymint.SecurityLevel;
+import android.hardware.keymint.Timestamp;
 
 /**
  * VerificationToken instances are used for secure environments to authenticate one another.
@@ -39,7 +39,6 @@ parcelable VerificationToken {
      */
     Timestamp timestamp;
 
-
     /**
      * SecurityLevel of the secure environment that generated the token.
      */
@@ -53,7 +52,7 @@ parcelable VerificationToken {
      *
      * where:
      *
-     *   ``HMAC'' is the shared HMAC key (see computeSharedHmac() in IKeymaster).
+     *   ``HMAC'' is the shared HMAC key (see computeSharedHmac() in IKeyMint).
      *
      *   ``||'' represents concatenation
      *
