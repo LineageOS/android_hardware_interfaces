@@ -26,6 +26,7 @@
 #include <nnapi/Types.h>
 #include <nnapi/hal/1.0/Conversions.h>
 #include <nnapi/hal/CommonUtils.h>
+#include <nnapi/hal/HandleError.h>
 
 #include <algorithm>
 #include <functional>
@@ -78,7 +79,7 @@ template <typename Input>
 using ConvertOutput = std::decay_t<decltype(convert(std::declval<Input>()).value())>;
 
 template <typename Type>
-Result<std::vector<ConvertOutput<Type>>> convertVec(const hidl_vec<Type>& arguments) {
+GeneralResult<std::vector<ConvertOutput<Type>>> convertVec(const hidl_vec<Type>& arguments) {
     std::vector<ConvertOutput<Type>> canonical;
     canonical.reserve(arguments.size());
     for (const auto& argument : arguments) {
@@ -88,25 +89,25 @@ Result<std::vector<ConvertOutput<Type>>> convertVec(const hidl_vec<Type>& argume
 }
 
 template <typename Type>
-Result<std::vector<ConvertOutput<Type>>> convert(const hidl_vec<Type>& arguments) {
+GeneralResult<std::vector<ConvertOutput<Type>>> convert(const hidl_vec<Type>& arguments) {
     return convertVec(arguments);
 }
 
 }  // anonymous namespace
 
-Result<OperandType> convert(const hal::V1_2::OperandType& operandType) {
+GeneralResult<OperandType> convert(const hal::V1_2::OperandType& operandType) {
     return static_cast<OperandType>(operandType);
 }
 
-Result<OperationType> convert(const hal::V1_2::OperationType& operationType) {
+GeneralResult<OperationType> convert(const hal::V1_2::OperationType& operationType) {
     return static_cast<OperationType>(operationType);
 }
 
-Result<DeviceType> convert(const hal::V1_2::DeviceType& deviceType) {
+GeneralResult<DeviceType> convert(const hal::V1_2::DeviceType& deviceType) {
     return static_cast<DeviceType>(deviceType);
 }
 
-Result<Capabilities> convert(const hal::V1_2::Capabilities& capabilities) {
+GeneralResult<Capabilities> convert(const hal::V1_2::Capabilities& capabilities) {
     const bool validOperandTypes = std::all_of(
             capabilities.operandPerformance.begin(), capabilities.operandPerformance.end(),
             [](const hal::V1_2::Capabilities::OperandPerformance& operandPerformance) {
@@ -114,7 +115,7 @@ Result<Capabilities> convert(const hal::V1_2::Capabilities& capabilities) {
                 return !maybeType.has_value() ? false : validOperandType(maybeType.value());
             });
     if (!validOperandTypes) {
-        return NN_ERROR()
+        return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
                << "Invalid OperandType when converting OperandPerformance in Capabilities";
     }
 
@@ -124,8 +125,9 @@ Result<Capabilities> convert(const hal::V1_2::Capabilities& capabilities) {
             NN_TRY(convert(capabilities.relaxedFloat32toFloat16PerformanceTensor));
     auto operandPerformance = NN_TRY(convert(capabilities.operandPerformance));
 
-    auto table =
-            NN_TRY(Capabilities::OperandPerformanceTable::create(std::move(operandPerformance)));
+    auto table = NN_TRY(hal::utils::makeGeneralFailure(
+            Capabilities::OperandPerformanceTable::create(std::move(operandPerformance)),
+            nn::ErrorStatus::GENERAL_FAILURE));
 
     return Capabilities{
             .relaxedFloat32toFloat16PerformanceScalar = relaxedFloat32toFloat16PerformanceScalar,
@@ -134,7 +136,7 @@ Result<Capabilities> convert(const hal::V1_2::Capabilities& capabilities) {
     };
 }
 
-Result<Capabilities::OperandPerformance> convert(
+GeneralResult<Capabilities::OperandPerformance> convert(
         const hal::V1_2::Capabilities::OperandPerformance& operandPerformance) {
     return Capabilities::OperandPerformance{
             .type = NN_TRY(convert(operandPerformance.type)),
@@ -142,7 +144,7 @@ Result<Capabilities::OperandPerformance> convert(
     };
 }
 
-Result<Operation> convert(const hal::V1_2::Operation& operation) {
+GeneralResult<Operation> convert(const hal::V1_2::Operation& operation) {
     return Operation{
             .type = NN_TRY(convert(operation.type)),
             .inputs = operation.inputs,
@@ -150,7 +152,7 @@ Result<Operation> convert(const hal::V1_2::Operation& operation) {
     };
 }
 
-Result<Operand::SymmPerChannelQuantParams> convert(
+GeneralResult<Operand::SymmPerChannelQuantParams> convert(
         const hal::V1_2::SymmPerChannelQuantParams& symmPerChannelQuantParams) {
     return Operand::SymmPerChannelQuantParams{
             .scales = symmPerChannelQuantParams.scales,
@@ -158,7 +160,7 @@ Result<Operand::SymmPerChannelQuantParams> convert(
     };
 }
 
-Result<Operand> convert(const hal::V1_2::Operand& operand) {
+GeneralResult<Operand> convert(const hal::V1_2::Operand& operand) {
     return Operand{
             .type = NN_TRY(convert(operand.type)),
             .dimensions = operand.dimensions,
@@ -170,7 +172,7 @@ Result<Operand> convert(const hal::V1_2::Operand& operand) {
     };
 }
 
-Result<Operand::ExtraParams> convert(const hal::V1_2::Operand::ExtraParams& extraParams) {
+GeneralResult<Operand::ExtraParams> convert(const hal::V1_2::Operand::ExtraParams& extraParams) {
     using Discriminator = hal::V1_2::Operand::ExtraParams::hidl_discriminator;
     switch (extraParams.getDiscriminator()) {
         case Discriminator::none:
@@ -180,11 +182,12 @@ Result<Operand::ExtraParams> convert(const hal::V1_2::Operand::ExtraParams& extr
         case Discriminator::extension:
             return extraParams.extension();
     }
-    return NN_ERROR() << "Unrecognized Operand::ExtraParams discriminator: "
-                      << underlyingType(extraParams.getDiscriminator());
+    return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
+           << "Unrecognized Operand::ExtraParams discriminator: "
+           << underlyingType(extraParams.getDiscriminator());
 }
 
-Result<Model> convert(const hal::V1_2::Model& model) {
+GeneralResult<Model> convert(const hal::V1_2::Model& model) {
     auto operations = NN_TRY(convert(model.operations));
 
     // Verify number of consumers.
@@ -193,9 +196,9 @@ Result<Model> convert(const hal::V1_2::Model& model) {
     CHECK(model.operands.size() == numberOfConsumers.size());
     for (size_t i = 0; i < model.operands.size(); ++i) {
         if (model.operands[i].numberOfConsumers != numberOfConsumers[i]) {
-            return NN_ERROR() << "Invalid numberOfConsumers for operand " << i << ", expected "
-                              << numberOfConsumers[i] << " but found "
-                              << model.operands[i].numberOfConsumers;
+            return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
+                   << "Invalid numberOfConsumers for operand " << i << ", expected "
+                   << numberOfConsumers[i] << " but found " << model.operands[i].numberOfConsumers;
         }
     }
 
@@ -215,7 +218,7 @@ Result<Model> convert(const hal::V1_2::Model& model) {
     };
 }
 
-Result<Model::ExtensionNameAndPrefix> convert(
+GeneralResult<Model::ExtensionNameAndPrefix> convert(
         const hal::V1_2::Model::ExtensionNameAndPrefix& extensionNameAndPrefix) {
     return Model::ExtensionNameAndPrefix{
             .name = extensionNameAndPrefix.name,
@@ -223,29 +226,29 @@ Result<Model::ExtensionNameAndPrefix> convert(
     };
 }
 
-Result<OutputShape> convert(const hal::V1_2::OutputShape& outputShape) {
+GeneralResult<OutputShape> convert(const hal::V1_2::OutputShape& outputShape) {
     return OutputShape{
             .dimensions = outputShape.dimensions,
             .isSufficient = outputShape.isSufficient,
     };
 }
 
-Result<MeasureTiming> convert(const hal::V1_2::MeasureTiming& measureTiming) {
+GeneralResult<MeasureTiming> convert(const hal::V1_2::MeasureTiming& measureTiming) {
     return static_cast<MeasureTiming>(measureTiming);
 }
 
-Result<Timing> convert(const hal::V1_2::Timing& timing) {
+GeneralResult<Timing> convert(const hal::V1_2::Timing& timing) {
     return Timing{.timeOnDevice = timing.timeOnDevice, .timeInDriver = timing.timeInDriver};
 }
 
-Result<Extension> convert(const hal::V1_2::Extension& extension) {
+GeneralResult<Extension> convert(const hal::V1_2::Extension& extension) {
     return Extension{
             .name = extension.name,
             .operandTypes = NN_TRY(convert(extension.operandTypes)),
     };
 }
 
-Result<Extension::OperandTypeInformation> convert(
+GeneralResult<Extension::OperandTypeInformation> convert(
         const hal::V1_2::Extension::OperandTypeInformation& operandTypeInformation) {
     return Extension::OperandTypeInformation{
             .type = operandTypeInformation.type,
@@ -254,20 +257,21 @@ Result<Extension::OperandTypeInformation> convert(
     };
 }
 
-Result<NativeHandle> convert(const hidl_handle& handle) {
+GeneralResult<NativeHandle> convert(const hidl_handle& handle) {
     auto* cloned = native_handle_clone(handle.getNativeHandle());
     return ::android::NativeHandle::create(cloned, /*ownsHandle=*/true);
 }
 
-Result<std::vector<Extension>> convert(const hidl_vec<hal::V1_2::Extension>& extensions) {
+GeneralResult<std::vector<Extension>> convert(const hidl_vec<hal::V1_2::Extension>& extensions) {
     return convertVec(extensions);
 }
 
-Result<std::vector<NativeHandle>> convert(const hidl_vec<hidl_handle>& handles) {
+GeneralResult<std::vector<NativeHandle>> convert(const hidl_vec<hidl_handle>& handles) {
     return convertVec(handles);
 }
 
-Result<std::vector<OutputShape>> convert(const hidl_vec<hal::V1_2::OutputShape>& outputShapes) {
+GeneralResult<std::vector<OutputShape>> convert(
+        const hidl_vec<hal::V1_2::OutputShape>& outputShapes) {
     return convertVec(outputShapes);
 }
 
@@ -278,24 +282,24 @@ namespace {
 
 using utils::convert;
 
-nn::Result<V1_0::OperandLifeTime> convert(const nn::Operand::LifeTime& lifetime) {
+nn::GeneralResult<V1_0::OperandLifeTime> convert(const nn::Operand::LifeTime& lifetime) {
     return V1_0::utils::convert(lifetime);
 }
 
-nn::Result<V1_0::PerformanceInfo> convert(
+nn::GeneralResult<V1_0::PerformanceInfo> convert(
         const nn::Capabilities::PerformanceInfo& performanceInfo) {
     return V1_0::utils::convert(performanceInfo);
 }
 
-nn::Result<V1_0::DataLocation> convert(const nn::DataLocation& location) {
+nn::GeneralResult<V1_0::DataLocation> convert(const nn::DataLocation& location) {
     return V1_0::utils::convert(location);
 }
 
-nn::Result<hidl_vec<uint8_t>> convert(const nn::Model::OperandValues& operandValues) {
+nn::GeneralResult<hidl_vec<uint8_t>> convert(const nn::Model::OperandValues& operandValues) {
     return V1_0::utils::convert(operandValues);
 }
 
-nn::Result<hidl_memory> convert(const nn::Memory& memory) {
+nn::GeneralResult<hidl_memory> convert(const nn::Memory& memory) {
     return V1_0::utils::convert(memory);
 }
 
@@ -303,7 +307,7 @@ template <typename Input>
 using ConvertOutput = std::decay_t<decltype(convert(std::declval<Input>()).value())>;
 
 template <typename Type>
-nn::Result<hidl_vec<ConvertOutput<Type>>> convertVec(const std::vector<Type>& arguments) {
+nn::GeneralResult<hidl_vec<ConvertOutput<Type>>> convertVec(const std::vector<Type>& arguments) {
     hidl_vec<ConvertOutput<Type>> halObject(arguments.size());
     for (size_t i = 0; i < arguments.size(); ++i) {
         halObject[i] = NN_TRY(convert(arguments[i]));
@@ -312,22 +316,23 @@ nn::Result<hidl_vec<ConvertOutput<Type>>> convertVec(const std::vector<Type>& ar
 }
 
 template <typename Type>
-nn::Result<hidl_vec<ConvertOutput<Type>>> convert(const std::vector<Type>& arguments) {
+nn::GeneralResult<hidl_vec<ConvertOutput<Type>>> convert(const std::vector<Type>& arguments) {
     return convertVec(arguments);
 }
 
-nn::Result<Operand::ExtraParams> makeExtraParams(nn::Operand::NoParams /*noParams*/) {
+nn::GeneralResult<Operand::ExtraParams> makeExtraParams(nn::Operand::NoParams /*noParams*/) {
     return Operand::ExtraParams{};
 }
 
-nn::Result<Operand::ExtraParams> makeExtraParams(
+nn::GeneralResult<Operand::ExtraParams> makeExtraParams(
         const nn::Operand::SymmPerChannelQuantParams& channelQuant) {
     Operand::ExtraParams ret;
     ret.channelQuant(NN_TRY(convert(channelQuant)));
     return ret;
 }
 
-nn::Result<Operand::ExtraParams> makeExtraParams(const nn::Operand::ExtensionParams& extension) {
+nn::GeneralResult<Operand::ExtraParams> makeExtraParams(
+        const nn::Operand::ExtensionParams& extension) {
     Operand::ExtraParams ret;
     ret.extension(extension);
     return ret;
@@ -335,28 +340,29 @@ nn::Result<Operand::ExtraParams> makeExtraParams(const nn::Operand::ExtensionPar
 
 }  // anonymous namespace
 
-nn::Result<OperandType> convert(const nn::OperandType& operandType) {
+nn::GeneralResult<OperandType> convert(const nn::OperandType& operandType) {
     return static_cast<OperandType>(operandType);
 }
 
-nn::Result<OperationType> convert(const nn::OperationType& operationType) {
+nn::GeneralResult<OperationType> convert(const nn::OperationType& operationType) {
     return static_cast<OperationType>(operationType);
 }
 
-nn::Result<DeviceType> convert(const nn::DeviceType& deviceType) {
+nn::GeneralResult<DeviceType> convert(const nn::DeviceType& deviceType) {
     switch (deviceType) {
         case nn::DeviceType::UNKNOWN:
-            return NN_ERROR() << "Invalid DeviceType UNKNOWN";
+            return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE) << "Invalid DeviceType UNKNOWN";
         case nn::DeviceType::OTHER:
         case nn::DeviceType::CPU:
         case nn::DeviceType::GPU:
         case nn::DeviceType::ACCELERATOR:
             return static_cast<DeviceType>(deviceType);
     }
-    return NN_ERROR() << "Invalid DeviceType " << underlyingType(deviceType);
+    return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
+           << "Invalid DeviceType " << underlyingType(deviceType);
 }
 
-nn::Result<Capabilities> convert(const nn::Capabilities& capabilities) {
+nn::GeneralResult<Capabilities> convert(const nn::Capabilities& capabilities) {
     std::vector<nn::Capabilities::OperandPerformance> operandPerformance;
     operandPerformance.reserve(capabilities.operandPerformance.asVector().size());
     std::copy_if(capabilities.operandPerformance.asVector().begin(),
@@ -375,7 +381,7 @@ nn::Result<Capabilities> convert(const nn::Capabilities& capabilities) {
     };
 }
 
-nn::Result<Capabilities::OperandPerformance> convert(
+nn::GeneralResult<Capabilities::OperandPerformance> convert(
         const nn::Capabilities::OperandPerformance& operandPerformance) {
     return Capabilities::OperandPerformance{
             .type = NN_TRY(convert(operandPerformance.type)),
@@ -383,7 +389,7 @@ nn::Result<Capabilities::OperandPerformance> convert(
     };
 }
 
-nn::Result<Operation> convert(const nn::Operation& operation) {
+nn::GeneralResult<Operation> convert(const nn::Operation& operation) {
     return Operation{
             .type = NN_TRY(convert(operation.type)),
             .inputs = operation.inputs,
@@ -391,7 +397,7 @@ nn::Result<Operation> convert(const nn::Operation& operation) {
     };
 }
 
-nn::Result<SymmPerChannelQuantParams> convert(
+nn::GeneralResult<SymmPerChannelQuantParams> convert(
         const nn::Operand::SymmPerChannelQuantParams& symmPerChannelQuantParams) {
     return SymmPerChannelQuantParams{
             .scales = symmPerChannelQuantParams.scales,
@@ -399,7 +405,7 @@ nn::Result<SymmPerChannelQuantParams> convert(
     };
 }
 
-nn::Result<Operand> convert(const nn::Operand& operand) {
+nn::GeneralResult<Operand> convert(const nn::Operand& operand) {
     return Operand{
             .type = NN_TRY(convert(operand.type)),
             .dimensions = operand.dimensions,
@@ -412,13 +418,14 @@ nn::Result<Operand> convert(const nn::Operand& operand) {
     };
 }
 
-nn::Result<Operand::ExtraParams> convert(const nn::Operand::ExtraParams& extraParams) {
+nn::GeneralResult<Operand::ExtraParams> convert(const nn::Operand::ExtraParams& extraParams) {
     return std::visit([](const auto& x) { return makeExtraParams(x); }, extraParams);
 }
 
-nn::Result<Model> convert(const nn::Model& model) {
+nn::GeneralResult<Model> convert(const nn::Model& model) {
     if (!hal::utils::hasNoPointerData(model)) {
-        return NN_ERROR() << "Model cannot be converted because it contains pointer-based memory";
+        return NN_ERROR(nn::ErrorStatus::INVALID_ARGUMENT)
+               << "Model cannot be converted because it contains pointer-based memory";
     }
 
     auto operands = NN_TRY(convert(model.main.operands));
@@ -443,7 +450,7 @@ nn::Result<Model> convert(const nn::Model& model) {
     };
 }
 
-nn::Result<Model::ExtensionNameAndPrefix> convert(
+nn::GeneralResult<Model::ExtensionNameAndPrefix> convert(
         const nn::Model::ExtensionNameAndPrefix& extensionNameAndPrefix) {
     return Model::ExtensionNameAndPrefix{
             .name = extensionNameAndPrefix.name,
@@ -451,27 +458,27 @@ nn::Result<Model::ExtensionNameAndPrefix> convert(
     };
 }
 
-nn::Result<OutputShape> convert(const nn::OutputShape& outputShape) {
+nn::GeneralResult<OutputShape> convert(const nn::OutputShape& outputShape) {
     return OutputShape{.dimensions = outputShape.dimensions,
                        .isSufficient = outputShape.isSufficient};
 }
 
-nn::Result<MeasureTiming> convert(const nn::MeasureTiming& measureTiming) {
+nn::GeneralResult<MeasureTiming> convert(const nn::MeasureTiming& measureTiming) {
     return static_cast<MeasureTiming>(measureTiming);
 }
 
-nn::Result<Timing> convert(const nn::Timing& timing) {
+nn::GeneralResult<Timing> convert(const nn::Timing& timing) {
     return Timing{.timeOnDevice = timing.timeOnDevice, .timeInDriver = timing.timeInDriver};
 }
 
-nn::Result<Extension> convert(const nn::Extension& extension) {
+nn::GeneralResult<Extension> convert(const nn::Extension& extension) {
     return Extension{
             .name = extension.name,
             .operandTypes = NN_TRY(convert(extension.operandTypes)),
     };
 }
 
-nn::Result<Extension::OperandTypeInformation> convert(
+nn::GeneralResult<Extension::OperandTypeInformation> convert(
         const nn::Extension::OperandTypeInformation& operandTypeInformation) {
     return Extension::OperandTypeInformation{
             .type = operandTypeInformation.type,
@@ -480,22 +487,22 @@ nn::Result<Extension::OperandTypeInformation> convert(
     };
 }
 
-nn::Result<hidl_handle> convert(const nn::NativeHandle& handle) {
+nn::GeneralResult<hidl_handle> convert(const nn::NativeHandle& handle) {
     const auto hidlHandle = hidl_handle(handle->handle());
     // Copy memory to force the native_handle_t to be copied.
     auto copiedHandle = hidlHandle;
     return copiedHandle;
 }
 
-nn::Result<hidl_vec<Extension>> convert(const std::vector<nn::Extension>& extensions) {
+nn::GeneralResult<hidl_vec<Extension>> convert(const std::vector<nn::Extension>& extensions) {
     return convertVec(extensions);
 }
 
-nn::Result<hidl_vec<hidl_handle>> convert(const std::vector<nn::NativeHandle>& handles) {
+nn::GeneralResult<hidl_vec<hidl_handle>> convert(const std::vector<nn::NativeHandle>& handles) {
     return convertVec(handles);
 }
 
-nn::Result<hidl_vec<OutputShape>> convert(const std::vector<nn::OutputShape>& outputShapes) {
+nn::GeneralResult<hidl_vec<OutputShape>> convert(const std::vector<nn::OutputShape>& outputShapes) {
     return convertVec(outputShapes);
 }
 
