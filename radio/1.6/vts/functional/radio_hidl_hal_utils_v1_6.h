@@ -795,6 +795,9 @@ class RadioResponse_v1_6 : public ::android::hardware::radio::V1_6::IRadioRespon
 
     Return<void> setDataThrottlingResponse(
             const ::android::hardware::radio::V1_6::RadioResponseInfo& info);
+
+    Return<void> getSystemSelectionChannelsResponse(
+            const ::android::hardware::radio::V1_6::RadioResponseInfo& info);
 };
 
 /* Callback class for radio indication */
