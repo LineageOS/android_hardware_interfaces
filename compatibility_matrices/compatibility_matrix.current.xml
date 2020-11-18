@@ -319,6 +319,14 @@
         </interface>
     </hal>
     <hal format="aidl" optional="true">
+        <name>android.hardware.keymint</name>
+        <interface>
+            <name>IKeyMintDevice</name>
+            <instance>default</instance>
+            <instance>strongbox</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
         <name>android.hardware.light</name>
         <interface>
             <name>ILights</name>

@@ -43,8 +43,8 @@
 #include PATH(android/hardware/audio/FILE_VERSION/types.h)
 #include PATH(android/hardware/audio/common/FILE_VERSION/types.h)
 #if MAJOR_VERSION >= 7
-#include <audio_policy_configuration_V7_0-enums.h>
-#include <audio_policy_configuration_V7_0.h>
+#include <android_audio_policy_configuration_V7_0-enums.h>
+#include <android_audio_policy_configuration_V7_0.h>
 #endif
 
 #include <fmq/EventFlag.h>
@@ -91,7 +91,7 @@ using namespace ::android::hardware::audio::CPP_VERSION;
 #if MAJOR_VERSION >= 7
 // Make an alias for enumerations generated from the APM config XSD.
 namespace xsd {
-using namespace ::audio::policy::configuration::CPP_VERSION;
+using namespace ::android::audio::policy::configuration::CPP_VERSION;
 }
 #endif
 

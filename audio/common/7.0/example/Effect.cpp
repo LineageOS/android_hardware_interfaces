@@ -17,7 +17,7 @@
 #define LOG_TAG "EffectsFactory7.0"
 #include <log/log.h>
 
-#include <audio_policy_configuration_V7_0.h>
+#include <android_audio_policy_configuration_V7_0.h>
 
 #include "Effect.h"
 
@@ -28,7 +28,7 @@ using ::android::hardware::Void;
 using namespace ::android::hardware::audio::common::V7_0;
 // Make an alias for enumerations generated from the APM config XSD.
 namespace xsd {
-using namespace ::audio::policy::configuration::V7_0;
+using namespace ::android::audio::policy::configuration::V7_0;
 }
 
 namespace android::hardware::audio::effect::V7_0::implementation {

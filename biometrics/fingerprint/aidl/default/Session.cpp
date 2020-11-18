@@ -79,8 +79,7 @@ ndk::ScopedAStatus Session::getAuthenticatorId(int32_t /*cookie*/) {
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Session::invalidateAuthenticatorId(int32_t /*cookie*/,
-                                                      const keymaster::HardwareAuthToken& /*hat*/) {
+ndk::ScopedAStatus Session::invalidateAuthenticatorId(int32_t /*cookie*/) {
     return ndk::ScopedAStatus::ok();
 }
 

@@ -16,13 +16,16 @@
 
 #define LOG_TAG "GnssHalTestCases"
 
+#include <android/hardware/gnss/IGnssPowerIndication.h>
 #include <android/hardware/gnss/IGnssPsds.h>
+#include "GnssPowerIndicationCallback.h"
 #include "gnss_hal_test.h"
 
 using android::sp;
 using android::hardware::gnss::BlocklistedSource;
 using GnssConstellationTypeAidl = android::hardware::gnss::GnssConstellationType;
 using android::hardware::gnss::IGnssConfiguration;
+using android::hardware::gnss::IGnssPowerIndication;
 using android::hardware::gnss::IGnssPsds;
 using android::hardware::gnss::PsdsType;
 
@@ -37,7 +40,7 @@ TEST_P(GnssHalTest, SetupTeardownCreateCleanup) {}
 /*
  * TestPsdsExtension:
  * 1. Gets the PsdsExtension and verifies that it returns a non-null extension.
- * 2. Injects empty PSDS data and verifies that it returns false.
+ * 2. Injects empty PSDS data and verifies that it returns an error.
  */
 TEST_P(GnssHalTest, TestPsdsExtension) {
     sp<IGnssPsds> iGnssPsds;
@@ -47,6 +50,34 @@ TEST_P(GnssHalTest, TestPsdsExtension) {
 
     status = iGnssPsds->injectPsdsData(PsdsType::LONG_TERM, std::vector<uint8_t>());
     ASSERT_FALSE(status.isOk());
+}
+
+/*
+ * TestGnssPowerIndication
+ * 1. Gets the GnssPowerIndicationExtension.
+ * 2. Sets a GnssPowerIndicationCallback.
+ * 3.
+ */
+TEST_P(GnssHalTest, TestGnssPowerIndication) {
+    sp<IGnssPowerIndication> iGnssPowerIndication;
+    auto status = aidl_gnss_hal_->getExtensionGnssPowerIndication(&iGnssPowerIndication);
+    ASSERT_TRUE(status.isOk());
+    ASSERT_TRUE(iGnssPowerIndication != nullptr);
+
+    auto gnssPowerIndicationCallback = sp<GnssPowerIndicationCallback>::make();
+    status = iGnssPowerIndication->setCallback(gnssPowerIndicationCallback);
+    ASSERT_TRUE(status.isOk());
+
+    const int kTimeoutSec = 2;
+    EXPECT_TRUE(gnssPowerIndicationCallback->capabilities_cbq_.retrieve(
+            gnssPowerIndicationCallback->last_capabilities_, kTimeoutSec));
+
+    EXPECT_EQ(gnssPowerIndicationCallback->capabilities_cbq_.calledCount(), 1);
+
+    iGnssPowerIndication->requestGnssPowerStats();
+    EXPECT_TRUE(gnssPowerIndicationCallback->gnss_power_stats_cbq_.retrieve(
+            gnssPowerIndicationCallback->last_gnss_power_stats_, kTimeoutSec));
+    EXPECT_EQ(gnssPowerIndicationCallback->gnss_power_stats_cbq_.calledCount(), 1);
 }
 
 /*
