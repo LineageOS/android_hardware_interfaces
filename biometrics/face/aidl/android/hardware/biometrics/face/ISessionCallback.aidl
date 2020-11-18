@@ -31,12 +31,12 @@ interface ISessionCallback {
     /**
      * Notifies the framework when a challenge is successfully generated.
      */
-    void onChallengeGenerated(in int sensorId, in int userId, in long challenge);
+    void onChallengeGenerated(in long challenge);
 
     /**
      * Notifies the framework when a challenge has been revoked.
      */
-    void onChallengeRevoked(in int sensorId, in int userId, in long challenge);
+    void onChallengeRevoked(in long challenge);
 
     /**
      * This method must only be used to notify the framework during the following states:
