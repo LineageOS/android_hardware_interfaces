@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
+#define LOG_TAG "VtsIdentityTestUtils"
+
 #include "VtsIdentityTestUtils.h"
 
 #include <aidl/Gtest.h>
+#include <android-base/logging.h>
+#include <keymaster/km_openssl/openssl_utils.h>
+#include <keymasterV4_1/attestation_record.h>
+#include <charconv>
 #include <map>
-
-#include "VtsAttestationParserSupport.h"
 
 namespace android::hardware::identity::test_utils {
 
@@ -32,15 +36,15 @@ using std::vector;
 using ::android::sp;
 using ::android::String16;
 using ::android::binder::Status;
+using ::keymaster::X509_Ptr;
 
 bool setupWritableCredential(sp<IWritableIdentityCredential>& writableCredential,
-                             sp<IIdentityCredentialStore>& credentialStore) {
+                             sp<IIdentityCredentialStore>& credentialStore, bool testCredential) {
     if (credentialStore == nullptr) {
         return false;
     }
 
     string docType = "org.iso.18013-5.2019.mdl";
-    bool testCredential = true;
     Status result = credentialStore->createCredential(docType, testCredential, &writableCredential);
 
     if (result.isOk() && writableCredential != nullptr) {
@@ -178,61 +182,267 @@ void setImageData(vector<uint8_t>& image) {
     }
 }
 
-bool validateAttestationCertificate(const vector<Certificate>& inputCertificates,
-                                    const vector<uint8_t>& expectedChallenge,
-                                    const vector<uint8_t>& expectedAppId,
-                                    const HardwareInformation& hwInfo) {
-    AttestationCertificateParser certParser_(inputCertificates);
-    bool ret = certParser_.parse();
-    EXPECT_TRUE(ret);
-    if (!ret) {
+string x509NameToRfc2253String(X509_NAME* name) {
+    char* buf;
+    size_t bufSize;
+    BIO* bio;
+
+    bio = BIO_new(BIO_s_mem());
+    X509_NAME_print_ex(bio, name, 0, XN_FLAG_RFC2253);
+    bufSize = BIO_get_mem_data(bio, &buf);
+    string ret = string(buf, bufSize);
+    BIO_free(bio);
+
+    return ret;
+}
+
+int parseDigits(const char** s, int numDigits) {
+    int result;
+    auto [_, ec] = std::from_chars(*s, *s + numDigits, result);
+    if (ec != std::errc()) {
+        LOG(ERROR) << "Error parsing " << numDigits << " digits "
+                   << " from " << s;
+        return 0;
+    }
+    *s += numDigits;
+    return result;
+}
+
+bool parseAsn1Time(const ASN1_TIME* asn1Time, time_t* outTime) {
+    struct tm tm;
+
+    memset(&tm, '\0', sizeof(tm));
+    const char* timeStr = (const char*)asn1Time->data;
+    const char* s = timeStr;
+    if (asn1Time->type == V_ASN1_UTCTIME) {
+        tm.tm_year = parseDigits(&s, 2);
+        if (tm.tm_year < 70) {
+            tm.tm_year += 100;
+        }
+    } else if (asn1Time->type == V_ASN1_GENERALIZEDTIME) {
+        tm.tm_year = parseDigits(&s, 4) - 1900;
+        tm.tm_year -= 1900;
+    } else {
+        LOG(ERROR) << "Unsupported ASN1_TIME type " << asn1Time->type;
+        return false;
+    }
+    tm.tm_mon = parseDigits(&s, 2) - 1;
+    tm.tm_mday = parseDigits(&s, 2);
+    tm.tm_hour = parseDigits(&s, 2);
+    tm.tm_min = parseDigits(&s, 2);
+    tm.tm_sec = parseDigits(&s, 2);
+    // This may need to be updated if someone create certificates using +/- instead of Z.
+    //
+    if (*s != 'Z') {
+        LOG(ERROR) << "Expected Z in string '" << timeStr << "' at offset " << (s - timeStr);
         return false;
     }
 
-    // As per the IC HAL, the version of the Identity
-    // Credential HAL is 1.0 - and this is encoded as major*10 + minor. This field is used by
-    // Keymaster which is known to report integers less than or equal to 4 (for KM up to 4.0)
-    // and integers greater or equal than 41 (for KM starting with 4.1).
-    //
-    // Since we won't get to version 4.0 of the IC HAL for a while, let's also check that a KM
-    // version isn't errornously returned.
-    EXPECT_LE(10, certParser_.getKeymasterVersion());
-    EXPECT_GT(40, certParser_.getKeymasterVersion());
-    EXPECT_LE(3, certParser_.getAttestationVersion());
-
-    // Verify the app id matches to whatever we set it to be.
-    optional<vector<uint8_t>> appId =
-            certParser_.getSwEnforcedBlob(::keymaster::TAG_ATTESTATION_APPLICATION_ID);
-    if (appId) {
-        EXPECT_EQ(expectedAppId.size(), appId.value().size());
-        EXPECT_EQ(0, memcmp(expectedAppId.data(), appId.value().data(), expectedAppId.size()));
-    } else {
-        // app id not found
-        EXPECT_EQ(0, expectedAppId.size());
+    time_t t = timegm(&tm);
+    if (t == -1) {
+        LOG(ERROR) << "Error converting broken-down time to time_t";
+        return false;
     }
-
-    EXPECT_TRUE(certParser_.getHwEnforcedBool(::keymaster::TAG_IDENTITY_CREDENTIAL_KEY));
-    EXPECT_FALSE(certParser_.getHwEnforcedBool(::keymaster::TAG_INCLUDE_UNIQUE_ID));
-
-    // Verify the challenge always matches in size and data of what is passed
-    // in.
-    vector<uint8_t> attChallenge = certParser_.getAttestationChallenge();
-    EXPECT_EQ(expectedChallenge.size(), attChallenge.size());
-    EXPECT_EQ(0, memcmp(expectedChallenge.data(), attChallenge.data(), expectedChallenge.size()));
-
-    // Ensure the attestation conveys that it's implemented in secure hardware (with carve-out
-    // for the reference implementation which cannot be implemented in secure hardware).
-    if (hwInfo.credentialStoreName == "Identity Credential Reference Implementation" &&
-        hwInfo.credentialStoreAuthorName == "Google") {
-        EXPECT_LE(KM_SECURITY_LEVEL_SOFTWARE, certParser_.getKeymasterSecurityLevel());
-        EXPECT_LE(KM_SECURITY_LEVEL_SOFTWARE, certParser_.getAttestationSecurityLevel());
-
-    } else {
-        // Actual devices should use TrustedEnvironment or StrongBox.
-        EXPECT_LE(KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT, certParser_.getKeymasterSecurityLevel());
-        EXPECT_LE(KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT, certParser_.getAttestationSecurityLevel());
-    }
+    *outTime = t;
     return true;
+}
+
+void validateAttestationCertificate(const vector<Certificate>& credentialKeyCertChain,
+                                    const vector<uint8_t>& expectedChallenge,
+                                    const vector<uint8_t>& expectedAppId, bool isTestCredential) {
+    ASSERT_GE(credentialKeyCertChain.size(), 2);
+
+    vector<uint8_t> certBytes = credentialKeyCertChain[0].encodedCertificate;
+    const uint8_t* certData = certBytes.data();
+    X509_Ptr cert = X509_Ptr(d2i_X509(nullptr, &certData, certBytes.size()));
+
+    vector<uint8_t> batchCertBytes = credentialKeyCertChain[1].encodedCertificate;
+    const uint8_t* batchCertData = batchCertBytes.data();
+    X509_Ptr batchCert = X509_Ptr(d2i_X509(nullptr, &batchCertData, batchCertBytes.size()));
+
+    // First get some values from the batch certificate which is checked
+    // against the top-level certificate (subject, notAfter)
+    //
+
+    X509_NAME* batchSubject = X509_get_subject_name(batchCert.get());
+    ASSERT_NE(nullptr, batchSubject);
+    time_t batchNotAfter;
+    ASSERT_TRUE(parseAsn1Time(X509_get0_notAfter(batchCert.get()), &batchNotAfter));
+
+    // Check all the requirements from IWritableIdentityCredential::getAttestationCertificate()...
+    //
+
+    //  - version: INTEGER 2 (means v3 certificate).
+    EXPECT_EQ(2, X509_get_version(cert.get()));
+
+    //  - serialNumber: INTEGER 1 (fixed value: same on all certs).
+    EXPECT_EQ(1, ASN1_INTEGER_get(X509_get_serialNumber(cert.get())));
+
+    //  - signature: must be set to ECDSA.
+    EXPECT_EQ(NID_ecdsa_with_SHA256, X509_get_signature_nid(cert.get()));
+
+    //  - subject: CN shall be set to "Android Identity Credential Key". (fixed value:
+    //    same on all certs)
+    X509_NAME* subject = X509_get_subject_name(cert.get());
+    ASSERT_NE(nullptr, subject);
+    EXPECT_EQ("CN=Android Identity Credential Key", x509NameToRfc2253String(subject));
+
+    //  - issuer: Same as the subject field of the batch attestation key.
+    X509_NAME* issuer = X509_get_issuer_name(cert.get());
+    ASSERT_NE(nullptr, issuer);
+    EXPECT_EQ(x509NameToRfc2253String(batchSubject), x509NameToRfc2253String(issuer));
+
+    //  - validity: Should be from current time and expire at the same time as the
+    //    attestation batch certificate used.
+    //
+    //  Allow for 10 seconds drift to account for the time drift between Secure HW
+    //  and this environment plus the difference between when the certificate was
+    //  created and until now
+    //
+    time_t notBefore;
+    ASSERT_TRUE(parseAsn1Time(X509_get0_notBefore(cert.get()), &notBefore));
+    uint64_t now = time(nullptr);
+    int64_t diffSecs = now - notBefore;
+    int64_t allowDriftSecs = 10;
+    EXPECT_LE(-allowDriftSecs, diffSecs);
+    EXPECT_GE(allowDriftSecs, diffSecs);
+
+    time_t notAfter;
+    ASSERT_TRUE(parseAsn1Time(X509_get0_notAfter(cert.get()), &notAfter));
+    EXPECT_EQ(notAfter, batchNotAfter);
+
+    auto [err, attRec] = keymaster::V4_1::parse_attestation_record(certBytes);
+    ASSERT_EQ(keymaster::V4_1::ErrorCode::OK, err);
+
+    //  - subjectPublicKeyInfo: must contain attested public key.
+
+    //  - The attestationVersion field in the attestation extension must be at least 3.
+    EXPECT_GE(attRec.attestation_version, 3);
+
+    //  - The attestationSecurityLevel field must be set to either Software (0),
+    //    TrustedEnvironment (1), or StrongBox (2) depending on how attestation is
+    //    implemented.
+    EXPECT_GE(attRec.attestation_security_level,
+              keymaster::V4_0::SecurityLevel::TRUSTED_ENVIRONMENT);
+
+    //  - The keymasterVersion field in the attestation extension must be set to the.
+    //    same value as used for Android Keystore keys.
+    //
+    // Nothing to check here...
+
+    //  - The keymasterSecurityLevel field in the attestation extension must be set to
+    //    either Software (0), TrustedEnvironment (1), or StrongBox (2) depending on how
+    //    the Trusted Application backing the HAL implementation is implemented.
+    EXPECT_GE(attRec.keymaster_security_level, keymaster::V4_0::SecurityLevel::TRUSTED_ENVIRONMENT);
+
+    //  - The attestationChallenge field must be set to the passed-in challenge.
+    EXPECT_EQ(expectedChallenge.size(), attRec.attestation_challenge.size());
+    EXPECT_TRUE(memcmp(expectedChallenge.data(), attRec.attestation_challenge.data(),
+                       attRec.attestation_challenge.size()) == 0);
+
+    //  - The uniqueId field must be empty.
+    EXPECT_EQ(attRec.unique_id.size(), 0);
+
+    //  - The softwareEnforced field in the attestation extension must include
+    //    Tag::ATTESTATION_APPLICATION_ID which must be set to the bytes of the passed-in
+    //    attestationApplicationId.
+    EXPECT_TRUE(attRec.software_enforced.Contains(keymaster::V4_0::TAG_ATTESTATION_APPLICATION_ID,
+                                                  expectedAppId));
+
+    //  - The teeEnforced field in the attestation extension must include
+    //
+    //    - Tag::IDENTITY_CREDENTIAL_KEY which indicates that the key is an Identity
+    //      Credential key (which can only sign/MAC very specific messages) and not an Android
+    //      Keystore key (which can be used to sign/MAC anything). This must not be set
+    //      for test credentials.
+    bool hasIcKeyTag =
+            attRec.hardware_enforced.Contains(static_cast<android::hardware::keymaster::V4_0::Tag>(
+                    keymaster::V4_1::Tag::IDENTITY_CREDENTIAL_KEY));
+    if (isTestCredential) {
+        EXPECT_FALSE(hasIcKeyTag);
+    } else {
+        EXPECT_TRUE(hasIcKeyTag);
+    }
+
+    //    - Tag::PURPOSE must be set to SIGN
+    EXPECT_TRUE(attRec.hardware_enforced.Contains(keymaster::V4_0::TAG_PURPOSE,
+                                                  keymaster::V4_0::KeyPurpose::SIGN));
+
+    //    - Tag::KEY_SIZE must be set to the appropriate key size, in bits (e.g. 256)
+    EXPECT_TRUE(attRec.hardware_enforced.Contains(keymaster::V4_0::TAG_KEY_SIZE, 256));
+
+    //    - Tag::ALGORITHM must be set to EC
+    EXPECT_TRUE(attRec.hardware_enforced.Contains(keymaster::V4_0::TAG_ALGORITHM,
+                                                  keymaster::V4_0::Algorithm::EC));
+
+    //    - Tag::NO_AUTH_REQUIRED must be set
+    EXPECT_TRUE(attRec.hardware_enforced.Contains(keymaster::V4_0::TAG_NO_AUTH_REQUIRED));
+
+    //    - Tag::DIGEST must be include SHA_2_256
+    EXPECT_TRUE(attRec.hardware_enforced.Contains(keymaster::V4_0::TAG_DIGEST,
+                                                  keymaster::V4_0::Digest::SHA_2_256));
+
+    //    - Tag::EC_CURVE must be set to P_256
+    EXPECT_TRUE(attRec.hardware_enforced.Contains(keymaster::V4_0::TAG_EC_CURVE,
+                                                  keymaster::V4_0::EcCurve::P_256));
+
+    //    - Tag::ROOT_OF_TRUST must be set
+    //
+    EXPECT_GE(attRec.root_of_trust.security_level,
+              keymaster::V4_0::SecurityLevel::TRUSTED_ENVIRONMENT);
+
+    //    - Tag::OS_VERSION and Tag::OS_PATCHLEVEL must be set
+    EXPECT_TRUE(attRec.hardware_enforced.Contains(keymaster::V4_0::TAG_OS_VERSION));
+    EXPECT_TRUE(attRec.hardware_enforced.Contains(keymaster::V4_0::TAG_OS_PATCHLEVEL));
+
+    // TODO: we could retrieve osVersion and osPatchLevel from Android itself and compare it
+    // with what was reported in the certificate.
+}
+
+void verifyAuthKeyCertificate(const vector<uint8_t>& authKeyCertChain) {
+    const uint8_t* data = authKeyCertChain.data();
+    auto cert = X509_Ptr(d2i_X509(nullptr, &data, authKeyCertChain.size()));
+
+    //  - version: INTEGER 2 (means v3 certificate).
+    EXPECT_EQ(X509_get_version(cert.get()), 2);
+
+    //  - serialNumber: INTEGER 1 (fixed value: same on all certs).
+    EXPECT_EQ(ASN1_INTEGER_get(X509_get_serialNumber(cert.get())), 1);
+
+    //  - signature: must be set to ECDSA.
+    EXPECT_EQ(X509_get_signature_nid(cert.get()), NID_ecdsa_with_SHA256);
+
+    //  - subject: CN shall be set to "Android Identity Credential Authentication Key". (fixed
+    //    value: same on all certs)
+    X509_NAME* subject = X509_get_subject_name(cert.get());
+    ASSERT_NE(subject, nullptr);
+    EXPECT_EQ(x509NameToRfc2253String(subject),
+              "CN=Android Identity Credential Authentication Key");
+
+    //  - issuer: CN shall be set to "Android Identity Credential Key". (fixed value:
+    //    same on all certs)
+    X509_NAME* issuer = X509_get_issuer_name(cert.get());
+    ASSERT_NE(issuer, nullptr);
+    EXPECT_EQ(x509NameToRfc2253String(issuer), "CN=Android Identity Credential Key");
+
+    //  - subjectPublicKeyInfo: must contain attested public key.
+
+    //  - validity: should be from current time and one year in the future (365 days).
+    time_t notBefore, notAfter;
+    ASSERT_TRUE(parseAsn1Time(X509_get0_notAfter(cert.get()), &notAfter));
+    ASSERT_TRUE(parseAsn1Time(X509_get0_notBefore(cert.get()), &notBefore));
+
+    //  Allow for 10 seconds drift to account for the time drift between Secure HW
+    //  and this environment plus the difference between when the certificate was
+    //  created and until now
+    //
+    uint64_t now = time(nullptr);
+    int64_t diffSecs = now - notBefore;
+    int64_t allowDriftSecs = 10;
+    EXPECT_LE(-allowDriftSecs, diffSecs);
+    EXPECT_GE(allowDriftSecs, diffSecs);
+    constexpr uint64_t kSecsInOneYear = 365 * 24 * 60 * 60;
+    EXPECT_EQ(notBefore + kSecsInOneYear, notAfter);
 }
 
 vector<RequestNamespace> buildRequestNamespaces(const vector<TestEntryData> entries) {

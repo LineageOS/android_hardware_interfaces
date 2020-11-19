@@ -102,6 +102,7 @@ typedef struct km_auth_list {
     ASN1_INTEGER* boot_patchlevel;
     ASN1_NULL* early_boot_only;
     ASN1_NULL* device_unique_attestation;
+    ASN1_NULL* identity_credential_key;
 } KM_AUTH_LIST;
 
 ASN1_SEQUENCE(KM_AUTH_LIST) = {
@@ -145,6 +146,8 @@ ASN1_SEQUENCE(KM_AUTH_LIST) = {
         ASN1_EXP_OPT(KM_AUTH_LIST, early_boot_only, ASN1_NULL, TAG_EARLY_BOOT_ONLY.maskedTag()),
         ASN1_EXP_OPT(KM_AUTH_LIST, device_unique_attestation, ASN1_NULL,
                      TAG_DEVICE_UNIQUE_ATTESTATION.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, identity_credential_key, ASN1_NULL,
+                     TAG_IDENTITY_CREDENTIAL_KEY.maskedTag()),
 } ASN1_SEQUENCE_END(KM_AUTH_LIST);
 IMPLEMENT_ASN1_FUNCTIONS(KM_AUTH_LIST);
 
@@ -285,6 +288,7 @@ static ErrorCode extract_auth_list(const KM_AUTH_LIST* record, AuthorizationSet*
     copyAuthTag(record->unlocked_device_required, TAG_UNLOCKED_DEVICE_REQUIRED, auth_list);
     copyAuthTag(record->early_boot_only, TAG_EARLY_BOOT_ONLY, auth_list);
     copyAuthTag(record->device_unique_attestation, TAG_DEVICE_UNIQUE_ATTESTATION, auth_list);
+    copyAuthTag(record->identity_credential_key, TAG_IDENTITY_CREDENTIAL_KEY, auth_list);
 
     return ErrorCode::OK;
 }
@@ -327,7 +331,10 @@ std::tuple<ErrorCode, AttestationRecord> parse_attestation_record(const hidl_vec
 
     p = attest_rec->data;
     KM_KEY_DESCRIPTION_Ptr record(d2i_KM_KEY_DESCRIPTION(nullptr, &p, attest_rec->length));
-    if (!record.get()) return {ErrorCode::UNKNOWN_ERROR, {}};
+    if (!record.get()) {
+        LOG(ERROR) << "Unable to get key description";
+        return {ErrorCode::UNKNOWN_ERROR, {}};
+    }
 
     AttestationRecord result;
 
@@ -352,10 +359,12 @@ std::tuple<ErrorCode, AttestationRecord> parse_attestation_record(const hidl_vec
     if (error != ErrorCode::OK) return {error, {}};
 
     KM_ROOT_OF_TRUST* root_of_trust = nullptr;
+    SecurityLevel root_of_trust_security_level = SecurityLevel::TRUSTED_ENVIRONMENT;
     if (record->tee_enforced && record->tee_enforced->root_of_trust) {
         root_of_trust = record->tee_enforced->root_of_trust;
     } else if (record->software_enforced && record->software_enforced->root_of_trust) {
         root_of_trust = record->software_enforced->root_of_trust;
+        root_of_trust_security_level = SecurityLevel::SOFTWARE;
     } else {
         LOG(ERROR) << AT << " Failed root of trust parsing";
         return {ErrorCode::INVALID_ARGUMENT, {}};
@@ -373,6 +382,7 @@ std::tuple<ErrorCode, AttestationRecord> parse_attestation_record(const hidl_vec
     rot.verified_boot_state = static_cast<keymaster_verified_boot_t>(
             ASN1_ENUMERATED_get(root_of_trust->verified_boot_state));
     rot.device_locked = root_of_trust->device_locked;
+    rot.security_level = root_of_trust_security_level;
 
     auto& vb_hash = root_of_trust->verified_boot_hash;
     if (!vb_hash) {
