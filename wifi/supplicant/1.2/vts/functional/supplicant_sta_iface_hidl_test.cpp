@@ -25,6 +25,7 @@
 #include <android/hardware/wifi/supplicant/1.2/types.h>
 #include <android/hardware/wifi/supplicant/1.3/ISupplicantStaIface.h>
 #include <android/hardware/wifi/supplicant/1.3/types.h>
+#include <android/hardware/wifi/supplicant/1.4/ISupplicantStaIface.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/HidlSupport.h>
 #include <hidl/ServiceManagement.h>
@@ -62,6 +63,8 @@ class SupplicantStaIfaceHidlTest : public SupplicantHidlTestBaseV1_2 {
         count_ = 0;
 
         v1_3 = ::android::hardware::wifi::supplicant::V1_3::
+            ISupplicantStaIface::castFrom(sta_iface_);
+        v1_4 = ::android::hardware::wifi::supplicant::V1_4::
             ISupplicantStaIface::castFrom(sta_iface_);
     }
 
@@ -106,6 +109,7 @@ class SupplicantStaIfaceHidlTest : public SupplicantHidlTestBaseV1_2 {
     // ISupplicantStaIface object used for all tests in this fixture.
     sp<ISupplicantStaIface> sta_iface_;
     sp<::android::hardware::wifi::supplicant::V1_3::ISupplicantStaIface> v1_3;
+    sp<::android::hardware::wifi::supplicant::V1_4::ISupplicantStaIface> v1_4;
 
     bool isDppSupported() {
         uint32_t keyMgmtMask = 0;
@@ -266,8 +270,9 @@ class IfaceDppCallback : public IfaceCallback {
  * RegisterCallback_1_2
  */
 TEST_P(SupplicantStaIfaceHidlTest, RegisterCallback_1_2) {
+    // This API is deprecated from v1.4 HAL.
     SupplicantStatusCode expectedCode =
-        (nullptr != v1_3) ? SupplicantStatusCode::FAILURE_UNKNOWN
+        (nullptr != v1_4) ? SupplicantStatusCode::FAILURE_UNKNOWN
                           : SupplicantStatusCode::SUCCESS;
     sta_iface_->registerCallback_1_2(new IfaceCallback(),
                                      [&](const SupplicantStatus& status) {
