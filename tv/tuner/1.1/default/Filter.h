@@ -84,7 +84,7 @@ class Filter : public V1_1::IFilter {
 
     virtual Return<Result> configureAvStreamType(const V1_1::AvStreamType& avStreamType) override;
 
-    virtual Return<Result> configureScramblingEvent(uint32_t statuses) override;
+    virtual Return<Result> configureMonitorEvent(uint32_t monitorEventTypes) override;
 
     /**
      * To create a FilterMQ and its Event Flag.
@@ -238,6 +238,8 @@ class Filter : public V1_1::IFilter {
 
     bool mConfigured = false;
     int mStartId = 0;
+    uint8_t mScramblingStatusMonitored = 0;
+    uint8_t mIpCidMonitored = 0;
 };
 
 }  // namespace implementation

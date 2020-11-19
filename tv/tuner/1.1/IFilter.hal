@@ -85,19 +85,23 @@ interface IFilter extends @1.0::IFilter {
     configureAvStreamType(AvStreamType avStreamType) generates (Result result);
 
     /**
-     * Configure the filter to monitor specific Scrambling Status.
+     * Configure the monitor event.
      *
-     * Scrambling Status should be sent through the filer callback at the following two scenarios:
+     * The event for Scrambling Status should be sent at the following two scenarios:
      *   1. When this method is called, the first detected scrambling status should be sent.
-     *   2. When the filter transits into the monitored statuses configured through this method,
-     *      event should be sent.
+     *   2. When the Scrambling status transits into different status, event should be sent.
      *
-     * @param statuses Scrambling Statuses to monitor. Set corresponding bit to monitor. Reset to
-     *        stop monitoring.
+     * The event for IP CID change should be sent at the following two scenarios:
+     *   1. When this method is called, the first detected CID for the IP should be sent.
+     *   2. When the CID is changed to different value for the IP filter, event should be sent.
+     *
+     * @param monitorEventypes the events to monitor. Set corresponding bit of the event to monitor.
+     *                         Reset to stop monitoring.
      * @return result Result status of the operation.
-     *         SUCCESS if successful,
-     *         INVALID_STATE if configure can't be applied,
-     *         UNKNOWN_ERROR if failed for other reasons.
+     *                SUCCESS if successful,
+     *                INVALID_STATE if configure can't be applied,
+     *                UNKNOWN_ERROR if failed for other reasons.
      */
-    configureScramblingEvent(bitfield<ScramblingStatus> statuses) generates (Result result);
+    configureMonitorEvent(bitfield<DemuxFilterMonitorEventType> monitorEventTypes)
+            generates (Result result);
 };
