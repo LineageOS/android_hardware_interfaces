@@ -1023,11 +1023,12 @@ optional<vector<vector<uint8_t>>> createAttestation(
     // relying party is ever going to trust our batch key and those keys above
     // it.
     //
-    ::keymaster::PureSoftKeymasterContext context(KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT);
+    ::keymaster::PureSoftKeymasterContext context(::keymaster::KmVersion::KEYMASTER_4_1,
+                                                  KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT);
 
     error = generate_attestation_from_EVP(key, swEnforced, hwEnforced, auth_set, context,
-                                          ::keymaster::kCurrentKeymasterVersion, *attestation_chain,
-                                          *attestation_signing_key, &cert_chain_out);
+                                          *attestation_chain, *attestation_signing_key,
+                                          &cert_chain_out);
 
     if (KM_ERROR_OK != error || !cert_chain_out) {
         LOG(ERROR) << "Error generate attestation from EVP key" << error;
@@ -2401,7 +2402,6 @@ vector<vector<uint8_t>> chunkVector(const vector<uint8_t>& content, size_t maxCh
 
     return ret;
 }
-
 
 vector<uint8_t> testHardwareBoundKey = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
