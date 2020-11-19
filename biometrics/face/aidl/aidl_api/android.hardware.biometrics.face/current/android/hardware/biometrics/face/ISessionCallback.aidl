@@ -19,8 +19,8 @@ package android.hardware.biometrics.face;
 @VintfStability
 interface ISessionCallback {
   void onStateChanged(in int cookie, in android.hardware.biometrics.face.SessionState state);
-  void onChallengeGenerated(in int sensorId, in int userId, in long challenge);
-  void onChallengeRevoked(in int sensorId, in int userId, in long challenge);
+  void onChallengeGenerated(in long challenge);
+  void onChallengeRevoked(in long challenge);
   void onAcquired(in android.hardware.biometrics.face.AcquiredInfo info, in int vendorCode);
   void onError(in android.hardware.biometrics.face.Error error, in int vendorCode);
   void onEnrollmentProgress(in int enrollmentId, int remaining);

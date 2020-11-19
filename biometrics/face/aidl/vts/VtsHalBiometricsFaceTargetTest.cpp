@@ -51,13 +51,11 @@ class SessionCallback : public BnSessionCallback {
         return ndk::ScopedAStatus::ok();
     }
 
-    ndk::ScopedAStatus onChallengeGenerated(int32_t /*sensorId*/, int32_t /*userId*/,
-                                            int64_t /*challenge*/) override {
+    ndk::ScopedAStatus onChallengeGenerated(int64_t /*challenge*/) override {
         return ndk::ScopedAStatus::ok();
     }
 
-    ndk::ScopedAStatus onChallengeRevoked(int32_t /*sensorId*/, int32_t /*userId*/,
-                                          int64_t /*challenge*/) override {
+    ndk::ScopedAStatus onChallengeRevoked(int64_t /*challenge*/) override {
         return ndk::ScopedAStatus::ok();
     }
 
