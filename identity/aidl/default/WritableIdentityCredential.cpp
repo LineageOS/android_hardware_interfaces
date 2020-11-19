@@ -74,7 +74,7 @@ ndk::ScopedAStatus WritableIdentityCredential::getAttestationCertificate(
     vector<uint8_t> appId(attestationApplicationId.begin(), attestationApplicationId.end());
 
     optional<std::pair<vector<uint8_t>, vector<vector<uint8_t>>>> keyAttestationPair =
-            support::createEcKeyPairAndAttestation(challenge, appId);
+            support::createEcKeyPairAndAttestation(challenge, appId, testCredential_);
     if (!keyAttestationPair) {
         LOG(ERROR) << "Error creating credentialKey and attestation";
         return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
