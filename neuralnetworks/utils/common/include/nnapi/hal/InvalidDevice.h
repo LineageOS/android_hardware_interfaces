@@ -14,40 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_UTILS_COMMON_RESILIENT_DEVICE_H
-#define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_UTILS_COMMON_RESILIENT_DEVICE_H
+#ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_UTILS_COMMON_INVALID_DEVICE_H
+#define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_UTILS_COMMON_INVALID_DEVICE_H
 
-#include <android-base/thread_annotations.h>
 #include <nnapi/IBuffer.h>
 #include <nnapi/IDevice.h>
 #include <nnapi/IPreparedModel.h>
 #include <nnapi/Result.h>
 #include <nnapi/Types.h>
 
-#include <functional>
 #include <memory>
-#include <mutex>
 #include <string>
 #include <vector>
 
 namespace android::hardware::neuralnetworks::utils {
 
-class ResilientDevice final : public nn::IDevice,
-                              public std::enable_shared_from_this<ResilientDevice> {
-    struct PrivateConstructorTag {};
-
+class InvalidDevice final : public nn::IDevice {
   public:
-    using Factory = std::function<nn::GeneralResult<nn::SharedDevice>(bool blocking)>;
-
-    static nn::GeneralResult<std::shared_ptr<const ResilientDevice>> create(Factory makeDevice);
-
-    explicit ResilientDevice(PrivateConstructorTag tag, Factory makeDevice, std::string name,
-                             std::string versionString, std::vector<nn::Extension> extensions,
-                             nn::Capabilities capabilities, nn::SharedDevice device);
-
-    nn::SharedDevice getDevice() const EXCLUDES(mMutex);
-    nn::SharedDevice recover(const nn::IDevice* failingDevice, bool blocking) const
-            EXCLUDES(mMutex);
+    InvalidDevice(std::string name, std::string versionString, nn::Version featureLevel,
+                  nn::DeviceType type, std::vector<nn::Extension> extensions,
+                  nn::Capabilities capabilities,
+                  std::pair<uint32_t, uint32_t> numberOfCacheFilesNeeded);
 
     const std::string& getName() const override;
     const std::string& getVersionString() const override;
@@ -79,32 +66,15 @@ class ResilientDevice final : public nn::IDevice,
             const std::vector<nn::BufferRole>& outputRoles) const override;
 
   private:
-    bool isValidInternal() const EXCLUDES(mMutex);
-    nn::GeneralResult<nn::SharedPreparedModel> prepareModelInternal(
-            bool blocking, const nn::Model& model, nn::ExecutionPreference preference,
-            nn::Priority priority, nn::OptionalTimePoint deadline,
-            const std::vector<nn::SharedHandle>& modelCache,
-            const std::vector<nn::SharedHandle>& dataCache, const nn::CacheToken& token) const;
-    nn::GeneralResult<nn::SharedPreparedModel> prepareModelFromCacheInternal(
-            bool blocking, nn::OptionalTimePoint deadline,
-            const std::vector<nn::SharedHandle>& modelCache,
-            const std::vector<nn::SharedHandle>& dataCache, const nn::CacheToken& token) const;
-    nn::GeneralResult<nn::SharedBuffer> allocateInternal(
-            bool blocking, const nn::BufferDesc& desc,
-            const std::vector<nn::SharedPreparedModel>& preparedModels,
-            const std::vector<nn::BufferRole>& inputRoles,
-            const std::vector<nn::BufferRole>& outputRoles) const;
-
-    const Factory kMakeDevice;
     const std::string kName;
     const std::string kVersionString;
+    const nn::Version kFeatureLevel;
+    const nn::DeviceType kType;
     const std::vector<nn::Extension> kExtensions;
     const nn::Capabilities kCapabilities;
-    mutable std::mutex mMutex;
-    mutable nn::SharedDevice mDevice GUARDED_BY(mMutex);
-    mutable bool mIsValid GUARDED_BY(mMutex) = true;
+    const std::pair<uint32_t, uint32_t> kNumberOfCacheFilesNeeded;
 };
 
 }  // namespace android::hardware::neuralnetworks::utils
 
-#endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_UTILS_COMMON_RESILIENT_DEVICE_H
+#endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_UTILS_COMMON_INVALID_DEVICE_H
