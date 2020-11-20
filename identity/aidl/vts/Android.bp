@@ -9,7 +9,6 @@ cc_test {
         "VtsIWritableIdentityCredentialTests.cpp",
         "VtsIdentityTestUtils.cpp",
         "VtsAttestationTests.cpp",
-        "VtsAttestationParserSupport.cpp",
         "UserAuthTests.cpp",
         "ReaderAuthTests.cpp",
     ],
@@ -20,13 +19,14 @@ cc_test {
     static_libs: [
         "libcppbor",
         "libkeymaster_portable",
-        "libsoft_attestation_cert",
         "libpuresoftkeymasterdevice",
         "android.hardware.keymaster@4.0",
         "android.hardware.identity-support-lib",
         "android.hardware.identity-cpp",
         "android.hardware.keymaster-cpp",
         "android.hardware.keymaster-ndk_platform",
+        "libkeymaster4support",
+        "libkeymaster4_1support",
     ],
     test_suites: [
         "general-tests",

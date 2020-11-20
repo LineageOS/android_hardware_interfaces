@@ -151,22 +151,42 @@ struct DemuxFilterMmtpRecordEventExt {
 struct DemuxFilterEventExt {
     safe_union Event {
         /**
-         * No extended record filter Event. This is used by the tsRecord or mmtpRecord filter event
-         * that does not contain the DemuxFilterTs/MmtpRecordEventExt information.
+         * No extended filter Event.
          */
         Monostate noinit;
 
+        /**
+         * Extended TS Record event sent along with @1.0::DemuxFilterEvent::Event::tsRecord.
+         * DemuxFilterEventExt.events[i] is corresponding to @1.0::DemuxFilterEvent.events[i]. If
+         * @1.0::DemuxFilterEvent.events[i] does not have extended event,
+         * DemuxFilterEventExt.events[i] should use Monostate.
+         */
         DemuxFilterTsRecordEventExt tsRecord;
 
+        /**
+         * Extended MMTP Record event sent along with @1.0::DemuxFilterEvent::Event::mmtpRecord.
+         * DemuxFilterEventExt.events[i] is corresponding to @1.0::DemuxFilterEvent.events[i]. If
+         * @1.0::DemuxFilterEvent.events[i] does not have extended event,
+         * DemuxFilterEventExt.events[i] should use Monostate.
+         */
         DemuxFilterMmtpRecordEventExt mmtpRecord;
 
-        ScramblingStatus scramblingStatus;
+        /**
+         * Monitor event to notify monitored status change.
+         *
+         * When sending monitorEvent, DemuxFilterEventExt.events should only contain one
+         * monitorEvent. MonitorEvent should be sent with an empty @1.0::DemuxFilterEvent.
+         */
+        DemuxFilterMonitorEvent monitorEvent;
 
         /**
          * An unique ID to mark the start point of receiving the valid filter events after
          * reconfiguring the filter. It must be sent at least once in the first event after the
          * filter is restarted. 0 is reserved for the newly opened filter's first start, which is
          * optional for HAL to send.
+         *
+         * When sending starId, DemuxFilterEventExt.events should only contain one startId event.
+         * StardId event should be sent with an empty @1.0::DemuxFilterEvent.
          */
         uint32_t startId;
     };
@@ -194,6 +214,24 @@ enum ScramblingStatus : uint32_t {
      * Content is scrambled.
      */
     SCRAMBLED = 1 << 2,
+};
+
+@export
+enum DemuxFilterMonitorEventType : uint32_t {
+    SCRAMBLING_STATUS = 1 << 0,
+    IP_CID_CHANGE = 1 << 1,
+};
+
+safe_union DemuxFilterMonitorEvent {
+    /**
+     * New scrambling status.
+     */
+    ScramblingStatus scramblingStatus;
+
+    /**
+     * New cid for the IP filter.
+     */
+    uint32_t cid;
 };
 
 typedef FrontendDvbcSpectralInversion FrontendSpectralInversion;
