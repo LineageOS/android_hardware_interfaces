@@ -77,6 +77,8 @@ struct HidlUtils {
 #endif
 
 #if MAJOR_VERSION >= 7
+    static constexpr char sAudioTagSeparator = ';';
+
     static status_t audioChannelMaskFromHal(audio_channel_mask_t halChannelMask, bool isInput,
                                             AudioChannelMask* channelMask);
     static status_t audioChannelMasksFromHal(const std::vector<std::string>& halChannelMasks,
@@ -126,6 +128,7 @@ struct HidlUtils {
                                                struct audio_port_config_device_ext* device,
                                                struct audio_port_config_mix_ext* mix,
                                                struct audio_port_config_session_ext* session);
+
 #endif  // MAJOR_VERSION >= 7
 
     // V4 and below have DeviceAddress defined in the 'core' interface.
