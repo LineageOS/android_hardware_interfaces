@@ -40,6 +40,18 @@ void FilterCallback::testFilterScramblingEvent() {
     ALOGW("[vts] pass and stop");
 }
 
+void FilterCallback::testFilterIpCidEvent() {
+    android::Mutex::Autolock autoLock(mMsgLock);
+    while (mIpCidEvent < 1) {
+        if (-ETIMEDOUT == mMsgCondition.waitRelative(mMsgLock, WAIT_TIMEOUT)) {
+            EXPECT_TRUE(false) << "ip cid change event does not output within timeout";
+            return;
+        }
+    }
+    mIpCidEvent = 0;
+    ALOGW("[vts] pass and stop");
+}
+
 void FilterCallback::testStartIdAfterReconfigure() {
     android::Mutex::Autolock autoLock(mMsgLock);
     while (!mStartIdReceived) {
@@ -80,8 +92,17 @@ void FilterCallback::readFilterEventData() {
                       eventExt.mmtpRecord().pts, eventExt.mmtpRecord().firstMbInSlice,
                       eventExt.mmtpRecord().mpuSequenceNumber, eventExt.mmtpRecord().tsIndexMask);
                 break;
-            case DemuxFilterEventExt::Event::hidl_discriminator::scramblingStatus:
-                mScramblingStatusEvent++;
+            case DemuxFilterEventExt::Event::hidl_discriminator::monitorEvent:
+                switch (eventExt.monitorEvent().getDiscriminator()) {
+                    case DemuxFilterMonitorEvent::hidl_discriminator::scramblingStatus:
+                        mScramblingStatusEvent++;
+                        break;
+                    case DemuxFilterMonitorEvent::hidl_discriminator::cid:
+                        mIpCidEvent++;
+                        break;
+                    default:
+                        break;
+                }
                 break;
             case DemuxFilterEventExt::Event::hidl_discriminator::startId:
                 ALOGD("[vts] Extended restart filter event, startId=%d", eventExt.startId());
@@ -272,15 +293,16 @@ AssertionResult FilterTests::closeFilter(uint64_t filterId) {
     return AssertionResult(status == Result::SUCCESS);
 }
 
-AssertionResult FilterTests::configureScramblingEvent(uint64_t filterId, uint32_t statuses) {
+AssertionResult FilterTests::configureMonitorEvent(uint64_t filterId, uint32_t monitorEventTypes) {
     EXPECT_TRUE(mFilters[filterId]) << "Test with getNewlyOpenedFilterId first.";
     Result status;
 
     sp<android::hardware::tv::tuner::V1_1::IFilter> filter_v1_1 =
             android::hardware::tv::tuner::V1_1::IFilter::castFrom(mFilters[filterId]);
     if (filter_v1_1 != NULL) {
-        status = filter_v1_1->configureScramblingEvent(statuses);
+        status = filter_v1_1->configureMonitorEvent(monitorEventTypes);
         mFilterCallbacks[filterId]->testFilterScramblingEvent();
+        mFilterCallbacks[filterId]->testFilterIpCidEvent();
     } else {
         ALOGW("[vts] Can't cast IFilter into v1_1.");
         return failure();
