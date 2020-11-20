@@ -1065,6 +1065,8 @@ TEST_P(BluetoothAudioProviderLeAudioOutputSoftwareHidlTest,
           ASSERT_TRUE(hidl_retval.isOk());
           if (is_codec_config_valid) {
             EXPECT_TRUE(tempDataMQ != nullptr && tempDataMQ->isValid());
+          } else {
+            EXPECT_TRUE(tempDataMQ == nullptr);
           }
           EXPECT_TRUE(audio_provider_2_1_->endSession().isOk());
         }  // uint32_t (data interval in microseconds)
