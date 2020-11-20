@@ -56,7 +56,6 @@ interface IEffect {
      *
      * @return retval operation completion status.
      */
-    @callflow(next={"prepareForProcessing"})
     enable() generates (Result retval);
 
     /**
@@ -64,7 +63,6 @@ interface IEffect {
      *
      * @return retval operation completion status.
      */
-    @callflow(next={"close"})
     disable() generates (Result retval);
 
     /**
@@ -78,7 +76,7 @@ interface IEffect {
      * @param device output device specification.
      * @return retval operation completion status.
      */
-    setDevice(bitfield<AudioDevice> device) generates (Result retval);
+    setDevice(DeviceAddress device) generates (Result retval);
 
     /**
      * Set and get volume. Used by audio framework to delegate volume control to
@@ -147,7 +145,7 @@ interface IEffect {
      * @param device input device specification.
      * @return retval operation completion status.
      */
-    setInputDevice(bitfield<AudioDevice> device) generates (Result retval);
+    setInputDevice(DeviceAddress device) generates (Result retval);
 
     /**
      * Read audio parameters configurations for input and output buffers.
@@ -251,7 +249,6 @@ interface IEffect {
      *                                  the queue.
      * @return statusMQ a message queue used for passing status from the effect.
      */
-    @callflow(next={"setProcessBuffers"})
     prepareForProcessing() generates (Result retval, fmq_sync<Result> statusMQ);
 
     /**
@@ -416,6 +413,5 @@ interface IEffect {
      * @return retval OK in case the success.
      *                INVALID_STATE if the effect was already closed.
      */
-    @exit
     close() generates (Result retval);
 };
