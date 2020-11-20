@@ -95,7 +95,7 @@ interface IStreamOut extends IStream {
      *
      * The driver operates on a dedicated thread. The client must ensure that
      * the thread is given an appropriate priority and assigned to correct
-     * scheduler and cgroup. For this purpose, the method returns identifiers
+     * scheduler and cgroup. For this purpose, the method returns the identifier
      * of the driver thread.
      *
      * @param frameSize the size of a single frame, in bytes.
@@ -109,7 +109,9 @@ interface IStreamOut extends IStream {
      *                specified at the stream opening.
      * @return statusMQ a message queue used for passing status from the driver
      *                  using WriteStatus structures.
-     * @return threadInfo identifiers of the driver's dedicated thread.
+     * @return threadId identifier of the driver's dedicated thread; the caller
+     *                  may adjust the thread priority to match the priority
+     *                  of the thread that provides audio data.
      */
     prepareForWriting(uint32_t frameSize, uint32_t framesCount)
     generates (
@@ -117,7 +119,7 @@ interface IStreamOut extends IStream {
             fmq_sync<WriteCommand> commandMQ,
             fmq_sync<uint8_t> dataMQ,
             fmq_sync<WriteStatus> statusMQ,
-            ThreadInfo threadInfo);
+            int32_t threadId);
 
     /**
      * Return the number of audio frames written by the audio DSP to DAC since

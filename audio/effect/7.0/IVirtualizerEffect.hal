@@ -48,7 +48,7 @@ interface IVirtualizerEffect extends IEffect {
 
     struct SpeakerAngle {
         /** Speaker channel mask */
-        bitfield<AudioChannelMask> mask;
+        vec<AudioChannelMask> mask;
         // all angles are expressed in degrees and
         // are relative to the listener.
         int16_t azimuth; // 0 is the direction the listener faces
@@ -61,17 +61,17 @@ interface IVirtualizerEffect extends IEffect {
      * Retrieves virtual speaker angles for the given channel mask on the
      * specified device.
      */
-    getVirtualSpeakerAngles(bitfield<AudioChannelMask> mask, AudioDevice device)
+    getVirtualSpeakerAngles(vec<AudioChannelMask> mask, DeviceAddress device)
             generates (Result retval, vec<SpeakerAngle> speakerAngles);
 
     /**
      * Forces the virtualizer effect for the given output device.
      */
-    forceVirtualizationMode(AudioDevice device) generates (Result retval);
+    forceVirtualizationMode(DeviceAddress device) generates (Result retval);
 
     /**
      * Returns audio device reflecting the current virtualization mode,
-     * AUDIO_DEVICE_NONE when not virtualizing.
+     * Device type can be empty when not virtualizing.
      */
-    getVirtualizationMode() generates (Result retval, AudioDevice device);
+    getVirtualizationMode() generates (Result retval, DeviceAddress device);
 };
