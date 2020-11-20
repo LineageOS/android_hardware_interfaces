@@ -6,6 +6,81 @@ package audio.policy.configuration.V7_0 {
     method public java.util.List<java.lang.String> getItem();
   }
 
+  public enum AudioChannelMask {
+    method public String getRawName();
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_1;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_10;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_11;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_12;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_13;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_14;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_15;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_16;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_17;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_18;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_19;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_2;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_20;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_21;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_22;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_23;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_24;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_3;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_4;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_5;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_6;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_7;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_8;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_9;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_IN_2POINT0POINT2;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_IN_2POINT1POINT2;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_IN_3POINT0POINT2;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_IN_3POINT1POINT2;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_IN_5POINT1;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_IN_6;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_IN_FRONT_BACK;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_IN_MONO;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_IN_STEREO;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_IN_VOICE_CALL_MONO;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_IN_VOICE_DNLINK_MONO;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_IN_VOICE_UPLINK_MONO;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_2POINT0POINT2;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_2POINT1;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_2POINT1POINT2;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_3POINT0POINT2;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_3POINT1POINT2;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_5POINT1;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_5POINT1POINT2;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_5POINT1POINT4;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_5POINT1_BACK;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_5POINT1_SIDE;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_6POINT1;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_7POINT1;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_7POINT1POINT2;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_7POINT1POINT4;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_HAPTIC_AB;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_MONO;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_MONO_HAPTIC_A;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_MONO_HAPTIC_AB;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_PENTA;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_QUAD;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_QUAD_BACK;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_QUAD_SIDE;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_STEREO;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_STEREO_HAPTIC_A;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_STEREO_HAPTIC_AB;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_SURROUND;
+  }
+
+  public enum AudioContentType {
+    method public String getRawName();
+    enum_constant public static final audio.policy.configuration.V7_0.AudioContentType AUDIO_CONTENT_TYPE_MOVIE;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioContentType AUDIO_CONTENT_TYPE_MUSIC;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioContentType AUDIO_CONTENT_TYPE_SONIFICATION;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioContentType AUDIO_CONTENT_TYPE_SPEECH;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioContentType AUDIO_CONTENT_TYPE_UNKNOWN;
+  }
+
   public enum AudioDevice {
     method public String getRawName();
     enum_constant public static final audio.policy.configuration.V7_0.AudioDevice AUDIO_DEVICE_IN_AMBIENT;
@@ -116,6 +191,7 @@ package audio.policy.configuration.V7_0 {
     enum_constant public static final audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_APTX_HD;
     enum_constant public static final audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_APTX_TWSP;
     enum_constant public static final audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_CELT;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_DEFAULT;
     enum_constant public static final audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_DOLBY_TRUEHD;
     enum_constant public static final audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_DSD;
     enum_constant public static final audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_DTS;
@@ -164,18 +240,59 @@ package audio.policy.configuration.V7_0 {
     method public void setVersion(audio.policy.configuration.V7_0.Version);
   }
 
+  public enum AudioSource {
+    method public String getRawName();
+    enum_constant public static final audio.policy.configuration.V7_0.AudioSource AUDIO_SOURCE_CAMCORDER;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioSource AUDIO_SOURCE_DEFAULT;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioSource AUDIO_SOURCE_ECHO_REFERENCE;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioSource AUDIO_SOURCE_FM_TUNER;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioSource AUDIO_SOURCE_HOTWORD;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioSource AUDIO_SOURCE_MIC;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioSource AUDIO_SOURCE_REMOTE_SUBMIX;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioSource AUDIO_SOURCE_UNPROCESSED;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioSource AUDIO_SOURCE_VOICE_CALL;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioSource AUDIO_SOURCE_VOICE_COMMUNICATION;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioSource AUDIO_SOURCE_VOICE_DOWNLINK;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioSource AUDIO_SOURCE_VOICE_PERFORMANCE;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioSource AUDIO_SOURCE_VOICE_RECOGNITION;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioSource AUDIO_SOURCE_VOICE_UPLINK;
+  }
+
+  public enum AudioStreamType {
+    method public String getRawName();
+    enum_constant public static final audio.policy.configuration.V7_0.AudioStreamType AUDIO_STREAM_ACCESSIBILITY;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioStreamType AUDIO_STREAM_ALARM;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioStreamType AUDIO_STREAM_ASSISTANT;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioStreamType AUDIO_STREAM_BLUETOOTH_SCO;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioStreamType AUDIO_STREAM_DTMF;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioStreamType AUDIO_STREAM_ENFORCED_AUDIBLE;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioStreamType AUDIO_STREAM_MUSIC;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioStreamType AUDIO_STREAM_NOTIFICATION;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioStreamType AUDIO_STREAM_PATCH;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioStreamType AUDIO_STREAM_REROUTING;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioStreamType AUDIO_STREAM_RING;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioStreamType AUDIO_STREAM_SYSTEM;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioStreamType AUDIO_STREAM_TTS;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioStreamType AUDIO_STREAM_VOICE_CALL;
+  }
+
   public enum AudioUsage {
     method public String getRawName();
     enum_constant public static final audio.policy.configuration.V7_0.AudioUsage AUDIO_USAGE_ALARM;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioUsage AUDIO_USAGE_ANNOUNCEMENT;
     enum_constant public static final audio.policy.configuration.V7_0.AudioUsage AUDIO_USAGE_ASSISTANCE_ACCESSIBILITY;
     enum_constant public static final audio.policy.configuration.V7_0.AudioUsage AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE;
     enum_constant public static final audio.policy.configuration.V7_0.AudioUsage AUDIO_USAGE_ASSISTANCE_SONIFICATION;
     enum_constant public static final audio.policy.configuration.V7_0.AudioUsage AUDIO_USAGE_ASSISTANT;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioUsage AUDIO_USAGE_CALL_ASSISTANT;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioUsage AUDIO_USAGE_EMERGENCY;
     enum_constant public static final audio.policy.configuration.V7_0.AudioUsage AUDIO_USAGE_GAME;
     enum_constant public static final audio.policy.configuration.V7_0.AudioUsage AUDIO_USAGE_MEDIA;
     enum_constant public static final audio.policy.configuration.V7_0.AudioUsage AUDIO_USAGE_NOTIFICATION;
     enum_constant public static final audio.policy.configuration.V7_0.AudioUsage AUDIO_USAGE_NOTIFICATION_TELEPHONY_RINGTONE;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioUsage AUDIO_USAGE_SAFETY;
     enum_constant public static final audio.policy.configuration.V7_0.AudioUsage AUDIO_USAGE_UNKNOWN;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioUsage AUDIO_USAGE_VEHICLE_STATUS;
     enum_constant public static final audio.policy.configuration.V7_0.AudioUsage AUDIO_USAGE_VIRTUAL_SOURCE;
     enum_constant public static final audio.policy.configuration.V7_0.AudioUsage AUDIO_USAGE_VOICE_COMMUNICATION;
     enum_constant public static final audio.policy.configuration.V7_0.AudioUsage AUDIO_USAGE_VOICE_COMMUNICATION_SIGNALLING;
@@ -234,7 +351,7 @@ package audio.policy.configuration.V7_0 {
 
   public static class Gains.Gain {
     ctor public Gains.Gain();
-    method public String getChannel_mask();
+    method public audio.policy.configuration.V7_0.AudioChannelMask getChannel_mask();
     method public int getDefaultValueMB();
     method public int getMaxRampMs();
     method public int getMaxValueMB();
@@ -244,7 +361,7 @@ package audio.policy.configuration.V7_0 {
     method public String getName();
     method public int getStepValueMB();
     method public boolean getUseForVolume();
-    method public void setChannel_mask(String);
+    method public void setChannel_mask(audio.policy.configuration.V7_0.AudioChannelMask);
     method public void setDefaultValueMB(int);
     method public void setMaxRampMs(int);
     method public void setMaxValueMB(int);
@@ -327,14 +444,14 @@ package audio.policy.configuration.V7_0 {
 
   public class Profile {
     ctor public Profile();
-    method public String getChannelMasks();
+    method public java.util.List<audio.policy.configuration.V7_0.AudioChannelMask> getChannelMasks();
     method public String getFormat();
     method public String getName();
-    method public String getSamplingRates();
-    method public void setChannelMasks(String);
+    method public java.util.List<java.math.BigInteger> getSamplingRates();
+    method public void setChannelMasks(java.util.List<audio.policy.configuration.V7_0.AudioChannelMask>);
     method public void setFormat(String);
     method public void setName(String);
-    method public void setSamplingRates(String);
+    method public void setSamplingRates(java.util.List<java.math.BigInteger>);
   }
 
   public class Reference {
@@ -363,24 +480,6 @@ package audio.policy.configuration.V7_0 {
     method public void setSink(String);
     method public void setSources(String);
     method public void setType(audio.policy.configuration.V7_0.MixType);
-  }
-
-  public enum Stream {
-    method public String getRawName();
-    enum_constant public static final audio.policy.configuration.V7_0.Stream AUDIO_STREAM_ACCESSIBILITY;
-    enum_constant public static final audio.policy.configuration.V7_0.Stream AUDIO_STREAM_ALARM;
-    enum_constant public static final audio.policy.configuration.V7_0.Stream AUDIO_STREAM_ASSISTANT;
-    enum_constant public static final audio.policy.configuration.V7_0.Stream AUDIO_STREAM_BLUETOOTH_SCO;
-    enum_constant public static final audio.policy.configuration.V7_0.Stream AUDIO_STREAM_DTMF;
-    enum_constant public static final audio.policy.configuration.V7_0.Stream AUDIO_STREAM_ENFORCED_AUDIBLE;
-    enum_constant public static final audio.policy.configuration.V7_0.Stream AUDIO_STREAM_MUSIC;
-    enum_constant public static final audio.policy.configuration.V7_0.Stream AUDIO_STREAM_NOTIFICATION;
-    enum_constant public static final audio.policy.configuration.V7_0.Stream AUDIO_STREAM_PATCH;
-    enum_constant public static final audio.policy.configuration.V7_0.Stream AUDIO_STREAM_REROUTING;
-    enum_constant public static final audio.policy.configuration.V7_0.Stream AUDIO_STREAM_RING;
-    enum_constant public static final audio.policy.configuration.V7_0.Stream AUDIO_STREAM_SYSTEM;
-    enum_constant public static final audio.policy.configuration.V7_0.Stream AUDIO_STREAM_TTS;
-    enum_constant public static final audio.policy.configuration.V7_0.Stream AUDIO_STREAM_VOICE_CALL;
   }
 
   public class SurroundFormats {
@@ -412,10 +511,10 @@ package audio.policy.configuration.V7_0 {
     method public audio.policy.configuration.V7_0.DeviceCategory getDeviceCategory();
     method public java.util.List<java.lang.String> getPoint();
     method public String getRef();
-    method public audio.policy.configuration.V7_0.Stream getStream();
+    method public audio.policy.configuration.V7_0.AudioStreamType getStream();
     method public void setDeviceCategory(audio.policy.configuration.V7_0.DeviceCategory);
     method public void setRef(String);
-    method public void setStream(audio.policy.configuration.V7_0.Stream);
+    method public void setStream(audio.policy.configuration.V7_0.AudioStreamType);
   }
 
   public class Volumes {
