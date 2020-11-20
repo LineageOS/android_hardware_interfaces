@@ -63,13 +63,13 @@ class ResilientDevice final : public nn::IDevice,
 
     nn::GeneralResult<nn::SharedPreparedModel> prepareModel(
             const nn::Model& model, nn::ExecutionPreference preference, nn::Priority priority,
-            nn::OptionalTimePoint deadline, const std::vector<nn::NativeHandle>& modelCache,
-            const std::vector<nn::NativeHandle>& dataCache,
+            nn::OptionalTimePoint deadline, const std::vector<nn::SharedHandle>& modelCache,
+            const std::vector<nn::SharedHandle>& dataCache,
             const nn::CacheToken& token) const override;
 
     nn::GeneralResult<nn::SharedPreparedModel> prepareModelFromCache(
-            nn::OptionalTimePoint deadline, const std::vector<nn::NativeHandle>& modelCache,
-            const std::vector<nn::NativeHandle>& dataCache,
+            nn::OptionalTimePoint deadline, const std::vector<nn::SharedHandle>& modelCache,
+            const std::vector<nn::SharedHandle>& dataCache,
             const nn::CacheToken& token) const override;
 
     nn::GeneralResult<nn::SharedBuffer> allocate(
@@ -81,12 +81,12 @@ class ResilientDevice final : public nn::IDevice,
     nn::GeneralResult<nn::SharedPreparedModel> prepareModelInternal(
             bool blocking, const nn::Model& model, nn::ExecutionPreference preference,
             nn::Priority priority, nn::OptionalTimePoint deadline,
-            const std::vector<nn::NativeHandle>& modelCache,
-            const std::vector<nn::NativeHandle>& dataCache, const nn::CacheToken& token) const;
+            const std::vector<nn::SharedHandle>& modelCache,
+            const std::vector<nn::SharedHandle>& dataCache, const nn::CacheToken& token) const;
     nn::GeneralResult<nn::SharedPreparedModel> prepareModelFromCacheInternal(
             bool blocking, nn::OptionalTimePoint deadline,
-            const std::vector<nn::NativeHandle>& modelCache,
-            const std::vector<nn::NativeHandle>& dataCache, const nn::CacheToken& token) const;
+            const std::vector<nn::SharedHandle>& modelCache,
+            const std::vector<nn::SharedHandle>& dataCache, const nn::CacheToken& token) const;
     nn::GeneralResult<nn::SharedBuffer> allocateInternal(
             bool blocking, const nn::BufferDesc& desc,
             const std::vector<nn::SharedPreparedModel>& preparedModels,

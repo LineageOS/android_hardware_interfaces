@@ -26,6 +26,7 @@ cc_library_static {
         "neuralnetworks_utils_hal_1_1",
         "neuralnetworks_utils_hal_1_2",
         "neuralnetworks_utils_hal_1_3",
+        "neuralnetworks_utils_hal_common",
     ],
     shared_libs: [
         "android.hardware.neuralnetworks@1.0",

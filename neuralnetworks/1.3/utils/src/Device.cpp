@@ -179,8 +179,8 @@ nn::GeneralResult<std::vector<bool>> Device::getSupportedOperations(const nn::Mo
 
 nn::GeneralResult<nn::SharedPreparedModel> Device::prepareModel(
         const nn::Model& model, nn::ExecutionPreference preference, nn::Priority priority,
-        nn::OptionalTimePoint deadline, const std::vector<nn::NativeHandle>& modelCache,
-        const std::vector<nn::NativeHandle>& dataCache, const nn::CacheToken& token) const {
+        nn::OptionalTimePoint deadline, const std::vector<nn::SharedHandle>& modelCache,
+        const std::vector<nn::SharedHandle>& dataCache, const nn::CacheToken& token) const {
     // Ensure that model is ready for IPC.
     std::optional<nn::Model> maybeModelInShared;
     const nn::Model& modelInShared =
@@ -211,8 +211,8 @@ nn::GeneralResult<nn::SharedPreparedModel> Device::prepareModel(
 }
 
 nn::GeneralResult<nn::SharedPreparedModel> Device::prepareModelFromCache(
-        nn::OptionalTimePoint deadline, const std::vector<nn::NativeHandle>& modelCache,
-        const std::vector<nn::NativeHandle>& dataCache, const nn::CacheToken& token) const {
+        nn::OptionalTimePoint deadline, const std::vector<nn::SharedHandle>& modelCache,
+        const std::vector<nn::SharedHandle>& dataCache, const nn::CacheToken& token) const {
     const auto hidlDeadline = NN_TRY(convert(deadline));
     const auto hidlModelCache = NN_TRY(V1_2::utils::convert(modelCache));
     const auto hidlDataCache = NN_TRY(V1_2::utils::convert(dataCache));
