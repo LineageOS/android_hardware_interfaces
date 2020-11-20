@@ -37,13 +37,14 @@ status_t HidlUtils::audioConfigFromHal(const audio_config_t& halConfig, AudioCon
     return status;
 }
 
-void HidlUtils::audioConfigToHal(const AudioConfig& config, audio_config_t* halConfig) {
+status_t HidlUtils::audioConfigToHal(const AudioConfig& config, audio_config_t* halConfig) {
     memset(halConfig, 0, sizeof(audio_config_t));
     halConfig->sample_rate = config.sampleRateHz;
     halConfig->channel_mask = static_cast<audio_channel_mask_t>(config.channelMask);
     halConfig->format = static_cast<audio_format_t>(config.format);
     audioOffloadInfoToHal(config.offloadInfo, &halConfig->offload_info);
     halConfig->frame_count = config.frameCount;
+    return NO_ERROR;
 }
 
 void HidlUtils::audioGainConfigFromHal(const struct audio_gain_config& halConfig,
@@ -57,8 +58,8 @@ void HidlUtils::audioGainConfigFromHal(const struct audio_gain_config& halConfig
     config->rampDurationMs = halConfig.ramp_duration_ms;
 }
 
-void HidlUtils::audioGainConfigToHal(const AudioGainConfig& config,
-                                     struct audio_gain_config* halConfig) {
+status_t HidlUtils::audioGainConfigToHal(const AudioGainConfig& config,
+                                         struct audio_gain_config* halConfig) {
     halConfig->index = config.index;
     halConfig->mode = static_cast<audio_gain_mode_t>(config.mode);
     halConfig->channel_mask = static_cast<audio_channel_mask_t>(config.channelMask);
@@ -67,6 +68,7 @@ void HidlUtils::audioGainConfigToHal(const AudioGainConfig& config,
         halConfig->values[i] = config.values[i];
     }
     halConfig->ramp_duration_ms = config.rampDurationMs;
+    return NO_ERROR;
 }
 
 void HidlUtils::audioGainFromHal(const struct audio_gain& halGain, AudioGain* gain) {
@@ -80,7 +82,7 @@ void HidlUtils::audioGainFromHal(const struct audio_gain& halGain, AudioGain* ga
     gain->maxRampMs = halGain.max_ramp_ms;
 }
 
-void HidlUtils::audioGainToHal(const AudioGain& gain, struct audio_gain* halGain) {
+status_t HidlUtils::audioGainToHal(const AudioGain& gain, struct audio_gain* halGain) {
     halGain->mode = static_cast<audio_gain_mode_t>(gain.mode);
     halGain->channel_mask = static_cast<audio_channel_mask_t>(gain.channelMask);
     halGain->min_value = gain.minValue;
@@ -89,22 +91,26 @@ void HidlUtils::audioGainToHal(const AudioGain& gain, struct audio_gain* halGain
     halGain->step_value = gain.stepValue;
     halGain->min_ramp_ms = gain.minRampMs;
     halGain->max_ramp_ms = gain.maxRampMs;
+    return NO_ERROR;
 }
 
-AudioUsage HidlUtils::audioUsageFromHal(const audio_usage_t halUsage) {
+status_t HidlUtils::audioUsageFromHal(audio_usage_t halUsage, AudioUsage* usage) {
     switch (halUsage) {
         case AUDIO_USAGE_NOTIFICATION_COMMUNICATION_REQUEST:
         case AUDIO_USAGE_NOTIFICATION_COMMUNICATION_INSTANT:
         case AUDIO_USAGE_NOTIFICATION_COMMUNICATION_DELAYED:
         case AUDIO_USAGE_NOTIFICATION_EVENT:
-            return AudioUsage::NOTIFICATION;
+            *usage = AudioUsage::NOTIFICATION;
+            break;
         default:
-            return static_cast<AudioUsage>(halUsage);
+            *usage = static_cast<AudioUsage>(halUsage);
     }
+    return NO_ERROR;
 }
 
-audio_usage_t HidlUtils::audioUsageToHal(const AudioUsage usage) {
-    return static_cast<audio_usage_t>(usage);
+status_t HidlUtils::audioUsageToHal(const AudioUsage& usage, audio_usage_t* halUsage) {
+    *halUsage = static_cast<audio_usage_t>(usage);
+    return NO_ERROR;
 }
 
 status_t HidlUtils::audioOffloadInfoFromHal(const audio_offload_info_t& halOffload,
@@ -119,7 +125,7 @@ status_t HidlUtils::audioOffloadInfoFromHal(const audio_offload_info_t& halOfflo
     offload->isStreaming = halOffload.is_streaming;
     offload->bitWidth = halOffload.bit_width;
     offload->bufferSize = halOffload.offload_buffer_size;
-    offload->usage = audioUsageFromHal(halOffload.usage);
+    audioUsageFromHal(halOffload.usage, &offload->usage);
 #if MAJOR_VERSION >= 6
     if (halOffload.version >= AUDIO_OFFLOAD_INFO_VERSION_0_2) {
         offload->encapsulationMode =
@@ -139,11 +145,11 @@ status_t HidlUtils::audioOffloadInfoFromHal(const audio_offload_info_t& halOfflo
         return BAD_VALUE;
     }
 #endif
-    return OK;
+    return NO_ERROR;
 }
 
-void HidlUtils::audioOffloadInfoToHal(const AudioOffloadInfo& offload,
-                                      audio_offload_info_t* halOffload) {
+status_t HidlUtils::audioOffloadInfoToHal(const AudioOffloadInfo& offload,
+                                          audio_offload_info_t* halOffload) {
     *halOffload = AUDIO_INFO_INITIALIZER;
     halOffload->sample_rate = offload.sampleRateHz;
     halOffload->channel_mask = static_cast<audio_channel_mask_t>(offload.channelMask);
@@ -155,7 +161,7 @@ void HidlUtils::audioOffloadInfoToHal(const AudioOffloadInfo& offload,
     halOffload->is_streaming = offload.isStreaming;
     halOffload->bit_width = offload.bitWidth;
     halOffload->offload_buffer_size = offload.bufferSize;
-    halOffload->usage = audioUsageToHal(offload.usage);
+    audioUsageToHal(offload.usage, &halOffload->usage);
 #if MAJOR_VERSION >= 6
     halOffload->encapsulation_mode =
             static_cast<audio_encapsulation_mode_t>(offload.encapsulationMode);
@@ -164,10 +170,11 @@ void HidlUtils::audioOffloadInfoToHal(const AudioOffloadInfo& offload,
 #else
     // offload doesn't contain encapsulationMode, contentId, syncId, so this is OK.
 #endif
+    return NO_ERROR;
 }
 
-void HidlUtils::audioPortConfigFromHal(const struct audio_port_config& halConfig,
-                                       AudioPortConfig* config) {
+status_t HidlUtils::audioPortConfigFromHal(const struct audio_port_config& halConfig,
+                                           AudioPortConfig* config) {
     config->id = halConfig.id;
     config->role = AudioPortRole(halConfig.role);
     config->type = AudioPortType(halConfig.type);
@@ -201,10 +208,11 @@ void HidlUtils::audioPortConfigFromHal(const struct audio_port_config& halConfig
             break;
         }
     }
+    return NO_ERROR;
 }
 
-void HidlUtils::audioPortConfigToHal(const AudioPortConfig& config,
-                                     struct audio_port_config* halConfig) {
+status_t HidlUtils::audioPortConfigToHal(const AudioPortConfig& config,
+                                         struct audio_port_config* halConfig) {
     memset(halConfig, 0, sizeof(audio_port_config));
     halConfig->id = config.id;
     halConfig->role = static_cast<audio_port_role_t>(config.role);
@@ -242,27 +250,10 @@ void HidlUtils::audioPortConfigToHal(const AudioPortConfig& config,
             break;
         }
     }
+    return NO_ERROR;
 }
 
-void HidlUtils::audioPortConfigsFromHal(unsigned int numHalConfigs,
-                                        const struct audio_port_config* halConfigs,
-                                        hidl_vec<AudioPortConfig>* configs) {
-    configs->resize(numHalConfigs);
-    for (unsigned int i = 0; i < numHalConfigs; ++i) {
-        audioPortConfigFromHal(halConfigs[i], &(*configs)[i]);
-    }
-}
-
-std::unique_ptr<audio_port_config[]> HidlUtils::audioPortConfigsToHal(
-    const hidl_vec<AudioPortConfig>& configs) {
-    std::unique_ptr<audio_port_config[]> halConfigs(new audio_port_config[configs.size()]);
-    for (size_t i = 0; i < configs.size(); ++i) {
-        audioPortConfigToHal(configs[i], &halConfigs[i]);
-    }
-    return halConfigs;
-}
-
-void HidlUtils::audioPortFromHal(const struct audio_port& halPort, AudioPort* port) {
+status_t HidlUtils::audioPortFromHal(const struct audio_port& halPort, AudioPort* port) {
     port->id = halPort.id;
     port->role = AudioPortRole(halPort.role);
     port->type = AudioPortType(halPort.type);
@@ -305,9 +296,10 @@ void HidlUtils::audioPortFromHal(const struct audio_port& halPort, AudioPort* po
             break;
         }
     }
+    return NO_ERROR;
 }
 
-void HidlUtils::audioPortToHal(const AudioPort& port, struct audio_port* halPort) {
+status_t HidlUtils::audioPortToHal(const AudioPort& port, struct audio_port* halPort) {
     memset(halPort, 0, sizeof(audio_port));
     halPort->id = port.id;
     halPort->role = static_cast<audio_port_role_t>(port.role);
@@ -356,22 +348,7 @@ void HidlUtils::audioPortToHal(const AudioPort& port, struct audio_port* halPort
             break;
         }
     }
-}
-
-void HidlUtils::uuidFromHal(const audio_uuid_t& halUuid, Uuid* uuid) {
-    uuid->timeLow = halUuid.timeLow;
-    uuid->timeMid = halUuid.timeMid;
-    uuid->versionAndTimeHigh = halUuid.timeHiAndVersion;
-    uuid->variantAndClockSeqHigh = halUuid.clockSeq;
-    memcpy(uuid->node.data(), halUuid.node, uuid->node.size());
-}
-
-void HidlUtils::uuidToHal(const Uuid& uuid, audio_uuid_t* halUuid) {
-    halUuid->timeLow = uuid.timeLow;
-    halUuid->timeMid = uuid.timeMid;
-    halUuid->timeHiAndVersion = uuid.versionAndTimeHigh;
-    halUuid->clockSeq = uuid.variantAndClockSeqHigh;
-    memcpy(halUuid->node, uuid.node.data(), uuid.node.size());
+    return NO_ERROR;
 }
 
 }  // namespace implementation

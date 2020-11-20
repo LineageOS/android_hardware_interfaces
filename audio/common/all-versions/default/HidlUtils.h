@@ -34,40 +34,123 @@ namespace implementation {
 
 using namespace ::android::hardware::audio::common::CPP_VERSION;
 
-class HidlUtils {
-  public:
-    // A failure here indicates a platform config that is incompatible with
-    // the compiled HIDL interface version.
+struct HidlUtils {
+#if MAJOR_VERSION < 7
     static status_t audioConfigFromHal(const audio_config_t& halConfig, AudioConfig* config);
-
-    static void audioConfigToHal(const AudioConfig& config, audio_config_t* halConfig);
     static void audioGainConfigFromHal(const struct audio_gain_config& halConfig,
                                        AudioGainConfig* config);
-    static void audioGainConfigToHal(const AudioGainConfig& config,
-                                     struct audio_gain_config* halConfig);
     static void audioGainFromHal(const struct audio_gain& halGain, AudioGain* gain);
-    static void audioGainToHal(const AudioGain& gain, struct audio_gain* halGain);
-    static AudioUsage audioUsageFromHal(const audio_usage_t halUsage);
-    static audio_usage_t audioUsageToHal(const AudioUsage usage);
-    // A failure here indicates a platform offload info that is incompatible with
-    // the compiled HIDL interface version.
+#else
+    static status_t audioConfigFromHal(const audio_config_t& halConfig, bool isInput,
+                                       AudioConfig* config);
+    static status_t audioGainConfigFromHal(const struct audio_gain_config& halConfig, bool isInput,
+                                           AudioGainConfig* config);
+    static status_t audioGainFromHal(const struct audio_gain& halGain, bool isInput,
+                                     AudioGain* gain);
+#endif
+    static status_t audioConfigToHal(const AudioConfig& config, audio_config_t* halConfig);
+    static status_t audioGainConfigToHal(const AudioGainConfig& config,
+                                         struct audio_gain_config* halConfig);
+    static status_t audioGainToHal(const AudioGain& gain, struct audio_gain* halGain);
+    static status_t audioUsageFromHal(audio_usage_t halUsage, AudioUsage* usage);
+    static status_t audioUsageToHal(const AudioUsage& usage, audio_usage_t* halUsage);
     static status_t audioOffloadInfoFromHal(const audio_offload_info_t& halOffload,
                                             AudioOffloadInfo* offload);
-    static void audioOffloadInfoToHal(const AudioOffloadInfo& offload,
-                                      audio_offload_info_t* halOffload);
-    static void audioPortConfigFromHal(const struct audio_port_config& halConfig,
-                                       AudioPortConfig* config);
-    static void audioPortConfigToHal(const AudioPortConfig& config,
-                                     struct audio_port_config* halConfig);
-    static void audioPortConfigsFromHal(unsigned int numHalConfigs,
-                                        const struct audio_port_config* halConfigs,
-                                        hidl_vec<AudioPortConfig>* configs);
+    static status_t audioOffloadInfoToHal(const AudioOffloadInfo& offload,
+                                          audio_offload_info_t* halOffload);
+    static status_t audioPortConfigFromHal(const struct audio_port_config& halConfig,
+                                           AudioPortConfig* config);
+    static status_t audioPortConfigToHal(const AudioPortConfig& config,
+                                         struct audio_port_config* halConfig);
+    static status_t audioPortConfigsFromHal(unsigned int numHalConfigs,
+                                            const struct audio_port_config* halConfigs,
+                                            hidl_vec<AudioPortConfig>* configs) {
+        status_t result = NO_ERROR;
+        configs->resize(numHalConfigs);
+        for (unsigned int i = 0; i < numHalConfigs; ++i) {
+            if (status_t status = audioPortConfigFromHal(halConfigs[i], &(*configs)[i]);
+                status != NO_ERROR) {
+                result = status;
+            }
+        }
+        return result;
+    }
+    static status_t audioPortConfigsToHal(const hidl_vec<AudioPortConfig>& configs,
+                                          std::unique_ptr<audio_port_config[]>* halConfigs) {
+        status_t result = NO_ERROR;
+        halConfigs->reset(new audio_port_config[configs.size()]);
+        for (size_t i = 0; i < configs.size(); ++i) {
+            if (status_t status = audioPortConfigToHal(configs[i], &(*halConfigs)[i]);
+                status != NO_ERROR) {
+                result = status;
+            }
+        }
+        return result;
+    }
+
+    // PLEASE DO NOT USE, will be removed in a couple of days
     static std::unique_ptr<audio_port_config[]> audioPortConfigsToHal(
-            const hidl_vec<AudioPortConfig>& configs);
-    static void audioPortFromHal(const struct audio_port& halPort, AudioPort* port);
-    static void audioPortToHal(const AudioPort& port, struct audio_port* halPort);
-    static void uuidFromHal(const audio_uuid_t& halUuid, Uuid* uuid);
-    static void uuidToHal(const Uuid& uuid, audio_uuid_t* halUuid);
+            const hidl_vec<AudioPortConfig>& configs) {
+        std::unique_ptr<audio_port_config[]> halConfigs;
+        (void)audioPortConfigsToHal(configs, &halConfigs);
+        return halConfigs;
+    }
+
+    static status_t audioPortFromHal(const struct audio_port& halPort, AudioPort* port);
+    static status_t audioPortToHal(const AudioPort& port, struct audio_port* halPort);
+#if MAJOR_VERSION >= 7
+    static status_t audioChannelMaskFromHal(audio_channel_mask_t halChannelMask, bool isInput,
+                                            AudioChannelMask* channelMask);
+    static status_t audioChannelMaskToHal(const AudioChannelMask& channelMask,
+                                          audio_channel_mask_t* halChannelMask);
+    static status_t audioConfigBaseFromHal(const audio_config_base_t& halConfigBase, bool isInput,
+                                           AudioConfigBase* configBase);
+    static status_t audioConfigBaseToHal(const AudioConfigBase& configBase,
+                                         audio_config_base_t* halConfigBase);
+    static status_t audioDeviceTypeFromHal(audio_devices_t halDevice, AudioDevice* device);
+    static status_t audioDeviceTypeToHal(const AudioDevice& device, audio_devices_t* halDevice);
+    static status_t audioFormatFromHal(audio_format_t halFormat, AudioFormat* format);
+    static status_t audioFormatToHal(const AudioFormat& format, audio_format_t* halFormat);
+    static status_t audioGainModeMaskFromHal(audio_gain_mode_t halGainModeMask,
+                                             hidl_vec<AudioGainMode>* gainModeMask);
+    static status_t audioGainModeMaskToHal(const hidl_vec<AudioGainMode>& gainModeMask,
+                                           audio_gain_mode_t* halGainModeMask);
+    static status_t audioPortFromHal(const struct audio_port_v7& halPort, AudioPort* port);
+    static status_t audioPortToHal(const AudioPort& port, struct audio_port_v7* halPort);
+    static status_t audioProfileFromHal(const struct audio_profile& halProfile, bool isInput,
+                                        AudioProfile* profile);
+    static status_t audioProfileToHal(const AudioProfile& profile,
+                                      struct audio_profile* halProfile);
+    static status_t audioSourceFromHal(audio_source_t halSource, AudioSource* source);
+    static status_t audioSourceToHal(const AudioSource& source, audio_source_t* halSource);
+    static status_t audioStreamTypeFromHal(audio_stream_type_t halStreamType,
+                                           AudioStreamType* streamType);
+    static status_t audioStreamTypeToHal(const AudioStreamType& streamType,
+                                         audio_stream_type_t* halStreamType);
+    static status_t deviceAddressToHal(const DeviceAddress& device, audio_devices_t* halDeviceType,
+                                       char* halDeviceAddress);
+    static status_t deviceAddressFromHal(audio_devices_t halDeviceType,
+                                         const char* halDeviceAddress, DeviceAddress* device);
+
+  private:
+    static status_t audioIndexChannelMaskFromHal(audio_channel_mask_t halChannelMask,
+                                                 AudioChannelMask* channelMask);
+    static status_t audioInputChannelMaskFromHal(audio_channel_mask_t halChannelMask,
+                                                 AudioChannelMask* channelMask);
+    static status_t audioOutputChannelMaskFromHal(audio_channel_mask_t halChannelMask,
+                                                  AudioChannelMask* channelMask);
+    static status_t audioPortExtendedInfoFromHal(
+            audio_port_role_t role, audio_port_type_t type,
+            const struct audio_port_config_device_ext& device,
+            const struct audio_port_config_mix_ext& mix,
+            const struct audio_port_config_session_ext& session, AudioPortExtendedInfo* ext,
+            bool* isInput);
+    static status_t audioPortExtendedInfoToHal(const AudioPortExtendedInfo& ext,
+                                               audio_port_role_t* role, audio_port_type_t* type,
+                                               struct audio_port_config_device_ext* device,
+                                               struct audio_port_config_mix_ext* mix,
+                                               struct audio_port_config_session_ext* session);
+#endif
 };
 
 }  // namespace implementation

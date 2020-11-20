@@ -1043,6 +1043,7 @@ TEST_P(BluetoothAudioProviderLeAudioOutputSoftwareHidlTest,
     } else {
       EXPECT_EQ(status, BluetoothAudioStatus::UNSUPPORTED_CODEC_CONFIGURATION);
       EXPECT_FALSE(dataMQ.isHandleValid());
+      tempDataMQ.reset(nullptr);
     }
   };
   android::hardware::bluetooth::audio::V2_1::AudioConfiguration audio_config =
@@ -1064,6 +1065,8 @@ TEST_P(BluetoothAudioProviderLeAudioOutputSoftwareHidlTest,
           ASSERT_TRUE(hidl_retval.isOk());
           if (is_codec_config_valid) {
             EXPECT_TRUE(tempDataMQ != nullptr && tempDataMQ->isValid());
+          } else {
+            EXPECT_TRUE(tempDataMQ == nullptr);
           }
           EXPECT_TRUE(audio_provider_2_1_->endSession().isOk());
         }  // uint32_t (data interval in microseconds)
@@ -1132,6 +1135,7 @@ TEST_P(BluetoothAudioProviderLeAudioInputSoftwareHidlTest,
     } else {
       EXPECT_EQ(status, BluetoothAudioStatus::UNSUPPORTED_CODEC_CONFIGURATION);
       EXPECT_FALSE(dataMQ.isHandleValid());
+      tempDataMQ.reset(nullptr);
     }
   };
   android::hardware::bluetooth::audio::V2_1::AudioConfiguration audio_config =
