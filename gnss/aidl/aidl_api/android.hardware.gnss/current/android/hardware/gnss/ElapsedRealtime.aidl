@@ -21,4 +21,6 @@ parcelable ElapsedRealtime {
   int flags;
   long timestampNs;
   double timeUncertaintyNs;
+  const int HAS_TIMESTAMP_NS = 1;
+  const int HAS_TIME_UNCERTAINTY_NS = 2;
 }

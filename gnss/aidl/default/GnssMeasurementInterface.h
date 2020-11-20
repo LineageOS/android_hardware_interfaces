@@ -16,39 +16,36 @@
 
 #pragma once
 
-#include <android/hardware/gnss/2.1/IGnssAntennaInfo.h>
-
+#include <aidl/android/hardware/gnss/BnGnssMeasurementCallback.h>
+#include <aidl/android/hardware/gnss/BnGnssMeasurementInterface.h>
+#include <atomic>
 #include <mutex>
 #include <thread>
 
-namespace android::hardware::gnss::V2_1::implementation {
+namespace aidl::android::hardware::gnss {
 
-struct GnssAntennaInfo : public ::android::hardware::gnss::V2_1::IGnssAntennaInfo {
-    GnssAntennaInfo();
-    ~GnssAntennaInfo();
-
-    // Methods from ::android::hardware::gnss::V2_1::IGnssAntennaInfo follow.
-    Return<GnssAntennaInfoStatus> setCallback(
-            const sp<::android::hardware::gnss::V2_1::IGnssAntennaInfoCallback>& callback) override;
-    Return<void> close() override;
+struct GnssMeasurementInterface : public BnGnssMeasurementInterface {
+  public:
+    GnssMeasurementInterface();
+    ~GnssMeasurementInterface();
+    ndk::ScopedAStatus setCallback(const std::shared_ptr<IGnssMeasurementCallback>& callback,
+                                   const bool enableFullTracking) override;
+    ndk::ScopedAStatus close() override;
 
   private:
     void start();
     void stop();
-    void reportAntennaInfo(
-            const hidl_vec<
-                    ::android::hardware::gnss::V2_1::IGnssAntennaInfoCallback::GnssAntennaInfo>&
-                    antennaInfo) const;
-
-    // Guarded by mMutex
-    static sp<::android::hardware::gnss::V2_1::IGnssAntennaInfoCallback> sCallback;
+    void reportMeasurement(const GnssData&);
 
     std::atomic<long> mMinIntervalMillis;
     std::atomic<bool> mIsActive;
     std::thread mThread;
 
+    // Guarded by mMutex
+    static std::shared_ptr<IGnssMeasurementCallback> sCallback;
+
     // Synchronization lock for sCallback
     mutable std::mutex mMutex;
 };
 
-}  // namespace android::hardware::gnss::V2_1::implementation
+}  // namespace aidl::android::hardware::gnss

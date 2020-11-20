@@ -22,10 +22,18 @@ package android.hardware.gnss;
 @VintfStability
 parcelable ElapsedRealtime {
 
+    /** Bit mask indicating a valid timestampNs is stored in the ElapsedRealtime parcelable. */
+    const int HAS_TIMESTAMP_NS = 1 << 0;
+
+    /**
+     * Bit mask indicating a valid timeUncertaintyNs is stored in the ElapsedRealtime parcelable.
+     */
+    const int HAS_TIME_UNCERTAINTY_NS = 1 << 1;
+
     /**
      * A bit field of flags indicating the validity of each field in this data structure.
      *
-     * The bit masks are defined in IGnss interface and prefixed with ELAPSED_REALTIME_HAS_.
+     * The bit masks are the constants with prefix HAS_.
      *
      * Fields may have invalid information in them, if not marked as valid by the corresponding bit
      * in flags.

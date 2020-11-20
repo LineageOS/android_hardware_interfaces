@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-#pragma once
+package android.hardware.gnss;
 
-#include <android/hardware/gnss/2.1/IGnss.h>
-#include "v2_1/gnss_hal_test_template.h"
-
-// The main test class for GNSS HAL.
-class GnssHalTest : public android::hardware::gnss::common::GnssHalTestTemplate<
-                            android::hardware::gnss::V2_1::IGnss> {
-  public:
-    /**
-     * IsGnssHalVersion_2_1:
-     * returns  true if the GNSS HAL version is exactly 2.1.
-     */
-    bool IsGnssHalVersion_2_1() const;
-};
+/**
+ * Enumeration of available values for the GNSS Measurement's multipath
+ * indicator.
+ */
+@VintfStability
+@Backing(type="int")
+enum GnssMultipathIndicator {
+    /** The indicator is not available or unknown. */
+    UNKNOWN      = 0,
+    /** The measurement is indicated to be affected by multipath. */
+    PRESENT      = 1,
+    /** The measurement is indicated to be not affected by multipath. */
+    NOT_PRESENT = 2,
+}

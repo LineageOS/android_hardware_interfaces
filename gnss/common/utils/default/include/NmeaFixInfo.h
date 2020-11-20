@@ -26,11 +26,6 @@ namespace android {
 namespace hardware {
 namespace gnss {
 namespace common {
-using ::android::sp;
-using ::android::hardware::hidl_string;
-using ::android::hardware::hidl_vec;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
 
 constexpr char GPGA_RECORD_TAG[] = "$GPGGA";
 constexpr char GPRMC_RECORD_TAG[] = "$GPRMC";

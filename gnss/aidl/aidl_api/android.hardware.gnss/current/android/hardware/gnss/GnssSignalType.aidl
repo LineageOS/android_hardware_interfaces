@@ -17,12 +17,24 @@
 
 package android.hardware.gnss;
 @VintfStability
-interface IGnss {
-  void setCallback(in android.hardware.gnss.IGnssCallback callback);
-  void close();
-  android.hardware.gnss.IGnssPsds getExtensionPsds();
-  android.hardware.gnss.IGnssConfiguration getExtensionGnssConfiguration();
-  android.hardware.gnss.IGnssMeasurementInterface getExtensionGnssMeasurement();
-  android.hardware.gnss.IGnssPowerIndication getExtensionGnssPowerIndication();
-  const int ERROR_INVALID_ARGUMENT = 1;
+parcelable GnssSignalType {
+  android.hardware.gnss.GnssConstellationType constellation;
+  double carrierFrequencyHz;
+  String codeType;
+  const String CODE_TYPE_A = "A";
+  const String CODE_TYPE_B = "B";
+  const String CODE_TYPE_C = "C";
+  const String CODE_TYPE_D = "D";
+  const String CODE_TYPE_I = "I";
+  const String CODE_TYPE_L = "L";
+  const String CODE_TYPE_M = "M";
+  const String CODE_TYPE_N = "N";
+  const String CODE_TYPE_P = "P";
+  const String CODE_TYPE_Q = "Q";
+  const String CODE_TYPE_S = "S";
+  const String CODE_TYPE_W = "W";
+  const String CODE_TYPE_X = "X";
+  const String CODE_TYPE_Y = "Y";
+  const String CODE_TYPE_Z = "Z";
+  const String CODE_TYPE_UNKNOWN = "UNKNOWN";
 }

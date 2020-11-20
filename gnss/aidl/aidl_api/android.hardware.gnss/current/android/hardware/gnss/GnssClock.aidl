@@ -17,12 +17,23 @@
 
 package android.hardware.gnss;
 @VintfStability
-interface IGnss {
-  void setCallback(in android.hardware.gnss.IGnssCallback callback);
-  void close();
-  android.hardware.gnss.IGnssPsds getExtensionPsds();
-  android.hardware.gnss.IGnssConfiguration getExtensionGnssConfiguration();
-  android.hardware.gnss.IGnssMeasurementInterface getExtensionGnssMeasurement();
-  android.hardware.gnss.IGnssPowerIndication getExtensionGnssPowerIndication();
-  const int ERROR_INVALID_ARGUMENT = 1;
+parcelable GnssClock {
+  int gnssClockFlags;
+  int leapSecond;
+  long timeNs;
+  double timeUncertaintyNs;
+  long fullBiasNs;
+  double biasNs;
+  double biasUncertaintyNs;
+  double driftNsps;
+  double driftUncertaintyNsps;
+  int hwClockDiscontinuityCount;
+  android.hardware.gnss.GnssSignalType referenceSignalTypeForIsb;
+  const int HAS_LEAP_SECOND = 1;
+  const int HAS_TIME_UNCERTAINTY = 2;
+  const int HAS_FULL_BIAS = 4;
+  const int HAS_BIAS = 8;
+  const int HAS_BIAS_UNCERTAINTY = 16;
+  const int HAS_DRIFT = 32;
+  const int HAS_DRIFT_UNCERTAINTY = 64;
 }

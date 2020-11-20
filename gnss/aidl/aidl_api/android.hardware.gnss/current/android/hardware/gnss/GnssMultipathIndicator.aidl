@@ -16,13 +16,9 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.gnss;
-@VintfStability
-interface IGnss {
-  void setCallback(in android.hardware.gnss.IGnssCallback callback);
-  void close();
-  android.hardware.gnss.IGnssPsds getExtensionPsds();
-  android.hardware.gnss.IGnssConfiguration getExtensionGnssConfiguration();
-  android.hardware.gnss.IGnssMeasurementInterface getExtensionGnssMeasurement();
-  android.hardware.gnss.IGnssPowerIndication getExtensionGnssPowerIndication();
-  const int ERROR_INVALID_ARGUMENT = 1;
+@Backing(type="int") @VintfStability
+enum GnssMultipathIndicator {
+  UNKNOWN = 0,
+  PRESENT = 1,
+  NOT_PRESENT = 2,
 }
