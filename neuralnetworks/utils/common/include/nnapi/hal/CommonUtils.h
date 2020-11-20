@@ -17,6 +17,8 @@
 #ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_UTILS_COMMON_COMMON_UTILS_H
 #define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_UTILS_COMMON_COMMON_UTILS_H
 
+#include <cutils/native_handle.h>
+#include <hidl/HidlSupport.h>
 #include <nnapi/Result.h>
 #include <nnapi/Types.h>
 #include <functional>
@@ -56,6 +58,13 @@ nn::GeneralResult<void> unflushDataFromSharedToPointer(
 
 std::vector<uint32_t> countNumberOfConsumers(size_t numberOfOperands,
                                              const std::vector<nn::Operation>& operations);
+
+nn::GeneralResult<nn::Memory> createSharedMemoryFromHidlMemory(const hidl_memory& memory);
+
+nn::GeneralResult<hidl_handle> hidlHandleFromSharedHandle(const nn::SharedHandle& handle);
+nn::GeneralResult<nn::SharedHandle> sharedHandleFromNativeHandle(const native_handle_t* handle);
+nn::GeneralResult<hidl_vec<hidl_handle>> convertSyncFences(
+        const std::vector<nn::SyncFence>& fences);
 
 }  // namespace android::hardware::neuralnetworks::utils
 
