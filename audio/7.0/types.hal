@@ -44,8 +44,10 @@ enum AudioDrain : int32_t {
  * A substitute for POSIX timespec.
  */
 struct TimeSpec {
-    uint64_t tvSec;   // seconds
-    uint64_t tvNSec;  // nanoseconds
+    /** Seconds. */
+    uint64_t tvSec;
+    /** Nanoseconds. */
+    uint64_t tvNSec;
 };
 
 struct ParameterValue {
@@ -85,8 +87,10 @@ struct MmapBufferInfo {
  * Used by streams opened in mmap mode.
  */
 struct MmapPosition {
-    int64_t  timeNanoseconds; // time stamp in ns, CLOCK_MONOTONIC
-    int32_t  positionFrames;  // increasing 32 bit frame count reset when IStream.stop() is called
+    /** Timestamp in ns, CLOCK_MONOTONIC. */
+    int64_t  timeNanoseconds;
+    /** Increasing 32 bit frame count reset when IStream.stop() is called. */
+    int32_t  positionFrames;
 };
 
 /**
@@ -128,9 +132,12 @@ struct AudioMicrophoneCoordinate {
  */
 @export(name="audio_microphone_channel_mapping_t", value_prefix="AUDIO_MICROPHONE_CHANNEL_MAPPING_")
 enum AudioMicrophoneChannelMapping : uint32_t {
-    UNUSED      = 0, /* Channel not used */
-    DIRECT      = 1, /* Channel used and signal not processed */
-    PROCESSED   = 2, /* Channel used and signal has some processing */
+    /** Channel not used. */
+    UNUSED      = 0,
+    /** Channel used and signal not processed. */
+    DIRECT      = 1,
+    /** Channel used and signal has some processing. */
+    PROCESSED   = 2,
 };
 
 /**
@@ -269,7 +276,6 @@ enum DualMonoMode : int32_t {
     // frameworks/base/media/java/android/media/AudioTrack.java
     /**
      * Disable any Dual Mono presentation effect.
-     *
      */
     OFF = 0,
     /**
