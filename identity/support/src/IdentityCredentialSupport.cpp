@@ -55,6 +55,7 @@
 #include <keymaster/contexts/soft_attestation_cert.h>
 #include <keymaster/keymaster_tags.h>
 #include <keymaster/km_openssl/attestation_utils.h>
+#include <keymaster/km_openssl/certificate_utils.h>
 
 namespace android {
 namespace hardware {
@@ -962,6 +963,18 @@ optional<vector<vector<uint8_t>>> createAttestation(
         return {};
     }
 
+    ::keymaster::X509_NAME_Ptr subjectName;
+    if (KM_ERROR_OK !=
+        ::keymaster::make_name_from_str("Android Identity Credential Key", &subjectName)) {
+        LOG(ERROR) << "Cannot create attestation subject";
+        return {};
+    }
+
+    vector<uint8_t> subject(i2d_X509_NAME(subjectName.get(), NULL));
+    unsigned char* subjectPtr = subject.data();
+
+    i2d_X509_NAME(subjectName.get(), &subjectPtr);
+
     ::keymaster::AuthorizationSet auth_set(
             ::keymaster::AuthorizationSetBuilder()
                     .Authorization(::keymaster::TAG_ATTESTATION_CHALLENGE, challenge.data(),
@@ -976,6 +989,8 @@ optional<vector<vector<uint8_t>>> createAttestation(
                     // includes app id.
                     .Authorization(::keymaster::TAG_ATTESTATION_APPLICATION_ID,
                                    applicationId.data(), applicationId.size())
+                    .Authorization(::keymaster::TAG_CERTIFICATE_SUBJECT, subject.data(),
+                                   subject.size())
                     .Authorization(::keymaster::TAG_USAGE_EXPIRE_DATETIME, expireTimeMilliSeconds));
 
     // Unique id and device id is not applicable for identity credential attestation,
@@ -1010,10 +1025,9 @@ optional<vector<vector<uint8_t>>> createAttestation(
     //
     ::keymaster::PureSoftKeymasterContext context(KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT);
 
-    error = generate_attestation_from_EVP_with_subject_name(
-            key, swEnforced, hwEnforced, auth_set, context, ::keymaster::kCurrentKeymasterVersion,
-            *attestation_chain, *attestation_signing_key, "Android Identity Credential Key",
-            &cert_chain_out);
+    error = generate_attestation_from_EVP(key, swEnforced, hwEnforced, auth_set, context,
+                                          ::keymaster::kCurrentKeymasterVersion, *attestation_chain,
+                                          *attestation_signing_key, &cert_chain_out);
 
     if (KM_ERROR_OK != error || !cert_chain_out) {
         LOG(ERROR) << "Error generate attestation from EVP key" << error;
