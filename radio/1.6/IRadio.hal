@@ -114,6 +114,9 @@ interface IRadio extends @1.5::IRadio {
      *     addresses of the existing data connection. The format is defined in RFC-4291 section 2.2.
      *     For example, "192.0.1.3" or "2001:db8::1". This parameter must be ignored unless reason
      *     is DataRequestReason:HANDOVER.
+     * @param pduSessionId The pdu session id to be used for this data call.  A value of 0 means
+     *     no pdu session id was attached to this call.
+     *     Reference: 3GPP TS 24.007 section 11.2.3.1b
      *
      * Response function is IRadioResponse.setupDataCallResponse_1_6()
      *
@@ -121,7 +124,8 @@ interface IRadio extends @1.5::IRadio {
      */
     oneway setupDataCall_1_6(int32_t serial, AccessNetwork accessNetwork,
             DataProfileInfo dataProfileInfo, bool roamingAllowed,
-            DataRequestReason reason, vec<LinkAddress> addresses, vec<string> dnses);
+            DataRequestReason reason, vec<LinkAddress> addresses, vec<string> dnses,
+            int32_t pduSessionId);
 
     /**
      * Send an SMS message
@@ -290,12 +294,12 @@ interface IRadio extends @1.5::IRadio {
      * @param serial Serial number of request.
      * @param id callId The identifier of the data call which is provided in SetupDataCallResult
      *
-     * Response function is IRadioResponse.beginHandoverResponse()
+     * Response function is IRadioResponse.startHandoverResponse()
      */
-    oneway beginHandover(int32_t serial, int32_t callId);
+    oneway startHandover(int32_t serial, int32_t callId);
 
     /**
-     * Indicates that a handover was cancelled after a call to IRadio::beginHandover.
+     * Indicates that a handover was cancelled after a call to IRadio::startHandover.
      *
      * Since the handover was unsuccessful, the modem retains ownership over any of the resources
      * being transferred and is still responsible for releasing them.
