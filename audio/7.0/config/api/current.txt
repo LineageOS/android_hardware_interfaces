@@ -360,7 +360,7 @@ package android.audio.policy.configuration.V7_0 {
   public static class DevicePorts.DevicePort {
     ctor public DevicePorts.DevicePort();
     method @Nullable public String getAddress();
-    method @Nullable public java.util.List<android.audio.policy.configuration.V7_0.AudioFormat> getEncodedFormats();
+    method @Nullable public java.util.List<java.lang.String> getEncodedFormats();
     method @Nullable public android.audio.policy.configuration.V7_0.Gains getGains();
     method @Nullable public java.util.List<android.audio.policy.configuration.V7_0.Profile> getProfile();
     method @Nullable public android.audio.policy.configuration.V7_0.Role getRole();
@@ -368,7 +368,7 @@ package android.audio.policy.configuration.V7_0 {
     method @Nullable public String getType();
     method @Nullable public boolean get_default();
     method public void setAddress(@Nullable String);
-    method public void setEncodedFormats(@Nullable java.util.List<android.audio.policy.configuration.V7_0.AudioFormat>);
+    method public void setEncodedFormats(@Nullable java.util.List<java.lang.String>);
     method public void setGains(@Nullable android.audio.policy.configuration.V7_0.Gains);
     method public void setRole(@Nullable android.audio.policy.configuration.V7_0.Role);
     method public void setTagName(@Nullable String);
@@ -527,10 +527,10 @@ package android.audio.policy.configuration.V7_0 {
 
   public static class SurroundFormats.Format {
     ctor public SurroundFormats.Format();
-    method @Nullable public android.audio.policy.configuration.V7_0.AudioFormat getName();
-    method @Nullable public java.util.List<android.audio.policy.configuration.V7_0.AudioFormat> getSubformats();
-    method public void setName(@Nullable android.audio.policy.configuration.V7_0.AudioFormat);
-    method public void setSubformats(@Nullable java.util.List<android.audio.policy.configuration.V7_0.AudioFormat>);
+    method @Nullable public String getName();
+    method @Nullable public java.util.List<java.lang.String> getSubformats();
+    method public void setName(@Nullable String);
+    method public void setSubformats(@Nullable java.util.List<java.lang.String>);
   }
 
   public class SurroundSound {

@@ -67,8 +67,7 @@ TEST_P(AudioHidlDeviceTest, GetMicrophonesTest) {
         auto flags = hidl_bitfield<AudioInputFlag>(AudioInputFlag::NONE);
         const SinkMetadata initMetadata = {{{.source = AudioSource::MIC, .gain = 1}}};
 #elif MAJOR_VERSION >= 7
-        config.base.channelMask.resize(1);
-        config.base.channelMask[0] = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_IN_MONO);
+        config.base.channelMask = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_IN_MONO);
         config.base.sampleRateHz = 8000;
         config.base.format = toString(xsd::AudioFormat::AUDIO_FORMAT_PCM_16_BIT);
         hidl_vec<hidl_string> flags;
