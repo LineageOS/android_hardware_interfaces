@@ -324,4 +324,29 @@ interface IRadio extends @1.5::IRadio {
      */
     oneway setAllowedNetworkTypeBitmap(
             uint32_t serial, bitfield<RadioAccessFamily> networkTypeBitmap);
+
+    /**
+     * Control data throttling at modem.
+     *   - DataThrottlingAction:NO_DATA_THROTTLING should clear any existing
+     *     data throttling within the requested completion window.
+     *   - DataThrottlingAction:THROTTLE_SECONDARY_CARRIER: Remove any existing
+     *     throttling on anchor carrier and achieve maximum data throttling on
+     *     secondary carrier within the requested completion window.
+     *   - DataThrottlingAction:THROTTLE_ANCHOR_CARRIER: disable secondary
+     *     carrier and achieve maximum data throttling on anchor carrier by
+     *     requested completion window.
+     *   - DataThrottlingAction:HOLD: Immediately hold on to current level of
+     *     throttling.
+     *
+     * @param serial Serial number of request.
+     * @param dataThrottlingAction DataThrottlingAction as defined in types.hal
+     * @param completionWindowSecs window, in seconds, in which the requested
+     *     throttling action has to be achieved. This must be 0 when
+     *     dataThrottlingAction is DataThrottlingAction:HOLD.
+     *
+     * Response function is IRadioResponse.setDataThrottlingResponse()
+     */
+    oneway setDataThrottling(int32_t serial,
+            DataThrottlingAction dataThrottlingAction,
+            int32_t completionWindowSecs);
 };
