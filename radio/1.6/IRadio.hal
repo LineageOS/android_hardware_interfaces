@@ -340,15 +340,15 @@ interface IRadio extends @1.5::IRadio {
      *
      * @param serial Serial number of request.
      * @param dataThrottlingAction DataThrottlingAction as defined in types.hal
-     * @param completionWindowSecs window, in seconds, in which the requested
-     *     throttling action has to be achieved. This must be 0 when
+     * @param completionDurationMillis window, in milliseconds, in which the
+     *     requested throttling action has to be achieved. This must be 0 when
      *     dataThrottlingAction is DataThrottlingAction:HOLD.
      *
      * Response function is IRadioResponse.setDataThrottlingResponse()
      */
     oneway setDataThrottling(int32_t serial,
             DataThrottlingAction dataThrottlingAction,
-            int32_t completionWindowSecs);
+            int64_t completionDurationMillis);
 
     /**
      * Get which bands the modem's background scan is acting on.
