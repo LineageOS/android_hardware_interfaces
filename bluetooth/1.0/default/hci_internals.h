@@ -44,6 +44,10 @@ const size_t HCI_LENGTH_OFFSET_SCO = 2;
 const size_t HCI_EVENT_PREAMBLE_SIZE = 2;
 const size_t HCI_LENGTH_OFFSET_EVT = 1;
 
+// 2 bytes for handle and flags, 2 byte for data length (Volume 4, Part E, 5.4.5)
+const size_t HCI_ISO_PREAMBLE_SIZE = 4;
+const size_t HCI_LENGTH_OFFSET_ISO = 2;
+
 const size_t HCI_PREAMBLE_SIZE_MAX = HCI_ACL_PREAMBLE_SIZE;
 
 // Event codes (Volume 2, Part E, 7.7.14)
