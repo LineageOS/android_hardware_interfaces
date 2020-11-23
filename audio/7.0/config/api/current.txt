@@ -228,6 +228,33 @@ package audio.policy.configuration.V7_0 {
     enum_constant public static final audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_WMA_PRO;
   }
 
+  public enum AudioInOutFlag {
+    method public String getRawName();
+    enum_constant public static final audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_INPUT_FLAG_DIRECT;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_INPUT_FLAG_FAST;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_INPUT_FLAG_HW_AV_SYNC;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_INPUT_FLAG_HW_HOTWORD;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_INPUT_FLAG_MMAP_NOIRQ;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_INPUT_FLAG_RAW;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_INPUT_FLAG_SYNC;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_INPUT_FLAG_VOIP_TX;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_DEEP_BUFFER;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_DIRECT;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_DIRECT_PCM;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_FAST;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_HW_AV_SYNC;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_IEC958_NONAUDIO;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_INCALL_MUSIC;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_MMAP_NOIRQ;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_NON_BLOCKING;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_PRIMARY;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_RAW;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_SYNC;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_TTS;
+    enum_constant public static final audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_VOIP_RX;
+  }
+
   public class AudioPolicyConfiguration {
     ctor public AudioPolicyConfiguration();
     method public audio.policy.configuration.V7_0.GlobalConfiguration getGlobalConfiguration();
@@ -396,7 +423,7 @@ package audio.policy.configuration.V7_0 {
 
   public static class MixPorts.MixPort {
     ctor public MixPorts.MixPort();
-    method public String getFlags();
+    method public java.util.List<audio.policy.configuration.V7_0.AudioInOutFlag> getFlags();
     method public audio.policy.configuration.V7_0.Gains getGains();
     method public long getMaxActiveCount();
     method public long getMaxOpenCount();
@@ -404,7 +431,7 @@ package audio.policy.configuration.V7_0 {
     method public java.util.List<audio.policy.configuration.V7_0.AudioUsage> getPreferredUsage();
     method public java.util.List<audio.policy.configuration.V7_0.Profile> getProfile();
     method public audio.policy.configuration.V7_0.Role getRole();
-    method public void setFlags(String);
+    method public void setFlags(java.util.List<audio.policy.configuration.V7_0.AudioInOutFlag>);
     method public void setGains(audio.policy.configuration.V7_0.Gains);
     method public void setMaxActiveCount(long);
     method public void setMaxOpenCount(long);
