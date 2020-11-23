@@ -42,8 +42,11 @@
 #include PATH(android/hardware/audio/FILE_VERSION/IPrimaryDevice.h)
 #include PATH(android/hardware/audio/FILE_VERSION/types.h)
 #include PATH(android/hardware/audio/common/FILE_VERSION/types.h)
+#if MAJOR_VERSION >= 7
+#include <audio_policy_configuration_V7_0-enums.h>
+#include <audio_policy_configuration_V7_0.h>
+#endif
 
-#include <Serializer.h>
 #include <fmq/EventFlag.h>
 #include <fmq/MessageQueue.h>
 #include <hidl/GtestPrinter.h>
@@ -63,14 +66,6 @@
 #include "4.0/AudioPrimaryHidlHalUtils.h"
 #endif
 
-using std::initializer_list;
-using std::list;
-using std::string;
-using std::to_string;
-using std::vector;
-
-using ::android::AudioPolicyConfig;
-using ::android::HwModule;
 using ::android::NO_INIT;
 using ::android::OK;
 using ::android::sp;
@@ -93,6 +88,12 @@ using ::android::hardware::details::toHexString;
 using namespace ::android::hardware::audio::common::CPP_VERSION;
 using namespace ::android::hardware::audio::common::test::utility;
 using namespace ::android::hardware::audio::CPP_VERSION;
+#if MAJOR_VERSION >= 7
+// Make an alias for enumerations generated from the APM config XSD.
+namespace xsd {
+using namespace ::audio::policy::configuration::CPP_VERSION;
+}
+#endif
 
 // Typical accepted results from interface methods
 static auto okOrNotSupported = {Result::OK, Result::NOT_SUPPORTED};
@@ -103,8 +104,12 @@ static auto okOrInvalidStateOrNotSupported = {Result::OK, Result::INVALID_STATE,
 static auto invalidArgsOrNotSupported = {Result::INVALID_ARGUMENTS, Result::NOT_SUPPORTED};
 static auto invalidStateOrNotSupported = {Result::INVALID_STATE, Result::NOT_SUPPORTED};
 
-#define AUDIO_PRIMARY_HIDL_HAL_TEST
 #include "DeviceManager.h"
+#if MAJOR_VERSION <= 6
+#include "PolicyConfig.h"
+#elif MAJOR_VERSION >= 7
+#include "7.0/PolicyConfig.h"
+#endif
 
 class HidlTest : public ::testing::Test {
   public:
@@ -136,83 +141,16 @@ class HidlTest : public ::testing::Test {
 ////////////////////////// Audio policy configuration ////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-static constexpr char kConfigFileName[] = "audio_policy_configuration.xml";
-
 // Stringify the argument.
 #define QUOTE(x) #x
 #define STRINGIFY(x) QUOTE(x)
 
-struct PolicyConfigData {
-    android::HwModuleCollection hwModules;
-    android::DeviceVector availableOutputDevices;
-    android::DeviceVector availableInputDevices;
-    sp<android::DeviceDescriptor> defaultOutputDevice;
-};
-
-class PolicyConfig : private PolicyConfigData, public AudioPolicyConfig {
-   public:
-    PolicyConfig()
-        : AudioPolicyConfig(hwModules, availableOutputDevices, availableInputDevices,
-                            defaultOutputDevice) {
-        for (const auto& location : android::audio_get_configuration_paths()) {
-            std::string path = location + '/' + kConfigFileName;
-            if (access(path.c_str(), F_OK) == 0) {
-                mFilePath = path;
-                break;
-            }
-        }
-        mStatus = android::deserializeAudioPolicyFile(mFilePath.c_str(), this);
-        if (mStatus == OK) {
-            mPrimaryModule = getHwModules().getModuleFromName(DeviceManager::kPrimaryDevice);
-            // Available devices are not 'attached' to modules at this moment.
-            // Need to go over available devices and find their module.
-            for (const auto& device : availableOutputDevices) {
-                for (const auto& module : hwModules) {
-                    if (module->getDeclaredDevices().indexOf(device) >= 0) {
-                        mModulesWithDevicesNames.insert(module->getName());
-                        break;
-                    }
-                }
-            }
-            for (const auto& device : availableInputDevices) {
-                for (const auto& module : hwModules) {
-                    if (module->getDeclaredDevices().indexOf(device) >= 0) {
-                        mModulesWithDevicesNames.insert(module->getName());
-                        break;
-                    }
-                }
-            }
-        }
-    }
-    status_t getStatus() const { return mStatus; }
-    std::string getError() const {
-        if (mFilePath.empty()) {
-            return std::string{"Could not find "} + kConfigFileName +
-                   " file in: " + testing::PrintToString(android::audio_get_configuration_paths());
-        } else {
-            return "Invalid config file: " + mFilePath;
-        }
-    }
-    const std::string& getFilePath() const { return mFilePath; }
-    sp<const HwModule> getModuleFromName(const std::string& name) const {
-        return getHwModules().getModuleFromName(name.c_str());
-    }
-    sp<const HwModule> getPrimaryModule() const { return mPrimaryModule; }
-    const std::set<std::string>& getModulesWithDevicesNames() const {
-        return mModulesWithDevicesNames;
-    }
-
-   private:
-    status_t mStatus = NO_INIT;
-    std::string mFilePath;
-    sp<HwModule> mPrimaryModule = nullptr;
-    std::set<std::string> mModulesWithDevicesNames;
-};
+static constexpr char kConfigFileName[] = "audio_policy_configuration.xml";
 
 // Cached policy config after parsing for faster test startup
 const PolicyConfig& getCachedPolicyConfig() {
     static std::unique_ptr<PolicyConfig> policyConfig = [] {
-        auto config = std::make_unique<PolicyConfig>();
+        auto config = std::make_unique<PolicyConfig>(kConfigFileName);
         return config;
     }();
     return *policyConfig;
@@ -449,9 +387,10 @@ class AccessorHidlTest : public BaseTestClass {
      *  The getter and/or the setter may return NOT_SUPPORTED if optionality == OPTIONAL.
      */
     template <Optionality optionality = REQUIRED, class IUTGetter, class Getter, class Setter>
-    void testAccessors(IUTGetter iutGetter, const string& propertyName,
-                       const Initial expectedInitial, list<Property> valuesToTest, Setter setter,
-                       Getter getter, const vector<Property>& invalidValues = {}) {
+    void testAccessors(IUTGetter iutGetter, const std::string& propertyName,
+                       const Initial expectedInitial, std::list<Property> valuesToTest,
+                       Setter setter, Getter getter,
+                       const std::vector<Property>& invalidValues = {}) {
         const auto expectedResults = {Result::OK,
                                       optionality == OPTIONAL ? Result::NOT_SUPPORTED : Result::OK};
 
@@ -495,9 +434,9 @@ class AccessorHidlTest : public BaseTestClass {
         EXPECT_RESULT(expectedResults, ((this->*iutGetter)().get()->*setter)(initialValue));
     }
     template <Optionality optionality = REQUIRED, class Getter, class Setter>
-    void testAccessors(const string& propertyName, const Initial expectedInitial,
-                       list<Property> valuesToTest, Setter setter, Getter getter,
-                       const vector<Property>& invalidValues = {}) {
+    void testAccessors(const std::string& propertyName, const Initial expectedInitial,
+                       std::list<Property> valuesToTest, Setter setter, Getter getter,
+                       const std::vector<Property>& invalidValues = {}) {
         testAccessors<optionality>(&BaseTestClass::getDevice, propertyName, expectedInitial,
                                    valuesToTest, setter, getter, invalidValues);
     }
@@ -573,9 +512,13 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioPatchHidlTest);
 // Nesting a tuple in another tuple allows to use GTest Combine function to generate
 // all combinations of devices and configs.
 enum { PARAM_DEVICE, PARAM_CONFIG, PARAM_FLAGS };
+#if MAJOR_VERSION <= 6
 enum { INDEX_INPUT, INDEX_OUTPUT };
 using DeviceConfigParameter =
         std::tuple<DeviceParameter, AudioConfig, std::variant<AudioInputFlag, AudioOutputFlag>>;
+#elif MAJOR_VERSION >= 7
+using DeviceConfigParameter = std::tuple<DeviceParameter, AudioConfig, std::vector<AudioInOutFlag>>;
+#endif
 
 #if MAJOR_VERSION >= 6
 const std::vector<DeviceConfigParameter>& getInputDeviceConfigParameters();
@@ -583,8 +526,8 @@ const std::vector<DeviceConfigParameter>& getOutputDeviceConfigParameters();
 #endif
 
 #if MAJOR_VERSION >= 4
-static string SanitizeStringForGTestName(const string& s) {
-    string result = s;
+static std::string SanitizeStringForGTestName(const std::string& s) {
+    std::string result = s;
     for (size_t i = 0; i < result.size(); i++) {
         // gtest test names must only contain alphanumeric characters
         if (!std::isalnum(result[i])) result[i] = '_';
@@ -598,43 +541,57 @@ static string SanitizeStringForGTestName(const string& s) {
  * As the only parameter changing are channel mask and sample rate,
  * only print those ones in the test name.
  */
-static string DeviceConfigParameterToString(
+static std::string DeviceConfigParameterToString(
         const testing::TestParamInfo<DeviceConfigParameter>& info) {
     const AudioConfig& config = std::get<PARAM_CONFIG>(info.param);
     const auto deviceName = DeviceParameterToString(::testing::TestParamInfo<DeviceParameter>{
             std::get<PARAM_DEVICE>(info.param), info.index});
-    return (deviceName.empty() ? "" : deviceName + "_") + to_string(info.index) + "__" +
-           to_string(config.sampleRateHz) + "_" +
-           // "MONO" is more clear than "FRONT_LEFT"
-           ((config.channelMask == mkEnumBitfield(AudioChannelMask::OUT_MONO) ||
-             config.channelMask == mkEnumBitfield(AudioChannelMask::IN_MONO))
-                    ? "MONO"
+    const auto devicePart =
+            (deviceName.empty() ? "" : deviceName + "_") + std::to_string(info.index);
+    // The types had changed a lot between versions 2, 4..6 and 7. Use separate
+    // code sections for easier understanding.
 #if MAJOR_VERSION == 2
-                    : ::testing::PrintToString(config.channelMask)
-#elif MAJOR_VERSION >= 4
-                    // In V4 and above the channel mask is a bitfield.
-                    // Printing its value using HIDL's toString for a bitfield emits a lot of extra
-                    // text due to overlapping constant values. Instead, we print the bitfield value
-                    // as if it was a single value + its hex representation
-                    : SanitizeStringForGTestName(
-                              ::testing::PrintToString(AudioChannelMask(config.channelMask)) + "_" +
-                              toHexString(config.channelMask))
+    const auto configPart =
+            std::to_string(config.sampleRateHz) + "_" +
+            // "MONO" is more clear than "FRONT_LEFT"
+            (config.channelMask == AudioChannelMask::OUT_MONO ||
+                             config.channelMask == AudioChannelMask::IN_MONO
+                     ? "MONO"
+                     : ::testing::PrintToString(config.channelMask)) +
+            "_" +
+            std::visit([](auto&& arg) -> std::string { return ::testing::PrintToString(arg); },
+                       std::get<PARAM_FLAGS>(info.param));
+#elif MAJOR_VERSION >= 4 && MAJOR_VERSION <= 6
+    const auto configPart =
+            std::to_string(config.sampleRateHz) + "_" +
+            // "MONO" is more clear than "FRONT_LEFT"
+            (config.channelMask == mkEnumBitfield(AudioChannelMask::OUT_MONO) ||
+                             config.channelMask == mkEnumBitfield(AudioChannelMask::IN_MONO)
+                     ? "MONO"
+                     // In V4 and above the channel mask is a bitfield.
+                     // Printing its value using HIDL's toString for a bitfield emits a lot of extra
+                     // text due to overlapping constant values. Instead, we print the bitfield
+                     // value as if it was a single value + its hex representation
+                     : SanitizeStringForGTestName(
+                               ::testing::PrintToString(AudioChannelMask(config.channelMask)) +
+                               "_" + toHexString(config.channelMask))) +
+            "_" +
+            SanitizeStringForGTestName(std::visit(
+                    [](auto&& arg) -> std::string {
+                        using T = std::decay_t<decltype(arg)>;
+                        // Need to use FQN of toString to avoid confusing the compiler
+                        return ::android::hardware::audio::common::CPP_VERSION::toString<T>(
+                                hidl_bitfield<T>(arg));
+                    },
+                    std::get<PARAM_FLAGS>(info.param)));
+#elif MAJOR_VERSION >= 7
+    const auto configPart =
+            std::to_string(config.base.sampleRateHz) + "_" +
+            // The channel masks and flags are vectors of strings, just need to sanitize them.
+            SanitizeStringForGTestName(::testing::PrintToString(config.base.channelMask)) + "_" +
+            SanitizeStringForGTestName(::testing::PrintToString(std::get<PARAM_FLAGS>(info.param)));
 #endif
-                    ) +
-           "_" +
-#if MAJOR_VERSION == 2
-           std::visit([](auto&& arg) -> std::string { return ::testing::PrintToString(arg); },
-                      std::get<PARAM_FLAGS>(info.param));
-#elif MAJOR_VERSION >= 4
-           SanitizeStringForGTestName(std::visit(
-                   [](auto&& arg) -> std::string {
-                       using T = std::decay_t<decltype(arg)>;
-                       // Need to use FQN of toString to avoid confusing the compiler
-                       return ::android::hardware::audio::common::CPP_VERSION::toString<T>(
-                               hidl_bitfield<T>(arg));
-                   },
-                   std::get<PARAM_FLAGS>(info.param)));
-#endif
+    return devicePart + "__" + configPart;
 }
 
 class AudioHidlTestWithDeviceConfigParameter
@@ -660,7 +617,7 @@ class AudioHidlTestWithDeviceConfigParameter
     AudioOutputFlag getOutputFlags() const {
         return std::get<INDEX_OUTPUT>(std::get<PARAM_FLAGS>(GetParam()));
     }
-#elif MAJOR_VERSION >= 4
+#elif MAJOR_VERSION >= 4 && MAJOR_VERSION <= 6
     hidl_bitfield<AudioInputFlag> getInputFlags() const {
         return hidl_bitfield<AudioInputFlag>(
                 std::get<INDEX_INPUT>(std::get<PARAM_FLAGS>(GetParam())));
@@ -669,10 +626,17 @@ class AudioHidlTestWithDeviceConfigParameter
         return hidl_bitfield<AudioOutputFlag>(
                 std::get<INDEX_OUTPUT>(std::get<PARAM_FLAGS>(GetParam())));
     }
+#elif MAJOR_VERSION >= 7
+    hidl_vec<AudioInOutFlag> getInputFlags() const { return std::get<PARAM_FLAGS>(GetParam()); }
+    hidl_vec<AudioInOutFlag> getOutputFlags() const { return std::get<PARAM_FLAGS>(GetParam()); }
 #endif
 };
 
+#if MAJOR_VERSION <= 6
+#define AUDIO_PRIMARY_HIDL_HAL_TEST
 #include "ConfigHelper.h"
+#undef AUDIO_PRIMARY_HIDL_HAL_TEST
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// getInputBufferSize /////////////////////////////
@@ -839,7 +803,7 @@ class StreamHelper {
               AudioConfig* suggestedConfigPtr) {
         // FIXME: Open a stream without an IOHandle
         //        This is not required to be accepted by hal implementations
-        AudioIoHandle ioHandle = (AudioIoHandle)AudioHandleConsts::AUDIO_IO_HANDLE_NONE;
+        AudioIoHandle ioHandle{};
         AudioConfig suggestedConfig{};
         bool retryWithSuggestedConfig = true;
         if (suggestedConfigPtr == nullptr) {
@@ -932,7 +896,11 @@ class OpenStreamTest : public AudioHidlTestWithDeviceConfigParameter {
 class OutputStreamTest : public OpenStreamTest<IStreamOut> {
     void SetUp() override {
         ASSERT_NO_FATAL_FAILURE(OpenStreamTest::SetUp());  // setup base
+#if MAJOR_VERSION <= 6
         address.device = AudioDevice::OUT_DEFAULT;
+#elif MAJOR_VERSION >= 7
+        address.deviceType = toString(xsd::AudioDevice::AUDIO_DEVICE_OUT_DEFAULT);
+#endif
         const AudioConfig& config = getConfig();
         auto flags = getOutputFlags();
         testOpen(
@@ -946,13 +914,19 @@ class OutputStreamTest : public OpenStreamTest<IStreamOut> {
                 },
                 config);
     }
-#if MAJOR_VERSION >= 4
+#if MAJOR_VERSION >= 4 && MAJOR_VERSION <= 6
 
-   protected:
+  protected:
     const SourceMetadata initMetadata = {
         { { AudioUsage::MEDIA,
             AudioContentType::MUSIC,
             1 /* gain */ } }};
+#elif MAJOR_VERSION >= 7
+  protected:
+    const SourceMetadata initMetadata = {
+            { { toString(xsd::AudioUsage::AUDIO_USAGE_MEDIA),
+                toString(xsd::AudioContentType::AUDIO_CONTENT_TYPE_MUSIC),
+                1 /* gain */ } }};
 #endif
 };
 TEST_P(OutputStreamTest, OpenOutputStreamTest) {
@@ -995,7 +969,11 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(OutputStreamTest);
 class InputStreamTest : public OpenStreamTest<IStreamIn> {
     void SetUp() override {
         ASSERT_NO_FATAL_FAILURE(OpenStreamTest::SetUp());  // setup base
+#if MAJOR_VERSION <= 6
         address.device = AudioDevice::IN_DEFAULT;
+#elif MAJOR_VERSION <= 7
+        address.deviceType = toString(xsd::AudioDevice::AUDIO_DEVICE_IN_DEFAULT);
+#endif
         const AudioConfig& config = getConfig();
         auto flags = getInputFlags();
         testOpen(
@@ -1009,8 +987,11 @@ class InputStreamTest : public OpenStreamTest<IStreamIn> {
    protected:
 #if MAJOR_VERSION == 2
     const AudioSource initMetadata = AudioSource::DEFAULT;
-#elif MAJOR_VERSION >= 4
-    const SinkMetadata initMetadata = {{{.source = AudioSource::DEFAULT, .gain = 1}}};
+#elif MAJOR_VERSION >= 4 && MAJOR_VERSION <= 6
+     const SinkMetadata initMetadata = {{ {.source = AudioSource::DEFAULT, .gain = 1 } }};
+#elif MAJOR_VERSION >= 7
+     const SinkMetadata initMetadata = {
+             {{.source = toString(xsd::AudioSource::AUDIO_SOURCE_DEFAULT), .gain = 1}}};
 #endif
 };
 
@@ -1067,6 +1048,7 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(InputStreamTest);
 TEST_IO_STREAM(GetFrameCount, "Check that getting stream frame count does not crash the HAL.",
                ASSERT_TRUE(stream->getFrameCount().isOk()))
 
+#if MAJOR_VERSION <= 6
 TEST_IO_STREAM(GetSampleRate, "Check that the stream sample rate == the one it was opened with",
                ASSERT_EQ(audioConfig.sampleRateHz, extract(stream->getSampleRate())))
 
@@ -1075,6 +1057,7 @@ TEST_IO_STREAM(GetChannelMask, "Check that the stream channel mask == the one it
 
 TEST_IO_STREAM(GetFormat, "Check that the stream format == the one it was opened with",
                ASSERT_EQ(audioConfig.format, extract(stream->getFormat())))
+#endif
 
 // TODO: for now only check that the framesize is not incoherent
 TEST_IO_STREAM(GetFrameSize, "Check that the stream frame size == the one it was opened with",
@@ -1084,7 +1067,7 @@ TEST_IO_STREAM(GetBufferSize, "Check that the stream buffer size== the one it wa
                ASSERT_GE(extract(stream->getBufferSize()), extract(stream->getFrameSize())));
 
 template <class Property, class CapabilityGetter>
-static void testCapabilityGetter(const string& name, IStream* stream,
+static void testCapabilityGetter(const std::string& name, IStream* stream,
                                  CapabilityGetter capabilityGetter,
                                  Return<Property> (IStream::*getter)(),
                                  Return<Result> (IStream::*setter)(Property),
@@ -1120,6 +1103,7 @@ static void testCapabilityGetter(const string& name, IStream* stream,
     }
 }
 
+#if MAJOR_VERSION <= 6
 TEST_IO_STREAM(SupportedSampleRate, "Check that the stream sample rate is declared as supported",
                testCapabilityGetter("getSupportedSampleRate", stream.get(),
                                     &GetSupported::sampleRates, &IStream::getSampleRate,
@@ -1137,19 +1121,71 @@ TEST_IO_STREAM(SupportedChannelMask, "Check that the stream channel mask is decl
 TEST_IO_STREAM(SupportedFormat, "Check that the stream format is declared as supported",
                testCapabilityGetter("getSupportedFormat", stream.get(), &GetSupported::formats,
                                     &IStream::getFormat, &IStream::setFormat))
+#else
+static void testGetSupportedProfiles(IStream* stream) {
+    Result res;
+    hidl_vec<AudioProfile> profiles;
+    auto ret = stream->getSupportedProfiles(returnIn(res, profiles));
+    EXPECT_TRUE(ret.isOk());
+    if (res == Result::OK) {
+        EXPECT_GT(profiles.size(), 0);
+    } else {
+        EXPECT_EQ(Result::NOT_SUPPORTED, res);
+    }
+}
+
+TEST_IO_STREAM(GetSupportedProfiles, "Try to call optional method GetSupportedProfiles",
+               testGetSupportedProfiles(stream.get()))
+
+static void testSetAudioProperties(IStream* stream) {
+    Result res;
+    hidl_vec<AudioProfile> profiles;
+    auto ret = stream->getSupportedProfiles(returnIn(res, profiles));
+    EXPECT_TRUE(ret.isOk());
+    if (res == Result::NOT_SUPPORTED) {
+        GTEST_SKIP() << "Retrieving supported profiles is not implemented";
+    }
+    for (const auto& profile : profiles) {
+        for (const auto& sampleRate : profile.sampleRates) {
+            for (const auto& channelMask : profile.channelMasks) {
+                AudioConfigBase config{.format = profile.format,
+                                       .sampleRateHz = sampleRate,
+                                       .channelMask = channelMask};
+                auto ret = stream->setAudioProperties(config);
+                EXPECT_TRUE(ret.isOk());
+                EXPECT_EQ(Result::OK, ret) << config.format << "; " << config.sampleRateHz << "; "
+                                           << toString(config.channelMask);
+            }
+        }
+    }
+}
+
+TEST_IO_STREAM(SetAudioProperties, "Call setAudioProperties for all supported profiles",
+               testSetAudioProperties(stream.get()))
+#endif
 
 static void testGetAudioProperties(IStream* stream, AudioConfig expectedConfig) {
+#if MAJOR_VERSION <= 6
     uint32_t sampleRateHz;
     auto mask = mkEnumBitfield<AudioChannelMask>({});
     AudioFormat format;
 
-    stream->getAudioProperties(returnIn(sampleRateHz, mask, format));
+    auto ret = stream->getAudioProperties(returnIn(sampleRateHz, mask, format));
+    EXPECT_TRUE(ret.isOk());
 
     // FIXME: the qcom hal it does not currently negotiate the sampleRate &
     // channel mask
     EXPECT_EQ(expectedConfig.sampleRateHz, sampleRateHz);
     EXPECT_EQ(expectedConfig.channelMask, mask);
     EXPECT_EQ(expectedConfig.format, format);
+#elif MAJOR_VERSION >= 7
+    AudioConfigBase actualConfig{};
+    auto ret = stream->getAudioProperties(returnIn(actualConfig));
+    EXPECT_TRUE(ret.isOk());
+    EXPECT_EQ(expectedConfig.base.sampleRateHz, actualConfig.sampleRateHz);
+    EXPECT_EQ(expectedConfig.base.channelMask, actualConfig.channelMask);
+    EXPECT_EQ(expectedConfig.base.format, actualConfig.format);
+#endif
 }
 
 TEST_IO_STREAM(GetAudioProperties,
@@ -1160,7 +1196,7 @@ TEST_IO_STREAM(SetHwAvSync, "Try to set hardware sync to an invalid value",
                ASSERT_RESULT(okOrNotSupportedOrInvalidArgs, stream->setHwAvSync(666)))
 
 static void checkGetNoParameter(IStream* stream, hidl_vec<hidl_string> keys,
-                                initializer_list<Result> expectedResults) {
+                                std::initializer_list<Result> expectedResults) {
     hidl_vec<ParameterValue> parameters;
     Result res;
     ASSERT_OK(Parameters::get(stream, keys, returnIn(res, parameters)));
@@ -1271,7 +1307,11 @@ TEST_P(InputStreamTest, GetAudioSource) {
         return;
     }
     ASSERT_OK(res);
+#if MAJOR_VERSION <= 6
     ASSERT_EQ(AudioSource::DEFAULT, source);
+#elif MAJOR_VERSION >= 7
+    ASSERT_EQ(xsd::AudioSource::AUDIO_SOURCE_DEFAULT, xsd::stringToAudioSource(source));
+#endif
 }
 
 static void testUnitaryGain(std::function<Return<Result>(float)> setGain) {
@@ -1286,7 +1326,7 @@ static void testUnitaryGain(std::function<Return<Result>(float)> setGain) {
 }
 
 static void testOptionalUnitaryGain(std::function<Return<Result>(float)> setGain,
-                                    string debugName) {
+                                    std::string debugName) {
     auto result = setGain(1);
     ASSERT_IS_OK(result);
     if (result == Result::NOT_SUPPORTED) {
@@ -1306,7 +1346,7 @@ static void testPrepareForReading(IStreamIn* stream, uint32_t frameSize, uint32_
     Result res;
     // Ignore output parameters as the call should fail
     ASSERT_OK(stream->prepareForReading(frameSize, framesCount,
-                                        [&res](auto r, auto&, auto&, auto&, auto&) { res = r; }));
+                                        [&res](auto r, auto&, auto&, auto&, auto) { res = r; }));
     EXPECT_RESULT(Result::INVALID_ARGUMENTS, res);
 }
 
@@ -1371,7 +1411,7 @@ static void testPrepareForWriting(IStreamOut* stream, uint32_t frameSize, uint32
     Result res;
     // Ignore output parameters as the call should fail
     ASSERT_OK(stream->prepareForWriting(frameSize, framesCount,
-                                        [&res](auto r, auto&, auto&, auto&, auto&) { res = r; }));
+                                        [&res](auto r, auto&, auto&, auto&, auto) { res = r; }));
     EXPECT_RESULT(Result::INVALID_ARGUMENTS, res);
 }
 
