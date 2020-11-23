@@ -83,7 +83,7 @@ PreparedModel::executeSynchronously(const V1_0::Request& request, MeasureTiming 
     };
 
     const auto ret = kPreparedModel->executeSynchronously(request, measure, cb);
-    NN_TRY(hal::utils::makeExecutionFailure(hal::utils::handleTransportError(ret)));
+    HANDLE_TRANSPORT_FAILURE(ret);
 
     return result;
 }
@@ -94,8 +94,7 @@ PreparedModel::executeAsynchronously(const V1_0::Request& request, MeasureTiming
     const auto scoped = kDeathHandler.protectCallback(cb.get());
 
     const auto ret = kPreparedModel->execute_1_2(request, measure, cb);
-    const auto status =
-            NN_TRY(hal::utils::makeExecutionFailure(hal::utils::handleTransportError(ret)));
+    const auto status = HANDLE_TRANSPORT_FAILURE(ret);
     if (status != V1_0::ErrorStatus::NONE) {
         const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
         return NN_ERROR(canonical) << "execute failed with " << toString(status);
