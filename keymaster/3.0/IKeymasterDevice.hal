@@ -20,6 +20,7 @@ package android.hardware.keymaster@3.0;
  * Keymaster device definition.  For thorough documentation see the implementer's reference, at
  * https://source.android.com/security/keystore/implementer-ref.html
  */
+@SensitiveData
 interface IKeymasterDevice {
 
     /**
