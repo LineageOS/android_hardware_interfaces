@@ -70,8 +70,7 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Prepare
     const auto status =
             NN_TRY(hal::utils::makeExecutionFailure(hal::utils::handleTransportError(ret)));
     if (status != ErrorStatus::NONE) {
-        const auto canonical =
-                validatedConvertToCanonical(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
+        const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
         return NN_ERROR(canonical) << "execute failed with " << toString(status);
     }
 

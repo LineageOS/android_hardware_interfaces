@@ -22,9 +22,7 @@
 #include <android-base/logging.h>
 #include <android/hardware/neuralnetworks/1.3/types.h>
 #include <nnapi/Result.h>
-#include <nnapi/TypeUtils.h>
 #include <nnapi/Types.h>
-#include <nnapi/Validation.h>
 #include <nnapi/hal/1.0/Conversions.h>
 #include <nnapi/hal/1.1/Conversions.h>
 #include <nnapi/hal/1.2/Conversions.h>
@@ -32,18 +30,12 @@
 namespace android::hardware::neuralnetworks::V1_3::utils {
 
 constexpr auto kDefaultPriority = Priority::MEDIUM;
-constexpr auto kVersion = nn::Version::ANDROID_R;
 
 template <typename Type>
 nn::Result<void> validate(const Type& halObject) {
     const auto maybeCanonical = nn::convert(halObject);
     if (!maybeCanonical.has_value()) {
         return nn::error() << maybeCanonical.error().message;
-    }
-    const auto version = NN_TRY(nn::validate(maybeCanonical.value()));
-    if (version > utils::kVersion) {
-        return NN_ERROR() << "Insufficient version: " << version << " vs required "
-                          << utils::kVersion;
     }
     return {};
 }
@@ -55,21 +47,6 @@ bool valid(const Type& halObject) {
         LOG(ERROR) << result.error();
     }
     return result.has_value();
-}
-
-template <typename Type>
-decltype(nn::convert(std::declval<Type>())) validatedConvertToCanonical(const Type& halObject) {
-    auto canonical = NN_TRY(nn::convert(halObject));
-    const auto maybeVersion = nn::validate(canonical);
-    if (!maybeVersion.has_value()) {
-        return nn::error() << maybeVersion.error();
-    }
-    const auto version = maybeVersion.value();
-    if (version > utils::kVersion) {
-        return NN_ERROR() << "Insufficient version: " << version << " vs required "
-                          << utils::kVersion;
-    }
-    return canonical;
 }
 
 }  // namespace android::hardware::neuralnetworks::V1_3::utils
