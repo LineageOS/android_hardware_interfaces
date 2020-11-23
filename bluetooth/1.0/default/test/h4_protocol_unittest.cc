@@ -190,8 +190,10 @@ class H4ProtocolTest : public ::testing::Test {
 
   void WriteAndExpectInboundIsoData(char* payload) {
     // h4 type[1] + handle[2] + size[1]
-    char preamble[4] = {HCI_PACKET_TYPE_ISO_DATA, 20, 17, 0};
-    preamble[3] = strlen(payload) & 0xFF;
+    char preamble[5] = {HCI_PACKET_TYPE_ISO_DATA, 19, 92, 0, 0};
+    int length = strlen(payload);
+    preamble[3] = length & 0xFF;
+    preamble[4] = (length >> 8) & 0x3F;
 
     ALOGD("%s writing", __func__);
     TEMP_FAILURE_RETRY(write(fake_uart_, preamble, sizeof(preamble)));
