@@ -21,6 +21,7 @@ import IMyTypes.SomeStruct;
 import ISimple;
 import ITheirTypes.FloatArray;
 
+@SensitiveData // for test
 interface IFoo {
 
     enum SomeBaseEnum : uint8_t {
