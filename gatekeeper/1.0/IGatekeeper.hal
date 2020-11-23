@@ -15,6 +15,7 @@
  */
 package android.hardware.gatekeeper@1.0;
 
+@SensitiveData
 interface IGatekeeper {
 
 /**
