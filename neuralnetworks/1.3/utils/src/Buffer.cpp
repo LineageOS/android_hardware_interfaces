@@ -61,13 +61,12 @@ nn::Request::MemoryDomainToken Buffer::getToken() const {
 }
 
 nn::GeneralResult<void> Buffer::copyTo(const nn::Memory& dst) const {
-    const auto hidlDst = NN_TRY(V1_0::utils::convert(dst));
+    const auto hidlDst = NN_TRY(convert(dst));
 
     const auto ret = kBuffer->copyTo(hidlDst);
     const auto status = NN_TRY(hal::utils::handleTransportError(ret));
     if (status != ErrorStatus::NONE) {
-        const auto canonical =
-                validatedConvertToCanonical(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
+        const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
         return NN_ERROR(canonical) << "IBuffer::copyTo failed with " << toString(status);
     }
 
@@ -76,14 +75,13 @@ nn::GeneralResult<void> Buffer::copyTo(const nn::Memory& dst) const {
 
 nn::GeneralResult<void> Buffer::copyFrom(const nn::Memory& src,
                                          const nn::Dimensions& dimensions) const {
-    const auto hidlSrc = NN_TRY(V1_0::utils::convert(src));
+    const auto hidlSrc = NN_TRY(convert(src));
     const auto hidlDimensions = hidl_vec<uint32_t>(dimensions);
 
     const auto ret = kBuffer->copyFrom(hidlSrc, hidlDimensions);
     const auto status = NN_TRY(hal::utils::handleTransportError(ret));
     if (status != ErrorStatus::NONE) {
-        const auto canonical =
-                validatedConvertToCanonical(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
+        const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
         return NN_ERROR(canonical) << "IBuffer::copyFrom failed with " << toString(status);
     }
 
