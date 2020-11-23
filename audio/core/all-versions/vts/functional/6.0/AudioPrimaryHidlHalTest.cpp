@@ -17,6 +17,7 @@
 // pull in all the <= 5.0 tests
 #include "5.0/AudioPrimaryHidlHalTest.cpp"
 
+#if MAJOR_VERSION <= 6
 const std::vector<DeviceConfigParameter>& getOutputDeviceConfigParameters() {
     static std::vector<DeviceConfigParameter> parameters = [] {
         std::vector<DeviceConfigParameter> result;
@@ -28,8 +29,8 @@ const std::vector<DeviceConfigParameter>& getOutputDeviceConfigParameters() {
                     const auto& channels = profile->getChannels();
                     const auto& sampleRates = profile->getSampleRates();
                     auto configs = ConfigHelper::combineAudioConfig(
-                            vector<audio_channel_mask_t>(channels.begin(), channels.end()),
-                            vector<uint32_t>(sampleRates.begin(), sampleRates.end()),
+                            std::vector<audio_channel_mask_t>(channels.begin(), channels.end()),
+                            std::vector<uint32_t>(sampleRates.begin(), sampleRates.end()),
                             profile->getFormat());
                     auto flags = ioProfile->getFlags();
                     for (auto& config : configs) {
@@ -46,8 +47,8 @@ const std::vector<DeviceConfigParameter>& getOutputDeviceConfigParameters() {
                             config.offloadInfo.bufferSize = 256;  // arbitrary value
                             config.offloadInfo.usage = AudioUsage::MEDIA;
                             result.emplace_back(device, config,
-                                                AudioOutputFlag(AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD |
-                                                                AUDIO_OUTPUT_FLAG_DIRECT));
+                                                AudioOutputFlag(AudioOutputFlag::COMPRESS_OFFLOAD |
+                                                                AudioOutputFlag::DIRECT));
                         } else {
                             if (flags & AUDIO_OUTPUT_FLAG_PRIMARY) {  // ignore the flag
                                 flags &= ~AUDIO_OUTPUT_FLAG_PRIMARY;
@@ -74,8 +75,8 @@ const std::vector<DeviceConfigParameter>& getInputDeviceConfigParameters() {
                     const auto& channels = profile->getChannels();
                     const auto& sampleRates = profile->getSampleRates();
                     auto configs = ConfigHelper::combineAudioConfig(
-                            vector<audio_channel_mask_t>(channels.begin(), channels.end()),
-                            vector<uint32_t>(sampleRates.begin(), sampleRates.end()),
+                            std::vector<audio_channel_mask_t>(channels.begin(), channels.end()),
+                            std::vector<uint32_t>(sampleRates.begin(), sampleRates.end()),
                             profile->getFormat());
                     for (const auto& config : configs) {
                         result.emplace_back(device, config, AudioInputFlag(ioProfile->getFlags()));
@@ -87,13 +88,22 @@ const std::vector<DeviceConfigParameter>& getInputDeviceConfigParameters() {
     }();
     return parameters;
 }
+#endif  // MAJOR_VERSION <= 6
 
 TEST_P(AudioHidlDeviceTest, CloseDeviceWithOpenedOutputStreams) {
     doc::test("Verify that a device can't be closed if there are streams opened");
+#if MAJOR_VERSION <= 6
     DeviceAddress address{.device = AudioDevice::OUT_DEFAULT};
-    AudioConfig config{};
-    auto flags = hidl_bitfield<AudioOutputFlag>(AudioOutputFlag::NONE);
     SourceMetadata initMetadata = {{{AudioUsage::MEDIA, AudioContentType::MUSIC, 1 /* gain */}}};
+    auto flags = hidl_bitfield<AudioOutputFlag>(AudioOutputFlag::NONE);
+#elif MAJOR_VERSION >= 7
+    DeviceAddress address{.deviceType = toString(xsd::AudioDevice::AUDIO_DEVICE_OUT_DEFAULT)};
+    SourceMetadata initMetadata = {
+            {{toString(xsd::AudioUsage::AUDIO_USAGE_MEDIA),
+              toString(xsd::AudioContentType::AUDIO_CONTENT_TYPE_MUSIC), 1 /* gain */}}};
+    hidl_vec<AudioInOutFlag> flags;
+#endif
+    AudioConfig config{};
     sp<IStreamOut> stream;
     StreamHelper<IStreamOut> helper(stream);
     AudioConfig suggestedConfig{};
@@ -111,14 +121,20 @@ TEST_P(AudioHidlDeviceTest, CloseDeviceWithOpenedOutputStreams) {
 
 TEST_P(AudioHidlDeviceTest, CloseDeviceWithOpenedInputStreams) {
     doc::test("Verify that a device can't be closed if there are streams opened");
-    auto module = getCachedPolicyConfig().getModuleFromName(getDeviceName());
-    if (module->getInputProfiles().empty()) {
+    if (!getCachedPolicyConfig().haveInputProfilesInModule(getDeviceName())) {
         GTEST_SKIP() << "Device doesn't have input profiles";
     }
+#if MAJOR_VERSION <= 6
     DeviceAddress address{.device = AudioDevice::IN_DEFAULT};
-    AudioConfig config{};
-    auto flags = hidl_bitfield<AudioInputFlag>(AudioInputFlag::NONE);
     SinkMetadata initMetadata = {{{.source = AudioSource::MIC, .gain = 1}}};
+    auto flags = hidl_bitfield<AudioInputFlag>(AudioInputFlag::NONE);
+#elif MAJOR_VERSION >= 7
+    DeviceAddress address{.deviceType = toString(xsd::AudioDevice::AUDIO_DEVICE_IN_DEFAULT)};
+    SinkMetadata initMetadata = {
+            {{.source = toString(xsd::AudioSource::AUDIO_SOURCE_MIC), .gain = 1}}};
+    hidl_vec<AudioInOutFlag> flags;
+#endif
+    AudioConfig config{};
     sp<IStreamIn> stream;
     StreamHelper<IStreamIn> helper(stream);
     AudioConfig suggestedConfig{};
@@ -137,9 +153,8 @@ TEST_P(AudioHidlDeviceTest, CloseDeviceWithOpenedInputStreams) {
 TEST_P(AudioPatchHidlTest, UpdatePatchInvalidHandle) {
     doc::test("Verify that passing an invalid handle to updateAudioPatch is checked");
     AudioPatchHandle ignored;
-    ASSERT_OK(getDevice()->updateAudioPatch(
-            static_cast<int32_t>(AudioHandleConsts::AUDIO_PATCH_HANDLE_NONE),
-            hidl_vec<AudioPortConfig>(), hidl_vec<AudioPortConfig>(), returnIn(res, ignored)));
+    ASSERT_OK(getDevice()->updateAudioPatch(AudioPatchHandle{}, hidl_vec<AudioPortConfig>(),
+                                            hidl_vec<AudioPortConfig>(), returnIn(res, ignored)));
     ASSERT_RESULT(Result::INVALID_ARGUMENTS, res);
 }
 
