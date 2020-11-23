@@ -18,7 +18,7 @@
 #define WIFI_AP_IFACE_H_
 
 #include <android-base/macros.h>
-#include <android/hardware/wifi/1.4/IWifiApIface.h>
+#include <android/hardware/wifi/1.5/IWifiApIface.h>
 
 #include "wifi_iface_util.h"
 #include "wifi_legacy_hal.h"
@@ -33,9 +33,10 @@ using namespace android::hardware::wifi::V1_0;
 /**
  * HIDL interface object used to control a AP Iface instance.
  */
-class WifiApIface : public V1_4::IWifiApIface {
+class WifiApIface : public V1_5::IWifiApIface {
    public:
     WifiApIface(const std::string& ifname,
+                const std::vector<std::string>& instances,
                 const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
                 const std::weak_ptr<iface_util::WifiIfaceUtil> iface_util);
     // Refer to |WifiChip::invalidate()|.
@@ -55,6 +56,8 @@ class WifiApIface : public V1_4::IWifiApIface {
                                setMacAddress_cb hidl_status_cb) override;
     Return<void> getFactoryMacAddress(
         getFactoryMacAddress_cb hidl_status_cb) override;
+    Return<void> resetToFactoryMacAddress(
+        resetToFactoryMacAddress_cb hidl_status_cb) override;
 
    private:
     // Corresponding worker functions for the HIDL methods.
@@ -64,10 +67,12 @@ class WifiApIface : public V1_4::IWifiApIface {
     std::pair<WifiStatus, std::vector<WifiChannelInMhz>>
     getValidFrequenciesForBandInternal(V1_0::WifiBand band);
     WifiStatus setMacAddressInternal(const std::array<uint8_t, 6>& mac);
-    std::pair<WifiStatus, std::array<uint8_t, 6>>
-    getFactoryMacAddressInternal();
+    std::pair<WifiStatus, std::array<uint8_t, 6>> getFactoryMacAddressInternal(
+        const std::string& ifaceName);
+    WifiStatus resetToFactoryMacAddressInternal();
 
     std::string ifname_;
+    std::vector<std::string> instances_;
     std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
     std::weak_ptr<iface_util::WifiIfaceUtil> iface_util_;
     bool is_valid_;
