@@ -195,7 +195,7 @@ import android.hardware.keymaster@3.0::KeyFormat;
  * Tag::VENDOR_PATCHLEVEL, and Tag::BOOT_PATCHLEVEL must be cryptographically bound to every
  * IKeymasterDevice key, as described in the Key Access Control section above.
  */
-
+@SensitiveData
 interface IKeymasterDevice {
 
     /**
