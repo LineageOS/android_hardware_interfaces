@@ -19,7 +19,7 @@
 
 namespace aidl::android::hardware::biometrics::fingerprint {
 
-const int kSensorId = 0;
+const int kSensorId = 1;
 const common::SensorStrength kSensorStrength = common::SensorStrength::STRONG;
 const int kMaxEnrollmentsPerUser = 5;
 const FingerprintSensorType kSensorType = FingerprintSensorType::REAR;
