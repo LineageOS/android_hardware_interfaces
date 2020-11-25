@@ -37,6 +37,7 @@ import @4.0::VerificationToken;
  * versions will be numbered as major_version * 10 + minor version.  The addition of new attestable
  * tags changes the attestation format again, slightly, so the attestationVersion must be 4.
  */
+@SensitiveData
 interface IKeymasterDevice extends @4.0::IKeymasterDevice {
     /**
      * Called by client to notify the IKeymasterDevice that the device is now locked, and keys with
