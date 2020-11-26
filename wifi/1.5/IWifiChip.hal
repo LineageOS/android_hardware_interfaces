@@ -17,6 +17,7 @@
 package android.hardware.wifi@1.5;
 
 import @1.0::WifiStatus;
+import @1.0::IfaceType;
 import @1.5::IWifiApIface;
 import @1.0::IWifiIface;
 import @1.3::IWifiChip;
@@ -129,7 +130,6 @@ interface IWifiChip extends @1.4::IWifiChip {
      */
     setMultiStaUseCase(MultiStaUseCase useCase) generates (WifiStatus status);
 
-
     /**
      * Create bridged IWifiApIface.
      *
@@ -167,4 +167,47 @@ interface IWifiChip extends @1.4::IWifiChip {
      */
     removeIfaceInstanceFromBridgedApIface(string brIfaceName, string ifaceInstanceName)
         generates (WifiStatus status);
+
+    /**
+     * Representation of a Wi-Fi channel for Wi-Fi coex channel avoidance.
+     */
+    struct CoexUnsafeChannel {
+        /* The band of the channel */
+        WifiBand band;
+        /* The channel number */
+        uint32_t channel;
+        /** The power cap will be a maximum power value in dbm that is allowed to be transmitted by
+            the chip on this channel. A value of PowerCapConstant.NO_POWER_CAP means no limitation
+            on transmitted power is needed by the chip for this channel.
+        */
+        int32_t powerCapDbm;
+    };
+
+    enum PowerCapConstant : int32_t {
+        NO_POWER_CAP = 0x7FFFFFFF,
+    };
+
+    /**
+     * Invoked to indicate that the provided |CoexUnsafeChannels| should be avoided with the
+     * specified restrictions.
+     *
+     * Channel avoidance is a suggestion and should be done on a best-effort approach. If a provided
+     * channel is used, then the specified power cap should be applied.
+     *
+     * In addition, hard restrictions on the Wifi modes may be indicated by |IfaceType| bits
+     * (STA, AP, P2P, NAN, etc) in the |restrictions| bitfield. If a hard restriction is provided,
+     * then the channels should be completely avoided for the provided Wifi modes instead of by
+     * best-effort.
+     *
+     * @param unsafeChannels List of |CoexUnsafeChannels| to avoid.
+     * @param restrictions Bitset of |IfaceType| values indicating Wifi modes to completely avoid.
+     * @return status WifiStatus of the operation.
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+     *         |WifiStatusCode.ERROR_INVALID_ARGS|,
+     */
+    setCoexUnsafeChannels(
+        vec<CoexUnsafeChannel> unsafeChannels, bitfield<IfaceType> restrictions)
+            generates (WifiStatus status);
 };
