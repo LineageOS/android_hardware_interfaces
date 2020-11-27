@@ -103,24 +103,36 @@ std::string getWlanIfaceName(unsigned idx) {
     return "wlan" + std::to_string(idx);
 }
 
-// Returns the dedicated iface name if one is defined.
-std::string getApIfaceName() {
+// Returns the dedicated iface name if defined.
+// Returns two ifaces in bridged mode.
+std::vector<std::string> getPredefinedApIfaceNames(bool is_bridged) {
+    std::vector<std::string> ifnames;
     std::array<char, PROPERTY_VALUE_MAX> buffer;
+    buffer.fill(0);
     if (property_get("ro.vendor.wifi.sap.interface", buffer.data(), nullptr) ==
         0) {
-        return {};
+        return ifnames;
     }
-    return buffer.data();
+    ifnames.push_back(buffer.data());
+    if (is_bridged) {
+        buffer.fill(0);
+        if (property_get("ro.vendor.wifi.sap.concurrent.interface",
+                         buffer.data(), nullptr) == 0) {
+            return ifnames;
+        }
+        ifnames.push_back(buffer.data());
+    }
+    return ifnames;
 }
 
-std::string getP2pIfaceName() {
+std::string getPredefinedP2pIfaceName() {
     std::array<char, PROPERTY_VALUE_MAX> buffer;
     property_get("wifi.direct.interface", buffer.data(), "p2p0");
     return buffer.data();
 }
 
 // Returns the dedicated iface name if one is defined.
-std::string getNanIfaceName() {
+std::string getPredefinedNanIfaceName() {
     std::array<char, PROPERTY_VALUE_MAX> buffer;
     if (property_get("wifi.aware.interface", buffer.data(), nullptr) == 0) {
         return {};
@@ -931,22 +943,22 @@ WifiChip::createBridgedApIfaceInternal() {
     if (!canCurrentModeSupportIfaceOfTypeWithCurrentIfaces(IfaceType::AP)) {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
-    std::string br_ifname = kApBridgeIfacePrefix + allocateApIfaceName();
-    std::vector<std::string> ap_instances;
+    std::vector<std::string> ap_instances = allocateBridgedApInstanceNames();
+    if (ap_instances.size() < 2) {
+        LOG(ERROR) << "Fail to allocate two instances";
+        return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
+    }
+    std::string br_ifname = kApBridgeIfacePrefix + ap_instances[0];
     for (int i = 0; i < 2; i++) {
-        // TODO: b/173999527, it should use idx from 2 when STA+STA support, but
-        // need to check vendor support or not.
-        std::string ifaceInstanceName = allocateApOrStaIfaceName(
-            IfaceType::AP, isStaApConcurrencyAllowedInCurrentMode() ? 1 : 0);
-        WifiStatus status = createVirtualApInterface(ifaceInstanceName);
+        WifiStatus status = createVirtualApInterface(ap_instances[i]);
         if (status.code != WifiStatusCode::SUCCESS) {
-            if (ap_instances.size() != 0) {
+            if (i != 0) {  // The failure happened when creating second virtual
+                           // iface.
                 legacy_hal_.lock()->deleteVirtualInterface(
-                    ap_instances.front());
+                    ap_instances.front());  // Remove the first virtual iface.
             }
             return {status, {}};
         }
-        ap_instances.push_back(ifaceInstanceName);
     }
     br_ifaces_ap_instances_[br_ifname] = ap_instances;
     if (!iface_util_.lock()->createBridge(br_ifname)) {
@@ -1048,7 +1060,7 @@ WifiChip::createNanIfaceInternal() {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
     bool is_dedicated_iface = true;
-    std::string ifname = getNanIfaceName();
+    std::string ifname = getPredefinedNanIfaceName();
     if (ifname.empty() || !iface_util_.lock()->ifNameToIndex(ifname)) {
         // Use the first shared STA iface (wlan0) if a dedicated aware iface is
         // not defined.
@@ -1101,7 +1113,7 @@ std::pair<WifiStatus, sp<IWifiP2pIface>> WifiChip::createP2pIfaceInternal() {
     if (!canCurrentModeSupportIfaceOfTypeWithCurrentIfaces(IfaceType::P2P)) {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
-    std::string ifname = getP2pIfaceName();
+    std::string ifname = getPredefinedP2pIfaceName();
     sp<WifiP2pIface> iface = new WifiP2pIface(ifname, legacy_hal_);
     p2p_ifaces_.push_back(iface);
     for (const auto& callback : event_cb_handler_.getCallbacks()) {
@@ -1720,7 +1732,7 @@ bool WifiChip::canCurrentModeSupportIfaceCombo(
 //    ChipIfaceCombination.
 // b) Check if the requested iface type can be added to the current mode.
 bool WifiChip::canCurrentModeSupportIfaceOfType(IfaceType requested_type) {
-    // Check if we can support atleast 1 iface of type.
+    // Check if we can support at least 1 iface of type.
     std::map<IfaceType, size_t> req_iface_combo;
     req_iface_combo[requested_type] = 1;
     return canCurrentModeSupportIfaceCombo(req_iface_combo);
@@ -1736,17 +1748,17 @@ bool WifiChip::isValidModeId(ChipModeId mode_id) {
 }
 
 bool WifiChip::isStaApConcurrencyAllowedInCurrentMode() {
-    // Check if we can support atleast 1 STA & 1 AP concurrently.
+    // Check if we can support at least 1 STA & 1 AP concurrently.
     std::map<IfaceType, size_t> req_iface_combo;
     req_iface_combo[IfaceType::AP] = 1;
     req_iface_combo[IfaceType::STA] = 1;
     return canCurrentModeSupportIfaceCombo(req_iface_combo);
 }
 
-bool WifiChip::isDualApAllowedInCurrentMode() {
-    // Check if we can support atleast 1 STA & 1 AP concurrently.
+bool WifiChip::isDualStaConcurrencyAllowedInCurrentMode() {
+    // Check if we can support at least 2 STA concurrently.
     std::map<IfaceType, size_t> req_iface_combo;
-    req_iface_combo[IfaceType::AP] = 2;
+    req_iface_combo[IfaceType::STA] = 2;
     return canCurrentModeSupportIfaceCombo(req_iface_combo);
 }
 
@@ -1776,19 +1788,46 @@ std::string WifiChip::allocateApOrStaIfaceName(IfaceType type,
     return {};
 }
 
+uint32_t WifiChip::startIdxOfApIface() {
+    if (isDualStaConcurrencyAllowedInCurrentMode()) {
+        // When the HAL support dual STAs, AP should start with idx 2.
+        return 2;
+    } else if (isStaApConcurrencyAllowedInCurrentMode()) {
+        //  When the HAL support STA + AP but it doesn't support dual STAs.
+        //  AP should start with idx 1.
+        return 1;
+    }
+    // No concurrency support.
+    return 0;
+}
+
 // AP iface names start with idx 1 for modes supporting
 // concurrent STA and not dual AP, else start with idx 0.
 std::string WifiChip::allocateApIfaceName() {
     // Check if we have a dedicated iface for AP.
-    std::string ifname = getApIfaceName();
-    if (!ifname.empty()) {
-        return ifname;
+    std::vector<std::string> ifnames = getPredefinedApIfaceNames(false);
+    if (!ifnames.empty()) {
+        return ifnames[0];
     }
-    return allocateApOrStaIfaceName(IfaceType::AP,
-                                    (isStaApConcurrencyAllowedInCurrentMode() &&
-                                     !isDualApAllowedInCurrentMode())
-                                        ? 1
-                                        : 0);
+    return allocateApOrStaIfaceName(IfaceType::AP, startIdxOfApIface());
+}
+
+std::vector<std::string> WifiChip::allocateBridgedApInstanceNames() {
+    // Check if we have a dedicated iface for AP.
+    std::vector<std::string> instances = getPredefinedApIfaceNames(true);
+    if (instances.size() == 2) {
+        return instances;
+    } else {
+        int num_ifaces_need_to_allocate = 2 - instances.size();
+        for (int i = 0; i < num_ifaces_need_to_allocate; i++) {
+            std::string instance_name =
+                allocateApOrStaIfaceName(IfaceType::AP, startIdxOfApIface());
+            if (!instance_name.empty()) {
+                instances.push_back(instance_name);
+            }
+        }
+    }
+    return instances;
 }
 
 // STA iface names start with idx 0.
