@@ -3027,6 +3027,115 @@ enum VehicleProperty : int32_t {
          | VehiclePropertyGroup:SYSTEM
          | VehiclePropertyType:INT64
          | VehicleArea:GLOBAL),
+
+    /**
+     * Starts the ClusterUI in cluster display.
+     *
+     * int32[0]: the type of ClusterUI to show
+     *    0 indicates ClusterHome, that is a home screen of cluster display, and provides
+     *        the default UI and a kind of launcher functionality for cluster display.
+     *    the other values are followed by OEM's definition.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     */
+     CLUSTER_SWITCH_UI = (
+         0x0F34
+         | VehiclePropertyGroup:SYSTEM
+         | VehiclePropertyType:INT32
+         | VehicleArea:GLOBAL),
+
+    /**
+     * Changes the state of the cluster display.
+     *
+     * int32[0]: on/off: 0 - off, 1 - on, -1 - don't care
+     * int32[1]: width: positive number - actual width in pixels
+                        -1 - don't care (should set "don't care" both width and height)
+     * int32[2]: height: ditto with width
+     * int32[3]: Inset - left: positive number - actual left inset value in pixels
+                               -1 - don't care (should set "don't care" all Inset fields)
+     * int32[4]: Inset - top
+     * int32[5]: Inset - right
+     * int32[6]: Inset - bottom
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     */
+     CLUSTER_DISPLAY_STATE = (
+         0x0F35
+         | VehiclePropertyGroup:SYSTEM
+         | VehiclePropertyType:INT32_VEC
+         | VehicleArea:GLOBAL),
+
+    /**
+     * Reports the current display state and ClusterUI state.
+     *
+     * ClusterHome will send this message when it handles CLUSTER_SWITCH_UI, CLUSTER_DISPLAY_STATE.
+     *
+     * In addition, ClusterHome should send this message when it starts for the first time.
+     * When ClusterOS receives this message and if the internal expectation is different with the
+     * received message, then it should send CLUSTER_SWITCH_UI, CLUSTER_DISPLAY_STATE again to
+     * match the state.
+     *
+     * int32[0]: on/off: 0 - off, 1 - on
+     * int32[1]: width
+     * int32[2]: height
+     * int32[3]: Inset - left
+     * int32[4]: Inset - top
+     * int32[5]: Inset - right
+     * int32[6]: Inset - bottom
+     * int32[7]: the type of ClusterUI in the fullscreen or main screen.
+     *    0 indicates ClusterHome.
+     *    the other values are followed by OEM's definition.
+     * int32[8]: the type of ClusterUI in sub screen if the currently two UIs are shown.
+     *    -1 indicates the area isn't used any more.
+     * bytes: the array to represent the availability of ClusterUI.
+     *     0 indicates non-available and 1 indicates available.
+     *     For example, let's assume a car supports 3 UI like HOME, MAPS, CALL and it only supports
+     *     CALL UI only when the cellular network is available. Then, if the nework is avaibale,
+     *     it'll send [1 1 1], and if it's out of network, it'll send [1 1 0].
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:WRITE
+     */
+     CLUSTER_REPORT_STATE = (
+         0x0F36
+         | VehiclePropertyGroup:SYSTEM
+         | VehiclePropertyType:MIXED
+         | VehicleArea:GLOBAL),
+
+    /**
+     * Requests to change the cluster display state to show some ClusterUI.
+     *
+     * When the current display state is off and ClusterHome sends this message to ClusterOS to
+     * request to turn the display on to show some specific ClusterUI.
+     * ClusterOS should response this with CLUSTER_DISPLAY_STATE.
+     *
+     * int32[0]: the type of ClusterUI to show
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:WRITE
+     */
+     CLUSTER_REQUEST_DISPLAY = (
+         0x0F37
+         | VehiclePropertyGroup:SYSTEM
+         | VehiclePropertyType:INT32
+         | VehicleArea:GLOBAL),
+
+    /**
+     * Informs the current navigation state.
+     *
+     * bytes: the serialized message of NavigationStateProto.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:WRITE
+     */
+     CLUSTER_NAVIGATION_STATE_LEGACY = (
+         0x0F38
+         | VehiclePropertyGroup:SYSTEM
+         | VehiclePropertyType:BYTES
+         | VehicleArea:GLOBAL),
+
 };
 
 /**

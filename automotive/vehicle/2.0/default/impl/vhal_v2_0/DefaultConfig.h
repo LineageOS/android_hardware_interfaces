@@ -1153,6 +1153,47 @@ const ConfigDeclaration kVehicleProperties[]{
                                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                         },
         },
+        {
+                .config =
+                        {
+                                .prop = toInt(VehicleProperty::CLUSTER_SWITCH_UI),
+                                .access = VehiclePropertyAccess::READ,
+                                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                        },
+        },
+        {
+                .config =
+                        {
+                                .prop = toInt(VehicleProperty::CLUSTER_DISPLAY_STATE),
+                                .access = VehiclePropertyAccess::READ,
+                                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                        },
+        },
+        {
+                .config =
+                        {
+                                .prop = toInt(VehicleProperty::CLUSTER_REPORT_STATE),
+                                .access = VehiclePropertyAccess::WRITE,
+                                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                                .configArray = {0, 0, 0, 9, 0, 0, 0, 0, 16},
+                        },
+        },
+        {
+                .config =
+                        {
+                                .prop = toInt(VehicleProperty::CLUSTER_REQUEST_DISPLAY),
+                                .access = VehiclePropertyAccess::WRITE,
+                                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                        },
+        },
+        {
+                .config =
+                        {
+                                .prop = toInt(VehicleProperty::CLUSTER_NAVIGATION_STATE_LEGACY),
+                                .access = VehiclePropertyAccess::WRITE,
+                                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                        },
+        },
 };
 
 }  // impl
