@@ -355,7 +355,7 @@ enum Tag {
      *
      * Must be hardware-enforced.
      */
-    USER_SECURE_ID = (4 << 28) | 502, /* TagType:UINT_REP */
+    USER_SECURE_ID = (10 << 28) | 502, /* TagType:ULONG_REP */
 
     /**
      * Tag::NO_AUTH_REQUIRED specifies that no authentication is required to use this key.  This tag
