@@ -71,8 +71,7 @@ interface ISupplicantStaIface extends @1.3::ISupplicantStaIface {
      *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
      *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
      */
-    initiateVenueUrlAnqpQuery(MacAddress macAddress)
-        generates (SupplicantStatus status);
+    initiateVenueUrlAnqpQuery(MacAddress macAddress) generates (SupplicantStatus status);
 
     /**
      * Get wpa driver capabilities.
@@ -84,4 +83,55 @@ interface ISupplicantStaIface extends @1.3::ISupplicantStaIface {
      */
     getWpaDriverCapabilities_1_4() generates (SupplicantStatus status,
         bitfield<WpaDriverCapabilitiesMask> driverCapabilitiesMask);
+
+    /**
+     * Generates DPP bootstrap information: Bootstrap ID, DPP URI and listen
+     * channel for responder mode.
+     *
+     * @param MacAddress MAC address of the interface for the DPP operation.
+     * @param deviceInfo Device specific information.
+     *        As per DPP Specification V1.0 section 5.2,
+     *        allowed Range of ASCII characters in deviceInfo - %x20-7E
+     *        semicolon is not allowed.
+     * @param DppCurve Elliptic curve cryptography type used to generate DPP
+     * public/private key pair.
+     * @return status of operation and bootstrap info.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     *         |SupplicantStatusCode.FAILURE_UNSUPPORTED|
+     */
+    generateDppBootstrapInfoForResponder(MacAddress macAddress, string deviceInfo, DppCurve curve)
+        generates (SupplicantStatus status, DppResponderBootstrapInfo bootstrapInfo);
+
+    /**
+     * Start DPP in Enrollee-Responder mode.
+     * Framework must first call |generateDppBootstrapInfoForResponder| to generate
+     * the bootstrapping information: Bootstrap ID, DPP URI and the listen channel.
+     * Then call this API with derived listen channel to start listening for
+     * authentication request from Peer initiator.
+     *
+     * @param listenChannel DPP listen channel.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     *         |SupplicantStatusCode.FAILURE_UNSUPPORTED|
+     */
+    startDppEnrolleeResponder(uint32_t listenChannel) generates (SupplicantStatus status);
+
+    /**
+     * Stop DPP Responder operation - Remove the bootstrap code and stop listening.
+     *
+     * @param ownBootstrapId Local device's URI ID obtained through
+     *        |generateDppBootstrapInfoForResponder| call.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     *         |SupplicantStatusCode.FAILURE_UNSUPPORTED|
+     */
+    stopDppResponder(uint32_t ownBootstrapId) generates (SupplicantStatus status);
 };

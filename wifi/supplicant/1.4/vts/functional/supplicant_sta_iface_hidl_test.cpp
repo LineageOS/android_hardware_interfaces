@@ -19,6 +19,7 @@
 #include <android/hardware/wifi/supplicant/1.1/ISupplicant.h>
 #include <android/hardware/wifi/supplicant/1.2/types.h>
 #include <android/hardware/wifi/supplicant/1.3/ISupplicant.h>
+#include <android/hardware/wifi/supplicant/1.3/ISupplicantStaNetwork.h>
 #include <android/hardware/wifi/supplicant/1.3/types.h>
 #include <android/hardware/wifi/supplicant/1.4/ISupplicant.h>
 #include <android/hardware/wifi/supplicant/1.4/ISupplicantStaIface.h>
@@ -45,7 +46,10 @@ using ::android::hardware::wifi::supplicant::V1_2::DppFailureCode;
 using ::android::hardware::wifi::supplicant::V1_2::DppNetRole;
 using ::android::hardware::wifi::supplicant::V1_2::DppProgressCode;
 using ::android::hardware::wifi::supplicant::V1_3::DppSuccessCode;
+using ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaNetwork;
 using ::android::hardware::wifi::supplicant::V1_4::ConnectionCapabilities;
+using ::android::hardware::wifi::supplicant::V1_4::DppCurve;
+using ::android::hardware::wifi::supplicant::V1_4::DppResponderBootstrapInfo;
 using ::android::hardware::wifi::supplicant::V1_4::ISupplicant;
 using ::android::hardware::wifi::supplicant::V1_4::ISupplicantStaIface;
 using ::android::hardware::wifi::supplicant::V1_4::ISupplicantStaIfaceCallback;
@@ -74,6 +78,24 @@ class SupplicantStaIfaceHidlTest : public SupplicantHidlTestBaseV1_4 {
     sp<ISupplicantStaIface> sta_iface_;
     // MAC address to use for various tests.
     std::array<uint8_t, 6> mac_addr_;
+
+    bool isDppSupported() {
+        uint32_t keyMgmtMask = 0;
+
+        // We need to first get the key management capabilities from the device.
+        // If DPP is not supported, we just pass the test.
+        sta_iface_->getKeyMgmtCapabilities_1_3(
+            [&](const SupplicantStatus& status, uint32_t keyMgmtMaskInternal) {
+                EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
+                keyMgmtMask = keyMgmtMaskInternal;
+            });
+
+        if (!(keyMgmtMask & ISupplicantStaNetwork::KeyMgmtMask::DPP)) {
+            // DPP not supported
+            return false;
+        }
+        return true;
+    }
 };
 
 class IfaceCallback : public ISupplicantStaIfaceCallback {
@@ -251,6 +273,48 @@ TEST_P(SupplicantStaIfaceHidlTest, InitiateVenueUrlAnqpQuery) {
 TEST_P(SupplicantStaIfaceHidlTest, GetWpaDriverCapabilities) {
     sta_iface_->getWpaDriverCapabilities_1_4(
         [&](const SupplicantStatusV1_4& status, uint32_t) {
+            EXPECT_EQ(SupplicantStatusCodeV1_4::SUCCESS, status.code);
+        });
+}
+
+/*
+ * StartDppEnrolleeResponder
+ */
+TEST_P(SupplicantStaIfaceHidlTest, StartDppEnrolleeResponder) {
+    // We need to first get the key management capabilities from the device.
+    // If DPP is not supported, we just pass the test.
+    if (!isDppSupported()) {
+        // DPP not supported
+        return;
+    }
+
+    hidl_string deviceInfo = "DPP_Responder_Mode_VTS_Test";
+    uint32_t bootstrap_id = 0;
+    uint32_t listen_channel = 0;
+    uint8_t mac_address[6] = {0x22, 0x33, 0x44, 0x55, 0x66, 0x77};
+
+    // Generate DPP bootstrap information
+    sta_iface_->generateDppBootstrapInfoForResponder(
+        mac_address, deviceInfo, DppCurve::PRIME256V1,
+        [&](const SupplicantStatusV1_4& status,
+            DppResponderBootstrapInfo bootstrapInfo) {
+            EXPECT_EQ(SupplicantStatusCodeV1_4::SUCCESS, status.code);
+            EXPECT_NE(-1, bootstrapInfo.bootstrapId);
+            EXPECT_NE(0, bootstrapInfo.bootstrapId);
+            bootstrap_id = bootstrapInfo.bootstrapId;
+            listen_channel = bootstrapInfo.listenChannel;
+            EXPECT_NE(0, bootstrapInfo.listenChannel);
+        });
+
+    // Start DPP as Enrollee-Responder.
+    sta_iface_->startDppEnrolleeResponder(
+        listen_channel, [&](const SupplicantStatusV1_4& status) {
+            EXPECT_EQ(SupplicantStatusCodeV1_4::SUCCESS, status.code);
+        });
+
+    // Stop DPP Enrollee-Responder mode, ie remove the URI and stop listen.
+    sta_iface_->stopDppResponder(
+        bootstrap_id, [&](const SupplicantStatusV1_4& status) {
             EXPECT_EQ(SupplicantStatusCodeV1_4::SUCCESS, status.code);
         });
 }
