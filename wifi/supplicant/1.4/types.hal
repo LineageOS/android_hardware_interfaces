@@ -18,6 +18,7 @@ package android.hardware.wifi.supplicant@1.4;
 
 import @1.0::SupplicantStatusCode;
 import @1.3::ConnectionCapabilities;
+import @1.3::DppFailureCode;
 import @1.3::WpaDriverCapabilitiesMask;
 
 /**
@@ -40,6 +41,29 @@ enum LegacyMode : uint32_t {
 };
 
 /**
+ * DppFailureCode: Error codes for DPP (Easy Connect)
+ */
+enum DppFailureCode : @1.3::DppFailureCode {
+    /**
+     * Failure to generate a DPP URI.
+     */
+    URI_GENERATION,
+};
+
+/**
+ * DppCurve: Elliptic curve cryptography type used to generate DPP
+ * public/private key pair.
+ */
+enum DppCurve : uint32_t {
+    PRIME256V1,
+    SECP384R1,
+    SECP521R1,
+    BRAINPOOLP256R1,
+    BRAINPOOLP384R1,
+    BRAINPOOLP512R1,
+};
+
+/**
  * Connection Capabilities supported by current network and device
  */
 struct ConnectionCapabilities {
@@ -47,6 +71,7 @@ struct ConnectionCapabilities {
      * Baseline information as defined in HAL 1.3.
      */
     @1.3::ConnectionCapabilities V1_3;
+
     /**
      * detailed network mode for legacy network
      */
@@ -64,13 +89,14 @@ enum SupplicantStatusCode : @1.0::SupplicantStatusCode {
  * Generic structure to return the status of any supplicant operation.
  */
 struct SupplicantStatus {
-  SupplicantStatusCode code;
-  /**
-   * A vendor specific error message to provide more information beyond the
-   * status code.
-   * This will be used for debbuging purposes only.
-   */
-  string debugMessage;
+    SupplicantStatusCode code;
+
+    /**
+     * A vendor specific error message to provide more information beyond the
+     * status code.
+     * This will be used for debbuging purposes only.
+     */
+    string debugMessage;
 };
 
 /**
@@ -78,7 +104,27 @@ struct SupplicantStatus {
  */
 enum WpaDriverCapabilitiesMask : @1.3::WpaDriverCapabilitiesMask {
     /**
-     *
      */
     SAE_PK = 1 << 2,
+};
+
+/**
+ * DPP bootstrap info generated for responder mode operation
+ */
+struct DppResponderBootstrapInfo {
+    /**
+     * Generated bootstrap identifier
+     */
+    uint32_t bootstrapId;
+
+    /**
+     * The Wi-Fi channel that the DPP responder is listening on.
+     */
+    uint32_t listenChannel;
+
+    /**
+     * Bootstrapping URI per DPP specification, "section 5.2 Bootstrapping
+     * information", may contain listen channel, MAC address, public key, or other information.
+     */
+    string uri;
 };
