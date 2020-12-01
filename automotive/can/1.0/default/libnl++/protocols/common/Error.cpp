@@ -26,7 +26,7 @@ using DataType = AttributeDefinition::DataType;
 
 // clang-format off
 Error::Error(int protocol) : MessageDefinition<nlmsgerr>("nlmsg", {
-    {NLMSG_ERROR, {"ERROR", MessageGenre::ACK}},
+    {NLMSG_ERROR, {"ERROR", MessageGenre::Ack}},
 }, {
     {NLMSGERR_ATTR_MSG, {"MSG", DataType::String}},
     {NLMSGERR_ATTR_OFFS, {"OFFS", DataType::Uint}},

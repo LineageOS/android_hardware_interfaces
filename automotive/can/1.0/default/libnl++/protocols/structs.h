@@ -16,24 +16,18 @@
 
 #pragma once
 
-#include "../NetlinkProtocol.h"
+#include <sstream>
 
-namespace android::nl::protocols::generic {
+namespace android::nl::protocols {
 
-/**
- * Definition of NETLINK_GENERIC protocol.
- */
-class Generic : public NetlinkProtocol {
-  public:
-    typedef std::map<nlmsgtype_t, std::shared_ptr<MessageDescriptor>> FamilyRegister;
+template <typename T>
+void arrayToStream(std::stringstream& ss, const Buffer<nlattr> attr) {
+    ss << '{';
+    for (const auto it : attr.data<T>().getRaw()) {
+        ss << it << ',';
+    }
+    ss.seekp(-1, std::ios_base::cur);
+    ss << '}';
+}
 
-    Generic();
-
-    const std::optional<std::reference_wrapper<MessageDescriptor>> getMessageDescriptor(
-            nlmsgtype_t nlmsg_type);
-
-  private:
-    FamilyRegister mFamilyRegister;
-};
-
-}  // namespace android::nl::protocols::generic
+}  // namespace android::nl::protocols

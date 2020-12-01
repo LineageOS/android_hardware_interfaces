@@ -16,12 +16,19 @@
 
 #include "Ctrl.h"
 
+#include "families/Nl80211.h"
+
+#include <libnl++/Message.h>
+
 namespace android::nl::protocols::generic {
 
 using DataType = AttributeDefinition::DataType;
+using Flags = AttributeDefinition::Flags;
 
 // clang-format off
-Ctrl::Ctrl() : GenericMessageBase(GENL_ID_CTRL, "ID_CTRL", {
+Ctrl::Ctrl(Generic::FamilyRegister& familyRegister)
+    : GenericMessageBase(GENL_ID_CTRL, "ID_CTRL",
+{
     {CTRL_CMD_NEWFAMILY, "NEWFAMILY"},
     {CTRL_CMD_DELFAMILY, "DELFAMILY"},
     {CTRL_CMD_GETFAMILY, "GETFAMILY"},
@@ -33,7 +40,7 @@ Ctrl::Ctrl() : GenericMessageBase(GENL_ID_CTRL, "ID_CTRL", {
     {CTRL_CMD_GETMCAST_GRP, "GETMCAST_GRP"},
 }, {
     {CTRL_ATTR_FAMILY_ID, {"FAMILY_ID", DataType::Uint}},
-    {CTRL_ATTR_FAMILY_NAME, {"FAMILY_NAME", DataType::String}},
+    {CTRL_ATTR_FAMILY_NAME, {"FAMILY_NAME", DataType::StringNul}},
     {CTRL_ATTR_VERSION, {"VERSION", DataType::Uint}},
     {CTRL_ATTR_HDRSIZE, {"HDRSIZE", DataType::Uint}},
     {CTRL_ATTR_MAXATTR, {"MAXATTR", DataType::Uint}},
@@ -42,14 +49,31 @@ Ctrl::Ctrl() : GenericMessageBase(GENL_ID_CTRL, "ID_CTRL", {
             {CTRL_ATTR_OP_ID, {"ID", DataType::Uint}},
             {CTRL_ATTR_OP_FLAGS, {"FLAGS", DataType::Uint}},
         }}},
-    }}},
+    }, Flags::Verbose}},
     {CTRL_ATTR_MCAST_GROUPS, {"MCAST_GROUPS", DataType::Nested, AttributeMap{
         {std::nullopt, {"GRP", DataType::Nested, AttributeMap{
-            {CTRL_ATTR_MCAST_GRP_NAME, {"NAME", DataType::String}},
+            {CTRL_ATTR_MCAST_GRP_NAME, {"NAME", DataType::StringNul}},
             {CTRL_ATTR_MCAST_GRP_ID, {"ID", DataType::Uint}},
         }}},
     }}},
-}) {}
+}), mFamilyRegister(familyRegister) {}
 // clang-format on
+
+void Ctrl::track(const Buffer<nlmsghdr> hdr) {
+    const auto msgMaybe = Message<genlmsghdr>::parse(hdr, {GENL_ID_CTRL});
+    if (!msgMaybe.has_value()) return;
+    const auto msg = *msgMaybe;
+
+    if (msg->cmd != CTRL_CMD_NEWFAMILY) return;
+    const auto familyId = msg.attributes.get<uint16_t>(CTRL_ATTR_FAMILY_ID);
+    const auto familyName = msg.attributes.get<std::string>(CTRL_ATTR_FAMILY_NAME);
+
+    /* For now, we support just a single family. But if you add more, please define proper
+     * abstraction and not hardcode every name and class here.
+     */
+    if (familyName == "nl80211") {
+        mFamilyRegister[familyId] = std::make_shared<families::Nl80211>(familyId);
+    }
+}
 
 }  // namespace android::nl::protocols::generic
