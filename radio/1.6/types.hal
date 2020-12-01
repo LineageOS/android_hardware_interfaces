@@ -22,6 +22,7 @@ import @1.4::DataCallFailCause;
 import @1.4::DataConnActiveStatus;
 import @1.4::PdpProtocolType;
 import @1.5::LinkAddress;
+
 import android.hidl.safe_union@1.0::Monostate;
 
 struct QosBandwidth {
