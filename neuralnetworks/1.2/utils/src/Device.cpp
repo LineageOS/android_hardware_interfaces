@@ -42,6 +42,30 @@
 #include <vector>
 
 namespace android::hardware::neuralnetworks::V1_2::utils {
+namespace {
+
+nn::GeneralResult<nn::Capabilities> initCapabilities(V1_2::IDevice* device) {
+    CHECK(device != nullptr);
+
+    nn::GeneralResult<nn::Capabilities> result = NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
+                                                 << "uninitialized";
+    const auto cb = [&result](V1_0::ErrorStatus status, const Capabilities& capabilities) {
+        if (status != V1_0::ErrorStatus::NONE) {
+            const auto canonical =
+                    validatedConvertToCanonical(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
+            result = NN_ERROR(canonical) << "getCapabilities_1_2 failed with " << toString(status);
+        } else {
+            result = validatedConvertToCanonical(capabilities);
+        }
+    };
+
+    const auto ret = device->getCapabilities_1_2(cb);
+    NN_TRY(hal::utils::handleTransportError(ret));
+
+    return result;
+}
+
+}  // namespace
 
 nn::GeneralResult<std::string> initVersionString(V1_2::IDevice* device) {
     CHECK(device != nullptr);
@@ -101,27 +125,6 @@ nn::GeneralResult<std::vector<nn::Extension>> initExtensions(V1_2::IDevice* devi
     };
 
     const auto ret = device->getSupportedExtensions(cb);
-    NN_TRY(hal::utils::handleTransportError(ret));
-
-    return result;
-}
-
-nn::GeneralResult<nn::Capabilities> initCapabilities(V1_2::IDevice* device) {
-    CHECK(device != nullptr);
-
-    nn::GeneralResult<nn::Capabilities> result = NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
-                                                 << "uninitialized";
-    const auto cb = [&result](V1_0::ErrorStatus status, const Capabilities& capabilities) {
-        if (status != V1_0::ErrorStatus::NONE) {
-            const auto canonical =
-                    validatedConvertToCanonical(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
-            result = NN_ERROR(canonical) << "getCapabilities_1_2 failed with " << toString(status);
-        } else {
-            result = validatedConvertToCanonical(capabilities);
-        }
-    };
-
-    const auto ret = device->getCapabilities_1_2(cb);
     NN_TRY(hal::utils::handleTransportError(ret));
 
     return result;
