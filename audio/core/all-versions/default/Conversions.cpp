@@ -31,7 +31,7 @@ std::string deviceAddressToHal(const DeviceAddress& address) {
     // HAL assumes that the address is NUL-terminated.
     char halAddress[AUDIO_DEVICE_MAX_ADDRESS_LEN];
     memset(halAddress, 0, sizeof(halAddress));
-    uint32_t halDevice = static_cast<uint32_t>(address.device);
+    audio_devices_t halDevice = static_cast<audio_devices_t>(address.device);
     if (getAudioDeviceOutAllA2dpSet().count(halDevice) > 0 ||
         halDevice == AUDIO_DEVICE_IN_BLUETOOTH_A2DP) {
         snprintf(halAddress, sizeof(halAddress), "%02X:%02X:%02X:%02X:%02X:%02X",
