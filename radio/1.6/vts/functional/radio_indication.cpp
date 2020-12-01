@@ -30,6 +30,13 @@ Return<void> RadioIndication_v1_6::unthrottleApn(RadioIndicationType /*type*/,
     return Void();
 }
 
+Return<void> RadioIndication_v1_6::currentPhysicalChannelConfigs_1_6(
+        RadioIndicationType /*type*/,
+        const ::android::hardware::hidl_vec<
+                ::android::hardware::radio::V1_6::PhysicalChannelConfig>& /*configs*/) {
+    return Void();
+}
+
 /* 1.5 Apis */
 Return<void> RadioIndication_v1_6::uiccApplicationsEnablementChanged(RadioIndicationType /*type*/,
                                                                      bool /*enabled*/) {
