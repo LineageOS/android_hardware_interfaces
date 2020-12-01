@@ -349,4 +349,13 @@ interface IRadio extends @1.5::IRadio {
     oneway setDataThrottling(int32_t serial,
             DataThrottlingAction dataThrottlingAction,
             int32_t completionWindowSecs);
+
+    /**
+     * Get which bands the modem's background scan is acting on.
+     *
+     * @param serial Serial number of request.
+     *
+     * Response callback is IRadioResponse.getSystemSelectionChannelsResponse()
+     */
+    oneway getSystemSelectionChannels(int32_t serial);
 };
