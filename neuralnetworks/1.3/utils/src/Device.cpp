@@ -71,6 +71,27 @@ nn::GeneralResult<nn::SharedBuffer> convert(
     return NN_TRY(std::move(result));
 }
 
+nn::GeneralResult<nn::Capabilities> initCapabilities(V1_3::IDevice* device) {
+    CHECK(device != nullptr);
+
+    nn::GeneralResult<nn::Capabilities> result = NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
+                                                 << "uninitialized";
+    const auto cb = [&result](ErrorStatus status, const Capabilities& capabilities) {
+        if (status != ErrorStatus::NONE) {
+            const auto canonical =
+                    validatedConvertToCanonical(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
+            result = NN_ERROR(canonical) << "getCapabilities_1_3 failed with " << toString(status);
+        } else {
+            result = validatedConvertToCanonical(capabilities);
+        }
+    };
+
+    const auto ret = device->getCapabilities_1_3(cb);
+    NN_TRY(hal::utils::handleTransportError(ret));
+
+    return result;
+}
+
 }  // namespace
 
 nn::GeneralResult<std::shared_ptr<const Device>> Device::create(std::string name,
@@ -87,7 +108,7 @@ nn::GeneralResult<std::shared_ptr<const Device>> Device::create(std::string name
     auto versionString = NN_TRY(V1_2::utils::initVersionString(device.get()));
     const auto deviceType = NN_TRY(V1_2::utils::initDeviceType(device.get()));
     auto extensions = NN_TRY(V1_2::utils::initExtensions(device.get()));
-    auto capabilities = NN_TRY(V1_2::utils::initCapabilities(device.get()));
+    auto capabilities = NN_TRY(initCapabilities(device.get()));
     const auto numberOfCacheFilesNeeded =
             NN_TRY(V1_2::utils::initNumberOfCacheFilesNeeded(device.get()));
 
