@@ -90,7 +90,10 @@ cc_test_library {
 
 cc_test {
     name: "android.hardware.sensors@2.X-halproxy-unit-tests",
-    srcs: ["HalProxy_test.cpp"],
+    srcs: [
+        "HalProxy_test.cpp",
+        "ScopedWakelock_test.cpp",
+    ],
     vendor: true,
     header_libs: [
         "android.hardware.sensors@2.X-shared-utils",

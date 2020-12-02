@@ -534,6 +534,9 @@ WifiNanIface::WifiNanIface(
 }
 
 void WifiNanIface::invalidate() {
+    if (!isValid()) {
+        return;
+    }
     // send commands to HAL to actually disable and destroy interfaces
     legacy_hal_.lock()->nanDisableRequest(ifname_, 0xFFFF);
     legacy_hal_.lock()->nanDataInterfaceDelete(ifname_, 0xFFFE, "aware_data0");

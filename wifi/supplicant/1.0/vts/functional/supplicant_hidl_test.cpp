@@ -40,16 +40,22 @@ class SupplicantHidlTest
     virtual void SetUp() override {
         wifi_instance_name_ = std::get<0>(GetParam());
         supplicant_instance_name_ = std::get<1>(GetParam());
+        isP2pOn_ =
+            testing::deviceSupportsFeature("android.hardware.wifi.direct");
+        // Stop Framework
+        std::system("/system/bin/stop");
         stopSupplicant(wifi_instance_name_);
         startSupplicantAndWaitForHidlService(wifi_instance_name_,
                                              supplicant_instance_name_);
-        isP2pOn_ =
-            testing::deviceSupportsFeature("android.hardware.wifi.direct");
         supplicant_ = getSupplicant(supplicant_instance_name_, isP2pOn_);
         ASSERT_NE(supplicant_.get(), nullptr);
     }
 
-    virtual void TearDown() override { stopSupplicant(wifi_instance_name_); }
+    virtual void TearDown() override {
+        stopSupplicant(wifi_instance_name_);
+        // Start Framework
+        std::system("/system/bin/start");
+    }
 
    protected:
     // ISupplicant object used for all tests in this fixture.
