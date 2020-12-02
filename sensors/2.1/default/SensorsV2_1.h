@@ -54,6 +54,23 @@ struct SensorsV2_1 : public Sensors {
     // Methods from ::android::hardware::sensors::V2_1::ISensors follow.
     Return<void> getSensorsList_2_1(ISensors::getSensorsList_2_1_cb _hidl_cb) override;
 
+    Return<void>
+    getSensorsList(V2_0::ISensors::getSensorsList_cb _hidl_cb) override {
+      std::vector<V1_0::SensorInfo> sensors;
+      for (const auto &sensor : mSensors) {
+        auto &info = sensor.second->getSensorInfo();
+        if (info.type != SensorType::HINGE_ANGLE) {
+          sensors.push_back(V2_1::implementation::convertToOldSensorInfo(
+              sensor.second->getSensorInfo()));
+        }
+      }
+
+      // Call the HIDL callback with the SensorInfo
+      _hidl_cb(sensors);
+
+      return Void();
+    }
+
     Return<Result> initialize_2_1(
             const ::android::hardware::MQDescriptorSync<V2_1::Event>& eventQueueDescriptor,
             const ::android::hardware::MQDescriptorSync<uint32_t>& wakeLockDescriptor,
@@ -71,4 +88,4 @@ struct SensorsV2_1 : public Sensors {
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_SENSORS_V2_1_H
+#endif // ANDROID_HARDWARE_SENSORS_V2_1_H

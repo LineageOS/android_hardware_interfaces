@@ -79,19 +79,6 @@ struct Sensors : public ISensorsInterface, public ISensorsEventCallback {
     }
 
     // Methods from ::android::hardware::sensors::V2_0::ISensors follow.
-    Return<void> getSensorsList(V2_0::ISensors::getSensorsList_cb _hidl_cb) override {
-        std::vector<V1_0::SensorInfo> sensors;
-        for (const auto& sensor : mSensors) {
-            sensors.push_back(
-                    V2_1::implementation::convertToOldSensorInfo(sensor.second->getSensorInfo()));
-        }
-
-        // Call the HIDL callback with the SensorInfo
-        _hidl_cb(sensors);
-
-        return Void();
-    }
-
     Return<Result> setOperationMode(OperationMode mode) override {
         for (auto sensor : mSensors) {
             sensor.second->setOperationMode(mode);
