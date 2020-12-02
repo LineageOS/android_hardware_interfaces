@@ -37,7 +37,6 @@ namespace android::hardware::neuralnetworks::V1_2::utils {
 nn::GeneralResult<std::string> initVersionString(V1_2::IDevice* device);
 nn::GeneralResult<nn::DeviceType> initDeviceType(V1_2::IDevice* device);
 nn::GeneralResult<std::vector<nn::Extension>> initExtensions(V1_2::IDevice* device);
-nn::GeneralResult<nn::Capabilities> initCapabilities(V1_2::IDevice* device);
 nn::GeneralResult<std::pair<uint32_t, uint32_t>> initNumberOfCacheFilesNeeded(
         V1_2::IDevice* device);
 

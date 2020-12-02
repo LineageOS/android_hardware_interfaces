@@ -218,6 +218,30 @@ enum AcquiredInfo {
     /**
      * The first frame from the camera has been received.
      */
-    FIRST_FRAME_RECEIVED = 23
+    FIRST_FRAME_RECEIVED = 23,
+
+    /**
+     * Dark glasses detected. This can be useful for providing relevant feedback to the user and
+     * enabling an alternative authentication logic if the implementation supports it.
+     */
+    DARK_GLASSES_DETECTED = 24,
+
+    /**
+     * A face mask or face covering detected. This can be useful for providing relevant feedback to
+     * the user and enabling an alternative authentication logic if the implementation supports it.
+     */
+    FACE_COVERING_DETECTED = 25,
+
+    /**
+     * Either one or both eyes are not visible in the frame. Prefer to use DARK_GLASSES_DETECTED if
+     * the eyes are not visible due to dark glasses.
+     */
+    EYES_NOT_VISIBLE = 26,
+
+    /**
+     * The mouth is not visible in the frame. Prefer to use MASK_DETECTED if the mouth is not
+     * visible due to a mask.
+     */
+    MOUTH_NOT_VISIBLE = 27,
 }
 
