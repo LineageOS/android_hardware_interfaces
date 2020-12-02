@@ -17,6 +17,7 @@
 package android.hardware.wifi@1.5;
 
 import @1.0::WifiStatus;
+import @1.0::IWifiApIface;
 import @1.0::IWifiIface;
 import @1.3::IWifiChip;
 import @1.4::IWifiChip;
@@ -127,4 +128,43 @@ interface IWifiChip extends @1.4::IWifiChip {
      *         |WifiStatusCode.ERROR_INVALID_ARGS|
      */
     setMultiStaUseCase(MultiStaUseCase useCase) generates (WifiStatus status);
+
+
+    /**
+     * Create bridged IWifiApIface.
+     *
+     * Depending on the mode the chip is configured in, the interface creation
+     * may fail (code: |ERROR_NOT_AVAILABLE|) if we've already reached the maximum
+     * allowed (specified in |ChipIfaceCombination|) number of ifaces of the AP
+     * type.
+     *
+     * @return status WifiStatus of the operation.
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+     *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+     *         |WifiStatusCode.ERROR_NOT_AVAILABLE|
+     * @return iface HIDL interface object representing the iface if
+     *         successful, null otherwise.
+     */
+    createBridgedApIface() generates (WifiStatus status, IWifiApIface iface);
+
+    /**
+     * Removes one of the instance on the AP Iface with the provided ifaceName and
+     * ifaceInstanceName.
+     *
+     * Use the API: removeApIface with brIfaceName in the V1_0::WifiChip.hal to remove bridge Iface.
+     *
+     * @param brIfaceName Name of the bridged AP iface.
+     * @param ifaceInstanceName Name of the instance. The empty instance is
+     * invalid.
+     * @return status WifiStatus of the operation.
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+     *         |WifiStatusCode.ERROR_INVALID_ARGS|,
+     *         |WifiStatusCode.ERROR_NOT_AVAILABLE|
+     */
+    removeIfaceInstanceFromBridgedApIface(string brIfaceName, string ifaceInstanceName)
+        generates (WifiStatus status);
 };

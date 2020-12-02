@@ -94,11 +94,16 @@ class WifiChip : public V1_5::IWifiChip {
     Return<void> requestFirmwareDebugDump(
         requestFirmwareDebugDump_cb hidl_status_cb) override;
     Return<void> createApIface(createApIface_cb hidl_status_cb) override;
+    Return<void> createBridgedApIface(
+        createBridgedApIface_cb hidl_status_cb) override;
     Return<void> getApIfaceNames(getApIfaceNames_cb hidl_status_cb) override;
     Return<void> getApIface(const hidl_string& ifname,
                             getApIface_cb hidl_status_cb) override;
     Return<void> removeApIface(const hidl_string& ifname,
                                removeApIface_cb hidl_status_cb) override;
+    Return<void> removeIfaceInstanceFromBridgedApIface(
+        const hidl_string& brIfaceName, const hidl_string& ifaceInstanceName,
+        removeIfaceInstanceFromBridgedApIface_cb hidl_status_cb) override;
     Return<void> createNanIface(createNanIface_cb hidl_status_cb) override;
     Return<void> getNanIfaceNames(getNanIfaceNames_cb hidl_status_cb) override;
     Return<void> getNanIface(const hidl_string& ifname,
@@ -192,11 +197,16 @@ class WifiChip : public V1_5::IWifiChip {
     requestDriverDebugDumpInternal();
     std::pair<WifiStatus, std::vector<uint8_t>>
     requestFirmwareDebugDumpInternal();
+    sp<WifiApIface> newWifiApIface(std::string& ifname);
+    WifiStatus createVirtualApInterface(const std::string& apVirtIf);
     std::pair<WifiStatus, sp<IWifiApIface>> createApIfaceInternal();
+    std::pair<WifiStatus, sp<IWifiApIface>> createBridgedApIfaceInternal();
     std::pair<WifiStatus, std::vector<hidl_string>> getApIfaceNamesInternal();
     std::pair<WifiStatus, sp<IWifiApIface>> getApIfaceInternal(
         const std::string& ifname);
     WifiStatus removeApIfaceInternal(const std::string& ifname);
+    WifiStatus removeIfaceInstanceFromBridgedApIfaceInternal(
+        const std::string& brIfaceName, const std::string& ifInstanceName);
     std::pair<WifiStatus, sp<V1_4::IWifiNanIface>> createNanIfaceInternal();
     std::pair<WifiStatus, std::vector<hidl_string>> getNanIfaceNamesInternal();
     std::pair<WifiStatus, sp<V1_4::IWifiNanIface>> getNanIfaceInternal(
@@ -272,6 +282,9 @@ class WifiChip : public V1_5::IWifiChip {
     std::string allocateStaIfaceName();
     bool writeRingbufferFilesInternal();
     std::string getWlanIfaceNameWithType(IfaceType type, unsigned idx);
+    void invalidateAndClearBridgedApAll();
+    void invalidateAndClearBridgedAp(const std::string& br_name);
+    bool findUsingNameFromBridgedApInstances(const std::string& name);
 
     ChipId chip_id_;
     std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
@@ -296,7 +309,7 @@ class WifiChip : public V1_5::IWifiChip {
         event_cb_handler_;
 
     const std::function<void(const std::string&)> subsystemCallbackHandler_;
-
+    std::map<std::string, std::vector<std::string>> br_ifaces_ap_instances_;
     DISALLOW_COPY_AND_ASSIGN(WifiChip);
 };
 
