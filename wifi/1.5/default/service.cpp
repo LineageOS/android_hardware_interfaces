@@ -17,6 +17,7 @@
 #include <android-base/logging.h>
 #include <hidl/HidlLazyUtils.h>
 #include <hidl/HidlTransportSupport.h>
+#include <signal.h>
 #include <utils/Looper.h>
 #include <utils/StrongPointer.h>
 
@@ -45,6 +46,7 @@ const bool kLazyService = false;
 #endif
 
 int main(int /*argc*/, char** argv) {
+    signal(SIGPIPE, SIG_IGN);
     android::base::InitLogging(
         argv, android::base::LogdLogger(android::base::SYSTEM));
     LOG(INFO) << "Wifi Hal is booting up...";
