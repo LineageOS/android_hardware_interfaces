@@ -1164,6 +1164,13 @@ Return<void> RadioResponse_v1_6::setDataThrottlingResponse(
     return Void();
 }
 
+Return<void> RadioResponse_v1_6::getCellInfoListResponse_1_6(
+        const ::android::hardware::radio::V1_6::RadioResponseInfo& /*info*/,
+        const ::android::hardware::hidl_vec<
+                ::android::hardware::radio::V1_6::CellInfo>& /*cellInfo*/) {
+    return Void();
+}
+
 Return<void> RadioResponse_v1_6::getSystemSelectionChannelsResponse(
         const ::android::hardware::radio::V1_6::RadioResponseInfo& info) {
     rspInfo = info;

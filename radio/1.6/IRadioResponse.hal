@@ -17,9 +17,10 @@
 package android.hardware.radio@1.6;
 
 import @1.0::SendSmsResult;
-import @1.6::RadioResponseInfo;
 import @1.5::IRadioResponse;
+import @1.6::CellInfo;
 import @1.6::RegStateResult;
+import @1.6::RadioResponseInfo;
 import @1.6::SetupDataCallResult;
 
 /**
@@ -328,6 +329,19 @@ interface IRadioResponse extends @1.5::IRadioResponse {
      *   RadioError:INVALID_ARGUMENTS
      */
     oneway getSystemSelectionChannelsResponse(RadioResponseInfo info);
+
+    /**
+     * This is identical to getCellInfoListResponse_1_5 but uses an updated version of CellInfo.
+     *
+     * @param info Response info struct containing response type, serial no. and error
+     * @param cellInfo List of current cell information known to radio
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     */
+    oneway getCellInfoListResponse_1_6(RadioResponseInfo info, vec<CellInfo> cellInfo);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
