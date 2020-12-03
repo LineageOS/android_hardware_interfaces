@@ -390,6 +390,15 @@ interface IRadio extends @1.5::IRadio {
     oneway getVoiceRegistrationState_1_6(int32_t serial);
 
     /**
+     * Requests current signal strength and associated information.  Must succeed if radio is on.
+     *
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.getSignalStrengthResponse_1_6()
+     */
+    oneway getSignalStrength_1_6(int32_t serial);
+
+    /**
      * Request current data registration state.
      *
      * @param serial Serial number of request.

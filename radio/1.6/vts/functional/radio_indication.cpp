@@ -387,6 +387,12 @@ Return<void> RadioIndication_v1_6::modemReset(RadioIndicationType /*type*/,
     return Void();
 }
 
+Return<void> RadioIndication_v1_6::currentSignalStrength_1_6(
+        RadioIndicationType /*type*/,
+        const ::android::hardware::radio::V1_6::SignalStrength& /*signalStrength*/) {
+    return Void();
+}
+
 Return<void> RadioIndication_v1_6::networkScanResult_1_6(
         RadioIndicationType /*type*/,
         const ::android::hardware::radio::V1_6::NetworkScanResult& /*result*/) {
