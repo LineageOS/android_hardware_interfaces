@@ -179,7 +179,7 @@ TEST_P(TunerFilterHidlTest, ConfigIpFilterInDemuxWithCid) {
     configSingleFilterInDemuxTest(filterArray[IP_IP0], frontendArray[DVBT]);
 }
 
-TEST_P(TunerFilterHidlTest, ReonfigFilterToReceiveStartId) {
+TEST_P(TunerFilterHidlTest, ReconfigFilterToReceiveStartId) {
     description("Recofigure and restart a filter to test start id.");
     // TODO use parameterized tests
     reconfigSingleFilterInDemuxTest(filterArray[TS_VIDEO0], filterArray[TS_VIDEO1],
