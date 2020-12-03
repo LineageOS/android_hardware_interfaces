@@ -51,6 +51,8 @@ class SupplicantStaNetworkHidlTest
         supplicant_v1_3_instance_name_ = std::get<1>(GetParam());
         isP2pOn_ =
             testing::deviceSupportsFeature("android.hardware.wifi.direct");
+        // Stop Framework
+        std::system("/system/bin/stop");
 
         stopSupplicant(wifi_v1_0_instance_name_);
         startSupplicantAndWaitForHidlService(wifi_v1_0_instance_name_,
@@ -66,6 +68,8 @@ class SupplicantStaNetworkHidlTest
 
     virtual void TearDown() override {
         stopSupplicant(wifi_v1_0_instance_name_);
+        // Start Framework
+        std::system("/system/bin/start");
     }
 
    protected:
