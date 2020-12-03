@@ -206,7 +206,10 @@ interface IVibrator {
      * device/board configuration files ensuring that no ID is assigned to
      * multiple clients. No client should use this API unless explicitly
      * assigned an always-on source ID. Clients must develop their own way to
-     * get IDs from vendor in a stable way.
+     * get IDs from vendor in a stable way. For instance, a client may expose
+     * a stable API (via HAL, sysprops, or xml overlays) to allow vendor to
+     * associate a hardware ID with a specific usecase. When that usecase is
+     * triggered, a client would use that hardware ID here.
      *
      * @param id The device-specific always-on source ID to enable.
      * @param effect The type of haptic event to trigger.
