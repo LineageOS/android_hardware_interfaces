@@ -798,6 +798,14 @@ class RadioResponse_v1_6 : public ::android::hardware::radio::V1_6::IRadioRespon
 
     Return<void> getSystemSelectionChannelsResponse(
             const ::android::hardware::radio::V1_6::RadioResponseInfo& info);
+
+    Return<void> getVoiceRegistrationStateResponse_1_6(
+            const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
+            const ::android::hardware::radio::V1_6::RegStateResult& regResponse);
+
+    Return<void> getDataRegistrationStateResponse_1_6(
+            const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
+            const ::android::hardware::radio::V1_6::RegStateResult& regResponse);
 };
 
 /* Callback class for radio indication */
