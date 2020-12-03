@@ -386,3 +386,16 @@ Return<void> RadioIndication_v1_6::modemReset(RadioIndicationType /*type*/,
                                               const ::android::hardware::hidl_string& /*reason*/) {
     return Void();
 }
+
+Return<void> RadioIndication_v1_6::networkScanResult_1_6(
+        RadioIndicationType /*type*/,
+        const ::android::hardware::radio::V1_6::NetworkScanResult& /*result*/) {
+    return Void();
+}
+
+Return<void> RadioIndication_v1_6::cellInfoList_1_6(
+        RadioIndicationType /*type*/,
+        const ::android::hardware::hidl_vec<
+                ::android::hardware::radio::V1_6::CellInfo>& /*records*/) {
+    return Void();
+}

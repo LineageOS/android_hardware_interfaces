@@ -799,6 +799,11 @@ class RadioResponse_v1_6 : public ::android::hardware::radio::V1_6::IRadioRespon
     Return<void> getSystemSelectionChannelsResponse(
             const ::android::hardware::radio::V1_6::RadioResponseInfo& info);
 
+    Return<void> getCellInfoListResponse_1_6(
+            const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
+            const ::android::hardware::hidl_vec<::android::hardware::radio::V1_6::CellInfo>&
+                    cellInfo);
+
     Return<void> getVoiceRegistrationStateResponse_1_6(
             const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
             const ::android::hardware::radio::V1_6::RegStateResult& regResponse);
@@ -824,6 +829,15 @@ class RadioIndication_v1_6 : public ::android::hardware::radio::V1_6::IRadioIndi
 
     Return<void> unthrottleApn(RadioIndicationType type,
                                const ::android::hardware::hidl_string& apn);
+
+    Return<void> networkScanResult_1_6(
+            RadioIndicationType type,
+            const ::android::hardware::radio::V1_6::NetworkScanResult& result);
+
+    Return<void> cellInfoList_1_6(
+            RadioIndicationType type,
+            const ::android::hardware::hidl_vec<::android::hardware::radio::V1_6::CellInfo>&
+                    records);
 
     /* 1.5 Api */
     Return<void> uiccApplicationsEnablementChanged(RadioIndicationType type, bool enabled);
