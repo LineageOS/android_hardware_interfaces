@@ -1,0 +1,17 @@
+genrule {
+    name: "tuner_frontend_input_es",
+    srcs: ["tuner_frontend_input.es"],
+    out: [
+        "test.es",
+    ],
+    cmd: "cp -f $(in) $(genDir)/test.es",
+}
+
+genrule {
+    name: "tuner_frontend_input_ts",
+    srcs: ["tuner_frontend_input.ts"],
+    out: [
+        "segment000000.ts",
+    ],
+    cmd: "cp -f $(in) $(genDir)/segment000000.ts",
+}

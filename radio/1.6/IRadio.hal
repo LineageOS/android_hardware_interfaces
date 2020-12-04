@@ -365,4 +365,22 @@ interface IRadio extends @1.5::IRadio {
      * Response callback is IRadioResponse.getSystemSelectionChannelsResponse()
      */
     oneway getSystemSelectionChannels(int32_t serial);
+
+    /**
+     * Request current voice registration state.
+     *
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.getVoiceRegistrationStateResponse_1_6()
+     */
+    oneway getVoiceRegistrationState_1_6(int32_t serial);
+
+    /**
+     * Request current data registration state.
+     *
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.getDataRegistrationStateResponse_1_6()
+     */
+    oneway getDataRegistrationState_1_6(int32_t serial);
 };

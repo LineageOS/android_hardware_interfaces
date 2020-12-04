@@ -199,10 +199,11 @@ class WifiChip : public V1_5::IWifiChip {
     requestFirmwareDebugDumpInternal();
     sp<WifiApIface> newWifiApIface(std::string& ifname);
     WifiStatus createVirtualApInterface(const std::string& apVirtIf);
-    std::pair<WifiStatus, sp<IWifiApIface>> createApIfaceInternal();
-    std::pair<WifiStatus, sp<IWifiApIface>> createBridgedApIfaceInternal();
+    std::pair<WifiStatus, sp<V1_5::IWifiApIface>> createApIfaceInternal();
+    std::pair<WifiStatus, sp<V1_5::IWifiApIface>>
+    createBridgedApIfaceInternal();
     std::pair<WifiStatus, std::vector<hidl_string>> getApIfaceNamesInternal();
-    std::pair<WifiStatus, sp<IWifiApIface>> getApIfaceInternal(
+    std::pair<WifiStatus, sp<V1_5::IWifiApIface>> getApIfaceInternal(
         const std::string& ifname);
     WifiStatus removeApIfaceInternal(const std::string& ifname);
     WifiStatus removeIfaceInstanceFromBridgedApIfaceInternal(
