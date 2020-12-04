@@ -45,7 +45,8 @@ class HingeAngleSensor : public OnChangeSensor {
         mSensorInfo.fifoReservedEventCount = 0;
         mSensorInfo.fifoMaxEventCount = 0;
         mSensorInfo.requiredPermission = "";
-        mSensorInfo.flags = static_cast<uint32_t>(V1_0::SensorFlagBits::ON_CHANGE_MODE);
+        mSensorInfo.flags = static_cast<uint32_t>(V1_0::SensorFlagBits::ON_CHANGE_MODE |
+                                                  V1_0::SensorFlagBits::WAKE_UP);
     }
 };
 
