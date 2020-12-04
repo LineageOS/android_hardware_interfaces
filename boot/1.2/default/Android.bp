@@ -1,0 +1,50 @@
+cc_library_shared {
+    name: "android.hardware.boot@1.2-impl",
+    stem: "android.hardware.boot@1.0-impl-1.2",
+    defaults: [
+        "hidl_defaults",
+        "libboot_control_defaults",
+    ],
+    relative_install_path: "hw",
+    vendor: true,
+    recovery_available: true,
+    srcs: ["BootControl.cpp"],
+
+    shared_libs: [
+        "liblog",
+        "libhidlbase",
+        "libhardware",
+        "libutils",
+        "android.hardware.boot@1.0",
+        "android.hardware.boot@1.1",
+        "android.hardware.boot@1.2",
+    ],
+    static_libs: [
+        "libboot_control",
+        "libfstab",
+    ],
+}
+
+cc_binary {
+    name: "android.hardware.boot@1.2-service",
+    defaults: ["hidl_defaults"],
+    relative_install_path: "hw",
+    vendor: true,
+    init_rc: ["android.hardware.boot@1.2-service.rc"],
+    srcs: ["service.cpp"],
+
+    vintf_fragments: [
+        "android.hardware.boot@1.2.xml",
+    ],
+
+    shared_libs: [
+        "liblog",
+        "libhardware",
+        "libhidlbase",
+        "libutils",
+        "android.hardware.boot@1.0",
+        "android.hardware.boot@1.1",
+        "android.hardware.boot@1.2",
+    ],
+
+}

@@ -32,6 +32,7 @@ class BootControl {
   unsigned int GetNumberSlots();
   unsigned int GetCurrentSlot();
   bool MarkBootSuccessful();
+  unsigned int GetActiveBootSlot();
   bool SetActiveBootSlot(unsigned int slot);
   bool SetSlotAsUnbootable(unsigned int slot);
   bool SetSlotBootable(unsigned int slot);
