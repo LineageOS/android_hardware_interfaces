@@ -18,8 +18,10 @@ package android.hardware.radio@1.6;
 
 import @1.0::RadioIndicationType;
 import @1.5::IRadioIndication;
-import @1.6::SetupDataCallResult;
+import @1.6::CellInfo;
 import @1.6::LinkCapacityEstimate;
+import @1.6::NetworkScanResult;
+import @1.6::SetupDataCallResult;
 
 /**
  * Interface declaring unsolicited radio indications.
@@ -67,4 +69,23 @@ interface IRadioIndication extends @1.5::IRadioIndication {
      * @param lce LinkCapacityEstimate
      */
     oneway currentLinkCapacityEstimate_1_6(RadioIndicationType type, LinkCapacityEstimate lce);
+
+    /**
+     * Report all of the current cell information known to the radio.
+     *
+     * This indication is updated from IRadioIndication@1.5 to report the @1.6 version of
+     * CellInfo.
+     *
+     * @param type Type of radio indication
+     * @param records Current cell information
+     */
+    oneway cellInfoList_1_6(RadioIndicationType type, vec<CellInfo> records);
+
+    /**
+     * Incremental network scan results.
+     *
+     * This indication is updated from IRadioIndication@1.5 to report the @1.6 version of
+     * CellInfo.
+     */
+    oneway networkScanResult_1_6(RadioIndicationType type, NetworkScanResult result);
 };
