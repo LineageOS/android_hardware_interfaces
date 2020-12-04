@@ -21,7 +21,9 @@
           "include-filter": "-*sample_float_fast*:*sample_float_slow*:*sample_minimal*:*sample_quant*"
         }
       ]
-    },
+    }
+  ],
+  "presubmit-large": [
     {
       "name": "VtsHalNeuralnetworksV1_2TargetTest",
       "options": [
