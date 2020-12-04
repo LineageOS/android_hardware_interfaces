@@ -261,6 +261,24 @@ bool BootControl::MarkBootSuccessful() {
   return UpdateAndSaveBootloaderControl(misc_device_, &bootctrl);
 }
 
+unsigned int BootControl::GetActiveBootSlot() {
+  bootloader_control bootctrl;
+  if (!LoadBootloaderControl(misc_device_, &bootctrl)) return false;
+
+  // Use the current slot by default.
+  unsigned int active_boot_slot = current_slot_;
+  unsigned int max_priority = bootctrl.slot_info[current_slot_].priority;
+  // Find the slot with the highest priority.
+  for (unsigned int i = 0; i < num_slots_; ++i) {
+    if (bootctrl.slot_info[i].priority > max_priority) {
+      max_priority = bootctrl.slot_info[i].priority;
+      active_boot_slot = i;
+    }
+  }
+
+  return active_boot_slot;
+}
+
 bool BootControl::SetActiveBootSlot(unsigned int slot) {
   if (slot >= kMaxNumSlots || slot >= num_slots_) {
     // Invalid slot number.
