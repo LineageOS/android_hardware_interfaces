@@ -26,6 +26,7 @@ namespace sensors {
 namespace V2_X {
 namespace implementation {
 
+using ::android::hardware::sensors::V1_0::EventPayload;
 using ::android::hardware::sensors::V1_0::MetaDataEventType;
 using ::android::hardware::sensors::V1_0::OperationMode;
 using ::android::hardware::sensors::V1_0::Result;
@@ -133,20 +134,13 @@ bool Sensor::isWakeUpSensor() {
 }
 
 std::vector<Event> Sensor::readEvents() {
-    // For an accelerometer sensor type, default the z-direction
-    // value to -9.8
-    float zValue = (mSensorInfo.type == SensorType::ACCELEROMETER)
-        ? -9.8 : 0.0;
-
     std::vector<Event> events;
     Event event;
     event.sensorHandle = mSensorInfo.sensorHandle;
     event.sensorType = mSensorInfo.type;
     event.timestamp = ::android::elapsedRealtimeNano();
-    event.u.vec3.x = 0;
-    event.u.vec3.y = 0;
-    event.u.vec3.z = zValue;
-    event.u.vec3.status = SensorStatus::ACCURACY_HIGH;
+    memset(&event.u, 0, sizeof(event.u));
+    readEventPayload(event.u);
     events.push_back(event);
     return events;
 }
@@ -194,7 +188,7 @@ std::vector<Event> OnChangeSensor::readEvents() {
 
     for (auto iter = events.begin(); iter != events.end(); ++iter) {
         Event ev = *iter;
-        if (ev.u.vec3 != mPreviousEvent.u.vec3 || !mPreviousEventSet) {
+        if (!mPreviousEventSet || memcmp(&mPreviousEvent.u, &ev.u, sizeof(ev.u)) != 0) {
             outputEvents.push_back(ev);
             mPreviousEvent = ev;
             mPreviousEventSet = true;
@@ -221,6 +215,13 @@ AccelSensor::AccelSensor(int32_t sensorHandle, ISensorsEventCallback* callback) 
     mSensorInfo.flags = static_cast<uint32_t>(SensorFlagBits::DATA_INJECTION);
 };
 
+void AccelSensor::readEventPayload(EventPayload& payload) {
+    payload.vec3.x = 0;
+    payload.vec3.y = 0;
+    payload.vec3.z = -9.8;
+    payload.vec3.status = SensorStatus::ACCURACY_HIGH;
+}
+
 PressureSensor::PressureSensor(int32_t sensorHandle, ISensorsEventCallback* callback)
     : Sensor(callback) {
     mSensorInfo.sensorHandle = sensorHandle;
@@ -239,6 +240,10 @@ PressureSensor::PressureSensor(int32_t sensorHandle, ISensorsEventCallback* call
     mSensorInfo.requiredPermission = "";
     mSensorInfo.flags = 0;
 };
+
+void PressureSensor::readEventPayload(EventPayload& payload) {
+    payload.scalar = 1013.25f;
+}
 
 MagnetometerSensor::MagnetometerSensor(int32_t sensorHandle, ISensorsEventCallback* callback)
     : Sensor(callback) {
