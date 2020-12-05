@@ -366,6 +366,20 @@ interface IRadio extends @1.5::IRadio {
      */
     oneway getSystemSelectionChannels(int32_t serial);
 
+   /**
+     * Request all of the current cell information known to the radio. The radio
+     * must return list of all current cells, including the neighboring cells. If for a particular
+     * cell information isn't known then the appropriate unknown value will be returned.
+     * This does not cause or change the rate of unsolicited cellInfoList().
+     *
+     * This is identitcal to getCellInfoList in V1.0, but it requests updated version of CellInfo.
+     *
+     * @param serial Serial number of request.
+     *
+     * Response callback is IRadioResponse.getCellInfoListResponse()
+     */
+    oneway getCellInfoList_1_6(int32_t serial);
+
     /**
      * Request current voice registration state.
      *

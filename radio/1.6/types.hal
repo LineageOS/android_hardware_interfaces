@@ -16,14 +16,29 @@
 
 package android.hardware.radio@1.6;
 
+import @1.0::CdmaSignalStrength;
+import @1.0::EvdoSignalStrength;
+import @1.0::GsmSignalStrength;
+import @1.0::LteSignalStrength;
 import @1.0::RadioError;
 import @1.0::RadioResponseType;
 import @1.0::RegState;
+import @1.1::ScanStatus;
+import @1.2::CellInfoCdma;
+import @1.2::CellConnectionStatus;
+import @1.2::TdscdmaSignalStrength;
+import @1.2::WcdmaSignalStrength;
 import @1.4::DataCallFailCause;
 import @1.4::DataConnActiveStatus;
+import @1.4::NrSignalStrength;
 import @1.4::PdpProtocolType;
 import @1.4::RadioTechnology;
 import @1.5::CellIdentity;
+import @1.5::CellIdentityLte;
+import @1.5::CellIdentityNr;
+import @1.5::CellInfoGsm;
+import @1.5::CellInfoWcdma;
+import @1.5::CellInfoTdscdma;
 import @1.5::LinkAddress;
 import @1.5::RegStateResult.AccessTechnologySpecificInfo.Cdma2000RegistrationInfo;
 import @1.5::RegStateResult.AccessTechnologySpecificInfo.EutranRegistrationInfo;
@@ -502,6 +517,153 @@ struct NrVopsInfo {
      * Refer 3GPP 24.501 EPS 5GS network feature support -> EMF
      */
     EmfIndicator emfSupported;
+};
+
+struct LteSignalStrength {
+    @1.0::LteSignalStrength base;
+
+    /**
+     * CSI channel quality indicator (CQI) table index. There are multiple CQI tables.
+     * The definition of CQI in each table is different.
+     *
+     * Reference: 3GPP TS 136.213 section 7.2.3.
+     *
+     * Range [1, 6], INT_MAX means invalid/unreported.
+     */
+    uint32_t cqiTableIndex;
+};
+
+struct NrSignalStrength {
+    @1.4::NrSignalStrength base;
+
+    /**
+     * CSI channel quality indicator (CQI) table index. There are multiple CQI tables.
+     * The definition of CQI in each table is different.
+     *
+     * Reference: 3GPP TS 138.214 section 5.2.2.1.
+     *
+     * Range [1, 3], INT_MAX means invalid/unreported.
+     */
+    uint32_t csiCqiTableIndex;
+
+    /**
+     * CSI channel quality indicator (CQI) for all subbands.
+     *
+     * If the CQI report is for the entire wideband, a single CQI index is provided.
+     * If the CQI report is for all subbands, one CQI index is provided for each subband,
+     * in ascending order of subband index.
+     * If CQI is not available, the CQI report is empty.
+     *
+     * Reference: 3GPP TS 138.214 section 5.2.2.1.
+     *
+     * Range [0, 15], INT_MAX means invalid/unreported.
+     */
+    vec<uint32_t> csiCqiReport;
+};
+
+/**
+ * Overwritten from @1.4::SignalStrength in order to update LteSignalStrength and NrSignalStrength.
+ */
+struct SignalStrength {
+    /**
+     * If GSM measurements are provided, this structure must contain valid measurements; otherwise
+     * all fields should be set to INT_MAX to mark them as invalid.
+     */
+    GsmSignalStrength gsm;
+
+    /**
+     * If CDMA measurements are provided, this structure must contain valid measurements; otherwise
+     * all fields should be set to INT_MAX to mark them as invalid.
+     */
+    CdmaSignalStrength cdma;
+
+    /**
+     * If EvDO measurements are provided, this structure must contain valid measurements; otherwise
+     * all fields should be set to INT_MAX to mark them as invalid.
+     */
+    EvdoSignalStrength evdo;
+
+    /**
+     * If LTE measurements are provided, this structure must contain valid measurements; otherwise
+     * all fields should be set to INT_MAX to mark them as invalid.
+     */
+    LteSignalStrength lte;
+
+    /**
+     * If TD-SCDMA measurements are provided, this structure must contain valid measurements;
+     * otherwise all fields should be set to INT_MAX to mark them as invalid.
+     */
+    TdscdmaSignalStrength tdscdma;
+
+    /**
+     * If WCDMA measurements are provided, this structure must contain valid measurements; otherwise
+     * all fields should be set to INT_MAX to mark them as invalid.
+     */
+    WcdmaSignalStrength wcdma;
+
+    /**
+     * If NR 5G measurements are provided, this structure must contain valid measurements; otherwise
+     * all fields should be set to INT_MAX to mark them as invalid.
+     */
+    NrSignalStrength nr;
+};
+
+/** Overwritten from @1.5::CellInfoLte in order to update LteSignalStrength. */
+struct CellInfoLte {
+    CellIdentityLte cellIdentityLte;
+    LteSignalStrength signalStrengthLte;
+};
+
+/** Overwritten from @1.5::CellInfoNr in order to update NrSignalStrength. */
+struct CellInfoNr {
+    CellIdentityNr cellIdentityNr;
+    NrSignalStrength signalStrengthNr;
+};
+
+/** Overwritten from @1.5::CellInfo in order to update LteSignalStrength and NrSignalStrength. */
+struct CellInfo {
+    /**
+     * True if this cell is registered false if not registered.
+     */
+    bool registered;
+    /**
+     * Connection status for the cell.
+     */
+    CellConnectionStatus connectionStatus;
+
+    safe_union CellInfoRatSpecificInfo {
+        /**
+         * 3gpp CellInfo types.
+         */
+        CellInfoGsm gsm;
+        CellInfoWcdma wcdma;
+        CellInfoTdscdma tdscdma;
+        CellInfoLte lte;
+        CellInfoNr nr;
+
+        /**
+         * 3gpp2 CellInfo types;
+         */
+        CellInfoCdma cdma;
+    } ratSpecificInfo;
+};
+
+/** Overwritten from @1.5::NetworkScanResult in order to update the CellInfo to 1.6 version. */
+struct NetworkScanResult {
+    /**
+     * The status of the scan.
+     */
+    ScanStatus status;
+
+    /**
+     * The error code of the incremental result.
+     */
+    RadioError error;
+
+    /**
+     * List of network information as CellInfo.
+     */
+    vec<CellInfo> networkInfos;
 };
 
 /**
