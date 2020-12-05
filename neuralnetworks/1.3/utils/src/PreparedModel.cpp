@@ -159,7 +159,7 @@ PreparedModel::executeAsynchronously(const Request& request, V1_2::MeasureTiming
 nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> PreparedModel::execute(
         const nn::Request& request, nn::MeasureTiming measure,
         const nn::OptionalTimePoint& deadline,
-        const nn::OptionalTimeoutDuration& loopTimeoutDuration) const {
+        const nn::OptionalDuration& loopTimeoutDuration) const {
     // Ensure that request is ready for IPC.
     std::optional<nn::Request> maybeRequestInShared;
     const nn::Request& requestInShared = NN_TRY(hal::utils::makeExecutionFailure(
@@ -200,8 +200,8 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Prepare
 nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>>
 PreparedModel::executeFenced(const nn::Request& request, const std::vector<nn::SyncFence>& waitFor,
                              nn::MeasureTiming measure, const nn::OptionalTimePoint& deadline,
-                             const nn::OptionalTimeoutDuration& loopTimeoutDuration,
-                             const nn::OptionalTimeoutDuration& timeoutDurationAfterFence) const {
+                             const nn::OptionalDuration& loopTimeoutDuration,
+                             const nn::OptionalDuration& timeoutDurationAfterFence) const {
     // Ensure that request is ready for IPC.
     std::optional<nn::Request> maybeRequestInShared;
     const nn::Request& requestInShared =
