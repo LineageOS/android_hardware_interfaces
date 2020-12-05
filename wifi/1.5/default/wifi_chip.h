@@ -276,10 +276,12 @@ class WifiChip : public V1_5::IWifiChip {
     bool canCurrentModeSupportIfaceOfType(IfaceType requested_type);
     bool isValidModeId(ChipModeId mode_id);
     bool isStaApConcurrencyAllowedInCurrentMode();
-    bool isDualApAllowedInCurrentMode();
+    bool isDualStaConcurrencyAllowedInCurrentMode();
+    uint32_t startIdxOfApIface();
     std::string getFirstActiveWlanIfaceName();
     std::string allocateApOrStaIfaceName(IfaceType type, uint32_t start_idx);
     std::string allocateApIfaceName();
+    std::vector<std::string> allocateBridgedApInstanceNames();
     std::string allocateStaIfaceName();
     bool writeRingbufferFilesInternal();
     std::string getWlanIfaceNameWithType(IfaceType type, unsigned idx);
