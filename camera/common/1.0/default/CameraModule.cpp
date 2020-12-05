@@ -529,24 +529,29 @@ status_t CameraModule::filterOpenErrorCode(status_t err) {
 }
 
 void CameraModule::removeCamera(int cameraId) {
-    std::unordered_set<std::string> physicalIds;
-    camera_metadata_t *metadata = const_cast<camera_metadata_t*>(
-            mCameraInfoMap.valueFor(cameraId).static_camera_characteristics);
-    common::V1_0::helper::CameraMetadata hidlMetadata(metadata);
+    // Skip HAL1 devices which isn't cached in mCameraInfoMap and don't advertise
+    // static_camera_characteristics
+    if (getDeviceVersion(cameraId) >= CAMERA_DEVICE_API_VERSION_3_0) {
+        std::unordered_set<std::string> physicalIds;
+        camera_metadata_t *metadata = const_cast<camera_metadata_t*>(
+                mCameraInfoMap.valueFor(cameraId).static_camera_characteristics);
+        common::V1_0::helper::CameraMetadata hidlMetadata(metadata);
 
-    if (isLogicalMultiCamera(hidlMetadata, &physicalIds)) {
-        for (const auto& id : physicalIds) {
-            int idInt = std::stoi(id);
-            if (mPhysicalCameraInfoMap.indexOfKey(idInt) >= 0) {
-                free_camera_metadata(mPhysicalCameraInfoMap[idInt]);
-                mPhysicalCameraInfoMap.removeItem(idInt);
-            } else {
-                ALOGE("%s: Cannot find corresponding static metadata for physical id %s",
-                        __FUNCTION__, id.c_str());
+        if (isLogicalMultiCamera(hidlMetadata, &physicalIds)) {
+            for (const auto& id : physicalIds) {
+                int idInt = std::stoi(id);
+                if (mPhysicalCameraInfoMap.indexOfKey(idInt) >= 0) {
+                    free_camera_metadata(mPhysicalCameraInfoMap[idInt]);
+                    mPhysicalCameraInfoMap.removeItem(idInt);
+                } else {
+                    ALOGE("%s: Cannot find corresponding static metadata for physical id %s",
+                            __FUNCTION__, id.c_str());
+                }
             }
         }
+        free_camera_metadata(metadata);
     }
-    free_camera_metadata(metadata);
+
     mCameraInfoMap.removeItem(cameraId);
     mDeviceVersionMap.removeItem(cameraId);
 }
