@@ -808,12 +808,6 @@ Return<void> RadioResponse_v1_6::getSignalStrengthResponse_1_2(
     return Void();
 }
 
-Return<void> RadioResponse_v1_6::getSignalStrengthResponse_1_4(
-        const ::android::hardware::radio::V1_0::RadioResponseInfo& /*info*/,
-        const ::android::hardware::radio::V1_4::SignalStrength& /*sig_strength*/) {
-    return Void();
-}
-
 Return<void> RadioResponse_v1_6::getCellInfoListResponse_1_2(
         const ::android::hardware::radio::V1_0::RadioResponseInfo& /*info*/,
         const ::android::hardware::hidl_vec<
@@ -864,6 +858,12 @@ Return<void> RadioResponse_v1_6::startNetworkScanResponse_1_4(
 Return<void> RadioResponse_v1_6::getDataRegistrationStateResponse_1_4(
         const ::android::hardware::radio::V1_0::RadioResponseInfo& /*info*/,
         const ::android::hardware::radio::V1_4::DataRegStateResult& /*dataRegResponse*/) {
+    return Void();
+}
+
+Return<void> RadioResponse_v1_6::getSignalStrengthResponse_1_4(
+        const ::android::hardware::radio::V1_0::RadioResponseInfo& /*info*/,
+        const ::android::hardware::radio::V1_4::SignalStrength& /*sig_strength*/) {
     return Void();
 }
 
@@ -1161,6 +1161,12 @@ Return<void> RadioResponse_v1_6::setDataThrottlingResponse(
         const ::android::hardware::radio::V1_6::RadioResponseInfo& info) {
     rspInfo = info;
     parent_v1_6.notify(info.serial);
+    return Void();
+}
+
+Return<void> RadioResponse_v1_6::getSignalStrengthResponse_1_6(
+        const ::android::hardware::radio::V1_6::RadioResponseInfo& /*info*/,
+        const ::android::hardware::radio::V1_6::SignalStrength& /*sig_strength*/) {
     return Void();
 }
 
