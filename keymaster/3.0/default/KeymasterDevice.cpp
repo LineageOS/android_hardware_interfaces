@@ -22,7 +22,6 @@
 #include <log/log.h>
 
 #include <AndroidKeymaster3Device.h>
-#include <hardware/keymaster0.h>
 #include <hardware/keymaster1.h>
 #include <hardware/keymaster2.h>
 #include <hardware/keymaster_defs.h>
@@ -32,16 +31,6 @@ namespace hardware {
 namespace keymaster {
 namespace V3_0 {
 namespace implementation {
-
-static int get_keymaster0_dev(keymaster0_device_t** dev, const hw_module_t* mod) {
-    int rc = keymaster0_open(mod, dev);
-    if (rc) {
-        ALOGE("Error opening keystore keymaster0 device.");
-        *dev = nullptr;
-        return rc;
-    }
-    return 0;
-}
 
 static int get_keymaster1_dev(keymaster1_device_t** dev, const hw_module_t* mod) {
     int rc = keymaster1_open(mod, dev);
@@ -75,11 +64,7 @@ static IKeymasterDevice* createKeymaster3Device() {
     }
 
     if (mod->module_api_version < KEYMASTER_MODULE_API_VERSION_1_0) {
-        keymaster0_device_t* dev = nullptr;
-        if (get_keymaster0_dev(&dev, mod)) {
-            return nullptr;
-        }
-        return ::keymaster::ng::CreateKeymasterDevice(dev);
+        return nullptr;
     } else if (mod->module_api_version == KEYMASTER_MODULE_API_VERSION_1_0) {
         keymaster1_device_t* dev = nullptr;
         if (get_keymaster1_dev(&dev, mod)) {
