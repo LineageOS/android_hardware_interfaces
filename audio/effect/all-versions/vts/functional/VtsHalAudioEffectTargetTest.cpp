@@ -28,8 +28,8 @@
 #include <android/hidl/allocator/1.0/IAllocator.h>
 #include <android/hidl/memory/1.0/IMemory.h>
 #if MAJOR_VERSION >= 7
-#include <audio_policy_configuration_V7_0-enums.h>
-#include <audio_policy_configuration_V7_0.h>
+#include <android_audio_policy_configuration_V7_0-enums.h>
+#include <android_audio_policy_configuration_V7_0.h>
 #endif
 
 #include <common/all-versions/VersionUtils.h>
@@ -54,7 +54,7 @@ using namespace ::android::hardware::audio::effect::CPP_VERSION;
 #if MAJOR_VERSION >= 7
 // Make an alias for enumerations generated from the APM config XSD.
 namespace xsd {
-using namespace ::audio::policy::configuration::CPP_VERSION;
+using namespace ::android::audio::policy::configuration::CPP_VERSION;
 }
 #endif
 
@@ -262,8 +262,8 @@ void AudioEffectHidlTest::getChannelCount(uint32_t* channelCount) {
     *channelCount = audio_channel_count_from_out_mask(
         static_cast<audio_channel_mask_t>(currentConfig.outputCfg.channels));
 #else
-    *channelCount =
-            audio::policy::configuration::V7_0::getChannelCount(currentConfig.outputCfg.channels);
+    *channelCount = android::audio::policy::configuration::V7_0::getChannelCount(
+            currentConfig.outputCfg.channels);
     ASSERT_NE(*channelCount, 0);
 #endif
 }
