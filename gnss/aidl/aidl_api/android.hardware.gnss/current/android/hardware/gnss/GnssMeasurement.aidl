@@ -2,13 +2,14 @@
 // THIS FILE IS IMMUTABLE. DO NOT EDIT IN ANY CASE.                          //
 ///////////////////////////////////////////////////////////////////////////////
 
-// This file is a snapshot of an AIDL interface (or parcelable). Do not try to
-// edit this file. It looks like you are doing that because you have modified
-// an AIDL interface in a backward-incompatible way, e.g., deleting a function
-// from an interface or a field from a parcelable and it broke the build. That
-// breakage is intended.
+// This file is a snapshot of an AIDL file. Do not edit it manually. There are
+// two cases:
+// 1). this is a frozen version file - do not edit this in any case.
+// 2). this is a 'current' file. If you make a backwards compatible change to
+//     the interface (from the latest frozen version), the build system will
+//     prompt you to update this file with `m <name>-update-api`.
 //
-// You must not make a backward incompatible changes to the AIDL files built
+// You must not make a backward incompatible change to any AIDL file built
 // with the aidl_interface module type with versions property set. The module
 // type is used to build AIDL files in a way that they can be used across
 // independently updatable components of the system. If a device is shipped
@@ -42,6 +43,7 @@ parcelable GnssMeasurement {
   double fullInterSignalBiasUncertaintyNs;
   double satelliteInterSignalBiasNs;
   double satelliteInterSignalBiasUncertaintyNs;
+  android.hardware.gnss.SatellitePvt satellitePvt;
   const int HAS_SNR = 1;
   const int HAS_CARRIER_FREQUENCY = 512;
   const int HAS_CARRIER_CYCLES = 1024;
@@ -52,6 +54,7 @@ parcelable GnssMeasurement {
   const int HAS_FULL_ISB_UNCERTAINTY = 131072;
   const int HAS_SATELLITE_ISB = 262144;
   const int HAS_SATELLITE_ISB_UNCERTAINTY = 524288;
+  const int HAS_SATELLITE_PVT = 1048576;
   const int STATE_UNKNOWN = 0;
   const int STATE_CODE_LOCK = 1;
   const int STATE_BIT_SYNC = 2;
