@@ -79,4 +79,11 @@ nn::ExecutionResult<Type> makeExecutionFailure(nn::Result<Type> result, nn::Erro
     return makeExecutionFailure(makeGeneralFailure(result, status));
 }
 
+#define HANDLE_HAL_STATUS(status)                                       \
+    if (const auto canonical = ::android::nn::convert(status).value_or( \
+                ::android::nn::ErrorStatus::GENERAL_FAILURE);           \
+        canonical == ::android::nn::ErrorStatus::NONE) {                \
+    } else                                                              \
+        return NN_ERROR(canonical)
+
 }  // namespace android::hardware::neuralnetworks::utils

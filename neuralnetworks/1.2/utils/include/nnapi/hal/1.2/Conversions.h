@@ -97,6 +97,12 @@ nn::GeneralResult<hidl_vec<Extension>> convert(const std::vector<nn::Extension>&
 nn::GeneralResult<hidl_vec<hidl_handle>> convert(const std::vector<nn::SharedHandle>& handles);
 nn::GeneralResult<hidl_vec<OutputShape>> convert(const std::vector<nn::OutputShape>& outputShapes);
 
+nn::GeneralResult<V1_0::DeviceStatus> convert(const nn::DeviceStatus& deviceStatus);
+nn::GeneralResult<V1_0::Request> convert(const nn::Request& request);
+nn::GeneralResult<V1_0::ErrorStatus> convert(const nn::ErrorStatus& status);
+nn::GeneralResult<V1_1::ExecutionPreference> convert(
+        const nn::ExecutionPreference& executionPreference);
+
 }  // namespace android::hardware::neuralnetworks::V1_2::utils
 
 #endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_2_CONVERSIONS_H

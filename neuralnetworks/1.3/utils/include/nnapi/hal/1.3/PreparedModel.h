@@ -40,10 +40,10 @@ class PreparedModel final : public nn::IPreparedModel {
 
   public:
     static nn::GeneralResult<std::shared_ptr<const PreparedModel>> create(
-            sp<V1_3::IPreparedModel> preparedModel);
+            sp<V1_3::IPreparedModel> preparedModel, bool executeSynchronously);
 
-    PreparedModel(PrivateConstructorTag tag, sp<V1_3::IPreparedModel> preparedModel,
-                  hal::utils::DeathHandler deathHandler);
+    PreparedModel(PrivateConstructorTag tag, bool executeSynchronously,
+                  sp<V1_3::IPreparedModel> preparedModel, hal::utils::DeathHandler deathHandler);
 
     nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> execute(
             const nn::Request& request, nn::MeasureTiming measure,
@@ -66,6 +66,7 @@ class PreparedModel final : public nn::IPreparedModel {
             const Request& request, V1_2::MeasureTiming measure, const OptionalTimePoint& deadline,
             const OptionalTimeoutDuration& loopTimeoutDuration) const;
 
+    const bool kExecuteSynchronously;
     const sp<V1_3::IPreparedModel> kPreparedModel;
     const hal::utils::DeathHandler kDeathHandler;
 };

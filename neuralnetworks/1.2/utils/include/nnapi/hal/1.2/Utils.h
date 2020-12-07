@@ -30,6 +30,8 @@
 
 namespace android::hardware::neuralnetworks::V1_2::utils {
 
+using CacheToken = hidl_array<uint8_t, static_cast<size_t>(Constant::BYTE_SIZE_OF_CACHE_TOKEN)>;
+
 constexpr auto kDefaultMesaureTiming = MeasureTiming::NO;
 constexpr auto kNoTiming = Timing{.timeOnDevice = std::numeric_limits<uint64_t>::max(),
                                   .timeInDriver = std::numeric_limits<uint64_t>::max()};
