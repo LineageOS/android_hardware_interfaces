@@ -207,7 +207,7 @@ AccelSensor::AccelSensor(int32_t sensorHandle, ISensorsEventCallback* callback) 
     mSensorInfo.maxRange = 78.4f;  // +/- 8g
     mSensorInfo.resolution = 1.52e-5;
     mSensorInfo.power = 0.001f;        // mA
-    mSensorInfo.minDelay = 20 * 1000;  // microseconds
+    mSensorInfo.minDelay = 10 * 1000;  // microseconds
     mSensorInfo.maxDelay = kDefaultMaxDelayUs;
     mSensorInfo.fifoReservedEventCount = 0;
     mSensorInfo.fifoMaxEventCount = 0;
