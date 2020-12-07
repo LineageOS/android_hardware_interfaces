@@ -22,6 +22,7 @@ import @1.6::CellInfo;
 import @1.6::RegStateResult;
 import @1.6::RadioResponseInfo;
 import @1.6::SetupDataCallResult;
+import @1.6::SignalStrength;
 
 /**
  * Interface declaring response functions to solicited radio requests.
@@ -342,6 +343,19 @@ interface IRadioResponse extends @1.5::IRadioResponse {
      *   RadioError:INTERNAL_ERR
      */
     oneway getCellInfoListResponse_1_6(RadioResponseInfo info, vec<CellInfo> cellInfo);
+
+    /**
+     * This is identical to getSignalStrengthResponse_1_4 but uses an updated version of
+     * SignalStrength.
+     *
+     * @param signalStrength Current signal strength
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     */
+    oneway getSignalStrengthResponse_1_6(RadioResponseInfo info, SignalStrength signalStrength);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
