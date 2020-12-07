@@ -88,6 +88,7 @@ cc_library_static {
     whole_static_libs: [
         "android.hardware.automotive.vehicle@2.0-emulated-user-hal-lib",
         "android.hardware.automotive.vehicle@2.0-manager-lib",
+        "libqemu_pipe",
     ],
     shared_libs: [
         "libbase",
@@ -95,7 +96,6 @@ cc_library_static {
         "libprotobuf-cpp-lite",
     ],
     static_libs: [
-        "libqemu_pipe",
         "android.hardware.automotive.vehicle@2.0-libproto-native",
     ],
 }
@@ -211,6 +211,5 @@ cc_binary {
         "android.hardware.automotive.vehicle@2.0-manager-lib",
         "android.hardware.automotive.vehicle@2.0-default-impl-lib",
         "android.hardware.automotive.vehicle@2.0-libproto-native",
-        "libqemu_pipe",
     ],
 }
