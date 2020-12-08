@@ -49,11 +49,10 @@ nn::GeneralResult<nn::Capabilities> initCapabilities(V1_1::IDevice* device) {
                                                  << "uninitialized";
     const auto cb = [&result](V1_0::ErrorStatus status, const Capabilities& capabilities) {
         if (status != V1_0::ErrorStatus::NONE) {
-            const auto canonical =
-                    validatedConvertToCanonical(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
+            const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
             result = NN_ERROR(canonical) << "getCapabilities_1_1 failed with " << toString(status);
         } else {
-            result = validatedConvertToCanonical(capabilities);
+            result = nn::convert(capabilities);
         }
     };
 
@@ -137,8 +136,7 @@ nn::GeneralResult<std::vector<bool>> Device::getSupportedOperations(const nn::Mo
     auto cb = [&result, &model](V1_0::ErrorStatus status,
                                 const hidl_vec<bool>& supportedOperations) {
         if (status != V1_0::ErrorStatus::NONE) {
-            const auto canonical =
-                    validatedConvertToCanonical(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
+            const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
             result = NN_ERROR(canonical)
                      << "getSupportedOperations_1_1 failed with " << toString(status);
         } else if (supportedOperations.size() != model.main.operations.size()) {
@@ -175,8 +173,7 @@ nn::GeneralResult<nn::SharedPreparedModel> Device::prepareModel(
     const auto ret = kDevice->prepareModel_1_1(hidlModel, hidlPreference, cb);
     const auto status = NN_TRY(hal::utils::handleTransportError(ret));
     if (status != V1_0::ErrorStatus::NONE) {
-        const auto canonical =
-                validatedConvertToCanonical(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
+        const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
         return NN_ERROR(canonical) << "prepareModel failed with " << toString(status);
     }
 
