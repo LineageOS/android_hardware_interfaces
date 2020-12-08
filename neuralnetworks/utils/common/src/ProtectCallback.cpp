@@ -58,7 +58,7 @@ nn::GeneralResult<DeathHandler> DeathHandler::create(sp<hidl::base::V1_0::IBase>
     auto deathRecipient = sp<DeathRecipient>::make();
 
     const auto ret = object->linkToDeath(deathRecipient, /*cookie=*/0);
-    const bool success = NN_TRY(handleTransportError(ret));
+    const bool success = HANDLE_TRANSPORT_FAILURE(ret);
     if (!success) {
         return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE) << "IBase::linkToDeath returned false";
     }
