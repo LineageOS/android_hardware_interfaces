@@ -49,16 +49,15 @@ nn::GeneralResult<nn::Capabilities> initCapabilities(V1_1::IDevice* device) {
                                                  << "uninitialized";
     const auto cb = [&result](V1_0::ErrorStatus status, const Capabilities& capabilities) {
         if (status != V1_0::ErrorStatus::NONE) {
-            const auto canonical =
-                    validatedConvertToCanonical(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
+            const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
             result = NN_ERROR(canonical) << "getCapabilities_1_1 failed with " << toString(status);
         } else {
-            result = validatedConvertToCanonical(capabilities);
+            result = nn::convert(capabilities);
         }
     };
 
     const auto ret = device->getCapabilities_1_1(cb);
-    NN_TRY(hal::utils::handleTransportError(ret));
+    HANDLE_TRANSPORT_FAILURE(ret);
 
     return result;
 }
@@ -121,7 +120,8 @@ std::pair<uint32_t, uint32_t> Device::getNumberOfCacheFilesNeeded() const {
 
 nn::GeneralResult<void> Device::wait() const {
     const auto ret = kDevice->ping();
-    return hal::utils::handleTransportError(ret);
+    HANDLE_TRANSPORT_FAILURE(ret);
+    return {};
 }
 
 nn::GeneralResult<std::vector<bool>> Device::getSupportedOperations(const nn::Model& model) const {
@@ -137,8 +137,7 @@ nn::GeneralResult<std::vector<bool>> Device::getSupportedOperations(const nn::Mo
     auto cb = [&result, &model](V1_0::ErrorStatus status,
                                 const hidl_vec<bool>& supportedOperations) {
         if (status != V1_0::ErrorStatus::NONE) {
-            const auto canonical =
-                    validatedConvertToCanonical(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
+            const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
             result = NN_ERROR(canonical)
                      << "getSupportedOperations_1_1 failed with " << toString(status);
         } else if (supportedOperations.size() != model.main.operations.size()) {
@@ -152,7 +151,7 @@ nn::GeneralResult<std::vector<bool>> Device::getSupportedOperations(const nn::Mo
     };
 
     const auto ret = kDevice->getSupportedOperations_1_1(hidlModel, cb);
-    NN_TRY(hal::utils::handleTransportError(ret));
+    HANDLE_TRANSPORT_FAILURE(ret);
 
     return result;
 }
@@ -173,10 +172,9 @@ nn::GeneralResult<nn::SharedPreparedModel> Device::prepareModel(
     const auto scoped = kDeathHandler.protectCallback(cb.get());
 
     const auto ret = kDevice->prepareModel_1_1(hidlModel, hidlPreference, cb);
-    const auto status = NN_TRY(hal::utils::handleTransportError(ret));
+    const auto status = HANDLE_TRANSPORT_FAILURE(ret);
     if (status != V1_0::ErrorStatus::NONE) {
-        const auto canonical =
-                validatedConvertToCanonical(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
+        const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
         return NN_ERROR(canonical) << "prepareModel failed with " << toString(status);
     }
 
