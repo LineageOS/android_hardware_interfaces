@@ -170,7 +170,6 @@ enum ForEachStrategy : int32_t {
 };
 
 // Script to Script
-@export(name="RsScriptCall")
 struct ScriptCall {
     ForEachStrategy strategy;
     uint32_t        xStart;
