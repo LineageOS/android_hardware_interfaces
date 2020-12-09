@@ -16,18 +16,29 @@
 
 #define LOG_TAG "GnssHalTestCases"
 
+#include <android/hardware/gnss/IGnss.h>
+#include <android/hardware/gnss/IGnssMeasurementCallback.h>
+#include <android/hardware/gnss/IGnssMeasurementInterface.h>
 #include <android/hardware/gnss/IGnssPowerIndication.h>
 #include <android/hardware/gnss/IGnssPsds.h>
+#include "GnssMeasurementCallbackAidl.h"
 #include "GnssPowerIndicationCallback.h"
 #include "gnss_hal_test.h"
 
 using android::sp;
 using android::hardware::gnss::BlocklistedSource;
-using GnssConstellationTypeAidl = android::hardware::gnss::GnssConstellationType;
+using android::hardware::gnss::ElapsedRealtime;
+using android::hardware::gnss::GnssClock;
+using android::hardware::gnss::GnssMeasurement;
+using android::hardware::gnss::IGnss;
 using android::hardware::gnss::IGnssConfiguration;
+using android::hardware::gnss::IGnssMeasurementCallback;
+using android::hardware::gnss::IGnssMeasurementInterface;
 using android::hardware::gnss::IGnssPowerIndication;
 using android::hardware::gnss::IGnssPsds;
 using android::hardware::gnss::PsdsType;
+
+using GnssConstellationTypeAidl = android::hardware::gnss::GnssConstellationType;
 
 /*
  * SetupTeardownCreateCleanup:
@@ -50,6 +61,62 @@ TEST_P(GnssHalTest, TestPsdsExtension) {
 
     status = iGnssPsds->injectPsdsData(PsdsType::LONG_TERM, std::vector<uint8_t>());
     ASSERT_FALSE(status.isOk());
+}
+
+/*
+ * TestGnssMeasurementExtension:
+ * 1. Gets the GnssMeasurementExtension and verifies that it returns a non-null extension.
+ * 2. Sets a GnssMeasurementCallback, waits for a measurement, and verifies fields are valid.
+ */
+TEST_P(GnssHalTest, TestGnssMeasurementExtension) {
+    const int kFirstGnssMeasurementTimeoutSeconds = 10;
+    sp<IGnssMeasurementInterface> iGnssMeasurement;
+    auto status = aidl_gnss_hal_->getExtensionGnssMeasurement(&iGnssMeasurement);
+    ASSERT_TRUE(status.isOk());
+    ASSERT_TRUE(iGnssMeasurement != nullptr);
+
+    auto callback = sp<GnssMeasurementCallbackAidl>::make();
+    status = iGnssMeasurement->setCallback(callback, /* enableFullTracking= */ true);
+    ASSERT_TRUE(status.isOk());
+
+    android::hardware::gnss::GnssData lastMeasurement;
+    ASSERT_TRUE(callback->gnss_data_cbq_.retrieve(lastMeasurement,
+                                                  kFirstGnssMeasurementTimeoutSeconds));
+    EXPECT_EQ(callback->gnss_data_cbq_.calledCount(), 1);
+    ASSERT_TRUE(lastMeasurement.measurements.size() > 0);
+
+    // Validity check GnssData fields
+    ASSERT_TRUE(
+            lastMeasurement.elapsedRealtime.flags >= 0 &&
+            lastMeasurement.elapsedRealtime.flags <=
+                    (ElapsedRealtime::HAS_TIMESTAMP_NS | ElapsedRealtime::HAS_TIME_UNCERTAINTY_NS));
+    if (lastMeasurement.elapsedRealtime.flags & ElapsedRealtime::HAS_TIMESTAMP_NS) {
+        ASSERT_TRUE(lastMeasurement.elapsedRealtime.timestampNs > 0);
+    }
+    if (lastMeasurement.elapsedRealtime.flags & ElapsedRealtime::HAS_TIME_UNCERTAINTY_NS) {
+        ASSERT_TRUE(lastMeasurement.elapsedRealtime.timeUncertaintyNs > 0);
+    }
+    ASSERT_TRUE(lastMeasurement.clock.gnssClockFlags >= 0 &&
+                lastMeasurement.clock.gnssClockFlags <=
+                        (GnssClock::HAS_LEAP_SECOND | GnssClock::HAS_TIME_UNCERTAINTY |
+                         GnssClock::HAS_FULL_BIAS | GnssClock::HAS_BIAS |
+                         GnssClock::HAS_BIAS_UNCERTAINTY | GnssClock::HAS_DRIFT |
+                         GnssClock::HAS_DRIFT_UNCERTAINTY));
+    for (const auto& measurement : lastMeasurement.measurements) {
+        ASSERT_TRUE(
+                measurement.flags >= 0 &&
+                measurement.flags <=
+                        (GnssMeasurement::HAS_SNR | GnssMeasurement::HAS_CARRIER_FREQUENCY |
+                         GnssMeasurement::HAS_CARRIER_CYCLES | GnssMeasurement::HAS_CARRIER_PHASE |
+                         GnssMeasurement::HAS_CARRIER_PHASE_UNCERTAINTY |
+                         GnssMeasurement::HAS_AUTOMATIC_GAIN_CONTROL |
+                         GnssMeasurement::HAS_FULL_ISB | GnssMeasurement::HAS_FULL_ISB_UNCERTAINTY |
+                         GnssMeasurement::HAS_SATELLITE_ISB |
+                         GnssMeasurement::HAS_SATELLITE_ISB_UNCERTAINTY));
+    }
+
+    status = iGnssMeasurement->close();
+    ASSERT_TRUE(status.isOk());
 }
 
 /*

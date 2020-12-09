@@ -21,6 +21,9 @@
 
 namespace android::hardware::gnss::V2_1::implementation {
 
+using GnssSvInfoV2_1 = V2_1::IGnssCallback::GnssSvInfo;
+using BlacklistedSourceV2_1 = V2_1::IGnssConfiguration::BlacklistedSource;
+
 // Methods from ::android::hardware::gnss::V1_0::IGnssConfiguration follow.
 Return<bool> GnssConfiguration::setSuplEs(bool enable) {
     ALOGD("setSuplEs enable: %d", enable);
@@ -69,7 +72,7 @@ Return<bool> GnssConfiguration::setEsExtensionSec(uint32_t emergencyExtensionSec
 
 // Methods from ::android::hardware::gnss::V2_1::IGnssConfiguration follow.
 Return<bool> GnssConfiguration::setBlacklist_2_1(
-        const hidl_vec<V2_1::IGnssConfiguration::BlacklistedSource>& sourceList) {
+        const hidl_vec<BlacklistedSourceV2_1>& sourceList) {
     std::unique_lock<std::recursive_mutex> lock(mMutex);
     mBlacklistedConstellationSet.clear();
     mBlacklistedSourceSet.clear();

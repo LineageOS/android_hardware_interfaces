@@ -17,12 +17,7 @@
 
 package android.hardware.gnss;
 @VintfStability
-interface IGnss {
-  void setCallback(in android.hardware.gnss.IGnssCallback callback);
+interface IGnssMeasurementInterface {
+  void setCallback(in android.hardware.gnss.IGnssMeasurementCallback callback, in boolean enableFullTracking);
   void close();
-  android.hardware.gnss.IGnssPsds getExtensionPsds();
-  android.hardware.gnss.IGnssConfiguration getExtensionGnssConfiguration();
-  android.hardware.gnss.IGnssMeasurementInterface getExtensionGnssMeasurement();
-  android.hardware.gnss.IGnssPowerIndication getExtensionGnssPowerIndication();
-  const int ERROR_INVALID_ARGUMENT = 1;
 }

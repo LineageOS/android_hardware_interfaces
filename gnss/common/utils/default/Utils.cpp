@@ -17,6 +17,7 @@
 #include <Constants.h>
 #include <MockLocation.h>
 #include <Utils.h>
+#include <aidl/android/hardware/gnss/BnGnss.h>
 #include <utils/SystemClock.h>
 
 namespace android {
@@ -24,15 +25,27 @@ namespace hardware {
 namespace gnss {
 namespace common {
 
+using IGnss = aidl::android::hardware::gnss::IGnss;
+using IGnssMeasurementCallback = aidl::android::hardware::gnss::IGnssMeasurementCallback;
+using GnssMeasurement = aidl::android::hardware::gnss::GnssMeasurement;
 using GnssSvFlags = V1_0::IGnssCallback::GnssSvFlags;
 using GnssMeasurementFlagsV1_0 = V1_0::IGnssMeasurementCallback::GnssMeasurementFlags;
 using GnssMeasurementFlagsV2_1 = V2_1::IGnssMeasurementCallback::GnssMeasurementFlags;
 using GnssMeasurementStateV2_0 = V2_0::IGnssMeasurementCallback::GnssMeasurementState;
-using ElapsedRealtime = V2_0::ElapsedRealtime;
+using ElapsedRealtime = aidl::android::hardware::gnss::ElapsedRealtime;
 using ElapsedRealtimeFlags = V2_0::ElapsedRealtimeFlags;
 using GnssConstellationTypeV2_0 = V2_0::GnssConstellationType;
 using IGnssMeasurementCallbackV2_0 = V2_0::IGnssMeasurementCallback;
 using GnssSignalType = V2_1::GnssSignalType;
+
+using GnssDataV2_0 = V2_0::IGnssMeasurementCallback::GnssData;
+using GnssDataV2_1 = V2_1::IGnssMeasurementCallback::GnssData;
+using GnssSvInfoV1_0 = V1_0::IGnssCallback::GnssSvInfo;
+using GnssSvInfoV2_0 = V2_0::IGnssCallback::GnssSvInfo;
+using GnssSvInfoV2_1 = V2_1::IGnssCallback::GnssSvInfo;
+using GnssAntennaInfo = ::android::hardware::gnss::V2_1::IGnssAntennaInfoCallback::GnssAntennaInfo;
+using Row = V2_1::IGnssAntennaInfoCallback::Row;
+using Coord = V2_1::IGnssAntennaInfoCallback::Coord;
 
 GnssDataV2_1 Utils::getMockMeasurementV2_1() {
     GnssDataV2_0 gnssDataV2_0 = Utils::getMockMeasurementV2_0();
@@ -110,7 +123,7 @@ GnssDataV2_0 Utils::getMockMeasurementV2_0() {
                                                        .driftUncertaintyNsps = 310.64968328491528,
                                                        .hwClockDiscontinuityCount = 1};
 
-    ElapsedRealtime timestamp = {
+    V2_0::ElapsedRealtime timestamp = {
             .flags = ElapsedRealtimeFlags::HAS_TIMESTAMP_NS |
                      ElapsedRealtimeFlags::HAS_TIME_UNCERTAINTY_NS,
             .timestampNs = static_cast<uint64_t>(::android::elapsedRealtimeNano()),
@@ -121,6 +134,52 @@ GnssDataV2_0 Utils::getMockMeasurementV2_0() {
 
     GnssDataV2_0 gnssData = {
             .measurements = measurements, .clock = clock, .elapsedRealtime = timestamp};
+    return gnssData;
+}
+
+aidl::android::hardware::gnss::GnssData Utils::getMockMeasurement() {
+    aidl::android::hardware::gnss::GnssSignalType signalType = {
+            .constellation = aidl::android::hardware::gnss::GnssConstellationType::GLONASS,
+            .carrierFrequencyHz = 1.59975e+09,
+            .codeType = aidl::android::hardware::gnss::GnssSignalType::CODE_TYPE_C,
+    };
+    aidl::android::hardware::gnss::GnssMeasurement measurement = {
+            .flags = GnssMeasurement::HAS_CARRIER_FREQUENCY,
+            .svid = 6,
+            .signalType = signalType,
+            .timeOffsetNs = 0.0,
+            .receivedSvTimeInNs = 8195997131077,
+            .receivedSvTimeUncertaintyInNs = 15,
+            .antennaCN0DbHz = 30.0,
+            .pseudorangeRateMps = -484.13739013671875,
+            .pseudorangeRateUncertaintyMps = 1.0379999876022339,
+            .accumulatedDeltaRangeState = GnssMeasurement::ADR_STATE_UNKNOWN,
+            .accumulatedDeltaRangeM = 0.0,
+            .accumulatedDeltaRangeUncertaintyM = 0.0,
+            .multipathIndicator = aidl::android::hardware::gnss::GnssMultipathIndicator::UNKNOWN,
+            .state = GnssMeasurement::STATE_CODE_LOCK | GnssMeasurement::STATE_BIT_SYNC |
+                     GnssMeasurement::STATE_SUBFRAME_SYNC | GnssMeasurement::STATE_TOW_DECODED |
+                     GnssMeasurement::STATE_GLO_STRING_SYNC |
+                     GnssMeasurement::STATE_GLO_TOD_DECODED};
+
+    aidl::android::hardware::gnss::GnssClock clock = {.timeNs = 2713545000000,
+                                                      .fullBiasNs = -1226701900521857520,
+                                                      .biasNs = 0.59689998626708984,
+                                                      .biasUncertaintyNs = 47514.989972114563,
+                                                      .driftNsps = -51.757811607455452,
+                                                      .driftUncertaintyNsps = 310.64968328491528,
+                                                      .hwClockDiscontinuityCount = 1};
+
+    ElapsedRealtime timestamp = {
+            .flags = ElapsedRealtime::HAS_TIMESTAMP_NS | ElapsedRealtime::HAS_TIME_UNCERTAINTY_NS,
+            .timestampNs = ::android::elapsedRealtimeNano(),
+            // This is an hardcoded value indicating a 1ms of uncertainty between the two clocks.
+            // In an actual implementation provide an estimate of the synchronization uncertainty
+            // or don't set the field.
+            .timeUncertaintyNs = 1000000};
+
+    aidl::android::hardware::gnss::GnssData gnssData = {
+            .measurements = {measurement}, .clock = clock, .elapsedRealtime = timestamp};
     return gnssData;
 }
 

@@ -16,16 +16,18 @@
 
 #pragma once
 
-#include <android/hardware/gnss/2.1/IGnss.h>
-#include "v2_1/gnss_hal_test_template.h"
+#include <android/hardware/gnss/BnGnssMeasurementCallback.h>
+#include "GnssCallbackEventQueue.h"
 
-// The main test class for GNSS HAL.
-class GnssHalTest : public android::hardware::gnss::common::GnssHalTestTemplate<
-                            android::hardware::gnss::V2_1::IGnss> {
+/** Implementation for IGnssMeasurementCallback. */
+class GnssMeasurementCallbackAidl : public android::hardware::gnss::BnGnssMeasurementCallback {
   public:
-    /**
-     * IsGnssHalVersion_2_1:
-     * returns  true if the GNSS HAL version is exactly 2.1.
-     */
-    bool IsGnssHalVersion_2_1() const;
+    GnssMeasurementCallbackAidl() : gnss_data_cbq_("gnss_data") {}
+    ~GnssMeasurementCallbackAidl() {}
+
+    android::binder::Status gnssMeasurementCb(
+            const android::hardware::gnss::GnssData& gnssData) override;
+
+    android::hardware::gnss::common::GnssCallbackEventQueue<android::hardware::gnss::GnssData>
+            gnss_data_cbq_;
 };

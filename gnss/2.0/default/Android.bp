@@ -29,7 +29,7 @@ cc_binary {
         "GnssMeasurement.cpp",
         "GnssMeasurementCorrections.cpp",
         "GnssVisibilityControl.cpp",
-        "service.cpp"
+        "service.cpp",
     ],
     shared_libs: [
         "libhidlbase",
@@ -39,8 +39,9 @@ cc_binary {
         "android.hardware.gnss.visibility_control@1.0",
         "android.hardware.gnss@2.1",
         "android.hardware.gnss@2.0",
-        "android.hardware.gnss@1.0",
         "android.hardware.gnss@1.1",
+        "android.hardware.gnss@1.0",
+        "android.hardware.gnss-ndk_platform",
     ],
     static_libs: [
         "android.hardware.gnss@common-default-lib",

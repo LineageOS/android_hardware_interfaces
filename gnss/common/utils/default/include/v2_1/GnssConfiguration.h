@@ -25,35 +25,27 @@
 
 namespace android::hardware::gnss::V2_1::implementation {
 
-using ::android::sp;
-using ::android::hardware::hidl_array;
-using ::android::hardware::hidl_memory;
-using ::android::hardware::hidl_string;
-using ::android::hardware::hidl_vec;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
-
-using BlacklistedSourceV2_1 =
-        ::android::hardware::gnss::V2_1::IGnssConfiguration::BlacklistedSource;
-using GnssConstellationTypeV2_0 = V2_0::GnssConstellationType;
-using GnssSvInfoV2_1 = V2_1::IGnssCallback::GnssSvInfo;
-
 struct BlacklistedSourceHashV2_1 {
-    inline int operator()(const BlacklistedSourceV2_1& source) const {
+    inline int operator()(
+            const ::android::hardware::gnss::V2_1::IGnssConfiguration::BlacklistedSource& source)
+            const {
         return int(source.constellation) * 1000 + int(source.svid);
     }
 };
 
 struct BlacklistedSourceEqualV2_1 {
-    inline bool operator()(const BlacklistedSourceV2_1& s1, const BlacklistedSourceV2_1& s2) const {
+    inline bool operator()(
+            const ::android::hardware::gnss::V2_1::IGnssConfiguration::BlacklistedSource& s1,
+            const ::android::hardware::gnss::V2_1::IGnssConfiguration::BlacklistedSource& s2)
+            const {
         return (s1.constellation == s2.constellation) && (s1.svid == s2.svid);
     }
 };
 
 using BlacklistedSourceSetV2_1 =
-        std::unordered_set<BlacklistedSourceV2_1, BlacklistedSourceHashV2_1,
-                           BlacklistedSourceEqualV2_1>;
-using BlacklistedConstellationSetV2_1 = std::unordered_set<GnssConstellationTypeV2_0>;
+        std::unordered_set<::android::hardware::gnss::V2_1::IGnssConfiguration::BlacklistedSource,
+                           BlacklistedSourceHashV2_1, BlacklistedSourceEqualV2_1>;
+using BlacklistedConstellationSetV2_1 = std::unordered_set<V2_0::GnssConstellationType>;
 
 struct GnssConfiguration : public IGnssConfiguration {
     // Methods from ::android::hardware::gnss::V1_0::IGnssConfiguration follow.
@@ -78,7 +70,7 @@ struct GnssConfiguration : public IGnssConfiguration {
     Return<bool> setBlacklist_2_1(
             const hidl_vec<V2_1::IGnssConfiguration::BlacklistedSource>& blacklist) override;
 
-    Return<bool> isBlacklistedV2_1(const GnssSvInfoV2_1& gnssSvInfo) const;
+    Return<bool> isBlacklistedV2_1(const V2_1::IGnssCallback::GnssSvInfo& gnssSvInfo) const;
 
   private:
     mutable std::recursive_mutex mMutex;
