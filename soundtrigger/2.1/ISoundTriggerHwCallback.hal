@@ -22,7 +22,6 @@ import @2.0::PhraseRecognitionExtra;
 /**
  * SoundTrigger HAL Callback interface. Obtained during SoundTrigger setup.
  */
-@hidl_callback
 interface ISoundTriggerHwCallback extends @2.0::ISoundTriggerHwCallback {
 
     /**
