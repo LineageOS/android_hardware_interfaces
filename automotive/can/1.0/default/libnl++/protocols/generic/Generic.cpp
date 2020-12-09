@@ -21,11 +21,12 @@
 
 namespace android::nl::protocols::generic {
 
-Generic::Generic() : NetlinkProtocol(NETLINK_GENERIC, "GENERIC", {std::make_shared<Ctrl>()}) {}
+Generic::Generic()
+    : NetlinkProtocol(NETLINK_GENERIC, "GENERIC", {std::make_shared<Ctrl>(mFamilyRegister)}) {}
 
-const std::optional<std::reference_wrapper<const MessageDescriptor>> Generic::getMessageDescriptor(
+const std::optional<std::reference_wrapper<MessageDescriptor>> Generic::getMessageDescriptor(
         nlmsgtype_t nlmsg_type) {
-    const auto desc = NetlinkProtocol::getMessageDescriptor(nlmsg_type);
+    auto desc = NetlinkProtocol::getMessageDescriptor(nlmsg_type);
     if (desc.has_value()) return desc;
 
     auto it = mFamilyRegister.find(nlmsg_type);

@@ -22,16 +22,27 @@ GenericMessageBase::GenericMessageBase(
         nlmsgtype_t msgtype, const std::string&& msgname,
         const std::initializer_list<GenericCommandNameMap::value_type> commandNames,
         const std::initializer_list<AttributeMap::value_type> attrTypes)
-    : MessageDefinition<genlmsghdr>(msgname, {{msgtype, {msgname, MessageGenre::UNKNOWN}}},
+    : MessageDefinition<genlmsghdr>(msgname, {{msgtype, {msgname, MessageGenre::Unknown}}},
                                     attrTypes),
       mCommandNames(commandNames) {}
 
 void GenericMessageBase::toStream(std::stringstream& ss, const genlmsghdr& data) const {
+    const auto commandNameIt = mCommandNames.find(data.cmd);
+    const auto commandName = (commandNameIt == mCommandNames.end())
+                                     ? std::nullopt
+                                     : std::optional<std::string>(commandNameIt->second);
+
+    if (commandName.has_value() && data.version == 1 && data.reserved == 0) {
+        // short version
+        ss << *commandName;
+        return;
+    }
+
     ss << "genlmsghdr{";
-    if (mCommandNames.count(data.cmd) == 0) {
+    if (commandName.has_value()) {
         ss << "cmd=" << unsigned(data.cmd);
     } else {
-        ss << "cmd=" << mCommandNames.find(data.cmd)->second;
+        ss << "cmd=" << *commandName;
     }
     ss << ", version=" << unsigned(data.version);
     if (data.reserved != 0) ss << ", reserved=" << data.reserved;

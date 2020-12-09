@@ -40,17 +40,17 @@ class NetlinkProtocol {
 
     const std::string& getName() const;
 
-    virtual const std::optional<std::reference_wrapper<const MessageDescriptor>>
-    getMessageDescriptor(nlmsgtype_t nlmsg_type);
+    virtual const std::optional<std::reference_wrapper<MessageDescriptor>> getMessageDescriptor(
+            nlmsgtype_t nlmsg_type);
 
   protected:
-    typedef std::vector<std::shared_ptr<const MessageDescriptor>> MessageDescriptorList;
+    typedef std::vector<std::shared_ptr<MessageDescriptor>> MessageDescriptorList;
 
     NetlinkProtocol(int protocol, const std::string& name,
                     const MessageDescriptorList&& messageDescrs);
 
   private:
-    typedef std::map<nlmsgtype_t, std::shared_ptr<const MessageDescriptor>> MessageDescriptorMap;
+    typedef std::map<nlmsgtype_t, std::shared_ptr<MessageDescriptor>> MessageDescriptorMap;
 
     const int mProtocol;
     const std::string mName;

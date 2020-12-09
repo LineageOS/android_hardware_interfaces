@@ -25,6 +25,7 @@ cc_library_static {
         "protocols/generic/Generic.cpp",
         "protocols/generic/GenericMessageBase.cpp",
         "protocols/generic/Unknown.cpp",
+        "protocols/generic/families/Nl80211.cpp",
         "protocols/route/Link.cpp",
         "protocols/route/Route.cpp",
         "protocols/route/structs.cpp",

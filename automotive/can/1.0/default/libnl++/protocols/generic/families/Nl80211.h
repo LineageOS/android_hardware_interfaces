@@ -16,24 +16,13 @@
 
 #pragma once
 
-#include "../NetlinkProtocol.h"
+#include "../GenericMessageBase.h"
 
-namespace android::nl::protocols::generic {
+namespace android::nl::protocols::generic::families {
 
-/**
- * Definition of NETLINK_GENERIC protocol.
- */
-class Generic : public NetlinkProtocol {
+class Nl80211 : public GenericMessageBase {
   public:
-    typedef std::map<nlmsgtype_t, std::shared_ptr<MessageDescriptor>> FamilyRegister;
-
-    Generic();
-
-    const std::optional<std::reference_wrapper<MessageDescriptor>> getMessageDescriptor(
-            nlmsgtype_t nlmsg_type);
-
-  private:
-    FamilyRegister mFamilyRegister;
+    Nl80211(nlmsgtype_t familyId);
 };
 
-}  // namespace android::nl::protocols::generic
+}  // namespace android::nl::protocols::generic::families
