@@ -76,16 +76,6 @@ void AuthorizationSet::Subtract(const AuthorizationSet& other) {
     }
 }
 
-void AuthorizationSet::Filter(std::function<bool(const KeyParameter&)> doKeep) {
-    std::vector<KeyParameter> result;
-    for (auto& param : data_) {
-        if (doKeep(param)) {
-            result.push_back(std::move(param));
-        }
-    }
-    std::swap(data_, result);
-}
-
 KeyParameter& AuthorizationSet::operator[](int at) {
     return data_[at];
 }

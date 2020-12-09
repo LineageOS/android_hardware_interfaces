@@ -16,9 +16,6 @@
 
 #pragma once
 
-#ifndef HARDWARE_INTERFACES_KEYMINT_10_SUPPORT_KEYMINT_UTILS_H_
-#define HARDWARE_INTERFACES_KEYMINT_10_SUPPORT_KEYMINT_UTILS_H_
-
 #include <android/hardware/security/keymint/HardwareAuthToken.h>
 
 namespace android::hardware::security::keymint {
@@ -43,5 +40,3 @@ uint32_t getOsVersion();
 uint32_t getOsPatchlevel();
 
 }  // namespace android::hardware::security::keymint
-
-#endif  // HARDWARE_INTERFACES_KEYMINT_10_SUPPORT_KEYMINT_UTILS_H_

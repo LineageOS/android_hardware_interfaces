@@ -43,18 +43,18 @@ class AuthorizationSet;
  */
 static const char kAttestionRecordOid[] = "1.3.6.1.4.1.11129.2.1.17";
 
-enum keymint_verified_boot_t {
-    KM_VERIFIED_BOOT_VERIFIED = 0,
-    KM_VERIFIED_BOOT_SELF_SIGNED = 1,
-    KM_VERIFIED_BOOT_UNVERIFIED = 2,
-    KM_VERIFIED_BOOT_FAILED = 3,
+enum class VerifiedBoot : uint8_t {
+    VERIFIED = 0,
+    SELF_SIGNED = 1,
+    UNVERIFIED = 2,
+    FAILED = 3,
 };
 
 struct RootOfTrust {
     SecurityLevel security_level;
     vector<uint8_t> verified_boot_key;
     vector<uint8_t> verified_boot_hash;
-    keymint_verified_boot_t verified_boot_state;
+    VerifiedBoot verified_boot_state;
     bool device_locked;
 };
 
@@ -81,7 +81,7 @@ ErrorCode parse_attestation_record(const uint8_t* asn1_key_desc, size_t asn1_key
 
 ErrorCode parse_root_of_trust(const uint8_t* asn1_key_desc, size_t asn1_key_desc_len,
                               std::vector<uint8_t>* verified_boot_key,
-                              keymint_verified_boot_t* verified_boot_state, bool* device_locked,
+                              VerifiedBoot* verified_boot_state, bool* device_locked,
                               std::vector<uint8_t>* verified_boot_hash);
 
 }  // namespace android::hardware::security::keymint

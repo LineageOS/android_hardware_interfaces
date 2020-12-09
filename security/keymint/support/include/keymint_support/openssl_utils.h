@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The Android Open Source Project
+ * Copyright 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef HARDWARE_INTERFACES_KEYMINT_1_0_SUPPORT_OPENSSL_UTILS_H_
-#define HARDWARE_INTERFACES_KEYMINT_1_0_SUPPORT_OPENSSL_UTILS_H_
+#pragma once
 
 #include <android/hardware/security/keymint/Digest.h>
 
@@ -63,5 +62,3 @@ inline const EVP_MD* openssl_digest(Digest digest) {
 }
 
 }  // namespace android::hardware::security::keymint
-
-#endif  // HARDWARE_INTERFACES_KEYMINT_1_0_SUPPORT_OPENSSL_UTILS_H_

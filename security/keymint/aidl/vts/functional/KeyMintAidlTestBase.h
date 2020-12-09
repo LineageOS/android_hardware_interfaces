@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef VTS_KEYMINT_AIDL_TEST_UTILS_H
-#define VTS_KEYMINT_AIDL_TEST_UTILS_H
-
 #pragma once
 
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
-#include <android/hardware/security/keymint/ErrorCode.h>
-#include <android/hardware/security/keymint/IKeyMintDevice.h>
 #include <binder/IServiceManager.h>
 #include <binder/ProcessState.h>
 #include <gtest/gtest.h>
+
+#include <android/hardware/security/keymint/ErrorCode.h>
+#include <android/hardware/security/keymint/IKeyMintDevice.h>
 
 #include <keymint_support/authorization_set.h>
 
@@ -187,5 +185,3 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
                              android::PrintInstanceNameToString)
 
 }  // namespace android::hardware::security::keymint::test
-
-#endif  // VTS_KEYMINT_AIDL_TEST_UTILS_H
