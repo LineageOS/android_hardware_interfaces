@@ -44,6 +44,7 @@ parcelable GnssMeasurement {
   double satelliteInterSignalBiasNs;
   double satelliteInterSignalBiasUncertaintyNs;
   android.hardware.gnss.SatellitePvt satellitePvt;
+  android.hardware.gnss.CorrelationVector[] correlationVectors;
   const int HAS_SNR = 1;
   const int HAS_CARRIER_FREQUENCY = 512;
   const int HAS_CARRIER_CYCLES = 1024;
@@ -55,6 +56,7 @@ parcelable GnssMeasurement {
   const int HAS_SATELLITE_ISB = 262144;
   const int HAS_SATELLITE_ISB_UNCERTAINTY = 524288;
   const int HAS_SATELLITE_PVT = 1048576;
+  const int HAS_CORRELATION_VECTOR = 2097152;
   const int STATE_UNKNOWN = 0;
   const int STATE_CODE_LOCK = 1;
   const int STATE_BIT_SYNC = 2;

@@ -18,7 +18,9 @@
 
 package android.hardware.gnss;
 @VintfStability
-parcelable BlocklistedSource {
-  android.hardware.gnss.GnssConstellationType constellation;
-  int svid;
+parcelable CorrelationVector {
+  int frequencyOffsetMps;
+  double samplingWidthM;
+  double samplingStartM;
+  int[] magnitude;
 }
