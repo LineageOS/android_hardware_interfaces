@@ -15,13 +15,8 @@
  */
 #define LOG_TAG "DefaultVehicleHal_v2_0"
 
-#include <android-base/macros.h>
-#include <android-base/properties.h>
 #include <android/log.h>
-#include <dirent.h>
-#include <sys/system_properties.h>
-#include <fstream>
-#include <regex>
+#include <android-base/macros.h>
 
 #include "EmulatedVehicleHal.h"
 #include "JsonFakeValueGenerator.h"
@@ -107,30 +102,6 @@ EmulatedVehicleHal::EmulatedVehicleHal(VehiclePropertyStore* propStore, VehicleH
     mVehicleClient->registerPropertyValueCallback(std::bind(&EmulatedVehicleHal::onPropertyValue,
                                                             this, std::placeholders::_1,
                                                             std::placeholders::_2));
-
-    mInitVhalValueOverride =
-            android::base::GetBoolProperty("persist.vendor.vhal_init_value_override", false);
-    if (mInitVhalValueOverride) {
-        getAllPropertiesOverride();
-    }
-}
-
-void EmulatedVehicleHal::getAllPropertiesOverride() {
-    if (auto dir = opendir("/vendor/etc/vhaloverride/")) {
-        std::regex reg_json(".*[.]json", std::regex::icase);
-        while (auto f = readdir(dir)) {
-            if (!regex_match(f->d_name, reg_json)) {
-                continue;
-            }
-            std::string file = "/vendor/etc/vhaloverride/" + std::string(f->d_name);
-            JsonFakeValueGenerator tmpGenerator(file);
-
-            std::vector<VehiclePropValue> propvalues = tmpGenerator.getAllEvents();
-            mVehiclePropertiesOverride.insert(std::end(mVehiclePropertiesOverride),
-                                              std::begin(propvalues), std::end(propvalues));
-        }
-        closedir(dir);
-    }
 }
 
 VehicleHal::VehiclePropValuePtr EmulatedVehicleHal::get(
@@ -239,14 +210,6 @@ StatusCode EmulatedVehicleHal::set(const VehiclePropValue& propValue) {
         return StatusCode::NOT_AVAILABLE;
     }
 
-    if (mInEmulator && propValue.prop == toInt(VehicleProperty::DISPLAY_BRIGHTNESS)) {
-        // Emulator does not support remote brightness control, b/139959479
-        // do not send it down so that it does not bring unnecessary property change event
-        // return other error code, such NOT_AVAILABLE, causes Emulator to be freezing
-        // TODO: return StatusCode::NOT_AVAILABLE once the above issue is fixed
-        return StatusCode::OK;
-    }
-
     /**
      * After checking all conditions, such as the property is available, a real vhal will
      * sent the events to Car ECU to take actions.
@@ -270,17 +233,6 @@ static bool isDiagnosticProperty(VehiclePropConfig propConfig) {
             return true;
     }
     return false;
-}
-
-// determine if it's running inside Android Emulator
-static bool isInEmulator() {
-    char propValue[PROP_VALUE_MAX];
-    bool isEmulator = (__system_property_get("ro.kernel.qemu", propValue) != 0);
-    if (!isEmulator) {
-        isEmulator = (__system_property_get("ro.hardware", propValue) != 0) &&
-                     (!strcmp(propValue, "ranchu") || !strcmp(propValue, "goldfish"));
-    }
-    return isEmulator;
 }
 
 // Parse supported properties list and generate vector of property values to hold current values.
@@ -327,21 +279,12 @@ void EmulatedVehicleHal::onCreate() {
                 }
             } else {
                 prop.value = it.initialValue;
-                if (mInitVhalValueOverride) {
-                    for (auto& itOverride : mVehiclePropertiesOverride) {
-                        if (itOverride.prop == cfg.prop) {
-                            prop.value = itOverride.value;
-                        }
-                    }
-                }
             }
             mPropStore->writeValue(prop, shouldUpdateStatus);
         }
     }
     initObd2LiveFrame(*mPropStore->getConfigOrDie(OBD2_LIVE_FRAME));
     initObd2FreezeFrame(*mPropStore->getConfigOrDie(OBD2_FREEZE_FRAME));
-    mInEmulator = isInEmulator();
-    ALOGD("mInEmulator=%s", mInEmulator ? "true" : "false");
 }
 
 std::vector<VehiclePropConfig> EmulatedVehicleHal::listProperties()  {

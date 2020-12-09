@@ -48,22 +48,6 @@ JsonFakeValueGenerator::JsonFakeValueGenerator(const VehiclePropValue& request) 
     mNumOfIterations = v.int32Values.size() < 2 ? -1 : v.int32Values[1];
 }
 
-JsonFakeValueGenerator::JsonFakeValueGenerator(std::string path) {
-    std::ifstream ifs(path);
-    if (!ifs) {
-        ALOGE("%s: couldn't open %s for parsing.", __func__, path.c_str());
-    }
-    mGenCfg = {
-        .index = 0,
-        .events = parseFakeValueJson(ifs),
-    };
-    mNumOfIterations = mGenCfg.events.size();
-}
-
-std::vector<VehiclePropValue> JsonFakeValueGenerator::getAllEvents() {
-    return mGenCfg.events;
-}
-
 VehiclePropValue JsonFakeValueGenerator::nextEvent() {
     VehiclePropValue generatedValue;
     if (!hasNext()) {
@@ -125,7 +109,6 @@ std::vector<VehiclePropValue> JsonFakeValueGenerator::parseFakeValueJson(std::is
 
         Json::Value rawEventValue = rawEvent["value"];
         auto& value = event.value;
-        int32_t count;
         switch (getPropType(event.prop)) {
             case VehiclePropertyType::BOOLEAN:
             case VehiclePropertyType::INT32:
@@ -142,13 +125,6 @@ std::vector<VehiclePropValue> JsonFakeValueGenerator::parseFakeValueJson(std::is
                 break;
             case VehiclePropertyType::STRING:
                 value.stringValue = rawEventValue.asString();
-                break;
-            case VehiclePropertyType::INT32_VEC:
-                value.int32Values.resize(rawEventValue.size());
-                count = 0;
-                for (auto& it : rawEventValue) {
-                    value.int32Values[count++] = it.asInt();
-                }
                 break;
             case VehiclePropertyType::MIXED:
                 copyMixedValueJson(value, rawEventValue);

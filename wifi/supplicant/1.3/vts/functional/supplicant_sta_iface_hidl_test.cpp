@@ -63,6 +63,8 @@ class SupplicantStaIfaceHidlTest
         supplicant_v1_3_instance_name_ = std::get<1>(GetParam());
         isP2pOn_ =
             testing::deviceSupportsFeature("android.hardware.wifi.direct");
+        // Stop Framework
+        std::system("/system/bin/stop");
 
         stopSupplicant(wifi_v1_0_instance_name_);
         startSupplicantAndWaitForHidlService(wifi_v1_0_instance_name_,
@@ -76,6 +78,8 @@ class SupplicantStaIfaceHidlTest
 
     virtual void TearDown() override {
         stopSupplicant(wifi_v1_0_instance_name_);
+        // Start Framework
+        std::system("/system/bin/start");
     }
 
     int64_t pmkCacheExpirationTimeInSec;
@@ -419,7 +423,8 @@ TEST_P(SupplicantStaIfaceHidlTest, StartDppEnrolleeInitiator) {
     }
 
     hidl_string uri =
-        "DPP:C:81/1;M:48d6d5bd1de1;I:G1197843;K:MDkwEwYHKoZIzj0CAQYIKoZIzj"
+        "DPP:C:81/1,117/"
+        "40;M:48d6d5bd1de1;I:G1197843;K:MDkwEwYHKoZIzj0CAQYIKoZIzj"
         "0DAQcDIgAD0edY4X3N//HhMFYsZfMbQJTiNFtNIWF/cIwMB/gzqOM=;;";
     uint32_t peer_id = 0;
 
@@ -470,7 +475,8 @@ TEST_P(SupplicantStaIfaceHidlTest, StartDppConfiguratorInitiator) {
     }
 
     hidl_string uri =
-        "DPP:C:81/1;M:48d6d5bd1de1;I:G1197843;K:MDkwEwYHKoZIzj0CAQYIKoZIzj"
+        "DPP:C:81/1,117/"
+        "40;M:48d6d5bd1de1;I:G1197843;K:MDkwEwYHKoZIzj0CAQYIKoZIzj"
         "0DAQcDIgAD0edY4X3N//HhMFYsZfMbQJTiNFtNIWF/cIwMB/gzqOM=;;";
     uint32_t peer_id = 0;
 

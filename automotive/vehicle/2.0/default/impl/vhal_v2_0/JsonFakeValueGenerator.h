@@ -41,12 +41,9 @@ private:
 
 public:
     JsonFakeValueGenerator(const VehiclePropValue& request);
-    JsonFakeValueGenerator(std::string path);
-
     ~JsonFakeValueGenerator() = default;
 
     VehiclePropValue nextEvent();
-    std::vector<VehiclePropValue> getAllEvents();
 
     bool hasNext();
 

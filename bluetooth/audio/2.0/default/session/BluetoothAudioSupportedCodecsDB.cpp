@@ -74,7 +74,7 @@ static const AacParameters kDefaultOffloadAacCapability = {
     .objectType = AacObjectType::MPEG2_LC,
     .sampleRate = SampleRate::RATE_44100,
     .channelMode = ChannelMode::STEREO,
-    .variableBitRateEnabled = AacVariableBitRate::DISABLED,
+    .variableBitRateEnabled = AacVariableBitRate::ENABLED,
     .bitsPerSample = BitsPerSample::BITS_16};
 
 // LDAC: mSampleRate:(44100|48000|88200|96000), mBitsPerSample:(16|24|32),

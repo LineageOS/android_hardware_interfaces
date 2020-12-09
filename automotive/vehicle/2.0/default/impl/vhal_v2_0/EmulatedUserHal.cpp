@@ -15,10 +15,12 @@
  */
 #define LOG_TAG "EmulatedUserHal"
 
+#include "EmulatedUserHal.h"
+
 #include <cutils/log.h>
 #include <utils/SystemClock.h>
 
-#include "EmulatedUserHal.h"
+#include "UserHalHelper.h"
 
 namespace android {
 namespace hardware {
@@ -28,12 +30,35 @@ namespace V2_0 {
 
 namespace impl {
 
-constexpr int INITIAL_USER_INFO = static_cast<int>(VehicleProperty::INITIAL_USER_INFO);
-constexpr int SWITCH_USER = static_cast<int>(VehicleProperty::SWITCH_USER);
-constexpr int CREATE_USER = static_cast<int>(VehicleProperty::CREATE_USER);
-constexpr int REMOVE_USER = static_cast<int>(VehicleProperty::REMOVE_USER);
-constexpr int USER_IDENTIFICATION_ASSOCIATION =
-        static_cast<int>(VehicleProperty::USER_IDENTIFICATION_ASSOCIATION);
+namespace {
+
+using android::base::Error;
+using android::base::Result;
+
+constexpr int32_t INITIAL_USER_INFO = static_cast<int32_t>(VehicleProperty::INITIAL_USER_INFO);
+constexpr int32_t SWITCH_USER = static_cast<int32_t>(VehicleProperty::SWITCH_USER);
+constexpr int32_t CREATE_USER = static_cast<int32_t>(VehicleProperty::CREATE_USER);
+constexpr int32_t REMOVE_USER = static_cast<int32_t>(VehicleProperty::REMOVE_USER);
+constexpr int32_t USER_IDENTIFICATION_ASSOCIATION =
+        static_cast<int32_t>(VehicleProperty::USER_IDENTIFICATION_ASSOCIATION);
+
+Result<int32_t> getRequestId(const VehiclePropValue& value) {
+    if (value.value.int32Values.size() < 1) {
+        return Error(static_cast<int>(StatusCode::INVALID_ARG))
+               << "no int32values on " << toString(value);
+    }
+    return value.value.int32Values[0];
+}
+
+Result<SwitchUserMessageType> getSwitchUserMessageType(const VehiclePropValue& value) {
+    if (value.value.int32Values.size() < 2) {
+        return Error(static_cast<int>(StatusCode::INVALID_ARG))
+               << "missing switch user message type " << toString(value);
+    }
+    return user_hal_helper::verifyAndCast<SwitchUserMessageType>(value.value.int32Values[1]);
+}
+
+}  // namespace
 
 bool EmulatedUserHal::isSupported(int32_t prop) {
     switch (prop) {
@@ -48,7 +73,7 @@ bool EmulatedUserHal::isSupported(int32_t prop) {
     }
 }
 
-android::base::Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetProperty(
+Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetProperty(
         const VehiclePropValue& value) {
     ALOGV("onSetProperty(): %s", toString(value).c_str());
 
@@ -65,12 +90,12 @@ android::base::Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetP
         case USER_IDENTIFICATION_ASSOCIATION:
             return onSetUserIdentificationAssociation(value);
         default:
-            return android::base::Error(static_cast<int>(StatusCode::INVALID_ARG))
+            return Error(static_cast<int>(StatusCode::INVALID_ARG))
                    << "Unsupported property: " << toString(value);
     }
 }
 
-android::base::Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onGetProperty(
+Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onGetProperty(
         const VehiclePropValue& value) {
     ALOGV("onGetProperty(%s)", toString(value).c_str());
     switch (value.prop) {
@@ -79,42 +104,41 @@ android::base::Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onGetP
         case CREATE_USER:
         case REMOVE_USER:
             ALOGE("onGetProperty(): %d is only supported on SET", value.prop);
-            return android::base::Error(static_cast<int>(StatusCode::INVALID_ARG))
-                   << "only supported on SET";
+            return Error(static_cast<int>(StatusCode::INVALID_ARG)) << "only supported on SET";
         case USER_IDENTIFICATION_ASSOCIATION:
             return onGetUserIdentificationAssociation(value);
         default:
             ALOGE("onGetProperty(): %d is not supported", value.prop);
-            return android::base::Error(static_cast<int>(StatusCode::INVALID_ARG))
-                   << "not supported by User HAL";
+            return Error(static_cast<int>(StatusCode::INVALID_ARG)) << "not supported by User HAL";
     }
 }
 
-android::base::Result<std::unique_ptr<VehiclePropValue>>
-EmulatedUserHal::onGetUserIdentificationAssociation(const VehiclePropValue& value) {
-    if (mSetUserIdentificationAssociationResponseFromCmd != nullptr) {
-        ALOGI("get(USER_IDENTIFICATION_ASSOCIATION): returning %s",
-              toString(*mSetUserIdentificationAssociationResponseFromCmd).c_str());
-        auto newValue = std::unique_ptr<VehiclePropValue>(
-                new VehiclePropValue(*mSetUserIdentificationAssociationResponseFromCmd));
+Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onGetUserIdentificationAssociation(
+        const VehiclePropValue& value) {
+    if (mSetUserIdentificationAssociationResponseFromCmd == nullptr) {
+        return defaultUserIdentificationAssociation(value);
+    }
+    ALOGI("get(USER_IDENTIFICATION_ASSOCIATION): returning %s",
+          toString(*mSetUserIdentificationAssociationResponseFromCmd).c_str());
+    auto newValue = std::unique_ptr<VehiclePropValue>(
+            new VehiclePropValue(*mSetUserIdentificationAssociationResponseFromCmd));
+    auto requestId = getRequestId(value);
+    if (requestId.ok()) {
         // Must use the same requestId
-        if (value.value.int32Values.size() > 0) {
-            newValue->value.int32Values[0] = value.value.int32Values[0];
-        } else {
-            ALOGE("get(USER_IDENTIFICATION_ASSOCIATION): no requestId on %s",
-                  toString(value).c_str());
-        }
-        return newValue;
+        newValue->value.int32Values[0] = *requestId;
+    } else {
+        ALOGE("get(USER_IDENTIFICATION_ASSOCIATION): no requestId on %s", toString(value).c_str());
     }
-    return defaultUserIdentificationAssociation(value);
+    return newValue;
 }
 
-android::base::Result<std::unique_ptr<VehiclePropValue>>
-EmulatedUserHal::onSetInitialUserInfoResponse(const VehiclePropValue& value) {
-    if (value.value.int32Values.size() == 0) {
-        ALOGE("set(INITIAL_USER_INFO): no int32values, ignoring it: %s", toString(value).c_str());
-        return android::base::Error(static_cast<int>(StatusCode::INVALID_ARG))
-               << "no int32values on " << toString(value);
+Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetInitialUserInfoResponse(
+        const VehiclePropValue& value) {
+    auto requestId = getRequestId(value);
+    if (!requestId.ok()) {
+        ALOGE("Failed to get requestId on set(INITIAL_USER_INFO): %s",
+              requestId.error().message().c_str());
+        return requestId.error();
     }
 
     if (value.areaId != 0) {
@@ -124,85 +148,82 @@ EmulatedUserHal::onSetInitialUserInfoResponse(const VehiclePropValue& value) {
     }
 
     ALOGD("set(INITIAL_USER_INFO) called from Android: %s", toString(value).c_str());
-
-    int32_t requestId = value.value.int32Values[0];
     if (mInitialUserResponseFromCmd != nullptr) {
         ALOGI("replying INITIAL_USER_INFO with lshal value:  %s",
               toString(*mInitialUserResponseFromCmd).c_str());
-        return sendUserHalResponse(std::move(mInitialUserResponseFromCmd), requestId);
+        return sendUserHalResponse(std::move(mInitialUserResponseFromCmd), *requestId);
     }
 
     // Returns default response
-    auto updatedValue = std::unique_ptr<VehiclePropValue>(new VehiclePropValue);
-    updatedValue->prop = INITIAL_USER_INFO;
-    updatedValue->timestamp = elapsedRealtimeNano();
-    updatedValue->value.int32Values.resize(2);
-    updatedValue->value.int32Values[0] = requestId;
-    updatedValue->value.int32Values[1] = (int32_t)InitialUserInfoResponseAction::DEFAULT;
-
+    auto updatedValue = user_hal_helper::toVehiclePropValue(InitialUserInfoResponse{
+            .requestId = *requestId,
+            .action = InitialUserInfoResponseAction::DEFAULT,
+    });
     ALOGI("no lshal response; replying with InitialUserInfoResponseAction::DEFAULT: %s",
           toString(*updatedValue).c_str());
-
     return updatedValue;
 }
 
-android::base::Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetSwitchUserResponse(
+Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetSwitchUserResponse(
         const VehiclePropValue& value) {
-    if (value.value.int32Values.size() == 0) {
-        ALOGE("set(SWITCH_USER): no int32values, ignoring it: %s", toString(value).c_str());
-        return android::base::Error(static_cast<int>(StatusCode::INVALID_ARG))
-               << "no int32values on " << toString(value);
+    auto requestId = getRequestId(value);
+    if (!requestId.ok()) {
+        ALOGE("Failed to get requestId on set(SWITCH_USER): %s",
+              requestId.error().message().c_str());
+        return requestId.error();
+    }
+
+    auto messageType = getSwitchUserMessageType(value);
+    if (!messageType.ok()) {
+        ALOGE("Failed to get messageType on set(SWITCH_USER): %s",
+              messageType.error().message().c_str());
+        return messageType.error();
     }
 
     if (value.areaId != 0) {
+        if (*messageType == SwitchUserMessageType::VEHICLE_REQUEST) {
+            // User HAL can also request a user switch, so we need to check it first
+            ALOGD("set(SWITCH_USER) called from lshal to emulate a vehicle request: %s",
+                  toString(value).c_str());
+            return std::unique_ptr<VehiclePropValue>(new VehiclePropValue(value));
+        }
+        // Otherwise, we store it
         ALOGD("set(SWITCH_USER) called from lshal; storing it: %s", toString(value).c_str());
         mSwitchUserResponseFromCmd.reset(new VehiclePropValue(value));
         return {};
     }
     ALOGD("set(SWITCH_USER) called from Android: %s", toString(value).c_str());
 
-    int32_t requestId = value.value.int32Values[0];
     if (mSwitchUserResponseFromCmd != nullptr) {
         ALOGI("replying SWITCH_USER with lshal value:  %s",
               toString(*mSwitchUserResponseFromCmd).c_str());
-        return sendUserHalResponse(std::move(mSwitchUserResponseFromCmd), requestId);
+        return sendUserHalResponse(std::move(mSwitchUserResponseFromCmd), *requestId);
     }
 
-    if (value.value.int32Values.size() > 1) {
-        auto messageType = static_cast<SwitchUserMessageType>(value.value.int32Values[1]);
-        switch (messageType) {
-            case SwitchUserMessageType::LEGACY_ANDROID_SWITCH:
-                ALOGI("request is LEGACY_ANDROID_SWITCH; ignoring it");
-                return {};
-            case SwitchUserMessageType::ANDROID_POST_SWITCH:
-                ALOGI("request is ANDROID_POST_SWITCH; ignoring it");
-                return {};
-            default:
-                break;
-        }
+    if (*messageType == SwitchUserMessageType::LEGACY_ANDROID_SWITCH ||
+        *messageType == SwitchUserMessageType::ANDROID_POST_SWITCH) {
+        ALOGI("request is %s; ignoring it", toString(*messageType).c_str());
+        return {};
     }
 
     // Returns default response
-    auto updatedValue = std::unique_ptr<VehiclePropValue>(new VehiclePropValue);
-    updatedValue->prop = SWITCH_USER;
-    updatedValue->timestamp = elapsedRealtimeNano();
-    updatedValue->value.int32Values.resize(3);
-    updatedValue->value.int32Values[0] = requestId;
-    updatedValue->value.int32Values[1] = (int32_t)SwitchUserMessageType::VEHICLE_RESPONSE;
-    updatedValue->value.int32Values[2] = (int32_t)SwitchUserStatus::SUCCESS;
-
+    auto updatedValue = user_hal_helper::toVehiclePropValue(SwitchUserResponse{
+            .requestId = *requestId,
+            .messageType = SwitchUserMessageType::VEHICLE_RESPONSE,
+            .status = SwitchUserStatus::SUCCESS,
+    });
     ALOGI("no lshal response; replying with VEHICLE_RESPONSE / SUCCESS: %s",
           toString(*updatedValue).c_str());
-
     return updatedValue;
 }
 
-android::base::Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetCreateUserResponse(
+Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetCreateUserResponse(
         const VehiclePropValue& value) {
-    if (value.value.int32Values.size() == 0) {
-        ALOGE("set(CREATE_USER): no int32values, ignoring it: %s", toString(value).c_str());
-        return android::base::Error(static_cast<int>(StatusCode::INVALID_ARG))
-               << "no int32values on " << toString(value);
+    auto requestId = getRequestId(value);
+    if (!requestId.ok()) {
+        ALOGE("Failed to get requestId on set(CREATE_USER): %s",
+              requestId.error().message().c_str());
+        return requestId.error();
     }
 
     if (value.areaId != 0) {
@@ -212,33 +233,28 @@ android::base::Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetC
     }
     ALOGD("set(CREATE_USER) called from Android: %s", toString(value).c_str());
 
-    int32_t requestId = value.value.int32Values[0];
     if (mCreateUserResponseFromCmd != nullptr) {
         ALOGI("replying CREATE_USER with lshal value:  %s",
               toString(*mCreateUserResponseFromCmd).c_str());
-        return sendUserHalResponse(std::move(mCreateUserResponseFromCmd), requestId);
+        return sendUserHalResponse(std::move(mCreateUserResponseFromCmd), *requestId);
     }
 
     // Returns default response
-    auto updatedValue = std::unique_ptr<VehiclePropValue>(new VehiclePropValue);
-    updatedValue->prop = CREATE_USER;
-    updatedValue->timestamp = elapsedRealtimeNano();
-    updatedValue->value.int32Values.resize(2);
-    updatedValue->value.int32Values[0] = requestId;
-    updatedValue->value.int32Values[1] = (int32_t)CreateUserStatus::SUCCESS;
-
+    auto updatedValue = user_hal_helper::toVehiclePropValue(CreateUserResponse{
+            .requestId = *requestId,
+            .status = CreateUserStatus::SUCCESS,
+    });
     ALOGI("no lshal response; replying with SUCCESS: %s", toString(*updatedValue).c_str());
-
     return updatedValue;
 }
 
-android::base::Result<std::unique_ptr<VehiclePropValue>>
-EmulatedUserHal::onSetUserIdentificationAssociation(const VehiclePropValue& value) {
-    if (value.value.int32Values.size() == 0) {
-        ALOGE("set(USER_IDENTIFICATION_ASSOCIATION): no int32values, ignoring it: %s",
-              toString(value).c_str());
-        return android::base::Error(static_cast<int>(StatusCode::INVALID_ARG))
-               << "no int32values on " << toString(value);
+Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetUserIdentificationAssociation(
+        const VehiclePropValue& value) {
+    auto requestId = getRequestId(value);
+    if (!requestId.ok()) {
+        ALOGE("Failed to get requestId on set(USER_IDENTIFICATION_ASSOCIATION): %s",
+              requestId.error().message().c_str());
+        return requestId.error();
     }
 
     if (value.areaId != 0) {
@@ -249,28 +265,26 @@ EmulatedUserHal::onSetUserIdentificationAssociation(const VehiclePropValue& valu
     }
     ALOGD("set(USER_IDENTIFICATION_ASSOCIATION) called from Android: %s", toString(value).c_str());
 
-    int32_t requestId = value.value.int32Values[0];
     if (mSetUserIdentificationAssociationResponseFromCmd != nullptr) {
         ALOGI("replying USER_IDENTIFICATION_ASSOCIATION with lshal value:  %s",
               toString(*mSetUserIdentificationAssociationResponseFromCmd).c_str());
         // Not moving response so it can be used on GET requests
         auto copy = std::unique_ptr<VehiclePropValue>(
                 new VehiclePropValue(*mSetUserIdentificationAssociationResponseFromCmd));
-        return sendUserHalResponse(std::move(copy), requestId);
+        return sendUserHalResponse(std::move(copy), *requestId);
     }
-
     // Returns default response
     return defaultUserIdentificationAssociation(value);
 }
 
-android::base::Result<std::unique_ptr<VehiclePropValue>>
-EmulatedUserHal::defaultUserIdentificationAssociation(const VehiclePropValue& request) {
+Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::defaultUserIdentificationAssociation(
+        const VehiclePropValue& request) {
     // TODO(b/159498909): return a response with NOT_ASSOCIATED_ANY_USER for all requested types
     ALOGE("no lshal response for %s; replying with NOT_AVAILABLE", toString(request).c_str());
-    return android::base::Error(static_cast<int>(StatusCode::NOT_AVAILABLE)) << "not set by lshal";
+    return Error(static_cast<int>(StatusCode::NOT_AVAILABLE)) << "not set by lshal";
 }
 
-android::base::Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::sendUserHalResponse(
+Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::sendUserHalResponse(
         std::unique_ptr<VehiclePropValue> response, int32_t requestId) {
     switch (response->areaId) {
         case 1:
@@ -284,17 +298,16 @@ android::base::Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::sendUs
         case 3:
             ALOGD("not generating a property change event because of lshal prop: %s",
                   toString(*response).c_str());
-            return android::base::Error(static_cast<int>(StatusCode::NOT_AVAILABLE))
+            return Error(static_cast<int>(StatusCode::NOT_AVAILABLE))
                    << "not generating a property change event because of lshal prop: "
                    << toString(*response);
         default:
             ALOGE("invalid action on lshal response: %s", toString(*response).c_str());
-            return android::base::Error(static_cast<int>(StatusCode::INTERNAL_ERROR))
+            return Error(static_cast<int>(StatusCode::INTERNAL_ERROR))
                    << "invalid action on lshal response: " << toString(*response);
     }
 
     ALOGD("updating property to: %s", toString(*response).c_str());
-
     return response;
 }
 
