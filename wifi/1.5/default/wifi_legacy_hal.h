@@ -386,6 +386,11 @@ class WifiLegacyHal {
     virtual wifi_error multiStaSetPrimaryConnection(const std::string& ifname);
     virtual wifi_error multiStaSetUseCase(wifi_multi_sta_use_case use_case);
 
+    // Coex functions.
+    virtual wifi_error setCoexUnsafeChannels(
+        std::vector<wifi_coex_unsafe_channel> unsafe_channels,
+        uint32_t restrictions);
+
    private:
     // Retrieve interface handles for all the available interfaces.
     wifi_error retrieveIfaceHandles();

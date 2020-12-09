@@ -71,6 +71,12 @@ legacy_hal::wifi_interface_type convertHidlIfaceTypeToLegacy(
     IfaceType hidl_interface_type);
 legacy_hal::wifi_multi_sta_use_case convertHidlMultiStaUseCaseToLegacy(
     IWifiChip::MultiStaUseCase use_case);
+bool convertHidlCoexUnsafeChannelToLegacy(
+    const IWifiChip::CoexUnsafeChannel& hidl_unsafe_channel,
+    legacy_hal::wifi_coex_unsafe_channel* legacy_unsafe_channel);
+bool convertHidlVectorOfCoexUnsafeChannelToLegacy(
+    const std::vector<IWifiChip::CoexUnsafeChannel>& hidl_unsafe_channels,
+    std::vector<legacy_hal::wifi_coex_unsafe_channel>* legacy_unsafe_channels);
 
 // STA iface conversion methods.
 bool convertLegacyFeaturesToHidlStaCapabilities(
