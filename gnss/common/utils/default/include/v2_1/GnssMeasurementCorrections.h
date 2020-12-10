@@ -22,9 +22,6 @@
 
 namespace android::hardware::gnss::measurement_corrections::V1_1::implementation {
 
-using ::android::sp;
-using ::android::hardware::Return;
-
 struct GnssMeasurementCorrections : public IMeasurementCorrections {
     GnssMeasurementCorrections();
     ~GnssMeasurementCorrections();

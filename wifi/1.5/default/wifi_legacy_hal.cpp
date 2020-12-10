@@ -1521,6 +1521,14 @@ wifi_error WifiLegacyHal::multiStaSetUseCase(wifi_multi_sta_use_case use_case) {
                                                           use_case);
 }
 
+wifi_error WifiLegacyHal::setCoexUnsafeChannels(
+    std::vector<wifi_coex_unsafe_channel> unsafe_channels,
+    uint32_t restrictions) {
+    return global_func_table_.wifi_set_coex_unsafe_channels(
+        global_handle_, unsafe_channels.size(), unsafe_channels.data(),
+        restrictions);
+}
+
 void WifiLegacyHal::invalidate() {
     global_handle_ = nullptr;
     iface_name_to_handle_.clear();

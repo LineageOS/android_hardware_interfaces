@@ -54,17 +54,64 @@ class AttributeMap : private std::map<std::optional<nlattrtype_t>, AttributeDefi
  */
 struct AttributeDefinition {
     enum class DataType : uint8_t {
+        /**
+         * Binary blob (or attribute of unknown type).
+         */
         Raw,
+
+        /**
+         * Nested attribute (with or without NLA_F_NESTED).
+         */
         Nested,
+
+        /**
+         * Non-null terminated string.
+         *
+         * The length of the string is determined by the size of an attribute.
+         */
         String,
+
+        /**
+         * Null terminated string.
+         */
+        StringNul,
+
+        /**
+         * Unsigned integer of size 8, 16, 32 or 64 bits.
+         */
         Uint,
+
+        /**
+         * Structure which printer is defined in ops ToStream variant.
+         */
         Struct,
+
+        /**
+         * Flag attribute.
+         *
+         * The attribute doesn't have any contents. The flag is set when the attribute is present,
+         * it's not when it's absent from attribute list.
+         */
+        Flag,
+    };
+    enum class Flags : uint8_t {
+        Verbose = (1 << 0),
     };
     using ToStream = std::function<void(std::stringstream& ss, const Buffer<nlattr> attr)>;
 
     std::string name;
     DataType dataType = DataType::Raw;
     std::variant<AttributeMap, ToStream> ops = AttributeMap{};
+
+    /**
+     * Attribute flags.
+     *
+     * It's not really a bitmask flag set (since you are not supposed to compare enum class by
+     * bitmask), but std::set<Flags> bumps compile time from 16s to 3m. Let's leave it as-is for
+     * now and revisit if we get some flags that can be used in pairs. When it happens, review all
+     * uses of the flags field to include the "&" operator and not "==".
+     */
+    Flags flags = {};
 };
 
 /**
@@ -74,11 +121,11 @@ struct AttributeDefinition {
  * section in linux/netlink.h.
  */
 enum class MessageGenre {
-    UNKNOWN,
-    GET,
-    NEW,
-    DELETE,
-    ACK,
+    Unknown,
+    Get,
+    New,
+    Delete,
+    Ack,
 };
 
 /**
@@ -103,8 +150,15 @@ class MessageDescriptor {
     MessageDetails getMessageDetails(nlmsgtype_t msgtype) const;
     virtual void dataToStream(std::stringstream& ss, const Buffer<nlmsghdr> hdr) const = 0;
 
+    /**
+     * Message tracking for stateful protocols (such as NETLINK_GENERIC).
+     *
+     * \param hdr Message to track
+     */
+    virtual void track(const Buffer<nlmsghdr> hdr);
+
     static MessageDetails getMessageDetails(
-            const std::optional<std::reference_wrapper<const MessageDescriptor>>& msgDescMaybe,
+            const std::optional<std::reference_wrapper<MessageDescriptor>>& msgDescMaybe,
             nlmsgtype_t msgtype);
 
   protected:

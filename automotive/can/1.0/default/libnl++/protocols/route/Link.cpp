@@ -16,6 +16,7 @@
 
 #include "Link.h"
 
+#include "../structs.h"
 #include "structs.h"
 
 #include <net/if.h>
@@ -26,9 +27,9 @@ using DataType = AttributeDefinition::DataType;
 
 // clang-format off
 Link::Link() : MessageDefinition<ifinfomsg>("link", {
-    {RTM_NEWLINK, {"NEWLINK", MessageGenre::NEW}},
-    {RTM_DELLINK, {"DELLINK", MessageGenre::DELETE}},
-    {RTM_GETLINK, {"GETLINK", MessageGenre::GET}},
+    {RTM_NEWLINK, {"NEWLINK", MessageGenre::New}},
+    {RTM_DELLINK, {"DELLINK", MessageGenre::Delete}},
+    {RTM_GETLINK, {"GETLINK", MessageGenre::Get}},
 }, {
     {IFLA_ADDRESS, {"ADDRESS"}},
     {IFLA_BROADCAST, {"BROADCAST"}},

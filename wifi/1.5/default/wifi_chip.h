@@ -174,6 +174,10 @@ class WifiChip : public V1_5::IWifiChip {
     Return<void> setMultiStaUseCase(
         MultiStaUseCase use_case,
         setMultiStaUseCase_cb hidl_status_cb) override;
+    Return<void> setCoexUnsafeChannels(
+        const hidl_vec<CoexUnsafeChannel>& unsafe_channels,
+        hidl_bitfield<IfaceType> restrictions,
+        setCoexUnsafeChannels_cb hidl_status_cb) override;
 
    private:
     void invalidateAndRemoveAllIfaces();
@@ -252,6 +256,8 @@ class WifiChip : public V1_5::IWifiChip {
         const sp<V1_4::IWifiChipEventCallback>& event_callback);
     WifiStatus setMultiStaPrimaryConnectionInternal(const std::string& ifname);
     WifiStatus setMultiStaUseCaseInternal(MultiStaUseCase use_case);
+    WifiStatus setCoexUnsafeChannelsInternal(
+        std::vector<CoexUnsafeChannel> unsafe_channels, uint32_t restrictions);
 
     WifiStatus handleChipConfiguration(
         std::unique_lock<std::recursive_mutex>* lock, ChipModeId mode_id);

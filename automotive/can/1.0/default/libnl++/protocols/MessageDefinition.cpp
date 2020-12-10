@@ -56,15 +56,17 @@ const AttributeMap& MessageDescriptor::getAttributeMap() const {
 
 MessageDescriptor::MessageDetails MessageDescriptor::getMessageDetails(nlmsgtype_t msgtype) const {
     const auto it = mMessageDetails.find(msgtype);
-    if (it == mMessageDetails.end()) return {std::to_string(msgtype), MessageGenre::UNKNOWN};
+    if (it == mMessageDetails.end()) return {std::to_string(msgtype), MessageGenre::Unknown};
     return it->second;
 }
 
 MessageDescriptor::MessageDetails MessageDescriptor::getMessageDetails(
-        const std::optional<std::reference_wrapper<const MessageDescriptor>>& msgDescMaybe,
+        const std::optional<std::reference_wrapper<MessageDescriptor>>& msgDescMaybe,
         nlmsgtype_t msgtype) {
     if (msgDescMaybe.has_value()) return msgDescMaybe->get().getMessageDetails(msgtype);
-    return {std::to_string(msgtype), protocols::MessageGenre::UNKNOWN};
+    return {std::to_string(msgtype), protocols::MessageGenre::Unknown};
 }
+
+void MessageDescriptor::track(const Buffer<nlmsghdr> /* hdr */) {}
 
 }  // namespace android::nl::protocols

@@ -16,13 +16,19 @@
 
 #pragma once
 
+#include "Generic.h"
 #include "GenericMessageBase.h"
 
 namespace android::nl::protocols::generic {
 
 class Ctrl : public GenericMessageBase {
   public:
-    Ctrl();
+    Ctrl(Generic::FamilyRegister& familyRegister);
+
+    void track(const Buffer<nlmsghdr> hdr) override;
+
+  private:
+    Generic::FamilyRegister& mFamilyRegister;
 };
 
 }  // namespace android::nl::protocols::generic

@@ -2800,6 +2800,47 @@ legacy_hal::wifi_multi_sta_use_case convertHidlMultiStaUseCaseToLegacy(
     }
     CHECK(false);
 }
+
+bool convertHidlCoexUnsafeChannelToLegacy(
+    const IWifiChip::CoexUnsafeChannel& hidl_unsafe_channel,
+    legacy_hal::wifi_coex_unsafe_channel* legacy_unsafe_channel) {
+    if (!legacy_unsafe_channel) {
+        return false;
+    }
+    *legacy_unsafe_channel = {};
+    switch (hidl_unsafe_channel.band) {
+        case WifiBand::BAND_24GHZ:
+            legacy_unsafe_channel->band = legacy_hal::WLAN_MAC_2_4_BAND;
+            break;
+        case WifiBand::BAND_5GHZ:
+            legacy_unsafe_channel->band = legacy_hal::WLAN_MAC_5_0_BAND;
+            break;
+        default:
+            return false;
+    };
+    legacy_unsafe_channel->channel = hidl_unsafe_channel.channel;
+    legacy_unsafe_channel->power_cap_dbm = hidl_unsafe_channel.powerCapDbm;
+    return true;
+}
+
+bool convertHidlVectorOfCoexUnsafeChannelToLegacy(
+    const std::vector<IWifiChip::CoexUnsafeChannel>& hidl_unsafe_channels,
+    std::vector<legacy_hal::wifi_coex_unsafe_channel>* legacy_unsafe_channels) {
+    if (!legacy_unsafe_channels) {
+        return false;
+    }
+    *legacy_unsafe_channels = {};
+    for (const auto& hidl_unsafe_channel : hidl_unsafe_channels) {
+        legacy_hal::wifi_coex_unsafe_channel legacy_unsafe_channel;
+        if (!hidl_struct_util::convertHidlCoexUnsafeChannelToLegacy(
+                hidl_unsafe_channel, &legacy_unsafe_channel)) {
+            return false;
+        }
+        legacy_unsafe_channels->push_back(legacy_unsafe_channel);
+    }
+    return true;
+}
+
 }  // namespace hidl_struct_util
 }  // namespace implementation
 }  // namespace V1_5

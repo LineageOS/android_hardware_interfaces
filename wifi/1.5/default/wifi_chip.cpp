@@ -722,6 +722,15 @@ Return<void> WifiChip::setMultiStaUseCase(
                            hidl_status_cb, use_case);
 }
 
+Return<void> WifiChip::setCoexUnsafeChannels(
+    const hidl_vec<CoexUnsafeChannel>& unsafeChannels,
+    hidl_bitfield<IfaceType> restrictions,
+    setCoexUnsafeChannels_cb hidl_status_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                           &WifiChip::setCoexUnsafeChannelsInternal,
+                           hidl_status_cb, unsafeChannels, restrictions);
+}
+
 void WifiChip::invalidateAndRemoveAllIfaces() {
     invalidateAndClearBridgedApAll();
     invalidateAndClearAll(ap_ifaces_);
@@ -1444,6 +1453,18 @@ WifiStatus WifiChip::setMultiStaPrimaryConnectionInternal(
 WifiStatus WifiChip::setMultiStaUseCaseInternal(MultiStaUseCase use_case) {
     auto legacy_status = legacy_hal_.lock()->multiStaSetUseCase(
         hidl_struct_util::convertHidlMultiStaUseCaseToLegacy(use_case));
+    return createWifiStatusFromLegacyError(legacy_status);
+}
+
+WifiStatus WifiChip::setCoexUnsafeChannelsInternal(
+    std::vector<CoexUnsafeChannel> unsafe_channels, uint32_t restrictions) {
+    std::vector<legacy_hal::wifi_coex_unsafe_channel> legacy_unsafe_channels;
+    if (!hidl_struct_util::convertHidlVectorOfCoexUnsafeChannelToLegacy(
+            unsafe_channels, &legacy_unsafe_channels)) {
+        return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
+    }
+    auto legacy_status = legacy_hal_.lock()->setCoexUnsafeChannels(
+        legacy_unsafe_channels, restrictions);
     return createWifiStatusFromLegacyError(legacy_status);
 }
 

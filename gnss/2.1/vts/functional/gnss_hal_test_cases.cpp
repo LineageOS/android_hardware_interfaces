@@ -27,6 +27,9 @@ using android::hardware::hidl_vec;
 
 using android::hardware::gnss::common::Utils;
 
+using android::hardware::gnss::V2_1::IGnssAntennaInfo;
+using android::hardware::gnss::V2_1::IGnssAntennaInfoCallback;
+
 using IGnssMeasurement_2_1 = android::hardware::gnss::V2_1::IGnssMeasurement;
 using IGnssMeasurement_2_0 = android::hardware::gnss::V2_0::IGnssMeasurement;
 using IGnssMeasurement_1_1 = android::hardware::gnss::V1_1::IGnssMeasurement;

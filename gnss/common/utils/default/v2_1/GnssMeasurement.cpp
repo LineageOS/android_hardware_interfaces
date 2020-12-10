@@ -114,7 +114,7 @@ void GnssMeasurement::stop() {
     }
 }
 
-void GnssMeasurement::reportMeasurement(const GnssDataV2_0& data) {
+void GnssMeasurement::reportMeasurement(const V2_0::IGnssMeasurementCallback::GnssData& data) {
     ALOGD("reportMeasurement()");
     std::unique_lock<std::mutex> lock(mMutex);
     if (sCallback_2_0 == nullptr) {
@@ -127,7 +127,7 @@ void GnssMeasurement::reportMeasurement(const GnssDataV2_0& data) {
     }
 }
 
-void GnssMeasurement::reportMeasurement(const GnssDataV2_1& data) {
+void GnssMeasurement::reportMeasurement(const V2_1::IGnssMeasurementCallback::GnssData& data) {
     ALOGD("reportMeasurement()");
     std::unique_lock<std::mutex> lock(mMutex);
     if (sCallback_2_1 == nullptr) {

@@ -19,7 +19,6 @@
 #include <android/hardware/gnss/3.0/IGnss.h>
 #include "v2_1/gnss_hal_test_template.h"
 
-using android::hardware::gnss::V3_0::IGnss;
-
 // The main test class for GNSS HAL.
-class GnssHalTest : public GnssHalTestTemplate<IGnss> {};
+class GnssHalTest : public android::hardware::gnss::common::GnssHalTestTemplate<
+                            android::hardware::gnss::V3_0::IGnss> {};

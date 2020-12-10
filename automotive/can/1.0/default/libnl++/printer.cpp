@@ -51,24 +51,24 @@ static void flagsToStream(std::stringstream& ss, __u16 nlmsg_flags, protocols::M
     printFlag(NLM_F_DUMP_FILTERED, "DUMP_FILTERED");
 
     switch (genre) {
-        case protocols::MessageGenre::UNKNOWN:
+        case protocols::MessageGenre::Unknown:
             break;
-        case protocols::MessageGenre::GET:
+        case protocols::MessageGenre::Get:
             printFlag(NLM_F_DUMP, "DUMP");  // ROOT | MATCH
             printFlag(NLM_F_ROOT, "ROOT");
             printFlag(NLM_F_MATCH, "MATCH");
             printFlag(NLM_F_ATOMIC, "ATOMIC");
             break;
-        case protocols::MessageGenre::NEW:
+        case protocols::MessageGenre::New:
             printFlag(NLM_F_REPLACE, "REPLACE");
             printFlag(NLM_F_EXCL, "EXCL");
             printFlag(NLM_F_CREATE, "CREATE");
             printFlag(NLM_F_APPEND, "APPEND");
             break;
-        case protocols::MessageGenre::DELETE:
+        case protocols::MessageGenre::Delete:
             printFlag(NLM_F_NONREC, "NONREC");
             break;
-        case protocols::MessageGenre::ACK:
+        case protocols::MessageGenre::Ack:
             printFlag(NLM_F_CAPPED, "CAPPED");
             printFlag(NLM_F_ACK_TLVS, "ACK_TLVS");
             break;
@@ -99,11 +99,25 @@ static void toStream(std::stringstream& ss, const Buffer<uint8_t> data) {
 static void toStream(std::stringstream& ss, const Buffer<nlattr> attr,
                      const protocols::AttributeMap& attrMap) {
     using DataType = protocols::AttributeDefinition::DataType;
+    using Flags = protocols::AttributeDefinition::Flags;
     const auto attrtype = attrMap[attr->nla_type];
 
-    ss << attrtype.name << ": ";
+    ss << attrtype.name;
+
+    if (attrtype.dataType == DataType::Flag && attr.data<uint8_t>().getRaw().len() == 0) return;
+    ss << ": ";
+
+    if (attrtype.flags == Flags::Verbose) {
+        const auto raw = attr.data<uint8_t>();
+        ss << "{len=" << raw.getRaw().len();
+        ss << ", crc=" << std::hex << std::setw(4) << crc16(raw) << std::dec;
+        ss << "}";
+        return;
+    }
+
     switch (attrtype.dataType) {
         case DataType::Raw:
+        case DataType::Flag:
             toStream(ss, attr.data<uint8_t>());
             break;
         case DataType::Nested: {
@@ -117,13 +131,19 @@ static void toStream(std::stringstream& ss, const Buffer<nlattr> attr,
             ss << '}';
             break;
         }
+        case DataType::StringNul:
         case DataType::String: {
             const auto str = attr.data<char>().getRaw();
-            ss << '"' << printableOnly({str.ptr(), str.len()}) << '"';
+            auto len = str.len();
+            if (attrtype.dataType == DataType::StringNul && len > 0 && str.ptr()[len - 1] == '\0') {
+                len--;
+            }
+
+            ss << '"' << printableOnly({str.ptr(), len}) << '"';
             break;
         }
         case DataType::Uint:
-            ss << attr.data<uint32_t>().copyFirst();
+            ss << attr.data<uint64_t>().copyFirst();
             break;
         case DataType::Struct: {
             const auto structToStream =
@@ -147,9 +167,11 @@ std::string toString(const Buffer<nlmsghdr> hdr, int protocol, bool printPayload
     }
     protocols::NetlinkProtocol& protocolDescr = *protocolMaybe;
 
-    const auto msgDescMaybe = protocolDescr.getMessageDescriptor(hdr->nlmsg_type);
+    auto msgDescMaybe = protocolDescr.getMessageDescriptor(hdr->nlmsg_type);
     const auto msgDetails =
             protocols::MessageDescriptor::getMessageDetails(msgDescMaybe, hdr->nlmsg_type);
+
+    if (msgDescMaybe.has_value()) msgDescMaybe->get().track(hdr);
 
     ss << "nlmsg{" << protocolDescr.getName() << " ";
 
