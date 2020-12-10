@@ -1,6 +1,21 @@
 {
   "presubmit": [
     {
+      "name": "neuralnetworks_utils_hal_common_test"
+    },
+    {
+      "name": "neuralnetworks_utils_hal_1_0_test"
+    },
+    {
+      "name": "neuralnetworks_utils_hal_1_1_test"
+    },
+    {
+      "name": "neuralnetworks_utils_hal_1_2_test"
+    },
+    {
+      "name": "neuralnetworks_utils_hal_1_3_test"
+    },
+    {
       "name": "VtsHalNeuralnetworksV1_0TargetTest",
       "options": [
         {
