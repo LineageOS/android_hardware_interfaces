@@ -30,7 +30,6 @@ enum Result : int32_t {
     NOT_SUPPORTED
 };
 
-@export(name="audio_drain_type_t", value_prefix="AUDIO_DRAIN_")
 enum AudioDrain : int32_t {
     /** drain() returns when all data has been played. */
     ALL,
@@ -127,16 +126,18 @@ struct AudioMicrophoneCoordinate {
  * process (e.g. High Pass Filtering, dynamic compression)
  * Simple processing as constant gain adjustment must be DIRECT.
  */
+@export(name="audio_microphone_channel_mapping_t", value_prefix="AUDIO_MICROPHONE_CHANNEL_MAPPING_")
 enum AudioMicrophoneChannelMapping : uint32_t {
     UNUSED      = 0, /* Channel not used */
     DIRECT      = 1, /* Channel used and signal not processed */
-    PROCESSED   = 2, /* Channel used and signal has some process */
+    PROCESSED   = 2, /* Channel used and signal has some processing */
 };
 
 /**
  * Enum to identify locations of microphones in regards to the body of the
  * android device.
  */
+@export(name="audio_microphone_location_t", value_prefix="AUDIO_MICROPHONE_LOCATION_")
 enum AudioMicrophoneLocation : uint32_t {
     UNKNOWN             = 0,
     MAINBODY            = 1,
@@ -153,6 +154,7 @@ typedef int32_t AudioMicrophoneGroup;
 /**
  * Enum with standard polar patterns of microphones
  */
+@export(name="audio_microphone_directionality_t", value_prefix="AUDIO_MICROPHONE_DIRECTIONALITY_")
 enum AudioMicrophoneDirectionality : uint32_t {
     UNKNOWN         = 0,
     OMNI            = 1,
@@ -315,7 +317,7 @@ enum TimestretchMode : int32_t {
  * Behavior when the values for speed and / or pitch are out
  * of applicable range.
  */
-@export(name="audio_timestretch_fallback_mode_t", value_prefix="AUDIO_TIMESTRETCH_FALLBACK_")
+@export(name="", value_prefix="HAL_AUDIO_TIMESTRETCH_FALLBACK_")
 enum TimestretchFallbackMode : int32_t {
     // Need to be in sync with AUDIO_FALLBACK_MODE_* constants in
     // frameworks/base/media/java/android/media/PlaybackParams.java

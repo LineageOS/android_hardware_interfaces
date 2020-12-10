@@ -496,11 +496,11 @@ Return<bool> StreamOut::supportsDrain() {
 }
 
 Return<Result> StreamOut::drain(AudioDrain type) {
+    audio_drain_type_t halDrainType =
+            type == AudioDrain::EARLY_NOTIFY ? AUDIO_DRAIN_EARLY_NOTIFY : AUDIO_DRAIN_ALL;
     return mStream->drain != NULL
-                   ? Stream::analyzeStatus(
-                             "drain",
-                             mStream->drain(mStream, static_cast<audio_drain_type_t>(type)),
-                             {ENOSYS} /*ignore*/)
+                   ? Stream::analyzeStatus("drain", mStream->drain(mStream, halDrainType),
+                                           {ENOSYS} /*ignore*/)
                    : Result::NOT_SUPPORTED;
 }
 
