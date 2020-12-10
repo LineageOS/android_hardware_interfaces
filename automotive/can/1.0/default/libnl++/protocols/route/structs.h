@@ -30,16 +30,6 @@ void mapToStream(std::stringstream& ss, const Buffer<nlattr> attr);
 // ifla_cacheinfo
 void ifla_cacheinfoToStream(std::stringstream& ss, const Buffer<nlattr> attr);
 
-template <typename T>
-void arrayToStream(std::stringstream& ss, const Buffer<nlattr> attr) {
-    ss << '{';
-    for (const auto it : attr.data<T>().getRaw()) {
-        ss << it << ',';
-    }
-    ss.seekp(-1, std::ios_base::cur);
-    ss << '}';
-}
-
 // rtnl_link_stats or rtnl_link_stats64
 template <typename T>
 void statsToStream(std::stringstream& ss, const Buffer<nlattr> attr) {

@@ -19,6 +19,7 @@
 #include "GnssPowerIndication.h"
 #include <aidl/android/hardware/gnss/BnGnss.h>
 #include <log/log.h>
+#include <utils/SystemClock.h>
 
 namespace aidl::android::hardware::gnss {
 
@@ -43,10 +44,9 @@ ndk::ScopedAStatus GnssPowerIndication::requestGnssPowerStats() {
     std::unique_lock<std::mutex> lock(mMutex);
 
     ElapsedRealtime elapsedRealtime = {
-            .flags = IGnss::ELAPSED_REALTIME_HAS_TIMESTAMP_NS |
-                     IGnss::ELAPSED_REALTIME_HAS_TIME_UNCERTAINTY_NS,
-            .timestampNs = (long)1323542,
-            .timeUncertaintyNs = (long)1000,
+            .flags = ElapsedRealtime::HAS_TIMESTAMP_NS | ElapsedRealtime::HAS_TIME_UNCERTAINTY_NS,
+            .timestampNs = ::android::elapsedRealtimeNano(),
+            .timeUncertaintyNs = 1000,
     };
     GnssPowerStats gnssPowerStats = {
             .elapsedRealtime = elapsedRealtime,

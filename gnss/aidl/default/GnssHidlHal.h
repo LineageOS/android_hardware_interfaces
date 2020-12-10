@@ -22,16 +22,16 @@
 
 namespace aidl::android::hardware::gnss {
 
-using ::android::hardware::gnss::common::implementation::GnssTemplate;
-using GnssSvInfo = ::android::hardware::gnss::V2_1::IGnssCallback::GnssSvInfo;
-
-class GnssHidlHal : public GnssTemplate<::android::hardware::gnss::V2_1::IGnss> {
+class GnssHidlHal : public ::android::hardware::gnss::common::implementation::GnssTemplate<
+                            ::android::hardware::gnss::V2_1::IGnss> {
   public:
     GnssHidlHal(const std::shared_ptr<Gnss>& gnssAidl);
 
   private:
-    hidl_vec<GnssSvInfo> filterBlocklistedSatellitesV2_1(
-            hidl_vec<GnssSvInfo> gnssSvInfoList) override;
+    hidl_vec<::android::hardware::gnss::V2_1::IGnssCallback::GnssSvInfo>
+    filterBlocklistedSatellitesV2_1(
+            hidl_vec<::android::hardware::gnss::V2_1::IGnssCallback::GnssSvInfo> gnssSvInfoList)
+            override;
 
     std::shared_ptr<Gnss> mGnssAidl;
     std::shared_ptr<GnssConfiguration> mGnssConfigurationAidl;

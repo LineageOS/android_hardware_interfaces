@@ -24,8 +24,6 @@
 
 namespace aidl::android::hardware::gnss {
 
-using android::hardware::gnss::GnssConstellationType;
-
 struct BlocklistedSourceHash {
     inline int operator()(const BlocklistedSource& source) const {
         return int(source.constellation) * 1000 + int(source.svid);
@@ -42,7 +40,8 @@ using GnssSvInfoV2_1 = ::android::hardware::gnss::V2_1::IGnssCallback::GnssSvInf
 using std::vector;
 using BlocklistedSourceSet =
         std::unordered_set<BlocklistedSource, BlocklistedSourceHash, BlocklistedSourceEqual>;
-using BlocklistedConstellationSet = std::unordered_set<GnssConstellationType>;
+using BlocklistedConstellationSet =
+        std::unordered_set<android::hardware::gnss::GnssConstellationType>;
 
 struct GnssConfiguration : public BnGnssConfiguration {
   public:

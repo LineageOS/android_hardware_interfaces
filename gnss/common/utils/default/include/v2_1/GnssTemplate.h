@@ -39,16 +39,6 @@
 
 namespace android::hardware::gnss::common::implementation {
 
-using GnssSvInfo = V2_1::IGnssCallback::GnssSvInfo;
-
-using common::NmeaFixInfo;
-using common::Utils;
-using measurement_corrections::V1_1::implementation::GnssMeasurementCorrections;
-
-using V2_1::implementation::GnssAntennaInfo;
-using V2_1::implementation::GnssConfiguration;
-using V2_1::implementation::GnssMeasurement;
-
 constexpr int INPUT_BUFFER_SIZE = 128;
 constexpr char CMD_GET_LOCATION[] = "CMD_GET_LOCATION";
 constexpr char GNSS_PATH[] = "/dev/gnss0";
@@ -120,7 +110,7 @@ struct GnssTemplate : public T_IGnss {
     std::unique_ptr<V2_0::GnssLocation> getLocationFromHW();
     void reportLocation(const V2_0::GnssLocation&) const;
     void reportLocation(const V1_0::GnssLocation&) const;
-    void reportSvStatus(const hidl_vec<GnssSvInfo>&) const;
+    void reportSvStatus(const hidl_vec<V2_1::IGnssCallback::GnssSvInfo>&) const;
 
     Return<void> help(const hidl_handle& fd);
     Return<void> setLocation(const hidl_handle& fd, const hidl_vec<hidl_string>& options);
@@ -131,15 +121,15 @@ struct GnssTemplate : public T_IGnss {
     static sp<V1_0::IGnssCallback> sGnssCallback_1_0;
 
     std::atomic<long> mMinIntervalMs;
-    sp<GnssConfiguration> mGnssConfiguration;
+    sp<V2_1::implementation::GnssConfiguration> mGnssConfiguration;
     std::atomic<bool> mIsActive;
     std::atomic<bool> mHardwareModeChecked;
     std::atomic<int> mGnssFd;
     std::thread mThread;
 
     mutable std::mutex mMutex;
-    virtual hidl_vec<GnssSvInfo> filterBlocklistedSatellitesV2_1(
-            hidl_vec<GnssSvInfo> gnssSvInfoList);
+    virtual hidl_vec<V2_1::IGnssCallback::GnssSvInfo> filterBlocklistedSatellitesV2_1(
+            hidl_vec<V2_1::IGnssCallback::GnssSvInfo> gnssSvInfoList);
 };
 
 template <class T_IGnss>
@@ -154,7 +144,7 @@ sp<V1_0::IGnssCallback> GnssTemplate<T_IGnss>::sGnssCallback_1_0 = nullptr;
 template <class T_IGnss>
 GnssTemplate<T_IGnss>::GnssTemplate()
     : mMinIntervalMs(1000),
-      mGnssConfiguration{new GnssConfiguration()},
+      mGnssConfiguration{new V2_1::implementation::GnssConfiguration()},
       mHardwareModeChecked(false),
       mGnssFd(-1) {}
 
@@ -237,8 +227,8 @@ Return<bool> GnssTemplate<T_IGnss>::start() {
 }
 
 template <class T_IGnss>
-hidl_vec<GnssSvInfo> GnssTemplate<T_IGnss>::filterBlocklistedSatellitesV2_1(
-        hidl_vec<GnssSvInfo> gnssSvInfoList) {
+hidl_vec<V2_1::IGnssCallback::GnssSvInfo> GnssTemplate<T_IGnss>::filterBlocklistedSatellitesV2_1(
+        hidl_vec<V2_1::IGnssCallback::GnssSvInfo> gnssSvInfoList) {
     ALOGD("filterBlocklistedSatellitesV2_1");
     for (uint32_t i = 0; i < gnssSvInfoList.size(); i++) {
         if (mGnssConfiguration->isBlacklistedV2_1(gnssSvInfoList[i])) {
@@ -348,7 +338,7 @@ Return<sp<V1_0::IGnssNi>> GnssTemplate<T_IGnss>::getExtensionGnssNi() {
 template <class T_IGnss>
 Return<sp<V1_0::IGnssMeasurement>> GnssTemplate<T_IGnss>::getExtensionGnssMeasurement() {
     ALOGD("Gnss::getExtensionGnssMeasurement");
-    return new GnssMeasurement();
+    return new V2_1::implementation::GnssMeasurement();
 }
 
 template <class T_IGnss>
@@ -501,14 +491,14 @@ Return<sp<V2_0::IAGnssRil>> GnssTemplate<T_IGnss>::getExtensionAGnssRil_2_0() {
 template <class T_IGnss>
 Return<sp<V2_0::IGnssMeasurement>> GnssTemplate<T_IGnss>::getExtensionGnssMeasurement_2_0() {
     ALOGD("Gnss::getExtensionGnssMeasurement_2_0");
-    return new GnssMeasurement();
+    return new V2_1::implementation::GnssMeasurement();
 }
 
 template <class T_IGnss>
 Return<sp<measurement_corrections::V1_0::IMeasurementCorrections>>
 GnssTemplate<T_IGnss>::getExtensionMeasurementCorrections() {
     ALOGD("Gnss::getExtensionMeasurementCorrections()");
-    return new GnssMeasurementCorrections();
+    return new measurement_corrections::V1_1::implementation::GnssMeasurementCorrections();
 }
 
 template <class T_IGnss>
@@ -569,7 +559,7 @@ Return<bool> GnssTemplate<T_IGnss>::setCallback_2_1(const sp<V2_1::IGnssCallback
 template <class T_IGnss>
 Return<sp<V2_1::IGnssMeasurement>> GnssTemplate<T_IGnss>::getExtensionGnssMeasurement_2_1() {
     ALOGD("Gnss::getExtensionGnssMeasurement_2_1");
-    return new GnssMeasurement();
+    return new V2_1::implementation::GnssMeasurement();
 }
 
 template <class T_IGnss>
@@ -582,17 +572,18 @@ template <class T_IGnss>
 Return<sp<measurement_corrections::V1_1::IMeasurementCorrections>>
 GnssTemplate<T_IGnss>::getExtensionMeasurementCorrections_1_1() {
     ALOGD("Gnss::getExtensionMeasurementCorrections_1_1()");
-    return new GnssMeasurementCorrections();
+    return new measurement_corrections::V1_1::implementation::GnssMeasurementCorrections();
 }
 
 template <class T_IGnss>
 Return<sp<V2_1::IGnssAntennaInfo>> GnssTemplate<T_IGnss>::getExtensionGnssAntennaInfo() {
     ALOGD("Gnss::getExtensionGnssAntennaInfo");
-    return new GnssAntennaInfo();
+    return new V2_1::implementation::GnssAntennaInfo();
 }
 
 template <class T_IGnss>
-void GnssTemplate<T_IGnss>::reportSvStatus(const hidl_vec<GnssSvInfo>& svInfoList) const {
+void GnssTemplate<T_IGnss>::reportSvStatus(
+        const hidl_vec<V2_1::IGnssCallback::GnssSvInfo>& svInfoList) const {
     std::unique_lock<std::mutex> lock(mMutex);
     // TODO(skz): update this to call 2_0 callback if non-null
     if (sGnssCallback_2_1 == nullptr) {

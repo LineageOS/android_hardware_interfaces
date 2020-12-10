@@ -32,7 +32,7 @@ const std::string& NetlinkProtocol::getName() const {
     return mName;
 }
 
-const std::optional<std::reference_wrapper<const MessageDescriptor>>
+const std::optional<std::reference_wrapper<MessageDescriptor>>
 NetlinkProtocol::getMessageDescriptor(nlmsgtype_t nlmsg_type) {
     if (mMessageDescrs.count(nlmsg_type) == 0) return std::nullopt;
     return *mMessageDescrs.find(nlmsg_type)->second;
@@ -41,7 +41,7 @@ NetlinkProtocol::getMessageDescriptor(nlmsgtype_t nlmsg_type) {
 NetlinkProtocol::MessageDescriptorMap NetlinkProtocol::toMap(
         const NetlinkProtocol::MessageDescriptorList& descrs, int protocol) {
     MessageDescriptorMap map;
-    for (const auto& descr : descrs) {
+    for (auto& descr : descrs) {
         for (const auto& [mtype, mdet] : descr->getMessageDetailsMap()) {
             map.emplace(mtype, descr);
         }

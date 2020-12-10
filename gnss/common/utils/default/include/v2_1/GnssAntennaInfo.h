@@ -23,29 +23,25 @@
 
 namespace android::hardware::gnss::V2_1::implementation {
 
-using ::android::sp;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
-using IGnssAntennaInfo = ::android::hardware::gnss::V2_1::IGnssAntennaInfo;
-using IGnssAntennaInfoCallback = ::android::hardware::gnss::V2_1::IGnssAntennaInfoCallback;
-
-struct GnssAntennaInfo : public IGnssAntennaInfo {
+struct GnssAntennaInfo : public ::android::hardware::gnss::V2_1::IGnssAntennaInfo {
     GnssAntennaInfo();
     ~GnssAntennaInfo();
 
     // Methods from ::android::hardware::gnss::V2_1::IGnssAntennaInfo follow.
     Return<GnssAntennaInfoStatus> setCallback(
-            const sp<IGnssAntennaInfoCallback>& callback) override;
+            const sp<::android::hardware::gnss::V2_1::IGnssAntennaInfoCallback>& callback) override;
     Return<void> close() override;
 
   private:
     void start();
     void stop();
     void reportAntennaInfo(
-            const hidl_vec<IGnssAntennaInfoCallback::GnssAntennaInfo>& antennaInfo) const;
+            const hidl_vec<
+                    ::android::hardware::gnss::V2_1::IGnssAntennaInfoCallback::GnssAntennaInfo>&
+                    antennaInfo) const;
 
     // Guarded by mMutex
-    static sp<IGnssAntennaInfoCallback> sCallback;
+    static sp<::android::hardware::gnss::V2_1::IGnssAntennaInfoCallback> sCallback;
 
     std::atomic<long> mMinIntervalMillis;
     std::atomic<bool> mIsActive;

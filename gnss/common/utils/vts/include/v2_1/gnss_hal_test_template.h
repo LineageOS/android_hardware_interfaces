@@ -23,35 +23,9 @@
 #include <gtest/gtest.h>
 #include <chrono>
 
-using ::android::hardware::gnss::common::Utils;
-
-using android::hardware::hidl_vec;
-using android::hardware::Return;
-using android::hardware::Void;
-
-using android::hardware::gnss::common::GnssCallback;
-using android::hardware::gnss::common::GnssCallbackEventQueue;
-using android::hardware::gnss::measurement_corrections::V1_0::IMeasurementCorrectionsCallback;
-using android::hardware::gnss::V1_0::GnssLocationFlags;
-using android::hardware::gnss::V2_0::GnssConstellationType;
-using android::hardware::gnss::V2_1::IGnssAntennaInfo;
-using android::hardware::gnss::V2_1::IGnssAntennaInfoCallback;
-
-using GnssLocation_1_0 = android::hardware::gnss::V1_0::GnssLocation;
-using GnssLocation_2_0 = android::hardware::gnss::V2_0::GnssLocation;
-
-using IGnssCallback_1_0 = android::hardware::gnss::V1_0::IGnssCallback;
-using IGnssCallback_2_0 = android::hardware::gnss::V2_0::IGnssCallback;
-using IGnssCallback_2_1 = android::hardware::gnss::V2_1::IGnssCallback;
-
-using IGnssMeasurementCallback_1_0 = android::hardware::gnss::V1_0::IGnssMeasurementCallback;
-using IGnssMeasurementCallback_1_1 = android::hardware::gnss::V1_1::IGnssMeasurementCallback;
-using IGnssMeasurementCallback_2_0 = android::hardware::gnss::V2_0::IGnssMeasurementCallback;
-using IGnssMeasurementCallback_2_1 = android::hardware::gnss::V2_1::IGnssMeasurementCallback;
-
-using android::sp;
-
 #define TIMEOUT_SEC 2  // for basic commands/responses
+
+namespace android::hardware::gnss::common {
 
 // The main test class for GNSS HAL.
 template <class T_IGnss>
@@ -62,34 +36,37 @@ class GnssHalTestTemplate : public testing::TestWithParam<std::string> {
     virtual void TearDown() override;
 
     /* Callback class for GnssMeasurement. */
-    class GnssMeasurementCallback : public IGnssMeasurementCallback_2_1 {
+    class GnssMeasurementCallback : public V2_1::IGnssMeasurementCallback {
       public:
-        GnssCallbackEventQueue<IGnssMeasurementCallback_2_1::GnssData> measurement_cbq_;
+        GnssCallbackEventQueue<V2_1::IGnssMeasurementCallback::GnssData> measurement_cbq_;
 
         GnssMeasurementCallback() : measurement_cbq_("measurement"){};
         virtual ~GnssMeasurementCallback() = default;
 
         // Methods from V1_0::IGnssMeasurementCallback follow.
-        Return<void> GnssMeasurementCb(const IGnssMeasurementCallback_1_0::GnssData&) override {
+        Return<void> GnssMeasurementCb(const V1_0::IGnssMeasurementCallback::GnssData&) override {
             return Void();
         }
 
         // Methods from V1_1::IGnssMeasurementCallback follow.
-        Return<void> gnssMeasurementCb(const IGnssMeasurementCallback_1_1::GnssData&) override {
+        Return<void> gnssMeasurementCb(const V1_1::IGnssMeasurementCallback::GnssData&) override {
             return Void();
         }
 
         // Methods from V2_0::IGnssMeasurementCallback follow.
-        Return<void> gnssMeasurementCb_2_0(const IGnssMeasurementCallback_2_0::GnssData&) override {
+        Return<void> gnssMeasurementCb_2_0(
+                const V2_0::IGnssMeasurementCallback::GnssData&) override {
             return Void();
         }
 
         // Methods from V2_1::IGnssMeasurementCallback follow.
-        Return<void> gnssMeasurementCb_2_1(const IGnssMeasurementCallback_2_1::GnssData&) override;
+        Return<void> gnssMeasurementCb_2_1(
+                const V2_1::IGnssMeasurementCallback::GnssData&) override;
     };
 
     /* Callback class for GnssMeasurementCorrections. */
-    class GnssMeasurementCorrectionsCallback : public IMeasurementCorrectionsCallback {
+    class GnssMeasurementCorrectionsCallback
+        : public measurement_corrections::V1_0::IMeasurementCorrectionsCallback {
       public:
         uint32_t last_capabilities_;
         GnssCallbackEventQueue<uint32_t> capabilities_cbq_;
@@ -102,9 +79,9 @@ class GnssHalTestTemplate : public testing::TestWithParam<std::string> {
     };
 
     /* Callback class for GnssAntennaInfo. */
-    class GnssAntennaInfoCallback : public IGnssAntennaInfoCallback {
+    class GnssAntennaInfoCallback : public V2_1::IGnssAntennaInfoCallback {
       public:
-        GnssCallbackEventQueue<hidl_vec<IGnssAntennaInfoCallback::GnssAntennaInfo>>
+        GnssCallbackEventQueue<hidl_vec<V2_1::IGnssAntennaInfoCallback::GnssAntennaInfo>>
                 antenna_info_cbq_;
 
         GnssAntennaInfoCallback() : antenna_info_cbq_("info"){};
@@ -112,7 +89,7 @@ class GnssHalTestTemplate : public testing::TestWithParam<std::string> {
 
         // Methods from V2_1::GnssAntennaInfoCallback follow.
         Return<void> gnssAntennaInfoCb(
-                const hidl_vec<IGnssAntennaInfoCallback::GnssAntennaInfo>& gnssAntennaInfos);
+                const hidl_vec<V2_1::IGnssAntennaInfoCallback::GnssAntennaInfo>& gnssAntennaInfos);
     };
 
     /*
@@ -138,7 +115,7 @@ class GnssHalTestTemplate : public testing::TestWithParam<std::string> {
      *
      *   check_speed: true if speed related fields are also verified.
      */
-    void CheckLocation(const GnssLocation_2_0& location, const bool check_speed);
+    void CheckLocation(const V2_0::GnssLocation& location, const bool check_speed);
 
     /*
      * StartAndCheckLocations:
@@ -170,7 +147,7 @@ class GnssHalTestTemplate : public testing::TestWithParam<std::string> {
      * Note that location is not stopped in this method. The client should call
      * StopAndClearLocations() after the call.
      */
-    GnssConstellationType startLocationAndGetNonGpsConstellation(
+    V2_0::GnssConstellationType startLocationAndGetNonGpsConstellation(
             const int locations_to_await, const int gnss_sv_info_list_timeout);
 
     sp<T_IGnss> gnss_hal_;      // GNSS HAL to call into
@@ -283,7 +260,7 @@ bool GnssHalTestTemplate<T_IGnss>::StartAndCheckFirstLocation() {
 }
 
 template <class T_IGnss>
-void GnssHalTestTemplate<T_IGnss>::CheckLocation(const GnssLocation_2_0& location,
+void GnssHalTestTemplate<T_IGnss>::CheckLocation(const V2_0::GnssLocation& location,
                                                  bool check_speed) {
     const bool check_more_accuracies =
             (gnss_cb_->info_cbq_.calledCount() > 0 && gnss_cb_->last_info_.yearOfHw >= 2017);
@@ -315,7 +292,7 @@ void GnssHalTestTemplate<T_IGnss>::StartAndCheckLocations(int count) {
 }
 
 template <class T_IGnss>
-GnssConstellationType GnssHalTestTemplate<T_IGnss>::startLocationAndGetNonGpsConstellation(
+V2_0::GnssConstellationType GnssHalTestTemplate<T_IGnss>::startLocationAndGetNonGpsConstellation(
         const int locations_to_await, const int gnss_sv_info_list_timeout) {
     gnss_cb_->location_cbq_.reset();
     StartAndCheckLocations(locations_to_await);
@@ -328,29 +305,29 @@ GnssConstellationType GnssHalTestTemplate<T_IGnss>::startLocationAndGetNonGpsCon
           sv_info_list_cbq_size, locations_to_await, location_called_count);
 
     // Find first non-GPS constellation to blacklist
-    GnssConstellationType constellation_to_blacklist = GnssConstellationType::UNKNOWN;
+    V2_0::GnssConstellationType constellation_to_blacklist = V2_0::GnssConstellationType::UNKNOWN;
     for (int i = 0; i < sv_info_list_cbq_size; ++i) {
-        hidl_vec<IGnssCallback_2_1::GnssSvInfo> sv_info_vec;
+        hidl_vec<V2_1::IGnssCallback::GnssSvInfo> sv_info_vec;
         gnss_cb_->sv_info_list_cbq_.retrieve(sv_info_vec, gnss_sv_info_list_timeout);
         for (uint32_t iSv = 0; iSv < sv_info_vec.size(); iSv++) {
             const auto& gnss_sv = sv_info_vec[iSv];
-            if ((gnss_sv.v2_0.v1_0.svFlag & IGnssCallback_1_0::GnssSvFlags::USED_IN_FIX) &&
-                (gnss_sv.v2_0.constellation != GnssConstellationType::UNKNOWN) &&
-                (gnss_sv.v2_0.constellation != GnssConstellationType::GPS)) {
+            if ((gnss_sv.v2_0.v1_0.svFlag & V1_0::IGnssCallback::GnssSvFlags::USED_IN_FIX) &&
+                (gnss_sv.v2_0.constellation != V2_0::GnssConstellationType::UNKNOWN) &&
+                (gnss_sv.v2_0.constellation != V2_0::GnssConstellationType::GPS)) {
                 // found a non-GPS constellation
                 constellation_to_blacklist = gnss_sv.v2_0.constellation;
                 break;
             }
         }
-        if (constellation_to_blacklist != GnssConstellationType::UNKNOWN) {
+        if (constellation_to_blacklist != V2_0::GnssConstellationType::UNKNOWN) {
             break;
         }
     }
 
-    if (constellation_to_blacklist == GnssConstellationType::UNKNOWN) {
+    if (constellation_to_blacklist == V2_0::GnssConstellationType::UNKNOWN) {
         ALOGI("No non-GPS constellations found, constellation blacklist test less effective.");
         // Proceed functionally to blacklist something.
-        constellation_to_blacklist = GnssConstellationType::GLONASS;
+        constellation_to_blacklist = V2_0::GnssConstellationType::GLONASS;
     }
 
     return constellation_to_blacklist;
@@ -358,7 +335,7 @@ GnssConstellationType GnssHalTestTemplate<T_IGnss>::startLocationAndGetNonGpsCon
 
 template <class T_IGnss>
 Return<void> GnssHalTestTemplate<T_IGnss>::GnssMeasurementCallback::gnssMeasurementCb_2_1(
-        const IGnssMeasurementCallback_2_1::GnssData& data) {
+        const V2_1::IGnssMeasurementCallback::GnssData& data) {
     ALOGD("GnssMeasurement v2.1 received. Size = %d", (int)data.measurements.size());
     measurement_cbq_.store(data);
     return Void();
@@ -374,8 +351,10 @@ Return<void> GnssHalTestTemplate<T_IGnss>::GnssMeasurementCorrectionsCallback::s
 
 template <class T_IGnss>
 Return<void> GnssHalTestTemplate<T_IGnss>::GnssAntennaInfoCallback::gnssAntennaInfoCb(
-        const hidl_vec<IGnssAntennaInfoCallback::GnssAntennaInfo>& gnssAntennaInfos) {
+        const hidl_vec<V2_1::IGnssAntennaInfoCallback::GnssAntennaInfo>& gnssAntennaInfos) {
     ALOGD("GnssAntennaInfo v2.1 received. Size = %d", (int)gnssAntennaInfos.size());
     antenna_info_cbq_.store(gnssAntennaInfos);
     return Void();
 }
+
+}  // namespace android::hardware::gnss::common

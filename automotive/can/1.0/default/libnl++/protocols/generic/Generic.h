@@ -25,13 +25,15 @@ namespace android::nl::protocols::generic {
  */
 class Generic : public NetlinkProtocol {
   public:
+    typedef std::map<nlmsgtype_t, std::shared_ptr<MessageDescriptor>> FamilyRegister;
+
     Generic();
 
-    const std::optional<std::reference_wrapper<const MessageDescriptor>> getMessageDescriptor(
+    const std::optional<std::reference_wrapper<MessageDescriptor>> getMessageDescriptor(
             nlmsgtype_t nlmsg_type);
 
   private:
-    std::map<nlmsgtype_t, std::shared_ptr<const MessageDescriptor>> mFamilyRegister;
+    FamilyRegister mFamilyRegister;
 };
 
 }  // namespace android::nl::protocols::generic

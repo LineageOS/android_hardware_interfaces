@@ -25,7 +25,6 @@ class GnssPowerIndicationCallback : public android::hardware::gnss::BnGnssPowerI
   public:
     GnssPowerIndicationCallback()
         : capabilities_cbq_("capabilities"),
-          other_mode_names_cbq_("other_mode_names"),
           gnss_power_stats_cbq_("gnss_power_stats") {}
     ~GnssPowerIndicationCallback() {}
 
@@ -35,9 +34,6 @@ class GnssPowerIndicationCallback : public android::hardware::gnss::BnGnssPowerI
 
     android::hardware::gnss::common::GnssCallbackEventQueue<int> capabilities_cbq_;
     int last_capabilities_;
-    android::hardware::gnss::common::GnssCallbackEventQueue<std::vector<std::string>>
-            other_mode_names_cbq_;
-    std::vector<std::string> last_other_mode_names_;
     android::hardware::gnss::common::GnssCallbackEventQueue<android::hardware::gnss::GnssPowerStats>
             gnss_power_stats_cbq_;
     android::hardware::gnss::GnssPowerStats last_gnss_power_stats_;

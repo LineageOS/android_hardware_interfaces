@@ -36,7 +36,7 @@ using android::hardware::gnss::BlocklistedSource;
 using android::hardware::gnss::IGnssConfiguration;
 
 // The main test class for GNSS HAL.
-class GnssHalTest : public GnssHalTestTemplate<IGnss_V2_1> {
+class GnssHalTest : public android::hardware::gnss::common::GnssHalTestTemplate<IGnss_V2_1> {
   public:
     GnssHalTest(){};
     ~GnssHalTest(){};
