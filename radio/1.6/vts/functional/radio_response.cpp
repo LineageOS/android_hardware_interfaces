@@ -1157,6 +1157,14 @@ Return<void> RadioResponse_v1_6::setAllowedNetworkTypeBitmapResponse(
     return Void();
 }
 
+Return<void> RadioResponse_v1_6::getAllowedNetworkTypeBitmapResponse(
+        const ::android::hardware::radio::V1_6::RadioResponseInfo& /*info*/,
+        const ::android::hardware::hidl_bitfield<
+                ::android::hardware::radio::V1_4::RadioAccessFamily>
+        /*networkTypeBitmap*/) {
+    return Void();
+}
+
 Return<void> RadioResponse_v1_6::setDataThrottlingResponse(
         const ::android::hardware::radio::V1_6::RadioResponseInfo& info) {
     rspInfo = info;
