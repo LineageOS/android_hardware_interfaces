@@ -28,6 +28,21 @@ int64_t getTimeNow() {
             .count();
 }
 
+ScopedWakelock::ScopedWakelock(ScopedWakelock&& other) {
+    *this = std::move(other);
+}
+
+ScopedWakelock& ScopedWakelock::operator=(ScopedWakelock&& other) {
+    mRefCounter = other.mRefCounter;
+    mCreatedAtTimeNs = other.mCreatedAtTimeNs;
+    mLocked = other.mLocked;
+
+    other.mRefCounter = nullptr;
+    other.mCreatedAtTimeNs = 0;
+    other.mLocked = false;
+    return *this;
+}
+
 ScopedWakelock::ScopedWakelock(IScopedWakelockRefCounter* refCounter, bool locked)
     : mRefCounter(refCounter), mLocked(locked) {
     if (mLocked) {
