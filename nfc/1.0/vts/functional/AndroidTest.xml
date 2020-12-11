@@ -28,6 +28,6 @@
     <test class="com.android.tradefed.testtype.GTest" >
         <option name="native-test-device-path" value="/data/local/tmp" />
         <option name="module-name" value="VtsHalNfcV1_0TargetTest" />
-        <option name="native-test-timeout" value="180000"/>
+        <option name="native-test-timeout" value="600000"/>
     </test>
 </configuration>
