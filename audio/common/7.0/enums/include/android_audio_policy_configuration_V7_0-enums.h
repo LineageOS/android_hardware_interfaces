@@ -225,6 +225,10 @@ static inline bool isUnknownAudioChannelMask(const std::string& mask) {
     return stringToAudioChannelMask(mask) == AudioChannelMask::UNKNOWN;
 }
 
+static inline bool isUnknownAudioContentType(const std::string& contentType) {
+    return stringToAudioContentType(contentType) == AudioContentType::UNKNOWN;
+}
+
 static inline bool isUnknownAudioDevice(const std::string& device) {
     return stringToAudioDevice(device) == AudioDevice::UNKNOWN && !isVendorExtension(device);
 }
@@ -235,6 +239,10 @@ static inline bool isUnknownAudioFormat(const std::string& format) {
 
 static inline bool isUnknownAudioGainMode(const std::string& mode) {
     return stringToAudioGainMode(mode) == AudioGainMode::UNKNOWN;
+}
+
+static inline bool isUnknownAudioInOutFlag(const std::string& flag) {
+    return stringToAudioInOutFlag(flag) == AudioInOutFlag::UNKNOWN;
 }
 
 static inline bool isUnknownAudioSource(const std::string& source) {
