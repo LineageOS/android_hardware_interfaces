@@ -73,28 +73,36 @@ Return<void> PrimaryDevice::getInputBufferSize(const AudioConfig& config,
 
 #if MAJOR_VERSION == 2
 Return<void> PrimaryDevice::openOutputStream(int32_t ioHandle, const DeviceAddress& device,
-                                             const AudioConfig& config,
-                                             AudioOutputFlagBitfield flags,
+                                             const AudioConfig& config, AudioOutputFlags flags,
                                              openOutputStream_cb _hidl_cb) {
     return mDevice->openOutputStream(ioHandle, device, config, flags, _hidl_cb);
 }
 
 Return<void> PrimaryDevice::openInputStream(int32_t ioHandle, const DeviceAddress& device,
-                                            const AudioConfig& config, AudioInputFlagBitfield flags,
+                                            const AudioConfig& config, AudioInputFlags flags,
                                             AudioSource source, openInputStream_cb _hidl_cb) {
     return mDevice->openInputStream(ioHandle, device, config, flags, source, _hidl_cb);
 }
 #elif MAJOR_VERSION >= 4
 Return<void> PrimaryDevice::openOutputStream(int32_t ioHandle, const DeviceAddress& device,
                                              const AudioConfig& config,
-                                             AudioOutputFlagBitfield flags,
+#if MAJOR_VERSION <= 6
+                                             AudioOutputFlags flags,
+#else
+                                             const AudioOutputFlags& flags,
+#endif
                                              const SourceMetadata& sourceMetadata,
                                              openOutputStream_cb _hidl_cb) {
     return mDevice->openOutputStream(ioHandle, device, config, flags, sourceMetadata, _hidl_cb);
 }
 
 Return<void> PrimaryDevice::openInputStream(int32_t ioHandle, const DeviceAddress& device,
-                                            const AudioConfig& config, AudioInputFlagBitfield flags,
+                                            const AudioConfig& config,
+#if MAJOR_VERSION <= 6
+                                            AudioInputFlags flags,
+#else
+                                            const AudioInputFlags& flags,
+#endif
                                             const SinkMetadata& sinkMetadata,
                                             openInputStream_cb _hidl_cb) {
     return mDevice->openInputStream(ioHandle, device, config, flags, sinkMetadata, _hidl_cb);

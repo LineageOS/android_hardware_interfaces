@@ -23,20 +23,52 @@
 
 #include <system/audio.h>
 
+#include <VersionUtils.h>
+
 namespace android {
 namespace hardware {
 namespace audio {
 namespace CPP_VERSION {
 namespace implementation {
 
+using ::android::hardware::hidl_vec;
 using namespace ::android::hardware::audio::common::CPP_VERSION;
 using namespace ::android::hardware::audio::CPP_VERSION;
 
+#if MAJOR_VERSION <= 6
+// Temporary version for compatibility with forks of the default implementation.
+// Will be removed, do not use!
 std::string deviceAddressToHal(const DeviceAddress& address);
+#endif
+
+status_t deviceAddressToHal(const DeviceAddress& device, audio_devices_t* halDeviceType,
+                            char* halDeviceAddress);
+status_t deviceAddressFromHal(audio_devices_t halDeviceType, const char* halDeviceAddress,
+                              DeviceAddress* device);
 
 #if MAJOR_VERSION >= 4
 bool halToMicrophoneCharacteristics(MicrophoneInfo* pDst,
                                     const struct audio_microphone_characteristic_t& src);
+#endif
+
+#if MAJOR_VERSION <= 6
+using AudioInputFlags =
+        ::android::hardware::audio::common::CPP_VERSION::implementation::AudioInputFlagBitfield;
+using AudioOutputFlags =
+        ::android::hardware::audio::common::CPP_VERSION::implementation::AudioOutputFlagBitfield;
+
+inline bool audioInputFlagsToHal(AudioInputFlags flags, audio_input_flags_t* halFlags) {
+    *halFlags = static_cast<audio_input_flags_t>(flags);
+    return true;
+}
+
+inline bool audioOutputFlagsToHal(AudioOutputFlags flags, audio_output_flags_t* halFlags) {
+    *halFlags = static_cast<audio_output_flags_t>(flags);
+    return true;
+}
+#else
+bool audioInputFlagsToHal(const hidl_vec<AudioInOutFlag>& flags, audio_input_flags_t* halFlags);
+bool audioOutputFlagsToHal(const hidl_vec<AudioInOutFlag>& flags, audio_output_flags_t* halFlags);
 #endif
 
 }  // namespace implementation
