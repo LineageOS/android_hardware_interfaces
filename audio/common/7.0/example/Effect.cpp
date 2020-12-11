@@ -107,14 +107,14 @@ Return<Result> Effect::setInputDevice(const DeviceAddress& device) {
 }
 
 Return<void> Effect::getConfig(getConfig_cb _hidl_cb) {
-    const EffectConfig config = {{} /* inputCfg */,
-                                 // outputCfg
-                                 {{} /* buffer */,
-                                  48000 /* samplingRateHz */,
-                                  toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO),
-                                  toString(xsd::AudioFormat::AUDIO_FORMAT_PCM_16_BIT),
-                                  EffectBufferAccess::ACCESS_ACCUMULATE,
-                                  0 /* mask */}};
+    const EffectConfig config = {
+            {} /* inputCfg */,
+            // outputCfg
+            {{} /* buffer */,
+             {toString(xsd::AudioFormat::AUDIO_FORMAT_PCM_16_BIT), 48000 /* samplingRateHz */,
+              toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO)}, /* base */
+             EffectBufferAccess::ACCESS_ACCUMULATE,
+             0 /* mask */}};
     _hidl_cb(Result::OK, config);
     return Void();
 }

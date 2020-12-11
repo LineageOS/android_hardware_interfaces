@@ -105,7 +105,6 @@ cc_library_shared {
 }
 
 cc_library_shared {
-    enabled: false,
     name: "android.hardware.audio.effect@7.0-impl",
     defaults: ["android.hardware.audio.effect-impl_default"],
     shared_libs: [

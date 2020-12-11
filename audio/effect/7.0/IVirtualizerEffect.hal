@@ -46,23 +46,38 @@ interface IVirtualizerEffect extends IEffect {
      */
     getStrength() generates (Result retval, uint16_t strength);
 
-    struct SpeakerAngle {
+    struct SpeakerAngles {
         /** Speaker channel mask */
-        vec<AudioChannelMask> mask;
-        // all angles are expressed in degrees and
-        // are relative to the listener.
-        int16_t azimuth; // 0 is the direction the listener faces
-                         // 180 is behind the listener
-                         // -90 is to their left
-        int16_t elevation; // 0 is the horizontal plane
-                           // +90 is above the listener, -90 is below
+        AudioChannelMask mask;
+        /**
+         * Horizontal speaker position angles for each channel ordered from LSb
+         * to MSb in the channel mask. The number of values is the number of
+         * channels in the channel mask.
+         *
+         * All angles are expressed in degrees and are relative to the listener.
+         *  - 0 is the direction the listener faces;
+         *  - 180 is behind the listener;
+         *  - -90 is to their left.
+         */
+        vec<int16_t> azimuth;
+        /**
+         * Vertical speaker position angles for each channel ordered from LSb
+         * to MSb in the channel mask. The number of values is the number of
+         * channels in the channel mask.
+         *
+         * All angles are expressed in degrees and are relative to the listener.
+         *  - 0 is the horizontal plane of the listener;
+         *  - +90 is above the listener;
+         *  - -90 is below the listener.
+         */
+        vec<int16_t> elevation;
     };
     /**
      * Retrieves virtual speaker angles for the given channel mask on the
      * specified device.
      */
-    getVirtualSpeakerAngles(vec<AudioChannelMask> mask, DeviceAddress device)
-            generates (Result retval, vec<SpeakerAngle> speakerAngles);
+    getVirtualSpeakerAngles(AudioChannelMask mask, DeviceAddress device)
+            generates (Result retval, SpeakerAngles speakerAngles);
 
     /**
      * Forces the virtualizer effect for the given output device.

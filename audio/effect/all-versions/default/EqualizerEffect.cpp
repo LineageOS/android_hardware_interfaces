@@ -31,9 +31,8 @@ namespace effect {
 namespace CPP_VERSION {
 namespace implementation {
 
-EqualizerEffect::EqualizerEffect(effect_handle_t handle) : mEffect(new Effect(handle)) {}
-
-EqualizerEffect::~EqualizerEffect() {}
+EqualizerEffect::EqualizerEffect(effect_handle_t handle)
+    : mEffect(new Effect(false /*isInput*/, handle)) {}
 
 void EqualizerEffect::propertiesFromHal(const t_equalizer_settings& halProperties,
                                         IEqualizerEffect::AllProperties* properties) {
@@ -80,9 +79,31 @@ Return<Result> EqualizerEffect::disable() {
     return mEffect->disable();
 }
 
+#if MAJOR_VERSION <= 6
+Return<Result> EqualizerEffect::setAudioSource(AudioSource source) {
+    return mEffect->setAudioSource(source);
+}
+
 Return<Result> EqualizerEffect::setDevice(AudioDeviceBitfield device) {
     return mEffect->setDevice(device);
 }
+
+Return<Result> EqualizerEffect::setInputDevice(AudioDeviceBitfield device) {
+    return mEffect->setInputDevice(device);
+}
+#else
+Return<Result> EqualizerEffect::setAudioSource(const AudioSource& source) {
+    return mEffect->setAudioSource(source);
+}
+
+Return<Result> EqualizerEffect::setDevice(const DeviceAddress& device) {
+    return mEffect->setDevice(device);
+}
+
+Return<Result> EqualizerEffect::setInputDevice(const DeviceAddress& device) {
+    return mEffect->setInputDevice(device);
+}
+#endif
 
 Return<void> EqualizerEffect::setAndGetVolume(const hidl_vec<uint32_t>& volumes,
                                               setAndGetVolume_cb _hidl_cb) {
@@ -101,10 +122,6 @@ Return<Result> EqualizerEffect::setConfigReverse(
     const EffectConfig& config, const sp<IEffectBufferProviderCallback>& inputBufferProvider,
     const sp<IEffectBufferProviderCallback>& outputBufferProvider) {
     return mEffect->setConfigReverse(config, inputBufferProvider, outputBufferProvider);
-}
-
-Return<Result> EqualizerEffect::setInputDevice(AudioDeviceBitfield device) {
-    return mEffect->setInputDevice(device);
 }
 
 Return<void> EqualizerEffect::getConfig(getConfig_cb _hidl_cb) {
@@ -126,10 +143,6 @@ Return<void> EqualizerEffect::getAuxChannelsConfig(getAuxChannelsConfig_cb _hidl
 
 Return<Result> EqualizerEffect::setAuxChannelsConfig(const EffectAuxChannelsConfig& config) {
     return mEffect->setAuxChannelsConfig(config);
-}
-
-Return<Result> EqualizerEffect::setAudioSource(AudioSource source) {
-    return mEffect->setAudioSource(source);
 }
 
 Return<Result> EqualizerEffect::offload(const EffectOffloadParameter& param) {
