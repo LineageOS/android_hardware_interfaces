@@ -47,7 +47,9 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
+#if MAJOR_VERSION <= 6
 using ::android::hardware::audio::common::CPP_VERSION::implementation::AudioDeviceBitfield;
+#endif
 using namespace ::android::hardware::audio::common::CPP_VERSION;
 using namespace ::android::hardware::audio::effect::CPP_VERSION;
 
@@ -56,7 +58,7 @@ struct Effect : public IEffect {
     using GetParameterSuccessCallback =
         std::function<void(uint32_t valueSize, const void* valueData)>;
 
-    explicit Effect(effect_handle_t handle);
+    Effect(bool isInput, effect_handle_t handle);
 
     // Methods from ::android::hardware::audio::effect::CPP_VERSION::IEffect follow.
     Return<Result> init() override;
@@ -66,7 +68,15 @@ struct Effect : public IEffect {
     Return<Result> reset() override;
     Return<Result> enable() override;
     Return<Result> disable() override;
+#if MAJOR_VERSION <= 6
+    Return<Result> setAudioSource(AudioSource source) override;
     Return<Result> setDevice(AudioDeviceBitfield device) override;
+    Return<Result> setInputDevice(AudioDeviceBitfield device) override;
+#else
+    Return<Result> setAudioSource(const AudioSource& source) override;
+    Return<Result> setDevice(const DeviceAddress& device) override;
+    Return<Result> setInputDevice(const DeviceAddress& device) override;
+#endif
     Return<void> setAndGetVolume(const hidl_vec<uint32_t>& volumes,
                                  setAndGetVolume_cb _hidl_cb) override;
     Return<Result> volumeChangeNotification(const hidl_vec<uint32_t>& volumes) override;
@@ -74,14 +84,12 @@ struct Effect : public IEffect {
     Return<Result> setConfigReverse(
         const EffectConfig& config, const sp<IEffectBufferProviderCallback>& inputBufferProvider,
         const sp<IEffectBufferProviderCallback>& outputBufferProvider) override;
-    Return<Result> setInputDevice(AudioDeviceBitfield device) override;
     Return<void> getConfig(getConfig_cb _hidl_cb) override;
     Return<void> getConfigReverse(getConfigReverse_cb _hidl_cb) override;
     Return<void> getSupportedAuxChannelsConfigs(
         uint32_t maxConfigs, getSupportedAuxChannelsConfigs_cb _hidl_cb) override;
     Return<void> getAuxChannelsConfig(getAuxChannelsConfig_cb _hidl_cb) override;
     Return<Result> setAuxChannelsConfig(const EffectAuxChannelsConfig& config) override;
-    Return<Result> setAudioSource(AudioSource source) override;
     Return<Result> offload(const EffectOffloadParameter& param) override;
     Return<void> getDescriptor(getDescriptor_cb _hidl_cb) override;
     Return<void> prepareForProcessing(prepareForProcessing_cb _hidl_cb) override;
@@ -104,6 +112,10 @@ struct Effect : public IEffect {
     Return<void> debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) override;
 
     // Utility methods for extending interfaces.
+    static const char* sContextConversion;
+
+    Result analyzeStatus(const char* funcName, const char* subFuncName,
+                         const char* contextDescription, status_t status);
     template <typename T>
     Return<void> getIntegerParam(uint32_t paramId,
                                  std::function<void(Result retval, T paramValue)> cb) {
@@ -170,6 +182,7 @@ struct Effect : public IEffect {
     static const char* sContextCallToCommand;
     static const char* sContextCallFunction;
 
+    const bool mIsInput;
     effect_handle_t mHandle;
     sp<AudioBufferWrapper> mInBuffer;
     sp<AudioBufferWrapper> mOutBuffer;
@@ -186,15 +199,14 @@ struct Effect : public IEffect {
     static size_t alignedSizeIn(size_t s);
     template <typename T>
     std::unique_ptr<uint8_t[]> hidlVecToHal(const hidl_vec<T>& vec, uint32_t* halDataSize);
-    static void effectAuxChannelsConfigFromHal(const channel_config_t& halConfig,
-                                               EffectAuxChannelsConfig* config);
+    void effectAuxChannelsConfigFromHal(const channel_config_t& halConfig,
+                                        EffectAuxChannelsConfig* config);
     static void effectAuxChannelsConfigToHal(const EffectAuxChannelsConfig& config,
                                              channel_config_t* halConfig);
-    static void effectBufferConfigFromHal(const buffer_config_t& halConfig,
-                                          EffectBufferConfig* config);
+    void effectBufferConfigFromHal(const buffer_config_t& halConfig, EffectBufferConfig* config);
     static void effectBufferConfigToHal(const EffectBufferConfig& config,
                                         buffer_config_t* halConfig);
-    static void effectConfigFromHal(const effect_config_t& halConfig, EffectConfig* config);
+    void effectConfigFromHal(const effect_config_t& halConfig, EffectConfig* config);
     static void effectConfigToHal(const EffectConfig& config, effect_config_t* halConfig);
     static void effectOffloadParamToHal(const EffectOffloadParameter& offload,
                                         effect_offload_param_t* halOffload);
@@ -202,8 +214,6 @@ struct Effect : public IEffect {
                                                uint32_t valueSize, const void** valueData);
 
     Result analyzeCommandStatus(const char* commandName, const char* context, status_t status);
-    Result analyzeStatus(const char* funcName, const char* subFuncName,
-                         const char* contextDescription, status_t status);
     void getConfigImpl(int commandCode, const char* commandName, GetConfigCallback cb);
     Result getCurrentConfigImpl(uint32_t featureId, uint32_t configSize,
                                 GetCurrentConfigSuccessCallback onSuccess);
