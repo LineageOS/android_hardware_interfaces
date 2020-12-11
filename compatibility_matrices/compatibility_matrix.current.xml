@@ -319,7 +319,7 @@
         </interface>
     </hal>
     <hal format="aidl" optional="true">
-        <name>android.hardware.keymint</name>
+        <name>android.hardware.security.keymint</name>
         <interface>
             <name>IKeyMintDevice</name>
             <instance>default</instance>
