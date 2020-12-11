@@ -308,6 +308,19 @@ const ConfigDeclaration kVehicleProperties[]{
 
         {.config =
                  {
+                         .prop = toInt(VehicleProperty::SEAT_OCCUPANCY),
+                         .access = VehiclePropertyAccess::READ,
+                         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                         .areaConfigs = {VehicleAreaConfig{.areaId = (SEAT_1_LEFT)},
+                                         VehicleAreaConfig{.areaId = (SEAT_1_RIGHT)}},
+                 },
+         .initialAreaValues = {{SEAT_1_LEFT,
+                                {.int32Values = {(int)VehicleSeatOccupancyState::VACANT}}},
+                               {SEAT_1_RIGHT,
+                                {.int32Values = {(int)VehicleSeatOccupancyState::VACANT}}}}},
+
+        {.config =
+                 {
                          .prop = toInt(VehicleProperty::INFO_DRIVER_SEAT),
                          .access = VehiclePropertyAccess::READ,
                          .changeMode = VehiclePropertyChangeMode::STATIC,
