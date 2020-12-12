@@ -305,11 +305,22 @@ TEST_P(EvsHidlTest, CameraOpenClean) {
             const auto id = 0xFFFFFFFF; // meaningless id
             hidl_vec<uint8_t> values;
             auto err = pCam->setExtendedInfo_1_1(id, values);
-            ASSERT_NE(EvsResult::INVALID_ARG, err);
+            if (isLogicalCam) {
+                // Logical camera device does not support setExtendedInfo
+                // method.
+                ASSERT_EQ(EvsResult::INVALID_ARG, err);
+            } else {
+                ASSERT_NE(EvsResult::INVALID_ARG, err);
+            }
 
-            pCam->getExtendedInfo_1_1(id, [](const auto& result, const auto& data) {
-                ASSERT_NE(EvsResult::INVALID_ARG, result);
-                ASSERT_EQ(0, data.size());
+
+            pCam->getExtendedInfo_1_1(id, [&isLogicalCam](const auto& result, const auto& data) {
+                if (isLogicalCam) {
+                    ASSERT_EQ(EvsResult::INVALID_ARG, result);
+                } else {
+                    ASSERT_NE(EvsResult::INVALID_ARG, result);
+                    ASSERT_EQ(0, data.size());
+                }
             });
 
             // Explicitly close the camera so resources are released right away
