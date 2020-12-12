@@ -26,6 +26,7 @@ package android.hardware.wifi.hostapd@1.3;
  *                     [hw_mode is HOSTAPD_MODE_IEEE80211A and VHT is 0].
  * WIFI_STANDARD_11AC = hw_mode is HOSTAPD_MODE_IEEE80211A and VHT is 1.
  * WIFI_STANDARD_11AX = hw_mode is HOSTAPD_MODE_IEEE80211AX.
+ * WIFI_STANDARD_11AD = hw_mode is HOSTAPD_MODE_IEEE80211AD.
  */
 enum Generation : uint32_t {
     WIFI_STANDARD_UNKNOWN = -1,
@@ -33,6 +34,7 @@ enum Generation : uint32_t {
     WIFI_STANDARD_11N = 1,
     WIFI_STANDARD_11AC = 2,
     WIFI_STANDARD_11AX = 3,
+    WIFI_STANDARD_11AD = 4,
 };
 
 /**
@@ -46,4 +48,8 @@ enum Bandwidth : uint32_t {
     WIFI_BANDWIDTH_80 = 4,
     WIFI_BANDWIDTH_80P80 = 5,
     WIFI_BANDWIDTH_160 = 6,
+    WIFI_BANDWIDTH_2160 = 7,
+    WIFI_BANDWIDTH_4320 = 8,
+    WIFI_BANDWIDTH_6480 = 9,
+    WIFI_BANDWIDTH_8640 = 10,
 };
