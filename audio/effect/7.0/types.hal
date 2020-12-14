@@ -202,16 +202,26 @@ enum EffectFlags : int32_t {
  * enumeration of the effect engines present in a library.
  */
 struct EffectDescriptor {
-    Uuid type;                   // UUID of to the OpenSL ES interface implemented
-                                 // by this effect
-    Uuid uuid;                   // UUID for this particular implementation
-    bitfield<EffectFlags> flags; // effect engine capabilities/requirements flags
-    uint16_t cpuLoad;            // CPU load indication expressed in 0.1 MIPS units
-                                 // as estimated on an ARM9E core (ARMv5TE) with 0 WS
-    uint16_t memoryUsage;        // data memory usage expressed in KB and includes
-                                 // only dynamically allocated memory
-    uint8_t[64] name;            // human readable effect name
-    uint8_t[64] implementor;     // human readable effect implementor name
+    /** UUID of to the OpenSL ES interface implemented by this effect. */
+    Uuid type;
+    /** UUID for this particular implementation. */
+    Uuid uuid;
+    /** Effect engine capabilities/requirements flags. */
+    bitfield<EffectFlags> flags;
+    /**
+     * CPU load indication expressed in 0.1 MIPS units as estimated on
+     * an ARM9E core (ARMv5TE) with 0 WS.
+     */
+    uint16_t cpuLoad;
+    /**
+     * Data memory usage expressed in KB and includes only dynamically
+     * allocated memory.
+     */
+    uint16_t memoryUsage;
+    /** Human readable effect name. */
+    uint8_t[64] name;
+    /** Human readable effect implementor name. */
+    uint8_t[64] implementor;
 };
 
 /**
@@ -242,11 +252,16 @@ enum EffectBufferAccess : int32_t {
  */
 @export(name="", value_prefix="EFFECT_CONFIG_")
 enum EffectConfigParameters : int32_t {
-    BUFFER = 0x0001,    // buffer field
-    SMP_RATE = 0x0002,  // samplingRate
-    CHANNELS = 0x0004,  // channels
-    FORMAT = 0x0008,    // format
-    ACC_MODE = 0x0010,  // accessMode
+    /** Buffer field. */
+    BUFFER = 0x0001,
+    /** Sampling rate. */
+    SMP_RATE = 0x0002,
+    /** Channels. */
+    CHANNELS = 0x0004,
+    /** Format. */
+    FORMAT = 0x0008,
+    /** Access mode. */
+    ACC_MODE = 0x0010,
     // Note that the 2.0 ALL have been moved to an helper function
 };
 
@@ -270,21 +285,23 @@ struct EffectConfig {
 
 @export(name="effect_feature_e", value_prefix="EFFECT_FEATURE_")
 enum EffectFeature : int32_t {
-    AUX_CHANNELS, // supports auxiliary channels
-                  // (e.g. dual mic noise suppressor)
+    /** Supports auxiliary channels (e.g. dual mic noise suppressor). */
+    AUX_CHANNELS,
     CNT
 };
 
 struct EffectAuxChannelsConfig {
-    vec<AudioChannelMask> mainChannels;  // channel mask for main channels
-    vec<AudioChannelMask> auxChannels;   // channel mask for auxiliary channels
+    /** Channel mask for main channels. */
+    vec<AudioChannelMask> mainChannels;
+    /** Channel mask for auxiliary channels. */
+    vec<AudioChannelMask> auxChannels;
 };
 
 struct EffectOffloadParameter {
-    bool isOffload;          // true if the playback thread the effect
-                             // is attached to is offloaded
-    AudioIoHandle ioHandle;  // io handle of the playback thread
-                             // the effect is attached to
+    /** True if the playback thread the effect is attached to is offloaded. */
+    bool isOffload;
+    /** I/O handle of the playback thread the effect is attached to. */
+    AudioIoHandle ioHandle;
 };
 
 /**
