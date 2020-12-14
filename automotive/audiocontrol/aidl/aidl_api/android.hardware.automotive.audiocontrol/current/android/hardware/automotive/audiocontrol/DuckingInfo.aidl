@@ -17,10 +17,9 @@
 
 package android.hardware.automotive.audiocontrol;
 @VintfStability
-interface IAudioControl {
-  oneway void onAudioFocusChange(in String usage, in int zoneId, in android.hardware.automotive.audiocontrol.AudioFocusChange focusChange);
-  oneway void onDevicesToDuckChange(in android.hardware.automotive.audiocontrol.DuckingInfo[] duckingInfos);
-  oneway void registerFocusListener(in android.hardware.automotive.audiocontrol.IFocusListener listener);
-  oneway void setBalanceTowardRight(in float value);
-  oneway void setFadeTowardFront(in float value);
+parcelable DuckingInfo {
+  int zoneId;
+  String[] deviceAddressesToDuck;
+  String[] deviceAddressesToUnduck;
+  String[] usagesHoldingFocus;
 }
