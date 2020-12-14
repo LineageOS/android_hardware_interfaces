@@ -724,7 +724,7 @@ Return<void> WifiChip::setMultiStaUseCase(
 
 Return<void> WifiChip::setCoexUnsafeChannels(
     const hidl_vec<CoexUnsafeChannel>& unsafeChannels,
-    hidl_bitfield<IfaceType> restrictions,
+    hidl_bitfield<CoexRestriction> restrictions,
     setCoexUnsafeChannels_cb hidl_status_cb) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
                            &WifiChip::setCoexUnsafeChannelsInternal,
@@ -1463,8 +1463,18 @@ WifiStatus WifiChip::setCoexUnsafeChannelsInternal(
             unsafe_channels, &legacy_unsafe_channels)) {
         return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
     }
+    uint32_t legacy_restrictions = 0;
+    if (restrictions & CoexRestriction::WIFI_DIRECT) {
+        legacy_restrictions |= legacy_hal::wifi_coex_restriction::WIFI_DIRECT;
+    }
+    if (restrictions & CoexRestriction::SOFTAP) {
+        legacy_restrictions |= legacy_hal::wifi_coex_restriction::SOFTAP;
+    }
+    if (restrictions & CoexRestriction::WIFI_AWARE) {
+        legacy_restrictions |= legacy_hal::wifi_coex_restriction::WIFI_AWARE;
+    }
     auto legacy_status = legacy_hal_.lock()->setCoexUnsafeChannels(
-        legacy_unsafe_channels, restrictions);
+        legacy_unsafe_channels, legacy_restrictions);
     return createWifiStatusFromLegacyError(legacy_status);
 }
 
