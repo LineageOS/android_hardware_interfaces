@@ -18,15 +18,15 @@
 
 #include <assert.h>
 
+#include <android/hardware/security/keymint/Tag.h>
+#include <android/hardware/security/keymint/TagType.h>
+
 #include <android-base/logging.h>
 
 #include <openssl/asn1t.h>
 #include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
-
-#include <android/hardware/security/keymint/Tag.h>
-#include <android/hardware/security/keymint/TagType.h>
 
 #include <keymint_support/authorization_set.h>
 #include <keymint_support/openssl_utils.h>
@@ -326,9 +326,8 @@ ErrorCode parse_attestation_record(const uint8_t* asn1_key_desc, size_t asn1_key
 }
 
 ErrorCode parse_root_of_trust(const uint8_t* asn1_key_desc, size_t asn1_key_desc_len,
-                              vector<uint8_t>* verified_boot_key,
-                              keymint_verified_boot_t* verified_boot_state, bool* device_locked,
-                              vector<uint8_t>* verified_boot_hash) {
+                              vector<uint8_t>* verified_boot_key, VerifiedBoot* verified_boot_state,
+                              bool* device_locked, vector<uint8_t>* verified_boot_hash) {
     if (!verified_boot_key || !verified_boot_state || !device_locked || !verified_boot_hash) {
         LOG(ERROR) << AT << "null pointer input(s)";
         return ErrorCode::INVALID_ARGUMENT;
@@ -358,8 +357,8 @@ ErrorCode parse_root_of_trust(const uint8_t* asn1_key_desc, size_t asn1_key_desc
     verified_boot_key->resize(vb_key->length);
     memcpy(verified_boot_key->data(), vb_key->data, vb_key->length);
 
-    *verified_boot_state = static_cast<keymint_verified_boot_t>(
-            ASN1_ENUMERATED_get(root_of_trust->verified_boot_state));
+    *verified_boot_state =
+            static_cast<VerifiedBoot>(ASN1_ENUMERATED_get(root_of_trust->verified_boot_state));
     if (!verified_boot_state) {
         LOG(ERROR) << AT << " Failed verified boot state parsing";
         return ErrorCode::INVALID_ARGUMENT;
