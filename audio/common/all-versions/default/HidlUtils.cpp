@@ -358,22 +358,6 @@ void HidlUtils::audioPortToHal(const AudioPort& port, struct audio_port* halPort
     }
 }
 
-void HidlUtils::uuidFromHal(const audio_uuid_t& halUuid, Uuid* uuid) {
-    uuid->timeLow = halUuid.timeLow;
-    uuid->timeMid = halUuid.timeMid;
-    uuid->versionAndTimeHigh = halUuid.timeHiAndVersion;
-    uuid->variantAndClockSeqHigh = halUuid.clockSeq;
-    memcpy(uuid->node.data(), halUuid.node, uuid->node.size());
-}
-
-void HidlUtils::uuidToHal(const Uuid& uuid, audio_uuid_t* halUuid) {
-    halUuid->timeLow = uuid.timeLow;
-    halUuid->timeMid = uuid.timeMid;
-    halUuid->timeHiAndVersion = uuid.versionAndTimeHigh;
-    halUuid->clockSeq = uuid.variantAndClockSeqHigh;
-    memcpy(halUuid->node, uuid.node.data(), uuid.node.size());
-}
-
 }  // namespace implementation
 }  // namespace CPP_VERSION
 }  // namespace common

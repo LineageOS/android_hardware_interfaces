@@ -66,8 +66,6 @@ class HidlUtils {
             const hidl_vec<AudioPortConfig>& configs);
     static void audioPortFromHal(const struct audio_port& halPort, AudioPort* port);
     static void audioPortToHal(const AudioPort& port, struct audio_port* halPort);
-    static void uuidFromHal(const audio_uuid_t& halUuid, Uuid* uuid);
-    static void uuidToHal(const Uuid& uuid, audio_uuid_t* halUuid);
 };
 
 }  // namespace implementation
