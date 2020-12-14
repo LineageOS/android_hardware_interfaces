@@ -15,7 +15,7 @@
  */
 
 #include "Conversions.h"
-#include "HidlUtils.h"
+#include "UuidUtils.h"
 
 #include <memory.h>
 #include <stdio.h>
@@ -31,12 +31,12 @@ namespace effect {
 namespace CPP_VERSION {
 namespace implementation {
 
-using ::android::hardware::audio::common::CPP_VERSION::implementation::HidlUtils;
+using ::android::hardware::audio::common::CPP_VERSION::implementation::UuidUtils;
 
 void effectDescriptorFromHal(const effect_descriptor_t& halDescriptor,
                              EffectDescriptor* descriptor) {
-    HidlUtils::uuidFromHal(halDescriptor.type, &descriptor->type);
-    HidlUtils::uuidFromHal(halDescriptor.uuid, &descriptor->uuid);
+    UuidUtils::uuidFromHal(halDescriptor.type, &descriptor->type);
+    UuidUtils::uuidFromHal(halDescriptor.uuid, &descriptor->uuid);
     descriptor->flags = EnumBitfield<EffectFlags>(halDescriptor.flags);
     descriptor->cpuLoad = halDescriptor.cpuLoad;
     descriptor->memoryUsage = halDescriptor.memoryUsage;
