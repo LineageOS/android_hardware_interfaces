@@ -332,14 +332,22 @@ typedef string AudioGainMode;
  * A gain stage is always attached to an audio port.
  */
 struct AudioGain {
-    vec<AudioGainMode> mode; // modes of operation
-    AudioChannelMask channelMask; // channels which gain can be controlled
-    int32_t minValue;     // minimum gain value in millibels
-    int32_t maxValue;     // maximum gain value in millibels
-    int32_t defaultValue; // default gain value in millibels
-    uint32_t stepValue;   // gain step in millibels
-    uint32_t minRampMs;   // minimum ramp duration in ms
-    uint32_t maxRampMs;   // maximum ramp duration in ms
+    /** Modes of operation. */
+    vec<AudioGainMode> mode;
+    /** Channels which gain can be controlled. */
+    AudioChannelMask channelMask;
+    /** Minimum gain value in millibels. */
+    int32_t minValue;
+    /** Maximum gain value in millibels. */
+    int32_t maxValue;
+    /** Default gain value in millibels. */
+    int32_t defaultValue;
+    /** Gain step in millibels. */
+    uint32_t stepValue;
+    /** Ramp duration in ms. */
+    uint32_t minRampMs;
+    /** Maximum ramp duration in ms. */
+    uint32_t maxRampMs;
 };
 
 /**
@@ -347,16 +355,20 @@ struct AudioGain {
  * given port.
  */
 struct AudioGainConfig {
-    int32_t index;  // index of the corresponding AudioGain in AudioPort.gains
-    vec<AudioGainMode> mode; // modes of operation
-    AudioChannelMask channelMask;  // channels which gain value follows
+    /** Index of the corresponding AudioGain in AudioPort.gains. */
+    int32_t index;
+    /** Modes of operation. */
+    vec<AudioGainMode> mode;
+    /** Channels which gain value follows. */
+    AudioChannelMask channelMask;
     /**
      * Gain values in millibels for each channel ordered from LSb to MSb in
      * channel mask. The number of values is 1 in joint mode or
      * the number of channels in the channel mask.
      */
     vec<int32_t> values;
-    uint32_t rampDurationMs;  // ramp duration in ms
+    /** Ramp duration in ms. */
+    uint32_t rampDurationMs;
 };
 
 
