@@ -19,6 +19,7 @@ package android.hardware.radio@1.6;
 import @1.0::SendSmsResult;
 import @1.4::RadioAccessFamily;
 import @1.5::IRadioResponse;
+import @1.6::Call;
 import @1.6::CellInfo;
 import @1.6::RegStateResult;
 import @1.6::RadioResponseInfo;
@@ -401,4 +402,16 @@ interface IRadioResponse extends @1.5::IRadioResponse {
      */
     oneway getDataRegistrationStateResponse_1_6(RadioResponseInfo info,
             RegStateResult dataRegResponse);
+
+    /**
+     * @param calls Current call list
+     *   RadioError:NO_MEMORY
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:SYSTEM_ERR
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:NO_RESOURCES
+     *   RadioError:CANCELLED
+     */
+    oneway getCurrentCallsResponse_1_6(RadioResponseInfo info, vec<Call> calls);
 };

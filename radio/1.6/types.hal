@@ -24,6 +24,7 @@ import @1.0::RadioError;
 import @1.0::RadioResponseType;
 import @1.0::RegState;
 import @1.1::ScanStatus;
+import @1.2::Call;
 import @1.2::CellInfoCdma;
 import @1.2::CellConnectionStatus;
 import @1.2::TdscdmaSignalStrength;
@@ -722,4 +723,13 @@ struct RegStateResult {
             NrVopsInfo nrVopsInfo;
         } ngranInfo;
     } accessTechnologySpecificInfo;
+};
+
+struct Call {
+    @1.2::Call base;
+    /**
+     * Forwarded number. It can set only one forwarded number based on 3GPP rule of the CS.
+     * Reference: 3GPP TS 24.008 section 10.5.4.21b
+     */
+    string forwardedNumber;
 };
