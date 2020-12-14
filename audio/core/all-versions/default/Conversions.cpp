@@ -27,6 +27,7 @@ namespace audio {
 namespace CPP_VERSION {
 namespace implementation {
 
+// TODO(mnaganov): Use method from HidlUtils for V7
 std::string deviceAddressToHal(const DeviceAddress& address) {
     // HAL assumes that the address is NUL-terminated.
     char halAddress[AUDIO_DEVICE_MAX_ADDRESS_LEN];
