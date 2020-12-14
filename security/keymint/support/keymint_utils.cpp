@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,12 @@
 
 #include <regex.h>
 
+#include <arpa/inet.h>
+
 #include <android-base/properties.h>
 #include <hardware/hw_auth_token.h>
-#include <keymint_support/keymint_utils.h>
 
-#include <arpa/inet.h>
+#include <keymint_support/keymint_utils.h>
 
 namespace android::hardware::security::keymint {
 
