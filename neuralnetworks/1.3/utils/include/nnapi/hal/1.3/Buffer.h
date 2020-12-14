@@ -24,8 +24,12 @@
 #include <nnapi/Types.h>
 #include <memory>
 
+// See hardware/interfaces/neuralnetworks/utils/README.md for more information on HIDL interface
+// lifetimes across processes.
+
 namespace android::hardware::neuralnetworks::V1_3::utils {
 
+// Class that adapts V1_3::IBuffer to nn::IBuffer.
 class Buffer final : public nn::IBuffer {
     struct PrivateConstructorTag {};
 
