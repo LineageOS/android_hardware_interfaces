@@ -406,4 +406,13 @@ interface IRadio extends @1.5::IRadio {
      * Response function is IRadioResponse.getDataRegistrationStateResponse_1_6()
      */
     oneway getDataRegistrationState_1_6(int32_t serial);
+
+    /**
+     * Requests current call list
+     *
+     * @param serial Serial number of request.
+     *
+     * Response function is IRadioResponse.getCurrentCallsResponse_1_6()
+     */
+    oneway getCurrentCalls_1_6(int32_t serial);
 };
