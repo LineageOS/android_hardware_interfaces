@@ -30,9 +30,8 @@ namespace effect {
 namespace CPP_VERSION {
 namespace implementation {
 
-PresetReverbEffect::PresetReverbEffect(effect_handle_t handle) : mEffect(new Effect(handle)) {}
-
-PresetReverbEffect::~PresetReverbEffect() {}
+PresetReverbEffect::PresetReverbEffect(effect_handle_t handle)
+    : mEffect(new Effect(false /*isInput*/, handle)) {}
 
 // Methods from ::android::hardware::audio::effect::CPP_VERSION::IEffect follow.
 Return<Result> PresetReverbEffect::init() {
@@ -57,9 +56,31 @@ Return<Result> PresetReverbEffect::disable() {
     return mEffect->disable();
 }
 
+#if MAJOR_VERSION <= 6
+Return<Result> PresetReverbEffect::setAudioSource(AudioSource source) {
+    return mEffect->setAudioSource(source);
+}
+
 Return<Result> PresetReverbEffect::setDevice(AudioDeviceBitfield device) {
     return mEffect->setDevice(device);
 }
+
+Return<Result> PresetReverbEffect::setInputDevice(AudioDeviceBitfield device) {
+    return mEffect->setInputDevice(device);
+}
+#else
+Return<Result> PresetReverbEffect::setAudioSource(const AudioSource& source) {
+    return mEffect->setAudioSource(source);
+}
+
+Return<Result> PresetReverbEffect::setDevice(const DeviceAddress& device) {
+    return mEffect->setDevice(device);
+}
+
+Return<Result> PresetReverbEffect::setInputDevice(const DeviceAddress& device) {
+    return mEffect->setInputDevice(device);
+}
+#endif
 
 Return<void> PresetReverbEffect::setAndGetVolume(const hidl_vec<uint32_t>& volumes,
                                                  setAndGetVolume_cb _hidl_cb) {
@@ -78,10 +99,6 @@ Return<Result> PresetReverbEffect::setConfigReverse(
     const EffectConfig& config, const sp<IEffectBufferProviderCallback>& inputBufferProvider,
     const sp<IEffectBufferProviderCallback>& outputBufferProvider) {
     return mEffect->setConfigReverse(config, inputBufferProvider, outputBufferProvider);
-}
-
-Return<Result> PresetReverbEffect::setInputDevice(AudioDeviceBitfield device) {
-    return mEffect->setInputDevice(device);
 }
 
 Return<void> PresetReverbEffect::getConfig(getConfig_cb _hidl_cb) {
@@ -103,10 +120,6 @@ Return<void> PresetReverbEffect::getAuxChannelsConfig(getAuxChannelsConfig_cb _h
 
 Return<Result> PresetReverbEffect::setAuxChannelsConfig(const EffectAuxChannelsConfig& config) {
     return mEffect->setAuxChannelsConfig(config);
-}
-
-Return<Result> PresetReverbEffect::setAudioSource(AudioSource source) {
-    return mEffect->setAudioSource(source);
 }
 
 Return<Result> PresetReverbEffect::offload(const EffectOffloadParameter& param) {

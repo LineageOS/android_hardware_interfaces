@@ -66,9 +66,10 @@ interface IStream {
      * Retrieves basic stream configuration: sample rate, audio format,
      * channel mask.
      *
+     * @return retval operation completion status.
      * @return config basic stream configuration.
      */
-    getAudioProperties() generates (AudioConfigBase config);
+    getAudioProperties() generates (Result retval, AudioConfigBase config);
 
     /**
      * Sets stream parameters. Only sets parameters that are specified.

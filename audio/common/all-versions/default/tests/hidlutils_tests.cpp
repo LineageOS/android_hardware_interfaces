@@ -28,6 +28,7 @@
 #include <xsdc/XsdcSupport.h>
 
 using namespace android;
+using ::android::hardware::hidl_vec;
 using namespace ::android::hardware::audio::common::CPP_VERSION;
 using ::android::hardware::audio::common::CPP_VERSION::implementation::HidlUtils;
 namespace xsd {
@@ -36,6 +37,8 @@ using namespace ::android::audio::policy::configuration::V7_0;
 
 static constexpr audio_channel_mask_t kInvalidHalChannelMask =
         static_cast<audio_channel_mask_t>(0xFFFFFFFFU);
+static constexpr audio_content_type_t kInvalidHalContentType =
+        static_cast<audio_content_type_t>(0xFFFFFFFFU);
 static constexpr audio_devices_t kInvalidHalDevice = static_cast<audio_devices_t>(0xFFFFFFFFU);
 static constexpr audio_format_t kInvalidHalFormat = static_cast<audio_format_t>(0xFFFFFFFFU);
 static constexpr audio_gain_mode_t kInvalidHalGainMode =
@@ -117,6 +120,34 @@ TEST(HidlUtils, ConvertChannelMask) {
     }
 }
 
+TEST(HidlUtils, ConvertInvalidChannelMasksFromHal) {
+    std::vector<std::string> validAndInvalidChannelMasks = {
+            toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO), "random string", ""};
+    hidl_vec<AudioChannelMask> validChannelMask;
+    EXPECT_EQ(BAD_VALUE,
+              HidlUtils::audioChannelMasksFromHal(validAndInvalidChannelMasks, &validChannelMask));
+    EXPECT_EQ(1, validChannelMask.size());
+    EXPECT_EQ(validAndInvalidChannelMasks[0], validChannelMask[0]);
+
+    std::vector<std::string> invalidChannelMasks = {"random string", ""};
+    hidl_vec<AudioChannelMask> empty;
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioChannelMasksFromHal(invalidChannelMasks, &empty));
+    EXPECT_EQ(0, empty.size());
+}
+
+TEST(HidlUtils, ConvertChannelMasksFromHal) {
+    std::vector<std::string> allHalChannelMasks;
+    for (const auto enumVal : xsdc_enum_range<xsd::AudioChannelMask>{}) {
+        allHalChannelMasks.push_back(toString(enumVal));
+    }
+    hidl_vec<AudioChannelMask> allChannelMasks;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioChannelMasksFromHal(allHalChannelMasks, &allChannelMasks));
+    EXPECT_EQ(allHalChannelMasks.size(), allChannelMasks.size());
+    for (size_t i = 0; i < allHalChannelMasks.size(); ++i) {
+        EXPECT_EQ(allHalChannelMasks[i], allChannelMasks[i]);
+    }
+}
+
 TEST(HidlUtils, ConvertInvalidConfigBase) {
     AudioConfigBase invalid;
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioConfigBaseFromHal({.sample_rate = 0,
@@ -145,6 +176,26 @@ TEST(HidlUtils, ConvertConfigBase) {
     EXPECT_EQ(NO_ERROR,
               HidlUtils::audioConfigBaseFromHal(halConfigBase, false /*isInput*/, &configBaseBack));
     EXPECT_EQ(configBase, configBaseBack);
+}
+
+TEST(HidlUtils, ConvertInvalidContentType) {
+    AudioContentType invalid;
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioContentTypeFromHal(kInvalidHalContentType, &invalid));
+    audio_content_type_t halInvalid;
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioContentTypeToHal("random string", &halInvalid));
+}
+
+TEST(HidlUtils, ConvertContentType) {
+    for (const auto enumVal : xsdc_enum_range<xsd::AudioContentType>{}) {
+        const AudioContentType contentType = toString(enumVal);
+        audio_content_type_t halContentType;
+        AudioContentType contentTypeBack;
+        EXPECT_EQ(NO_ERROR, HidlUtils::audioContentTypeToHal(contentType, &halContentType))
+                << "Conversion of \"" << contentType << "\" failed";
+        EXPECT_EQ(NO_ERROR, HidlUtils::audioContentTypeFromHal(halContentType, &contentTypeBack))
+                << "Conversion of content type " << halContentType << " failed";
+        EXPECT_EQ(contentType, contentTypeBack);
+    }
 }
 
 TEST(HidlUtils, ConvertInvalidDeviceType) {
@@ -311,6 +362,33 @@ TEST(HidlUtils, ConvertFormat) {
         EXPECT_EQ(NO_ERROR, HidlUtils::audioFormatFromHal(halFormat, &formatBack))
                 << "Conversion of format " << halFormat << " failed";
         EXPECT_EQ(format, formatBack);
+    }
+}
+
+TEST(HidlUtils, ConvertInvalidFormatsFromHal) {
+    std::vector<std::string> validAndInvalidFormats = {
+            toString(xsd::AudioFormat::AUDIO_FORMAT_PCM_16_BIT), "random string", ""};
+    hidl_vec<AudioFormat> validFormat;
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioFormatsFromHal(validAndInvalidFormats, &validFormat));
+    EXPECT_EQ(1, validFormat.size());
+    EXPECT_EQ(validAndInvalidFormats[0], validFormat[0]);
+
+    std::vector<std::string> invalidFormats = {"random string", ""};
+    hidl_vec<AudioFormat> empty;
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioFormatsFromHal(invalidFormats, &empty));
+    EXPECT_EQ(0, empty.size());
+}
+
+TEST(HidlUtils, ConvertFormatsFromHal) {
+    std::vector<std::string> allHalFormats;
+    for (const auto enumVal : xsdc_enum_range<xsd::AudioFormat>{}) {
+        allHalFormats.push_back(toString(enumVal));
+    }
+    hidl_vec<AudioFormat> allFormats;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioFormatsFromHal(allHalFormats, &allFormats));
+    EXPECT_EQ(allHalFormats.size(), allFormats.size());
+    for (size_t i = 0; i < allHalFormats.size(); ++i) {
+        EXPECT_EQ(allHalFormats[i], allFormats[i]);
     }
 }
 

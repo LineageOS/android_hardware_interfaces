@@ -44,8 +44,13 @@ using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 #if MAJOR_VERSION <= 6
-using ::android::hardware::audio::common::CPP_VERSION::implementation::AudioInputFlagBitfield;
-using ::android::hardware::audio::common::CPP_VERSION::implementation::AudioOutputFlagBitfield;
+using AudioInputFlags =
+        ::android::hardware::audio::common::CPP_VERSION::implementation::AudioInputFlagBitfield;
+using AudioOutputFlags =
+        ::android::hardware::audio::common::CPP_VERSION::implementation::AudioOutputFlagBitfield;
+#else
+using AudioInputFlags = hidl_vec<::android::hardware::audio::CPP_VERSION::AudioInOutFlag>;
+using AudioOutputFlags = hidl_vec<::android::hardware::audio::CPP_VERSION::AudioInOutFlag>;
 #endif
 using namespace ::android::hardware::audio::common::CPP_VERSION;
 using namespace ::android::hardware::audio::CPP_VERSION;
@@ -67,28 +72,36 @@ struct Device : public IDevice, public ParametersUtil {
     std::tuple<Result, sp<IStreamOut>> openOutputStreamImpl(int32_t ioHandle,
                                                             const DeviceAddress& device,
                                                             const AudioConfig& config,
-                                                            AudioOutputFlagBitfield flags,
+                                                            const AudioOutputFlags& flags,
                                                             AudioConfig* suggestedConfig);
     std::tuple<Result, sp<IStreamIn>> openInputStreamImpl(
-        int32_t ioHandle, const DeviceAddress& device, const AudioConfig& config,
-        AudioInputFlagBitfield flags, AudioSource source, AudioConfig* suggestedConfig);
-#if MAJOR_VERSION == 2
+            int32_t ioHandle, const DeviceAddress& device, const AudioConfig& config,
+            const AudioInputFlags& flags, AudioSource source, AudioConfig* suggestedConfig);
+
     Return<void> openOutputStream(int32_t ioHandle, const DeviceAddress& device,
-                                  const AudioConfig& config, AudioOutputFlagBitfield flags,
-                                  openOutputStream_cb _hidl_cb) override;
-    Return<void> openInputStream(int32_t ioHandle, const DeviceAddress& device,
-                                 const AudioConfig& config, AudioInputFlagBitfield flags,
-                                 AudioSource source, openInputStream_cb _hidl_cb) override;
-#elif MAJOR_VERSION >= 4
-    Return<void> openOutputStream(int32_t ioHandle, const DeviceAddress& device,
-                                  const AudioConfig& config, AudioOutputFlagBitfield flags,
-                                  const SourceMetadata& sourceMetadata,
-                                  openOutputStream_cb _hidl_cb) override;
-    Return<void> openInputStream(int32_t ioHandle, const DeviceAddress& device,
-                                 const AudioConfig& config, AudioInputFlagBitfield flags,
-                                 const SinkMetadata& sinkMetadata,
-                                 openInputStream_cb _hidl_cb) override;
+                                  const AudioConfig& config,
+#if MAJOR_VERSION <= 6
+                                  AudioOutputFlags flags,
+#else
+                                  const AudioOutputFlags& flags,
 #endif
+#if MAJOR_VERSION >= 4
+                                  const SourceMetadata& sourceMetadata,
+#endif
+                                  openOutputStream_cb _hidl_cb) override;
+    Return<void> openInputStream(int32_t ioHandle, const DeviceAddress& device,
+                                 const AudioConfig& config,
+#if MAJOR_VERSION <= 6
+                                 AudioInputFlags flags,
+#else
+                                 const AudioInputFlags& flags,
+#endif
+#if MAJOR_VERSION == 2
+                                 AudioSource source,
+#elif MAJOR_VERSION >= 4
+                                 const SinkMetadata& sinkMetadata,
+#endif
+                                 openInputStream_cb _hidl_cb) override;
 
     Return<bool> supportsAudioPatches() override;
     Return<void> createAudioPatch(const hidl_vec<AudioPortConfig>& sources,

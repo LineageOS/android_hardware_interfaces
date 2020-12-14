@@ -95,6 +95,25 @@ status_t HidlUtils::audioChannelMaskFromHal(audio_channel_mask_t halChannelMask,
     return NO_ERROR;
 }
 
+status_t HidlUtils::audioChannelMasksFromHal(const std::vector<std::string>& halChannelMasks,
+                                             hidl_vec<AudioChannelMask>* channelMasks) {
+    hidl_vec<AudioChannelMask> tempChannelMasks;
+    tempChannelMasks.resize(halChannelMasks.size());
+    size_t tempPos = 0;
+    for (const auto& halChannelMask : halChannelMasks) {
+        if (!halChannelMask.empty() && !xsd::isUnknownAudioChannelMask(halChannelMask)) {
+            tempChannelMasks[tempPos++] = halChannelMask;
+        }
+    }
+    if (tempPos == tempChannelMasks.size()) {
+        *channelMasks = std::move(tempChannelMasks);
+    } else {
+        *channelMasks = hidl_vec<AudioChannelMask>(tempChannelMasks.begin(),
+                                                   tempChannelMasks.begin() + tempPos);
+    }
+    return halChannelMasks.size() == channelMasks->size() ? NO_ERROR : BAD_VALUE;
+}
+
 status_t HidlUtils::audioChannelMaskToHal(const AudioChannelMask& channelMask,
                                           audio_channel_mask_t* halChannelMask) {
     if (!xsd::isUnknownAudioChannelMask(channelMask) &&
@@ -127,6 +146,28 @@ status_t HidlUtils::audioConfigBaseToHal(const AudioConfigBase& configBase,
     return result;
 }
 
+status_t HidlUtils::audioContentTypeFromHal(const audio_content_type_t halContentType,
+                                            AudioContentType* contentType) {
+    *contentType = audio_content_type_to_string(halContentType);
+    if (!contentType->empty() && !xsd::isUnknownAudioContentType(*contentType)) {
+        return NO_ERROR;
+    }
+    ALOGE("Unknown audio content type value 0x%X", halContentType);
+    *contentType = toString(xsd::AudioContentType::AUDIO_CONTENT_TYPE_UNKNOWN);
+    return BAD_VALUE;
+}
+
+status_t HidlUtils::audioContentTypeToHal(const AudioContentType& contentType,
+                                          audio_content_type_t* halContentType) {
+    if (!xsd::isUnknownAudioContentType(contentType) &&
+        audio_content_type_from_string(contentType.c_str(), halContentType)) {
+        return NO_ERROR;
+    }
+    ALOGE("Unknown audio content type \"%s\"", contentType.c_str());
+    *halContentType = AUDIO_CONTENT_TYPE_UNKNOWN;
+    return BAD_VALUE;
+}
+
 status_t HidlUtils::audioDeviceTypeFromHal(audio_devices_t halDevice, AudioDevice* device) {
     *device = audio_device_to_string(halDevice);
     if (!device->empty() && !xsd::isUnknownAudioDevice(*device)) {
@@ -153,6 +194,24 @@ status_t HidlUtils::audioFormatFromHal(audio_format_t halFormat, AudioFormat* fo
     }
     ALOGE("Unknown audio format value 0x%X", halFormat);
     return BAD_VALUE;
+}
+
+status_t HidlUtils::audioFormatsFromHal(const std::vector<std::string>& halFormats,
+                                        hidl_vec<AudioFormat>* formats) {
+    hidl_vec<AudioFormat> tempFormats;
+    tempFormats.resize(halFormats.size());
+    size_t tempPos = 0;
+    for (const auto& halFormat : halFormats) {
+        if (!halFormat.empty() && !xsd::isUnknownAudioFormat(halFormat)) {
+            tempFormats[tempPos++] = halFormat;
+        }
+    }
+    if (tempPos == tempFormats.size()) {
+        *formats = std::move(tempFormats);
+    } else {
+        *formats = hidl_vec<AudioFormat>(tempFormats.begin(), tempFormats.begin() + tempPos);
+    }
+    return halFormats.size() == formats->size() ? NO_ERROR : BAD_VALUE;
 }
 
 status_t HidlUtils::audioFormatToHal(const AudioFormat& format, audio_format_t* halFormat) {
