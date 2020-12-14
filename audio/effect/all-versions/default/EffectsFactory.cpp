@@ -24,10 +24,10 @@
 #include "Effect.h"
 #include "EnvironmentalReverbEffect.h"
 #include "EqualizerEffect.h"
-#include "HidlUtils.h"
 #include "LoudnessEnhancerEffect.h"
 #include "NoiseSuppressionEffect.h"
 #include "PresetReverbEffect.h"
+#include "UuidUtils.h"
 #include "VirtualizerEffect.h"
 #include "VisualizerEffect.h"
 #include "common/all-versions/default/EffectMap.h"
@@ -53,7 +53,7 @@ namespace effect {
 namespace CPP_VERSION {
 namespace implementation {
 
-using ::android::hardware::audio::common::CPP_VERSION::implementation::HidlUtils;
+using ::android::hardware::audio::common::CPP_VERSION::implementation::UuidUtils;
 
 // static
 sp<IEffect> EffectsFactory::dispatchEffectInstanceCreation(const effect_descriptor_t& halDescriptor,
@@ -135,7 +135,7 @@ exit:
 
 Return<void> EffectsFactory::getDescriptor(const Uuid& uuid, getDescriptor_cb _hidl_cb) {
     effect_uuid_t halUuid;
-    HidlUtils::uuidToHal(uuid, &halUuid);
+    UuidUtils::uuidToHal(uuid, &halUuid);
     effect_descriptor_t halDescriptor;
     status_t status = EffectGetDescriptor(&halUuid, &halDescriptor);
     EffectDescriptor descriptor;
@@ -170,7 +170,7 @@ Return<void> EffectsFactory::createEffect(const Uuid& uuid, int32_t session, int
 Return<void> EffectsFactory::createEffectImpl(const Uuid& uuid, int32_t session, int32_t ioHandle,
                                               int32_t device, createEffect_cb _hidl_cb) {
     effect_uuid_t halUuid;
-    HidlUtils::uuidToHal(uuid, &halUuid);
+    UuidUtils::uuidToHal(uuid, &halUuid);
     effect_handle_t handle;
     Result retval(Result::OK);
     status_t status;

@@ -44,8 +44,10 @@ enum AudioDrain : int32_t {
  * A substitute for POSIX timespec.
  */
 struct TimeSpec {
-    uint64_t tvSec;   // seconds
-    uint64_t tvNSec;  // nanoseconds
+    /** Seconds. */
+    uint64_t tvSec;
+    /** Nanoseconds. */
+    uint64_t tvNSec;
 };
 
 struct ParameterValue {
@@ -85,8 +87,10 @@ struct MmapBufferInfo {
  * Used by streams opened in mmap mode.
  */
 struct MmapPosition {
-    int64_t  timeNanoseconds; // time stamp in ns, CLOCK_MONOTONIC
-    int32_t  positionFrames;  // increasing 32 bit frame count reset when IStream.stop() is called
+    /** Timestamp in ns, CLOCK_MONOTONIC. */
+    int64_t  timeNanoseconds;
+    /** Increasing 32 bit frame count reset when IStream.stop() is called. */
+    int32_t  positionFrames;
 };
 
 /**
@@ -128,9 +132,12 @@ struct AudioMicrophoneCoordinate {
  */
 @export(name="audio_microphone_channel_mapping_t", value_prefix="AUDIO_MICROPHONE_CHANNEL_MAPPING_")
 enum AudioMicrophoneChannelMapping : uint32_t {
-    UNUSED      = 0, /* Channel not used */
-    DIRECT      = 1, /* Channel used and signal not processed */
-    PROCESSED   = 2, /* Channel used and signal has some processing */
+    /** Channel not used. */
+    UNUSED      = 0,
+    /** Channel used and signal not processed. */
+    DIRECT      = 1,
+    /** Channel used and signal has some processing. */
+    PROCESSED   = 2,
 };
 
 /**
@@ -179,7 +186,8 @@ struct AudioFrequencyResponsePoint {
  * Used by StreamIn and Device
  */
 struct MicrophoneInfo {
-    /** Unique alphanumeric id for microphone. Guaranteed to be the same
+    /**
+     * Unique alphanumeric id for microphone. Guaranteed to be the same
      * even after rebooting.
      */
     string                                  deviceId;
@@ -187,18 +195,21 @@ struct MicrophoneInfo {
      * Device specific information
      */
     DeviceAddress                           deviceAddress;
-    /** Each element of the vector must describe the channel with the same
-     *  index.
+    /**
+     * Each element of the vector must describe the channel with the same
+     * index.
      */
     vec<AudioMicrophoneChannelMapping>      channelMapping;
     /** Location of the microphone in regard to the body of the device */
     AudioMicrophoneLocation                 location;
-    /** Identifier to help group related microphones together
-     *  e.g. microphone arrays should belong to the same group
+    /**
+     * Identifier to help group related microphones together
+     * e.g. microphone arrays should belong to the same group
      */
     AudioMicrophoneGroup                    group;
-    /** Index of this microphone within the group.
-     *  (group, index) must be unique within the same device.
+    /**
+     * Index of this microphone within the group.
+     * (group, index) must be unique within the same device.
      */
     uint32_t                                indexInTheGroup;
     /** Level in dBFS produced by a 1000 Hz tone at 94 dB SPL */
@@ -209,17 +220,20 @@ struct MicrophoneInfo {
     float                                   minSpl;
     /** Standard polar pattern of the microphone */
     AudioMicrophoneDirectionality           directionality;
-    /** Vector with ordered frequency responses (from low to high frequencies)
-     *  with the frequency response of the microphone.
-     *  Levels are in dB, relative to level at 1000 Hz
+    /**
+     * Vector with ordered frequency responses (from low to high frequencies)
+     * with the frequency response of the microphone.
+     * Levels are in dB, relative to level at 1000 Hz
      */
     vec<AudioFrequencyResponsePoint>        frequencyResponse;
-    /** Position of the microphone's capsule in meters, from the
-     *  bottom-left-back corner of the bounding box of device.
+    /**
+     * Position of the microphone's capsule in meters, from the
+     * bottom-left-back corner of the bounding box of device.
      */
     AudioMicrophoneCoordinate               position;
-    /** Normalized point to signal the main orientation of the microphone's
-     *  capsule. sqrt(x^2 + y^2 + z^2) = 1
+    /**
+     * Normalized point to signal the main orientation of the microphone's
+     * capsule. sqrt(x^2 + y^2 + z^2) = 1
      */
     AudioMicrophoneCoordinate               orientation;
 };
@@ -262,7 +276,6 @@ enum DualMonoMode : int32_t {
     // frameworks/base/media/java/android/media/AudioTrack.java
     /**
      * Disable any Dual Mono presentation effect.
-     *
      */
     OFF = 0,
     /**
