@@ -29,8 +29,12 @@
 #include <utility>
 #include <vector>
 
+// See hardware/interfaces/neuralnetworks/utils/README.md for more information on HIDL interface
+// lifetimes across processes and for protecting asynchronous calls across HIDL.
+
 namespace android::hardware::neuralnetworks::V1_3::utils {
 
+// Class that adapts V1_3::IPreparedModel to nn::IPreparedModel.
 class PreparedModel final : public nn::IPreparedModel {
     struct PrivateConstructorTag {};
 
