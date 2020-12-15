@@ -36,7 +36,7 @@ nn::GeneralResult<std::shared_ptr<const ResilientPreparedModel>> ResilientPrepar
         return NN_ERROR(nn::ErrorStatus::INVALID_ARGUMENT)
                << "utils::ResilientPreparedModel::create must have non-empty makePreparedModel";
     }
-    auto preparedModel = NN_TRY(makePreparedModel(/*blocking=*/true));
+    auto preparedModel = NN_TRY(makePreparedModel());
     CHECK(preparedModel != nullptr);
     return std::make_shared<ResilientPreparedModel>(
             PrivateConstructorTag{}, std::move(makePreparedModel), std::move(preparedModel));
