@@ -17,6 +17,7 @@
 package android.hardware.radio@1.6;
 
 import @1.0::SendSmsResult;
+import @1.4::RadioAccessFamily;
 import @1.5::IRadioResponse;
 import @1.6::Call;
 import @1.6::CellInfo;
@@ -309,6 +310,23 @@ interface IRadioResponse extends @1.5::IRadioResponse {
      *   RadioError:NO_RESOURCES
      */
     oneway setAllowedNetworkTypeBitmapResponse(RadioResponseInfo info);
+
+    /**
+     * Callback of IRadio.getAllowedNetworkTypeBitmap(int, bitfield<RadioAccessFamily>)
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:OPERATION_NOT_ALLOWED
+     *   RadioError:MODE_NOT_SUPPORTED
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:MODEM_ERR
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:NO_RESOURCES
+     */
+    oneway getAllowedNetworkTypeBitmapResponse(
+            RadioResponseInfo info, bitfield<RadioAccessFamily> networkTypeBitmap);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
