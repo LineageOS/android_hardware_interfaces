@@ -76,19 +76,7 @@ struct HidlUtils {
                                          const char* halDeviceAddress, DeviceAddress* device);
 #endif
 
-#if MAJOR_VERSION <= 6
-    // Temporary versions for compatibility with forks of the default implementation.
-    // Will be removed, do not use!
-    static status_t audioConfigFromHal(const audio_config_t& halConfig, AudioConfig* config) {
-        return audioConfigFromHal(halConfig, false /*isInput--ignored*/, config);
-    }
-    static std::unique_ptr<audio_port_config[]> audioPortConfigsToHal(
-            const hidl_vec<AudioPortConfig>& configs) {
-        std::unique_ptr<audio_port_config[]> halConfigs;
-        (void)audioPortConfigsToHal(configs, &halConfigs);
-        return halConfigs;
-    }
-#else  // V7 and above
+#if MAJOR_VERSION >= 7
     static status_t audioChannelMaskFromHal(audio_channel_mask_t halChannelMask, bool isInput,
                                             AudioChannelMask* channelMask);
     static status_t audioChannelMasksFromHal(const std::vector<std::string>& halChannelMasks,
@@ -138,7 +126,7 @@ struct HidlUtils {
                                                struct audio_port_config_device_ext* device,
                                                struct audio_port_config_mix_ext* mix,
                                                struct audio_port_config_session_ext* session);
-#endif
+#endif  // MAJOR_VERSION >= 7
 
     // V4 and below have DeviceAddress defined in the 'core' interface.
     // To avoid duplicating code, the implementations of deviceAddressTo/FromHal
