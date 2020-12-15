@@ -30,9 +30,7 @@ namespace CPP_VERSION {
 namespace implementation {
 
 AutomaticGainControlEffect::AutomaticGainControlEffect(effect_handle_t handle)
-    : mEffect(new Effect(handle)) {}
-
-AutomaticGainControlEffect::~AutomaticGainControlEffect() {}
+    : mEffect(new Effect(true /*isInput*/, handle)) {}
 
 void AutomaticGainControlEffect::propertiesFromHal(
     const t_agc_settings& halProperties, IAutomaticGainControlEffect::AllProperties* properties) {
@@ -71,9 +69,31 @@ Return<Result> AutomaticGainControlEffect::disable() {
     return mEffect->disable();
 }
 
+#if MAJOR_VERSION <= 6
+Return<Result> AutomaticGainControlEffect::setAudioSource(AudioSource source) {
+    return mEffect->setAudioSource(source);
+}
+
 Return<Result> AutomaticGainControlEffect::setDevice(AudioDeviceBitfield device) {
     return mEffect->setDevice(device);
 }
+
+Return<Result> AutomaticGainControlEffect::setInputDevice(AudioDeviceBitfield device) {
+    return mEffect->setInputDevice(device);
+}
+#else
+Return<Result> AutomaticGainControlEffect::setAudioSource(const AudioSource& source) {
+    return mEffect->setAudioSource(source);
+}
+
+Return<Result> AutomaticGainControlEffect::setDevice(const DeviceAddress& device) {
+    return mEffect->setDevice(device);
+}
+
+Return<Result> AutomaticGainControlEffect::setInputDevice(const DeviceAddress& device) {
+    return mEffect->setInputDevice(device);
+}
+#endif
 
 Return<void> AutomaticGainControlEffect::setAndGetVolume(const hidl_vec<uint32_t>& volumes,
                                                          setAndGetVolume_cb _hidl_cb) {
@@ -93,10 +113,6 @@ Return<Result> AutomaticGainControlEffect::setConfigReverse(
     const EffectConfig& config, const sp<IEffectBufferProviderCallback>& inputBufferProvider,
     const sp<IEffectBufferProviderCallback>& outputBufferProvider) {
     return mEffect->setConfigReverse(config, inputBufferProvider, outputBufferProvider);
-}
-
-Return<Result> AutomaticGainControlEffect::setInputDevice(AudioDeviceBitfield device) {
-    return mEffect->setInputDevice(device);
 }
 
 Return<void> AutomaticGainControlEffect::getConfig(getConfig_cb _hidl_cb) {
@@ -119,10 +135,6 @@ Return<void> AutomaticGainControlEffect::getAuxChannelsConfig(getAuxChannelsConf
 Return<Result> AutomaticGainControlEffect::setAuxChannelsConfig(
     const EffectAuxChannelsConfig& config) {
     return mEffect->setAuxChannelsConfig(config);
-}
-
-Return<Result> AutomaticGainControlEffect::setAudioSource(AudioSource source) {
-    return mEffect->setAudioSource(source);
 }
 
 Return<Result> AutomaticGainControlEffect::offload(const EffectOffloadParameter& param) {

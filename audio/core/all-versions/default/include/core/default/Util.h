@@ -20,6 +20,8 @@
 #include PATH(android/hardware/audio/FILE_VERSION/types.h)
 
 #include <algorithm>
+#include <sstream>
+#include <string>
 #include <vector>
 
 #include <system/audio.h>
@@ -68,6 +70,16 @@ static inline Result analyzeStatus(const char* className, const char* funcName, 
         ALOGW("Error from HAL %s in function %s: %s", className, funcName, strerror(-status));
     }
     return analyzeStatus(status);
+}
+
+static inline std::vector<std::string> splitString(const std::string& s, char separator) {
+    std::istringstream iss(s);
+    std::string t;
+    std::vector<std::string> result;
+    while (std::getline(iss, t, separator)) {
+        result.push_back(std::move(t));
+    }
+    return result;
 }
 
 }  // namespace util

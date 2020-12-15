@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef SYSTEM_SECURITY_KEYSTORE_KM4_AUTHORIZATION_SET_H_
-#define SYSTEM_SECURITY_KEYSTORE_KM4_AUTHORIZATION_SET_H_
+#pragma once
 
 #include <vector>
 
@@ -33,9 +32,8 @@ using std::vector;
 class AuthorizationSetBuilder;
 
 /**
- * An ordered collection of KeyParameters. It provides memory ownership and some convenient
- * functionality for sorting, deduplicating, joining, and subtracting sets of KeyParameters.
- * For serialization, wrap the backing store of this structure in a vector<KeyParameter>.
+ * A collection of KeyParameters. It provides memory ownership and some convenient functionality for
+ * sorting, deduplicating, joining, and subtracting sets of KeyParameters.
  */
 class AuthorizationSet {
   public:
@@ -138,18 +136,15 @@ class AuthorizationSet {
     /**
      * Returns iterator (pointer) to beginning of elems array, to enable STL-style iteration
      */
-    std::vector<KeyParameter>::const_iterator begin() const { return data_.begin(); }
+    auto begin() { return data_.begin(); }
+    auto begin() const { return data_.begin(); }
 
     /**
      * Returns iterator (pointer) one past end of elems array, to enable STL-style iteration
      */
-    std::vector<KeyParameter>::const_iterator end() const { return data_.end(); }
+    auto end() { return data_.end(); }
+    auto end() const { return data_.end(); }
 
-    /**
-     * Modifies this Authorization set such that it only keeps the entries for which doKeep
-     * returns true.
-     */
-    void Filter(std::function<bool(const KeyParameter&)> doKeep);
     /**
      * Returns the nth element of the set.
      * Like for std::vector::operator[] there is no range check performed. Use of out of range
@@ -222,9 +217,6 @@ class AuthorizationSet {
         vector<KeyParameter> result(begin(), end());
         return result;
     }
-
-    void Serialize(std::ostream* out) const;
-    void Deserialize(std::istream* in);
 
   private:
     NullOr<const KeyParameter&> GetEntry(Tag tag) const;
@@ -316,5 +308,3 @@ class AuthorizationSetBuilder : public AuthorizationSet {
 };
 
 }  // namespace android::hardware::security::keymint
-
-#endif  // SYSTEM_SECURITY_KEYSTORE_KM4_AUTHORIZATION_SET_H_

@@ -23,8 +23,6 @@
 
 #include <system/audio.h>
 
-using ::android::hardware::hidl_vec;
-
 namespace android {
 namespace hardware {
 namespace audio {
@@ -32,25 +30,25 @@ namespace common {
 namespace CPP_VERSION {
 namespace implementation {
 
+using ::android::hardware::hidl_vec;
 using namespace ::android::hardware::audio::common::CPP_VERSION;
 
 struct HidlUtils {
-#if MAJOR_VERSION < 7
-    static status_t audioConfigFromHal(const audio_config_t& halConfig, AudioConfig* config);
-    static void audioGainConfigFromHal(const struct audio_gain_config& halConfig,
-                                       AudioGainConfig* config);
-    static void audioGainFromHal(const struct audio_gain& halGain, AudioGain* gain);
-#else
     static status_t audioConfigFromHal(const audio_config_t& halConfig, bool isInput,
                                        AudioConfig* config);
+    static status_t audioConfigToHal(const AudioConfig& config, audio_config_t* halConfig);
+#if MAJOR_VERSION >= 4
+    static status_t audioContentTypeFromHal(const audio_content_type_t halContentType,
+                                            AudioContentType* contentType);
+    static status_t audioContentTypeToHal(const AudioContentType& contentType,
+                                          audio_content_type_t* halContentType);
+#endif
     static status_t audioGainConfigFromHal(const struct audio_gain_config& halConfig, bool isInput,
                                            AudioGainConfig* config);
-    static status_t audioGainFromHal(const struct audio_gain& halGain, bool isInput,
-                                     AudioGain* gain);
-#endif
-    static status_t audioConfigToHal(const AudioConfig& config, audio_config_t* halConfig);
     static status_t audioGainConfigToHal(const AudioGainConfig& config,
                                          struct audio_gain_config* halConfig);
+    static status_t audioGainFromHal(const struct audio_gain& halGain, bool isInput,
+                                     AudioGain* gain);
     static status_t audioGainToHal(const AudioGain& gain, struct audio_gain* halGain);
     static status_t audioUsageFromHal(audio_usage_t halUsage, AudioUsage* usage);
     static status_t audioUsageToHal(const AudioUsage& usage, audio_usage_t* halUsage);
@@ -64,43 +62,37 @@ struct HidlUtils {
                                          struct audio_port_config* halConfig);
     static status_t audioPortConfigsFromHal(unsigned int numHalConfigs,
                                             const struct audio_port_config* halConfigs,
-                                            hidl_vec<AudioPortConfig>* configs) {
-        status_t result = NO_ERROR;
-        configs->resize(numHalConfigs);
-        for (unsigned int i = 0; i < numHalConfigs; ++i) {
-            if (status_t status = audioPortConfigFromHal(halConfigs[i], &(*configs)[i]);
-                status != NO_ERROR) {
-                result = status;
-            }
-        }
-        return result;
-    }
+                                            hidl_vec<AudioPortConfig>* configs);
     static status_t audioPortConfigsToHal(const hidl_vec<AudioPortConfig>& configs,
-                                          std::unique_ptr<audio_port_config[]>* halConfigs) {
-        status_t result = NO_ERROR;
-        halConfigs->reset(new audio_port_config[configs.size()]);
-        for (size_t i = 0; i < configs.size(); ++i) {
-            if (status_t status = audioPortConfigToHal(configs[i], &(*halConfigs)[i]);
-                status != NO_ERROR) {
-                result = status;
-            }
-        }
-        return result;
-    }
+                                          std::unique_ptr<audio_port_config[]>* halConfigs);
+    static status_t audioPortFromHal(const struct audio_port& halPort, AudioPort* port);
+    static status_t audioPortToHal(const AudioPort& port, struct audio_port* halPort);
+    static status_t audioSourceFromHal(audio_source_t halSource, AudioSource* source);
+    static status_t audioSourceToHal(const AudioSource& source, audio_source_t* halSource);
+#if MAJOR_VERSION >= 5
+    static status_t deviceAddressToHal(const DeviceAddress& device, audio_devices_t* halDeviceType,
+                                       char* halDeviceAddress);
+    static status_t deviceAddressFromHal(audio_devices_t halDeviceType,
+                                         const char* halDeviceAddress, DeviceAddress* device);
+#endif
 
-    // PLEASE DO NOT USE, will be removed in a couple of days
+#if MAJOR_VERSION <= 6
+    // Temporary versions for compatibility with forks of the default implementation.
+    // Will be removed, do not use!
+    static status_t audioConfigFromHal(const audio_config_t& halConfig, AudioConfig* config) {
+        return audioConfigFromHal(halConfig, false /*isInput--ignored*/, config);
+    }
     static std::unique_ptr<audio_port_config[]> audioPortConfigsToHal(
             const hidl_vec<AudioPortConfig>& configs) {
         std::unique_ptr<audio_port_config[]> halConfigs;
         (void)audioPortConfigsToHal(configs, &halConfigs);
         return halConfigs;
     }
-
-    static status_t audioPortFromHal(const struct audio_port& halPort, AudioPort* port);
-    static status_t audioPortToHal(const AudioPort& port, struct audio_port* halPort);
-#if MAJOR_VERSION >= 7
+#else  // V7 and above
     static status_t audioChannelMaskFromHal(audio_channel_mask_t halChannelMask, bool isInput,
                                             AudioChannelMask* channelMask);
+    static status_t audioChannelMasksFromHal(const std::vector<std::string>& halChannelMasks,
+                                             hidl_vec<AudioChannelMask>* channelMasks);
     static status_t audioChannelMaskToHal(const AudioChannelMask& channelMask,
                                           audio_channel_mask_t* halChannelMask);
     static status_t audioConfigBaseFromHal(const audio_config_base_t& halConfigBase, bool isInput,
@@ -110,6 +102,8 @@ struct HidlUtils {
     static status_t audioDeviceTypeFromHal(audio_devices_t halDevice, AudioDevice* device);
     static status_t audioDeviceTypeToHal(const AudioDevice& device, audio_devices_t* halDevice);
     static status_t audioFormatFromHal(audio_format_t halFormat, AudioFormat* format);
+    static status_t audioFormatsFromHal(const std::vector<std::string>& halFormats,
+                                        hidl_vec<AudioFormat>* formats);
     static status_t audioFormatToHal(const AudioFormat& format, audio_format_t* halFormat);
     static status_t audioGainModeMaskFromHal(audio_gain_mode_t halGainModeMask,
                                              hidl_vec<AudioGainMode>* gainModeMask);
@@ -121,16 +115,10 @@ struct HidlUtils {
                                         AudioProfile* profile);
     static status_t audioProfileToHal(const AudioProfile& profile,
                                       struct audio_profile* halProfile);
-    static status_t audioSourceFromHal(audio_source_t halSource, AudioSource* source);
-    static status_t audioSourceToHal(const AudioSource& source, audio_source_t* halSource);
     static status_t audioStreamTypeFromHal(audio_stream_type_t halStreamType,
                                            AudioStreamType* streamType);
     static status_t audioStreamTypeToHal(const AudioStreamType& streamType,
                                          audio_stream_type_t* halStreamType);
-    static status_t deviceAddressToHal(const DeviceAddress& device, audio_devices_t* halDeviceType,
-                                       char* halDeviceAddress);
-    static status_t deviceAddressFromHal(audio_devices_t halDeviceType,
-                                         const char* halDeviceAddress, DeviceAddress* device);
 
   private:
     static status_t audioIndexChannelMaskFromHal(audio_channel_mask_t halChannelMask,
@@ -151,7 +139,112 @@ struct HidlUtils {
                                                struct audio_port_config_mix_ext* mix,
                                                struct audio_port_config_session_ext* session);
 #endif
+
+    // V4 and below have DeviceAddress defined in the 'core' interface.
+    // To avoid duplicating code, the implementations of deviceAddressTo/FromHal
+    // are defined as templates. These templates can be only used directly by V4
+    // and below.
+#if MAJOR_VERSION >= 5
+  private:
+#endif
+    template <typename DA>
+    static status_t deviceAddressToHalImpl(const DA& device, audio_devices_t* halDeviceType,
+                                           char* halDeviceAddress);
+    template <typename DA>
+    static status_t deviceAddressFromHalImpl(audio_devices_t halDeviceType,
+                                             const char* halDeviceAddress, DA* device);
 };
+
+#if MAJOR_VERSION <= 6
+#if MAJOR_VERSION >= 4
+inline status_t HidlUtils::audioContentTypeFromHal(const audio_content_type_t halContentType,
+                                                   AudioContentType* contentType) {
+    *contentType = AudioContentType(halContentType);
+    return NO_ERROR;
+}
+
+inline status_t HidlUtils::audioContentTypeToHal(const AudioContentType& contentType,
+                                                 audio_content_type_t* halContentType) {
+    *halContentType = static_cast<audio_content_type_t>(contentType);
+    return NO_ERROR;
+}
+#endif
+
+inline status_t HidlUtils::audioSourceFromHal(audio_source_t halSource, AudioSource* source) {
+    *source = AudioSource(halSource);
+    return NO_ERROR;
+}
+
+inline status_t HidlUtils::audioSourceToHal(const AudioSource& source, audio_source_t* halSource) {
+    *halSource = static_cast<audio_source_t>(source);
+    return NO_ERROR;
+}
+
+template <typename DA>
+status_t HidlUtils::deviceAddressToHalImpl(const DA& device, audio_devices_t* halDeviceType,
+                                           char* halDeviceAddress) {
+    *halDeviceType = static_cast<audio_devices_t>(device.device);
+    memset(halDeviceAddress, 0, AUDIO_DEVICE_MAX_ADDRESS_LEN);
+    if (audio_is_a2dp_out_device(*halDeviceType) || audio_is_a2dp_in_device(*halDeviceType)) {
+        snprintf(halDeviceAddress, AUDIO_DEVICE_MAX_ADDRESS_LEN, "%02X:%02X:%02X:%02X:%02X:%02X",
+                 device.address.mac[0], device.address.mac[1], device.address.mac[2],
+                 device.address.mac[3], device.address.mac[4], device.address.mac[5]);
+    } else if (*halDeviceType == AUDIO_DEVICE_OUT_IP || *halDeviceType == AUDIO_DEVICE_IN_IP) {
+        snprintf(halDeviceAddress, AUDIO_DEVICE_MAX_ADDRESS_LEN, "%d.%d.%d.%d",
+                 device.address.ipv4[0], device.address.ipv4[1], device.address.ipv4[2],
+                 device.address.ipv4[3]);
+    } else if (audio_is_usb_out_device(*halDeviceType) || audio_is_usb_in_device(*halDeviceType)) {
+        snprintf(halDeviceAddress, AUDIO_DEVICE_MAX_ADDRESS_LEN, "card=%d;device=%d",
+                 device.address.alsa.card, device.address.alsa.device);
+    } else if (*halDeviceType == AUDIO_DEVICE_OUT_BUS || *halDeviceType == AUDIO_DEVICE_IN_BUS) {
+        snprintf(halDeviceAddress, AUDIO_DEVICE_MAX_ADDRESS_LEN, "%s", device.busAddress.c_str());
+    } else if (*halDeviceType == AUDIO_DEVICE_OUT_REMOTE_SUBMIX ||
+               *halDeviceType == AUDIO_DEVICE_IN_REMOTE_SUBMIX) {
+        snprintf(halDeviceAddress, AUDIO_DEVICE_MAX_ADDRESS_LEN, "%s",
+                 device.rSubmixAddress.c_str());
+    }
+    return NO_ERROR;
+}
+
+template <typename DA>
+status_t HidlUtils::deviceAddressFromHalImpl(audio_devices_t halDeviceType,
+                                             const char* halDeviceAddress, DA* device) {
+    if (device == nullptr) {
+        return BAD_VALUE;
+    }
+    device->device = AudioDevice(halDeviceType);
+    if (halDeviceAddress == nullptr ||
+        strnlen(halDeviceAddress, AUDIO_DEVICE_MAX_ADDRESS_LEN) == 0) {
+        return NO_ERROR;
+    }
+
+    if (audio_is_a2dp_out_device(halDeviceType) || audio_is_a2dp_in_device(halDeviceType)) {
+        int status =
+                sscanf(halDeviceAddress, "%hhX:%hhX:%hhX:%hhX:%hhX:%hhX", &device->address.mac[0],
+                       &device->address.mac[1], &device->address.mac[2], &device->address.mac[3],
+                       &device->address.mac[4], &device->address.mac[5]);
+        return status == 6 ? OK : BAD_VALUE;
+    } else if (halDeviceType == AUDIO_DEVICE_OUT_IP || halDeviceType == AUDIO_DEVICE_IN_IP) {
+        int status = sscanf(halDeviceAddress, "%hhu.%hhu.%hhu.%hhu", &device->address.ipv4[0],
+                            &device->address.ipv4[1], &device->address.ipv4[2],
+                            &device->address.ipv4[3]);
+        return status == 4 ? OK : BAD_VALUE;
+    } else if (audio_is_usb_out_device(halDeviceType) || audio_is_usb_in_device(halDeviceType)) {
+        int status = sscanf(halDeviceAddress, "card=%d;device=%d", &device->address.alsa.card,
+                            &device->address.alsa.device);
+        return status == 2 ? OK : BAD_VALUE;
+    } else if (halDeviceType == AUDIO_DEVICE_OUT_BUS || halDeviceType == AUDIO_DEVICE_IN_BUS) {
+        device->busAddress = halDeviceAddress;
+        return OK;
+    } else if (halDeviceType == AUDIO_DEVICE_OUT_REMOTE_SUBMIX ||
+               halDeviceType == AUDIO_DEVICE_IN_REMOTE_SUBMIX) {
+        device->rSubmixAddress = halDeviceAddress;
+        return OK;
+    }
+    device->busAddress = halDeviceAddress;
+    return NO_ERROR;
+}
+#endif  // MAJOR_VERSION <= 6
 
 }  // namespace implementation
 }  // namespace CPP_VERSION

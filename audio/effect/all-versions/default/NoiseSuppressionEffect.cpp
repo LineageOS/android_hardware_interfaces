@@ -30,9 +30,7 @@ namespace CPP_VERSION {
 namespace implementation {
 
 NoiseSuppressionEffect::NoiseSuppressionEffect(effect_handle_t handle)
-    : mEffect(new Effect(handle)) {}
-
-NoiseSuppressionEffect::~NoiseSuppressionEffect() {}
+    : mEffect(new Effect(true /*isInput*/, handle)) {}
 
 void NoiseSuppressionEffect::propertiesFromHal(const t_ns_settings& halProperties,
                                                INoiseSuppressionEffect::AllProperties* properties) {
@@ -69,9 +67,31 @@ Return<Result> NoiseSuppressionEffect::disable() {
     return mEffect->disable();
 }
 
+#if MAJOR_VERSION <= 6
+Return<Result> NoiseSuppressionEffect::setAudioSource(AudioSource source) {
+    return mEffect->setAudioSource(source);
+}
+
 Return<Result> NoiseSuppressionEffect::setDevice(AudioDeviceBitfield device) {
     return mEffect->setDevice(device);
 }
+
+Return<Result> NoiseSuppressionEffect::setInputDevice(AudioDeviceBitfield device) {
+    return mEffect->setInputDevice(device);
+}
+#else
+Return<Result> NoiseSuppressionEffect::setAudioSource(const AudioSource& source) {
+    return mEffect->setAudioSource(source);
+}
+
+Return<Result> NoiseSuppressionEffect::setDevice(const DeviceAddress& device) {
+    return mEffect->setDevice(device);
+}
+
+Return<Result> NoiseSuppressionEffect::setInputDevice(const DeviceAddress& device) {
+    return mEffect->setInputDevice(device);
+}
+#endif
 
 Return<void> NoiseSuppressionEffect::setAndGetVolume(const hidl_vec<uint32_t>& volumes,
                                                      setAndGetVolume_cb _hidl_cb) {
@@ -90,10 +110,6 @@ Return<Result> NoiseSuppressionEffect::setConfigReverse(
     const EffectConfig& config, const sp<IEffectBufferProviderCallback>& inputBufferProvider,
     const sp<IEffectBufferProviderCallback>& outputBufferProvider) {
     return mEffect->setConfigReverse(config, inputBufferProvider, outputBufferProvider);
-}
-
-Return<Result> NoiseSuppressionEffect::setInputDevice(AudioDeviceBitfield device) {
-    return mEffect->setInputDevice(device);
 }
 
 Return<void> NoiseSuppressionEffect::getConfig(getConfig_cb _hidl_cb) {
@@ -115,10 +131,6 @@ Return<void> NoiseSuppressionEffect::getAuxChannelsConfig(getAuxChannelsConfig_c
 
 Return<Result> NoiseSuppressionEffect::setAuxChannelsConfig(const EffectAuxChannelsConfig& config) {
     return mEffect->setAuxChannelsConfig(config);
-}
-
-Return<Result> NoiseSuppressionEffect::setAudioSource(AudioSource source) {
-    return mEffect->setAudioSource(source);
 }
 
 Return<Result> NoiseSuppressionEffect::offload(const EffectOffloadParameter& param) {
