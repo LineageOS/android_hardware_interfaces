@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef HARDWARE_INTERFACES_KEYMINT_SUPPORT_INCLUDE_KEYMINT_TAGS_H_
-#define HARDWARE_INTERFACES_KEYMINT_SUPPORT_INCLUDE_KEYMINT_TAGS_H_
+#pragma once
 
 #include <android/hardware/security/keymint/Algorithm.h>
 #include <android/hardware/security/keymint/BlockMode.h>
@@ -32,22 +31,15 @@
 
 namespace android::hardware::security::keymint {
 
-// The following create the numeric values that KM_TAG_PADDING and KM_TAG_DIGEST used to have.  We
-// need these old values to be able to support old keys that use them.
-// TODO(seleneh) we should delete this code when we stop supporting keymaster1
-// and deletes it.
-static const int32_t KM_TAG_DIGEST_OLD = static_cast<int32_t>(TagType::ENUM) | 5;
-static const int32_t KM_TAG_PADDING_OLD = static_cast<int32_t>(TagType::ENUM) | 7;
-
 constexpr TagType typeFromTag(Tag tag) {
     return static_cast<TagType>(static_cast<uint32_t>(tag) & static_cast<uint32_t>(0xf0000000));
 }
 
 /**
- * TypedTag is a templatized version of Tag, which provides compile-time checking of
- * keymint tag types. Instances are convertible to Tag, so they can be used wherever
- * Tag is expected, and because they encode the tag type it's possible to create
- * function overloads that only operate on tags with a particular type.
+ * TypedTag is a templatized version of Tag, which provides compile-time checking of KeyMint tag
+ * types.  Instances are convertible to Tag, so they can be used wherever Tag is expected, and
+ * because they encode the tag type it's possible to create function overloads that only operate on
+ * tags with a particular type.
  */
 template <TagType tag_type, Tag tag>
 struct TypedTag {
@@ -334,5 +326,3 @@ inline NullOr<const typename TypedTag2ValueType<TypedTag<tag_type, tag>>::type&>
 }
 
 }  // namespace android::hardware::security::keymint
-
-#endif  // HARDWARE_INTERFACES_KEYMINT_SUPPORT_INCLUDE_KEYMINT_TAGS_H_
