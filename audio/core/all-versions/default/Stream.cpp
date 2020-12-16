@@ -23,6 +23,7 @@
 
 #include <inttypes.h>
 
+#include <HidlUtils.h>
 #include <android/log.h>
 #include <hardware/audio.h>
 #include <hardware/audio_effect.h>
@@ -35,7 +36,11 @@ namespace audio {
 namespace CPP_VERSION {
 namespace implementation {
 
-Stream::Stream(audio_stream_t* stream) : mStream(stream) {}
+using ::android::hardware::audio::common::CPP_VERSION::implementation::HidlUtils;
+
+Stream::Stream(bool isInput, audio_stream_t* stream) : mIsInput(isInput), mStream(stream) {
+    (void)mIsInput;  // prevent 'unused field' warnings in pre-V7 versions.
+}
 
 Stream::~Stream() {
     mStream = nullptr;
@@ -78,6 +83,7 @@ Return<uint64_t> Stream::getBufferSize() {
     return mStream->get_buffer_size(mStream);
 }
 
+#if MAJOR_VERSION <= 6
 Return<uint32_t> Stream::getSampleRate() {
     return mStream->get_sample_rate(mStream);
 }
@@ -201,6 +207,96 @@ Return<void> Stream::getAudioProperties(getAudioProperties_cb _hidl_cb) {
     return Void();
 }
 
+#else  // MAJOR_VERSION <= 6
+
+Return<void> Stream::getSupportedProfiles(getSupportedProfiles_cb _hidl_cb) {
+    String8 halListValue;
+    Result result = getParam(AudioParameter::keyStreamSupportedFormats, &halListValue);
+    hidl_vec<AudioProfile> profiles;
+    if (result != Result::OK) {
+        _hidl_cb(result, profiles);
+        return Void();
+    }
+    // Ensure that the separator is one character, despite that it's defined as a C string.
+    static_assert(sizeof(AUDIO_PARAMETER_VALUE_LIST_SEPARATOR) == 2);
+    std::vector<std::string> halFormats =
+            util::splitString(halListValue.string(), AUDIO_PARAMETER_VALUE_LIST_SEPARATOR[0]);
+    hidl_vec<AudioFormat> formats;
+    (void)HidlUtils::audioFormatsFromHal(halFormats, &formats);
+    std::vector<AudioProfile> tempProfiles;
+    for (const auto& format : formats) {
+        audio_format_t halFormat;
+        if (status_t status = HidlUtils::audioFormatToHal(format, &halFormat); status != NO_ERROR) {
+            continue;
+        }
+        AudioParameter context;
+        context.addInt(String8(AUDIO_PARAMETER_STREAM_FORMAT), int(halFormat));
+        // Query supported sample rates for the format.
+        result = getParam(AudioParameter::keyStreamSupportedSamplingRates, &halListValue, context);
+        if (result != Result::OK) break;
+        std::vector<std::string> halSampleRates =
+                util::splitString(halListValue.string(), AUDIO_PARAMETER_VALUE_LIST_SEPARATOR[0]);
+        hidl_vec<uint32_t> sampleRates;
+        sampleRates.resize(halSampleRates.size());
+        for (size_t i = 0; i < sampleRates.size(); ++i) {
+            sampleRates[i] = std::stoi(halSampleRates[i]);
+        }
+        // Query supported channel masks for the format.
+        result = getParam(AudioParameter::keyStreamSupportedChannels, &halListValue, context);
+        if (result != Result::OK) break;
+        std::vector<std::string> halChannelMasks =
+                util::splitString(halListValue.string(), AUDIO_PARAMETER_VALUE_LIST_SEPARATOR[0]);
+        hidl_vec<AudioChannelMask> channelMasks;
+        (void)HidlUtils::audioChannelMasksFromHal(halChannelMasks, &channelMasks);
+        // Create a profile.
+        if (channelMasks.size() != 0 && sampleRates.size() != 0) {
+            tempProfiles.push_back({.format = format,
+                                    .sampleRates = std::move(sampleRates),
+                                    .channelMasks = std::move(channelMasks)});
+        }
+    }
+    // Legacy get_parameter does not return a status_t, thus can not advertise of failure.
+    // Note that the method must not return an empty list if this capability is supported.
+    if (!tempProfiles.empty()) {
+        profiles = tempProfiles;
+    } else {
+        result = Result::NOT_SUPPORTED;
+    }
+    _hidl_cb(result, profiles);
+    return Void();
+}
+
+Return<void> Stream::getAudioProperties(getAudioProperties_cb _hidl_cb) {
+    audio_config_base_t halConfigBase = {mStream->get_sample_rate(mStream),
+                                         mStream->get_channels(mStream),
+                                         mStream->get_format(mStream)};
+    AudioConfigBase configBase = {};
+    status_t status = HidlUtils::audioConfigBaseFromHal(halConfigBase, mIsInput, &configBase);
+    _hidl_cb(Stream::analyzeStatus("get_audio_properties", status), configBase);
+    return Void();
+}
+
+Return<Result> Stream::setAudioProperties(const AudioConfigBase& config) {
+    audio_config_base_t halConfigBase = {};
+    status_t status = HidlUtils::audioConfigBaseToHal(config, &halConfigBase);
+    if (status != NO_ERROR) {
+        return Stream::analyzeStatus("set_audio_properties", status);
+    }
+    if (Result result = setParam(AudioParameter::keySamplingRate,
+                                 static_cast<int>(halConfigBase.sample_rate));
+        result != Result::OK) {
+        return result;
+    }
+    if (Result result =
+                setParam(AudioParameter::keyChannels, static_cast<int>(halConfigBase.channel_mask));
+        result != Result::OK) {
+        return result;
+    }
+    return setParam(AudioParameter::keyFormat, static_cast<int>(halConfigBase.format));
+}
+
+#endif  // MAJOR_VERSION <= 6
+
 Return<Result> Stream::addEffect(uint64_t effectId) {
     effect_handle_t halEffect = EffectMap::getInstance().get(effectId);
     if (halEffect != NULL) {
@@ -257,12 +353,14 @@ Return<Result> Stream::setConnectedState(const DeviceAddress& address, bool conn
 }
 #elif MAJOR_VERSION >= 4
 Return<void> Stream::getDevices(getDevices_cb _hidl_cb) {
-    int device = 0;
-    Result retval = getParam(AudioParameter::keyRouting, &device);
+    int halDevice = 0;
+    Result retval = getParam(AudioParameter::keyRouting, &halDevice);
     hidl_vec<DeviceAddress> devices;
     if (retval == Result::OK) {
         devices.resize(1);
-        devices[0].device = static_cast<AudioDevice>(device);
+        retval = Stream::analyzeStatus("get_devices",
+                                       deviceAddressFromHal(static_cast<audio_devices_t>(halDevice),
+                                                            nullptr, &devices[0]));
     }
     _hidl_cb(retval, devices);
     return Void();
@@ -273,14 +371,13 @@ Return<Result> Stream::setDevices(const hidl_vec<DeviceAddress>& devices) {
     if (devices.size() > 1) {
         return Result::NOT_SUPPORTED;
     }
-    DeviceAddress address;
+    DeviceAddress address{};
     if (devices.size() == 1) {
         address = devices[0];
-    } else {
-        address.device = AudioDevice::NONE;
     }
     return setParam(AudioParameter::keyRouting, address);
 }
+
 Return<void> Stream::getParameters(const hidl_vec<ParameterValue>& context,
                                    const hidl_vec<hidl_string>& keys, getParameters_cb _hidl_cb) {
     getParametersImpl(context, keys, _hidl_cb);

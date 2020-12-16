@@ -125,13 +125,15 @@ cc_library_shared {
 }
 
 cc_library_shared {
-    enabled: false,
     name: "android.hardware.audio@7.0-impl",
     defaults: ["android.hardware.audio-impl_default"],
     shared_libs: [
         "android.hardware.audio@7.0",
         "android.hardware.audio.common@7.0",
+        "android.hardware.audio.common@7.0-enums",
         "android.hardware.audio.common@7.0-util",
+        "libbase",
+        "libxml2",
     ],
     cflags: [
         "-DMAJOR_VERSION=7",
