@@ -149,9 +149,15 @@ Result ParametersUtil::setParametersImpl(const hidl_vec<ParameterValue>& context
     }
     return setParams(params);
 }
+
 Result ParametersUtil::setParam(const char* name, const DeviceAddress& address) {
-    AudioParameter params(String8(deviceAddressToHal(address).c_str()));
-    params.addInt(String8(name), int(address.device));
+    audio_devices_t halDeviceType;
+    char halDeviceAddress[AUDIO_DEVICE_MAX_ADDRESS_LEN];
+    if (deviceAddressToHal(address, &halDeviceType, halDeviceAddress) != NO_ERROR) {
+        return Result::INVALID_ARGUMENTS;
+    }
+    AudioParameter params{String8(halDeviceAddress)};
+    params.addInt(String8(name), halDeviceType);
     return setParams(params);
 }
 

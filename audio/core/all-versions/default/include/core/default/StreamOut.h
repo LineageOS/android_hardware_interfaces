@@ -56,6 +56,7 @@ struct StreamOut : public IStreamOut {
     Return<uint64_t> getFrameSize() override;
     Return<uint64_t> getFrameCount() override;
     Return<uint64_t> getBufferSize() override;
+#if MAJOR_VERSION <= 6
     Return<uint32_t> getSampleRate() override;
 #if MAJOR_VERSION == 2
     Return<void> getSupportedSampleRates(getSupportedSampleRates_cb _hidl_cb) override;
@@ -69,6 +70,10 @@ struct StreamOut : public IStreamOut {
     Return<AudioFormat> getFormat() override;
     Return<void> getSupportedFormats(getSupportedFormats_cb _hidl_cb) override;
     Return<Result> setFormat(AudioFormat format) override;
+#else
+    Return<void> getSupportedProfiles(getSupportedProfiles_cb _hidl_cb) override;
+    Return<Result> setAudioProperties(const AudioConfigBase& config) override;
+#endif  // MAJOR_VERSION <= 6
     Return<void> getAudioProperties(getAudioProperties_cb _hidl_cb) override;
     Return<Result> addEffect(uint64_t effectId) override;
     Return<Result> removeEffect(uint64_t effectId) override;
