@@ -343,6 +343,43 @@ void onAsyncNanEventScheduleUpdate(NanDataPathScheduleUpdateInd* event) {
         on_nan_event_schedule_update_user_callback(*event);
     }
 }
+
+// Callbacks for the various TWT operations.
+std::function<void(const TwtSetupResponse&)>
+    on_twt_event_setup_response_callback;
+void onAsyncTwtEventSetupResponse(TwtSetupResponse* event) {
+    const auto lock = hidl_sync_util::acquireGlobalLock();
+    if (on_twt_event_setup_response_callback && event) {
+        on_twt_event_setup_response_callback(*event);
+    }
+}
+
+std::function<void(const TwtTeardownCompletion&)>
+    on_twt_event_teardown_completion_callback;
+void onAsyncTwtEventTeardownCompletion(TwtTeardownCompletion* event) {
+    const auto lock = hidl_sync_util::acquireGlobalLock();
+    if (on_twt_event_teardown_completion_callback && event) {
+        on_twt_event_teardown_completion_callback(*event);
+    }
+}
+
+std::function<void(const TwtInfoFrameReceived&)>
+    on_twt_event_info_frame_received_callback;
+void onAsyncTwtEventInfoFrameReceived(TwtInfoFrameReceived* event) {
+    const auto lock = hidl_sync_util::acquireGlobalLock();
+    if (on_twt_event_info_frame_received_callback && event) {
+        on_twt_event_info_frame_received_callback(*event);
+    }
+}
+
+std::function<void(const TwtDeviceNotify&)> on_twt_event_device_notify_callback;
+void onAsyncTwtEventDeviceNotify(TwtDeviceNotify* event) {
+    const auto lock = hidl_sync_util::acquireGlobalLock();
+    if (on_twt_event_device_notify_callback && event) {
+        on_twt_event_device_notify_callback(*event);
+    }
+}
+
 // End of the free-standing "C" style callbacks.
 
 WifiLegacyHal::WifiLegacyHal(
@@ -1529,6 +1566,70 @@ wifi_error WifiLegacyHal::setCoexUnsafeChannels(
         restrictions);
 }
 
+wifi_error WifiLegacyHal::setVoipMode(const std::string& iface_name,
+                                      wifi_voip_mode mode) {
+    return global_func_table_.wifi_set_voip_mode(getIfaceHandle(iface_name),
+                                                 mode);
+}
+
+wifi_error WifiLegacyHal::twtRegisterHandler(
+    const std::string& iface_name, const TwtCallbackHandlers& user_callbacks) {
+    on_twt_event_setup_response_callback = user_callbacks.on_setup_response;
+    on_twt_event_teardown_completion_callback =
+        user_callbacks.on_teardown_completion;
+    on_twt_event_info_frame_received_callback =
+        user_callbacks.on_info_frame_received;
+    on_twt_event_device_notify_callback = user_callbacks.on_device_notify;
+
+    return global_func_table_.wifi_twt_register_handler(
+        getIfaceHandle(iface_name),
+        {onAsyncTwtEventSetupResponse, onAsyncTwtEventTeardownCompletion,
+         onAsyncTwtEventInfoFrameReceived, onAsyncTwtEventDeviceNotify});
+}
+
+std::pair<wifi_error, TwtCapabilitySet> WifiLegacyHal::twtGetCapability(
+    const std::string& iface_name) {
+    TwtCapabilitySet capSet;
+    wifi_error status = global_func_table_.wifi_twt_get_capability(
+        getIfaceHandle(iface_name), &capSet);
+    return {status, capSet};
+}
+
+wifi_error WifiLegacyHal::twtSetupRequest(const std::string& iface_name,
+                                          const TwtSetupRequest& msg) {
+    TwtSetupRequest msgInternal(msg);
+    return global_func_table_.wifi_twt_setup_request(getIfaceHandle(iface_name),
+                                                     &msgInternal);
+}
+
+wifi_error WifiLegacyHal::twtTearDownRequest(const std::string& iface_name,
+                                             const TwtTeardownRequest& msg) {
+    TwtTeardownRequest msgInternal(msg);
+    return global_func_table_.wifi_twt_teardown_request(
+        getIfaceHandle(iface_name), &msgInternal);
+}
+
+wifi_error WifiLegacyHal::twtInfoFrameRequest(const std::string& iface_name,
+                                              const TwtInfoFrameRequest& msg) {
+    TwtInfoFrameRequest msgInternal(msg);
+    return global_func_table_.wifi_twt_info_frame_request(
+        getIfaceHandle(iface_name), &msgInternal);
+}
+
+std::pair<wifi_error, TwtStats> WifiLegacyHal::twtGetStats(
+    const std::string& iface_name, uint8_t configId) {
+    TwtStats stats;
+    wifi_error status = global_func_table_.wifi_twt_get_stats(
+        getIfaceHandle(iface_name), configId, &stats);
+    return {status, stats};
+}
+
+wifi_error WifiLegacyHal::twtClearStats(const std::string& iface_name,
+                                        uint8_t configId) {
+    return global_func_table_.wifi_twt_clear_stats(getIfaceHandle(iface_name),
+                                                   configId);
+}
+
 void WifiLegacyHal::invalidate() {
     global_handle_ = nullptr;
     iface_name_to_handle_.clear();
@@ -1560,6 +1661,10 @@ void WifiLegacyHal::invalidate() {
     on_nan_event_range_request_user_callback = nullptr;
     on_nan_event_range_report_user_callback = nullptr;
     on_nan_event_schedule_update_user_callback = nullptr;
+    on_twt_event_setup_response_callback = nullptr;
+    on_twt_event_teardown_completion_callback = nullptr;
+    on_twt_event_info_frame_received_callback = nullptr;
+    on_twt_event_device_notify_callback = nullptr;
 }
 
 }  // namespace legacy_hal

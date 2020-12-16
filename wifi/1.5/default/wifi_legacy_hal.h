@@ -164,6 +164,18 @@ typedef struct {
 using on_radio_mode_change_callback =
     std::function<void(const std::vector<WifiMacInfo>&)>;
 
+// TWT response and event callbacks struct.
+struct TwtCallbackHandlers {
+    // Callback for TWT setup response
+    std::function<void(const TwtSetupResponse&)> on_setup_response;
+    // Callback for TWT teardown completion
+    std::function<void(const TwtTeardownCompletion&)> on_teardown_completion;
+    // Callback for TWT info frame received event
+    std::function<void(const TwtInfoFrameReceived&)> on_info_frame_received;
+    // Callback for TWT notification from the device
+    std::function<void(const TwtDeviceNotify&)> on_device_notify;
+};
+
 /**
  * Class that encapsulates all legacy HAL interactions.
  * This class manages the lifetime of the event loop thread used by legacy HAL.
@@ -390,6 +402,28 @@ class WifiLegacyHal {
     virtual wifi_error setCoexUnsafeChannels(
         std::vector<wifi_coex_unsafe_channel> unsafe_channels,
         uint32_t restrictions);
+
+    wifi_error setVoipMode(const std::string& iface_name, wifi_voip_mode mode);
+
+    wifi_error twtRegisterHandler(const std::string& iface_name,
+                                  const TwtCallbackHandlers& handler);
+
+    std::pair<wifi_error, TwtCapabilitySet> twtGetCapability(
+        const std::string& iface_name);
+
+    wifi_error twtSetupRequest(const std::string& iface_name,
+                               const TwtSetupRequest& msg);
+
+    wifi_error twtTearDownRequest(const std::string& iface_name,
+                                  const TwtTeardownRequest& msg);
+
+    wifi_error twtInfoFrameRequest(const std::string& iface_name,
+                                   const TwtInfoFrameRequest& msg);
+
+    std::pair<wifi_error, TwtStats> twtGetStats(const std::string& iface_name,
+                                                uint8_t configId);
+
+    wifi_error twtClearStats(const std::string& iface_name, uint8_t configId);
 
    private:
     // Retrieve interface handles for all the available interfaces.
