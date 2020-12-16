@@ -55,7 +55,15 @@ struct AutomaticGainControlEffect : public IAutomaticGainControlEffect {
     Return<Result> reset() override;
     Return<Result> enable() override;
     Return<Result> disable() override;
+#if MAJOR_VERSION <= 6
+    Return<Result> setAudioSource(AudioSource source) override;
     Return<Result> setDevice(AudioDeviceBitfield device) override;
+    Return<Result> setInputDevice(AudioDeviceBitfield device) override;
+#else
+    Return<Result> setAudioSource(const AudioSource& source) override;
+    Return<Result> setDevice(const DeviceAddress& device) override;
+    Return<Result> setInputDevice(const DeviceAddress& device) override;
+#endif
     Return<void> setAndGetVolume(const hidl_vec<uint32_t>& volumes,
                                  setAndGetVolume_cb _hidl_cb) override;
     Return<Result> volumeChangeNotification(const hidl_vec<uint32_t>& volumes) override;
@@ -63,14 +71,12 @@ struct AutomaticGainControlEffect : public IAutomaticGainControlEffect {
     Return<Result> setConfigReverse(
         const EffectConfig& config, const sp<IEffectBufferProviderCallback>& inputBufferProvider,
         const sp<IEffectBufferProviderCallback>& outputBufferProvider) override;
-    Return<Result> setInputDevice(AudioDeviceBitfield device) override;
     Return<void> getConfig(getConfig_cb _hidl_cb) override;
     Return<void> getConfigReverse(getConfigReverse_cb _hidl_cb) override;
     Return<void> getSupportedAuxChannelsConfigs(
         uint32_t maxConfigs, getSupportedAuxChannelsConfigs_cb _hidl_cb) override;
     Return<void> getAuxChannelsConfig(getAuxChannelsConfig_cb _hidl_cb) override;
     Return<Result> setAuxChannelsConfig(const EffectAuxChannelsConfig& config) override;
-    Return<Result> setAudioSource(AudioSource source) override;
     Return<Result> offload(const EffectOffloadParameter& param) override;
     Return<void> getDescriptor(getDescriptor_cb _hidl_cb) override;
     Return<void> prepareForProcessing(prepareForProcessing_cb _hidl_cb) override;
@@ -107,7 +113,7 @@ struct AutomaticGainControlEffect : public IAutomaticGainControlEffect {
    private:
     sp<Effect> mEffect;
 
-    virtual ~AutomaticGainControlEffect();
+    virtual ~AutomaticGainControlEffect() = default;
 
     void propertiesFromHal(const t_agc_settings& halProperties,
                            IAutomaticGainControlEffect::AllProperties* properties);
