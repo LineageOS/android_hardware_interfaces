@@ -28,7 +28,7 @@ namespace common {
 namespace CPP_VERSION {
 namespace implementation {
 
-status_t HidlUtils::audioConfigFromHal(const audio_config_t& halConfig, AudioConfig* config) {
+status_t HidlUtils::audioConfigFromHal(const audio_config_t& halConfig, bool, AudioConfig* config) {
     config->sampleRateHz = halConfig.sample_rate;
     config->channelMask = EnumBitfield<AudioChannelMask>(halConfig.channel_mask);
     config->format = AudioFormat(halConfig.format);
@@ -47,8 +47,8 @@ status_t HidlUtils::audioConfigToHal(const AudioConfig& config, audio_config_t* 
     return NO_ERROR;
 }
 
-void HidlUtils::audioGainConfigFromHal(const struct audio_gain_config& halConfig,
-                                       AudioGainConfig* config) {
+status_t HidlUtils::audioGainConfigFromHal(const struct audio_gain_config& halConfig, bool,
+                                           AudioGainConfig* config) {
     config->index = halConfig.index;
     config->mode = EnumBitfield<AudioGainMode>(halConfig.mode);
     config->channelMask = EnumBitfield<AudioChannelMask>(halConfig.channel_mask);
@@ -56,6 +56,7 @@ void HidlUtils::audioGainConfigFromHal(const struct audio_gain_config& halConfig
         config->values[i] = halConfig.values[i];
     }
     config->rampDurationMs = halConfig.ramp_duration_ms;
+    return NO_ERROR;
 }
 
 status_t HidlUtils::audioGainConfigToHal(const AudioGainConfig& config,
@@ -71,7 +72,7 @@ status_t HidlUtils::audioGainConfigToHal(const AudioGainConfig& config,
     return NO_ERROR;
 }
 
-void HidlUtils::audioGainFromHal(const struct audio_gain& halGain, AudioGain* gain) {
+status_t HidlUtils::audioGainFromHal(const struct audio_gain& halGain, bool, AudioGain* gain) {
     gain->mode = EnumBitfield<AudioGainMode>(halGain.mode);
     gain->channelMask = EnumBitfield<AudioChannelMask>(halGain.channel_mask);
     gain->minValue = halGain.min_value;
@@ -80,6 +81,7 @@ void HidlUtils::audioGainFromHal(const struct audio_gain& halGain, AudioGain* ga
     gain->stepValue = halGain.step_value;
     gain->minRampMs = halGain.min_ramp_ms;
     gain->maxRampMs = halGain.max_ramp_ms;
+    return NO_ERROR;
 }
 
 status_t HidlUtils::audioGainToHal(const AudioGain& gain, struct audio_gain* halGain) {
@@ -182,7 +184,7 @@ status_t HidlUtils::audioPortConfigFromHal(const struct audio_port_config& halCo
     config->sampleRateHz = halConfig.sample_rate;
     config->channelMask = EnumBitfield<AudioChannelMask>(halConfig.channel_mask);
     config->format = AudioFormat(halConfig.format);
-    audioGainConfigFromHal(halConfig.gain, &config->gain);
+    audioGainConfigFromHal(halConfig.gain, false /*isInput--ignored*/, &config->gain);
     switch (halConfig.type) {
         case AUDIO_PORT_TYPE_NONE:
             break;
@@ -272,7 +274,7 @@ status_t HidlUtils::audioPortFromHal(const struct audio_port& halPort, AudioPort
     }
     port->gains.resize(halPort.num_gains);
     for (size_t i = 0; i < halPort.num_gains; ++i) {
-        audioGainFromHal(halPort.gains[i], &port->gains[i]);
+        audioGainFromHal(halPort.gains[i], false /*isInput--ignored*/, &port->gains[i]);
     }
     audioPortConfigFromHal(halPort.active_config, &port->activeConfig);
     switch (halPort.type) {
@@ -350,6 +352,18 @@ status_t HidlUtils::audioPortToHal(const AudioPort& port, struct audio_port* hal
     }
     return NO_ERROR;
 }
+
+#if MAJOR_VERSION >= 5
+status_t HidlUtils::deviceAddressToHal(const DeviceAddress& device, audio_devices_t* halDeviceType,
+                                       char* halDeviceAddress) {
+    return deviceAddressToHalImpl(device, halDeviceType, halDeviceAddress);
+}
+
+status_t HidlUtils::deviceAddressFromHal(audio_devices_t halDeviceType,
+                                         const char* halDeviceAddress, DeviceAddress* device) {
+    return deviceAddressFromHalImpl(halDeviceType, halDeviceAddress, device);
+}
+#endif
 
 }  // namespace implementation
 }  // namespace CPP_VERSION
