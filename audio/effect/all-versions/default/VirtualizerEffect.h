@@ -39,7 +39,9 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
+#if MAJOR_VERSION <= 6
 using ::android::hardware::audio::common::CPP_VERSION::implementation::AudioChannelBitfield;
+#endif
 using namespace ::android::hardware::audio::common::CPP_VERSION;
 using namespace ::android::hardware::audio::effect::CPP_VERSION;
 
@@ -54,7 +56,15 @@ struct VirtualizerEffect : public IVirtualizerEffect {
     Return<Result> reset() override;
     Return<Result> enable() override;
     Return<Result> disable() override;
+#if MAJOR_VERSION <= 6
+    Return<Result> setAudioSource(AudioSource source) override;
     Return<Result> setDevice(AudioDeviceBitfield device) override;
+    Return<Result> setInputDevice(AudioDeviceBitfield device) override;
+#else
+    Return<Result> setAudioSource(const AudioSource& source) override;
+    Return<Result> setDevice(const DeviceAddress& device) override;
+    Return<Result> setInputDevice(const DeviceAddress& device) override;
+#endif
     Return<void> setAndGetVolume(const hidl_vec<uint32_t>& volumes,
                                  setAndGetVolume_cb _hidl_cb) override;
     Return<Result> volumeChangeNotification(const hidl_vec<uint32_t>& volumes) override;
@@ -62,14 +72,12 @@ struct VirtualizerEffect : public IVirtualizerEffect {
     Return<Result> setConfigReverse(
         const EffectConfig& config, const sp<IEffectBufferProviderCallback>& inputBufferProvider,
         const sp<IEffectBufferProviderCallback>& outputBufferProvider) override;
-    Return<Result> setInputDevice(AudioDeviceBitfield device) override;
     Return<void> getConfig(getConfig_cb _hidl_cb) override;
     Return<void> getConfigReverse(getConfigReverse_cb _hidl_cb) override;
     Return<void> getSupportedAuxChannelsConfigs(
         uint32_t maxConfigs, getSupportedAuxChannelsConfigs_cb _hidl_cb) override;
     Return<void> getAuxChannelsConfig(getAuxChannelsConfig_cb _hidl_cb) override;
     Return<Result> setAuxChannelsConfig(const EffectAuxChannelsConfig& config) override;
-    Return<Result> setAudioSource(AudioSource source) override;
     Return<Result> offload(const EffectOffloadParameter& param) override;
     Return<void> getDescriptor(getDescriptor_cb _hidl_cb) override;
     Return<void> prepareForProcessing(prepareForProcessing_cb _hidl_cb) override;
@@ -96,18 +104,27 @@ struct VirtualizerEffect : public IVirtualizerEffect {
     Return<bool> isStrengthSupported() override;
     Return<Result> setStrength(uint16_t strength) override;
     Return<void> getStrength(getStrength_cb _hidl_cb) override;
+    Return<void> getVirtualizationMode(getVirtualizationMode_cb _hidl_cb) override;
+#if MAJOR_VERSION <= 6
     Return<void> getVirtualSpeakerAngles(AudioChannelBitfield mask, AudioDevice device,
                                          getVirtualSpeakerAngles_cb _hidl_cb) override;
     Return<Result> forceVirtualizationMode(AudioDevice device) override;
-    Return<void> getVirtualizationMode(getVirtualizationMode_cb _hidl_cb) override;
+#else
+    Return<void> getVirtualSpeakerAngles(const AudioChannelMask& mask, const DeviceAddress& device,
+                                         getVirtualSpeakerAngles_cb _hidl_cb) override;
+    Return<Result> forceVirtualizationMode(const DeviceAddress& device) override;
+#endif
 
-   private:
+  private:
     sp<Effect> mEffect;
 
-    virtual ~VirtualizerEffect();
+    virtual ~VirtualizerEffect() = default;
 
-    void speakerAnglesFromHal(const int32_t* halAngles, uint32_t channelCount,
-                              hidl_vec<SpeakerAngle>& speakerAngles);
+#if MAJOR_VERSION <= 6
+    using SpeakerAngles = hidl_vec<SpeakerAngle>;
+#endif
+    static status_t speakerAnglesFromHal(const int32_t* halAngles, uint32_t channelCount,
+                                         SpeakerAngles& speakerAngles);
 };
 
 }  // namespace implementation

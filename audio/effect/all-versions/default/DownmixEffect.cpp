@@ -30,9 +30,8 @@ namespace effect {
 namespace CPP_VERSION {
 namespace implementation {
 
-DownmixEffect::DownmixEffect(effect_handle_t handle) : mEffect(new Effect(handle)) {}
-
-DownmixEffect::~DownmixEffect() {}
+DownmixEffect::DownmixEffect(effect_handle_t handle)
+    : mEffect(new Effect(false /*isInput*/, handle)) {}
 
 // Methods from ::android::hardware::audio::effect::CPP_VERSION::IEffect follow.
 Return<Result> DownmixEffect::init() {
@@ -57,9 +56,31 @@ Return<Result> DownmixEffect::disable() {
     return mEffect->disable();
 }
 
+#if MAJOR_VERSION <= 6
+Return<Result> DownmixEffect::setAudioSource(AudioSource source) {
+    return mEffect->setAudioSource(source);
+}
+
 Return<Result> DownmixEffect::setDevice(AudioDeviceBitfield device) {
     return mEffect->setDevice(device);
 }
+
+Return<Result> DownmixEffect::setInputDevice(AudioDeviceBitfield device) {
+    return mEffect->setInputDevice(device);
+}
+#else
+Return<Result> DownmixEffect::setAudioSource(const AudioSource& source) {
+    return mEffect->setAudioSource(source);
+}
+
+Return<Result> DownmixEffect::setDevice(const DeviceAddress& device) {
+    return mEffect->setDevice(device);
+}
+
+Return<Result> DownmixEffect::setInputDevice(const DeviceAddress& device) {
+    return mEffect->setInputDevice(device);
+}
+#endif
 
 Return<void> DownmixEffect::setAndGetVolume(const hidl_vec<uint32_t>& volumes,
                                             setAndGetVolume_cb _hidl_cb) {
@@ -78,10 +99,6 @@ Return<Result> DownmixEffect::setConfigReverse(
     const EffectConfig& config, const sp<IEffectBufferProviderCallback>& inputBufferProvider,
     const sp<IEffectBufferProviderCallback>& outputBufferProvider) {
     return mEffect->setConfigReverse(config, inputBufferProvider, outputBufferProvider);
-}
-
-Return<Result> DownmixEffect::setInputDevice(AudioDeviceBitfield device) {
-    return mEffect->setInputDevice(device);
 }
 
 Return<void> DownmixEffect::getConfig(getConfig_cb _hidl_cb) {
@@ -103,10 +120,6 @@ Return<void> DownmixEffect::getAuxChannelsConfig(getAuxChannelsConfig_cb _hidl_c
 
 Return<Result> DownmixEffect::setAuxChannelsConfig(const EffectAuxChannelsConfig& config) {
     return mEffect->setAuxChannelsConfig(config);
-}
-
-Return<Result> DownmixEffect::setAudioSource(AudioSource source) {
-    return mEffect->setAudioSource(source);
 }
 
 Return<Result> DownmixEffect::offload(const EffectOffloadParameter& param) {
