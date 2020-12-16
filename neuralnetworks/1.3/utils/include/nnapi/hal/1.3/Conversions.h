@@ -44,7 +44,7 @@ GeneralResult<Request::MemoryPool> unvalidatedConvert(
         const hal::V1_3::Request::MemoryPool& memoryPool);
 GeneralResult<OptionalTimePoint> unvalidatedConvert(
         const hal::V1_3::OptionalTimePoint& optionalTimePoint);
-GeneralResult<OptionalTimeoutDuration> unvalidatedConvert(
+GeneralResult<OptionalDuration> unvalidatedConvert(
         const hal::V1_3::OptionalTimeoutDuration& optionalTimeoutDuration);
 GeneralResult<ErrorStatus> unvalidatedConvert(const hal::V1_3::ErrorStatus& errorStatus);
 
@@ -54,7 +54,7 @@ GeneralResult<Model> convert(const hal::V1_3::Model& model);
 GeneralResult<BufferDesc> convert(const hal::V1_3::BufferDesc& bufferDesc);
 GeneralResult<Request> convert(const hal::V1_3::Request& request);
 GeneralResult<OptionalTimePoint> convert(const hal::V1_3::OptionalTimePoint& optionalTimePoint);
-GeneralResult<OptionalTimeoutDuration> convert(
+GeneralResult<OptionalDuration> convert(
         const hal::V1_3::OptionalTimeoutDuration& optionalTimeoutDuration);
 GeneralResult<ErrorStatus> convert(const hal::V1_3::ErrorStatus& errorStatus);
 
@@ -86,7 +86,7 @@ nn::GeneralResult<Request::MemoryPool> unvalidatedConvert(
 nn::GeneralResult<OptionalTimePoint> unvalidatedConvert(
         const nn::OptionalTimePoint& optionalTimePoint);
 nn::GeneralResult<OptionalTimeoutDuration> unvalidatedConvert(
-        const nn::OptionalTimeoutDuration& optionalTimeoutDuration);
+        const nn::OptionalDuration& optionalTimeoutDuration);
 nn::GeneralResult<ErrorStatus> unvalidatedConvert(const nn::ErrorStatus& errorStatus);
 
 nn::GeneralResult<Priority> convert(const nn::Priority& priority);
@@ -96,7 +96,7 @@ nn::GeneralResult<BufferDesc> convert(const nn::BufferDesc& bufferDesc);
 nn::GeneralResult<Request> convert(const nn::Request& request);
 nn::GeneralResult<OptionalTimePoint> convert(const nn::OptionalTimePoint& optionalTimePoint);
 nn::GeneralResult<OptionalTimeoutDuration> convert(
-        const nn::OptionalTimeoutDuration& optionalTimeoutDuration);
+        const nn::OptionalDuration& optionalTimeoutDuration);
 nn::GeneralResult<ErrorStatus> convert(const nn::ErrorStatus& errorStatus);
 
 nn::GeneralResult<hidl_handle> convert(const nn::SharedHandle& handle);

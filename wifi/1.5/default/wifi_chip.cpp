@@ -116,8 +116,8 @@ std::vector<std::string> getPredefinedApIfaceNames(bool is_bridged) {
     ifnames.push_back(buffer.data());
     if (is_bridged) {
         buffer.fill(0);
-        if (property_get("ro.vendor.wifi.sap.concurrent.interface",
-                         buffer.data(), nullptr) == 0) {
+        if (property_get("ro.vendor.wifi.sap.concurrent.iface", buffer.data(),
+                         nullptr) == 0) {
             return ifnames;
         }
         ifnames.push_back(buffer.data());
@@ -1841,8 +1841,8 @@ std::vector<std::string> WifiChip::allocateBridgedApInstanceNames() {
     } else {
         int num_ifaces_need_to_allocate = 2 - instances.size();
         for (int i = 0; i < num_ifaces_need_to_allocate; i++) {
-            std::string instance_name =
-                allocateApOrStaIfaceName(IfaceType::AP, startIdxOfApIface());
+            std::string instance_name = allocateApOrStaIfaceName(
+                IfaceType::AP, startIdxOfApIface() + i);
             if (!instance_name.empty()) {
                 instances.push_back(instance_name);
             }

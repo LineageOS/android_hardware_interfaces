@@ -30,8 +30,12 @@
 #include <utility>
 #include <vector>
 
+// See hardware/interfaces/neuralnetworks/utils/README.md for more information on HIDL interface
+// lifetimes across processes and for protecting asynchronous calls across HIDL.
+
 namespace android::hardware::neuralnetworks::V1_2::utils {
 
+// Class that adapts V1_2::IPreparedModel to nn::IPreparedModel.
 class PreparedModel final : public nn::IPreparedModel {
     struct PrivateConstructorTag {};
 
@@ -45,13 +49,13 @@ class PreparedModel final : public nn::IPreparedModel {
     nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> execute(
             const nn::Request& request, nn::MeasureTiming measure,
             const nn::OptionalTimePoint& deadline,
-            const nn::OptionalTimeoutDuration& loopTimeoutDuration) const override;
+            const nn::OptionalDuration& loopTimeoutDuration) const override;
 
     nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>> executeFenced(
             const nn::Request& request, const std::vector<nn::SyncFence>& waitFor,
             nn::MeasureTiming measure, const nn::OptionalTimePoint& deadline,
-            const nn::OptionalTimeoutDuration& loopTimeoutDuration,
-            const nn::OptionalTimeoutDuration& timeoutDurationAfterFence) const override;
+            const nn::OptionalDuration& loopTimeoutDuration,
+            const nn::OptionalDuration& timeoutDurationAfterFence) const override;
 
     std::any getUnderlyingResource() const override;
 

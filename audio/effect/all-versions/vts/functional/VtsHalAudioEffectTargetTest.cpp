@@ -263,7 +263,7 @@ void AudioEffectHidlTest::getChannelCount(uint32_t* channelCount) {
         static_cast<audio_channel_mask_t>(currentConfig.outputCfg.channels));
 #else
     *channelCount = android::audio::policy::configuration::V7_0::getChannelCount(
-            currentConfig.outputCfg.channels);
+            currentConfig.outputCfg.base.channelMask);
     ASSERT_NE(*channelCount, 0);
 #endif
 }
@@ -353,8 +353,14 @@ inline bool operator==(const AudioBuffer& lhs, const AudioBuffer& rhs) {
 }
 
 inline bool operator==(const EffectBufferConfig& lhs, const EffectBufferConfig& rhs) {
-    return lhs.buffer == rhs.buffer && lhs.samplingRateHz == rhs.samplingRateHz &&
-           lhs.channels == rhs.channels && lhs.format == rhs.format &&
+    return lhs.buffer == rhs.buffer &&
+#if MAJOR_VERSION <= 6
+           lhs.samplingRateHz == rhs.samplingRateHz && lhs.channels == rhs.channels &&
+           lhs.format == rhs.format &&
+#else
+           lhs.base.sampleRateHz == rhs.base.sampleRateHz &&
+           lhs.base.channelMask == rhs.base.channelMask && lhs.base.format == rhs.base.format &&
+#endif
            lhs.accessMode == rhs.accessMode && lhs.mask == rhs.mask;
 }
 

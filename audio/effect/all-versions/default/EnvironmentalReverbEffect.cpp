@@ -31,9 +31,7 @@ namespace CPP_VERSION {
 namespace implementation {
 
 EnvironmentalReverbEffect::EnvironmentalReverbEffect(effect_handle_t handle)
-    : mEffect(new Effect(handle)) {}
-
-EnvironmentalReverbEffect::~EnvironmentalReverbEffect() {}
+    : mEffect(new Effect(false /*isInput*/, handle)) {}
 
 void EnvironmentalReverbEffect::propertiesFromHal(
     const t_reverb_settings& halProperties, IEnvironmentalReverbEffect::AllProperties* properties) {
@@ -86,9 +84,31 @@ Return<Result> EnvironmentalReverbEffect::disable() {
     return mEffect->disable();
 }
 
+#if MAJOR_VERSION <= 6
+Return<Result> EnvironmentalReverbEffect::setAudioSource(AudioSource source) {
+    return mEffect->setAudioSource(source);
+}
+
 Return<Result> EnvironmentalReverbEffect::setDevice(AudioDeviceBitfield device) {
     return mEffect->setDevice(device);
 }
+
+Return<Result> EnvironmentalReverbEffect::setInputDevice(AudioDeviceBitfield device) {
+    return mEffect->setInputDevice(device);
+}
+#else
+Return<Result> EnvironmentalReverbEffect::setAudioSource(const AudioSource& source) {
+    return mEffect->setAudioSource(source);
+}
+
+Return<Result> EnvironmentalReverbEffect::setDevice(const DeviceAddress& device) {
+    return mEffect->setDevice(device);
+}
+
+Return<Result> EnvironmentalReverbEffect::setInputDevice(const DeviceAddress& device) {
+    return mEffect->setInputDevice(device);
+}
+#endif
 
 Return<void> EnvironmentalReverbEffect::setAndGetVolume(const hidl_vec<uint32_t>& volumes,
                                                         setAndGetVolume_cb _hidl_cb) {
@@ -108,10 +128,6 @@ Return<Result> EnvironmentalReverbEffect::setConfigReverse(
     const EffectConfig& config, const sp<IEffectBufferProviderCallback>& inputBufferProvider,
     const sp<IEffectBufferProviderCallback>& outputBufferProvider) {
     return mEffect->setConfigReverse(config, inputBufferProvider, outputBufferProvider);
-}
-
-Return<Result> EnvironmentalReverbEffect::setInputDevice(AudioDeviceBitfield device) {
-    return mEffect->setInputDevice(device);
 }
 
 Return<void> EnvironmentalReverbEffect::getConfig(getConfig_cb _hidl_cb) {
@@ -134,10 +150,6 @@ Return<void> EnvironmentalReverbEffect::getAuxChannelsConfig(getAuxChannelsConfi
 Return<Result> EnvironmentalReverbEffect::setAuxChannelsConfig(
     const EffectAuxChannelsConfig& config) {
     return mEffect->setAuxChannelsConfig(config);
-}
-
-Return<Result> EnvironmentalReverbEffect::setAudioSource(AudioSource source) {
-    return mEffect->setAudioSource(source);
 }
 
 Return<Result> EnvironmentalReverbEffect::offload(const EffectOffloadParameter& param) {

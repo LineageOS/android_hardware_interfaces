@@ -1179,9 +1179,11 @@ static void testGetAudioProperties(IStream* stream, AudioConfig expectedConfig) 
     EXPECT_EQ(expectedConfig.channelMask, mask);
     EXPECT_EQ(expectedConfig.format, format);
 #elif MAJOR_VERSION >= 7
+    Result res;
     AudioConfigBase actualConfig{};
-    auto ret = stream->getAudioProperties(returnIn(actualConfig));
+    auto ret = stream->getAudioProperties(returnIn(res, actualConfig));
     EXPECT_TRUE(ret.isOk());
+    EXPECT_EQ(Result::OK, res);
     EXPECT_EQ(expectedConfig.base.sampleRateHz, actualConfig.sampleRateHz);
     EXPECT_EQ(expectedConfig.base.channelMask, actualConfig.channelMask);
     EXPECT_EQ(expectedConfig.base.format, actualConfig.format);
