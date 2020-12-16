@@ -43,6 +43,7 @@ filegroup {
     name: "android.hardware.audio.common-util@2-6",
     srcs: [
         "HidlUtils.cpp",
+        "HidlUtilsCommon.cpp",
         "UuidUtils.cpp",
     ],
 }
@@ -132,6 +133,7 @@ cc_library {
     defaults: ["android.hardware.audio.common-util_default"],
     srcs: [
         "7.0/HidlUtils.cpp",
+        "HidlUtilsCommon.cpp",
         "UuidUtils.cpp",
     ],
     shared_libs: [
