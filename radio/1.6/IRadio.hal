@@ -330,6 +330,9 @@ interface IRadio extends @1.5::IRadio {
      * Instruct the radio to *only* accept the types of network provided. This
      * is stronger than setPreferredNetworkType which is a suggestion.
      *
+     * In case of an emergency call, the modem is authorized to bypass this
+     * restriction.
+     *
      * @param serial Serial number of request.
      * @param networkTypeBitmap a 32-bit bearer bitmap of RadioAccessFamily
      *
