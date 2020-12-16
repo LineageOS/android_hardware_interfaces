@@ -33,9 +33,7 @@ namespace CPP_VERSION {
 namespace implementation {
 
 LoudnessEnhancerEffect::LoudnessEnhancerEffect(effect_handle_t handle)
-    : mEffect(new Effect(handle)) {}
-
-LoudnessEnhancerEffect::~LoudnessEnhancerEffect() {}
+    : mEffect(new Effect(false /*isInput*/, handle)) {}
 
 // Methods from ::android::hardware::audio::effect::CPP_VERSION::IEffect follow.
 Return<Result> LoudnessEnhancerEffect::init() {
@@ -60,9 +58,31 @@ Return<Result> LoudnessEnhancerEffect::disable() {
     return mEffect->disable();
 }
 
+#if MAJOR_VERSION <= 6
+Return<Result> LoudnessEnhancerEffect::setAudioSource(AudioSource source) {
+    return mEffect->setAudioSource(source);
+}
+
 Return<Result> LoudnessEnhancerEffect::setDevice(AudioDeviceBitfield device) {
     return mEffect->setDevice(device);
 }
+
+Return<Result> LoudnessEnhancerEffect::setInputDevice(AudioDeviceBitfield device) {
+    return mEffect->setInputDevice(device);
+}
+#else
+Return<Result> LoudnessEnhancerEffect::setAudioSource(const AudioSource& source) {
+    return mEffect->setAudioSource(source);
+}
+
+Return<Result> LoudnessEnhancerEffect::setDevice(const DeviceAddress& device) {
+    return mEffect->setDevice(device);
+}
+
+Return<Result> LoudnessEnhancerEffect::setInputDevice(const DeviceAddress& device) {
+    return mEffect->setInputDevice(device);
+}
+#endif
 
 Return<void> LoudnessEnhancerEffect::setAndGetVolume(const hidl_vec<uint32_t>& volumes,
                                                      setAndGetVolume_cb _hidl_cb) {
@@ -81,10 +101,6 @@ Return<Result> LoudnessEnhancerEffect::setConfigReverse(
     const EffectConfig& config, const sp<IEffectBufferProviderCallback>& inputBufferProvider,
     const sp<IEffectBufferProviderCallback>& outputBufferProvider) {
     return mEffect->setConfigReverse(config, inputBufferProvider, outputBufferProvider);
-}
-
-Return<Result> LoudnessEnhancerEffect::setInputDevice(AudioDeviceBitfield device) {
-    return mEffect->setInputDevice(device);
 }
 
 Return<void> LoudnessEnhancerEffect::getConfig(getConfig_cb _hidl_cb) {
@@ -106,10 +122,6 @@ Return<void> LoudnessEnhancerEffect::getAuxChannelsConfig(getAuxChannelsConfig_c
 
 Return<Result> LoudnessEnhancerEffect::setAuxChannelsConfig(const EffectAuxChannelsConfig& config) {
     return mEffect->setAuxChannelsConfig(config);
-}
-
-Return<Result> LoudnessEnhancerEffect::setAudioSource(AudioSource source) {
-    return mEffect->setAudioSource(source);
 }
 
 Return<Result> LoudnessEnhancerEffect::offload(const EffectOffloadParameter& param) {

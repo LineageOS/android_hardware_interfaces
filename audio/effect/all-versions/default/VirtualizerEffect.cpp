@@ -19,7 +19,9 @@
 #include "VirtualizerEffect.h"
 
 #include <memory.h>
+#include <stdlib.h>
 
+#include <HidlUtils.h>
 #include <android/log.h>
 #include <system/audio_effects/effect_virtualizer.h>
 
@@ -32,19 +34,10 @@ namespace effect {
 namespace CPP_VERSION {
 namespace implementation {
 
-VirtualizerEffect::VirtualizerEffect(effect_handle_t handle) : mEffect(new Effect(handle)) {}
+using ::android::hardware::audio::common::CPP_VERSION::implementation::HidlUtils;
 
-VirtualizerEffect::~VirtualizerEffect() {}
-
-void VirtualizerEffect::speakerAnglesFromHal(const int32_t* halAngles, uint32_t channelCount,
-                                             hidl_vec<SpeakerAngle>& speakerAngles) {
-    speakerAngles.resize(channelCount);
-    for (uint32_t i = 0; i < channelCount; ++i) {
-        speakerAngles[i].mask = AudioChannelBitfield(*halAngles++);
-        speakerAngles[i].azimuth = *halAngles++;
-        speakerAngles[i].elevation = *halAngles++;
-    }
-}
+VirtualizerEffect::VirtualizerEffect(effect_handle_t handle)
+    : mEffect(new Effect(false /*isInput*/, handle)) {}
 
 // Methods from ::android::hardware::audio::effect::CPP_VERSION::IEffect follow.
 Return<Result> VirtualizerEffect::init() {
@@ -69,9 +62,31 @@ Return<Result> VirtualizerEffect::disable() {
     return mEffect->disable();
 }
 
+#if MAJOR_VERSION <= 6
+Return<Result> VirtualizerEffect::setAudioSource(AudioSource source) {
+    return mEffect->setAudioSource(source);
+}
+
 Return<Result> VirtualizerEffect::setDevice(AudioDeviceBitfield device) {
     return mEffect->setDevice(device);
 }
+
+Return<Result> VirtualizerEffect::setInputDevice(AudioDeviceBitfield device) {
+    return mEffect->setInputDevice(device);
+}
+#else
+Return<Result> VirtualizerEffect::setAudioSource(const AudioSource& source) {
+    return mEffect->setAudioSource(source);
+}
+
+Return<Result> VirtualizerEffect::setDevice(const DeviceAddress& device) {
+    return mEffect->setDevice(device);
+}
+
+Return<Result> VirtualizerEffect::setInputDevice(const DeviceAddress& device) {
+    return mEffect->setInputDevice(device);
+}
+#endif
 
 Return<void> VirtualizerEffect::setAndGetVolume(const hidl_vec<uint32_t>& volumes,
                                                 setAndGetVolume_cb _hidl_cb) {
@@ -90,10 +105,6 @@ Return<Result> VirtualizerEffect::setConfigReverse(
     const EffectConfig& config, const sp<IEffectBufferProviderCallback>& inputBufferProvider,
     const sp<IEffectBufferProviderCallback>& outputBufferProvider) {
     return mEffect->setConfigReverse(config, inputBufferProvider, outputBufferProvider);
-}
-
-Return<Result> VirtualizerEffect::setInputDevice(AudioDeviceBitfield device) {
-    return mEffect->setInputDevice(device);
 }
 
 Return<void> VirtualizerEffect::getConfig(getConfig_cb _hidl_cb) {
@@ -115,10 +126,6 @@ Return<void> VirtualizerEffect::getAuxChannelsConfig(getAuxChannelsConfig_cb _hi
 
 Return<Result> VirtualizerEffect::setAuxChannelsConfig(const EffectAuxChannelsConfig& config) {
     return mEffect->setAuxChannelsConfig(config);
-}
-
-Return<Result> VirtualizerEffect::setAudioSource(AudioSource source) {
-    return mEffect->setAudioSource(source);
 }
 
 Return<Result> VirtualizerEffect::offload(const EffectOffloadParameter& param) {
@@ -192,42 +199,116 @@ Return<void> VirtualizerEffect::getStrength(getStrength_cb _hidl_cb) {
     return mEffect->getIntegerParam(VIRTUALIZER_PARAM_STRENGTH, _hidl_cb);
 }
 
-Return<void> VirtualizerEffect::getVirtualSpeakerAngles(AudioChannelBitfield mask,
-                                                        AudioDevice device,
-                                                        getVirtualSpeakerAngles_cb _hidl_cb) {
-    uint32_t channelCount =
-        audio_channel_count_from_out_mask(static_cast<audio_channel_mask_t>(mask));
+Return<void> VirtualizerEffect::getVirtualSpeakerAngles(
+#if MAJOR_VERSION <= 6
+        AudioChannelBitfield mask, AudioDevice device, getVirtualSpeakerAngles_cb _hidl_cb) {
+    audio_channel_mask_t halChannelMask = static_cast<audio_channel_mask_t>(mask);
+    audio_devices_t halDeviceType = static_cast<audio_devices_t>(device);
+#else
+        const AudioChannelMask& mask, const DeviceAddress& device,
+        getVirtualSpeakerAngles_cb _hidl_cb) {
+    audio_channel_mask_t halChannelMask;
+    if (status_t status = HidlUtils::audioChannelMaskToHal(mask, &halChannelMask);
+        status != NO_ERROR) {
+        _hidl_cb(mEffect->analyzeStatus(__func__, "audioChannelMaskToHal",
+                                        Effect::sContextConversion, status),
+                 SpeakerAngles{});
+        return Void();
+    }
+    audio_devices_t halDeviceType;
+    char halDeviceAddress[AUDIO_DEVICE_MAX_ADDRESS_LEN];
+    if (status_t status = HidlUtils::deviceAddressToHal(device, &halDeviceType, halDeviceAddress);
+        status != NO_ERROR) {
+        _hidl_cb(mEffect->analyzeStatus(__func__, "deviceAddressToHal", Effect::sContextConversion,
+                                        status),
+                 SpeakerAngles{});
+        return Void();
+    }
+#endif
+    uint32_t channelCount = audio_channel_count_from_out_mask(halChannelMask);
     size_t halSpeakerAnglesSize = sizeof(int32_t) * 3 * channelCount;
-    uint32_t halParam[3] = {VIRTUALIZER_PARAM_VIRTUAL_SPEAKER_ANGLES,
-                            static_cast<audio_channel_mask_t>(mask),
-                            static_cast<audio_devices_t>(device)};
-    hidl_vec<SpeakerAngle> speakerAngles;
+    uint32_t halParam[3] = {VIRTUALIZER_PARAM_VIRTUAL_SPEAKER_ANGLES, halChannelMask,
+                            halDeviceType};
+    SpeakerAngles speakerAngles;
+    status_t status = NO_ERROR;
     Result retval = mEffect->getParameterImpl(
-        sizeof(halParam), halParam, halSpeakerAnglesSize,
-        [&](uint32_t valueSize, const void* valueData) {
-            if (valueSize > halSpeakerAnglesSize) {
-                valueSize = halSpeakerAnglesSize;
-            } else if (valueSize < halSpeakerAnglesSize) {
-                channelCount = valueSize / (sizeof(int32_t) * 3);
-            }
-            speakerAnglesFromHal(reinterpret_cast<const int32_t*>(valueData), channelCount,
-                                 speakerAngles);
-        });
+            sizeof(halParam), halParam, halSpeakerAnglesSize,
+            [&](uint32_t valueSize, const void* valueData) {
+                if (valueSize < halSpeakerAnglesSize) {
+                    channelCount = valueSize / (sizeof(int32_t) * 3);
+                }
+                status = speakerAnglesFromHal(reinterpret_cast<const int32_t*>(valueData),
+                                              channelCount, speakerAngles);
+            });
+    if (retval == Result::OK) {
+        retval = mEffect->analyzeStatus(__func__, "speakerAnglesFromHal", "", status);
+    }
     _hidl_cb(retval, speakerAngles);
     return Void();
-}
-
-Return<Result> VirtualizerEffect::forceVirtualizationMode(AudioDevice device) {
-    return mEffect->setParam(VIRTUALIZER_PARAM_FORCE_VIRTUALIZATION_MODE,
-                             static_cast<audio_devices_t>(device));
 }
 
 Return<void> VirtualizerEffect::getVirtualizationMode(getVirtualizationMode_cb _hidl_cb) {
     uint32_t halMode = 0;
     Result retval = mEffect->getParam(VIRTUALIZER_PARAM_FORCE_VIRTUALIZATION_MODE, halMode);
+#if MAJOR_VERSION <= 6
     _hidl_cb(retval, AudioDevice(halMode));
+#else
+    DeviceAddress device;
+    (void)HidlUtils::deviceAddressFromHal(static_cast<audio_devices_t>(halMode), nullptr, &device);
+    _hidl_cb(retval, device);
+#endif
     return Void();
 }
+
+Return<Result> VirtualizerEffect::forceVirtualizationMode(
+#if MAJOR_VERSION <= 6
+        AudioDevice device) {
+    audio_devices_t halDeviceType = static_cast<audio_devices_t>(device);
+#else
+        const DeviceAddress& device) {
+    audio_devices_t halDeviceType;
+    char halDeviceAddress[AUDIO_DEVICE_MAX_ADDRESS_LEN];
+    (void)HidlUtils::deviceAddressToHal(device, &halDeviceType, halDeviceAddress);
+#endif
+    return mEffect->setParam(VIRTUALIZER_PARAM_FORCE_VIRTUALIZATION_MODE, halDeviceType);
+}
+
+#if MAJOR_VERSION <= 6
+// static
+status_t VirtualizerEffect::speakerAnglesFromHal(const int32_t* halAngles, uint32_t channelCount,
+                                                 hidl_vec<SpeakerAngle>& speakerAngles) {
+    speakerAngles.resize(channelCount);
+    for (uint32_t i = 0; i < channelCount; ++i) {
+        speakerAngles[i].mask = AudioChannelBitfield(*halAngles++);
+        speakerAngles[i].azimuth = *halAngles++;
+        speakerAngles[i].elevation = *halAngles++;
+    }
+    return NO_ERROR;
+}
+#else
+static int compare_channels(const void* lhs, const void* rhs) {
+    return *(int32_t*)lhs - *(int32_t*)rhs;
+}
+
+// static
+status_t VirtualizerEffect::speakerAnglesFromHal(const int32_t* halAngles, uint32_t channelCount,
+                                                 SpeakerAngles& speakerAngles) {
+    speakerAngles.azimuth.resize(channelCount);
+    speakerAngles.elevation.resize(channelCount);
+    int32_t halAnglesSorted[channelCount * 3];
+    memcpy(halAnglesSorted, halAngles, sizeof(halAnglesSorted));
+    // Ensure that channels are ordered from LSb to MSb.
+    qsort(halAnglesSorted, channelCount, sizeof(int32_t) * 3, compare_channels);
+    audio_channel_mask_t halMask = AUDIO_CHANNEL_NONE;
+    int32_t* halAnglesPtr = halAnglesSorted;
+    for (uint32_t i = 0; i < channelCount; ++i) {
+        halMask = static_cast<audio_channel_mask_t>(halMask | *halAnglesPtr++);
+        speakerAngles.azimuth[i] = *halAnglesPtr++;
+        speakerAngles.elevation[i] = *halAnglesPtr++;
+    }
+    return HidlUtils::audioChannelMaskFromHal(halMask, false /*isInput*/, &speakerAngles.mask);
+}
+#endif
 
 }  // namespace implementation
 }  // namespace CPP_VERSION

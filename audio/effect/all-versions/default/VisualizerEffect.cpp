@@ -31,9 +31,9 @@ namespace CPP_VERSION {
 namespace implementation {
 
 VisualizerEffect::VisualizerEffect(effect_handle_t handle)
-    : mEffect(new Effect(handle)), mCaptureSize(0), mMeasurementMode(MeasurementMode::NONE) {}
-
-VisualizerEffect::~VisualizerEffect() {}
+    : mEffect(new Effect(false /*isInput*/, handle)),
+      mCaptureSize(0),
+      mMeasurementMode(MeasurementMode::NONE) {}
 
 // Methods from ::android::hardware::audio::effect::CPP_VERSION::IEffect follow.
 Return<Result> VisualizerEffect::init() {
@@ -58,9 +58,31 @@ Return<Result> VisualizerEffect::disable() {
     return mEffect->disable();
 }
 
+#if MAJOR_VERSION <= 6
+Return<Result> VisualizerEffect::setAudioSource(AudioSource source) {
+    return mEffect->setAudioSource(source);
+}
+
 Return<Result> VisualizerEffect::setDevice(AudioDeviceBitfield device) {
     return mEffect->setDevice(device);
 }
+
+Return<Result> VisualizerEffect::setInputDevice(AudioDeviceBitfield device) {
+    return mEffect->setInputDevice(device);
+}
+#else
+Return<Result> VisualizerEffect::setAudioSource(const AudioSource& source) {
+    return mEffect->setAudioSource(source);
+}
+
+Return<Result> VisualizerEffect::setDevice(const DeviceAddress& device) {
+    return mEffect->setDevice(device);
+}
+
+Return<Result> VisualizerEffect::setInputDevice(const DeviceAddress& device) {
+    return mEffect->setInputDevice(device);
+}
+#endif
 
 Return<void> VisualizerEffect::setAndGetVolume(const hidl_vec<uint32_t>& volumes,
                                                setAndGetVolume_cb _hidl_cb) {
@@ -79,10 +101,6 @@ Return<Result> VisualizerEffect::setConfigReverse(
     const EffectConfig& config, const sp<IEffectBufferProviderCallback>& inputBufferProvider,
     const sp<IEffectBufferProviderCallback>& outputBufferProvider) {
     return mEffect->setConfigReverse(config, inputBufferProvider, outputBufferProvider);
-}
-
-Return<Result> VisualizerEffect::setInputDevice(AudioDeviceBitfield device) {
-    return mEffect->setInputDevice(device);
 }
 
 Return<void> VisualizerEffect::getConfig(getConfig_cb _hidl_cb) {
@@ -104,10 +122,6 @@ Return<void> VisualizerEffect::getAuxChannelsConfig(getAuxChannelsConfig_cb _hid
 
 Return<Result> VisualizerEffect::setAuxChannelsConfig(const EffectAuxChannelsConfig& config) {
     return mEffect->setAuxChannelsConfig(config);
-}
-
-Return<Result> VisualizerEffect::setAudioSource(AudioSource source) {
-    return mEffect->setAudioSource(source);
 }
 
 Return<Result> VisualizerEffect::offload(const EffectOffloadParameter& param) {

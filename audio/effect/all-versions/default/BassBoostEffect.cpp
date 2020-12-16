@@ -30,9 +30,8 @@ namespace effect {
 namespace CPP_VERSION {
 namespace implementation {
 
-BassBoostEffect::BassBoostEffect(effect_handle_t handle) : mEffect(new Effect(handle)) {}
-
-BassBoostEffect::~BassBoostEffect() {}
+BassBoostEffect::BassBoostEffect(effect_handle_t handle)
+    : mEffect(new Effect(false /*isInput*/, handle)) {}
 
 // Methods from ::android::hardware::audio::effect::CPP_VERSION::IEffect follow.
 Return<Result> BassBoostEffect::init() {
@@ -57,9 +56,31 @@ Return<Result> BassBoostEffect::disable() {
     return mEffect->disable();
 }
 
+#if MAJOR_VERSION <= 6
+Return<Result> BassBoostEffect::setAudioSource(AudioSource source) {
+    return mEffect->setAudioSource(source);
+}
+
 Return<Result> BassBoostEffect::setDevice(AudioDeviceBitfield device) {
     return mEffect->setDevice(device);
 }
+
+Return<Result> BassBoostEffect::setInputDevice(AudioDeviceBitfield device) {
+    return mEffect->setInputDevice(device);
+}
+#else
+Return<Result> BassBoostEffect::setAudioSource(const AudioSource& source) {
+    return mEffect->setAudioSource(source);
+}
+
+Return<Result> BassBoostEffect::setDevice(const DeviceAddress& device) {
+    return mEffect->setDevice(device);
+}
+
+Return<Result> BassBoostEffect::setInputDevice(const DeviceAddress& device) {
+    return mEffect->setInputDevice(device);
+}
+#endif
 
 Return<void> BassBoostEffect::setAndGetVolume(const hidl_vec<uint32_t>& volumes,
                                               setAndGetVolume_cb _hidl_cb) {
@@ -78,10 +99,6 @@ Return<Result> BassBoostEffect::setConfigReverse(
     const EffectConfig& config, const sp<IEffectBufferProviderCallback>& inputBufferProvider,
     const sp<IEffectBufferProviderCallback>& outputBufferProvider) {
     return mEffect->setConfigReverse(config, inputBufferProvider, outputBufferProvider);
-}
-
-Return<Result> BassBoostEffect::setInputDevice(AudioDeviceBitfield device) {
-    return mEffect->setInputDevice(device);
 }
 
 Return<void> BassBoostEffect::getConfig(getConfig_cb _hidl_cb) {
@@ -103,10 +120,6 @@ Return<void> BassBoostEffect::getAuxChannelsConfig(getAuxChannelsConfig_cb _hidl
 
 Return<Result> BassBoostEffect::setAuxChannelsConfig(const EffectAuxChannelsConfig& config) {
     return mEffect->setAuxChannelsConfig(config);
-}
-
-Return<Result> BassBoostEffect::setAudioSource(AudioSource source) {
-    return mEffect->setAudioSource(source);
 }
 
 Return<Result> BassBoostEffect::offload(const EffectOffloadParameter& param) {
