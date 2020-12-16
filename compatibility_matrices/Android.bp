@@ -60,5 +60,6 @@ vintf_compatibility_matrix {
     kernel_configs: [
         "kernel_config_current_4.19",
         "kernel_config_current_5.4",
+        "kernel_config_current_5.10",
     ],
 }
