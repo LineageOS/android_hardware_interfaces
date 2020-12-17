@@ -109,16 +109,33 @@ ndk::ScopedAStatus AudioControl::onDevicesToDuckChange(
     for (const DuckingInfo& duckingInfo : in_duckingInfos) {
         LOG(INFO) << "zone: " << duckingInfo.zoneId;
         LOG(INFO) << "Devices to duck:";
-        for (auto& addressToDuck : duckingInfo.deviceAddressesToDuck) {
+        for (const auto& addressToDuck : duckingInfo.deviceAddressesToDuck) {
             LOG(INFO) << addressToDuck;
         }
         LOG(INFO) << "Devices to unduck:";
-        for (auto& addressToUnduck : duckingInfo.deviceAddressesToUnduck) {
+        for (const auto& addressToUnduck : duckingInfo.deviceAddressesToUnduck) {
             LOG(INFO) << addressToUnduck;
         }
         LOG(INFO) << "Usages holding focus:";
-        for (auto& usage : duckingInfo.usagesHoldingFocus) {
+        for (const auto& usage : duckingInfo.usagesHoldingFocus) {
             LOG(INFO) << usage;
+        }
+    }
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus AudioControl::onDevicesToMuteChange(
+        const std::vector<MutingInfo>& in_mutingInfos) {
+    LOG(INFO) << "AudioControl::onDevicesToMuteChange";
+    for (const MutingInfo& mutingInfo : in_mutingInfos) {
+        LOG(INFO) << "zone: " << mutingInfo.zoneId;
+        LOG(INFO) << "Devices to mute:";
+        for (const auto& addressToMute : mutingInfo.deviceAddressesToMute) {
+            LOG(INFO) << addressToMute;
+        }
+        LOG(INFO) << "Devices to unmute:";
+        for (const auto& addressToUnmute : mutingInfo.deviceAddressesToUnmute) {
+            LOG(INFO) << addressToUnmute;
         }
     }
     return ndk::ScopedAStatus::ok();
