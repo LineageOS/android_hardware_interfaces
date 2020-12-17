@@ -93,14 +93,29 @@ class Attributes : private Buffer<nlattr> {
      */
     template <typename T>
     T get(nlattrtype_t attrtype) const {
-        const auto& ind = index();
-        const auto it = ind.find(attrtype);
-        if (it == ind.end()) {
+        const auto buffer = getBuffer(attrtype);
+        if (!buffer.has_value()) {
             LOG(WARNING) << "Netlink attribute is missing: " << attrtype;
             return T{};
         }
 
-        return parse<T>(it->second);
+        return parse<T>(*buffer);
+    }
+
+    /**
+     * Fetches underlying buffer of a given attribute.
+     *
+     * This is a low-level access method unlikely to be useful in most cases. Please consider
+     * using #get instead.
+     *
+     * \param attrtype Attribute to fetch
+     * \return Attribute buffer.
+     */
+    std::optional<Buffer<nlattr>> getBuffer(nlattrtype_t attrtype) const {
+        const auto& ind = index();
+        const auto it = ind.find(attrtype);
+        if (it == ind.end()) return std::nullopt;
+        return it->second;
     }
 
     /**
