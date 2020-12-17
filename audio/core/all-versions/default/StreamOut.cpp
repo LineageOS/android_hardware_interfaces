@@ -17,6 +17,7 @@
 #define LOG_TAG "StreamOutHAL"
 
 #include "core/default/StreamOut.h"
+#include "core/default/Conversions.h"
 #include "core/default/Util.h"
 
 //#define LOG_NDEBUG 0
@@ -585,81 +586,59 @@ Return<void> StreamOut::debug(const hidl_handle& fd, const hidl_vec<hidl_string>
 }
 
 #if MAJOR_VERSION >= 4
-playback_track_metadata StreamOut::convertPlaybackTrackMetadata(
-        const PlaybackTrackMetadata& trackMetadata) {
-    playback_track_metadata_t halTrackMetadata = {.gain = trackMetadata.gain};
-    (void)HidlUtils::audioUsageToHal(trackMetadata.usage, &halTrackMetadata.usage);
-    (void)HidlUtils::audioContentTypeToHal(trackMetadata.contentType,
-                                           &halTrackMetadata.content_type);
-    return halTrackMetadata;
-}
-
-void StreamOut::doUpdateSourceMetadata(const SourceMetadata& sourceMetadata) {
+Result StreamOut::doUpdateSourceMetadata(const SourceMetadata& sourceMetadata,
+                                         bool abortOnConversionFailure) {
     std::vector<playback_track_metadata_t> halTracks;
-    halTracks.reserve(sourceMetadata.tracks.size());
-    for (auto& metadata : sourceMetadata.tracks) {
-        halTracks.push_back(convertPlaybackTrackMetadata(metadata));
+    if (status_t status = sourceMetadataToHal(sourceMetadata, &halTracks);
+        status != NO_ERROR && abortOnConversionFailure) {
+        return Stream::analyzeStatus("sourceMetadataToHal", status);
     }
     const source_metadata_t halMetadata = {
         .track_count = halTracks.size(),
         .tracks = halTracks.data(),
     };
     mStream->update_source_metadata(mStream, &halMetadata);
+    return Result::OK;
 }
 
 #if MAJOR_VERSION >= 7
-playback_track_metadata_v7 StreamOut::convertPlaybackTrackMetadataV7(
-        const PlaybackTrackMetadata& trackMetadata) {
-    playback_track_metadata_v7 halTrackMetadata;
-    halTrackMetadata.base = convertPlaybackTrackMetadata(trackMetadata);
-    (void)HidlUtils::audioChannelMaskToHal(trackMetadata.channelMask,
-                                           &halTrackMetadata.channel_mask);
-    std::string halTags;
-    for (const auto& tag : trackMetadata.tags) {
-        if (&tag != &trackMetadata.tags[0]) {
-            halTags += HidlUtils::sAudioTagSeparator;
-        }
-        halTags += tag.c_str();
-    }
-    strncpy(halTrackMetadata.tags, halTags.c_str(), AUDIO_ATTRIBUTES_TAGS_MAX_SIZE);
-    return halTrackMetadata;
-}
-
-void StreamOut::doUpdateSourceMetadataV7(const SourceMetadata& sourceMetadata) {
+Result StreamOut::doUpdateSourceMetadataV7(const SourceMetadata& sourceMetadata) {
     std::vector<playback_track_metadata_v7> halTracks;
-    halTracks.reserve(sourceMetadata.tracks.size());
-    for (auto& metadata : sourceMetadata.tracks) {
-        halTracks.push_back(convertPlaybackTrackMetadataV7(metadata));
+    if (status_t status = sourceMetadataToHalV7(sourceMetadata, &halTracks); status != NO_ERROR) {
+        return Stream::analyzeStatus("sourceMetadataToHal", status);
     }
     const source_metadata_v7_t halMetadata = {
             .track_count = halTracks.size(),
             .tracks = halTracks.data(),
     };
     mStream->update_source_metadata_v7(mStream, &halMetadata);
+    return Result::OK;
 }
 #endif  //  MAJOR_VERSION >= 7
 
+#if MAJOR_VERSION <= 6
 Return<void> StreamOut::updateSourceMetadata(const SourceMetadata& sourceMetadata) {
-#if MAJOR_VERSION < 7
     if (mStream->update_source_metadata == nullptr) {
         return Void();  // not supported by the HAL
     }
-    doUpdateSourceMetadata(sourceMetadata);
-#else
-    if (mDevice->version() < AUDIO_DEVICE_API_VERSION_3_2) {
-        if (mStream->update_source_metadata == nullptr) {
-            return Void();  // not supported by the HAL
-        }
-        doUpdateSourceMetadata(sourceMetadata);
-    } else {
-        if (mStream->update_source_metadata_v7 == nullptr) {
-            return Void();  // not supported by the HAL
-        }
-        doUpdateSourceMetadataV7(sourceMetadata);
-    }
-#endif  //  MAJOR_VERSION < 7
+    (void)doUpdateSourceMetadata(sourceMetadata, false /*abortOnConversionFailure*/);
     return Void();
 }
+#elif MAJOR_VERSION >= 7
+Return<Result> StreamOut::updateSourceMetadata(const SourceMetadata& sourceMetadata) {
+    if (mDevice->version() < AUDIO_DEVICE_API_VERSION_3_2) {
+        if (mStream->update_source_metadata == nullptr) {
+            return Result::NOT_SUPPORTED;
+        }
+        return doUpdateSourceMetadata(sourceMetadata, true /*abortOnConversionFailure*/);
+    } else {
+        if (mStream->update_source_metadata_v7 == nullptr) {
+            return Result::NOT_SUPPORTED;
+        }
+        return doUpdateSourceMetadataV7(sourceMetadata);
+    }
+}
+#endif
 
 Return<Result> StreamOut::selectPresentation(int32_t /*presentationId*/, int32_t /*programId*/) {
     return Result::NOT_SUPPORTED;  // TODO: propagate to legacy

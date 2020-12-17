@@ -123,9 +123,13 @@ struct StreamOut : public IStreamOut {
     Return<void> createMmapBuffer(int32_t minSizeFrames, createMmapBuffer_cb _hidl_cb) override;
     Return<void> getMmapPosition(getMmapPosition_cb _hidl_cb) override;
 #if MAJOR_VERSION >= 4
-    Return<void> updateSourceMetadata(const SourceMetadata& sourceMetadata) override;
     Return<Result> selectPresentation(int32_t presentationId, int32_t programId) override;
+#if MAJOR_VERSION <= 6
+    Return<void> updateSourceMetadata(const SourceMetadata& sourceMetadata) override;
+#else
+    Return<Result> updateSourceMetadata(const SourceMetadata& sourceMetadata) override;
 #endif
+#endif  // MAJOR_VERSION >= 4
 #if MAJOR_VERSION >= 6
     Return<void> getDualMonoMode(getDualMonoMode_cb _hidl_cb) override;
     Return<Result> setDualMonoMode(DualMonoMode mode) override;
@@ -144,15 +148,12 @@ struct StreamOut : public IStreamOut {
 
   private:
 #if MAJOR_VERSION >= 4
-    playback_track_metadata convertPlaybackTrackMetadata(
-            const PlaybackTrackMetadata& trackMetadata);
-    void doUpdateSourceMetadata(const SourceMetadata& sourceMetadata);
+    Result doUpdateSourceMetadata(const SourceMetadata& sourceMetadata,
+                                  bool abortOnConversionFailure);
 #if MAJOR_VERSION >= 7
-    playback_track_metadata_v7 convertPlaybackTrackMetadataV7(
-            const PlaybackTrackMetadata& trackMetadata);
-    void doUpdateSourceMetadataV7(const SourceMetadata& sourceMetadata);
+    Result doUpdateSourceMetadataV7(const SourceMetadata& sourceMetadata);
 #endif
-#endif
+#endif  // MAJOR_VERSION >= 4
 
     const sp<Device> mDevice;
     audio_stream_out_t* mStream;
