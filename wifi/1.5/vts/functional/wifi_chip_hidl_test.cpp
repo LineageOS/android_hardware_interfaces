@@ -44,6 +44,7 @@ using ::android::hardware::wifi::V1_0::WifiStatus;
 using ::android::hardware::wifi::V1_0::WifiStatusCode;
 using ::android::hardware::wifi::V1_4::IWifiChipEventCallback;
 using ::android::hardware::wifi::V1_5::IWifiChip;
+using ::android::hardware::wifi::V1_5::WifiBand;
 
 /**
  * Fixture to use for all Wifi chip HIDL interface tests.
@@ -138,6 +139,37 @@ TEST_P(WifiChipHidlTest, setMultiStaUseCase) {
         IWifiChip::MultiStaUseCase::DUAL_STA_TRANSIENT_PREFER_PRIMARY);
     if (status.code != WifiStatusCode::SUCCESS) {
         EXPECT_EQ(WifiStatusCode::ERROR_NOT_SUPPORTED, status.code);
+    }
+}
+
+/*
+ * setCoexUnsafeChannels
+ */
+TEST_P(WifiChipHidlTest, setCoexUnsafeChannels) {
+    // Test with empty vector of CoexUnsafeChannels
+    std::vector<IWifiChip::CoexUnsafeChannel> vec;
+    const auto& statusEmpty =
+        HIDL_INVOKE(wifi_chip_, setCoexUnsafeChannels, vec, 0);
+    if (statusEmpty.code != WifiStatusCode::SUCCESS) {
+        EXPECT_EQ(WifiStatusCode::ERROR_NOT_SUPPORTED, statusEmpty.code);
+    }
+
+    // Test with non-empty vector of CoexUnsafeChannels
+    IWifiChip::CoexUnsafeChannel unsafeChannel24Ghz;
+    unsafeChannel24Ghz.band = WifiBand::BAND_24GHZ;
+    unsafeChannel24Ghz.channel = 6;
+    vec.push_back(unsafeChannel24Ghz);
+    IWifiChip::CoexUnsafeChannel unsafeChannel5Ghz;
+    unsafeChannel5Ghz.band = WifiBand::BAND_5GHZ;
+    unsafeChannel5Ghz.channel = 36;
+    vec.push_back(unsafeChannel5Ghz);
+    uint32_t restrictions = IWifiChip::CoexRestriction::WIFI_AWARE |
+                            IWifiChip::CoexRestriction::SOFTAP |
+                            IWifiChip::CoexRestriction::WIFI_DIRECT;
+    const auto& statusNonEmpty =
+        HIDL_INVOKE(wifi_chip_, setCoexUnsafeChannels, vec, restrictions);
+    if (statusNonEmpty.code != WifiStatusCode::SUCCESS) {
+        EXPECT_EQ(WifiStatusCode::ERROR_NOT_SUPPORTED, statusNonEmpty.code);
     }
 }
 
