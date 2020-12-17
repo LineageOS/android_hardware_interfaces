@@ -17,6 +17,7 @@
 package android.hardware.automotive.audiocontrol;
 
 import android.hardware.automotive.audiocontrol.AudioFocusChange;
+import android.hardware.automotive.audiocontrol.DuckingInfo;
 import android.hardware.automotive.audiocontrol.IFocusListener;
 
 /**
@@ -40,6 +41,17 @@ interface IAudioControl {
      * @param focusChange the AudioFocusChange that has occurred.
      */
     oneway void onAudioFocusChange(in String usage, in int zoneId, in AudioFocusChange focusChange);
+
+    /**
+     * Notifies HAL of changes in output devices that the HAL should apply ducking to.
+     *
+     * This will be called in response to changes in audio focus, and will include a
+     * {@link DuckingInfo} object per audio zone that experienced a change in audo focus.
+     *
+     * @param duckingInfos an array of {@link DuckingInfo} objects for the audio zones where audio
+     * focus has changed.
+     */
+     oneway void onDevicesToDuckChange(in DuckingInfo[] duckingInfos);
 
     /**
      * Registers focus listener to be used by HAL for requesting and abandoning audio focus.

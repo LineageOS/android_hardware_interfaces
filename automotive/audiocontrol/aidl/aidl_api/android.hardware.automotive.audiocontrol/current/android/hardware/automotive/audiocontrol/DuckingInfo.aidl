@@ -15,9 +15,11 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.memtrack;
+package android.hardware.automotive.audiocontrol;
 @VintfStability
-parcelable DeviceInfo {
-  int id;
-  @utf8InCpp String name;
+parcelable DuckingInfo {
+  int zoneId;
+  String[] deviceAddressesToDuck;
+  String[] deviceAddressesToUnduck;
+  String[] usagesHoldingFocus;
 }

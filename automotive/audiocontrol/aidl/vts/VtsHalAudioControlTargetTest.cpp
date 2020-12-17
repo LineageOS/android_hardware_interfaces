@@ -31,6 +31,7 @@ using android::String16;
 using android::binder::Status;
 using android::hardware::automotive::audiocontrol::AudioFocusChange;
 using android::hardware::automotive::audiocontrol::BnFocusListener;
+using android::hardware::automotive::audiocontrol::DuckingInfo;
 using android::hardware::automotive::audiocontrol::IAudioControl;
 
 #include "android_audio_policy_configuration_V7_0.h"
@@ -128,6 +129,22 @@ TEST_P(AudioControlAidl, FocusChangeExercise) {
     ASSERT_TRUE(
             audioControl->onAudioFocusChange(usage, 0, AudioFocusChange::GAIN_TRANSIENT).isOk());
 };
+
+TEST_P(AudioControlAidl, DuckChangeExercise) {
+    ALOGI("Duck change test");
+
+    DuckingInfo duckingInfo;
+    duckingInfo.zoneId = 0;
+    duckingInfo.deviceAddressesToDuck = {String16("address 1"), String16("address 2")};
+    duckingInfo.deviceAddressesToUnduck = {String16("address 3"), String16("address 4")};
+    duckingInfo.usagesHoldingFocus = {
+            String16(xsd::toString(xsd::AudioUsage::AUDIO_USAGE_MEDIA).c_str()),
+            String16(xsd::toString(xsd::AudioUsage::AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
+                             .c_str())};
+    std::vector<DuckingInfo> duckingInfos = {duckingInfo};
+    ALOGI("Duck change test start");
+    ASSERT_TRUE(audioControl->onDevicesToDuckChange(duckingInfos).isOk());
+}
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioControlAidl);
 INSTANTIATE_TEST_SUITE_P(

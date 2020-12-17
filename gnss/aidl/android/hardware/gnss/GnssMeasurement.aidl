@@ -16,7 +16,6 @@
 
 package android.hardware.gnss;
 
-import android.hardware.gnss.GnssConstellationType;
 import android.hardware.gnss.GnssSignalType;
 import android.hardware.gnss.GnssMultipathIndicator;
 
@@ -475,24 +474,6 @@ parcelable GnssMeasurement {
      * ADR_STATE_UNKNOWN.
      */
     double accumulatedDeltaRangeUncertaintyM;
-
-    /**
-     * Carrier frequency of the signal tracked, for example it can be the
-     * GPS central frequency for L1 = 1575.45 MHz, or L2 = 1227.60 MHz, L5 =
-     * 1176.45 MHz, varying GLO channels, etc. If the field is not set, it
-     * is the primary common use central frequency, e.g. L1 = 1575.45 MHz
-     * for GPS.
-     *
-     * For an L1, L5 receiver tracking a satellite on L1 and L5 at the same
-     * time, two raw measurement structs must be reported for this same
-     * satellite, in one of the measurement structs, all the values related
-     * to L1 must be filled, and in the other all of the values related to
-     * L5 must be filled.
-     *
-     * If the data is available, gnssMeasurementFlags must contain
-     * HAS_CARRIER_FREQUENCY.
-     */
-    float carrierFrequencyHz;
 
     /**
      * The number of full carrier cycles between the satellite and the

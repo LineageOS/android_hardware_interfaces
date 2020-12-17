@@ -46,67 +46,67 @@ parcelable GnssSignalType {
     /**
      * GNSS signal code type "A" representing GALILEO E1A, GALILEO E6A, IRNSS L5A, IRNSS SA.
      */
-    const String CODE_TYPE_A = "A";
+    const @utf8InCpp String CODE_TYPE_A = "A";
 
     /**
      * GNSS signal code type "B" representing GALILEO E1B, GALILEO E6B, IRNSS L5B, IRNSS SB.
      */
-    const String CODE_TYPE_B = "B";
+    const @utf8InCpp String CODE_TYPE_B = "B";
 
     /**
      * GNSS signal code type "C" representing GPS L1 C/A,  GPS L2 C/A, GLONASS G1 C/A,
      * GLONASS G2 C/A, GALILEO E1C, GALILEO E6C, SBAS L1 C/A, QZSS L1 C/A, IRNSS L5C.
      */
-    const String CODE_TYPE_C = "C";
+    const @utf8InCpp String CODE_TYPE_C = "C";
 
     /**
      * GNSS signal code type "D" representing BDS B1C D.
      */
-    const String CODE_TYPE_D = "D";
+    const @utf8InCpp String CODE_TYPE_D = "D";
 
     /**
      * GNSS signal code type "I" representing GPS L5 I, GLONASS G3 I, GALILEO E5a I, GALILEO E5b I,
      * GALILEO E5a+b I, SBAS L5 I, QZSS L5 I, BDS B1 I, BDS B2 I, BDS B3 I.
      */
-    const String CODE_TYPE_I = "I";
+    const @utf8InCpp String CODE_TYPE_I = "I";
 
     /**
      * GNSS signal code type "L" representing GPS L1C (P), GPS L2C (L), QZSS L1C (P), QZSS L2C (L),
      * LEX(6) L.
      */
-    const String CODE_TYPE_L = "L";
+    const @utf8InCpp String CODE_TYPE_L = "L";
 
     /**
      * GNSS signal code type "M" representing GPS L1M, GPS L2M.
      */
-    const String CODE_TYPE_M = "M";
+    const @utf8InCpp String CODE_TYPE_M = "M";
 
     /**
      * GNSS signal code type "N" representing GPS L1 codeless, GPS L2 codeless.
      */
-    const String CODE_TYPE_N = "N";
+    const @utf8InCpp String CODE_TYPE_N = "N";
 
     /**
      * GNSS signal code type "P" representing GPS L1P, GPS L2P, GLONASS G1P, GLONASS G2P, BDS B1C P.
      */
-    const String CODE_TYPE_P = "P";
+    const @utf8InCpp String CODE_TYPE_P = "P";
 
     /**
      * GNSS signal code type "Q" representing GPS L5 Q, GLONASS G3 Q, GALILEO E5a Q, GALILEO E5b Q,
      * GALILEO E5a+b Q, SBAS L5 Q, QZSS L5 Q, BDS B1 Q, BDS B2 Q, BDS B3 Q.
      */
-    const String CODE_TYPE_Q = "Q";
+    const @utf8InCpp String CODE_TYPE_Q = "Q";
 
     /**
      * GNSS signal code type "S" represents GPS L1C (D), GPS L2C (M), QZSS L1C (D), QZSS L2C (M),
      * LEX(6) S.
      */
-    const String CODE_TYPE_S = "S";
+    const @utf8InCpp String CODE_TYPE_S = "S";
 
     /**
      * GNSS signal code type "W" representing GPS L1 Z-tracking, GPS L2 Z-tracking.
      */
-    const String CODE_TYPE_W = "W";
+    const @utf8InCpp String CODE_TYPE_W = "W";
 
     /**
      * GNSS signal code type "X" representing GPS L1C (D+P), GPS L2C (M+L), GPS L5 (I+Q),
@@ -114,22 +114,22 @@ parcelable GnssSignalType {
      * GALILEO E6 (B+C), SBAS L5 (I+Q), QZSS L1C (D+P), QZSS L2C (M+L), QZSS L5 (I+Q),
      * LEX(6) (S+L), BDS B1 (I+Q), BDS B1C (D+P), BDS B2 (I+Q), BDS B3 (I+Q), IRNSS L5 (B+C).
      */
-    const String CODE_TYPE_X = "X";
+    const @utf8InCpp String CODE_TYPE_X = "X";
 
     /**
      * GNSS signal code type "Y" representing GPS L1Y, GPS L2Y.
      */
-    const String CODE_TYPE_Y = "Y";
+    const @utf8InCpp String CODE_TYPE_Y = "Y";
 
     /**
      * GNSS signal code type "Z" representing GALILEO E1 (A+B+C), GALILEO E6 (A+B+C), QZSS L1-SAIF.
      */
-    const String CODE_TYPE_Z = "Z";
+    const @utf8InCpp String CODE_TYPE_Z = "Z";
 
     /**
      * GNSS signal code type "UNKNOWN" representing the GNSS Measurement's code type is unknown.
      */
-    const String CODE_TYPE_UNKNOWN = "UNKNOWN";
+    const @utf8InCpp String CODE_TYPE_UNKNOWN = "UNKNOWN";
 
     /**
      * The type of code that is currently being tracked in the GNSS signal.
@@ -145,5 +145,5 @@ parcelable GnssSignalType {
      * "A channel"). In the future, if for instance a code "G" was added in the official RINEX
      * standard, "G" could be specified here.
      */
-    String codeType;
+    @utf8InCpp String codeType;
 }
