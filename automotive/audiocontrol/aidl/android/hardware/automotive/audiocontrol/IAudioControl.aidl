@@ -18,6 +18,7 @@ package android.hardware.automotive.audiocontrol;
 
 import android.hardware.automotive.audiocontrol.AudioFocusChange;
 import android.hardware.automotive.audiocontrol.DuckingInfo;
+import android.hardware.automotive.audiocontrol.MutingInfo;
 import android.hardware.automotive.audiocontrol.IFocusListener;
 
 /**
@@ -52,6 +53,18 @@ interface IAudioControl {
      * focus has changed.
      */
      oneway void onDevicesToDuckChange(in DuckingInfo[] duckingInfos);
+
+     /**
+      * Notifies HAL of changes in output devices that the HAL should apply muting to.
+      *
+      * This will be called in response to changes in audio mute state for each volume group
+      * and will include a {@link MutingInfo} object per audio zone that experienced a mute state
+      * event.
+      *
+      * @param mutingInfos an array of {@link MutingInfo} objects for the audio zones where audio
+      * mute state has changed.
+      */
+     oneway void onDevicesToMuteChange(in MutingInfo[] mutingInfos);
 
     /**
      * Registers focus listener to be used by HAL for requesting and abandoning audio focus.

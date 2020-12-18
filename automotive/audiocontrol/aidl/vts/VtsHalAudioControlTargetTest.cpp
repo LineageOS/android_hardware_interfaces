@@ -33,6 +33,7 @@ using android::hardware::automotive::audiocontrol::AudioFocusChange;
 using android::hardware::automotive::audiocontrol::BnFocusListener;
 using android::hardware::automotive::audiocontrol::DuckingInfo;
 using android::hardware::automotive::audiocontrol::IAudioControl;
+using android::hardware::automotive::audiocontrol::MutingInfo;
 
 #include "android_audio_policy_configuration_V7_0.h"
 
@@ -129,6 +130,18 @@ TEST_P(AudioControlAidl, FocusChangeExercise) {
     ASSERT_TRUE(
             audioControl->onAudioFocusChange(usage, 0, AudioFocusChange::GAIN_TRANSIENT).isOk());
 };
+
+TEST_P(AudioControlAidl, MuteChangeExercise) {
+    ALOGI("Mute change test");
+
+    MutingInfo mutingInfo;
+    mutingInfo.zoneId = 0;
+    mutingInfo.deviceAddressesToMute = {String16("address 1"), String16("address 2")};
+    mutingInfo.deviceAddressesToUnmute = {String16("address 3"), String16("address 4")};
+    std::vector<MutingInfo> mutingInfos = {mutingInfo};
+    ALOGI("Mute change test start");
+    ASSERT_TRUE(audioControl->onDevicesToMuteChange(mutingInfos).isOk());
+}
 
 TEST_P(AudioControlAidl, DuckChangeExercise) {
     ALOGI("Duck change test");
