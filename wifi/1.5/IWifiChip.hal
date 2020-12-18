@@ -17,7 +17,6 @@
 package android.hardware.wifi@1.5;
 
 import @1.0::WifiStatus;
-import @1.0::IfaceType;
 import @1.5::IWifiApIface;
 import @1.0::IWifiIface;
 import @1.3::IWifiChip;
@@ -187,6 +186,12 @@ interface IWifiChip extends @1.4::IWifiChip {
         NO_POWER_CAP = 0x7FFFFFFF,
     };
 
+    enum CoexRestriction : uint32_t {
+        WIFI_DIRECT = 1 << 0,
+        SOFTAP = 1 << 1,
+        WIFI_AWARE = 1 << 2
+    };
+
     /**
      * Invoked to indicate that the provided |CoexUnsafeChannels| should be avoided with the
      * specified restrictions.
@@ -194,13 +199,14 @@ interface IWifiChip extends @1.4::IWifiChip {
      * Channel avoidance is a suggestion and should be done on a best-effort approach. If a provided
      * channel is used, then the specified power cap should be applied.
      *
-     * In addition, hard restrictions on the Wifi modes may be indicated by |IfaceType| bits
-     * (STA, AP, P2P, NAN, etc) in the |restrictions| bitfield. If a hard restriction is provided,
-     * then the channels should be completely avoided for the provided Wifi modes instead of by
-     * best-effort.
+     * In addition, hard restrictions on the Wifi modes may be indicated by |CoexRestriction| bits
+     * (WIFI_DIRECT, SOFTAP, WIFI_AWARE) in the |restrictions| bitfield. If a hard restriction is
+     * provided, then the channels should be completely avoided for the provided Wifi modes instead
+     * of by best-effort.
      *
      * @param unsafeChannels List of |CoexUnsafeChannels| to avoid.
-     * @param restrictions Bitset of |IfaceType| values indicating Wifi modes to completely avoid.
+     * @param restrictions Bitset of |CoexRestriction| values indicating Wifi interfaces to
+     *         completely avoid.
      * @return status WifiStatus of the operation.
      *         Possible status codes:
      *         |WifiStatusCode.SUCCESS|,
@@ -208,6 +214,6 @@ interface IWifiChip extends @1.4::IWifiChip {
      *         |WifiStatusCode.ERROR_INVALID_ARGS|,
      */
     setCoexUnsafeChannels(
-        vec<CoexUnsafeChannel> unsafeChannels, bitfield<IfaceType> restrictions)
+        vec<CoexUnsafeChannel> unsafeChannels, bitfield<CoexRestriction> restrictions)
             generates (WifiStatus status);
 };
