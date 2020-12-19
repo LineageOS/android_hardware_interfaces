@@ -16,20 +16,20 @@
 
 #pragma once
 
-#include <android/hardware/security/keymint/Algorithm.h>
-#include <android/hardware/security/keymint/BlockMode.h>
-#include <android/hardware/security/keymint/Digest.h>
-#include <android/hardware/security/keymint/EcCurve.h>
-#include <android/hardware/security/keymint/HardwareAuthenticatorType.h>
-#include <android/hardware/security/keymint/KeyOrigin.h>
-#include <android/hardware/security/keymint/KeyParameter.h>
-#include <android/hardware/security/keymint/KeyPurpose.h>
-#include <android/hardware/security/keymint/PaddingMode.h>
-#include <android/hardware/security/keymint/SecurityLevel.h>
-#include <android/hardware/security/keymint/Tag.h>
-#include <android/hardware/security/keymint/TagType.h>
+#include <aidl/android/hardware/security/keymint/Algorithm.h>
+#include <aidl/android/hardware/security/keymint/BlockMode.h>
+#include <aidl/android/hardware/security/keymint/Digest.h>
+#include <aidl/android/hardware/security/keymint/EcCurve.h>
+#include <aidl/android/hardware/security/keymint/HardwareAuthenticatorType.h>
+#include <aidl/android/hardware/security/keymint/KeyOrigin.h>
+#include <aidl/android/hardware/security/keymint/KeyParameter.h>
+#include <aidl/android/hardware/security/keymint/KeyPurpose.h>
+#include <aidl/android/hardware/security/keymint/PaddingMode.h>
+#include <aidl/android/hardware/security/keymint/SecurityLevel.h>
+#include <aidl/android/hardware/security/keymint/Tag.h>
+#include <aidl/android/hardware/security/keymint/TagType.h>
 
-namespace android::hardware::security::keymint {
+namespace aidl::android::hardware::security::keymint {
 
 constexpr TagType typeFromTag(Tag tag) {
     return static_cast<TagType>(static_cast<uint32_t>(tag) & static_cast<uint32_t>(0xf0000000));
@@ -325,4 +325,4 @@ inline NullOr<const typename TypedTag2ValueType<TypedTag<tag_type, tag>>::type&>
     return accessTagValue(ttag, param);
 }
 
-}  // namespace android::hardware::security::keymint
+}  // namespace aidl::android::hardware::security::keymint

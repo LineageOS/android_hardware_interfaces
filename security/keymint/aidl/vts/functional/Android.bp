@@ -25,13 +25,13 @@ cc_test {
         "VerificationTokenTest.cpp",
     ],
     shared_libs: [
-        "libbinder",
+        "libbinder_ndk",
         "libcrypto",
         "libkeymint",
         "libkeymint_support",
     ],
     static_libs: [
-        "android.hardware.security.keymint-cpp",
+        "android.hardware.security.keymint-unstable-ndk_platform",
         "libcppbor_external",
         "libkeymint_vts_test_utils",
     ],
@@ -54,13 +54,13 @@ cc_test_library {
         ".",
     ],
     shared_libs: [
-        "libbinder",
+        "libbinder_ndk",
         "libcrypto",
         "libkeymint",
         "libkeymint_support",
     ],
     static_libs: [
-        "android.hardware.security.keymint-cpp",
+        "android.hardware.security.keymint-unstable-ndk_platform",
         "libcppbor",
     ],
 }
