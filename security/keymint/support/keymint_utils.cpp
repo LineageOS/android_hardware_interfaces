@@ -16,14 +16,10 @@
 
 #include <regex.h>
 
-#include <arpa/inet.h>
-
 #include <android-base/properties.h>
 #include <hardware/hw_auth_token.h>
 
-#include <keymint_support/keymint_utils.h>
-
-namespace android::hardware::security::keymint {
+namespace aidl::android::hardware::security::keymint {
 
 namespace {
 
@@ -112,4 +108,4 @@ uint32_t getOsPatchlevel() {
     return getOsPatchlevel(patchlevel.c_str());
 }
 
-}  // namespace android::hardware::security::keymint
+}  // namespace aidl::android::hardware::security::keymint
