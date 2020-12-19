@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_FRAMEWORKS_ML_NN_COMMON_EXECUTION_BURST_SERVER_H
-#define ANDROID_FRAMEWORKS_ML_NN_COMMON_EXECUTION_BURST_SERVER_H
+#ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_2_UTILS_EXECUTION_BURST_SERVER_H
+#define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_2_UTILS_EXECUTION_BURST_SERVER_H
 
 #include "ExecutionBurstUtils.h"
 
-#include <android-base/macros.h>
+#include <android-base/thread_annotations.h>
 #include <android/hardware/neuralnetworks/1.0/types.h>
-#include <android/hardware/neuralnetworks/1.1/types.h>
 #include <android/hardware/neuralnetworks/1.2/IBurstCallback.h>
 #include <android/hardware/neuralnetworks/1.2/IPreparedModel.h>
 #include <android/hardware/neuralnetworks/1.2/types.h>
 #include <fmq/MessageQueue.h>
 #include <hidl/MQDescriptor.h>
+#include <nnapi/IBurst.h>
+#include <nnapi/Result.h>
+#include <nnapi/Types.h>
+#include <nnapi/hal/ProtectCallback.h>
 
 #include <atomic>
 #include <chrono>
@@ -36,84 +39,61 @@
 #include <tuple>
 #include <vector>
 
-namespace android::nn {
+namespace android::hardware::neuralnetworks::V1_2::utils {
 
 /**
- * The ExecutionBurstServer class is responsible for waiting for and
- * deserializing a request object from a FMQ, performing the inference, and
- * serializing the result back across another FMQ.
+ * The ExecutionBurstServer class is responsible for waiting for and deserializing a request object
+ * from a FMQ, performing the inference, and serializing the result back across another FMQ.
  */
-class ExecutionBurstServer : public hardware::neuralnetworks::V1_2::IBurstContext {
-    DISALLOW_IMPLICIT_CONSTRUCTORS(ExecutionBurstServer);
+class ExecutionBurstServer : public IBurstContext {
+    struct PrivateConstructorTag {};
 
   public:
     /**
-     * IBurstExecutorWithCache is a callback object passed to
-     * ExecutionBurstServer's factory function that is used to perform an
-     * execution. Because some memory resources are needed across multiple
-     * executions, this object also contains a local cache that can directly be
-     * used in the execution.
+     * Class to cache the memory objects for a burst object.
      *
-     * ExecutionBurstServer will never access its IBurstExecutorWithCache object
-     * with concurrent calls.
+     * This class is thread-safe.
      */
-    class IBurstExecutorWithCache {
-        DISALLOW_COPY_AND_ASSIGN(IBurstExecutorWithCache);
-
+    class MemoryCache {
       public:
-        IBurstExecutorWithCache() = default;
-        virtual ~IBurstExecutorWithCache() = default;
+        // Precondition: burstExecutor != nullptr
+        // Precondition: burstCallback != nullptr
+        MemoryCache(nn::SharedBurst burstExecutor, sp<IBurstCallback> burstCallback);
 
         /**
-         * Checks if a cache entry specified by a slot is present in the cache.
+         * Get the cached memory objects corresponding to provided slot identifiers.
          *
-         * @param slot Identifier of the cache entry.
-         * @return 'true' if the cache entry is present in the cache, 'false'
-         *     otherwise.
+         * If the slot entry is not present in the cache, this class will use IBurstCallback to
+         * retrieve those entries that are not present in the cache, then cache them.
+         *
+         * @param slots Identifiers of memory objects to be retrieved.
+         * @return A vector where each element is the memory object and a ref-counted cache "hold"
+         *     object to preserve the cache entry of the IBurst object as long as the "hold" object
+         *     is alive, otherwise GeneralError. Each element of the vector corresponds to the
+         *     element of slot.
          */
-        virtual bool isCacheEntryPresent(int32_t slot) const = 0;
+        nn::GeneralResult<std::vector<std::pair<nn::SharedMemory, nn::IBurst::OptionalCacheHold>>>
+        getCacheEntries(const std::vector<int32_t>& slots);
 
         /**
-         * Adds an entry specified by a slot to the cache.
+         * Remove an entry from the cache.
          *
-         * The caller of this function must ensure that the cache entry that is
-         * being added is not already present in the cache. This can be checked
-         * via isCacheEntryPresent.
-         *
-         * @param memory Memory resource to be cached.
-         * @param slot Slot identifier corresponding to the memory resource.
+         * @param slot Identifier of the memory object to be removed from the cache.
          */
-        virtual void addCacheEntry(const hardware::hidl_memory& memory, int32_t slot) = 0;
+        void removeCacheEntry(int32_t slot);
 
-        /**
-         * Removes an entry specified by a slot from the cache.
-         *
-         * If the cache entry corresponding to the slot number does not exist,
-         * the call does nothing.
-         *
-         * @param slot Slot identifier corresponding to the memory resource.
-         */
-        virtual void removeCacheEntry(int32_t slot) = 0;
+      private:
+        nn::GeneralResult<void> ensureCacheEntriesArePresentLocked(
+                const std::vector<int32_t>& slots) REQUIRES(mMutex);
+        nn::GeneralResult<std::pair<nn::SharedMemory, nn::IBurst::OptionalCacheHold>>
+        getCacheEntryLocked(int32_t slot) REQUIRES(mMutex);
+        void addCacheEntryLocked(int32_t slot, nn::SharedMemory memory) REQUIRES(mMutex);
 
-        /**
-         * Perform an execution.
-         *
-         * @param request Request object with inputs and outputs specified.
-         *     Request::pools is empty, and DataLocation::poolIndex instead
-         *     refers to the 'slots' argument as if it were Request::pools.
-         * @param slots Slots corresponding to the cached memory entries to be
-         *     used.
-         * @param measure Whether timing information is requested for the
-         *     execution.
-         * @return Result of the execution, including the status of the
-         *     execution, dynamic output shapes, and any timing information.
-         */
-        virtual std::tuple<hardware::neuralnetworks::V1_0::ErrorStatus,
-                           hardware::hidl_vec<hardware::neuralnetworks::V1_2::OutputShape>,
-                           hardware::neuralnetworks::V1_2::Timing>
-        execute(const hardware::neuralnetworks::V1_0::Request& request,
-                const std::vector<int32_t>& slots,
-                hardware::neuralnetworks::V1_2::MeasureTiming measure) = 0;
+        std::mutex mMutex;
+        std::map<int32_t, std::pair<nn::SharedMemory, nn::IBurst::OptionalCacheHold>> mCache
+                GUARDED_BY(mMutex);
+        nn::SharedBurst kBurstExecutor;
+        const sp<IBurstCallback> kBurstCallback;
     };
 
     /**
@@ -124,85 +104,52 @@ class ExecutionBurstServer : public hardware::neuralnetworks::V1_2::IBurstContex
      * 2) Execute a model with the given information
      * 3) Send the result to the created FMQ
      *
-     * @param callback Callback used to retrieve memories corresponding to
-     *     unrecognized slots.
-     * @param requestChannel Input FMQ channel through which the client passes the
-     *     request to the service.
-     * @param resultChannel Output FMQ channel from which the client can retrieve
-     *     the result of the execution.
-     * @param executorWithCache Object which maintains a local cache of the
-     *     memory pools and executes using the cached memory pools.
-     * @param pollingTimeWindow How much time (in microseconds) the
-     *     ExecutionBurstServer is allowed to poll the FMQ before waiting on
-     *     the blocking futex. Polling may result in lower latencies at the
-     *     potential cost of more power usage.
-     * @result IBurstContext Handle to the burst context.
-     */
-    static sp<ExecutionBurstServer> create(
-            const sp<hardware::neuralnetworks::V1_2::IBurstCallback>& callback,
-            const FmqRequestDescriptor& requestChannel, const FmqResultDescriptor& resultChannel,
-            std::shared_ptr<IBurstExecutorWithCache> executorWithCache,
-            std::chrono::microseconds pollingTimeWindow = std::chrono::microseconds{0});
-
-    /**
-     * Create automated context to manage FMQ-based executions.
-     *
-     * This function is intended to be used by a service to automatically:
-     * 1) Receive data from a provided FMQ
-     * 2) Execute a model with the given information
-     * 3) Send the result to the created FMQ
-     *
-     * @param callback Callback used to retrieve memories corresponding to
-     *     unrecognized slots.
-     * @param requestChannel Input FMQ channel through which the client passes the
-     *     request to the service.
-     * @param resultChannel Output FMQ channel from which the client can retrieve
-     *     the result of the execution.
-     * @param preparedModel PreparedModel that the burst object was created from.
-     *     IPreparedModel::executeSynchronously will be used to perform the
+     * @param callback Callback used to retrieve memories corresponding to unrecognized slots.
+     * @param requestChannel Input FMQ channel through which the client passes the request to the
+     *     service.
+     * @param resultChannel Output FMQ channel from which the client can retrieve the result of the
      *     execution.
-     * @param pollingTimeWindow How much time (in microseconds) the
-     *     ExecutionBurstServer is allowed to poll the FMQ before waiting on
-     *     the blocking futex. Polling may result in lower latencies at the
-     *     potential cost of more power usage.
-     * @result IBurstContext Handle to the burst context.
+     * @param burstExecutor Object which maintains a local cache of the memory pools and executes
+     *     using the cached memory pools.
+     * @param pollingTimeWindow How much time (in microseconds) the ExecutionBurstServer is allowed
+     *     to poll the FMQ before waiting on the blocking futex. Polling may result in lower
+     *     latencies at the potential cost of more power usage.
+     * @return IBurstContext Handle to the burst context.
      */
-    static sp<ExecutionBurstServer> create(
-            const sp<hardware::neuralnetworks::V1_2::IBurstCallback>& callback,
-            const FmqRequestDescriptor& requestChannel, const FmqResultDescriptor& resultChannel,
-            hardware::neuralnetworks::V1_2::IPreparedModel* preparedModel,
+    static nn::GeneralResult<sp<ExecutionBurstServer>> create(
+            const sp<IBurstCallback>& callback,
+            const MQDescriptorSync<FmqRequestDatum>& requestChannel,
+            const MQDescriptorSync<FmqResultDatum>& resultChannel, nn::SharedBurst burstExecutor,
             std::chrono::microseconds pollingTimeWindow = std::chrono::microseconds{0});
 
-    ExecutionBurstServer(const sp<hardware::neuralnetworks::V1_2::IBurstCallback>& callback,
+    ExecutionBurstServer(PrivateConstructorTag tag, const sp<IBurstCallback>& callback,
                          std::unique_ptr<RequestChannelReceiver> requestChannel,
                          std::unique_ptr<ResultChannelSender> resultChannel,
-                         std::shared_ptr<IBurstExecutorWithCache> cachedExecutor);
+                         nn::SharedBurst burstExecutor);
     ~ExecutionBurstServer();
 
-    // Used by the NN runtime to preemptively remove any stored memory.
-    hardware::Return<void> freeMemory(int32_t slot) override;
+    // Used by the NN runtime to preemptively remove any stored memory. See
+    // IBurstContext::freeMemory for more information.
+    Return<void> freeMemory(int32_t slot) override;
 
   private:
-    // Ensures all cache entries contained in mExecutorWithCache are present in
-    // the cache. If they are not present, they are retrieved (via
-    // IBurstCallback::getMemories) and added to mExecutorWithCache.
-    //
-    // This method is locked via mMutex when it is called.
-    void ensureCacheEntriesArePresentLocked(const std::vector<int32_t>& slots);
-
-    // Work loop that will continue processing execution requests until the
-    // ExecutionBurstServer object is freed.
+    // Work loop that will continue processing execution requests until the ExecutionBurstServer
+    // object is freed.
     void task();
 
+    nn::ExecutionResult<std::pair<hidl_vec<OutputShape>, Timing>> execute(
+            const V1_0::Request& requestWithoutPools, const std::vector<int32_t>& slotsOfPools,
+            MeasureTiming measure);
+
     std::thread mWorker;
-    std::mutex mMutex;
     std::atomic<bool> mTeardown{false};
-    const sp<hardware::neuralnetworks::V1_2::IBurstCallback> mCallback;
+    const sp<IBurstCallback> mCallback;
     const std::unique_ptr<RequestChannelReceiver> mRequestChannelReceiver;
     const std::unique_ptr<ResultChannelSender> mResultChannelSender;
-    const std::shared_ptr<IBurstExecutorWithCache> mExecutorWithCache;
+    const nn::SharedBurst mBurstExecutor;
+    MemoryCache mMemoryCache;
 };
 
-}  // namespace android::nn
+}  // namespace android::hardware::neuralnetworks::V1_2::utils
 
-#endif  // ANDROID_FRAMEWORKS_ML_NN_COMMON_EXECUTION_BURST_SERVER_H
+#endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_2_UTILS_EXECUTION_BURST_SERVER_H

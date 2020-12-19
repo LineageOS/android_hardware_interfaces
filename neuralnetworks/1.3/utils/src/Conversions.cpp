@@ -352,10 +352,6 @@ GeneralResult<SharedHandle> convert(const hardware::hidl_handle& handle) {
     return validatedConvert(handle);
 }
 
-GeneralResult<SharedMemory> convert(const hardware::hidl_memory& memory) {
-    return validatedConvert(memory);
-}
-
 GeneralResult<std::vector<BufferRole>> convert(
         const hardware::hidl_vec<hal::V1_3::BufferRole>& bufferRoles) {
     return validatedConvert(bufferRoles);
