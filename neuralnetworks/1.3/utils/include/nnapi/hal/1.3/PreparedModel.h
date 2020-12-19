@@ -35,7 +35,8 @@
 namespace android::hardware::neuralnetworks::V1_3::utils {
 
 // Class that adapts V1_3::IPreparedModel to nn::IPreparedModel.
-class PreparedModel final : public nn::IPreparedModel {
+class PreparedModel final : public nn::IPreparedModel,
+                            public std::enable_shared_from_this<PreparedModel> {
     struct PrivateConstructorTag {};
 
   public:
