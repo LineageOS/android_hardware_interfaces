@@ -26,7 +26,7 @@
 
 #include <cutils/properties.h>
 
-#include <android/hardware/security/keymint/KeyFormat.h>
+#include <aidl/android/hardware/security/keymint/KeyFormat.h>
 
 #include <keymint_support/attestation_record.h>
 #include <keymint_support/key_param_output.h>
@@ -37,21 +37,21 @@
 static bool arm_deleteAllKeys = false;
 static bool dump_Attestations = false;
 
-using android::hardware::security::keymint::AuthorizationSet;
-using android::hardware::security::keymint::KeyCharacteristics;
-using android::hardware::security::keymint::KeyFormat;
+using aidl::android::hardware::security::keymint::AuthorizationSet;
+using aidl::android::hardware::security::keymint::KeyCharacteristics;
+using aidl::android::hardware::security::keymint::KeyFormat;
 
-namespace android::hardware::security::keymint {
+namespace aidl::android::hardware::security::keymint {
 
 bool operator==(const keymint::AuthorizationSet& a, const keymint::AuthorizationSet& b) {
     return a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin());
 }
 
-}  // namespace android::hardware::security::keymint
+}  // namespace aidl::android::hardware::security::keymint
 
 namespace std {
 
-using namespace android::hardware::security::keymint;
+using namespace aidl::android::hardware::security::keymint;
 
 template <>
 struct std::equal_to<KeyCharacteristics> {
@@ -73,7 +73,7 @@ struct std::equal_to<KeyCharacteristics> {
 
 }  // namespace std
 
-namespace android::hardware::security::keymint::test {
+namespace aidl::android::hardware::security::keymint::test {
 
 namespace {
 
@@ -834,7 +834,7 @@ TEST_P(SigningOperationsTest, RsaAbort) {
     EXPECT_EQ(ErrorCode::INVALID_OPERATION_HANDLE, Abort());
 
     // Set to sentinel, so TearDown() doesn't try to abort again.
-    op_.clear();
+    op_.reset();
 }
 
 /*
@@ -3115,7 +3115,7 @@ TEST_P(EncryptionOperationsTest, AesGcmAadOutOfOrder) {
     EXPECT_EQ(ErrorCode::INVALID_TAG,
               Update(update_params, "", &update_out_params, &ciphertext, &input_consumed));
 
-    op_.clear();
+    op_.reset();
 }
 
 /*
@@ -3973,7 +3973,7 @@ TEST_P(ClearOperationsTest, TooManyOperations) {
 
     auto params = AuthorizationSetBuilder().Padding(PaddingMode::NONE);
     constexpr size_t max_operations = 100;  // set to arbituary large number
-    sp<IKeyMintOperation> op_handles[max_operations];
+    std::shared_ptr<IKeyMintOperation> op_handles[max_operations];
     AuthorizationSet out_params;
     ErrorCode result;
     size_t i;
@@ -4040,7 +4040,7 @@ TEST_P(TransportLimitTest, LargeFinishInput) {
 
 INSTANTIATE_KEYMINT_AIDL_TEST(TransportLimitTest);
 
-}  // namespace android::hardware::security::keymint::test
+}  // namespace aidl::android::hardware::security::keymint::test
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
