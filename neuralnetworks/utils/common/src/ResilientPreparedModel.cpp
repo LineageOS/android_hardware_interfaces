@@ -124,6 +124,13 @@ ResilientPreparedModel::executeFenced(const nn::Request& request,
     return protect(*this, fn);
 }
 
+nn::GeneralResult<nn::SharedBurst> ResilientPreparedModel::configureExecutionBurst() const {
+    const auto fn = [](const nn::IPreparedModel& preparedModel) {
+        return preparedModel.configureExecutionBurst();
+    };
+    return protect(*this, fn);
+}
+
 std::any ResilientPreparedModel::getUnderlyingResource() const {
     return getPreparedModel()->getUnderlyingResource();
 }

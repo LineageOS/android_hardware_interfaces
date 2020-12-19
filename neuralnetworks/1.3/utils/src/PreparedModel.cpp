@@ -197,6 +197,10 @@ PreparedModel::executeFenced(const nn::Request& request, const std::vector<nn::S
     return std::make_pair(std::move(syncFence), std::move(callback));
 }
 
+nn::GeneralResult<nn::SharedBurst> PreparedModel::configureExecutionBurst() const {
+    return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE) << "Not yet implemented";
+}
+
 std::any PreparedModel::getUnderlyingResource() const {
     sp<V1_3::IPreparedModel> resource = kPreparedModel;
     return resource;
