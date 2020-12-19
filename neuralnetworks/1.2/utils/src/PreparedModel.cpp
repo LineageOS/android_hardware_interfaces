@@ -27,6 +27,7 @@
 #include <nnapi/IPreparedModel.h>
 #include <nnapi/Result.h>
 #include <nnapi/Types.h>
+#include <nnapi/hal/1.0/Burst.h>
 #include <nnapi/hal/1.0/Conversions.h>
 #include <nnapi/hal/CommonUtils.h>
 #include <nnapi/hal/HandleError.h>
@@ -118,7 +119,7 @@ PreparedModel::executeFenced(const nn::Request& /*request*/,
 }
 
 nn::GeneralResult<nn::SharedBurst> PreparedModel::configureExecutionBurst() const {
-    return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE) << "Not yet implemented";
+    return V1_0::utils::Burst::create(shared_from_this());
 }
 
 std::any PreparedModel::getUnderlyingResource() const {
