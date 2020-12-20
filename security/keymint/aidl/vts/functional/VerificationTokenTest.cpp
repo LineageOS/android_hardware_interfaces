@@ -16,7 +16,7 @@
 
 #include "KeyMintAidlTestBase.h"
 
-namespace android::hardware::security::keymint::test {
+namespace aidl::android::hardware::security::keymint::test {
 
 class VerificationTokenTest : public KeyMintAidlTestBase {
   protected:
@@ -165,4 +165,4 @@ TEST_P(VerificationTokenTest, MacChangesOnChangingTimestamp) {
 
 INSTANTIATE_KEYMINT_AIDL_TEST(VerificationTokenTest);
 
-}  // namespace android::hardware::security::keymint::test
+}  // namespace aidl::android::hardware::security::keymint::test

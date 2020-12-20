@@ -18,14 +18,14 @@
 
 #include <vector>
 
-#include <android/hardware/security/keymint/BlockMode.h>
-#include <android/hardware/security/keymint/Digest.h>
-#include <android/hardware/security/keymint/EcCurve.h>
-#include <android/hardware/security/keymint/PaddingMode.h>
+#include <aidl/android/hardware/security/keymint/BlockMode.h>
+#include <aidl/android/hardware/security/keymint/Digest.h>
+#include <aidl/android/hardware/security/keymint/EcCurve.h>
+#include <aidl/android/hardware/security/keymint/PaddingMode.h>
 
 #include <keymint_support/keymint_tags.h>
 
-namespace android::hardware::security::keymint {
+namespace aidl::android::hardware::security::keymint {
 
 using std::vector;
 
@@ -307,4 +307,4 @@ class AuthorizationSetBuilder : public AuthorizationSet {
     }
 };
 
-}  // namespace android::hardware::security::keymint
+}  // namespace aidl::android::hardware::security::keymint

@@ -22,15 +22,15 @@
 #include <binder/ProcessState.h>
 #include <gtest/gtest.h>
 
-#include <android/hardware/security/keymint/ErrorCode.h>
-#include <android/hardware/security/keymint/IKeyMintDevice.h>
+#include <aidl/android/hardware/security/keymint/ErrorCode.h>
+#include <aidl/android/hardware/security/keymint/IKeyMintDevice.h>
 
 #include <keymint_support/authorization_set.h>
 
-namespace android::hardware::security::keymint::test {
+namespace aidl::android::hardware::security::keymint::test {
 
 using ::android::sp;
-using binder::Status;
+using Status = ::ndk::ScopedAStatus;
 using ::std::shared_ptr;
 using ::std::string;
 using ::std::vector;
@@ -49,12 +49,12 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
         AbortIfNeeded();
     }
 
-    void InitializeKeyMint(sp<IKeyMintDevice> keyMint);
+    void InitializeKeyMint(std::shared_ptr<IKeyMintDevice> keyMint);
     IKeyMintDevice& keyMint() { return *keymint_; }
     uint32_t os_version() { return os_version_; }
     uint32_t os_patch_level() { return os_patch_level_; }
 
-    ErrorCode GetReturnErrorCode(Status result);
+    ErrorCode GetReturnErrorCode(const Status& result);
     ErrorCode GenerateKey(const AuthorizationSet& key_desc, vector<uint8_t>* key_blob,
                           KeyCharacteristics* key_characteristics);
 
@@ -80,7 +80,7 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
 
     ErrorCode Begin(KeyPurpose purpose, const vector<uint8_t>& key_blob,
                     const AuthorizationSet& in_params, AuthorizationSet* out_params,
-                    sp<IKeyMintOperation>& op);
+                    std::shared_ptr<IKeyMintOperation>& op);
     ErrorCode Begin(KeyPurpose purpose, const vector<uint8_t>& key_blob,
                     const AuthorizationSet& in_params, AuthorizationSet* out_params);
     ErrorCode Begin(KeyPurpose purpose, const AuthorizationSet& in_params,
@@ -98,7 +98,7 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     ErrorCode Finish(string* output) { return Finish(string(), output); }
 
     ErrorCode Abort();
-    ErrorCode Abort(const sp<IKeyMintOperation>& op);
+    ErrorCode Abort(const shared_ptr<IKeyMintOperation>& op);
     void AbortIfNeeded();
 
     string ProcessMessage(const vector<uint8_t>& key_blob, KeyPurpose operation,
@@ -159,17 +159,17 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     vector<Digest> ValidDigests(bool withNone, bool withMD5);
 
     static vector<string> build_params() {
-        auto params = android::getAidlHalInstanceNames(IKeyMintDevice::descriptor);
+        auto params = ::android::getAidlHalInstanceNames(IKeyMintDevice::descriptor);
         return params;
     }
 
-    sp<IKeyMintOperation> op_;
+    std::shared_ptr<IKeyMintOperation> op_;
     vector<Certificate> certChain_;
     vector<uint8_t> key_blob_;
     KeyCharacteristics key_characteristics_;
 
   private:
-    sp<IKeyMintDevice> keymint_;
+    std::shared_ptr<IKeyMintDevice> keymint_;
     uint32_t os_version_;
     uint32_t os_patch_level_;
 
@@ -182,6 +182,6 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
 #define INSTANTIATE_KEYMINT_AIDL_TEST(name)                                          \
     INSTANTIATE_TEST_SUITE_P(PerInstance, name,                                      \
                              testing::ValuesIn(KeyMintAidlTestBase::build_params()), \
-                             android::PrintInstanceNameToString)
+                             ::android::PrintInstanceNameToString)
 
-}  // namespace android::hardware::security::keymint::test
+}  // namespace aidl::android::hardware::security::keymint::test
