@@ -20,7 +20,7 @@
 
 #include <keymint_support/keymint_tags.h>
 
-namespace android::hardware::security::keymint {
+namespace aidl::android::hardware::security::keymint {
 
 using ::std::endl;
 using ::std::ostream;
@@ -69,4 +69,4 @@ ostream& operator<<(ostream& os, const KeyParameter& param) {
     return os << "UNKNOWN TAG TYPE!";
 }
 
-}  // namespace android::hardware::security::keymint
+}  // namespace aidl::android::hardware::security::keymint
