@@ -42,8 +42,7 @@ namespace android::hardware::neuralnetworks::V1_0::utils {
 nn::GeneralResult<std::shared_ptr<const PreparedModel>> PreparedModel::create(
         sp<V1_0::IPreparedModel> preparedModel) {
     if (preparedModel == nullptr) {
-        return NN_ERROR(nn::ErrorStatus::INVALID_ARGUMENT)
-               << "V1_0::utils::PreparedModel::create must have non-null preparedModel";
+        return NN_ERROR() << "V1_0::utils::PreparedModel::create must have non-null preparedModel";
     }
 
     auto deathHandler = NN_TRY(hal::utils::DeathHandler::create(preparedModel));
@@ -71,10 +70,7 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Prepare
 
     const auto ret = kPreparedModel->execute(hidlRequest, cb);
     const auto status = HANDLE_TRANSPORT_FAILURE(ret);
-    if (status != ErrorStatus::NONE) {
-        const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
-        return NN_ERROR(canonical) << "execute failed with " << toString(status);
-    }
+    HANDLE_HAL_STATUS(status) << "execution failed with " << toString(status);
 
     auto result = NN_TRY(cb->get());
     NN_TRY(hal::utils::makeExecutionFailure(

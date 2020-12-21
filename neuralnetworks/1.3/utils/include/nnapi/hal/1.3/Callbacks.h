@@ -39,6 +39,26 @@
 
 namespace android::hardware::neuralnetworks::V1_3::utils {
 
+// Converts the results of IDevice::getSupportedOperations* to the NN canonical format. On success,
+// this function returns with the supported operations as indicated by a driver. On failure, this
+// function returns with the appropriate nn::GeneralError.
+nn::GeneralResult<std::vector<bool>> supportedOperationsCallback(
+        ErrorStatus status, const hidl_vec<bool>& supportedOperations);
+
+// Converts the results of IDevice::prepareModel* to the NN canonical format. On success, this
+// function returns with a non-null nn::SharedPreparedModel with a feature level of
+// nn::Version::ANDROID_R. On failure, this function returns with the appropriate nn::GeneralError.
+nn::GeneralResult<nn::SharedPreparedModel> prepareModelCallback(
+        ErrorStatus status, const sp<IPreparedModel>& preparedModel);
+
+// Converts the results of IDevice::execute* to the NN canonical format. On success, this function
+// returns with the output shapes and the timing information. On failure, this function returns with
+// the appropriate nn::ExecutionError.
+nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> executionCallback(
+        ErrorStatus status, const hidl_vec<V1_2::OutputShape>& outputShapes,
+        const V1_2::Timing& timing);
+
+// A HIDL callback class to receive the results of IDevice::prepareModel* asynchronously.
 class PreparedModelCallback final : public IPreparedModelCallback,
                                     public hal::utils::IProtectedCallback {
   public:
@@ -55,11 +75,10 @@ class PreparedModelCallback final : public IPreparedModelCallback,
     Data get();
 
   private:
-    void notifyInternal(Data result);
-
     hal::utils::TransferValue<Data> mData;
 };
 
+// A HIDL callback class to receive the results of IDevice::execute_1_3 asynchronously.
 class ExecutionCallback final : public IExecutionCallback, public hal::utils::IProtectedCallback {
   public:
     using Data = nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>>;
@@ -76,8 +95,6 @@ class ExecutionCallback final : public IExecutionCallback, public hal::utils::IP
     Data get();
 
   private:
-    void notifyInternal(Data result);
-
     hal::utils::TransferValue<Data> mData;
 };
 
