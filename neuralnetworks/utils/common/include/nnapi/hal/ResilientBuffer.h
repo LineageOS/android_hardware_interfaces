@@ -34,7 +34,7 @@ class ResilientBuffer final : public nn::IBuffer {
     struct PrivateConstructorTag {};
 
   public:
-    using Factory = std::function<nn::GeneralResult<nn::SharedBuffer>(bool blocking)>;
+    using Factory = std::function<nn::GeneralResult<nn::SharedBuffer>()>;
 
     static nn::GeneralResult<std::shared_ptr<const ResilientBuffer>> create(Factory makeBuffer);
 

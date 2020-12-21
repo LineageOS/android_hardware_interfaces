@@ -34,7 +34,7 @@ class ResilientPreparedModel final : public nn::IPreparedModel {
     struct PrivateConstructorTag {};
 
   public:
-    using Factory = std::function<nn::GeneralResult<nn::SharedPreparedModel>(bool blocking)>;
+    using Factory = std::function<nn::GeneralResult<nn::SharedPreparedModel>()>;
 
     static nn::GeneralResult<std::shared_ptr<const ResilientPreparedModel>> create(
             Factory makePreparedModel);
