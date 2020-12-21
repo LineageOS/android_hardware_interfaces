@@ -290,6 +290,7 @@ class AuthorizationSetBuilder : public AuthorizationSet {
     AuthorizationSetBuilder& GcmModeMacLen(uint32_t macLength);
 
     AuthorizationSetBuilder& BlockMode(std::initializer_list<BlockMode> blockModes);
+    AuthorizationSetBuilder& OaepMGFDigest(const std::vector<Digest>& digests);
     AuthorizationSetBuilder& Digest(std::vector<Digest> digests);
     AuthorizationSetBuilder& Padding(std::initializer_list<PaddingMode> paddings);
 
