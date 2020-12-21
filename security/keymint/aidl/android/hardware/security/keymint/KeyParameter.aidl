@@ -16,40 +16,16 @@
 
 package android.hardware.security.keymint;
 
-import android.hardware.security.keymint.Algorithm;
-import android.hardware.security.keymint.BlockMode;
-import android.hardware.security.keymint.Digest;
-import android.hardware.security.keymint.EcCurve;
-import android.hardware.security.keymint.HardwareAuthenticatorType;
-import android.hardware.security.keymint.KeyDerivationFunction;
-import android.hardware.security.keymint.KeyOrigin;
-import android.hardware.security.keymint.KeyPurpose;
-import android.hardware.security.keymint.PaddingMode;
-import android.hardware.security.keymint.SecurityLevel;
 import android.hardware.security.keymint.Tag;
-
+import android.hardware.security.keymint.KeyParameterValue;
 
 /**
  * Identifies the key authorization parameters to be used with keyMint.  This is usually
  * provided as an array of KeyParameters to IKeyMintDevice or Operation.
- *
- * TODO(seleneh): Union was not supported in aidl when this cl is first drafted.  So we just had
- * the Tags, and bool, int, long, int[], and we will cast to the appropate types base on the
- * Tag value.  We need to update this defination to distingish Algorithm, BlockMode,
- * PaddingMode, KeyOrigin...etc later, as union support is recently added to aidl.
- * b/173253030
  */
 @VintfStability
+@RustDerive(Clone=true, Eq=true, PartialEq=true, Ord=true, PartialOrd=true, Hash=true)
 parcelable KeyParameter {
-    /**
-     * Identify what type of key parameter this parcelable actually holds, and based on the type
-     * of tag is int, long, bool, or byte[], one of the fields below will be referenced.
-     */
     Tag tag;
-
-    boolean boolValue;
-    int integer;
-    long longInteger;
-    // TODO: change this to nullable.
-    byte[] blob;
+    KeyParameterValue value;
 }
