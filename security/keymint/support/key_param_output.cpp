@@ -35,38 +35,8 @@ ostream& operator<<(ostream& os, const ::std::vector<KeyParameter>& set) {
     return os;
 }
 
-// TODO(seleneh) update this to a parsing that looks at each tags individually
-// such as ALGORITHM BLOCK_MODE when aidl union support is added.
 ostream& operator<<(ostream& os, const KeyParameter& param) {
-    os << param.tag << ": ";
-    switch (typeFromTag(param.tag)) {
-        case TagType::INVALID:
-            return os << " Invalid";
-        case TagType::ENUM_REP:
-        case TagType::ENUM:
-        case TagType::UINT_REP:
-        case TagType::UINT:
-            return os << param.integer;
-        case TagType::ULONG_REP:
-        case TagType::ULONG:
-        case TagType::DATE:
-            return os << param.longInteger;
-        case TagType::BOOL:
-            return os << "true";
-        case TagType::BIGNUM:
-            os << " Bignum: ";
-            for (size_t i = 0; i < param.blob.size(); ++i) {
-                os << std::hex << ::std::setw(2) << static_cast<int>(param.blob[i]) << ::std::dec;
-            }
-            return os;
-        case TagType::BYTES:
-            os << " Bytes: ";
-            for (size_t i = 0; i < param.blob.size(); ++i) {
-                os << ::std::hex << ::std::setw(2) << static_cast<int>(param.blob[i]) << ::std::dec;
-            }
-            return os;
-    }
-    return os << "UNKNOWN TAG TYPE!";
+    return os << param.toString();
 }
 
 }  // namespace aidl::android::hardware::security::keymint
