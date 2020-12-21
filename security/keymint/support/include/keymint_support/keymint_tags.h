@@ -141,72 +141,73 @@ using all_tags_t = MetaList<
 template <typename TypedTagType>
 struct TypedTag2ValueType;
 
-#define MAKE_TAG_VALUE_ACCESSOR(tag_type, field_name)                              \
-    template <Tag tag>                                                             \
-    struct TypedTag2ValueType<TypedTag<tag_type, tag>> {                           \
-        typedef decltype(static_cast<KeyParameter*>(nullptr)->field_name) type;    \
-    };                                                                             \
-    template <Tag tag>                                                             \
-    inline auto accessTagValue(TypedTag<tag_type, tag>, const KeyParameter& param) \
-            ->const decltype(param.field_name)& {                                  \
-        return param.field_name;                                                   \
-    }                                                                              \
-    template <Tag tag>                                                             \
-    inline auto accessTagValue(TypedTag<tag_type, tag>, KeyParameter& param)       \
-            ->decltype(param.field_name)& {                                        \
-        return param.field_name;                                                   \
+#define MAKE_TAG_VALUE_ACCESSOR(tag_type, field_name)                                     \
+    template <Tag tag>                                                                    \
+    struct TypedTag2ValueType<TypedTag<tag_type, tag>> {                                  \
+        using type = std::remove_reference<decltype(                                      \
+                static_cast<KeyParameterValue*>(nullptr)                                  \
+                        ->get<KeyParameterValue::field_name>())>::type;                   \
+        static constexpr KeyParameterValue::Tag unionTag = KeyParameterValue::field_name; \
+    };                                                                                    \
+    template <Tag tag>                                                                    \
+    inline auto& accessTagValue(TypedTag<tag_type, tag>, const KeyParameter& param) {     \
+        return param.value.get<KeyParameterValue::field_name>();                          \
+    }                                                                                     \
+    template <Tag tag>                                                                    \
+    inline auto& accessTagValue(TypedTag<tag_type, tag>, KeyParameter& param) {           \
+        return param.value.get<KeyParameterValue::field_name>();                          \
     }
 
 MAKE_TAG_VALUE_ACCESSOR(TagType::ULONG, longInteger)
 MAKE_TAG_VALUE_ACCESSOR(TagType::ULONG_REP, longInteger)
-MAKE_TAG_VALUE_ACCESSOR(TagType::DATE, longInteger)
+MAKE_TAG_VALUE_ACCESSOR(TagType::DATE, dateTime)
 MAKE_TAG_VALUE_ACCESSOR(TagType::UINT, integer)
 MAKE_TAG_VALUE_ACCESSOR(TagType::UINT_REP, integer)
 MAKE_TAG_VALUE_ACCESSOR(TagType::BOOL, boolValue)
 MAKE_TAG_VALUE_ACCESSOR(TagType::BYTES, blob)
 MAKE_TAG_VALUE_ACCESSOR(TagType::BIGNUM, blob)
 
-//  TODO(seleneh) change these MAKE_TAG_ENUM_VALUE_ACCESSOR back to the 2 parameter
-//  version when aidl supports union
-#define MAKE_TAG_ENUM_VALUE_ACCESSOR(typed_tag, field_name, field_type)                 \
-    template <>                                                                         \
-    struct TypedTag2ValueType<decltype(typed_tag)> {                                    \
-        typedef field_type type;                                                        \
-    };                                                                                  \
-    inline auto accessTagValue(decltype(typed_tag), const KeyParameter& param)          \
-            ->const field_type& {                                                       \
-        return *reinterpret_cast<const field_type*>(&param.field_name);                 \
-    }                                                                                   \
-    inline auto accessTagValue(decltype(typed_tag), KeyParameter& param)->field_type& { \
-        return *reinterpret_cast<field_type*>(&param.field_name);                       \
+#define MAKE_TAG_ENUM_VALUE_ACCESSOR(typed_tag, field_name)                               \
+    template <>                                                                           \
+    struct TypedTag2ValueType<decltype(typed_tag)> {                                      \
+        using type = std::remove_reference<decltype(                                      \
+                static_cast<KeyParameterValue*>(nullptr)                                  \
+                        ->get<KeyParameterValue::field_name>())>::type;                   \
+        static constexpr KeyParameterValue::Tag unionTag = KeyParameterValue::field_name; \
+    };                                                                                    \
+    inline auto& accessTagValue(decltype(typed_tag), const KeyParameter& param) {         \
+        return param.value.get<KeyParameterValue::field_name>();                          \
+    }                                                                                     \
+    inline auto& accessTagValue(decltype(typed_tag), KeyParameter& param) {               \
+        return param.value.get<KeyParameterValue::field_name>();                          \
     }
 
-MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_ALGORITHM, integer, Algorithm)
-MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_BLOCK_MODE, integer, BlockMode)
-MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_DIGEST, integer, Digest)
-MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_EC_CURVE, integer, EcCurve)
-MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_ORIGIN, integer, KeyOrigin)
-MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_PADDING, integer, PaddingMode)
-MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_PURPOSE, integer, KeyPurpose)
-MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_USER_AUTH_TYPE, integer, HardwareAuthenticatorType)
-MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_HARDWARE_TYPE, integer, SecurityLevel)
+MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_ALGORITHM, algorithm)
+MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_BLOCK_MODE, blockMode)
+MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_DIGEST, digest)
+MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_EC_CURVE, ecCurve)
+MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_ORIGIN, origin)
+MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_PADDING, paddingMode)
+MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_PURPOSE, keyPurpose)
+MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_USER_AUTH_TYPE, hardwareAuthenticatorType)
+MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_HARDWARE_TYPE, securityLevel)
 
 template <TagType tag_type, Tag tag, typename ValueT>
 inline KeyParameter makeKeyParameter(TypedTag<tag_type, tag> ttag, ValueT&& value) {
-    KeyParameter param;
-    param.tag = tag;
-    param.longInteger = 0;
-    accessTagValue(ttag, param) = std::forward<ValueT>(value);
-    return param;
+    KeyParameter retval;
+    retval.tag = tag;
+    retval.value = KeyParameterValue::make<TypedTag2ValueType<decltype(ttag)>::unionTag>(
+            std::forward<ValueT>(value));
+    return retval;
 }
 
 // the boolean case
 template <Tag tag>
 inline KeyParameter makeKeyParameter(TypedTag<TagType::BOOL, tag>) {
-    KeyParameter param;
-    param.tag = tag;
-    param.boolValue = true;
-    return param;
+    KeyParameter retval;
+    retval.tag = tag;
+    retval.value = KeyParameterValue::make<KeyParameterValue::boolValue>(true);
+    return retval;
 }
 
 template <typename... Pack>
@@ -321,7 +322,7 @@ std::remove_reference_t<Wrapped> defaultOr(NullOr<Wrapped>&& optional, Default&&
 template <TagType tag_type, Tag tag>
 inline NullOr<const typename TypedTag2ValueType<TypedTag<tag_type, tag>>::type&> authorizationValue(
         TypedTag<tag_type, tag> ttag, const KeyParameter& param) {
-    if (tag != param.tag) return {};
+    if (TypedTag2ValueType<TypedTag<tag_type, tag>>::unionTag != param.value.getTag()) return {};
     return accessTagValue(ttag, param);
 }
 
