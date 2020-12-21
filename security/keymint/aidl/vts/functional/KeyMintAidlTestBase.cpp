@@ -577,8 +577,8 @@ string KeyMintAidlTestBase::EncryptMessage(const string& message, BlockMode bloc
     string ciphertext = EncryptMessage(message, params, &out_params);
     EXPECT_EQ(1U, out_params.size());
     auto ivVal = out_params.GetTagValue(TAG_NONCE);
-    EXPECT_TRUE(ivVal.isOk());
-    if (ivVal.isOk()) *iv_out = ivVal.value();
+    EXPECT_TRUE(ivVal);
+    if (ivVal) *iv_out = *ivVal;
     return ciphertext;
 }
 
