@@ -17,8 +17,14 @@
 package android.hardware.power.stats;
 
 @VintfStability
-@Backing(type="int")
-enum EnergyConsumerId {
-    DISPLAY = 0,
-    GPS = 1,
+parcelable Channel {
+    /**
+     * Unique ID of this Channel
+     */
+    int id;
+    /**
+     * Unique name of this Channel. Vendor/device specific. Opaque to framework
+     */
+    @utf8InCpp String name;
 }
+
