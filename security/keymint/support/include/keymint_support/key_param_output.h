@@ -71,7 +71,7 @@ inline ::std::ostream& operator<<(::std::ostream& os, SecurityLevel value) {
 }
 
 template <typename ValueT>
-::std::ostream& operator<<(::std::ostream& os, const NullOr<ValueT>& value) {
+::std::ostream& operator<<(::std::ostream& os, const std::optional<ValueT>& value) {
     if (!value.isOk()) {
         os << "(value not present)";
     } else {
