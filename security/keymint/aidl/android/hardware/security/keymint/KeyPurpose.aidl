@@ -16,12 +16,11 @@
 
 package android.hardware.security.keymint;
 
-
 /**
  * Possible purposes of a key (or pair).
  */
 @VintfStability
-@Backing(type = "int")
+@Backing(type="int")
 enum KeyPurpose {
     /* Usable with RSA, EC and AES keys. */
     ENCRYPT = 0,
@@ -42,5 +41,7 @@ enum KeyPurpose {
     /* Key Agreement, usable with EC keys. */
     AGREE_KEY = 6,
 
-    /* TODO(seleneh) add ATTEST_KEY and their corresponding codes and tests later*/
+    /* Usable as an attestation signing key.  Keys with this purpose must not have any other
+     * purpose. */
+    ATTEST_KEY = 7,
 }
