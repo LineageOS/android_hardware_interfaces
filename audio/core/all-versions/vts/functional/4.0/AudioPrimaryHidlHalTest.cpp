@@ -140,20 +140,23 @@ TEST_P(AudioHidlDeviceTest, SetConnectedState) {
 #if MAJOR_VERSION <= 6
     using AD = AudioDevice;
     for (auto deviceType : {AD::OUT_HDMI, AD::OUT_WIRED_HEADPHONE, AD::IN_USB_HEADSET}) {
+        SCOPED_TRACE("device=" + ::testing::PrintToString(deviceType));
 #elif MAJOR_VERSION >= 7
     using AD = xsd::AudioDevice;
-    for (auto deviceType :
-         {toString(AD::AUDIO_DEVICE_OUT_HDMI), toString(AD::AUDIO_DEVICE_OUT_WIRED_HEADPHONE),
-          toString(AD::AUDIO_DEVICE_IN_USB_HEADSET)}) {
+    for (auto deviceType : {AD::AUDIO_DEVICE_OUT_HDMI, AD::AUDIO_DEVICE_OUT_WIRED_HEADPHONE,
+                            AD::AUDIO_DEVICE_IN_USB_HEADSET}) {
+        SCOPED_TRACE("device=" + toString(deviceType));
 #endif
-        SCOPED_TRACE("device=" + ::testing::PrintToString(deviceType));
         for (bool state : {true, false}) {
             SCOPED_TRACE("state=" + ::testing::PrintToString(state));
             DeviceAddress address = {};
 #if MAJOR_VERSION <= 6
             address.device = deviceType;
 #elif MAJOR_VERSION >= 7
-            address.deviceType = deviceType;
+            address.deviceType = toString(deviceType);
+            if (deviceType == AD::AUDIO_DEVICE_IN_USB_HEADSET) {
+                address.address.alsa({0, 0});
+            }
 #endif
             auto ret = getDevice()->setConnectedState(address, state);
             ASSERT_TRUE(ret.isOk());

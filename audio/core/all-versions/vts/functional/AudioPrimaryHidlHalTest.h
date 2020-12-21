@@ -156,6 +156,21 @@ const PolicyConfig& getCachedPolicyConfig() {
     return *policyConfig;
 }
 
+TEST(CheckConfig, audioPolicyConfigurationValidation) {
+    const auto factories = ::android::hardware::getAllHalInstanceNames(IDevicesFactory::descriptor);
+    if (factories.size() == 0) {
+        GTEST_SKIP() << "Skipping audioPolicyConfigurationValidation because no factory instances "
+                        "are found.";
+    }
+    RecordProperty("description",
+                   "Verify that the audio policy configuration file "
+                   "is valid according to the schema");
+
+    const char* xsd = "/data/local/tmp/audio_policy_configuration_" STRINGIFY(CPP_VERSION) ".xsd";
+    EXPECT_ONE_VALID_XML_MULTIPLE_LOCATIONS(kConfigFileName,
+                                            android::audio_get_configuration_paths(), xsd);
+}
+
 //////////////////////////////////////////////////////////////////////////////
 //////////////////// Test parameter types and definitions ////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -230,21 +245,6 @@ class AudioHidlTestWithDeviceParameter : public HidlTest,
         return std::get<PARAM_DEVICE_NAME>(GetParam());
     }
 };
-
-TEST(CheckConfig, audioPolicyConfigurationValidation) {
-    auto deviceParameters = getDeviceParametersForFactoryTests();
-    if (deviceParameters.size() == 0) {
-        GTEST_SKIP() << "Skipping audioPolicyConfigurationValidation because no device parameter "
-                        "is found.";
-    }
-    RecordProperty("description",
-                   "Verify that the audio policy configuration file "
-                   "is valid according to the schema");
-
-    const char* xsd = "/data/local/tmp/audio_policy_configuration_" STRINGIFY(CPP_VERSION) ".xsd";
-    EXPECT_ONE_VALID_XML_MULTIPLE_LOCATIONS(kConfigFileName,
-                                            android::audio_get_configuration_paths(), xsd);
-}
 
 class AudioPolicyConfigTest : public AudioHidlTestWithDeviceParameter {
   public:
