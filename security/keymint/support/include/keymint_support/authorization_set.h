@@ -168,7 +168,7 @@ class AuthorizationSet {
     bool Contains(TypedTag<tag_type, tag> ttag, const ValueT& value) const {
         for (const auto& param : data_) {
             auto entry = authorizationValue(ttag, param);
-            if (entry.isOk() && static_cast<ValueT>(entry.value()) == value) return true;
+            if (entry && static_cast<ValueT>(*entry) == value) return true;
         }
         return false;
     }
@@ -178,9 +178,9 @@ class AuthorizationSet {
     size_t GetTagCount(Tag tag) const;
 
     template <typename T>
-    inline NullOr<const typename TypedTag2ValueType<T>::type&> GetTagValue(T tag) const {
+    inline auto GetTagValue(T tag) const -> decltype(authorizationValue(tag, KeyParameter())) {
         auto entry = GetEntry(tag);
-        if (entry.isOk()) return authorizationValue(tag, entry.value());
+        if (entry) return authorizationValue(tag, *entry);
         return {};
     }
 
@@ -219,7 +219,7 @@ class AuthorizationSet {
     }
 
   private:
-    NullOr<const KeyParameter&> GetEntry(Tag tag) const;
+    std::optional<std::reference_wrapper<const KeyParameter>> GetEntry(Tag tag) const;
 
     std::vector<KeyParameter> data_;
 };
