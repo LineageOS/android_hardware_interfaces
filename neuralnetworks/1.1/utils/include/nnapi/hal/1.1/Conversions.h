@@ -51,6 +51,10 @@ nn::GeneralResult<Capabilities> convert(const nn::Capabilities& capabilities);
 nn::GeneralResult<Model> convert(const nn::Model& model);
 nn::GeneralResult<ExecutionPreference> convert(const nn::ExecutionPreference& executionPreference);
 
+nn::GeneralResult<V1_0::DeviceStatus> convert(const nn::DeviceStatus& deviceStatus);
+nn::GeneralResult<V1_0::Request> convert(const nn::Request& request);
+nn::GeneralResult<V1_0::ErrorStatus> convert(const nn::ErrorStatus& status);
+
 }  // namespace android::hardware::neuralnetworks::V1_1::utils
 
 #endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_1_CONVERSIONS_H

@@ -275,4 +275,16 @@ nn::GeneralResult<ExecutionPreference> convert(const nn::ExecutionPreference& ex
     return validatedConvert(executionPreference);
 }
 
+nn::GeneralResult<V1_0::DeviceStatus> convert(const nn::DeviceStatus& deviceStatus) {
+    return V1_0::utils::convert(deviceStatus);
+}
+
+nn::GeneralResult<V1_0::Request> convert(const nn::Request& request) {
+    return V1_0::utils::convert(request);
+}
+
+nn::GeneralResult<V1_0::ErrorStatus> convert(const nn::ErrorStatus& status) {
+    return V1_0::utils::convert(status);
+}
+
 }  // namespace android::hardware::neuralnetworks::V1_1::utils

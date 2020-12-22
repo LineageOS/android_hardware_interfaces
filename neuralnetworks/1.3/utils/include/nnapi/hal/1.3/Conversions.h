@@ -103,6 +103,17 @@ nn::GeneralResult<hidl_handle> convert(const nn::SharedHandle& handle);
 nn::GeneralResult<hidl_memory> convert(const nn::Memory& memory);
 nn::GeneralResult<hidl_vec<BufferRole>> convert(const std::vector<nn::BufferRole>& bufferRoles);
 
+nn::GeneralResult<V1_0::DeviceStatus> convert(const nn::DeviceStatus& deviceStatus);
+nn::GeneralResult<V1_1::ExecutionPreference> convert(
+        const nn::ExecutionPreference& executionPreference);
+nn::GeneralResult<hidl_vec<V1_2::Extension>> convert(const std::vector<nn::Extension>& extensions);
+nn::GeneralResult<hidl_vec<hidl_handle>> convert(const std::vector<nn::SharedHandle>& handles);
+nn::GeneralResult<hidl_vec<V1_2::OutputShape>> convert(
+        const std::vector<nn::OutputShape>& outputShapes);
+nn::GeneralResult<V1_2::DeviceType> convert(const nn::DeviceType& deviceType);
+nn::GeneralResult<V1_2::MeasureTiming> convert(const nn::MeasureTiming& measureTiming);
+nn::GeneralResult<V1_2::Timing> convert(const nn::Timing& timing);
+
 }  // namespace android::hardware::neuralnetworks::V1_3::utils
 
 #endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_3_CONVERSIONS_H

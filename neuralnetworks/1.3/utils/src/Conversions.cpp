@@ -685,4 +685,38 @@ nn::GeneralResult<hidl_vec<BufferRole>> convert(const std::vector<nn::BufferRole
     return validatedConvert(bufferRoles);
 }
 
+nn::GeneralResult<V1_0::DeviceStatus> convert(const nn::DeviceStatus& deviceStatus) {
+    return V1_2::utils::convert(deviceStatus);
+}
+
+nn::GeneralResult<V1_1::ExecutionPreference> convert(
+        const nn::ExecutionPreference& executionPreference) {
+    return V1_2::utils::convert(executionPreference);
+}
+
+nn::GeneralResult<hidl_vec<V1_2::Extension>> convert(const std::vector<nn::Extension>& extensions) {
+    return V1_2::utils::convert(extensions);
+}
+
+nn::GeneralResult<hidl_vec<hidl_handle>> convert(const std::vector<nn::SharedHandle>& handles) {
+    return V1_2::utils::convert(handles);
+}
+
+nn::GeneralResult<hidl_vec<V1_2::OutputShape>> convert(
+        const std::vector<nn::OutputShape>& outputShapes) {
+    return V1_2::utils::convert(outputShapes);
+}
+
+nn::GeneralResult<V1_2::DeviceType> convert(const nn::DeviceType& deviceType) {
+    return V1_2::utils::convert(deviceType);
+}
+
+nn::GeneralResult<V1_2::MeasureTiming> convert(const nn::MeasureTiming& measureTiming) {
+    return V1_2::utils::convert(measureTiming);
+}
+
+nn::GeneralResult<V1_2::Timing> convert(const nn::Timing& timing) {
+    return V1_2::utils::convert(timing);
+}
+
 }  // namespace android::hardware::neuralnetworks::V1_3::utils
