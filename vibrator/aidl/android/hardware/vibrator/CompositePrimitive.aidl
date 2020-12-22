@@ -70,4 +70,11 @@ enum CompositePrimitive {
      * Support is required.
      */
     LIGHT_TICK,
+    /**
+     * This very short low frequency effect should produce a light crisp sensation intended
+     * to be used repetitively for dynamic feedback.
+     *
+     * Support is required.
+     */
+    LOW_TICK,
 }
