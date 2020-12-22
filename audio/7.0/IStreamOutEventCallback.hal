@@ -51,6 +51,25 @@ interface IStreamOutEventCallback {
      * "has-atmos", int32
      * "audio-encoding", int32
      *
+     * S (audio HAL 7.0) in addition adds the following keys:
+     * "presentation-id", int32
+     * "program-id", int32
+     * "presentation-content-classifier", int32
+     *    presentation-content-classifier key values can be referenced from
+     *    frameworks/base/media/java/android/media/AudioPresentation.java
+     *    i.e AudioPresentation.ContentClassifier
+     *    It can contain any of the below values
+     *    CONTENT_UNKNOWN   = -1,
+     *    CONTENT_MAIN      =  0,
+     *    CONTENT_MUSIC_AND_EFFECTS = 1,
+     *    CONTENT_VISUALLY_IMPAIRED = 2,
+     *    CONTENT_HEARING_IMPAIRED  = 3,
+     *    CONTENT_DIALOG = 4,
+     *    CONTENT_COMMENTARY = 5,
+     *    CONTENT_EMERGENCY = 6,
+     *    CONTENT_VOICEOVER = 7
+     * "presentation-language", string  // represents ISO 639-2 (three letter code)
+     *
      * Parceling Format:
      * All values are native endian order. [1]
      *
