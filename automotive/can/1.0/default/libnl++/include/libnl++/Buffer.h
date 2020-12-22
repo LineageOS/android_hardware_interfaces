@@ -91,6 +91,18 @@ class Buffer {
         return {impl::data<const T, const D>(mData, offset), dataEnd()};
     }
 
+    template <typename B>
+    std::optional<uintptr_t> getOffset(Buffer<B> inner) const {
+        const auto selfStart = uintptr_t(mData);
+        const auto selfEnd = uintptr_t(mBufferEnd);
+        const auto innerStart = uintptr_t(inner.mData);
+        const auto innerEnd = uintptr_t(inner.mBufferEnd);
+
+        if (innerStart < selfStart || innerEnd > selfEnd) return std::nullopt;
+
+        return innerStart - selfStart;
+    }
+
     class iterator {
       public:
         iterator() : mCurrent(nullptr, size_t(0)) {
