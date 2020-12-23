@@ -13,7 +13,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Runs VtsAidlKeyMintV1_0TargetTest.">
+<configuration description="Runs VtsAidlKeyMintTargetTest.">
     <option name="test-suite-tag" value="apct" />
     <option name="test-suite-tag" value="apct-native" />
 
@@ -22,12 +22,13 @@
 
     <target_preparer class="com.android.tradefed.targetprep.PushFilePreparer">
         <option name="cleanup" value="true" />
-        <option name="push" value="VtsAidlKeyMintV1_0TargetTest->/data/local/tmp/VtsAidlKeyMintV1_0TargetTest" />
+        <option name="push"
+                value="VtsAidlKeyMintTargetTest->/data/local/tmp/VtsAidlKeyMintTargetTest" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.GTest" >
         <option name="native-test-device-path" value="/data/local/tmp" />
-        <option name="module-name" value="VtsAidlKeyMintV1_0TargetTest" />
+        <option name="module-name" value="VtsAidlKeyMintTargetTest" />
         <option name="native-test-timeout" value="900000"/>
     </test>
 </configuration>
