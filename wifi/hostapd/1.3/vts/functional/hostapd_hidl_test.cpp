@@ -124,6 +124,7 @@ class HostapdHidlTest
         // Newly added attributes in V1_3
         channelParams_1_3.channel = iface_params.channelParams.channel;
         channelParams_1_3.enableAcs = iface_params.channelParams.enableAcs;
+        channelParams_1_3.bandMask = iface_params_1_2.channelParams.bandMask;
         channelParams_1_3.V1_2 = iface_params_1_2.channelParams;
 
         vec_channelParams.push_back(channelParams_1_3);
@@ -147,7 +148,8 @@ class HostapdHidlTest
             iface_params_1_3.V1_2.V1_1.V1_0.channelParams.enableAcs;
         iface_params_1_3.channelParamsList[0].V1_2 =
             iface_params_1_3.V1_2.channelParams;
-
+        iface_params_1_3.channelParamsList[0].bandMask =
+            iface_params_1_3.V1_2.channelParams.bandMask;
         return iface_params_1_3;
     }
 
