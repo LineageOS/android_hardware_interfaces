@@ -58,6 +58,10 @@ struct Tag2TypedTag {
     typedef TypedTag<typeFromTag(tag), tag> type;
 };
 
+#ifdef DECLARE_TYPED_TAG
+#undef DECLARE_TYPED_TAG
+#endif
+
 #define DECLARE_TYPED_TAG(name)                                    \
     typedef typename Tag2TypedTag<Tag::name>::type TAG_##name##_t; \
     static TAG_##name##_t TAG_##name;
@@ -72,9 +76,12 @@ DECLARE_TYPED_TAG(ATTESTATION_APPLICATION_ID);
 DECLARE_TYPED_TAG(ATTESTATION_CHALLENGE);
 DECLARE_TYPED_TAG(ATTESTATION_ID_BRAND);
 DECLARE_TYPED_TAG(ATTESTATION_ID_DEVICE);
-DECLARE_TYPED_TAG(ATTESTATION_ID_PRODUCT);
+DECLARE_TYPED_TAG(ATTESTATION_ID_IMEI);
 DECLARE_TYPED_TAG(ATTESTATION_ID_MANUFACTURER);
+DECLARE_TYPED_TAG(ATTESTATION_ID_MEID);
+DECLARE_TYPED_TAG(ATTESTATION_ID_PRODUCT);
 DECLARE_TYPED_TAG(ATTESTATION_ID_MODEL);
+DECLARE_TYPED_TAG(ATTESTATION_ID_SERIAL);
 DECLARE_TYPED_TAG(AUTH_TIMEOUT);
 DECLARE_TYPED_TAG(BLOCK_MODE);
 DECLARE_TYPED_TAG(BOOTLOADER_ONLY);
@@ -118,6 +125,8 @@ DECLARE_TYPED_TAG(USER_ID);
 DECLARE_TYPED_TAG(USER_SECURE_ID);
 DECLARE_TYPED_TAG(VENDOR_PATCHLEVEL);
 
+#undef DECLARE_TYPED_TAG
+
 template <typename... Elems>
 struct MetaList {};
 
@@ -133,6 +142,7 @@ using all_tags_t = MetaList<
         TAG_OS_VERSION_t, TAG_OS_PATCHLEVEL_t, TAG_UNIQUE_ID_t, TAG_ATTESTATION_CHALLENGE_t,
         TAG_ATTESTATION_APPLICATION_ID_t, TAG_ATTESTATION_ID_BRAND_t, TAG_ATTESTATION_ID_DEVICE_t,
         TAG_ATTESTATION_ID_PRODUCT_t, TAG_ATTESTATION_ID_MANUFACTURER_t, TAG_ATTESTATION_ID_MODEL_t,
+        TAG_ATTESTATION_ID_SERIAL_t, TAG_ATTESTATION_ID_IMEI_t, TAG_ATTESTATION_ID_MEID_t,
         TAG_RESET_SINCE_ID_ROTATION_t, TAG_PURPOSE_t, TAG_ALGORITHM_t, TAG_BLOCK_MODE_t,
         TAG_DIGEST_t, TAG_PADDING_t, TAG_ORIGIN_t, TAG_USER_AUTH_TYPE_t, TAG_EC_CURVE_t,
         TAG_BOOT_PATCHLEVEL_t, TAG_VENDOR_PATCHLEVEL_t, TAG_TRUSTED_CONFIRMATION_REQUIRED_t,
@@ -141,72 +151,121 @@ using all_tags_t = MetaList<
 template <typename TypedTagType>
 struct TypedTag2ValueType;
 
-#define MAKE_TAG_VALUE_ACCESSOR(tag_type, field_name)                              \
-    template <Tag tag>                                                             \
-    struct TypedTag2ValueType<TypedTag<tag_type, tag>> {                           \
-        typedef decltype(static_cast<KeyParameter*>(nullptr)->field_name) type;    \
-    };                                                                             \
-    template <Tag tag>                                                             \
-    inline auto accessTagValue(TypedTag<tag_type, tag>, const KeyParameter& param) \
-            ->const decltype(param.field_name)& {                                  \
-        return param.field_name;                                                   \
-    }                                                                              \
-    template <Tag tag>                                                             \
-    inline auto accessTagValue(TypedTag<tag_type, tag>, KeyParameter& param)       \
-            ->decltype(param.field_name)& {                                        \
-        return param.field_name;                                                   \
+#ifdef MAKE_TAG_VALUE_ACCESSOR
+#undef MAKE_TAG_VALUE_ACCESSOR
+#endif
+
+#define MAKE_TAG_VALUE_ACCESSOR(tag_type, field_name)                                           \
+    template <Tag tag>                                                                          \
+    struct TypedTag2ValueType<TypedTag<tag_type, tag>> {                                        \
+        using type = std::remove_reference<                                                     \
+                decltype(static_cast<KeyParameterValue*>(nullptr)                               \
+                                 ->get<KeyParameterValue::field_name>())>::type;                \
+        static constexpr KeyParameterValue::Tag unionTag = KeyParameterValue::field_name;       \
+    };                                                                                          \
+    template <Tag tag>                                                                          \
+    inline std::optional<std::reference_wrapper<                                                \
+            const typename TypedTag2ValueType<TypedTag<tag_type, tag>>::type>>                  \
+    accessTagValue(TypedTag<tag_type, tag>, const KeyParameter& param) {                        \
+        if (param.value.getTag() == KeyParameterValue::field_name) {                            \
+            return std::optional(                                                               \
+                    std::reference_wrapper(param.value.get<KeyParameterValue::field_name>()));  \
+        } else {                                                                                \
+            return std::nullopt;                                                                \
+        }                                                                                       \
+    }                                                                                           \
+    template <Tag tag>                                                                          \
+    inline std::optional<                                                                       \
+            std::reference_wrapper<typename TypedTag2ValueType<TypedTag<tag_type, tag>>::type>> \
+    accessTagValue(TypedTag<tag_type, tag>, KeyParameter& param) {                              \
+        if (param.value.getTag() == KeyParameterValue::field_name) {                            \
+            return std::optional(                                                               \
+                    std::reference_wrapper(param.value.get<KeyParameterValue::field_name>()));  \
+        } else {                                                                                \
+            return std::nullopt;                                                                \
+        }                                                                                       \
     }
 
 MAKE_TAG_VALUE_ACCESSOR(TagType::ULONG, longInteger)
 MAKE_TAG_VALUE_ACCESSOR(TagType::ULONG_REP, longInteger)
-MAKE_TAG_VALUE_ACCESSOR(TagType::DATE, longInteger)
+MAKE_TAG_VALUE_ACCESSOR(TagType::DATE, dateTime)
 MAKE_TAG_VALUE_ACCESSOR(TagType::UINT, integer)
 MAKE_TAG_VALUE_ACCESSOR(TagType::UINT_REP, integer)
 MAKE_TAG_VALUE_ACCESSOR(TagType::BOOL, boolValue)
 MAKE_TAG_VALUE_ACCESSOR(TagType::BYTES, blob)
 MAKE_TAG_VALUE_ACCESSOR(TagType::BIGNUM, blob)
 
-//  TODO(seleneh) change these MAKE_TAG_ENUM_VALUE_ACCESSOR back to the 2 parameter
-//  version when aidl supports union
-#define MAKE_TAG_ENUM_VALUE_ACCESSOR(typed_tag, field_name, field_type)                 \
-    template <>                                                                         \
-    struct TypedTag2ValueType<decltype(typed_tag)> {                                    \
-        typedef field_type type;                                                        \
-    };                                                                                  \
-    inline auto accessTagValue(decltype(typed_tag), const KeyParameter& param)          \
-            ->const field_type& {                                                       \
-        return *reinterpret_cast<const field_type*>(&param.field_name);                 \
-    }                                                                                   \
-    inline auto accessTagValue(decltype(typed_tag), KeyParameter& param)->field_type& { \
-        return *reinterpret_cast<field_type*>(&param.field_name);                       \
+#undef MAKE_TAG_VALUE_ACCESSOR
+
+#ifdef MAKE_TAG_ENUM_VALUE_ACCESSOR
+#undef MAKE_TAG_ENUM_VALUE_ACCESSOR
+#endif
+
+#define MAKE_TAG_ENUM_VALUE_ACCESSOR(typed_tag, field_name)                                       \
+    template <>                                                                                   \
+    struct TypedTag2ValueType<decltype(typed_tag)> {                                              \
+        using type = std::remove_reference<                                                       \
+                decltype(static_cast<KeyParameterValue*>(nullptr)                                 \
+                                 ->get<KeyParameterValue::field_name>())>::type;                  \
+        static constexpr KeyParameterValue::Tag unionTag = KeyParameterValue::field_name;         \
+    };                                                                                            \
+    inline std::optional<                                                                         \
+            std::reference_wrapper<const typename TypedTag2ValueType<decltype(typed_tag)>::type>> \
+    accessTagValue(decltype(typed_tag), const KeyParameter& param) {                              \
+        if (param.value.getTag() == KeyParameterValue::field_name) {                              \
+            return std::optional(                                                                 \
+                    std::reference_wrapper(param.value.get<KeyParameterValue::field_name>()));    \
+        } else {                                                                                  \
+            return std::nullopt;                                                                  \
+        }                                                                                         \
+    }                                                                                             \
+    inline std::optional<                                                                         \
+            std::reference_wrapper<typename TypedTag2ValueType<decltype(typed_tag)>::type>>       \
+    accessTagValue(decltype(typed_tag), KeyParameter& param) {                                    \
+        if (param.value.getTag() == KeyParameterValue::field_name) {                              \
+            return std::optional(                                                                 \
+                    std::reference_wrapper(param.value.get<KeyParameterValue::field_name>()));    \
+        } else {                                                                                  \
+            return std::nullopt;                                                                  \
+        }                                                                                         \
     }
 
-MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_ALGORITHM, integer, Algorithm)
-MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_BLOCK_MODE, integer, BlockMode)
-MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_DIGEST, integer, Digest)
-MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_EC_CURVE, integer, EcCurve)
-MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_ORIGIN, integer, KeyOrigin)
-MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_PADDING, integer, PaddingMode)
-MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_PURPOSE, integer, KeyPurpose)
-MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_USER_AUTH_TYPE, integer, HardwareAuthenticatorType)
-MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_HARDWARE_TYPE, integer, SecurityLevel)
+MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_ALGORITHM, algorithm)
+MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_BLOCK_MODE, blockMode)
+MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_DIGEST, digest)
+MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_EC_CURVE, ecCurve)
+MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_ORIGIN, origin)
+MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_PADDING, paddingMode)
+MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_PURPOSE, keyPurpose)
+MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_USER_AUTH_TYPE, hardwareAuthenticatorType)
+MAKE_TAG_ENUM_VALUE_ACCESSOR(TAG_HARDWARE_TYPE, securityLevel)
+
+#undef MAKE_TAG_ENUM_VALUE_ACCESSOR
 
 template <TagType tag_type, Tag tag, typename ValueT>
 inline KeyParameter makeKeyParameter(TypedTag<tag_type, tag> ttag, ValueT&& value) {
-    KeyParameter param;
-    param.tag = tag;
-    param.longInteger = 0;
-    accessTagValue(ttag, param) = std::forward<ValueT>(value);
-    return param;
+    KeyParameter retval;
+    retval.tag = tag;
+    retval.value = KeyParameterValue::make<TypedTag2ValueType<decltype(ttag)>::unionTag>(
+            std::forward<ValueT>(value));
+    return retval;
 }
 
 // the boolean case
 template <Tag tag>
 inline KeyParameter makeKeyParameter(TypedTag<TagType::BOOL, tag>) {
-    KeyParameter param;
-    param.tag = tag;
-    param.boolValue = true;
-    return param;
+    KeyParameter retval;
+    retval.tag = tag;
+    retval.value = KeyParameterValue::make<KeyParameterValue::boolValue>(true);
+    return retval;
+}
+
+// the invalid case
+inline KeyParameter makeKeyParameter(TypedTag<TagType::INVALID, Tag::INVALID>) {
+    KeyParameter retval;
+    retval.tag = Tag::INVALID;
+    retval.value = KeyParameterValue::make<KeyParameterValue::invalid>(0);
+    return retval;
 }
 
 template <typename... Pack>
@@ -239,89 +298,32 @@ inline KeyParameter Authorization(TypedTag<tag_type, tag> ttag, Args&&... args) 
     return makeKeyParameter(ttag, std::forward<Args>(args)...);
 }
 
-/**
- * This class wraps a (mostly return) value and stores whether or not the wrapped value is valid out
- * of band. Note that if the wrapped value is a reference it is unsafe to access the value if
- * !isOk(). If the wrapped type is a pointer or value and !isOk(), it is still safe to access the
- * wrapped value. In this case the pointer will be NULL though, and the value will be default
- * constructed.
- *
- * TODO(seleneh) replace this with std::optional.
- */
-template <typename ValueT>
-class NullOr {
-    using internal_t = std::conditional_t<std::is_lvalue_reference<ValueT>::value,
-                                          std::remove_reference_t<ValueT>*, ValueT>;
-
-    struct pointer_initializer {
-        static std::nullptr_t init() { return nullptr; }
-    };
-    struct value_initializer {
-        static ValueT init() { return ValueT(); }
-    };
-    struct value_pointer_deref_t {
-        static ValueT& deref(ValueT& v) { return v; }
-    };
-    struct reference_deref_t {
-        static auto& deref(internal_t v) { return *v; }
-    };
-    using initializer_t = std::conditional_t<std::is_lvalue_reference<ValueT>::value ||
-                                                     std::is_pointer<ValueT>::value,
-                                             pointer_initializer, value_initializer>;
-    using deref_t = std::conditional_t<std::is_lvalue_reference<ValueT>::value, reference_deref_t,
-                                       value_pointer_deref_t>;
-
-  public:
-    NullOr() : value_(initializer_t::init()), null_(true) {}
-    template <typename T>
-    NullOr(T&& value, typename std::enable_if<
-                              !std::is_lvalue_reference<ValueT>::value &&
-                                      std::is_same<std::decay_t<ValueT>, std::decay_t<T>>::value,
-                              int>::type = 0)
-        : value_(std::forward<ValueT>(value)), null_(false) {}
-    template <typename T>
-    NullOr(T& value, typename std::enable_if<
-                             std::is_lvalue_reference<ValueT>::value &&
-                                     std::is_same<std::decay_t<ValueT>, std::decay_t<T>>::value,
-                             int>::type = 0)
-        : value_(&value), null_(false) {}
-
-    bool isOk() const { return !null_; }
-
-    const ValueT& value() const& { return deref_t::deref(value_); }
-    ValueT& value() & { return deref_t::deref(value_); }
-    ValueT&& value() && { return std::move(deref_t::deref(value_)); }
-
-  private:
-    internal_t value_;
-    bool null_;
-};
-
 template <typename T>
 std::remove_reference_t<T> NullOrOr(T&& v) {
-    if (v.isOk()) return v;
+    if (v) return v;
     return {};
 }
 
 template <typename Head, typename... Tail>
 std::remove_reference_t<Head> NullOrOr(Head&& head, Tail&&... tail) {
-    if (head.isOk()) return head;
+    if (head) return head;
     return NullOrOr(std::forward<Tail>(tail)...);
 }
 
 template <typename Default, typename Wrapped>
-std::remove_reference_t<Wrapped> defaultOr(NullOr<Wrapped>&& optional, Default&& def) {
+std::remove_reference_t<Wrapped> defaultOr(std::optional<Wrapped>&& optional, Default&& def) {
     static_assert(std::is_convertible<std::remove_reference_t<Default>,
                                       std::remove_reference_t<Wrapped>>::value,
-                  "Type of default value must match the type wrapped by NullOr");
-    if (optional.isOk()) return optional.value();
+                  "Type of default value must match the type wrapped by std::optional");
+    if (optional) return *optional;
     return def;
 }
 
 template <TagType tag_type, Tag tag>
-inline NullOr<const typename TypedTag2ValueType<TypedTag<tag_type, tag>>::type&> authorizationValue(
-        TypedTag<tag_type, tag> ttag, const KeyParameter& param) {
-    if (tag != param.tag) return {};
+inline std::optional<
+        std::reference_wrapper<const typename TypedTag2ValueType<TypedTag<tag_type, tag>>::type>>
+authorizationValue(TypedTag<tag_type, tag> ttag, const KeyParameter& param) {
+    if (TypedTag2ValueType<TypedTag<tag_type, tag>>::unionTag != param.value.getTag()) return {};
     return accessTagValue(ttag, param);
 }
 
