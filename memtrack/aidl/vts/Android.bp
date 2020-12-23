@@ -1,0 +1,17 @@
+cc_test {
+    name: "VtsHalMemtrackTargetTest",
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    srcs: ["VtsHalMemtrackTargetTest.cpp"],
+    shared_libs: [
+        "libbinder_ndk",
+    ],
+    static_libs: [
+        "android.hardware.memtrack-unstable-ndk_platform",
+    ],
+    test_suites: [
+        "vts-core",
+    ],
+}
