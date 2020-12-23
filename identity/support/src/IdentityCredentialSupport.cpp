@@ -935,18 +935,19 @@ bool parseAsn1Time(const ASN1_TIME* asn1Time, time_t* outTime) {
 optional<vector<vector<uint8_t>>> createAttestation(
         const EVP_PKEY* key, const vector<uint8_t>& applicationId, const vector<uint8_t>& challenge,
         uint64_t activeTimeMilliSeconds, uint64_t expireTimeMilliSeconds, bool isTestCredential) {
-    const keymaster_cert_chain_t* attestation_chain =
-            ::keymaster::getAttestationChain(KM_ALGORITHM_EC, nullptr);
-    if (attestation_chain == nullptr) {
-        LOG(ERROR) << "Error getting attestation chain";
+    keymaster_error_t error;
+    ::keymaster::CertificateChain attestation_chain =
+            ::keymaster::getAttestationChain(KM_ALGORITHM_EC, &error);
+    if (KM_ERROR_OK != error) {
+        LOG(ERROR) << "Error getting attestation chain " << error;
         return {};
     }
     if (expireTimeMilliSeconds == 0) {
-        if (attestation_chain->entry_count < 1) {
+        if (attestation_chain.entry_count < 1) {
             LOG(ERROR) << "Expected at least one entry in attestation chain";
             return {};
         }
-        keymaster_blob_t* bcBlob = &(attestation_chain->entries[0]);
+        keymaster_blob_t* bcBlob = &(attestation_chain.entries[0]);
         const uint8_t* bcData = bcBlob->data;
         auto bc = X509_Ptr(d2i_X509(nullptr, &bcData, bcBlob->data_length));
         time_t bcNotAfter;
@@ -1015,34 +1016,30 @@ optional<vector<vector<uint8_t>>> createAttestation(
     }
     ::keymaster::AuthorizationSet hwEnforced(hwEnforcedBuilder);
 
-    keymaster_error_t error;
-    ::keymaster::CertChainPtr cert_chain_out;
-
     // Pretend to be implemented in a trusted environment just so we can pass
     // the VTS tests. Of course, this is a pretend-only game since hopefully no
     // relying party is ever going to trust our batch key and those keys above
     // it.
-    //
     ::keymaster::PureSoftKeymasterContext context(::keymaster::KmVersion::KEYMASTER_4_1,
                                                   KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT);
 
-    error = generate_attestation_from_EVP(key, swEnforced, hwEnforced, auth_set, context,
-                                          *attestation_chain, *attestation_signing_key,
-                                          &cert_chain_out);
+    ::keymaster::CertificateChain cert_chain_out = generate_attestation_from_EVP(
+            key, swEnforced, hwEnforced, auth_set, context, move(attestation_chain),
+            *attestation_signing_key, &error);
 
-    if (KM_ERROR_OK != error || !cert_chain_out) {
+    if (KM_ERROR_OK != error) {
         LOG(ERROR) << "Error generate attestation from EVP key" << error;
         return {};
     }
 
-    // translate certificate format from keymaster_cert_chain_t to vector<uint8_t>.
+    // translate certificate format from keymaster_cert_chain_t to vector<vector<uint8_t>>.
     vector<vector<uint8_t>> attestationCertificate;
-    for (int i = 0; i < cert_chain_out->entry_count; i++) {
+    for (int i = 0; i < cert_chain_out.entry_count; i++) {
         attestationCertificate.insert(
                 attestationCertificate.end(),
                 vector<uint8_t>(
-                        cert_chain_out->entries[i].data,
-                        cert_chain_out->entries[i].data + cert_chain_out->entries[i].data_length));
+                        cert_chain_out.entries[i].data,
+                        cert_chain_out.entries[i].data + cert_chain_out.entries[i].data_length));
     }
 
     return attestationCertificate;
