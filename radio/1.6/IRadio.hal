@@ -117,6 +117,9 @@ interface IRadio extends @1.5::IRadio {
      * @param pduSessionId The pdu session id to be used for this data call.  A value of 0 means
      *     no pdu session id was attached to this call.
      *     Reference: 3GPP TS 24.007 section 11.2.3.1b
+     * @param sliceInfo SliceInfo to be used for the data connection when a handover occurs from
+     *     EPDG to 5G.  It is valid only when accessNetwork is AccessNetwork:NGRAN.  If the slice
+     *     passed from EPDG is rejected, then the data failure cause must be DataCallFailCause:SLICE_REJECTED.
      *
      * Response function is IRadioResponse.setupDataCallResponse_1_6()
      *
@@ -125,7 +128,7 @@ interface IRadio extends @1.5::IRadio {
     oneway setupDataCall_1_6(int32_t serial, AccessNetwork accessNetwork,
             DataProfileInfo dataProfileInfo, bool roamingAllowed,
             DataRequestReason reason, vec<LinkAddress> addresses, vec<string> dnses,
-            int32_t pduSessionId);
+            int32_t pduSessionId, OptionalSliceInfo sliceInfo);
 
     /**
      * Send an SMS message
