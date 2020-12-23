@@ -150,7 +150,14 @@ bool initHalFuncTableWithStubs(wifi_hal_fn* hal_fn) {
     populateStubFor(&hal_fn->wifi_multi_sta_set_primary_connection);
     populateStubFor(&hal_fn->wifi_multi_sta_set_use_case);
     populateStubFor(&hal_fn->wifi_set_coex_unsafe_channels);
-
+    populateStubFor(&hal_fn->wifi_set_voip_mode);
+    populateStubFor(&hal_fn->wifi_twt_register_handler);
+    populateStubFor(&hal_fn->wifi_twt_get_capability);
+    populateStubFor(&hal_fn->wifi_twt_setup_request);
+    populateStubFor(&hal_fn->wifi_twt_teardown_request);
+    populateStubFor(&hal_fn->wifi_twt_info_frame_request);
+    populateStubFor(&hal_fn->wifi_twt_get_stats);
+    populateStubFor(&hal_fn->wifi_twt_clear_stats);
     return true;
 }
 }  // namespace legacy_hal

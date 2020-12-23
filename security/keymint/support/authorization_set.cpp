@@ -106,10 +106,11 @@ bool AuthorizationSet::erase(int index) {
     return false;
 }
 
-NullOr<const KeyParameter&> AuthorizationSet::GetEntry(Tag tag) const {
+std::optional<std::reference_wrapper<const KeyParameter>> AuthorizationSet::GetEntry(
+        Tag tag) const {
     int pos = find(tag);
     if (pos == -1) return {};
-    return data_[pos];
+    return std::reference_wrapper(data_[pos]);
 }
 
 AuthorizationSetBuilder& AuthorizationSetBuilder::RsaKey(uint32_t key_size,
