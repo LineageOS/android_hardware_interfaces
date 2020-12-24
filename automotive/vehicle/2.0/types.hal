@@ -2773,7 +2773,7 @@ enum VehicleProperty : int32_t {
      *
      * int32[0]: 42  // request id
      * int32[1]: 11  // Android id of the created user
-     * int32[2]: 3   // Android flags (ephemeral guest) of the created user
+     * int32[2]: 6   // Android flags (ephemeral guest) of the created user
      * int32[3]: 10  // current user
      * int32[4]: 0   // current user flags (none)
      * int32[5]: 3   // number of users
@@ -2782,7 +2782,7 @@ enum VehicleProperty : int32_t {
      * int32[8]: 10  // 2nd user (user 10)
      * int32[9]: 0   // 2nd user flags (none)
      * int32[19]: 11 // 3rd user (user 11)
-     * int32[11]: 3  // 3rd user flags (ephemeral guest)
+     * int32[11]: 6  // 3rd user flags (ephemeral guest)
      * string: "ElGuesto" // name of the new user
      *
      * Then if the request succeeded, the HAL would return:
