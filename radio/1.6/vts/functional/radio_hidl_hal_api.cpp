@@ -56,8 +56,12 @@ TEST_P(RadioHidlTest_v1_6, setupDataCall_1_6) {
     ::android::hardware::radio::V1_2::DataRequestReason reason =
             ::android::hardware::radio::V1_2::DataRequestReason::NORMAL;
 
-    Return<void> res = radio_v1_6->setupDataCall_1_6(serial, accessNetwork, dataProfileInfo,
-                                                     roamingAllowed, reason, addresses, dnses, -1);
+    ::android::hardware::radio::V1_6::OptionalSliceInfo optionalSliceInfo;
+    memset(&optionalSliceInfo, 0, sizeof(optionalSliceInfo));
+
+    Return<void> res =
+            radio_v1_6->setupDataCall_1_6(serial, accessNetwork, dataProfileInfo, roamingAllowed,
+                                          reason, addresses, dnses, -1, optionalSliceInfo);
     ASSERT_OK(res);
 
     EXPECT_EQ(std::cv_status::no_timeout, wait());

@@ -152,9 +152,9 @@ class GraphicsComposerHidlTest : public ::testing::TestWithParam<std::string> {
 
     void execute() { mComposerClient->execute(mReader.get(), mWriter.get()); }
 
-    const native_handle_t* allocate() {
+    const native_handle_t* allocate(int32_t width, int32_t height) {
         return mGralloc->allocate(
-                /*width*/ 64, /*height*/ 64, /*layerCount*/ 1,
+                width, height, /*layerCount*/ 1,
                 static_cast<common::V1_1::PixelFormat>(PixelFormat::RGBA_8888),
                 static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN | BufferUsage::CPU_READ_OFTEN));
     }
@@ -407,7 +407,10 @@ void GraphicsComposerHidlTest::sendRefreshFrame(const VtsDisplay& display,
     mComposerClient->setPowerMode(display.get(), V2_1::IComposerClient::PowerMode::ON);
     mComposerClient->setColorMode_2_3(display.get(), ColorMode::NATIVE, RenderIntent::COLORIMETRIC);
 
-    auto handle = allocate();
+    IComposerClient::FRect displayCrop = display.getCrop();
+    int32_t displayWidth = static_cast<int32_t>(std::ceilf(displayCrop.right - displayCrop.left));
+    int32_t displayHeight = static_cast<int32_t>(std::ceilf(displayCrop.bottom - displayCrop.top));
+    auto handle = allocate(displayWidth, displayHeight);
     ASSERT_NE(nullptr, handle);
 
     Layer layer;
@@ -435,7 +438,7 @@ void GraphicsComposerHidlTest::sendRefreshFrame(const VtsDisplay& display,
     ASSERT_EQ(0, mReader->mErrors.size());
 
     mWriter->selectLayer(layer);
-    auto handle2 = allocate();
+    auto handle2 = allocate(displayWidth, displayHeight);
     ASSERT_NE(nullptr, handle2);
 
     mWriter->setLayerBuffer(0, handle2, -1);
