@@ -42,7 +42,7 @@ interface IStreamOutEventCallback {
      * is TEST(metadata_tests, compatibility_R) [3].  The test for R compatibility for JNI
      * marshalling is android.media.cts.AudioMetadataTest#testCompatibilityR [4].
      *
-     * R (audio HAL 7.0) defined keys are as follows [2]:
+     * R (audio HAL 6.0) defined keys are as follows [2]:
      * "bitrate", int32
      * "channel-mask", int32
      * "mime", string
