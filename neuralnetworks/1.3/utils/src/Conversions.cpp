@@ -272,47 +272,26 @@ GeneralResult<Request::MemoryPool> unvalidatedConvert(
 
 GeneralResult<OptionalTimePoint> unvalidatedConvert(
         const hal::V1_3::OptionalTimePoint& optionalTimePoint) {
-    constexpr auto kTimePointMaxCount = TimePoint::max().time_since_epoch().count();
-    const auto makeTimePoint = [](uint64_t count) -> GeneralResult<OptionalTimePoint> {
-        if (count > kTimePointMaxCount) {
-            return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
-                   << "Unable to unvalidatedConvert OptionalTimePoint because the count exceeds "
-                      "the max";
-        }
-        const auto nanoseconds = std::chrono::nanoseconds{count};
-        return TimePoint{nanoseconds};
-    };
-
     using Discriminator = hal::V1_3::OptionalTimePoint::hidl_discriminator;
     switch (optionalTimePoint.getDiscriminator()) {
         case Discriminator::none:
-            return std::nullopt;
+            return {};
         case Discriminator::nanosecondsSinceEpoch:
-            return makeTimePoint(optionalTimePoint.nanosecondsSinceEpoch());
+            return TimePoint{Duration{optionalTimePoint.nanosecondsSinceEpoch()}};
     }
     return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
            << "Invalid OptionalTimePoint discriminator "
            << underlyingType(optionalTimePoint.getDiscriminator());
 }
 
-GeneralResult<OptionalTimeoutDuration> unvalidatedConvert(
+GeneralResult<OptionalDuration> unvalidatedConvert(
         const hal::V1_3::OptionalTimeoutDuration& optionalTimeoutDuration) {
-    constexpr auto kTimeoutDurationMaxCount = TimeoutDuration::max().count();
-    const auto makeTimeoutDuration = [](uint64_t count) -> GeneralResult<OptionalTimeoutDuration> {
-        if (count > kTimeoutDurationMaxCount) {
-            return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
-                   << "Unable to unvalidatedConvert OptionalTimeoutDuration because the count "
-                      "exceeds the max";
-        }
-        return TimeoutDuration{count};
-    };
-
     using Discriminator = hal::V1_3::OptionalTimeoutDuration::hidl_discriminator;
     switch (optionalTimeoutDuration.getDiscriminator()) {
         case Discriminator::none:
-            return std::nullopt;
+            return {};
         case Discriminator::nanoseconds:
-            return makeTimeoutDuration(optionalTimeoutDuration.nanoseconds());
+            return Duration(optionalTimeoutDuration.nanoseconds());
     }
     return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
            << "Invalid OptionalTimeoutDuration discriminator "
@@ -360,7 +339,7 @@ GeneralResult<OptionalTimePoint> convert(const hal::V1_3::OptionalTimePoint& opt
     return validatedConvert(optionalTimePoint);
 }
 
-GeneralResult<OptionalTimeoutDuration> convert(
+GeneralResult<OptionalDuration> convert(
         const hal::V1_3::OptionalTimeoutDuration& optionalTimeoutDuration) {
     return validatedConvert(optionalTimeoutDuration);
 }
@@ -629,27 +608,16 @@ nn::GeneralResult<OptionalTimePoint> unvalidatedConvert(
     OptionalTimePoint ret;
     if (optionalTimePoint.has_value()) {
         const auto count = optionalTimePoint.value().time_since_epoch().count();
-        if (count < 0) {
-            return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
-                   << "Unable to unvalidatedConvert OptionalTimePoint because time since epoch "
-                      "count is "
-                      "negative";
-        }
         ret.nanosecondsSinceEpoch(count);
     }
     return ret;
 }
 
 nn::GeneralResult<OptionalTimeoutDuration> unvalidatedConvert(
-        const nn::OptionalTimeoutDuration& optionalTimeoutDuration) {
+        const nn::OptionalDuration& optionalTimeoutDuration) {
     OptionalTimeoutDuration ret;
     if (optionalTimeoutDuration.has_value()) {
         const auto count = optionalTimeoutDuration.value().count();
-        if (count < 0) {
-            return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
-                   << "Unable to unvalidatedConvert OptionalTimeoutDuration because count is "
-                      "negative";
-        }
         ret.nanoseconds(count);
     }
     return ret;
@@ -697,7 +665,7 @@ nn::GeneralResult<OptionalTimePoint> convert(const nn::OptionalTimePoint& option
 }
 
 nn::GeneralResult<OptionalTimeoutDuration> convert(
-        const nn::OptionalTimeoutDuration& optionalTimeoutDuration) {
+        const nn::OptionalDuration& optionalTimeoutDuration) {
     return validatedConvert(optionalTimeoutDuration);
 }
 
