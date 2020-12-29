@@ -18,15 +18,6 @@
 
 package android.hardware.biometrics.face;
 @VintfStability
-interface ISession {
-  void generateChallenge(in int cookie, in int timeoutSec);
-  void revokeChallenge(in int cookie, in long challenge);
-  android.hardware.biometrics.common.ICancellationSignal enroll(in int cookie, in android.hardware.biometrics.face.EnrollmentType enrollmentType, in android.hardware.keymaster.HardwareAuthToken hat, in android.hardware.common.NativeHandle previewSurface);
-  android.hardware.biometrics.common.ICancellationSignal authenticate(in int cookie, in long operationId);
-  android.hardware.biometrics.common.ICancellationSignal detectInteraction(in int cookie);
-  void enumerateEnrollments(in int cookie);
-  void removeEnrollments(in int cookie, in int[] enrollmentIds);
-  void getAuthenticatorId(in int cookie);
-  void invalidateAuthenticatorId(in int cookie);
-  void resetLockout(in int cookie, in android.hardware.keymaster.HardwareAuthToken hat);
+parcelable AuthenticationFrame {
+  android.hardware.biometrics.face.BaseFrame data;
 }

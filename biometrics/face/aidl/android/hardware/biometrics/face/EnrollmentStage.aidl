@@ -16,9 +16,40 @@
 
 package android.hardware.biometrics.face;
 
+/**
+ * Enrollment stages that can be mapped to the enrollment UI actions in the framework.
+ */
 @VintfStability
 @Backing(type="byte")
-enum FaceSensorType {
-    RGB,
-    IR
+enum EnrollmentStage {
+
+  /**
+   * HAL has obtained the first camera frame.
+   */
+   FIRST_FRAME_RECEIVED,
+
+  /**
+   * HAL is waiting for the user's face to be centered.
+   */
+   WAITING_FOR_CENTERING,
+
+  /**
+   * HAL is expecting the user's face to stay centered.
+   */
+   HOLD_STILL_IN_CENTER,
+
+  /**
+   * Vendor defined movement 1.
+   */
+   ENROLLING_MOVEMENT_1,
+
+  /**
+   * Vendor defined movement 2.
+   */
+   ENROLLING_MOVEMENT_2,
+
+  /**
+   * HAL has finished the enrollment.
+   */
+   ENROLLMENT_FINISHED,
 }
