@@ -43,7 +43,9 @@ constexpr std::underlying_type_t<Type> underlyingType(Type value) {
     return static_cast<std::underlying_type_t<Type>>(value);
 }
 
+using HalDuration = std::chrono::duration<uint64_t, std::micro>;
 constexpr auto kVersion = android::nn::Version::ANDROID_Q;
+constexpr uint64_t kNoTiming = std::numeric_limits<uint64_t>::max();
 
 }  // namespace
 
@@ -270,7 +272,18 @@ GeneralResult<MeasureTiming> unvalidatedConvert(const hal::V1_2::MeasureTiming& 
 }
 
 GeneralResult<Timing> unvalidatedConvert(const hal::V1_2::Timing& timing) {
-    return Timing{.timeOnDevice = timing.timeOnDevice, .timeInDriver = timing.timeInDriver};
+    constexpr uint64_t kMaxTiming = std::chrono::floor<HalDuration>(Duration::max()).count();
+    constexpr auto convertTiming = [](uint64_t halTiming) -> OptionalDuration {
+        if (halTiming == kNoTiming) {
+            return {};
+        }
+        if (halTiming > kMaxTiming) {
+            return Duration::max();
+        }
+        return HalDuration{halTiming};
+    };
+    return Timing{.timeOnDevice = convertTiming(timing.timeOnDevice),
+                  .timeInDriver = convertTiming(timing.timeInDriver)};
 }
 
 GeneralResult<Extension> unvalidatedConvert(const hal::V1_2::Extension& extension) {
@@ -547,7 +560,14 @@ nn::GeneralResult<MeasureTiming> unvalidatedConvert(const nn::MeasureTiming& mea
 }
 
 nn::GeneralResult<Timing> unvalidatedConvert(const nn::Timing& timing) {
-    return Timing{.timeOnDevice = timing.timeOnDevice, .timeInDriver = timing.timeInDriver};
+    constexpr auto convertTiming = [](nn::OptionalDuration canonicalTiming) -> uint64_t {
+        if (!canonicalTiming.has_value()) {
+            return kNoTiming;
+        }
+        return std::chrono::ceil<HalDuration>(*canonicalTiming).count();
+    };
+    return Timing{.timeOnDevice = convertTiming(timing.timeOnDevice),
+                  .timeInDriver = convertTiming(timing.timeInDriver)};
 }
 
 nn::GeneralResult<Extension> unvalidatedConvert(const nn::Extension& extension) {
