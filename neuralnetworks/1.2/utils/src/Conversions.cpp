@@ -26,6 +26,7 @@
 #include <nnapi/Types.h>
 #include <nnapi/Validation.h>
 #include <nnapi/hal/1.0/Conversions.h>
+#include <nnapi/hal/1.1/Conversions.h>
 #include <nnapi/hal/CommonUtils.h>
 #include <nnapi/hal/HandleError.h>
 
@@ -620,6 +621,23 @@ nn::GeneralResult<hidl_vec<hidl_handle>> convert(const std::vector<nn::SharedHan
 
 nn::GeneralResult<hidl_vec<OutputShape>> convert(const std::vector<nn::OutputShape>& outputShapes) {
     return validatedConvert(outputShapes);
+}
+
+nn::GeneralResult<V1_0::DeviceStatus> convert(const nn::DeviceStatus& deviceStatus) {
+    return V1_1::utils::convert(deviceStatus);
+}
+
+nn::GeneralResult<V1_0::Request> convert(const nn::Request& request) {
+    return V1_1::utils::convert(request);
+}
+
+nn::GeneralResult<V1_0::ErrorStatus> convert(const nn::ErrorStatus& status) {
+    return V1_1::utils::convert(status);
+}
+
+nn::GeneralResult<V1_1::ExecutionPreference> convert(
+        const nn::ExecutionPreference& executionPreference) {
+    return V1_1::utils::convert(executionPreference);
 }
 
 }  // namespace android::hardware::neuralnetworks::V1_2::utils

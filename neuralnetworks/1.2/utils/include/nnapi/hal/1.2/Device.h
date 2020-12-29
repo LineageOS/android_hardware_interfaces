@@ -37,10 +37,21 @@
 
 namespace android::hardware::neuralnetworks::V1_2::utils {
 
-nn::GeneralResult<std::string> initVersionString(V1_2::IDevice* device);
-nn::GeneralResult<nn::DeviceType> initDeviceType(V1_2::IDevice* device);
-nn::GeneralResult<std::vector<nn::Extension>> initExtensions(V1_2::IDevice* device);
-nn::GeneralResult<std::pair<uint32_t, uint32_t>> initNumberOfCacheFilesNeeded(
+// Retrieves the version string from the provided device object. On failure, this function returns
+// with the appropriate nn::GeneralError.
+nn::GeneralResult<std::string> getVersionStringFrom(V1_2::IDevice* device);
+
+// Retrieves the device type from the provided device object. On failure, this function returns with
+// the appropriate nn::GeneralError.
+nn::GeneralResult<nn::DeviceType> getDeviceTypeFrom(V1_2::IDevice* device);
+
+// Retrieves the extensions supported by the provided device object. On failure, this function
+// returns with the appropriate nn::GeneralError.
+nn::GeneralResult<std::vector<nn::Extension>> getSupportedExtensionsFrom(V1_2::IDevice* device);
+
+// Retrieves the number of model cache files and data cache files needed by the provided device
+// object. On failure, this function returns with the appropriate nn::GeneralError.
+nn::GeneralResult<std::pair<uint32_t, uint32_t>> getNumberOfCacheFilesNeededFrom(
         V1_2::IDevice* device);
 
 // Class that adapts V1_2::IDevice to nn::IDevice.

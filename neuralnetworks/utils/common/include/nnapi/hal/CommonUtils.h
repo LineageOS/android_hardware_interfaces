@@ -44,9 +44,18 @@ nn::Capabilities::OperandPerformanceTable makeQuantized8PerformanceConsistentWit
 bool hasNoPointerData(const nn::Model& model);
 bool hasNoPointerData(const nn::Request& request);
 
-// Relocate pointer-based data to shared memory.
+// Relocate pointer-based data to shared memory. If `model` has no Operand::LifeTime::POINTER data,
+// the function returns with a reference to `model`. If `model` has Operand::LifeTime::POINTER data,
+// the model is copied to `maybeModelInSharedOut` with the POINTER data relocated to a memory pool,
+// and the function returns with a reference to `*maybeModelInSharedOut`.
 nn::GeneralResult<std::reference_wrapper<const nn::Model>> flushDataFromPointerToShared(
         const nn::Model* model, std::optional<nn::Model>* maybeModelInSharedOut);
+
+// Relocate pointer-based data to shared memory. If `request` has no
+// Request::Argument::LifeTime::POINTER data, the function returns with a reference to `request`. If
+// `request` has Request::Argument::LifeTime::POINTER data, the request is copied to
+// `maybeRequestInSharedOut` with the POINTER data relocated to a memory pool, and the function
+// returns with a reference to `*maybeRequestInSharedOut`.
 nn::GeneralResult<std::reference_wrapper<const nn::Request>> flushDataFromPointerToShared(
         const nn::Request* request, std::optional<nn::Request>* maybeRequestInSharedOut);
 
