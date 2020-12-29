@@ -32,6 +32,9 @@
 #include <string>
 #include <vector>
 
+// See hardware/interfaces/neuralnetworks/utils/README.md for more information on HIDL interface
+// lifetimes across processes and for protecting asynchronous calls across HIDL.
+
 namespace android::hardware::neuralnetworks::V1_2::utils {
 
 nn::GeneralResult<std::string> initVersionString(V1_2::IDevice* device);
@@ -40,6 +43,7 @@ nn::GeneralResult<std::vector<nn::Extension>> initExtensions(V1_2::IDevice* devi
 nn::GeneralResult<std::pair<uint32_t, uint32_t>> initNumberOfCacheFilesNeeded(
         V1_2::IDevice* device);
 
+// Class that adapts V1_2::IDevice to nn::IDevice.
 class Device final : public nn::IDevice {
     struct PrivateConstructorTag {};
 
