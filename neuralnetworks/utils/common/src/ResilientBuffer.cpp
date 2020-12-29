@@ -36,7 +36,7 @@ nn::GeneralResult<std::shared_ptr<const ResilientBuffer>> ResilientBuffer::creat
         return NN_ERROR(nn::ErrorStatus::INVALID_ARGUMENT)
                << "utils::ResilientBuffer::create must have non-empty makeBuffer";
     }
-    auto buffer = NN_TRY(makeBuffer(/*blocking=*/true));
+    auto buffer = NN_TRY(makeBuffer());
     CHECK(buffer != nullptr);
     return std::make_shared<const ResilientBuffer>(PrivateConstructorTag{}, std::move(makeBuffer),
                                                    std::move(buffer));

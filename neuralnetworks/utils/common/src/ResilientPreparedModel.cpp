@@ -36,7 +36,7 @@ nn::GeneralResult<std::shared_ptr<const ResilientPreparedModel>> ResilientPrepar
         return NN_ERROR(nn::ErrorStatus::INVALID_ARGUMENT)
                << "utils::ResilientPreparedModel::create must have non-empty makePreparedModel";
     }
-    auto preparedModel = NN_TRY(makePreparedModel(/*blocking=*/true));
+    auto preparedModel = NN_TRY(makePreparedModel());
     CHECK(preparedModel != nullptr);
     return std::make_shared<ResilientPreparedModel>(
             PrivateConstructorTag{}, std::move(makePreparedModel), std::move(preparedModel));
@@ -64,16 +64,17 @@ nn::SharedPreparedModel ResilientPreparedModel::recover(
 nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>>
 ResilientPreparedModel::execute(const nn::Request& request, nn::MeasureTiming measure,
                                 const nn::OptionalTimePoint& deadline,
-                                const nn::OptionalTimeoutDuration& loopTimeoutDuration) const {
+                                const nn::OptionalDuration& loopTimeoutDuration) const {
     return getPreparedModel()->execute(request, measure, deadline, loopTimeoutDuration);
 }
 
 nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>>
-ResilientPreparedModel::executeFenced(
-        const nn::Request& request, const std::vector<nn::SyncFence>& waitFor,
-        nn::MeasureTiming measure, const nn::OptionalTimePoint& deadline,
-        const nn::OptionalTimeoutDuration& loopTimeoutDuration,
-        const nn::OptionalTimeoutDuration& timeoutDurationAfterFence) const {
+ResilientPreparedModel::executeFenced(const nn::Request& request,
+                                      const std::vector<nn::SyncFence>& waitFor,
+                                      nn::MeasureTiming measure,
+                                      const nn::OptionalTimePoint& deadline,
+                                      const nn::OptionalDuration& loopTimeoutDuration,
+                                      const nn::OptionalDuration& timeoutDurationAfterFence) const {
     return getPreparedModel()->executeFenced(request, waitFor, measure, deadline,
                                              loopTimeoutDuration, timeoutDurationAfterFence);
 }

@@ -26,6 +26,7 @@
 #include <nnapi/Types.h>
 #include <nnapi/Validation.h>
 #include <nnapi/hal/1.0/Conversions.h>
+#include <nnapi/hal/1.1/Conversions.h>
 #include <nnapi/hal/CommonUtils.h>
 #include <nnapi/hal/HandleError.h>
 
@@ -43,7 +44,9 @@ constexpr std::underlying_type_t<Type> underlyingType(Type value) {
     return static_cast<std::underlying_type_t<Type>>(value);
 }
 
+using HalDuration = std::chrono::duration<uint64_t, std::micro>;
 constexpr auto kVersion = android::nn::Version::ANDROID_Q;
+constexpr uint64_t kNoTiming = std::numeric_limits<uint64_t>::max();
 
 }  // namespace
 
@@ -270,7 +273,18 @@ GeneralResult<MeasureTiming> unvalidatedConvert(const hal::V1_2::MeasureTiming& 
 }
 
 GeneralResult<Timing> unvalidatedConvert(const hal::V1_2::Timing& timing) {
-    return Timing{.timeOnDevice = timing.timeOnDevice, .timeInDriver = timing.timeInDriver};
+    constexpr uint64_t kMaxTiming = std::chrono::floor<HalDuration>(Duration::max()).count();
+    constexpr auto convertTiming = [](uint64_t halTiming) -> OptionalDuration {
+        if (halTiming == kNoTiming) {
+            return {};
+        }
+        if (halTiming > kMaxTiming) {
+            return Duration::max();
+        }
+        return HalDuration{halTiming};
+    };
+    return Timing{.timeOnDevice = convertTiming(timing.timeOnDevice),
+                  .timeInDriver = convertTiming(timing.timeInDriver)};
 }
 
 GeneralResult<Extension> unvalidatedConvert(const hal::V1_2::Extension& extension) {
@@ -547,7 +561,14 @@ nn::GeneralResult<MeasureTiming> unvalidatedConvert(const nn::MeasureTiming& mea
 }
 
 nn::GeneralResult<Timing> unvalidatedConvert(const nn::Timing& timing) {
-    return Timing{.timeOnDevice = timing.timeOnDevice, .timeInDriver = timing.timeInDriver};
+    constexpr auto convertTiming = [](nn::OptionalDuration canonicalTiming) -> uint64_t {
+        if (!canonicalTiming.has_value()) {
+            return kNoTiming;
+        }
+        return std::chrono::ceil<HalDuration>(*canonicalTiming).count();
+    };
+    return Timing{.timeOnDevice = convertTiming(timing.timeOnDevice),
+                  .timeInDriver = convertTiming(timing.timeInDriver)};
 }
 
 nn::GeneralResult<Extension> unvalidatedConvert(const nn::Extension& extension) {
@@ -600,6 +621,23 @@ nn::GeneralResult<hidl_vec<hidl_handle>> convert(const std::vector<nn::SharedHan
 
 nn::GeneralResult<hidl_vec<OutputShape>> convert(const std::vector<nn::OutputShape>& outputShapes) {
     return validatedConvert(outputShapes);
+}
+
+nn::GeneralResult<V1_0::DeviceStatus> convert(const nn::DeviceStatus& deviceStatus) {
+    return V1_1::utils::convert(deviceStatus);
+}
+
+nn::GeneralResult<V1_0::Request> convert(const nn::Request& request) {
+    return V1_1::utils::convert(request);
+}
+
+nn::GeneralResult<V1_0::ErrorStatus> convert(const nn::ErrorStatus& status) {
+    return V1_1::utils::convert(status);
+}
+
+nn::GeneralResult<V1_1::ExecutionPreference> convert(
+        const nn::ExecutionPreference& executionPreference) {
+    return V1_1::utils::convert(executionPreference);
 }
 
 }  // namespace android::hardware::neuralnetworks::V1_2::utils

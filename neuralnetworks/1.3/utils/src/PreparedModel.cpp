@@ -39,28 +39,23 @@
 #include <utility>
 #include <vector>
 
+// See hardware/interfaces/neuralnetworks/utils/README.md for more information on HIDL interface
+// lifetimes across processes and for protecting asynchronous calls across HIDL.
+
 namespace android::hardware::neuralnetworks::V1_3::utils {
 namespace {
 
-nn::GeneralResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>>
-convertExecutionResultsHelper(const hidl_vec<V1_2::OutputShape>& outputShapes,
-                              const V1_2::Timing& timing) {
-    return std::make_pair(NN_TRY(nn::convert(outputShapes)), NN_TRY(nn::convert(timing)));
-}
-
-nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> convertExecutionResults(
-        const hidl_vec<V1_2::OutputShape>& outputShapes, const V1_2::Timing& timing) {
-    return hal::utils::makeExecutionFailure(convertExecutionResultsHelper(outputShapes, timing));
-}
-
 nn::GeneralResult<std::pair<nn::Timing, nn::Timing>> convertFencedExecutionCallbackResults(
-        const V1_2::Timing& timingLaunched, const V1_2::Timing& timingFenced) {
+        ErrorStatus status, const V1_2::Timing& timingLaunched, const V1_2::Timing& timingFenced) {
+    HANDLE_HAL_STATUS(status) << "fenced execution callback info failed with " << toString(status);
     return std::make_pair(NN_TRY(nn::convert(timingLaunched)), NN_TRY(nn::convert(timingFenced)));
 }
 
-nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>>
-convertExecuteFencedResults(const hidl_handle& syncFence,
-                            const sp<IFencedExecutionCallback>& callback) {
+nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>> fencedExecutionCallback(
+        ErrorStatus status, const hidl_handle& syncFence,
+        const sp<IFencedExecutionCallback>& callback) {
+    HANDLE_HAL_STATUS(status) << "fenced execution failed with " << toString(status);
+
     auto resultSyncFence = nn::SyncFence::createAsSignaled();
     if (syncFence.getNativeHandle() != nullptr) {
         auto sharedHandle = NN_TRY(nn::convert(syncFence));
@@ -75,23 +70,12 @@ convertExecuteFencedResults(const hidl_handle& syncFence,
     // Create callback which can be used to retrieve the execution error status and timings.
     nn::ExecuteFencedInfoCallback resultCallback =
             [callback]() -> nn::GeneralResult<std::pair<nn::Timing, nn::Timing>> {
-        nn::GeneralResult<std::pair<nn::Timing, nn::Timing>> result =
-                NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE) << "uninitialized";
-        auto cb = [&result](ErrorStatus status, const V1_2::Timing& timingLaunched,
-                            const V1_2::Timing& timingFenced) {
-            if (status != ErrorStatus::NONE) {
-                const auto canonical =
-                        nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
-                result = NN_ERROR(canonical) << "getExecutionInfo failed with " << toString(status);
-            } else {
-                result = convertFencedExecutionCallbackResults(timingLaunched, timingFenced);
-            }
-        };
+        auto cb = hal::utils::CallbackValue(convertFencedExecutionCallbackResults);
 
         const auto ret = callback->getExecutionInfo(cb);
         HANDLE_TRANSPORT_FAILURE(ret);
 
-        return result;
+        return cb.take();
     };
 
     return std::make_pair(std::move(resultSyncFence), std::move(resultCallback));
@@ -100,42 +84,34 @@ convertExecuteFencedResults(const hidl_handle& syncFence,
 }  // namespace
 
 nn::GeneralResult<std::shared_ptr<const PreparedModel>> PreparedModel::create(
-        sp<V1_3::IPreparedModel> preparedModel) {
+        sp<V1_3::IPreparedModel> preparedModel, bool executeSynchronously) {
     if (preparedModel == nullptr) {
-        return NN_ERROR(nn::ErrorStatus::INVALID_ARGUMENT)
-               << "V1_3::utils::PreparedModel::create must have non-null preparedModel";
+        return NN_ERROR() << "V1_3::utils::PreparedModel::create must have non-null preparedModel";
     }
 
     auto deathHandler = NN_TRY(hal::utils::DeathHandler::create(preparedModel));
-    return std::make_shared<const PreparedModel>(PrivateConstructorTag{}, std::move(preparedModel),
-                                                 std::move(deathHandler));
+    return std::make_shared<const PreparedModel>(PrivateConstructorTag{}, executeSynchronously,
+                                                 std::move(preparedModel), std::move(deathHandler));
 }
 
-PreparedModel::PreparedModel(PrivateConstructorTag /*tag*/, sp<V1_3::IPreparedModel> preparedModel,
+PreparedModel::PreparedModel(PrivateConstructorTag /*tag*/, bool executeSynchronously,
+                             sp<V1_3::IPreparedModel> preparedModel,
                              hal::utils::DeathHandler deathHandler)
-    : kPreparedModel(std::move(preparedModel)), kDeathHandler(std::move(deathHandler)) {}
+    : kExecuteSynchronously(executeSynchronously),
+      kPreparedModel(std::move(preparedModel)),
+      kDeathHandler(std::move(deathHandler)) {}
 
 nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>>
 PreparedModel::executeSynchronously(const Request& request, V1_2::MeasureTiming measure,
                                     const OptionalTimePoint& deadline,
                                     const OptionalTimeoutDuration& loopTimeoutDuration) const {
-    nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> result =
-            NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE) << "uninitialized";
-    const auto cb = [&result](ErrorStatus status, const hidl_vec<V1_2::OutputShape>& outputShapes,
-                              const V1_2::Timing& timing) {
-        if (status != ErrorStatus::NONE) {
-            const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
-            result = NN_ERROR(canonical) << "executeSynchronously failed with " << toString(status);
-        } else {
-            result = convertExecutionResults(outputShapes, timing);
-        }
-    };
+    auto cb = hal::utils::CallbackValue(executionCallback);
 
     const auto ret = kPreparedModel->executeSynchronously_1_3(request, measure, deadline,
                                                               loopTimeoutDuration, cb);
     HANDLE_TRANSPORT_FAILURE(ret);
 
-    return result;
+    return cb.take();
 }
 
 nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>>
@@ -148,9 +124,8 @@ PreparedModel::executeAsynchronously(const Request& request, V1_2::MeasureTiming
     const auto ret =
             kPreparedModel->execute_1_3(request, measure, deadline, loopTimeoutDuration, cb);
     const auto status = HANDLE_TRANSPORT_FAILURE(ret);
-    if (status != ErrorStatus::NONE) {
-        const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
-        return NN_ERROR(canonical) << "executeAsynchronously failed with " << toString(status);
+    if (status != ErrorStatus::OUTPUT_INSUFFICIENT_SIZE) {
+        HANDLE_HAL_STATUS(status) << "execution failed with " << toString(status);
     }
 
     return cb->get();
@@ -159,49 +134,36 @@ PreparedModel::executeAsynchronously(const Request& request, V1_2::MeasureTiming
 nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> PreparedModel::execute(
         const nn::Request& request, nn::MeasureTiming measure,
         const nn::OptionalTimePoint& deadline,
-        const nn::OptionalTimeoutDuration& loopTimeoutDuration) const {
+        const nn::OptionalDuration& loopTimeoutDuration) const {
     // Ensure that request is ready for IPC.
     std::optional<nn::Request> maybeRequestInShared;
     const nn::Request& requestInShared = NN_TRY(hal::utils::makeExecutionFailure(
             hal::utils::flushDataFromPointerToShared(&request, &maybeRequestInShared)));
 
     const auto hidlRequest = NN_TRY(hal::utils::makeExecutionFailure(convert(requestInShared)));
-    const auto hidlMeasure =
-            NN_TRY(hal::utils::makeExecutionFailure(V1_2::utils::convert(measure)));
+    const auto hidlMeasure = NN_TRY(hal::utils::makeExecutionFailure(convert(measure)));
     const auto hidlDeadline = NN_TRY(hal::utils::makeExecutionFailure(convert(deadline)));
     const auto hidlLoopTimeoutDuration =
             NN_TRY(hal::utils::makeExecutionFailure(convert(loopTimeoutDuration)));
 
-    nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> result =
-            NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE) << "uninitialized";
-    const bool preferSynchronous = true;
+    auto result = kExecuteSynchronously
+                          ? executeSynchronously(hidlRequest, hidlMeasure, hidlDeadline,
+                                                 hidlLoopTimeoutDuration)
+                          : executeAsynchronously(hidlRequest, hidlMeasure, hidlDeadline,
+                                                  hidlLoopTimeoutDuration);
+    auto [outputShapes, timing] = NN_TRY(std::move(result));
 
-    // Execute synchronously if allowed.
-    if (preferSynchronous) {
-        result = executeSynchronously(hidlRequest, hidlMeasure, hidlDeadline,
-                                      hidlLoopTimeoutDuration);
-    }
+    NN_TRY(hal::utils::makeExecutionFailure(
+            hal::utils::unflushDataFromSharedToPointer(request, maybeRequestInShared)));
 
-    // Run asymchronous execution if execution has not already completed.
-    if (!result.has_value()) {
-        result = executeAsynchronously(hidlRequest, hidlMeasure, hidlDeadline,
-                                       hidlLoopTimeoutDuration);
-    }
-
-    // Flush output buffers if suxcessful execution.
-    if (result.has_value()) {
-        NN_TRY(hal::utils::makeExecutionFailure(
-                hal::utils::unflushDataFromSharedToPointer(request, maybeRequestInShared)));
-    }
-
-    return result;
+    return std::make_pair(std::move(outputShapes), timing);
 }
 
 nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>>
 PreparedModel::executeFenced(const nn::Request& request, const std::vector<nn::SyncFence>& waitFor,
                              nn::MeasureTiming measure, const nn::OptionalTimePoint& deadline,
-                             const nn::OptionalTimeoutDuration& loopTimeoutDuration,
-                             const nn::OptionalTimeoutDuration& timeoutDurationAfterFence) const {
+                             const nn::OptionalDuration& loopTimeoutDuration,
+                             const nn::OptionalDuration& timeoutDurationAfterFence) const {
     // Ensure that request is ready for IPC.
     std::optional<nn::Request> maybeRequestInShared;
     const nn::Request& requestInShared =
@@ -209,28 +171,18 @@ PreparedModel::executeFenced(const nn::Request& request, const std::vector<nn::S
 
     const auto hidlRequest = NN_TRY(convert(requestInShared));
     const auto hidlWaitFor = NN_TRY(hal::utils::convertSyncFences(waitFor));
-    const auto hidlMeasure = NN_TRY(V1_2::utils::convert(measure));
+    const auto hidlMeasure = NN_TRY(convert(measure));
     const auto hidlDeadline = NN_TRY(convert(deadline));
     const auto hidlLoopTimeoutDuration = NN_TRY(convert(loopTimeoutDuration));
     const auto hidlTimeoutDurationAfterFence = NN_TRY(convert(timeoutDurationAfterFence));
 
-    nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>> result =
-            NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE) << "uninitialized";
-    auto cb = [&result](ErrorStatus status, const hidl_handle& syncFence,
-                        const sp<IFencedExecutionCallback>& callback) {
-        if (status != ErrorStatus::NONE) {
-            const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
-            result = NN_ERROR(canonical) << "executeFenced failed with " << toString(status);
-        } else {
-            result = convertExecuteFencedResults(syncFence, callback);
-        }
-    };
+    auto cb = hal::utils::CallbackValue(fencedExecutionCallback);
 
     const auto ret = kPreparedModel->executeFenced(hidlRequest, hidlWaitFor, hidlMeasure,
                                                    hidlDeadline, hidlLoopTimeoutDuration,
                                                    hidlTimeoutDurationAfterFence, cb);
     HANDLE_TRANSPORT_FAILURE(ret);
-    auto [syncFence, callback] = NN_TRY(std::move(result));
+    auto [syncFence, callback] = NN_TRY(cb.take());
 
     // If executeFenced required the request memory to be moved into shared memory, block here until
     // the fenced execution has completed and flush the memory back.

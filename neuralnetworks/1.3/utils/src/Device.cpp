@@ -36,6 +36,7 @@
 #include <nnapi/hal/1.1/Conversions.h>
 #include <nnapi/hal/1.2/Conversions.h>
 #include <nnapi/hal/1.2/Device.h>
+#include <nnapi/hal/1.2/Utils.h>
 #include <nnapi/hal/CommonUtils.h>
 #include <nnapi/hal/HandleError.h>
 #include <nnapi/hal/ProtectCallback.h>
@@ -46,6 +47,9 @@
 #include <optional>
 #include <string>
 #include <vector>
+
+// See hardware/interfaces/neuralnetworks/utils/README.md for more information on HIDL interface
+// lifetimes across processes and for protecting asynchronous calls across HIDL.
 
 namespace android::hardware::neuralnetworks::V1_3::utils {
 namespace {
@@ -66,29 +70,27 @@ nn::GeneralResult<hidl_vec<sp<IPreparedModel>>> convert(
     return hidlPreparedModels;
 }
 
-nn::GeneralResult<nn::SharedBuffer> convert(
-        nn::GeneralResult<std::shared_ptr<const Buffer>> result) {
-    return NN_TRY(std::move(result));
+nn::GeneralResult<nn::Capabilities> capabilitiesCallback(ErrorStatus status,
+                                                         const Capabilities& capabilities) {
+    HANDLE_HAL_STATUS(status) << "getting capabilities failed with " << toString(status);
+    return nn::convert(capabilities);
 }
 
-nn::GeneralResult<nn::Capabilities> initCapabilities(V1_3::IDevice* device) {
+nn::GeneralResult<nn::Capabilities> getCapabilitiesFrom(V1_3::IDevice* device) {
     CHECK(device != nullptr);
 
-    nn::GeneralResult<nn::Capabilities> result = NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
-                                                 << "uninitialized";
-    const auto cb = [&result](ErrorStatus status, const Capabilities& capabilities) {
-        if (status != ErrorStatus::NONE) {
-            const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
-            result = NN_ERROR(canonical) << "getCapabilities_1_3 failed with " << toString(status);
-        } else {
-            result = nn::convert(capabilities);
-        }
-    };
+    auto cb = hal::utils::CallbackValue(capabilitiesCallback);
 
     const auto ret = device->getCapabilities_1_3(cb);
     HANDLE_TRANSPORT_FAILURE(ret);
 
-    return result;
+    return cb.take();
+}
+
+nn::GeneralResult<nn::SharedBuffer> allocationCallback(ErrorStatus status,
+                                                       const sp<IBuffer>& buffer, uint32_t token) {
+    HANDLE_HAL_STATUS(status) << "IDevice::allocate failed with " << toString(status);
+    return Buffer::create(buffer, static_cast<nn::Request::MemoryDomainToken>(token));
 }
 
 }  // namespace
@@ -104,12 +106,12 @@ nn::GeneralResult<std::shared_ptr<const Device>> Device::create(std::string name
                << "V1_3::utils::Device::create must have non-null device";
     }
 
-    auto versionString = NN_TRY(V1_2::utils::initVersionString(device.get()));
-    const auto deviceType = NN_TRY(V1_2::utils::initDeviceType(device.get()));
-    auto extensions = NN_TRY(V1_2::utils::initExtensions(device.get()));
-    auto capabilities = NN_TRY(initCapabilities(device.get()));
+    auto versionString = NN_TRY(V1_2::utils::getVersionStringFrom(device.get()));
+    const auto deviceType = NN_TRY(V1_2::utils::getDeviceTypeFrom(device.get()));
+    auto extensions = NN_TRY(V1_2::utils::getSupportedExtensionsFrom(device.get()));
+    auto capabilities = NN_TRY(getCapabilitiesFrom(device.get()));
     const auto numberOfCacheFilesNeeded =
-            NN_TRY(V1_2::utils::initNumberOfCacheFilesNeeded(device.get()));
+            NN_TRY(V1_2::utils::getNumberOfCacheFilesNeededFrom(device.get()));
 
     auto deathHandler = NN_TRY(hal::utils::DeathHandler::create(device));
     return std::make_shared<const Device>(
@@ -174,27 +176,12 @@ nn::GeneralResult<std::vector<bool>> Device::getSupportedOperations(const nn::Mo
 
     const auto hidlModel = NN_TRY(convert(modelInShared));
 
-    nn::GeneralResult<std::vector<bool>> result = NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
-                                                  << "uninitialized";
-    auto cb = [&result, &model](ErrorStatus status, const hidl_vec<bool>& supportedOperations) {
-        if (status != ErrorStatus::NONE) {
-            const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
-            result = NN_ERROR(canonical)
-                     << "IDevice::getSupportedOperations_1_3 failed with " << toString(status);
-        } else if (supportedOperations.size() != model.main.operations.size()) {
-            result = NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
-                     << "IDevice::getSupportedOperations_1_3 returned vector of size "
-                     << supportedOperations.size() << " but expected "
-                     << model.main.operations.size();
-        } else {
-            result = supportedOperations;
-        }
-    };
+    auto cb = hal::utils::CallbackValue(supportedOperationsCallback);
 
     const auto ret = kDevice->getSupportedOperations_1_3(hidlModel, cb);
     HANDLE_TRANSPORT_FAILURE(ret);
 
-    return result;
+    return cb.take();
 }
 
 nn::GeneralResult<nn::SharedPreparedModel> Device::prepareModel(
@@ -207,12 +194,12 @@ nn::GeneralResult<nn::SharedPreparedModel> Device::prepareModel(
             NN_TRY(hal::utils::flushDataFromPointerToShared(&model, &maybeModelInShared));
 
     const auto hidlModel = NN_TRY(convert(modelInShared));
-    const auto hidlPreference = NN_TRY(V1_1::utils::convert(preference));
+    const auto hidlPreference = NN_TRY(convert(preference));
     const auto hidlPriority = NN_TRY(convert(priority));
     const auto hidlDeadline = NN_TRY(convert(deadline));
-    const auto hidlModelCache = NN_TRY(V1_2::utils::convert(modelCache));
-    const auto hidlDataCache = NN_TRY(V1_2::utils::convert(dataCache));
-    const auto hidlToken = token;
+    const auto hidlModelCache = NN_TRY(convert(modelCache));
+    const auto hidlDataCache = NN_TRY(convert(dataCache));
+    const auto hidlToken = V1_2::utils::CacheToken{token};
 
     const auto cb = sp<PreparedModelCallback>::make();
     const auto scoped = kDeathHandler.protectCallback(cb.get());
@@ -221,10 +208,7 @@ nn::GeneralResult<nn::SharedPreparedModel> Device::prepareModel(
             kDevice->prepareModel_1_3(hidlModel, hidlPreference, hidlPriority, hidlDeadline,
                                       hidlModelCache, hidlDataCache, hidlToken, cb);
     const auto status = HANDLE_TRANSPORT_FAILURE(ret);
-    if (status != ErrorStatus::NONE) {
-        const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
-        return NN_ERROR(canonical) << "prepareModel_1_3 failed with " << toString(status);
-    }
+    HANDLE_HAL_STATUS(status) << "model preparation failed with " << toString(status);
 
     return cb->get();
 }
@@ -233,9 +217,9 @@ nn::GeneralResult<nn::SharedPreparedModel> Device::prepareModelFromCache(
         nn::OptionalTimePoint deadline, const std::vector<nn::SharedHandle>& modelCache,
         const std::vector<nn::SharedHandle>& dataCache, const nn::CacheToken& token) const {
     const auto hidlDeadline = NN_TRY(convert(deadline));
-    const auto hidlModelCache = NN_TRY(V1_2::utils::convert(modelCache));
-    const auto hidlDataCache = NN_TRY(V1_2::utils::convert(dataCache));
-    const auto hidlToken = token;
+    const auto hidlModelCache = NN_TRY(convert(modelCache));
+    const auto hidlDataCache = NN_TRY(convert(dataCache));
+    const auto hidlToken = V1_2::utils::CacheToken{token};
 
     const auto cb = sp<PreparedModelCallback>::make();
     const auto scoped = kDeathHandler.protectCallback(cb.get());
@@ -243,10 +227,7 @@ nn::GeneralResult<nn::SharedPreparedModel> Device::prepareModelFromCache(
     const auto ret = kDevice->prepareModelFromCache_1_3(hidlDeadline, hidlModelCache, hidlDataCache,
                                                         hidlToken, cb);
     const auto status = HANDLE_TRANSPORT_FAILURE(ret);
-    if (status != ErrorStatus::NONE) {
-        const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
-        return NN_ERROR(canonical) << "prepareModelFromCache_1_3 failed with " << toString(status);
-    }
+    HANDLE_HAL_STATUS(status) << "model preparation from cache failed with " << toString(status);
 
     return cb->get();
 }
@@ -260,27 +241,13 @@ nn::GeneralResult<nn::SharedBuffer> Device::allocate(
     const auto hidlInputRoles = NN_TRY(convert(inputRoles));
     const auto hidlOutputRoles = NN_TRY(convert(outputRoles));
 
-    nn::GeneralResult<nn::SharedBuffer> result = NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
-                                                 << "uninitialized";
-    auto cb = [&result](ErrorStatus status, const sp<IBuffer>& buffer, uint32_t token) {
-        if (status != ErrorStatus::NONE) {
-            const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
-            result = NN_ERROR(canonical) << "IDevice::allocate failed with " << toString(status);
-        } else if (buffer == nullptr) {
-            result = NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE) << "Returned buffer is nullptr";
-        } else if (token == 0) {
-            result = NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE) << "Returned token is invalid (0)";
-        } else {
-            result = convert(
-                    Buffer::create(buffer, static_cast<nn::Request::MemoryDomainToken>(token)));
-        }
-    };
+    auto cb = hal::utils::CallbackValue(allocationCallback);
 
     const auto ret =
             kDevice->allocate(hidlDesc, hidlPreparedModels, hidlInputRoles, hidlOutputRoles, cb);
     HANDLE_TRANSPORT_FAILURE(ret);
 
-    return result;
+    return cb.take();
 }
 
 }  // namespace android::hardware::neuralnetworks::V1_3::utils

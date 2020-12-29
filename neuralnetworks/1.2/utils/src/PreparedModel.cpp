@@ -37,55 +37,37 @@
 #include <utility>
 #include <vector>
 
+// See hardware/interfaces/neuralnetworks/utils/README.md for more information on HIDL interface
+// lifetimes across processes and for protecting asynchronous calls across HIDL.
+
 namespace android::hardware::neuralnetworks::V1_2::utils {
-namespace {
-
-nn::GeneralResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>>
-convertExecutionResultsHelper(const hidl_vec<OutputShape>& outputShapes, const Timing& timing) {
-    return std::make_pair(NN_TRY(nn::convert(outputShapes)), NN_TRY(nn::convert(timing)));
-}
-
-nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> convertExecutionResults(
-        const hidl_vec<OutputShape>& outputShapes, const Timing& timing) {
-    return hal::utils::makeExecutionFailure(convertExecutionResultsHelper(outputShapes, timing));
-}
-
-}  // namespace
 
 nn::GeneralResult<std::shared_ptr<const PreparedModel>> PreparedModel::create(
-        sp<V1_2::IPreparedModel> preparedModel) {
+        sp<V1_2::IPreparedModel> preparedModel, bool executeSynchronously) {
     if (preparedModel == nullptr) {
-        return NN_ERROR(nn::ErrorStatus::INVALID_ARGUMENT)
-               << "V1_2::utils::PreparedModel::create must have non-null preparedModel";
+        return NN_ERROR() << "V1_2::utils::PreparedModel::create must have non-null preparedModel";
     }
 
     auto deathHandler = NN_TRY(hal::utils::DeathHandler::create(preparedModel));
-    return std::make_shared<const PreparedModel>(PrivateConstructorTag{}, std::move(preparedModel),
-                                                 std::move(deathHandler));
+    return std::make_shared<const PreparedModel>(PrivateConstructorTag{}, executeSynchronously,
+                                                 std::move(preparedModel), std::move(deathHandler));
 }
 
-PreparedModel::PreparedModel(PrivateConstructorTag /*tag*/, sp<V1_2::IPreparedModel> preparedModel,
+PreparedModel::PreparedModel(PrivateConstructorTag /*tag*/, bool executeSynchronously,
+                             sp<V1_2::IPreparedModel> preparedModel,
                              hal::utils::DeathHandler deathHandler)
-    : kPreparedModel(std::move(preparedModel)), kDeathHandler(std::move(deathHandler)) {}
+    : kExecuteSynchronously(executeSynchronously),
+      kPreparedModel(std::move(preparedModel)),
+      kDeathHandler(std::move(deathHandler)) {}
 
 nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>>
 PreparedModel::executeSynchronously(const V1_0::Request& request, MeasureTiming measure) const {
-    nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> result =
-            NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE) << "uninitialized";
-    const auto cb = [&result](V1_0::ErrorStatus status, const hidl_vec<OutputShape>& outputShapes,
-                              const Timing& timing) {
-        if (status != V1_0::ErrorStatus::NONE) {
-            const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
-            result = NN_ERROR(canonical) << "executeSynchronously failed with " << toString(status);
-        } else {
-            result = convertExecutionResults(outputShapes, timing);
-        }
-    };
+    auto cb = hal::utils::CallbackValue(executionCallback);
 
     const auto ret = kPreparedModel->executeSynchronously(request, measure, cb);
     HANDLE_TRANSPORT_FAILURE(ret);
 
-    return result;
+    return cb.take();
 }
 
 nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>>
@@ -95,9 +77,8 @@ PreparedModel::executeAsynchronously(const V1_0::Request& request, MeasureTiming
 
     const auto ret = kPreparedModel->execute_1_2(request, measure, cb);
     const auto status = HANDLE_TRANSPORT_FAILURE(ret);
-    if (status != V1_0::ErrorStatus::NONE) {
-        const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
-        return NN_ERROR(canonical) << "execute failed with " << toString(status);
+    if (status != V1_0::ErrorStatus::OUTPUT_INSUFFICIENT_SIZE) {
+        HANDLE_HAL_STATUS(status) << "execution failed with " << toString(status);
     }
 
     return cb->get();
@@ -106,51 +87,38 @@ PreparedModel::executeAsynchronously(const V1_0::Request& request, MeasureTiming
 nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> PreparedModel::execute(
         const nn::Request& request, nn::MeasureTiming measure,
         const nn::OptionalTimePoint& /*deadline*/,
-        const nn::OptionalTimeoutDuration& /*loopTimeoutDuration*/) const {
+        const nn::OptionalDuration& /*loopTimeoutDuration*/) const {
     // Ensure that request is ready for IPC.
     std::optional<nn::Request> maybeRequestInShared;
     const nn::Request& requestInShared = NN_TRY(hal::utils::makeExecutionFailure(
             hal::utils::flushDataFromPointerToShared(&request, &maybeRequestInShared)));
 
-    const auto hidlRequest =
-            NN_TRY(hal::utils::makeExecutionFailure(V1_0::utils::convert(requestInShared)));
+    const auto hidlRequest = NN_TRY(hal::utils::makeExecutionFailure(convert(requestInShared)));
     const auto hidlMeasure = NN_TRY(hal::utils::makeExecutionFailure(convert(measure)));
 
-    nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> result =
-            NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE) << "uninitialized";
-    const bool preferSynchronous = true;
+    auto result = kExecuteSynchronously ? executeSynchronously(hidlRequest, hidlMeasure)
+                                        : executeAsynchronously(hidlRequest, hidlMeasure);
+    auto [outputShapes, timing] = NN_TRY(std::move(result));
 
-    // Execute synchronously if allowed.
-    if (preferSynchronous) {
-        result = executeSynchronously(hidlRequest, hidlMeasure);
-    }
+    NN_TRY(hal::utils::makeExecutionFailure(
+            hal::utils::unflushDataFromSharedToPointer(request, maybeRequestInShared)));
 
-    // Run asymchronous execution if execution has not already completed.
-    if (!result.has_value()) {
-        result = executeAsynchronously(hidlRequest, hidlMeasure);
-    }
-
-    // Flush output buffers if suxcessful execution.
-    if (result.has_value()) {
-        NN_TRY(hal::utils::makeExecutionFailure(
-                hal::utils::unflushDataFromSharedToPointer(request, maybeRequestInShared)));
-    }
-
-    return result;
+    return std::make_pair(std::move(outputShapes), timing);
 }
 
 nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>>
-PreparedModel::executeFenced(
-        const nn::Request& /*request*/, const std::vector<nn::SyncFence>& /*waitFor*/,
-        nn::MeasureTiming /*measure*/, const nn::OptionalTimePoint& /*deadline*/,
-        const nn::OptionalTimeoutDuration& /*loopTimeoutDuration*/,
-        const nn::OptionalTimeoutDuration& /*timeoutDurationAfterFence*/) const {
+PreparedModel::executeFenced(const nn::Request& /*request*/,
+                             const std::vector<nn::SyncFence>& /*waitFor*/,
+                             nn::MeasureTiming /*measure*/,
+                             const nn::OptionalTimePoint& /*deadline*/,
+                             const nn::OptionalDuration& /*loopTimeoutDuration*/,
+                             const nn::OptionalDuration& /*timeoutDurationAfterFence*/) const {
     return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
            << "IPreparedModel::executeFenced is not supported on 1.2 HAL service";
 }
 
 std::any PreparedModel::getUnderlyingResource() const {
-    sp<V1_0::IPreparedModel> resource = kPreparedModel;
+    sp<V1_2::IPreparedModel> resource = kPreparedModel;
     return resource;
 }
 

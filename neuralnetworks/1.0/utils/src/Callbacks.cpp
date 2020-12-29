@@ -27,69 +27,62 @@
 #include <nnapi/Result.h>
 #include <nnapi/Types.h>
 #include <nnapi/hal/CommonUtils.h>
+#include <nnapi/hal/HandleError.h>
 #include <nnapi/hal/ProtectCallback.h>
 #include <nnapi/hal/TransferValue.h>
 
 #include <utility>
 
-namespace android::hardware::neuralnetworks::V1_0::utils {
-namespace {
+// See hardware/interfaces/neuralnetworks/utils/README.md for more information on HIDL interface
+// lifetimes across processes and for protecting asynchronous calls across HIDL.
 
-nn::GeneralResult<nn::SharedPreparedModel> convertPreparedModel(
-        const sp<IPreparedModel>& preparedModel) {
-    return NN_TRY(utils::PreparedModel::create(preparedModel));
+namespace android::hardware::neuralnetworks::V1_0::utils {
+
+nn::GeneralResult<std::vector<bool>> supportedOperationsCallback(
+        ErrorStatus status, const hidl_vec<bool>& supportedOperations) {
+    HANDLE_HAL_STATUS(status) << "get supported operations failed with " << toString(status);
+    return supportedOperations;
 }
 
-}  // namespace
+nn::GeneralResult<nn::SharedPreparedModel> prepareModelCallback(
+        ErrorStatus status, const sp<IPreparedModel>& preparedModel) {
+    HANDLE_HAL_STATUS(status) << "model preparation failed with " << toString(status);
+    return NN_TRY(PreparedModel::create(preparedModel));
+}
+
+nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> executionCallback(
+        ErrorStatus status) {
+    HANDLE_HAL_STATUS(status) << "execution failed with " << toString(status);
+    return {};
+}
 
 Return<void> PreparedModelCallback::notify(ErrorStatus status,
                                            const sp<IPreparedModel>& preparedModel) {
-    if (status != ErrorStatus::NONE) {
-        const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
-        notifyInternal(NN_ERROR(canonical) << "preparedModel failed with " << toString(status));
-    } else if (preparedModel == nullptr) {
-        notifyInternal(NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
-                       << "Returned preparedModel is nullptr");
-    } else {
-        notifyInternal(convertPreparedModel(preparedModel));
-    }
+    mData.put(prepareModelCallback(status, preparedModel));
     return Void();
 }
 
 void PreparedModelCallback::notifyAsDeadObject() {
-    notifyInternal(NN_ERROR(nn::ErrorStatus::DEAD_OBJECT) << "Dead object");
+    mData.put(NN_ERROR(nn::ErrorStatus::DEAD_OBJECT) << "Dead object");
 }
 
 PreparedModelCallback::Data PreparedModelCallback::get() {
     return mData.take();
 }
 
-void PreparedModelCallback::notifyInternal(PreparedModelCallback::Data result) {
-    mData.put(std::move(result));
-}
-
 // ExecutionCallback methods begin here
 
 Return<void> ExecutionCallback::notify(ErrorStatus status) {
-    if (status != ErrorStatus::NONE) {
-        const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
-        notifyInternal(NN_ERROR(canonical) << "execute failed with " << toString(status));
-    } else {
-        notifyInternal({});
-    }
+    mData.put(executionCallback(status));
     return Void();
 }
 
 void ExecutionCallback::notifyAsDeadObject() {
-    notifyInternal(NN_ERROR(nn::ErrorStatus::DEAD_OBJECT) << "Dead object");
+    mData.put(NN_ERROR(nn::ErrorStatus::DEAD_OBJECT) << "Dead object");
 }
 
 ExecutionCallback::Data ExecutionCallback::get() {
     return mData.take();
-}
-
-void ExecutionCallback::notifyInternal(ExecutionCallback::Data result) {
-    mData.put(std::move(result));
 }
 
 }  // namespace android::hardware::neuralnetworks::V1_0::utils
