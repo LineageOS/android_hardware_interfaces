@@ -41,12 +41,10 @@ namespace android::hardware::neuralnetworks::V1_3::utils {
 nn::GeneralResult<std::shared_ptr<const Buffer>> Buffer::create(
         sp<V1_3::IBuffer> buffer, nn::Request::MemoryDomainToken token) {
     if (buffer == nullptr) {
-        return NN_ERROR(nn::ErrorStatus::INVALID_ARGUMENT)
-               << "V1_3::utils::Buffer::create must have non-null buffer";
+        return NN_ERROR() << "V1_3::utils::Buffer::create must have non-null buffer";
     }
     if (token == static_cast<nn::Request::MemoryDomainToken>(0)) {
-        return NN_ERROR(nn::ErrorStatus::INVALID_ARGUMENT)
-               << "V1_3::utils::Buffer::create must have non-zero token";
+        return NN_ERROR() << "V1_3::utils::Buffer::create must have non-zero token";
     }
 
     return std::make_shared<const Buffer>(PrivateConstructorTag{}, std::move(buffer), token);
@@ -68,10 +66,7 @@ nn::GeneralResult<void> Buffer::copyTo(const nn::Memory& dst) const {
 
     const auto ret = kBuffer->copyTo(hidlDst);
     const auto status = HANDLE_TRANSPORT_FAILURE(ret);
-    if (status != ErrorStatus::NONE) {
-        const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
-        return NN_ERROR(canonical) << "IBuffer::copyTo failed with " << toString(status);
-    }
+    HANDLE_HAL_STATUS(status) << "IBuffer::copyTo failed with " << toString(status);
 
     return {};
 }
@@ -83,10 +78,7 @@ nn::GeneralResult<void> Buffer::copyFrom(const nn::Memory& src,
 
     const auto ret = kBuffer->copyFrom(hidlSrc, hidlDimensions);
     const auto status = HANDLE_TRANSPORT_FAILURE(ret);
-    if (status != ErrorStatus::NONE) {
-        const auto canonical = nn::convert(status).value_or(nn::ErrorStatus::GENERAL_FAILURE);
-        return NN_ERROR(canonical) << "IBuffer::copyFrom failed with " << toString(status);
-    }
+    HANDLE_HAL_STATUS(status) << "IBuffer::copyFrom failed with " << toString(status);
 
     return {};
 }
