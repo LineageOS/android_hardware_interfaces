@@ -274,10 +274,21 @@ struct AudioConfig {
     uint64_t frameCount;
 };
 
+/**
+ * AudioTag is an additional use case qualifier complementing
+ * AudioUsage and AudioContentType. Tags are set by vendor specific applications
+ * and must be prefixed by "VX_". Vendor must namespace their tag
+ * names to avoid conflicts.
+ */
+typedef string AudioTag;
+
 /** Metadata of a playback track for a StreamOut. */
 struct PlaybackTrackMetadata {
     AudioUsage usage;
     AudioContentType contentType;
+    /** Tags from AudioTrack audio atttributes */
+    vec<AudioTag> tags;
+    AudioChannelMask channelMask;
     /**
      * Positive linear gain applied to the track samples. 0 being muted and 1 is no attenuation,
      * 2 means double amplification...
@@ -294,6 +305,9 @@ struct SourceMetadata {
 /** Metadata of a record track for a StreamIn. */
 struct RecordTrackMetadata {
     AudioSource source;
+    /** Tags from AudioTrack audio atttributes */
+    vec<AudioTag> tags;
+    AudioChannelMask channelMask;
     /**
      * Positive linear gain applied to the track samples. 0 being muted and 1 is no attenuation,
      * 2 means double amplification...
