@@ -143,6 +143,17 @@ struct StreamOut : public IStreamOut {
 #endif
 
   private:
+#if MAJOR_VERSION >= 4
+    playback_track_metadata convertPlaybackTrackMetadata(
+            const PlaybackTrackMetadata& trackMetadata);
+    void doUpdateSourceMetadata(const SourceMetadata& sourceMetadata);
+#if MAJOR_VERSION >= 7
+    playback_track_metadata_v7 convertPlaybackTrackMetadataV7(
+            const PlaybackTrackMetadata& trackMetadata);
+    void doUpdateSourceMetadataV7(const SourceMetadata& sourceMetadata);
+#endif
+#endif
+
     const sp<Device> mDevice;
     audio_stream_out_t* mStream;
     const sp<Stream> mStreamCommon;

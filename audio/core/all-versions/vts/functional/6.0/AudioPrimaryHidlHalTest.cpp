@@ -98,9 +98,11 @@ TEST_P(AudioHidlDeviceTest, CloseDeviceWithOpenedOutputStreams) {
     auto flags = hidl_bitfield<AudioOutputFlag>(AudioOutputFlag::NONE);
 #elif MAJOR_VERSION >= 7
     DeviceAddress address{.deviceType = toString(xsd::AudioDevice::AUDIO_DEVICE_OUT_DEFAULT)};
-    SourceMetadata initMetadata = {
-            {{toString(xsd::AudioUsage::AUDIO_USAGE_MEDIA),
-              toString(xsd::AudioContentType::AUDIO_CONTENT_TYPE_MUSIC), 1 /* gain */}}};
+    SourceMetadata initMetadata = {{{toString(xsd::AudioUsage::AUDIO_USAGE_MEDIA),
+                                     toString(xsd::AudioContentType::AUDIO_CONTENT_TYPE_MUSIC),
+                                     {} /* tags */,
+                                     toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO),
+                                     1 /* gain */}}};
     hidl_vec<AudioInOutFlag> flags;
 #endif
     AudioConfig config{};
@@ -131,7 +133,10 @@ TEST_P(AudioHidlDeviceTest, CloseDeviceWithOpenedInputStreams) {
 #elif MAJOR_VERSION >= 7
     DeviceAddress address{.deviceType = toString(xsd::AudioDevice::AUDIO_DEVICE_IN_DEFAULT)};
     SinkMetadata initMetadata = {
-            {{.source = toString(xsd::AudioSource::AUDIO_SOURCE_MIC), .gain = 1}}};
+            {{.source = toString(xsd::AudioSource::AUDIO_SOURCE_MIC),
+              .gain = 1,
+              .tags = {},
+              .channelMask = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_IN_MONO)}}};
     hidl_vec<AudioInOutFlag> flags;
 #endif
     AudioConfig config{};

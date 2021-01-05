@@ -72,7 +72,10 @@ TEST_P(AudioHidlDeviceTest, GetMicrophonesTest) {
         config.base.format = toString(xsd::AudioFormat::AUDIO_FORMAT_PCM_16_BIT);
         hidl_vec<hidl_string> flags;
         const SinkMetadata initMetadata = {
-                {{.source = toString(xsd::AudioSource::AUDIO_SOURCE_MIC), .gain = 1}}};
+                {{.source = toString(xsd::AudioSource::AUDIO_SOURCE_MIC),
+                  .gain = 1,
+                  .tags = {},
+                  .channelMask = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_IN_MONO)}}};
 #endif
         EventFlag* efGroup;
         for (auto microphone : microphones) {
@@ -246,7 +249,11 @@ TEST_P(InputStreamTest, updateSinkMetadata) {
 #if MAJOR_VERSION <= 6
             const SinkMetadata metadata = {{{.source = source, .gain = volume}}};
 #elif MAJOR_VERSION >= 7
-            const SinkMetadata metadata = {{{.source = toString(source), .gain = volume}}};
+            const SinkMetadata metadata = {
+                    {{.source = toString(source),
+                      .gain = volume,
+                      .tags = {},
+                      .channelMask = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_IN_MONO)}}};
 #endif
             ASSERT_OK(stream->updateSinkMetadata(metadata))
                 << "source=" << toString(source) << ", volume=" << volume;
@@ -284,7 +291,12 @@ TEST_P(OutputStreamTest, updateSourceMetadata) {
 #if MAJOR_VERSION <= 6
                 const SourceMetadata metadata = {{{usage, content, volume}}};
 #elif MAJOR_VERSION >= 7
-                const SourceMetadata metadata = {{{toString(usage), toString(content), volume}}};
+                const SourceMetadata metadata = {
+                        {{toString(usage),
+                          toString(content),
+                          {} /* tags */,
+                          toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO),
+                          volume}}};
 #endif
                 ASSERT_OK(stream->updateSourceMetadata(metadata))
                     << "usage=" << toString(usage) << ", content=" << toString(content)
@@ -303,13 +315,25 @@ TEST_P(OutputStreamTest, updateSourceMetadata) {
           {AudioUsage::ASSISTANT, AudioContentType::UNKNOWN, 0.3}}}
 #elif MAJOR_VERSION >= 7
         {{{toString(xsd::AudioUsage::AUDIO_USAGE_MEDIA),
-                      toString(xsd::AudioContentType::AUDIO_CONTENT_TYPE_MUSIC), 0.1},
+                      toString(xsd::AudioContentType::AUDIO_CONTENT_TYPE_MUSIC),
+                      {},
+                      toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO),
+                      0.1},
           {toString(xsd::AudioUsage::AUDIO_USAGE_VOICE_COMMUNICATION),
-                      toString(xsd::AudioContentType::AUDIO_CONTENT_TYPE_SPEECH), 1.0},
+                      toString(xsd::AudioContentType::AUDIO_CONTENT_TYPE_SPEECH),
+                      {}, // tags
+                      toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_MONO),
+                      1.0},
           {toString(xsd::AudioUsage::AUDIO_USAGE_ALARM),
-                      toString(xsd::AudioContentType::AUDIO_CONTENT_TYPE_SONIFICATION), 0.0},
+                      toString(xsd::AudioContentType::AUDIO_CONTENT_TYPE_SONIFICATION),
+                      {}, // tags
+                      toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO),
+                      0.0},
           {toString(xsd::AudioUsage::AUDIO_USAGE_ASSISTANT),
-                      toString(xsd::AudioContentType::AUDIO_CONTENT_TYPE_UNKNOWN), 0.3}}}
+                      toString(xsd::AudioContentType::AUDIO_CONTENT_TYPE_UNKNOWN),
+                      {},
+                      toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_MONO),
+                      0.3}}}
 #endif
     ));
     // clang-format on
