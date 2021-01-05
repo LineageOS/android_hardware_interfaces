@@ -4,6 +4,9 @@ aidl_interface {
     srcs: [
         "android/hardware/security/keymint/*.aidl",
     ],
+    imports: [
+        "android.hardware.security.secureclock",
+    ],
     stability: "vintf",
     backend: {
         java: {
