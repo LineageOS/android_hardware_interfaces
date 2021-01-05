@@ -3691,7 +3691,10 @@ struct VehiclePropConfig {
  * events.
  */
 struct VehiclePropValue {
-    /** Time is elapsed nanoseconds since boot */
+    /**
+     * Time is elapsed nanoseconds since boot. It's equivalent to
+     * {@code SystemClock.elapsedRealtimeNano()}.
+     */
     int64_t timestamp;
 
     /**
