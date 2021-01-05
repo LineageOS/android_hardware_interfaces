@@ -788,5 +788,3 @@ b9fbb6e2e061ed0960939d48b785e9700210add1f13ed32ecd688d0f1ca20ef7 android.hardwar
 # HALs released in Android S
 # NOTE: waiting to freeze HALs until later in the release
 # NOTE: new HALs are recommended to be in AIDL
-6e64b33f1b720b66b0deb5e08dee37a99deaa94e2e9ebf7806703cabab56e21d android.hardware.contexthub@1.2::IContexthub
-3fb83f4539cab2c7bf9fdbecf7265d1c1dd6e8de9694046fe512b493c127ccea android.hardware.contexthub@1.2::types

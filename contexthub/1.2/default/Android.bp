@@ -41,6 +41,7 @@ cc_binary {
     ],
     header_libs: [
         "android.hardware.contexthub@1.X-common-impl",
+        "android.hardware.contexthub@1.X-common-utils",
     ],
     vintf_fragments: ["android.hardware.contexthub@1.2.xml"],
 }

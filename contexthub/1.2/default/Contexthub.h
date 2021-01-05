@@ -16,6 +16,7 @@
 #pragma once
 
 #include "ContextHub.h"
+#include "IContextHubCallbackWrapper.h"
 
 #include <android/hardware/contexthub/1.2/IContexthub.h>
 
@@ -27,15 +28,34 @@ namespace implementation {
 
 class Contexthub
     : public ::android::hardware::contexthub::V1_X::implementation::ContextHub<IContexthub> {
+    using ContextHubMsg = ::android::hardware::contexthub::V1_2::ContextHubMsg;
+    using IContexthubCallback = ::android::hardware::contexthub::V1_2::IContexthubCallback;
+    using IContextHubCallbackWrapperBase =
+            ::android::hardware::contexthub::V1_X::implementation::IContextHubCallbackWrapperBase;
+    using Result = ::android::hardware::contexthub::V1_0::Result;
     using SettingValue = ::android::hardware::contexthub::V1_1::SettingValue;
     using SettingV1_1 = ::android::hardware::contexthub::V1_1::Setting;
 
   public:
+    // Methods from V1_0::IContexthub
+    Return<Result> registerCallback(uint32_t hubId,
+                                    const sp<V1_0::IContexthubCallback>& cb) override;
+
+    Return<Result> queryApps(uint32_t hubId) override;
+
     // Methods from V1_1::IContexthub
     Return<void> onSettingChanged(SettingV1_1 setting, SettingValue newValue) override;
 
     // Methods from V1_2::IContexthub
     Return<void> onSettingChanged_1_2(Setting setting, SettingValue newValue) override;
+
+    Return<Result> registerCallback_1_2(uint32_t hubId,
+                                        const sp<V1_2::IContexthubCallback>& cb) override;
+
+    Return<Result> sendMessageToHub_1_2(uint32_t hubId, const ContextHubMsg& msg) override;
+
+  private:
+    sp<IContextHubCallbackWrapperBase> mCallback;
 };
 
 }  // namespace implementation

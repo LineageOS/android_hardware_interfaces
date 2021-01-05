@@ -16,10 +16,40 @@
 
 package android.hardware.contexthub@1.2;
 
+import @1.0::Result;
 import @1.1::IContexthub;
 import @1.1::SettingValue;
+import IContexthubCallback;
 
 interface IContexthub extends @1.1::IContexthub {
+    /**
+     * Register a callback for the HAL implementation to send asynchronous
+     * messages to the service from a context hub. There can be a maximum of
+     * one callback registered with the HAL. A call to this function when a
+     * callback has already been registered must override the previous
+     * registration.
+     *
+     * @param hubId    identifier for the hub
+     * @param callback an implementation of the IContextHubCallbacks
+     *
+     * @return result OK on success
+     *                BAD_VALUE if parameters are not valid
+     *
+     */
+    registerCallback_1_2(uint32_t hubId, IContexthubCallback cb) generates (Result result);
+
+    /**
+     * Send a message to a hub
+     *
+     * @param hubId identifier for hub to send message to
+     * @param msg   message to be sent
+     *
+     * @return result OK if successful, error code otherwise
+     *                BAD_VALUE if parameters are not valid
+     *                TRANSACTION_FAILED if message send failed
+     */
+    sendMessageToHub_1_2(uint32_t hubId, ContextHubMsg msg) generates (Result result);
+
     /**
      * Notification sent by the framework to indicate that the user
      * has changed a setting.
