@@ -17,9 +17,7 @@
 
 package android.hardware.power.stats;
 @VintfStability
-parcelable EnergyConsumerResult {
-  android.hardware.power.stats.EnergyConsumerId energyConsumerId;
-  long timestampMs;
+parcelable EnergyConsumerAttribution {
+  int uid;
   long energyUWs;
-  android.hardware.power.stats.EnergyConsumerAttribution[] attribution;
 }
