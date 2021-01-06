@@ -23,8 +23,27 @@ namespace contexthub {
 namespace V1_1 {
 namespace implementation {
 
+using ::android::hardware::contexthub::V1_0::Result;
+
 Return<void> Contexthub::onSettingChanged(Setting /*setting*/, SettingValue /*newValue*/) {
     return Void();
+}
+
+Return<Result> Contexthub::registerCallback(uint32_t hubId, const sp<IContexthubCallback>& cb) {
+    if (hubId == kMockHubId) {
+        mCallback = cb;
+        return Result::OK;
+    }
+    return Result::BAD_PARAMS;
+}
+
+Return<Result> Contexthub::queryApps(uint32_t hubId) {
+    if (hubId == kMockHubId && mCallback != nullptr) {
+        std::vector<HubAppInfo> nanoapps;
+        mCallback->handleAppsInfo(nanoapps);
+        return Result::OK;
+    }
+    return Result::BAD_PARAMS;
 }
 
 }  // namespace implementation
