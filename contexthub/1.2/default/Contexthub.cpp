@@ -23,6 +23,43 @@ namespace contexthub {
 namespace V1_2 {
 namespace implementation {
 
+using ::android::hardware::contexthub::V1_0::Result;
+using ::android::hardware::contexthub::V1_X::implementation::IContextHubCallbackWrapperV1_0;
+using ::android::hardware::contexthub::V1_X::implementation::IContextHubCallbackWrapperV1_2;
+
+Return<Result> Contexthub::registerCallback(uint32_t hubId,
+                                            const sp<V1_0::IContexthubCallback>& cb) {
+    if (hubId == kMockHubId) {
+        mCallback = new IContextHubCallbackWrapperV1_0(cb);
+        return Result::OK;
+    }
+    return Result::BAD_PARAMS;
+}
+
+Return<Result> Contexthub::queryApps(uint32_t hubId) {
+    if (hubId == kMockHubId && mCallback != nullptr) {
+        std::vector<V1_2::HubAppInfo> nanoapps;
+        mCallback->handleAppsInfo(nanoapps);
+        return Result::OK;
+    }
+    return Result::BAD_PARAMS;
+}
+
+Return<Result> Contexthub::registerCallback_1_2(uint32_t hubId,
+                                                const sp<V1_2::IContexthubCallback>& cb) {
+    if (hubId == kMockHubId) {
+        mCallback = new IContextHubCallbackWrapperV1_2(cb);
+        return Result::OK;
+    }
+    return Result::BAD_PARAMS;
+}
+
+// We don't expose any nanoapps, therefore all nanoapp-related API calls return with BAD_PARAMS
+Return<Result> Contexthub::sendMessageToHub_1_2(uint32_t /* hubId */,
+                                                const ContextHubMsg& /* msg */) {
+    return Result::BAD_PARAMS;
+}
+
 Return<void> Contexthub::onSettingChanged(SettingV1_1 /*setting*/, SettingValue /*newValue*/) {
     return Void();
 }

@@ -60,14 +60,6 @@ struct ContextHub : public IContextHubInterface {
         return Void();
     }
 
-    Return<Result> registerCallback(uint32_t hubId, const sp<IContexthubCallback>& cb) override {
-        if (hubId == kMockHubId) {
-            mCallback = cb;
-            return Result::OK;
-        }
-        return Result::BAD_PARAMS;
-    }
-
     // We don't expose any nanoapps, therefore all nanoapp-related API calls return with BAD_PARAMS
     Return<Result> sendMessageToHub(uint32_t /*hubId*/, const ContextHubMsg& /*msg*/) override {
         return Result::BAD_PARAMS;
@@ -93,19 +85,8 @@ struct ContextHub : public IContextHubInterface {
         return Result::BAD_PARAMS;
     }
 
-    Return<Result> queryApps(uint32_t hubId) override {
-        if (hubId == kMockHubId && mCallback != nullptr) {
-            std::vector<HubAppInfo> nanoapps;
-            mCallback->handleAppsInfo(nanoapps);
-            return Result::OK;
-        }
-        return Result::BAD_PARAMS;
-    }
-
-  private:
+  protected:
     static constexpr uint32_t kMockHubId = 0;
-
-    sp<IContexthubCallback> mCallback;
 };
 
 }  // namespace implementation
