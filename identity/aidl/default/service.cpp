@@ -22,20 +22,26 @@
 
 #include "IdentityCredentialStore.h"
 
+#include "FakeSecureHardwareProxy.h"
+
+using ::android::sp;
 using ::android::base::InitLogging;
 using ::android::base::StderrLogger;
 
-using aidl::android::hardware::identity::IdentityCredentialStore;
+using ::aidl::android::hardware::identity::IdentityCredentialStore;
+using ::android::hardware::identity::FakeSecureHardwareProxyFactory;
+using ::android::hardware::identity::SecureHardwareProxyFactory;
 
 int main(int /*argc*/, char* argv[]) {
     InitLogging(argv, StderrLogger);
 
+    sp<SecureHardwareProxyFactory> hwProxyFactory = new FakeSecureHardwareProxyFactory();
+
     ABinderProcess_setThreadPoolMaxThreadCount(0);
     std::shared_ptr<IdentityCredentialStore> store =
-            ndk::SharedRefBase::make<IdentityCredentialStore>();
+            ndk::SharedRefBase::make<IdentityCredentialStore>(hwProxyFactory);
 
     const std::string instance = std::string() + IdentityCredentialStore::descriptor + "/default";
-    LOG(INFO) << "instance: " << instance;
     binder_status_t status = AServiceManager_addService(store->asBinder().get(), instance.c_str());
     CHECK(status == STATUS_OK);
 

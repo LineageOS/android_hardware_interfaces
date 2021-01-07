@@ -23,16 +23,24 @@
 #include <cppbor.h>
 #include <set>
 
+#include "IdentityCredentialStore.h"
+#include "SecureHardwareProxy.h"
+
 namespace aidl::android::hardware::identity {
 
+using ::android::sp;
+using ::android::hardware::identity::SecureHardwareProvisioningProxy;
 using ::std::set;
 using ::std::string;
 using ::std::vector;
 
 class WritableIdentityCredential : public BnWritableIdentityCredential {
   public:
-    WritableIdentityCredential(const string& docType, bool testCredential)
-        : docType_(docType), testCredential_(testCredential) {}
+    WritableIdentityCredential(sp<SecureHardwareProvisioningProxy> hwProxy, const string& docType,
+                               bool testCredential)
+        : hwProxy_(hwProxy), docType_(docType), testCredential_(testCredential) {}
+
+    ~WritableIdentityCredential();
 
     // Creates the Credential Key. Returns false on failure. Must be called
     // right after construction.
@@ -57,7 +65,6 @@ class WritableIdentityCredential : public BnWritableIdentityCredential {
     ndk::ScopedAStatus beginAddEntry(const vector<int32_t>& accessControlProfileIds,
                                      const string& nameSpace, const string& name,
                                      int32_t entrySize) override;
-
     ndk::ScopedAStatus addEntryValue(const vector<uint8_t>& content,
                                      vector<uint8_t>* outEncryptedContent) override;
 
@@ -66,18 +73,17 @@ class WritableIdentityCredential : public BnWritableIdentityCredential {
             vector<uint8_t>* outProofOfProvisioningSignature) override;
 
   private:
+    // Set by constructor.
+    sp<SecureHardwareProvisioningProxy> hwProxy_;
     string docType_;
     bool testCredential_;
 
     // This is set in initialize().
-    vector<uint8_t> storageKey_;
     bool startPersonalizationCalled_;
     bool firstEntry_;
 
-    // These are set in getAttestationCertificate().
-    vector<uint8_t> credentialPrivKey_;
-    vector<uint8_t> credentialPubKey_;
-    vector<vector<uint8_t>> certificateChain_;
+    // This is set in getAttestationCertificate().
+    bool getAttestationCertificateAlreadyCalled_ = false;
 
     // These fields are initialized during startPersonalization()
     size_t numAccessControlProfileRemaining_;
@@ -92,7 +98,6 @@ class WritableIdentityCredential : public BnWritableIdentityCredential {
 
     // These fields are initialized during beginAddEntry()
     size_t entryRemainingBytes_;
-    vector<uint8_t> entryAdditionalData_;
     string entryNameSpace_;
     string entryName_;
     vector<int32_t> entryAccessControlProfileIds_;
