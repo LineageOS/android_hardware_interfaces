@@ -27,9 +27,19 @@ namespace implementation {
 
 class Contexthub
     : public ::android::hardware::contexthub::V1_X::implementation::ContextHub<IContexthub> {
+    using Result = ::android::hardware::contexthub::V1_0::Result;
+
   public:
+    // Methods from V1_0::IContexthub
+    Return<Result> registerCallback(uint32_t hubId, const sp<IContexthubCallback>& cb) override;
+
+    Return<Result> queryApps(uint32_t hubId) override;
+
     // Methods from V1_1::IContexthub
     Return<void> onSettingChanged(Setting setting, SettingValue newValue) override;
+
+  private:
+    sp<IContexthubCallback> mCallback;
 };
 
 }  // namespace implementation

@@ -21,4 +21,5 @@ parcelable EnergyConsumerResult {
   android.hardware.power.stats.EnergyConsumerId energyConsumerId;
   long timestampMs;
   long energyUWs;
+  android.hardware.power.stats.EnergyConsumerAttribution[] attribution;
 }

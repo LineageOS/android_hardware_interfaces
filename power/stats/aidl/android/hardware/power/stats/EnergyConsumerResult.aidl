@@ -17,6 +17,7 @@
 package android.hardware.power.stats;
 
 import android.hardware.power.stats.EnergyConsumerId;
+import android.hardware.power.stats.EnergyConsumerAttribution;
 
 @VintfStability
 parcelable EnergyConsumerResult {
@@ -32,5 +33,9 @@ parcelable EnergyConsumerResult {
      * Accumulated energy since boot in microwatt-seconds (uWs)
      */
     long energyUWs;
+    /**
+     * Optional attribution per UID for this EnergyConsumer.
+     */
+    EnergyConsumerAttribution[] attribution;
 }
 

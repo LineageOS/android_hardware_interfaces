@@ -559,16 +559,9 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.vibrator</name>
+        <version>1-2</version>
         <interface>
             <name>IVibratorManager</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.vr</name>
-        <version>1.0</version>
-        <interface>
-            <name>IVr</name>
             <instance>default</instance>
         </interface>
     </hal>
