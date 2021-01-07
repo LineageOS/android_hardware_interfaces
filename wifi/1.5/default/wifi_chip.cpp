@@ -1031,7 +1031,7 @@ WifiStatus WifiChip::removeIfaceInstanceFromBridgedApIfaceInternal(
     const std::string& ifname, const std::string& ifInstanceName) {
     legacy_hal::wifi_error legacy_status;
     const auto iface = findUsingName(ap_ifaces_, ifname);
-    if (!iface.get() || !ifInstanceName.empty()) {
+    if (!iface.get() || ifInstanceName.empty()) {
         return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
     }
     // Requires to remove one of the instance in bridge mode
