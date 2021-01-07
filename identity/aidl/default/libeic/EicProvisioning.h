@@ -1,0 +1,123 @@
+/*
+ * Copyright 2020, The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#if !defined(EIC_INSIDE_LIBEIC_H) && !defined(EIC_COMPILATION)
+#error "Never include this file directly, include libeic.h instead."
+#endif
+
+#ifndef ANDROID_HARDWARE_IDENTITY_EIC_PROVISIONING_H
+#define ANDROID_HARDWARE_IDENTITY_EIC_PROVISIONING_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "EicCbor.h"
+
+#define EIC_MAX_NUM_NAMESPACES 32
+#define EIC_MAX_NUM_ACCESS_CONTROL_PROFILE_IDS 32
+
+typedef struct {
+    // Set by eicCreateCredentialKey.
+    uint8_t credentialPrivateKey[EIC_P256_PRIV_KEY_SIZE];
+
+    int numEntryCounts;
+    uint8_t entryCounts[EIC_MAX_NUM_NAMESPACES];
+
+    int curNamespace;
+    int curNamespaceNumProcessed;
+
+    size_t curEntrySize;
+    size_t curEntryNumBytesReceived;
+
+    uint8_t storageKey[EIC_AES_128_KEY_SIZE];
+
+    size_t expectedCborSizeAtEnd;
+
+    // SHA-256 for AdditionalData, updated for each entry.
+    uint8_t additionalDataSha256[EIC_SHA256_DIGEST_SIZE];
+
+    EicCbor cbor;
+
+    bool testCredential;
+} EicProvisioning;
+
+bool eicProvisioningInit(EicProvisioning* ctx, bool testCredential);
+
+bool eicProvisioningCreateCredentialKey(EicProvisioning* ctx, const uint8_t* challenge,
+                                        size_t challengeSize, const uint8_t* applicationId,
+                                        size_t applicationIdSize, uint8_t* publicKeyCert,
+                                        size_t* publicKeyCertSize);
+
+bool eicProvisioningStartPersonalization(EicProvisioning* ctx, int accessControlProfileCount,
+                                         const int* entryCounts, size_t numEntryCounts,
+                                         const char* docType,
+                                         size_t expectedProofOfProvisioningingSize);
+
+bool eicProvisioningAddAccessControlProfile(EicProvisioning* ctx, int id,
+                                            const uint8_t* readerCertificate,
+                                            size_t readerCertificateSize,
+                                            bool userAuthenticationRequired, uint64_t timeoutMillis,
+                                            uint64_t secureUserId, uint8_t outMac[28]);
+
+// The scratchSpace should be set to a buffer at least 512 bytes. It's done this way to
+// avoid allocating stack space.
+//
+bool eicProvisioningBeginAddEntry(EicProvisioning* ctx, const int* accessControlProfileIds,
+                                  size_t numAccessControlProfileIds, const char* nameSpace,
+                                  const char* name, uint64_t entrySize, uint8_t* scratchSpace,
+                                  size_t scratchSpaceSize);
+
+// The outEncryptedContent array must be contentSize + 28 bytes long.
+//
+// The scratchSpace should be set to a buffer at least 512 bytes. It's done this way to
+// avoid allocating stack space.
+//
+bool eicProvisioningAddEntryValue(EicProvisioning* ctx, const int* accessControlProfileIds,
+                                  size_t numAccessControlProfileIds, const char* nameSpace,
+                                  const char* name, const uint8_t* content, size_t contentSize,
+                                  uint8_t* outEncryptedContent, uint8_t* scratchSpace,
+                                  size_t scratchSpaceSize);
+
+// The data returned in |signatureOfToBeSigned| contains the ECDSA signature of
+// the ToBeSigned CBOR from RFC 8051 "4.4. Signing and Verification Process"
+// where content is set to the ProofOfProvisioninging CBOR.
+//
+bool eicProvisioningFinishAddingEntries(
+        EicProvisioning* ctx, uint8_t signatureOfToBeSigned[EIC_ECDSA_P256_SIGNATURE_SIZE]);
+
+//
+//
+// The |encryptedCredentialKeys| array is set to AES-GCM-ENC(HBK, R, CredentialKeys, docType)
+// where
+//
+//   CredentialKeys = [
+//     bstr,   ; storageKey, a 128-bit AES key
+//     bstr    ; credentialPrivKey, the private key for credentialKey
+//   ]
+//
+// Since |storageKey| is 16 bytes and |credentialPrivKey| is 32 bytes, the
+// encoded CBOR for CredentialKeys is 52 bytes and consequently
+// |encryptedCredentialKeys| will be 52 + 28 = 80 bytes.
+//
+bool eicProvisioningFinishGetCredentialData(EicProvisioning* ctx, const char* docType,
+                                            uint8_t encryptedCredentialKeys[80]);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif  // ANDROID_HARDWARE_IDENTITY_EIC_PROVISIONING_H
