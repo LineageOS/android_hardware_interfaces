@@ -124,7 +124,16 @@ struct StreamIn : public IStreamIn {
     static Result getCapturePositionImpl(audio_stream_in_t* stream, uint64_t* frames,
                                          uint64_t* time);
 
-   private:
+  private:
+#if MAJOR_VERSION >= 4
+    record_track_metadata convertRecordTrackMetadata(const RecordTrackMetadata& trackMetadata);
+    void doUpdateSinkMetadata(const SinkMetadata& sinkMetadata);
+#if MAJOR_VERSION >= 7
+    record_track_metadata_v7 convertRecordTrackMetadataV7(const RecordTrackMetadata& trackMetadata);
+    void doUpdateSinkMetadataV7(const SinkMetadata& sinkMetadata);
+#endif
+#endif
+
     const sp<Device> mDevice;
     audio_stream_in_t* mStream;
     const sp<Stream> mStreamCommon;
