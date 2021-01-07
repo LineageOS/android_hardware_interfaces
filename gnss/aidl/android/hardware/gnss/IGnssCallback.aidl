@@ -28,7 +28,7 @@ import android.hardware.gnss.IGnssConfiguration;
 interface IGnssCallback {
 
     /** Capability bit mask indicating that GNSS supports blocklisting satellites */
-    const int CAPABILITY_SATELLITE_BLOCKLIST = 1 << 0;
+    const int CAPABILITY_SATELLITE_BLOCKLIST = 1 << 9;
 
     /** Capability bit mask indicating that GNSS supports correlation vector */
     const int CAPABILITY_CORRELATION_VECTOR =  1 << 12;
