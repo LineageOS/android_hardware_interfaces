@@ -36,3 +36,33 @@ cc_library_static {
         "neuralnetworks_utils_hal_common",
     ],
 }
+
+cc_test {
+    name: "neuralnetworks_utils_hal_1_2_test",
+    srcs: ["test/*.cpp"],
+    static_libs: [
+        "android.hardware.neuralnetworks@1.0",
+        "android.hardware.neuralnetworks@1.1",
+        "android.hardware.neuralnetworks@1.2",
+        "libgmock",
+        "libneuralnetworks_common",
+        "neuralnetworks_types",
+        "neuralnetworks_utils_hal_common",
+        "neuralnetworks_utils_hal_1_0",
+        "neuralnetworks_utils_hal_1_1",
+        "neuralnetworks_utils_hal_1_2",
+    ],
+    shared_libs: [
+        "android.hidl.allocator@1.0",
+        "android.hidl.memory@1.0",
+        "libbase",
+        "libcutils",
+        "libfmq",
+        "libhidlbase",
+        "libhidlmemory",
+        "liblog",
+        "libnativewindow",
+        "libutils",
+    ],
+    test_suites: ["general-tests"],
+}
