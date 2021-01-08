@@ -114,9 +114,13 @@ struct StreamIn : public IStreamIn {
     Return<void> createMmapBuffer(int32_t minSizeFrames, createMmapBuffer_cb _hidl_cb) override;
     Return<void> getMmapPosition(getMmapPosition_cb _hidl_cb) override;
 #if MAJOR_VERSION >= 4
+#if MAJOR_VERSION <= 6
     Return<void> updateSinkMetadata(const SinkMetadata& sinkMetadata) override;
-    Return<void> getActiveMicrophones(getActiveMicrophones_cb _hidl_cb) override;
+#else
+    Return<Result> updateSinkMetadata(const SinkMetadata& sinkMetadata) override;
 #endif
+    Return<void> getActiveMicrophones(getActiveMicrophones_cb _hidl_cb) override;
+#endif  // MAJOR_VERSION >= 4
 #if MAJOR_VERSION >= 5
     Return<Result> setMicrophoneDirection(MicrophoneDirection direction) override;
     Return<Result> setMicrophoneFieldDimension(float zoom) override;
@@ -126,13 +130,11 @@ struct StreamIn : public IStreamIn {
 
   private:
 #if MAJOR_VERSION >= 4
-    record_track_metadata convertRecordTrackMetadata(const RecordTrackMetadata& trackMetadata);
-    void doUpdateSinkMetadata(const SinkMetadata& sinkMetadata);
+    Result doUpdateSinkMetadata(const SinkMetadata& sinkMetadata, bool abortOnConversionFailure);
 #if MAJOR_VERSION >= 7
-    record_track_metadata_v7 convertRecordTrackMetadataV7(const RecordTrackMetadata& trackMetadata);
-    void doUpdateSinkMetadataV7(const SinkMetadata& sinkMetadata);
+    Result doUpdateSinkMetadataV7(const SinkMetadata& sinkMetadata);
 #endif
-#endif
+#endif  // MAJOR_VERSION >= 4
 
     const sp<Device> mDevice;
     audio_stream_in_t* mStream;

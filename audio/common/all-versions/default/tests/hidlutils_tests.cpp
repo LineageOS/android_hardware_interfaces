@@ -589,16 +589,29 @@ TEST(HidlUtils, ConvertConfig) {
     config.base.sampleRateHz = 44100;
     config.base.channelMask = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO);
     config.base.format = toString(xsd::AudioFormat::AUDIO_FORMAT_PCM_16_BIT);
-    config.offloadInfo.base = config.base;
-    config.offloadInfo.streamType = toString(xsd::AudioStreamType::AUDIO_STREAM_MUSIC);
-    config.offloadInfo.bitRatePerSecond = 320;
-    config.offloadInfo.durationMicroseconds = -1;
-    config.offloadInfo.bitWidth = 16;
-    config.offloadInfo.bufferSize = 1024;
-    config.offloadInfo.usage = toString(xsd::AudioUsage::AUDIO_USAGE_MEDIA);
-    config.offloadInfo.encapsulationMode = AudioEncapsulationMode::ELEMENTARY_STREAM;
-    config.offloadInfo.contentId = 42;
-    config.offloadInfo.syncId = 13;
+    audio_config_t halConfig;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigToHal(config, &halConfig));
+    AudioConfig configBack;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigFromHal(halConfig, false /*isInput*/, &configBack));
+    EXPECT_EQ(config, configBack);
+}
+
+TEST(HidlUtils, ConvertConfigWithOffloadInfo) {
+    AudioConfig config = {};
+    config.base.sampleRateHz = 44100;
+    config.base.channelMask = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO);
+    config.base.format = toString(xsd::AudioFormat::AUDIO_FORMAT_PCM_16_BIT);
+    config.offloadInfo.info(
+            AudioOffloadInfo{.base = config.base,
+                             .streamType = toString(xsd::AudioStreamType::AUDIO_STREAM_MUSIC),
+                             .bitRatePerSecond = 320,
+                             .durationMicroseconds = -1,
+                             .bitWidth = 16,
+                             .bufferSize = 1024,
+                             .usage = toString(xsd::AudioUsage::AUDIO_USAGE_MEDIA),
+                             .encapsulationMode = AudioEncapsulationMode::ELEMENTARY_STREAM,
+                             .contentId = 42,
+                             .syncId = 13});
     audio_config_t halConfig;
     EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigToHal(config, &halConfig));
     AudioConfig configBack;
@@ -706,4 +719,44 @@ TEST(HidlUtils, ConvertAudioPort) {
     struct audio_port_v7 halPortBack;
     EXPECT_EQ(NO_ERROR, HidlUtils::audioPortToHal(portBack, &halPortBack));
     EXPECT_TRUE(audio_ports_v7_are_equal(&halPort, &halPortBack));
+}
+
+TEST(HidlUtils, ConvertInvalidAudioTags) {
+    char halTag[AUDIO_ATTRIBUTES_TAGS_MAX_SIZE] = {};
+
+    hidl_vec<AudioTag> emptyTag = {{""}};
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioTagsToHal(emptyTag, halTag));
+
+    hidl_vec<AudioTag> longTag = {{std::string(AUDIO_ATTRIBUTES_TAGS_MAX_SIZE + 1, 'A')}};
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioTagsToHal(longTag, halTag));
+
+    hidl_vec<AudioTag> tagSeparator = {
+            {std::string(AUDIO_ATTRIBUTES_TAGS_MAX_SIZE - 1, HidlUtils::sAudioTagSeparator)}};
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioTagsToHal(tagSeparator, halTag));
+
+    hidl_vec<AudioTag> notExtensions = {{"random string", "VX_", "VX_GOOGLE_$$"}};
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioTagsToHal(notExtensions, halTag));
+}
+
+TEST(HidlUtils, ConvertAudioTags) {
+    hidl_vec<AudioTag> emptyTags;
+    char halEmptyTags[AUDIO_ATTRIBUTES_TAGS_MAX_SIZE] = {};
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioTagsToHal(emptyTags, halEmptyTags));
+    hidl_vec<AudioTag> emptyTagsBack;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioTagsFromHal(halEmptyTags, &emptyTagsBack));
+    EXPECT_EQ(emptyTags, emptyTagsBack);
+
+    hidl_vec<AudioTag> oneTag = {{"VX_GOOGLE_VR"}};
+    char halOneTag[AUDIO_ATTRIBUTES_TAGS_MAX_SIZE] = {};
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioTagsToHal(oneTag, halOneTag));
+    hidl_vec<AudioTag> oneTagBack;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioTagsFromHal(halOneTag, &oneTagBack));
+    EXPECT_EQ(oneTag, oneTagBack);
+
+    hidl_vec<AudioTag> twoTags = {{"VX_GOOGLE_VR_42", "VX_GOOGLE_1E100"}};
+    char halTwoTags[AUDIO_ATTRIBUTES_TAGS_MAX_SIZE] = {};
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioTagsToHal(twoTags, halTwoTags));
+    hidl_vec<AudioTag> twoTagsBack;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioTagsFromHal(halTwoTags, &twoTagsBack));
+    EXPECT_EQ(twoTags, twoTagsBack);
 }

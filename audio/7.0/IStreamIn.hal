@@ -41,6 +41,18 @@ interface IStreamIn extends IStream {
     setGain(float gain) generates (Result retval);
 
     /**
+     * Called when the metadata of the stream's sink has been changed.
+     * Optional method
+     *
+     * @param sinkMetadata Description of the audio that is suggested by the clients.
+     * @return retval operation completion status.
+     *        If any of the metadata fields contains an invalid value,
+     *        returns INVALID_ARGUMENTS.
+     *        If method isn't supported by the HAL returns NOT_SUPPORTED.
+     */
+    updateSinkMetadata(SinkMetadata sinkMetadata) generates (Result retval);
+
+    /**
      * Commands that can be executed on the driver reader thread.
      */
     enum ReadCommand : int32_t {
@@ -80,12 +92,6 @@ interface IStreamIn extends IStream {
             } capturePosition;
         } reply;
     };
-
-    /**
-     * Called when the metadata of the stream's sink has been changed.
-     * @param sinkMetadata Description of the audio that is suggested by the clients.
-     */
-    updateSinkMetadata(SinkMetadata sinkMetadata);
 
     /**
      * Set up required transports for receiving audio buffers from the driver.
