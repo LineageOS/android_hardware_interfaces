@@ -34,6 +34,9 @@ TEST_P(RadioHidlTest_v1_4, emergencyDial) {
     if (!deviceSupportsFeature(FEATURE_VOICE_CALL)) {
         ALOGI("Skipping emergencyDial because voice call is not supported in device");
         return;
+    } else if (!deviceSupportsFeature(FEATURE_TELEPHONY)) {
+        ALOGI("Skipping emergencyDial because telephony radio is not supported in device");
+        return;
     } else {
         ALOGI("Running emergencyDial because voice call is supported in device");
     }
@@ -86,6 +89,9 @@ TEST_P(RadioHidlTest_v1_4, emergencyDial_withServices) {
     if (!deviceSupportsFeature(FEATURE_VOICE_CALL)) {
         ALOGI("Skipping emergencyDial because voice call is not supported in device");
         return;
+    } else if (!deviceSupportsFeature(FEATURE_TELEPHONY)) {
+        ALOGI("Skipping emergencyDial because telephony radio is not supported in device");
+        return;
     } else {
         ALOGI("Running emergencyDial because voice call is supported in device");
     }
@@ -137,6 +143,9 @@ TEST_P(RadioHidlTest_v1_4, emergencyDial_withServices) {
 TEST_P(RadioHidlTest_v1_4, emergencyDial_withEmergencyRouting) {
     if (!deviceSupportsFeature(FEATURE_VOICE_CALL)) {
         ALOGI("Skipping emergencyDial because voice call is not supported in device");
+        return;
+    } else if (!deviceSupportsFeature(FEATURE_TELEPHONY)) {
+        ALOGI("Skipping emergencyDial because telephony radio is not supported in device");
         return;
     } else {
         ALOGI("Running emergencyDial because voice call is supported in device");

@@ -35,6 +35,8 @@ enum CheckFlag {
 
 static constexpr const char* FEATURE_VOICE_CALL = "android.software.connectionservice";
 
+static constexpr const char* FEATURE_TELEPHONY = "android.hardware.telephony";
+
 /*
  * Generate random serial number for radio test
  */
