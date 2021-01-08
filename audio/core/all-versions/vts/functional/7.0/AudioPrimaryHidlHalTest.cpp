@@ -401,6 +401,22 @@ static const RecordTrackMetadata& getRecordTrackMetadataWithInvalidDest() {
     return invalid;
 }
 
+static const RecordTrackMetadata& getInvalidChannelMaskRecordTrackMetadata() {
+    static const RecordTrackMetadata invalid = {
+            .source = toString(xsd::AudioSource::AUDIO_SOURCE_DEFAULT),
+            .gain = 1,
+            .channelMask = "random_string"};
+    return invalid;
+}
+
+static const RecordTrackMetadata& getInvalidTagsRecordTrackMetadata() {
+    static const RecordTrackMetadata invalid = {
+            .source = toString(xsd::AudioSource::AUDIO_SOURCE_DEFAULT),
+            .gain = 1,
+            .tags = {{"random_string"}}};
+    return invalid;
+}
+
 static const PlaybackTrackMetadata& getValidPlaybackTrackMetadata() {
     static const PlaybackTrackMetadata valid = {
             .usage = toString(xsd::AudioUsage::AUDIO_USAGE_MEDIA),
@@ -425,24 +441,54 @@ static const PlaybackTrackMetadata& getInvalidContentTypePlaybackTrackMetadata()
     return invalid;
 }
 
+static const PlaybackTrackMetadata& getInvalidChannelMaskPlaybackTrackMetadata() {
+    static const PlaybackTrackMetadata invalid = {
+            .usage = toString(xsd::AudioUsage::AUDIO_USAGE_MEDIA),
+            .contentType = toString(xsd::AudioContentType::AUDIO_CONTENT_TYPE_MUSIC),
+            .gain = 1,
+            .channelMask = "random_string"};
+    return invalid;
+}
+
+static const PlaybackTrackMetadata& getInvalidTagsPlaybackTrackMetadata() {
+    static const PlaybackTrackMetadata invalid = {
+            .usage = toString(xsd::AudioUsage::AUDIO_USAGE_MEDIA),
+            .contentType = toString(xsd::AudioContentType::AUDIO_CONTENT_TYPE_MUSIC),
+            .gain = 1,
+            .tags = {{"random_string"}}};
+    return invalid;
+}
+
 static const std::vector<SourceMetadata>& getInvalidSourceMetadatas() {
     static const std::vector<SourceMetadata> invalids = {
             SourceMetadata{.tracks = {{getInvalidUsagePlaybackTrackMetadata()}}},
             SourceMetadata{.tracks = {{getInvalidContentTypePlaybackTrackMetadata()}}},
+            SourceMetadata{.tracks = {{getInvalidChannelMaskPlaybackTrackMetadata()}}},
+            SourceMetadata{.tracks = {{getInvalidTagsPlaybackTrackMetadata()}}},
             SourceMetadata{.tracks = {{getValidPlaybackTrackMetadata(),
                                        getInvalidUsagePlaybackTrackMetadata()}}},
             SourceMetadata{.tracks = {{getValidPlaybackTrackMetadata(),
-                                       getInvalidContentTypePlaybackTrackMetadata()}}}};
+                                       getInvalidContentTypePlaybackTrackMetadata()}}},
+            SourceMetadata{.tracks = {{getValidPlaybackTrackMetadata(),
+                                       getInvalidChannelMaskPlaybackTrackMetadata()}}},
+            SourceMetadata{.tracks = {{getValidPlaybackTrackMetadata(),
+                                       getInvalidTagsPlaybackTrackMetadata()}}}};
     return invalids;
 }
 static const std::vector<SinkMetadata>& getInvalidSinkMetadatas() {
     static const std::vector<SinkMetadata> invalids = {
             SinkMetadata{.tracks = {{getInvalidSourceRecordTrackMetadata()}}},
             SinkMetadata{.tracks = {{getRecordTrackMetadataWithInvalidDest()}}},
+            SinkMetadata{.tracks = {{getInvalidChannelMaskRecordTrackMetadata()}}},
+            SinkMetadata{.tracks = {{getInvalidTagsRecordTrackMetadata()}}},
             SinkMetadata{.tracks = {{getValidRecordTrackMetadata(),
                                      getInvalidSourceRecordTrackMetadata()}}},
             SinkMetadata{.tracks = {{getValidRecordTrackMetadata(),
-                                     getRecordTrackMetadataWithInvalidDest()}}}};
+                                     getRecordTrackMetadataWithInvalidDest()}}},
+            SinkMetadata{.tracks = {{getValidRecordTrackMetadata(),
+                                     getInvalidChannelMaskRecordTrackMetadata()}}},
+            SinkMetadata{.tracks = {{getValidRecordTrackMetadata(),
+                                     getInvalidTagsRecordTrackMetadata()}}}};
     return invalids;
 }
 template <typename T>
