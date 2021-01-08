@@ -35,12 +35,6 @@ using ::android::hardware::hidl_vec;
 using namespace ::android::hardware::audio::common::CPP_VERSION;
 using namespace ::android::hardware::audio::CPP_VERSION;
 
-#if MAJOR_VERSION <= 6
-// Temporary version for compatibility with forks of the default implementation.
-// Will be removed, do not use!
-std::string deviceAddressToHal(const DeviceAddress& address);
-#endif
-
 status_t deviceAddressToHal(const DeviceAddress& device, audio_devices_t* halDeviceType,
                             char* halDeviceAddress);
 status_t deviceAddressFromHal(audio_devices_t halDeviceType, const char* halDeviceAddress,
@@ -49,6 +43,10 @@ status_t deviceAddressFromHal(audio_devices_t halDeviceType, const char* halDevi
 #if MAJOR_VERSION >= 4
 bool halToMicrophoneCharacteristics(MicrophoneInfo* pDst,
                                     const struct audio_microphone_characteristic_t& src);
+status_t sinkMetadataToHal(const SinkMetadata& sinkMetadata,
+                           std::vector<record_track_metadata>* halTracks);
+status_t sourceMetadataToHal(const SourceMetadata& sourceMetadata,
+                             std::vector<playback_track_metadata_t>* halTracks);
 #endif
 
 #if MAJOR_VERSION <= 6
@@ -69,6 +67,11 @@ inline bool audioOutputFlagsToHal(AudioOutputFlags flags, audio_output_flags_t* 
 #else
 bool audioInputFlagsToHal(const hidl_vec<AudioInOutFlag>& flags, audio_input_flags_t* halFlags);
 bool audioOutputFlagsToHal(const hidl_vec<AudioInOutFlag>& flags, audio_output_flags_t* halFlags);
+// Overloading isn't convenient when passing a nullptr.
+status_t sinkMetadataToHalV7(const SinkMetadata& sinkMetadata,
+                             std::vector<record_track_metadata_v7_t>* halTracks);
+status_t sourceMetadataToHalV7(const SourceMetadata& sourceMetadata,
+                               std::vector<playback_track_metadata_v7_t>* halTracks);
 #endif
 
 }  // namespace implementation
