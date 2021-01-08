@@ -280,6 +280,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.identity</name>
+        <version>1-2</version>
         <interface>
             <name>IIdentityCredentialStore</name>
             <instance>default</instance>
@@ -552,6 +553,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.vibrator</name>
+        <version>1-2</version>
         <interface>
             <name>IVibrator</name>
             <instance>default</instance>
@@ -559,6 +561,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.vibrator</name>
+        <version>1-2</version>
         <interface>
             <name>IVibratorManager</name>
             <instance>default</instance>
