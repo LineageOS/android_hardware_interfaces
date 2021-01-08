@@ -130,7 +130,7 @@ struct StreamIn : public IStreamIn {
 
   private:
 #if MAJOR_VERSION >= 4
-    Result doUpdateSinkMetadata(const SinkMetadata& sinkMetadata, bool abortOnConversionFailure);
+    Result doUpdateSinkMetadata(const SinkMetadata& sinkMetadata);
 #if MAJOR_VERSION >= 7
     Result doUpdateSinkMetadataV7(const SinkMetadata& sinkMetadata);
 #endif

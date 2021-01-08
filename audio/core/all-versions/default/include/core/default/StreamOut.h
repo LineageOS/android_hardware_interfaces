@@ -148,8 +148,7 @@ struct StreamOut : public IStreamOut {
 
   private:
 #if MAJOR_VERSION >= 4
-    Result doUpdateSourceMetadata(const SourceMetadata& sourceMetadata,
-                                  bool abortOnConversionFailure);
+    Result doUpdateSourceMetadata(const SourceMetadata& sourceMetadata);
 #if MAJOR_VERSION >= 7
     Result doUpdateSourceMetadataV7(const SourceMetadata& sourceMetadata);
 #endif
