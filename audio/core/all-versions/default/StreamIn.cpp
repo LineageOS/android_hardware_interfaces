@@ -478,13 +478,24 @@ Return<void> StreamIn::debug(const hidl_handle& fd, const hidl_vec<hidl_string>&
 }
 
 #if MAJOR_VERSION >= 4
-Result StreamIn::doUpdateSinkMetadata(const SinkMetadata& sinkMetadata,
-                                      bool abortOnConversionFailure) {
+Result StreamIn::doUpdateSinkMetadata(const SinkMetadata& sinkMetadata) {
     std::vector<record_track_metadata> halTracks;
-    if (status_t status = sinkMetadataToHal(sinkMetadata, &halTracks);
-        status != NO_ERROR && abortOnConversionFailure) {
+#if MAJOR_VERSION <= 6
+    (void)sinkMetadataToHal(sinkMetadata, &halTracks);
+#else
+    // Validate whether a conversion to V7 is possible. This is needed
+    // to have a consistent behavior of the HAL regardless of the API
+    // version of the legacy HAL (and also to be consistent with openInputStream).
+    std::vector<record_track_metadata_v7> halTracksV7;
+    if (status_t status = sinkMetadataToHalV7(sinkMetadata, &halTracksV7); status == NO_ERROR) {
+        halTracks.reserve(halTracksV7.size());
+        for (auto metadata_v7 : halTracksV7) {
+            halTracks.push_back(std::move(metadata_v7.base));
+        }
+    } else {
         return Stream::analyzeStatus("sinkMetadataToHal", status);
     }
+#endif  // MAJOR_VERSION <= 6
     const sink_metadata_t halMetadata = {
         .track_count = halTracks.size(),
         .tracks = halTracks.data(),
@@ -513,7 +524,7 @@ Return<void> StreamIn::updateSinkMetadata(const SinkMetadata& sinkMetadata) {
     if (mStream->update_sink_metadata == nullptr) {
         return Void();  // not supported by the HAL
     }
-    (void)doUpdateSinkMetadata(sinkMetadata, false /*abortOnConversionFailure*/);
+    (void)doUpdateSinkMetadata(sinkMetadata);
     return Void();
 }
 #elif MAJOR_VERSION >= 7
@@ -522,7 +533,7 @@ Return<Result> StreamIn::updateSinkMetadata(const SinkMetadata& sinkMetadata) {
         if (mStream->update_sink_metadata == nullptr) {
             return Result::NOT_SUPPORTED;
         }
-        return doUpdateSinkMetadata(sinkMetadata, true /*abortOnConversionFailure*/);
+        return doUpdateSinkMetadata(sinkMetadata);
     } else {
         if (mStream->update_sink_metadata_v7 == nullptr) {
             return Result::NOT_SUPPORTED;
