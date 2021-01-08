@@ -34,8 +34,8 @@ using ::android::binder::Status;
 
 struct AttestationData {
     AttestationData(sp<IWritableIdentityCredential>& writableCredential, string challenge,
-                    vector<uint8_t> applicationId)
-        : attestationApplicationId(applicationId) {
+                    vector<uint8_t> attestationAppId)
+        : attestationApplicationId(attestationAppId) {
         // ASSERT_NE(writableCredential, nullptr);
 
         if (!challenge.empty()) {
@@ -94,7 +94,7 @@ struct TestProfile {
 };
 
 bool setupWritableCredential(sp<IWritableIdentityCredential>& writableCredential,
-                             sp<IIdentityCredentialStore>& credentialStore);
+                             sp<IIdentityCredentialStore>& credentialStore, bool testCredential);
 
 optional<vector<uint8_t>> generateReaderCertificate(string serialDecimal);
 
@@ -111,12 +111,16 @@ bool addEntry(sp<IWritableIdentityCredential>& writableCredential, const TestEnt
 
 void setImageData(vector<uint8_t>& image);
 
-bool validateAttestationCertificate(const vector<Certificate>& inputCertificates,
+void validateAttestationCertificate(const vector<Certificate>& credentialKeyCertChain,
                                     const vector<uint8_t>& expectedChallenge,
-                                    const vector<uint8_t>& expectedAppId,
-                                    const HardwareInformation& hwInfo);
+                                    const vector<uint8_t>& expectedAppId, bool isTestCredential);
 
 vector<RequestNamespace> buildRequestNamespaces(const vector<TestEntryData> entries);
+
+// Verifies that the X.509 certificate for a just created authentication key
+// is valid.
+//
+void verifyAuthKeyCertificate(const vector<uint8_t>& authKeyCertChain);
 
 }  // namespace android::hardware::identity::test_utils
 
