@@ -237,26 +237,14 @@ TEST_IO_STREAM(GetHwAvSync, "Get hardware sync can not fail", checkGetHwAVSync(g
 
 TEST_P(InputStreamTest, updateSinkMetadata) {
     doc::test("The HAL should not crash on metadata change");
-
 #if MAJOR_VERSION <= 6
     hidl_enum_range<AudioSource> range;
-#elif MAJOR_VERSION >= 7
-    xsdc_enum_range<android::audio::policy::configuration::V7_0::AudioSource> range;
-#endif
     // Test all possible track configuration
     for (auto source : range) {
         for (float volume : {0.0, 0.5, 1.0}) {
-#if MAJOR_VERSION <= 6
             const SinkMetadata metadata = {{{.source = source, .gain = volume}}};
-#elif MAJOR_VERSION >= 7
-            const SinkMetadata metadata = {
-                    {{.source = toString(source),
-                      .gain = volume,
-                      .tags = {},
-                      .channelMask = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_IN_MONO)}}};
-#endif
             ASSERT_OK(stream->updateSinkMetadata(metadata))
-                << "source=" << toString(source) << ", volume=" << volume;
+                    << "source=" << toString(source) << ", volume=" << volume;
         }
     }
 
@@ -264,9 +252,30 @@ TEST_P(InputStreamTest, updateSinkMetadata) {
 
     // Set no metadata as if all stream track had stopped
     ASSERT_OK(stream->updateSinkMetadata({}));
-
     // Restore initial
     ASSERT_OK(stream->updateSinkMetadata(initMetadata));
+
+#elif MAJOR_VERSION >= 7
+    xsdc_enum_range<android::audio::policy::configuration::V7_0::AudioSource> range;
+    // Test all possible track configuration
+    for (auto source : range) {
+        for (float volume : {0.0, 0.5, 1.0}) {
+            const SinkMetadata metadata = {
+                    {{.source = toString(source),
+                      .gain = volume,
+                      .tags = {},
+                      .channelMask = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_IN_MONO)}}};
+            ASSERT_RESULT(okOrNotSupported, stream->updateSinkMetadata(metadata))
+                    << "source=" << toString(source) << ", volume=" << volume;
+        }
+    }
+    // Do not test concurrent capture as this is not officially supported
+
+    // Set no metadata as if all stream track had stopped
+    ASSERT_RESULT(okOrNotSupported, stream->updateSinkMetadata({}));
+    // Restore initial
+    ASSERT_RESULT(okOrNotSupported, stream->updateSinkMetadata(initMetadata));
+#endif
 }
 
 TEST_P(OutputStreamTest, SelectPresentation) {
@@ -276,44 +285,55 @@ TEST_P(OutputStreamTest, SelectPresentation) {
 
 TEST_P(OutputStreamTest, updateSourceMetadata) {
     doc::test("The HAL should not crash on metadata change");
-
 #if MAJOR_VERSION <= 6
     hidl_enum_range<AudioUsage> usageRange;
     hidl_enum_range<AudioContentType> contentRange;
-#elif MAJOR_VERSION >= 7
-    xsdc_enum_range<android::audio::policy::configuration::V7_0::AudioUsage> usageRange;
-    xsdc_enum_range<android::audio::policy::configuration::V7_0::AudioContentType> contentRange;
-#endif
     // Test all possible track configuration
     for (auto usage : usageRange) {
         for (auto content : contentRange) {
             for (float volume : {0.0, 0.5, 1.0}) {
-#if MAJOR_VERSION <= 6
                 const SourceMetadata metadata = {{{usage, content, volume}}};
-#elif MAJOR_VERSION >= 7
-                const SourceMetadata metadata = {
-                        {{toString(usage),
-                          toString(content),
-                          {} /* tags */,
-                          toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO),
-                          volume}}};
-#endif
                 ASSERT_OK(stream->updateSourceMetadata(metadata))
                     << "usage=" << toString(usage) << ", content=" << toString(content)
                     << ", volume=" << volume;
             }
         }
     }
-
-    // clang-format off
     // Set many track of different configuration
+    // clang-format off
     ASSERT_OK(stream->updateSourceMetadata(
-#if MAJOR_VERSION <= 6
         {{{AudioUsage::MEDIA, AudioContentType::MUSIC, 0.1},
           {AudioUsage::VOICE_COMMUNICATION, AudioContentType::SPEECH, 1.0},
           {AudioUsage::ALARM, AudioContentType::SONIFICATION, 0.0},
           {AudioUsage::ASSISTANT, AudioContentType::UNKNOWN, 0.3}}}
+    ));
+    // clang-format on
+    // Set no metadata as if all stream track had stopped
+    ASSERT_OK(stream->updateSourceMetadata({}));
+    // Restore initial
+    ASSERT_OK(stream->updateSourceMetadata(initMetadata));
 #elif MAJOR_VERSION >= 7
+    xsdc_enum_range<android::audio::policy::configuration::V7_0::AudioUsage> usageRange;
+    xsdc_enum_range<android::audio::policy::configuration::V7_0::AudioContentType> contentRange;
+    // Test all possible track configuration
+    for (auto usage : usageRange) {
+        for (auto content : contentRange) {
+            for (float volume : {0.0, 0.5, 1.0}) {
+                const SourceMetadata metadata = {
+                        {{toString(usage),
+                          toString(content),
+                          {} /* tags */,
+                          toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO),
+                          volume}}};
+                ASSERT_RESULT(okOrNotSupported, stream->updateSourceMetadata(metadata))
+                        << "usage=" << toString(usage) << ", content=" << toString(content)
+                        << ", volume=" << volume;
+            }
+        }
+    }
+    // Set many track of different configuration
+    // clang-format off
+    ASSERT_RESULT(okOrNotSupported, stream->updateSourceMetadata(
         {{{toString(xsd::AudioUsage::AUDIO_USAGE_MEDIA),
                       toString(xsd::AudioContentType::AUDIO_CONTENT_TYPE_MUSIC),
                       {},
@@ -334,15 +354,13 @@ TEST_P(OutputStreamTest, updateSourceMetadata) {
                       {},
                       toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_MONO),
                       0.3}}}
-#endif
     ));
     // clang-format on
-
     // Set no metadata as if all stream track had stopped
-    ASSERT_OK(stream->updateSourceMetadata({}));
-
+    ASSERT_RESULT(okOrNotSupported, stream->updateSourceMetadata({}));
     // Restore initial
-    ASSERT_OK(stream->updateSourceMetadata(initMetadata));
+    ASSERT_RESULT(okOrNotSupported, stream->updateSourceMetadata(initMetadata));
+#endif
 }
 
 TEST_P(AudioPrimaryHidlTest, setMode) {
