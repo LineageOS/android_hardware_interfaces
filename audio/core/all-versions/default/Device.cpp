@@ -135,13 +135,14 @@ Return<void> Device::getMasterMute(getMasterMute_cb _hidl_cb) {
 
 Return<void> Device::getInputBufferSize(const AudioConfig& config, getInputBufferSize_cb _hidl_cb) {
     audio_config_t halConfig;
-    HidlUtils::audioConfigToHal(config, &halConfig);
-    size_t halBufferSize = mDevice->get_input_buffer_size(mDevice, &halConfig);
     Result retval(Result::INVALID_ARGUMENTS);
     uint64_t bufferSize = 0;
-    if (halBufferSize != 0) {
-        retval = Result::OK;
-        bufferSize = halBufferSize;
+    if (HidlUtils::audioConfigToHal(config, &halConfig) == NO_ERROR) {
+        size_t halBufferSize = mDevice->get_input_buffer_size(mDevice, &halConfig);
+        if (halBufferSize != 0) {
+            retval = Result::OK;
+            bufferSize = halBufferSize;
+        }
     }
     _hidl_cb(retval, bufferSize);
     return Void();
@@ -153,7 +154,9 @@ std::tuple<Result, sp<IStreamOut>> Device::openOutputStreamImpl(int32_t ioHandle
                                                                 const AudioOutputFlags& flags,
                                                                 AudioConfig* suggestedConfig) {
     audio_config_t halConfig;
-    HidlUtils::audioConfigToHal(config, &halConfig);
+    if (HidlUtils::audioConfigToHal(config, &halConfig) != NO_ERROR) {
+        return {Result::INVALID_ARGUMENTS, nullptr};
+    }
     audio_stream_out_t* halStream;
     audio_devices_t halDevice;
     char halDeviceAddress[AUDIO_DEVICE_MAX_ADDRESS_LEN];
@@ -186,7 +189,9 @@ std::tuple<Result, sp<IStreamIn>> Device::openInputStreamImpl(
         int32_t ioHandle, const DeviceAddress& device, const AudioConfig& config,
         const AudioInputFlags& flags, AudioSource source, AudioConfig* suggestedConfig) {
     audio_config_t halConfig;
-    HidlUtils::audioConfigToHal(config, &halConfig);
+    if (HidlUtils::audioConfigToHal(config, &halConfig) != NO_ERROR) {
+        return {Result::INVALID_ARGUMENTS, nullptr};
+    }
     audio_stream_in_t* halStream;
     audio_devices_t halDevice;
     char halDeviceAddress[AUDIO_DEVICE_MAX_ADDRESS_LEN];
@@ -248,6 +253,14 @@ Return<void> Device::openOutputStream(int32_t ioHandle, const DeviceAddress& dev
 #endif
                                       const SourceMetadata& sourceMetadata,
                                       openOutputStream_cb _hidl_cb) {
+#if MAJOR_VERSION <= 6
+    if (status_t status = sourceMetadataToHal(sourceMetadata, nullptr); status != NO_ERROR) {
+#else
+    if (status_t status = sourceMetadataToHalV7(sourceMetadata, nullptr); status != NO_ERROR) {
+#endif
+        _hidl_cb(analyzeStatus("sourceMetadataToHal", status), nullptr, AudioConfig{});
+        return Void();
+    }
     AudioConfig suggestedConfig;
     auto [result, streamOut] =
         openOutputStreamImpl(ioHandle, device, config, flags, &suggestedConfig);
@@ -271,7 +284,15 @@ Return<void> Device::openInputStream(int32_t ioHandle, const DeviceAddress& devi
         // This should never happen, the framework must not create as stream
         // if there is no client
         ALOGE("openInputStream called without tracks connected");
-        _hidl_cb(Result::INVALID_ARGUMENTS, nullptr, AudioConfig());
+        _hidl_cb(Result::INVALID_ARGUMENTS, nullptr, AudioConfig{});
+        return Void();
+    }
+#if MAJOR_VERSION <= 6
+    if (status_t status = sinkMetadataToHal(sinkMetadata, nullptr); status != NO_ERROR) {
+#else
+    if (status_t status = sinkMetadataToHalV7(sinkMetadata, nullptr); status != NO_ERROR) {
+#endif
+        _hidl_cb(analyzeStatus("sinkMetadataToHal", status), nullptr, AudioConfig{});
         return Void();
     }
     // Pick the first one as the main.

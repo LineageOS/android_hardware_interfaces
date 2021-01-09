@@ -21,6 +21,7 @@
 #include <log/log.h>
 
 #include <android_audio_policy_configuration_V7_0-enums.h>
+#include <common/all-versions/HidlSupport.h>
 #include <common/all-versions/VersionUtils.h>
 
 #include "HidlUtils.h"
@@ -306,7 +307,12 @@ status_t HidlUtils::audioConfigFromHal(const audio_config_t& halConfig, bool isI
     audio_config_base_t halConfigBase = {halConfig.sample_rate, halConfig.channel_mask,
                                          halConfig.format};
     CONVERT_CHECKED(audioConfigBaseFromHal(halConfigBase, isInput, &config->base), result);
-    CONVERT_CHECKED(audioOffloadInfoFromHal(halConfig.offload_info, &config->offloadInfo), result);
+    if (halConfig.offload_info.sample_rate != 0) {
+        config->offloadInfo.info({});
+        CONVERT_CHECKED(
+                audioOffloadInfoFromHal(halConfig.offload_info, &config->offloadInfo.info()),
+                result);
+    }
     config->frameCount = halConfig.frame_count;
     return result;
 }
@@ -319,7 +325,11 @@ status_t HidlUtils::audioConfigToHal(const AudioConfig& config, audio_config_t* 
     halConfig->sample_rate = halConfigBase.sample_rate;
     halConfig->channel_mask = halConfigBase.channel_mask;
     halConfig->format = halConfigBase.format;
-    CONVERT_CHECKED(audioOffloadInfoToHal(config.offloadInfo, &halConfig->offload_info), result);
+    if (config.offloadInfo.getDiscriminator() ==
+        AudioConfig::OffloadInfo::hidl_discriminator::info) {
+        CONVERT_CHECKED(audioOffloadInfoToHal(config.offloadInfo.info(), &halConfig->offload_info),
+                        result);
+    }
     halConfig->frame_count = config.frameCount;
     return result;
 }
@@ -797,6 +807,47 @@ status_t HidlUtils::audioProfileToHal(const AudioProfile& profile,
                 audioChannelMaskToHal(profile.channelMasks[i], &halProfile->channel_masks[i]),
                 status);
     }
+    return result;
+}
+
+status_t HidlUtils::audioTagsFromHal(const char* halTags, hidl_vec<AudioTag>* tags) {
+    std::vector<std::string> strTags = utils::splitString(halTags, sAudioTagSeparator);
+    status_t result = NO_ERROR;
+    tags->resize(strTags.size());
+    size_t to = 0;
+    for (size_t from = 0; from < strTags.size(); ++from) {
+        if (xsd::isVendorExtension(strTags[from])) {
+            (*tags)[to++] = strTags[from];
+        } else {
+            result = BAD_VALUE;
+        }
+    }
+    if (to != strTags.size()) {
+        tags->resize(to);
+    }
+    return result;
+}
+
+status_t HidlUtils::audioTagsToHal(const hidl_vec<AudioTag>& tags, char* halTags) {
+    memset(halTags, 0, AUDIO_ATTRIBUTES_TAGS_MAX_SIZE);
+    status_t result = NO_ERROR;
+    std::ostringstream halTagsBuffer;
+    bool hasValue = false;
+    for (const auto& tag : tags) {
+        if (hasValue) {
+            halTagsBuffer << sAudioTagSeparator;
+        }
+        if (xsd::isVendorExtension(tag) && strchr(tag.c_str(), sAudioTagSeparator) == nullptr) {
+            halTagsBuffer << tag;
+            hasValue = true;
+        } else {
+            result = BAD_VALUE;
+        }
+    }
+    std::string fullHalTags{std::move(halTagsBuffer.str())};
+    strncpy(halTags, fullHalTags.c_str(), AUDIO_ATTRIBUTES_TAGS_MAX_SIZE);
+    CONVERT_CHECKED(fullHalTags.length() <= AUDIO_ATTRIBUTES_TAGS_MAX_SIZE ? NO_ERROR : BAD_VALUE,
+                    result);
     return result;
 }
 

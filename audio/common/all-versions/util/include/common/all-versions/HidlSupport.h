@@ -20,6 +20,9 @@
 
 #include <hidl/HidlSupport.h>
 #include <algorithm>
+#include <sstream>
+#include <string>
+#include <vector>
 
 namespace android::hardware::audio::common::utils {
 
@@ -27,6 +30,16 @@ template <typename Enum>
 bool isValidHidlEnum(Enum e) {
     hidl_enum_range<Enum> values;
     return std::find(values.begin(), values.end(), e) != values.end();
+}
+
+static inline std::vector<std::string> splitString(const std::string& s, char separator) {
+    std::istringstream iss(s);
+    std::string t;
+    std::vector<std::string> result;
+    while (std::getline(iss, t, separator)) {
+        result.push_back(std::move(t));
+    }
+    return result;
 }
 
 } // namespace android::hardware::audio::common::utils
