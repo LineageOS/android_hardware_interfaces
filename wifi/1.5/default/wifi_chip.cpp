@@ -1795,7 +1795,16 @@ bool WifiChip::isDualStaConcurrencyAllowedInCurrentMode() {
 
 std::string WifiChip::getFirstActiveWlanIfaceName() {
     if (sta_ifaces_.size() > 0) return sta_ifaces_[0]->getName();
-    if (ap_ifaces_.size() > 0) return ap_ifaces_[0]->getName();
+    if (ap_ifaces_.size() > 0) {
+        // If the first active wlan iface is bridged iface.
+        // Return first instance name.
+        for (auto const& it : br_ifaces_ap_instances_) {
+            if (it.first == ap_ifaces_[0]->getName()) {
+                return it.second[0];
+            }
+        }
+        return ap_ifaces_[0]->getName();
+    }
     // This could happen if the chip call is made before any STA/AP
     // iface is created. Default to wlan0 for such cases.
     LOG(WARNING) << "No active wlan interfaces in use! Using default";
