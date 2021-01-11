@@ -281,7 +281,7 @@ struct SetupDataCallResult {
      * suggestion. 0 indicates retry should be performed immediately. 0x7fffffffffffffff indicates
      * the device should not retry data setup anymore.
      */
-    uint64_t suggestedRetryTime;
+    int64_t suggestedRetryTime;
 
     /** Context ID, uniquely identifies this data connection. */
     int32_t cid;
