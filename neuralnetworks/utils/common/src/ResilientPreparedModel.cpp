@@ -20,15 +20,45 @@
 #include <android-base/thread_annotations.h>
 #include <nnapi/IPreparedModel.h>
 #include <nnapi/Result.h>
+#include <nnapi/TypeUtils.h>
 #include <nnapi/Types.h>
 
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <sstream>
 #include <utility>
 #include <vector>
 
 namespace android::hardware::neuralnetworks::utils {
+namespace {
+
+template <typename FnType>
+auto protect(const ResilientPreparedModel& resilientPreparedModel, const FnType& fn)
+        -> decltype(fn(*resilientPreparedModel.getPreparedModel())) {
+    auto preparedModel = resilientPreparedModel.getPreparedModel();
+    auto result = fn(*preparedModel);
+
+    // Immediately return if prepared model is not dead.
+    if (result.has_value() || result.error().code != nn::ErrorStatus::DEAD_OBJECT) {
+        return result;
+    }
+
+    // Attempt recovery and return if it fails.
+    auto maybePreparedModel = resilientPreparedModel.recover(preparedModel.get());
+    if (!maybePreparedModel.has_value()) {
+        const auto& [message, code] = maybePreparedModel.error();
+        std::ostringstream oss;
+        oss << ", and failed to recover dead prepared model with error " << code << ": " << message;
+        result.error().message += oss.str();
+        return result;
+    }
+    preparedModel = std::move(maybePreparedModel).value();
+
+    return fn(*preparedModel);
+}
+
+}  // namespace
 
 nn::GeneralResult<std::shared_ptr<const ResilientPreparedModel>> ResilientPreparedModel::create(
         Factory makePreparedModel) {
@@ -55,9 +85,16 @@ nn::SharedPreparedModel ResilientPreparedModel::getPreparedModel() const {
     return mPreparedModel;
 }
 
-nn::SharedPreparedModel ResilientPreparedModel::recover(
-        const nn::IPreparedModel* /*failingPreparedModel*/, bool /*blocking*/) const {
+nn::GeneralResult<nn::SharedPreparedModel> ResilientPreparedModel::recover(
+        const nn::IPreparedModel* failingPreparedModel) const {
     std::lock_guard guard(mMutex);
+
+    // Another caller updated the failing prepared model.
+    if (mPreparedModel.get() != failingPreparedModel) {
+        return mPreparedModel;
+    }
+
+    mPreparedModel = NN_TRY(kMakePreparedModel());
     return mPreparedModel;
 }
 
@@ -65,7 +102,11 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>>
 ResilientPreparedModel::execute(const nn::Request& request, nn::MeasureTiming measure,
                                 const nn::OptionalTimePoint& deadline,
                                 const nn::OptionalDuration& loopTimeoutDuration) const {
-    return getPreparedModel()->execute(request, measure, deadline, loopTimeoutDuration);
+    const auto fn = [&request, measure, &deadline,
+                     &loopTimeoutDuration](const nn::IPreparedModel& preparedModel) {
+        return preparedModel.execute(request, measure, deadline, loopTimeoutDuration);
+    };
+    return protect(*this, fn);
 }
 
 nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>>
@@ -75,8 +116,12 @@ ResilientPreparedModel::executeFenced(const nn::Request& request,
                                       const nn::OptionalTimePoint& deadline,
                                       const nn::OptionalDuration& loopTimeoutDuration,
                                       const nn::OptionalDuration& timeoutDurationAfterFence) const {
-    return getPreparedModel()->executeFenced(request, waitFor, measure, deadline,
-                                             loopTimeoutDuration, timeoutDurationAfterFence);
+    const auto fn = [&request, &waitFor, measure, &deadline, &loopTimeoutDuration,
+                     &timeoutDurationAfterFence](const nn::IPreparedModel& preparedModel) {
+        return preparedModel.executeFenced(request, waitFor, measure, deadline, loopTimeoutDuration,
+                                           timeoutDurationAfterFence);
+    };
+    return protect(*this, fn);
 }
 
 std::any ResilientPreparedModel::getUnderlyingResource() const {
