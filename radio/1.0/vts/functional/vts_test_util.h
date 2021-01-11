@@ -36,6 +36,10 @@ static constexpr const char* FEATURE_VOICE_CALL = "android.software.connectionse
 
 static constexpr const char* FEATURE_TELEPHONY = "android.hardware.telephony";
 
+static constexpr const char* FEATURE_TELEPHONY_GSM = "android.hardware.telephony.gsm";
+
+static constexpr const char* FEATURE_TELEPHONY_CDMA = "android.hardware.telephony.cdma";
+
 /*
  * Generate random serial number for radio test
  */
