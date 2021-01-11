@@ -43,8 +43,8 @@ class ResilientPreparedModel final : public nn::IPreparedModel {
                                     nn::SharedPreparedModel preparedModel);
 
     nn::SharedPreparedModel getPreparedModel() const;
-    nn::SharedPreparedModel recover(const nn::IPreparedModel* failingPreparedModel,
-                                    bool blocking) const;
+    nn::GeneralResult<nn::SharedPreparedModel> recover(
+            const nn::IPreparedModel* failingPreparedModel) const;
 
     nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> execute(
             const nn::Request& request, nn::MeasureTiming measure,
