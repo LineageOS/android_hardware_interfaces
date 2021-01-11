@@ -18,9 +18,8 @@
 
 package android.hardware.security.keymint;
 @VintfStability
-parcelable KeyMintHardwareInfo {
-  int versionNumber;
-  android.hardware.security.keymint.SecurityLevel securityLevel;
-  @utf8InCpp String keyMintName;
-  @utf8InCpp String keyMintAuthorName;
+parcelable KeyCreationResult {
+  byte[] keyBlob;
+  android.hardware.security.keymint.KeyCharacteristics[] keyCharacteristics;
+  android.hardware.security.keymint.Certificate[] certificateChain;
 }

@@ -512,10 +512,10 @@ enum Tag {
 
     /**
      * Tag::APPLICATION_DATA.  When provided to generateKey or importKey, this tag specifies data
-     * that is necessary during all uses of the key.  In particular, calls to exportKey() and
-     * getKeyCharacteristics() must provide the same value to the appData parameter, and calls to
-     * begin must provide this tag and the same associated data as part of the inParams set.  If
-     * the correct data is not provided, the method must return ErrorCode::INVALID_KEY_BLOB.
+     * that is necessary during all uses of the key.  In particular, calls to begin() and
+     * exportKey() must provide the same value to the appData parameter, and calls to begin must
+     * provide this tag and the same associated data as part of the inParams set.  If the correct
+     * data is not provided, the method must return ErrorCode::INVALID_KEY_BLOB.
      *
      * The content of this tag msut be bound to the key cryptographically, meaning it must not be
      * possible for an adversary who has access to all of the secure world secrets but does not have
