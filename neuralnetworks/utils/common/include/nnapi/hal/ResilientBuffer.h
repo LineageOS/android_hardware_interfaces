@@ -42,7 +42,7 @@ class ResilientBuffer final : public nn::IBuffer {
                              nn::SharedBuffer buffer);
 
     nn::SharedBuffer getBuffer() const;
-    nn::SharedBuffer recover(const nn::IBuffer* failingBuffer, bool blocking) const;
+    nn::GeneralResult<nn::SharedBuffer> recover(const nn::IBuffer* failingBuffer) const;
 
     nn::Request::MemoryDomainToken getToken() const override;
 
