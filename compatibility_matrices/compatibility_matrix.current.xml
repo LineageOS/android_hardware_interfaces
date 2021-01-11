@@ -280,8 +280,17 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.identity</name>
+        <version>1-2</version>
         <interface>
             <name>IIdentityCredentialStore</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.oemlock</name>
+        <version>1</version>
+        <interface>
+            <name>IOemLock</name>
             <instance>default</instance>
         </interface>
     </hal>

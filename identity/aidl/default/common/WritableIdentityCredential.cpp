@@ -17,7 +17,6 @@
 #define LOG_TAG "WritableIdentityCredential"
 
 #include "WritableIdentityCredential.h"
-#include "IdentityCredentialStore.h"
 
 #include <android/hardware/identity/support/IdentityCredentialSupport.h>
 
@@ -30,8 +29,8 @@
 #include <utility>
 
 #include "IdentityCredentialStore.h"
-#include "Util.h"
-#include "WritableIdentityCredential.h"
+
+#include "FakeSecureHardwareProxy.h"
 
 namespace aidl::android::hardware::identity {
 
@@ -40,74 +39,55 @@ using ::std::optional;
 using namespace ::android::hardware::identity;
 
 bool WritableIdentityCredential::initialize() {
-    optional<vector<uint8_t>> random = support::getRandom(16);
-    if (!random) {
-        LOG(ERROR) << "Error creating storageKey";
+    if (!hwProxy_->initialize(testCredential_)) {
+        LOG(ERROR) << "hwProxy->initialize failed";
         return false;
     }
-    storageKey_ = random.value();
     startPersonalizationCalled_ = false;
     firstEntry_ = true;
 
     return true;
 }
 
-// This function generates the attestation certificate using the passed in
-// |attestationApplicationId| and |attestationChallenge|.  It will generate an
-// attestation certificate with current time and expires one year from now.  The
-// certificate shall contain all values as specified in hal.
+WritableIdentityCredential::~WritableIdentityCredential() {}
+
 ndk::ScopedAStatus WritableIdentityCredential::getAttestationCertificate(
-        const vector<uint8_t>& attestationApplicationId,  //
-        const vector<uint8_t>& attestationChallenge,      //
-        vector<Certificate>* outCertificateChain) {
-    if (!credentialPrivKey_.empty() || !credentialPubKey_.empty() || !certificateChain_.empty()) {
+        const vector<uint8_t>& attestationApplicationId,
+        const vector<uint8_t>& attestationChallenge, vector<Certificate>* outCertificateChain) {
+    if (getAttestationCertificateAlreadyCalled_) {
         return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
                 IIdentityCredentialStore::STATUS_FAILED,
                 "Error attestation certificate previously generated"));
     }
+    getAttestationCertificateAlreadyCalled_ = true;
+
     if (attestationChallenge.empty()) {
         return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
                 IIdentityCredentialStore::STATUS_INVALID_DATA, "Challenge can not be empty"));
     }
 
-    vector<uint8_t> challenge(attestationChallenge.begin(), attestationChallenge.end());
-    vector<uint8_t> appId(attestationApplicationId.begin(), attestationApplicationId.end());
-
-    optional<std::pair<vector<uint8_t>, vector<vector<uint8_t>>>> keyAttestationPair =
-            support::createEcKeyPairAndAttestation(challenge, appId, testCredential_);
-    if (!keyAttestationPair) {
-        LOG(ERROR) << "Error creating credentialKey and attestation";
+    optional<vector<uint8_t>> certChain =
+            hwProxy_->createCredentialKey(attestationChallenge, attestationApplicationId);
+    if (!certChain) {
         return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
                 IIdentityCredentialStore::STATUS_FAILED,
-                "Error creating credentialKey and attestation"));
+                "Error generating attestation certificate chain"));
     }
 
-    vector<uint8_t> keyPair = keyAttestationPair.value().first;
-    certificateChain_ = keyAttestationPair.value().second;
-
-    optional<vector<uint8_t>> pubKey = support::ecKeyPairGetPublicKey(keyPair);
-    if (!pubKey) {
+    optional<vector<vector<uint8_t>>> certs = support::certificateChainSplit(certChain.value());
+    if (!certs) {
         return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
                 IIdentityCredentialStore::STATUS_FAILED,
-                "Error getting public part of credentialKey"));
+                "Error splitting chain into separate certificates"));
     }
-    credentialPubKey_ = pubKey.value();
 
-    optional<vector<uint8_t>> privKey = support::ecKeyPairGetPrivateKey(keyPair);
-    if (!privKey) {
-        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
-                IIdentityCredentialStore::STATUS_FAILED,
-                "Error getting private part of credentialKey"));
-    }
-    credentialPrivKey_ = privKey.value();
-
-    // convert from vector<vector<uint8_t>>> to vector<Certificate>*
     *outCertificateChain = vector<Certificate>();
-    for (const vector<uint8_t>& cert : certificateChain_) {
+    for (const vector<uint8_t>& cert : certs.value()) {
         Certificate c = Certificate();
         c.encodedCertificate = cert;
         outCertificateChain->push_back(std::move(c));
     }
+
     return ndk::ScopedAStatus::ok();
 }
 
@@ -123,8 +103,8 @@ ndk::ScopedAStatus WritableIdentityCredential::startPersonalization(
         return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
                 IIdentityCredentialStore::STATUS_FAILED, "startPersonalization called already"));
     }
-
     startPersonalizationCalled_ = true;
+
     numAccessControlProfileRemaining_ = accessControlProfileCount;
     remainingEntryCounts_ = entryCounts;
     entryNameSpace_ = "";
@@ -133,6 +113,12 @@ ndk::ScopedAStatus WritableIdentityCredential::startPersonalization(
     signedDataNamespaces_ = cppbor::Map();
     signedDataCurrentNamespace_ = cppbor::Array();
 
+    if (!hwProxy_->startPersonalization(accessControlProfileCount, entryCounts, docType_,
+                                        expectedProofOfProvisioningSize_)) {
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_FAILED, "eicStartPersonalization"));
+    }
+
     return ndk::ScopedAStatus::ok();
 }
 
@@ -140,8 +126,6 @@ ndk::ScopedAStatus WritableIdentityCredential::addAccessControlProfile(
         int32_t id, const Certificate& readerCertificate, bool userAuthenticationRequired,
         int64_t timeoutMillis, int64_t secureUserId,
         SecureAccessControlProfile* outSecureAccessControlProfile) {
-    SecureAccessControlProfile profile;
-
     if (numAccessControlProfileRemaining_ == 0) {
         return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
                 IIdentityCredentialStore::STATUS_INVALID_DATA,
@@ -169,25 +153,21 @@ ndk::ScopedAStatus WritableIdentityCredential::addAccessControlProfile(
                 "userAuthenticationRequired is false but timeout is non-zero"));
     }
 
-    // If |userAuthenticationRequired| is true, then |secureUserId| must be non-zero.
-    if (userAuthenticationRequired && secureUserId == 0) {
+    optional<vector<uint8_t>> mac = hwProxy_->addAccessControlProfile(
+            id, readerCertificate.encodedCertificate, userAuthenticationRequired, timeoutMillis,
+            secureUserId);
+    if (!mac) {
         return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
-                IIdentityCredentialStore::STATUS_INVALID_DATA,
-                "userAuthenticationRequired is true but secureUserId is zero"));
+                IIdentityCredentialStore::STATUS_FAILED, "eicAddAccessControlProfile"));
     }
 
+    SecureAccessControlProfile profile;
     profile.id = id;
     profile.readerCertificate = readerCertificate;
     profile.userAuthenticationRequired = userAuthenticationRequired;
     profile.timeoutMillis = timeoutMillis;
     profile.secureUserId = secureUserId;
-    optional<vector<uint8_t>> mac = secureAccessControlProfileCalcMac(profile, storageKey_);
-    if (!mac) {
-        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
-                IIdentityCredentialStore::STATUS_FAILED, "Error calculating MAC for profile"));
-    }
     profile.mac = mac.value();
-
     cppbor::Map profileMap;
     profileMap.add("id", profile.id);
     if (profile.readerCertificate.encodedCertificate.size() > 0) {
@@ -261,14 +241,18 @@ ndk::ScopedAStatus WritableIdentityCredential::beginAddEntry(
         remainingEntryCounts_[0] -= 1;
     }
 
-    entryAdditionalData_ = entryCreateAdditionalData(nameSpace, name, accessControlProfileIds);
-
     entryRemainingBytes_ = entrySize;
     entryNameSpace_ = nameSpace;
     entryName_ = name;
     entryAccessControlProfileIds_ = accessControlProfileIds;
     entryBytes_.resize(0);
     // LOG(INFO) << "name=" << name << " entrySize=" << entrySize;
+
+    if (!hwProxy_->beginAddEntry(accessControlProfileIds, nameSpace, name, entrySize)) {
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_FAILED, "eicBeginAddEntry"));
+    }
+
     return ndk::ScopedAStatus::ok();
 }
 
@@ -297,16 +281,11 @@ ndk::ScopedAStatus WritableIdentityCredential::addEntryValue(const vector<uint8_
         }
     }
 
-    optional<vector<uint8_t>> nonce = support::getRandom(12);
-    if (!nonce) {
-        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
-                IIdentityCredentialStore::STATUS_FAILED, "Error getting nonce"));
-    }
-    optional<vector<uint8_t>> encryptedContent =
-            support::encryptAes128Gcm(storageKey_, nonce.value(), content, entryAdditionalData_);
+    optional<vector<uint8_t>> encryptedContent = hwProxy_->addEntryValue(
+            entryAccessControlProfileIds_, entryNameSpace_, entryName_, content);
     if (!encryptedContent) {
         return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
-                IIdentityCredentialStore::STATUS_FAILED, "Error encrypting content"));
+                IIdentityCredentialStore::STATUS_FAILED, "eicAddEntryValue"));
     }
 
     if (entryRemainingBytes_ == 0) {
@@ -330,50 +309,6 @@ ndk::ScopedAStatus WritableIdentityCredential::addEntryValue(const vector<uint8_
 
     *outEncryptedContent = encryptedContent.value();
     return ndk::ScopedAStatus::ok();
-}
-
-// Writes CBOR-encoded structure to |credentialKeys| containing |storageKey| and
-// |credentialPrivKey|.
-static bool generateCredentialKeys(const vector<uint8_t>& storageKey,
-                                   const vector<uint8_t>& credentialPrivKey,
-                                   vector<uint8_t>& credentialKeys) {
-    if (storageKey.size() != 16) {
-        LOG(ERROR) << "Size of storageKey is not 16";
-        return false;
-    }
-
-    cppbor::Array array;
-    array.add(cppbor::Bstr(storageKey));
-    array.add(cppbor::Bstr(credentialPrivKey));
-    credentialKeys = array.encode();
-    return true;
-}
-
-// Writes CBOR-encoded structure to |credentialData| containing |docType|,
-// |testCredential| and |credentialKeys|. The latter element will be stored in
-// encrypted form, using |hardwareBoundKey| as the encryption key.
-bool generateCredentialData(const vector<uint8_t>& hardwareBoundKey, const string& docType,
-                            bool testCredential, const vector<uint8_t>& credentialKeys,
-                            vector<uint8_t>& credentialData) {
-    optional<vector<uint8_t>> nonce = support::getRandom(12);
-    if (!nonce) {
-        LOG(ERROR) << "Error getting random";
-        return false;
-    }
-    vector<uint8_t> docTypeAsVec(docType.begin(), docType.end());
-    optional<vector<uint8_t>> credentialBlob = support::encryptAes128Gcm(
-            hardwareBoundKey, nonce.value(), credentialKeys, docTypeAsVec);
-    if (!credentialBlob) {
-        LOG(ERROR) << "Error encrypting CredentialKeys blob";
-        return false;
-    }
-
-    cppbor::Array array;
-    array.add(docType);
-    array.add(testCredential);
-    array.add(cppbor::Bstr(credentialBlob.value()));
-    credentialData = array.encode();
-    return true;
 }
 
 ndk::ScopedAStatus WritableIdentityCredential::finishAddingEntries(
@@ -411,31 +346,37 @@ ndk::ScopedAStatus WritableIdentityCredential::finishAddingEntries(
                         .c_str()));
     }
 
-    optional<vector<uint8_t>> signature = support::coseSignEcDsa(credentialPrivKey_,
-                                                                 encodedCbor,  // payload
-                                                                 {},           // additionalData
-                                                                 {});          // certificateChain
+    optional<vector<uint8_t>> signatureOfToBeSigned = hwProxy_->finishAddingEntries();
+    if (!signatureOfToBeSigned) {
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_FAILED, "eicFinishAddingEntries"));
+    }
+
+    optional<vector<uint8_t>> signature =
+            support::coseSignEcDsaWithSignature(signatureOfToBeSigned.value(),
+                                                encodedCbor,  // data
+                                                {});          // certificateChain
     if (!signature) {
         return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
                 IIdentityCredentialStore::STATUS_FAILED, "Error signing data"));
     }
 
-    vector<uint8_t> credentialKeys;
-    if (!generateCredentialKeys(storageKey_, credentialPrivKey_, credentialKeys)) {
+    optional<vector<uint8_t>> encryptedCredentialKeys = hwProxy_->finishGetCredentialData(docType_);
+    if (!encryptedCredentialKeys) {
         return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
-                IIdentityCredentialStore::STATUS_FAILED, "Error generating CredentialKeys"));
+                IIdentityCredentialStore::STATUS_FAILED,
+                "Error generating encrypted CredentialKeys"));
     }
-
-    vector<uint8_t> credentialData;
-    if (!generateCredentialData(
-                testCredential_ ? support::getTestHardwareBoundKey() : getHardwareBoundKey(),
-                docType_, testCredential_, credentialKeys, credentialData)) {
-        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
-                IIdentityCredentialStore::STATUS_FAILED, "Error generating CredentialData"));
-    }
+    cppbor::Array array;
+    array.add(docType_);
+    array.add(testCredential_);
+    array.add(encryptedCredentialKeys.value());
+    vector<uint8_t> credentialData = array.encode();
 
     *outCredentialData = credentialData;
     *outProofOfProvisioningSignature = signature.value();
+    hwProxy_->shutdown();
+
     return ndk::ScopedAStatus::ok();
 }
 

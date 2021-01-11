@@ -39,8 +39,9 @@ ndk::ScopedAStatus IdentityCredentialStore::getHardwareInformation(
 ndk::ScopedAStatus IdentityCredentialStore::createCredential(
         const string& docType, bool testCredential,
         shared_ptr<IWritableIdentityCredential>* outWritableCredential) {
+    sp<SecureHardwareProvisioningProxy> hwProxy = hwProxyFactory_->createProvisioningProxy();
     shared_ptr<WritableIdentityCredential> wc =
-            ndk::SharedRefBase::make<WritableIdentityCredential>(docType, testCredential);
+            ndk::SharedRefBase::make<WritableIdentityCredential>(hwProxy, docType, testCredential);
     if (!wc->initialize()) {
         return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
                 IIdentityCredentialStore::STATUS_FAILED,
@@ -60,8 +61,9 @@ ndk::ScopedAStatus IdentityCredentialStore::getCredential(
                 "Unsupported cipher suite"));
     }
 
+    sp<SecureHardwarePresentationProxy> hwProxy = hwProxyFactory_->createPresentationProxy();
     shared_ptr<IdentityCredential> credential =
-            ndk::SharedRefBase::make<IdentityCredential>(credentialData);
+            ndk::SharedRefBase::make<IdentityCredential>(hwProxy, credentialData);
     auto ret = credential->initialize();
     if (ret != IIdentityCredentialStore::STATUS_OK) {
         return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
