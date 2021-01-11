@@ -22,7 +22,7 @@ interface IContexthubCallback {
      * implementation to allow the HAL to send asynchronous messages back
      * to the service and registered clients of the ContextHub service.
      *
-     * @params msg : message
+     * @param msg message being sent from the contexthub
      *
      */
      handleClientMsg(ContextHubMsg msg);
@@ -32,9 +32,9 @@ interface IContexthubCallback {
      * implementation to allow the HAL to send the response for a
      * transaction.
      *
-     * @params txnId : transaction id whose result is being sent
-     *                 passed in by the service at start of transacation.
-     *         result: result of transaction.
+     * @param txnId transaction id whose result is being sent
+     *              passed in by the service at start of transacation.
+     * @param result result of transaction.
      *
      */
      handleTxnResult(uint32_t txnId, TransactionResult result);
@@ -44,7 +44,7 @@ interface IContexthubCallback {
      * implementation to allow the HAL to send an asynchronous event
      * to the ContextHub service.
      *
-     * @params msg : message
+     * @param evt event being sent from the contexthub
      *
      */
      handleHubEvent(AsyncEventType evt);
@@ -55,8 +55,8 @@ interface IContexthubCallback {
      * that a nanp-app has aborted.
      * This method must be called when a nanoapp invokes chreAbort(...)).
      *
-     * @params appId : app identifier
-     *               : abortCode code passed by the nanoApp.
+     * @param appId app identifier
+     * @param abortCode code passed by the nanoApp.
      *
      * Also see chreAbort(...)
      *
@@ -68,12 +68,11 @@ interface IContexthubCallback {
       * implementation to allow the HAL to send information about the
       * currently loaded and active nanoapps on the hub.
       *
-      * @params appInfo : vector of HubAppinfo structure for each nanoApp
-      *                   on the hub that can be enabled, disabled and
-      *                   unloaded by the service. Any nanoApps that cannot
-      *                   be controlled by the service must not be reported.
-      *                   All nanoApps that can be controlled by the service
-      *                   must be reported.
+      * @param appInfo vector of HubAppinfo structure for each nanoApp on the
+      *                hub that can be enabled, disabled and unloaded by the
+      *                service. Any nanoApps that cannot be controlled by the
+      *                service must not be reported. All nanoApps that can be
+      *                controlled by the service must be reported.
       */
       handleAppsInfo(vec<HubAppInfo> appInfo);
 };
