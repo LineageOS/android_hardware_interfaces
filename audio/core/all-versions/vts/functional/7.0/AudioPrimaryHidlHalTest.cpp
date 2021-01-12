@@ -298,6 +298,19 @@ INSTANTIATE_TEST_CASE_P(
         &DeviceConfigParameterToString);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(InputBufferSizeInvalidConfig);
 
+static const DeviceAddress& getInvalidDeviceAddress() {
+    static const DeviceAddress valid = {.deviceType = "random_string"};
+    return valid;
+}
+
+TEST_P(AudioHidlDeviceTest, SetConnectedStateInvalidDeviceAddress) {
+    doc::test("Check that invalid device address is rejected by IDevice::setConnectedState");
+    EXPECT_RESULT(Result::INVALID_ARGUMENTS,
+                  getDevice()->setConnectedState(getInvalidDeviceAddress(), true));
+    EXPECT_RESULT(Result::INVALID_ARGUMENTS,
+                  getDevice()->setConnectedState(getInvalidDeviceAddress(), false));
+}
+
 enum { PARAM_DEVICE_CONFIG, PARAM_ADDRESS, PARAM_METADATA };
 enum { INDEX_SINK, INDEX_SOURCE };
 using SinkOrSourceMetadata = std::variant<SinkMetadata, SourceMetadata>;
@@ -358,11 +371,6 @@ static const DeviceAddress& getValidInputDeviceAddress() {
 static const DeviceAddress& getValidOutputDeviceAddress() {
     static const DeviceAddress valid = {
             .deviceType = toString(xsd::AudioDevice::AUDIO_DEVICE_OUT_DEFAULT)};
-    return valid;
-}
-
-static const DeviceAddress& getInvalidDeviceAddress() {
-    static const DeviceAddress valid = {.deviceType = "random_string"};
     return valid;
 }
 
@@ -567,7 +575,40 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(OutputStreamInvalidConfig);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(OutputStreamInvalidAddress);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(OutputStreamInvalidMetadata);
 
-TEST_P(OutputStreamTest, UpdateInvalidSourceMetadata) {
+#define TEST_SINGLE_CONFIG_IO_STREAM(test_name, documentation, code) \
+    TEST_P(SingleConfigInputStreamTest, test_name) {                 \
+        doc::test(documentation);                                    \
+        code;                                                        \
+    }                                                                \
+    TEST_P(SingleConfigOutputStreamTest, test_name) {                \
+        doc::test(documentation);                                    \
+        code;                                                        \
+    }
+
+static void testSetDevicesInvalidDeviceAddress(IStream* stream) {
+    ASSERT_RESULT(Result::INVALID_ARGUMENTS, stream->setDevices({getInvalidDeviceAddress()}));
+}
+TEST_SINGLE_CONFIG_IO_STREAM(
+        SetDevicesInvalidDeviceAddress,
+        "Verify that invalid device address is rejected by IStream::setDevices",
+        areAudioPatchesSupported() ? doc::partialTest("Audio patches are supported")
+                                   : testSetDevicesInvalidDeviceAddress(stream.get()));
+
+static void testSetAudioPropertiesInvalidArguments(IStream* stream, const AudioConfigBase& base) {
+    AudioConfigBase invalidFormat = base;
+    invalidFormat.format = "random_string";
+    ASSERT_RESULT(invalidArgsOrNotSupported, stream->setAudioProperties(invalidFormat));
+
+    AudioConfigBase invalidChannelMask = base;
+    invalidChannelMask.channelMask = "random_string";
+    ASSERT_RESULT(invalidArgsOrNotSupported, stream->setAudioProperties(invalidChannelMask));
+}
+TEST_SINGLE_CONFIG_IO_STREAM(
+        SetAudioPropertiesInvalidArguments,
+        "Verify that invalid arguments are rejected by IStream::setAudioProperties",
+        testSetAudioPropertiesInvalidArguments(stream.get(), audioConfig.base));
+
+TEST_P(SingleConfigOutputStreamTest, UpdateInvalidSourceMetadata) {
     doc::test("Verify that invalid metadata is rejected by IStreamOut::updateSourceMetadata");
     for (const auto& metadata : getInvalidSourceMetadatas()) {
         ASSERT_RESULT(invalidArgsOrNotSupported, stream->updateSourceMetadata(metadata))
@@ -575,7 +616,7 @@ TEST_P(OutputStreamTest, UpdateInvalidSourceMetadata) {
     }
 }
 
-TEST_P(InputStreamTest, UpdateInvalidSinkMetadata) {
+TEST_P(SingleConfigInputStreamTest, UpdateInvalidSinkMetadata) {
     doc::test("Verify that invalid metadata is rejected by IStreamIn::updateSinkMetadata");
     for (const auto& metadata : getInvalidSinkMetadatas()) {
         ASSERT_RESULT(invalidArgsOrNotSupported, stream->updateSinkMetadata(metadata))
