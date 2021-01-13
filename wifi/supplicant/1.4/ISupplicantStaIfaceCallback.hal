@@ -168,4 +168,13 @@ interface ISupplicantStaIfaceCallback extends @1.3::ISupplicantStaIfaceCallback 
      * @param assocRejectData Association Rejection related information.
      */
     oneway onAssociationRejected_1_4(AssociationRejectionData assocRejectData);
+
+    /**
+     * Used to indicate that the supplicant failed to find a network in scan result
+     * which matches with the network capabilities requested by upper layer
+     * for connection.
+     *
+     * @param ssid network name supplicant tried to connect.
+     */
+    oneway onNetworkNotFound(Ssid ssid);
 };
