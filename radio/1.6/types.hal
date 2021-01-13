@@ -347,7 +347,7 @@ struct SetupDataCallResult {
 
     /**
      * The allocated pdu session id for this data call.
-     * A value of -1 means no pdu session id was attached to this call.
+     * A value of 0 means no pdu session id was attached to this call.
      *
      * Reference: 3GPP TS 24.007 section 11.2.3.1b
      */
