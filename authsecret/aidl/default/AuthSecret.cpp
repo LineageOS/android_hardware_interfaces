@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,20 @@
  * limitations under the License.
  */
 
-package android.hardware.radio.config@1.3;
+#include "AuthSecret.h"
 
-/**
- * Contains the device capabilities with respect to the Radio HAL.
- */
-struct HalDeviceCapabilities {
-  /**
-   * True indicates that the modem is missing features within the current
-   * version of the Radio HAL.
-   */
-  bool modemReducedFeatureSet1;
-};
+namespace aidl {
+namespace android {
+namespace hardware {
+namespace authsecret {
+
+// Methods from ::android::hardware::authsecret::IAuthSecret follow.
+::ndk::ScopedAStatus AuthSecret::setPrimaryUserCredential(const std::vector<uint8_t>& in_secret) {
+    (void)in_secret;
+    return ::ndk::ScopedAStatus::ok();
+}
+
+} // namespace authsecret
+} // namespace hardware
+} // namespace android
+} // aidl

@@ -119,6 +119,7 @@ ndk::ScopedAStatus Vibrator::getSupportedPrimitives(std::vector<CompositePrimiti
             CompositePrimitive::THUD,       CompositePrimitive::SPIN,
             CompositePrimitive::QUICK_RISE, CompositePrimitive::SLOW_RISE,
             CompositePrimitive::QUICK_FALL, CompositePrimitive::LIGHT_TICK,
+            CompositePrimitive::LOW_TICK,
     };
     return ndk::ScopedAStatus::ok();
 }

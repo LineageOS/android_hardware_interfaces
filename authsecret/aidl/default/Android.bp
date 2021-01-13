@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,23 +14,19 @@
 // limitations under the License.
 //
 
-cc_test {
-    name: "VtsHalCasV1_1TargetTest",
-    defaults: ["VtsHalTargetTestDefaults"],
-    srcs: ["VtsHalCasV1_1TargetTest.cpp"],
-    static_libs: [
-        "android.hardware.cas@1.0",
-        "android.hardware.cas@1.1",
-        "android.hardware.cas@1.2",
-        "android.hardware.cas.native@1.0",
-        "android.hidl.allocator@1.0",
-        "android.hidl.memory@1.0",
-        "libhidlallocatorutils",
-        "libhidlmemory",
+cc_binary {
+    name: "android.hardware.authsecret-service.example",
+    relative_install_path: "hw",
+    init_rc: ["android.hardware.authsecret-service.example.rc"],
+    vintf_fragments: ["android.hardware.authsecret-service.example.xml"],
+    vendor: true,
+    srcs: [
+        "service.cpp",
+        "AuthSecret.cpp",
     ],
     shared_libs: [
-        "libbinder",
+        "android.hardware.authsecret-ndk_platform",
+        "libbase",
+        "libbinder_ndk",
     ],
-    test_suites: ["general-tests", "vts"],
 }
-

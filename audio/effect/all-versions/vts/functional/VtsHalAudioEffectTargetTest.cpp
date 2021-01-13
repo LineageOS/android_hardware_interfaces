@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <vector>
+
 #define LOG_TAG "AudioEffectHidlHalTest"
 #include <android-base/logging.h>
 #if MAJOR_VERSION <= 6
@@ -309,6 +311,47 @@ TEST_P(AudioEffectHidlTest, GetSetConfig) {
     EXPECT_EQ(Result::OK, ret2);
 }
 
+#if MAJOR_VERSION >= 7
+std::vector<EffectBufferConfig> generateInvalidConfigs(const EffectBufferConfig& src) {
+    std::vector<EffectBufferConfig> result;
+    EffectBufferConfig invalidFormat = src;
+    invalidFormat.base.format = "random_string";
+    result.push_back(std::move(invalidFormat));
+    EffectBufferConfig invalidChannelMask = src;
+    invalidChannelMask.base.channelMask = "random_string";
+    result.push_back(std::move(invalidChannelMask));
+    return result;
+}
+
+TEST_P(AudioEffectHidlTest, SetConfigInvalidArguments) {
+    description("Verify that invalid arguments are rejected by SetConfig");
+    Result retval = Result::NOT_INITIALIZED;
+    EffectConfig currentConfig;
+    Return<void> ret = effect->getConfig([&](Result r, const EffectConfig& conf) {
+        retval = r;
+        if (r == Result::OK) {
+            currentConfig = conf;
+        }
+    });
+    EXPECT_TRUE(ret.isOk());
+    EXPECT_EQ(Result::OK, retval);
+    for (const auto& invalidInputCfg : generateInvalidConfigs(currentConfig.inputCfg)) {
+        EffectConfig invalidConfig = currentConfig;
+        invalidConfig.inputCfg = invalidInputCfg;
+        Return<Result> ret = effect->setConfig(invalidConfig, nullptr, nullptr);
+        EXPECT_TRUE(ret.isOk());
+        EXPECT_EQ(Result::INVALID_ARGUMENTS, ret);
+    }
+    for (const auto& invalidOutputCfg : generateInvalidConfigs(currentConfig.outputCfg)) {
+        EffectConfig invalidConfig = currentConfig;
+        invalidConfig.outputCfg = invalidOutputCfg;
+        Return<Result> ret = effect->setConfig(invalidConfig, nullptr, nullptr);
+        EXPECT_TRUE(ret.isOk());
+        EXPECT_EQ(Result::INVALID_ARGUMENTS, ret);
+    }
+}
+#endif
+
 TEST_P(AudioEffectHidlTest, GetConfigReverse) {
     description("Verify that GetConfigReverse does not crash");
     Return<void> ret = effect->getConfigReverse([&](Result, const EffectConfig&) {});
@@ -413,6 +456,16 @@ TEST_P(AudioEffectHidlTest, DisableEnableDisable) {
     EXPECT_EQ(Result::OK, ret);
 }
 
+#if MAJOR_VERSION >= 7
+TEST_P(AudioEffectHidlTest, SetDeviceInvalidDeviceAddress) {
+    description("Verify that invalid device address is rejected by SetDevice");
+    DeviceAddress device{.deviceType = "random_string"};
+    Return<Result> ret = effect->setDevice(device);
+    EXPECT_TRUE(ret.isOk());
+    EXPECT_EQ(Result::INVALID_ARGUMENTS, ret);
+}
+#endif
+
 TEST_P(AudioEffectHidlTest, SetDevice) {
     description("Verify that SetDevice works for an output chain effect");
 #if MAJOR_VERSION <= 6
@@ -468,6 +521,17 @@ TEST_P(AudioEffectHidlTest, SetConfigReverse) {
     EXPECT_TRUE(ret.isOk());
 }
 
+#if MAJOR_VERSION >= 7
+TEST_P(AudioEffectHidlTest, SetInputDeviceInvalidDeviceAddress) {
+    description("Verify that invalid device address is rejected by SetInputDevice");
+    DeviceAddress device{.deviceType = "random_string"};
+    Return<Result> ret = effect->setInputDevice(device);
+    EXPECT_TRUE(ret.isOk());
+    EXPECT_TRUE(ret == Result::INVALID_ARGUMENTS || ret == Result::NOT_SUPPORTED)
+            << ::testing::PrintToString(ret);
+}
+#endif
+
 TEST_P(AudioEffectHidlTest, SetInputDevice) {
     description("Verify that SetInputDevice does not crash");
 #if MAJOR_VERSION <= 6
@@ -478,6 +542,16 @@ TEST_P(AudioEffectHidlTest, SetInputDevice) {
 #endif
     EXPECT_TRUE(ret.isOk());
 }
+
+#if MAJOR_VERSION >= 7
+TEST_P(AudioEffectHidlTest, SetInvalidAudioSource) {
+    description("Verify that an invalid audio source is rejected by SetAudioSource");
+    Return<Result> ret = effect->setAudioSource("random_string");
+    ASSERT_TRUE(ret.isOk());
+    EXPECT_TRUE(ret == Result::INVALID_ARGUMENTS || ret == Result::NOT_SUPPORTED)
+            << ::testing::PrintToString(ret);
+}
+#endif
 
 TEST_P(AudioEffectHidlTest, SetAudioSource) {
     description("Verify that SetAudioSource does not crash");

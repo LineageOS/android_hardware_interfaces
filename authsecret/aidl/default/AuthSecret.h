@@ -14,15 +14,24 @@
  * limitations under the License.
  */
 
-package android.hardware.radio.config@1.3;
+#pragma once
 
-/**
- * Contains the device capabilities with respect to the Radio HAL.
- */
-struct HalDeviceCapabilities {
-  /**
-   * True indicates that the modem is missing features within the current
-   * version of the Radio HAL.
-   */
-  bool modemReducedFeatureSet1;
+#include <aidl/android/hardware/authsecret/BnAuthSecret.h>
+
+namespace aidl {
+namespace android {
+namespace hardware {
+namespace authsecret {
+
+struct AuthSecret : public BnAuthSecret {
+    AuthSecret() = default;
+
+    // Methods from ::android::hardware::authsecret::IAuthSecret follow.
+    ::ndk::ScopedAStatus setPrimaryUserCredential(const std::vector<uint8_t>& in_secret) override;
+
 };
+
+} // namespace authsecret
+} // namespace hardware
+} // namespace android
+} // aidl
