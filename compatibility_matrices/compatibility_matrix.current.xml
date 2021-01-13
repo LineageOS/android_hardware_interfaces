@@ -259,6 +259,14 @@
         </interface>
     </hal>
     <hal format="aidl" optional="true">
+        <name>android.hardware.health.storage</name>
+        <version>1</version>
+        <interface>
+            <name>IStorage</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
         <name>android.hardware.identity</name>
         <interface>
             <name>IIdentityCredentialStore</name>
