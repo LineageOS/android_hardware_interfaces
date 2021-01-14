@@ -18,8 +18,10 @@
 
 package android.hardware.gnss;
 @VintfStability
-interface IGnssCallback {
-  void gnssSetCapabilitiesCb(in int capabilities);
-  const int CAPABILITY_SATELLITE_BLOCKLIST = 1;
-  const int CAPABILITY_SATELLITE_PVT = 8192;
+parcelable SatellitePvt {
+  android.hardware.gnss.SatellitePositionEcef satPosEcef;
+  android.hardware.gnss.SatelliteVelocityEcef satVelEcef;
+  android.hardware.gnss.SatelliteClockInfo satClockInfo;
+  double ionoDelayMeters;
+  double tropoDelayMeters;
 }

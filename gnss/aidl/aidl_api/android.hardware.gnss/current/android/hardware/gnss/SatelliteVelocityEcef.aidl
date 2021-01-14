@@ -18,8 +18,9 @@
 
 package android.hardware.gnss;
 @VintfStability
-interface IGnssCallback {
-  void gnssSetCapabilitiesCb(in int capabilities);
-  const int CAPABILITY_SATELLITE_BLOCKLIST = 1;
-  const int CAPABILITY_SATELLITE_PVT = 8192;
+parcelable SatelliteVelocityEcef {
+  double velXMps;
+  double velYMps;
+  double velZMps;
+  double ureRateMps;
 }
