@@ -409,12 +409,14 @@ bool IsSoftwarePcmConfigurationValid(
 }
 
 bool IsSoftwarePcmConfigurationValid_2_1(const PcmParameters& pcm_config) {
-  if ((pcm_config.sampleRate != SampleRate::RATE_44100 &&
-       pcm_config.sampleRate != SampleRate::RATE_48000 &&
+  if ((pcm_config.sampleRate != SampleRate::RATE_96000 &&
        pcm_config.sampleRate != SampleRate::RATE_88200 &&
-       pcm_config.sampleRate != SampleRate::RATE_96000 &&
+       pcm_config.sampleRate != SampleRate::RATE_48000 &&
+       pcm_config.sampleRate != SampleRate::RATE_44100 &&
+       pcm_config.sampleRate != SampleRate::RATE_32000 &&
+       pcm_config.sampleRate != SampleRate::RATE_24000 &&
        pcm_config.sampleRate != SampleRate::RATE_16000 &&
-       pcm_config.sampleRate != SampleRate::RATE_24000) ||
+       pcm_config.sampleRate != SampleRate::RATE_8000) ||
       (pcm_config.bitsPerSample != BitsPerSample::BITS_16 &&
        pcm_config.bitsPerSample != BitsPerSample::BITS_24 &&
        pcm_config.bitsPerSample != BitsPerSample::BITS_32) ||
