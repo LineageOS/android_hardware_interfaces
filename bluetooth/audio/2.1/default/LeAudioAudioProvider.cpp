@@ -91,11 +91,17 @@ Return<void> LeAudioAudioProvider::startSession_2_1(
 
   uint32_t kDataMqSize = 0;
   switch (audioConfig.pcmConfig().sampleRate) {
+    case SampleRate::RATE_8000:
+      kDataMqSize = 8000;
+      break;
     case SampleRate::RATE_16000:
       kDataMqSize = 16000;
       break;
     case SampleRate::RATE_24000:
       kDataMqSize = 24000;
+      break;
+    case SampleRate::RATE_32000:
+      kDataMqSize = 32000;
       break;
     case SampleRate::RATE_44100:
       kDataMqSize = 44100;
@@ -103,23 +109,12 @@ Return<void> LeAudioAudioProvider::startSession_2_1(
     case SampleRate::RATE_48000:
       kDataMqSize = 48000;
       break;
-    case SampleRate::RATE_88200:
-      kDataMqSize = 88200;
-      break;
-    case SampleRate::RATE_96000:
-      kDataMqSize = 96000;
-      break;
-    case SampleRate::RATE_176400:
-      kDataMqSize = 176400;
-      break;
-    case SampleRate::RATE_192000:
-      kDataMqSize = 192000;
-      break;
     default:
-      /* This should never happen it would be caught while validating
-       * parameters.
-       */
-      break;
+      LOG(WARNING) << __func__ << " - Unsupported sampling frequency="
+                   << toString(audioConfig.pcmConfig());
+      _hidl_cb(BluetoothAudioStatus::UNSUPPORTED_CODEC_CONFIGURATION,
+               DataMQ::Descriptor());
+      return Void();
   }
 
   /* Number of samples per millisecond */
