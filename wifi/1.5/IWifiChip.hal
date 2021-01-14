@@ -216,4 +216,22 @@ interface IWifiChip extends @1.4::IWifiChip {
     setCoexUnsafeChannels(
         vec<CoexUnsafeChannel> unsafeChannels, bitfield<CoexRestriction> restrictions)
             generates (WifiStatus status);
+
+    /**
+     * Set country code for this Wifi chip.
+     *
+     * Country code is global setting across the Wifi chip and not Wifi
+     * interface (STA or AP) specific. Legacy HAL API's for country code in
+     * @1.0::ISupplicantStaIface::setCountryCode &
+     * @1.0::IWifiApIface:setCountryCode are deprecated in favor of this
+     * chip level API.
+     *
+     * @param code 2 byte country code (as defined in ISO 3166) to set.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.FAILURE_UNKNOWN|,
+     *         |WifiStatusCode.FAILURE_IFACE_INVALID|
+     */
+    setCountryCode(int8_t[2] code) generates (WifiStatus status);
 };

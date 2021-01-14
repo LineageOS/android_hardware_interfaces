@@ -690,6 +690,9 @@ class WifiLegacyHal {
 
     wifi_error twtClearStats(const std::string& iface_name, uint8_t configId);
 
+    wifi_error setDtimConfig(const std::string& iface_name,
+                             uint32_t multiplier);
+
    private:
     // Retrieve interface handles for all the available interfaces.
     wifi_error retrieveIfaceHandles();
