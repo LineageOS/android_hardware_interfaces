@@ -458,6 +458,20 @@
             <regex-instance>SIM[1-9][0-9]*</regex-instance>
         </interface>
     </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.security.secureclock</name>
+        <interface>
+            <name>ISecureClock</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.security.sharedsecret</name>
+        <interface>
+            <name>ISharedSecret</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.sensors</name>
         <version>1.0</version>
