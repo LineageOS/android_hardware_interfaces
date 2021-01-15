@@ -1,0 +1,7 @@
+{
+  "presubmit": [
+    {
+      "name": "android.hardware.audio.effect@7.0-util_tests"
+    }
+  ]
+}

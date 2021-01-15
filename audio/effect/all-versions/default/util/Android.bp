@@ -1,56 +1,38 @@
 cc_defaults {
-    name: "android.hardware.audio.effect-impl_default",
+    name: "android.hardware.audio.effect-util_default",
     defaults: ["hidl_defaults"],
-    vendor: true,
-    relative_install_path: "hw",
+
+    vendor_available: true,
+
+    export_include_dirs: ["include"],
+
     srcs: [
-        "AcousticEchoCancelerEffect.cpp",
-        "AudioBufferManager.cpp",
-        "AutomaticGainControlEffect.cpp",
-        "BassBoostEffect.cpp",
-        "DownmixEffect.cpp",
-        "Effect.cpp",
-        "EffectsFactory.cpp",
-        "EnvironmentalReverbEffect.cpp",
-        "EqualizerEffect.cpp",
-        "LoudnessEnhancerEffect.cpp",
-        "NoiseSuppressionEffect.cpp",
-        "PresetReverbEffect.cpp",
-        "VirtualizerEffect.cpp",
-        "VisualizerEffect.cpp",
+        "EffectUtils.cpp",
     ],
 
     shared_libs: [
-        "libbase",
-        "libcutils",
-        "libeffects",
-        "libfmq",
-        "libhidlbase",
-        "libhidlmemory",
         "liblog",
         "libutils",
+        "libhidlbase",
         "android.hardware.audio.common-util",
-        "android.hidl.memory@1.0",
+    ],
+    export_shared_lib_headers: [
+        "android.hardware.audio.common-util",
     ],
 
     header_libs: [
-        "android.hardware.audio.common.util@all-versions",
         "libaudio_system_headers",
-        "libaudioclient_headers",
-        "libeffects_headers",
         "libhardware_headers",
-        "libmedia_headers",
     ],
 }
 
 cc_library_shared {
-    name: "android.hardware.audio.effect@2.0-impl",
-    defaults: ["android.hardware.audio.effect-impl_default"],
+    name: "android.hardware.audio.effect@2.0-util",
+    defaults: ["android.hardware.audio.effect-util_default"],
     shared_libs: [
         "android.hardware.audio.common@2.0",
         "android.hardware.audio.common@2.0-util",
         "android.hardware.audio.effect@2.0",
-        "android.hardware.audio.effect@2.0-util",
     ],
     cflags: [
         "-DMAJOR_VERSION=2",
@@ -60,13 +42,12 @@ cc_library_shared {
 }
 
 cc_library_shared {
-    name: "android.hardware.audio.effect@4.0-impl",
-    defaults: ["android.hardware.audio.effect-impl_default"],
+    name: "android.hardware.audio.effect@4.0-util",
+    defaults: ["android.hardware.audio.effect-util_default"],
     shared_libs: [
         "android.hardware.audio.common@4.0",
         "android.hardware.audio.common@4.0-util",
         "android.hardware.audio.effect@4.0",
-        "android.hardware.audio.effect@4.0-util",
     ],
     cflags: [
         "-DMAJOR_VERSION=4",
@@ -76,13 +57,12 @@ cc_library_shared {
 }
 
 cc_library_shared {
-    name: "android.hardware.audio.effect@5.0-impl",
-    defaults: ["android.hardware.audio.effect-impl_default"],
+    name: "android.hardware.audio.effect@5.0-util",
+    defaults: ["android.hardware.audio.effect-util_default"],
     shared_libs: [
         "android.hardware.audio.common@5.0",
         "android.hardware.audio.common@5.0-util",
         "android.hardware.audio.effect@5.0",
-        "android.hardware.audio.effect@5.0-util",
     ],
     cflags: [
         "-DMAJOR_VERSION=5",
@@ -92,13 +72,12 @@ cc_library_shared {
 }
 
 cc_library_shared {
-    name: "android.hardware.audio.effect@6.0-impl",
-    defaults: ["android.hardware.audio.effect-impl_default"],
+    name: "android.hardware.audio.effect@6.0-util",
+    defaults: ["android.hardware.audio.effect-util_default"],
     shared_libs: [
         "android.hardware.audio.common@6.0",
         "android.hardware.audio.common@6.0-util",
         "android.hardware.audio.effect@6.0",
-        "android.hardware.audio.effect@6.0-util",
     ],
     cflags: [
         "-DMAJOR_VERSION=6",
@@ -107,18 +86,51 @@ cc_library_shared {
     ],
 }
 
-cc_library_shared {
-    name: "android.hardware.audio.effect@7.0-impl",
-    defaults: ["android.hardware.audio.effect-impl_default"],
+cc_library {
+    name: "android.hardware.audio.effect@7.0-util",
+    defaults: ["android.hardware.audio.effect-util_default"],
     shared_libs: [
         "android.hardware.audio.common@7.0",
         "android.hardware.audio.common@7.0-util",
         "android.hardware.audio.effect@7.0",
-        "android.hardware.audio.effect@7.0-util",
     ],
     cflags: [
         "-DMAJOR_VERSION=7",
         "-DMINOR_VERSION=0",
         "-include common/all-versions/VersionMacro.h",
     ],
+}
+
+// Note: this isn't a VTS test, but rather a unit test
+// to verify correctness of conversion utilities.
+cc_test {
+    name: "android.hardware.audio.effect@7.0-util_tests",
+    defaults: ["android.hardware.audio.effect-util_default"],
+
+    srcs: ["tests/effectutils_tests.cpp"],
+
+    // Use static linking to allow running in presubmit on
+    // targets that don't have HAL V7.
+    static_libs: [
+        "android.hardware.audio.common@7.0",
+        "android.hardware.audio.common@7.0-enums",
+        "android.hardware.audio.common@7.0-util",
+        "android.hardware.audio.effect@7.0",
+        "android.hardware.audio.effect@7.0-util",
+    ],
+
+    shared_libs: [
+        "libbase",
+        "libxml2",
+    ],
+
+    cflags: [
+        "-Werror",
+        "-Wall",
+        "-DMAJOR_VERSION=7",
+        "-DMINOR_VERSION=0",
+        "-include common/all-versions/VersionMacro.h",
+    ],
+
+    test_suites: ["device-tests"],
 }
