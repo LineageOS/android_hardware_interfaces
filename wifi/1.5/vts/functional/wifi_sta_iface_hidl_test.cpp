@@ -108,6 +108,19 @@ TEST_P(WifiStaIfaceHidlTest, GetLinkLayerStats_1_5) {
         WifiStatusCode::SUCCESS,
         HIDL_INVOKE(wifi_sta_iface_, disableLinkLayerStatsCollection).code);
 }
+/**
+ * SetScanMode
+ */
+TEST_P(WifiStaIfaceHidlTest, SetScanMode) {
+    auto statusCode =
+        HIDL_INVOKE(wifi_sta_iface_, setScanMode, true).code;
+    EXPECT_TRUE(statusCode == WifiStatusCode::SUCCESS ||
+                statusCode == WifiStatusCode::ERROR_NOT_SUPPORTED);
+
+    statusCode = HIDL_INVOKE(wifi_sta_iface_, setScanMode, false).code;
+    EXPECT_TRUE(statusCode == WifiStatusCode::SUCCESS ||
+                statusCode == WifiStatusCode::ERROR_NOT_SUPPORTED);
+}
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiStaIfaceHidlTest);
 INSTANTIATE_TEST_SUITE_P(
