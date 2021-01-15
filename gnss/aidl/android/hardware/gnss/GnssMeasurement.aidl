@@ -16,6 +16,7 @@
 
 package android.hardware.gnss;
 
+import android.hardware.gnss.CorrelationVector;
 import android.hardware.gnss.GnssSignalType;
 import android.hardware.gnss.GnssMultipathIndicator;
 import android.hardware.gnss.SatellitePvt;
@@ -62,6 +63,10 @@ parcelable GnssMeasurement {
      * Bit mask indicating a valid satellite PVT is stored in the GnssMeasurement.
      */
     const int HAS_SATELLITE_PVT              = 1 << 20;
+    /**
+     * Bit mask indicating valid correlation vectors are stored in the GnssMeasurement.
+     */
+    const int HAS_CORRELATION_VECTOR         = 1 << 21;
 
     /**
      * A bitfield of flags indicating the validity of the fields in this GnssMeasurement. The bit
@@ -625,4 +630,13 @@ parcelable GnssMeasurement {
      * If the data is available, gnssMeasurementFlags must contain HAS_SATELLITE_PVT.
      */
     SatellitePvt satellitePvt;
+
+    /**
+     * A list of Correlation Vectors with each vector corresponding to a frequency offset.
+     *
+     * To represent correlation values over a 2D spaces (delay and frequency), a CorrelationVector
+     * is required per frequency offset, and each CorrelationVector contains correlation values
+     * at equally spaced spatial offsets.
+     */
+    CorrelationVector[] correlationVectors;
 }

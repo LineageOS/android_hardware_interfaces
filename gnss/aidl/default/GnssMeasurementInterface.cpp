@@ -34,8 +34,10 @@ GnssMeasurementInterface::~GnssMeasurementInterface() {
 }
 
 ndk::ScopedAStatus GnssMeasurementInterface::setCallback(
-        const std::shared_ptr<IGnssMeasurementCallback>& callback, const bool enableFullTracking) {
-    ALOGD("setCallback: enableFullTracking: %d", (int)enableFullTracking);
+        const std::shared_ptr<IGnssMeasurementCallback>& callback, const bool enableFullTracking,
+        const bool enableCorrVecOutputs) {
+    ALOGD("setCallback: enableFullTracking: %d enableCorrVecOutputs: %d", (int)enableFullTracking,
+          (int)enableCorrVecOutputs);
     std::unique_lock<std::mutex> lock(mMutex);
     sCallback = callback;
 
@@ -43,7 +45,7 @@ ndk::ScopedAStatus GnssMeasurementInterface::setCallback(
         ALOGW("GnssMeasurement callback already set. Resetting the callback...");
         stop();
     }
-    start();
+    start(enableCorrVecOutputs);
 
     return ndk::ScopedAStatus::ok();
 }
@@ -56,12 +58,12 @@ ndk::ScopedAStatus GnssMeasurementInterface::close() {
     return ndk::ScopedAStatus::ok();
 }
 
-void GnssMeasurementInterface::start() {
+void GnssMeasurementInterface::start(const bool enableCorrVecOutputs) {
     ALOGD("start");
     mIsActive = true;
-    mThread = std::thread([this]() {
+    mThread = std::thread([this, enableCorrVecOutputs]() {
         while (mIsActive == true) {
-            auto measurement = Utils::getMockMeasurement();
+            auto measurement = Utils::getMockMeasurement(enableCorrVecOutputs);
             this->reportMeasurement(measurement);
 
             std::this_thread::sleep_for(std::chrono::milliseconds(mMinIntervalMillis));

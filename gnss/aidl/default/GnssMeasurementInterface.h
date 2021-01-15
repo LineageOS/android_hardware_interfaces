@@ -29,11 +29,12 @@ struct GnssMeasurementInterface : public BnGnssMeasurementInterface {
     GnssMeasurementInterface();
     ~GnssMeasurementInterface();
     ndk::ScopedAStatus setCallback(const std::shared_ptr<IGnssMeasurementCallback>& callback,
-                                   const bool enableFullTracking) override;
+                                   const bool enableFullTracking,
+                                   const bool enableCorrVecOutputs) override;
     ndk::ScopedAStatus close() override;
 
   private:
-    void start();
+    void start(const bool enableCorrVecOutputs);
     void stop();
     void reportMeasurement(const GnssData&);
 

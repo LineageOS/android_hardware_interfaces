@@ -30,7 +30,8 @@ namespace gnss {
 namespace common {
 
 struct Utils {
-    static aidl::android::hardware::gnss::GnssData getMockMeasurement();
+    static aidl::android::hardware::gnss::GnssData getMockMeasurement(
+            const bool enableCorrVecOutputs);
     static V2_0::IGnssMeasurementCallback::GnssData getMockMeasurementV2_0();
     static V2_1::IGnssMeasurementCallback::GnssData getMockMeasurementV2_1();
     static V2_0::GnssLocation getMockLocationV2_0();
