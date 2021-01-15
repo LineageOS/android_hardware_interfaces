@@ -17,25 +17,20 @@
 package android.hardware.security.keymint;
 
 import android.hardware.security.keymint.KeyParameter;
+import android.hardware.security.keymint.SecurityLevel;
 
 /**
- * KeyCharacteristics defines the attributes of a key, including cryptographic parameters, and usage
- * restrictions.  It consits of two vectors of KeyParameters, one for "softwareEnforced" attributes
- * and one for "hardwareEnforced" attributes.
+ * KeyCharacteristics defines the attributes of a key that are enforced by KeyMint, and the security
+ * level (see SecurityLevel.aidl) of that enforcement.
  *
- * KeyCharacteristics objects are returned by generateKey, importKey, importWrappedKey and
- * getKeyCharacteristics.  The IKeyMintDevice secure environment is responsible for allocating the
- * parameters, all of which are Tags with associated values, to the correct vector.  The
- * hardwareEnforced vector must contain only those attributes which are enforced by secure hardware.
- * All others should be in the softwareEnforced vector.  See the definitions of individual Tag enums
- * for specification of which must be hardware-enforced, which may be software-enforced and which
- * must never appear in KeyCharacteristics.
+ * The `generateKey` `importKey` and `importWrappedKey` methods each return an array of
+ * KeyCharacteristics, specifying the security levels of enforcement and the authorizations
+ * enforced.  Note that enforcement at a given security level means that the semantics of the tag
+ * and value are fully enforced.  See the definition of individual tags for specifications of what
+ * must be enforced.
  */
 @VintfStability
 parcelable KeyCharacteristics {
-    /* TODO(seleneh) get rid of the software enforced in keymint.  replace hardware enforced with
-     * tee enforced and strongbox enforced.
-     */
-    KeyParameter[] softwareEnforced;
-    KeyParameter[] hardwareEnforced;
+    SecurityLevel securityLevel;
+    KeyParameter[] authorizations;
 }
