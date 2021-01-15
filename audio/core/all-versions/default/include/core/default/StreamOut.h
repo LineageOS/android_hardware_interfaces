@@ -161,7 +161,7 @@ struct StreamOut : public IStreamOut {
     const sp<StreamMmap<audio_stream_out_t>> mStreamMmap;
     mediautils::atomic_sp<IStreamOutCallback> mCallback;  // for non-blocking write and drain
 #if MAJOR_VERSION >= 6
-    sp<IStreamOutEventCallback> mEventCallback;
+    mediautils::atomic_sp<IStreamOutEventCallback> mEventCallback;
 #endif
     std::unique_ptr<CommandMQ> mCommandMQ;
     std::unique_ptr<DataMQ> mDataMQ;
