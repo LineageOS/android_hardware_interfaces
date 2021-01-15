@@ -70,6 +70,7 @@ TEST_P(GnssHalTest, TestPsdsExtension) {
  */
 TEST_P(GnssHalTest, TestGnssMeasurementExtension) {
     const int kFirstGnssMeasurementTimeoutSeconds = 10;
+    bool has_capability_satpvt = false;
     sp<IGnssMeasurementInterface> iGnssMeasurement;
     auto status = aidl_gnss_hal_->getExtensionGnssMeasurement(&iGnssMeasurement);
     ASSERT_TRUE(status.isOk());
@@ -102,6 +103,10 @@ TEST_P(GnssHalTest, TestGnssMeasurementExtension) {
                          GnssClock::HAS_FULL_BIAS | GnssClock::HAS_BIAS |
                          GnssClock::HAS_BIAS_UNCERTAINTY | GnssClock::HAS_DRIFT |
                          GnssClock::HAS_DRIFT_UNCERTAINTY));
+
+    if (aidl_gnss_cb_->last_capabilities_ & (int)GnssCallbackAidl::CAPABILITY_SATELLITE_PVT) {
+        has_capability_satpvt = true;
+    }
     for (const auto& measurement : lastMeasurement.measurements) {
         ASSERT_TRUE(
                 measurement.flags >= 0 &&
@@ -112,7 +117,25 @@ TEST_P(GnssHalTest, TestGnssMeasurementExtension) {
                          GnssMeasurement::HAS_AUTOMATIC_GAIN_CONTROL |
                          GnssMeasurement::HAS_FULL_ISB | GnssMeasurement::HAS_FULL_ISB_UNCERTAINTY |
                          GnssMeasurement::HAS_SATELLITE_ISB |
-                         GnssMeasurement::HAS_SATELLITE_ISB_UNCERTAINTY));
+                         GnssMeasurement::HAS_SATELLITE_ISB_UNCERTAINTY |
+                         GnssMeasurement::HAS_SATELLITE_PVT));
+        if ((measurement.flags & GnssMeasurement::HAS_SATELLITE_PVT) &&
+            (has_capability_satpvt == true)) {
+            ASSERT_TRUE(measurement.satellitePvt.satPosEcef.posXMeters >= -43000000 &&
+                        measurement.satellitePvt.satPosEcef.posXMeters <= 43000000);
+            ASSERT_TRUE(measurement.satellitePvt.satPosEcef.posYMeters >= -43000000 &&
+                        measurement.satellitePvt.satPosEcef.posYMeters <= 43000000);
+            ASSERT_TRUE(measurement.satellitePvt.satPosEcef.posZMeters >= -43000000 &&
+                        measurement.satellitePvt.satPosEcef.posZMeters <= 43000000);
+            ASSERT_TRUE(measurement.satellitePvt.satPosEcef.ureMeters > 0);
+            ASSERT_TRUE(measurement.satellitePvt.satVelEcef.velXMps >= -4000 &&
+                        measurement.satellitePvt.satVelEcef.velXMps <= 4000);
+            ASSERT_TRUE(measurement.satellitePvt.satVelEcef.velYMps >= -4000 &&
+                        measurement.satellitePvt.satVelEcef.velYMps <= 4000);
+            ASSERT_TRUE(measurement.satellitePvt.satVelEcef.velZMps >= -4000 &&
+                        measurement.satellitePvt.satVelEcef.velZMps <= 4000);
+            ASSERT_TRUE(measurement.satellitePvt.satVelEcef.ureRateMps > 0);
+        }
     }
 
     status = iGnssMeasurement->close();
