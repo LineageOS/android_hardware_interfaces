@@ -298,6 +298,18 @@ INSTANTIATE_TEST_CASE_P(
         &DeviceConfigParameterToString);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(InputBufferSizeInvalidConfig);
 
+static const DeviceAddress& getValidInputDeviceAddress() {
+    static const DeviceAddress valid = {
+            .deviceType = toString(xsd::AudioDevice::AUDIO_DEVICE_IN_DEFAULT)};
+    return valid;
+}
+
+static const DeviceAddress& getValidOutputDeviceAddress() {
+    static const DeviceAddress valid = {
+            .deviceType = toString(xsd::AudioDevice::AUDIO_DEVICE_OUT_DEFAULT)};
+    return valid;
+}
+
 static const DeviceAddress& getInvalidDeviceAddress() {
     static const DeviceAddress valid = {.deviceType = "random_string"};
     return valid;
@@ -309,6 +321,141 @@ TEST_P(AudioHidlDeviceTest, SetConnectedStateInvalidDeviceAddress) {
                   getDevice()->setConnectedState(getInvalidDeviceAddress(), true));
     EXPECT_RESULT(Result::INVALID_ARGUMENTS,
                   getDevice()->setConnectedState(getInvalidDeviceAddress(), false));
+}
+
+static std::vector<AudioPortConfig>& generatePortConfigs(bool valid) {
+    enum {  // Note: This is for convenience when deriving "invalid" configs from "valid".
+        PORT_CONF_MINIMAL,
+        PORT_CONF_WITH_GAIN,
+        PORT_CONF_EXT_DEVICE,
+        PORT_CONF_EXT_MIX_SOURCE,
+        PORT_CONF_EXT_MIX_SINK,
+        PORT_CONF_EXT_SESSION
+    };
+    static std::vector<AudioPortConfig> valids = [] {
+        std::vector<AudioPortConfig> result;
+        result.reserve(PORT_CONF_EXT_SESSION + 1);
+        result.push_back(AudioPortConfig{});
+        AudioPortConfig configWithGain{};
+        configWithGain.gain.config(AudioGainConfig{
+                .index = 0,
+                .mode = {toString(xsd::AudioGainMode::AUDIO_GAIN_MODE_JOINT)},
+                .channelMask = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_MONO),
+                .rampDurationMs = 1});
+        configWithGain.gain.config().values.resize(1);
+        configWithGain.gain.config().values[0] = 1000;
+        result.push_back(std::move(configWithGain));
+        AudioPortConfig configWithPortExtDevice{};
+        configWithPortExtDevice.ext.device(getValidOutputDeviceAddress());
+        result.push_back(std::move(configWithPortExtDevice));
+        AudioPortConfig configWithPortExtMixSource{};
+        configWithPortExtMixSource.ext.mix({});
+        configWithPortExtMixSource.ext.mix().useCase.stream(
+                toString(xsd::AudioStreamType::AUDIO_STREAM_VOICE_CALL));
+        result.push_back(std::move(configWithPortExtMixSource));
+        AudioPortConfig configWithPortExtMixSink{};
+        configWithPortExtMixSink.ext.mix({});
+        configWithPortExtMixSink.ext.mix().useCase.source(
+                toString(xsd::AudioSource::AUDIO_SOURCE_DEFAULT));
+        result.push_back(std::move(configWithPortExtMixSink));
+        AudioPortConfig configWithPortExtSession{};
+        configWithPortExtSession.ext.session(
+                static_cast<AudioSession>(AudioSessionConsts::OUTPUT_MIX));
+        result.push_back(std::move(configWithPortExtSession));
+        return result;
+    }();
+    static std::vector<AudioPortConfig> invalids = [&] {
+        std::vector<AudioPortConfig> result;
+        AudioPortConfig invalidBaseChannelMask = valids[PORT_CONF_MINIMAL];
+        invalidBaseChannelMask.base.channelMask = "random_string";
+        result.push_back(std::move(invalidBaseChannelMask));
+        AudioPortConfig invalidBaseFormat = valids[PORT_CONF_MINIMAL];
+        invalidBaseFormat.base.format = "random_string";
+        result.push_back(std::move(invalidBaseFormat));
+        AudioPortConfig invalidGainMode = valids[PORT_CONF_WITH_GAIN];
+        invalidGainMode.gain.config().mode = {{"random_string"}};
+        result.push_back(std::move(invalidGainMode));
+        AudioPortConfig invalidGainChannelMask = valids[PORT_CONF_WITH_GAIN];
+        invalidGainChannelMask.gain.config().channelMask = "random_string";
+        result.push_back(std::move(invalidGainChannelMask));
+        AudioPortConfig invalidDeviceType = valids[PORT_CONF_EXT_DEVICE];
+        invalidDeviceType.ext.device().deviceType = "random_string";
+        result.push_back(std::move(invalidDeviceType));
+        AudioPortConfig invalidStreamType = valids[PORT_CONF_EXT_MIX_SOURCE];
+        invalidStreamType.ext.mix().useCase.stream() = "random_string";
+        result.push_back(std::move(invalidStreamType));
+        AudioPortConfig invalidSource = valids[PORT_CONF_EXT_MIX_SINK];
+        invalidSource.ext.mix().useCase.source() = "random_string";
+        result.push_back(std::move(invalidSource));
+        return result;
+    }();
+    return valid ? valids : invalids;
+}
+
+TEST_P(AudioHidlDeviceTest, SetAudioPortConfigInvalidArguments) {
+    doc::test("Check that invalid port configs are rejected by IDevice::setAudioPortConfig");
+    for (const auto& invalidConfig : generatePortConfigs(false /*valid*/)) {
+        EXPECT_RESULT(invalidArgsOrNotSupported, getDevice()->setAudioPortConfig(invalidConfig))
+                << ::testing::PrintToString(invalidConfig);
+    }
+}
+
+TEST_P(AudioPatchHidlTest, CreatePatchInvalidArguments) {
+    doc::test("Check that invalid port configs are rejected by IDevice::createAudioPatch");
+    // Note that HAL actually might reject the proposed source / sink combo
+    // due to other reasons than presence of invalid enum-strings.
+    // TODO: Come up with a way to guarantee validity of a source / sink combo.
+    for (const auto& validSource : generatePortConfigs(true /*valid*/)) {
+        for (const auto& invalidSink : generatePortConfigs(false /*valid*/)) {
+            AudioPatchHandle handle;
+            EXPECT_OK(getDevice()->createAudioPatch(hidl_vec<AudioPortConfig>{validSource},
+                                                    hidl_vec<AudioPortConfig>{invalidSink},
+                                                    returnIn(res, handle)));
+            EXPECT_EQ(Result::INVALID_ARGUMENTS, res)
+                    << "Source: " << ::testing::PrintToString(validSource)
+                    << "; Sink: " << ::testing::PrintToString(invalidSink);
+        }
+    }
+    for (const auto& validSink : generatePortConfigs(true /*valid*/)) {
+        for (const auto& invalidSource : generatePortConfigs(false /*valid*/)) {
+            AudioPatchHandle handle;
+            EXPECT_OK(getDevice()->createAudioPatch(hidl_vec<AudioPortConfig>{invalidSource},
+                                                    hidl_vec<AudioPortConfig>{validSink},
+                                                    returnIn(res, handle)));
+            EXPECT_EQ(Result::INVALID_ARGUMENTS, res)
+                    << "Source: " << ::testing::PrintToString(invalidSource)
+                    << "; Sink: " << ::testing::PrintToString(validSink);
+        }
+    }
+}
+
+TEST_P(AudioPatchHidlTest, UpdatePatchInvalidArguments) {
+    doc::test("Check that invalid port configs are rejected by IDevice::updateAudioPatch");
+    // Note that HAL actually might reject the proposed source / sink combo
+    // due to other reasons than presence of invalid enum-strings.
+    // TODO: Come up with a way to guarantee validity of a source / sink combo.
+    for (const auto& validSource : generatePortConfigs(true /*valid*/)) {
+        for (const auto& invalidSink : generatePortConfigs(false /*valid*/)) {
+            AudioPatchHandle handle{};
+            EXPECT_OK(getDevice()->updateAudioPatch(handle, hidl_vec<AudioPortConfig>{validSource},
+                                                    hidl_vec<AudioPortConfig>{invalidSink},
+                                                    returnIn(res, handle)));
+            EXPECT_EQ(Result::INVALID_ARGUMENTS, res)
+                    << "Source: " << ::testing::PrintToString(validSource)
+                    << "; Sink: " << ::testing::PrintToString(invalidSink);
+        }
+    }
+    for (const auto& validSink : generatePortConfigs(true /*valid*/)) {
+        for (const auto& invalidSource : generatePortConfigs(false /*valid*/)) {
+            AudioPatchHandle handle{};
+            EXPECT_OK(getDevice()->updateAudioPatch(
+                    handle, hidl_vec<AudioPortConfig>{invalidSource},
+                    hidl_vec<AudioPortConfig>{validSink}, returnIn(res, handle)));
+            EXPECT_EQ(Result::INVALID_ARGUMENTS, res)
+                    << "Source: " << ::testing::PrintToString(invalidSource)
+                    << "; Sink: " << ::testing::PrintToString(validSink);
+        }
+    }
 }
 
 enum { PARAM_DEVICE_CONFIG, PARAM_ADDRESS, PARAM_METADATA };
@@ -361,18 +508,6 @@ class StreamOpenTest : public HidlTest, public ::testing::WithParamInterface<Str
         return std::get<INDEX_SOURCE>(std::get<PARAM_METADATA>(GetParam()));
     }
 };
-
-static const DeviceAddress& getValidInputDeviceAddress() {
-    static const DeviceAddress valid = {
-            .deviceType = toString(xsd::AudioDevice::AUDIO_DEVICE_IN_DEFAULT)};
-    return valid;
-}
-
-static const DeviceAddress& getValidOutputDeviceAddress() {
-    static const DeviceAddress valid = {
-            .deviceType = toString(xsd::AudioDevice::AUDIO_DEVICE_OUT_DEFAULT)};
-    return valid;
-}
 
 static const RecordTrackMetadata& getValidRecordTrackMetadata() {
     static const RecordTrackMetadata valid = {
