@@ -857,6 +857,11 @@ class RadioIndication_v1_6 : public ::android::hardware::radio::V1_6::IRadioIndi
             const ::android::hardware::hidl_vec<::android::hardware::radio::V1_6::CellInfo>&
                     records);
 
+    Return<void> currentPhysicalChannelConfigs_1_6(
+            RadioIndicationType type,
+            const ::android::hardware::hidl_vec<
+                    ::android::hardware::radio::V1_6::PhysicalChannelConfig>& configs);
+
     /* 1.5 Api */
     Return<void> uiccApplicationsEnablementChanged(RadioIndicationType type, bool enabled);
 
