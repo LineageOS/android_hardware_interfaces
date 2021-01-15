@@ -18,6 +18,7 @@ package android.hardware.gnss;
 
 import android.hardware.gnss.GnssSignalType;
 import android.hardware.gnss.GnssMultipathIndicator;
+import android.hardware.gnss.SatellitePvt;
 
 /**
  * Represents a GNSS Measurement, it contains raw and computed information.
@@ -57,6 +58,10 @@ parcelable GnssMeasurement {
      * GnssMeasurement.
      */
     const int HAS_SATELLITE_ISB_UNCERTAINTY  = 1 << 19;
+    /**
+     * Bit mask indicating a valid satellite PVT is stored in the GnssMeasurement.
+     */
+    const int HAS_SATELLITE_PVT              = 1 << 20;
 
     /**
      * A bitfield of flags indicating the validity of the fields in this GnssMeasurement. The bit
@@ -612,4 +617,12 @@ parcelable GnssMeasurement {
      * 1-sigma uncertainty associated with the satellite inter-signal bias in nanoseconds.
      */
     double satelliteInterSignalBiasUncertaintyNs;
+
+    /**
+     * The GNSS satellite position, velocity and time information at the signal transmission time
+     * receivedSvTimeInNs.
+     *
+     * If the data is available, gnssMeasurementFlags must contain HAS_SATELLITE_PVT.
+     */
+    SatellitePvt satellitePvt;
 }
