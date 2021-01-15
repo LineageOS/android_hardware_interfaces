@@ -30,6 +30,7 @@
 
 #include "wifi_hidl_call_util.h"
 #include "wifi_hidl_test_utils.h"
+#include "wifi_hidl_test_utils_1_5.h"
 
 using ::android::sp;
 using ::android::hardware::hidl_string;
@@ -49,7 +50,7 @@ using ::android::hardware::wifi::V1_5::IWifiChip;
 /**
  * Fixture for IWifiChip tests that are conditioned on SoftAP support.
  */
-class WifiChipHidlTest : public ::testing::TestWithParam<std::string> {
+class WifiApIfaceHidlTest : public ::testing::TestWithParam<std::string> {
    public:
     virtual void SetUp() override {
         isBridgedSupport_ = testing::checkSubstringInCommandOutput(
@@ -57,63 +58,40 @@ class WifiChipHidlTest : public ::testing::TestWithParam<std::string> {
             "wifi_softap_bridged_ap_supported");
         // Make sure to start with a clean state
         stopWifi(GetInstanceName());
-
-        wifi_chip_ = IWifiChip::castFrom(getWifiChip(GetInstanceName()));
-        ASSERT_NE(nullptr, wifi_chip_.get());
     }
 
     virtual void TearDown() override { stopWifi(GetInstanceName()); }
 
    protected:
     bool isBridgedSupport_ = false;
-    // Helper function to configure the Chip in one of the supported modes.
-    // Most of the non-mode-configuration-related methods require chip
-    // to be first configured.
-    ChipModeId configureChipForIfaceType(IfaceType type, bool expectSuccess) {
-        ChipModeId mode_id;
-        EXPECT_EQ(expectSuccess,
-                  configureChipToSupportIfaceType(wifi_chip_, type, &mode_id));
-        return mode_id;
-    }
-
-    void createBridgedApIface(sp<IWifiApIface>* ap_iface) {
-        configureChipForIfaceType(IfaceType::AP, true);
-        const auto& status_and_iface =
-            HIDL_INVOKE(wifi_chip_, createBridgedApIface);
-        *ap_iface = status_and_iface.second;
-        EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_iface.first.code);
-    }
-
-    sp<IWifiChip> wifi_chip_;
-
-   private:
     std::string GetInstanceName() { return GetParam(); }
 };
 
-/**
- * createBridgedApIface & removeIfaceInstanceFromBridgedApIface
+/*
+ * resetToFactoryMacAddress
  */
-TEST_P(WifiChipHidlTest,
-       createBridgedApIfaceAndremoveIfaceInstanceFromBridgedApIfaceTest) {
+TEST_P(WifiApIfaceHidlTest, resetToFactoryMacAddressInBridgedModeTest) {
     if (!isBridgedSupport_) GTEST_SKIP() << "Missing Bridged AP support";
-    sp<IWifiApIface> wifi_ap_iface;
-    createBridgedApIface(&wifi_ap_iface);
+    sp<IWifiApIface> wifi_ap_iface =
+        getBridgedWifiApIface_1_5(GetInstanceName());
     ASSERT_NE(nullptr, wifi_ap_iface.get());
-    const auto& status_and_name = HIDL_INVOKE(wifi_ap_iface, getName);
-    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_name.first.code);
-    // TODO: b/173999527, add API to get instance name to replace it.
-    std::string br_name = status_and_name.second;  // ap_br_ is the pre-fix
-    std::string instance_name =
-        br_name.substr(6, br_name.length());  // remove the pre-fex
-    const auto& status_code =
-        HIDL_INVOKE(wifi_chip_, removeIfaceInstanceFromBridgedApIface, br_name,
-                    instance_name);
-    EXPECT_EQ(WifiStatusCode::SUCCESS, status_code.code);
+    const auto& status = HIDL_INVOKE(wifi_ap_iface, resetToFactoryMacAddress);
+    EXPECT_EQ(WifiStatusCode::SUCCESS, status.code);
 }
 
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiChipHidlTest);
+/*
+ * resetToFactoryMacAddress
+ */
+TEST_P(WifiApIfaceHidlTest, resetToFactoryMacAddressTest) {
+    sp<IWifiApIface> wifi_ap_iface = getWifiApIface_1_5(GetInstanceName());
+    ASSERT_NE(nullptr, wifi_ap_iface.get());
+    const auto& status = HIDL_INVOKE(wifi_ap_iface, resetToFactoryMacAddress);
+    EXPECT_EQ(WifiStatusCode::SUCCESS, status.code);
+}
+
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiApIfaceHidlTest);
 INSTANTIATE_TEST_SUITE_P(
-    PerInstance, WifiChipHidlTest,
+    PerInstance, WifiApIfaceHidlTest,
     testing::ValuesIn(android::hardware::getAllHalInstanceNames(
         ::android::hardware::wifi::V1_5::IWifi::descriptor)),
     android::hardware::PrintInstanceNameToString);
