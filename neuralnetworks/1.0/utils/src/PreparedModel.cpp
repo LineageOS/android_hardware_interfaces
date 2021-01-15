@@ -16,6 +16,7 @@
 
 #include "PreparedModel.h"
 
+#include "Burst.h"
 #include "Callbacks.h"
 #include "Conversions.h"
 #include "Utils.h"
@@ -88,6 +89,10 @@ PreparedModel::executeFenced(const nn::Request& /*request*/,
                              const nn::OptionalDuration& /*timeoutDurationAfterFence*/) const {
     return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
            << "IPreparedModel::executeFenced is not supported on 1.0 HAL service";
+}
+
+nn::GeneralResult<nn::SharedBurst> PreparedModel::configureExecutionBurst() const {
+    return Burst::create(shared_from_this());
 }
 
 std::any PreparedModel::getUnderlyingResource() const {
