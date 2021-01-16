@@ -325,11 +325,17 @@ std::tuple<Result, AudioPatchHandle> Device::createOrUpdateAudioPatch(
         const hidl_vec<AudioPortConfig>& sinks) {
     Result retval(Result::NOT_SUPPORTED);
     if (version() >= AUDIO_DEVICE_API_VERSION_3_0) {
-        std::unique_ptr<audio_port_config[]> halSources;
-        HidlUtils::audioPortConfigsToHal(sources, &halSources);
-        std::unique_ptr<audio_port_config[]> halSinks;
-        HidlUtils::audioPortConfigsToHal(sinks, &halSinks);
         audio_patch_handle_t halPatch = static_cast<audio_patch_handle_t>(patch);
+        std::unique_ptr<audio_port_config[]> halSources;
+        if (status_t status = HidlUtils::audioPortConfigsToHal(sources, &halSources);
+            status != NO_ERROR) {
+            return {analyzeStatus("audioPortConfigsToHal;sources", status), patch};
+        }
+        std::unique_ptr<audio_port_config[]> halSinks;
+        if (status_t status = HidlUtils::audioPortConfigsToHal(sinks, &halSinks);
+            status != NO_ERROR) {
+            return {analyzeStatus("audioPortConfigsToHal;sinks", status), patch};
+        }
         retval = analyzeStatus("create_audio_patch",
                                mDevice->create_audio_patch(mDevice, sources.size(), &halSources[0],
                                                            sinks.size(), &halSinks[0], &halPatch));
@@ -364,7 +370,10 @@ Return<void> Device::getAudioPort(const AudioPort& port, getAudioPort_cb _hidl_c
 Return<Result> Device::setAudioPortConfig(const AudioPortConfig& config) {
     if (version() >= AUDIO_DEVICE_API_VERSION_3_0) {
         struct audio_port_config halPortConfig;
-        HidlUtils::audioPortConfigToHal(config, &halPortConfig);
+        if (status_t status = HidlUtils::audioPortConfigToHal(config, &halPortConfig);
+            status != NO_ERROR) {
+            return analyzeStatus("audioPortConfigToHal", status);
+        }
         return analyzeStatus("set_audio_port_config",
                              mDevice->set_audio_port_config(mDevice, &halPortConfig));
     }

@@ -1,0 +1,21 @@
+aidl_interface {
+    name: "android.hardware.security.sharedsecret",
+    vendor_available: true,
+    srcs: [
+        "android/hardware/security/sharedsecret/*.aidl",
+    ],
+    stability: "vintf",
+    backend: {
+        java: {
+            sdk_version: "module_current",
+        },
+        ndk: {
+            vndk: {
+                enabled: true,
+            },
+        },
+        rust: {
+            enabled: true,
+        },
+    },
+}

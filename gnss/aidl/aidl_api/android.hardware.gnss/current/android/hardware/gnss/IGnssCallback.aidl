@@ -21,5 +21,6 @@ package android.hardware.gnss;
 interface IGnssCallback {
   void gnssSetCapabilitiesCb(in int capabilities);
   const int CAPABILITY_SATELLITE_BLOCKLIST = 1;
+  const int CAPABILITY_CORRELATION_VECTOR = 4096;
   const int CAPABILITY_SATELLITE_PVT = 8192;
 }
