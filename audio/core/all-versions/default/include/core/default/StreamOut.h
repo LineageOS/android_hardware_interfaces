@@ -29,6 +29,7 @@
 #include <fmq/MessageQueue.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
+#include <mediautils/Synchronization.h>
 #include <utils/Thread.h>
 
 namespace android {
@@ -158,7 +159,7 @@ struct StreamOut : public IStreamOut {
     audio_stream_out_t* mStream;
     const sp<Stream> mStreamCommon;
     const sp<StreamMmap<audio_stream_out_t>> mStreamMmap;
-    sp<IStreamOutCallback> mCallback;  // Callback for non-blocking write and drain
+    mediautils::atomic_sp<IStreamOutCallback> mCallback;  // for non-blocking write and drain
 #if MAJOR_VERSION >= 6
     sp<IStreamOutEventCallback> mEventCallback;
 #endif
