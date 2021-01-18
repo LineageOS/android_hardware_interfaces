@@ -140,7 +140,7 @@ GnssDataV2_0 Utils::getMockMeasurementV2_0() {
     return gnssData;
 }
 
-GnssData Utils::getMockMeasurement() {
+GnssData Utils::getMockMeasurement(const bool enableCorrVecOutputs) {
     aidl::android::hardware::gnss::GnssSignalType signalType = {
             .constellation = aidl::android::hardware::gnss::GnssConstellationType::GLONASS,
             .carrierFrequencyHz = 1.59975e+09,
@@ -152,10 +152,10 @@ GnssData Utils::getMockMeasurement() {
                      GnssMeasurement::HAS_CARRIER_PHASE_UNCERTAINTY |
                      GnssMeasurement::HAS_FULL_ISB | GnssMeasurement::HAS_FULL_ISB_UNCERTAINTY |
                      GnssMeasurement::HAS_SATELLITE_ISB |
-                     GnssMeasurement::HAS_SATELLITE_ISB_UNCERTAINTY,
+                     GnssMeasurement::HAS_SATELLITE_ISB_UNCERTAINTY |
+                     GnssMeasurement::HAS_SATELLITE_PVT,
             .svid = 13,
             .signalType = signalType,
-            .timeOffsetNs = 0.0,
             .receivedSvTimeInNs = 8195997131077,
             .receivedSvTimeUncertaintyInNs = 15,
             .antennaCN0DbHz = 30.0,
@@ -175,7 +175,20 @@ GnssData Utils::getMockMeasurement() {
             .fullInterSignalBiasUncertaintyNs = 792.0,
             .satelliteInterSignalBiasNs = 233.9,
             .satelliteInterSignalBiasUncertaintyNs = 921.2,
-    };
+            .satellitePvt = {.satPosEcef = {.posXMeters = 10442993.1153328,
+                                            .posYMeters = -19926932.8051666,
+                                            .posZMeters = -12034295.0216203,
+                                            .ureMeters = 1000.2345678},
+                             .satVelEcef = {.velXMps = -478.667183715732,
+                                            .velYMps = 1580.68371984114,
+                                            .velZMps = -3030.52994449997,
+                                            .ureRateMps = 10.2345678},
+                             .satClockInfo = {.satHardwareCodeBiasMeters = 1.396983861923e-09,
+                                              .satTimeCorrectionMeters = -7113.08964331,
+                                              .satClkDriftMps = 0},
+                             .ionoDelayMeters = 3.069949602639317e-08,
+                             .tropoDelayMeters = 3.882265204404031},
+            .correlationVectors = {}};
 
     GnssClock clock = {.gnssClockFlags = GnssClock::HAS_FULL_BIAS | GnssClock::HAS_FULL_BIAS |
                                          GnssClock::HAS_BIAS_UNCERTAINTY | GnssClock::HAS_DRIFT |
@@ -195,6 +208,21 @@ GnssData Utils::getMockMeasurement() {
             // In an actual implementation provide an estimate of the synchronization uncertainty
             // or don't set the field.
             .timeUncertaintyNs = 1020400};
+
+    if (enableCorrVecOutputs) {
+        aidl::android::hardware::gnss::CorrelationVector correlationVector1 = {
+                .frequencyOffsetMps = 10,
+                .samplingWidthM = 30,
+                .samplingStartM = 0,
+                .magnitude = {0, 5000, 10000, 5000, 0, 0, 3000, 0}};
+        aidl::android::hardware::gnss::CorrelationVector correlationVector2 = {
+                .frequencyOffsetMps = 20,
+                .samplingWidthM = 30,
+                .samplingStartM = 0,
+                .magnitude = {0, 3000, 5000, 3000, 0, 0, 1000, 0}};
+        measurement.correlationVectors = {correlationVector1, correlationVector2};
+        measurement.flags |= GnssMeasurement::HAS_CORRELATION_VECTOR;
+    }
 
     GnssData gnssData = {
             .measurements = {measurement}, .clock = clock, .elapsedRealtime = timestamp};

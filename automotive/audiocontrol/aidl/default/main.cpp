@@ -15,21 +15,27 @@
  */
 
 #include "AudioControl.h"
+#include "PowerPolicyClient.h"
 
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 
 using aidl::android::hardware::automotive::audiocontrol::AudioControl;
+using aidl::android::hardware::automotive::audiocontrol::PowerPolicyClient;
 
 int main() {
     ABinderProcess_setThreadPoolMaxThreadCount(0);
-    std::shared_ptr<AudioControl> audioControl = ndk::SharedRefBase::make<AudioControl>();
+    std::shared_ptr<AudioControl> audioControl = ::ndk::SharedRefBase::make<AudioControl>();
 
     const std::string instance = std::string() + AudioControl::descriptor + "/default";
     binder_status_t status =
             AServiceManager_addService(audioControl->asBinder().get(), instance.c_str());
     CHECK(status == STATUS_OK);
+
+    std::shared_ptr<PowerPolicyClient> powerPolicyClient =
+            ::ndk::SharedRefBase::make<PowerPolicyClient>(audioControl);
+    powerPolicyClient->init();
 
     ABinderProcess_joinThreadPool();
     return EXIT_FAILURE;  // should not reach

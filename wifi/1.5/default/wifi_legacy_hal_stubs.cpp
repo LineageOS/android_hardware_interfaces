@@ -158,6 +158,7 @@ bool initHalFuncTableWithStubs(wifi_hal_fn* hal_fn) {
     populateStubFor(&hal_fn->wifi_twt_info_frame_request);
     populateStubFor(&hal_fn->wifi_twt_get_stats);
     populateStubFor(&hal_fn->wifi_twt_clear_stats);
+    populateStubFor(&hal_fn->wifi_set_dtim_config);
     return true;
 }
 }  // namespace legacy_hal

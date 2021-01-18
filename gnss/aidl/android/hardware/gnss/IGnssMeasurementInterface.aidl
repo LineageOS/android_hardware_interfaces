@@ -37,12 +37,16 @@ interface IGnssMeasurementInterface {
      *     The GNSS chipset is allowed to consume more power in this mode. If false, API must
      *     optimize power via duty cycling, constellations and frequency limits, etc.
      *
+     * @param enableCorrVecOutputs If true, enable correlation vectors as part of the raw GNSS
+     *     measurements outputs. If false, disable correlation vectors.
+     *
      * @return initRet Returns SUCCESS if successful. Returns ERROR_ALREADY_INIT if a callback has
      *     already been registered without a corresponding call to 'close'. Returns ERROR_GENERIC
      *     for any other error. The HAL must not generate any other updates upon returning this
      *     error code.
      */
-    void setCallback(in IGnssMeasurementCallback callback, in boolean enableFullTracking);
+    void setCallback(in IGnssMeasurementCallback callback, in boolean enableFullTracking,
+                     in boolean enableCorrVecOutputs);
 
     /**
      * Stops updates from the HAL, and unregisters the callback routines. After a call to close(),

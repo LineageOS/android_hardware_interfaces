@@ -22,15 +22,18 @@ cc_binary {
     generated_sources: ["audio_policy_configuration_V7_0"],
     header_libs: ["libxsdc-utils"],
     shared_libs: [
+        "android.frameworks.automotive.powerpolicy-ndk_platform",
         "android.hardware.automotive.audiocontrol-ndk_platform",
         "libbase",
         "libbinder_ndk",
-        "liblog",
         "libcutils",
+        "liblog",
+        "libpowerpolicyclient",
         "libxml2",
     ],
     srcs: [
         "AudioControl.cpp",
         "main.cpp",
+        "PowerPolicyClient.cpp",
     ],
 }

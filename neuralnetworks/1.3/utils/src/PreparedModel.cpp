@@ -29,6 +29,7 @@
 #include <nnapi/Result.h>
 #include <nnapi/TypeUtils.h>
 #include <nnapi/Types.h>
+#include <nnapi/hal/1.0/Burst.h>
 #include <nnapi/hal/1.2/Conversions.h>
 #include <nnapi/hal/CommonUtils.h>
 #include <nnapi/hal/HandleError.h>
@@ -195,6 +196,10 @@ PreparedModel::executeFenced(const nn::Request& request, const std::vector<nn::S
     }
 
     return std::make_pair(std::move(syncFence), std::move(callback));
+}
+
+nn::GeneralResult<nn::SharedBurst> PreparedModel::configureExecutionBurst() const {
+    return V1_0::utils::Burst::create(shared_from_this());
 }
 
 std::any PreparedModel::getUnderlyingResource() const {

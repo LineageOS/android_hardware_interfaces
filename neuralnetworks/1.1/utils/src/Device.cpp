@@ -106,6 +106,10 @@ nn::DeviceType Device::getType() const {
     return nn::DeviceType::UNKNOWN;
 }
 
+bool Device::isUpdatable() const {
+    return false;
+}
+
 const std::vector<nn::Extension>& Device::getSupportedExtensions() const {
     return kExtensions;
 }

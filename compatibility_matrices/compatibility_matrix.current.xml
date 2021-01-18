@@ -27,6 +27,14 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <hal format="aidl" optional="true">
+         <name>android.hardware.authsecret</name>
+         <version>1</version>
+         <interface>
+             <name>IAuthSecret</name>
+             <instance>default</instance>
+         </interface>
+    </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.authsecret</name>
         <version>1.0</version>
@@ -477,6 +485,20 @@
             <regex-instance>SIM[1-9][0-9]*</regex-instance>
         </interface>
     </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.security.secureclock</name>
+        <interface>
+            <name>ISecureClock</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.security.sharedsecret</name>
+        <interface>
+            <name>ISharedSecret</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.sensors</name>
         <version>1.0</version>
@@ -561,6 +583,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.vibrator</name>
+        <version>1-2</version>
         <interface>
             <name>IVibrator</name>
             <instance>default</instance>
