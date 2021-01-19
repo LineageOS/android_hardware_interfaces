@@ -163,7 +163,7 @@ StreamOut::~StreamOut() {
         status_t status = EventFlag::deleteEventFlag(&mEfGroup);
         ALOGE_IF(status, "write MQ event flag deletion error: %s", strerror(-status));
     }
-    mCallback.clear();
+    mCallback = nullptr;
 #if MAJOR_VERSION <= 5
     mDevice->closeOutputStream(mStream);
     // Closing the output stream in the HAL waits for the callback to finish,
@@ -462,7 +462,7 @@ Return<Result> StreamOut::setCallback(const sp<IStreamOutCallback>& callback) {
 
 Return<Result> StreamOut::clearCallback() {
     if (mStream->set_callback == NULL) return Result::NOT_SUPPORTED;
-    mCallback.clear();
+    mCallback = nullptr;
     return Result::OK;
 }
 
@@ -477,7 +477,7 @@ int StreamOut::asyncCallback(stream_callback_event_t event, void*, void* cookie)
     // It's correct to hold an sp<> to callback because the reference
     // in the StreamOut instance can be cleared in the meantime. There is
     // no difference on which thread to run IStreamOutCallback's destructor.
-    sp<IStreamOutCallback> callback = self->mCallback;
+    sp<IStreamOutCallback> callback = self->mCallback.load();
     if (callback.get() == nullptr) return 0;
     ALOGV("asyncCallback() event %d", event);
     Return<void> result;
@@ -698,7 +698,7 @@ Return<Result> StreamOut::setEventCallback(const sp<IStreamOutEventCallback>& ca
 // static
 int StreamOut::asyncEventCallback(stream_event_callback_type_t event, void* param, void* cookie) {
     StreamOut* self = reinterpret_cast<StreamOut*>(cookie);
-    sp<IStreamOutEventCallback> eventCallback = self->mEventCallback;
+    sp<IStreamOutEventCallback> eventCallback = self->mEventCallback.load();
     if (eventCallback.get() == nullptr) return 0;
     ALOGV("%s event %d", __func__, event);
     Return<void> result;
