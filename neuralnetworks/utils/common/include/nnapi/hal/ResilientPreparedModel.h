@@ -30,7 +30,8 @@
 
 namespace android::hardware::neuralnetworks::utils {
 
-class ResilientPreparedModel final : public nn::IPreparedModel {
+class ResilientPreparedModel final : public nn::IPreparedModel,
+                                     public std::enable_shared_from_this<ResilientPreparedModel> {
     struct PrivateConstructorTag {};
 
   public:
@@ -62,6 +63,9 @@ class ResilientPreparedModel final : public nn::IPreparedModel {
     std::any getUnderlyingResource() const override;
 
   private:
+    bool isValidInternal() const EXCLUDES(mMutex);
+    nn::GeneralResult<nn::SharedBurst> configureExecutionBurstInternal() const;
+
     const Factory kMakePreparedModel;
     mutable std::mutex mMutex;
     mutable nn::SharedPreparedModel mPreparedModel GUARDED_BY(mMutex);
