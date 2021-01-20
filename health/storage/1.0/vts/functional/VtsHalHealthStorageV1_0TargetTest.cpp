@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
+#include <unistd.h>
+
+#include <thread>
+
 #include <android-base/logging.h>
 #include <android/hardware/health/storage/1.0/IStorage.h>
 #include <gtest/gtest.h>
+#include <health-storage-test/common.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/HidlTransportSupport.h>
 #include <hidl/ServiceManagement.h>
-#include <unistd.h>
-#include <thread>
 
 namespace android {
 namespace hardware {
@@ -29,61 +32,17 @@ namespace health {
 namespace storage {
 namespace V1_0 {
 
+using namespace ::android::hardware::health::storage::test;
 using ::std::literals::chrono_literals::operator""ms;
 
 #define ASSERT_OK(ret) ASSERT_TRUE(ret.isOk()) << ret.description()
 
-// Dev GC timeout. This is the timeout used by vold.
-const uint64_t kDevGcTimeoutSec = 120;
-const std::chrono::seconds kDevGcTimeout{kDevGcTimeoutSec};
-// Dev GC timeout tolerance. The HAL may not immediately return after the
-// timeout, so include an acceptable tolerance.
-const std::chrono::seconds kDevGcTolerance{3};
-// Time accounted for RPC calls.
-const std::chrono::milliseconds kRpcTime{1000};
-
-template <typename R>
-std::string toString(std::chrono::duration<R, std::milli> time) {
-    return std::to_string(time.count()) + "ms";
-}
-
-/** An atomic boolean flag that indicates whether a task has finished. */
-class Flag {
-   public:
-    void onFinish() {
-        std::unique_lock<std::mutex> lock(mMutex);
-        onFinishLocked(&lock);
-    }
-    template <typename R, typename P>
-    bool wait(std::chrono::duration<R, P> duration) {
-        std::unique_lock<std::mutex> lock(mMutex);
-        return waitLocked(&lock, duration);
-    }
-
-   protected:
-    /** Will unlock. */
-    void onFinishLocked(std::unique_lock<std::mutex>* lock) {
-        mFinished = true;
-        lock->unlock();
-        mCv.notify_all();
-    }
-    template <typename R, typename P>
-    bool waitLocked(std::unique_lock<std::mutex>* lock, std::chrono::duration<R, P> duration) {
-        mCv.wait_for(*lock, duration, [this] { return mFinished; });
-        return mFinished;
-    }
-
-    bool mFinished{false};
-    std::mutex mMutex;
-    std::condition_variable mCv;
-};
-
 class GcCallback : public IGarbageCollectCallback, public Flag {
-   public:
+  public:
     Return<void> onFinish(Result result) override {
-        std::unique_lock<std::mutex> lock(mMutex);
-        mResult = result;
-        Flag::onFinishLocked(&lock);
+        std::unique_lock<std::mutex> lock(mutex_);
+        result_ = result;
+        Flag::OnFinishLocked(&lock);
         return Void();
     }
 
@@ -93,13 +52,13 @@ class GcCallback : public IGarbageCollectCallback, public Flag {
      */
     template <typename R, typename P>
     void waitForResult(std::chrono::duration<R, P> timeout, Result expected) {
-        std::unique_lock<std::mutex> lock(mMutex);
-        ASSERT_TRUE(waitLocked(&lock, timeout)) << "timeout after " << toString(timeout);
-        EXPECT_EQ(expected, mResult);
+        std::unique_lock<std::mutex> lock(mutex_);
+        ASSERT_TRUE(WaitLocked(&lock, timeout)) << "timeout after " << to_string(timeout);
+        EXPECT_EQ(expected, result_);
     }
 
-   private:
-    Result mResult{Result::UNKNOWN_ERROR};
+  private:
+    Result result_{Result::UNKNOWN_ERROR};
 };
 
 class HealthStorageHidlTest : public ::testing::TestWithParam<std::string> {
@@ -127,10 +86,10 @@ class HealthStorageHidlTest : public ::testing::TestWithParam<std::string> {
         auto pingFlag = std::make_shared<Flag>();
         std::thread([service, pingFlag] {
             service->ping();
-            pingFlag->onFinish();
+            pingFlag->OnFinish();
         })
             .detach();
-        return pingFlag->wait(timeout);
+        return pingFlag->Wait(timeout);
     }
 
     sp<IStorage> fs;
@@ -147,7 +106,7 @@ TEST_P(HealthStorageHidlTest, GcNullCallback) {
     // Hold test process because HAL can be single-threaded and doing GC.
     ASSERT_TRUE(ping(kDevGcTimeout + kDevGcTolerance + kRpcTime))
             << "Service must be available after "
-            << toString(kDevGcTimeout + kDevGcTolerance + kRpcTime);
+            << to_string(kDevGcTimeout + kDevGcTolerance + kRpcTime);
 }
 
 /**
