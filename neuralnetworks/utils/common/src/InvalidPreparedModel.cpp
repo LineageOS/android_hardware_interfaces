@@ -42,6 +42,10 @@ InvalidPreparedModel::executeFenced(
     return NN_ERROR() << "InvalidPreparedModel";
 }
 
+nn::GeneralResult<nn::SharedBurst> InvalidPreparedModel::configureExecutionBurst() const {
+    return NN_ERROR() << "InvalidPreparedModel";
+}
+
 std::any InvalidPreparedModel::getUnderlyingResource() const {
     return {};
 }

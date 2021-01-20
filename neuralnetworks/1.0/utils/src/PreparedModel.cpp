@@ -90,6 +90,10 @@ PreparedModel::executeFenced(const nn::Request& /*request*/,
            << "IPreparedModel::executeFenced is not supported on 1.0 HAL service";
 }
 
+nn::GeneralResult<nn::SharedBurst> PreparedModel::configureExecutionBurst() const {
+    return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE) << "Not yet implemented";
+}
+
 std::any PreparedModel::getUnderlyingResource() const {
     sp<V1_0::IPreparedModel> resource = kPreparedModel;
     return resource;
