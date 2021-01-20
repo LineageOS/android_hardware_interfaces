@@ -16,7 +16,7 @@
 
 package android.hardware.security.keymint;
 
-import android.hardware.security.keymint.Timestamp;
+import android.hardware.security.secureclock.Timestamp;
 import android.hardware.security.keymint.HardwareAuthenticatorType;
 
 /**

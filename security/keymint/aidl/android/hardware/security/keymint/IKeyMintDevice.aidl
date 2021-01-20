@@ -26,7 +26,7 @@ import android.hardware.security.keymint.KeyParameter;
 import android.hardware.security.keymint.KeyMintHardwareInfo;
 import android.hardware.security.keymint.KeyPurpose;
 import android.hardware.security.keymint.SecurityLevel;
-import android.hardware.security.keymint.VerificationToken;
+import android.hardware.security.secureclock.TimeStampToken;
 
 /**
  * KeyMint device definition.
@@ -221,34 +221,6 @@ interface IKeyMintDevice {
      *         as version number, security level, keyMint name and author name.
      */
     KeyMintHardwareInfo getHardwareInfo();
-
-    /**
-     * Verify authorizations for another IKeyMintDevice instance.
-     *
-     * On systems with both a StrongBox and a TEE IKeyMintDevice instance it is sometimes useful
-     * to ask the TEE KeyMintDevice to verify authorizations for a key hosted in StrongBox.
-     *
-     * For every StrongBox operation, Keystore is required to call this method on the TEE KeyMint,
-     * passing in the StrongBox key's hardwareEnforced authorization list and the challenge
-     * returned by StrongBox begin().  Keystore must then pass the VerificationToken to the
-     * subsequent invocations of StrongBox update() and finish().
-     *
-     * StrongBox implementations must return ErrorCode::UNIMPLEMENTED.
-     *
-     * @param the challenge returned by StrongBox's keyMint's begin().
-     *
-     * @param authToken A HardwareAuthToken if needed to authorize key usage.
-     *
-     * @return error ErrorCode::OK on success or ErrorCode::UNIMPLEMENTED if the KeyMintDevice is
-     *         a StrongBox.  If the IKeyMintDevice cannot verify one or more elements of
-     *         parametersToVerify it must not return an error code, but just omit the unverified
-     *         parameter from the VerificationToken.
-     *
-     * @return token the verification token.  See VerificationToken in VerificationToken.aidl for
-     *         details.
-     */
-    VerificationToken verifyAuthorization(in long challenge,
-                                          in HardwareAuthToken token);
 
     /**
      * Adds entropy to the RNG used by KeyMint.  Entropy added through this method must not be the
