@@ -1057,9 +1057,9 @@ TEST_P(VideoEncHidlTest, BufferSourceCallBacks) {
     ASSERT_NO_FATAL_FAILURE(changeStateExecutetoIdle(
         omxNode, observer, &buffersource->iBuffer, &buffersource->oBuffer));
     // set state to executing
-    ASSERT_NO_FATAL_FAILURE(changeStateIdletoLoaded(
-        omxNode, observer, &buffersource->iBuffer, &buffersource->oBuffer,
-        kPortIndexInput, kPortIndexOutput));
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoLoaded(omxNode, observer, &buffersource->iBuffer,
+                                                    &buffersource->oBuffer, kPortIndexInput,
+                                                    kPortIndexOutput, portMode));
     // test for callbacks
     EXPECT_EQ(buffersource->callback, 31);
 }
@@ -1174,9 +1174,8 @@ TEST_P(VideoEncHidlTest, EncodeTest) {
     ASSERT_NO_FATAL_FAILURE(
         changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer));
     // set state to executing
-    ASSERT_NO_FATAL_FAILURE(changeStateIdletoLoaded(omxNode, observer, &iBuffer,
-                                                    &oBuffer, kPortIndexInput,
-                                                    kPortIndexOutput));
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
+                                                    kPortIndexInput, kPortIndexOutput, portMode));
 }
 
 // test raw stream encode (input is ANW buffers)
@@ -1337,9 +1336,8 @@ TEST_P(VideoEncHidlTest, EncodeTestBufferMetaModes) {
         changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer));
     EXPECT_EQ(portDef.nBufferCountActual, listener->freeBuffers);
     // set state to executing
-    ASSERT_NO_FATAL_FAILURE(changeStateIdletoLoaded(omxNode, observer, &iBuffer,
-                                                    &oBuffer, kPortIndexInput,
-                                                    kPortIndexOutput));
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
+                                                    kPortIndexInput, kPortIndexOutput, portMode));
 
     returnval = producer->disconnect(
         NATIVE_WINDOW_API_CPU, IGraphicBufferProducer::DisconnectMode::API);
@@ -1452,9 +1450,8 @@ TEST_P(VideoEncHidlTest, EncodeTestEOS) {
         changeStateExecutetoIdle(omxNode, observer, &iBuffer, &oBuffer));
     EXPECT_EQ(portDef.nBufferCountActual, listener->freeBuffers);
     // set state to executing
-    ASSERT_NO_FATAL_FAILURE(changeStateIdletoLoaded(omxNode, observer, &iBuffer,
-                                                    &oBuffer, kPortIndexInput,
-                                                    kPortIndexOutput));
+    ASSERT_NO_FATAL_FAILURE(changeStateIdletoLoaded(omxNode, observer, &iBuffer, &oBuffer,
+                                                    kPortIndexInput, kPortIndexOutput, portMode));
 
     returnval = producer->disconnect(
         NATIVE_WINDOW_API_CPU, IGraphicBufferProducer::DisconnectMode::API);
