@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.hardware.security.keymint;
+package android.hardware.security.secureclock;
 
 /**
  * Time in milliseconds since some arbitrary point in time.  Time must be monotonically increasing,

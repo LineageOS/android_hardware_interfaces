@@ -20,7 +20,6 @@ package android.hardware.security.keymint;
 @VintfStability
 interface IKeyMintDevice {
   android.hardware.security.keymint.KeyMintHardwareInfo getHardwareInfo();
-  android.hardware.security.keymint.VerificationToken verifyAuthorization(in long challenge, in android.hardware.security.keymint.HardwareAuthToken token);
   void addRngEntropy(in byte[] data);
   android.hardware.security.keymint.KeyCreationResult generateKey(in android.hardware.security.keymint.KeyParameter[] keyParams);
   android.hardware.security.keymint.KeyCreationResult importKey(in android.hardware.security.keymint.KeyParameter[] keyParams, in android.hardware.security.keymint.KeyFormat keyFormat, in byte[] keyData);
