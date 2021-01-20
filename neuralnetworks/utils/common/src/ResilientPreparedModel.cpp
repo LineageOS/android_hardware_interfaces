@@ -16,6 +16,9 @@
 
 #include "ResilientPreparedModel.h"
 
+#include "InvalidBurst.h"
+#include "ResilientBurst.h"
+
 #include <android-base/logging.h>
 #include <android-base/thread_annotations.h>
 #include <nnapi/IPreparedModel.h>
@@ -125,14 +128,34 @@ ResilientPreparedModel::executeFenced(const nn::Request& request,
 }
 
 nn::GeneralResult<nn::SharedBurst> ResilientPreparedModel::configureExecutionBurst() const {
-    const auto fn = [](const nn::IPreparedModel& preparedModel) {
-        return preparedModel.configureExecutionBurst();
+#if 0
+    auto self = shared_from_this();
+    ResilientBurst::Factory makeBurst =
+            [preparedModel = std::move(self)]() -> nn::GeneralResult<nn::SharedBurst> {
+        return preparedModel->configureExecutionBurst();
     };
-    return protect(*this, fn);
+    return ResilientBurst::create(std::move(makeBurst));
+#else
+    return configureExecutionBurstInternal();
+#endif
 }
 
 std::any ResilientPreparedModel::getUnderlyingResource() const {
     return getPreparedModel()->getUnderlyingResource();
+}
+
+bool ResilientPreparedModel::isValidInternal() const {
+    return true;
+}
+
+nn::GeneralResult<nn::SharedBurst> ResilientPreparedModel::configureExecutionBurstInternal() const {
+    if (!isValidInternal()) {
+        return std::make_shared<const InvalidBurst>();
+    }
+    const auto fn = [](const nn::IPreparedModel& preparedModel) {
+        return preparedModel.configureExecutionBurst();
+    };
+    return protect(*this, fn);
 }
 
 }  // namespace android::hardware::neuralnetworks::utils
