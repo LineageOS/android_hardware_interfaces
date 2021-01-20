@@ -17,6 +17,8 @@
 #ifndef ANDROID_FRAMEWORKS_ML_NN_COMMON_EXECUTION_BURST_SERVER_H
 #define ANDROID_FRAMEWORKS_ML_NN_COMMON_EXECUTION_BURST_SERVER_H
 
+#include "ExecutionBurstUtils.h"
+
 #include <android-base/macros.h>
 #include <android/hardware/neuralnetworks/1.0/types.h>
 #include <android/hardware/neuralnetworks/1.1/types.h>
@@ -35,143 +37,6 @@
 #include <vector>
 
 namespace android::nn {
-
-using FmqRequestDescriptor =
-        hardware::MQDescriptorSync<hardware::neuralnetworks::V1_2::FmqRequestDatum>;
-using FmqResultDescriptor =
-        hardware::MQDescriptorSync<hardware::neuralnetworks::V1_2::FmqResultDatum>;
-
-/**
- * Function to serialize results.
- *
- * Prefer calling ResultChannelSender::send.
- *
- * @param errorStatus Status of the execution.
- * @param outputShapes Dynamic shapes of the output tensors.
- * @param timing Timing information of the execution.
- * @return Serialized FMQ result data.
- */
-std::vector<hardware::neuralnetworks::V1_2::FmqResultDatum> serialize(
-        hardware::neuralnetworks::V1_0::ErrorStatus errorStatus,
-        const std::vector<hardware::neuralnetworks::V1_2::OutputShape>& outputShapes,
-        hardware::neuralnetworks::V1_2::Timing timing);
-
-/**
- * Deserialize the FMQ request data.
- *
- * The three resulting fields are the Request object (where Request::pools is
- * empty), slot identifiers (which are stand-ins for Request::pools), and
- * whether timing information must be collected for the run.
- *
- * @param data Serialized FMQ request data.
- * @return Request object if successfully deserialized, std::nullopt otherwise.
- */
-std::optional<std::tuple<hardware::neuralnetworks::V1_0::Request, std::vector<int32_t>,
-                         hardware::neuralnetworks::V1_2::MeasureTiming>>
-deserialize(const std::vector<hardware::neuralnetworks::V1_2::FmqRequestDatum>& data);
-
-/**
- * RequestChannelReceiver is responsible for waiting on the channel until the
- * packet is available, extracting the packet from the channel, and
- * deserializing the packet.
- *
- * Because the receiver can wait on a packet that may never come (e.g., because
- * the sending side of the packet has been closed), this object can be
- * invalidated, unblocking the receiver.
- */
-class RequestChannelReceiver {
-    using FmqRequestChannel =
-            hardware::MessageQueue<hardware::neuralnetworks::V1_2::FmqRequestDatum,
-                                   hardware::kSynchronizedReadWrite>;
-
-  public:
-    /**
-     * Create the receiving end of a request channel.
-     *
-     * Prefer this call over the constructor.
-     *
-     * @param requestChannel Descriptor for the request channel.
-     * @param pollingTimeWindow How much time (in microseconds) the
-     *     RequestChannelReceiver is allowed to poll the FMQ before waiting on
-     *     the blocking futex. Polling may result in lower latencies at the
-     *     potential cost of more power usage.
-     * @return RequestChannelReceiver on successful creation, nullptr otherwise.
-     */
-    static std::unique_ptr<RequestChannelReceiver> create(
-            const FmqRequestDescriptor& requestChannel,
-            std::chrono::microseconds pollingTimeWindow);
-
-    /**
-     * Get the request from the channel.
-     *
-     * This method will block until either:
-     * 1) The packet has been retrieved, or
-     * 2) The receiver has been invalidated
-     *
-     * @return Request object if successfully received, std::nullopt if error or
-     *     if the receiver object was invalidated.
-     */
-    std::optional<std::tuple<hardware::neuralnetworks::V1_0::Request, std::vector<int32_t>,
-                             hardware::neuralnetworks::V1_2::MeasureTiming>>
-    getBlocking();
-
-    /**
-     * Method to mark the channel as invalid, unblocking any current or future
-     * calls to RequestChannelReceiver::getBlocking.
-     */
-    void invalidate();
-
-    RequestChannelReceiver(std::unique_ptr<FmqRequestChannel> fmqRequestChannel,
-                           std::chrono::microseconds pollingTimeWindow);
-
-  private:
-    std::optional<std::vector<hardware::neuralnetworks::V1_2::FmqRequestDatum>> getPacketBlocking();
-
-    const std::unique_ptr<FmqRequestChannel> mFmqRequestChannel;
-    std::atomic<bool> mTeardown{false};
-    const std::chrono::microseconds kPollingTimeWindow;
-};
-
-/**
- * ResultChannelSender is responsible for serializing the result packet of
- * information, sending it on the result channel, and signaling that the data is
- * available.
- */
-class ResultChannelSender {
-    using FmqResultChannel = hardware::MessageQueue<hardware::neuralnetworks::V1_2::FmqResultDatum,
-                                                    hardware::kSynchronizedReadWrite>;
-
-  public:
-    /**
-     * Create the sending end of a result channel.
-     *
-     * Prefer this call over the constructor.
-     *
-     * @param resultChannel Descriptor for the result channel.
-     * @return ResultChannelSender on successful creation, nullptr otherwise.
-     */
-    static std::unique_ptr<ResultChannelSender> create(const FmqResultDescriptor& resultChannel);
-
-    /**
-     * Send the result to the channel.
-     *
-     * @param errorStatus Status of the execution.
-     * @param outputShapes Dynamic shapes of the output tensors.
-     * @param timing Timing information of the execution.
-     * @return 'true' on successful send, 'false' otherwise.
-     */
-    bool send(hardware::neuralnetworks::V1_0::ErrorStatus errorStatus,
-              const std::vector<hardware::neuralnetworks::V1_2::OutputShape>& outputShapes,
-              hardware::neuralnetworks::V1_2::Timing timing);
-
-    // prefer calling ResultChannelSender::send
-    bool sendPacket(const std::vector<hardware::neuralnetworks::V1_2::FmqResultDatum>& packet);
-
-    ResultChannelSender(std::unique_ptr<FmqResultChannel> fmqResultChannel);
-
-  private:
-    const std::unique_ptr<FmqResultChannel> mFmqResultChannel;
-};
 
 /**
  * The ExecutionBurstServer class is responsible for waiting for and
