@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,24 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "android.hardware.health@1.0-service"
+package android.hardware.health.storage;
 
-#include <android/hardware/health/1.0/IHealth.h>
-#include <hidl/LegacySupport.h>
-
-using android::hardware::health::V1_0::IHealth;
-using android::hardware::defaultPassthroughServiceImplementation;
-
-int main() {
-    return defaultPassthroughServiceImplementation<IHealth>();
+/**
+ * Status values for HAL methods.
+ */
+@VintfStability
+@Backing(type="int")
+enum Result {
+    /**
+     * Execution of the method is successful.
+     */
+    SUCCESS = 0,
+    /**
+     * An IO error is encountered when the HAL communicates with the device.
+     */
+    IO_ERROR,
+    /**
+     * An unknown error is encountered.
+     */
+    UNKNOWN_ERROR,
 }
