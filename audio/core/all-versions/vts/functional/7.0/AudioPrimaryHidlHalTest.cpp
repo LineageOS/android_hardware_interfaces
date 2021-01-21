@@ -296,7 +296,7 @@ INSTANTIATE_TEST_CASE_P(
         InputBufferSizeInvalidConfig, InvalidInputConfigNoFlagsTest,
         ::testing::ValuesIn(getInputDeviceInvalidConfigParameters(false /*generateInvalidFlags*/)),
         &DeviceConfigParameterToString);
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(InputBufferSizeInvalidConfig);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(InvalidInputConfigNoFlagsTest);
 
 static const DeviceAddress& getValidInputDeviceAddress() {
     static const DeviceAddress valid = {
@@ -682,9 +682,7 @@ INSTANTIATE_TEST_CASE_P(
                            ::testing::Values(getValidInputDeviceAddress()),
                            ::testing::ValuesIn(wrapMetadata(getInvalidSinkMetadatas()))),
         &StreamOpenParameterToString);
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(InputStreamInvalidConfig);
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(InputStreamInvalidAddress);
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(InputStreamInvalidMetadata);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(StreamOpenTest);
 
 INSTANTIATE_TEST_CASE_P(
         OutputStreamInvalidConfig, StreamOpenTest,
@@ -706,9 +704,6 @@ INSTANTIATE_TEST_CASE_P(
                            ::testing::Values(getValidOutputDeviceAddress()),
                            ::testing::ValuesIn(wrapMetadata(getInvalidSourceMetadatas()))),
         &StreamOpenParameterToString);
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(OutputStreamInvalidConfig);
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(OutputStreamInvalidAddress);
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(OutputStreamInvalidMetadata);
 
 #define TEST_SINGLE_CONFIG_IO_STREAM(test_name, documentation, code) \
     TEST_P(SingleConfigInputStreamTest, test_name) {                 \
