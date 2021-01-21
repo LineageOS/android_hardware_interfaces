@@ -415,7 +415,7 @@ TEST_P(BroadcastRadioHalTest, GetDabRegionConfig) {
 TEST_P(BroadcastRadioHalTest, FmTune) {
     ASSERT_TRUE(openSession());
 
-    uint64_t freq = 100100;  // 100.1 FM
+    uint64_t freq = 90900;  // 90.9 FM
     auto sel = make_selector_amfm(freq);
 
     /* TODO(b/69958777): there is a race condition between tune() and onCurrentProgramInfoChanged
