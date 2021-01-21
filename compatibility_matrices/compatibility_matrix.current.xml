@@ -198,7 +198,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.drm</name>
-        <version>1.3</version>
+        <version>1.3-4</version>
         <interface>
             <name>ICryptoFactory</name>
             <regex-instance>.*</regex-instance>
@@ -281,6 +281,14 @@
     <hal format="hidl" optional="true">
         <name>android.hardware.health.storage</name>
         <version>1.0</version>
+        <interface>
+            <name>IStorage</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.health.storage</name>
+        <version>1</version>
         <interface>
             <name>IStorage</name>
             <instance>default</instance>

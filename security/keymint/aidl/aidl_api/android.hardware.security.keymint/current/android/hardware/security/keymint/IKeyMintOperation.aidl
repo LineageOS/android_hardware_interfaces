@@ -19,7 +19,7 @@
 package android.hardware.security.keymint;
 @VintfStability
 interface IKeyMintOperation {
-  int update(in @nullable android.hardware.security.keymint.KeyParameterArray inParams, in @nullable byte[] input, in @nullable android.hardware.security.keymint.HardwareAuthToken inAuthToken, in @nullable android.hardware.security.keymint.VerificationToken inVerificationToken, out @nullable android.hardware.security.keymint.KeyParameterArray outParams, out @nullable android.hardware.security.keymint.ByteArray output);
-  byte[] finish(in @nullable android.hardware.security.keymint.KeyParameterArray inParams, in @nullable byte[] input, in @nullable byte[] inSignature, in @nullable android.hardware.security.keymint.HardwareAuthToken authToken, in @nullable android.hardware.security.keymint.VerificationToken inVerificationToken, out @nullable android.hardware.security.keymint.KeyParameterArray outParams);
+  int update(in @nullable android.hardware.security.keymint.KeyParameterArray inParams, in @nullable byte[] input, in @nullable android.hardware.security.keymint.HardwareAuthToken inAuthToken, in @nullable android.hardware.security.secureclock.TimeStampToken inTimeStampToken, out @nullable android.hardware.security.keymint.KeyParameterArray outParams, out @nullable android.hardware.security.keymint.ByteArray output);
+  byte[] finish(in @nullable android.hardware.security.keymint.KeyParameterArray inParams, in @nullable byte[] input, in @nullable byte[] inSignature, in @nullable android.hardware.security.keymint.HardwareAuthToken authToken, in @nullable android.hardware.security.secureclock.TimeStampToken inTimeStampToken, out @nullable android.hardware.security.keymint.KeyParameterArray outParams);
   void abort();
 }

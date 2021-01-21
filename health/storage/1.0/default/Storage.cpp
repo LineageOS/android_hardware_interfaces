@@ -18,11 +18,8 @@
 
 #include <sstream>
 
-#include <android-base/chrono_utils.h>
-#include <android-base/file.h>
 #include <android-base/logging.h>
-#include <android-base/strings.h>
-#include <fstab/fstab.h>
+#include <health-storage-impl/common.h>
 
 namespace android {
 namespace hardware {
@@ -31,69 +28,9 @@ namespace storage {
 namespace V1_0 {
 namespace implementation {
 
-using base::ReadFileToString;
-using base::Timer;
-using base::Trim;
-using base::WriteStringToFd;
-using base::WriteStringToFile;
-using fs_mgr::Fstab;
-using fs_mgr::ReadDefaultFstab;
-
-std::string getGarbageCollectPath() {
-    Fstab fstab;
-    ReadDefaultFstab(&fstab);
-
-    for (const auto& entry : fstab) {
-        if (!entry.sysfs_path.empty()) {
-            return entry.sysfs_path + "/manual_gc";
-        }
-    }
-
-    return "";
-}
-
 Return<void> Storage::garbageCollect(uint64_t timeoutSeconds,
                                      const sp<IGarbageCollectCallback>& cb) {
-    Result result = Result::SUCCESS;
-    std::string path = getGarbageCollectPath();
-
-    if (path.empty()) {
-        LOG(WARNING) << "Cannot find Dev GC path";
-        result = Result::UNKNOWN_ERROR;
-    } else {
-        Timer timer;
-        LOG(INFO) << "Start Dev GC on " << path;
-        while (1) {
-            std::string require;
-            if (!ReadFileToString(path, &require)) {
-                PLOG(WARNING) << "Reading manual_gc failed in " << path;
-                result = Result::IO_ERROR;
-                break;
-            }
-            require = Trim(require);
-            if (require == "" || require == "off" || require == "disabled") {
-                LOG(DEBUG) << "No more to do Dev GC";
-                break;
-            }
-            LOG(DEBUG) << "Trigger Dev GC on " << path;
-            if (!WriteStringToFile("1", path)) {
-                PLOG(WARNING) << "Start Dev GC failed on " << path;
-                result = Result::IO_ERROR;
-                break;
-            }
-            if (timer.duration() >= std::chrono::seconds(timeoutSeconds)) {
-                LOG(WARNING) << "Dev GC timeout";
-                // Timeout is not treated as an error. Try next time.
-                break;
-            }
-            sleep(2);
-        }
-        LOG(INFO) << "Stop Dev GC on " << path;
-        if (!WriteStringToFile("0", path)) {
-            PLOG(WARNING) << "Stop Dev GC failed on " << path;
-            result = Result::IO_ERROR;
-        }
-    }
+    Result result = GarbageCollect(timeoutSeconds);
 
     if (cb != nullptr) {
         auto ret = cb->onFinish(result);
@@ -110,28 +47,7 @@ Return<void> Storage::debug(const hidl_handle& handle, const hidl_vec<hidl_strin
     }
 
     int fd = handle->data[0];
-    std::stringstream output;
-
-    std::string path = getGarbageCollectPath();
-    if (path.empty()) {
-        output << "Cannot find Dev GC path";
-    } else {
-        std::string require;
-
-        if (ReadFileToString(path, &require)) {
-            output << path << ":" << require << std::endl;
-        }
-
-        if (WriteStringToFile("0", path)) {
-            output << "stop success" << std::endl;
-        }
-    }
-
-    if (!WriteStringToFd(output.str(), fd)) {
-        PLOG(WARNING) << "debug: cannot write to fd";
-    }
-
-    fsync(fd);
+    DebugDump(fd);
 
     return Void();
 }

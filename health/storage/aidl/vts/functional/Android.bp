@@ -1,5 +1,4 @@
-//
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2021 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,12 +11,27 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 cc_test {
-    name: "VtsHalHealthV1_0TargetTest",
-    defaults: ["VtsHalTargetTestDefaults"],
-    srcs: ["VtsHalHealthV1_0TargetTest.cpp"],
-    static_libs: ["android.hardware.health@1.0"],
-    test_suites: ["general-tests", "vts"],
+    name: "VtsHalHealthStorageTargetTest",
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    srcs: [
+        "VtsHalHealthStorageTargetTest.cpp",
+    ],
+    shared_libs: [
+        "libbinder_ndk",
+    ],
+    static_libs: [
+        "android.hardware.health.storage-ndk_platform",
+    ],
+    header_libs: [
+        "libhealth_storage_test_common_headers",
+    ],
+    test_suites: [
+        "vts",
+    ],
+    test_config: "VtsHalHealthStorageTargetTest.xml",
 }

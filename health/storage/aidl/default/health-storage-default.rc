@@ -1,0 +1,7 @@
+service vendor.health-storage-default /vendor/bin/hw/android.hardware.health.storage-service.default
+    interface aidl android.hardware.health.storage.IStorage/default
+    oneshot
+    disabled
+    class hal
+    user system
+    group system

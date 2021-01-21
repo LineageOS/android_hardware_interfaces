@@ -1,0 +1,53 @@
+/*
+ * Copyright (C) 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+cc_defaults {
+    name: "libhealth_storage_impl_defaults",
+    vendor: true,
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "android.hardware.health.storage-unstable-ndk_platform",
+    ],
+    static_libs: [
+        "libfstab",
+        "libhealth_storage_impl_common",
+    ],
+}
+
+cc_library_static {
+    name: "libhealth_storage_default_impl",
+    defaults: ["libhealth_storage_impl_defaults"],
+    srcs: [
+        "Storage.cpp",
+    ],
+    visibility: [
+        ":__subpackages__",
+        "//hardware/interfaces/tests/extension/health/storage:__subpackages__",
+    ],
+}
+
+cc_binary {
+    name: "android.hardware.health.storage-service.default",
+    defaults: ["libhealth_storage_impl_defaults"],
+    relative_install_path: "hw",
+    init_rc: ["health-storage-default.rc"],
+    vintf_fragments: ["health-storage-default.xml"],
+    srcs: ["main.cpp"],
+    static_libs: [
+        "libhealth_storage_default_impl",
+    ],
+}
