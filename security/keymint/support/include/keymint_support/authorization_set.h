@@ -259,6 +259,12 @@ class AuthorizationSetBuilder : public AuthorizationSet {
                              size - 1);  // drop the terminating '\0'
     }
 
+    template <Tag tag>
+    AuthorizationSetBuilder& Authorization(TypedTag<TagType::BYTES, tag> ttag,
+                                           const std::string& data) {
+        return Authorization(ttag, reinterpret_cast<const uint8_t*>(data.data()), data.size());
+    }
+
     AuthorizationSetBuilder& Authorizations(const AuthorizationSet& set) {
         for (const auto& entry : set) {
             push_back(entry);
@@ -293,6 +299,20 @@ class AuthorizationSetBuilder : public AuthorizationSet {
     AuthorizationSetBuilder& OaepMGFDigest(const std::vector<Digest>& digests);
     AuthorizationSetBuilder& Digest(std::vector<Digest> digests);
     AuthorizationSetBuilder& Padding(std::initializer_list<PaddingMode> paddings);
+
+    AuthorizationSetBuilder& AttestationChallenge(const std::string& challenge) {
+        return Authorization(TAG_ATTESTATION_CHALLENGE, challenge);
+    }
+    AuthorizationSetBuilder& AttestationChallenge(std::vector<uint8_t> challenge) {
+        return Authorization(TAG_ATTESTATION_CHALLENGE, challenge);
+    }
+
+    AuthorizationSetBuilder& AttestationApplicationId(const std::string& id) {
+        return Authorization(TAG_ATTESTATION_APPLICATION_ID, id);
+    }
+    AuthorizationSetBuilder& AttestationApplicationId(std::vector<uint8_t> id) {
+        return Authorization(TAG_ATTESTATION_APPLICATION_ID, id);
+    }
 
     template <typename... T>
     AuthorizationSetBuilder& BlockMode(T&&... a) {

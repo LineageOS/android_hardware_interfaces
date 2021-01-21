@@ -14,7 +14,6 @@
 // limitations under the License.
 //
 
-#include <cutils/properties.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <gtest/gtest.h>
@@ -39,12 +38,6 @@ constexpr char kZeros[BluetoothAddress::kStringLength + 1] =
     "00:00:00:00:00:00";
 constexpr uint8_t kZeros_bytes[BluetoothAddress::kBytes] = {0x00, 0x00, 0x00,
                                                             0x00, 0x00, 0x00};
-constexpr char kTestAddrBad1[BluetoothAddress::kStringLength + 1] =
-    "bb:aa:dd:00:00:01";
-constexpr uint8_t kTestAddrBad1_bytes[BluetoothAddress::kBytes] = {
-    0xbb, 0xaa, 0xdd, 0x00, 0x00, 0x01};
-
-constexpr char kAddrPath[] = "/tmp/my_address_in_a_file.txt";
 
 class BluetoothAddressTest : public ::testing::Test {
  public:
@@ -118,45 +111,6 @@ TEST_F(BluetoothAddressTest, bytes_to_string) {
 
   // kTestAddr1 != kZeros
   EXPECT_FALSE(memcmp(addrA, addrB, BluetoothAddress::kStringLength) == 0);
-}
-
-TEST_F(BluetoothAddressTest, get_local_address) {
-  EXPECT_TRUE(property_set(PERSIST_BDADDR_PROPERTY, "") == 0);
-  EXPECT_TRUE(property_set(FACTORY_BDADDR_PROPERTY, "") == 0);
-  uint8_t address[BluetoothAddress::kBytes];
-
-  // File contains a non-zero Address.
-  FileWriteString(kAddrPath, kTestAddr1);
-  EXPECT_TRUE(property_set(PROPERTY_BT_BDADDR_PATH, kAddrPath) == 0);
-  EXPECT_TRUE(BluetoothAddress::get_local_address(address));
-  EXPECT_TRUE(memcmp(address, kTestAddr1_bytes, BluetoothAddress::kBytes) == 0);
-
-  // File contains a zero address.  A random address will be generated.
-  FileWriteString(kAddrPath, kZeros);
-  EXPECT_TRUE(property_set(PROPERTY_BT_BDADDR_PATH, kAddrPath) == 0);
-  EXPECT_TRUE(property_set(PERSIST_BDADDR_PROPERTY, kTestAddrBad1) == 0);
-  EXPECT_TRUE(BluetoothAddress::get_local_address(address));
-  EXPECT_TRUE(memcmp(address, kZeros_bytes, BluetoothAddress::kBytes) != 0);
-  char prop[PROP_VALUE_MAX] = "Before reading";
-  EXPECT_TRUE(property_get(PERSIST_BDADDR_PROPERTY, prop, NULL) ==
-              BluetoothAddress::kStringLength);
-  char address_str[BluetoothAddress::kStringLength + 1];
-  BluetoothAddress::bytes_to_string(address, address_str);
-  EXPECT_TRUE(memcmp(address_str, prop, BluetoothAddress::kStringLength) == 0);
-
-  // Factory property contains an address.
-  EXPECT_TRUE(property_set(PERSIST_BDADDR_PROPERTY, kTestAddrBad1) == 0);
-  EXPECT_TRUE(property_set(FACTORY_BDADDR_PROPERTY, kTestAddr1) == 0);
-  EXPECT_TRUE(BluetoothAddress::get_local_address(address));
-  EXPECT_TRUE(memcmp(address, kTestAddr1_bytes, BluetoothAddress::kBytes) == 0);
-
-  // Persistent property contains an address.
-  memcpy(address, kTestAddrBad1_bytes, BluetoothAddress::kBytes);
-  EXPECT_TRUE(property_set(PERSIST_BDADDR_PROPERTY, kTestAddr1) == 0);
-  EXPECT_TRUE(property_set(FACTORY_BDADDR_PROPERTY, "") == 0);
-  EXPECT_TRUE(property_set(PROPERTY_BT_BDADDR_PATH, "") == 0);
-  EXPECT_TRUE(BluetoothAddress::get_local_address(address));
-  EXPECT_TRUE(memcmp(address, kTestAddr1_bytes, BluetoothAddress::kBytes) == 0);
 }
 
 }  // namespace implementation

@@ -16,11 +16,8 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.security.keymint;
+package android.hardware.health.storage;
 @VintfStability
-parcelable VerificationToken {
-  long challenge;
-  android.hardware.security.keymint.Timestamp timestamp;
-  android.hardware.security.keymint.SecurityLevel securityLevel;
-  byte[] mac;
+interface IGarbageCollectCallback {
+  oneway void onFinish(in android.hardware.health.storage.Result result);
 }

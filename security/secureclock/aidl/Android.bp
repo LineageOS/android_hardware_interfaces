@@ -5,9 +5,6 @@ aidl_interface {
         "android/hardware/security/secureclock/*.aidl",
     ],
     stability: "vintf",
-    imports: [
-        "android.hardware.security.keymint",
-    ],
     backend: {
         java: {
             sdk_version: "module_current",
