@@ -17,7 +17,7 @@
 #ifndef HARDWARE_INTERFACES_HEALTH_V1_0_DEFAULT_INCLUDE_HAL_CONVERSION_H_
 #define HARDWARE_INTERFACES_HEALTH_V1_0_DEFAULT_INCLUDE_HAL_CONVERSION_H_
 
-#include <android/hardware/health/1.0/IHealth.h>
+#include <android/hardware/health/1.0/types.h>
 #include <healthd/healthd.h>
 
 namespace android {
