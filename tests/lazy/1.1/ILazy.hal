@@ -20,10 +20,10 @@ import android.hardware.tests.lazy@1.0;
 
 interface ILazy extends @1.0::ILazy {
     /**
-     * Ask the process hosting the service to install a callback that notifies
-     * it when the number of active (i.e. with clients) services changes.
+     * Ask the process hosting the service to install a callback that notifies if there are
+     * services with clients.
      * For testing purposes, this callback exercises the code to unregister/re-register
      * the services and eventually shuts down the process.
      */
-    setCustomActiveServicesCountCallback();
+    setCustomActiveServicesCallback();
 };
