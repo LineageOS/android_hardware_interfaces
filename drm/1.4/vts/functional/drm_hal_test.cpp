@@ -154,6 +154,42 @@ TEST_P(DrmHalTest, SetPlaybackId) {
     EXPECT_TRUE(foundPbId);
 }
 
+TEST_P(DrmHalTest, GetLogMessages) {
+    auto drm = DrmPluginV1_4();
+    auto sid = OpenSession();
+    auto crypto_1_0 = CryptoPlugin(sid);
+    sp<V1_4::ICryptoPlugin> crypto(V1_4::ICryptoPlugin::castFrom(crypto_1_0));
+
+    hidl_vec<uint8_t> initData;
+    hidl_string mime{"text/plain"};
+    V1_0::KeyedVector optionalParameters;
+    auto res = drmPlugin->getKeyRequest_1_2(
+            sid, initData, mime, V1_0::KeyType::STREAMING,
+            optionalParameters, [&](V1_2::Status status, const hidl_vec<uint8_t>&,
+                                    V1_1::KeyRequestType, const hidl_string&) {
+                EXPECT_NE(V1_2::Status::OK, status);
+            });
+    EXPECT_OK(res);
+
+    V1_4::IDrmPlugin::getLogMessages_cb cb = [&](
+            V1_4::Status status,
+            hidl_vec<V1_4::LogMessage> logs) {
+        EXPECT_EQ(V1_4::Status::OK, status);
+        EXPECT_NE(0, logs.size());
+        for (auto log: logs) {
+            ALOGI("priority=[%u] message='%s'", log.priority, log.message.c_str());
+        }
+    };
+
+    auto res2 = drm->getLogMessages(cb);
+    EXPECT_OK(res2);
+
+    auto res3 = crypto->getLogMessages(cb);
+    EXPECT_OK(res3);
+
+    closeSession(sid);
+}
+
 }  // namespace vts
 }  // namespace V1_4
 }  // namespace drm
