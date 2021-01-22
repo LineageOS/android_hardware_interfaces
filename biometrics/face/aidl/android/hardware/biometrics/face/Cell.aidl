@@ -16,9 +16,12 @@
 
 package android.hardware.biometrics.face;
 
+/**
+ * Coordinates of an enrollment UI cell in a vendor-defined coordinate system.
+ */
 @VintfStability
-@Backing(type="byte")
-enum FaceSensorType {
-    RGB,
-    IR
+parcelable Cell {
+    int x;
+    int y;
+    int z;
 }

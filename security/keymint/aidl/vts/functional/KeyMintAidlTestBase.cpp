@@ -37,7 +37,7 @@ using std::optional;
         os << "(Empty)" << ::std::endl;
     else {
         os << "\n";
-        for (size_t i = 0; i < set.size(); ++i) os << set[i] << ::std::endl;
+        for (auto& entry : set) os << entry << ::std::endl;
     }
     return os;
 }
@@ -131,6 +131,17 @@ ErrorCode KeyMintAidlTestBase::GenerateKey(const AuthorizationSet& key_desc,
         *key_blob = std::move(creationResult.keyBlob);
         *key_characteristics = std::move(creationResult.keyCharacteristics);
         cert_chain_ = std::move(creationResult.certificateChain);
+
+        auto algorithm = key_desc.GetTagValue(TAG_ALGORITHM);
+        EXPECT_TRUE(algorithm);
+        if (algorithm &&
+            (algorithm.value() == Algorithm::RSA || algorithm.value() == Algorithm::EC)) {
+            EXPECT_GE(cert_chain_.size(), 1);
+            if (key_desc.Contains(TAG_ATTESTATION_CHALLENGE)) EXPECT_GT(cert_chain_.size(), 1);
+        } else {
+            // For symmetric keys there should be no certificates.
+            EXPECT_EQ(cert_chain_.size(), 0);
+        }
     }
 
     return GetReturnErrorCode(result);
@@ -162,6 +173,17 @@ ErrorCode KeyMintAidlTestBase::ImportKey(const AuthorizationSet& key_desc, KeyFo
         *key_blob = std::move(creationResult.keyBlob);
         *key_characteristics = std::move(creationResult.keyCharacteristics);
         cert_chain_ = std::move(creationResult.certificateChain);
+
+        auto algorithm = key_desc.GetTagValue(TAG_ALGORITHM);
+        EXPECT_TRUE(algorithm);
+        if (algorithm &&
+            (algorithm.value() == Algorithm::RSA || algorithm.value() == Algorithm::EC)) {
+            EXPECT_GE(cert_chain_.size(), 1);
+            if (key_desc.Contains(TAG_ATTESTATION_CHALLENGE)) EXPECT_GT(cert_chain_.size(), 1);
+        } else {
+            // For symmetric keys there should be no certificates.
+            EXPECT_EQ(cert_chain_.size(), 0);
+        }
     }
 
     return GetReturnErrorCode(result);
@@ -195,6 +217,20 @@ ErrorCode KeyMintAidlTestBase::ImportWrappedKey(string wrapped_key, string wrapp
         key_blob_ = std::move(creationResult.keyBlob);
         key_characteristics_ = std::move(creationResult.keyCharacteristics);
         cert_chain_ = std::move(creationResult.certificateChain);
+
+        AuthorizationSet allAuths;
+        for (auto& entry : key_characteristics_) {
+            allAuths.push_back(AuthorizationSet(entry.authorizations));
+        }
+        auto algorithm = allAuths.GetTagValue(TAG_ALGORITHM);
+        EXPECT_TRUE(algorithm);
+        if (algorithm &&
+            (algorithm.value() == Algorithm::RSA || algorithm.value() == Algorithm::EC)) {
+            EXPECT_GE(cert_chain_.size(), 1);
+        } else {
+            // For symmetric keys there should be no certificates.
+            EXPECT_EQ(cert_chain_.size(), 0);
+        }
     }
 
     return GetReturnErrorCode(result);
@@ -785,6 +821,24 @@ const vector<KeyParameter>& KeyMintAidlTestBase::SecLevelAuthorizations(
         const vector<KeyCharacteristics>& key_characteristics) {
     auto found = std::find_if(key_characteristics.begin(), key_characteristics.end(),
                               [this](auto& entry) { return entry.securityLevel == SecLevel(); });
+    return (found == key_characteristics.end()) ? kEmptyAuthList : found->authorizations;
+}
+
+const vector<KeyParameter>& KeyMintAidlTestBase::HwEnforcedAuthorizations(
+        const vector<KeyCharacteristics>& key_characteristics) {
+    auto found =
+            std::find_if(key_characteristics.begin(), key_characteristics.end(), [](auto& entry) {
+                return entry.securityLevel == SecurityLevel::STRONGBOX ||
+                       entry.securityLevel == SecurityLevel::TRUSTED_ENVIRONMENT;
+            });
+    return (found == key_characteristics.end()) ? kEmptyAuthList : found->authorizations;
+}
+
+const vector<KeyParameter>& KeyMintAidlTestBase::SwEnforcedAuthorizations(
+        const vector<KeyCharacteristics>& key_characteristics) {
+    auto found = std::find_if(
+            key_characteristics.begin(), key_characteristics.end(),
+            [](auto& entry) { return entry.securityLevel == SecurityLevel::SOFTWARE; });
     return (found == key_characteristics.end()) ? kEmptyAuthList : found->authorizations;
 }
 

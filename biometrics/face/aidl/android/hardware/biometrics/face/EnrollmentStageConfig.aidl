@@ -16,9 +16,18 @@
 
 package android.hardware.biometrics.face;
 
+import android.hardware.biometrics.face.Cell;
+import android.hardware.biometrics.face.EnrollmentStage;
+
 @VintfStability
-@Backing(type="byte")
-enum FaceSensorType {
-    RGB,
-    IR
+parcelable EnrollmentStageConfig {
+    /**
+     * The stage that's being configured.
+     */
+    EnrollmentStage stage;
+
+    /**
+     * Optional list of cells that must be completed to finish this stage.
+     */
+    List<Cell> cells;
 }
