@@ -101,14 +101,23 @@ TEST_P(WifiChipHidlTest,
     ASSERT_NE(nullptr, wifi_ap_iface.get());
     const auto& status_and_name = HIDL_INVOKE(wifi_ap_iface, getName);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_name.first.code);
-    // TODO: b/173999527, add API to get instance name to replace it.
-    std::string br_name = status_and_name.second;  // ap_br_ is the pre-fix
-    std::string instance_name =
-        br_name.substr(6, br_name.length());  // remove the pre-fex
+    std::string br_name = status_and_name.second;
+    const auto& status_and_instances =
+        HIDL_INVOKE(wifi_ap_iface, getBridgedInstances);
+    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_instances.first.code);
+    const auto& instances = status_and_instances.second;
+    EXPECT_EQ(2, instances.size());
     const auto& status_code =
         HIDL_INVOKE(wifi_chip_, removeIfaceInstanceFromBridgedApIface, br_name,
-                    instance_name);
+                    instances[0]);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status_code.code);
+    const auto& status_and_instances_after_remove =
+        HIDL_INVOKE(wifi_ap_iface, getBridgedInstances);
+    EXPECT_EQ(WifiStatusCode::SUCCESS,
+              status_and_instances_after_remove.first.code);
+    const auto& instances_after_remove =
+        status_and_instances_after_remove.second;
+    EXPECT_EQ(1, instances_after_remove.size());
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiChipHidlTest);
