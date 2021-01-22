@@ -128,7 +128,7 @@ TEST_P(SingleConfigOutputStreamTest, CloseDeviceWithOpenedOutputStreams) {
 INSTANTIATE_TEST_CASE_P(SingleConfigOutputStream, SingleConfigOutputStreamTest,
                         ::testing::ValuesIn(getOutputDeviceSingleConfigParameters()),
                         &DeviceConfigParameterToString);
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SingleConfigOutputStream);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SingleConfigOutputStreamTest);
 
 class SingleConfigInputStreamTest : public InputStreamTest {};
 TEST_P(SingleConfigInputStreamTest, CloseDeviceWithOpenedInputStreams) {
@@ -142,7 +142,7 @@ TEST_P(SingleConfigInputStreamTest, CloseDeviceWithOpenedInputStreams) {
 INSTANTIATE_TEST_CASE_P(SingleConfigInputStream, SingleConfigInputStreamTest,
                         ::testing::ValuesIn(getInputDeviceSingleConfigParameters()),
                         &DeviceConfigParameterToString);
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SingleConfigInputStream);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SingleConfigInputStreamTest);
 
 TEST_P(AudioPatchHidlTest, UpdatePatchInvalidHandle) {
     doc::test("Verify that passing an invalid handle to updateAudioPatch is checked");

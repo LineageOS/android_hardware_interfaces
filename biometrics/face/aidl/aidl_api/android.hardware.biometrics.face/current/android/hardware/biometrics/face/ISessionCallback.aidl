@@ -22,7 +22,8 @@ interface ISessionCallback {
   void onStateChanged(in int cookie, in android.hardware.biometrics.face.SessionState state);
   void onChallengeGenerated(in long challenge);
   void onChallengeRevoked(in long challenge);
-  void onAcquired(in android.hardware.biometrics.face.AcquiredInfo info, in int vendorCode);
+  void onAuthenticationFrame(in android.hardware.biometrics.face.AuthenticationFrame frame);
+  void onEnrollmentFrame(in android.hardware.biometrics.face.EnrollmentFrame frame);
   void onError(in android.hardware.biometrics.face.Error error, in int vendorCode);
   void onEnrollmentProgress(in int enrollmentId, int remaining);
   void onAuthenticationSucceeded(in int enrollmentId, in android.hardware.keymaster.HardwareAuthToken hat);

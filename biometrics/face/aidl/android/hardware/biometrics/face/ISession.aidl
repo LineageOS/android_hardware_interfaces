@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package android.hardware.biometrics.face;
 
 import android.hardware.biometrics.common.ICancellationSignal;
+import android.hardware.biometrics.face.EnrollmentType;
 import android.hardware.keymaster.HardwareAuthToken;
 import android.hardware.common.NativeHandle;
 
@@ -85,6 +86,18 @@ interface ISession {
     void revokeChallenge(in int cookie, in long challenge);
 
     /**
+     * getEnrollmentConfig:
+     *
+     * Returns the enrollment configuration depending on the provided enrollment type. Enrollment
+     * configuration determines how many stages the enrollment will have and the requirements for
+     * each of the stages.
+     *
+     * @param enrollmentType See the EnrollmentType enum.
+     * @return A list of EnrollmentStageConfig that describes each enrollment stage.
+     *
+    List<EnrollmentStageConfig> getEnrollmentConfig(in EnrollmentType enrollmentType);
+
+    /**
      * enroll:
      *
      * A request to add a face enrollment.
@@ -118,6 +131,7 @@ interface ISession {
      *
      * @param cookie An identifier used to track subsystem operations related to this call path. The
      *               client must guarantee that it is unique per ISession.
+     * @param enrollmentType See the EnrollmentType enum.
      * @param previewSurface A surface provided by the framework if SensorProps#halControlsPreview is
      *                       set to true. The HAL must send the preview frames to previewSurface if
      *                       it's not null.
@@ -125,7 +139,8 @@ interface ISession {
      * @return ICancellationSignal An object that can be used by the framework to cancel this
      * operation.
      */
-    ICancellationSignal enroll(in int cookie, in HardwareAuthToken hat, in NativeHandle previewSurface);
+    ICancellationSignal enroll(in int cookie, in EnrollmentType enrollmentType,
+            in HardwareAuthToken hat, in NativeHandle previewSurface);
 
     /**
      * authenticate:

@@ -35,9 +35,9 @@ class Session : public BnSession {
     ndk::ScopedAStatus revokeChallenge(int32_t cookie, int64_t challenge) override;
 
     ndk::ScopedAStatus enroll(
-            int32_t cookie, const keymaster::HardwareAuthToken& hat,
-            const NativeHandle& previewSurface,
-            std::shared_ptr<biometrics::common::ICancellationSignal>* returnVal) override;
+            int32_t cookie, biometrics::face::EnrollmentType enrollmentType,
+            const keymaster::HardwareAuthToken& hat, const NativeHandle& previewSurface,
+            std::shared_ptr<biometrics::common::ICancellationSignal>* return_val) override;
 
     ndk::ScopedAStatus authenticate(
             int32_t cookie, int64_t keystoreOperationId,

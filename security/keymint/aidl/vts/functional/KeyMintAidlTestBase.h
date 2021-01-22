@@ -27,7 +27,11 @@
 
 #include <keymint_support/authorization_set.h>
 
-namespace aidl::android::hardware::security::keymint::test {
+namespace aidl::android::hardware::security::keymint {
+
+::std::ostream& operator<<(::std::ostream& os, const AuthorizationSet& set);
+
+namespace test {
 
 using ::android::sp;
 using Status = ::ndk::ScopedAStatus;
@@ -36,8 +40,6 @@ using ::std::string;
 using ::std::vector;
 
 constexpr uint64_t kOpHandleSentinel = 0xFFFFFFFFFFFFFFFF;
-
-::std::ostream& operator<<(::std::ostream& os, const AuthorizationSet& set);
 
 class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
   public:
@@ -173,6 +175,10 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     inline const vector<KeyParameter>& SecLevelAuthorizations() {
         return SecLevelAuthorizations(key_characteristics_);
     }
+    const vector<KeyParameter>& HwEnforcedAuthorizations(
+            const vector<KeyCharacteristics>& key_characteristics);
+    const vector<KeyParameter>& SwEnforcedAuthorizations(
+            const vector<KeyCharacteristics>& key_characteristics);
 
   private:
     std::shared_ptr<IKeyMintDevice> keymint_;
@@ -190,4 +196,6 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
                              testing::ValuesIn(KeyMintAidlTestBase::build_params()), \
                              ::android::PrintInstanceNameToString)
 
-}  // namespace aidl::android::hardware::security::keymint::test
+}  // namespace test
+
+}  // namespace aidl::android::hardware::security::keymint

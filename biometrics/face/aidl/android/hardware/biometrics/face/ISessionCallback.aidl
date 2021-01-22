@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 package android.hardware.biometrics.face;
 
 import android.hardware.biometrics.face.AcquiredInfo;
+import android.hardware.biometrics.face.AuthenticationFrame;
+import android.hardware.biometrics.face.EnrollmentFrame;
 import android.hardware.biometrics.face.Error;
 import android.hardware.biometrics.face.SessionState;
 import android.hardware.keymaster.HardwareAuthToken;
@@ -40,20 +42,26 @@ interface ISessionCallback {
 
     /**
      * This method must only be used to notify the framework during the following states:
-     *   1) SessionState::ENROLLING
-     *   2) SessionState::AUTHENTICATING
-     *   3) SessionState::DETECTING_INTERACTION
+     *   1) SessionState::AUTHENTICATING
+     *   2) SessionState::DETECTING_INTERACTION
      *
      * These messages may be used to provide user guidance multiple times if necessary per
      * operation.
      *
-     * @param info See the AcquiredInfo enum.
-     * @param vendorCode Only valid if info == AcquiredInfo::VENDOR. The vendorCode must be used to
-     *                   index into the configuration
-     *                   com.android.internal.R.array.face_acquired_vendor that's installed
-     *                   on the vendor partition.
+     * @param frame See the AuthenticationFrame enum.
      */
-    void onAcquired(in AcquiredInfo info, in int vendorCode);
+    void onAuthenticationFrame(in AuthenticationFrame frame);
+
+    /**
+     * This method must only be used to notify the framework during the SessionState::ENROLLING
+     * state.
+     *
+     * These messages may be used to provide user guidance multiple times if necessary per
+     * operation.
+     *
+     * @param frame See the EnrollmentFrame enum.
+     */
+    void onEnrollmentFrame(in EnrollmentFrame frame);
 
     /**
      * This method must only be used to notify the framework during the following states:

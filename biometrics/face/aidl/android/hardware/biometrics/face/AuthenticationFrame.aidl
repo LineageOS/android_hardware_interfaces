@@ -16,9 +16,16 @@
 
 package android.hardware.biometrics.face;
 
+import android.hardware.biometrics.face.BaseFrame;
+
+/**
+ * Describes an individual frame captured during authentication.
+ */
 @VintfStability
-@Backing(type="byte")
-enum FaceSensorType {
-    RGB,
-    IR
+parcelable AuthenticationFrame {
+
+    /**
+     * The frame metadata. Can be used by the framework to provide user feedback.
+     */
+    BaseFrame data;
 }
