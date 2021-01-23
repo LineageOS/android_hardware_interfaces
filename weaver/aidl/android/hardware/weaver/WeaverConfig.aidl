@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "VtsHalGnssV3_0TargetTest"
 
-#include <gtest/gtest.h>
-#include <hidl/GtestPrinter.h>
-#include <hidl/ServiceManagement.h>
+package android.hardware.weaver;
 
-#include "gnss_hal_test.h"
+@VintfStability
+parcelable WeaverConfig {
+    /**
+     * The number of slots available.
+     */
+    long slots;
+    /**
+     * The number of bytes used for a key.
+     */
+    long keySize;
+    /**
+     * The number of bytes used for a value.
+     */
+    long valueSize;
+}
 
-using android::hardware::gnss::V3_0::IGnss;
-
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GnssHalTest);
-INSTANTIATE_TEST_SUITE_P(
-        PerInstance, GnssHalTest,
-        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IGnss::descriptor)),
-        android::hardware::PrintInstanceNameToString);

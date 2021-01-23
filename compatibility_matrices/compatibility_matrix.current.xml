@@ -227,7 +227,6 @@
     <hal format="hidl" optional="true">
         <name>android.hardware.gnss</name>
         <version>2.0-1</version>
-        <version>3.0</version>
         <interface>
             <name>IGnss</name>
             <instance>default</instance>
@@ -275,14 +274,6 @@
         <version>2.1</version>
         <interface>
             <name>IHealth</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.health.storage</name>
-        <version>1.0</version>
-        <interface>
-            <name>IStorage</name>
             <instance>default</instance>
         </interface>
     </hal>
@@ -608,6 +599,14 @@
     <hal format="hidl" optional="true">
         <name>android.hardware.weaver</name>
         <version>1.0</version>
+        <interface>
+            <name>IWeaver</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.weaver</name>
+        <version>1</version>
         <interface>
             <name>IWeaver</name>
             <instance>default</instance>

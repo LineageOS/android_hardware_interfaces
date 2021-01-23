@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "Gnss"
+package android.hardware.weaver;
 
-#include "Gnss.h"
-#include <log/log.h>
-#include "GnssPsds.h"
-#include "Utils.h"
-
-namespace android::hardware::gnss::V3_0::implementation {
-
-// Methods from V3_0::IGnss follow.
-Return<sp<V3_0::IGnssPsds>> Gnss::getExtensionPsds() {
-    ALOGD("Gnss::getExtensionPsds");
-    return new GnssPsds();
+@VintfStability
+parcelable WeaverReadResponse {
+    /**
+     * The time to wait, in milliseconds, before making the next request.
+     */
+    long timeout;
+    /**
+     * The value read from the slot or empty if the value was not read.
+     */
+    byte[] value;
 }
 
-}  // namespace android::hardware::gnss::V3_0::implementation
