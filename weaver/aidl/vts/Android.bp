@@ -15,23 +15,17 @@
 //
 
 cc_test {
-    name: "VtsHalGnssV3_0TargetTest",
-    defaults: ["VtsHalTargetTestDefaults"],
-    srcs: [
-        "gnss_hal_test_cases.cpp",
-        "VtsHalGnssV3_0TargetTest.cpp",
+    name: "VtsHalWeaverTargetTest",
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
     ],
-    static_libs: [
-        "android.hardware.gnss.measurement_corrections@1.0",
-        "android.hardware.gnss.measurement_corrections@1.1",
-        "android.hardware.gnss.visibility_control@1.0",
-        "android.hardware.gnss@1.0",
-        "android.hardware.gnss@1.1",
-        "android.hardware.gnss@2.0",
-        "android.hardware.gnss@2.1",
-        "android.hardware.gnss@3.0",
-        "android.hardware.gnss@common-vts-lib",
+    srcs: ["VtsHalWeaverTargetTest.cpp"],
+    shared_libs: [
+        "libbinder_ndk",
+        "libbase",
     ],
+    static_libs: ["android.hardware.weaver-ndk_platform"],
     test_suites: [
         "general-tests",
         "vts",

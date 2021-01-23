@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
-package android.hardware.gnss@3.0;
+#include <android-base/logging.h>
+#include <android/binder_manager.h>
+#include <android/binder_process.h>
 
-import @2.1::IGnss;
-import IGnssPsds;
+#include "Weaver.h"
 
-/**
- * Represents the standard GNSS (Global Navigation Satellite System) interface.
- */
-interface IGnss extends @2.1::IGnss {
-    /**
-     * This method returns the IGnssPsds interface.
-     *
-     * @return psdsIface Handle to the IGnssPsds interface.
-     */
-    getExtensionPsds() generates (IGnssPsds psdsIface);
-};
+using ::aidl::android::hardware::weaver::Weaver;
+
+int main() {
+    ABinderProcess_setThreadPoolMaxThreadCount(0);
+    std::shared_ptr<Weaver> weaver = ndk::SharedRefBase::make<Weaver>();
+
+    const std::string instance = std::string() + Weaver::descriptor + "/default";
+    binder_status_t status = AServiceManager_addService(weaver->asBinder().get(), instance.c_str());
+    CHECK(status == STATUS_OK);
+
+    ABinderProcess_joinThreadPool();
+    return -1; // Should never be reached
+}
