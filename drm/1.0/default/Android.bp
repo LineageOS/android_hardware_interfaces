@@ -9,6 +9,7 @@ cc_library_static {
         "-Werror",
         "-Wextra",
         "-Wall",
+        "-Wthread-safety",
     ],
     shared_libs: [
         "liblog",
@@ -19,5 +20,5 @@ cc_library_static {
     export_header_lib_headers: [
         "libutils_headers",
     ],
-    export_include_dirs : ["include"]
+    export_include_dirs: ["include"],
 }
