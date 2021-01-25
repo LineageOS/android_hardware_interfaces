@@ -15,6 +15,8 @@
  */
 package android.hardware.drm@1.4;
 
+import @1.0::Status;
+import @1.0::SessionId;
 import @1.1::SecurityLevel;
 import @1.2::IDrmPlugin;
 
@@ -46,5 +48,17 @@ interface IDrmPlugin extends @1.2::IDrmPlugin {
      * for the specified mime-type
      */
     requiresSecureDecoderDefault(string mime) generates (bool secureRequired);
+
+    /**
+     * Set playback id of a drm session. The playback id can be used to join drm session metrics
+     * with metrics from other low level media components, e.g. codecs, or metrics from the high
+     * level player.
+     *
+     * @param sessionId drm session id
+     * @param playbackId high level playback id
+     * @return status the status of the call. The status must be OK on success, or
+     *     ERROR_DRM_SESSION_NOT_OPENED if the drm session cannot be found
+     */
+    setPlaybackId(SessionId sessionId, string playbackId) generates (@1.0::Status status);
 
 };

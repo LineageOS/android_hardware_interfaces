@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-package android.hardware.gnss@3.0;
+package android.hardware.biometrics.face;
 
-import @2.1::IGnss;
-import IGnssPsds;
+import android.hardware.biometrics.face.Cell;
+import android.hardware.biometrics.face.EnrollmentStage;
 
-/**
- * Represents the standard GNSS (Global Navigation Satellite System) interface.
- */
-interface IGnss extends @2.1::IGnss {
+@VintfStability
+parcelable EnrollmentStageConfig {
     /**
-     * This method returns the IGnssPsds interface.
-     *
-     * @return psdsIface Handle to the IGnssPsds interface.
+     * The stage that's being configured.
      */
-    getExtensionPsds() generates (IGnssPsds psdsIface);
-};
+    EnrollmentStage stage;
+
+    /**
+     * Optional list of cells that must be completed to finish this stage.
+     */
+    List<Cell> cells;
+}

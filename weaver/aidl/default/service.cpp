@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "VtsHalGnssV3_0TargetTest"
 
-#include <gtest/gtest.h>
-#include <hidl/GtestPrinter.h>
-#include <hidl/ServiceManagement.h>
+#include <android-base/logging.h>
+#include <android/binder_manager.h>
+#include <android/binder_process.h>
 
-#include "gnss_hal_test.h"
+#include "Weaver.h"
 
-using android::hardware::gnss::V3_0::IGnss;
+using ::aidl::android::hardware::weaver::Weaver;
 
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GnssHalTest);
-INSTANTIATE_TEST_SUITE_P(
-        PerInstance, GnssHalTest,
-        testing::ValuesIn(android::hardware::getAllHalInstanceNames(IGnss::descriptor)),
-        android::hardware::PrintInstanceNameToString);
+int main() {
+    ABinderProcess_setThreadPoolMaxThreadCount(0);
+    std::shared_ptr<Weaver> weaver = ndk::SharedRefBase::make<Weaver>();
+
+    const std::string instance = std::string() + Weaver::descriptor + "/default";
+    binder_status_t status = AServiceManager_addService(weaver->asBinder().get(), instance.c_str());
+    CHECK(status == STATUS_OK);
+
+    ABinderProcess_joinThreadPool();
+    return -1; // Should never be reached
+}

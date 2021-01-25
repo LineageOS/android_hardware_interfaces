@@ -1,4 +1,18 @@
-///////////////////////////////////////////////////////////////////////////////
+/*
+ * Copyright 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *////////////////////////////////////////////////////////////////////////////////
 // THIS FILE IS IMMUTABLE. DO NOT EDIT IN ANY CASE.                          //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -16,17 +30,10 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.biometrics.face;
+package android.hardware.weaver;
 @VintfStability
-interface ISession {
-  void generateChallenge(in int cookie, in int timeoutSec);
-  void revokeChallenge(in int cookie, in long challenge);
-  android.hardware.biometrics.common.ICancellationSignal enroll(in int cookie, in android.hardware.biometrics.face.EnrollmentType enrollmentType, in android.hardware.keymaster.HardwareAuthToken hat, in android.hardware.common.NativeHandle previewSurface);
-  android.hardware.biometrics.common.ICancellationSignal authenticate(in int cookie, in long operationId);
-  android.hardware.biometrics.common.ICancellationSignal detectInteraction(in int cookie);
-  void enumerateEnrollments(in int cookie);
-  void removeEnrollments(in int cookie, in int[] enrollmentIds);
-  void getAuthenticatorId(in int cookie);
-  void invalidateAuthenticatorId(in int cookie);
-  void resetLockout(in int cookie, in android.hardware.keymaster.HardwareAuthToken hat);
+parcelable WeaverConfig {
+  long slots;
+  long keySize;
+  long valueSize;
 }

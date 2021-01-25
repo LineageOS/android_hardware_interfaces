@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "Gnss"
+package android.hardware.biometrics.face;
 
-#include "Gnss.h"
-#include <log/log.h>
-#include "GnssPsds.h"
-#include "Utils.h"
+import android.hardware.biometrics.face.BaseFrame;
 
-namespace android::hardware::gnss::V3_0::implementation {
+/**
+ * Describes an individual frame captured during authentication.
+ */
+@VintfStability
+parcelable AuthenticationFrame {
 
-// Methods from V3_0::IGnss follow.
-Return<sp<V3_0::IGnssPsds>> Gnss::getExtensionPsds() {
-    ALOGD("Gnss::getExtensionPsds");
-    return new GnssPsds();
+    /**
+     * The frame metadata. Can be used by the framework to provide user feedback.
+     */
+    BaseFrame data;
 }
-
-}  // namespace android::hardware::gnss::V3_0::implementation

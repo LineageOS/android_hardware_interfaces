@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,21 @@
  * limitations under the License.
  */
 
-#pragma once
+package android.hardware.weaver;
 
-#include <android/hardware/gnss/3.0/IGnss.h>
-#include "v2_1/gnss_hal_test_template.h"
+@VintfStability
+parcelable WeaverConfig {
+    /**
+     * The number of slots available.
+     */
+    long slots;
+    /**
+     * The number of bytes used for a key.
+     */
+    long keySize;
+    /**
+     * The number of bytes used for a value.
+     */
+    long valueSize;
+}
 
-// The main test class for GNSS HAL.
-class GnssHalTest : public android::hardware::gnss::common::GnssHalTestTemplate<
-                            android::hardware::gnss::V3_0::IGnss> {};

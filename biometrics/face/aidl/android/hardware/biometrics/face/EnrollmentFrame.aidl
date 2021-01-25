@@ -16,9 +16,27 @@
 
 package android.hardware.biometrics.face;
 
+import android.hardware.biometrics.face.Cell;
+import android.hardware.biometrics.face.EnrollmentStage;
+import android.hardware.biometrics.face.BaseFrame;
+
+/**
+ * Describes an individual frame captured during enrollment.
+ */
 @VintfStability
-@Backing(type="byte")
-enum FaceSensorType {
-    RGB,
-    IR
+parcelable EnrollmentFrame {
+    /**
+     * The enrollment UI cell that was captured in this frame, or null if no cell was captured.
+     */
+    @nullable Cell cell;
+
+    /**
+     * The enrollment stage for which this frame was captured.
+     */
+    EnrollmentStage stage;
+
+    /**
+     * The frame metadata. Can be used by the framework to provide user feedback.
+     */
+    BaseFrame data;
 }
