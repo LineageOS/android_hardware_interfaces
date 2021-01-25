@@ -2,13 +2,14 @@
 // THIS FILE IS IMMUTABLE. DO NOT EDIT IN ANY CASE.                          //
 ///////////////////////////////////////////////////////////////////////////////
 
-// This file is a snapshot of an AIDL interface (or parcelable). Do not try to
-// edit this file. It looks like you are doing that because you have modified
-// an AIDL interface in a backward-incompatible way, e.g., deleting a function
-// from an interface or a field from a parcelable and it broke the build. That
-// breakage is intended.
+// This file is a snapshot of an AIDL file. Do not edit it manually. There are
+// two cases:
+// 1). this is a frozen version file - do not edit this in any case.
+// 2). this is a 'current' file. If you make a backwards compatible change to
+//     the interface (from the latest frozen version), the build system will
+//     prompt you to update this file with `m <name>-update-api`.
 //
-// You must not make a backward incompatible changes to the AIDL files built
+// You must not make a backward incompatible change to any AIDL file built
 // with the aidl_interface module type with versions property set. The module
 // type is used to build AIDL files in a way that they can be used across
 // independently updatable components of the system. If a device is shipped
@@ -19,11 +20,10 @@ package android.hardware.security.keymint;
 @VintfStability
 interface IKeyMintDevice {
   android.hardware.security.keymint.KeyMintHardwareInfo getHardwareInfo();
-  android.hardware.security.keymint.VerificationToken verifyAuthorization(in long challenge, in android.hardware.security.keymint.HardwareAuthToken token);
   void addRngEntropy(in byte[] data);
-  void generateKey(in android.hardware.security.keymint.KeyParameter[] keyParams, out android.hardware.security.keymint.ByteArray generatedKeyBlob, out android.hardware.security.keymint.KeyCharacteristics generatedKeyCharacteristics, out android.hardware.security.keymint.Certificate[] outCertChain);
-  void importKey(in android.hardware.security.keymint.KeyParameter[] inKeyParams, in android.hardware.security.keymint.KeyFormat inKeyFormat, in byte[] inKeyData, out android.hardware.security.keymint.ByteArray outImportedKeyBlob, out android.hardware.security.keymint.KeyCharacteristics outImportedKeyCharacteristics, out android.hardware.security.keymint.Certificate[] outCertChain);
-  void importWrappedKey(in byte[] inWrappedKeyData, in byte[] inWrappingKeyBlob, in byte[] inMaskingKey, in android.hardware.security.keymint.KeyParameter[] inUnwrappingParams, in long inPasswordSid, in long inBiometricSid, out android.hardware.security.keymint.ByteArray outImportedKeyBlob, out android.hardware.security.keymint.KeyCharacteristics outImportedKeyCharacteristics);
+  android.hardware.security.keymint.KeyCreationResult generateKey(in android.hardware.security.keymint.KeyParameter[] keyParams);
+  android.hardware.security.keymint.KeyCreationResult importKey(in android.hardware.security.keymint.KeyParameter[] keyParams, in android.hardware.security.keymint.KeyFormat keyFormat, in byte[] keyData);
+  android.hardware.security.keymint.KeyCreationResult importWrappedKey(in byte[] wrappedKeyData, in byte[] wrappingKeyBlob, in byte[] maskingKey, in android.hardware.security.keymint.KeyParameter[] unwrappingParams, in long passwordSid, in long biometricSid);
   byte[] upgradeKey(in byte[] inKeyBlobToUpgrade, in android.hardware.security.keymint.KeyParameter[] inUpgradeParams);
   void deleteKey(in byte[] inKeyBlob);
   void deleteAllKeys();

@@ -1,0 +1,4 @@
+service vendor.weaver_default /vendor/bin/hw/android.hardware.weaver-service.example
+    class hal
+    user hsm
+    group hsm

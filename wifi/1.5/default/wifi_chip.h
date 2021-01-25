@@ -178,6 +178,8 @@ class WifiChip : public V1_5::IWifiChip {
         const hidl_vec<CoexUnsafeChannel>& unsafe_channels,
         hidl_bitfield<IfaceType> restrictions,
         setCoexUnsafeChannels_cb hidl_status_cb) override;
+    Return<void> setCountryCode(const hidl_array<int8_t, 2>& code,
+                                setCountryCode_cb _hidl_cb) override;
 
    private:
     void invalidateAndRemoveAllIfaces();
@@ -258,7 +260,7 @@ class WifiChip : public V1_5::IWifiChip {
     WifiStatus setMultiStaUseCaseInternal(MultiStaUseCase use_case);
     WifiStatus setCoexUnsafeChannelsInternal(
         std::vector<CoexUnsafeChannel> unsafe_channels, uint32_t restrictions);
-
+    WifiStatus setCountryCodeInternal(const std::array<int8_t, 2>& code);
     WifiStatus handleChipConfiguration(
         std::unique_lock<std::recursive_mutex>* lock, ChipModeId mode_id);
     WifiStatus registerDebugRingBufferCallback();

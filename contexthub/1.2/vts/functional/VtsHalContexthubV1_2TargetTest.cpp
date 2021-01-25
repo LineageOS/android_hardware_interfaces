@@ -62,6 +62,13 @@ TEST_P(ContexthubHidlTest, TestOnAirplaneModeSettingChanged) {
     ASSERT_OK(registerCallback(nullptr));
 }
 
+TEST_P(ContexthubHidlTest, TestOnGlobalMicDisableSettingChanged) {
+    ASSERT_OK(registerCallback(new ContexthubCallbackBase()));
+    hubApi->onSettingChanged_1_2(Setting::GLOBAL_MIC_DISABLE, SettingValue::DISABLED);
+    hubApi->onSettingChanged_1_2(Setting::GLOBAL_MIC_DISABLE, SettingValue::ENABLED);
+    ASSERT_OK(registerCallback(nullptr));
+}
+
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(ContexthubHidlTest);
 INSTANTIATE_TEST_SUITE_P(HubIdSpecificTests, ContexthubHidlTest, testing::ValuesIn(kTestParameters),
                          android::hardware::PrintInstanceTupleNameToString<>);

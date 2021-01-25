@@ -17,6 +17,7 @@
 #include "KeyMintAidlTestBase.h"
 
 #include <chrono>
+#include <unordered_set>
 #include <vector>
 
 #include <android-base/logging.h>
@@ -36,12 +37,40 @@ using std::optional;
         os << "(Empty)" << ::std::endl;
     else {
         os << "\n";
-        for (size_t i = 0; i < set.size(); ++i) os << set[i] << ::std::endl;
+        for (auto& entry : set) os << entry << ::std::endl;
     }
     return os;
 }
 
 namespace test {
+
+namespace {
+
+// Predicate for testing basic characteristics validity in generation or import.
+bool KeyCharacteristicsBasicallyValid(SecurityLevel secLevel,
+                                      const vector<KeyCharacteristics>& key_characteristics) {
+    if (key_characteristics.empty()) return false;
+
+    std::unordered_set<SecurityLevel> levels_seen;
+    for (auto& entry : key_characteristics) {
+        if (entry.authorizations.empty()) return false;
+
+        if (levels_seen.find(entry.securityLevel) != levels_seen.end()) return false;
+        levels_seen.insert(entry.securityLevel);
+
+        // Generally, we should only have one entry, at the same security level as the KM
+        // instance.  There is an exception: StrongBox KM can have some authorizations that are
+        // enforced by the TEE.
+        bool isExpectedSecurityLevel = secLevel == entry.securityLevel ||
+                                       (secLevel == SecurityLevel::STRONGBOX &&
+                                        entry.securityLevel == SecurityLevel::TRUSTED_ENVIRONMENT);
+
+        if (!isExpectedSecurityLevel) return false;
+    }
+    return true;
+}
+
+}  // namespace
 
 ErrorCode KeyMintAidlTestBase::GetReturnErrorCode(const Status& result) {
     if (result.isOk()) return ErrorCode::OK;
@@ -78,35 +107,41 @@ void KeyMintAidlTestBase::SetUp() {
 }
 
 ErrorCode KeyMintAidlTestBase::GenerateKey(const AuthorizationSet& key_desc,
-                                           vector<uint8_t>* keyBlob, KeyCharacteristics* keyChar) {
-    EXPECT_NE(keyBlob, nullptr) << "Key blob pointer must not be null.  Test bug";
-    EXPECT_NE(keyChar, nullptr)
+                                           vector<uint8_t>* key_blob,
+                                           vector<KeyCharacteristics>* key_characteristics) {
+    EXPECT_NE(key_blob, nullptr) << "Key blob pointer must not be null.  Test bug";
+    EXPECT_NE(key_characteristics, nullptr)
             << "Previous characteristics not deleted before generating key.  Test bug.";
 
     // Aidl does not clear these output parameters if the function returns
     // error.  This is different from hal where output parameter is always
     // cleared due to hal returning void.  So now we need to do our own clearing
     // of the output variables prior to calling keyMint aidl libraries.
-    keyBlob->clear();
-    keyChar->softwareEnforced.clear();
-    keyChar->hardwareEnforced.clear();
-    certChain_.clear();
+    key_blob->clear();
+    key_characteristics->clear();
+    cert_chain_.clear();
 
-    Status result;
-    ByteArray blob;
+    KeyCreationResult creationResult;
+    Status result = keymint_->generateKey(key_desc.vector_data(), &creationResult);
 
-    result = keymint_->generateKey(key_desc.vector_data(), &blob, keyChar, &certChain_);
-
-    // On result, blob & characteristics should be empty.
     if (result.isOk()) {
-        if (SecLevel() != SecurityLevel::SOFTWARE) {
-            EXPECT_GT(keyChar->hardwareEnforced.size(), 0);
+        EXPECT_PRED2(KeyCharacteristicsBasicallyValid, SecLevel(),
+                     creationResult.keyCharacteristics);
+        EXPECT_GT(creationResult.keyBlob.size(), 0);
+        *key_blob = std::move(creationResult.keyBlob);
+        *key_characteristics = std::move(creationResult.keyCharacteristics);
+        cert_chain_ = std::move(creationResult.certificateChain);
+
+        auto algorithm = key_desc.GetTagValue(TAG_ALGORITHM);
+        EXPECT_TRUE(algorithm);
+        if (algorithm &&
+            (algorithm.value() == Algorithm::RSA || algorithm.value() == Algorithm::EC)) {
+            EXPECT_GE(cert_chain_.size(), 1);
+            if (key_desc.Contains(TAG_ATTESTATION_CHALLENGE)) EXPECT_GT(cert_chain_.size(), 1);
+        } else {
+            // For symmetric keys there should be no certificates.
+            EXPECT_EQ(cert_chain_.size(), 0);
         }
-        EXPECT_GT(keyChar->softwareEnforced.size(), 0);
-        // TODO(seleneh) in a later version where we return @nullable
-        // single Certificate, check non-null single certificate is always
-        // non-empty.
-        *keyBlob = blob.data;
     }
 
     return GetReturnErrorCode(result);
@@ -118,25 +153,37 @@ ErrorCode KeyMintAidlTestBase::GenerateKey(const AuthorizationSet& key_desc) {
 
 ErrorCode KeyMintAidlTestBase::ImportKey(const AuthorizationSet& key_desc, KeyFormat format,
                                          const string& key_material, vector<uint8_t>* key_blob,
-                                         KeyCharacteristics* key_characteristics) {
+                                         vector<KeyCharacteristics>* key_characteristics) {
     Status result;
 
-    certChain_.clear();
-    key_characteristics->softwareEnforced.clear();
-    key_characteristics->hardwareEnforced.clear();
+    cert_chain_.clear();
+    key_characteristics->clear();
     key_blob->clear();
 
-    ByteArray blob;
+    KeyCreationResult creationResult;
     result = keymint_->importKey(key_desc.vector_data(), format,
-                                 vector<uint8_t>(key_material.begin(), key_material.end()), &blob,
-                                 key_characteristics, &certChain_);
+                                 vector<uint8_t>(key_material.begin(), key_material.end()),
+                                 &creationResult);
 
     if (result.isOk()) {
-        if (SecLevel() != SecurityLevel::SOFTWARE) {
-            EXPECT_GT(key_characteristics->hardwareEnforced.size(), 0);
+        EXPECT_PRED2(KeyCharacteristicsBasicallyValid, SecLevel(),
+                     creationResult.keyCharacteristics);
+        EXPECT_GT(creationResult.keyBlob.size(), 0);
+
+        *key_blob = std::move(creationResult.keyBlob);
+        *key_characteristics = std::move(creationResult.keyCharacteristics);
+        cert_chain_ = std::move(creationResult.certificateChain);
+
+        auto algorithm = key_desc.GetTagValue(TAG_ALGORITHM);
+        EXPECT_TRUE(algorithm);
+        if (algorithm &&
+            (algorithm.value() == Algorithm::RSA || algorithm.value() == Algorithm::EC)) {
+            EXPECT_GE(cert_chain_.size(), 1);
+            if (key_desc.Contains(TAG_ATTESTATION_CHALLENGE)) EXPECT_GT(cert_chain_.size(), 1);
+        } else {
+            // For symmetric keys there should be no certificates.
+            EXPECT_EQ(cert_chain_.size(), 0);
         }
-        EXPECT_GT(key_characteristics->softwareEnforced.size(), 0);
-        *key_blob = blob.data;
     }
 
     return GetReturnErrorCode(result);
@@ -151,25 +198,39 @@ ErrorCode KeyMintAidlTestBase::ImportWrappedKey(string wrapped_key, string wrapp
                                                 const AuthorizationSet& wrapping_key_desc,
                                                 string masking_key,
                                                 const AuthorizationSet& unwrapping_params) {
-    Status result;
     EXPECT_EQ(ErrorCode::OK, ImportKey(wrapping_key_desc, KeyFormat::PKCS8, wrapping_key));
 
-    ByteArray outBlob;
-    key_characteristics_.softwareEnforced.clear();
-    key_characteristics_.hardwareEnforced.clear();
+    key_characteristics_.clear();
 
-    result = keymint_->importWrappedKey(vector<uint8_t>(wrapped_key.begin(), wrapped_key.end()),
-                                        key_blob_,
-                                        vector<uint8_t>(masking_key.begin(), masking_key.end()),
-                                        unwrapping_params.vector_data(), 0 /* passwordSid */,
-                                        0 /* biometricSid */, &outBlob, &key_characteristics_);
+    KeyCreationResult creationResult;
+    Status result = keymint_->importWrappedKey(
+            vector<uint8_t>(wrapped_key.begin(), wrapped_key.end()), key_blob_,
+            vector<uint8_t>(masking_key.begin(), masking_key.end()),
+            unwrapping_params.vector_data(), 0 /* passwordSid */, 0 /* biometricSid */,
+            &creationResult);
 
     if (result.isOk()) {
-        key_blob_ = outBlob.data;
-        if (SecLevel() != SecurityLevel::SOFTWARE) {
-            EXPECT_GT(key_characteristics_.hardwareEnforced.size(), 0);
+        EXPECT_PRED2(KeyCharacteristicsBasicallyValid, SecLevel(),
+                     creationResult.keyCharacteristics);
+        EXPECT_GT(creationResult.keyBlob.size(), 0);
+
+        key_blob_ = std::move(creationResult.keyBlob);
+        key_characteristics_ = std::move(creationResult.keyCharacteristics);
+        cert_chain_ = std::move(creationResult.certificateChain);
+
+        AuthorizationSet allAuths;
+        for (auto& entry : key_characteristics_) {
+            allAuths.push_back(AuthorizationSet(entry.authorizations));
         }
-        EXPECT_GT(key_characteristics_.softwareEnforced.size(), 0);
+        auto algorithm = allAuths.GetTagValue(TAG_ALGORITHM);
+        EXPECT_TRUE(algorithm);
+        if (algorithm &&
+            (algorithm.value() == Algorithm::RSA || algorithm.value() == Algorithm::EC)) {
+            EXPECT_GE(cert_chain_.size(), 1);
+        } else {
+            // For symmetric keys there should be no certificates.
+            EXPECT_EQ(cert_chain_.size(), 0);
+        }
     }
 
     return GetReturnErrorCode(result);
@@ -752,6 +813,33 @@ vector<Digest> KeyMintAidlTestBase::ValidDigests(bool withNone, bool withMD5) {
     }
     ADD_FAILURE() << "Should be impossible to get here";
     return {};
+}
+
+static const vector<KeyParameter> kEmptyAuthList{};
+
+const vector<KeyParameter>& KeyMintAidlTestBase::SecLevelAuthorizations(
+        const vector<KeyCharacteristics>& key_characteristics) {
+    auto found = std::find_if(key_characteristics.begin(), key_characteristics.end(),
+                              [this](auto& entry) { return entry.securityLevel == SecLevel(); });
+    return (found == key_characteristics.end()) ? kEmptyAuthList : found->authorizations;
+}
+
+const vector<KeyParameter>& KeyMintAidlTestBase::HwEnforcedAuthorizations(
+        const vector<KeyCharacteristics>& key_characteristics) {
+    auto found =
+            std::find_if(key_characteristics.begin(), key_characteristics.end(), [](auto& entry) {
+                return entry.securityLevel == SecurityLevel::STRONGBOX ||
+                       entry.securityLevel == SecurityLevel::TRUSTED_ENVIRONMENT;
+            });
+    return (found == key_characteristics.end()) ? kEmptyAuthList : found->authorizations;
+}
+
+const vector<KeyParameter>& KeyMintAidlTestBase::SwEnforcedAuthorizations(
+        const vector<KeyCharacteristics>& key_characteristics) {
+    auto found = std::find_if(
+            key_characteristics.begin(), key_characteristics.end(),
+            [](auto& entry) { return entry.securityLevel == SecurityLevel::SOFTWARE; });
+    return (found == key_characteristics.end()) ? kEmptyAuthList : found->authorizations;
 }
 
 }  // namespace test

@@ -163,7 +163,7 @@ StreamOut::~StreamOut() {
         status_t status = EventFlag::deleteEventFlag(&mEfGroup);
         ALOGE_IF(status, "write MQ event flag deletion error: %s", strerror(-status));
     }
-    mCallback.clear();
+    mCallback = nullptr;
 #if MAJOR_VERSION <= 5
     mDevice->closeOutputStream(mStream);
     // Closing the output stream in the HAL waits for the callback to finish,
@@ -462,7 +462,7 @@ Return<Result> StreamOut::setCallback(const sp<IStreamOutCallback>& callback) {
 
 Return<Result> StreamOut::clearCallback() {
     if (mStream->set_callback == NULL) return Result::NOT_SUPPORTED;
-    mCallback.clear();
+    mCallback = nullptr;
     return Result::OK;
 }
 
@@ -477,7 +477,7 @@ int StreamOut::asyncCallback(stream_callback_event_t event, void*, void* cookie)
     // It's correct to hold an sp<> to callback because the reference
     // in the StreamOut instance can be cleared in the meantime. There is
     // no difference on which thread to run IStreamOutCallback's destructor.
-    sp<IStreamOutCallback> callback = self->mCallback;
+    sp<IStreamOutCallback> callback = self->mCallback.load();
     if (callback.get() == nullptr) return 0;
     ALOGV("asyncCallback() event %d", event);
     Return<void> result;
@@ -658,32 +658,65 @@ Return<Result> StreamOut::selectPresentation(int32_t /*presentationId*/, int32_t
 
 #if MAJOR_VERSION >= 6
 Return<void> StreamOut::getDualMonoMode(getDualMonoMode_cb _hidl_cb) {
-    _hidl_cb(Result::NOT_SUPPORTED, DualMonoMode::OFF);
+    audio_dual_mono_mode_t mode = AUDIO_DUAL_MONO_MODE_OFF;
+    Result retval = mStream->get_dual_mono_mode != nullptr
+                            ? Stream::analyzeStatus("get_dual_mono_mode",
+                                                    mStream->get_dual_mono_mode(mStream, &mode))
+                            : Result::NOT_SUPPORTED;
+    _hidl_cb(retval, DualMonoMode(mode));
     return Void();
 }
 
-Return<Result> StreamOut::setDualMonoMode(DualMonoMode /*mode*/) {
-    return Result::NOT_SUPPORTED;
+Return<Result> StreamOut::setDualMonoMode(DualMonoMode mode) {
+    return mStream->set_dual_mono_mode != nullptr
+                   ? Stream::analyzeStatus(
+                             "set_dual_mono_mode",
+                             mStream->set_dual_mono_mode(mStream,
+                                                         static_cast<audio_dual_mono_mode_t>(mode)))
+                   : Result::NOT_SUPPORTED;
 }
 
 Return<void> StreamOut::getAudioDescriptionMixLevel(getAudioDescriptionMixLevel_cb _hidl_cb) {
-    _hidl_cb(Result::NOT_SUPPORTED, -std::numeric_limits<float>::infinity());
+    float leveldB = -std::numeric_limits<float>::infinity();
+    Result retval = mStream->get_audio_description_mix_level != nullptr
+                            ? Stream::analyzeStatus(
+                                      "get_audio_description_mix_level",
+                                      mStream->get_audio_description_mix_level(mStream, &leveldB))
+                            : Result::NOT_SUPPORTED;
+    _hidl_cb(retval, leveldB);
     return Void();
 }
 
-Return<Result> StreamOut::setAudioDescriptionMixLevel(float /*leveldB*/) {
-    return Result::NOT_SUPPORTED;
+Return<Result> StreamOut::setAudioDescriptionMixLevel(float leveldB) {
+    return mStream->set_audio_description_mix_level != nullptr
+                   ? Stream::analyzeStatus(
+                             "set_audio_description_mix_level",
+                             mStream->set_audio_description_mix_level(mStream, leveldB))
+                   : Result::NOT_SUPPORTED;
 }
 
 Return<void> StreamOut::getPlaybackRateParameters(getPlaybackRateParameters_cb _hidl_cb) {
-    _hidl_cb(Result::NOT_SUPPORTED,
-             // Same as AUDIO_PLAYBACK_RATE_INITIALIZER
-             PlaybackRate{1.0f, 1.0f, TimestretchMode::DEFAULT, TimestretchFallbackMode::FAIL});
+    audio_playback_rate_t rate = AUDIO_PLAYBACK_RATE_INITIALIZER;
+    Result retval =
+            mStream->get_playback_rate_parameters != nullptr
+                    ? Stream::analyzeStatus("get_playback_rate_parameters",
+                                            mStream->get_playback_rate_parameters(mStream, &rate))
+                    : Result::NOT_SUPPORTED;
+    _hidl_cb(retval,
+             PlaybackRate{rate.mSpeed, rate.mPitch, static_cast<TimestretchMode>(rate.mStretchMode),
+                          static_cast<TimestretchFallbackMode>(rate.mFallbackMode)});
     return Void();
 }
 
-Return<Result> StreamOut::setPlaybackRateParameters(const PlaybackRate& /*playbackRate*/) {
-    return Result::NOT_SUPPORTED;
+Return<Result> StreamOut::setPlaybackRateParameters(const PlaybackRate& playbackRate) {
+    audio_playback_rate_t rate = {
+            playbackRate.speed, playbackRate.pitch,
+            static_cast<audio_timestretch_stretch_mode_t>(playbackRate.timestretchMode),
+            static_cast<audio_timestretch_fallback_mode_t>(playbackRate.fallbackMode)};
+    return mStream->set_playback_rate_parameters != nullptr
+                   ? Stream::analyzeStatus("set_playback_rate_parameters",
+                                           mStream->set_playback_rate_parameters(mStream, &rate))
+                   : Result::NOT_SUPPORTED;
 }
 
 Return<Result> StreamOut::setEventCallback(const sp<IStreamOutEventCallback>& callback) {
@@ -698,7 +731,7 @@ Return<Result> StreamOut::setEventCallback(const sp<IStreamOutEventCallback>& ca
 // static
 int StreamOut::asyncEventCallback(stream_event_callback_type_t event, void* param, void* cookie) {
     StreamOut* self = reinterpret_cast<StreamOut*>(cookie);
-    sp<IStreamOutEventCallback> eventCallback = self->mEventCallback;
+    sp<IStreamOutEventCallback> eventCallback = self->mEventCallback.load();
     if (eventCallback.get() == nullptr) return 0;
     ALOGV("%s event %d", __func__, event);
     Return<void> result;

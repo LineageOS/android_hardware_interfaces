@@ -1,0 +1,16 @@
+aidl_interface {
+    name: "android.hardware.oemlock",
+    vendor_available: true,
+    srcs: ["android/hardware/oemlock/*.aidl"],
+    stability: "vintf",
+    backend: {
+        java: {
+            platform_apis: true,
+        },
+        ndk: {
+            vndk: {
+                enabled: true,
+            },
+        },
+    },
+}

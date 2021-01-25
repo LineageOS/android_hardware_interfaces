@@ -173,6 +173,20 @@ TEST_P(WifiChipHidlTest, setCoexUnsafeChannels) {
     }
 }
 
+/*
+ * SetCountryCode:
+ * Ensures that a call to set the country code will return with a success
+ * status code.
+ */
+TEST_P(WifiChipHidlTest, setCountryCode) {
+    const android::hardware::hidl_array<int8_t, 2> kCountryCode{
+        std::array<int8_t, 2>{{0x55, 0x53}}};
+
+    configureChipForIfaceType(IfaceType::STA, true);
+    EXPECT_EQ(WifiStatusCode::SUCCESS,
+              HIDL_INVOKE(wifi_chip_, setCountryCode, kCountryCode).code);
+}
+
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiChipHidlTest);
 INSTANTIATE_TEST_SUITE_P(
     PerInstance, WifiChipHidlTest,

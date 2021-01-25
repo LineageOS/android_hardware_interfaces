@@ -27,8 +27,14 @@ import android.hardware.gnss.IGnssConfiguration;
 @VintfStability
 interface IGnssCallback {
 
-    /** Capability bit mask indicating GNSS supports blocklisting satellites */
-    const int CAPABILITY_SATELLITE_BLOCKLIST = 1 << 0;
+    /** Capability bit mask indicating that GNSS supports blocklisting satellites */
+    const int CAPABILITY_SATELLITE_BLOCKLIST = 1 << 9;
+
+    /** Capability bit mask indicating that GNSS supports correlation vector */
+    const int CAPABILITY_CORRELATION_VECTOR =  1 << 12;
+
+    /** Capability bit mask indicating that GNSS supports satellite PVT */
+    const int CAPABILITY_SATELLITE_PVT       = 1 << 13;
 
     /**
      * Callback to inform framework of the GNSS HAL implementation's capabilities.

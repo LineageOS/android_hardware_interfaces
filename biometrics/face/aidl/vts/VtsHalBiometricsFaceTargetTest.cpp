@@ -59,7 +59,11 @@ class SessionCallback : public BnSessionCallback {
         return ndk::ScopedAStatus::ok();
     }
 
-    ndk::ScopedAStatus onAcquired(AcquiredInfo /*info*/, int32_t /*vendorCode*/) override {
+    ndk::ScopedAStatus onAuthenticationFrame(const AuthenticationFrame& /*frame*/) override {
+        return ndk::ScopedAStatus::ok();
+    }
+
+    ndk::ScopedAStatus onEnrollmentFrame(const EnrollmentFrame& /*frame*/) override {
         return ndk::ScopedAStatus::ok();
     }
 
@@ -103,7 +107,9 @@ class SessionCallback : public BnSessionCallback {
         return ndk::ScopedAStatus::ok();
     }
 
-    ndk::ScopedAStatus onAuthenticatorIdInvalidated() override { return ndk::ScopedAStatus::ok(); }
+    ndk::ScopedAStatus onAuthenticatorIdInvalidated(int64_t /*newAuthenticatorId*/) override {
+        return ndk::ScopedAStatus::ok();
+    }
 
   private:
     std::promise<SessionCallbackInvocation> invocation_promise_;

@@ -18,16 +18,15 @@ package android.hardware.security.keymint;
 
 import android.hardware.security.keymint.BeginResult;
 import android.hardware.security.keymint.ByteArray;
-import android.hardware.security.keymint.Certificate;
 import android.hardware.security.keymint.HardwareAuthToken;
 import android.hardware.security.keymint.IKeyMintOperation;
-import android.hardware.security.keymint.KeyCharacteristics;
+import android.hardware.security.keymint.KeyCreationResult;
 import android.hardware.security.keymint.KeyFormat;
 import android.hardware.security.keymint.KeyParameter;
 import android.hardware.security.keymint.KeyMintHardwareInfo;
 import android.hardware.security.keymint.KeyPurpose;
 import android.hardware.security.keymint.SecurityLevel;
-import android.hardware.security.keymint.VerificationToken;
+import android.hardware.security.secureclock.TimeStampToken;
 
 /**
  * KeyMint device definition.
@@ -126,16 +125,22 @@ import android.hardware.security.keymint.VerificationToken;
  * attacker can use them at will (though they're more secure than keys which can be
  * exfiltrated).  Therefore, IKeyMintDevice must enforce access controls.
  *
- * Access controls are defined as an "authorization list" of tag/value pairs.  Authorization tags
- * are 32-bit integers from the Tag enum, and the values are a variety of types, defined in the
- * TagType enum.  Some tags may be repeated to specify multiple values.  Whether a tag may be
- * repeated is specified in the documentation for the tag and in the TagType.  When a key is
- * created or imported, the caller specifies an authorization list.  The IKeyMintDevice must divide
- * the caller-provided authorizations into two lists, those it enforces in tee secure zone and
- * those enforced in the strongBox hardware.  These two lists are returned as the "teeEnforced"
- * and "strongboxEnforced" elements of the KeyCharacteristics struct. Note that software enforced
- * authorization list entries are not returned because they are not enforced by keymint.  The
- * IKeyMintDevice must also add the following authorizations to the appropriate list:
+ * Access controls are defined as "authorization lists" of tag/value pairs.  Authorization tags are
+ * 32-bit integers from the Tag enum, and the values are a variety of types, defined in the TagType
+ * enum.  Some tags may be repeated to specify multiple values.  Whether a tag may be repeated is
+ * specified in the documentation for the tag and in the TagType.  When a key is created or
+ * imported, the caller specifies a `key_description` authorization list.  The IKeyMintDevice must
+ * determine which tags it can and cannot enforce, and at what SecurityLevel, and return an array of
+ * `KeyCharacteristics` structures that contains everything it will enforce, associated with the
+ * appropriate security level, which is one of SOFTWARE, TRUSTED_ENVIRONMENT and STRONGBOX.
+ * Typically, implementations will only return a single KeyCharacteristics structure, because
+ * everything they enforce is enforced at the same security level.  There may be cases, however, for
+ * which multiple security levels are relevant. One example is that of a StrongBox IKeyMintDevice
+ * that relies on a TEE to enforce biometric user authentication.  In that case, the generate/import
+ * methods must return two KeyCharacteristics structs, one with SecurityLevel::TRUSTED_ENVIRONMENT
+ * and the biometric authentication-related tags, and another with SecurityLevel::STRONGBOX and
+ * everything else.  The IKeyMintDevice must also add the following authorizations to the
+ * appropriate list:
  *
  * o    Tag::OS_VERSION
  * o    Tag::OS_PATCHLEVEL
@@ -148,26 +153,27 @@ import android.hardware.security.keymint.VerificationToken;
  * The caller must always provide the current date time in the keyParameter CREATION_DATETIME
  * tags.
  *
- * All authorization tags and their values, both teeEnforced and strongboxEnforced, including
- * unknown tags, must be cryptographically bound to the private/secret key material such that any
- * modification of the portion of the key blob that contains the authorization list makes it
- * impossible for the secure environment to obtain the private/secret key material.  The
- * recommended approach to meet this requirement is to use the full set of authorization tags
- * associated with a key as input to a secure key derivation function used to derive a key that
- * is used to encrypt the private/secret key material.
+ * All authorization tags and their values enforced by an IKeyMintDevice must be cryptographically
+ * bound to the private/secret key material such that any modification of the portion of the key
+ * blob that contains the authorization list makes it impossible for the secure environment to
+ * obtain the private/secret key material.  The recommended approach to meet this requirement is to
+ * use the full set of authorization tags associated with a key as input to a secure key derivation
+ * function used to derive a key (the KEK) that is used to encrypt the private/secret key material.
+ * Note that it is NOT acceptable to use a static KEK to encrypt the private/secret key material
+ * with an AEAD cipher mode, using the enforced authorization tags as AAD.  This is because
+ * Tag::APPLICATION_DATA must not be included in the authorization tags stored in the key blob, but
+ * must be provided by the caller for every use.  Assuming the Tag::APPLICATION_DATA value has
+ * sufficient entropy, this provides a cryptographic guarantee that an attacker cannot use a key
+ * without knowing the Tag::APPLICATION_DATA value, even if they compromise the IKeyMintDevice.
  *
- * IKeyMintDevice implementations ignore any tags they cannot enforce and do not return them
- * in KeyCharacteristics.  For example, Tag::ORIGINATION_EXPIRE_DATETIME provides the date and
- * time after which a key may not be used to encrypt or sign new messages.  Unless the
- * IKeyMintDevice has access to a secure source of current date/time information, it is not
- * possible for the IKeyMintDevice to enforce this tag.  An IKeyMintDevice implementation will
- * not rely on the non-secure world's notion of time, because it could be controlled by an
- * attacker. Similarly, it cannot rely on GPSr time, even if it has exclusive control of the
- * GPSr, because that might be spoofed by attacker RF signals.
- *
- * IKeyMintDevices do not use or enforce any tags they place in the softwareEnforced
- * list.  The IKeyMintDevice caller must enforce them, and it is unnecessary to enforce them
- * twice.
+ * IKeyMintDevice implementations must ignore any tags they cannot enforce and must not return them
+ * in KeyCharacteristics.  For example, Tag::ORIGINATION_EXPIRE_DATETIME provides the date and time
+ * after which a key may not be used to encrypt or sign new messages.  Unless the IKeyMintDevice has
+ * access to a secure source of current date/time information, it is not possible for the
+ * IKeyMintDevice to enforce this tag.  An IKeyMintDevice implementation will not rely on the
+ * non-secure world's notion of time, because it could be controlled by an attacker. Similarly, it
+ * cannot rely on GPSr time, even if it has exclusive control of the GPSr, because that might be
+ * spoofed by attacker RF signals.
  *
  * Some tags must be enforced by the IKeyMintDevice.  See the detailed documentation on each Tag
  * in Tag.aidl.
@@ -215,34 +221,6 @@ interface IKeyMintDevice {
      *         as version number, security level, keyMint name and author name.
      */
     KeyMintHardwareInfo getHardwareInfo();
-
-    /**
-     * Verify authorizations for another IKeyMintDevice instance.
-     *
-     * On systems with both a StrongBox and a TEE IKeyMintDevice instance it is sometimes useful
-     * to ask the TEE KeyMintDevice to verify authorizations for a key hosted in StrongBox.
-     *
-     * For every StrongBox operation, Keystore is required to call this method on the TEE KeyMint,
-     * passing in the StrongBox key's hardwareEnforced authorization list and the challenge
-     * returned by StrongBox begin().  Keystore must then pass the VerificationToken to the
-     * subsequent invocations of StrongBox update() and finish().
-     *
-     * StrongBox implementations must return ErrorCode::UNIMPLEMENTED.
-     *
-     * @param the challenge returned by StrongBox's keyMint's begin().
-     *
-     * @param authToken A HardwareAuthToken if needed to authorize key usage.
-     *
-     * @return error ErrorCode::OK on success or ErrorCode::UNIMPLEMENTED if the KeyMintDevice is
-     *         a StrongBox.  If the IKeyMintDevice cannot verify one or more elements of
-     *         parametersToVerify it must not return an error code, but just omit the unverified
-     *         parameter from the VerificationToken.
-     *
-     * @return token the verification token.  See VerificationToken in VerificationToken.aidl for
-     *         details.
-     */
-    VerificationToken verifyAuthorization(in long challenge,
-                                          in HardwareAuthToken token);
 
     /**
      * Adds entropy to the RNG used by KeyMint.  Entropy added through this method must not be the
@@ -337,38 +315,9 @@ interface IKeyMintDevice {
      *        provided in params.  See above for detailed specifications of which tags are required
      *        for which types of keys.
      *
-     * @return generatedKeyBlob Opaque descriptor of the generated key.  The recommended
-     *         implementation strategy is to include an encrypted copy of the key material, wrapped
-     *         in a key unavailable outside secure hardware.
-     *
-     * @return generatedKeyCharacteristics Description of the generated key, divided into two sets:
-     *         hardware-enforced and software-enforced.  The description here applies equally
-     *         to the key characteristics lists returned by generateKey, importKey and
-     *         importWrappedKey.  The characteristics returned by this parameter completely
-     *         describe the type and usage of the specified key.
-     *
-     *         The rule that IKeyMintDevice implementations must use for deciding whether a
-     *         given tag belongs in the hardware-enforced or software-enforced list is that if
-     *         the meaning of the tag is fully assured by secure hardware, it is hardware
-     *         enforced.  Otherwise, it's software enforced.
-     *
-     * @return outCertChain If the key is an asymmetric key, and proper keyparameters for
-     *         attestation (such as challenge) is provided, then this parameter will return the
-     *         attestation certificate.  If the signing of the attestation certificate is from a
-     *         factory key, additional certificates back to the root attestation certificate will
-     *         also be provided. Clients will need to check root certificate against a known-good
-     *         value. The certificates must be DER-encoded.  Caller needs to provide
-     *         CREATION_DATETIME as one of the attestation parameters, otherwise the attestation
-     *         certificate will not contain the creation datetime.  The first certificate in the
-     *         vector is the attestation for the generated key itself, the next certificate is
-     *         the key that signs the first certificate, and so forth.  The last certificate in
-     *         the chain is the root certificate.  If the key is a symmetric key, then no
-     *         certificate will be returned and this variable will return empty. TODO: change
-     *         certificate return to a single certificate and make it nullable b/163604282.
+     * @return The result of key creation.  See KeyCreationResult.aidl.
      */
-    void generateKey(in KeyParameter[] keyParams, out ByteArray generatedKeyBlob,
-                     out KeyCharacteristics generatedKeyCharacteristics,
-                     out Certificate[] outCertChain);
+    KeyCreationResult generateKey(in KeyParameter[] keyParams);
 
     /**
      * Imports key material into an IKeyMintDevice.  Key definition parameters and return values
@@ -396,29 +345,10 @@ interface IKeyMintDevice {
      *
      * @param inKeyData The key material to import, in the format specified in keyFormat.
      *
-     * @return outImportedKeyBlob descriptor of the imported key.  The format of the keyblob will
-     *         be the google specified keyblob format.
-     *
-     * @return outImportedKeyCharacteristics Description of the generated key.  See the
-     *         keyCharacteristics description in generateKey.
-     *
-     * @return outCertChain If the key is an asymmetric key, and proper keyparameters for
-     *         attestation (such as challenge) is provided, then this parameter will return the
-     *         attestation certificate.  If the signing of the attestation certificate is from a
-     *         factory key, additional certificates back to the root attestation certificate will
-     *         also be provided. Clients will need to check root certificate against a known-good
-     *         value. The certificates must be DER-encoded.  Caller needs to provide
-     *         CREATION_DATETIME as one of the attestation parameters, otherwise the attestation
-     *         certificate will not contain the creation datetime.  The first certificate in the
-     *         vector is the attestation for the generated key itself, the next certificate is
-     *         the key that signs the first certificate, and so forth.  The last certificate in
-     *         the chain is the root certificate.  If the key is a symmetric key, then no
-     *         certificate will be returned and this variable will return empty.
+     * @return The result of key creation.  See KeyCreationResult.aidl.
      */
-    void importKey(in KeyParameter[] inKeyParams, in KeyFormat inKeyFormat,
-                   in byte[] inKeyData, out ByteArray outImportedKeyBlob,
-                   out KeyCharacteristics outImportedKeyCharacteristics,
-                   out Certificate[] outCertChain);
+    KeyCreationResult importKey(in KeyParameter[] keyParams, in KeyFormat keyFormat,
+                                in byte[] keyData);
 
     /**
      * Securely imports a key, or key pair, returning a key blob and a description of the imported
@@ -474,45 +404,38 @@ interface IKeyMintDevice {
      *     5. Perform the equivalent of calling importKey(keyParams, keyFormat, keyData), except
      *        that the origin tag should be set to SECURELY_IMPORTED.
      *
-     * @param inWrappingKeyBlob The opaque key descriptor returned by generateKey() or importKey().
+     * @param wrappingKeyBlob The opaque key descriptor returned by generateKey() or importKey().
      *        This key must have been created with Purpose::WRAP_KEY.
      *
-     * @param inMaskingKey The 32-byte value XOR'd with the transport key in the SecureWrappedKey
+     * @param maskingKey The 32-byte value XOR'd with the transport key in the SecureWrappedKey
      *        structure.
      *
-     * @param inUnwrappingParams must contain any parameters needed to perform the unwrapping
-     *        operation.  For example, if the wrapping key is an AES key the block and padding
-     *        modes must be specified in this argument.
+     * @param unwrappingParams must contain any parameters needed to perform the unwrapping
+     *        operation.  For example, if the wrapping key is an AES key the block and padding modes
+     *        must be specified in this argument.
      *
-     * @param inPasswordSid specifies the password secure ID (SID) of the user that owns the key
-     *        being installed.  If the authorization list in wrappedKeyData contains a
-     *        Tag::USER_SECURE_IDwith a value that has the HardwareAuthenticatorType::PASSWORD
-     *        bit set, the constructed key must be bound to the SID value provided by this
-     *        argument.  If the wrappedKeyData does not contain such a tag and value, this argument
-     *        must be ignored.
+     * @param passwordSid specifies the password secure ID (SID) of the user that owns the key being
+     *        installed.  If the authorization list in wrappedKeyData contains a
+     *        Tag::USER_SECURE_IDwith a value that has the HardwareAuthenticatorType::PASSWORD bit
+     *        set, the constructed key must be bound to the SID value provided by this argument.  If
+     *        the wrappedKeyData does not contain such a tag and value, this argument must be
+     *        ignored.
      *
-     * @param inBiometricSid specifies the biometric secure ID (SID) of the user that owns the key
+     * @param biometricSid specifies the biometric secure ID (SID) of the user that owns the key
      *        being installed.  If the authorization list in wrappedKeyData contains a
      *        Tag::USER_SECURE_ID with a value that has the HardwareAuthenticatorType::FINGERPRINT
      *        bit set, the constructed key must be bound to the SID value provided by this argument.
      *        If the wrappedKeyData does not contain such a tag and value, this argument must be
      *        ignored.
      *
-     * @return outImportedKeyBlob Opaque descriptor of the imported key.  It is recommended that
-     *         the keyBlob contain a copy of the key material, wrapped in a key unavailable outside
-     *         secure hardware.
-     *
-     * @return outImportedKeyCharacteristics Description of the generated key.  See the description
-     *         of keyCharacteristics parameter in generateKey.
+     * @return The result of key creation.  See KeyCreationResult.aidl.
      */
-    void importWrappedKey(in byte[] inWrappedKeyData,
-                          in byte[] inWrappingKeyBlob,
-                          in byte[] inMaskingKey,
-                          in KeyParameter[] inUnwrappingParams,
-                          in long inPasswordSid,
-                          in long inBiometricSid,
-                          out ByteArray outImportedKeyBlob,
-                          out KeyCharacteristics outImportedKeyCharacteristics);
+     KeyCreationResult importWrappedKey(in byte[] wrappedKeyData,
+                                        in byte[] wrappingKeyBlob,
+                                        in byte[] maskingKey,
+                                        in KeyParameter[] unwrappingParams,
+                                        in long passwordSid,
+                                        in long biometricSid);
 
     /**
      * Upgrades an old key blob.  Keys can become "old" in two ways: IKeyMintDevice can be

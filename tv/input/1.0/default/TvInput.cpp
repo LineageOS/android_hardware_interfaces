@@ -142,7 +142,7 @@ Return<Result> TvInput::closeStream(int32_t deviceId, int32_t streamId)  {
 
 // static
 void TvInput::notify(struct tv_input_device* __unused, tv_input_event_t* event,
-        void* __unused) {
+                     void* optionalStatus) {
     if (mCallback != nullptr && event != nullptr) {
         // Capturing is no longer supported.
         if (event->type >= TV_INPUT_EVENT_CAPTURE_SUCCEEDED) {
@@ -154,7 +154,17 @@ void TvInput::notify(struct tv_input_device* __unused, tv_input_event_t* event,
         tvInputEvent.deviceInfo.type = static_cast<TvInputType>(
                 event->device_info.type);
         tvInputEvent.deviceInfo.portId = event->device_info.hdmi.port_id;
-        tvInputEvent.deviceInfo.cableConnectionStatus = CableConnectionStatus::UNKNOWN;
+        CableConnectionStatus connectionStatus = CableConnectionStatus::UNKNOWN;
+        if (optionalStatus != nullptr &&
+            ((event->type == TV_INPUT_EVENT_STREAM_CONFIGURATIONS_CHANGED) ||
+             (event->type == TV_INPUT_EVENT_DEVICE_AVAILABLE))) {
+            int newStatus = *reinterpret_cast<int*>(optionalStatus);
+            if (newStatus <= static_cast<int>(CableConnectionStatus::DISCONNECTED) &&
+                newStatus >= static_cast<int>(CableConnectionStatus::UNKNOWN)) {
+                connectionStatus = static_cast<CableConnectionStatus>(newStatus);
+            }
+        }
+        tvInputEvent.deviceInfo.cableConnectionStatus = connectionStatus;
         // TODO: Ensure the legacy audio type code is the same once audio HAL default
         // implementation is ready.
         tvInputEvent.deviceInfo.audioType = static_cast<AudioDevice>(

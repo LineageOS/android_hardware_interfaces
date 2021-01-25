@@ -36,7 +36,10 @@ ndk::ScopedAStatus Gnss::setCallback(const std::shared_ptr<IGnssCallback>& callb
 
     sGnssCallback = callback;
 
-    int capabilities = (int)IGnssCallback::CAPABILITY_SATELLITE_BLOCKLIST;
+    int capabilities = (int)(IGnssCallback::CAPABILITY_SATELLITE_BLOCKLIST |
+                             IGnssCallback::CAPABILITY_SATELLITE_PVT |
+                             IGnssCallback::CAPABILITY_CORRELATION_VECTOR);
+
     auto status = sGnssCallback->gnssSetCapabilitiesCb(capabilities);
     if (!status.isOk()) {
         ALOGE("%s: Unable to invoke callback.gnssSetCapabilities", __func__);

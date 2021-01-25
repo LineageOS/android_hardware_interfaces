@@ -41,7 +41,7 @@ interface IContexthub {
      * registration.
      *
      * @param hubId    identifier for the hub
-     *        callback an implementation of the IContextHubCallbacks
+     * @param callback an implementation of the IContextHubCallbacks
      *
      * @return result OK on success
      *                BAD_VALUE if parameters are not sane
@@ -53,7 +53,7 @@ interface IContexthub {
      * Send a message to a hub
      *
      * @param hubId identifier for hub to send message to
-     *        msg   message to be sent
+     * @param msg   message to be sent
      *
      * @return result OK if successful, error code otherwise
      *                BAD_VALUE if parameters are not sane
@@ -77,9 +77,9 @@ interface IContexthub {
      * device.
      *
      * @param hubId identifer of the contextHub
-     *        appBinary contains the binary representation of the nanoApp, plus
+     * @param appBinary contains the binary representation of the nanoApp, plus
      *                  metadata
-     *        transactionId transactionId for this call
+     * @param transactionId transactionId for this call
      *
      * @return result OK if transation started
      *                BAD_VALUE if parameters are not sane
@@ -101,8 +101,8 @@ interface IContexthub {
      * Unloading a nanoapp must not take more than 5 seconds.
      *
      * @param hubId identifer of the contextHub
-     *        appId appIdentifier returned by the HAL
-     *        msg   message to be sent
+     * @param appId appIdentifier returned by the HAL
+     * @param msg   message to be sent
      *
      * @return result OK if transation started
      *                BAD_VALUE if parameters are not sane
@@ -122,8 +122,8 @@ interface IContexthub {
      * Enabling a nanoapp must not take more than 5 seconds.
      *
      * @param hubId identifer of the contextHub
-     *        appId appIdentifier returned by the HAL
-     *        msg   message to be sent
+     * @param appId appIdentifier returned by the HAL
+     * @param msg   message to be sent
      *
      * @return result OK if transation started
      *                BAD_VALUE if parameters are not sane
@@ -143,8 +143,8 @@ interface IContexthub {
      * Disabling a nanoapp must not take more than 5 seconds.
      *
      * @param hubId identifer of the contextHub
-     *        appId appIdentifier returned by the HAL
-     *        msg   message to be sent
+     * @param appId appIdentifier returned by the HAL
+     * @param msg   message to be sent
      *
      * @return result OK if transation started
      *                BAD_VALUE if parameters are not sane
