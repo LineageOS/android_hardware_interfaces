@@ -31,6 +31,7 @@ using ::android::hardware::Return;
 using ::android::hardware::tv::cec::V1_0::CecLogicalAddress;
 using ::android::hardware::tv::cec::V1_0::CecMessage;
 using ::android::hardware::tv::cec::V1_0::IHdmiCec;
+using ::android::hardware::tv::cec::V1_0::OptionKey;
 using ::android::hardware::tv::cec::V1_0::Result;
 using ::android::hardware::tv::cec::V1_0::SendMessageResult;
 
@@ -93,4 +94,21 @@ TEST_P(HdmiCecTest, CecVersion) {
 TEST_P(HdmiCecTest, VendorId) {
     Return<uint32_t> ret = hdmiCec->getVendorId();
     EXPECT_NE(ret, INCORRECT_VENDOR_ID);
+}
+
+TEST_P(HdmiCecTest, SetOption) {
+    Return<void> ret;
+    ret = hdmiCec->setOption(OptionKey::WAKEUP, false);
+    EXPECT_TRUE(ret.isOk());
+    ret = hdmiCec->setOption(OptionKey::ENABLE_CEC, false);
+    EXPECT_TRUE(ret.isOk());
+    ret = hdmiCec->setOption(OptionKey::SYSTEM_CEC_CONTROL, true);
+    EXPECT_TRUE(ret.isOk());
+    // Restore option keys to their default values
+    ret = hdmiCec->setOption(OptionKey::WAKEUP, true);
+    EXPECT_TRUE(ret.isOk());
+    ret = hdmiCec->setOption(OptionKey::ENABLE_CEC, true);
+    EXPECT_TRUE(ret.isOk());
+    ret = hdmiCec->setOption(OptionKey::SYSTEM_CEC_CONTROL, false);
+    EXPECT_TRUE(ret.isOk());
 }
