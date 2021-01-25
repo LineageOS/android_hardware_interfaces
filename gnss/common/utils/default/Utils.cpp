@@ -190,7 +190,7 @@ GnssData Utils::getMockMeasurement(const bool enableCorrVecOutputs) {
                              .tropoDelayMeters = 3.882265204404031},
             .correlationVectors = {}};
 
-    GnssClock clock = {.gnssClockFlags = GnssClock::HAS_FULL_BIAS | GnssClock::HAS_FULL_BIAS |
+    GnssClock clock = {.gnssClockFlags = GnssClock::HAS_FULL_BIAS | GnssClock::HAS_BIAS |
                                          GnssClock::HAS_BIAS_UNCERTAINTY | GnssClock::HAS_DRIFT |
                                          GnssClock::HAS_DRIFT_UNCERTAINTY,
                        .timeNs = 35854545000000,
