@@ -26,7 +26,6 @@ import android.hardware.security.keymint.KeyParameter;
 import android.hardware.security.keymint.KeyMintHardwareInfo;
 import android.hardware.security.keymint.KeyPurpose;
 import android.hardware.security.keymint.SecurityLevel;
-import android.hardware.security.secureclock.TimeStampToken;
 
 /**
  * KeyMint device definition.
