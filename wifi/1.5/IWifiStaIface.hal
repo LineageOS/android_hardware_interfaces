@@ -41,4 +41,17 @@ interface IWifiStaIface extends @1.3::IWifiStaIface {
      * @return stats Instance of |LinkLayerStats|.
      */
     getLinkLayerStats_1_5() generates (WifiStatus status, StaLinkLayerStats stats);
+
+    /**
+     * Turn on/off scan only mode for the interface.
+     *
+     * @param enable Indicate if scan only mode is to be turned on/off.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+     *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+     *         |WifiStatusCode.FAILURE_UNKNOWN|
+     */
+    setScanMode(bool enable) generates (WifiStatus status);
 };
