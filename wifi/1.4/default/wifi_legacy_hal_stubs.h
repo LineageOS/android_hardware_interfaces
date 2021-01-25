@@ -17,13 +17,14 @@
 #ifndef WIFI_LEGACY_HAL_STUBS_H_
 #define WIFI_LEGACY_HAL_STUBS_H_
 
+#include <hardware_legacy/wifi_hal.h>
+
 namespace android {
 namespace hardware {
 namespace wifi {
 namespace V1_4 {
 namespace implementation {
 namespace legacy_hal {
-#include <hardware_legacy/wifi_hal.h>
 
 bool initHalFuncTableWithStubs(wifi_hal_fn* hal_fn);
 }  // namespace legacy_hal
