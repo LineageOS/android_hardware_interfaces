@@ -16,6 +16,7 @@
 
 package android.hardware.common.fmq;
 
+import android.hardware.common.NativeHandle;
 import android.hardware.common.fmq.GrantorDescriptor;
 
 /*
@@ -34,8 +35,11 @@ parcelable MQDescriptor<T, Flavor> {
      * for blocking operations in the shared memory.
      */
     GrantorDescriptor[] grantors;
-    /* File descriptor for shared memory used in the message queue */
-    ParcelFileDescriptor fileDescriptor;
+    /*
+     * NativeHandle that contains the file descriptors for shared memory used
+     * in the message queue
+     */
+    NativeHandle handle;
     /* Size of each item, T, in bytes */
     int quantum;
     /* EventFlag word for blocking operations */
