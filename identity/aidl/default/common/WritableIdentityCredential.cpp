@@ -40,7 +40,20 @@ using namespace ::android::hardware::identity;
 
 bool WritableIdentityCredential::initialize() {
     if (!hwProxy_->initialize(testCredential_)) {
-        LOG(ERROR) << "hwProxy->initialize failed";
+        LOG(ERROR) << "hwProxy->initialize() failed";
+        return false;
+    }
+    startPersonalizationCalled_ = false;
+    firstEntry_ = true;
+
+    return true;
+}
+
+// Used when updating a credential. Returns false on failure.
+bool WritableIdentityCredential::initializeForUpdate(
+        const vector<uint8_t>& encryptedCredentialKeys) {
+    if (!hwProxy_->initializeForUpdate(testCredential_, docType_, encryptedCredentialKeys)) {
+        LOG(ERROR) << "hwProxy->initializeForUpdate() failed";
         return false;
     }
     startPersonalizationCalled_ = false;

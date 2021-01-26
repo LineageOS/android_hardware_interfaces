@@ -45,9 +45,11 @@ using ::std::vector;
 
 class IdentityCredential : public BnIdentityCredential {
   public:
-    IdentityCredential(sp<SecureHardwarePresentationProxy> hwProxy,
+    IdentityCredential(sp<SecureHardwareProxyFactory> hwProxyFactory,
+                       sp<SecureHardwarePresentationProxy> hwProxy,
                        const vector<uint8_t>& credentialData)
-        : hwProxy_(hwProxy),
+        : hwProxyFactory_(hwProxyFactory),
+          hwProxy_(hwProxy),
           credentialData_(credentialData),
           numStartRetrievalCalls_(0),
           expectedDeviceNameSpacesSize_(0) {}
@@ -58,6 +60,11 @@ class IdentityCredential : public BnIdentityCredential {
 
     // Methods from IIdentityCredential follow.
     ndk::ScopedAStatus deleteCredential(vector<uint8_t>* outProofOfDeletionSignature) override;
+    ndk::ScopedAStatus deleteCredentialWithChallenge(
+            const vector<uint8_t>& challenge,
+            vector<uint8_t>* outProofOfDeletionSignature) override;
+    ndk::ScopedAStatus proveOwnership(const vector<uint8_t>& challenge,
+                                      vector<uint8_t>* outProofOfOwnershipSignature) override;
     ndk::ScopedAStatus createEphemeralKeyPair(vector<uint8_t>* outKeyPair) override;
     ndk::ScopedAStatus setReaderEphemeralPublicKey(const vector<uint8_t>& publicKey) override;
     ndk::ScopedAStatus createAuthChallenge(int64_t* outChallenge) override;
@@ -79,8 +86,16 @@ class IdentityCredential : public BnIdentityCredential {
     ndk::ScopedAStatus generateSigningKeyPair(vector<uint8_t>* outSigningKeyBlob,
                                               Certificate* outSigningKeyCertificate) override;
 
+    ndk::ScopedAStatus updateCredential(
+            shared_ptr<IWritableIdentityCredential>* outWritableCredential) override;
+
   private:
+    ndk::ScopedAStatus deleteCredentialCommon(const vector<uint8_t>& challenge,
+                                              bool includeChallenge,
+                                              vector<uint8_t>* outProofOfDeletionSignature);
+
     // Set by constructor
+    sp<SecureHardwareProxyFactory> hwProxyFactory_;
     sp<SecureHardwarePresentationProxy> hwProxy_;
     vector<uint8_t> credentialData_;
     int numStartRetrievalCalls_;
@@ -88,6 +103,7 @@ class IdentityCredential : public BnIdentityCredential {
     // Set by initialize()
     string docType_;
     bool testCredential_;
+    vector<uint8_t> encryptedCredentialKeys_;
 
     // Set by createEphemeralKeyPair()
     vector<uint8_t> ephemeralPublicKey_;

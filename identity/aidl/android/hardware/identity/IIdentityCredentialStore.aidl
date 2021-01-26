@@ -104,6 +104,11 @@ import android.hardware.identity.CipherSuite;
  * All binder calls in the HAL may return a ServiceSpecificException with statuses from the
  * STATUS_* integers defined in this interface. Each method states which status can be returned
  * and under which circumstances.
+ *
+ * The API described here is API version 3 which corresponds to feature version 202101
+ * of the android.security.identity Framework API. An XML file declaring the feature
+ * android.hardware.identity_credential (or android.hardware.identity_credential.direct_access
+ * if implementing the Direct Access HAL) should be included declaring this feature version.
  */
 @VintfStability
 interface IIdentityCredentialStore {
@@ -229,6 +234,9 @@ interface IIdentityCredentialStore {
      *     and an encrypted byte array that contains data used to secure the credential.  See the
      *     return argument of the same name in finishAddingEntries(), in
      *     IWritableIdentityCredential.
+     *
+     *     Note that the format of credentialData may depend on the feature version.
+     *     Implementations must support credentialData created by an earlier feature version.
      *
      * @return an IIdentityCredential interface that provides operations on the Credential.
      */

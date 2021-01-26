@@ -32,7 +32,7 @@
 #include <map>
 #include <utility>
 
-#include "VtsIdentityTestUtils.h"
+#include "Util.h"
 
 namespace android::hardware::identity {
 
@@ -145,7 +145,7 @@ void UserAuthTests::provisionData() {
     EXPECT_TRUE(status.isOk()) << status.exceptionCode() << ": " << status.exceptionMessage();
 }
 
-// From ReaderAuthTest.cpp - TODO: consolidate with VtsIdentityTestUtils.h
+// From ReaderAuthTest.cpp - TODO: consolidate with Util.h
 pair<vector<uint8_t>, vector<uint8_t>> generateReaderKey();
 vector<uint8_t> generateReaderCert(const vector<uint8_t>& publicKey,
                                    const vector<uint8_t>& signingKey);

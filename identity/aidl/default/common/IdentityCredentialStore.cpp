@@ -63,7 +63,7 @@ ndk::ScopedAStatus IdentityCredentialStore::getCredential(
 
     sp<SecureHardwarePresentationProxy> hwProxy = hwProxyFactory_->createPresentationProxy();
     shared_ptr<IdentityCredential> credential =
-            ndk::SharedRefBase::make<IdentityCredential>(hwProxy, credentialData);
+            ndk::SharedRefBase::make<IdentityCredential>(hwProxyFactory_, hwProxy, credentialData);
     auto ret = credential->initialize();
     if (ret != IIdentityCredentialStore::STATUS_OK) {
         return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
