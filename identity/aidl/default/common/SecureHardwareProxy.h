@@ -64,6 +64,9 @@ class SecureHardwareProvisioningProxy : public RefBase {
 
     virtual bool initialize(bool testCredential) = 0;
 
+    virtual bool initializeForUpdate(bool testCredential, string docType,
+                                     vector<uint8_t> encryptedCredentialKeys) = 0;
+
     // Returns public key certificate chain with attestation.
     //
     // This must return an entire certificate chain and its implementation must
@@ -164,7 +167,13 @@ class SecureHardwarePresentationProxy : public RefBase {
     virtual optional<vector<uint8_t>> finishRetrieval();
 
     virtual optional<vector<uint8_t>> deleteCredential(const string& docType,
+                                                       const vector<uint8_t>& challenge,
+                                                       bool includeChallenge,
                                                        size_t proofOfDeletionCborSize) = 0;
+
+    virtual optional<vector<uint8_t>> proveOwnership(const string& docType, bool testCredential,
+                                                     const vector<uint8_t>& challenge,
+                                                     size_t proofOfOwnershipCborSize) = 0;
 
     virtual bool shutdown() = 0;
 };
