@@ -17,12 +17,12 @@
 package android.hardware.biometrics.face;
 
 import android.hardware.biometrics.common.ICancellationSignal;
+import android.hardware.biometrics.face.Feature;
 import android.hardware.biometrics.face.EnrollmentType;
 import android.hardware.keymaster.HardwareAuthToken;
 import android.hardware.common.NativeHandle;
 
-/**
- * A session is a collection of immutable state (sensorId, userId), mutable state (SessionState),
+/** * A session is a collection of immutable state (sensorId, userId), mutable state (SessionState),
  * methods available for the framework to call, and a callback (ISessionCallback) to notify the
  * framework about the events and results. A session is used to establish communication between
  * the framework and the HAL.
@@ -131,16 +131,17 @@ interface ISession {
      *
      * @param cookie An identifier used to track subsystem operations related to this call path. The
      *               client must guarantee that it is unique per ISession.
+     * @param hat See above documentation.
      * @param enrollmentType See the EnrollmentType enum.
+     * @param features See the Feature enum.
      * @param previewSurface A surface provided by the framework if SensorProps#halControlsPreview is
      *                       set to true. The HAL must send the preview frames to previewSurface if
      *                       it's not null.
-     * @param hat See above documentation.
      * @return ICancellationSignal An object that can be used by the framework to cancel this
      * operation.
      */
-    ICancellationSignal enroll(in int cookie, in EnrollmentType enrollmentType,
-            in HardwareAuthToken hat, in NativeHandle previewSurface);
+    ICancellationSignal enroll(in int cookie, in HardwareAuthToken hat, in EnrollmentType type,
+            in Feature[] features, in NativeHandle previewSurface);
 
     /**
      * authenticate:
@@ -264,6 +265,54 @@ interface ISession {
      *               The framework will guarantee that it is unique per ISession.
      */
     void removeEnrollments(in int cookie, in int[] enrollmentIds);
+
+    /**
+     * getFeatures:
+     *
+     * Returns a list of currently enabled features for the provided enrollmentId.
+     *
+     * If the enrollmentId is invalid, the HAL must invoke ISessionCallback#onError with
+     * Error::UNABLE_TO_PROCESS and return to SessionState::IDLING if no subsequent work is in the
+     * queue.
+     *
+     * Once the HAL is able to start processing this request, it must notify the framework by using
+     * ISessionCallback#onStateChanged with SessionState::GETTING_FEATURES.
+     *
+     * The HAL must notify the framework about the result by calling
+     * ISessionCallback#onFeaturesRetrieved.
+     *
+     * @param cookie An identifier used to track subsystem operations related to this call path. The
+     *               client must guarantee that it is unique per ISession.
+     * @param enrollmentId the ID of the enrollment for which the features are requested.
+     */
+    void getFeatures(in int cookie, in int enrollmentId);
+
+    /**
+     * setFeature:
+     *
+     * Enables or disables a feature for the given enrollmentId. Because certain features may
+     * decrease security, the user must enter their password before this method is invoked
+     * (see @param hat). The HAL must verify the hat before changing any feature state.
+     *
+     * If either the hat or enrollmentId is invalid, the HAL must invoke ISessionCallback#onError
+     * with Error::UNABLE_TO_PROCESS and return to SessionState::IDLING if no subsequent work is in
+     * the queue.
+     *
+     * Once the HAL is able to start processing this request, it must notify the framework by using
+     * ISessionCallback#onStateChanged with SessionState::SETTING_FEATURE.
+     *
+     * After the feature is successfully set, the HAL must notify the framework by calling
+     * ISessionCallback#onFeatureSet.
+     *
+     * @param cookie An identifier used to track subsystem operations related to this call path. The
+     *               client must guarantee that it is unique per ISession.
+     * @param hat HardwareAuthToken See above documentation.
+     * @param enrollmentId the ID of the enrollment for which the feature update is requested.
+     * @param feature The feature to be enabled or disabled.
+     * @param enabled Whether the provided features should be enabled or disabled.
+     */
+    void setFeature(in int cookie, in HardwareAuthToken hat, in int enrollmentId,
+            in Feature feature, boolean enabled);
 
     /**
      * getAuthenticatorId:

@@ -55,8 +55,9 @@ ndk::ScopedAStatus Session::revokeChallenge(int32_t /*cookie*/, int64_t challeng
 }
 
 ndk::ScopedAStatus Session::enroll(
-        int32_t /*cookie*/, biometrics::face::EnrollmentType /*enrollmentType*/,
-        const keymaster::HardwareAuthToken& /*hat*/, const NativeHandle& /*previewSurface*/,
+        int32_t /*cookie*/, const keymaster::HardwareAuthToken& /*hat*/,
+        EnrollmentType /*enrollmentType*/, const std::vector<Feature>& /*features*/,
+        const NativeHandle& /*previewSurface*/,
         std::shared_ptr<biometrics::common::ICancellationSignal>* /*return_val*/) {
     return ndk::ScopedAStatus::ok();
 }
@@ -91,6 +92,17 @@ ndk::ScopedAStatus Session::removeEnrollments(int32_t /*cookie*/,
         cb_->onEnrollmentsRemoved(std::vector<int32_t>());
         cb_->onStateChanged(0, SessionState::IDLING);
     }
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Session::getFeatures(int32_t /*cookie*/, int32_t /*enrollmentId*/) {
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Session::setFeature(int32_t /*cookie*/,
+                                       const keymaster::HardwareAuthToken& /*hat*/,
+                                       int32_t /*enrollmentId*/, Feature /*feature*/,
+                                       bool /*enabled*/) {
     return ndk::ScopedAStatus::ok();
 }
 

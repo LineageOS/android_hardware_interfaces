@@ -17,6 +17,7 @@
 package android.hardware.biometrics.face;
 
 import android.hardware.biometrics.face.AcquiredInfo;
+import android.hardware.biometrics.face.Feature;
 import android.hardware.biometrics.face.AuthenticationFrame;
 import android.hardware.biometrics.face.EnrollmentFrame;
 import android.hardware.biometrics.face.Error;
@@ -176,6 +177,26 @@ interface ISessionCallback {
      * @param enrollmentIds A list of enrollments for the session's (userId, sensorId) pair.
      */
     void onEnrollmentsEnumerated(in int[] enrollmentIds);
+
+    /**
+     * This method must only be used to notify the framework during SessionState::GETTING_FEATURES.
+     *
+     * Provides a list of features that are currently enabled for the given enrollmentId.
+     *
+     * @param features A list of currently enabled features. See the Feature enum.
+     * @param enrollmentId The enrollment for which the features were requested.
+     */
+    void onFeaturesRetrieved(in Feature[] features, in int enrollmentId);
+
+    /**
+     * This method must only be used to notify the framework during SessionState::SETTING_FEATURE.
+     *
+     * Notifies the framework that ISession#setFeature has completed.
+     *
+     * @param enrollmentId The enrollment for which a feature was set.
+     * @param feature The feature that was set.
+     */
+    void onFeatureSet(in int enrollmentId, Feature feature);
 
     /**
      * This method must only be used to notify the framework during
