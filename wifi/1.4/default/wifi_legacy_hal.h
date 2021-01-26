@@ -271,6 +271,7 @@ using ::transaction_id;
 using ::wifi_band;
 using ::wifi_cached_scan_results;
 using ::wifi_channel_info;
+using ::wifi_channel_stat;
 using ::wifi_channel_width;
 using ::wifi_error;
 using ::wifi_gscan_capabilities;
