@@ -27,4 +27,6 @@ enum AcquiredInfo {
   TOO_FAST = 5,
   VENDOR = 6,
   START = 7,
+  TOO_DARK = 8,
+  TOO_BRIGHT = 9,
 }
