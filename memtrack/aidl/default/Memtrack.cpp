@@ -35,6 +35,8 @@ ndk::ScopedAStatus Memtrack::getMemory(int pid, MemtrackType type,
 
 ndk::ScopedAStatus Memtrack::getGpuDeviceInfo(std::vector<DeviceInfo>* _aidl_return) {
     _aidl_return->clear();
+    DeviceInfo dev_info = {.id = 0, .name = "virtio_gpu"};
+    _aidl_return->emplace_back(dev_info);
     return ndk::ScopedAStatus::ok();
 }
 
