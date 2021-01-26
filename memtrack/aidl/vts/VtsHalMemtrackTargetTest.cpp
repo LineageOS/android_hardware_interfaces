@@ -21,11 +21,15 @@
 #include <aidl/android/hardware/memtrack/MemtrackType.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
+#include <vintf/VintfObject.h>
 
 using aidl::android::hardware::memtrack::DeviceInfo;
 using aidl::android::hardware::memtrack::IMemtrack;
 using aidl::android::hardware::memtrack::MemtrackRecord;
 using aidl::android::hardware::memtrack::MemtrackType;
+using android::vintf::KernelVersion;
+using android::vintf::RuntimeInfo;
+using android::vintf::VintfObject;
 
 class MemtrackAidlTest : public testing::TestWithParam<std::string> {
   public:
@@ -75,7 +79,23 @@ TEST_P(MemtrackAidlTest, GetGpuDeviceInfo) {
 
     auto status = memtrack_->getGpuDeviceInfo(&device_info);
 
+    // Devices with < 5.10 kernels aren't required to provide an implementation of
+    // getGpuDeviceInfo(), and can return EX_UNSUPPORTED_OPERATION
+    if (status.getExceptionCode() == EX_UNSUPPORTED_OPERATION) {
+        KernelVersion min_kernel_version = KernelVersion(5, 10, 0);
+        KernelVersion kernel_version = VintfObject::GetInstance()
+                                               ->getRuntimeInfo(RuntimeInfo::FetchFlag::CPU_VERSION)
+                                               ->kernelVersion();
+        EXPECT_LT(kernel_version, min_kernel_version)
+                << "Devices with 5.10 or later kernels must implement getGpuDeviceInfo()";
+        return;
+    }
+
     EXPECT_TRUE(status.isOk());
+    EXPECT_FALSE(device_info.empty());
+    for (auto device : device_info) {
+        EXPECT_FALSE(device.name.empty());
+    }
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(MemtrackAidlTest);
