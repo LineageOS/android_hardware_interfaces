@@ -29,6 +29,7 @@ import android.hardware.security.keymint.HardwareAuthenticatorType;
  * appropriate for a given key operation.
  */
 @VintfStability
+@RustDerive(Clone=true, Eq=true, PartialEq=true, Ord=true, PartialOrd=true, Hash=true)
 parcelable HardwareAuthToken {
     /**
      * challenge is a value that's used to enable authentication tokens to authorize specific

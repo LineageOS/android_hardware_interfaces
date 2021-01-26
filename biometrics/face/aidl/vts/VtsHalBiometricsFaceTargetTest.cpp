@@ -103,6 +103,15 @@ class SessionCallback : public BnSessionCallback {
         return ndk::ScopedAStatus::ok();
     }
 
+    ndk::ScopedAStatus onFeaturesRetrieved(const std::vector<Feature>& /*features*/,
+                                           int32_t /*enrollmentId*/) override {
+        return ndk::ScopedAStatus::ok();
+    }
+
+    ndk::ScopedAStatus onFeatureSet(int32_t /*enrollmentId*/, Feature /*feature*/) override {
+        return ndk::ScopedAStatus::ok();
+    }
+
     ndk::ScopedAStatus onAuthenticatorIdRetrieved(int64_t /*authenticatorId*/) override {
         return ndk::ScopedAStatus::ok();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,26 @@
  * limitations under the License.
  */
 
-package android.hardware.common.fmq;
+package android.hardware.biometrics.face;
 
-/*
- * Included in MQDescriptor, for use with libfmq.
- */
 @VintfStability
-parcelable GrantorDescriptor {
-    /*
-     * Index of file descriptor for this grantor
+@Backing(type="byte")
+enum Feature {
+    /**
+     * Do not require the user to look at the device during enrollment and authentication. Note
+     * this is to accommodate people who have limited vision.
      */
-    int fdIndex;
-    /*
-     * The offset of this descriptor in the shared memory in bytes.
+    WAVE_ATTENTION_REQUIREMENT,
+
+    /**
+     * Do not require a diverse set of poses during enrollment. This is to accommodate people with
+     * limited mobility.
      */
-    int offset;
-    /*
-     * The size of this descriptor in bytes.
+    WAVE_DIVERSE_POSES_REQUIREMENT,
+
+    /**
+     * Enable debugging functionality.
      */
-    long extent;
+    DEBUG,
 }
+
