@@ -46,7 +46,7 @@ soong_config_module_type {
 
 android_hardware_drm_1_0_multilib {
     name: "android.hardware.drm@1.0-multilib-lib",
-    compile_multilib: "32",
+    compile_multilib: "prefer32",
     soong_config_variables: {
         TARGET_ENABLE_MEDIADRM_64: {
             compile_multilib: "both",
@@ -56,7 +56,7 @@ android_hardware_drm_1_0_multilib {
 
 android_hardware_drm_1_0_multilib {
     name: "android.hardware.drm@1.0-multilib-exe",
-    compile_multilib: "32",
+    compile_multilib: "prefer32",
     soong_config_variables: {
         TARGET_ENABLE_MEDIADRM_64: {
             compile_multilib: "first",
