@@ -41,10 +41,19 @@ Return<bool> TestMsgQ::configureFmqSyncReadWrite(
     return true;
 }
 
-Return<void> TestMsgQ::getFmqUnsyncWrite(bool configureFmq, getFmqUnsyncWrite_cb _hidl_cb) {
+Return<void> TestMsgQ::getFmqUnsyncWrite(bool configureFmq, bool userFd,
+                                         getFmqUnsyncWrite_cb _hidl_cb) {
     if (configureFmq) {
         static constexpr size_t kNumElementsInQueue = 1024;
-        mFmqUnsynchronized.reset(new (std::nothrow) MessageQueueUnsync(kNumElementsInQueue));
+        static constexpr size_t kElementSizeBytes = sizeof(int32_t);
+        android::base::unique_fd ringbufferFd;
+        if (userFd) {
+            ringbufferFd.reset(
+                    ::ashmem_create_region("UnsyncWrite", kNumElementsInQueue * kElementSizeBytes));
+        }
+        mFmqUnsynchronized.reset(new (std::nothrow) MessageQueueUnsync(
+                kNumElementsInQueue, false, std::move(ringbufferFd),
+                kNumElementsInQueue * kElementSizeBytes));
     }
     if ((mFmqUnsynchronized == nullptr) ||
         (mFmqUnsynchronized->isValid() == false)) {

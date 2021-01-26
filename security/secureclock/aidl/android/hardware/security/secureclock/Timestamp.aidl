@@ -23,6 +23,7 @@ package android.hardware.security.secureclock;
  * by setting the clock to zero during each boot, and then counting time accurately).
  */
 @VintfStability
+@RustDerive(Clone=true, Eq=true, PartialEq=true, Ord=true, PartialOrd=true, Hash=true)
 parcelable Timestamp {
     long milliSeconds;
 }
