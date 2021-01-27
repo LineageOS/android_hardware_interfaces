@@ -26,8 +26,8 @@ parcelable EnergyConsumer {
     int id;
 
     /**
-     * For a group of EnergyConsumers of the same logical type, sorting by ordinal should
-     * be give their physical order. No other meaning is carried by it.
+     * For a group of EnergyConsumers of the same logical type, sorting by ordinal
+     * gives their physical order. Ordinals must be consecutive integers starting from 0.
      */
     int ordinal;
 
