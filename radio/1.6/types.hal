@@ -356,6 +356,12 @@ struct SetupDataCallResult {
      * Reference: 3GPP TS 24.007 section 11.2.3.1b
      */
     int32_t pduSessionId;
+
+    /**
+     * Slice used for this data call. It is valid only when this data call is on
+     * AccessNetwork:NGRAN.
+     */
+    OptionalSliceInfo sliceInfo;
 };
 
 /**
@@ -803,4 +809,81 @@ enum NgranBands  : @1.5::NgranBands {
     BAND_46 = 46,
     BAND_53 = 53,
     BAND_96 = 96,
+};
+
+/**
+ * This safe_union represents an optional slice info
+ */
+safe_union OptionalSliceInfo {
+    Monostate noinit;
+    SliceInfo value;
+};
+
+/**
+ * This struct represents a S-NSSAI as defined in 3GPP TS 24.501.
+ */
+struct SliceInfo {
+    /**
+     * The type of service provided by the slice.
+     *
+     * see: 3GPP TS 24.501 Section 9.11.2.8.
+     */
+    SliceServiceType sst;
+
+    /**
+     * Slice differentiator is the identifier of a slice that has
+     * SliceServiceType as SST. A value of -1 indicates that there is
+     * no corresponding SliceInfo of the HPLMN.
+     *
+     * see: 3GPP TS 24.501 Section 9.11.2.8.
+     */
+    int32_t sliceDifferentiator;
+
+    /**
+     * This SST corresponds to a SliceInfo (S-NSSAI) of the HPLMN; the SST is
+     * mapped to this value.
+     *
+     * see: 3GPP TS 24.501 Section 9.11.2.8.
+     */
+    SliceServiceType mappedHplmnSst;
+
+    /**
+     * Present only if both sliceDifferentiator and mappedHplmnSst are also
+     * present. This SD corresponds to a SliceInfo (S-NSSAI) of the HPLMN;
+     * sliceDifferentiator is mapped to this value. A value of -1 indicates that
+     * there is no corresponding SliceInfo of the HPLMN.
+     *
+     * see: 3GPP TS 24.501 Section 9.11.2.8.
+     */
+    int32_t mappedHplmnSD;
+};
+
+/**
+ * Slice/Service Type as defined in 3GPP TS 23.501.
+ */
+enum SliceServiceType : uint8_t {
+    /* Not specified */
+    NONE = 0,
+
+    /* Slice suitable for the handling of 5G enhanced Mobile Broadband */
+    EMBB = 1,
+
+    /**
+     * Slice suitable for the handling of ultra-reliable low latency
+     * communications
+     */
+    URLLC = 2,
+
+    /* Slice suitable for the handling of massive IoT */
+    MIOT = 3,
+};
+
+/**
+ * Expose more setup data call failures.
+ */
+enum DataCallFailCause : @1.4::DataCallFailCause {
+    /**
+     * Data call fail due to the slice not being allowed for the data call.
+     */
+    SLICE_REJECTED = 0x8CC,
 };
