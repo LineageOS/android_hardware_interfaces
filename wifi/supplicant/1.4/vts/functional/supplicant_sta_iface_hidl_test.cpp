@@ -237,6 +237,10 @@ class IfaceCallback : public ISupplicantStaIfaceCallback {
         override {
         return Void();
     }
+    Return<void> onNetworkNotFound(
+        const hidl_vec<uint8_t>& /* ssid */) override {
+        return Void();
+    }
 };
 
 /*

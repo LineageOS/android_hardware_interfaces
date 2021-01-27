@@ -16,26 +16,10 @@
 
 package android.hardware.power.stats;
 
-import android.hardware.power.stats.EnergyConsumerAttribution;
-
+/* Indicates the type of an energy consumer reported by the Power Stats HAL */
 @VintfStability
-parcelable EnergyConsumerResult {
-    /**
-     * ID of the EnergyConsumer associated with this result
-     */
-    int id;
-    /**
-     * Time since boot in milliseconds
-     */
-    long timestampMs;
-    /**
-     * Total accumulated energy since boot in microwatt-seconds (uWs)
-     */
-    long energyUWs;
-    /**
-     * Optional attributed energy per Android ID / Linux UID for this EnergyConsumer.
-     * Sum total of attributed energy must be less than or equal to total accumulated energy.
-     */
-    EnergyConsumerAttribution[] attribution;
+enum EnergyConsumerType {
+    OTHER,
+    CPU_CLUSTER,
+    DISPLAY,
 }
-
