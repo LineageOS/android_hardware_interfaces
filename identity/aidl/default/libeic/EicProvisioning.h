@@ -31,7 +31,7 @@ extern "C" {
 #define EIC_MAX_NUM_ACCESS_CONTROL_PROFILE_IDS 32
 
 typedef struct {
-    // Set by eicCreateCredentialKey.
+    // Set by eicCreateCredentialKey() OR eicProvisioningInitForUpdate()
     uint8_t credentialPrivateKey[EIC_P256_PRIV_KEY_SIZE];
 
     int numEntryCounts;
@@ -43,6 +43,7 @@ typedef struct {
     size_t curEntrySize;
     size_t curEntryNumBytesReceived;
 
+    // Set by eicProvisioningInit() OR eicProvisioningInitForUpdate()
     uint8_t storageKey[EIC_AES_128_KEY_SIZE];
 
     size_t expectedCborSizeAtEnd;
@@ -50,12 +51,22 @@ typedef struct {
     // SHA-256 for AdditionalData, updated for each entry.
     uint8_t additionalDataSha256[EIC_SHA256_DIGEST_SIZE];
 
+    // Digester just for ProofOfProvisioning (without Sig_structure).
+    EicSha256Ctx proofOfProvisioningDigester;
+
     EicCbor cbor;
 
     bool testCredential;
+
+    // Set to true if this is an update.
+    bool isUpdate;
 } EicProvisioning;
 
 bool eicProvisioningInit(EicProvisioning* ctx, bool testCredential);
+
+bool eicProvisioningInitForUpdate(EicProvisioning* ctx, bool testCredential, const char* docType,
+                                  const uint8_t* encryptedCredentialKeys,
+                                  size_t encryptedCredentialKeysSize);
 
 bool eicProvisioningCreateCredentialKey(EicProvisioning* ctx, const uint8_t* challenge,
                                         size_t challengeSize, const uint8_t* applicationId,
@@ -107,14 +118,18 @@ bool eicProvisioningFinishAddingEntries(
 //   CredentialKeys = [
 //     bstr,   ; storageKey, a 128-bit AES key
 //     bstr    ; credentialPrivKey, the private key for credentialKey
+//     bstr    ; SHA-256(ProofOfProvisioning)
 //   ]
 //
+// for feature version 202101. For feature version 202009 the third field was not present.
+//
 // Since |storageKey| is 16 bytes and |credentialPrivKey| is 32 bytes, the
-// encoded CBOR for CredentialKeys is 52 bytes and consequently
-// |encryptedCredentialKeys| will be 52 + 28 = 80 bytes.
+// encoded CBOR for CredentialKeys is 86 bytes and consequently
+// |encryptedCredentialKeys| will be no longer than 86 + 28 = 114 bytes.
 //
 bool eicProvisioningFinishGetCredentialData(EicProvisioning* ctx, const char* docType,
-                                            uint8_t encryptedCredentialKeys[80]);
+                                            uint8_t* encryptedCredentialKeys,
+                                            size_t* encryptedCredentialKeysSize);
 
 #ifdef __cplusplus
 }
