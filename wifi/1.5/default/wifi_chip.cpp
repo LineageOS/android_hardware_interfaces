@@ -1036,7 +1036,6 @@ WifiStatus WifiChip::removeApIfaceInternal(const std::string& ifname) {
 
 WifiStatus WifiChip::removeIfaceInstanceFromBridgedApIfaceInternal(
     const std::string& ifname, const std::string& ifInstanceName) {
-    legacy_hal::wifi_error legacy_status;
     const auto iface = findUsingName(ap_ifaces_, ifname);
     if (!iface.get() || ifInstanceName.empty()) {
         return createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS);
@@ -1048,13 +1047,13 @@ WifiStatus WifiChip::removeIfaceInstanceFromBridgedApIfaceInternal(
                 if (iface == ifInstanceName) {
                     if (!iface_util_.lock()->removeIfaceFromBridge(it.first,
                                                                    iface)) {
-                        LOG(ERROR) << "Failed to remove interface: " << iface
-                                   << " from " << ifname << ", error: "
-                                   << legacyErrorToString(legacy_status);
+                        LOG(ERROR)
+                            << "Failed to remove interface: " << ifInstanceName
+                            << " from " << ifname;
                         return createWifiStatus(
                             WifiStatusCode::ERROR_NOT_AVAILABLE);
                     }
-                    legacy_status =
+                    legacy_hal::wifi_error legacy_status =
                         legacy_hal_.lock()->deleteVirtualInterface(iface);
                     if (legacy_status != legacy_hal::WIFI_SUCCESS) {
                         LOG(ERROR) << "Failed to del interface: " << iface
