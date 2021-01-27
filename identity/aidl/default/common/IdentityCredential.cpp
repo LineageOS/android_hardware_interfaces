@@ -30,6 +30,7 @@
 #include <cppbor_parse.h>
 
 #include "FakeSecureHardwareProxy.h"
+#include "WritableIdentityCredential.h"
 
 namespace aidl::android::hardware::identity {
 
@@ -70,14 +71,8 @@ int IdentityCredential::initialize() {
     docType_ = docTypeItem->value();
     testCredential_ = testCredentialItem->value();
 
-    const vector<uint8_t>& encryptedCredentialKeys = encryptedCredentialKeysItem->value();
-
-    if (encryptedCredentialKeys.size() != 80) {
-        LOG(ERROR) << "Unexpected size for encrypted CredentialKeys";
-        return IIdentityCredentialStore::STATUS_INVALID_DATA;
-    }
-
-    if (!hwProxy_->initialize(testCredential_, docType_, encryptedCredentialKeys)) {
+    encryptedCredentialKeys_ = encryptedCredentialKeysItem->value();
+    if (!hwProxy_->initialize(testCredential_, docType_, encryptedCredentialKeys_)) {
         LOG(ERROR) << "hwProxy->initialize failed";
         return false;
     }
@@ -87,12 +82,32 @@ int IdentityCredential::initialize() {
 
 ndk::ScopedAStatus IdentityCredential::deleteCredential(
         vector<uint8_t>* outProofOfDeletionSignature) {
+    return deleteCredentialCommon({}, false, outProofOfDeletionSignature);
+}
+
+ndk::ScopedAStatus IdentityCredential::deleteCredentialWithChallenge(
+        const vector<uint8_t>& challenge, vector<uint8_t>* outProofOfDeletionSignature) {
+    return deleteCredentialCommon(challenge, true, outProofOfDeletionSignature);
+}
+
+ndk::ScopedAStatus IdentityCredential::deleteCredentialCommon(
+        const vector<uint8_t>& challenge, bool includeChallenge,
+        vector<uint8_t>* outProofOfDeletionSignature) {
+    if (challenge.size() > 32) {
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_INVALID_DATA, "Challenge too big"));
+    }
+
     cppbor::Array array = {"ProofOfDeletion", docType_, testCredential_};
+    if (includeChallenge) {
+        array = {"ProofOfDeletion", docType_, challenge, testCredential_};
+    }
+
     vector<uint8_t> proofOfDeletionCbor = array.encode();
     vector<uint8_t> podDigest = support::sha256(proofOfDeletionCbor);
 
-    optional<vector<uint8_t>> signatureOfToBeSigned =
-            hwProxy_->deleteCredential(docType_, proofOfDeletionCbor.size());
+    optional<vector<uint8_t>> signatureOfToBeSigned = hwProxy_->deleteCredential(
+            docType_, challenge, includeChallenge, proofOfDeletionCbor.size());
     if (!signatureOfToBeSigned) {
         return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
                 IIdentityCredentialStore::STATUS_FAILED, "Error signing ProofOfDeletion"));
@@ -108,6 +123,38 @@ ndk::ScopedAStatus IdentityCredential::deleteCredential(
     }
 
     *outProofOfDeletionSignature = signature.value();
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus IdentityCredential::proveOwnership(
+        const vector<uint8_t>& challenge, vector<uint8_t>* outProofOfOwnershipSignature) {
+    if (challenge.size() > 32) {
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_INVALID_DATA, "Challenge too big"));
+    }
+
+    cppbor::Array array;
+    array = {"ProofOfOwnership", docType_, challenge, testCredential_};
+    vector<uint8_t> proofOfOwnershipCbor = array.encode();
+    vector<uint8_t> podDigest = support::sha256(proofOfOwnershipCbor);
+
+    optional<vector<uint8_t>> signatureOfToBeSigned = hwProxy_->proveOwnership(
+            docType_, testCredential_, challenge, proofOfOwnershipCbor.size());
+    if (!signatureOfToBeSigned) {
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_FAILED, "Error signing ProofOfOwnership"));
+    }
+
+    optional<vector<uint8_t>> signature =
+            support::coseSignEcDsaWithSignature(signatureOfToBeSigned.value(),
+                                                proofOfOwnershipCbor,  // data
+                                                {});                   // certificateChain
+    if (!signature) {
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_FAILED, "Error signing data"));
+    }
+
+    *outProofOfOwnershipSignature = signature.value();
     return ndk::ScopedAStatus::ok();
 }
 
@@ -830,6 +877,21 @@ ndk::ScopedAStatus IdentityCredential::generateSigningKeyPair(
     outSigningKeyCertificate->encodedCertificate = pair->first;
 
     *outSigningKeyBlob = pair->second;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus IdentityCredential::updateCredential(
+        shared_ptr<IWritableIdentityCredential>* outWritableCredential) {
+    sp<SecureHardwareProvisioningProxy> hwProxy = hwProxyFactory_->createProvisioningProxy();
+    shared_ptr<WritableIdentityCredential> wc =
+            ndk::SharedRefBase::make<WritableIdentityCredential>(hwProxy, docType_,
+                                                                 testCredential_);
+    if (!wc->initializeForUpdate(encryptedCredentialKeys_)) {
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_FAILED,
+                "Error initializing WritableIdentityCredential for update"));
+    }
+    *outWritableCredential = wc;
     return ndk::ScopedAStatus::ok();
 }
 
