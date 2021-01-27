@@ -154,16 +154,19 @@ static void toStream(std::stringstream& ss, const Buffer<nlattr> attr,
     }
 }
 
-std::string toString(const Buffer<nlmsghdr> hdr, int protocol, bool printPayload) {
-    if (!hdr.firstOk()) return "nlmsg{buffer overflow}";
+static void toStream(std::stringstream& ss, const Buffer<nlmsghdr> hdr, int protocol,
+                     bool printPayload) {
+    if (!hdr.firstOk()) {
+        ss << "nlmsg{buffer overflow}";
+        return;
+    }
 
-    std::stringstream ss;
     ss << std::setfill('0');
 
     auto protocolMaybe = protocols::get(protocol);
     if (!protocolMaybe.has_value()) {
         ss << "nlmsg{protocol=" << protocol << "}";
-        return ss.str();
+        return;
     }
     protocols::NetlinkProtocol& protocolDescr = *protocolMaybe;
 
@@ -187,7 +190,7 @@ std::string toString(const Buffer<nlmsghdr> hdr, int protocol, bool printPayload
     ss << ", crc=" << std::hex << std::setw(4) << crc16(hdr.data<uint8_t>()) << std::dec;
     ss << '}';
 
-    if (!printPayload) return ss.str();
+    if (!printPayload) return;
     ss << ' ';
 
     if (!msgDescMaybe.has_value()) {
@@ -210,6 +213,17 @@ std::string toString(const Buffer<nlmsghdr> hdr, int protocol, bool printPayload
     }
 
     ss << "}";
+}
+
+std::string toString(const Buffer<nlmsghdr> hdrs, int protocol, bool printPayload) {
+    std::stringstream ss;
+    bool first = true;
+    for (const auto hdr : hdrs) {
+        if (!first) ss << std::endl;
+        first = false;
+
+        toStream(ss, hdr, protocol, printPayload);
+    }
 
     return ss.str();
 }
