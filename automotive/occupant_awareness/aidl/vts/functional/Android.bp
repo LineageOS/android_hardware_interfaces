@@ -9,7 +9,7 @@ cc_test {
         "libbinder",
     ],
     static_libs: [
-        "android.hardware.automotive.occupant_awareness-cpp",
+        "android.hardware.automotive.occupant_awareness-V1-cpp",
     ],
     test_suites: [
         "vts",
