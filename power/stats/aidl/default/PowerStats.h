@@ -28,13 +28,13 @@ class PowerStats : public BnPowerStats {
   public:
     PowerStats() = default;
     // Methods from aidl::android::hardware::power::stats::IPowerStats
-    ndk::ScopedAStatus getPowerEntityInfo(std::vector<PowerEntityInfo>* _aidl_return) override;
+    ndk::ScopedAStatus getPowerEntityInfo(std::vector<PowerEntity>* _aidl_return) override;
     ndk::ScopedAStatus getStateResidency(const std::vector<int32_t>& in_powerEntityIds,
                                          std::vector<StateResidencyResult>* _aidl_return) override;
-    ndk::ScopedAStatus getEnergyConsumerInfo(std::vector<EnergyConsumerId>* _aidl_return) override;
-    ndk::ScopedAStatus getEnergyConsumed(const std::vector<EnergyConsumerId>& in_energyConsumerIds,
+    ndk::ScopedAStatus getEnergyConsumerInfo(std::vector<EnergyConsumer>* _aidl_return) override;
+    ndk::ScopedAStatus getEnergyConsumed(const std::vector<int32_t>& in_energyConsumerIds,
                                          std::vector<EnergyConsumerResult>* _aidl_return) override;
-    ndk::ScopedAStatus getEnergyMeterInfo(std::vector<ChannelInfo>* _aidl_return) override;
+    ndk::ScopedAStatus getEnergyMeterInfo(std::vector<Channel>* _aidl_return) override;
     ndk::ScopedAStatus readEnergyMeters(const std::vector<int32_t>& in_channelIds,
                                         std::vector<EnergyMeasurement>* _aidl_return) override;
 };

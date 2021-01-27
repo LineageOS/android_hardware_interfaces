@@ -18,11 +18,8 @@
 
 package android.hardware.power.stats;
 @VintfStability
-interface IPowerStats {
-  android.hardware.power.stats.PowerEntity[] getPowerEntityInfo();
-  android.hardware.power.stats.StateResidencyResult[] getStateResidency(in int[] powerEntityIds);
-  android.hardware.power.stats.EnergyConsumer[] getEnergyConsumerInfo();
-  android.hardware.power.stats.EnergyConsumerResult[] getEnergyConsumed(in int[] energyConsumerIds);
-  android.hardware.power.stats.Channel[] getEnergyMeterInfo();
-  android.hardware.power.stats.EnergyMeasurement[] readEnergyMeters(in int[] channelIds);
+enum EnergyConsumerType {
+  OTHER = 0,
+  CPU_CLUSTER = 1,
+  DISPLAY = 2,
 }
