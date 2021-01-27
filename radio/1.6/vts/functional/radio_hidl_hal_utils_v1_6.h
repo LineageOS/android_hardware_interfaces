@@ -790,10 +790,10 @@ class RadioResponse_v1_6 : public ::android::hardware::radio::V1_6::IRadioRespon
     Return<void> cancelHandoverResponse(
             const ::android::hardware::radio::V1_6::RadioResponseInfo& info);
 
-    Return<void> setAllowedNetworkTypeBitmapResponse(
+    Return<void> setAllowedNetworkTypesBitmapResponse(
             const ::android::hardware::radio::V1_6::RadioResponseInfo& info);
 
-    Return<void> getAllowedNetworkTypeBitmapResponse(
+    Return<void> getAllowedNetworkTypesBitmapResponse(
             const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
             const ::android::hardware::hidl_bitfield<
                     ::android::hardware::radio::V1_4::RadioAccessFamily>

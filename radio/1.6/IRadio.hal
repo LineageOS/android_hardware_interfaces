@@ -324,30 +324,29 @@ interface IRadio extends @1.5::IRadio {
     /**
      * Requests to set the network type for searching and registering.
      *
-     * Instruct the radio to *only* accept the types of network provided. This
-     * is stronger than setPreferredNetworkType which is a suggestion.
+     * Instruct the radio to *only* accept the types of network provided.
+     * setPreferredNetworkType, setPreferredNetworkTypesBitmap will not be called anymore
+     * except for IRadio v1.5 or older devices.
      *
      * @param serial Serial number of request.
      * @param networkTypeBitmap a 32-bit bearer bitmap of RadioAccessFamily
      *
-     * Response callback is IRadioResponse.setNetworkTypeBitmapResponse()
+     * Response callback is IRadioResponse.setAllowedNetworkTypesBitmapResponse()
      */
-    oneway setAllowedNetworkTypeBitmap(
+    oneway setAllowedNetworkTypesBitmap(
             uint32_t serial, bitfield<RadioAccessFamily> networkTypeBitmap);
 
     /**
      * Requests bitmap representing the currently allowed network types.
      *
-     * Requests the bitmap set by the corresponding method
-     * setAllowedNetworkTypeBitmap, which sets a strict set of RATs for the
-     * radio to use. Differs from getPreferredNetworkType and getPreferredNetworkTypeBitmap
-     * in that those request *preferences*.
+     * getPreferredNetworkType, getPreferredNetworkTypesBitmap will not be called anymore
+     * except for IRadio v1.5 or older devices.
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioResponse.getNetworkTypeBitmapResponse()
+     * Response callback is IRadioResponse.getAllowedNetworkTypesBitmapResponse()
      */
-    oneway getAllowedNetworkTypeBitmap(uint32_t serial);
+    oneway getAllowedNetworkTypesBitmap(uint32_t serial);
 
     /**
      * Control data throttling at modem.

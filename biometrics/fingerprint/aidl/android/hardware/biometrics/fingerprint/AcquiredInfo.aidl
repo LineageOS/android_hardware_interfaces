@@ -63,5 +63,17 @@ enum AcquiredInfo {
      * latency based on the time between the last START message and the onAuthenticated callback.
      */
     START,
+
+    /**
+     * For sensors that require illumination, such as optical under-display fingerprint sensors,
+     * the image was too dark to be used for matching.
+     */
+    TOO_DARK,
+
+    /**
+     * For sensors that require illumination, such as optical under-display fingerprint sensors,
+     * the image was too bright to be used for matching.
+     */
+    TOO_BRIGHT,
 }
 
