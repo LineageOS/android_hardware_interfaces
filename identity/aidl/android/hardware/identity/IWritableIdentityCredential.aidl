@@ -263,13 +263,26 @@ interface IWritableIdentityCredential {
      *
      *     where HBK is a unique hardware-bound key that has never existed outside of the secure
      *     environment (except it's all zeroes if testCredential is True) and CredentialKeys is
-     *     the CBOR-encoded structure (in CDDL notation):
+     *     the CBOR-encoded structure (in CDDL notation) given below.
+     *
+     *     In API versions 1 and 2 it was the following
      *
      *         CredentialKeys = [
      *              bstr,   ; storageKey, a 128-bit AES key
      *              bstr    ; credentialPrivKey, the private key for credentialKey
      *                      ; in uncompressed form
      *         ]
+     *
+     *     In API version 3 or later it must be the following
+     *
+     *         CredentialKeys = [
+     *              bstr,   ; storageKey, a 128-bit AES key
+     *              bstr    ; credentialPrivKey, the private key for credentialKey
+     *                      ; in uncompressed form
+     *              bstr    ; SHA-256(ProofOfProvisioning)
+     *         ]
+     *
+     *     Additional elements may be added to the CredentialKeys array in future versions.
      *
      * @param out proofOfProvisioningSignature proves to the IA that the credential was imported
      *     into the secure hardware without alteration or error.  When the final addEntry() call is
@@ -321,4 +334,5 @@ interface IWritableIdentityCredential {
      * @param expectedProofOfProvisioningSize the expected size of ProofOfProvisioning.
      */
     void setExpectedProofOfProvisioningSize(in int expectedProofOfProvisioningSize);
+
 }
