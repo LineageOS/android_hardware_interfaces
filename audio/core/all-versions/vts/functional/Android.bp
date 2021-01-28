@@ -22,7 +22,7 @@ cc_defaults {
         "libxml2",
     ],
     shared_libs: [
-        "audioclient-types-aidl-unstable-cpp",
+        "audioclient-types-aidl-cpp",
         "libaudioclient_aidl_conversion",
         "libbinder",
         "libfmq",
