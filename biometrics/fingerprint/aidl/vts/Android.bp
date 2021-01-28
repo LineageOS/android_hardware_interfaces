@@ -7,7 +7,7 @@ cc_test {
     srcs: ["VtsHalBiometricsFingerprintTargetTest.cpp"],
     shared_libs: [
         "libbinder_ndk",
-        "android.hardware.biometrics.fingerprint-ndk_platform",
+        "android.hardware.biometrics.fingerprint-V1-ndk_platform",
     ],
     test_suites: [
         "general-tests",
