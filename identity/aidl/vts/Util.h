@@ -21,6 +21,7 @@
 #include <android/hardware/identity/support/IdentityCredentialSupport.h>
 #include <cppbor.h>
 #include <cppbor_parse.h>
+#include <gtest/gtest.h>
 
 namespace android::hardware::identity::test_utils {
 

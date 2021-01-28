@@ -271,7 +271,7 @@ vector<uint8_t> generateCertChain(size_t numCerts) {
         optional<vector<uint8_t>> pubKey = support::ecKeyPairGetPublicKey(keyPair.value());
 
         optional<vector<uint8_t>> cert = support::ecPublicKeyGenerateCertificate(
-                pubKey.value(), privKey.value(), "0001", "someIssuer", "someSubject", 0, 0);
+                pubKey.value(), privKey.value(), "0001", "someIssuer", "someSubject", 0, 0, {});
         certs.push_back(cert.value());
     }
     return support::certificateChainJoin(certs);
@@ -338,7 +338,7 @@ TEST(IdentityCredentialSupport, CertificateChain) {
     ASSERT_TRUE(pubKey);
 
     optional<vector<uint8_t>> cert = support::ecPublicKeyGenerateCertificate(
-            pubKey.value(), privKey.value(), "0001", "someIssuer", "someSubject", 0, 0);
+            pubKey.value(), privKey.value(), "0001", "someIssuer", "someSubject", 0, 0, {});
 
     optional<vector<uint8_t>> extractedPubKey =
             support::certificateChainGetTopMostKey(cert.value());
@@ -358,7 +358,7 @@ TEST(IdentityCredentialSupport, CertificateChain) {
     optional<vector<uint8_t>> otherPubKey = support::ecKeyPairGetPublicKey(keyPair.value());
     ASSERT_TRUE(otherPubKey);
     optional<vector<uint8_t>> otherCert = support::ecPublicKeyGenerateCertificate(
-            otherPubKey.value(), privKey.value(), "0001", "someIssuer", "someSubject", 0, 0);
+            otherPubKey.value(), privKey.value(), "0001", "someIssuer", "someSubject", 0, 0, {});
 
     // Now both cert and otherCert are two distinct certificates. Let's make a
     // chain and check that certificateChainSplit() works as expected.
