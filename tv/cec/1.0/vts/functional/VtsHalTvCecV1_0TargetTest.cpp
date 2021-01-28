@@ -150,3 +150,14 @@ TEST_P(HdmiCecTest, EnableAudioReturnChannel) {
         }
     }
 }
+
+TEST_P(HdmiCecTest, IsConnected) {
+    hidl_vec<HdmiPortInfo> ports;
+    Return<void> ret =
+            hdmiCec->getPortInfo([&ports](hidl_vec<HdmiPortInfo> list) { ports = list; });
+    EXPECT_TRUE(ret.isOk());
+    for (size_t i = 0; i < ports.size(); ++i) {
+        Return<bool> ret = hdmiCec->isConnected(ports[i].portId);
+        EXPECT_TRUE(ret.isOk());
+    }
+}
