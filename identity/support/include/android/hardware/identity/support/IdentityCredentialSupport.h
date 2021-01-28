@@ -18,6 +18,7 @@
 #define IDENTITY_SUPPORT_INCLUDE_IDENTITY_CREDENTIAL_UTILS_H_
 
 #include <cstdint>
+#include <map>
 #include <optional>
 #include <string>
 #include <tuple>
@@ -29,11 +30,12 @@ namespace hardware {
 namespace identity {
 namespace support {
 
+using ::std::map;
 using ::std::optional;
+using ::std::pair;
 using ::std::string;
 using ::std::tuple;
 using ::std::vector;
-using ::std::pair;
 
 // The semantic tag for a bstr which includes Encoded CBOR (RFC 7049, section 2.4)
 const int kSemanticTagEncodedCbor = 24;
@@ -221,6 +223,11 @@ optional<pair<size_t, size_t>> certificateFindSignature(const vector<uint8_t>& x
 //
 optional<pair<time_t, time_t>> certificateGetValidity(const vector<uint8_t>& x509Certificate);
 
+// Looks for an extension with OID in |oidStr| which must be an stored as an OCTET STRING.
+//
+optional<vector<uint8_t>> certificateGetExtension(const vector<uint8_t>& x509Certificate,
+                                                  const string& oidStr);
+
 // Generates a X.509 certificate for |publicKey| (which must be in the format
 // returned by ecKeyPairGetPublicKey()).
 //
@@ -230,7 +237,8 @@ optional<pair<time_t, time_t>> certificateGetValidity(const vector<uint8_t>& x50
 optional<vector<uint8_t>> ecPublicKeyGenerateCertificate(
         const vector<uint8_t>& publicKey, const vector<uint8_t>& signingKey,
         const string& serialDecimal, const string& issuer, const string& subject,
-        time_t validityNotBefore, time_t validityNotAfter);
+        time_t validityNotBefore, time_t validityNotAfter,
+        const map<string, vector<uint8_t>>& extensions);
 
 // Performs Elliptic-curve Diffie-Helman using |publicKey| (which must be in the
 // format returned by ecKeyPairGetPublicKey()) and |privateKey| (which must be

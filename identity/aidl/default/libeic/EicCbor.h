@@ -53,6 +53,9 @@ typedef struct {
         EicHmacSha256Ctx hmacSha256;
     } digester;
 
+    // The secondary digester, may be unset.
+    EicSha256Ctx* secondaryDigesterSha256;
+
     // The buffer used for building up CBOR or NULL if bufferSize is 0.
     uint8_t* buffer;
 } EicCbor;
@@ -69,6 +72,14 @@ void eicCborInit(EicCbor* cbor, uint8_t* buffer, size_t bufferSize);
  */
 void eicCborInitHmacSha256(EicCbor* cbor, uint8_t* buffer, size_t bufferSize,
                            const uint8_t* hmacKey, size_t hmacKeySize);
+
+/* Enables a secondary digester.
+ *
+ * May be enabled midway through processing, this can be used to e.g. calculate
+ * a digest of Sig_structure (for COSE_Sign1) and a separate digest of its
+ * payload.
+ */
+void eicCborEnableSecondaryDigesterSha256(EicCbor* cbor, EicSha256Ctx* sha256);
 
 /* Finishes building CBOR and returns the digest. */
 void eicCborFinal(EicCbor* cbor, uint8_t digest[EIC_SHA256_DIGEST_SIZE]);

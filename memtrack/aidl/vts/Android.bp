@@ -7,6 +7,7 @@ cc_test {
     srcs: ["VtsHalMemtrackTargetTest.cpp"],
     shared_libs: [
         "libbinder_ndk",
+        "libvintf",
     ],
     static_libs: [
         "android.hardware.memtrack-unstable-ndk_platform",
