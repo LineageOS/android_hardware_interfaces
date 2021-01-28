@@ -10,7 +10,7 @@ cc_test {
         "libvintf",
     ],
     static_libs: [
-        "android.hardware.memtrack-unstable-ndk_platform",
+        "android.hardware.memtrack-V1-ndk_platform",
     ],
     test_suites: [
         "vts-core",

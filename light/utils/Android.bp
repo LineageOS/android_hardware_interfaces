@@ -28,6 +28,6 @@ cc_binary {
         "libutils",
     ],
     static_libs: [
-        "android.hardware.light-cpp",
+        "android.hardware.light-V1-cpp",
     ],
 }

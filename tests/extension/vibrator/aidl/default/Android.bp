@@ -19,7 +19,7 @@ cc_binary {
     shared_libs: [
         "libbase",
         "libbinder_ndk",
-        "android.hardware.vibrator-unstable-ndk_platform",
-        "android.hardware.tests.extension.vibrator-unstable-ndk_platform",
+        "android.hardware.vibrator-V2-ndk_platform",
+        "android.hardware.tests.extension.vibrator-V2-ndk_platform",
     ],
 }
