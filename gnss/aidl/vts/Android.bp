@@ -34,7 +34,7 @@ cc_test {
         "libbinder",
     ],
     static_libs: [
-        "android.hardware.gnss-cpp",
+        "android.hardware.gnss-V1-cpp",
         "android.hardware.gnss@common-vts-lib",
     ],
     test_suites: [
