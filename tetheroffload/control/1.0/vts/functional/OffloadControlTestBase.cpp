@@ -53,29 +53,6 @@ void OffloadControlTestBase::setupConfigHal() {
     ASSERT_TRUE(ret.isOk());
 }
 
-void OffloadControlTestBase::prepareControlHal() {
-    control = createControl(std::get<1>(GetParam()));
-    ASSERT_NE(nullptr, control.get()) << "Could not get HIDL instance";
-
-    control_cb = new TetheringOffloadCallback();
-    ASSERT_NE(nullptr, control_cb.get()) << "Could not get get offload callback";
-}
-
-void OffloadControlTestBase::initOffload(const bool expected_result) {
-    auto init_cb = [&](bool success, std::string errMsg) {
-        std::string msg = StringPrintf("Unexpectedly %s to init offload: %s",
-                                       success ? "succeeded" : "failed", errMsg.c_str());
-        ASSERT_EQ(expected_result, success) << msg;
-    };
-    const Return<void> ret = control->initOffload(control_cb, init_cb);
-    ASSERT_TRUE(ret.isOk());
-}
-
-void OffloadControlTestBase::setupControlHal() {
-    prepareControlHal();
-    initOffload(true);
-}
-
 void OffloadControlTestBase::stopOffload(const ExpectBoolean value) {
     auto cb = [&](bool success, const hidl_string& errMsg) {
         switch (value) {
