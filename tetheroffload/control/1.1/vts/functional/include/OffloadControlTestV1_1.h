@@ -16,24 +16,26 @@
 
 #pragma once
 
-#include <OffloadControlTestBase.h>
+#include <OffloadControlTestV1_0.h>
+#include <android/hardware/tetheroffload/control/1.1/IOffloadControl.h>
 
-class OffloadControlTestV1_0_HalNotStarted : public OffloadControlTestBase {
+class OffloadControlTestV1_1_HalNotStarted : public OffloadControlTestV1_0_HalNotStarted {
   public:
-    virtual void SetUp() override {
-        setupConfigHal();
-        // Create tether offload control object without calling its initOffload.
-        prepareControlHal();
-    }
-
     virtual sp<android::hardware::tetheroffload::control::V1_0::IOffloadControl> createControl(
             const std::string& serviceName) override {
-        return android::hardware::tetheroffload::control::V1_0::IOffloadControl::getService(
+        return android::hardware::tetheroffload::control::V1_1::IOffloadControl::getService(
                 serviceName);
+    }
+
+    sp<android::hardware::tetheroffload::control::V1_1::IOffloadControl> getControlV1_1() {
+        // The cast is safe since only devices with V1.1+ HAL will be enumerated and pass in to the
+        // test.
+        return android::hardware::tetheroffload::control::V1_1::IOffloadControl::castFrom(control)
+                .withDefault(nullptr);
     }
 };
 
-class OffloadControlTestV1_0_HalStarted : public OffloadControlTestV1_0_HalNotStarted {
+class OffloadControlTestV1_1_HalStarted : public OffloadControlTestV1_1_HalNotStarted {
   public:
     virtual void SetUp() override {
         setupConfigHal();
