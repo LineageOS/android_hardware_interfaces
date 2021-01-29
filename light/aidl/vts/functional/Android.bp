@@ -27,7 +27,7 @@ cc_test {
         "libbinder",
     ],
     static_libs: [
-        "android.hardware.light-cpp",
+        "android.hardware.light-V1-cpp",
     ],
     test_suites: [
         "vts",
