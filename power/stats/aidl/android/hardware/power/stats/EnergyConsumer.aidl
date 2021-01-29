@@ -16,20 +16,26 @@
 
 package android.hardware.power.stats;
 
-import android.hardware.power.stats.StateInfo;
+import android.hardware.power.stats.EnergyConsumerType;
 
 @VintfStability
-parcelable PowerEntityInfo {
+parcelable EnergyConsumer {
     /**
-     * Unique ID of this PowerEntityInfo
+     * Unique ID of this EnergyConsumer
      */
-    int powerEntityId;
+    int id;
+
     /**
-     * Unique name of the PowerEntity. Vendor/device specific. Opaque to framework
+     * For a group of EnergyConsumers of the same logical type, sorting by ordinal
+     * gives their physical order. Ordinals must be consecutive integers starting from 0.
      */
-    @utf8InCpp String powerEntityName;
+    int ordinal;
+
+    /* Type of this EnergyConsumer */
+    EnergyConsumerType type;
+
     /**
-     * List of states that the PowerEntity may reside in
+     * Unique name of this EnergyConsumer. Vendor/device specific. Opaque to framework
      */
-    StateInfo[] states;
+    @utf8InCpp String name;
 }

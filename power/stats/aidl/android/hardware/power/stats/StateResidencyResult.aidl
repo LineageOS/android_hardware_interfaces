@@ -23,7 +23,7 @@ parcelable StateResidencyResult {
     /**
      * ID of the PowerEntity associated with this result
      */
-    int powerEntityId;
+    int id;
     /**
      * Residency for each state in the PowerEntity's state space
      */

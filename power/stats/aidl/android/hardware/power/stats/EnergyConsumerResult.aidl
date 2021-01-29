@@ -16,7 +16,6 @@
 
 package android.hardware.power.stats;
 
-import android.hardware.power.stats.EnergyConsumerId;
 import android.hardware.power.stats.EnergyConsumerAttribution;
 
 @VintfStability
@@ -24,17 +23,18 @@ parcelable EnergyConsumerResult {
     /**
      * ID of the EnergyConsumer associated with this result
      */
-    EnergyConsumerId energyConsumerId;
+    int id;
     /**
      * Time since boot in milliseconds
      */
     long timestampMs;
     /**
-     * Accumulated energy since boot in microwatt-seconds (uWs)
+     * Total accumulated energy since boot in microwatt-seconds (uWs)
      */
     long energyUWs;
     /**
-     * Optional attribution per UID for this EnergyConsumer.
+     * Optional attributed energy per Android ID / Linux UID for this EnergyConsumer.
+     * Sum total of attributed energy must be less than or equal to total accumulated energy.
      */
     EnergyConsumerAttribution[] attribution;
 }

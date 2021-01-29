@@ -17,6 +17,7 @@
 #include "EicCbor.h"
 
 void eicCborInit(EicCbor* cbor, uint8_t* buffer, size_t bufferSize) {
+    eicMemSet(cbor, '\0', sizeof(EicCbor));
     cbor->size = 0;
     cbor->bufferSize = bufferSize;
     cbor->buffer = buffer;
@@ -26,11 +27,16 @@ void eicCborInit(EicCbor* cbor, uint8_t* buffer, size_t bufferSize) {
 
 void eicCborInitHmacSha256(EicCbor* cbor, uint8_t* buffer, size_t bufferSize,
                            const uint8_t* hmacKey, size_t hmacKeySize) {
+    eicMemSet(cbor, '\0', sizeof(EicCbor));
     cbor->size = 0;
     cbor->bufferSize = bufferSize;
     cbor->buffer = buffer;
     cbor->digestType = EIC_CBOR_DIGEST_TYPE_HMAC_SHA256;
     eicOpsHmacSha256Init(&cbor->digester.hmacSha256, hmacKey, hmacKeySize);
+}
+
+void eicCborEnableSecondaryDigesterSha256(EicCbor* cbor, EicSha256Ctx* sha256) {
+    cbor->secondaryDigesterSha256 = sha256;
 }
 
 void eicCborFinal(EicCbor* cbor, uint8_t digest[EIC_SHA256_DIGEST_SIZE]) {
@@ -52,6 +58,9 @@ void eicCborAppend(EicCbor* cbor, const uint8_t* data, size_t size) {
         case EIC_CBOR_DIGEST_TYPE_HMAC_SHA256:
             eicOpsHmacSha256Update(&cbor->digester.hmacSha256, data, size);
             break;
+    }
+    if (cbor->secondaryDigesterSha256 != NULL) {
+        eicOpsSha256Update(cbor->secondaryDigesterSha256, data, size);
     }
 
     if (cbor->size >= cbor->bufferSize) {

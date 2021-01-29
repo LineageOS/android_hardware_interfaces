@@ -65,6 +65,16 @@ enum SessionState {
     REMOVING_ENROLLMENTS,
 
     /**
+     * The HAL is processing the ISession#getFeatures request.
+     */
+    GETTING_FEATURES,
+
+    /**
+     * The HAL is processing the ISession#setFeature request.
+     */
+    SETTING_FEATURE,
+
+    /**
      * The HAL is processing the ISession#getAuthenticatorId request.
      */
     GETTING_AUTHENTICATOR_ID,

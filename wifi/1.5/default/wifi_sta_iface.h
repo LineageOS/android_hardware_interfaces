@@ -114,6 +114,8 @@ class WifiStaIface : public V1_5::IWifiStaIface {
                                setMacAddress_cb hidl_status_cb) override;
     Return<void> getFactoryMacAddress(
         getFactoryMacAddress_cb hidl_status_cb) override;
+    Return<void> setScanMode(bool enable,
+                             setScanMode_cb hidl_status_cb) override;
 
    private:
     // Corresponding worker functions for the HIDL methods.
@@ -164,6 +166,7 @@ class WifiStaIface : public V1_5::IWifiStaIface {
     WifiStatus setMacAddressInternal(const std::array<uint8_t, 6>& mac);
     std::pair<WifiStatus, std::array<uint8_t, 6>>
     getFactoryMacAddressInternal();
+    WifiStatus setScanModeInternal(bool enable);
 
     std::string ifname_;
     std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;

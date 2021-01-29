@@ -17,8 +17,15 @@
 package android.hardware.power.stats;
 
 @VintfStability
-@Backing(type="int")
-enum EnergyConsumerId {
-    DISPLAY = 0,
-    GPS = 1,
+parcelable State {
+    /**
+     * Unique (for a given PowerEntity) ID of this State
+     */
+    int id;
+    /**
+     * Unique (for a given PowerEntity) name of the state. Vendor/device specific.
+     * Opaque to framework
+     */
+    @utf8InCpp String name;
 }
+

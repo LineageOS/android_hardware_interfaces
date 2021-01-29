@@ -284,6 +284,9 @@ struct SetupDataCallResult {
      * retry back-off time in milliseconds. Negative value indicates network does not give any
      * suggestion. 0 indicates retry should be performed immediately. 0x7fffffffffffffff indicates
      * the device should not retry data setup anymore.
+     *
+     * During this time, no calls to IRadio@1.6::SetupDataCall for this APN will be made unless
+     * IRadioIndication@1.6::unthrottleApn is sent with the same APN.
      */
     int64_t suggestedRetryTime;
 

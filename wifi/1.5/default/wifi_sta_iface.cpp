@@ -273,6 +273,13 @@ Return<void> WifiStaIface::getFactoryMacAddress(
                            hidl_status_cb);
 }
 
+Return<void> WifiStaIface::setScanMode(bool enable,
+                                       setScanMode_cb hidl_status_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                           &WifiStaIface::setScanModeInternal, hidl_status_cb,
+                           enable);
+}
+
 std::pair<WifiStatus, std::string> WifiStaIface::getNameInternal() {
     return {createWifiStatus(WifiStatusCode::SUCCESS), ifname_};
 }
@@ -653,6 +660,12 @@ WifiStaIface::getFactoryMacAddressInternal() {
         return {createWifiStatus(WifiStatusCode::ERROR_UNKNOWN), mac};
     }
     return {createWifiStatus(WifiStatusCode::SUCCESS), mac};
+}
+
+WifiStatus WifiStaIface::setScanModeInternal(bool enable) {
+    // OEM's need to implement this on their devices if needed.
+    LOG(WARNING) << "setScanModeInternal(" << enable << ") not supported";
+    return createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED);
 }
 
 }  // namespace implementation

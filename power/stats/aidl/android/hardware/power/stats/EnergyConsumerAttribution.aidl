@@ -19,7 +19,7 @@ package android.hardware.power.stats;
 @VintfStability
 parcelable EnergyConsumerAttribution {
     /**
-     * Android ID / Linux UID, the accumulated energy should be attributed to
+     * Android ID / Linux UID, the accumulated energy is attributed to
      */
     int uid;
     /**

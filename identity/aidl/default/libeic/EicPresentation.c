@@ -19,13 +19,28 @@
 #include <inttypes.h>
 
 bool eicPresentationInit(EicPresentation* ctx, bool testCredential, const char* docType,
-                         const uint8_t encryptedCredentialKeys[80]) {
-    uint8_t credentialKeys[52];
+                         const uint8_t* encryptedCredentialKeys,
+                         size_t encryptedCredentialKeysSize) {
+    uint8_t credentialKeys[86];
+    bool expectPopSha256 = false;
+
+    // For feature version 202009 it's 52 bytes long and for feature version 202101 it's 86
+    // bytes (the additional data is the ProofOfProvisioning SHA-256). We need
+    // to support loading all feature versions.
+    //
+    if (encryptedCredentialKeysSize == 52 + 28) {
+        /* do nothing */
+    } else if (encryptedCredentialKeysSize == 86 + 28) {
+        expectPopSha256 = true;
+    } else {
+        eicDebug("Unexpected size %zd for encryptedCredentialKeys", encryptedCredentialKeysSize);
+        return false;
+    }
 
     eicMemSet(ctx, '\0', sizeof(EicPresentation));
 
     if (!eicOpsDecryptAes128Gcm(eicOpsGetHardwareBoundKey(testCredential), encryptedCredentialKeys,
-                                80,
+                                encryptedCredentialKeysSize,
                                 // DocType is the additionalAuthenticatedData
                                 (const uint8_t*)docType, eicStrLen(docType), credentialKeys)) {
         eicDebug("Error decrypting CredentialKeys");
@@ -34,25 +49,42 @@ bool eicPresentationInit(EicPresentation* ctx, bool testCredential, const char* 
 
     // It's supposed to look like this;
     //
+    // Feature version 202009:
+    //
     //         CredentialKeys = [
     //              bstr,   ; storageKey, a 128-bit AES key
-    //              bstr    ; credentialPrivKey, the private key for credentialKey
+    //              bstr,   ; credentialPrivKey, the private key for credentialKey
     //         ]
     //
-    // where storageKey is 16 bytes and credentialPrivateKey is 32 bytes.
+    // Feature version 202101:
     //
-    // So the first two bytes will be 0x82 0x50 indicating resp. an array of two elements
-    // and a bstr of 16 elements. Sixteen bytes later (offset 18 and 19) there will be
-    // a bstr of 32 bytes. It's encoded as two bytes 0x58 and 0x20.
+    //         CredentialKeys = [
+    //              bstr,   ; storageKey, a 128-bit AES key
+    //              bstr,   ; credentialPrivKey, the private key for credentialKey
+    //              bstr    ; proofOfProvisioning SHA-256
+    //         ]
     //
-    if (credentialKeys[0] != 0x82 || credentialKeys[1] != 0x50 || credentialKeys[18] != 0x58 ||
-        credentialKeys[19] != 0x20) {
+    // where storageKey is 16 bytes, credentialPrivateKey is 32 bytes, and proofOfProvisioning
+    // SHA-256 is 32 bytes.
+    //
+    if (credentialKeys[0] != (expectPopSha256 ? 0x83 : 0x82) ||  // array of two or three elements
+        credentialKeys[1] != 0x50 ||                             // 16-byte bstr
+        credentialKeys[18] != 0x58 || credentialKeys[19] != 0x20) {  // 32-byte bstr
         eicDebug("Invalid CBOR for CredentialKeys");
         return false;
+    }
+    if (expectPopSha256) {
+        if (credentialKeys[52] != 0x58 || credentialKeys[53] != 0x20) {  // 32-byte bstr
+            eicDebug("Invalid CBOR for CredentialKeys");
+            return false;
+        }
     }
     eicMemCpy(ctx->storageKey, credentialKeys + 2, EIC_AES_128_KEY_SIZE);
     eicMemCpy(ctx->credentialPrivateKey, credentialKeys + 20, EIC_P256_PRIV_KEY_SIZE);
     ctx->testCredential = testCredential;
+    if (expectPopSha256) {
+        eicMemCpy(ctx->proofOfProvisioningSha256, credentialKeys + 54, EIC_SHA256_DIGEST_SIZE);
+    }
     return true;
 }
 
@@ -61,6 +93,35 @@ bool eicPresentationGenerateSigningKeyPair(EicPresentation* ctx, const char* doc
                                            uint8_t signingKeyBlob[60]) {
     uint8_t signingKeyPriv[EIC_P256_PRIV_KEY_SIZE];
     uint8_t signingKeyPub[EIC_P256_PUB_KEY_SIZE];
+    uint8_t cborBuf[64];
+
+    // Generate the ProofOfBinding CBOR to include in the X.509 certificate in
+    // IdentityCredentialAuthenticationKeyExtension CBOR. This CBOR is defined
+    // by the following CDDL
+    //
+    //   ProofOfBinding = [
+    //     "ProofOfBinding",
+    //     bstr,                  // Contains the SHA-256 of ProofOfProvisioning
+    //   ]
+    //
+    // This array may grow in the future if other information needs to be
+    // conveyed.
+    //
+    // The bytes of ProofOfBinding is is represented as an OCTET_STRING
+    // and stored at OID 1.3.6.1.4.1.11129.2.1.26.
+    //
+
+    EicCbor cbor;
+    eicCborInit(&cbor, cborBuf, sizeof cborBuf);
+    eicCborAppendArray(&cbor, 2);
+    eicCborAppendString(&cbor, "ProofOfBinding");
+    eicCborAppendByteString(&cbor, ctx->proofOfProvisioningSha256, EIC_SHA256_DIGEST_SIZE);
+    if (cbor.size > sizeof(cborBuf)) {
+        eicDebug("Exceeded buffer size");
+        return false;
+    }
+    const uint8_t* proofOfBinding = cborBuf;
+    size_t proofOfBindingSize = cbor.size;
 
     if (!eicOpsCreateEcKey(signingKeyPriv, signingKeyPub)) {
         eicDebug("Error creating signing key");
@@ -73,7 +134,8 @@ bool eicPresentationGenerateSigningKeyPair(EicPresentation* ctx, const char* doc
     if (!eicOpsSignEcKey(signingKeyPub, ctx->credentialPrivateKey, 1,
                          "Android Identity Credential Key",                 // issuer CN
                          "Android Identity Credential Authentication Key",  // subject CN
-                         validityNotBefore, validityNotAfter, publicKeyCert, publicKeyCertSize)) {
+                         validityNotBefore, validityNotAfter, proofOfBinding, proofOfBindingSize,
+                         publicKeyCert, publicKeyCertSize)) {
         eicDebug("Error creating certificate for signing key");
         return false;
     }
@@ -674,7 +736,8 @@ bool eicPresentationFinishRetrieval(EicPresentation* ctx, uint8_t* digestToBeMac
 }
 
 bool eicPresentationDeleteCredential(EicPresentation* ctx, const char* docType,
-                                     size_t proofOfDeletionCborSize,
+                                     const uint8_t* challenge, size_t challengeSize,
+                                     bool includeChallenge, size_t proofOfDeletionCborSize,
                                      uint8_t signatureOfToBeSigned[EIC_ECDSA_P256_SIGNATURE_SIZE]) {
     EicCbor cbor;
 
@@ -712,10 +775,69 @@ bool eicPresentationDeleteCredential(EicPresentation* ctx, const char* docType,
     eicCborBegin(&cbor, EIC_CBOR_MAJOR_TYPE_BYTE_STRING, proofOfDeletionCborSize);
 
     // Finally, the CBOR that we're actually signing.
-    eicCborAppendArray(&cbor, 3);
+    eicCborAppendArray(&cbor, includeChallenge ? 4 : 3);
     eicCborAppendString(&cbor, "ProofOfDeletion");
     eicCborAppendString(&cbor, docType);
+    if (includeChallenge) {
+        eicCborAppendByteString(&cbor, challenge, challengeSize);
+    }
     eicCborAppendBool(&cbor, ctx->testCredential);
+
+    uint8_t cborSha256[EIC_SHA256_DIGEST_SIZE];
+    eicCborFinal(&cbor, cborSha256);
+    if (!eicOpsEcDsa(ctx->credentialPrivateKey, cborSha256, signatureOfToBeSigned)) {
+        eicDebug("Error signing proofOfDeletion");
+        return false;
+    }
+
+    return true;
+}
+
+bool eicPresentationProveOwnership(EicPresentation* ctx, const char* docType, bool testCredential,
+                                   const uint8_t* challenge, size_t challengeSize,
+                                   size_t proofOfOwnershipCborSize,
+                                   uint8_t signatureOfToBeSigned[EIC_ECDSA_P256_SIGNATURE_SIZE]) {
+    EicCbor cbor;
+
+    eicCborInit(&cbor, NULL, 0);
+
+    // What we're going to sign is the COSE ToBeSigned structure which
+    // looks like the following:
+    //
+    // Sig_structure = [
+    //   context : "Signature" / "Signature1" / "CounterSignature",
+    //   body_protected : empty_or_serialized_map,
+    //   ? sign_protected : empty_or_serialized_map,
+    //   external_aad : bstr,
+    //   payload : bstr
+    //  ]
+    //
+    eicCborAppendArray(&cbor, 4);
+    eicCborAppendString(&cbor, "Signature1");
+
+    // The COSE Encoded protected headers is just a single field with
+    // COSE_LABEL_ALG (1) -> COSE_ALG_ECSDA_256 (-7). For simplicitly we just
+    // hard-code the CBOR encoding:
+    static const uint8_t coseEncodedProtectedHeaders[] = {0xa1, 0x01, 0x26};
+    eicCborAppendByteString(&cbor, coseEncodedProtectedHeaders,
+                            sizeof(coseEncodedProtectedHeaders));
+
+    // We currently don't support Externally Supplied Data (RFC 8152 section 4.3)
+    // so external_aad is the empty bstr
+    static const uint8_t externalAad[0] = {};
+    eicCborAppendByteString(&cbor, externalAad, sizeof(externalAad));
+
+    // For the payload, the _encoded_ form follows here. We handle this by simply
+    // opening a bstr, and then writing the CBOR. This requires us to know the
+    // size of said bstr, ahead of time.
+    eicCborBegin(&cbor, EIC_CBOR_MAJOR_TYPE_BYTE_STRING, proofOfOwnershipCborSize);
+
+    // Finally, the CBOR that we're actually signing.
+    eicCborAppendArray(&cbor, 4);
+    eicCborAppendString(&cbor, "ProofOfOwnership");
+    eicCborAppendString(&cbor, docType);
+    eicCborAppendByteString(&cbor, challenge, challengeSize);
+    eicCborAppendBool(&cbor, testCredential);
 
     uint8_t cborSha256[EIC_SHA256_DIGEST_SIZE];
     eicCborFinal(&cbor, cborSha256);

@@ -17,15 +17,19 @@
 package android.hardware.power.stats;
 
 @VintfStability
-parcelable StateInfo {
+parcelable Channel {
     /**
-     * Unique (for a given PowerEntityInfo) ID of this StateInfo
+     * Unique ID of this Channel
      */
-    int stateId;
+    int id;
     /**
-     * Unique (for a given PowerEntityInfo) name of the state. Vendor/device specific.
-     * Opaque to framework
+     * Unique name of this Channel. Vendor/device specific. Opaque to framework
      */
-    @utf8InCpp String stateName;
+    @utf8InCpp String name;
+
+    /**
+     * Name of the subsystem associated with this Channel. Opaque to framework
+     */
+    @utf8InCpp String subsystem;
 }
 

@@ -26,7 +26,6 @@ import android.hardware.security.keymint.KeyParameter;
 import android.hardware.security.keymint.KeyMintHardwareInfo;
 import android.hardware.security.keymint.KeyPurpose;
 import android.hardware.security.keymint.SecurityLevel;
-import android.hardware.security.secureclock.TimeStampToken;
 
 /**
  * KeyMint device definition.
@@ -682,9 +681,9 @@ interface IKeyMintDevice {
      * values less than the key's minimum length, begin() must return ErrorCode::INVALID_MAC_LENGTH.
      *
      * @param inPurpose The purpose of the operation, one of KeyPurpose::ENCRYPT,
-     *        KeyPurpose::DECRYPT, KeyPurpose::SIGN or KeyPurpose::VERIFY.  Note that for AEAD
-     *        modes, encryption and decryption imply signing and verification, respectively, but
-     *        must be specified as KeyPurpose::ENCRYPT and KeyPurpose::DECRYPT.
+     *        KeyPurpose::DECRYPT, KeyPurpose::SIGN, KeyPurpose::VERIFY, or KeyPurpose::AGREE_KEY.
+     *        Note that for AEAD modes, encryption and decryption imply signing and verification,
+     *        respectively, but must be specified as KeyPurpose::ENCRYPT and KeyPurpose::DECRYPT.
      *
      * @param inKeyBlob The opaque key descriptor returned by generateKey() or importKey().  The key
      *        must have a purpose compatible with purpose and all of its usage requirements must be
