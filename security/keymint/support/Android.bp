@@ -31,7 +31,7 @@ cc_library {
         "include",
     ],
     shared_libs: [
-        "android.hardware.security.keymint-unstable-ndk_platform",
+        "android.hardware.security.keymint-V1-ndk_platform",
         "libbase",
         "libcrypto",
         "libutils",
