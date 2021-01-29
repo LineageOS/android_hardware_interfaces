@@ -19,7 +19,7 @@ cc_test {
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: ["VtsHalGraphicsMapperV4_0TargetTest.cpp"],
     static_libs: [
-        "android.hardware.graphics.common-unstable-ndk_platform",
+        "android.hardware.graphics.common-V2-ndk_platform",
         "android.hardware.graphics.mapper@4.0-vts",
         "libgralloctypes",
         "libsync",

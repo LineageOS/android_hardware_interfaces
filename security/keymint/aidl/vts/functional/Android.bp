@@ -30,8 +30,8 @@ cc_test {
         "libkeymint_support",
     ],
     static_libs: [
-        "android.hardware.security.keymint-unstable-ndk_platform",
-        "android.hardware.security.secureclock-unstable-ndk_platform",
+        "android.hardware.security.keymint-V1-ndk_platform",
+        "android.hardware.security.secureclock-V1-ndk_platform",
         "libcppbor_external",
         "libkeymint_vts_test_utils",
     ],
@@ -60,8 +60,8 @@ cc_test_library {
         "libkeymint_support",
     ],
     static_libs: [
-        "android.hardware.security.keymint-unstable-ndk_platform",
-        "android.hardware.security.secureclock-unstable-ndk_platform",
+        "android.hardware.security.keymint-V1-ndk_platform",
+        "android.hardware.security.secureclock-V1-ndk_platform",
         "libcppbor",
     ],
 }
