@@ -1,0 +1,82 @@
+/*
+ * Copyright (C) 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.tetheroffload.control@1.1;
+
+import @1.0::IOffloadControl;
+
+/**
+ * Interface used to control the lifecycle of tethering offload. Note that callbacks of 1.1 HAL
+ * can be registered with the existing callback registration methods from 1.0 HAL.
+ */
+interface IOffloadControl extends @1.0::IOffloadControl {
+    /**
+     * Instruct hardware to send callbacks after certain number of bytes have been transferred in
+     * either direction on this upstream interface.
+     *
+     * The specified quota bytes must be applied to all traffic on the given upstream interface.
+     * This includes hardware forwarded traffic, software forwarded traffic, and AP-originated
+     * traffic. IPv4 and IPv6 traffic both count towards the same quota. IP headers are included
+     * in the byte count quota, but, link-layer headers are not.
+     *
+     * This API may only be called while offload is occurring on this upstream. The hardware
+     * management process MUST NOT store the values when offload is not started and applies once
+     * offload is started. This is because the quota values would likely become stale over
+     * time and would not reflect any new traffic that has occurred.
+     *
+     * This API replaces {@link @1.0::IOffloadControl::setDataLimit}, the framework would always
+     * calls this API if 1.1 HAL is supported. Otherwise, calls the other one. Thus, no
+     * interaction between the two APIs need to be addressed. However, the hardware implementation
+     * still needs to keep functionality of both in case of shipping with older framework that
+     * doesn't support 1.1 HAL.
+     *
+     * The specified quota bytes MUST replace any previous quotas set by
+     * {@code setDataWarningAndLimit} specified on the same interface. It may be interpreted as
+     * "tell me when either <warningBytes> or <limitBytes> bytes have been transferred
+     * (in either direction), and stop offload when <limitBytes> bytes have been transferred,
+     * starting now and counting from zero on <upstream>."
+     *
+     * Once the {@code warningBytes} is reached, the callback registered in initOffload must be
+     * called with {@code OFFLOAD_WARNING_REACHED} to indicate this event. Once the event fires
+     * for this upstream, no further {@code OFFLOAD_WARNING_REACHED} event will be fired for this
+     * upstream unless this method is called again with the same interface. Note that there is
+     * no need to call initOffload again to resume offload if stopOffload was not called by the
+     * client.
+     *
+     * Similarly, Once the {@code limitBytes} is reached, the callback registered in initOffload
+     * must be called with {@code OFFLOAD_STOPPED_LIMIT_REACHED} to indicate this event. Once
+     * the event fires for this upstream, no further {@code OFFLOAD_STOPPED_LIMIT_REACHED}
+     * event will be fired for this upstream unless this method is called again with the same
+     * interface. However, unlike {@code warningBytes}, when {@code limitBytes} is reached,
+     * all offload must be stopped. If offload is desired again, the hardware management
+     * process must be completely reprogrammed by calling setUpstreamParameters and
+     * addDownstream again.
+     *
+     * Note that when one of the quota bytes is reached, the other one is still considered valid
+     * unless this method is called again with the same interface.
+     *
+     * @param upstream Upstream interface name that quota must apply to.
+     * @param warningBytes The quota of warning, defined as the number of bytes, starting from
+     *                     zero and counting from now.
+     * @param limitBytes The quota of limit, defined as the number of bytes, starting from zero
+     *                   and counting from now.
+     *
+     * @return success true if quota is applied, false otherwise
+     * @return errMsg a human readable string if error has occurred.
+     */
+    setDataWarningAndLimit(string upstream, uint64_t warningBytes, uint64_t limitBytes)
+        generates (bool success, string errMsg);
+};
