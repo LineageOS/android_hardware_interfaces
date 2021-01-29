@@ -1,4 +1,4 @@
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,34 +13,18 @@
 // limitations under the License.
 
 cc_test {
-    name: "VtsHalTetheroffloadControlV1_0TargetTest",
+    name: "VtsHalTetheroffloadControlV1_1TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
+    srcs: ["VtsHalTetheroffloadControlV1_1TargetTest.cpp"],
     local_include_dirs: ["include"],
-    srcs: [
-        "VtsHalTetheroffloadControlV1_0TargetTest.cpp",
-        "OffloadControlTestBase.cpp",
-        "OffloadControlTestUtils.cpp",
-    ],
     static_libs: [
         "android.hardware.tetheroffload.config@1.0",
         "android.hardware.tetheroffload.control@1.0",
+        "android.hardware.tetheroffload.control@1.1",
+        "VtsHalTetheroffloadControlV1_0TargetTest-lib",
     ],
     test_suites: [
         "general-tests",
         "vts",
-    ],
-}
-
-cc_test_library {
-    name: "VtsHalTetheroffloadControlV1_0TargetTest-lib",
-    defaults: ["VtsHalTargetTestDefaults"],
-    export_include_dirs: ["include"],
-    static_libs: [
-        "android.hardware.tetheroffload.config@1.0",
-        "android.hardware.tetheroffload.control@1.0",
-    ],
-    srcs: [
-        "OffloadControlTestBase.cpp",
-        "OffloadControlTestUtils.cpp",
     ],
 }

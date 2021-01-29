@@ -26,8 +26,28 @@ class OffloadControlTestV1_0_HalNotStarted : public OffloadControlTestBase {
         prepareControlHal();
     }
 
-    virtual sp<IOffloadControl> createControl(const std::string& serviceName) override {
-        return IOffloadControl::getService(serviceName);
+    virtual sp<android::hardware::tetheroffload::control::V1_0::IOffloadControl> createControl(
+            const std::string& serviceName) override {
+        return android::hardware::tetheroffload::control::V1_0::IOffloadControl::getService(
+                serviceName);
+    }
+
+    virtual void prepareControlHal() override {
+        control = createControl(std::get<1>(GetParam()));
+        ASSERT_NE(nullptr, control.get()) << "Could not get HIDL instance";
+
+        control_cb = new TetheringOffloadCallback();
+        ASSERT_NE(nullptr, control_cb.get()) << "Could not get get offload callback";
+    }
+
+    virtual void initOffload(const bool expected_result) override {
+        auto init_cb = [&](bool success, std::string errMsg) {
+            std::string msg = StringPrintf("Unexpectedly %s to init offload: %s",
+                                           success ? "succeeded" : "failed", errMsg.c_str());
+            ASSERT_EQ(expected_result, success) << msg;
+        };
+        const Return<void> ret = control->initOffload(control_cb, init_cb);
+        ASSERT_TRUE(ret.isOk());
     }
 };
 
