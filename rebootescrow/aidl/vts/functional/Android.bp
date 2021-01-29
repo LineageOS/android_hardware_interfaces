@@ -25,7 +25,7 @@ cc_test {
         "libbinder",
     ],
     static_libs: [
-        "android.hardware.rebootescrow-cpp",
+        "android.hardware.rebootescrow-V1-cpp",
     ],
     test_suites: [
         "vts",
