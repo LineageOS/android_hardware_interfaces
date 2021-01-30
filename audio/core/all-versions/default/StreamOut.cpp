@@ -239,7 +239,7 @@ Return<void> StreamOut::getSupportedProfiles(getSupportedProfiles_cb _hidl_cb) {
     return mStreamCommon->getSupportedProfiles(_hidl_cb);
 }
 
-Return<Result> StreamOut::setAudioProperties(const AudioConfigBase& config) {
+Return<Result> StreamOut::setAudioProperties(const AudioConfigBaseOptional& config) {
     return mStreamCommon->setAudioProperties(config);
 }
 

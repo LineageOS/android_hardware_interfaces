@@ -89,6 +89,15 @@ struct HidlUtils {
                                            AudioConfigBase* configBase);
     static status_t audioConfigBaseToHal(const AudioConfigBase& configBase,
                                          audio_config_base_t* halConfigBase);
+    static status_t audioConfigBaseOptionalFromHal(const audio_config_base_t& halConfigBase,
+                                                   bool isInput, bool formatSpecified,
+                                                   bool sampleRateSpecified,
+                                                   bool channelMaskSpecified,
+                                                   AudioConfigBaseOptional* configBase);
+    static status_t audioConfigBaseOptionalToHal(const AudioConfigBaseOptional& configBase,
+                                                 audio_config_base_t* halConfigBase,
+                                                 bool* formatSpecified, bool* sampleRateSpecified,
+                                                 bool* channelMaskSpecified);
     static status_t audioDeviceTypeFromHal(audio_devices_t halDevice, AudioDevice* device);
     static status_t audioDeviceTypeToHal(const AudioDevice& device, audio_devices_t* halDevice);
     static status_t audioFormatFromHal(audio_format_t halFormat, AudioFormat* format);
