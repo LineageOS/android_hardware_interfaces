@@ -17,6 +17,7 @@
 package android.hardware.audio.effect@7.0;
 
 import android.hardware.audio.common@7.0;
+import android.hidl.safe_union@1.0;
 
 enum Result : int32_t {
     OK,
@@ -248,32 +249,19 @@ enum EffectBufferAccess : int32_t {
 };
 
 /**
- * Determines what fields of EffectBufferConfig need to be considered.
- */
-@export(name="", value_prefix="EFFECT_CONFIG_")
-enum EffectConfigParameters : int32_t {
-    /** Buffer field. */
-    BUFFER = 0x0001,
-    /** Sampling rate. */
-    SMP_RATE = 0x0002,
-    /** Channels. */
-    CHANNELS = 0x0004,
-    /** Format. */
-    FORMAT = 0x0008,
-    /** Access mode. */
-    ACC_MODE = 0x0010,
-    // Note that the 2.0 ALL have been moved to an helper function
-};
-
-/**
  * The buffer config structure specifies the input or output audio format
  * to be used by the effect engine.
  */
 struct EffectBufferConfig {
-    AudioBuffer buffer;
-    AudioConfigBase base;
-    EffectBufferAccess accessMode;
-    bitfield<EffectConfigParameters> mask;
+    safe_union OptionalBuffer {
+        Monostate unspecified;
+        AudioBuffer buf;
+    } buffer;
+    AudioConfigBaseOptional base;
+    safe_union OptionalAccessMode {
+        Monostate unspecified;
+        EffectBufferAccess value;
+    } accessMode;
 };
 
 struct EffectConfig {
