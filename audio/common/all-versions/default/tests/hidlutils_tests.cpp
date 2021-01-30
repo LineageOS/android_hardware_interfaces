@@ -35,30 +35,27 @@ namespace xsd {
 using namespace ::android::audio::policy::configuration::V7_0;
 }
 
-static constexpr audio_channel_mask_t kInvalidHalChannelMask =
-        static_cast<audio_channel_mask_t>(0xFFFFFFFFU);
+static constexpr audio_channel_mask_t kInvalidHalChannelMask = AUDIO_CHANNEL_INVALID;
 static constexpr audio_content_type_t kInvalidHalContentType =
         static_cast<audio_content_type_t>(0xFFFFFFFFU);
 static constexpr audio_devices_t kInvalidHalDevice = static_cast<audio_devices_t>(0xFFFFFFFFU);
-static constexpr audio_format_t kInvalidHalFormat = static_cast<audio_format_t>(0xFFFFFFFFU);
+static constexpr audio_format_t kInvalidHalFormat = AUDIO_FORMAT_INVALID;
 static constexpr audio_gain_mode_t kInvalidHalGainMode =
         static_cast<audio_gain_mode_t>(0xFFFFFFFFU);
-static constexpr audio_source_t kInvalidHalSource = static_cast<audio_source_t>(0xFFFFFFFFU);
+// AUDIO_SOURCE_INVALID is framework-only.
+static constexpr audio_source_t kInvalidHalSource = static_cast<audio_source_t>(-1);
 static constexpr audio_stream_type_t kInvalidHalStreamType =
         static_cast<audio_stream_type_t>(0xFFFFFFFFU);
 static constexpr audio_usage_t kInvalidHalUsage = static_cast<audio_usage_t>(0xFFFFFFFFU);
 
 TEST(HidlUtils, ConvertInvalidChannelMask) {
     AudioChannelMask invalid;
-    EXPECT_EQ(BAD_VALUE, HidlUtils::audioChannelMaskFromHal(AUDIO_CHANNEL_INVALID,
-                                                            false /*isInput*/, &invalid));
-    EXPECT_EQ(BAD_VALUE, HidlUtils::audioChannelMaskFromHal(AUDIO_CHANNEL_INVALID, true /*isInput*/,
-                                                            &invalid));
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioChannelMaskFromHal(kInvalidHalChannelMask,
                                                             false /*isInput*/, &invalid));
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioChannelMaskFromHal(kInvalidHalChannelMask,
                                                             true /*isInput*/, &invalid));
     audio_channel_mask_t halInvalid;
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioChannelMaskToHal("", &halInvalid));
     // INVALID channel mask is not in XSD thus it's not allowed for transfer over HIDL.
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioChannelMaskToHal("AUDIO_CHANNEL_INVALID", &halInvalid));
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioChannelMaskToHal("random string", &halInvalid));
@@ -148,40 +145,241 @@ TEST(HidlUtils, ConvertChannelMasksFromHal) {
     }
 }
 
+static AudioConfigBase generateValidConfigBase(bool isInput) {
+    AudioConfigBase configBase;
+    configBase.sampleRateHz = 44100;
+    configBase.format = toString(xsd::AudioFormat::AUDIO_FORMAT_PCM_16_BIT);
+    configBase.channelMask = isInput ? toString(xsd::AudioChannelMask::AUDIO_CHANNEL_IN_STEREO)
+                                     : toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO);
+    return configBase;
+}
+
 TEST(HidlUtils, ConvertInvalidConfigBase) {
     AudioConfigBase invalid;
-    EXPECT_EQ(BAD_VALUE, HidlUtils::audioConfigBaseFromHal({.sample_rate = 0,
-                                                            .channel_mask = kInvalidHalChannelMask,
-                                                            .format = kInvalidHalFormat},
-                                                           false /*isInput*/, &invalid));
-    EXPECT_EQ(BAD_VALUE, HidlUtils::audioConfigBaseFromHal({.sample_rate = 0,
-                                                            .channel_mask = kInvalidHalChannelMask,
-                                                            .format = kInvalidHalFormat},
-                                                           true /*isInput*/, &invalid));
+    audio_config_base_t halInvalidChannelMask = AUDIO_CONFIG_BASE_INITIALIZER;
+    halInvalidChannelMask.channel_mask = kInvalidHalChannelMask;
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioConfigBaseFromHal(halInvalidChannelMask, false /*isInput*/,
+                                                           &invalid));
+    EXPECT_EQ(BAD_VALUE,
+              HidlUtils::audioConfigBaseFromHal(halInvalidChannelMask, true /*isInput*/, &invalid));
+    audio_config_base_t halInvalidFormat = AUDIO_CONFIG_BASE_INITIALIZER;
+    halInvalidFormat.format = kInvalidHalFormat;
+    EXPECT_EQ(BAD_VALUE,
+              HidlUtils::audioConfigBaseFromHal(halInvalidFormat, false /*isInput*/, &invalid));
+    EXPECT_EQ(BAD_VALUE,
+              HidlUtils::audioConfigBaseFromHal(halInvalidFormat, true /*isInput*/, &invalid));
+
     audio_config_base_t halInvalid;
-    invalid.sampleRateHz = 0;
-    invalid.channelMask = "random string";
-    invalid.format = "random string";
-    EXPECT_EQ(BAD_VALUE, HidlUtils::audioConfigBaseToHal(invalid, &halInvalid));
+    AudioConfigBase invalidChannelMask = generateValidConfigBase(false /*isInput*/);
+    invalidChannelMask.channelMask = "random string";
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioConfigBaseToHal(invalidChannelMask, &halInvalid));
+    AudioConfigBase invalidFormat = generateValidConfigBase(false /*isInput*/);
+    invalidFormat.format = "random string";
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioConfigBaseToHal(invalidFormat, &halInvalid));
+}
+
+TEST(HidlUtils, ConvertConfigBaseDefault) {
+    audio_config_base_t halBaseDefault = AUDIO_CONFIG_BASE_INITIALIZER;
+    AudioConfigBase baseDefaultOut, baseDefaultIn;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigBaseFromHal(halBaseDefault, false /*isInput*/,
+                                                          &baseDefaultOut));
+    EXPECT_EQ(NO_ERROR,
+              HidlUtils::audioConfigBaseFromHal(halBaseDefault, true /*isInput*/, &baseDefaultIn));
+    EXPECT_EQ(baseDefaultOut, baseDefaultIn);
+    audio_config_base_t halBaseDefaultBack;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigBaseToHal(baseDefaultOut, &halBaseDefaultBack));
+    EXPECT_EQ(halBaseDefault.sample_rate, halBaseDefaultBack.sample_rate);
+    EXPECT_EQ(halBaseDefault.channel_mask, halBaseDefaultBack.channel_mask);
+    EXPECT_EQ(halBaseDefault.format, halBaseDefaultBack.format);
 }
 
 TEST(HidlUtils, ConvertConfigBase) {
-    AudioConfigBase configBase;
-    configBase.sampleRateHz = 44100;
-    configBase.channelMask = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO);
-    configBase.format = toString(xsd::AudioFormat::AUDIO_FORMAT_PCM_16_BIT);
-    audio_config_base_t halConfigBase;
-    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigBaseToHal(configBase, &halConfigBase));
-    AudioConfigBase configBaseBack;
+    AudioConfigBase configBaseOut = generateValidConfigBase(false /*isInput*/);
+    audio_config_base_t halConfigBaseOut;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigBaseToHal(configBaseOut, &halConfigBaseOut));
+    AudioConfigBase configBaseOutBack;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigBaseFromHal(halConfigBaseOut, false /*isInput*/,
+                                                          &configBaseOutBack));
+    EXPECT_EQ(configBaseOut, configBaseOutBack);
+
+    AudioConfigBase configBaseIn = generateValidConfigBase(true /*isInput*/);
+    audio_config_base_t halConfigBaseIn;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigBaseToHal(configBaseIn, &halConfigBaseIn));
+    AudioConfigBase configBaseInBack;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigBaseFromHal(halConfigBaseIn, true /*isInput*/,
+                                                          &configBaseInBack));
+    EXPECT_EQ(configBaseIn, configBaseInBack);
+}
+
+TEST(HidlUtils, ConvertInvalidConfigBaseOptional) {
+    AudioConfigBaseOptional invalid;
+    audio_config_base_t halInvalidChannelMask = AUDIO_CONFIG_BASE_INITIALIZER;
+    halInvalidChannelMask.channel_mask = kInvalidHalChannelMask;
+    EXPECT_EQ(BAD_VALUE,
+              HidlUtils::audioConfigBaseOptionalFromHal(
+                      halInvalidChannelMask, false /*isInput*/, false /*formatSpecified*/,
+                      false /*sampleRateSpecified*/, true /*channelMaskSpecified*/, &invalid));
+    EXPECT_EQ(BAD_VALUE,
+              HidlUtils::audioConfigBaseOptionalFromHal(
+                      halInvalidChannelMask, true /*isInput*/, false /*formatSpecified*/,
+                      false /*sampleRateSpecified*/, true /*channelMaskSpecified*/, &invalid));
+    // Unspecified invalid values are ignored
+    AudioConfigBaseOptional unspecified;
     EXPECT_EQ(NO_ERROR,
-              HidlUtils::audioConfigBaseFromHal(halConfigBase, false /*isInput*/, &configBaseBack));
-    EXPECT_EQ(configBase, configBaseBack);
+              HidlUtils::audioConfigBaseOptionalFromHal(
+                      halInvalidChannelMask, false /*isInput*/, false /*formatSpecified*/,
+                      false /*sampleRateSpecified*/, false /*channelMaskSpecified*/, &unspecified));
+    EXPECT_EQ(NO_ERROR,
+              HidlUtils::audioConfigBaseOptionalFromHal(
+                      halInvalidChannelMask, true /*isInput*/, false /*formatSpecified*/,
+                      false /*sampleRateSpecified*/, false /*channelMaskSpecified*/, &unspecified));
+    audio_config_base_t halInvalidFormat = AUDIO_CONFIG_BASE_INITIALIZER;
+    halInvalidFormat.format = kInvalidHalFormat;
+    EXPECT_EQ(BAD_VALUE,
+              HidlUtils::audioConfigBaseOptionalFromHal(
+                      halInvalidFormat, false /*isInput*/, true /*formatSpecified*/,
+                      false /*sampleRateSpecified*/, false /*channelMaskSpecified*/, &invalid));
+    EXPECT_EQ(BAD_VALUE,
+              HidlUtils::audioConfigBaseOptionalFromHal(
+                      halInvalidFormat, true /*isInput*/, true /*formatSpecified*/,
+                      false /*sampleRateSpecified*/, false /*channelMaskSpecified*/, &invalid));
+    EXPECT_EQ(NO_ERROR,
+              HidlUtils::audioConfigBaseOptionalFromHal(
+                      halInvalidFormat, false /*isInput*/, false /*formatSpecified*/,
+                      false /*sampleRateSpecified*/, false /*channelMaskSpecified*/, &unspecified));
+    EXPECT_EQ(NO_ERROR,
+              HidlUtils::audioConfigBaseOptionalFromHal(
+                      halInvalidFormat, true /*isInput*/, false /*formatSpecified*/,
+                      false /*sampleRateSpecified*/, false /*channelMaskSpecified*/, &unspecified));
+
+    audio_config_base_t halInvalid;
+    AudioConfigBaseOptional invalidChannelMask;
+    bool formatSpecified, sampleRateSpecified, channelMaskSpecified;
+    invalidChannelMask.channelMask.value("random string");
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioConfigBaseOptionalToHal(
+                                 invalidChannelMask, &halInvalid, &formatSpecified,
+                                 &sampleRateSpecified, &channelMaskSpecified));
+    AudioConfigBaseOptional invalidFormat;
+    invalidFormat.format.value("random string");
+    EXPECT_EQ(BAD_VALUE,
+              HidlUtils::audioConfigBaseOptionalToHal(invalidFormat, &halInvalid, &formatSpecified,
+                                                      &sampleRateSpecified, &channelMaskSpecified));
+}
+
+TEST(HidlUtils, ConvertConfigBaseOptionalDefault) {
+    audio_config_base_t halBaseDefault = AUDIO_CONFIG_BASE_INITIALIZER;
+    AudioConfigBaseOptional baseDefaultUnspecOut, baseDefaultUnspecIn;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigBaseOptionalFromHal(
+                                halBaseDefault, false /*isInput*/, false /*formatSpecified*/,
+                                false /*sampleRateSpecified*/, false /*channelMaskSpecified*/,
+                                &baseDefaultUnspecOut));
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigBaseOptionalFromHal(
+                                halBaseDefault, true /*isInput*/, false /*formatSpecified*/,
+                                false /*sampleRateSpecified*/, false /*channelMaskSpecified*/,
+                                &baseDefaultUnspecIn));
+    EXPECT_EQ(baseDefaultUnspecOut, baseDefaultUnspecIn);
+    audio_config_base_t halBaseDefaultUnspecBack = AUDIO_CONFIG_BASE_INITIALIZER;
+    bool formatSpecified, sampleRateSpecified, channelMaskSpecified;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigBaseOptionalToHal(
+                                baseDefaultUnspecOut, &halBaseDefaultUnspecBack, &formatSpecified,
+                                &sampleRateSpecified, &channelMaskSpecified));
+    EXPECT_FALSE(formatSpecified);
+    EXPECT_FALSE(sampleRateSpecified);
+    EXPECT_FALSE(channelMaskSpecified);
+    EXPECT_EQ(halBaseDefault.sample_rate, halBaseDefaultUnspecBack.sample_rate);
+    EXPECT_EQ(halBaseDefault.channel_mask, halBaseDefaultUnspecBack.channel_mask);
+    EXPECT_EQ(halBaseDefault.format, halBaseDefaultUnspecBack.format);
+
+    AudioConfigBaseOptional baseDefaultSpecOut, baseDefaultSpecIn;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigBaseOptionalFromHal(
+                                halBaseDefault, false /*isInput*/, true /*formatSpecified*/,
+                                true /*sampleRateSpecified*/, true /*channelMaskSpecified*/,
+                                &baseDefaultSpecOut));
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigBaseOptionalFromHal(
+                                halBaseDefault, true /*isInput*/, true /*formatSpecified*/,
+                                true /*sampleRateSpecified*/, true /*channelMaskSpecified*/,
+                                &baseDefaultSpecIn));
+    EXPECT_EQ(baseDefaultSpecOut, baseDefaultSpecIn);
+    audio_config_base_t halBaseDefaultSpecBack;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigBaseOptionalToHal(
+                                baseDefaultSpecOut, &halBaseDefaultSpecBack, &formatSpecified,
+                                &sampleRateSpecified, &channelMaskSpecified));
+    EXPECT_TRUE(formatSpecified);
+    EXPECT_TRUE(sampleRateSpecified);
+    EXPECT_TRUE(channelMaskSpecified);
+    EXPECT_EQ(halBaseDefault.sample_rate, halBaseDefaultSpecBack.sample_rate);
+    EXPECT_EQ(halBaseDefault.channel_mask, halBaseDefaultSpecBack.channel_mask);
+    EXPECT_EQ(halBaseDefault.format, halBaseDefaultSpecBack.format);
+}
+
+TEST(HidlUtils, ConvertConfigBaseOptionalEmpty) {
+    AudioConfigBaseOptional empty;
+    bool formatSpecified, sampleRateSpecified, channelMaskSpecified;
+    audio_config_base_t halEmpty = AUDIO_CONFIG_BASE_INITIALIZER;
+    EXPECT_EQ(NO_ERROR,
+              HidlUtils::audioConfigBaseOptionalToHal(empty, &halEmpty, &formatSpecified,
+                                                      &sampleRateSpecified, &channelMaskSpecified));
+    EXPECT_FALSE(formatSpecified);
+    EXPECT_FALSE(sampleRateSpecified);
+    EXPECT_FALSE(channelMaskSpecified);
+    AudioConfigBaseOptional emptyOutBack, emptyInBack;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigBaseOptionalFromHal(
+                                halEmpty, false /*isInput*/, formatSpecified, sampleRateSpecified,
+                                channelMaskSpecified, &emptyOutBack));
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigBaseOptionalFromHal(
+                                halEmpty, true /*isInput*/, formatSpecified, sampleRateSpecified,
+                                channelMaskSpecified, &emptyInBack));
+    EXPECT_EQ(emptyOutBack, emptyInBack);
+    EXPECT_EQ(empty, emptyOutBack);
+}
+
+TEST(HidlUtils, ConvertConfigBaseOptional) {
+    AudioConfigBase validBaseOut = generateValidConfigBase(false /*isInput*/);
+    AudioConfigBaseOptional configBaseOut;
+    configBaseOut.format.value(validBaseOut.format);
+    configBaseOut.sampleRateHz.value(validBaseOut.sampleRateHz);
+    configBaseOut.channelMask.value(validBaseOut.channelMask);
+    audio_config_base_t halConfigBaseOut;
+    bool formatSpecified, sampleRateSpecified, channelMaskSpecified;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigBaseOptionalToHal(
+                                configBaseOut, &halConfigBaseOut, &formatSpecified,
+                                &sampleRateSpecified, &channelMaskSpecified));
+    EXPECT_TRUE(formatSpecified);
+    EXPECT_TRUE(sampleRateSpecified);
+    EXPECT_TRUE(channelMaskSpecified);
+    AudioConfigBaseOptional configBaseOutBack;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigBaseOptionalFromHal(
+                                halConfigBaseOut, false /*isInput*/, formatSpecified,
+                                sampleRateSpecified, channelMaskSpecified, &configBaseOutBack));
+    EXPECT_EQ(configBaseOut, configBaseOutBack);
+
+    AudioConfigBase validBaseIn = generateValidConfigBase(true /*isInput*/);
+    AudioConfigBaseOptional configBaseIn;
+    configBaseIn.format.value(validBaseIn.format);
+    configBaseIn.sampleRateHz.value(validBaseIn.sampleRateHz);
+    configBaseIn.channelMask.value(validBaseIn.channelMask);
+    audio_config_base_t halConfigBaseIn;
+    formatSpecified = false;
+    sampleRateSpecified = false;
+    channelMaskSpecified = false;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigBaseOptionalToHal(
+                                configBaseIn, &halConfigBaseIn, &formatSpecified,
+                                &sampleRateSpecified, &channelMaskSpecified));
+    EXPECT_TRUE(formatSpecified);
+    EXPECT_TRUE(sampleRateSpecified);
+    EXPECT_TRUE(channelMaskSpecified);
+    AudioConfigBaseOptional configBaseInBack;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigBaseOptionalFromHal(
+                                halConfigBaseIn, true /*isInput*/, formatSpecified,
+                                sampleRateSpecified, channelMaskSpecified, &configBaseInBack));
+    EXPECT_EQ(configBaseIn, configBaseInBack);
 }
 
 TEST(HidlUtils, ConvertInvalidContentType) {
     AudioContentType invalid;
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioContentTypeFromHal(kInvalidHalContentType, &invalid));
     audio_content_type_t halInvalid;
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioContentTypeToHal("", &halInvalid));
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioContentTypeToHal("random string", &halInvalid));
 }
 
@@ -202,6 +400,7 @@ TEST(HidlUtils, ConvertInvalidDeviceType) {
     AudioDevice invalid;
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioDeviceTypeFromHal(kInvalidHalDevice, &invalid));
     audio_devices_t halInvalid;
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioDeviceTypeToHal("", &halInvalid));
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioDeviceTypeToHal("random string", &halInvalid));
 }
 
@@ -233,6 +432,7 @@ TEST(HidlUtils, ConvertDeviceType) {
 // The enums module is too small to have unit tests on its own.
 TEST(HidlUtils, VendorExtension) {
     EXPECT_TRUE(xsd::isVendorExtension("VX_GOOGLE_VR_42"));
+    EXPECT_FALSE(xsd::isVendorExtension(""));
     EXPECT_FALSE(xsd::isVendorExtension("random string"));
     EXPECT_FALSE(xsd::isVendorExtension("VX_"));
     EXPECT_FALSE(xsd::isVendorExtension("VX_GOOGLE_$$"));
@@ -347,6 +547,9 @@ TEST(HidlUtils, ConvertInvalidFormat) {
     AudioFormat invalid;
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioFormatFromHal(kInvalidHalFormat, &invalid));
     audio_format_t halInvalid;
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioFormatToHal("", &halInvalid));
+    // INVALID format is not in XSD thus it's not allowed for transfer over HIDL.
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioFormatToHal("AUDIO_FORMAT_INVALID", &halInvalid));
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioFormatToHal("random string", &halInvalid));
 }
 
@@ -357,8 +560,9 @@ TEST(HidlUtils, ConvertFormat) {
         AudioFormat formatBack;
         EXPECT_EQ(NO_ERROR, HidlUtils::audioFormatToHal(format, &halFormat))
                 << "Conversion of \"" << format << "\" failed";
-        EXPECT_TRUE(audio_is_valid_format(halFormat))
-                << "Converted format \"" << format << "\" is invalid";
+        EXPECT_EQ(enumVal != xsd::AudioFormat::AUDIO_FORMAT_DEFAULT,
+                  audio_is_valid_format(halFormat))
+                << "Validity of \"" << format << "\" is not as expected";
         EXPECT_EQ(NO_ERROR, HidlUtils::audioFormatFromHal(halFormat, &formatBack))
                 << "Conversion of format " << halFormat << " failed";
         EXPECT_EQ(format, formatBack);
@@ -430,6 +634,9 @@ TEST(HidlUtils, ConvertInvalidSource) {
     AudioSource invalid;
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioSourceFromHal(kInvalidHalSource, &invalid));
     audio_source_t halInvalid;
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioSourceToHal("", &halInvalid));
+    // INVALID source is not in XSD thus it's not allowed for transfer over HIDL.
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioSourceToHal("AUDIO_SOURCE_INVALID", &halInvalid));
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioSourceToHal("random string", &halInvalid));
 }
 
@@ -453,6 +660,7 @@ TEST(HidlUtils, ConvertInvalidStreamType) {
     AudioStreamType invalid;
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioStreamTypeFromHal(kInvalidHalStreamType, &invalid));
     audio_stream_type_t halInvalid;
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioStreamTypeToHal("", &halInvalid));
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioStreamTypeToHal("random string", &halInvalid));
 }
 
@@ -524,6 +732,7 @@ TEST(HidlUtils, ConvertInvalidUsage) {
     AudioUsage invalid;
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioUsageFromHal(kInvalidHalUsage, &invalid));
     audio_usage_t halInvalid;
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioUsageToHal("", &halInvalid));
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioUsageToHal("random string", &halInvalid));
 }
 
@@ -543,7 +752,7 @@ TEST(HidlUtils, ConvertUsage) {
 TEST(HidlUtils, ConvertInvalidOffloadInfo) {
     AudioOffloadInfo invalid;
     audio_offload_info_t halInvalid = AUDIO_INFO_INITIALIZER;
-    halInvalid.channel_mask = AUDIO_CHANNEL_INVALID;
+    halInvalid.channel_mask = kInvalidHalChannelMask;
     halInvalid.format = kInvalidHalFormat;
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioOffloadInfoFromHal(halInvalid, &invalid));
     invalid.base.channelMask = "random string";
@@ -575,7 +784,7 @@ TEST(HidlUtils, ConvertOffloadInfo) {
 TEST(HidlUtils, ConvertInvalidConfig) {
     AudioConfig invalid;
     audio_config_t halInvalid = AUDIO_CONFIG_INITIALIZER;
-    halInvalid.channel_mask = AUDIO_CHANNEL_INVALID;
+    halInvalid.channel_mask = kInvalidHalChannelMask;
     halInvalid.format = kInvalidHalFormat;
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioConfigFromHal(halInvalid, false /*isInput*/, &invalid));
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioConfigFromHal(halInvalid, true /*isInput*/, &invalid));
@@ -655,18 +864,18 @@ TEST(HidlUtils, ConvertInvalidAudioPortConfig) {
     halInvalid.type = AUDIO_PORT_TYPE_MIX;
     halInvalid.role = AUDIO_PORT_ROLE_NONE;  // note: this is valid.
     halInvalid.config_mask = AUDIO_PORT_CONFIG_CHANNEL_MASK;
-    halInvalid.channel_mask = AUDIO_CHANNEL_INVALID;
+    halInvalid.channel_mask = kInvalidHalChannelMask;
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioPortConfigFromHal(halInvalid, &invalid));
-    invalid.base.channelMask = "random string";
+    invalid.base.channelMask.value("random string");
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioPortConfigToHal(invalid, &halInvalid));
 }
 
 TEST(HidlUtils, ConvertAudioPortConfig) {
     AudioPortConfig config = {};
     config.id = 42;
-    config.base.sampleRateHz = 44100;
-    config.base.channelMask = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO);
-    config.base.format = toString(xsd::AudioFormat::AUDIO_FORMAT_PCM_16_BIT);
+    config.base.sampleRateHz.value(44100);
+    config.base.channelMask.value(toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO));
+    config.base.format.value(toString(xsd::AudioFormat::AUDIO_FORMAT_PCM_16_BIT));
     config.gain.config({});
     config.gain.config().channelMask = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO);
     config.ext.device({});
@@ -734,7 +943,7 @@ TEST(HidlUtils, ConvertInvalidAudioTags) {
             {std::string(AUDIO_ATTRIBUTES_TAGS_MAX_SIZE - 1, HidlUtils::sAudioTagSeparator)}};
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioTagsToHal(tagSeparator, halTag));
 
-    hidl_vec<AudioTag> notExtensions = {{"random string", "VX_", "VX_GOOGLE_$$"}};
+    hidl_vec<AudioTag> notExtensions = {{"", "random string", "VX_", "VX_GOOGLE_$$"}};
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioTagsToHal(notExtensions, halTag));
 }
 
