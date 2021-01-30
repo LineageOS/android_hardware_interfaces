@@ -249,14 +249,17 @@ void Effect::effectAuxChannelsConfigToHal(const EffectAuxChannelsConfig& config,
 
 void Effect::effectBufferConfigFromHal(const buffer_config_t& halConfig,
                                        EffectBufferConfig* config) {
-    config->buffer.id = 0;
-    config->buffer.frameCount = 0;
+    config->buffer.unspecified();
     audio_config_base_t halConfigBase = {halConfig.samplingRate,
                                          static_cast<audio_channel_mask_t>(halConfig.channels),
                                          static_cast<audio_format_t>(halConfig.format)};
-    (void)HidlUtils::audioConfigBaseFromHal(halConfigBase, mIsInput, &config->base);
-    config->accessMode = EffectBufferAccess(halConfig.accessMode);
-    config->mask = static_cast<decltype(config->mask)>(halConfig.mask);
+    (void)HidlUtils::audioConfigBaseOptionalFromHal(
+            halConfigBase, mIsInput, halConfig.mask & EFFECT_CONFIG_FORMAT,
+            halConfig.mask & EFFECT_CONFIG_SMP_RATE, halConfig.mask & EFFECT_CONFIG_CHANNELS,
+            &config->base);
+    if (halConfig.mask & EFFECT_CONFIG_ACC_MODE) {
+        config->accessMode.value(EffectBufferAccess(halConfig.accessMode));
+    }
 }
 
 // static
@@ -265,17 +268,32 @@ void Effect::effectBufferConfigToHal(const EffectBufferConfig& config, buffer_co
     // using 'setProcessBuffers'.
     halConfig->buffer.frameCount = 0;
     halConfig->buffer.raw = nullptr;
-    audio_config_base_t halConfigBase;
-    (void)HidlUtils::audioConfigBaseToHal(config.base, &halConfigBase);
-    halConfig->samplingRate = halConfigBase.sample_rate;
-    halConfig->channels = halConfigBase.channel_mask;
-    halConfig->format = halConfigBase.format;
+    audio_config_base_t halConfigBase = AUDIO_CONFIG_BASE_INITIALIZER;
+    bool formatSpecified = false, sRateSpecified = false, channelMaskSpecified = false;
+    (void)HidlUtils::audioConfigBaseOptionalToHal(config.base, &halConfigBase, &formatSpecified,
+                                                  &sRateSpecified, &channelMaskSpecified);
+    halConfig->mask = 0;
+    if (sRateSpecified) {
+        halConfig->mask |= EFFECT_CONFIG_SMP_RATE;
+        halConfig->samplingRate = halConfigBase.sample_rate;
+    }
+    if (channelMaskSpecified) {
+        halConfig->mask |= EFFECT_CONFIG_CHANNELS;
+        halConfig->channels = halConfigBase.channel_mask;
+    }
+    if (formatSpecified) {
+        halConfig->mask |= EFFECT_CONFIG_FORMAT;
+        halConfig->format = halConfigBase.format;
+    }
     // Note: The framework code does not use BP.
     halConfig->bufferProvider.cookie = nullptr;
     halConfig->bufferProvider.getBuffer = nullptr;
     halConfig->bufferProvider.releaseBuffer = nullptr;
-    halConfig->accessMode = static_cast<uint8_t>(config.accessMode);
-    halConfig->mask = static_cast<uint8_t>(config.mask);
+    if (config.accessMode.getDiscriminator() ==
+        EffectBufferConfig::OptionalAccessMode::hidl_discriminator::value) {
+        halConfig->mask |= EFFECT_CONFIG_ACC_MODE;
+        halConfig->accessMode = static_cast<uint8_t>(config.accessMode.value());
+    }
 }
 
 #endif  // MAJOR_VERSION <= 6

@@ -77,7 +77,7 @@ struct Stream : public IStream, public ParametersUtil {
     Return<Result> setFormat(AudioFormat format) override;
 #else
     Return<void> getSupportedProfiles(getSupportedProfiles_cb _hidl_cb) override;
-    Return<Result> setAudioProperties(const AudioConfigBase& config) override;
+    Return<Result> setAudioProperties(const AudioConfigBaseOptional& config) override;
 #endif  // MAJOR_VERSION <= 6
     Return<void> getAudioProperties(getAudioProperties_cb _hidl_cb) override;
     Return<Result> addEffect(uint64_t effectId) override;
