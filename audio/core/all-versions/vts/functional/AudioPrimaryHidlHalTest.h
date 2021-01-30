@@ -1155,13 +1155,14 @@ static void testSetAudioProperties(IStream* stream) {
     for (const auto& profile : profiles) {
         for (const auto& sampleRate : profile.sampleRates) {
             for (const auto& channelMask : profile.channelMasks) {
-                AudioConfigBase config{.format = profile.format,
-                                       .sampleRateHz = sampleRate,
-                                       .channelMask = {{channelMask}}};
+                AudioConfigBaseOptional config;
+                config.format.value(profile.format);
+                config.sampleRateHz.value(sampleRate);
+                config.channelMask.value(channelMask);
                 auto ret = stream->setAudioProperties(config);
                 EXPECT_TRUE(ret.isOk());
-                EXPECT_EQ(Result::OK, ret) << config.format << "; " << config.sampleRateHz << "; "
-                                           << toString(config.channelMask);
+                EXPECT_EQ(Result::OK, ret)
+                        << profile.format << "; " << sampleRate << "; " << channelMask;
             }
         }
     }
@@ -1169,7 +1170,7 @@ static void testSetAudioProperties(IStream* stream) {
 
 TEST_IO_STREAM(SetAudioProperties, "Call setAudioProperties for all supported profiles",
                testSetAudioProperties(stream.get()))
-#endif
+#endif  // MAJOR_VERSION <= 6
 
 static void testGetAudioProperties(IStream* stream, AudioConfig expectedConfig) {
 #if MAJOR_VERSION <= 6

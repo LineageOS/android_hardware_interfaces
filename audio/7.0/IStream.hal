@@ -73,14 +73,14 @@ interface IStream {
 
     /**
      * Sets stream parameters. Only sets parameters that are specified.
-     * See the description of AudioConfigBase for the details.
      *
      * Optional method. If implemented, only called on a stopped stream.
      *
      * @param config basic stream configuration.
      * @return retval operation completion status.
      */
-    setAudioProperties(AudioConfigBase config) generates (Result retval);
+    setAudioProperties(AudioConfigBaseOptional config)
+            generates (Result retval);
 
     /**
      * Applies audio effect to the stream.
