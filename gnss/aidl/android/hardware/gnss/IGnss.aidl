@@ -34,6 +34,12 @@ interface IGnss {
      */
     const int ERROR_INVALID_ARGUMENT = 1;
 
+    /** A callback has already been registered. */
+    const int ERROR_ALREADY_INIT = 2;
+
+    /** Any other error. */
+    const int ERROR_GENERIC = 3;
+
     /**
      * Opens the interface and provides the callback routines to the implementation of this
      * interface.
