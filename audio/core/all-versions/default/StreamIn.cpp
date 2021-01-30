@@ -233,7 +233,7 @@ Return<void> StreamIn::getSupportedProfiles(getSupportedProfiles_cb _hidl_cb) {
     return mStreamCommon->getSupportedProfiles(_hidl_cb);
 }
 
-Return<Result> StreamIn::setAudioProperties(const AudioConfigBase& config) {
+Return<Result> StreamIn::setAudioProperties(const AudioConfigBaseOptional& config) {
     return mStreamCommon->setAudioProperties(config);
 }
 
