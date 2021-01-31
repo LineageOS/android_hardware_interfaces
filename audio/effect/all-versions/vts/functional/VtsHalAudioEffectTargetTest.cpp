@@ -264,8 +264,10 @@ void AudioEffectHidlTest::getChannelCount(uint32_t* channelCount) {
     *channelCount = audio_channel_count_from_out_mask(
         static_cast<audio_channel_mask_t>(currentConfig.outputCfg.channels));
 #else
+    ASSERT_EQ(AudioConfigBaseOptional::ChannelMask::hidl_discriminator::value,
+              currentConfig.outputCfg.base.channelMask.getDiscriminator());
     *channelCount = android::audio::policy::configuration::V7_0::getChannelCount(
-            currentConfig.outputCfg.base.channelMask);
+            currentConfig.outputCfg.base.channelMask.value());
     ASSERT_NE(*channelCount, 0);
 #endif
 }
@@ -315,10 +317,10 @@ TEST_P(AudioEffectHidlTest, GetSetConfig) {
 std::vector<EffectBufferConfig> generateInvalidConfigs(const EffectBufferConfig& src) {
     std::vector<EffectBufferConfig> result;
     EffectBufferConfig invalidFormat = src;
-    invalidFormat.base.format = "random_string";
+    invalidFormat.base.format.value("random_string");
     result.push_back(std::move(invalidFormat));
     EffectBufferConfig invalidChannelMask = src;
-    invalidChannelMask.base.channelMask = "random_string";
+    invalidChannelMask.base.channelMask.value("random_string");
     result.push_back(std::move(invalidChannelMask));
     return result;
 }
@@ -395,17 +397,22 @@ inline bool operator==(const AudioBuffer& lhs, const AudioBuffer& rhs) {
            rhs.data.handle() == nullptr;
 }
 
+#if MAJOR_VERSION <= 6
 inline bool operator==(const EffectBufferConfig& lhs, const EffectBufferConfig& rhs) {
     return lhs.buffer == rhs.buffer &&
-#if MAJOR_VERSION <= 6
            lhs.samplingRateHz == rhs.samplingRateHz && lhs.channels == rhs.channels &&
            lhs.format == rhs.format &&
-#else
-           lhs.base.sampleRateHz == rhs.base.sampleRateHz &&
-           lhs.base.channelMask == rhs.base.channelMask && lhs.base.format == rhs.base.format &&
-#endif
            lhs.accessMode == rhs.accessMode && lhs.mask == rhs.mask;
 }
+#else
+inline bool operator==(const EffectBufferConfig& lhs, const EffectBufferConfig& rhs) {
+    return lhs.buffer.getDiscriminator() == rhs.buffer.getDiscriminator() &&
+           (lhs.buffer.getDiscriminator() ==
+                    EffectBufferConfig::OptionalBuffer::hidl_discriminator::unspecified ||
+            lhs.buffer.buf() == rhs.buffer.buf()) &&
+           lhs.base == rhs.base && lhs.accessMode == rhs.accessMode;
+}
+#endif  // MAJOR_VERSION <= 6
 
 inline bool operator==(const EffectConfig& lhs, const EffectConfig& rhs) {
     return lhs.inputCfg == rhs.inputCfg && lhs.outputCfg == rhs.outputCfg;
