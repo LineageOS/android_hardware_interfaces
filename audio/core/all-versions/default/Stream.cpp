@@ -278,23 +278,36 @@ Return<void> Stream::getAudioProperties(getAudioProperties_cb _hidl_cb) {
     return Void();
 }
 
-Return<Result> Stream::setAudioProperties(const AudioConfigBase& config) {
-    audio_config_base_t halConfigBase = {};
-    status_t status = HidlUtils::audioConfigBaseToHal(config, &halConfigBase);
+Return<Result> Stream::setAudioProperties(const AudioConfigBaseOptional& config) {
+    audio_config_base_t halConfigBase = AUDIO_CONFIG_BASE_INITIALIZER;
+    bool formatSpecified, sRateSpecified, channelMaskSpecified;
+    status_t status = HidlUtils::audioConfigBaseOptionalToHal(
+            config, &halConfigBase, &formatSpecified, &sRateSpecified, &channelMaskSpecified);
     if (status != NO_ERROR) {
         return Stream::analyzeStatus("set_audio_properties", status);
     }
-    if (Result result = setParam(AudioParameter::keySamplingRate,
-                                 static_cast<int>(halConfigBase.sample_rate));
-        result != Result::OK) {
-        return result;
+    if (sRateSpecified) {
+        if (Result result = setParam(AudioParameter::keySamplingRate,
+                                     static_cast<int>(halConfigBase.sample_rate));
+            result != Result::OK) {
+            return result;
+        }
     }
-    if (Result result =
-                setParam(AudioParameter::keyChannels, static_cast<int>(halConfigBase.channel_mask));
-        result != Result::OK) {
-        return result;
+    if (channelMaskSpecified) {
+        if (Result result = setParam(AudioParameter::keyChannels,
+                                     static_cast<int>(halConfigBase.channel_mask));
+            result != Result::OK) {
+            return result;
+        }
     }
-    return setParam(AudioParameter::keyFormat, static_cast<int>(halConfigBase.format));
+    if (formatSpecified) {
+        if (Result result =
+                    setParam(AudioParameter::keyFormat, static_cast<int>(halConfigBase.format));
+            result != Result::OK) {
+            return result;
+        }
+    }
+    return Result::OK;
 }
 
 #endif  // MAJOR_VERSION <= 6
