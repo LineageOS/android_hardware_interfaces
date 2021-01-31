@@ -40,10 +40,9 @@ interface IGnssMeasurementInterface {
      * @param enableCorrVecOutputs If true, enable correlation vectors as part of the raw GNSS
      *     measurements outputs. If false, disable correlation vectors.
      *
-     * @return initRet Returns SUCCESS if successful. Returns ERROR_ALREADY_INIT if a callback has
-     *     already been registered without a corresponding call to 'close'. Returns ERROR_GENERIC
-     *     for any other error. The HAL must not generate any other updates upon returning this
-     *     error code.
+     * Returns ok() if successful. Returns ERROR_ALREADY_INIT if a callback has already been
+     * registered without a corresponding call to 'close'. Returns ERROR_GENERIC for any other
+     * error. The HAL must not generate any other updates upon returning this error code.
      */
     void setCallback(in IGnssMeasurementCallback callback, in boolean enableFullTracking,
                      in boolean enableCorrVecOutputs);
