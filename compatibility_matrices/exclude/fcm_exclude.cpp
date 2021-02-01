@@ -72,8 +72,6 @@ bool ShouldCheckMissingHalsInFcm(const std::string& package) {
             "android.hardware.nfc@1.0",
             // TODO(b/171260715) Remove when HAL definition is removed
             "android.hardware.radio.deprecated@1.0",
-            // TODO(b/178772241) Remove when HAL definition is removed
-            "android.hardware.tv.cec@2.0",
     };
 
     auto package_has_prefix = [&](const std::string& prefix) {
