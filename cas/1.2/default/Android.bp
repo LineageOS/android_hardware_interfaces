@@ -12,7 +12,7 @@ cc_defaults {
       "TypeConvert.cpp",
     ],
 
-    compile_multilib: "32",
+    compile_multilib: "prefer32",
 
     shared_libs: [
       "android.hardware.cas@1.0",
