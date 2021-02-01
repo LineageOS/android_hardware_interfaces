@@ -59,15 +59,9 @@ TEST_P(RadioHidlTest_v1_6, setupDataCall_1_6) {
     ::android::hardware::radio::V1_6::OptionalSliceInfo optionalSliceInfo;
     memset(&optionalSliceInfo, 0, sizeof(optionalSliceInfo));
 
-    ::android::hardware::radio::V1_6::OptionalTrafficDescriptor optionalTrafficDescriptor;
-    memset(&optionalTrafficDescriptor, 0, sizeof(optionalTrafficDescriptor));
-
-    bool matchAllRuleAllowed = true;
-
     Return<void> res =
             radio_v1_6->setupDataCall_1_6(serial, accessNetwork, dataProfileInfo, roamingAllowed,
-                                          reason, addresses, dnses, -1, optionalSliceInfo,
-                                          optionalTrafficDescriptor, matchAllRuleAllowed);
+                                          reason, addresses, dnses, -1, optionalSliceInfo);
     ASSERT_OK(res);
 
     EXPECT_EQ(std::cv_status::no_timeout, wait());
@@ -85,81 +79,6 @@ TEST_P(RadioHidlTest_v1_6, setupDataCall_1_6) {
                 {::android::hardware::radio::V1_6::RadioError::NONE,
                  ::android::hardware::radio::V1_6::RadioError::RADIO_NOT_AVAILABLE,
                  ::android::hardware::radio::V1_6::RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW}));
-    }
-}
-
-TEST_P(RadioHidlTest_v1_6, setupDataCall_1_6_osAppId) {
-    serial = GetRandomSerialNumber();
-
-    ::android::hardware::radio::V1_5::AccessNetwork accessNetwork =
-            ::android::hardware::radio::V1_5::AccessNetwork::EUTRAN;
-
-    android::hardware::radio::V1_5::DataProfileInfo dataProfileInfo;
-    memset(&dataProfileInfo, 0, sizeof(dataProfileInfo));
-    dataProfileInfo.profileId = DataProfileId::DEFAULT;
-    dataProfileInfo.apn = hidl_string("internet");
-    dataProfileInfo.protocol = PdpProtocolType::IP;
-    dataProfileInfo.roamingProtocol = PdpProtocolType::IP;
-    dataProfileInfo.authType = ApnAuthType::NO_PAP_NO_CHAP;
-    dataProfileInfo.user = hidl_string("username");
-    dataProfileInfo.password = hidl_string("password");
-    dataProfileInfo.type = DataProfileInfoType::THREE_GPP;
-    dataProfileInfo.maxConnsTime = 300;
-    dataProfileInfo.maxConns = 20;
-    dataProfileInfo.waitTime = 0;
-    dataProfileInfo.enabled = true;
-    dataProfileInfo.supportedApnTypesBitmap = 320;
-    dataProfileInfo.bearerBitmap = 161543;
-    dataProfileInfo.mtuV4 = 0;
-    dataProfileInfo.mtuV6 = 0;
-    dataProfileInfo.preferred = true;
-    dataProfileInfo.persistent = false;
-
-    bool roamingAllowed = false;
-
-    std::vector<::android::hardware::radio::V1_5::LinkAddress> addresses = {};
-    std::vector<hidl_string> dnses = {};
-
-    ::android::hardware::radio::V1_2::DataRequestReason reason =
-            ::android::hardware::radio::V1_2::DataRequestReason::NORMAL;
-
-    ::android::hardware::radio::V1_6::OptionalSliceInfo optionalSliceInfo;
-    memset(&optionalSliceInfo, 0, sizeof(optionalSliceInfo));
-
-    ::android::hardware::radio::V1_6::OptionalTrafficDescriptor optionalTrafficDescriptor;
-    memset(&optionalTrafficDescriptor, 0, sizeof(optionalTrafficDescriptor));
-
-    ::android::hardware::radio::V1_6::TrafficDescriptor trafficDescriptor;
-    ::android::hardware::radio::V1_6::OSAppId osAppId;
-    osAppId.osAppId = 1;
-    trafficDescriptor.osAppId.value(osAppId);
-    optionalTrafficDescriptor.value(trafficDescriptor);
-
-    bool matchAllRuleAllowed = true;
-
-    Return<void> res =
-            radio_v1_6->setupDataCall_1_6(serial, accessNetwork, dataProfileInfo, roamingAllowed,
-                                          reason, addresses, dnses, -1, optionalSliceInfo,
-                                          optionalTrafficDescriptor, matchAllRuleAllowed);
-    ASSERT_OK(res);
-
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo.type);
-    EXPECT_EQ(serial, radioRsp_v1_6->rspInfo.serial);
-    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-                radioRsp_v1_6->rspInfo.error,
-                {::android::hardware::radio::V1_6::RadioError::SIM_ABSENT,
-                 ::android::hardware::radio::V1_6::RadioError::RADIO_NOT_AVAILABLE,
-                 ::android::hardware::radio::V1_6::RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW}));
-    } else if (cardStatus.base.base.base.cardState == CardState::PRESENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-                radioRsp_v1_6->rspInfo.error,
-                {::android::hardware::radio::V1_6::RadioError::NONE,
-                 ::android::hardware::radio::V1_6::RadioError::RADIO_NOT_AVAILABLE,
-                 ::android::hardware::radio::V1_6::RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW}));
-        EXPECT_EQ(optionalTrafficDescriptor.value().osAppId.value().osAppId,
-                radioRsp_v1_6->setupDataCallResult.trafficDescriptors[0].osAppId.value().osAppId);
     }
 }
 
