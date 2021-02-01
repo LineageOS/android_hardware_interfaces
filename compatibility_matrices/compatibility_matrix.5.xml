@@ -467,7 +467,6 @@
     <hal format="hidl" optional="true">
         <name>android.hardware.tv.cec</name>
         <version>1.0</version>
-        <version>2.0</version>
         <interface>
             <name>IHdmiCec</name>
             <instance>default</instance>
