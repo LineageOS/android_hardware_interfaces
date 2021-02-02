@@ -22,6 +22,7 @@ import android.hardware.security.keymint.SecurityLevel;
  * KeyMintHardwareInfo is the hardware information returned by calling KeyMint getHardwareInfo()
  */
 @VintfStability
+@RustDerive(Clone=true, Eq=true, PartialEq=true, Ord=true, PartialOrd=true, Hash=true)
 parcelable KeyMintHardwareInfo {
     /**
      * Implementation version of the keymint hardware.  The version number is implementation
