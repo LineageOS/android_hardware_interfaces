@@ -80,7 +80,7 @@ namespace implementation {
             }
         }
 
-        android::CryptoPlugin::Mode legacyMode;
+        android::CryptoPlugin::Mode legacyMode = android::CryptoPlugin::kMode_Unencrypted;
         switch(mode) {
         case Mode::UNENCRYPTED:
             legacyMode = android::CryptoPlugin::kMode_Unencrypted;
@@ -149,7 +149,10 @@ namespace implementation {
                 return Void();
             }
 
-            if (destBuffer.offset + destBuffer.size > destBase->getSize()) {
+            size_t totalDstSize = 0;
+            if (__builtin_add_overflow(destBuffer.offset, destBuffer.size, &totalDstSize) ||
+                totalDstSize > destBase->getSize()) {
+                android_errorWriteLog(0x534e4554, "176496353");
                 _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, 0, "invalid buffer size");
                 return Void();
             }
