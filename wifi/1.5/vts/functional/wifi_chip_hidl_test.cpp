@@ -45,6 +45,7 @@ using ::android::hardware::wifi::V1_0::WifiStatusCode;
 using ::android::hardware::wifi::V1_4::IWifiChipEventCallback;
 using ::android::hardware::wifi::V1_5::IWifiChip;
 using ::android::hardware::wifi::V1_5::WifiBand;
+using ::android::hardware::wifi::V1_5::WifiIfaceMode;
 
 /**
  * Fixture to use for all Wifi chip HIDL interface tests.
@@ -185,6 +186,23 @@ TEST_P(WifiChipHidlTest, setCountryCode) {
     configureChipForIfaceType(IfaceType::STA, true);
     EXPECT_EQ(WifiStatusCode::SUCCESS,
               HIDL_INVOKE(wifi_chip_, setCountryCode, kCountryCode).code);
+}
+
+/* getUsableChannels:
+ * Ensure that a call to getUsableChannels will return with a success
+ * status for valid inputs.
+ */
+TEST_P(WifiChipHidlTest, getUsableChannels) {
+    uint32_t ifaceModeMask =
+        WifiIfaceMode::IFACE_MODE_P2P_CLIENT | WifiIfaceMode::IFACE_MODE_P2P_GO;
+    configureChipForIfaceType(IfaceType::STA, true);
+    WifiBand band = WifiBand::BAND_24GHZ_5GHZ_6GHZ;
+    const auto& statusNonEmpty =
+        HIDL_INVOKE(wifi_chip_, getUsableChannels, band, ifaceModeMask);
+    if (statusNonEmpty.first.code != WifiStatusCode::SUCCESS) {
+        EXPECT_EQ(WifiStatusCode::ERROR_NOT_SUPPORTED,
+                  statusNonEmpty.first.code);
+    }
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiChipHidlTest);

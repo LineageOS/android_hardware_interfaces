@@ -356,6 +356,129 @@ bool convertLegacyWifiMacInfoToHidl(
     return true;
 }
 
+uint32_t convertHidlWifiBandToLegacyMacBand(V1_5::WifiBand hidl_band) {
+    switch (hidl_band) {
+        case V1_5::WifiBand::BAND_24GHZ:
+            return legacy_hal::WLAN_MAC_2_4_BAND;
+        case V1_5::WifiBand::BAND_5GHZ:
+        case V1_5::WifiBand::BAND_5GHZ_DFS:
+        case V1_5::WifiBand::BAND_5GHZ_WITH_DFS:
+            return legacy_hal::WLAN_MAC_5_0_BAND;
+        case V1_5::WifiBand::BAND_24GHZ_5GHZ:
+        case V1_5::WifiBand::BAND_24GHZ_5GHZ_WITH_DFS:
+            return (legacy_hal::WLAN_MAC_2_4_BAND |
+                    legacy_hal::WLAN_MAC_5_0_BAND);
+        case V1_5::WifiBand::BAND_6GHZ:
+            return legacy_hal::WLAN_MAC_6_0_BAND;
+        case V1_5::WifiBand::BAND_5GHZ_6GHZ:
+            return (legacy_hal::WLAN_MAC_5_0_BAND |
+                    legacy_hal::WLAN_MAC_6_0_BAND);
+        case V1_5::WifiBand::BAND_24GHZ_5GHZ_6GHZ:
+        case V1_5::WifiBand::BAND_24GHZ_5GHZ_WITH_DFS_6GHZ:
+            return (legacy_hal::WLAN_MAC_2_4_BAND |
+                    legacy_hal::WLAN_MAC_5_0_BAND |
+                    legacy_hal::WLAN_MAC_6_0_BAND);
+        case V1_5::WifiBand::BAND_60GHZ:
+            return legacy_hal::WLAN_MAC_60_0_BAND;
+        default:
+            return (
+                legacy_hal::WLAN_MAC_2_4_BAND | legacy_hal::WLAN_MAC_5_0_BAND |
+                legacy_hal::WLAN_MAC_6_0_BAND | legacy_hal::WLAN_MAC_60_0_BAND);
+    }
+}
+
+uint32_t convertHidlWifiIfaceModeToLegacy(uint32_t hidl_iface_mask) {
+    uint32_t legacy_iface_mask = 0;
+    if (hidl_iface_mask & V1_5::WifiIfaceMode::IFACE_MODE_STA) {
+        legacy_iface_mask |= (1 << legacy_hal::WIFI_INTERFACE_STA);
+    }
+    if (hidl_iface_mask & V1_5::WifiIfaceMode::IFACE_MODE_SOFTAP) {
+        legacy_iface_mask |= (1 << legacy_hal::WIFI_INTERFACE_SOFTAP);
+    }
+    if (hidl_iface_mask & V1_5::WifiIfaceMode::IFACE_MODE_P2P_CLIENT) {
+        legacy_iface_mask |= (1 << legacy_hal::WIFI_INTERFACE_P2P_CLIENT);
+    }
+    if (hidl_iface_mask & V1_5::WifiIfaceMode::IFACE_MODE_P2P_GO) {
+        legacy_iface_mask |= (1 << legacy_hal::WIFI_INTERFACE_P2P_GO);
+    }
+    if (hidl_iface_mask & V1_5::WifiIfaceMode::IFACE_MODE_NAN) {
+        legacy_iface_mask |= (1 << legacy_hal::WIFI_INTERFACE_NAN);
+    }
+    if (hidl_iface_mask & V1_5::WifiIfaceMode::IFACE_MODE_TDLS) {
+        legacy_iface_mask |= (1 << legacy_hal::WIFI_INTERFACE_TDLS);
+    }
+    if (hidl_iface_mask & V1_5::WifiIfaceMode::IFACE_MODE_MESH) {
+        legacy_iface_mask |= (1 << legacy_hal::WIFI_INTERFACE_MESH);
+    }
+    if (hidl_iface_mask & V1_5::WifiIfaceMode::IFACE_MODE_IBSS) {
+        legacy_iface_mask |= (1 << legacy_hal::WIFI_INTERFACE_IBSS);
+    }
+    return legacy_iface_mask;
+}
+
+uint32_t convertLegacyWifiInterfaceModeToHidl(uint32_t legacy_iface_mask) {
+    uint32_t hidl_iface_mask = 0;
+    if (legacy_iface_mask & (1 << legacy_hal::WIFI_INTERFACE_STA)) {
+        hidl_iface_mask |= V1_5::WifiIfaceMode::IFACE_MODE_STA;
+    }
+    if (legacy_iface_mask & (1 << legacy_hal::WIFI_INTERFACE_SOFTAP)) {
+        hidl_iface_mask |= V1_5::WifiIfaceMode::IFACE_MODE_SOFTAP;
+    }
+    if (legacy_iface_mask & (1 << legacy_hal::WIFI_INTERFACE_P2P_CLIENT)) {
+        hidl_iface_mask |= V1_5::WifiIfaceMode::IFACE_MODE_P2P_CLIENT;
+    }
+    if (legacy_iface_mask & (1 << legacy_hal::WIFI_INTERFACE_P2P_GO)) {
+        hidl_iface_mask |= V1_5::WifiIfaceMode::IFACE_MODE_P2P_GO;
+    }
+    if (legacy_iface_mask & (1 << legacy_hal::WIFI_INTERFACE_NAN)) {
+        hidl_iface_mask |= V1_5::WifiIfaceMode::IFACE_MODE_NAN;
+    }
+    if (legacy_iface_mask & (1 << legacy_hal::WIFI_INTERFACE_TDLS)) {
+        hidl_iface_mask |= V1_5::WifiIfaceMode::IFACE_MODE_TDLS;
+    }
+    if (legacy_iface_mask & (1 << legacy_hal::WIFI_INTERFACE_MESH)) {
+        hidl_iface_mask |= V1_5::WifiIfaceMode::IFACE_MODE_MESH;
+    }
+    if (legacy_iface_mask & (1 << legacy_hal::WIFI_INTERFACE_IBSS)) {
+        hidl_iface_mask |= V1_5::WifiIfaceMode::IFACE_MODE_IBSS;
+    }
+    return hidl_iface_mask;
+}
+
+bool convertLegacyWifiUsableChannelToHidl(
+    const legacy_hal::wifi_usable_channel& legacy_usable_channel,
+    V1_5::WifiUsableChannel* hidl_usable_channel) {
+    if (!hidl_usable_channel) {
+        return false;
+    }
+    *hidl_usable_channel = {};
+    hidl_usable_channel->channel = legacy_usable_channel.freq;
+    hidl_usable_channel->channelBandwidth =
+        convertLegacyWifiChannelWidthToHidl(legacy_usable_channel.width);
+    hidl_usable_channel->ifaceModeMask = convertLegacyWifiInterfaceModeToHidl(
+        legacy_usable_channel.iface_mode_mask);
+
+    return true;
+}
+
+bool convertLegacyWifiUsableChannelsToHidl(
+    const std::vector<legacy_hal::wifi_usable_channel>& legacy_usable_channels,
+    std::vector<V1_5::WifiUsableChannel>* hidl_usable_channels) {
+    if (!hidl_usable_channels) {
+        return false;
+    }
+    *hidl_usable_channels = {};
+    for (const auto& legacy_usable_channel : legacy_usable_channels) {
+        V1_5::WifiUsableChannel hidl_usable_channel;
+        if (!convertLegacyWifiUsableChannelToHidl(legacy_usable_channel,
+                                                  &hidl_usable_channel)) {
+            return false;
+        }
+        hidl_usable_channels->push_back(hidl_usable_channel);
+    }
+    return true;
+}
+
 bool convertLegacyWifiMacInfosToHidl(
     const std::vector<legacy_hal::WifiMacInfo>& legacy_mac_infos,
     std::vector<V1_4::IWifiChipEventCallback::RadioModeInfo>*
