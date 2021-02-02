@@ -47,6 +47,12 @@ bool valid(const Type& halObject) {
     return result.has_value();
 }
 
+template <typename Type>
+auto convertFromNonCanonical(const Type& nonCanonicalObject)
+        -> decltype(convert(nn::convert(nonCanonicalObject).value())) {
+    return convert(NN_TRY(nn::convert(nonCanonicalObject)));
+}
+
 }  // namespace android::hardware::neuralnetworks::V1_1::utils
 
 #endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_1_UTILS_H
