@@ -37,11 +37,9 @@ interface IOffloadControl extends @1.0::IOffloadControl {
      * offload is started. This is because the quota values would likely become stale over
      * time and would not reflect any new traffic that has occurred.
      *
-     * This API replaces {@link @1.0::IOffloadControl::setDataLimit}, the framework would always
-     * calls this API if 1.1 HAL is supported. Otherwise, calls the other one. Thus, no
-     * interaction between the two APIs need to be addressed. However, the hardware implementation
-     * still needs to keep functionality of both in case of shipping with older framework that
-     * doesn't support 1.1 HAL.
+     * This API replaces {@link @1.0::IOffloadControl::setDataLimit}, the framework will always
+     * call setDataWarningAndLimit on 1.1 implementations, and setDataLimit on 1.0 implementations.
+     * Thus, no interaction between the two APIs need to be addressed.
      *
      * The specified quota bytes MUST replace any previous quotas set by
      * {@code setDataWarningAndLimit} specified on the same interface. It may be interpreted as
