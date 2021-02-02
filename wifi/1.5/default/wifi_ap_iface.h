@@ -43,6 +43,7 @@ class WifiApIface : public V1_5::IWifiApIface {
     void invalidate();
     bool isValid();
     std::string getName();
+    void removeInstance(std::string instance);
 
     // HIDL methods exposed.
     Return<void> getName(getName_cb hidl_status_cb) override;
@@ -59,6 +60,9 @@ class WifiApIface : public V1_5::IWifiApIface {
     Return<void> resetToFactoryMacAddress(
         resetToFactoryMacAddress_cb hidl_status_cb) override;
 
+    Return<void> getBridgedInstances(
+        getBridgedInstances_cb hidl_status_cb) override;
+
    private:
     // Corresponding worker functions for the HIDL methods.
     std::pair<WifiStatus, std::string> getNameInternal();
@@ -70,6 +74,8 @@ class WifiApIface : public V1_5::IWifiApIface {
     std::pair<WifiStatus, std::array<uint8_t, 6>> getFactoryMacAddressInternal(
         const std::string& ifaceName);
     WifiStatus resetToFactoryMacAddressInternal();
+    std::pair<WifiStatus, std::vector<hidl_string>>
+    getBridgedInstancesInternal();
 
     std::string ifname_;
     std::vector<std::string> instances_;
