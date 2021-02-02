@@ -1074,6 +1074,7 @@ WifiStatus WifiChip::removeIfaceInstanceFromBridgedApIfaceInternal(
         }
     }
     br_ifaces_ap_instances_.erase(ifInstanceName);
+    iface->removeInstance(ifInstanceName);
     return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
