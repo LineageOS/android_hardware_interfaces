@@ -23,24 +23,3 @@ cc_library_shared {
         "libutils",
     ],
 }
-
-cc_library_shared {
-    name: "libbluetooth_audio_session",
-    defaults: ["hidl_defaults"],
-    vendor: true,
-    srcs: [
-        "session/BluetoothAudioSession.cpp",
-        "session/BluetoothAudioSupportedCodecsDB.cpp",
-    ],
-    export_include_dirs: ["session/"],
-    header_libs: ["libhardware_headers"],
-    shared_libs: [
-        "android.hardware.bluetooth.audio@2.0",
-        "libbase",
-        "libcutils",
-        "libfmq",
-        "libhidlbase",
-        "liblog",
-        "libutils",
-    ],
-}
