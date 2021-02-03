@@ -251,7 +251,6 @@ package android.audio.policy.configuration.V7_0 {
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_INPUT_FLAG_HW_AV_SYNC;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_INPUT_FLAG_HW_HOTWORD;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_INPUT_FLAG_MMAP_NOIRQ;
-    enum_constant public static final android.audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_INPUT_FLAG_NONE;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_INPUT_FLAG_RAW;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_INPUT_FLAG_SYNC;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_INPUT_FLAG_VOIP_TX;
@@ -265,7 +264,6 @@ package android.audio.policy.configuration.V7_0 {
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_IEC958_NONAUDIO;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_INCALL_MUSIC;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_MMAP_NOIRQ;
-    enum_constant public static final android.audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_NONE;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_NON_BLOCKING;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_PRIMARY;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_RAW;

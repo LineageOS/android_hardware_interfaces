@@ -17,9 +17,7 @@
 #define LOG_TAG "DeviceHAL"
 
 #include "core/default/Device.h"
-#include <HidlUtils.h>
 #include "common/all-versions/default/EffectMap.h"
-#include "core/default/Conversions.h"
 #include "core/default/StreamIn.h"
 #include "core/default/StreamOut.h"
 #include "core/default/Util.h"
@@ -32,6 +30,8 @@
 #include <algorithm>
 
 #include <android/log.h>
+
+#include <HidlUtils.h>
 
 namespace android {
 namespace hardware {
@@ -160,11 +160,11 @@ std::tuple<Result, sp<IStreamOut>> Device::openOutputStreamImpl(int32_t ioHandle
     audio_stream_out_t* halStream;
     audio_devices_t halDevice;
     char halDeviceAddress[AUDIO_DEVICE_MAX_ADDRESS_LEN];
-    if (deviceAddressToHal(device, &halDevice, halDeviceAddress) != NO_ERROR) {
+    if (CoreUtils::deviceAddressToHal(device, &halDevice, halDeviceAddress) != NO_ERROR) {
         return {Result::INVALID_ARGUMENTS, nullptr};
     }
     audio_output_flags_t halFlags;
-    if (!audioOutputFlagsToHal(flags, &halFlags)) {
+    if (CoreUtils::audioOutputFlagsToHal(flags, &halFlags) != NO_ERROR) {
         return {Result::INVALID_ARGUMENTS, nullptr};
     }
     ALOGV("open_output_stream handle: %d devices: %x flags: %#x "
@@ -195,12 +195,12 @@ std::tuple<Result, sp<IStreamIn>> Device::openInputStreamImpl(
     audio_stream_in_t* halStream;
     audio_devices_t halDevice;
     char halDeviceAddress[AUDIO_DEVICE_MAX_ADDRESS_LEN];
-    if (deviceAddressToHal(device, &halDevice, halDeviceAddress) != NO_ERROR) {
+    if (CoreUtils::deviceAddressToHal(device, &halDevice, halDeviceAddress) != NO_ERROR) {
         return {Result::INVALID_ARGUMENTS, nullptr};
     }
     audio_input_flags_t halFlags;
     audio_source_t halSource;
-    if (!audioInputFlagsToHal(flags, &halFlags) ||
+    if (CoreUtils::audioInputFlagsToHal(flags, &halFlags) != NO_ERROR ||
         HidlUtils::audioSourceToHal(source, &halSource) != NO_ERROR) {
         return {Result::INVALID_ARGUMENTS, nullptr};
     }
@@ -254,9 +254,12 @@ Return<void> Device::openOutputStream(int32_t ioHandle, const DeviceAddress& dev
                                       const SourceMetadata& sourceMetadata,
                                       openOutputStream_cb _hidl_cb) {
 #if MAJOR_VERSION <= 6
-    if (status_t status = sourceMetadataToHal(sourceMetadata, nullptr); status != NO_ERROR) {
+    if (status_t status = CoreUtils::sourceMetadataToHal(sourceMetadata, nullptr);
+        status != NO_ERROR) {
 #else
-    if (status_t status = sourceMetadataToHalV7(sourceMetadata, nullptr); status != NO_ERROR) {
+    if (status_t status = CoreUtils::sourceMetadataToHalV7(sourceMetadata,
+                                                           false /*ignoreNonVendorTags*/, nullptr);
+        status != NO_ERROR) {
 #endif
         _hidl_cb(analyzeStatus("sourceMetadataToHal", status), nullptr, AudioConfig{});
         return Void();
@@ -288,9 +291,11 @@ Return<void> Device::openInputStream(int32_t ioHandle, const DeviceAddress& devi
         return Void();
     }
 #if MAJOR_VERSION <= 6
-    if (status_t status = sinkMetadataToHal(sinkMetadata, nullptr); status != NO_ERROR) {
+    if (status_t status = CoreUtils::sinkMetadataToHal(sinkMetadata, nullptr); status != NO_ERROR) {
 #else
-    if (status_t status = sinkMetadataToHalV7(sinkMetadata, nullptr); status != NO_ERROR) {
+    if (status_t status = CoreUtils::sinkMetadataToHalV7(sinkMetadata,
+                                                         false /*ignoreNonVendorTags*/, nullptr);
+        status != NO_ERROR) {
 #endif
         _hidl_cb(analyzeStatus("sinkMetadataToHal", status), nullptr, AudioConfig{});
         return Void();
@@ -444,7 +449,7 @@ Return<void> Device::getMicrophones(getMicrophones_cb _hidl_cb) {
         mDevice->get_microphones(mDevice, &mic_array[0], &actual_mics) == 0) {
         microphones.resize(actual_mics);
         for (size_t i = 0; i < actual_mics; ++i) {
-            halToMicrophoneCharacteristics(&microphones[i], mic_array[i]);
+            (void)CoreUtils::microphoneInfoFromHal(mic_array[i], &microphones[i]);
         }
         retval = Result::OK;
     }
