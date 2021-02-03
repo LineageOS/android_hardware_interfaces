@@ -365,6 +365,13 @@ struct SetupDataCallResult {
      * AccessNetwork:NGRAN.
      */
     OptionalSliceInfo sliceInfo;
+
+    /**
+     * TrafficDescriptors for which this data call must be used. It only includes
+     * the TDs for which a data call has been requested so far; it is not an
+     * exhaustive list.
+     */
+    vec<TrafficDescriptor> trafficDescriptors;
 };
 
 /**
@@ -824,6 +831,16 @@ enum DataCallFailCause : @1.4::DataCallFailCause {
      * Data call fail due to the slice not being allowed for the data call.
      */
     SLICE_REJECTED = 0x8CC,
+
+    /**
+     * No matching rule available for the request, and match-all rule is not allowed for it.
+     */
+    MATCH_ALL_RULE_NOT_ALLOWED = 0x8CD,
+
+    /**
+     * If connection failed for all matching URSP rules
+     */
+    ALL_MATCHING_RULES_FAILED = 0x8CE,
 };
 
 struct PhysicalChannelConfig {
@@ -891,4 +908,58 @@ enum NgranBands  : @1.5::NgranBands {
     BAND_46 = 46,
     BAND_53 = 53,
     BAND_96 = 96,
+};
+
+/**
+ * This safe_union represents an optional DNN. DNN stands for Data Network Name
+ * and represents an APN as defined in 3GPP TS 23.003.
+ */
+safe_union OptionalDNN {
+    Monostate noinit;
+    string value;
+};
+
+/**
+ * This safe_union represents an optional OSAppId.
+ */
+safe_union OptionalOSAppId {
+    Monostate noinit;
+    OSAppId value;
+};
+
+/**
+ * This safe_union represents an optional TrafficDescriptor.
+ */
+safe_union OptionalTrafficDescriptor {
+    Monostate noinit;
+    TrafficDescriptor value;
+};
+
+/**
+ * This struct represents a traffic descriptor. A valid struct must have at least
+ * one of the optional values present. This is based on the definition of traffic
+ * descriptor in TS 24.526 Section 5.2.
+ */
+struct TrafficDescriptor {
+    /**
+     * DNN stands for Data Network Name and represents an APN as defined in
+     * 3GPP TS 23.003.
+     */
+    OptionalDNN dnn;
+    /**
+     * Indicates the OSId + OSAppId (used as category in Android).
+     */
+    OptionalOSAppId osAppId;
+};
+
+/**
+ * This struct represents the OSId + OSAppId as defined in TS 24.526 Section 5.2
+ */
+struct OSAppId {
+    /**
+     * Byte array representing OSId + OSAppId. The minimum length of the array is
+     * 18 and maximum length is 272 (16 bytes for OSId + 1 byte for OSAppId length
+     * + up to 255 bytes for OSAppId).
+     */
+    vec<uint8_t> osAppId;
 };
