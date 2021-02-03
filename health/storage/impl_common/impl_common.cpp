@@ -45,32 +45,59 @@ static std::string GetGarbageCollectPath() {
     return "";
 }
 
-Result GarbageCollect(uint64_t timeout_seconds) {
-    std::string path = GetGarbageCollectPath();
+static std::string GetWriteBoosterPath() {
+    Fstab fstab;
+    ReadDefaultFstab(&fstab);
 
-    if (path.empty()) {
+    for (const auto& entry : fstab) {
+        if (!entry.sysfs_path.empty()) {
+            return entry.sysfs_path + "/attributes/wb_avail_buf";
+        }
+    }
+
+    return "";
+}
+
+Result GarbageCollect(uint64_t timeout_seconds) {
+    std::string gc_path = GetGarbageCollectPath();
+
+    if (gc_path.empty()) {
         LOG(WARNING) << "Cannot find Dev GC path";
         return Result::UNKNOWN_ERROR;
     }
 
     Result result = Result::SUCCESS;
     Timer timer;
-    LOG(INFO) << "Start Dev GC on " << path;
+    LOG(INFO) << "Start Dev GC on " << gc_path;
     while (1) {
-        std::string require;
-        if (!ReadFileToString(path, &require)) {
-            PLOG(WARNING) << "Reading manual_gc failed in " << path;
+        std::string require_gc;
+        if (!ReadFileToString(gc_path, &require_gc)) {
+            PLOG(WARNING) << "Reading manual_gc failed in " << gc_path;
             result = Result::IO_ERROR;
             break;
         }
-        require = Trim(require);
-        if (require == "" || require == "off" || require == "disabled") {
+        require_gc = Trim(require_gc);
+
+        std::string wb_path = GetWriteBoosterPath();
+        // Let's flush WB till 100% available
+        std::string wb_avail = "0x0000000A";
+        if (!wb_path.empty() && !ReadFileToString(wb_path, &wb_avail)) {
+            PLOG(WARNING) << "Reading wb_avail_buf failed in " << wb_path;
+        }
+        wb_avail = Trim(wb_avail);
+
+        if (require_gc == "disabled") {
+            LOG(DEBUG) << "Disabled Dev GC";
+            break;
+        }
+        if ((require_gc == "" || require_gc == "off") && wb_avail == "0x0000000A") {
             LOG(DEBUG) << "No more to do Dev GC";
             break;
         }
-        LOG(DEBUG) << "Trigger Dev GC on " << path;
-        if (!WriteStringToFile("1", path)) {
-            PLOG(WARNING) << "Start Dev GC failed on " << path;
+        LOG(DEBUG) << "Trigger Dev GC on " << gc_path << " having " << require_gc << ", WB on "
+                   << wb_path << " having " << wb_avail;
+        if (!WriteStringToFile("1", gc_path)) {
+            PLOG(WARNING) << "Start Dev GC failed on " << gc_path;
             result = Result::IO_ERROR;
             break;
         }
@@ -81,9 +108,9 @@ Result GarbageCollect(uint64_t timeout_seconds) {
         }
         sleep(2);
     }
-    LOG(INFO) << "Stop Dev GC on " << path;
-    if (!WriteStringToFile("0", path)) {
-        PLOG(WARNING) << "Stop Dev GC failed on " << path;
+    LOG(INFO) << "Stop Dev GC on " << gc_path;
+    if (!WriteStringToFile("0", gc_path)) {
+        PLOG(WARNING) << "Stop Dev GC failed on " << gc_path;
         result = Result::IO_ERROR;
     }
 
@@ -97,17 +124,26 @@ void DebugDump(int fd) {
     if (path.empty()) {
         output << "Cannot find Dev GC path";
     } else {
-        std::string require;
+        std::string require_gc;
 
-        if (ReadFileToString(path, &require)) {
-            output << path << ":" << require << std::endl;
+        if (ReadFileToString(path, &require_gc)) {
+            output << path << ":" << require_gc << std::endl;
         }
 
         if (WriteStringToFile("0", path)) {
             output << "stop success" << std::endl;
         }
     }
+    std::string wb_path = GetWriteBoosterPath();
+    if (wb_path.empty()) {
+        output << "Cannot find Dev WriteBooster path";
+    } else {
+        std::string wb_available;
 
+        if (ReadFileToString(wb_path, &wb_available)) {
+            output << wb_path << ":" << wb_available << std::endl;
+        }
+    }
     if (!WriteStringToFd(output.str(), fd)) {
         PLOG(WARNING) << "debug: cannot write to fd";
     }
