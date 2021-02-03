@@ -175,9 +175,12 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     inline const vector<KeyParameter>& SecLevelAuthorizations() {
         return SecLevelAuthorizations(key_characteristics_);
     }
-    const vector<KeyParameter>& HwEnforcedAuthorizations(
+    const vector<KeyParameter>& SecLevelAuthorizations(
+            const vector<KeyCharacteristics>& key_characteristics, SecurityLevel securityLevel);
+
+    AuthorizationSet HwEnforcedAuthorizations(
             const vector<KeyCharacteristics>& key_characteristics);
-    const vector<KeyParameter>& SwEnforcedAuthorizations(
+    AuthorizationSet SwEnforcedAuthorizations(
             const vector<KeyCharacteristics>& key_characteristics);
 
   private:
