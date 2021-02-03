@@ -27,12 +27,16 @@ namespace vibrator {
 static constexpr int32_t kComposeDelayMaxMs = 1000;
 static constexpr int32_t kComposeSizeMax = 256;
 
+static constexpr float kResonantFrequency = 150.0;
+static constexpr float kQFactor = 11.0;
+
 ndk::ScopedAStatus Vibrator::getCapabilities(int32_t* _aidl_return) {
     LOG(INFO) << "Vibrator reporting capabilities";
     *_aidl_return = IVibrator::CAP_ON_CALLBACK | IVibrator::CAP_PERFORM_CALLBACK |
                     IVibrator::CAP_AMPLITUDE_CONTROL | IVibrator::CAP_EXTERNAL_CONTROL |
                     IVibrator::CAP_EXTERNAL_AMPLITUDE_CONTROL | IVibrator::CAP_COMPOSE_EFFECTS |
-                    IVibrator::CAP_ALWAYS_ON_CONTROL;
+                    IVibrator::CAP_ALWAYS_ON_CONTROL | IVibrator::CAP_GET_RESONANT_FREQUENCY |
+                    IVibrator::CAP_GET_Q_FACTOR;
     return ndk::ScopedAStatus::ok();
 }
 
@@ -198,6 +202,16 @@ ndk::ScopedAStatus Vibrator::alwaysOnEnable(int32_t id, Effect effect, EffectStr
 
 ndk::ScopedAStatus Vibrator::alwaysOnDisable(int32_t id) {
     LOG(INFO) << "Disabling always-on ID " << id;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Vibrator::getResonantFrequency(float *resonantFreqHz) {
+    *resonantFreqHz = kResonantFrequency;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Vibrator::getQFactor(float *qFactor) {
+    *qFactor = kQFactor;
     return ndk::ScopedAStatus::ok();
 }
 

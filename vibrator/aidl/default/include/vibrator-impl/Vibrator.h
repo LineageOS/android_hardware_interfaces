@@ -44,6 +44,8 @@ class Vibrator : public BnVibrator {
     ndk::ScopedAStatus getSupportedAlwaysOnEffects(std::vector<Effect>* _aidl_return) override;
     ndk::ScopedAStatus alwaysOnEnable(int32_t id, Effect effect, EffectStrength strength) override;
     ndk::ScopedAStatus alwaysOnDisable(int32_t id) override;
+    ndk::ScopedAStatus getResonantFrequency(float *resonantFreqHz) override;
+    ndk::ScopedAStatus getQFactor(float *qFactor) override;
 };
 
 }  // namespace vibrator
