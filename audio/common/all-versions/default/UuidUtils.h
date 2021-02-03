@@ -17,13 +17,13 @@
 #ifndef android_hardware_audio_Uuid_Utils_H_
 #define android_hardware_audio_Uuid_Utils_H_
 
+#include <string>
+
 // clang-format off
 #include PATH(android/hardware/audio/common/FILE_VERSION/types.h)
 // clang-format on
 
 #include <system/audio.h>
-
-using ::android::hardware::hidl_vec;
 
 namespace android {
 namespace hardware {
@@ -38,6 +38,7 @@ class UuidUtils {
   public:
     static void uuidFromHal(const audio_uuid_t& halUuid, Uuid* uuid);
     static void uuidToHal(const Uuid& uuid, audio_uuid_t* halUuid);
+    static std::string uuidToString(const audio_uuid_t& halUuid);
 };
 
 }  // namespace implementation

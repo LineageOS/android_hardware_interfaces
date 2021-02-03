@@ -738,6 +738,14 @@ Return<void> WifiChip::setCountryCode(const hidl_array<int8_t, 2>& code,
                            code);
 }
 
+Return<void> WifiChip::getUsableChannels(
+    WifiBand band, hidl_bitfield<WifiIfaceMode> ifaceModeMask,
+    getUsableChannels_cb _hidl_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                           &WifiChip::getUsableChannelsInternal, _hidl_cb, band,
+                           ifaceModeMask);
+}
+
 void WifiChip::invalidateAndRemoveAllIfaces() {
     invalidateAndClearBridgedApAll();
     invalidateAndClearAll(ap_ifaces_);
@@ -1066,6 +1074,7 @@ WifiStatus WifiChip::removeIfaceInstanceFromBridgedApIfaceInternal(
         }
     }
     br_ifaces_ap_instances_.erase(ifInstanceName);
+    iface->removeInstance(ifInstanceName);
     return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
@@ -1488,6 +1497,25 @@ WifiStatus WifiChip::setCountryCodeInternal(const std::array<int8_t, 2>& code) {
     auto legacy_status =
         legacy_hal_.lock()->setCountryCode(getFirstActiveWlanIfaceName(), code);
     return createWifiStatusFromLegacyError(legacy_status);
+}
+
+std::pair<WifiStatus, std::vector<WifiUsableChannel>>
+WifiChip::getUsableChannelsInternal(WifiBand band, uint32_t ifaceModeMask) {
+    legacy_hal::wifi_error legacy_status;
+    std::vector<legacy_hal::wifi_usable_channel> legacy_usable_channels;
+    std::tie(legacy_status, legacy_usable_channels) =
+        legacy_hal_.lock()->getUsableChannels(
+            hidl_struct_util::convertHidlWifiBandToLegacyMacBand(band),
+            hidl_struct_util::convertHidlWifiIfaceModeToLegacy(ifaceModeMask));
+    if (legacy_status != legacy_hal::WIFI_SUCCESS) {
+        return {createWifiStatusFromLegacyError(legacy_status), {}};
+    }
+    std::vector<WifiUsableChannel> hidl_usable_channels;
+    if (!hidl_struct_util::convertLegacyWifiUsableChannelsToHidl(
+            legacy_usable_channels, &hidl_usable_channels)) {
+        return {createWifiStatus(WifiStatusCode::ERROR_UNKNOWN), {}};
+    }
+    return {createWifiStatus(WifiStatusCode::SUCCESS), hidl_usable_channels};
 }
 
 WifiStatus WifiChip::handleChipConfiguration(

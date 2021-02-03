@@ -74,29 +74,6 @@ std::cv_status RadioHidlTest_v1_6::wait() {
     return status;
 }
 
-void RadioHidlTest_v1_6::clearPotentialEstablishedCalls() {
-    // Get the current call Id to hangup the established emergency call.
-    serial = GetRandomSerialNumber();
-    radio_v1_6->getCurrentCalls_1_6(serial);
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-
-    // Hang up to disconnect the established call channels.
-    for (const ::android::hardware::radio::V1_6::Call& call : radioRsp_v1_6->currentCalls) {
-        serial = GetRandomSerialNumber();
-        radio_v1_6->hangup(serial, call.base.base.index);
-        ALOGI("Hang up to disconnect the established call channel: %d", call.base.base.index);
-        EXPECT_EQ(std::cv_status::no_timeout, wait());
-        // Give some time for modem to disconnect the established call channel.
-        sleep(MODEM_EMERGENCY_CALL_DISCONNECT_TIME);
-    }
-
-    // Verify there are no more current calls.
-    serial = GetRandomSerialNumber();
-    radio_v1_6->getCurrentCalls_1_6(serial);
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(0, radioRsp_v1_6->currentCalls.size());
-}
-
 void RadioHidlTest_v1_6::updateSimCardStatus() {
     serial = GetRandomSerialNumber();
     radio_v1_6->getIccCardStatus(serial);

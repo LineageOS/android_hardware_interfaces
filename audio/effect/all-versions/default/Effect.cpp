@@ -19,7 +19,6 @@
 #define LOG_TAG "EffectHAL"
 #define ATRACE_TAG ATRACE_TAG_AUDIO
 
-#include "Conversions.h"
 #include "Effect.h"
 #include "common/all-versions/default/EffectMap.h"
 
@@ -30,6 +29,7 @@
 #include <HidlUtils.h>
 #include <android/log.h>
 #include <media/EffectsFactoryApi.h>
+#include <util/EffectUtils.h>
 #include <utils/Trace.h>
 
 #include "VersionUtils.h"
@@ -202,34 +202,6 @@ void Effect::effectAuxChannelsConfigToHal(const EffectAuxChannelsConfig& config,
     halConfig->aux_channels = static_cast<audio_channel_mask_t>(config.auxChannels);
 }
 
-void Effect::effectBufferConfigFromHal(const buffer_config_t& halConfig,
-                                       EffectBufferConfig* config) {
-    config->buffer.id = 0;
-    config->buffer.frameCount = 0;
-    config->samplingRateHz = halConfig.samplingRate;
-    config->channels = AudioChannelBitfield(halConfig.channels);
-    config->format = AudioFormat(halConfig.format);
-    config->accessMode = EffectBufferAccess(halConfig.accessMode);
-    config->mask = static_cast<decltype(config->mask)>(halConfig.mask);
-}
-
-// static
-void Effect::effectBufferConfigToHal(const EffectBufferConfig& config, buffer_config_t* halConfig) {
-    // Note: setting the buffers directly is considered obsolete. They need to be set
-    // using 'setProcessBuffers'.
-    halConfig->buffer.frameCount = 0;
-    halConfig->buffer.raw = NULL;
-    halConfig->samplingRate = config.samplingRateHz;
-    halConfig->channels = static_cast<uint32_t>(config.channels);
-    // Note: The framework code does not use BP.
-    halConfig->bufferProvider.cookie = NULL;
-    halConfig->bufferProvider.getBuffer = NULL;
-    halConfig->bufferProvider.releaseBuffer = NULL;
-    halConfig->format = static_cast<uint8_t>(config.format);
-    halConfig->accessMode = static_cast<uint8_t>(config.accessMode);
-    halConfig->mask = static_cast<uint8_t>(config.mask);
-}
-
 #else  // MAJOR_VERSION <= 6
 
 void Effect::effectAuxChannelsConfigFromHal(const channel_config_t& halConfig,
@@ -247,67 +219,7 @@ void Effect::effectAuxChannelsConfigToHal(const EffectAuxChannelsConfig& config,
     (void)HidlUtils::audioChannelMaskToHal(config.auxChannels, &halConfig->aux_channels);
 }
 
-void Effect::effectBufferConfigFromHal(const buffer_config_t& halConfig,
-                                       EffectBufferConfig* config) {
-    config->buffer.unspecified();
-    audio_config_base_t halConfigBase = {halConfig.samplingRate,
-                                         static_cast<audio_channel_mask_t>(halConfig.channels),
-                                         static_cast<audio_format_t>(halConfig.format)};
-    (void)HidlUtils::audioConfigBaseOptionalFromHal(
-            halConfigBase, mIsInput, halConfig.mask & EFFECT_CONFIG_FORMAT,
-            halConfig.mask & EFFECT_CONFIG_SMP_RATE, halConfig.mask & EFFECT_CONFIG_CHANNELS,
-            &config->base);
-    if (halConfig.mask & EFFECT_CONFIG_ACC_MODE) {
-        config->accessMode.value(EffectBufferAccess(halConfig.accessMode));
-    }
-}
-
-// static
-void Effect::effectBufferConfigToHal(const EffectBufferConfig& config, buffer_config_t* halConfig) {
-    // Note: setting the buffers directly is considered obsolete. They need to be set
-    // using 'setProcessBuffers'.
-    halConfig->buffer.frameCount = 0;
-    halConfig->buffer.raw = nullptr;
-    audio_config_base_t halConfigBase = AUDIO_CONFIG_BASE_INITIALIZER;
-    bool formatSpecified = false, sRateSpecified = false, channelMaskSpecified = false;
-    (void)HidlUtils::audioConfigBaseOptionalToHal(config.base, &halConfigBase, &formatSpecified,
-                                                  &sRateSpecified, &channelMaskSpecified);
-    halConfig->mask = 0;
-    if (sRateSpecified) {
-        halConfig->mask |= EFFECT_CONFIG_SMP_RATE;
-        halConfig->samplingRate = halConfigBase.sample_rate;
-    }
-    if (channelMaskSpecified) {
-        halConfig->mask |= EFFECT_CONFIG_CHANNELS;
-        halConfig->channels = halConfigBase.channel_mask;
-    }
-    if (formatSpecified) {
-        halConfig->mask |= EFFECT_CONFIG_FORMAT;
-        halConfig->format = halConfigBase.format;
-    }
-    // Note: The framework code does not use BP.
-    halConfig->bufferProvider.cookie = nullptr;
-    halConfig->bufferProvider.getBuffer = nullptr;
-    halConfig->bufferProvider.releaseBuffer = nullptr;
-    if (config.accessMode.getDiscriminator() ==
-        EffectBufferConfig::OptionalAccessMode::hidl_discriminator::value) {
-        halConfig->mask |= EFFECT_CONFIG_ACC_MODE;
-        halConfig->accessMode = static_cast<uint8_t>(config.accessMode.value());
-    }
-}
-
 #endif  // MAJOR_VERSION <= 6
-
-void Effect::effectConfigFromHal(const effect_config_t& halConfig, EffectConfig* config) {
-    effectBufferConfigFromHal(halConfig.inputCfg, &config->inputCfg);
-    effectBufferConfigFromHal(halConfig.outputCfg, &config->outputCfg);
-}
-
-// static
-void Effect::effectConfigToHal(const EffectConfig& config, effect_config_t* halConfig) {
-    effectBufferConfigToHal(config.inputCfg, &halConfig->inputCfg);
-    effectBufferConfigToHal(config.outputCfg, &halConfig->outputCfg);
-}
 
 // static
 void Effect::effectOffloadParamToHal(const EffectOffloadParameter& offload,
@@ -373,7 +285,7 @@ void Effect::getConfigImpl(int commandCode, const char* commandName, GetConfigCa
         (*mHandle)->command(mHandle, commandCode, 0, NULL, &halResultSize, &halConfig);
     EffectConfig config;
     if (status == OK) {
-        effectConfigFromHal(halConfig, &config);
+        status = EffectUtils::effectConfigFromHal(halConfig, mIsInput, &config);
     }
     cb(analyzeCommandStatus(commandName, sContextCallToCommand, status), config);
 }
@@ -538,7 +450,7 @@ Result Effect::setConfigImpl(int commandCode, const char* commandName, const Eff
                              const sp<IEffectBufferProviderCallback>& inputBufferProvider,
                              const sp<IEffectBufferProviderCallback>& outputBufferProvider) {
     effect_config_t halConfig;
-    effectConfigToHal(config, &halConfig);
+    EffectUtils::effectConfigToHal(config, &halConfig);
     if (inputBufferProvider != 0) {
         LOG_FATAL("Using input buffer provider is not supported");
     }
@@ -733,7 +645,7 @@ Return<void> Effect::getDescriptor(getDescriptor_cb _hidl_cb) {
     status_t status = (*mHandle)->get_descriptor(mHandle, &halDescriptor);
     EffectDescriptor descriptor;
     if (status == OK) {
-        effectDescriptorFromHal(halDescriptor, &descriptor);
+        status = EffectUtils::effectDescriptorFromHal(halDescriptor, &descriptor);
     }
     _hidl_cb(analyzeStatus("get_descriptor", "", sContextCallFunction, status), descriptor);
     return Void();

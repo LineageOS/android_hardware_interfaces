@@ -47,6 +47,12 @@ bool WifiApIface::isValid() { return is_valid_; }
 
 std::string WifiApIface::getName() { return ifname_; }
 
+void WifiApIface::removeInstance(std::string instance) {
+    instances_.erase(
+        std::remove(instances_.begin(), instances_.end(), instance),
+        instances_.end());
+}
+
 Return<void> WifiApIface::getName(getName_cb hidl_status_cb) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
                            &WifiApIface::getNameInternal, hidl_status_cb);
@@ -90,6 +96,13 @@ Return<void> WifiApIface::resetToFactoryMacAddress(
     resetToFactoryMacAddress_cb hidl_status_cb) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
                            &WifiApIface::resetToFactoryMacAddressInternal,
+                           hidl_status_cb);
+}
+
+Return<void> WifiApIface::getBridgedInstances(
+    getBridgedInstances_cb hidl_status_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                           &WifiApIface::getBridgedInstancesInternal,
                            hidl_status_cb);
 }
 
@@ -177,6 +190,15 @@ WifiStatus WifiApIface::resetToFactoryMacAddressInternal() {
         }
     }
     return createWifiStatus(WifiStatusCode::SUCCESS);
+}
+
+std::pair<WifiStatus, std::vector<hidl_string>>
+WifiApIface::getBridgedInstancesInternal() {
+    std::vector<hidl_string> instances;
+    for (const auto& instance_name : instances_) {
+        instances.push_back(instance_name);
+    }
+    return {createWifiStatus(WifiStatusCode::SUCCESS), instances};
 }
 }  // namespace implementation
 }  // namespace V1_5
