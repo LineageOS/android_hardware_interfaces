@@ -234,4 +234,33 @@ interface IWifiChip extends @1.4::IWifiChip {
      *         |WifiStatusCode.FAILURE_IFACE_INVALID|
      */
     setCountryCode(int8_t[2] code) generates (WifiStatus status);
+
+    /**
+     * Retrieve list of usable Wifi channels for the specified band &
+     * operational modes.
+     *
+     * The list of usable Wifi channels in a given band depends on factors
+     * like current country code, operational mode (e.g. STA, SAP, CLI, GO,
+     * TDLS, NAN) and any hard restrictons due to DFS, LTE Coex and
+     * MCC(multi channel-concurrency).
+     *
+     * @param band |WifiBand| for which list of usable channels is requested.
+     * @param ifaceModeMask Bitmask of the modes represented by |WifiIfaceMode|
+     *        Bitmask respresents all the modes that the caller is interested
+     *        in (e.g. STA, SAP, CLI, GO, TDLS, NAN).
+     *        Note: Bitmask does not represent concurrency matrix.
+     * @return status WifiStatus of the operation.
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+     *         |WifiStatusCode.ERROR_INVALID_ARGS|,
+     *         |WifiStatusCode.FAILURE_UNKNOWN|
+     * @return channels List of channels represented by |WifiUsableChannel|
+     *         Each entry represents a channel frequency, bandwidth and
+     *         bitmask of operational modes (e.g. STA, SAP, CLI, GO, TDLS, NAN)
+     *         allowed on that channel.
+     *         Note: Bitmask does not represent concurrency matrix.
+     */
+    getUsableChannels(WifiBand band, bitfield<WifiIfaceMode> ifaceModeMask)
+        generates (WifiStatus status, vec<WifiUsableChannel> channels);
 };

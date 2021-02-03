@@ -159,13 +159,9 @@
         <xs:annotation>
             <xs:documentation xml:lang="en">
               The flags indicate suggested stream attributes supported by the profile.
-              Use of AUDIO_{INPUT|OUTPUT}_FLAG_NONE in the XML file isn't required
-              as empty flag lists are allowed. However these constants are useful for
-              representing an empty enum value.
             </xs:documentation>
         </xs:annotation>
         <xs:restriction base="xs:string">
-            <xs:enumeration value="AUDIO_OUTPUT_FLAG_NONE" />
             <xs:enumeration value="AUDIO_OUTPUT_FLAG_DIRECT" />
             <xs:enumeration value="AUDIO_OUTPUT_FLAG_PRIMARY" />
             <xs:enumeration value="AUDIO_OUTPUT_FLAG_FAST" />
@@ -182,7 +178,6 @@
             <xs:enumeration value="AUDIO_OUTPUT_FLAG_VOIP_RX" />
             <xs:enumeration value="AUDIO_OUTPUT_FLAG_INCALL_MUSIC" />
             <xs:enumeration value="AUDIO_OUTPUT_FLAG_GAPLESS_OFFLOAD" />
-            <xs:enumeration value="AUDIO_INPUT_FLAG_NONE" />
             <xs:enumeration value="AUDIO_INPUT_FLAG_FAST" />
             <xs:enumeration value="AUDIO_INPUT_FLAG_HW_HOTWORD" />
             <xs:enumeration value="AUDIO_INPUT_FLAG_RAW" />

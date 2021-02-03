@@ -36,6 +36,7 @@ static constexpr uint32_t kMaxGscanFrequenciesForBand = 64;
 static constexpr uint32_t kLinkLayerStatsDataMpduSizeThreshold = 128;
 static constexpr uint32_t kMaxWakeReasonStatsArraySize = 32;
 static constexpr uint32_t kMaxRingBuffers = 10;
+static constexpr uint32_t kMaxWifiUsableChannels = 256;
 // need a long timeout (1000ms) for chips that unload their driver.
 static constexpr uint32_t kMaxStopCompleteWaitMs = 1000;
 static constexpr char kDriverPropName[] = "wlan.driver.status";
@@ -1634,6 +1635,19 @@ wifi_error WifiLegacyHal::setDtimConfig(const std::string& iface_name,
                                         uint32_t multiplier) {
     return global_func_table_.wifi_set_dtim_config(getIfaceHandle(iface_name),
                                                    multiplier);
+}
+
+std::pair<wifi_error, std::vector<wifi_usable_channel>>
+WifiLegacyHal::getUsableChannels(uint32_t band_mask, uint32_t iface_mode_mask) {
+    std::vector<wifi_usable_channel> channels;
+    channels.resize(kMaxWifiUsableChannels);
+    uint32_t size = 0;
+    wifi_error status = global_func_table_.wifi_get_usable_channels(
+        global_handle_, band_mask, iface_mode_mask, channels.size(), &size,
+        reinterpret_cast<wifi_usable_channel*>(channels.data()));
+    CHECK(size >= 0 && size <= kMaxWifiUsableChannels);
+    channels.resize(size);
+    return {status, std::move(channels)};
 }
 
 void WifiLegacyHal::invalidate() {

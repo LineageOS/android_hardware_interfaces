@@ -37,4 +37,18 @@ interface IWifiApIface extends @1.4::IWifiApIface {
      *         |WifiStatusCode.ERROR_UNKNOWN|
      */
     resetToFactoryMacAddress() generates (WifiStatus status);
+
+    /**
+     * Get the names of the bridged AP instances.
+     *
+     * @return status WifiStatus of the operation
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|,
+     *         |WifiStatusCode.ERROR_UNKNOWN|
+     *
+     * @return instances A vector which contains the names of the bridged AP
+     * instances. Note: Returns an empty vector for a non-bridged AP.
+     */
+    getBridgedInstances() generates (WifiStatus status, vec<string> instances);
 };

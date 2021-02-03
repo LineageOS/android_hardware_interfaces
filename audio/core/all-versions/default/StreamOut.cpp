@@ -17,7 +17,6 @@
 #define LOG_TAG "StreamOutHAL"
 
 #include "core/default/StreamOut.h"
-#include "core/default/Conversions.h"
 #include "core/default/Util.h"
 
 //#define LOG_NDEBUG 0
@@ -30,6 +29,7 @@
 #include <HidlUtils.h>
 #include <android/log.h>
 #include <hardware/audio.h>
+#include <util/CoreUtils.h>
 #include <utils/Trace.h>
 
 namespace android {
@@ -589,13 +589,15 @@ Return<void> StreamOut::debug(const hidl_handle& fd, const hidl_vec<hidl_string>
 Result StreamOut::doUpdateSourceMetadata(const SourceMetadata& sourceMetadata) {
     std::vector<playback_track_metadata_t> halTracks;
 #if MAJOR_VERSION <= 6
-    (void)sourceMetadataToHal(sourceMetadata, &halTracks);
+    (void)CoreUtils::sourceMetadataToHal(sourceMetadata, &halTracks);
 #else
     // Validate whether a conversion to V7 is possible. This is needed
     // to have a consistent behavior of the HAL regardless of the API
     // version of the legacy HAL (and also to be consistent with openOutputStream).
     std::vector<playback_track_metadata_v7> halTracksV7;
-    if (status_t status = sourceMetadataToHalV7(sourceMetadata, &halTracksV7); status == NO_ERROR) {
+    if (status_t status = CoreUtils::sourceMetadataToHalV7(
+                sourceMetadata, false /*ignoreNonVendorTags*/, &halTracksV7);
+        status == NO_ERROR) {
         halTracks.reserve(halTracksV7.size());
         for (auto metadata_v7 : halTracksV7) {
             halTracks.push_back(std::move(metadata_v7.base));
@@ -615,7 +617,9 @@ Result StreamOut::doUpdateSourceMetadata(const SourceMetadata& sourceMetadata) {
 #if MAJOR_VERSION >= 7
 Result StreamOut::doUpdateSourceMetadataV7(const SourceMetadata& sourceMetadata) {
     std::vector<playback_track_metadata_v7> halTracks;
-    if (status_t status = sourceMetadataToHalV7(sourceMetadata, &halTracks); status != NO_ERROR) {
+    if (status_t status = CoreUtils::sourceMetadataToHalV7(
+                sourceMetadata, false /*ignoreNonVendorTags*/, &halTracks);
+        status != NO_ERROR) {
         return Stream::analyzeStatus("sourceMetadataToHal", status);
     }
     const source_metadata_v7_t halMetadata = {

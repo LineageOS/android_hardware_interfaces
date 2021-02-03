@@ -36,7 +36,6 @@ parcelable KeyCreationResult {
      * deciding whether a given tag from `keyParams` argument to the generation/import method should
      * be returned in `keyCharacteristics` are:
      *
-     * - If the IKeyMintDevice cannot fully enforce the semantics of the tag, it should be omitted.
      * - If the semantics of the tag are fully enforced by the IKeyMintDevice, without any
      *   assistance from components running at other security levels, it should be included in an
      *   entry with the SecurityLevel of the IKeyMintDevice.
@@ -45,6 +44,9 @@ parcelable KeyCreationResult {
      *   SecurityLevel of the involved components.  For example if a StrongBox IKeyMintDevice relies
      *   on a TEE to validate biometric authentication, biometric authentication tags go in an entry
      *   with SecurityLevel::TRUSTED_ENVIRONMENT.
+     * - If the semantics are not enforced by KeyMint at all, SecurityLevel::KEYSTORE is used to
+     *   indicate that Keystore should enforce.  Note that in Keymaster (predecessor to KeyMint),
+     *   these tags would have been in SecurityLevel::SOFTWARE.
      */
     KeyCharacteristics[] keyCharacteristics;
 

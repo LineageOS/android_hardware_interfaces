@@ -212,10 +212,16 @@ static inline bool isOutputDevice(const std::string& device) {
     return isOutputDevice(stringToAudioDevice(device));
 }
 
+static inline bool maybeVendorExtension(const std::string& s) {
+    // Only checks whether the string starts with the "vendor prefix".
+    static const std::string vendorPrefix = "VX_";
+    return s.size() > vendorPrefix.size() && s.substr(0, vendorPrefix.size()) == vendorPrefix;
+}
+
 static inline bool isVendorExtension(const std::string& s) {
     // Must match the "vendorExtension" rule from the XSD file.
     static const std::string vendorPrefix = "VX_";
-    return s.size() > vendorPrefix.size() && s.substr(0, vendorPrefix.size()) == vendorPrefix &&
+    return maybeVendorExtension(s) &&
            std::all_of(s.begin() + vendorPrefix.size(), s.end(),
                        [](unsigned char c) { return c == '_' || std::isalnum(c); });
 }
