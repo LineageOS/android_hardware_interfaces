@@ -17,7 +17,6 @@
 #define LOG_TAG "StreamInHAL"
 
 #include "core/default/StreamIn.h"
-#include "core/default/Conversions.h"
 #include "core/default/Util.h"
 #include "common/all-versions/HidlSupport.h"
 
@@ -27,6 +26,7 @@
 #include <HidlUtils.h>
 #include <android/log.h>
 #include <hardware/audio.h>
+#include <util/CoreUtils.h>
 #include <utils/Trace.h>
 #include <cmath>
 #include <memory>
@@ -481,13 +481,15 @@ Return<void> StreamIn::debug(const hidl_handle& fd, const hidl_vec<hidl_string>&
 Result StreamIn::doUpdateSinkMetadata(const SinkMetadata& sinkMetadata) {
     std::vector<record_track_metadata> halTracks;
 #if MAJOR_VERSION <= 6
-    (void)sinkMetadataToHal(sinkMetadata, &halTracks);
+    (void)CoreUtils::sinkMetadataToHal(sinkMetadata, &halTracks);
 #else
     // Validate whether a conversion to V7 is possible. This is needed
     // to have a consistent behavior of the HAL regardless of the API
     // version of the legacy HAL (and also to be consistent with openInputStream).
     std::vector<record_track_metadata_v7> halTracksV7;
-    if (status_t status = sinkMetadataToHalV7(sinkMetadata, &halTracksV7); status == NO_ERROR) {
+    if (status_t status = CoreUtils::sinkMetadataToHalV7(
+                sinkMetadata, false /*ignoreNonVendorTags*/, &halTracksV7);
+        status == NO_ERROR) {
         halTracks.reserve(halTracksV7.size());
         for (auto metadata_v7 : halTracksV7) {
             halTracks.push_back(std::move(metadata_v7.base));
@@ -507,7 +509,9 @@ Result StreamIn::doUpdateSinkMetadata(const SinkMetadata& sinkMetadata) {
 #if MAJOR_VERSION >= 7
 Result StreamIn::doUpdateSinkMetadataV7(const SinkMetadata& sinkMetadata) {
     std::vector<record_track_metadata_v7> halTracks;
-    if (status_t status = sinkMetadataToHalV7(sinkMetadata, &halTracks); status != NO_ERROR) {
+    if (status_t status = CoreUtils::sinkMetadataToHalV7(sinkMetadata,
+                                                         false /*ignoreNonVendorTags*/, &halTracks);
+        status != NO_ERROR) {
         return Stream::analyzeStatus("sinkMetadataToHal", status);
     }
     const sink_metadata_v7_t halMetadata = {
@@ -553,7 +557,7 @@ Return<void> StreamIn::getActiveMicrophones(getActiveMicrophones_cb _hidl_cb) {
         mStream->get_active_microphones(mStream, &mic_array[0], &actual_mics) == 0) {
         microphones.resize(actual_mics);
         for (size_t i = 0; i < actual_mics; ++i) {
-            halToMicrophoneCharacteristics(&microphones[i], mic_array[i]);
+            (void)CoreUtils::microphoneInfoFromHal(mic_array[i], &microphones[i]);
         }
         retval = Result::OK;
     }
