@@ -203,11 +203,6 @@ struct Effect : public IEffect {
                                         EffectAuxChannelsConfig* config);
     static void effectAuxChannelsConfigToHal(const EffectAuxChannelsConfig& config,
                                              channel_config_t* halConfig);
-    void effectBufferConfigFromHal(const buffer_config_t& halConfig, EffectBufferConfig* config);
-    static void effectBufferConfigToHal(const EffectBufferConfig& config,
-                                        buffer_config_t* halConfig);
-    void effectConfigFromHal(const effect_config_t& halConfig, EffectConfig* config);
-    static void effectConfigToHal(const EffectConfig& config, effect_config_t* halConfig);
     static void effectOffloadParamToHal(const EffectOffloadParameter& offload,
                                         effect_offload_param_t* halOffload);
     static std::vector<uint8_t> parameterToHal(uint32_t paramSize, const void* paramData,

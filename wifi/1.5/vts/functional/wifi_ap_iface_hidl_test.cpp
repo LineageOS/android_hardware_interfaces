@@ -67,8 +67,8 @@ class WifiApIfaceHidlTest : public ::testing::TestWithParam<std::string> {
     std::string GetInstanceName() { return GetParam(); }
 };
 
-/*
- * resetToFactoryMacAddress
+/**
+ * resetToFactoryMacAddress in bridged AP mode.
  */
 TEST_P(WifiApIfaceHidlTest, resetToFactoryMacAddressInBridgedModeTest) {
     if (!isBridgedSupport_) GTEST_SKIP() << "Missing Bridged AP support";
@@ -79,14 +79,42 @@ TEST_P(WifiApIfaceHidlTest, resetToFactoryMacAddressInBridgedModeTest) {
     EXPECT_EQ(WifiStatusCode::SUCCESS, status.code);
 }
 
-/*
- * resetToFactoryMacAddress
+/**
+ * resetToFactoryMacAddress in non-bridged mode
  */
 TEST_P(WifiApIfaceHidlTest, resetToFactoryMacAddressTest) {
     sp<IWifiApIface> wifi_ap_iface = getWifiApIface_1_5(GetInstanceName());
     ASSERT_NE(nullptr, wifi_ap_iface.get());
     const auto& status = HIDL_INVOKE(wifi_ap_iface, resetToFactoryMacAddress);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status.code);
+}
+
+/**
+ * getBridgedInstances in non-bridged mode
+ */
+TEST_P(WifiApIfaceHidlTest, getBridgedInstancesTest) {
+    sp<IWifiApIface> wifi_ap_iface = getWifiApIface_1_5(GetInstanceName());
+    ASSERT_NE(nullptr, wifi_ap_iface.get());
+    const auto& status_and_instances =
+        HIDL_INVOKE(wifi_ap_iface, getBridgedInstances);
+    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_instances.first.code);
+    const auto& instances = status_and_instances.second;
+    EXPECT_EQ(0, instances.size());
+}
+
+/**
+ * getBridgedInstances in bridged AP mode.
+ */
+TEST_P(WifiApIfaceHidlTest, getBridgedInstancesInBridgedModeTest) {
+    if (!isBridgedSupport_) GTEST_SKIP() << "Missing Bridged AP support";
+    sp<IWifiApIface> wifi_ap_iface =
+        getBridgedWifiApIface_1_5(GetInstanceName());
+    ASSERT_NE(nullptr, wifi_ap_iface.get());
+    const auto& status_and_instances =
+        HIDL_INVOKE(wifi_ap_iface, getBridgedInstances);
+    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_instances.first.code);
+    const auto& instances = status_and_instances.second;
+    EXPECT_EQ(2, instances.size());
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiApIfaceHidlTest);

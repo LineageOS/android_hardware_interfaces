@@ -336,24 +336,24 @@ TEST_P(OutputStreamTest, updateSourceMetadata) {
     ASSERT_RESULT(okOrNotSupported, stream->updateSourceMetadata(
         {{{toString(xsd::AudioUsage::AUDIO_USAGE_MEDIA),
                       toString(xsd::AudioContentType::AUDIO_CONTENT_TYPE_MUSIC),
-                      {},
+                      0.1, // gain
                       toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO),
-                      0.1},
+                      {}}, // tags
           {toString(xsd::AudioUsage::AUDIO_USAGE_VOICE_COMMUNICATION),
                       toString(xsd::AudioContentType::AUDIO_CONTENT_TYPE_SPEECH),
-                      {}, // tags
+                      1.0,
                       toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_MONO),
-                      1.0},
+                      {}},
           {toString(xsd::AudioUsage::AUDIO_USAGE_ALARM),
                       toString(xsd::AudioContentType::AUDIO_CONTENT_TYPE_SONIFICATION),
-                      {}, // tags
+                      0.0,
                       toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO),
-                      0.0},
+                      {}},
           {toString(xsd::AudioUsage::AUDIO_USAGE_ASSISTANT),
                       toString(xsd::AudioContentType::AUDIO_CONTENT_TYPE_UNKNOWN),
-                      {},
+                      0.3,
                       toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_MONO),
-                      0.3}}}
+                      {}}}}
     ));
     // clang-format on
     // Set no metadata as if all stream track had stopped

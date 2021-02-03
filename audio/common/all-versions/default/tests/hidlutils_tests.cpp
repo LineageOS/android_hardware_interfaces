@@ -762,9 +762,7 @@ TEST(HidlUtils, ConvertInvalidOffloadInfo) {
 
 TEST(HidlUtils, ConvertOffloadInfo) {
     AudioOffloadInfo offloadInfo = {};
-    offloadInfo.base.sampleRateHz = 44100;
-    offloadInfo.base.channelMask = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO);
-    offloadInfo.base.format = toString(xsd::AudioFormat::AUDIO_FORMAT_PCM_16_BIT);
+    offloadInfo.base = generateValidConfigBase(false /*isInput*/);
     offloadInfo.streamType = toString(xsd::AudioStreamType::AUDIO_STREAM_MUSIC);
     offloadInfo.bitRatePerSecond = 320;
     offloadInfo.durationMicroseconds = -1;
@@ -783,33 +781,76 @@ TEST(HidlUtils, ConvertOffloadInfo) {
 
 TEST(HidlUtils, ConvertInvalidConfig) {
     AudioConfig invalid;
-    audio_config_t halInvalid = AUDIO_CONFIG_INITIALIZER;
-    halInvalid.channel_mask = kInvalidHalChannelMask;
-    halInvalid.format = kInvalidHalFormat;
-    EXPECT_EQ(BAD_VALUE, HidlUtils::audioConfigFromHal(halInvalid, false /*isInput*/, &invalid));
-    EXPECT_EQ(BAD_VALUE, HidlUtils::audioConfigFromHal(halInvalid, true /*isInput*/, &invalid));
-    invalid.base.channelMask = "random string";
-    invalid.base.format = "random string";
-    EXPECT_EQ(BAD_VALUE, HidlUtils::audioConfigToHal(invalid, &halInvalid));
+    audio_config_t halInvalidChannelMask = AUDIO_CONFIG_INITIALIZER;
+    halInvalidChannelMask.channel_mask = kInvalidHalChannelMask;
+    EXPECT_EQ(BAD_VALUE,
+              HidlUtils::audioConfigFromHal(halInvalidChannelMask, false /*isInput*/, &invalid));
+    EXPECT_EQ(BAD_VALUE,
+              HidlUtils::audioConfigFromHal(halInvalidChannelMask, true /*isInput*/, &invalid));
+    audio_config_t halInvalidFormat = AUDIO_CONFIG_INITIALIZER;
+    halInvalidFormat.format = kInvalidHalFormat;
+    EXPECT_EQ(BAD_VALUE,
+              HidlUtils::audioConfigFromHal(halInvalidFormat, false /*isInput*/, &invalid));
+    EXPECT_EQ(BAD_VALUE,
+              HidlUtils::audioConfigFromHal(halInvalidFormat, true /*isInput*/, &invalid));
+
+    AudioConfig invalidChannelMask;
+    audio_config_t halInvalid;
+    invalidChannelMask.base.channelMask = "random string";
+    invalidChannelMask.base.format = toString(xsd::AudioFormat::AUDIO_FORMAT_DEFAULT);
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioConfigToHal(invalidChannelMask, &halInvalid));
+    AudioConfig invalidFormat;
+    invalidFormat.base.format = "random string";
+    invalidFormat.base.channelMask = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_NONE);
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioConfigToHal(invalidFormat, &halInvalid));
+}
+
+TEST(HidlUtils, ConvertConfigDefault) {
+    audio_config_t halDefault = AUDIO_CONFIG_INITIALIZER;
+    AudioConfig defaultOut, defaultIn;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigFromHal(halDefault, false /*isInput*/, &defaultOut));
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigFromHal(halDefault, true /*isInput*/, &defaultIn));
+    EXPECT_EQ(defaultOut, defaultIn);
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigToHal(defaultOut, &halDefault));
+
+    // Note: empty channel mask and config are not valid values.
+    AudioConfig defaultCfg{};
+    defaultCfg.base.channelMask = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_NONE);
+    defaultCfg.base.format = toString(xsd::AudioFormat::AUDIO_FORMAT_DEFAULT);
+    audio_config_t halDefaultCfg;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigToHal(defaultCfg, &halDefaultCfg));
+    AudioConfig defaultCfgBackOut, defaultCfgBackIn;
+    EXPECT_EQ(NO_ERROR,
+              HidlUtils::audioConfigFromHal(halDefaultCfg, false /*isInput*/, &defaultCfgBackOut));
+    EXPECT_EQ(NO_ERROR,
+              HidlUtils::audioConfigFromHal(halDefaultCfg, true /*isInput*/, &defaultCfgBackIn));
+    EXPECT_EQ(defaultCfgBackOut, defaultCfgBackIn);
+    EXPECT_EQ(defaultCfg, defaultCfgBackOut);
 }
 
 TEST(HidlUtils, ConvertConfig) {
-    AudioConfig config = {};
-    config.base.sampleRateHz = 44100;
-    config.base.channelMask = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO);
-    config.base.format = toString(xsd::AudioFormat::AUDIO_FORMAT_PCM_16_BIT);
-    audio_config_t halConfig;
-    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigToHal(config, &halConfig));
-    AudioConfig configBack;
-    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigFromHal(halConfig, false /*isInput*/, &configBack));
-    EXPECT_EQ(config, configBack);
+    AudioConfig configOut{};
+    configOut.base = generateValidConfigBase(false /*isInput*/);
+    audio_config_t halConfigOut;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigToHal(configOut, &halConfigOut));
+    AudioConfig configOutBack;
+    EXPECT_EQ(NO_ERROR,
+              HidlUtils::audioConfigFromHal(halConfigOut, false /*isInput*/, &configOutBack));
+    EXPECT_EQ(configOut, configOutBack);
+
+    AudioConfig configIn{};
+    configIn.base = generateValidConfigBase(true /*isInput*/);
+    audio_config_t halConfigIn;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioConfigToHal(configIn, &halConfigIn));
+    AudioConfig configInBack;
+    EXPECT_EQ(NO_ERROR,
+              HidlUtils::audioConfigFromHal(halConfigIn, true /*isInput*/, &configInBack));
+    EXPECT_EQ(configIn, configInBack);
 }
 
 TEST(HidlUtils, ConvertConfigWithOffloadInfo) {
     AudioConfig config = {};
-    config.base.sampleRateHz = 44100;
-    config.base.channelMask = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO);
-    config.base.format = toString(xsd::AudioFormat::AUDIO_FORMAT_PCM_16_BIT);
+    config.base = generateValidConfigBase(false /*isInput*/);
     config.offloadInfo.info(
             AudioOffloadInfo{.base = config.base,
                              .streamType = toString(xsd::AudioStreamType::AUDIO_STREAM_MUSIC),
@@ -952,20 +993,51 @@ TEST(HidlUtils, ConvertAudioTags) {
     char halEmptyTags[AUDIO_ATTRIBUTES_TAGS_MAX_SIZE] = {};
     EXPECT_EQ(NO_ERROR, HidlUtils::audioTagsToHal(emptyTags, halEmptyTags));
     hidl_vec<AudioTag> emptyTagsBack;
-    EXPECT_EQ(NO_ERROR, HidlUtils::audioTagsFromHal(halEmptyTags, &emptyTagsBack));
+    EXPECT_EQ(NO_ERROR,
+              HidlUtils::audioTagsFromHal(HidlUtils::splitAudioTags(halEmptyTags), &emptyTagsBack));
     EXPECT_EQ(emptyTags, emptyTagsBack);
 
     hidl_vec<AudioTag> oneTag = {{"VX_GOOGLE_VR"}};
     char halOneTag[AUDIO_ATTRIBUTES_TAGS_MAX_SIZE] = {};
     EXPECT_EQ(NO_ERROR, HidlUtils::audioTagsToHal(oneTag, halOneTag));
     hidl_vec<AudioTag> oneTagBack;
-    EXPECT_EQ(NO_ERROR, HidlUtils::audioTagsFromHal(halOneTag, &oneTagBack));
+    EXPECT_EQ(NO_ERROR,
+              HidlUtils::audioTagsFromHal(HidlUtils::splitAudioTags(halOneTag), &oneTagBack));
     EXPECT_EQ(oneTag, oneTagBack);
 
     hidl_vec<AudioTag> twoTags = {{"VX_GOOGLE_VR_42", "VX_GOOGLE_1E100"}};
     char halTwoTags[AUDIO_ATTRIBUTES_TAGS_MAX_SIZE] = {};
     EXPECT_EQ(NO_ERROR, HidlUtils::audioTagsToHal(twoTags, halTwoTags));
     hidl_vec<AudioTag> twoTagsBack;
-    EXPECT_EQ(NO_ERROR, HidlUtils::audioTagsFromHal(halTwoTags, &twoTagsBack));
+    EXPECT_EQ(NO_ERROR,
+              HidlUtils::audioTagsFromHal(HidlUtils::splitAudioTags(halTwoTags), &twoTagsBack));
     EXPECT_EQ(twoTags, twoTagsBack);
+}
+
+template <typename T>
+class FilterTest : public ::testing::Test {};
+using FilterTestTypeParams = ::testing::Types<hidl_vec<AudioTag>, std::vector<std::string>>;
+TYPED_TEST_SUITE(FilterTest, FilterTestTypeParams);
+
+TYPED_TEST(FilterTest, FilterOutNonVendorTags) {
+    TypeParam emptyTags;
+    EXPECT_EQ(emptyTags, HidlUtils::filterOutNonVendorTags(emptyTags));
+
+    TypeParam allVendorTags = {{"VX_GOOGLE_VR_42", "VX_GOOGLE_1E100"}};
+    EXPECT_EQ(allVendorTags, HidlUtils::filterOutNonVendorTags(allVendorTags));
+
+    TypeParam oneVendorTag = {{"", "VX_GOOGLE_VR", "random_string"}};
+    TypeParam oneVendorTagOnly = HidlUtils::filterOutNonVendorTags(oneVendorTag);
+    EXPECT_EQ(1, oneVendorTagOnly.size());
+    EXPECT_EQ(oneVendorTag[1], oneVendorTagOnly[0]);
+
+    // The vendor extension isn't valid, however it must not be filtered out
+    // so the converter can detect the issue.
+    TypeParam oneMaybeVendorTag = {{"", "random string", "VX_GOOGLE_$$"}};
+    TypeParam oneMaybeVendorTagOnly = HidlUtils::filterOutNonVendorTags(oneMaybeVendorTag);
+    EXPECT_EQ(1, oneMaybeVendorTagOnly.size());
+    EXPECT_EQ(oneMaybeVendorTag[2], oneMaybeVendorTagOnly[0]);
+
+    TypeParam noVendorTags = {{"", "random string", "V_"}};
+    EXPECT_EQ(emptyTags, HidlUtils::filterOutNonVendorTags(noVendorTags));
 }
