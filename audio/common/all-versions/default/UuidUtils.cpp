@@ -42,6 +42,14 @@ void UuidUtils::uuidToHal(const Uuid& uuid, audio_uuid_t* halUuid) {
     memcpy(halUuid->node, uuid.node.data(), uuid.node.size());
 }
 
+std::string UuidUtils::uuidToString(const audio_uuid_t& halUuid) {
+    char str[64];
+    snprintf(str, sizeof(str), "%08x-%04x-%04x-%04x-%02x%02x%02x%02x%02x%02x", halUuid.timeLow,
+             halUuid.timeMid, halUuid.timeHiAndVersion, halUuid.clockSeq, halUuid.node[0],
+             halUuid.node[1], halUuid.node[2], halUuid.node[3], halUuid.node[4], halUuid.node[5]);
+    return str;
+}
+
 }  // namespace implementation
 }  // namespace CPP_VERSION
 }  // namespace common

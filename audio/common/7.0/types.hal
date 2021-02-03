@@ -309,15 +309,15 @@ typedef string AudioTag;
 struct PlaybackTrackMetadata {
     AudioUsage usage;
     AudioContentType contentType;
-    /** Tags from AudioTrack audio atttributes */
-    vec<AudioTag> tags;
-    AudioChannelMask channelMask;
     /**
      * Positive linear gain applied to the track samples. 0 being muted and 1 is no attenuation,
      * 2 means double amplification...
      * Must not be negative.
      */
     float gain;
+    AudioChannelMask channelMask;
+    /** Tags from AudioTrack audio atttributes */
+    vec<AudioTag> tags;
 };
 
 /** Metadatas of the source of a StreamOut. */
@@ -328,9 +328,6 @@ struct SourceMetadata {
 /** Metadata of a record track for a StreamIn. */
 struct RecordTrackMetadata {
     AudioSource source;
-    /** Tags from AudioTrack audio atttributes */
-    vec<AudioTag> tags;
-    AudioChannelMask channelMask;
     /**
      * Positive linear gain applied to the track samples. 0 being muted and 1 is no attenuation,
      * 2 means double amplification...
@@ -344,6 +341,9 @@ struct RecordTrackMetadata {
         Monostate unspecified;
         DeviceAddress device;
     } destination;
+    AudioChannelMask channelMask;
+    /** Tags from AudioTrack audio atttributes */
+    vec<AudioTag> tags;
 };
 
 /** Metadatas of the sink of a StreamIn. */

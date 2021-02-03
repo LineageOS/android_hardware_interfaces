@@ -19,7 +19,6 @@
 #include "core/default/Stream.h"
 #include "common/all-versions/HidlSupport.h"
 #include "common/all-versions/default/EffectMap.h"
-#include "core/default/Conversions.h"
 #include "core/default/Util.h"
 
 #include <inttypes.h>
@@ -30,6 +29,7 @@
 #include <hardware/audio_effect.h>
 #include <media/AudioContainers.h>
 #include <media/TypeConverter.h>
+#include <util/CoreUtils.h>
 
 namespace android {
 namespace hardware {
@@ -373,9 +373,10 @@ Return<void> Stream::getDevices(getDevices_cb _hidl_cb) {
     hidl_vec<DeviceAddress> devices;
     if (retval == Result::OK) {
         devices.resize(1);
-        retval = Stream::analyzeStatus("get_devices",
-                                       deviceAddressFromHal(static_cast<audio_devices_t>(halDevice),
-                                                            nullptr, &devices[0]));
+        retval = Stream::analyzeStatus(
+                "get_devices",
+                CoreUtils::deviceAddressFromHal(static_cast<audio_devices_t>(halDevice), nullptr,
+                                                &devices[0]));
     }
     _hidl_cb(retval, devices);
     return Void();
