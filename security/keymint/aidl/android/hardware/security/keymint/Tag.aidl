@@ -27,7 +27,7 @@ import android.hardware.security.keymint.TagType;
  * data are stored in KeyParameter.
  */
 @VintfStability
-@Backing(type = "int")
+@Backing(type="int")
 enum Tag {
     /**
      * Tag::INVALID should never be set.  It means you hit an error.
@@ -81,7 +81,6 @@ enum Tag {
      * Must be hardware-enforced.
      */
     BLOCK_MODE = (2 << 28) /* TagType:ENUM_REP */ | 4,
-
 
     /**
      * Tag::DIGEST specifies the digest algorithms that may be used with the key to perform signing
@@ -187,21 +186,21 @@ enum Tag {
      */
     INCLUDE_UNIQUE_ID = (7 << 28) /* TagType:BOOL */ | 202,
 
-     /**
-      * Tag::RSA_OAEP_MGF_DIGEST specifies the MGF1 digest algorithms that may be used with
-      * RSA encryption/decryption with OAEP padding. If the key characteristics supports OAEP
-      * and this tag is absent then SHA1 digest is selected by default for MGF1.
-      *
-      * This tag is repeatable for key generation/import.  If this tag is present in the key
-      * characteristics with one or more values from @4.0::Digest, then for RSA cipher
-      * operations with OAEP Padding, the caller must specify a digest in the additionalParams
-      * argument of begin operation. If this tag is missing or the specified digest is not in
-      * the digests associated with the key then begin operation must fail with
-      * ErrorCode::INCOMPATIBLE_MGF_DIGEST.
-      *
-      * Must be hardware-enforced.
-      */
-     RSA_OAEP_MGF_DIGEST = (2 << 28) /* TagType:ENUM_REP */ | 203,
+    /**
+     * Tag::RSA_OAEP_MGF_DIGEST specifies the MGF1 digest algorithms that may be used with
+     * RSA encryption/decryption with OAEP padding. If the key characteristics supports OAEP
+     * and this tag is absent then SHA1 digest is selected by default for MGF1.
+     *
+     * This tag is repeatable for key generation/import.  If this tag is present in the key
+     * characteristics with one or more values from @4.0::Digest, then for RSA cipher
+     * operations with OAEP Padding, the caller must specify a digest in the additionalParams
+     * argument of begin operation. If this tag is missing or the specified digest is not in
+     * the digests associated with the key then begin operation must fail with
+     * ErrorCode::INCOMPATIBLE_MGF_DIGEST.
+     *
+     * Must be hardware-enforced.
+     */
+    RSA_OAEP_MGF_DIGEST = (2 << 28) /* TagType:ENUM_REP */ | 203,
 
     /**
      * TODO(seleneh) this tag needs to be deleted from all codes.
@@ -346,14 +345,14 @@ enum Tag {
      * At this point, if the caller specifies count > 1, it is not expected that any TEE will be
      * able to enforce this feature in the hardware due to limited resources of secure
      * storage. In this case, the tag with the value of maximum usage must be added to the key
-     * characteristics with SecurityLevel::SOFTWARE by the IKeyMintDevice.
+     * characteristics with SecurityLevel::KEYSTORE by the IKeyMintDevice.
      *
      * On the other hand, if the caller specifies count = 1, some TEEs may have the ability
      * to enforce this feature in the hardware with its secure storage. If the IKeyMintDevice
      * implementation can enforce this feature, the tag with value = 1 must be added to the key
      * characteristics with the SecurityLevel of the IKeyMintDevice. If the IKeyMintDevice can't
      * enforce this feature even when the count = 1, the tag must be added to the key
-     * characteristics with the SecurityLevel::SOFTWARE.
+     * characteristics with the SecurityLevel::KEYSTORE.
      *
      * When the key is attested, this tag with the same value must also be added to the attestation
      * record. This tag must have the same SecurityLevel as the tag that is added to the key
@@ -497,7 +496,8 @@ enum Tag {
      */
     TRUSTED_USER_PRESENCE_REQUIRED = (7 << 28) /* TagType:BOOL */ | 507,
 
-    /** Tag::TRUSTED_CONFIRMATION_REQUIRED is only applicable to keys with KeyPurpose SIGN, and
+    /**
+     * Tag::TRUSTED_CONFIRMATION_REQUIRED is only applicable to keys with KeyPurpose SIGN, and
      *  specifies that this key must not be usable unless the user provides confirmation of the data
      *  to be signed.  Confirmation is proven to keyMint via an approval token.  See
      *  CONFIRMATION_TOKEN, as well as the ConfirmatinUI HAL.
