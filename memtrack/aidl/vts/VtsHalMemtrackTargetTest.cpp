@@ -79,10 +79,10 @@ TEST_P(MemtrackAidlTest, GetGpuDeviceInfo) {
 
     auto status = memtrack_->getGpuDeviceInfo(&device_info);
 
-    // Devices with < 5.10 kernels aren't required to provide an implementation of
+    // Devices with < 5.4 kernels aren't required to provide an implementation of
     // getGpuDeviceInfo(), and can return EX_UNSUPPORTED_OPERATION
     if (status.getExceptionCode() == EX_UNSUPPORTED_OPERATION) {
-        KernelVersion min_kernel_version = KernelVersion(5, 10, 0);
+        KernelVersion min_kernel_version = KernelVersion(5, 4, 0);
         KernelVersion kernel_version = VintfObject::GetInstance()
                                                ->getRuntimeInfo(RuntimeInfo::FetchFlag::CPU_VERSION)
                                                ->kernelVersion();
