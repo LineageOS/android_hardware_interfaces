@@ -313,7 +313,7 @@ GyroSensor::GyroSensor(int32_t sensorHandle, ISensorsEventCallback* callback) : 
     mSensorInfo.maxRange = 1000.0f * M_PI / 180.0f;
     mSensorInfo.resolution = 1000.0f * M_PI / (180.0f * 32768.0f);
     mSensorInfo.power = 0.001f;
-    mSensorInfo.minDelay = 2.5f * 1000;  // microseconds
+    mSensorInfo.minDelay = 10 * 1000;  // microseconds
     mSensorInfo.maxDelay = kDefaultMaxDelayUs;
     mSensorInfo.fifoReservedEventCount = 0;
     mSensorInfo.fifoMaxEventCount = 0;
