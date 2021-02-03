@@ -1059,6 +1059,7 @@ Return<void> RadioResponse_v1_6::setupDataCallResponse_1_6(
     parent_v1_6.notify(info.serial);
     return Void();
 }
+
 Return<void> RadioResponse_v1_6::setNrDualConnectivityStateResponse(
         const ::android::hardware::radio::V1_6::RadioResponseInfo& info) {
     rspInfo = info;

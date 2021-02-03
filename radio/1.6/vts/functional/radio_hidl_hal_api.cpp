@@ -130,7 +130,7 @@ TEST_P(RadioHidlTest_v1_6, setupDataCall_1_6_osAppId) {
     memset(&optionalTrafficDescriptor, 0, sizeof(optionalTrafficDescriptor));
 
     ::android::hardware::radio::V1_6::TrafficDescriptor trafficDescriptor;
-    ::android::hardware::radio::V1_6::OSAppId osAppId;
+    ::android::hardware::radio::V1_6::OsAppId osAppId;
     osAppId.osAppId = 1;
     trafficDescriptor.osAppId.value(osAppId);
     optionalTrafficDescriptor.value(trafficDescriptor);
