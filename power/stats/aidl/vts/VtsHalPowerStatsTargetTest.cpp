@@ -262,7 +262,7 @@ TEST_P(PowerStatsAidl, ValidateChannelUniqueIds) {
 // Reading energy meter must return a valid status
 TEST_P(PowerStatsAidl, TestReadEnergyMeter) {
     std::vector<EnergyMeasurement> data;
-    ASSERT_TRUE(powerstats->readEnergyMeters({}, &data).isOk());
+    ASSERT_TRUE(powerstats->readEnergyMeter({}, &data).isOk());
 }
 
 // Reading energy meter must return results for all available channels
@@ -271,7 +271,7 @@ TEST_P(PowerStatsAidl, TestGetAllEnergyMeasurements) {
     ASSERT_TRUE(powerstats->getEnergyMeterInfo(&channels).isOk());
 
     std::vector<EnergyMeasurement> measurements;
-    ASSERT_TRUE(powerstats->readEnergyMeters({}, &measurements).isOk());
+    ASSERT_TRUE(powerstats->readEnergyMeter({}, &measurements).isOk());
 
     testMatching(channels, &Channel::id, measurements, &EnergyMeasurement::id);
 }
@@ -291,7 +291,7 @@ TEST_P(PowerStatsAidl, TestGetSelectedEnergyMeasurements) {
     }
 
     std::vector<EnergyMeasurement> selectedMeasurements;
-    ASSERT_TRUE(powerstats->readEnergyMeters(selectedIds, &selectedMeasurements).isOk());
+    ASSERT_TRUE(powerstats->readEnergyMeter(selectedIds, &selectedMeasurements).isOk());
 
     testMatching(selectedChannels, &Channel::id, selectedMeasurements, &EnergyMeasurement::id);
 }
