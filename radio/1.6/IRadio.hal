@@ -18,9 +18,12 @@ package android.hardware.radio@1.6;
 
 
 import @1.0::CdmaSmsMessage;
+import @1.0::Dial;
 import @1.0::GsmSmsMessage;
 import @1.1::CardPowerState;
 import @1.2::DataRequestReason;
+import @1.4::EmergencyCallRouting;
+import @1.4::EmergencyServiceCategory;
 import @1.4::RadioAccessFamily;
 import @1.5::IRadio;
 import @1.5::AccessNetwork;
@@ -120,6 +123,18 @@ interface IRadio extends @1.5::IRadio {
      * @param sliceInfo SliceInfo to be used for the data connection when a handover occurs from
      *     EPDG to 5G.  It is valid only when accessNetwork is AccessNetwork:NGRAN.  If the slice
      *     passed from EPDG is rejected, then the data failure cause must be DataCallFailCause:SLICE_REJECTED.
+     * @param trafficDescriptor TrafficDescriptor for which data connection needs to be
+     *     established. It is used for URSP traffic matching as described in TS 24.526
+     *     Section 4.2.2. It includes an optional DNN which, if present, must be used for traffic
+     *     matching -- it does not specify the end point to be used for the data call. The end
+     *     point is specified by DataProfileInfo.apn; DataProfileInfo.apn must be used as the end
+     *     point if one is not specified through URSP rules.
+     * @param matchAllRuleAllowed bool to indicate if using default match-all URSP rule for this
+     *     request is allowed. If false, this request must not use the match-all URSP rule and if
+     *     a non-match-all rule is not found (or if URSP rules are not available) it should return
+     *     failure with cause DataCallFailCause:MATCH_ALL_RULE_NOT_ALLOWED. This is needed as some
+     *     requests need to have a hard failure if the intention cannot be met, for example, a
+     *     zero-rating slice.
      *
      * Response function is IRadioResponse.setupDataCallResponse_1_6()
      *
@@ -128,7 +143,8 @@ interface IRadio extends @1.5::IRadio {
     oneway setupDataCall_1_6(int32_t serial, AccessNetwork accessNetwork,
             DataProfileInfo dataProfileInfo, bool roamingAllowed,
             DataRequestReason reason, vec<LinkAddress> addresses, vec<string> dnses,
-            int32_t pduSessionId, OptionalSliceInfo sliceInfo);
+            int32_t pduSessionId, OptionalSliceInfo sliceInfo,
+            OptionalTrafficDescriptor trafficDescriptor, bool matchAllRuleAllowed);
 
     /**
      * Send an SMS message
@@ -372,6 +388,64 @@ interface IRadio extends @1.5::IRadio {
     oneway setDataThrottling(int32_t serial,
             DataThrottlingAction dataThrottlingAction,
             int64_t completionDurationMillis);
+
+    /**
+     * Initiate emergency voice call, with zero or more emergency service category(s), zero or
+     * more emergency Uniform Resource Names (URN), and routing information for handling the call.
+     * Android uses this request to make its emergency call instead of using @1.0::IRadio.dial
+     * if the 'address' in the 'dialInfo' field is identified as an emergency number by Android.
+     *
+     * In multi-sim scenario, if the emergency number is from a specific subscription, this radio
+     * request can still be sent out on the other subscription as long as routing is set to
+     * @1.4::EmergencyNumberRouting#EMERGENCY. This radio request will not be sent on an inactive
+     * (PIN/PUK locked) subscription unless both subscriptions are PIN/PUK locked. In this case,
+     * the request will be sent on the primary subscription.
+     *
+     * Some countries or carriers require some emergency numbers that must be handled with normal
+     * call routing if possible or emergency routing. 1) if the 'routing' field is specified as
+     * @1.4::EmergencyNumberRouting#NORMAL, the implementation must try the full radio service to
+     * use normal call routing to handle the call; if service cannot support normal routing, the
+     * implementation must use emergency routing to handle the call. 2) if 'routing' is specified
+     * as @1.4::EmergencyNumberRouting#EMERGENCY, the implementation must use emergency routing to
+     * handle the call. 3) if 'routing' is specified as @1.4::EmergencyNumberRouting#UNKNOWN,
+     * Android does not know how to handle the call.
+     *
+     * If the dialed emergency number does not have a specified emergency service category, the
+     * 'categories' field is set to @1.4::EmergencyServiceCategory#UNSPECIFIED; if the dialed
+     * emergency number does not have specified emergency Uniform Resource Names, the 'urns' field
+     * is set to an empty list. If the underlying technology used to request emergency services
+     * does not support the emergency service category or emergency uniform resource names, the
+     * field 'categories' or 'urns' may be ignored.
+     *
+     * In the scenarios that the 'address' in the 'dialInfo' field has other functions besides the
+     * emergency number function, if the 'hasKnownUserIntentEmergency' field is true, the user's
+     * intent for this dial request is emergency call, and the modem must treat this as an actual
+     * emergency dial; if the 'hasKnownUserIntentEmergency' field is false, Android does not know
+     * user's intent for this call.
+     *
+     * If 'isTesting' is true, this request is for testing purpose, and must not be sent to a real
+     * emergency service; otherwise it's for a real emergency call request.
+     *
+     * Reference: 3gpp 22.101, Section 10 - Emergency Calls;
+     *            3gpp 23.167, Section 6 - Functional description;
+     *            3gpp 24.503, Section 5.1.6.8.1 - General;
+     *            RFC 5031
+     *
+     * @param serial Serial number of request.
+     * @param dialInfo the same @1.0::Dial information used by @1.0::IRadio.dial.
+     * @param categories bitfield<@1.4::EmergencyServiceCategory> the Emergency Service Category(s)
+     *     of the call.
+     * @param urns the emergency Uniform Resource Names (URN)
+     * @param routing @1.4::EmergencyCallRouting the emergency call routing information.
+     * @param hasKnownUserIntentEmergency Flag indicating if user's intent for the emergency call
+     *     is known.
+     * @param isTesting Flag indicating if this request is for testing purpose.
+     *
+     * Response function is IRadioResponse.emergencyDialResponse()
+     */
+    oneway emergencyDial_1_6(int32_t serial, Dial dialInfo,
+            bitfield<EmergencyServiceCategory> categories, vec<string> urns,
+            EmergencyCallRouting routing, bool hasKnownUserIntentEmergency, bool isTesting);
 
     /**
      * Get which bands the modem's background scan is acting on.
