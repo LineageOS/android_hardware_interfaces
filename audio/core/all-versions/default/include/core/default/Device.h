@@ -31,6 +31,7 @@
 #include <hidl/MQDescriptor.h>
 
 #include <VersionUtils.h>
+#include <util/CoreUtils.h>
 
 namespace android {
 namespace hardware {
@@ -43,17 +44,10 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
-#if MAJOR_VERSION <= 6
-using AudioInputFlags =
-        ::android::hardware::audio::common::CPP_VERSION::implementation::AudioInputFlagBitfield;
-using AudioOutputFlags =
-        ::android::hardware::audio::common::CPP_VERSION::implementation::AudioOutputFlagBitfield;
-#else
-using AudioInputFlags = hidl_vec<::android::hardware::audio::CPP_VERSION::AudioInOutFlag>;
-using AudioOutputFlags = hidl_vec<::android::hardware::audio::CPP_VERSION::AudioInOutFlag>;
-#endif
 using namespace ::android::hardware::audio::common::CPP_VERSION;
 using namespace ::android::hardware::audio::CPP_VERSION;
+using AudioInputFlags = CoreUtils::AudioInputFlags;
+using AudioOutputFlags = CoreUtils::AudioOutputFlags;
 
 struct Device : public IDevice, public ParametersUtil {
     explicit Device(audio_hw_device_t* device);

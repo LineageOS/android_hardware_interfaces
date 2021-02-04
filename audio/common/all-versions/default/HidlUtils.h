@@ -20,6 +20,8 @@
 #include PATH(android/hardware/audio/common/FILE_VERSION/types.h)
 
 #include <memory>
+#include <string>
+#include <vector>
 
 #include <system/audio.h>
 
@@ -118,8 +120,12 @@ struct HidlUtils {
                                            AudioStreamType* streamType);
     static status_t audioStreamTypeToHal(const AudioStreamType& streamType,
                                          audio_stream_type_t* halStreamType);
-    static status_t audioTagsFromHal(const char* halTags, hidl_vec<AudioTag>* tags);
+    static status_t audioTagsFromHal(const std::vector<std::string>& strTags,
+                                     hidl_vec<AudioTag>* tags);
     static status_t audioTagsToHal(const hidl_vec<AudioTag>& tags, char* halTags);
+    static hidl_vec<AudioTag> filterOutNonVendorTags(const hidl_vec<AudioTag>& tags);
+    static std::vector<std::string> filterOutNonVendorTags(const std::vector<std::string>& tags);
+    static std::vector<std::string> splitAudioTags(const char* halTags);
 
   private:
     static status_t audioIndexChannelMaskFromHal(audio_channel_mask_t halChannelMask,
