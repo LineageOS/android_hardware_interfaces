@@ -97,6 +97,7 @@ typedef struct km_auth_list {
     ASN1_NULL* device_unique_attestation;
     ASN1_NULL* storage_key;
     ASN1_NULL* identity_credential;
+    ASN1_INTEGER* usage_count_limit;
 } KM_AUTH_LIST;
 
 ASN1_SEQUENCE(KM_AUTH_LIST) = {
@@ -143,7 +144,8 @@ ASN1_SEQUENCE(KM_AUTH_LIST) = {
         ASN1_EXP_OPT(KM_AUTH_LIST, storage_key, ASN1_NULL, TAG_STORAGE_KEY.maskedTag()),
         ASN1_EXP_OPT(KM_AUTH_LIST, identity_credential, ASN1_NULL,
                      TAG_IDENTITY_CREDENTIAL_KEY.maskedTag()),
-
+        ASN1_EXP_OPT(KM_AUTH_LIST, usage_count_limit, ASN1_INTEGER,
+                     TAG_USAGE_COUNT_LIMIT.maskedTag()),
 } ASN1_SEQUENCE_END(KM_AUTH_LIST);
 IMPLEMENT_ASN1_FUNCTIONS(KM_AUTH_LIST);
 
@@ -285,6 +287,7 @@ static ErrorCode extract_auth_list(const KM_AUTH_LIST* record, AuthorizationSet*
     copyAuthTag(record->device_unique_attestation, TAG_DEVICE_UNIQUE_ATTESTATION, auth_list);
     copyAuthTag(record->storage_key, TAG_STORAGE_KEY, auth_list);
     copyAuthTag(record->identity_credential, TAG_IDENTITY_CREDENTIAL_KEY, auth_list);
+    copyAuthTag(record->usage_count_limit, TAG_USAGE_COUNT_LIMIT, auth_list);
 
     return ErrorCode::OK;
 }

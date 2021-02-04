@@ -73,6 +73,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.automotive.occupant_awareness</name>
+        <version>1</version>
         <interface>
             <name>IOccupantAwareness</name>
             <instance>default</instance>
@@ -336,6 +337,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.security.keymint</name>
+        <version>1</version>
         <interface>
             <name>IKeyMintDevice</name>
             <instance>default</instance>
@@ -344,6 +346,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.light</name>
+        <version>1</version>
         <interface>
             <name>ILights</name>
             <instance>default</instance>
@@ -372,6 +375,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.memtrack</name>
+        <version>1</version>
         <interface>
             <name>IMemtrack</name>
             <instance>default</instance>
@@ -411,6 +415,7 @@
     </hal>
     <hal format="aidl" optional="false">
         <name>android.hardware.power</name>
+        <version>1</version>
         <interface>
             <name>IPower</name>
             <instance>default</instance>
@@ -470,6 +475,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.rebootescrow</name>
+        <version>1</version>
         <interface>
             <name>IRebootEscrow</name>
             <instance>default</instance>
@@ -486,6 +492,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.security.secureclock</name>
+        <version>1</version>
         <interface>
             <name>ISecureClock</name>
             <instance>default</instance>
@@ -493,6 +500,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.security.sharedsecret</name>
+        <version>1</version>
         <interface>
             <name>ISharedSecret</name>
             <instance>default</instance>
@@ -542,7 +550,6 @@
     <hal format="hidl" optional="true">
         <name>android.hardware.tv.cec</name>
         <version>1.0</version>
-        <version>2.0</version>
         <interface>
             <name>IHdmiCec</name>
             <instance>default</instance>
