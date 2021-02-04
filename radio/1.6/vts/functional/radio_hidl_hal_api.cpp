@@ -59,9 +59,15 @@ TEST_P(RadioHidlTest_v1_6, setupDataCall_1_6) {
     ::android::hardware::radio::V1_6::OptionalSliceInfo optionalSliceInfo;
     memset(&optionalSliceInfo, 0, sizeof(optionalSliceInfo));
 
+    ::android::hardware::radio::V1_6::OptionalTrafficDescriptor optionalTrafficDescriptor;
+    memset(&optionalTrafficDescriptor, 0, sizeof(optionalTrafficDescriptor));
+
+    bool matchAllRuleAllowed = true;
+
     Return<void> res =
             radio_v1_6->setupDataCall_1_6(serial, accessNetwork, dataProfileInfo, roamingAllowed,
-                                          reason, addresses, dnses, -1, optionalSliceInfo);
+                                          reason, addresses, dnses, -1, optionalSliceInfo,
+                                          optionalTrafficDescriptor, matchAllRuleAllowed);
     ASSERT_OK(res);
 
     EXPECT_EQ(std::cv_status::no_timeout, wait());
@@ -79,6 +85,81 @@ TEST_P(RadioHidlTest_v1_6, setupDataCall_1_6) {
                 {::android::hardware::radio::V1_6::RadioError::NONE,
                  ::android::hardware::radio::V1_6::RadioError::RADIO_NOT_AVAILABLE,
                  ::android::hardware::radio::V1_6::RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW}));
+    }
+}
+
+TEST_P(RadioHidlTest_v1_6, setupDataCall_1_6_osAppId) {
+    serial = GetRandomSerialNumber();
+
+    ::android::hardware::radio::V1_5::AccessNetwork accessNetwork =
+            ::android::hardware::radio::V1_5::AccessNetwork::EUTRAN;
+
+    android::hardware::radio::V1_5::DataProfileInfo dataProfileInfo;
+    memset(&dataProfileInfo, 0, sizeof(dataProfileInfo));
+    dataProfileInfo.profileId = DataProfileId::DEFAULT;
+    dataProfileInfo.apn = hidl_string("internet");
+    dataProfileInfo.protocol = PdpProtocolType::IP;
+    dataProfileInfo.roamingProtocol = PdpProtocolType::IP;
+    dataProfileInfo.authType = ApnAuthType::NO_PAP_NO_CHAP;
+    dataProfileInfo.user = hidl_string("username");
+    dataProfileInfo.password = hidl_string("password");
+    dataProfileInfo.type = DataProfileInfoType::THREE_GPP;
+    dataProfileInfo.maxConnsTime = 300;
+    dataProfileInfo.maxConns = 20;
+    dataProfileInfo.waitTime = 0;
+    dataProfileInfo.enabled = true;
+    dataProfileInfo.supportedApnTypesBitmap = 320;
+    dataProfileInfo.bearerBitmap = 161543;
+    dataProfileInfo.mtuV4 = 0;
+    dataProfileInfo.mtuV6 = 0;
+    dataProfileInfo.preferred = true;
+    dataProfileInfo.persistent = false;
+
+    bool roamingAllowed = false;
+
+    std::vector<::android::hardware::radio::V1_5::LinkAddress> addresses = {};
+    std::vector<hidl_string> dnses = {};
+
+    ::android::hardware::radio::V1_2::DataRequestReason reason =
+            ::android::hardware::radio::V1_2::DataRequestReason::NORMAL;
+
+    ::android::hardware::radio::V1_6::OptionalSliceInfo optionalSliceInfo;
+    memset(&optionalSliceInfo, 0, sizeof(optionalSliceInfo));
+
+    ::android::hardware::radio::V1_6::OptionalTrafficDescriptor optionalTrafficDescriptor;
+    memset(&optionalTrafficDescriptor, 0, sizeof(optionalTrafficDescriptor));
+
+    ::android::hardware::radio::V1_6::TrafficDescriptor trafficDescriptor;
+    ::android::hardware::radio::V1_6::OSAppId osAppId;
+    osAppId.osAppId = 1;
+    trafficDescriptor.osAppId.value(osAppId);
+    optionalTrafficDescriptor.value(trafficDescriptor);
+
+    bool matchAllRuleAllowed = true;
+
+    Return<void> res =
+            radio_v1_6->setupDataCall_1_6(serial, accessNetwork, dataProfileInfo, roamingAllowed,
+                                          reason, addresses, dnses, -1, optionalSliceInfo,
+                                          optionalTrafficDescriptor, matchAllRuleAllowed);
+    ASSERT_OK(res);
+
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_6->rspInfo.serial);
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_v1_6->rspInfo.error,
+                {::android::hardware::radio::V1_6::RadioError::SIM_ABSENT,
+                 ::android::hardware::radio::V1_6::RadioError::RADIO_NOT_AVAILABLE,
+                 ::android::hardware::radio::V1_6::RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW}));
+    } else if (cardStatus.base.base.base.cardState == CardState::PRESENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_v1_6->rspInfo.error,
+                {::android::hardware::radio::V1_6::RadioError::NONE,
+                 ::android::hardware::radio::V1_6::RadioError::RADIO_NOT_AVAILABLE,
+                 ::android::hardware::radio::V1_6::RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW}));
+        EXPECT_EQ(optionalTrafficDescriptor.value().osAppId.value().osAppId,
+                radioRsp_v1_6->setupDataCallResult.trafficDescriptors[0].osAppId.value().osAppId);
     }
 }
 
@@ -409,6 +490,167 @@ TEST_P(RadioHidlTest_v1_6, setSimCardPower_1_6) {
         updateSimCardStatus();
         EXPECT_EQ(CardState::PRESENT, cardStatus.base.base.base.cardState);
     }
+}
+
+/*
+ * Test IRadio.emergencyDial() for the response returned.
+ */
+TEST_P(RadioHidlTest_v1_6, emergencyDial_1_6) {
+    if (!deviceSupportsFeature(FEATURE_VOICE_CALL)) {
+        ALOGI("Skipping emergencyDial because voice call is not supported in device");
+        return;
+    } else {
+        ALOGI("Running emergencyDial because voice call is supported in device");
+    }
+
+    serial = GetRandomSerialNumber();
+
+    ::android::hardware::radio::V1_0::Dial dialInfo;
+    dialInfo.address = hidl_string("911");
+    int categories = static_cast<int>(
+            ::android::hardware::radio::V1_4::EmergencyServiceCategory::UNSPECIFIED);
+    std::vector<hidl_string> urns = {""};
+    ::android::hardware::radio::V1_4::EmergencyCallRouting routing =
+            ::android::hardware::radio::V1_4::EmergencyCallRouting::UNKNOWN;
+
+    Return<void> res =
+            radio_v1_6->emergencyDial_1_6(serial, dialInfo, categories, urns, routing, true, true);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo_v1_0.type);
+    EXPECT_EQ(serial, radioRsp_v1_6->rspInfo_v1_0.serial);
+
+    ALOGI("emergencyDial, rspInfo_v1_0.error = %s\n",
+          toString(radioRsp_v1_6->rspInfo_v1_0.error).c_str());
+
+    ::android::hardware::radio::V1_0::RadioError rspEmergencyDial =
+            radioRsp_v1_6->rspInfo_v1_0.error;
+    // In DSDS or TSTS, we only check the result if the current slot is IN_SERVICE
+    // or Emergency_Only.
+    if (isDsDsEnabled() || isTsTsEnabled()) {
+        serial = GetRandomSerialNumber();
+        radio_v1_6->getVoiceRegistrationState(serial);
+        EXPECT_EQ(std::cv_status::no_timeout, wait());
+        if (isVoiceEmergencyOnly(radioRsp_v1_6->voiceRegResp.regState) ||
+            isVoiceInService(radioRsp_v1_6->voiceRegResp.regState)) {
+            EXPECT_EQ(::android::hardware::radio::V1_0::RadioError::NONE, rspEmergencyDial);
+        }
+    } else {
+        EXPECT_EQ(::android::hardware::radio::V1_0::RadioError::NONE, rspEmergencyDial);
+    }
+
+    // Give some time for modem to establish the emergency call channel.
+    sleep(MODEM_EMERGENCY_CALL_ESTABLISH_TIME);
+
+    // Disconnect all the potential established calls to prevent them affecting other tests.
+    clearPotentialEstablishedCalls();
+}
+
+/*
+ * Test IRadio.emergencyDial() with specified service and its response returned.
+ */
+TEST_P(RadioHidlTest_v1_6, emergencyDial_1_6_withServices) {
+    if (!deviceSupportsFeature(FEATURE_VOICE_CALL)) {
+        ALOGI("Skipping emergencyDial because voice call is not supported in device");
+        return;
+    } else {
+        ALOGI("Running emergencyDial because voice call is supported in device");
+    }
+
+    serial = GetRandomSerialNumber();
+
+    ::android::hardware::radio::V1_0::Dial dialInfo;
+    dialInfo.address = hidl_string("911");
+    int categories =
+            static_cast<int>(::android::hardware::radio::V1_4::EmergencyServiceCategory::AMBULANCE);
+    std::vector<hidl_string> urns = {"urn:service:sos.ambulance"};
+    ::android::hardware::radio::V1_4::EmergencyCallRouting routing =
+            ::android::hardware::radio::V1_4::EmergencyCallRouting::UNKNOWN;
+
+    Return<void> res =
+            radio_v1_6->emergencyDial_1_6(serial, dialInfo, categories, urns, routing, true, true);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo_v1_0.type);
+    EXPECT_EQ(serial, radioRsp_v1_6->rspInfo_v1_0.serial);
+
+    ALOGI("emergencyDial_withServices, rspInfo_v1_0.error = %s\n",
+          toString(radioRsp_v1_6->rspInfo_v1_0.error).c_str());
+    ::android::hardware::radio::V1_0::RadioError rspEmergencyDial =
+            radioRsp_v1_6->rspInfo_v1_0.error;
+
+    // In DSDS or TSTS, we only check the result if the current slot is IN_SERVICE
+    // or Emergency_Only.
+    if (isDsDsEnabled() || isTsTsEnabled()) {
+        serial = GetRandomSerialNumber();
+        radio_v1_6->getVoiceRegistrationState(serial);
+        EXPECT_EQ(std::cv_status::no_timeout, wait());
+        if (isVoiceEmergencyOnly(radioRsp_v1_6->voiceRegResp.regState) ||
+            isVoiceInService(radioRsp_v1_6->voiceRegResp.regState)) {
+            EXPECT_EQ(::android::hardware::radio::V1_0::RadioError::NONE, rspEmergencyDial);
+        }
+    } else {
+        EXPECT_EQ(::android::hardware::radio::V1_0::RadioError::NONE, rspEmergencyDial);
+    }
+    // Give some time for modem to establish the emergency call channel.
+    sleep(MODEM_EMERGENCY_CALL_ESTABLISH_TIME);
+
+    // Disconnect all the potential established calls to prevent them affecting other tests.
+    clearPotentialEstablishedCalls();
+}
+
+/*
+ * Test IRadio.emergencyDial() with known emergency call routing and its response returned.
+ */
+TEST_P(RadioHidlTest_v1_6, emergencyDial_1_6_withEmergencyRouting) {
+    if (!deviceSupportsFeature(FEATURE_VOICE_CALL)) {
+        ALOGI("Skipping emergencyDial because voice call is not supported in device");
+        return;
+    } else {
+        ALOGI("Running emergencyDial because voice call is supported in device");
+    }
+
+    serial = GetRandomSerialNumber();
+
+    ::android::hardware::radio::V1_0::Dial dialInfo;
+    dialInfo.address = hidl_string("911");
+    int categories = static_cast<int>(
+            ::android::hardware::radio::V1_4::EmergencyServiceCategory::UNSPECIFIED);
+    std::vector<hidl_string> urns = {""};
+    ::android::hardware::radio::V1_4::EmergencyCallRouting routing =
+            ::android::hardware::radio::V1_4::EmergencyCallRouting::EMERGENCY;
+
+    Return<void> res =
+            radio_v1_6->emergencyDial_1_6(serial, dialInfo, categories, urns, routing, true, true);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo_v1_0.type);
+    EXPECT_EQ(serial, radioRsp_v1_6->rspInfo_v1_0.serial);
+
+    ALOGI("emergencyDial_withEmergencyRouting, rspInfo_v1_0.error = %s\n",
+          toString(radioRsp_v1_6->rspInfo_v1_0.error).c_str());
+    ::android::hardware::radio::V1_0::RadioError rspEmergencyDial =
+            radioRsp_v1_6->rspInfo_v1_0.error;
+
+    // In DSDS or TSTS, we only check the result if the current slot is IN_SERVICE
+    // or Emergency_Only.
+    if (isDsDsEnabled() || isTsTsEnabled()) {
+        serial = GetRandomSerialNumber();
+        radio_v1_6->getVoiceRegistrationState(serial);
+        EXPECT_EQ(std::cv_status::no_timeout, wait());
+        if (isVoiceEmergencyOnly(radioRsp_v1_6->voiceRegResp.regState) ||
+            isVoiceInService(radioRsp_v1_6->voiceRegResp.regState)) {
+            EXPECT_EQ(::android::hardware::radio::V1_0::RadioError::NONE, rspEmergencyDial);
+        }
+    } else {
+        EXPECT_EQ(::android::hardware::radio::V1_0::RadioError::NONE, rspEmergencyDial);
+    }
+
+    // Give some time for modem to establish the emergency call channel.
+    sleep(MODEM_EMERGENCY_CALL_ESTABLISH_TIME);
+
+    // Disconnect all the potential established calls to prevent them affecting other tests.
+    clearPotentialEstablishedCalls();
 }
 
 /*

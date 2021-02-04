@@ -223,6 +223,10 @@ package android.audio.policy.configuration.V7_0 {
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_MAT_2_1;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_MP2;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_MP3;
+    enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_MPEGH_BL_L3;
+    enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_MPEGH_BL_L4;
+    enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_MPEGH_LC_L3;
+    enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_MPEGH_LC_L4;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_OPUS;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_PCM_16_BIT;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_PCM_24_BIT_PACKED;
