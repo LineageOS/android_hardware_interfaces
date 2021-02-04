@@ -53,8 +53,8 @@ ndk::ScopedAStatus PowerStats::getEnergyMeterInfo(std::vector<Channel>* _aidl_re
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus PowerStats::readEnergyMeters(const std::vector<int32_t>& in_channelIds,
-                                                std::vector<EnergyMeasurement>* _aidl_return) {
+ndk::ScopedAStatus PowerStats::readEnergyMeter(const std::vector<int32_t>& in_channelIds,
+                                               std::vector<EnergyMeasurement>* _aidl_return) {
     (void)in_channelIds;
     (void)_aidl_return;
     return ndk::ScopedAStatus::ok();
