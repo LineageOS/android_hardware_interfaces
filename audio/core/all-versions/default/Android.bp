@@ -1,7 +1,6 @@
 filegroup {
     name: "android.hardware.audio-impl_srcs",
     srcs: [
-        "Conversions.cpp",
         "Device.cpp",
         "DevicesFactory.cpp",
         "ParametersUtil.cpp",
@@ -63,6 +62,7 @@ cc_library_shared {
     defaults: ["android.hardware.audio-impl_default"],
     shared_libs: [
         "android.hardware.audio@2.0",
+        "android.hardware.audio@2.0-util",
         "android.hardware.audio.common@2.0",
         "android.hardware.audio.common@2.0-util",
     ],
@@ -79,6 +79,7 @@ cc_library_shared {
 
     shared_libs: [
         "android.hardware.audio@4.0",
+        "android.hardware.audio@4.0-util",
         "android.hardware.audio.common@4.0",
         "android.hardware.audio.common@4.0-util",
     ],
@@ -94,6 +95,7 @@ cc_library_shared {
     defaults: ["android.hardware.audio-impl_default"],
     shared_libs: [
         "android.hardware.audio@5.0",
+        "android.hardware.audio@5.0-util",
         "android.hardware.audio.common@5.0",
         "android.hardware.audio.common@5.0-util",
     ],
@@ -109,6 +111,7 @@ cc_defaults {
     defaults: ["android.hardware.audio-impl_default"],
     shared_libs: [
         "android.hardware.audio@6.0",
+        "android.hardware.audio@6.0-util",
         "android.hardware.audio.common@6.0",
         "android.hardware.audio.common@6.0-util",
     ],
@@ -129,6 +132,7 @@ cc_library_shared {
     defaults: ["android.hardware.audio-impl_default"],
     shared_libs: [
         "android.hardware.audio@7.0",
+        "android.hardware.audio@7.0-util",
         "android.hardware.audio.common@7.0",
         "android.hardware.audio.common@7.0-enums",
         "android.hardware.audio.common@7.0-util",
