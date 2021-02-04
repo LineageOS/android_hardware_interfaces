@@ -744,6 +744,14 @@ struct RegStateResult {
              */
             NrVopsInfo nrVopsInfo;
         } ngranInfo;
+
+        struct GeranRegistrationInfo {
+            /**
+             * True if the dual transfer mode is supported.
+             * Refer to 3GPP TS 44.108 section 3.4.25.3
+             */
+            bool dtmSupported;
+        } geranInfo;
     } accessTechnologySpecificInfo;
 };
 
