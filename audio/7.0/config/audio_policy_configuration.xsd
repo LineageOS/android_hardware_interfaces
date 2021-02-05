@@ -20,7 +20,7 @@
     <!-- List the config versions supported by audio policy. -->
     <xs:simpleType name="version">
         <xs:restriction base="xs:decimal">
-            <xs:enumeration value="1.0"/>
+            <xs:enumeration value="7.0"/>
         </xs:restriction>
     </xs:simpleType>
     <xs:simpleType name="halVersion">
