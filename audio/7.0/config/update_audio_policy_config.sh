@@ -113,6 +113,9 @@ echo "Will update paths to shared included files."
 echo "Press Ctrl-C to cancel, Enter to continue"
 read
 
+# Update 'audioPolicyConfiguration version="1.0"' -> 7.0 in the main file
+sed -i -r -e 's/(audioPolicyConfiguration version=")1.0/\17.0/' ${SOURCE_CONFIG}
+
 updateFile() {
     FILE=$1
     ATTR=$2
