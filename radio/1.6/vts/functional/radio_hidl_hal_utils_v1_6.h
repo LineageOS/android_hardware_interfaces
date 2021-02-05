@@ -827,6 +827,10 @@ class RadioResponse_v1_6 : public ::android::hardware::radio::V1_6::IRadioRespon
     Return<void> getCurrentCallsResponse_1_6(
             const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
             const ::android::hardware::hidl_vec<::android::hardware::radio::V1_6::Call>& calls);
+
+    Return<void> getSlicingConfigResponse(
+            const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
+            const ::android::hardware::radio::V1_6::SlicingConfig& slicingConfig);
 };
 
 /* Callback class for radio indication */
