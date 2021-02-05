@@ -8,6 +8,7 @@ hidl_interface {
         "ICryptoPlugin.hal",
         "IDrmFactory.hal",
         "IDrmPlugin.hal",
+        "types.hal",
     ],
     interfaces: [
         "android.hardware.drm@1.0",
