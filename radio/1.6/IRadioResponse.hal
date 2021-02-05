@@ -25,6 +25,7 @@ import @1.6::RegStateResult;
 import @1.6::RadioResponseInfo;
 import @1.6::SetupDataCallResult;
 import @1.6::SignalStrength;
+import @1.6::SlicingConfig;
 
 /**
  * Interface declaring response functions to solicited radio requests.
@@ -416,4 +417,17 @@ interface IRadioResponse extends @1.5::IRadioResponse {
      *   RadioError:CANCELLED
      */
     oneway getCurrentCallsResponse_1_6(RadioResponseInfo info, vec<Call> calls);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param slicingConfig Current slicing configuration
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:MODEM_ERR
+     */
+    oneway getSlicingConfigResponse(RadioResponseInfo info,
+            SlicingConfig slicingConfig);
 };

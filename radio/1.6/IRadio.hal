@@ -505,4 +505,17 @@ interface IRadio extends @1.5::IRadio {
      * Response function is IRadioResponse.getCurrentCallsResponse_1_6()
      */
     oneway getCurrentCalls_1_6(int32_t serial);
+
+    /**
+     * Request to get the current slicing configuration including URSP rules and
+     * NSSAIs (configured, allowed and rejected).
+     * URSP stands for UE route selection policy and is defined in 3GPP TS 24.526
+     * Section 4.2.
+     * An NSSAI is a collection of network slices. Each network slice is identified by
+     * an S-NSSAI and is represented by the struct SliceInfo. NSSAI and S-NSSAI
+     * are defined in 3GPP TS 24.501.
+     *
+     * Response function is IRadioResponse.getSlicingConfigResponse()
+     */
+    oneway getSlicingConfig(int32_t serial);
 };
