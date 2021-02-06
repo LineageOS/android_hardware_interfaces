@@ -70,5 +70,10 @@ parcelable SensorProps {
      * be applied when configuring the preview texture.
      */
     float enrollPreviewScale;
+
+    /**
+     * Specifies whether or not the implementation supports ISession#detectInteraction.
+     */
+    boolean supportsDetectInteraction;
 }
 
