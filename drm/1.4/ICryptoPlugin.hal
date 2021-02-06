@@ -16,6 +16,8 @@
 package android.hardware.drm@1.4;
 
 import @1.2::ICryptoPlugin;
+import @1.4::LogMessage;
+import @1.4::Status;
 
 /**
  * ICryptoPlugin is the HAL for vendor-provided crypto plugins.
@@ -23,4 +25,15 @@ import @1.2::ICryptoPlugin;
  * load crypto keys for a codec to decrypt protected video content.
  */
 interface ICryptoPlugin extends @1.2::ICryptoPlugin {
+
+    /**
+     * @return logMessages latest plugin level log messages. Can be used
+     *     by apps in diagnosis of errors.
+     * @return status the status of the call. The status must be:
+     *     OK on success;
+     *     GENERAL_OEM_ERROR on OEM-provided, low-level component failures;
+     *     GENERAL_PLUGIN_ERROR on unexpected plugin-level errors.
+     */
+    getLogMessages() generates (@1.4::Status status, vec<LogMessage> logMessages);
+
 };
