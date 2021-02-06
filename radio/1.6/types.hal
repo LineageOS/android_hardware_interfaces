@@ -971,3 +971,147 @@ struct OSAppId {
      */
     vec<uint8_t> osAppId;
 };
+
+/**
+ * This struct represents the current slicing configuration.
+ */
+struct SlicingConfig {
+    /**
+     * This vector contains the current URSP rules. Empty vector represents that no
+     * rules are configured.
+     */
+    vec<UrspRule> urspRules;
+    /**
+     * Struct containing all NSSAIs (list of slice info).
+     */
+    Nssais nsaids;
+};
+
+/**
+ * This struct represents a single URSP rule as defined in 3GPP TS 24.526.
+ */
+struct UrspRule {
+    /**
+     * Precedence value in the range of 0 to 255. Higher value has lower
+     * precedence.
+     */
+    uint8_t precedence;
+    /**
+     * Used as a matcher for network requests.
+     */
+    vec<TrafficDescriptor> trafficDescriptors;
+    /**
+     * List of routes (connection parameters) that must be used for requests
+     * matching a trafficDescriptor.
+     */
+    vec<RouteSelectionDescriptor> routeSelectionDescriptor;
+};
+
+
+/**
+ * This struct represents a single route selection descriptor as defined in
+ * 3GPP TS 24.526.
+ */
+struct RouteSelectionDescriptor {
+    /**
+     * Precedence value in the range of 0 to 255. Higher value has lower
+     * precedence.
+     */
+    uint8_t precedence;
+    /**
+     * Parameters defining this RouteSelectionDescriptor. The length of the vector
+     * must be >= 1.
+     */
+    vec<RouteSelectionDescriptorParams> routeSelectionDescriptorParams;
+};
+
+/**
+ * This struct represents a route selection descriptor. A valid struct must have
+ * at least one of the vectors non-empty.
+ */
+struct RouteSelectionDescriptorParams {
+    /**
+     * Valid values are IP, IPV6 and IPV4V6.
+     */
+    OptionalPdpProtocolType sessionType;
+    OptionalSscMode sscMode;
+    /**
+     * There can be 0 or more SliceInfo specified in a route descriptor.
+     */
+    vec<SliceInfo> sliceInfo;
+    /**
+     * DNN stands for Data Network Name and represents an APN as defined in
+     * 3GPP TS 23.003. There can be 0 or more DNNs specified in a route
+     * descriptor.
+     */
+    vec<string> dnn;
+};
+
+/**
+ * This safe_union represents an optional PdpProtocolType.
+ */
+safe_union OptionalPdpProtocolType {
+    Monostate noinit;
+    PdpProtocolType value;
+};
+
+/**
+ * This safe_union represents an optional SscMode.
+ */
+safe_union OptionalSscMode {
+    Monostate noinit;
+    SscMode value;
+};
+
+/**
+ * This struct contains all NSSAIs (lists of slices).
+ */
+struct Nssais {
+    /**
+     * These are all the slices configured by the network. This includes allowed
+     * and rejected slices, as well as slices that are neither allowed nor rejected
+     * yet. Empty vector indicates that no slices are configured, and in that case
+     * allowed and rejected vectors must be empty as well.
+     */
+    vec<SliceInfo> configured;
+    /**
+     * These are all the slices that the UE is allowed to use. All these slices
+     * must be configured as well. Empty vector indicates that no slices are
+     * allowed yet.
+     */
+    vec<SliceInfo> allowed;
+    /**
+     * These are all the slices that the UE is not allowed to use. All these slices
+     * must be configured as well. Empty vector indicates that no slices are
+     * rejected yet.
+     */
+    vec<RejectedSliceInfo> rejected;
+    /**
+     * Default configured NSSAI
+     */
+    vec<SliceInfo> defaultConfigured;
+};
+
+/**
+ * This struct represents a network slice rejected by the network. It contains a
+ * rejectionCause corresponding to a rejected network slice.
+ */
+struct RejectedSliceInfo {
+    SliceInfo sliceInfo;
+    SliceRejectionCause rejectionCause;
+};
+
+enum SliceRejectionCause : int32_t {
+    NOT_AVAILABLE_IN_PLMN,
+    NOT_AVAILABLE_IN_REG_AREA,
+};
+
+/**
+ * Enum representing session and service continuity mode as defined in
+ * 3GPP TS 23.501.
+ */
+enum SscMode : int32_t {
+    MODE_1 = 1,
+    MODE_2 = 2,
+    MODE_3 = 3,
+};

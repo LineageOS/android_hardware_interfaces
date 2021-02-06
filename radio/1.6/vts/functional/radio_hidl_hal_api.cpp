@@ -164,6 +164,18 @@ TEST_P(RadioHidlTest_v1_6, setupDataCall_1_6_osAppId) {
 }
 
 /*
+ * Test IRadio.getSlicingConfig() for the response returned.
+ */
+TEST_P(RadioHidlTest_v1_6, getSlicingConfig) {
+    serial = GetRandomSerialNumber();
+    radio_v1_6->getSlicingConfig(serial);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_6->rspInfo.serial);
+    EXPECT_EQ(::android::hardware::radio::V1_6::RadioError::NONE, radioRsp_v1_6->rspInfo.error);
+}
+
+/*
  * Test IRadio_1_6.sendSms() for the response returned.
  */
 TEST_P(RadioHidlTest_v1_6, sendSms_1_6) {

@@ -19,6 +19,8 @@ import @1.0::Status;
 import @1.0::SessionId;
 import @1.1::SecurityLevel;
 import @1.2::IDrmPlugin;
+import @1.4::LogMessage;
+import @1.4::Status;
 
 /**
  * IDrmPlugin is used to interact with a specific drm plugin that was
@@ -60,5 +62,15 @@ interface IDrmPlugin extends @1.2::IDrmPlugin {
      *     ERROR_DRM_SESSION_NOT_OPENED if the drm session cannot be found
      */
     setPlaybackId(SessionId sessionId, string playbackId) generates (@1.0::Status status);
+
+    /**
+     * @return logMessages latest plugin level log messages. Can be used
+     *     by apps in diagnosis of errors.
+     * @return status the status of the call. The status must be:
+     *     OK on success;
+     *     GENERAL_OEM_ERROR on OEM-provided, low-level component failures;
+     *     GENERAL_PLUGIN_ERROR on unexpected plugin-level errors.
+     */
+    getLogMessages() generates (@1.4::Status status, vec<LogMessage> logMessages);
 
 };
