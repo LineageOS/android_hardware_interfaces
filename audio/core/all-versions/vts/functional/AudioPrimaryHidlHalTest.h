@@ -928,9 +928,9 @@ class OutputStreamTest : public OpenStreamTest<IStreamOut> {
     const SourceMetadata initMetadata = {
             { { toString(xsd::AudioUsage::AUDIO_USAGE_MEDIA),
                 toString(xsd::AudioContentType::AUDIO_CONTENT_TYPE_MUSIC),
-                {},
+                1 /* gain */,
                 toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO),
-                1 /* gain */ } }};
+                {} } }};
 #endif
 };
 TEST_P(OutputStreamTest, OpenOutputStreamTest) {
