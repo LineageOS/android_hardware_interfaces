@@ -99,12 +99,12 @@ nn::Request::MemoryDomainToken ResilientBuffer::getToken() const {
     return getBuffer()->getToken();
 }
 
-nn::GeneralResult<void> ResilientBuffer::copyTo(const nn::Memory& dst) const {
+nn::GeneralResult<void> ResilientBuffer::copyTo(const nn::SharedMemory& dst) const {
     const auto fn = [&dst](const nn::IBuffer& buffer) { return buffer.copyTo(dst); };
     return protect(*this, fn);
 }
 
-nn::GeneralResult<void> ResilientBuffer::copyFrom(const nn::Memory& src,
+nn::GeneralResult<void> ResilientBuffer::copyFrom(const nn::SharedMemory& src,
                                                   const nn::Dimensions& dimensions) const {
     const auto fn = [&src, &dimensions](const nn::IBuffer& buffer) {
         return buffer.copyFrom(src, dimensions);

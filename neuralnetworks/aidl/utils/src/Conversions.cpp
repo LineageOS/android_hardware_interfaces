@@ -53,6 +53,8 @@ constexpr auto kVersion = android::nn::Version::ANDROID_S;
 namespace android::nn {
 namespace {
 
+using ::aidl::android::hardware::common::NativeHandle;
+
 constexpr auto validOperandType(nn::OperandType operandType) {
     switch (operandType) {
         case nn::OperandType::FLOAT32:
@@ -316,13 +318,13 @@ GeneralResult<MeasureTiming> unvalidatedConvert(bool measureTiming) {
     return measureTiming ? MeasureTiming::YES : MeasureTiming::NO;
 }
 
-GeneralResult<Memory> unvalidatedConvert(const aidl_hal::Memory& memory) {
+GeneralResult<SharedMemory> unvalidatedConvert(const aidl_hal::Memory& memory) {
     VERIFY_NON_NEGATIVE(memory.size) << "Memory size must not be negative";
-    return Memory{
+    return std::make_shared<const Memory>(Memory{
             .handle = NN_TRY(unvalidatedConvert(memory.handle)),
             .size = static_cast<uint32_t>(memory.size),
             .name = memory.name,
-    };
+    });
 }
 
 GeneralResult<Model::OperandValues> unvalidatedConvert(const std::vector<uint8_t>& operandValues) {
@@ -397,8 +399,7 @@ GeneralResult<ExecutionPreference> unvalidatedConvert(
     return static_cast<ExecutionPreference>(executionPreference);
 }
 
-GeneralResult<SharedHandle> unvalidatedConvert(
-        const ::aidl::android::hardware::common::NativeHandle& aidlNativeHandle) {
+GeneralResult<SharedHandle> unvalidatedConvert(const NativeHandle& aidlNativeHandle) {
     std::vector<base::unique_fd> fds;
     fds.reserve(aidlNativeHandle.fds.size());
     for (const auto& fd : aidlNativeHandle.fds) {
@@ -422,7 +423,7 @@ GeneralResult<ExecutionPreference> convert(
     return validatedConvert(executionPreference);
 }
 
-GeneralResult<Memory> convert(const aidl_hal::Memory& operand) {
+GeneralResult<SharedMemory> convert(const aidl_hal::Memory& operand) {
     return validatedConvert(operand);
 }
 
@@ -454,7 +455,7 @@ GeneralResult<std::vector<Operation>> convert(const std::vector<aidl_hal::Operat
     return unvalidatedConvert(operations);
 }
 
-GeneralResult<std::vector<Memory>> convert(const std::vector<aidl_hal::Memory>& memories) {
+GeneralResult<std::vector<SharedMemory>> convert(const std::vector<aidl_hal::Memory>& memories) {
     return validatedConvert(memories);
 }
 
@@ -525,14 +526,15 @@ nn::GeneralResult<common::NativeHandle> unvalidatedConvert(const nn::SharedHandl
     return aidlNativeHandle;
 }
 
-nn::GeneralResult<Memory> unvalidatedConvert(const nn::Memory& memory) {
-    if (memory.size > std::numeric_limits<int64_t>::max()) {
+nn::GeneralResult<Memory> unvalidatedConvert(const nn::SharedMemory& memory) {
+    CHECK(memory != nullptr);
+    if (memory->size > std::numeric_limits<int64_t>::max()) {
         return NN_ERROR() << "Memory size doesn't fit into int64_t.";
     }
     return Memory{
-            .handle = NN_TRY(unvalidatedConvert(memory.handle)),
-            .size = static_cast<int64_t>(memory.size),
-            .name = memory.name,
+            .handle = NN_TRY(unvalidatedConvert(memory->handle)),
+            .size = static_cast<int64_t>(memory->size),
+            .name = memory->name,
     };
 }
 
@@ -558,7 +560,7 @@ nn::GeneralResult<OutputShape> unvalidatedConvert(const nn::OutputShape& outputS
                        .isSufficient = outputShape.isSufficient};
 }
 
-nn::GeneralResult<Memory> convert(const nn::Memory& memory) {
+nn::GeneralResult<Memory> convert(const nn::SharedMemory& memory) {
     return validatedConvert(memory);
 }
 
