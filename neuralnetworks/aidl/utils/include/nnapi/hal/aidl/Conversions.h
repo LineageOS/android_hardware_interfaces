@@ -79,7 +79,7 @@ GeneralResult<Model::OperandValues> unvalidatedConvert(const std::vector<uint8_t
 GeneralResult<Model::Subgraph> unvalidatedConvert(const aidl_hal::Subgraph& subgraph);
 GeneralResult<OutputShape> unvalidatedConvert(const aidl_hal::OutputShape& outputShape);
 GeneralResult<MeasureTiming> unvalidatedConvert(bool measureTiming);
-GeneralResult<Memory> unvalidatedConvert(const aidl_hal::Memory& memory);
+GeneralResult<SharedMemory> unvalidatedConvert(const aidl_hal::Memory& memory);
 GeneralResult<Timing> unvalidatedConvert(const aidl_hal::Timing& timing);
 GeneralResult<BufferDesc> unvalidatedConvert(const aidl_hal::BufferDesc& bufferDesc);
 GeneralResult<BufferRole> unvalidatedConvert(const aidl_hal::BufferRole& bufferRole);
@@ -99,7 +99,7 @@ GeneralResult<SharedHandle> unvalidatedConvert(
 
 GeneralResult<ExecutionPreference> convert(
         const aidl_hal::ExecutionPreference& executionPreference);
-GeneralResult<Memory> convert(const aidl_hal::Memory& memory);
+GeneralResult<SharedMemory> convert(const aidl_hal::Memory& memory);
 GeneralResult<Model> convert(const aidl_hal::Model& model);
 GeneralResult<Operand> convert(const aidl_hal::Operand& operand);
 GeneralResult<OperandType> convert(const aidl_hal::OperandType& operandType);
@@ -108,7 +108,7 @@ GeneralResult<Request::MemoryPool> convert(const aidl_hal::RequestMemoryPool& me
 GeneralResult<Request> convert(const aidl_hal::Request& request);
 
 GeneralResult<std::vector<Operation>> convert(const std::vector<aidl_hal::Operation>& outputShapes);
-GeneralResult<std::vector<Memory>> convert(const std::vector<aidl_hal::Memory>& memories);
+GeneralResult<std::vector<SharedMemory>> convert(const std::vector<aidl_hal::Memory>& memories);
 
 GeneralResult<std::vector<uint32_t>> toUnsigned(const std::vector<int32_t>& vec);
 
@@ -118,11 +118,11 @@ namespace aidl::android::hardware::neuralnetworks::utils {
 
 namespace nn = ::android::nn;
 
-nn::GeneralResult<Memory> unvalidatedConvert(const nn::Memory& memory);
+nn::GeneralResult<Memory> unvalidatedConvert(const nn::SharedMemory& memory);
 nn::GeneralResult<OutputShape> unvalidatedConvert(const nn::OutputShape& outputShape);
 nn::GeneralResult<ErrorStatus> unvalidatedConvert(const nn::ErrorStatus& errorStatus);
 
-nn::GeneralResult<Memory> convert(const nn::Memory& memory);
+nn::GeneralResult<Memory> convert(const nn::SharedMemory& memory);
 nn::GeneralResult<ErrorStatus> convert(const nn::ErrorStatus& errorStatus);
 nn::GeneralResult<std::vector<OutputShape>> convert(
         const std::vector<nn::OutputShape>& outputShapes);

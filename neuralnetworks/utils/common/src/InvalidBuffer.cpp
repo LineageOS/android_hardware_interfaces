@@ -30,11 +30,11 @@ nn::Request::MemoryDomainToken InvalidBuffer::getToken() const {
     return nn::Request::MemoryDomainToken{};
 }
 
-nn::GeneralResult<void> InvalidBuffer::copyTo(const nn::Memory& /*dst*/) const {
+nn::GeneralResult<void> InvalidBuffer::copyTo(const nn::SharedMemory& /*dst*/) const {
     return NN_ERROR() << "InvalidBuffer";
 }
 
-nn::GeneralResult<void> InvalidBuffer::copyFrom(const nn::Memory& /*src*/,
+nn::GeneralResult<void> InvalidBuffer::copyFrom(const nn::SharedMemory& /*src*/,
                                                 const nn::Dimensions& /*dimensions*/) const {
     return NN_ERROR() << "InvalidBuffer";
 }
