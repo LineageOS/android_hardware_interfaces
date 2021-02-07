@@ -545,7 +545,7 @@ package android.audio.policy.configuration.V7_0 {
 
   public enum Version {
     method @NonNull public String getRawName();
-    enum_constant public static final android.audio.policy.configuration.V7_0.Version _1_0;
+    enum_constant public static final android.audio.policy.configuration.V7_0.Version _7_0;
   }
 
   public class Volume {
