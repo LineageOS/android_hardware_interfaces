@@ -191,7 +191,9 @@ interface ISession {
     /**
      * detectInteraction:
      *
-     * A request to start looking for fingerprints without performing matching.
+     * A request to start looking for fingerprints without performing matching. Must only be called
+     * if SensorProps#supportsDetectInteraction is true. If invoked on implementations that do not
+     * support this functionality, the HAL must respond with ISession#onError(UNABLE_TO_PROCESS, 0).
      *
      * Once the HAL is able to start processing this request, it must notify the framework via
      * ISessionCallback#onStateChanged with SessionState::DETECTING_INTERACTION.
