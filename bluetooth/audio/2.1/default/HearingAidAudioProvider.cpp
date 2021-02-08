@@ -20,8 +20,8 @@
 
 #include <android-base/logging.h>
 
-#include "BluetoothAudioSessionReport.h"
-#include "BluetoothAudioSupportedCodecsDB.h"
+#include "BluetoothAudioSessionReport_2_1.h"
+#include "BluetoothAudioSupportedCodecsDB_2_1.h"
 
 namespace android {
 namespace hardware {
@@ -30,7 +30,7 @@ namespace audio {
 namespace V2_1 {
 namespace implementation {
 
-using ::android::bluetooth::audio::BluetoothAudioSessionReport;
+using ::android::bluetooth::audio::BluetoothAudioSessionReport_2_1;
 using ::android::hardware::Void;
 using ::android::hardware::bluetooth::audio::V2_0::AudioConfiguration;
 
@@ -95,7 +95,7 @@ Return<void> HearingAidAudioProvider::startSession(
 
 Return<void> HearingAidAudioProvider::onSessionReady(startSession_cb _hidl_cb) {
   if (mDataMQ && mDataMQ->isValid()) {
-    BluetoothAudioSessionReport::OnSessionStarted(
+    BluetoothAudioSessionReport_2_1::OnSessionStarted(
         session_type_, stack_iface_, mDataMQ->getDesc(), audio_config_);
     _hidl_cb(BluetoothAudioStatus::SUCCESS, *mDataMQ->getDesc());
   } else {
