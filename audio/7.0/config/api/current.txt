@@ -212,6 +212,7 @@ package android.audio.policy.configuration.V7_0 {
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_FLAC;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_HE_AAC_V1;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_HE_AAC_V2;
+    enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_IEC60958;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_IEC61937;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_LC3;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_LDAC;
