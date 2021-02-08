@@ -261,7 +261,7 @@ GeneralResult<Request::MemoryPool> unvalidatedConvert(
     using Discriminator = hal::V1_3::Request::MemoryPool::hidl_discriminator;
     switch (memoryPool.getDiscriminator()) {
         case Discriminator::hidlMemory:
-            return createSharedMemoryFromHidlMemory(memoryPool.hidlMemory());
+            return hal::utils::createSharedMemoryFromHidlMemory(memoryPool.hidlMemory());
         case Discriminator::token:
             return static_cast<Request::MemoryDomainToken>(memoryPool.token());
     }
