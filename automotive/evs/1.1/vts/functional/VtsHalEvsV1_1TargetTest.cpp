@@ -41,14 +41,14 @@ static const float kNanoToSeconds = 0.000000001f;
 #include <utils/Errors.h>
 #include <utils/StrongPointer.h>
 
+#include <android-base/logging.h>
 #include <android/hardware/automotive/evs/1.1/IEvsCamera.h>
 #include <android/hardware/automotive/evs/1.1/IEvsCameraStream.h>
-#include <android/hardware/automotive/evs/1.1/IEvsEnumerator.h>
 #include <android/hardware/automotive/evs/1.1/IEvsDisplay.h>
+#include <android/hardware/automotive/evs/1.1/IEvsEnumerator.h>
 #include <android/hardware/camera/device/3.2/ICameraDevice.h>
-#include <android-base/logging.h>
 #include <system/camera_metadata.h>
-#include <ui/DisplayConfig.h>
+#include <ui/DisplayMode.h>
 #include <ui/DisplayState.h>
 #include <ui/GraphicBuffer.h>
 #include <ui/GraphicBufferAllocator.h>
@@ -622,7 +622,7 @@ TEST_P(EvsHidlTest, CameraToDisplayRoundTrip) {
         ASSERT_GT(config.size(), 0);
         ASSERT_GT(state.size(), 0);
 
-        android::DisplayConfig* pConfig = (android::DisplayConfig*)config.data();
+        android::ui::DisplayMode* pConfig = (android::ui::DisplayMode*)config.data();
         const auto width = pConfig->resolution.getWidth();
         const auto height = pConfig->resolution.getHeight();
         LOG(INFO) << "    Resolution: " << width << "x" << height;
