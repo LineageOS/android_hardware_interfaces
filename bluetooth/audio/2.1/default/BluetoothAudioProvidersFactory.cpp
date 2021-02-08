@@ -20,7 +20,7 @@
 
 #include <android-base/logging.h>
 
-#include "BluetoothAudioSupportedCodecsDB.h"
+#include "BluetoothAudioSupportedCodecsDB_2_1.h"
 
 namespace android {
 namespace hardware {
