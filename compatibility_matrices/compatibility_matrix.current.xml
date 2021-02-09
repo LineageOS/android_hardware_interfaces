@@ -397,6 +397,13 @@
             <regex-instance>.*</regex-instance>
         </interface>
     </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.neuralnetworks</name>
+        <interface>
+            <name>IDevice</name>
+            <regex-instance>.*</regex-instance>
+        </interface>
+    </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.nfc</name>
         <version>1.2</version>

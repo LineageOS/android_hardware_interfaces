@@ -16,6 +16,7 @@
 
 #include "Ctrl.h"
 
+#include "families/Mac80211hwsim.h"
 #include "families/Nl80211.h"
 
 #include <libnl++/Message.h>
@@ -68,11 +69,14 @@ void Ctrl::track(const Buffer<nlmsghdr> hdr) {
     const auto familyId = msg.attributes.get<uint16_t>(CTRL_ATTR_FAMILY_ID);
     const auto familyName = msg.attributes.get<std::string>(CTRL_ATTR_FAMILY_NAME);
 
-    /* For now, we support just a single family. But if you add more, please define proper
+    /* For now, we support just two families. But if you add more, please define proper
      * abstraction and not hardcode every name and class here.
      */
     if (familyName == "nl80211") {
         mFamilyRegister[familyId] = std::make_shared<families::Nl80211>(familyId);
+    }
+    if (familyName == "MAC80211_HWSIM") {
+        mFamilyRegister[familyId] = std::make_shared<families::Mac80211hwsim>(familyId);
     }
 }
 

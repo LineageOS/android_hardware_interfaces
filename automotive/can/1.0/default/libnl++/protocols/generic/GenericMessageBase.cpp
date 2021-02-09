@@ -40,9 +40,9 @@ void GenericMessageBase::toStream(std::stringstream& ss, const genlmsghdr& data)
 
     ss << "genlmsghdr{";
     if (commandName.has_value()) {
-        ss << "cmd=" << unsigned(data.cmd);
-    } else {
         ss << "cmd=" << *commandName;
+    } else {
+        ss << "cmd=" << unsigned(data.cmd);
     }
     ss << ", version=" << unsigned(data.version);
     if (data.reserved != 0) ss << ", reserved=" << data.reserved;
