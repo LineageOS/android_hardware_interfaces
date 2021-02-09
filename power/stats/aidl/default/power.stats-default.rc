@@ -1,0 +1,4 @@
+service vendor.power.stats-default /vendor/bin/hw/android.hardware.power.stats-service.example
+    class hal
+    user system
+    group system

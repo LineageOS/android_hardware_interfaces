@@ -16,17 +16,18 @@
 
 #pragma once
 
-#include <aidl/android/hardware/powerstats/BnPowerStats.h>
+#include <aidl/android/hardware/power/stats/BnPowerStats.h>
 
 namespace aidl {
 namespace android {
 namespace hardware {
-namespace powerstats {
+namespace power {
+namespace stats {
 
 class PowerStats : public BnPowerStats {
   public:
     PowerStats() = default;
-    // Methods from aidl::android::hardware::powerstats::IPowerStats
+    // Methods from aidl::android::hardware::power::stats::IPowerStats
     ndk::ScopedAStatus getPowerEntityInfo(std::vector<PowerEntityInfo>* _aidl_return) override;
     ndk::ScopedAStatus getStateResidency(const std::vector<int32_t>& in_powerEntityIds,
                                          std::vector<StateResidencyResult>* _aidl_return) override;
@@ -38,7 +39,8 @@ class PowerStats : public BnPowerStats {
                                         std::vector<EnergyMeasurement>* _aidl_return) override;
 };
 
-}  // namespace powerstats
+}  // namespace stats
+}  // namespace power
 }  // namespace hardware
 }  // namespace android
 }  // namespace aidl
