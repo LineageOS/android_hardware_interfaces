@@ -35,8 +35,8 @@ class PowerStats : public BnPowerStats {
     ndk::ScopedAStatus getEnergyConsumed(const std::vector<int32_t>& in_energyConsumerIds,
                                          std::vector<EnergyConsumerResult>* _aidl_return) override;
     ndk::ScopedAStatus getEnergyMeterInfo(std::vector<Channel>* _aidl_return) override;
-    ndk::ScopedAStatus readEnergyMeters(const std::vector<int32_t>& in_channelIds,
-                                        std::vector<EnergyMeasurement>* _aidl_return) override;
+    ndk::ScopedAStatus readEnergyMeter(const std::vector<int32_t>& in_channelIds,
+                                       std::vector<EnergyMeasurement>* _aidl_return) override;
 };
 
 }  // namespace stats

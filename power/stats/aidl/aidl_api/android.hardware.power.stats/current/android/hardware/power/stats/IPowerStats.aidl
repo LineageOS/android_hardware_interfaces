@@ -38,5 +38,5 @@ interface IPowerStats {
   android.hardware.power.stats.EnergyConsumer[] getEnergyConsumerInfo();
   android.hardware.power.stats.EnergyConsumerResult[] getEnergyConsumed(in int[] energyConsumerIds);
   android.hardware.power.stats.Channel[] getEnergyMeterInfo();
-  android.hardware.power.stats.EnergyMeasurement[] readEnergyMeters(in int[] channelIds);
+  android.hardware.power.stats.EnergyMeasurement[] readEnergyMeter(in int[] channelIds);
 }
