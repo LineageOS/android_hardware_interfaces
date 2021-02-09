@@ -22,8 +22,8 @@
 #include <fmq/MessageQueue.h>
 #include <hidl/MQDescriptor.h>
 
-#include "BluetoothAudioSessionReport.h"
-#include "BluetoothAudioSupportedCodecsDB.h"
+#include "BluetoothAudioSessionReport_2_1.h"
+#include "BluetoothAudioSupportedCodecsDB_2_1.h"
 
 namespace android {
 namespace hardware {
@@ -32,7 +32,7 @@ namespace audio {
 namespace V2_1 {
 namespace implementation {
 
-using ::android::bluetooth::audio::BluetoothAudioSessionReport;
+using ::android::bluetooth::audio::BluetoothAudioSessionReport_2_1;
 using ::android::hardware::kSynchronizedReadWrite;
 using ::android::hardware::MessageQueue;
 using ::android::hardware::Void;
@@ -81,8 +81,8 @@ Return<void> A2dpOffloadAudioProvider::startSession(
 
 Return<void> A2dpOffloadAudioProvider::onSessionReady(
     startSession_cb _hidl_cb) {
-  BluetoothAudioSessionReport::OnSessionStarted(session_type_, stack_iface_,
-                                                nullptr, audio_config_);
+  BluetoothAudioSessionReport_2_1::OnSessionStarted(session_type_, stack_iface_,
+                                                    nullptr, audio_config_);
   _hidl_cb(BluetoothAudioStatus::SUCCESS, DataMQ::Descriptor());
   return Void();
 }
