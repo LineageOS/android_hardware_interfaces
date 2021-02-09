@@ -21,7 +21,7 @@ parcelable EnergyMeasurement {
     /**
      * ID of the Channel associated with this measurement
      */
-    int channelId;
+    int id;
     /**
      * Approximate time of data capture in millseconds since boot
      */

@@ -24,7 +24,7 @@ parcelable StateResidency {
     /**
      * ID of the state associated with this residency
      */
-    int stateId;
+    int id;
     /**
      * Total time in milliseconds that the corresponding PowerEntity resided
      * in this state since boot

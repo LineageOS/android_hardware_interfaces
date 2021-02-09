@@ -16,11 +16,11 @@
 
 package android.hardware.power.stats;
 
-import android.hardware.power.stats.ChannelInfo;
-import android.hardware.power.stats.EnergyConsumerId;
+import android.hardware.power.stats.Channel;
+import android.hardware.power.stats.EnergyConsumer;
 import android.hardware.power.stats.EnergyConsumerResult;
 import android.hardware.power.stats.EnergyMeasurement;
-import android.hardware.power.stats.PowerEntityInfo;
+import android.hardware.power.stats.PowerEntity;
 import android.hardware.power.stats.StateResidencyResult;
 
 @VintfStability
@@ -34,7 +34,7 @@ interface IPowerStats {
      *
      * @return List of information on each PowerEntity
      */
-    PowerEntityInfo[] getPowerEntityInfo();
+    PowerEntity[] getPowerEntityInfo();
 
     /**
      * Reports the accumulated state residency for each requested PowerEntity.
@@ -61,15 +61,14 @@ interface IPowerStats {
     StateResidencyResult[] getStateResidency(in int[] powerEntityIds);
 
     /**
-     * Return the list IDs for all supported EnergyConsumers for which energy consumption data is
-     * available.
+     * Return the list EnergyConsumers for which energy consumption data is available.
      *
      * An EnergyConsumer is a device subsystem or peripheral that consumes energy. Energy
      * consumption data may be used by framework for the purpose of power attribution.
      *
-     * @return List of EnergyConsumersIds that are available.
+     * @return List of EnergyConsumers that are available.
      */
-    EnergyConsumerId[] getEnergyConsumerInfo();
+    EnergyConsumer[] getEnergyConsumerInfo();
 
     /**
      * Reports the energy consumed since boot by each requested EnergyConsumer.
@@ -83,7 +82,7 @@ interface IPowerStats {
      *  - STATUS_BAD_VALUE if an invalid energyConsumerId is provided
      *  - STATUS_FAILED_TRANSACTION if any EnergyConsumerResult fails to be returned
      */
-    EnergyConsumerResult[] getEnergyConsumed(in EnergyConsumerId[] energyConsumerIds);
+    EnergyConsumerResult[] getEnergyConsumed(in int[] energyConsumerIds);
 
     /**
      * Return information related to all channels monitored by Energy Meters.
@@ -91,9 +90,9 @@ interface IPowerStats {
      * An Energy Meter is a device that monitors energy and may support monitoring multiple
      * channels simultaneously. A channel may correspond a bus, sense resistor, or power rail.
      *
-     * @return Information about channels monitored by Energy Meters.
+     * @return Channels monitored by Energy Meters.
      */
-    ChannelInfo[] getEnergyMeterInfo();
+    Channel[] getEnergyMeterInfo();
 
     /**
      * Reports accumulated energy for each specified channel.
