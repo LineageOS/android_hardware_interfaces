@@ -20,5 +20,6 @@ package android.hardware.power.stats;
 parcelable EnergyMeasurement {
   int channelId;
   long timestampMs;
+  long durationMs;
   long energyUWs;
 }
