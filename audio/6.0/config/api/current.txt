@@ -199,7 +199,7 @@ package audio.policy.configuration.V6_0 {
   public static class DevicePorts.DevicePort {
     ctor public DevicePorts.DevicePort();
     method public String getAddress();
-    method public java.util.List<audio.policy.configuration.V6_0.AudioFormat> getEncodedFormats();
+    method public java.util.List<java.lang.String> getEncodedFormats();
     method public audio.policy.configuration.V6_0.Gains getGains();
     method public java.util.List<audio.policy.configuration.V6_0.Profile> getProfile();
     method public audio.policy.configuration.V6_0.Role getRole();
@@ -207,7 +207,7 @@ package audio.policy.configuration.V6_0 {
     method public String getType();
     method public boolean get_default();
     method public void setAddress(String);
-    method public void setEncodedFormats(java.util.List<audio.policy.configuration.V6_0.AudioFormat>);
+    method public void setEncodedFormats(java.util.List<java.lang.String>);
     method public void setGains(audio.policy.configuration.V6_0.Gains);
     method public void setRole(audio.policy.configuration.V6_0.Role);
     method public void setTagName(String);
@@ -391,10 +391,10 @@ package audio.policy.configuration.V6_0 {
 
   public static class SurroundFormats.Format {
     ctor public SurroundFormats.Format();
-    method public audio.policy.configuration.V6_0.AudioFormat getName();
-    method public java.util.List<audio.policy.configuration.V6_0.AudioFormat> getSubformats();
-    method public void setName(audio.policy.configuration.V6_0.AudioFormat);
-    method public void setSubformats(java.util.List<audio.policy.configuration.V6_0.AudioFormat>);
+    method public String getName();
+    method public java.util.List<java.lang.String> getSubformats();
+    method public void setName(String);
+    method public void setSubformats(java.util.List<java.lang.String>);
   }
 
   public class SurroundSound {

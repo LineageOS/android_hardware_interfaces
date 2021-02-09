@@ -611,13 +611,13 @@
         </xs:sequence>
     </xs:complexType>
     <xs:simpleType name="audioFormatsList">
-        <xs:list itemType="audioFormat" />
+        <xs:list itemType="extendableAudioFormat" />
     </xs:simpleType>
     <xs:complexType name="surroundFormats">
         <xs:sequence>
             <xs:element name="format" minOccurs="0" maxOccurs="unbounded">
                 <xs:complexType>
-                    <xs:attribute name="name" type="audioFormat" use="required"/>
+                    <xs:attribute name="name" type="extendableAudioFormat" use="required"/>
                     <xs:attribute name="subformats" type="audioFormatsList" />
                 </xs:complexType>
             </xs:element>
