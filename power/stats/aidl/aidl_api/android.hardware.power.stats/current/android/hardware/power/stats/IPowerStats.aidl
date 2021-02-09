@@ -15,9 +15,13 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.powerstats;
-@Backing(type="int") @VintfStability
-enum EnergyConsumerId {
-  DISPLAY = 0,
-  GPS = 1,
+package android.hardware.power.stats;
+@VintfStability
+interface IPowerStats {
+  android.hardware.power.stats.PowerEntityInfo[] getPowerEntityInfo();
+  android.hardware.power.stats.StateResidencyResult[] getStateResidency(in int[] powerEntityIds);
+  android.hardware.power.stats.EnergyConsumerId[] getEnergyConsumerInfo();
+  android.hardware.power.stats.EnergyConsumerResult[] getEnergyConsumed(in android.hardware.power.stats.EnergyConsumerId[] energyConsumerIds);
+  android.hardware.power.stats.ChannelInfo[] getEnergyMeterInfo();
+  android.hardware.power.stats.EnergyMeasurement[] readEnergyMeters(in int[] channelIds);
 }
