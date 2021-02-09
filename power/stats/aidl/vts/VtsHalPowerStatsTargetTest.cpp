@@ -21,10 +21,10 @@
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 
-using aidl::android::hardware::power::stats::ChannelInfo;
+using aidl::android::hardware::power::stats::Channel;
 using aidl::android::hardware::power::stats::EnergyMeasurement;
 using aidl::android::hardware::power::stats::IPowerStats;
-using aidl::android::hardware::power::stats::PowerEntityInfo;
+using aidl::android::hardware::power::stats::PowerEntity;
 using aidl::android::hardware::power::stats::StateResidencyResult;
 
 using ndk::SpAIBinder;
@@ -47,70 +47,70 @@ TEST_P(PowerStatsAidl, TestReadEnergyMeter) {
 
 // Each PowerEntity must have a valid name
 TEST_P(PowerStatsAidl, ValidatePowerEntityNames) {
-    std::vector<PowerEntityInfo> infos;
+    std::vector<PowerEntity> infos;
     ASSERT_TRUE(powerstats->getPowerEntityInfo(&infos).isOk());
 
     for (auto info : infos) {
-        EXPECT_NE(info.powerEntityName, "");
+        EXPECT_NE(info.name, "");
     }
 }
 
 // Each power entity must have a unique name
 TEST_P(PowerStatsAidl, ValidatePowerEntityUniqueNames) {
-    std::vector<PowerEntityInfo> infos;
+    std::vector<PowerEntity> infos;
     ASSERT_TRUE(powerstats->getPowerEntityInfo(&infos).isOk());
 
     std::set<std::string> names;
     for (auto info : infos) {
-        EXPECT_TRUE(names.insert(info.powerEntityName).second);
+        EXPECT_TRUE(names.insert(info.name).second);
     }
 }
 
 // Each PowerEntity must have a unique ID
 TEST_P(PowerStatsAidl, ValidatePowerEntityIds) {
-    std::vector<PowerEntityInfo> infos;
+    std::vector<PowerEntity> infos;
     ASSERT_TRUE(powerstats->getPowerEntityInfo(&infos).isOk());
 
     std::set<int32_t> ids;
     for (auto info : infos) {
-        EXPECT_TRUE(ids.insert(info.powerEntityId).second);
+        EXPECT_TRUE(ids.insert(info.id).second);
     }
 }
 
 // Each state must have a valid name
 TEST_P(PowerStatsAidl, ValidateStateNames) {
-    std::vector<PowerEntityInfo> infos;
+    std::vector<PowerEntity> infos;
     ASSERT_TRUE(powerstats->getPowerEntityInfo(&infos).isOk());
 
     for (auto info : infos) {
         for (auto state : info.states) {
-            EXPECT_NE(state.stateName, "");
+            EXPECT_NE(state.name, "");
         }
     }
 }
 
 // Each state must have a name that is unique to the given PowerEntity
 TEST_P(PowerStatsAidl, ValidateStateUniqueNames) {
-    std::vector<PowerEntityInfo> infos;
+    std::vector<PowerEntity> infos;
     ASSERT_TRUE(powerstats->getPowerEntityInfo(&infos).isOk());
 
     for (auto info : infos) {
         std::set<std::string> stateNames;
         for (auto state : info.states) {
-            EXPECT_TRUE(stateNames.insert(state.stateName).second);
+            EXPECT_TRUE(stateNames.insert(state.name).second);
         }
     }
 }
 
 // Each state must have an ID that is unique to the given PowerEntity
 TEST_P(PowerStatsAidl, ValidateStateUniqueIds) {
-    std::vector<PowerEntityInfo> infos;
+    std::vector<PowerEntity> infos;
     ASSERT_TRUE(powerstats->getPowerEntityInfo(&infos).isOk());
 
     for (auto info : infos) {
         std::set<int32_t> stateIds;
         for (auto state : info.states) {
-            EXPECT_TRUE(stateIds.insert(state.stateId).second);
+            EXPECT_TRUE(stateIds.insert(state.id).second);
         }
     }
 }
@@ -121,7 +121,7 @@ TEST_P(PowerStatsAidl, TestGetStateResidency) {
 }
 
 TEST_P(PowerStatsAidl, TestGetEnergyMeterInfo) {
-    std::vector<ChannelInfo> info;
+    std::vector<Channel> info;
     ASSERT_TRUE(powerstats->getEnergyMeterInfo(&info).isOk());
 }
 
