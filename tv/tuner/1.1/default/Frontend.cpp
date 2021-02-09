@@ -196,7 +196,7 @@ Return<void> Frontend::getStatus(const hidl_vec<FrontendStatusType>& statusTypes
             }
             case FrontendStatusType::MODULATION: {
                 FrontendModulationStatus modulationStatus;
-                modulationStatus.isdbt(FrontendIsdbtModulation::MOD_16QAM);  // value = 1 << 3
+                modulationStatus.isdbs(FrontendIsdbsModulation::MOD_BPSK);  // value = 1 << 1
                 status.modulation(modulationStatus);
                 break;
             }
@@ -281,12 +281,14 @@ Return<void> Frontend::getStatusExt1_1(const hidl_vec<V1_1::FrontendStatusTypeEx
     for (int i = 0; i < statusTypes.size(); i++) {
         V1_1::FrontendStatusTypeExt1_1 type = statusTypes[i];
         V1_1::FrontendStatusExt1_1 status;
+
         // assign randomly selected values for testing.
+        // TODO: assign status values according to the frontend type
         switch (type) {
             case V1_1::FrontendStatusTypeExt1_1::MODULATIONS: {
                 vector<V1_1::FrontendModulation> modulations;
                 V1_1::FrontendModulation modulation;
-                modulation.isdbt(FrontendIsdbtModulation::MOD_16QAM);  // value = 1 << 3
+                modulation.isdbs(FrontendIsdbsModulation::MOD_BPSK);  // value = 1 << 1
                 modulations.push_back(modulation);
                 status.modulations(modulations);
                 break;
@@ -347,7 +349,7 @@ Return<void> Frontend::getStatusExt1_1(const hidl_vec<V1_1::FrontendStatusTypeEx
             }
             case V1_1::FrontendStatusTypeExt1_1::ROLL_OFF: {
                 V1_1::FrontendRollOff rollOff;
-                rollOff.dvbs(FrontendDvbsRolloff::ROLLOFF_0_35);
+                rollOff.isdbs(FrontendIsdbsRolloff::ROLLOFF_0_35);
                 status.rollOff(rollOff);
                 break;
             }
