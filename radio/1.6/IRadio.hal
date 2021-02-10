@@ -344,6 +344,9 @@ interface IRadio extends @1.5::IRadio {
      * setPreferredNetworkType, setPreferredNetworkTypesBitmap will not be called anymore
      * except for IRadio v1.5 or older devices.
      *
+     * In case of an emergency call, the modem is authorized to bypass this
+     * restriction.
+     *
      * @param serial Serial number of request.
      * @param networkTypeBitmap a 32-bit bearer bitmap of RadioAccessFamily
      *
