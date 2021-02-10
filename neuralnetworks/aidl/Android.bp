@@ -15,5 +15,13 @@ aidl_interface {
         cpp: {
             enabled: false,
         },
+        ndk: {
+            apex_available: [
+                "//apex_available:platform",
+                "com.android.neuralnetworks",
+                "test_com.android.neuralnetworks",
+            ],
+            min_sdk_version: "30",
+        },
     },
 }
