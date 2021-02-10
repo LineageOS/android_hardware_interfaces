@@ -215,6 +215,7 @@ void allocateGraphicBuffers(sp<IOmxNode> omxNode, OMX_U32 portIndex,
     ASSERT_NE(handle, nullptr);
 
     *nStride = static_cast<int32_t>(stride);
+    buffer->handle = handle;
     buffer->omxBuffer.nativeHandle = handle;
     buffer->omxBuffer.attr.anwBuffer.width = nFrameWidth;
     buffer->omxBuffer.attr.anwBuffer.height = nFrameHeight;
@@ -335,6 +336,18 @@ void allocatePortBuffers(sp<IOmxNode> omxNode,
     }
 }
 
+// free buffers needed on a component port
+void freePortBuffers(android::Vector<BufferInfo>* buffArray, PortMode portMode, bool allocGrap) {
+    for (size_t i = 0; i < buffArray->size(); i++) {
+        if (portMode == PortMode::PRESET_ANW_BUFFER ||
+            (allocGrap && portMode == PortMode::DYNAMIC_ANW_BUFFER)) {
+            android::GraphicBufferAllocator& allocator = android::GraphicBufferAllocator::get();
+            android::status_t error = allocator.free((*buffArray)[i].handle);
+            ASSERT_EQ(error, android::NO_ERROR);
+        }
+    }
+}
+
 // State Transition : Loaded -> Idle
 // Note: This function does not make any background checks for this transition.
 // The callee holds the reponsibility to ensure the legality of the transition.
@@ -399,11 +412,15 @@ void changeStateLoadedtoIdle(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
 // The callee holds the reponsibility to ensure the legality of the transition.
 void changeStateIdletoLoaded(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                              android::Vector<BufferInfo>* iBuffer,
-                             android::Vector<BufferInfo>* oBuffer,
-                             OMX_U32 kPortIndexInput,
-                             OMX_U32 kPortIndexOutput) {
+                             android::Vector<BufferInfo>* oBuffer, OMX_U32 kPortIndexInput,
+                             OMX_U32 kPortIndexOutput, PortMode* portMode, bool allocGrap) {
     android::hardware::media::omx::V1_0::Status status;
     Message msg;
+    PortMode defaultPortMode[2], *pm;
+
+    defaultPortMode[0] = PortMode::PRESET_BYTE_BUFFER;
+    defaultPortMode[1] = PortMode::PRESET_BYTE_BUFFER;
+    pm = portMode ? portMode : defaultPortMode;
 
     // set state to Loaded
     status = omxNode->sendCommand(toRawCommandType(OMX_CommandStateSet),
@@ -446,6 +463,8 @@ void changeStateIdletoLoaded(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
     ASSERT_EQ(msg.data.eventData.data1, OMX_CommandStateSet);
     ASSERT_EQ(msg.data.eventData.data2, OMX_StateLoaded);
 
+    ASSERT_NO_FATAL_FAILURE(freePortBuffers(iBuffer, pm[0], allocGrap));
+    ASSERT_NO_FATAL_FAILURE(freePortBuffers(oBuffer, pm[1], allocGrap));
     return;
 }
 
