@@ -18,6 +18,7 @@ package android.hardware.biometrics.fingerprint;
 
 import android.hardware.biometrics.common.CommonProps;
 import android.hardware.biometrics.fingerprint.FingerprintSensorType;
+import android.hardware.biometrics.fingerprint.SensorLocation;
 
 @VintfStability
 parcelable SensorProps {
@@ -32,37 +33,16 @@ parcelable SensorProps {
     FingerprintSensorType sensorType;
 
     /**
+     * A list of display-specific locations from where the sensor is usable from. See SensorLocation
+     * for more details.
+     */
+    SensorLocation[] sensorLocations;
+
+    /**
      * Must be set to true for sensors that support "swipe" gestures via
      * android.view.KeyEvent#KEYCODE_SYSTEM_NAVIGATION_*.
      */
     boolean supportsNavigationGestures;
-
-    /**
-     * The location of the center of the sensor if applicable. For example, sensors of
-     * FingerprintSensorType::UNDER_DISPLAY_* would report this value as the distance in pixels,
-     * measured from the left edge of the screen.
-     */
-    int sensorLocationX;
-
-    /**
-     * The location of the center of the sensor if applicable. For example, sensors of
-     * FingerprintSensorType::UNDER_DISPLAY_* would report this value as the distance in pixels,
-     * measured from the top edge of the screen.
-     */
-    int sensorLocationY;
-
-    /**
-     * The radius of the sensor if applicable. For example, sensors of
-     * FingerprintSensorType::UNDER_DISPLAY_* would report this value as the radius of the sensor,
-     * in pixels.
-     */
-    int sensorRadius;
-
-    /**
-     * For sensors of FingerprintSensorType::UNDER_DISPLAY_*, this must correspond to the
-     * android.hardware.DisplayManager#getDisplay Android API.
-     */
-    int displayId;
 
     /**
      * Specifies whether or not the implementation supports ISession#detectInteraction.
