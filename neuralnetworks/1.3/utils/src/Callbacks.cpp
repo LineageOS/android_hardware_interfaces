@@ -28,6 +28,7 @@
 #include <nnapi/IPreparedModel.h>
 #include <nnapi/Result.h>
 #include <nnapi/Types.h>
+#include <nnapi/hal/1.0/Callbacks.h>
 #include <nnapi/hal/1.0/Conversions.h>
 #include <nnapi/hal/1.0/PreparedModel.h>
 #include <nnapi/hal/1.2/Callbacks.h>
@@ -45,6 +46,20 @@
 
 namespace android::hardware::neuralnetworks::V1_3::utils {
 namespace {
+
+nn::GeneralResult<nn::SharedPreparedModel> prepareModelCallback(
+        V1_0::ErrorStatus status, const sp<V1_0::IPreparedModel>& preparedModel) {
+    if (const auto dynamicPreparedModel =
+                V1_3::IPreparedModel::castFrom(preparedModel).withDefault(nullptr)) {
+        const auto currentVersionStatus = NN_TRY(convertFromNonCanonical(status));
+        return V1_3::utils::prepareModelCallback(currentVersionStatus, dynamicPreparedModel);
+    }
+    if (const auto dynamicPreparedModel =
+                V1_2::IPreparedModel::castFrom(preparedModel).withDefault(nullptr)) {
+        return V1_2::utils::prepareModelCallback(status, dynamicPreparedModel);
+    }
+    return V1_0::utils::prepareModelCallback(status, preparedModel);
+}
 
 nn::GeneralResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>>
 convertExecutionGeneralResultsHelper(const hidl_vec<V1_2::OutputShape>& outputShapes,
@@ -82,13 +97,13 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> executi
 
 Return<void> PreparedModelCallback::notify(V1_0::ErrorStatus status,
                                            const sp<V1_0::IPreparedModel>& preparedModel) {
-    mData.put(V1_0::utils::prepareModelCallback(status, preparedModel));
+    mData.put(prepareModelCallback(status, preparedModel));
     return Void();
 }
 
 Return<void> PreparedModelCallback::notify_1_2(V1_0::ErrorStatus status,
                                                const sp<V1_2::IPreparedModel>& preparedModel) {
-    mData.put(V1_2::utils::prepareModelCallback(status, preparedModel));
+    mData.put(prepareModelCallback(status, preparedModel));
     return Void();
 }
 
