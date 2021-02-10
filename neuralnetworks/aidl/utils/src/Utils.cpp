@@ -19,38 +19,77 @@
 #include <nnapi/Result.h>
 
 namespace aidl::android::hardware::neuralnetworks::utils {
+namespace {
 
 using ::android::nn::GeneralResult;
 
-GeneralResult<Model> copyModel(const Model& model) {
-    Model newModel{
+template <typename Type>
+nn::GeneralResult<std::vector<Type>> cloneVec(const std::vector<Type>& arguments) {
+    std::vector<Type> clonedObjects;
+    clonedObjects.reserve(arguments.size());
+    for (const auto& argument : arguments) {
+        clonedObjects.push_back(NN_TRY(clone(argument)));
+    }
+    return clonedObjects;
+}
+
+template <typename Type>
+GeneralResult<std::vector<Type>> clone(const std::vector<Type>& arguments) {
+    return cloneVec(arguments);
+}
+
+}  // namespace
+
+GeneralResult<Memory> clone(const Memory& memory) {
+    common::NativeHandle nativeHandle;
+    nativeHandle.ints = memory.handle.ints;
+    nativeHandle.fds.reserve(memory.handle.fds.size());
+    for (const auto& fd : memory.handle.fds) {
+        const int newFd = dup(fd.get());
+        if (newFd < 0) {
+            return NN_ERROR() << "Couldn't dup a file descriptor";
+        }
+        nativeHandle.fds.emplace_back(newFd);
+    }
+    return Memory{
+            .handle = std::move(nativeHandle),
+            .size = memory.size,
+            .name = memory.name,
+    };
+}
+
+GeneralResult<RequestMemoryPool> clone(const RequestMemoryPool& requestPool) {
+    using Tag = RequestMemoryPool::Tag;
+    switch (requestPool.getTag()) {
+        case Tag::pool:
+            return RequestMemoryPool::make<Tag::pool>(NN_TRY(clone(requestPool.get<Tag::pool>())));
+        case Tag::token:
+            return RequestMemoryPool::make<Tag::token>(requestPool.get<Tag::token>());
+    }
+    // Using explicit type conversion because std::variant inside the RequestMemoryPool confuses the
+    // compiler.
+    return (NN_ERROR() << "Unrecognized request pool tag: " << requestPool.getTag())
+            .
+            operator GeneralResult<RequestMemoryPool>();
+}
+
+GeneralResult<Request> clone(const Request& request) {
+    return Request{
+            .inputs = request.inputs,
+            .outputs = request.outputs,
+            .pools = NN_TRY(clone(request.pools)),
+    };
+}
+
+GeneralResult<Model> clone(const Model& model) {
+    return Model{
             .main = model.main,
             .referenced = model.referenced,
             .operandValues = model.operandValues,
-            .pools = {},
+            .pools = NN_TRY(clone(model.pools)),
             .relaxComputationFloat32toFloat16 = model.relaxComputationFloat32toFloat16,
             .extensionNameToPrefix = model.extensionNameToPrefix,
     };
-    newModel.pools.reserve(model.pools.size());
-    for (const auto& pool : model.pools) {
-        common::NativeHandle nativeHandle;
-        nativeHandle.ints = pool.handle.ints;
-        nativeHandle.fds.reserve(pool.handle.fds.size());
-        for (const auto& fd : pool.handle.fds) {
-            const int newFd = dup(fd.get());
-            if (newFd == -1) {
-                return NN_ERROR() << "Couldn't dup a file descriptor.";
-            }
-            nativeHandle.fds.emplace_back(newFd);
-        }
-        Memory memory = {
-                .handle = std::move(nativeHandle),
-                .size = pool.size,
-                .name = pool.name,
-        };
-        newModel.pools.push_back(std::move(memory));
-    }
-    return newModel;
 }
 
 }  // namespace aidl::android::hardware::neuralnetworks::utils
