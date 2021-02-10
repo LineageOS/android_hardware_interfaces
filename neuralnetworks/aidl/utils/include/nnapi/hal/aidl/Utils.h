@@ -47,7 +47,10 @@ bool valid(const Type& halObject) {
     return result.has_value();
 }
 
-nn::GeneralResult<Model> copyModel(const Model& model);
+nn::GeneralResult<Memory> clone(const Memory& memory);
+nn::GeneralResult<Request> clone(const Request& request);
+nn::GeneralResult<RequestMemoryPool> clone(const RequestMemoryPool& requestPool);
+nn::GeneralResult<Model> clone(const Model& model);
 
 }  // namespace aidl::android::hardware::neuralnetworks::utils
 
