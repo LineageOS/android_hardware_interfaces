@@ -335,25 +335,35 @@ status_t HidlUtils::audioSourceToHal(const AudioSource& source, audio_source_t* 
     return BAD_VALUE;
 }
 
+// The "default" value of audio_stream_type_t is represented by an empty string.
 status_t HidlUtils::audioStreamTypeFromHal(audio_stream_type_t halStreamType,
                                            AudioStreamType* streamType) {
-    *streamType = audio_stream_type_to_string(halStreamType);
-    if (!streamType->empty() && !xsd::isUnknownAudioStreamType(*streamType)) {
+    if (halStreamType != AUDIO_STREAM_DEFAULT) {
+        *streamType = audio_stream_type_to_string(halStreamType);
+        if (!streamType->empty() && !xsd::isUnknownAudioStreamType(*streamType)) {
+            return NO_ERROR;
+        }
+        ALOGE("Unknown audio stream type value 0x%X", halStreamType);
+        return BAD_VALUE;
+    } else {
+        *streamType = "";
         return NO_ERROR;
     }
-    ALOGE("Unknown audio stream type value 0x%X", halStreamType);
-    return BAD_VALUE;
 }
 
 status_t HidlUtils::audioStreamTypeToHal(const AudioStreamType& streamType,
                                          audio_stream_type_t* halStreamType) {
-    if (!xsd::isUnknownAudioStreamType(streamType) &&
-        audio_stream_type_from_string(streamType.c_str(), halStreamType)) {
+    if (!streamType.empty()) {
+        if (!xsd::isUnknownAudioStreamType(streamType) &&
+            audio_stream_type_from_string(streamType.c_str(), halStreamType)) {
+            return NO_ERROR;
+        }
+        ALOGE("Unknown audio stream type \"%s\"", streamType.c_str());
+        return BAD_VALUE;
+    } else {
+        *halStreamType = AUDIO_STREAM_DEFAULT;
         return NO_ERROR;
     }
-    ALOGE("Unknown audio stream type \"%s\"", streamType.c_str());
-    *halStreamType = AUDIO_STREAM_DEFAULT;
-    return BAD_VALUE;
 }
 
 status_t HidlUtils::audioConfigFromHal(const audio_config_t& halConfig, bool isInput,

@@ -61,6 +61,8 @@ struct Uuid {
  * Audio stream type describing the intended use case of a stream.
  * See 'audioStreamType' in audio_policy_configuration.xsd for the
  * list of allowed values.
+ *
+ * An empty string is used to specify the "default" stream type.
  */
 typedef string AudioStreamType;
 
