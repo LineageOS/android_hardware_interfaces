@@ -80,14 +80,14 @@ Return<Result> Health::unregisterCallback(const sp<V2_0::IHealthInfoCallback>&) 
 
 Return<Result> Health::update() {
     Result result = Result::UNKNOWN;
-    getHealthInfo_2_1([&](auto res, const auto& /* health_info */) {
+    getHealthInfo_2_1([&](auto res, const auto& health_info) {
         result = res;
         if (res != Result::SUCCESS) {
             LOG(ERROR) << "Cannot call getHealthInfo_2_1: " << toString(res);
             return;
         }
 
-        battery_monitor_.logValues();
+        BatteryMonitor::logValues(health_info, *healthd_config_);
     });
     return result;
 }
