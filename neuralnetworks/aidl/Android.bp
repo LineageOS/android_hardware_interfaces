@@ -1,0 +1,19 @@
+aidl_interface {
+    name: "android.hardware.neuralnetworks",
+    vendor_available: true,
+    srcs: [
+        "android/hardware/neuralnetworks/*.aidl",
+    ],
+    stability: "vintf",
+    imports: [
+        "android.hardware.common",
+    ],
+    backend: {
+        java: {
+            enabled: false,
+        },
+        cpp: {
+            enabled: false,
+        },
+    },
+}
