@@ -17,10 +17,10 @@
 package android.hardware.biometrics.face;
 
 import android.hardware.biometrics.face.AcquiredInfo;
-import android.hardware.biometrics.face.Feature;
 import android.hardware.biometrics.face.AuthenticationFrame;
 import android.hardware.biometrics.face.EnrollmentFrame;
 import android.hardware.biometrics.face.Error;
+import android.hardware.biometrics.face.Feature;
 import android.hardware.biometrics.face.SessionState;
 import android.hardware.keymaster.HardwareAuthToken;
 
@@ -100,9 +100,8 @@ interface ISessionCallback {
     /**
      * This method must only be used to notify the framework during SessionState::AUTHENTICATING.
      *
-     * Used to notify the framework upon successful authentication. Note that the authentication
-     * lifecycle ends when either 1) a face is accepted, or 2) an error occurred. The
-     * authentication lifecycle does NOT end when a face is rejected.
+     * Used to notify the framework about a successful authentication. This ends the authentication
+     * lifecycle.
      *
      * @param enrollmentId Face that was accepted.
      * @param hat If the sensor is configured as SensorStrength::STRONG, a non-null attestation that
@@ -115,9 +114,8 @@ interface ISessionCallback {
     /**
      * This method must only be used to notify the framework during SessionState::AUTHENTICATING.
      *
-     * Used to notify the framework upon rejected attempts. Note that the authentication
-     * lifecycle ends when either 1) a face is accepted, or 2) an occurred. The
-     * authentication lifecycle does NOT end when a face is rejected.
+     * Used to notify the framework about a failed authentication. This ends the authentication
+     * lifecycle.
      */
     void onAuthenticationFailed();
 

@@ -43,13 +43,17 @@ ndk::ScopedAStatus Fingerprint::getSensorProps(std::vector<SensorProps>* return_
             kSensorStrength,
             kMaxEnrollmentsPerUser,
             hardwareInfos};
-    SensorProps props = {commonProps,
-            kSensorType,
-            kSupportsNavigationGestures,
+    SensorLocation sensorLocation = {
+            0 /* displayId */,
             0 /* sensorLocationX */,
             0 /* sensorLocationY */,
-            0 /* sensorRadius */,
-            0 /* displayId */};
+            0 /* sensorRadius */
+    };
+    SensorProps props = {commonProps,
+            kSensorType,
+            {sensorLocation},
+            kSupportsNavigationGestures,
+            false /* supportsDetectInteraction */};
     return_val->push_back(props);
     return ndk::ScopedAStatus::ok();
 }
