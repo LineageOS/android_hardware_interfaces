@@ -1032,7 +1032,7 @@ TEST_P(BluetoothAudioProviderLeAudioOutputSoftwareHidlTest,
  * stopped with different PCM config
  */
 TEST_P(BluetoothAudioProviderLeAudioOutputSoftwareHidlTest,
-       StartAndEndLeAudioOutputSessionWithPossiblePcmConfig) {
+       DISABLED_StartAndEndLeAudioOutputSessionWithPossiblePcmConfig) {
   bool is_codec_config_valid;
   std::unique_ptr<DataMQ> tempDataMQ;
   auto hidl_cb = [&is_codec_config_valid, &tempDataMQ](
@@ -1126,7 +1126,7 @@ TEST_P(BluetoothAudioProviderLeAudioInputSoftwareHidlTest,
  * stopped with different PCM config
  */
 TEST_P(BluetoothAudioProviderLeAudioInputSoftwareHidlTest,
-       StartAndEndLeAudioInputSessionWithPossiblePcmConfig) {
+       DISABLED_StartAndEndLeAudioInputSessionWithPossiblePcmConfig) {
   bool is_codec_config_valid;
   std::unique_ptr<DataMQ> tempDataMQ;
   auto hidl_cb = [&is_codec_config_valid, &tempDataMQ](
