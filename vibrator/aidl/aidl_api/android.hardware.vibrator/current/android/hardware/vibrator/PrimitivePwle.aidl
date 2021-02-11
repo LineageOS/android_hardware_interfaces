@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,19 +33,7 @@
 
 package android.hardware.vibrator;
 @VintfStability
-interface IVibratorManager {
-  int getCapabilities();
-  int[] getVibratorIds();
-  android.hardware.vibrator.IVibrator getVibrator(in int vibratorId);
-  void prepareSynced(in int[] vibratorIds);
-  void triggerSynced(in android.hardware.vibrator.IVibratorCallback callback);
-  void cancelSynced();
-  const int CAP_SYNC = 1;
-  const int CAP_PREPARE_ON = 2;
-  const int CAP_PREPARE_PERFORM = 4;
-  const int CAP_PREPARE_COMPOSE = 8;
-  const int CAP_MIXED_TRIGGER_ON = 16;
-  const int CAP_MIXED_TRIGGER_PERFORM = 32;
-  const int CAP_MIXED_TRIGGER_COMPOSE = 64;
-  const int CAP_TRIGGER_CALLBACK = 128;
+union PrimitivePwle {
+  android.hardware.vibrator.ActivePwle active;
+  android.hardware.vibrator.BrakingPwle braking;
 }

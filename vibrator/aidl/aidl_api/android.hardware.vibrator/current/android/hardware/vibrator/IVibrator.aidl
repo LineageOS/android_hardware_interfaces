@@ -12,7 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *////////////////////////////////////////////////////////////////////////////////
+ */
+///////////////////////////////////////////////////////////////////////////////
 // THIS FILE IS IMMUTABLE. DO NOT EDIT IN ANY CASE.                          //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -50,6 +51,13 @@ interface IVibrator {
   void alwaysOnDisable(in int id);
   float getResonantFrequency();
   float getQFactor();
+  float getFrequencyResolution();
+  float getFrequencyMinimum();
+  float[] getBandwidthAmplitudeMap();
+  int getPwlePrimitiveDurationMax();
+  int getPwleCompositionSizeMax();
+  android.hardware.vibrator.Braking[] getSupportedBraking();
+  void composePwle(in android.hardware.vibrator.PrimitivePwle[] composite, in android.hardware.vibrator.IVibratorCallback callback);
   const int CAP_ON_CALLBACK = 1;
   const int CAP_PERFORM_CALLBACK = 2;
   const int CAP_AMPLITUDE_CONTROL = 4;
@@ -59,4 +67,6 @@ interface IVibrator {
   const int CAP_ALWAYS_ON_CONTROL = 64;
   const int CAP_GET_RESONANT_FREQUENCY = 128;
   const int CAP_GET_Q_FACTOR = 256;
+  const int CAP_FREQUENCY_CONTROL = 512;
+  const int CAP_COMPOSE_PWLE_EFFECTS = 1024;
 }
