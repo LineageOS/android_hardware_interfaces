@@ -740,10 +740,11 @@ Return<void> WifiChip::setCountryCode(const hidl_array<int8_t, 2>& code,
 
 Return<void> WifiChip::getUsableChannels(
     WifiBand band, hidl_bitfield<WifiIfaceMode> ifaceModeMask,
+    hidl_bitfield<UsableChannelFilter> filterMask,
     getUsableChannels_cb _hidl_cb) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
                            &WifiChip::getUsableChannelsInternal, _hidl_cb, band,
-                           ifaceModeMask);
+                           ifaceModeMask, filterMask);
 }
 
 void WifiChip::invalidateAndRemoveAllIfaces() {
@@ -1500,13 +1501,17 @@ WifiStatus WifiChip::setCountryCodeInternal(const std::array<int8_t, 2>& code) {
 }
 
 std::pair<WifiStatus, std::vector<WifiUsableChannel>>
-WifiChip::getUsableChannelsInternal(WifiBand band, uint32_t ifaceModeMask) {
+WifiChip::getUsableChannelsInternal(WifiBand band, uint32_t ifaceModeMask,
+                                    uint32_t filterMask) {
     legacy_hal::wifi_error legacy_status;
     std::vector<legacy_hal::wifi_usable_channel> legacy_usable_channels;
     std::tie(legacy_status, legacy_usable_channels) =
         legacy_hal_.lock()->getUsableChannels(
             hidl_struct_util::convertHidlWifiBandToLegacyMacBand(band),
-            hidl_struct_util::convertHidlWifiIfaceModeToLegacy(ifaceModeMask));
+            hidl_struct_util::convertHidlWifiIfaceModeToLegacy(ifaceModeMask),
+            hidl_struct_util::convertHidlUsableChannelFilterToLegacy(
+                filterMask));
+
     if (legacy_status != legacy_hal::WIFI_SUCCESS) {
         return {createWifiStatusFromLegacyError(legacy_status), {}};
     }

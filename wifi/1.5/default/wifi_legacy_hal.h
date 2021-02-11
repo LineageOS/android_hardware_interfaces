@@ -313,6 +313,8 @@ using ::WIFI_SUCCESS;
 using ::wifi_tx_packet_fate;
 using ::wifi_tx_report;
 using ::wifi_usable_channel;
+using ::WIFI_USABLE_CHANNEL_FILTER_CELLULAR_COEXISTENCE;
+using ::WIFI_USABLE_CHANNEL_FILTER_CONCURRENCY;
 using ::WLAN_MAC_2_4_BAND;
 using ::WLAN_MAC_5_0_BAND;
 using ::WLAN_MAC_60_0_BAND;
@@ -705,7 +707,7 @@ class WifiLegacyHal {
     // Retrieve the list of usable channels in the requested bands
     // for the requested modes
     std::pair<wifi_error, std::vector<wifi_usable_channel>> getUsableChannels(
-        uint32_t band_mask, uint32_t iface_mode_mask);
+        uint32_t band_mask, uint32_t iface_mode_mask, uint32_t filter_mask);
 
    private:
     // Retrieve interface handles for all the available interfaces.
