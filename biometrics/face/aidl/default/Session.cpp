@@ -15,6 +15,7 @@
  */
 
 #include <aidl/android/hardware/biometrics/common/BnCancellationSignal.h>
+#include <android-base/logging.h>
 
 #include "Session.h"
 
@@ -37,6 +38,7 @@ class CancellationSignal : public common::BnCancellationSignal {
 Session::Session(std::shared_ptr<ISessionCallback> cb) : cb_(std::move(cb)) {}
 
 ndk::ScopedAStatus Session::generateChallenge(int32_t /*cookie*/, int32_t /*timeoutSec*/) {
+    LOG(INFO) << "generateChallenge";
     if (cb_) {
         cb_->onStateChanged(0, SessionState::GENERATING_CHALLENGE);
         cb_->onChallengeGenerated(0);
@@ -46,6 +48,7 @@ ndk::ScopedAStatus Session::generateChallenge(int32_t /*cookie*/, int32_t /*time
 }
 
 ndk::ScopedAStatus Session::revokeChallenge(int32_t /*cookie*/, int64_t challenge) {
+    LOG(INFO) << "revokeChallenge";
     if (cb_) {
         cb_->onStateChanged(0, SessionState::REVOKING_CHALLENGE);
         cb_->onChallengeRevoked(challenge);
@@ -59,11 +62,13 @@ ndk::ScopedAStatus Session::enroll(
         EnrollmentType /*enrollmentType*/, const std::vector<Feature>& /*features*/,
         const NativeHandle& /*previewSurface*/,
         std::shared_ptr<biometrics::common::ICancellationSignal>* /*return_val*/) {
+    LOG(INFO) << "enroll";
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::authenticate(int32_t /*cookie*/, int64_t /*keystoreOperationId*/,
                                          std::shared_ptr<common::ICancellationSignal>* return_val) {
+    LOG(INFO) << "authenticate";
     if (cb_) {
         cb_->onStateChanged(0, SessionState::AUTHENTICATING);
     }
@@ -73,10 +78,12 @@ ndk::ScopedAStatus Session::authenticate(int32_t /*cookie*/, int64_t /*keystoreO
 
 ndk::ScopedAStatus Session::detectInteraction(
         int32_t /*cookie*/, std::shared_ptr<common::ICancellationSignal>* /*return_val*/) {
+    LOG(INFO) << "detectInteraction";
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::enumerateEnrollments(int32_t /*cookie*/) {
+    LOG(INFO) << "enumerateEnrollments";
     if (cb_) {
         cb_->onStateChanged(0, SessionState::ENUMERATING_ENROLLMENTS);
         cb_->onEnrollmentsEnumerated(std::vector<int32_t>());
@@ -87,6 +94,7 @@ ndk::ScopedAStatus Session::enumerateEnrollments(int32_t /*cookie*/) {
 
 ndk::ScopedAStatus Session::removeEnrollments(int32_t /*cookie*/,
                                               const std::vector<int32_t>& /*enrollmentIds*/) {
+    LOG(INFO) << "removeEnrollments";
     if (cb_) {
         cb_->onStateChanged(0, SessionState::REMOVING_ENROLLMENTS);
         cb_->onEnrollmentsRemoved(std::vector<int32_t>());
@@ -96,6 +104,7 @@ ndk::ScopedAStatus Session::removeEnrollments(int32_t /*cookie*/,
 }
 
 ndk::ScopedAStatus Session::getFeatures(int32_t /*cookie*/, int32_t /*enrollmentId*/) {
+    LOG(INFO) << "getFeatures";
     return ndk::ScopedAStatus::ok();
 }
 
@@ -103,10 +112,12 @@ ndk::ScopedAStatus Session::setFeature(int32_t /*cookie*/,
                                        const keymaster::HardwareAuthToken& /*hat*/,
                                        int32_t /*enrollmentId*/, Feature /*feature*/,
                                        bool /*enabled*/) {
+    LOG(INFO) << "setFeature";
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::getAuthenticatorId(int32_t /*cookie*/) {
+    LOG(INFO) << "getAuthenticatorId";
     if (cb_) {
         cb_->onStateChanged(0, SessionState::GETTING_AUTHENTICATOR_ID);
         cb_->onAuthenticatorIdRetrieved(0 /* authenticatorId */);
@@ -116,11 +127,13 @@ ndk::ScopedAStatus Session::getAuthenticatorId(int32_t /*cookie*/) {
 }
 
 ndk::ScopedAStatus Session::invalidateAuthenticatorId(int32_t /*cookie*/) {
+    LOG(INFO) << "invalidateAuthenticatorId";
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::resetLockout(int32_t /*cookie*/,
                                          const keymaster::HardwareAuthToken& /*hat*/) {
+    LOG(INFO) << "resetLockout";
     if (cb_) {
         cb_->onStateChanged(0, SessionState::RESETTING_LOCKOUT);
         cb_->onLockoutCleared();
