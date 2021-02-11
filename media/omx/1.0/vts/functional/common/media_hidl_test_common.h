@@ -115,6 +115,7 @@ inline uint32_t toRawCommandType(OMX_COMMANDTYPE l) {
 struct BufferInfo {
     uint32_t id;
     bufferOwner owner;
+    buffer_handle_t handle;
     android::hardware::media::omx::V1_0::CodecBuffer omxBuffer;
     ::android::sp<IMemory> mMemory;
     int32_t slot;
@@ -329,6 +330,9 @@ void allocatePortBuffers(sp<IOmxNode> omxNode,
                          PortMode portMode = PortMode::PRESET_BYTE_BUFFER,
                          bool allocGrap = false);
 
+void freePortBuffers(android::Vector<BufferInfo>* buffArray, PortMode portMode,
+                     bool allocGrap = false);
+
 void changeStateLoadedtoIdle(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                              android::Vector<BufferInfo>* iBuffer,
                              android::Vector<BufferInfo>* oBuffer,
@@ -338,8 +342,9 @@ void changeStateLoadedtoIdle(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
 
 void changeStateIdletoLoaded(sp<IOmxNode> omxNode, sp<CodecObserver> observer,
                              android::Vector<BufferInfo>* iBuffer,
-                             android::Vector<BufferInfo>* oBuffer,
-                             OMX_U32 kPortIndexInput, OMX_U32 kPortIndexOutput);
+                             android::Vector<BufferInfo>* oBuffer, OMX_U32 kPortIndexInput,
+                             OMX_U32 kPortIndexOutput, PortMode* portMode = nullptr,
+                             bool allocGrap = false);
 
 void changeStateIdletoExecute(sp<IOmxNode> omxNode, sp<CodecObserver> observer);
 
