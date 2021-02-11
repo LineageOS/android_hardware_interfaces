@@ -24,10 +24,18 @@ interface IContexthubCallback extends @1.0::IContexthubCallback {
      * implementation to allow the HAL to send asynchronous messages back
      * to the service and registered clients of the ContextHub service.
      *
-     * @param msg message that should be delivered to host app clients
-     *
+     * @param msg             message that should be delivered to host app
+     *                        clients
+     * @param msgContentPerms list of Android permissions that cover the
+     *                        contents of the message being sent from the app.
+     *                        This is different from the permissions stored
+     *                        inside of ContextHubMsg in that these must be a
+     *                        subset of those permissions and are meant to
+     *                        assist in properly attributing the message
+     *                        contents when delivering to a ContextHub service
+     *                        client.
      */
-    handleClientMsg_1_2(ContextHubMsg msg);
+    handleClientMsg_1_2(ContextHubMsg msg, vec<string> msgContentPerms);
 
     /**
      * This callback is passed by the Contexthub service to the HAL
