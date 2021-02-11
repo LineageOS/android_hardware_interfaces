@@ -35,6 +35,7 @@ class Contexthub
     using Result = ::android::hardware::contexthub::V1_0::Result;
     using SettingValue = ::android::hardware::contexthub::V1_1::SettingValue;
     using SettingV1_1 = ::android::hardware::contexthub::V1_1::Setting;
+    using getHubs_1_2_cb = ::android::hardware::contexthub::V1_2::IContexthub::getHubs_1_2_cb;
 
   public:
     // Methods from V1_0::IContexthub
@@ -47,6 +48,8 @@ class Contexthub
     Return<void> onSettingChanged(SettingV1_1 setting, SettingValue newValue) override;
 
     // Methods from V1_2::IContexthub
+    Return<void> getHubs_1_2(getHubs_1_2_cb _hidl_cb) override;
+
     Return<void> onSettingChanged_1_2(Setting setting, SettingValue newValue) override;
 
     Return<Result> registerCallback_1_2(uint32_t hubId,
