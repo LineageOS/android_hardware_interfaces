@@ -210,6 +210,9 @@ status_t HidlUtils::deviceAddressToHalImpl(const DA& device, audio_devices_t* ha
                *halDeviceType == AUDIO_DEVICE_IN_REMOTE_SUBMIX) {
         snprintf(halDeviceAddress, AUDIO_DEVICE_MAX_ADDRESS_LEN, "%s",
                  device.rSubmixAddress.c_str());
+    } else {
+        // Fall back to bus address for other device types, e.g. for microphones.
+        snprintf(halDeviceAddress, AUDIO_DEVICE_MAX_ADDRESS_LEN, "%s", device.busAddress.c_str());
     }
     return NO_ERROR;
 }
@@ -249,6 +252,7 @@ status_t HidlUtils::deviceAddressFromHalImpl(audio_devices_t halDeviceType,
         device->rSubmixAddress = halDeviceAddress;
         return OK;
     }
+    // Fall back to bus address for other device types, e.g. for microphones.
     device->busAddress = halDeviceAddress;
     return NO_ERROR;
 }

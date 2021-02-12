@@ -476,6 +476,11 @@ TEST(HidlUtils, ConvertUniqueDeviceAddress) {
     DeviceAddress speaker;
     speaker.deviceType = toString(xsd::AudioDevice::AUDIO_DEVICE_OUT_SPEAKER);
     ConvertDeviceAddress(speaker);
+
+    DeviceAddress micWithAddress;
+    micWithAddress.deviceType = toString(xsd::AudioDevice::AUDIO_DEVICE_IN_BUILTIN_MIC);
+    micWithAddress.address.id("bottom");
+    ConvertDeviceAddress(micWithAddress);
 }
 
 TEST(HidlUtils, ConvertA2dpDeviceAddress) {
