@@ -21,25 +21,38 @@
 #include <android/binder_process.h>
 
 #include <AndroidKeyMintDevice.h>
+#include <AndroidSecureClock.h>
+#include <AndroidSharedSecret.h>
 #include <keymaster/soft_keymaster_logger.h>
 
 using aidl::android::hardware::security::keymint::AndroidKeyMintDevice;
 using aidl::android::hardware::security::keymint::SecurityLevel;
+using aidl::android::hardware::security::secureclock::AndroidSecureClock;
+using aidl::android::hardware::security::sharedsecret::AndroidSharedSecret;
+
+template <typename T, class... Args>
+std::shared_ptr<T> addService(Args&&... args) {
+    std::shared_ptr<T> ser = ndk::SharedRefBase::make<T>(std::forward<Args>(args)...);
+    auto instanceName = std::string(T::descriptor) + "/default";
+    LOG(INFO) << "adding keymint service instance: " << instanceName;
+    binder_status_t status =
+            AServiceManager_addService(ser->asBinder().get(), instanceName.c_str());
+    CHECK(status == STATUS_OK);
+    return ser;
+}
 
 int main() {
     // Zero threads seems like a useless pool, but below we'll join this thread to it, increasing
     // the pool size to 1.
     ABinderProcess_setThreadPoolMaxThreadCount(0);
+
+    // Add Keymint Service
     std::shared_ptr<AndroidKeyMintDevice> keyMint =
-            ndk::SharedRefBase::make<AndroidKeyMintDevice>(SecurityLevel::SOFTWARE);
-
-    keymaster::SoftKeymasterLogger logger;
-    const auto instanceName = std::string(AndroidKeyMintDevice::descriptor) + "/default";
-    LOG(INFO) << "instance: " << instanceName;
-    binder_status_t status =
-            AServiceManager_addService(keyMint->asBinder().get(), instanceName.c_str());
-    CHECK(status == STATUS_OK);
-
+            addService<AndroidKeyMintDevice>(SecurityLevel::SOFTWARE);
+    // Add Secure Clock Service
+    addService<AndroidSecureClock>(keyMint);
+    // Add Shared Secret Service
+    addService<AndroidSharedSecret>(keyMint);
     ABinderProcess_joinThreadPool();
     return EXIT_FAILURE;  // should not reach
 }
