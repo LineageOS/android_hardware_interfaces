@@ -1190,7 +1190,8 @@ Return<void> RadioResponse_v1_6::getCellInfoListResponse_1_6(
 }
 
 Return<void> RadioResponse_v1_6::getSystemSelectionChannelsResponse(
-        const ::android::hardware::radio::V1_6::RadioResponseInfo& info) {
+        const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
+        const hidl_vec<::android::hardware::radio::V1_5::RadioAccessSpecifier>& /*specifier*/) {
     rspInfo = info;
     parent_v1_6.notify(info.serial);
     return Void();
