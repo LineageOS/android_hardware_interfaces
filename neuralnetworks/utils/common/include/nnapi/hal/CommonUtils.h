@@ -24,15 +24,21 @@
 #include <functional>
 #include <vector>
 
-// Shorthand
+// Shorthands
 namespace android::hardware::neuralnetworks {
 namespace hal = ::android::hardware::neuralnetworks;
 }  // namespace android::hardware::neuralnetworks
 
-// Shorthand
+// Shorthands
+namespace aidl::android::hardware::neuralnetworks {
+namespace aidl_hal = ::aidl::android::hardware::neuralnetworks;
+}  // namespace aidl::android::hardware::neuralnetworks
+
+// Shorthands
 namespace android::nn {
 namespace hal = ::android::hardware::neuralnetworks;
-}
+namespace aidl_hal = ::aidl::android::hardware::neuralnetworks;
+}  // namespace android::nn
 
 namespace android::hardware::neuralnetworks::utils {
 
