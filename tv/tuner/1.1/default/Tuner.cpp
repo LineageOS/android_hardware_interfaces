@@ -34,7 +34,7 @@ Tuner::Tuner() {
     // Static Frontends array to maintain local frontends information
     // Array index matches their FrontendId in the default impl
     mFrontendSize = 9;
-    mFrontends[0] = new Frontend(FrontendType::DVBT, 0, this);
+    mFrontends[0] = new Frontend(FrontendType::ISDBS, 0, this);
     mFrontends[1] = new Frontend(FrontendType::ATSC, 1, this);
     mFrontends[2] = new Frontend(FrontendType::DVBC, 2, this);
     mFrontends[3] = new Frontend(FrontendType::DVBS, 3, this);
@@ -47,7 +47,7 @@ Tuner::Tuner() {
 
     FrontendInfo::FrontendCapabilities caps;
     caps = FrontendInfo::FrontendCapabilities();
-    caps.dvbtCaps(FrontendDvbtCapabilities());
+    caps.isdbsCaps(FrontendIsdbsCapabilities());
     mFrontendCaps[0] = caps;
 
     caps = FrontendInfo::FrontendCapabilities();
@@ -168,6 +168,8 @@ Return<void> Tuner::getFrontendInfo(FrontendId frontendId, getFrontendInfo_cb _h
             FrontendStatusType::PLP_ID,
             FrontendStatusType::LAYER_ERROR,
             FrontendStatusType::ATSC3_PLP_INFO,
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::MODULATIONS),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::ROLL_OFF),
     };
     // assign randomly selected values for testing.
     info = {

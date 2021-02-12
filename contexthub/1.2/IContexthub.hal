@@ -16,12 +16,24 @@
 
 package android.hardware.contexthub@1.2;
 
+import @1.0::ContextHub;
 import @1.0::Result;
 import @1.1::IContexthub;
 import @1.1::SettingValue;
 import IContexthubCallback;
 
 interface IContexthub extends @1.1::IContexthub {
+    /**
+     * Enumerate all available context hubs on the system.
+     *
+     * @return hubs                 list of hubs on this system.
+     * @return supportedPermissions list of Android permissions all hubs
+     *                              support for nanoapps to enforce host
+     *                              endpoints are granted in order to
+     *                              communicate with them.
+     */
+    getHubs_1_2() generates (vec<ContextHub> hubs, vec<string> supportedPermissions);
+
     /**
      * Register a callback for the HAL implementation to send asynchronous
      * messages to the service from a context hub. There can be a maximum of

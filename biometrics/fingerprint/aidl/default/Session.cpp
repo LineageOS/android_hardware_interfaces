@@ -15,6 +15,7 @@
  */
 
 #include <aidl/android/hardware/biometrics/common/BnCancellationSignal.h>
+#include <android-base/logging.h>
 
 #include "Session.h"
 
@@ -28,20 +29,24 @@ class CancellationSignal : public common::BnCancellationSignal {
 Session::Session(std::shared_ptr<ISessionCallback> cb) : cb_(std::move(cb)) {}
 
 ndk::ScopedAStatus Session::generateChallenge(int32_t /*cookie*/, int32_t /*timeoutSec*/) {
+    LOG(INFO) << "generateChallenge";
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::revokeChallenge(int32_t /*cookie*/, int64_t /*challenge*/) {
+    LOG(INFO) << "revokeChallenge";
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::enroll(int32_t /*cookie*/, const keymaster::HardwareAuthToken& /*hat*/,
                                    std::shared_ptr<common::ICancellationSignal>* /*return_val*/) {
+    LOG(INFO) << "enroll";
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::authenticate(int32_t /*cookie*/, int64_t /*keystoreOperationId*/,
                                          std::shared_ptr<common::ICancellationSignal>* return_val) {
+    LOG(INFO) << "authenticate";
     if (cb_) {
         cb_->onStateChanged(0, SessionState::AUTHENTICATING);
     }
@@ -51,10 +56,12 @@ ndk::ScopedAStatus Session::authenticate(int32_t /*cookie*/, int64_t /*keystoreO
 
 ndk::ScopedAStatus Session::detectInteraction(
         int32_t /*cookie*/, std::shared_ptr<common::ICancellationSignal>* /*return_val*/) {
+    LOG(INFO) << "detectInteraction";
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::enumerateEnrollments(int32_t /*cookie*/) {
+    LOG(INFO) << "enumerateEnrollments";
     if (cb_) {
         cb_->onStateChanged(0, SessionState::ENUMERATING_ENROLLMENTS);
         cb_->onEnrollmentsEnumerated(std::vector<int32_t>());
@@ -64,6 +71,7 @@ ndk::ScopedAStatus Session::enumerateEnrollments(int32_t /*cookie*/) {
 
 ndk::ScopedAStatus Session::removeEnrollments(int32_t /*cookie*/,
                                               const std::vector<int32_t>& /*enrollmentIds*/) {
+    LOG(INFO) << "removeEnrollments";
     if (cb_) {
         cb_->onStateChanged(0, SessionState::REMOVING_ENROLLMENTS);
         cb_->onEnrollmentsRemoved(std::vector<int32_t>());
@@ -72,6 +80,7 @@ ndk::ScopedAStatus Session::removeEnrollments(int32_t /*cookie*/,
 }
 
 ndk::ScopedAStatus Session::getAuthenticatorId(int32_t /*cookie*/) {
+    LOG(INFO) << "getAuthenticatorId";
     if (cb_) {
         cb_->onStateChanged(0, SessionState::GETTING_AUTHENTICATOR_ID);
         cb_->onAuthenticatorIdRetrieved(0 /* authenticatorId */);
@@ -80,24 +89,29 @@ ndk::ScopedAStatus Session::getAuthenticatorId(int32_t /*cookie*/) {
 }
 
 ndk::ScopedAStatus Session::invalidateAuthenticatorId(int32_t /*cookie*/) {
+    LOG(INFO) << "invalidateAuthenticatorId";
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::resetLockout(int32_t /*cookie*/,
                                          const keymaster::HardwareAuthToken& /*hat*/) {
+    LOG(INFO) << "resetLockout";
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::onPointerDown(int32_t /*pointerId*/, int32_t /*x*/, int32_t /*y*/,
                                           float /*minor*/, float /*major*/) {
+    LOG(INFO) << "onPointerDown";
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::onPointerUp(int32_t /*pointerId*/) {
+    LOG(INFO) << "onPointerUp";
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::onUiReady() {
+    LOG(INFO) << "onUiReady";
     return ndk::ScopedAStatus::ok();
 }
 }  // namespace aidl::android::hardware::biometrics::fingerprint
