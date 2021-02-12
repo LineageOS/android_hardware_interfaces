@@ -23,9 +23,35 @@ namespace contexthub {
 namespace V1_2 {
 namespace implementation {
 
+using ::android::hardware::hidl_string;
 using ::android::hardware::contexthub::V1_0::Result;
 using ::android::hardware::contexthub::V1_X::implementation::IContextHubCallbackWrapperV1_0;
 using ::android::hardware::contexthub::V1_X::implementation::IContextHubCallbackWrapperV1_2;
+
+Return<void> Contexthub::getHubs_1_2(getHubs_1_2_cb _hidl_cb) {
+    ::android::hardware::contexthub::V1_0::ContextHub hub = {};
+    hub.name = "Mock Context Hub";
+    hub.vendor = "AOSP";
+    hub.toolchain = "n/a";
+    hub.platformVersion = 1;
+    hub.toolchainVersion = 1;
+    hub.hubId = kMockHubId;
+    hub.peakMips = 1;
+    hub.peakPowerDrawMw = 1;
+    hub.maxSupportedMsgLen = 4096;
+    hub.chrePlatformId = UINT64_C(0x476f6f6754000000);
+    hub.chreApiMajorVersion = 1;
+    hub.chreApiMinorVersion = 4;
+
+    // Report a single mock hub
+    std::vector<::android::hardware::contexthub::V1_0::ContextHub> hubs;
+    hubs.push_back(hub);
+
+    std::vector<hidl_string> hubPermissionList;
+
+    _hidl_cb(hubs, hubPermissionList);
+    return Void();
+}
 
 Return<Result> Contexthub::registerCallback(uint32_t hubId,
                                             const sp<V1_0::IContexthubCallback>& cb) {

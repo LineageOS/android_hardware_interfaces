@@ -1,0 +1,68 @@
+//
+// Copyright (C) 2021 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+cc_test {
+    name: "VtsHalNeuralnetworksTargetTest",
+    defaults: [
+        "neuralnetworks_vts_functional_defaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    srcs: [
+        "BasicTests.cpp",
+        "Callbacks.cpp",
+        "CompilationCachingTests.cpp",
+        "GeneratedTestHarness.cpp",
+        "MemoryDomainTests.cpp",
+        "QualityOfServiceTests.cpp",
+        "TestAssertions.cpp",
+        "TestMain.cpp",
+        "Utils.cpp",
+        "ValidateModel.cpp",
+        "ValidateRequest.cpp",
+        "VtsHalNeuralnetworks.cpp",
+    ],
+    shared_libs: [
+        "libbinder_ndk",
+        "libnativewindow",
+        "libvndksupport",
+    ],
+    static_libs: [
+        "android.hardware.common-V2-ndk_platform",
+        "android.hardware.neuralnetworks-V1-ndk_platform",
+        "android.hidl.allocator@1.0",
+        "android.hidl.memory@1.0",
+        "libgmock",
+        "libhidlmemory",
+        "libneuralnetworks_generated_test_harness",
+        "libneuralnetworks_utils",
+        "libsync",
+        "neuralnetworks_utils_hal_aidl",
+    ],
+    whole_static_libs: [
+        "neuralnetworks_generated_V1_0_example",
+        "neuralnetworks_generated_V1_1_example",
+        "neuralnetworks_generated_V1_2_example",
+        "neuralnetworks_generated_V1_3_example",
+    ],
+    header_libs: [
+        "libbase_headers",
+        "libneuralnetworks_headers",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+}

@@ -1,0 +1,27 @@
+aidl_interface {
+    name: "android.hardware.neuralnetworks",
+    vendor_available: true,
+    srcs: [
+        "android/hardware/neuralnetworks/*.aidl",
+    ],
+    stability: "vintf",
+    imports: [
+        "android.hardware.common",
+    ],
+    backend: {
+        java: {
+            enabled: false,
+        },
+        cpp: {
+            enabled: false,
+        },
+        ndk: {
+            apex_available: [
+                "//apex_available:platform",
+                "com.android.neuralnetworks",
+                "test_com.android.neuralnetworks",
+            ],
+            min_sdk_version: "30",
+        },
+    },
+}
