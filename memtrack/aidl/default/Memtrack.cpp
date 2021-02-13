@@ -26,7 +26,8 @@ ndk::ScopedAStatus Memtrack::getMemory(int pid, MemtrackType type,
     if (pid < 0) {
         return ndk::ScopedAStatus(AStatus_fromExceptionCode(EX_ILLEGAL_ARGUMENT));
     }
-    if (type < MemtrackType::OTHER || type >= MemtrackType::NUM_TYPES) {
+    if (type != MemtrackType::OTHER && type != MemtrackType::GL && type != MemtrackType::GRAPHICS &&
+        type != MemtrackType::MULTIMEDIA && type != MemtrackType::CAMERA) {
         return ndk::ScopedAStatus(AStatus_fromExceptionCode(EX_UNSUPPORTED_OPERATION));
     }
     _aidl_return->clear();
