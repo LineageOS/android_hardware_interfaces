@@ -45,7 +45,7 @@ using std::optional;
 namespace test {
 
 namespace {
-
+typedef KeyMintAidlTestBase::KeyData KeyData;
 // Predicate for testing basic characteristics validity in generation or import.
 bool KeyCharacteristicsBasicallyValid(SecurityLevel secLevel,
                                       const vector<KeyCharacteristics>& key_characteristics) {
@@ -461,6 +461,34 @@ void KeyMintAidlTestBase::AbortIfNeeded() {
     }
 }
 
+auto KeyMintAidlTestBase::ProcessMessage(const vector<uint8_t>& key_blob, KeyPurpose operation,
+                                         const string& message, const AuthorizationSet& in_params)
+        -> std::tuple<ErrorCode, string, AuthorizationSet /* out_params */> {
+    AuthorizationSet begin_out_params;
+    ErrorCode result = Begin(operation, key_blob, in_params, &begin_out_params);
+    AuthorizationSet out_params(std::move(begin_out_params));
+    if (result != ErrorCode::OK) {
+        return {result, {}, out_params};
+    }
+
+    string output;
+    int32_t consumed = 0;
+    AuthorizationSet update_params;
+    AuthorizationSet update_out_params;
+    result = Update(update_params, message, &update_out_params, &output, &consumed);
+    out_params.push_back(update_out_params);
+    if (result != ErrorCode::OK) {
+        return {result, output, out_params};
+    }
+
+    string unused;
+    AuthorizationSet finish_params;
+    AuthorizationSet finish_out_params;
+    result = Finish(finish_params, message.substr(consumed), unused, &finish_out_params, &output);
+    out_params.push_back(finish_out_params);
+    return {result, output, out_params};
+}
+
 string KeyMintAidlTestBase::ProcessMessage(const vector<uint8_t>& key_blob, KeyPurpose operation,
                                            const string& message, const AuthorizationSet& in_params,
                                            AuthorizationSet* out_params) {
@@ -857,6 +885,35 @@ AuthorizationSet KeyMintAidlTestBase::SwEnforcedAuthorizations(
         }
     }
     return authList;
+}
+
+ErrorCode KeyMintAidlTestBase::UseAesKey(const vector<uint8_t>& aesKeyBlob) {
+    auto [result, ciphertext, out_params] = ProcessMessage(
+            aesKeyBlob, KeyPurpose::ENCRYPT, "1234567890123456",
+            AuthorizationSetBuilder().BlockMode(BlockMode::ECB).Padding(PaddingMode::NONE));
+    return result;
+}
+
+ErrorCode KeyMintAidlTestBase::UseHmacKey(const vector<uint8_t>& hmacKeyBlob) {
+    auto [result, mac, out_params] = ProcessMessage(
+            hmacKeyBlob, KeyPurpose::SIGN, "1234567890123456",
+            AuthorizationSetBuilder().Authorization(TAG_MAC_LENGTH, 128).Digest(Digest::SHA_2_256));
+    return result;
+}
+
+ErrorCode KeyMintAidlTestBase::UseRsaKey(const vector<uint8_t>& rsaKeyBlob) {
+    std::string message(2048 / 8, 'a');
+    auto [result, signature, out_params] = ProcessMessage(
+            rsaKeyBlob, KeyPurpose::SIGN, message,
+            AuthorizationSetBuilder().Digest(Digest::NONE).Padding(PaddingMode::NONE));
+    return result;
+}
+
+ErrorCode KeyMintAidlTestBase::UseEcdsaKey(const vector<uint8_t>& ecdsaKeyBlob) {
+    auto [result, signature, out_params] =
+            ProcessMessage(ecdsaKeyBlob, KeyPurpose::SIGN, "a",
+                           AuthorizationSetBuilder().Digest(Digest::SHA_2_256));
+    return result;
 }
 
 }  // namespace test
