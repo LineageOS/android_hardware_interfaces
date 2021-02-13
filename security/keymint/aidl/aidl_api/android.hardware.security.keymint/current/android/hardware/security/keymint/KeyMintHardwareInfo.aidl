@@ -37,4 +37,5 @@ parcelable KeyMintHardwareInfo {
   android.hardware.security.keymint.SecurityLevel securityLevel;
   @utf8InCpp String keyMintName;
   @utf8InCpp String keyMintAuthorName;
+  boolean timestampTokenRequired;
 }
