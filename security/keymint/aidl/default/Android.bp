@@ -2,7 +2,11 @@ cc_binary {
     name: "android.hardware.security.keymint-service",
     relative_install_path: "hw",
     init_rc: ["android.hardware.security.keymint-service.rc"],
-    vintf_fragments: ["android.hardware.security.keymint-service.xml"],
+    vintf_fragments: [
+        "android.hardware.security.keymint-service.xml",
+        "android.hardware.security.sharedsecret-service.xml",
+        "android.hardware.security.secureclock-service.xml",
+    ],
     vendor: true,
     cflags: [
         "-Wall",
@@ -10,6 +14,8 @@ cc_binary {
     ],
     shared_libs: [
         "android.hardware.security.keymint-V1-ndk_platform",
+        "android.hardware.security.sharedsecret-unstable-ndk_platform",
+        "android.hardware.security.secureclock-unstable-ndk_platform",
         "libbase",
         "libbinder_ndk",
         "libcppbor",
