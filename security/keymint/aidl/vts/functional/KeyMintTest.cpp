@@ -78,7 +78,8 @@ namespace aidl::android::hardware::security::keymint::test {
 namespace {
 
 template <TagType tag_type, Tag tag, typename ValueT>
-bool contains(vector<KeyParameter>& set, TypedTag<tag_type, tag> ttag, ValueT expected_value) {
+bool contains(const vector<KeyParameter>& set, TypedTag<tag_type, tag> ttag,
+              ValueT expected_value) {
     auto it = std::find_if(set.begin(), set.end(), [&](const KeyParameter& param) {
         if (auto p = authorizationValue(ttag, param)) {
             return *p == expected_value;
@@ -89,7 +90,7 @@ bool contains(vector<KeyParameter>& set, TypedTag<tag_type, tag> ttag, ValueT ex
 }
 
 template <TagType tag_type, Tag tag>
-bool contains(vector<KeyParameter>& set, TypedTag<tag_type, tag>) {
+bool contains(const vector<KeyParameter>& set, TypedTag<tag_type, tag>) {
     auto it = std::find_if(set.begin(), set.end(),
                            [&](const KeyParameter& param) { return param.tag == tag; });
     return (it != set.end());
@@ -4960,6 +4961,99 @@ TEST_P(KeyAgreementTest, Ecdh) {
 }
 
 INSTANTIATE_KEYMINT_AIDL_TEST(KeyAgreementTest);
+
+typedef KeyMintAidlTestBase EarlyBootKeyTest;
+
+TEST_P(EarlyBootKeyTest, CreateEarlyBootKeys) {
+    auto [aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData] =
+            CreateTestKeys(TAG_EARLY_BOOT_ONLY, ErrorCode::OK);
+
+    CheckedDeleteKey(&aesKeyData.blob);
+    CheckedDeleteKey(&hmacKeyData.blob);
+    CheckedDeleteKey(&rsaKeyData.blob);
+    CheckedDeleteKey(&ecdsaKeyData.blob);
+}
+
+// This is a more comprenhensive test, but it can only be run on a machine which is still in early
+// boot stage, which no proper Android device is by the time we can run VTS.  To use this,
+// un-disable it and modify vold to remove the call to earlyBootEnded().  Running the test will end
+// early boot, so you'll have to reboot between runs.
+TEST_P(EarlyBootKeyTest, DISABLED_FullTest) {
+    auto [aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData] =
+            CreateTestKeys(TAG_EARLY_BOOT_ONLY, ErrorCode::OK);
+    // TAG_EARLY_BOOT_ONLY should be in hw-enforced.
+    EXPECT_TRUE(HwEnforcedAuthorizations(aesKeyData.characteristics).Contains(TAG_EARLY_BOOT_ONLY));
+    EXPECT_TRUE(
+            HwEnforcedAuthorizations(hmacKeyData.characteristics).Contains(TAG_EARLY_BOOT_ONLY));
+    EXPECT_TRUE(HwEnforcedAuthorizations(rsaKeyData.characteristics).Contains(TAG_EARLY_BOOT_ONLY));
+    EXPECT_TRUE(
+            HwEnforcedAuthorizations(ecdsaKeyData.characteristics).Contains(TAG_EARLY_BOOT_ONLY));
+
+    // Should be able to use keys, since early boot has not ended
+    EXPECT_EQ(ErrorCode::OK, UseAesKey(aesKeyData.blob));
+    EXPECT_EQ(ErrorCode::OK, UseHmacKey(hmacKeyData.blob));
+    EXPECT_EQ(ErrorCode::OK, UseRsaKey(rsaKeyData.blob));
+    EXPECT_EQ(ErrorCode::OK, UseEcdsaKey(ecdsaKeyData.blob));
+
+    // End early boot
+    ErrorCode earlyBootResult = GetReturnErrorCode(keyMint().earlyBootEnded());
+    EXPECT_EQ(earlyBootResult, ErrorCode::OK);
+
+    // Should not be able to use already-created keys.
+    EXPECT_EQ(ErrorCode::EARLY_BOOT_ENDED, UseAesKey(aesKeyData.blob));
+    EXPECT_EQ(ErrorCode::EARLY_BOOT_ENDED, UseHmacKey(hmacKeyData.blob));
+    EXPECT_EQ(ErrorCode::EARLY_BOOT_ENDED, UseRsaKey(rsaKeyData.blob));
+    EXPECT_EQ(ErrorCode::EARLY_BOOT_ENDED, UseEcdsaKey(ecdsaKeyData.blob));
+
+    CheckedDeleteKey(&aesKeyData.blob);
+    CheckedDeleteKey(&hmacKeyData.blob);
+    CheckedDeleteKey(&rsaKeyData.blob);
+    CheckedDeleteKey(&ecdsaKeyData.blob);
+
+    // Should not be able to create new keys
+    std::tie(aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData) =
+            CreateTestKeys(TAG_EARLY_BOOT_ONLY, ErrorCode::EARLY_BOOT_ENDED);
+
+    CheckedDeleteKey(&aesKeyData.blob);
+    CheckedDeleteKey(&hmacKeyData.blob);
+    CheckedDeleteKey(&rsaKeyData.blob);
+    CheckedDeleteKey(&ecdsaKeyData.blob);
+}
+INSTANTIATE_KEYMINT_AIDL_TEST(EarlyBootKeyTest);
+
+typedef KeyMintAidlTestBase UnlockedDeviceRequiredTest;
+
+// This may be a problematic test.  It can't be run repeatedly without unlocking the device in
+// between runs... and on most test devices there are no enrolled credentials so it can't be
+// unlocked at all, meaning the only way to get the test to pass again on a properly-functioning
+// device is to reboot it.  For that reason, this is disabled by default.  It can be used as part of
+// a manual test process, which includes unlocking between runs, which is why it's included here.
+// Well, that and the fact that it's the only test we can do without also making calls into the
+// Gatekeeper HAL.  We haven't written any cross-HAL tests, and don't know what all of the
+// implications might be, so that may or may not be a solution.
+TEST_P(UnlockedDeviceRequiredTest, DISABLED_KeysBecomeUnusable) {
+    auto [aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData] =
+            CreateTestKeys(TAG_UNLOCKED_DEVICE_REQUIRED, ErrorCode::OK);
+
+    EXPECT_EQ(ErrorCode::OK, UseAesKey(aesKeyData.blob));
+    EXPECT_EQ(ErrorCode::OK, UseHmacKey(hmacKeyData.blob));
+    EXPECT_EQ(ErrorCode::OK, UseRsaKey(rsaKeyData.blob));
+    EXPECT_EQ(ErrorCode::OK, UseEcdsaKey(ecdsaKeyData.blob));
+
+    ErrorCode rc = GetReturnErrorCode(
+            keyMint().deviceLocked(false /* passwordOnly */, {} /* verificationToken */));
+    ASSERT_EQ(ErrorCode::OK, rc);
+    EXPECT_EQ(ErrorCode::DEVICE_LOCKED, UseAesKey(aesKeyData.blob));
+    EXPECT_EQ(ErrorCode::DEVICE_LOCKED, UseHmacKey(hmacKeyData.blob));
+    EXPECT_EQ(ErrorCode::DEVICE_LOCKED, UseRsaKey(rsaKeyData.blob));
+    EXPECT_EQ(ErrorCode::DEVICE_LOCKED, UseEcdsaKey(ecdsaKeyData.blob));
+
+    CheckedDeleteKey(&aesKeyData.blob);
+    CheckedDeleteKey(&hmacKeyData.blob);
+    CheckedDeleteKey(&rsaKeyData.blob);
+    CheckedDeleteKey(&ecdsaKeyData.blob);
+}
+INSTANTIATE_KEYMINT_AIDL_TEST(UnlockedDeviceRequiredTest);
 
 }  // namespace aidl::android::hardware::security::keymint::test
 
