@@ -33,7 +33,7 @@ interface ISecureClock {
      * String used as context in the HMAC computation signing the generated time stamp.
      * See TimeStampToken.mac for details.
      */
-    const String TIME_STAMP_MAC_LABEL = "Time Verification";
+    const String TIME_STAMP_MAC_LABEL = "Auth Verification";
 
     /**
      * Generates an authenticated timestamp.
