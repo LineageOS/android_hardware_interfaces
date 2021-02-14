@@ -45,4 +45,11 @@ parcelable KeyMintHardwareInfo {
      *         same author.
      */
     @utf8InCpp String keyMintAuthorName;
+
+    /* The timestampTokenRequired is a boolean flag, which when true reflects that IKeyMintDevice
+     * instance will expect a valid TimeStampToken with various operations. This will typically
+     * required by the StrongBox implementations that generally don't have secure clock hardware to
+     * generate timestamp tokens.
+     */
+    boolean timestampTokenRequired;
 }
