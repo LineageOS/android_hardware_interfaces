@@ -22,10 +22,11 @@ import android.hardware.security.keymint.HardwareAuthToken;
 import android.hardware.security.keymint.IKeyMintOperation;
 import android.hardware.security.keymint.KeyCreationResult;
 import android.hardware.security.keymint.KeyFormat;
-import android.hardware.security.keymint.KeyParameter;
 import android.hardware.security.keymint.KeyMintHardwareInfo;
+import android.hardware.security.keymint.KeyParameter;
 import android.hardware.security.keymint.KeyPurpose;
 import android.hardware.security.keymint.SecurityLevel;
+import android.hardware.security.secureclock.TimeStampToken;
 
 /**
  * KeyMint device definition.
@@ -346,8 +347,8 @@ interface IKeyMintDevice {
      *
      * @return The result of key creation.  See KeyCreationResult.aidl.
      */
-    KeyCreationResult importKey(in KeyParameter[] keyParams, in KeyFormat keyFormat,
-                                in byte[] keyData);
+    KeyCreationResult importKey(
+            in KeyParameter[] keyParams, in KeyFormat keyFormat, in byte[] keyData);
 
     /**
      * Securely imports a key, or key pair, returning a key blob and a description of the imported
@@ -429,12 +430,9 @@ interface IKeyMintDevice {
      *
      * @return The result of key creation.  See KeyCreationResult.aidl.
      */
-     KeyCreationResult importWrappedKey(in byte[] wrappedKeyData,
-                                        in byte[] wrappingKeyBlob,
-                                        in byte[] maskingKey,
-                                        in KeyParameter[] unwrappingParams,
-                                        in long passwordSid,
-                                        in long biometricSid);
+    KeyCreationResult importWrappedKey(in byte[] wrappedKeyData, in byte[] wrappingKeyBlob,
+            in byte[] maskingKey, in KeyParameter[] unwrappingParams, in long passwordSid,
+            in long biometricSid);
 
     /**
      * Upgrades an old key blob.  Keys can become "old" in two ways: IKeyMintDevice can be
@@ -705,8 +703,44 @@ interface IKeyMintDevice {
      *         from operations that generate an IV or nonce, and IKeyMintOperation object pointer
      *         which is used to perform update(), finish() or abort() operations.
      */
-    BeginResult begin(in KeyPurpose inPurpose,
-               in byte[] inKeyBlob,
-               in KeyParameter[] inParams,
-               in HardwareAuthToken inAuthToken);
+    BeginResult begin(in KeyPurpose inPurpose, in byte[] inKeyBlob, in KeyParameter[] inParams,
+            in HardwareAuthToken inAuthToken);
+
+    /**
+     * Called by client to notify the IKeyMintDevice that the device is now locked, and keys with
+     * the UNLOCKED_DEVICE_REQUIRED tag should no longer be usable.  When this function is called,
+     * the IKeyMintDevice should note the current timestamp, and attempts to use
+     * UNLOCKED_DEVICE_REQUIRED keys must be rejected with Error::DEVICE_LOCKED until an
+     * authentication token with a later timestamp is presented.  If the `passwordOnly' argument is
+     * set to true the sufficiently-recent authentication token must indicate that the user
+     * authenticated with a password, not a biometric.
+     *
+     * Note that the IKeyMintDevice UNLOCKED_DEVICE_REQUIRED semantics are slightly different from
+     * the UNLOCKED_DEVICE_REQUIRED semantics enforced by keystore.  Keystore handles device locking
+     * on a per-user basis.  Because auth tokens do not contain an Android user ID, it's not
+     * possible to replicate the keystore enformcement logic in IKeyMintDevice.  So from the
+     * IKeyMintDevice perspective, any user unlock unlocks all UNLOCKED_DEVICE_REQUIRED keys.
+     * Keystore will continue enforcing the per-user device locking.
+     *
+     * @param passwordOnly specifies whether the device must be unlocked with a password, rather
+     * than a biometric, before UNLOCKED_DEVICE_REQUIRED keys can be used.
+     *
+     * @param timestampToken is used by StrongBox implementations of IKeyMintDevice.  It
+     * provides the StrongBox IKeyMintDevice with a fresh, MACed timestamp which it can use as the
+     * device-lock time, for future comparison against auth tokens when operations using
+     * UNLOCKED_DEVICE_REQUIRED keys are attempted.  Unless the auth token timestamp is newer than
+     * the timestamp in the timestampToken, the device is still considered to be locked.
+     * Crucially, if a StrongBox IKeyMintDevice receives a deviceLocked() call with a timestampToken
+     * timestamp that is less than the timestamp in the last deviceLocked() call, it must ignore the
+     * new timestamp.  TEE IKeyMintDevice implementations will receive an empty timestampToken (zero
+     * values and empty vectors) and should use their own clock as the device-lock time.
+     */
+    void deviceLocked(in boolean passwordOnly, in @nullable TimeStampToken timestampToken);
+
+    /**
+     * Called by client to notify the IKeyMintDevice that the device has left the early boot
+     * state, and that keys with the EARLY_BOOT_ONLY tag may no longer be used.  All attempts to use
+     * an EARLY_BOOT_ONLY key after this method is called must fail with Error::INVALID_KEY_BLOB.
+     */
+    void earlyBootEnded();
 }
