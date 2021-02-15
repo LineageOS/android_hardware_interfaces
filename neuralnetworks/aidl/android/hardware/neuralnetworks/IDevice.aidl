@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package android.hardware.neuralnetworks;
 
 import android.hardware.neuralnetworks.BufferDesc;
@@ -114,7 +113,7 @@ interface IDevice {
      *     - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
      */
     DeviceBuffer allocate(in BufferDesc desc, in IPreparedModelParcel[] preparedModels,
-        in BufferRole[] inputRoles, in BufferRole[] outputRoles);
+            in BufferRole[] inputRoles, in BufferRole[] outputRoles);
 
     /**
      * Gets the capabilities of a driver.
@@ -345,8 +344,9 @@ interface IDevice {
      *     - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
      */
     void prepareModel(in Model model, in ExecutionPreference preference, in Priority priority,
-        in long deadline, in ParcelFileDescriptor[] modelCache, in ParcelFileDescriptor[] dataCache,
-        in byte[] token, in IPreparedModelCallback callback);
+            in long deadline, in ParcelFileDescriptor[] modelCache,
+            in ParcelFileDescriptor[] dataCache, in byte[] token,
+            in IPreparedModelCallback callback);
 
     /**
      * Creates a prepared model from cache files for execution.
@@ -427,5 +427,6 @@ interface IDevice {
      *     - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
      */
     void prepareModelFromCache(in long deadline, in ParcelFileDescriptor[] modelCache,
-        in ParcelFileDescriptor[] dataCache, in byte[] token, in IPreparedModelCallback callback);
+            in ParcelFileDescriptor[] dataCache, in byte[] token,
+            in IPreparedModelCallback callback);
 }
