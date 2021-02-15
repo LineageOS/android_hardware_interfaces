@@ -189,7 +189,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.contexthub</name>
-        <version>1.0-2</version>
+        <version>1.2</version>
         <interface>
             <name>IContexthub</name>
             <instance>default</instance>
