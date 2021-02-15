@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package android.hardware.neuralnetworks;
 
 import android.hardware.neuralnetworks.ErrorStatus;
@@ -44,4 +43,3 @@ parcelable ExecutionResult {
      */
     Timing timing;
 }
-

@@ -16,7 +16,6 @@
 
 package android.hardware.neuralnetworks;
 import android.hardware.common.NativeHandle;
-
 import android.os.ParcelFileDescriptor;
 
 /**
