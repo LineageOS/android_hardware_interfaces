@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
- package android.hardware.neuralnetworks;
+package android.hardware.neuralnetworks;
 
 import android.hardware.neuralnetworks.IBuffer;
 
 /**
  * A type that is used to represent a driver allocated buffer and token that corresponds to it.
  */
- @VintfStability
- parcelable DeviceBuffer {
+@VintfStability
+parcelable DeviceBuffer {
     /**
      * An IBuffer object used to interact with the device allocated buffer.
      */
@@ -33,4 +33,4 @@ import android.hardware.neuralnetworks.IBuffer;
      * with the tokens of other IBuffer objects that are currently alive in the same driver service.
      */
     int token;
- }
+}
