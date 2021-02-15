@@ -4597,6 +4597,57 @@ TEST_P(UsageCountLimitTest, TestLimitUseRsa) {
     }
 }
 
+/*
+ * UsageCountLimitTest.TestSingleUseKeyAndRollbackResistance
+ *
+ * Verifies that when rollback resistance is supported by the KeyMint implementation with
+ * the secure hardware, the single use key with usage count limit tag = 1 must also be enforced
+ * in hardware.
+ */
+TEST_P(UsageCountLimitTest, TestSingleUseKeyAndRollbackResistance) {
+    if (SecLevel() == SecurityLevel::STRONGBOX) return;
+
+    auto error = GenerateKey(AuthorizationSetBuilder()
+                                     .RsaSigningKey(2048, 65537)
+                                     .Digest(Digest::NONE)
+                                     .Padding(PaddingMode::NONE)
+                                     .Authorization(TAG_NO_AUTH_REQUIRED)
+                                     .Authorization(TAG_ROLLBACK_RESISTANCE)
+                                     .SetDefaultValidity());
+    ASSERT_TRUE(error == ErrorCode::ROLLBACK_RESISTANCE_UNAVAILABLE || error == ErrorCode::OK);
+
+    if (error == ErrorCode::OK) {
+        // Rollback resistance is supported by KeyMint, verify it is enforced in hardware.
+        AuthorizationSet hardwareEnforced(SecLevelAuthorizations());
+        ASSERT_TRUE(hardwareEnforced.Contains(TAG_ROLLBACK_RESISTANCE));
+        ASSERT_EQ(ErrorCode::OK, DeleteKey());
+
+        // The KeyMint should also enforce single use key in hardware when it supports rollback
+        // resistance.
+        ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                     .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                     .RsaSigningKey(1024, 65537)
+                                                     .NoDigestOrPadding()
+                                                     .Authorization(TAG_USAGE_COUNT_LIMIT, 1)
+                                                     .SetDefaultValidity()));
+
+        // Check the usage count limit tag appears in the hardware authorizations.
+        AuthorizationSet hardware_auths = HwEnforcedAuthorizations(key_characteristics_);
+        EXPECT_TRUE(hardware_auths.Contains(TAG_USAGE_COUNT_LIMIT, 1U))
+                << "key usage count limit " << 1U << " missing";
+
+        string message = "1234567890123456";
+        auto params = AuthorizationSetBuilder().NoDigestOrPadding();
+
+        // First usage of RSA key should work.
+        SignMessage(message, params);
+
+        // Usage count limit tag is enforced by hardware. After using the key, the key blob
+        // must be invalidated from secure storage (such as RPMB partition).
+        EXPECT_EQ(ErrorCode::INVALID_KEY_BLOB, Begin(KeyPurpose::SIGN, params));
+    }
+}
+
 INSTANTIATE_KEYMINT_AIDL_TEST(UsageCountLimitTest);
 
 typedef KeyMintAidlTestBase AddEntropyTest;
@@ -4646,7 +4697,8 @@ TEST_P(KeyDeletionTest, DeleteKey) {
                                      .Digest(Digest::NONE)
                                      .Padding(PaddingMode::NONE)
                                      .Authorization(TAG_NO_AUTH_REQUIRED)
-                                     .Authorization(TAG_ROLLBACK_RESISTANCE));
+                                     .Authorization(TAG_ROLLBACK_RESISTANCE)
+                                     .SetDefaultValidity());
     ASSERT_TRUE(error == ErrorCode::ROLLBACK_RESISTANCE_UNAVAILABLE || error == ErrorCode::OK);
 
     // Delete must work if rollback protection is implemented
@@ -4679,7 +4731,8 @@ TEST_P(KeyDeletionTest, DeleteInvalidKey) {
                                      .Digest(Digest::NONE)
                                      .Padding(PaddingMode::NONE)
                                      .Authorization(TAG_NO_AUTH_REQUIRED)
-                                     .Authorization(TAG_ROLLBACK_RESISTANCE));
+                                     .Authorization(TAG_ROLLBACK_RESISTANCE)
+                                     .SetDefaultValidity());
     ASSERT_TRUE(error == ErrorCode::ROLLBACK_RESISTANCE_UNAVAILABLE || error == ErrorCode::OK);
 
     // Delete must work if rollback protection is implemented
