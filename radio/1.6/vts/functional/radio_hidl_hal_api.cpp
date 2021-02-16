@@ -676,3 +676,29 @@ TEST_P(RadioHidlTest_v1_6, getCurrentCalls_1_6) {
     EXPECT_EQ(serial, radioRsp_v1_6->rspInfo.serial);
     EXPECT_EQ(::android::hardware::radio::V1_6::RadioError::NONE, radioRsp_v1_6->rspInfo.error);
 }
+
+/*
+ * Test IRadio.setCarrierInfoForImsiEncryption_1_6() for the response returned.
+ */
+TEST_P(RadioHidlTest_v1_6, setCarrierInfoForImsiEncryption_1_6) {
+    serial = GetRandomSerialNumber();
+    ::android::hardware::radio::V1_6::ImsiEncryptionInfo imsiInfo;
+    imsiInfo.base.mcc = "310";
+    imsiInfo.base.mnc = "004";
+    imsiInfo.base.carrierKey = (std::vector<uint8_t>){1, 2, 3, 4, 5, 6};
+    imsiInfo.base.keyIdentifier = "Test";
+    imsiInfo.base.expirationTime = 20180101;
+    imsiInfo.keyType = PublicKeyType::EPDG;
+
+    radio_v1_6->setCarrierInfoForImsiEncryption_1_6(serial, imsiInfo);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_6->rspInfo.serial);
+
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_v1_6->rspInfo.error,
+                {::android::hardware::radio::V1_6::RadioError::NONE,
+                 ::android::hardware::radio::V1_6::RadioError::REQUEST_NOT_SUPPORTED}));
+    }
+}
