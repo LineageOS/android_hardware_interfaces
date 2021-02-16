@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package android.hardware.neuralnetworks;
 
 import android.hardware.neuralnetworks.OperationType;
@@ -43,4 +42,3 @@ parcelable Operation {
      */
     int[] outputs;
 }
-

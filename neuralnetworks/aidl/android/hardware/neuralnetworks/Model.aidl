@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-
 package android.hardware.neuralnetworks;
 
 import android.hardware.neuralnetworks.ExtensionNameAndPrefix;
-import android.hardware.neuralnetworks.Subgraph;
 import android.hardware.neuralnetworks.Memory;
+import android.hardware.neuralnetworks.Subgraph;
 
 /**
  * A Neural Network Model.
