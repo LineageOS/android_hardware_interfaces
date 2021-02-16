@@ -19,11 +19,14 @@ package android.hardware.drm@1.4;
 import @1.2::Status;
 
 enum LogPriority : uint32_t {
-  ERROR,
-  WARN,
-  INFO,
-  DEBUG,
-  VERBOSE
+    UNKNOWN,
+    DEFAULT,
+    VERBOSE,
+    DEBUG,
+    INFO,
+    WARN,
+    ERROR,
+    FATAL,
 };
 
 /**
