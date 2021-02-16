@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package android.hardware.neuralnetworks;
 
 import android.hardware.common.NativeHandle;
@@ -95,7 +94,7 @@ interface IPreparedModel {
      *     - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
      */
     ExecutionResult executeSynchronously(in Request request, in boolean measureTiming,
-        in long deadline, in long loopTimeoutDuration);
+            in long deadline, in long loopTimeoutDuration);
 
     /**
      * Launch a fenced asynchronous execution on a prepared model.
@@ -168,6 +167,6 @@ interface IPreparedModel {
      *     - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
      */
     IFencedExecutionCallback executeFenced(in Request request, in ParcelFileDescriptor[] waitFor,
-        in boolean measureTiming, in long deadline, in long loopTimeoutDuration, in long duration,
-        out @nullable ParcelFileDescriptor syncFence);
+            in boolean measureTiming, in long deadline, in long loopTimeoutDuration,
+            in long duration, out @nullable ParcelFileDescriptor syncFence);
 }

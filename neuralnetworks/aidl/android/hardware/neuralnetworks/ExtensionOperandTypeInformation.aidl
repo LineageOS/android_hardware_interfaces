@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package android.hardware.neuralnetworks;
 
 /**
@@ -35,4 +34,3 @@ parcelable ExtensionOperandTypeInformation {
      */
     int byteSize;
 }
-
