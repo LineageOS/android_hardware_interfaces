@@ -35,12 +35,15 @@ cc_library_static {
         "neuralnetworks_utils_hal_1_1",
         "neuralnetworks_utils_hal_1_2",
         "neuralnetworks_utils_hal_1_3",
+        "neuralnetworks_utils_hal_aidl",
         "neuralnetworks_utils_hal_common",
     ],
     shared_libs: [
+        "android.hardware.neuralnetworks-V1-ndk_platform",
         "android.hardware.neuralnetworks@1.0",
         "android.hardware.neuralnetworks@1.1",
         "android.hardware.neuralnetworks@1.2",
         "android.hardware.neuralnetworks@1.3",
+        "libbinder_ndk",
     ],
 }
