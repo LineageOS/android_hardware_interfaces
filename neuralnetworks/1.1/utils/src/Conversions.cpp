@@ -175,7 +175,7 @@ nn::GeneralResult<hidl_vec<uint8_t>> unvalidatedConvert(
     return V1_0::utils::unvalidatedConvert(operandValues);
 }
 
-nn::GeneralResult<hidl_memory> unvalidatedConvert(const nn::Memory& memory) {
+nn::GeneralResult<hidl_memory> unvalidatedConvert(const nn::SharedMemory& memory) {
     return V1_0::utils::unvalidatedConvert(memory);
 }
 

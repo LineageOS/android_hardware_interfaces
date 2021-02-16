@@ -59,7 +59,7 @@ GeneralResult<OptionalDuration> convert(
 GeneralResult<ErrorStatus> convert(const hal::V1_3::ErrorStatus& errorStatus);
 
 GeneralResult<SharedHandle> convert(const hardware::hidl_handle& handle);
-GeneralResult<Memory> convert(const hardware::hidl_memory& memory);
+GeneralResult<SharedMemory> convert(const hardware::hidl_memory& memory);
 GeneralResult<std::vector<BufferRole>> convert(
         const hardware::hidl_vec<hal::V1_3::BufferRole>& bufferRoles);
 
@@ -100,7 +100,7 @@ nn::GeneralResult<OptionalTimeoutDuration> convert(
 nn::GeneralResult<ErrorStatus> convert(const nn::ErrorStatus& errorStatus);
 
 nn::GeneralResult<hidl_handle> convert(const nn::SharedHandle& handle);
-nn::GeneralResult<hidl_memory> convert(const nn::Memory& memory);
+nn::GeneralResult<hidl_memory> convert(const nn::SharedMemory& memory);
 nn::GeneralResult<hidl_vec<BufferRole>> convert(const std::vector<nn::BufferRole>& bufferRoles);
 
 nn::GeneralResult<V1_0::DeviceStatus> convert(const nn::DeviceStatus& deviceStatus);
