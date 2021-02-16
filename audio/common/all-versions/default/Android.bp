@@ -114,7 +114,7 @@ cc_library_shared {
     ],
 }
 
-cc_library_shared {
+cc_library {
     name: "android.hardware.audio.common@6.0-util",
     defaults: ["android.hardware.audio.common-util_default"],
     srcs: [":android.hardware.audio.common-util@2-6"],
@@ -147,6 +147,32 @@ cc_library {
         "-DMINOR_VERSION=0",
         "-include common/all-versions/VersionMacro.h",
     ],
+}
+
+// Note: this isn't a VTS test, but rather a unit test
+// to verify correctness of conversion utilities.
+cc_test {
+    name: "android.hardware.audio.common@6.0-util_tests",
+    defaults: ["android.hardware.audio.common-util_default"],
+
+    srcs: ["tests/hidlutils6_tests.cpp"],
+
+    // Use static linking to allow running in presubmit on
+    // targets that don't have HAL V6.
+    static_libs: [
+        "android.hardware.audio.common@6.0",
+        "android.hardware.audio.common@6.0-util",
+    ],
+
+    cflags: [
+        "-Werror",
+        "-Wall",
+        "-DMAJOR_VERSION=6",
+        "-DMINOR_VERSION=0",
+        "-include common/all-versions/VersionMacro.h",
+    ],
+
+    test_suites: ["device-tests"],
 }
 
 // Note: this isn't a VTS test, but rather a unit test
