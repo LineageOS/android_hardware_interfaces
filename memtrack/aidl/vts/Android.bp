@@ -13,6 +13,6 @@ cc_test {
         "android.hardware.memtrack-V1-ndk_platform",
     ],
     test_suites: [
-        "vts-core",
+        "vts",
     ],
 }
