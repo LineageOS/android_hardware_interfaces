@@ -208,6 +208,7 @@ bool convertLegacyVectorOfRttResultToHidl(
     std::vector<V1_4::RttResult>* hidl_results);
 uint32_t convertHidlWifiBandToLegacyMacBand(V1_5::WifiBand band);
 uint32_t convertHidlWifiIfaceModeToLegacy(uint32_t hidl_iface_mask);
+uint32_t convertHidlUsableChannelFilterToLegacy(uint32_t hidl_filter_mask);
 bool convertLegacyWifiUsableChannelsToHidl(
     const std::vector<legacy_hal::wifi_usable_channel>& legacy_usable_channels,
     std::vector<V1_5::WifiUsableChannel>* hidl_usable_channels);

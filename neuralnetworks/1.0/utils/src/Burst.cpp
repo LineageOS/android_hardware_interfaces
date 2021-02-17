@@ -43,7 +43,7 @@ Burst::Burst(PrivateConstructorTag /*tag*/, nn::SharedPreparedModel preparedMode
     CHECK(kPreparedModel != nullptr);
 }
 
-Burst::OptionalCacheHold Burst::cacheMemory(const nn::Memory& /*memory*/) const {
+Burst::OptionalCacheHold Burst::cacheMemory(const nn::SharedMemory& /*memory*/) const {
     return nullptr;
 }
 

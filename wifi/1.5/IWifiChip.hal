@@ -236,19 +236,54 @@ interface IWifiChip extends @1.4::IWifiChip {
     setCountryCode(int8_t[2] code) generates (WifiStatus status);
 
     /**
+     * Usable Wifi channels filter masks.
+     */
+    enum UsableChannelFilter : uint32_t {
+        /**
+         * Filter Wifi channels that should be avoided due to extreme
+         * cellular coexistence restrictions. Some Wifi channels can have
+         * extreme interference from/to cellular due to short frequency
+         * seperation with neighboring cellular channels or when there
+         * is harmonic and intermodulation interference. Channels which
+         * only have some performance degradation (e.g. power back off is
+         * sufficient to deal with coexistence issue) can be included and
+         * should not be filtered out.
+         */
+        CELLULAR_COEXISTENCE = 1 << 0,
+        /**
+         * Filter based on concurrency state.
+         * Examples:
+         * - 5GHz SAP operation may be supported in standalone mode, but if
+         *  there is STA connection on 5GHz DFS channel, none of the 5GHz
+         *  channels are usable for SAP if device does not support DFS SAP mode.
+         * - P2P GO may not be supported on indoor channels in EU during
+         *  standalone mode but if there is a STA connection on indoor channel,
+         *  P2P GO may be supported by some vendors on the same STA channel.
+         */
+        CONCURRENCY = 1 << 1,
+    };
+
+    /**
      * Retrieve list of usable Wifi channels for the specified band &
      * operational modes.
      *
      * The list of usable Wifi channels in a given band depends on factors
-     * like current country code, operational mode (e.g. STA, SAP, CLI, GO,
-     * TDLS, NAN) and any hard restrictons due to DFS, LTE Coex and
-     * MCC(multi channel-concurrency).
+     * like current country code, operational mode (e.g. STA, SAP, WFD-CLI,
+     * WFD-GO, TDLS, NAN) and other restrictons due to DFS, cellular coexistence
+     * and conncurency state of the device.
      *
      * @param band |WifiBand| for which list of usable channels is requested.
      * @param ifaceModeMask Bitmask of the modes represented by |WifiIfaceMode|
      *        Bitmask respresents all the modes that the caller is interested
-     *        in (e.g. STA, SAP, CLI, GO, TDLS, NAN).
-     *        Note: Bitmask does not represent concurrency matrix.
+     *        in (e.g. STA, SAP, CLI, GO, TDLS, NAN). E.g. If the caller is
+     *        interested in knowing usable channels for P2P CLI, P2P GO & NAN,
+     *        ifaceModeMask would be set to
+     *        IFACE_MODE_P2P_CLIENT|IFACE_MODE_P2P_GO|IFACE_MODE_NAN.
+     * @param filterMask Bitmask of filters represented by
+     *        |UsableChannelFilter|. Specifies whether driver should filter
+     *        channels based on additional criteria. If no filter is specified
+     *        driver should return usable channels purely based on regulatory
+     *        constraints.
      * @return status WifiStatus of the operation.
      *         Possible status codes:
      *         |WifiStatusCode.SUCCESS|,
@@ -257,10 +292,15 @@ interface IWifiChip extends @1.4::IWifiChip {
      *         |WifiStatusCode.FAILURE_UNKNOWN|
      * @return channels List of channels represented by |WifiUsableChannel|
      *         Each entry represents a channel frequency, bandwidth and
-     *         bitmask of operational modes (e.g. STA, SAP, CLI, GO, TDLS, NAN)
-     *         allowed on that channel.
-     *         Note: Bitmask does not represent concurrency matrix.
+     *         bitmask of modes (e.g. STA, SAP, CLI, GO, TDLS, NAN) that are
+     *         allowed on that channel. E.g. If only STA mode can be supported
+     *         on an indoor channel, only the IFACE_MODE_STA bit would be set
+     *         for that channel. If 5GHz SAP cannot be supported, then none of
+     *         the 5GHz channels will have IFACE_MODE_SOFTAP bit set.
+     *         Note: Bits do not represent concurrency state. Each bit only
+     *         represents whether particular mode is allowed on that channel.
      */
-    getUsableChannels(WifiBand band, bitfield<WifiIfaceMode> ifaceModeMask)
+    getUsableChannels(WifiBand band, bitfield<WifiIfaceMode> ifaceModeMask,
+            bitfield<UsableChannelFilter> filterMask)
         generates (WifiStatus status, vec<WifiUsableChannel> channels);
 };

@@ -521,4 +521,20 @@ interface IRadio extends @1.5::IRadio {
      * Response function is IRadioResponse.getSlicingConfigResponse()
      */
     oneway getSlicingConfig(int32_t serial);
+
+    /**
+     * Provide Carrier specific information to the modem that must be used to
+     * encrypt the IMSI and IMPI. Sent by the framework during boot, carrier
+     * switch and everytime the framework receives a new certificate.
+     *
+     * @param serial Serial number of request.
+     * @param imsiEncryptionInfo ImsiEncryptionInfo as defined in types.hal.
+     *
+     * Response callback is
+     * IRadioResponse.setCarrierInfoForImsiEncryptionResponse()
+     *
+     * Note this API is the same as the 1.1 version except using the 1.6 ImsiEncryptionInfo
+     * as the input param.
+     */
+    oneway setCarrierInfoForImsiEncryption_1_6(int32_t serial, @1.6::ImsiEncryptionInfo imsiEncryptionInfo);
 };

@@ -20,11 +20,14 @@
 
 #include <android-base/logging.h>
 #include <android-base/unique_fd.h>
+#include <android/hardware_buffer.h>
+#include <hidl/HidlSupport.h>
 #include <nnapi/Result.h>
 #include <nnapi/SharedMemory.h>
 #include <nnapi/TypeUtils.h>
 #include <nnapi/Types.h>
 #include <nnapi/Validation.h>
+#include <vndk/hardware_buffer.h>
 
 #include <algorithm>
 #include <any>
@@ -203,13 +206,13 @@ nn::GeneralResult<std::reference_wrapper<const nn::Request>> flushDataFromPointe
 nn::GeneralResult<void> unflushDataFromSharedToPointer(
         const nn::Request& request, const std::optional<nn::Request>& maybeRequestInShared) {
     if (!maybeRequestInShared.has_value() || maybeRequestInShared->pools.empty() ||
-        !std::holds_alternative<nn::Memory>(maybeRequestInShared->pools.back())) {
+        !std::holds_alternative<nn::SharedMemory>(maybeRequestInShared->pools.back())) {
         return {};
     }
     const auto& requestInShared = *maybeRequestInShared;
 
     // Map the memory.
-    const auto& outputMemory = std::get<nn::Memory>(requestInShared.pools.back());
+    const auto& outputMemory = std::get<nn::SharedMemory>(requestInShared.pools.back());
     const auto [pointer, size, context] = NN_TRY(map(outputMemory));
     const uint8_t* constantPointer =
             std::visit([](const auto& o) { return static_cast<const uint8_t*>(o); }, pointer);
@@ -248,44 +251,128 @@ std::vector<uint32_t> countNumberOfConsumers(size_t numberOfOperands,
     return nn::countNumberOfConsumers(numberOfOperands, operations);
 }
 
-nn::GeneralResult<hidl_handle> hidlHandleFromSharedHandle(const nn::SharedHandle& handle) {
-    if (handle == nullptr) {
-        return {};
+nn::GeneralResult<hidl_memory> createHidlMemoryFromSharedMemory(const nn::SharedMemory& memory) {
+    if (memory == nullptr) {
+        return NN_ERROR() << "Memory must be non-empty";
+    }
+    if (const auto* handle = std::get_if<nn::Handle>(&memory->handle)) {
+        return hidl_memory(memory->name, NN_TRY(hidlHandleFromSharedHandle(*handle)), memory->size);
     }
 
+    const auto* ahwb = std::get<nn::HardwareBufferHandle>(memory->handle).get();
+    AHardwareBuffer_Desc bufferDesc;
+    AHardwareBuffer_describe(ahwb, &bufferDesc);
+
+    if (bufferDesc.format == AHARDWAREBUFFER_FORMAT_BLOB) {
+        CHECK_EQ(memory->size, bufferDesc.width);
+        CHECK_EQ(memory->name, "hardware_buffer_blob");
+    } else {
+        CHECK_EQ(memory->size, 0u);
+        CHECK_EQ(memory->name, "hardware_buffer");
+    }
+
+    const native_handle_t* nativeHandle = AHardwareBuffer_getNativeHandle(ahwb);
+    const hidl_handle hidlHandle(nativeHandle);
+    hidl_handle handle(hidlHandle);
+
+    return hidl_memory(memory->name, std::move(handle), memory->size);
+}
+
+static uint32_t roundUpToMultiple(uint32_t value, uint32_t multiple) {
+    return (value + multiple - 1) / multiple * multiple;
+}
+
+nn::GeneralResult<nn::SharedMemory> createSharedMemoryFromHidlMemory(const hidl_memory& memory) {
+    CHECK_LE(memory.size(), std::numeric_limits<uint32_t>::max());
+
+    if (memory.name() != "hardware_buffer_blob") {
+        return std::make_shared<const nn::Memory>(nn::Memory{
+                .handle = NN_TRY(sharedHandleFromNativeHandle(memory.handle())),
+                .size = static_cast<uint32_t>(memory.size()),
+                .name = memory.name(),
+        });
+    }
+
+    const auto size = memory.size();
+    const auto format = AHARDWAREBUFFER_FORMAT_BLOB;
+    const auto usage = AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN | AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN;
+    const uint32_t width = size;
+    const uint32_t height = 1;  // height is always 1 for BLOB mode AHardwareBuffer.
+    const uint32_t layers = 1;  // layers is always 1 for BLOB mode AHardwareBuffer.
+
+    // AHardwareBuffer_createFromHandle() might fail because an allocator
+    // expects a specific stride value. In that case, we try to guess it by
+    // aligning the width to small powers of 2.
+    // TODO(b/174120849): Avoid stride assumptions.
+    AHardwareBuffer* hardwareBuffer = nullptr;
+    status_t status = UNKNOWN_ERROR;
+    for (uint32_t alignment : {1, 4, 32, 64, 128, 2, 8, 16}) {
+        const uint32_t stride = roundUpToMultiple(width, alignment);
+        AHardwareBuffer_Desc desc{
+                .width = width,
+                .height = height,
+                .layers = layers,
+                .format = format,
+                .usage = usage,
+                .stride = stride,
+        };
+        status = AHardwareBuffer_createFromHandle(&desc, memory.handle(),
+                                                  AHARDWAREBUFFER_CREATE_FROM_HANDLE_METHOD_CLONE,
+                                                  &hardwareBuffer);
+        if (status == NO_ERROR) {
+            break;
+        }
+    }
+    if (status != NO_ERROR) {
+        return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
+               << "Can't create AHardwareBuffer from handle. Error: " << status;
+    }
+
+    return std::make_shared<const nn::Memory>(nn::Memory{
+            .handle = nn::HardwareBufferHandle(hardwareBuffer, /*takeOwnership=*/true),
+            .size = static_cast<uint32_t>(memory.size()),
+            .name = memory.name(),
+    });
+}
+
+nn::GeneralResult<hidl_handle> hidlHandleFromSharedHandle(const nn::Handle& handle) {
     std::vector<base::unique_fd> fds;
-    fds.reserve(handle->fds.size());
-    for (const auto& fd : handle->fds) {
-        int dupFd = dup(fd);
+    fds.reserve(handle.fds.size());
+    for (const auto& fd : handle.fds) {
+        const int dupFd = dup(fd);
         if (dupFd == -1) {
             return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE) << "Failed to dup the fd";
         }
         fds.emplace_back(dupFd);
     }
 
-    native_handle_t* nativeHandle = native_handle_create(handle->fds.size(), handle->ints.size());
+    constexpr size_t kIntMax = std::numeric_limits<int>::max();
+    CHECK_LE(handle.fds.size(), kIntMax);
+    CHECK_LE(handle.ints.size(), kIntMax);
+    native_handle_t* nativeHandle = native_handle_create(static_cast<int>(handle.fds.size()),
+                                                         static_cast<int>(handle.ints.size()));
     if (nativeHandle == nullptr) {
         return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE) << "Failed to create native_handle";
     }
     for (size_t i = 0; i < fds.size(); ++i) {
         nativeHandle->data[i] = fds[i].release();
     }
-    std::copy(handle->ints.begin(), handle->ints.end(), &nativeHandle->data[nativeHandle->numFds]);
+    std::copy(handle.ints.begin(), handle.ints.end(), &nativeHandle->data[nativeHandle->numFds]);
 
     hidl_handle hidlHandle;
     hidlHandle.setTo(nativeHandle, /*shouldOwn=*/true);
     return hidlHandle;
 }
 
-nn::GeneralResult<nn::SharedHandle> sharedHandleFromNativeHandle(const native_handle_t* handle) {
+nn::GeneralResult<nn::Handle> sharedHandleFromNativeHandle(const native_handle_t* handle) {
     if (handle == nullptr) {
-        return nullptr;
+        return NN_ERROR() << "sharedHandleFromNativeHandle failed because handle is nullptr";
     }
 
     std::vector<base::unique_fd> fds;
     fds.reserve(handle->numFds);
     for (int i = 0; i < handle->numFds; ++i) {
-        int dupFd = dup(handle->data[i]);
+        const int dupFd = dup(handle->data[i]);
         if (dupFd == -1) {
             return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE) << "Failed to dup the fd";
         }
@@ -295,18 +382,18 @@ nn::GeneralResult<nn::SharedHandle> sharedHandleFromNativeHandle(const native_ha
     std::vector<int> ints(&handle->data[handle->numFds],
                           &handle->data[handle->numFds + handle->numInts]);
 
-    return std::make_shared<const nn::Handle>(nn::Handle{
-            .fds = std::move(fds),
-            .ints = std::move(ints),
-    });
+    return nn::Handle{.fds = std::move(fds), .ints = std::move(ints)};
 }
 
 nn::GeneralResult<hidl_vec<hidl_handle>> convertSyncFences(
         const std::vector<nn::SyncFence>& syncFences) {
     hidl_vec<hidl_handle> handles(syncFences.size());
     for (size_t i = 0; i < syncFences.size(); ++i) {
-        handles[i] =
-                NN_TRY(hal::utils::hidlHandleFromSharedHandle(syncFences[i].getSharedHandle()));
+        const auto& handle = syncFences[i].getSharedHandle();
+        if (handle == nullptr) {
+            return NN_ERROR() << "convertSyncFences failed because sync fence is empty";
+        }
+        handles[i] = NN_TRY(hidlHandleFromSharedHandle(*handle));
     }
     return handles;
 }
