@@ -191,6 +191,10 @@ AuthorizationSetBuilder& AuthorizationSetBuilder::EncryptionKey() {
     return Authorization(TAG_PURPOSE, KeyPurpose::DECRYPT);
 }
 
+AuthorizationSetBuilder& AuthorizationSetBuilder::AttestKey() {
+    return Authorization(TAG_PURPOSE, KeyPurpose::ATTEST_KEY);
+}
+
 AuthorizationSetBuilder& AuthorizationSetBuilder::NoDigestOrPadding() {
     Authorization(TAG_DIGEST, Digest::NONE);
     return Authorization(TAG_PADDING, PaddingMode::NONE);
