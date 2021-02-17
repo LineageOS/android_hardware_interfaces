@@ -18,15 +18,41 @@ cc_binary {
         "android.hardware.security.secureclock-unstable-ndk_platform",
         "libbase",
         "libbinder_ndk",
-        "libcppbor",
+        "libcppbor_external",
         "libcrypto",
         "libkeymaster_portable",
         "libkeymint",
         "liblog",
         "libpuresoftkeymasterdevice",
+        "libremote_provisioner",
         "libutils",
     ],
     srcs: [
         "service.cpp",
+    ],
+}
+
+cc_library {
+    name: "libremote_provisioner",
+    vendor_available: true,
+    static_libs: [
+        "libkeymint_remote_prov_support",
+    ],
+    shared_libs: [
+        "android.hardware.security.keymint-unstable-ndk_platform",
+        "libbinder_ndk",
+        "libcppbor_external",
+        "libcppcose",
+        "libcrypto",
+        "libkeymaster_portable",
+        "libkeymint",
+        "liblog",
+        "libpuresoftkeymasterdevice",
+    ],
+    export_include_dirs: [
+        ".",
+    ],
+    srcs: [
+        "RemotelyProvisionedComponent.cpp",
     ],
 }
