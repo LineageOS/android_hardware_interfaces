@@ -37,3 +37,40 @@ cc_library {
         "libutils",
     ],
 }
+
+cc_library {
+    name: "libkeymint_remote_prov_support",
+    vendor_available: true,
+    srcs: [
+        "remote_prov_utils.cpp",
+    ],
+    export_include_dirs: [
+        "include",
+    ],
+    shared_libs: [
+        "libcppcose",
+        "libcppbor_external",
+        "libcrypto",
+    ],
+}
+
+cc_library {
+    name: "libcppcose",
+    vendor_available: true,
+    srcs: [
+        "cppcose.cpp",
+    ],
+    export_include_dirs: [
+        "include",
+    ],
+    shared_libs: [
+        "libbinder_ndk",
+        "libcppbor_external",
+        "libcrypto",
+        "liblog",
+    ],
+    static_libs: [
+        // TODO(swillden): Remove keymint NDK
+        "android.hardware.security.keymint-unstable-ndk_platform",
+    ],
+}
