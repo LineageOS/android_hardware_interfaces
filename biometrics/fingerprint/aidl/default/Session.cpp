@@ -26,7 +26,7 @@ class CancellationSignal : public common::BnCancellationSignal {
     ndk::ScopedAStatus cancel() override { return ndk::ScopedAStatus::ok(); }
 };
 
-Session::Session(std::shared_ptr<ISessionCallback> cb) : cb_(std::move(cb)) {}
+Session::Session(std::shared_ptr<ISessionCallback> cb) : mCb(std::move(cb)) {}
 
 ndk::ScopedAStatus Session::generateChallenge(int32_t /*cookie*/, int32_t /*timeoutSec*/) {
     LOG(INFO) << "generateChallenge";
@@ -39,32 +39,32 @@ ndk::ScopedAStatus Session::revokeChallenge(int32_t /*cookie*/, int64_t /*challe
 }
 
 ndk::ScopedAStatus Session::enroll(int32_t /*cookie*/, const keymaster::HardwareAuthToken& /*hat*/,
-                                   std::shared_ptr<common::ICancellationSignal>* /*return_val*/) {
+                                   std::shared_ptr<common::ICancellationSignal>* /*out*/) {
     LOG(INFO) << "enroll";
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::authenticate(int32_t /*cookie*/, int64_t /*keystoreOperationId*/,
-                                         std::shared_ptr<common::ICancellationSignal>* return_val) {
+                                         std::shared_ptr<common::ICancellationSignal>* out) {
     LOG(INFO) << "authenticate";
-    if (cb_) {
-        cb_->onStateChanged(0, SessionState::AUTHENTICATING);
+    if (mCb) {
+        mCb->onStateChanged(0, SessionState::AUTHENTICATING);
     }
-    *return_val = SharedRefBase::make<CancellationSignal>();
+    *out = SharedRefBase::make<CancellationSignal>();
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::detectInteraction(
-        int32_t /*cookie*/, std::shared_ptr<common::ICancellationSignal>* /*return_val*/) {
+        int32_t /*cookie*/, std::shared_ptr<common::ICancellationSignal>* /*out*/) {
     LOG(INFO) << "detectInteraction";
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::enumerateEnrollments(int32_t /*cookie*/) {
     LOG(INFO) << "enumerateEnrollments";
-    if (cb_) {
-        cb_->onStateChanged(0, SessionState::ENUMERATING_ENROLLMENTS);
-        cb_->onEnrollmentsEnumerated(std::vector<int32_t>());
+    if (mCb) {
+        mCb->onStateChanged(0, SessionState::ENUMERATING_ENROLLMENTS);
+        mCb->onEnrollmentsEnumerated(std::vector<int32_t>());
     }
     return ndk::ScopedAStatus::ok();
 }
@@ -72,18 +72,18 @@ ndk::ScopedAStatus Session::enumerateEnrollments(int32_t /*cookie*/) {
 ndk::ScopedAStatus Session::removeEnrollments(int32_t /*cookie*/,
                                               const std::vector<int32_t>& /*enrollmentIds*/) {
     LOG(INFO) << "removeEnrollments";
-    if (cb_) {
-        cb_->onStateChanged(0, SessionState::REMOVING_ENROLLMENTS);
-        cb_->onEnrollmentsRemoved(std::vector<int32_t>());
+    if (mCb) {
+        mCb->onStateChanged(0, SessionState::REMOVING_ENROLLMENTS);
+        mCb->onEnrollmentsRemoved(std::vector<int32_t>());
     }
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::getAuthenticatorId(int32_t /*cookie*/) {
     LOG(INFO) << "getAuthenticatorId";
-    if (cb_) {
-        cb_->onStateChanged(0, SessionState::GETTING_AUTHENTICATOR_ID);
-        cb_->onAuthenticatorIdRetrieved(0 /* authenticatorId */);
+    if (mCb) {
+        mCb->onStateChanged(0, SessionState::GETTING_AUTHENTICATOR_ID);
+        mCb->onAuthenticatorIdRetrieved(0 /* authenticatorId */);
     }
     return ndk::ScopedAStatus::ok();
 }
