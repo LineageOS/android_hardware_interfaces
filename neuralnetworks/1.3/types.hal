@@ -263,7 +263,8 @@ enum OperationType : int32_t {
      *      tensors. The output shape is [D0, D1, ..., sum(Daxis(i)), ..., Dm].
      *      Since HAL version 1.2, for a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
      *      the scale and zeroPoint values can be different from
-     *      input tensors. Before HAL version 1.2 they have to be the same as for the input tensors.
+     *      input tensors. Before HAL version 1.2 they have to be the same as for the
+     *      input tensors.
      *      For a {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} tensor,
      *      the scale and zeroPoint values can be different from input tensors.
      */
@@ -312,7 +313,8 @@ enum OperationType : int32_t {
      * * * {@link OperandType::TENSOR_INT32} for bias (with scale set to
      * * * input.scale * filter.scale).
      *
-     * * Quantized signed with filter symmetric per channel quantization (since HAL version 1.3):
+     * * Quantized signed with filter symmetric per channel quantization
+     *   (since HAL version 1.3):
      * * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} for input, and output.
      * * * {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL} for filter.
      * * * {@link OperandType::TENSOR_INT32} for bias (scale set to 0.0,
@@ -425,8 +427,9 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output 4-D tensor, of shape
      *      [batches, out_height, out_width, depth_out].
-     *      Before HAL version 1.2, for output tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
-     *      the following condition must be satisfied: output_scale > input_scale * filter_scale
+     *      Before HAL version 1.2, for output tensor of
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM}, the following condition must
+     *      be satisfied: output_scale > input_scale * filter_scale
      */
     CONV_2D = @1.2::OperationType:CONV_2D,
 
@@ -477,7 +480,8 @@ enum OperationType : int32_t {
      * * * {@link OperandType::TENSOR_INT32} for bias (with scale set to
      * * * input.scale * filter.scale).
      *
-     * * Quantized signed with filter symmetric per channel quantization (since HAL version 1.3):
+     * * Quantized signed with filter symmetric per channel quantization
+     *   (since HAL version 1.3):
      * * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} for input, and output.
      * * * {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL} for filter.
      * * * {@link OperandType::TENSOR_INT32} for bias (scale set to 0.0,
@@ -3354,7 +3358,8 @@ enum OperationType : int32_t {
      * * * {@link OperandType::TENSOR_INT32} for bias (scale set to 0.0,
      * * * each value scaling is separate and equal to input.scale * filter.scales[channel]).
      *
-     * * Quantized signed with filter symmetric per channel quantization (since HAL version 1.3):
+     * * Quantized signed with filter symmetric per channel quantization
+     *   (since HAL version 1.3):
      * * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} for input, and output.
      * * * {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL} for filter.
      * * * {@link OperandType::TENSOR_INT32} for bias (scale set to 0.0,
@@ -4615,7 +4620,8 @@ enum OperationType : int32_t {
      * * * {@link OperandType::TENSOR_INT32} for bias (with scale set to
      * * * input.scale * filter.scale).
      *
-     * * Quantized signed with filter symmetric per channel quantization (since HAL version 1.3):
+     * * Quantized signed with filter symmetric per channel quantization
+     *   (since HAL version 1.3):
      * * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} for input, and output.
      * * * {@link OperandType::TENSOR_QUANT8_SYMM_PER_CHANNEL} for filter.
      * * * {@link OperandType::TENSOR_INT32} for bias (scale set to 0.0,
