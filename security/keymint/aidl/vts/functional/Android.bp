@@ -21,6 +21,7 @@ cc_test {
         "use_libaidlvintf_gtest_helper_static",
     ],
     srcs: [
+        "AttestKeyTest.cpp",
         "KeyMintTest.cpp",
     ],
     shared_libs: [

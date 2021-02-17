@@ -80,7 +80,7 @@ INSTANTIATE_REM_PROV_AIDL_TEST(GenerateKeyTests);
 /**
  * Generate and validate a production-mode key.  MAC tag can't be verified.
  */
-TEST_P(GenerateKeyTests, generateEcdsaP256Key_prodMode) {
+TEST_P(GenerateKeyTests, DISABLED_generateEcdsaP256Key_prodMode) {
     MacedPublicKey macedPubKey;
     bytevec privateKeyBlob;
     bool testMode = false;
@@ -133,7 +133,7 @@ TEST_P(GenerateKeyTests, generateEcdsaP256Key_prodMode) {
 /**
  * Generate and validate a test-mode key.
  */
-TEST_P(GenerateKeyTests, generateEcdsaP256Key_testMode) {
+TEST_P(GenerateKeyTests, DISABLED_generateEcdsaP256Key_testMode) {
     MacedPublicKey macedPubKey;
     bytevec privateKeyBlob;
     bool testMode = true;
@@ -224,7 +224,7 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
  * Generate an empty certificate request in test mode, and decrypt and verify the structure and
  * content.
  */
-TEST_P(CertificateRequestTest, EmptyRequest_testMode) {
+TEST_P(CertificateRequestTest, DISABLED_EmptyRequest_testMode) {
     bool testMode = true;
     bytevec keysToSignMac;
     ProtectedData protectedData;
@@ -294,7 +294,7 @@ TEST_P(CertificateRequestTest, EmptyRequest_testMode) {
  * TODO(swillden): Get a valid GEEK and use it so the generation can succeed, though we won't be
  * able to decrypt.
  */
-TEST_P(CertificateRequestTest, EmptyRequest_prodMode) {
+TEST_P(CertificateRequestTest, DISABLED_EmptyRequest_prodMode) {
     bool testMode = false;
     bytevec keysToSignMac;
     ProtectedData protectedData;
@@ -309,7 +309,7 @@ TEST_P(CertificateRequestTest, EmptyRequest_prodMode) {
 /**
  * Generate a non-empty certificate request in test mode.  Decrypt, parse and validate the contents.
  */
-TEST_P(CertificateRequestTest, NonEmptyRequest_testMode) {
+TEST_P(CertificateRequestTest, DISABLED_NonEmptyRequest_testMode) {
     bool testMode = true;
     generateKeys(testMode, 4 /* numKeys */);
 
@@ -379,7 +379,7 @@ TEST_P(CertificateRequestTest, NonEmptyRequest_testMode) {
  * TODO(swillden): Get a valid GEEK and use it so the generation can succeed, though we won't be
  * able to decrypt.
  */
-TEST_P(CertificateRequestTest, NonEmptyRequest_prodMode) {
+TEST_P(CertificateRequestTest, DISABLED_NonEmptyRequest_prodMode) {
     bool testMode = false;
     generateKeys(testMode, 4 /* numKeys */);
 
@@ -396,7 +396,7 @@ TEST_P(CertificateRequestTest, NonEmptyRequest_prodMode) {
  * Generate a non-empty certificate request in test mode, with prod keys.  Must fail with
  * STATUS_PRODUCTION_KEY_IN_TEST_REQUEST.
  */
-TEST_P(CertificateRequestTest, NonEmptyRequest_prodKeyInTestCert) {
+TEST_P(CertificateRequestTest, DISABLED_NonEmptyRequest_prodKeyInTestCert) {
     generateKeys(false /* testMode */, 2 /* numKeys */);
 
     bytevec keysToSignMac;
@@ -414,7 +414,7 @@ TEST_P(CertificateRequestTest, NonEmptyRequest_prodKeyInTestCert) {
  * Generate a non-empty certificate request in prod mode, with test keys.  Must fail with
  * STATUS_TEST_KEY_IN_PRODUCTION_REQUEST.
  */
-TEST_P(CertificateRequestTest, NonEmptyRequest_testKeyInProdCert) {
+TEST_P(CertificateRequestTest, DISABLED_NonEmptyRequest_testKeyInProdCert) {
     generateKeys(true /* testMode */, 2 /* numKeys */);
 
     bytevec keysToSignMac;
