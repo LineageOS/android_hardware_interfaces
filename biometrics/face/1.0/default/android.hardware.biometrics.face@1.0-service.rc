@@ -1,4 +1,4 @@
-service vendor.face-hal-1-1-default /vendor/bin/hw/android.hardware.biometrics.face@1.1-service.example
+service vendor.face-hal-1-0-default /vendor/bin/hw/android.hardware.biometrics.face@1.0-service.example
     # "class hal" causes a race condition on some devices due to files created
     # in /data. As a workaround, postpone startup until later in boot once
     # /data is mounted.

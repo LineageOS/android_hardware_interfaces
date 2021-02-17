@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <android/hardware/biometrics/face/1.1/IBiometricsFace.h>
+#include <android/hardware/biometrics/face/1.0/IBiometricsFace.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
 #include <random>
@@ -34,7 +34,7 @@ using ::android::hardware::biometrics::face::V1_0::Feature;
 using ::android::hardware::biometrics::face::V1_0::IBiometricsFaceClientCallback;
 using ::android::hardware::biometrics::face::V1_0::Status;
 
-class BiometricsFace : public V1_1::IBiometricsFace {
+class BiometricsFace : public V1_0::IBiometricsFace {
   public:
     BiometricsFace();
 
@@ -70,14 +70,6 @@ class BiometricsFace : public V1_1::IBiometricsFace {
     Return<Status> userActivity() override;
 
     Return<Status> resetLockout(const hidl_vec<uint8_t>& hat) override;
-
-    // Methods from ::android::hardware::biometrics::face::V1_1::IBiometricsFace follow.
-    Return<Status> enroll_1_1(const hidl_vec<uint8_t>& hat, uint32_t timeoutSec,
-                              const hidl_vec<Feature>& disabledFeatures,
-                              const hidl_handle& windowId) override;
-
-    Return<Status> enrollRemotely(const hidl_vec<uint8_t>& hat, uint32_t timeoutSec,
-                                  const hidl_vec<Feature>& disabledFeatures) override;
 
   private:
     std::mt19937 mRandom;
