@@ -35,6 +35,6 @@ package android.hardware.power.stats;
 parcelable EnergyConsumer {
   int id;
   int ordinal;
-  android.hardware.power.stats.EnergyConsumerType type;
+  android.hardware.power.stats.EnergyConsumerType type = android.hardware.power.stats.EnergyConsumerType.OTHER;
   @utf8InCpp String name;
 }
