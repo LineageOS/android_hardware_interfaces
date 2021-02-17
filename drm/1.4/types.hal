@@ -37,15 +37,100 @@ struct LogMessage {
 };
 
 enum Status : @1.2::Status {
-
+    /**
+     * queueSecureInput buffer called with 0 subsamples.
+     */
+    CANNOT_DECRYPT_ZERO_SUBSAMPLES,
+    /**
+     * An error happened within the crypto library used by the drm plugin.
+     */
+    CRYPTO_LIBRARY_ERROR,
     /**
      * Non-specific error reported by the device OEM subsystem.
      */
     GENERAL_OEM_ERROR,
-
     /**
      * Unexpected internal failure in the drm/crypto plugin.
      */
     GENERAL_PLUGIN_ERROR,
-
+    /**
+     * The init data parameter passed to getKeyRequest is empty or invalid.
+     */
+    INIT_DATA_INVALID,
+    /**
+     * Either the key was not loaded from the license before attempting the
+     * operation, or the key ID parameter provided by the app is incorrect.
+     */
+    KEY_NOT_LOADED,
+    /**
+     * The license response was empty, fields are missing or otherwise unable
+     * to be parsed.
+     */
+    LICENSE_PARSE_ERROR,
+    /**
+     * The operation (e.g. to renew or persist a license) is prohibited by the
+     * license policy.
+     */
+    LICENSE_POLICY_ERROR,
+    /**
+     * Failed to generate a release request because a field in the stored
+     * license is empty or malformed.
+     */
+    LICENSE_RELEASE_ERROR,
+    /**
+     * The license server detected an error in the license request.
+     */
+    LICENSE_REQUEST_REJECTED,
+    /**
+     * Failed to restore an offline license because a field is empty or
+     * malformed.
+     */
+    LICENSE_RESTORE_ERROR,
+    /**
+     * License is in an invalid state for the attempted operation.
+     */
+    LICENSE_STATE_ERROR,
+    /**
+     * Certificate is malformed or is of the wrong type.
+     */
+    MALFORMED_CERTIFICATE,
+    /**
+     * Failure in the media framework.
+     */
+    MEDIA_FRAMEWORK_ERROR,
+    /**
+     * Certificate has not been set.
+     */
+    MISSING_CERTIFICATE,
+    /**
+     * There was an error loading the provisioned certificate.
+     */
+    PROVISIONING_CERTIFICATE_ERROR,
+    /**
+     * Required steps where not performed before provisioning was attempted.
+     */
+    PROVISIONING_CONFIGURATION_ERROR,
+    /**
+     * The provisioning response was empty, fields are missing or otherwise
+     * unable to be parsed.
+     */
+    PROVISIONING_PARSE_ERROR,
+    /**
+     * Provisioning failed in a way that is likely to succeed on a subsequent
+     * attempt.
+     */
+    RETRYABLE_PROVISIONING_ERROR,
+    /**
+     * Failed to generate a secure stop request because a field in the stored
+     * license is empty or malformed.
+     */
+    SECURE_STOP_RELEASE_ERROR,
+    /**
+     * The plugin was unable to read data from the filesystem.
+     */
+    STORAGE_READ_FAILURE,
+    /**
+     * The plugin was unable to write data to the filesystem.
+     */
+    STORAGE_WRITE_FAILURE,
 };
