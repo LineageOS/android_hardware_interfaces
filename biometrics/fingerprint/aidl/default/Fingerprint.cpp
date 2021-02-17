@@ -18,50 +18,44 @@
 #include "Session.h"
 
 namespace aidl::android::hardware::biometrics::fingerprint {
+namespace {
 
-const int kSensorId = 1;
-const common::SensorStrength kSensorStrength = common::SensorStrength::STRONG;
-const int kMaxEnrollmentsPerUser = 5;
-const FingerprintSensorType kSensorType = FingerprintSensorType::REAR;
-const bool kSupportsNavigationGestures = true;
-const std::string kHwDeviceName = "fingerprintSensor";
-const std::string kHardwareVersion = "vendor/model/revision";
-const std::string kFirmwareVersion = "1.01";
-const std::string kSerialNumber = "00000001";
+constexpr int SENSOR_ID = 1;
+constexpr common::SensorStrength SENSOR_STRENGTH = common::SensorStrength::STRONG;
+constexpr int MAX_ENROLLMENTS_PER_USER = 5;
+constexpr FingerprintSensorType SENSOR_TYPE = FingerprintSensorType::REAR;
+constexpr bool SUPPORTS_NAVIGATION_GESTURES = true;
+constexpr char HW_DEVICE_NAME[] = "fingerprintSensor";
+constexpr char HW_VERSION[] = "vendor/model/revision";
+constexpr char FW_VERSION[] = "1.01";
+constexpr char SERIAL_NUMBER[] = "00000001";
 
-ndk::ScopedAStatus Fingerprint::getSensorProps(std::vector<SensorProps>* return_val) {
-    *return_val = std::vector<SensorProps>();
+}  // namespace
 
-    std::vector<common::HardwareInfo> hardwareInfos = std::vector<common::HardwareInfo>();
-    common::HardwareInfo sensorInfo = {kHwDeviceName,
-            kHardwareVersion,
-            kFirmwareVersion,
-            kSerialNumber
-    };
-    hardwareInfos.push_back(sensorInfo);
-    common::CommonProps commonProps = {kSensorId,
-            kSensorStrength,
-            kMaxEnrollmentsPerUser,
-            hardwareInfos};
-    SensorLocation sensorLocation = {
-            0 /* displayId */,
-            0 /* sensorLocationX */,
-            0 /* sensorLocationY */,
-            0 /* sensorRadius */
-    };
-    SensorProps props = {commonProps,
-            kSensorType,
-            {sensorLocation},
-            kSupportsNavigationGestures,
-            false /* supportsDetectInteraction */};
-    return_val->push_back(props);
+Fingerprint::Fingerprint() {}
+
+ndk::ScopedAStatus Fingerprint::getSensorProps(std::vector<SensorProps>* out) {
+    std::vector<common::HardwareInfo> hardwareInfos = {
+            {HW_DEVICE_NAME, HW_VERSION, FW_VERSION, SERIAL_NUMBER}};
+
+    common::CommonProps commonProps = {SENSOR_ID, SENSOR_STRENGTH, MAX_ENROLLMENTS_PER_USER,
+                                       hardwareInfos};
+
+    SensorLocation sensorLocation = {0 /* displayId */, 0 /* sensorLocationX */,
+                                     0 /* sensorLocationY */, 0 /* sensorRadius */};
+
+    *out = {{commonProps,
+             SENSOR_TYPE,
+             {sensorLocation},
+             SUPPORTS_NAVIGATION_GESTURES,
+             false /* supportsDetectInteraction */}};
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Fingerprint::createSession(int32_t /*sensorId*/, int32_t /*userId*/,
                                               const std::shared_ptr<ISessionCallback>& cb,
-                                              std::shared_ptr<ISession>* return_val) {
-    *return_val = SharedRefBase::make<Session>(cb);
+                                              std::shared_ptr<ISession>* out) {
+    *out = SharedRefBase::make<Session>(cb);
     return ndk::ScopedAStatus::ok();
 }
 }  // namespace aidl::android::hardware::biometrics::fingerprint
