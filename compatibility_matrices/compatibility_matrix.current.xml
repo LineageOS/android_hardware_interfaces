@@ -343,6 +343,13 @@
         </interface>
     </hal>
     <hal format="aidl" optional="true">
+        <name>android.hardware.security.keymint</name>
+        <interface>
+            <name>IRemotelyProvisionedComponent</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
         <name>android.hardware.light</name>
         <version>1</version>
         <interface>
@@ -578,7 +585,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.usb</name>
-        <version>1.0-2</version>
+        <version>1.0-3</version>
         <interface>
             <name>IUsb</name>
             <instance>default</instance>
