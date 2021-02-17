@@ -15,7 +15,6 @@
  */
 
 package android.hardware.biometrics.face@1.1;
-
 import @1.0::IBiometricsFace;
 import @1.0::Status;
 import @1.0::Feature;
@@ -78,40 +77,6 @@ interface IBiometricsFace extends @1.0::IBiometricsFace {
      *     enrollment. Note that all features are enabled by default.
      * @return status The status of this method call.
      */
-    enrollRemotely(vec<uint8_t> hat, uint32_t timeoutSec, vec<Feature> disabledFeatures)
-        generates (Status status);
-
-    /**
-     * Enrolls a user's face.
-     *
-     * Note that the Hardware Authentication Token must be valid for the
-     * duration of enrollment and thus should be explicitly invalidated by a
-     * call to revokeChallenge() when enrollment is complete, to reduce the
-     * window of opportunity to re-use the challenge and HAT. For example,
-     * Settings calls generateChallenge() once to allow the user to enroll one
-     * or more faces or toggle secure settings without having to re-enter the
-     * PIN/pattern/password. Once the user completes the operation, Settings
-     * invokes revokeChallenge() to close the transaction. If the HAT is expired,
-     * the implementation must invoke onError with UNABLE_TO_PROCESS.
-     *
-     * This method triggers the IBiometricsFaceClientCallback#onEnrollResult()
-     * method.
-     *
-     * @param hat A valid Hardware Authentication Token, generated as a result
-     *     of a generateChallenge() challenge being wrapped by the gatekeeper
-     *     after a successful strong authentication request.
-     * @param timeoutSec A timeout in seconds, after which this enroll
-     *     attempt is cancelled. Note that the framework can continue
-     *     enrollment by calling this again with a valid HAT. This timeout is
-     *     expected to be used to limit power usage if the device becomes idle
-     *     during enrollment. The implementation is expected to send
-     *     ERROR_TIMEOUT if this happens.
-     * @param disabledFeatures A list of features to be disabled during
-     *     enrollment. Note that all features are enabled by default.
-     * @param windowId optional ID of a camera preview window for a
-     *     single-camera device. Must be null if not used.
-     * @return status The status of this method call.
-     */
-    enroll_1_1(vec<uint8_t> hat, uint32_t timeoutSec, vec<Feature> disabledFeatures,
-        handle windowId) generates (Status status);
+    enrollRemotely(vec<uint8_t> hat, uint32_t timeoutSec,
+        vec<Feature> disabledFeatures) generates (Status status);
 };
