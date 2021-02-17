@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,13 +31,9 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.security.keymint;
-@Backing(type="int") @VintfStability
-enum KeyPurpose {
-  ENCRYPT = 0,
-  DECRYPT = 1,
-  SIGN = 2,
-  VERIFY = 3,
-  WRAP_KEY = 5,
-  AGREE_KEY = 6,
-  ATTEST_KEY = 7,
+@RustDerive(Clone=true, Eq=true, Hash=true, Ord=true, PartialEq=true, PartialOrd=true) @VintfStability
+parcelable AttestationKey {
+  byte[] keyBlob;
+  android.hardware.security.keymint.KeyParameter[] attestKeyParams;
+  byte[] issuerSubjectName;
 }
