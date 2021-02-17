@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "keymint_5_test"
+#define LOG_TAG "keymint_1_test"
 #include <cutils/log.h>
 
 #include <signal.h>
@@ -23,33 +23,20 @@
 #include <openssl/ec.h>
 #include <openssl/evp.h>
 #include <openssl/mem.h>
-#include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
 #include <cutils/properties.h>
 
 #include <aidl/android/hardware/security/keymint/KeyFormat.h>
 
-#include <keymint_support/attestation_record.h>
 #include <keymint_support/key_param_output.h>
 #include <keymint_support/openssl_utils.h>
 
 #include "KeyMintAidlTestBase.h"
 
-static bool arm_deleteAllKeys = false;
-static bool dump_Attestations = false;
-
 using aidl::android::hardware::security::keymint::AuthorizationSet;
 using aidl::android::hardware::security::keymint::KeyCharacteristics;
 using aidl::android::hardware::security::keymint::KeyFormat;
-
-namespace aidl::android::hardware::security::keymint {
-
-bool operator==(const keymint::AuthorizationSet& a, const keymint::AuthorizationSet& b) {
-    return a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin());
-}
-
-}  // namespace aidl::android::hardware::security::keymint
 
 namespace std {
 
@@ -182,281 +169,6 @@ string ec_256_key_sec1 =
 struct RSA_Delete {
     void operator()(RSA* p) { RSA_free(p); }
 };
-
-char nibble2hex[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
-                       '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
-
-string bin2hex(const vector<uint8_t>& data) {
-    string retval;
-    retval.reserve(data.size() * 2 + 1);
-    for (uint8_t byte : data) {
-        retval.push_back(nibble2hex[0x0F & (byte >> 4)]);
-        retval.push_back(nibble2hex[0x0F & byte]);
-    }
-    return retval;
-}
-
-X509* parse_cert_blob(const vector<uint8_t>& blob) {
-    const uint8_t* p = blob.data();
-    return d2i_X509(nullptr, &p, blob.size());
-}
-
-bool verify_chain(const vector<Certificate>& chain) {
-    for (size_t i = 0; i < chain.size(); ++i) {
-        X509_Ptr key_cert(parse_cert_blob(chain[i].encodedCertificate));
-        X509_Ptr signing_cert;
-        if (i < chain.size() - 1) {
-            signing_cert.reset(parse_cert_blob(chain[i + 1].encodedCertificate));
-        } else {
-            signing_cert.reset(parse_cert_blob(chain[i].encodedCertificate));
-        }
-        EXPECT_TRUE(!!key_cert.get() && !!signing_cert.get());
-        if (!key_cert.get() || !signing_cert.get()) return false;
-
-        EVP_PKEY_Ptr signing_pubkey(X509_get_pubkey(signing_cert.get()));
-        EXPECT_TRUE(!!signing_pubkey.get());
-        if (!signing_pubkey.get()) return false;
-
-        EXPECT_EQ(1, X509_verify(key_cert.get(), signing_pubkey.get()))
-                << "Verification of certificate " << i << " failed "
-                << "OpenSSL error string: " << ERR_error_string(ERR_get_error(), NULL);
-
-        char* cert_issuer =  //
-                X509_NAME_oneline(X509_get_issuer_name(key_cert.get()), nullptr, 0);
-        char* signer_subj =
-                X509_NAME_oneline(X509_get_subject_name(signing_cert.get()), nullptr, 0);
-        EXPECT_STREQ(cert_issuer, signer_subj) << "Cert " << i << " has wrong issuer.";
-        if (i == 0) {
-            char* cert_sub = X509_NAME_oneline(X509_get_subject_name(key_cert.get()), nullptr, 0);
-            EXPECT_STREQ("/CN=Android Keystore Key", cert_sub)
-                    << "Cert " << i << " has wrong subject.";
-            OPENSSL_free(cert_sub);
-        }
-
-        OPENSSL_free(cert_issuer);
-        OPENSSL_free(signer_subj);
-
-        if (dump_Attestations) std::cout << bin2hex(chain[i].encodedCertificate) << std::endl;
-    }
-
-    return true;
-}
-
-// Extract attestation record from cert. Returned object is still part of cert; don't free it
-// separately.
-ASN1_OCTET_STRING* get_attestation_record(X509* certificate) {
-    ASN1_OBJECT_Ptr oid(OBJ_txt2obj(kAttestionRecordOid, 1 /* dotted string format */));
-    EXPECT_TRUE(!!oid.get());
-    if (!oid.get()) return nullptr;
-
-    int location = X509_get_ext_by_OBJ(certificate, oid.get(), -1 /* search from beginning */);
-    EXPECT_NE(-1, location) << "Attestation extension not found in certificate";
-    if (location == -1) return nullptr;
-
-    X509_EXTENSION* attest_rec_ext = X509_get_ext(certificate, location);
-    EXPECT_TRUE(!!attest_rec_ext)
-            << "Found attestation extension but couldn't retrieve it?  Probably a BoringSSL bug.";
-    if (!attest_rec_ext) return nullptr;
-
-    ASN1_OCTET_STRING* attest_rec = X509_EXTENSION_get_data(attest_rec_ext);
-    EXPECT_TRUE(!!attest_rec) << "Attestation extension contained no data";
-    return attest_rec;
-}
-
-bool tag_in_list(const KeyParameter& entry) {
-    // Attestations don't contain everything in key authorization lists, so we need to filter
-    // the key lists to produce the lists that we expect to match the attestations.
-    auto tag_list = {
-            Tag::BLOB_USAGE_REQUIREMENTS,  //
-            Tag::CREATION_DATETIME,        //
-            Tag::EC_CURVE,
-            Tag::HARDWARE_TYPE,
-            Tag::INCLUDE_UNIQUE_ID,
-    };
-    return std::find(tag_list.begin(), tag_list.end(), entry.tag) != tag_list.end();
-}
-
-AuthorizationSet filtered_tags(const AuthorizationSet& set) {
-    AuthorizationSet filtered;
-    std::remove_copy_if(set.begin(), set.end(), std::back_inserter(filtered), tag_in_list);
-    return filtered;
-}
-
-bool avb_verification_enabled() {
-    char value[PROPERTY_VALUE_MAX];
-    return property_get("ro.boot.vbmeta.device_state", value, "") != 0;
-}
-
-bool verify_attestation_record(const string& challenge,                //
-                               const string& app_id,                   //
-                               AuthorizationSet expected_sw_enforced,  //
-                               AuthorizationSet expected_hw_enforced,  //
-                               SecurityLevel security_level,
-                               const vector<uint8_t>& attestation_cert) {
-    X509_Ptr cert(parse_cert_blob(attestation_cert));
-    EXPECT_TRUE(!!cert.get());
-    if (!cert.get()) return false;
-
-    ASN1_OCTET_STRING* attest_rec = get_attestation_record(cert.get());
-    EXPECT_TRUE(!!attest_rec);
-    if (!attest_rec) return false;
-
-    AuthorizationSet att_sw_enforced;
-    AuthorizationSet att_hw_enforced;
-    uint32_t att_attestation_version;
-    uint32_t att_keymaster_version;
-    SecurityLevel att_attestation_security_level;
-    SecurityLevel att_keymaster_security_level;
-    vector<uint8_t> att_challenge;
-    vector<uint8_t> att_unique_id;
-    vector<uint8_t> att_app_id;
-
-    auto error = parse_attestation_record(attest_rec->data,                 //
-                                          attest_rec->length,               //
-                                          &att_attestation_version,         //
-                                          &att_attestation_security_level,  //
-                                          &att_keymaster_version,           //
-                                          &att_keymaster_security_level,    //
-                                          &att_challenge,                   //
-                                          &att_sw_enforced,                 //
-                                          &att_hw_enforced,                 //
-                                          &att_unique_id);
-    EXPECT_EQ(ErrorCode::OK, error);
-    if (error != ErrorCode::OK) return false;
-
-    EXPECT_GE(att_attestation_version, 3U);
-
-    expected_sw_enforced.push_back(TAG_ATTESTATION_APPLICATION_ID,
-                                   vector<uint8_t>(app_id.begin(), app_id.end()));
-
-    EXPECT_GE(att_keymaster_version, 4U);
-    EXPECT_EQ(security_level, att_keymaster_security_level);
-    EXPECT_EQ(security_level, att_attestation_security_level);
-
-    EXPECT_EQ(challenge.length(), att_challenge.size());
-    EXPECT_EQ(0, memcmp(challenge.data(), att_challenge.data(), challenge.length()));
-
-    char property_value[PROPERTY_VALUE_MAX] = {};
-    // TODO(b/136282179): When running under VTS-on-GSI the TEE-backed
-    // keymaster implementation will report YYYYMM dates instead of YYYYMMDD
-    // for the BOOT_PATCH_LEVEL.
-    if (avb_verification_enabled()) {
-        for (int i = 0; i < att_hw_enforced.size(); i++) {
-            if (att_hw_enforced[i].tag == TAG_BOOT_PATCHLEVEL ||
-                att_hw_enforced[i].tag == TAG_VENDOR_PATCHLEVEL) {
-                std::string date =
-                        std::to_string(att_hw_enforced[i].value.get<KeyParameterValue::dateTime>());
-                // strptime seems to require delimiters, but the tag value will
-                // be YYYYMMDD
-                date.insert(6, "-");
-                date.insert(4, "-");
-                EXPECT_EQ(date.size(), 10);
-                struct tm time;
-                strptime(date.c_str(), "%Y-%m-%d", &time);
-
-                // Day of the month (0-31)
-                EXPECT_GE(time.tm_mday, 0);
-                EXPECT_LT(time.tm_mday, 32);
-                // Months since Jan (0-11)
-                EXPECT_GE(time.tm_mon, 0);
-                EXPECT_LT(time.tm_mon, 12);
-                // Years since 1900
-                EXPECT_GT(time.tm_year, 110);
-                EXPECT_LT(time.tm_year, 200);
-            }
-        }
-    }
-
-    // Check to make sure boolean values are properly encoded. Presence of a boolean tag indicates
-    // true. A provided boolean tag that can be pulled back out of the certificate indicates correct
-    // encoding. No need to check if it's in both lists, since the AuthorizationSet compare below
-    // will handle mismatches of tags.
-    if (security_level == SecurityLevel::SOFTWARE) {
-        EXPECT_TRUE(expected_sw_enforced.Contains(TAG_NO_AUTH_REQUIRED));
-    } else {
-        EXPECT_TRUE(expected_hw_enforced.Contains(TAG_NO_AUTH_REQUIRED));
-    }
-
-    // Alternatively this checks the opposite - a false boolean tag (one that isn't provided in
-    // the authorization list during key generation) isn't being attested to in the certificate.
-    EXPECT_FALSE(expected_sw_enforced.Contains(TAG_TRUSTED_USER_PRESENCE_REQUIRED));
-    EXPECT_FALSE(att_sw_enforced.Contains(TAG_TRUSTED_USER_PRESENCE_REQUIRED));
-    EXPECT_FALSE(expected_hw_enforced.Contains(TAG_TRUSTED_USER_PRESENCE_REQUIRED));
-    EXPECT_FALSE(att_hw_enforced.Contains(TAG_TRUSTED_USER_PRESENCE_REQUIRED));
-
-    if (att_hw_enforced.Contains(TAG_ALGORITHM, Algorithm::EC)) {
-        // For ECDSA keys, either an EC_CURVE or a KEY_SIZE can be specified, but one must be.
-        EXPECT_TRUE(att_hw_enforced.Contains(TAG_EC_CURVE) ||
-                    att_hw_enforced.Contains(TAG_KEY_SIZE));
-    }
-
-    // Test root of trust elements
-    vector<uint8_t> verified_boot_key;
-    VerifiedBoot verified_boot_state;
-    bool device_locked;
-    vector<uint8_t> verified_boot_hash;
-    error = parse_root_of_trust(attest_rec->data, attest_rec->length, &verified_boot_key,
-                                &verified_boot_state, &device_locked, &verified_boot_hash);
-    EXPECT_EQ(ErrorCode::OK, error);
-
-    if (avb_verification_enabled()) {
-        EXPECT_NE(property_get("ro.boot.vbmeta.digest", property_value, ""), 0);
-        string prop_string(property_value);
-        EXPECT_EQ(prop_string.size(), 64);
-        EXPECT_EQ(prop_string, bin2hex(verified_boot_hash));
-
-        EXPECT_NE(property_get("ro.boot.vbmeta.device_state", property_value, ""), 0);
-        if (!strcmp(property_value, "unlocked")) {
-            EXPECT_FALSE(device_locked);
-        } else {
-            EXPECT_TRUE(device_locked);
-        }
-
-        // Check that the device is locked if not debuggable, e.g., user build
-        // images in CTS. For VTS, debuggable images are used to allow adb root
-        // and the device is unlocked.
-        if (!property_get_bool("ro.debuggable", false)) {
-            EXPECT_TRUE(device_locked);
-        } else {
-            EXPECT_FALSE(device_locked);
-        }
-    }
-
-    // Verified boot key should be all 0's if the boot state is not verified or self signed
-    std::string empty_boot_key(32, '\0');
-    std::string verified_boot_key_str((const char*)verified_boot_key.data(),
-                                      verified_boot_key.size());
-    EXPECT_NE(property_get("ro.boot.verifiedbootstate", property_value, ""), 0);
-    if (!strcmp(property_value, "green")) {
-        EXPECT_EQ(verified_boot_state, VerifiedBoot::VERIFIED);
-        EXPECT_NE(0, memcmp(verified_boot_key.data(), empty_boot_key.data(),
-                            verified_boot_key.size()));
-    } else if (!strcmp(property_value, "yellow")) {
-        EXPECT_EQ(verified_boot_state, VerifiedBoot::SELF_SIGNED);
-        EXPECT_NE(0, memcmp(verified_boot_key.data(), empty_boot_key.data(),
-                            verified_boot_key.size()));
-    } else if (!strcmp(property_value, "orange")) {
-        EXPECT_EQ(verified_boot_state, VerifiedBoot::UNVERIFIED);
-        EXPECT_EQ(0, memcmp(verified_boot_key.data(), empty_boot_key.data(),
-                            verified_boot_key.size()));
-    } else if (!strcmp(property_value, "red")) {
-        EXPECT_EQ(verified_boot_state, VerifiedBoot::FAILED);
-    } else {
-        EXPECT_EQ(verified_boot_state, VerifiedBoot::UNVERIFIED);
-        EXPECT_NE(0, memcmp(verified_boot_key.data(), empty_boot_key.data(),
-                            verified_boot_key.size()));
-    }
-
-    att_sw_enforced.Sort();
-    expected_sw_enforced.Sort();
-    EXPECT_EQ(filtered_tags(expected_sw_enforced), filtered_tags(att_sw_enforced));
-
-    att_hw_enforced.Sort();
-    expected_hw_enforced.Sort();
-    EXPECT_EQ(filtered_tags(expected_hw_enforced), filtered_tags(att_hw_enforced));
-
-    return true;
-}
 
 std::string make_string(const uint8_t* data, size_t length) {
     return std::string(reinterpret_cast<const char*>(data), length);
@@ -596,7 +308,7 @@ TEST_P(NewKeyGenerationTest, RsaWithAttestation) {
                 << "Key size " << key_size << "missing";
         EXPECT_TRUE(crypto_params.Contains(TAG_RSA_PUBLIC_EXPONENT, 65537U));
 
-        EXPECT_TRUE(verify_chain(cert_chain_));
+        EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
         ASSERT_GT(cert_chain_.size(), 0);
 
         AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
@@ -692,7 +404,7 @@ TEST_P(NewKeyGenerationTest, LimitedUsageRsaWithAttestation) {
                 << "key usage count limit " << 1U << " missing";
 
         // Check the usage count limit tag also appears in the attestation.
-        EXPECT_TRUE(verify_chain(cert_chain_));
+        EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
         ASSERT_GT(cert_chain_.size(), 0);
 
         AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
@@ -5111,14 +4823,26 @@ INSTANTIATE_KEYMINT_AIDL_TEST(UnlockedDeviceRequiredTest);
 }  // namespace aidl::android::hardware::security::keymint::test
 
 int main(int argc, char** argv) {
+    std::cout << "Testing ";
+    auto halInstances =
+            aidl::android::hardware::security::keymint::test::KeyMintAidlTestBase::build_params();
+    std::cout << "HAL instances:\n";
+    for (auto& entry : halInstances) {
+        std::cout << "    " << entry << '\n';
+    }
+
     ::testing::InitGoogleTest(&argc, argv);
     for (int i = 1; i < argc; ++i) {
         if (argv[i][0] == '-') {
             if (std::string(argv[i]) == "--arm_deleteAllKeys") {
-                arm_deleteAllKeys = true;
+                aidl::android::hardware::security::keymint::test::KeyMintAidlTestBase::
+                        arm_deleteAllKeys = true;
             }
             if (std::string(argv[i]) == "--dump_attestations") {
-                dump_Attestations = true;
+                aidl::android::hardware::security::keymint::test::KeyMintAidlTestBase::
+                        dump_Attestations = true;
+            } else {
+                std::cout << "NOT dumping attestations" << std::endl;
             }
         }
     }
