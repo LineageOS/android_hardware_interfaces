@@ -1638,12 +1638,14 @@ wifi_error WifiLegacyHal::setDtimConfig(const std::string& iface_name,
 }
 
 std::pair<wifi_error, std::vector<wifi_usable_channel>>
-WifiLegacyHal::getUsableChannels(uint32_t band_mask, uint32_t iface_mode_mask) {
+WifiLegacyHal::getUsableChannels(uint32_t band_mask, uint32_t iface_mode_mask,
+                                 uint32_t filter_mask) {
     std::vector<wifi_usable_channel> channels;
     channels.resize(kMaxWifiUsableChannels);
     uint32_t size = 0;
     wifi_error status = global_func_table_.wifi_get_usable_channels(
-        global_handle_, band_mask, iface_mode_mask, channels.size(), &size,
+        global_handle_, band_mask, iface_mode_mask, filter_mask,
+        channels.size(), &size,
         reinterpret_cast<wifi_usable_channel*>(channels.data()));
     CHECK(size >= 0 && size <= kMaxWifiUsableChannels);
     channels.resize(size);
