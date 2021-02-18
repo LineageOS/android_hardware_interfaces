@@ -94,7 +94,8 @@ nn::GeneralResult<nn::SharedBurst> ResilientBurst::recover(const nn::IBurst* fai
     return mBurst;
 }
 
-ResilientBurst::OptionalCacheHold ResilientBurst::cacheMemory(const nn::Memory& memory) const {
+ResilientBurst::OptionalCacheHold ResilientBurst::cacheMemory(
+        const nn::SharedMemory& memory) const {
     return getBurst()->cacheMemory(memory);
 }
 

@@ -74,7 +74,7 @@ nn::GeneralResult<void> unflushDataFromSharedToPointer(
 std::vector<uint32_t> countNumberOfConsumers(size_t numberOfOperands,
                                              const std::vector<nn::Operation>& operations);
 
-nn::GeneralResult<nn::Memory> createSharedMemoryFromHidlMemory(const hidl_memory& memory);
+nn::GeneralResult<nn::SharedMemory> createSharedMemoryFromHidlMemory(const hidl_memory& memory);
 
 nn::GeneralResult<hidl_handle> hidlHandleFromSharedHandle(const nn::SharedHandle& handle);
 nn::GeneralResult<nn::SharedHandle> sharedHandleFromNativeHandle(const native_handle_t* handle);
