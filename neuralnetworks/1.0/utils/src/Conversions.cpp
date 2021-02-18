@@ -154,7 +154,7 @@ GeneralResult<Model::OperandValues> unvalidatedConvert(const hidl_vec<uint8_t>& 
 }
 
 GeneralResult<SharedMemory> unvalidatedConvert(const hidl_memory& memory) {
-    return createSharedMemoryFromHidlMemory(memory);
+    return hal::utils::createSharedMemoryFromHidlMemory(memory);
 }
 
 GeneralResult<Model> unvalidatedConvert(const hal::V1_0::Model& model) {
@@ -347,9 +347,7 @@ nn::GeneralResult<hidl_vec<uint8_t>> unvalidatedConvert(
 }
 
 nn::GeneralResult<hidl_memory> unvalidatedConvert(const nn::SharedMemory& memory) {
-    CHECK(memory != nullptr);
-    return hidl_memory(memory->name, NN_TRY(hal::utils::hidlHandleFromSharedHandle(memory->handle)),
-                       memory->size);
+    return hal::utils::createHidlMemoryFromSharedMemory(memory);
 }
 
 nn::GeneralResult<Model> unvalidatedConvert(const nn::Model& model) {
