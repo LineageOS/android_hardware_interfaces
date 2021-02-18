@@ -1,0 +1,14 @@
+cc_test {
+    name: "VtsHalTvCecV1_1TargetTest",
+    defaults: ["VtsHalTargetTestDefaults"],
+    srcs: ["VtsHalTvCecV1_1TargetTest.cpp"],
+    static_libs: [
+        "android.hardware.tv.cec@1.1",
+        "android.hardware.tv.cec@1.0",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+    disable_framework: true,
+}

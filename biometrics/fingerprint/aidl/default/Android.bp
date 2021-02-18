@@ -1,18 +1,32 @@
 cc_binary {
     name: "android.hardware.biometrics.fingerprint-service.example",
+    vendor: true,
     relative_install_path: "hw",
     init_rc: ["fingerprint-default.rc"],
     vintf_fragments: ["fingerprint-default.xml"],
-    vendor: true,
+    local_include_dirs: ["include"],
+    srcs: [
+        "main.cpp",
+        "Fingerprint.cpp",
+        "Session.cpp",
+    ],
     shared_libs: [
         "libbase",
         "libbinder_ndk",
         "android.hardware.biometrics.fingerprint-V1-ndk_platform",
         "android.hardware.biometrics.common-V1-ndk_platform",
     ],
+}
+
+cc_test_host {
+    name: "android.hardware.biometrics.fingerprint.WorkerThreadTest",
+    local_include_dirs: ["include"],
     srcs: [
-        "main.cpp",
-        "Fingerprint.cpp",
-        "Session.cpp",
+        "tests/WorkerThreadTest.cpp",
+        "WorkerThread.cpp",
     ],
+    shared_libs: [
+        "libcutils",
+    ],
+    test_suites: ["general-tests"],
 }

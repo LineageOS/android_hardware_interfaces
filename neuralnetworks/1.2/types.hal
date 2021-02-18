@@ -314,7 +314,8 @@ enum OperationType : int32_t {
      *      tensors. The output shape is [D0, D1, ..., sum(Daxis(i)), ..., Dm].
      *      Since HAL version 1.2, for a {@link OperandType::TENSOR_QUANT8_ASYMM} tensor,
      *      the scale and zeroPoint values can be different from
-     *      input tensors. Before HAL version 1.2 they have to be the same as for the input tensors.
+     *      input tensors. Before HAL version 1.2 they have to be the same as for the
+     *      input tensors.
      */
     CONCATENATION = @1.1::OperationType:CONCATENATION,
 
@@ -460,8 +461,9 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output 4-D tensor, of shape
      *      [batches, out_height, out_width, depth_out].
-     *      Before HAL version 1.2, for output tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
-     *      the following condition must be satisfied: output_scale > input_scale * filter_scale
+     *      Before HAL version 1.2, for output tensor of
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM}, the following condition must
+     *      be satisfied: output_scale > input_scale * filter_scale
      */
     CONV_2D = @1.1::OperationType:CONV_2D,
 
