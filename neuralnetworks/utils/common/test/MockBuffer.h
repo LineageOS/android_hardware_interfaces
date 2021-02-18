@@ -27,9 +27,9 @@ namespace android::nn {
 class MockBuffer final : public IBuffer {
   public:
     MOCK_METHOD(Request::MemoryDomainToken, getToken, (), (const, override));
-    MOCK_METHOD(GeneralResult<void>, copyTo, (const Memory& dst), (const, override));
-    MOCK_METHOD(GeneralResult<void>, copyFrom, (const Memory& src, const Dimensions& dimensions),
-                (const, override));
+    MOCK_METHOD(GeneralResult<void>, copyTo, (const SharedMemory& dst), (const, override));
+    MOCK_METHOD(GeneralResult<void>, copyFrom,
+                (const SharedMemory& src, const Dimensions& dimensions), (const, override));
 };
 
 }  // namespace android::nn

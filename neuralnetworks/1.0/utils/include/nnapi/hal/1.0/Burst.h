@@ -41,7 +41,7 @@ class Burst final : public nn::IBurst {
 
     Burst(PrivateConstructorTag tag, nn::SharedPreparedModel preparedModel);
 
-    OptionalCacheHold cacheMemory(const nn::Memory& memory) const override;
+    OptionalCacheHold cacheMemory(const nn::SharedMemory& memory) const override;
 
     nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> execute(
             const nn::Request& request, nn::MeasureTiming measure) const override;
