@@ -18,6 +18,8 @@
 
 #include <aidl/android/hardware/common/NativeHandle.h>
 #include <android-base/logging.h>
+#include <android/hardware_buffer.h>
+#include <cutils/native_handle.h>
 #include <nnapi/OperandTypes.h>
 #include <nnapi/OperationTypes.h>
 #include <nnapi/Result.h>
@@ -27,6 +29,7 @@
 #include <nnapi/Validation.h>
 #include <nnapi/hal/CommonUtils.h>
 #include <nnapi/hal/HandleError.h>
+#include <vndk/hardware_buffer.h>
 
 #include <algorithm>
 #include <chrono>
@@ -52,6 +55,8 @@ constexpr auto kVersion = android::nn::Version::ANDROID_S;
 
 namespace android::nn {
 namespace {
+
+using ::aidl::android::hardware::common::NativeHandle;
 
 constexpr auto validOperandType(nn::OperandType operandType) {
     switch (operandType) {
@@ -123,6 +128,61 @@ GeneralResult<std::vector<UnvalidatedConvertOutput<Type>>> validatedConvert(
         canonical.push_back(NN_TRY(validatedConvert(argument)));
     }
     return canonical;
+}
+
+GeneralResult<Handle> unvalidatedConvertHelper(const NativeHandle& aidlNativeHandle) {
+    std::vector<base::unique_fd> fds;
+    fds.reserve(aidlNativeHandle.fds.size());
+    for (const auto& fd : aidlNativeHandle.fds) {
+        const int dupFd = dup(fd.get());
+        if (dupFd == -1) {
+            // TODO(b/120417090): is ANEURALNETWORKS_UNEXPECTED_NULL the correct error to return
+            // here?
+            return NN_ERROR() << "Failed to dup the fd";
+        }
+        fds.emplace_back(dupFd);
+    }
+
+    return Handle{.fds = std::move(fds), .ints = aidlNativeHandle.ints};
+}
+
+struct NativeHandleDeleter {
+    void operator()(native_handle_t* handle) const {
+        if (handle) {
+            native_handle_close(handle);
+            native_handle_delete(handle);
+        }
+    }
+};
+
+using UniqueNativeHandle = std::unique_ptr<native_handle_t, NativeHandleDeleter>;
+
+static nn::GeneralResult<UniqueNativeHandle> nativeHandleFromAidlHandle(
+        const NativeHandle& handle) {
+    std::vector<base::unique_fd> fds;
+    fds.reserve(handle.fds.size());
+    for (const auto& fd : handle.fds) {
+        const int dupFd = dup(fd.get());
+        if (dupFd == -1) {
+            return NN_ERROR() << "Failed to dup the fd";
+        }
+        fds.emplace_back(dupFd);
+    }
+
+    constexpr size_t kIntMax = std::numeric_limits<int>::max();
+    CHECK_LE(handle.fds.size(), kIntMax);
+    CHECK_LE(handle.ints.size(), kIntMax);
+    native_handle_t* nativeHandle = native_handle_create(static_cast<int>(handle.fds.size()),
+                                                         static_cast<int>(handle.ints.size()));
+    if (nativeHandle == nullptr) {
+        return NN_ERROR() << "Failed to create native_handle";
+    }
+    for (size_t i = 0; i < fds.size(); ++i) {
+        nativeHandle->data[i] = fds[i].release();
+    }
+    std::copy(handle.ints.begin(), handle.ints.end(), &nativeHandle->data[nativeHandle->numFds]);
+
+    return UniqueNativeHandle(nativeHandle);
 }
 
 }  // anonymous namespace
@@ -316,13 +376,67 @@ GeneralResult<MeasureTiming> unvalidatedConvert(bool measureTiming) {
     return measureTiming ? MeasureTiming::YES : MeasureTiming::NO;
 }
 
-GeneralResult<Memory> unvalidatedConvert(const aidl_hal::Memory& memory) {
+static uint32_t roundUpToMultiple(uint32_t value, uint32_t multiple) {
+    return (value + multiple - 1) / multiple * multiple;
+}
+
+GeneralResult<SharedMemory> unvalidatedConvert(const aidl_hal::Memory& memory) {
     VERIFY_NON_NEGATIVE(memory.size) << "Memory size must not be negative";
-    return Memory{
-            .handle = NN_TRY(unvalidatedConvert(memory.handle)),
+    if (memory.size > std::numeric_limits<uint32_t>::max()) {
+        return NN_ERROR() << "Memory: size must be <= std::numeric_limits<size_t>::max()";
+    }
+
+    if (memory.name != "hardware_buffer_blob") {
+        return std::make_shared<const Memory>(Memory{
+                .handle = NN_TRY(unvalidatedConvertHelper(memory.handle)),
+                .size = static_cast<uint32_t>(memory.size),
+                .name = memory.name,
+        });
+    }
+
+    const auto size = static_cast<uint32_t>(memory.size);
+    const auto format = AHARDWAREBUFFER_FORMAT_BLOB;
+    const auto usage = AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN | AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN;
+    const uint32_t width = size;
+    const uint32_t height = 1;  // height is always 1 for BLOB mode AHardwareBuffer.
+    const uint32_t layers = 1;  // layers is always 1 for BLOB mode AHardwareBuffer.
+
+    const UniqueNativeHandle handle = NN_TRY(nativeHandleFromAidlHandle(memory.handle));
+    const native_handle_t* nativeHandle = handle.get();
+
+    // AHardwareBuffer_createFromHandle() might fail because an allocator
+    // expects a specific stride value. In that case, we try to guess it by
+    // aligning the width to small powers of 2.
+    // TODO(b/174120849): Avoid stride assumptions.
+    AHardwareBuffer* hardwareBuffer = nullptr;
+    status_t status = UNKNOWN_ERROR;
+    for (uint32_t alignment : {1, 4, 32, 64, 128, 2, 8, 16}) {
+        const uint32_t stride = roundUpToMultiple(width, alignment);
+        AHardwareBuffer_Desc desc{
+                .width = width,
+                .height = height,
+                .layers = layers,
+                .format = format,
+                .usage = usage,
+                .stride = stride,
+        };
+        status = AHardwareBuffer_createFromHandle(&desc, nativeHandle,
+                                                  AHARDWAREBUFFER_CREATE_FROM_HANDLE_METHOD_CLONE,
+                                                  &hardwareBuffer);
+        if (status == NO_ERROR) {
+            break;
+        }
+    }
+    if (status != NO_ERROR) {
+        return NN_ERROR(ErrorStatus::GENERAL_FAILURE)
+               << "Can't create AHardwareBuffer from handle. Error: " << status;
+    }
+
+    return std::make_shared<const Memory>(Memory{
+            .handle = HardwareBufferHandle(hardwareBuffer, /*takeOwnership=*/true),
             .size = static_cast<uint32_t>(memory.size),
             .name = memory.name,
-    };
+    });
 }
 
 GeneralResult<Model::OperandValues> unvalidatedConvert(const std::vector<uint8_t>& operandValues) {
@@ -397,24 +511,8 @@ GeneralResult<ExecutionPreference> unvalidatedConvert(
     return static_cast<ExecutionPreference>(executionPreference);
 }
 
-GeneralResult<SharedHandle> unvalidatedConvert(
-        const ::aidl::android::hardware::common::NativeHandle& aidlNativeHandle) {
-    std::vector<base::unique_fd> fds;
-    fds.reserve(aidlNativeHandle.fds.size());
-    for (const auto& fd : aidlNativeHandle.fds) {
-        int dupFd = dup(fd.get());
-        if (dupFd == -1) {
-            // TODO(b/120417090): is ANEURALNETWORKS_UNEXPECTED_NULL the correct error to return
-            // here?
-            return NN_ERROR() << "Failed to dup the fd";
-        }
-        fds.emplace_back(dupFd);
-    }
-
-    return std::make_shared<const Handle>(Handle{
-            .fds = std::move(fds),
-            .ints = aidlNativeHandle.ints,
-    });
+GeneralResult<SharedHandle> unvalidatedConvert(const NativeHandle& aidlNativeHandle) {
+    return std::make_shared<const Handle>(NN_TRY(unvalidatedConvertHelper(aidlNativeHandle)));
 }
 
 GeneralResult<ExecutionPreference> convert(
@@ -422,7 +520,7 @@ GeneralResult<ExecutionPreference> convert(
     return validatedConvert(executionPreference);
 }
 
-GeneralResult<Memory> convert(const aidl_hal::Memory& operand) {
+GeneralResult<SharedMemory> convert(const aidl_hal::Memory& operand) {
     return validatedConvert(operand);
 }
 
@@ -454,7 +552,7 @@ GeneralResult<std::vector<Operation>> convert(const std::vector<aidl_hal::Operat
     return unvalidatedConvert(operations);
 }
 
-GeneralResult<std::vector<Memory>> convert(const std::vector<aidl_hal::Memory>& memories) {
+GeneralResult<std::vector<SharedMemory>> convert(const std::vector<aidl_hal::Memory>& memories) {
     return validatedConvert(memories);
 }
 
@@ -507,13 +605,11 @@ nn::GeneralResult<std::vector<UnvalidatedConvertOutput<Type>>> validatedConvert(
     return halObject;
 }
 
-}  // namespace
-
-nn::GeneralResult<common::NativeHandle> unvalidatedConvert(const nn::SharedHandle& sharedHandle) {
+nn::GeneralResult<common::NativeHandle> unvalidatedConvert(const nn::Handle& handle) {
     common::NativeHandle aidlNativeHandle;
-    aidlNativeHandle.fds.reserve(sharedHandle->fds.size());
-    for (const auto& fd : sharedHandle->fds) {
-        int dupFd = dup(fd.get());
+    aidlNativeHandle.fds.reserve(handle.fds.size());
+    for (const auto& fd : handle.fds) {
+        const int dupFd = dup(fd.get());
         if (dupFd == -1) {
             // TODO(b/120417090): is ANEURALNETWORKS_UNEXPECTED_NULL the correct error to return
             // here?
@@ -521,18 +617,71 @@ nn::GeneralResult<common::NativeHandle> unvalidatedConvert(const nn::SharedHandl
         }
         aidlNativeHandle.fds.emplace_back(dupFd);
     }
-    aidlNativeHandle.ints = sharedHandle->ints;
+    aidlNativeHandle.ints = handle.ints;
     return aidlNativeHandle;
 }
 
-nn::GeneralResult<Memory> unvalidatedConvert(const nn::Memory& memory) {
-    if (memory.size > std::numeric_limits<int64_t>::max()) {
+static nn::GeneralResult<common::NativeHandle> aidlHandleFromNativeHandle(
+        const native_handle_t& handle) {
+    common::NativeHandle aidlNativeHandle;
+
+    aidlNativeHandle.fds.reserve(handle.numFds);
+    for (int i = 0; i < handle.numFds; ++i) {
+        const int dupFd = dup(handle.data[i]);
+        if (dupFd == -1) {
+            return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE) << "Failed to dup the fd";
+        }
+        aidlNativeHandle.fds.emplace_back(dupFd);
+    }
+
+    aidlNativeHandle.ints = std::vector<int>(&handle.data[handle.numFds],
+                                             &handle.data[handle.numFds + handle.numInts]);
+
+    return aidlNativeHandle;
+}
+
+}  // namespace
+
+nn::GeneralResult<common::NativeHandle> unvalidatedConvert(const nn::SharedHandle& sharedHandle) {
+    CHECK(sharedHandle != nullptr);
+    return unvalidatedConvert(*sharedHandle);
+}
+
+nn::GeneralResult<Memory> unvalidatedConvert(const nn::SharedMemory& memory) {
+    CHECK(memory != nullptr);
+    if (memory->size > std::numeric_limits<int64_t>::max()) {
         return NN_ERROR() << "Memory size doesn't fit into int64_t.";
     }
+    if (const auto* handle = std::get_if<nn::Handle>(&memory->handle)) {
+        return Memory{
+                .handle = NN_TRY(unvalidatedConvert(*handle)),
+                .size = static_cast<int64_t>(memory->size),
+                .name = memory->name,
+        };
+    }
+
+    const auto* ahwb = std::get<nn::HardwareBufferHandle>(memory->handle).get();
+    AHardwareBuffer_Desc bufferDesc;
+    AHardwareBuffer_describe(ahwb, &bufferDesc);
+
+    if (bufferDesc.format == AHARDWAREBUFFER_FORMAT_BLOB) {
+        CHECK_EQ(memory->size, bufferDesc.width);
+        CHECK_EQ(memory->name, "hardware_buffer_blob");
+    } else {
+        CHECK_EQ(memory->size, 0u);
+        CHECK_EQ(memory->name, "hardware_buffer");
+    }
+
+    const native_handle_t* nativeHandle = AHardwareBuffer_getNativeHandle(ahwb);
+    if (nativeHandle == nullptr) {
+        return NN_ERROR() << "unvalidatedConvert failed because AHardwareBuffer_getNativeHandle "
+                             "returned nullptr";
+    }
+
     return Memory{
-            .handle = NN_TRY(unvalidatedConvert(memory.handle)),
-            .size = static_cast<int64_t>(memory.size),
-            .name = memory.name,
+            .handle = NN_TRY(aidlHandleFromNativeHandle(*nativeHandle)),
+            .size = static_cast<int64_t>(memory->size),
+            .name = memory->name,
     };
 }
 
@@ -558,7 +707,7 @@ nn::GeneralResult<OutputShape> unvalidatedConvert(const nn::OutputShape& outputS
                        .isSufficient = outputShape.isSufficient};
 }
 
-nn::GeneralResult<Memory> convert(const nn::Memory& memory) {
+nn::GeneralResult<Memory> convert(const nn::SharedMemory& memory) {
     return validatedConvert(memory);
 }
 
