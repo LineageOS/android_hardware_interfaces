@@ -203,13 +203,13 @@ nn::GeneralResult<std::reference_wrapper<const nn::Request>> flushDataFromPointe
 nn::GeneralResult<void> unflushDataFromSharedToPointer(
         const nn::Request& request, const std::optional<nn::Request>& maybeRequestInShared) {
     if (!maybeRequestInShared.has_value() || maybeRequestInShared->pools.empty() ||
-        !std::holds_alternative<nn::Memory>(maybeRequestInShared->pools.back())) {
+        !std::holds_alternative<nn::SharedMemory>(maybeRequestInShared->pools.back())) {
         return {};
     }
     const auto& requestInShared = *maybeRequestInShared;
 
     // Map the memory.
-    const auto& outputMemory = std::get<nn::Memory>(requestInShared.pools.back());
+    const auto& outputMemory = std::get<nn::SharedMemory>(requestInShared.pools.back());
     const auto [pointer, size, context] = NN_TRY(map(outputMemory));
     const uint8_t* constantPointer =
             std::visit([](const auto& o) { return static_cast<const uint8_t*>(o); }, pointer);

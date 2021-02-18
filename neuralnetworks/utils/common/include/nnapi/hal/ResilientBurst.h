@@ -44,7 +44,7 @@ class ResilientBurst final : public nn::IBurst,
     nn::SharedBurst getBurst() const;
     nn::GeneralResult<nn::SharedBurst> recover(const nn::IBurst* failingBurst) const;
 
-    OptionalCacheHold cacheMemory(const nn::Memory& memory) const override;
+    OptionalCacheHold cacheMemory(const nn::SharedMemory& memory) const override;
 
     nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> execute(
             const nn::Request& request, nn::MeasureTiming measure) const override;
