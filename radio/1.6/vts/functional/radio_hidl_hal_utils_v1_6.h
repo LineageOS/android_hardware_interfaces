@@ -805,7 +805,8 @@ class RadioResponse_v1_6 : public ::android::hardware::radio::V1_6::IRadioRespon
             const ::android::hardware::radio::V1_6::RadioResponseInfo& info);
 
     Return<void> getSystemSelectionChannelsResponse(
-            const ::android::hardware::radio::V1_6::RadioResponseInfo& info);
+            const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
+            const hidl_vec<::android::hardware::radio::V1_5::RadioAccessSpecifier>& specifier);
 
     Return<void> getSignalStrengthResponse_1_6(
             const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
