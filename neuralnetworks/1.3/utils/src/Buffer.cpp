@@ -61,7 +61,7 @@ nn::Request::MemoryDomainToken Buffer::getToken() const {
     return kToken;
 }
 
-nn::GeneralResult<void> Buffer::copyTo(const nn::Memory& dst) const {
+nn::GeneralResult<void> Buffer::copyTo(const nn::SharedMemory& dst) const {
     const auto hidlDst = NN_TRY(convert(dst));
 
     const auto ret = kBuffer->copyTo(hidlDst);
@@ -71,7 +71,7 @@ nn::GeneralResult<void> Buffer::copyTo(const nn::Memory& dst) const {
     return {};
 }
 
-nn::GeneralResult<void> Buffer::copyFrom(const nn::Memory& src,
+nn::GeneralResult<void> Buffer::copyFrom(const nn::SharedMemory& src,
                                          const nn::Dimensions& dimensions) const {
     const auto hidlSrc = NN_TRY(convert(src));
     const auto hidlDimensions = hidl_vec<uint32_t>(dimensions);
