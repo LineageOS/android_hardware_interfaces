@@ -180,9 +180,10 @@ class WifiChip : public V1_5::IWifiChip {
         setCoexUnsafeChannels_cb hidl_status_cb) override;
     Return<void> setCountryCode(const hidl_array<int8_t, 2>& code,
                                 setCountryCode_cb _hidl_cb) override;
-    Return<void> getUsableChannels(WifiBand band,
-                                   hidl_bitfield<WifiIfaceMode> ifaceModeMask,
-                                   getUsableChannels_cb _hidl_cb) override;
+    Return<void> getUsableChannels(
+        WifiBand band, hidl_bitfield<WifiIfaceMode> ifaceModeMask,
+        hidl_bitfield<UsableChannelFilter> filterMask,
+        getUsableChannels_cb _hidl_cb) override;
 
    private:
     void invalidateAndRemoveAllIfaces();
@@ -265,7 +266,8 @@ class WifiChip : public V1_5::IWifiChip {
         std::vector<CoexUnsafeChannel> unsafe_channels, uint32_t restrictions);
     WifiStatus setCountryCodeInternal(const std::array<int8_t, 2>& code);
     std::pair<WifiStatus, std::vector<WifiUsableChannel>>
-    getUsableChannelsInternal(WifiBand band, uint32_t ifaceModeMask);
+    getUsableChannelsInternal(WifiBand band, uint32_t ifaceModeMask,
+                              uint32_t filterMask);
     WifiStatus handleChipConfiguration(
         std::unique_lock<std::recursive_mutex>* lock, ChipModeId mode_id);
     WifiStatus registerDebugRingBufferCallback();

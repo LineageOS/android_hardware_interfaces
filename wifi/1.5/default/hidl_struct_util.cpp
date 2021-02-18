@@ -445,6 +445,20 @@ uint32_t convertLegacyWifiInterfaceModeToHidl(uint32_t legacy_iface_mask) {
     return hidl_iface_mask;
 }
 
+uint32_t convertHidlUsableChannelFilterToLegacy(uint32_t hidl_filter_mask) {
+    uint32_t legacy_filter_mask = 0;
+    if (hidl_filter_mask &
+        IWifiChip::UsableChannelFilter::CELLULAR_COEXISTENCE) {
+        legacy_filter_mask |=
+            legacy_hal::WIFI_USABLE_CHANNEL_FILTER_CELLULAR_COEXISTENCE;
+    }
+    if (hidl_filter_mask & IWifiChip::UsableChannelFilter::CONCURRENCY) {
+        legacy_filter_mask |=
+            legacy_hal::WIFI_USABLE_CHANNEL_FILTER_CONCURRENCY;
+    }
+    return legacy_filter_mask;
+}
+
 bool convertLegacyWifiUsableChannelToHidl(
     const legacy_hal::wifi_usable_channel& legacy_usable_channel,
     V1_5::WifiUsableChannel* hidl_usable_channel) {

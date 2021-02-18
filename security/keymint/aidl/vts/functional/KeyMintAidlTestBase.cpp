@@ -22,15 +22,23 @@
 
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
+#include <cutils/properties.h>
+#include <openssl/mem.h>
 
+#include <keymint_support/attestation_record.h>
 #include <keymint_support/key_param_output.h>
 #include <keymint_support/keymint_utils.h>
+#include <keymint_support/openssl_utils.h>
 
 namespace aidl::android::hardware::security::keymint {
 
 using namespace std::literals::chrono_literals;
 using std::endl;
 using std::optional;
+using std::unique_ptr;
+using ::testing::AssertionFailure;
+using ::testing::AssertionResult;
+using ::testing::AssertionSuccess;
 
 ::std::ostream& operator<<(::std::ostream& os, const AuthorizationSet& set) {
     if (set.size() == 0)
@@ -73,7 +81,66 @@ bool KeyCharacteristicsBasicallyValid(SecurityLevel secLevel,
     return true;
 }
 
+// Extract attestation record from cert. Returned object is still part of cert; don't free it
+// separately.
+ASN1_OCTET_STRING* get_attestation_record(X509* certificate) {
+    ASN1_OBJECT_Ptr oid(OBJ_txt2obj(kAttestionRecordOid, 1 /* dotted string format */));
+    EXPECT_TRUE(!!oid.get());
+    if (!oid.get()) return nullptr;
+
+    int location = X509_get_ext_by_OBJ(certificate, oid.get(), -1 /* search from beginning */);
+    EXPECT_NE(-1, location) << "Attestation extension not found in certificate";
+    if (location == -1) return nullptr;
+
+    X509_EXTENSION* attest_rec_ext = X509_get_ext(certificate, location);
+    EXPECT_TRUE(!!attest_rec_ext)
+            << "Found attestation extension but couldn't retrieve it?  Probably a BoringSSL bug.";
+    if (!attest_rec_ext) return nullptr;
+
+    ASN1_OCTET_STRING* attest_rec = X509_EXTENSION_get_data(attest_rec_ext);
+    EXPECT_TRUE(!!attest_rec) << "Attestation extension contained no data";
+    return attest_rec;
+}
+
+bool avb_verification_enabled() {
+    char value[PROPERTY_VALUE_MAX];
+    return property_get("ro.boot.vbmeta.device_state", value, "") != 0;
+}
+
+char nibble2hex[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
+                       '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+
+// Attestations don't contain everything in key authorization lists, so we need to filter the key
+// lists to produce the lists that we expect to match the attestations.
+auto kTagsToFilter = {
+        Tag::BLOB_USAGE_REQUIREMENTS,  //
+        Tag::CREATION_DATETIME,        //
+        Tag::EC_CURVE,
+        Tag::HARDWARE_TYPE,
+        Tag::INCLUDE_UNIQUE_ID,
+};
+
+AuthorizationSet filtered_tags(const AuthorizationSet& set) {
+    AuthorizationSet filtered;
+    std::remove_copy_if(
+            set.begin(), set.end(), std::back_inserter(filtered), [](const auto& entry) -> bool {
+                return std::find(kTagsToFilter.begin(), kTagsToFilter.end(), entry.tag) !=
+                       kTagsToFilter.end();
+            });
+    return filtered;
+}
+
+string x509NameToStr(X509_NAME* name) {
+    char* s = X509_NAME_oneline(name, nullptr, 0);
+    string retval(s);
+    OPENSSL_free(s);
+    return retval;
+}
+
 }  // namespace
+
+bool KeyMintAidlTestBase::arm_deleteAllKeys = false;
+bool KeyMintAidlTestBase::dump_Attestations = false;
 
 ErrorCode KeyMintAidlTestBase::GetReturnErrorCode(const Status& result) {
     if (result.isOk()) return ErrorCode::OK;
@@ -110,48 +177,48 @@ void KeyMintAidlTestBase::SetUp() {
 }
 
 ErrorCode KeyMintAidlTestBase::GenerateKey(const AuthorizationSet& key_desc,
+                                           const optional<AttestationKey>& attest_key,
                                            vector<uint8_t>* key_blob,
-                                           vector<KeyCharacteristics>* key_characteristics) {
+                                           vector<KeyCharacteristics>* key_characteristics,
+                                           vector<Certificate>* cert_chain) {
     EXPECT_NE(key_blob, nullptr) << "Key blob pointer must not be null.  Test bug";
     EXPECT_NE(key_characteristics, nullptr)
             << "Previous characteristics not deleted before generating key.  Test bug.";
 
-    // Aidl does not clear these output parameters if the function returns
-    // error.  This is different from hal where output parameter is always
-    // cleared due to hal returning void.  So now we need to do our own clearing
-    // of the output variables prior to calling keyMint aidl libraries.
-    key_blob->clear();
-    key_characteristics->clear();
-    cert_chain_.clear();
-
     KeyCreationResult creationResult;
-    Status result = keymint_->generateKey(key_desc.vector_data(), &creationResult);
-
+    Status result = keymint_->generateKey(key_desc.vector_data(), attest_key, &creationResult);
     if (result.isOk()) {
         EXPECT_PRED2(KeyCharacteristicsBasicallyValid, SecLevel(),
                      creationResult.keyCharacteristics);
         EXPECT_GT(creationResult.keyBlob.size(), 0);
         *key_blob = std::move(creationResult.keyBlob);
         *key_characteristics = std::move(creationResult.keyCharacteristics);
-        cert_chain_ = std::move(creationResult.certificateChain);
+        *cert_chain = std::move(creationResult.certificateChain);
 
         auto algorithm = key_desc.GetTagValue(TAG_ALGORITHM);
         EXPECT_TRUE(algorithm);
         if (algorithm &&
             (algorithm.value() == Algorithm::RSA || algorithm.value() == Algorithm::EC)) {
-            EXPECT_GE(cert_chain_.size(), 1);
-            if (key_desc.Contains(TAG_ATTESTATION_CHALLENGE)) EXPECT_GT(cert_chain_.size(), 1);
+            EXPECT_GE(cert_chain->size(), 1);
+            if (key_desc.Contains(TAG_ATTESTATION_CHALLENGE)) {
+                if (attest_key) {
+                    EXPECT_EQ(cert_chain->size(), 1);
+                } else {
+                    EXPECT_GT(cert_chain->size(), 1);
+                }
+            }
         } else {
             // For symmetric keys there should be no certificates.
-            EXPECT_EQ(cert_chain_.size(), 0);
+            EXPECT_EQ(cert_chain->size(), 0);
         }
     }
 
     return GetReturnErrorCode(result);
 }
 
-ErrorCode KeyMintAidlTestBase::GenerateKey(const AuthorizationSet& key_desc) {
-    return GenerateKey(key_desc, &key_blob_, &key_characteristics_);
+ErrorCode KeyMintAidlTestBase::GenerateKey(const AuthorizationSet& key_desc,
+                                           const optional<AttestationKey>& attest_key) {
+    return GenerateKey(key_desc, attest_key, &key_blob_, &key_characteristics_, &cert_chain_);
 }
 
 ErrorCode KeyMintAidlTestBase::ImportKey(const AuthorizationSet& key_desc, KeyFormat format,
@@ -166,7 +233,7 @@ ErrorCode KeyMintAidlTestBase::ImportKey(const AuthorizationSet& key_desc, KeyFo
     KeyCreationResult creationResult;
     result = keymint_->importKey(key_desc.vector_data(), format,
                                  vector<uint8_t>(key_material.begin(), key_material.end()),
-                                 &creationResult);
+                                 {} /* attestationSigningKeyBlob */, &creationResult);
 
     if (result.isOk()) {
         EXPECT_PRED2(KeyCharacteristicsBasicallyValid, SecLevel(),
@@ -914,6 +981,240 @@ ErrorCode KeyMintAidlTestBase::UseEcdsaKey(const vector<uint8_t>& ecdsaKeyBlob) 
             ProcessMessage(ecdsaKeyBlob, KeyPurpose::SIGN, "a",
                            AuthorizationSetBuilder().Digest(Digest::SHA_2_256));
     return result;
+}
+
+bool verify_attestation_record(const string& challenge,                //
+                               const string& app_id,                   //
+                               AuthorizationSet expected_sw_enforced,  //
+                               AuthorizationSet expected_hw_enforced,  //
+                               SecurityLevel security_level,
+                               const vector<uint8_t>& attestation_cert) {
+    X509_Ptr cert(parse_cert_blob(attestation_cert));
+    EXPECT_TRUE(!!cert.get());
+    if (!cert.get()) return false;
+
+    ASN1_OCTET_STRING* attest_rec = get_attestation_record(cert.get());
+    EXPECT_TRUE(!!attest_rec);
+    if (!attest_rec) return false;
+
+    AuthorizationSet att_sw_enforced;
+    AuthorizationSet att_hw_enforced;
+    uint32_t att_attestation_version;
+    uint32_t att_keymaster_version;
+    SecurityLevel att_attestation_security_level;
+    SecurityLevel att_keymaster_security_level;
+    vector<uint8_t> att_challenge;
+    vector<uint8_t> att_unique_id;
+    vector<uint8_t> att_app_id;
+
+    auto error = parse_attestation_record(attest_rec->data,                 //
+                                          attest_rec->length,               //
+                                          &att_attestation_version,         //
+                                          &att_attestation_security_level,  //
+                                          &att_keymaster_version,           //
+                                          &att_keymaster_security_level,    //
+                                          &att_challenge,                   //
+                                          &att_sw_enforced,                 //
+                                          &att_hw_enforced,                 //
+                                          &att_unique_id);
+    EXPECT_EQ(ErrorCode::OK, error);
+    if (error != ErrorCode::OK) return false;
+
+    EXPECT_GE(att_attestation_version, 3U);
+
+    expected_sw_enforced.push_back(TAG_ATTESTATION_APPLICATION_ID,
+                                   vector<uint8_t>(app_id.begin(), app_id.end()));
+
+    EXPECT_GE(att_keymaster_version, 4U);
+    EXPECT_EQ(security_level, att_keymaster_security_level);
+    EXPECT_EQ(security_level, att_attestation_security_level);
+
+    EXPECT_EQ(challenge.length(), att_challenge.size());
+    EXPECT_EQ(0, memcmp(challenge.data(), att_challenge.data(), challenge.length()));
+
+    char property_value[PROPERTY_VALUE_MAX] = {};
+    // TODO(b/136282179): When running under VTS-on-GSI the TEE-backed
+    // keymaster implementation will report YYYYMM dates instead of YYYYMMDD
+    // for the BOOT_PATCH_LEVEL.
+    if (avb_verification_enabled()) {
+        for (int i = 0; i < att_hw_enforced.size(); i++) {
+            if (att_hw_enforced[i].tag == TAG_BOOT_PATCHLEVEL ||
+                att_hw_enforced[i].tag == TAG_VENDOR_PATCHLEVEL) {
+                std::string date =
+                        std::to_string(att_hw_enforced[i].value.get<KeyParameterValue::dateTime>());
+                // strptime seems to require delimiters, but the tag value will
+                // be YYYYMMDD
+                date.insert(6, "-");
+                date.insert(4, "-");
+                EXPECT_EQ(date.size(), 10);
+                struct tm time;
+                strptime(date.c_str(), "%Y-%m-%d", &time);
+
+                // Day of the month (0-31)
+                EXPECT_GE(time.tm_mday, 0);
+                EXPECT_LT(time.tm_mday, 32);
+                // Months since Jan (0-11)
+                EXPECT_GE(time.tm_mon, 0);
+                EXPECT_LT(time.tm_mon, 12);
+                // Years since 1900
+                EXPECT_GT(time.tm_year, 110);
+                EXPECT_LT(time.tm_year, 200);
+            }
+        }
+    }
+
+    // Check to make sure boolean values are properly encoded. Presence of a boolean tag
+    // indicates true. A provided boolean tag that can be pulled back out of the certificate
+    // indicates correct encoding. No need to check if it's in both lists, since the
+    // AuthorizationSet compare below will handle mismatches of tags.
+    if (security_level == SecurityLevel::SOFTWARE) {
+        EXPECT_TRUE(expected_sw_enforced.Contains(TAG_NO_AUTH_REQUIRED));
+    } else {
+        EXPECT_TRUE(expected_hw_enforced.Contains(TAG_NO_AUTH_REQUIRED));
+    }
+
+    // Alternatively this checks the opposite - a false boolean tag (one that isn't provided in
+    // the authorization list during key generation) isn't being attested to in the certificate.
+    EXPECT_FALSE(expected_sw_enforced.Contains(TAG_TRUSTED_USER_PRESENCE_REQUIRED));
+    EXPECT_FALSE(att_sw_enforced.Contains(TAG_TRUSTED_USER_PRESENCE_REQUIRED));
+    EXPECT_FALSE(expected_hw_enforced.Contains(TAG_TRUSTED_USER_PRESENCE_REQUIRED));
+    EXPECT_FALSE(att_hw_enforced.Contains(TAG_TRUSTED_USER_PRESENCE_REQUIRED));
+
+    if (att_hw_enforced.Contains(TAG_ALGORITHM, Algorithm::EC)) {
+        // For ECDSA keys, either an EC_CURVE or a KEY_SIZE can be specified, but one must be.
+        EXPECT_TRUE(att_hw_enforced.Contains(TAG_EC_CURVE) ||
+                    att_hw_enforced.Contains(TAG_KEY_SIZE));
+    }
+
+    // Test root of trust elements
+    vector<uint8_t> verified_boot_key;
+    VerifiedBoot verified_boot_state;
+    bool device_locked;
+    vector<uint8_t> verified_boot_hash;
+    error = parse_root_of_trust(attest_rec->data, attest_rec->length, &verified_boot_key,
+                                &verified_boot_state, &device_locked, &verified_boot_hash);
+    EXPECT_EQ(ErrorCode::OK, error);
+
+    if (avb_verification_enabled()) {
+        EXPECT_NE(property_get("ro.boot.vbmeta.digest", property_value, ""), 0);
+        string prop_string(property_value);
+        EXPECT_EQ(prop_string.size(), 64);
+        EXPECT_EQ(prop_string, bin2hex(verified_boot_hash));
+
+        EXPECT_NE(property_get("ro.boot.vbmeta.device_state", property_value, ""), 0);
+        if (!strcmp(property_value, "unlocked")) {
+            EXPECT_FALSE(device_locked);
+        } else {
+            EXPECT_TRUE(device_locked);
+        }
+
+        // Check that the device is locked if not debuggable, e.g., user build
+        // images in CTS. For VTS, debuggable images are used to allow adb root
+        // and the device is unlocked.
+        if (!property_get_bool("ro.debuggable", false)) {
+            EXPECT_TRUE(device_locked);
+        } else {
+            EXPECT_FALSE(device_locked);
+        }
+    }
+
+    // Verified boot key should be all 0's if the boot state is not verified or self signed
+    std::string empty_boot_key(32, '\0');
+    std::string verified_boot_key_str((const char*)verified_boot_key.data(),
+                                      verified_boot_key.size());
+    EXPECT_NE(property_get("ro.boot.verifiedbootstate", property_value, ""), 0);
+    if (!strcmp(property_value, "green")) {
+        EXPECT_EQ(verified_boot_state, VerifiedBoot::VERIFIED);
+        EXPECT_NE(0, memcmp(verified_boot_key.data(), empty_boot_key.data(),
+                            verified_boot_key.size()));
+    } else if (!strcmp(property_value, "yellow")) {
+        EXPECT_EQ(verified_boot_state, VerifiedBoot::SELF_SIGNED);
+        EXPECT_NE(0, memcmp(verified_boot_key.data(), empty_boot_key.data(),
+                            verified_boot_key.size()));
+    } else if (!strcmp(property_value, "orange")) {
+        EXPECT_EQ(verified_boot_state, VerifiedBoot::UNVERIFIED);
+        EXPECT_EQ(0, memcmp(verified_boot_key.data(), empty_boot_key.data(),
+                            verified_boot_key.size()));
+    } else if (!strcmp(property_value, "red")) {
+        EXPECT_EQ(verified_boot_state, VerifiedBoot::FAILED);
+    } else {
+        EXPECT_EQ(verified_boot_state, VerifiedBoot::UNVERIFIED);
+        EXPECT_NE(0, memcmp(verified_boot_key.data(), empty_boot_key.data(),
+                            verified_boot_key.size()));
+    }
+
+    att_sw_enforced.Sort();
+    expected_sw_enforced.Sort();
+    auto a = filtered_tags(expected_sw_enforced);
+    auto b = filtered_tags(att_sw_enforced);
+    EXPECT_EQ(a, b);
+
+    att_hw_enforced.Sort();
+    expected_hw_enforced.Sort();
+    EXPECT_EQ(filtered_tags(expected_hw_enforced), filtered_tags(att_hw_enforced));
+
+    return true;
+}
+
+string bin2hex(const vector<uint8_t>& data) {
+    string retval;
+    retval.reserve(data.size() * 2 + 1);
+    for (uint8_t byte : data) {
+        retval.push_back(nibble2hex[0x0F & (byte >> 4)]);
+        retval.push_back(nibble2hex[0x0F & byte]);
+    }
+    return retval;
+}
+
+AssertionResult ChainSignaturesAreValid(const vector<Certificate>& chain) {
+    std::stringstream cert_data;
+
+    for (size_t i = 0; i < chain.size(); ++i) {
+        cert_data << bin2hex(chain[i].encodedCertificate) << std::endl;
+
+        X509_Ptr key_cert(parse_cert_blob(chain[i].encodedCertificate));
+        X509_Ptr signing_cert;
+        if (i < chain.size() - 1) {
+            signing_cert = parse_cert_blob(chain[i + 1].encodedCertificate);
+        } else {
+            signing_cert = parse_cert_blob(chain[i].encodedCertificate);
+        }
+        if (!key_cert.get() || !signing_cert.get()) return AssertionFailure() << cert_data.str();
+
+        EVP_PKEY_Ptr signing_pubkey(X509_get_pubkey(signing_cert.get()));
+        if (!signing_pubkey.get()) return AssertionFailure() << cert_data.str();
+
+        if (!X509_verify(key_cert.get(), signing_pubkey.get())) {
+            return AssertionFailure()
+                   << "Verification of certificate " << i << " failed "
+                   << "OpenSSL error string: " << ERR_error_string(ERR_get_error(), NULL) << '\n'
+                   << cert_data.str();
+        }
+
+        string cert_issuer = x509NameToStr(X509_get_issuer_name(key_cert.get()));
+        string signer_subj = x509NameToStr(X509_get_subject_name(signing_cert.get()));
+        if (cert_issuer != signer_subj) {
+            return AssertionFailure() << "Cert " << i << " has wrong issuer.\n" << cert_data.str();
+        }
+
+        if (i == 0) {
+            string cert_sub = x509NameToStr(X509_get_subject_name(key_cert.get()));
+            if ("/CN=Android Keystore Key" != cert_sub) {
+                return AssertionFailure()
+                       << "Leaf cert has wrong subject, should be CN=Android Keystore Key, was "
+                       << cert_sub << '\n'
+                       << cert_data.str();
+            }
+        }
+    }
+
+    if (KeyMintAidlTestBase::dump_Attestations) std::cout << cert_data.str();
+    return AssertionSuccess();
+}
+
+X509_Ptr parse_cert_blob(const vector<uint8_t>& blob) {
+    const uint8_t* p = blob.data();
+    return X509_Ptr(d2i_X509(nullptr /* allocate new */, &p, blob.size()));
 }
 
 }  // namespace test
