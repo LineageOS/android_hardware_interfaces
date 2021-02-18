@@ -30,6 +30,10 @@ namespace hardware {
 namespace contexthub {
 namespace vts_utils {
 
+// App ID with vendor "GoogT" (Google Testing), app identifier 0x555555. This
+// app ID is reserved and must never appear in the list of loaded apps.
+constexpr uint64_t kNonExistentAppId = 0x476f6f6754555555;
+
 #define ASSERT_OK(result) ASSERT_EQ(result, ::android::hardware::contexthub::V1_0::Result::OK)
 #define EXPECT_OK(result) EXPECT_EQ(result, ::android::hardware::contexthub::V1_0::Result::OK)
 
@@ -62,6 +66,29 @@ static std::vector<std::tuple<std::string, std::string>> getHalAndHubIdList() {
     }
 
     return parameters;
+}
+
+// Wait for a callback to occur (signaled by the given future) up to the
+// provided timeout. If the future is invalid or the callback does not come
+// within the given time, returns false.
+template <class ReturnType>
+bool waitForCallback(std::future<ReturnType> future, ReturnType* result,
+                     std::chrono::milliseconds timeout = std::chrono::seconds(5)) {
+    auto expiration = std::chrono::system_clock::now() + timeout;
+
+    EXPECT_NE(result, nullptr);
+    EXPECT_TRUE(future.valid());
+    if (result != nullptr && future.valid()) {
+        std::future_status status = future.wait_until(expiration);
+        EXPECT_NE(status, std::future_status::timeout) << "Timed out waiting for callback";
+
+        if (status == std::future_status::ready) {
+            *result = future.get();
+            return true;
+        }
+    }
+
+    return false;
 }
 
 }  // namespace vts_utils
