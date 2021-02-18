@@ -195,10 +195,12 @@ TEST_P(WifiChipHidlTest, setCountryCode) {
 TEST_P(WifiChipHidlTest, getUsableChannels) {
     uint32_t ifaceModeMask =
         WifiIfaceMode::IFACE_MODE_P2P_CLIENT | WifiIfaceMode::IFACE_MODE_P2P_GO;
+    uint32_t filterMask = IWifiChip::UsableChannelFilter::CELLULAR_COEXISTENCE |
+                          IWifiChip::UsableChannelFilter::CONCURRENCY;
     configureChipForIfaceType(IfaceType::STA, true);
     WifiBand band = WifiBand::BAND_24GHZ_5GHZ_6GHZ;
-    const auto& statusNonEmpty =
-        HIDL_INVOKE(wifi_chip_, getUsableChannels, band, ifaceModeMask);
+    const auto& statusNonEmpty = HIDL_INVOKE(wifi_chip_, getUsableChannels,
+                                             band, ifaceModeMask, filterMask);
     if (statusNonEmpty.first.code != WifiStatusCode::SUCCESS) {
         EXPECT_EQ(WifiStatusCode::ERROR_NOT_SUPPORTED,
                   statusNonEmpty.first.code);

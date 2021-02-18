@@ -33,14 +33,13 @@ class Session : public BnSession {
     ndk::ScopedAStatus revokeChallenge(int32_t cookie, int64_t challenge) override;
 
     ndk::ScopedAStatus enroll(int32_t cookie, const keymaster::HardwareAuthToken& hat,
-                              std::shared_ptr<common::ICancellationSignal>* return_val) override;
+                              std::shared_ptr<common::ICancellationSignal>* out) override;
 
-    ndk::ScopedAStatus authenticate(
-            int32_t cookie, int64_t keystoreOperationId,
-            std::shared_ptr<common::ICancellationSignal>* return_val) override;
+    ndk::ScopedAStatus authenticate(int32_t cookie, int64_t keystoreOperationId,
+                                    std::shared_ptr<common::ICancellationSignal>* out) override;
 
     ndk::ScopedAStatus detectInteraction(
-            int32_t cookie, std::shared_ptr<common::ICancellationSignal>* return_val) override;
+            int32_t cookie, std::shared_ptr<common::ICancellationSignal>* out) override;
 
     ndk::ScopedAStatus enumerateEnrollments(int32_t cookie) override;
 
@@ -62,7 +61,7 @@ class Session : public BnSession {
     ndk::ScopedAStatus onUiReady() override;
 
   private:
-    std::shared_ptr<ISessionCallback> cb_;
+    std::shared_ptr<ISessionCallback> mCb;
 };
 
 }  // namespace aidl::android::hardware::biometrics::fingerprint
