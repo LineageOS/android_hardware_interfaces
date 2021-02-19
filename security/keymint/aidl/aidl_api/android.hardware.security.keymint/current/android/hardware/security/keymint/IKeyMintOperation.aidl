@@ -33,7 +33,8 @@
 package android.hardware.security.keymint;
 @VintfStability
 interface IKeyMintOperation {
-  int update(in @nullable android.hardware.security.keymint.KeyParameterArray inParams, in @nullable byte[] input, in @nullable android.hardware.security.keymint.HardwareAuthToken inAuthToken, in @nullable android.hardware.security.secureclock.TimeStampToken inTimeStampToken, out @nullable android.hardware.security.keymint.KeyParameterArray outParams, out @nullable android.hardware.security.keymint.ByteArray output);
-  byte[] finish(in @nullable android.hardware.security.keymint.KeyParameterArray inParams, in @nullable byte[] input, in @nullable byte[] inSignature, in @nullable android.hardware.security.keymint.HardwareAuthToken authToken, in @nullable android.hardware.security.secureclock.TimeStampToken inTimeStampToken, out @nullable android.hardware.security.keymint.KeyParameterArray outParams);
+  void updateAad(in byte[] input, in @nullable android.hardware.security.keymint.HardwareAuthToken authToken, in @nullable android.hardware.security.secureclock.TimeStampToken timeStampToken);
+  byte[] update(in byte[] input, in @nullable android.hardware.security.keymint.HardwareAuthToken authToken, in @nullable android.hardware.security.secureclock.TimeStampToken timeStampToken);
+  byte[] finish(in @nullable byte[] input, in @nullable byte[] signature, in @nullable android.hardware.security.keymint.HardwareAuthToken authToken, in @nullable android.hardware.security.secureclock.TimeStampToken timestampToken, in @nullable byte[] confirmationToken);
   void abort();
 }
