@@ -35,7 +35,6 @@ cc_binary {
         "libcutils",
         "libhidlbase",
         "liblog",
-        "libxml2",
         "libutils",
         "android.hardware.audio@7.0",
         "android.hardware.audio.common@7.0",

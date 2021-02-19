@@ -16,15 +16,14 @@ hidl_interface {
 cc_library {
     name: "android.hardware.audio.common@7.0-enums",
     vendor_available: true,
-    generated_headers: ["audio_policy_configuration_V7_0"],
-    generated_sources: ["audio_policy_configuration_V7_0"],
+    generated_headers: ["audio_policy_configuration_V7_0_enums"],
+    generated_sources: ["audio_policy_configuration_V7_0_enums"],
     header_libs: ["libxsdc-utils"],
-    export_generated_headers: ["audio_policy_configuration_V7_0"],
+    export_generated_headers: ["audio_policy_configuration_V7_0_enums"],
     export_header_lib_headers: ["libxsdc-utils"],
     export_include_dirs: ["enums/include"],
     shared_libs: [
         "libbase",
         "liblog",
-        "libxml2",
     ],
 }
