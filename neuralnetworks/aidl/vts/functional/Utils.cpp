@@ -135,7 +135,8 @@ void TestBlobAHWB::initialize(uint32_t size) {
     ASSERT_EQ(AHardwareBuffer_allocate(&desc, &mAhwb), 0);
     ASSERT_NE(mAhwb, nullptr);
 
-    const auto sharedMemory = nn::createSharedMemoryFromAHWB(*mAhwb).value();
+    const auto sharedMemory =
+            nn::createSharedMemoryFromAHWB(mAhwb, /*takeOwnership=*/false).value();
     mMapping = nn::map(sharedMemory).value();
     mPtr = static_cast<uint8_t*>(std::get<void*>(mMapping.pointer));
     CHECK_NE(mPtr, nullptr);

@@ -465,7 +465,7 @@ interface IRadio extends @1.5::IRadio {
      * cell information isn't known then the appropriate unknown value will be returned.
      * This does not cause or change the rate of unsolicited cellInfoList().
      *
-     * This is identitcal to getCellInfoList in V1.0, but it requests updated version of CellInfo.
+     * This is identical to getCellInfoList in V1.0, but it requests updated version of CellInfo.
      *
      * @param serial Serial number of request.
      *

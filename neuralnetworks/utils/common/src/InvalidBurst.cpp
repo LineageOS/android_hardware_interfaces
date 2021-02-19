@@ -26,7 +26,8 @@
 
 namespace android::hardware::neuralnetworks::utils {
 
-InvalidBurst::OptionalCacheHold InvalidBurst::cacheMemory(const nn::Memory& /*memory*/) const {
+InvalidBurst::OptionalCacheHold InvalidBurst::cacheMemory(
+        const nn::SharedMemory& /*memory*/) const {
     return nullptr;
 }
 

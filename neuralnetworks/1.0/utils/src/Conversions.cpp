@@ -153,8 +153,8 @@ GeneralResult<Model::OperandValues> unvalidatedConvert(const hidl_vec<uint8_t>& 
     return Model::OperandValues(operandValues.data(), operandValues.size());
 }
 
-GeneralResult<Memory> unvalidatedConvert(const hidl_memory& memory) {
-    return createSharedMemoryFromHidlMemory(memory);
+GeneralResult<SharedMemory> unvalidatedConvert(const hidl_memory& memory) {
+    return hal::utils::createSharedMemoryFromHidlMemory(memory);
 }
 
 GeneralResult<Model> unvalidatedConvert(const hal::V1_0::Model& model) {
@@ -346,9 +346,8 @@ nn::GeneralResult<hidl_vec<uint8_t>> unvalidatedConvert(
     return hidl_vec<uint8_t>(operandValues.data(), operandValues.data() + operandValues.size());
 }
 
-nn::GeneralResult<hidl_memory> unvalidatedConvert(const nn::Memory& memory) {
-    return hidl_memory(memory.name, NN_TRY(hal::utils::hidlHandleFromSharedHandle(memory.handle)),
-                       memory.size);
+nn::GeneralResult<hidl_memory> unvalidatedConvert(const nn::SharedMemory& memory) {
+    return hal::utils::createHidlMemoryFromSharedMemory(memory);
 }
 
 nn::GeneralResult<Model> unvalidatedConvert(const nn::Model& model) {
@@ -392,7 +391,7 @@ nn::GeneralResult<RequestArgument> unvalidatedConvert(
 }
 
 nn::GeneralResult<hidl_memory> unvalidatedConvert(const nn::Request::MemoryPool& memoryPool) {
-    return unvalidatedConvert(std::get<nn::Memory>(memoryPool));
+    return unvalidatedConvert(std::get<nn::SharedMemory>(memoryPool));
 }
 
 nn::GeneralResult<Request> unvalidatedConvert(const nn::Request& request) {
