@@ -71,6 +71,6 @@ cc_library {
     ],
     static_libs: [
         // TODO(swillden): Remove keymint NDK
-        "android.hardware.security.keymint-unstable-ndk_platform",
+        "android.hardware.security.keymint-V1-ndk_platform",
     ],
 }

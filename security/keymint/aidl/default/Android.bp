@@ -14,8 +14,8 @@ cc_binary {
     ],
     shared_libs: [
         "android.hardware.security.keymint-V1-ndk_platform",
-        "android.hardware.security.sharedsecret-unstable-ndk_platform",
-        "android.hardware.security.secureclock-unstable-ndk_platform",
+        "android.hardware.security.sharedsecret-V1-ndk_platform",
+        "android.hardware.security.secureclock-V1-ndk_platform",
         "libbase",
         "libbinder_ndk",
         "libcppbor_external",
@@ -39,7 +39,7 @@ cc_library {
         "libkeymint_remote_prov_support",
     ],
     shared_libs: [
-        "android.hardware.security.keymint-unstable-ndk_platform",
+        "android.hardware.security.keymint-V1-ndk_platform",
         "libbinder_ndk",
         "libcppbor_external",
         "libcppcose",
