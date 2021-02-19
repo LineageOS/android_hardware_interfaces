@@ -18,8 +18,8 @@
 #define ANDROID_AUDIO_POLICY_CONFIGURATION_V7_0_ENUMS_H
 
 #include <sys/types.h>
-#include <algorithm>
-#include <cctype>
+#include <regex>
+#include <string>
 
 #include <android_audio_policy_configuration_V7_0.h>
 
@@ -219,11 +219,9 @@ static inline bool maybeVendorExtension(const std::string& s) {
 }
 
 static inline bool isVendorExtension(const std::string& s) {
-    // Must match the "vendorExtension" rule from the XSD file.
-    static const std::string vendorPrefix = "VX_";
-    return maybeVendorExtension(s) &&
-           std::all_of(s.begin() + vendorPrefix.size(), s.end(),
-                       [](unsigned char c) { return c == '_' || std::isalnum(c); });
+    // Must be the same as the "vendorExtension" rule from the XSD file.
+    static const std::regex vendorExtension("VX_[A-Z0-9]{3,}_[_A-Z0-9]+");
+    return std::regex_match(s.begin(), s.end(), vendorExtension);
 }
 
 static inline bool isUnknownAudioChannelMask(const std::string& mask) {
