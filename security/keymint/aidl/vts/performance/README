@@ -1,0 +1,28 @@
+# KeyMint Benchmark
+
+The KeyMint Benchmark is a standalone tool for measuring the performance of
+ KeyMint implementations.
+
+## Building
+
+Build:
+`m  VtsAidlKeyMintBenchmarkTest`
+
+Transfer to device/emulator:
+`adb sync data`
+
+The benchmark executable will be located at
+ `data/benchmarktest/VtsAidlKeyMintBenchmarkTest` on the device.
+
+## Usage
+
+KeyMint Benchmark is built on [Google microbenchmark
+library](https://github.com/google/benchmark). All of the commandline arguments
+provided by the microbenchmark library are valid, such as
+`--benchmark_filter=<regex>` or `benchmark_out_format={json|console|csv}`.
+In addition to the command line arguments provided by microbenchmark,
+`--service_name=<service_name>` is provided to allow specification of the KeyMint
+fully qualified service name, e.g. specify
+`--service_name=android.hardware.security.keymint.IKeyMintDevice/default` to
+benchmark default implementation of KeyMint.
+
