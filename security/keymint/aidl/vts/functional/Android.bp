@@ -21,6 +21,7 @@ cc_test {
         "use_libaidlvintf_gtest_helper_static",
     ],
     srcs: [
+        "AttestKeyTest.cpp",
         "KeyMintTest.cpp",
     ],
     shared_libs: [
@@ -83,7 +84,7 @@ cc_test {
         "libpuresoftkeymasterdevice",
     ],
     static_libs: [
-        "android.hardware.security.keymint-unstable-ndk_platform",
+        "android.hardware.security.keymint-V1-ndk_platform",
         "libcppcose",
         "libgmock_ndk",
         "libremote_provisioner",

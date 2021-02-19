@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-package android.hardware.power.stats;
+package android.hardware.security.keymint;
 
-/* Indicates the type of an energy consumer reported by the Power Stats HAL */
+import android.hardware.security.keymint.KeyParameter;
+
+/**
+ * Contains a key blob with Tag::ATTEST_KEY that can be used to sign an attestation certificate,
+ * and the DER-encoded X.501 Subject Name that will be placed in the Issuer field of the attestation
+ * certificate.
+ */
 @VintfStability
-enum EnergyConsumerType {
-    OTHER,
-    BLUETOOTH,
-    CPU_CLUSTER,
-    DISPLAY,
-    GNSS,
-    MOBILE_RADIO,
-    WIFI,
+@RustDerive(Clone=true, Eq=true, PartialEq=true, Ord=true, PartialOrd=true, Hash=true)
+parcelable AttestationKey {
+    byte[] keyBlob;
+    KeyParameter[] attestKeyParams;
+    byte[] issuerSubjectName;
 }

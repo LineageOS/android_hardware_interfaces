@@ -32,7 +32,7 @@ parcelable EnergyConsumer {
     int ordinal;
 
     /* Type of this EnergyConsumer */
-    EnergyConsumerType type;
+    EnergyConsumerType type = EnergyConsumerType.OTHER;
 
     /**
      * Unique name of this EnergyConsumer. Vendor/device specific. Opaque to framework
