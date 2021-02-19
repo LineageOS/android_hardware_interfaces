@@ -590,10 +590,10 @@ interface IRadioResponse {
      *   RadioError:NONE must be returned on both success and failure of setup with the
      *              DataCallResponse.status containing the actual status
      *              For all other errors the DataCallResponse is ignored.
+     *   RadioError:REQUEST_NOT_SUPPORTED may be returned when HAL 1.2 or higher is supported.
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:OP_NOT_ALLOWED_BEFORE_REG_TO_NW
      *   RadioError:OP_NOT_ALLOWED_DURING_VOICE_CALL
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:INTERNAL_ERR
      *   RadioError:NO_MEMORY
@@ -856,12 +856,12 @@ interface IRadioResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED may be returned when HAL 1.2 or higher is supported.
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_CALL_ID
      *   RadioError:INVALID_STATE
      *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:INTERNAL_ERR
      *   RadioError:NO_MEMORY
      *   RadioError:NO_RESOURCES
@@ -2420,11 +2420,11 @@ interface IRadioResponse {
      * @param statusInfo LceStatusInfo indicating LCE status
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED may be returned when HAL 1.2 or higher is supported.
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:LCE_NOT_SUPPORTED
      *   RadioError:INTERNAL_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_MEMORY
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
@@ -2436,6 +2436,7 @@ interface IRadioResponse {
      * @param statusInfo LceStatusInfo indicating LCE status
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED may be returned when HAL 1.2 or higher is supported.
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:LCE_NOT_SUPPORTED
@@ -2443,7 +2444,6 @@ interface IRadioResponse {
      *   RadioError:NO_MEMORY
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:SIM_ABSENT
      */
     oneway stopLceServiceResponse(RadioResponseInfo info, LceStatusInfo statusInfo);
@@ -2453,6 +2453,7 @@ interface IRadioResponse {
      * @param lceInfo LceDataInfo indicating LCE data as defined in types.hal
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED may be returned when HAL 1.2 or higher is supported.
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:LCE_NOT_SUPPORTED
@@ -2460,7 +2461,6 @@ interface IRadioResponse {
      *   RadioError:NO_MEMORY
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:SIM_ABSENT
      */
     oneway pullLceDataResponse(RadioResponseInfo info, LceDataInfo lceInfo);
@@ -2534,13 +2534,13 @@ interface IRadioResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED may be returned when HAL 1.2 or higher is supported.
      *   RadioError:NONE
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:NO_MEMORY
      *   RadioError:INTERNAL_ERR
      *   RadioError:SYSTEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
@@ -2550,9 +2550,9 @@ interface IRadioResponse {
      * @param info Response info struct containing response type, serial no. and error
      *
      * Valid errors returned:
+     *   RadioError:REQUEST_NOT_SUPPORTED may be returned when HAL 1.1 or higher is supported.
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:INTERNAL_ERR
      *   RadioError:NO_MEMORY
