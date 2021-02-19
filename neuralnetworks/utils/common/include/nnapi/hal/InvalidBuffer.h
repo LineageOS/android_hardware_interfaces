@@ -31,9 +31,9 @@ class InvalidBuffer final : public nn::IBuffer {
   public:
     nn::Request::MemoryDomainToken getToken() const override;
 
-    nn::GeneralResult<void> copyTo(const nn::Memory& dst) const override;
+    nn::GeneralResult<void> copyTo(const nn::SharedMemory& dst) const override;
 
-    nn::GeneralResult<void> copyFrom(const nn::Memory& src,
+    nn::GeneralResult<void> copyFrom(const nn::SharedMemory& src,
                                      const nn::Dimensions& dimensions) const override;
 };
 

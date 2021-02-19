@@ -304,7 +304,11 @@ GeneralResult<Extension::OperandTypeInformation> unvalidatedConvert(
 }
 
 GeneralResult<SharedHandle> unvalidatedConvert(const hidl_handle& hidlHandle) {
-    return hal::utils::sharedHandleFromNativeHandle(hidlHandle.getNativeHandle());
+    if (hidlHandle.getNativeHandle() == nullptr) {
+        return nullptr;
+    }
+    auto handle = NN_TRY(hal::utils::sharedHandleFromNativeHandle(hidlHandle.getNativeHandle()));
+    return std::make_shared<const Handle>(std::move(handle));
 }
 
 GeneralResult<DeviceType> convert(const hal::V1_2::DeviceType& deviceType) {
@@ -365,7 +369,7 @@ nn::GeneralResult<hidl_vec<uint8_t>> unvalidatedConvert(
     return V1_0::utils::unvalidatedConvert(operandValues);
 }
 
-nn::GeneralResult<hidl_memory> unvalidatedConvert(const nn::Memory& memory) {
+nn::GeneralResult<hidl_memory> unvalidatedConvert(const nn::SharedMemory& memory) {
     return V1_0::utils::unvalidatedConvert(memory);
 }
 
@@ -588,7 +592,10 @@ nn::GeneralResult<Extension::OperandTypeInformation> unvalidatedConvert(
 }
 
 nn::GeneralResult<hidl_handle> unvalidatedConvert(const nn::SharedHandle& handle) {
-    return hal::utils::hidlHandleFromSharedHandle(handle);
+    if (handle == nullptr) {
+        return {};
+    }
+    return hal::utils::hidlHandleFromSharedHandle(*handle);
 }
 
 nn::GeneralResult<DeviceType> convert(const nn::DeviceType& deviceType) {

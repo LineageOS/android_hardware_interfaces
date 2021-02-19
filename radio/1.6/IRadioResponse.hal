@@ -19,6 +19,7 @@ package android.hardware.radio@1.6;
 import @1.0::SendSmsResult;
 import @1.4::RadioAccessFamily;
 import @1.5::IRadioResponse;
+import @1.5::RadioAccessSpecifier;
 import @1.6::Call;
 import @1.6::CellInfo;
 import @1.6::RegStateResult;
@@ -344,6 +345,7 @@ interface IRadioResponse extends @1.5::IRadioResponse {
 
     /**
      * @param info Response info struct containing response type, serial no. and error
+     * @param specifiers List of RadioAccessSpecifiers that are scanned.
      *
      * Valid errors returned:
      *   RadioError:NONE
@@ -351,7 +353,8 @@ interface IRadioResponse extends @1.5::IRadioResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_ARGUMENTS
      */
-    oneway getSystemSelectionChannelsResponse(RadioResponseInfo info);
+    oneway getSystemSelectionChannelsResponse(
+            RadioResponseInfo info, vec<RadioAccessSpecifier> specifiers);
 
     /**
      * This is identical to getCellInfoListResponse_1_5 but uses an updated version of CellInfo.
