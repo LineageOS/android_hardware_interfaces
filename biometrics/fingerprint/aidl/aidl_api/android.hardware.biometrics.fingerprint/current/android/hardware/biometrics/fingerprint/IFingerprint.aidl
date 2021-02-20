@@ -35,4 +35,5 @@ package android.hardware.biometrics.fingerprint;
 interface IFingerprint {
   android.hardware.biometrics.fingerprint.SensorProps[] getSensorProps();
   android.hardware.biometrics.fingerprint.ISession createSession(in int sensorId, in int userId, in android.hardware.biometrics.fingerprint.ISessionCallback cb);
+  void reset();
 }
