@@ -53,6 +53,8 @@ class Session : public BnSession {
     ndk::ScopedAStatus resetLockout(int32_t cookie,
                                     const keymaster::HardwareAuthToken& hat) override;
 
+    ndk::ScopedAStatus close(int32_t cookie) override;
+
     ndk::ScopedAStatus onPointerDown(int32_t pointerId, int32_t x, int32_t y, float minor,
                                      float major) override;
 

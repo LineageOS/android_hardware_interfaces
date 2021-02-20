@@ -27,6 +27,8 @@ class Face : public BnFace {
     ndk::ScopedAStatus createSession(int32_t sensorId, int32_t userId,
                                      const std::shared_ptr<ISessionCallback>& cb,
                                      std::shared_ptr<ISession>* _aidl_return) override;
+
+    ndk::ScopedAStatus reset() override;
 };
 
 }  // namespace aidl::android::hardware::biometrics::face
