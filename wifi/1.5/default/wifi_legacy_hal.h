@@ -340,9 +340,15 @@ struct LinkLayerRadioStats {
     std::vector<wifi_channel_stat> channel_stats;
 };
 
+struct WifiPeerInfo {
+    wifi_peer_info peer_info;
+    std::vector<wifi_rate_stat> rate_stats;
+};
+
 struct LinkLayerStats {
     wifi_iface_stat iface;
     std::vector<LinkLayerRadioStats> radios;
+    std::vector<WifiPeerInfo> peers;
 };
 #pragma GCC diagnostic pop
 
