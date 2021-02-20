@@ -17,19 +17,20 @@
 package android.hardware.biometrics.face;
 
 import android.hardware.biometrics.common.ICancellationSignal;
-import android.hardware.biometrics.face.Feature;
 import android.hardware.biometrics.face.EnrollmentType;
-import android.hardware.keymaster.HardwareAuthToken;
+import android.hardware.biometrics.face.Feature;
 import android.hardware.common.NativeHandle;
+import android.hardware.keymaster.HardwareAuthToken;
 
-/** * A session is a collection of immutable state (sensorId, userId), mutable state (SessionState),
+/**
+ * A session is a collection of immutable state (sensorId, userId), mutable state (SessionState),
  * methods available for the framework to call, and a callback (ISessionCallback) to notify the
  * framework about the events and results. A session is used to establish communication between
  * the framework and the HAL.
  */
 @VintfStability
 interface ISession {
-   /**
+    /**
      * generateChallenge:
      *
      * Begins a secure transaction request. Note that the challenge by itself is not useful. It only
@@ -134,9 +135,9 @@ interface ISession {
      * @param hat See above documentation.
      * @param enrollmentType See the EnrollmentType enum.
      * @param features See the Feature enum.
-     * @param previewSurface A surface provided by the framework if SensorProps#halControlsPreview is
-     *                       set to true. The HAL must send the preview frames to previewSurface if
-     *                       it's not null.
+     * @param previewSurface A surface provided by the framework if SensorProps#halControlsPreview
+     *                       is set to true. The HAL must send the preview frames to previewSurface
+     *                       if it's not null.
      * @return ICancellationSignal An object that can be used by the framework to cancel this
      * operation.
      */
@@ -420,5 +421,22 @@ interface ISession {
      * @param hat HardwareAuthToken See above documentation.
      */
     void resetLockout(in int cookie, in HardwareAuthToken hat);
-}
 
+    /*
+     * Close this session and allow the HAL to release the resources associated with this session.
+     *
+     * A session can only be closed when it's in SessionState::IDLING. Closing a session will
+     * result in a ISessionCallback#onStateChanged call with SessionState::CLOSED.
+     *
+     * If a session is unresponsive or stuck in a state other than SessionState::CLOSED,
+     * IFace#reset could be used as a last resort to terminate the session and recover the HAL
+     * from a bad state.
+     *
+     * All sessions must be explicitly closed. Calling IFace#createSession while there is an active
+     * session is considered an error.
+     *
+     * @param cookie An identifier used to track subsystem operations related to this call path. The
+     *               client must guarantee that it is unique per ISession.
+     */
+    void close(in int cookie);
+}

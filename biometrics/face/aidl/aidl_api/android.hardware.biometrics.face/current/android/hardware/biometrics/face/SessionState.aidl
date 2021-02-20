@@ -34,7 +34,7 @@ package android.hardware.biometrics.face;
 @Backing(type="byte") @VintfStability
 enum SessionState {
   IDLING = 0,
-  TERMINATED = 1,
+  CLOSED = 1,
   GENERATING_CHALLENGE = 2,
   REVOKING_CHALLENGE = 3,
   ENROLLING = 4,

@@ -29,6 +29,8 @@ class Fingerprint final : public BnFingerprint {
     ndk::ScopedAStatus createSession(int32_t sensorId, int32_t userId,
                                      const std::shared_ptr<ISessionCallback>& cb,
                                      std::shared_ptr<ISession>* out) override;
+
+    ndk::ScopedAStatus reset() override;
 };
 
 }  // namespace aidl::android::hardware::biometrics::fingerprint
