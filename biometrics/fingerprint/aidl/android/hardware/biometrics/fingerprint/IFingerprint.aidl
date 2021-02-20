@@ -35,6 +35,10 @@ interface IFingerprint {
      * Creates a session which can then be used by the framework to perform operations such as
      * enroll, authenticate, etc for the given sensorId and userId.
      *
+     * Calling this method while there is an active session is considered an error. If the
+     * framework is in a bad state and for some reason cannot close its session, it should use
+     * the reset method below.
+     *
      * A physical sensor identified by sensorId typically supports only a single in-flight session
      * at a time. As such, if a session is currently in a state other than SessionState::IDLING, the
      * HAL MUST finish or cancel the current operation and return to SessionState::IDLING before the
@@ -61,4 +65,14 @@ interface IFingerprint {
      * @return A new session
      */
     ISession createSession(in int sensorId, in int userId, in ISessionCallback cb);
+
+    /**
+     * Resets the HAL into a clean state, forcing it to cancel all of the pending operations, close
+     * its current session, and release all of the acquired resources.
+     *
+     * This should be used as a last resort to recover the HAL if the current session becomes
+     * unresponsive. The implementation might choose to restart the HAL process to get back into a
+     * good state.
+     */
+    void reset();
 }

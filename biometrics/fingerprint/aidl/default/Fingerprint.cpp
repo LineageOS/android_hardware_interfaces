@@ -58,4 +58,9 @@ ndk::ScopedAStatus Fingerprint::createSession(int32_t /*sensorId*/, int32_t /*us
     *out = SharedRefBase::make<Session>(cb);
     return ndk::ScopedAStatus::ok();
 }
+
+ndk::ScopedAStatus Fingerprint::reset() {
+    return ndk::ScopedAStatus::ok();
+}
+
 }  // namespace aidl::android::hardware::biometrics::fingerprint
