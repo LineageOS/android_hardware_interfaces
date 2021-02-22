@@ -211,6 +211,11 @@ TEST_P(TunerFrontendHidlTest, GetFrontendDtmbCaps) {
     mFrontendTests.getFrontendDtmbCapsTest();
 }
 
+TEST_P(TunerFrontendHidlTest, LinkToCiCam) {
+    description("Test Frontend link to CiCam");
+    mFrontendTests.tuneTest(frontendArray[defaultFrontend]);
+}
+
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, TunerBroadcastHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(ITuner::descriptor)),
