@@ -274,6 +274,7 @@ AssertionResult FilterTests::startFilter(uint64_t filterId) {
 AssertionResult FilterTests::stopFilter(uint64_t filterId) {
     EXPECT_TRUE(mFilters[filterId]) << "Test with getNewlyOpenedFilterId first.";
     Result status = mFilters[filterId]->stop();
+
     return AssertionResult(status == Result::SUCCESS);
 }
 

@@ -103,6 +103,8 @@ struct FilterConfig {
 
 struct FrontendConfig {
     bool isSoftwareFe;
+    bool canConnectToCiCam;
+    uint32_t ciCamId;
     FrontendType type;
     FrontendSettings settings;
     FrontendSettingsExt1_1 settingsExt1_1;
@@ -121,6 +123,7 @@ static FrontendConfig frontendArray[FILTER_MAX];
 static FrontendConfig frontendScanArray[SCAN_MAX];
 static FilterConfig filterArray[FILTER_MAX];
 static DvrConfig dvrArray[DVR_MAX];
+static int defaultFrontend = DVBT;
 
 /** Configuration array for the frontend tune test */
 inline void initFrontendConfig() {
@@ -150,6 +153,8 @@ inline void initFrontendConfig() {
     frontendArray[DVBT].tuneStatusTypes = types;
     frontendArray[DVBT].expectTuneStatuses = statuses;
     frontendArray[DVBT].isSoftwareFe = true;
+    frontendArray[DVBT].canConnectToCiCam = true;
+    frontendArray[DVBT].ciCamId = 0;
     frontendArray[DVBT].settingsExt1_1.settingExt.dvbt({
             .transmissionMode =
                     android::hardware::tv::tuner::V1_1::FrontendDvbtTransmissionMode::MODE_8K_E,
