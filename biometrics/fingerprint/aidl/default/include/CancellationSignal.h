@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,30 +16,27 @@
 
 #pragma once
 
-#include <aidl/android/hardware/biometrics/fingerprint/BnFingerprint.h>
+#include <aidl/android/hardware/biometrics/common/BnCancellationSignal.h>
+#include <aidl/android/hardware/biometrics/fingerprint/ISessionCallback.h>
+#include <functional>
+#include <future>
 
-#include "FakeFingerprintEngine.h"
-#include "Session.h"
 #include "WorkerThread.h"
 
 namespace aidl::android::hardware::biometrics::fingerprint {
 
-class Fingerprint : public BnFingerprint {
+class CancellationSignal : public common::BnCancellationSignal {
   public:
-    Fingerprint();
+    explicit CancellationSignal(std::promise<void>&& cancellationPromise);
 
-    ndk::ScopedAStatus getSensorProps(std::vector<SensorProps>* out) override;
-
-    ndk::ScopedAStatus createSession(int32_t sensorId, int32_t userId,
-                                     const std::shared_ptr<ISessionCallback>& cb,
-                                     std::shared_ptr<ISession>* out) override;
-
-    ndk::ScopedAStatus reset() override;
+    ndk::ScopedAStatus cancel() override;
 
   private:
-    std::unique_ptr<FakeFingerprintEngine> mEngine;
-    WorkerThread mWorker;
-    std::weak_ptr<Session> mSession;
+    std::promise<void> mCancellationPromise;
 };
+
+// Returns whether the given cancellation future is ready, i.e. whether the operation corresponding
+// to this future should be cancelled.
+bool shouldCancel(const std::future<void>& cancellationFuture);
 
 }  // namespace aidl::android::hardware::biometrics::fingerprint

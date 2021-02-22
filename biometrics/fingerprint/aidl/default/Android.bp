@@ -6,9 +6,11 @@ cc_binary {
     vintf_fragments: ["fingerprint-default.xml"],
     local_include_dirs: ["include"],
     srcs: [
-        "main.cpp",
+        "CancellationSignal.cpp",
         "Fingerprint.cpp",
         "Session.cpp",
+        "WorkerThread.cpp",
+        "main.cpp",
     ],
     shared_libs: [
         "libbase",
