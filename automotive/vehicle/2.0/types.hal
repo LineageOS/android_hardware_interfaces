@@ -354,6 +354,12 @@ enum VehicleProperty : int32_t {
     /**
      * Speed of the vehicle
      *
+     * The value must be positive when the vehicle is moving forward and negative when
+     * the vehicle is moving backward. This value is independent of gear value
+     * (CURRENT_GEAR or GEAR_SELECTION), for example, if GEAR_SELECTION is GEAR_NEUTRAL,
+     * PERF_VEHICLE_SPEED is positive when the vehicle is moving forward, negative when moving
+     * backward, and zero when not moving.
+     *
      * @change_mode VehiclePropertyChangeMode:CONTINUOUS
      * @access VehiclePropertyAccess:READ
      * @unit VehicleUnit:METER_PER_SEC

@@ -77,7 +77,10 @@ Filter::Filter(DemuxFilterType type, uint64_t filterId, uint32_t bufferSize,
     }
 }
 
-Filter::~Filter() {}
+Filter::~Filter() {
+    mFilterThreadRunning = false;
+    std::lock_guard<std::mutex> lock(mFilterThreadLock);
+}
 
 Return<void> Filter::getId64Bit(getId64Bit_cb _hidl_cb) {
     ALOGV("%s", __FUNCTION__);
@@ -137,15 +140,14 @@ Return<Result> Filter::configure(const DemuxFilterSettings& settings) {
 
 Return<Result> Filter::start() {
     ALOGV("%s", __FUNCTION__);
-
+    mFilterThreadRunning = true;
     return startFilterLoop();
 }
 
 Return<Result> Filter::stop() {
     ALOGV("%s", __FUNCTION__);
-
     mFilterThreadRunning = false;
-
+    std::lock_guard<std::mutex> lock(mFilterThreadLock);
     return Result::SUCCESS;
 }
 
@@ -185,6 +187,8 @@ Return<Result> Filter::releaseAvHandle(const hidl_handle& avMemory, uint64_t avD
 Return<Result> Filter::close() {
     ALOGV("%s", __FUNCTION__);
 
+    mFilterThreadRunning = false;
+    std::lock_guard<std::mutex> lock(mFilterThreadLock);
     return mDemux->removeFilter(mFilterId);
 }
 
@@ -331,9 +335,11 @@ void* Filter::__threadLoopFilter(void* user) {
 }
 
 void Filter::filterThreadLoop() {
-    ALOGD("[Filter] filter %" PRIu64 " threadLoop start.", mFilterId);
+    if (!mFilterThreadRunning) {
+        return;
+    }
     std::lock_guard<std::mutex> lock(mFilterThreadLock);
-    mFilterThreadRunning = true;
+    ALOGD("[Filter] filter %" PRIu64 " threadLoop start.", mFilterId);
 
     // For the first time of filter output, implementation needs to send the filter
     // Event Callback without waiting for the DATA_CONSUMED to init the process.
@@ -382,6 +388,9 @@ void Filter::filterThreadLoop() {
         // We do not wait for the last round of written data to be read to finish the thread
         // because the VTS can verify the reading itself.
         for (int i = 0; i < SECTION_WRITE_COUNT; i++) {
+            if (!mFilterThreadRunning) {
+                break;
+            }
             while (mFilterThreadRunning && mIsUsingFMQ) {
                 status_t status = mFilterEventFlag->wait(
                         static_cast<uint32_t>(DemuxQueueNotifyBits::DATA_CONSUMED), &efState,
@@ -417,9 +426,8 @@ void Filter::filterThreadLoop() {
                 break;
             }
         }
-        mFilterThreadRunning = false;
+        break;
     }
-
     ALOGD("[Filter] filter thread ended.");
 }
 

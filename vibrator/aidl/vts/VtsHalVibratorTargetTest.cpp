@@ -538,6 +538,28 @@ TEST_P(VibratorAidl, AlwaysOn) {
     }
 }
 
+TEST_P(VibratorAidl, GetResonantFrequency) {
+    float resonantFrequency;
+    Status status = vibrator->getResonantFrequency(&resonantFrequency);
+    if (capabilities & IVibrator::CAP_GET_RESONANT_FREQUENCY) {
+        ASSERT_NE(resonantFrequency, 0);
+        EXPECT_EQ(status.exceptionCode(), Status::EX_NONE);
+    } else {
+        EXPECT_EQ(status.exceptionCode(), Status::EX_UNSUPPORTED_OPERATION);
+    }
+}
+
+TEST_P(VibratorAidl, GetQFactor) {
+    float qFactor;
+    Status status = vibrator->getQFactor(&qFactor);
+    if (capabilities & IVibrator::CAP_GET_Q_FACTOR) {
+        ASSERT_NE(qFactor, 0);
+        EXPECT_EQ(status.exceptionCode(), Status::EX_NONE);
+    } else {
+        EXPECT_EQ(status.exceptionCode(), Status::EX_UNSUPPORTED_OPERATION);
+    }
+}
+
 std::vector<std::tuple<int32_t, int32_t>> GenerateVibratorMapping() {
     std::vector<std::tuple<int32_t, int32_t>> tuples;
     auto managerAidlNames = android::getAidlHalInstanceNames(IVibratorManager::descriptor);

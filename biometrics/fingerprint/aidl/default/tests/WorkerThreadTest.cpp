@@ -25,13 +25,14 @@
 
 namespace {
 
+using aidl::android::hardware::biometrics::fingerprint::Callable;
 using aidl::android::hardware::biometrics::fingerprint::WorkerThread;
 using namespace std::chrono_literals;
 
 TEST(WorkerThreadTest, ScheduleReturnsTrueWhenQueueHasSpace) {
     WorkerThread worker(1 /*maxQueueSize*/);
     for (int i = 0; i < 100; ++i) {
-        EXPECT_TRUE(worker.schedule([] {}));
+        EXPECT_TRUE(worker.schedule(Callable::from([] {})));
         // Allow enough time for the previous task to be processed.
         std::this_thread::sleep_for(2ms);
     }
@@ -40,16 +41,16 @@ TEST(WorkerThreadTest, ScheduleReturnsTrueWhenQueueHasSpace) {
 TEST(WorkerThreadTest, ScheduleReturnsFalseWhenQueueIsFull) {
     WorkerThread worker(2 /*maxQueueSize*/);
     // Add a long-running task.
-    worker.schedule([] { std::this_thread::sleep_for(1s); });
+    worker.schedule(Callable::from([] { std::this_thread::sleep_for(1s); }));
 
     // Allow enough time for the worker to start working on the previous task.
     std::this_thread::sleep_for(2ms);
 
     // Fill the worker's queue to the maximum.
-    worker.schedule([] {});
-    worker.schedule([] {});
+    worker.schedule(Callable::from([] {}));
+    worker.schedule(Callable::from([] {}));
 
-    EXPECT_FALSE(worker.schedule([] {}));
+    EXPECT_FALSE(worker.schedule(Callable::from([] {})));
 }
 
 TEST(WorkerThreadTest, TasksExecuteInOrder) {
@@ -58,19 +59,19 @@ TEST(WorkerThreadTest, TasksExecuteInOrder) {
 
     std::vector<int> results;
     for (int i = 0; i < NUM_TASKS; ++i) {
-        worker.schedule([&results, i] {
+        worker.schedule(Callable::from([&results, i] {
             // Delay tasks differently to provoke races.
             std::this_thread::sleep_for(std::chrono::nanoseconds(100 - i % 100));
             // Unguarded write to results to provoke races.
             results.push_back(i);
-        });
+        }));
     }
 
     std::promise<void> promise;
     auto future = promise.get_future();
 
     // Schedule a special task to signal when all of the tasks are finished.
-    worker.schedule([&promise] { promise.set_value(); });
+    worker.schedule(Callable::from([&promise] { promise.set_value(); }));
     auto status = future.wait_for(1s);
     ASSERT_EQ(status, std::future_status::ready);
 
@@ -86,11 +87,11 @@ TEST(WorkerThreadTest, ExecutionStopsAfterWorkerIsDestroyed) {
 
     {
         WorkerThread worker(2 /*maxQueueSize*/);
-        worker.schedule([&promise1] {
+        worker.schedule(Callable::from([&promise1] {
             promise1.set_value();
             std::this_thread::sleep_for(200ms);
-        });
-        worker.schedule([&promise2] { promise2.set_value(); });
+        }));
+        worker.schedule(Callable::from([&promise2] { promise2.set_value(); }));
 
         // Make sure the first task is executing.
         auto status1 = future1.wait_for(1s);
