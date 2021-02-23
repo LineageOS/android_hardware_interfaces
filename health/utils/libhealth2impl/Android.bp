@@ -14,6 +14,15 @@
 
 // A helper library for health@2.x HAL implementation.
 // HAL implementations can link to this library and extend the Health class.
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
 cc_library_static {
     name: "libhealth2impl",
     vendor_available: true,
