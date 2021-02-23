@@ -1019,6 +1019,14 @@ bool convertLegacyLinkLayerStatsToHidl(
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].mpdu_lost;
     hidl_stats->iface.V1_0.wmeBePktStats.retries =
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].retries;
+    hidl_stats->iface.wmeBeContentionTimeStats.contentionTimeMinInUsec =
+        legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].contention_time_min;
+    hidl_stats->iface.wmeBeContentionTimeStats.contentionTimeMaxInUsec =
+        legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].contention_time_max;
+    hidl_stats->iface.wmeBeContentionTimeStats.contentionTimeAvgInUsec =
+        legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].contention_time_avg;
+    hidl_stats->iface.wmeBeContentionTimeStats.contentionNumSamples =
+        legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].contention_num_samples;
     hidl_stats->iface.V1_0.wmeBkPktStats.rxMpdu =
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].rx_mpdu;
     hidl_stats->iface.V1_0.wmeBkPktStats.txMpdu =
@@ -1027,6 +1035,14 @@ bool convertLegacyLinkLayerStatsToHidl(
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].mpdu_lost;
     hidl_stats->iface.V1_0.wmeBkPktStats.retries =
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].retries;
+    hidl_stats->iface.wmeBkContentionTimeStats.contentionTimeMinInUsec =
+        legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].contention_time_min;
+    hidl_stats->iface.wmeBkContentionTimeStats.contentionTimeMaxInUsec =
+        legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].contention_time_max;
+    hidl_stats->iface.wmeBkContentionTimeStats.contentionTimeAvgInUsec =
+        legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].contention_time_avg;
+    hidl_stats->iface.wmeBkContentionTimeStats.contentionNumSamples =
+        legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].contention_num_samples;
     hidl_stats->iface.V1_0.wmeViPktStats.rxMpdu =
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].rx_mpdu;
     hidl_stats->iface.V1_0.wmeViPktStats.txMpdu =
@@ -1035,6 +1051,14 @@ bool convertLegacyLinkLayerStatsToHidl(
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].mpdu_lost;
     hidl_stats->iface.V1_0.wmeViPktStats.retries =
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].retries;
+    hidl_stats->iface.wmeViContentionTimeStats.contentionTimeMinInUsec =
+        legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].contention_time_min;
+    hidl_stats->iface.wmeViContentionTimeStats.contentionTimeMaxInUsec =
+        legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].contention_time_max;
+    hidl_stats->iface.wmeViContentionTimeStats.contentionTimeAvgInUsec =
+        legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].contention_time_avg;
+    hidl_stats->iface.wmeViContentionTimeStats.contentionNumSamples =
+        legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].contention_num_samples;
     hidl_stats->iface.V1_0.wmeVoPktStats.rxMpdu =
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].rx_mpdu;
     hidl_stats->iface.V1_0.wmeVoPktStats.txMpdu =
@@ -1043,6 +1067,14 @@ bool convertLegacyLinkLayerStatsToHidl(
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].mpdu_lost;
     hidl_stats->iface.V1_0.wmeVoPktStats.retries =
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].retries;
+    hidl_stats->iface.wmeVoContentionTimeStats.contentionTimeMinInUsec =
+        legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].contention_time_min;
+    hidl_stats->iface.wmeVoContentionTimeStats.contentionTimeMaxInUsec =
+        legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].contention_time_max;
+    hidl_stats->iface.wmeVoContentionTimeStats.contentionTimeAvgInUsec =
+        legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].contention_time_avg;
+    hidl_stats->iface.wmeVoContentionTimeStats.contentionNumSamples =
+        legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].contention_num_samples;
     hidl_stats->iface.timeSliceDutyCycleInPercent =
         legacy_stats.iface.info.time_slicing_duty_cycle_percent;
     // radio legacy_stats conversion.

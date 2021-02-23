@@ -138,21 +138,41 @@ TEST_F(HidlStructUtilTest, canConvertLegacyLinkLayerStatsToHidl) {
     legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].tx_mpdu = rand();
     legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].mpdu_lost = rand();
     legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].retries = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].contention_time_min = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].contention_time_max = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].contention_time_avg = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].contention_num_samples =
+        rand();
 
     legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].rx_mpdu = rand();
     legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].tx_mpdu = rand();
     legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].mpdu_lost = rand();
     legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].retries = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].contention_time_min = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].contention_time_max = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].contention_time_avg = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].contention_num_samples =
+        rand();
 
     legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].rx_mpdu = rand();
     legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].tx_mpdu = rand();
     legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].mpdu_lost = rand();
     legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].retries = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].contention_time_min = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].contention_time_max = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].contention_time_avg = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].contention_num_samples =
+        rand();
 
     legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].rx_mpdu = rand();
     legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].tx_mpdu = rand();
     legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].mpdu_lost = rand();
     legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].retries = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].contention_time_min = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].contention_time_max = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].contention_time_avg = rand();
+    legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].contention_num_samples =
+        rand();
 
     legacy_stats.iface.info.time_slicing_duty_cycle_percent = rand();
 
@@ -197,6 +217,15 @@ TEST_F(HidlStructUtilTest, canConvertLegacyLinkLayerStatsToHidl) {
               converted.iface.V1_0.wmeBePktStats.lostMpdu);
     EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].retries,
               converted.iface.V1_0.wmeBePktStats.retries);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].contention_time_min,
+              converted.iface.wmeBeContentionTimeStats.contentionTimeMinInUsec);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].contention_time_max,
+              converted.iface.wmeBeContentionTimeStats.contentionTimeMaxInUsec);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].contention_time_avg,
+              converted.iface.wmeBeContentionTimeStats.contentionTimeAvgInUsec);
+    EXPECT_EQ(
+        legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].contention_num_samples,
+        converted.iface.wmeBeContentionTimeStats.contentionNumSamples);
 
     EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].rx_mpdu,
               converted.iface.V1_0.wmeBkPktStats.rxMpdu);
@@ -206,6 +235,15 @@ TEST_F(HidlStructUtilTest, canConvertLegacyLinkLayerStatsToHidl) {
               converted.iface.V1_0.wmeBkPktStats.lostMpdu);
     EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].retries,
               converted.iface.V1_0.wmeBkPktStats.retries);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].contention_time_min,
+              converted.iface.wmeBkContentionTimeStats.contentionTimeMinInUsec);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].contention_time_max,
+              converted.iface.wmeBkContentionTimeStats.contentionTimeMaxInUsec);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].contention_time_avg,
+              converted.iface.wmeBkContentionTimeStats.contentionTimeAvgInUsec);
+    EXPECT_EQ(
+        legacy_stats.iface.ac[legacy_hal::WIFI_AC_BK].contention_num_samples,
+        converted.iface.wmeBkContentionTimeStats.contentionNumSamples);
 
     EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].rx_mpdu,
               converted.iface.V1_0.wmeViPktStats.rxMpdu);
@@ -215,6 +253,15 @@ TEST_F(HidlStructUtilTest, canConvertLegacyLinkLayerStatsToHidl) {
               converted.iface.V1_0.wmeViPktStats.lostMpdu);
     EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].retries,
               converted.iface.V1_0.wmeViPktStats.retries);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].contention_time_min,
+              converted.iface.wmeViContentionTimeStats.contentionTimeMinInUsec);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].contention_time_max,
+              converted.iface.wmeViContentionTimeStats.contentionTimeMaxInUsec);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].contention_time_avg,
+              converted.iface.wmeViContentionTimeStats.contentionTimeAvgInUsec);
+    EXPECT_EQ(
+        legacy_stats.iface.ac[legacy_hal::WIFI_AC_VI].contention_num_samples,
+        converted.iface.wmeViContentionTimeStats.contentionNumSamples);
 
     EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].rx_mpdu,
               converted.iface.V1_0.wmeVoPktStats.rxMpdu);
@@ -224,6 +271,15 @@ TEST_F(HidlStructUtilTest, canConvertLegacyLinkLayerStatsToHidl) {
               converted.iface.V1_0.wmeVoPktStats.lostMpdu);
     EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].retries,
               converted.iface.V1_0.wmeVoPktStats.retries);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].contention_time_min,
+              converted.iface.wmeVoContentionTimeStats.contentionTimeMinInUsec);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].contention_time_max,
+              converted.iface.wmeVoContentionTimeStats.contentionTimeMaxInUsec);
+    EXPECT_EQ(legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].contention_time_avg,
+              converted.iface.wmeVoContentionTimeStats.contentionTimeAvgInUsec);
+    EXPECT_EQ(
+        legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].contention_num_samples,
+        converted.iface.wmeVoContentionTimeStats.contentionNumSamples);
 
     EXPECT_EQ(legacy_stats.iface.info.time_slicing_duty_cycle_percent,
               converted.iface.timeSliceDutyCycleInPercent);
