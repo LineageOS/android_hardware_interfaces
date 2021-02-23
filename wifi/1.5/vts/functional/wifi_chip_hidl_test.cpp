@@ -147,6 +147,7 @@ TEST_P(WifiChipHidlTest, setMultiStaUseCase) {
  * setCoexUnsafeChannels
  */
 TEST_P(WifiChipHidlTest, setCoexUnsafeChannels) {
+    configureChipForIfaceType(IfaceType::STA, true);
     // Test with empty vector of CoexUnsafeChannels
     std::vector<IWifiChip::CoexUnsafeChannel> vec;
     const auto& statusEmpty =
