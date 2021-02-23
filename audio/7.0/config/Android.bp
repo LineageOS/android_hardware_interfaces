@@ -13,3 +13,19 @@ xsd_config {
     package_name: "android.audio.policy.configuration.V7_0",
     nullability: true,
 }
+
+xsd_config {
+    name: "audio_policy_configuration_V7_0_enums",
+    srcs: ["audio_policy_configuration.xsd"],
+    package_name: "android.audio.policy.configuration.V7_0",
+    nullability: true,
+    enums_only: true,
+}
+
+xsd_config {
+    name: "audio_policy_configuration_V7_0_parser",
+    srcs: ["audio_policy_configuration.xsd"],
+    package_name: "android.audio.policy.configuration.V7_0",
+    nullability: true,
+    parser_only: true,
+}

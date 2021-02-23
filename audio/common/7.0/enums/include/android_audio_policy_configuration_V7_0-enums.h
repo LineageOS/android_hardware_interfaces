@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_AUDIO_POLICY_CONFIGURATION_V7_0_ENUMS_H
-#define ANDROID_AUDIO_POLICY_CONFIGURATION_V7_0_ENUMS_H
+#ifndef ANDROID_AUDIO_POLICY_CONFIGURATION_V7_0__ENUMS_H
+#define ANDROID_AUDIO_POLICY_CONFIGURATION_V7_0__ENUMS_H
 
 #include <sys/types.h>
 #include <algorithm>
 #include <cctype>
 
-#include <android_audio_policy_configuration_V7_0.h>
+#include <android_audio_policy_configuration_V7_0_enums.h>
 
 namespace android::audio::policy::configuration::V7_0 {
 
@@ -264,4 +264,4 @@ static inline bool isUnknownAudioUsage(const std::string& usage) {
 
 }  // namespace android::audio::policy::configuration::V7_0
 
-#endif  // ANDROID_AUDIO_POLICY_CONFIGURATION_V7_0_ENUMS_H
+#endif  // ANDROID_AUDIO_POLICY_CONFIGURATION_V7_0__ENUMS_H
