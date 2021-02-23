@@ -311,13 +311,17 @@
         </xs:restriction>
     </xs:simpleType>
     <xs:simpleType name="vendorExtension">
-        <!-- Vendor extension names must be prefixed by "VX_" to distinguish them from AOSP values.
-             Vendor are encouraged to namespace their module names to avoid conflicts.
-             Example for an hypothetical Google virtual reality device:
-                <devicePort tagName="VR" type="VX_GOOGLE_VR" role="sink">
+        <!-- Vendor extension names must be prefixed by "VX_" to distinguish them from
+             AOSP values. Vendors must namespace their names to avoid conflicts. The
+             namespace part must only use capital latin characters and decimal digits and
+             consist of at least 3 characters. The part of the extension name after the
+             namespace may in addition include underscores. Example for a hypothetical
+             Google virtual reality device:
+
+                 <devicePort tagName="VR" type="VX_GOOGLE_VR" role="sink" />
         -->
         <xs:restriction base="xs:string">
-            <xs:pattern value="VX_[_a-zA-Z0-9]+"/>
+            <xs:pattern value="VX_[A-Z0-9]{3,}_[_A-Z0-9]+"/>
         </xs:restriction>
     </xs:simpleType>
     <xs:simpleType name="extendableAudioDevice">
