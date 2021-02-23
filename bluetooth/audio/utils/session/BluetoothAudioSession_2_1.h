@@ -40,6 +40,11 @@ class BluetoothAudioSession_2_1 {
       const ::android::hardware::bluetooth::audio::V2_1::AudioConfiguration&
           audio_config);
 
+  static ::android::hardware::bluetooth::audio::V2_1::AudioConfiguration
+      invalidSoftwareAudioConfiguration;
+  static ::android::hardware::bluetooth::audio::V2_1::AudioConfiguration
+      invalidOffloadAudioConfiguration;
+
  public:
   BluetoothAudioSession_2_1(
       const ::android::hardware::bluetooth::audio::V2_1::SessionType&
@@ -60,6 +65,13 @@ class BluetoothAudioSession_2_1 {
   // AudioConfiguration
   const ::android::hardware::bluetooth::audio::V2_1::AudioConfiguration&
   GetAudioConfig();
+
+  static constexpr ::android::hardware::bluetooth::audio::V2_1::
+      AudioConfiguration& kInvalidSoftwareAudioConfiguration =
+          invalidSoftwareAudioConfiguration;
+  static constexpr ::android::hardware::bluetooth::audio::V2_1::
+      AudioConfiguration& kInvalidOffloadAudioConfiguration =
+          invalidOffloadAudioConfiguration;
 };
 
 class BluetoothAudioSessionInstance_2_1 {
