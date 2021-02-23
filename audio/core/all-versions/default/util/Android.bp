@@ -104,7 +104,6 @@ cc_library {
         "android.hardware.audio.common@7.0-util",
         "android.hardware.audio@7.0",
         "libbase",
-        "libxml2",
     ],
     cflags: [
         "-DMAJOR_VERSION=7",
