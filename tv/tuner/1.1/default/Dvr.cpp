@@ -37,7 +37,10 @@ Dvr::Dvr(DvrType type, uint32_t bufferSize, const sp<IDvrCallback>& cb, sp<Demux
     mDemux = demux;
 }
 
-Dvr::~Dvr() {}
+Dvr::~Dvr() {
+    mDvrThreadRunning = false;
+    lock_guard<mutex> lock(mDvrThreadLock);
+}
 
 Return<void> Dvr::getQueueDesc(getQueueDesc_cb _hidl_cb) {
     ALOGV("%s", __FUNCTION__);
@@ -118,6 +121,9 @@ Return<Result> Dvr::detachFilter(const sp<V1_0::IFilter>& filter) {
 
 Return<Result> Dvr::start() {
     ALOGV("%s", __FUNCTION__);
+    if (mDvrThreadRunning) {
+        return Result::SUCCESS;
+    }
 
     if (!mCallback) {
         return Result::NOT_INITIALIZED;
@@ -128,6 +134,7 @@ Return<Result> Dvr::start() {
     }
 
     if (mType == DvrType::PLAYBACK) {
+        mDvrThreadRunning = true;
         pthread_create(&mDvrThread, NULL, __threadLoopPlayback, this);
         pthread_setname_np(mDvrThread, "playback_waiting_loop");
     } else if (mType == DvrType::RECORD) {
@@ -144,7 +151,6 @@ Return<Result> Dvr::stop() {
     ALOGV("%s", __FUNCTION__);
 
     mDvrThreadRunning = false;
-
     lock_guard<mutex> lock(mDvrThreadLock);
 
     mIsRecordStarted = false;
@@ -164,6 +170,8 @@ Return<Result> Dvr::flush() {
 Return<Result> Dvr::close() {
     ALOGV("%s", __FUNCTION__);
 
+    mDvrThreadRunning = false;
+    lock_guard<mutex> lock(mDvrThreadLock);
     return Result::SUCCESS;
 }
 
@@ -199,7 +207,6 @@ void* Dvr::__threadLoopPlayback(void* user) {
 void Dvr::playbackThreadLoop() {
     ALOGD("[Dvr] playback threadLoop start.");
     lock_guard<mutex> lock(mDvrThreadLock);
-    mDvrThreadRunning = true;
 
     while (mDvrThreadRunning) {
         uint32_t efState = 0;
