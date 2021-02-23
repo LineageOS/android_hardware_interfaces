@@ -65,6 +65,40 @@ BluetoothAudioSession_2_1::GetAudioSession() {
   return audio_session;
 }
 
+// The control function is for the bluetooth_audio module to get the current
+// AudioConfiguration
+const ::android::hardware::bluetooth::audio::V2_1::AudioConfiguration
+BluetoothAudioSession_2_1::GetAudioConfig() {
+  std::lock_guard<std::recursive_mutex> guard(audio_session->mutex_);
+  if (audio_session->IsSessionReady()) {
+    // If session is unknown it means it should be 2.0 type
+    if (session_type_2_1_ != SessionType_2_1::UNKNOWN)
+      return audio_config_2_1_;
+
+    ::android::hardware::bluetooth::audio::V2_1::AudioConfiguration toConf;
+    const AudioConfiguration fromConf = GetAudioSession()->GetAudioConfig();
+    // pcmConfig only differs between 2.0 and 2.1 in AudioConfiguration
+    if (fromConf.getDiscriminator() ==
+        AudioConfiguration::hidl_discriminator::codecConfig) {
+      toConf.codecConfig() = fromConf.codecConfig();
+    } else {
+      toConf.pcmConfig() = {
+          .sampleRate = static_cast<
+              ::android::hardware::bluetooth::audio::V2_1::SampleRate>(
+              fromConf.pcmConfig().sampleRate),
+          .channelMode = fromConf.pcmConfig().channelMode,
+          .bitsPerSample = fromConf.pcmConfig().bitsPerSample,
+          .dataIntervalUs = 0};
+    }
+    return toConf;
+  } else if (session_type_2_1_ ==
+             SessionType_2_1::A2DP_HARDWARE_OFFLOAD_DATAPATH) {
+    return kInvalidOffloadAudioConfiguration;
+  } else {
+    return kInvalidSoftwareAudioConfiguration;
+  }
+}
+
 bool BluetoothAudioSession_2_1::UpdateAudioConfig(
     const ::android::hardware::bluetooth::audio::V2_1::AudioConfiguration&
         audio_config) {
