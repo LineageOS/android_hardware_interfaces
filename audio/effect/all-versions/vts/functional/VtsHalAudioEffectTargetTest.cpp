@@ -31,7 +31,6 @@
 #include <android/hidl/memory/1.0/IMemory.h>
 #if MAJOR_VERSION >= 7
 #include <android_audio_policy_configuration_V7_0-enums.h>
-#include <android_audio_policy_configuration_V7_0.h>
 #endif
 
 #include <common/all-versions/VersionUtils.h>
