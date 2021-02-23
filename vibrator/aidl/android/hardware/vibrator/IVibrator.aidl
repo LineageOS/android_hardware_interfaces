@@ -52,6 +52,14 @@ interface IVibrator {
      * Whether alwaysOnEnable/alwaysOnDisable is supported.
      */
     const int CAP_ALWAYS_ON_CONTROL = 1 << 6;
+    /**
+     * Whether getResonantFrequency is supported.
+     */
+    const int CAP_GET_RESONANT_FREQUENCY = 1 << 7;
+    /**
+     * Whether getQFactor is supported.
+     */
+    const int CAP_GET_Q_FACTOR = 1 << 8;
 
     /**
      * Determine capabilities of the vibrator HAL (CAP_* mask)
@@ -230,4 +238,20 @@ interface IVibrator {
      * @param id The device-specific always-on source ID to disable.
      */
     void alwaysOnDisable(in int id);
+
+    /**
+     * Retrieve the measured resonant frequency of the actuator. This may not be supported
+     * and this support is reflected in getCapabilities (CAP_GET_RESONANT_FREQUENCY)
+     *
+     * @return Measured resonant frequency in Hz.
+     */
+    float getResonantFrequency();
+
+    /**
+     * Retrieve the measured Q factor. This may not be supported
+     * and this support is reflected in getCapabilities (CAP_GET_Q_FACTOR)
+     *
+     * @return Measured Q factor.
+     */
+    float getQFactor();
 }
