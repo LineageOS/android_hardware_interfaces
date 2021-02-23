@@ -308,8 +308,9 @@ enum OperationType : int32_t {
      * Outputs:
      * * 0: The output 4-D tensor, of shape
      *      [batches, out_height, out_width, depth_out].
-     *      For output tensor of {@link OperandType::TENSOR_QUANT8_ASYMM},
-     *      the following condition must be satisfied: output_scale > input_scale * filter_scale
+     *      For output tensor of
+     *      {@link OperandType::TENSOR_QUANT8_ASYMM}, the following condition must
+     *      be satisfied: output_scale > input_scale * filter_scale
      */
     CONV_2D = 3,
 
