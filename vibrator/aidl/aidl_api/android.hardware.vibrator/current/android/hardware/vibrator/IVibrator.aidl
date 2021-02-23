@@ -1,14 +1,29 @@
-///////////////////////////////////////////////////////////////////////////////
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *////////////////////////////////////////////////////////////////////////////////
 // THIS FILE IS IMMUTABLE. DO NOT EDIT IN ANY CASE.                          //
 ///////////////////////////////////////////////////////////////////////////////
 
-// This file is a snapshot of an AIDL interface (or parcelable). Do not try to
-// edit this file. It looks like you are doing that because you have modified
-// an AIDL interface in a backward-incompatible way, e.g., deleting a function
-// from an interface or a field from a parcelable and it broke the build. That
-// breakage is intended.
+// This file is a snapshot of an AIDL file. Do not edit it manually. There are
+// two cases:
+// 1). this is a frozen version file - do not edit this in any case.
+// 2). this is a 'current' file. If you make a backwards compatible change to
+//     the interface (from the latest frozen version), the build system will
+//     prompt you to update this file with `m <name>-update-api`.
 //
-// You must not make a backward incompatible changes to the AIDL files built
+// You must not make a backward incompatible change to any AIDL file built
 // with the aidl_interface module type with versions property set. The module
 // type is used to build AIDL files in a way that they can be used across
 // independently updatable components of the system. If a device is shipped
@@ -33,6 +48,8 @@ interface IVibrator {
   android.hardware.vibrator.Effect[] getSupportedAlwaysOnEffects();
   void alwaysOnEnable(in int id, in android.hardware.vibrator.Effect effect, in android.hardware.vibrator.EffectStrength strength);
   void alwaysOnDisable(in int id);
+  float getResonantFrequency();
+  float getQFactor();
   const int CAP_ON_CALLBACK = 1;
   const int CAP_PERFORM_CALLBACK = 2;
   const int CAP_AMPLITUDE_CONTROL = 4;
@@ -40,4 +57,6 @@ interface IVibrator {
   const int CAP_EXTERNAL_AMPLITUDE_CONTROL = 16;
   const int CAP_COMPOSE_EFFECTS = 32;
   const int CAP_ALWAYS_ON_CONTROL = 64;
+  const int CAP_GET_RESONANT_FREQUENCY = 128;
+  const int CAP_GET_Q_FACTOR = 256;
 }

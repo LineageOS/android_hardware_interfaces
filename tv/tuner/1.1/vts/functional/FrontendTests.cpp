@@ -305,6 +305,36 @@ AssertionResult FrontendTests::getFrontendDtmbCaps(uint32_t id) {
     return AssertionResult(status == Result::SUCCESS);
 }
 
+AssertionResult FrontendTests::linkCiCam(uint32_t ciCamId) {
+    sp<android::hardware::tv::tuner::V1_1::IFrontend> frontend_1_1;
+    frontend_1_1 = android::hardware::tv::tuner::V1_1::IFrontend::castFrom(mFrontend);
+    if (frontend_1_1 == nullptr) {
+        EXPECT_TRUE(false) << "Couldn't get 1.1 IFrontend from the Hal implementation.";
+        return failure();
+    }
+
+    Result status;
+    uint32_t ltsId;
+    frontend_1_1->linkCiCam(ciCamId, [&](Result r, uint32_t id) {
+        status = r;
+        ltsId = id;
+    });
+
+    return AssertionResult(status == Result::SUCCESS);
+}
+
+AssertionResult FrontendTests::unlinkCiCam(uint32_t ciCamId) {
+    sp<android::hardware::tv::tuner::V1_1::IFrontend> frontend_1_1;
+    frontend_1_1 = android::hardware::tv::tuner::V1_1::IFrontend::castFrom(mFrontend);
+    if (frontend_1_1 == nullptr) {
+        EXPECT_TRUE(false) << "Couldn't get 1.1 IFrontend from the Hal implementation.";
+        return failure();
+    }
+
+    Result status = frontend_1_1->unlinkCiCam(ciCamId);
+    return AssertionResult(status == Result::SUCCESS);
+}
+
 void FrontendTests::verifyFrontendStatusExt1_1(vector<FrontendStatusTypeExt1_1> statusTypes,
                                                vector<FrontendStatusExt1_1> expectStatuses) {
     ASSERT_TRUE(mFrontend) << "Frontend is not opened yet.";
@@ -465,6 +495,10 @@ void FrontendTests::tuneTest(FrontendConfig frontendConf) {
     ASSERT_TRUE(feId != INVALID_ID);
     ASSERT_TRUE(openFrontendById(feId));
     ASSERT_TRUE(setFrontendCallback());
+    if (frontendConf.canConnectToCiCam) {
+        ASSERT_TRUE(linkCiCam(frontendConf.ciCamId));
+        ASSERT_TRUE(unlinkCiCam(frontendConf.ciCamId));
+    }
     ASSERT_TRUE(tuneFrontend(frontendConf, false /*testWithDemux*/));
     verifyFrontendStatusExt1_1(frontendConf.tuneStatusTypes, frontendConf.expectTuneStatuses);
     ASSERT_TRUE(stopTuneFrontend(false /*testWithDemux*/));

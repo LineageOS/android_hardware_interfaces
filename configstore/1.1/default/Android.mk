@@ -3,6 +3,9 @@ LOCAL_PATH := $(call my-dir)
 ################################################################################
 include $(CLEAR_VARS)
 LOCAL_MODULE := android.hardware.configstore@1.1-service
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
+LOCAL_NOTICE_FILE := $(LOCAL_PATH)/../../../NOTICE
 # seccomp is not required for coverage build.
 ifneq ($(NATIVE_COVERAGE),true)
 LOCAL_REQUIRED_MODULES_arm64 := configstore@1.1.policy
@@ -30,6 +33,9 @@ include $(BUILD_EXECUTABLE)
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm64))
 include $(CLEAR_VARS)
 LOCAL_MODULE := configstore@1.1.policy
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
+LOCAL_NOTICE_FILE := $(LOCAL_PATH)/../../../NOTICE
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/etc/seccomp_policy
 LOCAL_SRC_FILES := seccomp_policy/configstore@1.1-$(TARGET_ARCH).policy
@@ -39,6 +45,9 @@ endif
 # disable configstore
 include $(CLEAR_VARS)
 LOCAL_MODULE := disable_configstore
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
+LOCAL_NOTICE_FILE := $(LOCAL_PATH)/../../../NOTICE
 LOCAL_MODULE_CLASS := EXECUTABLES
 LOCAL_SRC_FILES:= disable_configstore.cpp
 LOCAL_OVERRIDES_MODULES := android.hardware.configstore@1.1-service
