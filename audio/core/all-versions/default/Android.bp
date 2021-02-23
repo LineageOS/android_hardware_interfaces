@@ -146,7 +146,6 @@ cc_library_shared {
         "android.hardware.audio.common@7.0-enums",
         "android.hardware.audio.common@7.0-util",
         "libbase",
-        "libxml2",
     ],
     cflags: [
         "-DMAJOR_VERSION=7",
