@@ -17,7 +17,7 @@
 #define LOG_TAG "EffectsFactory7.0"
 #include <log/log.h>
 
-#include <android_audio_policy_configuration_V7_0.h>
+#include <android_audio_policy_configuration_V7_0-enums.h>
 
 #include "Effect.h"
 
