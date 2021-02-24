@@ -274,7 +274,8 @@ enum HandoverFailureMode : int32_t {
 /**
  * Overwritten from @1.5::SetupDataCallResult in order to change the suggestedRetryTime
  * to 64-bit value. In the future, this must be extended instead of overwritten.
- * Also added defaultQos, qosSessions, and handoverFailureMode in this version.
+ * Also added defaultQos, qosSessions, handoverFailureMode, pduSessionId, sliceInfo,
+ * and traffic descriptors in this version.
  */
 struct SetupDataCallResult {
     /** Data call fail cause. DataCallFailCause.NONE if no error. */
@@ -847,7 +848,7 @@ enum DataCallFailCause : @1.4::DataCallFailCause {
     MATCH_ALL_RULE_NOT_ALLOWED = 0x8CD,
 
     /**
-     * If connection failed for all matching URSP rules
+     * If connection failed for all matching URSP rules.
      */
     ALL_MATCHING_RULES_FAILED = 0x8CE,
 };
@@ -923,17 +924,17 @@ enum NgranBands  : @1.5::NgranBands {
  * This safe_union represents an optional DNN. DNN stands for Data Network Name
  * and represents an APN as defined in 3GPP TS 23.003.
  */
-safe_union OptionalDNN {
+safe_union OptionalDnn {
     Monostate noinit;
     string value;
 };
 
 /**
- * This safe_union represents an optional OSAppId.
+ * This safe_union represents an optional OsAppId.
  */
-safe_union OptionalOSAppId {
+safe_union OptionalOsAppId {
     Monostate noinit;
-    OSAppId value;
+    OsAppId value;
 };
 
 /**
@@ -954,21 +955,21 @@ struct TrafficDescriptor {
      * DNN stands for Data Network Name and represents an APN as defined in
      * 3GPP TS 23.003.
      */
-    OptionalDNN dnn;
+    OptionalDnn dnn;
     /**
-     * Indicates the OSId + OSAppId (used as category in Android).
+     * Indicates the OsId + OsAppId (used as category in Android).
      */
-    OptionalOSAppId osAppId;
+    OptionalOsAppId osAppId;
 };
 
 /**
- * This struct represents the OSId + OSAppId as defined in TS 24.526 Section 5.2
+ * This struct represents the OsId + OsAppId as defined in TS 24.526 Section 5.2
  */
-struct OSAppId {
+struct OsAppId {
     /**
-     * Byte array representing OSId + OSAppId. The minimum length of the array is
-     * 18 and maximum length is 272 (16 bytes for OSId + 1 byte for OSAppId length
-     * + up to 255 bytes for OSAppId).
+     * Byte array representing OsId + OsAppId. The minimum length of the array is
+     * 18 and maximum length is 272 (16 bytes for OsId + 1 byte for OsAppId length
+     * + up to 255 bytes for OsAppId).
      */
     vec<uint8_t> osAppId;
 };
