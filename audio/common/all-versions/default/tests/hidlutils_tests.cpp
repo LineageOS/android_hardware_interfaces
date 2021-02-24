@@ -432,10 +432,16 @@ TEST(HidlUtils, ConvertDeviceType) {
 // The enums module is too small to have unit tests on its own.
 TEST(HidlUtils, VendorExtension) {
     EXPECT_TRUE(xsd::isVendorExtension("VX_GOOGLE_VR_42"));
+    EXPECT_TRUE(xsd::isVendorExtension("VX_QCM_SPK"));
     EXPECT_FALSE(xsd::isVendorExtension(""));
     EXPECT_FALSE(xsd::isVendorExtension("random string"));
     EXPECT_FALSE(xsd::isVendorExtension("VX_"));
+    EXPECT_FALSE(xsd::isVendorExtension("VX_X"));
+    EXPECT_FALSE(xsd::isVendorExtension("VX_X_"));
+    EXPECT_FALSE(xsd::isVendorExtension("VX_X_X"));
+    EXPECT_FALSE(xsd::isVendorExtension("VX_XX_X"));
     EXPECT_FALSE(xsd::isVendorExtension("VX_GOOGLE_$$"));
+    EXPECT_FALSE(xsd::isVendorExtension("VX_$CM_SPK"));
 }
 
 TEST(HidlUtils, ConvertInvalidDeviceAddress) {

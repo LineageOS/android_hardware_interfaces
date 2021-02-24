@@ -135,6 +135,33 @@ struct NanCapabilities {
 };
 
 /**
+ * Contention time statistics for different traffic categories.
+ */
+struct StaLinkLayerIfaceContentionTimeStats {
+    /**
+     * Data packet min contention time (usec).  It includes both the internal contention time
+     * among different access categories within the chipset and the contention time for the medium.
+     */
+    uint64_t contentionTimeMinInUsec;
+
+    /**
+     * Data packet max contention time (usec).  It includes both the internal contention time
+     * among different access categories within the chipset and the contention time for the medium.
+     */
+    uint64_t contentionTimeMaxInUsec;
+    /**
+     * Data packet average contention time (usec).  It includes both the internal contention time
+     * among different access categories within the chipset and the contention time for the medium.
+     */
+    uint64_t contentionTimeAvgInUsec;
+
+    /**
+     * Number of data packets used for contention statistics.
+     */
+    uint64_t contentionNumSamples;
+};
+
+/**
  * Iface statistics for the current connection.
  */
 struct StaLinkLayerIfaceStats {
@@ -150,6 +177,26 @@ struct StaLinkLayerIfaceStats {
      * If not using time slicing (i.e SCC or DBS), set to 100.
      */
     uint8_t timeSliceDutyCycleInPercent;
+
+    /**
+     * WME Best Effort (BE) Access Category (AC) contention time statistics.
+     */
+    StaLinkLayerIfaceContentionTimeStats wmeBeContentionTimeStats;
+
+    /**
+     * WME Background (BK) Access Category (AC) contention time statistics.
+     */
+    StaLinkLayerIfaceContentionTimeStats wmeBkContentionTimeStats;
+
+    /**
+     * WME Video (VI) Access Category (AC) contention time statistics.
+     */
+    StaLinkLayerIfaceContentionTimeStats wmeViContentionTimeStats;
+
+    /**
+     * WME Voice (VO) Access Category (AC) contention time statistics.
+     */
+    StaLinkLayerIfaceContentionTimeStats wmeVoContentionTimeStats;
 };
 
 /**
