@@ -17,6 +17,15 @@
 // TODO(152067309): Stop building this yourself once it's ABI stable and has
 // been made vendor available. Just use libc++fs instead of this.
 
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-NCSA
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
 cc_defaults {
     name: "android.hardware.automotive@libc++fsdefaults",
     local_include_dirs: ["include"],
