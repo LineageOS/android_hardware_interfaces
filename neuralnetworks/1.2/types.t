@@ -107,14 +107,14 @@ enum DeviceType : int32_t {
     // HAL equivalent of unknown type and a 1.2 HAL implementation must belong
     // to one of the categories below.
     /** The device does not fall into any category below. */
-    OTHER             = 1,
+    OTHER = 1,
     /** The device runs NNAPI models on single or multi-core CPU. */
-    CPU               = 2,
+    CPU = 2,
     /** The device can run NNAPI models and also accelerate graphics APIs such
-      * as OpenGL ES and Vulkan. */
-    GPU               = 3,
+     * as OpenGL ES and Vulkan. */
+    GPU = 3,
     /** Dedicated accelerator for Machine Learning workloads. */
-    ACCELERATOR       = 4,
+    ACCELERATOR = 4,
 };
 
 /**
@@ -450,7 +450,7 @@ struct OutputShape {
  * Specifies whether or not to measure timing information during execution.
  */
 enum MeasureTiming : int32_t {
-    NO  = 0,
+    NO = 0,
     YES = 1,
 };
 
