@@ -198,6 +198,18 @@ class Filter : public V1_1::IFilter {
     Result createShareMemMediaEvents(vector<uint8_t> output);
     bool sameFile(int fd1, int fd2);
 
+    DemuxFilterEvent createMediaEvent();
+    DemuxFilterEvent createTsRecordEvent();
+    V1_1::DemuxFilterEventExt createTsRecordEventExt();
+    DemuxFilterEvent createMmtpRecordEvent();
+    V1_1::DemuxFilterEventExt createMmtpRecordEventExt();
+    DemuxFilterEvent createSectionEvent();
+    DemuxFilterEvent createPesEvent();
+    DemuxFilterEvent createDownloadEvent();
+    DemuxFilterEvent createIpPayloadEvent();
+    DemuxFilterEvent createTemiEvent();
+    V1_1::DemuxFilterEventExt createMonitorEvent();
+    V1_1::DemuxFilterEventExt createRestartEvent();
     /**
      * Lock to protect writes to the FMQs
      */
