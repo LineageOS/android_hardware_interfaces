@@ -40,4 +40,5 @@ enum Error {
   CANCELED = 5,
   UNABLE_TO_REMOVE = 6,
   VENDOR = 8,
+  REENROLL_REQUIRED = 16,
 }
