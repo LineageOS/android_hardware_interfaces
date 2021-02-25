@@ -221,71 +221,78 @@ TEST_P(DeviceUniqueAttestationTest, NonStrongBoxOnly) {
 
 TEST_P(DeviceUniqueAttestationTest, Rsa) {
     if (SecLevel() != SecurityLevel::STRONGBOX) return;
-    ASSERT_EQ(ErrorCode::OK,
-              convert(GenerateKey(AuthorizationSetBuilder()
-                                  .Authorization(TAG_NO_AUTH_REQUIRED)
-                                  .RsaSigningKey(2048, 65537)
-                                  .Digest(Digest::SHA_2_256)
-                                  .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN)
-                                  .Authorization(TAG_INCLUDE_UNIQUE_ID))));
+    ASSERT_EQ(ErrorCode::OK, convert(GenerateKey(AuthorizationSetBuilder()
+                                                         .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                         .RsaSigningKey(2048, 65537)
+                                                         .Digest(Digest::SHA_2_256)
+                                                         .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN)
+                                                         .Authorization(TAG_INCLUDE_UNIQUE_ID))));
 
     hidl_vec<hidl_vec<uint8_t>> cert_chain;
     HidlBuf challenge("challenge");
     HidlBuf app_id("foo");
-    EXPECT_EQ(ErrorCode::OK,
-              convert(AttestKey(AuthorizationSetBuilder()
-                                        .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION)
-                                        .Authorization(TAG_ATTESTATION_CHALLENGE, challenge)
-                                        .Authorization(TAG_ATTESTATION_APPLICATION_ID, app_id),
-                                &cert_chain)));
+    ErrorCode result =
+            convert(AttestKey(AuthorizationSetBuilder()
+                                      .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION)
+                                      .Authorization(TAG_ATTESTATION_CHALLENGE, challenge)
+                                      .Authorization(TAG_ATTESTATION_APPLICATION_ID, app_id),
+                              &cert_chain));
 
+    // It is optional for Strong box to support DeviceUniqueAttestation.
+    if (result == ErrorCode::CANNOT_ATTEST_IDS) return;
+
+    EXPECT_EQ(ErrorCode::OK, result);
     EXPECT_EQ(2U, cert_chain.size());
     if (dumpAttestations) dumpContent(bin2hex(cert_chain[0]));
     auto [err, attestation] = parse_attestation_record(cert_chain[0]);
     ASSERT_EQ(ErrorCode::OK, err);
 
-    check_attestation_record(attestation, challenge,
-                             /* sw_enforced */
-                             AuthorizationSetBuilder()
-                                     .Authorization(TAG_ATTESTATION_APPLICATION_ID, app_id),
-                             /* hw_enforced */
-                             AuthorizationSetBuilder()
-                                     .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION)
-                                     .Authorization(TAG_NO_AUTH_REQUIRED)
-                                     .RsaSigningKey(2048, 65537)
-                                     .Digest(Digest::SHA_2_256)
-                                     .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN)
-                                     .Authorization(TAG_ORIGIN, KeyOrigin::GENERATED)
-                                     .Authorization(TAG_OS_VERSION, os_version())
-                                     .Authorization(TAG_OS_PATCHLEVEL, os_patch_level()),
-                             SecLevel());
+    check_attestation_record(
+            attestation, challenge,
+            /* sw_enforced */
+            AuthorizationSetBuilder().Authorization(TAG_ATTESTATION_APPLICATION_ID, app_id),
+            /* hw_enforced */
+            AuthorizationSetBuilder()
+                    .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION)
+                    .Authorization(TAG_NO_AUTH_REQUIRED)
+                    .RsaSigningKey(2048, 65537)
+                    .Digest(Digest::SHA_2_256)
+                    .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN)
+                    .Authorization(TAG_ORIGIN, KeyOrigin::GENERATED)
+                    .Authorization(TAG_OS_VERSION, os_version())
+                    .Authorization(TAG_OS_PATCHLEVEL, os_patch_level()),
+            SecLevel());
 }
 
 TEST_P(DeviceUniqueAttestationTest, Ecdsa) {
     if (SecLevel() != SecurityLevel::STRONGBOX) return;
-    ASSERT_EQ(ErrorCode::OK,
-              convert(GenerateKey(AuthorizationSetBuilder()
-                                          .Authorization(TAG_NO_AUTH_REQUIRED)
-                                          .EcdsaSigningKey(256)
-                                          .Digest(Digest::SHA_2_256)
-                                          .Authorization(TAG_INCLUDE_UNIQUE_ID))));
+    ASSERT_EQ(ErrorCode::OK, convert(GenerateKey(AuthorizationSetBuilder()
+                                                         .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                         .EcdsaSigningKey(256)
+                                                         .Digest(Digest::SHA_2_256)
+                                                         .Authorization(TAG_INCLUDE_UNIQUE_ID))));
 
     hidl_vec<hidl_vec<uint8_t>> cert_chain;
     HidlBuf challenge("challenge");
     HidlBuf app_id("foo");
-    EXPECT_EQ(ErrorCode::OK,
-              convert(AttestKey(AuthorizationSetBuilder()
-                                        .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION)
-                                        .Authorization(TAG_ATTESTATION_CHALLENGE, challenge)
-                                        .Authorization(TAG_ATTESTATION_APPLICATION_ID, app_id),
-                                &cert_chain)));
+    ErrorCode result =
+            convert(AttestKey(AuthorizationSetBuilder()
+                                      .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION)
+                                      .Authorization(TAG_ATTESTATION_CHALLENGE, challenge)
+                                      .Authorization(TAG_ATTESTATION_APPLICATION_ID, app_id),
+                              &cert_chain));
 
+    // It is optional for Strong box to support DeviceUniqueAttestation.
+    if (result == ErrorCode::CANNOT_ATTEST_IDS) return;
+
+    EXPECT_EQ(ErrorCode::OK, result);
     EXPECT_EQ(2U, cert_chain.size());
     if (dumpAttestations) dumpContent(bin2hex(cert_chain[0]));
     auto [err, attestation] = parse_attestation_record(cert_chain[0]);
     ASSERT_EQ(ErrorCode::OK, err);
 
-    check_attestation_record(attestation, challenge,
+    check_attestation_record(
+            attestation, challenge,
             /* sw_enforced */
             AuthorizationSetBuilder().Authorization(TAG_ATTESTATION_APPLICATION_ID, app_id),
             /* hw_enforced */
