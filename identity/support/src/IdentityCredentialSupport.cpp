@@ -928,7 +928,7 @@ optional<vector<vector<uint8_t>>> createAttestation(
 
     // translate certificate format from keymaster_cert_chain_t to vector<vector<uint8_t>>.
     vector<vector<uint8_t>> attestationCertificate;
-    for (int i = 0; i < cert_chain_out.entry_count; i++) {
+    for (std::size_t i = 0; i < cert_chain_out.entry_count; i++) {
         attestationCertificate.insert(
                 attestationCertificate.end(),
                 vector<uint8_t>(
