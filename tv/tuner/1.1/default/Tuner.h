@@ -79,6 +79,7 @@ class Tuner : public ITuner {
     // Static mFrontends array to maintain local frontends information
     map<uint32_t, sp<Frontend>> mFrontends;
     map<uint32_t, FrontendInfo::FrontendCapabilities> mFrontendCaps;
+    map<uint32_t, vector<FrontendStatusType>> mFrontendStatusCaps;
     V1_1::FrontendDtmbCapabilities mDtmbCaps;
     map<uint32_t, uint32_t> mFrontendToDemux;
     map<uint32_t, sp<Demux>> mDemuxes;
