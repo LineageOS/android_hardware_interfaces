@@ -41,7 +41,7 @@ var (
 	}, "inputs")
 
 	xmllintXsd = pctx.AndroidStaticRule("xmllint-xsd", blueprint.RuleParams{
-		Command:     `$XmlLintCmd --schema $xsd $in > /dev/null && touch -a $out`,
+		Command:     `$XmlLintCmd --quiet --schema $xsd $in > /dev/null && touch -a $out`,
 		CommandDeps: []string{"$XmlLintCmd"},
 		Restat:      true,
 	}, "xsd")
