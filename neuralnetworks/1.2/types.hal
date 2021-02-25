@@ -4895,25 +4895,25 @@ struct Operand {
      * Additional parameters specific to a particular operand type.
      */
     safe_union ExtraParams {
-       /**
-        * No additional parameters.
-        */
-       Monostate none;
+        /**
+         * No additional parameters.
+         */
+        Monostate none;
 
-       /**
-        * Symmetric per-channel quantization parameters.
-        *
-        * Only applicable to operands of type TENSOR_QUANT8_SYMM_PER_CHANNEL.
-        */
-       SymmPerChannelQuantParams channelQuant;
+        /**
+         * Symmetric per-channel quantization parameters.
+         *
+         * Only applicable to operands of type TENSOR_QUANT8_SYMM_PER_CHANNEL.
+         */
+        SymmPerChannelQuantParams channelQuant;
 
-       /**
-        * Extension operand parameters.
-        *
-        * The framework treats this as an opaque data blob.
-        * The format is up to individual extensions.
-        */
-       vec<uint8_t> extension;
+        /**
+         * Extension operand parameters.
+         *
+         * The framework treats this as an opaque data blob.
+         * The format is up to individual extensions.
+         */
+        vec<uint8_t> extension;
     } extraParams;
 };
 
