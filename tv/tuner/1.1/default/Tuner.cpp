@@ -33,38 +33,91 @@ namespace implementation {
 Tuner::Tuner() {
     // Static Frontends array to maintain local frontends information
     // Array index matches their FrontendId in the default impl
-    mFrontendSize = 9;
+    mFrontendSize = 10;
     mFrontends[0] = new Frontend(FrontendType::ISDBS, 0, this);
-    mFrontends[1] = new Frontend(FrontendType::ATSC, 1, this);
+    mFrontends[1] = new Frontend(FrontendType::ATSC3, 1, this);
     mFrontends[2] = new Frontend(FrontendType::DVBC, 2, this);
     mFrontends[3] = new Frontend(FrontendType::DVBS, 3, this);
     mFrontends[4] = new Frontend(FrontendType::DVBT, 4, this);
     mFrontends[5] = new Frontend(FrontendType::ISDBT, 5, this);
     mFrontends[6] = new Frontend(FrontendType::ANALOG, 6, this);
     mFrontends[7] = new Frontend(FrontendType::ATSC, 7, this);
-    mFrontends[8] =
-            new Frontend(static_cast<V1_0::FrontendType>(V1_1::FrontendType::DTMB), 8, this);
+    mFrontends[8] = new Frontend(FrontendType::ISDBS3, 8, this);
+    mFrontends[9] =
+            new Frontend(static_cast<V1_0::FrontendType>(V1_1::FrontendType::DTMB), 9, this);
 
     FrontendInfo::FrontendCapabilities caps;
+    vector<FrontendStatusType> statusCaps;
+
     caps = FrontendInfo::FrontendCapabilities();
     caps.isdbsCaps(FrontendIsdbsCapabilities());
     mFrontendCaps[0] = caps;
+    statusCaps = {
+            FrontendStatusType::DEMOD_LOCK,
+            FrontendStatusType::SNR,
+            FrontendStatusType::FEC,
+            FrontendStatusType::MODULATION,
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::MODULATIONS),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::ROLL_OFF),
+    };
+    mFrontendStatusCaps[0] = statusCaps;
 
     caps = FrontendInfo::FrontendCapabilities();
-    caps.atscCaps(FrontendAtscCapabilities());
+    caps.atsc3Caps(FrontendAtsc3Capabilities());
     mFrontendCaps[1] = caps;
+    statusCaps = {
+            FrontendStatusType::BER,
+            FrontendStatusType::PER,
+            FrontendStatusType::ATSC3_PLP_INFO,
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::MODULATIONS),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::BERS),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::INTERLEAVINGS),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::BANDWIDTH),
+    };
+    mFrontendStatusCaps[1] = statusCaps;
 
     caps = FrontendInfo::FrontendCapabilities();
     caps.dvbcCaps(FrontendDvbcCapabilities());
     mFrontendCaps[2] = caps;
+    statusCaps = {
+            FrontendStatusType::PRE_BER,
+            FrontendStatusType::SIGNAL_QUALITY,
+            FrontendStatusType::MODULATION,
+            FrontendStatusType::SPECTRAL,
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::MODULATIONS),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::CODERATES),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::INTERLEAVINGS),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::BANDWIDTH),
+    };
+    mFrontendStatusCaps[2] = statusCaps;
 
     caps = FrontendInfo::FrontendCapabilities();
     caps.dvbsCaps(FrontendDvbsCapabilities());
     mFrontendCaps[3] = caps;
+    statusCaps = {
+            FrontendStatusType::SIGNAL_STRENGTH,
+            FrontendStatusType::SYMBOL_RATE,
+            FrontendStatusType::MODULATION,
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::MODULATIONS),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::ROLL_OFF),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::IS_MISO),
+    };
+    mFrontendStatusCaps[3] = statusCaps;
 
     caps = FrontendInfo::FrontendCapabilities();
     caps.dvbtCaps(FrontendDvbtCapabilities());
     mFrontendCaps[4] = caps;
+    statusCaps = {
+            FrontendStatusType::EWBS,
+            FrontendStatusType::PLP_ID,
+            FrontendStatusType::HIERARCHY,
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::MODULATIONS),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::BANDWIDTH),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::GUARD_INTERVAL),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::TRANSMISSION_MODE),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::T2_SYSTEM_ID),
+    };
+    mFrontendStatusCaps[4] = statusCaps;
 
     caps = FrontendInfo::FrontendCapabilities();
     FrontendIsdbtCapabilities isdbtCaps{
@@ -77,14 +130,60 @@ Tuner::Tuner() {
     };
     caps.isdbtCaps(isdbtCaps);
     mFrontendCaps[5] = caps;
+    statusCaps = {
+            FrontendStatusType::AGC,
+            FrontendStatusType::LNA,
+            FrontendStatusType::MODULATION,
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::MODULATIONS),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::BANDWIDTH),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::GUARD_INTERVAL),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::TRANSMISSION_MODE),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::ISDBT_SEGMENTS),
+    };
+    mFrontendStatusCaps[5] = statusCaps;
 
     caps = FrontendInfo::FrontendCapabilities();
     caps.analogCaps(FrontendAnalogCapabilities());
     mFrontendCaps[6] = caps;
+    statusCaps = {
+            FrontendStatusType::LAYER_ERROR,
+            FrontendStatusType::MER,
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::UEC),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::TS_DATA_RATES),
+    };
+    mFrontendStatusCaps[6] = statusCaps;
 
     caps = FrontendInfo::FrontendCapabilities();
     caps.atscCaps(FrontendAtscCapabilities());
     mFrontendCaps[7] = caps;
+    statusCaps = {
+            FrontendStatusType::FREQ_OFFSET,
+            FrontendStatusType::RF_LOCK,
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::MODULATIONS),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::IS_LINEAR),
+    };
+    mFrontendStatusCaps[7] = statusCaps;
+
+    caps = FrontendInfo::FrontendCapabilities();
+    caps.isdbs3Caps(FrontendIsdbs3Capabilities());
+    mFrontendCaps[8] = caps;
+    statusCaps = {
+            FrontendStatusType::DEMOD_LOCK,
+            FrontendStatusType::MODULATION,
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::MODULATIONS),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::ROLL_OFF),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::IS_SHORT_FRAMES),
+    };
+    mFrontendStatusCaps[8] = statusCaps;
+
+    statusCaps = {
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::MODULATIONS),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::INTERLEAVINGS),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::BANDWIDTH),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::GUARD_INTERVAL),
+            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::TRANSMISSION_MODE),
+    };
+    mFrontendStatusCaps[9] = statusCaps;
 
     mLnbs.resize(2);
     mLnbs[0] = new Lnb(0);
@@ -160,17 +259,6 @@ Return<void> Tuner::getFrontendInfo(FrontendId frontendId, getFrontendInfo_cb _h
         return Void();
     }
 
-    vector<FrontendStatusType> statusCaps = {
-            FrontendStatusType::DEMOD_LOCK,
-            FrontendStatusType::SNR,
-            FrontendStatusType::FEC,
-            FrontendStatusType::MODULATION,
-            FrontendStatusType::PLP_ID,
-            FrontendStatusType::LAYER_ERROR,
-            FrontendStatusType::ATSC3_PLP_INFO,
-            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::MODULATIONS),
-            static_cast<FrontendStatusType>(V1_1::FrontendStatusTypeExt1_1::ROLL_OFF),
-    };
     // assign randomly selected values for testing.
     info = {
             .type = mFrontends[frontendId]->getFrontendType(),
@@ -180,7 +268,7 @@ Return<void> Tuner::getFrontendInfo(FrontendId frontendId, getFrontendInfo_cb _h
             .maxSymbolRate = 1145,
             .acquireRange = 30,
             .exclusiveGroupId = 57,
-            .statusCaps = statusCaps,
+            .statusCaps = mFrontendStatusCaps[frontendId],
             .frontendCaps = mFrontendCaps[frontendId],
     };
 
