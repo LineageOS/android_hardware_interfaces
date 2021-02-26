@@ -28,7 +28,7 @@ cc_binary {
     relative_install_path: "hw",
     srcs: [
         "AudioControl.cpp",
-        "service.cpp"
+        "service.cpp",
     ],
     init_rc: ["android.hardware.automotive.audiocontrol@1.0-service.rc"],
 
@@ -39,4 +39,17 @@ cc_binary {
         "libutils",
     ],
     vintf_fragments: ["audiocontrol_manifest.xml"],
+}
+
+filegroup {
+    name: "audiocontrolV1.0_source",
+    srcs: [
+        "AudioControl.cpp",
+    ],
+}
+
+cc_library_headers {
+    name: "audiocontrolV1.0_header",
+    host_supported: true,
+    export_include_dirs: ["."],
 }
