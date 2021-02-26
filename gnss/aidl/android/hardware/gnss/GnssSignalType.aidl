@@ -26,7 +26,7 @@ parcelable GnssSignalType {
     /**
      * Constellation type of the SV that transmits the signal.
      */
-    GnssConstellationType constellation;
+    GnssConstellationType constellation = GnssConstellationType.UNKNOWN;
 
     /**
      * Carrier frequency of the signal tracked, for example it can be the

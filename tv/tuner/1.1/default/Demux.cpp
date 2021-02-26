@@ -340,6 +340,10 @@ void* Demux::__threadLoopFrontend(void* user) {
 }
 
 void Demux::frontendInputThreadLoop() {
+    if (!mFrontendInputThreadRunning) {
+        return;
+    }
+
     std::lock_guard<std::mutex> lock(mFrontendInputThreadLock);
     if (!mDvrPlayback) {
         ALOGW("[Demux] No software Frontend input configured. Ending Frontend thread loop.");
