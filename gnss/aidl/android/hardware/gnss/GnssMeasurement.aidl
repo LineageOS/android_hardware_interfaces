@@ -536,7 +536,7 @@ parcelable GnssMeasurement {
      * contain multipath, and MULTIPATH_INDICATOR_NOT_PRESENT for those
      * signals that are tracked and do not contain multipath.
      */
-    GnssMultipathIndicator multipathIndicator;
+    GnssMultipathIndicator multipathIndicator = GnssMultipathIndicator.UNKNOWN;
 
     /**
      * Signal-to-noise ratio at correlator output in dB.

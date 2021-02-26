@@ -33,7 +33,7 @@
 package android.hardware.gnss;
 @VintfStability
 parcelable GnssSignalType {
-  android.hardware.gnss.GnssConstellationType constellation;
+  android.hardware.gnss.GnssConstellationType constellation = android.hardware.gnss.GnssConstellationType.UNKNOWN;
   double carrierFrequencyHz;
   @utf8InCpp String codeType;
   const @utf8InCpp String CODE_TYPE_A = "A";
