@@ -16,17 +16,17 @@
 
 package android.hardware.security.keymint;
 
-import android.hardware.security.secureclock.Timestamp;
 import android.hardware.security.keymint.HardwareAuthenticatorType;
+import android.hardware.security.secureclock.Timestamp;
 
 /**
  * HardwareAuthToken is used to prove successful user authentication, to unlock the use of a key.
  *
  * HardwareAuthTokens are produced by other secure environment applications, notably GateKeeper and
- * biometric authenticators, in response to successful user authentication events.  These tokens are passed to
- * begin(), update(), and finish() to prove that authentication occurred.  See those methods for
- * more details.  It is up to the caller to determine which of the generated auth tokens is
- * appropriate for a given key operation.
+ * biometric authenticators, in response to successful user authentication events.  These tokens are
+ * passed to begin(), update(), and finish() to prove that authentication occurred.  See those
+ * methods for more details.  It is up to the caller to determine which of the generated auth tokens
+ * is appropriate for a given key operation.
  */
 @VintfStability
 @RustDerive(Clone=true, Eq=true, PartialEq=true, Ord=true, PartialOrd=true, Hash=true)
@@ -55,7 +55,7 @@ parcelable HardwareAuthToken {
      * authenticatorType describes the type of authentication that took place, e.g. password or
      * fingerprint.
      */
-    HardwareAuthenticatorType authenticatorType;
+    HardwareAuthenticatorType authenticatorType = HardwareAuthenticatorType.NONE;
 
     /**
      * timestamp indicates when the user authentication took place, in milliseconds since some
