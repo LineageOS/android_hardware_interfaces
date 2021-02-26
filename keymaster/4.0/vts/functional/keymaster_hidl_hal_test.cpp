@@ -136,6 +136,49 @@ string bin2hex(const hidl_vec<uint8_t>& data) {
     return retval;
 }
 
+string rsa_2048_key =
+        hex2str("308204a50201000282010100caa620db7bbadfd351153a804e05a3115a0"
+                "eea067316c7d6ae010086cc4d636edcc50b725c495027e79d7c6d65ec50"
+                "5ab84107b0ca9f8389d0d812d42df3af0c1c50f1083b1eedd18921283e3"
+                "9ebe95bd56795c9ba129afc63d60fb020b300c44861a73845508a992c54"
+                "7cf4ce7694955c684bc130fe9a0478285d686da954989a7be3cd970de7e"
+                "5eca8574c0617fed74717f7035655f65af7b5f9b982feca8eed643b96d8"
+                "f1c4e6dcd96a9ccfcca3366d8f1c95f83a83ab785f997b78918ceca567d"
+                "91cf2ea85c340c0d4462f31f8a31e648cd26e1116a97d17dcfec51e4336"
+                "fa0725ff49216005911966748f94789c055795da023362091c977bdc0bd"
+                "8e31902030100010282010100ca562da0785e1275d013be21b5c5731834"
+                "2f8803808e52624bc2bc5fdb45b9ee4b8882f160abe2d8b52e4dba7d760"
+                "295523bbc0e0d824fb81f4a5f2273ef47ec73a96dc0a6272f9573b22398"
+                "5e04eb2fc25876fac04b2b6cadd2623f9da69d315e84028ef0c6865c822"
+                "2a9d15504993eb8d17a321f55573af72e76757a690408c36909eb44a555"
+                "4b571007edde150b47952287d942559e7f8cbcb2c47086aa291515f55c4"
+                "deba6d1ebde0cca5ee899b3b0c4c21123bbf92feac53db515fe02d03b83"
+                "2154e31122abcbb6fc80b49e1c8fc5528605935f8f6ead1237b16e83d23"
+                "ad73e82ee008c3ff7b4666f4c137c20f52ae6fea5b54ed104c1c1bf75fc"
+                "3c020102818100efa6b29bb0f6b81c8fecf3e73c3e5a59b71ffd31075c4"
+                "0282269ee245367c2e54f0244301dad0b90dcce73f25c1caca2f4ef1774"
+                "42a5d9e98a354bcd5ddae129bea2c0771d1ad51341f44ddf0c5c0f22252"
+                "414e2de7af6c67754dba610ee2743f21789a89829ad91efc02c7c5588fe"
+                "84b64df12dc5cee90df2e7dd4a1ca2886902818100d87937f039df50054"
+                "7c7d5435ec8e89789b36a0e5c4004d4612a6ef2dce39ee4f24fb5d2da38"
+                "dbf5f3d639681a11fc416618554b1ff51a8215446b676363f6a5e91ea6c"
+                "957483e0a47ae36582bde9fba45c00e6e3fadc651cc87c170171d7fef6d"
+                "0dc1f0ddb6eca2674064925b78542b32f2821605c29b6d0b65485081f5a"
+                "f3102818100ee21453ee153f6d422cb7ffc586758dde6d239835b5df63e"
+                "2b1bf94f4d35407b1ccc12b780f56f15ade2d36192d7c74f5174b66886c"
+                "5484800563f113cde7e783d7e7922a2e003b3d4088ecc40fac4ead7df07"
+                "85fb2e524219574fbeaefa063844b9d0c69f1462ed2d3f56b4e145742aa"
+                "8ffbfd40cc731daf37023fa3d83df6902818055dc2e8dbfc68d2caafddd"
+                "deacd7af397bca87c44e5eae0bb6c667df3831a83252d1bee274df9c8ef"
+                "f39f6e70d8018b7afd0f2f3ab27426e5a151b2c94c56f6cfafbc75790a0"
+                "fcca8307dc5238844282556c09cd3cc0a62a879f48e036aae2b58a61ac8"
+                "ce6c3c933d914374fbdac0a665ffcc4100c14d624f82221fe9cad5fe102"
+                "818100964193ee55581c9a82fe03f8eb018cdce8965f30745cc6e68154c"
+                "b6618ef3cc57ae4798ff2a509306a135f7cf705ceb215fda6939c7a6353"
+                "0c86a5ba02f491a64f6079e62b1b00b86859899febf3ed300edcc0b8b35"
+                "1855a90d9d39a279be963f0972a256084a3c46575f796ad27dc801f67a3"
+                "7a59e62e076b996f025a9c9042");
+
 string rsa_key = hex2str(
     "30820275020100300d06092a864886f70d01010105000482025f3082025b"
     "02010002818100c6095409047d8634812d5a218176e45c41d60a75b13901"
@@ -1905,21 +1948,31 @@ class ImportKeyTest : public KeymasterHidlTest {
  * Verifies that importing and using an RSA key pair works correctly.
  */
 TEST_P(ImportKeyTest, RsaSuccess) {
+    uint32_t keysize;
+    string key;
+    if (SecLevel() == SecurityLevel::STRONGBOX) {
+        keysize = 2048;
+        key = rsa_2048_key;
+    } else {
+        keysize = 1024;
+        key = rsa_key;
+    }
+
     ASSERT_EQ(ErrorCode::OK, ImportKey(AuthorizationSetBuilder()
-                                           .Authorization(TAG_NO_AUTH_REQUIRED)
-                                           .RsaSigningKey(1024, 65537)
-                                           .Digest(Digest::SHA_2_256)
-                                           .Padding(PaddingMode::RSA_PSS),
-                                       KeyFormat::PKCS8, rsa_key));
+                                               .Authorization(TAG_NO_AUTH_REQUIRED)
+                                               .RsaSigningKey(keysize, 65537)
+                                               .Digest(Digest::SHA_2_256)
+                                               .Padding(PaddingMode::RSA_PSS),
+                                       KeyFormat::PKCS8, key));
 
     CheckCryptoParam(TAG_ALGORITHM, Algorithm::RSA);
-    CheckCryptoParam(TAG_KEY_SIZE, 1024U);
+    CheckCryptoParam(TAG_KEY_SIZE, keysize);
     CheckCryptoParam(TAG_RSA_PUBLIC_EXPONENT, 65537U);
     CheckCryptoParam(TAG_DIGEST, Digest::SHA_2_256);
     CheckCryptoParam(TAG_PADDING, PaddingMode::RSA_PSS);
     CheckOrigin();
 
-    string message(1024 / 8, 'a');
+    string message(keysize / 8, 'a');
     auto params = AuthorizationSetBuilder().Digest(Digest::SHA_2_256).Padding(PaddingMode::RSA_PSS);
     string signature = SignMessage(message, params);
     VerifyMessage(message, signature, params);
