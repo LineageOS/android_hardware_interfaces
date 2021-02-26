@@ -34,7 +34,7 @@ package android.hardware.biometrics.face;
 @VintfStability
 parcelable SensorProps {
   android.hardware.biometrics.common.CommonProps commonProps;
-  android.hardware.biometrics.face.FaceSensorType sensorType;
+  android.hardware.biometrics.face.FaceSensorType sensorType = android.hardware.biometrics.face.FaceSensorType.RGB;
   boolean halControlsPreview;
   int enrollPreviewWidth;
   int enrollPreviewHeight;

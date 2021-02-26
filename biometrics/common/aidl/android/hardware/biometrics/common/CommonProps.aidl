@@ -33,7 +33,7 @@ parcelable CommonProps {
      * A statically configured strength for this sensor. See the SensorStrength interface for more
      * information.
      */
-    SensorStrength sensorStrength;
+    SensorStrength sensorStrength = SensorStrength.CONVENIENCE;
 
     /**
      * The maximum number of enrollments that a single user can have. Statically configured.
