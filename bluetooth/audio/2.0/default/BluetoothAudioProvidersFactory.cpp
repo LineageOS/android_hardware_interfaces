@@ -75,7 +75,7 @@ Return<void> BluetoothAudioProvidersFactory::getProviderCapabilities(
         android::bluetooth::audio::GetOffloadCodecCapabilities(sessionType);
     if (db_codec_capabilities.size()) {
       audio_capabilities.resize(db_codec_capabilities.size());
-      for (int i = 0; i < db_codec_capabilities.size(); ++i) {
+      for (std::size_t i = 0; i < db_codec_capabilities.size(); ++i) {
         audio_capabilities[i].codecCapabilities(db_codec_capabilities[i]);
       }
     }
