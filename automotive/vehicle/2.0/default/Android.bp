@@ -221,3 +221,29 @@ cc_binary {
         "android.hardware.automotive.vehicle@2.0-libproto-native",
     ],
 }
+
+cc_fuzz {
+    name: "vehicleManager_fuzzer",
+    vendor: true,
+    defaults: ["vhal_v2_0_target_defaults"],
+    whole_static_libs: ["android.hardware.automotive.vehicle@2.0-manager-lib"],
+    srcs: [
+        "tests/fuzzer/VehicleManager_fuzzer.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "libcutils",
+        "libbinder_ndk",
+    ],
+    header_libs: ["libbase_headers"],
+    local_include_dirs: [
+        "common/include",
+        "tests",
+    ],
+    fuzz_config: {
+        cc: [
+            "android-media-fuzzing-reports@google.com",
+        ],
+        componentid: 533764,
+    },
+}
