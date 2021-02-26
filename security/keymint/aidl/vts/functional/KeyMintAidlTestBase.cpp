@@ -386,122 +386,50 @@ ErrorCode KeyMintAidlTestBase::Begin(KeyPurpose purpose, const AuthorizationSet&
     return result;
 }
 
-ErrorCode KeyMintAidlTestBase::Update(const AuthorizationSet& in_params, const string& input,
-                                      AuthorizationSet* out_params, string* output,
-                                      int32_t* input_consumed) {
+ErrorCode KeyMintAidlTestBase::UpdateAad(const string& input) {
+    return GetReturnErrorCode(op_->updateAad(vector<uint8_t>(input.begin(), input.end()),
+                                             {} /* hardwareAuthToken */,
+                                             {} /* verificationToken */));
+}
+
+ErrorCode KeyMintAidlTestBase::Update(const string& input, string* output) {
     SCOPED_TRACE("Update");
 
     Status result;
-    EXPECT_NE(op_, nullptr);
-    if (!op_) {
-        return ErrorCode::UNEXPECTED_NULL_POINTER;
-    }
+    if (!output) return ErrorCode::UNEXPECTED_NULL_POINTER;
 
-    KeyParameterArray key_params;
-    key_params.params = in_params.vector_data();
+    std::vector<uint8_t> o_put;
+    result = op_->update(vector<uint8_t>(input.begin(), input.end()), {}, {}, &o_put);
 
-    KeyParameterArray in_keyParams;
-    in_keyParams.params = in_params.vector_data();
-
-    optional<KeyParameterArray> out_keyParams;
-    optional<ByteArray> o_put;
-    result = op_->update(in_keyParams, vector<uint8_t>(input.begin(), input.end()), {}, {},
-                         &out_keyParams, &o_put, input_consumed);
-
-    if (result.isOk()) {
-        if (o_put) {
-            output->append(o_put->data.begin(), o_put->data.end());
-        }
-
-        if (out_keyParams) {
-            out_params->push_back(AuthorizationSet(out_keyParams->params));
-        }
-    }
+    if (result.isOk()) output->append(o_put.begin(), o_put.end());
 
     return GetReturnErrorCode(result);
 }
 
-ErrorCode KeyMintAidlTestBase::Update(const string& input, string* out, int32_t* input_consumed) {
-    SCOPED_TRACE("Update");
-    AuthorizationSet out_params;
-    ErrorCode result =
-            Update(AuthorizationSet() /* in_params */, input, &out_params, out, input_consumed);
-    EXPECT_TRUE(out_params.empty());
-    return result;
-}
-
-ErrorCode KeyMintAidlTestBase::Finish(const AuthorizationSet& in_params, const string& input,
-                                      const string& signature, AuthorizationSet* out_params,
+ErrorCode KeyMintAidlTestBase::Finish(const string& input, const string& signature,
                                       string* output) {
     SCOPED_TRACE("Finish");
     Status result;
 
     EXPECT_NE(op_, nullptr);
-    if (!op_) {
-        return ErrorCode::UNEXPECTED_NULL_POINTER;
-    }
-
-    KeyParameterArray key_params;
-    key_params.params = in_params.vector_data();
-
-    KeyParameterArray in_keyParams;
-    in_keyParams.params = in_params.vector_data();
-
-    optional<KeyParameterArray> out_keyParams;
-    optional<vector<uint8_t>> o_put;
+    if (!op_) return ErrorCode::UNEXPECTED_NULL_POINTER;
 
     vector<uint8_t> oPut;
-    result = op_->finish(in_keyParams, vector<uint8_t>(input.begin(), input.end()),
-                         vector<uint8_t>(signature.begin(), signature.end()), {}, {},
-                         &out_keyParams, &oPut);
+    result = op_->finish(vector<uint8_t>(input.begin(), input.end()),
+                         vector<uint8_t>(signature.begin(), signature.end()), {} /* authToken */,
+                         {} /* timestampToken */, {} /* confirmationToken */, &oPut);
 
-    if (result.isOk()) {
-        if (out_keyParams) {
-            out_params->push_back(AuthorizationSet(out_keyParams->params));
-        }
+    if (result.isOk()) output->append(oPut.begin(), oPut.end());
 
-        output->append(oPut.begin(), oPut.end());
-    }
-
-    op_.reset();
+    op_ = {};
     return GetReturnErrorCode(result);
-}
-
-ErrorCode KeyMintAidlTestBase::Finish(const string& message, string* output) {
-    SCOPED_TRACE("Finish");
-    AuthorizationSet out_params;
-    string finish_output;
-    ErrorCode result = Finish(AuthorizationSet() /* in_params */, message, "" /* signature */,
-                              &out_params, output);
-    if (result != ErrorCode::OK) {
-        return result;
-    }
-    EXPECT_EQ(0U, out_params.size());
-    return result;
-}
-
-ErrorCode KeyMintAidlTestBase::Finish(const string& message, const string& signature,
-                                      string* output) {
-    SCOPED_TRACE("Finish");
-    AuthorizationSet out_params;
-    ErrorCode result =
-            Finish(AuthorizationSet() /* in_params */, message, signature, &out_params, output);
-
-    if (result != ErrorCode::OK) {
-        return result;
-    }
-
-    EXPECT_EQ(0U, out_params.size());
-    return result;
 }
 
 ErrorCode KeyMintAidlTestBase::Abort(const std::shared_ptr<IKeyMintOperation>& op) {
     SCOPED_TRACE("Abort");
 
     EXPECT_NE(op, nullptr);
-    if (!op) {
-        return ErrorCode::UNEXPECTED_NULL_POINTER;
-    }
+    if (!op) return ErrorCode::UNEXPECTED_NULL_POINTER;
 
     Status retval = op->abort();
     EXPECT_TRUE(retval.isOk());
@@ -512,9 +440,7 @@ ErrorCode KeyMintAidlTestBase::Abort() {
     SCOPED_TRACE("Abort");
 
     EXPECT_NE(op_, nullptr);
-    if (!op_) {
-        return ErrorCode::UNEXPECTED_NULL_POINTER;
-    }
+    if (!op_) return ErrorCode::UNEXPECTED_NULL_POINTER;
 
     Status retval = op_->abort();
     return static_cast<ErrorCode>(retval.getServiceSpecificError());
@@ -530,30 +456,13 @@ void KeyMintAidlTestBase::AbortIfNeeded() {
 
 auto KeyMintAidlTestBase::ProcessMessage(const vector<uint8_t>& key_blob, KeyPurpose operation,
                                          const string& message, const AuthorizationSet& in_params)
-        -> std::tuple<ErrorCode, string, AuthorizationSet /* out_params */> {
+        -> std::tuple<ErrorCode, string> {
     AuthorizationSet begin_out_params;
     ErrorCode result = Begin(operation, key_blob, in_params, &begin_out_params);
-    AuthorizationSet out_params(std::move(begin_out_params));
-    if (result != ErrorCode::OK) {
-        return {result, {}, out_params};
-    }
+    if (result != ErrorCode::OK) return {result, {}};
 
     string output;
-    int32_t consumed = 0;
-    AuthorizationSet update_params;
-    AuthorizationSet update_out_params;
-    result = Update(update_params, message, &update_out_params, &output, &consumed);
-    out_params.push_back(update_out_params);
-    if (result != ErrorCode::OK) {
-        return {result, output, out_params};
-    }
-
-    string unused;
-    AuthorizationSet finish_params;
-    AuthorizationSet finish_out_params;
-    result = Finish(finish_params, message.substr(consumed), unused, &finish_out_params, &output);
-    out_params.push_back(finish_out_params);
-    return {result, output, out_params};
+    return {Finish(message, &output), output};
 }
 
 string KeyMintAidlTestBase::ProcessMessage(const vector<uint8_t>& key_blob, KeyPurpose operation,
@@ -561,30 +470,14 @@ string KeyMintAidlTestBase::ProcessMessage(const vector<uint8_t>& key_blob, KeyP
                                            AuthorizationSet* out_params) {
     SCOPED_TRACE("ProcessMessage");
     AuthorizationSet begin_out_params;
-    ErrorCode result = Begin(operation, key_blob, in_params, &begin_out_params);
+    ErrorCode result = Begin(operation, key_blob, in_params, out_params);
     EXPECT_EQ(ErrorCode::OK, result);
     if (result != ErrorCode::OK) {
         return "";
     }
 
     string output;
-    int32_t consumed = 0;
-    AuthorizationSet update_params;
-    AuthorizationSet update_out_params;
-    result = Update(update_params, message, &update_out_params, &output, &consumed);
-    EXPECT_EQ(ErrorCode::OK, result);
-    if (result != ErrorCode::OK) {
-        return "";
-    }
-
-    string unused;
-    AuthorizationSet finish_params;
-    AuthorizationSet finish_out_params;
-    EXPECT_EQ(ErrorCode::OK,
-              Finish(finish_params, message.substr(consumed), unused, &finish_out_params, &output));
-
-    out_params->push_back(begin_out_params);
-    out_params->push_back(finish_out_params);
+    EXPECT_EQ(ErrorCode::OK, Finish(message, &output));
     return output;
 }
 
@@ -674,21 +567,9 @@ void KeyMintAidlTestBase::VerifyMessage(const vector<uint8_t>& key_blob, const s
     ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::VERIFY, key_blob, params, &begin_out_params));
 
     string output;
-    AuthorizationSet update_params;
-    AuthorizationSet update_out_params;
-    int32_t consumed;
-    ASSERT_EQ(ErrorCode::OK,
-              Update(update_params, message, &update_out_params, &output, &consumed));
+    EXPECT_EQ(ErrorCode::OK, Finish(message, signature, &output));
     EXPECT_TRUE(output.empty());
-    EXPECT_GT(consumed, 0U);
-
-    string unused;
-    AuthorizationSet finish_params;
-    AuthorizationSet finish_out_params;
-    EXPECT_EQ(ErrorCode::OK, Finish(finish_params, message.substr(consumed), signature,
-                                    &finish_out_params, &output));
-    op_.reset();
-    EXPECT_TRUE(output.empty());
+    op_ = {};
 }
 
 void KeyMintAidlTestBase::VerifyMessage(const string& message, const string& signature,
@@ -955,14 +836,14 @@ AuthorizationSet KeyMintAidlTestBase::SwEnforcedAuthorizations(
 }
 
 ErrorCode KeyMintAidlTestBase::UseAesKey(const vector<uint8_t>& aesKeyBlob) {
-    auto [result, ciphertext, out_params] = ProcessMessage(
+    auto [result, ciphertext] = ProcessMessage(
             aesKeyBlob, KeyPurpose::ENCRYPT, "1234567890123456",
             AuthorizationSetBuilder().BlockMode(BlockMode::ECB).Padding(PaddingMode::NONE));
     return result;
 }
 
 ErrorCode KeyMintAidlTestBase::UseHmacKey(const vector<uint8_t>& hmacKeyBlob) {
-    auto [result, mac, out_params] = ProcessMessage(
+    auto [result, mac] = ProcessMessage(
             hmacKeyBlob, KeyPurpose::SIGN, "1234567890123456",
             AuthorizationSetBuilder().Authorization(TAG_MAC_LENGTH, 128).Digest(Digest::SHA_2_256));
     return result;
@@ -970,16 +851,15 @@ ErrorCode KeyMintAidlTestBase::UseHmacKey(const vector<uint8_t>& hmacKeyBlob) {
 
 ErrorCode KeyMintAidlTestBase::UseRsaKey(const vector<uint8_t>& rsaKeyBlob) {
     std::string message(2048 / 8, 'a');
-    auto [result, signature, out_params] = ProcessMessage(
+    auto [result, signature] = ProcessMessage(
             rsaKeyBlob, KeyPurpose::SIGN, message,
             AuthorizationSetBuilder().Digest(Digest::NONE).Padding(PaddingMode::NONE));
     return result;
 }
 
 ErrorCode KeyMintAidlTestBase::UseEcdsaKey(const vector<uint8_t>& ecdsaKeyBlob) {
-    auto [result, signature, out_params] =
-            ProcessMessage(ecdsaKeyBlob, KeyPurpose::SIGN, "a",
-                           AuthorizationSetBuilder().Digest(Digest::SHA_2_256));
+    auto [result, signature] = ProcessMessage(ecdsaKeyBlob, KeyPurpose::SIGN, "a",
+                                              AuthorizationSetBuilder().Digest(Digest::SHA_2_256));
     return result;
 }
 
