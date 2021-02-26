@@ -39,7 +39,7 @@ class Fingerprint : public BnFingerprint {
   private:
     std::unique_ptr<FakeFingerprintEngine> mEngine;
     WorkerThread mWorker;
-    std::weak_ptr<Session> mSession;
+    std::shared_ptr<Session> mSession;
 };
 
 }  // namespace aidl::android::hardware::biometrics::fingerprint
