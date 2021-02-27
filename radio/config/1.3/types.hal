@@ -21,8 +21,14 @@ package android.hardware.radio.config@1.3;
  */
 struct HalDeviceCapabilities {
   /**
-   * True indicates that the modem is missing features within the current
-   * version of the Radio HAL.
+   * True indicates that the modem does NOT support the following features:
+   * <ul>
+   * <li>Providing either
+   * android.hardware.radio@1.6::LinkCapacityEstimate:secondaryDownlinkCapacityKbps
+   * or android.hardware.radio@1.6::LinkCapacityEstimate:secondaryUplinkCapacityKbps
+   * when given from android.hardware.radio@1.6::RadioIndication:currentLinkCapacityEstimate
+   * </li>
+   * </ul>
    */
   bool modemReducedFeatureSet1;
 };
