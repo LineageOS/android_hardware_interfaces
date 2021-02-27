@@ -986,7 +986,7 @@ struct SlicingConfig {
     /**
      * Struct containing all NSSAIs (list of slice info).
      */
-    Nssais nsaids;
+    Nssais nssais;
 };
 
 /**
