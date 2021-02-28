@@ -16,9 +16,9 @@
 
 package android.hardware.biometrics.face;
 
+import android.hardware.biometrics.face.BaseFrame;
 import android.hardware.biometrics.face.Cell;
 import android.hardware.biometrics.face.EnrollmentStage;
-import android.hardware.biometrics.face.BaseFrame;
 
 /**
  * Describes an individual frame captured during enrollment.
@@ -33,7 +33,7 @@ parcelable EnrollmentFrame {
     /**
      * The enrollment stage for which this frame was captured.
      */
-    EnrollmentStage stage;
+    EnrollmentStage stage = EnrollmentStage.FIRST_FRAME_RECEIVED;
 
     /**
      * The frame metadata. Can be used by the framework to provide user feedback.
