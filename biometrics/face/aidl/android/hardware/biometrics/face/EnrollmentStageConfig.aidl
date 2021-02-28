@@ -24,7 +24,7 @@ parcelable EnrollmentStageConfig {
     /**
      * The stage that's being configured.
      */
-    EnrollmentStage stage;
+    EnrollmentStage stage = EnrollmentStage.FIRST_FRAME_RECEIVED;
 
     /**
      * Optional list of cells that must be completed to finish this stage.
