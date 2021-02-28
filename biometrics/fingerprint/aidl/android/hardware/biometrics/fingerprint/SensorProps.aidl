@@ -30,7 +30,7 @@ parcelable SensorProps {
     /**
      * A statically configured sensor type representing this fingerprint sensor.
      */
-    FingerprintSensorType sensorType;
+    FingerprintSensorType sensorType = FingerprintSensorType.UNKNOWN;
 
     /**
      * A list of display-specific locations from where the sensor is usable from. See SensorLocation
@@ -49,4 +49,3 @@ parcelable SensorProps {
      */
     boolean supportsDetectInteraction;
 }
-
