@@ -79,6 +79,8 @@ struct PortStatusCallbacks {
 };
 
 class BluetoothAudioSession {
+  friend class BluetoothAudioSession_2_1;
+
  private:
   // using recursive_mutex to allow hwbinder to re-enter agian.
   std::recursive_mutex mutex_;
