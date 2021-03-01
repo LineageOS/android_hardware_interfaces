@@ -145,26 +145,36 @@ Return<Result> Filter::start() {
         case DemuxFilterMainType::TS:
             mCallback->onFilterEvent(createMediaEvent());
             mCallback->onFilterEvent(createTsRecordEvent());
-            mCallback_1_1->onFilterEvent_1_1(createTsRecordEvent(), createTsRecordEventExt());
             mCallback->onFilterEvent(createTemiEvent());
+            // clients could still pass 1.0 callback
+            if (mCallback_1_1 != NULL) {
+                mCallback_1_1->onFilterEvent_1_1(createTsRecordEvent(), createTsRecordEventExt());
+            }
             break;
         case DemuxFilterMainType::MMTP:
             mCallback->onFilterEvent(createDownloadEvent());
             mCallback->onFilterEvent(createMmtpRecordEvent());
-            mCallback_1_1->onFilterEvent_1_1(createMmtpRecordEvent(), createMmtpRecordEventExt());
+            if (mCallback_1_1 != NULL) {
+                mCallback_1_1->onFilterEvent_1_1(createMmtpRecordEvent(),
+                                                 createMmtpRecordEventExt());
+            }
             break;
         case DemuxFilterMainType::IP:
             mCallback->onFilterEvent(createSectionEvent());
             mCallback->onFilterEvent(createIpPayloadEvent());
             break;
         case DemuxFilterMainType::TLV: {
-            DemuxFilterEvent emptyFilterEvent;
-            mCallback_1_1->onFilterEvent_1_1(emptyFilterEvent, createMonitorEvent());
+            if (mCallback_1_1 != NULL) {
+                DemuxFilterEvent emptyFilterEvent;
+                mCallback_1_1->onFilterEvent_1_1(emptyFilterEvent, createMonitorEvent());
+            }
             break;
         }
         case DemuxFilterMainType::ALP: {
-            DemuxFilterEvent emptyFilterEvent;
-            mCallback_1_1->onFilterEvent_1_1(emptyFilterEvent, createRestartEvent());
+            if (mCallback_1_1 != NULL) {
+                DemuxFilterEvent emptyFilterEvent;
+                mCallback_1_1->onFilterEvent_1_1(emptyFilterEvent, createRestartEvent());
+            }
             break;
         }
         default:
@@ -967,7 +977,6 @@ DemuxFilterEvent Filter::createMediaEvent() {
             .dataLength = 3,
             .offset = 4,
             .isSecureMemory = true,
-            .avDataId = 5,
             .mpuSequenceNumber = 6,
             .isPesPrivateData = true,
     });
@@ -988,8 +997,15 @@ DemuxFilterEvent Filter::createMediaEvent() {
 
     native_handle_t* nativeHandle = createNativeHandle(av_fd);
     if (nativeHandle == NULL) {
+        ::close(av_fd);
+        ALOGE("[Filter] Failed to create native_handle %d", errno);
         return event;
     }
+
+    // Create a dataId and add a <dataId, av_fd> pair into the dataId2Avfd map
+    uint64_t dataId = mLastUsedDataId++ /*createdUID*/;
+    mDataId2Avfd[dataId] = dup(av_fd);
+    event.events[0].media().avDataId = dataId;
 
     hidl_handle handle;
     handle.setTo(nativeHandle, /*shouldOwn=*/true);

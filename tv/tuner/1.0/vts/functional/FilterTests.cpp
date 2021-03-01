@@ -78,24 +78,20 @@ bool FilterCallback::readFilterEventData() {
     DemuxFilterEvent filterEvent = mFilterEvent;
     ALOGW("[vts] reading from filter FMQ or buffer %d", mFilterId);
     // todo separate filter handlers
-    for (int i = 0; i < filterEvent.events.size(); i++) {
-        switch (mFilterEventType) {
-            case FilterEventType::SECTION:
-                mDataLength = filterEvent.events[i].section().dataLength;
+    for (auto event : filterEvent.events) {
+        switch (event.getDiscriminator()) {
+            case DemuxFilterEvent::Event::hidl_discriminator::section:
+                mDataLength = event.section().dataLength;
                 break;
-            case FilterEventType::PES:
-                mDataLength = filterEvent.events[i].pes().dataLength;
+            case DemuxFilterEvent::Event::hidl_discriminator::pes:
+                mDataLength = event.pes().dataLength;
                 break;
-            case FilterEventType::MEDIA:
-                return dumpAvData(filterEvent.events[i].media());
-            case FilterEventType::RECORD:
-                return readRecordData(filterEvent.events[i].tsRecord());
-            case FilterEventType::MMTPRECORD:
-                break;
-            case FilterEventType::DOWNLOAD:
-                break;
+            case DemuxFilterEvent::Event::hidl_discriminator::media:
+                return dumpAvData(event.media());
+            case DemuxFilterEvent::Event::hidl_discriminator::tsRecord:
+                return readRecordData(event.tsRecord());
             default:
-                break;
+                continue;
         }
         // EXPECT_TRUE(mDataLength == goldenDataOutputBuffer.size()) << "buffer size does not
         // match";
@@ -150,11 +146,6 @@ AssertionResult FilterTests::openFilterInDemux(DemuxFilterType type, uint32_t bu
                            mFilter = filter;
                            status = result;
                        });
-
-    if (status == Result::SUCCESS) {
-        mFilterCallback->setFilterEventType(getFilterEventType(type));
-    }
-
     return AssertionResult(status == Result::SUCCESS);
 }
 
