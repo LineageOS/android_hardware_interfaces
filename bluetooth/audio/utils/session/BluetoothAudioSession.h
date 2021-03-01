@@ -153,6 +153,8 @@ class BluetoothAudioSession {
 
   // The control function writes stream to FMQ
   size_t OutWritePcmData(const void* buffer, size_t bytes);
+  // The control function read stream from FMQ
+  size_t InReadPcmData(void* buffer, size_t bytes);
 
   static constexpr PcmParameters kInvalidPcmParameters = {
       .sampleRate = SampleRate::RATE_UNKNOWN,
