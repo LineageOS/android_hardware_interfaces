@@ -141,6 +141,17 @@ class BluetoothAudioSessionControl_2_1 {
     }
     return 0;
   }
+
+  // The control API reads stream from FMQ
+  static size_t InReadPcmData(const SessionType_2_1& session_type, void* buffer,
+                              size_t bytes) {
+    std::shared_ptr<BluetoothAudioSession_2_1> session_ptr =
+        BluetoothAudioSessionInstance_2_1::GetSessionInstance(session_type);
+    if (session_ptr != nullptr) {
+      return session_ptr->GetAudioSession()->InReadPcmData(buffer, bytes);
+    }
+    return 0;
+  }
 };
 
 }  // namespace audio
