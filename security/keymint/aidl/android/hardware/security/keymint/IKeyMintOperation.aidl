@@ -16,14 +16,74 @@
 
 package android.hardware.security.keymint;
 
-import android.hardware.security.keymint.ByteArray;
 import android.hardware.security.keymint.HardwareAuthToken;
 import android.hardware.security.keymint.KeyParameter;
-import android.hardware.security.keymint.KeyParameterArray;
 import android.hardware.security.secureclock.TimeStampToken;
 
 @VintfStability
 interface IKeyMintOperation {
+    /**
+     * Provides additional authentication data (AAD) to a cryptographic operation begun with
+     * begin(), provided in the input argument.  This method only applies to AEAD modes.  This
+     * method may be called multiple times, supplying the AAD in chunks, but may not be called after
+     * update() is called.  If updateAad() is called after update(), it must return
+     * ErrorCode::INVALID_TAG.
+     *
+     * If operation is in an invalid state (was aborted or had an error) update() must return
+     * ErrorCode::INVALID_OPERATION_HANDLE.
+     *
+     * If this method returns an error code other than ErrorCode::OK, the operation is aborted and
+     * the operation handle must be invalidated.  Any future use of the handle, with this method,
+     * finish, or abort, must return ErrorCode::INVALID_OPERATION_HANDLE.
+     *
+     * == Authorization Enforcement ==
+     *
+     * Key authorization enforcement is performed primarily in begin().  The one exception is the
+     * case where the key has:
+     *
+     * o One or more Tag::USER_SECURE_IDs, and
+     *
+     * o Does not have a Tag::AUTH_TIMEOUT
+     *
+     * In this case, the key requires an authorization per operation, and the update method must
+     * receive a non-null and valid HardwareAuthToken.  For the auth token to be valid, all of the
+     * following has to be true:
+     *
+     *   o The HMAC field must validate correctly.
+     *
+     *   o At least one of the Tag::USER_SECURE_ID values from the key must match at least one of
+     *     the secure ID values in the token.
+     *
+     *   o The key must have a Tag::USER_AUTH_TYPE that matches the auth type in the token.
+     *
+     *   o The challenge field in the auth token must contain the operationHandle
+     *
+     *   If any of these conditions are not met, update() must return
+     *   ErrorCode::KEY_USER_NOT_AUTHENTICATED.
+     *
+     * The caller must provide the auth token on every call to updateAad(), update() and finish().
+     *
+     *
+     * For GCM encryption, the AEAD tag must be appended to the ciphertext by finish().  During
+     * decryption, the last Tag::MAC_LENGTH bytes of the data provided to the last update call must
+     * be the AEAD tag.  Since a given invocation of update cannot know if it's the last invocation,
+     * it must process all but the tag length and buffer the possible tag data for processing during
+     * finish().
+     *
+     * @param input Additional Authentication Data to be processed.
+     *
+     * @param authToken Authentication token. Can be nullable if not provided.
+     *
+     * @param timeStampToken timestamp token, certifies the freshness of an auth token in case
+     *        the security domain of this KeyMint instance has a different clock than the
+     *        authenticator issuing the auth token.
+     *
+     * @return error Returns ErrorCode encountered in keymint as service specific errors. See the
+     *         ErrorCode enum in ErrorCode.aidl.
+     */
+    void updateAad(in byte[] input, in @nullable HardwareAuthToken authToken,
+            in @nullable TimeStampToken timeStampToken);
+
     /**
      * Provides data to, and possibly receives output from, an ongoing cryptographic operation begun
      * with begin().
@@ -96,53 +156,28 @@ interface IKeyMintOperation {
      *
      * -- AES keys --
      *
-     * AES GCM mode supports "associated authentication data," provided via the Tag::ASSOCIATED_DATA
-     * tag in the inParams argument.  The associated data may be provided in repeated calls
-     * (important if the data is too large to send in a single block) but must always precede data
-     * to be encrypted or decrypted.  An update call may receive both associated data and data to
-     * encrypt/decrypt, but subsequent updates must not include associated data.  If the caller
-     * provides associated data to an update call after a call that includes data to
-     * encrypt/decrypt, update() must return ErrorCode::INVALID_TAG.
-     *
      * For GCM encryption, the AEAD tag must be appended to the ciphertext by finish().  During
      * decryption, the last Tag::MAC_LENGTH bytes of the data provided to the last update call must
      * be the AEAD tag.  Since a given invocation of update cannot know if it's the last invocation,
      * it must process all but the tag length and buffer the possible tag data for processing during
      * finish().
      *
-     * TODO: update() needs to be refactored b/168665179.
-     *
-     * @param inParams Additional parameters for the operation.  For AEAD modes, this is used to
-     *        specify Tag::ADDITIONAL_DATA.  Note that additional data may be provided in multiple
-     *        calls to update(), but only until input data has been provided.
-     *
      * @param input Data to be processed.  Note that update() may or may not consume all of the data
      *        provided.  See return value.
      *
-     * @param inTimeStampToken timestamp token, certifies the freshness of an auth token in case
-     *        the security domain of this KeyMint instance has a different clock than the
-     *        authenticator issuing the auth token.
+     * @param authToken Authentication token. Can be nullable if not provided.
+     *
+     * @param timeStampToken certifies the freshness of an auth token in case the security domain of
+     *        this KeyMint instance has a different clock than the authenticator issuing the auth
+     *        token.
      *
      * @return error Returns ErrorCode encountered in keymint as service specific errors. See the
      *         ErrorCode enum in ErrorCode.aidl.
      *
-     * @return int Amount of data that was consumed by update().  If this is less than the
-     *         amount provided, the caller may provide the remainder in a subsequent call to
-     *         update() or finish().  Every call to update must consume at least one byte, unless
-     *         the input is empty, and implementations should consume as much data as reasonably
-     *         possible for each call.
-     *
-     * @return outParams returns the updated key parameters from the blob, if needed.
-     * operation.
-     *
-     * @return out variable output The output data, if any.
+     * @return byte[] The output data, if any.
      */
-    int update(in @nullable KeyParameterArray inParams,
-               in @nullable byte[] input,
-               in @nullable HardwareAuthToken inAuthToken,
-               in @nullable TimeStampToken inTimeStampToken,
-               out @nullable KeyParameterArray outParams,
-               out @nullable ByteArray output);
+    byte[] update(in byte[] input, in @nullable HardwareAuthToken authToken,
+            in @nullable TimeStampToken timeStampToken);
 
     /**
      * Finalizes a cryptographic operation begun with begin() and invalidates operation.
@@ -229,8 +264,7 @@ interface IKeyMintOperation {
      *
      * TODO: update() will need to be refactored into 2 function. b/168665179.
      *
-     * @param inParams Additional parameters for the operation.  For AEAD modes, this is used to
-     *        specify Tag::ADDITIONAL_DATA, but only if no input data was provided to update().
+     * @param inParams Additional parameters for the operation.
      *
      * @param input Data to be processed, per the parameters established in the call to begin().
      *        finish() must consume all provided data or return ErrorCode::INVALID_INPUT_LENGTH.
@@ -240,19 +274,21 @@ interface IKeyMintOperation {
      *
      * @param authToken Authentication token. Can be nullable if not provided.
      *
-     * @param inTimeStampToken timestamp token, certifies the freshness of an auth token in case
-     *        the security domain of this KeyMint instance has a different clock than the
-     *        authenticator issuing the auth token.
+     * @param timestampToken certifies the freshness of an auth token in case the security domain of
+     *        this KeyMint instance has a different clock than the authenticator issuing the auth
+     *        token.
      *
-     * @return outParams Any output parameters generated by finish().
+     * @param confirmationToken is the confirmation token required by keys with
+     * Tag::TRUSTED_CONFIRMATION_REQUIRED.
      *
      * @return The output data, if any.
+     *
+     * @return outParams Any output parameters generated by finish().
      */
-    byte[] finish(in @nullable KeyParameterArray inParams, in @nullable byte[] input,
-                in @nullable byte[] inSignature,
-                in @nullable HardwareAuthToken authToken,
-                in @nullable TimeStampToken inTimeStampToken,
-                out @nullable KeyParameterArray outParams);
+    byte[] finish(in @nullable byte[] input, in @nullable byte[] signature,
+            in @nullable HardwareAuthToken authToken,
+            in @nullable TimeStampToken timestampToken,
+            in @nullable byte[] confirmationToken);
 
     /**
      * Aborts a cryptographic operation begun with begin(), freeing all internal resources. If an
