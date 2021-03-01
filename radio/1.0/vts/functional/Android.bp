@@ -26,46 +26,56 @@ package {
 cc_test {
     name: "VtsHalRadioV1_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
-    srcs: ["radio_hidl_hal_cell_broadcast.cpp",
-           "radio_hidl_hal_data.cpp",
-           "radio_hidl_hal_icc.cpp",
-           "radio_hidl_hal_ims.cpp",
-           "radio_hidl_hal_misc.cpp",
-           "radio_hidl_hal_sms.cpp",
-           "radio_hidl_hal_stk.cpp",
-           "radio_hidl_hal_test.cpp",
-           "radio_hidl_hal_voice.cpp",
-           "radio_indication.cpp",
-           "radio_response.cpp",
-           "VtsHalRadioV1_0TargetTest.cpp",
-           "vts_test_util.cpp"],
+    srcs: [
+        "radio_hidl_hal_cell_broadcast.cpp",
+        "radio_hidl_hal_data.cpp",
+        "radio_hidl_hal_icc.cpp",
+        "radio_hidl_hal_ims.cpp",
+        "radio_hidl_hal_misc.cpp",
+        "radio_hidl_hal_sms.cpp",
+        "radio_hidl_hal_stk.cpp",
+        "radio_hidl_hal_test.cpp",
+        "radio_hidl_hal_voice.cpp",
+        "radio_indication.cpp",
+        "radio_response.cpp",
+        "VtsHalRadioV1_0TargetTest.cpp",
+        "vts_test_util.cpp",
+    ],
     static_libs: [
         "android.hardware.radio@1.0",
     ],
     test_config: "vts_hal_radio_target_test.xml",
-    test_suites: ["general-tests", "vts"],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
 }
 
 cc_test {
     name: "VtsHalSapV1_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
-    srcs: ["sap_callback.cpp",
-           "sap_hidl_hal_api.cpp",
-           "sap_hidl_hal_test.cpp",
-           "VtsHalSapV1_0TargetTest.cpp",
-           "vts_test_util.cpp"],
+    srcs: [
+        "sap_callback.cpp",
+        "sap_hidl_hal_api.cpp",
+        "sap_hidl_hal_test.cpp",
+        "VtsHalSapV1_0TargetTest.cpp",
+        "vts_test_util.cpp",
+    ],
     static_libs: [
         "android.hardware.radio@1.0",
     ],
     test_config: "vts_hal_sap_target_test.xml",
-    test_suites: ["general-tests", "vts"],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
 }
 
 cc_library_static {
     name: "RadioVtsTestUtilBase",
     defaults: ["VtsHalTargetTestDefaults"],
-    srcs : [
-        "vts_test_util.cpp"
+    srcs: [
+        "vts_test_util.cpp",
     ],
     shared_libs: [
         "android.hardware.radio@1.0",
