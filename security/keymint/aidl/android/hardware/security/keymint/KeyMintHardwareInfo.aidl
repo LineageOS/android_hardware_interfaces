@@ -34,7 +34,7 @@ parcelable KeyMintHardwareInfo {
 
     /* securityLevel is the security level of the IKeyMintDevice implementation accessed
      * through this aidl package.  */
-    SecurityLevel securityLevel;
+    SecurityLevel securityLevel = SecurityLevel.SOFTWARE;
 
     /* keyMintName is the name of the IKeyMintDevice implementation.  */
     @utf8InCpp String keyMintName;
