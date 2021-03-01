@@ -63,7 +63,7 @@ class BluetoothAudioSession_2_1 {
 
   // The control function is for the bluetooth_audio module to get the current
   // AudioConfiguration
-  const ::android::hardware::bluetooth::audio::V2_1::AudioConfiguration&
+  const ::android::hardware::bluetooth::audio::V2_1::AudioConfiguration
   GetAudioConfig();
 
   static constexpr ::android::hardware::bluetooth::audio::V2_1::
