@@ -29,6 +29,11 @@ using SessionType_2_1 =
 using SessionType_2_0 =
     ::android::hardware::bluetooth::audio::V2_0::SessionType;
 
+::android::hardware::bluetooth::audio::V2_1::AudioConfiguration
+    BluetoothAudioSession_2_1::invalidSoftwareAudioConfiguration = {};
+::android::hardware::bluetooth::audio::V2_1::AudioConfiguration
+    BluetoothAudioSession_2_1::invalidOffloadAudioConfiguration = {};
+
 namespace {
 bool is_2_0_session_type(
     const ::android::hardware::bluetooth::audio::V2_1::SessionType&
@@ -60,6 +65,71 @@ BluetoothAudioSession_2_1::GetAudioSession() {
   return audio_session;
 }
 
+// The control function is for the bluetooth_audio module to get the current
+// AudioConfiguration
+const ::android::hardware::bluetooth::audio::V2_1::AudioConfiguration
+BluetoothAudioSession_2_1::GetAudioConfig() {
+  std::lock_guard<std::recursive_mutex> guard(audio_session->mutex_);
+  if (audio_session->IsSessionReady()) {
+    // If session is unknown it means it should be 2.0 type
+    if (session_type_2_1_ != SessionType_2_1::UNKNOWN)
+      return audio_config_2_1_;
+
+    ::android::hardware::bluetooth::audio::V2_1::AudioConfiguration toConf;
+    const AudioConfiguration fromConf = GetAudioSession()->GetAudioConfig();
+    // pcmConfig only differs between 2.0 and 2.1 in AudioConfiguration
+    if (fromConf.getDiscriminator() ==
+        AudioConfiguration::hidl_discriminator::codecConfig) {
+      toConf.codecConfig() = fromConf.codecConfig();
+    } else {
+      toConf.pcmConfig() = {
+          .sampleRate = static_cast<
+              ::android::hardware::bluetooth::audio::V2_1::SampleRate>(
+              fromConf.pcmConfig().sampleRate),
+          .channelMode = fromConf.pcmConfig().channelMode,
+          .bitsPerSample = fromConf.pcmConfig().bitsPerSample,
+          .dataIntervalUs = 0};
+    }
+    return toConf;
+  } else if (session_type_2_1_ ==
+             SessionType_2_1::A2DP_HARDWARE_OFFLOAD_DATAPATH) {
+    return kInvalidOffloadAudioConfiguration;
+  } else {
+    return kInvalidSoftwareAudioConfiguration;
+  }
+}
+
+bool BluetoothAudioSession_2_1::UpdateAudioConfig(
+    const ::android::hardware::bluetooth::audio::V2_1::AudioConfiguration&
+        audio_config) {
+  bool is_software_session =
+      (session_type_2_1_ == SessionType_2_1::A2DP_SOFTWARE_ENCODING_DATAPATH ||
+       session_type_2_1_ ==
+           SessionType_2_1::HEARING_AID_SOFTWARE_ENCODING_DATAPATH ||
+       session_type_2_1_ ==
+           SessionType_2_1::LE_AUDIO_SOFTWARE_ENCODING_DATAPATH ||
+       session_type_2_1_ ==
+           SessionType_2_1::LE_AUDIO_SOFTWARE_DECODED_DATAPATH);
+  bool is_offload_session =
+      (session_type_2_1_ == SessionType_2_1::A2DP_HARDWARE_OFFLOAD_DATAPATH);
+  auto audio_config_discriminator = audio_config.getDiscriminator();
+  bool is_software_audio_config =
+      (is_software_session &&
+       audio_config_discriminator ==
+           ::android::hardware::bluetooth::audio::V2_1::AudioConfiguration::
+               hidl_discriminator::pcmConfig);
+  bool is_offload_audio_config =
+      (is_offload_session &&
+       audio_config_discriminator ==
+           ::android::hardware::bluetooth::audio::V2_1::AudioConfiguration::
+               hidl_discriminator::codecConfig);
+  if (!is_software_audio_config && !is_offload_audio_config) {
+    return false;
+  }
+  audio_config_2_1_ = audio_config;
+  return true;
+}
+
 // The report function is used to report that the Bluetooth stack has started
 // this session without any failure, and will invoke session_changed_cb_ to
 // notify those registered bluetooth_audio outputs
@@ -86,7 +156,27 @@ void BluetoothAudioSession_2_1::OnSessionStarted(
 
     audio_session->OnSessionStarted(stack_iface, dataMQ, config);
   } else {
-    LOG(FATAL) << " Not implemented yet!!";
+    std::lock_guard<std::recursive_mutex> guard(audio_session->mutex_);
+    if (stack_iface == nullptr) {
+      LOG(ERROR) << __func__ << " - SessionType=" << toString(session_type_2_1_)
+                 << ", IBluetoothAudioPort Invalid";
+    } else if (!UpdateAudioConfig(audio_config)) {
+      LOG(ERROR) << __func__ << " - SessionType=" << toString(session_type_2_1_)
+                 << ", AudioConfiguration=" << toString(audio_config)
+                 << " Invalid";
+    } else if (!audio_session->UpdateDataPath(dataMQ)) {
+      LOG(ERROR) << __func__ << " - SessionType=" << toString(session_type_2_1_)
+                 << " DataMQ Invalid";
+      audio_config_2_1_ =
+          (session_type_2_1_ == SessionType_2_1::A2DP_HARDWARE_OFFLOAD_DATAPATH
+               ? kInvalidOffloadAudioConfiguration
+               : kInvalidSoftwareAudioConfiguration);
+    } else {
+      audio_session->stack_iface_ = stack_iface;
+      LOG(INFO) << __func__ << " - SessionType=" << toString(session_type_2_1_)
+                << ", AudioConfiguration=" << toString(audio_config);
+      audio_session->ReportSessionStatus();
+    };
   }
 }
 

@@ -66,17 +66,6 @@ using ::testing::AssertionResult;
 
 using namespace std;
 
-enum FilterEventType : uint8_t {
-    UNDEFINED,
-    SECTION,
-    MEDIA,
-    PES,
-    RECORD,
-    MMTPRECORD,
-    DOWNLOAD,
-    TEMI,
-};
-
 using FilterMQ = MessageQueue<uint8_t, kSynchronizedReadWrite>;
 using MQDesc = MQDescriptorSync<uint8_t>;
 
@@ -104,7 +93,6 @@ class FilterCallback : public IFilterCallback {
 
     void setFilterId(uint32_t filterId) { mFilterId = filterId; }
     void setFilterInterface(sp<IFilter> filter) { mFilter = filter; }
-    void setFilterEventType(FilterEventType type) { mFilterEventType = type; }
 
     void testFilterDataOutput();
 
@@ -130,7 +118,6 @@ class FilterCallback : public IFilterCallback {
 
     uint32_t mFilterId;
     sp<IFilter> mFilter;
-    FilterEventType mFilterEventType;
     std::unique_ptr<FilterMQ> mFilterMQ;
     EventFlag* mFilterMQEventFlag;
     DemuxFilterEvent mFilterEvent;
@@ -167,53 +154,6 @@ class FilterTests {
     AssertionResult stopFilter(uint32_t filterId);
     AssertionResult closeFilter(uint32_t filterId);
     AssertionResult closeTimeFilter();
-
-    FilterEventType getFilterEventType(DemuxFilterType type) {
-        FilterEventType eventType = FilterEventType::UNDEFINED;
-        switch (type.mainType) {
-            case DemuxFilterMainType::TS:
-                switch (type.subType.tsFilterType()) {
-                    case DemuxTsFilterType::UNDEFINED:
-                        break;
-                    case DemuxTsFilterType::SECTION:
-                        eventType = FilterEventType::SECTION;
-                        break;
-                    case DemuxTsFilterType::PES:
-                        eventType = FilterEventType::PES;
-                        break;
-                    case DemuxTsFilterType::TS:
-                        break;
-                    case DemuxTsFilterType::AUDIO:
-                    case DemuxTsFilterType::VIDEO:
-                        eventType = FilterEventType::MEDIA;
-                        break;
-                    case DemuxTsFilterType::PCR:
-                        break;
-                    case DemuxTsFilterType::RECORD:
-                        eventType = FilterEventType::RECORD;
-                        break;
-                    case DemuxTsFilterType::TEMI:
-                        eventType = FilterEventType::TEMI;
-                        break;
-                }
-                break;
-            case DemuxFilterMainType::MMTP:
-                /*mmtpSettings*/
-                break;
-            case DemuxFilterMainType::IP:
-                /*ipSettings*/
-                break;
-            case DemuxFilterMainType::TLV:
-                /*tlvSettings*/
-                break;
-            case DemuxFilterMainType::ALP:
-                /*alpSettings*/
-                break;
-            default:
-                break;
-        }
-        return eventType;
-    }
 
   protected:
     static AssertionResult failure() { return ::testing::AssertionFailure(); }

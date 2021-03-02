@@ -43,7 +43,10 @@ AudioConfiguration BluetoothAudioSession::invalidSoftwareAudioConfiguration =
 AudioConfiguration BluetoothAudioSession::invalidOffloadAudioConfiguration = {};
 
 static constexpr int kFmqSendTimeoutMs = 1000;  // 1000 ms timeout for sending
+static constexpr int kFmqReceiveTimeoutMs =
+    1000;                                       // 1000 ms timeout for receiving
 static constexpr int kWritePollMs = 1;          // polled non-blocking interval
+static constexpr int kReadPollMs = 1;           // polled non-blocking interval
 
 static inline timespec timespec_convert_from_hal(const TimeSpec& TS) {
   return {.tv_sec = static_cast<long>(TS.tvSec),
@@ -400,6 +403,39 @@ size_t BluetoothAudioSession::OutWritePcmData(const void* buffer,
     }
   } while (totalWritten < bytes);
   return totalWritten;
+}
+
+// The control function reads stream from FMQ
+size_t BluetoothAudioSession::InReadPcmData(void* buffer, size_t bytes) {
+  if (buffer == nullptr || !bytes) return 0;
+  size_t totalRead = 0;
+  int ms_timeout = kFmqReceiveTimeoutMs;
+  do {
+    std::unique_lock<std::recursive_mutex> lock(mutex_);
+    if (!IsSessionReady()) break;
+    size_t availableToRead = mDataMQ->availableToRead();
+    if (availableToRead) {
+      if (availableToRead > (bytes - totalRead)) {
+        availableToRead = bytes - totalRead;
+      }
+      if (!mDataMQ->read(static_cast<uint8_t*>(buffer) + totalRead,
+                         availableToRead)) {
+        ALOGE("FMQ datapath reading %zu/%zu failed", totalRead, bytes);
+        return totalRead;
+      }
+      totalRead += availableToRead;
+    } else if (ms_timeout >= kReadPollMs) {
+      lock.unlock();
+      usleep(kReadPollMs * 1000);
+      ms_timeout -= kReadPollMs;
+      continue;
+    } else {
+      ALOGD("in data %zu/%zu overflow %d ms", totalRead, bytes,
+            (kFmqReceiveTimeoutMs - ms_timeout));
+      return totalRead;
+    }
+  } while (totalRead < bytes);
+  return totalRead;
 }
 
 std::unique_ptr<BluetoothAudioSessionInstance>
