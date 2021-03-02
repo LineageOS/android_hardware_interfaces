@@ -276,6 +276,7 @@ ndk::ScopedAStatus IdentityCredential::startRetrieval(
     auto itemsRequest = byteStringToUnsigned(itemsRequestS);
     auto readerSignature = byteStringToUnsigned(readerSignatureS);
 
+    std::unique_ptr<cppbor::Item> sessionTranscriptItem;
     if (sessionTranscript.size() > 0) {
         auto [item, _, message] = cppbor::parse(sessionTranscript);
         if (item == nullptr) {
@@ -283,7 +284,7 @@ ndk::ScopedAStatus IdentityCredential::startRetrieval(
                     IIdentityCredentialStore::STATUS_INVALID_DATA,
                     "SessionTranscript contains invalid CBOR"));
         }
-        sessionTranscriptItem_ = std::move(item);
+        sessionTranscriptItem = std::move(item);
     }
     if (numStartRetrievalCalls_ > 0) {
         if (sessionTranscript_ != sessionTranscript) {
@@ -323,7 +324,7 @@ ndk::ScopedAStatus IdentityCredential::startRetrieval(
         vector<uint8_t> encodedReaderAuthentication =
                 cppbor::Array()
                         .add("ReaderAuthentication")
-                        .add(sessionTranscriptItem_->clone())
+                        .add(std::move(sessionTranscriptItem))
                         .add(cppbor::Semantic(24, itemsRequestBytes))
                         .encode();
         vector<uint8_t> encodedReaderAuthenticationBytes =
@@ -781,13 +782,6 @@ ndk::ScopedAStatus IdentityCredential::finishRetrieval(vector<int8_t>* outMac,
     optional<vector<uint8_t>> mac;
     if (signingKeyBlob_.size() > 0 && sessionTranscript_.size() > 0 &&
         readerPublicKey_.size() > 0) {
-        cppbor::Array array;
-        array.add("DeviceAuthentication");
-        array.add(sessionTranscriptItem_->clone());
-        array.add(docType_);
-        array.add(cppbor::Semantic(24, encodedDeviceNameSpaces));
-        vector<uint8_t> deviceAuthenticationBytes = cppbor::Semantic(24, array.encode()).encode();
-
         vector<uint8_t> docTypeAsBlob(docType_.begin(), docType_.end());
         optional<vector<uint8_t>> signingKey =
                 support::decryptAes128Gcm(storageKey_, signingKeyBlob_, docTypeAsBlob);
@@ -797,31 +791,15 @@ ndk::ScopedAStatus IdentityCredential::finishRetrieval(vector<int8_t>* outMac,
                     "Error decrypting signingKeyBlob"));
         }
 
-        optional<vector<uint8_t>> sharedSecret =
-                support::ecdh(readerPublicKey_, signingKey.value());
-        if (!sharedSecret) {
-            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
-                    IIdentityCredentialStore::STATUS_FAILED, "Error doing ECDH"));
-        }
-
-        // Mix-in SessionTranscriptBytes
         vector<uint8_t> sessionTranscriptBytes = cppbor::Semantic(24, sessionTranscript_).encode();
-        vector<uint8_t> sharedSecretWithSessionTranscriptBytes = sharedSecret.value();
-        std::copy(sessionTranscriptBytes.begin(), sessionTranscriptBytes.end(),
-                  std::back_inserter(sharedSecretWithSessionTranscriptBytes));
-
-        vector<uint8_t> salt = {0x00};
-        vector<uint8_t> info = {};
-        optional<vector<uint8_t>> derivedKey =
-                support::hkdf(sharedSecretWithSessionTranscriptBytes, salt, info, 32);
-        if (!derivedKey) {
+        optional<vector<uint8_t>> eMacKey =
+                support::calcEMacKey(signingKey.value(), readerPublicKey_, sessionTranscriptBytes);
+        if (!eMacKey) {
             return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
-                    IIdentityCredentialStore::STATUS_FAILED,
-                    "Error deriving key from shared secret"));
+                    IIdentityCredentialStore::STATUS_FAILED, "Error calculating EMacKey"));
         }
-
-        mac = support::coseMac0(derivedKey.value(), {},      // payload
-                                deviceAuthenticationBytes);  // detached content
+        mac = support::calcMac(sessionTranscript_, docType_, encodedDeviceNameSpaces,
+                               eMacKey.value());
         if (!mac) {
             return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
                     IIdentityCredentialStore::STATUS_FAILED, "Error MACing data"));
@@ -835,9 +813,9 @@ ndk::ScopedAStatus IdentityCredential::finishRetrieval(vector<int8_t>* outMac,
 
 ndk::ScopedAStatus IdentityCredential::generateSigningKeyPair(
         vector<int8_t>* outSigningKeyBlob, Certificate* outSigningKeyCertificate) {
-    string serialDecimal = "0";  // TODO: set serial to something unique
-    string issuer = "Android Open Source Project";
-    string subject = "Android IdentityCredential Reference Implementation";
+    string serialDecimal = "1";
+    string issuer = "Android Identity Credential Key";
+    string subject = "Android Identity Credential Authentication Key";
     time_t validityNotBefore = time(nullptr);
     time_t validityNotAfter = validityNotBefore + 365 * 24 * 3600;
 
