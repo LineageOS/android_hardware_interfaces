@@ -18,7 +18,6 @@ package android.hardware.security.keymint;
 
 import android.hardware.security.keymint.AttestationKey;
 import android.hardware.security.keymint.BeginResult;
-import android.hardware.security.keymint.ByteArray;
 import android.hardware.security.keymint.HardwareAuthToken;
 import android.hardware.security.keymint.IKeyMintOperation;
 import android.hardware.security.keymint.KeyCreationResult;

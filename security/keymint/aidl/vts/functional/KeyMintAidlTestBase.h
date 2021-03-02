@@ -112,15 +112,14 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
                     AuthorizationSet* out_params);
     ErrorCode Begin(KeyPurpose purpose, const AuthorizationSet& in_params);
 
-    ErrorCode Update(const AuthorizationSet& in_params, const string& input,
-                     AuthorizationSet* out_params, string* output, int32_t* input_consumed);
-    ErrorCode Update(const string& input, string* out, int32_t* input_consumed);
+    ErrorCode UpdateAad(const string& input);
+    ErrorCode Update(const string& input, string* output);
 
-    ErrorCode Finish(const AuthorizationSet& in_params, const string& input,
-                     const string& signature, AuthorizationSet* out_params, string* output);
-    ErrorCode Finish(const string& message, string* output);
     ErrorCode Finish(const string& message, const string& signature, string* output);
-    ErrorCode Finish(string* output) { return Finish(string(), output); }
+    ErrorCode Finish(const string& message, string* output) {
+        return Finish(message, {} /* signature */, output);
+    }
+    ErrorCode Finish(string* output) { return Finish({} /* message */, output); }
 
     ErrorCode Abort();
     ErrorCode Abort(const shared_ptr<IKeyMintOperation>& op);
@@ -129,9 +128,9 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     string ProcessMessage(const vector<uint8_t>& key_blob, KeyPurpose operation,
                           const string& message, const AuthorizationSet& in_params,
                           AuthorizationSet* out_params);
-    std::tuple<ErrorCode, std::string /* processedMessage */, AuthorizationSet /* out_params */>
-    ProcessMessage(const vector<uint8_t>& key_blob, KeyPurpose operation,
-                   const std::string& message, const AuthorizationSet& in_params);
+    std::tuple<ErrorCode, std::string /* processedMessage */> ProcessMessage(
+            const vector<uint8_t>& key_blob, KeyPurpose operation, const std::string& message,
+            const AuthorizationSet& in_params);
     string SignMessage(const vector<uint8_t>& key_blob, const string& message,
                        const AuthorizationSet& params);
     string SignMessage(const string& message, const AuthorizationSet& params);
