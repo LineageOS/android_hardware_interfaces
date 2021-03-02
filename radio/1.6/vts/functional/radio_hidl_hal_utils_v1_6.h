@@ -89,6 +89,7 @@ class RadioResponse_v1_6 : public ::android::hardware::radio::V1_6::IRadioRespon
 
     // Data
     ::android::hardware::radio::V1_4::DataRegStateResult dataRegResp;
+    ::android::hardware::radio::V1_6::SetupDataCallResult setupDataCallResult;
 
     // SimLock status
     ::android::hardware::radio::V1_4::CarrierRestrictionsWithPriority carrierRestrictionsResp;
