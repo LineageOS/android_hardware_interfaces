@@ -54,7 +54,7 @@ class WifiChip : public V1_5::IWifiChip {
              const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
              const std::weak_ptr<mode_controller::WifiModeController>
                  mode_controller,
-             const std::weak_ptr<iface_util::WifiIfaceUtil> iface_util,
+             const std::shared_ptr<iface_util::WifiIfaceUtil> iface_util,
              const std::weak_ptr<feature_flags::WifiFeatureFlags> feature_flags,
              const std::function<void(const std::string&)>&
                  subsystemCallbackHandler);
@@ -307,7 +307,7 @@ class WifiChip : public V1_5::IWifiChip {
     ChipId chip_id_;
     std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
     std::weak_ptr<mode_controller::WifiModeController> mode_controller_;
-    std::weak_ptr<iface_util::WifiIfaceUtil> iface_util_;
+    std::shared_ptr<iface_util::WifiIfaceUtil> iface_util_;
     std::vector<sp<WifiApIface>> ap_ifaces_;
     std::vector<sp<WifiNanIface>> nan_ifaces_;
     std::vector<sp<WifiP2pIface>> p2p_ifaces_;
