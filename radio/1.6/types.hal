@@ -707,8 +707,10 @@ struct RegStateResult {
     RegState regState;
 
     /**
-     * Indicates the available voice radio technology, valid values as
-     * defined by RadioTechnology.
+     * Indicates the available voice radio technology, valid values as defined by RadioTechnology,
+     * except LTE_CA, which is no longer a valid value on 1.5 or above. When the device is on
+     * carrier aggregation, vendor RIL service should properly report multiple PhysicalChannelConfig
+     * elements through IRadio::currentPhysicalChannelConfigs_1_6.
      */
     RadioTechnology rat;
 
