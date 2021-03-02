@@ -198,8 +198,8 @@ class InvalidPreparedModel : public BnPreparedModel {
                 static_cast<int32_t>(ErrorStatus::GENERAL_FAILURE));
     }
     ndk::ScopedAStatus executeFenced(const Request&, const std::vector<ndk::ScopedFileDescriptor>&,
-                                     bool, int64_t, int64_t, int64_t, ndk::ScopedFileDescriptor*,
-                                     std::shared_ptr<IFencedExecutionCallback>*) override {
+                                     bool, int64_t, int64_t, int64_t,
+                                     FencedExecutionResult*) override {
         return ndk::ScopedAStatus::fromServiceSpecificError(
                 static_cast<int32_t>(ErrorStatus::GENERAL_FAILURE));
     }
@@ -893,25 +893,24 @@ class MemoryDomainExecutionTest
 
     ErrorStatus executeFenced(const std::shared_ptr<IPreparedModel>& preparedModel,
                               const Request& request) {
-        ndk::ScopedFileDescriptor syncFence;
-        std::shared_ptr<IFencedExecutionCallback> fencedCallback;
+        FencedExecutionResult executionResult;
         const auto ret = preparedModel->executeFenced(request, {}, false, kNoDeadline,
                                                       kOmittedTimeoutDuration, kNoDuration,
-                                                      &syncFence, &fencedCallback);
+                                                      &executionResult);
         if (!ret.isOk()) {
             EXPECT_EQ(ret.getExceptionCode(), EX_SERVICE_SPECIFIC);
             return static_cast<ErrorStatus>(ret.getServiceSpecificError());
         }
-        if (syncFence.get() != -1) {
-            waitForSyncFence(syncFence.get());
+        if (executionResult.syncFence.get() != -1) {
+            waitForSyncFence(executionResult.syncFence.get());
         }
-        EXPECT_NE(fencedCallback, nullptr);
+        EXPECT_NE(executionResult.callback, nullptr);
 
         ErrorStatus executionStatus = ErrorStatus::GENERAL_FAILURE;
         Timing time = kNoTiming;
         Timing timeFenced = kNoTiming;
         const auto retExecutionInfo =
-                fencedCallback->getExecutionInfo(&time, &timeFenced, &executionStatus);
+                executionResult.callback->getExecutionInfo(&time, &timeFenced, &executionStatus);
         EXPECT_TRUE(retExecutionInfo.isOk());
         EXPECT_EQ(time, kNoTiming);
         return executionStatus;
