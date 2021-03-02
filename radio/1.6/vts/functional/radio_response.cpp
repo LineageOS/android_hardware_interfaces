@@ -1053,8 +1053,9 @@ Return<void> RadioResponse_v1_6::setRadioPowerResponse_1_6(
 
 Return<void> RadioResponse_v1_6::setupDataCallResponse_1_6(
         const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
-        const android::hardware::radio::V1_6::SetupDataCallResult& /* dcResponse */) {
+        const android::hardware::radio::V1_6::SetupDataCallResult& dcResponse) {
     rspInfo = info;
+    setupDataCallResult = dcResponse;
     parent_v1_6.notify(info.serial);
     return Void();
 }
@@ -1217,6 +1218,14 @@ Return<void> RadioResponse_v1_6::getCurrentCallsResponse_1_6(
         const ::android::hardware::hidl_vec<::android::hardware::radio::V1_6::Call>& calls) {
     rspInfo = info;
     currentCalls = calls;
+    parent_v1_6.notify(info.serial);
+    return Void();
+}
+
+Return<void> RadioResponse_v1_6::getSlicingConfigResponse(
+        const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
+        const ::android::hardware::radio::V1_6::SlicingConfig& /*slicingConfig*/) {
+    rspInfo = info;
     parent_v1_6.notify(info.serial);
     return Void();
 }

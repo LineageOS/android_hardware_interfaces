@@ -123,6 +123,18 @@ interface IRadio extends @1.5::IRadio {
      * @param sliceInfo SliceInfo to be used for the data connection when a handover occurs from
      *     EPDG to 5G.  It is valid only when accessNetwork is AccessNetwork:NGRAN.  If the slice
      *     passed from EPDG is rejected, then the data failure cause must be DataCallFailCause:SLICE_REJECTED.
+     * @param trafficDescriptor TrafficDescriptor for which data connection needs to be
+     *     established. It is used for URSP traffic matching as described in TS 24.526
+     *     Section 4.2.2. It includes an optional DNN which, if present, must be used for traffic
+     *     matching -- it does not specify the end point to be used for the data call. The end
+     *     point is specified by DataProfileInfo.apn; DataProfileInfo.apn must be used as the end
+     *     point if one is not specified through URSP rules.
+     * @param matchAllRuleAllowed bool to indicate if using default match-all URSP rule for this
+     *     request is allowed. If false, this request must not use the match-all URSP rule and if
+     *     a non-match-all rule is not found (or if URSP rules are not available) it should return
+     *     failure with cause DataCallFailCause:MATCH_ALL_RULE_NOT_ALLOWED. This is needed as some
+     *     requests need to have a hard failure if the intention cannot be met, for example, a
+     *     zero-rating slice.
      *
      * Response function is IRadioResponse.setupDataCallResponse_1_6()
      *
@@ -131,7 +143,8 @@ interface IRadio extends @1.5::IRadio {
     oneway setupDataCall_1_6(int32_t serial, AccessNetwork accessNetwork,
             DataProfileInfo dataProfileInfo, bool roamingAllowed,
             DataRequestReason reason, vec<LinkAddress> addresses, vec<string> dnses,
-            int32_t pduSessionId, OptionalSliceInfo sliceInfo);
+            int32_t pduSessionId, OptionalSliceInfo sliceInfo,
+            OptionalTrafficDescriptor trafficDescriptor, bool matchAllRuleAllowed);
 
     /**
      * Send an SMS message
@@ -496,6 +509,19 @@ interface IRadio extends @1.5::IRadio {
      * Response function is IRadioResponse.getCurrentCallsResponse_1_6()
      */
     oneway getCurrentCalls_1_6(int32_t serial);
+
+    /**
+     * Request to get the current slicing configuration including URSP rules and
+     * NSSAIs (configured, allowed and rejected).
+     * URSP stands for UE route selection policy and is defined in 3GPP TS 24.526
+     * Section 4.2.
+     * An NSSAI is a collection of network slices. Each network slice is identified by
+     * an S-NSSAI and is represented by the struct SliceInfo. NSSAI and S-NSSAI
+     * are defined in 3GPP TS 24.501.
+     *
+     * Response function is IRadioResponse.getSlicingConfigResponse()
+     */
+    oneway getSlicingConfig(int32_t serial);
 
     /**
      * Provide Carrier specific information to the modem that must be used to
