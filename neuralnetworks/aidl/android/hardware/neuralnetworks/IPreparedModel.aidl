@@ -19,7 +19,7 @@ package android.hardware.neuralnetworks;
 import android.hardware.common.NativeHandle;
 import android.hardware.neuralnetworks.ErrorStatus;
 import android.hardware.neuralnetworks.ExecutionResult;
-import android.hardware.neuralnetworks.IFencedExecutionCallback;
+import android.hardware.neuralnetworks.FencedExecutionResult;
 import android.hardware.neuralnetworks.Request;
 
 /**
@@ -152,11 +152,8 @@ interface IPreparedModel {
      *                 complete after all sync fences in waitFor are signaled. If the execution
      *                 cannot be finished within the duration, the execution may be aborted. Passing
      *                 -1 means the duration is omitted. Other negative values are invalid.
-     * @param out syncFence The sync fence that will be signaled when the task is completed. The
-     *                      sync fence will be set to error if a critical error, e.g. hardware
-     *                      failure or kernel panic, occurs when doing execution.
-     * @return The IFencedExecutionCallback can be used to query information like duration and error
-     *     status when the execution is completed.
+     * @return The FencedExecutionResult parcelable, containing IFencedExecutionCallback and the
+     *         sync fence.
      * @throws ServiceSpecificException with one of the following ErrorStatus values:
      *     - DEVICE_UNAVAILABLE if driver is offline or busy
      *     - GENERAL_FAILURE if there is an unspecified error
@@ -166,7 +163,7 @@ interface IPreparedModel {
      *       deadline
      *     - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
      */
-    IFencedExecutionCallback executeFenced(in Request request, in ParcelFileDescriptor[] waitFor,
+    FencedExecutionResult executeFenced(in Request request, in ParcelFileDescriptor[] waitFor,
             in boolean measureTiming, in long deadline, in long loopTimeoutDuration,
-            in long duration, out @nullable ParcelFileDescriptor syncFence);
+            in long duration);
 }

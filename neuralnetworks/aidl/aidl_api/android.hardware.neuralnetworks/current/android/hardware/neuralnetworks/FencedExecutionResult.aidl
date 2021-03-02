@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *////////////////////////////////////////////////////////////////////////////////
+ */
+///////////////////////////////////////////////////////////////////////////////
 // THIS FILE IS IMMUTABLE. DO NOT EDIT IN ANY CASE.                          //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -32,9 +33,7 @@
 
 package android.hardware.neuralnetworks;
 @VintfStability
-interface IPreparedModel {
-  android.hardware.neuralnetworks.ExecutionResult executeSynchronously(in android.hardware.neuralnetworks.Request request, in boolean measureTiming, in long deadline, in long loopTimeoutDuration);
-  android.hardware.neuralnetworks.FencedExecutionResult executeFenced(in android.hardware.neuralnetworks.Request request, in ParcelFileDescriptor[] waitFor, in boolean measureTiming, in long deadline, in long loopTimeoutDuration, in long duration);
-  const long DEFAULT_LOOP_TIMEOUT_DURATION_NS = 2000000000;
-  const long MAXIMUM_LOOP_TIMEOUT_DURATION_NS = 15000000000;
+parcelable FencedExecutionResult {
+  android.hardware.neuralnetworks.IFencedExecutionCallback callback;
+  @nullable ParcelFileDescriptor syncFence;
 }
