@@ -2562,7 +2562,8 @@ TEST_P(EncryptionOperationsTest, RsaPkcs1Success) {
     string message = "Hello World!";
     auto params = AuthorizationSetBuilder().Padding(PaddingMode::RSA_PKCS1_1_5_ENCRYPT);
     string ciphertext1 = EncryptMessage(message, params);
-    EXPECT_EQ(2048U / 8, ciphertext1.size());
+    // Die here on failure because we try to modify ciphertext1 below
+    ASSERT_EQ(2048U / 8, ciphertext1.size()) << "Failed to encrypt the message";
 
     string ciphertext2 = EncryptMessage(message, params);
     EXPECT_EQ(2048U / 8, ciphertext2.size());
