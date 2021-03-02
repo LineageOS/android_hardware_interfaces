@@ -72,6 +72,8 @@ using ::android::hardware::automotive::evs::V1_1::BufferDesc;
 using ::android::hardware::automotive::evs::V1_0::DisplayDesc;
 using ::android::hardware::automotive::evs::V1_0::DisplayState;
 using ::android::hardware::graphics::common::V1_0::PixelFormat;
+using ::android::frameworks::automotive::display::V1_0::HwDisplayConfig;
+using ::android::frameworks::automotive::display::V1_0::HwDisplayState;
 using IEvsCamera_1_0 = ::android::hardware::automotive::evs::V1_0::IEvsCamera;
 using IEvsCamera_1_1 = ::android::hardware::automotive::evs::V1_1::IEvsCamera;
 using IEvsDisplay_1_0 = ::android::hardware::automotive::evs::V1_0::IEvsDisplay;
@@ -303,11 +305,22 @@ TEST_P(EvsHidlTest, CameraOpenClean) {
             const auto id = 0xFFFFFFFF; // meaningless id
             hidl_vec<uint8_t> values;
             auto err = pCam->setExtendedInfo_1_1(id, values);
-            ASSERT_NE(EvsResult::INVALID_ARG, err);
+            if (isLogicalCam) {
+                // Logical camera device does not support setExtendedInfo
+                // method.
+                ASSERT_EQ(EvsResult::INVALID_ARG, err);
+            } else {
+                ASSERT_NE(EvsResult::INVALID_ARG, err);
+            }
 
-            pCam->getExtendedInfo_1_1(id, [](const auto& result, const auto& data) {
-                ASSERT_NE(EvsResult::INVALID_ARG, result);
-                ASSERT_EQ(0, data.size());
+
+            pCam->getExtendedInfo_1_1(id, [&isLogicalCam](const auto& result, const auto& data) {
+                if (isLogicalCam) {
+                    ASSERT_EQ(EvsResult::INVALID_ARG, result);
+                } else {
+                    ASSERT_NE(EvsResult::INVALID_ARG, result);
+                    ASSERT_EQ(0, data.size());
+                }
             });
 
             // Explicitly close the camera so resources are released right away
@@ -605,7 +618,10 @@ TEST_P(EvsHidlTest, CameraToDisplayRoundTrip) {
     LOG(INFO) << "Display " << targetDisplayId << " is alreay in use.";
 
     // Get the display descriptor
-    pDisplay->getDisplayInfo_1_1([](const auto& config, const auto& state) {
+    pDisplay->getDisplayInfo_1_1([](const HwDisplayConfig& config, const HwDisplayState& state) {
+        ASSERT_GT(config.size(), 0);
+        ASSERT_GT(state.size(), 0);
+
         android::DisplayConfig* pConfig = (android::DisplayConfig*)config.data();
         const auto width = pConfig->resolution.getWidth();
         const auto height = pConfig->resolution.getHeight();
