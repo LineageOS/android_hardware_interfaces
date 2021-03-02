@@ -1053,8 +1053,9 @@ Return<void> RadioResponse_v1_6::setRadioPowerResponse_1_6(
 
 Return<void> RadioResponse_v1_6::setupDataCallResponse_1_6(
         const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
-        const android::hardware::radio::V1_6::SetupDataCallResult& /* dcResponse */) {
+        const android::hardware::radio::V1_6::SetupDataCallResult& dcResponse) {
     rspInfo = info;
+    setupDataCallResult = dcResponse;
     parent_v1_6.notify(info.serial);
     return Void();
 }
