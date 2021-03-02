@@ -2751,39 +2751,22 @@ TEST_P(EncryptionOperationsTest, AesIncremental) {
     for (int increment = 1; increment <= 240; ++increment) {
         for (auto block_mode : block_modes) {
             string message(240, 'a');
-            auto params = AuthorizationSetBuilder()
-                                  .BlockMode(block_mode)
-                                  .Padding(PaddingMode::NONE)
-                                  .Authorization(TAG_MAC_LENGTH, 128) /* for GCM */;
+            auto params =
+                    AuthorizationSetBuilder().BlockMode(block_mode).Padding(PaddingMode::NONE);
+            if (block_mode == BlockMode::GCM) {
+                params.Authorization(TAG_MAC_LENGTH, 128) /* for GCM */;
+            }
 
             AuthorizationSet output_params;
             EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, params, &output_params));
 
             string ciphertext;
-            int32_t input_consumed;
             string to_send;
             for (size_t i = 0; i < message.size(); i += increment) {
-                to_send.append(message.substr(i, increment));
-                EXPECT_EQ(ErrorCode::OK, Update(to_send, &ciphertext, &input_consumed));
-                EXPECT_EQ(to_send.length(), input_consumed);
-                to_send = to_send.substr(input_consumed);
-                EXPECT_EQ(0U, to_send.length());
-
-                switch (block_mode) {
-                    case BlockMode::ECB:
-                    case BlockMode::CBC:
-                        // Implementations must take as many blocks as possible, leaving less
-                        // than a block.
-                        EXPECT_LE(to_send.length(), 16U);
-                        break;
-                    case BlockMode::GCM:
-                    case BlockMode::CTR:
-                        // Implementations must always take all the data.
-                        EXPECT_EQ(0U, to_send.length());
-                        break;
-                }
+                EXPECT_EQ(ErrorCode::OK, Update(message.substr(i, increment), &ciphertext));
             }
-            EXPECT_EQ(ErrorCode::OK, Finish(to_send, &ciphertext)) << "Error sending " << to_send;
+            EXPECT_EQ(ErrorCode::OK, Finish(to_send, &ciphertext))
+                    << "Error sending " << to_send << " with block mode " << block_mode;
 
             switch (block_mode) {
                 case BlockMode::GCM:
@@ -2818,9 +2801,7 @@ TEST_P(EncryptionOperationsTest, AesIncremental) {
 
             string plaintext;
             for (size_t i = 0; i < ciphertext.size(); i += increment) {
-                to_send.append(ciphertext.substr(i, increment));
-                EXPECT_EQ(ErrorCode::OK, Update(to_send, &plaintext, &input_consumed));
-                to_send = to_send.substr(input_consumed);
+                EXPECT_EQ(ErrorCode::OK, Update(ciphertext.substr(i, increment), &plaintext));
             }
             ErrorCode error = Finish(to_send, &plaintext);
             ASSERT_EQ(ErrorCode::OK, error) << "Decryption failed for block mode " << block_mode
@@ -3077,17 +3058,13 @@ TEST_P(EncryptionOperationsTest, AesGcmRoundTripSuccess) {
                                 .Padding(PaddingMode::NONE)
                                 .Authorization(TAG_MAC_LENGTH, 128);
 
-    auto update_params =
-            AuthorizationSetBuilder().Authorization(TAG_ASSOCIATED_DATA, aad.data(), aad.size());
-
     // Encrypt
     AuthorizationSet begin_out_params;
     ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, begin_params, &begin_out_params))
             << "Begin encrypt";
     string ciphertext;
-    AuthorizationSet update_out_params;
-    ASSERT_EQ(ErrorCode::OK, Finish(update_params, message, "", &update_out_params, &ciphertext));
-
+    ASSERT_EQ(ErrorCode::OK, UpdateAad(aad));
+    ASSERT_EQ(ErrorCode::OK, Finish(message, &ciphertext));
     ASSERT_EQ(ciphertext.length(), message.length() + 16);
 
     // Grab nonce
@@ -3095,12 +3072,9 @@ TEST_P(EncryptionOperationsTest, AesGcmRoundTripSuccess) {
 
     // Decrypt.
     ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, begin_params)) << "Begin decrypt";
+    ASSERT_EQ(ErrorCode::OK, UpdateAad(aad));
     string plaintext;
-    int32_t input_consumed;
-    ASSERT_EQ(ErrorCode::OK,
-              Update(update_params, ciphertext, &update_out_params, &plaintext, &input_consumed));
-    EXPECT_EQ(ciphertext.size(), input_consumed);
-    EXPECT_EQ(ErrorCode::OK, Finish("", &plaintext));
+    EXPECT_EQ(ErrorCode::OK, Finish(ciphertext, &plaintext));
     EXPECT_EQ(message.length(), plaintext.length());
     EXPECT_EQ(message, plaintext);
 }
@@ -3127,17 +3101,15 @@ TEST_P(EncryptionOperationsTest, AesGcmRoundTripWithDelaySuccess) {
                                 .Padding(PaddingMode::NONE)
                                 .Authorization(TAG_MAC_LENGTH, 128);
 
-    auto update_params =
-            AuthorizationSetBuilder().Authorization(TAG_ASSOCIATED_DATA, aad.data(), aad.size());
-
     // Encrypt
     AuthorizationSet begin_out_params;
     ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, begin_params, &begin_out_params))
             << "Begin encrypt";
     string ciphertext;
     AuthorizationSet update_out_params;
+    ASSERT_EQ(ErrorCode::OK, UpdateAad(aad));
     sleep(5);
-    ASSERT_EQ(ErrorCode::OK, Finish(update_params, message, "", &update_out_params, &ciphertext));
+    ASSERT_EQ(ErrorCode::OK, Finish(message, &ciphertext));
 
     ASSERT_EQ(ciphertext.length(), message.length() + 16);
 
@@ -3147,11 +3119,9 @@ TEST_P(EncryptionOperationsTest, AesGcmRoundTripWithDelaySuccess) {
     // Decrypt.
     ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, begin_params)) << "Begin decrypt";
     string plaintext;
-    int32_t input_consumed;
+    ASSERT_EQ(ErrorCode::OK, UpdateAad(aad));
     sleep(5);
-    ASSERT_EQ(ErrorCode::OK,
-              Update(update_params, ciphertext, &update_out_params, &plaintext, &input_consumed));
-    EXPECT_EQ(ciphertext.size(), input_consumed);
+    ASSERT_EQ(ErrorCode::OK, Update(ciphertext, &plaintext));
     sleep(5);
     EXPECT_EQ(ErrorCode::OK, Finish("", &plaintext));
     EXPECT_EQ(message.length(), plaintext.length());
@@ -3230,9 +3200,6 @@ TEST_P(EncryptionOperationsTest, AesGcmTooShortTagOnDecrypt) {
                           .Padding(PaddingMode::NONE)
                           .Authorization(TAG_MAC_LENGTH, 128);
 
-    auto finish_params =
-            AuthorizationSetBuilder().Authorization(TAG_ASSOCIATED_DATA, aad.data(), aad.size());
-
     // Encrypt
     AuthorizationSet begin_out_params;
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, params, &begin_out_params));
@@ -3241,8 +3208,8 @@ TEST_P(EncryptionOperationsTest, AesGcmTooShortTagOnDecrypt) {
 
     AuthorizationSet finish_out_params;
     string ciphertext;
-    EXPECT_EQ(ErrorCode::OK,
-              Finish(finish_params, message, "" /* signature */, &finish_out_params, &ciphertext));
+    ASSERT_EQ(ErrorCode::OK, UpdateAad(aad));
+    EXPECT_EQ(ErrorCode::OK, Finish(message, &ciphertext));
 
     params = AuthorizationSetBuilder()
                      .Authorizations(begin_out_params)
@@ -3326,16 +3293,13 @@ TEST_P(EncryptionOperationsTest, AesGcmAadNoData) {
                           .Padding(PaddingMode::NONE)
                           .Authorization(TAG_MAC_LENGTH, 128);
 
-    auto finish_params =
-            AuthorizationSetBuilder().Authorization(TAG_ASSOCIATED_DATA, aad.data(), aad.size());
-
     // Encrypt
     AuthorizationSet begin_out_params;
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, params, &begin_out_params));
     string ciphertext;
     AuthorizationSet finish_out_params;
-    EXPECT_EQ(ErrorCode::OK, Finish(finish_params, "" /* input */, "" /* signature */,
-                                    &finish_out_params, &ciphertext));
+    ASSERT_EQ(ErrorCode::OK, UpdateAad(aad));
+    EXPECT_EQ(ErrorCode::OK, Finish(&ciphertext));
     EXPECT_TRUE(finish_out_params.empty());
 
     // Grab nonce
@@ -3343,9 +3307,9 @@ TEST_P(EncryptionOperationsTest, AesGcmAadNoData) {
 
     // Decrypt.
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, params));
+    ASSERT_EQ(ErrorCode::OK, UpdateAad(aad));
     string plaintext;
-    EXPECT_EQ(ErrorCode::OK, Finish(finish_params, ciphertext, "" /* signature */,
-                                    &finish_out_params, &plaintext));
+    EXPECT_EQ(ErrorCode::OK, Finish(ciphertext, &plaintext));
 
     EXPECT_TRUE(finish_out_params.empty());
 
@@ -3374,43 +3338,26 @@ TEST_P(EncryptionOperationsTest, AesGcmMultiPartAad) {
                                 .Authorization(TAG_MAC_LENGTH, tag_bits);
     AuthorizationSet begin_out_params;
 
-    auto update_params =
-            AuthorizationSetBuilder().Authorization(TAG_ASSOCIATED_DATA, "foo", (size_t)3);
-
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, begin_params, &begin_out_params));
 
     // No data, AAD only.
+    EXPECT_EQ(ErrorCode::OK, UpdateAad("foo"));
+    EXPECT_EQ(ErrorCode::OK, UpdateAad("foo"));
     string ciphertext;
-    int32_t input_consumed;
-    AuthorizationSet update_out_params;
-    EXPECT_EQ(ErrorCode::OK, Update(update_params, "" /* input */, &update_out_params, &ciphertext,
-                                    &input_consumed));
-    EXPECT_EQ(0U, input_consumed);
-    EXPECT_EQ(0U, ciphertext.size());
-    EXPECT_TRUE(update_out_params.empty());
+    EXPECT_EQ(ErrorCode::OK, Update(message, &ciphertext));
+    EXPECT_EQ(ErrorCode::OK, Finish(&ciphertext));
 
-    // AAD and data.
-    EXPECT_EQ(ErrorCode::OK,
-              Update(update_params, message, &update_out_params, &ciphertext, &input_consumed));
-    EXPECT_EQ(message.size(), input_consumed);
-    EXPECT_TRUE(update_out_params.empty());
-
-    EXPECT_EQ(ErrorCode::OK, Finish("" /* input */, &ciphertext));
     // Expect 128-bit (16-byte) tag appended to ciphertext.
-    EXPECT_EQ(message.size() + (tag_bits >> 3), ciphertext.size());
+    EXPECT_EQ(message.size() + (tag_bits / 8), ciphertext.size());
 
     // Grab nonce.
     begin_params.push_back(begin_out_params);
 
     // Decrypt
-    update_params =
-            AuthorizationSetBuilder().Authorization(TAG_ASSOCIATED_DATA, "foofoo", (size_t)6);
-
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, begin_params));
+    EXPECT_EQ(ErrorCode::OK, UpdateAad("foofoo"));
     string plaintext;
-    EXPECT_EQ(ErrorCode::OK, Finish(update_params, ciphertext, "" /* signature */,
-                                    &update_out_params, &plaintext));
-    EXPECT_TRUE(update_out_params.empty());
+    EXPECT_EQ(ErrorCode::OK, Finish(ciphertext, &plaintext));
     EXPECT_EQ(message, plaintext);
 }
 
@@ -3434,32 +3381,14 @@ TEST_P(EncryptionOperationsTest, AesGcmAadOutOfOrder) {
                                 .Authorization(TAG_MAC_LENGTH, 128);
     AuthorizationSet begin_out_params;
 
-    auto update_params =
-            AuthorizationSetBuilder().Authorization(TAG_ASSOCIATED_DATA, "foo", (size_t)3);
-
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, begin_params, &begin_out_params));
 
-    // No data, AAD only.
+    EXPECT_EQ(ErrorCode::OK, UpdateAad("foo"));
     string ciphertext;
-    int32_t input_consumed;
-    AuthorizationSet update_out_params;
-    EXPECT_EQ(ErrorCode::OK, Update(update_params, "" /* input */, &update_out_params, &ciphertext,
-                                    &input_consumed));
-    EXPECT_EQ(0U, input_consumed);
-    EXPECT_EQ(0U, ciphertext.size());
-    EXPECT_TRUE(update_out_params.empty());
+    EXPECT_EQ(ErrorCode::OK, Update(message, &ciphertext));
+    EXPECT_EQ(ErrorCode::INVALID_TAG, UpdateAad("foo"));
 
-    // AAD and data.
-    EXPECT_EQ(ErrorCode::OK,
-              Update(update_params, message, &update_out_params, &ciphertext, &input_consumed));
-    EXPECT_EQ(message.size(), input_consumed);
-    EXPECT_TRUE(update_out_params.empty());
-
-    // More AAD
-    EXPECT_EQ(ErrorCode::INVALID_TAG,
-              Update(update_params, "", &update_out_params, &ciphertext, &input_consumed));
-
-    op_.reset();
+    op_ = {};
 }
 
 /*
@@ -3481,28 +3410,21 @@ TEST_P(EncryptionOperationsTest, AesGcmBadAad) {
                                 .Padding(PaddingMode::NONE)
                                 .Authorization(TAG_MAC_LENGTH, 128);
 
-    auto finish_params =
-            AuthorizationSetBuilder().Authorization(TAG_ASSOCIATED_DATA, "foobar", (size_t)6);
-
     // Encrypt
     AuthorizationSet begin_out_params;
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, begin_params, &begin_out_params));
+    EXPECT_EQ(ErrorCode::OK, UpdateAad("foobar"));
     string ciphertext;
-    AuthorizationSet finish_out_params;
-    EXPECT_EQ(ErrorCode::OK,
-              Finish(finish_params, message, "" /* signature */, &finish_out_params, &ciphertext));
+    EXPECT_EQ(ErrorCode::OK, Finish(message, &ciphertext));
 
     // Grab nonce
     begin_params.push_back(begin_out_params);
 
-    finish_params = AuthorizationSetBuilder().Authorization(TAG_ASSOCIATED_DATA,
-                                                            "barfoo" /* Wrong AAD */, (size_t)6);
-
     // Decrypt.
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, begin_params, &begin_out_params));
+    EXPECT_EQ(ErrorCode::OK, UpdateAad("barfoo"));
     string plaintext;
-    EXPECT_EQ(ErrorCode::VERIFICATION_FAILED, Finish(finish_params, ciphertext, "" /* signature */,
-                                                     &finish_out_params, &plaintext));
+    EXPECT_EQ(ErrorCode::VERIFICATION_FAILED, Finish(ciphertext, &plaintext));
 }
 
 /*
@@ -3524,25 +3446,22 @@ TEST_P(EncryptionOperationsTest, AesGcmWrongNonce) {
                                 .Padding(PaddingMode::NONE)
                                 .Authorization(TAG_MAC_LENGTH, 128);
 
-    auto finish_params =
-            AuthorizationSetBuilder().Authorization(TAG_ASSOCIATED_DATA, "foobar", (size_t)6);
-
     // Encrypt
     AuthorizationSet begin_out_params;
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, begin_params, &begin_out_params));
+    EXPECT_EQ(ErrorCode::OK, UpdateAad("foobar"));
     string ciphertext;
     AuthorizationSet finish_out_params;
-    EXPECT_EQ(ErrorCode::OK,
-              Finish(finish_params, message, "" /* signature */, &finish_out_params, &ciphertext));
+    EXPECT_EQ(ErrorCode::OK, Finish(message, &ciphertext));
 
     // Wrong nonce
     begin_params.push_back(TAG_NONCE, AidlBuf("123456789012"));
 
     // Decrypt.
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, begin_params, &begin_out_params));
+    EXPECT_EQ(ErrorCode::OK, UpdateAad("foobar"));
     string plaintext;
-    EXPECT_EQ(ErrorCode::VERIFICATION_FAILED, Finish(finish_params, ciphertext, "" /* signature */,
-                                                     &finish_out_params, &plaintext));
+    EXPECT_EQ(ErrorCode::VERIFICATION_FAILED, Finish(ciphertext, &plaintext));
 
     // With wrong nonce, should have gotten garbage plaintext (or none).
     EXPECT_NE(message, plaintext);
@@ -3569,17 +3488,12 @@ TEST_P(EncryptionOperationsTest, AesGcmCorruptTag) {
                           .Padding(PaddingMode::NONE)
                           .Authorization(TAG_MAC_LENGTH, 128);
 
-    auto finish_params =
-            AuthorizationSetBuilder().Authorization(TAG_ASSOCIATED_DATA, aad.data(), aad.size());
-
     // Encrypt
     AuthorizationSet begin_out_params;
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, params, &begin_out_params));
+    EXPECT_EQ(ErrorCode::OK, UpdateAad(aad));
     string ciphertext;
-    AuthorizationSet finish_out_params;
-    EXPECT_EQ(ErrorCode::OK,
-              Finish(finish_params, message, "" /* signature */, &finish_out_params, &ciphertext));
-    EXPECT_TRUE(finish_out_params.empty());
+    EXPECT_EQ(ErrorCode::OK, Finish(message, &ciphertext));
 
     // Corrupt tag
     ++(*ciphertext.rbegin());
@@ -3589,10 +3503,9 @@ TEST_P(EncryptionOperationsTest, AesGcmCorruptTag) {
 
     // Decrypt.
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, params));
+    EXPECT_EQ(ErrorCode::OK, UpdateAad(aad));
     string plaintext;
-    EXPECT_EQ(ErrorCode::VERIFICATION_FAILED, Finish(finish_params, ciphertext, "" /* signature */,
-                                                     &finish_out_params, &plaintext));
-    EXPECT_TRUE(finish_out_params.empty());
+    EXPECT_EQ(ErrorCode::VERIFICATION_FAILED, Finish(ciphertext, &plaintext));
 }
 
 /*
@@ -3704,9 +3617,7 @@ TEST_P(EncryptionOperationsTest, TripleDesEcbPkcs7PaddingCorrupted) {
     begin_params.push_back(TAG_PADDING, PaddingMode::PKCS7);
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, begin_params));
     string plaintext;
-    int32_t input_consumed;
-    EXPECT_EQ(ErrorCode::OK, Update(ciphertext, &plaintext, &input_consumed));
-    EXPECT_EQ(ciphertext.size(), input_consumed);
+    EXPECT_EQ(ErrorCode::OK, Update(ciphertext, &plaintext));
     EXPECT_EQ(ErrorCode::INVALID_ARGUMENT, Finish(&plaintext));
 }
 
@@ -4020,9 +3931,7 @@ TEST_P(EncryptionOperationsTest, TripleDesCbcPkcs7PaddingCorrupted) {
                                 .Authorization(TAG_NONCE, iv);
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, begin_params));
     string plaintext;
-    int32_t input_consumed;
-    EXPECT_EQ(ErrorCode::OK, Update(ciphertext, &plaintext, &input_consumed));
-    EXPECT_EQ(ciphertext.size(), input_consumed);
+    EXPECT_EQ(ErrorCode::OK, Update(ciphertext, &plaintext));
     EXPECT_EQ(ErrorCode::INVALID_ARGUMENT, Finish(&plaintext));
 }
 
@@ -4046,10 +3955,8 @@ TEST_P(EncryptionOperationsTest, TripleDesCbcIncrementalNoPadding) {
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, input_params, &output_params));
 
     string ciphertext;
-    int32_t input_consumed;
     for (size_t i = 0; i < message.size(); i += increment)
-        EXPECT_EQ(ErrorCode::OK,
-                  Update(message.substr(i, increment), &ciphertext, &input_consumed));
+        EXPECT_EQ(ErrorCode::OK, Update(message.substr(i, increment), &ciphertext));
     EXPECT_EQ(ErrorCode::OK, Finish(&ciphertext));
     EXPECT_EQ(message.size(), ciphertext.size());
 
@@ -4062,8 +3969,7 @@ TEST_P(EncryptionOperationsTest, TripleDesCbcIncrementalNoPadding) {
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, input_params, &output_params));
     string plaintext;
     for (size_t i = 0; i < ciphertext.size(); i += increment)
-        EXPECT_EQ(ErrorCode::OK,
-                  Update(ciphertext.substr(i, increment), &plaintext, &input_consumed));
+        EXPECT_EQ(ErrorCode::OK, Update(ciphertext.substr(i, increment), &plaintext));
     EXPECT_EQ(ErrorCode::OK, Finish(&plaintext));
     EXPECT_EQ(ciphertext.size(), plaintext.size());
     EXPECT_EQ(message, plaintext);
