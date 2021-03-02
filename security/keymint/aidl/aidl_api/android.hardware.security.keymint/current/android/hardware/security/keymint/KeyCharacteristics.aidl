@@ -33,6 +33,6 @@
 package android.hardware.security.keymint;
 @VintfStability
 parcelable KeyCharacteristics {
-  android.hardware.security.keymint.SecurityLevel securityLevel;
+  android.hardware.security.keymint.SecurityLevel securityLevel = android.hardware.security.keymint.SecurityLevel.SOFTWARE;
   android.hardware.security.keymint.KeyParameter[] authorizations;
 }
