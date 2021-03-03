@@ -142,23 +142,23 @@ struct StaLinkLayerIfaceContentionTimeStats {
      * Data packet min contention time (usec).  It includes both the internal contention time
      * among different access categories within the chipset and the contention time for the medium.
      */
-    uint64_t contentionTimeMinInUsec;
+    uint32_t contentionTimeMinInUsec;
 
     /**
      * Data packet max contention time (usec).  It includes both the internal contention time
      * among different access categories within the chipset and the contention time for the medium.
      */
-    uint64_t contentionTimeMaxInUsec;
+    uint32_t contentionTimeMaxInUsec;
     /**
      * Data packet average contention time (usec).  It includes both the internal contention time
      * among different access categories within the chipset and the contention time for the medium.
      */
-    uint64_t contentionTimeAvgInUsec;
+    uint32_t contentionTimeAvgInUsec;
 
     /**
      * Number of data packets used for contention statistics.
      */
-    uint64_t contentionNumSamples;
+    uint32_t contentionNumSamples;
 };
 
 /**
