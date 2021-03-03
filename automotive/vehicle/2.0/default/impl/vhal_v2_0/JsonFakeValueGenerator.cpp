@@ -96,11 +96,12 @@ bool JsonFakeValueGenerator::hasNext() {
 std::vector<VehiclePropValue> JsonFakeValueGenerator::parseFakeValueJson(std::istream& is) {
     std::vector<VehiclePropValue> fakeVhalEvents;
 
-    Json::Reader reader;
+    Json::CharReaderBuilder builder;
     Json::Value rawEvents;
-    if (!reader.parse(is, rawEvents)) {
+    std::string errorMessage;
+    if (!Json::parseFromStream(builder, is, &rawEvents, &errorMessage)) {
         ALOGE("%s: Failed to parse fake data JSON file. Error: %s", __func__,
-              reader.getFormattedErrorMessages().c_str());
+              errorMessage.c_str());
         return fakeVhalEvents;
     }
 
