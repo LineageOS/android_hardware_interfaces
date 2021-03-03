@@ -2927,6 +2927,29 @@ enum VehicleProperty : int32_t {
         | VehicleArea:GLOBAL),
 
     /**
+     * Enable/request an EVS service.
+     *
+     * The property provides a generalized way to trigger EVS services.  VHAL
+     * should use this property to request Android to start or stop EVS service.
+     *
+     *  int32Values[0] = a type of the EVS service. The value must be one of enums in
+     *                   EvsServiceType.
+     *  int32Values[1] = the state of the EVS service. The value must be one of enums in
+     *                   EvsServiceState.
+     *
+     * For example, to enable rear view EVS service, android side can set the property value as
+     * [EvsServiceType::REAR_VIEW, EvsServiceState::ON].
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     */
+    EVS_SERVICE_REQUEST = (
+        0x0F10
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32_VEC
+        | VehicleArea:GLOBAL),
+
+    /**
      * Defines a request to apply power policy.
      *
      * VHAL sets this property to change car power policy. Car power policy service subscribes to
@@ -3210,6 +3233,33 @@ enum  VehicleSeatOccupancyState : int32_t {
     UNKNOWN = 0,
     VACANT = 1,
     OCCUPIED = 2
+};
+
+/**
+ * Used by EVS_SERVICE_REQUEST to enumerate the service's type.
+ */
+enum EvsServiceType : int32_t {
+
+    REARVIEW = 0,
+    SURROUNDVIEW = 1,
+};
+
+/**
+ * Used by EVS_SERVICE_REQUEST to enumerate the service's state.
+ */
+enum EvsServiceState : int32_t {
+
+    OFF = 0,
+    ON = 1,
+};
+
+/**
+ * Index in int32VAlues for VehicleProperty#EVS_SERVICE_REQUEST property.
+ */
+enum EvsServiceRequestIndex : int32_t {
+
+    TYPE = 0,
+    STATE = 1,
 };
 
 /**
