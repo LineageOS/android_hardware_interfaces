@@ -59,6 +59,7 @@
 #include "utility/ReturnIn.h"
 #include "utility/ValidateXml.h"
 
+#include "AudioTestDefinitions.h"
 /** Provide version specific functions that are used in the generic tests */
 #if MAJOR_VERSION == 2
 #include "2.0/AudioPrimaryHidlHalUtils.h"
@@ -107,7 +108,11 @@ static auto invalidStateOrNotSupported = {Result::INVALID_STATE, Result::NOT_SUP
 #include "DeviceManager.h"
 #if MAJOR_VERSION <= 6
 #include "PolicyConfig.h"
+#if MAJOR_VERSION == 6
+#include "6.0/Generators.h"
+#endif
 #elif MAJOR_VERSION >= 7
+#include "7.0/Generators.h"
 #include "7.0/PolicyConfig.h"
 #endif
 
@@ -174,9 +179,6 @@ TEST(CheckConfig, audioPolicyConfigurationValidation) {
 //////////////////////////////////////////////////////////////////////////////
 //////////////////// Test parameter types and definitions ////////////////////
 //////////////////////////////////////////////////////////////////////////////
-
-enum { PARAM_FACTORY_NAME, PARAM_DEVICE_NAME };
-using DeviceParameter = std::tuple<std::string, std::string>;
 
 static inline std::string DeviceParameterToString(
         const ::testing::TestParamInfo<DeviceParameter>& info) {
@@ -508,24 +510,6 @@ INSTANTIATE_TEST_CASE_P(AudioPatchHidl, AudioPatchHidlTest,
 // When the VTS test runs on a device lacking the corresponding HAL version the parameter
 // list is empty, this isn't a problem.
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioPatchHidlTest);
-
-// Nesting a tuple in another tuple allows to use GTest Combine function to generate
-// all combinations of devices and configs.
-enum { PARAM_DEVICE, PARAM_CONFIG, PARAM_FLAGS };
-#if MAJOR_VERSION <= 6
-enum { INDEX_INPUT, INDEX_OUTPUT };
-using DeviceConfigParameter =
-        std::tuple<DeviceParameter, AudioConfig, std::variant<AudioInputFlag, AudioOutputFlag>>;
-#elif MAJOR_VERSION >= 7
-using DeviceConfigParameter = std::tuple<DeviceParameter, AudioConfig, std::vector<AudioInOutFlag>>;
-#endif
-
-#if MAJOR_VERSION >= 6
-const std::vector<DeviceConfigParameter>& getInputDeviceConfigParameters();
-const std::vector<DeviceConfigParameter>& getInputDeviceSingleConfigParameters();
-const std::vector<DeviceConfigParameter>& getOutputDeviceConfigParameters();
-const std::vector<DeviceConfigParameter>& getOutputDeviceSingleConfigParameters();
-#endif
 
 #if MAJOR_VERSION >= 4
 static std::string SanitizeStringForGTestName(const std::string& s) {

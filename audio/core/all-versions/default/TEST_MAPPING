@@ -2,6 +2,12 @@
   "presubmit": [
     {
       "name": "android.hardware.audio@7.0-util_tests"
+    },
+    {
+      "name": "HalAudioV6_0GeneratorTest"
+    },
+    {
+      "name": "HalAudioV7_0GeneratorTest"
     }
   ]
 }
