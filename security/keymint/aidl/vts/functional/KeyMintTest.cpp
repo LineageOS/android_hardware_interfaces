@@ -4633,7 +4633,7 @@ TEST_P(KeyAgreementTest, Ecdh) {
 
 INSTANTIATE_KEYMINT_AIDL_TEST(KeyAgreementTest);
 
-typedef KeyMintAidlTestBase EarlyBootKeyTest;
+using EarlyBootKeyTest = KeyMintAidlTestBase;
 
 TEST_P(EarlyBootKeyTest, CreateEarlyBootKeys) {
     auto [aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData] =
@@ -4690,9 +4690,10 @@ TEST_P(EarlyBootKeyTest, DISABLED_FullTest) {
     CheckedDeleteKey(&rsaKeyData.blob);
     CheckedDeleteKey(&ecdsaKeyData.blob);
 }
+
 INSTANTIATE_KEYMINT_AIDL_TEST(EarlyBootKeyTest);
 
-typedef KeyMintAidlTestBase UnlockedDeviceRequiredTest;
+using UnlockedDeviceRequiredTest = KeyMintAidlTestBase;
 
 // This may be a problematic test.  It can't be run repeatedly without unlocking the device in
 // between runs... and on most test devices there are no enrolled credentials so it can't be
@@ -4724,7 +4725,18 @@ TEST_P(UnlockedDeviceRequiredTest, DISABLED_KeysBecomeUnusable) {
     CheckedDeleteKey(&rsaKeyData.blob);
     CheckedDeleteKey(&ecdsaKeyData.blob);
 }
+
 INSTANTIATE_KEYMINT_AIDL_TEST(UnlockedDeviceRequiredTest);
+
+using PerformOperationTest = KeyMintAidlTestBase;
+
+TEST_P(PerformOperationTest, RequireUnimplemented) {
+    vector<uint8_t> response;
+    auto result = keymint_->performOperation({} /* request */, &response);
+    ASSERT_EQ(GetReturnErrorCode(result), ErrorCode::UNIMPLEMENTED);
+}
+
+INSTANTIATE_KEYMINT_AIDL_TEST(PerformOperationTest);
 
 }  // namespace aidl::android::hardware::security::keymint::test
 
