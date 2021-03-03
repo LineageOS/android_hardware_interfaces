@@ -781,8 +781,6 @@ ba84f3a750b1cc43ac51074e8b8e22df924f3e6d9068fac50d95bcf57b2b1d61 android.hardwar
 e8c86c69c438da8d1549856c1bb3e2d1b8da52722f8235ff49a30f2cce91742c android.hardware.soundtrigger@2.1::ISoundTriggerHwCallback
 b9fbb6e2e061ed0960939d48b785e9700210add1f13ed32ecd688d0f1ca20ef7 android.hardware.renderscript@1.0::types
 0f53d70e1eadf8d987766db4bf6ae2048004682168f4cab118da576787def3fa android.hardware.radio@1.0::types
-38d65fb20c60a5b823298560fc0825457ecdc49603a4b4e94bf81511790737da android.hardware.radio@1.4::types
-954c334efd80e8869b66d1ce5fe2755712d96ba4b3c38d415739c330af5fb4cb android.hardware.radio@1.5::types
 
 # HALs released in Android S
 # NOTE: waiting to freeze HALs until later in the release
