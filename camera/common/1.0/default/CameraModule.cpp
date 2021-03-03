@@ -549,7 +549,6 @@ void CameraModule::removeCamera(int cameraId) {
                 }
             }
         }
-        free_camera_metadata(metadata);
     }
 
     mCameraInfoMap.removeItem(cameraId);
