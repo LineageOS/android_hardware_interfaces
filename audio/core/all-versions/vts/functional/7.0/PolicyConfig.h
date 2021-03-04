@@ -16,11 +16,35 @@
 
 #pragma once
 
-// Note: it is assumed that this file is included from AudioPrimaryHidlTest.h
-// and thus it doesn't have all '#include' and 'using' directives required
-// for a standalone compilation.
+#include <fcntl.h>
+#include <unistd.h>
 
+#include <optional>
+#include <set>
+#include <string>
+
+#include <gtest/gtest.h>
+#include <system/audio_config.h>
+#include <utils/Errors.h>
+
+// clang-format off
+#include PATH(android/hardware/audio/FILE_VERSION/types.h)
+#include PATH(android/hardware/audio/common/FILE_VERSION/types.h)
+// clang-format on
+
+#include <android_audio_policy_configuration_V7_0-enums.h>
+#include <android_audio_policy_configuration_V7_0.h>
+
+#include "DeviceManager.h"
+
+using ::android::NO_INIT;
+using ::android::OK;
+using ::android::status_t;
+
+using namespace ::android::hardware::audio::common::CPP_VERSION;
+using namespace ::android::hardware::audio::CPP_VERSION;
 namespace xsd {
+using namespace ::android::audio::policy::configuration::CPP_VERSION;
 using Module = Modules::Module;
 }
 
@@ -30,20 +54,13 @@ class PolicyConfig {
         : mConfigFileName{configFileName},
           mFilePath{findExistingConfigurationFile(mConfigFileName)},
           mConfig{xsd::read(mFilePath.c_str())} {
-        if (mConfig) {
-            mStatus = OK;
-            mPrimaryModule = getModuleFromName(DeviceManager::kPrimaryDevice);
-            if (mConfig->getFirstModules()) {
-                for (const auto& module : mConfig->getFirstModules()->get_module()) {
-                    if (module.getFirstAttachedDevices()) {
-                        auto attachedDevices = module.getFirstAttachedDevices()->getItem();
-                        if (!attachedDevices.empty()) {
-                            mModulesWithDevicesNames.insert(module.getName());
-                        }
-                    }
-                }
-            }
-        }
+        init();
+    }
+    PolicyConfig(const std::string& configPath, const std::string& configFileName)
+        : mConfigFileName{configFileName},
+          mFilePath{configPath + "/" + mConfigFileName},
+          mConfig{xsd::read(mFilePath.c_str())} {
+        init();
     }
     status_t getStatus() const { return mStatus; }
     std::string getError() const {
@@ -86,6 +103,22 @@ class PolicyConfig {
             }
         }
         return std::string{};
+    }
+    void init() {
+        if (mConfig) {
+            mStatus = OK;
+            mPrimaryModule = getModuleFromName(DeviceManager::kPrimaryDevice);
+            if (mConfig->getFirstModules()) {
+                for (const auto& module : mConfig->getFirstModules()->get_module()) {
+                    if (module.getFirstAttachedDevices()) {
+                        auto attachedDevices = module.getFirstAttachedDevices()->getItem();
+                        if (!attachedDevices.empty()) {
+                            mModulesWithDevicesNames.insert(module.getName());
+                        }
+                    }
+                }
+            }
+        }
     }
 
     const std::string mConfigFileName;
