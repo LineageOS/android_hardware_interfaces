@@ -35,12 +35,12 @@ interface IHostapdCallback extends @1.1::IHostapdCallback {
      * The apIfaceInstance can be used to identify which instance the callback
      * is from.
      * Note: The apIfaceInstance must be same as ifaceName in single AP mode.
-     * @param freq The operational frequency of the AP.
+     * @param freqMhz The operational frequency of the AP in Mhz.
      * @param bandwidth The operational bandwidth of the AP.
      * @param generation The operational mode of the AP (e.g. 11ac, 11ax).
      * @param apIfaceInstanceMacAddress MAC Address of the apIfaceInstance.
      */
-    oneway onApInstanceInfoChanged(string ifaceName, string apIfaceInstance, uint32_t freq,
+    oneway onApInstanceInfoChanged(string ifaceName, string apIfaceInstance, uint32_t freqMhz,
         Bandwidth bandwidth, Generation generation, MacAddress apIfaceInstanceMacAddress);
 
     /**
