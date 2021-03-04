@@ -75,5 +75,12 @@ enum AcquiredInfo {
      * the image was too bright to be used for matching.
      */
     TOO_BRIGHT,
+
+    /**
+     * This message may be sent during enrollment if the same area of the finger has already
+     * been captured during this enrollment session. In general, enrolling multiple areas of the
+     * same finger can help against false rejections.
+     */
+    IMMOBILE,
 }
 

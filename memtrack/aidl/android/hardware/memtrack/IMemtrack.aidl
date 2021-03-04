@@ -30,6 +30,22 @@ import android.hardware.memtrack.MemtrackType;
  * GL, graphics, etc. All memory sizes must be in real memory usage,
  * accounting for stride, bit depth, rounding up to page size, etc.
  *
+ * The following getMemory() categories are important for memory accounting in
+ * `dumpsys meminfo` and should be reported as described below:
+ *
+ * - MemtrackType::GRAPHICS and MemtrackRecord::FLAG_SMAPS_UNACCOUNTED
+ *     This should report the PSS of all DMA buffers mapped by the process
+ *     with the specified PID. This PSS can be calculated using ReadDmaBufPss()
+ *     form libdmabufinfo.
+ *
+ * - MemtrackType::GL and MemtrackRecord::FLAG_SMAPS_UNACCOUNTED
+ *     This category should report all GPU private allocations for the specified
+ *     PID that are not accounted in /proc/<pid>/smaps.
+ *
+ * - MemtrackType::OTHER and MemtrackRecord::FLAG_SMAPS_UNACCOUNTED
+ *     Any other memory not accounted for in /proc/<pid>/smaps if any, otherwise
+ *     this should return 0.
+ *
  * Constructor for the interface should be used to perform memtrack management
  * setup actions and must be called once before any calls to getMemory().
  */
@@ -76,7 +92,10 @@ interface IMemtrack {
      * This information is used to identify GPU devices for GPU specific
      * memory accounting (e.g. DMA buffer usage).
      *
+     * The device name(s) provided in getGpuDeviceInfo() must match the
+     * device name in the corresponding device(s) sysfs entry.
+     *
      * @return vector of DeviceInfo populated for all GPU devices.
      */
-     DeviceInfo[] getGpuDeviceInfo();
+    DeviceInfo[] getGpuDeviceInfo();
 }
