@@ -253,14 +253,17 @@ ndk::ScopedAStatus IdentityCredential::startRetrieval(
         }
     }
 
-    // Feed the auth token to secure hardware.
-    if (!hwProxy_->setAuthToken(authToken.challenge, authToken.userId, authToken.authenticatorId,
-                                int(authToken.authenticatorType), authToken.timestamp.milliSeconds,
-                                authToken.mac, verificationToken_.challenge,
-                                verificationToken_.timestamp.milliSeconds,
-                                int(verificationToken_.securityLevel), verificationToken_.mac)) {
-        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
-                IIdentityCredentialStore::STATUS_INVALID_DATA, "Invalid Auth Token"));
+    // Feed the auth token to secure hardware only if they're valid.
+    if (authToken.timestamp.milliSeconds != 0) {
+        if (!hwProxy_->setAuthToken(
+                    authToken.challenge, authToken.userId, authToken.authenticatorId,
+                    int(authToken.authenticatorType), authToken.timestamp.milliSeconds,
+                    authToken.mac, verificationToken_.challenge,
+                    verificationToken_.timestamp.milliSeconds,
+                    int(verificationToken_.securityLevel), verificationToken_.mac)) {
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_INVALID_DATA, "Invalid Auth Token"));
+        }
     }
 
     // We'll be feeding ACPs interleaved with certificates from the reader
