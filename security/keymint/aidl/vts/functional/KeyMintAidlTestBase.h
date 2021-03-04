@@ -261,7 +261,7 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     ErrorCode UseRsaKey(const vector<uint8_t>& rsaKeyBlob);
     ErrorCode UseEcdsaKey(const vector<uint8_t>& ecdsaKeyBlob);
 
-  private:
+  protected:
     std::shared_ptr<IKeyMintDevice> keymint_;
     uint32_t os_version_;
     uint32_t os_patch_level_;
