@@ -42,6 +42,14 @@ enum CameraMetadataTag : @3.5::CameraMetadataTag {
      */
     ANDROID_SCALER_DEFAULT_SECURE_IMAGE_SIZE = android.hardware.camera.metadata@3.5::CameraMetadataTag:ANDROID_SCALER_END_3_5,
 
+    /** android.scaler.physicalCameraMultiResolutionStreamConfigurations [static, enum[], ndk_public]
+     *
+     * <p>The available multi-resolution stream configurations that this
+     * physical camera device supports
+     * (i.e. format, width, height, output/input stream).</p>
+     */
+    ANDROID_SCALER_PHYSICAL_CAMERA_MULTI_RESOLUTION_STREAM_CONFIGURATIONS,
+
     ANDROID_SCALER_END_3_6,
 
 };
@@ -49,3 +57,11 @@ enum CameraMetadataTag : @3.5::CameraMetadataTag {
 /*
  * Enumeration definitions for the various entries that need them
  */
+
+/** android.scaler.physicalCameraMultiResolutionStreamConfigurations enumeration values
+ * @see ANDROID_SCALER_PHYSICAL_CAMERA_MULTI_RESOLUTION_STREAM_CONFIGURATIONS
+ */
+enum CameraMetadataEnumAndroidScalerPhysicalCameraMultiResolutionStreamConfigurations : uint32_t {
+    ANDROID_SCALER_PHYSICAL_CAMERA_MULTI_RESOLUTION_STREAM_CONFIGURATIONS_OUTPUT,
+    ANDROID_SCALER_PHYSICAL_CAMERA_MULTI_RESOLUTION_STREAM_CONFIGURATIONS_INPUT,
+};
