@@ -427,6 +427,9 @@ interface IRadioIndication {
     *
     * @param type Type of radio indication
     * @param lce LceData information
+    *
+    * DEPRECATED in @1.2 and above, use
+    * @1.2::IRadioIndication.currentLinkCapacityEstimate() instead.
     */
    oneway lceData(RadioIndicationType type, LceDataInfo lce);
 
