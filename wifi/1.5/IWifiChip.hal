@@ -303,4 +303,25 @@ interface IWifiChip extends @1.4::IWifiChip {
     getUsableChannels(WifiBand band, bitfield<WifiIfaceMode> ifaceModeMask,
             bitfield<UsableChannelFilter> filterMask)
         generates (WifiStatus status, vec<WifiUsableChannel> channels);
+
+    /**
+     * Trigger subsystem restart
+     *
+     * If the framework detects a problem (e.g. connection failure),
+     * it must call this function to attempt recovery.
+     *
+     * When the wifi HAL receiveds triggerSubsystemRestart(), it must restart
+     * the wlan subsystem, especially the wlan firmware.
+     *
+     * Regarding the callback function for subsystem restart, refer to documentation of
+     * |IWifiEventCallback.onSubsystemRestart| for details.
+     *
+     * @return status WifiStatus of the operation.
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|,
+     *         |WifiStatusCode.ERROR_NOT_AVAILABLE|,
+     *         |WifiStatusCode.ERROR_UNKNOWN|
+     */
+    triggerSubsystemRestart() generates (WifiStatus status);
 };
