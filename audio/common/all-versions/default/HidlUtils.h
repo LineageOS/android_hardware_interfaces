@@ -126,6 +126,10 @@ struct HidlUtils {
     static hidl_vec<AudioTag> filterOutNonVendorTags(const hidl_vec<AudioTag>& tags);
     static std::vector<std::string> filterOutNonVendorTags(const std::vector<std::string>& tags);
     static std::vector<std::string> splitAudioTags(const char* halTags);
+    static status_t audioTransportsFromHal(const struct audio_port_v7& halPort, bool isInput,
+                                           hidl_vec<AudioTransport>* transports);
+    static status_t audioTransportsToHal(const hidl_vec<AudioTransport>& transports,
+                                         struct audio_port_v7* halTransport);
 
   private:
     static status_t audioIndexChannelMaskFromHal(audio_channel_mask_t halChannelMask,
@@ -145,6 +149,10 @@ struct HidlUtils {
                                                struct audio_port_config_device_ext* device,
                                                struct audio_port_config_mix_ext* mix,
                                                struct audio_port_config_session_ext* session);
+    static status_t encapsulationTypeFromHal(audio_encapsulation_type_t halEncapsulationType,
+                                             AudioEncapsulationType* encapsulationType);
+    static status_t encapsulationTypeToHal(const AudioEncapsulationType& encapsulationType,
+                                           audio_encapsulation_type_t* halEncapsulationType);
 
 #endif  // MAJOR_VERSION >= 7
 
