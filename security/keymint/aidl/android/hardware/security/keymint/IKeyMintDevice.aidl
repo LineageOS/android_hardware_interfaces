@@ -761,6 +761,27 @@ interface IKeyMintDevice {
      */
     void earlyBootEnded();
 
+    /*
+     * Called by the client to get a wrapped per-boot ephemeral key from a wrapped storage key.
+     * Clients will then use the returned per-boot ephemeral key in place of the wrapped storage
+     * key. Whenever the hardware is presented with a per-boot ephemeral key for an operation, it
+     * must use the storage key associated with that ephemeral key to perform the requested
+     * operation.
+     *
+     * Implementations should return ErrorCode::UNIMPLEMENTED if they don't support wrapped storage
+     * keys.
+     *
+     * Implementations should return ErrorCode::INVALID_ARGUMENT (as a ServiceSpecificException)
+     * if the input key blob doesn't represent a valid long-lived wrapped storage key.
+     *
+     * @param storageKeyBlob is the wrapped storage key for which the client wants a per-boot
+     *        ephemeral key
+     *
+     * @return a buffer containing the per-boot ephemeral keyblob that should henceforth be used in
+     *         place of the input storageKeyBlob
+     */
+    byte[] convertStorageKeyToEphemeral(in byte[] storageKeyBlob);
+
     /**
      * Called by the client to perform a KeyMint operation.
      *
