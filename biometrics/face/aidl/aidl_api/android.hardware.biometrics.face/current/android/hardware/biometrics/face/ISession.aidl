@@ -34,7 +34,7 @@
 package android.hardware.biometrics.face;
 @VintfStability
 interface ISession {
-  void generateChallenge(in int cookie, in int timeoutSec);
+  void generateChallenge(in int cookie);
   void revokeChallenge(in int cookie, in long challenge);
   android.hardware.biometrics.common.ICancellationSignal enroll(in int cookie, in android.hardware.keymaster.HardwareAuthToken hat, in android.hardware.biometrics.face.EnrollmentType type, in android.hardware.biometrics.face.Feature[] features, in android.hardware.common.NativeHandle previewSurface);
   android.hardware.biometrics.common.ICancellationSignal authenticate(in int cookie, in long operationId);
