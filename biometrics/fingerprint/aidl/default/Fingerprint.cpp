@@ -28,8 +28,8 @@ constexpr FingerprintSensorType SENSOR_TYPE = FingerprintSensorType::REAR;
 constexpr bool SUPPORTS_NAVIGATION_GESTURES = true;
 constexpr char HW_DEVICE_NAME[] = "fingerprintSensor";
 constexpr char HW_VERSION[] = "vendor/model/revision";
-constexpr char FW_VERSION[] = "1.01";
 constexpr char SERIAL_NUMBER[] = "00000001";
+constexpr char SW_VERSION[] = "vendor1/algorithm1/version;vendor2/algorithm2/version";
 
 }  // namespace
 
@@ -37,11 +37,10 @@ Fingerprint::Fingerprint()
     : mEngine(std::make_unique<FakeFingerprintEngine>()), mWorker(MAX_WORKER_QUEUE_SIZE) {}
 
 ndk::ScopedAStatus Fingerprint::getSensorProps(std::vector<SensorProps>* out) {
-    std::vector<common::HardwareInfo> hardwareInfos = {
-            {HW_DEVICE_NAME, HW_VERSION, FW_VERSION, SERIAL_NUMBER}};
+    std::vector<common::HardwareInfo> hardwareInfos = {{HW_DEVICE_NAME, HW_VERSION, SERIAL_NUMBER}};
 
     common::CommonProps commonProps = {SENSOR_ID, SENSOR_STRENGTH, MAX_ENROLLMENTS_PER_USER,
-                                       hardwareInfos};
+                                       hardwareInfos, SW_VERSION};
 
     SensorLocation sensorLocation = {0 /* displayId */, 0 /* sensorLocationX */,
                                      0 /* sensorLocationY */, 0 /* sensorRadius */};

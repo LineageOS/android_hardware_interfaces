@@ -37,7 +37,10 @@ interface IRadio extends @1.1::IRadio {
      * @param serial Serial number of request.
      * @param request Defines the radio networks/bands/channels which need to be scanned.
      *
-     * Response function is IRadioResponse.startNetworkScanResponse()
+     * Response function is IRadioResponse.startNetworkScanResponse() which may return
+     * RadioError:REQUEST_NOT_SUPPORTED if @1.4::IRadio or higher is supported.
+     *
+     * DEPRECATED in @1.4 or higher, use @1.4::IRadio.startNetworkScan_1_4() instead.
      */
     oneway startNetworkScan_1_2(int32_t serial, NetworkScanRequest request);
 
