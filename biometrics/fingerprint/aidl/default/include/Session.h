@@ -32,7 +32,7 @@ class Session : public BnSession {
     Session(int sensorId, int userId, std::shared_ptr<ISessionCallback> cb,
             FakeFingerprintEngine* engine, WorkerThread* worker);
 
-    ndk::ScopedAStatus generateChallenge(int32_t cookie, int32_t timeoutSec) override;
+    ndk::ScopedAStatus generateChallenge(int32_t cookie) override;
 
     ndk::ScopedAStatus revokeChallenge(int32_t cookie, int64_t challenge) override;
 
