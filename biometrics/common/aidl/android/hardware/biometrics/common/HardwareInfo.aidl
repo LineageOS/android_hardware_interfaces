@@ -29,11 +29,6 @@ parcelable HardwareInfo {
     String hardwareVersion;
 
     /**
-     * The firmware version.
-     */
-    String firmwareVersion;
-
-    /**
      * The sensor's serial number.
      */
     String serialNumber;
