@@ -60,13 +60,13 @@ bool Session::isClosed() {
     return mCurrentState == SessionState::CLOSED;
 }
 
-ndk::ScopedAStatus Session::generateChallenge(int32_t cookie, int32_t timeoutSec) {
+ndk::ScopedAStatus Session::generateChallenge(int32_t cookie) {
     LOG(INFO) << "generateChallenge";
     scheduleStateOrCrash(SessionState::GENERATING_CHALLENGE);
 
-    mWorker->schedule(Callable::from([this, cookie, timeoutSec] {
+    mWorker->schedule(Callable::from([this, cookie] {
         enterStateOrCrash(cookie, SessionState::GENERATING_CHALLENGE);
-        mEngine->generateChallengeImpl(mCb.get(), timeoutSec);
+        mEngine->generateChallengeImpl(mCb.get());
         enterIdling(cookie);
     }));
 

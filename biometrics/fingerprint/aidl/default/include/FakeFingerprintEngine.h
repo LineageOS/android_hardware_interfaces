@@ -22,7 +22,7 @@ namespace aidl::android::hardware::biometrics::fingerprint {
 
 class FakeFingerprintEngine {
   public:
-    void generateChallengeImpl(ISessionCallback* cb, int32_t /*timeoutSec*/) {
+    void generateChallengeImpl(ISessionCallback* cb) {
         LOG(INFO) << "generateChallengeImpl";
         cb->onChallengeGenerated(0 /* challenge */);
     }
