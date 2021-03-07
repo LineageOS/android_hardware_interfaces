@@ -3037,7 +3037,7 @@ enum VehicleProperty : int32_t {
     /**
      * Starts the ClusterUI in cluster display.
      *
-     * int32[0]: the type of ClusterUI to show
+     * int32: the type of ClusterUI to show
      *    0 indicates ClusterHome, that is a home screen of cluster display, and provides
      *        the default UI and a kind of launcher functionality for cluster display.
      *    the other values are followed by OEM's definition.
@@ -3057,12 +3057,12 @@ enum VehicleProperty : int32_t {
      * int32[0]: on/off: 0 - off, 1 - on, -1 - don't care
      * int32[1]: width: positive number - actual width in pixels
                         -1 - don't care (should set "don't care" both width and height)
-     * int32[2]: height: ditto with width
+     * int32[2]: height: same format with 'width'
      * int32[3]: Inset - left: positive number - actual left inset value in pixels
                                -1 - don't care (should set "don't care" all Inset fields)
-     * int32[4]: Inset - top
-     * int32[5]: Inset - right
-     * int32[6]: Inset - bottom
+     * int32[4]: Inset - top:    same format with 'left'
+     * int32[5]: Inset - right:  same format with 'left'
+     * int32[6]: Inset - bottom: same format with 'left'
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ
@@ -3097,9 +3097,9 @@ enum VehicleProperty : int32_t {
      *    -1 indicates the area isn't used any more.
      * bytes: the array to represent the availability of ClusterUI.
      *     0 indicates non-available and 1 indicates available.
-     *     For example, let's assume a car supports 3 UI like HOME, MAPS, CALL and it only supports
-     *     CALL UI only when the cellular network is available. Then, if the nework is avaibale,
-     *     it'll send [1 1 1], and if it's out of network, it'll send [1 1 0].
+     *     For example, let's assume a car supports 3 OEM defined ClusterUI like HOME, MAPS, CALL,
+     *     and it only supports CALL UI only when the cellular network is available. Then, if the
+     *     nework is avaibale, it'll send [1 1 1], and if it's out of network, it'll send [1 1 0].
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:WRITE
@@ -3117,7 +3117,7 @@ enum VehicleProperty : int32_t {
      * request to turn the display on to show some specific ClusterUI.
      * ClusterOS should response this with CLUSTER_DISPLAY_STATE.
      *
-     * int32[0]: the type of ClusterUI to show
+     * int32: the type of ClusterUI to show
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:WRITE

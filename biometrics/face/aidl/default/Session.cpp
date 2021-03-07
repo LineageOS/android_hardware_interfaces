@@ -37,7 +37,7 @@ class CancellationSignal : public common::BnCancellationSignal {
 
 Session::Session(std::shared_ptr<ISessionCallback> cb) : cb_(std::move(cb)) {}
 
-ndk::ScopedAStatus Session::generateChallenge(int32_t /*cookie*/, int32_t /*timeoutSec*/) {
+ndk::ScopedAStatus Session::generateChallenge(int32_t /*cookie*/) {
     LOG(INFO) << "generateChallenge";
     if (cb_) {
         cb_->onStateChanged(0, SessionState::GENERATING_CHALLENGE);
