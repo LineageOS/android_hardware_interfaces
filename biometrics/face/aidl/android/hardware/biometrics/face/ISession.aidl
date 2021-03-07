@@ -45,7 +45,7 @@ interface ISession {
      *      to allow addition of biometric enrollments.
      * To secure this path, the following path is taken:
      *   1) Upon user requesting face enroll, the framework requests
-     *      IFace#generateChallenge
+     *      ISession#generateChallenge
      *   2) Framework sends the challenge to the credential subsystem, and upon credential
      *      confirmation, a HAT is created, containing the challenge in the "challenge" field.
      *   3) Framework sends the HAT to the HAL, e.g. ISession#enroll.
@@ -53,11 +53,10 @@ interface ISession {
      *   5) Implementation now has confidence that the user entered their credential to allow
      *      biometric enrollment.
      *
-     * Note that the interface allows multiple in-flight challenges. For example, invoking
-     * generateChallenge(0, 0, timeoutSec) twice does not invalidate the first challenge. The
-     * challenge is invalidated only when:
-     *   1) The provided timeout expires, or
-     *   2) IFace#revokeChallenge is invoked
+     * Note that this interface allows multiple in-flight challenges. Invoking generateChallenge
+     * twice does not invalidate the first challenge. The challenge is invalidated only when:
+     *   1) Its lifespan exceeds the HAL's internal challenge timeout
+     *   2) IFingerprint#revokeChallenge is invoked
      *
      * For example, the following is a possible table of valid challenges:
      * ----------------------------------------------
@@ -70,9 +69,8 @@ interface ISession {
      * ----------------------------------------------
      *
      * @param cookie A unique number identifying this operation
-     * @param timeoutSec Duration for which the challenge is valid for
      */
-    void generateChallenge(in int cookie, in int timeoutSec);
+    void generateChallenge(in int cookie);
 
     /**
      * revokeChallenge:
@@ -113,7 +111,7 @@ interface ISession {
      *
      * Before capturing face data, the implementation must first verify the authenticity and
      * integrity of the provided HardwareAuthToken. In addition, it must check that the challenge
-     * within the provided HardwareAuthToken is valid. See IFace#generateChallenge. If any of
+     * within the provided HardwareAuthToken is valid. See ISession#generateChallenge. If any of
      * the above checks fail, the framework must be notified via ISessionCallback#onError and the
      * HAL must notify the framework when it returns to the idle state. See
      * Error::UNABLE_TO_PROCESS.
