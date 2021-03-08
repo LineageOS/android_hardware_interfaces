@@ -58,7 +58,7 @@ private:
 
 public:
     GeneratorHub(const OnHalEvent& onHalEvent);
-    ~GeneratorHub() = default;
+    ~GeneratorHub();
 
     /**
      * Register a new generator. The generator will be discarded if it could not produce next event.
@@ -84,6 +84,7 @@ private:
     mutable std::mutex mLock;
     std::condition_variable mCond;
     std::thread mThread;
+    std::atomic<bool> mShuttingDownFlag{false};
 };
 
 }  // namespace impl
