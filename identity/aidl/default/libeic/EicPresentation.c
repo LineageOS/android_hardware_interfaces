@@ -336,6 +336,18 @@ bool eicPresentationSetAuthToken(EicPresentation* ctx, uint64_t challenge, uint6
                                  int verificationTokenSecurityLevel,
                                  const uint8_t* verificationTokenMac,
                                  size_t verificationTokenMacSize) {
+    // It doesn't make sense to accept any tokens if eicPresentationCreateAuthChallenge()
+    // was never called.
+    if (ctx->authChallenge == 0) {
+        eicDebug("Trying validate tokens when no auth-challenge was previously generated");
+        return false;
+    }
+    // At least the verification-token must have the same challenge as what was generated.
+    if (verificationTokenChallenge != ctx->authChallenge) {
+        eicDebug("Challenge in verification token does not match the challenge "
+                 "previously generated");
+        return false;
+    }
     if (!eicOpsValidateAuthToken(
                 challenge, secureUserId, authenticatorId, hardwareAuthenticatorType, timeStamp, mac,
                 macSize, verificationTokenChallenge, verificationTokenTimestamp,
@@ -360,18 +372,9 @@ static bool checkUserAuth(EicPresentation* ctx, bool userAuthenticationRequired,
         return false;
     }
 
+    // Only ACP with auth-on-every-presentation - those with timeout == 0 - need the
+    // challenge to match...
     if (timeoutMillis == 0) {
-        if (ctx->authTokenChallenge == 0) {
-            eicDebug("No challenge in authToken");
-            return false;
-        }
-
-        // If we didn't create a challenge, too bad but user auth with
-        // timeoutMillis set to 0 needs it.
-        if (ctx->authChallenge == 0) {
-            eicDebug("No challenge was created for this session");
-            return false;
-        }
         if (ctx->authTokenChallenge != ctx->authChallenge) {
             eicDebug("Challenge in authToken (%" PRIu64
                      ") doesn't match the challenge "
