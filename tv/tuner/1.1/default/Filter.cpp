@@ -259,11 +259,14 @@ Return<void> Filter::getAvSharedHandle(getAvSharedHandle_cb _hidl_cb) {
     int av_fd = createAvIonFd(BUFFER_SIZE_16M);
     if (av_fd == -1) {
         _hidl_cb(Result::UNKNOWN_ERROR, NULL, 0);
+        return Void();
     }
 
     native_handle_t* nativeHandle = createNativeHandle(av_fd);
     if (nativeHandle == NULL) {
+        ::close(av_fd);
         _hidl_cb(Result::UNKNOWN_ERROR, NULL, 0);
+        return Void();
     }
     mSharedAvMemHandle.setTo(nativeHandle, /*shouldOwn=*/true);
     ::close(av_fd);
