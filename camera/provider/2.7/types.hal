@@ -14,6 +14,17 @@
  * limitations under the License.
  */
 
-package android.hardware.biometrics.face;
+package android.hardware.camera.provider@2.7;
 
-@VintfStability @Backing(type="byte") enum FaceSensorType { UNKNOWN, RGB, IR }
+import android.hardware.camera.device@3.7::StreamConfiguration;
+
+/**
+ * CameraIdAndStreamCombination:
+ *
+ * This is identical to @2.6::CameraIdAndStreamCombination except that
+ * streamConfiguration is of version @3.7.
+ */
+struct CameraIdAndStreamCombination {
+    string cameraId;
+    @3.7::StreamConfiguration streamConfiguration;
+};

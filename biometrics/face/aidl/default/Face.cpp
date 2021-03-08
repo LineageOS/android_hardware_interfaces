@@ -26,14 +26,13 @@ const FaceSensorType kSensorType = FaceSensorType::RGB;
 const bool kHalControlsPreview = true;
 const std::string kHwDeviceName = "faceSensor";
 const std::string kHardwareVersion = "vendor/model/revision";
-const std::string kFirmwareVersion = "1.01";
 const std::string kSerialNumber = "00000001";
+const std::string kSoftwareVersion = "vendor1/algorithm1/version;vendor2/algorithm2/version";
 
 ndk::ScopedAStatus Face::getSensorProps(std::vector<SensorProps>* return_val) {
     common::HardwareInfo hardware_info;
     hardware_info.deviceName = kHwDeviceName;
     hardware_info.hardwareVersion = kHardwareVersion;
-    hardware_info.firmwareVersion = kFirmwareVersion;
     hardware_info.serialNumber = kSerialNumber;
 
     common::CommonProps commonProps;
@@ -41,6 +40,7 @@ ndk::ScopedAStatus Face::getSensorProps(std::vector<SensorProps>* return_val) {
     commonProps.sensorStrength = kSensorStrength;
     commonProps.maxEnrollmentsPerUser = kMaxEnrollmentsPerUser;
     commonProps.hardwareInfo = {std::move(hardware_info)};
+    commonProps.softwareInfo = kSoftwareVersion;
 
     SensorProps props;
     props.commonProps = std::move(commonProps);

@@ -119,6 +119,10 @@ enum Status : @1.2::Status {
      */
     PROVISIONING_PARSE_ERROR,
     /**
+     * The provisioning server detected an error in the provisioning request.
+     */
+    PROVISIONING_REQUEST_REJECTED,
+    /**
      * Provisioning failed in a way that is likely to succeed on a subsequent
      * attempt.
      */
