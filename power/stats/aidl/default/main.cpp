@@ -16,15 +16,60 @@
 
 #include "PowerStats.h"
 
+#include "FakeEnergyConsumer.h"
+#include "FakeEnergyMeter.h"
+#include "FakeStateResidencyDataProvider.h"
+
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 
+using aidl::android::hardware::power::stats::EnergyConsumerType;
+using aidl::android::hardware::power::stats::FakeEnergyConsumer;
+using aidl::android::hardware::power::stats::FakeEnergyMeter;
+using aidl::android::hardware::power::stats::FakeStateResidencyDataProvider;
 using aidl::android::hardware::power::stats::PowerStats;
+using aidl::android::hardware::power::stats::State;
+
+void setFakeEnergyMeter(std::shared_ptr<PowerStats> p) {
+    p->setEnergyMeter(
+            std::make_unique<FakeEnergyMeter>(std::vector<std::pair<std::string, std::string>>{
+                    {"Rail1", "Display"},
+                    {"Rail2", "CPU"},
+                    {"Rail3", "Modem"},
+            }));
+}
+
+void addFakeStateResidencyDataProvider1(std::shared_ptr<PowerStats> p) {
+    p->addStateResidencyDataProvider(std::make_unique<FakeStateResidencyDataProvider>(
+            "CPU", std::vector<State>{{0, "Idle"}, {1, "Active"}}));
+}
+
+void addFakeStateResidencyDataProvider2(std::shared_ptr<PowerStats> p) {
+    p->addStateResidencyDataProvider(std::make_unique<FakeStateResidencyDataProvider>(
+            "Display", std::vector<State>{{0, "Off"}, {1, "On"}}));
+}
+
+void addFakeEnergyConsumer1(std::shared_ptr<PowerStats> p) {
+    p->addEnergyConsumer(std::make_unique<FakeEnergyConsumer>(EnergyConsumerType::OTHER, "GPU"));
+}
+
+void addFakeEnergyConsumer2(std::shared_ptr<PowerStats> p) {
+    p->addEnergyConsumer(
+            std::make_unique<FakeEnergyConsumer>(EnergyConsumerType::MOBILE_RADIO, "MODEM"));
+}
 
 int main() {
     ABinderProcess_setThreadPoolMaxThreadCount(0);
     std::shared_ptr<PowerStats> p = ndk::SharedRefBase::make<PowerStats>();
+
+    setFakeEnergyMeter(p);
+
+    addFakeStateResidencyDataProvider1(p);
+    addFakeStateResidencyDataProvider2(p);
+
+    addFakeEnergyConsumer1(p);
+    addFakeEnergyConsumer2(p);
 
     const std::string instance = std::string() + PowerStats::descriptor + "/default";
     binder_status_t status = AServiceManager_addService(p->asBinder().get(), instance.c_str());
