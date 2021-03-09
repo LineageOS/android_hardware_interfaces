@@ -19,6 +19,8 @@
 #include <iostream>
 #include "VtsCoreUtil.h"
 
+#define WAIT_TIMEOUT_PERIOD 75
+
 int GetRandomSerialNumber() {
     return rand();
 }
@@ -99,4 +101,33 @@ bool isVoiceEmergencyOnly(RegState state) {
            ::android::hardware::radio::V1_0::RegState::NOT_REG_MT_SEARCHING_OP_EM == state ||
            ::android::hardware::radio::V1_0::RegState::REG_DENIED_EM == state ||
            ::android::hardware::radio::V1_0::RegState::UNKNOWN_EM == state;
+}
+
+/*
+ * Notify that the response message is received.
+ */
+void RadioResponseWaiter::notify(int receivedSerial) {
+    std::unique_lock<std::mutex> lock(mtx_);
+    if (serial == receivedSerial) {
+        count_++;
+        cv_.notify_one();
+    }
+}
+
+/*
+ * Wait till the response message is notified or till WAIT_TIMEOUT_PERIOD.
+ */
+std::cv_status RadioResponseWaiter::wait() {
+    std::unique_lock<std::mutex> lock(mtx_);
+
+    std::cv_status status = std::cv_status::no_timeout;
+    auto now = std::chrono::system_clock::now();
+    while (count_ == 0) {
+        status = cv_.wait_until(lock, now + std::chrono::seconds(WAIT_TIMEOUT_PERIOD));
+        if (status == std::cv_status::timeout) {
+            return status;
+        }
+    }
+    count_--;
+    return status;
 }
