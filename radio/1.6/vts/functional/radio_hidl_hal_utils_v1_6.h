@@ -18,15 +18,11 @@
 
 #include <android-base/logging.h>
 
-#include <gtest/gtest.h>
-#include <hidl/GtestPrinter.h>
-#include <hidl/ServiceManagement.h>
-#include <utils/Log.h>
+#include "radio_config_hidl_hal_utils.h"
+
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
-
-#include <android/hardware/radio/config/1.1/IRadioConfig.h>
 
 #include <android/hardware/radio/1.6/IRadio.h>
 #include <android/hardware/radio/1.6/IRadioIndication.h>
@@ -42,14 +38,15 @@ using namespace ::android::hardware::radio::V1_3;
 using namespace ::android::hardware::radio::V1_2;
 using namespace ::android::hardware::radio::V1_1;
 using namespace ::android::hardware::radio::V1_0;
+using namespace ::android::hardware::radio::config::V1_3;
 
 using ::android::sp;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
+using ::android::hardware::radio::config::V1_3::HalDeviceCapabilities;
 
-#define TIMEOUT_PERIOD 75
 #define MODEM_EMERGENCY_CALL_ESTABLISH_TIME 3
 #define MODEM_EMERGENCY_CALL_DISCONNECT_TIME 3
 
@@ -61,7 +58,7 @@ extern ::android::hardware::radio::V1_5::CardStatus cardStatus;
 /* Callback class for radio response v1_6 */
 class RadioResponse_v1_6 : public ::android::hardware::radio::V1_6::IRadioResponse {
   protected:
-    RadioHidlTest_v1_6& parent_v1_6;
+    RadioResponseWaiter& parent_v1_6;
 
   public:
     hidl_vec<RadioBandMode> radioBandModes;
@@ -105,7 +102,7 @@ class RadioResponse_v1_6 : public ::android::hardware::radio::V1_6::IRadioRespon
     ::android::hardware::radio::V1_5::CellIdentity barringCellIdentity;
     ::android::hardware::hidl_vec<::android::hardware::radio::V1_5::BarringInfo> barringInfos;
 
-    RadioResponse_v1_6(RadioHidlTest_v1_6& parent_v1_6);
+    RadioResponse_v1_6(RadioResponseWaiter& parent_v1_6);
     virtual ~RadioResponse_v1_6() = default;
 
     Return<void> getIccCardStatusResponse(
@@ -1079,15 +1076,9 @@ class RadioIndication_v1_6 : public ::android::hardware::radio::V1_6::IRadioIndi
 };
 
 // The main test class for Radio HIDL.
-class RadioHidlTest_v1_6 : public ::testing::TestWithParam<std::string> {
+class RadioHidlTest_v1_6 : public ::testing::TestWithParam<std::string>,
+                           public RadioResponseWaiter {
   protected:
-    std::mutex mtx_;
-    std::condition_variable cv_;
-    int count_;
-
-    /* Serial number for radio request */
-    int serial;
-
     /* Clear Potential Established Calls */
     void clearPotentialEstablishedCalls();
 
@@ -1100,11 +1091,7 @@ class RadioHidlTest_v1_6 : public ::testing::TestWithParam<std::string> {
   public:
     virtual void SetUp() override;
 
-    /* Used as a mechanism to inform the test about data/event callback */
-    void notify(int receivedSerial);
-
-    /* Test code calls this function to wait for response */
-    std::cv_status wait();
+    HalDeviceCapabilities getRadioHalCapabilities();
 
     /* radio service handle */
     sp<::android::hardware::radio::V1_6::IRadio> radio_v1_6;

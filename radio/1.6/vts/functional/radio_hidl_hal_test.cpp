@@ -45,35 +45,6 @@ void RadioHidlTest_v1_6::SetUp() {
     EXPECT_EQ(CardState::PRESENT, cardStatus.base.base.base.cardState);
 }
 
-/*
- * Notify that the response message is received.
- */
-void RadioHidlTest_v1_6::notify(int receivedSerial) {
-    std::unique_lock<std::mutex> lock(mtx_);
-    if (serial == receivedSerial) {
-        count_++;
-        cv_.notify_one();
-    }
-}
-
-/*
- * Wait till the response message is notified or till TIMEOUT_PERIOD.
- */
-std::cv_status RadioHidlTest_v1_6::wait() {
-    std::unique_lock<std::mutex> lock(mtx_);
-
-    std::cv_status status = std::cv_status::no_timeout;
-    auto now = std::chrono::system_clock::now();
-    while (count_ == 0) {
-        status = cv_.wait_until(lock, now + std::chrono::seconds(TIMEOUT_PERIOD));
-        if (status == std::cv_status::timeout) {
-            return status;
-        }
-    }
-    count_--;
-    return status;
-}
-
 void RadioHidlTest_v1_6::clearPotentialEstablishedCalls() {
     // Get the current call Id to hangup the established emergency call.
     serial = GetRandomSerialNumber();
@@ -107,4 +78,32 @@ void RadioHidlTest_v1_6::getDataCallList() {
     serial = GetRandomSerialNumber();
     radio_v1_6->getDataCallList_1_6(serial);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
+}
+
+/**
+ * Specific features on the Radio Hal rely on Radio Hal Capabilities.  The VTS
+ * tests related to that features must not run if the related capability is
+ * disabled.
+ * <p/>
+ * Typical usage within VTS:
+ * if (getRadioHalCapabilities().modemReducedFeatureSet) return;
+ */
+HalDeviceCapabilities RadioHidlTest_v1_6::getRadioHalCapabilities() {
+    sp<::android::hardware::radio::config::V1_3::IRadioConfig> radioConfig_v1_3 =
+            ::android::hardware::radio::config::V1_3::IRadioConfig::getService();
+    if (radioConfig_v1_3.get() == nullptr) {
+        // If v1_3 isn't present, the values are initialized to false
+        HalDeviceCapabilities radioHalCapabilities;
+        memset(&radioHalCapabilities, 0, sizeof(radioHalCapabilities));
+        return radioHalCapabilities;
+    } else {
+        // Get radioHalDeviceCapabilities from the radio config
+        sp<RadioConfigResponse> radioConfigRsp = new (std::nothrow) RadioConfigResponse(*this);
+        radioConfig_v1_3->setResponseFunctions(radioConfigRsp, nullptr);
+        serial = GetRandomSerialNumber();
+
+        radioConfig_v1_3->getHalDeviceCapabilities(serial);
+        EXPECT_EQ(std::cv_status::no_timeout, wait());
+        return radioConfigRsp->halDeviceCapabilities;
+    }
 }
