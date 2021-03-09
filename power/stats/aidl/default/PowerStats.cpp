@@ -18,46 +18,157 @@
 
 #include <android-base/logging.h>
 
+#include <numeric>
+
 namespace aidl {
 namespace android {
 namespace hardware {
 namespace power {
 namespace stats {
 
+void PowerStats::addStateResidencyDataProvider(std::unique_ptr<IStateResidencyDataProvider> p) {
+    if (!p) {
+        return;
+    }
+
+    int32_t id = mPowerEntityInfos.size();
+
+    for (const auto& [entityName, states] : p->getInfo()) {
+        PowerEntity i = {
+                .id = id++,
+                .name = entityName,
+                .states = states,
+        };
+        mPowerEntityInfos.emplace_back(i);
+        mStateResidencyDataProviders.emplace_back(std::move(p));
+    }
+}
+
+void PowerStats::addEnergyConsumer(std::unique_ptr<IEnergyConsumer> p) {
+    if (!p) {
+        return;
+    }
+
+    EnergyConsumerType type = p->getType();
+    std::string name = p->getName();
+    int32_t count = count_if(mEnergyConsumerInfos.begin(), mEnergyConsumerInfos.end(),
+                             [&type](const EnergyConsumer& c) { return type == c.type; });
+    int32_t id = mEnergyConsumers.size();
+    mEnergyConsumerInfos.emplace_back(
+            EnergyConsumer{.id = id, .ordinal = count, .type = type, .name = name});
+    mEnergyConsumers.emplace_back(std::move(p));
+}
+
+void PowerStats::setEnergyMeter(std::unique_ptr<IEnergyMeter> p) {
+    mEnergyMeter = std::move(p);
+}
+
 ndk::ScopedAStatus PowerStats::getPowerEntityInfo(std::vector<PowerEntity>* _aidl_return) {
-    (void)_aidl_return;
+    *_aidl_return = mPowerEntityInfos;
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus PowerStats::getStateResidency(const std::vector<int32_t>& in_powerEntityIds,
                                                  std::vector<StateResidencyResult>* _aidl_return) {
-    (void)in_powerEntityIds;
-    (void)_aidl_return;
-    return ndk::ScopedAStatus::ok();
+    if (mPowerEntityInfos.empty()) {
+        return ndk::ScopedAStatus::ok();
+    }
+
+    // If in_powerEntityIds is empty then return data for all supported entities
+    if (in_powerEntityIds.empty()) {
+        std::vector<int32_t> v(mPowerEntityInfos.size());
+        std::iota(std::begin(v), std::end(v), 0);
+        return getStateResidency(v, _aidl_return);
+    }
+
+    binder_status_t err = STATUS_OK;
+
+    std::unordered_map<std::string, std::vector<StateResidency>> stateResidencies;
+
+    for (const int32_t id : in_powerEntityIds) {
+        // skip any invalid ids
+        if (id < 0 || id >= mPowerEntityInfos.size()) {
+            continue;
+        }
+
+        // Check to see if we already have data for the given id
+        std::string powerEntityName = mPowerEntityInfos[id].name;
+        if (stateResidencies.find(powerEntityName) == stateResidencies.end()) {
+            mStateResidencyDataProviders[id]->getStateResidencies(&stateResidencies);
+        }
+
+        // Append results if we have them
+        auto stateResidency = stateResidencies.find(powerEntityName);
+        if (stateResidency != stateResidencies.end()) {
+            StateResidencyResult res = {
+                    .id = id,
+                    .stateResidencyData = stateResidency->second,
+            };
+            _aidl_return->emplace_back(res);
+        } else {
+            // Failed to retrieve results for the given id.
+            err = STATUS_FAILED_TRANSACTION;
+        }
+    }
+
+    return ndk::ScopedAStatus::fromStatus(err);
 }
 
 ndk::ScopedAStatus PowerStats::getEnergyConsumerInfo(std::vector<EnergyConsumer>* _aidl_return) {
-    (void)_aidl_return;
+    *_aidl_return = mEnergyConsumerInfos;
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus PowerStats::getEnergyConsumed(const std::vector<int32_t>& in_energyConsumerIds,
                                                  std::vector<EnergyConsumerResult>* _aidl_return) {
-    (void)in_energyConsumerIds;
-    (void)_aidl_return;
-    return ndk::ScopedAStatus::ok();
+    if (mEnergyConsumers.empty()) {
+        return ndk::ScopedAStatus::ok();
+    }
+
+    // If in_powerEntityIds is empty then return data for all supported energy consumers
+    if (in_energyConsumerIds.empty()) {
+        std::vector<int32_t> v(mEnergyConsumerInfos.size());
+        std::iota(std::begin(v), std::end(v), 0);
+        return getEnergyConsumed(v, _aidl_return);
+    }
+
+    binder_status_t err = STATUS_OK;
+
+    for (const auto id : in_energyConsumerIds) {
+        // skip any invalid ids
+        if (id < 0 || id >= mEnergyConsumers.size()) {
+            continue;
+        }
+
+        auto optionalResult = mEnergyConsumers[id]->getEnergyConsumed();
+        if (optionalResult) {
+            EnergyConsumerResult result = optionalResult.value();
+            result.id = id;
+            _aidl_return->emplace_back(result);
+        } else {
+            // Failed to retrieve results for the given id.
+            err = STATUS_FAILED_TRANSACTION;
+        }
+    }
+
+    return ndk::ScopedAStatus::fromStatus(err);
 }
 
 ndk::ScopedAStatus PowerStats::getEnergyMeterInfo(std::vector<Channel>* _aidl_return) {
-    (void)_aidl_return;
-    return ndk::ScopedAStatus::ok();
+    if (!mEnergyMeter) {
+        return ndk::ScopedAStatus::ok();
+    }
+
+    return mEnergyMeter->getEnergyMeterInfo(_aidl_return);
 }
 
 ndk::ScopedAStatus PowerStats::readEnergyMeter(const std::vector<int32_t>& in_channelIds,
                                                std::vector<EnergyMeasurement>* _aidl_return) {
-    (void)in_channelIds;
-    (void)_aidl_return;
-    return ndk::ScopedAStatus::ok();
+    if (!mEnergyMeter) {
+        return ndk::ScopedAStatus::ok();
+    }
+
+    return mEnergyMeter->readEnergyMeter(in_channelIds, _aidl_return);
 }
 
 }  // namespace stats
