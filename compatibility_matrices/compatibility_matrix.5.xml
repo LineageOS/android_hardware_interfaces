@@ -256,6 +256,13 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.identity</name>
+        <!--
+          b/178458001: identity V2 is introduced in R, but Android R VINTF does not support AIDL
+          versions. Hence, we only specify identity V2 in compatibility_matrix.5.xml in Android S+
+          branches. In Android R branches, the matrix implicitly specifies V1.
+          SingleManifestTest.ManifestAidlHalsServed has an exemption for this.
+        -->
+        <version>1-2</version>
         <interface>
             <name>IIdentityCredentialStore</name>
             <instance>default</instance>

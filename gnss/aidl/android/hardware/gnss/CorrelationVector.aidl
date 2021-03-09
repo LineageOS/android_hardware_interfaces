@@ -22,11 +22,10 @@ package android.hardware.gnss;
  */
 @VintfStability
 parcelable CorrelationVector {
-
     /**
      * Frequency offset from reported pseudorange rate for this Correlation Vector.
      */
-    int frequencyOffsetMps;
+    double frequencyOffsetMps;
 
     /**
      * Space between correlation samples in meters.
