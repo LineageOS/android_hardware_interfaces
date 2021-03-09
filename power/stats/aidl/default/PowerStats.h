@@ -18,6 +18,8 @@
 
 #include <aidl/android/hardware/power/stats/BnPowerStats.h>
 
+#include <unordered_map>
+
 namespace aidl {
 namespace android {
 namespace hardware {
@@ -26,7 +28,37 @@ namespace stats {
 
 class PowerStats : public BnPowerStats {
   public:
+    class IStateResidencyDataProvider {
+      public:
+        virtual ~IStateResidencyDataProvider() = default;
+        virtual bool getStateResidencies(
+                std::unordered_map<std::string, std::vector<StateResidency>>* residencies) = 0;
+        virtual std::unordered_map<std::string, std::vector<State>> getInfo() = 0;
+    };
+
+    class IEnergyConsumer {
+      public:
+        virtual ~IEnergyConsumer() = default;
+        virtual std::string getName() = 0;
+        virtual EnergyConsumerType getType() = 0;
+        virtual std::optional<EnergyConsumerResult> getEnergyConsumed() = 0;
+    };
+
+    class IEnergyMeter {
+      public:
+        virtual ~IEnergyMeter() = default;
+        virtual ndk::ScopedAStatus readEnergyMeter(
+                const std::vector<int32_t>& in_channelIds,
+                std::vector<EnergyMeasurement>* _aidl_return) = 0;
+        virtual ndk::ScopedAStatus getEnergyMeterInfo(std::vector<Channel>* _aidl_return) = 0;
+    };
+
     PowerStats() = default;
+
+    void addStateResidencyDataProvider(std::unique_ptr<IStateResidencyDataProvider> p);
+    void addEnergyConsumer(std::unique_ptr<IEnergyConsumer> p);
+    void setEnergyMeter(std::unique_ptr<IEnergyMeter> p);
+
     // Methods from aidl::android::hardware::power::stats::IPowerStats
     ndk::ScopedAStatus getPowerEntityInfo(std::vector<PowerEntity>* _aidl_return) override;
     ndk::ScopedAStatus getStateResidency(const std::vector<int32_t>& in_powerEntityIds,
@@ -37,6 +69,15 @@ class PowerStats : public BnPowerStats {
     ndk::ScopedAStatus getEnergyMeterInfo(std::vector<Channel>* _aidl_return) override;
     ndk::ScopedAStatus readEnergyMeter(const std::vector<int32_t>& in_channelIds,
                                        std::vector<EnergyMeasurement>* _aidl_return) override;
+
+  private:
+    std::vector<std::unique_ptr<IStateResidencyDataProvider>> mStateResidencyDataProviders;
+    std::vector<PowerEntity> mPowerEntityInfos;
+
+    std::vector<std::unique_ptr<IEnergyConsumer>> mEnergyConsumers;
+    std::vector<EnergyConsumer> mEnergyConsumerInfos;
+
+    std::unique_ptr<IEnergyMeter> mEnergyMeter;
 };
 
 }  // namespace stats
