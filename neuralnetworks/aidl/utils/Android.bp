@@ -29,10 +29,12 @@ cc_library_static {
     srcs: ["src/*"],
     local_include_dirs: ["include/nnapi/hal/aidl/"],
     export_include_dirs: ["include"],
+    cflags: ["-Wthread-safety"],
     static_libs: [
         "libarect",
         "neuralnetworks_types",
         "neuralnetworks_utils_hal_common",
+        "neuralnetworks_utils_hal_1_0",
     ],
     shared_libs: [
         "android.hardware.neuralnetworks-V1-ndk_platform",
@@ -40,4 +42,39 @@ cc_library_static {
         "libhidlbase",
         "libnativewindow",
     ],
+}
+
+cc_test {
+    name: "neuralnetworks_utils_hal_aidl_test",
+    defaults: ["neuralnetworks_utils_defaults"],
+    srcs: [
+        "test/*.cpp",
+    ],
+    static_libs: [
+        "android.hardware.common-V2-ndk_platform",
+        "android.hardware.neuralnetworks-V1-ndk_platform",
+        "libgmock",
+        "libneuralnetworks_common",
+        "neuralnetworks_types",
+        "neuralnetworks_utils_hal_aidl",
+        "neuralnetworks_utils_hal_common",
+    ],
+    shared_libs: [
+        "android.hidl.allocator@1.0",
+        "libbase",
+        "libbinder_ndk",
+        "libcutils",
+        "libhidlbase",
+        "libhidlmemory",
+        "liblog",
+        "libnativewindow",
+        "libutils",
+    ],
+    cflags: [
+        /* GMOCK defines functions for printing all MOCK_DEVICE arguments and
+         * MockDevice contains a string pointer which triggers a warning in the
+         * base logging library. */
+        "-Wno-user-defined-warnings",
+    ],
+    test_suites: ["general-tests"],
 }

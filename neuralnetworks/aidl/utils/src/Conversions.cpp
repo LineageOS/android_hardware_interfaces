@@ -18,6 +18,8 @@
 
 #include <aidl/android/hardware/common/NativeHandle.h>
 #include <android-base/logging.h>
+#include <android-base/unique_fd.h>
+#include <android/binder_auto_utils.h>
 #include <android/hardware_buffer.h>
 #include <cutils/native_handle.h>
 #include <nnapi/OperandTypes.h>
@@ -42,14 +44,17 @@
 #define VERIFY_NON_NEGATIVE(value) \
     while (UNLIKELY(value < 0)) return NN_ERROR()
 
-namespace {
+#define VERIFY_LE_INT32_MAX(value) \
+    while (UNLIKELY(value > std::numeric_limits<int32_t>::max())) return NN_ERROR()
 
+namespace {
 template <typename Type>
 constexpr std::underlying_type_t<Type> underlyingType(Type value) {
     return static_cast<std::underlying_type_t<Type>>(value);
 }
 
 constexpr auto kVersion = android::nn::Version::ANDROID_S;
+constexpr int64_t kNoTiming = -1;
 
 }  // namespace
 
@@ -134,13 +139,8 @@ GeneralResult<Handle> unvalidatedConvertHelper(const NativeHandle& aidlNativeHan
     std::vector<base::unique_fd> fds;
     fds.reserve(aidlNativeHandle.fds.size());
     for (const auto& fd : aidlNativeHandle.fds) {
-        const int dupFd = dup(fd.get());
-        if (dupFd == -1) {
-            // TODO(b/120417090): is ANEURALNETWORKS_UNEXPECTED_NULL the correct error to return
-            // here?
-            return NN_ERROR() << "Failed to dup the fd";
-        }
-        fds.emplace_back(dupFd);
+        auto duplicatedFd = NN_TRY(dupFd(fd.get()));
+        fds.emplace_back(duplicatedFd.release());
     }
 
     return Handle{.fds = std::move(fds), .ints = aidlNativeHandle.ints};
@@ -157,16 +157,12 @@ struct NativeHandleDeleter {
 
 using UniqueNativeHandle = std::unique_ptr<native_handle_t, NativeHandleDeleter>;
 
-static nn::GeneralResult<UniqueNativeHandle> nativeHandleFromAidlHandle(
-        const NativeHandle& handle) {
+static GeneralResult<UniqueNativeHandle> nativeHandleFromAidlHandle(const NativeHandle& handle) {
     std::vector<base::unique_fd> fds;
     fds.reserve(handle.fds.size());
     for (const auto& fd : handle.fds) {
-        const int dupFd = dup(fd.get());
-        if (dupFd == -1) {
-            return NN_ERROR() << "Failed to dup the fd";
-        }
-        fds.emplace_back(dupFd);
+        auto duplicatedFd = NN_TRY(dupFd(fd.get()));
+        fds.emplace_back(duplicatedFd.release());
     }
 
     constexpr size_t kIntMax = std::numeric_limits<int>::max();
@@ -382,14 +378,14 @@ static uint32_t roundUpToMultiple(uint32_t value, uint32_t multiple) {
 
 GeneralResult<SharedMemory> unvalidatedConvert(const aidl_hal::Memory& memory) {
     VERIFY_NON_NEGATIVE(memory.size) << "Memory size must not be negative";
-    if (memory.size > std::numeric_limits<uint32_t>::max()) {
+    if (memory.size > std::numeric_limits<size_t>::max()) {
         return NN_ERROR() << "Memory: size must be <= std::numeric_limits<size_t>::max()";
     }
 
     if (memory.name != "hardware_buffer_blob") {
         return std::make_shared<const Memory>(Memory{
                 .handle = NN_TRY(unvalidatedConvertHelper(memory.handle)),
-                .size = static_cast<uint32_t>(memory.size),
+                .size = static_cast<size_t>(memory.size),
                 .name = memory.name,
         });
     }
@@ -434,9 +430,26 @@ GeneralResult<SharedMemory> unvalidatedConvert(const aidl_hal::Memory& memory) {
 
     return std::make_shared<const Memory>(Memory{
             .handle = HardwareBufferHandle(hardwareBuffer, /*takeOwnership=*/true),
-            .size = static_cast<uint32_t>(memory.size),
+            .size = static_cast<size_t>(memory.size),
             .name = memory.name,
     });
+}
+
+GeneralResult<Timing> unvalidatedConvert(const aidl_hal::Timing& timing) {
+    if (timing.timeInDriver < -1) {
+        return NN_ERROR() << "Timing: timeInDriver must not be less than -1";
+    }
+    if (timing.timeOnDevice < -1) {
+        return NN_ERROR() << "Timing: timeOnDevice must not be less than -1";
+    }
+    constexpr auto convertTiming = [](int64_t halTiming) -> OptionalDuration {
+        if (halTiming == kNoTiming) {
+            return {};
+        }
+        return nn::Duration(static_cast<uint64_t>(halTiming));
+    };
+    return Timing{.timeOnDevice = convertTiming(timing.timeOnDevice),
+                  .timeInDriver = convertTiming(timing.timeInDriver)};
 }
 
 GeneralResult<Model::OperandValues> unvalidatedConvert(const std::vector<uint8_t>& operandValues) {
@@ -515,6 +528,23 @@ GeneralResult<SharedHandle> unvalidatedConvert(const NativeHandle& aidlNativeHan
     return std::make_shared<const Handle>(NN_TRY(unvalidatedConvertHelper(aidlNativeHandle)));
 }
 
+GeneralResult<SyncFence> unvalidatedConvert(const ndk::ScopedFileDescriptor& syncFence) {
+    auto duplicatedFd = NN_TRY(dupFd(syncFence.get()));
+    return SyncFence::create(std::move(duplicatedFd));
+}
+
+GeneralResult<Capabilities> convert(const aidl_hal::Capabilities& capabilities) {
+    return validatedConvert(capabilities);
+}
+
+GeneralResult<DeviceType> convert(const aidl_hal::DeviceType& deviceType) {
+    return validatedConvert(deviceType);
+}
+
+GeneralResult<ErrorStatus> convert(const aidl_hal::ErrorStatus& errorStatus) {
+    return validatedConvert(errorStatus);
+}
+
 GeneralResult<ExecutionPreference> convert(
         const aidl_hal::ExecutionPreference& executionPreference) {
     return validatedConvert(executionPreference);
@@ -548,12 +578,29 @@ GeneralResult<Request> convert(const aidl_hal::Request& request) {
     return validatedConvert(request);
 }
 
+GeneralResult<Timing> convert(const aidl_hal::Timing& timing) {
+    return validatedConvert(timing);
+}
+
+GeneralResult<SyncFence> convert(const ndk::ScopedFileDescriptor& syncFence) {
+    return unvalidatedConvert(syncFence);
+}
+
+GeneralResult<std::vector<Extension>> convert(const std::vector<aidl_hal::Extension>& extension) {
+    return validatedConvert(extension);
+}
+
 GeneralResult<std::vector<Operation>> convert(const std::vector<aidl_hal::Operation>& operations) {
     return unvalidatedConvert(operations);
 }
 
 GeneralResult<std::vector<SharedMemory>> convert(const std::vector<aidl_hal::Memory>& memories) {
     return validatedConvert(memories);
+}
+
+GeneralResult<std::vector<OutputShape>> convert(
+        const std::vector<aidl_hal::OutputShape>& outputShapes) {
+    return validatedConvert(outputShapes);
 }
 
 GeneralResult<std::vector<uint32_t>> toUnsigned(const std::vector<int32_t>& vec) {
@@ -575,11 +622,18 @@ using UnvalidatedConvertOutput =
 template <typename Type>
 nn::GeneralResult<std::vector<UnvalidatedConvertOutput<Type>>> unvalidatedConvertVec(
         const std::vector<Type>& arguments) {
-    std::vector<UnvalidatedConvertOutput<Type>> halObject(arguments.size());
-    for (size_t i = 0; i < arguments.size(); ++i) {
-        halObject[i] = NN_TRY(unvalidatedConvert(arguments[i]));
+    std::vector<UnvalidatedConvertOutput<Type>> halObject;
+    halObject.reserve(arguments.size());
+    for (const auto& argument : arguments) {
+        halObject.push_back(NN_TRY(unvalidatedConvert(argument)));
     }
     return halObject;
+}
+
+template <typename Type>
+nn::GeneralResult<std::vector<UnvalidatedConvertOutput<Type>>> unvalidatedConvert(
+        const std::vector<Type>& arguments) {
+    return unvalidatedConvertVec(arguments);
 }
 
 template <typename Type>
@@ -609,17 +663,20 @@ nn::GeneralResult<common::NativeHandle> unvalidatedConvert(const nn::Handle& han
     common::NativeHandle aidlNativeHandle;
     aidlNativeHandle.fds.reserve(handle.fds.size());
     for (const auto& fd : handle.fds) {
-        const int dupFd = dup(fd.get());
-        if (dupFd == -1) {
-            // TODO(b/120417090): is ANEURALNETWORKS_UNEXPECTED_NULL the correct error to return
-            // here?
-            return NN_ERROR() << "Failed to dup the fd";
-        }
-        aidlNativeHandle.fds.emplace_back(dupFd);
+        auto duplicatedFd = NN_TRY(nn::dupFd(fd.get()));
+        aidlNativeHandle.fds.emplace_back(duplicatedFd.release());
     }
     aidlNativeHandle.ints = handle.ints;
     return aidlNativeHandle;
 }
+
+// Helper template for std::visit
+template <class... Ts>
+struct overloaded : Ts... {
+    using Ts::operator()...;
+};
+template <class... Ts>
+overloaded(Ts...)->overloaded<Ts...>;
 
 static nn::GeneralResult<common::NativeHandle> aidlHandleFromNativeHandle(
         const native_handle_t& handle) {
@@ -627,11 +684,8 @@ static nn::GeneralResult<common::NativeHandle> aidlHandleFromNativeHandle(
 
     aidlNativeHandle.fds.reserve(handle.numFds);
     for (int i = 0; i < handle.numFds; ++i) {
-        const int dupFd = dup(handle.data[i]);
-        if (dupFd == -1) {
-            return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE) << "Failed to dup the fd";
-        }
-        aidlNativeHandle.fds.emplace_back(dupFd);
+        auto duplicatedFd = NN_TRY(nn::dupFd(handle.data[i]));
+        aidlNativeHandle.fds.emplace_back(duplicatedFd.release());
     }
 
     aidlNativeHandle.ints = std::vector<int>(&handle.data[handle.numFds],
@@ -641,6 +695,30 @@ static nn::GeneralResult<common::NativeHandle> aidlHandleFromNativeHandle(
 }
 
 }  // namespace
+
+nn::GeneralResult<std::vector<uint8_t>> unvalidatedConvert(const nn::CacheToken& cacheToken) {
+    return std::vector<uint8_t>(cacheToken.begin(), cacheToken.end());
+}
+
+nn::GeneralResult<BufferDesc> unvalidatedConvert(const nn::BufferDesc& bufferDesc) {
+    return BufferDesc{.dimensions = NN_TRY(toSigned(bufferDesc.dimensions))};
+}
+
+nn::GeneralResult<BufferRole> unvalidatedConvert(const nn::BufferRole& bufferRole) {
+    VERIFY_LE_INT32_MAX(bufferRole.modelIndex)
+            << "BufferRole: modelIndex must be <= std::numeric_limits<int32_t>::max()";
+    VERIFY_LE_INT32_MAX(bufferRole.ioIndex)
+            << "BufferRole: ioIndex must be <= std::numeric_limits<int32_t>::max()";
+    return BufferRole{
+            .modelIndex = static_cast<int32_t>(bufferRole.modelIndex),
+            .ioIndex = static_cast<int32_t>(bufferRole.ioIndex),
+            .frequency = bufferRole.frequency,
+    };
+}
+
+nn::GeneralResult<bool> unvalidatedConvert(const nn::MeasureTiming& measureTiming) {
+    return measureTiming == nn::MeasureTiming::YES;
+}
 
 nn::GeneralResult<common::NativeHandle> unvalidatedConvert(const nn::SharedHandle& sharedHandle) {
     CHECK(sharedHandle != nullptr);
@@ -707,6 +785,230 @@ nn::GeneralResult<OutputShape> unvalidatedConvert(const nn::OutputShape& outputS
                        .isSufficient = outputShape.isSufficient};
 }
 
+nn::GeneralResult<ExecutionPreference> unvalidatedConvert(
+        const nn::ExecutionPreference& executionPreference) {
+    return static_cast<ExecutionPreference>(executionPreference);
+}
+
+nn::GeneralResult<OperandType> unvalidatedConvert(const nn::OperandType& operandType) {
+    return static_cast<OperandType>(operandType);
+}
+
+nn::GeneralResult<OperandLifeTime> unvalidatedConvert(
+        const nn::Operand::LifeTime& operandLifeTime) {
+    return static_cast<OperandLifeTime>(operandLifeTime);
+}
+
+nn::GeneralResult<DataLocation> unvalidatedConvert(const nn::DataLocation& location) {
+    VERIFY_LE_INT32_MAX(location.poolIndex)
+            << "DataLocation: pool index must be <= std::numeric_limits<int32_t>::max()";
+    return DataLocation{
+            .poolIndex = static_cast<int32_t>(location.poolIndex),
+            .offset = static_cast<int64_t>(location.offset),
+            .length = static_cast<int64_t>(location.length),
+    };
+}
+
+nn::GeneralResult<std::optional<OperandExtraParams>> unvalidatedConvert(
+        const nn::Operand::ExtraParams& extraParams) {
+    return std::visit(
+            overloaded{
+                    [](const nn::Operand::NoParams&)
+                            -> nn::GeneralResult<std::optional<OperandExtraParams>> {
+                        return std::nullopt;
+                    },
+                    [](const nn::Operand::SymmPerChannelQuantParams& symmPerChannelQuantParams)
+                            -> nn::GeneralResult<std::optional<OperandExtraParams>> {
+                        if (symmPerChannelQuantParams.channelDim >
+                            std::numeric_limits<int32_t>::max()) {
+                            // Using explicit type conversion because std::optional in successful
+                            // result confuses the compiler.
+                            return (NN_ERROR() << "symmPerChannelQuantParams.channelDim must be <= "
+                                                  "std::numeric_limits<int32_t>::max(), received: "
+                                               << symmPerChannelQuantParams.channelDim)
+                                    .
+                                    operator nn::GeneralResult<std::optional<OperandExtraParams>>();
+                        }
+                        return OperandExtraParams::make<OperandExtraParams::Tag::channelQuant>(
+                                SymmPerChannelQuantParams{
+                                        .scales = symmPerChannelQuantParams.scales,
+                                        .channelDim = static_cast<int32_t>(
+                                                symmPerChannelQuantParams.channelDim),
+                                });
+                    },
+                    [](const nn::Operand::ExtensionParams& extensionParams)
+                            -> nn::GeneralResult<std::optional<OperandExtraParams>> {
+                        return OperandExtraParams::make<OperandExtraParams::Tag::extension>(
+                                extensionParams);
+                    },
+            },
+            extraParams);
+}
+
+nn::GeneralResult<Operand> unvalidatedConvert(const nn::Operand& operand) {
+    return Operand{
+            .type = NN_TRY(unvalidatedConvert(operand.type)),
+            .dimensions = NN_TRY(toSigned(operand.dimensions)),
+            .scale = operand.scale,
+            .zeroPoint = operand.zeroPoint,
+            .lifetime = NN_TRY(unvalidatedConvert(operand.lifetime)),
+            .location = NN_TRY(unvalidatedConvert(operand.location)),
+            .extraParams = NN_TRY(unvalidatedConvert(operand.extraParams)),
+    };
+}
+
+nn::GeneralResult<OperationType> unvalidatedConvert(const nn::OperationType& operationType) {
+    return static_cast<OperationType>(operationType);
+}
+
+nn::GeneralResult<Operation> unvalidatedConvert(const nn::Operation& operation) {
+    return Operation{
+            .type = NN_TRY(unvalidatedConvert(operation.type)),
+            .inputs = NN_TRY(toSigned(operation.inputs)),
+            .outputs = NN_TRY(toSigned(operation.outputs)),
+    };
+}
+
+nn::GeneralResult<Subgraph> unvalidatedConvert(const nn::Model::Subgraph& subgraph) {
+    return Subgraph{
+            .operands = NN_TRY(unvalidatedConvert(subgraph.operands)),
+            .operations = NN_TRY(unvalidatedConvert(subgraph.operations)),
+            .inputIndexes = NN_TRY(toSigned(subgraph.inputIndexes)),
+            .outputIndexes = NN_TRY(toSigned(subgraph.outputIndexes)),
+    };
+}
+
+nn::GeneralResult<std::vector<uint8_t>> unvalidatedConvert(
+        const nn::Model::OperandValues& operandValues) {
+    return std::vector<uint8_t>(operandValues.data(), operandValues.data() + operandValues.size());
+}
+
+nn::GeneralResult<ExtensionNameAndPrefix> unvalidatedConvert(
+        const nn::Model::ExtensionNameAndPrefix& extensionNameToPrefix) {
+    return ExtensionNameAndPrefix{
+            .name = extensionNameToPrefix.name,
+            .prefix = extensionNameToPrefix.prefix,
+    };
+}
+
+nn::GeneralResult<Model> unvalidatedConvert(const nn::Model& model) {
+    return Model{
+            .main = NN_TRY(unvalidatedConvert(model.main)),
+            .referenced = NN_TRY(unvalidatedConvert(model.referenced)),
+            .operandValues = NN_TRY(unvalidatedConvert(model.operandValues)),
+            .pools = NN_TRY(unvalidatedConvert(model.pools)),
+            .relaxComputationFloat32toFloat16 = model.relaxComputationFloat32toFloat16,
+            .extensionNameToPrefix = NN_TRY(unvalidatedConvert(model.extensionNameToPrefix)),
+    };
+}
+
+nn::GeneralResult<Priority> unvalidatedConvert(const nn::Priority& priority) {
+    return static_cast<Priority>(priority);
+}
+
+nn::GeneralResult<Request> unvalidatedConvert(const nn::Request& request) {
+    return Request{
+            .inputs = NN_TRY(unvalidatedConvert(request.inputs)),
+            .outputs = NN_TRY(unvalidatedConvert(request.outputs)),
+            .pools = NN_TRY(unvalidatedConvert(request.pools)),
+    };
+}
+
+nn::GeneralResult<RequestArgument> unvalidatedConvert(
+        const nn::Request::Argument& requestArgument) {
+    if (requestArgument.lifetime == nn::Request::Argument::LifeTime::POINTER) {
+        return NN_ERROR(nn::ErrorStatus::INVALID_ARGUMENT)
+               << "Request cannot be unvalidatedConverted because it contains pointer-based memory";
+    }
+    const bool hasNoValue = requestArgument.lifetime == nn::Request::Argument::LifeTime::NO_VALUE;
+    return RequestArgument{
+            .hasNoValue = hasNoValue,
+            .location = NN_TRY(unvalidatedConvert(requestArgument.location)),
+            .dimensions = NN_TRY(toSigned(requestArgument.dimensions)),
+    };
+}
+
+nn::GeneralResult<RequestMemoryPool> unvalidatedConvert(const nn::Request::MemoryPool& memoryPool) {
+    return std::visit(
+            overloaded{
+                    [](const nn::SharedMemory& memory) -> nn::GeneralResult<RequestMemoryPool> {
+                        return RequestMemoryPool::make<RequestMemoryPool::Tag::pool>(
+                                NN_TRY(unvalidatedConvert(memory)));
+                    },
+                    [](const nn::Request::MemoryDomainToken& token)
+                            -> nn::GeneralResult<RequestMemoryPool> {
+                        return RequestMemoryPool::make<RequestMemoryPool::Tag::token>(
+                                underlyingType(token));
+                    },
+                    [](const nn::SharedBuffer& /*buffer*/) {
+                        return (NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
+                                << "Unable to make memory pool from IBuffer")
+                                .
+                                operator nn::GeneralResult<RequestMemoryPool>();
+                    },
+            },
+            memoryPool);
+}
+
+nn::GeneralResult<Timing> unvalidatedConvert(const nn::Timing& timing) {
+    return Timing{
+            .timeOnDevice = NN_TRY(unvalidatedConvert(timing.timeOnDevice)),
+            .timeInDriver = NN_TRY(unvalidatedConvert(timing.timeInDriver)),
+    };
+}
+
+nn::GeneralResult<int64_t> unvalidatedConvert(const nn::Duration& duration) {
+    const uint64_t nanoseconds = duration.count();
+    if (nanoseconds > std::numeric_limits<int64_t>::max()) {
+        return std::numeric_limits<int64_t>::max();
+    }
+    return static_cast<int64_t>(nanoseconds);
+}
+
+nn::GeneralResult<int64_t> unvalidatedConvert(const nn::OptionalDuration& optionalDuration) {
+    if (!optionalDuration.has_value()) {
+        return kNoTiming;
+    }
+    return unvalidatedConvert(optionalDuration.value());
+}
+
+nn::GeneralResult<int64_t> unvalidatedConvert(const nn::OptionalTimePoint& optionalTimePoint) {
+    if (!optionalTimePoint.has_value()) {
+        return kNoTiming;
+    }
+    return unvalidatedConvert(optionalTimePoint->time_since_epoch());
+}
+
+nn::GeneralResult<ndk::ScopedFileDescriptor> unvalidatedConvert(const nn::SyncFence& syncFence) {
+    auto duplicatedFd = NN_TRY(nn::dupFd(syncFence.getFd()));
+    return ndk::ScopedFileDescriptor(duplicatedFd.release());
+}
+
+nn::GeneralResult<ndk::ScopedFileDescriptor> unvalidatedConvertCache(
+        const nn::SharedHandle& handle) {
+    if (handle->ints.size() != 0) {
+        NN_ERROR() << "Cache handle must not contain ints";
+    }
+    if (handle->fds.size() != 1) {
+        NN_ERROR() << "Cache handle must contain exactly one fd but contains "
+                   << handle->fds.size();
+    }
+    auto duplicatedFd = NN_TRY(nn::dupFd(handle->fds.front().get()));
+    return ndk::ScopedFileDescriptor(duplicatedFd.release());
+}
+
+nn::GeneralResult<std::vector<uint8_t>> convert(const nn::CacheToken& cacheToken) {
+    return unvalidatedConvert(cacheToken);
+}
+
+nn::GeneralResult<BufferDesc> convert(const nn::BufferDesc& bufferDesc) {
+    return validatedConvert(bufferDesc);
+}
+
+nn::GeneralResult<bool> convert(const nn::MeasureTiming& measureTiming) {
+    return validatedConvert(measureTiming);
+}
+
 nn::GeneralResult<Memory> convert(const nn::SharedMemory& memory) {
     return validatedConvert(memory);
 }
@@ -715,9 +1017,60 @@ nn::GeneralResult<ErrorStatus> convert(const nn::ErrorStatus& errorStatus) {
     return validatedConvert(errorStatus);
 }
 
+nn::GeneralResult<ExecutionPreference> convert(const nn::ExecutionPreference& executionPreference) {
+    return validatedConvert(executionPreference);
+}
+
+nn::GeneralResult<Model> convert(const nn::Model& model) {
+    return validatedConvert(model);
+}
+
+nn::GeneralResult<Priority> convert(const nn::Priority& priority) {
+    return validatedConvert(priority);
+}
+
+nn::GeneralResult<Request> convert(const nn::Request& request) {
+    return validatedConvert(request);
+}
+
+nn::GeneralResult<Timing> convert(const nn::Timing& timing) {
+    return validatedConvert(timing);
+}
+
+nn::GeneralResult<int64_t> convert(const nn::OptionalDuration& optionalDuration) {
+    return validatedConvert(optionalDuration);
+}
+
+nn::GeneralResult<int64_t> convert(const nn::OptionalTimePoint& outputShapes) {
+    return validatedConvert(outputShapes);
+}
+
+nn::GeneralResult<std::vector<BufferRole>> convert(const std::vector<nn::BufferRole>& bufferRoles) {
+    return validatedConvert(bufferRoles);
+}
+
 nn::GeneralResult<std::vector<OutputShape>> convert(
         const std::vector<nn::OutputShape>& outputShapes) {
     return validatedConvert(outputShapes);
+}
+
+nn::GeneralResult<std::vector<ndk::ScopedFileDescriptor>> convert(
+        const std::vector<nn::SharedHandle>& cacheHandles) {
+    const auto version = NN_TRY(hal::utils::makeGeneralFailure(nn::validate(cacheHandles)));
+    if (version > kVersion) {
+        return NN_ERROR() << "Insufficient version: " << version << " vs required " << kVersion;
+    }
+    std::vector<ndk::ScopedFileDescriptor> cacheFds;
+    cacheFds.reserve(cacheHandles.size());
+    for (const auto& cacheHandle : cacheHandles) {
+        cacheFds.push_back(NN_TRY(unvalidatedConvertCache(cacheHandle)));
+    }
+    return cacheFds;
+}
+
+nn::GeneralResult<std::vector<ndk::ScopedFileDescriptor>> convert(
+        const std::vector<nn::SyncFence>& syncFences) {
+    return unvalidatedConvert(syncFences);
 }
 
 nn::GeneralResult<std::vector<int32_t>> toSigned(const std::vector<uint32_t>& vec) {
