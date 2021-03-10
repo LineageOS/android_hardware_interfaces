@@ -82,13 +82,28 @@ class Session : public BnSession {
     // by calling ISessionCallback#onStateChanged.
     void enterIdling(int cookie);
 
+    // The sensor and user IDs for which this session was created.
     int32_t mSensorId;
     int32_t mUserId;
+
+    // Callback for talking to the framework. This callback must only be called from non-binder
+    // threads to prevent nested binder calls and consequently a binder thread exhaustion.
+    // Practically, it means that this callback should always be called from the worker thread.
     std::shared_ptr<ISessionCallback> mCb;
+
+    // Module that communicates to the actual fingerprint hardware, keystore, TEE, etc. In real
+    // life such modules typically consume a lot of memory and are slow to initialize. This is here
+    // to showcase how such a module can be used within a Session without incurring the high
+    // initialization costs every time a Session is constructed.
     FakeFingerprintEngine* mEngine;
+
+    // Worker thread that allows to schedule tasks for asynchronous execution.
     WorkerThread* mWorker;
-    SessionState mScheduledState;
-    SessionState mCurrentState;
+
+    // Simple representation of the session's state machine. These are atomic because they can be
+    // modified from both the main and the worker threads.
+    std::atomic<SessionState> mScheduledState;
+    std::atomic<SessionState> mCurrentState;
 };
 
 }  // namespace aidl::android::hardware::biometrics::fingerprint
