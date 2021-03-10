@@ -27,6 +27,20 @@ using ::android::hardware::radio::V1_0::RegState;
 using ::android::hardware::radio::V1_0::SapResultCode;
 using namespace std;
 
+/*
+ * MACRO used to skip test case when radio response return error REQUEST_NOT_SUPPORTED
+ * on HAL versions which has deprecated the request interfaces. The MACRO can only be used
+ * AFTER receiving radio response.
+ */
+#define SKIP_TEST_IF_REQUEST_NOT_SUPPORTED_WITH_HAL(__ver__, __radio__, __radioRsp__)      \
+    do {                                                                                   \
+        sp<::android::hardware::radio::V##__ver__::IRadio> __radio =                       \
+                ::android::hardware::radio::V##__ver__::IRadio::castFrom(__radio__);       \
+        if (__radio && __radioRsp__->rspInfo.error == RadioError::REQUEST_NOT_SUPPORTED) { \
+            GTEST_SKIP() << "REQUEST_NOT_SUPPORTED";                                       \
+        }                                                                                  \
+    } while (0)
+
 enum CheckFlag {
     CHECK_DEFAULT = 0,
     CHECK_GENERAL_ERROR = 1,

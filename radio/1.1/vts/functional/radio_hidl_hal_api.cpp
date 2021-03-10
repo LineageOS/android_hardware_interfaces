@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <android/hardware/radio/1.2/IRadio.h>
 #include <radio_hidl_hal_utils_v1_1.h>
 #include <vector>
 
@@ -107,6 +108,9 @@ TEST_P(RadioHidlTest_v1_1, startNetworkScan) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_1->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_1->rspInfo.serial);
 
+    // startNetworkScan is deprecated on radio::V1_2 with startNetworkScan_1_2
+    SKIP_TEST_IF_REQUEST_NOT_SUPPORTED_WITH_HAL_VERSION_AT_LEAST(1_2);
+
     if (cardStatus.cardState == CardState::ABSENT) {
         ALOGI("startNetworkScan, rspInfo.error = %d\n", (int32_t)radioRsp_v1_1->rspInfo.error);
         ASSERT_TRUE(CheckAnyOfErrors(
@@ -130,6 +134,9 @@ TEST_P(RadioHidlTest_v1_1, startNetworkScan_InvalidArgument) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_1->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_1->rspInfo.serial);
+
+    // startNetworkScan is deprecated on radio::V1_2 with startNetworkScan_1_2
+    SKIP_TEST_IF_REQUEST_NOT_SUPPORTED_WITH_HAL_VERSION_AT_LEAST(1_2);
 
     if (cardStatus.cardState == CardState::ABSENT) {
         ALOGI("startNetworkScan_InvalidArgument, rspInfo.error = %d\n",
