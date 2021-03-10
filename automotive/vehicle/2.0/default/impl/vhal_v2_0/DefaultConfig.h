@@ -996,6 +996,15 @@ const ConfigDeclaration kVehicleProperties[]{
                  },
          .initialValue = {.int32Values = {LIGHT_SWITCH_AUTO}}},
 
+        {.config =
+                 {
+                         .prop = toInt(VehicleProperty::EVS_SERVICE_REQUEST),
+                         .access = VehiclePropertyAccess::READ,
+                         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                 },
+         .initialValue = {.int32Values = {toInt(EvsServiceType::REARVIEW),
+                                          toInt(EvsServiceState::OFF)}}},
+
         {.config = {.prop = VEHICLE_MAP_SERVICE,
                     .access = VehiclePropertyAccess::READ_WRITE,
                     .changeMode = VehiclePropertyChangeMode::ON_CHANGE}},
