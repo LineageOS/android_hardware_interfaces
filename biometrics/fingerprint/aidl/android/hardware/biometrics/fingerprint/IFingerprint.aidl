@@ -65,14 +65,4 @@ interface IFingerprint {
      * @return A new session
      */
     ISession createSession(in int sensorId, in int userId, in ISessionCallback cb);
-
-    /**
-     * Resets the HAL into a clean state, forcing it to cancel all of the pending operations, close
-     * its current session, and release all of the acquired resources.
-     *
-     * This should be used as a last resort to recover the HAL if the current session becomes
-     * unresponsive. The implementation might choose to restart the HAL process to get back into a
-     * good state.
-     */
-    void reset();
 }
