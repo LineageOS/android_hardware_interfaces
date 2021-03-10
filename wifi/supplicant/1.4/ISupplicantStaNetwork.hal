@@ -55,6 +55,24 @@ interface ISupplicantStaNetwork extends @1.3::ISupplicantStaNetwork {
     };
 
     /**
+     * SAE Hash-to-Element mode.
+     */
+    enum SaeH2eMode : uint8_t {
+        /**
+         * Hash-to-Element is disabled, only Hunting & Pecking is allowed.
+         */
+        DISABLED,
+        /**
+         * Both Hash-to-Element and Hunting & Pecking are allowed.
+         */
+        H2E_OPTIONAL,
+        /**
+         * Only Hash-to-Element is allowed.
+         */
+        H2E_MANDATORY,
+    };
+
+    /**
      * Set group cipher mask for the network.
      *
      * @param groupCipherMask value to set.
@@ -154,22 +172,16 @@ interface ISupplicantStaNetwork extends @1.3::ISupplicantStaNetwork {
         generates (SupplicantStatus status);
 
     /**
-     * Set whether to enable SAE H2E (Hash-to-Element) only mode.
+     * Set SAE H2E (Hash-to-Element) mode.
      *
-     * When enabled, only SAE H2E network is allowed; othewise
-     * H&P (Hunting and Pecking) and H2E are both allowed.
-     * H&P only mode is not supported.
-     * If this API is not called before connecting to a SAE
-     * network, the behavior is undefined.
-     *
-     * @param enable true to set, false otherwise.
+     * @param mode SAE H2E supporting mode.
      * @return status Status of the operation.
      *         Possible status codes:
      *         |SupplicantStatusCode.SUCCESS|,
      *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
      *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
      */
-    enableSaeH2eOnlyMode(bool enable) generates (SupplicantStatus status);
+    setSaeH2eMode(SaeH2eMode mode) generates (SupplicantStatus status);
 
     /**
      * Set whether to enable SAE PK (Public Key) only mode to enable public AP validation.
