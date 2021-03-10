@@ -31,6 +31,7 @@ cc_defaults {
         "android.hardware.tv.tuner@1.1",
         "android.hidl.memory@1.0",
         "libcutils",
+        "libdmabufheap",
         "libfmq",
         "libhidlbase",
         "libhidlmemory",
