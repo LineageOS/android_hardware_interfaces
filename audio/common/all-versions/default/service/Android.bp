@@ -13,11 +13,32 @@ cc_binary {
     init_rc: ["android.hardware.audio.service.rc"],
     relative_install_path: "hw",
     vendor: true,
-    // Prefer 32 bit as the binary must always be installed at the same
-    // location for init to start it and the build system does not support
-    // having two binaries installable to the same location even if they are
-    // not installed in the same build.
-    compile_multilib: "prefer32",
+    compile_multilib: "32",
+    srcs: ["service.cpp"],
+
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+    ],
+
+    shared_libs: [
+        "libcutils",
+        "libbinder",
+        "libhidlbase",
+        "liblog",
+        "libutils",
+        "libhardware",
+    ],
+}
+
+cc_binary {
+    name: "android.hardware.audio.service_64",
+
+    init_rc: ["android.hardware.audio.service_64.rc"],
+    relative_install_path: "hw",
+    vendor: true,
+    compile_multilib: "64",
     srcs: ["service.cpp"],
 
     cflags: [
@@ -40,4 +61,8 @@ cc_binary {
 phony {
     name: "android.hardware.audio@2.0-service",
     required: ["android.hardware.audio.service"],
+}
+phony {
+    name: "android.hardware.audio@2.0-service_64",
+    required: ["android.hardware.audio.service_64"],
 }
