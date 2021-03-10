@@ -30,7 +30,7 @@ class Session : public BnSession {
   public:
     explicit Session(std::shared_ptr<ISessionCallback> cb);
 
-    ndk::ScopedAStatus generateChallenge(int32_t cookie, int32_t timeoutSec) override;
+    ndk::ScopedAStatus generateChallenge(int32_t cookie) override;
 
     ndk::ScopedAStatus revokeChallenge(int32_t cookie, int64_t challenge) override;
 
