@@ -110,6 +110,7 @@ interface IStream {
 
     /**
      * Return the set of devices which this stream is connected to.
+     *
      * Optional method
      *
      * @return retval operation completion status: OK or NOT_SUPPORTED.
@@ -133,6 +134,7 @@ interface IStream {
     /**
      * Sets the HW synchronization source. Calling this method is equivalent to
      * setting AUDIO_PARAMETER_STREAM_HW_AV_SYNC on the legacy HAL.
+     *
      * Optional method
      *
      * @param hwAvSync HW synchronization source
