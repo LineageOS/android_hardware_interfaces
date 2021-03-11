@@ -1077,6 +1077,17 @@ bool convertLegacyLinkLayerStatsToHidl(
         legacy_stats.iface.ac[legacy_hal::WIFI_AC_VO].contention_num_samples;
     hidl_stats->iface.timeSliceDutyCycleInPercent =
         legacy_stats.iface.info.time_slicing_duty_cycle_percent;
+    // peer info legacy_stats conversion.
+    std::vector<StaPeerInfo> hidl_peers_info_stats;
+    for (const auto& legacy_peer_info_stats : legacy_stats.peers) {
+        StaPeerInfo hidl_peer_info_stats;
+        if (!convertLegacyPeerInfoStatsToHidl(legacy_peer_info_stats,
+                                              &hidl_peer_info_stats)) {
+            return false;
+        }
+        hidl_peers_info_stats.push_back(hidl_peer_info_stats);
+    }
+    hidl_stats->iface.peers = hidl_peers_info_stats;
     // radio legacy_stats conversion.
     std::vector<V1_3::StaLinkLayerRadioStats> hidl_radios_stats;
     for (const auto& legacy_radio_stats : legacy_stats.radios) {
@@ -1091,6 +1102,35 @@ bool convertLegacyLinkLayerStatsToHidl(
     // Timestamp in the HAL wrapper here since it's not provided in the legacy
     // HAL API.
     hidl_stats->timeStampInMs = uptimeMillis();
+    return true;
+}
+
+bool convertLegacyPeerInfoStatsToHidl(
+    const legacy_hal::WifiPeerInfo& legacy_peer_info_stats,
+    StaPeerInfo* hidl_peer_info_stats) {
+    if (!hidl_peer_info_stats) {
+        return false;
+    }
+    *hidl_peer_info_stats = {};
+    hidl_peer_info_stats->staCount =
+        legacy_peer_info_stats.peer_info.bssload.sta_count;
+    hidl_peer_info_stats->chanUtil =
+        legacy_peer_info_stats.peer_info.bssload.chan_util;
+
+    std::vector<StaRateStat> hidlRateStats;
+    for (const auto& legacy_rate_stats : legacy_peer_info_stats.rate_stats) {
+        StaRateStat rateStat;
+        if (!convertLegacyWifiRateInfoToHidl(legacy_rate_stats.rate,
+                                             &rateStat.rateInfo)) {
+            return false;
+        }
+        rateStat.txMpdu = legacy_rate_stats.tx_mpdu;
+        rateStat.rxMpdu = legacy_rate_stats.rx_mpdu;
+        rateStat.mpduLost = legacy_rate_stats.mpdu_lost;
+        rateStat.retries = legacy_rate_stats.retries;
+        hidlRateStats.push_back(rateStat);
+    }
+    hidl_peer_info_stats->rateStats = hidlRateStats;
     return true;
 }
 
