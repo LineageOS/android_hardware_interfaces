@@ -495,7 +495,7 @@ TEST_P(BroadcastRadioHalTest, TuneFailsWithInvalid) {
  *    invoked carrying a proper selector;
  *  - program changes exactly to what was requested.
  */
-TEST_F(BroadcastRadioHalTest, DabTune) {
+TEST_P(BroadcastRadioHalTest, DabTune) {
     ASSERT_TRUE(openSession());
 
     ProgramSelector sel = {};
