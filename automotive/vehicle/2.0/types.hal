@@ -688,7 +688,7 @@ enum VehicleProperty : int32_t {
      * Parking brake state.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @access VehiclePropertyAccess:READ
      */
     PARKING_BRAKE_ON = (
         0x0402
@@ -700,7 +700,7 @@ enum VehicleProperty : int32_t {
      * Auto-apply parking brake.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @access VehiclePropertyAccess:READ
      */
     PARKING_BRAKE_AUTO_APPLY = (
         0x0403
