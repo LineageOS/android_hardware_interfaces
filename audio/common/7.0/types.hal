@@ -344,7 +344,7 @@ struct RecordTrackMetadata {
         DeviceAddress device;
     } destination;
     AudioChannelMask channelMask;
-    /** Tags from AudioTrack audio atttributes */
+    /** Tags from AudioRecord audio atttributes */
     vec<AudioTag> tags;
 };
 
