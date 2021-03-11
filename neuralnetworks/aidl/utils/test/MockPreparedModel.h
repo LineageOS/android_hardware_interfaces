@@ -39,6 +39,8 @@ class MockPreparedModel final : public BnPreparedModel {
                  bool measureTiming, int64_t deadline, int64_t loopTimeoutDuration,
                  int64_t duration, FencedExecutionResult* fencedExecutionResult),
                 (override));
+    MOCK_METHOD(ndk::ScopedAStatus, configureExecutionBurst, (std::shared_ptr<IBurst> * burst),
+                (override));
 };
 
 inline std::shared_ptr<MockPreparedModel> MockPreparedModel::create() {
