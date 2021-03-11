@@ -35,6 +35,7 @@ interface IStreamOut extends IStream {
      * allowing to directly set the volume as apposed to via the framework.
      * This method might produce multiple PCM outputs or hardware accelerated
      * codecs, such as MP3 or AAC.
+     *
      * Optional method
      *
      * @param left left channel attenuation, 1.0f is unity, 0.0f is zero.
@@ -46,6 +47,7 @@ interface IStreamOut extends IStream {
 
     /**
      * Called when the metadata of the stream's source has been changed.
+     *
      * Optional method
      *
      * @param sourceMetadata Description of the audio that is played by the clients.
@@ -130,6 +132,7 @@ interface IStreamOut extends IStream {
     /**
      * Return the number of audio frames written by the audio DSP to DAC since
      * the output has exited standby.
+     *
      * Optional method
      *
      * @return retval operation completion status.
@@ -141,6 +144,7 @@ interface IStreamOut extends IStream {
      * Get the local time at which the next write to the audio driver will be
      * presented. The units are microseconds, where the epoch is decided by the
      * local audio HAL.
+     *
      * Optional method
      *
      * @return retval operation completion status.
@@ -253,8 +257,11 @@ interface IStreamOut extends IStream {
     drain(AudioDrain type) generates (Result retval);
 
     /**
-     * Notifies to the audio driver to flush the queued data. Stream must
-     * already be paused before calling 'flush'.
+     * Notifies to the audio driver to flush (that is, drop) the queued
+     * data. Stream must already be paused before calling 'flush'. For
+     * compressed and offload streams the frame count returned by
+     * 'getPresentationPosition' must reset after flush.
+     *
      * Optional method
      *
      * Implementation of this function is mandatory for offloaded playback.
@@ -266,12 +273,14 @@ interface IStreamOut extends IStream {
     /**
      * Return a recent count of the number of audio frames presented to an
      * external observer. This excludes frames which have been written but are
-     * still in the pipeline. The count is not reset to zero when output enters
-     * standby. Also returns the value of CLOCK_MONOTONIC as of this
+     * still in the pipeline. The count must not reset to zero when a PCM output
+     * enters standby. For compressed and offload streams it is recommended that
+     * HAL resets the frame count.
+     *
+     * This method also returns the value of CLOCK_MONOTONIC as of this
      * presentation count. The returned count is expected to be 'recent', but
      * does not need to be the most recent possible value. However, the
      * associated time must correspond to whatever count is returned.
-     *
      * Example: assume that N+M frames have been presented, where M is a 'small'
      * number. Then it is permissible to return N instead of N+M, and the
      * timestamp must correspond to N rather than N+M. The terms 'recent' and
@@ -287,6 +296,7 @@ interface IStreamOut extends IStream {
     /**
      * Selects a presentation for decoding from a next generation media stream
      * (as defined per ETSI TS 103 190-2) and a program within the presentation.
+     *
      * Optional method
      *
      * @param presentationId selected audio presentation.
