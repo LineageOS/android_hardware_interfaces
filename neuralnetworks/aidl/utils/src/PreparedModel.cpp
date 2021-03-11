@@ -16,9 +16,9 @@
 
 #include "PreparedModel.h"
 
+#include "Burst.h"
 #include "Callbacks.h"
 #include "Conversions.h"
-#include "ProtectCallback.h"
 #include "Utils.h"
 
 #include <android/binder_auto_utils.h>
@@ -26,7 +26,6 @@
 #include <nnapi/Result.h>
 #include <nnapi/TypeUtils.h>
 #include <nnapi/Types.h>
-#include <nnapi/hal/1.0/Burst.h>
 #include <nnapi/hal/CommonUtils.h>
 #include <nnapi/hal/HandleError.h>
 
@@ -161,7 +160,10 @@ PreparedModel::executeFenced(const nn::Request& request, const std::vector<nn::S
 }
 
 nn::GeneralResult<nn::SharedBurst> PreparedModel::configureExecutionBurst() const {
-    return hal::V1_0::utils::Burst::create(shared_from_this());
+    std::shared_ptr<IBurst> burst;
+    const auto ret = kPreparedModel->configureExecutionBurst(&burst);
+    HANDLE_ASTATUS(ret) << "configureExecutionBurst failed";
+    return Burst::create(std::move(burst));
 }
 
 std::any PreparedModel::getUnderlyingResource() const {
