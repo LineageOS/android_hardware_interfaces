@@ -21,6 +21,8 @@
 
 #include <android/hardware/wifi/1.0/IWifi.h>
 
+#include "wifi_legacy_hal.h"
+
 namespace android {
 namespace hardware {
 namespace wifi {
@@ -40,7 +42,8 @@ struct IfaceEventHandlers {
  */
 class WifiIfaceUtil {
    public:
-    WifiIfaceUtil(const std::weak_ptr<wifi_system::InterfaceTool> iface_tool);
+    WifiIfaceUtil(const std::weak_ptr<wifi_system::InterfaceTool> iface_tool,
+                  const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal);
     virtual ~WifiIfaceUtil() = default;
 
     virtual std::array<uint8_t, 6> getFactoryMacAddress(
@@ -73,6 +76,7 @@ class WifiIfaceUtil {
     std::array<uint8_t, 6> createRandomMacAddress();
 
     std::weak_ptr<wifi_system::InterfaceTool> iface_tool_;
+    std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
     std::unique_ptr<std::array<uint8_t, 6>> random_mac_address_;
     std::map<std::string, IfaceEventHandlers> event_handlers_map_;
 };
