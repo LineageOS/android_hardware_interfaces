@@ -132,6 +132,8 @@ TEST_F(HidlStructUtilTest, canConvertLegacyLinkLayerStatsToHidl) {
     legacy_hal::LinkLayerStats legacy_stats{};
     legacy_stats.radios.push_back(legacy_hal::LinkLayerRadioStats{});
     legacy_stats.radios.push_back(legacy_hal::LinkLayerRadioStats{});
+    legacy_stats.peers.push_back(legacy_hal::WifiPeerInfo{});
+    legacy_stats.peers.push_back(legacy_hal::WifiPeerInfo{});
     legacy_stats.iface.beacon_rx = rand();
     legacy_stats.iface.rssi_mgmt = rand();
     legacy_stats.iface.ac[legacy_hal::WIFI_AC_BE].rx_mpdu = rand();
@@ -175,6 +177,7 @@ TEST_F(HidlStructUtilTest, canConvertLegacyLinkLayerStatsToHidl) {
         rand();
 
     legacy_stats.iface.info.time_slicing_duty_cycle_percent = rand();
+    legacy_stats.iface.num_peers = 1;
 
     for (auto& radio : legacy_stats.radios) {
         radio.stats.on_time = rand();
@@ -202,6 +205,31 @@ TEST_F(HidlStructUtilTest, canConvertLegacyLinkLayerStatsToHidl) {
         };
         radio.channel_stats.push_back(channel_stat1);
         radio.channel_stats.push_back(channel_stat2);
+    }
+
+    for (auto& peer : legacy_stats.peers) {
+        peer.peer_info.bssload.sta_count = rand();
+        peer.peer_info.bssload.chan_util = rand();
+        wifi_rate_stat rate_stat1 = {
+            .rate = {3, 1, 2, 5, 0, 0},
+            .tx_mpdu = 0,
+            .rx_mpdu = 1,
+            .mpdu_lost = 2,
+            .retries = 3,
+            .retries_short = 4,
+            .retries_long = 5,
+        };
+        wifi_rate_stat rate_stat2 = {
+            .rate = {2, 2, 1, 6, 0, 1},
+            .tx_mpdu = 6,
+            .rx_mpdu = 7,
+            .mpdu_lost = 8,
+            .retries = 9,
+            .retries_short = 10,
+            .retries_long = 11,
+        };
+        peer.rate_stats.push_back(rate_stat1);
+        peer.rate_stats.push_back(rate_stat2);
     }
 
     V1_5::StaLinkLayerStats converted{};
@@ -328,6 +356,37 @@ TEST_F(HidlStructUtilTest, canConvertLegacyLinkLayerStatsToHidl) {
                       converted.radios[i].channelStats[k].ccaBusyTimeInMs);
             EXPECT_EQ(legacy_channel_st.on_time,
                       converted.radios[i].channelStats[k].onTimeInMs);
+        }
+    }
+
+    EXPECT_EQ(legacy_stats.peers.size(), converted.iface.peers.size());
+    for (size_t i = 0; i < legacy_stats.peers.size(); i++) {
+        EXPECT_EQ(legacy_stats.peers[i].peer_info.bssload.sta_count,
+                  converted.iface.peers[i].staCount);
+        EXPECT_EQ(legacy_stats.peers[i].peer_info.bssload.chan_util,
+                  converted.iface.peers[i].chanUtil);
+        for (size_t j = 0; j < legacy_stats.peers[i].rate_stats.size(); j++) {
+            EXPECT_EQ(legacy_stats.peers[i].rate_stats[j].rate.preamble,
+                      (uint32_t)converted.iface.peers[i]
+                          .rateStats[j]
+                          .rateInfo.preamble);
+            EXPECT_EQ(
+                legacy_stats.peers[i].rate_stats[j].rate.nss,
+                (uint32_t)converted.iface.peers[i].rateStats[j].rateInfo.nss);
+            EXPECT_EQ(
+                legacy_stats.peers[i].rate_stats[j].rate.bw,
+                (uint32_t)converted.iface.peers[i].rateStats[j].rateInfo.bw);
+            EXPECT_EQ(
+                legacy_stats.peers[i].rate_stats[j].rate.rateMcsIdx,
+                converted.iface.peers[i].rateStats[j].rateInfo.rateMcsIdx);
+            EXPECT_EQ(legacy_stats.peers[i].rate_stats[j].tx_mpdu,
+                      converted.iface.peers[i].rateStats[j].txMpdu);
+            EXPECT_EQ(legacy_stats.peers[i].rate_stats[j].rx_mpdu,
+                      converted.iface.peers[i].rateStats[j].rxMpdu);
+            EXPECT_EQ(legacy_stats.peers[i].rate_stats[j].mpdu_lost,
+                      converted.iface.peers[i].rateStats[j].mpduLost);
+            EXPECT_EQ(legacy_stats.peers[i].rate_stats[j].retries,
+                      converted.iface.peers[i].rateStats[j].retries);
         }
     }
 }
