@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "MockBurstContext.h"
 #include "MockFencedExecutionCallback.h"
 #include "MockPreparedModel.h"
 
@@ -93,6 +94,17 @@ auto makeExecuteFencedCallbackReturn(V1_3::ErrorStatus status, const V1_2::Timin
     return [status, timingA,
             timingB](const V1_3::IFencedExecutionCallback::getExecutionInfo_cb& cb) {
         cb(status, timingA, timingB);
+        return hardware::Void();
+    };
+}
+auto makeConfigureExecutionBurstReturn(V1_0::ErrorStatus status,
+                                       const sp<MockBurstContext>& burstContext) {
+    return [status, burstContext](
+                   const sp<V1_2::IBurstCallback>& /*callback*/,
+                   const MQDescriptorSync<V1_2::FmqRequestDatum>& /*requestChannel*/,
+                   const MQDescriptorSync<V1_2::FmqResultDatum>& /*resultChannel*/,
+                   V1_2::IPreparedModel::configureExecutionBurst_cb cb) -> hardware::Return<void> {
+        cb(status, burstContext);
         return hardware::Void();
     };
 }
@@ -450,7 +462,76 @@ TEST(PreparedModelTest, executeFencedDeadObject) {
     EXPECT_EQ(result.error().code, nn::ErrorStatus::DEAD_OBJECT);
 }
 
-// TODO: test burst execution if/when it is added to nn::IPreparedModel.
+TEST(PreparedModelTest, configureExecutionBurst) {
+    // setup test
+    const auto mockPreparedModel = MockPreparedModel::create();
+    const auto mockBurstContext = sp<MockBurstContext>::make();
+    EXPECT_CALL(*mockPreparedModel, configureExecutionBurst(_, _, _, _))
+            .Times(1)
+            .WillOnce(makeConfigureExecutionBurstReturn(V1_0::ErrorStatus::NONE, mockBurstContext));
+    const auto preparedModel =
+            PreparedModel::create(mockPreparedModel, /*executeSynchronously=*/true).value();
+
+    // run test
+    const auto result = preparedModel->configureExecutionBurst();
+
+    // verify result
+    ASSERT_TRUE(result.has_value())
+            << "Failed with " << result.error().code << ": " << result.error().message;
+    EXPECT_NE(result.value(), nullptr);
+}
+
+TEST(PreparedModelTest, configureExecutionBurstError) {
+    // setup test
+    const auto mockPreparedModel = MockPreparedModel::create();
+    const auto preparedModel =
+            PreparedModel::create(mockPreparedModel, /*executeSynchronously=*/true).value();
+    EXPECT_CALL(*mockPreparedModel, configureExecutionBurst(_, _, _, _))
+            .Times(1)
+            .WillOnce(
+                    makeConfigureExecutionBurstReturn(V1_0::ErrorStatus::GENERAL_FAILURE, nullptr));
+
+    // run test
+    const auto result = preparedModel->configureExecutionBurst();
+
+    // verify result
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
+}
+
+TEST(PreparedModelTest, configureExecutionBurstTransportFailure) {
+    // setup test
+    const auto mockPreparedModel = MockPreparedModel::create();
+    const auto preparedModel =
+            PreparedModel::create(mockPreparedModel, /*executeSynchronously=*/true).value();
+    EXPECT_CALL(*mockPreparedModel, configureExecutionBurst(_, _, _, _))
+            .Times(1)
+            .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
+
+    // run test
+    const auto result = preparedModel->configureExecutionBurst();
+
+    // verify result
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
+}
+
+TEST(PreparedModelTest, configureExecutionBurstDeadObject) {
+    // setup test
+    const auto mockPreparedModel = MockPreparedModel::create();
+    const auto preparedModel =
+            PreparedModel::create(mockPreparedModel, /*executeSynchronously=*/true).value();
+    EXPECT_CALL(*mockPreparedModel, configureExecutionBurst(_, _, _, _))
+            .Times(1)
+            .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
+
+    // run test
+    const auto result = preparedModel->configureExecutionBurst();
+
+    // verify result
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, nn::ErrorStatus::DEAD_OBJECT);
+}
 
 TEST(PreparedModelTest, getUnderlyingResource) {
     // setup test

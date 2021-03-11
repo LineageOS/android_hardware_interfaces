@@ -224,7 +224,19 @@ TEST(PreparedModelTest, executeFencedNotSupported) {
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-// TODO: test burst execution if/when it is added to nn::IPreparedModel.
+TEST(PreparedModelTest, configureExecutionBurst) {
+    // setup test
+    const auto mockPreparedModel = MockPreparedModel::create();
+    const auto preparedModel = PreparedModel::create(mockPreparedModel).value();
+
+    // run test
+    const auto result = preparedModel->configureExecutionBurst();
+
+    // verify result
+    ASSERT_TRUE(result.has_value())
+            << "Failed with " << result.error().code << ": " << result.error().message;
+    EXPECT_NE(result.value(), nullptr);
+}
 
 TEST(PreparedModelTest, getUnderlyingResource) {
     // setup test
