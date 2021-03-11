@@ -476,6 +476,10 @@ wifi_error WifiLegacyHal::stop(
 
 bool WifiLegacyHal::isStarted() { return is_started_; }
 
+wifi_error WifiLegacyHal::waitForDriverReady() {
+    return global_func_table_.wifi_wait_for_driver_ready();
+}
+
 std::pair<wifi_error, std::string> WifiLegacyHal::getDriverVersion(
     const std::string& iface_name) {
     std::array<char, kMaxVersionStringLength> buffer;

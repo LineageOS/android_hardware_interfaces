@@ -276,7 +276,7 @@ class WifiChipTest : public Test {
     std::shared_ptr<NiceMock<mode_controller::MockWifiModeController>>
         mode_controller_{new NiceMock<mode_controller::MockWifiModeController>};
     std::shared_ptr<NiceMock<iface_util::MockWifiIfaceUtil>> iface_util_{
-        new NiceMock<iface_util::MockWifiIfaceUtil>(iface_tool_)};
+        new NiceMock<iface_util::MockWifiIfaceUtil>(iface_tool_, legacy_hal_)};
     std::shared_ptr<NiceMock<feature_flags::MockWifiFeatureFlags>>
         feature_flags_{new NiceMock<feature_flags::MockWifiFeatureFlags>};
 

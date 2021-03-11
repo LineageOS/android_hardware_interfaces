@@ -46,7 +46,6 @@ class Wifi : public V1_5::IWifi {
              legacy_hal_factory,
          const std::shared_ptr<mode_controller::WifiModeController>
              mode_controller,
-         const std::shared_ptr<iface_util::WifiIfaceUtil> iface_util,
          const std::shared_ptr<feature_flags::WifiFeatureFlags> feature_flags);
 
     bool isValid();
@@ -85,7 +84,6 @@ class Wifi : public V1_5::IWifi {
     std::shared_ptr<legacy_hal::WifiLegacyHalFactory> legacy_hal_factory_;
     std::shared_ptr<mode_controller::WifiModeController> mode_controller_;
     std::vector<std::shared_ptr<legacy_hal::WifiLegacyHal>> legacy_hals_;
-    std::shared_ptr<iface_util::WifiIfaceUtil> iface_util_;
     std::shared_ptr<feature_flags::WifiFeatureFlags> feature_flags_;
     RunState run_state_;
     std::vector<sp<WifiChip>> chips_;
