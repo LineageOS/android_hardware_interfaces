@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <android/hardware/radio/1.4/IRadio.h>
 #include <radio_hidl_hal_utils_v1_2.h>
 #include <vector>
 
@@ -57,6 +58,9 @@ TEST_P(RadioHidlTest_v1_2, startNetworkScan) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_2->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_2->rspInfo.serial);
 
+    // startNetworkScan_1_2 is deprecated in radio::V1_4 with startNetworkScan_1_4
+    SKIP_TEST_IF_REQUEST_NOT_SUPPORTED_WITH_HAL_VERSION_AT_LEAST(1_4);
+
     ALOGI("startNetworkScan, rspInfo.error = %s\n", toString(radioRsp_v1_2->rspInfo.error).c_str());
     if (cardStatus.base.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(radioRsp_v1_2->rspInfo.error, {RadioError::SIM_ABSENT}));
@@ -94,6 +98,9 @@ TEST_P(RadioHidlTest_v1_2, startNetworkScan_InvalidArgument) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_2->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_2->rspInfo.serial);
 
+    // startNetworkScan_1_2 is deprecated in radio::V1_4 with startNetworkScan_1_4
+    SKIP_TEST_IF_REQUEST_NOT_SUPPORTED_WITH_HAL_VERSION_AT_LEAST(1_4);
+
     ALOGI("startNetworkScan_InvalidArgument, rspInfo.error = %s\n",
           toString(radioRsp_v1_2->rspInfo.error).c_str());
     if (cardStatus.base.cardState == CardState::ABSENT) {
@@ -125,6 +132,9 @@ TEST_P(RadioHidlTest_v1_2, startNetworkScan_InvalidInterval1) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_2->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_2->rspInfo.serial);
+
+    // startNetworkScan_1_2 is deprecated in radio::V1_4 with startNetworkScan_1_4
+    SKIP_TEST_IF_REQUEST_NOT_SUPPORTED_WITH_HAL_VERSION_AT_LEAST(1_4);
 
     ALOGI("startNetworkScan_InvalidInterval1, rspInfo.error = %s\n",
           toString(radioRsp_v1_2->rspInfo.error).c_str());
@@ -158,6 +168,9 @@ TEST_P(RadioHidlTest_v1_2, startNetworkScan_InvalidInterval2) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_2->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_2->rspInfo.serial);
 
+    // startNetworkScan_1_2 is deprecated in radio::V1_4 with startNetworkScan_1_4
+    SKIP_TEST_IF_REQUEST_NOT_SUPPORTED_WITH_HAL_VERSION_AT_LEAST(1_4);
+
     ALOGI("startNetworkScan_InvalidInterval2, rspInfo.error = %s\n",
           toString(radioRsp_v1_2->rspInfo.error).c_str());
     if (cardStatus.base.cardState == CardState::ABSENT) {
@@ -189,6 +202,9 @@ TEST_P(RadioHidlTest_v1_2, startNetworkScan_InvalidMaxSearchTime1) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_2->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_2->rspInfo.serial);
+
+    // startNetworkScan_1_2 is deprecated in radio::V1_4 with startNetworkScan_1_4
+    SKIP_TEST_IF_REQUEST_NOT_SUPPORTED_WITH_HAL_VERSION_AT_LEAST(1_4);
 
     ALOGI("startNetworkScan_InvalidMaxSearchTime1, rspInfo.error = %s\n",
           toString(radioRsp_v1_2->rspInfo.error).c_str());
@@ -222,6 +238,9 @@ TEST_P(RadioHidlTest_v1_2, startNetworkScan_InvalidMaxSearchTime2) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_2->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_2->rspInfo.serial);
 
+    // startNetworkScan_1_2 is deprecated in radio::V1_4 with startNetworkScan_1_4
+    SKIP_TEST_IF_REQUEST_NOT_SUPPORTED_WITH_HAL_VERSION_AT_LEAST(1_4);
+
     ALOGI("startNetworkScan_InvalidMaxSearchTime2, rspInfo.error = %s\n",
           toString(radioRsp_v1_2->rspInfo.error).c_str());
     if (cardStatus.base.cardState == CardState::ABSENT) {
@@ -254,6 +273,9 @@ TEST_P(RadioHidlTest_v1_2, startNetworkScan_InvalidPeriodicity1) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_2->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_2->rspInfo.serial);
 
+    // startNetworkScan_1_2 is deprecated in radio::V1_4 with startNetworkScan_1_4
+    SKIP_TEST_IF_REQUEST_NOT_SUPPORTED_WITH_HAL_VERSION_AT_LEAST(1_4);
+
     ALOGI("startNetworkScan_InvalidPeriodicity1, rspInfo.error = %s\n",
           toString(radioRsp_v1_2->rspInfo.error).c_str());
     if (cardStatus.base.cardState == CardState::ABSENT) {
@@ -285,6 +307,9 @@ TEST_P(RadioHidlTest_v1_2, startNetworkScan_InvalidPeriodicity2) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_2->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_2->rspInfo.serial);
+
+    // startNetworkScan_1_2 is deprecated in radio::V1_4 with startNetworkScan_1_4
+    SKIP_TEST_IF_REQUEST_NOT_SUPPORTED_WITH_HAL_VERSION_AT_LEAST(1_4);
 
     ALOGI("startNetworkScan_InvalidPeriodicity2, rspInfo.error = %s\n",
           toString(radioRsp_v1_2->rspInfo.error).c_str());
@@ -322,6 +347,9 @@ TEST_P(RadioHidlTest_v1_2, DISABLED_startNetworkScan_GoodRequest1) {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_2->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_2->rspInfo.serial);
 
+    // startNetworkScan_1_2 is deprecated in radio::V1_4 with startNetworkScan_1_4
+    SKIP_TEST_IF_REQUEST_NOT_SUPPORTED_WITH_HAL_VERSION_AT_LEAST(1_4);
+
     ALOGI("startNetworkScan_InvalidArgument, rspInfo.error = %s\n",
           toString(radioRsp_v1_2->rspInfo.error).c_str());
     if (cardStatus.base.cardState == CardState::ABSENT) {
@@ -358,6 +386,9 @@ TEST_P(RadioHidlTest_v1_2, DISABLED_startNetworkScan_GoodRequest2) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_2->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_2->rspInfo.serial);
+
+    // startNetworkScan_1_2 is deprecated in radio::V1_4 with startNetworkScan_1_4
+    SKIP_TEST_IF_REQUEST_NOT_SUPPORTED_WITH_HAL_VERSION_AT_LEAST(1_4);
 
     ALOGI("startNetworkScan_InvalidArgument, rspInfo.error = %s\n",
           toString(radioRsp_v1_2->rspInfo.error).c_str());

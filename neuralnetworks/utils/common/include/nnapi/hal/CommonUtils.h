@@ -32,6 +32,8 @@ namespace hal = ::android::hardware::neuralnetworks;
 // Shorthands
 namespace aidl::android::hardware::neuralnetworks {
 namespace aidl_hal = ::aidl::android::hardware::neuralnetworks;
+namespace hal = ::android::hardware::neuralnetworks;
+namespace nn = ::android::nn;
 }  // namespace aidl::android::hardware::neuralnetworks
 
 // Shorthands

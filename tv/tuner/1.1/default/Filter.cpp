@@ -16,8 +16,10 @@
 
 #define LOG_TAG "android.hardware.tv.tuner@1.1-Filter"
 
-#include "Filter.h"
+#include <BufferAllocator/BufferAllocator.h>
 #include <utils/Log.h>
+
+#include "Filter.h"
 
 namespace android {
 namespace hardware {
@@ -829,15 +831,15 @@ void Filter::detachFilterFromRecord() {
 }
 
 int Filter::createAvIonFd(int size) {
-    // Create an ion fd and allocate an av fd mapped to a buffer to it.
-    int ion_fd = ion_open();
-    if (ion_fd == -1) {
-        ALOGE("[Filter] Failed to open ion fd %d", errno);
+    // Create an DMA-BUF fd and allocate an av fd mapped to a buffer to it.
+    auto buffer_allocator = std::make_unique<BufferAllocator>();
+    if (!buffer_allocator) {
+        ALOGE("[Filter] Unable to create BufferAllocator object");
         return -1;
     }
     int av_fd = -1;
-    ion_alloc_fd(dup(ion_fd), size, 0 /*align*/, ION_HEAP_SYSTEM_MASK, 0 /*flags*/, &av_fd);
-    if (av_fd == -1) {
+    av_fd = buffer_allocator->Alloc("system-uncached", size);
+    if (av_fd < 0) {
         ALOGE("[Filter] Failed to create av fd %d", errno);
         return -1;
     }

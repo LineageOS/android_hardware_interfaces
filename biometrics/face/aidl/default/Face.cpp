@@ -63,8 +63,4 @@ ndk::ScopedAStatus Face::createSession(int32_t /*sensorId*/, int32_t /*userId*/,
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Face::reset() {
-    return ndk::ScopedAStatus::ok();
-}
-
 }  // namespace aidl::android::hardware::biometrics::face

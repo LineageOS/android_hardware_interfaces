@@ -63,10 +63,4 @@ ndk::ScopedAStatus Fingerprint::createSession(int32_t sensorId, int32_t userId,
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Fingerprint::reset() {
-    // Crash. The system will start a fresh instance of the HAL.
-    CHECK(false) << "Unable to reset. Crashing.";
-    return ndk::ScopedAStatus::ok();
-}
-
 }  // namespace aidl::android::hardware::biometrics::fingerprint
