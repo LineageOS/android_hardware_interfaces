@@ -212,6 +212,11 @@ uint32_t convertHidlUsableChannelFilterToLegacy(uint32_t hidl_filter_mask);
 bool convertLegacyWifiUsableChannelsToHidl(
     const std::vector<legacy_hal::wifi_usable_channel>& legacy_usable_channels,
     std::vector<V1_5::WifiUsableChannel>* hidl_usable_channels);
+bool convertLegacyPeerInfoStatsToHidl(
+    const legacy_hal::WifiPeerInfo& legacy_peer_info_stats,
+    StaPeerInfo* hidl_peer_info_stats);
+bool convertLegacyWifiRateInfoToHidl(const legacy_hal::wifi_rate& legacy_rate,
+                                     V1_4::WifiRateInfo* hidl_rate);
 }  // namespace hidl_struct_util
 }  // namespace implementation
 }  // namespace V1_5
