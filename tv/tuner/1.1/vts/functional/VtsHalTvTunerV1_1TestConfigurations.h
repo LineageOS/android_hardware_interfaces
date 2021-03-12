@@ -55,6 +55,7 @@ using android::hardware::tv::tuner::V1_1::VideoStreamType;
 
 using namespace std;
 
+const uint32_t FMQ_SIZE_512K = 0x80000;
 const uint32_t FMQ_SIZE_1M = 0x100000;
 const uint32_t FMQ_SIZE_4M = 0x400000;
 const uint32_t FMQ_SIZE_16M = 0x1000000;
@@ -94,6 +95,7 @@ struct FilterConfig {
     uint32_t bufferSize;
     DemuxFilterType type;
     DemuxFilterSettings settings;
+    bool getMqDesc;
     AvStreamType streamType;
     uint32_t ipCid;
     uint32_t monitorEventTypes;
@@ -102,6 +104,7 @@ struct FilterConfig {
 };
 
 struct FrontendConfig {
+    bool enable;
     bool isSoftwareFe;
     bool canConnectToCiCam;
     uint32_t ciCamId;
@@ -124,6 +127,7 @@ static FrontendConfig frontendScanArray[SCAN_MAX];
 static FilterConfig filterArray[FILTER_MAX];
 static DvrConfig dvrArray[DVR_MAX];
 static int defaultFrontend = DVBT;
+static int defaultScanFrontend = SCAN_DVBT;
 
 /** Configuration array for the frontend tune test */
 inline void initFrontendConfig() {
@@ -159,8 +163,10 @@ inline void initFrontendConfig() {
             .transmissionMode =
                     android::hardware::tv::tuner::V1_1::FrontendDvbtTransmissionMode::MODE_8K_E,
     });
+    frontendArray[DVBT].enable = true;
     frontendArray[DVBS].type = FrontendType::DVBS;
     frontendArray[DVBS].isSoftwareFe = true;
+    frontendArray[DVBS].enable = true;
 };
 
 /** Configuration array for the frontend scan test */
@@ -223,6 +229,7 @@ inline void initFilterConfig() {
             .isRaw = false,
             .streamId = 0xbd,
     });
+    filterArray[TS_PES0].getMqDesc = true;
     // TS PCR filter setting
     filterArray[TS_PCR0].type.mainType = DemuxFilterMainType::TS;
     filterArray[TS_PCR0].type.subType.tsFilterType(DemuxTsFilterType::PCR);
@@ -243,6 +250,7 @@ inline void initFilterConfig() {
     filterArray[TS_SECTION0].settings.ts().filterSettings.section({
             .isRaw = false,
     });
+    filterArray[TS_SECTION0].getMqDesc = true;
     // TS RECORD filter setting
     filterArray[TS_RECORD0].type.mainType = DemuxFilterMainType::TS;
     filterArray[TS_RECORD0].type.subType.tsFilterType(DemuxTsFilterType::RECORD);

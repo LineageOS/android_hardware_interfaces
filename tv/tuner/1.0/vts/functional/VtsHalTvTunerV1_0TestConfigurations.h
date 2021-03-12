@@ -221,7 +221,7 @@ inline void initFrontendConfig() {
     frontendArray[DVBT].tuneStatusTypes = types;
     frontendArray[DVBT].expectTuneStatuses = statuses;
     frontendArray[DVBT].isSoftwareFe = true;
-    frontendArray[DVBS].enable = true;
+    frontendArray[DVBT].enable = true;
     frontendArray[DVBS].type = FrontendType::DVBS;
     frontendArray[DVBS].enable = true;
     frontendArray[DVBS].isSoftwareFe = true;
