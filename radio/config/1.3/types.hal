@@ -28,6 +28,9 @@ struct HalDeviceCapabilities {
    * or android.hardware.radio@1.6::LinkCapacityEstimate:secondaryUplinkCapacityKbps
    * when given from android.hardware.radio@1.6::RadioIndication:currentLinkCapacityEstimate
    * </li>
+   * <li> calling android.hardware.radio@1.6::IRadio.setNrDualConnectivityState
+   * or querying android.hardware.radio@1.6::IRadio.isNrDualConnectivityEnabled
+   * </li>
    * </ul>
    */
   bool modemReducedFeatureSet1;
