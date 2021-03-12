@@ -16,6 +16,7 @@ hidl_interface {
         "types.hal",
         "ISupplicant.hal",
         "ISupplicantP2pIface.hal",
+        "ISupplicantP2pIfaceCallback.hal",
         "ISupplicantStaIface.hal",
         "ISupplicantStaNetwork.hal",
         "ISupplicantStaNetworkCallback.hal",

@@ -1,0 +1,61 @@
+/*
+ * Copyright 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi.supplicant@1.4;
+
+import @1.0::ISupplicantP2pIfaceCallback;
+import @1.0::MacAddress;
+import @1.0::WpsConfigMethods;
+import @1.0::P2pGroupCapabilityMask;
+
+/**
+ * Callback Interface exposed by the supplicant service
+ * for each P2P mode interface (ISupplicantP2pIface).
+ *
+ * Clients need to host an instance of this HIDL interface object and
+ * pass a reference of the object to the supplicant via the
+ * corresponding |ISupplicantP2pIface.registerCallback| method.
+ */
+interface ISupplicantP2pIfaceCallback extends @1.0::ISupplicantP2pIfaceCallback {
+    /**
+     * Used to indicate that a P2P Wi-Fi Display R2 device has been found. Refer to
+     * Wi-Fi Display Technical Specification Version 2.0.
+     *
+     * @param srcAddress MAC address of the device found. This must either
+     *        be the P2P device address for a peer which is not in a group,
+     *        or the P2P interface address for a peer which is a Group Owner.
+     * @param p2pDeviceAddress P2P device address.
+     * @param primaryDeviceType Type of device. Refer to section B.1 of Wifi P2P
+     *        Technical specification v1.2.
+     * @param deviceName Name of the device.
+     * @param configMethods Mask of WPS configuration methods supported by the
+     *        device.
+     * @param deviceCapabilities Refer to section 4.1.4 of Wifi P2P Technical
+     *        specification v1.2.
+     * @param groupCapabilites Refer to section 4.1.4 of Wifi P2P Technical
+     *        specification v1.2.
+     * @param wfdDeviceInfo WFD device info as described in section 5.1.2 of WFD
+     *        technical specification v1.0.0.
+     * @param wfdR2DeviceInfo WFD R2 device info as described in section 5.1.12 of WFD
+     *        technical specification v2.1.
+     */
+    oneway onR2DeviceFound(
+        MacAddress srcAddress, MacAddress p2pDeviceAddress,
+        uint8_t[8] primaryDeviceType, string deviceName,
+        bitfield<WpsConfigMethods> configMethods, uint8_t deviceCapabilities,
+        bitfield<P2pGroupCapabilityMask> groupCapabilities, uint8_t[6] wfdDeviceInfo,
+        uint8_t[2] wfdR2DeviceInfo);
+};
