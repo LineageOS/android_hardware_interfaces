@@ -31,7 +31,8 @@ namespace iface_util {
 class MockWifiIfaceUtil : public WifiIfaceUtil {
    public:
     MockWifiIfaceUtil(
-        const std::weak_ptr<wifi_system::InterfaceTool> iface_tool);
+        const std::weak_ptr<wifi_system::InterfaceTool> iface_tool,
+        const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal);
     MOCK_METHOD1(getFactoryMacAddress,
                  std::array<uint8_t, 6>(const std::string&));
     MOCK_METHOD2(setMacAddress,
