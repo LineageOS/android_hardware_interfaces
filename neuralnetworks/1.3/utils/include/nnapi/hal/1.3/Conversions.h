@@ -59,7 +59,6 @@ GeneralResult<OptionalDuration> convert(
 GeneralResult<ErrorStatus> convert(const hal::V1_3::ErrorStatus& errorStatus);
 
 GeneralResult<SharedHandle> convert(const hardware::hidl_handle& handle);
-GeneralResult<SharedMemory> convert(const hardware::hidl_memory& memory);
 GeneralResult<std::vector<BufferRole>> convert(
         const hardware::hidl_vec<hal::V1_3::BufferRole>& bufferRoles);
 
