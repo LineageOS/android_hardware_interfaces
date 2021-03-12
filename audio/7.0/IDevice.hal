@@ -245,6 +245,7 @@ interface IDevice {
     /**
      * Gets the HW synchronization source of the device. Calling this method is
      * equivalent to getting AUDIO_PARAMETER_HW_AV_SYNC on the legacy HAL.
+     *
      * Optional method
      *
      * @return retval operation completion status: OK or NOT_SUPPORTED.
@@ -255,6 +256,7 @@ interface IDevice {
     /**
      * Sets whether the screen is on. Calling this method is equivalent to
      * setting AUDIO_PARAMETER_KEY_SCREEN_STATE on the legacy HAL.
+     *
      * Optional method
      *
      * @param turnedOn whether the screen is turned on.

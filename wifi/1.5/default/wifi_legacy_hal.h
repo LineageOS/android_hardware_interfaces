@@ -340,9 +340,15 @@ struct LinkLayerRadioStats {
     std::vector<wifi_channel_stat> channel_stats;
 };
 
+struct WifiPeerInfo {
+    wifi_peer_info peer_info;
+    std::vector<wifi_rate_stat> rate_stats;
+};
+
 struct LinkLayerStats {
     wifi_iface_stat iface;
     std::vector<LinkLayerRadioStats> radios;
+    std::vector<WifiPeerInfo> peers;
 };
 #pragma GCC diagnostic pop
 
@@ -473,6 +479,7 @@ class WifiLegacyHal {
     // using a predefined timeout.
     virtual wifi_error stop(std::unique_lock<std::recursive_mutex>* lock,
                             const std::function<void()>& on_complete_callback);
+    virtual wifi_error waitForDriverReady();
     // Checks if legacy HAL has successfully started
     bool isStarted();
     // Wrappers for all the functions in the legacy HAL function table.

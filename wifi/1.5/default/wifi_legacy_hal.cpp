@@ -476,6 +476,10 @@ wifi_error WifiLegacyHal::stop(
 
 bool WifiLegacyHal::isStarted() { return is_started_; }
 
+wifi_error WifiLegacyHal::waitForDriverReady() {
+    return global_func_table_.wifi_wait_for_driver_ready();
+}
+
 std::pair<wifi_error, std::string> WifiLegacyHal::getDriverVersion(
     const std::string& iface_name) {
     std::array<char, kMaxVersionStringLength> buffer;
@@ -715,9 +719,29 @@ std::pair<wifi_error, LinkLayerStats> WifiLegacyHal::getLinkLayerStats(
                           wifi_iface_stat* iface_stats_ptr, int num_radios,
                           wifi_radio_stat* radio_stats_ptr) {
             wifi_radio_stat* l_radio_stats_ptr;
+            wifi_peer_info* l_peer_info_stats_ptr;
 
             if (iface_stats_ptr != nullptr) {
                 link_stats_ptr->iface = *iface_stats_ptr;
+                l_peer_info_stats_ptr = iface_stats_ptr->peer_info;
+                for (uint32_t i = 0; i < iface_stats_ptr->num_peers; i++) {
+                    WifiPeerInfo peer;
+                    peer.peer_info = *l_peer_info_stats_ptr;
+                    if (l_peer_info_stats_ptr->num_rate > 0) {
+                        /* Copy the rate stats */
+                        peer.rate_stats.assign(
+                            l_peer_info_stats_ptr->rate_stats,
+                            l_peer_info_stats_ptr->rate_stats +
+                                l_peer_info_stats_ptr->num_rate);
+                    }
+                    peer.peer_info.num_rate = 0;
+                    link_stats_ptr->peers.push_back(peer);
+                    l_peer_info_stats_ptr =
+                        (wifi_peer_info*)((u8*)l_peer_info_stats_ptr +
+                                          sizeof(wifi_peer_info) +
+                                          (sizeof(wifi_rate_stat) *
+                                           l_peer_info_stats_ptr->num_rate));
+                }
                 link_stats_ptr->iface.num_peers = 0;
             } else {
                 LOG(ERROR) << "Invalid iface stats in link layer stats";

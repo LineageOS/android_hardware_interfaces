@@ -26,6 +26,7 @@ import @1.2::NanConfigRequestSupplemental;
 import @1.3::StaLinkLayerRadioStats;
 import @1.0::WifiChannelInMhz;
 import @1.0::WifiChannelWidthInMhz;
+import @1.4::WifiRateInfo;
 
 /**
  * Wifi bands defined in 80211 spec.
@@ -162,6 +163,54 @@ struct StaLinkLayerIfaceContentionTimeStats {
 };
 
 /**
+ * Per rate statistics.  The rate is characterized by the combination of preamble, number of spatial
+ * streams, transmission bandwidth, and modulation and coding scheme (MCS).
+ */
+struct StaRateStat{
+    /**
+     * Wifi rate information: preamble, number of spatial streams, bandwidth, MCS, etc.
+     */
+    WifiRateInfo rateInfo;
+    /**
+     * Number of successfully transmitted data packets (ACK received)
+     */
+    uint32_t txMpdu;
+    /**
+     * Number of received data packets
+     */
+    uint32_t rxMpdu;
+    /**
+     * Number of data packet losses (no ACK)
+     */
+    uint32_t mpduLost;
+    /**
+     * Number of data packet retries
+     */
+    uint32_t retries;
+};
+
+/**
+ * Per peer statistics.  The types of peer include the Access Point (AP), the Tunneled Direct Link
+ * Setup (TDLS), the Group Owner (GO), the Neighbor Awareness Networking (NAN), etc.
+ */
+struct StaPeerInfo {
+    /**
+     * Station count: The total number of stations currently associated with the peer.
+     */
+    uint16_t staCount;
+    /**
+     * Channel utilization: The percentage of time (normalized to 255, i.e., x% corresponds to
+     * (int) x * 255 / 100) that the medium is sensed as busy measured by either physical or
+     * virtual carrier sense (CS) mechanism.
+     */
+    uint16_t chanUtil;
+    /**
+     * Per rate statistics
+     */
+    vec<StaRateStat> rateStats;
+};
+
+/**
  * Iface statistics for the current connection.
  */
 struct StaLinkLayerIfaceStats {
@@ -197,6 +246,11 @@ struct StaLinkLayerIfaceStats {
      * WME Voice (VO) Access Category (AC) contention time statistics.
      */
     StaLinkLayerIfaceContentionTimeStats wmeVoContentionTimeStats;
+
+    /**
+     * Per peer statistics.
+     */
+    vec<StaPeerInfo> peers;
 };
 
 /**
