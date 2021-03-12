@@ -36,5 +36,4 @@ package android.hardware.biometrics.face;
 interface IFace {
   android.hardware.biometrics.face.SensorProps[] getSensorProps();
   android.hardware.biometrics.face.ISession createSession(in int sensorId, in int userId, in android.hardware.biometrics.face.ISessionCallback cb);
-  void reset();
 }

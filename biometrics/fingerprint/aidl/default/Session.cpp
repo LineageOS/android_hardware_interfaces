@@ -46,7 +46,7 @@ void Session::scheduleStateOrCrash(SessionState state) {
 
 void Session::enterStateOrCrash(int cookie, SessionState state) {
     CHECK(mScheduledState == state);
-    mCurrentState = mScheduledState;
+    mCurrentState = state;
     mScheduledState = SessionState::IDLING;
     mCb->onStateChanged(cookie, mCurrentState);
 }

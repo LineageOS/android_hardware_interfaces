@@ -37,12 +37,10 @@ Wifi::Wifi(
     const std::shared_ptr<wifi_system::InterfaceTool> iface_tool,
     const std::shared_ptr<legacy_hal::WifiLegacyHalFactory> legacy_hal_factory,
     const std::shared_ptr<mode_controller::WifiModeController> mode_controller,
-    const std::shared_ptr<iface_util::WifiIfaceUtil> iface_util,
     const std::shared_ptr<feature_flags::WifiFeatureFlags> feature_flags)
     : iface_tool_(iface_tool),
       legacy_hal_factory_(legacy_hal_factory),
       mode_controller_(mode_controller),
-      iface_util_(iface_util),
       feature_flags_(feature_flags),
       run_state_(RunState::STOPPED) {}
 
@@ -130,7 +128,8 @@ WifiStatus Wifi::startInternal() {
         for (auto& hal : legacy_hals_) {
             chips_.push_back(new WifiChip(
                 chipId, chipId == kPrimaryChipId, hal, mode_controller_,
-                iface_util_, feature_flags_, on_subsystem_restart_callback));
+                std::make_shared<iface_util::WifiIfaceUtil>(iface_tool_, hal),
+                feature_flags_, on_subsystem_restart_callback));
             chipId++;
         }
         run_state_ = RunState::STARTED;

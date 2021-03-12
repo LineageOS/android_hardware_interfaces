@@ -122,7 +122,7 @@ class WifiNanIfaceTest : public Test {
         new NiceMock<legacy_hal::MockWifiLegacyHal>(iface_tool_,
                                                     fake_func_table_, true)};
     std::shared_ptr<NiceMock<iface_util::MockWifiIfaceUtil>> iface_util_{
-        new NiceMock<iface_util::MockWifiIfaceUtil>(iface_tool_)};
+        new NiceMock<iface_util::MockWifiIfaceUtil>(iface_tool_, legacy_hal_)};
 };
 
 TEST_F(WifiNanIfaceTest, IfacEventHandlers_OnStateToggleOffOn) {
