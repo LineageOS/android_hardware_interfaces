@@ -98,7 +98,7 @@ class ComposerClientImpl : public Interface {
                      // display change and thus the framework may want to reallocate buffers. We
                      // need to free all cached handles, since they are holding a strong reference
                      // to the underlying buffers.
-                     cleanDisplayResources(display);
+                     cleanDisplayResources(display, mResources, mHal);
                      mResources->removeDisplay(display);
                  }
                  mResources->addPhysicalDisplay(display);
@@ -125,56 +125,6 @@ class ComposerClientImpl : public Interface {
          Hal* const mHal;
          const sp<IComposerCallback> mCallback;
          ComposerResources* const mResources;
-
-         void cleanDisplayResources(Display display) {
-             size_t cacheSize;
-             Error err = mResources->getDisplayClientTargetCacheSize(display, &cacheSize);
-             if (err == Error::NONE) {
-                 for (int slot = 0; slot < cacheSize; slot++) {
-                     ComposerResources::ReplacedHandle replacedBuffer(/*isBuffer*/ true);
-                     // Replace the buffer slots with NULLs. Keep the old handle until it is
-                     // replaced in ComposerHal, otherwise we risk leaving a dangling pointer.
-                     const native_handle_t* clientTarget = nullptr;
-                     err = mResources->getDisplayClientTarget(display, slot, /*useCache*/ true,
-                                                              /*rawHandle*/ nullptr, &clientTarget,
-                                                              &replacedBuffer);
-                     if (err != Error::NONE) {
-                         continue;
-                     }
-                     const std::vector<hwc_rect_t> damage;
-                     err = mHal->setClientTarget(display, clientTarget, /*fence*/ -1, 0, damage);
-                     ALOGE_IF(err != Error::NONE,
-                              "Can't clean slot %d of the client target buffer"
-                              "cache for display %" PRIu64,
-                              slot, display);
-                 }
-             } else {
-                 ALOGE("Can't clean client target cache for display %" PRIu64, display);
-             }
-
-             err = mResources->getDisplayOutputBufferCacheSize(display, &cacheSize);
-             if (err == Error::NONE) {
-                 for (int slot = 0; slot < cacheSize; slot++) {
-                     // Replace the buffer slots with NULLs. Keep the old handle until it is
-                     // replaced in ComposerHal, otherwise we risk leaving a dangling pointer.
-                     ComposerResources::ReplacedHandle replacedBuffer(/*isBuffer*/ true);
-                     const native_handle_t* outputBuffer = nullptr;
-                     err = mResources->getDisplayOutputBuffer(display, slot, /*useCache*/ true,
-                                                              /*rawHandle*/ nullptr, &outputBuffer,
-                                                              &replacedBuffer);
-                     if (err != Error::NONE) {
-                         continue;
-                     }
-                     err = mHal->setOutputBuffer(display, outputBuffer, /*fence*/ -1);
-                     ALOGE_IF(err != Error::NONE,
-                              "Can't clean slot %d of the output buffer cache"
-                              "for display %" PRIu64,
-                              slot, display);
-                 }
-             } else {
-                 ALOGE("Can't clean output buffer cache for display %" PRIu64, display);
-             }
-         }
     };
 
     Return<void> registerCallback(const sp<IComposerCallback>& callback) override {
@@ -378,6 +328,57 @@ class ComposerClientImpl : public Interface {
 
     virtual std::unique_ptr<ComposerCommandEngine> createCommandEngine() {
         return std::make_unique<ComposerCommandEngine>(mHal, mResources.get());
+    }
+
+    static void cleanDisplayResources(Display display, ComposerResources* const resources,
+                                      Hal* const hal) {
+        size_t cacheSize;
+        Error err = resources->getDisplayClientTargetCacheSize(display, &cacheSize);
+        if (err == Error::NONE) {
+            for (int slot = 0; slot < cacheSize; slot++) {
+                ComposerResources::ReplacedHandle replacedBuffer(/*isBuffer*/ true);
+                // Replace the buffer slots with NULLs. Keep the old handle until it is
+                // replaced in ComposerHal, otherwise we risk leaving a dangling pointer.
+                const native_handle_t* clientTarget = nullptr;
+                err = resources->getDisplayClientTarget(display, slot, /*useCache*/ true,
+                                                        /*rawHandle*/ nullptr, &clientTarget,
+                                                        &replacedBuffer);
+                if (err != Error::NONE) {
+                    continue;
+                }
+                const std::vector<hwc_rect_t> damage;
+                err = hal->setClientTarget(display, clientTarget, /*fence*/ -1, 0, damage);
+                ALOGE_IF(err != Error::NONE,
+                         "Can't clean slot %d of the client target buffer"
+                         "cache for display %" PRIu64,
+                         slot, display);
+            }
+        } else {
+            ALOGE("Can't clean client target cache for display %" PRIu64, display);
+        }
+
+        err = resources->getDisplayOutputBufferCacheSize(display, &cacheSize);
+        if (err == Error::NONE) {
+            for (int slot = 0; slot < cacheSize; slot++) {
+                // Replace the buffer slots with NULLs. Keep the old handle until it is
+                // replaced in ComposerHal, otherwise we risk leaving a dangling pointer.
+                ComposerResources::ReplacedHandle replacedBuffer(/*isBuffer*/ true);
+                const native_handle_t* outputBuffer = nullptr;
+                err = resources->getDisplayOutputBuffer(display, slot, /*useCache*/ true,
+                                                        /*rawHandle*/ nullptr, &outputBuffer,
+                                                        &replacedBuffer);
+                if (err != Error::NONE) {
+                    continue;
+                }
+                err = hal->setOutputBuffer(display, outputBuffer, /*fence*/ -1);
+                ALOGE_IF(err != Error::NONE,
+                         "Can't clean slot %d of the output buffer cache"
+                         "for display %" PRIu64,
+                         slot, display);
+            }
+        } else {
+            ALOGE("Can't clean output buffer cache for display %" PRIu64, display);
+        }
     }
 
     void destroyResources() {
