@@ -24,6 +24,7 @@ interface IStreamIn extends IStream {
      * Returns the source descriptor of the input stream. Calling this method is
      * equivalent to getting AUDIO_PARAMETER_STREAM_INPUT_SOURCE on the legacy
      * HAL.
+     *
      * Optional method
      *
      * @return retval operation completion status.
@@ -33,6 +34,7 @@ interface IStreamIn extends IStream {
 
     /**
      * Set the input gain for the audio driver.
+     *
      * Optional method
      *
      * @param gain 1.0f is unity, 0.0f is zero.
@@ -42,6 +44,7 @@ interface IStreamIn extends IStream {
 
     /**
      * Called when the metadata of the stream's sink has been changed.
+     *
      * Optional method
      *
      * @param sinkMetadata Description of the audio that is suggested by the clients.
@@ -148,7 +151,8 @@ interface IStreamIn extends IStream {
 
     /**
      * Return a recent count of the number of audio frames received and the
-     * clock time associated with that frame count.
+     * clock time associated with that frame count. The count must not reset to
+     * zero when a PCM input enters standby.
      *
      * @return retval INVALID_STATE if the device is not ready/available,
      *                NOT_SUPPORTED if the command is not supported,

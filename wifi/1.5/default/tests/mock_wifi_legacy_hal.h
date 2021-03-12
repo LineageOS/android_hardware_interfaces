@@ -62,6 +62,7 @@ class MockWifiLegacyHal : public WifiLegacyHal {
                  wifi_error(const std::string& ifname,
                             wifi_interface_type iftype));
     MOCK_METHOD1(deleteVirtualInterface, wifi_error(const std::string& ifname));
+    MOCK_METHOD0(waitForDriverReady, wifi_error());
 };
 }  // namespace legacy_hal
 }  // namespace implementation

@@ -813,6 +813,11 @@ struct SliceInfo {
      * see: 3GPP TS 24.501 Section 9.11.2.8.
      */
     int32_t mappedHplmnSD;
+
+    /**
+     * Field to indicate the current status of the slice.
+     */
+    SliceStatus status;
 };
 
 /**
@@ -986,9 +991,9 @@ struct SlicingConfig {
      */
     vec<UrspRule> urspRules;
     /**
-     * Struct containing all NSSAIs (list of slice info).
+     * List of all slices.
      */
-    Nssais nssais;
+    vec<SliceInfo> sliceInfo;
 };
 
 /**
@@ -1010,7 +1015,6 @@ struct UrspRule {
      */
     vec<RouteSelectionDescriptor> routeSelectionDescriptor;
 };
-
 
 /**
  * This struct represents a single route selection descriptor as defined in
@@ -1067,47 +1071,13 @@ safe_union OptionalSscMode {
     SscMode value;
 };
 
-/**
- * This struct contains all NSSAIs (lists of slices).
- */
-struct Nssais {
-    /**
-     * These are all the slices configured by the network. This includes allowed
-     * and rejected slices, as well as slices that are neither allowed nor rejected
-     * yet. Empty vector indicates that no slices are configured, and in that case
-     * allowed and rejected vectors must be empty as well.
-     */
-    vec<SliceInfo> configured;
-    /**
-     * These are all the slices that the UE is allowed to use. All these slices
-     * must be configured as well. Empty vector indicates that no slices are
-     * allowed yet.
-     */
-    vec<SliceInfo> allowed;
-    /**
-     * These are all the slices that the UE is not allowed to use. All these slices
-     * must be configured as well. Empty vector indicates that no slices are
-     * rejected yet.
-     */
-    vec<RejectedSliceInfo> rejected;
-    /**
-     * Default configured NSSAI
-     */
-    vec<SliceInfo> defaultConfigured;
-};
-
-/**
- * This struct represents a network slice rejected by the network. It contains a
- * rejectionCause corresponding to a rejected network slice.
- */
-struct RejectedSliceInfo {
-    SliceInfo sliceInfo;
-    SliceRejectionCause rejectionCause;
-};
-
-enum SliceRejectionCause : int32_t {
-    NOT_AVAILABLE_IN_PLMN,
-    NOT_AVAILABLE_IN_REG_AREA,
+enum SliceStatus : int32_t {
+    UNKNOWN,
+    CONFIGURED, // Configured but not allowed or rejected yet
+    ALLOWED,    // Allowed to be used
+    REJECTED_NOT_AVAILABLE_IN_PLMN,     // Rejected because not available in PLMN
+    REJECTED_NOT_AVAILABLE_IN_REG_AREA, // Rejected because not available in reg area
+    DEFAULT_CONFIGURED,     // Considered valid when configured/allowed slices are not available
 };
 
 /**

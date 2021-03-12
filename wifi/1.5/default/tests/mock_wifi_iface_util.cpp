@@ -29,8 +29,9 @@ namespace implementation {
 namespace iface_util {
 
 MockWifiIfaceUtil::MockWifiIfaceUtil(
-    const std::weak_ptr<wifi_system::InterfaceTool> iface_tool)
-    : WifiIfaceUtil(iface_tool) {}
+    const std::weak_ptr<wifi_system::InterfaceTool> iface_tool,
+    const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal)
+    : WifiIfaceUtil(iface_tool, legacy_hal) {}
 }  // namespace iface_util
 }  // namespace implementation
 }  // namespace V1_5
