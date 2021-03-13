@@ -252,7 +252,11 @@ AssertionResult FilterTests::configIpFilterCid(uint32_t ipCid, uint64_t filterId
     return AssertionResult(status == Result::SUCCESS);
 }
 
-AssertionResult FilterTests::getFilterMQDescriptor(uint64_t filterId) {
+AssertionResult FilterTests::getFilterMQDescriptor(uint64_t filterId, bool getMqDesc) {
+    if (!getMqDesc) {
+        ALOGE("[vts] Filter does not need FMQ.");
+        return success();
+    }
     Result status;
     EXPECT_TRUE(mFilters[filterId]) << "Test with getNewlyOpenedFilterId first.";
     EXPECT_TRUE(mFilterCallbacks[filterId]) << "Test with getNewlyOpenedFilterId first.";
