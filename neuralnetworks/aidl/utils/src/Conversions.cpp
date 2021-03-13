@@ -254,16 +254,22 @@ GeneralResult<DataLocation> unvalidatedConvert(const aidl_hal::DataLocation& loc
     VERIFY_NON_NEGATIVE(location.poolIndex) << "DataLocation: pool index must not be negative";
     VERIFY_NON_NEGATIVE(location.offset) << "DataLocation: offset must not be negative";
     VERIFY_NON_NEGATIVE(location.length) << "DataLocation: length must not be negative";
+    VERIFY_NON_NEGATIVE(location.padding) << "DataLocation: padding must not be negative";
     if (location.offset > std::numeric_limits<uint32_t>::max()) {
         return NN_ERROR() << "DataLocation: offset must be <= std::numeric_limits<uint32_t>::max()";
     }
     if (location.length > std::numeric_limits<uint32_t>::max()) {
         return NN_ERROR() << "DataLocation: length must be <= std::numeric_limits<uint32_t>::max()";
     }
+    if (location.padding > std::numeric_limits<uint32_t>::max()) {
+        return NN_ERROR()
+               << "DataLocation: padding must be <= std::numeric_limits<uint32_t>::max()";
+    }
     return DataLocation{
             .poolIndex = static_cast<uint32_t>(location.poolIndex),
             .offset = static_cast<uint32_t>(location.offset),
             .length = static_cast<uint32_t>(location.length),
+            .padding = static_cast<uint32_t>(location.padding),
     };
 }
 
