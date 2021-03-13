@@ -42,6 +42,7 @@ cc_library_static {
         "android.hardware.neuralnetworks@1.1",
         "android.hardware.neuralnetworks@1.2",
         "android.hardware.neuralnetworks@1.3",
+        "libfmq",
     ],
     export_static_lib_headers: [
         "neuralnetworks_utils_hal_common",

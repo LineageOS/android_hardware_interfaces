@@ -17,6 +17,7 @@
 package android.hardware.wifi.supplicant@1.4;
 
 import @1.2::ISupplicantP2pIface;
+import ISupplicantP2pIfaceCallback;
 
 /**
  * Interface exposed by the supplicant for each P2P mode network
@@ -48,4 +49,36 @@ interface ISupplicantP2pIface extends @1.2::ISupplicantP2pIface {
      * @return enabled true if set, false otherwise.
      */
     getEdmg() generates (SupplicantStatus status, bool enabled);
+
+    /**
+     * Register for callbacks from this interface.
+     *
+     * These callbacks are invoked for events that are specific to this interface.
+     * Registration of multiple callback objects is supported. These objects must
+     * be automatically deleted when the corresponding client process is dead or
+     * if this interface is removed.
+     *
+     * @param callback An instance of the |ISupplicantP2pIfaceCallback| HIDL
+     *        interface object.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     */
+    registerCallback_1_4(ISupplicantP2pIfaceCallback callback)
+        generates (SupplicantStatus status);
+
+    /*
+     * Set Wifi Display R2 device info.
+     *
+     * @param info WFD R2 device info as described in section 5.1.12 of WFD technical
+     *        specification v2.1.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     */
+    setWfdR2DeviceInfo(uint8_t[4] info) generates (SupplicantStatus status);
 };

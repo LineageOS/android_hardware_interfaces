@@ -38,7 +38,7 @@ aidl_interface {
             },
         },
         cpp: {
-            enabled: false,
+            enabled: true,
         },
     },
 }
