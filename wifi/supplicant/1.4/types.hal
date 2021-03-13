@@ -107,6 +107,10 @@ enum WpaDriverCapabilitiesMask : @1.3::WpaDriverCapabilitiesMask {
      * WPA3 SAE Public-Key.
      */
     SAE_PK = 1 << 2,
+    /**
+     * Wi-Fi Display R2
+     */
+    WFD_R2 = 1 << 3,
 };
 
 /**
