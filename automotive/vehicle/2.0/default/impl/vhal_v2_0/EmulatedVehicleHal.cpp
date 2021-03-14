@@ -276,17 +276,6 @@ static bool isDiagnosticProperty(VehiclePropConfig propConfig) {
     return false;
 }
 
-// determine if it's running inside Android Emulator
-static bool isInEmulator() {
-    char propValue[PROP_VALUE_MAX];
-    bool isEmulator = (__system_property_get("ro.kernel.qemu", propValue) != 0);
-    if (!isEmulator) {
-        isEmulator = (__system_property_get("ro.hardware", propValue) != 0) &&
-                     (!strcmp(propValue, "ranchu") || !strcmp(propValue, "goldfish"));
-    }
-    return isEmulator;
-}
-
 // Parse supported properties list and generate vector of property values to hold current values.
 void EmulatedVehicleHal::onCreate() {
     static constexpr bool shouldUpdateStatus = true;
