@@ -82,7 +82,7 @@ class FrontendCallback : public IFrontendCallback {
     void scanTest(sp<IFrontend>& frontend, FrontendConfig config, FrontendScanType type);
 
     // Helper methods
-    uint32_t getTargetFrequency(FrontendSettings settings, FrontendType type);
+    uint32_t getTargetFrequency(FrontendSettings settings);
     void resetBlindScanStartingFrequency(FrontendConfig& config, uint32_t resetingFreq);
 
   private:
