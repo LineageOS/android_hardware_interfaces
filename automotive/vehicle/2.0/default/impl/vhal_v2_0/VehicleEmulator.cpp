@@ -44,7 +44,7 @@ VehicleEmulator::VehicleEmulator(EmulatedVehicleHalIface* hal) : mHal{hal} {
     mSocketComm = std::make_unique<SocketComm>(this);
     mSocketComm->start();
 
-    if (android::base::GetBoolProperty("ro.kernel.qemu", false)) {
+    if (isInEmulator()) {
         ALOGI("Starting PipeComm");
         mPipeComm = std::make_unique<PipeComm>(this);
         mPipeComm->start();
@@ -224,6 +224,10 @@ void VehicleEmulator::populateProtoVehicleConfig(vhal_proto::VehiclePropConfig* 
 void VehicleEmulator::populateProtoVehiclePropValue(vhal_proto::VehiclePropValue* protoVal,
                                                     const VehiclePropValue* val) {
     return proto_msg_converter::toProto(protoVal, *val);
+}
+
+bool isInEmulator() {
+    return android::base::GetBoolProperty("ro.boot.qemu", false);
 }
 
 }  // impl
