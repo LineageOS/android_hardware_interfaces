@@ -95,6 +95,9 @@ private:
     std::unique_ptr<PipeComm> mPipeComm;
 };
 
+// determine if it's running inside Android Emulator
+bool isInEmulator();
+
 }  // impl
 
 }  // namespace V2_0
