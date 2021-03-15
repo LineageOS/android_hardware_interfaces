@@ -55,6 +55,7 @@ void DvrCallback::playbackThreadLoop() {
     uint8_t* buffer;
     ALOGW("[vts] playback thread loop start %s", mInputDataFile.c_str());
     if (fd < 0) {
+        EXPECT_TRUE(fd >= 0) << "Failed to open: " + mInputDataFile;
         mPlaybackThreadRunning = false;
         ALOGW("[vts] Error %s", strerror(errno));
     }
@@ -178,7 +179,7 @@ void DvrCallback::recordThreadLoop(RecordSettings* /*recordSettings*/, bool* kee
             // Our current implementation filter the data and write it into the filter FMQ
             // immediately after the DATA_READY from the VTS/framework
             if (!readRecordFMQ()) {
-                ALOGD("[vts] record data failed to be filtered. Ending thread");
+                ALOGW("[vts] record data failed to be filtered. Ending thread");
                 mRecordThreadRunning = false;
                 break;
             }

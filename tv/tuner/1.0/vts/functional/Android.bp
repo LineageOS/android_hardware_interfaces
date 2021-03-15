@@ -41,6 +41,10 @@ cc_test {
     shared_libs: [
         "libbinder",
     ],
+    data: [
+        ":tuner_frontend_input_ts",
+        ":tuner_frontend_input_es",
+    ],
     test_suites: [
         "general-tests",
         "vts",

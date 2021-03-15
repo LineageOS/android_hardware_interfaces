@@ -157,7 +157,7 @@ class FilterTests {
     AssertionResult getTimeStamp();
     AssertionResult getNewlyOpenedFilterId(uint32_t& filterId);
     AssertionResult configFilter(DemuxFilterSettings setting, uint32_t filterId);
-    AssertionResult getFilterMQDescriptor(uint32_t filterId);
+    AssertionResult getFilterMQDescriptor(uint32_t filterId, bool getMqDesc);
     AssertionResult setFilterDataSource(uint32_t sourceFilterId, uint32_t sinkFilterId);
     AssertionResult setFilterDataSourceToDemux(uint32_t filterId);
     AssertionResult startFilter(uint32_t filterId);

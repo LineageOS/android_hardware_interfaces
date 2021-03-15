@@ -55,6 +55,7 @@ using android::hardware::tv::tuner::V1_0::RecordSettings;
 
 using namespace std;
 
+const uint32_t FMQ_SIZE_512K = 0x80000;
 const uint32_t FMQ_SIZE_1M = 0x100000;
 const uint32_t FMQ_SIZE_4M = 0x400000;
 const uint32_t FMQ_SIZE_16M = 0x1000000;
@@ -134,16 +135,17 @@ struct FilterConfig {
     uint32_t bufferSize;
     DemuxFilterType type;
     DemuxFilterSettings settings;
+    bool getMqDesc;
 
     bool operator<(const FilterConfig& /*c*/) const { return false; }
 };
 
 struct TimeFilterConfig {
-    bool supportTimeFilter;
     uint64_t timeStamp;
 };
 
 struct FrontendConfig {
+    bool enable;
     bool isSoftwareFe;
     FrontendType type;
     FrontendSettings settings;
@@ -152,7 +154,6 @@ struct FrontendConfig {
 };
 
 struct LnbConfig {
-    bool usingLnb;
     string name;
     LnbVoltage voltage;
     LnbTone tone;
@@ -191,6 +192,8 @@ static DemuxFilterType filterLinkageTypes[LINKAGE_DIR][FILTER_MAIN_TYPE_BIT_COUN
 static DvrConfig dvrArray[DVR_MAX];
 static DescramblerConfig descramblerArray[DESC_MAX];
 static vector<string> goldenOutputFiles;
+static int defaultFrontend = DVBT;
+static int defaultScanFrontend = SCAN_DVBT;
 
 /** Configuration array for the frontend tune test */
 inline void initFrontendConfig() {
@@ -216,7 +219,9 @@ inline void initFrontendConfig() {
     frontendArray[DVBT].tuneStatusTypes = types;
     frontendArray[DVBT].expectTuneStatuses = statuses;
     frontendArray[DVBT].isSoftwareFe = true;
+    frontendArray[DVBT].enable = true;
     frontendArray[DVBS].type = FrontendType::DVBS;
+    frontendArray[DVBS].enable = false;
     frontendArray[DVBS].isSoftwareFe = true;
 };
 
@@ -239,11 +244,9 @@ inline void initFrontendScanConfig() {
 
 /** Configuration array for the Lnb test */
 inline void initLnbConfig() {
-    lnbArray[LNB0].usingLnb = true;
     lnbArray[LNB0].voltage = LnbVoltage::VOLTAGE_12V;
     lnbArray[LNB0].tone = LnbTone::NONE;
     lnbArray[LNB0].position = LnbPosition::UNDEFINED;
-    lnbArray[LNB_EXTERNAL].usingLnb = true;
     lnbArray[LNB_EXTERNAL].name = "default_lnb_external";
     lnbArray[LNB_EXTERNAL].voltage = LnbVoltage::VOLTAGE_5V;
     lnbArray[LNB_EXTERNAL].tone = LnbTone::NONE;
@@ -283,6 +286,7 @@ inline void initFilterConfig() {
             .isRaw = false,
             .streamId = 0xbd,
     });
+    filterArray[TS_PES0].getMqDesc = true;
     // TS PCR filter setting
     filterArray[TS_PCR0].type.mainType = DemuxFilterMainType::TS;
     filterArray[TS_PCR0].type.subType.tsFilterType(DemuxTsFilterType::PCR);
@@ -303,6 +307,7 @@ inline void initFilterConfig() {
     filterArray[TS_SECTION0].settings.ts().filterSettings.section({
             .isRaw = false,
     });
+    filterArray[TS_SECTION0].getMqDesc = true;
     // TS RECORD filter setting
     filterArray[TS_RECORD0].type.mainType = DemuxFilterMainType::TS;
     filterArray[TS_RECORD0].type.subType.tsFilterType(DemuxTsFilterType::RECORD);
@@ -335,7 +340,6 @@ inline void initFilterConfig() {
 
 /** Configuration array for the timer filter test */
 inline void initTimeFilterConfig() {
-    timeFilterArray[TIMER0].supportTimeFilter = true;
     timeFilterArray[TIMER0].timeStamp = 1;
 }
 
