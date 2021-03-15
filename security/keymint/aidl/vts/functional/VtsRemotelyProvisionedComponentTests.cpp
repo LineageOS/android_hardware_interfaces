@@ -128,6 +128,30 @@ void check_maced_pubkey(const MacedPublicKey& macedPubKey, bool testMode,
     }
 }
 
+ErrMsgOr<MacedPublicKey> corrupt_maced_key(const MacedPublicKey& macedPubKey) {
+    auto [coseMac0, _, mac0ParseErr] = cppbor::parse(macedPubKey.macedKey);
+    if (!coseMac0 || coseMac0->asArray()->size() != kCoseMac0EntryCount) {
+        return "COSE Mac0 parse failed";
+    }
+    auto protParams = coseMac0->asArray()->get(kCoseMac0ProtectedParams)->asBstr();
+    auto unprotParams = coseMac0->asArray()->get(kCoseMac0UnprotectedParams)->asMap();
+    auto payload = coseMac0->asArray()->get(kCoseMac0Payload)->asBstr();
+    auto tag = coseMac0->asArray()->get(kCoseMac0Tag)->asBstr();
+    if (!protParams || !unprotParams || !payload || !tag) {
+        return "Invalid COSE_Sign1: missing content";
+    }
+    auto corruptMac0 = cppbor::Array();
+    corruptMac0.add(protParams->clone());
+    corruptMac0.add(unprotParams->clone());
+    corruptMac0.add(payload->clone());
+    vector<uint8_t> tagData = tag->value();
+    tagData[0] ^= 0x08;
+    tagData[tagData.size() - 1] ^= 0x80;
+    corruptMac0.add(cppbor::Bstr(tagData));
+
+    return MacedPublicKey{corruptMac0.encode()};
+}
+
 ErrMsgOr<cppbor::Array> corrupt_sig(const cppbor::Array* coseSign1) {
     if (coseSign1->size() != kCoseSign1EntryCount) {
         return "Invalid COSE_Sign1, wrong entry count";
@@ -414,6 +438,46 @@ TEST_P(CertificateRequestTest, NonEmptyRequest_prodMode) {
         EXPECT_EQ(status.getServiceSpecificError(),
                   BnRemotelyProvisionedComponent::STATUS_INVALID_EEK);
     }
+}
+
+/**
+ * Generate a non-empty certificate request in test mode, but with the MAC corrupted on the keypair.
+ */
+TEST_P(CertificateRequestTest, NonEmptyRequestCorruptMac_testMode) {
+    bool testMode = true;
+    generateKeys(testMode, 1 /* numKeys */);
+    MacedPublicKey keyWithCorruptMac = corrupt_maced_key(keysToSign_[0]).moveValue();
+
+    bytevec keysToSignMac;
+    DeviceInfo deviceInfo;
+    ProtectedData protectedData;
+    auto status = provisionable_->generateCertificateRequest(
+            testMode, {keyWithCorruptMac}, eekChain_.chain, challenge_, &deviceInfo, &protectedData,
+            &keysToSignMac);
+    ASSERT_FALSE(status.isOk()) << status.getMessage();
+    EXPECT_EQ(status.getServiceSpecificError(), BnRemotelyProvisionedComponent::STATUS_INVALID_MAC);
+}
+
+/**
+ * Generate a non-empty certificate request in prod mode, but with the MAC corrupted on the keypair.
+ */
+TEST_P(CertificateRequestTest, NonEmptyRequestCorruptMac_prodMode) {
+    bool testMode = true;
+    generateKeys(testMode, 1 /* numKeys */);
+    MacedPublicKey keyWithCorruptMac = corrupt_maced_key(keysToSign_[0]).moveValue();
+
+    bytevec keysToSignMac;
+    DeviceInfo deviceInfo;
+    ProtectedData protectedData;
+    auto status = provisionable_->generateCertificateRequest(
+            testMode, {keyWithCorruptMac}, eekChain_.chain, challenge_, &deviceInfo, &protectedData,
+            &keysToSignMac);
+    ASSERT_FALSE(status.isOk()) << status.getMessage();
+    auto rc = status.getServiceSpecificError();
+
+    // TODO(drysdale): drop the INVALID_EEK potential error code when a real GEEK is available.
+    EXPECT_TRUE(rc == BnRemotelyProvisionedComponent::STATUS_INVALID_EEK ||
+                rc == BnRemotelyProvisionedComponent::STATUS_INVALID_MAC);
 }
 
 /**
