@@ -230,6 +230,7 @@ interface IRadioResponse extends @1.5::IRadioResponse {
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
+     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     oneway setNrDualConnectivityStateResponse(RadioResponseInfo info);
 
@@ -242,6 +243,7 @@ interface IRadioResponse extends @1.5::IRadioResponse {
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
+     *   RadioError:REQUEST_NOT_SUPPORTED
      */
     oneway isNrDualConnectivityEnabledResponse(RadioResponseInfo info, bool isEnabled);
 
