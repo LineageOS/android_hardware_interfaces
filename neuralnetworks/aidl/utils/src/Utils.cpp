@@ -16,12 +16,11 @@
 
 #include "Utils.h"
 
+#include <android/binder_status.h>
 #include <nnapi/Result.h>
 
 namespace aidl::android::hardware::neuralnetworks::utils {
 namespace {
-
-using ::android::nn::GeneralResult;
 
 template <typename Type>
 nn::GeneralResult<std::vector<Type>> cloneVec(const std::vector<Type>& arguments) {
@@ -34,13 +33,13 @@ nn::GeneralResult<std::vector<Type>> cloneVec(const std::vector<Type>& arguments
 }
 
 template <typename Type>
-GeneralResult<std::vector<Type>> clone(const std::vector<Type>& arguments) {
+nn::GeneralResult<std::vector<Type>> clone(const std::vector<Type>& arguments) {
     return cloneVec(arguments);
 }
 
 }  // namespace
 
-GeneralResult<Memory> clone(const Memory& memory) {
+nn::GeneralResult<Memory> clone(const Memory& memory) {
     common::NativeHandle nativeHandle;
     nativeHandle.ints = memory.handle.ints;
     nativeHandle.fds.reserve(memory.handle.fds.size());
@@ -58,7 +57,7 @@ GeneralResult<Memory> clone(const Memory& memory) {
     };
 }
 
-GeneralResult<RequestMemoryPool> clone(const RequestMemoryPool& requestPool) {
+nn::GeneralResult<RequestMemoryPool> clone(const RequestMemoryPool& requestPool) {
     using Tag = RequestMemoryPool::Tag;
     switch (requestPool.getTag()) {
         case Tag::pool:
@@ -70,10 +69,10 @@ GeneralResult<RequestMemoryPool> clone(const RequestMemoryPool& requestPool) {
     // compiler.
     return (NN_ERROR() << "Unrecognized request pool tag: " << requestPool.getTag())
             .
-            operator GeneralResult<RequestMemoryPool>();
+            operator nn::GeneralResult<RequestMemoryPool>();
 }
 
-GeneralResult<Request> clone(const Request& request) {
+nn::GeneralResult<Request> clone(const Request& request) {
     return Request{
             .inputs = request.inputs,
             .outputs = request.outputs,
@@ -81,7 +80,7 @@ GeneralResult<Request> clone(const Request& request) {
     };
 }
 
-GeneralResult<Model> clone(const Model& model) {
+nn::GeneralResult<Model> clone(const Model& model) {
     return Model{
             .main = model.main,
             .referenced = model.referenced,
@@ -90,6 +89,22 @@ GeneralResult<Model> clone(const Model& model) {
             .relaxComputationFloat32toFloat16 = model.relaxComputationFloat32toFloat16,
             .extensionNameToPrefix = model.extensionNameToPrefix,
     };
+}
+
+nn::GeneralResult<void> handleTransportError(const ndk::ScopedAStatus& ret) {
+    if (ret.getStatus() == STATUS_DEAD_OBJECT) {
+        return nn::error(nn::ErrorStatus::DEAD_OBJECT)
+               << "Binder transaction returned STATUS_DEAD_OBJECT: " << ret.getDescription();
+    }
+    if (ret.isOk()) {
+        return {};
+    }
+    if (ret.getExceptionCode() != EX_SERVICE_SPECIFIC) {
+        return nn::error(nn::ErrorStatus::GENERAL_FAILURE)
+               << "Binder transaction returned exception: " << ret.getDescription();
+    }
+    return nn::error(static_cast<nn::ErrorStatus>(ret.getServiceSpecificError()))
+           << ret.getMessage();
 }
 
 }  // namespace aidl::android::hardware::neuralnetworks::utils

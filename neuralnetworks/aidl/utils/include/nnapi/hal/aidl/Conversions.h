@@ -46,6 +46,7 @@
 #include <aidl/android/hardware/neuralnetworks/SymmPerChannelQuantParams.h>
 #include <aidl/android/hardware/neuralnetworks/Timing.h>
 
+#include <android/binder_auto_utils.h>
 #include <nnapi/Result.h>
 #include <nnapi/Types.h>
 #include <nnapi/hal/CommonUtils.h>
@@ -96,7 +97,11 @@ GeneralResult<Extension::OperandTypeInformation> unvalidatedConvert(
         const aidl_hal::ExtensionOperandTypeInformation& operandTypeInformation);
 GeneralResult<SharedHandle> unvalidatedConvert(
         const ::aidl::android::hardware::common::NativeHandle& handle);
+GeneralResult<SyncFence> unvalidatedConvert(const ndk::ScopedFileDescriptor& syncFence);
 
+GeneralResult<Capabilities> convert(const aidl_hal::Capabilities& capabilities);
+GeneralResult<DeviceType> convert(const aidl_hal::DeviceType& deviceType);
+GeneralResult<ErrorStatus> convert(const aidl_hal::ErrorStatus& errorStatus);
 GeneralResult<ExecutionPreference> convert(
         const aidl_hal::ExecutionPreference& executionPreference);
 GeneralResult<SharedMemory> convert(const aidl_hal::Memory& memory);
@@ -106,9 +111,14 @@ GeneralResult<OperandType> convert(const aidl_hal::OperandType& operandType);
 GeneralResult<Priority> convert(const aidl_hal::Priority& priority);
 GeneralResult<Request::MemoryPool> convert(const aidl_hal::RequestMemoryPool& memoryPool);
 GeneralResult<Request> convert(const aidl_hal::Request& request);
+GeneralResult<Timing> convert(const aidl_hal::Timing& timing);
+GeneralResult<SyncFence> convert(const ndk::ScopedFileDescriptor& syncFence);
 
+GeneralResult<std::vector<Extension>> convert(const std::vector<aidl_hal::Extension>& extension);
 GeneralResult<std::vector<Operation>> convert(const std::vector<aidl_hal::Operation>& outputShapes);
 GeneralResult<std::vector<SharedMemory>> convert(const std::vector<aidl_hal::Memory>& memories);
+GeneralResult<std::vector<OutputShape>> convert(
+        const std::vector<aidl_hal::OutputShape>& outputShapes);
 
 GeneralResult<std::vector<uint32_t>> toUnsigned(const std::vector<int32_t>& vec);
 
@@ -118,14 +128,62 @@ namespace aidl::android::hardware::neuralnetworks::utils {
 
 namespace nn = ::android::nn;
 
+nn::GeneralResult<std::vector<uint8_t>> unvalidatedConvert(const nn::CacheToken& cacheToken);
+nn::GeneralResult<BufferDesc> unvalidatedConvert(const nn::BufferDesc& bufferDesc);
+nn::GeneralResult<BufferRole> unvalidatedConvert(const nn::BufferRole& bufferRole);
+nn::GeneralResult<bool> unvalidatedConvert(const nn::MeasureTiming& measureTiming);
 nn::GeneralResult<Memory> unvalidatedConvert(const nn::SharedMemory& memory);
 nn::GeneralResult<OutputShape> unvalidatedConvert(const nn::OutputShape& outputShape);
 nn::GeneralResult<ErrorStatus> unvalidatedConvert(const nn::ErrorStatus& errorStatus);
+nn::GeneralResult<ExecutionPreference> unvalidatedConvert(
+        const nn::ExecutionPreference& executionPreference);
+nn::GeneralResult<OperandType> unvalidatedConvert(const nn::OperandType& operandType);
+nn::GeneralResult<OperandLifeTime> unvalidatedConvert(const nn::Operand::LifeTime& operandLifeTime);
+nn::GeneralResult<DataLocation> unvalidatedConvert(const nn::DataLocation& location);
+nn::GeneralResult<std::optional<OperandExtraParams>> unvalidatedConvert(
+        const nn::Operand::ExtraParams& extraParams);
+nn::GeneralResult<Operand> unvalidatedConvert(const nn::Operand& operand);
+nn::GeneralResult<OperationType> unvalidatedConvert(const nn::OperationType& operationType);
+nn::GeneralResult<Operation> unvalidatedConvert(const nn::Operation& operation);
+nn::GeneralResult<Subgraph> unvalidatedConvert(const nn::Model::Subgraph& subgraph);
+nn::GeneralResult<std::vector<uint8_t>> unvalidatedConvert(
+        const nn::Model::OperandValues& operandValues);
+nn::GeneralResult<ExtensionNameAndPrefix> unvalidatedConvert(
+        const nn::Model::ExtensionNameAndPrefix& extensionNameToPrefix);
+nn::GeneralResult<Model> unvalidatedConvert(const nn::Model& model);
+nn::GeneralResult<Priority> unvalidatedConvert(const nn::Priority& priority);
+nn::GeneralResult<Request> unvalidatedConvert(const nn::Request& request);
+nn::GeneralResult<RequestArgument> unvalidatedConvert(const nn::Request::Argument& requestArgument);
+nn::GeneralResult<RequestMemoryPool> unvalidatedConvert(const nn::Request::MemoryPool& memoryPool);
+nn::GeneralResult<Timing> unvalidatedConvert(const nn::Timing& timing);
+nn::GeneralResult<int64_t> unvalidatedConvert(const nn::Duration& duration);
+nn::GeneralResult<int64_t> unvalidatedConvert(const nn::OptionalDuration& optionalDuration);
+nn::GeneralResult<int64_t> unvalidatedConvert(const nn::OptionalTimePoint& optionalTimePoint);
+nn::GeneralResult<ndk::ScopedFileDescriptor> unvalidatedConvert(const nn::SyncFence& syncFence);
+nn::GeneralResult<common::NativeHandle> unvalidatedConvert(const nn::SharedHandle& sharedHandle);
+nn::GeneralResult<ndk::ScopedFileDescriptor> unvalidatedConvertCache(
+        const nn::SharedHandle& handle);
 
+nn::GeneralResult<std::vector<uint8_t>> convert(const nn::CacheToken& cacheToken);
+nn::GeneralResult<BufferDesc> convert(const nn::BufferDesc& bufferDesc);
+nn::GeneralResult<bool> convert(const nn::MeasureTiming& measureTiming);
 nn::GeneralResult<Memory> convert(const nn::SharedMemory& memory);
 nn::GeneralResult<ErrorStatus> convert(const nn::ErrorStatus& errorStatus);
+nn::GeneralResult<ExecutionPreference> convert(const nn::ExecutionPreference& executionPreference);
+nn::GeneralResult<Model> convert(const nn::Model& model);
+nn::GeneralResult<Priority> convert(const nn::Priority& priority);
+nn::GeneralResult<Request> convert(const nn::Request& request);
+nn::GeneralResult<Timing> convert(const nn::Timing& timing);
+nn::GeneralResult<int64_t> convert(const nn::OptionalDuration& optionalDuration);
+nn::GeneralResult<int64_t> convert(const nn::OptionalTimePoint& optionalTimePoint);
+
+nn::GeneralResult<std::vector<BufferRole>> convert(const std::vector<nn::BufferRole>& bufferRoles);
 nn::GeneralResult<std::vector<OutputShape>> convert(
         const std::vector<nn::OutputShape>& outputShapes);
+nn::GeneralResult<std::vector<ndk::ScopedFileDescriptor>> convert(
+        const std::vector<nn::SharedHandle>& handles);
+nn::GeneralResult<std::vector<ndk::ScopedFileDescriptor>> convert(
+        const std::vector<nn::SyncFence>& syncFences);
 
 nn::GeneralResult<std::vector<int32_t>> toSigned(const std::vector<uint32_t>& vec);
 
