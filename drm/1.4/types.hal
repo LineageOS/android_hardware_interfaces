@@ -32,8 +32,16 @@ enum LogPriority : uint32_t {
 /**
  * Returned by getLogMessages to report error diagnostics to the
  * app.
+ *
+ * The |message| field is for informational purposes only, and
+ * NOT meant to be parsed programmatically when handling errors.
+ * For programmatic error handling, please check the return |Status|
+ * of APIs instead.
  */
 struct LogMessage {
+  /**
+   * Epoch time in milliseconds.
+   */
   int64_t timeMs;
   LogPriority priority;
   string message;
