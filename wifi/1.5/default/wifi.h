@@ -52,8 +52,11 @@ class Wifi : public V1_5::IWifi {
 
     // HIDL methods exposed.
     Return<void> registerEventCallback(
-        const sp<IWifiEventCallback>& event_callback,
+        const sp<V1_0::IWifiEventCallback>& event_callback,
         registerEventCallback_cb hidl_status_cb) override;
+    Return<void> registerEventCallback_1_5(
+        const sp<V1_5::IWifiEventCallback>& event_callback,
+        registerEventCallback_1_5_cb hidl_status_cb) override;
     Return<bool> isStarted() override;
     Return<void> start(start_cb hidl_status_cb) override;
     Return<void> stop(stop_cb hidl_status_cb) override;
@@ -67,7 +70,9 @@ class Wifi : public V1_5::IWifi {
 
     // Corresponding worker functions for the HIDL methods.
     WifiStatus registerEventCallbackInternal(
-        const sp<IWifiEventCallback>& event_callback);
+        const sp<V1_0::IWifiEventCallback>& event_callback __unused);
+    WifiStatus registerEventCallbackInternal_1_5(
+        const sp<V1_5::IWifiEventCallback>& event_callback);
     WifiStatus startInternal();
     WifiStatus stopInternal(std::unique_lock<std::recursive_mutex>* lock);
     std::pair<WifiStatus, std::vector<ChipId>> getChipIdsInternal();
@@ -87,7 +92,7 @@ class Wifi : public V1_5::IWifi {
     std::shared_ptr<feature_flags::WifiFeatureFlags> feature_flags_;
     RunState run_state_;
     std::vector<sp<WifiChip>> chips_;
-    hidl_callback_util::HidlCallbackHandler<IWifiEventCallback>
+    hidl_callback_util::HidlCallbackHandler<V1_5::IWifiEventCallback>
         event_cb_handler_;
 
     DISALLOW_COPY_AND_ASSIGN(Wifi);
