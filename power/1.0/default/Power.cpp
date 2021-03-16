@@ -35,7 +35,6 @@ Power::Power(power_module_t *module) : mModule(module) {
 }
 
 Power::~Power() {
-    delete(mModule);
 }
 
 // Methods from ::android::hardware::power::V1_0::IPower follow.
