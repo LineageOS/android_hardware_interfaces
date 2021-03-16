@@ -56,7 +56,7 @@ class IProtectedCallback {
 // Thread safe class
 class DeathRecipient final : public hidl_death_recipient {
   public:
-    void serviceDied(uint64_t /*cookie*/, const wp<hidl::base::V1_0::IBase>& /*who*/) override;
+    void serviceDied(uint64_t cookie, const wp<hidl::base::V1_0::IBase>& who) override;
     // Precondition: `killable` must be non-null.
     void add(IProtectedCallback* killable) const;
     // Precondition: `killable` must be non-null.
@@ -64,6 +64,7 @@ class DeathRecipient final : public hidl_death_recipient {
 
   private:
     mutable std::mutex mMutex;
+    mutable bool mIsDeadObject GUARDED_BY(mMutex) = false;
     mutable std::vector<IProtectedCallback*> mObjects GUARDED_BY(mMutex);
 };
 
@@ -78,14 +79,21 @@ class DeathHandler final {
     ~DeathHandler();
 
     using Cleanup = std::function<void()>;
+    using Hold = base::ScopeGuard<Cleanup>;
+
     // Precondition: `killable` must be non-null.
-    [[nodiscard]] base::ScopeGuard<Cleanup> protectCallback(IProtectedCallback* killable) const;
+    // `killable` must outlive the return value `Hold`.
+    [[nodiscard]] Hold protectCallback(IProtectedCallback* killable) const;
+
+    // Precondition: `killable` must be non-null.
+    // `killable` must outlive the `DeathHandler`.
+    void protectCallbackForLifetimeOfDeathHandler(IProtectedCallback* killable) const;
 
   private:
     DeathHandler(sp<hidl::base::V1_0::IBase> object, sp<DeathRecipient> deathRecipient);
 
-    sp<hidl::base::V1_0::IBase> kObject;
-    sp<DeathRecipient> kDeathRecipient;
+    sp<hidl::base::V1_0::IBase> mObject;
+    sp<DeathRecipient> mDeathRecipient;
 };
 
 }  // namespace android::hardware::neuralnetworks::utils
