@@ -27,7 +27,6 @@ cc_library_static {
     name: "neuralnetworks_utils_hal_1_2",
     defaults: ["neuralnetworks_utils_defaults"],
     srcs: ["src/*"],
-    exclude_srcs: ["src/ExecutionBurst*"],
     local_include_dirs: ["include/nnapi/hal/1.2/"],
     export_include_dirs: ["include"],
     cflags: ["-Wthread-safety"],
@@ -41,10 +40,16 @@ cc_library_static {
         "android.hardware.neuralnetworks@1.0",
         "android.hardware.neuralnetworks@1.1",
         "android.hardware.neuralnetworks@1.2",
+        "libfmq",
     ],
     export_static_lib_headers: [
         "neuralnetworks_utils_hal_common",
     ],
+    product_variables: {
+        debuggable: { // eng and userdebug builds
+            cflags: ["-DNN_DEBUGGABLE"],
+        },
+    },
 }
 
 cc_test {
