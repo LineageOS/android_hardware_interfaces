@@ -134,8 +134,20 @@ TEST(EffectUtils, ConvertBufferConfig) {
     EXPECT_EQ(format, formatBackIn);
 }
 
+TEST(EffectUtils, ConvertInvalidDescriptor) {
+    effect_descriptor_t halDesc;
+    EffectDescriptor longName{};
+    longName.name = std::string(EFFECT_STRING_LEN_MAX, 'x');
+    EXPECT_EQ(BAD_VALUE, EffectUtils::effectDescriptorToHal(longName, &halDesc));
+    EffectDescriptor longImplementor{};
+    longImplementor.implementor = std::string(EFFECT_STRING_LEN_MAX, 'x');
+    EXPECT_EQ(BAD_VALUE, EffectUtils::effectDescriptorToHal(longImplementor, &halDesc));
+}
+
 TEST(EffectUtils, ConvertDescriptor) {
     EffectDescriptor desc{};
+    desc.name = "test";
+    desc.implementor = "foo";
     effect_descriptor_t halDesc;
     EXPECT_EQ(NO_ERROR, EffectUtils::effectDescriptorToHal(desc, &halDesc));
     EffectDescriptor descBack;
