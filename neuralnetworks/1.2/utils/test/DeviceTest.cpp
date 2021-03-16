@@ -772,7 +772,7 @@ TEST(DeviceTest, prepareModelFromCache) {
     EXPECT_NE(result.value(), nullptr);
 }
 
-TEST(DeviceTest, prepareModelFromCacheError) {
+TEST(DeviceTest, prepareModelFromCacheLaunchError) {
     // setup call
     const auto mockDevice = createMockDevice();
     const auto device = Device::create(kName, mockDevice).value();
@@ -781,6 +781,23 @@ TEST(DeviceTest, prepareModelFromCacheError) {
             .WillOnce(Invoke(makePreparedModelFromCacheReturn(V1_0::ErrorStatus::GENERAL_FAILURE,
                                                               V1_0::ErrorStatus::GENERAL_FAILURE,
                                                               nullptr)));
+
+    // run test
+    const auto result = device->prepareModelFromCache({}, {}, {}, {});
+
+    // verify result
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
+}
+
+TEST(DeviceTest, prepareModelFromCacheReturnError) {
+    // setup call
+    const auto mockDevice = createMockDevice();
+    const auto device = Device::create(kName, mockDevice).value();
+    EXPECT_CALL(*mockDevice, prepareModelFromCache(_, _, _, _))
+            .Times(1)
+            .WillOnce(Invoke(makePreparedModelFromCacheReturn(
+                    V1_0::ErrorStatus::NONE, V1_0::ErrorStatus::GENERAL_FAILURE, nullptr)));
 
     // run test
     const auto result = device->prepareModelFromCache({}, {}, {}, {});
