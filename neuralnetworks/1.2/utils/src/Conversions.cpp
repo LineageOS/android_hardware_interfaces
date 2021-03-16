@@ -331,6 +331,10 @@ GeneralResult<Timing> convert(const hal::V1_2::Timing& timing) {
     return validatedConvert(timing);
 }
 
+GeneralResult<SharedMemory> convert(const hardware::hidl_memory& memory) {
+    return validatedConvert(memory);
+}
+
 GeneralResult<std::vector<Extension>> convert(const hidl_vec<hal::V1_2::Extension>& extensions) {
     return validatedConvert(extensions);
 }
