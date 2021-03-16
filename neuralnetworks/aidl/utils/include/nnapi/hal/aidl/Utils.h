@@ -23,6 +23,7 @@
 #include <nnapi/Result.h>
 #include <nnapi/Types.h>
 #include <nnapi/Validation.h>
+#include <nnapi/hal/HandleError.h>
 
 namespace aidl::android::hardware::neuralnetworks::utils {
 
@@ -51,6 +52,12 @@ nn::GeneralResult<Memory> clone(const Memory& memory);
 nn::GeneralResult<Request> clone(const Request& request);
 nn::GeneralResult<RequestMemoryPool> clone(const RequestMemoryPool& requestPool);
 nn::GeneralResult<Model> clone(const Model& model);
+
+nn::GeneralResult<void> handleTransportError(const ndk::ScopedAStatus& ret);
+
+#define HANDLE_ASTATUS(ret)                                            \
+    for (const auto status = handleTransportError(ret); !status.ok();) \
+    return NN_ERROR(status.error().code) << status.error().message << ": "
 
 }  // namespace aidl::android::hardware::neuralnetworks::utils
 

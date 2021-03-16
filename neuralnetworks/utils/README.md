@@ -49,7 +49,9 @@ The `convert` functions operate only on types that used in a HIDL method call di
 (i.e., not as a nested class) or used in a subsequent version of the NN HAL. Prefer using `convert`
 over `unvalidatedConvert`.
 
-# HIDL Interface Lifetimes across Processes
+# Interface Lifetimes across Processes
+
+## HIDL
 
 Some notes about HIDL interface objects and lifetimes across processes:
 
@@ -68,7 +70,20 @@ behave strangely with `::android::wp` references.)
 If the process which created the HIDL interface object dies, any call on this object from another
 process will result in a HIDL transport error with the code `DEAD_OBJECT`.
 
-# Protecting Asynchronous Calls across HIDL
+## AIDL
+
+We use NDK backend for AIDL interfaces. Handling of lifetimes is generally the same with the
+following differences:
+* Interfaces inherit from `ndk::ICInterface`, which inherits from `ndk::SharedRefBase`. The latter
+  is an analog of `::android::RefBase` using `std::shared_ptr` for reference counting.
+* AIDL calls return `ndk::ScopedAStatus` which wraps fields of types `binder_status_t` and
+  `binder_exception_t`. In case the call is made on a dead object, the call will return
+  `ndk::ScopedAStatus` with exception `EX_TRANSACTION_FAILED` and binder status
+  `STATUS_DEAD_OBJECT`.
+
+# Protecting Asynchronous Calls
+
+## Across HIDL
 
 Some notes about asynchronous calls across HIDL:
 
@@ -95,3 +110,17 @@ died. nnapi/hal/ProtectCallback.h's `DeathHandler` uses `hidl_death_recipient`s 
 driver process has died, and `DeathHandler` will unblock any thread waiting on the results of an
 `IProtectedCallback` callback object that may otherwise not be signaled. In order for this to work,
 the `IProtectedCallback` object must have been registered via `DeathHandler::protectCallback()`.
+
+## Across AIDL
+
+We use NDK backend for AIDL interfaces. Handling of asynchronous calls is generally the same with
+the following differences:
+* AIDL calls return `ndk::ScopedAStatus` which wraps fields of types `binder_status_t` and
+  `binder_exception_t`. In case the call is made on a dead object, the call will return
+  `ndk::ScopedAStatus` with exception `EX_TRANSACTION_FAILED` and binder status
+  `STATUS_DEAD_OBJECT`.
+* AIDL interface doesn't contain asynchronous `IPreparedModel::execute`.
+* Service death is handled using `AIBinder_DeathRecipient` object which is linked to an interface
+  object using `AIBinder_linkToDeath`. nnapi/hal/aidl/ProtectCallback.h provides `DeathHandler`
+  object that is a direct analog of HIDL `DeathHandler`, only using libbinder_ndk objects for
+  implementation.
