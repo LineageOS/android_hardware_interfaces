@@ -16,11 +16,16 @@
 
 #include <memory.h>
 
+#define LOG_TAG "EffectUtils"
+#include <log/log.h>
+
 #include <HidlUtils.h>
 #include <UuidUtils.h>
 #include <common/all-versions/VersionUtils.h>
 
 #include "util/EffectUtils.h"
+
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
 
 using ::android::hardware::audio::common::CPP_VERSION::implementation::HidlUtils;
 using ::android::hardware::audio::common::CPP_VERSION::implementation::UuidUtils;
@@ -156,23 +161,52 @@ status_t EffectUtils::effectDescriptorFromHal(const effect_descriptor_t& halDesc
     descriptor->flags = EnumBitfield<EffectFlags>(halDescriptor.flags);
     descriptor->cpuLoad = halDescriptor.cpuLoad;
     descriptor->memoryUsage = halDescriptor.memoryUsage;
+#if MAJOR_VERSION <= 6
     memcpy(descriptor->name.data(), halDescriptor.name, descriptor->name.size());
     memcpy(descriptor->implementor.data(), halDescriptor.implementor,
            descriptor->implementor.size());
+#else
+    descriptor->name = hidl_string(halDescriptor.name, ARRAY_SIZE(halDescriptor.name));
+    descriptor->implementor =
+            hidl_string(halDescriptor.implementor, ARRAY_SIZE(halDescriptor.implementor));
+#endif
     return NO_ERROR;
 }
 
 status_t EffectUtils::effectDescriptorToHal(const EffectDescriptor& descriptor,
                                             effect_descriptor_t* halDescriptor) {
+    status_t result = NO_ERROR;
     UuidUtils::uuidToHal(descriptor.type, &halDescriptor->type);
     UuidUtils::uuidToHal(descriptor.uuid, &halDescriptor->uuid);
     halDescriptor->flags = static_cast<uint32_t>(descriptor.flags);
     halDescriptor->cpuLoad = descriptor.cpuLoad;
     halDescriptor->memoryUsage = descriptor.memoryUsage;
+#if MAJOR_VERSION <= 6
     memcpy(halDescriptor->name, descriptor.name.data(), descriptor.name.size());
     memcpy(halDescriptor->implementor, descriptor.implementor.data(),
            descriptor.implementor.size());
-    return NO_ERROR;
+#else
+    // According to 'dumpEffectDescriptor' 'name' and 'implementor' must be NUL-terminated.
+    size_t nameSize = descriptor.name.size();
+    if (nameSize >= ARRAY_SIZE(halDescriptor->name)) {
+        ALOGE("effect name is too long: %zu (%zu max)", nameSize,
+              ARRAY_SIZE(halDescriptor->name) - 1);
+        nameSize = ARRAY_SIZE(halDescriptor->name) - 1;
+        result = BAD_VALUE;
+    }
+    strncpy(halDescriptor->name, descriptor.name.c_str(), nameSize);
+    halDescriptor->name[nameSize] = '\0';
+    size_t implementorSize = descriptor.implementor.size();
+    if (implementorSize >= ARRAY_SIZE(halDescriptor->implementor)) {
+        ALOGE("effect implementor is too long: %zu (%zu max)", implementorSize,
+              ARRAY_SIZE(halDescriptor->implementor) - 1);
+        implementorSize = ARRAY_SIZE(halDescriptor->implementor) - 1;
+        result = BAD_VALUE;
+    }
+    strncpy(halDescriptor->implementor, descriptor.implementor.c_str(), implementorSize);
+    halDescriptor->implementor[implementorSize] = '\0';
+#endif
+    return result;
 }
 
 }  // namespace implementation
