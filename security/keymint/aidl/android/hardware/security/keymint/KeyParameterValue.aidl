@@ -26,10 +26,10 @@ import android.hardware.security.keymint.KeyPurpose;
 import android.hardware.security.keymint.PaddingMode;
 import android.hardware.security.keymint.SecurityLevel;
 
+/** @hide */
 @VintfStability
 @RustDerive(Clone=true, Eq=true, PartialEq=true, Ord=true, PartialOrd=true, Hash=true)
 union KeyParameterValue {
-
     /* Represents an invalid value type. */
     int invalid;
 
@@ -45,7 +45,7 @@ union KeyParameterValue {
     SecurityLevel securityLevel;
 
     /* Other types */
-    boolean boolValue;  // Always true, if present.
+    boolean boolValue; // Always true, if present.
     int integer;
     long longInteger;
     long dateTime;

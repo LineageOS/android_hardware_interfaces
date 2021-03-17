@@ -21,6 +21,7 @@ import android.hardware.security.keymint.KeyParameter;
 
 /**
  * This is all the results returned by the IKeyMintDevice begin() function.
+ * @hide
  */
 @VintfStability
 parcelable BeginResult {
