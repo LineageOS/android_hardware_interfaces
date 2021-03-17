@@ -18,6 +18,7 @@ package android.hardware.security.keymint;
 
 /**
  * TagType classifies Tags in Tag.aidl into various groups of data.
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

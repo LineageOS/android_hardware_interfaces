@@ -19,6 +19,7 @@ package android.hardware.security.keymint;
 /**
  * KeyMint error codes.  Aidl will return these error codes as service specific
  * errors in EX_SERVICE_SPECIFIC.
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

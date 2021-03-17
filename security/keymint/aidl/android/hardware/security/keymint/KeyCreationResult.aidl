@@ -22,6 +22,7 @@ import android.hardware.security.keymint.KeyCharacteristics;
 /**
  * This structure is returned when a new key is created with generateKey(), importKey() or
  * importWrappedKey().
+ * @hide
  */
 @VintfStability
 parcelable KeyCreationResult {
