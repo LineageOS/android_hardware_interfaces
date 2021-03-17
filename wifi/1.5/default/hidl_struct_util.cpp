@@ -2557,10 +2557,9 @@ WifiChannelWidthInMhz convertLegacyWifiChannelWidthToHidl(
             return WifiChannelWidthInMhz::WIDTH_5;
         case legacy_hal::WIFI_CHAN_WIDTH_10:
             return WifiChannelWidthInMhz::WIDTH_10;
-        case legacy_hal::WIFI_CHAN_WIDTH_INVALID:
+        default:
             return WifiChannelWidthInMhz::WIDTH_INVALID;
     };
-    CHECK(false) << "Unknown legacy type: " << type;
 }
 
 legacy_hal::wifi_rtt_preamble convertHidlRttPreambleToLegacy(
