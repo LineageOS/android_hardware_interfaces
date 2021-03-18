@@ -51,18 +51,6 @@ interface IContexthub extends @1.1::IContexthub {
     registerCallback_1_2(uint32_t hubId, IContexthubCallback cb) generates (Result result);
 
     /**
-     * Send a message to a hub
-     *
-     * @param hubId identifier for hub to send message to
-     * @param msg   message to be sent
-     *
-     * @return result OK if successful, error code otherwise
-     *                BAD_VALUE if parameters are not valid
-     *                TRANSACTION_FAILED if message send failed
-     */
-    sendMessageToHub_1_2(uint32_t hubId, ContextHubMsg msg) generates (Result result);
-
-    /**
      * Notification sent by the framework to indicate that the user
      * has changed a setting.
      *

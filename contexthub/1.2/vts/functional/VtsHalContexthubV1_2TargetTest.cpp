@@ -195,39 +195,8 @@ class TxnResultCallback : public ContexthubCallbackV1_2 {
     std::promise<TransactionResult> promise;
 };
 
-// Parameterized fixture that sets the callback to TxnResultCallback
-class ContexthubTxnTest : public ContexthubHidlTest {
-  public:
-    virtual void SetUp() override {
-        ContexthubHidlTest::SetUp();
-        ASSERT_OK(registerCallback_1_2(cb));
-    }
-
-    sp<TxnResultCallback> cb = new TxnResultCallback();
-};
-
-TEST_P(ContexthubTxnTest, TestSendMessageToNonExistentNanoApp) {
-    ContextHubMsg msg;
-    msg.msg_1_0.appName = kNonExistentAppId;
-    msg.msg_1_0.msgType = 1;
-    msg.msg_1_0.msg.resize(4);
-    std::fill(msg.msg_1_0.msg.begin(), msg.msg_1_0.msg.end(), 0);
-
-    ALOGD("Sending message to non-existent nanoapp");
-    Result result = hubApi->sendMessageToHub_1_2(getHubId(), msg);
-    if (result != Result::OK && result != Result::BAD_PARAMS &&
-        result != Result::TRANSACTION_FAILED) {
-        FAIL() << "Got result " << asBaseType(result) << ", expected OK, BAD_PARAMS"
-               << ", or TRANSACTION_FAILED";
-    }
-}
-
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(ContexthubHidlTest);
 INSTANTIATE_TEST_SUITE_P(HubIdSpecificTests, ContexthubHidlTest, testing::ValuesIn(kTestParameters),
-                         android::hardware::PrintInstanceTupleNameToString<>);
-
-GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(ContexthubTxnTest);
-INSTANTIATE_TEST_SUITE_P(HubIdSpecificTests, ContexthubTxnTest, testing::ValuesIn(kTestParameters),
                          android::hardware::PrintInstanceTupleNameToString<>);
 
 }  // anonymous namespace

@@ -55,8 +55,6 @@ class Contexthub
     Return<Result> registerCallback_1_2(uint32_t hubId,
                                         const sp<V1_2::IContexthubCallback>& cb) override;
 
-    Return<Result> sendMessageToHub_1_2(uint32_t hubId, const ContextHubMsg& msg) override;
-
   private:
     sp<IContextHubCallbackWrapperBase> mCallback;
 };
