@@ -268,7 +268,7 @@ TestBufferLayer::TestBufferLayer(const std::shared_ptr<ComposerClient>& client,
     mLayerCount = 1;
     mFormat = format;
     mUsage = static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN | BufferUsage::CPU_WRITE_OFTEN |
-                                   BufferUsage::COMPOSER_OVERLAY | BufferUsage::GPU_TEXTURE);
+                                   BufferUsage::COMPOSER_OVERLAY);
 
     mAccessRegion.top = 0;
     mAccessRegion.left = 0;
