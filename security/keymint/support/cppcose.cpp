@@ -85,7 +85,7 @@ ErrMsgOr<cppbor::Array> constructCoseMac0(const bytevec& macKey, const bytevec& 
 
     return cppbor::Array()
             .add(cppbor::Map().add(ALGORITHM, HMAC_256).canonicalize().encode())
-            .add(cppbor::Bstr() /* unprotected */)
+            .add(cppbor::Map() /* unprotected */)
             .add(payload)
             .add(tag.moveValue());
 }
@@ -97,7 +97,7 @@ ErrMsgOr<bytevec /* payload */> parseCoseMac0(const cppbor::Item* macItem) {
     }
 
     auto protectedParms = mac->get(kCoseMac0ProtectedParams)->asBstr();
-    auto unprotectedParms = mac->get(kCoseMac0UnprotectedParams)->asBstr();
+    auto unprotectedParms = mac->get(kCoseMac0UnprotectedParams)->asMap();
     auto payload = mac->get(kCoseMac0Payload)->asBstr();
     auto tag = mac->get(kCoseMac0Tag)->asBstr();
     if (!protectedParms || !unprotectedParms || !payload || !tag) {
@@ -115,7 +115,7 @@ ErrMsgOr<bytevec /* payload */> verifyAndParseCoseMac0(const cppbor::Item* macIt
     }
 
     auto protectedParms = mac->get(kCoseMac0ProtectedParams)->asBstr();
-    auto unprotectedParms = mac->get(kCoseMac0UnprotectedParams)->asBstr();
+    auto unprotectedParms = mac->get(kCoseMac0UnprotectedParams)->asMap();
     auto payload = mac->get(kCoseMac0Payload)->asBstr();
     auto tag = mac->get(kCoseMac0Tag)->asBstr();
     if (!protectedParms || !unprotectedParms || !payload || !tag) {
@@ -168,7 +168,7 @@ ErrMsgOr<cppbor::Array> constructCoseSign1(const bytevec& key, cppbor::Map prote
 
     return cppbor::Array()
             .add(protParms)
-            .add(bytevec{} /* unprotected parameters */)
+            .add(cppbor::Map() /* unprotected parameters */)
             .add(payload)
             .add(*signature);
 }
@@ -185,7 +185,7 @@ ErrMsgOr<bytevec> verifyAndParseCoseSign1(bool ignoreSignature, const cppbor::Ar
     }
 
     const cppbor::Bstr* protectedParams = coseSign1->get(kCoseSign1ProtectedParams)->asBstr();
-    const cppbor::Bstr* unprotectedParams = coseSign1->get(kCoseSign1UnprotectedParams)->asBstr();
+    const cppbor::Map* unprotectedParams = coseSign1->get(kCoseSign1UnprotectedParams)->asMap();
     const cppbor::Bstr* payload = coseSign1->get(kCoseSign1Payload)->asBstr();
     const cppbor::Bstr* signature = coseSign1->get(kCoseSign1Signature)->asBstr();
 
