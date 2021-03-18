@@ -490,6 +490,14 @@ const ConfigDeclaration kVehicleProperties[]{
 
         {.config =
                  {
+                         .prop = toInt(VehicleProperty::PARKING_BRAKE_AUTO_APPLY),
+                         .access = VehiclePropertyAccess::READ,
+                         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                 },
+         .initialValue = {.int32Values = {1}}},
+
+        {.config =
+                 {
                          .prop = toInt(VehicleProperty::FUEL_LEVEL_LOW),
                          .access = VehiclePropertyAccess::READ,
                          .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
@@ -1059,7 +1067,7 @@ const ConfigDeclaration kVehicleProperties[]{
         {.config =
                  {
                          .prop = toInt(VehicleProperty::SUPPORT_CUSTOMIZE_VENDOR_PERMISSION),
-                         .access = VehiclePropertyAccess::READ_WRITE,
+                         .access = VehiclePropertyAccess::READ,
                          .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                          .configArray =
                                  {kMixedTypePropertyForTest,
