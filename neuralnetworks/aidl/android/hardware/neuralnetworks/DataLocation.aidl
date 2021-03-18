@@ -35,6 +35,11 @@ package android.hardware.neuralnetworks;
  * total size of the writable region of the output data, and padding specifies the extra bytes at
  * the end of the memory region that may be used by the device to access memory in chunks, for
  * efficiency, but must not be used to hold any output data.
+ *
+ * When used in RequestArgument, clients should prefer to align and pad the sub-region to
+ * 64 bytes when possible; this may allow the device to access the sub-region more efficiently.
+ * The sub-region is aligned to 64 bytes if the value of offset is a multiple of 64.
+ * The sub-region is padded to 64 bytes if the sum of length and padding is a multiple of 64.
  */
 @VintfStability
 parcelable DataLocation {
