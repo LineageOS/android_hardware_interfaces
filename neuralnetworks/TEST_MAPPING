@@ -16,6 +16,9 @@
       "name": "neuralnetworks_utils_hal_1_3_test"
     },
     {
+      "name": "neuralnetworks_utils_hal_aidl_test"
+    },
+    {
       "name": "VtsHalNeuralnetworksV1_0TargetTest",
       "options": [
         {
