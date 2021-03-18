@@ -97,9 +97,9 @@ TEST_P(GenerateKeyTests, generateEcdsaP256Key_prodMode) {
     ASSERT_NE(protParms, nullptr);
     ASSERT_EQ(cppbor::prettyPrint(protParms->value()), "{\n  1 : 5,\n}");
 
-    auto unprotParms = coseMac0->asArray()->get(kCoseMac0UnprotectedParams)->asBstr();
+    auto unprotParms = coseMac0->asArray()->get(kCoseMac0UnprotectedParams)->asMap();
     ASSERT_NE(unprotParms, nullptr);
-    ASSERT_EQ(unprotParms->value().size(), 0);
+    ASSERT_EQ(unprotParms->size(), 0);
 
     auto payload = coseMac0->asArray()->get(kCoseMac0Payload)->asBstr();
     ASSERT_NE(payload, nullptr);
@@ -150,9 +150,9 @@ TEST_P(GenerateKeyTests, generateEcdsaP256Key_testMode) {
     ASSERT_NE(protParms, nullptr);
     ASSERT_EQ(cppbor::prettyPrint(protParms->value()), "{\n  1 : 5,\n}");
 
-    auto unprotParms = coseMac0->asArray()->get(kCoseMac0UnprotectedParams)->asBstr();
+    auto unprotParms = coseMac0->asArray()->get(kCoseMac0UnprotectedParams)->asMap();
     ASSERT_NE(unprotParms, nullptr);
-    ASSERT_EQ(unprotParms->value().size(), 0);
+    ASSERT_EQ(unprotParms->size(), 0);
 
     auto payload = coseMac0->asArray()->get(kCoseMac0Payload)->asBstr();
     ASSERT_NE(payload, nullptr);
@@ -279,7 +279,7 @@ TEST_P(CertificateRequestTest, EmptyRequest_testMode) {
                                          .add(ALGORITHM, HMAC_256)
                                          .canonicalize()
                                          .encode())
-                            .add(cppbor::Bstr())             // unprotected
+                            .add(cppbor::Map())              // unprotected
                             .add(cppbor::Array().encode())   // payload (keysToSign)
                             .add(std::move(keysToSignMac));  // tag
 
@@ -364,7 +364,7 @@ TEST_P(CertificateRequestTest, NonEmptyRequest_testMode) {
                                          .add(ALGORITHM, HMAC_256)
                                          .canonicalize()
                                          .encode())
-                            .add(cppbor::Bstr())             // unprotected
+                            .add(cppbor::Map())              // unprotected
                             .add(cborKeysToSign_.encode())   // payload
                             .add(std::move(keysToSignMac));  // tag
 
