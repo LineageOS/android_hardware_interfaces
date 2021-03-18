@@ -52,6 +52,7 @@ GeneralResult<Capabilities> convert(const hal::V1_2::Capabilities& capabilities)
 GeneralResult<Model> convert(const hal::V1_2::Model& model);
 GeneralResult<MeasureTiming> convert(const hal::V1_2::MeasureTiming& measureTiming);
 GeneralResult<Timing> convert(const hal::V1_2::Timing& timing);
+GeneralResult<SharedMemory> convert(const hardware::hidl_memory& memory);
 
 GeneralResult<std::vector<Extension>> convert(
         const hardware::hidl_vec<hal::V1_2::Extension>& extensions);
