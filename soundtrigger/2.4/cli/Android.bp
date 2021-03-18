@@ -1,6 +1,6 @@
 java_binary {
-    name: "sthal_cli",
-    wrapper: "sthal_cli",
+    name: "sthal_cli_2.4",
+    wrapper: "sthal_cli_2.4",
     srcs: ["java/**/*.java"],
     static_libs: [
         "android.hardware.soundtrigger-V2.4-java",
