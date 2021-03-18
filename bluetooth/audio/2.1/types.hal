@@ -16,13 +16,14 @@
 
 package android.hardware.bluetooth.audio@2.1;
 
-import @2.0::PcmParameters;
-import @2.0::SessionType;
-import @2.0::SampleRate;
-import @2.0::ChannelMode;
 import @2.0::BitsPerSample;
-import @2.0::CodecConfiguration;
+import @2.0::ChannelMode;
 import @2.0::CodecCapabilities;
+import @2.0::CodecConfiguration;
+import @2.0::CodecType;
+import @2.0::PcmParameters;
+import @2.0::SampleRate;
+import @2.0::SessionType;
 
 enum SessionType : @2.0::SessionType {
     /** Used when encoded by Bluetooth Stack and streaming to LE Audio device */
@@ -33,6 +34,10 @@ enum SessionType : @2.0::SessionType {
     LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH,
     /** Decoding is done by HW an there is control only */
     LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH,
+};
+
+enum CodecType : @2.0::CodecType {
+    LC3 = 0x20,
 };
 
 enum SampleRate : @2.0::SampleRate {
@@ -49,14 +54,57 @@ struct PcmParameters {
     uint32_t dataIntervalUs;
 };
 
-/** Used to configure either a Hardware or Software Encoding session based on session type */
-safe_union AudioConfiguration {
-    PcmParameters pcmConfig;
-    CodecConfiguration codecConfig;
+enum Lc3FrameDuration : uint8_t {
+    DURATION_10000US = 0x00,
+    DURATION_7500US = 0x01,
+};
+
+/**
+ * Used for Hardware Encoding/Decoding LC3 codec parameters.
+ */
+struct Lc3Parameters {
+    /* PCM is Input for encoder, Output for decoder */
+    BitsPerSample pcmBitDepth;
+
+    /* codec-specific parameters */
+    SampleRate samplingFrequency;
+    Lc3FrameDuration frameDuration;
+    /* length in octets of a codec frame */
+    uint32_t octetsPerFrame;
+    /* Number of blocks of codec frames per single SDU (Service Data Unit) */
+    uint8_t blocksPerSdu;
+};
+
+/**
+ * Used to specify the capabilities of the LC3 codecs supported by Hardware Encoding.
+ */
+struct Lc3CodecCapabilities {
+    /* This is bitfield, if bit N is set, HW Offloader supports N+1 channels at the same time.
+     * Example: 0x27 = 0b00100111: One, two, three or six channels supported.*/
+    uint8_t supportedChannelCounts;
+    Lc3Parameters lc3Capabilities;
 };
 
 /** Used to specify the capabilities of the different session types */
 safe_union AudioCapabilities {
     PcmParameters pcmCapabilities;
     CodecCapabilities codecCapabilities;
+    Lc3CodecCapabilities leAudioCapabilities;
+};
+
+/**
+ * Used to configure a LC3 Hardware Encoding session.
+ */
+struct Lc3CodecConfiguration {
+    /* This is also bitfield, specifying how the channels are ordered in the outgoing media packet.
+     * Bit meaning is defined in Bluetooth Assigned Numbers. */
+    uint32_t audioChannelAllocation;
+    Lc3Parameters lc3Config;
+};
+
+/** Used to configure either a Hardware or Software Encoding session based on session type */
+safe_union AudioConfiguration {
+    PcmParameters pcmConfig;
+    CodecConfiguration codecConfig;
+    Lc3CodecConfiguration leAudioCodecConfig;
 };
