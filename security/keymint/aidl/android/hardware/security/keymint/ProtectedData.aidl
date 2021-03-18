@@ -80,7 +80,7 @@ parcelable ProtectedData {
      *         bstr .cbor {                    // Protected params
      *             1 : -8,                     // Algorithm : EdDSA
      *         },
-     *         bstr .size 0,                   // Unprotected params
+     *         { },                            // Unprotected params
      *         bstr .size 32,                  // MAC key
      *         bstr PureEd25519(DK_priv, .cbor SignedMac_structure)
      *     ]
@@ -127,7 +127,7 @@ parcelable ProtectedData {
      *         protected: bstr .cbor {
      *             1 : -8,                    // Algorithm : EdDSA
      *         },
-     *         unprotected: bstr .size 0,
+     *         unprotected: { },
      *         payload: bstr .cbor BccPayload,
      *         // First entry in the chain is signed by DK_pub, the others are each signed by their
      *         // immediate predecessor.  See RFC 8032 for signature representation.
