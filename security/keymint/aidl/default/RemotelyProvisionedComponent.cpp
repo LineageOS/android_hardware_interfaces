@@ -156,7 +156,7 @@ StatusOr<bytevec /* pubkeys */> validateAndExtractPubkeys(bool testMode,
         }
 
         auto protectedParms = macedKeyItem->asArray()->get(kCoseMac0ProtectedParams)->asBstr();
-        auto unprotectedParms = macedKeyItem->asArray()->get(kCoseMac0UnprotectedParams)->asBstr();
+        auto unprotectedParms = macedKeyItem->asArray()->get(kCoseMac0UnprotectedParams)->asMap();
         auto payload = macedKeyItem->asArray()->get(kCoseMac0Payload)->asBstr();
         auto tag = macedKeyItem->asArray()->get(kCoseMac0Tag)->asBstr();
         if (!protectedParms || !unprotectedParms || !payload || !tag) {

@@ -80,12 +80,6 @@ Return<Result> Contexthub::registerCallback_1_2(uint32_t hubId,
     return Result::BAD_PARAMS;
 }
 
-// We don't expose any nanoapps, therefore all nanoapp-related API calls return with BAD_PARAMS
-Return<Result> Contexthub::sendMessageToHub_1_2(uint32_t /* hubId */,
-                                                const ContextHubMsg& /* msg */) {
-    return Result::BAD_PARAMS;
-}
-
 Return<void> Contexthub::onSettingChanged(SettingV1_1 /*setting*/, SettingValue /*newValue*/) {
     return Void();
 }

@@ -83,7 +83,7 @@ ErrMsgOr<bytevec> verifyAndParseCoseSign1Cwt(bool ignoreSignature, const cppbor:
     }
 
     const cppbor::Bstr* protectedParams = coseSign1->get(kCoseSign1ProtectedParams)->asBstr();
-    const cppbor::Bstr* unprotectedParams = coseSign1->get(kCoseSign1UnprotectedParams)->asBstr();
+    const cppbor::Map* unprotectedParams = coseSign1->get(kCoseSign1UnprotectedParams)->asMap();
     const cppbor::Bstr* payload = coseSign1->get(kCoseSign1Payload)->asBstr();
     const cppbor::Bstr* signature = coseSign1->get(kCoseSign1Signature)->asBstr();
 
