@@ -472,7 +472,7 @@ GeneralResult<BufferRole> unvalidatedConvert(const aidl_hal::BufferRole& bufferR
     return BufferRole{
             .modelIndex = static_cast<uint32_t>(bufferRole.modelIndex),
             .ioIndex = static_cast<uint32_t>(bufferRole.ioIndex),
-            .frequency = bufferRole.frequency,
+            .probability = bufferRole.probability,
     };
 }
 
@@ -718,7 +718,7 @@ nn::GeneralResult<BufferRole> unvalidatedConvert(const nn::BufferRole& bufferRol
     return BufferRole{
             .modelIndex = static_cast<int32_t>(bufferRole.modelIndex),
             .ioIndex = static_cast<int32_t>(bufferRole.ioIndex),
-            .frequency = bufferRole.frequency,
+            .probability = bufferRole.probability,
     };
 }
 
