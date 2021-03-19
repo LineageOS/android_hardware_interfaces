@@ -16,7 +16,9 @@
 
 #include "Service.h"
 
+#include <aidl/android/hardware/neuralnetworks/IDevice.h>
 #include <android-base/logging.h>
+#include <android/binder_manager.h>
 #include <android/hardware/neuralnetworks/1.0/IDevice.h>
 #include <android/hardware/neuralnetworks/1.1/IDevice.h>
 #include <android/hardware/neuralnetworks/1.2/IDevice.h>
@@ -31,6 +33,7 @@
 #include <nnapi/hal/1.1/Service.h>
 #include <nnapi/hal/1.2/Service.h>
 #include <nnapi/hal/1.3/Service.h>
+#include <nnapi/hal/aidl/Service.h>
 
 #include <functional>
 #include <memory>
@@ -42,11 +45,12 @@
 namespace android::hardware::neuralnetworks::service {
 namespace {
 
+namespace aidl_hal = ::aidl::android::hardware::neuralnetworks;
 using getDeviceFn = std::add_pointer_t<nn::GeneralResult<nn::SharedDevice>(const std::string&)>;
 
-void getDevicesForVersion(const std::string& descriptor, getDeviceFn getDevice,
-                          std::vector<nn::SharedDevice>* devices,
-                          std::unordered_set<std::string>* registeredDevices) {
+void getHidlDevicesForVersion(const std::string& descriptor, getDeviceFn getDevice,
+                              std::vector<nn::SharedDevice>* devices,
+                              std::unordered_set<std::string>* registeredDevices) {
     CHECK(devices != nullptr);
     CHECK(registeredDevices != nullptr);
 
@@ -66,18 +70,52 @@ void getDevicesForVersion(const std::string& descriptor, getDeviceFn getDevice,
     }
 }
 
+void getAidlDevices(std::vector<nn::SharedDevice>* devices,
+                    std::unordered_set<std::string>* registeredDevices) {
+    CHECK(devices != nullptr);
+    CHECK(registeredDevices != nullptr);
+
+    std::vector<std::string> names;
+    constexpr auto callback = [](const char* serviceName, void* names) {
+        static_cast<std::vector<std::string>*>(names)->emplace_back(serviceName);
+    };
+
+    // Devices with SDK level lower than 31 (Android S) don't have any AIDL drivers available, so
+    // there is no need for a workaround supported on lower levels.
+    if (__builtin_available(android __ANDROID_API_S__, *)) {
+        AServiceManager_forEachDeclaredInstance(aidl_hal::IDevice::descriptor,
+                                                static_cast<void*>(&names), callback);
+    }
+
+    for (const auto& name : names) {
+        if (const auto [it, unregistered] = registeredDevices->insert(name); unregistered) {
+            auto maybeDevice = aidl_hal::utils::getDevice(name);
+            if (maybeDevice.has_value()) {
+                auto device = std::move(maybeDevice).value();
+                CHECK(device != nullptr);
+                devices->push_back(std::move(device));
+            } else {
+                LOG(ERROR) << "getDevice(" << name << ") failed with " << maybeDevice.error().code
+                           << ": " << maybeDevice.error().message;
+            }
+        }
+    }
+}
+
 std::vector<nn::SharedDevice> getDevices() {
     std::vector<nn::SharedDevice> devices;
     std::unordered_set<std::string> registeredDevices;
 
-    getDevicesForVersion(V1_3::IDevice::descriptor, &V1_3::utils::getDevice, &devices,
-                         &registeredDevices);
-    getDevicesForVersion(V1_2::IDevice::descriptor, &V1_2::utils::getDevice, &devices,
-                         &registeredDevices);
-    getDevicesForVersion(V1_1::IDevice::descriptor, &V1_1::utils::getDevice, &devices,
-                         &registeredDevices);
-    getDevicesForVersion(V1_0::IDevice::descriptor, &V1_0::utils::getDevice, &devices,
-                         &registeredDevices);
+    getAidlDevices(&devices, &registeredDevices);
+
+    getHidlDevicesForVersion(V1_3::IDevice::descriptor, &V1_3::utils::getDevice, &devices,
+                             &registeredDevices);
+    getHidlDevicesForVersion(V1_2::IDevice::descriptor, &V1_2::utils::getDevice, &devices,
+                             &registeredDevices);
+    getHidlDevicesForVersion(V1_1::IDevice::descriptor, &V1_1::utils::getDevice, &devices,
+                             &registeredDevices);
+    getHidlDevicesForVersion(V1_0::IDevice::descriptor, &V1_0::utils::getDevice, &devices,
+                             &registeredDevices);
 
     return devices;
 }
