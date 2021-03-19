@@ -17,19 +17,34 @@
 package android.hardware.biometrics.common;
 
 @VintfStability
-parcelable HardwareInfo {
+parcelable ComponentInfo {
     /**
      * An identifier uniquely identifying a subsystem.
+     * It must not be an empty string.
      */
-    String deviceName;
+    String componentId;
 
     /**
      * The hardware version. For example, <vendor>/<model>/<revision>.
+     * If there's no hardware version for this component, it must be empty.
      */
     String hardwareVersion;
 
     /**
+     * The firmware version.
+     * If there's no firmware version for this component, it must be empty.
+     */
+    String firmwareVersion;
+
+    /**
      * The sensor's serial number.
+     * If there's no serial number for this component, it must be empty.
      */
     String serialNumber;
+
+    /**
+     * The software version. For example, <vendor>/<version>/<revision>.
+     * If there's no software version for this component, it must be empty.
+     */
+    String softwareVersion;
 }
