@@ -45,11 +45,8 @@ struct ContextHubMsg {
     @1.0::ContextHubMsg msg_1_0;
 
     /**
-     * The list of Android permissions that the sender of this message has at
-     * the time the message was sent.
-     *
-     * The HAL MUST drop messages to nanoapps if this list of permissions is not
-     * a superset of those of the receiving nanoapp(s).
+     * The list of Android permissions held by the sending nanoapp at the time
+     * the message was sent.
      *
      * The framework MUST drop messages to host apps that don't have a superset
      * of the permissions that the sending nanoapp is using.
