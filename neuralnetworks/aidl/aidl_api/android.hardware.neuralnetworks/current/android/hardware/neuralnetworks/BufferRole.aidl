@@ -35,5 +35,5 @@ package android.hardware.neuralnetworks;
 parcelable BufferRole {
   int modelIndex;
   int ioIndex;
-  float frequency;
+  float probability;
 }
