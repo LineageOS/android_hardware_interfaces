@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@
 
 package android.hardware.neuralnetworks;
 @VintfStability
-parcelable SymmPerChannelQuantParams {
-  float[] scales;
-  int channelDim;
+interface IBurst {
+  android.hardware.neuralnetworks.ExecutionResult executeSynchronously(in android.hardware.neuralnetworks.Request request, in long[] memoryIdentifierTokens, in boolean measureTiming, in long deadline, in long loopTimeoutDuration);
+  void releaseMemoryResource(in long memoryIdentifierToken);
 }

@@ -203,6 +203,10 @@ class InvalidPreparedModel : public BnPreparedModel {
         return ndk::ScopedAStatus::fromServiceSpecificError(
                 static_cast<int32_t>(ErrorStatus::GENERAL_FAILURE));
     }
+    ndk::ScopedAStatus configureExecutionBurst(std::shared_ptr<IBurst>*) override {
+        return ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(ErrorStatus::GENERAL_FAILURE));
+    }
 };
 
 template <typename... Args>
@@ -866,6 +870,9 @@ class MemoryDomainExecutionTest
             case Executor::SYNC:
                 EXPECT_EQ(executeSync(preparedModel, request), expectedStatus);
                 break;
+            case Executor::BURST:
+                EXPECT_EQ(executeBurst(preparedModel, request), expectedStatus);
+                break;
             case Executor::FENCED:
                 EXPECT_EQ(executeFenced(preparedModel, request), expectedStatus);
                 break;
@@ -913,6 +920,35 @@ class MemoryDomainExecutionTest
                 executionResult.callback->getExecutionInfo(&time, &timeFenced, &executionStatus);
         EXPECT_TRUE(retExecutionInfo.isOk());
         EXPECT_EQ(time, kNoTiming);
+        return executionStatus;
+    }
+
+    ErrorStatus executeBurst(const std::shared_ptr<IPreparedModel>& preparedModel,
+                             const Request& request) {
+        // create burst
+        std::shared_ptr<IBurst> burst;
+        auto ret = preparedModel->configureExecutionBurst(&burst);
+        EXPECT_TRUE(ret.isOk()) << ret.getDescription();
+        EXPECT_NE(nullptr, burst.get());
+        if (!ret.isOk() || burst.get() == nullptr) {
+            return ErrorStatus::GENERAL_FAILURE;
+        }
+
+        // use -1 for all memory identifier tokens
+        const std::vector<int64_t> slots(request.pools.size(), -1);
+
+        ExecutionResult executionResult;
+        ret = burst->executeSynchronously(request, slots, false, kNoDeadline,
+                                          kOmittedTimeoutDuration, &executionResult);
+
+        if (!ret.isOk()) {
+            EXPECT_EQ(ret.getExceptionCode(), EX_SERVICE_SPECIFIC);
+            return static_cast<ErrorStatus>(ret.getServiceSpecificError());
+        }
+        const ErrorStatus executionStatus = executionResult.outputSufficientSize
+                                                    ? ErrorStatus::NONE
+                                                    : ErrorStatus::OUTPUT_INSUFFICIENT_SIZE;
+        EXPECT_EQ(executionResult.timing, kNoTiming);
         return executionStatus;
     }
 
@@ -1159,7 +1195,7 @@ TEST_P(MemoryDomainExecutionTest, InvalidDimensions) {
                   ErrorStatus::GENERAL_FAILURE);
 }
 
-const auto kExecutorChoices = testing::Values(Executor::SYNC, Executor::FENCED);
+const auto kExecutorChoices = testing::Values(Executor::SYNC, Executor::BURST, Executor::FENCED);
 
 std::string printMemoryDomainExecutionTest(
         const testing::TestParamInfo<MemoryDomainExecutionTestParam>& info) {
