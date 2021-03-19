@@ -73,8 +73,8 @@ interface IPreparedModel {
      *                runs from the time the driver sees the call to the executeSynchronously
      *                function to the time the driver returns from the function.
      * @param deadline The time by which the execution is expected to complete. The time is measured
-     *                 in nanoseconds since epoch of the steady clock (as from
-     *                 std::chrono::steady_clock). If the execution cannot be finished by the
+     *                 in nanoseconds since boot (as from clock_gettime(CLOCK_BOOTTIME, &ts) or
+     *                 ::android::base::boot_clock). If the execution cannot be finished by the
      *                 deadline, the execution may be aborted. Passing -1 means the deadline is
      *                 omitted. Other negative values are invalid.
      * @param loopTimeoutDuration The maximum amount of time in nanoseconds that should be spent
@@ -138,8 +138,8 @@ interface IPreparedModel {
      *                sync fences have been signaled.
      * @param measure Specifies whether or not to measure duration of the execution.
      * @param deadline The time by which the execution is expected to complete. The time is measured
-     *                 in nanoseconds since epoch of the steady clock (as from
-     *                 std::chrono::steady_clock).If the execution cannot be finished by the
+     *                 in nanoseconds since boot (as from clock_gettime(CLOCK_BOOTTIME, &ts) or
+     *                 ::android::base::boot_clock). If the execution cannot be finished by the
      *                 deadline, the execution may be aborted. Passing -1 means the deadline is
      *                 omitted. Other negative values are invalid.
      * @param loopTimeoutDuration The maximum amount of time in nanoseconds that should be spent

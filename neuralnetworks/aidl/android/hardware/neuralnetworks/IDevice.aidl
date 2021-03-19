@@ -307,10 +307,10 @@ interface IDevice {
      * @param priority The priority of the prepared model relative to other prepared models owned by
      *                 the client.
      * @param deadline The time by which the model is expected to be prepared. The time is measured
-     *                 in nanoseconds since epoch of the steady clock (as from
-     *                 std::chrono::steady_clock). If the model cannot be prepared by the deadline,
-     *                 the preparation may be aborted. Passing -1 means the deadline is omitted.
-     *                 Other negative values are invalid.
+     *                 in nanoseconds since boot (as from clock_gettime(CLOCK_BOOTTIME, &ts)
+     *                 or ::android::base::boot_clock). If the model cannot be prepared by the
+     *                 deadline, the preparation may be aborted. Passing -1 means the deadline is
+     *                 omitted. Other negative values are invalid.
      * @param modelCache A vector of file descriptors for the security-sensitive cache. The length
      *                   of the vector must either be 0 indicating that caching information is not
      *                   provided, or match the numModelCache returned from
@@ -396,10 +396,10 @@ interface IDevice {
      * different shapes of inputs on different (possibly concurrent) executions.
      *
      * @param deadline The time by which the model is expected to be prepared. The time is measured
-     *                 in nanoseconds since epoch of the steady clock (as from
-     *                 std::chrono::steady_clock). If the model cannot be prepared by the deadline,
-     *                 the preparation may be aborted. Passing -1 means the deadline is omitted.
-     *                 Other negative values are invalid.
+     *                 in nanoseconds since boot (as from clock_gettime(CLOCK_BOOTTIME, &ts) or
+     *                 ::android::base::boot_clock). If the model cannot be prepared by the
+     *                 deadline, the preparation may be aborted. Passing -1 means the deadline is
+     *                 omitted. Other negative values are invalid.
      * @param modelCache A vector of file descriptors for the security-sensitive cache. The length
      *                   of the vector must match the numModelCache returned from
      *                   getNumberOfCacheFilesNeeded. The cache file descriptors will be provided in
