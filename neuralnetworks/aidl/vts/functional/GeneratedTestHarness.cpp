@@ -299,9 +299,11 @@ static bool isOutputSizeGreaterThanOne(const TestModel& testModel, uint32_t inde
 }
 
 static void makeOutputInsufficientSize(uint32_t outputIndex, Request* request) {
-    auto& length = request->outputs[outputIndex].location.length;
-    ASSERT_GT(length, 1u);
-    length -= 1u;
+    auto& loc = request->outputs[outputIndex].location;
+    ASSERT_GT(loc.length, 1u);
+    loc.length -= 1u;
+    // Test that the padding is not used for output data.
+    loc.padding += 1u;
 }
 
 static void makeOutputDimensionsUnspecified(Model* model) {
@@ -335,6 +337,12 @@ class ExecutionContext {
     std::unique_ptr<TestMemoryBase> mInputMemory, mOutputMemory;
     std::vector<std::shared_ptr<IBuffer>> mBuffers;
 };
+
+// Returns the number of bytes needed to round up "size" to the nearest multiple of "multiple".
+static uint32_t roundUpBytesNeeded(uint32_t size, uint32_t multiple) {
+    CHECK(multiple != 0);
+    return ((size + multiple - 1) / multiple) * multiple - size;
+}
 
 std::optional<Request> ExecutionContext::createRequest(const TestModel& testModel,
                                                        MemoryType memoryType) {
@@ -370,10 +378,13 @@ std::optional<Request> ExecutionContext::createRequest(const TestModel& testMode
         }
 
         // Reserve shared memory for input.
+        inputSize += roundUpBytesNeeded(inputSize, nn::kDefaultRequestMemoryAlignment);
+        const auto padding = roundUpBytesNeeded(op.data.size(), nn::kDefaultRequestMemoryPadding);
         DataLocation loc = {.poolIndex = kInputPoolIndex,
                             .offset = static_cast<int64_t>(inputSize),
-                            .length = static_cast<int64_t>(op.data.size())};
-        inputSize += op.data.alignedSize();
+                            .length = static_cast<int64_t>(op.data.size()),
+                            .padding = static_cast<int64_t>(padding)};
+        inputSize += (op.data.size() + padding);
         inputs[i] = {.hasNoValue = false, .location = loc, .dimensions = {}};
     }
 
@@ -404,10 +415,13 @@ std::optional<Request> ExecutionContext::createRequest(const TestModel& testMode
         size_t bufferSize = std::max<size_t>(op.data.size(), 1);
 
         // Reserve shared memory for output.
+        outputSize += roundUpBytesNeeded(outputSize, nn::kDefaultRequestMemoryAlignment);
+        const auto padding = roundUpBytesNeeded(bufferSize, nn::kDefaultRequestMemoryPadding);
         DataLocation loc = {.poolIndex = kOutputPoolIndex,
                             .offset = static_cast<int64_t>(outputSize),
-                            .length = static_cast<int64_t>(bufferSize)};
-        outputSize += op.data.size() == 0 ? TestBuffer::kAlignment : op.data.alignedSize();
+                            .length = static_cast<int64_t>(bufferSize),
+                            .padding = static_cast<int64_t>(padding)};
+        outputSize += (bufferSize + padding);
         outputs[i] = {.hasNoValue = false, .location = loc, .dimensions = {}};
     }
 
