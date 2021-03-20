@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.hardware.soundtrigger.cli;
+package android.hardware.soundtrigger.V2_4.cli;
 
 import android.hardware.soundtrigger.V2_0.PhraseRecognitionExtra;
 import android.hardware.soundtrigger.V2_0.RecognitionMode;
@@ -26,6 +26,7 @@ import android.os.HidlMemoryUtil;
 import android.os.HwBinder;
 import android.os.RemoteException;
 import android.os.SystemProperties;
+
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -63,8 +64,7 @@ public class SthalCli {
             SystemProperties.set("debug.soundtrigger_middleware.use_mock_hal", "true");
             SystemProperties.set("sys.audio.restart.hal", "1");
 
-            while (processCommand())
-                ;
+            while (processCommand()) ;
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -97,13 +97,13 @@ public class SthalCli {
                 return true;
 
             case "r":
-                mService.sendRecognitionEvent(
-                        Integer.parseInt(tokens[1]), Integer.parseInt(tokens[2]));
+                mService.sendRecognitionEvent(Integer.parseInt(tokens[1]),
+                        Integer.parseInt(tokens[2]));
                 return true;
 
             case "p":
-                mService.sendPhraseRecognitionEvent(
-                        Integer.parseInt(tokens[1]), Integer.parseInt(tokens[2]));
+                mService.sendPhraseRecognitionEvent(Integer.parseInt(tokens[1]),
+                        Integer.parseInt(tokens[2]));
                 return true;
 
             case "d":
@@ -111,9 +111,7 @@ public class SthalCli {
                 return true;
 
             case "h":
-                System.out.print("Available commands:\n"
-                        + "h - help\n"
-                        + "q - quit\n"
+                System.out.print("Available commands:\n" + "h - help\n" + "q - quit\n"
                         + "a - send onResourcesAvailable event\n"
                         + "u <model> - send modelUnloaded event\n"
                         + "r <model> <status> - send recognitionEvent\n"
@@ -177,8 +175,7 @@ public class SthalCli {
             Model model = mLoadedModels.get(modelHandle);
             if (model != null && model.config != null) {
                 android.hardware.soundtrigger.V2_1.ISoundTriggerHwCallback.RecognitionEvent event =
-                        new android.hardware.soundtrigger.V2_1.ISoundTriggerHwCallback
-                                .RecognitionEvent();
+                        new android.hardware.soundtrigger.V2_1.ISoundTriggerHwCallback.RecognitionEvent();
                 event.header.model = modelHandle;
                 event.header.type = SoundModelType.GENERIC;
                 event.header.status = status;
@@ -200,10 +197,9 @@ public class SthalCli {
         public void sendPhraseRecognitionEvent(int modelHandle, int status) {
             Model model = mLoadedModels.get(modelHandle);
             if (model != null && model.config != null) {
-                android.hardware.soundtrigger.V2_1.ISoundTriggerHwCallback
-                        .PhraseRecognitionEvent event =
-                        new android.hardware.soundtrigger.V2_1.ISoundTriggerHwCallback
-                                .PhraseRecognitionEvent();
+                android.hardware.soundtrigger.V2_1.ISoundTriggerHwCallback.PhraseRecognitionEvent
+                        event =
+                        new android.hardware.soundtrigger.V2_1.ISoundTriggerHwCallback.PhraseRecognitionEvent();
                 event.common.header.model = modelHandle;
                 event.common.header.type = SoundModelType.KEYPHRASE;
                 event.common.header.status = status;
@@ -250,8 +246,7 @@ public class SthalCli {
         public void loadSoundModel_2_4(SoundModel soundModel, ISoundTriggerHwCallback callback,
                 loadSoundModel_2_4Callback _hidl_cb) {
             int handle = mHandleCounter++;
-            System.out.println(
-                    String.format("loadSoundModel_2_4(soundModel=%s) -> %d", soundModel, handle));
+            System.out.printf("loadSoundModel_2_4(soundModel=%s) -> %d%n", soundModel, handle);
             mLoadedModels.put(handle, new Model(callback, soundModel));
             _hidl_cb.onValues(0, handle);
         }
@@ -260,16 +255,16 @@ public class SthalCli {
         public void loadPhraseSoundModel_2_4(PhraseSoundModel soundModel,
                 ISoundTriggerHwCallback callback, loadPhraseSoundModel_2_4Callback _hidl_cb) {
             int handle = mHandleCounter++;
-            System.out.println(String.format(
-                    "loadPhraseSoundModel_2_4(soundModel=%s) -> %d", soundModel, handle));
+            System.out.printf("loadPhraseSoundModel_2_4(soundModel=%s) -> %d%n", soundModel,
+                    handle);
             mLoadedModels.put(handle, new Model(callback, soundModel));
             _hidl_cb.onValues(0, handle);
         }
 
         @Override
-        public int startRecognition_2_4(
-                int modelHandle, android.hardware.soundtrigger.V2_3.RecognitionConfig config) {
-            System.out.println(String.format("startRecognition_2_4(modelHandle=%d)", modelHandle));
+        public int startRecognition_2_4(int modelHandle,
+                android.hardware.soundtrigger.V2_3.RecognitionConfig config) {
+            System.out.printf("startRecognition_2_4(modelHandle=%d)%n", modelHandle);
             Model model = mLoadedModels.get(modelHandle);
             if (model != null) {
                 model.config = config;
@@ -292,26 +287,26 @@ public class SthalCli {
         }
 
         @Override
-        public void queryParameter(
-                int modelHandle, int modelParam, queryParameterCallback _hidl_cb) {
+        public void queryParameter(int modelHandle, int modelParam,
+                queryParameterCallback _hidl_cb) {
             _hidl_cb.onValues(0, new OptionalModelParameterRange());
         }
 
         @Override
         public int getModelState(int modelHandle) {
-            System.out.println(String.format("getModelState(modelHandle=%d)", modelHandle));
+            System.out.printf("getModelState(modelHandle=%d)%n", modelHandle);
             return 0;
         }
 
         @Override
         public int unloadSoundModel(int modelHandle) {
-            System.out.println(String.format("unloadSoundModel(modelHandle=%d)", modelHandle));
+            System.out.printf("unloadSoundModel(modelHandle=%d)%n", modelHandle);
             return 0;
         }
 
         @Override
         public int stopRecognition(int modelHandle) {
-            System.out.println(String.format("stopRecognition(modelHandle=%d)", modelHandle));
+            System.out.printf("stopRecognition(modelHandle=%d)%n", modelHandle);
             Model model = mLoadedModels.get(modelHandle);
             if (model != null) {
                 model.config = null;
@@ -335,8 +330,8 @@ public class SthalCli {
         // Everything below is not implemented and not expected to be called.
 
         @Override
-        public int startRecognition_2_3(
-                int modelHandle, android.hardware.soundtrigger.V2_3.RecognitionConfig config) {
+        public int startRecognition_2_3(int modelHandle,
+                android.hardware.soundtrigger.V2_3.RecognitionConfig config) {
             throw new UnsupportedOperationException();
         }
 

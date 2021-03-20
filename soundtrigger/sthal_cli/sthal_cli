@@ -1,7 +1,0 @@
-#!/system/bin/sh
-# Script to start "sthal_cli" on the device
-#
-base=/system
-export CLASSPATH=$base/framework/sthal_cli.jar
-exec app_process $base/bin android.hardware.soundtrigger.cli.SthalCli "$@"
-

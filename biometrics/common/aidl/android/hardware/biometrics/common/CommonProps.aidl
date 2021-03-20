@@ -16,7 +16,7 @@
 
 package android.hardware.biometrics.common;
 
-import android.hardware.biometrics.common.HardwareInfo;
+import android.hardware.biometrics.common.ComponentInfo;
 import android.hardware.biometrics.common.SensorStrength;
 
 @VintfStability
@@ -41,16 +41,7 @@ parcelable CommonProps {
     int maxEnrollmentsPerUser;
 
     /**
-     * A list of hardware information for subsystems that pertain to this biometric sensor.
+     * A list of component information for subsystems that pertain to this biometric sensor.
      */
-    HardwareInfo[] hardwareInfo;
-
-    /**
-     * Software information for subsystems that pertain to this biometric sensor.
-     * This may include information for the matching algorithm, the PAD (Presentation Attack
-     * Detection) algorithm, and any other algorithm(s) used by this biometric sensor.
-     * For example, <algorithm_1_info>;<algorithm_2_info>;<algorithm_3_info>.
-     * The format of each algorithm's info can be <vendor>/<algorithm>/<version>.
-     */
-    String softwareInfo;
+    ComponentInfo[] componentInfo;
 }
