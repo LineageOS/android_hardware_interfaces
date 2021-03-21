@@ -1027,18 +1027,6 @@ struct RouteSelectionDescriptor {
      */
     uint8_t precedence;
     /**
-     * Parameters defining this RouteSelectionDescriptor. The length of the vector
-     * must be >= 1.
-     */
-    vec<RouteSelectionDescriptorParams> routeSelectionDescriptorParams;
-};
-
-/**
- * This struct represents a route selection descriptor. A valid struct must have
- * at least one of the vectors non-empty.
- */
-struct RouteSelectionDescriptorParams {
-    /**
      * Valid values are IP, IPV6 and IPV4V6.
      */
     OptionalPdpProtocolType sessionType;
