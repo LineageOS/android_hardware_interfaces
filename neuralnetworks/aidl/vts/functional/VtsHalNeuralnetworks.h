@@ -52,7 +52,7 @@ void createPreparedModel(const std::shared_ptr<IDevice>& device, const Model& mo
                          std::shared_ptr<IPreparedModel>* preparedModel,
                          bool reportSkipping = true);
 
-enum class Executor { ASYNC, SYNC, BURST, FENCED };
+enum class Executor { SYNC, BURST, FENCED };
 
 std::string toString(Executor executor);
 
