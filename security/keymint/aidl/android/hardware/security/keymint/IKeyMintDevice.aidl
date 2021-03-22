@@ -211,6 +211,7 @@ import android.hardware.security.secureclock.TimeStampToken;
  * hardwareEnforced authorization list.  Tag::OS_VERSION, Tag::OS_PATCHLEVEL,
  * Tag::VENDOR_PATCHLEVEL, and Tag::BOOT_PATCHLEVEL must be cryptographically bound to every
  * IKeyMintDevice key, as described in the Key Access Control section above.
+ * @hide
  */
 @VintfStability
 interface IKeyMintDevice {
