@@ -811,30 +811,6 @@ const vector<KeyParameter>& KeyMintAidlTestBase::SecLevelAuthorizations(
     return (found == key_characteristics.end()) ? kEmptyAuthList : found->authorizations;
 }
 
-AuthorizationSet KeyMintAidlTestBase::HwEnforcedAuthorizations(
-        const vector<KeyCharacteristics>& key_characteristics) {
-    AuthorizationSet authList;
-    for (auto& entry : key_characteristics) {
-        if (entry.securityLevel == SecurityLevel::STRONGBOX ||
-            entry.securityLevel == SecurityLevel::TRUSTED_ENVIRONMENT) {
-            authList.push_back(AuthorizationSet(entry.authorizations));
-        }
-    }
-    return authList;
-}
-
-AuthorizationSet KeyMintAidlTestBase::SwEnforcedAuthorizations(
-        const vector<KeyCharacteristics>& key_characteristics) {
-    AuthorizationSet authList;
-    for (auto& entry : key_characteristics) {
-        if (entry.securityLevel == SecurityLevel::SOFTWARE ||
-            entry.securityLevel == SecurityLevel::KEYSTORE) {
-            authList.push_back(AuthorizationSet(entry.authorizations));
-        }
-    }
-    return authList;
-}
-
 ErrorCode KeyMintAidlTestBase::UseAesKey(const vector<uint8_t>& aesKeyBlob) {
     auto [result, ciphertext] = ProcessMessage(
             aesKeyBlob, KeyPurpose::ENCRYPT, "1234567890123456",
@@ -1046,6 +1022,28 @@ string bin2hex(const vector<uint8_t>& data) {
     return retval;
 }
 
+AuthorizationSet HwEnforcedAuthorizations(const vector<KeyCharacteristics>& key_characteristics) {
+    AuthorizationSet authList;
+    for (auto& entry : key_characteristics) {
+        if (entry.securityLevel == SecurityLevel::STRONGBOX ||
+            entry.securityLevel == SecurityLevel::TRUSTED_ENVIRONMENT) {
+            authList.push_back(AuthorizationSet(entry.authorizations));
+        }
+    }
+    return authList;
+}
+
+AuthorizationSet SwEnforcedAuthorizations(const vector<KeyCharacteristics>& key_characteristics) {
+    AuthorizationSet authList;
+    for (auto& entry : key_characteristics) {
+        if (entry.securityLevel == SecurityLevel::SOFTWARE ||
+            entry.securityLevel == SecurityLevel::KEYSTORE) {
+            authList.push_back(AuthorizationSet(entry.authorizations));
+        }
+    }
+    return authList;
+}
+
 AssertionResult ChainSignaturesAreValid(const vector<Certificate>& chain) {
     std::stringstream cert_data;
 
@@ -1095,6 +1093,29 @@ AssertionResult ChainSignaturesAreValid(const vector<Certificate>& chain) {
 X509_Ptr parse_cert_blob(const vector<uint8_t>& blob) {
     const uint8_t* p = blob.data();
     return X509_Ptr(d2i_X509(nullptr /* allocate new */, &p, blob.size()));
+}
+
+vector<uint8_t> make_name_from_str(const string& name) {
+    X509_NAME_Ptr x509_name(X509_NAME_new());
+    EXPECT_TRUE(x509_name.get() != nullptr);
+    if (!x509_name) return {};
+
+    EXPECT_EQ(1, X509_NAME_add_entry_by_txt(x509_name.get(),  //
+                                            "CN",             //
+                                            MBSTRING_ASC,
+                                            reinterpret_cast<const uint8_t*>(name.c_str()),
+                                            -1,  // len
+                                            -1,  // loc
+                                            0 /* set */));
+
+    int len = i2d_X509_NAME(x509_name.get(), nullptr /* only return length */);
+    EXPECT_GT(len, 0);
+
+    vector<uint8_t> retval(len);
+    uint8_t* p = retval.data();
+    i2d_X509_NAME(x509_name.get(), &p);
+
+    return retval;
 }
 
 }  // namespace test

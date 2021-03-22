@@ -17,17 +17,20 @@
 #define LOG_TAG "VtsRemotelyProvisionableComponentTests"
 
 #include <RemotelyProvisionedComponent.h>
-#include <aidl/Gtest.h>
-#include <aidl/Vintf.h>
 #include <aidl/android/hardware/security/keymint/IRemotelyProvisionedComponent.h>
 #include <aidl/android/hardware/security/keymint/SecurityLevel.h>
 #include <android/binder_manager.h>
 #include <cppbor_parse.h>
 #include <cppcose/cppcose.h>
 #include <gmock/gmock.h>
-#include <gtest/gtest.h>
 #include <keymaster/keymaster_configuration.h>
+#include <keymint_support/authorization_set.h>
+#include <openssl/ec.h>
+#include <openssl/ec_key.h>
+#include <openssl/x509.h>
 #include <remote_prov/remote_prov_utils.h>
+
+#include "KeyMintAidlTestBase.h"
 
 namespace aidl::android::hardware::security::keymint::test {
 
@@ -50,6 +53,41 @@ using namespace keymaster;
 bytevec string_to_bytevec(const char* s) {
     const uint8_t* p = reinterpret_cast<const uint8_t*>(s);
     return bytevec(p, p + strlen(s));
+}
+
+void p256_pub_key(const vector<uint8_t>& coseKeyData, EVP_PKEY_Ptr* signingKey) {
+    // Extract x and y affine coordinates from the encoded Cose_Key.
+    auto [parsedPayload, __, payloadParseErr] = cppbor::parse(coseKeyData);
+    ASSERT_TRUE(parsedPayload) << "Key parse failed: " << payloadParseErr;
+    auto coseKey = parsedPayload->asMap();
+    const std::unique_ptr<cppbor::Item>& xItem = coseKey->get(cppcose::CoseKey::PUBKEY_X);
+    ASSERT_NE(xItem->asBstr(), nullptr);
+    vector<uint8_t> x = xItem->asBstr()->value();
+    const std::unique_ptr<cppbor::Item>& yItem = coseKey->get(cppcose::CoseKey::PUBKEY_Y);
+    ASSERT_NE(yItem->asBstr(), nullptr);
+    vector<uint8_t> y = yItem->asBstr()->value();
+
+    // Concatenate: 0x04 (uncompressed form marker) | x | y
+    vector<uint8_t> pubKeyData{0x04};
+    pubKeyData.insert(pubKeyData.end(), x.begin(), x.end());
+    pubKeyData.insert(pubKeyData.end(), y.begin(), y.end());
+
+    EC_KEY_Ptr ecKey = EC_KEY_Ptr(EC_KEY_new());
+    ASSERT_NE(ecKey, nullptr);
+    EC_GROUP_Ptr group = EC_GROUP_Ptr(EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1));
+    ASSERT_NE(group, nullptr);
+    ASSERT_EQ(EC_KEY_set_group(ecKey.get(), group.get()), 1);
+    EC_POINT_Ptr point = EC_POINT_Ptr(EC_POINT_new(group.get()));
+    ASSERT_NE(point, nullptr);
+    ASSERT_EQ(EC_POINT_oct2point(group.get(), point.get(), pubKeyData.data(), pubKeyData.size(),
+                                 nullptr),
+              1);
+    ASSERT_EQ(EC_KEY_set_public_key(ecKey.get(), point.get()), 1);
+
+    EVP_PKEY_Ptr pubKey = EVP_PKEY_Ptr(EVP_PKEY_new());
+    ASSERT_NE(pubKey, nullptr);
+    EVP_PKEY_assign_EC_KEY(pubKey.get(), ecKey.release());
+    *signingKey = std::move(pubKey);
 }
 
 void check_cose_key(const vector<uint8_t>& data, bool testMode) {
@@ -227,7 +265,8 @@ using GenerateKeyTests = VtsRemotelyProvisionedComponentTests;
 INSTANTIATE_REM_PROV_AIDL_TEST(GenerateKeyTests);
 
 /**
- * Generate and validate a production-mode key.  MAC tag can't be verified.
+ * Generate and validate a production-mode key.  MAC tag can't be verified, but
+ * the private key blob should be usable in KeyMint operations.
  */
 TEST_P(GenerateKeyTests, generateEcdsaP256Key_prodMode) {
     MacedPublicKey macedPubKey;
@@ -235,8 +274,59 @@ TEST_P(GenerateKeyTests, generateEcdsaP256Key_prodMode) {
     bool testMode = false;
     auto status = provisionable_->generateEcdsaP256KeyPair(testMode, &macedPubKey, &privateKeyBlob);
     ASSERT_TRUE(status.isOk());
+    vector<uint8_t> coseKeyData;
+    check_maced_pubkey(macedPubKey, testMode, &coseKeyData);
+    AttestationKey attestKey;
+    attestKey.keyBlob = std::move(privateKeyBlob);
+    attestKey.issuerSubjectName = make_name_from_str("Android Keystore Key");
 
-    check_maced_pubkey(macedPubKey, testMode, nullptr);
+    // Also talk to an IKeyMintDevice.
+    // TODO: if there were multiple instances of IRemotelyProvisionedComponent and IKeyMintDevice,
+    // what should the correlation between them be?
+    vector<string> params = ::android::getAidlHalInstanceNames(IKeyMintDevice::descriptor);
+    ASSERT_GT(params.size(), 0U);
+    ASSERT_TRUE(AServiceManager_isDeclared(params[0].c_str()));
+    ::ndk::SpAIBinder binder(AServiceManager_waitForService(params[0].c_str()));
+    std::shared_ptr<IKeyMintDevice> keyMint = IKeyMintDevice::fromBinder(binder);
+    KeyMintHardwareInfo info;
+    ASSERT_TRUE(keyMint->getHardwareInfo(&info).isOk());
+
+    // Generate an ECDSA key that is attested by the generated P256 keypair.
+    AuthorizationSet keyDesc = AuthorizationSetBuilder()
+                                       .Authorization(TAG_NO_AUTH_REQUIRED)
+                                       .EcdsaSigningKey(256)
+                                       .AttestationChallenge("foo")
+                                       .AttestationApplicationId("bar")
+                                       .Digest(Digest::NONE)
+                                       .SetDefaultValidity();
+    KeyCreationResult creationResult;
+    auto result = keyMint->generateKey(keyDesc.vector_data(), attestKey, &creationResult);
+    ASSERT_TRUE(result.isOk());
+    vector<uint8_t> attested_key_blob = std::move(creationResult.keyBlob);
+    vector<KeyCharacteristics> attested_key_characteristics =
+            std::move(creationResult.keyCharacteristics);
+    vector<Certificate> attested_key_cert_chain = std::move(creationResult.certificateChain);
+    EXPECT_EQ(attested_key_cert_chain.size(), 1);
+
+    AuthorizationSet hw_enforced = HwEnforcedAuthorizations(attested_key_characteristics);
+    AuthorizationSet sw_enforced = SwEnforcedAuthorizations(attested_key_characteristics);
+    EXPECT_TRUE(verify_attestation_record("foo", "bar", sw_enforced, hw_enforced,
+                                          info.securityLevel,
+                                          attested_key_cert_chain[0].encodedCertificate));
+
+    // Attestation by itself is not valid (last entry is not self-signed).
+    EXPECT_FALSE(ChainSignaturesAreValid(attested_key_cert_chain));
+
+    // The signature over the attested key should correspond to the P256 public key.
+    X509_Ptr key_cert(parse_cert_blob(attested_key_cert_chain[0].encodedCertificate));
+    ASSERT_TRUE(key_cert.get());
+    EVP_PKEY_Ptr signing_pubkey;
+    p256_pub_key(coseKeyData, &signing_pubkey);
+    ASSERT_TRUE(signing_pubkey.get());
+
+    ASSERT_TRUE(X509_verify(key_cert.get(), signing_pubkey.get()))
+            << "Verification of attested certificate failed "
+            << "OpenSSL error string: " << ERR_error_string(ERR_get_error(), NULL);
 }
 
 /**
