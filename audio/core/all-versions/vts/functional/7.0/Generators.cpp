@@ -110,7 +110,7 @@ std::vector<DeviceConfigParameter> generateOutputDeviceConfigParameters(bool one
                     if (isOffload) {
                         config.offloadInfo.info(generateOffloadInfo(config.base));
                     }
-                    result.emplace_back(device, config, flags);
+                    result.emplace_back(device, mixPort.getName(), config, flags);
                     if (oneProfilePerDevice) break;
                 }
                 if (oneProfilePerDevice) break;
@@ -160,7 +160,7 @@ const std::vector<DeviceConfigParameter>& getOutputDeviceInvalidConfigParameters
                         if (isOffload) {
                             config.offloadInfo.info(generateOffloadInfo(validBase));
                         }
-                        result.emplace_back(device, config, validFlags);
+                        result.emplace_back(device, mixPort.getName(), config, validFlags);
                     }
                     {
                         AudioConfig config{.base = validBase};
@@ -168,7 +168,7 @@ const std::vector<DeviceConfigParameter>& getOutputDeviceInvalidConfigParameters
                         if (isOffload) {
                             config.offloadInfo.info(generateOffloadInfo(validBase));
                         }
-                        result.emplace_back(device, config, validFlags);
+                        result.emplace_back(device, mixPort.getName(), config, validFlags);
                     }
                     if (generateInvalidFlags) {
                         AudioConfig config{.base = validBase};
@@ -176,32 +176,32 @@ const std::vector<DeviceConfigParameter>& getOutputDeviceInvalidConfigParameters
                             config.offloadInfo.info(generateOffloadInfo(validBase));
                         }
                         std::vector<AudioInOutFlag> flags = {"random_string", ""};
-                        result.emplace_back(device, config, flags);
+                        result.emplace_back(device, mixPort.getName(), config, flags);
                     }
                     if (isOffload) {
                         {
                             AudioConfig config{.base = validBase};
                             config.offloadInfo.info(generateOffloadInfo(validBase));
                             config.offloadInfo.info().base.channelMask = "random_string";
-                            result.emplace_back(device, config, validFlags);
+                            result.emplace_back(device, mixPort.getName(), config, validFlags);
                         }
                         {
                             AudioConfig config{.base = validBase};
                             config.offloadInfo.info(generateOffloadInfo(validBase));
                             config.offloadInfo.info().base.format = "random_string";
-                            result.emplace_back(device, config, validFlags);
+                            result.emplace_back(device, mixPort.getName(), config, validFlags);
                         }
                         {
                             AudioConfig config{.base = validBase};
                             config.offloadInfo.info(generateOffloadInfo(validBase));
                             config.offloadInfo.info().streamType = "random_string";
-                            result.emplace_back(device, config, validFlags);
+                            result.emplace_back(device, mixPort.getName(), config, validFlags);
                         }
                         {
                             AudioConfig config{.base = validBase};
                             config.offloadInfo.info(generateOffloadInfo(validBase));
                             config.offloadInfo.info().usage = "random_string";
-                            result.emplace_back(device, config, validFlags);
+                            result.emplace_back(device, mixPort.getName(), config, validFlags);
                         }
                         hasOffloadConfig = true;
                     } else {
@@ -234,7 +234,7 @@ std::vector<DeviceConfigParameter> generateInputDeviceConfigParameters(bool oneP
                 auto configs = combineAudioConfig(profile.getChannelMasks(),
                                                   profile.getSamplingRates(), profile.getFormat());
                 for (const auto& config : configs) {
-                    result.emplace_back(device, config, flags);
+                    result.emplace_back(device, mixPort.getName(), config, flags);
                     if (oneProfilePerDevice) break;
                 }
                 if (oneProfilePerDevice) break;
@@ -285,17 +285,17 @@ const std::vector<DeviceConfigParameter>& getInputDeviceInvalidConfigParameters(
                     {
                         AudioConfig config{.base = validBase};
                         config.base.channelMask = "random_string";
-                        result.emplace_back(device, config, validFlags);
+                        result.emplace_back(device, mixPort.getName(), config, validFlags);
                     }
                     {
                         AudioConfig config{.base = validBase};
                         config.base.format = "random_string";
-                        result.emplace_back(device, config, validFlags);
+                        result.emplace_back(device, mixPort.getName(), config, validFlags);
                     }
                     if (generateInvalidFlags) {
                         AudioConfig config{.base = validBase};
                         std::vector<AudioInOutFlag> flags = {"random_string", ""};
-                        result.emplace_back(device, config, flags);
+                        result.emplace_back(device, mixPort.getName(), config, flags);
                     }
                     hasConfig = true;
                     break;
