@@ -20,8 +20,8 @@ import android.hardware.security.secureclock.Timestamp;
 
 /**
  * TimeStampToken instances are used for secure environments that requires secure time information.
+ * @hide
  */
-
 @VintfStability
 @RustDerive(Clone=true, Eq=true, PartialEq=true, Ord=true, PartialOrd=true, Hash=true)
 parcelable TimeStampToken {

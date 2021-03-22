@@ -18,6 +18,7 @@ package android.hardware.security.keymint;
 
 /**
  * Digests provided by keyMint implementations.
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

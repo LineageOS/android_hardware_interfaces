@@ -22,6 +22,7 @@ import android.hardware.security.keymint.Tag;
 /**
  * Identifies the key authorization parameters to be used with keyMint.  This is usually
  * provided as an array of KeyParameters to IKeyMintDevice or Operation.
+ * @hide
  */
 @VintfStability
 @RustDerive(Clone=true, Eq=true, PartialEq=true, Ord=true, PartialOrd=true, Hash=true)
