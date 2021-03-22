@@ -89,6 +89,10 @@ using ::android::hardware::details::toHexString;
 using namespace ::android::hardware::audio::common::CPP_VERSION;
 using namespace ::android::hardware::audio::common::test::utility;
 using namespace ::android::hardware::audio::CPP_VERSION;
+using ReadParameters = ::android::hardware::audio::CPP_VERSION::IStreamIn::ReadParameters;
+using ReadStatus = ::android::hardware::audio::CPP_VERSION::IStreamIn::ReadStatus;
+using WriteCommand = ::android::hardware::audio::CPP_VERSION::IStreamOut::WriteCommand;
+using WriteStatus = ::android::hardware::audio::CPP_VERSION::IStreamOut::WriteStatus;
 #if MAJOR_VERSION >= 7
 // Make an alias for enumerations generated from the APM config XSD.
 namespace xsd {
@@ -100,6 +104,7 @@ using namespace ::android::audio::policy::configuration::CPP_VERSION;
 static auto okOrNotSupported = {Result::OK, Result::NOT_SUPPORTED};
 static auto okOrNotSupportedOrInvalidArgs = {Result::OK, Result::NOT_SUPPORTED,
                                              Result::INVALID_ARGUMENTS};
+static auto okOrInvalidState = {Result::OK, Result::INVALID_STATE};
 static auto okOrInvalidStateOrNotSupported = {Result::OK, Result::INVALID_STATE,
                                               Result::NOT_SUPPORTED};
 static auto invalidArgsOrNotSupported = {Result::INVALID_ARGUMENTS, Result::NOT_SUPPORTED};
@@ -115,6 +120,7 @@ static auto invalidStateOrNotSupported = {Result::INVALID_STATE, Result::NOT_SUP
 #include "7.0/Generators.h"
 #include "7.0/PolicyConfig.h"
 #endif
+#include "StreamWorker.h"
 
 class HidlTest : public ::testing::Test {
   public:
@@ -778,6 +784,11 @@ TEST_P(AudioHidlDeviceTest, DebugDumpInvalidArguments) {
 ////////////////////////// open{Output,Input}Stream //////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
+static inline AudioIoHandle getNextIoHandle() {
+    static AudioIoHandle lastHandle{};
+    return ++lastHandle;
+}
+
 // This class is also used by some device tests.
 template <class Stream>
 class StreamHelper {
@@ -787,16 +798,13 @@ class StreamHelper {
     template <class Open>
     void open(Open openStream, const AudioConfig& config, Result* res,
               AudioConfig* suggestedConfigPtr) {
-        // FIXME: Open a stream without an IOHandle
-        //        This is not required to be accepted by hal implementations
-        AudioIoHandle ioHandle{};
         AudioConfig suggestedConfig{};
         bool retryWithSuggestedConfig = true;
         if (suggestedConfigPtr == nullptr) {
             suggestedConfigPtr = &suggestedConfig;
             retryWithSuggestedConfig = false;
         }
-        ASSERT_OK(openStream(ioHandle, config, returnIn(*res, mStream, *suggestedConfigPtr)));
+        ASSERT_OK(openStream(mIoHandle, config, returnIn(*res, mStream, *suggestedConfigPtr)));
         switch (*res) {
             case Result::OK:
                 ASSERT_TRUE(mStream != nullptr);
@@ -806,7 +814,7 @@ class StreamHelper {
                 ASSERT_TRUE(mStream == nullptr);
                 if (retryWithSuggestedConfig) {
                     AudioConfig suggestedConfigRetry;
-                    ASSERT_OK(openStream(ioHandle, *suggestedConfigPtr,
+                    ASSERT_OK(openStream(mIoHandle, *suggestedConfigPtr,
                                          returnIn(*res, mStream, suggestedConfigRetry)));
                     ASSERT_OK(*res);
                     ASSERT_TRUE(mStream != nullptr);
@@ -834,8 +842,10 @@ class StreamHelper {
 #endif
         }
     }
+    AudioIoHandle getIoHandle() const { return mIoHandle; }
 
   private:
+    const AudioIoHandle mIoHandle = getNextIoHandle();
     sp<Stream>& mStream;
 };
 
@@ -861,7 +871,6 @@ class OpenStreamTest : public AudioHidlTestWithDeviceConfigParameter {
         return res;
     }
 
-  private:
     void TearDown() override {
         if (open) {
             ASSERT_OK(closeStream());
@@ -878,6 +887,116 @@ class OpenStreamTest : public AudioHidlTestWithDeviceConfigParameter {
 };
 
 ////////////////////////////// openOutputStream //////////////////////////////
+
+class StreamWriter : public StreamWorker<StreamWriter> {
+  public:
+    StreamWriter(IStreamOut* stream, size_t bufferSize)
+        : mStream(stream), mBufferSize(bufferSize), mData(mBufferSize) {}
+    ~StreamWriter() {
+        stop();
+        if (mEfGroup) {
+            EventFlag::deleteEventFlag(&mEfGroup);
+        }
+    }
+
+    typedef MessageQueue<WriteCommand, ::android::hardware::kSynchronizedReadWrite> CommandMQ;
+    typedef MessageQueue<uint8_t, ::android::hardware::kSynchronizedReadWrite> DataMQ;
+    typedef MessageQueue<WriteStatus, ::android::hardware::kSynchronizedReadWrite> StatusMQ;
+
+    bool workerInit() {
+        std::unique_ptr<CommandMQ> tempCommandMQ;
+        std::unique_ptr<DataMQ> tempDataMQ;
+        std::unique_ptr<StatusMQ> tempStatusMQ;
+        Result retval;
+        Return<void> ret = mStream->prepareForWriting(
+                1, mBufferSize,
+                [&](Result r, const CommandMQ::Descriptor& commandMQ,
+                    const DataMQ::Descriptor& dataMQ, const StatusMQ::Descriptor& statusMQ,
+                    const auto& /*halThreadInfo*/) {
+                    retval = r;
+                    if (retval == Result::OK) {
+                        tempCommandMQ.reset(new CommandMQ(commandMQ));
+                        tempDataMQ.reset(new DataMQ(dataMQ));
+                        tempStatusMQ.reset(new StatusMQ(statusMQ));
+                        if (tempDataMQ->isValid() && tempDataMQ->getEventFlagWord()) {
+                            EventFlag::createEventFlag(tempDataMQ->getEventFlagWord(), &mEfGroup);
+                        }
+                    }
+                });
+        if (!ret.isOk()) {
+            ALOGE("Transport error while calling prepareForWriting: %s", ret.description().c_str());
+            return false;
+        }
+        if (retval != Result::OK) {
+            ALOGE("Error from prepareForWriting: %d", retval);
+            return false;
+        }
+        if (!tempCommandMQ || !tempCommandMQ->isValid() || !tempDataMQ || !tempDataMQ->isValid() ||
+            !tempStatusMQ || !tempStatusMQ->isValid() || !mEfGroup) {
+            ALOGE_IF(!tempCommandMQ, "Failed to obtain command message queue for writing");
+            ALOGE_IF(tempCommandMQ && !tempCommandMQ->isValid(),
+                     "Command message queue for writing is invalid");
+            ALOGE_IF(!tempDataMQ, "Failed to obtain data message queue for writing");
+            ALOGE_IF(tempDataMQ && !tempDataMQ->isValid(),
+                     "Data message queue for writing is invalid");
+            ALOGE_IF(!tempStatusMQ, "Failed to obtain status message queue for writing");
+            ALOGE_IF(tempStatusMQ && !tempStatusMQ->isValid(),
+                     "Status message queue for writing is invalid");
+            ALOGE_IF(!mEfGroup, "Event flag creation for writing failed");
+            return false;
+        }
+        mCommandMQ = std::move(tempCommandMQ);
+        mDataMQ = std::move(tempDataMQ);
+        mStatusMQ = std::move(tempStatusMQ);
+        return true;
+    }
+
+    bool workerCycle() {
+        WriteCommand cmd = WriteCommand::WRITE;
+        if (!mCommandMQ->write(&cmd)) {
+            ALOGE("command message queue write failed");
+            return false;
+        }
+        const size_t dataSize = std::min(mData.size(), mDataMQ->availableToWrite());
+        bool success = mDataMQ->write(mData.data(), dataSize);
+        ALOGE_IF(!success, "data message queue write failed");
+        mEfGroup->wake(static_cast<uint32_t>(MessageQueueFlagBits::NOT_EMPTY));
+
+        uint32_t efState = 0;
+    retry:
+        status_t ret =
+                mEfGroup->wait(static_cast<uint32_t>(MessageQueueFlagBits::NOT_FULL), &efState);
+        if (efState & static_cast<uint32_t>(MessageQueueFlagBits::NOT_FULL)) {
+            WriteStatus writeStatus;
+            writeStatus.retval = Result::NOT_INITIALIZED;
+            if (!mStatusMQ->read(&writeStatus)) {
+                ALOGE("status message read failed");
+                success = false;
+            }
+            if (writeStatus.retval != Result::OK) {
+                ALOGE("bad write status: %d", writeStatus.retval);
+                success = false;
+            }
+        }
+        if (ret == -EAGAIN || ret == -EINTR) {
+            // Spurious wakeup. This normally retries no more than once.
+            goto retry;
+        } else if (ret) {
+            ALOGE("bad wait status: %d", ret);
+            success = false;
+        }
+        return success;
+    }
+
+  private:
+    IStreamOut* const mStream;
+    const size_t mBufferSize;
+    std::vector<uint8_t> mData;
+    std::unique_ptr<CommandMQ> mCommandMQ;
+    std::unique_ptr<DataMQ> mDataMQ;
+    std::unique_ptr<StatusMQ> mStatusMQ;
+    EventFlag* mEfGroup = nullptr;
+};
 
 class OutputStreamTest : public OpenStreamTest<IStreamOut> {
     void SetUp() override {
@@ -953,6 +1072,121 @@ INSTANTIATE_TEST_CASE_P(DeclaredOutputStreamConfigSupport, OutputStreamTest,
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(OutputStreamTest);
 
 ////////////////////////////// openInputStream //////////////////////////////
+
+class StreamReader : public StreamWorker<StreamReader> {
+  public:
+    StreamReader(IStreamIn* stream, size_t bufferSize)
+        : mStream(stream), mBufferSize(bufferSize), mData(mBufferSize) {}
+    ~StreamReader() {
+        stop();
+        if (mEfGroup) {
+            EventFlag::deleteEventFlag(&mEfGroup);
+        }
+    }
+
+    typedef MessageQueue<ReadParameters, ::android::hardware::kSynchronizedReadWrite> CommandMQ;
+    typedef MessageQueue<uint8_t, ::android::hardware::kSynchronizedReadWrite> DataMQ;
+    typedef MessageQueue<ReadStatus, ::android::hardware::kSynchronizedReadWrite> StatusMQ;
+
+    bool workerInit() {
+        std::unique_ptr<CommandMQ> tempCommandMQ;
+        std::unique_ptr<DataMQ> tempDataMQ;
+        std::unique_ptr<StatusMQ> tempStatusMQ;
+        Result retval;
+        Return<void> ret = mStream->prepareForReading(
+                1, mBufferSize,
+                [&](Result r, const CommandMQ::Descriptor& commandMQ,
+                    const DataMQ::Descriptor& dataMQ, const StatusMQ::Descriptor& statusMQ,
+                    const auto& /*halThreadInfo*/) {
+                    retval = r;
+                    if (retval == Result::OK) {
+                        tempCommandMQ.reset(new CommandMQ(commandMQ));
+                        tempDataMQ.reset(new DataMQ(dataMQ));
+                        tempStatusMQ.reset(new StatusMQ(statusMQ));
+                        if (tempDataMQ->isValid() && tempDataMQ->getEventFlagWord()) {
+                            EventFlag::createEventFlag(tempDataMQ->getEventFlagWord(), &mEfGroup);
+                        }
+                    }
+                });
+        if (!ret.isOk()) {
+            ALOGE("Transport error while calling prepareForReading: %s", ret.description().c_str());
+            return false;
+        }
+        if (retval != Result::OK) {
+            ALOGE("Error from prepareForReading: %d", retval);
+            return false;
+        }
+        if (!tempCommandMQ || !tempCommandMQ->isValid() || !tempDataMQ || !tempDataMQ->isValid() ||
+            !tempStatusMQ || !tempStatusMQ->isValid() || !mEfGroup) {
+            ALOGE_IF(!tempCommandMQ, "Failed to obtain command message queue for reading");
+            ALOGE_IF(tempCommandMQ && !tempCommandMQ->isValid(),
+                     "Command message queue for reading is invalid");
+            ALOGE_IF(!tempDataMQ, "Failed to obtain data message queue for reading");
+            ALOGE_IF(tempDataMQ && !tempDataMQ->isValid(),
+                     "Data message queue for reading is invalid");
+            ALOGE_IF(!tempStatusMQ, "Failed to obtain status message queue for reading");
+            ALOGE_IF(tempStatusMQ && !tempStatusMQ->isValid(),
+                     "Status message queue for reading is invalid");
+            ALOGE_IF(!mEfGroup, "Event flag creation for reading failed");
+            return false;
+        }
+        mCommandMQ = std::move(tempCommandMQ);
+        mDataMQ = std::move(tempDataMQ);
+        mStatusMQ = std::move(tempStatusMQ);
+        return true;
+    }
+
+    bool workerCycle() {
+        ReadParameters params;
+        params.command = IStreamIn::ReadCommand::READ;
+        params.params.read = mBufferSize;
+        if (!mCommandMQ->write(&params)) {
+            ALOGE("command message queue write failed");
+            return false;
+        }
+        mEfGroup->wake(static_cast<uint32_t>(MessageQueueFlagBits::NOT_FULL));
+
+        uint32_t efState = 0;
+        bool success = true;
+    retry:
+        status_t ret =
+                mEfGroup->wait(static_cast<uint32_t>(MessageQueueFlagBits::NOT_EMPTY), &efState);
+        if (efState & static_cast<uint32_t>(MessageQueueFlagBits::NOT_EMPTY)) {
+            ReadStatus readStatus;
+            readStatus.retval = Result::NOT_INITIALIZED;
+            if (!mStatusMQ->read(&readStatus)) {
+                ALOGE("status message read failed");
+                success = false;
+            }
+            if (readStatus.retval != Result::OK) {
+                ALOGE("bad read status: %d", readStatus.retval);
+                success = false;
+            }
+            const size_t dataSize = std::min(mData.size(), mDataMQ->availableToRead());
+            if (!mDataMQ->read(mData.data(), dataSize)) {
+                ALOGE("data message queue read failed");
+                success = false;
+            }
+        }
+        if (ret == -EAGAIN || ret == -EINTR) {
+            // Spurious wakeup. This normally retries no more than once.
+            goto retry;
+        } else if (ret) {
+            ALOGE("bad wait status: %d", ret);
+            success = false;
+        }
+        return success;
+    }
+
+  private:
+    IStreamIn* const mStream;
+    const size_t mBufferSize;
+    std::vector<uint8_t> mData;
+    std::unique_ptr<CommandMQ> mCommandMQ;
+    std::unique_ptr<DataMQ> mDataMQ;
+    std::unique_ptr<StatusMQ> mStatusMQ;
+    EventFlag* mEfGroup = nullptr;
+};
 
 class InputStreamTest : public OpenStreamTest<IStreamIn> {
     void SetUp() override {
@@ -1377,6 +1611,12 @@ TEST_P(InputStreamTest, getCapturePosition) {
     uint64_t frames;
     uint64_t time;
     ASSERT_OK(stream->getCapturePosition(returnIn(res, frames, time)));
+    // Although 'getCapturePosition' is mandatory in V7, legacy implementations
+    // may return -ENOSYS (which is translated to NOT_SUPPORTED) in cases when
+    // the capture position can't be retrieved, e.g. when the stream isn't
+    // running. Because of this, we don't fail when getting NOT_SUPPORTED
+    // in this test. Behavior of 'getCapturePosition' for running streams is
+    // tested in 'PcmOnlyConfigInputStreamTest' for V7.
     ASSERT_RESULT(okOrInvalidStateOrNotSupported, res);
     if (res == Result::OK) {
         ASSERT_EQ(0U, frames);
@@ -1560,15 +1800,19 @@ TEST_P(OutputStreamTest, GetPresentationPositionStop) {
         "If supported, a stream should always succeed to retrieve the "
         "presentation position");
     uint64_t frames;
-    TimeSpec mesureTS;
-    ASSERT_OK(stream->getPresentationPosition(returnIn(res, frames, mesureTS)));
+    TimeSpec measureTS;
+    ASSERT_OK(stream->getPresentationPosition(returnIn(res, frames, measureTS)));
+#if MAJOR_VERSION <= 6
     if (res == Result::NOT_SUPPORTED) {
-        doc::partialTest("getpresentationPosition is not supported");
+        doc::partialTest("getPresentationPosition is not supported");
         return;
     }
+#else
+    ASSERT_NE(Result::NOT_SUPPORTED, res) << "getPresentationPosition is mandatory in V7";
+#endif
     ASSERT_EQ(0U, frames);
 
-    if (mesureTS.tvNSec == 0 && mesureTS.tvSec == 0) {
+    if (measureTS.tvNSec == 0 && measureTS.tvSec == 0) {
         // As the stream has never written a frame yet,
         // the timestamp does not really have a meaning, allow to return 0
         return;
@@ -1580,8 +1824,8 @@ TEST_P(OutputStreamTest, GetPresentationPositionStop) {
 
     auto toMicroSec = [](uint64_t sec, auto nsec) { return sec * 1e+6 + nsec / 1e+3; };
     auto currentTime = toMicroSec(currentTS.tv_sec, currentTS.tv_nsec);
-    auto mesureTime = toMicroSec(mesureTS.tvSec, mesureTS.tvNSec);
-    ASSERT_PRED2([](auto c, auto m) { return c - m < 1e+6; }, currentTime, mesureTime);
+    auto measureTime = toMicroSec(measureTS.tvSec, measureTS.tvNSec);
+    ASSERT_PRED2([](auto c, auto m) { return c - m < 1e+6; }, currentTime, measureTime);
 }
 
 //////////////////////////////////////////////////////////////////////////////
