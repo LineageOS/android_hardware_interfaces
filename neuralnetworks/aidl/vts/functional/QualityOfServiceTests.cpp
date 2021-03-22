@@ -51,6 +51,10 @@ constexpr auto kShortDuration = std::chrono::milliseconds{5};
 using Results = std::tuple<ErrorStatus, std::vector<OutputShape>, Timing>;
 using MaybeResults = std::optional<Results>;
 
+using ExecutionFunction =
+        std::function<MaybeResults(const std::shared_ptr<IPreparedModel>& preparedModel,
+                                   const Request& request, int64_t deadline)>;
+
 static int64_t makeDeadline(DeadlineBoundType deadlineBoundType) {
     const auto getNanosecondsSinceEpoch = [](const auto& time) -> int64_t {
         const auto timeSinceEpoch = time.time_since_epoch();
@@ -177,13 +181,53 @@ static MaybeResults executeSynchronously(const std::shared_ptr<IPreparedModel>& 
                          std::move(executionResult.outputShapes), executionResult.timing});
 }
 
+static MaybeResults executeBurst(const std::shared_ptr<IPreparedModel>& preparedModel,
+                                 const Request& request, int64_t deadline) {
+    SCOPED_TRACE("burst");
+    const bool measure = false;
+
+    // create burst
+    std::shared_ptr<IBurst> burst;
+    auto ret = preparedModel->configureExecutionBurst(&burst);
+    EXPECT_TRUE(ret.isOk()) << ret.getDescription();
+    EXPECT_NE(nullptr, burst.get());
+    if (!ret.isOk() || burst.get() == nullptr) {
+        return std::nullopt;
+    }
+
+    // use -1 for all memory identifier tokens
+    const std::vector<int64_t> slots(request.pools.size(), -1);
+
+    // run execution
+    ExecutionResult executionResult;
+    ret = burst->executeSynchronously(request, slots, measure, deadline, kOmittedTimeoutDuration,
+                                      &executionResult);
+    EXPECT_TRUE(ret.isOk() || ret.getExceptionCode() == EX_SERVICE_SPECIFIC)
+            << ret.getDescription();
+    if (!ret.isOk()) {
+        if (ret.getExceptionCode() != EX_SERVICE_SPECIFIC) {
+            return std::nullopt;
+        }
+        return MaybeResults(
+                {static_cast<ErrorStatus>(ret.getServiceSpecificError()), {}, kNoTiming});
+    }
+
+    // return results
+    return MaybeResults({executionResult.outputSufficientSize
+                                 ? ErrorStatus::NONE
+                                 : ErrorStatus::OUTPUT_INSUFFICIENT_SIZE,
+                         std::move(executionResult.outputShapes), executionResult.timing});
+}
+
 void runExecutionTest(const std::shared_ptr<IPreparedModel>& preparedModel,
                       const TestModel& testModel, const Request& request,
-                      const ExecutionContext& context, DeadlineBoundType deadlineBound) {
+                      const ExecutionContext& context, bool synchronous,
+                      DeadlineBoundType deadlineBound) {
+    const ExecutionFunction execute = synchronous ? executeSynchronously : executeBurst;
     const auto deadline = makeDeadline(deadlineBound);
 
     // Perform execution and unpack results.
-    const auto results = executeSynchronously(preparedModel, request, deadline);
+    const auto results = execute(preparedModel, request, deadline);
     if (!results.has_value()) return;
     const auto& [status, outputShapes, timing] = results.value();
 
@@ -235,8 +279,11 @@ void runExecutionTest(const std::shared_ptr<IPreparedModel>& preparedModel,
 void runExecutionTests(const std::shared_ptr<IPreparedModel>& preparedModel,
                        const TestModel& testModel, const Request& request,
                        const ExecutionContext& context) {
-    for (auto deadlineBound : deadlineBounds) {
-        runExecutionTest(preparedModel, testModel, request, context, deadlineBound);
+    for (bool synchronous : {false, true}) {
+        for (auto deadlineBound : deadlineBounds) {
+            runExecutionTest(preparedModel, testModel, request, context, synchronous,
+                             deadlineBound);
+        }
     }
 }
 
