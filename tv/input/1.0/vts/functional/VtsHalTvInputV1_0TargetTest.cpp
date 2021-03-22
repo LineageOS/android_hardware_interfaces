@@ -313,6 +313,9 @@ TEST_P(TvInputHidlTest, OpenAnOpenedStreamsTest) {
     tv_input_->openStream(device_id, stream_id,
                           [&result](Result res, const native_handle_t*) { result = res; });
     EXPECT_EQ(Result::INVALID_STATE, result);
+
+    // close stream as subsequent tests assume no open streams
+    EXPECT_EQ(Result::OK, tv_input_->closeStream(device_id, stream_id));
 }
 
 /*
