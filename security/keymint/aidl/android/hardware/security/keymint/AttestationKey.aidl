@@ -22,6 +22,7 @@ import android.hardware.security.keymint.KeyParameter;
  * Contains a key blob with Tag::ATTEST_KEY that can be used to sign an attestation certificate,
  * and the DER-encoded X.501 Subject Name that will be placed in the Issuer field of the attestation
  * certificate.
+ * @hide
  */
 @VintfStability
 @RustDerive(Clone=true, Eq=true, PartialEq=true, Ord=true, PartialOrd=true, Hash=true)

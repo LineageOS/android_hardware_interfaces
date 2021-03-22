@@ -35,8 +35,8 @@ import android.hardware.security.sharedsecret.SharedSecretParameters;
  * Step 3: The system collects sharing check hash values from each service and evaluates them. If
  * they are all equal, then the shared secret generation is considered to be successful else it is
  * considered to have failed.
+ * @hide
  */
-
 @VintfStability
 interface ISharedSecret {
     /**
