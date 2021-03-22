@@ -21,6 +21,7 @@ package android.hardware.security.secureclock;
  * and a secure environment's notion of "current time" must not repeat until the Android device
  * reboots, or until at least 50 million years have elapsed (note that this requirement is satisfied
  * by setting the clock to zero during each boot, and then counting time accurately).
+ * @hide
  */
 @VintfStability
 @RustDerive(Clone=true, Eq=true, PartialEq=true, Ord=true, PartialOrd=true, Hash=true)
