@@ -31,15 +31,17 @@ using DeviceParameter = std::tuple<std::string, std::string>;
 
 // Nesting a tuple in another tuple allows to use GTest Combine function to generate
 // all combinations of devices and configs.
-enum { PARAM_DEVICE, PARAM_CONFIG, PARAM_FLAGS };
 #if MAJOR_VERSION <= 6
+enum { PARAM_DEVICE, PARAM_CONFIG, PARAM_FLAGS };
 enum { INDEX_INPUT, INDEX_OUTPUT };
 using DeviceConfigParameter =
         std::tuple<DeviceParameter, android::hardware::audio::common::CPP_VERSION::AudioConfig,
                    std::variant<android::hardware::audio::common::CPP_VERSION::AudioInputFlag,
                                 android::hardware::audio::common::CPP_VERSION::AudioOutputFlag>>;
 #elif MAJOR_VERSION >= 7
+enum { PARAM_DEVICE, PARAM_PORT_NAME, PARAM_CONFIG, PARAM_FLAGS };
 using DeviceConfigParameter =
-        std::tuple<DeviceParameter, android::hardware::audio::common::CPP_VERSION::AudioConfig,
+        std::tuple<DeviceParameter, std::string,
+                   android::hardware::audio::common::CPP_VERSION::AudioConfig,
                    std::vector<android::hardware::audio::CPP_VERSION::AudioInOutFlag>>;
 #endif
