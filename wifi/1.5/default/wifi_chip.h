@@ -184,6 +184,8 @@ class WifiChip : public V1_5::IWifiChip {
         WifiBand band, hidl_bitfield<WifiIfaceMode> ifaceModeMask,
         hidl_bitfield<UsableChannelFilter> filterMask,
         getUsableChannels_cb _hidl_cb) override;
+    Return<void> triggerSubsystemRestart(
+        triggerSubsystemRestart_cb hidl_status_cb) override;
 
    private:
     void invalidateAndRemoveAllIfaces();
@@ -303,6 +305,7 @@ class WifiChip : public V1_5::IWifiChip {
     void invalidateAndClearBridgedApAll();
     void invalidateAndClearBridgedAp(const std::string& br_name);
     bool findUsingNameFromBridgedApInstances(const std::string& name);
+    WifiStatus triggerSubsystemRestartInternal();
 
     ChipId chip_id_;
     std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;

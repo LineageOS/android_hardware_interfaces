@@ -131,7 +131,7 @@ WifiStatus Wifi::startInternal() {
                 WifiStatus wifi_status =
                     createWifiStatus(WifiStatusCode::ERROR_UNKNOWN, error);
                 for (const auto& callback : event_cb_handler_.getCallbacks()) {
-                    if (!callback->onFailure(wifi_status).isOk()) {
+                    if (!callback->onSubsystemRestart(wifi_status).isOk()) {
                         LOG(ERROR) << "Failed to invoke onFailure callback";
                     }
                 }
