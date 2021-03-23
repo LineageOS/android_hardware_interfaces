@@ -50,11 +50,19 @@ bool Wifi::isValid() {
 }
 
 Return<void> Wifi::registerEventCallback(
-    const sp<IWifiEventCallback>& event_callback,
+    const sp<V1_0::IWifiEventCallback>& event_callback,
     registerEventCallback_cb hidl_status_cb) {
     return validateAndCall(this, WifiStatusCode::ERROR_UNKNOWN,
                            &Wifi::registerEventCallbackInternal, hidl_status_cb,
                            event_callback);
+}
+
+Return<void> Wifi::registerEventCallback_1_5(
+    const sp<V1_5::IWifiEventCallback>& event_callback,
+    registerEventCallback_1_5_cb hidl_status_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_UNKNOWN,
+                           &Wifi::registerEventCallbackInternal_1_5,
+                           hidl_status_cb, event_callback);
 }
 
 Return<bool> Wifi::isStarted() { return run_state_ != RunState::STOPPED; }
@@ -95,7 +103,13 @@ Return<void> Wifi::debug(const hidl_handle& handle,
 }
 
 WifiStatus Wifi::registerEventCallbackInternal(
-    const sp<IWifiEventCallback>& event_callback) {
+    const sp<V1_0::IWifiEventCallback>& event_callback __unused) {
+    // Deprecated support for this callback.
+    return createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED);
+}
+
+WifiStatus Wifi::registerEventCallbackInternal_1_5(
+    const sp<V1_5::IWifiEventCallback>& event_callback) {
     if (!event_cb_handler_.addCallback(event_callback)) {
         return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
     }
