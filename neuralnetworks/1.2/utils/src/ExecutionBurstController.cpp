@@ -28,6 +28,7 @@
 #include <nnapi/Types.h>
 #include <nnapi/Validation.h>
 #include <nnapi/hal/1.0/Conversions.h>
+#include <nnapi/hal/CommonUtils.h>
 #include <nnapi/hal/HandleError.h>
 #include <nnapi/hal/ProtectCallback.h>
 #include <nnapi/hal/TransferValue.h>
@@ -49,6 +50,35 @@
 
 namespace android::hardware::neuralnetworks::V1_2::utils {
 namespace {
+
+class BurstExecution final : public nn::IExecution,
+                             public std::enable_shared_from_this<BurstExecution> {
+    struct PrivateConstructorTag {};
+
+  public:
+    static nn::GeneralResult<std::shared_ptr<const BurstExecution>> create(
+            std::shared_ptr<const ExecutionBurstController> controller,
+            std::vector<FmqRequestDatum> request, hal::utils::RequestRelocation relocation,
+            std::vector<ExecutionBurstController::OptionalCacheHold> cacheHolds);
+
+    BurstExecution(PrivateConstructorTag tag,
+                   std::shared_ptr<const ExecutionBurstController> controller,
+                   std::vector<FmqRequestDatum> request, hal::utils::RequestRelocation relocation,
+                   std::vector<ExecutionBurstController::OptionalCacheHold> cacheHolds);
+
+    nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> compute(
+            const nn::OptionalTimePoint& deadline) const override;
+
+    nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>> computeFenced(
+            const std::vector<nn::SyncFence>& waitFor, const nn::OptionalTimePoint& deadline,
+            const nn::OptionalDuration& timeoutDurationAfterFence) const override;
+
+  private:
+    const std::shared_ptr<const ExecutionBurstController> kController;
+    const std::vector<FmqRequestDatum> kRequest;
+    const hal::utils::RequestRelocation kRelocation;
+    const std::vector<ExecutionBurstController::OptionalCacheHold> kCacheHolds;
+};
 
 nn::GeneralResult<sp<IBurstContext>> executionBurstResultCallback(
         V1_0::ErrorStatus status, const sp<IBurstContext>& burstContext) {
@@ -209,10 +239,10 @@ Return<void> ExecutionBurstController::ExecutionBurstCallback::getMemories(
 // ExecutionBurstController methods
 
 nn::GeneralResult<std::shared_ptr<const ExecutionBurstController>> ExecutionBurstController::create(
-        const sp<V1_2::IPreparedModel>& preparedModel, FallbackFunction fallback,
+        nn::SharedPreparedModel preparedModel, const sp<V1_2::IPreparedModel>& hidlPreparedModel,
         std::chrono::microseconds pollingTimeWindow) {
     // check inputs
-    if (preparedModel == nullptr) {
+    if (preparedModel == nullptr || hidlPreparedModel == nullptr) {
         return NN_ERROR() << "ExecutionBurstController::create passed a nullptr";
     }
 
@@ -236,7 +266,7 @@ nn::GeneralResult<std::shared_ptr<const ExecutionBurstController>> ExecutionBurs
     auto cb = hal::utils::CallbackValue(executionBurstResultCallback);
 
     // configure burst
-    const Return<void> ret = preparedModel->configureExecutionBurst(
+    const Return<void> ret = hidlPreparedModel->configureExecutionBurst(
             burstCallback, *requestChannelDescriptor, *resultChannelDescriptor, cb);
     HANDLE_TRANSPORT_FAILURE(ret);
 
@@ -250,18 +280,18 @@ nn::GeneralResult<std::shared_ptr<const ExecutionBurstController>> ExecutionBurs
 
     // make and return controller
     return std::make_shared<const ExecutionBurstController>(
-            PrivateConstructorTag{}, std::move(fallback), std::move(requestChannelSender),
+            PrivateConstructorTag{}, std::move(preparedModel), std::move(requestChannelSender),
             std::move(resultChannelReceiver), std::move(burstCallback), std::move(burstContext),
             std::move(memoryCache), std::move(deathHandler));
 }
 
 ExecutionBurstController::ExecutionBurstController(
-        PrivateConstructorTag /*tag*/, FallbackFunction fallback,
+        PrivateConstructorTag /*tag*/, nn::SharedPreparedModel preparedModel,
         std::unique_ptr<RequestChannelSender> requestChannelSender,
         std::unique_ptr<ResultChannelReceiver> resultChannelReceiver,
         sp<ExecutionBurstCallback> callback, sp<IBurstContext> burstContext,
         std::shared_ptr<MemoryCache> memoryCache, neuralnetworks::utils::DeathHandler deathHandler)
-    : kFallback(std::move(fallback)),
+    : kPreparedModel(std::move(preparedModel)),
       mRequestChannelSender(std::move(requestChannelSender)),
       mResultChannelReceiver(std::move(resultChannelReceiver)),
       mBurstCallback(std::move(callback)),
@@ -283,25 +313,95 @@ ExecutionBurstController::execute(const nn::Request& request, nn::MeasureTiming 
     // systraces. Note that the first point we can begin collecting systraces in
     // ExecutionBurstServer is when the RequestChannelReceiver realizes there is data in the FMQ, so
     // ExecutionBurstServer collects systraces at different points in the code.
-    NNTRACE_FULL(NNTRACE_LAYER_IPC, NNTRACE_PHASE_EXECUTION, "ExecutionBurstController::execute");
+    NNTRACE_RT(NNTRACE_PHASE_EXECUTION, "ExecutionBurstController::execute");
 
     // if the request is valid but of a higher version than what's supported in burst execution,
     // fall back to another execution path
     if (const auto version = NN_TRY(hal::utils::makeExecutionFailure(nn::validate(request)));
         version > nn::Version::ANDROID_Q) {
         // fallback to another execution path if the packet could not be sent
-        if (kFallback) {
-            return kFallback(request, measure, deadline, loopTimeoutDuration);
-        }
-        return NN_ERROR() << "Request object has features not supported by IBurst::execute";
+        return kPreparedModel->execute(request, measure, deadline, loopTimeoutDuration);
     }
 
+    // ensure that request is ready for IPC
+    std::optional<nn::Request> maybeRequestInShared;
+    hal::utils::RequestRelocation relocation;
+    const nn::Request& requestInShared =
+            NN_TRY(hal::utils::makeExecutionFailure(hal::utils::convertRequestFromPointerToShared(
+                    &request, &maybeRequestInShared, &relocation)));
+
     // clear pools field of request, as they will be provided via slots
-    const auto requestWithoutPools =
-            nn::Request{.inputs = request.inputs, .outputs = request.outputs, .pools = {}};
+    const auto requestWithoutPools = nn::Request{
+            .inputs = requestInShared.inputs, .outputs = requestInShared.outputs, .pools = {}};
     auto hidlRequest = NN_TRY(
             hal::utils::makeExecutionFailure(V1_0::utils::unvalidatedConvert(requestWithoutPools)));
     const auto hidlMeasure = NN_TRY(hal::utils::makeExecutionFailure(convert(measure)));
+
+    std::vector<int32_t> slots;
+    std::vector<OptionalCacheHold> holds;
+    slots.reserve(requestInShared.pools.size());
+    holds.reserve(requestInShared.pools.size());
+    for (const auto& memoryPool : requestInShared.pools) {
+        auto [slot, hold] = mMemoryCache->cacheMemory(std::get<nn::SharedMemory>(memoryPool));
+        slots.push_back(slot);
+        holds.push_back(std::move(hold));
+    }
+
+    // send request packet
+    const auto requestPacket = serialize(hidlRequest, hidlMeasure, slots);
+    const auto fallback = [this, &request, measure, &deadline, &loopTimeoutDuration] {
+        return kPreparedModel->execute(request, measure, deadline, loopTimeoutDuration);
+    };
+    return executeInternal(requestPacket, relocation, fallback);
+}
+
+// See IBurst::createReusableExecution for information on this method.
+nn::GeneralResult<nn::SharedExecution> ExecutionBurstController::createReusableExecution(
+        const nn::Request& request, nn::MeasureTiming measure,
+        const nn::OptionalDuration& loopTimeoutDuration) const {
+    NNTRACE_RT(NNTRACE_PHASE_EXECUTION, "ExecutionBurstController::createReusableExecution");
+
+    // if the request is valid but of a higher version than what's supported in burst execution,
+    // fall back to another execution path
+    if (const auto version = NN_TRY(hal::utils::makeGeneralFailure(nn::validate(request)));
+        version > nn::Version::ANDROID_Q) {
+        // fallback to another execution path if the packet could not be sent
+        return kPreparedModel->createReusableExecution(request, measure, loopTimeoutDuration);
+    }
+
+    // ensure that request is ready for IPC
+    std::optional<nn::Request> maybeRequestInShared;
+    hal::utils::RequestRelocation relocation;
+    const nn::Request& requestInShared = NN_TRY(hal::utils::convertRequestFromPointerToShared(
+            &request, &maybeRequestInShared, &relocation));
+
+    // clear pools field of request, as they will be provided via slots
+    const auto requestWithoutPools = nn::Request{
+            .inputs = requestInShared.inputs, .outputs = requestInShared.outputs, .pools = {}};
+    auto hidlRequest = NN_TRY(V1_0::utils::unvalidatedConvert(requestWithoutPools));
+    const auto hidlMeasure = NN_TRY(convert(measure));
+
+    std::vector<int32_t> slots;
+    std::vector<OptionalCacheHold> holds;
+    slots.reserve(requestInShared.pools.size());
+    holds.reserve(requestInShared.pools.size());
+    for (const auto& memoryPool : requestInShared.pools) {
+        auto [slot, hold] = mMemoryCache->cacheMemory(std::get<nn::SharedMemory>(memoryPool));
+        slots.push_back(slot);
+        holds.push_back(std::move(hold));
+    }
+
+    const auto requestPacket = serialize(hidlRequest, hidlMeasure, slots);
+    return BurstExecution::create(shared_from_this(), std::move(requestPacket),
+                                  std::move(relocation), std::move(holds));
+}
+
+nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>>
+ExecutionBurstController::executeInternal(const std::vector<FmqRequestDatum>& requestPacket,
+                                          const hal::utils::RequestRelocation& relocation,
+                                          FallbackFunction fallback) const {
+    NNTRACE_FULL(NNTRACE_LAYER_IPC, NNTRACE_PHASE_EXECUTION,
+                 "ExecutionBurstController::executeInternal");
 
     // Ensure that at most one execution is in flight at any given time.
     const bool alreadyInFlight = mExecutionInFlight.test_and_set();
@@ -310,22 +410,16 @@ ExecutionBurstController::execute(const nn::Request& request, nn::MeasureTiming 
     }
     const auto guard = base::make_scope_guard([this] { mExecutionInFlight.clear(); });
 
-    std::vector<int32_t> slots;
-    std::vector<OptionalCacheHold> holds;
-    slots.reserve(request.pools.size());
-    holds.reserve(request.pools.size());
-    for (const auto& memoryPool : request.pools) {
-        auto [slot, hold] = mMemoryCache->cacheMemory(std::get<nn::SharedMemory>(memoryPool));
-        slots.push_back(slot);
-        holds.push_back(std::move(hold));
+    if (relocation.input) {
+        relocation.input->flush();
     }
 
     // send request packet
-    const auto sendStatus = mRequestChannelSender->send(hidlRequest, hidlMeasure, slots);
+    const auto sendStatus = mRequestChannelSender->sendPacket(requestPacket);
     if (!sendStatus.ok()) {
         // fallback to another execution path if the packet could not be sent
-        if (kFallback) {
-            return kFallback(request, measure, deadline, loopTimeoutDuration);
+        if (fallback) {
+            return fallback();
         }
         return NN_ERROR() << "Error sending FMQ packet: " << sendStatus.error();
     }
@@ -333,7 +427,47 @@ ExecutionBurstController::execute(const nn::Request& request, nn::MeasureTiming 
     // get result packet
     const auto [status, outputShapes, timing] =
             NN_TRY(hal::utils::makeExecutionFailure(mResultChannelReceiver->getBlocking()));
+
+    if (relocation.output) {
+        relocation.output->flush();
+    }
     return executionCallback(status, outputShapes, timing);
+}
+
+nn::GeneralResult<std::shared_ptr<const BurstExecution>> BurstExecution::create(
+        std::shared_ptr<const ExecutionBurstController> controller,
+        std::vector<FmqRequestDatum> request, hal::utils::RequestRelocation relocation,
+        std::vector<ExecutionBurstController::OptionalCacheHold> cacheHolds) {
+    if (controller == nullptr) {
+        return NN_ERROR() << "V1_2::utils::BurstExecution::create must have non-null controller";
+    }
+
+    return std::make_shared<const BurstExecution>(PrivateConstructorTag{}, std::move(controller),
+                                                  std::move(request), std::move(relocation),
+                                                  std::move(cacheHolds));
+}
+
+BurstExecution::BurstExecution(PrivateConstructorTag /*tag*/,
+                               std::shared_ptr<const ExecutionBurstController> controller,
+                               std::vector<FmqRequestDatum> request,
+                               hal::utils::RequestRelocation relocation,
+                               std::vector<ExecutionBurstController::OptionalCacheHold> cacheHolds)
+    : kController(std::move(controller)),
+      kRequest(std::move(request)),
+      kRelocation(std::move(relocation)),
+      kCacheHolds(std::move(cacheHolds)) {}
+
+nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> BurstExecution::compute(
+        const nn::OptionalTimePoint& /*deadline*/) const {
+    return kController->executeInternal(kRequest, kRelocation, /*fallback=*/nullptr);
+}
+
+nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>>
+BurstExecution::computeFenced(const std::vector<nn::SyncFence>& /*waitFor*/,
+                              const nn::OptionalTimePoint& /*deadline*/,
+                              const nn::OptionalDuration& /*timeoutDurationAfterFence*/) const {
+    return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
+           << "IExecution::computeFenced is not supported on burst object";
 }
 
 }  // namespace android::hardware::neuralnetworks::V1_2::utils

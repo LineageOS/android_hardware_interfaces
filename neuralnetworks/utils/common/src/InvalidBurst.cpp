@@ -38,4 +38,10 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Invalid
     return NN_ERROR() << "InvalidBurst";
 }
 
+nn::GeneralResult<nn::SharedExecution> InvalidBurst::createReusableExecution(
+        const nn::Request& /*request*/, nn::MeasureTiming /*measure*/,
+        const nn::OptionalDuration& /*loopTimeoutDuration*/) const {
+    return NN_ERROR() << "InvalidBurst";
+}
+
 }  // namespace android::hardware::neuralnetworks::utils
