@@ -32,23 +32,41 @@ using namespace std::chrono_literals;
 TEST(WorkerThreadTest, ScheduleReturnsTrueWhenQueueHasSpace) {
     WorkerThread worker(1 /*maxQueueSize*/);
     for (int i = 0; i < 100; ++i) {
-        EXPECT_TRUE(worker.schedule(Callable::from([] {})));
-        // Allow enough time for the previous task to be processed.
-        std::this_thread::sleep_for(2ms);
+        std::promise<void> promise;
+        auto future = promise.get_future();
+
+        ASSERT_TRUE(worker.schedule(Callable::from([promise = std::move(promise)]() mutable {
+            // Notify that the task has started.
+            promise.set_value();
+        })));
+
+        auto status = future.wait_for(1s);
+        EXPECT_EQ(status, std::future_status::ready);
     }
 }
 
 TEST(WorkerThreadTest, ScheduleReturnsFalseWhenQueueIsFull) {
     WorkerThread worker(2 /*maxQueueSize*/);
-    // Add a long-running task.
-    worker.schedule(Callable::from([] { std::this_thread::sleep_for(1s); }));
 
-    // Allow enough time for the worker to start working on the previous task.
-    std::this_thread::sleep_for(2ms);
+    std::promise<void> promise;
+    auto future = promise.get_future();
 
+    // Schedule a long-running task.
+    ASSERT_TRUE(worker.schedule(Callable::from([promise = std::move(promise)]() mutable {
+        // Notify that the task has started.
+        promise.set_value();
+        // Block for a "very long" time.
+        std::this_thread::sleep_for(2s);
+    })));
+
+    // Make sure the long-running task began executing.
+    auto status = future.wait_for(1s);
+    ASSERT_EQ(status, std::future_status::ready);
+
+    // The first task is already being worked on, which means the queue must be empty.
     // Fill the worker's queue to the maximum.
-    worker.schedule(Callable::from([] {}));
-    worker.schedule(Callable::from([] {}));
+    ASSERT_TRUE(worker.schedule(Callable::from([] {})));
+    ASSERT_TRUE(worker.schedule(Callable::from([] {})));
 
     EXPECT_FALSE(worker.schedule(Callable::from([] {})));
 }
@@ -71,7 +89,8 @@ TEST(WorkerThreadTest, TasksExecuteInOrder) {
     auto future = promise.get_future();
 
     // Schedule a special task to signal when all of the tasks are finished.
-    worker.schedule(Callable::from([&promise] { promise.set_value(); }));
+    worker.schedule(
+            Callable::from([promise = std::move(promise)]() mutable { promise.set_value(); }));
     auto status = future.wait_for(1s);
     ASSERT_EQ(status, std::future_status::ready);
 
@@ -84,23 +103,37 @@ TEST(WorkerThreadTest, ExecutionStopsAfterWorkerIsDestroyed) {
     std::promise<void> promise2;
     auto future1 = promise1.get_future();
     auto future2 = promise2.get_future();
+    std::atomic<bool> value;
 
+    // Local scope for the worker to test its destructor when it goes out of scope.
     {
         WorkerThread worker(2 /*maxQueueSize*/);
-        worker.schedule(Callable::from([&promise1] {
-            promise1.set_value();
-            std::this_thread::sleep_for(200ms);
-        }));
-        worker.schedule(Callable::from([&promise2] { promise2.set_value(); }));
 
-        // Make sure the first task is executing.
-        auto status1 = future1.wait_for(1s);
-        ASSERT_EQ(status1, std::future_status::ready);
+        ASSERT_TRUE(worker.schedule(Callable::from([promise = std::move(promise1)]() mutable {
+            promise.set_value();
+            std::this_thread::sleep_for(200ms);
+        })));
+
+        // The first task should start executing.
+        auto status = future1.wait_for(1s);
+        ASSERT_EQ(status, std::future_status::ready);
+
+        // The second task should schedule successfully.
+        ASSERT_TRUE(
+                worker.schedule(Callable::from([promise = std::move(promise2), &value]() mutable {
+                    // The worker should destruct before it gets a chance to execute this.
+                    value = true;
+                    promise.set_value();
+                })));
     }
 
     // The second task should never execute.
-    auto status2 = future2.wait_for(1s);
-    EXPECT_EQ(status2, std::future_status::timeout);
+    auto status = future2.wait_for(1s);
+    ASSERT_EQ(status, std::future_status::ready);
+    // The future is expected to be ready but contain an exception.
+    // Cannot use ASSERT_THROW because exceptions are disabled in this codebase.
+    // ASSERT_THROW(future2.get(), std::future_error);
+    EXPECT_FALSE(value);
 }
 
 }  // namespace
