@@ -27,6 +27,7 @@ import android.hardware.security.secureclock.Timestamp;
  * passed to begin(), update(), and finish() to prove that authentication occurred.  See those
  * methods for more details.  It is up to the caller to determine which of the generated auth tokens
  * is appropriate for a given key operation.
+ * @hide
  */
 @VintfStability
 @RustDerive(Clone=true, Eq=true, PartialEq=true, Ord=true, PartialOrd=true, Hash=true)

@@ -20,6 +20,7 @@ import android.hardware.security.keymint.HardwareAuthToken;
 import android.hardware.security.keymint.KeyParameter;
 import android.hardware.security.secureclock.TimeStampToken;
 
+/** @hide */
 @VintfStability
 interface IKeyMintOperation {
     /**
