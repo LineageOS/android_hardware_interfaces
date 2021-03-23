@@ -227,4 +227,10 @@ interface ISessionCallback {
      *                           current set of enrollments.
      */
     void onAuthenticatorIdInvalidated(in long newAuthenticatorId);
+
+    /**
+     * This method notifes the client that this session has closed.
+     * The client must not make any more calls to this session.
+     */
+    void onSessionClosed();
 }
