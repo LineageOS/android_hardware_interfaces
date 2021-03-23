@@ -641,6 +641,25 @@ enum VehicleProperty : int32_t {
         | VehicleArea:WHEEL),
 
     /**
+     * Critically low tire pressure
+     *
+     * This property indicates the critically low pressure threshold for each tire.
+     * It indicates when it is time for tires to be replaced or fixed. The value
+     * must be less than or equal to minFloatValue in TIRE_PRESSURE.
+     * Minimum and maximum property values (that is, minFloatValue, maxFloatValue)
+     * are not applicable to this property.
+     *
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
+     * @unit VehicleUnit:KILOPASCAL
+     */
+    CRITICALLY_LOW_TIRE_PRESSURE = (
+        0x030A
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:FLOAT
+        | VehicleArea:WHEEL),
+
+    /**
      * Currently selected gear
      *
      * This is the gear selected by the user.
@@ -880,6 +899,24 @@ enum VehicleProperty : int32_t {
 
     /**
      * HVAC, target temperature set.
+     *
+     * The configArray is used to indicate the valid values for HVAC in Fahrenheit and Celsius.
+     * Android might use it in the HVAC app UI.
+     * The configArray is set as follows:
+     *      configArray[0] = [the lower bound of the supported temperature in Celsius] * 10.
+     *      configArray[1] = [the upper bound of the supported temperature in Celsius] * 10.
+     *      configArray[2] = [the increment in Celsius] * 10.
+     *      configArray[3] = [the lower bound of the supported temperature in Fahrenheit] * 10.
+     *      configArray[4] = [the upper bound of the supported temperature in Fahrenheit] * 10.
+     *      configArray[5] = [the increment in Fahrenheit] * 10.
+     * For example, if the vehicle supports temperature values as:
+     *      [16.0, 16.5, 17.0 ,..., 28.0] in Celsius
+     *      [60.5, 61.5, 62.5 ,..., 85.5] in Fahrenheit.
+     * The configArray should be configArray = {160, 280, 5, 605, 825, 10}.
+     *
+     * If the vehicle supports HVAC_TEMPERATURE_VALUE_SUGGESTION, the application can use
+     * that property to get the suggested value before setting HVAC_TEMPERATURE_SET. Otherwise,
+     * the application may choose the value in HVAC_TEMPERATURE_SET configArray by itself.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -1228,6 +1265,50 @@ enum VehicleProperty : int32_t {
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:WINDOW),
+
+    /**
+     * Suggested values for setting HVAC temperature.
+     *
+     * Implement the property to help applications understand the closest supported temperature
+     * value in Celsius or Fahrenheit.
+     *
+     *      floatValues[0] = the requested value that an application wants to set a temperature to.
+     *      floatValues[1] = the unit for floatValues[0]. It should be one of
+     *                       {VehicleUnit:CELSIUS, VehicleUnit:FAHRENHEIT}.
+     *      floatValues[2] = the value OEMs suggested in CELSIUS. This value is not included
+     *                       in the request.
+     *      floatValues[3] = the value OEMs suggested in FAHRENHEIT. This value is not included
+     *                       in the request.
+     *
+     * An application calls set(VehiclePropValue propValue) with the requested value and unit for
+     * the value. OEMs need to return the suggested values in floatValues[2] and floatValues[3] by
+     * onPropertyEvent() callbacks.
+     *
+     * For example, when a user uses the voice assistant to set HVAC temperature to 66.2 in
+     * Fahrenheit.
+     * First, an application will set this property with the value
+     * [66.2, (float)VehicleUnit:FAHRENHEIT,0,0].
+     * If OEMs suggest to set 19.0 in Celsius or 66.5 in Fahrenheit for user's request, then VHAL
+     * must generate a callback with property value
+     * [66.2, (float)VehicleUnit:FAHRENHEIT, 19.0, 66.5]. After the voice assistant gets the
+     * callback, it will inform the user and set HVAC temperature to the suggested value.
+     *
+     * Another example, an application receives 21 Celsius as the current temperature value by
+     * querying HVC_TEMPERATURE_SET. But the application wants to know what value is displayed on
+     * the car's UI in Fahrenheit.
+     * For this, the application sets the property to [21, (float)VehicleUnit:CELSIUS, 0, 0]. If
+     * the suggested value by the OEM for 21 Celsius is 70 Fahrenheit, then VHAL must generate a
+     * callback with property value [21, (float)VehicleUnit:CELSIUS, 21.0, 70.0].
+     * In this case, the application can know that the value is 70.0 Fahrenheit in the car’s UI.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    HVAC_TEMPERATURE_VALUE_SUGGESTION = (
+        0x0515
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:FLOAT_VEC
+        | VehicleArea:GLOBAL),
 
    /**
      * Distance units for display

@@ -439,28 +439,39 @@ const ConfigDeclaration kVehicleProperties[]{
                          .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
                          .areaConfigs = {VehicleAreaConfig{
                                                  .areaId = WHEEL_FRONT_LEFT,
-                                                 .minFloatValue = 100.0f,
+                                                 .minFloatValue = 193.0f,
                                                  .maxFloatValue = 300.0f,
                                          },
                                          VehicleAreaConfig{
                                                  .areaId = WHEEL_FRONT_RIGHT,
-                                                 .minFloatValue = 100.0f,
+                                                 .minFloatValue = 193.0f,
                                                  .maxFloatValue = 300.0f,
                                          },
                                          VehicleAreaConfig{
                                                  .areaId = WHEEL_REAR_LEFT,
-                                                 .minFloatValue = 100.0f,
+                                                 .minFloatValue = 193.0f,
                                                  .maxFloatValue = 300.0f,
                                          },
                                          VehicleAreaConfig{
                                                  .areaId = WHEEL_REAR_RIGHT,
-                                                 .minFloatValue = 100.0f,
+                                                 .minFloatValue = 193.0f,
                                                  .maxFloatValue = 300.0f,
                                          }},
                          .minSampleRate = 1.0f,
                          .maxSampleRate = 2.0f,
                  },
          .initialValue = {.floatValues = {200.0f}}},  // units in kPa
+
+        {.config =
+                 {
+                         .prop = toInt(VehicleProperty::CRITICALLY_LOW_TIRE_PRESSURE),
+                         .access = VehiclePropertyAccess::READ,
+                         .changeMode = VehiclePropertyChangeMode::STATIC,
+                 },
+         .initialAreaValues = {{WHEEL_FRONT_LEFT, {.floatValues = {137.0f}}},
+                               {WHEEL_FRONT_RIGHT, {.floatValues = {137.0f}}},
+                               {WHEEL_REAR_RIGHT, {.floatValues = {137.0f}}},
+                               {WHEEL_REAR_LEFT, {.floatValues = {137.0f}}}}},
 
         {.config =
                  {
@@ -660,6 +671,7 @@ const ConfigDeclaration kVehicleProperties[]{
         {.config = {.prop = toInt(VehicleProperty::HVAC_TEMPERATURE_SET),
                     .access = VehiclePropertyAccess::READ_WRITE,
                     .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                    .configArray = {160, 280, 5, 605, 825, 10},
                     .areaConfigs = {VehicleAreaConfig{
                                             .areaId = HVAC_LEFT,
                                             .minFloatValue = 16,
@@ -672,6 +684,14 @@ const ConfigDeclaration kVehicleProperties[]{
                                     }}},
          .initialAreaValues = {{HVAC_LEFT, {.floatValues = {16}}},
                                {HVAC_RIGHT, {.floatValues = {20}}}}},
+
+        {.config =
+                 {
+                         .prop = toInt(VehicleProperty::HVAC_TEMPERATURE_VALUE_SUGGESTION),
+                         .access = VehiclePropertyAccess::READ_WRITE,
+                         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                 },
+         .initialValue = {.floatValues = {66.2f, (float)VehicleUnit::FAHRENHEIT, 19.0f, 66.5f}}},
 
         {.config =
                  {
