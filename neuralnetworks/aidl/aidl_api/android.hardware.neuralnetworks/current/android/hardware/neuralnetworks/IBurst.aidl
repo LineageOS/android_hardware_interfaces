@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,12 +31,9 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.security.keymint;
-/* @hide */
-@Backing(type="int") @VintfStability
-enum BlockMode {
-  ECB = 1,
-  CBC = 2,
-  CTR = 3,
-  GCM = 32,
+package android.hardware.neuralnetworks;
+@VintfStability
+interface IBurst {
+  android.hardware.neuralnetworks.ExecutionResult executeSynchronously(in android.hardware.neuralnetworks.Request request, in long[] memoryIdentifierTokens, in boolean measureTiming, in long deadline, in long loopTimeoutDuration);
+  void releaseMemoryResource(in long memoryIdentifierToken);
 }

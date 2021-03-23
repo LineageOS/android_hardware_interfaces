@@ -17,6 +17,7 @@
 #include "GeneratedTestHarness.h"
 
 #include <aidl/android/hardware/neuralnetworks/ErrorStatus.h>
+#include <aidl/android/hardware/neuralnetworks/RequestMemoryPool.h>
 #include <android-base/logging.h>
 #include <android/binder_auto_utils.h>
 #include <android/sync.h>
@@ -582,6 +583,53 @@ void EvaluatePreparedModel(const std::shared_ptr<IDevice>& device,
             }
             break;
         }
+        case Executor::BURST: {
+            SCOPED_TRACE("burst");
+
+            // create burst
+            std::shared_ptr<IBurst> burst;
+            auto ret = preparedModel->configureExecutionBurst(&burst);
+            ASSERT_TRUE(ret.isOk()) << ret.getDescription();
+            ASSERT_NE(nullptr, burst.get());
+
+            // associate a unique slot with each memory pool
+            int64_t currentSlot = 0;
+            std::vector<int64_t> slots;
+            slots.reserve(request.pools.size());
+            for (const auto& pool : request.pools) {
+                if (pool.getTag() == RequestMemoryPool::Tag::pool) {
+                    slots.push_back(currentSlot++);
+                } else {
+                    EXPECT_EQ(pool.getTag(), RequestMemoryPool::Tag::token);
+                    slots.push_back(-1);
+                }
+            }
+
+            ExecutionResult executionResult;
+            // execute
+            ret = burst->executeSynchronously(request, slots, testConfig.measureTiming, kNoDeadline,
+                                              loopTimeoutDuration, &executionResult);
+            ASSERT_TRUE(ret.isOk() || ret.getExceptionCode() == EX_SERVICE_SPECIFIC)
+                    << ret.getDescription();
+            if (ret.isOk()) {
+                executionStatus = executionResult.outputSufficientSize
+                                          ? ErrorStatus::NONE
+                                          : ErrorStatus::OUTPUT_INSUFFICIENT_SIZE;
+                outputShapes = std::move(executionResult.outputShapes);
+                timing = executionResult.timing;
+            } else {
+                executionStatus = static_cast<ErrorStatus>(ret.getServiceSpecificError());
+            }
+
+            // Mark each slot as unused after the execution. This is unnecessary because the burst
+            // is freed after this scope ends, but this is here to test the functionality.
+            for (int64_t slot : slots) {
+                ret = burst->releaseMemoryResource(slot);
+                ASSERT_TRUE(ret.isOk()) << ret.getDescription();
+            }
+
+            break;
+        }
         case Executor::FENCED: {
             SCOPED_TRACE("fenced");
             ErrorStatus result = ErrorStatus::NONE;
@@ -727,19 +775,19 @@ void EvaluatePreparedModel(const std::shared_ptr<IDevice>& device,
         case TestKind::GENERAL: {
             outputTypesList = {OutputType::FULLY_SPECIFIED};
             measureTimingList = {false, true};
-            executorList = {Executor::SYNC};
+            executorList = {Executor::SYNC, Executor::BURST};
             memoryTypeList = {MemoryType::ASHMEM};
         } break;
         case TestKind::DYNAMIC_SHAPE: {
             outputTypesList = {OutputType::UNSPECIFIED, OutputType::INSUFFICIENT};
             measureTimingList = {false, true};
-            executorList = {Executor::SYNC, Executor::FENCED};
+            executorList = {Executor::SYNC, Executor::BURST, Executor::FENCED};
             memoryTypeList = {MemoryType::ASHMEM};
         } break;
         case TestKind::MEMORY_DOMAIN: {
             outputTypesList = {OutputType::FULLY_SPECIFIED};
             measureTimingList = {false};
-            executorList = {Executor::SYNC, Executor::FENCED};
+            executorList = {Executor::SYNC, Executor::BURST, Executor::FENCED};
             memoryTypeList = {MemoryType::BLOB_AHWB, MemoryType::DEVICE};
         } break;
         case TestKind::FENCED_COMPUTE: {
@@ -755,7 +803,7 @@ void EvaluatePreparedModel(const std::shared_ptr<IDevice>& device,
         case TestKind::INTINITE_LOOP_TIMEOUT: {
             outputTypesList = {OutputType::MISSED_DEADLINE};
             measureTimingList = {false, true};
-            executorList = {Executor::SYNC, Executor::FENCED};
+            executorList = {Executor::SYNC, Executor::BURST, Executor::FENCED};
             memoryTypeList = {MemoryType::ASHMEM};
         } break;
     }
@@ -779,7 +827,7 @@ void EvaluatePreparedCoupledModels(const std::shared_ptr<IDevice>& device,
                                    const TestModel& coupledModel) {
     const std::vector<OutputType> outputTypesList = {OutputType::FULLY_SPECIFIED};
     const std::vector<bool> measureTimingList = {false, true};
-    const std::vector<Executor> executorList = {Executor::SYNC, Executor::FENCED};
+    const std::vector<Executor> executorList = {Executor::SYNC, Executor::BURST, Executor::FENCED};
 
     for (const OutputType outputType : outputTypesList) {
         for (const bool measureTiming : measureTimingList) {

@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.security.keymint;
+/* @hide */
 @VintfStability
 interface IKeyMintDevice {
   android.hardware.security.keymint.KeyMintHardwareInfo getHardwareInfo();

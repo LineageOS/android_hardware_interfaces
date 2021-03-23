@@ -342,6 +342,7 @@ interface IRadioResponse extends @1.5::IRadioResponse {
      *  RadioError:RADIO_NOT_AVAILABLE
      *  RadioError:MODEM_ERR
      *  RadioError:INVALID_ARGUMENTS
+     *  RadioError:REQUEST_NOT_SUPPORTED
      */
     oneway setDataThrottlingResponse(RadioResponseInfo info);
 
