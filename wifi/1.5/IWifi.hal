@@ -17,6 +17,8 @@
 package android.hardware.wifi@1.5;
 
 import @1.4::IWifi;
+import IWifiEventCallback;
+import @1.0::WifiStatus;
 
 /**
  * This is the root of the HAL module and is the interface returned when
@@ -24,4 +26,21 @@ import @1.4::IWifi;
  * module loaded in the system.
  * IWifi.getChip() must return @1.5::IWifiChip
  */
-interface IWifi extends @1.4::IWifi {};
+interface IWifi extends @1.4::IWifi {
+  /**
+   * Requests notifications of significant events for the HAL. Multiple calls to
+   * this must register multiple callbacks each of which must receive all
+   * events. |IWifiEventCallback| object registration must be independent of the
+   * state of the rest of the HAL and must persist though stops/starts. These
+   * objects must be deleted when the corresponding client process is dead.
+   *
+   * @param callback An instance of the |IWifiEventCallback| HIDL interface
+   *        object.
+   * @return status WifiStatus of the operation.
+   *         Possible status codes:
+   *         |WifiStatusCode.SUCCESS|,
+   *         |WifiStatusCode.UNKNOWN|
+   */
+  registerEventCallback_1_5(IWifiEventCallback callback)
+      generates (WifiStatus status);
+};
