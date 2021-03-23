@@ -77,7 +77,6 @@ TEST_P(AudioHidlDeviceTest, GetMicrophonesTest) {
                   .tags = {},
                   .channelMask = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_IN_MONO)}}};
 #endif
-        EventFlag* efGroup;
         for (auto microphone : microphones) {
 #if MAJOR_VERSION <= 6
             if (microphone.deviceAddress.device != AudioDevice::IN_BUILTIN_MIC) {
@@ -96,44 +95,15 @@ TEST_P(AudioHidlDeviceTest, GetMicrophonesTest) {
                                                             config, flags, initMetadata, cb);
                     },
                     config, &res, &suggestedConfig));
+            StreamReader reader(stream.get(), stream->getBufferSize());
+            ASSERT_TRUE(reader.start());
+            reader.pause();  // This ensures that at least one read has happened.
+            EXPECT_FALSE(reader.hasError());
+
             hidl_vec<MicrophoneInfo> activeMicrophones;
-            Result readRes;
-            typedef MessageQueue<IStreamIn::ReadParameters, kSynchronizedReadWrite> CommandMQ;
-            typedef MessageQueue<uint8_t, kSynchronizedReadWrite> DataMQ;
-            std::unique_ptr<CommandMQ> commandMQ;
-            std::unique_ptr<DataMQ> dataMQ;
-            size_t frameSize = stream->getFrameSize();
-            size_t frameCount = stream->getBufferSize() / frameSize;
-            ASSERT_OK(stream->prepareForReading(
-                    frameSize, frameCount, [&](auto r, auto& c, auto& d, auto&, auto) {
-                        readRes = r;
-                        if (readRes == Result::OK) {
-                            commandMQ.reset(new CommandMQ(c));
-                            dataMQ.reset(new DataMQ(d));
-                            if (dataMQ->isValid() && dataMQ->getEventFlagWord()) {
-                                EventFlag::createEventFlag(dataMQ->getEventFlagWord(), &efGroup);
-                            }
-                        }
-                    }));
-            ASSERT_OK(readRes);
-            IStreamIn::ReadParameters params;
-            params.command = IStreamIn::ReadCommand::READ;
-            ASSERT_TRUE(commandMQ != nullptr);
-            ASSERT_TRUE(commandMQ->isValid());
-            ASSERT_TRUE(commandMQ->write(&params));
-            efGroup->wake(static_cast<uint32_t>(MessageQueueFlagBits::NOT_FULL));
-            uint32_t efState = 0;
-            efGroup->wait(static_cast<uint32_t>(MessageQueueFlagBits::NOT_EMPTY), &efState);
-            if (efState & static_cast<uint32_t>(MessageQueueFlagBits::NOT_EMPTY)) {
-                ASSERT_OK(stream->getActiveMicrophones(returnIn(res, activeMicrophones)));
-                ASSERT_OK(res);
-                ASSERT_NE(0U, activeMicrophones.size());
-            }
-            helper.close(true /*clear*/, &res);
+            ASSERT_OK(stream->getActiveMicrophones(returnIn(res, activeMicrophones)));
             ASSERT_OK(res);
-            if (efGroup) {
-                EventFlag::deleteEventFlag(&efGroup);
-            }
+            EXPECT_NE(0U, activeMicrophones.size());
         }
     }
 }

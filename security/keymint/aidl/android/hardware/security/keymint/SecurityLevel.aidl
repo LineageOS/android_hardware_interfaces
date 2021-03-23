@@ -27,6 +27,7 @@ package android.hardware.security.keymint;
  *     certificates.  This specifies the security level of the weakest environment involved in
  *     enforcing that particular tag, i.e. the sort of security environment an attacker would have
  *     to subvert in order to break the enforcement of that tag.
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

@@ -31,6 +31,8 @@ struct HalDeviceCapabilities {
    * <li> calling android.hardware.radio@1.6::IRadio.setNrDualConnectivityState
    * or querying android.hardware.radio@1.6::IRadio.isNrDualConnectivityEnabled
    * </li>
+   * <li>Requesting android.hardware.radio@1.6::IRadio.setDataThrottling()
+   * </li>
    * </ul>
    */
   bool modemReducedFeatureSet1;

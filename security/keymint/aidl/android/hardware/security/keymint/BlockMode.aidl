@@ -18,6 +18,7 @@ package android.hardware.security.keymint;
 
 /**
  * Symmetric block cipher modes provided by IKeyMintDevice implementations.
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

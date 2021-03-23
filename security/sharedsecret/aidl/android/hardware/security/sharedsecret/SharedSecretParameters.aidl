@@ -21,8 +21,8 @@ package android.hardware.security.sharedsecret;
  * HMAC key between multiple keymint services.  These parameters are returned in by
  * getSharedSecretParameters() and send to computeShareSecret().  See the named methods in
  * ISharedSecret for details of usage.
+ * @hide
  */
-
 @VintfStability
 parcelable SharedSecretParameters {
     /**
