@@ -17,5 +17,12 @@
 package android.hardware.wifi@1.5;
 
 import @1.0::IWifiEventCallback;
+import @1.0::WifiStatus;
 
-interface IWifiEventCallback extends @1.0::IWifiEventCallback {};
+interface IWifiEventCallback extends @1.0::IWifiEventCallback {
+  /**
+    * Must be called when the Wi-Fi subsystem restart completes.
+    * Once this event is received, framework must fully reset the Wi-Fi stack state.
+    */
+  oneway onSubsystemRestart(WifiStatus status);
+};

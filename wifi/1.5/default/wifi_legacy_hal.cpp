@@ -1676,6 +1676,10 @@ WifiLegacyHal::getUsableChannels(uint32_t band_mask, uint32_t iface_mode_mask,
     return {status, std::move(channels)};
 }
 
+wifi_error WifiLegacyHal::triggerSubsystemRestart() {
+    return global_func_table_.wifi_trigger_subsystem_restart();
+}
+
 void WifiLegacyHal::invalidate() {
     global_handle_ = nullptr;
     iface_name_to_handle_.clear();
