@@ -16,6 +16,7 @@
 
 package android.hardware.security.keymint;
 
+import android.hardware.security.keymint.DeviceInfo;
 import android.hardware.security.keymint.MacedPublicKey;
 import android.hardware.security.keymint.ProtectedData;
 
@@ -256,7 +257,7 @@ interface IRemotelyProvisionedComponent {
      * @param out ProtectedData contains the encrypted BCC and the ephemeral MAC key used to
      *        authenticate the keysToSign (see keysToSignMac output argument).
      */
-    void generateCertificateRequest(in boolean testMode, in MacedPublicKey[] keysToSign,
-            in byte[] endpointEncryptionCertChain, in byte[] challenge, out byte[] keysToSignMac,
+    byte[] generateCertificateRequest(in boolean testMode, in MacedPublicKey[] keysToSign,
+            in byte[] endpointEncryptionCertChain, in byte[] challenge, out DeviceInfo deviceInfo,
             out ProtectedData protectedData);
 }
