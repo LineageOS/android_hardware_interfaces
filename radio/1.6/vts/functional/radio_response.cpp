@@ -1234,3 +1234,28 @@ Return<void> RadioResponse_v1_6::getSlicingConfigResponse(
     parent_v1_6.notify(info.serial);
     return Void();
 }
+
+Return<void> RadioResponse_v1_6::getSimPhonebookRecordsResponse(
+        const ::android::hardware::radio::V1_6::RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_v1_6.notify(info.serial);
+    return Void();
+}
+
+Return<void> RadioResponse_v1_6::getSimPhonebookCapacityResponse(
+        const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
+        const ::android::hardware::radio::V1_6::PhonebookCapacity& capacity) {
+    rspInfo = info;
+    this->capacity = capacity;
+    parent_v1_6.notify(info.serial);
+    return Void();
+}
+
+Return<void> RadioResponse_v1_6::updateSimPhonebookRecordsResponse(
+        const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
+        int32_t updatedRecordIndex) {
+    rspInfo = info;
+    this->updatedRecordIndex = updatedRecordIndex;
+    parent_v1_6.notify(info.serial);
+    return Void();
+}
