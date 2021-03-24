@@ -33,6 +33,9 @@ struct HalDeviceCapabilities {
    * </li>
    * <li>Requesting android.hardware.radio@1.6::IRadio.setDataThrottling()
    * </li>
+   * <li>Providing android.hardware.radio@1.6::SlicingConfig through
+   * android.hardware.radio@1.6::getSlicingConfig()
+   * </li>
    * </ul>
    */
   bool modemReducedFeatureSet1;

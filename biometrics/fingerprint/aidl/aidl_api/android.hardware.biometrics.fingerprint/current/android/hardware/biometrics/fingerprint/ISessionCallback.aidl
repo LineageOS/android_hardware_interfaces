@@ -50,4 +50,5 @@ interface ISessionCallback {
   void onEnrollmentsRemoved(in int[] enrollmentIds);
   void onAuthenticatorIdRetrieved(in long authenticatorId);
   void onAuthenticatorIdInvalidated(in long newAuthenticatorId);
+  void onSessionClosed();
 }
