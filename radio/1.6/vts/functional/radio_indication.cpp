@@ -412,3 +412,16 @@ Return<void> RadioIndication_v1_6::cellInfoList_1_6(
                 ::android::hardware::radio::V1_6::CellInfo>& /*records*/) {
     return Void();
 }
+
+Return<void> RadioIndication_v1_6::simPhonebookChanged(
+        RadioIndicationType /*type*/) {
+    return Void();
+}
+
+Return<void> RadioIndication_v1_6::simPhonebookRecordsReceived(
+        RadioIndicationType /*type*/,
+        ::android::hardware::radio::V1_6::PbReceivedStatus /*status*/,
+        const ::android::hardware::hidl_vec<
+        ::android::hardware::radio::V1_6::PhonebookRecordInfo>& /*records*/) {
+    return Void();
+}

@@ -23,7 +23,9 @@ import @1.6::LinkCapacityEstimate;
 import @1.6::NetworkScanResult;
 import @1.6::SignalStrength;
 import @1.6::SetupDataCallResult;
+import @1.6::PbReceivedStatus;
 import @1.6::PhysicalChannelConfig;
+import @1.6::PhonebookRecordInfo;
 
 /**
  * Interface declaring unsolicited radio indications.
@@ -72,7 +74,6 @@ interface IRadioIndication extends @1.5::IRadioIndication {
      */
     oneway currentLinkCapacityEstimate_1_6(RadioIndicationType type, LinkCapacityEstimate lce);
 
-
     /**
      * Indicates current signal strength of the radio.
      *
@@ -113,4 +114,27 @@ interface IRadioIndication extends @1.5::IRadioIndication {
      */
     oneway currentPhysicalChannelConfigs_1_6(RadioIndicationType type,
             vec<PhysicalChannelConfig> configs);
+
+    /**
+     * Indicates whether SIM phonebook is changed.
+     *
+     * This indication is sent whenever the SIM phonebook is changed, including SIM is
+     * inserted or removed and updated by IRadio.updateSimPhonebookRecords.
+     *
+     * @param type Type of radio indication
+     */
+    oneway simPhonebookChanged(RadioIndicationType type);
+
+    /**
+     * Indicates the content of all the used records in the SIM phonebook.
+     *
+     * This indication is associated with the API getSimPhonebookRecords and
+     * might be received more than once that is replying on the record count.
+     *
+     * @param type Type of radio indication
+     * @param status Status of PbReceivedStatus
+     * @param records Vector of PhonebookRecordInfo
+     */
+    oneway simPhonebookRecordsReceived(RadioIndicationType type,
+            PbReceivedStatus status, vec<PhonebookRecordInfo> records);
 };
