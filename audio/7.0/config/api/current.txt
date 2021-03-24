@@ -155,6 +155,12 @@ package android.audio.policy.configuration.V7_0 {
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioDevice AUDIO_DEVICE_OUT_WIRED_HEADSET;
   }
 
+  public enum AudioEncapsulationType {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.audio.policy.configuration.V7_0.AudioEncapsulationType AUDIO_ENCAPSULATION_TYPE_IEC61937;
+    enum_constant public static final android.audio.policy.configuration.V7_0.AudioEncapsulationType AUDIO_ENCAPSULATION_TYPE_NONE;
+  }
+
   public enum AudioFormat {
     method @NonNull public String getRawName();
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_AAC;
@@ -488,10 +494,12 @@ package android.audio.policy.configuration.V7_0 {
   public class Profile {
     ctor public Profile();
     method @Nullable public java.util.List<android.audio.policy.configuration.V7_0.AudioChannelMask> getChannelMasks();
+    method @Nullable public android.audio.policy.configuration.V7_0.AudioEncapsulationType getEncapsulationType();
     method @Nullable public String getFormat();
     method @Nullable public String getName();
     method @Nullable public java.util.List<java.math.BigInteger> getSamplingRates();
     method public void setChannelMasks(@Nullable java.util.List<android.audio.policy.configuration.V7_0.AudioChannelMask>);
+    method public void setEncapsulationType(@Nullable android.audio.policy.configuration.V7_0.AudioEncapsulationType);
     method public void setFormat(@Nullable String);
     method public void setName(@Nullable String);
     method public void setSamplingRates(@Nullable java.util.List<java.math.BigInteger>);
