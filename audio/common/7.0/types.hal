@@ -145,6 +145,14 @@ struct AudioConfigBaseOptional {
 };
 
 /**
+ * Audio encapsulation type indicates the encapsulation type that is required
+ * for playback/capture.
+ * See 'audioEncapsulationType' in audio_policy_configuration.xsd for the list
+ * of allowed values.
+ */
+typedef string AudioEncapsulationType;
+
+/**
  * Configurations supported for a certain audio format.
  */
 struct AudioProfile {
@@ -153,6 +161,35 @@ struct AudioProfile {
     vec<uint32_t> sampleRates;
     /** List of channel masks supported by the profile. */
     vec<AudioChannelMask> channelMasks;
+};
+
+/**
+ * AudioTransport struct describes the capability of an audio port. The
+ * capability is described via AudioProfile or raw hardware descriptors for
+ * for formats that are not supported by the platform.
+ */
+struct AudioTransport {
+    safe_union AudioCapability {
+        /**
+         * A certain audio format that is known by the platform and its
+         * corresponding configuration.
+         */
+        AudioProfile profile;
+        /**
+         * The audio descriptor that is reported from EDID. See HDMI
+         * specification 1.4b section 7 and CEA-861-G section 7.5.2 for more
+         * information. When this value is set, it indicates the standard is
+         * AUDIO_STANDARD_EDID.
+         */
+        vec<uint8_t> edid;
+    } audioCapability;
+
+    /**
+     * The encapsulation type that is required when the framework is using this
+     * format when playing or capturing to/from a stream or device exposing this
+     * audio transport.
+     */
+    AudioEncapsulationType encapsulationType;
 };
 
 /**
@@ -488,8 +525,12 @@ struct AudioPort {
      * E.g. "telephony_tx" or "fm_tuner".
      */
     string name;
-    /** List of audio profiles supported by the port. */
-    vec<AudioProfile> profiles;
+    /**
+     * List of audio transports supported by the audio port. This includes
+     * supported formats and raw hardware descriptors for formats not supported
+     * by the platform.
+     */
+    vec<AudioTransport> transports;
     /** List of gain controls attached to the port. */
     vec<AudioGain> gains;
     /** Parameters that depend on the actual port role. */
