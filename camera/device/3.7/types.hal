@@ -21,6 +21,8 @@ import @3.2::StreamConfigurationMode;
 import @3.4::CaptureRequest;
 import @3.4::Stream;
 
+import android.hardware.camera.metadata@3.6::CameraMetadataEnumAndroidSensorPixelMode;
+
 /**
  * Stream:
  *
@@ -57,6 +59,14 @@ struct Stream {
      * usage flag.
      */
     int32_t groupId;
+
+    /**
+     *  The sensor pixel modes used by this stream. This can assist the camera
+     *  HAL in decision making about stream combination support.
+     *  If this is empty, the HAL must assume that this stream will only be used
+     *  with ANDROID_SENSOR_PIXEL_MODE set to ANDROID_SENSOR_PIXEL_MODE_DEFAULT.
+     */
+    vec<CameraMetadataEnumAndroidSensorPixelMode> sensorPixelModesUsed;
 };
 
 /**
