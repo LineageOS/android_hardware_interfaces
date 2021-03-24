@@ -1,0 +1,21 @@
+cc_test {
+    name: "VtsHalAutomotiveVehicleV2_0TargetTest",
+    defaults: [
+        "VtsHalTargetTestDefaults",
+    ],
+    srcs: [
+        "VtsHalAutomotiveVehicleV2_0TargetTest.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "libhidlbase",
+        "liblog",
+    ],
+    static_libs: [
+        "android.hardware.automotive.vehicle@2.0",
+    ],
+    test_suites: [
+        "vts",
+        "general-tests",
+    ],
+}
