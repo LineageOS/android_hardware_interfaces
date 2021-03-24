@@ -27,6 +27,7 @@ import @1.6::RadioResponseInfo;
 import @1.6::SetupDataCallResult;
 import @1.6::SignalStrength;
 import @1.6::SlicingConfig;
+import @1.6::PhonebookCapacity;
 
 /**
  * Interface declaring response functions to solicited radio requests.
@@ -436,4 +437,57 @@ interface IRadioResponse extends @1.5::IRadioResponse {
      */
     oneway getSlicingConfigResponse(RadioResponseInfo info,
             SlicingConfig slicingConfig);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:INVALID_SIM_STATE
+     *   RadioError:MODEM_ERR
+     *   RadioError:INTERNAL_ERR
+     * REQUEST_NOT_SUPPORTED may only be returned on devices that don't support this API,
+     * indicated by the HAL capability CAPABILITY_SIM_PHONEBOOK_IN_MODEM.
+     */
+    oneway getSimPhonebookRecordsResponse(RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param capacity Response capacity enum indicating response processing status
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:INVALID_SIM_STATE
+     *   RadioError:MODEM_ERR
+     *   RadioError:INTERNAL_ERR
+     * REQUEST_NOT_SUPPORTED may only be returned on devices that don't support this API,
+     * indicated by the HAL capability CAPABILITY_SIM_PHONEBOOK_IN_MODEM.
+     */
+    oneway getSimPhonebookCapacityResponse(RadioResponseInfo info, PhonebookCapacity capacity);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param updatedRecordIndex The index of the updated or inserted record in the phonebook and
+     *                           the minimum value is 1
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:INVALID_SIM_STATE
+     *   RadioError:MODEM_ERR
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:SIM_ERR
+     *   RadioError:NO_SUCH_ENTRY
+     *   RadioError:NO_RESOURCES
+     * REQUEST_NOT_SUPPORTED may only be returned on devices that don't support this API,
+     * indicated by the HAL capability CAPABILITY_SIM_PHONEBOOK_IN_MODEM.
+     */
+    oneway updateSimPhonebookRecordsResponse(RadioResponseInfo info, int32_t updatedRecordIndex);
 };
