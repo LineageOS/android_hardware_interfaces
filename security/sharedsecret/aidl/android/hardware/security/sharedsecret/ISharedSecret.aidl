@@ -22,8 +22,8 @@ import android.hardware.security.sharedsecret.SharedSecretParameters;
  * An ISharedSecret enables any service that implements this interface to establish a shared secret
  * with one or more other services such as ISecureClock, TEE IKeymintDevice, StrongBox
  * IKeymintDevice, etc. The shared secret is a 256-bit HMAC key and it is further used to generate
- * secure tokens with integrity protection. There are two steps to establish a shared secret between
- * the collaborating services:
+ * secure tokens with integrity protection. There are three steps to establish a shared secret
+ * between the collaborating services:
  *
  * Step 1: During Android startup the system calls each service that implements this interface to
  * get the shared secret parameters. This is done using getSharedSecretParameters method defined
@@ -64,11 +64,11 @@ interface ISharedSecret {
 
     /**
      * This method is the second and final step in the process for agreeing on a shared key.  It is
-     * called by Android during startup.  The system calls it on each of the keymint services, and
-     * sends to it all of the SharedSecretParameters returned by all keymint services.
+     * called by Android during startup.  The system calls it on each of the HAL instances, and
+     * sends to it all of the SharedSecretParameters returned by all HAL instances.
      *
-     * This method computes the shared 32-byte HMAC key ``H'' as follows (all keymint services
-     * instances perform the same computation to arrive at the same result):
+     * This method computes the shared 32-byte HMAC key ``H'' as follows (all HAL instances perform
+     * the same computation to arrive at the same result):
      *
      *     H = CKDF(key = K,
      *              context = P1 || P2 || ... || Pn,
@@ -98,16 +98,16 @@ interface ISharedSecret {
      * Note that the label "KeymasterSharedMac" is the 18-byte UTF-8 encoding of the string.
      *
      * @param params is an array of SharedSecretParameters The lexicographically sorted
-     * SharedSecretParameters data returned by all keymint services when getSharedSecretParameters
+     * SharedSecretParameters data returned by all HAL instances when getSharedSecretParameters
      * was called.
      *
-     * @return sharingCheck A 32-byte value used to verify that all the keymint services have
+     * @return sharingCheck A 32-byte value used to verify that all the HAL instances have
      *         computed the same shared HMAC key.  The sharingCheck value is computed as follows:
      *
      *             sharingCheck = HMAC(H, KEY_CHECK_LABEL)
      *
      *         The string is UTF-8 encoded, 27 bytes in length.  If the returned values of all
-     *         keymint services don't match, clients must assume that HMAC agreement
+     *         HAL instances don't match, clients must assume that HMAC agreement
      *         failed.
      */
     byte[] computeSharedSecret(in SharedSecretParameters[] params);

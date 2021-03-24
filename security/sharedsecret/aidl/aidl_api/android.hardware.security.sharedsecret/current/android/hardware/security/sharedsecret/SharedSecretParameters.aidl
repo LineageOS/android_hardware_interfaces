@@ -33,7 +33,7 @@
 
 package android.hardware.security.sharedsecret;
 /* @hide */
-@VintfStability
+@RustDerive(Clone=true, Eq=true, Hash=true, Ord=true, PartialEq=true, PartialOrd=true) @VintfStability
 parcelable SharedSecretParameters {
   byte[] seed;
   byte[] nonce;
