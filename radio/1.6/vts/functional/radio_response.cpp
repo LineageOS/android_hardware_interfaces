@@ -87,7 +87,9 @@ Return<void> RadioResponse_v1_6::getIMSIForAppResponse(
 }
 
 Return<void> RadioResponse_v1_6::hangupConnectionResponse(
-        const ::android::hardware::radio::V1_0::RadioResponseInfo& /*info*/) {
+        const ::android::hardware::radio::V1_0::RadioResponseInfo& info) {
+    rspInfo_v1_0 = info;
+    parent_v1_6.notify(info.serial);
     return Void();
 }
 
