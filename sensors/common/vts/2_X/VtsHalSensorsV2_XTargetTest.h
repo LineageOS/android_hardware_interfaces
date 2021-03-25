@@ -462,6 +462,7 @@ TEST_P(SensorsHidlTest, InjectSensorEventData) {
 
     // Wait for events to be written back to the Event FMQ
     callback.waitForEvents(sensors, milliseconds(1000) /* timeout */);
+    getEnvironment()->unregisterCallback();
 
     for (const auto& s : sensors) {
         auto events = callback.getEvents(s.sensorHandle);
@@ -485,7 +486,6 @@ TEST_P(SensorsHidlTest, InjectSensorEventData) {
         ASSERT_EQ(lastEvent.u.vec3.status, injectedEvent.u.vec3.status);
     }
 
-    getEnvironment()->unregisterCallback();
     ASSERT_EQ(Result::OK, getSensors()->setOperationMode(OperationMode::NORMAL));
 }
 
@@ -603,7 +603,7 @@ void SensorsHidlTest::runFlushTest(const std::vector<SensorInfoType>& sensors, b
                          << " type=" << static_cast<int>(sensor.type) << " name=" << sensor.name);
 
             Result flushResult = flush(sensor.sensorHandle);
-            ASSERT_EQ(flushResult, expectedResponse);
+            EXPECT_EQ(flushResult, expectedResponse);
         }
     }
 
