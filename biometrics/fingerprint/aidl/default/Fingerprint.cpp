@@ -22,7 +22,7 @@ namespace aidl::android::hardware::biometrics::fingerprint {
 namespace {
 constexpr size_t MAX_WORKER_QUEUE_SIZE = 5;
 constexpr int SENSOR_ID = 1;
-constexpr common::SensorStrength SENSOR_STRENGTH = common::SensorStrength::STRONG;
+constexpr common::SensorStrength SENSOR_STRENGTH = common::SensorStrength::WEAK;
 constexpr int MAX_ENROLLMENTS_PER_USER = 5;
 constexpr FingerprintSensorType SENSOR_TYPE = FingerprintSensorType::REAR;
 constexpr bool SUPPORTS_NAVIGATION_GESTURES = true;
