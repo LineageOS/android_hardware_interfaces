@@ -50,9 +50,11 @@ cc_test {
     ],
     static_libs: [
         "android.hardware.common-V2-ndk_platform",
+        "android.hardware.graphics.common-V2-ndk_platform",
         "android.hardware.neuralnetworks-V1-ndk_platform",
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",
+        "libaidlcommonsupport",
         "libgmock",
         "libhidlmemory",
         "libneuralnetworks_generated_test_harness",
