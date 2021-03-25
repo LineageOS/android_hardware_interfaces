@@ -34,7 +34,6 @@
 package android.hardware.biometrics.fingerprint;
 @VintfStability
 interface ISessionCallback {
-  void onStateChanged(in int cookie, in android.hardware.biometrics.fingerprint.SessionState state);
   void onChallengeGenerated(in long challenge);
   void onChallengeRevoked(in long challenge);
   void onAcquired(in android.hardware.biometrics.fingerprint.AcquiredInfo info, in int vendorCode);

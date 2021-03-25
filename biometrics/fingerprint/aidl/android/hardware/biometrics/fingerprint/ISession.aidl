@@ -22,23 +22,28 @@ import android.hardware.keymaster.HardwareAuthToken;
 /**
  * Operations that can be performed for unique sessions retrieved via IFingerprint#createSession.
  * Methods defined within this interface can be split into the following categories:
- *   1) Methods associated with a state (see the SessionState enum). State-based operations are
- *      handled by the HAL in FIFO order.
- *   1a) Cancellable state-based operations. If a cancellable operation is in-progress and the
- *       framework requests a subsequent state-based operation, the implementation should finish
- *       the operation via ISessionCallback#onError with Error::CANCELED.
- *   1b) Non-cancellable state-based operations. These operations should fully complete before the
- *       next state-based operation can be started.
- *   2) Methods without a state. These methods may be invoked by the framework depending on its
- *      use case. For example on devices with sensors of FingerprintSensorType::UNDER_DISPLAY_*,
- *      ISession#onFingerDown may be invoked while the HAL is in SessionState::ENROLLING,
- *      SessionState::AUTHENTICATING, or SessionState::DETECTING_INTERACTION.
+ *   1) Non-interrupting operations. These operations are handled by the HAL in FIFO order.
+ *   1a) Cancellable operations. These are usually the operations that can execute for several
+ *       minutes. To allow for cancellation, they return an instance of ICancellationSignal that
+ *       lets the framework cancel them by calling ICancellationSignal#cancel. If such an operation
+ *       is cancelled, it must notify the framework by calling ISessionCallback#onError with
+ *       Error::CANCELED.
+ *   1b) Non-cancellable operations. Such operations cannot be cancelled once started.
+ *   2) Interrupting operations. These operations may be invoked by the framework immediately,
+ *      regardless of whether another operation is executing. For example, on devices with sensors
+ *      of FingerprintSensorType::UNDER_DISPLAY_*, ISession#onFingerDown may be invoked while the
+ *      HAL is executing ISession#enroll, ISession#authenticate or ISession#detectInteraction.
  *
- * If the HAL has multiple operations in its queue, it is not required to notify the framework
- * of SessionState::IDLING between each operation. However, it must notify the framework when all
- * work is completed. See ISessionCallback#onStateChanged. For example, the following is a valid
- * sequence of ISessionCallback#onStateChanged invocations: SessionState::IDLING -->
- * SessionState::ENROLLING --> SessionState::ENUMERATING_ENROLLMENTS --> SessionState::IDLING.
+ * The lifecycle of a non-interrupting operation ends when one of its terminal callbacks is called.
+ * For example, ISession#authenticate is considered completed when either of the following callbacks
+ * is called: ISessionCallback#onError or ISessionCallback#onAuthenticationSucceeded.
+ *
+ * The lifecycle of an interrupting operation ends when it returns. Interrupting operations do not
+ * have callbacks.
+ *
+ * ISession only supports execution of one non-interrupting operation at a time, regardless of
+ * whether it's cancellable. The framework must wait for a corresponding callback indicating the end of
+ * the current non-interrupting operation before a new non-interrupting operation can be started.
  */
 @VintfStability
 interface ISession {
@@ -84,9 +89,8 @@ interface ISession {
      * | 0        | 10     | <Time4>    | <Random4> |
      * ----------------------------------------------
      *
-     * @param cookie A unique number identifying this operation
      */
-    void generateChallenge(in int cookie);
+    void generateChallenge();
 
     /**
      * revokeChallenge:
@@ -95,23 +99,17 @@ interface ISession {
      * parameters is requested, the implementation must still notify the framework using the
      * provided callback.
      *
-     * @param cookie A unique number identifying this operation
      * @param challenge Challenge that should be revoked.
      */
-    void revokeChallenge(in int cookie, in long challenge);
+    void revokeChallenge(in long challenge);
 
     /**
      * enroll:
      *
      * A request to add a fingerprint enrollment.
      *
-     * Once the HAL is able to start processing the enrollment request, it must notify the framework
-     * via ISessionCallback#onStateChanged with SessionState::ENROLLING.
-     *
      * At any point during enrollment, if a non-recoverable error occurs, the HAL must notify the
-     * framework via ISessionCallback#onError with the applicable enrollment-specific error, and
-     * then send ISessionCallback#onStateChanged(cookie, SessionState::IDLING) if no subsequent
-     * operation is in the queue.
+     * framework via ISessionCallback#onError with the applicable enrollment-specific error.
      *
      * Before capturing fingerprint data, the implementation must first verify the authenticity and
      * integrity of the provided HardwareAuthToken. In addition, it must check that the challenge
@@ -132,24 +130,17 @@ interface ISession {
      * implementation MUST update and associate this (sensorId, userId) pair with a new new
      * entropy-encoded random identifier. See ISession#getAuthenticatorId for more information.
      *
-     * @param cookie An identifier used to track subsystem operations related to this call path. The
-     *               client must guarantee that it is unique per ISession.
      * @param hat See above documentation.
      */
-    ICancellationSignal enroll(in int cookie, in HardwareAuthToken hat);
+    ICancellationSignal enroll(in HardwareAuthToken hat);
 
     /**
      * authenticate:
      *
      * A request to start looking for fingerprints to authenticate.
      *
-     * Once the HAL is able to start processing the authentication request, it must notify framework
-     * via ISessionCallback#onStateChanged with SessionState::AUTHENTICATING.
-     *
      * At any point during authentication, if a non-recoverable error occurs, the HAL must notify
-     * the framework via ISessionCallback#onError with the applicable authentication-specific error,
-     * and then send ISessionCallback#onStateChanged(cookie, SessionState::IDLING) if no
-     * subsequent operation is in the queue.
+     * the framework via ISessionCallback#onError with the applicable authentication-specific error.
      *
      * During authentication, the implementation may notify the framework via
      * ISessionCallback#onAcquired with messages that may be used to guide the user. This callback
@@ -171,8 +162,6 @@ interface ISession {
      * must be set with the operationId passed in during #authenticate. If the sensor is NOT
      * SensorStrength::STRONG, the HardwareAuthToken MUST be null.
      *
-     * @param cookie An identifier used to track subsystem operations related to this call path. The
-     *               client must guarantee that it is unique per ISession.
      * @param operationId For sensors configured as SensorStrength::STRONG, this must be used ONLY
      *                    upon successful authentication and wrapped in the HardwareAuthToken's
      *                    "challenge" field and sent to the framework via
@@ -184,7 +173,7 @@ interface ISession {
      *                    setUserAuthenticationParameters in KeyGenParameterSpec.Builder and
      *                    KeyProtection.Builder.
      */
-    ICancellationSignal authenticate(in int cookie, in long operationId);
+    ICancellationSignal authenticate(in long operationId);
 
     /**
      * detectInteraction:
@@ -193,17 +182,12 @@ interface ISession {
      * if SensorProps#supportsDetectInteraction is true. If invoked on implementations that do not
      * support this functionality, the HAL must respond with ISession#onError(UNABLE_TO_PROCESS, 0).
      *
-     * Once the HAL is able to start processing this request, it must notify the framework via
-     * ISessionCallback#onStateChanged with SessionState::DETECTING_INTERACTION.
-     *
      * The framework will use this method in cases where determing user presence is required, but
      * identifying/authentication is not. For example, when the device is encrypted (first boot) or
      * in lockdown mode.
      *
      * At any point during detectInteraction, if a non-recoverable error occurs, the HAL must notify
-     * the framework via ISessionCallback#onError with the applicable error, and then send
-     * ISessionCallback#onStateChanged(cookie, SessionState::IDLING) if no subsequent operation is
-     * in the queue.
+     * the framework via ISessionCallback#onError with the applicable error.
      *
      * The implementation must only check for a fingerprint-like image was detected (e.g. to
      * minimize interactions due to non-fingerprint objects), and the lockout counter must not
@@ -221,10 +205,8 @@ interface ISession {
      * Note that if the operation is canceled, the implementation must notify the framework via
      * ISessionCallback#onError with Error::CANCELED.
      *
-     * @param cookie An identifier used to track subsystem operations related to this call path.
-     *               The framework will guarantee that it is unique per ISession.
      */
-    ICancellationSignal detectInteraction(in int cookie);
+    ICancellationSignal detectInteraction();
 
     /*
      * enumerateEnrollments:
@@ -232,32 +214,22 @@ interface ISession {
      * A request to enumerate (list) the enrollments for this (sensorId, userId) pair. The
      * framework typically uses this to ensure that its cache is in sync with the HAL.
      *
-     * Once the HAL is able to start processing this request, it must notify the framework via
-     * ISessionCallback#onStateChanged with SessionState::ENUMERATING_ENROLLMENTS.
-     *
      * The implementation must then notify the framework with a list of enrollments applicable
      * for the current session via ISessionCallback#onEnrollmentsEnumerated.
      *
-     * @param cookie An identifier used to track subsystem operations related to this call path.
-     *               The framework will guarantee that it is unique per ISession.
      */
-    void enumerateEnrollments(in int cookie);
+    void enumerateEnrollments();
 
     /**
      * removeEnrollments:
      *
      * A request to remove the enrollments for this (sensorId, userId) pair.
      *
-     * Once the HAL is able to start processing this request, it must notify the framework via
-     * ISessionCallback#onStateChanged with SessionState::REMOVING_ENROLLMENTS.
-     *
      * After removing the enrollmentIds from everywhere necessary (filesystem, secure subsystems,
      * etc), the implementation must notify the framework via ISessionCallback#onEnrollmentsRemoved.
      *
-     * @param cookie An identifier used to track subsystem operations related to this call path.
-     *               The framework will guarantee that it is unique per ISession.
      */
-    void removeEnrollments(in int cookie, in int[] enrollmentIds);
+    void removeEnrollments(in int[] enrollmentIds);
 
     /**
      * getAuthenticatorId:
@@ -285,10 +257,8 @@ interface ISession {
      *   3) MUST not change if a fingerprint is deleted.
      *   4) MUST be an entropy-encoded random number
      *
-     * @param cookie An identifier used to track subsystem operations related to this call path. The
-     *               client must guarantee that it is unique per ISession.
      */
-    void getAuthenticatorId(in int cookie);
+    void getAuthenticatorId();
 
     /**
      * invalidateAuthenticatorId:
@@ -312,10 +282,8 @@ interface ISession {
      * for more details). As such, the framework would coordinate invalidation across multiple
      * biometric HALs as necessary.
      *
-     * @param cookie An identifier used to track subsystem operations related to this call path. The
-     *               client must guarantee that it is unique per ISession.
      */
-    void invalidateAuthenticatorId(in int cookie);
+    void invalidateAuthenticatorId();
 
     /**
      * resetLockout:
@@ -326,8 +294,7 @@ interface ISession {
      *   2) Verify that the timestamp provided within the HAT is relatively recent (e.g. on the
      *      order of minutes, not hours).
      * If either of the checks fail, the HAL must invoke ISessionCallback#onError with
-     * Error::UNABLE_TO_PROCESS and return to SessionState::IDLING if no subsequent work is in the
-     * queue.
+     * Error::UNABLE_TO_PROCESS and return to the idling state.
      *
      * Upon successful verification, the HAL must clear the lockout counter and notify the framework
      * via ISessionCallback#onLockoutCleared.
@@ -358,29 +325,26 @@ interface ISession {
      * See the Android CDD section 7.3.10 for the full set of lockout and rate-limiting
      * requirements.
      *
-     * @param cookie An identifier used to track subsystem operations related to this call path. The
-     *               client must guarantee that it is unique per ISession.
      * @param hat HardwareAuthToken See above documentation.
      */
-    void resetLockout(in int cookie, in HardwareAuthToken hat);
+    void resetLockout(in HardwareAuthToken hat);
 
     /*
      * Close this session and allow the HAL to release the resources associated with this session.
      *
-     * A session can only be closed when it's in SessionState::IDLING. Closing a session will
-     * result in a ISessionCallback#onStateChanged call with SessionState::CLOSED.
+     * A session can only be closed when the HAL is idling, i.e. not performing any of the
+     * non-interruptable operations. If the HAL is busy performing a cancellable operation, the
+     * operation must be explicitly cancelled with a call to ICancellationSignal#cancel before
+     * the session can be closed.
      *
-     * If a session is unresponsive or stuck in a state other than SessionState::CLOSED,
-     * IFingerprint#reset could be used as a last resort to terminate the session and recover the
-     * HAL from a bad state.
+     * After a session is closed, the HAL must notify the framework by calling
+     * ISessionCallback#onSessionClosed.
      *
      * All sessions must be explicitly closed. Calling IFingerprint#createSession while there is an
      * active session is considered an error.
      *
-     * @param cookie An identifier used to track subsystem operations related to this call path. The
-     *               client must guarantee that it is unique per ISession.
      */
-    void close(in int cookie);
+    void close();
 
     /**
      * Methods for notifying the under-display fingerprint sensor about external events.
@@ -394,9 +358,8 @@ interface ISession {
      * of other types, the HAL must treat this as a no-op and return immediately.
      *
      * For sensors of type FingerprintSensorType::UNDER_DISPLAY_*, this method is used to notify the
-     * HAL of display touches. This method can be invoked when the session is in one of the
-     * following states: SessionState::ENROLLING, SessionState::AUTHENTICATING, or
-     * SessionState::DETECTING_INTERACTION.
+     * HAL of display touches. This method can be invoked when the HAL is performing any one of:
+     * ISession#authenticate, ISession#enroll, ISession#detectInteraction.
      *
      * Note that the framework will only invoke this method if the event occurred on the display on
      * which this sensor is located.
