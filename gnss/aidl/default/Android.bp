@@ -40,6 +40,7 @@ cc_binary {
     ],
     shared_libs: [
         "libbase",
+        "libcutils",
         "libbinder_ndk",
         "libhidlbase",
         "libutils",
