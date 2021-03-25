@@ -727,8 +727,8 @@ TEST_P(RadioHidlTest_v1_6, setCarrierInfoForImsiEncryption_1_6) {
 
     radio_v1_6->setCarrierInfoForImsiEncryption_1_6(serial, imsiInfo);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo.type);
-    EXPECT_EQ(serial, radioRsp_v1_6->rspInfo.serial);
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo_v1_0.type);
+    EXPECT_EQ(serial, radioRsp_v1_6->rspInfo_v1_0.serial);
 
     if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(
