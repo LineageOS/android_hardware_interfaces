@@ -39,6 +39,7 @@ cc_binary {
     srcs: [
         "service.cpp",
     ],
+    required: ["RemoteProvisioner"],
 }
 
 cc_library {
