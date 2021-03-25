@@ -18,6 +18,9 @@ package android.hardware.gnss;
 
 /**
  * Contains estimates of the satellite velocity fields in the ECEF coordinate frame.
+ *
+ * The satellite velocity must be defined at the time of transmission of the
+ * signal receivedSvTimeNs.
  */
 @VintfStability
 parcelable SatelliteVelocityEcef {
