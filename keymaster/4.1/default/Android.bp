@@ -45,5 +45,14 @@ cc_binary {
         "liblog",
         "libutils",
     ],
+    required: [
+        "android.hardware.hardware_keystore.km41.xml",
+    ],
+}
 
+prebuilt_etc {
+    name: "android.hardware.hardware_keystore.km41.xml",
+    sub_dir: "permissions",
+    vendor: true,
+    src: "android.hardware.hardware_keystore.km41.xml",
 }
