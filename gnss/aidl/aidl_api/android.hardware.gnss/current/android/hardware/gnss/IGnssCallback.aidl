@@ -12,7 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *////////////////////////////////////////////////////////////////////////////////
+ */
+///////////////////////////////////////////////////////////////////////////////
 // THIS FILE IS IMMUTABLE. DO NOT EDIT IN ANY CASE.                          //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -37,4 +38,5 @@ interface IGnssCallback {
   const int CAPABILITY_SATELLITE_BLOCKLIST = 512;
   const int CAPABILITY_CORRELATION_VECTOR = 4096;
   const int CAPABILITY_SATELLITE_PVT = 8192;
+  const int CAPABILITY_MEASUREMENT_CORRECTIONS_FOR_DRIVING = 16384;
 }
