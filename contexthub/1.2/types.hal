@@ -35,10 +35,12 @@ enum Setting : @1.1::Setting {
     AIRPLANE_MODE,
 
     /**
-     * Indicates if the microphone access was turned off globally by the user,
-     * in which case audio data cannot be used and propagated by CHRE.
+     * Indicates if the microphone access is available for CHRE. Microphone
+     * access is disabled if the user has turned off the microphone as a
+     * privacy setting, in which case audio data cannot be used and propagated
+     * by CHRE.
      */
-    GLOBAL_MIC_DISABLE,
+    MICROPHONE,
 };
 
 struct ContextHubMsg {
