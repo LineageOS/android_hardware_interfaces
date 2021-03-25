@@ -28,6 +28,8 @@
 #include <string>
 #include <thread>
 
+#include <cutils/properties.h>
+
 #include "GnssAntennaInfo.h"
 #include "GnssConfiguration.h"
 #include "GnssDebug.h"
@@ -157,9 +159,17 @@ template <class T_IGnss>
 std::unique_ptr<V2_0::GnssLocation> GnssTemplate<T_IGnss>::getLocationFromHW() {
     char inputBuffer[INPUT_BUFFER_SIZE];
     if (!mHardwareModeChecked) {
-        mGnssFd = open(GNSS_PATH, O_RDWR | O_NONBLOCK);
+        // default using gnss0
+        const char * gnss_dev_path = GNSS_PATH;
+        char devname_value[PROPERTY_VALUE_MAX] = "";
+        if (property_get("debug.location.gnss.devname", devname_value, NULL) > 0) {
+            gnss_dev_path = devname_value;
+            ALOGD("using %s instead of the default %s", gnss_dev_path, GNSS_PATH);
+        }
+
+        mGnssFd = open(gnss_dev_path, O_RDWR | O_NONBLOCK);
         if (mGnssFd == -1) {
-            ALOGW("Failed to open /dev/gnss0 errno: %d", errno);
+            ALOGW("Failed to open %s errno: %d", gnss_dev_path, errno);
         }
         mHardwareModeChecked = true;
     }

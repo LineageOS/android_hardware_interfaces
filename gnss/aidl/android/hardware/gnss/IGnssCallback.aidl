@@ -16,8 +16,8 @@
 
 package android.hardware.gnss;
 
-import android.hardware.gnss.IGnssPsds;
 import android.hardware.gnss.IGnssConfiguration;
+import android.hardware.gnss.IGnssPsds;
 
 /**
  * This interface is required for the HAL to communicate certain information
@@ -26,15 +26,17 @@ import android.hardware.gnss.IGnssConfiguration;
  */
 @VintfStability
 interface IGnssCallback {
-
     /** Capability bit mask indicating that GNSS supports blocklisting satellites */
     const int CAPABILITY_SATELLITE_BLOCKLIST = 1 << 9;
 
     /** Capability bit mask indicating that GNSS supports correlation vector */
-    const int CAPABILITY_CORRELATION_VECTOR =  1 << 12;
+    const int CAPABILITY_CORRELATION_VECTOR = 1 << 12;
 
     /** Capability bit mask indicating that GNSS supports satellite PVT */
-    const int CAPABILITY_SATELLITE_PVT       = 1 << 13;
+    const int CAPABILITY_SATELLITE_PVT = 1 << 13;
+
+    /** Capability bit mask indicating that GNSS supports measurement corrections for driving */
+    const int CAPABILITY_MEASUREMENT_CORRECTIONS_FOR_DRIVING = 1 << 14;
 
     /**
      * Callback to inform framework of the GNSS HAL implementation's capabilities.
