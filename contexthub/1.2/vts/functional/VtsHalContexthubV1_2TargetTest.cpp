@@ -131,10 +131,10 @@ TEST_P(ContexthubHidlTest, TestOnAirplaneModeSettingChanged) {
     ASSERT_OK(registerCallback_1_2(nullptr));
 }
 
-TEST_P(ContexthubHidlTest, TestOnGlobalMicDisableSettingChanged) {
+TEST_P(ContexthubHidlTest, TestOnMicrophoneSettingChanged) {
     ASSERT_OK(registerCallback_1_2(new ContexthubCallbackV1_2()));
-    hubApi->onSettingChanged_1_2(Setting::GLOBAL_MIC_DISABLE, SettingValue::DISABLED);
-    hubApi->onSettingChanged_1_2(Setting::GLOBAL_MIC_DISABLE, SettingValue::ENABLED);
+    hubApi->onSettingChanged_1_2(Setting::MICROPHONE, SettingValue::DISABLED);
+    hubApi->onSettingChanged_1_2(Setting::MICROPHONE, SettingValue::ENABLED);
     ASSERT_OK(registerCallback_1_2(nullptr));
 }
 

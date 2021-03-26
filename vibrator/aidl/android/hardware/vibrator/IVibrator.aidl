@@ -17,10 +17,12 @@
 package android.hardware.vibrator;
 
 import android.hardware.vibrator.IVibratorCallback;
+import android.hardware.vibrator.Braking;
 import android.hardware.vibrator.Effect;
 import android.hardware.vibrator.EffectStrength;
 import android.hardware.vibrator.CompositeEffect;
 import android.hardware.vibrator.CompositePrimitive;
+import android.hardware.vibrator.PrimitivePwle;
 
 @VintfStability
 interface IVibrator {
@@ -60,6 +62,14 @@ interface IVibrator {
      * Whether getQFactor is supported.
      */
     const int CAP_GET_Q_FACTOR = 1 << 8;
+    /**
+     * Whether frequency control is supported.
+     */
+    const int CAP_FREQUENCY_CONTROL = 1 << 9;
+    /**
+     * Whether composePwle is supported.
+     */
+    const int CAP_COMPOSE_PWLE_EFFECTS = 1 << 10;
 
     /**
      * Determine capabilities of the vibrator HAL (CAP_* mask)
@@ -240,18 +250,109 @@ interface IVibrator {
     void alwaysOnDisable(in int id);
 
     /**
-     * Retrieve the measured resonant frequency of the actuator. This may not be supported
-     * and this support is reflected in getCapabilities (CAP_GET_RESONANT_FREQUENCY)
+     * Retrieve the measured resonant frequency of the actuator.
      *
-     * @return Measured resonant frequency in Hz.
+     * This may not be supported and this support is reflected in
+     * getCapabilities (CAP_GET_RESONANT_FREQUENCY)
+     *
+     * @return Measured resonant frequency in Hz. Non-zero value if supported,
+     *         or value should be ignored if not supported.
      */
     float getResonantFrequency();
 
     /**
-     * Retrieve the measured Q factor. This may not be supported
-     * and this support is reflected in getCapabilities (CAP_GET_Q_FACTOR)
+     * Retrieve the measured Q factor.
      *
-     * @return Measured Q factor.
+     * This may not be supported and this support is reflected in
+     * getCapabilities (CAP_GET_Q_FACTOR)
+     *
+     * @return Measured Q factor. Non-zero value if supported, or value should be
+     *         ignored if not supported.
      */
     float getQFactor();
+
+    /**
+     * Retrieve the frequency resolution used in getBandwidthAmplitudeMap() in units of hertz
+     *
+     * This may not be supported and this support is reflected in
+     * getCapabilities (CAP_FREQUENCY_CONTROL).
+     *
+     * @return The frequency resolution of the bandwidth amplitude map.
+     *         Non-zero value if supported, or value should be ignored if not supported.
+     */
+    float getFrequencyResolution();
+
+    /**
+     * Retrieve the minimum allowed frequency in units of hertz
+     *
+     * This may not be supported and this support is reflected in
+     * getCapabilities (CAP_FREQUENCY_CONTROL).
+     *
+     * @return The minimum frequency allowed. Non-zero value if supported,
+     *         or value should be ignored if not supported.
+     */
+    float getFrequencyMinimum();
+
+    /**
+     * Retrieve the output acceleration amplitude values per frequency supported
+     *
+     * This may not be supported and this support is reflected in
+     * getCapabilities (CAP_FREQUENCY_CONTROL).
+     *
+     * The mapping is represented as a list of amplitude values in the inclusive range [0.0, 1.0].
+     * The first value represents the amplitude at the frequency returned by getFrequencyMinimum().
+     * Each subsequent element is the amplitude at the next supported frequency, in increments
+     * of getFrequencyResolution(). The value returned by getResonantFrequency() must be
+     * represented in the returned list.
+     *
+     * @return The maximum output acceleration amplitude for each supported frequency,
+     *         starting at getMinimumFrequency()
+     */
+    float[] getBandwidthAmplitudeMap();
+
+    /**
+     * Retrieve the maximum duration allowed for any primitive PWLE in units of milliseconds.
+     *
+     * This may not be supported and this support is reflected in
+     * getCapabilities (CAP_COMPOSE_PWLE_EFFECTS).
+     *
+     * @return The maximum duration allowed for a single PrimitivePwle.
+     *         Non-zero value if supported, or value should be ignored if not supported.
+     */
+    int getPwlePrimitiveDurationMax();
+
+    /**
+     * Retrieve the maximum count for allowed PWLEs in one composition.
+     *
+     * This may not be supported and this support is reflected in
+     * getCapabilities (CAP_COMPOSE_PWLE_EFFECTS).
+     *
+     * @return The maximum count allowed. Non-zero value if supported,
+     *         or value should be ignored if not supported.
+     */
+    int getPwleCompositionSizeMax();
+
+    /**
+     * List of supported braking mechanism.
+     *
+     * This may not be supported and this support is reflected in
+     * getCapabilities (CAP_COMPOSE_PWLE_EFFECTS).
+     * Implementations are optional but encouraged if available.
+     *
+     * @return The braking mechanisms which are supported by the composePwle API.
+     */
+    Braking[] getSupportedBraking();
+
+    /**
+     * Fire off a string of PWLEs.
+     *
+     * This may not be supported and this support is reflected in
+     * getCapabilities (CAP_COMPOSE_PWLE_EFFECTS).
+     *
+     * Doing this operation while the vibrator is already on is undefined behavior. Clients should
+     * explicitly call off. IVibratorCallback.onComplete() support is required for this API.
+     *
+     * @param composite Array of PWLEs.
+     */
+    void composePwle(in PrimitivePwle[] composite, in IVibratorCallback callback);
 }

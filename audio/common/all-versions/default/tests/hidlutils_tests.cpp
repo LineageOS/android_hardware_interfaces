@@ -47,6 +47,10 @@ static constexpr audio_source_t kInvalidHalSource = static_cast<audio_source_t>(
 // AUDIO_STREAM_DEFAULT is framework-only
 static constexpr audio_stream_type_t kInvalidHalStreamType = static_cast<audio_stream_type_t>(-2);
 static constexpr audio_usage_t kInvalidHalUsage = static_cast<audio_usage_t>(0xFFFFFFFFU);
+static constexpr audio_encapsulation_type_t kInvalidEncapsulationType =
+        static_cast<audio_encapsulation_type_t>(0xFFFFFFFFU);
+static constexpr audio_standard_t kInvalidAudioStandard =
+        static_cast<audio_standard_t>(0xFFFFFFFFU);
 
 TEST(HidlUtils, ConvertInvalidChannelMask) {
     AudioChannelMask invalid;
@@ -950,6 +954,53 @@ TEST(HidlUtils, ConvertAudioPortConfig) {
     EXPECT_TRUE(audio_port_configs_are_equal(&halConfig, &halConfigBack));
 }
 
+TEST(HidlUtils, ConvertInvalidAudioTransports) {
+    hidl_vec<AudioTransport> invalid;
+    struct audio_port_v7 halInvalid = {};
+    halInvalid.num_audio_profiles = 1;
+    halInvalid.audio_profiles[0].format = kInvalidHalFormat;
+    halInvalid.audio_profiles[0].encapsulation_type = kInvalidEncapsulationType;
+    halInvalid.num_extra_audio_descriptors = 1;
+    halInvalid.extra_audio_descriptors[0].standard = kInvalidAudioStandard;
+    halInvalid.extra_audio_descriptors[0].descriptor_length = EXTRA_AUDIO_DESCRIPTOR_SIZE + 1;
+    EXPECT_EQ(BAD_VALUE,
+              HidlUtils::audioTransportsFromHal(halInvalid, false /*isInput*/, &invalid));
+    invalid.resize(2);
+    AudioProfile invalidProfile;
+    invalidProfile.format = "random string";
+    invalid[0].audioCapability.profile(invalidProfile);
+    invalid[0].encapsulationType = "random string";
+    invalid[0].audioCapability.edid(hidl_vec<uint8_t>(EXTRA_AUDIO_DESCRIPTOR_SIZE + 1));
+    invalid[1].encapsulationType = "random string";
+    EXPECT_EQ(BAD_VALUE, HidlUtils::audioTransportsToHal(invalid, &halInvalid));
+}
+
+TEST(HidlUtils, ConvertAudioTransports) {
+    hidl_vec<AudioTransport> transports;
+    transports.resize(2);
+    AudioProfile profile;
+    profile.format = toString(xsd::AudioFormat::AUDIO_FORMAT_PCM_16_BIT);
+    profile.sampleRates.resize(2);
+    profile.sampleRates[0] = 44100;
+    profile.sampleRates[1] = 48000;
+    profile.channelMasks.resize(2);
+    profile.channelMasks[0] = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_MONO);
+    profile.channelMasks[1] = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO);
+    transports[0].audioCapability.profile(profile);
+    hidl_vec<uint8_t> shortAudioDescriptor({0x11, 0x06, 0x01});
+    transports[0].encapsulationType =
+            toString(xsd::AudioEncapsulationType::AUDIO_ENCAPSULATION_TYPE_NONE);
+    transports[1].audioCapability.edid(std::move(shortAudioDescriptor));
+    transports[1].encapsulationType =
+            toString(xsd::AudioEncapsulationType::AUDIO_ENCAPSULATION_TYPE_IEC61937);
+    struct audio_port_v7 halPort;
+    EXPECT_EQ(NO_ERROR, HidlUtils::audioTransportsToHal(transports, &halPort));
+    hidl_vec<AudioTransport> transportsBack;
+    EXPECT_EQ(NO_ERROR,
+              HidlUtils::audioTransportsFromHal(halPort, false /*isInput*/, &transportsBack));
+    EXPECT_EQ(transports, transportsBack);
+}
+
 TEST(HidlUtils, ConvertInvalidAudioPort) {
     AudioPort invalid;
     struct audio_port_v7 halInvalid = {};
@@ -958,8 +1009,10 @@ TEST(HidlUtils, ConvertInvalidAudioPort) {
     halInvalid.num_audio_profiles = 1;
     halInvalid.audio_profiles[0].format = kInvalidHalFormat;
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioPortFromHal(halInvalid, &invalid));
-    invalid.profiles.resize(1);
-    invalid.profiles[0].format = "random string";
+    invalid.transports.resize(1);
+    AudioProfile invalidProfile;
+    invalidProfile.format = "random string";
+    invalid.transports[0].audioCapability.profile(invalidProfile);
     EXPECT_EQ(BAD_VALUE, HidlUtils::audioPortToHal(invalid, &halInvalid));
 }
 
@@ -967,14 +1020,22 @@ TEST(HidlUtils, ConvertAudioPort) {
     AudioPort port = {};
     port.id = 42;
     port.name = "test";
-    port.profiles.resize(1);
-    port.profiles[0].format = toString(xsd::AudioFormat::AUDIO_FORMAT_PCM_16_BIT);
-    port.profiles[0].sampleRates.resize(2);
-    port.profiles[0].sampleRates[0] = 44100;
-    port.profiles[0].sampleRates[1] = 48000;
-    port.profiles[0].channelMasks.resize(2);
-    port.profiles[0].channelMasks[0] = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_MONO);
-    port.profiles[0].channelMasks[1] = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO);
+    port.transports.resize(2);
+    AudioProfile profile;
+    profile.format = toString(xsd::AudioFormat::AUDIO_FORMAT_PCM_16_BIT);
+    profile.sampleRates.resize(2);
+    profile.sampleRates[0] = 44100;
+    profile.sampleRates[1] = 48000;
+    profile.channelMasks.resize(2);
+    profile.channelMasks[0] = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_MONO);
+    profile.channelMasks[1] = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO);
+    port.transports[0].audioCapability.profile(profile);
+    port.transports[0].encapsulationType =
+            toString(xsd::AudioEncapsulationType::AUDIO_ENCAPSULATION_TYPE_NONE);
+    hidl_vec<uint8_t> shortAudioDescriptor({0x11, 0x06, 0x01});
+    port.transports[1].audioCapability.edid(std::move(shortAudioDescriptor));
+    port.transports[1].encapsulationType =
+            toString(xsd::AudioEncapsulationType::AUDIO_ENCAPSULATION_TYPE_IEC61937);
     port.gains.resize(1);
     port.gains[0].channelMask = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO);
     port.ext.device({});

@@ -103,6 +103,11 @@ class RadioResponse_v1_6 : public ::android::hardware::radio::V1_6::IRadioRespon
     ::android::hardware::hidl_vec<::android::hardware::radio::V1_5::BarringInfo> barringInfos;
 
     RadioResponse_v1_6(RadioResponseWaiter& parent_v1_6);
+
+    // Phone Book
+    ::android::hardware::radio::V1_6::PhonebookCapacity capacity;
+    int32_t updatedRecordIndex;
+
     virtual ~RadioResponse_v1_6() = default;
 
     Return<void> getIccCardStatusResponse(
@@ -829,6 +834,17 @@ class RadioResponse_v1_6 : public ::android::hardware::radio::V1_6::IRadioRespon
     Return<void> getSlicingConfigResponse(
             const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
             const ::android::hardware::radio::V1_6::SlicingConfig& slicingConfig);
+
+    Return<void> getSimPhonebookRecordsResponse(
+            const ::android::hardware::radio::V1_6::RadioResponseInfo& info);
+
+    Return<void> getSimPhonebookCapacityResponse(
+            const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
+            const ::android::hardware::radio::V1_6::PhonebookCapacity& capacity);
+
+    Return<void> updateSimPhonebookRecordsResponse(
+            const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
+            int32_t updatedRecordIndex);
 };
 
 /* Callback class for radio indication */
@@ -1073,6 +1089,14 @@ class RadioIndication_v1_6 : public ::android::hardware::radio::V1_6::IRadioIndi
             const ::android::hardware::radio::V1_5::CellIdentity& /*cellIdentity*/,
             const ::android::hardware::hidl_vec<::android::hardware::radio::V1_5::BarringInfo>&
             /*barringInfos*/);
+
+    Return<void> simPhonebookChanged(RadioIndicationType type);
+
+    Return<void> simPhonebookRecordsReceived(
+            RadioIndicationType type,
+            ::android::hardware::radio::V1_6::PbReceivedStatus status,
+            const ::android::hardware::hidl_vec<::android::hardware::radio::V1_6::PhonebookRecordInfo>&
+                    records);
 };
 
 // The main test class for Radio HIDL.
