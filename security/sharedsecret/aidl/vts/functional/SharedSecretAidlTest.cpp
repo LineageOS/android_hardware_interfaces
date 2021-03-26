@@ -114,14 +114,14 @@ class SharedSecretAidlTest : public ::testing::Test {
     const vector<shared_ptr<ISharedSecret>>& allSharedSecrets() { return allSharedSecrets_; }
 
     static void SetUpTestCase() {
-        if (allSharedSecrets_.empty()) {
-            auto names = ::android::getAidlHalInstanceNames(ISharedSecret::descriptor);
-            for (const auto& name : names) {
-                auto servicePtr = getSharedSecretService(name.c_str());
-                if (servicePtr != nullptr) allSharedSecrets_.push_back(std::move(servicePtr));
-            }
+        ASSERT_TRUE(allSharedSecrets_.empty()) << "The Shared Secret vector is not empty.";
+        auto names = ::android::getAidlHalInstanceNames(ISharedSecret::descriptor);
+        for (const auto& name : names) {
+            auto servicePtr = getSharedSecretService(name.c_str());
+            if (servicePtr != nullptr) allSharedSecrets_.push_back(std::move(servicePtr));
         }
     }
+
     static void TearDownTestCase() {}
     void SetUp() override {}
     void TearDown() override {}
@@ -134,6 +134,9 @@ vector<shared_ptr<ISharedSecret>> SharedSecretAidlTest::allSharedSecrets_;
 
 TEST_F(SharedSecretAidlTest, GetParameters) {
     auto sharedSecrets = allSharedSecrets();
+    if (sharedSecrets.empty()) {
+        GTEST_SKIP() << "Skipping the test because no shared secret service is found.";
+    }
     for (auto sharedSecret : sharedSecrets) {
         auto result1 = getSharedSecretParameters(sharedSecret);
         EXPECT_EQ(ErrorCode::OK, result1.error);
@@ -148,14 +151,18 @@ TEST_F(SharedSecretAidlTest, GetParameters) {
 }
 
 TEST_F(SharedSecretAidlTest, ComputeSharedSecret) {
+    auto sharedSecrets = allSharedSecrets();
+    if (sharedSecrets.empty()) {
+        GTEST_SKIP() << "Skipping the test as no shared secret service is found.";
+    }
     auto params = getAllSharedSecretParameters();
-    ASSERT_EQ(allSharedSecrets().size(), params.size())
+    ASSERT_EQ(sharedSecrets.size(), params.size())
             << "One or more shared secret services failed to provide parameters.";
     auto nonces = copyNonces(params);
-    EXPECT_EQ(allSharedSecrets().size(), nonces.size());
+    EXPECT_EQ(sharedSecrets.size(), nonces.size());
     std::sort(nonces.begin(), nonces.end());
     std::unique(nonces.begin(), nonces.end());
-    EXPECT_EQ(allSharedSecrets().size(), nonces.size());
+    EXPECT_EQ(sharedSecrets.size(), nonces.size());
 
     auto responses = computeAllSharedSecrets(params);
     ASSERT_GT(responses.size(), 0U);
@@ -163,7 +170,7 @@ TEST_F(SharedSecretAidlTest, ComputeSharedSecret) {
 
     // Do it a second time.  Should get the same answers.
     params = getAllSharedSecretParameters();
-    ASSERT_EQ(allSharedSecrets().size(), params.size())
+    ASSERT_EQ(sharedSecrets.size(), params.size())
             << "One or more shared secret services failed to provide parameters.";
 
     responses = computeAllSharedSecrets(params);
@@ -188,10 +195,14 @@ inline final_action<F> finally(const F& f) {
 }
 
 TEST_F(SharedSecretAidlTest, ComputeSharedSecretCorruptNonce) {
+    auto sharedSecrets = allSharedSecrets();
+    if (sharedSecrets.empty()) {
+        GTEST_SKIP() << "Skipping the test as no shared secret service is found.";
+    }
     auto fixup_hmac = finally([&]() { computeAllSharedSecrets(getAllSharedSecretParameters()); });
 
     auto params = getAllSharedSecretParameters();
-    ASSERT_EQ(allSharedSecrets().size(), params.size())
+    ASSERT_EQ(sharedSecrets.size(), params.size())
             << "One or more shared secret services failed to provide parameters.";
 
     // All should be well in the normal case
@@ -224,9 +235,13 @@ TEST_F(SharedSecretAidlTest, ComputeSharedSecretCorruptNonce) {
 }
 
 TEST_F(SharedSecretAidlTest, ComputeSharedSecretCorruptSeed) {
+    auto sharedSecrets = allSharedSecrets();
+    if (sharedSecrets.empty()) {
+        GTEST_SKIP() << "Skipping the test as no shared secret service is found.";
+    }
     auto fixup_hmac = finally([&]() { computeAllSharedSecrets(getAllSharedSecretParameters()); });
     auto params = getAllSharedSecretParameters();
-    ASSERT_EQ(allSharedSecrets().size(), params.size())
+    ASSERT_EQ(sharedSecrets.size(), params.size())
             << "One or more shared secret service failed to provide parameters.";
 
     // All should be well in the normal case

@@ -287,6 +287,10 @@ static inline bool isLinearPcm(const std::string& format) {
     return isLinearPcm(stringToAudioFormat(format));
 }
 
+static inline bool isUnknownAudioEncapsulationType(const std::string& encapsulationType) {
+    return stringToAudioEncapsulationType(encapsulationType) == AudioEncapsulationType::UNKNOWN;
+}
+
 }  // namespace android::audio::policy::configuration::V7_0
 
 #endif  // ANDROID_AUDIO_POLICY_CONFIGURATION_V7_0__ENUMS_H

@@ -37,7 +37,7 @@ class FakeFingerprintEngine {
         cb->onEnrollmentProgress(0 /* enrollmentId */, 0 /* remaining */);
     }
 
-    void authenticateImpl(ISessionCallback* cb, int64_t /*operationId*/) {
+    void authenticateImpl(ISessionCallback* cb, int64_t /* operationId */) {
         LOG(INFO) << "authenticateImpl";
         cb->onAuthenticationSucceeded(0 /* enrollmentId */, {} /* hat */);
     }

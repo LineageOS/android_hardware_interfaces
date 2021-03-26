@@ -39,11 +39,11 @@ cc_test {
     shared_libs: [
         "libbinder_ndk",
         "libcrypto",
-        "libkeymint",
     ],
     static_libs: [
         "android.hardware.security.keymint-V1-ndk_platform",
         "android.hardware.security.sharedsecret-V1-ndk_platform",
+        "libkeymint",
     ],
     test_suites: [
         "general-tests",

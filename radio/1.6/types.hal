@@ -1094,3 +1094,106 @@ struct ImsiEncryptionInfo {
     @1.1::ImsiEncryptionInfo base;
     PublicKeyType keyType;         // Public key type
 };
+
+/**
+ * Phonebook-record-information specified by EF_ADN(Abbreviated dialing numbers)
+ * record of SIM as per 3GPP spec 31.102 v15 Section-4.4.2.3.
+ */
+struct PhonebookRecordInfo {
+    /** Record index. 0 is used to insert a record */
+    uint32_t recordId;
+
+    /** Alpha identifier, empty string if no value */
+    string name;
+
+    /** Dialling number, empty string if no value */
+    string number;
+
+    /** Email addresses */
+    vec<string> emails;
+
+    /** Additional numbers */
+    vec<string> additionalNumbers;
+};
+
+struct PhonebookCapacity {
+    /**
+     * Maximum number of ADN records possible in the SIM phonebook
+     * Needs to be non-negative
+     */
+    int32_t maxAdnRecords;
+
+    /**
+     * Used ADN records in the SIM phonebook
+     * Needs to be non-negative
+     */
+    int32_t usedAdnRecords;
+
+    /**
+     * Maximum email records possible in the SIM phonebook
+     * Needs to be non-negative
+     */
+    int32_t maxEmailRecords;
+
+    /**
+     * Used email records in the SIM phonebook
+     * Needs to be non-negative
+     */
+    int32_t usedEmailRecords;
+
+    /**
+     * Maximum additional number records possible in the SIM phonebook
+     * Needs to be non-negative
+     */
+    int32_t maxAdditionalNumberRecords;
+
+    /**
+     * Used additional number records in the SIM phonebook
+     * Needs to be non-negative
+     */
+    int32_t usedAdditionalNumberRecords;
+
+    /**
+     * Maximum name length possible in the SIM phonebook
+     * Needs to be non-negative
+     */
+    int32_t maxNameLen;
+
+    /**
+     * Maximum number length possible in the SIM phonebook
+     * Needs to be non-negative
+     */
+    int32_t maxNumberLen;
+
+    /**
+     * Maximum email length possible in the SIM phonebook
+     * Needs to be non-negative
+     */
+    int32_t maxEmailLen;
+
+    /**
+     * Maximum additional number length possible in the SIM phonebook
+     * Needs to be non-negative
+     */
+    int32_t maxAdditionalNumberLen;
+};
+
+/**
+ * Enum representing the status of the received PB indication,
+ * PB_RECEIVED_OK indicates this retrieval is fine
+ * PB_RECEIVED_ERROR indicates one error happens, in general, the process
+ *   can't be restored soon.
+ * PB_RECEIVED_ABORT indicates the process is interrupted, in this case,
+ *   modem might need resources and interrupt the current process, or it is
+ *   timed out to receive all indications, and client can retry soon.
+ * PB_RECEIVED_FINAL indicates the whole process is finished with a full
+ *   chunk of phonebook data, means this is a last indication with the left
+ *   data.
+ */
+enum PbReceivedStatus : int32_t {
+    PB_RECEIVED_OK = 1,
+    PB_RECEIVED_ERROR = 2,
+    PB_RECEIVED_ABORT = 3,
+    PB_RECEIVED_FINAL = 4,
+};
+
