@@ -39,54 +39,56 @@ Session::Session(int sensorId, int userId, std::shared_ptr<ISessionCallback> cb,
 }
 
 void Session::scheduleStateOrCrash(SessionState state) {
-    CHECK(mScheduledState == SessionState::IDLING);
-    CHECK(mCurrentState == SessionState::IDLING);
+    // TODO(b/166800618): call enterIdling from the terminal callbacks and restore these checks.
+    // CHECK(mScheduledState == SessionState::IDLING);
+    // CHECK(mCurrentState == SessionState::IDLING);
     mScheduledState = state;
 }
 
-void Session::enterStateOrCrash(int cookie, SessionState state) {
+void Session::enterStateOrCrash(SessionState state) {
     CHECK(mScheduledState == state);
     mCurrentState = state;
     mScheduledState = SessionState::IDLING;
-    mCb->onStateChanged(cookie, mCurrentState);
 }
 
-void Session::enterIdling(int cookie) {
-    mCurrentState = SessionState::IDLING;
-    mCb->onStateChanged(cookie, mCurrentState);
+void Session::enterIdling() {
+    // TODO(b/166800618): call enterIdling from the terminal callbacks and rethink this conditional.
+    if (mCurrentState != SessionState::CLOSED) {
+        mCurrentState = SessionState::IDLING;
+    }
 }
 
 bool Session::isClosed() {
     return mCurrentState == SessionState::CLOSED;
 }
 
-ndk::ScopedAStatus Session::generateChallenge(int32_t cookie) {
+ndk::ScopedAStatus Session::generateChallenge() {
     LOG(INFO) << "generateChallenge";
     scheduleStateOrCrash(SessionState::GENERATING_CHALLENGE);
 
-    mWorker->schedule(Callable::from([this, cookie] {
-        enterStateOrCrash(cookie, SessionState::GENERATING_CHALLENGE);
+    mWorker->schedule(Callable::from([this] {
+        enterStateOrCrash(SessionState::GENERATING_CHALLENGE);
         mEngine->generateChallengeImpl(mCb.get());
-        enterIdling(cookie);
+        enterIdling();
     }));
 
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Session::revokeChallenge(int32_t cookie, int64_t challenge) {
+ndk::ScopedAStatus Session::revokeChallenge(int64_t challenge) {
     LOG(INFO) << "revokeChallenge";
     scheduleStateOrCrash(SessionState::REVOKING_CHALLENGE);
 
-    mWorker->schedule(Callable::from([this, cookie, challenge] {
-        enterStateOrCrash(cookie, SessionState::REVOKING_CHALLENGE);
+    mWorker->schedule(Callable::from([this, challenge] {
+        enterStateOrCrash(SessionState::REVOKING_CHALLENGE);
         mEngine->revokeChallengeImpl(mCb.get(), challenge);
-        enterIdling(cookie);
+        enterIdling();
     }));
 
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Session::enroll(int32_t cookie, const keymaster::HardwareAuthToken& hat,
+ndk::ScopedAStatus Session::enroll(const keymaster::HardwareAuthToken& hat,
                                    std::shared_ptr<common::ICancellationSignal>* out) {
     LOG(INFO) << "enroll";
     scheduleStateOrCrash(SessionState::ENROLLING);
@@ -94,21 +96,21 @@ ndk::ScopedAStatus Session::enroll(int32_t cookie, const keymaster::HardwareAuth
     std::promise<void> cancellationPromise;
     auto cancFuture = cancellationPromise.get_future();
 
-    mWorker->schedule(Callable::from([this, cookie, hat, cancFuture = std::move(cancFuture)] {
-        enterStateOrCrash(cookie, SessionState::ENROLLING);
+    mWorker->schedule(Callable::from([this, hat, cancFuture = std::move(cancFuture)] {
+        enterStateOrCrash(SessionState::ENROLLING);
         if (shouldCancel(cancFuture)) {
             mCb->onError(Error::CANCELED, 0 /* vendorCode */);
         } else {
             mEngine->enrollImpl(mCb.get(), hat);
         }
-        enterIdling(cookie);
+        enterIdling();
     }));
 
     *out = SharedRefBase::make<CancellationSignal>(std::move(cancellationPromise));
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Session::authenticate(int32_t cookie, int64_t operationId,
+ndk::ScopedAStatus Session::authenticate(int64_t operationId,
                                          std::shared_ptr<common::ICancellationSignal>* out) {
     LOG(INFO) << "authenticate";
     scheduleStateOrCrash(SessionState::AUTHENTICATING);
@@ -116,112 +118,111 @@ ndk::ScopedAStatus Session::authenticate(int32_t cookie, int64_t operationId,
     std::promise<void> cancPromise;
     auto cancFuture = cancPromise.get_future();
 
-    mWorker->schedule(
-            Callable::from([this, cookie, operationId, cancFuture = std::move(cancFuture)] {
-                enterStateOrCrash(cookie, SessionState::AUTHENTICATING);
-                if (shouldCancel(cancFuture)) {
-                    mCb->onError(Error::CANCELED, 0 /* vendorCode */);
-                } else {
-                    mEngine->authenticateImpl(mCb.get(), operationId);
-                }
-                enterIdling(cookie);
-            }));
+    mWorker->schedule(Callable::from([this, operationId, cancFuture = std::move(cancFuture)] {
+        enterStateOrCrash(SessionState::AUTHENTICATING);
+        if (shouldCancel(cancFuture)) {
+            mCb->onError(Error::CANCELED, 0 /* vendorCode */);
+        } else {
+            mEngine->authenticateImpl(mCb.get(), operationId);
+        }
+        enterIdling();
+    }));
 
     *out = SharedRefBase::make<CancellationSignal>(std::move(cancPromise));
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Session::detectInteraction(int32_t cookie,
-                                              std::shared_ptr<common::ICancellationSignal>* out) {
+ndk::ScopedAStatus Session::detectInteraction(std::shared_ptr<common::ICancellationSignal>* out) {
     LOG(INFO) << "detectInteraction";
     scheduleStateOrCrash(SessionState::DETECTING_INTERACTION);
 
     std::promise<void> cancellationPromise;
     auto cancFuture = cancellationPromise.get_future();
 
-    mWorker->schedule(Callable::from([this, cookie, cancFuture = std::move(cancFuture)] {
-        enterStateOrCrash(cookie, SessionState::DETECTING_INTERACTION);
+    mWorker->schedule(Callable::from([this, cancFuture = std::move(cancFuture)] {
+        enterStateOrCrash(SessionState::DETECTING_INTERACTION);
         if (shouldCancel(cancFuture)) {
             mCb->onError(Error::CANCELED, 0 /* vendorCode */);
         } else {
             mEngine->detectInteractionImpl(mCb.get());
         }
-        enterIdling(cookie);
+        enterIdling();
     }));
 
     *out = SharedRefBase::make<CancellationSignal>(std::move(cancellationPromise));
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Session::enumerateEnrollments(int32_t cookie) {
+ndk::ScopedAStatus Session::enumerateEnrollments() {
     LOG(INFO) << "enumerateEnrollments";
     scheduleStateOrCrash(SessionState::ENUMERATING_ENROLLMENTS);
 
-    mWorker->schedule(Callable::from([this, cookie] {
-        enterStateOrCrash(cookie, SessionState::ENUMERATING_ENROLLMENTS);
+    mWorker->schedule(Callable::from([this] {
+        enterStateOrCrash(SessionState::ENUMERATING_ENROLLMENTS);
         mEngine->enumerateEnrollmentsImpl(mCb.get());
-        enterIdling(cookie);
+        enterIdling();
     }));
 
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Session::removeEnrollments(int32_t cookie,
-                                              const std::vector<int32_t>& enrollmentIds) {
+ndk::ScopedAStatus Session::removeEnrollments(const std::vector<int32_t>& enrollmentIds) {
     LOG(INFO) << "removeEnrollments";
     scheduleStateOrCrash(SessionState::REMOVING_ENROLLMENTS);
 
-    mWorker->schedule(Callable::from([this, cookie, enrollmentIds] {
-        enterStateOrCrash(cookie, SessionState::REMOVING_ENROLLMENTS);
+    mWorker->schedule(Callable::from([this, enrollmentIds] {
+        enterStateOrCrash(SessionState::REMOVING_ENROLLMENTS);
         mEngine->removeEnrollmentsImpl(mCb.get(), enrollmentIds);
-        enterIdling(cookie);
+        enterIdling();
     }));
 
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Session::getAuthenticatorId(int32_t cookie) {
+ndk::ScopedAStatus Session::getAuthenticatorId() {
     LOG(INFO) << "getAuthenticatorId";
     scheduleStateOrCrash(SessionState::GETTING_AUTHENTICATOR_ID);
 
-    mWorker->schedule(Callable::from([this, cookie] {
-        enterStateOrCrash(cookie, SessionState::GETTING_AUTHENTICATOR_ID);
+    mWorker->schedule(Callable::from([this] {
+        enterStateOrCrash(SessionState::GETTING_AUTHENTICATOR_ID);
         mEngine->getAuthenticatorIdImpl(mCb.get());
-        enterIdling(cookie);
+        enterIdling();
     }));
 
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Session::invalidateAuthenticatorId(int32_t cookie) {
+ndk::ScopedAStatus Session::invalidateAuthenticatorId() {
     LOG(INFO) << "invalidateAuthenticatorId";
     scheduleStateOrCrash(SessionState::INVALIDATING_AUTHENTICATOR_ID);
 
-    mWorker->schedule(Callable::from([this, cookie] {
-        enterStateOrCrash(cookie, SessionState::INVALIDATING_AUTHENTICATOR_ID);
+    mWorker->schedule(Callable::from([this] {
+        enterStateOrCrash(SessionState::INVALIDATING_AUTHENTICATOR_ID);
         mEngine->invalidateAuthenticatorIdImpl(mCb.get());
-        enterIdling(cookie);
+        enterIdling();
     }));
 
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Session::resetLockout(int32_t cookie, const keymaster::HardwareAuthToken& hat) {
+ndk::ScopedAStatus Session::resetLockout(const keymaster::HardwareAuthToken& hat) {
     LOG(INFO) << "resetLockout";
     scheduleStateOrCrash(SessionState::RESETTING_LOCKOUT);
 
-    mWorker->schedule(Callable::from([this, cookie, hat] {
-        enterStateOrCrash(cookie, SessionState::RESETTING_LOCKOUT);
+    mWorker->schedule(Callable::from([this, hat] {
+        enterStateOrCrash(SessionState::RESETTING_LOCKOUT);
         mEngine->resetLockoutImpl(mCb.get(), hat);
-        enterIdling(cookie);
+        enterIdling();
     }));
 
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Session::close(int32_t /*cookie*/) {
+ndk::ScopedAStatus Session::close() {
     LOG(INFO) << "close";
-    CHECK(mCurrentState == SessionState::IDLING) << "Can't close a non-idling session. Crashing.";
+    // TODO(b/166800618): call enterIdling from the terminal callbacks and restore this check.
+    // CHECK(mCurrentState == SessionState::IDLING) << "Can't close a non-idling session.
+    // Crashing.";
     mCurrentState = SessionState::CLOSED;
     mCb->onSessionClosed();
     return ndk::ScopedAStatus::ok();

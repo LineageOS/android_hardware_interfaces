@@ -22,46 +22,20 @@
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 
+#include <chrono>
 #include <future>
 
 namespace aidl::android::hardware::biometrics::fingerprint {
 namespace {
 
+using namespace std::literals::chrono_literals;
+
 constexpr int kSensorId = 0;
 constexpr int kUserId = 0;
-constexpr auto kCallbackTimeout = std::chrono::seconds(1);
-
-enum class MethodName {
-    kOnStateChanged,
-};
-
-struct Invocation {
-    MethodName methodName;
-    int32_t cookie;
-    SessionState state;
-};
 
 class SessionCallback : public BnSessionCallback {
   public:
-    explicit SessionCallback() : mIsPromiseValid(false) {}
-
-    void setPromise(std::promise<std::vector<Invocation>>&& promise) {
-        mPromise = std::move(promise);
-        mIsPromiseValid = true;
-    }
-
-    ndk::ScopedAStatus onStateChanged(int32_t cookie, SessionState state) override {
-        Invocation invocation = {};
-        invocation.methodName = MethodName::kOnStateChanged;
-        invocation.cookie = cookie;
-        invocation.state = state;
-        mInvocations.push_back(invocation);
-        if (state == SessionState::IDLING) {
-            assert(mIsPromiseValid);
-            mPromise.set_value(mInvocations);
-        }
-        return ndk::ScopedAStatus::ok();
-    }
+    explicit SessionCallback(std::promise<void>&& promise) : mPromise(std::move(promise)) {}
 
     ndk::ScopedAStatus onChallengeGenerated(int64_t /*challenge*/) override {
         return ndk::ScopedAStatus::ok();
@@ -119,12 +93,13 @@ class SessionCallback : public BnSessionCallback {
         return ndk::ScopedAStatus::ok();
     }
 
-    ndk::ScopedAStatus onSessionClosed() override { return ndk::ScopedAStatus::ok(); }
+    ndk::ScopedAStatus onSessionClosed() override {
+        mPromise.set_value();
+        return ndk::ScopedAStatus::ok();
+    }
 
   private:
-    bool mIsPromiseValid;
-    std::vector<Invocation> mInvocations;
-    std::promise<std::vector<Invocation>> mPromise;
+    std::promise<void> mPromise;
 };
 
 class Fingerprint : public testing::TestWithParam<std::string> {
@@ -139,33 +114,26 @@ class Fingerprint : public testing::TestWithParam<std::string> {
 };
 
 TEST_P(Fingerprint, AuthenticateTest) {
-    // Prepare the callback
-    std::promise<std::vector<Invocation>> promise;
+    auto promise = std::promise<void>{};
     auto future = promise.get_future();
-    std::shared_ptr<SessionCallback> cb = ndk::SharedRefBase::make<SessionCallback>();
-    cb->setPromise(std::move(promise));
+    // Prepare the callback.
+    auto cb = ndk::SharedRefBase::make<SessionCallback>(std::move(promise));
 
     // Create a session
     std::shared_ptr<ISession> session;
     ASSERT_TRUE(mHal->createSession(kSensorId, kUserId, cb, &session).isOk());
 
     // Call authenticate
-    int32_t cookie = 123;
     std::shared_ptr<common::ICancellationSignal> cancellationSignal;
-    ASSERT_TRUE(session->authenticate(cookie, 0, &cancellationSignal).isOk());
+    ASSERT_TRUE(session->authenticate(-1 /* operationId */, &cancellationSignal).isOk());
 
     // Get the results
-    ASSERT_TRUE(future.wait_for(kCallbackTimeout) == std::future_status::ready);
-    std::vector<Invocation> invocations = future.get();
+    // TODO(b/166799066): test authenticate.
 
     // Close the session
-    ASSERT_TRUE(session->close(0).isOk());
-
-    ASSERT_FALSE(invocations.empty());
-    EXPECT_EQ(invocations.front().methodName, MethodName::kOnStateChanged);
-    EXPECT_EQ(invocations.front().state, SessionState::AUTHENTICATING);
-    EXPECT_EQ(invocations.back().methodName, MethodName::kOnStateChanged);
-    EXPECT_EQ(invocations.back().state, SessionState::IDLING);
+    ASSERT_TRUE(session->close().isOk());
+    auto status = future.wait_for(1s);
+    ASSERT_EQ(status, std::future_status::ready);
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(Fingerprint);

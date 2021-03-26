@@ -21,16 +21,10 @@ import android.hardware.biometrics.face.AuthenticationFrame;
 import android.hardware.biometrics.face.EnrollmentFrame;
 import android.hardware.biometrics.face.Error;
 import android.hardware.biometrics.face.Feature;
-import android.hardware.biometrics.face.SessionState;
 import android.hardware.keymaster.HardwareAuthToken;
 
 @VintfStability
 interface ISessionCallback {
-    /**
-     * Used to notify the framework of session state changes. See ISession for more information.
-     */
-    void onStateChanged(in int cookie, in SessionState state);
-
     /**
      * Notifies the framework when a challenge is successfully generated.
      */
@@ -42,9 +36,9 @@ interface ISessionCallback {
     void onChallengeRevoked(in long challenge);
 
     /**
-     * This method must only be used to notify the framework during the following states:
-     *   1) SessionState::AUTHENTICATING
-     *   2) SessionState::DETECTING_INTERACTION
+     * This method must only be used to notify the framework during the following operations:
+     *   1) ISession#authenticate
+     *   2) ISession#detectInteraction
      *
      * These messages may be used to provide user guidance multiple times if necessary per
      * operation.
@@ -54,8 +48,8 @@ interface ISessionCallback {
     void onAuthenticationFrame(in AuthenticationFrame frame);
 
     /**
-     * This method must only be used to notify the framework during the SessionState::ENROLLING
-     * state.
+     * This method must only be used to notify the framework during the ISession#enroll
+     * operation.
      *
      * These messages may be used to provide user guidance multiple times if necessary per
      * operation.
@@ -65,18 +59,18 @@ interface ISessionCallback {
     void onEnrollmentFrame(in EnrollmentFrame frame);
 
     /**
-     * This method must only be used to notify the framework during the following states:
-     *   1) SessionState::ENROLLING
-     *   2) SessionState::AUTHENTICATING
-     *   3) SessionState::DETECTING_INTERACTION
-     *   4) SessionState::INVALIDATING_AUTHENTICATOR_ID
-     *   5) SessionState::RESETTING_LOCKOUT
+     * This method must only be used to notify the framework during the following operations:
+     *   1) ISession#enroll
+     *   2) ISession#authenticate
+     *   3) ISession#detectInteraction
+     *   4) ISession#invalidateAuthenticatorId
+     *   5) ISession#resetLockout
      *
      * These messages may be used to notify the framework or user that a non-recoverable error
      * has occurred. The operation is finished, and the HAL must proceed with the next operation
-     * or return to SessionState::IDLING if the queue is empty.
+     * or return to the idling state.
      *
-     * Note that cancellation (see common::ICancellationSignal) and preemption most be followed with
+     * Note that cancellation (see common::ICancellationSignal) and preemption must be followed with
      * an Error::CANCELED message.
      *
      * @param error See the Error enum.
@@ -88,8 +82,7 @@ interface ISessionCallback {
     void onError(in Error error, in int vendorCode);
 
     /**
-     * This method must only be used to notify the framework during the following state:
-     *   1) SessionState::ENROLLING
+     * This method must only be used to notify the framework during the ISession#enroll operation.
      *
      * @param enrollmentId Unique stable identifier for the enrollment that's being added by this
      *                     ISession#enroll invocation.
@@ -98,7 +91,7 @@ interface ISessionCallback {
     void onEnrollmentProgress(in int enrollmentId, int remaining);
 
     /**
-     * This method must only be used to notify the framework during SessionState::AUTHENTICATING.
+     * This method must only be used to notify the framework during ISession#authenticate.
      *
      * Used to notify the framework about a successful authentication. This ends the authentication
      * lifecycle.
@@ -112,7 +105,7 @@ interface ISessionCallback {
     void onAuthenticationSucceeded(in int enrollmentId, in HardwareAuthToken hat);
 
     /**
-     * This method must only be used to notify the framework during SessionState::AUTHENTICATING.
+     * This method must only be used to notify the framework during ISession#authenticate.
      *
      * Used to notify the framework about a failed authentication. This ends the authentication
      * lifecycle.
@@ -120,7 +113,7 @@ interface ISessionCallback {
     void onAuthenticationFailed();
 
     /**
-     * This method must only be used to notify the framework during SessionState::AUTHENTICATING.
+     * This method must only be used to notify the framework during ISession#authenticate.
      *
      * Authentication is locked out due to too many unsuccessful attempts. This is a rate-limiting
      * lockout, and authentication can be restarted after a period of time. See
@@ -133,7 +126,7 @@ interface ISessionCallback {
     void onLockoutTimed(in long durationMillis);
 
     /**
-     * This method must only be used to notify the framework during SessionState::AUTHENTICATING.
+     * This method must only be used to notify the framework during ISession#authenticate.
      *
      * Authentication is disabled until the user unlocks with their device credential
      * (PIN/Pattern/Password). See ISession#resetLockout.
@@ -160,7 +153,7 @@ interface ISessionCallback {
 
     /**
      * This method must only be used to notify the framework during
-     * SessionState::DETECTING_INTERACTION
+     * ISession#detectInteraction
      *
      * Notifies the framework that user interaction occurred. See ISession#detectInteraction.
      */
@@ -168,7 +161,7 @@ interface ISessionCallback {
 
     /**
      * This method must only be used to notify the framework during
-     * SessionState::ENUMERATING_ENROLLMENTS.
+     * ISession#enumerateEnrollments.
      *
      * Notifies the framework of the current enrollments. See ISession#enumerateEnrollments.
      *
@@ -177,7 +170,7 @@ interface ISessionCallback {
     void onEnrollmentsEnumerated(in int[] enrollmentIds);
 
     /**
-     * This method must only be used to notify the framework during SessionState::GETTING_FEATURES.
+     * This method must only be used to notify the framework during ISession#getFeatures.
      *
      * Provides a list of features that are currently enabled for the given enrollmentId.
      *
@@ -187,7 +180,7 @@ interface ISessionCallback {
     void onFeaturesRetrieved(in Feature[] features, in int enrollmentId);
 
     /**
-     * This method must only be used to notify the framework during SessionState::SETTING_FEATURE.
+     * This method must only be used to notify the framework during ISession#setFeature.
      *
      * Notifies the framework that ISession#setFeature has completed.
      *
@@ -198,7 +191,7 @@ interface ISessionCallback {
 
     /**
      * This method must only be used to notify the framework during
-     * SessionState::REMOVING_ENROLLMENTS.
+     * ISession#removeEnrollments.
      *
      * Notifies the framework that the specified enrollments are removed.
      *
@@ -208,7 +201,7 @@ interface ISessionCallback {
 
     /**
      * This method must only be used to notify the framework during
-     * SessionState::GETTING_AUTHENTICATOR_ID.
+     * ISession#getAuthenticatorId.
      *
      * Notifies the framework with the authenticatorId corresponding to this session's
      * (userId, sensorId) pair.
@@ -219,7 +212,7 @@ interface ISessionCallback {
 
     /**
      * This method must only be used to notify the framework during
-     * SessionState::INVALIDATING_AUTHENTICATOR_ID.
+     * ISession#invalidateAuthenticatorId.
      *
      * See ISession#invalidateAuthenticatorId for more information.
      *

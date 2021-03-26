@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,19 +31,9 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.biometrics.fingerprint;
-@Backing(type="byte") @VintfStability
-enum SessionState {
-  IDLING = 0,
-  CLOSED = 1,
-  GENERATING_CHALLENGE = 2,
-  REVOKING_CHALLENGE = 3,
-  ENROLLING = 4,
-  AUTHENTICATING = 5,
-  DETECTING_INTERACTION = 6,
-  ENUMERATING_ENROLLMENTS = 7,
-  REMOVING_ENROLLMENTS = 8,
-  GETTING_AUTHENTICATOR_ID = 9,
-  INVALIDATING_AUTHENTICATOR_ID = 10,
-  RESETTING_LOCKOUT = 11,
+package android.hardware.security.keymint;
+/* @hide */
+@VintfStability
+parcelable DeviceInfo {
+  byte[] deviceInfo;
 }

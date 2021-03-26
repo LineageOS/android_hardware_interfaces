@@ -715,6 +715,27 @@ status_t HidlUtils::audioPortExtendedInfoToHal(const AudioPortExtendedInfo& ext,
     return result;
 }
 
+status_t HidlUtils::encapsulationTypeFromHal(audio_encapsulation_type_t halEncapsulationType,
+                                             AudioEncapsulationType* encapsulationType) {
+    *encapsulationType = audio_encapsulation_type_to_string(halEncapsulationType);
+    if (!encapsulationType->empty() && !xsd::isUnknownAudioEncapsulationType(*encapsulationType)) {
+        return NO_ERROR;
+    }
+    ALOGE("Unknown audio encapsulation type value 0x%X", halEncapsulationType);
+    return BAD_VALUE;
+}
+
+status_t HidlUtils::encapsulationTypeToHal(const AudioEncapsulationType& encapsulationType,
+                                           audio_encapsulation_type_t* halEncapsulationType) {
+    if (!xsd::isUnknownAudioEncapsulationType(encapsulationType) &&
+        audio_encapsulation_type_from_string(encapsulationType.c_str(), halEncapsulationType)) {
+        return NO_ERROR;
+    }
+    ALOGE("Unknown audio encapsulation type \"%s\"", encapsulationType.c_str());
+    *halEncapsulationType = AUDIO_ENCAPSULATION_TYPE_NONE;
+    return BAD_VALUE;
+}
+
 status_t HidlUtils::audioPortFromHal(const struct audio_port& halPort, AudioPort* port) {
     struct audio_port_v7 halPortV7 = {};
     audio_populate_audio_port_v7(&halPort, &halPortV7);
@@ -758,11 +779,7 @@ status_t HidlUtils::audioPortFromHal(const struct audio_port_v7& halPort, AudioP
     CONVERT_CHECKED(audioPortExtendedInfoFromHal(halPort.role, halPort.type, halDevice, halMix,
                                                  halSession, &port->ext, &isInput),
                     result);
-    port->profiles.resize(halPort.num_audio_profiles);
-    for (size_t i = 0; i < halPort.num_audio_profiles; ++i) {
-        CONVERT_CHECKED(audioProfileFromHal(halPort.audio_profiles[i], isInput, &port->profiles[i]),
-                        result);
-    }
+    CONVERT_CHECKED(audioTransportsFromHal(halPort, isInput, &port->transports), result);
     port->gains.resize(halPort.num_gains);
     for (size_t i = 0; i < halPort.num_gains; ++i) {
         CONVERT_CHECKED(audioGainFromHal(halPort.gains[i], isInput, &port->gains[i]), result);
@@ -780,15 +797,7 @@ status_t HidlUtils::audioPortToHal(const AudioPort& port, struct audio_port_v7* 
         ALOGE("HIDL Audio Port name is too long: %zu", port.name.size());
         result = BAD_VALUE;
     }
-    halPort->num_audio_profiles = port.profiles.size();
-    if (halPort->num_audio_profiles > AUDIO_PORT_MAX_AUDIO_PROFILES) {
-        ALOGE("HIDL Audio Port has too many profiles: %u", halPort->num_audio_profiles);
-        halPort->num_audio_profiles = AUDIO_PORT_MAX_AUDIO_PROFILES;
-        result = BAD_VALUE;
-    }
-    for (size_t i = 0; i < halPort->num_audio_profiles; ++i) {
-        CONVERT_CHECKED(audioProfileToHal(port.profiles[i], &halPort->audio_profiles[i]), result);
-    }
+    CONVERT_CHECKED(audioTransportsToHal(port.transports, halPort), result);
     halPort->num_gains = port.gains.size();
     if (halPort->num_gains > AUDIO_PORT_MAX_GAINS) {
         ALOGE("HIDL Audio Port has too many gains: %u", halPort->num_gains);
@@ -821,6 +830,110 @@ status_t HidlUtils::audioPortToHal(const AudioPort& port, struct audio_port_v7* 
             break;
     }
     CONVERT_CHECKED(audioPortConfigToHal(port.activeConfig, &halPort->active_config), result);
+    return result;
+}
+
+status_t HidlUtils::audioTransportsFromHal(const struct audio_port_v7& halPort, bool isInput,
+                                           hidl_vec<AudioTransport>* transports) {
+    if (halPort.num_audio_profiles > AUDIO_PORT_MAX_AUDIO_PROFILES ||
+        halPort.num_extra_audio_descriptors > AUDIO_PORT_MAX_EXTRA_AUDIO_DESCRIPTORS) {
+        ALOGE("%s, too many audio profiles(%u) or extra audio descriptors(%u)", __func__,
+              halPort.num_audio_profiles, halPort.num_extra_audio_descriptors);
+        return BAD_VALUE;
+    }
+    status_t result = NO_ERROR;
+    transports->resize(halPort.num_audio_profiles + halPort.num_extra_audio_descriptors);
+    size_t idx = 0;
+    for (size_t i = 0; i < halPort.num_audio_profiles; ++i) {
+        auto& transport = (*transports)[idx++];
+        transport.audioCapability.profile({});
+        CONVERT_CHECKED(audioProfileFromHal(halPort.audio_profiles[i], isInput,
+                                            &transport.audioCapability.profile()),
+                        result);
+        CONVERT_CHECKED(encapsulationTypeFromHal(halPort.audio_profiles[i].encapsulation_type,
+                                                 &transport.encapsulationType),
+                        result);
+    }
+    for (size_t i = 0; i < halPort.num_extra_audio_descriptors; ++i) {
+        switch (halPort.extra_audio_descriptors[i].standard) {
+            case AUDIO_STANDARD_EDID: {
+                const struct audio_extra_audio_descriptor* extraAudioDescriptor =
+                        &halPort.extra_audio_descriptors[i];
+                if (extraAudioDescriptor->descriptor_length <= EXTRA_AUDIO_DESCRIPTOR_SIZE) {
+                    auto& transport = (*transports)[idx++];
+                    transport.audioCapability.edid(
+                            hidl_vec<uint8_t>(extraAudioDescriptor->descriptor,
+                                              extraAudioDescriptor->descriptor +
+                                                      extraAudioDescriptor->descriptor_length));
+                    CONVERT_CHECKED(
+                            encapsulationTypeFromHal(extraAudioDescriptor->encapsulation_type,
+                                                     &transport.encapsulationType),
+                            result);
+                } else {
+                    ALOGE("%s, invalid descriptor length %u", __func__,
+                          extraAudioDescriptor->descriptor_length);
+                    result = BAD_VALUE;
+                }
+            } break;
+            case AUDIO_STANDARD_NONE:
+            default:
+                ALOGE("%s, invalid standard %u", __func__,
+                      halPort.extra_audio_descriptors[i].standard);
+                result = BAD_VALUE;
+                break;
+        }
+    }
+    return result;
+}
+
+status_t HidlUtils::audioTransportsToHal(const hidl_vec<AudioTransport>& transports,
+                                         struct audio_port_v7* halPort) {
+    status_t result = NO_ERROR;
+    halPort->num_audio_profiles = 0;
+    halPort->num_extra_audio_descriptors = 0;
+    for (const auto& transport : transports) {
+        switch (transport.audioCapability.getDiscriminator()) {
+            case AudioTransport::AudioCapability::hidl_discriminator::profile:
+                if (halPort->num_audio_profiles > AUDIO_PORT_MAX_AUDIO_PROFILES) {
+                    ALOGE("%s, too many audio profiles", __func__);
+                    result = BAD_VALUE;
+                    break;
+                }
+                CONVERT_CHECKED(
+                        audioProfileToHal(transport.audioCapability.profile(),
+                                          &halPort->audio_profiles[halPort->num_audio_profiles]),
+                        result);
+                CONVERT_CHECKED(encapsulationTypeToHal(
+                                        transport.encapsulationType,
+                                        &halPort->audio_profiles[halPort->num_audio_profiles++]
+                                                 .encapsulation_type),
+                                result);
+                break;
+            case AudioTransport::AudioCapability::hidl_discriminator::edid:
+                if (halPort->num_extra_audio_descriptors > AUDIO_PORT_MAX_EXTRA_AUDIO_DESCRIPTORS) {
+                    ALOGE("%s, too many extra audio descriptors", __func__);
+                    result = BAD_VALUE;
+                    break;
+                }
+                if (transport.audioCapability.edid().size() > EXTRA_AUDIO_DESCRIPTOR_SIZE) {
+                    ALOGE("%s, wrong edid size %zu", __func__,
+                          transport.audioCapability.edid().size());
+                    result = BAD_VALUE;
+                    break;
+                }
+                struct audio_extra_audio_descriptor* extraAudioDescriptor =
+                        &halPort->extra_audio_descriptors[halPort->num_extra_audio_descriptors++];
+                extraAudioDescriptor->standard = AUDIO_STANDARD_EDID;
+                extraAudioDescriptor->descriptor_length = transport.audioCapability.edid().size();
+                memcpy(extraAudioDescriptor->descriptor, transport.audioCapability.edid().data(),
+                       transport.audioCapability.edid().size() * sizeof(uint8_t));
+
+                CONVERT_CHECKED(encapsulationTypeToHal(transport.encapsulationType,
+                                                       &extraAudioDescriptor->encapsulation_type),
+                                result);
+                break;
+        }
+    }
     return result;
 }
 
