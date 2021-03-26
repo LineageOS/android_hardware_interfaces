@@ -31,21 +31,9 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.biometrics.face;
-@Backing(type="byte") @VintfStability
-enum SessionState {
-  IDLING = 0,
-  CLOSED = 1,
-  GENERATING_CHALLENGE = 2,
-  REVOKING_CHALLENGE = 3,
-  ENROLLING = 4,
-  AUTHENTICATING = 5,
-  DETECTING_INTERACTION = 6,
-  ENUMERATING_ENROLLMENTS = 7,
-  REMOVING_ENROLLMENTS = 8,
-  GETTING_FEATURES = 9,
-  SETTING_FEATURE = 10,
-  GETTING_AUTHENTICATOR_ID = 11,
-  INVALIDATING_AUTHENTICATOR_ID = 12,
-  RESETTING_LOCKOUT = 13,
+package android.hardware.vibrator;
+@VintfStability
+union PrimitivePwle {
+  android.hardware.vibrator.ActivePwle active;
+  android.hardware.vibrator.BrakingPwle braking;
 }

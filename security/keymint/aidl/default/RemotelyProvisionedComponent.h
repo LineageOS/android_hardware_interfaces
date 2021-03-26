@@ -39,8 +39,8 @@ class RemotelyProvisionedComponent : public BnRemotelyProvisionedComponent {
                                              const std::vector<MacedPublicKey>& keysToSign,
                                              const std::vector<uint8_t>& endpointEncCertChain,
                                              const std::vector<uint8_t>& challenge,
-                                             std::vector<uint8_t>* keysToSignMac,
-                                             ProtectedData* protectedData) override;
+                                             DeviceInfo* deviceInfo, ProtectedData* protectedData,
+                                             std::vector<uint8_t>* keysToSignMac) override;
 
   private:
     // TODO(swillden): Move these into an appropriate Context class.

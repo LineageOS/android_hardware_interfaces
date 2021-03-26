@@ -551,11 +551,18 @@
     <xs:simpleType name="channelMasks">
         <xs:list itemType="audioChannelMask" />
     </xs:simpleType>
+    <xs:simpleType name="audioEncapsulationType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="AUDIO_ENCAPSULATION_TYPE_NONE"/>
+            <xs:enumeration value="AUDIO_ENCAPSULATION_TYPE_IEC61937"/>
+        </xs:restriction>
+    </xs:simpleType>
     <xs:complexType name="profile">
         <xs:attribute name="name" type="xs:token" use="optional"/>
         <xs:attribute name="format" type="extendableAudioFormat" use="optional"/>
         <xs:attribute name="samplingRates" type="samplingRates" use="optional"/>
         <xs:attribute name="channelMasks" type="channelMasks" use="optional"/>
+        <xs:attribute name="encapsulationType" type="audioEncapsulationType" use="optional"/>
     </xs:complexType>
     <xs:simpleType name="audioGainMode">
         <xs:restriction base="xs:string">

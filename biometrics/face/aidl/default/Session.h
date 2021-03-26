@@ -30,40 +30,38 @@ class Session : public BnSession {
   public:
     explicit Session(std::shared_ptr<ISessionCallback> cb);
 
-    ndk::ScopedAStatus generateChallenge(int32_t cookie) override;
+    ndk::ScopedAStatus generateChallenge() override;
 
-    ndk::ScopedAStatus revokeChallenge(int32_t cookie, int64_t challenge) override;
+    ndk::ScopedAStatus revokeChallenge(int64_t challenge) override;
 
-    ndk::ScopedAStatus enroll(int32_t cookie, const keymaster::HardwareAuthToken& hat,
+    ndk::ScopedAStatus enroll(const keymaster::HardwareAuthToken& hat,
                               EnrollmentType enrollmentType, const std::vector<Feature>& features,
                               const NativeHandle& previewSurface,
                               std::shared_ptr<common::ICancellationSignal>* return_val) override;
 
     ndk::ScopedAStatus authenticate(
-            int32_t cookie, int64_t keystoreOperationId,
+            int64_t keystoreOperationId,
             std::shared_ptr<common::ICancellationSignal>* returnVal) override;
 
     ndk::ScopedAStatus detectInteraction(
-            int32_t cookie, std::shared_ptr<common::ICancellationSignal>* returnVal) override;
+            std::shared_ptr<common::ICancellationSignal>* returnVal) override;
 
-    ndk::ScopedAStatus enumerateEnrollments(int32_t cookie) override;
+    ndk::ScopedAStatus enumerateEnrollments() override;
 
-    ndk::ScopedAStatus removeEnrollments(int32_t cookie,
-                                         const std::vector<int32_t>& enrollmentIds) override;
+    ndk::ScopedAStatus removeEnrollments(const std::vector<int32_t>& enrollmentIds) override;
 
-    ndk::ScopedAStatus getFeatures(int32_t cookie, int32_t enrollmentId) override;
+    ndk::ScopedAStatus getFeatures(int32_t enrollmentId) override;
 
-    ndk::ScopedAStatus setFeature(int32_t cookie, const keymaster::HardwareAuthToken& hat,
-                                  int32_t enrollmentId, Feature feature, bool enabled) override;
+    ndk::ScopedAStatus setFeature(const keymaster::HardwareAuthToken& hat, int32_t enrollmentId,
+                                  Feature feature, bool enabled) override;
 
-    ndk::ScopedAStatus getAuthenticatorId(int32_t cookie) override;
+    ndk::ScopedAStatus getAuthenticatorId() override;
 
-    ndk::ScopedAStatus invalidateAuthenticatorId(int32_t cookie) override;
+    ndk::ScopedAStatus invalidateAuthenticatorId() override;
 
-    ndk::ScopedAStatus resetLockout(int32_t cookie,
-                                    const keymaster::HardwareAuthToken& hat) override;
+    ndk::ScopedAStatus resetLockout(const keymaster::HardwareAuthToken& hat) override;
 
-    ndk::ScopedAStatus close(int32_t cookie) override;
+    ndk::ScopedAStatus close() override;
 
   private:
     std::shared_ptr<ISessionCallback> cb_;

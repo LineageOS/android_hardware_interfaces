@@ -733,13 +733,151 @@ TEST_P(RadioHidlTest_v1_6, setCarrierInfoForImsiEncryption_1_6) {
 
     radio_v1_6->setCarrierInfoForImsiEncryption_1_6(serial, imsiInfo);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo.type);
-    EXPECT_EQ(serial, radioRsp_v1_6->rspInfo.serial);
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo_v1_0.type);
+    EXPECT_EQ(serial, radioRsp_v1_6->rspInfo_v1_0.serial);
 
     if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
         ASSERT_TRUE(CheckAnyOfErrors(
                 radioRsp_v1_6->rspInfo.error,
                 {::android::hardware::radio::V1_6::RadioError::NONE,
                  ::android::hardware::radio::V1_6::RadioError::REQUEST_NOT_SUPPORTED}));
+    }
+}
+
+/*
+ * Test IRadio.getSimPhonebookRecords() for the response returned.
+ */
+TEST_F(RadioHidlTest_v1_6, getSimPhonebookRecords) {
+    serial = GetRandomSerialNumber();
+    radio_v1_6->getSimPhonebookRecords(serial);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_6->rspInfo.serial);
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_v1_6->rspInfo.error,
+            {::android::hardware::radio::V1_6::RadioError::INVALID_SIM_STATE,
+             ::android::hardware::radio::V1_6::RadioError::RADIO_NOT_AVAILABLE,
+             ::android::hardware::radio::V1_6::RadioError::MODEM_ERR,
+             ::android::hardware::radio::V1_6::RadioError::INVALID_ARGUMENTS,
+             ::android::hardware::radio::V1_6::RadioError::REQUEST_NOT_SUPPORTED},
+             CHECK_GENERAL_ERROR));
+    } else if (cardStatus.base.base.base.cardState == CardState::PRESENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_v1_6->rspInfo.error,
+            {::android::hardware::radio::V1_6::RadioError::NONE,
+             ::android::hardware::radio::V1_6::RadioError::REQUEST_NOT_SUPPORTED},
+             CHECK_GENERAL_ERROR));
+    }
+}
+
+/*
+ * Test IRadio.getSimPhonebookCapacity for the response returned.
+ */
+TEST_P(RadioHidlTest_v1_6, getSimPhonebookCapacity) {
+    serial = GetRandomSerialNumber();
+    radio_v1_6->getSimPhonebookCapacity(serial);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_6->rspInfo.serial);
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_v1_6->rspInfo.error,
+            {::android::hardware::radio::V1_6::RadioError::INVALID_SIM_STATE,
+             ::android::hardware::radio::V1_6::RadioError::RADIO_NOT_AVAILABLE,
+             ::android::hardware::radio::V1_6::RadioError::MODEM_ERR,
+             ::android::hardware::radio::V1_6::RadioError::INVALID_ARGUMENTS,
+             ::android::hardware::radio::V1_6::RadioError::REQUEST_NOT_SUPPORTED},
+             CHECK_GENERAL_ERROR));
+    } else if (cardStatus.base.base.base.cardState == CardState::PRESENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_v1_6->rspInfo.error,
+            {::android::hardware::radio::V1_6::RadioError::NONE,
+            ::android::hardware::radio::V1_6::RadioError::REQUEST_NOT_SUPPORTED},
+            CHECK_GENERAL_ERROR));
+
+        ::android::hardware::radio::V1_6::PhonebookCapacity pbCapacity =
+             radioRsp_v1_6->capacity;
+        if(pbCapacity.maxAdnRecords > 0) {
+            EXPECT_TRUE(pbCapacity.maxNameLen > 0 && pbCapacity.maxNumberLen > 0);
+            EXPECT_TRUE(pbCapacity.usedAdnRecords <= pbCapacity.maxAdnRecords);
+        }
+
+        if(pbCapacity.maxEmailRecords > 0) {
+            EXPECT_TRUE(pbCapacity.maxEmailLen > 0);
+            EXPECT_TRUE(pbCapacity.usedEmailRecords <= pbCapacity.maxEmailRecords);
+        }
+
+        if(pbCapacity.maxAdditionalNumberRecords > 0) {
+            EXPECT_TRUE(pbCapacity.maxAdditionalNumberLen > 0);
+            EXPECT_TRUE(pbCapacity.usedAdditionalNumberRecords <= pbCapacity.maxAdditionalNumberRecords);
+        }
+    }
+}
+
+/*
+ * Test IRadio.updateSimPhonebookRecords() for the response returned.
+ */
+TEST_F(RadioHidlTest_v1_6, updateSimPhonebookRecords) {
+    serial = GetRandomSerialNumber();
+    radio_v1_6->getSimPhonebookCapacity(serial);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_v1_6->rspInfo.serial);
+    if (cardStatus.base.base.base.cardState == CardState::ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_v1_6->rspInfo.error,
+            {::android::hardware::radio::V1_6::RadioError::INVALID_SIM_STATE,
+             ::android::hardware::radio::V1_6::RadioError::RADIO_NOT_AVAILABLE,
+             ::android::hardware::radio::V1_6::RadioError::MODEM_ERR,
+             ::android::hardware::radio::V1_6::RadioError::INVALID_ARGUMENTS,
+             ::android::hardware::radio::V1_6::RadioError::REQUEST_NOT_SUPPORTED},
+             CHECK_GENERAL_ERROR));
+    } else if (cardStatus.base.base.base.cardState == CardState::PRESENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_v1_6->rspInfo.error,
+            {::android::hardware::radio::V1_6::RadioError::NONE,
+             ::android::hardware::radio::V1_6::RadioError::REQUEST_NOT_SUPPORTED},
+             CHECK_GENERAL_ERROR));
+        ::android::hardware::radio::V1_6::PhonebookCapacity pbCapacity =
+                radioRsp_v1_6->capacity;
+
+        serial = GetRandomSerialNumber();
+        radio_v1_6->getSimPhonebookRecords(serial);
+
+        EXPECT_EQ(std::cv_status::no_timeout, wait());
+        EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo.type);
+        EXPECT_EQ(serial, radioRsp_v1_6->rspInfo.serial);
+        EXPECT_EQ(::android::hardware::radio::V1_6::RadioError::NONE, radioRsp_v1_6->rspInfo.error);
+
+        if(pbCapacity.maxAdnRecords > 0
+                && pbCapacity.usedAdnRecords < pbCapacity.maxAdnRecords) {
+            // Add a phonebook record
+            PhonebookRecordInfo recordInfo;
+            recordInfo.recordId = 0;
+            recordInfo.name = "ABC";
+            recordInfo.number = "1234567890";
+            serial = GetRandomSerialNumber();
+            radio_v1_6->updateSimPhonebookRecords(serial, recordInfo);
+
+            EXPECT_EQ(std::cv_status::no_timeout, wait());
+            EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo.type);
+            EXPECT_EQ(serial, radioRsp_v1_6->rspInfo.serial);
+            EXPECT_EQ(::android::hardware::radio::V1_6::RadioError::NONE, radioRsp_v1_6->rspInfo.error);
+            int index = radioRsp_v1_6->updatedRecordIndex;
+            EXPECT_TRUE(index > 0);
+
+            // Deleted a phonebook record
+            recordInfo.recordId = index;
+            recordInfo.name = "";
+            recordInfo.number = "";
+            serial = GetRandomSerialNumber();
+            radio_v1_6->updateSimPhonebookRecords(serial, recordInfo);
+
+            EXPECT_EQ(std::cv_status::no_timeout, wait());
+            EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo.type);
+            EXPECT_EQ(serial, radioRsp_v1_6->rspInfo.serial);
+            EXPECT_EQ(::android::hardware::radio::V1_6::RadioError::NONE, radioRsp_v1_6->rspInfo.error);
+        }
     }
 }

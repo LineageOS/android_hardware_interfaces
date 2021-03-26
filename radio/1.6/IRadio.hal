@@ -544,4 +544,43 @@ interface IRadio extends @1.5::IRadio {
      * as the input param.
      */
     oneway setCarrierInfoForImsiEncryption_1_6(int32_t serial, @1.6::ImsiEncryptionInfo imsiEncryptionInfo);
+
+    /**
+     * Get the local and global phonebook records from the SIM card.
+     * This should be called again after a simPhonebookChanged notification is received.
+     *
+     * The phonebook records are received via IRadioIndication.simPhonebookRecordsReceived()
+     *
+     * @param serial Serial number of request.
+     *
+     * Response callback is IRadioResponse.getSimPhonebookRecordsResponse()
+     */
+    oneway getSimPhonebookRecords(int32_t serial);
+
+    /**
+     * Get the phone book capacity
+     *
+     * @param serial Serial number of request.
+     *
+     * Response function is defined from IRadioResponse.getSimPhonebookCapacityResponse()
+     */
+    oneway getSimPhonebookCapacity(int32_t serial);
+
+    /**
+     * Insert, delete or update a phonebook record on the SIM card.
+     * If the index of recordInfo is 0, the phonebook record will be added to global or
+     * local phonebook, and global phonebook has higher priority than local phonebook.
+     *
+     * If the fields in the recordInfo are all empty except for the index, the phonebook
+     * record specified by the index will be deleted.
+     *
+     * The indication simPhonebookChanged will be called after every successful call of
+     * updateSimPhonebookRecords.
+     *
+     * @param serial Serial number of request.
+     * @param recordInfo Details of the record to insert, delete or update.
+     *
+     * Response callback is IRadioResponse.updateSimPhonebookRecordsResponse()
+     */
+    oneway updateSimPhonebookRecords(int32_t serial, PhonebookRecordInfo recordInfo);
 };

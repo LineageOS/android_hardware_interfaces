@@ -34,17 +34,17 @@
 package android.hardware.biometrics.face;
 @VintfStability
 interface ISession {
-  void generateChallenge(in int cookie);
-  void revokeChallenge(in int cookie, in long challenge);
-  android.hardware.biometrics.common.ICancellationSignal enroll(in int cookie, in android.hardware.keymaster.HardwareAuthToken hat, in android.hardware.biometrics.face.EnrollmentType type, in android.hardware.biometrics.face.Feature[] features, in android.hardware.common.NativeHandle previewSurface);
-  android.hardware.biometrics.common.ICancellationSignal authenticate(in int cookie, in long operationId);
-  android.hardware.biometrics.common.ICancellationSignal detectInteraction(in int cookie);
-  void enumerateEnrollments(in int cookie);
-  void removeEnrollments(in int cookie, in int[] enrollmentIds);
-  void getFeatures(in int cookie, in int enrollmentId);
-  void setFeature(in int cookie, in android.hardware.keymaster.HardwareAuthToken hat, in int enrollmentId, in android.hardware.biometrics.face.Feature feature, boolean enabled);
-  void getAuthenticatorId(in int cookie);
-  void invalidateAuthenticatorId(in int cookie);
-  void resetLockout(in int cookie, in android.hardware.keymaster.HardwareAuthToken hat);
-  void close(in int cookie);
+  void generateChallenge();
+  void revokeChallenge(in long challenge);
+  android.hardware.biometrics.common.ICancellationSignal enroll(in android.hardware.keymaster.HardwareAuthToken hat, in android.hardware.biometrics.face.EnrollmentType type, in android.hardware.biometrics.face.Feature[] features, in android.hardware.common.NativeHandle previewSurface);
+  android.hardware.biometrics.common.ICancellationSignal authenticate(in long operationId);
+  android.hardware.biometrics.common.ICancellationSignal detectInteraction();
+  void enumerateEnrollments();
+  void removeEnrollments(in int[] enrollmentIds);
+  void getFeatures(in int enrollmentId);
+  void setFeature(in android.hardware.keymaster.HardwareAuthToken hat, in int enrollmentId, in android.hardware.biometrics.face.Feature feature, boolean enabled);
+  void getAuthenticatorId();
+  void invalidateAuthenticatorId();
+  void resetLockout(in android.hardware.keymaster.HardwareAuthToken hat);
+  void close();
 }
