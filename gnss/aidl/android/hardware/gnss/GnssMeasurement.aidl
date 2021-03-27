@@ -17,8 +17,8 @@
 package android.hardware.gnss;
 
 import android.hardware.gnss.CorrelationVector;
-import android.hardware.gnss.GnssSignalType;
 import android.hardware.gnss.GnssMultipathIndicator;
+import android.hardware.gnss.GnssSignalType;
 import android.hardware.gnss.SatellitePvt;
 
 /**
@@ -32,41 +32,41 @@ import android.hardware.gnss.SatellitePvt;
 @VintfStability
 parcelable GnssMeasurement {
     /** Bit mask indicating a valid 'snr' is stored in the GnssMeasurement. */
-    const int HAS_SNR                        = 1 << 0;
+    const int HAS_SNR = 1 << 0;
     /** Bit mask indicating a valid 'carrier frequency' is stored in the GnssMeasurement. */
-    const int HAS_CARRIER_FREQUENCY          = 1 << 9;
+    const int HAS_CARRIER_FREQUENCY = 1 << 9;
     /** Bit mask indicating a valid 'carrier cycles' is stored in the GnssMeasurement. */
-    const int HAS_CARRIER_CYCLES             = 1 << 10;
+    const int HAS_CARRIER_CYCLES = 1 << 10;
     /** Bit mask indicating a valid 'carrier phase' is stored in the GnssMeasurement. */
-    const int HAS_CARRIER_PHASE              = 1 << 11;
+    const int HAS_CARRIER_PHASE = 1 << 11;
     /** Bit mask indicating a valid 'carrier phase uncertainty' is stored in the GnssMeasurement. */
-    const int HAS_CARRIER_PHASE_UNCERTAINTY  = 1 << 12;
+    const int HAS_CARRIER_PHASE_UNCERTAINTY = 1 << 12;
     /** Bit mask indicating a valid automatic gain control is stored in the GnssMeasurement. */
-    const int HAS_AUTOMATIC_GAIN_CONTROL     = 1 << 13;
+    const int HAS_AUTOMATIC_GAIN_CONTROL = 1 << 13;
     /** Bit mask indicating a valid full inter-signal bias is stored in the GnssMeasurement. */
-    const int HAS_FULL_ISB                   = 1 << 16;
+    const int HAS_FULL_ISB = 1 << 16;
     /**
      * Bit mask indicating a valid full inter-signal bias uncertainty is stored in the
      * GnssMeasurement.
      */
-    const int HAS_FULL_ISB_UNCERTAINTY       = 1 << 17;
+    const int HAS_FULL_ISB_UNCERTAINTY = 1 << 17;
     /**
      * Bit mask indicating a valid satellite inter-signal bias is stored in the GnssMeasurement.
      */
-    const int HAS_SATELLITE_ISB              = 1 << 18;
+    const int HAS_SATELLITE_ISB = 1 << 18;
     /**
      * Bit mask indicating a valid satellite inter-signal bias uncertainty is stored in the
      * GnssMeasurement.
      */
-    const int HAS_SATELLITE_ISB_UNCERTAINTY  = 1 << 19;
+    const int HAS_SATELLITE_ISB_UNCERTAINTY = 1 << 19;
     /**
      * Bit mask indicating a valid satellite PVT is stored in the GnssMeasurement.
      */
-    const int HAS_SATELLITE_PVT              = 1 << 20;
+    const int HAS_SATELLITE_PVT = 1 << 20;
     /**
      * Bit mask indicating valid correlation vectors are stored in the GnssMeasurement.
      */
-    const int HAS_CORRELATION_VECTOR         = 1 << 21;
+    const int HAS_CORRELATION_VECTOR = 1 << 21;
 
     /**
      * A bitfield of flags indicating the validity of the fields in this GnssMeasurement. The bit
@@ -132,17 +132,17 @@ parcelable GnssMeasurement {
      * the received GNSS satellite time value.
      *
      * +---------------------------+--------------------+-----+-----------+--------------------+------+
-     * |                           |GPS/QZSS	        |GLNS |BDS        |GAL                 |SBAS  |
+     * |                           |GPS/QZSS            |GLNS |BDS        |GAL                 |SBAS  |
      * +---------------------------+------+------+------+-----+------+----+------+------+------+------+
      * |State Flag	               |L1    |L5I   |L5Q   |L1OF |B1I   |B1I |E1B   |E1C   |E5AQ  |L1    |
-     * |                           |C/A	  |      |      |     |(D1)  |(D2)|      |      |      |C/A   |
+     * |                           |C/A   |      |      |     |(D1)  |(D2)|      |      |      |C/A   |
      * |---------------------------+------+------+------+-----+------+----+------+------+------+------+
-     * |STATE_UNKNOWN              |0	  |0	 |0	    |0	  |0	 |0   |0     |0     |0	   |0     |
+     * |STATE_UNKNOWN              |0     |0     |0     |0    |0     |0   |0     |0     |0     |0     |
      * |---------------------------+------+------+------+-----+------+----+------+------+------+------+
      * |STATE_CODE_LOCK            |1ms   |1 ms  |1 ms  |1 ms |1 ms  |1 ms|-     |-     |1 ms  |1 ms  |
      * |---------------------------+------+------+------+-----+------+----+------+------+------+------+
      * |STATE_SYMBOL_SYNC          |20ms  |10 ms |1 ms  |10 ms|20 ms |2 ms|4 ms  |4 ms  |1 ms  |2 ms  |
-     * |                           |(opt.)|	     |(opt.)|     |(opt.)|    |(opt.)|(opt.)|(opt.)|      |
+     * |                           |(opt.)|      |(opt.)|     |(opt.)|    |(opt.)|(opt.)|(opt.)|      |
      * |---------------------------+------+------+------+-----+------+----+------+------+------+------+
      * |STATE_BIT_SYNC             |20 ms |20 ms |1 ms  |20 ms|20 ms |-   |8 ms  |-     |1 ms  |4 ms  |
      * |                           |      |      |(opt.)|     |      |    |      |      |(opt.)|      |
@@ -194,24 +194,24 @@ parcelable GnssMeasurement {
      *   - For E1B and E1C, STATE_SYMBOL_SYNC is optional, because it is implied by
      *     STATE_GAL_E1BC_CODE_LOCK.
      */
-    const int STATE_UNKNOWN                = 0;
-    const int STATE_CODE_LOCK              = 1 << 0;
-    const int STATE_BIT_SYNC               = 1 << 1;
-    const int STATE_SUBFRAME_SYNC          = 1 << 2;
-    const int STATE_TOW_DECODED            = 1 << 3;
-    const int STATE_MSEC_AMBIGUOUS         = 1 << 4;
-    const int STATE_SYMBOL_SYNC            = 1 << 5;
-    const int STATE_GLO_STRING_SYNC        = 1 << 6;
-    const int STATE_GLO_TOD_DECODED        = 1 << 7;
-    const int STATE_BDS_D2_BIT_SYNC        = 1 << 8;
-    const int STATE_BDS_D2_SUBFRAME_SYNC   = 1 << 9;
-    const int STATE_GAL_E1BC_CODE_LOCK     = 1 << 10;
-    const int STATE_GAL_E1C_2ND_CODE_LOCK  = 1 << 11;
-    const int STATE_GAL_E1B_PAGE_SYNC      = 1 << 12;
-    const int STATE_SBAS_SYNC              = 1 << 13;
-    const int STATE_TOW_KNOWN              = 1 << 14;
-    const int STATE_GLO_TOD_KNOWN          = 1 << 15;
-    const int STATE_2ND_CODE_LOCK          = 1 << 16;
+    const int STATE_UNKNOWN = 0;
+    const int STATE_CODE_LOCK = 1 << 0;
+    const int STATE_BIT_SYNC = 1 << 1;
+    const int STATE_SUBFRAME_SYNC = 1 << 2;
+    const int STATE_TOW_DECODED = 1 << 3;
+    const int STATE_MSEC_AMBIGUOUS = 1 << 4;
+    const int STATE_SYMBOL_SYNC = 1 << 5;
+    const int STATE_GLO_STRING_SYNC = 1 << 6;
+    const int STATE_GLO_TOD_DECODED = 1 << 7;
+    const int STATE_BDS_D2_BIT_SYNC = 1 << 8;
+    const int STATE_BDS_D2_SUBFRAME_SYNC = 1 << 9;
+    const int STATE_GAL_E1BC_CODE_LOCK = 1 << 10;
+    const int STATE_GAL_E1C_2ND_CODE_LOCK = 1 << 11;
+    const int STATE_GAL_E1B_PAGE_SYNC = 1 << 12;
+    const int STATE_SBAS_SYNC = 1 << 13;
+    const int STATE_TOW_KNOWN = 1 << 14;
+    const int STATE_GLO_TOD_KNOWN = 1 << 15;
+    const int STATE_2ND_CODE_LOCK = 1 << 16;
 
     /**
      * A bitfield of flags indicating the GnssMeasurementState per satellite sync state. It
@@ -379,7 +379,6 @@ parcelable GnssMeasurement {
      * This value is mandatory.
      */
     double pseudorangeRateUncertaintyMps;
-
 
     /**
      * Flags indicating the Accumulated Delta Range's states.
@@ -620,8 +619,10 @@ parcelable GnssMeasurement {
     double satelliteInterSignalBiasUncertaintyNs;
 
     /**
-     * The GNSS satellite position, velocity and time information at the signal transmission time
-     * receivedSvTimeInNs.
+     * The GNSS satellite position, velocity and time information at the same signal transmission
+     * time receivedSvTimeInNs.
+     *
+     * The position and velocity must be in ECEF coordinates.
      *
      * If the data is available, gnssMeasurementFlags must contain HAS_SATELLITE_PVT.
      */
