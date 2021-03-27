@@ -82,5 +82,11 @@ enum AcquiredInfo {
      * same finger can help against false rejections.
      */
     IMMOBILE,
-}
 
+    /**
+     * This message may be sent to notify the framework that an additional image capture is taking
+     * place. Multiple RETRYING_CAPTURE may be sent before an ACQUIRED_GOOD message is sent.
+     * However, RETRYING_CAPTURE must not be sent after ACQUIRED_GOOD is sent.
+     */
+    RETRYING_CAPTURE,
+}

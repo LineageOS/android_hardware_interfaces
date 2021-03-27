@@ -45,4 +45,5 @@ enum AcquiredInfo {
   TOO_DARK = 8,
   TOO_BRIGHT = 9,
   IMMOBILE = 10,
+  RETRYING_CAPTURE = 11,
 }
