@@ -18,6 +18,9 @@ package android.hardware.gnss;
 
 /**
  * Contains estimates of the satellite position fields in ECEF coordinate frame.
+ *
+ * The satellite position must be defined at the time of transmission of the
+ * signal receivedSvTimeNs.
  */
 @VintfStability
 parcelable SatellitePositionEcef {
