@@ -99,12 +99,78 @@
         </xs:choice>
         <xs:attribute name="id" type="frontendId" use="required"/>
         <xs:attribute name="type" type="frontendTypeEnum" use="required"/>
-        <xs:attribute name="isSoftwareFrontend" type="xs:boolean" use="required"/>
         <!-- A dvr connection is required in the data flow config section when
             "isSoftwareFrontend" is true. -->
+        <xs:attribute name="isSoftwareFrontend" type="xs:boolean" use="required"/>
         <xs:attribute name="frequency" type="xs:nonNegativeInteger" use="required"/>
         <xs:attribute name="connectToCicamId" type="xs:nonNegativeInteger" use="optional"/>
         <xs:attribute name="endFrequency" type="xs:nonNegativeInteger" use="optional"/>
+    </xs:complexType>
+
+    <!-- DVR SESSION -->
+    <xs:simpleType name="dvrId">
+        <!-- Dvr id must be DVR_TYPE_NUM. <dvr id="DVR_PLAYBACK_0"/> -->
+        <xs:restriction base="xs:string">
+            <xs:pattern value="DVR_RECORD_[0-9]+|DVR_PLAYBACK_[0-9]+"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="dvrStatusMask">
+        <!-- Dvr status mask must masking the <dvrStatusEnum> -->
+        <xs:restriction base="xs:integer">
+            <xs:minInclusive value="0"/>
+            <xs:maxInclusive value="15"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="dvrStatusEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="DATA_READY" />
+            <xs:enumeration value="LOW_WATER" />
+            <xs:enumeration value="HIGH_WATER" />
+            <xs:enumeration value="OVERFLOW" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="dvrTypeEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="PLAYBACK" />
+            <xs:enumeration value="RECORD" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="dvrDataFormatEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="TS" />
+            <xs:enumeration value="PES" />
+            <xs:enumeration value="ES" />
+            <xs:enumeration value="SHV_TLV" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="dvr">
+        <xs:annotation>
+            <xs:documentation>
+                Each dvr element contain the following attributes:
+                    "id": unique id of the dvr that could be used to connect to the test the
+                        "dataFlowConfiguration"
+                    "type": the dvr type.
+                    "bufferSize": the dvr buffer size.
+                    "statusMask": register callbacks of specific status.
+                    "lowThreshold": the dvr status low threshold.
+                    "highThreshold": the dvr status high threshold.
+                    "dataFormat": the dvr data format.
+                    "packetSize": the dvr packet size.
+                    "inputFilePath": the dvr playback input file path. Only required in playback
+                        dvr.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="id" type="dvrId" use="required"/>
+        <xs:attribute name="type" type="dvrTypeEnum" use="required"/>
+        <xs:attribute name="bufferSize" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="statusMask" type="dvrStatusMask" use="required"/>
+        <xs:attribute name="lowThreshold" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="highThreshold" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="dataFormat" type="dvrDataFormatEnum" use="required"/>
+        <xs:attribute name="packetSize" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="inputFilePath" type="xs:anyURI" use="optional"/>
     </xs:complexType>
 
     <!-- HARDWARE CONFIGURATION SESSION -->
@@ -131,6 +197,23 @@
                     </xs:sequence>
                 </xs:complexType>
             </xs:element>
+            <xs:element name="dvrs" minOccurs="0" maxOccurs="1">
+                <xs:complexType>
+                    <xs:annotation>
+                        <xs:documentation xml:lang="en">
+                            This section contains configurations of all the dvrs that would be used
+                                in the tests.
+                                - This section is optional and can be skipped if the device does
+                                    not support dvr.
+                                - The users can configure 1 or more dvr elements in the dvrs
+                                   sections.
+                        </xs:documentation>
+                    </xs:annotation>
+                    <xs:sequence>
+                        <xs:element name="dvr" type="dvr" minOccurs="1" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
         </xs:sequence>
     </xs:complexType>
 
@@ -139,8 +222,9 @@
         <xs:sequence>
             <xs:element name="clearLiveBroadcast" minOccurs="1" maxOccurs="1">
                 <xs:complexType>
-                    <!-- TODO: add optional dvr config for software input -->
                     <xs:attribute name="frontendConnection" type="frontendId" use="required"/>
+                    <!-- DVR is only required when the frontend is using the software input -->
+                    <xs:attribute name="dvrSoftwareFeConnection" type="dvrId" use="optional"/>
                 </xs:complexType>
             </xs:element>
             <xs:element name="scan" minOccurs="1" maxOccurs="1">
@@ -151,11 +235,21 @@
             <xs:element name="descrambling" minOccurs="0" maxOccurs="1">
                 <xs:complexType>
                     <xs:attribute name="frontendConnection" type="frontendId" use="required"/>
+                    <!-- DVR is only required when the frontend is using the software input -->
+                    <xs:attribute name="dvrSoftwareFeConnection" type="dvrId" use="optional"/>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="dvrPlayback" minOccurs="0" maxOccurs="1">
+                <xs:complexType>
+                    <xs:attribute name="dvrConnection" type="dvrId" use="required"/>
                 </xs:complexType>
             </xs:element>
             <xs:element name="dvrRecord" minOccurs="0" maxOccurs="1">
                 <xs:complexType>
                     <xs:attribute name="frontendConnection" type="frontendId" use="required"/>
+                    <xs:attribute name="dvrRecordConnection" type="dvrId" use="required"/>
+                    <!-- DVR is only required when the frontend is using the software input -->
+                    <xs:attribute name="dvrSoftwareFeConnection" type="dvrId" use="optional"/>
                 </xs:complexType>
             </xs:element>
             <xs:element name="lnbLive" minOccurs="0" maxOccurs="1">
@@ -166,6 +260,7 @@
             <xs:element name="lnbRecord" minOccurs="0" maxOccurs="1">
                 <xs:complexType>
                     <xs:attribute name="frontendConnection" type="frontendId" use="required"/>
+                    <xs:attribute name="dvrRecordConnection" type="dvrId" use="required"/>
                 </xs:complexType>
             </xs:element>
         </xs:sequence>
