@@ -158,6 +158,9 @@ TEST_P(RadioHidlTest_v1_6, setupDataCall_1_6_osAppId) {
                 {::android::hardware::radio::V1_6::RadioError::NONE,
                  ::android::hardware::radio::V1_6::RadioError::RADIO_NOT_AVAILABLE,
                  ::android::hardware::radio::V1_6::RadioError::OP_NOT_ALLOWED_BEFORE_REG_TO_NW}));
+        if (radioRsp_v1_6->setupDataCallResult.trafficDescriptors.size() <= 0) {
+            return;
+        }
         EXPECT_EQ(optionalTrafficDescriptor.value().osAppId.value().osAppId,
                 radioRsp_v1_6->setupDataCallResult.trafficDescriptors[0].osAppId.value().osAppId);
     }
