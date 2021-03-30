@@ -818,7 +818,7 @@ TEST_P(RadioHidlTest_v1_6, getSimPhonebookCapacity) {
 /*
  * Test IRadio.updateSimPhonebookRecords() for the response returned.
  */
-TEST_F(RadioHidlTest_v1_6, updateSimPhonebookRecords) {
+TEST_P(RadioHidlTest_v1_6, updateSimPhonebookRecords) {
     serial = GetRandomSerialNumber();
     radio_v1_6->getSimPhonebookCapacity(serial);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
