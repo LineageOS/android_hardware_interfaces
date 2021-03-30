@@ -43,6 +43,7 @@ using ::android::hardware::tv::cec::V1_0::SendMessageResult;
 
 #define CEC_VERSION 0x05
 #define INCORRECT_VENDOR_ID 0x00
+#define TV_PHYSICAL_ADDRESS 0x0000
 
 // The main test class for TV CEC HAL.
 class HdmiCecTest : public ::testing::TestWithParam<std::string> {
@@ -108,6 +109,20 @@ TEST_P(HdmiCecTest, ClearAddLogicalAddress) {
     hdmiCec->clearLogicalAddress();
     Return<Result> ret = hdmiCec->addLogicalAddress(CecLogicalAddress::PLAYBACK_3);
     EXPECT_EQ(ret, Result::SUCCESS);
+}
+
+TEST_P(HdmiCecTest, PhysicalAddress) {
+    Result result;
+    uint16_t addr;
+    Return<void> ret = hdmiCec->getPhysicalAddress([&result, &addr](Result res, uint16_t paddr) {
+        result = res;
+        addr = paddr;
+    });
+    EXPECT_TRUE(ret.isOk());
+    EXPECT_EQ(result, Result::SUCCESS);
+    if (!hasDeviceType(CecDeviceType::TV)) {
+        EXPECT_NE(addr, TV_PHYSICAL_ADDRESS);
+    }
 }
 
 TEST_P(HdmiCecTest, SendMessage) {
