@@ -112,3 +112,8 @@ TEST_P(HdmiCecTest, SetOption) {
     ret = hdmiCec->setOption(OptionKey::SYSTEM_CEC_CONTROL, false);
     EXPECT_TRUE(ret.isOk());
 }
+
+TEST_P(HdmiCecTest, SetLanguage) {
+    Return<void> ret = hdmiCec->setLanguage("eng");
+    EXPECT_TRUE(ret.isOk());
+}
