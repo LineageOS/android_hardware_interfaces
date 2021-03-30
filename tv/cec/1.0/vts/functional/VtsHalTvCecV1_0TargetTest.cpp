@@ -28,6 +28,7 @@
 using ::android::sp;
 using ::android::hardware::hidl_death_recipient;
 using ::android::hardware::Return;
+using ::android::hardware::tv::cec::V1_0::CecLogicalAddress;
 using ::android::hardware::tv::cec::V1_0::IHdmiCec;
 using ::android::hardware::tv::cec::V1_0::Result;
 
@@ -65,6 +66,12 @@ INSTANTIATE_TEST_SUITE_P(
         PerInstance, HdmiCecTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IHdmiCec::descriptor)),
         android::hardware::PrintInstanceNameToString);
+
+TEST_P(HdmiCecTest, ClearAddLogicalAddress) {
+    hdmiCec->clearLogicalAddress();
+    Return<Result> ret = hdmiCec->addLogicalAddress(CecLogicalAddress::PLAYBACK_3);
+    EXPECT_EQ(ret, Result::SUCCESS);
+}
 
 TEST_P(HdmiCecTest, CecVersion) {
     Return<int32_t> ret = hdmiCec->getCecVersion();
