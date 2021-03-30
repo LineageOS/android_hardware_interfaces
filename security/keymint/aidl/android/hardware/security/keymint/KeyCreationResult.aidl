@@ -53,13 +53,36 @@ parcelable KeyCreationResult {
 
     /**
      * If the generated/imported key is an asymmetric key, `certificateChain` will contain a chain
-     * of one or more certificates.  If the key parameters provided to the generate/import method
-     * contains Tag::ATTESTATION_CHALLENGE the first certificate will contain an attestation
-     * extension, and will be signed by a factory-installed attestation key and followed by a chain
-     * of certificates leading to an authoritative root.  If there is no attestation challenge, only
-     * one certificate will be returned, and it will be self-signed or contain a fake signature,
-     * depending on whether the key has KeyPurpose::SIGN.  If the generated key is symmetric,
-     * certificateChain will be empty.
+     * of one or more certificates.
+     *
+     * There are a few variations in what is contained in `certificateChain`, depending on whether
+     * the caller requested attestation, whether they provided an attestation key (via the
+     * `attestationKey` parameter of `generateKey()`, `importKey()` or `importWrappedKey()`), and in
+     * the non-attestaion case, whether the key can self-sign.
+     *
+     * 1.  Attestation with factory key.  If Tag::ATTESTATION_CHALLENGE is provided and the
+     *     `attestationKey` parameter on the generate/import call is null, the returned certificate
+     *     chain must contain an attestation certificate signed with a factory-provisioned
+     *     attestation key, and the full certificate chain for that factory-provisioned attestation
+     *     key.
+     *
+     * 2.  Attestation with caller-provided key.  If Tag::ATTESTATION_CHALLENGE is provided and the
+     *     `attestationKey` parameter on the generat/import call is non-null and contains the key
+     *     blob of a key with KeyPurpose::ATTEST_KEY, the returned certificate chain must contain
+     *     only an attestation certificate signed with the specified key.  The caller must know the
+     *     certificate chain for the provided key.
+     *
+     * 3.  Non-attestation with signing key.  If Tag::ATTESTATION_CHALLENGE is not provided and the
+     *     generated/imported key has KeyPurpose::SIGN, then the returned certificate chain must
+     *     contain only a single self-signed certificate with no attestation extension.
+     *
+     * 4.  Non-attestation with non-signing key.  If TAG::ATTESTATION_CHALLENGE is not provided and
+     *     the generated/imported key does not have KeyPurpose::SIGN, then the returned certificate
+     *     chain must contain only a single certificate with an empty signature and no attestation
+     *     extension.
+     *
+     * 5.  Symmetric key.  If the generated/imported key is symmetric, the certificate chain must be
+     *     empty.
      */
     Certificate[] certificateChain;
 }
