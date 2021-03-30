@@ -29,8 +29,10 @@ using ::android::sp;
 using ::android::hardware::hidl_death_recipient;
 using ::android::hardware::Return;
 using ::android::hardware::tv::cec::V1_0::CecLogicalAddress;
+using ::android::hardware::tv::cec::V1_0::CecMessage;
 using ::android::hardware::tv::cec::V1_0::IHdmiCec;
 using ::android::hardware::tv::cec::V1_0::Result;
+using ::android::hardware::tv::cec::V1_0::SendMessageResult;
 
 #define CEC_VERSION 0x05
 #define INCORRECT_VENDOR_ID 0x00
@@ -71,6 +73,16 @@ TEST_P(HdmiCecTest, ClearAddLogicalAddress) {
     hdmiCec->clearLogicalAddress();
     Return<Result> ret = hdmiCec->addLogicalAddress(CecLogicalAddress::PLAYBACK_3);
     EXPECT_EQ(ret, Result::SUCCESS);
+}
+
+TEST_P(HdmiCecTest, SendMessage) {
+    CecMessage message;
+    message.initiator = CecLogicalAddress::PLAYBACK_1;
+    message.destination = CecLogicalAddress::BROADCAST;
+    message.body.resize(1);
+    message.body[0] = 131;
+    SendMessageResult ret = hdmiCec->sendMessage(message);
+    EXPECT_EQ(ret, SendMessageResult::SUCCESS);
 }
 
 TEST_P(HdmiCecTest, CecVersion) {
