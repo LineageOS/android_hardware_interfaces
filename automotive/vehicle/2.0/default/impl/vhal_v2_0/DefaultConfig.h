@@ -1149,6 +1149,22 @@ const ConfigDeclaration kVehicleProperties[]{
         {
                 .config =
                         {
+                                .prop = toInt(VehicleProperty::UNIX_TIME),
+                                .access = VehiclePropertyAccess::READ_WRITE,
+                                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                        },
+        },
+        {
+                .config =
+                        {
+                                .prop = toInt(VehicleProperty::STORAGE_ENCRYPTION_BINDING_SEED),
+                                .access = VehiclePropertyAccess::READ_WRITE,
+                                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                        },
+        },
+        {
+                .config =
+                        {
                                 .prop = toInt(VehicleProperty::WATCHDOG_ALIVE),
                                 .access = VehiclePropertyAccess::WRITE,
                                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
