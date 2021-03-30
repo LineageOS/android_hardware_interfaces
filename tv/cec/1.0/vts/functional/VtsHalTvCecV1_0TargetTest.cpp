@@ -32,6 +32,7 @@ using ::android::hardware::tv::cec::V1_0::IHdmiCec;
 using ::android::hardware::tv::cec::V1_0::Result;
 
 #define CEC_VERSION 0x05
+#define INCORRECT_VENDOR_ID 0x00
 
 // The main test class for TV CEC HAL.
 class HdmiCecTest : public ::testing::TestWithParam<std::string> {
@@ -68,4 +69,9 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(HdmiCecTest, CecVersion) {
     Return<int32_t> ret = hdmiCec->getCecVersion();
     EXPECT_GE(ret, CEC_VERSION);
+}
+
+TEST_P(HdmiCecTest, VendorId) {
+    Return<uint32_t> ret = hdmiCec->getVendorId();
+    EXPECT_NE(ret, INCORRECT_VENDOR_ID);
 }
