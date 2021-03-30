@@ -33,12 +33,6 @@ class TestWorker : public StreamWorker<TestWorker> {
     // Use nullptr to test error reporting from the worker thread.
     explicit TestWorker(TestStream* stream) : mStream(stream) {}
 
-    void ensureWorkerCycled() {
-        const size_t cyclesBefore = mWorkerCycles;
-        while (mWorkerCycles == cyclesBefore && !hasError()) {
-            sched_yield();
-        }
-    }
     size_t getWorkerCycles() const { return mWorkerCycles; }
     bool hasWorkerCycleCalled() const { return mWorkerCycles != 0; }
     bool hasNoWorkerCycleCalled(useconds_t usec) {
@@ -131,21 +125,21 @@ TEST_P(StreamWorkerTest, Uninitialized) {
 
 TEST_P(StreamWorkerTest, Start) {
     ASSERT_TRUE(worker.start());
-    worker.ensureWorkerCycled();
+    worker.waitForAtLeastOneCycle();
     EXPECT_FALSE(worker.hasError());
 }
 
 TEST_P(StreamWorkerTest, WorkerError) {
     ASSERT_TRUE(worker.start());
     stream.error = true;
-    worker.ensureWorkerCycled();
+    worker.waitForAtLeastOneCycle();
     EXPECT_TRUE(worker.hasError());
     EXPECT_TRUE(worker.hasNoWorkerCycleCalled(kWorkerIdleCheckTime));
 }
 
 TEST_P(StreamWorkerTest, PauseResume) {
     ASSERT_TRUE(worker.start());
-    worker.ensureWorkerCycled();
+    worker.waitForAtLeastOneCycle();
     EXPECT_FALSE(worker.hasError());
     worker.pause();
     EXPECT_TRUE(worker.hasNoWorkerCycleCalled(kWorkerIdleCheckTime));
@@ -159,7 +153,7 @@ TEST_P(StreamWorkerTest, PauseResume) {
 
 TEST_P(StreamWorkerTest, StopPaused) {
     ASSERT_TRUE(worker.start());
-    worker.ensureWorkerCycled();
+    worker.waitForAtLeastOneCycle();
     EXPECT_FALSE(worker.hasError());
     worker.pause();
     worker.stop();
@@ -169,7 +163,7 @@ TEST_P(StreamWorkerTest, StopPaused) {
 TEST_P(StreamWorkerTest, PauseAfterErrorIgnored) {
     ASSERT_TRUE(worker.start());
     stream.error = true;
-    worker.ensureWorkerCycled();
+    worker.waitForAtLeastOneCycle();
     EXPECT_TRUE(worker.hasError());
     worker.pause();
     EXPECT_TRUE(worker.hasNoWorkerCycleCalled(kWorkerIdleCheckTime));
@@ -179,7 +173,7 @@ TEST_P(StreamWorkerTest, PauseAfterErrorIgnored) {
 TEST_P(StreamWorkerTest, ResumeAfterErrorIgnored) {
     ASSERT_TRUE(worker.start());
     stream.error = true;
-    worker.ensureWorkerCycled();
+    worker.waitForAtLeastOneCycle();
     EXPECT_TRUE(worker.hasError());
     worker.resume();
     EXPECT_TRUE(worker.hasNoWorkerCycleCalled(kWorkerIdleCheckTime));
@@ -188,14 +182,14 @@ TEST_P(StreamWorkerTest, ResumeAfterErrorIgnored) {
 
 TEST_P(StreamWorkerTest, WorkerErrorOnResume) {
     ASSERT_TRUE(worker.start());
-    worker.ensureWorkerCycled();
+    worker.waitForAtLeastOneCycle();
     EXPECT_FALSE(worker.hasError());
     worker.pause();
     EXPECT_FALSE(worker.hasError());
     stream.error = true;
     EXPECT_FALSE(worker.hasError());
     worker.resume();
-    worker.ensureWorkerCycled();
+    worker.waitForAtLeastOneCycle();
     EXPECT_TRUE(worker.hasError());
     EXPECT_TRUE(worker.hasNoWorkerCycleCalled(kWorkerIdleCheckTime));
 }
