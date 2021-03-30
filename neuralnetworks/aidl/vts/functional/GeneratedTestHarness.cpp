@@ -102,7 +102,7 @@ class DeviceMemoryAllocator {
         ASSERT_NE(result, nullptr);
 
         // Prepare arguments.
-        BufferRole role = {.modelIndex = 0, .ioIndex = index, .frequency = 1.0f};
+        BufferRole role = {.modelIndex = 0, .ioIndex = index, .probability = 1.0f};
         std::vector<BufferRole> inputRoles, outputRoles;
         if constexpr (ioType == IOType::INPUT) {
             inputRoles = {role};

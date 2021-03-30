@@ -1194,7 +1194,17 @@ class InputStreamTest : public OpenStreamTest<IStreamIn> {
 #if MAJOR_VERSION <= 6
         address.device = AudioDevice::IN_DEFAULT;
 #elif MAJOR_VERSION >= 7
-        address.deviceType = toString(xsd::AudioDevice::AUDIO_DEVICE_IN_DEFAULT);
+        auto maybeSourceAddress = getCachedPolicyConfig().getSourceDeviceForMixPort(
+                getDeviceName(), getMixPortName());
+        if (maybeSourceAddress.has_value() &&
+            !xsd::isTelephonyDevice(maybeSourceAddress.value().deviceType)) {
+            address = maybeSourceAddress.value();
+            auto& metadata = initMetadata.tracks[0];
+            metadata.source = toString(xsd::AudioSource::AUDIO_SOURCE_UNPROCESSED);
+            metadata.channelMask = getConfig().base.channelMask;
+        } else {
+            address.deviceType = toString(xsd::AudioDevice::AUDIO_DEVICE_IN_DEFAULT);
+        }
 #endif
         const AudioConfig& config = getConfig();
         auto flags = getInputFlags();
@@ -1212,7 +1222,8 @@ class InputStreamTest : public OpenStreamTest<IStreamIn> {
 #elif MAJOR_VERSION >= 4 && MAJOR_VERSION <= 6
      const SinkMetadata initMetadata = {{ {.source = AudioSource::DEFAULT, .gain = 1 } }};
 #elif MAJOR_VERSION >= 7
-     const SinkMetadata initMetadata = {
+     const std::string& getMixPortName() const { return std::get<PARAM_PORT_NAME>(GetParam()); }
+     SinkMetadata initMetadata = {
              {{.source = toString(xsd::AudioSource::AUDIO_SOURCE_DEFAULT),
                .gain = 1,
                .tags = {},
