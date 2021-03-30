@@ -20,6 +20,8 @@
 #include <android/hardware/tv/cec/1.0/IHdmiCec.h>
 #include <android/hardware/tv/cec/1.0/types.h>
 #include <utils/Log.h>
+#include <sstream>
+#include <vector>
 
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
@@ -29,6 +31,7 @@ using ::android::sp;
 using ::android::hardware::hidl_death_recipient;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
+using ::android::hardware::tv::cec::V1_0::CecDeviceType;
 using ::android::hardware::tv::cec::V1_0::CecLogicalAddress;
 using ::android::hardware::tv::cec::V1_0::CecMessage;
 using ::android::hardware::tv::cec::V1_0::HdmiPortInfo;
@@ -53,6 +56,34 @@ class HdmiCecTest : public ::testing::TestWithParam<std::string> {
         hdmiCec_death_recipient = new HdmiCecDeathRecipient();
         ASSERT_NE(hdmiCec_death_recipient, nullptr);
         ASSERT_TRUE(hdmiCec->linkToDeath(hdmiCec_death_recipient, 0).isOk());
+    }
+
+    std::vector<int> getDeviceTypes() {
+        std::vector<int> deviceTypes;
+        FILE* p = popen("getprop ro.hdmi.device_type", "re");
+        if (p) {
+            char* line = NULL;
+            size_t len = 0;
+            if (getline(&line, &len, p) > 0) {
+                std::istringstream stream(line);
+                std::string number{};
+                while (std::getline(stream, number, ',')) {
+                    deviceTypes.push_back(stoi(number));
+                }
+            }
+            pclose(p);
+        }
+        return deviceTypes;
+    }
+
+    bool hasDeviceType(CecDeviceType type) {
+        std::vector<int> deviceTypes = getDeviceTypes();
+        for (auto deviceType = deviceTypes.begin(); deviceType != deviceTypes.end(); ++deviceType) {
+            if (*deviceType == (int)type) {
+                return true;
+            }
+        }
+        return false;
     }
 
     class HdmiCecDeathRecipient : public hidl_death_recipient {
