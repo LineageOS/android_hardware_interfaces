@@ -35,5 +35,5 @@ parcelable BufferRole {
      * used in the specified role. This is provided as a hint to optimize the case when multiple
      * roles prefer different buffer locations or data layouts.
      */
-    float frequency;
+    float probability;
 }
