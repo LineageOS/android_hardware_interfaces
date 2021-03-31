@@ -26,29 +26,6 @@ namespace aidl::android::hardware::security::keymint::test {
 
 namespace {
 
-vector<uint8_t> make_name_from_str(const string& name) {
-    X509_NAME_Ptr x509_name(X509_NAME_new());
-    EXPECT_TRUE(x509_name.get() != nullptr);
-    if (!x509_name) return {};
-
-    EXPECT_EQ(1, X509_NAME_add_entry_by_txt(x509_name.get(),  //
-                                            "CN",             //
-                                            MBSTRING_ASC,
-                                            reinterpret_cast<const uint8_t*>(name.c_str()),
-                                            -1,  // len
-                                            -1,  // loc
-                                            0 /* set */));
-
-    int len = i2d_X509_NAME(x509_name.get(), nullptr /* only return length */);
-    EXPECT_GT(len, 0);
-
-    vector<uint8_t> retval(len);
-    uint8_t* p = retval.data();
-    i2d_X509_NAME(x509_name.get(), &p);
-
-    return retval;
-}
-
 bool IsSelfSigned(const vector<Certificate>& chain) {
     if (chain.size() != 1) return false;
     return ChainSignaturesAreValid(chain);
