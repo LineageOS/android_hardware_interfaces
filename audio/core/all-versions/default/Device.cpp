@@ -360,17 +360,42 @@ Return<Result> Device::releaseAudioPatch(int32_t patch) {
     return Result::NOT_SUPPORTED;
 }
 
-Return<void> Device::getAudioPort(const AudioPort& port, getAudioPort_cb _hidl_cb) {
-    audio_port halPort;
-    HidlUtils::audioPortToHal(port, &halPort);
-    Result retval = analyzeStatus("get_audio_port", mDevice->get_audio_port(mDevice, &halPort));
+template <typename HalPort>
+Return<void> Device::getAudioPortImpl(const AudioPort& port, getAudioPort_cb _hidl_cb,
+                                      int (*halGetter)(audio_hw_device_t*, HalPort*),
+                                      const char* halGetterName) {
+    HalPort halPort;
+    if (status_t status = HidlUtils::audioPortToHal(port, &halPort); status != NO_ERROR) {
+        _hidl_cb(analyzeStatus("audioPortToHal", status), port);
+        return Void();
+    }
+    Result retval = analyzeStatus(halGetterName, halGetter(mDevice, &halPort));
     AudioPort resultPort = port;
     if (retval == Result::OK) {
-        HidlUtils::audioPortFromHal(halPort, &resultPort);
+        if (status_t status = HidlUtils::audioPortFromHal(halPort, &resultPort);
+            status != NO_ERROR) {
+            _hidl_cb(analyzeStatus("audioPortFromHal", status), port);
+            return Void();
+        }
     }
     _hidl_cb(retval, resultPort);
     return Void();
 }
+
+#if MAJOR_VERSION <= 6
+Return<void> Device::getAudioPort(const AudioPort& port, getAudioPort_cb _hidl_cb) {
+    return getAudioPortImpl(port, _hidl_cb, mDevice->get_audio_port, "get_audio_port");
+}
+#else
+Return<void> Device::getAudioPort(const AudioPort& port, getAudioPort_cb _hidl_cb) {
+    if (version() >= AUDIO_DEVICE_API_VERSION_3_2) {
+        // get_audio_port_v7 is mandatory if legacy HAL support this API version.
+        return getAudioPortImpl(port, _hidl_cb, mDevice->get_audio_port_v7, "get_audio_port_v7");
+    } else {
+        return getAudioPortImpl(port, _hidl_cb, mDevice->get_audio_port, "get_audio_port");
+    }
+}
+#endif
 
 Return<Result> Device::setAudioPortConfig(const AudioPortConfig& config) {
     if (version() >= AUDIO_DEVICE_API_VERSION_3_0) {
