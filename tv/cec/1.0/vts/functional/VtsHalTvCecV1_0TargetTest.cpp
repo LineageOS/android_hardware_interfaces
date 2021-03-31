@@ -17,8 +17,8 @@
 #define LOG_TAG "HdmiCec_hal_test"
 #include <android-base/logging.h>
 
-#include <android/hardware/tv/cec/1.1/IHdmiCec.h>
-#include <android/hardware/tv/cec/1.1/types.h>
+#include <android/hardware/tv/cec/1.0/IHdmiCec.h>
+#include <android/hardware/tv/cec/1.0/types.h>
 #include <utils/Log.h>
 #include <sstream>
 #include <vector>
@@ -31,18 +31,15 @@ using ::android::sp;
 using ::android::hardware::hidl_death_recipient;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
-using ::android::hardware::Void;
 using ::android::hardware::tv::cec::V1_0::CecDeviceType;
+using ::android::hardware::tv::cec::V1_0::CecLogicalAddress;
+using ::android::hardware::tv::cec::V1_0::CecMessage;
 using ::android::hardware::tv::cec::V1_0::HdmiPortInfo;
 using ::android::hardware::tv::cec::V1_0::HdmiPortType;
-using ::android::hardware::tv::cec::V1_0::HotplugEvent;
+using ::android::hardware::tv::cec::V1_0::IHdmiCec;
 using ::android::hardware::tv::cec::V1_0::OptionKey;
 using ::android::hardware::tv::cec::V1_0::Result;
 using ::android::hardware::tv::cec::V1_0::SendMessageResult;
-using ::android::hardware::tv::cec::V1_1::CecLogicalAddress;
-using ::android::hardware::tv::cec::V1_1::CecMessage;
-using ::android::hardware::tv::cec::V1_1::IHdmiCec;
-using ::android::hardware::tv::cec::V1_1::IHdmiCecCallback;
 
 #define CEC_VERSION 0x05
 #define INCORRECT_VENDOR_ID 0x00
@@ -58,7 +55,6 @@ class HdmiCecTest : public ::testing::TestWithParam<std::string> {
               hdmiCec->isRemote() ? "remote" : "local");
 
         hdmiCec_death_recipient = new HdmiCecDeathRecipient();
-        hdmiCecCallback = new CecCallback();
         ASSERT_NE(hdmiCec_death_recipient, nullptr);
         ASSERT_TRUE(hdmiCec->linkToDeath(hdmiCec_death_recipient, 0).isOk());
     }
@@ -83,24 +79,13 @@ class HdmiCecTest : public ::testing::TestWithParam<std::string> {
 
     bool hasDeviceType(CecDeviceType type) {
         std::vector<int> deviceTypes = getDeviceTypes();
-        return std::find(deviceTypes.begin(), deviceTypes.end(), (int)type) != deviceTypes.end();
+        for (auto deviceType = deviceTypes.begin(); deviceType != deviceTypes.end(); ++deviceType) {
+            if (*deviceType == (int)type) {
+                return true;
+            }
+        }
+        return false;
     }
-
-    class CecCallback : public IHdmiCecCallback {
-      public:
-        Return<void> onCecMessage(
-                const ::android::hardware::tv::cec::V1_0::CecMessage& /* message */) {
-            return Void();
-        }
-        Return<void> onCecMessage_1_1(
-                const ::android::hardware::tv::cec::V1_1::CecMessage& /* message */) {
-            return Void();
-        }
-        Return<void> onHotplugEvent(
-                const ::android::hardware::tv::cec::V1_0::HotplugEvent& /* event */) {
-            return Void();
-        }
-    };
 
     class HdmiCecDeathRecipient : public hidl_death_recipient {
       public:
@@ -111,7 +96,6 @@ class HdmiCecTest : public ::testing::TestWithParam<std::string> {
     };
 
     sp<IHdmiCec> hdmiCec;
-    sp<IHdmiCecCallback> hdmiCecCallback;
     sp<HdmiCecDeathRecipient> hdmiCec_death_recipient;
 };
 
@@ -123,7 +107,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_P(HdmiCecTest, ClearAddLogicalAddress) {
     hdmiCec->clearLogicalAddress();
-    Return<Result> ret = hdmiCec->addLogicalAddress_1_1(CecLogicalAddress::PLAYBACK_3);
+    Return<Result> ret = hdmiCec->addLogicalAddress(CecLogicalAddress::PLAYBACK_3);
     EXPECT_EQ(ret, Result::SUCCESS);
 }
 
@@ -134,6 +118,7 @@ TEST_P(HdmiCecTest, PhysicalAddress) {
         result = res;
         addr = paddr;
     });
+    EXPECT_TRUE(ret.isOk());
     EXPECT_EQ(result, Result::SUCCESS);
     if (!hasDeviceType(CecDeviceType::TV)) {
         EXPECT_NE(addr, TV_PHYSICAL_ADDRESS);
@@ -146,18 +131,13 @@ TEST_P(HdmiCecTest, SendMessage) {
     message.destination = CecLogicalAddress::BROADCAST;
     message.body.resize(1);
     message.body[0] = 131;
-    SendMessageResult ret = hdmiCec->sendMessage_1_1(message);
+    SendMessageResult ret = hdmiCec->sendMessage(message);
     EXPECT_EQ(ret, SendMessageResult::SUCCESS);
 }
 
 TEST_P(HdmiCecTest, CecVersion) {
     Return<int32_t> ret = hdmiCec->getCecVersion();
     EXPECT_GE(ret, CEC_VERSION);
-}
-
-TEST_P(HdmiCecTest, SetCallback) {
-    Return<void> ret = hdmiCec->setCallback_1_1(new CecCallback());
-    ASSERT_TRUE(ret.isOk());
 }
 
 TEST_P(HdmiCecTest, VendorId) {
@@ -169,7 +149,7 @@ TEST_P(HdmiCecTest, GetPortInfo) {
     hidl_vec<HdmiPortInfo> ports;
     Return<void> ret =
             hdmiCec->getPortInfo([&ports](hidl_vec<HdmiPortInfo> list) { ports = list; });
-    ASSERT_TRUE(ret.isOk());
+    EXPECT_TRUE(ret.isOk());
     bool cecSupportedOnDevice = false;
     for (size_t i = 0; i < ports.size(); ++i) {
         EXPECT_TRUE((ports[i].type == HdmiPortType::OUTPUT) ||
@@ -183,31 +163,36 @@ TEST_P(HdmiCecTest, GetPortInfo) {
 }
 
 TEST_P(HdmiCecTest, SetOption) {
-    Return<void> wakeup = hdmiCec->setOption(OptionKey::WAKEUP, false);
-    ASSERT_TRUE(wakeup.isOk());
-    Return<void> enableCec = hdmiCec->setOption(OptionKey::ENABLE_CEC, false);
-    ASSERT_TRUE(enableCec.isOk());
-    Return<void> systemCecControl = hdmiCec->setOption(OptionKey::SYSTEM_CEC_CONTROL, true);
-    ASSERT_TRUE(systemCecControl.isOk());
+    Return<void> ret;
+    ret = hdmiCec->setOption(OptionKey::WAKEUP, false);
+    EXPECT_TRUE(ret.isOk());
+    ret = hdmiCec->setOption(OptionKey::ENABLE_CEC, false);
+    EXPECT_TRUE(ret.isOk());
+    ret = hdmiCec->setOption(OptionKey::SYSTEM_CEC_CONTROL, true);
+    EXPECT_TRUE(ret.isOk());
     // Restore option keys to their default values
-    hdmiCec->setOption(OptionKey::WAKEUP, true);
-    hdmiCec->setOption(OptionKey::ENABLE_CEC, true);
-    hdmiCec->setOption(OptionKey::SYSTEM_CEC_CONTROL, false);
+    ret = hdmiCec->setOption(OptionKey::WAKEUP, true);
+    EXPECT_TRUE(ret.isOk());
+    ret = hdmiCec->setOption(OptionKey::ENABLE_CEC, true);
+    EXPECT_TRUE(ret.isOk());
+    ret = hdmiCec->setOption(OptionKey::SYSTEM_CEC_CONTROL, false);
+    EXPECT_TRUE(ret.isOk());
 }
 
 TEST_P(HdmiCecTest, SetLanguage) {
     Return<void> ret = hdmiCec->setLanguage("eng");
-    ASSERT_TRUE(ret.isOk());
+    EXPECT_TRUE(ret.isOk());
 }
 
 TEST_P(HdmiCecTest, EnableAudioReturnChannel) {
     hidl_vec<HdmiPortInfo> ports;
     Return<void> ret =
             hdmiCec->getPortInfo([&ports](hidl_vec<HdmiPortInfo> list) { ports = list; });
+    EXPECT_TRUE(ret.isOk());
     for (size_t i = 0; i < ports.size(); ++i) {
         if (ports[i].arcSupported) {
-            Return<void> ret = hdmiCec->enableAudioReturnChannel(ports[i].portId, true);
-            ASSERT_TRUE(ret.isOk());
+            ret = hdmiCec->enableAudioReturnChannel(ports[i].portId, true);
+            EXPECT_TRUE(ret.isOk());
         }
     }
 }
@@ -216,6 +201,7 @@ TEST_P(HdmiCecTest, IsConnected) {
     hidl_vec<HdmiPortInfo> ports;
     Return<void> ret =
             hdmiCec->getPortInfo([&ports](hidl_vec<HdmiPortInfo> list) { ports = list; });
+    EXPECT_TRUE(ret.isOk());
     for (size_t i = 0; i < ports.size(); ++i) {
         Return<bool> ret = hdmiCec->isConnected(ports[i].portId);
         EXPECT_TRUE(ret.isOk());
