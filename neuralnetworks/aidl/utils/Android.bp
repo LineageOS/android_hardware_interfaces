@@ -34,7 +34,6 @@ cc_library_static {
         "libarect",
         "neuralnetworks_types",
         "neuralnetworks_utils_hal_common",
-        "neuralnetworks_utils_hal_1_0",
     ],
     shared_libs: [
         "android.hardware.neuralnetworks-V1-ndk_platform",

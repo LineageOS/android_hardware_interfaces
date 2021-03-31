@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_TEST_MOCK_FENCED_EXECUTION_CALLBACK_H
-#define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_TEST_MOCK_FENCED_EXECUTION_CALLBACK_H
+#ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_TEST_MOCK_BURST_H
+#define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_TEST_MOCK_BURST_H
 
-#include <aidl/android/hardware/neuralnetworks/BnFencedExecutionCallback.h>
-#include <android/binder_auto_utils.h>
+#include <aidl/android/hardware/neuralnetworks/BnBurst.h>
 #include <android/binder_interface_utils.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -26,20 +25,17 @@
 
 namespace aidl::android::hardware::neuralnetworks::utils {
 
-class MockFencedExecutionCallback final : public BnFencedExecutionCallback {
+class MockBurst final : public BnBurst {
   public:
-    static std::shared_ptr<MockFencedExecutionCallback> create();
-
-    // V1_3 methods below.
-    MOCK_METHOD(ndk::ScopedAStatus, getExecutionInfo,
-                (Timing * timingLaunched, Timing* timingFenced, ErrorStatus* errorStatus),
+    MOCK_METHOD(ndk::ScopedAStatus, executeSynchronously,
+                (const Request& request, const std::vector<int64_t>& memoryIdentifierTokens,
+                 bool measureTiming, int64_t deadline, int64_t loopTimeoutDuration,
+                 ExecutionResult* executionResult),
+                (override));
+    MOCK_METHOD(ndk::ScopedAStatus, releaseMemoryResource, (int64_t memoryIdentifierToken),
                 (override));
 };
 
-inline std::shared_ptr<MockFencedExecutionCallback> MockFencedExecutionCallback::create() {
-    return ndk::SharedRefBase::make<MockFencedExecutionCallback>();
-}
-
 }  // namespace aidl::android::hardware::neuralnetworks::utils
 
-#endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_TEST_MOCK_FENCED_EXECUTION_CALLBACK_H
+#endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_TEST_MOCK_BURST_H
