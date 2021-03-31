@@ -1348,6 +1348,48 @@ enum VehicleProperty : int32_t {
         | VehicleArea:GLOBAL),
 
     /**
+     * Current date and time, encoded as Unix time (in milliseconds).
+     * This value denotes the number of milliseconds seconds that have
+     * elapsed since 1/1/1970 UTC.
+     *
+     * Reading this value will give you the system’s time. This can be
+     * useful to synchronize other vehicle systems (dash clock etc).
+     *
+     * Writing this value will update the ‘ExternalTimeSuggestion’
+     * value (if enabled). This value may be consumed by the “Time
+     * Detector Service”, if other sources do not have a higher
+     * priority. For information on how to adjust time source
+     * priorities see Time Detector Service documentation.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     * @unit VehicleUnit:MILLI_SECS
+     */
+    UNIX_TIME = (
+        0x0606
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT64
+        | VehicleArea:GLOBAL),
+
+    /**
+     * External encryption binding seed.
+     *
+     * This value is mixed with the local key storage encryption key.
+     * This property holds 16 bytes, and is expected to be persisted on an ECU separate from
+     * the IVI. The property is initially set by AAOS, who generates it using a CSRNG.
+     * AAOS will then read the property on subsequent boots. The binding seed is expected to be
+     * reliably persisted. Any loss of the seed results in a factory reset of the IVI.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    STORAGE_ENCRYPTION_BINDING_SEED = (
+        0x0607
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:BYTES
+        | VehicleArea:GLOBAL),
+
+    /**
      * Outside temperature
      *
      * @change_mode VehiclePropertyChangeMode:CONTINUOUS
@@ -3623,6 +3665,7 @@ enum VehicleUnit : int32_t {
     US_GALLON           = 0x42,
     IMPERIAL_GALLON     = 0x43,
     NANO_SECS           = 0x50,
+    MILLI_SECS          = 0x51,
     SECS                = 0x53,
     YEAR                = 0x59,
 
