@@ -153,6 +153,10 @@ struct Device : public IDevice, public ParametersUtil {
     std::tuple<Result, AudioPatchHandle> createOrUpdateAudioPatch(
             AudioPatchHandle patch, const hidl_vec<AudioPortConfig>& sources,
             const hidl_vec<AudioPortConfig>& sinks);
+    template <typename HalPort>
+    Return<void> getAudioPortImpl(const AudioPort& port, getAudioPort_cb _hidl_cb,
+                                  int (*halGetter)(audio_hw_device_t*, HalPort*),
+                                  const char* halGetterName);
 
     // Methods from ParametersUtil.
     char* halGetParameters(const char* keys) override;
