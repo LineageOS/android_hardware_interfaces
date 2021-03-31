@@ -33,7 +33,7 @@ parcelable ProtectedData {
      *         unprotected: {
      *             5 : bstr .size 12       // IV
      *         },
-     *         ciphertext: bstr,           // AES-GCM-128(K, .cbor ProtectedDataPayload)
+     *         ciphertext: bstr,           // AES-GCM-256(K, .cbor ProtectedDataPayload)
      *         recipients : [
      *             [                       // COSE_Recipient
      *                 protected : bstr .cbor {
