@@ -154,3 +154,20 @@ TEST(EffectUtils, ConvertDescriptor) {
     EXPECT_EQ(NO_ERROR, EffectUtils::effectDescriptorFromHal(halDesc, &descBack));
     EXPECT_EQ(desc, descBack);
 }
+
+TEST(EffectUtils, ConvertNameAndImplementor) {
+    for (size_t i = 0; i < EFFECT_STRING_LEN_MAX; ++i) {
+        effect_descriptor_t halDesc{};
+        for (size_t c = 0; c < i; ++c) {  // '<' to accommodate NUL terminator.
+            halDesc.name[c] = halDesc.implementor[c] = 'A' + static_cast<char>(c);
+        }
+        EffectDescriptor desc;
+        EXPECT_EQ(NO_ERROR, EffectUtils::effectDescriptorFromHal(halDesc, &desc));
+        effect_descriptor_t halDescBack;
+        EXPECT_EQ(NO_ERROR, EffectUtils::effectDescriptorToHal(desc, &halDescBack));
+        EXPECT_EQ(i, strlen(halDescBack.name));
+        EXPECT_EQ(i, strlen(halDescBack.implementor));
+        EXPECT_EQ(0, strcmp(halDesc.name, halDescBack.name));
+        EXPECT_EQ(0, strcmp(halDesc.implementor, halDescBack.implementor));
+    }
+}
