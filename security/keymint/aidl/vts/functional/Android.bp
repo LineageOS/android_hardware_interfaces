@@ -94,11 +94,14 @@ cc_test {
     ],
     static_libs: [
         "android.hardware.security.keymint-V1-ndk_platform",
+        "android.hardware.security.secureclock-V1-ndk_platform",
         "libcppcose",
         "libgmock_ndk",
-        "libremote_provisioner",
         "libkeymint",
+        "libkeymint_support",
         "libkeymint_remote_prov_support",
+        "libkeymint_vts_test_utils",
+        "libremote_provisioner",
     ],
     test_suites: [
         "general-tests",
