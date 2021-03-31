@@ -54,6 +54,8 @@ ErrMsgOr<EekChain> generateEekChain(size_t length, const bytevec& eekId) {
                                             {} /* AAD */);
         if (!coseSign1) return coseSign1.moveMessage();
         eekChain.add(coseSign1.moveValue());
+
+        prev_priv_key = priv_key;
     }
 
     bytevec pub_key(X25519_PUBLIC_VALUE_LEN);

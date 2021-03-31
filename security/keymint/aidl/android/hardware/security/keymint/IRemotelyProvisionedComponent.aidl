@@ -202,7 +202,7 @@ interface IRemotelyProvisionedComponent {
      *                2 : bstr                        // KID : EEK ID
      *                3 : -25,                        // Algorithm : ECDH-ES + HKDF-256
      *                -1 : 4,                         // Curve : X25519
-     *                -2 : bstr                       // Ed25519 public key
+     *                -2 : bstr                       // X25519 public key
      *            }
      *
      *            EekSignatureInput = [
@@ -221,7 +221,7 @@ interface IRemotelyProvisionedComponent {
      *        in the chain, which implies that it must not attempt to validate the signature.
      *
      *        If testMode is false, the method must validate the chain signatures, and must verify
-     *        that the public key in the root certifictate is in its pre-configured set of
+     *        that the public key in the root certificate is in its pre-configured set of
      *        authorized EEK root keys. If the public key is not in the database, or if signature
      *        verification fails, the method must return STATUS_INVALID_EEK.
      *
