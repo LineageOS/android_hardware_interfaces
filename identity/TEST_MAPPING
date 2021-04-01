@@ -1,0 +1,13 @@
+{
+  "presubmit": [
+    {
+      "name": "CtsIdentityTestCases"
+    },
+    {
+      "name": "VtsHalIdentityTargetTest"
+    },
+    {
+      "name": "android.hardware.identity-support-lib-test"
+    }
+  ]
+}

@@ -23,8 +23,6 @@
 
 namespace aidl::android::hardware::automotive::audiocontrol {
 
-using ::std::shared_ptr;
-
 class AudioControl : public BnAudioControl {
   public:
     ndk::ScopedAStatus onAudioFocusChange(const std::string& in_usage, int32_t in_zoneId,
@@ -34,7 +32,7 @@ class AudioControl : public BnAudioControl {
     ndk::ScopedAStatus onDevicesToMuteChange(
             const std::vector<MutingInfo>& in_mutingInfos) override;
     ndk::ScopedAStatus registerFocusListener(
-            const shared_ptr<IFocusListener>& in_listener) override;
+            const std::shared_ptr<IFocusListener>& in_listener) override;
     ndk::ScopedAStatus setBalanceTowardRight(float in_value) override;
     ndk::ScopedAStatus setFadeTowardFront(float in_value) override;
     binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
@@ -44,7 +42,7 @@ class AudioControl : public BnAudioControl {
     // a single instance of CarAudioService. As such, it doesn't have explicit serialization.
     // If a different AudioControl implementation were to have multiple threads leveraging this
     // listener, then it should also include mutexes or make the listener atomic.
-    shared_ptr<IFocusListener> mFocusListener;
+    std::shared_ptr<IFocusListener> mFocusListener;
 
     binder_status_t cmdHelp(int fd) const;
     binder_status_t cmdRequestFocus(int fd, const char** args, uint32_t numArgs);
