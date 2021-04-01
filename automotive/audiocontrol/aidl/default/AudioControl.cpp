@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#define LOG_TAG "AudioControl"
+// #define LOG_NDEBUG 0
+
 #include "AudioControl.h"
 
 #include <aidl/android/hardware/automotive/audiocontrol/AudioFocusChange.h>
@@ -24,7 +27,7 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
-#include <android_audio_policy_configuration_V7_0.h>
+#include <android_audio_policy_configuration_V7_0-enums.h>
 #include <private/android_filesystem_config.h>
 
 #include <stdio.h>
@@ -33,6 +36,7 @@ namespace aidl::android::hardware::automotive::audiocontrol {
 
 using ::android::base::EqualsIgnoreCase;
 using ::android::base::ParseInt;
+using ::std::shared_ptr;
 using ::std::string;
 
 namespace xsd {
@@ -68,7 +72,7 @@ ndk::ScopedAStatus AudioControl::registerFocusListener(
         const shared_ptr<IFocusListener>& in_listener) {
     LOG(DEBUG) << "registering focus listener";
 
-    if (in_listener.get()) {
+    if (in_listener) {
         std::atomic_store(&mFocusListener, in_listener);
     } else {
         LOG(ERROR) << "Unexpected nullptr for listener resulting in no-op.";
@@ -80,9 +84,10 @@ ndk::ScopedAStatus AudioControl::setBalanceTowardRight(float value) {
     if (isValidValue(value)) {
         // Just log in this default mock implementation
         LOG(INFO) << "Balance set to " << value;
-    } else {
-        LOG(ERROR) << "Balance value out of range -1 to 1 at " << value;
+        return ndk::ScopedAStatus::ok();
     }
+
+    LOG(ERROR) << "Balance value out of range -1 to 1 at " << value;
     return ndk::ScopedAStatus::ok();
 }
 
@@ -90,9 +95,10 @@ ndk::ScopedAStatus AudioControl::setFadeTowardFront(float value) {
     if (isValidValue(value)) {
         // Just log in this default mock implementation
         LOG(INFO) << "Fader set to " << value;
-    } else {
-        LOG(ERROR) << "Fader value out of range -1 to 1 at " << value;
+        return ndk::ScopedAStatus::ok();
     }
+
+    LOG(ERROR) << "Fader value out of range -1 to 1 at " << value;
     return ndk::ScopedAStatus::ok();
 }
 
@@ -194,7 +200,7 @@ binder_status_t AudioControl::cmdRequestFocus(int fd, const char** args, uint32_
     }
 
     string usage = string(args[1]);
-    if (xsd::stringToAudioUsage(usage) == xsd::AudioUsage::UNKNOWN) {
+    if (xsd::isUnknownAudioUsage(usage)) {
         dprintf(fd,
                 "Unknown usage provided: %s. Please see audio_policy_configuration.xsd V7_0 "
                 "for supported values\n",
@@ -236,7 +242,7 @@ binder_status_t AudioControl::cmdAbandonFocus(int fd, const char** args, uint32_
     }
 
     string usage = string(args[1]);
-    if (xsd::stringToAudioUsage(usage) == xsd::AudioUsage::UNKNOWN) {
+    if (xsd::isUnknownAudioUsage(usage)) {
         dprintf(fd,
                 "Unknown usage provided: %s. Please see audio_policy_configuration.xsd V7_0 "
                 "for supported values\n",
