@@ -239,6 +239,30 @@ ErrMsgOr<EekChain> corrupt_sig_chain(const EekChain& eek, int which) {
     return EekChain{corruptChain.encode(), eek.last_pubkey, eek.last_privkey};
 }
 
+string device_suffix(const string& name) {
+    size_t pos = name.find('/');
+    if (pos == string::npos) {
+        return name;
+    }
+    return name.substr(pos + 1);
+}
+
+bool matching_keymint_device(const string& rp_name, std::shared_ptr<IKeyMintDevice>* keyMint) {
+    string rp_suffix = device_suffix(rp_name);
+
+    vector<string> km_names = ::android::getAidlHalInstanceNames(IKeyMintDevice::descriptor);
+    for (const string& km_name : km_names) {
+        // If the suffix of the KeyMint instance equals the suffix of the
+        // RemotelyProvisionedComponent instance, assume they match.
+        if (device_suffix(km_name) == rp_suffix && AServiceManager_isDeclared(km_name.c_str())) {
+            ::ndk::SpAIBinder binder(AServiceManager_waitForService(km_name.c_str()));
+            *keyMint = IKeyMintDevice::fromBinder(binder);
+            return true;
+        }
+    }
+    return false;
+}
+
 }  // namespace
 
 class VtsRemotelyProvisionedComponentTests : public testing::TestWithParam<std::string> {
@@ -276,20 +300,33 @@ TEST_P(GenerateKeyTests, generateEcdsaP256Key_prodMode) {
     ASSERT_TRUE(status.isOk());
     vector<uint8_t> coseKeyData;
     check_maced_pubkey(macedPubKey, testMode, &coseKeyData);
+}
+
+/**
+ * Generate and validate a production-mode key, then use it as a KeyMint attestation key.
+ */
+TEST_P(GenerateKeyTests, generateAndUseEcdsaP256Key_prodMode) {
+    // See if there is a matching IKeyMintDevice for this IRemotelyProvisionedComponent.
+    std::shared_ptr<IKeyMintDevice> keyMint;
+    if (!matching_keymint_device(GetParam(), &keyMint)) {
+        // No matching IKeyMintDevice.
+        GTEST_SKIP() << "Skipping key use test as no matching KeyMint device found";
+        return;
+    }
+    KeyMintHardwareInfo info;
+    ASSERT_TRUE(keyMint->getHardwareInfo(&info).isOk());
+
+    MacedPublicKey macedPubKey;
+    bytevec privateKeyBlob;
+    bool testMode = false;
+    auto status = provisionable_->generateEcdsaP256KeyPair(testMode, &macedPubKey, &privateKeyBlob);
+    ASSERT_TRUE(status.isOk());
+    vector<uint8_t> coseKeyData;
+    check_maced_pubkey(macedPubKey, testMode, &coseKeyData);
+
     AttestationKey attestKey;
     attestKey.keyBlob = std::move(privateKeyBlob);
     attestKey.issuerSubjectName = make_name_from_str("Android Keystore Key");
-
-    // Also talk to an IKeyMintDevice.
-    // TODO: if there were multiple instances of IRemotelyProvisionedComponent and IKeyMintDevice,
-    // what should the correlation between them be?
-    vector<string> params = ::android::getAidlHalInstanceNames(IKeyMintDevice::descriptor);
-    ASSERT_GT(params.size(), 0U);
-    ASSERT_TRUE(AServiceManager_isDeclared(params[0].c_str()));
-    ::ndk::SpAIBinder binder(AServiceManager_waitForService(params[0].c_str()));
-    std::shared_ptr<IKeyMintDevice> keyMint = IKeyMintDevice::fromBinder(binder);
-    KeyMintHardwareInfo info;
-    ASSERT_TRUE(keyMint->getHardwareInfo(&info).isOk());
 
     // Generate an ECDSA key that is attested by the generated P256 keypair.
     AuthorizationSet keyDesc = AuthorizationSetBuilder()
@@ -370,7 +407,7 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
         }
     }
 
-    void checkProtectedData(bool testMode, const cppbor::Array& keysToSign,
+    void checkProtectedData(const DeviceInfo& deviceInfo, const cppbor::Array& keysToSign,
                             const bytevec& keysToSignMac, const ProtectedData& protectedData) {
         auto [parsedProtectedData, _, protDataErrMsg] = cppbor::parse(protectedData.protectedData);
         ASSERT_TRUE(parsedProtectedData) << protDataErrMsg;
@@ -404,11 +441,16 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
         ASSERT_TRUE(bccContents) << "\n" << bccContents.message() << "\n" << prettyPrint(bcc.get());
         ASSERT_GT(bccContents->size(), 0U);
 
+        auto [deviceInfoMap, __2, deviceInfoErrMsg] = cppbor::parse(deviceInfo.deviceInfo);
+        ASSERT_TRUE(deviceInfoMap) << "Failed to parse deviceInfo: " << deviceInfoErrMsg;
+        ASSERT_TRUE(deviceInfoMap->asMap());
+
         auto& signingKey = bccContents->back().pubKey;
-        auto macKey = verifyAndParseCoseSign1(testMode, signedMac->asArray(), signingKey,
-                                              cppbor::Array()  // DeviceInfo
+        auto macKey = verifyAndParseCoseSign1(/* ignore_signature = */ false, signedMac->asArray(),
+                                              signingKey,
+                                              cppbor::Array()  // SignedMacAad
                                                       .add(challenge_)
-                                                      .add(cppbor::Map())
+                                                      .add(std::move(deviceInfoMap))
                                                       .encode());
         ASSERT_TRUE(macKey) << macKey.message();
 
@@ -451,7 +493,7 @@ TEST_P(CertificateRequestTest, EmptyRequest_testMode) {
                 &protectedData, &keysToSignMac);
         ASSERT_TRUE(status.isOk()) << status.getMessage();
 
-        checkProtectedData(testMode, cppbor::Array(), keysToSignMac, protectedData);
+        checkProtectedData(deviceInfo, cppbor::Array(), keysToSignMac, protectedData);
     }
 }
 
@@ -499,7 +541,7 @@ TEST_P(CertificateRequestTest, NonEmptyRequest_testMode) {
                 &keysToSignMac);
         ASSERT_TRUE(status.isOk()) << status.getMessage();
 
-        checkProtectedData(testMode, cborKeysToSign_, keysToSignMac, protectedData);
+        checkProtectedData(deviceInfo, cborKeysToSign_, keysToSignMac, protectedData);
     }
 }
 
