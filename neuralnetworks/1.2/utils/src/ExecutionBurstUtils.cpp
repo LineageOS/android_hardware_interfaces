@@ -520,6 +520,8 @@ nn::Result<std::vector<FmqRequestDatum>> RequestChannelReceiver::getPacketBlocki
             }
             return packet;
         }
+
+        std::this_thread::yield();
     }
 
     // If we get to this point, we either stopped polling because it was taking too long or polling
@@ -665,6 +667,8 @@ nn::Result<std::vector<FmqResultDatum>> ResultChannelReceiver::getPacketBlocking
             }
             return packet;
         }
+
+        std::this_thread::yield();
     }
 
     // If we get to this point, we either stopped polling because it was taking too long or polling
