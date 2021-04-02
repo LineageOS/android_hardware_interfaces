@@ -185,6 +185,8 @@ TEST_P(SecureClockAidlTest, MacChangesOnChangingTimestamp) {
 INSTANTIATE_TEST_SUITE_P(PerInstance, SecureClockAidlTest,
                          testing::ValuesIn(SecureClockAidlTest::build_params()),
                          ::android::PrintInstanceNameToString);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SecureClockAidlTest);
+
 }  // namespace aidl::android::hardware::security::secureclock::test
 
 int main(int argc, char** argv) {
