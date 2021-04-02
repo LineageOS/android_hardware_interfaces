@@ -196,6 +196,7 @@ std::unique_ptr<V2_0::GnssLocation> GnssTemplate<T_IGnss>::getLocationFromHW() {
         return nullptr;
     }
     while (true) {
+        memset(inputBuffer, 0, INPUT_BUFFER_SIZE);
         bytes_read = read(mGnssFd, &inputBuffer, INPUT_BUFFER_SIZE);
         if (bytes_read <= 0) {
             break;
@@ -218,9 +219,14 @@ Return<bool> GnssTemplate<T_IGnss>::start() {
             auto svStatus = filterBlocklistedSatellitesV2_1(Utils::getMockSvInfoListV2_1());
             this->reportSvStatus(svStatus);
             auto currentLocation = getLocationFromHW();
-            if (mGnssFd != -1 && currentLocation != nullptr) {
+            if (mGnssFd != -1) {
                 // Only report location if the return from hardware is valid
-                this->reportLocation(*currentLocation);
+                // note that we can not merge these two "if" together, if didn't
+                // get location from hardware, we shouldn't report location, not
+                // report the "default" one.
+                if (currentLocation != nullptr) {
+                    this->reportLocation(*currentLocation);
+                }
             } else {
                 if (sGnssCallback_2_1 != nullptr || sGnssCallback_2_0 != nullptr) {
                     const auto location = Utils::getMockLocationV2_0();
@@ -259,6 +265,7 @@ Return<bool> GnssTemplate<T_IGnss>::stop() {
     if (mGnssFd != -1) {
         close(mGnssFd);
         mGnssFd = -1;
+        mHardwareModeChecked = false;
     }
     return true;
 }
