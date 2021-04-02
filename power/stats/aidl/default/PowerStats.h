@@ -73,6 +73,8 @@ class PowerStats : public BnPowerStats {
   private:
     std::vector<std::unique_ptr<IStateResidencyDataProvider>> mStateResidencyDataProviders;
     std::vector<PowerEntity> mPowerEntityInfos;
+    /* Index that maps each power entity id to an entry in mStateResidencyDataProviders */
+    std::vector<size_t> mStateResidencyDataProviderIndex;
 
     std::vector<std::unique_ptr<IEnergyConsumer>> mEnergyConsumers;
     std::vector<EnergyConsumer> mEnergyConsumerInfos;
