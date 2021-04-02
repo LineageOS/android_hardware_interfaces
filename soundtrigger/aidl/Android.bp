@@ -1,0 +1,28 @@
+aidl_interface {
+    name: "android.hardware.soundtrigger3",
+    vendor_available: true,
+    flags: ["-Werror", "-Weverything", ],
+    srcs: [
+        "android/hardware/soundtrigger3/ISoundTriggerHw.aidl",
+        "android/hardware/soundtrigger3/ISoundTriggerHwCallback.aidl",
+        "android/hardware/soundtrigger3/ISoundTriggerHwGlobalCallback.aidl",
+    ],
+    stability: "vintf",
+    imports: [
+        "android.media.soundtrigger.types",
+    ],
+    backend: {
+        cpp: {
+            // prefer NDK backend which can be used anywhere
+            enabled: false,
+        },
+        java: {
+            sdk_version: "module_current",
+        },
+        ndk: {
+            vndk: {
+                enabled: true,
+            },
+        },
+    },
+}

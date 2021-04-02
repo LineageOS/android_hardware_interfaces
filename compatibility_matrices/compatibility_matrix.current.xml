@@ -527,6 +527,14 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <hal format="aidl" optional="true">
+         <name>android.hardware.soundtrigger3</name>
+         <version>1</version>
+         <interface>
+             <name>ISoundTriggerHw</name>
+             <instance>default</instance>
+         </interface>
+    </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.tetheroffload.config</name>
         <version>1.0</version>

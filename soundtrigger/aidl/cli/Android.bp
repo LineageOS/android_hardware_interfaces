@@ -1,0 +1,8 @@
+java_binary {
+    name: "sthal_cli_3",
+    wrapper: "sthal_cli_3",
+    srcs: ["java/**/*.java"],
+    static_libs: [
+        "android.hardware.soundtrigger3-V1-java",
+    ],
+}

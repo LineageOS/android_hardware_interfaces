@@ -61,7 +61,7 @@ public class SthalCli {
             mService.registerAsService("mock");
 
             System.out.println("Rebooting STHAL");
-            SystemProperties.set("debug.soundtrigger_middleware.use_mock_hal", "true");
+            SystemProperties.set("debug.soundtrigger_middleware.use_mock_hal", "2");
             SystemProperties.set("sys.audio.restart.hal", "1");
 
             while (processCommand()) ;
@@ -74,7 +74,7 @@ public class SthalCli {
 
     private static void cleanup() {
         System.out.println("Cleaning up.");
-        SystemProperties.set("debug.soundtrigger_middleware.use_mock_hal", "false");
+        SystemProperties.set("debug.soundtrigger_middleware.use_mock_hal", null);
         HwBinder.setTrebleTestingOverride(false);
     }
 
