@@ -207,6 +207,36 @@ TEST_P(AttestKeyTest, AllEcCurves) {
     }
 }
 
+TEST_P(AttestKeyTest, AttestWithNonAttestKey) {
+    // Create non-attestaton key.
+    AttestationKey non_attest_key;
+    vector<KeyCharacteristics> non_attest_key_characteristics;
+    vector<Certificate> non_attest_key_cert_chain;
+    ASSERT_EQ(
+            ErrorCode::OK,
+            GenerateKey(
+                    AuthorizationSetBuilder().EcdsaSigningKey(EcCurve::P_256).SetDefaultValidity(),
+                    {} /* attestation siging key */, &non_attest_key.keyBlob,
+                    &non_attest_key_characteristics, &non_attest_key_cert_chain));
+
+    EXPECT_EQ(non_attest_key_cert_chain.size(), 1);
+    EXPECT_TRUE(IsSelfSigned(non_attest_key_cert_chain));
+
+    // Attempt to sign attestation with non-attest key.
+    vector<uint8_t> attested_key_blob;
+    vector<KeyCharacteristics> attested_key_characteristics;
+    vector<Certificate> attested_key_cert_chain;
+    EXPECT_EQ(ErrorCode::INCOMPATIBLE_PURPOSE,
+              GenerateKey(AuthorizationSetBuilder()
+                                  .EcdsaSigningKey(EcCurve::P_256)
+                                  .Authorization(TAG_NO_AUTH_REQUIRED)
+                                  .AttestationChallenge("foo")
+                                  .AttestationApplicationId("bar")
+                                  .SetDefaultValidity(),
+                          non_attest_key, &attested_key_blob, &attested_key_characteristics,
+                          &attested_key_cert_chain));
+}
+
 INSTANTIATE_KEYMINT_AIDL_TEST(AttestKeyTest);
 
 }  // namespace aidl::android::hardware::security::keymint::test
