@@ -32,6 +32,7 @@ constexpr char GPRMC_RECORD_TAG[] = "$GPRMC";
 constexpr char LINE_SEPARATOR = '\n';
 constexpr char COMMA_SEPARATOR = ',';
 constexpr double TIMESTAMP_EPSILON = 0.001;
+constexpr int MIN_COL_NUM = 13;
 
 /** Helper class to parse and store the GNSS fix details information. */
 class NmeaFixInfo {
