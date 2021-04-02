@@ -249,8 +249,11 @@ enum Tag {
     HARDWARE_TYPE = (1 << 28) /* TagType:ENUM */ | 304,
 
     /**
-     * Keys tagged with EARLY_BOOT_ONLY may only be used, or created, during early boot, until
-     * IKeyMintDevice::earlyBootEnded() is called.
+     * Keys tagged with EARLY_BOOT_ONLY may only be used during early boot, until
+     * IKeyMintDevice::earlyBootEnded() is called.  Early boot keys may be created after
+     * early boot.  Early boot keys may not be imprted at all, if Tag::EARLY_BOOT_ONLY is
+     * provided to IKeyMintDevice::importKey, the import must fail with
+     * ErrorCode::INVALID_ARGUMENT.
      */
     EARLY_BOOT_ONLY = (7 << 28) /* TagType:BOOL */ | 305,
 

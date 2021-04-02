@@ -3201,7 +3201,7 @@ enum VehicleProperty : int32_t {
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:WRITE
      */
-     CLUSTER_NAVIGATION_STATE_LEGACY = (
+     CLUSTER_NAVIGATION_STATE = (
          0x0F38
          | VehiclePropertyGroup:SYSTEM
          | VehiclePropertyType:BYTES
