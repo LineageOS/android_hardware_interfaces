@@ -45,7 +45,7 @@ class RemotelyProvisionedComponent : public BnRemotelyProvisionedComponent {
   private:
     // TODO(swillden): Move these into an appropriate Context class.
     std::vector<uint8_t> deriveBytesFromHbk(const std::string& context, size_t numBytes) const;
-    std::vector<uint8_t> createDeviceInfo() const;
+    std::unique_ptr<cppbor::Map> createDeviceInfo() const;
     std::pair<std::vector<uint8_t>, cppbor::Array> generateBcc();
 
     std::vector<uint8_t> macKey_ = deriveBytesFromHbk("Key to MAC public keys", 32);
