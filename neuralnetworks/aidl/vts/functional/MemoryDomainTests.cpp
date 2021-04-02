@@ -337,18 +337,18 @@ class MemoryDomainAllocateTest : public MemoryDomainTestBase,
                               const std::shared_ptr<IPreparedModel>& model2) {
         validateAllocate({
                 .preparedModels = {model1, model2},
-                .inputRoles = {{.modelIndex = 0, .ioIndex = 0, .frequency = 1.0f},
-                               {.modelIndex = 1, .ioIndex = 0, .frequency = 1.0f}},
+                .inputRoles = {{.modelIndex = 0, .ioIndex = 0, .probability = 1.0f},
+                               {.modelIndex = 1, .ioIndex = 0, .probability = 1.0f}},
         });
         validateAllocate({
                 .preparedModels = {model1, model2},
-                .inputRoles = {{.modelIndex = 0, .ioIndex = 0, .frequency = 1.0f}},
-                .outputRoles = {{.modelIndex = 1, .ioIndex = 0, .frequency = 1.0f}},
+                .inputRoles = {{.modelIndex = 0, .ioIndex = 0, .probability = 1.0f}},
+                .outputRoles = {{.modelIndex = 1, .ioIndex = 0, .probability = 1.0f}},
         });
         validateAllocate({
                 .preparedModels = {model1, model2},
-                .outputRoles = {{.modelIndex = 0, .ioIndex = 0, .frequency = 1.0f},
-                                {.modelIndex = 1, .ioIndex = 0, .frequency = 1.0f}},
+                .outputRoles = {{.modelIndex = 0, .ioIndex = 0, .probability = 1.0f},
+                                {.modelIndex = 1, .ioIndex = 0, .probability = 1.0f}},
         });
     }
 };
@@ -370,13 +370,13 @@ TEST_P(MemoryDomainAllocateTest, NullptrPreparedModel) {
     // Test with nullptr prepared model as input role.
     validateAllocate({
             .preparedModels = {nullptr},
-            .inputRoles = {{.modelIndex = 0, .ioIndex = 0, .frequency = 1.0f}},
+            .inputRoles = {{.modelIndex = 0, .ioIndex = 0, .probability = 1.0f}},
     });
 
     // Test with nullptr prepared model as output role.
     validateAllocate({
             .preparedModels = {nullptr},
-            .outputRoles = {{.modelIndex = 0, .ioIndex = 0, .frequency = 1.0f}},
+            .outputRoles = {{.modelIndex = 0, .ioIndex = 0, .probability = 1.0f}},
     });
 }
 
@@ -387,13 +387,13 @@ TEST_P(MemoryDomainAllocateTest, InvalidPreparedModel) {
     // Test with invalid prepared model as input role.
     validateAllocate({
             .preparedModels = {invalidPreparedModel},
-            .inputRoles = {{.modelIndex = 0, .ioIndex = 0, .frequency = 1.0f}},
+            .inputRoles = {{.modelIndex = 0, .ioIndex = 0, .probability = 1.0f}},
     });
 
     // Test with invalid prepared model as output role.
     validateAllocate({
             .preparedModels = {invalidPreparedModel},
-            .outputRoles = {{.modelIndex = 0, .ioIndex = 0, .frequency = 1.0f}},
+            .outputRoles = {{.modelIndex = 0, .ioIndex = 0, .probability = 1.0f}},
     });
 }
 
@@ -404,13 +404,13 @@ TEST_P(MemoryDomainAllocateTest, InvalidModelIndex) {
     // This should fail, because the model index is out of bound.
     validateAllocate({
             .preparedModels = {preparedModel},
-            .inputRoles = {{.modelIndex = 1, .ioIndex = 0, .frequency = 1.0f}},
+            .inputRoles = {{.modelIndex = 1, .ioIndex = 0, .probability = 1.0f}},
     });
 
     // This should fail, because the model index is out of bound.
     validateAllocate({
             .preparedModels = {preparedModel},
-            .outputRoles = {{.modelIndex = 1, .ioIndex = 0, .frequency = 1.0f}},
+            .outputRoles = {{.modelIndex = 1, .ioIndex = 0, .probability = 1.0f}},
     });
 }
 
@@ -421,30 +421,30 @@ TEST_P(MemoryDomainAllocateTest, InvalidIOIndex) {
     // This should fail, because the model only has one input.
     validateAllocate({
             .preparedModels = {preparedModel},
-            .inputRoles = {{.modelIndex = 0, .ioIndex = 1, .frequency = 1.0f}},
+            .inputRoles = {{.modelIndex = 0, .ioIndex = 1, .probability = 1.0f}},
     });
 
     // This should fail, because the model only has one output.
     validateAllocate({
             .preparedModels = {preparedModel},
-            .outputRoles = {{.modelIndex = 0, .ioIndex = 1, .frequency = 1.0f}},
+            .outputRoles = {{.modelIndex = 0, .ioIndex = 1, .probability = 1.0f}},
     });
 }
 
-TEST_P(MemoryDomainAllocateTest, InvalidFrequency) {
+TEST_P(MemoryDomainAllocateTest, InvalidProbability) {
     auto preparedModel = createConvPreparedModel(kTestOperand);
     if (preparedModel == nullptr) return;
 
     for (float invalidFreq : {10.0f, 0.0f, -0.5f}) {
-        // Test with invalid frequency for input roles.
+        // Test with invalid probability for input roles.
         validateAllocate({
                 .preparedModels = {preparedModel},
-                .inputRoles = {{.modelIndex = 0, .ioIndex = 0, .frequency = invalidFreq}},
+                .inputRoles = {{.modelIndex = 0, .ioIndex = 0, .probability = invalidFreq}},
         });
-        // Test with invalid frequency for output roles.
+        // Test with invalid probability for output roles.
         validateAllocate({
                 .preparedModels = {preparedModel},
-                .outputRoles = {{.modelIndex = 0, .ioIndex = 0, .frequency = invalidFreq}},
+                .outputRoles = {{.modelIndex = 0, .ioIndex = 0, .probability = invalidFreq}},
         });
     }
 }
@@ -456,25 +456,25 @@ TEST_P(MemoryDomainAllocateTest, SameRoleSpecifiedTwice) {
     // Same role with same model index.
     validateAllocate({
             .preparedModels = {preparedModel},
-            .inputRoles = {{.modelIndex = 0, .ioIndex = 0, .frequency = 1.0f},
-                           {.modelIndex = 0, .ioIndex = 0, .frequency = 1.0f}},
+            .inputRoles = {{.modelIndex = 0, .ioIndex = 0, .probability = 1.0f},
+                           {.modelIndex = 0, .ioIndex = 0, .probability = 1.0f}},
     });
     validateAllocate({
             .preparedModels = {preparedModel},
-            .outputRoles = {{.modelIndex = 0, .ioIndex = 0, .frequency = 1.0f},
-                            {.modelIndex = 0, .ioIndex = 0, .frequency = 1.0f}},
+            .outputRoles = {{.modelIndex = 0, .ioIndex = 0, .probability = 1.0f},
+                            {.modelIndex = 0, .ioIndex = 0, .probability = 1.0f}},
     });
 
     // Different model indexes, but logically referring to the same role.
     validateAllocate({
             .preparedModels = {preparedModel, preparedModel},
-            .inputRoles = {{.modelIndex = 0, .ioIndex = 0, .frequency = 1.0f},
-                           {.modelIndex = 1, .ioIndex = 0, .frequency = 1.0f}},
+            .inputRoles = {{.modelIndex = 0, .ioIndex = 0, .probability = 1.0f},
+                           {.modelIndex = 1, .ioIndex = 0, .probability = 1.0f}},
     });
     validateAllocate({
             .preparedModels = {preparedModel, preparedModel},
-            .outputRoles = {{.modelIndex = 0, .ioIndex = 0, .frequency = 1.0f},
-                            {.modelIndex = 1, .ioIndex = 0, .frequency = 1.0f}},
+            .outputRoles = {{.modelIndex = 0, .ioIndex = 0, .probability = 1.0f},
+                            {.modelIndex = 1, .ioIndex = 0, .probability = 1.0f}},
     });
 }
 
@@ -553,12 +553,12 @@ TEST_P(MemoryDomainAllocateTest, ConflictRankBetweenRoleAndDesc) {
     validateAllocate({
             .dimensions = badDimensions,
             .preparedModels = {preparedModel},
-            .inputRoles = {{.modelIndex = 0, .ioIndex = 0, .frequency = 1.0f}},
+            .inputRoles = {{.modelIndex = 0, .ioIndex = 0, .probability = 1.0f}},
     });
     validateAllocate({
             .dimensions = badDimensions,
             .preparedModels = {preparedModel},
-            .outputRoles = {{.modelIndex = 0, .ioIndex = 0, .frequency = 1.0f}},
+            .outputRoles = {{.modelIndex = 0, .ioIndex = 0, .probability = 1.0f}},
     });
 }
 
@@ -572,12 +572,12 @@ TEST_P(MemoryDomainAllocateTest, ConflictDimensionsBetweenRoleAndDesc) {
     validateAllocate({
             .dimensions = badDimensions,
             .preparedModels = {preparedModel},
-            .inputRoles = {{.modelIndex = 0, .ioIndex = 0, .frequency = 1.0f}},
+            .inputRoles = {{.modelIndex = 0, .ioIndex = 0, .probability = 1.0f}},
     });
     validateAllocate({
             .dimensions = badDimensions,
             .preparedModels = {preparedModel},
-            .outputRoles = {{.modelIndex = 0, .ioIndex = 0, .frequency = 1.0f}},
+            .outputRoles = {{.modelIndex = 0, .ioIndex = 0, .probability = 1.0f}},
     });
 }
 
@@ -590,7 +590,7 @@ TEST_P(MemoryDomainAllocateTest, ConflictRankWithScalarRole) {
     validateAllocate({
             .dimensions = {1},
             .preparedModels = {preparedModel},
-            .inputRoles = {{.modelIndex = 0, .ioIndex = 2, .frequency = 1.0f}},
+            .inputRoles = {{.modelIndex = 0, .ioIndex = 2, .probability = 1.0f}},
     });
 }
 
@@ -624,7 +624,7 @@ class MemoryDomainCopyTestBase : public MemoryDomainTestBase {
 
         std::vector<BufferRole> inputRoles(inputIndexes.size()), outputRoles(outputIndexes.size());
         auto trans = [](int32_t ind) -> BufferRole {
-            return {.modelIndex = 0, .ioIndex = ind, .frequency = 1.0f};
+            return {.modelIndex = 0, .ioIndex = ind, .probability = 1.0f};
         };
         std::transform(inputIndexes.begin(), inputIndexes.end(), inputRoles.begin(), trans);
         std::transform(outputIndexes.begin(), outputIndexes.end(), outputRoles.begin(), trans);
