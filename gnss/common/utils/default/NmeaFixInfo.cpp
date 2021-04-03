@@ -202,8 +202,15 @@ std::unique_ptr<V2_0::GnssLocation> NmeaFixInfo::getLocationFromInputStr(
     uint32_t fixId = 0;
     double lastTimeStamp = 0;
     for (const auto& line : nmeaRecords) {
+        if (line.compare(0, strlen(GPGA_RECORD_TAG), GPGA_RECORD_TAG) != 0 &&
+            line.compare(0, strlen(GPRMC_RECORD_TAG), GPRMC_RECORD_TAG) != 0) {
+            continue;
+        }
         std::vector<std::string> sentenceValues;
         splitStr(line, COMMA_SEPARATOR, sentenceValues);
+        if (sentenceValues.size() < MIN_COL_NUM) {
+            continue;
+        }
         double currentTimeStamp = std::stof(sentenceValues[1]);
         // If see a new timestamp, report correct location.
         if ((currentTimeStamp - lastTimeStamp) > TIMESTAMP_EPSILON &&
