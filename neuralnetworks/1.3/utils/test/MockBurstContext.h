@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,30 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_3_UTILS_TEST_MOCK_BUFFER_H
-#define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_3_UTILS_TEST_MOCK_BUFFER_H
+#ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_3_UTILS_TEST_MOCK_BURST_CONTEXT_H
+#define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_3_UTILS_TEST_MOCK_BURST_CONTEXT_H
 
-#include <android/hardware/neuralnetworks/1.3/IBuffer.h>
+#include <android/hardware/neuralnetworks/1.2/IBurstContext.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <hidl/HidlSupport.h>
 #include <hidl/Status.h>
 
 namespace android::hardware::neuralnetworks::V1_3::utils {
 
-class MockBuffer final : public IBuffer {
+class MockBurstContext final : public V1_2::IBurstContext {
   public:
-    static sp<MockBuffer> create();
-
-    // V1_3 methods below.
-    MOCK_METHOD(Return<V1_3::ErrorStatus>, copyTo, (const hidl_memory& dst), (override));
-    MOCK_METHOD(Return<V1_3::ErrorStatus>, copyFrom,
-                (const hidl_memory& src, const hidl_vec<uint32_t>& dimensions), (override));
+    // V1_2 methods below.
+    MOCK_METHOD(Return<void>, freeMemory, (int32_t slot), (override));
 };
-
-inline sp<MockBuffer> MockBuffer::create() {
-    return sp<MockBuffer>::make();
-}
 
 }  // namespace android::hardware::neuralnetworks::V1_3::utils
 
-#endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_3_UTILS_TEST_MOCK_BUFFER_H
+#endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_3_UTILS_TEST_MOCK_BURST_CONTEXT_H
