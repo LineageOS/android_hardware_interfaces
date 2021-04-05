@@ -17,10 +17,13 @@
 #ifndef ANDROID_HARDWARE_DRM_V1_0__CRYPTOPLUGIN_H
 #define ANDROID_HARDWARE_DRM_V1_0__CRYPTOPLUGIN_H
 
-#include <android/hidl/memory/1.0/IMemory.h>
+#include <android-base/thread_annotations.h>
 #include <android/hardware/drm/1.0/ICryptoPlugin.h>
+#include <android/hidl/memory/1.0/IMemory.h>
 #include <hidl/Status.h>
 #include <media/hardware/CryptoAPI.h>
+
+#include <mutex>
 
 namespace android {
 namespace hardware {
@@ -60,19 +63,21 @@ struct CryptoPlugin : public ICryptoPlugin {
     Return<void> setSharedBufferBase(const ::android::hardware::hidl_memory& base,
         uint32_t bufferId) override;
 
-    Return<void> decrypt(bool secure, const hidl_array<uint8_t, 16>& keyId,
-            const hidl_array<uint8_t, 16>& iv, Mode mode, const Pattern& pattern,
-            const hidl_vec<SubSample>& subSamples, const SharedBuffer& source,
-            uint64_t offset, const DestinationBuffer& destination,
-            decrypt_cb _hidl_cb) override;
+    Return<void> decrypt(
+            bool secure, const hidl_array<uint8_t, 16>& keyId, const hidl_array<uint8_t, 16>& iv,
+            Mode mode, const Pattern& pattern, const hidl_vec<SubSample>& subSamples,
+            const SharedBuffer& source, uint64_t offset, const DestinationBuffer& destination,
+            decrypt_cb _hidl_cb) override NO_THREAD_SAFETY_ANALYSIS;  // use unique_lock
 
-private:
+  private:
     android::CryptoPlugin *mLegacyPlugin;
-    std::map<uint32_t, sp<IMemory> > mSharedBufferMap;
+    std::map<uint32_t, sp<IMemory>> mSharedBufferMap GUARDED_BY(mSharedBufferLock);
 
     CryptoPlugin() = delete;
     CryptoPlugin(const CryptoPlugin &) = delete;
     void operator=(const CryptoPlugin &) = delete;
+
+    std::mutex mSharedBufferLock;
 };
 
 }  // namespace implementation
