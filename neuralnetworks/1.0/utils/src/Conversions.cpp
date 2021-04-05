@@ -35,14 +35,14 @@
 #include <utility>
 #include <variant>
 
+#include "Utils.h"
+
 namespace {
 
 template <typename Type>
 constexpr std::underlying_type_t<Type> underlyingType(Type value) {
     return static_cast<std::underlying_type_t<Type>>(value);
 }
-
-constexpr auto kVersion = android::nn::Version::ANDROID_OC_MR1;
 
 }  // namespace
 
@@ -53,13 +53,13 @@ using hardware::hidl_memory;
 using hardware::hidl_vec;
 
 template <typename Input>
-using unvalidatedConvertOutput =
+using UnvalidatedConvertOutput =
         std::decay_t<decltype(unvalidatedConvert(std::declval<Input>()).value())>;
 
 template <typename Type>
-GeneralResult<std::vector<unvalidatedConvertOutput<Type>>> unvalidatedConvert(
+GeneralResult<std::vector<UnvalidatedConvertOutput<Type>>> unvalidatedConvert(
         const hidl_vec<Type>& arguments) {
-    std::vector<unvalidatedConvertOutput<Type>> canonical;
+    std::vector<UnvalidatedConvertOutput<Type>> canonical;
     canonical.reserve(arguments.size());
     for (const auto& argument : arguments) {
         canonical.push_back(NN_TRY(nn::unvalidatedConvert(argument)));
@@ -68,16 +68,9 @@ GeneralResult<std::vector<unvalidatedConvertOutput<Type>>> unvalidatedConvert(
 }
 
 template <typename Type>
-decltype(nn::unvalidatedConvert(std::declval<Type>())) validatedConvert(const Type& halObject) {
+GeneralResult<UnvalidatedConvertOutput<Type>> validatedConvert(const Type& halObject) {
     auto canonical = NN_TRY(nn::unvalidatedConvert(halObject));
-    const auto maybeVersion = validate(canonical);
-    if (!maybeVersion.has_value()) {
-        return error() << maybeVersion.error();
-    }
-    const auto version = maybeVersion.value();
-    if (version > kVersion) {
-        return NN_ERROR() << "Insufficient version: " << version << " vs required " << kVersion;
-    }
+    NN_TRY(hal::V1_0::utils::compliantVersion(canonical));
     return canonical;
 }
 
@@ -248,13 +241,13 @@ namespace android::hardware::neuralnetworks::V1_0::utils {
 namespace {
 
 template <typename Input>
-using unvalidatedConvertOutput =
+using UnvalidatedConvertOutput =
         std::decay_t<decltype(unvalidatedConvert(std::declval<Input>()).value())>;
 
 template <typename Type>
-nn::GeneralResult<hidl_vec<unvalidatedConvertOutput<Type>>> unvalidatedConvert(
+nn::GeneralResult<hidl_vec<UnvalidatedConvertOutput<Type>>> unvalidatedConvert(
         const std::vector<Type>& arguments) {
-    hidl_vec<unvalidatedConvertOutput<Type>> halObject(arguments.size());
+    hidl_vec<UnvalidatedConvertOutput<Type>> halObject(arguments.size());
     for (size_t i = 0; i < arguments.size(); ++i) {
         halObject[i] = NN_TRY(utils::unvalidatedConvert(arguments[i]));
     }
@@ -262,15 +255,8 @@ nn::GeneralResult<hidl_vec<unvalidatedConvertOutput<Type>>> unvalidatedConvert(
 }
 
 template <typename Type>
-decltype(utils::unvalidatedConvert(std::declval<Type>())) validatedConvert(const Type& canonical) {
-    const auto maybeVersion = nn::validate(canonical);
-    if (!maybeVersion.has_value()) {
-        return nn::error() << maybeVersion.error();
-    }
-    const auto version = maybeVersion.value();
-    if (version > kVersion) {
-        return NN_ERROR() << "Insufficient version: " << version << " vs required " << kVersion;
-    }
+nn::GeneralResult<UnvalidatedConvertOutput<Type>> validatedConvert(const Type& canonical) {
+    NN_TRY(compliantVersion(canonical));
     return utils::unvalidatedConvert(canonical);
 }
 

@@ -22,19 +22,25 @@
 #include <android-base/logging.h>
 #include <android/hardware/neuralnetworks/1.2/types.h>
 #include <nnapi/Result.h>
+#include <nnapi/TypeUtils.h>
 #include <nnapi/Types.h>
+#include <nnapi/Validation.h>
 #include <nnapi/hal/1.0/Conversions.h>
 #include <nnapi/hal/1.1/Conversions.h>
+#include <nnapi/hal/1.1/Utils.h>
+#include <nnapi/hal/HandleError.h>
 
 #include <limits>
 
 namespace android::hardware::neuralnetworks::V1_2::utils {
 
 using CacheToken = hidl_array<uint8_t, static_cast<size_t>(Constant::BYTE_SIZE_OF_CACHE_TOKEN)>;
+using V1_1::utils::kDefaultExecutionPreference;
 
 constexpr auto kDefaultMesaureTiming = MeasureTiming::NO;
 constexpr auto kNoTiming = Timing{.timeOnDevice = std::numeric_limits<uint64_t>::max(),
                                   .timeInDriver = std::numeric_limits<uint64_t>::max()};
+constexpr auto kVersion = nn::Version::ANDROID_Q;
 
 template <typename Type>
 nn::Result<void> validate(const Type& halObject) {
@@ -52,6 +58,15 @@ bool valid(const Type& halObject) {
         LOG(ERROR) << result.error();
     }
     return result.has_value();
+}
+
+template <typename Type>
+nn::GeneralResult<void> compliantVersion(const Type& canonical) {
+    const auto version = NN_TRY(hal::utils::makeGeneralFailure(nn::validate(canonical)));
+    if (version > kVersion) {
+        return NN_ERROR() << "Insufficient version: " << version << " vs required " << kVersion;
+    }
+    return {};
 }
 
 template <typename Type>
