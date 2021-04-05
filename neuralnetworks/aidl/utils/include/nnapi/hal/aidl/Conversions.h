@@ -99,6 +99,9 @@ GeneralResult<SharedHandle> unvalidatedConvert(
         const ::aidl::android::hardware::common::NativeHandle& handle);
 GeneralResult<SyncFence> unvalidatedConvert(const ndk::ScopedFileDescriptor& syncFence);
 
+GeneralResult<std::vector<Operation>> unvalidatedConvert(
+        const std::vector<aidl_hal::Operation>& operations);
+
 GeneralResult<Capabilities> convert(const aidl_hal::Capabilities& capabilities);
 GeneralResult<DeviceType> convert(const aidl_hal::DeviceType& deviceType);
 GeneralResult<ErrorStatus> convert(const aidl_hal::ErrorStatus& errorStatus);
@@ -106,16 +109,13 @@ GeneralResult<ExecutionPreference> convert(
         const aidl_hal::ExecutionPreference& executionPreference);
 GeneralResult<SharedMemory> convert(const aidl_hal::Memory& memory);
 GeneralResult<Model> convert(const aidl_hal::Model& model);
-GeneralResult<Operand> convert(const aidl_hal::Operand& operand);
 GeneralResult<OperandType> convert(const aidl_hal::OperandType& operandType);
 GeneralResult<Priority> convert(const aidl_hal::Priority& priority);
-GeneralResult<Request::MemoryPool> convert(const aidl_hal::RequestMemoryPool& memoryPool);
 GeneralResult<Request> convert(const aidl_hal::Request& request);
 GeneralResult<Timing> convert(const aidl_hal::Timing& timing);
 GeneralResult<SyncFence> convert(const ndk::ScopedFileDescriptor& syncFence);
 
 GeneralResult<std::vector<Extension>> convert(const std::vector<aidl_hal::Extension>& extension);
-GeneralResult<std::vector<Operation>> convert(const std::vector<aidl_hal::Operation>& outputShapes);
 GeneralResult<std::vector<SharedMemory>> convert(const std::vector<aidl_hal::Memory>& memories);
 GeneralResult<std::vector<OutputShape>> convert(
         const std::vector<aidl_hal::OutputShape>& outputShapes);
