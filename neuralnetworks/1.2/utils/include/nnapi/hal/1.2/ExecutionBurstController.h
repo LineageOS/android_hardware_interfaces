@@ -57,7 +57,8 @@ class ExecutionBurstController final : public nn::IBurst {
   public:
     using FallbackFunction =
             std::function<nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>>(
-                    const nn::Request&, nn::MeasureTiming)>;
+                    const nn::Request&, nn::MeasureTiming, const nn::OptionalTimePoint&,
+                    const nn::OptionalDuration&)>;
 
     /**
      * NN runtime memory cache.
@@ -168,7 +169,9 @@ class ExecutionBurstController final : public nn::IBurst {
 
     // See IBurst::execute for information on this method.
     nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> execute(
-            const nn::Request& request, nn::MeasureTiming measure) const override;
+            const nn::Request& request, nn::MeasureTiming measure,
+            const nn::OptionalTimePoint& deadline,
+            const nn::OptionalDuration& loopTimeoutDuration) const override;
 
   private:
     mutable std::atomic_flag mExecutionInFlight = ATOMIC_FLAG_INIT;

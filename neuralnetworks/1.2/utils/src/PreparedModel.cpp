@@ -122,10 +122,12 @@ PreparedModel::executeFenced(const nn::Request& /*request*/,
 
 nn::GeneralResult<nn::SharedBurst> PreparedModel::configureExecutionBurst() const {
     auto self = shared_from_this();
-    auto fallback = [preparedModel = std::move(self)](const nn::Request& request,
-                                                      nn::MeasureTiming measure)
+    auto fallback = [preparedModel = std::move(self)](
+                            const nn::Request& request, nn::MeasureTiming measure,
+                            const nn::OptionalTimePoint& deadline,
+                            const nn::OptionalDuration& loopTimeoutDuration)
             -> nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> {
-        return preparedModel->execute(request, measure, {}, {});
+        return preparedModel->execute(request, measure, deadline, loopTimeoutDuration);
     };
     const auto pollingTimeWindow = getBurstControllerPollingTimeWindow();
     return ExecutionBurstController::create(kPreparedModel, std::move(fallback), pollingTimeWindow);
