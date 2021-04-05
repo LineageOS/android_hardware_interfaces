@@ -325,6 +325,10 @@ interface IKeyMintDevice {
      *        return ErrorCode::INCOMPATIBLE_PURPOSE.  If the provided AttestationKey has an empty
      *        issuer subject name, the IKeyMintDevice must return ErrorCode::INVALID_ARGUMENT.
      *
+     *        If `attestationKey` is null and `keyParams` contains Tag::ATTESTATION_CHALLENGE but
+     *        the KeyMint implementation does not have factory-provisioned attestation keys, it must
+     *        return ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED.
+     *
      * @return The result of key creation.  See KeyCreationResult.aidl.
      */
     KeyCreationResult generateKey(
@@ -363,6 +367,10 @@ interface IKeyMintDevice {
      *        blob containing an asymmetric key with KeyPurpose::ATTEST_KEY, the IKeyMintDevice must
      *        return ErrorCode::INCOMPATIBLE_PURPOSE.  If the provided AttestationKey has an empty
      *        issuer subject name, the IKeyMintDevice must return ErrorCode::INVALID_ARGUMENT.
+     *
+     *        If `attestationKey` is null and `keyParams` contains Tag::ATTESTATION_CHALLENGE but
+     *        the KeyMint implementation does not have factory-provisioned attestation keys, it must
+     *        return ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED.
      *
      * @return The result of key creation.  See KeyCreationResult.aidl.
      */

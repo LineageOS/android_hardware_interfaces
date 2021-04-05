@@ -935,33 +935,34 @@ enum Tag {
     CONFIRMATION_TOKEN = (9 << 28) /* TagType:BYTES */ | 1005,
 
     /**
-     * Tag::CERTIFICATE_SERIAL specifies the serial number to be assigned to the
-     * attestation certificate to be generated for the given key.  This parameter should only
-     * be passed to keyMint in the attestation parameters during generateKey() and importKey().
+     * Tag::CERTIFICATE_SERIAL specifies the serial number to be assigned to the attestation
+     * certificate to be generated for the given key.  This parameter should only be passed to
+     * keyMint in the attestation parameters during generateKey() and importKey().  If not provided,
+     * the serial shall default to 1.
      */
     CERTIFICATE_SERIAL = (8 << 28) /* TagType:BIGNUM */ | 1006,
 
     /**
-     * Tag::CERTIFICATE_SUBJECT the certificate subject. The value is a DER encoded X509 NAME.
-     * This value is used when generating a self signed certificates. This tag may be specified
+     * Tag::CERTIFICATE_SUBJECT the certificate subject.  The value is a DER encoded X509 NAME.
+     * This value is used when generating a self signed certificates.  This tag may be specified
      * during generateKey and importKey. If not provided the subject name shall default to
-     * <TODO default subject here>.
+     * CN="Android Keystore Key".
      */
     CERTIFICATE_SUBJECT = (9 << 28) /* TagType:BYTES */ | 1007,
 
     /**
      * Tag::CERTIFICATE_NOT_BEFORE the beginning of the validity of the certificate in UNIX epoch
-     * time in seconds. This value is used when generating attestation or self signed certificates.
-     * ErrorCode::MISSING_NOT_BEFORE must be returned if this tag is not provided if this tag is
-     * not provided to generateKey or importKey.
+     * time in seconds.  This value is used when generating attestation or self signed certificates.
+     * ErrorCode::MISSING_NOT_BEFORE must be returned if this tag is not provided if this tag is not
+     * provided to generateKey or importKey.
      */
     CERTIFICATE_NOT_BEFORE = (6 << 28) /* TagType:DATE */ | 1008,
 
     /**
-     * Tag::CERTIFICATE_NOT_AFTER the end of the validity of the certificate in UNIX epoch
-     * time in seconds. This value is used when generating attestation or self signed certificates.
-     * ErrorCode::MISSING_NOT_AFTER must be returned if this tag is not provided to generateKey
-     * or importKey.
+     * Tag::CERTIFICATE_NOT_AFTER the end of the validity of the certificate in UNIX epoch time in
+     * seconds.  This value is used when generating attestation or self signed certificates.
+     * ErrorCode::MISSING_NOT_AFTER must be returned if this tag is not provided to generateKey or
+     * importKey.
      */
     CERTIFICATE_NOT_AFTER = (6 << 28) /* TagType:DATE */ | 1009,
 
