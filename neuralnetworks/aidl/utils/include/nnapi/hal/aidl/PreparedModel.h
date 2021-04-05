@@ -22,7 +22,6 @@
 #include <nnapi/Result.h>
 #include <nnapi/Types.h>
 #include <nnapi/hal/CommonUtils.h>
-#include <nnapi/hal/aidl/ProtectCallback.h>
 
 #include <memory>
 #include <tuple>
@@ -35,8 +34,7 @@
 namespace aidl::android::hardware::neuralnetworks::utils {
 
 // Class that adapts aidl_hal::IPreparedModel to nn::IPreparedModel.
-class PreparedModel final : public nn::IPreparedModel,
-                            public std::enable_shared_from_this<PreparedModel> {
+class PreparedModel final : public nn::IPreparedModel {
     struct PrivateConstructorTag {};
 
   public:
