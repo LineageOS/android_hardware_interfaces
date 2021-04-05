@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_TEST_MOCK_BUFFER
-#define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_TEST_MOCK_BUFFER
+#ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_TEST_MOCK_BUFFER_H
+#define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_TEST_MOCK_BUFFER_H
 
 #include <aidl/android/hardware/neuralnetworks/BnBuffer.h>
 #include <android/binder_interface_utils.h>
@@ -40,4 +40,4 @@ inline std::shared_ptr<MockBuffer> MockBuffer::create() {
 
 }  // namespace aidl::android::hardware::neuralnetworks::utils
 
-#endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_TEST_MOCK_BUFFER
+#endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_TEST_MOCK_BUFFER_H
