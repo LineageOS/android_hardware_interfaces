@@ -213,6 +213,7 @@ interface ISession {
      * 1) Any face is detected and the framework is notified via
      *    ISessionCallback#onInteractiondetected
      * 2) The operation was cancelled by the framework (see ICancellationSignal)
+     * 3) An error occurred, for example ERROR::TIMEOUT
      *
      * Note that if the operation is canceled, the implementation must notify the framework via
      * ISessionCallback#onError with Error::CANCELED.

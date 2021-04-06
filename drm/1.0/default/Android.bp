@@ -32,6 +32,7 @@ cc_library_static {
         "-Werror",
         "-Wextra",
         "-Wall",
+        "-Wthread-safety",
     ],
     shared_libs: [
         "liblog",
@@ -42,7 +43,7 @@ cc_library_static {
     export_header_lib_headers: [
         "libutils_headers",
     ],
-    export_include_dirs : ["include"]
+    export_include_dirs: ["include"],
 }
 
 soong_config_module_type {
@@ -59,8 +60,8 @@ android_hardware_drm_1_0_multilib {
     soong_config_variables: {
         TARGET_ENABLE_MEDIADRM_64: {
             compile_multilib: "both",
-        }
-    }
+        },
+    },
 }
 
 android_hardware_drm_1_0_multilib {
@@ -69,8 +70,8 @@ android_hardware_drm_1_0_multilib {
     soong_config_variables: {
         TARGET_ENABLE_MEDIADRM_64: {
             compile_multilib: "first",
-        }
-    }
+        },
+    },
 }
 
 cc_defaults {
@@ -98,7 +99,7 @@ cc_binary {
     name: "android.hardware.drm@1.0-service",
     defaults: [
         "android.hardware.drm@1.0-multilib-exe",
-        "android.hardware.drm@1.0-service-defaults"
+        "android.hardware.drm@1.0-service-defaults",
     ],
     init_rc: ["android.hardware.drm@1.0-service.rc"],
     srcs: ["service.cpp"],
@@ -110,7 +111,7 @@ cc_binary {
     name: "android.hardware.drm@1.0-service-lazy",
     defaults: [
         "android.hardware.drm@1.0-multilib-exe",
-        "android.hardware.drm@1.0-service-defaults"
+        "android.hardware.drm@1.0-service-defaults",
     ],
     overrides: ["android.hardware.drm@1.0-service"],
     init_rc: ["android.hardware.drm@1.0-service-lazy.rc"],
