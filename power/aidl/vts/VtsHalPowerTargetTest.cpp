@@ -16,29 +16,28 @@
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
 
+#include <aidl/android/hardware/power/BnPower.h>
+#include <aidl/android/hardware/power/BnPowerHintSession.h>
 #include <android-base/properties.h>
-#include <android/hardware/power/Boost.h>
-#include <android/hardware/power/IPower.h>
-#include <android/hardware/power/Mode.h>
-#include <binder/IServiceManager.h>
-#include <binder/ProcessState.h>
+#include <android/binder_ibinder.h>
+#include <android/binder_manager.h>
+#include <android/binder_process.h>
 
-#include <future>
+#include <unistd.h>
 
-using android::ProcessState;
-using android::sp;
-using android::String16;
-using android::base::GetUintProperty;
-using android::binder::Status;
+namespace aidl::android::hardware::power {
+namespace {
+
+using ::android::base::GetUintProperty;
 using android::hardware::power::Boost;
 using android::hardware::power::IPower;
+using android::hardware::power::IPowerHintSession;
 using android::hardware::power::Mode;
+using android::hardware::power::WorkDuration;
 
-const std::vector<Boost> kBoosts{android::enum_range<Boost>().begin(),
-                                 android::enum_range<Boost>().end()};
+const std::vector<Boost> kBoosts{ndk::enum_range<Boost>().begin(), ndk::enum_range<Boost>().end()};
 
-const std::vector<Mode> kModes{android::enum_range<Mode>().begin(),
-                               android::enum_range<Mode>().end()};
+const std::vector<Mode> kModes{ndk::enum_range<Mode>().begin(), ndk::enum_range<Mode>().end()};
 
 const std::vector<Boost> kInvalidBoosts = {
         static_cast<Boost>(static_cast<int32_t>(kBoosts.front()) - 1),
@@ -50,14 +49,48 @@ const std::vector<Mode> kInvalidModes = {
         static_cast<Mode>(static_cast<int32_t>(kModes.back()) + 1),
 };
 
+class DurationWrapper : public WorkDuration {
+  public:
+    DurationWrapper(int64_t dur, int64_t time) {
+        durationNanos = dur;
+        timeStampNanos = time;
+    }
+};
+
+const std::vector<int32_t> kSelfTids = {
+        gettid(),
+};
+
+const std::vector<int32_t> kEmptyTids = {};
+
+const std::vector<WorkDuration> kNoDurations = {};
+
+const std::vector<WorkDuration> kDurationsWithZero = {
+        DurationWrapper(1000L, 1L),
+        DurationWrapper(0L, 2L),
+};
+
+const std::vector<WorkDuration> kDurationsWithNegative = {
+        DurationWrapper(1000L, 1L),
+        DurationWrapper(-1000L, 2L),
+};
+
+const std::vector<WorkDuration> kDurations = {
+        DurationWrapper(1L, 1L),
+        DurationWrapper(1000L, 2L),
+        DurationWrapper(1000000L, 3L),
+        DurationWrapper(1000000000L, 4L),
+};
+
 class PowerAidl : public testing::TestWithParam<std::string> {
   public:
     virtual void SetUp() override {
-        power = android::waitForDeclaredService<IPower>(String16(GetParam().c_str()));
-        ASSERT_NE(power, nullptr);
+        AIBinder* binder = AServiceManager_waitForService(GetParam().c_str());
+        ASSERT_NE(binder, nullptr);
+        power = IPower::fromBinder(ndk::SpAIBinder(binder));
     }
 
-    sp<IPower> power;
+    std::shared_ptr<IPower> power;
 };
 
 TEST_P(PowerAidl, setMode) {
@@ -110,6 +143,56 @@ TEST_P(PowerAidl, isBoostSupported) {
     }
 }
 
+TEST_P(PowerAidl, getHintSessionPreferredRate) {
+    int64_t rate = -1;
+    auto status = power->getHintSessionPreferredRate(&rate);
+    if (!status.isOk()) {
+        ASSERT_EQ(EX_UNSUPPORTED_OPERATION, status.getExceptionCode());
+        return;
+    }
+
+    // At least 1ms rate limit from HAL
+    ASSERT_GE(rate, 1000000);
+}
+
+TEST_P(PowerAidl, createAndCloseHintSession) {
+    std::shared_ptr<IPowerHintSession> session;
+    auto status = power->createHintSession(getpid(), getuid(), kSelfTids, 16666666L, &session);
+    if (!status.isOk()) {
+        ASSERT_EQ(EX_UNSUPPORTED_OPERATION, status.getExceptionCode());
+        return;
+    }
+    ASSERT_NE(nullptr, session);
+    ASSERT_TRUE(session->pause().isOk());
+    ASSERT_TRUE(session->resume().isOk());
+    // Test normal destroy operation
+    ASSERT_TRUE(session->close().isOk());
+    session.reset();
+}
+TEST_P(PowerAidl, createHintSessionFailed) {
+    std::shared_ptr<IPowerHintSession> session;
+    auto status = power->createHintSession(getpid(), getuid(), kEmptyTids, 16666666L, &session);
+    ASSERT_FALSE(status.isOk());
+    if (EX_UNSUPPORTED_OPERATION == status.getExceptionCode()) {
+        return;
+    }
+    // Test with empty tid list
+    ASSERT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode());
+}
+
+TEST_P(PowerAidl, updateAndReportDurations) {
+    std::shared_ptr<IPowerHintSession> session;
+    auto status = power->createHintSession(getpid(), getuid(), kSelfTids, 16666666L, &session);
+    if (!status.isOk()) {
+        ASSERT_EQ(EX_UNSUPPORTED_OPERATION, status.getExceptionCode());
+        return;
+    }
+    ASSERT_NE(nullptr, session);
+
+    ASSERT_TRUE(session->updateTargetWorkDuration(16666667LL).isOk());
+    ASSERT_TRUE(session->reportActualWorkDuration(kDurations).isOk());
+}
+
 // FIXED_PERFORMANCE mode is required for all devices which ship on Android 11
 // or later
 TEST_P(PowerAidl, hasFixedPerformance) {
@@ -128,12 +211,16 @@ TEST_P(PowerAidl, hasFixedPerformance) {
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(PowerAidl);
 INSTANTIATE_TEST_SUITE_P(Power, PowerAidl,
-                         testing::ValuesIn(android::getAidlHalInstanceNames(IPower::descriptor)),
-                         android::PrintInstanceNameToString);
+                         testing::ValuesIn(::android::getAidlHalInstanceNames(IPower::descriptor)),
+                         ::android::PrintInstanceNameToString);
+
+}  // namespace
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
-    ProcessState::self()->setThreadPoolMaxThreadCount(1);
-    ProcessState::self()->startThreadPool();
+    ABinderProcess_setThreadPoolMaxThreadCount(1);
+    ABinderProcess_startThreadPool();
     return RUN_ALL_TESTS();
 }
+
+}  // namespace aidl::android::hardware::power
