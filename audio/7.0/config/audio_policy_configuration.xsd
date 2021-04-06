@@ -411,6 +411,7 @@
             <xs:enumeration value="AUDIO_FORMAT_MPEGH_LC_L3"/>
             <xs:enumeration value="AUDIO_FORMAT_MPEGH_LC_L4"/>
             <xs:enumeration value="AUDIO_FORMAT_IEC60958"/>
+            <xs:enumeration value="AUDIO_FORMAT_DTS_UHD"/>
         </xs:restriction>
     </xs:simpleType>
     <xs:simpleType name="extendableAudioFormat">
