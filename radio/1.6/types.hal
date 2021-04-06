@@ -55,9 +55,9 @@ import android.hidl.safe_union@1.0::Monostate;
 
 struct QosBandwidth {
     /** Maximum bit rate possible on the bearer */
-    int32_t maxBitrateKbps;
+    uint32_t maxBitrateKbps;
     /** Minimum bit rate that is guaranteed to be provided by the network */
-    int32_t guaranteedBitrateKbps;
+    uint32_t guaranteedBitrateKbps;
 };
 
 /** LTE/EPS Quality of Service parameters as per 3gpp spec 24.301 sec 9.9.4.3. */
@@ -106,7 +106,7 @@ safe_union Qos {
 /**
  * Next header protocol numbers defined by IANA, RFC 5237
  */
-enum QosProtocol : int32_t {
+enum QosProtocol : int8_t {
     /** No protocol specified */
     UNSPECIFIED = -1,
     /** Transmission Control Protocol */
@@ -119,14 +119,14 @@ enum QosProtocol : int32_t {
     AH = 51,
 };
 
-enum QosFilterDirection : int32_t {
+enum QosFilterDirection : int8_t {
     DOWNLINK = 0,
     UPLINK = 1,
     BIDIRECTIONAL = 2,
 };
 
 /** Allowed port numbers */
-enum QosPortRange : int32_t {
+enum QosPortRange : uint16_t {
     MIN = 20,
     MAX = 65535
 };
@@ -248,7 +248,7 @@ struct QosSession {
 };
 
 /** The allowed failure modes on an IWLAN handover failure. */
-enum HandoverFailureMode : int32_t {
+enum HandoverFailureMode : int8_t {
     /**
      * On data handover failure, fallback to the source data transport when the
      * fail cause is due to a hand off preference change.
@@ -379,7 +379,7 @@ struct SetupDataCallResult {
 /**
  * NR Dual connectivity state
  */
-enum NrDualConnectivityState: int32_t {
+enum NrDualConnectivityState: int8_t {
     /**
      * Enable NR dual connectivity. Enabled state does not mean dual connectivity
      * is active. It means device is allowed to connect to both primary and secondary.
@@ -441,7 +441,7 @@ struct LinkCapacityEstimate {
    uint32_t secondaryUplinkCapacityKbps;
 };
 
-enum DataThrottlingAction : int32_t {
+enum DataThrottlingAction : int8_t {
     /* Clear all existing data throttling. */
     NO_DATA_THROTTLING = 0,
 
@@ -579,9 +579,9 @@ struct NrSignalStrength {
      *
      * Reference: 3GPP TS 138.214 section 5.2.2.1.
      *
-     * Range [0, 15], INT_MAX means invalid/unreported.
+     * Range [0, 15], 0xFF means invalid/unreported.
      */
-    vec<uint32_t> csiCqiReport;
+    vec<uint8_t> csiCqiReport;
 };
 
 /**
@@ -738,22 +738,19 @@ struct RegStateResult {
 
         EutranRegistrationInfo eutranInfo;
 
-        struct NgranRegistrationInfo {
-            /**
-             * Network capabilities for voice over PS services. This info is valid only on NR
-             * network and must be present when the device is camped on NR. VopsInfo must be
-             * empty when the device is not camped on NR.
-             */
-            NrVopsInfo nrVopsInfo;
-        } ngranInfo;
+        /**
+         * Network capabilities for voice over PS services. This info is valid only on NR
+         * network and must be present when the device is camped on NR. VopsInfo must be
+         * empty when the device is not camped on NR.
+         */
+        NrVopsInfo ngranNrVopsInfo;
 
-        struct GeranRegistrationInfo {
-            /**
-             * True if the dual transfer mode is supported.
-             * Refer to 3GPP TS 44.108 section 3.4.25.3
-             */
-            bool dtmSupported;
-        } geranInfo;
+        /**
+         * True if the dual transfer mode is supported.
+         * Refer to 3GPP TS 44.108 section 3.4.25.3
+         */
+        bool geranDtmSupported;
+
     } accessTechnologySpecificInfo;
 };
 
@@ -780,10 +777,10 @@ struct PhysicalChannelConfig {
     int32_t uplinkChannelNumber;
 
     /** Downlink cell bandwidth, in kHz */
-    int32_t cellBandwidthDownlink;
+    int32_t cellBandwidthDownlinkKhz;
 
     /** Uplink cell bandwidth, in kHz */
-    int32_t cellBandwidthUplink;
+    int32_t cellBandwidthUplinkKhz;
 
     /**
      * A list of data calls mapped to this physical channel. The context id must match the cid of
@@ -1069,7 +1066,7 @@ safe_union OptionalSscMode {
     SscMode value;
 };
 
-enum SliceStatus : int32_t {
+enum SliceStatus : int8_t {
     UNKNOWN,
     CONFIGURED, // Configured but not allowed or rejected yet
     ALLOWED,    // Allowed to be used
@@ -1082,7 +1079,7 @@ enum SliceStatus : int32_t {
  * Enum representing session and service continuity mode as defined in
  * 3GPP TS 23.501.
  */
-enum SscMode : int32_t {
+enum SscMode : int8_t {
     MODE_1 = 1,
     MODE_2 = 2,
     MODE_3 = 3,
@@ -1091,7 +1088,7 @@ enum SscMode : int32_t {
 /**
  * Public key type from carrier certificate.
  */
-enum PublicKeyType : int32_t {
+enum PublicKeyType : int8_t {
     EPDG    = 1,                   // Key type to be used for ePDG
     WLAN    = 2,                   // Key type to be used for WLAN
 };
@@ -1200,7 +1197,7 @@ struct PhonebookCapacity {
  *   chunk of phonebook data, means this is a last indication with the left
  *   data.
  */
-enum PbReceivedStatus : int32_t {
+enum PbReceivedStatus : int8_t {
     PB_RECEIVED_OK = 1,
     PB_RECEIVED_ERROR = 2,
     PB_RECEIVED_ABORT = 3,
