@@ -931,11 +931,12 @@ nn::GeneralResult<Timing> unvalidatedConvert(const nn::Timing& timing) {
 }
 
 nn::GeneralResult<int64_t> unvalidatedConvert(const nn::Duration& duration) {
-    const uint64_t nanoseconds = duration.count();
-    if (nanoseconds > std::numeric_limits<int64_t>::max()) {
-        return std::numeric_limits<int64_t>::max();
+    if (duration < nn::Duration::zero()) {
+        return NN_ERROR() << "Unable to convert invalid (negative) duration";
     }
-    return static_cast<int64_t>(nanoseconds);
+    constexpr std::chrono::nanoseconds::rep kIntMax = std::numeric_limits<int64_t>::max();
+    const auto count = duration.count();
+    return static_cast<int64_t>(std::min(count, kIntMax));
 }
 
 nn::GeneralResult<int64_t> unvalidatedConvert(const nn::OptionalDuration& optionalDuration) {

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
+#include <android-base/chrono_utils.h>
 #include <android/binder_enums.h>
 #include <android/binder_interface_utils.h>
 #include <android/binder_status.h>
-
 #include <nnapi/hal/aidl/Conversions.h>
 
 #include "Callbacks.h"
@@ -61,16 +61,16 @@ static int64_t makeDeadline(DeadlineBoundType deadlineBoundType) {
         return std::chrono::duration_cast<std::chrono::nanoseconds>(timeSinceEpoch).count();
     };
 
-    std::chrono::steady_clock::time_point timePoint;
+    ::android::base::boot_clock::time_point timePoint;
     switch (deadlineBoundType) {
         case DeadlineBoundType::NOW:
-            timePoint = std::chrono::steady_clock::now();
+            timePoint = ::android::base::boot_clock::now();
             break;
         case DeadlineBoundType::UNLIMITED:
-            timePoint = std::chrono::steady_clock::time_point::max();
+            timePoint = ::android::base::boot_clock::time_point::max();
             break;
         case DeadlineBoundType::SHORT:
-            timePoint = std::chrono::steady_clock::now() + kShortDuration;
+            timePoint = ::android::base::boot_clock::now() + kShortDuration;
             break;
     }
 
