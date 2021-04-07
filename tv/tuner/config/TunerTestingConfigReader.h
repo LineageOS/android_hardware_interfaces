@@ -70,8 +70,16 @@ struct FrontendConfig {
     vector<FrontendStatus> expectTuneStatuses;
 };
 
+struct DvrConfig {
+    DvrType type;
+    uint32_t bufferSize;
+    DvrSettings settings;
+    string playbackInputFile;
+};
+
 struct LiveBroadcastHardwareConnections {
     string frontendId;
+    string dvrSoftwareFeId;
     /* string audioFilterId;
     string videoFilterId;
     list string of extra filters; */
@@ -81,9 +89,20 @@ struct ScanHardwareConnections {
     string frontendId;
 };
 
+struct DvrPlaybackHardwareConnections {
+    bool support;
+    string frontendId;
+    string dvrId;
+    /* string audioFilterId;
+    string videoFilterId;
+    list string of extra filters; */
+};
+
 struct DvrRecordHardwareConnections {
     bool support;
     string frontendId;
+    string dvrRecordId;
+    string dvrSoftwareFeId;
     /* string recordFilterId;
     string dvrId; */
 };
@@ -91,6 +110,7 @@ struct DvrRecordHardwareConnections {
 struct DescramblingHardwareConnections {
     bool support;
     string frontendId;
+    string dvrSoftwareFeId;
     /* string descramblerId;
     string audioFilterId;
     string videoFilterId;
@@ -196,14 +216,56 @@ struct TunerTestingConfigReader {
         }
     }
 
+    static void readDvrConfig1_0(map<string, DvrConfig>& dvrMap) {
+        auto hardwareConfig = getHardwareConfig();
+        if (hardwareConfig.hasDvrs()) {
+            auto dvrs = *hardwareConfig.getFirstDvrs();
+            for (auto dvrConfig : dvrs.getDvr()) {
+                string id = dvrConfig.getId();
+                DvrType type;
+                switch (dvrConfig.getType()) {
+                    case DvrTypeEnum::PLAYBACK:
+                        type = DvrType::PLAYBACK;
+                        dvrMap[id].settings.playback(readPlaybackSettings(dvrConfig));
+                        break;
+                    case DvrTypeEnum::RECORD:
+                        type = DvrType::RECORD;
+                        dvrMap[id].settings.record(readRecordSettings(dvrConfig));
+                        break;
+                    case DvrTypeEnum::UNKNOWN:
+                        ALOGW("[ConfigReader] invalid DVR type");
+                        return;
+                }
+                dvrMap[id].type = type;
+                dvrMap[id].bufferSize = static_cast<uint32_t>(dvrConfig.getBufferSize());
+                if (dvrConfig.hasInputFilePath()) {
+                    dvrMap[id].playbackInputFile = dvrConfig.getInputFilePath();
+                }
+            }
+        }
+    }
+
     static void connectLiveBroadcast(LiveBroadcastHardwareConnections& live) {
         auto liveConfig = getDataFlowConfiguration().getFirstClearLiveBroadcast();
         live.frontendId = liveConfig->getFrontendConnection();
+        if (liveConfig->hasDvrSoftwareFeConnection()) {
+            live.dvrSoftwareFeId = liveConfig->getDvrSoftwareFeConnection();
+        }
     }
 
     static void connectScan(ScanHardwareConnections& scan) {
         auto scanConfig = getDataFlowConfiguration().getFirstScan();
         scan.frontendId = scanConfig->getFrontendConnection();
+    }
+
+    static void connectDvrPlayback(DvrPlaybackHardwareConnections& playback) {
+        auto dataFlow = getDataFlowConfiguration();
+        if (!dataFlow.hasDvrPlayback()) {
+            playback.support = false;
+            return;
+        }
+        auto playbackConfig = dataFlow.getFirstDvrPlayback();
+        playback.dvrId = playbackConfig->getDvrConnection();
     }
 
     static void connectDvrRecord(DvrRecordHardwareConnections& record) {
@@ -214,6 +276,10 @@ struct TunerTestingConfigReader {
         }
         auto recordConfig = dataFlow.getFirstDvrRecord();
         record.frontendId = recordConfig->getFrontendConnection();
+        record.dvrRecordId = recordConfig->getDvrRecordConnection();
+        if (recordConfig->hasDvrSoftwareFeConnection()) {
+            record.dvrSoftwareFeId = recordConfig->getDvrSoftwareFeConnection();
+        }
     }
 
     static void connectDescrambling(DescramblingHardwareConnections& descrambling) {
@@ -224,6 +290,9 @@ struct TunerTestingConfigReader {
         }
         auto descConfig = dataFlow.getFirstDescrambling();
         descrambling.frontendId = descConfig->getFrontendConnection();
+        if (descConfig->hasDvrSoftwareFeConnection()) {
+            descrambling.dvrSoftwareFeId = descConfig->getDvrSoftwareFeConnection();
+        }
     }
 
     static void connectLnbLive(LnbLiveHardwareConnections& lnbLive) {
@@ -248,7 +317,7 @@ struct TunerTestingConfigReader {
 
   private:
     static FrontendDvbtSettings readDvbtFrontendSettings(Frontend feConfig) {
-        ALOGW("[ConfigReader] type is dvbt");
+        ALOGW("[ConfigReader] fe type is dvbt");
         FrontendDvbtSettings dvbtSettings{
                 .frequency = (uint32_t)feConfig.getFrequency(),
         };
@@ -266,7 +335,7 @@ struct TunerTestingConfigReader {
     }
 
     static FrontendDvbsSettings readDvbsFrontendSettings(Frontend feConfig) {
-        ALOGW("[ConfigReader] type is dvbs");
+        ALOGW("[ConfigReader] fe type is dvbs");
         FrontendDvbsSettings dvbsSettings{
                 .frequency = (uint32_t)feConfig.getFrequency(),
         };
@@ -279,6 +348,30 @@ struct TunerTestingConfigReader {
         dvbsSettings.inputStreamId = static_cast<uint32_t>(
                 feConfig.getFirstDvbsFrontendSettings_optional()->getInputStreamId());
         return dvbsSettings;
+    }
+
+    static PlaybackSettings readPlaybackSettings(Dvr dvrConfig) {
+        ALOGW("[ConfigReader] dvr type is playback");
+        PlaybackSettings playbackSettings{
+                .statusMask = static_cast<uint8_t>(dvrConfig.getStatusMask()),
+                .lowThreshold = static_cast<uint32_t>(dvrConfig.getLowThreshold()),
+                .highThreshold = static_cast<uint32_t>(dvrConfig.getHighThreshold()),
+                .dataFormat = static_cast<DataFormat>(dvrConfig.getDataFormat()),
+                .packetSize = static_cast<uint8_t>(dvrConfig.getPacketSize()),
+        };
+        return playbackSettings;
+    }
+
+    static RecordSettings readRecordSettings(Dvr dvrConfig) {
+        ALOGW("[ConfigReader] dvr type is record");
+        RecordSettings recordSettings{
+                .statusMask = static_cast<uint8_t>(dvrConfig.getStatusMask()),
+                .lowThreshold = static_cast<uint32_t>(dvrConfig.getLowThreshold()),
+                .highThreshold = static_cast<uint32_t>(dvrConfig.getHighThreshold()),
+                .dataFormat = static_cast<DataFormat>(dvrConfig.getDataFormat()),
+                .packetSize = static_cast<uint8_t>(dvrConfig.getPacketSize()),
+        };
+        return recordSettings;
     }
 
     static TunerConfiguration getTunerConfig() { return *read(configFilePath.c_str()); }
