@@ -21,6 +21,7 @@
 
 #include <android-base/logging.h>
 #include <nnapi/Result.h>
+#include <nnapi/TypeUtils.h>
 #include <nnapi/Types.h>
 #include <nnapi/Validation.h>
 #include <nnapi/hal/HandleError.h>
@@ -46,6 +47,22 @@ bool valid(const Type& halObject) {
         LOG(ERROR) << result.error();
     }
     return result.has_value();
+}
+
+template <typename Type>
+nn::GeneralResult<void> compliantVersion(const Type& canonical) {
+    const auto version = NN_TRY(::android::hardware::neuralnetworks::utils::makeGeneralFailure(
+            nn::validate(canonical)));
+    if (version > kVersion) {
+        return NN_ERROR() << "Insufficient version: " << version << " vs required " << kVersion;
+    }
+    return {};
+}
+
+template <typename Type>
+auto convertFromNonCanonical(const Type& nonCanonicalObject)
+        -> decltype(convert(nn::convert(nonCanonicalObject).value())) {
+    return convert(NN_TRY(nn::convert(nonCanonicalObject)));
 }
 
 nn::GeneralResult<Memory> clone(const Memory& memory);
