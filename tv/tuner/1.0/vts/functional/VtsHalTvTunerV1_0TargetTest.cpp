@@ -86,16 +86,13 @@ void TunerBroadcastHidlTest::broadcastSingleFilterTest(FilterConfig filterConf,
     uint32_t filterId;
 
     mFrontendTests.getFrontendIdByType(frontendConf.type, feId);
-    if (feId == INVALID_ID) {
-        // TODO broadcast test on Cuttlefish needs licensed ts input,
-        // these tests are runnable on vendor device with real frontend module
-        // or with manual ts installing and use DVBT frontend.
-        return;
-    }
     ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
     ASSERT_TRUE(mFrontendTests.setFrontendCallback());
     if (mLnbId) {
         ASSERT_TRUE(mFrontendTests.setLnb(*mLnbId));
+    }
+    if (frontendConf.isSoftwareFe) {
+        mFrontendTests.setSoftwareFrontendDvrConfig(dvrMap[live.dvrSoftwareFeId]);
     }
     ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
     ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
@@ -177,6 +174,9 @@ void TunerRecordHidlTest::recordSingleFilterTest(FilterConfig filterConf,
     ASSERT_TRUE(mFrontendTests.setFrontendCallback());
     if (mLnbId) {
         ASSERT_TRUE(mFrontendTests.setLnb(*mLnbId));
+    }
+    if (frontendConf.isSoftwareFe) {
+        mFrontendTests.setSoftwareFrontendDvrConfig(dvrMap[record.dvrSoftwareFeId]);
     }
     ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
     ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
@@ -279,14 +279,11 @@ void TunerDescramblerHidlTest::scrambledBroadcastTest(set<struct FilterConfig> m
     set<uint32_t>::iterator id;
 
     mFrontendTests.getFrontendIdByType(frontendConf.type, feId);
-    if (feId == INVALID_ID) {
-        // TODO broadcast test on Cuttlefish needs licensed ts input,
-        // these tests are runnable on vendor device with real frontend module
-        // or with manual ts installing and use DVBT frontend.
-        return;
-    }
     ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
     ASSERT_TRUE(mFrontendTests.setFrontendCallback());
+    if (frontendConf.isSoftwareFe) {
+        mFrontendTests.setSoftwareFrontendDvrConfig(dvrMap[descrambling.dvrSoftwareFeId]);
+    }
     ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
     ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
     mFilterTests.setDemux(demux);
@@ -301,7 +298,7 @@ void TunerDescramblerHidlTest::scrambledBroadcastTest(set<struct FilterConfig> m
     TunerKeyToken token;
     ASSERT_TRUE(mDescramblerTests.getKeyToken(descConfig.casSystemId, descConfig.provisionStr,
                                               descConfig.hidlPvtData, token));
-    ASSERT_TRUE(mDescramblerTests.setKeyToken(token));
+    mDescramblerTests.setKeyToken(token);
     vector<DemuxPid> pids;
     DemuxPid pid;
     for (config = mediaFilterConfs.begin(); config != mediaFilterConfs.end(); config++) {
@@ -497,66 +494,12 @@ TEST_P(TunerBroadcastHidlTest, LnbBroadcastDataFlowVideoFilterTest) {
     broadcastSingleFilterTest(filterArray[TS_VIDEO0], frontendMap[live.frontendId]);
 }
 
-TEST_P(TunerBroadcastHidlTest, BroadcastEsDataFlowMediaFiltersTest) {
-    description("Test Meida Filters functionality in Broadcast use case with ES input.");
-    uint32_t feId;
-    uint32_t demuxId;
-    sp<IDemux> demux;
-    uint32_t filterId;
-
-    mFrontendTests.getFrontendIdByType(frontendMap[live.frontendId].type, feId);
-    if (feId == INVALID_ID) {
-        // TODO broadcast test on Cuttlefish needs licensed ts input,
-        // these tests are runnable on vendor device with real frontend module
-        // or with manual ts installing and use defaultFrontend frontend.
-        return;
-    }
-    ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
-    ASSERT_TRUE(mFrontendTests.setFrontendCallback());
-    ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
-    ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
-    mFrontendTests.setDemux(demux);
-    mFilterTests.setDemux(demux);
-    ASSERT_TRUE(mFilterTests.openFilterInDemux(filterArray[TS_AUDIO1].type,
-                                               filterArray[TS_AUDIO1].bufferSize));
-    ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId(filterId));
-    ASSERT_TRUE(mFilterTests.configFilter(filterArray[TS_AUDIO1].settings, filterId));
-    ASSERT_TRUE(mFilterTests.getFilterMQDescriptor(filterId, filterArray[TS_AUDIO1].getMqDesc));
-    ASSERT_TRUE(mFilterTests.startFilter(filterId));
-    ASSERT_TRUE(mFilterTests.openFilterInDemux(filterArray[TS_VIDEO1].type,
-                                               filterArray[TS_VIDEO1].bufferSize));
-    ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId(filterId));
-    ASSERT_TRUE(mFilterTests.configFilter(filterArray[TS_VIDEO1].settings, filterId));
-    ASSERT_TRUE(mFilterTests.getFilterMQDescriptor(filterId, filterArray[TS_VIDEO1].getMqDesc));
-    ASSERT_TRUE(mFilterTests.startFilter(filterId));
-    // tune test
-    // TODO: replace with customized dvr input
-    PlaybackSettings playbackSettings{
-            .statusMask = 0xf,
-            .lowThreshold = 0x1000,
-            .highThreshold = 0x07fff,
-            .dataFormat = DataFormat::ES,
-            .packetSize = 188,
-    };
-    DvrConfig dvrConfig{
-            .type = DvrType::PLAYBACK,
-            .playbackInputFile = "/data/local/tmp/test.es",
-            .bufferSize = FMQ_SIZE_4M,
-    };
-    dvrConfig.settings.playback(playbackSettings);
-    mFrontendTests.setSoftwareFrontendDvrConfig(dvrConfig);
-    ASSERT_TRUE(mFrontendTests.tuneFrontend(frontendMap[live.frontendId], true /*testWithDemux*/));
-    ASSERT_TRUE(filterDataOutputTest());
-    ASSERT_TRUE(mFrontendTests.stopTuneFrontend(true /*testWithDemux*/));
-    ASSERT_TRUE(mFilterTests.stopFilter(filterId));
-    ASSERT_TRUE(mFilterTests.closeFilter(filterId));
-    ASSERT_TRUE(mDemuxTests.closeDemux());
-    ASSERT_TRUE(mFrontendTests.closeFrontend());
-}
-
 TEST_P(TunerPlaybackHidlTest, PlaybackDataFlowWithTsSectionFilterTest) {
     description("Feed ts data from playback and configure Ts section filter to get output");
-    playbackSingleFilterTest(filterArray[TS_SECTION0], dvrArray[DVR_PLAYBACK0]);
+    if (!playback.support) {
+        return;
+    }
+    playbackSingleFilterTest(filterArray[TS_SECTION0], dvrMap[playback.dvrId]);
 }
 
 TEST_P(TunerRecordHidlTest, AttachFiltersToRecordTest) {
@@ -566,7 +509,7 @@ TEST_P(TunerRecordHidlTest, AttachFiltersToRecordTest) {
         return;
     }
     attachSingleFilterToRecordDvrTest(filterArray[TS_RECORD0], frontendMap[record.frontendId],
-                                      dvrArray[DVR_RECORD0]);
+                                      dvrMap[record.dvrRecordId]);
 }
 
 TEST_P(TunerRecordHidlTest, RecordDataFlowWithTsRecordFilterTest) {
@@ -575,7 +518,7 @@ TEST_P(TunerRecordHidlTest, RecordDataFlowWithTsRecordFilterTest) {
         return;
     }
     recordSingleFilterTest(filterArray[TS_RECORD0], frontendMap[record.frontendId],
-                           dvrArray[DVR_RECORD0]);
+                           dvrMap[record.dvrRecordId]);
 }
 
 TEST_P(TunerRecordHidlTest, LnbRecordDataFlowWithTsRecordFilterTest) {
@@ -584,7 +527,7 @@ TEST_P(TunerRecordHidlTest, LnbRecordDataFlowWithTsRecordFilterTest) {
         return;
     }
     recordSingleFilterTestWithLnb(filterArray[TS_RECORD0], frontendMap[lnbRecord.frontendId],
-                                  dvrArray[DVR_RECORD0], lnbArray[LNB0]);
+                                  dvrMap[record.dvrRecordId], lnbArray[LNB0]);
 }
 
 TEST_P(TunerDescramblerHidlTest, CreateDescrambler) {
