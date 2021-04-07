@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_TEST_MOCK_DEVICE
-#define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_TEST_MOCK_DEVICE
+#ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_TEST_MOCK_DEVICE_H
+#define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_TEST_MOCK_DEVICE_H
 
 #include <aidl/android/hardware/neuralnetworks/BnDevice.h>
 #include <android/binder_auto_utils.h>
@@ -64,4 +64,4 @@ inline std::shared_ptr<MockDevice> MockDevice::create() {
 
 }  // namespace aidl::android::hardware::neuralnetworks::utils
 
-#endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_TEST_MOCK_DEVICE
+#endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_TEST_MOCK_DEVICE_H
