@@ -131,6 +131,14 @@ interface IDevice extends @1.2::IDevice {
      * ErrorStatus::MISSED_DEADLINE_TRANSIENT} or {@link
      * ErrorStatus::MISSED_DEADLINE_PERSISTENT} may be returned. The error due
      * to an abort must be sent the same way as other errors, described above.
+     * The deadline is represented as nanoseconds since the epoch of the steady
+     * clock (as if from std::chrono::steady_clock::time_point), but the service
+     * may convert it to the nanoseconds since boot time (as if from
+     * clock_gettime(CLOCK_BOOTTIME, &ts) or
+     * android::base::boot_clock::time_point) to account for time when the
+     * system is suspended. This conversion can by done by finding the timeout
+     * duration remaining compared to the steady_clock and adding it to the
+     * current boot_clock time.
      *
      * Optionally, the driver may save the prepared model to cache during the
      * asynchronous preparation. Any error that occurs when saving to cache must
@@ -249,7 +257,15 @@ interface IDevice extends @1.2::IDevice {
      * ErrorStatus::MISSED_DEADLINE_TRANSIENT}
      * or {@link ErrorStatus::MISSED_DEADLINE_PERSISTENT} may be returned. The
      * error due to an abort must be sent the same way as other errors,
-     * described above.
+     * described above. The deadline is represented as nanoseconds since the
+     * epoch of the steady clock (as if from
+     * std::chrono::steady_clock::time_point), but the service may convert it to
+     * the nanoseconds since boot time (as if from
+     * clock_gettime(CLOCK_BOOTTIME, &ts) or
+     * android::base::boot_clock::time_point) to account for time when the
+     * system is suspended. This conversion can by done by finding the timeout
+     * duration remaining compared to the steady_clock and adding it to the
+     * current boot_clock time.
      *
      * The only information that may be unknown to the model at this stage is
      * the shape of the tensors, which may only be known at execution time. As

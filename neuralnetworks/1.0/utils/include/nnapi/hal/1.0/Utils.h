@@ -22,9 +22,14 @@
 #include <android-base/logging.h>
 #include <android/hardware/neuralnetworks/1.0/types.h>
 #include <nnapi/Result.h>
+#include <nnapi/TypeUtils.h>
 #include <nnapi/Types.h>
+#include <nnapi/Validation.h>
+#include <nnapi/hal/HandleError.h>
 
 namespace android::hardware::neuralnetworks::V1_0::utils {
+
+constexpr auto kVersion = nn::Version::ANDROID_OC_MR1;
 
 template <typename Type>
 nn::Result<void> validate(const Type& halObject) {
@@ -42,6 +47,15 @@ bool valid(const Type& halObject) {
         LOG(ERROR) << result.error();
     }
     return result.has_value();
+}
+
+template <typename Type>
+nn::GeneralResult<void> compliantVersion(const Type& canonical) {
+    const auto version = NN_TRY(hal::utils::makeGeneralFailure(nn::validate(canonical)));
+    if (version > kVersion) {
+        return NN_ERROR() << "Insufficient version: " << version << " vs required " << kVersion;
+    }
+    return {};
 }
 
 template <typename Type>
