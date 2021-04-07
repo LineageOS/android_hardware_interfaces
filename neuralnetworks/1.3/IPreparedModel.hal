@@ -74,6 +74,14 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      * ErrorStatus::MISSED_DEADLINE_TRANSIENT} or {@link
      * ErrorStatus::MISSED_DEADLINE_PERSISTENT} may be returned. The error due
      * to an abort must be sent the same way as other errors, described above.
+     * The deadline is represented as nanoseconds since the epoch of the steady
+     * clock (as if from std::chrono::steady_clock::time_point), but the service
+     * may convert it to the nanoseconds since boot time (as if from
+     * clock_gettime(CLOCK_BOOTTIME, &ts) or
+     * android::base::boot_clock::time_point) to account for time when the
+     * system is suspended. This conversion can by done by finding the timeout
+     * duration remaining compared to the steady_clock and adding it to the
+     * current boot_clock time.
      *
      * Any number of calls to the execute* and executeSynchronously* functions,
      * in any combination, may be made concurrently, even on the same
@@ -150,6 +158,14 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      * ErrorStatus::MISSED_DEADLINE_TRANSIENT} or {@link
      * ErrorStatus::MISSED_DEADLINE_PERSISTENT} may be returned. The error due
      * to an abort must be sent the same way as other errors, described above.
+     * The deadline is represented as nanoseconds since the epoch of the steady
+     * clock (as if from std::chrono::steady_clock::time_point), but the service
+     * may convert it to the nanoseconds since boot time (as if from
+     * clock_gettime(CLOCK_BOOTTIME, &ts) or
+     * android::base::boot_clock::time_point) to account for time when the
+     * system is suspended. This conversion can by done by finding the timeout
+     * duration remaining compared to the steady_clock and adding it to the
+     * current boot_clock time.
      *
      * Any number of calls to the execute* and executeSynchronously* functions,
      * in any combination, may be made concurrently, even on the same
@@ -231,6 +247,14 @@ interface IPreparedModel extends @1.2::IPreparedModel {
      * {@link ErrorStatus::MISSED_DEADLINE_TRANSIENT} or {@link
      * ErrorStatus::MISSED_DEADLINE_PERSISTENT} may be returned. The error due
      * to an abort must be sent the same way as other errors, described above.
+     * The deadline is represented as nanoseconds since the epoch of the steady
+     * clock (as if from std::chrono::steady_clock::time_point), but the service
+     * may convert it to the nanoseconds since boot time (as if from
+     * clock_gettime(CLOCK_BOOTTIME, &ts) or
+     * android::base::boot_clock::time_point) to account for time when the
+     * system is suspended. This conversion can by done by finding the timeout
+     * duration remaining compared to the steady_clock and adding it to the
+     * current boot_clock time.
      *
      * If any of the sync fences in waitFor changes to error status after the executeFenced
      * call succeeds, or the execution is aborted because it cannot finish before the deadline
