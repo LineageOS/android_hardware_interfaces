@@ -18,6 +18,11 @@ cc_library_static {
         "android.hardware.common-V2-ndk_platform",
         "libcutils",
     ],
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.neuralnetworks",
+    ],
+    min_sdk_version: "29",
 }
 
 cc_test {
