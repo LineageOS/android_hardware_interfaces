@@ -1064,6 +1064,16 @@ const ConfigDeclaration kVehicleProperties[]{
                     .changeMode = VehiclePropertyChangeMode::ON_CHANGE},
          .initialValue = {.stringValue = "Vendor String Property"}},
 
+        {.config = {.prop = toInt(VehicleProperty::ELECTRONIC_TOLL_COLLECTION_CARD_TYPE),
+                    .access = VehiclePropertyAccess::READ,
+                    .changeMode = VehiclePropertyChangeMode::ON_CHANGE},
+         .initialValue = {.int32Values = {0}}},
+
+        {.config = {.prop = toInt(VehicleProperty::ELECTRONIC_TOLL_COLLECTION_CARD_STATUS),
+                    .access = VehiclePropertyAccess::READ,
+                    .changeMode = VehiclePropertyChangeMode::ON_CHANGE},
+         .initialValue = {.int32Values = {0}}},
+
         {.config =
                  {
                          .prop = toInt(VehicleProperty::SUPPORT_CUSTOMIZE_VENDOR_PERMISSION),
