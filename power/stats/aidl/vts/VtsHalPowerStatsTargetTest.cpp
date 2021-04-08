@@ -40,6 +40,12 @@ using aidl::android::hardware::power::stats::StateResidencyResult;
 
 using ndk::SpAIBinder;
 
+#define ASSERT_OK(a)                                     \
+    do {                                                 \
+        auto ret = a;                                    \
+        ASSERT_TRUE(ret.isOk()) << ret.getDescription(); \
+    } while (0)
+
 class PowerStatsAidl : public testing::TestWithParam<std::string> {
   public:
     virtual void SetUp() override {
@@ -108,7 +114,7 @@ void PowerStatsAidl::testMatching(std::vector<T> const& c1, R T::*f1, std::vecto
 // Each PowerEntity must have a valid name
 TEST_P(PowerStatsAidl, ValidatePowerEntityNames) {
     std::vector<PowerEntity> infos;
-    ASSERT_TRUE(powerstats->getPowerEntityInfo(&infos).isOk());
+    ASSERT_OK(powerstats->getPowerEntityInfo(&infos));
 
     for (auto info : infos) {
         testNameValid(info.name);
@@ -118,7 +124,7 @@ TEST_P(PowerStatsAidl, ValidatePowerEntityNames) {
 // Each power entity must have a unique name
 TEST_P(PowerStatsAidl, ValidatePowerEntityUniqueNames) {
     std::vector<PowerEntity> entities;
-    ASSERT_TRUE(powerstats->getPowerEntityInfo(&entities).isOk());
+    ASSERT_OK(powerstats->getPowerEntityInfo(&entities));
 
     testUnique(entities, &PowerEntity::name);
 }
@@ -126,7 +132,7 @@ TEST_P(PowerStatsAidl, ValidatePowerEntityUniqueNames) {
 // Each PowerEntity must have a unique ID
 TEST_P(PowerStatsAidl, ValidatePowerEntityIds) {
     std::vector<PowerEntity> entities;
-    ASSERT_TRUE(powerstats->getPowerEntityInfo(&entities).isOk());
+    ASSERT_OK(powerstats->getPowerEntityInfo(&entities));
 
     testUnique(entities, &PowerEntity::id);
 }
@@ -134,7 +140,7 @@ TEST_P(PowerStatsAidl, ValidatePowerEntityIds) {
 // Each power entity must have at least one state
 TEST_P(PowerStatsAidl, ValidateStateSize) {
     std::vector<PowerEntity> entities;
-    ASSERT_TRUE(powerstats->getPowerEntityInfo(&entities).isOk());
+    ASSERT_OK(powerstats->getPowerEntityInfo(&entities));
 
     for (auto entity : entities) {
         EXPECT_GT(entity.states.size(), 0);
@@ -144,7 +150,7 @@ TEST_P(PowerStatsAidl, ValidateStateSize) {
 // Each state must have a valid name
 TEST_P(PowerStatsAidl, ValidateStateNames) {
     std::vector<PowerEntity> entities;
-    ASSERT_TRUE(powerstats->getPowerEntityInfo(&entities).isOk());
+    ASSERT_OK(powerstats->getPowerEntityInfo(&entities));
 
     for (auto entity : entities) {
         for (auto state : entity.states) {
@@ -156,7 +162,7 @@ TEST_P(PowerStatsAidl, ValidateStateNames) {
 // Each state must have a name that is unique to the given PowerEntity
 TEST_P(PowerStatsAidl, ValidateStateUniqueNames) {
     std::vector<PowerEntity> entities;
-    ASSERT_TRUE(powerstats->getPowerEntityInfo(&entities).isOk());
+    ASSERT_OK(powerstats->getPowerEntityInfo(&entities));
 
     for (auto entity : entities) {
         testUnique(entity.states, &State::name);
@@ -166,7 +172,7 @@ TEST_P(PowerStatsAidl, ValidateStateUniqueNames) {
 // Each state must have an ID that is unique to the given PowerEntity
 TEST_P(PowerStatsAidl, ValidateStateUniqueIds) {
     std::vector<PowerEntity> entities;
-    ASSERT_TRUE(powerstats->getPowerEntityInfo(&entities).isOk());
+    ASSERT_OK(powerstats->getPowerEntityInfo(&entities));
 
     for (auto entity : entities) {
         testUnique(entity.states, &State::id);
@@ -176,16 +182,16 @@ TEST_P(PowerStatsAidl, ValidateStateUniqueIds) {
 // State residency must return a valid status
 TEST_P(PowerStatsAidl, TestGetStateResidency) {
     std::vector<StateResidencyResult> results;
-    ASSERT_TRUE(powerstats->getStateResidency({}, &results).isOk());
+    ASSERT_OK(powerstats->getStateResidency({}, &results));
 }
 
 // State residency must return all results
 TEST_P(PowerStatsAidl, TestGetStateResidencyAllResults) {
     std::vector<PowerEntity> entities;
-    ASSERT_TRUE(powerstats->getPowerEntityInfo(&entities).isOk());
+    ASSERT_OK(powerstats->getPowerEntityInfo(&entities));
 
     std::vector<StateResidencyResult> results;
-    ASSERT_TRUE(powerstats->getStateResidency({}, &results).isOk());
+    ASSERT_OK(powerstats->getStateResidency({}, &results));
 
     testMatching(entities, &PowerEntity::id, results, &StateResidencyResult::id);
 }
@@ -193,10 +199,10 @@ TEST_P(PowerStatsAidl, TestGetStateResidencyAllResults) {
 // Each result must contain all state residencies
 TEST_P(PowerStatsAidl, TestGetStateResidencyAllStateResidencies) {
     std::vector<PowerEntity> entities;
-    ASSERT_TRUE(powerstats->getPowerEntityInfo(&entities).isOk());
+    ASSERT_OK(powerstats->getPowerEntityInfo(&entities));
 
     std::vector<StateResidencyResult> results;
-    ASSERT_TRUE(powerstats->getStateResidency({}, &results).isOk());
+    ASSERT_OK(powerstats->getStateResidency({}, &results));
 
     for (auto entity : entities) {
         auto it = std::find_if(results.begin(), results.end(),
@@ -210,7 +216,7 @@ TEST_P(PowerStatsAidl, TestGetStateResidencyAllStateResidencies) {
 // State residency must return results for each requested power entity
 TEST_P(PowerStatsAidl, TestGetStateResidencySelectedResults) {
     std::vector<PowerEntity> entities;
-    ASSERT_TRUE(powerstats->getPowerEntityInfo(&entities).isOk());
+    ASSERT_OK(powerstats->getPowerEntityInfo(&entities));
     if (entities.empty()) {
         return;
     }
@@ -222,7 +228,7 @@ TEST_P(PowerStatsAidl, TestGetStateResidencySelectedResults) {
     }
 
     std::vector<StateResidencyResult> selectedResults;
-    ASSERT_TRUE(powerstats->getStateResidency(selectedIds, &selectedResults).isOk());
+    ASSERT_OK(powerstats->getStateResidency(selectedIds, &selectedResults));
 
     testMatching(selectedEntities, &PowerEntity::id, selectedResults, &StateResidencyResult::id);
 }
@@ -230,13 +236,13 @@ TEST_P(PowerStatsAidl, TestGetStateResidencySelectedResults) {
 // Energy meter info must return a valid status
 TEST_P(PowerStatsAidl, TestGetEnergyMeterInfo) {
     std::vector<Channel> info;
-    ASSERT_TRUE(powerstats->getEnergyMeterInfo(&info).isOk());
+    ASSERT_OK(powerstats->getEnergyMeterInfo(&info));
 }
 
 // Each channel must have a valid name and subsystem
 TEST_P(PowerStatsAidl, ValidateChannelNames) {
     std::vector<Channel> channels;
-    ASSERT_TRUE(powerstats->getEnergyMeterInfo(&channels).isOk());
+    ASSERT_OK(powerstats->getEnergyMeterInfo(&channels));
     for (auto channel : channels) {
         testNameValid(channel.name);
         testNameValid(channel.subsystem);
@@ -246,7 +252,7 @@ TEST_P(PowerStatsAidl, ValidateChannelNames) {
 // Each channel must have a unique name
 TEST_P(PowerStatsAidl, ValidateChannelUniqueNames) {
     std::vector<Channel> channels;
-    ASSERT_TRUE(powerstats->getEnergyMeterInfo(&channels).isOk());
+    ASSERT_OK(powerstats->getEnergyMeterInfo(&channels));
 
     testUnique(channels, &Channel::name);
 }
@@ -254,7 +260,7 @@ TEST_P(PowerStatsAidl, ValidateChannelUniqueNames) {
 // Each channel must have a unique ID
 TEST_P(PowerStatsAidl, ValidateChannelUniqueIds) {
     std::vector<Channel> channels;
-    ASSERT_TRUE(powerstats->getEnergyMeterInfo(&channels).isOk());
+    ASSERT_OK(powerstats->getEnergyMeterInfo(&channels));
 
     testUnique(channels, &Channel::id);
 }
@@ -262,16 +268,16 @@ TEST_P(PowerStatsAidl, ValidateChannelUniqueIds) {
 // Reading energy meter must return a valid status
 TEST_P(PowerStatsAidl, TestReadEnergyMeter) {
     std::vector<EnergyMeasurement> data;
-    ASSERT_TRUE(powerstats->readEnergyMeter({}, &data).isOk());
+    ASSERT_OK(powerstats->readEnergyMeter({}, &data));
 }
 
 // Reading energy meter must return results for all available channels
 TEST_P(PowerStatsAidl, TestGetAllEnergyMeasurements) {
     std::vector<Channel> channels;
-    ASSERT_TRUE(powerstats->getEnergyMeterInfo(&channels).isOk());
+    ASSERT_OK(powerstats->getEnergyMeterInfo(&channels));
 
     std::vector<EnergyMeasurement> measurements;
-    ASSERT_TRUE(powerstats->readEnergyMeter({}, &measurements).isOk());
+    ASSERT_OK(powerstats->readEnergyMeter({}, &measurements));
 
     testMatching(channels, &Channel::id, measurements, &EnergyMeasurement::id);
 }
@@ -279,7 +285,7 @@ TEST_P(PowerStatsAidl, TestGetAllEnergyMeasurements) {
 // Reading energy must must return results for each selected channel
 TEST_P(PowerStatsAidl, TestGetSelectedEnergyMeasurements) {
     std::vector<Channel> channels;
-    ASSERT_TRUE(powerstats->getEnergyMeterInfo(&channels).isOk());
+    ASSERT_OK(powerstats->getEnergyMeterInfo(&channels));
     if (channels.empty()) {
         return;
     }
@@ -291,7 +297,7 @@ TEST_P(PowerStatsAidl, TestGetSelectedEnergyMeasurements) {
     }
 
     std::vector<EnergyMeasurement> selectedMeasurements;
-    ASSERT_TRUE(powerstats->readEnergyMeter(selectedIds, &selectedMeasurements).isOk());
+    ASSERT_OK(powerstats->readEnergyMeter(selectedIds, &selectedMeasurements));
 
     testMatching(selectedChannels, &Channel::id, selectedMeasurements, &EnergyMeasurement::id);
 }
@@ -299,13 +305,13 @@ TEST_P(PowerStatsAidl, TestGetSelectedEnergyMeasurements) {
 // Energy consumer info must return a valid status
 TEST_P(PowerStatsAidl, TestGetEnergyConsumerInfo) {
     std::vector<EnergyConsumer> consumers;
-    ASSERT_TRUE(powerstats->getEnergyConsumerInfo(&consumers).isOk());
+    ASSERT_OK(powerstats->getEnergyConsumerInfo(&consumers));
 }
 
 // Each energy consumer must have a unique id
 TEST_P(PowerStatsAidl, TestGetEnergyConsumerUniqueId) {
     std::vector<EnergyConsumer> consumers;
-    ASSERT_TRUE(powerstats->getEnergyConsumerInfo(&consumers).isOk());
+    ASSERT_OK(powerstats->getEnergyConsumerInfo(&consumers));
 
     testUnique(consumers, &EnergyConsumer::id);
 }
@@ -313,7 +319,7 @@ TEST_P(PowerStatsAidl, TestGetEnergyConsumerUniqueId) {
 // Each energy consumer must have a valid name
 TEST_P(PowerStatsAidl, ValidateEnergyConsumerNames) {
     std::vector<EnergyConsumer> consumers;
-    ASSERT_TRUE(powerstats->getEnergyConsumerInfo(&consumers).isOk());
+    ASSERT_OK(powerstats->getEnergyConsumerInfo(&consumers));
 
     for (auto consumer : consumers) {
         testNameValid(consumer.name);
@@ -323,7 +329,7 @@ TEST_P(PowerStatsAidl, ValidateEnergyConsumerNames) {
 // Each energy consumer must have a unique name
 TEST_P(PowerStatsAidl, ValidateEnergyConsumerUniqueNames) {
     std::vector<EnergyConsumer> consumers;
-    ASSERT_TRUE(powerstats->getEnergyConsumerInfo(&consumers).isOk());
+    ASSERT_OK(powerstats->getEnergyConsumerInfo(&consumers));
 
     testUnique(consumers, &EnergyConsumer::name);
 }
@@ -331,7 +337,7 @@ TEST_P(PowerStatsAidl, ValidateEnergyConsumerUniqueNames) {
 // Energy consumers of the same type must have ordinals that are 0,1,2,..., N - 1
 TEST_P(PowerStatsAidl, ValidateEnergyConsumerOrdinals) {
     std::vector<EnergyConsumer> consumers;
-    ASSERT_TRUE(powerstats->getEnergyConsumerInfo(&consumers).isOk());
+    ASSERT_OK(powerstats->getEnergyConsumerInfo(&consumers));
 
     std::unordered_map<EnergyConsumerType, std::set<int32_t>> ordinalMap;
 
@@ -350,16 +356,16 @@ TEST_P(PowerStatsAidl, ValidateEnergyConsumerOrdinals) {
 // Energy consumed must return a valid status
 TEST_P(PowerStatsAidl, TestGetEnergyConsumed) {
     std::vector<EnergyConsumerResult> results;
-    ASSERT_TRUE(powerstats->getEnergyConsumed({}, &results).isOk());
+    ASSERT_OK(powerstats->getEnergyConsumed({}, &results));
 }
 
 // Energy consumed must return data for all energy consumers
 TEST_P(PowerStatsAidl, TestGetAllEnergyConsumed) {
     std::vector<EnergyConsumer> consumers;
-    ASSERT_TRUE(powerstats->getEnergyConsumerInfo(&consumers).isOk());
+    ASSERT_OK(powerstats->getEnergyConsumerInfo(&consumers));
 
     std::vector<EnergyConsumerResult> results;
-    ASSERT_TRUE(powerstats->getEnergyConsumed({}, &results).isOk());
+    ASSERT_OK(powerstats->getEnergyConsumed({}, &results));
 
     testMatching(consumers, &EnergyConsumer::id, results, &EnergyConsumerResult::id);
 }
@@ -367,7 +373,7 @@ TEST_P(PowerStatsAidl, TestGetAllEnergyConsumed) {
 // Energy consumed must return data for each selected energy consumer
 TEST_P(PowerStatsAidl, TestGetSelectedEnergyConsumed) {
     std::vector<EnergyConsumer> consumers;
-    ASSERT_TRUE(powerstats->getEnergyConsumerInfo(&consumers).isOk());
+    ASSERT_OK(powerstats->getEnergyConsumerInfo(&consumers));
     if (consumers.empty()) {
         return;
     }
@@ -379,7 +385,7 @@ TEST_P(PowerStatsAidl, TestGetSelectedEnergyConsumed) {
     }
 
     std::vector<EnergyConsumerResult> selectedResults;
-    ASSERT_TRUE(powerstats->getEnergyConsumed(selectedIds, &selectedResults).isOk());
+    ASSERT_OK(powerstats->getEnergyConsumed(selectedIds, &selectedResults));
 
     testMatching(selectedConsumers, &EnergyConsumer::id, selectedResults,
                  &EnergyConsumerResult::id);
@@ -388,7 +394,7 @@ TEST_P(PowerStatsAidl, TestGetSelectedEnergyConsumed) {
 // Energy consumed attribution uids must be unique for a given energy consumer
 TEST_P(PowerStatsAidl, ValidateEnergyConsumerAttributionUniqueUids) {
     std::vector<EnergyConsumerResult> results;
-    ASSERT_TRUE(powerstats->getEnergyConsumed({}, &results).isOk());
+    ASSERT_OK(powerstats->getEnergyConsumed({}, &results));
 
     for (auto result : results) {
         testUnique(result.attribution, &EnergyConsumerAttribution::uid);
@@ -398,7 +404,7 @@ TEST_P(PowerStatsAidl, ValidateEnergyConsumerAttributionUniqueUids) {
 // Energy consumed total energy >= sum total of uid-attributed energy
 TEST_P(PowerStatsAidl, TestGetEnergyConsumedAttributedEnergy) {
     std::vector<EnergyConsumerResult> results;
-    ASSERT_TRUE(powerstats->getEnergyConsumed({}, &results).isOk());
+    ASSERT_OK(powerstats->getEnergyConsumed({}, &results));
 
     for (auto result : results) {
         int64_t totalAttributedEnergyUWs = 0;
