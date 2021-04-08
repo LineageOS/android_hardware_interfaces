@@ -33,7 +33,7 @@
 
 package android.hardware.security.keymint;
 /* @hide */
-@VintfStability
+@SensitiveData @VintfStability
 interface IKeyMintDevice {
   android.hardware.security.keymint.KeyMintHardwareInfo getHardwareInfo();
   void addRngEntropy(in byte[] data);

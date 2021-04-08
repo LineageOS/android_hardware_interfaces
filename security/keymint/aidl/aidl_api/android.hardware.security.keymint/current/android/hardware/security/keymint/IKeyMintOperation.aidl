@@ -33,7 +33,7 @@
 
 package android.hardware.security.keymint;
 /* @hide */
-@VintfStability
+@SensitiveData @VintfStability
 interface IKeyMintOperation {
   void updateAad(in byte[] input, in @nullable android.hardware.security.keymint.HardwareAuthToken authToken, in @nullable android.hardware.security.secureclock.TimeStampToken timeStampToken);
   byte[] update(in byte[] input, in @nullable android.hardware.security.keymint.HardwareAuthToken authToken, in @nullable android.hardware.security.secureclock.TimeStampToken timeStampToken);
