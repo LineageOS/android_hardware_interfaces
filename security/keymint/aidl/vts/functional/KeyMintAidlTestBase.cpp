@@ -897,7 +897,7 @@ bool verify_attestation_record(const string& challenge,                //
             if (att_hw_enforced[i].tag == TAG_BOOT_PATCHLEVEL ||
                 att_hw_enforced[i].tag == TAG_VENDOR_PATCHLEVEL) {
                 std::string date =
-                        std::to_string(att_hw_enforced[i].value.get<KeyParameterValue::dateTime>());
+                        std::to_string(att_hw_enforced[i].value.get<KeyParameterValue::integer>());
                 // strptime seems to require delimiters, but the tag value will
                 // be YYYYMMDD
                 date.insert(6, "-");
