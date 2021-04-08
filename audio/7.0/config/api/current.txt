@@ -209,6 +209,7 @@ package android.audio.policy.configuration.V7_0 {
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_DSD;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_DTS;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_DTS_HD;
+    enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_DTS_UHD;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_EVRC;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_EVRCB;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioFormat AUDIO_FORMAT_EVRCNW;
