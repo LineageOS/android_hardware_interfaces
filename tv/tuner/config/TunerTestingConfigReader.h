@@ -29,8 +29,11 @@ using namespace android::media::tuner::testing::configuration::V1_0;
 
 using android::hardware::tv::tuner::V1_0::DataFormat;
 using android::hardware::tv::tuner::V1_0::DemuxAlpFilterType;
+using android::hardware::tv::tuner::V1_0::DemuxFilterAvSettings;
 using android::hardware::tv::tuner::V1_0::DemuxFilterEvent;
 using android::hardware::tv::tuner::V1_0::DemuxFilterMainType;
+using android::hardware::tv::tuner::V1_0::DemuxFilterRecordSettings;
+using android::hardware::tv::tuner::V1_0::DemuxFilterSectionSettings;
 using android::hardware::tv::tuner::V1_0::DemuxFilterSettings;
 using android::hardware::tv::tuner::V1_0::DemuxFilterType;
 using android::hardware::tv::tuner::V1_0::DemuxIpFilterType;
@@ -61,6 +64,7 @@ using android::hardware::tv::tuner::V1_0::PlaybackSettings;
 using android::hardware::tv::tuner::V1_0::RecordSettings;
 
 const string configFilePath = "/vendor/etc/tuner_vts_config.xml";
+const string emptyHardwareId = "";
 
 struct FrontendConfig {
     bool isSoftwareFe;
@@ -68,6 +72,15 @@ struct FrontendConfig {
     FrontendSettings settings;
     vector<FrontendStatusType> tuneStatusTypes;
     vector<FrontendStatus> expectTuneStatuses;
+};
+
+struct FilterConfig {
+    uint32_t bufferSize;
+    DemuxFilterType type;
+    DemuxFilterSettings settings;
+    bool getMqDesc;
+
+    bool operator<(const FilterConfig& /*c*/) const { return false; }
 };
 
 struct DvrConfig {
@@ -80,9 +93,11 @@ struct DvrConfig {
 struct LiveBroadcastHardwareConnections {
     string frontendId;
     string dvrSoftwareFeId;
-    /* string audioFilterId;
+    string audioFilterId;
     string videoFilterId;
-    list string of extra filters; */
+    string sectionFilterId;
+    string pcrFilterId;
+    /* list string of extra filters; */
 };
 
 struct ScanHardwareConnections {
@@ -93,9 +108,10 @@ struct DvrPlaybackHardwareConnections {
     bool support;
     string frontendId;
     string dvrId;
-    /* string audioFilterId;
+    string audioFilterId;
     string videoFilterId;
-    list string of extra filters; */
+    string sectionFilterId;
+    /* list string of extra filters; */
 };
 
 struct DvrRecordHardwareConnections {
@@ -103,34 +119,34 @@ struct DvrRecordHardwareConnections {
     string frontendId;
     string dvrRecordId;
     string dvrSoftwareFeId;
-    /* string recordFilterId;
-    string dvrId; */
+    string recordFilterId;
 };
 
 struct DescramblingHardwareConnections {
     bool support;
     string frontendId;
     string dvrSoftwareFeId;
-    /* string descramblerId;
     string audioFilterId;
     string videoFilterId;
+    /* string descramblerId;
     list string of extra filters; */
 };
 
 struct LnbLiveHardwareConnections {
     bool support;
     string frontendId;
-    /* string audioFilterId;
+    string audioFilterId;
     string videoFilterId;
-    list string of extra filters;
+    /* list string of extra filters;
     string lnbId; */
 };
 
 struct LnbRecordHardwareConnections {
     bool support;
     string frontendId;
-    /* string recordFilterId;
-    list string of extra filters;
+    string dvrRecordId;
+    string recordFilterId;
+    /* list string of extra filters;
     string lnbId; */
 };
 
@@ -149,7 +165,7 @@ struct TunerTestingConfigReader {
     static void readFrontendConfig1_0(map<string, FrontendConfig>& frontendMap) {
         auto hardwareConfig = getHardwareConfig();
         if (hardwareConfig.hasFrontends()) {
-            // TODO: complete the tune status config
+            // TODO: b/182519645 complete the tune status config
             vector<FrontendStatusType> types;
             types.push_back(FrontendStatusType::DEMOD_LOCK);
             FrontendStatus status;
@@ -169,7 +185,7 @@ struct TunerTestingConfigReader {
                     case FrontendTypeEnum::UNDEFINED:
                         type = FrontendType::UNDEFINED;
                         break;
-                    // TODO: finish all other frontend settings
+                    // TODO: b/182519645 finish all other frontend settings
                     case FrontendTypeEnum::ANALOG:
                         type = FrontendType::ANALOG;
                         break;
@@ -209,9 +225,38 @@ struct TunerTestingConfigReader {
                 }
                 frontendMap[id].type = type;
                 frontendMap[id].isSoftwareFe = feConfig.getIsSoftwareFrontend();
-                // TODO: complete the tune status config
+                // TODO: b/182519645 complete the tune status config
                 frontendMap[id].tuneStatusTypes = types;
                 frontendMap[id].expectTuneStatuses = statuses;
+            }
+        }
+    }
+
+    static void readFilterConfig1_0(map<string, FilterConfig>& filterMap) {
+        auto hardwareConfig = getHardwareConfig();
+        if (hardwareConfig.hasFilters()) {
+            auto filters = *hardwareConfig.getFirstFilters();
+            for (auto filterConfig : filters.getFilter()) {
+                string id = filterConfig.getId();
+                if (id.compare(string("FILTER_AUDIO_DEFAULT")) == 0) {
+                    // overrid default
+                    filterMap.erase(string("FILTER_AUDIO_DEFAULT"));
+                }
+                if (id.compare(string("FILTER_VIDEO_DEFAULT")) == 0) {
+                    // overrid default
+                    filterMap.erase(string("FILTER_VIDEO_DEFAULT"));
+                }
+
+                DemuxFilterType type;
+                DemuxFilterSettings settings;
+                if (!readFilterTypeAndSettings(filterConfig, type, settings)) {
+                    ALOGW("[ConfigReader] invalid filter type");
+                    return;
+                }
+                filterMap[id].type = type;
+                filterMap[id].bufferSize = filterConfig.getBufferSize();
+                filterMap[id].getMqDesc = filterConfig.getUseFMQ();
+                filterMap[id].settings = settings;
             }
         }
     }
@@ -246,10 +291,23 @@ struct TunerTestingConfigReader {
     }
 
     static void connectLiveBroadcast(LiveBroadcastHardwareConnections& live) {
-        auto liveConfig = getDataFlowConfiguration().getFirstClearLiveBroadcast();
-        live.frontendId = liveConfig->getFrontendConnection();
-        if (liveConfig->hasDvrSoftwareFeConnection()) {
-            live.dvrSoftwareFeId = liveConfig->getDvrSoftwareFeConnection();
+        auto liveConfig = *getDataFlowConfiguration().getFirstClearLiveBroadcast();
+        live.frontendId = liveConfig.getFrontendConnection();
+
+        live.audioFilterId = liveConfig.getAudioFilterConnection();
+        live.videoFilterId = liveConfig.getVideoFilterConnection();
+        if (liveConfig.hasPcrFilterConnection()) {
+            live.pcrFilterId = liveConfig.getPcrFilterConnection();
+        } else {
+            live.pcrFilterId = emptyHardwareId;
+        }
+        if (liveConfig.hasSectionFilterConnection()) {
+            live.sectionFilterId = liveConfig.getSectionFilterConnection();
+        } else {
+            live.sectionFilterId = emptyHardwareId;
+        }
+        if (liveConfig.hasDvrSoftwareFeConnection()) {
+            live.dvrSoftwareFeId = liveConfig.getDvrSoftwareFeConnection();
         }
     }
 
@@ -260,59 +318,78 @@ struct TunerTestingConfigReader {
 
     static void connectDvrPlayback(DvrPlaybackHardwareConnections& playback) {
         auto dataFlow = getDataFlowConfiguration();
-        if (!dataFlow.hasDvrPlayback()) {
-            playback.support = false;
+        if (dataFlow.hasDvrPlayback()) {
+            playback.support = true;
+        } else {
             return;
         }
-        auto playbackConfig = dataFlow.getFirstDvrPlayback();
-        playback.dvrId = playbackConfig->getDvrConnection();
+        auto playbackConfig = *dataFlow.getFirstDvrPlayback();
+        playback.dvrId = playbackConfig.getDvrConnection();
+        playback.audioFilterId = playbackConfig.getAudioFilterConnection();
+        playback.videoFilterId = playbackConfig.getVideoFilterConnection();
+        if (playbackConfig.hasSectionFilterConnection()) {
+            playback.sectionFilterId = playbackConfig.getSectionFilterConnection();
+        } else {
+            playback.sectionFilterId = emptyHardwareId;
+        }
     }
 
     static void connectDvrRecord(DvrRecordHardwareConnections& record) {
         auto dataFlow = getDataFlowConfiguration();
-        if (!dataFlow.hasDvrRecord()) {
-            record.support = false;
+        if (dataFlow.hasDvrRecord()) {
+            record.support = true;
+        } else {
             return;
         }
-        auto recordConfig = dataFlow.getFirstDvrRecord();
-        record.frontendId = recordConfig->getFrontendConnection();
-        record.dvrRecordId = recordConfig->getDvrRecordConnection();
-        if (recordConfig->hasDvrSoftwareFeConnection()) {
-            record.dvrSoftwareFeId = recordConfig->getDvrSoftwareFeConnection();
+        auto recordConfig = *dataFlow.getFirstDvrRecord();
+        record.frontendId = recordConfig.getFrontendConnection();
+        record.recordFilterId = recordConfig.getRecordFilterConnection();
+        record.dvrRecordId = recordConfig.getDvrRecordConnection();
+        if (recordConfig.hasDvrSoftwareFeConnection()) {
+            record.dvrSoftwareFeId = recordConfig.getDvrSoftwareFeConnection();
         }
     }
 
     static void connectDescrambling(DescramblingHardwareConnections& descrambling) {
         auto dataFlow = getDataFlowConfiguration();
-        if (!dataFlow.hasDescrambling()) {
-            descrambling.support = false;
+        if (dataFlow.hasDescrambling()) {
+            descrambling.support = true;
+        } else {
             return;
         }
-        auto descConfig = dataFlow.getFirstDescrambling();
-        descrambling.frontendId = descConfig->getFrontendConnection();
-        if (descConfig->hasDvrSoftwareFeConnection()) {
-            descrambling.dvrSoftwareFeId = descConfig->getDvrSoftwareFeConnection();
+        auto descConfig = *dataFlow.getFirstDescrambling();
+        descrambling.frontendId = descConfig.getFrontendConnection();
+        descrambling.audioFilterId = descConfig.getAudioFilterConnection();
+        descrambling.videoFilterId = descConfig.getVideoFilterConnection();
+        if (descConfig.hasDvrSoftwareFeConnection()) {
+            descrambling.dvrSoftwareFeId = descConfig.getDvrSoftwareFeConnection();
         }
     }
 
     static void connectLnbLive(LnbLiveHardwareConnections& lnbLive) {
         auto dataFlow = getDataFlowConfiguration();
-        if (!dataFlow.hasLnbLive()) {
-            lnbLive.support = false;
+        if (dataFlow.hasLnbLive()) {
+            lnbLive.support = true;
+        } else {
             return;
         }
-        auto lnbLiveConfig = dataFlow.getFirstLnbLive();
-        lnbLive.frontendId = lnbLiveConfig->getFrontendConnection();
+        auto lnbLiveConfig = *dataFlow.getFirstLnbLive();
+        lnbLive.frontendId = lnbLiveConfig.getFrontendConnection();
+        lnbLive.audioFilterId = lnbLiveConfig.getAudioFilterConnection();
+        lnbLive.videoFilterId = lnbLiveConfig.getVideoFilterConnection();
     }
 
     static void connectLnbRecord(LnbRecordHardwareConnections& lnbRecord) {
         auto dataFlow = getDataFlowConfiguration();
-        if (!dataFlow.hasLnbRecord()) {
-            lnbRecord.support = false;
+        if (dataFlow.hasLnbRecord()) {
+            lnbRecord.support = true;
+        } else {
             return;
         }
-        auto lnbRecordConfig = dataFlow.getFirstLnbRecord();
-        lnbRecord.frontendId = lnbRecordConfig->getFrontendConnection();
+        auto lnbRecordConfig = *dataFlow.getFirstLnbRecord();
+        lnbRecord.frontendId = lnbRecordConfig.getFrontendConnection();
+        lnbRecord.recordFilterId = lnbRecordConfig.getRecordFilterConnection();
+        lnbRecord.dvrRecordId = lnbRecordConfig.getDvrRecordConnection();
     }
 
   private:
@@ -348,6 +425,147 @@ struct TunerTestingConfigReader {
         dvbsSettings.inputStreamId = static_cast<uint32_t>(
                 feConfig.getFirstDvbsFrontendSettings_optional()->getInputStreamId());
         return dvbsSettings;
+    }
+
+    static bool readFilterTypeAndSettings(Filter filterConfig, DemuxFilterType& type,
+                                          DemuxFilterSettings& settings) {
+        auto mainType = filterConfig.getMainType();
+        auto subType = filterConfig.getSubType();
+        uint32_t pid = static_cast<uint32_t>(filterConfig.getPid());
+        switch (mainType) {
+            case FilterMainTypeEnum::TS: {
+                ALOGW("[ConfigReader] filter main type is ts");
+                type.mainType = DemuxFilterMainType::TS;
+                switch (subType) {
+                    case FilterSubTypeEnum::UNDEFINED:
+                        break;
+                    case FilterSubTypeEnum::SECTION:
+                        type.subType.tsFilterType(DemuxTsFilterType::SECTION);
+                        settings.ts().filterSettings.section(
+                                readSectionFilterSettings(filterConfig));
+                        break;
+                    case FilterSubTypeEnum::PES:
+                        // TODO: b/182519645 support all the filter settings
+                        /*settings.ts().filterSettings.pesData(
+                                getPesFilterSettings(filterConfig));*/
+                        type.subType.tsFilterType(DemuxTsFilterType::PES);
+                        break;
+                    case FilterSubTypeEnum::TS:
+                        type.subType.tsFilterType(DemuxTsFilterType::TS);
+                        settings.ts().filterSettings.noinit();
+                        break;
+                    case FilterSubTypeEnum::PCR:
+                        type.subType.tsFilterType(DemuxTsFilterType::PCR);
+                        settings.ts().filterSettings.noinit();
+                        break;
+                    case FilterSubTypeEnum::TEMI:
+                        type.subType.tsFilterType(DemuxTsFilterType::TEMI);
+                        settings.ts().filterSettings.noinit();
+                        break;
+                    case FilterSubTypeEnum::AUDIO:
+                        type.subType.tsFilterType(DemuxTsFilterType::AUDIO);
+                        settings.ts().filterSettings.av(readAvFilterSettings(filterConfig));
+                        break;
+                    case FilterSubTypeEnum::VIDEO:
+                        type.subType.tsFilterType(DemuxTsFilterType::VIDEO);
+                        settings.ts().filterSettings.av(readAvFilterSettings(filterConfig));
+                        break;
+                    case FilterSubTypeEnum::RECORD:
+                        type.subType.tsFilterType(DemuxTsFilterType::RECORD);
+                        settings.ts().filterSettings.record(readRecordFilterSettings(filterConfig));
+                        break;
+                    default:
+                        ALOGW("[ConfigReader] ts subtype is not supported");
+                        return false;
+                }
+                settings.ts().tpid = pid;
+                break;
+            }
+            case FilterMainTypeEnum::MMTP: {
+                ALOGW("[ConfigReader] filter main type is mmtp");
+                type.mainType = DemuxFilterMainType::MMTP;
+                switch (subType) {
+                    case FilterSubTypeEnum::UNDEFINED:
+                        break;
+                    case FilterSubTypeEnum::SECTION:
+                        type.subType.mmtpFilterType(DemuxMmtpFilterType::SECTION);
+                        settings.mmtp().filterSettings.section(
+                                readSectionFilterSettings(filterConfig));
+                        break;
+                    case FilterSubTypeEnum::PES:
+                        type.subType.mmtpFilterType(DemuxMmtpFilterType::PES);
+                        // TODO: b/182519645 support all the filter settings
+                        /*settings.mmtp().filterSettings.pesData(
+                                getPesFilterSettings(filterConfig));*/
+                        break;
+                    case FilterSubTypeEnum::MMTP:
+                        type.subType.mmtpFilterType(DemuxMmtpFilterType::MMTP);
+                        settings.mmtp().filterSettings.noinit();
+                        break;
+                    case FilterSubTypeEnum::AUDIO:
+                        type.subType.mmtpFilterType(DemuxMmtpFilterType::AUDIO);
+                        settings.mmtp().filterSettings.av(readAvFilterSettings(filterConfig));
+                        break;
+                    case FilterSubTypeEnum::VIDEO:
+                        settings.mmtp().filterSettings.av(readAvFilterSettings(filterConfig));
+                        break;
+                    case FilterSubTypeEnum::RECORD:
+                        type.subType.mmtpFilterType(DemuxMmtpFilterType::RECORD);
+                        settings.mmtp().filterSettings.record(
+                                readRecordFilterSettings(filterConfig));
+                        break;
+                    case FilterSubTypeEnum::DOWNLOAD:
+                        type.subType.mmtpFilterType(DemuxMmtpFilterType::DOWNLOAD);
+                        // TODO: b/182519645 support all the filter settings
+                        /*settings.mmtp().filterSettings.download(
+                                getDownloadFilterSettings(filterConfig));*/
+                        break;
+                    default:
+                        ALOGW("[ConfigReader] mmtp subtype is not supported");
+                        return false;
+                }
+                settings.mmtp().mmtpPid = pid;
+                break;
+            }
+            default:
+                // TODO: b/182519645 support all the filter configs
+                ALOGW("[ConfigReader] filter main type is not supported in dynamic config");
+                return false;
+        }
+        return true;
+    }
+
+    static DemuxFilterSectionSettings readSectionFilterSettings(Filter filterConfig) {
+        DemuxFilterSectionSettings settings;
+        if (!filterConfig.hasSectionFilterSettings_optional()) {
+            return settings;
+        }
+        auto section = filterConfig.getFirstSectionFilterSettings_optional();
+        settings.isCheckCrc = section->getIsCheckCrc();
+        settings.isRepeat = section->getIsRepeat();
+        settings.isRaw = section->getIsRaw();
+        return settings;
+    }
+
+    static DemuxFilterAvSettings readAvFilterSettings(Filter filterConfig) {
+        DemuxFilterAvSettings settings;
+        if (!filterConfig.hasAvFilterSettings_optional()) {
+            return settings;
+        }
+        auto av = filterConfig.getFirstAvFilterSettings_optional();
+        settings.isPassthrough = av->getIsPassthrough();
+        return settings;
+    }
+
+    static DemuxFilterRecordSettings readRecordFilterSettings(Filter filterConfig) {
+        DemuxFilterRecordSettings settings;
+        if (!filterConfig.hasRecordFilterSettings_optional()) {
+            return settings;
+        }
+        auto record = filterConfig.getFirstRecordFilterSettings_optional();
+        settings.tsIndexMask = static_cast<uint32_t>(record->getTsIndexMask());
+        settings.scIndexType = static_cast<DemuxRecordScIndexType>(record->getScIndexType());
+        return settings;
     }
 
     static PlaybackSettings readPlaybackSettings(Dvr dvrConfig) {

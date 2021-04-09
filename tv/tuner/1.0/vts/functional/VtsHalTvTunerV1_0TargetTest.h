@@ -33,6 +33,7 @@ bool initConfiguration() {
         return false;
     }
     initFrontendConfig();
+    initFilterConfig();
     initDvrConfig();
     connectHardwaresToTestCases();
     if (!validateConnections()) {
@@ -41,7 +42,6 @@ bool initConfiguration() {
     }
 
     initLnbConfig();
-    initFilterConfig();
     initTimeFilterConfig();
     initDescramblerConfig();
 
