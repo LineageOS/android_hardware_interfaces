@@ -5,12 +5,14 @@ package android.media.tuner.testing.configuration.V1_0 {
     ctor public DataFlowConfiguration();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.ClearLiveBroadcast getClearLiveBroadcast();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.Descrambling getDescrambling();
+    method @Nullable public android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.DvrPlayback getDvrPlayback();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.DvrRecord getDvrRecord();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.LnbLive getLnbLive();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.LnbRecord getLnbRecord();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.Scan getScan();
     method public void setClearLiveBroadcast(@Nullable android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.ClearLiveBroadcast);
     method public void setDescrambling(@Nullable android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.Descrambling);
+    method public void setDvrPlayback(@Nullable android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.DvrPlayback);
     method public void setDvrRecord(@Nullable android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.DvrRecord);
     method public void setLnbLive(@Nullable android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.LnbLive);
     method public void setLnbRecord(@Nullable android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.LnbRecord);
@@ -19,19 +21,33 @@ package android.media.tuner.testing.configuration.V1_0 {
 
   public static class DataFlowConfiguration.ClearLiveBroadcast {
     ctor public DataFlowConfiguration.ClearLiveBroadcast();
+    method @Nullable public String getDvrSoftwareFeConnection();
     method @Nullable public String getFrontendConnection();
+    method public void setDvrSoftwareFeConnection(@Nullable String);
     method public void setFrontendConnection(@Nullable String);
   }
 
   public static class DataFlowConfiguration.Descrambling {
     ctor public DataFlowConfiguration.Descrambling();
+    method @Nullable public String getDvrSoftwareFeConnection();
     method @Nullable public String getFrontendConnection();
+    method public void setDvrSoftwareFeConnection(@Nullable String);
     method public void setFrontendConnection(@Nullable String);
+  }
+
+  public static class DataFlowConfiguration.DvrPlayback {
+    ctor public DataFlowConfiguration.DvrPlayback();
+    method @Nullable public String getDvrConnection();
+    method public void setDvrConnection(@Nullable String);
   }
 
   public static class DataFlowConfiguration.DvrRecord {
     ctor public DataFlowConfiguration.DvrRecord();
+    method @Nullable public String getDvrRecordConnection();
+    method @Nullable public String getDvrSoftwareFeConnection();
     method @Nullable public String getFrontendConnection();
+    method public void setDvrRecordConnection(@Nullable String);
+    method public void setDvrSoftwareFeConnection(@Nullable String);
     method public void setFrontendConnection(@Nullable String);
   }
 
@@ -43,7 +59,9 @@ package android.media.tuner.testing.configuration.V1_0 {
 
   public static class DataFlowConfiguration.LnbRecord {
     ctor public DataFlowConfiguration.LnbRecord();
+    method @Nullable public String getDvrRecordConnection();
     method @Nullable public String getFrontendConnection();
+    method public void setDvrRecordConnection(@Nullable String);
     method public void setFrontendConnection(@Nullable String);
   }
 
@@ -69,6 +87,50 @@ package android.media.tuner.testing.configuration.V1_0 {
     method public void setBandwidth(@Nullable java.math.BigInteger);
     method public void setIsHighPriority(@Nullable java.math.BigInteger);
     method public void setTransmissionMode(@Nullable java.math.BigInteger);
+  }
+
+  public class Dvr {
+    ctor public Dvr();
+    method @Nullable public java.math.BigInteger getBufferSize();
+    method @Nullable public android.media.tuner.testing.configuration.V1_0.DvrDataFormatEnum getDataFormat();
+    method @Nullable public java.math.BigInteger getHighThreshold();
+    method @Nullable public String getId();
+    method @Nullable public String getInputFilePath();
+    method @Nullable public java.math.BigInteger getLowThreshold();
+    method @Nullable public java.math.BigInteger getPacketSize();
+    method @Nullable public java.math.BigInteger getStatusMask();
+    method @Nullable public android.media.tuner.testing.configuration.V1_0.DvrTypeEnum getType();
+    method public void setBufferSize(@Nullable java.math.BigInteger);
+    method public void setDataFormat(@Nullable android.media.tuner.testing.configuration.V1_0.DvrDataFormatEnum);
+    method public void setHighThreshold(@Nullable java.math.BigInteger);
+    method public void setId(@Nullable String);
+    method public void setInputFilePath(@Nullable String);
+    method public void setLowThreshold(@Nullable java.math.BigInteger);
+    method public void setPacketSize(@Nullable java.math.BigInteger);
+    method public void setStatusMask(@Nullable java.math.BigInteger);
+    method public void setType(@Nullable android.media.tuner.testing.configuration.V1_0.DvrTypeEnum);
+  }
+
+  public enum DvrDataFormatEnum {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.DvrDataFormatEnum ES;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.DvrDataFormatEnum PES;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.DvrDataFormatEnum SHV_TLV;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.DvrDataFormatEnum TS;
+  }
+
+  public enum DvrStatusEnum {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.DvrStatusEnum DATA_READY;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.DvrStatusEnum HIGH_WATER;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.DvrStatusEnum LOW_WATER;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.DvrStatusEnum OVERFLOW;
+  }
+
+  public enum DvrTypeEnum {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.DvrTypeEnum PLAYBACK;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.DvrTypeEnum RECORD;
   }
 
   public class Frontend {
@@ -108,8 +170,15 @@ package android.media.tuner.testing.configuration.V1_0 {
 
   public class HardwareConfiguration {
     ctor public HardwareConfiguration();
+    method @Nullable public android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.Dvrs getDvrs();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.Frontends getFrontends();
+    method public void setDvrs(@Nullable android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.Dvrs);
     method public void setFrontends(@Nullable android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.Frontends);
+  }
+
+  public static class HardwareConfiguration.Dvrs {
+    ctor public HardwareConfiguration.Dvrs();
+    method @Nullable public java.util.List<android.media.tuner.testing.configuration.V1_0.Dvr> getDvr();
   }
 
   public static class HardwareConfiguration.Frontends {
