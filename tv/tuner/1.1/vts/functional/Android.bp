@@ -33,6 +33,15 @@ cc_test {
         "FrontendTests.cpp",
         "VtsHalTvTunerV1_1TargetTest.cpp",
     ],
+    generated_headers: [
+        "tuner_testing_dynamic_configuration_V1_0_enums",
+        "tuner_testing_dynamic_configuration_V1_0_parser",
+    ],
+    generated_sources: [
+        "tuner_testing_dynamic_configuration_V1_0_enums",
+        "tuner_testing_dynamic_configuration_V1_0_parser",
+    ],
+    header_libs: ["libxsdc-utils"],
     static_libs: [
         "android.hardware.cas@1.0",
         "android.hardware.cas@1.1",
@@ -48,9 +57,12 @@ cc_test {
     ],
     shared_libs: [
         "libbinder",
+        "libxml2",
     ],
     data: [
+        ":tuner_frontend_input_ts",
         ":tuner_frontend_input_es",
+        ":tuner_testing_dynamic_configuration_V1_0",
     ],
     test_suites: [
         "general-tests",
