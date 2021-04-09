@@ -160,8 +160,8 @@ cppbor::Map calcSessionTranscript(const vector<uint8_t>& ePublicKey) {
     // Let SessionTranscript be a map here (it's an array in EndToEndTest) just
     // to check that the implementation can deal with either.
     cppbor::Map sessionTranscript;
-    sessionTranscript.add(42, cppbor::Semantic(24, deviceEngagementBytes));
-    sessionTranscript.add(43, cppbor::Semantic(24, eReaderPubBytes));
+    sessionTranscript.add(42, cppbor::SemanticTag(24, deviceEngagementBytes));
+    sessionTranscript.add(43, cppbor::SemanticTag(24, eReaderPubBytes));
     return sessionTranscript;
 }
 
@@ -209,7 +209,7 @@ void UserAuthTests::retrieveData(HardwareAuthToken authToken, VerificationToken 
         vector<uint8_t> dataToSign = cppbor::Array()
                                              .add("ReaderAuthentication")
                                              .add(sessionTranscript_.clone())
-                                             .add(cppbor::Semantic(24, itemsRequestBytes))
+                                             .add(cppbor::SemanticTag(24, itemsRequestBytes))
                                              .encode();
     }
 

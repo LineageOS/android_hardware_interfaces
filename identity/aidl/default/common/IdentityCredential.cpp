@@ -488,7 +488,7 @@ ndk::ScopedAStatus IdentityCredential::startRetrieval(
         }
 
         for (size_t n = 0; n < nsMap->size(); n++) {
-            auto [nsKeyItem, nsValueItem] = (*nsMap)[n];
+            auto& [nsKeyItem, nsValueItem] = (*nsMap)[n];
             const cppbor::Tstr* nsKey = nsKeyItem->asTstr();
             const cppbor::Map* nsInnerMap = nsValueItem->asMap();
             if (nsKey == nullptr || nsInnerMap == nullptr) {
