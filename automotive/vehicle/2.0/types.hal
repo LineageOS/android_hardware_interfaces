@@ -3207,6 +3207,66 @@ enum VehicleProperty : int32_t {
          | VehiclePropertyType:BYTES
          | VehicleArea:GLOBAL),
 
+    /**
+     * Electronic Toll Collection card type.
+     *
+     * This property indicates the type of ETC card in this vehicle.
+     * If the head unit is aware of an ETC card attached to the vehicle, this property should
+     * return the type of card attached; otherwise, this property should be UNAVAILABLE.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     * @data_enum ElectronicTollCollectionCardType
+     */
+     ELECTRONIC_TOLL_COLLECTION_CARD_TYPE = (
+         0x0F39
+         | VehiclePropertyGroup:SYSTEM
+         | VehiclePropertyType:INT32
+         | VehicleArea:GLOBAL),
+
+    /**
+     * Electronic Toll Collection card status.
+     *
+     * This property indicates the status of ETC card in this vehicle.
+     * If the head unit is aware of an ETC card attached to the vehicle,
+     * ELECTRONIC_TOLL_COLLECTION_CARD_TYPE gives that status of the card; otherwise,
+     * this property should be UNAVAILABLE.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     * @data_enum ElectronicTollCollectionCardStatus
+     */
+     ELECTRONIC_TOLL_COLLECTION_CARD_STATUS = (
+         0x0F3A
+         | VehiclePropertyGroup:SYSTEM
+         | VehiclePropertyType:INT32
+         | VehicleArea:GLOBAL),
+};
+
+/**
+ * Used by ELECTRONIC_TOLL_COLLECTION_CARD_TYPE.
+ */
+enum ElectronicTollCollectionCardType : int32_t {
+    // Type is unknown or not in the list below.
+    UNKNOWN = 0,
+    // A Japanese ETC card reader that does not support ETC 2.0.
+    JP_ELECTRONIC_TOLL_COLLECTION_CARD = 1,
+    // A Japanese ETC 2.0 card reader.
+    JP_ELECTRONIC_TOLL_COLLECTION_CARD_V2 = 2,
+};
+
+/**
+ * Used by ELECTRONIC_TOLL_COLLECTION_CARD_STATUS.
+ */
+enum ElectronicTollCollectionCardStatus : int32_t {
+    // Status could not be determined
+    UNKNOWN = 0,
+    // A valid ETC card is present
+    ELECTRONIC_TOLL_COLLECTION_CARD_VALID = 1,
+    // An ETC card is present, but it is expired or otherwise invalid
+    ELECTRONIC_TOLL_COLLECTION_CARD_INVALID = 2,
+    // No ETC card is inserted in the reader.
+    ELECTRONIC_TOLL_COLLECTION_CARD_NOT_INSERTED = 3,
 };
 
 /**

@@ -43,17 +43,17 @@ oneway interface IPowerHintSession {
     void reportActualWorkDuration(in WorkDuration[] durations);
 
     /**
-     * Pause the session when the application is not in foreground and above
+     * Pause the session when the application is not allowed to send hint in framework.
      */
     void pause();
 
     /**
-     * Resume the session when the application is not in foreground and above
+     * Resume the session when the application is allowed to send hint in framework.
      */
     void resume();
 
     /**
-     * Close the session to release resources
+     * Close the session to release resources.
      */
     void close();
 }
