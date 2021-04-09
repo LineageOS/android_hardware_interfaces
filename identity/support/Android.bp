@@ -42,7 +42,7 @@ cc_library {
         "libpuresoftkeymasterdevice",
     ],
     static_libs: [
-        "libcppbor",
+        "libcppbor_external",
     ],
 }
 
@@ -59,7 +59,7 @@ cc_test {
         "libhardware",
     ],
     static_libs: [
-        "libcppbor",
+        "libcppbor_external",
         "libgmock",
     ],
     test_suites: ["general-tests"],
@@ -89,7 +89,7 @@ cc_test {
         "tests/cppbor_test.cpp",
     ],
     shared_libs: [
-        "libcppbor",
+        "libcppbor_external",
         "libbase",
     ],
     static_libs: [
@@ -104,7 +104,7 @@ cc_test_host {
         "tests/cppbor_test.cpp",
     ],
     shared_libs: [
-        "libcppbor",
+        "libcppbor_external",
         "libbase",
     ],
     static_libs: [
