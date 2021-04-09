@@ -214,6 +214,7 @@ import android.hardware.security.secureclock.TimeStampToken;
  * @hide
  */
 @VintfStability
+@SensitiveData
 interface IKeyMintDevice {
     const int AUTH_TOKEN_MAC_LENGTH = 32;
 
