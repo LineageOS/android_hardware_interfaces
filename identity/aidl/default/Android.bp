@@ -31,7 +31,7 @@ cc_library_static {
     ],
     static_libs: [
         "libbase",
-        "libcppbor",
+        "libcppbor_external",
         "libutils",
         "libsoft_attestation_cert",
         "libkeymaster_portable",
@@ -91,7 +91,7 @@ cc_binary {
     ],
     static_libs: [
         "libbase",
-        "libcppbor",
+        "libcppbor_external",
         "libutils",
         "libsoft_attestation_cert",
         "libkeymaster_portable",
