@@ -262,8 +262,8 @@ void ReaderAuthTests::retrieveData(const vector<uint8_t>& readerPrivateKey,
     vector<uint8_t> deviceEngagementBytes = deviceEngagement.encode();
     vector<uint8_t> eReaderPubBytes = cppbor::Tstr("ignored").encode();
     cppbor::Array sessionTranscript = cppbor::Array()
-                                              .add(cppbor::Semantic(24, deviceEngagementBytes))
-                                              .add(cppbor::Semantic(24, eReaderPubBytes));
+                                              .add(cppbor::SemanticTag(24, deviceEngagementBytes))
+                                              .add(cppbor::SemanticTag(24, eReaderPubBytes));
     vector<uint8_t> sessionTranscriptBytes = sessionTranscript.encode();
 
     vector<uint8_t> itemsRequestBytes;
@@ -293,10 +293,10 @@ void ReaderAuthTests::retrieveData(const vector<uint8_t>& readerPrivateKey,
             cppbor::Array()
                     .add("ReaderAuthentication")
                     .add(sessionTranscript.clone())
-                    .add(cppbor::Semantic(24, itemsRequestBytes))
+                    .add(cppbor::SemanticTag(24, itemsRequestBytes))
                     .encode();
     vector<uint8_t> encodedReaderAuthenticationBytes =
-            cppbor::Semantic(24, encodedReaderAuthentication).encode();
+            cppbor::SemanticTag(24, encodedReaderAuthentication).encode();
 
     optional<vector<uint8_t>> readerSignature =
             support::coseSignEcDsa(readerPrivateKey,                  // private key for reader
@@ -517,8 +517,8 @@ TEST_P(ReaderAuthTests, ephemeralKeyNotInSessionTranscript) {
     vector<uint8_t> deviceEngagementBytes = deviceEngagement.encode();
     vector<uint8_t> eReaderPubBytes = cppbor::Tstr("ignored").encode();
     cppbor::Array sessionTranscript = cppbor::Array()
-                                              .add(cppbor::Semantic(24, deviceEngagementBytes))
-                                              .add(cppbor::Semantic(24, eReaderPubBytes));
+                                              .add(cppbor::SemanticTag(24, deviceEngagementBytes))
+                                              .add(cppbor::SemanticTag(24, eReaderPubBytes));
     vector<uint8_t> sessionTranscriptBytes = sessionTranscript.encode();
 
     vector<uint8_t> itemsRequestBytes;
@@ -535,10 +535,10 @@ TEST_P(ReaderAuthTests, ephemeralKeyNotInSessionTranscript) {
             cppbor::Array()
                     .add("ReaderAuthentication")
                     .add(sessionTranscript.clone())
-                    .add(cppbor::Semantic(24, itemsRequestBytes))
+                    .add(cppbor::SemanticTag(24, itemsRequestBytes))
                     .encode();
     vector<uint8_t> encodedReaderAuthenticationBytes =
-            cppbor::Semantic(24, encodedReaderAuthentication).encode();
+            cppbor::SemanticTag(24, encodedReaderAuthentication).encode();
 
     vector<vector<uint8_t>> readerCertChain = {cert_reader_SelfSigned_};
     optional<vector<uint8_t>> readerSignature =
