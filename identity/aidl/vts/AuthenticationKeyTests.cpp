@@ -118,7 +118,7 @@ TEST_P(AuthenticationKeyTests, proofOfProvisionInAuthKeyCert) {
     optional<vector<uint8_t>> proofOfProvisioning =
             support::coseSignGetPayload(proofOfProvisioningSignature);
     ASSERT_TRUE(proofOfProvisioning);
-    string cborPretty = support::cborPrettyPrint(proofOfProvisioning.value(), 32, {});
+    string cborPretty = cppbor::prettyPrint(proofOfProvisioning.value(), 32, {});
     EXPECT_EQ(
             "[\n"
             "  'ProofOfProvisioning',\n"

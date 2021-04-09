@@ -231,7 +231,7 @@ TEST_P(EndToEndTests, createAndRetrieveCredential) {
     optional<vector<uint8_t>> proofOfProvisioning =
             support::coseSignGetPayload(proofOfProvisioningSignature);
     ASSERT_TRUE(proofOfProvisioning);
-    cborPretty = support::cborPrettyPrint(proofOfProvisioning.value(), 32, {"readerCertificate"});
+    cborPretty = cppbor::prettyPrint(proofOfProvisioning.value(), 32, {"readerCertificate"});
     EXPECT_EQ(
             "[\n"
             "  'ProofOfProvisioning',\n"
@@ -339,8 +339,8 @@ TEST_P(EndToEndTests, createAndRetrieveCredential) {
     vector<uint8_t> deviceEngagementBytes = deviceEngagement.encode();
     vector<uint8_t> eReaderPubBytes = cppbor::Tstr("ignored").encode();
     cppbor::Array sessionTranscript = cppbor::Array()
-                                              .add(cppbor::Semantic(24, deviceEngagementBytes))
-                                              .add(cppbor::Semantic(24, eReaderPubBytes));
+                                              .add(cppbor::SemanticTag(24, deviceEngagementBytes))
+                                              .add(cppbor::SemanticTag(24, eReaderPubBytes));
     vector<uint8_t> sessionTranscriptEncoded = sessionTranscript.encode();
 
     vector<uint8_t> itemsRequestBytes =
@@ -353,7 +353,7 @@ TEST_P(EndToEndTests, createAndRetrieveCredential) {
                                                              .add("Home address", true))
                                 .add("Image", cppbor::Map().add("Portrait image", false)))
                     .encode();
-    cborPretty = support::cborPrettyPrint(itemsRequestBytes, 32, {"EphemeralPublicKey"});
+    cborPretty = cppbor::prettyPrint(itemsRequestBytes, 32, {"EphemeralPublicKey"});
     EXPECT_EQ(
             "{\n"
             "  'nameSpaces' : {\n"
@@ -373,10 +373,10 @@ TEST_P(EndToEndTests, createAndRetrieveCredential) {
             cppbor::Array()
                     .add("ReaderAuthentication")
                     .add(sessionTranscript.clone())
-                    .add(cppbor::Semantic(24, itemsRequestBytes))
+                    .add(cppbor::SemanticTag(24, itemsRequestBytes))
                     .encode();
     vector<uint8_t> encodedReaderAuthenticationBytes =
-            cppbor::Semantic(24, encodedReaderAuthentication).encode();
+            cppbor::SemanticTag(24, encodedReaderAuthentication).encode();
     optional<vector<uint8_t>> readerSignature =
             support::coseSignEcDsa(readerKey, {},                     // content
                                    encodedReaderAuthenticationBytes,  // detached content
@@ -443,7 +443,7 @@ TEST_P(EndToEndTests, createAndRetrieveCredential) {
     vector<uint8_t> mac;
     vector<uint8_t> deviceNameSpacesEncoded;
     ASSERT_TRUE(credential->finishRetrieval(&mac, &deviceNameSpacesEncoded).isOk());
-    cborPretty = support::cborPrettyPrint(deviceNameSpacesEncoded, 32, {});
+    cborPretty = cppbor::prettyPrint(deviceNameSpacesEncoded, 32, {});
     ASSERT_EQ(
             "{\n"
             "  'PersonalData' : {\n"
@@ -462,10 +462,11 @@ TEST_P(EndToEndTests, createAndRetrieveCredential) {
     string docType = "org.iso.18013-5.2019.mdl";
     optional<vector<uint8_t>> readerEphemeralPrivateKey =
             support::ecKeyPairGetPrivateKey(readerEphemeralKeyPair.value());
-    optional<vector<uint8_t>> eMacKey = support::calcEMacKey(
-            readerEphemeralPrivateKey.value(),                           // Private Key
-            signingPubKey.value(),                                       // Public Key
-            cppbor::Semantic(24, sessionTranscript.encode()).encode());  // SessionTranscriptBytes
+    optional<vector<uint8_t>> eMacKey =
+            support::calcEMacKey(readerEphemeralPrivateKey.value(),  // Private Key
+                                 signingPubKey.value(),              // Public Key
+                                 cppbor::SemanticTag(24, sessionTranscript.encode())
+                                         .encode());  // SessionTranscriptBytes
     optional<vector<uint8_t>> calculatedMac =
             support::calcMac(sessionTranscript.encode(),  // SessionTranscript
                              docType,                     // DocType
@@ -486,7 +487,7 @@ TEST_P(EndToEndTests, createAndRetrieveCredential) {
                                 testEntriesEntryCounts)
                         .isOk());
     ASSERT_TRUE(credential->finishRetrieval(&mac, &deviceNameSpacesEncoded).isOk());
-    cborPretty = support::cborPrettyPrint(deviceNameSpacesEncoded, 32, {});
+    cborPretty = cppbor::prettyPrint(deviceNameSpacesEncoded, 32, {});
     ASSERT_EQ("{}", cborPretty);
     // Calculate DeviceAuthentication and MAC (MACing key hasn't changed)
     calculatedMac = support::calcMac(sessionTranscript.encode(),  // SessionTranscript
@@ -508,7 +509,7 @@ TEST_P(EndToEndTests, createAndRetrieveCredential) {
                                 testEntriesEntryCounts)
                         .isOk());
     ASSERT_TRUE(credential->finishRetrieval(&mac, &deviceNameSpacesEncoded).isOk());
-    cborPretty = support::cborPrettyPrint(deviceNameSpacesEncoded, 32, {});
+    cborPretty = cppbor::prettyPrint(deviceNameSpacesEncoded, 32, {});
     ASSERT_EQ("{}", cborPretty);
     // Calculate DeviceAuthentication and MAC (MACing key hasn't changed)
     calculatedMac = support::calcMac(sessionTranscript.encode(),  // SessionTranscript
