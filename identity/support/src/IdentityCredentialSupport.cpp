@@ -148,199 +148,6 @@ optional<vector<uint8_t>> decodeHex(const string& hexEncoded) {
 }
 
 // ---------------------------------------------------------------------------
-// CBOR utilities.
-// ---------------------------------------------------------------------------
-
-static bool cborAreAllElementsNonCompound(const cppbor::CompoundItem* compoundItem) {
-    if (compoundItem->type() == cppbor::ARRAY) {
-        const cppbor::Array* array = compoundItem->asArray();
-        for (size_t n = 0; n < array->size(); n++) {
-            const cppbor::Item* entry = (*array)[n].get();
-            switch (entry->type()) {
-                case cppbor::ARRAY:
-                case cppbor::MAP:
-                    return false;
-                default:
-                    break;
-            }
-        }
-    } else {
-        const cppbor::Map* map = compoundItem->asMap();
-        for (size_t n = 0; n < map->size(); n++) {
-            auto [keyEntry, valueEntry] = (*map)[n];
-            switch (keyEntry->type()) {
-                case cppbor::ARRAY:
-                case cppbor::MAP:
-                    return false;
-                default:
-                    break;
-            }
-            switch (valueEntry->type()) {
-                case cppbor::ARRAY:
-                case cppbor::MAP:
-                    return false;
-                default:
-                    break;
-            }
-        }
-    }
-    return true;
-}
-
-static bool cborPrettyPrintInternal(const cppbor::Item* item, string& out, size_t indent,
-                                    size_t maxBStrSize, const vector<string>& mapKeysToNotPrint) {
-    char buf[80];
-
-    string indentString(indent, ' ');
-
-    switch (item->type()) {
-        case cppbor::UINT:
-            snprintf(buf, sizeof(buf), "%" PRIu64, item->asUint()->unsignedValue());
-            out.append(buf);
-            break;
-
-        case cppbor::NINT:
-            snprintf(buf, sizeof(buf), "%" PRId64, item->asNint()->value());
-            out.append(buf);
-            break;
-
-        case cppbor::BSTR: {
-            const cppbor::Bstr* bstr = item->asBstr();
-            const vector<uint8_t>& value = bstr->value();
-            if (value.size() > maxBStrSize) {
-                unsigned char digest[SHA_DIGEST_LENGTH];
-                SHA_CTX ctx;
-                SHA1_Init(&ctx);
-                SHA1_Update(&ctx, value.data(), value.size());
-                SHA1_Final(digest, &ctx);
-                char buf2[SHA_DIGEST_LENGTH * 2 + 1];
-                for (size_t n = 0; n < SHA_DIGEST_LENGTH; n++) {
-                    snprintf(buf2 + n * 2, 3, "%02x", digest[n]);
-                }
-                snprintf(buf, sizeof(buf), "<bstr size=%zd sha1=%s>", value.size(), buf2);
-                out.append(buf);
-            } else {
-                out.append("{");
-                for (size_t n = 0; n < value.size(); n++) {
-                    if (n > 0) {
-                        out.append(", ");
-                    }
-                    snprintf(buf, sizeof(buf), "0x%02x", value[n]);
-                    out.append(buf);
-                }
-                out.append("}");
-            }
-        } break;
-
-        case cppbor::TSTR:
-            out.append("'");
-            {
-                // TODO: escape "'" characters
-                out.append(item->asTstr()->value().c_str());
-            }
-            out.append("'");
-            break;
-
-        case cppbor::ARRAY: {
-            const cppbor::Array* array = item->asArray();
-            if (array->size() == 0) {
-                out.append("[]");
-            } else if (cborAreAllElementsNonCompound(array)) {
-                out.append("[");
-                for (size_t n = 0; n < array->size(); n++) {
-                    if (!cborPrettyPrintInternal((*array)[n].get(), out, indent + 2, maxBStrSize,
-                                                 mapKeysToNotPrint)) {
-                        return false;
-                    }
-                    out.append(", ");
-                }
-                out.append("]");
-            } else {
-                out.append("[\n" + indentString);
-                for (size_t n = 0; n < array->size(); n++) {
-                    out.append("  ");
-                    if (!cborPrettyPrintInternal((*array)[n].get(), out, indent + 2, maxBStrSize,
-                                                 mapKeysToNotPrint)) {
-                        return false;
-                    }
-                    out.append(",\n" + indentString);
-                }
-                out.append("]");
-            }
-        } break;
-
-        case cppbor::MAP: {
-            const cppbor::Map* map = item->asMap();
-
-            if (map->size() == 0) {
-                out.append("{}");
-            } else {
-                out.append("{\n" + indentString);
-                for (size_t n = 0; n < map->size(); n++) {
-                    out.append("  ");
-
-                    auto [map_key, map_value] = (*map)[n];
-
-                    if (!cborPrettyPrintInternal(map_key.get(), out, indent + 2, maxBStrSize,
-                                                 mapKeysToNotPrint)) {
-                        return false;
-                    }
-                    out.append(" : ");
-                    if (map_key->type() == cppbor::TSTR &&
-                        std::find(mapKeysToNotPrint.begin(), mapKeysToNotPrint.end(),
-                                  map_key->asTstr()->value()) != mapKeysToNotPrint.end()) {
-                        out.append("<not printed>");
-                    } else {
-                        if (!cborPrettyPrintInternal(map_value.get(), out, indent + 2, maxBStrSize,
-                                                     mapKeysToNotPrint)) {
-                            return false;
-                        }
-                    }
-                    out.append(",\n" + indentString);
-                }
-                out.append("}");
-            }
-        } break;
-
-        case cppbor::SEMANTIC: {
-            const cppbor::Semantic* semantic = item->asSemantic();
-            snprintf(buf, sizeof(buf), "tag %" PRIu64 " ", semantic->value());
-            out.append(buf);
-            cborPrettyPrintInternal(semantic->child().get(), out, indent, maxBStrSize,
-                                    mapKeysToNotPrint);
-        } break;
-
-        case cppbor::SIMPLE:
-            const cppbor::Bool* asBool = item->asSimple()->asBool();
-            const cppbor::Null* asNull = item->asSimple()->asNull();
-            if (asBool != nullptr) {
-                out.append(asBool->value() ? "true" : "false");
-            } else if (asNull != nullptr) {
-                out.append("null");
-            } else {
-                LOG(ERROR) << "Only boolean/null is implemented for SIMPLE";
-                return false;
-            }
-            break;
-    }
-
-    return true;
-}
-
-string cborPrettyPrint(const vector<uint8_t>& encodedCbor, size_t maxBStrSize,
-                       const vector<string>& mapKeysToNotPrint) {
-    auto [item, _, message] = cppbor::parse(encodedCbor);
-    if (item == nullptr) {
-        LOG(ERROR) << "Data to pretty print is not valid CBOR: " << message;
-        return "";
-    }
-
-    string out;
-    cborPrettyPrintInternal(item.get(), out, 0, maxBStrSize, mapKeysToNotPrint);
-    return out;
-}
-
-// ---------------------------------------------------------------------------
 // Crypto functionality / abstraction.
 // ---------------------------------------------------------------------------
 
@@ -2140,7 +1947,7 @@ optional<int> coseSignGetAlg(const vector<uint8_t>& signatureCoseSign1) {
     }
 
     for (size_t n = 0; n < protectedHeaders->size(); n++) {
-        auto [keyItem, valueItem] = (*protectedHeaders)[n];
+        auto& [keyItem, valueItem] = (*protectedHeaders)[n];
         const cppbor::Int* number = keyItem->asInt();
         if (number == nullptr) {
             LOG(ERROR) << "Key item in top-level map is not a number";
@@ -2183,7 +1990,7 @@ optional<vector<uint8_t>> coseSignGetX5Chain(const vector<uint8_t>& signatureCos
     }
 
     for (size_t n = 0; n < unprotectedHeaders->size(); n++) {
-        auto [keyItem, valueItem] = (*unprotectedHeaders)[n];
+        auto& [keyItem, valueItem] = (*unprotectedHeaders)[n];
         const cppbor::Int* number = keyItem->asInt();
         if (number == nullptr) {
             LOG(ERROR) << "Key item in top-level map is not a number";
@@ -2335,9 +2142,9 @@ optional<vector<uint8_t>> calcMac(const vector<uint8_t>& sessionTranscriptEncode
                     .add("DeviceAuthentication")
                     .add(std::move(sessionTranscriptItem))
                     .add(docType)
-                    .add(cppbor::Semantic(kSemanticTagEncodedCbor, deviceNameSpacesEncoded));
+                    .add(cppbor::SemanticTag(kSemanticTagEncodedCbor, deviceNameSpacesEncoded));
     vector<uint8_t> deviceAuthenticationBytes =
-            cppbor::Semantic(kSemanticTagEncodedCbor, deviceAuthentication.encode()).encode();
+            cppbor::SemanticTag(kSemanticTagEncodedCbor, deviceAuthentication.encode()).encode();
     optional<vector<uint8_t>> calculatedMac =
             support::coseMac0(eMacKey, {},                 // payload
                               deviceAuthenticationBytes);  // detached content
