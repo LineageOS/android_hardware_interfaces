@@ -48,10 +48,11 @@ AssertionResult LnbTests::openLnbById(uint32_t lnbId) {
     return AssertionResult(status == Result::SUCCESS);
 }
 
-AssertionResult LnbTests::openLnbByName(string lnbName) {
+AssertionResult LnbTests::openLnbByName(string lnbName, uint32_t& id) {
     Result status;
-    mService->openLnbByName(lnbName, [&](Result result, uint32_t /*lnbId*/, const sp<ILnb>& lnb) {
+    mService->openLnbByName(lnbName, [&](Result result, uint32_t lnbId, const sp<ILnb>& lnb) {
         mLnb = lnb;
+        id = lnbId;
         status = result;
     });
 
