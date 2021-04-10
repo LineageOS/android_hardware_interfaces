@@ -23,8 +23,8 @@
 #include <android-base/logging.h>
 #include <android-base/stringprintf.h>
 
-#include <cppbor/cppbor.h>
-#include <cppbor/cppbor_parse.h>
+#include <cppbor.h>
+#include <cppbor_parse.h>
 
 #include <utility>
 
