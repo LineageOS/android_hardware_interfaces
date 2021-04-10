@@ -338,8 +338,7 @@ TEST_P(IdentityCredentialTests, verifyOneProfileAndEntryPass) {
     optional<vector<uint8_t>> proofOfProvisioning =
             support::coseSignGetPayload(proofOfProvisioningSignature);
     ASSERT_TRUE(proofOfProvisioning);
-    string cborPretty =
-            support::cborPrettyPrint(proofOfProvisioning.value(), 32, {"readerCertificate"});
+    string cborPretty = cppbor::prettyPrint(proofOfProvisioning.value(), 32, {"readerCertificate"});
     EXPECT_EQ(
             "[\n"
             "  'ProofOfProvisioning',\n"
@@ -449,9 +448,9 @@ TEST_P(IdentityCredentialTests, verifyManyProfilesAndEntriesPass) {
     optional<vector<uint8_t>> proofOfProvisioning =
             support::coseSignGetPayload(proofOfProvisioningSignature);
     ASSERT_TRUE(proofOfProvisioning);
-    string cborPretty = support::cborPrettyPrint(proofOfProvisioning.value(),
-                                                 32,  //
-                                                 {"readerCertificate"});
+    string cborPretty = cppbor::prettyPrint(proofOfProvisioning.value(),
+                                            32,  //
+                                            {"readerCertificate"});
     EXPECT_EQ(
             "[\n"
             "  'ProofOfProvisioning',\n"

@@ -210,6 +210,7 @@ cc_binary {
     vendor: true,
     relative_install_path: "hw",
     srcs: ["VehicleService.cpp"],
+    cflags: ["-DENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING"],
     shared_libs: [
         "libbase",
         "libjsoncpp",
