@@ -279,6 +279,99 @@
         <xs:attribute name="inputFilePath" type="xs:anyURI" use="optional"/>
     </xs:complexType>
 
+    <!-- LNB SESSION -->
+    <xs:simpleType name="lnbId">
+        <!-- Lnb id must be LNB_NUM: <lnb id="LNB_10"/> -->
+        <xs:restriction base="xs:string">
+            <xs:pattern value="LNB_[0-9]+"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="lnbVoltageEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="NONE" />
+            <xs:enumeration value="VOLTAGE_5V" />
+            <xs:enumeration value="VOLTAGE_11V" />
+            <xs:enumeration value="VOLTAGE_12V"/>
+            <xs:enumeration value="VOLTAGE_13V"/>
+            <xs:enumeration value="VOLTAGE_14V"/>
+            <xs:enumeration value="VOLTAGE_15V"/>
+            <xs:enumeration value="VOLTAGE_18V"/>
+            <xs:enumeration value="VOLTAGE_19V"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="lnbToneEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="NONE" />
+            <xs:enumeration value="CONTINUOUS" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="lnbPositionEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="UNDEFINED" />
+            <xs:enumeration value="POSITION_A" />
+            <xs:enumeration value="POSITION_B" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Diseqc Messages that would be used to send to the lnb under test. -->
+    <xs:simpleType name="diseqcMsgName">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z_]+"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="diseqcMsgBody">
+        <xs:list itemType="xs:unsignedByte"/>
+    </xs:simpleType>
+    <xs:complexType name="diseqcMessage">
+        <xs:attribute name="msgName" type="diseqcMsgName"/>
+        <xs:attribute name="msgBody" type="diseqcMsgBody"/>
+    </xs:complexType>
+    <xs:simpleType name="diseqcMsgSender">
+        <xs:list itemType="diseqcMsgName"/>
+    </xs:simpleType>
+
+    <xs:complexType name="lnb">
+        <xs:annotation>
+            <xs:documentation>
+                Each lnb element contain the following attributes:
+                    "id": unique id of the lnb that could be used to connect to the test the
+                        "dataFlowConfiguration"
+                    "name": the external lnb device name.
+                    "voltage": the voltage used to config the lnb.
+                    "tone": the voltage used to config the lnb.
+                    "position": the voltage used to config the lnb.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="id" type="lnbId" use="required"/>
+        <!-- Only required on external lnb with no device id. -->
+        <xs:attribute name="name" type="xs:string" use="optional"/>
+        <xs:attribute name="voltage" type="lnbVoltageEnum" use="required"/>
+        <xs:attribute name="tone" type="lnbToneEnum" use="required"/>
+        <xs:attribute name="position" type="lnbPositionEnum" use="required"/>
+    </xs:complexType>
+
+    <!-- TIME FILTER SESSION -->
+    <xs:simpleType name="timeFilterId">
+        <!-- Time Filter id must be TIME_FILTER_NUM: <timeFilter id="TIME_FILTER_1"/> -->
+        <xs:restriction base="xs:string">
+            <xs:pattern value="TIME_FILTER_[0-9]+"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="timeFilter">
+        <xs:annotation>
+            <xs:documentation>
+                Each timeFilter element contain the following attributes:
+                    "id": unique id of the time filter that could be used to connect to the test the
+                        "dataFlowConfiguration"
+                    "timeStamp": the time stamp used to config the time filter.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="id" type="timeFilterId" use="required"/>
+        <xs:attribute name="timeStamp" type="xs:nonNegativeInteger" use="required"/>
+    </xs:complexType>
+
     <!-- HARDWARE CONFIGURATION SESSION -->
     <xs:complexType name="hardwareConfiguration">
         <xs:sequence>
@@ -341,6 +434,55 @@
                     </xs:sequence>
                 </xs:complexType>
             </xs:element>
+            <xs:element name="diseqcMessages" minOccurs="0" maxOccurs="1">
+                <xs:complexType>
+                    <xs:annotation>
+                        <xs:documentation xml:lang="en">
+                            This section contains configurations of all the diseqc messages that
+                            would be used in the lnb tests.
+                                - This section is optional and can be skipped if lnb is not suppoted
+                                - The users can configure 1 or more message elements in the
+                                    diseqcMessages sections.
+                        </xs:documentation>
+                    </xs:annotation>
+                    <xs:sequence>
+                        <xs:element name="diseqcMessage" type="diseqcMessage" minOccurs="1" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="lnbs" minOccurs="0" maxOccurs="1">
+                <xs:complexType>
+                    <xs:annotation>
+                        <xs:documentation xml:lang="en">
+                            This section contains configurations of all the lnbs that would be used
+                                in the tests.
+                                - This section is optional and can be skipped if lnb is not suppoted
+                                - The users can configure 1 or more lnb elements in the lnbs
+                                    sections.
+                        </xs:documentation>
+                    </xs:annotation>
+                    <xs:sequence>
+                        <xs:element name="lnb" type="lnb" minOccurs="1" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="timeFilters" minOccurs="0" maxOccurs="1">
+                <xs:complexType>
+                    <xs:annotation>
+                        <xs:documentation xml:lang="en">
+                            This section contains configurations of all the time filters that would
+                                be used in the tests.
+                                - This section is optional and can be skipped if time filter is
+                                    not supported.
+                                - The users can configure 1 or more time filter elements in the
+                                    time filters sections.
+                        </xs:documentation>
+                    </xs:annotation>
+                    <xs:sequence>
+                        <xs:element name="timeFilter" type="timeFilter" minOccurs="1" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
         </xs:sequence>
     </xs:complexType>
 
@@ -397,6 +539,8 @@
                     <xs:attribute name="frontendConnection" type="frontendId" use="required"/>
                     <xs:attribute name="audioFilterConnection" type="filterId" use="required"/>
                     <xs:attribute name="videoFilterConnection" type="filterId" use="required"/>
+                    <xs:attribute name="lnbConnection" type="lnbId" use="required"/>
+                    <xs:attribute name="diseqcMsgSender" type="diseqcMsgSender" use="optional"/>
                     <!-- TODO: b/182519645 allow the users to insert extra filters -->
                 </xs:complexType>
             </xs:element>
@@ -405,6 +549,13 @@
                     <xs:attribute name="frontendConnection" type="frontendId" use="required"/>
                     <xs:attribute name="recordFilterConnection" type="filterId" use="required"/>
                     <xs:attribute name="dvrRecordConnection" type="dvrId" use="required"/>
+                    <xs:attribute name="lnbConnection" type="lnbId" use="required"/>
+                    <xs:attribute name="diseqcMsgSender" type="diseqcMsgSender" use="optional"/>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="timeFilter" minOccurs="0" maxOccurs="1">
+                <xs:complexType>
+                    <xs:attribute name="timeFilterConnection" type="timeFilterId" use="required"/>
                 </xs:complexType>
             </xs:element>
         </xs:sequence>
@@ -429,6 +580,14 @@
         </xs:key>
         <xs:key name="dvrIdUniqueness">
             <xs:selector xpath="hardwareConfiguration/dvrs/dvr"/>
+            <xs:field xpath="@id"/>
+        </xs:key>
+        <xs:key name="lnbIdUniqueness">
+            <xs:selector xpath="hardwareConfiguration/lnbs/lnb"/>
+            <xs:field xpath="@id"/>
+        </xs:key>
+        <xs:key name="timeFilterIdUniqueness">
+            <xs:selector xpath="hardwareConfiguration/timeFilters/timeFilter"/>
             <xs:field xpath="@id"/>
         </xs:key>
     </xs:element>

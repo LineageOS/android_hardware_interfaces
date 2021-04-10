@@ -64,7 +64,7 @@ class LnbTests {
 
     AssertionResult getLnbIds(vector<uint32_t>& ids);
     AssertionResult openLnbById(uint32_t lnbId);
-    AssertionResult openLnbByName(string lnbName);
+    AssertionResult openLnbByName(string lnbName, uint32_t& lnbId);
     AssertionResult setLnbCallback();
     AssertionResult setVoltage(LnbVoltage voltage);
     AssertionResult setTone(LnbTone tone);

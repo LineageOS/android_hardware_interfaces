@@ -80,44 +80,15 @@ const uint32_t FMQ_SIZE_16M = 0x1000000;
     "}                                                   "
 
 typedef enum {
-    TIMER0,
-    TIMER_MAX,
-} TimeFilter;
-
-typedef enum {
     SOURCE,
     SINK,
     LINKAGE_DIR,
 } Linkage;
 
 typedef enum {
-    LNB0,
-    LNB_EXTERNAL,
-    LNB_MAX,
-} Lnb;
-
-typedef enum {
-    DISEQC_POWER_ON,
-    DISEQC_MAX,
-} Diseqc;
-
-typedef enum {
     DESC_0,
     DESC_MAX,
 } Descrambler;
-
-struct TimeFilterConfig {
-    bool supportTimeFilter;
-    uint64_t timeStamp;
-};
-
-struct LnbConfig {
-    bool usingLnb;
-    string name;
-    LnbVoltage voltage;
-    LnbTone tone;
-    LnbPosition position;
-};
 
 struct DescramblerConfig {
     uint32_t casSystemId;
@@ -126,9 +97,6 @@ struct DescramblerConfig {
 };
 
 // TODO: remove all the manual config array after the dynamic config refactoring is done.
-static LnbConfig lnbArray[LNB_MAX];
-static vector<uint8_t> diseqcMsgArray[DISEQC_MAX];
-static TimeFilterConfig timeFilterArray[TIMER_MAX];
 static DemuxFilterType filterLinkageTypes[LINKAGE_DIR][FILTER_MAIN_TYPE_BIT_COUNT];
 static DescramblerConfig descramblerArray[DESC_MAX];
 
@@ -136,6 +104,9 @@ static DescramblerConfig descramblerArray[DESC_MAX];
 static map<string, FrontendConfig> frontendMap;
 static map<string, FilterConfig> filterMap;
 static map<string, DvrConfig> dvrMap;
+static map<string, LnbConfig> lnbMap;
+static map<string, TimeFilterConfig> timeFilterMap;
+static map<string, vector<uint8_t>> diseqcMsgMap;
 
 // Hardware and test cases connections
 static LiveBroadcastHardwareConnections live;
@@ -145,6 +116,7 @@ static DvrRecordHardwareConnections record;
 static DescramblingHardwareConnections descrambling;
 static LnbLiveHardwareConnections lnbLive;
 static LnbRecordHardwareConnections lnbRecord;
+static TimeFilterHardwareConnections timeFilter;
 
 /** Config all the frontends that would be used in the tests */
 inline void initFrontendConfig() {
@@ -202,6 +174,19 @@ inline void initDvrConfig() {
     TunerTestingConfigReader::readDvrConfig1_0(dvrMap);
 };
 
+/** Config all the lnbs that would be used in the tests */
+inline void initLnbConfig() {
+    // Read customized config
+    TunerTestingConfigReader::readLnbConfig1_0(lnbMap);
+    TunerTestingConfigReader::readDiseqcMessages(diseqcMsgMap);
+};
+
+/** Config all the time filters that would be used in the tests */
+inline void initTimeFilterConfig() {
+    // Read customized config
+    TunerTestingConfigReader::readTimeFilterConfig1_0(timeFilterMap);
+};
+
 /** Read the vendor configurations of which hardware to use for each test cases/data flows */
 inline void connectHardwaresToTestCases() {
     TunerTestingConfigReader::connectLiveBroadcast(live);
@@ -211,6 +196,7 @@ inline void connectHardwaresToTestCases() {
     TunerTestingConfigReader::connectDescrambling(descrambling);
     TunerTestingConfigReader::connectLnbLive(lnbLive);
     TunerTestingConfigReader::connectLnbRecord(lnbRecord);
+    TunerTestingConfigReader::connectTimeFilter(timeFilter);
 };
 
 inline bool validateConnections() {
@@ -233,14 +219,12 @@ inline bool validateConnections() {
                               ? dvrMap.find(live.dvrSoftwareFeId) != dvrMap.end()
                               : true;
     dvrIsValid &= playback.support ? dvrMap.find(playback.dvrId) != dvrMap.end() : true;
-
     if (record.support) {
         if (frontendMap[record.frontendId].isSoftwareFe) {
             dvrIsValid &= dvrMap.find(record.dvrSoftwareFeId) != dvrMap.end();
         }
         dvrIsValid &= dvrMap.find(record.dvrRecordId) != dvrMap.end();
     }
-
     if (descrambling.support && frontendMap[descrambling.frontendId].isSoftwareFe) {
         dvrIsValid &= dvrMap.find(descrambling.dvrSoftwareFeId) != dvrMap.end();
     }
@@ -252,24 +236,19 @@ inline bool validateConnections() {
 
     bool filterIsValid = filterMap.find(live.audioFilterId) != filterMap.end() &&
                          filterMap.find(live.videoFilterId) != filterMap.end();
-
     filterIsValid &= playback.support
                              ? (filterMap.find(playback.audioFilterId) != filterMap.end() &&
                                 filterMap.find(playback.videoFilterId) != filterMap.end())
                              : true;
-
     filterIsValid &=
             record.support ? filterMap.find(record.recordFilterId) != filterMap.end() : true;
-
     filterIsValid &= descrambling.support
                              ? (filterMap.find(descrambling.audioFilterId) != filterMap.end() &&
                                 filterMap.find(descrambling.videoFilterId) != filterMap.end())
                              : true;
-
     filterIsValid &= lnbLive.support ? (filterMap.find(lnbLive.audioFilterId) != filterMap.end() &&
                                         filterMap.find(lnbLive.videoFilterId) != filterMap.end())
                                      : true;
-
     filterIsValid &=
             lnbRecord.support ? filterMap.find(lnbRecord.recordFilterId) != filterMap.end() : true;
 
@@ -278,34 +257,35 @@ inline bool validateConnections() {
         return false;
     }
 
+    bool lnbIsValid = lnbLive.support ? lnbMap.find(lnbLive.lnbId) != lnbMap.end() : true;
+    lnbIsValid &= lnbRecord.support ? lnbMap.find(lnbRecord.lnbId) != lnbMap.end() : true;
+
+    if (!lnbIsValid) {
+        ALOGW("[vts config] dynamic config lnb connection is invalid.");
+        return false;
+    }
+
+    bool diseqcMsgIsValid = true;
+    if (lnbLive.support) {
+        for (auto msgName : lnbLive.diseqcMsgs) {
+            diseqcMsgIsValid &= diseqcMsgMap.find(msgName) != diseqcMsgMap.end();
+        }
+    }
+    if (lnbRecord.support) {
+        for (auto msgName : lnbRecord.diseqcMsgs) {
+            diseqcMsgIsValid &= diseqcMsgMap.find(msgName) != diseqcMsgMap.end();
+        }
+    }
+
+    if (!diseqcMsgIsValid) {
+        ALOGW("[vts config] dynamic config diseqcMsg sender is invalid.");
+        return false;
+    }
+
     return true;
 }
 
 // TODO: remove all the manual configs after the dynamic config refactoring is done.
-/** Configuration array for the Lnb test */
-inline void initLnbConfig() {
-    lnbArray[LNB0].usingLnb = true;
-    lnbArray[LNB0].voltage = LnbVoltage::VOLTAGE_12V;
-    lnbArray[LNB0].tone = LnbTone::NONE;
-    lnbArray[LNB0].position = LnbPosition::UNDEFINED;
-    lnbArray[LNB_EXTERNAL].usingLnb = true;
-    lnbArray[LNB_EXTERNAL].name = "default_lnb_external";
-    lnbArray[LNB_EXTERNAL].voltage = LnbVoltage::VOLTAGE_5V;
-    lnbArray[LNB_EXTERNAL].tone = LnbTone::NONE;
-    lnbArray[LNB_EXTERNAL].position = LnbPosition::UNDEFINED;
-};
-
-/** Diseqc messages array for the Lnb test */
-inline void initDiseqcMsg() {
-    diseqcMsgArray[DISEQC_POWER_ON] = {0xE, 0x0, 0x0, 0x0, 0x0, 0x3};
-};
-
-/** Configuration array for the timer filter test */
-inline void initTimeFilterConfig() {
-    timeFilterArray[TIMER0].supportTimeFilter = true;
-    timeFilterArray[TIMER0].timeStamp = 1;
-}
-
 /** Configuration array for the descrambler test */
 inline void initDescramblerConfig() {
     descramblerArray[DESC_0].casSystemId = CLEAR_KEY_SYSTEM_ID;

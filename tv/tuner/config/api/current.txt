@@ -16,6 +16,7 @@ package android.media.tuner.testing.configuration.V1_0 {
     method @Nullable public android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.LnbLive getLnbLive();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.LnbRecord getLnbRecord();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.Scan getScan();
+    method @Nullable public android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.TimeFilter getTimeFilter();
     method public void setClearLiveBroadcast(@Nullable android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.ClearLiveBroadcast);
     method public void setDescrambling(@Nullable android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.Descrambling);
     method public void setDvrPlayback(@Nullable android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.DvrPlayback);
@@ -23,6 +24,7 @@ package android.media.tuner.testing.configuration.V1_0 {
     method public void setLnbLive(@Nullable android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.LnbLive);
     method public void setLnbRecord(@Nullable android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.LnbRecord);
     method public void setScan(@Nullable android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.Scan);
+    method public void setTimeFilter(@Nullable android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.TimeFilter);
   }
 
   public static class DataFlowConfiguration.ClearLiveBroadcast {
@@ -80,20 +82,28 @@ package android.media.tuner.testing.configuration.V1_0 {
   public static class DataFlowConfiguration.LnbLive {
     ctor public DataFlowConfiguration.LnbLive();
     method @Nullable public String getAudioFilterConnection();
+    method @Nullable public java.util.List<java.lang.String> getDiseqcMsgSender();
     method @Nullable public String getFrontendConnection();
+    method @Nullable public String getLnbConnection();
     method @Nullable public String getVideoFilterConnection();
     method public void setAudioFilterConnection(@Nullable String);
+    method public void setDiseqcMsgSender(@Nullable java.util.List<java.lang.String>);
     method public void setFrontendConnection(@Nullable String);
+    method public void setLnbConnection(@Nullable String);
     method public void setVideoFilterConnection(@Nullable String);
   }
 
   public static class DataFlowConfiguration.LnbRecord {
     ctor public DataFlowConfiguration.LnbRecord();
+    method @Nullable public java.util.List<java.lang.String> getDiseqcMsgSender();
     method @Nullable public String getDvrRecordConnection();
     method @Nullable public String getFrontendConnection();
+    method @Nullable public String getLnbConnection();
     method @Nullable public String getRecordFilterConnection();
+    method public void setDiseqcMsgSender(@Nullable java.util.List<java.lang.String>);
     method public void setDvrRecordConnection(@Nullable String);
     method public void setFrontendConnection(@Nullable String);
+    method public void setLnbConnection(@Nullable String);
     method public void setRecordFilterConnection(@Nullable String);
   }
 
@@ -101,6 +111,20 @@ package android.media.tuner.testing.configuration.V1_0 {
     ctor public DataFlowConfiguration.Scan();
     method @Nullable public String getFrontendConnection();
     method public void setFrontendConnection(@Nullable String);
+  }
+
+  public static class DataFlowConfiguration.TimeFilter {
+    ctor public DataFlowConfiguration.TimeFilter();
+    method @Nullable public String getTimeFilterConnection();
+    method public void setTimeFilterConnection(@Nullable String);
+  }
+
+  public class DiseqcMessage {
+    ctor public DiseqcMessage();
+    method @Nullable public java.util.List<java.lang.Short> getMsgBody();
+    method @Nullable public String getMsgName();
+    method public void setMsgBody(@Nullable java.util.List<java.lang.Short>);
+    method public void setMsgName(@Nullable String);
   }
 
   public class DvbsFrontendSettings {
@@ -245,12 +269,23 @@ package android.media.tuner.testing.configuration.V1_0 {
 
   public class HardwareConfiguration {
     ctor public HardwareConfiguration();
+    method @Nullable public android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.DiseqcMessages getDiseqcMessages();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.Dvrs getDvrs();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.Filters getFilters();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.Frontends getFrontends();
+    method @Nullable public android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.Lnbs getLnbs();
+    method @Nullable public android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.TimeFilters getTimeFilters();
+    method public void setDiseqcMessages(@Nullable android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.DiseqcMessages);
     method public void setDvrs(@Nullable android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.Dvrs);
     method public void setFilters(@Nullable android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.Filters);
     method public void setFrontends(@Nullable android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.Frontends);
+    method public void setLnbs(@Nullable android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.Lnbs);
+    method public void setTimeFilters(@Nullable android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.TimeFilters);
+  }
+
+  public static class HardwareConfiguration.DiseqcMessages {
+    ctor public HardwareConfiguration.DiseqcMessages();
+    method @Nullable public java.util.List<android.media.tuner.testing.configuration.V1_0.DiseqcMessage> getDiseqcMessage();
   }
 
   public static class HardwareConfiguration.Dvrs {
@@ -266,6 +301,56 @@ package android.media.tuner.testing.configuration.V1_0 {
   public static class HardwareConfiguration.Frontends {
     ctor public HardwareConfiguration.Frontends();
     method @Nullable public java.util.List<android.media.tuner.testing.configuration.V1_0.Frontend> getFrontend();
+  }
+
+  public static class HardwareConfiguration.Lnbs {
+    ctor public HardwareConfiguration.Lnbs();
+    method @Nullable public java.util.List<android.media.tuner.testing.configuration.V1_0.Lnb> getLnb();
+  }
+
+  public static class HardwareConfiguration.TimeFilters {
+    ctor public HardwareConfiguration.TimeFilters();
+    method @Nullable public java.util.List<android.media.tuner.testing.configuration.V1_0.TimeFilter> getTimeFilter();
+  }
+
+  public class Lnb {
+    ctor public Lnb();
+    method @Nullable public String getId();
+    method @Nullable public String getName();
+    method @Nullable public android.media.tuner.testing.configuration.V1_0.LnbPositionEnum getPosition();
+    method @Nullable public android.media.tuner.testing.configuration.V1_0.LnbToneEnum getTone();
+    method @Nullable public android.media.tuner.testing.configuration.V1_0.LnbVoltageEnum getVoltage();
+    method public void setId(@Nullable String);
+    method public void setName(@Nullable String);
+    method public void setPosition(@Nullable android.media.tuner.testing.configuration.V1_0.LnbPositionEnum);
+    method public void setTone(@Nullable android.media.tuner.testing.configuration.V1_0.LnbToneEnum);
+    method public void setVoltage(@Nullable android.media.tuner.testing.configuration.V1_0.LnbVoltageEnum);
+  }
+
+  public enum LnbPositionEnum {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.LnbPositionEnum POSITION_A;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.LnbPositionEnum POSITION_B;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.LnbPositionEnum UNDEFINED;
+  }
+
+  public enum LnbToneEnum {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.LnbToneEnum CONTINUOUS;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.LnbToneEnum NONE;
+  }
+
+  public enum LnbVoltageEnum {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.LnbVoltageEnum NONE;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.LnbVoltageEnum VOLTAGE_11V;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.LnbVoltageEnum VOLTAGE_12V;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.LnbVoltageEnum VOLTAGE_13V;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.LnbVoltageEnum VOLTAGE_14V;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.LnbVoltageEnum VOLTAGE_15V;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.LnbVoltageEnum VOLTAGE_18V;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.LnbVoltageEnum VOLTAGE_19V;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.LnbVoltageEnum VOLTAGE_5V;
   }
 
   public class RecordFilterSettings {
@@ -291,6 +376,14 @@ package android.media.tuner.testing.configuration.V1_0 {
     method public void setIsCheckCrc(@Nullable boolean);
     method public void setIsRaw(@Nullable boolean);
     method public void setIsRepeat(@Nullable boolean);
+  }
+
+  public class TimeFilter {
+    ctor public TimeFilter();
+    method @Nullable public String getId();
+    method @Nullable public java.math.BigInteger getTimeStamp();
+    method public void setId(@Nullable String);
+    method public void setTimeStamp(@Nullable java.math.BigInteger);
   }
 
   public class TunerConfiguration {
