@@ -247,6 +247,28 @@ StatusCode VehicleHalServer::onSetProperty(const VehiclePropValue& value, bool u
                     break;
             }
             break;
+
+#ifdef ENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING
+        case toInt(VehicleProperty::CLUSTER_REPORT_STATE):
+        case toInt(VehicleProperty::CLUSTER_REQUEST_DISPLAY):
+        case toInt(VehicleProperty::CLUSTER_NAVIGATION_STATE):
+        case VENDOR_CLUSTER_SWITCH_UI:
+        case VENDOR_CLUSTER_DISPLAY_STATE: {
+            auto updatedPropValue = createVehiclePropValue(getPropType(value.prop), 0);
+            updatedPropValue->prop = value.prop & ~toInt(VehiclePropertyGroup::MASK);
+            if (isSystemProperty(value.prop)) {
+                updatedPropValue->prop |= toInt(VehiclePropertyGroup::VENDOR);
+            } else {
+                updatedPropValue->prop |= toInt(VehiclePropertyGroup::SYSTEM);
+            }
+            updatedPropValue->value = value.value;
+            updatedPropValue->timestamp = elapsedRealtimeNano();
+            updatedPropValue->areaId = value.areaId;
+            onPropertyValueFromCar(*updatedPropValue, updateStatus);
+            return StatusCode::OK;
+        }
+#endif  // ENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING
+
         default:
             break;
     }

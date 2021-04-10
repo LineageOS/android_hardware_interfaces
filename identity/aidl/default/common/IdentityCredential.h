@@ -27,7 +27,7 @@
 #include <string>
 #include <vector>
 
-#include <cppbor/cppbor.h>
+#include <cppbor.h>
 
 #include "IdentityCredentialStore.h"
 #include "SecureHardwareProxy.h"
