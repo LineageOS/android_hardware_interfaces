@@ -168,6 +168,22 @@
         <timeFilters>
             <timeFilter id="TIME_FILTER_0" timeStamp="1"/>
         </timeFilters>
+        <!-- Descrambler section:
+            This section contains configurations of all the descramblers that would be used in
+            the tests.
+                - This section is optional and can be skipped if Descrambler is not supported.
+                - The users can configure 1 or more descrambler elements in the descramblers sections.
+
+            Each Descrambler element contain the following attributes:
+                "id": unique id of the descrambler that could be used to connect to the test the
+                    "dataFlowConfiguration"
+                "casSystemId": the cas system id to connect to the descrambler.
+                "provisionStr": the provision string to use with the cas plugin.
+                "sesstionPrivatData": the session private data used to open the cas session.
+        -->
+        <descramblers>
+            <descrambler id="DESCRAMBLER_0" casSystemId="63192"/>
+        </descramblers>
     </hardwareConfiguration>
 
     <!-- Data flow configuration section connects each data flow under test to the ids of the
@@ -181,6 +197,7 @@
                             dvrSoftwareFeConnection="DVR_PLAYBACK_0"/>
         <scan frontendConnection="FE_DEFAULT"/>
         <descrambling frontendConnection="FE_DEFAULT"
+                      descramblerConnection="DESCRAMBLER_0"
                       audioFilterConnection="FILTER_AUDIO_DEFAULT"
                       videoFilterConnection="FILTER_VIDEO_DEFAULT"
                       dvrSoftwareFeConnection="DVR_PLAYBACK_0"/>
