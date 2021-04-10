@@ -34,7 +34,7 @@ cc_test {
         "libcrypto",
     ],
     static_libs: [
-        "libcppbor",
+        "libcppbor_external",
         "libkeymaster_portable",
         "libpuresoftkeymasterdevice",
         "android.hardware.keymaster@4.0",
