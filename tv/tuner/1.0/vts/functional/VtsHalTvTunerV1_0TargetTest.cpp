@@ -441,11 +441,9 @@ TEST_P(TunerFilterHidlTest, SetFilterLinkage) {
             if (caps.linkCaps[i] & (bitMask << j)) {
                 uint32_t sourceFilterId;
                 uint32_t sinkFilterId;
-                ASSERT_TRUE(mFilterTests.openFilterInDemux(filterLinkageTypes[SOURCE][i],
-                                                           FMQ_SIZE_16M));
+                ASSERT_TRUE(mFilterTests.openFilterInDemux(getLinkageFilterType(i), FMQ_SIZE_16M));
                 ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId(sourceFilterId));
-                ASSERT_TRUE(
-                        mFilterTests.openFilterInDemux(filterLinkageTypes[SINK][j], FMQ_SIZE_16M));
+                ASSERT_TRUE(mFilterTests.openFilterInDemux(getLinkageFilterType(j), FMQ_SIZE_16M));
                 ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId(sinkFilterId));
                 ASSERT_TRUE(mFilterTests.setFilterDataSource(sourceFilterId, sinkFilterId));
                 ASSERT_TRUE(mFilterTests.setFilterDataSourceToDemux(sinkFilterId));
@@ -561,7 +559,7 @@ TEST_P(TunerDescramblerHidlTest, ScrambledBroadcastDataFlowMediaFiltersTest) {
     filterConfs.insert(static_cast<FilterConfig>(filterMap[descrambling.audioFilterId]));
     filterConfs.insert(static_cast<FilterConfig>(filterMap[descrambling.videoFilterId]));
     scrambledBroadcastTest(filterConfs, frontendMap[descrambling.frontendId],
-                           descramblerArray[DESC_0]);
+                           descramblerMap[descrambling.descramblerId]);
 }
 
 INSTANTIATE_TEST_SUITE_P(

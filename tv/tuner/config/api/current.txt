@@ -46,10 +46,12 @@ package android.media.tuner.testing.configuration.V1_0 {
   public static class DataFlowConfiguration.Descrambling {
     ctor public DataFlowConfiguration.Descrambling();
     method @Nullable public String getAudioFilterConnection();
+    method @Nullable public String getDescramblerConnection();
     method @Nullable public String getDvrSoftwareFeConnection();
     method @Nullable public String getFrontendConnection();
     method @Nullable public String getVideoFilterConnection();
     method public void setAudioFilterConnection(@Nullable String);
+    method public void setDescramblerConnection(@Nullable String);
     method public void setDvrSoftwareFeConnection(@Nullable String);
     method public void setFrontendConnection(@Nullable String);
     method public void setVideoFilterConnection(@Nullable String);
@@ -117,6 +119,18 @@ package android.media.tuner.testing.configuration.V1_0 {
     ctor public DataFlowConfiguration.TimeFilter();
     method @Nullable public String getTimeFilterConnection();
     method public void setTimeFilterConnection(@Nullable String);
+  }
+
+  public class Descrambler {
+    ctor public Descrambler();
+    method @Nullable public java.math.BigInteger getCasSystemId();
+    method @Nullable public String getId();
+    method @Nullable public String getProvisionStr();
+    method @Nullable public java.util.List<java.lang.Short> getSesstionPrivatData();
+    method public void setCasSystemId(@Nullable java.math.BigInteger);
+    method public void setId(@Nullable String);
+    method public void setProvisionStr(@Nullable String);
+    method public void setSesstionPrivatData(@Nullable java.util.List<java.lang.Short>);
   }
 
   public class DiseqcMessage {
@@ -269,18 +283,25 @@ package android.media.tuner.testing.configuration.V1_0 {
 
   public class HardwareConfiguration {
     ctor public HardwareConfiguration();
+    method @Nullable public android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.Descramblers getDescramblers();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.DiseqcMessages getDiseqcMessages();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.Dvrs getDvrs();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.Filters getFilters();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.Frontends getFrontends();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.Lnbs getLnbs();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.TimeFilters getTimeFilters();
+    method public void setDescramblers(@Nullable android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.Descramblers);
     method public void setDiseqcMessages(@Nullable android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.DiseqcMessages);
     method public void setDvrs(@Nullable android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.Dvrs);
     method public void setFilters(@Nullable android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.Filters);
     method public void setFrontends(@Nullable android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.Frontends);
     method public void setLnbs(@Nullable android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.Lnbs);
     method public void setTimeFilters(@Nullable android.media.tuner.testing.configuration.V1_0.HardwareConfiguration.TimeFilters);
+  }
+
+  public static class HardwareConfiguration.Descramblers {
+    ctor public HardwareConfiguration.Descramblers();
+    method @Nullable public java.util.List<android.media.tuner.testing.configuration.V1_0.Descrambler> getDescrambler();
   }
 
   public static class HardwareConfiguration.DiseqcMessages {
