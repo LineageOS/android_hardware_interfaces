@@ -124,7 +124,11 @@ namespace implementation {
             return Void();
         }
 
-        if (source.offset + offset + source.size > sourceBase->getSize()) {
+        size_t totalSize = 0;
+        if (__builtin_add_overflow(source.offset, offset, &totalSize) ||
+            __builtin_add_overflow(totalSize, source.size, &totalSize) ||
+            totalSize > sourceBase->getSize()) {
+            android_errorWriteLog(0x534e4554, "176496160");
             _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, 0, "invalid buffer size");
             return Void();
         }
