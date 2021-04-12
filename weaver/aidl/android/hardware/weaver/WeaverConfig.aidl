@@ -21,14 +21,14 @@ parcelable WeaverConfig {
     /**
      * The number of slots available.
      */
-    long slots;
+    int slots;
     /**
      * The number of bytes used for a key.
      */
-    long keySize;
+    int keySize;
     /**
      * The number of bytes used for a value.
      */
-    long valueSize;
+    int valueSize;
 }
 
