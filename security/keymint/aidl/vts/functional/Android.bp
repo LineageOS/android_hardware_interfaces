@@ -43,6 +43,8 @@ cc_test {
         "android.hardware.security.keymint-V1-ndk_platform",
         "android.hardware.security.secureclock-V1-ndk_platform",
         "libcppbor_external",
+        "libcppcose",
+        "libkeymint_remote_prov_support",
         "libkeymint_vts_test_utils",
     ],
     test_suites: [
@@ -73,6 +75,9 @@ cc_test_library {
         "android.hardware.security.keymint-V1-ndk_platform",
         "android.hardware.security.secureclock-V1-ndk_platform",
         "libcppbor_external",
+        "libcppcose",
+        "libgmock_ndk",
+        "libkeymint_remote_prov_support",
     ],
 }
 

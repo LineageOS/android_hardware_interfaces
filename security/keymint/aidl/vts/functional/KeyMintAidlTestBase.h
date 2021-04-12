@@ -25,6 +25,7 @@
 
 #include <aidl/android/hardware/security/keymint/ErrorCode.h>
 #include <aidl/android/hardware/security/keymint/IKeyMintDevice.h>
+#include <aidl/android/hardware/security/keymint/MacedPublicKey.h>
 
 #include <keymint_support/authorization_set.h>
 #include <keymint_support/openssl_utils.h>
@@ -277,6 +278,10 @@ bool verify_attestation_record(const string& challenge,                //
 string bin2hex(const vector<uint8_t>& data);
 X509_Ptr parse_cert_blob(const vector<uint8_t>& blob);
 vector<uint8_t> make_name_from_str(const string& name);
+void check_maced_pubkey(const MacedPublicKey& macedPubKey, bool testMode,
+                        vector<uint8_t>* payload_value);
+void p256_pub_key(const vector<uint8_t>& coseKeyData, EVP_PKEY_Ptr* signingKey);
+
 AuthorizationSet HwEnforcedAuthorizations(const vector<KeyCharacteristics>& key_characteristics);
 AuthorizationSet SwEnforcedAuthorizations(const vector<KeyCharacteristics>& key_characteristics);
 ::testing::AssertionResult ChainSignaturesAreValid(const vector<Certificate>& chain);
