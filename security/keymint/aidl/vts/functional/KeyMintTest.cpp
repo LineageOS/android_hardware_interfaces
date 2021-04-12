@@ -27,6 +27,9 @@
 
 #include <cutils/properties.h>
 
+#include <android/binder_manager.h>
+
+#include <aidl/android/hardware/security/keymint/IRemotelyProvisionedComponent.h>
 #include <aidl/android/hardware/security/keymint/KeyFormat.h>
 
 #include <keymint_support/key_param_output.h>
@@ -209,6 +212,32 @@ class AidlBuf : public vector<uint8_t> {
     string to_string() const { return string(reinterpret_cast<const char*>(data()), size()); }
 };
 
+string device_suffix(const string& name) {
+    size_t pos = name.find('/');
+    if (pos == string::npos) {
+        return name;
+    }
+    return name.substr(pos + 1);
+}
+
+bool matching_rp_instance(const string& km_name,
+                          std::shared_ptr<IRemotelyProvisionedComponent>* rp) {
+    string km_suffix = device_suffix(km_name);
+
+    vector<string> rp_names =
+            ::android::getAidlHalInstanceNames(IRemotelyProvisionedComponent::descriptor);
+    for (const string& rp_name : rp_names) {
+        // If the suffix of the RemotelyProvisionedComponent instance equals the suffix of the
+        // KeyMint instance, assume they match.
+        if (device_suffix(rp_name) == km_suffix && AServiceManager_isDeclared(rp_name.c_str())) {
+            ::ndk::SpAIBinder binder(AServiceManager_waitForService(rp_name.c_str()));
+            *rp = IRemotelyProvisionedComponent::fromBinder(binder);
+            return true;
+        }
+    }
+    return false;
+}
+
 }  // namespace
 
 class NewKeyGenerationTest : public KeyMintAidlTestBase {
@@ -316,6 +345,77 @@ TEST_P(NewKeyGenerationTest, RsaWithAttestation) {
         EXPECT_TRUE(verify_attestation_record(challenge, app_id,  //
                                               sw_enforced, hw_enforced, SecLevel(),
                                               cert_chain_[0].encodedCertificate));
+
+        CheckedDeleteKey(&key_blob);
+    }
+}
+
+/*
+ * NewKeyGenerationTest.RsaWithRpkAttestation
+ *
+ * Verifies that keymint can generate all required RSA key sizes, using an attestation key
+ * that has been generated using an associate IRemotelyProvisionedComponent.
+ */
+TEST_P(NewKeyGenerationTest, RsaWithRpkAttestation) {
+    // There should be an IRemotelyProvisionedComponent instance associated with the KeyMint
+    // instance.
+    std::shared_ptr<IRemotelyProvisionedComponent> rp;
+    ASSERT_TRUE(matching_rp_instance(GetParam(), &rp))
+            << "No IRemotelyProvisionedComponent found that matches KeyMint device " << GetParam();
+
+    // Generate a P-256 keypair to use as an attestation key.
+    MacedPublicKey macedPubKey;
+    std::vector<uint8_t> privateKeyBlob;
+    auto status =
+            rp->generateEcdsaP256KeyPair(/* testMode= */ false, &macedPubKey, &privateKeyBlob);
+    ASSERT_TRUE(status.isOk());
+    vector<uint8_t> coseKeyData;
+    check_maced_pubkey(macedPubKey, /* testMode= */ false, &coseKeyData);
+
+    AttestationKey attestation_key;
+    attestation_key.keyBlob = std::move(privateKeyBlob);
+    attestation_key.issuerSubjectName = make_name_from_str("Android Keystore Key");
+
+    for (auto key_size : ValidKeySizes(Algorithm::RSA)) {
+        auto challenge = "hello";
+        auto app_id = "foo";
+
+        vector<uint8_t> key_blob;
+        vector<KeyCharacteristics> key_characteristics;
+        ASSERT_EQ(ErrorCode::OK,
+                  GenerateKey(AuthorizationSetBuilder()
+                                      .RsaSigningKey(key_size, 65537)
+                                      .Digest(Digest::NONE)
+                                      .Padding(PaddingMode::NONE)
+                                      .AttestationChallenge(challenge)
+                                      .AttestationApplicationId(app_id)
+                                      .Authorization(TAG_NO_AUTH_REQUIRED)
+                                      .SetDefaultValidity(),
+                              attestation_key, &key_blob, &key_characteristics, &cert_chain_));
+
+        ASSERT_GT(key_blob.size(), 0U);
+        CheckBaseParams(key_characteristics);
+
+        AuthorizationSet crypto_params = SecLevelAuthorizations(key_characteristics);
+
+        EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::RSA));
+        EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
+                << "Key size " << key_size << "missing";
+        EXPECT_TRUE(crypto_params.Contains(TAG_RSA_PUBLIC_EXPONENT, 65537U));
+
+        // Attestation by itself is not valid (last entry is not self-signed).
+        EXPECT_FALSE(ChainSignaturesAreValid(cert_chain_));
+
+        // The signature over the attested key should correspond to the P256 public key.
+        X509_Ptr key_cert(parse_cert_blob(cert_chain_[0].encodedCertificate));
+        ASSERT_TRUE(key_cert.get());
+        EVP_PKEY_Ptr signing_pubkey;
+        p256_pub_key(coseKeyData, &signing_pubkey);
+        ASSERT_TRUE(signing_pubkey.get());
+
+        ASSERT_TRUE(X509_verify(key_cert.get(), signing_pubkey.get()))
+                << "Verification of attested certificate failed "
+                << "OpenSSL error string: " << ERR_error_string(ERR_get_error(), NULL);
 
         CheckedDeleteKey(&key_blob);
     }
