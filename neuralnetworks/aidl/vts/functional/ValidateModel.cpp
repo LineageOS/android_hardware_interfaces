@@ -259,12 +259,16 @@ template <>
 size_t sizeForBinder(const Memory& memory) {
     // This is just a guess.
 
-    size_t size = 0;
-    const NativeHandle& handle = memory.handle;
-    size += sizeof(decltype(handle.fds)::value_type) * handle.fds.size();
-    size += sizeof(decltype(handle.ints)::value_type) * handle.ints.size();
-    size += sizeForBinder(memory.name);
-    size += sizeof(memory);
+    size_t size = sizeof(Memory);
+
+    // Only hardwareBuffer type memory has dynamic memory that needs to be accounted for (in the
+    // form of a NativeHandle type). The other other types of memory (MappableFile, Ashmem) use a
+    // single file descriptor (with metadata) instead.
+    if (memory.getTag() == Memory::Tag::hardwareBuffer) {
+        const NativeHandle& handle = memory.get<Memory::Tag::hardwareBuffer>().handle;
+        size += sizeof(decltype(handle.fds)::value_type) * handle.fds.size();
+        size += sizeof(decltype(handle.ints)::value_type) * handle.ints.size();
+    }
 
     return size;
 }
