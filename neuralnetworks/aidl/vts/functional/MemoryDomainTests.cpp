@@ -16,6 +16,7 @@
 
 #define LOG_TAG "neuralnetworks_aidl_hal_test"
 
+#include <aidl/android/hardware/graphics/common/PixelFormat.h>
 #include <android-base/logging.h>
 #include <android/binder_auto_utils.h>
 #include <android/binder_interface_utils.h>
@@ -659,10 +660,26 @@ class MemoryDomainCopyTestBase : public MemoryDomainTestBase {
         return allocateBuffer(preparedModel, inputIndexes, outputIndexes, {});
     }
 
+    size_t getSize(const Memory& memory) {
+        switch (memory.getTag()) {
+            case Memory::Tag::ashmem:
+                return memory.get<Memory::Tag::ashmem>().size;
+            case Memory::Tag::mappableFile:
+                return memory.get<Memory::Tag::mappableFile>().length;
+            case Memory::Tag::hardwareBuffer: {
+                const auto& hardwareBuffer = memory.get<Memory::Tag::hardwareBuffer>();
+                const bool isBlob =
+                        hardwareBuffer.description.format == graphics::common::PixelFormat::BLOB;
+                return isBlob ? hardwareBuffer.description.width : 0;
+            }
+        }
+        return 0;
+    }
+
     Memory allocateSharedMemory(uint32_t size) {
         const auto sharedMemory = nn::createSharedMemory(size).value();
         auto memory = utils::convert(sharedMemory).value();
-        EXPECT_EQ(memory.size, size);
+        EXPECT_EQ(getSize(memory), size);
         return memory;
     }
 
@@ -690,7 +707,7 @@ class MemoryDomainCopyTestBase : public MemoryDomainTestBase {
 
     void initializeDeviceMemory(const std::shared_ptr<IBuffer>& buffer) {
         Memory memory = allocateSharedMemory(kTestOperandDataSize);
-        ASSERT_EQ(memory.size, kTestOperandDataSize);
+        ASSERT_EQ(getSize(memory), kTestOperandDataSize);
         testCopyFrom(buffer, memory, utils::toSigned(kTestOperand.dimensions).value(),
                      ErrorStatus::NONE);
     }
