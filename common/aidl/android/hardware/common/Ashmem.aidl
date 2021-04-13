@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,27 +14,21 @@
  * limitations under the License.
  */
 
-package android.hardware.neuralnetworks;
+package android.hardware.common;
 
-import android.hardware.common.Ashmem;
-import android.hardware.common.MappableFile;
-import android.hardware.graphics.common.HardwareBuffer;
+import android.os.ParcelFileDescriptor;
 
 /**
- * The different types of memory that can be shared across processes.
+ * Type that holds same memory as the "ashmem" hidl_memory type from HIDL.
  */
 @VintfStability
-union Memory {
+parcelable Ashmem {
     /**
-     * Ashmem hidl_memory type from HIDL.
+     * A handle to a memory region.
      */
-    Ashmem ashmem;
+    ParcelFileDescriptor fd;
     /**
-     * File that can be mapped.
+     * Size of the memory region in bytes.
      */
-    MappableFile mappableFile;
-    /**
-     * AIDL representation of AHardwareBuffer.
-     */
-    HardwareBuffer hardwareBuffer;
+    long size;
 }
