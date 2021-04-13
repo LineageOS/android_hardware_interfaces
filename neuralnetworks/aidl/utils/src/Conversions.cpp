@@ -16,8 +16,13 @@
 
 #include "Conversions.h"
 
+#include <aidl/android/hardware/common/Ashmem.h>
+#include <aidl/android/hardware/common/MappableFile.h>
 #include <aidl/android/hardware/common/NativeHandle.h>
+#include <aidl/android/hardware/graphics/common/HardwareBuffer.h>
+#include <aidlcommonsupport/NativeHandle.h>
 #include <android-base/logging.h>
+#include <android-base/mapped_file.h>
 #include <android-base/unique_fd.h>
 #include <android/binder_auto_utils.h>
 #include <android/hardware_buffer.h>
@@ -125,28 +130,17 @@ struct NativeHandleDeleter {
 
 using UniqueNativeHandle = std::unique_ptr<native_handle_t, NativeHandleDeleter>;
 
-static GeneralResult<UniqueNativeHandle> nativeHandleFromAidlHandle(const NativeHandle& handle) {
-    std::vector<base::unique_fd> fds;
-    fds.reserve(handle.fds.size());
-    for (const auto& fd : handle.fds) {
-        auto duplicatedFd = NN_TRY(dupFd(fd.get()));
-        fds.emplace_back(duplicatedFd.release());
+GeneralResult<UniqueNativeHandle> nativeHandleFromAidlHandle(const NativeHandle& handle) {
+    auto nativeHandle = UniqueNativeHandle(dupFromAidl(handle));
+    if (nativeHandle.get() == nullptr) {
+        return NN_ERROR() << "android::dupFromAidl failed to convert the common::NativeHandle to a "
+                             "native_handle_t";
     }
-
-    constexpr size_t kIntMax = std::numeric_limits<int>::max();
-    CHECK_LE(handle.fds.size(), kIntMax);
-    CHECK_LE(handle.ints.size(), kIntMax);
-    native_handle_t* nativeHandle = native_handle_create(static_cast<int>(handle.fds.size()),
-                                                         static_cast<int>(handle.ints.size()));
-    if (nativeHandle == nullptr) {
-        return NN_ERROR() << "Failed to create native_handle";
+    if (!std::all_of(nativeHandle->data + 0, nativeHandle->data + nativeHandle->numFds,
+                     [](int fd) { return fd >= 0; })) {
+        return NN_ERROR() << "android::dupFromAidl returned an invalid native_handle_t";
     }
-    for (size_t i = 0; i < fds.size(); ++i) {
-        nativeHandle->data[i] = fds[i].release();
-    }
-    std::copy(handle.ints.begin(), handle.ints.end(), &nativeHandle->data[nativeHandle->numFds]);
-
-    return UniqueNativeHandle(nativeHandle);
+    return nativeHandle;
 }
 
 }  // anonymous namespace
@@ -353,67 +347,66 @@ GeneralResult<MeasureTiming> unvalidatedConvert(bool measureTiming) {
     return measureTiming ? MeasureTiming::YES : MeasureTiming::NO;
 }
 
-static uint32_t roundUpToMultiple(uint32_t value, uint32_t multiple) {
-    return (value + multiple - 1) / multiple * multiple;
-}
-
 GeneralResult<SharedMemory> unvalidatedConvert(const aidl_hal::Memory& memory) {
-    VERIFY_NON_NEGATIVE(memory.size) << "Memory size must not be negative";
-    if (memory.size > std::numeric_limits<size_t>::max()) {
-        return NN_ERROR() << "Memory: size must be <= std::numeric_limits<size_t>::max()";
-    }
+    using Tag = aidl_hal::Memory::Tag;
+    switch (memory.getTag()) {
+        case Tag::ashmem: {
+            const auto& ashmem = memory.get<Tag::ashmem>();
+            VERIFY_NON_NEGATIVE(ashmem.size) << "Memory size must not be negative";
+            if (ashmem.size > std::numeric_limits<size_t>::max()) {
+                return NN_ERROR() << "Memory: size must be <= std::numeric_limits<size_t>::max()";
+            }
 
-    if (memory.name != "hardware_buffer_blob") {
-        return std::make_shared<const Memory>(Memory{
-                .handle = NN_TRY(unvalidatedConvertHelper(memory.handle)),
-                .size = static_cast<size_t>(memory.size),
-                .name = memory.name,
-        });
-    }
+            auto handle = Memory::Ashmem{
+                    .fd = NN_TRY(dupFd(ashmem.fd.get())),
+                    .size = static_cast<size_t>(ashmem.size),
+            };
+            return std::make_shared<const Memory>(Memory{.handle = std::move(handle)});
+        }
+        case Tag::mappableFile: {
+            const auto& mappableFile = memory.get<Tag::mappableFile>();
+            VERIFY_NON_NEGATIVE(mappableFile.length) << "Memory size must not be negative";
+            VERIFY_NON_NEGATIVE(mappableFile.offset) << "Memory offset must not be negative";
+            if (mappableFile.length > std::numeric_limits<size_t>::max()) {
+                return NN_ERROR() << "Memory: size must be <= std::numeric_limits<size_t>::max()";
+            }
+            if (mappableFile.offset > std::numeric_limits<size_t>::max()) {
+                return NN_ERROR() << "Memory: offset must be <= std::numeric_limits<size_t>::max()";
+            }
 
-    const auto size = static_cast<uint32_t>(memory.size);
-    const auto format = AHARDWAREBUFFER_FORMAT_BLOB;
-    const auto usage = AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN | AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN;
-    const uint32_t width = size;
-    const uint32_t height = 1;  // height is always 1 for BLOB mode AHardwareBuffer.
-    const uint32_t layers = 1;  // layers is always 1 for BLOB mode AHardwareBuffer.
+            const size_t size = static_cast<size_t>(mappableFile.length);
+            const int prot = mappableFile.prot;
+            const int fd = mappableFile.fd.get();
+            const size_t offset = static_cast<size_t>(mappableFile.offset);
 
-    const UniqueNativeHandle handle = NN_TRY(nativeHandleFromAidlHandle(memory.handle));
-    const native_handle_t* nativeHandle = handle.get();
+            return createSharedMemoryFromFd(size, prot, fd, offset);
+        }
+        case Tag::hardwareBuffer: {
+            const auto& hardwareBuffer = memory.get<Tag::hardwareBuffer>();
 
-    // AHardwareBuffer_createFromHandle() might fail because an allocator
-    // expects a specific stride value. In that case, we try to guess it by
-    // aligning the width to small powers of 2.
-    // TODO(b/174120849): Avoid stride assumptions.
-    AHardwareBuffer* hardwareBuffer = nullptr;
-    status_t status = UNKNOWN_ERROR;
-    for (uint32_t alignment : {1, 4, 32, 64, 128, 2, 8, 16}) {
-        const uint32_t stride = roundUpToMultiple(width, alignment);
-        AHardwareBuffer_Desc desc{
-                .width = width,
-                .height = height,
-                .layers = layers,
-                .format = format,
-                .usage = usage,
-                .stride = stride,
-        };
-        status = AHardwareBuffer_createFromHandle(&desc, nativeHandle,
-                                                  AHARDWAREBUFFER_CREATE_FROM_HANDLE_METHOD_CLONE,
-                                                  &hardwareBuffer);
-        if (status == NO_ERROR) {
-            break;
+            const UniqueNativeHandle handle =
+                    NN_TRY(nativeHandleFromAidlHandle(hardwareBuffer.handle));
+            const native_handle_t* nativeHandle = handle.get();
+
+            const AHardwareBuffer_Desc desc{
+                    .width = static_cast<uint32_t>(hardwareBuffer.description.width),
+                    .height = static_cast<uint32_t>(hardwareBuffer.description.height),
+                    .layers = static_cast<uint32_t>(hardwareBuffer.description.layers),
+                    .format = static_cast<uint32_t>(hardwareBuffer.description.format),
+                    .usage = static_cast<uint64_t>(hardwareBuffer.description.usage),
+                    .stride = static_cast<uint32_t>(hardwareBuffer.description.stride),
+            };
+            AHardwareBuffer* ahwb = nullptr;
+            const status_t status = AHardwareBuffer_createFromHandle(
+                    &desc, nativeHandle, AHARDWAREBUFFER_CREATE_FROM_HANDLE_METHOD_CLONE, &ahwb);
+            if (status != NO_ERROR) {
+                return NN_ERROR() << "createFromHandle failed";
+            }
+
+            return createSharedMemoryFromAHWB(ahwb, /*takeOwnership=*/true);
         }
     }
-    if (status != NO_ERROR) {
-        return NN_ERROR(ErrorStatus::GENERAL_FAILURE)
-               << "Can't create AHardwareBuffer from handle. Error: " << status;
-    }
-
-    return std::make_shared<const Memory>(Memory{
-            .handle = HardwareBufferHandle(hardwareBuffer, /*takeOwnership=*/true),
-            .size = static_cast<size_t>(memory.size),
-            .name = memory.name,
-    });
+    return NN_ERROR() << "Unrecognized Memory::Tag: " << memory.getTag();
 }
 
 GeneralResult<Timing> unvalidatedConvert(const aidl_hal::Timing& timing) {
@@ -645,20 +638,95 @@ struct overloaded : Ts... {
 template <class... Ts>
 overloaded(Ts...)->overloaded<Ts...>;
 
-static nn::GeneralResult<common::NativeHandle> aidlHandleFromNativeHandle(
-        const native_handle_t& handle) {
-    common::NativeHandle aidlNativeHandle;
+nn::GeneralResult<common::NativeHandle> aidlHandleFromNativeHandle(
+        const native_handle_t& nativeHandle) {
+    auto handle = ::android::dupToAidl(&nativeHandle);
+    if (!std::all_of(handle.fds.begin(), handle.fds.end(),
+                     [](const ndk::ScopedFileDescriptor& fd) { return fd.get() >= 0; })) {
+        return NN_ERROR() << "android::dupToAidl returned an invalid common::NativeHandle";
+    }
+    return handle;
+}
 
-    aidlNativeHandle.fds.reserve(handle.numFds);
-    for (int i = 0; i < handle.numFds; ++i) {
-        auto duplicatedFd = NN_TRY(nn::dupFd(handle.data[i]));
-        aidlNativeHandle.fds.emplace_back(duplicatedFd.release());
+nn::GeneralResult<Memory> unvalidatedConvert(const nn::Memory::Ashmem& memory) {
+    if constexpr (std::numeric_limits<size_t>::max() > std::numeric_limits<int64_t>::max()) {
+        if (memory.size > std::numeric_limits<int64_t>::max()) {
+            return (
+                           NN_ERROR()
+                           << "Memory::Ashmem: size must be <= std::numeric_limits<int64_t>::max()")
+                    .
+                    operator nn::GeneralResult<Memory>();
+        }
     }
 
-    aidlNativeHandle.ints = std::vector<int>(&handle.data[handle.numFds],
-                                             &handle.data[handle.numFds + handle.numInts]);
+    auto fd = NN_TRY(nn::dupFd(memory.fd));
+    auto handle = common::Ashmem{
+            .fd = ndk::ScopedFileDescriptor(fd.release()),
+            .size = static_cast<int64_t>(memory.size),
+    };
+    return Memory::make<Memory::Tag::ashmem>(std::move(handle));
+}
 
-    return aidlNativeHandle;
+nn::GeneralResult<Memory> unvalidatedConvert(const nn::Memory::Fd& memory) {
+    if constexpr (std::numeric_limits<size_t>::max() > std::numeric_limits<int64_t>::max()) {
+        if (memory.size > std::numeric_limits<int64_t>::max()) {
+            return (NN_ERROR() << "Memory::Fd: size must be <= std::numeric_limits<int64_t>::max()")
+                    .
+                    operator nn::GeneralResult<Memory>();
+        }
+        if (memory.offset > std::numeric_limits<int64_t>::max()) {
+            return (
+                           NN_ERROR()
+                           << "Memory::Fd: offset must be <= std::numeric_limits<int64_t>::max()")
+                    .
+                    operator nn::GeneralResult<Memory>();
+        }
+    }
+
+    auto fd = NN_TRY(nn::dupFd(memory.fd));
+    auto handle = common::MappableFile{
+            .length = static_cast<int64_t>(memory.size),
+            .prot = memory.prot,
+            .fd = ndk::ScopedFileDescriptor(fd.release()),
+            .offset = static_cast<int64_t>(memory.offset),
+    };
+    return Memory::make<Memory::Tag::mappableFile>(std::move(handle));
+}
+
+nn::GeneralResult<Memory> unvalidatedConvert(const nn::Memory::HardwareBuffer& memory) {
+    const native_handle_t* nativeHandle = AHardwareBuffer_getNativeHandle(memory.handle.get());
+    if (nativeHandle == nullptr) {
+        return (NN_ERROR() << "unvalidatedConvert failed because AHardwareBuffer_getNativeHandle "
+                              "returned nullptr")
+                .
+                operator nn::GeneralResult<Memory>();
+    }
+
+    auto handle = NN_TRY(aidlHandleFromNativeHandle(*nativeHandle));
+
+    AHardwareBuffer_Desc desc;
+    AHardwareBuffer_describe(memory.handle.get(), &desc);
+
+    const auto description = graphics::common::HardwareBufferDescription{
+            .width = static_cast<int32_t>(desc.width),
+            .height = static_cast<int32_t>(desc.height),
+            .layers = static_cast<int32_t>(desc.layers),
+            .format = static_cast<graphics::common::PixelFormat>(desc.format),
+            .usage = static_cast<graphics::common::BufferUsage>(desc.usage),
+            .stride = static_cast<int32_t>(desc.stride),
+    };
+
+    auto hardwareBuffer = graphics::common::HardwareBuffer{
+            .description = std::move(description),
+            .handle = std::move(handle),
+    };
+    return Memory::make<Memory::Tag::hardwareBuffer>(std::move(hardwareBuffer));
+}
+
+nn::GeneralResult<Memory> unvalidatedConvert(const nn::Memory::Unknown& /*memory*/) {
+    return (NN_ERROR() << "Unable to convert Unknown memory type")
+            .
+            operator nn::GeneralResult<Memory>();
 }
 
 }  // namespace
@@ -693,41 +761,12 @@ nn::GeneralResult<common::NativeHandle> unvalidatedConvert(const nn::SharedHandl
 }
 
 nn::GeneralResult<Memory> unvalidatedConvert(const nn::SharedMemory& memory) {
-    CHECK(memory != nullptr);
-    if (memory->size > std::numeric_limits<int64_t>::max()) {
-        return NN_ERROR() << "Memory size doesn't fit into int64_t.";
+    if (memory == nullptr) {
+        return (NN_ERROR() << "Unable to convert nullptr memory")
+                .
+                operator nn::GeneralResult<Memory>();
     }
-    if (const auto* handle = std::get_if<nn::Handle>(&memory->handle)) {
-        return Memory{
-                .handle = NN_TRY(unvalidatedConvert(*handle)),
-                .size = static_cast<int64_t>(memory->size),
-                .name = memory->name,
-        };
-    }
-
-    const auto* ahwb = std::get<nn::HardwareBufferHandle>(memory->handle).get();
-    AHardwareBuffer_Desc bufferDesc;
-    AHardwareBuffer_describe(ahwb, &bufferDesc);
-
-    if (bufferDesc.format == AHARDWAREBUFFER_FORMAT_BLOB) {
-        CHECK_EQ(memory->size, bufferDesc.width);
-        CHECK_EQ(memory->name, "hardware_buffer_blob");
-    } else {
-        CHECK_EQ(memory->size, 0u);
-        CHECK_EQ(memory->name, "hardware_buffer");
-    }
-
-    const native_handle_t* nativeHandle = AHardwareBuffer_getNativeHandle(ahwb);
-    if (nativeHandle == nullptr) {
-        return NN_ERROR() << "unvalidatedConvert failed because AHardwareBuffer_getNativeHandle "
-                             "returned nullptr";
-    }
-
-    return Memory{
-            .handle = NN_TRY(aidlHandleFromNativeHandle(*nativeHandle)),
-            .size = static_cast<int64_t>(memory->size),
-            .name = memory->name,
-    };
+    return std::visit([](const auto& x) { return unvalidatedConvert(x); }, memory->handle);
 }
 
 nn::GeneralResult<ErrorStatus> unvalidatedConvert(const nn::ErrorStatus& errorStatus) {
