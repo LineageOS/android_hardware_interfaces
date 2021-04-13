@@ -33,8 +33,8 @@
 
 package android.hardware.neuralnetworks;
 @VintfStability
-parcelable Memory {
-  android.hardware.common.NativeHandle handle;
-  long size;
-  String name;
+union Memory {
+  android.hardware.common.Ashmem ashmem;
+  android.hardware.common.MappableFile mappableFile;
+  android.hardware.graphics.common.HardwareBuffer hardwareBuffer;
 }
