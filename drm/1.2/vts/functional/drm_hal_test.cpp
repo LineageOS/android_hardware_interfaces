@@ -172,6 +172,7 @@ void checkKeySetIdState(Status status, OfflineLicenseState state) {
 TEST_P(DrmHalTest, OfflineLicenseTest) {
     auto sessionId = openSession();
     hidl_vec<uint8_t> keySetId = loadKeys(sessionId, KeyType::OFFLINE);
+    closeSession(sessionId);
 
     auto res = drmPlugin->getOfflineLicenseKeySetIds(
             [&](Status status, const hidl_vec<KeySetId>& keySetIds) {
@@ -201,8 +202,6 @@ TEST_P(DrmHalTest, OfflineLicenseTest) {
 
     err = drmPlugin->removeOfflineLicense(keySetId);
     EXPECT_EQ(Status::BAD_VALUE, err);
-
-    closeSession(sessionId);
 }
 
 /**
@@ -212,6 +211,8 @@ TEST_P(DrmHalTest, OfflineLicenseStateTest) {
     auto sessionId = openSession();
     DrmHalVTSVendorModule_V1::ContentConfiguration content = getContent(KeyType::OFFLINE);
     hidl_vec<uint8_t> keySetId = loadKeys(sessionId, content, KeyType::OFFLINE);
+    closeSession(sessionId);
+
     drmPlugin->getOfflineLicenseState(keySetId, checkKeySetIdState<Status::OK, OfflineLicenseState::USABLE>);
 
     hidl_vec<uint8_t> keyRequest = getKeyRequest(keySetId, content, KeyType::RELEASE);
@@ -226,7 +227,6 @@ TEST_P(DrmHalTest, OfflineLicenseStateTest) {
 
     provideKeyResponse(keySetId, keyResponse);
     drmPlugin->getOfflineLicenseState(keySetId, checkKeySetIdState<Status::BAD_VALUE, OfflineLicenseState::UNKNOWN>);
-    closeSession(sessionId);
 }
 
 /**
