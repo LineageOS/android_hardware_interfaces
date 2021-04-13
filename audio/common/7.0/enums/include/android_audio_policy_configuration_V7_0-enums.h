@@ -155,6 +155,7 @@ static inline bool isOutputDevice(AudioDevice device) {
         case AudioDevice::AUDIO_DEVICE_OUT_TELEPHONY_TX:
         case AudioDevice::AUDIO_DEVICE_OUT_LINE:
         case AudioDevice::AUDIO_DEVICE_OUT_HDMI_ARC:
+        case AudioDevice::AUDIO_DEVICE_OUT_HDMI_EARC:
         case AudioDevice::AUDIO_DEVICE_OUT_SPDIF:
         case AudioDevice::AUDIO_DEVICE_OUT_FM:
         case AudioDevice::AUDIO_DEVICE_OUT_AUX_LINE:
@@ -197,6 +198,7 @@ static inline bool isOutputDevice(AudioDevice device) {
         case AudioDevice::AUDIO_DEVICE_IN_USB_HEADSET:
         case AudioDevice::AUDIO_DEVICE_IN_BLUETOOTH_BLE:
         case AudioDevice::AUDIO_DEVICE_IN_HDMI_ARC:
+        case AudioDevice::AUDIO_DEVICE_IN_HDMI_EARC:
         case AudioDevice::AUDIO_DEVICE_IN_ECHO_REFERENCE:
         case AudioDevice::AUDIO_DEVICE_IN_BLE_HEADSET:
         case AudioDevice::AUDIO_DEVICE_IN_DEFAULT:
