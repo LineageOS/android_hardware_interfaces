@@ -62,6 +62,7 @@ class RadioResponse_v1_6 : public ::android::hardware::radio::V1_6::IRadioRespon
 
   public:
     hidl_vec<RadioBandMode> radioBandModes;
+    hidl_vec<OperatorInfo> networkInfos;
 
     ::android::hardware::radio::V1_0::RadioResponseInfo rspInfo_v1_0;
     ::android::hardware::radio::V1_6::RadioResponseInfo rspInfo;

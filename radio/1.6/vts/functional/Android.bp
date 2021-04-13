@@ -28,6 +28,7 @@ cc_test {
     defaults: ["VtsHalTargetTestDefaults"],
     srcs: [
         "radio_hidl_hal_api.cpp",
+        "radio_hidl_hal_misc.cpp",
         "radio_hidl_hal_test.cpp",
         "radio_response.cpp",
         "radio_indication.cpp",
