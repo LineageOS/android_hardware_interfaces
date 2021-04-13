@@ -89,6 +89,59 @@ void copyPointersToSharedMemory(nn::Model::Subgraph* subgraph,
                   });
 }
 
+nn::GeneralResult<hidl_handle> createNativeHandleFrom(base::unique_fd fd,
+                                                      const std::vector<int32_t>& ints) {
+    constexpr size_t kIntMax = std::numeric_limits<int>::max();
+    CHECK_LE(ints.size(), kIntMax);
+    native_handle_t* nativeHandle = native_handle_create(1, static_cast<int>(ints.size()));
+    if (nativeHandle == nullptr) {
+        return NN_ERROR() << "Failed to create native_handle";
+    }
+
+    nativeHandle->data[0] = fd.release();
+    std::copy(ints.begin(), ints.end(), nativeHandle->data + 1);
+
+    hidl_handle handle;
+    handle.setTo(nativeHandle, /*shouldOwn=*/true);
+    return handle;
+}
+
+nn::GeneralResult<hidl_memory> createHidlMemoryFrom(const nn::Memory::Ashmem& memory) {
+    auto fd = NN_TRY(nn::dupFd(memory.fd));
+    auto handle = NN_TRY(createNativeHandleFrom(std::move(fd), {}));
+    return hidl_memory("ashmem", std::move(handle), memory.size);
+}
+
+nn::GeneralResult<hidl_memory> createHidlMemoryFrom(const nn::Memory::Fd& memory) {
+    auto fd = NN_TRY(nn::dupFd(memory.fd));
+
+    const auto [lowOffsetBits, highOffsetBits] = nn::getIntsFromOffset(memory.offset);
+    const std::vector<int> ints = {memory.prot, lowOffsetBits, highOffsetBits};
+
+    auto handle = NN_TRY(createNativeHandleFrom(std::move(fd), ints));
+    return hidl_memory("mmap_fd", std::move(handle), memory.size);
+}
+
+nn::GeneralResult<hidl_memory> createHidlMemoryFrom(const nn::Memory::HardwareBuffer& memory) {
+    const auto* ahwb = memory.handle.get();
+    AHardwareBuffer_Desc bufferDesc;
+    AHardwareBuffer_describe(ahwb, &bufferDesc);
+
+    const bool isBlob = bufferDesc.format == AHARDWAREBUFFER_FORMAT_BLOB;
+    const size_t size = isBlob ? bufferDesc.width : 0;
+    const char* const name = isBlob ? "hardware_buffer_blob" : "hardware_buffer";
+
+    const native_handle_t* nativeHandle = AHardwareBuffer_getNativeHandle(ahwb);
+    const hidl_handle hidlHandle(nativeHandle);
+    hidl_handle copiedHandle(hidlHandle);
+
+    return hidl_memory(name, std::move(copiedHandle), size);
+}
+
+nn::GeneralResult<hidl_memory> createHidlMemoryFrom(const nn::Memory::Unknown& memory) {
+    return hidl_memory(memory.name, NN_TRY(hidlHandleFromSharedHandle(memory.handle)), memory.size);
+}
+
 }  // anonymous namespace
 
 nn::Capabilities::OperandPerformanceTable makeQuantized8PerformanceConsistentWithP(
@@ -255,27 +308,7 @@ nn::GeneralResult<hidl_memory> createHidlMemoryFromSharedMemory(const nn::Shared
     if (memory == nullptr) {
         return NN_ERROR() << "Memory must be non-empty";
     }
-    if (const auto* handle = std::get_if<nn::Handle>(&memory->handle)) {
-        return hidl_memory(memory->name, NN_TRY(hidlHandleFromSharedHandle(*handle)), memory->size);
-    }
-
-    const auto* ahwb = std::get<nn::HardwareBufferHandle>(memory->handle).get();
-    AHardwareBuffer_Desc bufferDesc;
-    AHardwareBuffer_describe(ahwb, &bufferDesc);
-
-    if (bufferDesc.format == AHARDWAREBUFFER_FORMAT_BLOB) {
-        CHECK_EQ(memory->size, bufferDesc.width);
-        CHECK_EQ(memory->name, "hardware_buffer_blob");
-    } else {
-        CHECK_EQ(memory->size, 0u);
-        CHECK_EQ(memory->name, "hardware_buffer");
-    }
-
-    const native_handle_t* nativeHandle = AHardwareBuffer_getNativeHandle(ahwb);
-    const hidl_handle hidlHandle(nativeHandle);
-    hidl_handle handle(hidlHandle);
-
-    return hidl_memory(memory->name, std::move(handle), memory->size);
+    return std::visit([](const auto& x) { return createHidlMemoryFrom(x); }, memory->handle);
 }
 
 static uint32_t roundUpToMultiple(uint32_t value, uint32_t multiple) {
@@ -283,14 +316,53 @@ static uint32_t roundUpToMultiple(uint32_t value, uint32_t multiple) {
 }
 
 nn::GeneralResult<nn::SharedMemory> createSharedMemoryFromHidlMemory(const hidl_memory& memory) {
-    CHECK_LE(memory.size(), std::numeric_limits<uint32_t>::max());
+    CHECK_LE(memory.size(), std::numeric_limits<size_t>::max());
+    if (!memory.valid()) {
+        return NN_ERROR() << "Unable to convert invalid hidl_memory";
+    }
+
+    if (memory.name() == "ashmem") {
+        if (memory.handle()->numFds != 1) {
+            return NN_ERROR() << "Unable to convert invalid ashmem memory object with "
+                              << memory.handle()->numFds << " numFds, but expected 1";
+        }
+        if (memory.handle()->numInts != 0) {
+            return NN_ERROR() << "Unable to convert invalid ashmem memory object with "
+                              << memory.handle()->numInts << " numInts, but expected 0";
+        }
+        auto handle = nn::Memory::Ashmem{
+                .fd = NN_TRY(nn::dupFd(memory.handle()->data[0])),
+                .size = static_cast<size_t>(memory.size()),
+        };
+        return std::make_shared<const nn::Memory>(nn::Memory{.handle = std::move(handle)});
+    }
+
+    if (memory.name() == "mmap_fd") {
+        if (memory.handle()->numFds != 1) {
+            return NN_ERROR() << "Unable to convert invalid mmap_fd memory object with "
+                              << memory.handle()->numFds << " numFds, but expected 1";
+        }
+        if (memory.handle()->numInts != 3) {
+            return NN_ERROR() << "Unable to convert invalid mmap_fd memory object with "
+                              << memory.handle()->numInts << " numInts, but expected 3";
+        }
+
+        const int fd = memory.handle()->data[0];
+        const int prot = memory.handle()->data[1];
+        const int lower = memory.handle()->data[2];
+        const int higher = memory.handle()->data[3];
+        const size_t offset = nn::getOffsetFromInts(lower, higher);
+
+        return nn::createSharedMemoryFromFd(static_cast<size_t>(memory.size()), prot, fd, offset);
+    }
 
     if (memory.name() != "hardware_buffer_blob") {
-        return std::make_shared<const nn::Memory>(nn::Memory{
+        auto handle = nn::Memory::Unknown{
                 .handle = NN_TRY(sharedHandleFromNativeHandle(memory.handle())),
-                .size = static_cast<uint32_t>(memory.size()),
+                .size = static_cast<size_t>(memory.size()),
                 .name = memory.name(),
-        });
+        };
+        return std::make_shared<const nn::Memory>(nn::Memory{.handle = std::move(handle)});
     }
 
     const auto size = memory.size();
@@ -328,11 +400,7 @@ nn::GeneralResult<nn::SharedMemory> createSharedMemoryFromHidlMemory(const hidl_
                << "Can't create AHardwareBuffer from handle. Error: " << status;
     }
 
-    return std::make_shared<const nn::Memory>(nn::Memory{
-            .handle = nn::HardwareBufferHandle(hardwareBuffer, /*takeOwnership=*/true),
-            .size = static_cast<uint32_t>(memory.size()),
-            .name = memory.name(),
-    });
+    return nn::createSharedMemoryFromAHWB(hardwareBuffer, /*takeOwnership=*/true);
 }
 
 nn::GeneralResult<hidl_handle> hidlHandleFromSharedHandle(const nn::Handle& handle) {
