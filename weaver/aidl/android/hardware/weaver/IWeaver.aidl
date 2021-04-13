@@ -46,8 +46,8 @@ interface IWeaver {
      * Read binder calls may return a ServiceSpecificException with the following error codes.
      */
     const int STATUS_FAILED = 1;
-    const int INCORRECT_KEY = 2;
-    const int THROTTLE = 3;
+    const int STATUS_INCORRECT_KEY = 2;
+    const int STATUS_THROTTLE = 3;
 
     /**
      * Attempts to retrieve the value stored in the identified slot.
