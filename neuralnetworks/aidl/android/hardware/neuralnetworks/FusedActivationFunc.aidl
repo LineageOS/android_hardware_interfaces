@@ -22,8 +22,20 @@ package android.hardware.neuralnetworks;
 @VintfStability
 @Backing(type="int")
 enum FusedActivationFunc {
+    /**
+     * No activation.
+     */
     NONE,
+    /**
+     * ReLU(x) = max(0, x)
+     */
     RELU,
+    /**
+     * ReLU1(x) = min(1, max(-1, x))
+     */
     RELU1,
+    /**
+     * ReLU6(x) = min(6, max(0, x))
+     */
     RELU6,
 }
