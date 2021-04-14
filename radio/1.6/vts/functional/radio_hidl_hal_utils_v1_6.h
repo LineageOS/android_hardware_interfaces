@@ -38,14 +38,12 @@ using namespace ::android::hardware::radio::V1_3;
 using namespace ::android::hardware::radio::V1_2;
 using namespace ::android::hardware::radio::V1_1;
 using namespace ::android::hardware::radio::V1_0;
-using namespace ::android::hardware::radio::config::V1_3;
 
 using ::android::sp;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
-using ::android::hardware::radio::config::V1_3::HalDeviceCapabilities;
 
 #define MODEM_EMERGENCY_CALL_ESTABLISH_TIME 3
 #define MODEM_EMERGENCY_CALL_DISCONNECT_TIME 3
@@ -1115,7 +1113,7 @@ class RadioHidlTest_v1_6 : public ::testing::TestWithParam<std::string>,
   public:
     virtual void SetUp() override;
 
-    HalDeviceCapabilities getRadioHalCapabilities();
+    bool getRadioHalCapabilities();
 
     /* radio service handle */
     sp<::android::hardware::radio::V1_6::IRadio> radio_v1_6;
