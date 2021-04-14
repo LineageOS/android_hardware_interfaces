@@ -417,11 +417,11 @@ GeneralResult<SharedMemory> unvalidatedConvert(const aidl_hal::Memory& memory) {
 }
 
 GeneralResult<Timing> unvalidatedConvert(const aidl_hal::Timing& timing) {
-    if (timing.timeInDriver < -1) {
-        return NN_ERROR() << "Timing: timeInDriver must not be less than -1";
+    if (timing.timeInDriverNs < -1) {
+        return NN_ERROR() << "Timing: timeInDriverNs must not be less than -1";
     }
-    if (timing.timeOnDevice < -1) {
-        return NN_ERROR() << "Timing: timeOnDevice must not be less than -1";
+    if (timing.timeOnDeviceNs < -1) {
+        return NN_ERROR() << "Timing: timeOnDeviceNs must not be less than -1";
     }
     constexpr auto convertTiming = [](int64_t halTiming) -> OptionalDuration {
         if (halTiming == kNoTiming) {
@@ -429,8 +429,8 @@ GeneralResult<Timing> unvalidatedConvert(const aidl_hal::Timing& timing) {
         }
         return nn::Duration(static_cast<uint64_t>(halTiming));
     };
-    return Timing{.timeOnDevice = convertTiming(timing.timeOnDevice),
-                  .timeInDriver = convertTiming(timing.timeInDriver)};
+    return Timing{.timeOnDevice = convertTiming(timing.timeOnDeviceNs),
+                  .timeInDriver = convertTiming(timing.timeInDriverNs)};
 }
 
 GeneralResult<Model::OperandValues> unvalidatedConvert(const std::vector<uint8_t>& operandValues) {
@@ -925,8 +925,8 @@ nn::GeneralResult<RequestMemoryPool> unvalidatedConvert(const nn::Request::Memor
 
 nn::GeneralResult<Timing> unvalidatedConvert(const nn::Timing& timing) {
     return Timing{
-            .timeOnDevice = NN_TRY(unvalidatedConvert(timing.timeOnDevice)),
-            .timeInDriver = NN_TRY(unvalidatedConvert(timing.timeInDriver)),
+            .timeOnDeviceNs = NN_TRY(unvalidatedConvert(timing.timeOnDevice)),
+            .timeInDriverNs = NN_TRY(unvalidatedConvert(timing.timeInDriver)),
     };
 }
 

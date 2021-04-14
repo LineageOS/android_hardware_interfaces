@@ -77,18 +77,18 @@ interface IBurst {
      * @param measure Specifies whether or not to measure duration of the execution. The duration
      *                runs from the time the driver sees the call to the executeSynchronously
      *                function to the time the driver returns from the function.
-     * @param deadline The time by which the execution is expected to complete. The time is measured
-     *                 in nanoseconds since epoch of the steady clock (as from
-     *                 std::chrono::steady_clock). If the execution cannot be finished by the
-     *                 deadline, the execution may be aborted. Passing -1 means the deadline is
-     *                 omitted. Other negative values are invalid.
-     * @param loopTimeoutDuration The maximum amount of time in nanoseconds that should be spent
-     *                            executing a {@link OperationType::WHILE} operation. If a loop
-     *                            condition model does not output false within this duration, the
-     *                            execution must be aborted. If -1 is provided, the maximum amount
-     *                            of time is {@link DEFAULT_LOOP_TIMEOUT_DURATION_NS}. Other
-     *                            negative values are invalid. When provided, the duration must not
-     *                            exceed {@link MAXIMUM_LOOP_TIMEOUT_DURATION_NS}.
+     * @param deadlineNs The time by which the execution is expected to complete. The time is
+     *                   measured in nanoseconds since epoch of the steady clock (as from
+     *                   std::chrono::steady_clock). If the execution cannot be finished by the
+     *                   deadline, the execution may be aborted. Passing -1 means the deadline is
+     *                   omitted. Other negative values are invalid.
+     * @param loopTimeoutDurationNs The maximum amount of time in nanoseconds that should be spent
+     *                              executing a {@link OperationType::WHILE} operation. If a loop
+     *                              condition model does not output false within this duration, the
+     *                              execution must be aborted. If -1 is provided, the maximum amount
+     *                              of time is {@link DEFAULT_LOOP_TIMEOUT_DURATION_NS}. Other
+     *                              negative values are invalid. When provided, the duration must
+     *                              not exceed {@link MAXIMUM_LOOP_TIMEOUT_DURATION_NS}.
      * @return ExecutionResult parcelable, containing the status of the execution, output shapes and
      *     timing information.
      * @throws ServiceSpecificException with one of the following ErrorStatus values:
@@ -100,7 +100,7 @@ interface IBurst {
      *     - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
      */
     ExecutionResult executeSynchronously(in Request request, in long[] memoryIdentifierTokens,
-            in boolean measureTiming, in long deadline, in long loopTimeoutDuration);
+            in boolean measureTiming, in long deadlineNs, in long loopTimeoutDurationNs);
 
     /**
      * releaseMemoryResource is used by the client to signal to the service that a memory buffer
