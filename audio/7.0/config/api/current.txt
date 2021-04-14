@@ -104,6 +104,7 @@ package android.audio.policy.configuration.V7_0 {
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioDevice AUDIO_DEVICE_IN_FM_TUNER;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioDevice AUDIO_DEVICE_IN_HDMI;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioDevice AUDIO_DEVICE_IN_HDMI_ARC;
+    enum_constant public static final android.audio.policy.configuration.V7_0.AudioDevice AUDIO_DEVICE_IN_HDMI_EARC;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioDevice AUDIO_DEVICE_IN_IP;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioDevice AUDIO_DEVICE_IN_LINE;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioDevice AUDIO_DEVICE_IN_LOOPBACK;
@@ -138,6 +139,7 @@ package android.audio.policy.configuration.V7_0 {
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioDevice AUDIO_DEVICE_OUT_FM;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioDevice AUDIO_DEVICE_OUT_HDMI;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioDevice AUDIO_DEVICE_OUT_HDMI_ARC;
+    enum_constant public static final android.audio.policy.configuration.V7_0.AudioDevice AUDIO_DEVICE_OUT_HDMI_EARC;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioDevice AUDIO_DEVICE_OUT_HEARING_AID;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioDevice AUDIO_DEVICE_OUT_IP;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioDevice AUDIO_DEVICE_OUT_LINE;

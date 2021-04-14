@@ -12,7 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *////////////////////////////////////////////////////////////////////////////////
+ */
+///////////////////////////////////////////////////////////////////////////////
 // THIS FILE IS IMMUTABLE. DO NOT EDIT IN ANY CASE.                          //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -37,6 +38,6 @@ interface IWeaver {
   android.hardware.weaver.WeaverReadResponse read(in int slotId, in byte[] key);
   void write(in int slotId, in byte[] key, in byte[] value);
   const int STATUS_FAILED = 1;
-  const int INCORRECT_KEY = 2;
-  const int THROTTLE = 3;
+  const int STATUS_INCORRECT_KEY = 2;
+  const int STATUS_THROTTLE = 3;
 }
