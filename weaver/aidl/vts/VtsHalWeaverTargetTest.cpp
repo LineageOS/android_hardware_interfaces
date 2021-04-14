@@ -156,7 +156,7 @@ TEST_P(WeaverAidlTest, WriteFollowedByReadWithWrongKeyDoesNotGiveTheValue) {
 
     ASSERT_FALSE(readRet.isOk());
     ASSERT_EQ(EX_SERVICE_SPECIFIC, readRet.getExceptionCode());
-    ASSERT_EQ(IWeaver::INCORRECT_KEY, readRet.getServiceSpecificError());
+    ASSERT_EQ(IWeaver::STATUS_INCORRECT_KEY, readRet.getServiceSpecificError());
     EXPECT_TRUE(readValue.empty());
 }
 
