@@ -18,7 +18,6 @@ package android.hardware.radio.config@1.3;
 
 import android.hardware.radio@1.6::RadioResponseInfo;
 import @1.2::IRadioConfigResponse;
-import HalDeviceCapabilities;
 
 /**
  * Interface declaring response functions to solicited radio config requests.
@@ -26,8 +25,18 @@ import HalDeviceCapabilities;
 interface IRadioConfigResponse extends @1.2::IRadioConfigResponse {
     /**
      * @param info Response info struct containing response type, serial no. and error
-     * @param capabilities Capabilities struct containing the capabilities of the
-     * device related to the Radio HAL
+     * @param modemReducedFeatureSet1 True indicates that the modem does NOT support the following
+     *        features.
+     *        - Providing either
+     *          android.hardware.radio@1.6::LinkCapacityEstimate:secondaryDownlinkCapacityKbps
+     *          or android.hardware.radio@1.6::LinkCapacityEstimate:secondaryUplinkCapacityKbps
+     *          when given from
+     *          android.hardware.radio@1.6::RadioIndication:currentLinkCapacityEstimate
+     *        - Calling android.hardware.radio@1.6::IRadio.setNrDualConnectivityState
+     *          or querying android.hardware.radio@1.6::IRadio.isNrDualConnectivityEnabled
+     *        - Requesting android.hardware.radio@1.6::IRadio.setDataThrottling()
+     *        - Providing android.hardware.radio@1.6::SlicingConfig through
+     *          android.hardware.radio@1.6::getSlicingConfig()
      *
      * Valid errors returned:
      *   RadioError:NONE
@@ -35,5 +44,5 @@ interface IRadioConfigResponse extends @1.2::IRadioConfigResponse {
      *   RadioError:INTERNAL_ERR
      */
     oneway getHalDeviceCapabilitiesResponse(RadioResponseInfo info,
-        HalDeviceCapabilities capabilities);
+        bool modemReducedFeatureSet1);
 };
