@@ -47,6 +47,15 @@ interface IWifiChip extends @1.4::IWifiChip {
      *   - This will be invoked before an active wifi connection is established on the second
      *     interface.
      *   - This use-case hint is implicitly void when the second STA interface is brought down.
+     *   - When there is only 1 STA interface, the must should still retain the last use case
+     *     set, which must become active the next time multi STA is enabled.
+     *     1. Initialize with single STA.
+     *     2. Framework creates second STA.
+     *     3. Framework sets use case to DUAL_STA_NON_TRANSIENT_UNBIASED.
+     *     4. Framework destroys second STA. Only 1 STA remains.
+     *     5. Framework recreates second STA.
+     *     6. The active use case remains DUAL_STA_NON_TRANSIENT_UNBIASED (i.e. firmware should not
+     *        automatically change it during period of single STA unless requested by framework).
      */
     enum MultiStaUseCase : uint8_t {
         /**
@@ -100,11 +109,14 @@ interface IWifiChip extends @1.4::IWifiChip {
     /**
      * Invoked to indicate that the provided iface is the primary STA iface when there are more
      * than 1 STA iface concurrently active.
-     * Note: If the wifi firmware/chip cannot support multiple instances of any offload
-     * (like roaming, APF, rssi threshold, etc), the firmware should ensure that these
-     * offloads are at least enabled for the primary interface. If the new primary interface is
-     * already connected to a network, the firmware must switch all the offloads on
-     * this new interface without disconnecting.
+     * Notes:
+     * - If the wifi firmware/chip cannot support multiple instances of any offload
+     *   (like roaming, APF, rssi threshold, etc), the firmware should ensure that these
+     *   offloads are at least enabled for the primary interface. If the new primary interface is
+     *   already connected to a network, the firmware must switch all the offloads on
+     *   this new interface without disconnecting.
+     * - When there is only 1 STA interface, the firmware must still retain the last primary
+     *   connection, which must become active the next time multi STA is enabled.
      *
      * @param ifname Name of the STA iface.
      * @return status WifiStatus of the operation.
