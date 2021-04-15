@@ -50,10 +50,10 @@ class Session : public BnSession {
 
     ndk::ScopedAStatus removeEnrollments(const std::vector<int32_t>& enrollmentIds) override;
 
-    ndk::ScopedAStatus getFeatures(int32_t enrollmentId) override;
+    ndk::ScopedAStatus getFeatures() override;
 
-    ndk::ScopedAStatus setFeature(const keymaster::HardwareAuthToken& hat, int32_t enrollmentId,
-                                  Feature feature, bool enabled) override;
+    ndk::ScopedAStatus setFeature(const keymaster::HardwareAuthToken& hat, Feature feature,
+                                  bool enabled) override;
 
     ndk::ScopedAStatus getAuthenticatorId() override;
 
