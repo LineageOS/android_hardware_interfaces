@@ -29,7 +29,6 @@
 #include <android/hardware/radio/config/1.2/types.h>
 #include <android/hardware/radio/config/1.3/IRadioConfig.h>
 #include <android/hardware/radio/config/1.3/IRadioConfigResponse.h>
-#include <android/hardware/radio/config/1.3/types.h>
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
@@ -48,7 +47,6 @@ using ::android::hardware::radio::config::V1_1::ModemsConfig;
 using ::android::hardware::radio::config::V1_1::PhoneCapability;
 using ::android::hardware::radio::config::V1_2::IRadioConfigIndication;
 using ::android::hardware::radio::config::V1_2::SimSlotStatus;
-using ::android::hardware::radio::config::V1_3::HalDeviceCapabilities;
 using ::android::hardware::radio::config::V1_3::IRadioConfig;
 using ::android::hardware::radio::config::V1_3::IRadioConfigResponse;
 using ::android::hardware::radio::V1_0::RadioResponseInfo;
@@ -65,7 +63,7 @@ class RadioConfigResponse : public IRadioConfigResponse {
   public:
     RadioResponseInfo rspInfo;
     PhoneCapability phoneCap;
-    HalDeviceCapabilities halDeviceCapabilities;
+    bool modemReducedFeatureSet1;
 
     RadioConfigResponse(RadioResponseWaiter& parent);
     virtual ~RadioConfigResponse() = default;
@@ -93,7 +91,7 @@ class RadioConfigResponse : public IRadioConfigResponse {
 
     Return<void> getHalDeviceCapabilitiesResponse(
             const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
-            const HalDeviceCapabilities& halDeviceCapabilities);
+            bool modemReducedFeatureSet1);
 };
 
 /* Callback class for radio config indication */

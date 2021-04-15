@@ -94,7 +94,7 @@ void NeuralNetworksAidlTest::SetUp() {
 }
 
 static NamedDevice makeNamedDevice(const std::string& name) {
-    ndk::SpAIBinder binder(AServiceManager_getService(name.c_str()));
+    ndk::SpAIBinder binder(AServiceManager_waitForService(name.c_str()));
     return {name, IDevice::fromBinder(binder)};
 }
 

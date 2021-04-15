@@ -16,6 +16,7 @@
 
 #include "Service.h"
 
+#include <AndroidVersionUtil.h>
 #include <android/binder_auto_utils.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
@@ -35,13 +36,23 @@ nn::GeneralResult<nn::SharedDevice> getDevice(const std::string& instanceName) {
     hal::utils::ResilientDevice::Factory makeDevice =
             [instanceName,
              name = std::move(fullName)](bool blocking) -> nn::GeneralResult<nn::SharedDevice> {
-        const auto& getService =
-                blocking ? AServiceManager_getService : AServiceManager_checkService;
+        std::add_pointer_t<AIBinder*(const char*)> getService;
+        if (blocking) {
+            if (__builtin_available(android __NNAPI_AIDL_MIN_ANDROID_API__, *)) {
+                getService = AServiceManager_waitForService;
+            } else {
+                getService = AServiceManager_getService;
+            }
+        } else {
+            getService = AServiceManager_checkService;
+        }
+
         auto service = IDevice::fromBinder(ndk::SpAIBinder(getService(name.c_str())));
         if (service == nullptr) {
-            return NN_ERROR() << (blocking ? "AServiceManager_getService"
-                                           : "AServiceManager_checkService")
-                              << " returned nullptr";
+            return NN_ERROR()
+                   << (blocking ? "AServiceManager_waitForService (or AServiceManager_getService)"
+                                : "AServiceManager_checkService")
+                   << " returned nullptr";
         }
         ABinderProcess_startThreadPool();
         return Device::create(instanceName, std::move(service));
