@@ -553,8 +553,6 @@ TEST_P(VibratorAidl, ComposeSizeBoundary) {
 }
 
 TEST_P(VibratorAidl, ComposeCallback) {
-    constexpr std::chrono::milliseconds allowedLatency{10};
-
     if (capabilities & IVibrator::CAP_COMPOSE_EFFECTS) {
         std::vector<CompositePrimitive> supported;
 
@@ -586,17 +584,16 @@ TEST_P(VibratorAidl, ComposeCallback) {
                 << toString(primitive);
             duration = std::chrono::milliseconds(durationMs);
 
+            start = high_resolution_clock::now();
             EXPECT_EQ(Status::EX_NONE, vibrator->compose(composite, callback).exceptionCode())
                 << toString(primitive);
-            start = high_resolution_clock::now();
 
-            EXPECT_EQ(completionFuture.wait_for(duration + allowedLatency), std::future_status::ready)
+            EXPECT_EQ(completionFuture.wait_for(duration * 2), std::future_status::ready)
                 << toString(primitive);
             end = high_resolution_clock::now();
 
             elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-            EXPECT_LE(elapsed.count(), (duration + allowedLatency).count()) << toString(primitive);
-            EXPECT_GE(elapsed.count(), (duration - allowedLatency).count()) << toString(primitive);
+            EXPECT_GE(elapsed.count(), duration.count()) << toString(primitive);
         }
     }
 }
