@@ -232,6 +232,7 @@ interface IRadioResponse extends @1.5::IRadioResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
      *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:INVALID_STATE
      */
     oneway setNrDualConnectivityStateResponse(RadioResponseInfo info);
 
