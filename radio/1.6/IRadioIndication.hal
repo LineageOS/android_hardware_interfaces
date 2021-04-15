@@ -107,7 +107,7 @@ interface IRadioIndication extends @1.5::IRadioIndication {
     /**
      * Indicates physical channel configurations.
      *
-     * An empty configs list indicates that the radio is in idle mode.
+     * An empty configs list shall be returned when the radio is in idle mode (i.e. RRC idle).
      *
      * @param type Type of radio indication
      * @param configs Vector of PhysicalChannelConfigs
