@@ -274,8 +274,7 @@ interface IKeyMintDevice {
      *
      * o Tag::RSA_PUBLIC_EXPONENT specifies the RSA public exponent value.  If omitted, generateKey
      *   must return ErrorCode::INVALID_ARGUMENT.  The values 3 and 65537 must be supported.  It is
-     *   recommended to support all prime values up to 2^64.  If provided with a non-prime value,
-     *   generateKey must return ErrorCode::INVALID_ARGUMENT.
+     *   recommended to support all prime values up to 2^64.
      *
      * The following parameters are not necessary to generate a usable RSA key, but generateKey must
      * not return an error if they are omitted:
