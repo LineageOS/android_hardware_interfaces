@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-#pragma once
-
 #include <composer-vts/2.2/ReadbackVts.h>
 #include <math/half.h>
 #include <math/vec3.h>
-#include <renderengine/ExternalTexture.h>
 #include <renderengine/RenderEngine.h>
 #include <ui/GraphicBuffer.h>
 #include <ui/GraphicBufferAllocator.h>
@@ -54,15 +51,12 @@ class TestRenderEngine {
     void drawLayers();
     void checkColorBuffer(std::vector<V2_2::IComposerClient::Color>& expectedColors);
 
-    renderengine::RenderEngine& getInternalRenderEngine() { return *mRenderEngine; }
-
   private:
     common::V1_1::PixelFormat mFormat;
     std::vector<renderengine::LayerSettings> mCompositionLayers;
     std::unique_ptr<renderengine::RenderEngine> mRenderEngine;
     std::vector<renderengine::LayerSettings> mRenderLayers;
     sp<GraphicBuffer> mGraphicBuffer;
-
     DisplaySettings mDisplaySettings;
 };
 
