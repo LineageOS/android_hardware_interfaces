@@ -47,8 +47,8 @@ interface ISessionCallback {
   void onLockoutCleared();
   void onInteractionDetected();
   void onEnrollmentsEnumerated(in int[] enrollmentIds);
-  void onFeaturesRetrieved(in android.hardware.biometrics.face.Feature[] features, in int enrollmentId);
-  void onFeatureSet(in int enrollmentId, android.hardware.biometrics.face.Feature feature);
+  void onFeaturesRetrieved(in android.hardware.biometrics.face.Feature[] features);
+  void onFeatureSet(android.hardware.biometrics.face.Feature feature);
   void onEnrollmentsRemoved(in int[] enrollmentIds);
   void onAuthenticatorIdRetrieved(in long authenticatorId);
   void onAuthenticatorIdInvalidated(in long newAuthenticatorId);
