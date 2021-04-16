@@ -32,6 +32,8 @@ class RemotelyProvisionedComponent : public BnRemotelyProvisionedComponent {
     explicit RemotelyProvisionedComponent(std::shared_ptr<keymint::AndroidKeyMintDevice> keymint);
     virtual ~RemotelyProvisionedComponent();
 
+    ScopedAStatus getHardwareInfo(RpcHardwareInfo* info) override;
+
     ScopedAStatus generateEcdsaP256KeyPair(bool testMode, MacedPublicKey* macedPublicKey,
                                            std::vector<uint8_t>* privateKeyHandle) override;
 

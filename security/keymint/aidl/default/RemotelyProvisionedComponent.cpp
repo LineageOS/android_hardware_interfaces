@@ -291,6 +291,13 @@ RemotelyProvisionedComponent::RemotelyProvisionedComponent(
 
 RemotelyProvisionedComponent::~RemotelyProvisionedComponent() {}
 
+ScopedAStatus RemotelyProvisionedComponent::getHardwareInfo(RpcHardwareInfo* info) {
+    info->versionNumber = 1;
+    info->rpcAuthorName = "Google";
+    info->supportedEekCurve = RpcHardwareInfo::CURVE_25519;
+    return ScopedAStatus::ok();
+}
+
 ScopedAStatus RemotelyProvisionedComponent::generateEcdsaP256KeyPair(bool testMode,
                                                                      MacedPublicKey* macedPublicKey,
                                                                      bytevec* privateKeyHandle) {
