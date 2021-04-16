@@ -66,6 +66,18 @@ using android::hardware::tv::tuner::V1_0::RecordSettings;
 const string configFilePath = "/vendor/etc/tuner_vts_config.xml";
 const string emptyHardwareId = "";
 
+#define PROVISION_STR                                      \
+    "{                                                   " \
+    "  \"id\": 21140844,                                 " \
+    "  \"name\": \"Test Title\",                         " \
+    "  \"lowercase_organization_name\": \"Android\",     " \
+    "  \"asset_key\": {                                  " \
+    "  \"encryption_key\": \"nezAr3CHFrmBR9R8Tedotw==\"  " \
+    "  },                                                " \
+    "  \"cas_type\": 1,                                  " \
+    "  \"track_types\": [ ]                              " \
+    "}                                                   "
+
 struct FrontendConfig {
     bool isSoftwareFe;
     FrontendType type;
@@ -99,6 +111,12 @@ struct LnbConfig {
 
 struct TimeFilterConfig {
     uint64_t timeStamp;
+};
+
+struct DescramblerConfig {
+    uint32_t casSystemId;
+    string provisionStr;
+    vector<uint8_t> hidlPvtData;
 };
 
 struct LiveBroadcastHardwareConnections {
@@ -139,8 +157,8 @@ struct DescramblingHardwareConnections {
     string dvrSoftwareFeId;
     string audioFilterId;
     string videoFilterId;
-    /* string descramblerId;
-    list string of extra filters; */
+    string descramblerId;
+    /* list string of extra filters; */
 };
 
 struct LnbLiveHardwareConnections {
@@ -326,6 +344,31 @@ struct TunerTestingConfigReader {
         }
     }
 
+    static void readDescramblerConfig1_0(map<string, DescramblerConfig>& descramblerMap) {
+        auto hardwareConfig = getHardwareConfig();
+        if (hardwareConfig.hasDescramblers()) {
+            auto descramblers = *hardwareConfig.getFirstDescramblers();
+            for (auto descramblerConfig : descramblers.getDescrambler()) {
+                string id = descramblerConfig.getId();
+                descramblerMap[id].casSystemId =
+                        static_cast<uint32_t>(descramblerConfig.getCasSystemId());
+                if (descramblerConfig.hasProvisionStr()) {
+                    descramblerMap[id].provisionStr = descramblerConfig.getProvisionStr();
+                } else {
+                    descramblerMap[id].provisionStr = PROVISION_STR;
+                }
+                if (descramblerConfig.hasSesstionPrivatData()) {
+                    auto privateData = descramblerConfig.getSesstionPrivatData();
+                    int size = privateData.size();
+                    descramblerMap[id].hidlPvtData.resize(size);
+                    memcpy(descramblerMap[id].hidlPvtData.data(), privateData.data(), size);
+                } else {
+                    descramblerMap[id].hidlPvtData.resize(256);
+                }
+            }
+        }
+    }
+
     static void readDiseqcMessages(map<string, vector<uint8_t>>& diseqcMsgMap) {
         auto hardwareConfig = getHardwareConfig();
         if (hardwareConfig.hasDiseqcMessages()) {
@@ -420,6 +463,7 @@ struct TunerTestingConfigReader {
         }
         auto descConfig = *dataFlow.getFirstDescrambling();
         descrambling.frontendId = descConfig.getFrontendConnection();
+        descrambling.descramblerId = descConfig.getDescramblerConnection();
         descrambling.audioFilterId = descConfig.getAudioFilterConnection();
         descrambling.videoFilterId = descConfig.getVideoFilterConnection();
         if (descConfig.hasDvrSoftwareFeConnection()) {
