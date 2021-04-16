@@ -46,6 +46,7 @@ package android.audio.policy.configuration.V7_0 {
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_IN_VOICE_UPLINK_MONO;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_NONE;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_13POINT_360RA;
+    enum_constant public static final android.audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_22POINT2;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_2POINT0POINT2;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_2POINT1;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioChannelMask AUDIO_CHANNEL_OUT_2POINT1POINT2;
