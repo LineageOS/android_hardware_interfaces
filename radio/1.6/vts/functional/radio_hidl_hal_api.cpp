@@ -392,6 +392,7 @@ TEST_P(RadioHidlTest_v1_6, setNrDualConnectivityState) {
                 CheckAnyOfErrors(radioRsp_v1_6->rspInfo.error,
                                  {::android::hardware::radio::V1_6::RadioError::RADIO_NOT_AVAILABLE,
                                   ::android::hardware::radio::V1_6::RadioError::INTERNAL_ERR,
+                                  ::android::hardware::radio::V1_6::RadioError::INVALID_STATE,
                                   ::android::hardware::radio::V1_6::RadioError::NONE}));
     }
 }
