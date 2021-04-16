@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Copyright (C) 2021 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<!-- The Sample Tuner Testing Configuration.
+    Name the customized xml with "tuner_vts_config.xml" and push into the device
+    "/vendor/etc" path. Please use "tuner_testing_dynamic_configuration.xsd" to verify the xml.
+    The version section contains a “version” tag in the form “major.minor” e.g version=”1.0”
+    This shows the tuner dynamic configuration version. -->
+<TunerConfiguration version="1.0" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <!-- Hardware Configuration section contains the configurations of all the hardwares
+        that would be used in the tests. In the "dataFlowConfiguration" section, each data flow
+        under test has its required/optional hardwares. The ids configured in the
+        "dataFlowConfiguration" would be used to connect the hardware to each data flow test. -->
+    <hardwareConfiguration>
+        <!-- Frontends section:
+            This section contains configurations of all the frontends that would be used
+                in the tests.
+                - This section is optional and can be skipped to use the default fe settings.
+                - The default settings can be found in the sample_tuner_vts_configurations.xml.
+                - The users can also override the default frontend settings using id="FE_DEFAULT".
+                - The users can configure 1 or more frontend elements in the frontends sections.
+
+            Each frontend element contain the following attributes:
+                "id": unique id of the frontend that could be used to connect to the test the
+                    "dataFlowConfiguration"
+                "type": the frontend type. The enums are defined in the xsd.
+                "isSoftwareFrontend": if the test environment is using hardware or software
+                    frontend. If using software, a ts input file path needs to be configured.
+                "softwareFeInputPath": used as the source of the software frontend.
+                "connectToCicamId": if the device supports frontend connecting to cicam, the target
+                    cicam id needs to be configured here. Supported in Tuner 1.1 or higher.
+                "frequency": the frequency used to configure tune and scan.
+                "endFrequency": the end frequency of scan. Supported in Tuner 1.1 or higher.
+
+            Each frontend element also contains one and only one type-related "frontendSettings".
+                - The settings type should match the frontend "type" attribute.
+                - For example, when frontend type="DVBT", dvbtFrontendSettings can be configured.
+                - This is optional and skipping the settings would pass a setting with frequency
+                    config only to the hal.
+        -->
+        <frontends>
+            <frontend id="FE_DEFAULT" type="DVBT" isSoftwareFrontend="true"
+                      connectToCicamId="0" frequency="578000" endFrequency="800000">
+                <dvbtFrontendSettings bandwidth="8" transmissionMode="1" isHighPriority="1"/>
+            </frontend>
+            <frontend id="FE_DVBS_0" type="DVBS" isSoftwareFrontend="true"
+                      connectToCicamId="0" frequency="578000" endFrequency="800000">
+            </frontend>
+        </frontends>
+    </hardwareConfiguration>
+
+    <!-- Data flow configuration section connects each data flow under test to the ids of the
+        hardwares that would be used during the tests. -->
+    <dataFlowConfiguration>
+        <clearLiveBroadcast frontendConnection="FE_DEFAULT"/>
+        <scan frontendConnection="FE_DEFAULT"/>
+        <descrambling frontendConnection="FE_DEFAULT"/>
+        <dvrRecord frontendConnection="FE_DEFAULT"/>
+        <lnbLive frontendConnection="FE_DVBS_0"/>
+        <lnbRecord frontendConnection="FE_DVBS_0"/>
+    </dataFlowConfiguration>
+</TunerConfiguration>
