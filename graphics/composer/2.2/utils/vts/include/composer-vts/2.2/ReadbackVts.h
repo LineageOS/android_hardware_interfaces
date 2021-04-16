@@ -50,8 +50,6 @@ static const IComposerClient::Color TRANSLUCENT_RED = {0xff, 0, 0, 0x33};
 static const IComposerClient::Color GREEN = {0, 0xff, 0, 0xff};
 static const IComposerClient::Color BLUE = {0, 0, 0xff, 0xff};
 
-class TestRenderEngine;
-
 class TestLayer {
   public:
     TestLayer(const std::shared_ptr<ComposerClient>& client, Display display)
@@ -112,8 +110,7 @@ class TestBufferLayer : public TestLayer {
   public:
     TestBufferLayer(
             const std::shared_ptr<ComposerClient>& client, const std::shared_ptr<Gralloc>& gralloc,
-            TestRenderEngine& renderEngine, Display display, int32_t width, int32_t height,
-            PixelFormat format,
+            Display display, int32_t width, int32_t height, PixelFormat format,
             IComposerClient::Composition composition = IComposerClient::Composition::DEVICE);
 
     ~TestBufferLayer();
@@ -141,7 +138,6 @@ class TestBufferLayer : public TestLayer {
   protected:
     IComposerClient::Composition mComposition;
     std::shared_ptr<Gralloc> mGralloc;
-    TestRenderEngine& mRenderEngine;
     int32_t mFillFence;
     const native_handle_t* mBufferHandle = nullptr;
 };
