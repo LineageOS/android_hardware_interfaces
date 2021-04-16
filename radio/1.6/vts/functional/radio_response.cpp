@@ -1090,7 +1090,7 @@ Return<void> RadioResponse_v1_6::sendSmsResponse_1_6(
     return Void();
 }
 
-Return<void> RadioResponse_v1_6::sendSmsExpectMoreResponse_1_6(
+Return<void> RadioResponse_v1_6::sendSMSExpectMoreResponse_1_6(
         const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
         const SendSmsResult& sms) {
     rspInfo = info;

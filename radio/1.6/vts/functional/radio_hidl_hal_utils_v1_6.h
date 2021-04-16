@@ -762,7 +762,7 @@ class RadioResponse_v1_6 : public ::android::hardware::radio::V1_6::IRadioRespon
             const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
             const SendSmsResult& sms);
 
-    Return<void> sendSmsExpectMoreResponse_1_6(
+    Return<void> sendSMSExpectMoreResponse_1_6(
             const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
             const SendSmsResult& sms);
 
