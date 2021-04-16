@@ -60,16 +60,165 @@
                       connectToCicamId="0" frequency="578000" endFrequency="800000">
             </frontend>
         </frontends>
+        <!-- Filter section:
+            This section contains configurations of all the filters that would be used in the tests.
+                - This section is optional and can be skipped to use the default filter settings.
+                - The default settings can be found in the sample_tuner_vts_configurations.xml.
+                - The users can also override the default filter settings using
+                - id="FILTER_AUDIO_DEFAULT" or "FILTER_VIDEO_DEFAULT".
+                - The users can configure 1 or more filter elements in the filters sections.
+
+            Each filter element contain the following attributes:
+                "id": unique id of the filter that could be used to connect to the test the
+                    "dataFlowConfiguration"
+                "mainType": the main filter type. The enums are defined in the xsd.
+                "subType": the sub filter type. The enums are defined in the xsd.
+                "bufferSize": the buffer size of the filter in hex.
+                "pid": the pid that would be used to configure the filter.
+                "useFMQ": if the filter uses FMQ.
+
+            Each filter element also contains at most one type-related "filterSettings".
+                - The settings type should match the filter "subType" attribute.
+                - For example, when filter subType is audio or video, the avFilterSettings can be
+                    configured.
+                - This is optional and skipping the settings would pass a setting with tpid config
+                    only to the hal.
+        -->
+        <filters>
+            <filter id="FILTER_AUDIO_DEFAULT" mainType="TS" subType="AUDIO"
+                    bufferSize="16777216" pid="257" useFMQ="false">
+                <avFilterSettings isPassthrough="false"/>
+            </filter>
+            <filter id="FILTER_VIDEO_DEFAULT" mainType="TS" subType="VIDEO"
+                    bufferSize="16777216" pid="256" useFMQ="false">
+                <avFilterSettings isPassthrough="false"/>
+            </filter>
+            <filter id="FILTER_TS_RECORD_0" mainType="TS" subType="RECORD"
+                    bufferSize="16777216" pid="257" useFMQ="false">
+                <recordFilterSettings tsIndexMask="1" scIndexType="NONE"/>
+            </filter>
+            <filter id="FILTER_TS_SECTION_0" mainType="TS" subType="SECTION"
+                    bufferSize="16777216" pid="257" useFMQ="true">
+                <sectionFilterSettings isCheckCrc="false" isRepeat="false" isRaw="false"/>
+            </filter>
+            <filter id="FILTER_TS_PCR_0" mainType="TS" subType="PCR"
+                    bufferSize="16777216" pid="256" useFMQ="false">
+            </filter>
+        </filters>
+        <!-- Dvr section:
+            This section contains configurations of all the dvrs that would be used in the tests.
+                - This section is optional and can be skipped if DVR is not supported.
+                - The users can configure 1 or more dvr elements in the dvrs sections.
+
+            Each dvr element contain the following attributes:
+                "id": unique id of the dvr that could be used to connect to the test the
+                    "dataFlowConfiguration"
+                "type": the dvr type.
+                "bufferSize": the dvr buffer size.
+                "statusMask": register callbacks of specific status.
+                "lowThreshold": the dvr status low threshold.
+                "highThreshold": the dvr status high threshold.
+                "dataFormat": the dvr data format.
+                "packetSize": the dvr packet size.
+                "inputFilePath": the dvr playback input file path. Only required in playback dvr.
+        -->
+        <dvrs>
+            <dvr id="DVR_PLAYBACK_0" type="PLAYBACK" bufferSize="4194304"
+                 statusMask="15" lowThreshold="4096" highThreshold="32767"
+                 dataFormat="TS" packetSize="188" inputFilePath="/data/local/tmp/segment000000.ts"/>
+            <dvr id="DVR_RECORD_0" type="RECORD" bufferSize="4194304"
+                 statusMask="15" lowThreshold="4096" highThreshold="32767"
+                 dataFormat="TS" packetSize="188"/>
+            <dvr id="DVR_PLAYBACK_1" type="PLAYBACK" bufferSize="4194304"
+                 statusMask="15" lowThreshold="4096" highThreshold="32767"
+                 dataFormat="ES" packetSize="188" inputFilePath="/data/local/tmp/test.es"/>
+        </dvrs>
+        <!-- Lnb section:
+            This section contains configurations of all the lnbs that would be used in the tests.
+                - This section is optional and can be skipped if LNB is not supported.
+                - The users can configure 1 or more lnb elements in the lnbs sections.
+
+            Each lnb element contain the following attributes:
+                "id": unique id of the lnb that could be used to connect to the test the
+                    "dataFlowConfiguration"
+                "name": the external lnb device name.
+                "voltage": the voltage used to config the lnb.
+                "tone": the voltage used to config the lnb.
+                "position": the voltage used to config the lnb.
+        -->
+        <diseqcMessages>
+            <diseqcMessage msgName="DISEQC_POWER_ON" msgBody="14 0 0 0 0 3"/>
+        </diseqcMessages>
+        <lnbs>
+            <lnb id="LNB_0" voltage="VOLTAGE_12V" tone="NONE" position="UNDEFINED"/>
+            <lnb id="LNB_1" name="default_lnb_external" voltage="VOLTAGE_5V"
+                            tone="NONE" position="UNDEFINED"/>
+        </lnbs>
+        <!-- TimeFilter section:
+            This section contains configurations of all the time filters that would be used in
+            the tests.
+                - This section is optional and can be skipped if Time Filter is not supported.
+                - The users can configure 1 or more timeFilter elements in the timeFilters sections.
+
+            Each timeFilter element contain the following attributes:
+                "id": unique id of the time filter that could be used to connect to the test the
+                    "dataFlowConfiguration"
+                "timeStamp": the time stamp used to config the time filter.
+        -->
+        <timeFilters>
+            <timeFilter id="TIME_FILTER_0" timeStamp="1"/>
+        </timeFilters>
+        <!-- Descrambler section:
+            This section contains configurations of all the descramblers that would be used in
+            the tests.
+                - This section is optional and can be skipped if Descrambler is not supported.
+                - The users can configure 1 or more descrambler elements in the descramblers sections.
+
+            Each Descrambler element contain the following attributes:
+                "id": unique id of the descrambler that could be used to connect to the test the
+                    "dataFlowConfiguration"
+                "casSystemId": the cas system id to connect to the descrambler.
+                "provisionStr": the provision string to use with the cas plugin.
+                "sesstionPrivatData": the session private data used to open the cas session.
+        -->
+        <descramblers>
+            <descrambler id="DESCRAMBLER_0" casSystemId="63192"/>
+        </descramblers>
     </hardwareConfiguration>
 
     <!-- Data flow configuration section connects each data flow under test to the ids of the
         hardwares that would be used during the tests. -->
     <dataFlowConfiguration>
-        <clearLiveBroadcast frontendConnection="FE_DEFAULT"/>
+        <clearLiveBroadcast frontendConnection="FE_DEFAULT"
+                            audioFilterConnection="FILTER_AUDIO_DEFAULT"
+                            videoFilterConnection="FILTER_VIDEO_DEFAULT"
+                            pcrFilterConnection="FILTER_TS_PCR_0"
+                            sectionFilterConnection="FILTER_TS_SECTION_0"
+                            dvrSoftwareFeConnection="DVR_PLAYBACK_0"/>
         <scan frontendConnection="FE_DEFAULT"/>
-        <descrambling frontendConnection="FE_DEFAULT"/>
-        <dvrRecord frontendConnection="FE_DEFAULT"/>
-        <lnbLive frontendConnection="FE_DVBS_0"/>
-        <lnbRecord frontendConnection="FE_DVBS_0"/>
+        <descrambling frontendConnection="FE_DEFAULT"
+                      descramblerConnection="DESCRAMBLER_0"
+                      audioFilterConnection="FILTER_AUDIO_DEFAULT"
+                      videoFilterConnection="FILTER_VIDEO_DEFAULT"
+                      dvrSoftwareFeConnection="DVR_PLAYBACK_0"/>
+        <dvrPlayback dvrConnection="DVR_PLAYBACK_0"
+                     audioFilterConnection="FILTER_AUDIO_DEFAULT"
+                     videoFilterConnection="FILTER_VIDEO_DEFAULT"
+                     sectionFilterConnection="FILTER_TS_SECTION_0"/>
+        <dvrRecord frontendConnection="FE_DEFAULT"
+                   recordFilterConnection="FILTER_TS_RECORD_0"
+                   dvrRecordConnection="DVR_RECORD_0"
+                   dvrSoftwareFeConnection="DVR_PLAYBACK_0"/>
+        <lnbLive frontendConnection="FE_DVBS_0"
+                 audioFilterConnection="FILTER_AUDIO_DEFAULT"
+                 videoFilterConnection="FILTER_VIDEO_DEFAULT"
+                 lnbConnection="LNB_1"
+                 diseqcMsgSender="DISEQC_POWER_ON"/>
+        <lnbRecord frontendConnection="FE_DVBS_0"
+                   recordFilterConnection="FILTER_TS_RECORD_0"
+                   dvrRecordConnection="DVR_RECORD_0"
+                   lnbConnection="LNB_0"
+                   diseqcMsgSender="DISEQC_POWER_ON"/>
+        <timeFilter timeFilterConnection="TIME_FILTER_0"/>
     </dataFlowConfiguration>
 </TunerConfiguration>

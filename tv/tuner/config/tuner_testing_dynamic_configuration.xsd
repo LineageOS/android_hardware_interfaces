@@ -85,7 +85,7 @@
             </xs:documentation>
         </xs:annotation>
         <xs:choice minOccurs="0" maxOccurs="1">
-            <!-- TODO: finish all the frontend settings structures. -->
+            <!-- TODO: b/182519645 finish all the frontend settings structures. -->
             <!--xs:element name="analog" type="analogSettings"/>
             <xs:element name="atsc" type="atscSettings"/>
             <xs:element name="atsc3" type="atsc3Settings"/>
@@ -99,12 +99,305 @@
         </xs:choice>
         <xs:attribute name="id" type="frontendId" use="required"/>
         <xs:attribute name="type" type="frontendTypeEnum" use="required"/>
-        <xs:attribute name="isSoftwareFrontend" type="xs:boolean" use="required"/>
         <!-- A dvr connection is required in the data flow config section when
             "isSoftwareFrontend" is true. -->
+        <xs:attribute name="isSoftwareFrontend" type="xs:boolean" use="required"/>
         <xs:attribute name="frequency" type="xs:nonNegativeInteger" use="required"/>
         <xs:attribute name="connectToCicamId" type="xs:nonNegativeInteger" use="optional"/>
         <xs:attribute name="endFrequency" type="xs:nonNegativeInteger" use="optional"/>
+    </xs:complexType>
+
+    <!-- FILTER SESSION -->
+    <xs:simpleType name="filterId">
+        <!-- Filter id must be either FILTER_AUDIO_DEFAULT or FILTER_VIDEO_DEFAULT
+             or FILTER_MAINTYPE_SUBTYPE_NUM
+            <filter id="FILTER_TS_AUDIO_0"/>
+        -->
+        <xs:restriction base="xs:string">
+            <xs:pattern value="FILTER_AUDIO_DEFAULT|FILTER_VIDEO_DEFAULT|FILTER_[A-Z]+_[A-Z]+_[0-9]+"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <!-- A list of filter ids that could be used in the data flow configurations to connect
+        filters under testing. -->
+    <xs:simpleType name="filterConnections">
+        <xs:list itemType="filterId" />
+    </xs:simpleType>
+    <!-- DemuxFilterRecordSettings::tsIndexMask -->
+    <xs:simpleType name="tsIndexMask">
+        <xs:restriction base="xs:integer">
+            <xs:minInclusive value="0"/>
+            <xs:maxInclusive value="8191"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <!-- DemuxFilterRecordSettings::scIndexType -->
+    <xs:simpleType name="scIndexTypeEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="NONE" />
+            <xs:enumeration value="SC" />
+            <xs:enumeration value="SC_HEVC"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="filterMainTypeEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="TS" />
+            <xs:enumeration value="MMTP" />
+            <!-- TODO: b/182519645 Support IP/TLV/ALP filter config
+            <xs:enumeration value="IP"/>
+            <xs:enumeration value="TLV"/>
+            <xs:enumeration value="ALP"/-->
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="filterSubTypeEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="UNDEFINED" />
+            <xs:enumeration value="SECTION" />
+            <xs:enumeration value="PES" />
+            <xs:enumeration value="TS"/>
+            <xs:enumeration value="AUDIO"/>
+            <xs:enumeration value="VIDEO"/>
+            <xs:enumeration value="PCR"/>
+            <xs:enumeration value="RECORD"/>
+            <xs:enumeration value="TEMI"/>
+            <xs:enumeration value="MMTP"/>
+            <xs:enumeration value="DOWNLOAD"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="avFilterSettings">
+        <xs:attribute name="isPassthrough" type="xs:boolean" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="sectionFilterSettings">
+        <xs:attribute name="isCheckCrc" type="xs:boolean" use="required"/>
+        <xs:attribute name="isRepeat" type="xs:boolean" use="required"/>
+        <xs:attribute name="isRaw" type="xs:boolean" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="recordFilterSettings">
+        <xs:attribute name="tsIndexMask" type="tsIndexMask" use="required"/>
+        <xs:attribute name="scIndexType" type="scIndexTypeEnum" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="filter">
+        <xs:annotation>
+            <xs:documentation>
+                Each filter element contain the following attributes:
+                    "id": unique id of the filter that could be used to connect to the test the
+                        "dataFlowConfiguration"
+                    "mainType": the main filter type. The enums are defined in the xsd.
+                    "subType": the sub filter type. The enums are defined in the xsd.
+                    "bufferSize": the buffer size of the filter in hex.
+                    "pid": the pid that would be used to configure the filter.
+                    "useFMQ": if the filter uses FMQ.
+
+                Each filter element also contains at most one type-related "filterSettings".
+                    - The settings type should match the filter "subType" attribute.
+                    - For example, when filter subType is audio or video, the avFilterSettings
+                        can be configured.
+                    - This is optional and skipping the settings would pass a setting with tpid
+                        config only to the hal.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:choice minOccurs="0" maxOccurs="1">
+            <!-- TODO: b/182519645 finish all the filter settings structures. -->
+            <xs:element name="sectionFilterSettings" type="sectionFilterSettings"/>
+            <xs:element name="avFilterSettings" type="avFilterSettings"/>
+            <xs:element name="recordFilterSettings" type="recordFilterSettings"/>
+            <!--xs:element name="pes" type="pesFilterSettings"/>
+            <xs:element name="download" type="downloadFilterSettings"/-->
+        </xs:choice>
+        <xs:attribute name="id" type="filterId" use="required"/>
+        <xs:attribute name="mainType" type="filterMainTypeEnum" use="required"/>
+        <xs:attribute name="subType" type="filterSubTypeEnum" use="required"/>
+        <xs:attribute name="bufferSize" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="pid" type="xs:nonNegativeInteger" use="optional"/>
+        <xs:attribute name="useFMQ" type="xs:boolean" use="required"/>
+    </xs:complexType>
+
+    <!-- DVR SESSION -->
+    <xs:simpleType name="dvrId">
+        <!-- Dvr id must be DVR_TYPE_NUM. <dvr id="DVR_PLAYBACK_0"/> -->
+        <xs:restriction base="xs:string">
+            <xs:pattern value="DVR_RECORD_[0-9]+|DVR_PLAYBACK_[0-9]+"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="dvrStatusMask">
+        <!-- Dvr status mask must masking the <dvrStatusEnum> -->
+        <xs:restriction base="xs:integer">
+            <xs:minInclusive value="0"/>
+            <xs:maxInclusive value="15"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="dvrStatusEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="DATA_READY" />
+            <xs:enumeration value="LOW_WATER" />
+            <xs:enumeration value="HIGH_WATER" />
+            <xs:enumeration value="OVERFLOW" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="dvrTypeEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="PLAYBACK" />
+            <xs:enumeration value="RECORD" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="dvrDataFormatEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="TS" />
+            <xs:enumeration value="PES" />
+            <xs:enumeration value="ES" />
+            <xs:enumeration value="SHV_TLV" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="dvr">
+        <xs:annotation>
+            <xs:documentation>
+                Each dvr element contain the following attributes:
+                    "id": unique id of the dvr that could be used to connect to the test the
+                        "dataFlowConfiguration"
+                    "type": the dvr type.
+                    "bufferSize": the dvr buffer size.
+                    "statusMask": register callbacks of specific status.
+                    "lowThreshold": the dvr status low threshold.
+                    "highThreshold": the dvr status high threshold.
+                    "dataFormat": the dvr data format.
+                    "packetSize": the dvr packet size.
+                    "inputFilePath": the dvr playback input file path. Only required in playback
+                        dvr.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="id" type="dvrId" use="required"/>
+        <xs:attribute name="type" type="dvrTypeEnum" use="required"/>
+        <xs:attribute name="bufferSize" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="statusMask" type="dvrStatusMask" use="required"/>
+        <xs:attribute name="lowThreshold" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="highThreshold" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="dataFormat" type="dvrDataFormatEnum" use="required"/>
+        <xs:attribute name="packetSize" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="inputFilePath" type="xs:anyURI" use="optional"/>
+    </xs:complexType>
+
+    <!-- LNB SESSION -->
+    <xs:simpleType name="lnbId">
+        <!-- Lnb id must be LNB_NUM: <lnb id="LNB_10"/> -->
+        <xs:restriction base="xs:string">
+            <xs:pattern value="LNB_[0-9]+"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="lnbVoltageEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="NONE" />
+            <xs:enumeration value="VOLTAGE_5V" />
+            <xs:enumeration value="VOLTAGE_11V" />
+            <xs:enumeration value="VOLTAGE_12V"/>
+            <xs:enumeration value="VOLTAGE_13V"/>
+            <xs:enumeration value="VOLTAGE_14V"/>
+            <xs:enumeration value="VOLTAGE_15V"/>
+            <xs:enumeration value="VOLTAGE_18V"/>
+            <xs:enumeration value="VOLTAGE_19V"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="lnbToneEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="NONE" />
+            <xs:enumeration value="CONTINUOUS" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="lnbPositionEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="UNDEFINED" />
+            <xs:enumeration value="POSITION_A" />
+            <xs:enumeration value="POSITION_B" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Diseqc Messages that would be used to send to the lnb under test. -->
+    <xs:simpleType name="diseqcMsgName">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z_]+"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="diseqcMsgBody">
+        <xs:list itemType="xs:unsignedByte"/>
+    </xs:simpleType>
+    <xs:complexType name="diseqcMessage">
+        <xs:attribute name="msgName" type="diseqcMsgName"/>
+        <xs:attribute name="msgBody" type="diseqcMsgBody"/>
+    </xs:complexType>
+    <xs:simpleType name="diseqcMsgSender">
+        <xs:list itemType="diseqcMsgName"/>
+    </xs:simpleType>
+
+    <xs:complexType name="lnb">
+        <xs:annotation>
+            <xs:documentation>
+                Each lnb element contain the following attributes:
+                    "id": unique id of the lnb that could be used to connect to the test the
+                        "dataFlowConfiguration"
+                    "name": the external lnb device name.
+                    "voltage": the voltage used to config the lnb.
+                    "tone": the voltage used to config the lnb.
+                    "position": the voltage used to config the lnb.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="id" type="lnbId" use="required"/>
+        <!-- Only required on external lnb with no device id. -->
+        <xs:attribute name="name" type="xs:string" use="optional"/>
+        <xs:attribute name="voltage" type="lnbVoltageEnum" use="required"/>
+        <xs:attribute name="tone" type="lnbToneEnum" use="required"/>
+        <xs:attribute name="position" type="lnbPositionEnum" use="required"/>
+    </xs:complexType>
+
+    <!-- TIME FILTER SESSION -->
+    <xs:simpleType name="timeFilterId">
+        <!-- Time Filter id must be TIME_FILTER_NUM: <timeFilter id="TIME_FILTER_1"/> -->
+        <xs:restriction base="xs:string">
+            <xs:pattern value="TIME_FILTER_[0-9]+"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="timeFilter">
+        <xs:annotation>
+            <xs:documentation>
+                Each timeFilter element contain the following attributes:
+                    "id": unique id of the time filter that could be used to connect to the test the
+                        "dataFlowConfiguration"
+                    "timeStamp": the time stamp used to config the time filter.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="id" type="timeFilterId" use="required"/>
+        <xs:attribute name="timeStamp" type="xs:nonNegativeInteger" use="required"/>
+    </xs:complexType>
+
+    <!-- DESCRAMBLER SESSION -->
+    <xs:simpleType name="descramblerId">
+        <!-- Descrambler id must be DESCRAMBLER_NUM: <descrambler id="DESCRAMBLER_2"/> -->
+        <xs:restriction base="xs:string">
+            <xs:pattern value="DESCRAMBLER_[0-9]+"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="sessionPrivateData">
+        <xs:list itemType="xs:unsignedByte"/>
+    </xs:simpleType>
+
+    <xs:complexType name="descrambler">
+        <xs:annotation>
+            <xs:documentation>
+                Each descrambler element contain the following attributes:
+                    "id": unique id of the descrambler that could be used to connect to the test the
+                        "dataFlowConfiguration"
+                    "casSystemId": the cas system id to connect to the descrambler.
+                    "provisionStr": the provision string to use with the cas plugin.
+                    "sesstionPrivatData": the session private data used to open the cas session.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="id" type="descramblerId" use="required"/>
+        <xs:attribute name="casSystemId" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="provisionStr" type="xs:string" use="required"/>
+        <xs:attribute name="sesstionPrivatData" type="sessionPrivateData" use="optional"/>
     </xs:complexType>
 
     <!-- HARDWARE CONFIGURATION SESSION -->
@@ -131,6 +424,110 @@
                     </xs:sequence>
                 </xs:complexType>
             </xs:element>
+            <xs:element name="filters" minOccurs="0" maxOccurs="1">
+                <xs:complexType>
+                    <xs:annotation>
+                        <xs:documentation xml:lang="en">
+                            This section contains configurations of all the filters that would be
+                                used in the tests.
+                                - This section is optional and can be skipped to use the default
+                                    filter settings.
+                                - The default settings can be found in the
+                                    sample_tuner_vts_configurations.xml.
+                                - The users can also override the default filter settings using
+                                - id="FILTER_AUDIO_DEFAULT" or "FILTER_VIDEO_DEFAULT".
+                                - The users can configure 1 or more filter elements in the filters
+                                    sections.
+                        </xs:documentation>
+                    </xs:annotation>
+                    <xs:sequence>
+                        <xs:element name="filter" type="filter" minOccurs="1" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="dvrs" minOccurs="0" maxOccurs="1">
+                <xs:complexType>
+                    <xs:annotation>
+                        <xs:documentation xml:lang="en">
+                            This section contains configurations of all the dvrs that would be used
+                                in the tests.
+                                - This section is optional and can be skipped if the device does
+                                    not support dvr.
+                                - The users can configure 1 or more dvr elements in the dvrs
+                                   sections.
+                        </xs:documentation>
+                    </xs:annotation>
+                    <xs:sequence>
+                        <xs:element name="dvr" type="dvr" minOccurs="1" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="diseqcMessages" minOccurs="0" maxOccurs="1">
+                <xs:complexType>
+                    <xs:annotation>
+                        <xs:documentation xml:lang="en">
+                            This section contains configurations of all the diseqc messages that
+                            would be used in the lnb tests.
+                                - This section is optional and can be skipped if lnb is not suppoted
+                                - The users can configure 1 or more message elements in the
+                                    diseqcMessages sections.
+                        </xs:documentation>
+                    </xs:annotation>
+                    <xs:sequence>
+                        <xs:element name="diseqcMessage" type="diseqcMessage" minOccurs="1" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="lnbs" minOccurs="0" maxOccurs="1">
+                <xs:complexType>
+                    <xs:annotation>
+                        <xs:documentation xml:lang="en">
+                            This section contains configurations of all the lnbs that would be used
+                                in the tests.
+                                - This section is optional and can be skipped if lnb is not suppoted
+                                - The users can configure 1 or more lnb elements in the lnbs
+                                    sections.
+                        </xs:documentation>
+                    </xs:annotation>
+                    <xs:sequence>
+                        <xs:element name="lnb" type="lnb" minOccurs="1" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="timeFilters" minOccurs="0" maxOccurs="1">
+                <xs:complexType>
+                    <xs:annotation>
+                        <xs:documentation xml:lang="en">
+                            This section contains configurations of all the time filters that would
+                                be used in the tests.
+                                - This section is optional and can be skipped if time filter is
+                                    not supported.
+                                - The users can configure 1 or more time filter elements in the
+                                    time filters sections.
+                        </xs:documentation>
+                    </xs:annotation>
+                    <xs:sequence>
+                        <xs:element name="timeFilter" type="timeFilter" minOccurs="1" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="descramblers" minOccurs="0" maxOccurs="1">
+                <xs:complexType>
+                    <xs:annotation>
+                        <xs:documentation xml:lang="en">
+                            This section contains configurations of all the descramblers that would
+                                be used in the tests.
+                                - This section is optional and can be skipped if descrambling is not
+                                    supported.
+                                - The users can configure 1 or more descrambler elements in the
+                                    descramblers sections.
+                        </xs:documentation>
+                    </xs:annotation>
+                    <xs:sequence>
+                        <xs:element name="descrambler" type="descrambler" minOccurs="1" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
         </xs:sequence>
     </xs:complexType>
 
@@ -139,8 +536,14 @@
         <xs:sequence>
             <xs:element name="clearLiveBroadcast" minOccurs="1" maxOccurs="1">
                 <xs:complexType>
-                    <!-- TODO: add optional dvr config for software input -->
                     <xs:attribute name="frontendConnection" type="frontendId" use="required"/>
+                    <xs:attribute name="audioFilterConnection" type="filterId" use="required"/>
+                    <xs:attribute name="videoFilterConnection" type="filterId" use="required"/>
+                    <xs:attribute name="pcrFilterConnection" type="filterId" use="optional"/>
+                    <xs:attribute name="sectionFilterConnection" type="filterId" use="optional"/>
+                    <!-- TODO: b/182519645 allow the users to insert extra filters -->
+                    <!-- DVR is only required when the frontend is using the software input -->
+                    <xs:attribute name="dvrSoftwareFeConnection" type="dvrId" use="optional"/>
                 </xs:complexType>
             </xs:element>
             <xs:element name="scan" minOccurs="1" maxOccurs="1">
@@ -151,21 +554,54 @@
             <xs:element name="descrambling" minOccurs="0" maxOccurs="1">
                 <xs:complexType>
                     <xs:attribute name="frontendConnection" type="frontendId" use="required"/>
+                    <xs:attribute name="descramblerConnection" type="descramblerId" use="required"/>
+                    <xs:attribute name="audioFilterConnection" type="filterId" use="required"/>
+                    <xs:attribute name="videoFilterConnection" type="filterId" use="required"/>
+                    <!-- TODO: b/182519645 allow the users to insert extra filters -->
+                    <!-- DVR is only required when the frontend is using the software input -->
+                    <xs:attribute name="dvrSoftwareFeConnection" type="dvrId" use="optional"/>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="dvrPlayback" minOccurs="0" maxOccurs="1">
+                <xs:complexType>
+                    <xs:attribute name="dvrConnection" type="dvrId" use="required"/>
+                    <xs:attribute name="audioFilterConnection" type="filterId" use="required"/>
+                    <xs:attribute name="videoFilterConnection" type="filterId" use="required"/>
+                    <xs:attribute name="sectionFilterConnection" type="filterId" use="optional"/>
+                    <!-- TODO: b/182519645 allow the users to insert extra filters -->
                 </xs:complexType>
             </xs:element>
             <xs:element name="dvrRecord" minOccurs="0" maxOccurs="1">
                 <xs:complexType>
                     <xs:attribute name="frontendConnection" type="frontendId" use="required"/>
+                    <xs:attribute name="dvrRecordConnection" type="dvrId" use="required"/>
+                    <!-- DVR is only required when the frontend is using the software input -->
+                    <xs:attribute name="dvrSoftwareFeConnection" type="dvrId" use="optional"/>
+                    <xs:attribute name="recordFilterConnection" type="filterId" use="required"/>
                 </xs:complexType>
             </xs:element>
             <xs:element name="lnbLive" minOccurs="0" maxOccurs="1">
                 <xs:complexType>
                     <xs:attribute name="frontendConnection" type="frontendId" use="required"/>
+                    <xs:attribute name="audioFilterConnection" type="filterId" use="required"/>
+                    <xs:attribute name="videoFilterConnection" type="filterId" use="required"/>
+                    <xs:attribute name="lnbConnection" type="lnbId" use="required"/>
+                    <xs:attribute name="diseqcMsgSender" type="diseqcMsgSender" use="optional"/>
+                    <!-- TODO: b/182519645 allow the users to insert extra filters -->
                 </xs:complexType>
             </xs:element>
             <xs:element name="lnbRecord" minOccurs="0" maxOccurs="1">
                 <xs:complexType>
                     <xs:attribute name="frontendConnection" type="frontendId" use="required"/>
+                    <xs:attribute name="recordFilterConnection" type="filterId" use="required"/>
+                    <xs:attribute name="dvrRecordConnection" type="dvrId" use="required"/>
+                    <xs:attribute name="lnbConnection" type="lnbId" use="required"/>
+                    <xs:attribute name="diseqcMsgSender" type="diseqcMsgSender" use="optional"/>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="timeFilter" minOccurs="0" maxOccurs="1">
+                <xs:complexType>
+                    <xs:attribute name="timeFilterConnection" type="timeFilterId" use="required"/>
                 </xs:complexType>
             </xs:element>
         </xs:sequence>
@@ -182,6 +618,26 @@
         </xs:complexType>
         <xs:key name="frontendIdUniqueness">
             <xs:selector xpath="hardwareConfiguration/frontends/frontend"/>
+            <xs:field xpath="@id"/>
+        </xs:key>
+        <xs:key name="filterIdUniqueness">
+            <xs:selector xpath="hardwareConfiguration/filters/filter"/>
+            <xs:field xpath="@id"/>
+        </xs:key>
+        <xs:key name="dvrIdUniqueness">
+            <xs:selector xpath="hardwareConfiguration/dvrs/dvr"/>
+            <xs:field xpath="@id"/>
+        </xs:key>
+        <xs:key name="lnbIdUniqueness">
+            <xs:selector xpath="hardwareConfiguration/lnbs/lnb"/>
+            <xs:field xpath="@id"/>
+        </xs:key>
+        <xs:key name="timeFilterIdUniqueness">
+            <xs:selector xpath="hardwareConfiguration/timeFilters/timeFilter"/>
+            <xs:field xpath="@id"/>
+        </xs:key>
+        <xs:key name="descramblerIdUniqueness">
+            <xs:selector xpath="hardwareConfiguration/descramblers/descrambler"/>
             <xs:field xpath="@id"/>
         </xs:key>
     </xs:element>
