@@ -90,6 +90,17 @@ struct DvrConfig {
     string playbackInputFile;
 };
 
+struct LnbConfig {
+    string name;
+    LnbVoltage voltage;
+    LnbTone tone;
+    LnbPosition position;
+};
+
+struct TimeFilterConfig {
+    uint64_t timeStamp;
+};
+
 struct LiveBroadcastHardwareConnections {
     string frontendId;
     string dvrSoftwareFeId;
@@ -137,8 +148,9 @@ struct LnbLiveHardwareConnections {
     string frontendId;
     string audioFilterId;
     string videoFilterId;
-    /* list string of extra filters;
-    string lnbId; */
+    string lnbId;
+    vector<string> diseqcMsgs;
+    /* list string of extra filters; */
 };
 
 struct LnbRecordHardwareConnections {
@@ -146,8 +158,14 @@ struct LnbRecordHardwareConnections {
     string frontendId;
     string dvrRecordId;
     string recordFilterId;
-    /* list string of extra filters;
-    string lnbId; */
+    string lnbId;
+    vector<string> diseqcMsgs;
+    /* list string of extra filters; */
+};
+
+struct TimeFilterHardwareConnections {
+    bool support;
+    string timeFilterId;
 };
 
 struct TunerTestingConfigReader {
@@ -290,6 +308,49 @@ struct TunerTestingConfigReader {
         }
     }
 
+    static void readLnbConfig1_0(map<string, LnbConfig>& lnbMap) {
+        auto hardwareConfig = getHardwareConfig();
+        if (hardwareConfig.hasLnbs()) {
+            auto lnbs = *hardwareConfig.getFirstLnbs();
+            for (auto lnbConfig : lnbs.getLnb()) {
+                string id = lnbConfig.getId();
+                if (lnbConfig.hasName()) {
+                    lnbMap[id].name = lnbConfig.getName();
+                } else {
+                    lnbMap[id].name = emptyHardwareId;
+                }
+                lnbMap[id].voltage = static_cast<LnbVoltage>(lnbConfig.getVoltage());
+                lnbMap[id].tone = static_cast<LnbTone>(lnbConfig.getTone());
+                lnbMap[id].position = static_cast<LnbPosition>(lnbConfig.getPosition());
+            }
+        }
+    }
+
+    static void readDiseqcMessages(map<string, vector<uint8_t>>& diseqcMsgMap) {
+        auto hardwareConfig = getHardwareConfig();
+        if (hardwareConfig.hasDiseqcMessages()) {
+            auto msgs = *hardwareConfig.getFirstDiseqcMessages();
+            for (auto msgConfig : msgs.getDiseqcMessage()) {
+                string name = msgConfig.getMsgName();
+                for (uint8_t atom : msgConfig.getMsgBody()) {
+                    diseqcMsgMap[name].push_back(atom);
+                }
+            }
+        }
+    }
+
+    static void readTimeFilterConfig1_0(map<string, TimeFilterConfig>& timeFilterMap) {
+        auto hardwareConfig = getHardwareConfig();
+        if (hardwareConfig.hasTimeFilters()) {
+            auto timeFilters = *hardwareConfig.getFirstTimeFilters();
+            for (auto timeFilterConfig : timeFilters.getTimeFilter()) {
+                string id = timeFilterConfig.getId();
+                timeFilterMap[id].timeStamp =
+                        static_cast<uint64_t>(timeFilterConfig.getTimeStamp());
+            }
+        }
+    }
+
     static void connectLiveBroadcast(LiveBroadcastHardwareConnections& live) {
         auto liveConfig = *getDataFlowConfiguration().getFirstClearLiveBroadcast();
         live.frontendId = liveConfig.getFrontendConnection();
@@ -377,6 +438,12 @@ struct TunerTestingConfigReader {
         lnbLive.frontendId = lnbLiveConfig.getFrontendConnection();
         lnbLive.audioFilterId = lnbLiveConfig.getAudioFilterConnection();
         lnbLive.videoFilterId = lnbLiveConfig.getVideoFilterConnection();
+        lnbLive.lnbId = lnbLiveConfig.getLnbConnection();
+        if (lnbLiveConfig.hasDiseqcMsgSender()) {
+            for (auto msgName : lnbLiveConfig.getDiseqcMsgSender()) {
+                lnbLive.diseqcMsgs.push_back(msgName);
+            }
+        }
     }
 
     static void connectLnbRecord(LnbRecordHardwareConnections& lnbRecord) {
@@ -390,6 +457,23 @@ struct TunerTestingConfigReader {
         lnbRecord.frontendId = lnbRecordConfig.getFrontendConnection();
         lnbRecord.recordFilterId = lnbRecordConfig.getRecordFilterConnection();
         lnbRecord.dvrRecordId = lnbRecordConfig.getDvrRecordConnection();
+        lnbRecord.lnbId = lnbRecordConfig.getLnbConnection();
+        if (lnbRecordConfig.hasDiseqcMsgSender()) {
+            for (auto msgName : lnbRecordConfig.getDiseqcMsgSender()) {
+                lnbRecord.diseqcMsgs.push_back(msgName);
+            }
+        }
+    }
+
+    static void connectTimeFilter(TimeFilterHardwareConnections& timeFilter) {
+        auto dataFlow = getDataFlowConfiguration();
+        if (dataFlow.hasTimeFilter()) {
+            timeFilter.support = true;
+        } else {
+            return;
+        }
+        auto timeFilterConfig = *dataFlow.getFirstTimeFilter();
+        timeFilter.timeFilterId = timeFilterConfig.getTimeFilterConnection();
     }
 
   private:
