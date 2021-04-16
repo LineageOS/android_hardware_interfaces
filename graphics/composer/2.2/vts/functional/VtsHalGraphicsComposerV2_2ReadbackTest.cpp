@@ -288,9 +288,9 @@ TEST_P(GraphicsCompositionTest, SetLayerBuffer) {
                                        {0, mDisplayHeight / 2, mDisplayWidth, mDisplayHeight},
                                        BLUE);
 
-        auto layer = std::make_shared<TestBufferLayer>(
-                mComposerClient, mGralloc, *mTestRenderEngine, mPrimaryDisplay, mDisplayWidth,
-                mDisplayHeight, PixelFormat::RGBA_8888);
+        auto layer = std::make_shared<TestBufferLayer>(mComposerClient, mGralloc, mPrimaryDisplay,
+                                                       mDisplayWidth, mDisplayHeight,
+                                                       PixelFormat::RGBA_8888);
         layer->setDisplayFrame({0, 0, mDisplayWidth, mDisplayHeight});
         layer->setZOrder(10);
         layer->setDataspace(ReadbackHelper::getDataspaceForColorMode(mode), mWriter);
@@ -422,9 +422,9 @@ TEST_P(GraphicsCompositionTest, ClientComposition) {
                                        {0, mDisplayHeight / 2, mDisplayWidth, mDisplayHeight},
                                        BLUE);
 
-        auto layer = std::make_shared<TestBufferLayer>(
-                mComposerClient, mGralloc, *mTestRenderEngine, mPrimaryDisplay, mDisplayWidth,
-                mDisplayHeight, PixelFormat::RGBA_FP16);
+        auto layer = std::make_shared<TestBufferLayer>(mComposerClient, mGralloc, mPrimaryDisplay,
+                                                       mDisplayWidth, mDisplayHeight,
+                                                       PixelFormat::RGBA_FP16);
         layer->setDisplayFrame({0, 0, mDisplayWidth, mDisplayHeight});
         layer->setZOrder(10);
         layer->setDataspace(ReadbackHelper::getDataspaceForColorMode(mode), mWriter);
@@ -538,8 +538,8 @@ TEST_P(GraphicsCompositionTest, DeviceAndClientComposition) {
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
 
         auto deviceLayer = std::make_shared<TestBufferLayer>(
-                mComposerClient, mGralloc, *mTestRenderEngine, mPrimaryDisplay, mDisplayWidth,
-                mDisplayHeight / 2, PixelFormat::RGBA_8888);
+                mComposerClient, mGralloc, mPrimaryDisplay, mDisplayWidth, mDisplayHeight / 2,
+                PixelFormat::RGBA_8888);
         std::vector<IComposerClient::Color> deviceColors(deviceLayer->mWidth *
                                                          deviceLayer->mHeight);
         ReadbackHelper::fillColorsArea(deviceColors, deviceLayer->mWidth,
@@ -575,8 +575,8 @@ TEST_P(GraphicsCompositionTest, DeviceAndClientComposition) {
         }
 
         auto clientLayer = std::make_shared<TestBufferLayer>(
-                mComposerClient, mGralloc, *mTestRenderEngine, mPrimaryDisplay, clientWidth,
-                clientHeight, PixelFormat::RGBA_FP16, IComposerClient::Composition::DEVICE);
+                mComposerClient, mGralloc, mPrimaryDisplay, clientWidth, clientHeight,
+                PixelFormat::RGBA_FP16, IComposerClient::Composition::DEVICE);
         IComposerClient::Rect clientFrame = {0, mDisplayHeight / 2, mDisplayWidth, mDisplayHeight};
         clientLayer->setDisplayFrame(clientFrame);
         clientLayer->setZOrder(0);
@@ -657,9 +657,9 @@ TEST_P(GraphicsCompositionTest, SetLayerDamage) {
         std::vector<IComposerClient::Color> expectedColors(mDisplayWidth * mDisplayHeight);
         ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth, redRect, RED);
 
-        auto layer = std::make_shared<TestBufferLayer>(
-                mComposerClient, mGralloc, *mTestRenderEngine, mPrimaryDisplay, mDisplayWidth,
-                mDisplayHeight, PixelFormat::RGBA_8888);
+        auto layer = std::make_shared<TestBufferLayer>(mComposerClient, mGralloc, mPrimaryDisplay,
+                                                       mDisplayWidth, mDisplayHeight,
+                                                       PixelFormat::RGBA_8888);
         layer->setDisplayFrame({0, 0, mDisplayWidth, mDisplayHeight});
         layer->setZOrder(10);
         layer->setDataspace(ReadbackHelper::getDataspaceForColorMode(mode), mWriter);
@@ -805,9 +805,9 @@ TEST_P(GraphicsCompositionTest, SetLayerSourceCrop) {
                                        {0, mDisplayHeight / 2, mDisplayWidth, mDisplayHeight},
                                        BLUE);
 
-        auto layer = std::make_shared<TestBufferLayer>(
-                mComposerClient, mGralloc, *mTestRenderEngine, mPrimaryDisplay, mDisplayWidth,
-                mDisplayHeight, PixelFormat::RGBA_8888);
+        auto layer = std::make_shared<TestBufferLayer>(mComposerClient, mGralloc, mPrimaryDisplay,
+                                                       mDisplayWidth, mDisplayHeight,
+                                                       PixelFormat::RGBA_8888);
         layer->setDisplayFrame({0, 0, mDisplayWidth, mDisplayHeight});
         layer->setZOrder(10);
         layer->setDataspace(ReadbackHelper::getDataspaceForColorMode(mode), mWriter);
@@ -957,9 +957,9 @@ class GraphicsBlendModeCompositionTest
         backgroundLayer->setZOrder(0);
         backgroundLayer->setColor(mBackgroundColor);
 
-        auto layer = std::make_shared<TestBufferLayer>(
-                mComposerClient, mGralloc, *mTestRenderEngine, mPrimaryDisplay, mDisplayWidth,
-                mDisplayHeight, PixelFormat::RGBA_8888);
+        auto layer = std::make_shared<TestBufferLayer>(mComposerClient, mGralloc, mPrimaryDisplay,
+                                                       mDisplayWidth, mDisplayHeight,
+                                                       PixelFormat::RGBA_8888);
         layer->setDisplayFrame({0, 0, mDisplayWidth, mDisplayHeight});
         layer->setZOrder(10);
         layer->setDataspace(Dataspace::UNKNOWN, mWriter);
@@ -1195,9 +1195,9 @@ class GraphicsTransformCompositionTest : public GraphicsCompositionTest {
         IComposerClient::Rect blueRect = {mSideLength / 2, mSideLength / 2, mSideLength,
                                           mSideLength};
 
-        mLayer = std::make_shared<TestBufferLayer>(mComposerClient, mGralloc, *mTestRenderEngine,
-                                                   mPrimaryDisplay, mSideLength, mSideLength,
-                                                   PixelFormat::RGBA_8888);
+        mLayer =
+            std::make_shared<TestBufferLayer>(mComposerClient, mGralloc, mPrimaryDisplay,
+                                              mSideLength, mSideLength, PixelFormat::RGBA_8888);
         mLayer->setDisplayFrame({0, 0, mSideLength, mSideLength});
         mLayer->setZOrder(10);
 
