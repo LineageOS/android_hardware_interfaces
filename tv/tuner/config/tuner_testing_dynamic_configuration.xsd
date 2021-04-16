@@ -372,6 +372,34 @@
         <xs:attribute name="timeStamp" type="xs:nonNegativeInteger" use="required"/>
     </xs:complexType>
 
+    <!-- DESCRAMBLER SESSION -->
+    <xs:simpleType name="descramblerId">
+        <!-- Descrambler id must be DESCRAMBLER_NUM: <descrambler id="DESCRAMBLER_2"/> -->
+        <xs:restriction base="xs:string">
+            <xs:pattern value="DESCRAMBLER_[0-9]+"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="sessionPrivateData">
+        <xs:list itemType="xs:unsignedByte"/>
+    </xs:simpleType>
+
+    <xs:complexType name="descrambler">
+        <xs:annotation>
+            <xs:documentation>
+                Each descrambler element contain the following attributes:
+                    "id": unique id of the descrambler that could be used to connect to the test the
+                        "dataFlowConfiguration"
+                    "casSystemId": the cas system id to connect to the descrambler.
+                    "provisionStr": the provision string to use with the cas plugin.
+                    "sesstionPrivatData": the session private data used to open the cas session.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="id" type="descramblerId" use="required"/>
+        <xs:attribute name="casSystemId" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="provisionStr" type="xs:string" use="required"/>
+        <xs:attribute name="sesstionPrivatData" type="sessionPrivateData" use="optional"/>
+    </xs:complexType>
+
     <!-- HARDWARE CONFIGURATION SESSION -->
     <xs:complexType name="hardwareConfiguration">
         <xs:sequence>
@@ -483,6 +511,23 @@
                     </xs:sequence>
                 </xs:complexType>
             </xs:element>
+            <xs:element name="descramblers" minOccurs="0" maxOccurs="1">
+                <xs:complexType>
+                    <xs:annotation>
+                        <xs:documentation xml:lang="en">
+                            This section contains configurations of all the descramblers that would
+                                be used in the tests.
+                                - This section is optional and can be skipped if descrambling is not
+                                    supported.
+                                - The users can configure 1 or more descrambler elements in the
+                                    descramblers sections.
+                        </xs:documentation>
+                    </xs:annotation>
+                    <xs:sequence>
+                        <xs:element name="descrambler" type="descrambler" minOccurs="1" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
         </xs:sequence>
     </xs:complexType>
 
@@ -509,6 +554,7 @@
             <xs:element name="descrambling" minOccurs="0" maxOccurs="1">
                 <xs:complexType>
                     <xs:attribute name="frontendConnection" type="frontendId" use="required"/>
+                    <xs:attribute name="descramblerConnection" type="descramblerId" use="required"/>
                     <xs:attribute name="audioFilterConnection" type="filterId" use="required"/>
                     <xs:attribute name="videoFilterConnection" type="filterId" use="required"/>
                     <!-- TODO: b/182519645 allow the users to insert extra filters -->
@@ -588,6 +634,10 @@
         </xs:key>
         <xs:key name="timeFilterIdUniqueness">
             <xs:selector xpath="hardwareConfiguration/timeFilters/timeFilter"/>
+            <xs:field xpath="@id"/>
+        </xs:key>
+        <xs:key name="descramblerIdUniqueness">
+            <xs:selector xpath="hardwareConfiguration/descramblers/descrambler"/>
             <xs:field xpath="@id"/>
         </xs:key>
     </xs:element>
