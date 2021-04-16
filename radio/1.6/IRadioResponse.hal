@@ -139,7 +139,7 @@ interface IRadioResponse extends @1.5::IRadioResponse {
      *   RadioError:ACCESS_BARRED
      *   RadioError:BLOCKED_DUE_TO_CALL
      */
-    oneway sendSmsExpectMoreResponse_1_6(RadioResponseInfo info, SendSmsResult sms);
+    oneway sendSMSExpectMoreResponse_1_6(RadioResponseInfo info, SendSmsResult sms);
 
     /**
      * @param info Response info struct containing response type, serial no. and error

@@ -145,6 +145,7 @@ interface IRadio extends @1.5::IRadio {
      *
      * Response function is IRadioResponse.setupDataCallResponse_1_6()
      *
+     * Note this API is the same as the 1.5
      */
     oneway setupDataCall_1_6(int32_t serial, AccessNetwork accessNetwork,
             DataProfileInfo dataProfileInfo, bool roamingAllowed,
@@ -176,7 +177,7 @@ interface IRadio extends @1.5::IRadio {
      * @param serial Serial number of request.
      * @param message GsmSmsMessage as defined in types.hal
      *
-     * Response function is IRadioResponse.sendSmsExpectMoreResponse_1_6()
+     * Response function is IRadioResponse.sendSMSExpectMoreResponse_1_6()
      *
      * Note this API is the same as the 1.0
      *
@@ -184,7 +185,7 @@ interface IRadio extends @1.5::IRadio {
      * fails. RadioError:SMS_SEND_FAIL_RETRY means retry (i.e. error cause is 332)
      * and RadioError:GENERIC_FAILURE means no retry (i.e. error cause is 500)
      */
-    oneway sendSmsExpectMore_1_6(int32_t serial, GsmSmsMessage message);
+    oneway sendSMSExpectMore_1_6(int32_t serial, GsmSmsMessage message);
 
     /**
      * Send a CDMA SMS message
@@ -266,7 +267,7 @@ interface IRadio extends @1.5::IRadio {
      * 2. Disable NR dual connectivity {NrDualConnectivityState:DISABLE}
      * 3. Disable NR dual connectivity and force secondary cell to be released
      * {NrDualConnectivityState:DISABLE_IMMEDIATE}
-     *
+
      * Response callback is IRadioResponse.setNRDualConnectivityStateResponse()
      */
     oneway setNrDualConnectivityState(int32_t serial,
@@ -371,7 +372,7 @@ interface IRadio extends @1.5::IRadio {
      *
      * Response callback is IRadioResponse.getAllowedNetworkTypesBitmapResponse()
      */
-    oneway getAllowedNetworkTypesBitmap(int32_t serial);
+    oneway getAllowedNetworkTypesBitmap(uint32_t serial);
 
     /**
      * Control data throttling at modem.
