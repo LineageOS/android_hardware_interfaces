@@ -133,6 +133,41 @@
                  statusMask="15" lowThreshold="4096" highThreshold="32767"
                  dataFormat="ES" packetSize="188" inputFilePath="/data/local/tmp/test.es"/>
         </dvrs>
+        <!-- Lnb section:
+            This section contains configurations of all the lnbs that would be used in the tests.
+                - This section is optional and can be skipped if LNB is not supported.
+                - The users can configure 1 or more lnb elements in the lnbs sections.
+
+            Each lnb element contain the following attributes:
+                "id": unique id of the lnb that could be used to connect to the test the
+                    "dataFlowConfiguration"
+                "name": the external lnb device name.
+                "voltage": the voltage used to config the lnb.
+                "tone": the voltage used to config the lnb.
+                "position": the voltage used to config the lnb.
+        -->
+        <diseqcMessages>
+            <diseqcMessage msgName="DISEQC_POWER_ON" msgBody="14 0 0 0 0 3"/>
+        </diseqcMessages>
+        <lnbs>
+            <lnb id="LNB_0" voltage="VOLTAGE_12V" tone="NONE" position="UNDEFINED"/>
+            <lnb id="LNB_1" name="default_lnb_external" voltage="VOLTAGE_5V"
+                            tone="NONE" position="UNDEFINED"/>
+        </lnbs>
+        <!-- TimeFilter section:
+            This section contains configurations of all the time filters that would be used in
+            the tests.
+                - This section is optional and can be skipped if Time Filter is not supported.
+                - The users can configure 1 or more timeFilter elements in the timeFilters sections.
+
+            Each timeFilter element contain the following attributes:
+                "id": unique id of the time filter that could be used to connect to the test the
+                    "dataFlowConfiguration"
+                "timeStamp": the time stamp used to config the time filter.
+        -->
+        <timeFilters>
+            <timeFilter id="TIME_FILTER_0" timeStamp="1"/>
+        </timeFilters>
     </hardwareConfiguration>
 
     <!-- Data flow configuration section connects each data flow under test to the ids of the
@@ -159,9 +194,14 @@
                    dvrSoftwareFeConnection="DVR_PLAYBACK_0"/>
         <lnbLive frontendConnection="FE_DVBS_0"
                  audioFilterConnection="FILTER_AUDIO_DEFAULT"
-                 videoFilterConnection="FILTER_VIDEO_DEFAULT"/>
+                 videoFilterConnection="FILTER_VIDEO_DEFAULT"
+                 lnbConnection="LNB_1"
+                 diseqcMsgSender="DISEQC_POWER_ON"/>
         <lnbRecord frontendConnection="FE_DVBS_0"
                    recordFilterConnection="FILTER_TS_RECORD_0"
-                   dvrRecordConnection="DVR_RECORD_0"/>
+                   dvrRecordConnection="DVR_RECORD_0"
+                   lnbConnection="LNB_0"
+                   diseqcMsgSender="DISEQC_POWER_ON"/>
+        <timeFilter timeFilterConnection="TIME_FILTER_0"/>
     </dataFlowConfiguration>
 </TunerConfiguration>
