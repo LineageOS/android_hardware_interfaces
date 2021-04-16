@@ -34,7 +34,7 @@
 package android.hardware.biometrics.face;
 @Backing(type="byte") @VintfStability
 enum Feature {
-  WAVE_ATTENTION_REQUIREMENT = 0,
-  WAVE_DIVERSE_POSES_REQUIREMENT = 1,
+  REQUIRE_ATTENTION = 0,
+  REQUIRE_DIVERSE_POSES = 1,
   DEBUG = 2,
 }
