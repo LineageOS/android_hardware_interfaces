@@ -141,6 +141,8 @@ Return<void> Tuner::getDemuxCaps(getDemuxCaps_cb _hidl_cb) {
 
     // IP filter can be an MMTP filter's data source.
     caps.linkCaps = {0x00, 0x00, 0x02, 0x00, 0x00};
+    // Support time filter testing
+    caps.bTimeFilter = true;
     _hidl_cb(Result::SUCCESS, caps);
     return Void();
 }

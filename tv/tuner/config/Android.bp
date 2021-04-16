@@ -1,0 +1,31 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+xsd_config {
+    name: "tuner_testing_dynamic_configuration_V1_0",
+    srcs: ["tuner_testing_dynamic_configuration.xsd"],
+    package_name: "android.media.tuner.testing.configuration.V1_0",
+    nullability: true,
+}
+
+xsd_config {
+    name: "tuner_testing_dynamic_configuration_V1_0_enums",
+    srcs: ["tuner_testing_dynamic_configuration.xsd"],
+    package_name: "android.media.tuner.testing.configuration.V1_0",
+    nullability: true,
+    enums_only: true,
+}
+
+xsd_config {
+    name: "tuner_testing_dynamic_configuration_V1_0_parser",
+    srcs: ["tuner_testing_dynamic_configuration.xsd"],
+    package_name: "android.media.tuner.testing.configuration.V1_0",
+    nullability: true,
+    parser_only: true,
+}

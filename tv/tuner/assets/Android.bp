@@ -1,0 +1,26 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+genrule {
+    name: "tuner_frontend_input_es",
+    srcs: ["tuner_frontend_input.es"],
+    out: [
+        "test.es",
+    ],
+    cmd: "cp -f $(in) $(genDir)/test.es",
+}
+
+genrule {
+    name: "tuner_frontend_input_ts",
+    srcs: ["tuner_frontend_input.ts"],
+    out: [
+        "segment000000.ts",
+    ],
+    cmd: "cp -f $(in) $(genDir)/segment000000.ts",
+}
