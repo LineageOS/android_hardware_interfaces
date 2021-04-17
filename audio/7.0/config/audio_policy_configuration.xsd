@@ -508,6 +508,8 @@
             <xs:enumeration value="AUDIO_CHANNEL_OUT_7POINT1"/>
             <xs:enumeration value="AUDIO_CHANNEL_OUT_7POINT1POINT2"/>
             <xs:enumeration value="AUDIO_CHANNEL_OUT_7POINT1POINT4"/>
+            <xs:enumeration value="AUDIO_CHANNEL_OUT_13POINT_360RA"/>
+            <xs:enumeration value="AUDIO_CHANNEL_OUT_22POINT2"/>
             <xs:enumeration value="AUDIO_CHANNEL_OUT_MONO_HAPTIC_A"/>
             <xs:enumeration value="AUDIO_CHANNEL_OUT_STEREO_HAPTIC_A"/>
             <xs:enumeration value="AUDIO_CHANNEL_OUT_HAPTIC_AB"/>
