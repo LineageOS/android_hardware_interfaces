@@ -41,8 +41,8 @@ interface ISession {
   android.hardware.biometrics.common.ICancellationSignal detectInteraction();
   void enumerateEnrollments();
   void removeEnrollments(in int[] enrollmentIds);
-  void getFeatures(in int enrollmentId);
-  void setFeature(in android.hardware.keymaster.HardwareAuthToken hat, in int enrollmentId, in android.hardware.biometrics.face.Feature feature, boolean enabled);
+  void getFeatures();
+  void setFeature(in android.hardware.keymaster.HardwareAuthToken hat, in android.hardware.biometrics.face.Feature feature, boolean enabled);
   void getAuthenticatorId();
   void invalidateAuthenticatorId();
   void resetLockout(in android.hardware.keymaster.HardwareAuthToken hat);

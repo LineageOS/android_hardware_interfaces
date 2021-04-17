@@ -20,20 +20,19 @@ package android.hardware.biometrics.face;
 @Backing(type="byte")
 enum Feature {
     /**
-     * Do not require the user to look at the device during enrollment and authentication. Note
-     * this is to accommodate people who have limited vision.
+     * Require the user to look at the device during enrollment and authentication. This feature
+     * can be disabled to accommodate people who have limited vision.
      */
-    WAVE_ATTENTION_REQUIREMENT,
+    REQUIRE_ATTENTION,
 
     /**
-     * Do not require a diverse set of poses during enrollment. This is to accommodate people with
-     * limited mobility.
+     * Require a diverse set of poses during enrollment. This feature can be disabled to accommodate
+     * people with limited mobility.
      */
-    WAVE_DIVERSE_POSES_REQUIREMENT,
+    REQUIRE_DIVERSE_POSES,
 
     /**
      * Enable debugging functionality.
      */
     DEBUG,
 }
-
