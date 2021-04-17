@@ -94,6 +94,7 @@ static inline size_t getChannelCount(AudioChannelMask mask) {
         case AudioChannelMask::AUDIO_CHANNEL_OUT_7POINT1POINT4:
         case AudioChannelMask::AUDIO_CHANNEL_INDEX_MASK_12:
             return 12;
+        case AudioChannelMask::AUDIO_CHANNEL_OUT_13POINT_360RA:
         case AudioChannelMask::AUDIO_CHANNEL_INDEX_MASK_13:
             return 13;
         case AudioChannelMask::AUDIO_CHANNEL_INDEX_MASK_14:
@@ -116,6 +117,7 @@ static inline size_t getChannelCount(AudioChannelMask mask) {
             return 22;
         case AudioChannelMask::AUDIO_CHANNEL_INDEX_MASK_23:
             return 23;
+        case AudioChannelMask::AUDIO_CHANNEL_OUT_22POINT2:
         case AudioChannelMask::AUDIO_CHANNEL_INDEX_MASK_24:
             return 24;
         case AudioChannelMask::UNKNOWN:
