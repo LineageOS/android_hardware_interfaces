@@ -57,25 +57,8 @@ cc_library {
         "include",
     ],
     shared_libs: [
-        "libcppcose",
         "libcppbor_external",
+        "libcppcose_rkp",
         "libcrypto",
-    ],
-}
-
-cc_library {
-    name: "libcppcose",
-    vendor_available: true,
-    host_supported: true,
-    srcs: [
-        "cppcose.cpp",
-    ],
-    export_include_dirs: [
-        "include",
-    ],
-    shared_libs: [
-        "libcppbor_external",
-        "libcrypto",
-        "liblog",
     ],
 }

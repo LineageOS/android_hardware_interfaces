@@ -23,12 +23,12 @@
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
 #include <cppbor_parse.h>
-#include <cppcose/cppcose.h>
 #include <cutils/properties.h>
 #include <gmock/gmock.h>
 #include <openssl/mem.h>
 #include <remote_prov/remote_prov_utils.h>
 
+#include <keymaster/cppcose/cppcose.h>
 #include <keymint_support/attestation_record.h>
 #include <keymint_support/key_param_output.h>
 #include <keymint_support/keymint_utils.h>
