@@ -35,6 +35,7 @@ cc_test {
     ],
     static_libs: [
         "libcppbor_external",
+        "libcppcose_rkp",
         "libkeymaster_portable",
         "libpuresoftkeymasterdevice",
         "android.hardware.keymaster@4.0",
