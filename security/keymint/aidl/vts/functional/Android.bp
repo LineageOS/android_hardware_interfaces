@@ -106,7 +106,6 @@ cc_test {
         "libkeymint_remote_prov_support",
         "libkeymint_vts_test_utils",
         "libpuresoftkeymasterdevice",
-        "libremote_provisioner",
     ],
     test_suites: [
         "general-tests",
