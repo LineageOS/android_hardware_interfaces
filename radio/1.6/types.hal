@@ -408,7 +408,7 @@ struct LinkCapacityEstimate {
     * the estimated maximum sustainable link bandwidth (as would be measured
     * at the Upper PDCP or SNDCP SAP). If the DL Aggregate Maximum Bit Rate is known,
     * this value shall not exceed the DL-AMBR for the Internet PDN connection.
-    * This must be filled with -1 if network is not connected.
+    * This must be filled with 0 if network is not connected.
     */
    uint32_t downlinkCapacityKbps;
 
@@ -418,7 +418,7 @@ struct LinkCapacityEstimate {
     * estimated maximum sustainable link bandwidth (as would be measured at the
     * Upper PDCP or SNDCP SAP). If the UL Aggregate Maximum Bit Rate is known,
     * this value shall not exceed the UL-AMBR for the Internet PDN connection.
-    * This must be filled with -1 if network is not connected.
+    * This must be filled with 0 if network is not connected.
     */
    uint32_t uplinkCapacityKbps;
 
@@ -427,7 +427,7 @@ struct LinkCapacityEstimate {
     * This bandwidth estimate shall be the estimated maximum sustainable link bandwidth
     * (as would be measured at the Upper PDCP or SNDCP SAP). This is valid only
     * in if device is connected to both primary and secodary in dual connected
-    * mode. This must be filled with -1 if secondary is not connected or if
+    * mode. This must be filled with 0 if secondary is not connected or if
     * modem does not support this feature.
     */
    uint32_t secondaryDownlinkCapacityKbps;
@@ -437,7 +437,7 @@ struct LinkCapacityEstimate {
     * This bandwidth estimate shall be the estimated
     * maximum sustainable link bandwidth (as would be measured at the Upper PDCP or SNDCP SAP).
     * This is valid only in if device is connected to both primary and secodary in dual connected
-    * mode.This must be filled with -1 if secondary is not connected or if modem
+    * mode.This must be filled with 0 if secondary is not connected or if modem
     * does not support this feature.
     */
    uint32_t secondaryUplinkCapacityKbps;
