@@ -53,7 +53,7 @@ using MaybeResults = std::optional<Results>;
 
 using ExecutionFunction =
         std::function<MaybeResults(const std::shared_ptr<IPreparedModel>& preparedModel,
-                                   const Request& request, int64_t deadline)>;
+                                   const Request& request, int64_t deadlineNs)>;
 
 static int64_t makeDeadline(DeadlineBoundType deadlineBoundType) {
     const auto getNanosecondsSinceEpoch = [](const auto& time) -> int64_t {
@@ -79,9 +79,9 @@ static int64_t makeDeadline(DeadlineBoundType deadlineBoundType) {
 
 void runPrepareModelTest(const std::shared_ptr<IDevice>& device, const Model& model,
                          Priority priority, std::optional<DeadlineBoundType> deadlineBound) {
-    int64_t deadline = kNoDeadline;
+    int64_t deadlineNs = kNoDeadline;
     if (deadlineBound.has_value()) {
-        deadline = makeDeadline(deadlineBound.value());
+        deadlineNs = makeDeadline(deadlineBound.value());
     }
 
     // see if service can handle model
@@ -96,8 +96,8 @@ void runPrepareModelTest(const std::shared_ptr<IDevice>& device, const Model& mo
     const std::shared_ptr<PreparedModelCallback> preparedModelCallback =
             ndk::SharedRefBase::make<PreparedModelCallback>();
     const auto prepareLaunchStatus =
-            device->prepareModel(model, ExecutionPreference::FAST_SINGLE_ANSWER, priority, deadline,
-                                 {}, {}, kEmptyCacheToken, preparedModelCallback);
+            device->prepareModel(model, ExecutionPreference::FAST_SINGLE_ANSWER, priority,
+                                 deadlineNs, {}, {}, kEmptyCacheToken, preparedModelCallback);
     ASSERT_TRUE(prepareLaunchStatus.isOk())
             << "prepareLaunchStatus: " << prepareLaunchStatus.getDescription();
 
@@ -156,13 +156,13 @@ void runPrepareModelTests(const std::shared_ptr<IDevice>& device, const Model& m
 }
 
 static MaybeResults executeSynchronously(const std::shared_ptr<IPreparedModel>& preparedModel,
-                                         const Request& request, int64_t deadline) {
+                                         const Request& request, int64_t deadlineNs) {
     SCOPED_TRACE("synchronous");
     const bool measure = false;
 
     // run execution
     ExecutionResult executionResult;
-    const auto ret = preparedModel->executeSynchronously(request, measure, deadline,
+    const auto ret = preparedModel->executeSynchronously(request, measure, deadlineNs,
                                                          kOmittedTimeoutDuration, &executionResult);
     EXPECT_TRUE(ret.isOk() || ret.getExceptionCode() == EX_SERVICE_SPECIFIC)
             << ret.getDescription();
@@ -182,7 +182,7 @@ static MaybeResults executeSynchronously(const std::shared_ptr<IPreparedModel>& 
 }
 
 static MaybeResults executeBurst(const std::shared_ptr<IPreparedModel>& preparedModel,
-                                 const Request& request, int64_t deadline) {
+                                 const Request& request, int64_t deadlineNs) {
     SCOPED_TRACE("burst");
     const bool measure = false;
 
@@ -200,7 +200,7 @@ static MaybeResults executeBurst(const std::shared_ptr<IPreparedModel>& prepared
 
     // run execution
     ExecutionResult executionResult;
-    ret = burst->executeSynchronously(request, slots, measure, deadline, kOmittedTimeoutDuration,
+    ret = burst->executeSynchronously(request, slots, measure, deadlineNs, kOmittedTimeoutDuration,
                                       &executionResult);
     EXPECT_TRUE(ret.isOk() || ret.getExceptionCode() == EX_SERVICE_SPECIFIC)
             << ret.getDescription();
@@ -224,10 +224,10 @@ void runExecutionTest(const std::shared_ptr<IPreparedModel>& preparedModel,
                       const ExecutionContext& context, bool synchronous,
                       DeadlineBoundType deadlineBound) {
     const ExecutionFunction execute = synchronous ? executeSynchronously : executeBurst;
-    const auto deadline = makeDeadline(deadlineBound);
+    const auto deadlineNs = makeDeadline(deadlineBound);
 
     // Perform execution and unpack results.
-    const auto results = execute(preparedModel, request, deadline);
+    const auto results = execute(preparedModel, request, deadlineNs);
     if (!results.has_value()) return;
     const auto& [status, outputShapes, timing] = results.value();
 
