@@ -3200,15 +3200,21 @@ enum VehicleProperty : int32_t {
     /**
      * Changes the state of the cluster display.
      *
+     * Bounds: the area to render the cluster Activity.
+     * Inset: the area which Activity should avoid from placing any important
+     *     information.
+     *
      * int32[0]: on/off: 0 - off, 1 - on, -1 - don't care
-     * int32[1]: width: positive number - actual width in pixels
-                        -1 - don't care (should set "don't care" both width and height)
-     * int32[2]: height: same format with 'width'
-     * int32[3]: Inset - left: positive number - actual left inset value in pixels
+     * int32[1]: Bounds - left: positive number - left position in pixels
+                                -1 - don't care (should set all Bounds fields)
+     * int32[2]: Bounds - top:    same format with 'left'
+     * int32[3]: Bounds - right:  same format with 'left'
+     * int32[4]: Bounds - bottom: same format with 'left'
+     * int32[5]: Inset - left: positive number - actual left inset value in pixels
                                -1 - don't care (should set "don't care" all Inset fields)
-     * int32[4]: Inset - top:    same format with 'left'
-     * int32[5]: Inset - right:  same format with 'left'
-     * int32[6]: Inset - bottom: same format with 'left'
+     * int32[6]: Inset - top:    same format with 'left'
+     * int32[7]: Inset - right:  same format with 'left'
+     * int32[8]: Inset - bottom: same format with 'left'
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ
@@ -3230,16 +3236,18 @@ enum VehicleProperty : int32_t {
      * match the state.
      *
      * int32[0]: on/off: 0 - off, 1 - on
-     * int32[1]: width
-     * int32[2]: height
-     * int32[3]: Inset - left
-     * int32[4]: Inset - top
-     * int32[5]: Inset - right
-     * int32[6]: Inset - bottom
-     * int32[7]: the type of ClusterUI in the fullscreen or main screen.
+     * int32[1]: Bounds - left
+     * int32[2]: Bounds - top
+     * int32[3]: Bounds - right
+     * int32[4]: Bounds - bottom
+     * int32[5]: Inset - left
+     * int32[6]: Inset - top
+     * int32[7]: Inset - right
+     * int32[8]: Inset - bottom
+     * int32[9]: the type of ClusterUI in the fullscreen or main screen.
      *    0 indicates ClusterHome.
      *    the other values are followed by OEM's definition.
-     * int32[8]: the type of ClusterUI in sub screen if the currently two UIs are shown.
+     * int32[10]: the type of ClusterUI in sub screen if the currently two UIs are shown.
      *    -1 indicates the area isn't used any more.
      * bytes: the array to represent the availability of ClusterUI.
      *     0 indicates non-available and 1 indicates available.
