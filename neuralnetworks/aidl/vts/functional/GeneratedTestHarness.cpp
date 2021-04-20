@@ -547,7 +547,7 @@ void EvaluatePreparedModel(const std::shared_ptr<IDevice>& device,
         makeOutputInsufficientSize(kInsufficientOutputIndex, &request);
     }
 
-    int64_t loopTimeoutDuration = kOmittedTimeoutDuration;
+    int64_t loopTimeoutDurationNs = kOmittedTimeoutDuration;
     // OutputType::MISSED_DEADLINE is only used by
     // TestKind::INTINITE_LOOP_TIMEOUT tests to verify that an infinite loop is
     // aborted after a timeout.
@@ -555,7 +555,7 @@ void EvaluatePreparedModel(const std::shared_ptr<IDevice>& device,
         // Override the default loop timeout duration with a small value to
         // speed up test execution.
         constexpr int64_t kMillisecond = 1'000'000;
-        loopTimeoutDuration = 1 * kMillisecond;
+        loopTimeoutDurationNs = 1 * kMillisecond;
     }
 
     ErrorStatus executionStatus;
@@ -568,7 +568,7 @@ void EvaluatePreparedModel(const std::shared_ptr<IDevice>& device,
             ExecutionResult executionResult;
             // execute
             const auto ret = preparedModel->executeSynchronously(request, testConfig.measureTiming,
-                                                                 kNoDeadline, loopTimeoutDuration,
+                                                                 kNoDeadline, loopTimeoutDurationNs,
                                                                  &executionResult);
             ASSERT_TRUE(ret.isOk() || ret.getExceptionCode() == EX_SERVICE_SPECIFIC)
                     << ret.getDescription();
@@ -608,7 +608,7 @@ void EvaluatePreparedModel(const std::shared_ptr<IDevice>& device,
             ExecutionResult executionResult;
             // execute
             ret = burst->executeSynchronously(request, slots, testConfig.measureTiming, kNoDeadline,
-                                              loopTimeoutDuration, &executionResult);
+                                              loopTimeoutDurationNs, &executionResult);
             ASSERT_TRUE(ret.isOk() || ret.getExceptionCode() == EX_SERVICE_SPECIFIC)
                     << ret.getDescription();
             if (ret.isOk()) {
@@ -635,7 +635,7 @@ void EvaluatePreparedModel(const std::shared_ptr<IDevice>& device,
             ErrorStatus result = ErrorStatus::NONE;
             FencedExecutionResult executionResult;
             auto ret = preparedModel->executeFenced(request, {}, testConfig.measureTiming,
-                                                    kNoDeadline, loopTimeoutDuration, kNoDuration,
+                                                    kNoDeadline, loopTimeoutDurationNs, kNoDuration,
                                                     &executionResult);
             ASSERT_TRUE(ret.isOk() || ret.getExceptionCode() == EX_SERVICE_SPECIFIC)
                     << ret.getDescription();
@@ -649,7 +649,7 @@ void EvaluatePreparedModel(const std::shared_ptr<IDevice>& device,
                 waitFor.emplace_back(dupFd);
                 // If a sync fence is returned, try start another run waiting for the sync fence.
                 ret = preparedModel->executeFenced(request, waitFor, testConfig.measureTiming,
-                                                   kNoDeadline, loopTimeoutDuration, kNoDuration,
+                                                   kNoDeadline, loopTimeoutDurationNs, kNoDuration,
                                                    &executionResult);
                 ASSERT_TRUE(ret.isOk());
                 waitForSyncFence(executionResult.syncFence.get());
@@ -686,8 +686,8 @@ void EvaluatePreparedModel(const std::shared_ptr<IDevice>& device,
     if (!testConfig.measureTiming) {
         EXPECT_EQ(timing, kNoTiming);
     } else {
-        if (timing.timeOnDevice != -1 && timing.timeInDriver != -1) {
-            EXPECT_LE(timing.timeOnDevice, timing.timeInDriver);
+        if (timing.timeOnDeviceNs != -1 && timing.timeInDriverNs != -1) {
+            EXPECT_LE(timing.timeOnDeviceNs, timing.timeInDriverNs);
         }
     }
 

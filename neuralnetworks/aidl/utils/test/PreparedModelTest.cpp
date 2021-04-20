@@ -39,7 +39,7 @@ using ::testing::InvokeWithoutArgs;
 using ::testing::SetArgPointee;
 
 const std::shared_ptr<IPreparedModel> kInvalidPreparedModel;
-constexpr auto kNoTiming = Timing{.timeOnDevice = -1, .timeInDriver = -1};
+constexpr auto kNoTiming = Timing{.timeOnDeviceNs = -1, .timeInDriverNs = -1};
 
 constexpr auto makeStatusOk = [] { return ndk::ScopedAStatus::ok(); };
 
