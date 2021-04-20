@@ -1260,7 +1260,7 @@ const ConfigDeclaration kVehicleProperties[]{
                                 .prop = toInt(VehicleProperty::CLUSTER_REPORT_STATE),
                                 .access = VehiclePropertyAccess::WRITE,
                                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-                                .configArray = {0, 0, 0, 9, 0, 0, 0, 0, 16},
+                                .configArray = {0, 0, 0, 11, 0, 0, 0, 0, 16},
                         },
         },
         {
@@ -1303,7 +1303,7 @@ const ConfigDeclaration kVehicleProperties[]{
                                 .prop = VENDOR_CLUSTER_REPORT_STATE,
                                 .access = VehiclePropertyAccess::READ,
                                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-                                .configArray = {0, 0, 0, 9, 0, 0, 0, 0, 16},
+                                .configArray = {0, 0, 0, 11, 0, 0, 0, 0, 16},
                         },
         },
         {
