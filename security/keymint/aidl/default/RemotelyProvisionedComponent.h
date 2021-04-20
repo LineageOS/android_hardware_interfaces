@@ -32,6 +32,8 @@ class RemotelyProvisionedComponent : public BnRemotelyProvisionedComponent {
     explicit RemotelyProvisionedComponent(std::shared_ptr<keymint::AndroidKeyMintDevice> keymint);
     virtual ~RemotelyProvisionedComponent();
 
+    ScopedAStatus getHardwareInfo(RpcHardwareInfo* info) override;
+
     ScopedAStatus generateEcdsaP256KeyPair(bool testMode, MacedPublicKey* macedPublicKey,
                                            std::vector<uint8_t>* privateKeyHandle) override;
 
@@ -43,14 +45,6 @@ class RemotelyProvisionedComponent : public BnRemotelyProvisionedComponent {
                                              std::vector<uint8_t>* keysToSignMac) override;
 
   private:
-    // TODO(swillden): Move these into an appropriate Context class.
-    std::vector<uint8_t> deriveBytesFromHbk(const std::string& context, size_t numBytes) const;
-    std::unique_ptr<cppbor::Map> createDeviceInfo() const;
-    std::pair<std::vector<uint8_t>, cppbor::Array> generateBcc();
-
-    std::vector<uint8_t> macKey_ = deriveBytesFromHbk("Key to MAC public keys", 32);
-    std::vector<uint8_t> devicePrivKey_;
-    cppbor::Array bcc_;
     std::shared_ptr<::keymaster::AndroidKeymaster> impl_;
 };
 

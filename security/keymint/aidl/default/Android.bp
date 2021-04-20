@@ -62,7 +62,7 @@ cc_library {
         "android.hardware.security.keymint-V1-ndk_platform",
         "libbinder_ndk",
         "libcppbor_external",
-        "libcppcose",
+        "libcppcose_rkp",
         "libcrypto",
         "libkeymaster_portable",
         "libkeymint",
