@@ -37,6 +37,8 @@ interface IRadioConfigResponse extends @1.2::IRadioConfigResponse {
      *        - Requesting android.hardware.radio@1.6::IRadio.setDataThrottling()
      *        - Providing android.hardware.radio@1.6::SlicingConfig through
      *          android.hardware.radio@1.6::getSlicingConfig()
+     *        - Providing android.hardware.radio@1.6::PhysicalChannelConfig through
+     *          android.hardware.radio@1.6::IRadioIndication.currentPhysicalChannelConfigs_1_6()
      *
      * Valid errors returned:
      *   RadioError:NONE
