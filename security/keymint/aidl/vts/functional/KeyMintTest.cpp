@@ -359,10 +359,10 @@ TEST_P(NewKeyGenerationTest, Rsa) {
  * have correct characteristics.
  */
 TEST_P(NewKeyGenerationTest, RsaWithAttestation) {
-    for (auto key_size : ValidKeySizes(Algorithm::RSA)) {
-        auto challenge = "hello";
-        auto app_id = "foo";
+    auto challenge = "hello";
+    auto app_id = "foo";
 
+    for (auto key_size : ValidKeySizes(Algorithm::RSA)) {
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
         ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
@@ -470,6 +470,163 @@ TEST_P(NewKeyGenerationTest, RsaWithRpkAttestation) {
 }
 
 /*
+ * NewKeyGenerationTest.RsaEncryptionWithAttestation
+ *
+ * Verifies that keymint attestation for RSA encryption keys with challenge and
+ * app id is also successful.
+ */
+TEST_P(NewKeyGenerationTest, RsaEncryptionWithAttestation) {
+    auto key_size = 2048;
+    auto challenge = "hello";
+    auto app_id = "foo";
+
+    vector<uint8_t> key_blob;
+    vector<KeyCharacteristics> key_characteristics;
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                 .RsaEncryptionKey(key_size, 65537)
+                                                 .Padding(PaddingMode::NONE)
+                                                 .AttestationChallenge(challenge)
+                                                 .AttestationApplicationId(app_id)
+                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                 .SetDefaultValidity(),
+                                         &key_blob, &key_characteristics));
+
+    ASSERT_GT(key_blob.size(), 0U);
+    AuthorizationSet auths;
+    for (auto& entry : key_characteristics) {
+        auths.push_back(AuthorizationSet(entry.authorizations));
+    }
+
+    EXPECT_TRUE(auths.Contains(TAG_ORIGIN, KeyOrigin::GENERATED));
+    EXPECT_TRUE(auths.Contains(TAG_PURPOSE, KeyPurpose::DECRYPT));
+
+    // Verify that App data and ROT are NOT included.
+    EXPECT_FALSE(auths.Contains(TAG_ROOT_OF_TRUST));
+    EXPECT_FALSE(auths.Contains(TAG_APPLICATION_DATA));
+
+    // Check that some unexpected tags/values are NOT present.
+    EXPECT_FALSE(auths.Contains(TAG_PURPOSE, KeyPurpose::SIGN));
+    EXPECT_FALSE(auths.Contains(TAG_PURPOSE, KeyPurpose::VERIFY));
+
+    EXPECT_FALSE(auths.Contains(TAG_AUTH_TIMEOUT, 301U));
+
+    auto os_ver = auths.GetTagValue(TAG_OS_VERSION);
+    ASSERT_TRUE(os_ver);
+    EXPECT_EQ(*os_ver, os_version());
+
+    AuthorizationSet crypto_params = SecLevelAuthorizations(key_characteristics);
+
+    EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::RSA));
+    EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
+            << "Key size " << key_size << "missing";
+    EXPECT_TRUE(crypto_params.Contains(TAG_RSA_PUBLIC_EXPONENT, 65537U));
+
+    EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
+    ASSERT_GT(cert_chain_.size(), 0);
+
+    AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
+    AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
+    EXPECT_TRUE(verify_attestation_record(challenge, app_id,  //
+                                          sw_enforced, hw_enforced, SecLevel(),
+                                          cert_chain_[0].encodedCertificate));
+
+    CheckedDeleteKey(&key_blob);
+}
+
+/*
+ * NewKeyGenerationTest.RsaWithSelfSign
+ *
+ * Verifies that attesting to RSA key generation is successful, and returns
+ * self signed certificate if no challenge is provided.  And signing etc
+ * works as expected.
+ */
+TEST_P(NewKeyGenerationTest, RsaWithSelfSign) {
+    for (auto key_size : ValidKeySizes(Algorithm::RSA)) {
+        vector<uint8_t> key_blob;
+        vector<KeyCharacteristics> key_characteristics;
+        ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                     .RsaSigningKey(key_size, 65537)
+                                                     .Digest(Digest::NONE)
+                                                     .Padding(PaddingMode::NONE)
+                                                     .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                     .SetDefaultValidity(),
+                                             &key_blob, &key_characteristics));
+
+        ASSERT_GT(key_blob.size(), 0U);
+        CheckBaseParams(key_characteristics);
+
+        AuthorizationSet crypto_params = SecLevelAuthorizations(key_characteristics);
+
+        EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::RSA));
+        EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
+                << "Key size " << key_size << "missing";
+        EXPECT_TRUE(crypto_params.Contains(TAG_RSA_PUBLIC_EXPONENT, 65537U));
+
+        EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
+        ASSERT_EQ(cert_chain_.size(), 1);
+
+        CheckedDeleteKey(&key_blob);
+    }
+}
+
+/*
+ * NewKeyGenerationTest.RsaWithAttestationMissAppId
+ *
+ * Verifies that attesting to RSA checks for missing app ID.
+ */
+TEST_P(NewKeyGenerationTest, RsaWithAttestationMissAppId) {
+    auto challenge = "hello";
+    vector<uint8_t> key_blob;
+    vector<KeyCharacteristics> key_characteristics;
+
+    ASSERT_EQ(ErrorCode::ATTESTATION_APPLICATION_ID_MISSING,
+              GenerateKey(AuthorizationSetBuilder()
+                                  .RsaSigningKey(2048, 65537)
+                                  .Digest(Digest::NONE)
+                                  .Padding(PaddingMode::NONE)
+                                  .AttestationChallenge(challenge)
+                                  .Authorization(TAG_NO_AUTH_REQUIRED)
+                                  .SetDefaultValidity(),
+                          &key_blob, &key_characteristics));
+}
+
+/*
+ * NewKeyGenerationTest.RsaWithAttestationAppIdIgnored
+ *
+ * Verifies that attesting to RSA ignores app id if challenge is missing.
+ */
+TEST_P(NewKeyGenerationTest, RsaWithAttestationAppIdIgnored) {
+    auto key_size = 2048;
+    auto app_id = "foo";
+
+    vector<uint8_t> key_blob;
+    vector<KeyCharacteristics> key_characteristics;
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                 .RsaSigningKey(key_size, 65537)
+                                                 .Digest(Digest::NONE)
+                                                 .Padding(PaddingMode::NONE)
+                                                 .AttestationApplicationId(app_id)
+                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                 .SetDefaultValidity(),
+                                         &key_blob, &key_characteristics));
+
+    ASSERT_GT(key_blob.size(), 0U);
+    CheckBaseParams(key_characteristics);
+
+    AuthorizationSet crypto_params = SecLevelAuthorizations(key_characteristics);
+
+    EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::RSA));
+    EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
+            << "Key size " << key_size << "missing";
+    EXPECT_TRUE(crypto_params.Contains(TAG_RSA_PUBLIC_EXPONENT, 65537U));
+
+    EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
+    ASSERT_EQ(cert_chain_.size(), 1);
+
+    CheckedDeleteKey(&key_blob);
+}
+
+/*
  * NewKeyGenerationTest.LimitedUsageRsa
  *
  * Verifies that KeyMint can generate all required RSA key sizes with limited usage, and that the
@@ -516,10 +673,10 @@ TEST_P(NewKeyGenerationTest, LimitedUsageRsa) {
  * resulting keys have correct characteristics and attestation.
  */
 TEST_P(NewKeyGenerationTest, LimitedUsageRsaWithAttestation) {
-    for (auto key_size : ValidKeySizes(Algorithm::RSA)) {
-        auto challenge = "hello";
-        auto app_id = "foo";
+    auto challenge = "hello";
+    auto app_id = "foo";
 
+    for (auto key_size : ValidKeySizes(Algorithm::RSA)) {
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
         ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
@@ -622,6 +779,188 @@ TEST_P(NewKeyGenerationTest, Ecdsa) {
         EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::EC));
         EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
                 << "Key size " << key_size << "missing";
+
+        CheckedDeleteKey(&key_blob);
+    }
+}
+
+/*
+ * NewKeyGenerationTest.EcdsaAttestation
+ *
+ * Verifies that for all Ecdsa key sizes, if challenge and app id is provided,
+ * an attestation will be generated.
+ */
+TEST_P(NewKeyGenerationTest, EcdsaAttestation) {
+    auto challenge = "hello";
+    auto app_id = "foo";
+
+    for (auto key_size : ValidKeySizes(Algorithm::EC)) {
+        vector<uint8_t> key_blob;
+        vector<KeyCharacteristics> key_characteristics;
+        ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                     .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                     .EcdsaSigningKey(key_size)
+                                                     .Digest(Digest::NONE)
+                                                     .AttestationChallenge(challenge)
+                                                     .AttestationApplicationId(app_id)
+                                                     .SetDefaultValidity(),
+                                             &key_blob, &key_characteristics));
+        ASSERT_GT(key_blob.size(), 0U);
+        CheckBaseParams(key_characteristics);
+
+        AuthorizationSet crypto_params = SecLevelAuthorizations(key_characteristics);
+
+        EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::EC));
+        EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
+                << "Key size " << key_size << "missing";
+
+        EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
+        ASSERT_GT(cert_chain_.size(), 0);
+
+        AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
+        AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
+        EXPECT_TRUE(verify_attestation_record(challenge, app_id,  //
+                                              sw_enforced, hw_enforced, SecLevel(),
+                                              cert_chain_[0].encodedCertificate));
+
+        CheckedDeleteKey(&key_blob);
+    }
+}
+
+/*
+ * NewKeyGenerationTest.EcdsaSelfSignAttestation
+ *
+ * Verifies that if no challenge is provided to an Ecdsa key generation, then
+ * the key will generate a self signed attestation.
+ */
+TEST_P(NewKeyGenerationTest, EcdsaSelfSignAttestation) {
+    for (auto key_size : ValidKeySizes(Algorithm::EC)) {
+        vector<uint8_t> key_blob;
+        vector<KeyCharacteristics> key_characteristics;
+        ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                     .EcdsaSigningKey(key_size)
+                                                     .Digest(Digest::NONE)
+                                                     .SetDefaultValidity(),
+                                             &key_blob, &key_characteristics));
+        ASSERT_GT(key_blob.size(), 0U);
+        CheckBaseParams(key_characteristics);
+
+        AuthorizationSet crypto_params = SecLevelAuthorizations(key_characteristics);
+
+        EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::EC));
+        EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
+                << "Key size " << key_size << "missing";
+
+        EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
+        ASSERT_EQ(cert_chain_.size(), 1);
+
+        AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
+        AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
+
+        CheckedDeleteKey(&key_blob);
+    }
+}
+
+/*
+ * NewKeyGenerationTest.EcdsaAttestationRequireAppId
+ *
+ * Verifies that if attestation challenge is provided to Ecdsa key generation, then
+ * app id must also be provided or else it will fail.
+ */
+TEST_P(NewKeyGenerationTest, EcdsaAttestationRequireAppId) {
+    auto challenge = "hello";
+    vector<uint8_t> key_blob;
+    vector<KeyCharacteristics> key_characteristics;
+
+    ASSERT_EQ(ErrorCode::ATTESTATION_APPLICATION_ID_MISSING,
+              GenerateKey(AuthorizationSetBuilder()
+                                  .EcdsaSigningKey(EcCurve::P_256)
+                                  .Digest(Digest::NONE)
+                                  .AttestationChallenge(challenge)
+                                  .SetDefaultValidity(),
+                          &key_blob, &key_characteristics));
+}
+
+/*
+ * NewKeyGenerationTest.EcdsaIgnoreAppId
+ *
+ * Verifies that if no challenge is provided to the Ecdsa key generation, then
+ * any appid will be ignored, and keymint will generate a self sign certificate.
+ */
+TEST_P(NewKeyGenerationTest, EcdsaIgnoreAppId) {
+    auto app_id = "foo";
+
+    for (auto key_size : ValidKeySizes(Algorithm::EC)) {
+        vector<uint8_t> key_blob;
+        vector<KeyCharacteristics> key_characteristics;
+        ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                     .EcdsaSigningKey(key_size)
+                                                     .Digest(Digest::NONE)
+                                                     .AttestationApplicationId(app_id)
+                                                     .SetDefaultValidity(),
+                                             &key_blob, &key_characteristics));
+
+        ASSERT_GT(key_blob.size(), 0U);
+        CheckBaseParams(key_characteristics);
+
+        AuthorizationSet crypto_params = SecLevelAuthorizations(key_characteristics);
+
+        EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::EC));
+        EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
+                << "Key size " << key_size << "missing";
+
+        EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
+        ASSERT_EQ(cert_chain_.size(), 1);
+
+        AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
+        AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
+
+        CheckedDeleteKey(&key_blob);
+    }
+}
+
+/*
+ * NewKeyGenerationTest.AttestationApplicationIDLengthProperlyEncoded
+ *
+ * Verifies that the Attestation Application ID software enforced tag has a proper length encoding.
+ * Some implementations break strict encoding rules by encoding a length between 127 and 256 in one
+ * byte. Proper DER encoding specifies that for lengths greater than 127, one byte should be used
+ * to specify how many following bytes will be used to encode the length.
+ */
+TEST_P(NewKeyGenerationTest, AttestationApplicationIDLengthProperlyEncoded) {
+    auto challenge = "hello";
+    auto key_size = 256;
+    std::vector<uint32_t> app_id_lengths{143, 258};
+
+    for (uint32_t length : app_id_lengths) {
+        const string app_id(length, 'a');
+        vector<uint8_t> key_blob;
+        vector<KeyCharacteristics> key_characteristics;
+        ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                     .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                     .EcdsaSigningKey(key_size)
+                                                     .Digest(Digest::NONE)
+                                                     .AttestationChallenge(challenge)
+                                                     .AttestationApplicationId(app_id)
+                                                     .SetDefaultValidity(),
+                                             &key_blob, &key_characteristics));
+        ASSERT_GT(key_blob.size(), 0U);
+        CheckBaseParams(key_characteristics);
+
+        AuthorizationSet crypto_params = SecLevelAuthorizations(key_characteristics);
+
+        EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::EC));
+        EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
+                << "Key size " << key_size << "missing";
+
+        EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
+        ASSERT_GT(cert_chain_.size(), 0);
+
+        AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
+        AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
+        EXPECT_TRUE(verify_attestation_record(challenge, app_id,  //
+                                              sw_enforced, hw_enforced, SecLevel(),
+                                              cert_chain_[0].encodedCertificate));
 
         CheckedDeleteKey(&key_blob);
     }
@@ -789,6 +1128,41 @@ TEST_P(NewKeyGenerationTest, Hmac) {
 }
 
 /*
+ * NewKeyGenerationTest.HmacNoAttestation
+ *
+ * Verifies that for Hmac key generation, no attestation will be generated even if challenge
+ * and app id are provided.
+ */
+TEST_P(NewKeyGenerationTest, HmacNoAttestation) {
+    auto challenge = "hello";
+    auto app_id = "foo";
+
+    for (auto digest : ValidDigests(false /* withNone */, true /* withMD5 */)) {
+        vector<uint8_t> key_blob;
+        vector<KeyCharacteristics> key_characteristics;
+        constexpr size_t key_size = 128;
+        ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                     .HmacKey(key_size)
+                                                     .Digest(digest)
+                                                     .AttestationChallenge(challenge)
+                                                     .AttestationApplicationId(app_id)
+                                                     .Authorization(TAG_MIN_MAC_LENGTH, 128),
+                                             &key_blob, &key_characteristics));
+
+        ASSERT_GT(key_blob.size(), 0U);
+        ASSERT_EQ(cert_chain_.size(), 0);
+        CheckBaseParams(key_characteristics);
+
+        AuthorizationSet crypto_params = SecLevelAuthorizations(key_characteristics);
+        EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::HMAC));
+        EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
+                << "Key size " << key_size << "missing";
+
+        CheckedDeleteKey(&key_blob);
+    }
+}
+
+/*
  * NewKeyGenerationTest.LimitedUsageHmac
  *
  * Verifies that KeyMint supports all required digests with limited usage Hmac, and that the
@@ -920,6 +1294,47 @@ TEST_P(NewKeyGenerationTest, HmacDigestNone) {
                                   .HmacKey(128)
                                   .Digest(Digest::NONE)
                                   .Authorization(TAG_MIN_MAC_LENGTH, 128)));
+}
+
+/*
+ * NewKeyGenerationTest.AesNoAttestation
+ *
+ * Verifies that attestation parameters to AES keys are ignored and generateKey
+ * will succeed.
+ */
+TEST_P(NewKeyGenerationTest, AesNoAttestation) {
+    auto challenge = "hello";
+    auto app_id = "foo";
+
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                 .AesEncryptionKey(128)
+                                                 .EcbMode()
+                                                 .Padding(PaddingMode::PKCS7)
+                                                 .AttestationChallenge(challenge)
+                                                 .AttestationApplicationId(app_id)));
+
+    ASSERT_EQ(cert_chain_.size(), 0);
+}
+
+/*
+ * NewKeyGenerationTest.TripleDesNoAttestation
+ *
+ * Verifies that attesting parameters to 3DES keys are ignored and generate key
+ * will be successful.  No attestation should be generated.
+ */
+TEST_P(NewKeyGenerationTest, TripleDesNoAttestation) {
+    auto challenge = "hello";
+    auto app_id = "foo";
+
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                 .TripleDesEncryptionKey(168)
+                                                 .BlockMode(BlockMode::ECB)
+                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                 .Padding(PaddingMode::NONE)
+                                                 .AttestationChallenge(challenge)
+                                                 .AttestationApplicationId(app_id)));
+    ASSERT_EQ(cert_chain_.size(), 0);
 }
 
 INSTANTIATE_KEYMINT_AIDL_TEST(NewKeyGenerationTest);
