@@ -36,11 +36,15 @@ using ::android::hardware::Return;
 using ::android::hardware::Void;
 
 struct AtraceDevice : public IAtraceDevice {
+    AtraceDevice();
     // Methods from ::android::hardware::atrace::V1_0::IAtraceDevice follow.
     Return<void> listCategories(listCategories_cb _hidl_cb) override;
     Return<::android::hardware::atrace::V1_0::Status> enableCategories(
         const hidl_vec<hidl_string>& categories) override;
     Return<::android::hardware::atrace::V1_0::Status> disableAllCategories() override;
+
+  private:
+    std::string tracefs_event_root_;
 
     // Methods from ::android::hidl::base::V1_0::IBase follow.
 };
