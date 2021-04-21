@@ -34,6 +34,6 @@
 package android.hardware.neuralnetworks;
 @VintfStability
 interface IBurst {
-  android.hardware.neuralnetworks.ExecutionResult executeSynchronously(in android.hardware.neuralnetworks.Request request, in long[] memoryIdentifierTokens, in boolean measureTiming, in long deadline, in long loopTimeoutDuration);
+  android.hardware.neuralnetworks.ExecutionResult executeSynchronously(in android.hardware.neuralnetworks.Request request, in long[] memoryIdentifierTokens, in boolean measureTiming, in long deadlineNs, in long loopTimeoutDurationNs);
   void releaseMemoryResource(in long memoryIdentifierToken);
 }
