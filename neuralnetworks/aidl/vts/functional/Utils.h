@@ -43,7 +43,7 @@ namespace nn = ::android::nn;
 
 inline constexpr Priority kDefaultPriority = Priority::MEDIUM;
 
-inline constexpr Timing kNoTiming = {.timeOnDevice = -1, .timeInDriver = -1};
+inline constexpr Timing kNoTiming = {.timeOnDeviceNs = -1, .timeInDriverNs = -1};
 inline constexpr int64_t kNoDeadline = -1;
 inline constexpr int64_t kOmittedTimeoutDuration = -1;
 inline constexpr int64_t kNoDuration = -1;

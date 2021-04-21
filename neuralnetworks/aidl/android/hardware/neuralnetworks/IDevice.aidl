@@ -306,11 +306,11 @@ interface IDevice {
      * @param preference Indicates the intended execution behavior of a prepared model.
      * @param priority The priority of the prepared model relative to other prepared models owned by
      *                 the client.
-     * @param deadline The time by which the model is expected to be prepared. The time is measured
-     *                 in nanoseconds since boot (as from clock_gettime(CLOCK_BOOTTIME, &ts)
-     *                 or ::android::base::boot_clock). If the model cannot be prepared by the
-     *                 deadline, the preparation may be aborted. Passing -1 means the deadline is
-     *                 omitted. Other negative values are invalid.
+     * @param deadlineNs The time by which the model is expected to be prepared. The time is
+     *                   measured in nanoseconds since boot (as from clock_gettime(CLOCK_BOOTTIME,
+     *                   &ts) or ::android::base::boot_clock). If the model cannot be prepared by
+     *                   the deadline, the preparation may be aborted. Passing -1 means the deadline
+     *                   is omitted. Other negative values are invalid.
      * @param modelCache A vector of file descriptors for the security-sensitive cache. The length
      *                   of the vector must either be 0 indicating that caching information is not
      *                   provided, or match the numModelCache returned from
@@ -344,7 +344,7 @@ interface IDevice {
      *     - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
      */
     void prepareModel(in Model model, in ExecutionPreference preference, in Priority priority,
-            in long deadline, in ParcelFileDescriptor[] modelCache,
+            in long deadlineNs, in ParcelFileDescriptor[] modelCache,
             in ParcelFileDescriptor[] dataCache, in byte[] token,
             in IPreparedModelCallback callback);
 
@@ -395,11 +395,11 @@ interface IDevice {
      * with a set of inputs to the model. Note that the same prepared model object may be used with
      * different shapes of inputs on different (possibly concurrent) executions.
      *
-     * @param deadline The time by which the model is expected to be prepared. The time is measured
-     *                 in nanoseconds since boot (as from clock_gettime(CLOCK_BOOTTIME, &ts) or
-     *                 ::android::base::boot_clock). If the model cannot be prepared by the
-     *                 deadline, the preparation may be aborted. Passing -1 means the deadline is
-     *                 omitted. Other negative values are invalid.
+     * @param deadlineNs The time by which the model is expected to be prepared. The time is
+     *                   measured in nanoseconds since boot (as from clock_gettime(CLOCK_BOOTTIME,
+     *                   &ts) or ::android::base::boot_clock). If the model cannot be prepared by
+     *                   the deadline, the preparation may be aborted. Passing -1 means the deadline
+     *                   is omitted. Other negative values are invalid.
      * @param modelCache A vector of file descriptors for the security-sensitive cache. The length
      *                   of the vector must match the numModelCache returned from
      *                   getNumberOfCacheFilesNeeded. The cache file descriptors will be provided in
@@ -426,7 +426,7 @@ interface IDevice {
      *       the deadline
      *     - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
      */
-    void prepareModelFromCache(in long deadline, in ParcelFileDescriptor[] modelCache,
+    void prepareModelFromCache(in long deadlineNs, in ParcelFileDescriptor[] modelCache,
             in ParcelFileDescriptor[] dataCache, in byte[] token,
             in IPreparedModelCallback callback);
 }
