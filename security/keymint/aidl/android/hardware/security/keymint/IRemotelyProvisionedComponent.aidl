@@ -19,6 +19,7 @@ package android.hardware.security.keymint;
 import android.hardware.security.keymint.DeviceInfo;
 import android.hardware.security.keymint.MacedPublicKey;
 import android.hardware.security.keymint.ProtectedData;
+import android.hardware.security.keymint.RpcHardwareInfo;
 
 /**
  * An IRemotelyProvisionedComponent is a secure-side component for which certificates can be
@@ -119,6 +120,12 @@ interface IRemotelyProvisionedComponent {
     const int STATUS_PRODUCTION_KEY_IN_TEST_REQUEST = 3;
     const int STATUS_TEST_KEY_IN_PRODUCTION_REQUEST = 4;
     const int STATUS_INVALID_EEK = 5;
+
+    /**
+     * @return info which contains information about the underlying IRemotelyProvisionedComponent
+     *         hardware, such as version number, component name, author name, and supported curve.
+     */
+    RpcHardwareInfo getHardwareInfo();
 
     /**
      * generateKeyPair generates a new ECDSA P-256 key pair that can be certified.  Note that this

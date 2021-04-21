@@ -15,6 +15,8 @@
  */
 
 #include <composer-vts/2.2/ReadbackVts.h>
+#include <composer-vts/2.2/RenderEngineVts.h>
+#include "renderengine/ExternalTexture.h"
 
 namespace android {
 namespace hardware {
@@ -257,10 +259,11 @@ LayerSettings TestColorLayer::toRenderEngineLayerSettings() {
 }
 
 TestBufferLayer::TestBufferLayer(const std::shared_ptr<ComposerClient>& client,
-                                 const std::shared_ptr<Gralloc>& gralloc, Display display,
-                                 int32_t width, int32_t height, PixelFormat format,
+                                 const std::shared_ptr<Gralloc>& gralloc,
+                                 TestRenderEngine& renderEngine, Display display, int32_t width,
+                                 int32_t height, PixelFormat format,
                                  IComposerClient::Composition composition)
-    : TestLayer{client, display} {
+    : TestLayer{client, display}, mRenderEngine(renderEngine) {
     mGralloc = gralloc;
     mComposition = composition;
     mWidth = width;
@@ -293,9 +296,11 @@ void TestBufferLayer::write(const std::shared_ptr<CommandWriterBase>& writer) {
 
 LayerSettings TestBufferLayer::toRenderEngineLayerSettings() {
     LayerSettings layerSettings = TestLayer::toRenderEngineLayerSettings();
-    layerSettings.source.buffer.buffer =
+    layerSettings.source.buffer.buffer = std::make_shared<renderengine::ExternalTexture>(
             new GraphicBuffer(mBufferHandle, GraphicBuffer::CLONE_HANDLE, mWidth, mHeight,
-                              static_cast<int32_t>(mFormat), 1, mUsage, mStride);
+                              static_cast<int32_t>(mFormat), 1, mUsage, mStride),
+            mRenderEngine.getInternalRenderEngine(),
+            renderengine::ExternalTexture::Usage::READABLE);
 
     layerSettings.source.buffer.usePremultipliedAlpha =
             mBlendMode == IComposerClient::BlendMode::PREMULTIPLIED;
