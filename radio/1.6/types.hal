@@ -427,7 +427,8 @@ struct LinkCapacityEstimate {
     * This bandwidth estimate shall be the estimated maximum sustainable link bandwidth
     * (as would be measured at the Upper PDCP or SNDCP SAP). This is valid only
     * in if device is connected to both primary and secodary in dual connected
-    * mode. This must be filled with -1 if secondary is not connected.
+    * mode. This must be filled with -1 if secondary is not connected or if
+    * modem does not support this feature.
     */
    uint32_t secondaryDownlinkCapacityKbps;
 
@@ -436,7 +437,8 @@ struct LinkCapacityEstimate {
     * This bandwidth estimate shall be the estimated
     * maximum sustainable link bandwidth (as would be measured at the Upper PDCP or SNDCP SAP).
     * This is valid only in if device is connected to both primary and secodary in dual connected
-    * mode.This must be filled with -1 if secondary is not connected.
+    * mode.This must be filled with -1 if secondary is not connected or if modem
+    * does not support this feature.
     */
    uint32_t secondaryUplinkCapacityKbps;
 };
