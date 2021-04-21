@@ -274,8 +274,11 @@ Return<void> RadioResponse_v1_6::setNetworkSelectionModeManualResponse(
 }
 
 Return<void> RadioResponse_v1_6::getAvailableNetworksResponse(
-        const ::android::hardware::radio::V1_0::RadioResponseInfo& /*info*/,
-        const ::android::hardware::hidl_vec<OperatorInfo>& /*networkInfos*/) {
+        const ::android::hardware::radio::V1_0::RadioResponseInfo& info,
+        const ::android::hardware::hidl_vec<OperatorInfo>& networkInfos) {
+    rspInfo_v1_0 = info;
+    this->networkInfos = networkInfos;
+    parent_v1_6.notify(info.serial);
     return Void();
 }
 
