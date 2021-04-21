@@ -33,7 +33,6 @@ cc_binary {
         "libkeymint",
         "liblog",
         "libpuresoftkeymasterdevice",
-        "libremote_provisioner",
         "libutils",
     ],
     srcs: [
@@ -50,29 +49,4 @@ prebuilt_etc {
     sub_dir: "permissions",
     vendor: true,
     src: "android.hardware.hardware_keystore.xml",
-}
-
-cc_library {
-    name: "libremote_provisioner",
-    vendor_available: true,
-    static_libs: [
-        "libkeymint_remote_prov_support",
-    ],
-    shared_libs: [
-        "android.hardware.security.keymint-V1-ndk_platform",
-        "libbinder_ndk",
-        "libcppbor_external",
-        "libcppcose_rkp",
-        "libcrypto",
-        "libkeymaster_portable",
-        "libkeymint",
-        "liblog",
-        "libpuresoftkeymasterdevice",
-    ],
-    export_include_dirs: [
-        ".",
-    ],
-    srcs: [
-        "RemotelyProvisionedComponent.cpp",
-    ],
 }
