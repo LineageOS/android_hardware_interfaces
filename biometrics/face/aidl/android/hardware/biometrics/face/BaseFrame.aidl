@@ -29,7 +29,7 @@ parcelable BaseFrame {
      * Information about the frame that can be used by the framework to provide feedback to the
      * user, for example ask the user to move their face in a certain way.
      */
-    AcquiredInfo acquiredInfo = AcquiredInfo.INSUFFICIENT;
+    AcquiredInfo acquiredInfo = AcquiredInfo.UNKNOWN;
 
     /**
      * If acquiredInfo is set to AcquiredInfo::VENDOR. This is the index into the configuration

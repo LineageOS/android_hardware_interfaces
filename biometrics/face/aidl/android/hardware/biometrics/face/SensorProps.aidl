@@ -29,7 +29,7 @@ parcelable SensorProps {
     /**
      * A statically configured sensor type representing this face sensor.
      */
-    FaceSensorType sensorType = FaceSensorType.RGB;
+    FaceSensorType sensorType = FaceSensorType.UNKNOWN;
 
     /**
      * Whether or not the HAL is responsible for showing the face enrollment preview to the user.
