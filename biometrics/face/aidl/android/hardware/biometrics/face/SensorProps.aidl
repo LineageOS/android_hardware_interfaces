@@ -41,6 +41,13 @@ parcelable SensorProps {
     boolean halControlsPreview;
 
     /**
+     * The ID of the display that's used for enrollment preview. This must correspond to the
+     * android.hardware.DisplayManager#getDisplay Android API. This is useful for devices with
+     * multiple displays to ensure the correct display is used for this face sensor.
+     */
+    int previewDisplayId;
+
+    /**
      * For implementations where the HAL manages the preview, this is the width, in pixels, of each
      * frame that the camera is set up to output.
      */
