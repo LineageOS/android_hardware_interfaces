@@ -32,7 +32,7 @@ namespace android::hardware::neuralnetworks::utils {
 class InvalidDevice final : public nn::IDevice {
   public:
     InvalidDevice(std::string name, std::string versionString, nn::Version featureLevel,
-                  nn::DeviceType type, bool isUpdatable, std::vector<nn::Extension> extensions,
+                  nn::DeviceType type, std::vector<nn::Extension> extensions,
                   nn::Capabilities capabilities,
                   std::pair<uint32_t, uint32_t> numberOfCacheFilesNeeded);
 
@@ -40,7 +40,6 @@ class InvalidDevice final : public nn::IDevice {
     const std::string& getVersionString() const override;
     nn::Version getFeatureLevel() const override;
     nn::DeviceType getType() const override;
-    bool isUpdatable() const override;
     const std::vector<nn::Extension>& getSupportedExtensions() const override;
     const nn::Capabilities& getCapabilities() const override;
     std::pair<uint32_t, uint32_t> getNumberOfCacheFilesNeeded() const override;
@@ -71,7 +70,6 @@ class InvalidDevice final : public nn::IDevice {
     const std::string kVersionString;
     const nn::Version kFeatureLevel;
     const nn::DeviceType kType;
-    const bool kIsUpdatable;
     const std::vector<nn::Extension> kExtensions;
     const nn::Capabilities kCapabilities;
     const std::pair<uint32_t, uint32_t> kNumberOfCacheFilesNeeded;
