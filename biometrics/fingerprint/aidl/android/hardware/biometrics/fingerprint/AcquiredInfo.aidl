@@ -20,6 +20,13 @@ package android.hardware.biometrics.fingerprint;
 @Backing(type="byte")
 enum AcquiredInfo {
     /**
+     * Placeholder value used for default initialization of AcquiredInfo. This
+     * value means AcquiredInfo wasn't explicitly initialized and must be
+     * discarded by the recipient.
+     */
+    UNKNOWN,
+
+    /**
      * A high quality fingerprint image was detected, no further user interaction is necessary.
      */
     GOOD,
