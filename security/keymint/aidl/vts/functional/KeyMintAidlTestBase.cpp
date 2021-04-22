@@ -883,16 +883,20 @@ bool verify_attestation_record(const string& challenge,                //
     if (error != ErrorCode::OK) return false;
 
     EXPECT_GE(att_attestation_version, 3U);
+    vector<uint8_t> appId(app_id.begin(), app_id.end());
 
-    expected_sw_enforced.push_back(TAG_ATTESTATION_APPLICATION_ID,
-                                   vector<uint8_t>(app_id.begin(), app_id.end()));
+    // check challenge and app id only if we expects a non-fake certificate
+    if (challenge.length() > 0) {
+        EXPECT_EQ(challenge.length(), att_challenge.size());
+        EXPECT_EQ(0, memcmp(challenge.data(), att_challenge.data(), challenge.length()));
+
+        expected_sw_enforced.push_back(TAG_ATTESTATION_APPLICATION_ID, appId);
+    }
 
     EXPECT_GE(att_keymaster_version, 4U);
     EXPECT_EQ(security_level, att_keymaster_security_level);
     EXPECT_EQ(security_level, att_attestation_security_level);
 
-    EXPECT_EQ(challenge.length(), att_challenge.size());
-    EXPECT_EQ(0, memcmp(challenge.data(), att_challenge.data(), challenge.length()));
 
     char property_value[PROPERTY_VALUE_MAX] = {};
     // TODO(b/136282179): When running under VTS-on-GSI the TEE-backed
