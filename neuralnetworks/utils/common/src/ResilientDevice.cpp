@@ -122,14 +122,12 @@ nn::GeneralResult<nn::SharedDevice> ResilientDevice::recover(const nn::IDevice* 
     };
     if (compare(&IDevice::getName) || compare(&IDevice::getVersionString) ||
         compare(&IDevice::getFeatureLevel) || compare(&IDevice::getType) ||
-        compare(&IDevice::isUpdatable) || compare(&IDevice::getSupportedExtensions) ||
-        compare(&IDevice::getCapabilities)) {
+        compare(&IDevice::getSupportedExtensions) || compare(&IDevice::getCapabilities)) {
         LOG(ERROR) << "Recovered device has different metadata than what is cached. Marking "
                       "IDevice object as invalid.";
         device = std::make_shared<const InvalidDevice>(
-                kName, kVersionString, mDevice->getFeatureLevel(), mDevice->getType(),
-                mDevice->isUpdatable(), kExtensions, kCapabilities,
-                mDevice->getNumberOfCacheFilesNeeded());
+                kName, kVersionString, mDevice->getFeatureLevel(), mDevice->getType(), kExtensions,
+                kCapabilities, mDevice->getNumberOfCacheFilesNeeded());
         mIsValid = false;
     }
 
@@ -151,10 +149,6 @@ nn::Version ResilientDevice::getFeatureLevel() const {
 
 nn::DeviceType ResilientDevice::getType() const {
     return getDevice()->getType();
-}
-
-bool ResilientDevice::isUpdatable() const {
-    return getDevice()->isUpdatable();
 }
 
 const std::vector<nn::Extension>& ResilientDevice::getSupportedExtensions() const {

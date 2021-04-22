@@ -54,7 +54,6 @@ class Device final : public nn::IDevice {
     const std::string& getVersionString() const override;
     nn::Version getFeatureLevel() const override;
     nn::DeviceType getType() const override;
-    bool isUpdatable() const override;
     const std::vector<nn::Extension>& getSupportedExtensions() const override;
     const nn::Capabilities& getCapabilities() const override;
     std::pair<uint32_t, uint32_t> getNumberOfCacheFilesNeeded() const override;
