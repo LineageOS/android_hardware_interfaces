@@ -52,6 +52,12 @@ ndk::ScopedAStatus Session::revokeChallenge(int64_t challenge) {
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus Session::getEnrollmentConfig(EnrollmentType /*enrollmentType*/,
+                                                std::vector<EnrollmentStageConfig>* return_val) {
+    *return_val = {};
+    return ndk::ScopedAStatus::ok();
+}
+
 ndk::ScopedAStatus Session::enroll(
         const keymaster::HardwareAuthToken& /*hat*/, EnrollmentType /*enrollmentType*/,
         const std::vector<Feature>& /*features*/, const NativeHandle& /*previewSurface*/,
