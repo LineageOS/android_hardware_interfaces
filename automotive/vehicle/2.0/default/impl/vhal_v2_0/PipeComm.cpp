@@ -18,9 +18,9 @@
 
 #include <android/hardware/automotive/vehicle/2.0/IVehicle.h>
 #include <log/log.h>
-#include <qemu_pipe.h>
 
 #include "PipeComm.h"
+#include "qemu_pipe.h"
 
 #define CAR_SERVICE_NAME "pipe:qemud:car"
 
