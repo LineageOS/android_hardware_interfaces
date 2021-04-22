@@ -35,6 +35,6 @@ package android.hardware.biometrics.face;
 @VintfStability
 parcelable EnrollmentFrame {
   @nullable android.hardware.biometrics.face.Cell cell;
-  android.hardware.biometrics.face.EnrollmentStage stage = android.hardware.biometrics.face.EnrollmentStage.FIRST_FRAME_RECEIVED;
+  android.hardware.biometrics.face.EnrollmentStage stage = android.hardware.biometrics.face.EnrollmentStage.UNKNOWN;
   android.hardware.biometrics.face.BaseFrame data;
 }
