@@ -22,34 +22,40 @@ package android.hardware.biometrics.face;
 @VintfStability
 @Backing(type="byte")
 enum EnrollmentStage {
+    /**
+     * Placeholder value used for default initialization of EnrollmentStage. This
+     * value means EnrollmentStage wasn't explicitly initialized and must be
+     * discarded by the recipient.
+     */
+    UNKNOWN,
 
-  /**
-   * HAL has obtained the first camera frame.
-   */
-   FIRST_FRAME_RECEIVED,
+    /**
+     * HAL has obtained the first camera frame.
+     */
+    FIRST_FRAME_RECEIVED,
 
-  /**
-   * HAL is waiting for the user's face to be centered.
-   */
-   WAITING_FOR_CENTERING,
+    /**
+     * HAL is waiting for the user's face to be centered.
+     */
+    WAITING_FOR_CENTERING,
 
-  /**
-   * HAL is expecting the user's face to stay centered.
-   */
-   HOLD_STILL_IN_CENTER,
+    /**
+     * HAL is expecting the user's face to stay centered.
+     */
+    HOLD_STILL_IN_CENTER,
 
-  /**
-   * Vendor defined movement 1.
-   */
-   ENROLLING_MOVEMENT_1,
+    /**
+     * Vendor defined movement 1.
+     */
+    ENROLLING_MOVEMENT_1,
 
-  /**
-   * Vendor defined movement 2.
-   */
-   ENROLLING_MOVEMENT_2,
+    /**
+     * Vendor defined movement 2.
+     */
+    ENROLLING_MOVEMENT_2,
 
-  /**
-   * HAL has finished the enrollment.
-   */
-   ENROLLMENT_FINISHED,
+    /**
+     * HAL has finished the enrollment.
+     */
+    ENROLLMENT_FINISHED,
 }

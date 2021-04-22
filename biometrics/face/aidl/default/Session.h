@@ -34,6 +34,9 @@ class Session : public BnSession {
 
     ndk::ScopedAStatus revokeChallenge(int64_t challenge) override;
 
+    ndk::ScopedAStatus getEnrollmentConfig(EnrollmentType enrollmentType,
+                                           std::vector<EnrollmentStageConfig>* return_val) override;
+
     ndk::ScopedAStatus enroll(const keymaster::HardwareAuthToken& hat,
                               EnrollmentType enrollmentType, const std::vector<Feature>& features,
                               const NativeHandle& previewSurface,
