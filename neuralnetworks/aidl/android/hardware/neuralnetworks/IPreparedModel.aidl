@@ -72,18 +72,18 @@ interface IPreparedModel {
      * @param measure Specifies whether or not to measure duration of the execution. The duration
      *                runs from the time the driver sees the call to the executeSynchronously
      *                function to the time the driver returns from the function.
-     * @param deadline The time by which the execution is expected to complete. The time is measured
-     *                 in nanoseconds since boot (as from clock_gettime(CLOCK_BOOTTIME, &ts) or
-     *                 ::android::base::boot_clock). If the execution cannot be finished by the
-     *                 deadline, the execution may be aborted. Passing -1 means the deadline is
-     *                 omitted. Other negative values are invalid.
-     * @param loopTimeoutDuration The maximum amount of time in nanoseconds that should be spent
-     *                            executing a {@link OperationType::WHILE} operation. If a loop
-     *                            condition model does not output false within this duration, the
-     *                            execution must be aborted. If -1 is provided, the maximum amount
-     *                            of time is {@link DEFAULT_LOOP_TIMEOUT_DURATION_NS}. Other
-     *                            negative values are invalid. When provided, the duration must not
-     *                            exceed {@link MAXIMUM_LOOP_TIMEOUT_DURATION_NS}.
+     * @param deadlineNs The time by which the execution is expected to complete. The time is
+     *                   measured in nanoseconds since boot (as from clock_gettime(CLOCK_BOOTTIME,
+     *                   &ts) or ::android::base::boot_clock). If the execution cannot be finished
+     *                   by the deadline, the execution may be aborted. Passing -1 means the
+     *                   deadline is omitted. Other negative values are invalid.
+     * @param loopTimeoutDurationNs The maximum amount of time in nanoseconds that should be spent
+     *                              executing a {@link OperationType::WHILE} operation. If a loop
+     *                              condition model does not output false within this duration, the
+     *                              execution must be aborted. If -1 is provided, the maximum amount
+     *                              of time is {@link DEFAULT_LOOP_TIMEOUT_DURATION_NS}. Other
+     *                              negative values are invalid. When provided, the duration must
+     *                              not exceed {@link MAXIMUM_LOOP_TIMEOUT_DURATION_NS}.
      * @return ExecutionResult parcelable, containing the status of the execution, output shapes and
      *     timing information.
      * @throws ServiceSpecificException with one of the following ErrorStatus values:
@@ -95,7 +95,7 @@ interface IPreparedModel {
      *     - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
      */
     ExecutionResult executeSynchronously(in Request request, in boolean measureTiming,
-            in long deadline, in long loopTimeoutDuration);
+            in long deadlineNs, in long loopTimeoutDurationNs);
 
     /**
      * Launch a fenced asynchronous execution on a prepared model.
@@ -137,22 +137,23 @@ interface IPreparedModel {
      * @param waitFor A vector of sync fence file descriptors. Execution must not start until all
      *                sync fences have been signaled.
      * @param measure Specifies whether or not to measure duration of the execution.
-     * @param deadline The time by which the execution is expected to complete. The time is measured
-     *                 in nanoseconds since boot (as from clock_gettime(CLOCK_BOOTTIME, &ts) or
-     *                 ::android::base::boot_clock). If the execution cannot be finished by the
-     *                 deadline, the execution may be aborted. Passing -1 means the deadline is
-     *                 omitted. Other negative values are invalid.
-     * @param loopTimeoutDuration The maximum amount of time in nanoseconds that should be spent
-     *                            executing a {@link OperationType::WHILE} operation. If a loop
-     *                            condition model does not output false within this duration, the
-     *                            execution must be aborted. If -1 is provided, the maximum amount
-     *                            of time is {@link DEFAULT_LOOP_TIMEOUT_DURATION_NS}. Other
-     *                            negative values are invalid. When provided, the duration must not
-     *                            exceed {@link MAXIMUM_LOOP_TIMEOUT_DURATION_NS}.
-     * @param duration The length of time in nanoseconds within which the execution is expected to
-     *                 complete after all sync fences in waitFor are signaled. If the execution
-     *                 cannot be finished within the duration, the execution may be aborted. Passing
-     *                 -1 means the duration is omitted. Other negative values are invalid.
+     * @param deadlineNs The time by which the execution is expected to complete. The time is
+     *                   measured in nanoseconds since boot (as from clock_gettime(CLOCK_BOOTTIME,
+     *                   &ts) or ::android::base::boot_clock). If the execution cannot be finished
+     *                   by the deadline, the execution may be aborted. Passing -1 means the
+     *                   deadline is omitted. Other negative values are invalid.
+     * @param loopTimeoutDurationNs The maximum amount of time in nanoseconds that should be spent
+     *                              executing a {@link OperationType::WHILE} operation. If a loop
+     *                              condition model does not output false within this duration, the
+     *                              execution must be aborted. If -1 is provided, the maximum amount
+     *                              of time is {@link DEFAULT_LOOP_TIMEOUT_DURATION_NS}. Other
+     *                              negative values are invalid. When provided, the duration must
+     *                              not exceed {@link MAXIMUM_LOOP_TIMEOUT_DURATION_NS}.
+     * @param durationNs The length of time in nanoseconds within which the execution is expected to
+     *                   complete after all sync fences in waitFor are signaled. If the execution
+     *                   cannot be finished within the duration, the execution may be aborted.
+     *                   Passing -1 means the duration is omitted. Other negative values are
+     *                   invalid.
      * @return The FencedExecutionResult parcelable, containing IFencedExecutionCallback and the
      *         sync fence.
      * @throws ServiceSpecificException with one of the following ErrorStatus values:
@@ -165,8 +166,8 @@ interface IPreparedModel {
      *     - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
      */
     FencedExecutionResult executeFenced(in Request request, in ParcelFileDescriptor[] waitFor,
-            in boolean measureTiming, in long deadline, in long loopTimeoutDuration,
-            in long duration);
+            in boolean measureTiming, in long deadlineNs, in long loopTimeoutDurationNs,
+            in long durationNs);
 
     /**
      * Configure a Burst object used to execute multiple inferences on a prepared model in rapid
