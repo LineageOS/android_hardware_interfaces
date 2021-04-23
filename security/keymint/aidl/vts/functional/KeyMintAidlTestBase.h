@@ -269,12 +269,20 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     long challenge_;
 };
 
+vector<uint8_t> build_serial_blob(const uint64_t serial_int);
+void verify_subject(const X509* cert, const string& subject, bool self_signed);
+void verify_serial(X509* cert, const uint64_t expected_serial);
+void verify_subject_and_serial(const Certificate& certificate,  //
+                               const uint64_t expected_serial,  //
+                               const string& subject, bool self_signed);
+
 bool verify_attestation_record(const string& challenge,                //
                                const string& app_id,                   //
                                AuthorizationSet expected_sw_enforced,  //
                                AuthorizationSet expected_hw_enforced,  //
                                SecurityLevel security_level,
                                const vector<uint8_t>& attestation_cert);
+
 string bin2hex(const vector<uint8_t>& data);
 X509_Ptr parse_cert_blob(const vector<uint8_t>& blob);
 vector<uint8_t> make_name_from_str(const string& name);
