@@ -3,8 +3,12 @@ package android.media.tuner.testing.configuration.V1_0 {
 
   public class AvFilterSettings {
     ctor public AvFilterSettings();
+    method @Nullable public short getAudioStreamType_optional();
     method @Nullable public boolean getIsPassthrough();
+    method @Nullable public short getVideoStreamType_optional();
+    method public void setAudioStreamType_optional(@Nullable short);
     method public void setIsPassthrough(@Nullable boolean);
+    method public void setVideoStreamType_optional(@Nullable short);
   }
 
   public class DataFlowConfiguration {
@@ -32,12 +36,14 @@ package android.media.tuner.testing.configuration.V1_0 {
     method @Nullable public String getAudioFilterConnection();
     method @Nullable public String getDvrSoftwareFeConnection();
     method @Nullable public String getFrontendConnection();
+    method @Nullable public String getIpFilterConnection();
     method @Nullable public String getPcrFilterConnection();
     method @Nullable public String getSectionFilterConnection();
     method @Nullable public String getVideoFilterConnection();
     method public void setAudioFilterConnection(@Nullable String);
     method public void setDvrSoftwareFeConnection(@Nullable String);
     method public void setFrontendConnection(@Nullable String);
+    method public void setIpFilterConnection(@Nullable String);
     method public void setPcrFilterConnection(@Nullable String);
     method public void setSectionFilterConnection(@Nullable String);
     method public void setVideoFilterConnection(@Nullable String);
@@ -144,17 +150,32 @@ package android.media.tuner.testing.configuration.V1_0 {
   public class DvbsFrontendSettings {
     ctor public DvbsFrontendSettings();
     method @Nullable public java.math.BigInteger getInputStreamId();
+    method @Nullable public boolean getIsDiseqcRxMessage();
+    method @Nullable public android.media.tuner.testing.configuration.V1_0.DvbsScanType getScanType();
     method @Nullable public java.math.BigInteger getSymbolRate();
     method public void setInputStreamId(@Nullable java.math.BigInteger);
+    method public void setIsDiseqcRxMessage(@Nullable boolean);
+    method public void setScanType(@Nullable android.media.tuner.testing.configuration.V1_0.DvbsScanType);
     method public void setSymbolRate(@Nullable java.math.BigInteger);
+  }
+
+  public enum DvbsScanType {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.DvbsScanType DIRECT;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.DvbsScanType DISEQC;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.DvbsScanType JESS;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.DvbsScanType UNDEFINED;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.DvbsScanType UNICABLE;
   }
 
   public class DvbtFrontendSettings {
     ctor public DvbtFrontendSettings();
     method @Nullable public java.math.BigInteger getBandwidth();
+    method @Nullable public java.math.BigInteger getConstellation();
     method @Nullable public java.math.BigInteger getIsHighPriority();
     method @Nullable public java.math.BigInteger getTransmissionMode();
     method public void setBandwidth(@Nullable java.math.BigInteger);
+    method public void setConstellation(@Nullable java.math.BigInteger);
     method public void setIsHighPriority(@Nullable java.math.BigInteger);
     method public void setTransmissionMode(@Nullable java.math.BigInteger);
   }
@@ -208,7 +229,9 @@ package android.media.tuner.testing.configuration.V1_0 {
     method @Nullable public android.media.tuner.testing.configuration.V1_0.AvFilterSettings getAvFilterSettings_optional();
     method @Nullable public java.math.BigInteger getBufferSize();
     method @Nullable public String getId();
+    method @Nullable public android.media.tuner.testing.configuration.V1_0.IpFilterConfig getIpFilterConfig_optional();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.FilterMainTypeEnum getMainType();
+    method @Nullable public java.math.BigInteger getMonitorEventTypes();
     method @Nullable public java.math.BigInteger getPid();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.RecordFilterSettings getRecordFilterSettings_optional();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.SectionFilterSettings getSectionFilterSettings_optional();
@@ -217,7 +240,9 @@ package android.media.tuner.testing.configuration.V1_0 {
     method public void setAvFilterSettings_optional(@Nullable android.media.tuner.testing.configuration.V1_0.AvFilterSettings);
     method public void setBufferSize(@Nullable java.math.BigInteger);
     method public void setId(@Nullable String);
+    method public void setIpFilterConfig_optional(@Nullable android.media.tuner.testing.configuration.V1_0.IpFilterConfig);
     method public void setMainType(@Nullable android.media.tuner.testing.configuration.V1_0.FilterMainTypeEnum);
+    method public void setMonitorEventTypes(@Nullable java.math.BigInteger);
     method public void setPid(@Nullable java.math.BigInteger);
     method public void setRecordFilterSettings_optional(@Nullable android.media.tuner.testing.configuration.V1_0.RecordFilterSettings);
     method public void setSectionFilterSettings_optional(@Nullable android.media.tuner.testing.configuration.V1_0.SectionFilterSettings);
@@ -227,6 +252,7 @@ package android.media.tuner.testing.configuration.V1_0 {
 
   public enum FilterMainTypeEnum {
     method @NonNull public String getRawName();
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.FilterMainTypeEnum IP;
     enum_constant public static final android.media.tuner.testing.configuration.V1_0.FilterMainTypeEnum MMTP;
     enum_constant public static final android.media.tuner.testing.configuration.V1_0.FilterMainTypeEnum TS;
   }
@@ -235,7 +261,11 @@ package android.media.tuner.testing.configuration.V1_0 {
     method @NonNull public String getRawName();
     enum_constant public static final android.media.tuner.testing.configuration.V1_0.FilterSubTypeEnum AUDIO;
     enum_constant public static final android.media.tuner.testing.configuration.V1_0.FilterSubTypeEnum DOWNLOAD;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.FilterSubTypeEnum IP;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.FilterSubTypeEnum IP_PAYLOAD;
     enum_constant public static final android.media.tuner.testing.configuration.V1_0.FilterSubTypeEnum MMTP;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.FilterSubTypeEnum NTP;
+    enum_constant public static final android.media.tuner.testing.configuration.V1_0.FilterSubTypeEnum PAYLOAD_THROUGH;
     enum_constant public static final android.media.tuner.testing.configuration.V1_0.FilterSubTypeEnum PCR;
     enum_constant public static final android.media.tuner.testing.configuration.V1_0.FilterSubTypeEnum PES;
     enum_constant public static final android.media.tuner.testing.configuration.V1_0.FilterSubTypeEnum RECORD;
@@ -332,6 +362,30 @@ package android.media.tuner.testing.configuration.V1_0 {
   public static class HardwareConfiguration.TimeFilters {
     ctor public HardwareConfiguration.TimeFilters();
     method @Nullable public java.util.List<android.media.tuner.testing.configuration.V1_0.TimeFilter> getTimeFilter();
+  }
+
+  public class IpAddress {
+    ctor public IpAddress();
+    method @Nullable public java.util.List<java.lang.Short> getIp();
+    method @Nullable public boolean getIsIpV4();
+    method public void setIp(@Nullable java.util.List<java.lang.Short>);
+    method public void setIsIpV4(@Nullable boolean);
+  }
+
+  public class IpFilterConfig {
+    ctor public IpFilterConfig();
+    method @Nullable public boolean getDataPassthrough();
+    method @Nullable public android.media.tuner.testing.configuration.V1_0.IpAddress getDestIpAddress();
+    method @Nullable public long getDestPort();
+    method @Nullable public java.math.BigInteger getIpCid();
+    method @Nullable public android.media.tuner.testing.configuration.V1_0.IpAddress getSrcIpAddress();
+    method @Nullable public long getSrcPort();
+    method public void setDataPassthrough(@Nullable boolean);
+    method public void setDestIpAddress(@Nullable android.media.tuner.testing.configuration.V1_0.IpAddress);
+    method public void setDestPort(@Nullable long);
+    method public void setIpCid(@Nullable java.math.BigInteger);
+    method public void setSrcIpAddress(@Nullable android.media.tuner.testing.configuration.V1_0.IpAddress);
+    method public void setSrcPort(@Nullable long);
   }
 
   public class Lnb {
