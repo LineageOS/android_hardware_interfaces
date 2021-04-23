@@ -32,14 +32,13 @@
 namespace android::hardware::neuralnetworks::utils {
 
 InvalidDevice::InvalidDevice(std::string name, std::string versionString, nn::Version featureLevel,
-                             nn::DeviceType type, bool isUpdatable,
-                             std::vector<nn::Extension> extensions, nn::Capabilities capabilities,
+                             nn::DeviceType type, std::vector<nn::Extension> extensions,
+                             nn::Capabilities capabilities,
                              std::pair<uint32_t, uint32_t> numberOfCacheFilesNeeded)
     : kName(std::move(name)),
       kVersionString(std::move(versionString)),
       kFeatureLevel(featureLevel),
       kType(type),
-      kIsUpdatable(isUpdatable),
       kExtensions(std::move(extensions)),
       kCapabilities(std::move(capabilities)),
       kNumberOfCacheFilesNeeded(numberOfCacheFilesNeeded) {}
@@ -58,10 +57,6 @@ nn::Version InvalidDevice::getFeatureLevel() const {
 
 nn::DeviceType InvalidDevice::getType() const {
     return kType;
-}
-
-bool InvalidDevice::isUpdatable() const {
-    return kIsUpdatable;
 }
 
 const std::vector<nn::Extension>& InvalidDevice::getSupportedExtensions() const {
