@@ -756,7 +756,7 @@ TEST_P(RadioHidlTest_v1_6, setCarrierInfoForImsiEncryption_1_6) {
 /*
  * Test IRadio.getSimPhonebookRecords() for the response returned.
  */
-TEST_F(RadioHidlTest_v1_6, getSimPhonebookRecords) {
+TEST_P(RadioHidlTest_v1_6, getSimPhonebookRecords) {
     serial = GetRandomSerialNumber();
     radio_v1_6->getSimPhonebookRecords(serial);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
