@@ -29,7 +29,6 @@ class MockDevice final : public IDevice {
     MOCK_METHOD(const std::string&, getVersionString, (), (const, override));
     MOCK_METHOD(Version, getFeatureLevel, (), (const, override));
     MOCK_METHOD(DeviceType, getType, (), (const, override));
-    MOCK_METHOD(bool, isUpdatable, (), (const, override));
     MOCK_METHOD(const std::vector<Extension>&, getSupportedExtensions, (), (const, override));
     MOCK_METHOD(const Capabilities&, getCapabilities, (), (const, override));
     MOCK_METHOD((std::pair<uint32_t, uint32_t>), getNumberOfCacheFilesNeeded, (),
