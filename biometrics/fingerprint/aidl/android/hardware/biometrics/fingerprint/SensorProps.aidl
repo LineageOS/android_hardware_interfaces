@@ -48,4 +48,26 @@ parcelable SensorProps {
      * Specifies whether or not the implementation supports ISession#detectInteraction.
      */
     boolean supportsDetectInteraction;
+
+    /**
+     * Whether the HAL is responsible for detecting and processing of display touches. This is only
+     * applicable to under-display fingerprint sensors (UDFPS). If the value is false, the framework
+     * will be responsible for handling the display touch events and passing them down to the HAL by
+     * using ISession#onPointerDown and ISession#onPointerUp. If the value is true, the framework
+     * will not notify the HAL about touch events.
+     *
+     * This value must be ignored for non-UDFPS sensors.
+     */
+    boolean halHandlesDisplayTouches;
+
+    /**
+     * Whether the HAL is responsible for fingerprint illumination, for example through enabling the
+     * display's high-brightness mode. This is only applicable to optical under-display fingerprint
+     * sensors (optical UDFPS). If the value is false, the framework will be responsible for
+     * illuminating the finger and reporting ISession#onUiReady. If the value is true, the framework
+     * will not illuminate the finger and will not report ISession#onUiReady.
+     *
+     * This value must be ignored for sensors that aren't optical UDFPS.
+     */
+    boolean halControlsIllumination;
 }
