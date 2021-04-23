@@ -121,7 +121,7 @@ void FrontendCallback::tuneTestOnLock(sp<IFrontend>& frontend, FrontendSettings 
     mLockMsgReceived = false;
 }
 
-void FrontendCallback::scanTest(sp<IFrontend>& frontend, FrontendConfig config,
+void FrontendCallback::scanTest(sp<IFrontend>& frontend, FrontendConfig1_1 config,
                                 FrontendScanType type) {
     sp<android::hardware::tv::tuner::V1_1::IFrontend> frontend_1_1;
     frontend_1_1 = android::hardware::tv::tuner::V1_1::IFrontend::castFrom(frontend);
@@ -130,7 +130,7 @@ void FrontendCallback::scanTest(sp<IFrontend>& frontend, FrontendConfig config,
         return;
     }
 
-    uint32_t targetFrequency = getTargetFrequency(config.settings);
+    uint32_t targetFrequency = getTargetFrequency(config.config1_0.settings);
     if (type == FrontendScanType::SCAN_BLIND) {
         // reset the frequency in the scan configuration to test blind scan. The settings param of
         // passed in means the real input config on the transponder connected to the DUT.
@@ -139,7 +139,7 @@ void FrontendCallback::scanTest(sp<IFrontend>& frontend, FrontendConfig config,
         resetBlindScanStartingFrequency(config, targetFrequency - 100);
     }
 
-    Result result = frontend_1_1->scan_1_1(config.settings, type, config.settingsExt1_1);
+    Result result = frontend_1_1->scan_1_1(config.config1_0.settings, type, config.settingsExt1_1);
     EXPECT_TRUE(result == Result::SUCCESS);
 
     bool scanMsgLockedReceived = false;
@@ -159,7 +159,8 @@ wait:
     if (mScanMessageType != FrontendScanMessageType::END) {
         if (mScanMessageType == FrontendScanMessageType::LOCKED) {
             scanMsgLockedReceived = true;
-            Result result = frontend_1_1->scan_1_1(config.settings, type, config.settingsExt1_1);
+            Result result =
+                    frontend_1_1->scan_1_1(config.config1_0.settings, type, config.settingsExt1_1);
             EXPECT_TRUE(result == Result::SUCCESS);
         }
 
@@ -207,35 +208,35 @@ uint32_t FrontendCallback::getTargetFrequency(FrontendSettings settings) {
     }
 }
 
-void FrontendCallback::resetBlindScanStartingFrequency(FrontendConfig& config,
+void FrontendCallback::resetBlindScanStartingFrequency(FrontendConfig1_1& config,
                                                        uint32_t resetingFreq) {
-    switch (config.settings.getDiscriminator()) {
+    switch (config.config1_0.settings.getDiscriminator()) {
         case FrontendSettings::hidl_discriminator::analog:
-            config.settings.analog().frequency = resetingFreq;
+            config.config1_0.settings.analog().frequency = resetingFreq;
             break;
         case FrontendSettings::hidl_discriminator::atsc:
-            config.settings.atsc().frequency = resetingFreq;
+            config.config1_0.settings.atsc().frequency = resetingFreq;
             break;
         case FrontendSettings::hidl_discriminator::atsc3:
-            config.settings.atsc3().frequency = resetingFreq;
+            config.config1_0.settings.atsc3().frequency = resetingFreq;
             break;
         case FrontendSettings::hidl_discriminator::dvbc:
-            config.settings.dvbc().frequency = resetingFreq;
+            config.config1_0.settings.dvbc().frequency = resetingFreq;
             break;
         case FrontendSettings::hidl_discriminator::dvbs:
-            config.settings.dvbs().frequency = resetingFreq;
+            config.config1_0.settings.dvbs().frequency = resetingFreq;
             break;
         case FrontendSettings::hidl_discriminator::dvbt:
-            config.settings.dvbt().frequency = resetingFreq;
+            config.config1_0.settings.dvbt().frequency = resetingFreq;
             break;
         case FrontendSettings::hidl_discriminator::isdbs:
-            config.settings.isdbs().frequency = resetingFreq;
+            config.config1_0.settings.isdbs().frequency = resetingFreq;
             break;
         case FrontendSettings::hidl_discriminator::isdbs3:
-            config.settings.isdbs3().frequency = resetingFreq;
+            config.config1_0.settings.isdbs3().frequency = resetingFreq;
             break;
         case FrontendSettings::hidl_discriminator::isdbt:
-            config.settings.isdbt().frequency = resetingFreq;
+            config.config1_0.settings.isdbt().frequency = resetingFreq;
             break;
     }
 }
@@ -274,11 +275,11 @@ AssertionResult FrontendTests::setFrontendCallback() {
     return AssertionResult(callbackStatus.isOk());
 }
 
-AssertionResult FrontendTests::scanFrontend(FrontendConfig config, FrontendScanType type) {
+AssertionResult FrontendTests::scanFrontend(FrontendConfig1_1 config, FrontendScanType type) {
     EXPECT_TRUE(mFrontendCallback)
             << "test with openFrontendById/setFrontendCallback/getFrontendInfo first.";
 
-    EXPECT_TRUE(mFrontendInfo.type == config.type)
+    EXPECT_TRUE(mFrontendInfo.type == config.config1_0.type)
             << "FrontendConfig does not match the frontend info of the given id.";
 
     mFrontendCallback->scanTest(mFrontend, config, type);
@@ -426,14 +427,14 @@ void FrontendTests::verifyFrontendStatusExt1_1(vector<FrontendStatusTypeExt1_1> 
     ASSERT_TRUE(status == Result::SUCCESS);
 }
 
-AssertionResult FrontendTests::tuneFrontend(FrontendConfig config, bool testWithDemux) {
+AssertionResult FrontendTests::tuneFrontend(FrontendConfig1_1 config, bool testWithDemux) {
     EXPECT_TRUE(mFrontendCallback)
             << "test with openFrontendById/setFrontendCallback/getFrontendInfo first.";
 
-    EXPECT_TRUE(mFrontendInfo.type == config.type)
+    EXPECT_TRUE(mFrontendInfo.type == config.config1_0.type)
             << "FrontendConfig does not match the frontend info of the given id.";
 
-    mIsSoftwareFe = config.isSoftwareFe;
+    mIsSoftwareFe = config.config1_0.isSoftwareFe;
     bool result = true;
     if (mIsSoftwareFe && testWithDemux) {
         result &= mDvrTests.openDvrInDemux(mDvrConfig.type, mDvrConfig.bufferSize) == success();
@@ -446,7 +447,7 @@ AssertionResult FrontendTests::tuneFrontend(FrontendConfig config, bool testWith
             return failure();
         }
     }
-    mFrontendCallback->tuneTestOnLock(mFrontend, config.settings, config.settingsExt1_1);
+    mFrontendCallback->tuneTestOnLock(mFrontend, config.config1_0.settings, config.settingsExt1_1);
     return AssertionResult(true);
 }
 
@@ -484,12 +485,9 @@ void FrontendTests::getFrontendIdByType(FrontendType feType, uint32_t& feId) {
     feId = INVALID_ID;
 }
 
-void FrontendTests::tuneTest(FrontendConfig frontendConf) {
-    if (!frontendConf.enable) {
-        return;
-    }
+void FrontendTests::tuneTest(FrontendConfig1_1 frontendConf) {
     uint32_t feId;
-    getFrontendIdByType(frontendConf.type, feId);
+    getFrontendIdByType(frontendConf.config1_0.type, feId);
     ASSERT_TRUE(feId != INVALID_ID);
     ASSERT_TRUE(openFrontendById(feId));
     ASSERT_TRUE(setFrontendCallback());
@@ -503,12 +501,9 @@ void FrontendTests::tuneTest(FrontendConfig frontendConf) {
     ASSERT_TRUE(closeFrontend());
 }
 
-void FrontendTests::scanTest(FrontendConfig frontendConf, FrontendScanType scanType) {
-    if (!frontendConf.enable) {
-        return;
-    }
+void FrontendTests::scanTest(FrontendConfig1_1 frontendConf, FrontendScanType scanType) {
     uint32_t feId;
-    getFrontendIdByType(frontendConf.type, feId);
+    getFrontendIdByType(frontendConf.config1_0.type, feId);
     ASSERT_TRUE(feId != INVALID_ID);
     ASSERT_TRUE(openFrontendById(feId));
     ASSERT_TRUE(setFrontendCallback());

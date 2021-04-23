@@ -49,15 +49,27 @@
             <xs:enumeration value="DTMB"/>
         </xs:restriction>
     </xs:simpleType>
+    <xs:simpleType name="dvbsScanType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="UNDEFINED" />
+            <xs:enumeration value="DIRECT" />
+            <xs:enumeration value="DISEQC" />
+            <xs:enumeration value="UNICABLE"/>
+            <xs:enumeration value="JESS"/>
+        </xs:restriction>
+    </xs:simpleType>
 
     <xs:complexType name="dvbtFrontendSettings">
         <xs:attribute name="bandwidth" type="xs:nonNegativeInteger" use="required"/>
         <xs:attribute name="transmissionMode" type="xs:nonNegativeInteger" use="required"/>
         <xs:attribute name="isHighPriority" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="constellation" type="xs:nonNegativeInteger" use="optional"/>
     </xs:complexType>
     <xs:complexType name="dvbsFrontendSettings">
         <xs:attribute name="inputStreamId" type="xs:nonNegativeInteger" use="required"/>
         <xs:attribute name="symbolRate" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="scanType" type="dvbsScanType" use="optional"/>
+        <xs:attribute name="isDiseqcRxMessage" type="xs:boolean" use="optional"/>
     </xs:complexType>
 
     <xs:complexType name="frontend">
@@ -137,13 +149,19 @@
             <xs:enumeration value="SC_HEVC"/>
         </xs:restriction>
     </xs:simpleType>
+    <xs:simpleType name="monitoEvents">
+        <xs:restriction base="xs:integer">
+            <xs:minInclusive value="0"/>
+            <xs:maxInclusive value="3"/>
+        </xs:restriction>
+    </xs:simpleType>
 
     <xs:simpleType name="filterMainTypeEnum">
         <xs:restriction base="xs:string">
             <xs:enumeration value="TS" />
             <xs:enumeration value="MMTP" />
-            <!-- TODO: b/182519645 Support IP/TLV/ALP filter config
             <xs:enumeration value="IP"/>
+            <!-- TODO: b/182519645 Support TLV/ALP filter config
             <xs:enumeration value="TLV"/>
             <xs:enumeration value="ALP"/-->
         </xs:restriction>
@@ -161,10 +179,37 @@
             <xs:enumeration value="TEMI"/>
             <xs:enumeration value="MMTP"/>
             <xs:enumeration value="DOWNLOAD"/>
+            <xs:enumeration value="IP"/>
+            <xs:enumeration value="NTP"/>
+            <xs:enumeration value="IP_PAYLOAD"/>
+            <xs:enumeration value="PAYLOAD_THROUGH"/>            
         </xs:restriction>
     </xs:simpleType>
 
+    <xs:simpleType name="ip">
+        <xs:list itemType="xs:unsignedByte"/>
+    </xs:simpleType>
+    <xs:complexType name="ipAddress">
+        <xs:attribute name="isIpV4" type="xs:boolean" use="required"/>
+        <xs:attribute name="ip" type="ip" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="ipFilterConfig">
+        <xs:sequence>
+            <xs:element name="srcIpAddress" type="ipAddress" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="destIpAddress" type="ipAddress" minOccurs="1" maxOccurs="1"/>
+        </xs:sequence>
+        <xs:attribute name="srcPort" type="xs:unsignedInt" use="optional"/>
+        <xs:attribute name="destPort" type="xs:unsignedInt" use="optional"/>
+        <!-- True if the ip filter data goes to the next filter directly -->
+        <xs:attribute name="dataPassthrough" type="xs:boolean" use="optional"/>
+        <xs:attribute name="ipCid" type="xs:nonNegativeInteger" use="optional"/>
+    </xs:complexType>
+
     <xs:complexType name="avFilterSettings">
+        <xs:choice minOccurs="0" maxOccurs="1">
+            <xs:element name="audioStreamType" type="xs:unsignedByte"/>
+            <xs:element name="videoStreamType" type="xs:unsignedByte"/>
+        </xs:choice>
         <xs:attribute name="isPassthrough" type="xs:boolean" use="required"/>
     </xs:complexType>
     <xs:complexType name="sectionFilterSettings">
@@ -197,20 +242,28 @@
                         config only to the hal.
             </xs:documentation>
         </xs:annotation>
-        <xs:choice minOccurs="0" maxOccurs="1">
-            <!-- TODO: b/182519645 finish all the filter settings structures. -->
-            <xs:element name="sectionFilterSettings" type="sectionFilterSettings"/>
-            <xs:element name="avFilterSettings" type="avFilterSettings"/>
-            <xs:element name="recordFilterSettings" type="recordFilterSettings"/>
-            <!--xs:element name="pes" type="pesFilterSettings"/>
-            <xs:element name="download" type="downloadFilterSettings"/-->
-        </xs:choice>
+        <xs:sequence>
+            <!-- Main filter type related config -->
+            <xs:choice minOccurs="0" maxOccurs="1">
+                <xs:element name="ipFilterConfig" type="ipFilterConfig"/>
+            </xs:choice>
+            <!-- Sub filter type related config -->
+            <xs:choice minOccurs="0" maxOccurs="1">
+                <!-- TODO: b/182519645 finish all the filter settings structures. -->
+                <xs:element name="sectionFilterSettings" type="sectionFilterSettings"/>
+                <xs:element name="avFilterSettings" type="avFilterSettings"/>
+                <xs:element name="recordFilterSettings" type="recordFilterSettings"/>
+                <!--xs:element name="pes" type="pesFilterSettings"/>
+                <xs:element name="download" type="downloadFilterSettings"/-->
+            </xs:choice>
+        </xs:sequence>
         <xs:attribute name="id" type="filterId" use="required"/>
         <xs:attribute name="mainType" type="filterMainTypeEnum" use="required"/>
         <xs:attribute name="subType" type="filterSubTypeEnum" use="required"/>
         <xs:attribute name="bufferSize" type="xs:nonNegativeInteger" use="required"/>
         <xs:attribute name="pid" type="xs:nonNegativeInteger" use="optional"/>
         <xs:attribute name="useFMQ" type="xs:boolean" use="required"/>
+        <xs:attribute name="monitorEventTypes" type="monitoEvents" use="optional"/>
     </xs:complexType>
 
     <!-- DVR SESSION -->
@@ -396,7 +449,7 @@
         </xs:annotation>
         <xs:attribute name="id" type="descramblerId" use="required"/>
         <xs:attribute name="casSystemId" type="xs:nonNegativeInteger" use="required"/>
-        <xs:attribute name="provisionStr" type="xs:string" use="required"/>
+        <xs:attribute name="provisionStr" type="xs:string" use="optional"/>
         <xs:attribute name="sesstionPrivatData" type="sessionPrivateData" use="optional"/>
     </xs:complexType>
 
@@ -541,6 +594,7 @@
                     <xs:attribute name="videoFilterConnection" type="filterId" use="required"/>
                     <xs:attribute name="pcrFilterConnection" type="filterId" use="optional"/>
                     <xs:attribute name="sectionFilterConnection" type="filterId" use="optional"/>
+                    <xs:attribute name="ipFilterConnection" type="filterId" use="optional"/>
                     <!-- TODO: b/182519645 allow the users to insert extra filters -->
                     <!-- DVR is only required when the frontend is using the software input -->
                     <xs:attribute name="dvrSoftwareFeConnection" type="dvrId" use="optional"/>
