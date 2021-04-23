@@ -39,4 +39,6 @@ parcelable SensorProps {
   android.hardware.biometrics.fingerprint.SensorLocation[] sensorLocations;
   boolean supportsNavigationGestures;
   boolean supportsDetectInteraction;
+  boolean halHandlesDisplayTouches;
+  boolean halControlsIllumination;
 }
