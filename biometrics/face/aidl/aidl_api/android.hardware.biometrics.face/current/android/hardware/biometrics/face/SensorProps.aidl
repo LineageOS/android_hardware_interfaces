@@ -37,6 +37,7 @@ parcelable SensorProps {
   android.hardware.biometrics.common.CommonProps commonProps;
   android.hardware.biometrics.face.FaceSensorType sensorType = android.hardware.biometrics.face.FaceSensorType.UNKNOWN;
   boolean halControlsPreview;
+  int previewDisplayId;
   int enrollPreviewWidth;
   int enrollPreviewHeight;
   float enrollTranslationX;
