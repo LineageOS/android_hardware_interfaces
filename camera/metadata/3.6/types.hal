@@ -131,6 +131,12 @@ enum CameraMetadataTag : @3.5::CameraMetadataTag {
      */
     ANDROID_SCALER_AVAILABLE_INPUT_OUTPUT_FORMATS_MAP_MAXIMUM_RESOLUTION,
 
+    /** android.scaler.multiResolutionStreamSupported [static, enum, ndk_public]
+     *
+     * <p>Whether the camera device supports multi-resolution input or output streams</p>
+     */
+    ANDROID_SCALER_MULTI_RESOLUTION_STREAM_SUPPORTED,
+
     ANDROID_SCALER_END_3_6,
 
     /** android.sensor.opaqueRawSizeMaximumResolution [static, int32[], system]
@@ -332,6 +338,14 @@ enum CameraMetadataEnumAndroidScalerPhysicalCameraMultiResolutionStreamConfigura
 enum CameraMetadataEnumAndroidScalerAvailableStreamConfigurationsMaximumResolution : uint32_t {
     ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_MAXIMUM_RESOLUTION_OUTPUT,
     ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_MAXIMUM_RESOLUTION_INPUT,
+};
+
+/** android.scaler.multiResolutionStreamSupported enumeration values
+ * @see ANDROID_SCALER_MULTI_RESOLUTION_STREAM_SUPPORTED
+ */
+enum CameraMetadataEnumAndroidScalerMultiResolutionStreamSupported : uint32_t {
+    ANDROID_SCALER_MULTI_RESOLUTION_STREAM_SUPPORTED_FALSE,
+    ANDROID_SCALER_MULTI_RESOLUTION_STREAM_SUPPORTED_TRUE,
 };
 
 /** android.sensor.pixelMode enumeration values

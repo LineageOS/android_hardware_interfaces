@@ -845,6 +845,66 @@ ErrorCode KeyMintAidlTestBase::UseEcdsaKey(const vector<uint8_t>& ecdsaKeyBlob) 
     return result;
 }
 
+void verify_serial(X509* cert, const uint64_t expected_serial) {
+    BIGNUM_Ptr ser(BN_new());
+    EXPECT_TRUE(ASN1_INTEGER_to_BN(X509_get_serialNumber(cert), ser.get()));
+
+    uint64_t serial;
+    EXPECT_TRUE(BN_get_u64(ser.get(), &serial));
+    EXPECT_EQ(serial, expected_serial);
+}
+
+// Please set self_signed to true for fake certificates or self signed
+// certificates
+void verify_subject(const X509* cert,       //
+                    const string& subject,  //
+                    bool self_signed) {
+    char* cert_issuer =  //
+            X509_NAME_oneline(X509_get_issuer_name(cert), nullptr, 0);
+
+    char* cert_subj = X509_NAME_oneline(X509_get_subject_name(cert), nullptr, 0);
+
+    string expected_subject("/CN=");
+    if (subject.empty()) {
+        expected_subject.append("Android Keystore Key");
+    } else {
+        expected_subject.append(subject);
+    }
+
+    EXPECT_STREQ(expected_subject.c_str(), cert_subj) << "Cert has wrong subject." << cert_subj;
+
+    if (self_signed) {
+        EXPECT_STREQ(cert_issuer, cert_subj)
+                << "Cert issuer and subject mismatch for self signed certificate.";
+    }
+
+    OPENSSL_free(cert_subj);
+    OPENSSL_free(cert_issuer);
+}
+
+vector<uint8_t> build_serial_blob(const uint64_t serial_int) {
+    BIGNUM_Ptr serial(BN_new());
+    EXPECT_TRUE(BN_set_u64(serial.get(), serial_int));
+
+    int len = BN_num_bytes(serial.get());
+    vector<uint8_t> serial_blob(len);
+    if (BN_bn2bin(serial.get(), serial_blob.data()) != len) {
+        return {};
+    }
+
+    return serial_blob;
+}
+
+void verify_subject_and_serial(const Certificate& certificate,  //
+                               const uint64_t expected_serial,  //
+                               const string& subject, bool self_signed) {
+    X509_Ptr cert(parse_cert_blob(certificate.encodedCertificate));
+    ASSERT_TRUE(!!cert.get());
+
+    verify_serial(cert.get(), expected_serial);
+    verify_subject(cert.get(), subject, self_signed);
+}
+
 bool verify_attestation_record(const string& challenge,                //
                                const string& app_id,                   //
                                AuthorizationSet expected_sw_enforced,  //
@@ -1083,16 +1143,6 @@ AssertionResult ChainSignaturesAreValid(const vector<Certificate>& chain) {
         string signer_subj = x509NameToStr(X509_get_subject_name(signing_cert.get()));
         if (cert_issuer != signer_subj) {
             return AssertionFailure() << "Cert " << i << " has wrong issuer.\n" << cert_data.str();
-        }
-
-        if (i == 0) {
-            string cert_sub = x509NameToStr(X509_get_subject_name(key_cert.get()));
-            if ("/CN=Android Keystore Key" != cert_sub) {
-                return AssertionFailure()
-                       << "Leaf cert has wrong subject, should be CN=Android Keystore Key, was "
-                       << cert_sub << '\n'
-                       << cert_data.str();
-            }
         }
     }
 
