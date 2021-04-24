@@ -79,11 +79,11 @@ class FrontendCallback : public IFrontendCallback {
 
     void tuneTestOnLock(sp<IFrontend>& frontend, FrontendSettings settings,
                         FrontendSettingsExt1_1 settingsExt1_1);
-    void scanTest(sp<IFrontend>& frontend, FrontendConfig config, FrontendScanType type);
+    void scanTest(sp<IFrontend>& frontend, FrontendConfig1_1 config, FrontendScanType type);
 
     // Helper methods
     uint32_t getTargetFrequency(FrontendSettings settings);
-    void resetBlindScanStartingFrequency(FrontendConfig& config, uint32_t resetingFreq);
+    void resetBlindScanStartingFrequency(FrontendConfig1_1& config, uint32_t resetingFreq);
 
   private:
     void readFrontendScanMessageExt1_1Modulation(FrontendModulation modulation);
@@ -114,9 +114,9 @@ class FrontendTests {
     AssertionResult getFrontendInfo(uint32_t frontendId);
     AssertionResult openFrontendById(uint32_t frontendId);
     AssertionResult setFrontendCallback();
-    AssertionResult scanFrontend(FrontendConfig config, FrontendScanType type);
+    AssertionResult scanFrontend(FrontendConfig1_1 config, FrontendScanType type);
     AssertionResult stopScanFrontend();
-    AssertionResult tuneFrontend(FrontendConfig config, bool testWithDemux);
+    AssertionResult tuneFrontend(FrontendConfig1_1 config, bool testWithDemux);
     void verifyFrontendStatusExt1_1(vector<FrontendStatusTypeExt1_1> statusTypes,
                                     vector<FrontendStatusExt1_1> expectStatuses);
     AssertionResult stopTuneFrontend(bool testWithDemux);
@@ -127,8 +127,8 @@ class FrontendTests {
     AssertionResult unlinkCiCam(uint32_t ciCamId);
 
     void getFrontendIdByType(FrontendType feType, uint32_t& feId);
-    void tuneTest(FrontendConfig frontendConf);
-    void scanTest(FrontendConfig frontend, FrontendScanType type);
+    void tuneTest(FrontendConfig1_1 frontendConf);
+    void scanTest(FrontendConfig1_1 frontend, FrontendScanType type);
     void getFrontendDtmbCapsTest();
 
     void setDvrTests(DvrTests dvrTests) { mDvrTests = dvrTests; }
