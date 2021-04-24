@@ -23,7 +23,6 @@ import android.hardware.biometrics.face.BaseFrame;
  */
 @VintfStability
 parcelable AuthenticationFrame {
-
     /**
      * The frame metadata. Can be used by the framework to provide user feedback.
      */

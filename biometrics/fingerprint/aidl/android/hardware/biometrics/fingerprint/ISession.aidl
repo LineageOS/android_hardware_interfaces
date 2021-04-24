@@ -42,8 +42,8 @@ import android.hardware.keymaster.HardwareAuthToken;
  * have callbacks.
  *
  * ISession only supports execution of one non-interrupting operation at a time, regardless of
- * whether it's cancellable. The framework must wait for a corresponding callback indicating the end of
- * the current non-interrupting operation before a new non-interrupting operation can be started.
+ * whether it's cancellable. The framework must wait for a corresponding callback indicating the end
+ * of the current non-interrupting operation before a new non-interrupting operation can be started.
  */
 @VintfStability
 interface ISession {

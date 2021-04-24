@@ -33,7 +33,7 @@ parcelable EnrollmentFrame {
     /**
      * The enrollment stage for which this frame was captured.
      */
-    EnrollmentStage stage = EnrollmentStage.FIRST_FRAME_RECEIVED;
+    EnrollmentStage stage = EnrollmentStage.UNKNOWN;
 
     /**
      * The frame metadata. Can be used by the framework to provide user feedback.

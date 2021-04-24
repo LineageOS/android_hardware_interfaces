@@ -19,11 +19,20 @@
 
 namespace {
 
-void initConfiguration() {
+bool initConfiguration() {
+    TunerTestingConfigReader1_0::setConfigFilePath(configFilePath);
+    if (!TunerTestingConfigReader1_0::checkConfigFileExists()) {
+        return false;
+    }
     initFrontendConfig();
-    initFrontendScanConfig();
     initFilterConfig();
     initDvrConfig();
+    connectHardwaresToTestCases();
+    if (!validateConnections()) {
+        ALOGW("[vts] failed to validate connections.");
+        return false;
+    }
+    return true;
 }
 
 static AssertionResult success() {
@@ -57,9 +66,9 @@ class TunerFilterHidlTest : public testing::TestWithParam<std::string> {
         RecordProperty("description", description);
     }
 
-    void configSingleFilterInDemuxTest(FilterConfig filterConf, FrontendConfig frontendConf);
-    void reconfigSingleFilterInDemuxTest(FilterConfig filterConf, FilterConfig filterReconf,
-                                         FrontendConfig frontendConf);
+    void configSingleFilterInDemuxTest(FilterConfig1_1 filterConf, FrontendConfig1_1 frontendConf);
+    void reconfigSingleFilterInDemuxTest(FilterConfig1_1 filterConf, FilterConfig1_1 filterReconf,
+                                         FrontendConfig1_1 frontendConf);
     sp<ITuner> mService;
     FrontendTests mFrontendTests;
     DemuxTests mDemuxTests;
@@ -86,7 +95,7 @@ class TunerRecordHidlTest : public testing::TestWithParam<std::string> {
         RecordProperty("description", description);
     }
 
-    void recordSingleFilterTest(FilterConfig filterConf, FrontendConfig frontendConf,
+    void recordSingleFilterTest(FilterConfig1_1 filterConf, FrontendConfig1_1 frontendConf,
                                 DvrConfig dvrConf);
     AssertionResult filterDataOutputTest();
 
@@ -144,7 +153,8 @@ class TunerBroadcastHidlTest : public testing::TestWithParam<std::string> {
 
     AssertionResult filterDataOutputTest();
 
-    void mediaFilterUsingSharedMemoryTest(FilterConfig filterConf, FrontendConfig frontendConf);
+    void mediaFilterUsingSharedMemoryTest(FilterConfig1_1 filterConf,
+                                          FrontendConfig1_1 frontendConf);
 };
 
 // TODO remove from the allow list once the cf tv target is enabled for testing
