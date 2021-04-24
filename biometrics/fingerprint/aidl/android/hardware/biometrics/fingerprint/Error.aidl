@@ -20,57 +20,47 @@ package android.hardware.biometrics.fingerprint;
 @Backing(type="byte")
 enum Error {
     /**
-     * Used for testing, and to keep subsequent numbering consistent with older HIDLs.
+     * Placeholder value used for default initialization of Error. This value
+     * means Error wasn't explicitly initialized and must be discarded by the
+     * recipient.
      */
-    // NO_ERROR = 0,
+    UNKNOWN,
 
     /**
      * A hardware error has occurred that cannot be resolved. For example, I2C failure or a broken
      * sensor.
      */
-    HW_UNAVAILABLE = 1,
+    HW_UNAVAILABLE,
 
     /**
      * The implementation is unable to process the request. For example, invalid arguments were
      * supplied.
      */
-    UNABLE_TO_PROCESS = 2,
+    UNABLE_TO_PROCESS,
 
     /**
      * The current operation took too long to complete.
      */
-    TIMEOUT = 3,
+    TIMEOUT,
 
     /**
      * No space available to store additional enrollments.
      */
-    NO_SPACE = 4,
+    NO_SPACE,
 
     /**
      * The operation was canceled. See common::ICancellationSignal.
      */
-    CANCELED = 5,
+    CANCELED,
 
     /**
      * The implementation was unable to remove an enrollment.
      * See ISession#removeEnrollments.
      */
-    UNABLE_TO_REMOVE = 6,
-
-    /**
-     * Reserved to maintain backwards compatibility. See ISessionCallback#onLockoutTimed instead.
-     */
-    // LOCKOUT = 7,
+    UNABLE_TO_REMOVE,
 
     /**
      * Used to enable vendor-specific error messages.
      */
-    VENDOR = 8,
-
-    /**
-     * Reserved to maintain backwards compatibility. See ISessionCallback#onLockoutPermanent
-     * instead.
-     */
-    // LOCKOUT_PERMANENT = 9,
+    VENDOR,
 }
-
