@@ -617,12 +617,17 @@ Return<Result> StreamOut::setPlaybackRateParameters(const PlaybackRate& /*playba
 }
 
 Return<Result> StreamOut::setEventCallback(const sp<IStreamOutEventCallback>& callback) {
+#ifdef DISABLE_STREAM_OUT_EVENT_CALLBACK
+    (void) callback;
+    return Result::NOT_SUPPORTED;
+#else
     if (mStream->set_event_callback == nullptr) return Result::NOT_SUPPORTED;
     int result = mStream->set_event_callback(mStream, StreamOut::asyncEventCallback, this);
     if (result == 0) {
         mEventCallback = callback;
     }
     return Stream::analyzeStatus("set_stream_out_callback", result, {ENOSYS} /*ignore*/);
+#endif
 }
 
 // static

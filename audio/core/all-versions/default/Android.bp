@@ -14,7 +14,10 @@ cc_defaults {
         "StreamOut.cpp",
     ],
 
-    defaults: ["hidl_defaults"],
+    defaults: [
+        "disable_stream_out_event_callback_defaults",
+        "hidl_defaults",
+    ],
 
     export_include_dirs: ["include"],
 
