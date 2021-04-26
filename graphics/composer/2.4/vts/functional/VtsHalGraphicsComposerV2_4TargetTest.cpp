@@ -71,15 +71,15 @@ class VtsDisplay {
 
     IComposerClient::Rect getFrameRect() const { return {0, 0, mDisplayWidth, mDisplayHeight}; }
 
-    void setDimensions(int32_t displayWidth, int32_t displayHeight) const {
+    void setDimensions(int32_t displayWidth, int32_t displayHeight) {
         mDisplayWidth = displayWidth;
         mDisplayHeight = displayHeight;
     }
 
   private:
     const Display mDisplay;
-    mutable int32_t mDisplayWidth;
-    mutable int32_t mDisplayHeight;
+    int32_t mDisplayWidth;
+    int32_t mDisplayHeight;
 };
 
 class GraphicsComposerHidlTest : public ::testing::TestWithParam<std::string> {
@@ -198,7 +198,7 @@ class GraphicsComposerHidlTest : public ::testing::TestWithParam<std::string> {
                                        const ContentType& contentType, const char* contentTypeStr);
 
     Error setActiveConfigWithConstraints(
-            const VtsDisplay& display, Config config,
+            VtsDisplay& display, Config config,
             const IComposerClient::VsyncPeriodChangeConstraints& constraints,
             VsyncPeriodChangeTimeline* timeline) {
         const auto error = mComposerClient->setActiveConfigWithConstraints(display.get(), config,
@@ -213,7 +213,7 @@ class GraphicsComposerHidlTest : public ::testing::TestWithParam<std::string> {
         return error;
     }
 
-    void setActiveConfig(const VtsDisplay& display, Config config) {
+    void setActiveConfig(VtsDisplay& display, Config config) {
         mComposerClient->setActiveConfig(display.get(), config);
         const int32_t displayWidth = mComposerClient->getDisplayAttribute_2_4(
                 display.get(), config, IComposerClient::Attribute::WIDTH);
@@ -322,7 +322,7 @@ TEST_P(GraphicsComposerHidlTest, getDisplayVsyncPeriod_BadDisplay) {
 }
 
 TEST_P(GraphicsComposerHidlTest, getDisplayVsyncPeriod) {
-    for (const auto& display : mDisplays) {
+    for (VtsDisplay& display : mDisplays) {
         for (Config config : mComposerClient->getDisplayConfigs(display.get())) {
             VsyncPeriodNanos expectedVsyncPeriodNanos = mComposerClient->getDisplayAttribute_2_4(
                     display.get(), config,
@@ -386,7 +386,7 @@ TEST_P(GraphicsComposerHidlTest, setActiveConfigWithConstraints_BadConfig) {
     constraints.seamlessRequired = false;
     constraints.desiredTimeNanos = systemTime();
 
-    for (const auto& display : mDisplays) {
+    for (VtsDisplay& display : mDisplays) {
         Config invalidConfigId = GetInvalidConfigId(display.get());
         EXPECT_EQ(Error::BAD_CONFIG,
                   setActiveConfigWithConstraints(display, invalidConfigId, constraints, &timeline));
@@ -400,7 +400,7 @@ TEST_P(GraphicsComposerHidlTest, setActiveConfigWithConstraints_SeamlessNotAllow
     constraints.seamlessRequired = true;
     constraints.desiredTimeNanos = systemTime();
 
-    for (const auto& display : mDisplays) {
+    for (VtsDisplay& display : mDisplays) {
         forEachTwoConfigs(display.get(), [&](Config config1, Config config2) {
             const auto configGroup1 = mComposerClient->getDisplayAttribute_2_4(
                     display.get(), config1,
@@ -498,7 +498,7 @@ void GraphicsComposerHidlTest::waitForVsyncPeriodChange(Display display,
 }
 
 void GraphicsComposerHidlTest::Test_setActiveConfigWithConstraints(const TestParameters& params) {
-    for (const auto& display : mDisplays) {
+    for (VtsDisplay& display : mDisplays) {
         forEachTwoConfigs(display.get(), [&](Config config1, Config config2) {
             setActiveConfig(display, config1);
             sendRefreshFrame(display, nullptr);
