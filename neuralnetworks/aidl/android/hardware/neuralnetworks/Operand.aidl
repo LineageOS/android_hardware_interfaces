@@ -33,7 +33,7 @@ parcelable Operand {
      * {@link IDevice::OPERAND_TYPE_BASE_MAX} is possible and should be interpreted as an extension
      * type according to {@link Model::extensionNameToPrefix}.
      */
-    OperandType type;
+    OperandType type = OperandType.FLOAT32;
     /**
      * Dimensions of the operand.
      *
@@ -86,7 +86,7 @@ parcelable Operand {
     /**
      * How the operand is used.
      */
-    OperandLifeTime lifetime;
+    OperandLifeTime lifetime = OperandLifeTime.TEMPORARY_VARIABLE;
     /**
      * Where to find the data for this operand.
      * If the lifetime is TEMPORARY_VARIABLE, SUBGRAPH_INPUT, SUBGRAPH_OUTPUT, or NO_VALUE:

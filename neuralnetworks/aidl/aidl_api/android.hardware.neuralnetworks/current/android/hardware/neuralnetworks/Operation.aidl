@@ -34,7 +34,7 @@
 package android.hardware.neuralnetworks;
 @VintfStability
 parcelable Operation {
-  android.hardware.neuralnetworks.OperationType type;
+  android.hardware.neuralnetworks.OperationType type = android.hardware.neuralnetworks.OperationType.ADD;
   int[] inputs;
   int[] outputs;
 }

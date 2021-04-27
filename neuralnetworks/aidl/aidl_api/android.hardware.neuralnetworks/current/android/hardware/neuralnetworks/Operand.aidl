@@ -34,11 +34,11 @@
 package android.hardware.neuralnetworks;
 @VintfStability
 parcelable Operand {
-  android.hardware.neuralnetworks.OperandType type;
+  android.hardware.neuralnetworks.OperandType type = android.hardware.neuralnetworks.OperandType.FLOAT32;
   int[] dimensions;
   float scale;
   int zeroPoint;
-  android.hardware.neuralnetworks.OperandLifeTime lifetime;
+  android.hardware.neuralnetworks.OperandLifeTime lifetime = android.hardware.neuralnetworks.OperandLifeTime.TEMPORARY_VARIABLE;
   android.hardware.neuralnetworks.DataLocation location;
   @nullable android.hardware.neuralnetworks.OperandExtraParams extraParams;
 }

@@ -21,7 +21,7 @@ parcelable HardwareAuthToken {
   long challenge;
   long userId;
   long authenticatorId;
-  android.hardware.keymaster.HardwareAuthenticatorType authenticatorType;
+  android.hardware.keymaster.HardwareAuthenticatorType authenticatorType = android.hardware.keymaster.HardwareAuthenticatorType.NONE;
   android.hardware.keymaster.Timestamp timestamp;
   byte[] mac;
 }
