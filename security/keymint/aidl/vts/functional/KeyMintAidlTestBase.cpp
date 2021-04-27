@@ -941,7 +941,7 @@ bool verify_attestation_record(const string& challenge,                //
     EXPECT_EQ(ErrorCode::OK, error);
     if (error != ErrorCode::OK) return false;
 
-    EXPECT_GE(att_attestation_version, 3U);
+    EXPECT_EQ(att_attestation_version, 100U);
     vector<uint8_t> appId(app_id.begin(), app_id.end());
 
     // check challenge and app id only if we expects a non-fake certificate
@@ -952,7 +952,7 @@ bool verify_attestation_record(const string& challenge,                //
         expected_sw_enforced.push_back(TAG_ATTESTATION_APPLICATION_ID, appId);
     }
 
-    EXPECT_GE(att_keymaster_version, 4U);
+    EXPECT_EQ(att_keymaster_version, 100U);
     EXPECT_EQ(security_level, att_keymaster_security_level);
     EXPECT_EQ(security_level, att_attestation_security_level);
 
