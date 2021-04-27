@@ -30,7 +30,7 @@ parcelable Operation {
      * {@link IDevice::OPERATION_TYPE_BASE_MAX} is possible and should be interpreted as an
      * extension type according to {@link Model::extensionNameToPrefix}.
      */
-    OperationType type;
+    OperationType type = OperationType.ADD;
     /**
      * Describes the table that contains the indexes of the inputs of the operation. The offset is
      * the index in the operandIndexes table.
