@@ -38,6 +38,6 @@ interface IWritableIdentityCredential {
   android.hardware.identity.SecureAccessControlProfile addAccessControlProfile(in int id, in android.hardware.identity.Certificate readerCertificate, in boolean userAuthenticationRequired, in long timeoutMillis, in long secureUserId);
   void beginAddEntry(in int[] accessControlProfileIds, in @utf8InCpp String nameSpace, in @utf8InCpp String name, in int entrySize);
   byte[] addEntryValue(in byte[] content);
-  void finishAddingEntries(out byte[] credentialData, out byte[] proofOfProvisioningSignature);
+  @SuppressWarnings(value={"out-array"}) void finishAddingEntries(out byte[] credentialData, out byte[] proofOfProvisioningSignature);
   void setExpectedProofOfProvisioningSize(in int expectedProofOfProvisioningSize);
 }
