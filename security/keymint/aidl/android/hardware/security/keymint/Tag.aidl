@@ -203,22 +203,7 @@ enum Tag {
      */
     RSA_OAEP_MGF_DIGEST = (2 << 28) /* TagType:ENUM_REP */ | 203,
 
-    /**
-     * TODO(seleneh) this tag needs to be deleted from all codes.
-     *
-     * Tag::BLOB_USAGE_REQUIREMENTS specifies the necessary system environment conditions for the
-     * generated key to be used.  Possible values are defined by the KeyBlobUsageRequirements enum.
-     *
-     * This tag is specified by the caller during key generation or import to require that the key
-     * is usable in the specified condition.  If the caller specifies Tag::BLOB_USAGE_REQUIREMENTS
-     * with value KeyBlobUsageRequirements::STANDALONE the IKeyMintDevice must return a key blob
-     * that can be used without file system support.  This is critical for devices with encrypted
-     * disks, where the file system may not be available until after a KeyMint key is used to
-     * decrypt the disk.
-     *
-     * Must be hardware-enforced.
-     */
-    BLOB_USAGE_REQUIREMENTS = (1 << 28) /* TagType:ENUM */ | 301,
+    // Tag 301 reserved
 
     /**
      * Tag::BOOTLOADER_ONLY specifies only the bootloader can use the key.
