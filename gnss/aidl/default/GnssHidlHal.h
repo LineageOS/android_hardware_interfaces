@@ -32,9 +32,11 @@ class GnssHidlHal : public ::android::hardware::gnss::common::implementation::Gn
     filterBlocklistedSatellitesV2_1(
             hidl_vec<::android::hardware::gnss::V2_1::IGnssCallback::GnssSvInfo> gnssSvInfoList)
             override;
+    void notePowerConsumption() override;
 
     std::shared_ptr<Gnss> mGnssAidl;
     std::shared_ptr<GnssConfiguration> mGnssConfigurationAidl;
+    std::shared_ptr<GnssPowerIndication> mGnssPowerIndicationAidl;
 };
 
 }  // namespace aidl::android::hardware::gnss

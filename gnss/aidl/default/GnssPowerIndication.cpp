@@ -50,13 +50,19 @@ ndk::ScopedAStatus GnssPowerIndication::requestGnssPowerStats() {
     };
     GnssPowerStats gnssPowerStats = {
             .elapsedRealtime = elapsedRealtime,
-            .totalEnergyMilliJoule = 1.59975e+3,
-            .singlebandTrackingModeEnergyMilliJoule = 1.2342e+3,
-            .multibandTrackingModeEnergyMilliJoule = 3.653e+2,
+            .totalEnergyMilliJoule = 1.500e+3 + numLocationReported * 22.0,
+            .singlebandTrackingModeEnergyMilliJoule = 0.0,
+            .multibandTrackingModeEnergyMilliJoule = 1.28e+2 + numLocationReported * 4.0,
+            .singlebandAcquisitionModeEnergyMilliJoule = 0.0,
+            .multibandAcquisitionModeEnergyMilliJoule = 3.65e+2 + numLocationReported * 15.0,
             .otherModesEnergyMilliJoule = {1.232e+2, 3.234e+3},
     };
     sCallback->gnssPowerStatsCb(gnssPowerStats);
     return ndk::ScopedAStatus::ok();
+}
+
+void GnssPowerIndication::notePowerConsumption() {
+    numLocationReported++;
 }
 
 }  // namespace aidl::android::hardware::gnss

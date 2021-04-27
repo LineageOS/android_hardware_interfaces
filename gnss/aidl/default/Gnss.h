@@ -22,6 +22,7 @@
 #include <aidl/android/hardware/gnss/BnGnssPowerIndication.h>
 #include <aidl/android/hardware/gnss/BnGnssPsds.h>
 #include "GnssConfiguration.h"
+#include "GnssPowerIndication.h"
 
 namespace aidl::android::hardware::gnss {
 
@@ -38,6 +39,7 @@ class Gnss : public BnGnss {
             std::shared_ptr<IGnssMeasurementInterface>* iGnssMeasurement) override;
 
     std::shared_ptr<GnssConfiguration> mGnssConfiguration;
+    std::shared_ptr<GnssPowerIndication> mGnssPowerIndication;
 
   private:
     static std::shared_ptr<IGnssCallback> sGnssCallback;
