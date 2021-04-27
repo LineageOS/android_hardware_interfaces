@@ -5372,16 +5372,6 @@ TEST_P(UnlockedDeviceRequiredTest, DISABLED_KeysBecomeUnusable) {
 
 INSTANTIATE_KEYMINT_AIDL_TEST(UnlockedDeviceRequiredTest);
 
-using PerformOperationTest = KeyMintAidlTestBase;
-
-TEST_P(PerformOperationTest, RequireUnimplemented) {
-    vector<uint8_t> response;
-    auto result = keymint_->performOperation({} /* request */, &response);
-    ASSERT_EQ(GetReturnErrorCode(result), ErrorCode::UNIMPLEMENTED);
-}
-
-INSTANTIATE_KEYMINT_AIDL_TEST(PerformOperationTest);
-
 }  // namespace aidl::android::hardware::security::keymint::test
 
 int main(int argc, char** argv) {
