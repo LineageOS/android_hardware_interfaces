@@ -34,6 +34,6 @@
 package android.hardware.neuralnetworks;
 @VintfStability
 parcelable OperandPerformance {
-  android.hardware.neuralnetworks.OperandType type;
+  android.hardware.neuralnetworks.OperandType type = android.hardware.neuralnetworks.OperandType.FLOAT32;
   android.hardware.neuralnetworks.PerformanceInfo info;
 }
