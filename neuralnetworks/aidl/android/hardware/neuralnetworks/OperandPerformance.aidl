@@ -25,6 +25,6 @@ import android.hardware.neuralnetworks.PerformanceInfo;
  */
 @VintfStability
 parcelable OperandPerformance {
-    OperandType type;
+    OperandType type = OperandType.FLOAT32;
     PerformanceInfo info;
 }
