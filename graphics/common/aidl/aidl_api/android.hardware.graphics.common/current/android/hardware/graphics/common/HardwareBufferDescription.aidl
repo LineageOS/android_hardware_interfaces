@@ -21,7 +21,7 @@ parcelable HardwareBufferDescription {
   int width;
   int height;
   int layers;
-  android.hardware.graphics.common.PixelFormat format;
-  android.hardware.graphics.common.BufferUsage usage;
+  android.hardware.graphics.common.PixelFormat format = android.hardware.graphics.common.PixelFormat.UNSPECIFIED;
+  android.hardware.graphics.common.BufferUsage usage = android.hardware.graphics.common.BufferUsage.CPU_READ_NEVER;
   int stride;
 }

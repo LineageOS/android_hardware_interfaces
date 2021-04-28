@@ -20,6 +20,6 @@ package android.hardware.keymaster;
 parcelable VerificationToken {
   long challenge;
   android.hardware.keymaster.Timestamp timestamp;
-  android.hardware.keymaster.SecurityLevel securityLevel;
+  android.hardware.keymaster.SecurityLevel securityLevel = android.hardware.keymaster.SecurityLevel.SOFTWARE;
   byte[] mac;
 }
