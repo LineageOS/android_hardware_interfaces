@@ -26,12 +26,16 @@ struct GnssPowerIndication : public BnGnssPowerIndication {
             const std::shared_ptr<IGnssPowerIndicationCallback>& callback) override;
     ndk::ScopedAStatus requestGnssPowerStats() override;
 
+    void notePowerConsumption();
+
   private:
     // Guarded by mMutex
     static std::shared_ptr<IGnssPowerIndicationCallback> sCallback;
 
     // Synchronization lock for sCallback
     mutable std::mutex mMutex;
+
+    int numLocationReported;
 };
 
 }  // namespace aidl::android::hardware::gnss
