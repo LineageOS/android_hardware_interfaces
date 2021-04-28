@@ -257,9 +257,6 @@ interface IKeyMintDevice {
      *
      * o Tag::ORIGIN with the value KeyOrigin::GENERATED.
      *
-     * o Tag::BLOB_USAGE_REQUIREMENTS with the appropriate value (see KeyBlobUsageRequirements in
-     *   Tag.aidl).
-     *
      * o Tag::OS_VERSION, Tag::OS_PATCHLEVEL, Tag::VENDOR_PATCHLEVEL and Tag::BOOT_PATCHLEVEL with
      *   appropriate values.
      *
@@ -325,6 +322,10 @@ interface IKeyMintDevice {
      *        return ErrorCode::INCOMPATIBLE_PURPOSE.  If the provided AttestationKey has an empty
      *        issuer subject name, the IKeyMintDevice must return ErrorCode::INVALID_ARGUMENT.
      *
+     *        If `attestationKey` is null and `keyParams` contains Tag::ATTESTATION_CHALLENGE but
+     *        the KeyMint implementation does not have factory-provisioned attestation keys, it must
+     *        return ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED.
+     *
      * @return The result of key creation.  See KeyCreationResult.aidl.
      */
     KeyCreationResult generateKey(
@@ -363,6 +364,10 @@ interface IKeyMintDevice {
      *        blob containing an asymmetric key with KeyPurpose::ATTEST_KEY, the IKeyMintDevice must
      *        return ErrorCode::INCOMPATIBLE_PURPOSE.  If the provided AttestationKey has an empty
      *        issuer subject name, the IKeyMintDevice must return ErrorCode::INVALID_ARGUMENT.
+     *
+     *        If `attestationKey` is null and `keyParams` contains Tag::ATTESTATION_CHALLENGE but
+     *        the KeyMint implementation does not have factory-provisioned attestation keys, it must
+     *        return ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED.
      *
      * @return The result of key creation.  See KeyCreationResult.aidl.
      */
@@ -713,9 +718,7 @@ interface IKeyMintDevice {
      *        contain a tag Tag::NONCE.  If Tag::NONCE is provided for a key without
      *        Tag:CALLER_NONCE, ErrorCode::CALLER_NONCE_PROHIBITED must be returned.
      *
-     * @param inAuthToken Authentication token.  Callers that provide no token must set all numeric
-     *        fields to zero and the MAC must be an empty vector.  TODO: make this field nullable.
-     *        b/173483024.
+     * @param inAuthToken Authentication token.
      *
      * @return BeginResult as output, which contains the challenge, KeyParameters which haves
      *         additional data from the operation initialization, notably to return the IV or nonce
@@ -723,7 +726,7 @@ interface IKeyMintDevice {
      *         which is used to perform update(), finish() or abort() operations.
      */
     BeginResult begin(in KeyPurpose purpose, in byte[] keyBlob, in KeyParameter[] params,
-            in HardwareAuthToken authToken);
+            in @nullable HardwareAuthToken authToken);
 
     /**
      * Called by client to notify the IKeyMintDevice that the device is now locked, and keys with
@@ -783,18 +786,4 @@ interface IKeyMintDevice {
      *         place of the input storageKeyBlob
      */
     byte[] convertStorageKeyToEphemeral(in byte[] storageKeyBlob);
-
-    /**
-     * Called by the client to perform a KeyMint operation.
-     *
-     *  This method is added primarily as a placeholder.  Details will be fleshed before the KeyMint
-     *  V1 interface is frozen.  Until then, implementations must return ErrorCode::UNIMPLEMENTED.
-     *
-     * @param request is an encrypted buffer containing a description of the operation the client
-     *        wishes to perform.  Structure, content and encryption are TBD.
-     *
-     * @return an encrypted buffer containing the result of the operation.  Structure, content and
-     *         encryption are TBD.
-     */
-    byte[] performOperation(in byte[] request);
 }
