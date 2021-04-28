@@ -203,22 +203,7 @@ enum Tag {
      */
     RSA_OAEP_MGF_DIGEST = (2 << 28) /* TagType:ENUM_REP */ | 203,
 
-    /**
-     * TODO(seleneh) this tag needs to be deleted from all codes.
-     *
-     * Tag::BLOB_USAGE_REQUIREMENTS specifies the necessary system environment conditions for the
-     * generated key to be used.  Possible values are defined by the KeyBlobUsageRequirements enum.
-     *
-     * This tag is specified by the caller during key generation or import to require that the key
-     * is usable in the specified condition.  If the caller specifies Tag::BLOB_USAGE_REQUIREMENTS
-     * with value KeyBlobUsageRequirements::STANDALONE the IKeyMintDevice must return a key blob
-     * that can be used without file system support.  This is critical for devices with encrypted
-     * disks, where the file system may not be available until after a KeyMint key is used to
-     * decrypt the disk.
-     *
-     * Must be hardware-enforced.
-     */
-    BLOB_USAGE_REQUIREMENTS = (1 << 28) /* TagType:ENUM */ | 301,
+    // Tag 301 reserved
 
     /**
      * Tag::BOOTLOADER_ONLY specifies only the bootloader can use the key.
@@ -935,33 +920,34 @@ enum Tag {
     CONFIRMATION_TOKEN = (9 << 28) /* TagType:BYTES */ | 1005,
 
     /**
-     * Tag::CERTIFICATE_SERIAL specifies the serial number to be assigned to the
-     * attestation certificate to be generated for the given key.  This parameter should only
-     * be passed to keyMint in the attestation parameters during generateKey() and importKey().
+     * Tag::CERTIFICATE_SERIAL specifies the serial number to be assigned to the attestation
+     * certificate to be generated for the given key.  This parameter should only be passed to
+     * keyMint in the attestation parameters during generateKey() and importKey().  If not provided,
+     * the serial shall default to 1.
      */
     CERTIFICATE_SERIAL = (8 << 28) /* TagType:BIGNUM */ | 1006,
 
     /**
-     * Tag::CERTIFICATE_SUBJECT the certificate subject. The value is a DER encoded X509 NAME.
-     * This value is used when generating a self signed certificates. This tag may be specified
+     * Tag::CERTIFICATE_SUBJECT the certificate subject.  The value is a DER encoded X509 NAME.
+     * This value is used when generating a self signed certificates.  This tag may be specified
      * during generateKey and importKey. If not provided the subject name shall default to
-     * <TODO default subject here>.
+     * CN="Android Keystore Key".
      */
     CERTIFICATE_SUBJECT = (9 << 28) /* TagType:BYTES */ | 1007,
 
     /**
      * Tag::CERTIFICATE_NOT_BEFORE the beginning of the validity of the certificate in UNIX epoch
-     * time in seconds. This value is used when generating attestation or self signed certificates.
-     * ErrorCode::MISSING_NOT_BEFORE must be returned if this tag is not provided if this tag is
-     * not provided to generateKey or importKey.
+     * time in seconds.  This value is used when generating attestation or self signed certificates.
+     * ErrorCode::MISSING_NOT_BEFORE must be returned if this tag is not provided if this tag is not
+     * provided to generateKey or importKey.
      */
     CERTIFICATE_NOT_BEFORE = (6 << 28) /* TagType:DATE */ | 1008,
 
     /**
-     * Tag::CERTIFICATE_NOT_AFTER the end of the validity of the certificate in UNIX epoch
-     * time in seconds. This value is used when generating attestation or self signed certificates.
-     * ErrorCode::MISSING_NOT_AFTER must be returned if this tag is not provided to generateKey
-     * or importKey.
+     * Tag::CERTIFICATE_NOT_AFTER the end of the validity of the certificate in UNIX epoch time in
+     * seconds.  This value is used when generating attestation or self signed certificates.
+     * ErrorCode::MISSING_NOT_AFTER must be returned if this tag is not provided to generateKey or
+     * importKey.
      */
     CERTIFICATE_NOT_AFTER = (6 << 28) /* TagType:DATE */ | 1009,
 

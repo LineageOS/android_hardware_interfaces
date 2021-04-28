@@ -119,7 +119,6 @@ char nibble2hex[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
 // Attestations don't contain everything in key authorization lists, so we need to filter the key
 // lists to produce the lists that we expect to match the attestations.
 auto kTagsToFilter = {
-        Tag::BLOB_USAGE_REQUIREMENTS,  //
         Tag::CREATION_DATETIME,        //
         Tag::EC_CURVE,
         Tag::HARDWARE_TYPE,
@@ -348,7 +347,7 @@ ErrorCode KeyMintAidlTestBase::Begin(KeyPurpose purpose, const vector<uint8_t>& 
     SCOPED_TRACE("Begin");
     Status result;
     BeginResult out;
-    result = keymint_->begin(purpose, key_blob, in_params.vector_data(), HardwareAuthToken(), &out);
+    result = keymint_->begin(purpose, key_blob, in_params.vector_data(), std::nullopt, &out);
 
     if (result.isOk()) {
         *out_params = out.params;
@@ -366,7 +365,7 @@ ErrorCode KeyMintAidlTestBase::Begin(KeyPurpose purpose, const vector<uint8_t>& 
     Status result;
     BeginResult out;
 
-    result = keymint_->begin(purpose, key_blob, in_params.vector_data(), HardwareAuthToken(), &out);
+    result = keymint_->begin(purpose, key_blob, in_params.vector_data(), std::nullopt, &out);
 
     if (result.isOk()) {
         *out_params = out.params;
@@ -942,7 +941,7 @@ bool verify_attestation_record(const string& challenge,                //
     EXPECT_EQ(ErrorCode::OK, error);
     if (error != ErrorCode::OK) return false;
 
-    EXPECT_GE(att_attestation_version, 3U);
+    EXPECT_EQ(att_attestation_version, 100U);
     vector<uint8_t> appId(app_id.begin(), app_id.end());
 
     // check challenge and app id only if we expects a non-fake certificate
@@ -953,7 +952,7 @@ bool verify_attestation_record(const string& challenge,                //
         expected_sw_enforced.push_back(TAG_ATTESTATION_APPLICATION_ID, appId);
     }
 
-    EXPECT_GE(att_keymaster_version, 4U);
+    EXPECT_EQ(att_keymaster_version, 100U);
     EXPECT_EQ(security_level, att_keymaster_security_level);
     EXPECT_EQ(security_level, att_attestation_security_level);
 

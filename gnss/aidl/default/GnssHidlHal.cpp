@@ -31,11 +31,19 @@ GnssHidlHal::GnssHidlHal(const std::shared_ptr<Gnss>& gnssAidl) : mGnssAidl(gnss
     } else {
         mGnssConfigurationAidl = iGnss->mGnssConfiguration;
     }
+
+    std::shared_ptr<IGnssPowerIndication> iGnssPowerIndication;
+    status = iGnss->getExtensionGnssPowerIndication(&iGnssPowerIndication);
+    if (!status.isOk()) {
+        ALOGE("Failed to getExtensionGnssPowerIndication.");
+    } else {
+        mGnssPowerIndicationAidl = iGnss->mGnssPowerIndication;
+    }
 };
 
 hidl_vec<GnssSvInfo> GnssHidlHal::filterBlocklistedSatellitesV2_1(
         hidl_vec<GnssSvInfo> gnssSvInfoList) {
-    ALOGD("filterBlocklistSatellitesV2_1 - overridden by GnssHidlHal class");
+    ALOGD("GnssHidlHal::filterBlocklistSatellitesV2_1");
     if (mGnssConfigurationAidl == nullptr) {
         ALOGE("Handle to AIDL GnssConfiguration is not available.");
         return gnssSvInfoList;
@@ -49,6 +57,10 @@ hidl_vec<GnssSvInfo> GnssHidlHal::filterBlocklistedSatellitesV2_1(
         }
     }
     return gnssSvInfoList;
+}
+
+void GnssHidlHal::notePowerConsumption() {
+    mGnssPowerIndicationAidl->notePowerConsumption();
 }
 
 }  // namespace aidl::android::hardware::gnss

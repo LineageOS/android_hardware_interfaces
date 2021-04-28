@@ -30,6 +30,7 @@ using android::hardware::gnss::BlocklistedSource;
 using android::hardware::gnss::ElapsedRealtime;
 using android::hardware::gnss::GnssClock;
 using android::hardware::gnss::GnssMeasurement;
+using android::hardware::gnss::GnssPowerStats;
 using android::hardware::gnss::IGnss;
 using android::hardware::gnss::IGnssConfiguration;
 using android::hardware::gnss::IGnssMeasurementCallback;
@@ -168,9 +169,12 @@ TEST_P(GnssHalTest, TestGnssMeasurementExtension) {
  * TestGnssPowerIndication
  * 1. Gets the GnssPowerIndicationExtension.
  * 2. Sets a GnssPowerIndicationCallback.
- * 3.
+ * 3. Requests and verifies the 1st GnssPowerStats is received.
+ * 4. Gets a location.
+ * 5. Requests the 2nd GnssPowerStats, and verifies it has larger values than the 1st one.
  */
 TEST_P(GnssHalTest, TestGnssPowerIndication) {
+    // Set up gnssPowerIndication and callback
     sp<IGnssPowerIndication> iGnssPowerIndication;
     auto status = aidl_gnss_hal_->getExtensionGnssPowerIndication(&iGnssPowerIndication);
     ASSERT_TRUE(status.isOk());
@@ -186,10 +190,49 @@ TEST_P(GnssHalTest, TestGnssPowerIndication) {
 
     EXPECT_EQ(gnssPowerIndicationCallback->capabilities_cbq_.calledCount(), 1);
 
+    // Request and verify a GnssPowerStats is received
+    gnssPowerIndicationCallback->gnss_power_stats_cbq_.reset();
     iGnssPowerIndication->requestGnssPowerStats();
+
     EXPECT_TRUE(gnssPowerIndicationCallback->gnss_power_stats_cbq_.retrieve(
             gnssPowerIndicationCallback->last_gnss_power_stats_, kTimeoutSec));
     EXPECT_EQ(gnssPowerIndicationCallback->gnss_power_stats_cbq_.calledCount(), 1);
+    auto powerStats1 = gnssPowerIndicationCallback->last_gnss_power_stats_;
+
+    // Get a location and request another GnssPowerStats
+    gnss_cb_->location_cbq_.reset();
+    StartAndCheckFirstLocation();
+
+    // Request and verify the 2nd GnssPowerStats has larger values than the 1st one
+    iGnssPowerIndication->requestGnssPowerStats();
+
+    EXPECT_TRUE(gnssPowerIndicationCallback->gnss_power_stats_cbq_.retrieve(
+            gnssPowerIndicationCallback->last_gnss_power_stats_, kTimeoutSec));
+    EXPECT_EQ(gnssPowerIndicationCallback->gnss_power_stats_cbq_.calledCount(), 2);
+    auto powerStats2 = gnssPowerIndicationCallback->last_gnss_power_stats_;
+
+    // Elapsed realtime must increase
+    EXPECT_GT(powerStats2.elapsedRealtime.timestampNs, powerStats1.elapsedRealtime.timestampNs);
+
+    // Total energy must increase
+    EXPECT_GT(powerStats2.totalEnergyMilliJoule, powerStats1.totalEnergyMilliJoule);
+
+    // At least oone of singleband and multiband acquisition energy must increase
+    bool singlebandAcqEnergyIncreased = powerStats2.singlebandAcquisitionModeEnergyMilliJoule >
+                                        powerStats1.singlebandAcquisitionModeEnergyMilliJoule;
+    bool multibandAcqEnergyIncreased = powerStats2.multibandAcquisitionModeEnergyMilliJoule >
+                                       powerStats1.multibandAcquisitionModeEnergyMilliJoule;
+    EXPECT_TRUE(singlebandAcqEnergyIncreased || multibandAcqEnergyIncreased);
+
+    // At least one of singleband and multiband tracking energy must increase
+    bool singlebandTrackingEnergyIncreased = powerStats2.singlebandTrackingModeEnergyMilliJoule >
+                                             powerStats1.singlebandTrackingModeEnergyMilliJoule;
+    bool multibandTrackingEnergyIncreased = powerStats2.multibandTrackingModeEnergyMilliJoule >
+                                            powerStats1.multibandTrackingModeEnergyMilliJoule;
+    EXPECT_TRUE(singlebandTrackingEnergyIncreased || multibandTrackingEnergyIncreased);
+
+    // Clean up
+    StopAndClearLocations();
 }
 
 /*
