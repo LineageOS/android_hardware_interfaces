@@ -20,6 +20,7 @@ import android.hardware.security.keymint.AttestationKey;
 import android.hardware.security.keymint.BeginResult;
 import android.hardware.security.keymint.HardwareAuthToken;
 import android.hardware.security.keymint.IKeyMintOperation;
+import android.hardware.security.keymint.KeyCharacteristics;
 import android.hardware.security.keymint.KeyCreationResult;
 import android.hardware.security.keymint.KeyFormat;
 import android.hardware.security.keymint.KeyMintHardwareInfo;
@@ -766,7 +767,7 @@ interface IKeyMintDevice {
      */
     void earlyBootEnded();
 
-    /*
+    /**
      * Called by the client to get a wrapped per-boot ephemeral key from a wrapped storage key.
      * Clients will then use the returned per-boot ephemeral key in place of the wrapped storage
      * key. Whenever the hardware is presented with a per-boot ephemeral key for an operation, it
@@ -786,4 +787,26 @@ interface IKeyMintDevice {
      *         place of the input storageKeyBlob
      */
     byte[] convertStorageKeyToEphemeral(in byte[] storageKeyBlob);
+
+    /**
+     * Returns parameters associated with the provided key. This should match the
+     * KeyCharacteristics present in the KeyCreationResult returned by generateKey(),
+     * importKey(), or importWrappedKey().
+     *
+     * @param keyBlob The opaque descriptor returned by generateKey, importKey or importWrappedKey.
+     *
+     * @param appId An opaque byte string identifying the client.  This value must match the
+     *        Tag::APPLICATION_ID data provided during key generation/import.  Without the correct
+     *        value, it must be computationally infeasible for the secure hardware to obtain the
+     *        key material.
+     *
+     * @param appData An opaque byte string provided by the application.  This value must match the
+     *        Tag::APPLICATION_DATA data provided during key generation/import.  Without the
+     *        correct value, it must be computationally infeasible for the secure hardware to
+     *        obtain the key material.
+     *
+     * @return Characteristics of the generated key. See KeyCreationResult for details.
+     */
+    KeyCharacteristics[] getKeyCharacteristics(
+            in byte[] keyBlob, in byte[] appId, in byte[] appData);
 }
