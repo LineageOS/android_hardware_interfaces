@@ -35,6 +35,6 @@ package android.hardware.vibrator;
 @VintfStability
 parcelable CompositeEffect {
   int delayMs;
-  android.hardware.vibrator.CompositePrimitive primitive;
+  android.hardware.vibrator.CompositePrimitive primitive = android.hardware.vibrator.CompositePrimitive.NOOP;
   float scale;
 }

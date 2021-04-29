@@ -43,8 +43,8 @@ interface IIdentityCredential {
   void startRetrieval(in android.hardware.identity.SecureAccessControlProfile[] accessControlProfiles, in android.hardware.keymaster.HardwareAuthToken authToken, in byte[] itemsRequest, in byte[] signingKeyBlob, in byte[] sessionTranscript, in byte[] readerSignature, in int[] requestCounts);
   void startRetrieveEntryValue(in @utf8InCpp String nameSpace, in @utf8InCpp String name, in int entrySize, in int[] accessControlProfileIds);
   byte[] retrieveEntryValue(in byte[] encryptedContent);
-  void finishRetrieval(out byte[] mac, out byte[] deviceNameSpaces);
-  android.hardware.identity.Certificate generateSigningKeyPair(out byte[] signingKeyBlob);
+  @SuppressWarnings(value={"out-array"}) void finishRetrieval(out byte[] mac, out byte[] deviceNameSpaces);
+  @SuppressWarnings(value={"out-array"}) android.hardware.identity.Certificate generateSigningKeyPair(out byte[] signingKeyBlob);
   void setRequestedNamespaces(in android.hardware.identity.RequestNamespace[] requestNamespaces);
   void setVerificationToken(in android.hardware.keymaster.VerificationToken verificationToken);
   byte[] deleteCredentialWithChallenge(in byte[] challenge);
