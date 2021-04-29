@@ -587,7 +587,9 @@
     <!-- DATA FLOW CONFIGURATION SESSION -->
     <xs:complexType name="dataFlowConfiguration">
         <xs:sequence>
-            <xs:element name="clearLiveBroadcast" minOccurs="1" maxOccurs="1">
+            <!-- clearLiveBroadcast is only optional when there is no physical frontend. In this
+              case, the dvrPlayback config is required. -->
+            <xs:element name="clearLiveBroadcast" minOccurs="0" maxOccurs="1">
                 <xs:complexType>
                     <xs:attribute name="frontendConnection" type="frontendId" use="required"/>
                     <xs:attribute name="audioFilterConnection" type="filterId" use="required"/>
@@ -600,20 +602,27 @@
                     <xs:attribute name="dvrSoftwareFeConnection" type="dvrId" use="optional"/>
                 </xs:complexType>
             </xs:element>
-            <xs:element name="scan" minOccurs="1" maxOccurs="1">
+            <!-- scan is only optional when there is no physical frontend. In this case, the
+              dvrPlayback config is required. -->
+            <xs:element name="scan" minOccurs="0" maxOccurs="1">
                 <xs:complexType>
                     <xs:attribute name="frontendConnection" type="frontendId" use="required"/>
                 </xs:complexType>
             </xs:element>
             <xs:element name="descrambling" minOccurs="0" maxOccurs="1">
                 <xs:complexType>
+                    <!-- If there is a software or hardware frontend connection or not. If false,
+                      dvrSourceConnection config is required when testing dvrRecord.  -->
+                    <xs:attribute name="hasFrontendConnection" type="xs:boolean" use="required"/>
                     <xs:attribute name="frontendConnection" type="frontendId" use="required"/>
                     <xs:attribute name="descramblerConnection" type="descramblerId" use="required"/>
                     <xs:attribute name="audioFilterConnection" type="filterId" use="required"/>
                     <xs:attribute name="videoFilterConnection" type="filterId" use="required"/>
                     <!-- TODO: b/182519645 allow the users to insert extra filters -->
-                    <!-- DVR is only required when the frontend is using the software input -->
+                    <!-- This DVR is only required when the frontend is using the software input -->
                     <xs:attribute name="dvrSoftwareFeConnection" type="dvrId" use="optional"/>
+                    <!-- This Dvr is only required when there's no frontend(sw or hw) connection -->
+                    <xs:attribute name="dvrSourceConnection" type="dvrId" use="optional"/>
                 </xs:complexType>
             </xs:element>
             <xs:element name="dvrPlayback" minOccurs="0" maxOccurs="1">
@@ -627,10 +636,15 @@
             </xs:element>
             <xs:element name="dvrRecord" minOccurs="0" maxOccurs="1">
                 <xs:complexType>
-                    <xs:attribute name="frontendConnection" type="frontendId" use="required"/>
+                    <!-- If there is a software or hardware frontend connection or not. If false,
+                      dvrSourceConnection config is required when testing dvrRecord.  -->
+                    <xs:attribute name="hasFrontendConnection" type="xs:boolean" use="required"/>
+                    <xs:attribute name="frontendConnection" type="frontendId" use="optional"/>
                     <xs:attribute name="dvrRecordConnection" type="dvrId" use="required"/>
-                    <!-- DVR is only required when the frontend is using the software input -->
+                    <!-- This Dvr is only required when the frontend is using the software input -->
                     <xs:attribute name="dvrSoftwareFeConnection" type="dvrId" use="optional"/>
+                    <!-- This Dvr is only required when there's no frontend(sw or hw) connection -->
+                    <xs:attribute name="dvrSourceConnection" type="dvrId" use="optional"/>
                     <xs:attribute name="recordFilterConnection" type="filterId" use="required"/>
                 </xs:complexType>
             </xs:element>

@@ -97,7 +97,6 @@ class TunerRecordHidlTest : public testing::TestWithParam<std::string> {
 
     void recordSingleFilterTest(FilterConfig1_1 filterConf, FrontendConfig1_1 frontendConf,
                                 DvrConfig dvrConf);
-    AssertionResult filterDataOutputTest();
 
     sp<ITuner> mService;
     FrontendTests mFrontendTests;

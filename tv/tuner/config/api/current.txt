@@ -54,12 +54,16 @@ package android.media.tuner.testing.configuration.V1_0 {
     method @Nullable public String getAudioFilterConnection();
     method @Nullable public String getDescramblerConnection();
     method @Nullable public String getDvrSoftwareFeConnection();
+    method @Nullable public String getDvrSourceConnection();
     method @Nullable public String getFrontendConnection();
+    method @Nullable public boolean getHasFrontendConnection();
     method @Nullable public String getVideoFilterConnection();
     method public void setAudioFilterConnection(@Nullable String);
     method public void setDescramblerConnection(@Nullable String);
     method public void setDvrSoftwareFeConnection(@Nullable String);
+    method public void setDvrSourceConnection(@Nullable String);
     method public void setFrontendConnection(@Nullable String);
+    method public void setHasFrontendConnection(@Nullable boolean);
     method public void setVideoFilterConnection(@Nullable String);
   }
 
@@ -79,11 +83,15 @@ package android.media.tuner.testing.configuration.V1_0 {
     ctor public DataFlowConfiguration.DvrRecord();
     method @Nullable public String getDvrRecordConnection();
     method @Nullable public String getDvrSoftwareFeConnection();
+    method @Nullable public String getDvrSourceConnection();
     method @Nullable public String getFrontendConnection();
+    method @Nullable public boolean getHasFrontendConnection();
     method @Nullable public String getRecordFilterConnection();
     method public void setDvrRecordConnection(@Nullable String);
     method public void setDvrSoftwareFeConnection(@Nullable String);
+    method public void setDvrSourceConnection(@Nullable String);
     method public void setFrontendConnection(@Nullable String);
+    method public void setHasFrontendConnection(@Nullable boolean);
     method public void setRecordFilterConnection(@Nullable String);
   }
 
