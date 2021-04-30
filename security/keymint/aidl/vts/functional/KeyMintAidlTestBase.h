@@ -71,6 +71,7 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     IKeyMintDevice& keyMint() { return *keymint_; }
     uint32_t os_version() { return os_version_; }
     uint32_t os_patch_level() { return os_patch_level_; }
+    uint32_t vendor_patch_level() { return vendor_patch_level_; }
 
     ErrorCode GetReturnErrorCode(const Status& result);
 
@@ -266,6 +267,7 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     std::shared_ptr<IKeyMintDevice> keymint_;
     uint32_t os_version_;
     uint32_t os_patch_level_;
+    uint32_t vendor_patch_level_;
 
     SecurityLevel securityLevel_;
     string name_;
