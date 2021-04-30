@@ -38,5 +38,6 @@ vector<uint8_t> authToken2vector(const HardwareAuthToken& token);
 
 uint32_t getOsVersion();
 uint32_t getOsPatchlevel();
+uint32_t getVendorPatchlevel();
 
 }  // namespace aidl::android::hardware::security::keymint
