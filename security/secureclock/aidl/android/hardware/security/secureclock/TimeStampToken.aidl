@@ -43,7 +43,7 @@ parcelable TimeStampToken {
      *
      * where:
      *
-     *   ``ISecureClock.TIME_STAMP_MAC_LABEL'' is a sting constant defined in ISecureClock.aidl.
+     *   ``ISecureClock.TIME_STAMP_MAC_LABEL'' is a string constant defined in ISecureClock.aidl.
      *
      *   ``H'' is the shared HMAC key (see computeSharedHmac() in ISharedSecret).
      *
