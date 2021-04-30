@@ -150,10 +150,32 @@ inline void connectHardwaresToTestCases() {
 };
 
 inline bool validateConnections() {
-    bool feIsValid = frontendMap.find(live.frontendId) != frontendMap.end() &&
-                     frontendMap.find(scan.frontendId) != frontendMap.end();
-    feIsValid &= record.support ? frontendMap.find(record.frontendId) != frontendMap.end() : true;
-    feIsValid &= descrambling.support
+    if ((!live.hasFrontendConnection || !scan.hasFrontendConnection) && !playback.support) {
+        ALOGW("[vts config] VTS must support either a DVR source or a Frontend source.");
+        return false;
+    }
+
+    if (record.support && !record.hasFrontendConnection &&
+        record.dvrSourceId.compare(emptyHardwareId) == 0) {
+        ALOGW("[vts config] Record must support either a DVR source or a Frontend source.");
+        return false;
+    }
+
+    if (descrambling.support && !descrambling.hasFrontendConnection &&
+        descrambling.dvrSourceId.compare(emptyHardwareId) == 0) {
+        ALOGW("[vts config] Descrambling must support either a DVR source or a Frontend source.");
+        return false;
+    }
+
+    bool feIsValid = live.hasFrontendConnection
+                             ? frontendMap.find(live.frontendId) != frontendMap.end()
+                             : true;
+    feIsValid &= scan.hasFrontendConnection ? frontendMap.find(scan.frontendId) != frontendMap.end()
+                                            : true;
+    feIsValid &= record.support && record.hasFrontendConnection
+                         ? frontendMap.find(record.frontendId) != frontendMap.end()
+                         : true;
+    feIsValid &= (descrambling.support && descrambling.hasFrontendConnection)
                          ? frontendMap.find(descrambling.frontendId) != frontendMap.end()
                          : true;
     feIsValid &= lnbLive.support ? frontendMap.find(lnbLive.frontendId) != frontendMap.end() : true;
@@ -165,18 +187,28 @@ inline bool validateConnections() {
         return false;
     }
 
-    bool dvrIsValid = frontendMap[live.frontendId].isSoftwareFe
+    bool dvrIsValid = (live.hasFrontendConnection && frontendMap[live.frontendId].isSoftwareFe)
                               ? dvrMap.find(live.dvrSoftwareFeId) != dvrMap.end()
                               : true;
     dvrIsValid &= playback.support ? dvrMap.find(playback.dvrId) != dvrMap.end() : true;
     if (record.support) {
-        if (frontendMap[record.frontendId].isSoftwareFe) {
-            dvrIsValid &= dvrMap.find(record.dvrSoftwareFeId) != dvrMap.end();
+        if (record.hasFrontendConnection) {
+            if (frontendMap[record.frontendId].isSoftwareFe) {
+                dvrIsValid &= dvrMap.find(record.dvrSoftwareFeId) != dvrMap.end();
+            }
+        } else {
+            dvrIsValid &= dvrMap.find(record.dvrSourceId) != dvrMap.end();
         }
         dvrIsValid &= dvrMap.find(record.dvrRecordId) != dvrMap.end();
     }
-    if (descrambling.support && frontendMap[descrambling.frontendId].isSoftwareFe) {
-        dvrIsValid &= dvrMap.find(descrambling.dvrSoftwareFeId) != dvrMap.end();
+    if (descrambling.support) {
+        if (descrambling.hasFrontendConnection) {
+            if (frontendMap[descrambling.frontendId].isSoftwareFe) {
+                dvrIsValid &= dvrMap.find(descrambling.dvrSoftwareFeId) != dvrMap.end();
+            }
+        } else {
+            dvrIsValid &= dvrMap.find(descrambling.dvrSourceId) != dvrMap.end();
+        }
     }
 
     if (!dvrIsValid) {

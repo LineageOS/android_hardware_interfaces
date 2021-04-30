@@ -218,19 +218,26 @@ void Dvr::playbackThreadLoop() {
             continue;
         }
 
+        // If the both dvr playback and dvr record are created, the playback will be treated as
+        // the source of the record. isVirtualFrontend set to true would direct the dvr playback
+        // input to the demux record filters or live broadcast filters.
+        bool isRecording = mDemux->isRecording();
+        bool isVirtualFrontend = isRecording;
+
         if (mDvrSettings.playback().dataFormat == DataFormat::ES) {
-            if (!processEsDataOnPlayback(false /*isVirtualFrontend*/, false /*isRecording*/)) {
+            if (!processEsDataOnPlayback(isVirtualFrontend, isRecording)) {
                 ALOGE("[Dvr] playback es data failed to be filtered. Ending thread");
                 break;
             }
             maySendPlaybackStatusCallback();
             continue;
         }
+
         // Our current implementation filter the data and write it into the filter FMQ immediately
         // after the DATA_READY from the VTS/framework
         // This is for the non-ES data source, real playback use case handling.
-        if (!readPlaybackFMQ(false /*isVirtualFrontend*/, false /*isRecording*/) ||
-            !startFilterDispatcher(false /*isVirtualFrontend*/, false /*isRecording*/)) {
+        if (!readPlaybackFMQ(isVirtualFrontend, isRecording) ||
+            !startFilterDispatcher(isVirtualFrontend, isRecording)) {
             ALOGE("[Dvr] playback data failed to be filtered. Ending thread");
             break;
         }
