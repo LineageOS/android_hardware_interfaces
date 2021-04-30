@@ -67,6 +67,8 @@ namespace aidl::android::hardware::security::keymint::test {
 
 namespace {
 
+bool check_patchLevels = false;
+
 template <TagType tag_type, Tag tag, typename ValueT>
 bool contains(const vector<KeyParameter>& set, TypedTag<tag_type, tag> ttag,
               ValueT expected_value) {
@@ -329,6 +331,15 @@ class NewKeyGenerationTest : public KeyMintAidlTestBase {
         auto os_pl = auths.GetTagValue(TAG_OS_PATCHLEVEL);
         EXPECT_TRUE(os_pl);
         EXPECT_EQ(*os_pl, os_patch_level());
+
+        if (check_patchLevels) {
+            // Should include vendor and boot patchlevels.
+            auto vendor_pl = auths.GetTagValue(TAG_VENDOR_PATCHLEVEL);
+            EXPECT_TRUE(vendor_pl);
+            EXPECT_EQ(*vendor_pl, vendor_patch_level());
+            auto boot_pl = auths.GetTagValue(TAG_BOOT_PATCHLEVEL);
+            EXPECT_TRUE(boot_pl);
+        }
 
         return auths;
     }
@@ -5312,6 +5323,16 @@ TEST_P(AddEntropyTest, AddLargeEntropy) {
     EXPECT_TRUE(keyMint().addRngEntropy(AidlBuf(string(2 * 1024, 'a'))).isOk());
 }
 
+/*
+ * AddEntropyTest.AddTooLargeEntropy
+ *
+ * Verifies that the addRngEntropy method rejects more than 2KiB  of data.
+ */
+TEST_P(AddEntropyTest, AddTooLargeEntropy) {
+    ErrorCode rc = GetReturnErrorCode(keyMint().addRngEntropy(AidlBuf(string(2 * 1024 + 1, 'a'))));
+    EXPECT_EQ(ErrorCode::INVALID_INPUT_LENGTH, rc);
+}
+
 INSTANTIATE_KEYMINT_AIDL_TEST(AddEntropyTest);
 
 typedef KeyMintAidlTestBase KeyDeletionTest;
@@ -5764,6 +5785,10 @@ int main(int argc, char** argv) {
                         dump_Attestations = true;
             } else {
                 std::cout << "NOT dumping attestations" << std::endl;
+            }
+            // TODO(drysdale): Remove this flag when available KeyMint devices comply with spec
+            if (std::string(argv[i]) == "--check_patchLevels") {
+                aidl::android::hardware::security::keymint::test::check_patchLevels = true;
             }
         }
     }
