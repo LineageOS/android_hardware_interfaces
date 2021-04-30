@@ -252,6 +252,7 @@
             <xs:enumeration value="AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_HEADPHONES"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_SPEAKER"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_HDMI"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_HDMI_EARC"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_AUX_DIGITAL"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_ANLG_DOCK_HEADSET"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_DGTL_DOCK_HEADSET"/>
@@ -303,6 +304,7 @@
             <xs:enumeration value="AUDIO_DEVICE_IN_USB_HEADSET"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_BLUETOOTH_BLE"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_HDMI_ARC"/>
+            <xs:enumeration value="AUDIO_DEVICE_IN_HDMI_EARC"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_ECHO_REFERENCE"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_BLE_HEADSET"/>
             <xs:enumeration value="AUDIO_DEVICE_IN_DEFAULT"/>
