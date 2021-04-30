@@ -392,6 +392,10 @@ void Demux::setIsRecording(bool isRecording) {
     mIsRecording = isRecording;
 }
 
+bool Demux::isRecording() {
+    return mIsRecording;
+}
+
 bool Demux::attachRecordFilter(uint64_t filterId) {
     if (mFilters[filterId] == nullptr || mDvrRecord == nullptr ||
         !mFilters[filterId]->isRecordFilter()) {
