@@ -31,12 +31,12 @@ interface IKeyMintOperation {
      * update() is called.  If updateAad() is called after update(), it must return
      * ErrorCode::INVALID_TAG.
      *
-     * If operation is in an invalid state (was aborted or had an error) update() must return
+     * If the operation is in an invalid state (was aborted or had an error) update() must return
      * ErrorCode::INVALID_OPERATION_HANDLE.
      *
      * If this method returns an error code other than ErrorCode::OK, the operation is aborted and
-     * the operation handle must be invalidated.  Any future use of the handle, with this method,
-     * finish, or abort, must return ErrorCode::INVALID_OPERATION_HANDLE.
+     * the operation handle must be invalidated.  Any future use of this object must return
+     * ErrorCode::INVALID_OPERATION_HANDLE.
      *
      * == Authorization Enforcement ==
      *
@@ -58,9 +58,10 @@ interface IKeyMintOperation {
      *
      *   o The key must have a Tag::USER_AUTH_TYPE that matches the auth type in the token.
      *
-     *   o The challenge field in the auth token must contain the operationHandle
+     *   o The challenge field in the auth token must contain the value returned from
+     *     IKeyMintDevice::begin(), given by the challenge field of the BeginResult structure.
      *
-     *   If any of these conditions are not met, update() must return
+     *   If any of these conditions are not met, updateAad() must return
      *   ErrorCode::KEY_USER_NOT_AUTHENTICATED.
      *
      * The caller must provide the auth token on every call to updateAad(), update() and finish().
@@ -74,7 +75,7 @@ interface IKeyMintOperation {
      *
      * @param input Additional Authentication Data to be processed.
      *
-     * @param authToken Authentication token. Can be nullable if not provided.
+     * @param authToken Authentication token, if provided.
      *
      * @param timeStampToken timestamp token, certifies the freshness of an auth token in case
      *        the security domain of this KeyMint instance has a different clock than the
@@ -93,18 +94,9 @@ interface IKeyMintOperation {
      * If operation is in an invalid state (was aborted or had an error) update() must return
      * ErrorCode::INVALID_OPERATION_HANDLE.
      *
-     * To provide more flexibility for buffer handling, implementations of this method have the
-     * option of consuming less data than was provided.  The caller is responsible for looping to
-     * feed the rest of the data in subsequent calls.  The amount of input consumed must be returned
-     * in the inputConsumed parameter.  Implementations must always consume at least one byte,
-     * unless the operation cannot accept any more; if more than zero bytes are provided and zero
-     * bytes are consumed, callers must consider this an error and abort the operation.
-     * TODO(seleneh) update the code to always consume alll the input data. b/168665179.
-     *
-     * Implementations may also choose how much data to return, as a result of the update.  This is
-     * only relevant for encryption and decryption operations, because signing and verification
-     * return no data until finish.  It is recommended to return data as early as possible, rather
-     * than buffer it.
+     * Implementations may choose how much data to return as a result of the update.  This is
+     * only relevant for encryption and decryption operations, because signing returns no data
+     * until finish.  It is recommended to return data as early as possible, rather than buffer it.
      *
      * If this method returns an error code other than ErrorCode::OK, the operation is aborted and
      * the operation handle must be invalidated.  Any future use of the handle, with this method,
@@ -112,8 +104,8 @@ interface IKeyMintOperation {
      *
      * == Authorization Enforcement ==
      *
-     * Key authorization enforcement is performed primarily in begin().  The one exception is the
-     * case where the key has:
+     * Key authorization enforcement is performed primarily in IKeyMintDevice::begin().  The one
+     * exception is the case where the key has:
      *
      * o One or more Tag::USER_SECURE_IDs, and
      *
@@ -130,7 +122,8 @@ interface IKeyMintOperation {
      *
      *   o The key must have a Tag::USER_AUTH_TYPE that matches the auth type in the token.
      *
-     *   o The challenge field in the auth token must contain the operationHandle
+     *   o The challenge field in the auth token must contain the challenge value contained in the
+     *     BeginResult returned from IKeyMintDevice::begin().
      *
      *   If any of these conditions are not met, update() must return
      *   ErrorCode::KEY_USER_NOT_AUTHENTICATED.
@@ -139,22 +132,20 @@ interface IKeyMintOperation {
      *
      * -- RSA keys --
      *
-     * For signing and verification operations with Digest::NONE, this method must accept the entire
-     * block to be signed or verified in a single update.  It may not consume only a portion of the
-     * block in these cases.  However, the caller may choose to provide the data in multiple
-     * updates, and update() must accept the data this way as well.  If the caller provides more
-     * data to sign than can be used (length of data exceeds RSA key size), update() must return
-     * ErrorCode::INVALID_INPUT_LENGTH.
+     * For signing operations with Digest::NONE, this method must accept the entire block to be
+     * signed in a single update.  It may not consume only a portion of the block in these cases.
+     * However, the caller may choose to provide the data in multiple updates, and update() must
+     * accept the data this way as well.  If the caller provides more data to sign than can be used
+     * (length of data exceeds RSA key size), update() must return ErrorCode::INVALID_INPUT_LENGTH.
      *
      * -- ECDSA keys --
      *
-     * For signing and verification operations with Digest::NONE, this method must accept the entire
-     * block to be signed or verified in a single update.  This method may not consume only a
-     * portion of the block.  However, the caller may choose to provide the data in multiple updates
-     * and update() must accept the data this way as well.  If the caller provides more data to sign
-     * than can be used, the data is silently truncated.  (This differs from the handling of excess
-     * data provided in similar RSA operations.  The reason for this is compatibility with legacy
-     * clients.)
+     * For signing operations with Digest::NONE, this method must accept the entire block to be
+     * signed in a single update.  This method may not consume only a portion of the block.
+     * However, the caller may choose to provide the data in multiple updates and update() must
+     * accept the data this way as well.  If the caller provides more data to sign than can be used,
+     * the data is silently truncated.  (This differs from the handling of excess data provided in
+     * similar RSA operations.  The reason for this is compatibility with legacy clients.)
      *
      * -- AES keys --
      *
@@ -182,7 +173,7 @@ interface IKeyMintOperation {
             in @nullable TimeStampToken timeStampToken);
 
     /**
-     * Finalizes a cryptographic operation begun with begin() and invalidates operation.
+     * Finalizes a cryptographic operation begun with begin() and invalidates the operation.
      *
      * This method is the last one called in an operation, so all processed data must be returned.
      *
@@ -190,8 +181,7 @@ interface IKeyMintOperation {
      * Any future use of the operation, with finish(), update(), or abort(), must return
      * ErrorCode::INVALID_OPERATION_HANDLE.
      *
-     * Signing operations return the signature as the output.  Verification operations accept the
-     * signature in the signature parameter, and return no output.
+     * Signing operations return the signature as the output.
      *
      * == Authorization enforcement ==
      *
@@ -230,43 +220,34 @@ interface IKeyMintOperation {
      * Some additional requirements, depending on the padding mode:
      *
      * o PaddingMode::NONE.  For unpadded signing and encryption operations, if the provided data is
-     *   shorter than the key, the data must be zero-padded on the left before
-     *   signing/encryption.  If the data is the same length as the key, but numerically larger,
-     *   finish() must return ErrorCode::INVALID_ARGUMENT.  For verification and decryption
-     *   operations, the data must be exactly as long as the key.  Otherwise, return
-     *   ErrorCode::INVALID_INPUT_LENGTH.
+     *   shorter than the key, the data must be zero-padded on the left before signing/encryption.
+     *   If the data is the same length as the key, but numerically larger, finish() must return
+     *   ErrorCode::INVALID_ARGUMENT.  For decryption operations, the data must be exactly as long
+     *   as the key.  Otherwise, return ErrorCode::INVALID_INPUT_LENGTH.
      *
      * o PaddingMode::RSA_PSS.  For PSS-padded signature operations, the PSS salt length must match
-     *   the size of the PSS digest selected.  The digest specified with Tag::DIGEST in inputParams
+     *   the size of the PSS digest selected.  The digest specified with Tag::DIGEST in params
      *   on begin() must be used as the PSS digest algorithm, MGF1 must be used as the mask
      *   generation function and SHA1 must be used as the MGF1 digest algorithm.
      *
-     * o PaddingMode::RSA_OAEP.  The digest specified with Tag::DIGEST in inputParams on begin is
-     *   used as the OAEP digest algorithm, MGF1 must be used as the mask generation function and
-     *   and SHA1 must be used as the MGF1 digest algorithm.
-     *
      * -- ECDSA keys --
      *
-     * If the data provided for unpadded signing or verification is too long, truncate it.
+     * If the data provided for undigested signing is too long, truncate it.
      *
      * -- AES keys --
      *
      * Some additional conditions, depending on block mode:
      *
      * o BlockMode::ECB or BlockMode::CBC.  If padding is PaddingMode::NONE and the data length is
-     *  not a multiple of the AES block size, finish() must return
-     *  ErrorCode::INVALID_INPUT_LENGTH.  If padding is PaddingMode::PKCS7, pad the data per the
-     *  PKCS#7 specification, including adding an additional padding block if the data is a multiple
-     *  of the block length.
+     *   not a multiple of the AES block size, finish() must return
+     *   ErrorCode::INVALID_INPUT_LENGTH.  If padding is PaddingMode::PKCS7, pad the data per the
+     *   PKCS#7 specification, including adding an additional padding block if the data is a
+     *   multiple of the block length.
      *
      * o BlockMode::GCM.  During encryption, after processing all plaintext, compute the tag
      *   (Tag::MAC_LENGTH bytes) and append it to the returned ciphertext.  During decryption,
      *   process the last Tag::MAC_LENGTH bytes as the tag.  If tag verification fails, finish()
      *   must return ErrorCode::VERIFICATION_FAILED.
-     *
-     * TODO: update() will need to be refactored into 2 function. b/168665179.
-     *
-     * @param inParams Additional parameters for the operation.
      *
      * @param input Data to be processed, per the parameters established in the call to begin().
      *        finish() must consume all provided data or return ErrorCode::INVALID_INPUT_LENGTH.
@@ -281,11 +262,9 @@ interface IKeyMintOperation {
      *        token.
      *
      * @param confirmationToken is the confirmation token required by keys with
-     * Tag::TRUSTED_CONFIRMATION_REQUIRED.
+     *        Tag::TRUSTED_CONFIRMATION_REQUIRED.
      *
      * @return The output data, if any.
-     *
-     * @return outParams Any output parameters generated by finish().
      */
     byte[] finish(in @nullable byte[] input, in @nullable byte[] signature,
             in @nullable HardwareAuthToken authToken,
@@ -293,13 +272,10 @@ interface IKeyMintOperation {
             in @nullable byte[] confirmationToken);
 
     /**
-     * Aborts a cryptographic operation begun with begin(), freeing all internal resources. If an
-     * operation was finalized, calling update, finish, or abort yields
-     * ErrorCode::INVALID_OPERATION_HANDLE. An operation is finalized if finish or abort was
-     * called on it, or if update returned an ErrorCode.
-     *
-     * @param operationHandle The operation handle returned by begin().  This handle must be
-     *        invalid when abort() returns.
+     * Aborts a cryptographic operation begun with IKeyMintDevice::begin(), freeing all internal
+     * resources.  If an operation was finalized, calling updateAad, update, finish, or abort yields
+     * ErrorCode::INVALID_OPERATION_HANDLE. An operation is finalized if finish or abort was called
+     * on it, or if updateAad or update returned an ErrorCode.
      *
      * @return error See the ErrorCode enum in ErrorCode.aidl.
      */
