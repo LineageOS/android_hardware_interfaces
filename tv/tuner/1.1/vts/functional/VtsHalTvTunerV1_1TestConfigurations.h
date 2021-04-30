@@ -148,6 +148,11 @@ inline void connectHardwaresToTestCases() {
 };
 
 inline bool validateConnections() {
+    if (record.support && !record.hasFrontendConnection &&
+        record.dvrSourceId.compare(emptyHardwareId) == 0) {
+        ALOGW("[vts config] Record must support either a DVR source or a Frontend source.");
+        return false;
+    }
     bool feIsValid = frontendMap.find(live.frontendId) != frontendMap.end() &&
                      frontendMap.find(scan.frontendId) != frontendMap.end();
     feIsValid &= record.support ? frontendMap.find(record.frontendId) != frontendMap.end() : true;
@@ -160,9 +165,14 @@ inline bool validateConnections() {
     bool dvrIsValid = frontendMap[live.frontendId].config1_0.isSoftwareFe
                               ? dvrMap.find(live.dvrSoftwareFeId) != dvrMap.end()
                               : true;
+
     if (record.support) {
-        if (frontendMap[record.frontendId].config1_0.isSoftwareFe) {
-            dvrIsValid &= dvrMap.find(record.dvrSoftwareFeId) != dvrMap.end();
+        if (record.hasFrontendConnection) {
+            if (frontendMap[record.frontendId].config1_0.isSoftwareFe) {
+                dvrIsValid &= dvrMap.find(record.dvrSoftwareFeId) != dvrMap.end();
+            }
+        } else {
+            dvrIsValid &= dvrMap.find(record.dvrSourceId) != dvrMap.end();
         }
         dvrIsValid &= dvrMap.find(record.dvrRecordId) != dvrMap.end();
     }
