@@ -230,6 +230,10 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     vector<uint32_t> ValidKeySizes(Algorithm algorithm);
     vector<uint32_t> InvalidKeySizes(Algorithm algorithm);
 
+    vector<BlockMode> ValidBlockModes(Algorithm algorithm);
+    vector<PaddingMode> ValidPaddingModes(Algorithm algorithm, BlockMode blockMode);
+    vector<PaddingMode> InvalidPaddingModes(Algorithm algorithm, BlockMode blockMode);
+
     vector<EcCurve> ValidCurves();
     vector<EcCurve> InvalidCurves();
 
