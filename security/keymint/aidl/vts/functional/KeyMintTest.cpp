@@ -291,35 +291,329 @@ bool matching_rp_instance(const string& km_name,
 class NewKeyGenerationTest : public KeyMintAidlTestBase {
   protected:
     void CheckBaseParams(const vector<KeyCharacteristics>& keyCharacteristics) {
-        // TODO(swillden): Distinguish which params should be in which auth list.
-
-        AuthorizationSet auths;
-        for (auto& entry : keyCharacteristics) {
-            auths.push_back(AuthorizationSet(entry.authorizations));
-        }
-
-        EXPECT_TRUE(auths.Contains(TAG_ORIGIN, KeyOrigin::GENERATED));
+        AuthorizationSet auths = CheckCommonParams(keyCharacteristics);
         EXPECT_TRUE(auths.Contains(TAG_PURPOSE, KeyPurpose::SIGN));
         EXPECT_TRUE(auths.Contains(TAG_PURPOSE, KeyPurpose::VERIFY));
-
-        // Verify that App data and ROT are NOT included.
-        EXPECT_FALSE(auths.Contains(TAG_ROOT_OF_TRUST));
-        EXPECT_FALSE(auths.Contains(TAG_APPLICATION_DATA));
 
         // Check that some unexpected tags/values are NOT present.
         EXPECT_FALSE(auths.Contains(TAG_PURPOSE, KeyPurpose::ENCRYPT));
         EXPECT_FALSE(auths.Contains(TAG_PURPOSE, KeyPurpose::DECRYPT));
+    }
+
+    void CheckSymmetricParams(const vector<KeyCharacteristics>& keyCharacteristics) {
+        AuthorizationSet auths = CheckCommonParams(keyCharacteristics);
+        EXPECT_TRUE(auths.Contains(TAG_PURPOSE, KeyPurpose::ENCRYPT));
+        EXPECT_TRUE(auths.Contains(TAG_PURPOSE, KeyPurpose::DECRYPT));
+
+        EXPECT_FALSE(auths.Contains(TAG_PURPOSE, KeyPurpose::SIGN));
+        EXPECT_FALSE(auths.Contains(TAG_PURPOSE, KeyPurpose::VERIFY));
+    }
+
+    AuthorizationSet CheckCommonParams(const vector<KeyCharacteristics>& keyCharacteristics) {
+        // TODO(swillden): Distinguish which params should be in which auth list.
+        AuthorizationSet auths;
+        for (auto& entry : keyCharacteristics) {
+            auths.push_back(AuthorizationSet(entry.authorizations));
+        }
+        EXPECT_TRUE(auths.Contains(TAG_ORIGIN, KeyOrigin::GENERATED));
+
+        // Verify that App data, ROT and auth timeout are NOT included.
+        EXPECT_FALSE(auths.Contains(TAG_ROOT_OF_TRUST));
+        EXPECT_FALSE(auths.Contains(TAG_APPLICATION_DATA));
         EXPECT_FALSE(auths.Contains(TAG_AUTH_TIMEOUT, 301U));
 
+        // Check OS details match the original hardware info.
         auto os_ver = auths.GetTagValue(TAG_OS_VERSION);
-        ASSERT_TRUE(os_ver);
+        EXPECT_TRUE(os_ver);
         EXPECT_EQ(*os_ver, os_version());
-
         auto os_pl = auths.GetTagValue(TAG_OS_PATCHLEVEL);
-        ASSERT_TRUE(os_pl);
+        EXPECT_TRUE(os_pl);
         EXPECT_EQ(*os_pl, os_patch_level());
+
+        return auths;
     }
 };
+
+/*
+ * NewKeyGenerationTest.Aes
+ *
+ * Verifies that keymint can generate all required AES key sizes, and that the resulting keys
+ * have correct characteristics.
+ */
+TEST_P(NewKeyGenerationTest, Aes) {
+    for (auto key_size : ValidKeySizes(Algorithm::AES)) {
+        for (auto block_mode : ValidBlockModes(Algorithm::AES)) {
+            for (auto padding_mode : ValidPaddingModes(Algorithm::AES, block_mode)) {
+                SCOPED_TRACE(testing::Message()
+                             << "AES-" << key_size << "-" << block_mode << "-" << padding_mode);
+                vector<uint8_t> key_blob;
+                vector<KeyCharacteristics> key_characteristics;
+                auto builder = AuthorizationSetBuilder()
+                                       .AesEncryptionKey(key_size)
+                                       .BlockMode(block_mode)
+                                       .Padding(padding_mode)
+                                       .SetDefaultValidity();
+                if (block_mode == BlockMode::GCM) {
+                    builder.Authorization(TAG_MIN_MAC_LENGTH, 128);
+                }
+                ASSERT_EQ(ErrorCode::OK, GenerateKey(builder, &key_blob, &key_characteristics));
+
+                EXPECT_GT(key_blob.size(), 0U);
+                CheckSymmetricParams(key_characteristics);
+
+                AuthorizationSet crypto_params = SecLevelAuthorizations(key_characteristics);
+
+                EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::AES));
+                EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
+                        << "Key size " << key_size << "missing";
+
+                CheckedDeleteKey(&key_blob);
+            }
+        }
+    }
+}
+
+/*
+ * NewKeyGenerationTest.AesInvalidSize
+ *
+ * Verifies that specifying an invalid key size for AES key generation returns
+ * UNSUPPORTED_KEY_SIZE.
+ */
+TEST_P(NewKeyGenerationTest, AesInvalidSize) {
+    for (auto key_size : InvalidKeySizes(Algorithm::AES)) {
+        for (auto block_mode : ValidBlockModes(Algorithm::AES)) {
+            for (auto padding_mode : ValidPaddingModes(Algorithm::AES, block_mode)) {
+                SCOPED_TRACE(testing::Message()
+                             << "AES-" << key_size << "-" << block_mode << "-" << padding_mode);
+                vector<uint8_t> key_blob;
+                vector<KeyCharacteristics> key_characteristics;
+                auto builder = AuthorizationSetBuilder()
+                                       .AesEncryptionKey(key_size)
+                                       .BlockMode(block_mode)
+                                       .Padding(padding_mode)
+                                       .SetDefaultValidity();
+                if (block_mode == BlockMode::GCM) {
+                    builder.Authorization(TAG_MIN_MAC_LENGTH, 128);
+                }
+                EXPECT_EQ(ErrorCode::UNSUPPORTED_KEY_SIZE,
+                          GenerateKey(builder, &key_blob, &key_characteristics));
+            }
+        }
+    }
+
+    for (auto block_mode : ValidBlockModes(Algorithm::AES)) {
+        for (auto padding_mode : ValidPaddingModes(Algorithm::AES, block_mode)) {
+            vector<uint8_t> key_blob;
+            vector<KeyCharacteristics> key_characteristics;
+            // No key size specified
+            auto builder = AuthorizationSetBuilder()
+                                   .Authorization(TAG_ALGORITHM, Algorithm::AES)
+                                   .BlockMode(block_mode)
+                                   .Padding(padding_mode)
+                                   .SetDefaultValidity();
+            if (block_mode == BlockMode::GCM) {
+                builder.Authorization(TAG_MIN_MAC_LENGTH, 128);
+            }
+            EXPECT_EQ(ErrorCode::UNSUPPORTED_KEY_SIZE,
+                      GenerateKey(builder, &key_blob, &key_characteristics));
+        }
+    }
+}
+
+/*
+ * NewKeyGenerationTest.AesInvalidPadding
+ *
+ * Verifies that specifying an invalid padding on AES keys gives a failure
+ * somewhere along the way.
+ */
+TEST_P(NewKeyGenerationTest, AesInvalidPadding) {
+    for (auto key_size : ValidKeySizes(Algorithm::AES)) {
+        for (auto block_mode : ValidBlockModes(Algorithm::AES)) {
+            for (auto padding_mode : InvalidPaddingModes(Algorithm::AES, block_mode)) {
+                SCOPED_TRACE(testing::Message()
+                             << "AES-" << key_size << "-" << block_mode << "-" << padding_mode);
+                vector<uint8_t> key_blob;
+                vector<KeyCharacteristics> key_characteristics;
+                auto builder = AuthorizationSetBuilder()
+                                       .AesEncryptionKey(key_size)
+                                       .BlockMode(block_mode)
+                                       .Padding(padding_mode)
+                                       .SetDefaultValidity();
+                if (block_mode == BlockMode::GCM) {
+                    builder.Authorization(TAG_MIN_MAC_LENGTH, 128);
+                }
+
+                auto result = GenerateKey(builder, &key_blob, &key_characteristics);
+                if (result == ErrorCode::OK) {
+                    // Key creation was OK but has generated a key that cannot be used.
+                    auto params =
+                            AuthorizationSetBuilder().BlockMode(block_mode).Padding(padding_mode);
+                    auto result = Begin(KeyPurpose::ENCRYPT, params);
+                    EXPECT_TRUE(result == ErrorCode::INCOMPATIBLE_PADDING_MODE ||
+                                result == ErrorCode::INVALID_KEY_BLOB);
+                } else {
+                    // The KeyMint implementation detected that the generated key
+                    // is unusable.
+                    EXPECT_EQ(ErrorCode::INCOMPATIBLE_PADDING_MODE, result);
+                }
+            }
+        }
+    }
+}
+
+/*
+ * NewKeyGenerationTest.AesGcmMissingMinMac
+ *
+ * Verifies that specifying an invalid key size for AES key generation returns
+ * UNSUPPORTED_KEY_SIZE.
+ */
+TEST_P(NewKeyGenerationTest, AesGcmMissingMinMac) {
+    for (auto key_size : ValidKeySizes(Algorithm::AES)) {
+        BlockMode block_mode = BlockMode::GCM;
+        for (auto padding_mode : ValidPaddingModes(Algorithm::AES, block_mode)) {
+            SCOPED_TRACE(testing::Message()
+                         << "AES-" << key_size << "-" << block_mode << "-" << padding_mode);
+            vector<uint8_t> key_blob;
+            vector<KeyCharacteristics> key_characteristics;
+            // No MIN_MAC_LENGTH provided.
+            auto builder = AuthorizationSetBuilder()
+                                   .AesEncryptionKey(key_size)
+                                   .BlockMode(block_mode)
+                                   .Padding(padding_mode)
+                                   .SetDefaultValidity();
+            EXPECT_EQ(ErrorCode::MISSING_MIN_MAC_LENGTH,
+                      GenerateKey(builder, &key_blob, &key_characteristics));
+        }
+    }
+}
+
+/*
+ * NewKeyGenerationTest.TripleDes
+ *
+ * Verifies that keymint can generate all required 3DES key sizes, and that the resulting keys
+ * have correct characteristics.
+ */
+TEST_P(NewKeyGenerationTest, TripleDes) {
+    for (auto key_size : ValidKeySizes(Algorithm::TRIPLE_DES)) {
+        for (auto block_mode : ValidBlockModes(Algorithm::TRIPLE_DES)) {
+            for (auto padding_mode : ValidPaddingModes(Algorithm::AES, block_mode)) {
+                SCOPED_TRACE(testing::Message()
+                             << "3DES-" << key_size << "-" << block_mode << "-" << padding_mode);
+                vector<uint8_t> key_blob;
+                vector<KeyCharacteristics> key_characteristics;
+                ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                             .TripleDesEncryptionKey(key_size)
+                                                             .BlockMode(block_mode)
+                                                             .Padding(padding_mode)
+                                                             .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                             .SetDefaultValidity(),
+                                                     &key_blob, &key_characteristics));
+
+                EXPECT_GT(key_blob.size(), 0U);
+                CheckSymmetricParams(key_characteristics);
+
+                AuthorizationSet crypto_params = SecLevelAuthorizations(key_characteristics);
+
+                EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::TRIPLE_DES));
+                EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
+                        << "Key size " << key_size << "missing";
+
+                CheckedDeleteKey(&key_blob);
+            }
+        }
+    }
+}
+
+/*
+ * NewKeyGenerationTest.TripleDesWithAttestation
+ *
+ * Verifies that keymint can generate all required 3DES key sizes, and that the resulting keys
+ * have correct characteristics.
+ *
+ * Request attestation, which doesn't help for symmetric keys (as there is no public key to
+ * put in a certificate) but which isn't an error.
+ */
+TEST_P(NewKeyGenerationTest, TripleDesWithAttestation) {
+    for (auto key_size : ValidKeySizes(Algorithm::TRIPLE_DES)) {
+        for (auto block_mode : ValidBlockModes(Algorithm::TRIPLE_DES)) {
+            for (auto padding_mode : ValidPaddingModes(Algorithm::AES, block_mode)) {
+                SCOPED_TRACE(testing::Message()
+                             << "3DES-" << key_size << "-" << block_mode << "-" << padding_mode);
+
+                auto challenge = "hello";
+                auto app_id = "foo";
+
+                vector<uint8_t> key_blob;
+                vector<KeyCharacteristics> key_characteristics;
+                ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                             .TripleDesEncryptionKey(key_size)
+                                                             .BlockMode(block_mode)
+                                                             .Padding(padding_mode)
+                                                             .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                             .AttestationChallenge(challenge)
+                                                             .AttestationApplicationId(app_id)
+                                                             .SetDefaultValidity(),
+                                                     &key_blob, &key_characteristics));
+
+                EXPECT_GT(key_blob.size(), 0U);
+                CheckSymmetricParams(key_characteristics);
+
+                AuthorizationSet crypto_params = SecLevelAuthorizations(key_characteristics);
+
+                EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::TRIPLE_DES));
+                EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
+                        << "Key size " << key_size << "missing";
+
+                CheckedDeleteKey(&key_blob);
+            }
+        }
+    }
+}
+
+/*
+ * NewKeyGenerationTest.TripleDesInvalidSize
+ *
+ * Verifies that specifying an invalid key size for 3-DES key generation returns
+ * UNSUPPORTED_KEY_SIZE.
+ */
+TEST_P(NewKeyGenerationTest, TripleDesInvalidSize) {
+    for (auto key_size : InvalidKeySizes(Algorithm::TRIPLE_DES)) {
+        for (auto block_mode : ValidBlockModes(Algorithm::TRIPLE_DES)) {
+            for (auto padding_mode : ValidPaddingModes(Algorithm::AES, block_mode)) {
+                SCOPED_TRACE(testing::Message()
+                             << "3DES-" << key_size << "-" << block_mode << "-" << padding_mode);
+                vector<uint8_t> key_blob;
+                vector<KeyCharacteristics> key_characteristics;
+                EXPECT_EQ(ErrorCode::UNSUPPORTED_KEY_SIZE,
+                          GenerateKey(AuthorizationSetBuilder()
+                                              .TripleDesEncryptionKey(key_size)
+                                              .BlockMode(block_mode)
+                                              .Padding(padding_mode)
+                                              .Authorization(TAG_NO_AUTH_REQUIRED)
+                                              .SetDefaultValidity(),
+                                      &key_blob, &key_characteristics));
+            }
+        }
+    }
+
+    // Omitting the key size fails.
+    for (auto block_mode : ValidBlockModes(Algorithm::TRIPLE_DES)) {
+        for (auto padding_mode : ValidPaddingModes(Algorithm::AES, block_mode)) {
+            SCOPED_TRACE(testing::Message()
+                         << "3DES-default-" << block_mode << "-" << padding_mode);
+            vector<uint8_t> key_blob;
+            vector<KeyCharacteristics> key_characteristics;
+            ASSERT_EQ(ErrorCode::UNSUPPORTED_KEY_SIZE,
+                      GenerateKey(AuthorizationSetBuilder()
+                                          .Authorization(TAG_ALGORITHM, Algorithm::TRIPLE_DES)
+                                          .BlockMode(block_mode)
+                                          .Padding(padding_mode)
+                                          .Authorization(TAG_NO_AUTH_REQUIRED)
+                                          .SetDefaultValidity(),
+                                  &key_blob, &key_characteristics));
+        }
+    }
+}
 
 /*
  * NewKeyGenerationTest.Rsa
@@ -1720,7 +2014,7 @@ TEST_P(SigningOperationsTest, RsaNoDigest) {
 }
 
 /*
- * SigningOperationsTest.RsaPssNoDigest
+ * SigningOperationsTest.RsaPssNoPadding
  *
  * Verifies that RSA operations fail when no padding mode is specified.  PaddingMode::NONE is
  * supported in some cases (as validated in other tests), but a mode must be specified.
@@ -2075,7 +2369,7 @@ TEST_P(VerificationOperationsTest, RsaSuccess) {
 }
 
 /*
- * VerificationOperationsTest.RsaSuccess
+ * VerificationOperationsTest.RsaAllPaddingsAndDigests
  *
  * Verifies RSA signature/verification for all padding modes and digests.
  */
@@ -2171,7 +2465,7 @@ TEST_P(VerificationOperationsTest, RsaAllPaddingsAndDigests) {
 }
 
 /*
- * VerificationOperationsTest.RsaSuccess
+ * VerificationOperationsTest.RsaAllDigestsAndCurves
  *
  * Verifies ECDSA signature/verification for all digests and curves.
  */
@@ -2571,7 +2865,72 @@ TEST_P(ImportKeyTest, AesSuccess) {
 }
 
 /*
- * ImportKeyTest.AesSuccess
+ * ImportKeyTest.AesFailure
+ *
+ * Verifies that importing an invalid AES key fails.
+ */
+TEST_P(ImportKeyTest, AesFailure) {
+    string key = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    uint32_t bitlen = key.size() * 8;
+    for (uint32_t key_size : {bitlen - 1, bitlen + 1, bitlen - 8, bitlen + 8}) {
+        ASSERT_EQ(ErrorCode::UNSUPPORTED_KEY_SIZE,
+                  ImportKey(AuthorizationSetBuilder()
+                                    .Authorization(TAG_NO_AUTH_REQUIRED)
+                                    .AesEncryptionKey(key_size)
+                                    .EcbMode()
+                                    .Padding(PaddingMode::PKCS7),
+                            KeyFormat::RAW, key));
+    }
+}
+
+/*
+ * ImportKeyTest.TripleDesSuccess
+ *
+ * Verifies that importing and using a 3DES key works.
+ */
+TEST_P(ImportKeyTest, TripleDesSuccess) {
+    string key = hex2str("a49d7564199e97cb529d2c9d97bf2f98d35edf57ba1f7358");
+    ASSERT_EQ(ErrorCode::OK, ImportKey(AuthorizationSetBuilder()
+                                               .Authorization(TAG_NO_AUTH_REQUIRED)
+                                               .TripleDesEncryptionKey(168)
+                                               .EcbMode()
+                                               .Padding(PaddingMode::PKCS7),
+                                       KeyFormat::RAW, key));
+
+    CheckCryptoParam(TAG_ALGORITHM, Algorithm::TRIPLE_DES);
+    CheckCryptoParam(TAG_KEY_SIZE, 168U);
+    CheckCryptoParam(TAG_PADDING, PaddingMode::PKCS7);
+    CheckCryptoParam(TAG_BLOCK_MODE, BlockMode::ECB);
+    CheckOrigin();
+
+    string message = "Hello World!";
+    auto params = AuthorizationSetBuilder().BlockMode(BlockMode::ECB).Padding(PaddingMode::PKCS7);
+    string ciphertext = EncryptMessage(message, params);
+    string plaintext = DecryptMessage(ciphertext, params);
+    EXPECT_EQ(message, plaintext);
+}
+
+/*
+ * ImportKeyTest.TripleDesFailure
+ *
+ * Verifies that importing an invalid 3DES key fails.
+ */
+TEST_P(ImportKeyTest, TripleDesFailure) {
+    string key = hex2str("a49d7564199e97cb529d2c9d97bf2f98d35edf57ba1f7358");
+    uint32_t bitlen = key.size() * 8;
+    for (uint32_t key_size : {bitlen - 1, bitlen + 1, bitlen - 8, bitlen + 8}) {
+        ASSERT_EQ(ErrorCode::UNSUPPORTED_KEY_SIZE,
+                  ImportKey(AuthorizationSetBuilder()
+                                    .Authorization(TAG_NO_AUTH_REQUIRED)
+                                    .TripleDesEncryptionKey(key_size)
+                                    .EcbMode()
+                                    .Padding(PaddingMode::PKCS7),
+                            KeyFormat::RAW, key));
+    }
+}
+
+/*
+ * ImportKeyTest.HmacKeySuccess
  *
  * Verifies that importing and using an HMAC key works.
  */
@@ -2881,7 +3240,7 @@ TEST_P(EncryptionOperationsTest, RsaOaepInvalidDigest) {
 }
 
 /*
- * EncryptionOperationsTest.RsaOaepInvalidDigest
+ * EncryptionOperationsTest.RsaOaepDecryptWithWrongDigest
  *
  * Verifies that RSA-OAEP encryption operations fail in the correct way when asked to decrypt
  * with a different digest than was used to encrypt.
@@ -3165,7 +3524,7 @@ TEST_P(EncryptionOperationsTest, AesEcbRoundTripSuccess) {
 }
 
 /*
- * EncryptionOperationsTest.AesEcbRoundTripSuccess
+ * EncryptionOperationsTest.AesWrongMode
  *
  * Verifies that AES encryption fails in the correct way when an unauthorized mode is specified.
  */
@@ -3565,7 +3924,7 @@ TEST_P(EncryptionOperationsTest, AesCtrInvalidCallerNonce) {
 }
 
 /*
- * EncryptionOperationsTest.AesCtrInvalidCallerNonce
+ * EncryptionOperationsTest.AesCbcRoundTripSuccess
  *
  * Verifies that keymint fails correctly when the user supplies an incorrect-size nonce.
  */
@@ -4231,11 +4590,8 @@ TEST_P(EncryptionOperationsTest, TripleDesEcbNoPaddingKeyWithPkcs7Padding) {
                                                  .BlockMode(BlockMode::ECB)
                                                  .Authorization(TAG_NO_AUTH_REQUIRED)
                                                  .Padding(PaddingMode::NONE)));
-    for (size_t i = 0; i < 32; ++i) {
-        auto inParams =
-                AuthorizationSetBuilder().BlockMode(BlockMode::ECB).Padding(PaddingMode::PKCS7);
-        EXPECT_EQ(ErrorCode::INCOMPATIBLE_PADDING_MODE, Begin(KeyPurpose::ENCRYPT, inParams));
-    }
+    auto inParams = AuthorizationSetBuilder().BlockMode(BlockMode::ECB).Padding(PaddingMode::PKCS7);
+    EXPECT_EQ(ErrorCode::INCOMPATIBLE_PADDING_MODE, Begin(KeyPurpose::ENCRYPT, inParams));
 }
 
 /*
@@ -4912,6 +5268,19 @@ TEST_P(UsageCountLimitTest, TestSingleUseKeyAndRollbackResistance) {
 
 INSTANTIATE_KEYMINT_AIDL_TEST(UsageCountLimitTest);
 
+typedef KeyMintAidlTestBase GetHardwareInfoTest;
+
+TEST_P(GetHardwareInfoTest, GetHardwareInfo) {
+    // Retrieving hardware info should give the same result each time.
+    KeyMintHardwareInfo info;
+    ASSERT_TRUE(keyMint().getHardwareInfo(&info).isOk());
+    KeyMintHardwareInfo info2;
+    ASSERT_TRUE(keyMint().getHardwareInfo(&info2).isOk());
+    EXPECT_EQ(info, info2);
+}
+
+INSTANTIATE_KEYMINT_AIDL_TEST(GetHardwareInfoTest);
+
 typedef KeyMintAidlTestBase AddEntropyTest;
 
 /*
@@ -5122,7 +5491,7 @@ INSTANTIATE_KEYMINT_AIDL_TEST(ClearOperationsTest);
 typedef KeyMintAidlTestBase TransportLimitTest;
 
 /*
- * TransportLimitTest.FinishInput
+ * TransportLimitTest.LargeFinishInput
  *
  * Verifies that passing input data to finish succeeds as expected.
  */
