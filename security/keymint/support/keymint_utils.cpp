@@ -31,10 +31,11 @@ constexpr size_t kSubminorVersionMatch = 5;
 constexpr size_t kPlatformVersionMatchCount = kSubminorVersionMatch + 1;
 
 constexpr char kPlatformPatchlevelProp[] = "ro.build.version.security_patch";
-constexpr char kPlatformPatchlevelRegex[] = "^([0-9]{4})-([0-9]{2})-[0-9]{2}$";
+constexpr char kVendorPatchlevelProp[] = "ro.vendor.build.security_patch";
+constexpr char kPatchlevelRegex[] = "^([0-9]{4})-([0-9]{2})-[0-9]{2}$";
 constexpr size_t kYearMatch = 1;
 constexpr size_t kMonthMatch = 2;
-constexpr size_t kPlatformPatchlevelMatchCount = kMonthMatch + 1;
+constexpr size_t kPatchlevelMatchCount = kMonthMatch + 1;
 
 uint32_t match_to_uint32(const char* expression, const regmatch_t& match) {
     if (match.rm_so == -1) return 0;
@@ -80,15 +81,14 @@ uint32_t getOsVersion() {
     return getOsVersion(version.c_str());
 }
 
-uint32_t getOsPatchlevel(const char* patchlevel_str) {
+uint32_t getPatchlevel(const char* patchlevel_str) {
     regex_t regex;
-    if (regcomp(&regex, kPlatformPatchlevelRegex, REG_EXTENDED) != 0) {
+    if (regcomp(&regex, kPatchlevelRegex, REG_EXTENDED) != 0) {
         return 0;
     }
 
-    regmatch_t matches[kPlatformPatchlevelMatchCount];
-    int not_match =
-            regexec(&regex, patchlevel_str, kPlatformPatchlevelMatchCount, matches, 0 /* flags */);
+    regmatch_t matches[kPatchlevelMatchCount];
+    int not_match = regexec(&regex, patchlevel_str, kPatchlevelMatchCount, matches, 0 /* flags */);
     regfree(&regex);
     if (not_match) {
         return 0;
@@ -105,7 +105,12 @@ uint32_t getOsPatchlevel(const char* patchlevel_str) {
 
 uint32_t getOsPatchlevel() {
     std::string patchlevel = wait_and_get_property(kPlatformPatchlevelProp);
-    return getOsPatchlevel(patchlevel.c_str());
+    return getPatchlevel(patchlevel.c_str());
+}
+
+uint32_t getVendorPatchlevel() {
+    std::string patchlevel = wait_and_get_property(kVendorPatchlevelProp);
+    return getPatchlevel(patchlevel.c_str());
 }
 
 }  // namespace aidl::android::hardware::security::keymint
