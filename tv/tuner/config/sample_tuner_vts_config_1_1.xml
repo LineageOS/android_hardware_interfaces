@@ -145,14 +145,15 @@
                             audioFilterConnection="FILTER_AUDIO_DEFAULT"
                             videoFilterConnection="FILTER_VIDEO_DEFAULT"
                             ipFilterConnection="FILTER_IP_IP_0"
-                            dvrSoftwareFeConnection="DVR_PLAYBACK_0"/>
+                            dvrSoftwareFeConnection="DVR_PLAYBACK_1"/>
         <scan frontendConnection="FE_DEFAULT"/>
-        <dvrPlayback dvrConnection="DVR_PLAYBACK_0"
+        <dvrPlayback dvrConnection="DVR_PLAYBACK_1"
                      audioFilterConnection="FILTER_AUDIO_DEFAULT"
                      videoFilterConnection="FILTER_VIDEO_DEFAULT"/>
-        <dvrRecord frontendConnection="FE_DEFAULT"
+        <dvrRecord hasFrontendConnection="true"
+                   frontendConnection="FE_DEFAULT"
                    recordFilterConnection="FILTER_TS_RECORD_0"
                    dvrRecordConnection="DVR_RECORD_0"
-                   dvrSoftwareFeConnection="DVR_PLAYBACK_0"/>
+                   dvrSoftwareFeConnection="DVR_PLAYBACK_1"/>
     </dataFlowConfiguration>
 </TunerConfiguration>
