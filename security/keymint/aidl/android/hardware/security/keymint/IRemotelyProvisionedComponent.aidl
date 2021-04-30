@@ -78,7 +78,7 @@ import android.hardware.security.keymint.RpcHardwareInfo;
  * While a proper BCC, as described above, reflects the complete boot sequence from boot ROM to the
  * secure area image of the IRemotelyProvisionedComponent, it's also possible to use a "degenerate"
  * BCC which consists only of a single, self-signed certificate containing the public key of a
- * hardware-bound key pair. This is an appopriate solution for devices which haven't implemented
+ * hardware-bound key pair. This is an appropriate solution for devices which haven't implemented
  * everything necessary to produce a proper BCC, but can derive a unique key pair in the secure
  * area.  In this degenerate case, DK_pub is the same as KM_pub.
  *

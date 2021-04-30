@@ -58,7 +58,7 @@ parcelable KeyCreationResult {
      * There are a few variations in what is contained in `certificateChain`, depending on whether
      * the caller requested attestation, whether they provided an attestation key (via the
      * `attestationKey` parameter of `generateKey()`, `importKey()` or `importWrappedKey()`), and in
-     * the non-attestaion case, whether the key can self-sign.
+     * the non-attestation case, whether the key can self-sign.
      *
      * 1.  Asymmetric key attestation with factory key.  If Tag::ATTESTATION_CHALLENGE is provided
      *     and the `attestationKey` parameter on the generate/import call is null, the returned
@@ -70,7 +70,7 @@ parcelable KeyCreationResult {
      *     attestation keys.
      *
      * 2.  Asymmetric key attestation with caller-provided key.  If Tag::ATTESTATION_CHALLENGE is
-     *     provided and the `attestationKey` parameter on the generat/import call is non-null and
+     *     provided and the `attestationKey` parameter on the generate/import call is non-null and
      *     contains the key blob of a key with KeyPurpose::ATTEST_KEY, the returned certificate
      *     chain must contain only an attestation certificate signed with the specified key.  The
      *     caller must know the certificate chain for the provided key.  Tag::
