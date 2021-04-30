@@ -170,6 +170,7 @@ void KeyMintAidlTestBase::InitializeKeyMint(std::shared_ptr<IKeyMintDevice> keyM
 
     os_version_ = getOsVersion();
     os_patch_level_ = getOsPatchlevel();
+    vendor_patch_level_ = getVendorPatchlevel();
 }
 
 void KeyMintAidlTestBase::SetUp() {
