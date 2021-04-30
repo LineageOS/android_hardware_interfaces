@@ -20,7 +20,7 @@ package android.hardware.security.keymint;
  * The origin of a key (or pair), i.e. where it was generated.  Note that ORIGIN can be found in
  * either the hardware-enforced or software-enforced list for a key, indicating whether the key is
  * hardware or software-based.  Specifically, a key with GENERATED in the hardware-enforced list
- * must be guaranteed never to have existed outide the secure hardware.
+ * must be guaranteed never to have existed outside the secure hardware.
  * @hide
  */
 @VintfStability
