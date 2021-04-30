@@ -196,7 +196,8 @@
                             sectionFilterConnection="FILTER_TS_SECTION_0"
                             dvrSoftwareFeConnection="DVR_PLAYBACK_0"/>
         <scan frontendConnection="FE_DEFAULT"/>
-        <descrambling frontendConnection="FE_DEFAULT"
+        <descrambling hasFrontendConnection="true"
+                      frontendConnection="FE_DEFAULT"
                       descramblerConnection="DESCRAMBLER_0"
                       audioFilterConnection="FILTER_AUDIO_DEFAULT"
                       videoFilterConnection="FILTER_VIDEO_DEFAULT"
@@ -205,7 +206,8 @@
                      audioFilterConnection="FILTER_AUDIO_DEFAULT"
                      videoFilterConnection="FILTER_VIDEO_DEFAULT"
                      sectionFilterConnection="FILTER_TS_SECTION_0"/>
-        <dvrRecord frontendConnection="FE_DEFAULT"
+        <dvrRecord hasFrontendConnection="true"
+                   frontendConnection="FE_DEFAULT"
                    recordFilterConnection="FILTER_TS_RECORD_0"
                    dvrRecordConnection="DVR_RECORD_0"
                    dvrSoftwareFeConnection="DVR_PLAYBACK_0"/>
