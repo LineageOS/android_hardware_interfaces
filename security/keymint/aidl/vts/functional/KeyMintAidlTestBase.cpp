@@ -170,6 +170,7 @@ void KeyMintAidlTestBase::InitializeKeyMint(std::shared_ptr<IKeyMintDevice> keyM
 
     os_version_ = getOsVersion();
     os_patch_level_ = getOsPatchlevel();
+    vendor_patch_level_ = getVendorPatchlevel();
 }
 
 void KeyMintAidlTestBase::SetUp() {
@@ -743,11 +744,82 @@ vector<uint32_t> KeyMintAidlTestBase::InvalidKeySizes(Algorithm algorithm) {
                 return {224, 384, 521};
             case Algorithm::AES:
                 return {192};
+            case Algorithm::TRIPLE_DES:
+                return {56};
+            default:
+                return {};
+        }
+    } else {
+        switch (algorithm) {
+            case Algorithm::TRIPLE_DES:
+                return {56};
             default:
                 return {};
         }
     }
     return {};
+}
+
+vector<BlockMode> KeyMintAidlTestBase::ValidBlockModes(Algorithm algorithm) {
+    switch (algorithm) {
+        case Algorithm::AES:
+            return {
+                    BlockMode::CBC,
+                    BlockMode::CTR,
+                    BlockMode::ECB,
+                    BlockMode::GCM,
+            };
+        case Algorithm::TRIPLE_DES:
+            return {
+                    BlockMode::CBC,
+                    BlockMode::ECB,
+            };
+        default:
+            return {};
+    }
+}
+
+vector<PaddingMode> KeyMintAidlTestBase::ValidPaddingModes(Algorithm algorithm,
+                                                           BlockMode blockMode) {
+    switch (algorithm) {
+        case Algorithm::AES:
+            switch (blockMode) {
+                case BlockMode::CBC:
+                case BlockMode::ECB:
+                    return {PaddingMode::NONE, PaddingMode::PKCS7};
+                case BlockMode::CTR:
+                case BlockMode::GCM:
+                    return {PaddingMode::NONE};
+                default:
+                    return {};
+            };
+        case Algorithm::TRIPLE_DES:
+            switch (blockMode) {
+                case BlockMode::CBC:
+                case BlockMode::ECB:
+                    return {PaddingMode::NONE, PaddingMode::PKCS7};
+                default:
+                    return {};
+            };
+        default:
+            return {};
+    }
+}
+
+vector<PaddingMode> KeyMintAidlTestBase::InvalidPaddingModes(Algorithm algorithm,
+                                                             BlockMode blockMode) {
+    switch (algorithm) {
+        case Algorithm::AES:
+            switch (blockMode) {
+                case BlockMode::CTR:
+                case BlockMode::GCM:
+                    return {PaddingMode::PKCS7};
+                default:
+                    return {};
+            };
+        default:
+            return {};
+    }
 }
 
 vector<EcCurve> KeyMintAidlTestBase::ValidCurves() {

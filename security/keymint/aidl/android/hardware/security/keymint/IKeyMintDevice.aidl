@@ -20,6 +20,7 @@ import android.hardware.security.keymint.AttestationKey;
 import android.hardware.security.keymint.BeginResult;
 import android.hardware.security.keymint.HardwareAuthToken;
 import android.hardware.security.keymint.IKeyMintOperation;
+import android.hardware.security.keymint.KeyCharacteristics;
 import android.hardware.security.keymint.KeyCreationResult;
 import android.hardware.security.keymint.KeyFormat;
 import android.hardware.security.keymint.KeyMintHardwareInfo;
@@ -107,7 +108,6 @@ import android.hardware.security.secureclock.TimeStampToken;
  *
  *      - 168-bit keys.
  *      - CBC and ECB mode.
-
  *      - CBC and ECB modes must support unpadded and PKCS7 padding modes.  With no padding CBC and
  *        ECB-mode operations must fail with ErrorCode::INVALID_INPUT_LENGTH if the input isn't a
  *        multiple of the DES block size.
@@ -150,8 +150,8 @@ import android.hardware.security.secureclock.TimeStampToken;
  *
  * The IKeyMintDevice must ignore unknown tags.
  *
- * The caller must always provide the current date time in the keyParameter CREATION_DATETIME
- * tags.
+ * The caller may provide the current date time in the keyParameter CREATION_DATETIME tag, but
+ * this is optional and informational only.
  *
  * All authorization tags and their values enforced by an IKeyMintDevice must be cryptographically
  * bound to the private/secret key material such that any modification of the portion of the key
@@ -185,7 +185,7 @@ import android.hardware.security.secureclock.TimeStampToken;
  * startup, preferably by the bootloader.  This bitstring must be cryptographically bound to every
  * key managed by the IKeyMintDevice.  As above, the recommended mechanism for this cryptographic
  * binding is to include the Root of Trust data in the input to the key derivation function used to
- * derive a key that is used to encryp the private/secret key material.
+ * derive a key that is used to encrypt the private/secret key material.
  *
  * The root of trust consists of a bitstring that must be derived from the public key used by
  * Verified Boot to verify the signature on the boot image and from the lock state of the
@@ -247,7 +247,7 @@ interface IKeyMintDevice {
      * Generates a new cryptographic key, specifying associated parameters, which must be
      * cryptographically bound to the key.  IKeyMintDevice implementations must disallow any use
      * of a key in any way inconsistent with the authorizations specified at generation time.  With
-     * respect to parameters that the secure environment cannot enforce, the secure envionment's
+     * respect to parameters that the secure environment cannot enforce, the secure environment's
      * obligation is limited to ensuring that the unenforceable parameters associated with the key
      * cannot be modified.  In addition, the characteristics returned by generateKey places
      * parameters correctly in the tee-enforced and strongbox-enforced lists.
@@ -268,7 +268,7 @@ interface IKeyMintDevice {
      *
      * The following parameters are required to generate an RSA key:
      *
-     * o Tag::Key_SIZE specifies the size of the public modulus, in bits.  If omitted, generateKey
+     * o Tag::KEY_SIZE specifies the size of the public modulus, in bits.  If omitted, generateKey
      *   must return ErrorCode::UNSUPPORTED_KEY_SIZE.  Required values for TEE IKeyMintDevice
      *   implementations are 1024, 2048, 3072 and 4096.  StrongBox IKeyMintDevice implementations
      *   must support 2048.
@@ -285,7 +285,7 @@ interface IKeyMintDevice {
      *   except AGREE_KEY must be supported for RSA keys.
      *
      * o Tag::DIGEST specifies digest algorithms that may be used with the new key.  TEE
-     *   IKeyMintDevice implementatiosn must support all Digest values (see digest.aidl) for RSA
+     *   IKeyMintDevice implementations must support all Digest values (see digest.aidl) for RSA
      *   keys.  StrongBox IKeyMintDevice implementations must support SHA_2_256.
      *
      * o Tag::PADDING specifies the padding modes that may be used with the new
@@ -295,11 +295,9 @@ interface IKeyMintDevice {
      *
      * == ECDSA Keys ==
      *
-     * Either Tag::KEY_SIZE or Tag::EC_CURVE must be provided to generate an ECDSA key.  If neither
-     * is provided, generateKey must return ErrorCode::UNSUPPORTED_KEY_SIZE.  If Tag::KEY_SIZE is
-     * provided, the possible values are 224, 256, 384 and 521, and must be mapped to Tag::EC_CURVE
-     * values P_224, P_256, P_384 and P_521, respectively.  TEE IKeyMintDevice implementations
-     * must support all curves.  StrongBox implementations must support P_256.
+     * Tag::EC_CURVE must be provided to generate an ECDSA key.  If it is not provided, generateKey
+     * must return ErrorCode::UNSUPPORTED_KEY_SIZE. TEE IKeyMintDevice implementations must support
+     * all curves.  StrongBox implementations must support P_256.
      *
      * == AES Keys ==
      *
@@ -309,6 +307,10 @@ interface IKeyMintDevice {
      * If Tag::BLOCK_MODE is specified with value BlockMode::GCM, then the caller must also provide
      * Tag::MIN_MAC_LENGTH.  If omitted, generateKey must return ErrorCode::MISSING_MIN_MAC_LENGTH.
      *
+     * == 3DES Keys ==
+     *
+     * Only Tag::KEY_SIZE is required to generate an 3DES key, and its value must be 168.  If
+     * omitted, generateKey must return ErrorCode::UNSUPPORTED_KEY_SIZE.
      *
      * @param keyParams Key generation parameters are defined as KeyMintDevice tag/value pairs,
      *        provided in params.  See above for detailed specifications of which tags are required
@@ -349,13 +351,12 @@ interface IKeyMintDevice {
      *
      * o Tag::ORIGIN (returned in keyCharacteristics) must have the value KeyOrigin::IMPORTED.
      *
-     * @param inKeyParams Key generation parameters are defined as KeyMintDevice tag/value pairs,
+     * @param keyParams Key generation parameters are defined as KeyMintDevice tag/value pairs,
      *        provided in params.
      *
-     * @param inKeyFormat The format of the key material to import.  See KeyFormat in
-     *        keyformat.aidl.
+     * @param keyFormat The format of the key material to import.  See KeyFormat in keyformat.aidl.
      *
-     * @param inKeyData The key material to import, in the format specified in keyFormat.
+     * @param keyData The key material to import, in the format specified in keyFormat.
      *
      * @param attestationKey, if provided, specifies the key that must be used to sign the
      *        attestation certificate.  If `keyParams` does not contain a Tag::ATTESTATION_CHALLENGE
@@ -378,9 +379,8 @@ interface IKeyMintDevice {
      * Securely imports a key, or key pair, returning a key blob and a description of the imported
      * key.
      *
-     * @param inWrappedKeyData The wrapped key material to import.
-     *     TODO(seleneh) Decide if we want the wrapped key in DER-encoded ASN.1 format or CBOR
-     *     format or both.  And specify the standarized format.
+     * @param wrappedKeyData The wrapped key material to import, as ASN.1 DER-encoded data
+     *        corresponding to the following schema.
      *
      *     KeyDescription ::= SEQUENCE(
      *         keyFormat INTEGER,                   # Values from KeyFormat enum.
@@ -398,20 +398,20 @@ interface IKeyMintDevice {
      *
      *     Where:
      *
-     *     o keyFormat is an integer from the KeyFormat enum, defining the format of the plaintext
+     *     - keyFormat is an integer from the KeyFormat enum, defining the format of the plaintext
      *       key material.
-     *     o keyParams is the characteristics of the key to be imported (as with generateKey or
+     *     - keyParams is the characteristics of the key to be imported (as with generateKey or
      *       importKey).  If the secure import is successful, these characteristics must be
      *       associated with the key exactly as if the key material had been insecurely imported
-     *       with the IKeyMintDevice::importKey.  See attestKey() for documentation of the
-     *       AuthorizationList schema.
-     *     o encryptedTransportKey is a 256-bit AES key, XORed with a masking key and then encrypted
+     *       with the IKeyMintDevice::importKey.  See KeyCreationResult.aidl for documentation of
+     *       the AuthorizationList schema.
+     *     - encryptedTransportKey is a 256-bit AES key, XORed with a masking key and then encrypted
      *       with the wrapping key specified by wrappingKeyBlob.
-     *     o keyDescription is a KeyDescription, above.
-     *     o encryptedKey is the key material of the key to be imported, in format keyFormat, and
+     *     - keyDescription is a KeyDescription, above.
+     *     - encryptedKey is the key material of the key to be imported, in format keyFormat, and
      *       encrypted with encryptedEphemeralKey in AES-GCM mode, with the DER-encoded
      *       representation of keyDescription provided as additional authenticated data.
-     *     o tag is the tag produced by the AES-GCM encryption of encryptedKey.
+     *     - tag is the tag produced by the AES-GCM encryption of encryptedKey.
      *
      * So, importWrappedKey does the following:
      *
@@ -440,7 +440,7 @@ interface IKeyMintDevice {
      *
      * @param passwordSid specifies the password secure ID (SID) of the user that owns the key being
      *        installed.  If the authorization list in wrappedKeyData contains a
-     *        Tag::USER_SECURE_IDwith a value that has the HardwareAuthenticatorType::PASSWORD bit
+     *        Tag::USER_SECURE_ID with a value that has the HardwareAuthenticatorType::PASSWORD bit
      *        set, the constructed key must be bound to the SID value provided by this argument.  If
      *        the wrappedKeyData does not contain such a tag and value, this argument must be
      *        ignored.
@@ -483,9 +483,9 @@ interface IKeyMintDevice {
      * patch level and OS version.  This requirement is relaxed for 4.0::IKeymasterDevice and
      * IKeyMintDevice, and the OS version in the boot image footer is no longer used.
      *
-     * @param inKeyBlobToUpgrade The opaque descriptor returned by generateKey() or importKey();
+     * @param keyBlobToUpgrade The opaque descriptor returned by generateKey() or importKey().
      *
-     * @param inUpgradeParams A parameter list containing any parameters needed to complete the
+     * @param upgradeParams A parameter list containing any parameters needed to complete the
      *        upgrade, including Tag::APPLICATION_ID and Tag::APPLICATION_DATA.
      *
      * @return A new key blob that references the same key as keyBlobToUpgrade, but is in the new
@@ -499,7 +499,9 @@ interface IKeyMintDevice {
      * render the key permanently unusable.  Keys without Tag::ROLLBACK_RESISTANCE may or
      * may not be rendered unusable.
      *
-     * @param inKeyBlob The opaque descriptor returned by generateKey() or importKey();
+     * @param keyBlob The opaque descriptor returned by generateKey() or importKey();
+     *
+     * @return error See the ErrorCode enum.
      */
     void deleteKey(in byte[] keyBlob);
 
@@ -508,8 +510,6 @@ interface IKeyMintDevice {
      * this function is called all keys with Tag::ROLLBACK_RESISTANCE in their hardware-enforced
      * authorization lists must be rendered permanently unusable.  Keys without
      * Tag::ROLLBACK_RESISTANCE may or may not be rendered unusable.
-     *
-     * @return error See the ErrorCode enum.
      */
     void deleteAllKeys();
 
@@ -528,28 +528,27 @@ interface IKeyMintDevice {
 
     /**
      * Begins a cryptographic operation using the specified key.  If all is well, begin() must
-     * return ErrorCode::OK and create an operation handle which must be passed to subsequent calls
-     * to update(), finish() or abort().
+     * return ErrorCode::OK and create an IKeyMintOperation handle which will be used to perform
+     * the cryptographic operation.
      *
-     * It is critical that each call to begin() be paired with a subsequent call to finish() or
-     * abort(), to allow the IKeyMintDevice implementation to clean up any internal operation
-     * state.  The caller's failure to do this may leak internal state space or other internal
-     * resources and may eventually cause begin() to return ErrorCode::TOO_MANY_OPERATIONS when it
-     * runs out of space for operations.  Any result other than ErrorCode::OK from begin(), update()
-     * or finish() implicitly aborts the operation, in which case abort() need not be called (and
-     * must return ErrorCode::INVALID_OPERATION_HANDLE if called).  IKeyMintDevice implementations
-     * must support 32 concurrent operations.
+     * It is critical that each successful call to begin() be paired with a subsequent call to
+     * finish() or abort() on the resulting IKeyMintOperation, to allow the IKeyMintDevice
+     * implementation to clean up any internal operation state.  The caller's failure to do this may
+     * leak internal state space or other internal resources and may eventually cause begin() to
+     * return ErrorCode::TOO_MANY_OPERATIONS when it runs out of space for operations.  Any result
+     * other than ErrorCode::OK from begin() will not return an IKeyMintOperation (in which case
+     * calling finish() or abort() is neither possible nor necessary). IKeyMintDevice
+     * implementations must support 32 concurrent operations.
      *
      * If Tag::APPLICATION_ID or Tag::APPLICATION_DATA were specified during key generation or
      * import, calls to begin must include those tags with the originally-specified values in the
-     * inParams argument to this method.  If not, begin() must return ErrorCode::INVALID_KEY_BLOB.
+     * params argument to this method.  If not, begin() must return ErrorCode::INVALID_KEY_BLOB.
      *
      * == Authorization Enforcement ==
      *
      * The following key authorization parameters must be enforced by the IKeyMintDevice secure
      * environment if the tags were returned in the "hardwareEnforced" list in the
-     * KeyCharacteristics.  Public key operations, meaning KeyPurpose::ENCRYPT and
-     * KeyPurpose::VERIFY must be allowed to succeed even if authorization requirements are not met.
+     * KeyCharacteristics.
      *
      * -- All Key Types --
      *
@@ -578,9 +577,9 @@ interface IKeyMintDevice {
      *
      * o Tag::USER_SECURE_ID must be enforced by this method if and only if the key also has
      *   Tag::AUTH_TIMEOUT (if it does not have Tag::AUTH_TIMEOUT, the Tag::USER_SECURE_ID
-     *   requirement must be enforced by update() and finish()).  If the key has both, then this
-     *   method must receive a non-empty HardwareAuthToken in the authToken argument.  For the auth
-     *   token to be valid, all of the following have to be true:
+     *   requirement must be enforced by updateAad(), update() and finish()).  If the key has both,
+     *   then this method must receive a non-empty HardwareAuthToken in the authToken argument.  For
+     *   the auth token to be valid, all of the following have to be true:
      *
      *   o The HMAC field must validate correctly.
      *
@@ -607,32 +606,30 @@ interface IKeyMintDevice {
      *
      * -- RSA Keys --
      *
-     * All RSA key operations must specify exactly one padding mode in inParams.  If unspecified or
+     * All RSA key operations must specify exactly one padding mode in params.  If unspecified or
      * specified more than once, the begin() must return ErrorCode::UNSUPPORTED_PADDING_MODE.
      *
-     * RSA signing and verification operations need a digest, as do RSA encryption and decryption
-     * operations with OAEP padding mode.  For those cases, the caller must specify exactly one
-     * digest in inParams.  If unspecified or specified more than once, begin() must return
+     * RSA signing operations need a digest, as do RSA encryption and decryption operations with
+     * OAEP padding mode.  For those cases, the caller must specify exactly one digest in params.
+     * If unspecified or specified more than once, begin() must return
      * ErrorCode::UNSUPPORTED_DIGEST.
      *
      * Private key operations (KeyPurpose::DECRYPT and KeyPurpose::SIGN) need authorization of
      * digest and padding, which means that the key authorizations need to contain the specified
      * values.  If not, begin() must return ErrorCode::INCOMPATIBLE_DIGEST or
-     * ErrorCode::INCOMPATIBLE_PADDING, as appropriate.  Public key operations (KeyPurpose::ENCRYPT
-     * and KeyPurpose::VERIFY) are permitted with unauthorized digest or padding modes.
+     * ErrorCode::INCOMPATIBLE_PADDING_MODE, as appropriate.
      *
      * With the exception of PaddingMode::NONE, all RSA padding modes are applicable only to certain
      * purposes.  Specifically, PaddingMode::RSA_PKCS1_1_5_SIGN and PaddingMode::RSA_PSS only
-     * support signing and verification, while PaddingMode::RSA_PKCS1_1_5_ENCRYPT and
-     * PaddingMode::RSA_OAEP only support encryption and decryption.  begin() must return
-     * ErrorCode::UNSUPPORTED_PADDING_MODE if the specified mode does not support the specified
-     * purpose.
+     * support signing, while PaddingMode::RSA_PKCS1_1_5_ENCRYPT and PaddingMode::RSA_OAEP only
+     * support encryption and decryption.  begin() must return ErrorCode::UNSUPPORTED_PADDING_MODE
+     * if the specified mode does not support the specified purpose.
      *
      * There are some important interactions between padding modes and digests:
      *
-     * o PaddingMode::NONE indicates that a "raw" RSA operation is performed.  If signing or
-     *   verifying, Digest::NONE is specified for the digest.  No digest is necessary for unpadded
-     *   encryption or decryption.
+     * o PaddingMode::NONE indicates that a "raw" RSA operation is performed.  If signing,
+     *   Digest::NONE is specified for the digest.  No digest is necessary for unpadded encryption
+     *   or decryption.
      *
      * o PaddingMode::RSA_PKCS1_1_5_SIGN padding requires a digest.  The digest may be Digest::NONE,
      *   in which case the KeyMint implementation cannot build a proper PKCS#1 v1.5 signature
@@ -644,37 +641,37 @@ interface IKeyMintDevice {
      *
      * o PaddingMode::RSA_PKCS1_1_1_5_ENCRYPT padding does not require a digest.
      *
-     * o PaddingMode::RSA_PSS padding requires a digest, which may not be Digest::NONE.  If
-     *   Digest::NONE is specified, the begin() must return ErrorCode::INCOMPATIBLE_DIGEST.  In
-     *   addition, the size of the RSA key must be at least 2 + D bytes larger than the output size
-     *   of the digest, where D is the size of the digest, in bytes.  Otherwise begin() must
-     *   return ErrorCode::INCOMPATIBLE_DIGEST.  The salt size must be D.
+     * o PaddingMode::RSA_PSS padding requires a digest, which must match one of the padding values
+     *   in the key authorizations, and which may not be Digest::NONE.  begin() must return
+     *   ErrorCode::INCOMPATIBLE_DIGEST if this is not the case.  In addition, the size of the RSA
+     *   key must be at least 2 + D bytes larger than the output size of the digest, where D is the
+     *   size of the digest, in bytes.  Otherwise begin() must return
+     *   ErrorCode::INCOMPATIBLE_DIGEST.  The salt size must be D.
      *
-     * o PaddingMode::RSA_OAEP padding requires a digest, which may not be Digest::NONE.  If
-     *   Digest::NONE is specified, begin() must return ErrorCode::INCOMPATIBLE_DIGEST.  The OAEP
-     *   mask generation function must be MGF1 and the MGF1 digest must be SHA1, regardless of the
-     *   OAEP digest specified.
+     * o PaddingMode::RSA_OAEP padding requires a digest, which must match one of the padding values
+     *   in the key authorizations, and which may not be Digest::NONE.  begin() must return
+     *   ErrorCode::INCOMPATIBLE_DIGEST if this is not the case.  RSA_OAEP padding also requires an
+     *   MGF1 digest, specified with Tag::RSA_OAEP_MGF_DIGEST, which must match one of the MGF1
+     *   padding values in the key authorizations and which may not be Digest::NONE.  begin() must
+     *   return ErrorCode::INCOMPATIBLE_MGF_DIGEST if this is not the case. The OAEP mask generation
+     *   function must be MGF1.
      *
      * -- EC Keys --
      *
-     * EC key operations must specify exactly one padding mode in inParams.  If unspecified or
-     * specified more than once, begin() must return ErrorCode::UNSUPPORTED_PADDING_MODE.
-     *
      * Private key operations (KeyPurpose::SIGN) need authorization of digest and padding, which
      * means that the key authorizations must contain the specified values.  If not, begin() must
-     * return ErrorCode::INCOMPATIBLE_DIGEST.  Public key operations (KeyPurpose::VERIFY) are
-     * permitted with unauthorized digest or padding.
+     * return ErrorCode::INCOMPATIBLE_DIGEST.
      *
      * -- AES Keys --
      *
      * AES key operations must specify exactly one block mode (Tag::BLOCK_MODE) and one padding mode
-     * (Tag::PADDING) in inParams.  If either value is unspecified or specified more than once,
+     * (Tag::PADDING) in params.  If either value is unspecified or specified more than once,
      * begin() must return ErrorCode::UNSUPPORTED_BLOCK_MODE or
      * ErrorCode::UNSUPPORTED_PADDING_MODE.  The specified modes must be authorized by the key,
      * otherwise begin() must return ErrorCode::INCOMPATIBLE_BLOCK_MODE or
      * ErrorCode::INCOMPATIBLE_PADDING_MODE.
      *
-     * If the block mode is BlockMode::GCM, inParams must specify Tag::MAC_LENGTH, and the specified
+     * If the block mode is BlockMode::GCM, params must specify Tag::MAC_LENGTH, and the specified
      * value must be a multiple of 8 that is not greater than 128 or less than the value of
      * Tag::MIN_MAC_LENGTH in the key authorizations.  For MAC lengths greater than 128 or
      * non-multiples of 8, begin() must return ErrorCode::UNSUPPORTED_MAC_LENGTH.  For values less
@@ -687,43 +684,63 @@ interface IKeyMintDevice {
      *
      * If the block mode is BlockMode::CBC, BlockMode::CTR, or BlockMode::GCM, an initialization
      * vector or nonce is required.  In most cases, callers shouldn't provide an IV or nonce and the
-     * IKeyMintDevice implementation must generate a random IV or nonce and return it via
-     * Tag::NONCE in outParams.  CBC and CTR IVs are 16 bytes.  GCM nonces are 12 bytes.  If the key
+     * IKeyMintDevice implementation must generate a random IV or nonce and return it via Tag::NONCE
+     * in outParams.  CBC and CTR IVs are 16 bytes.  GCM nonces are 12 bytes.  If the key
      * authorizations contain Tag::CALLER_NONCE, then the caller may provide an IV/nonce with
-     * Tag::NONCE in inParams.  If a nonce is provided when Tag::CALLER_NONCE is not authorized,
+     * Tag::NONCE in params, which must be of the correct size (if not, return
+     * ErrorCode::INVALID_NONCE).  If a nonce is provided when Tag::CALLER_NONCE is not authorized,
      * begin() must return ErrorCode::CALLER_NONCE_PROHIBITED.  If a nonce is not provided when
-     * Tag::CALLER_NONCE is authorized, IKeyMintDevice msut generate a random IV/nonce.
+     * Tag::CALLER_NONCE is authorized, IKeyMintDevice must generate a random IV/nonce.
+     *
+     * -- 3DES Keys --
+     *
+     * 3DES key operations must specify exactly one block mode (Tag::BLOCK_MODE) and one padding
+     * mode (Tag::PADDING) in params.  If either value is unspecified or specified more than once,
+     * begin() must return ErrorCode::UNSUPPORTED_BLOCK_MODE or
+     * ErrorCode::UNSUPPORTED_PADDING_MODE.  The specified modes must be authorized by the key,
+     * otherwise begin() must return ErrorCode::INCOMPATIBLE_BLOCK_MODE or
+     * ErrorCode::INCOMPATIBLE_PADDING_MODE.
+     *
+     * If the block mode is BlockMode::CBC, an initialization vector or nonce is required.  In most
+     * cases, callers shouldn't provide an IV or nonce and the IKeyMintDevice implementation must
+     * generate a random IV or nonce and return it via Tag::NONCE in outParams.  CBC IVs are 8
+     * bytes.  If the key authorizations contain Tag::CALLER_NONCE, then the caller may provide an
+     * IV/nonce with Tag::NONCE in params, which must be of the correct size (if not, return
+     * ErrorCode::INVALID_NONCE).  If a nonce is provided when Tag::CALLER_NONCE is not authorized,
+     * begin() must return ErrorCode::CALLER_NONCE_PROHIBITED.  If a nonce is not provided when
+     * Tag::CALLER_NONCE is authorized, IKeyMintDevice must generate a random IV/nonce.
+     *
      *
      * -- HMAC keys --
      *
-     * HMAC key operations must specify Tag::MAC_LENGTH in inParams.  The specified value must be a
+     * HMAC key operations must specify Tag::MAC_LENGTH in params.  The specified value must be a
      * multiple of 8 that is not greater than the digest length or less than the value of
      * Tag::MIN_MAC_LENGTH in the key authorizations.  For MAC lengths greater than the digest
      * length or non-multiples of 8, begin() must return ErrorCode::UNSUPPORTED_MAC_LENGTH.  For
      * values less than the key's minimum length, begin() must return ErrorCode::INVALID_MAC_LENGTH.
      *
-     * @param inPurpose The purpose of the operation, one of KeyPurpose::ENCRYPT,
-     *        KeyPurpose::DECRYPT, KeyPurpose::SIGN, KeyPurpose::VERIFY, or KeyPurpose::AGREE_KEY.
-     *        Note that for AEAD modes, encryption and decryption imply signing and verification,
-     *        respectively, but must be specified as KeyPurpose::ENCRYPT and KeyPurpose::DECRYPT.
+     * @param purpose The purpose of the operation, one of KeyPurpose::ENCRYPT, KeyPurpose::DECRYPT,
+     *        KeyPurpose::SIGN, KeyPurpose::VERIFY, or KeyPurpose::AGREE_KEY.  Note that for AEAD
+     *        modes, encryption and decryption imply signing and verification, respectively, but
+     *        must be specified as KeyPurpose::ENCRYPT and KeyPurpose::DECRYPT.
      *
-     * @param inKeyBlob The opaque key descriptor returned by generateKey() or importKey().  The key
+     * @param keyBlob The opaque key descriptor returned by generateKey() or importKey().  The key
      *        must have a purpose compatible with purpose and all of its usage requirements must be
      *        satisfied, or begin() must return an appropriate error code (see above).
      *
-     * @param inParams Additional parameters for the operation.  If Tag::APPLICATION_ID or
+     * @param params Additional parameters for the operation.  If Tag::APPLICATION_ID or
      *        Tag::APPLICATION_DATA were provided during generation, they must be provided here, or
      *        the operation must fail with ErrorCode::INVALID_KEY_BLOB.  For operations that require
-     *        a nonce or IV, on keys that were generated with Tag::CALLER_NONCE, inParams may
+     *        a nonce or IV, on keys that were generated with Tag::CALLER_NONCE, params may
      *        contain a tag Tag::NONCE.  If Tag::NONCE is provided for a key without
      *        Tag:CALLER_NONCE, ErrorCode::CALLER_NONCE_PROHIBITED must be returned.
      *
-     * @param inAuthToken Authentication token.
+     * @param authToken Authentication token.
      *
      * @return BeginResult as output, which contains the challenge, KeyParameters which haves
      *         additional data from the operation initialization, notably to return the IV or nonce
      *         from operations that generate an IV or nonce, and IKeyMintOperation object pointer
-     *         which is used to perform update(), finish() or abort() operations.
+     *         which is used to perform updateAad(), update(), finish() or abort() operations.
      */
     BeginResult begin(in KeyPurpose purpose, in byte[] keyBlob, in KeyParameter[] params,
             in @nullable HardwareAuthToken authToken);
@@ -740,7 +757,7 @@ interface IKeyMintDevice {
      * Note that the IKeyMintDevice UNLOCKED_DEVICE_REQUIRED semantics are slightly different from
      * the UNLOCKED_DEVICE_REQUIRED semantics enforced by keystore.  Keystore handles device locking
      * on a per-user basis.  Because auth tokens do not contain an Android user ID, it's not
-     * possible to replicate the keystore enformcement logic in IKeyMintDevice.  So from the
+     * possible to replicate the keystore enforcement logic in IKeyMintDevice.  So from the
      * IKeyMintDevice perspective, any user unlock unlocks all UNLOCKED_DEVICE_REQUIRED keys.
      * Keystore will continue enforcing the per-user device locking.
      *
@@ -766,7 +783,7 @@ interface IKeyMintDevice {
      */
     void earlyBootEnded();
 
-    /*
+    /**
      * Called by the client to get a wrapped per-boot ephemeral key from a wrapped storage key.
      * Clients will then use the returned per-boot ephemeral key in place of the wrapped storage
      * key. Whenever the hardware is presented with a per-boot ephemeral key for an operation, it
@@ -786,4 +803,26 @@ interface IKeyMintDevice {
      *         place of the input storageKeyBlob
      */
     byte[] convertStorageKeyToEphemeral(in byte[] storageKeyBlob);
+
+    /**
+     * Returns parameters associated with the provided key. This should match the
+     * KeyCharacteristics present in the KeyCreationResult returned by generateKey(),
+     * importKey(), or importWrappedKey().
+     *
+     * @param keyBlob The opaque descriptor returned by generateKey, importKey or importWrappedKey.
+     *
+     * @param appId An opaque byte string identifying the client.  This value must match the
+     *        Tag::APPLICATION_ID data provided during key generation/import.  Without the correct
+     *        value, it must be computationally infeasible for the secure hardware to obtain the
+     *        key material.
+     *
+     * @param appData An opaque byte string provided by the application.  This value must match the
+     *        Tag::APPLICATION_DATA data provided during key generation/import.  Without the
+     *        correct value, it must be computationally infeasible for the secure hardware to
+     *        obtain the key material.
+     *
+     * @return Characteristics of the generated key. See KeyCreationResult for details.
+     */
+    KeyCharacteristics[] getKeyCharacteristics(
+            in byte[] keyBlob, in byte[] appId, in byte[] appData);
 }
