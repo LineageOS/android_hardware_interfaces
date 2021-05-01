@@ -23,10 +23,10 @@ package android.hardware.security.keymint;
 @VintfStability
 @Backing(type="int")
 enum KeyPurpose {
-    /* Usable with RSA, EC and AES keys. */
+    /* Usable with RSA, 3DES and AES keys. */
     ENCRYPT = 0,
 
-    /* Usable with RSA, EC and AES keys. */
+    /* Usable with RSA, 3DES and AES keys. */
     DECRYPT = 1,
 
     /* Usable with RSA, EC and HMAC keys. */
@@ -36,6 +36,7 @@ enum KeyPurpose {
     VERIFY = 3,
 
     /* 4 is reserved */
+
     /* Usable with wrapping keys. */
     WRAP_KEY = 5,
 
