@@ -38,7 +38,7 @@ Nfc::Nfc(nfc_nci_device_t* device) : mDevice(device) {}
 ::android::hardware::Return<NfcStatus> Nfc::coreInitialized(const hidl_vec<uint8_t>& data)  {
     hidl_vec<uint8_t> copy = data;
 
-    if (mDevice == nullptr) {
+    if (mDevice == nullptr || copy.size() == 0) {
         return NfcStatus::FAILED;
     }
     int ret = mDevice->core_initialized(mDevice, &copy[0]);
