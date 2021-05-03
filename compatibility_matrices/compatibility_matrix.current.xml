@@ -316,7 +316,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="false">
+    <hal format="hidl" optional="true">
         <name>android.hardware.keymaster</name>
         <version>3.0</version>
         <version>4.0-1</version>
