@@ -27,7 +27,19 @@ import android.hardware.security.keymint.KeyParameter;
 @VintfStability
 @RustDerive(Clone=true, Eq=true, PartialEq=true, Ord=true, PartialOrd=true, Hash=true)
 parcelable AttestationKey {
+    /**
+     * Key blob containing a key pair with KeyPurpose::ATTEST_KEY
+     */
     byte[] keyBlob;
+
+    /**
+     * Key parameters needed to use the key in keyBlob, notably Tag::APPLICATION_ID and
+     * Tag::APPLICATION_DATA, if they were provided during generation of the key in keyBlob.
+     */
     KeyParameter[] attestKeyParams;
+
+    /**
+     * The issuerSubjectName to use in the generated attestation.
+     */
     byte[] issuerSubjectName;
 }
