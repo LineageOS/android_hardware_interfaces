@@ -124,16 +124,18 @@ TEST_P(AttestKeyTest, AllRsaSizes) {
         EXPECT_EQ(attested_key_cert_chain.size(), 2);
 
         /*
-         * Use attestation key to sign EC key
+         * Use attestation key to sign EC key. Specify a CREATION_DATETIME for this one.
          */
         attested_key_characteristics.resize(0);
         attested_key_cert_chain.resize(0);
+        uint64_t timestamp = 1619621648000;
         EXPECT_EQ(ErrorCode::OK,
                   GenerateKey(AuthorizationSetBuilder()
                                       .EcdsaSigningKey(EcCurve::P_256)
                                       .Authorization(TAG_NO_AUTH_REQUIRED)
                                       .AttestationChallenge("foo")
                                       .AttestationApplicationId("bar")
+                                      .Authorization(TAG_CREATION_DATETIME, timestamp)
                                       .SetDefaultValidity(),
                               attest_key, &attested_key_blob, &attested_key_characteristics,
                               &attested_key_cert_chain));
@@ -143,6 +145,12 @@ TEST_P(AttestKeyTest, AllRsaSizes) {
 
         hw_enforced = HwEnforcedAuthorizations(attested_key_characteristics);
         sw_enforced = SwEnforcedAuthorizations(attested_key_characteristics);
+        // The client-specified CREATION_DATETIME should be in sw_enforced.
+        // Its presence will also trigger verify_attestation_record() to check that it
+        // is in the attestation extension with a matching value.
+        EXPECT_TRUE(sw_enforced.Contains(TAG_CREATION_DATETIME, timestamp))
+                << "expected CREATION_TIMESTAMP in sw_enforced:" << sw_enforced
+                << " not in hw_enforced:" << hw_enforced;
         EXPECT_TRUE(verify_attestation_record("foo", "bar", sw_enforced, hw_enforced, SecLevel(),
                                               attested_key_cert_chain[0].encodedCertificate));
 
@@ -476,6 +484,53 @@ TEST_P(AttestKeyTest, AlternateAttestKeyChaining) {
 
     for (int i = 0; i < chain_size; i++) {
         CheckedDeleteKey(&key_blob_list[i]);
+    }
+}
+
+TEST_P(AttestKeyTest, MissingChallenge) {
+    for (auto size : ValidKeySizes(Algorithm::RSA)) {
+        /*
+         * Create attestation key.
+         */
+        AttestationKey attest_key;
+        vector<KeyCharacteristics> attest_key_characteristics;
+        vector<Certificate> attest_key_cert_chain;
+        ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                     .RsaSigningKey(size, 65537)
+                                                     .AttestKey()
+                                                     .SetDefaultValidity(),
+                                             {} /* attestation signing key */, &attest_key.keyBlob,
+                                             &attest_key_characteristics, &attest_key_cert_chain));
+
+        EXPECT_EQ(attest_key_cert_chain.size(), 1);
+        EXPECT_TRUE(IsSelfSigned(attest_key_cert_chain)) << "Failed on size " << size;
+
+        /*
+         * Use attestation key to sign RSA / ECDSA key but forget to provide a challenge
+         */
+        attest_key.issuerSubjectName = make_name_from_str("Android Keystore Key");
+        vector<uint8_t> attested_key_blob;
+        vector<KeyCharacteristics> attested_key_characteristics;
+        vector<Certificate> attested_key_cert_chain;
+        EXPECT_EQ(ErrorCode::INVALID_ARGUMENT,
+                  GenerateKey(AuthorizationSetBuilder()
+                                      .RsaSigningKey(2048, 65537)
+                                      .Authorization(TAG_NO_AUTH_REQUIRED)
+                                      .AttestationApplicationId("bar")
+                                      .SetDefaultValidity(),
+                              attest_key, &attested_key_blob, &attested_key_characteristics,
+                              &attested_key_cert_chain));
+
+        EXPECT_EQ(ErrorCode::INVALID_ARGUMENT,
+                  GenerateKey(AuthorizationSetBuilder()
+                                      .EcdsaSigningKey(EcCurve::P_256)
+                                      .Authorization(TAG_NO_AUTH_REQUIRED)
+                                      .AttestationApplicationId("bar")
+                                      .SetDefaultValidity(),
+                              attest_key, &attested_key_blob, &attested_key_characteristics,
+                              &attested_key_cert_chain));
+
+        CheckedDeleteKey(&attest_key.keyBlob);
     }
 }
 
