@@ -95,12 +95,21 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
 
     ErrorCode ImportWrappedKey(string wrapped_key, string wrapping_key,
                                const AuthorizationSet& wrapping_key_desc, string masking_key,
-                               const AuthorizationSet& unwrapping_params);
+                               const AuthorizationSet& unwrapping_params, int64_t password_sid,
+                               int64_t biometric_sid);
+    ErrorCode ImportWrappedKey(string wrapped_key, string wrapping_key,
+                               const AuthorizationSet& wrapping_key_desc, string masking_key,
+                               const AuthorizationSet& unwrapping_params) {
+        return ImportWrappedKey(wrapped_key, wrapping_key, wrapping_key_desc, masking_key,
+                                unwrapping_params, 0 /* password_sid */, 0 /* biometric_sid */);
+    }
 
     ErrorCode DeleteKey(vector<uint8_t>* key_blob, bool keep_key_blob = false);
     ErrorCode DeleteKey(bool keep_key_blob = false);
 
     ErrorCode DeleteAllKeys();
+
+    ErrorCode DestroyAttestationIds();
 
     void CheckedDeleteKey(vector<uint8_t>* key_blob, bool keep_key_blob = false);
     void CheckedDeleteKey();
@@ -166,6 +175,8 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
                           const vector<uint8_t>& iv_in);
     string EncryptMessage(const string& message, BlockMode block_mode, PaddingMode padding,
                           uint8_t mac_length_bits, const vector<uint8_t>& iv_in);
+    string EncryptMessage(const string& message, BlockMode block_mode, PaddingMode padding,
+                          uint8_t mac_length_bits);
 
     string DecryptMessage(const vector<uint8_t>& key_blob, const string& ciphertext,
                           const AuthorizationSet& params);
@@ -268,6 +279,7 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     uint32_t os_version_;
     uint32_t os_patch_level_;
     uint32_t vendor_patch_level_;
+    bool timestamp_token_required_;
 
     SecurityLevel securityLevel_;
     string name_;
