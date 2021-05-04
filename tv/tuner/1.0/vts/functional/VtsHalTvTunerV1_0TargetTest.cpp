@@ -267,7 +267,9 @@ void TunerRecordHidlTest::attachSingleFilterToRecordDvrTest(FilterConfig filterC
     uint32_t demuxId;
     sp<IDemux> demux;
     ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
+    mDvrTests.setDemux(demux);
 
+    DvrConfig dvrSourceConfig;
     if (record.hasFrontendConnection) {
         uint32_t feId;
         mFrontendTests.getFrontendIdByType(frontendConf.type, feId);
@@ -275,13 +277,17 @@ void TunerRecordHidlTest::attachSingleFilterToRecordDvrTest(FilterConfig filterC
         ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
         ASSERT_TRUE(mFrontendTests.setFrontendCallback());
         ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
+    } else {
+        dvrSourceConfig = dvrMap[record.dvrSourceId];
+        ASSERT_TRUE(mDvrTests.openDvrInDemux(dvrSourceConfig.type, dvrSourceConfig.bufferSize));
+        ASSERT_TRUE(mDvrTests.configDvrPlayback(dvrSourceConfig.settings));
+        ASSERT_TRUE(mDvrTests.getDvrPlaybackMQDescriptor());
     }
 
     uint32_t filterId;
     sp<IFilter> filter;
     mFilterTests.setDemux(demux);
 
-    mDvrTests.setDemux(demux);
     ASSERT_TRUE(mDvrTests.openDvrInDemux(dvrConf.type, dvrConf.bufferSize));
     ASSERT_TRUE(mDvrTests.configDvrRecord(dvrConf.settings));
     ASSERT_TRUE(mDvrTests.getDvrRecordMQDescriptor());
@@ -327,6 +333,7 @@ void TunerDescramblerHidlTest::scrambledBroadcastTest(set<struct FilterConfig> m
         mFrontendTests.setDemux(demux);
     } else {
         dvrSourceConfig = dvrMap[descrambling.dvrSourceId];
+        mDvrTests.setDemux(demux);
         ASSERT_TRUE(mDvrTests.openDvrInDemux(dvrSourceConfig.type, dvrSourceConfig.bufferSize));
         ASSERT_TRUE(mDvrTests.configDvrPlayback(dvrSourceConfig.settings));
         ASSERT_TRUE(mDvrTests.getDvrPlaybackMQDescriptor());
@@ -641,7 +648,7 @@ TEST_P(TunerRecordHidlTest, RecordDataFlowWithTsRecordFilterTest) {
 
 TEST_P(TunerRecordHidlTest, LnbRecordDataFlowWithTsRecordFilterTest) {
     description("Feed ts data from Fe with Lnb to recording and test with ts record filter");
-    if (lnbRecord.support) {
+    if (!lnbRecord.support) {
         return;
     }
     recordSingleFilterTestWithLnb(filterMap[lnbRecord.recordFilterId],
@@ -651,7 +658,7 @@ TEST_P(TunerRecordHidlTest, LnbRecordDataFlowWithTsRecordFilterTest) {
 
 TEST_P(TunerDescramblerHidlTest, CreateDescrambler) {
     description("Create Descrambler");
-    if (descrambling.support) {
+    if (!descrambling.support) {
         return;
     }
     uint32_t demuxId;
@@ -678,7 +685,7 @@ TEST_P(TunerDescramblerHidlTest, CreateDescrambler) {
 
 TEST_P(TunerDescramblerHidlTest, ScrambledBroadcastDataFlowMediaFiltersTest) {
     description("Test ts audio filter in scrambled broadcast use case");
-    if (descrambling.support) {
+    if (!descrambling.support) {
         return;
     }
     set<FilterConfig> filterConfs;
