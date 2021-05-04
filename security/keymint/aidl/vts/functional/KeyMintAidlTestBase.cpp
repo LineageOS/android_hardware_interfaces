@@ -167,6 +167,7 @@ void KeyMintAidlTestBase::InitializeKeyMint(std::shared_ptr<IKeyMintDevice> keyM
     securityLevel_ = info.securityLevel;
     name_.assign(info.keyMintName.begin(), info.keyMintName.end());
     author_.assign(info.keyMintAuthorName.begin(), info.keyMintAuthorName.end());
+    timestamp_token_required_ = info.timestampTokenRequired;
 
     os_version_ = getOsVersion();
     os_patch_level_ = getOsPatchlevel();
@@ -273,7 +274,8 @@ ErrorCode KeyMintAidlTestBase::ImportKey(const AuthorizationSet& key_desc, KeyFo
 ErrorCode KeyMintAidlTestBase::ImportWrappedKey(string wrapped_key, string wrapping_key,
                                                 const AuthorizationSet& wrapping_key_desc,
                                                 string masking_key,
-                                                const AuthorizationSet& unwrapping_params) {
+                                                const AuthorizationSet& unwrapping_params,
+                                                int64_t password_sid, int64_t biometric_sid) {
     EXPECT_EQ(ErrorCode::OK, ImportKey(wrapping_key_desc, KeyFormat::PKCS8, wrapping_key));
 
     key_characteristics_.clear();
@@ -282,8 +284,7 @@ ErrorCode KeyMintAidlTestBase::ImportWrappedKey(string wrapped_key, string wrapp
     Status result = keymint_->importWrappedKey(
             vector<uint8_t>(wrapped_key.begin(), wrapped_key.end()), key_blob_,
             vector<uint8_t>(masking_key.begin(), masking_key.end()),
-            unwrapping_params.vector_data(), 0 /* passwordSid */, 0 /* biometricSid */,
-            &creationResult);
+            unwrapping_params.vector_data(), password_sid, biometric_sid, &creationResult);
 
     if (result.isOk()) {
         EXPECT_PRED2(KeyCharacteristicsBasicallyValid, SecLevel(),
@@ -329,6 +330,11 @@ ErrorCode KeyMintAidlTestBase::DeleteKey(bool keep_key_blob) {
 ErrorCode KeyMintAidlTestBase::DeleteAllKeys() {
     Status result = keymint_->deleteAllKeys();
     EXPECT_TRUE(result.isOk()) << result.getServiceSpecificError() << endl;
+    return GetReturnErrorCode(result);
+}
+
+ErrorCode KeyMintAidlTestBase::DestroyAttestationIds() {
+    Status result = keymint_->destroyAttestationIds();
     return GetReturnErrorCode(result);
 }
 
@@ -649,6 +655,18 @@ string KeyMintAidlTestBase::EncryptMessage(const string& message, BlockMode bloc
                           .Padding(padding)
                           .Authorization(TAG_MAC_LENGTH, mac_length_bits)
                           .Authorization(TAG_NONCE, iv_in);
+    AuthorizationSet out_params;
+    string ciphertext = EncryptMessage(message, params, &out_params);
+    return ciphertext;
+}
+
+string KeyMintAidlTestBase::EncryptMessage(const string& message, BlockMode block_mode,
+                                           PaddingMode padding, uint8_t mac_length_bits) {
+    SCOPED_TRACE("EncryptMessage");
+    auto params = AuthorizationSetBuilder()
+                          .BlockMode(block_mode)
+                          .Padding(padding)
+                          .Authorization(TAG_MAC_LENGTH, mac_length_bits);
     AuthorizationSet out_params;
     string ciphertext = EncryptMessage(message, params, &out_params);
     return ciphertext;
