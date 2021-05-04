@@ -14,9 +14,14 @@ cc_test {
         "use_libaidlvintf_gtest_helper_static",
     ],
     srcs: ["VtsHalBiometricsFaceTargetTest.cpp"],
+    static_libs: [
+        "android.hardware.biometrics.common-V1-ndk_platform",
+        "android.hardware.biometrics.face-V1-ndk_platform",
+        "android.hardware.common-V2-ndk_platform",
+        "android.hardware.keymaster-V3-ndk_platform",
+    ],
     shared_libs: [
         "libbinder_ndk",
-        "android.hardware.biometrics.face-V1-ndk_platform",
     ],
     test_suites: [
         "general-tests",
