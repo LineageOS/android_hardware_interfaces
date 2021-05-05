@@ -201,7 +201,7 @@ TEST_P(GnssHalTest, TestGnssPowerIndication) {
 
     // Get a location and request another GnssPowerStats
     gnss_cb_->location_cbq_.reset();
-    StartAndCheckFirstLocation();
+    StartAndCheckFirstLocation(/* min_interval_msec= */ 1000, /* low_power_mode= */ false);
 
     // Request and verify the 2nd GnssPowerStats has larger values than the 1st one
     iGnssPowerIndication->requestGnssPowerStats();
