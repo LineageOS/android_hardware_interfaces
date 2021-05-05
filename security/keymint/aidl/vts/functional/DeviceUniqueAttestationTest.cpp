@@ -70,7 +70,6 @@ TEST_P(DeviceUniqueAttestationTest, RsaNonStrongBoxUnimplemented) {
                                       .Digest(Digest::SHA_2_256)
                                       .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN)
                                       .Authorization(TAG_INCLUDE_UNIQUE_ID)
-                                      .Authorization(TAG_NO_AUTH_REQUIRED)
                                       .AttestationChallenge("challenge")
                                       .AttestationApplicationId("foo")
                                       .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION),
@@ -124,7 +123,6 @@ TEST_P(DeviceUniqueAttestationTest, RsaDeviceUniqueAttestation) {
                                       .Digest(Digest::SHA_2_256)
                                       .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN)
                                       .Authorization(TAG_INCLUDE_UNIQUE_ID)
-                                      .Authorization(TAG_NO_AUTH_REQUIRED)
                                       .AttestationChallenge("challenge")
                                       .AttestationApplicationId("foo")
                                       .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION),
