@@ -921,6 +921,23 @@ TEST_P(NewKeyGenerationTest, HmacDigestNone) {
                               .Authorization(TAG_MIN_MAC_LENGTH, 128)));
 }
 
+/**
+ * NewKeyGenerationTest.AesInvalidKeySize
+ *
+ * Verifies that specifying an invalid key size for AES key generation returns
+ * UNSUPPORTED_KEY_SIZE.
+ */
+TEST_P(NewKeyGenerationTest, AesInvalidKeySize) {
+    for (auto key_size : InvalidKeySizes(Algorithm::AES)) {
+        ASSERT_EQ(ErrorCode::UNSUPPORTED_KEY_SIZE,
+                  GenerateKey(AuthorizationSetBuilder()
+                                      .Authorization(TAG_NO_AUTH_REQUIRED)
+                                      .AesEncryptionKey(key_size)
+                                      .Authorization(TAG_BLOCK_MODE, BlockMode::ECB)
+                                      .Padding(PaddingMode::NONE)));
+    }
+}
+
 INSTANTIATE_KEYMASTER_HIDL_TEST(NewKeyGenerationTest);
 
 typedef KeymasterHidlTest SigningOperationsTest;
