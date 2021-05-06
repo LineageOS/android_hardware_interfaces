@@ -59,6 +59,11 @@ using ::testing::MatchesRegex;
 namespace test {
 
 namespace {
+
+// Overhead for PKCS#1 v1.5 signature padding of undigested messages.  Digested messages have
+// additional overhead, for the digest algorithmIdentifier required by PKCS#1.
+const size_t kPkcs1UndigestedSignaturePaddingOverhead = 11;
+
 typedef KeyMintAidlTestBase::KeyData KeyData;
 // Predicate for testing basic characteristics validity in generation or import.
 bool KeyCharacteristicsBasicallyValid(SecurityLevel secLevel,
@@ -588,6 +593,110 @@ void KeyMintAidlTestBase::VerifyMessage(const string& message, const string& sig
                                         const AuthorizationSet& params) {
     SCOPED_TRACE("VerifyMessage");
     VerifyMessage(key_blob_, message, signature, params);
+}
+
+void KeyMintAidlTestBase::LocalVerifyMessage(const string& message, const string& signature,
+                                             const AuthorizationSet& params) {
+    SCOPED_TRACE("LocalVerifyMessage");
+
+    // Retrieve the public key from the leaf certificate.
+    ASSERT_GT(cert_chain_.size(), 0);
+    X509_Ptr key_cert(parse_cert_blob(cert_chain_[0].encodedCertificate));
+    ASSERT_TRUE(key_cert.get());
+    EVP_PKEY_Ptr pub_key(X509_get_pubkey(key_cert.get()));
+    ASSERT_TRUE(pub_key.get());
+
+    Digest digest = params.GetTagValue(TAG_DIGEST).value();
+    PaddingMode padding = PaddingMode::NONE;
+    auto tag = params.GetTagValue(TAG_PADDING);
+    if (tag.has_value()) {
+        padding = tag.value();
+    }
+
+    if (digest == Digest::NONE) {
+        switch (EVP_PKEY_id(pub_key.get())) {
+            case EVP_PKEY_EC: {
+                vector<uint8_t> data((EVP_PKEY_bits(pub_key.get()) + 7) / 8);
+                size_t data_size = std::min(data.size(), message.size());
+                memcpy(data.data(), message.data(), data_size);
+                EC_KEY_Ptr ecdsa(EVP_PKEY_get1_EC_KEY(pub_key.get()));
+                ASSERT_TRUE(ecdsa.get());
+                ASSERT_EQ(1,
+                          ECDSA_verify(0, reinterpret_cast<const uint8_t*>(data.data()), data_size,
+                                       reinterpret_cast<const uint8_t*>(signature.data()),
+                                       signature.size(), ecdsa.get()));
+                break;
+            }
+            case EVP_PKEY_RSA: {
+                vector<uint8_t> data(EVP_PKEY_size(pub_key.get()));
+                size_t data_size = std::min(data.size(), message.size());
+                memcpy(data.data(), message.data(), data_size);
+
+                RSA_Ptr rsa(EVP_PKEY_get1_RSA(const_cast<EVP_PKEY*>(pub_key.get())));
+                ASSERT_TRUE(rsa.get());
+
+                size_t key_len = RSA_size(rsa.get());
+                int openssl_padding = RSA_NO_PADDING;
+                switch (padding) {
+                    case PaddingMode::NONE:
+                        ASSERT_TRUE(data_size <= key_len);
+                        ASSERT_EQ(key_len, signature.size());
+                        openssl_padding = RSA_NO_PADDING;
+                        break;
+                    case PaddingMode::RSA_PKCS1_1_5_SIGN:
+                        ASSERT_TRUE(data_size + kPkcs1UndigestedSignaturePaddingOverhead <=
+                                    key_len);
+                        openssl_padding = RSA_PKCS1_PADDING;
+                        break;
+                    default:
+                        ADD_FAILURE() << "Unsupported RSA padding mode " << padding;
+                }
+
+                vector<uint8_t> decrypted_data(key_len);
+                int bytes_decrypted = RSA_public_decrypt(
+                        signature.size(), reinterpret_cast<const uint8_t*>(signature.data()),
+                        decrypted_data.data(), rsa.get(), openssl_padding);
+                ASSERT_GE(bytes_decrypted, 0);
+
+                const uint8_t* compare_pos = decrypted_data.data();
+                size_t bytes_to_compare = bytes_decrypted;
+                uint8_t zero_check_result = 0;
+                if (padding == PaddingMode::NONE && data_size < bytes_to_compare) {
+                    // If the data is short, for "unpadded" signing we zero-pad to the left.  So
+                    // during verification we should have zeros on the left of the decrypted data.
+                    // Do a constant-time check.
+                    const uint8_t* zero_end = compare_pos + bytes_to_compare - data_size;
+                    while (compare_pos < zero_end) zero_check_result |= *compare_pos++;
+                    ASSERT_EQ(0, zero_check_result);
+                    bytes_to_compare = data_size;
+                }
+                ASSERT_EQ(0, memcmp(compare_pos, data.data(), bytes_to_compare));
+                break;
+            }
+            default:
+                ADD_FAILURE() << "Unknown public key type";
+        }
+    } else {
+        EVP_MD_CTX digest_ctx;
+        EVP_MD_CTX_init(&digest_ctx);
+        EVP_PKEY_CTX* pkey_ctx;
+        const EVP_MD* md = openssl_digest(digest);
+        ASSERT_NE(md, nullptr);
+        ASSERT_EQ(1, EVP_DigestVerifyInit(&digest_ctx, &pkey_ctx, md, nullptr, pub_key.get()));
+
+        if (padding == PaddingMode::RSA_PSS) {
+            EXPECT_GT(EVP_PKEY_CTX_set_rsa_padding(pkey_ctx, RSA_PKCS1_PSS_PADDING), 0);
+            EXPECT_GT(EVP_PKEY_CTX_set_rsa_pss_saltlen(pkey_ctx, EVP_MD_size(md)), 0);
+        }
+
+        ASSERT_EQ(1, EVP_DigestVerifyUpdate(&digest_ctx,
+                                            reinterpret_cast<const uint8_t*>(message.data()),
+                                            message.size()));
+        ASSERT_EQ(1, EVP_DigestVerifyFinal(&digest_ctx,
+                                           reinterpret_cast<const uint8_t*>(signature.data()),
+                                           signature.size()));
+        EVP_MD_CTX_cleanup(&digest_ctx);
+    }
 }
 
 string KeyMintAidlTestBase::EncryptMessage(const vector<uint8_t>& key_blob, const string& message,
