@@ -254,7 +254,7 @@ TEST_P(GnssHalTest, TestGnssAntennaInfo) {
  */
 TEST_P(GnssHalTest, TestGnssSvInfoFields) {
     gnss_cb_->location_cbq_.reset();
-    StartAndCheckFirstLocation();
+    StartAndCheckFirstLocation(/* min_interval_msec= */ 1000, /* low_power_mode= */ false);
     int location_called_count = gnss_cb_->location_cbq_.calledCount();
 
     // Tolerate 1 less sv status to handle edge cases in reporting.

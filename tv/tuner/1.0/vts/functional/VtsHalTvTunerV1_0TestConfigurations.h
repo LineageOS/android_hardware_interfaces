@@ -216,8 +216,10 @@ inline bool validateConnections() {
         return false;
     }
 
-    bool filterIsValid = filterMap.find(live.audioFilterId) != filterMap.end() &&
-                         filterMap.find(live.videoFilterId) != filterMap.end();
+    bool filterIsValid = (live.hasFrontendConnection)
+                             ? filterMap.find(live.audioFilterId) != filterMap.end() &&
+                               filterMap.find(live.videoFilterId) != filterMap.end()
+                             : true;
     filterIsValid &= playback.support
                              ? (filterMap.find(playback.audioFilterId) != filterMap.end() &&
                                 filterMap.find(playback.videoFilterId) != filterMap.end())

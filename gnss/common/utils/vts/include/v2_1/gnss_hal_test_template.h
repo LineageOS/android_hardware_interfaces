@@ -107,7 +107,7 @@ class GnssHalTestTemplate : public testing::TestWithParam<std::string> {
      *
      * returns  true if a location was successfully generated
      */
-    bool StartAndCheckFirstLocation();
+    bool StartAndCheckFirstLocation(const int min_interval_msec, const bool low_power_mode);
 
     /*
      * CheckLocation:
@@ -234,7 +234,9 @@ void GnssHalTestTemplate<T_IGnss>::SetPositionMode(const int min_interval_msec,
 }
 
 template <class T_IGnss>
-bool GnssHalTestTemplate<T_IGnss>::StartAndCheckFirstLocation() {
+bool GnssHalTestTemplate<T_IGnss>::StartAndCheckFirstLocation(const int min_interval_msec,
+                                                              const bool low_power_mode) {
+    SetPositionMode(min_interval_msec, low_power_mode);
     const auto result = gnss_hal_->start();
 
     EXPECT_TRUE(result.isOk());
@@ -274,9 +276,7 @@ void GnssHalTestTemplate<T_IGnss>::StartAndCheckLocations(int count) {
     const int kLocationTimeoutSubsequentSec = 2;
     const bool kLowPowerMode = false;
 
-    SetPositionMode(kMinIntervalMsec, kLowPowerMode);
-
-    EXPECT_TRUE(StartAndCheckFirstLocation());
+    EXPECT_TRUE(StartAndCheckFirstLocation(kMinIntervalMsec, kLowPowerMode));
 
     for (int i = 1; i < count; i++) {
         EXPECT_TRUE(gnss_cb_->location_cbq_.retrieve(gnss_cb_->last_location_,
