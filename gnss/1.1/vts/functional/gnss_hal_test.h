@@ -106,7 +106,8 @@ class GnssHalTest : public testing::TestWithParam<std::string> {
      *
      * returns  true if a location was successfully generated
      */
-    bool StartAndCheckFirstLocation(bool strict);
+    bool StartAndCheckFirstLocation(const bool strict, const int min_interval_msec,
+                                    const bool low_power_mode);
 
     /*
      * CheckLocation:
