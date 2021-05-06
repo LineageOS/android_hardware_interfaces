@@ -482,7 +482,6 @@ class NewKeyGenerationTest : public KeyMintAidlTestBase {
     void CheckBaseParams(const vector<KeyCharacteristics>& keyCharacteristics) {
         AuthorizationSet auths = CheckCommonParams(keyCharacteristics);
         EXPECT_TRUE(auths.Contains(TAG_PURPOSE, KeyPurpose::SIGN));
-        EXPECT_TRUE(auths.Contains(TAG_PURPOSE, KeyPurpose::VERIFY));
 
         // Check that some unexpected tags/values are NOT present.
         EXPECT_FALSE(auths.Contains(TAG_PURPOSE, KeyPurpose::ENCRYPT));
@@ -495,7 +494,6 @@ class NewKeyGenerationTest : public KeyMintAidlTestBase {
         EXPECT_TRUE(auths.Contains(TAG_PURPOSE, KeyPurpose::DECRYPT));
 
         EXPECT_FALSE(auths.Contains(TAG_PURPOSE, KeyPurpose::SIGN));
-        EXPECT_FALSE(auths.Contains(TAG_PURPOSE, KeyPurpose::VERIFY));
     }
 
     AuthorizationSet CheckCommonParams(const vector<KeyCharacteristics>& keyCharacteristics) {
@@ -1986,6 +1984,50 @@ TEST_P(SigningOperationsTest, RsaSuccess) {
     string message = "12345678901234567890123456789012";
     string signature = SignMessage(
             message, AuthorizationSetBuilder().Digest(Digest::NONE).Padding(PaddingMode::NONE));
+    LocalVerifyMessage(message, signature,
+                       AuthorizationSetBuilder().Digest(Digest::NONE).Padding(PaddingMode::NONE));
+}
+
+/*
+ * SigningOperationsTest.RsaAllPaddingsAndDigests
+ *
+ * Verifies RSA signature/verification for all padding modes and digests.
+ */
+TEST_P(SigningOperationsTest, RsaAllPaddingsAndDigests) {
+    auto authorizations = AuthorizationSetBuilder()
+                                  .Authorization(TAG_NO_AUTH_REQUIRED)
+                                  .RsaSigningKey(2048, 65537)
+                                  .Digest(ValidDigests(true /* withNone */, true /* withMD5 */))
+                                  .Padding(PaddingMode::NONE)
+                                  .Padding(PaddingMode::RSA_PSS)
+                                  .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN)
+                                  .SetDefaultValidity();
+
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(authorizations));
+
+    string message(128, 'a');
+    string corrupt_message(message);
+    ++corrupt_message[corrupt_message.size() / 2];
+
+    for (auto padding :
+         {PaddingMode::NONE, PaddingMode::RSA_PSS, PaddingMode::RSA_PKCS1_1_5_SIGN}) {
+        for (auto digest : ValidDigests(true /* withNone */, true /* withMD5 */)) {
+            if (padding == PaddingMode::NONE && digest != Digest::NONE) {
+                // Digesting only makes sense with padding.
+                continue;
+            }
+
+            if (padding == PaddingMode::RSA_PSS && digest == Digest::NONE) {
+                // PSS requires digesting.
+                continue;
+            }
+
+            string signature =
+                    SignMessage(message, AuthorizationSetBuilder().Digest(digest).Padding(padding));
+            LocalVerifyMessage(message, signature,
+                               AuthorizationSetBuilder().Digest(digest).Padding(padding));
+        }
+    }
 }
 
 /*
@@ -2432,6 +2474,39 @@ TEST_P(SigningOperationsTest, EcdsaAllSizesAndHashes) {
 }
 
 /*
+ * SigningOperationsTest.EcdsaAllDigestsAndCurves
+ *
+ * Verifies ECDSA signature/verification for all digests and curves.
+ */
+TEST_P(SigningOperationsTest, EcdsaAllDigestsAndCurves) {
+    auto digests = ValidDigests(true /* withNone */, false /* withMD5 */);
+
+    string message = "1234567890";
+    string corrupt_message = "2234567890";
+    for (auto curve : ValidCurves()) {
+        SCOPED_TRACE(testing::Message() << "Curve::" << curve);
+        ErrorCode error = GenerateKey(AuthorizationSetBuilder()
+                                              .Authorization(TAG_NO_AUTH_REQUIRED)
+                                              .EcdsaSigningKey(curve)
+                                              .Digest(digests)
+                                              .SetDefaultValidity());
+        EXPECT_EQ(ErrorCode::OK, error) << "Failed to generate key for EC curve " << curve;
+        if (error != ErrorCode::OK) {
+            continue;
+        }
+
+        for (auto digest : digests) {
+            SCOPED_TRACE(testing::Message() << "Digest::" << digest);
+            string signature = SignMessage(message, AuthorizationSetBuilder().Digest(digest));
+            LocalVerifyMessage(message, signature, AuthorizationSetBuilder().Digest(digest));
+        }
+
+        auto rc = DeleteKey();
+        ASSERT_TRUE(rc == ErrorCode::OK || rc == ErrorCode::UNIMPLEMENTED);
+    }
+}
+
+/*
  * SigningOperationsTest.EcdsaAllCurves
  *
  * Verifies that ECDSA operations succeed with all possible curves.
@@ -2699,207 +2774,6 @@ INSTANTIATE_KEYMINT_AIDL_TEST(SigningOperationsTest);
 typedef KeyMintAidlTestBase VerificationOperationsTest;
 
 /*
- * VerificationOperationsTest.RsaSuccess
- *
- * Verifies that a simple RSA signature/verification sequence succeeds.
- */
-TEST_P(VerificationOperationsTest, RsaSuccess) {
-    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
-                                                 .RsaSigningKey(2048, 65537)
-                                                 .Digest(Digest::NONE)
-                                                 .Padding(PaddingMode::NONE)
-                                                 .SetDefaultValidity()));
-    string message = "12345678901234567890123456789012";
-    string signature = SignMessage(
-            message, AuthorizationSetBuilder().Digest(Digest::NONE).Padding(PaddingMode::NONE));
-    VerifyMessage(message, signature,
-                  AuthorizationSetBuilder().Digest(Digest::NONE).Padding(PaddingMode::NONE));
-}
-
-/*
- * VerificationOperationsTest.RsaAllPaddingsAndDigests
- *
- * Verifies RSA signature/verification for all padding modes and digests.
- */
-TEST_P(VerificationOperationsTest, RsaAllPaddingsAndDigests) {
-    auto authorizations = AuthorizationSetBuilder()
-                                  .Authorization(TAG_NO_AUTH_REQUIRED)
-                                  .RsaSigningKey(2048, 65537)
-                                  .Digest(ValidDigests(true /* withNone */, true /* withMD5 */))
-                                  .Padding(PaddingMode::NONE)
-                                  .Padding(PaddingMode::RSA_PSS)
-                                  .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN)
-                                  .SetDefaultValidity();
-
-    ASSERT_EQ(ErrorCode::OK, GenerateKey(authorizations));
-
-    string message(128, 'a');
-    string corrupt_message(message);
-    ++corrupt_message[corrupt_message.size() / 2];
-
-    for (auto padding :
-         {PaddingMode::NONE, PaddingMode::RSA_PSS, PaddingMode::RSA_PKCS1_1_5_SIGN}) {
-        for (auto digest : ValidDigests(true /* withNone */, true /* withMD5 */)) {
-            if (padding == PaddingMode::NONE && digest != Digest::NONE) {
-                // Digesting only makes sense with padding.
-                continue;
-            }
-
-            if (padding == PaddingMode::RSA_PSS && digest == Digest::NONE) {
-                // PSS requires digesting.
-                continue;
-            }
-
-            string signature =
-                    SignMessage(message, AuthorizationSetBuilder().Digest(digest).Padding(padding));
-            VerifyMessage(message, signature,
-                          AuthorizationSetBuilder().Digest(digest).Padding(padding));
-
-            /* TODO(seleneh) add exportkey tests back later when we have decided on
-             * the new api.
-                        if (digest != Digest::NONE) {
-                            // Verify with OpenSSL.
-                            vector<uint8_t> pubkey;
-                            ASSERT_EQ(ErrorCode::OK, ExportKey(KeyFormat::X509, &pubkey));
-
-                            const uint8_t* p = pubkey.data();
-                            EVP_PKEY_Ptr pkey(d2i_PUBKEY(nullptr, &p, pubkey.size()));
-                            ASSERT_TRUE(pkey.get());
-
-                            EVP_MD_CTX digest_ctx;
-                            EVP_MD_CTX_init(&digest_ctx);
-                            EVP_PKEY_CTX* pkey_ctx;
-                            const EVP_MD* md = openssl_digest(digest);
-                            ASSERT_NE(md, nullptr);
-                            EXPECT_EQ(1, EVP_DigestVerifyInit(&digest_ctx, &pkey_ctx, md,
-             nullptr, pkey.get()));
-
-                            switch (padding) {
-                                case PaddingMode::RSA_PSS:
-                                    EXPECT_GT(EVP_PKEY_CTX_set_rsa_padding(pkey_ctx,
-               RSA_PKCS1_PSS_PADDING), 0); EXPECT_GT(EVP_PKEY_CTX_set_rsa_pss_saltlen(pkey_ctx,
-               EVP_MD_size(md)), 0); break; case PaddingMode::RSA_PKCS1_1_5_SIGN:
-                                    // PKCS1 is the default; don't need to set anything.
-                                    break;
-                                default:
-                                    FAIL();
-                                    break;
-                            }
-
-                            EXPECT_EQ(1, EVP_DigestVerifyUpdate(&digest_ctx, message.data(),
-               message.size())); EXPECT_EQ(1, EVP_DigestVerifyFinal(&digest_ctx,
-                                                            reinterpret_cast<const
-               uint8_t*>(signature.data()), signature.size())); EVP_MD_CTX_cleanup(&digest_ctx);
-                        }
-            */
-
-            // Corrupt signature shouldn't verify.
-            string corrupt_signature(signature);
-            ++corrupt_signature[corrupt_signature.size() / 2];
-
-            EXPECT_EQ(ErrorCode::OK,
-                      Begin(KeyPurpose::VERIFY,
-                            AuthorizationSetBuilder().Digest(digest).Padding(padding)));
-            string result;
-            EXPECT_EQ(ErrorCode::VERIFICATION_FAILED, Finish(message, corrupt_signature, &result));
-
-            // Corrupt message shouldn't verify
-            EXPECT_EQ(ErrorCode::OK,
-                      Begin(KeyPurpose::VERIFY,
-                            AuthorizationSetBuilder().Digest(digest).Padding(padding)));
-            EXPECT_EQ(ErrorCode::VERIFICATION_FAILED, Finish(corrupt_message, signature, &result));
-        }
-    }
-}
-
-/*
- * VerificationOperationsTest.RsaAllDigestsAndCurves
- *
- * Verifies ECDSA signature/verification for all digests and curves.
- */
-TEST_P(VerificationOperationsTest, EcdsaAllDigestsAndCurves) {
-    auto digests = ValidDigests(true /* withNone */, false /* withMD5 */);
-
-    string message = "1234567890";
-    string corrupt_message = "2234567890";
-    for (auto curve : ValidCurves()) {
-        ErrorCode error = GenerateKey(AuthorizationSetBuilder()
-                                              .Authorization(TAG_NO_AUTH_REQUIRED)
-                                              .EcdsaSigningKey(curve)
-                                              .Digest(digests)
-                                              .SetDefaultValidity());
-        EXPECT_EQ(ErrorCode::OK, error) << "Failed to generate key for EC curve " << curve;
-        if (error != ErrorCode::OK) {
-            continue;
-        }
-
-        for (auto digest : digests) {
-            string signature = SignMessage(message, AuthorizationSetBuilder().Digest(digest));
-            VerifyMessage(message, signature, AuthorizationSetBuilder().Digest(digest));
-
-            /* TODO(seleneh) add exportkey tests back later when we have decided on
-             * the new api.
-
-                        // Verify with OpenSSL
-                        if (digest != Digest::NONE) {
-                            vector<uint8_t> pubkey;
-                            ASSERT_EQ(ErrorCode::OK, ExportKey(KeyFormat::X509, &pubkey))
-                                    << curve << ' ' << digest;
-
-                            const uint8_t* p = pubkey.data();
-                            EVP_PKEY_Ptr pkey(d2i_PUBKEY(nullptr, &p, pubkey.size()));
-                            ASSERT_TRUE(pkey.get());
-
-                            EVP_MD_CTX digest_ctx;
-                            EVP_MD_CTX_init(&digest_ctx);
-                            EVP_PKEY_CTX* pkey_ctx;
-                            const EVP_MD* md = openssl_digest(digest);
-
-                            EXPECT_EQ(1, EVP_DigestVerifyInit(&digest_ctx, &pkey_ctx, md,
-             nullptr, pkey.get()))
-                                    << curve << ' ' << digest;
-
-                            EXPECT_EQ(1, EVP_DigestVerifyUpdate(&digest_ctx, message.data(),
-               message.size()))
-                                    << curve << ' ' << digest;
-
-                            EXPECT_EQ(1,
-                                      EVP_DigestVerifyFinal(&digest_ctx,
-                                                            reinterpret_cast<const
-               uint8_t*>(signature.data()), signature.size()))
-                                    << curve << ' ' << digest;
-
-                            EVP_MD_CTX_cleanup(&digest_ctx);
-                        }
-            */
-            // Corrupt signature shouldn't verify.
-            string corrupt_signature(signature);
-            ++corrupt_signature[corrupt_signature.size() / 2];
-
-            EXPECT_EQ(ErrorCode::OK,
-                      Begin(KeyPurpose::VERIFY, AuthorizationSetBuilder().Digest(digest)))
-                    << curve << ' ' << digest;
-
-            string result;
-            EXPECT_EQ(ErrorCode::VERIFICATION_FAILED, Finish(message, corrupt_signature, &result))
-                    << curve << ' ' << digest;
-
-            // Corrupt message shouldn't verify
-            EXPECT_EQ(ErrorCode::OK,
-                      Begin(KeyPurpose::VERIFY, AuthorizationSetBuilder().Digest(digest)))
-                    << curve << ' ' << digest;
-
-            EXPECT_EQ(ErrorCode::VERIFICATION_FAILED, Finish(corrupt_message, signature, &result))
-                    << curve << ' ' << digest;
-        }
-
-        auto rc = DeleteKey();
-        ASSERT_TRUE(rc == ErrorCode::OK || rc == ErrorCode::UNIMPLEMENTED);
-    }
-}
-
-/*
  * VerificationOperationsTest.HmacSigningKeyCannotVerify
  *
  * Verifies HMAC signing and verification, but that a signing key cannot be used to verify.
@@ -3016,7 +2890,7 @@ TEST_P(ImportKeyTest, RsaSuccess) {
     string message(1024 / 8, 'a');
     auto params = AuthorizationSetBuilder().Digest(Digest::SHA_2_256).Padding(PaddingMode::RSA_PSS);
     string signature = SignMessage(message, params);
-    VerifyMessage(message, signature, params);
+    LocalVerifyMessage(message, signature, params);
 }
 
 /*
@@ -3058,7 +2932,7 @@ TEST_P(ImportKeyTest, RsaSuccessWithoutParams) {
     string message(1024 / 8, 'a');
     auto params = AuthorizationSetBuilder().Digest(Digest::SHA_2_256).Padding(PaddingMode::RSA_PSS);
     string signature = SignMessage(message, params);
-    VerifyMessage(message, signature, params);
+    LocalVerifyMessage(message, signature, params);
 }
 
 /*
@@ -3116,7 +2990,7 @@ TEST_P(ImportKeyTest, EcdsaSuccess) {
     string message(32, 'a');
     auto params = AuthorizationSetBuilder().Digest(Digest::SHA_2_256);
     string signature = SignMessage(message, params);
-    VerifyMessage(message, signature, params);
+    LocalVerifyMessage(message, signature, params);
 }
 
 /*
@@ -3143,7 +3017,7 @@ TEST_P(ImportKeyTest, EcdsaP256RFC5915Success) {
     string message(32, 'a');
     auto params = AuthorizationSetBuilder().Digest(Digest::SHA_2_256);
     string signature = SignMessage(message, params);
-    VerifyMessage(message, signature, params);
+    LocalVerifyMessage(message, signature, params);
 }
 
 /*
@@ -3169,7 +3043,7 @@ TEST_P(ImportKeyTest, EcdsaP256SEC1Success) {
     string message(32, 'a');
     auto params = AuthorizationSetBuilder().Digest(Digest::SHA_2_256);
     string signature = SignMessage(message, params);
-    VerifyMessage(message, signature, params);
+    LocalVerifyMessage(message, signature, params);
 }
 
 /*
@@ -3195,7 +3069,7 @@ TEST_P(ImportKeyTest, Ecdsa521Success) {
     string message(32, 'a');
     auto params = AuthorizationSetBuilder().Digest(Digest::SHA_2_256);
     string signature = SignMessage(message, params);
-    VerifyMessage(message, signature, params);
+    LocalVerifyMessage(message, signature, params);
 }
 
 /*
