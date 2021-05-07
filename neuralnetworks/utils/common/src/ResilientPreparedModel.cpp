@@ -17,7 +17,9 @@
 #include "ResilientPreparedModel.h"
 
 #include "InvalidBurst.h"
+#include "InvalidExecution.h"
 #include "ResilientBurst.h"
+#include "ResilientExecution.h"
 
 #include <android-base/logging.h>
 #include <android-base/thread_annotations.h>
@@ -127,6 +129,21 @@ ResilientPreparedModel::executeFenced(const nn::Request& request,
     return protect(*this, fn);
 }
 
+nn::GeneralResult<nn::SharedExecution> ResilientPreparedModel::createReusableExecution(
+        const nn::Request& request, nn::MeasureTiming measure,
+        const nn::OptionalDuration& loopTimeoutDuration) const {
+#if 0
+    auto self = shared_from_this();
+    ResilientExecution::Factory makeExecution =
+            [preparedModel = std::move(self), request, measure, loopTimeoutDuration] {
+        return preparedModel->createReusableExecutionInternal(request, measure, loopTimeoutDuration);
+    };
+    return ResilientExecution::create(std::move(makeExecution));
+#else
+    return createReusableExecutionInternal(request, measure, loopTimeoutDuration);
+#endif
+}
+
 nn::GeneralResult<nn::SharedBurst> ResilientPreparedModel::configureExecutionBurst() const {
 #if 0
     auto self = shared_from_this();
@@ -138,6 +155,19 @@ nn::GeneralResult<nn::SharedBurst> ResilientPreparedModel::configureExecutionBur
 #else
     return configureExecutionBurstInternal();
 #endif
+}
+
+nn::GeneralResult<nn::SharedExecution> ResilientPreparedModel::createReusableExecutionInternal(
+        const nn::Request& request, nn::MeasureTiming measure,
+        const nn::OptionalDuration& loopTimeoutDuration) const {
+    if (!isValidInternal()) {
+        return std::make_shared<const InvalidExecution>();
+    }
+    const auto fn = [&request, measure,
+                     &loopTimeoutDuration](const nn::IPreparedModel& preparedModel) {
+        return preparedModel.createReusableExecution(request, measure, loopTimeoutDuration);
+    };
+    return protect(*this, fn);
 }
 
 std::any ResilientPreparedModel::getUnderlyingResource() const {
