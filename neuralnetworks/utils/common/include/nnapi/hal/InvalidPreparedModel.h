@@ -40,6 +40,10 @@ class InvalidPreparedModel final : public nn::IPreparedModel {
             const nn::OptionalDuration& loopTimeoutDuration,
             const nn::OptionalDuration& timeoutDurationAfterFence) const override;
 
+    nn::GeneralResult<nn::SharedExecution> createReusableExecution(
+            const nn::Request& request, nn::MeasureTiming measure,
+            const nn::OptionalDuration& loopTimeoutDuration) const override;
+
     nn::GeneralResult<nn::SharedBurst> configureExecutionBurst() const override;
 
     std::any getUnderlyingResource() const override;

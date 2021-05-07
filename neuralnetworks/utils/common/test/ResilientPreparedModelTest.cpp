@@ -55,6 +55,7 @@ constexpr auto makeError = [](nn::ErrorStatus status) {
 const auto kReturnGeneralFailure = makeError(nn::ErrorStatus::GENERAL_FAILURE);
 const auto kReturnDeadObject = makeError(nn::ErrorStatus::DEAD_OBJECT);
 
+const auto kNoCreateReusableExecutionError = nn::GeneralResult<nn::SharedExecution>{};
 const auto kNoExecutionError =
         nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>>{};
 const auto kNoFencedExecutionError =
@@ -229,6 +230,36 @@ TEST(ResilientPreparedModelTest, executeFencedDeadObjectSuccessfulRecovery) {
     // verify result
     ASSERT_TRUE(result.has_value())
             << "Failed with " << result.error().code << ": " << result.error().message;
+}
+
+TEST(ResilientPreparedModelTest, createReusableExecution) {
+    // setup call
+    const auto [mockPreparedModel, mockPreparedModelFactory, preparedModel] = setup();
+    EXPECT_CALL(*mockPreparedModel, createReusableExecution(_, _, _))
+            .Times(1)
+            .WillOnce(Return(kNoCreateReusableExecutionError));
+
+    // run test
+    const auto result = preparedModel->createReusableExecution({}, {}, {});
+
+    // verify result
+    ASSERT_TRUE(result.has_value())
+            << "Failed with " << result.error().code << ": " << result.error().message;
+}
+
+TEST(ResilientPreparedModelTest, createReusableExecutionError) {
+    // setup call
+    const auto [mockPreparedModel, mockPreparedModelFactory, preparedModel] = setup();
+    EXPECT_CALL(*mockPreparedModel, createReusableExecution(_, _, _))
+            .Times(1)
+            .WillOnce(kReturnGeneralFailure);
+
+    // run test
+    const auto result = preparedModel->createReusableExecution({}, {}, {});
+
+    // verify result
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
 TEST(ResilientPreparedModelTest, getUnderlyingResource) {
