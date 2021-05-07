@@ -158,7 +158,7 @@ nn::GeneralResult<nn::SharedBurst> PreparedModel::configureExecutionBurst() cons
         return preparedModel->execute(request, measure, deadline, loopTimeoutDuration);
     };
     const auto pollingTimeWindow = getBurstControllerPollingTimeWindow();
-    return ExecutionBurstController::create(kPreparedModel, std::move(fallback), pollingTimeWindow);
+    return ExecutionBurstController::create(shared_from_this(), kPreparedModel, pollingTimeWindow);
 }
 
 std::any PreparedModel::getUnderlyingResource() const {
