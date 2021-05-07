@@ -58,9 +58,17 @@ class PreparedModel final : public nn::IPreparedModel,
             const nn::OptionalDuration& loopTimeoutDuration,
             const nn::OptionalDuration& timeoutDurationAfterFence) const override;
 
+    nn::GeneralResult<nn::SharedExecution> createReusableExecution(
+            const nn::Request& request, nn::MeasureTiming measure,
+            const nn::OptionalDuration& loopTimeoutDuration) const override;
+
     nn::GeneralResult<nn::SharedBurst> configureExecutionBurst() const override;
 
     std::any getUnderlyingResource() const override;
+
+    nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> executeInternal(
+            const V1_0::Request& request, MeasureTiming measure,
+            const hal::utils::RequestRelocation& relocation) const;
 
   private:
     nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> executeSynchronously(
