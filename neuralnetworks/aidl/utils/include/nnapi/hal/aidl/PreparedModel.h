@@ -18,6 +18,7 @@
 #define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_PREPARED_MODEL_H
 
 #include <aidl/android/hardware/neuralnetworks/IPreparedModel.h>
+#include <aidl/android/hardware/neuralnetworks/Request.h>
 #include <nnapi/IPreparedModel.h>
 #include <nnapi/Result.h>
 #include <nnapi/Types.h>
@@ -34,7 +35,8 @@
 namespace aidl::android::hardware::neuralnetworks::utils {
 
 // Class that adapts aidl_hal::IPreparedModel to nn::IPreparedModel.
-class PreparedModel final : public nn::IPreparedModel {
+class PreparedModel final : public nn::IPreparedModel,
+                            public std::enable_shared_from_this<PreparedModel> {
     struct PrivateConstructorTag {};
 
   public:
@@ -55,9 +57,24 @@ class PreparedModel final : public nn::IPreparedModel {
             const nn::OptionalDuration& loopTimeoutDuration,
             const nn::OptionalDuration& timeoutDurationAfterFence) const override;
 
+    nn::GeneralResult<nn::SharedExecution> createReusableExecution(
+            const nn::Request& request, nn::MeasureTiming measure,
+            const nn::OptionalDuration& loopTimeoutDuration) const override;
+
     nn::GeneralResult<nn::SharedBurst> configureExecutionBurst() const override;
 
     std::any getUnderlyingResource() const override;
+
+    nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> executeInternal(
+            const Request& request, bool measure, int64_t deadline, int64_t loopTimeoutDuration,
+            const hal::utils::RequestRelocation& relocation) const;
+
+    nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>>
+    executeFencedInternal(const Request& request,
+                          const std::vector<ndk::ScopedFileDescriptor>& waitFor, bool measure,
+                          int64_t deadline, int64_t loopTimeoutDuration,
+                          int64_t timeoutDurationAfterFence,
+                          const hal::utils::RequestRelocation& relocation) const;
 
   private:
     const std::shared_ptr<aidl_hal::IPreparedModel> kPreparedModel;
