@@ -65,7 +65,8 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Prepare
     hal::utils::RequestRelocation relocation;
     const nn::Request& requestInShared =
             NN_TRY(hal::utils::makeExecutionFailure(hal::utils::convertRequestFromPointerToShared(
-                    &request, &maybeRequestInShared, &relocation)));
+                    &request, nn::kDefaultRequestMemoryAlignment, nn::kMinMemoryPadding,
+                    &maybeRequestInShared, &relocation)));
 
     const auto hidlRequest = NN_TRY(hal::utils::makeExecutionFailure(convert(requestInShared)));
 
@@ -111,7 +112,8 @@ nn::GeneralResult<nn::SharedExecution> PreparedModel::createReusableExecution(
     std::optional<nn::Request> maybeRequestInShared;
     hal::utils::RequestRelocation relocation;
     const nn::Request& requestInShared = NN_TRY(hal::utils::convertRequestFromPointerToShared(
-            &request, &maybeRequestInShared, &relocation));
+            &request, nn::kDefaultRequestMemoryAlignment, nn::kMinMemoryPadding,
+            &maybeRequestInShared, &relocation));
 
     auto hidlRequest = NN_TRY(convert(requestInShared));
     return Execution::create(shared_from_this(), std::move(hidlRequest), std::move(relocation));
