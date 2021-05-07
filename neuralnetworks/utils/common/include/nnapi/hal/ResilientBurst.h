@@ -51,7 +51,16 @@ class ResilientBurst final : public nn::IBurst,
             const nn::OptionalTimePoint& deadline,
             const nn::OptionalDuration& loopTimeoutDuration) const override;
 
+    nn::GeneralResult<nn::SharedExecution> createReusableExecution(
+            const nn::Request& request, nn::MeasureTiming measure,
+            const nn::OptionalDuration& loopTimeoutDuration) const override;
+
   private:
+    bool isValidInternal() const EXCLUDES(mMutex);
+    nn::GeneralResult<nn::SharedExecution> createReusableExecutionInternal(
+            const nn::Request& request, nn::MeasureTiming measure,
+            const nn::OptionalDuration& loopTimeoutDuration) const;
+
     const Factory kMakeBurst;
     mutable std::mutex mMutex;
     mutable nn::SharedBurst mBurst GUARDED_BY(mMutex);
