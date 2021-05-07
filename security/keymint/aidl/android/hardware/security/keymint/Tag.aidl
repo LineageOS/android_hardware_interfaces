@@ -505,10 +505,10 @@ enum Tag {
 
     /**
      * Tag::APPLICATION_ID.  When provided to generateKey or importKey, this tag specifies data
-     * that is necessary during all uses of the key.  In particular, calls to exportKey() must
-     * provide the same value to the clientId parameter, and calls to begin() must provide this
-     * tag and the same associated data as part of the inParams set.  If the correct data is not
-     * provided, the method must return ErrorCode::INVALID_KEY_BLOB.
+     * that is necessary during all uses of the key.  In particular, calls to exportKey() and
+     * getKeyCharacteristics() must provide the same value to the clientId parameter, and calls to
+     * begin() must provide this tag and the same associated data as part of the inParams set.  If
+     * the correct data is not provided, the method must return ErrorCode::INVALID_KEY_BLOB.
      *
      * The content of this tag must be bound to the key cryptographically, meaning it must not be
      * possible for an adversary who has access to all of the secure world secrets but does not have
@@ -573,8 +573,8 @@ enum Tag {
      * Tag::OS_VERSION specifies the system OS version with which the key may be used.  This tag is
      * never sent to the IKeyMintDevice, but is added to the hardware-enforced authorization list
      * by the TA.  Any attempt to use a key with a Tag::OS_VERSION value different from the
-     * currently-running OS version must cause begin() or exportKey() to return
-     * ErrorCode::KEY_REQUIRES_UPGRADE.  See upgradeKey() for details.
+     * currently-running OS version must cause begin(), getKeyCharacteristics() or exportKey() to
+     * return ErrorCode::KEY_REQUIRES_UPGRADE.  See upgradeKey() for details.
      *
      * The value of the tag is an integer of the form MMmmss, where MM is the major version number,
      * mm is the minor version number, and ss is the sub-minor version number.  For example, for a
@@ -596,8 +596,9 @@ enum Tag {
      * Tag::OS_PATCHLEVEL specifies the system security patch level with which the key may be used.
      * This tag is never sent to the keyMint TA, but is added to the hardware-enforced
      * authorization list by the TA.  Any attempt to use a key with a Tag::OS_PATCHLEVEL value
-     * different from the currently-running system patchlevel must cause begin() or
-     * exportKey() to return ErrorCode::KEY_REQUIRES_UPGRADE.  See upgradeKey() for details.
+     * different from the currently-running system patchlevel must cause begin(),
+     * getKeyCharacteristics() or exportKey() to return ErrorCode::KEY_REQUIRES_UPGRADE.  See
+     * upgradeKey() for details.
      *
      * The value of the tag is an integer of the form YYYYMM, where YYYY is the four-digit year of
      * the last update and MM is the two-digit month of the last update.  For example, for a key
@@ -789,8 +790,9 @@ enum Tag {
      * Tag::VENDOR_PATCHLEVEL specifies the vendor image security patch level with which the key may
      * be used.  This tag is never sent to the keyMint TA, but is added to the hardware-enforced
      * authorization list by the TA.  Any attempt to use a key with a Tag::VENDOR_PATCHLEVEL value
-     * different from the currently-running system patchlevel must cause begin() or
-     * exportKey() to return ErrorCode::KEY_REQUIRES_UPGRADE.  See upgradeKey() for details.
+     * different from the currently-running system patchlevel must cause begin(),
+     * getKeyCharacteristics() or exportKey() to return ErrorCode::KEY_REQUIRES_UPGRADE.  See
+     * upgradeKey() for details.
      *
      * The value of the tag is an integer of the form YYYYMMDD, where YYYY is the four-digit year of
      * the last update, MM is the two-digit month and DD is the two-digit day of the last
@@ -811,8 +813,8 @@ enum Tag {
      * key may be used.  This tag is never sent to the keyMint TA, but is added to the
      * hardware-enforced authorization list by the TA.  Any attempt to use a key with a
      * Tag::BOOT_PATCHLEVEL value different from the currently-running system patchlevel must
-     * cause begin() or exportKey() to return ErrorCode::KEY_REQUIRES_UPGRADE.  See upgradeKey() for
-     * details.
+     * cause begin(), getKeyCharacteristics() or exportKey() to return
+     * ErrorCode::KEY_REQUIRES_UPGRADE.  See upgradeKey() for details.
      *
      * The value of the tag is an integer of the form YYYYMMDD, where YYYY is the four-digit year of
      * the last update, MM is the two-digit month and DD is the two-digit day of the last
