@@ -35,6 +35,10 @@ class InvalidBurst final : public nn::IBurst {
             const nn::Request& request, nn::MeasureTiming measure,
             const nn::OptionalTimePoint& deadline,
             const nn::OptionalDuration& loopTimeoutDuration) const override;
+
+    nn::GeneralResult<nn::SharedExecution> createReusableExecution(
+            const nn::Request& request, nn::MeasureTiming measure,
+            const nn::OptionalDuration& loopTimeoutDuration) const override;
 };
 
 }  // namespace android::hardware::neuralnetworks::utils

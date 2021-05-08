@@ -21,6 +21,7 @@
 #include <aidl/android/hardware/neuralnetworks/IFencedExecutionCallback.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <nnapi/IExecution.h>
 #include <nnapi/IPreparedModel.h>
 #include <nnapi/TypeUtils.h>
 #include <nnapi/Types.h>
@@ -251,6 +252,225 @@ TEST(PreparedModelTest, executeFencedDeadObject) {
     // verify result
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, nn::ErrorStatus::DEAD_OBJECT);
+}
+
+TEST(PreparedModelTest, reusableExecuteSync) {
+    // setup call
+    const uint32_t kNumberOfComputations = 2;
+    const auto mockPreparedModel = MockPreparedModel::create();
+    const auto preparedModel = PreparedModel::create(mockPreparedModel).value();
+    const auto mockExecutionResult = ExecutionResult{
+            .outputSufficientSize = true,
+            .outputShapes = {},
+            .timing = kNoTiming,
+    };
+    EXPECT_CALL(*mockPreparedModel, executeSynchronously(_, _, _, _, _))
+            .Times(kNumberOfComputations)
+            .WillRepeatedly(
+                    DoAll(SetArgPointee<4>(mockExecutionResult), InvokeWithoutArgs(makeStatusOk)));
+
+    // create execution
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    ASSERT_TRUE(createResult.has_value())
+            << "Failed with " << createResult.error().code << ": " << createResult.error().message;
+    ASSERT_NE(createResult.value(), nullptr);
+
+    // invoke compute repeatedly
+    for (uint32_t i = 0; i < kNumberOfComputations; i++) {
+        const auto computeResult = createResult.value()->compute({});
+        EXPECT_TRUE(computeResult.has_value()) << "Failed with " << computeResult.error().code
+                                               << ": " << computeResult.error().message;
+    }
+}
+
+TEST(PreparedModelTest, reusableExecuteSyncError) {
+    // setup test
+    const auto mockPreparedModel = MockPreparedModel::create();
+    const auto preparedModel = PreparedModel::create(mockPreparedModel).value();
+    EXPECT_CALL(*mockPreparedModel, executeSynchronously(_, _, _, _, _))
+            .Times(1)
+            .WillOnce(Invoke(makeGeneralFailure));
+
+    // create execution
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    ASSERT_TRUE(createResult.has_value())
+            << "Failed with " << createResult.error().code << ": " << createResult.error().message;
+    ASSERT_NE(createResult.value(), nullptr);
+
+    // invoke compute
+    const auto computeResult = createResult.value()->compute({});
+    ASSERT_FALSE(computeResult.has_value());
+    EXPECT_EQ(computeResult.error().code, nn::ErrorStatus::GENERAL_FAILURE);
+}
+
+TEST(PreparedModelTest, reusableExecuteSyncTransportFailure) {
+    // setup test
+    const auto mockPreparedModel = MockPreparedModel::create();
+    const auto preparedModel = PreparedModel::create(mockPreparedModel).value();
+    EXPECT_CALL(*mockPreparedModel, executeSynchronously(_, _, _, _, _))
+            .Times(1)
+            .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
+
+    // create execution
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    ASSERT_TRUE(createResult.has_value())
+            << "Failed with " << createResult.error().code << ": " << createResult.error().message;
+    ASSERT_NE(createResult.value(), nullptr);
+
+    // invoke compute
+    const auto computeResult = createResult.value()->compute({});
+    ASSERT_FALSE(computeResult.has_value());
+    EXPECT_EQ(computeResult.error().code, nn::ErrorStatus::GENERAL_FAILURE);
+}
+
+TEST(PreparedModelTest, reusableExecuteSyncDeadObject) {
+    // setup test
+    const auto mockPreparedModel = MockPreparedModel::create();
+    const auto preparedModel = PreparedModel::create(mockPreparedModel).value();
+    EXPECT_CALL(*mockPreparedModel, executeSynchronously(_, _, _, _, _))
+            .Times(1)
+            .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
+
+    // create execution
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    ASSERT_TRUE(createResult.has_value())
+            << "Failed with " << createResult.error().code << ": " << createResult.error().message;
+    ASSERT_NE(createResult.value(), nullptr);
+
+    // invoke compute
+    const auto computeResult = createResult.value()->compute({});
+    ASSERT_FALSE(computeResult.has_value());
+    EXPECT_EQ(computeResult.error().code, nn::ErrorStatus::DEAD_OBJECT);
+}
+
+TEST(PreparedModelTest, reusableExecuteFenced) {
+    // setup call
+    const uint32_t kNumberOfComputations = 2;
+    const auto mockPreparedModel = MockPreparedModel::create();
+    const auto preparedModel = PreparedModel::create(mockPreparedModel).value();
+    const auto mockCallback = MockFencedExecutionCallback::create();
+    EXPECT_CALL(*mockCallback, getExecutionInfo(_, _, _))
+            .Times(kNumberOfComputations)
+            .WillRepeatedly(DoAll(SetArgPointee<0>(kNoTiming), SetArgPointee<1>(kNoTiming),
+                                  SetArgPointee<2>(ErrorStatus::NONE), Invoke(makeStatusOk)));
+    EXPECT_CALL(*mockPreparedModel, executeFenced(_, _, _, _, _, _, _))
+            .Times(kNumberOfComputations)
+            .WillRepeatedly(Invoke(makeFencedExecutionResult(mockCallback)));
+
+    // create execution
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    ASSERT_TRUE(createResult.has_value())
+            << "Failed with " << createResult.error().code << ": " << createResult.error().message;
+    ASSERT_NE(createResult.value(), nullptr);
+
+    // invoke compute repeatedly
+    for (uint32_t i = 0; i < kNumberOfComputations; i++) {
+        const auto computeResult = createResult.value()->computeFenced({}, {}, {});
+        ASSERT_TRUE(computeResult.has_value()) << "Failed with " << computeResult.error().code
+                                               << ": " << computeResult.error().message;
+        const auto& [syncFence, callback] = computeResult.value();
+        EXPECT_EQ(syncFence.syncWait({}), nn::SyncFence::FenceState::SIGNALED);
+        ASSERT_NE(callback, nullptr);
+
+        // get results from callback
+        const auto callbackResult = callback();
+        ASSERT_TRUE(callbackResult.has_value()) << "Failed with " << callbackResult.error().code
+                                                << ": " << callbackResult.error().message;
+    }
+}
+
+TEST(PreparedModelTest, reusableExecuteFencedCallbackError) {
+    // setup call
+    const auto mockPreparedModel = MockPreparedModel::create();
+    const auto preparedModel = PreparedModel::create(mockPreparedModel).value();
+    const auto mockCallback = MockFencedExecutionCallback::create();
+    EXPECT_CALL(*mockCallback, getExecutionInfo(_, _, _))
+            .Times(1)
+            .WillOnce(Invoke(DoAll(SetArgPointee<0>(kNoTiming), SetArgPointee<1>(kNoTiming),
+                                   SetArgPointee<2>(ErrorStatus::GENERAL_FAILURE),
+                                   Invoke(makeStatusOk))));
+    EXPECT_CALL(*mockPreparedModel, executeFenced(_, _, _, _, _, _, _))
+            .Times(1)
+            .WillOnce(Invoke(makeFencedExecutionResult(mockCallback)));
+
+    // create execution
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    ASSERT_TRUE(createResult.has_value())
+            << "Failed with " << createResult.error().code << ": " << createResult.error().message;
+    ASSERT_NE(createResult.value(), nullptr);
+
+    // invoke compute
+    const auto computeResult = createResult.value()->computeFenced({}, {}, {});
+    ASSERT_TRUE(computeResult.has_value()) << "Failed with " << computeResult.error().code << ": "
+                                           << computeResult.error().message;
+    const auto& [syncFence, callback] = computeResult.value();
+    EXPECT_NE(syncFence.syncWait({}), nn::SyncFence::FenceState::ACTIVE);
+    ASSERT_NE(callback, nullptr);
+
+    // verify callback failure
+    const auto callbackResult = callback();
+    ASSERT_FALSE(callbackResult.has_value());
+    EXPECT_EQ(callbackResult.error().code, nn::ErrorStatus::GENERAL_FAILURE);
+}
+
+TEST(PreparedModelTest, reusableExecuteFencedError) {
+    // setup test
+    const auto mockPreparedModel = MockPreparedModel::create();
+    const auto preparedModel = PreparedModel::create(mockPreparedModel).value();
+    EXPECT_CALL(*mockPreparedModel, executeFenced(_, _, _, _, _, _, _))
+            .Times(1)
+            .WillOnce(InvokeWithoutArgs(makeGeneralFailure));
+
+    // create execution
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    ASSERT_TRUE(createResult.has_value())
+            << "Failed with " << createResult.error().code << ": " << createResult.error().message;
+    ASSERT_NE(createResult.value(), nullptr);
+
+    // invoke compute
+    const auto computeResult = createResult.value()->computeFenced({}, {}, {});
+    ASSERT_FALSE(computeResult.has_value());
+    EXPECT_EQ(computeResult.error().code, nn::ErrorStatus::GENERAL_FAILURE);
+}
+
+TEST(PreparedModelTest, reusableExecuteFencedTransportFailure) {
+    // setup test
+    const auto mockPreparedModel = MockPreparedModel::create();
+    const auto preparedModel = PreparedModel::create(mockPreparedModel).value();
+    EXPECT_CALL(*mockPreparedModel, executeFenced(_, _, _, _, _, _, _))
+            .Times(1)
+            .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
+
+    // create execution
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    ASSERT_TRUE(createResult.has_value())
+            << "Failed with " << createResult.error().code << ": " << createResult.error().message;
+    ASSERT_NE(createResult.value(), nullptr);
+
+    // invoke compute
+    const auto computeResult = createResult.value()->computeFenced({}, {}, {});
+    ASSERT_FALSE(computeResult.has_value());
+    EXPECT_EQ(computeResult.error().code, nn::ErrorStatus::GENERAL_FAILURE);
+}
+
+TEST(PreparedModelTest, reusableExecuteFencedDeadObject) {
+    // setup test
+    const auto mockPreparedModel = MockPreparedModel::create();
+    const auto preparedModel = PreparedModel::create(mockPreparedModel).value();
+    EXPECT_CALL(*mockPreparedModel, executeFenced(_, _, _, _, _, _, _))
+            .Times(1)
+            .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
+
+    // create execution
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    ASSERT_TRUE(createResult.has_value())
+            << "Failed with " << createResult.error().code << ": " << createResult.error().message;
+    ASSERT_NE(createResult.value(), nullptr);
+
+    // invoke compute
+    const auto computeResult = createResult.value()->computeFenced({}, {}, {});
+    ASSERT_FALSE(computeResult.has_value());
+    EXPECT_EQ(computeResult.error().code, nn::ErrorStatus::DEAD_OBJECT);
 }
 
 TEST(PreparedModelTest, configureExecutionBurst) {
