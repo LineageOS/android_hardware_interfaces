@@ -19,6 +19,7 @@
 #include "Burst.h"
 #include "Callbacks.h"
 #include "Conversions.h"
+#include "Execution.h"
 #include "Utils.h"
 
 #include <android/hardware/neuralnetworks/1.0/IPreparedModel.h>
@@ -61,22 +62,34 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Prepare
         const nn::OptionalDuration& /*loopTimeoutDuration*/) const {
     // Ensure that request is ready for IPC.
     std::optional<nn::Request> maybeRequestInShared;
-    const nn::Request& requestInShared = NN_TRY(hal::utils::makeExecutionFailure(
-            hal::utils::flushDataFromPointerToShared(&request, &maybeRequestInShared)));
+    hal::utils::RequestRelocation relocation;
+    const nn::Request& requestInShared =
+            NN_TRY(hal::utils::makeExecutionFailure(hal::utils::convertRequestFromPointerToShared(
+                    &request, &maybeRequestInShared, &relocation)));
 
     const auto hidlRequest = NN_TRY(hal::utils::makeExecutionFailure(convert(requestInShared)));
+
+    return executeInternal(hidlRequest, relocation);
+}
+
+nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>>
+PreparedModel::executeInternal(const V1_0::Request& request,
+                               const hal::utils::RequestRelocation& relocation) const {
+    if (relocation.input) {
+        relocation.input->flush();
+    }
 
     const auto cb = sp<ExecutionCallback>::make();
     const auto scoped = kDeathHandler.protectCallback(cb.get());
 
-    const auto ret = kPreparedModel->execute(hidlRequest, cb);
+    const auto ret = kPreparedModel->execute(request, cb);
     const auto status = HANDLE_TRANSPORT_FAILURE(ret);
     HANDLE_HAL_STATUS(status) << "execution failed with " << toString(status);
 
     auto result = NN_TRY(cb->get());
-    NN_TRY(hal::utils::makeExecutionFailure(
-            hal::utils::unflushDataFromSharedToPointer(request, maybeRequestInShared)));
-
+    if (relocation.output) {
+        relocation.output->flush();
+    }
     return result;
 }
 
@@ -89,6 +102,19 @@ PreparedModel::executeFenced(const nn::Request& /*request*/,
                              const nn::OptionalDuration& /*timeoutDurationAfterFence*/) const {
     return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
            << "IPreparedModel::executeFenced is not supported on 1.0 HAL service";
+}
+
+nn::GeneralResult<nn::SharedExecution> PreparedModel::createReusableExecution(
+        const nn::Request& request, nn::MeasureTiming /*measure*/,
+        const nn::OptionalDuration& /*loopTimeoutDuration*/) const {
+    // Ensure that request is ready for IPC.
+    std::optional<nn::Request> maybeRequestInShared;
+    hal::utils::RequestRelocation relocation;
+    const nn::Request& requestInShared = NN_TRY(hal::utils::convertRequestFromPointerToShared(
+            &request, &maybeRequestInShared, &relocation));
+
+    auto hidlRequest = NN_TRY(convert(requestInShared));
+    return Execution::create(shared_from_this(), std::move(hidlRequest), std::move(relocation));
 }
 
 nn::GeneralResult<nn::SharedBurst> PreparedModel::configureExecutionBurst() const {

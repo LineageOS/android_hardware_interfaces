@@ -38,7 +38,7 @@
 namespace aidl::android::hardware::neuralnetworks::utils {
 
 // Class that adapts aidl_hal::IBurst to nn::IBurst.
-class Burst final : public nn::IBurst {
+class Burst final : public nn::IBurst, public std::enable_shared_from_this<Burst> {
     struct PrivateConstructorTag {};
 
   public:
@@ -99,6 +99,16 @@ class Burst final : public nn::IBurst {
             const nn::Request& request, nn::MeasureTiming measure,
             const nn::OptionalTimePoint& deadline,
             const nn::OptionalDuration& loopTimeoutDuration) const override;
+
+    // See IBurst::createReusableExecution for information.
+    nn::GeneralResult<nn::SharedExecution> createReusableExecution(
+            const nn::Request& request, nn::MeasureTiming measure,
+            const nn::OptionalDuration& loopTimeoutDuration) const override;
+
+    nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> executeInternal(
+            const aidl_hal::Request& request, const std::vector<int64_t>& memoryIdentifierTokens,
+            bool measure, int64_t deadline, int64_t loopTimeoutDuration,
+            const hal::utils::RequestRelocation& relocation) const;
 
   private:
     mutable std::atomic_flag mExecutionInFlight = ATOMIC_FLAG_INIT;
