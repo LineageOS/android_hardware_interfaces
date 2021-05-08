@@ -19,6 +19,7 @@
 #include <android-base/logging.h>
 #include <android-base/thread_annotations.h>
 #include <nnapi/IBurst.h>
+#include <nnapi/IPreparedModel.h>
 #include <nnapi/Result.h>
 #include <nnapi/TypeUtils.h>
 #include <nnapi/Types.h>
@@ -28,6 +29,9 @@
 #include <mutex>
 #include <optional>
 #include <utility>
+
+#include "InvalidExecution.h"
+#include "ResilientExecution.h"
 
 namespace android::hardware::neuralnetworks::utils {
 namespace {
@@ -46,11 +50,11 @@ auto protect(const ResilientBurst& resilientBurst, const FnType& fn)
     // Attempt recovery and return if it fails.
     auto maybeBurst = resilientBurst.recover(burst.get());
     if (!maybeBurst.has_value()) {
-        auto [resultErrorMessage, resultErrorCode, resultOutputShapes] = std::move(result).error();
-        const auto& [recoveryErrorMessage, recoveryErrorCode] = maybeBurst.error();
-        return nn::error(resultErrorCode, std::move(resultOutputShapes))
-               << resultErrorMessage << ", and failed to recover dead burst object with error "
-               << recoveryErrorCode << ": " << recoveryErrorMessage;
+        const auto& [message, code] = maybeBurst.error();
+        std::ostringstream oss;
+        oss << ", and failed to recover dead burst object with error " << code << ": " << message;
+        result.error().message += oss.str();
+        return result;
     }
     burst = std::move(maybeBurst).value();
 
@@ -107,6 +111,37 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Resilie
         return burst.execute(request, measure, deadline, loopTimeoutDuration);
     };
     return protect(*this, fn);
+}
+
+nn::GeneralResult<nn::SharedExecution> ResilientBurst::createReusableExecution(
+        const nn::Request& request, nn::MeasureTiming measure,
+        const nn::OptionalDuration& loopTimeoutDuration) const {
+#if 0
+    auto self = shared_from_this();
+    ResilientExecution::Factory makeExecution =
+            [burst = std::move(self), request, measure, loopTimeoutDuration] {
+        return burst->createReusableExecutionInternal(request, measure, loopTimeoutDuration);
+    };
+    return ResilientExecution::create(std::move(makeExecution));
+#else
+    return createReusableExecutionInternal(request, measure, loopTimeoutDuration);
+#endif
+}
+
+nn::GeneralResult<nn::SharedExecution> ResilientBurst::createReusableExecutionInternal(
+        const nn::Request& request, nn::MeasureTiming measure,
+        const nn::OptionalDuration& loopTimeoutDuration) const {
+    if (!isValidInternal()) {
+        return std::make_shared<const InvalidExecution>();
+    }
+    const auto fn = [&request, measure, &loopTimeoutDuration](const nn::IBurst& burst) {
+        return burst.createReusableExecution(request, measure, loopTimeoutDuration);
+    };
+    return protect(*this, fn);
+}
+
+bool ResilientBurst::isValidInternal() const {
+    return true;
 }
 
 }  // namespace android::hardware::neuralnetworks::utils
