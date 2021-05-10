@@ -831,7 +831,7 @@ f22813615be1445ddd817655c054fc69dc9efea56c9035cd0757f3cbed190641 android.hardwar
 c9ad18729268593d14681d88ffad1c97e707444a45e1b4ed804dab949edbd84f android.hardware.radio.config@1.3::IRadioConfigResponse
 78dcb9a6975e8b377cb90bbe952078162960941468c992dcd2e1830a477b8c03 android.hardware.radio.config@1.3::types
 fd43298c43f70130c747a642ee43b0c242ac0cebffb377faa24f2725f0aa6caf android.hardware.tetheroffload.control@1.1::IOffloadControl
-fe18c9032e4063efca3fff3c377dd69780de1f96e8e2bc3f7d100a5d8bd467b4 android.hardware.tetheroffload.control@1.1::ITetheringOffloadCallback
+ead4ec8713a2cb40906fe31ba793d21a6b1190143c446690d16a6ea686aa2fea android.hardware.tetheroffload.control@1.1::ITetheringOffloadCallback
 e34b4c7bec5e032c14804707ca924dd6b99ed5ba139da7505fe7d698d0fe178f android.hardware.tetheroffload.control@1.1::types
 
 # There should be no more HIDL HALs - please use AIDL instead.
