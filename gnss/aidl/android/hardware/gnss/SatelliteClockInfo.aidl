@@ -24,6 +24,14 @@ parcelable SatelliteClockInfo {
     /**
      * Satellite hardware code bias of the reported code type w.r.t
      * ionosphere-free measurement in meters.
+     *
+     * When broadcast ephemeris is used, this is the offset caused
+     * by the satellite hardware delays at different frequencies;
+     * e.g. in IS-GPS-705D, this term is described in Section
+     * 20.3.3.3.1.2.1.
+     *
+     * For GPS this term is ~10ns, and affects the satellite position
+     * computation by less than a millimeter.
      */
     double satHardwareCodeBiasMeters;
 
@@ -31,6 +39,17 @@ parcelable SatelliteClockInfo {
      * Satellite time correction for ionospheric-free signal measurement
      * (meters). The satellite clock correction for the given signal type
      * = satTimeCorrectionMeters - satHardwareCodeBiasMeters.
+     *
+     * When broadcast ephemeris is used, this is the offset modeled in the
+     * clock terms broadcast over the air by the satellites;
+     * e.g. in IS-GPS-200H, Section 20.3.3.3.3.1, this term is
+     * ∆tsv = af0 + af1(t - toc) + af2(t - toc)^2 + ∆tr.
+     *
+     * If another source of ephemeris is used for SatellitePvt, then the
+     * equivalent value of satTimeCorrection must be provided.
+     *
+     * For GPS this term is ~1ms, and affects the satellite position
+     * computation by ~1m.
      */
     double satTimeCorrectionMeters;
 
