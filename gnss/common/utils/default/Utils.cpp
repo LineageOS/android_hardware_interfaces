@@ -31,6 +31,7 @@ using aidl::android::hardware::gnss::GnssData;
 using aidl::android::hardware::gnss::GnssMeasurement;
 using aidl::android::hardware::gnss::IGnss;
 using aidl::android::hardware::gnss::IGnssMeasurementCallback;
+using aidl::android::hardware::gnss::SatellitePvt;
 
 using GnssSvFlags = V1_0::IGnssCallback::GnssSvFlags;
 using GnssMeasurementFlagsV1_0 = V1_0::IGnssMeasurementCallback::GnssMeasurementFlags;
@@ -175,7 +176,9 @@ GnssData Utils::getMockMeasurement(const bool enableCorrVecOutputs) {
             .fullInterSignalBiasUncertaintyNs = 792.0,
             .satelliteInterSignalBiasNs = 233.9,
             .satelliteInterSignalBiasUncertaintyNs = 921.2,
-            .satellitePvt = {.satPosEcef = {.posXMeters = 10442993.1153328,
+            .satellitePvt = {.flags = SatellitePvt::HAS_POSITION_VELOCITY_CLOCK_INFO |
+                                      SatellitePvt::HAS_IONO | SatellitePvt::HAS_TROPO,
+                             .satPosEcef = {.posXMeters = 10442993.1153328,
                                             .posYMeters = -19926932.8051666,
                                             .posZMeters = -12034295.0216203,
                                             .ureMeters = 1000.2345678},
