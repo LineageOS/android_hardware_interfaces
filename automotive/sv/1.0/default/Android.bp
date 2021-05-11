@@ -29,9 +29,7 @@ cc_binary {
     relative_install_path: "hw",
     srcs: [
         "service.cpp",
-        "SurroundViewService.cpp",
-        "SurroundView2dSession.cpp",
-        "SurroundView3dSession.cpp",
+        ":automotiveSvV1.0_sources",
     ],
     init_rc: ["android.hardware.automotive.sv@1.0-service.rc"],
     vintf_fragments: ["android.hardware.automotive.sv@1.0-service.xml"],
@@ -53,4 +51,18 @@ cc_binary {
         "-O0",
         "-g",
     ],
+}
+
+filegroup {
+    name: "automotiveSvV1.0_sources",
+    srcs: [
+        "SurroundViewService.cpp",
+        "SurroundView2dSession.cpp",
+        "SurroundView3dSession.cpp",
+    ],
+}
+
+cc_library_headers {
+    name: "automotiveSvV1.0_headers",
+    export_include_dirs: ["."],
 }
