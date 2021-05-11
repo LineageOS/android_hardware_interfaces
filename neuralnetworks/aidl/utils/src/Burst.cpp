@@ -148,8 +148,10 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Burst::
 
     // Ensure that request is ready for IPC.
     std::optional<nn::Request> maybeRequestInShared;
-    const nn::Request& requestInShared = NN_TRY(hal::utils::makeExecutionFailure(
-            hal::utils::flushDataFromPointerToShared(&request, &maybeRequestInShared)));
+    hal::utils::RequestRelocation relocation;
+    const nn::Request& requestInShared =
+            NN_TRY(hal::utils::makeExecutionFailure(hal::utils::convertRequestFromPointerToShared(
+                    &request, &maybeRequestInShared, &relocation)));
 
     const auto aidlRequest = NN_TRY(hal::utils::makeExecutionFailure(convert(requestInShared)));
     const auto aidlMeasure = NN_TRY(hal::utils::makeExecutionFailure(convert(measure)));
@@ -174,6 +176,10 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Burst::
     }
     CHECK_EQ(request.pools.size(), memoryIdentifierTokens.size());
 
+    if (relocation.input) {
+        relocation.input->flush();
+    }
+
     ExecutionResult executionResult;
     const auto ret =
             kBurst->executeSynchronously(aidlRequest, memoryIdentifierTokens, aidlMeasure,
@@ -188,9 +194,9 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Burst::
     auto [outputShapes, timing] = NN_TRY(hal::utils::makeExecutionFailure(
             convertExecutionResults(executionResult.outputShapes, executionResult.timing)));
 
-    NN_TRY(hal::utils::makeExecutionFailure(
-            hal::utils::unflushDataFromSharedToPointer(request, maybeRequestInShared)));
-
+    if (relocation.output) {
+        relocation.output->flush();
+    }
     return std::make_pair(std::move(outputShapes), timing);
 }
 
