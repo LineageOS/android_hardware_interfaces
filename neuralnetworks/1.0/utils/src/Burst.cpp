@@ -55,4 +55,10 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Burst::
     return kPreparedModel->execute(request, measure, deadline, loopTimeoutDuration);
 }
 
+nn::GeneralResult<nn::SharedExecution> Burst::createReusableExecution(
+        const nn::Request& request, nn::MeasureTiming measure,
+        const nn::OptionalDuration& loopTimeoutDuration) const {
+    return kPreparedModel->createReusableExecution(request, measure, loopTimeoutDuration);
+}
+
 }  // namespace android::hardware::neuralnetworks::V1_0::utils
