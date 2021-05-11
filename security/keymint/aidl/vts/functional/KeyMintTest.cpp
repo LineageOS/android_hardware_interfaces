@@ -2261,11 +2261,11 @@ TEST_P(SigningOperationsTest, RsaNonUniqueParams) {
                                               .Padding(PaddingMode::NONE)
                                               .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN)));
 
-    ASSERT_EQ(ErrorCode::UNSUPPORTED_DIGEST,
-              Begin(KeyPurpose::SIGN, AuthorizationSetBuilder()
-                                              .Digest(Digest::NONE)
-                                              .Digest(Digest::SHA1)
-                                              .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN)));
+    auto result = Begin(KeyPurpose::SIGN, AuthorizationSetBuilder()
+                                                  .Digest(Digest::NONE)
+                                                  .Digest(Digest::SHA1)
+                                                  .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN));
+    ASSERT_TRUE(result == ErrorCode::UNSUPPORTED_DIGEST || result == ErrorCode::INVALID_ARGUMENT);
 
     ASSERT_EQ(ErrorCode::UNSUPPORTED_DIGEST,
               Begin(KeyPurpose::SIGN,
