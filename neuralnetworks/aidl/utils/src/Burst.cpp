@@ -22,6 +22,7 @@
 #include <android-base/logging.h>
 #include <android/binder_auto_utils.h>
 #include <nnapi/IBurst.h>
+#include <nnapi/IExecution.h>
 #include <nnapi/Result.h>
 #include <nnapi/TypeUtils.h>
 #include <nnapi/Types.h>
@@ -34,6 +35,39 @@
 
 namespace aidl::android::hardware::neuralnetworks::utils {
 namespace {
+
+class BurstExecution final : public nn::IExecution,
+                             public std::enable_shared_from_this<BurstExecution> {
+    struct PrivateConstructorTag {};
+
+  public:
+    static nn::GeneralResult<std::shared_ptr<const BurstExecution>> create(
+            std::shared_ptr<const Burst> burst, Request request,
+            std::vector<int64_t> memoryIdentifierTokens, bool measure, int64_t loopTimeoutDuration,
+            hal::utils::RequestRelocation relocation,
+            std::vector<Burst::OptionalCacheHold> cacheHolds);
+
+    BurstExecution(PrivateConstructorTag tag, std::shared_ptr<const Burst> burst, Request request,
+                   std::vector<int64_t> memoryIdentifierTokens, bool measure,
+                   int64_t loopTimeoutDuration, hal::utils::RequestRelocation relocation,
+                   std::vector<Burst::OptionalCacheHold> cacheHolds);
+
+    nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> compute(
+            const nn::OptionalTimePoint& deadline) const override;
+
+    nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>> computeFenced(
+            const std::vector<nn::SyncFence>& waitFor, const nn::OptionalTimePoint& deadline,
+            const nn::OptionalDuration& timeoutDurationAfterFence) const override;
+
+  private:
+    const std::shared_ptr<const Burst> kBurst;
+    const Request kRequest;
+    const std::vector<int64_t>& kMemoryIdentifierTokens;
+    const bool kMeasure;
+    const int64_t kLoopTimeoutDuration;
+    const hal::utils::RequestRelocation kRelocation;
+    const std::vector<Burst::OptionalCacheHold> kCacheHolds;
+};
 
 nn::GeneralResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> convertExecutionResults(
         const std::vector<OutputShape>& outputShapes, const Timing& timing) {
@@ -139,13 +173,6 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Burst::
         const nn::Request& request, nn::MeasureTiming measure,
         const nn::OptionalTimePoint& deadline,
         const nn::OptionalDuration& loopTimeoutDuration) const {
-    // Ensure that at most one execution is in flight at any given time.
-    const bool alreadyInFlight = mExecutionInFlight.test_and_set();
-    if (alreadyInFlight) {
-        return NN_ERROR() << "IBurst already has an execution in flight";
-    }
-    const auto guard = ::android::base::make_scope_guard([this] { mExecutionInFlight.clear(); });
-
     // Ensure that request is ready for IPC.
     std::optional<nn::Request> maybeRequestInShared;
     hal::utils::RequestRelocation relocation;
@@ -161,9 +188,9 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Burst::
 
     std::vector<int64_t> memoryIdentifierTokens;
     std::vector<OptionalCacheHold> holds;
-    memoryIdentifierTokens.reserve(request.pools.size());
-    holds.reserve(request.pools.size());
-    for (const auto& memoryPool : request.pools) {
+    memoryIdentifierTokens.reserve(requestInShared.pools.size());
+    holds.reserve(requestInShared.pools.size());
+    for (const auto& memoryPool : requestInShared.pools) {
         if (const auto* memory = std::get_if<nn::SharedMemory>(&memoryPool)) {
             if (auto cached = kMemoryCache->getMemoryIfAvailable(*memory)) {
                 auto& [identifier, hold] = *cached;
@@ -174,16 +201,30 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Burst::
         }
         memoryIdentifierTokens.push_back(-1);
     }
-    CHECK_EQ(request.pools.size(), memoryIdentifierTokens.size());
+    CHECK_EQ(requestInShared.pools.size(), memoryIdentifierTokens.size());
+
+    return executeInternal(aidlRequest, memoryIdentifierTokens, aidlMeasure, aidlDeadline,
+                           aidlLoopTimeoutDuration, relocation);
+}
+
+nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Burst::executeInternal(
+        const Request& request, const std::vector<int64_t>& memoryIdentifierTokens, bool measure,
+        int64_t deadline, int64_t loopTimeoutDuration,
+        const hal::utils::RequestRelocation& relocation) const {
+    // Ensure that at most one execution is in flight at any given time.
+    const bool alreadyInFlight = mExecutionInFlight.test_and_set();
+    if (alreadyInFlight) {
+        return NN_ERROR() << "IBurst already has an execution in flight";
+    }
+    const auto guard = ::android::base::make_scope_guard([this] { mExecutionInFlight.clear(); });
 
     if (relocation.input) {
         relocation.input->flush();
     }
 
     ExecutionResult executionResult;
-    const auto ret =
-            kBurst->executeSynchronously(aidlRequest, memoryIdentifierTokens, aidlMeasure,
-                                         aidlDeadline, aidlLoopTimeoutDuration, &executionResult);
+    const auto ret = kBurst->executeSynchronously(request, memoryIdentifierTokens, measure,
+                                                  deadline, loopTimeoutDuration, &executionResult);
     HANDLE_ASTATUS(ret) << "execute failed";
     if (!executionResult.outputSufficientSize) {
         auto canonicalOutputShapes =
@@ -198,6 +239,84 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Burst::
         relocation.output->flush();
     }
     return std::make_pair(std::move(outputShapes), timing);
+}
+
+nn::GeneralResult<nn::SharedExecution> Burst::createReusableExecution(
+        const nn::Request& request, nn::MeasureTiming measure,
+        const nn::OptionalDuration& loopTimeoutDuration) const {
+    // Ensure that request is ready for IPC.
+    std::optional<nn::Request> maybeRequestInShared;
+    hal::utils::RequestRelocation relocation;
+    const nn::Request& requestInShared = NN_TRY(hal::utils::convertRequestFromPointerToShared(
+            &request, &maybeRequestInShared, &relocation));
+
+    auto aidlRequest = NN_TRY(convert(requestInShared));
+    const auto aidlMeasure = NN_TRY(convert(measure));
+    const auto aidlLoopTimeoutDuration = NN_TRY(convert(loopTimeoutDuration));
+
+    std::vector<int64_t> memoryIdentifierTokens;
+    std::vector<OptionalCacheHold> holds;
+    memoryIdentifierTokens.reserve(requestInShared.pools.size());
+    holds.reserve(requestInShared.pools.size());
+    for (const auto& memoryPool : requestInShared.pools) {
+        if (const auto* memory = std::get_if<nn::SharedMemory>(&memoryPool)) {
+            if (auto cached = kMemoryCache->getMemoryIfAvailable(*memory)) {
+                auto& [identifier, hold] = *cached;
+                memoryIdentifierTokens.push_back(identifier);
+                holds.push_back(std::move(hold));
+                continue;
+            }
+        }
+        memoryIdentifierTokens.push_back(-1);
+    }
+    CHECK_EQ(requestInShared.pools.size(), memoryIdentifierTokens.size());
+
+    return BurstExecution::create(shared_from_this(), std::move(aidlRequest),
+                                  std::move(memoryIdentifierTokens), aidlMeasure,
+                                  aidlLoopTimeoutDuration, std::move(relocation), std::move(holds));
+}
+
+nn::GeneralResult<std::shared_ptr<const BurstExecution>> BurstExecution::create(
+        std::shared_ptr<const Burst> burst, Request request,
+        std::vector<int64_t> memoryIdentifierTokens, bool measure, int64_t loopTimeoutDuration,
+        hal::utils::RequestRelocation relocation,
+        std::vector<Burst::OptionalCacheHold> cacheHolds) {
+    if (burst == nullptr) {
+        return NN_ERROR() << "aidl::utils::BurstExecution::create must have non-null burst";
+    }
+
+    return std::make_shared<const BurstExecution>(
+            PrivateConstructorTag{}, std::move(burst), std::move(request),
+            std::move(memoryIdentifierTokens), measure, loopTimeoutDuration, std::move(relocation),
+            std::move(cacheHolds));
+}
+
+BurstExecution::BurstExecution(PrivateConstructorTag /*tag*/, std::shared_ptr<const Burst> burst,
+                               Request request, std::vector<int64_t> memoryIdentifierTokens,
+                               bool measure, int64_t loopTimeoutDuration,
+                               hal::utils::RequestRelocation relocation,
+                               std::vector<Burst::OptionalCacheHold> cacheHolds)
+    : kBurst(std::move(burst)),
+      kRequest(std::move(request)),
+      kMemoryIdentifierTokens(std::move(memoryIdentifierTokens)),
+      kMeasure(measure),
+      kLoopTimeoutDuration(loopTimeoutDuration),
+      kRelocation(std::move(relocation)),
+      kCacheHolds(std::move(cacheHolds)) {}
+
+nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> BurstExecution::compute(
+        const nn::OptionalTimePoint& deadline) const {
+    const auto aidlDeadline = NN_TRY(hal::utils::makeExecutionFailure(convert(deadline)));
+    return kBurst->executeInternal(kRequest, kMemoryIdentifierTokens, kMeasure, aidlDeadline,
+                                   kLoopTimeoutDuration, kRelocation);
+}
+
+nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>>
+BurstExecution::computeFenced(const std::vector<nn::SyncFence>& /*waitFor*/,
+                              const nn::OptionalTimePoint& /*deadline*/,
+                              const nn::OptionalDuration& /*timeoutDurationAfterFence*/) const {
+    return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
+           << "IExecution::computeFenced is not supported on burst object";
 }
 
 }  // namespace aidl::android::hardware::neuralnetworks::utils
