@@ -625,6 +625,17 @@ parcelable GnssMeasurement {
      * The position and velocity must be in ECEF coordinates.
      *
      * If the data is available, gnssMeasurementFlags must contain HAS_SATELLITE_PVT.
+     *
+     * If SatellitePvt is derived from Broadcast ephemeris, then the position is already w.r.t.
+     * the antenna phase center. However, if SatellitePvt is derived from other modeled orbits,
+     * such as long-term-orbits, or precise orbits, then the orbits may have been computed w.r.t.
+     * the satellite center of mass, and then GNSS vendors are expected to correct for the effect
+     * on different phase centers (can differ by meters) of different GNSS signals (e.g. L1, L5)
+     * on the reported satellite position. Accordingly, we might observe a different satellite
+     * position reported for L1 GnssMeasurement struct compared to L5 GnssMeasurement struct.
+     *
+     * If receivedSvTimeNs is not fully decoded, Satellite PVT could still be reported and
+     * receivedSvTimeNs uncertainty field would be used to provide confidence.
      */
     SatellitePvt satellitePvt;
 

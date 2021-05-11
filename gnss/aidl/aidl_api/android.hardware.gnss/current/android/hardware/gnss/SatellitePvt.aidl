@@ -34,9 +34,13 @@
 package android.hardware.gnss;
 @VintfStability
 parcelable SatellitePvt {
+  int flags;
   android.hardware.gnss.SatellitePositionEcef satPosEcef;
   android.hardware.gnss.SatelliteVelocityEcef satVelEcef;
   android.hardware.gnss.SatelliteClockInfo satClockInfo;
   double ionoDelayMeters;
   double tropoDelayMeters;
+  const int HAS_POSITION_VELOCITY_CLOCK_INFO = 1;
+  const int HAS_IONO = 2;
+  const int HAS_TROPO = 4;
 }

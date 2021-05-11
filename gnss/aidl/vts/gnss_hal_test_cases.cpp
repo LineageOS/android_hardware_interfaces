@@ -38,6 +38,7 @@ using android::hardware::gnss::IGnssMeasurementInterface;
 using android::hardware::gnss::IGnssPowerIndication;
 using android::hardware::gnss::IGnssPsds;
 using android::hardware::gnss::PsdsType;
+using android::hardware::gnss::SatellitePvt;
 
 using GnssConstellationTypeAidl = android::hardware::gnss::GnssConstellationType;
 
@@ -128,22 +129,39 @@ TEST_P(GnssHalTest, TestGnssMeasurementExtension) {
                          GnssMeasurement::HAS_SATELLITE_PVT |
                          GnssMeasurement::HAS_CORRELATION_VECTOR));
 
-        if ((measurement.flags & GnssMeasurement::HAS_SATELLITE_PVT) &&
-            (has_capability_satpvt == true)) {
-            ASSERT_TRUE(measurement.satellitePvt.satPosEcef.posXMeters >= -43000000 &&
-                        measurement.satellitePvt.satPosEcef.posXMeters <= 43000000);
-            ASSERT_TRUE(measurement.satellitePvt.satPosEcef.posYMeters >= -43000000 &&
-                        measurement.satellitePvt.satPosEcef.posYMeters <= 43000000);
-            ASSERT_TRUE(measurement.satellitePvt.satPosEcef.posZMeters >= -43000000 &&
-                        measurement.satellitePvt.satPosEcef.posZMeters <= 43000000);
-            ASSERT_TRUE(measurement.satellitePvt.satPosEcef.ureMeters > 0);
-            ASSERT_TRUE(measurement.satellitePvt.satVelEcef.velXMps >= -4000 &&
-                        measurement.satellitePvt.satVelEcef.velXMps <= 4000);
-            ASSERT_TRUE(measurement.satellitePvt.satVelEcef.velYMps >= -4000 &&
-                        measurement.satellitePvt.satVelEcef.velYMps <= 4000);
-            ASSERT_TRUE(measurement.satellitePvt.satVelEcef.velZMps >= -4000 &&
-                        measurement.satellitePvt.satVelEcef.velZMps <= 4000);
-            ASSERT_TRUE(measurement.satellitePvt.satVelEcef.ureRateMps > 0);
+        if (measurement.flags & GnssMeasurement::HAS_SATELLITE_PVT &&
+            has_capability_satpvt == true) {
+            if (measurement.satellitePvt.flags & SatellitePvt::HAS_POSITION_VELOCITY_CLOCK_INFO) {
+                ASSERT_TRUE(measurement.satellitePvt.satPosEcef.posXMeters >= -43000000 &&
+                            measurement.satellitePvt.satPosEcef.posXMeters <= 43000000);
+                ASSERT_TRUE(measurement.satellitePvt.satPosEcef.posYMeters >= -43000000 &&
+                            measurement.satellitePvt.satPosEcef.posYMeters <= 43000000);
+                ASSERT_TRUE(measurement.satellitePvt.satPosEcef.posZMeters >= -43000000 &&
+                            measurement.satellitePvt.satPosEcef.posZMeters <= 43000000);
+                ASSERT_TRUE(measurement.satellitePvt.satPosEcef.ureMeters > 0);
+                ASSERT_TRUE(measurement.satellitePvt.satVelEcef.velXMps >= -4000 &&
+                            measurement.satellitePvt.satVelEcef.velXMps <= 4000);
+                ASSERT_TRUE(measurement.satellitePvt.satVelEcef.velYMps >= -4000 &&
+                            measurement.satellitePvt.satVelEcef.velYMps <= 4000);
+                ASSERT_TRUE(measurement.satellitePvt.satVelEcef.velZMps >= -4000 &&
+                            measurement.satellitePvt.satVelEcef.velZMps <= 4000);
+                ASSERT_TRUE(measurement.satellitePvt.satVelEcef.ureRateMps > 0);
+                ASSERT_TRUE(
+                        measurement.satellitePvt.satClockInfo.satHardwareCodeBiasMeters > -17.869 &&
+                        measurement.satellitePvt.satClockInfo.satHardwareCodeBiasMeters < 17.729);
+                ASSERT_TRUE(measurement.satellitePvt.satClockInfo.satTimeCorrectionMeters > -3e6 &&
+                            measurement.satellitePvt.satClockInfo.satTimeCorrectionMeters < 3e6);
+                ASSERT_TRUE(measurement.satellitePvt.satClockInfo.satClkDriftMps > -1.117 &&
+                            measurement.satellitePvt.satClockInfo.satClkDriftMps < 1.117);
+            }
+            if (measurement.satellitePvt.flags & SatellitePvt::HAS_IONO) {
+                ASSERT_TRUE(measurement.satellitePvt.ionoDelayMeters > 0 &&
+                            measurement.satellitePvt.ionoDelayMeters < 100);
+            }
+            if (measurement.satellitePvt.flags & SatellitePvt::HAS_TROPO) {
+                ASSERT_TRUE(measurement.satellitePvt.tropoDelayMeters > 0 &&
+                            measurement.satellitePvt.tropoDelayMeters < 100);
+            }
         }
 
         if (kIsCorrelationVectorSupported &&
