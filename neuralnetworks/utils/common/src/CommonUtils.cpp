@@ -220,8 +220,8 @@ void OutputRelocationTracker::flush() const {
 }
 
 nn::GeneralResult<std::reference_wrapper<const nn::Request>> convertRequestFromPointerToShared(
-        const nn::Request* request, std::optional<nn::Request>* maybeRequestInSharedOut,
-        RequestRelocation* relocationOut) {
+        const nn::Request* request, uint32_t alignment, uint32_t padding,
+        std::optional<nn::Request>* maybeRequestInSharedOut, RequestRelocation* relocationOut) {
     CHECK(request != nullptr);
     CHECK(maybeRequestInSharedOut != nullptr);
     CHECK(relocationOut != nullptr);
@@ -249,7 +249,7 @@ nn::GeneralResult<std::reference_wrapper<const nn::Request>> convertRequestFromP
         const void* data = std::visit([](auto ptr) { return static_cast<const void*>(ptr); },
                                       location.pointer);
         CHECK(data != nullptr);
-        input.location = inputBuilder.append(location.length);
+        input.location = inputBuilder.append(location.length, alignment, padding);
         inputRelocationInfos.push_back({data, input.location.length, input.location.offset});
     }
 
@@ -273,7 +273,7 @@ nn::GeneralResult<std::reference_wrapper<const nn::Request>> convertRequestFromP
         output.lifetime = nn::Request::Argument::LifeTime::POOL;
         void* data = std::get<void*>(location.pointer);
         CHECK(data != nullptr);
-        output.location = outputBuilder.append(location.length);
+        output.location = outputBuilder.append(location.length, alignment, padding);
         outputRelocationInfos.push_back({data, output.location.length, output.location.offset});
     }
 
