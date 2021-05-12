@@ -114,7 +114,7 @@ void eicCborBegin(EicCbor* cbor, int majorType, size_t size) {
         data[4] = size & 0xff;
         eicCborAppend(cbor, data, 5);
     } else {
-        data[0] = (majorType << 5) | 24;
+        data[0] = (majorType << 5) | 27;
         data[1] = (((uint64_t)size) >> 56) & 0xff;
         data[2] = (((uint64_t)size) >> 48) & 0xff;
         data[3] = (((uint64_t)size) >> 40) & 0xff;
