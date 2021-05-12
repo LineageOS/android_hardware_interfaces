@@ -498,6 +498,8 @@ TEST_P(RadioHidlTest_v1_6, setDataThrottling) {
                  ::android::hardware::radio::V1_6::RadioError::NONE,
                  ::android::hardware::radio::V1_6::RadioError::INVALID_ARGUMENTS}));
     }
+
+    sleep(1);
 }
 
 /*
