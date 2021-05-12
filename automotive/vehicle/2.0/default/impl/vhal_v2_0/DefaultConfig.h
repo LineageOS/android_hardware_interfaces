@@ -1245,6 +1245,7 @@ const ConfigDeclaration kVehicleProperties[]{
                                 .access = VehiclePropertyAccess::READ,
                                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                         },
+                .initialValue = {.int32Values = {0 /* ClusterHome */, -1 /* ClusterNone */}},
         },
         {
                 .config =
@@ -1253,6 +1254,8 @@ const ConfigDeclaration kVehicleProperties[]{
                                 .access = VehiclePropertyAccess::READ,
                                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                         },
+                .initialValue = {.int32Values = {0 /* Off */, -1, -1, -1, -1 /* Bounds */,
+                                                 -1, -1, -1, -1 /* Insets */}},
         },
         {
                 .config =
@@ -1305,6 +1308,9 @@ const ConfigDeclaration kVehicleProperties[]{
                                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                                 .configArray = {0, 0, 0, 11, 0, 0, 0, 0, 16},
                         },
+                .initialValue = {.int32Values = {0 /* Off */, -1, -1, -1, -1 /* Bounds */,
+                                                 -1, -1, -1, -1 /* Insets */,
+                                                 0 /* ClusterHome */, -1 /* ClusterNone */}},
         },
         {
                 .config =
@@ -1313,6 +1319,7 @@ const ConfigDeclaration kVehicleProperties[]{
                                 .access = VehiclePropertyAccess::READ,
                                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                         },
+                .initialValue = {.int32Values = {0 /* ClusterHome */}},
         },
         {
                 .config =
