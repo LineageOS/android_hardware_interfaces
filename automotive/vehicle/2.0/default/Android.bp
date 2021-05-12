@@ -134,6 +134,7 @@ cc_library_static {
     srcs: [
         "common/src/Obd2SensorStore.cpp",
         "common/src/VehicleObjectPool.cpp",
+        "common/src/VehiclePropertyStore.cpp",
         "common/src/VehicleUtils.cpp",
     ],
 }
