@@ -699,6 +699,101 @@ void KeyMintAidlTestBase::LocalVerifyMessage(const string& message, const string
     }
 }
 
+string KeyMintAidlTestBase::LocalRsaEncryptMessage(const string& message,
+                                                   const AuthorizationSet& params) {
+    SCOPED_TRACE("LocalRsaEncryptMessage");
+
+    // Retrieve the public key from the leaf certificate.
+    if (cert_chain_.empty()) {
+        ADD_FAILURE() << "No public key available";
+        return "Failure";
+    }
+    X509_Ptr key_cert(parse_cert_blob(cert_chain_[0].encodedCertificate));
+    EVP_PKEY_Ptr pub_key(X509_get_pubkey(key_cert.get()));
+    RSA_Ptr rsa(EVP_PKEY_get1_RSA(const_cast<EVP_PKEY*>(pub_key.get())));
+
+    // Retrieve relevant tags.
+    Digest digest = Digest::NONE;
+    Digest mgf_digest = Digest::NONE;
+    PaddingMode padding = PaddingMode::NONE;
+
+    auto digest_tag = params.GetTagValue(TAG_DIGEST);
+    if (digest_tag.has_value()) digest = digest_tag.value();
+    auto pad_tag = params.GetTagValue(TAG_PADDING);
+    if (pad_tag.has_value()) padding = pad_tag.value();
+    auto mgf_tag = params.GetTagValue(TAG_RSA_OAEP_MGF_DIGEST);
+    if (mgf_tag.has_value()) mgf_digest = mgf_tag.value();
+
+    const EVP_MD* md = openssl_digest(digest);
+    const EVP_MD* mgf_md = openssl_digest(mgf_digest);
+
+    // Set up encryption context.
+    EVP_PKEY_CTX_Ptr ctx(EVP_PKEY_CTX_new(pub_key.get(), /* engine= */ nullptr));
+    if (EVP_PKEY_encrypt_init(ctx.get()) <= 0) {
+        ADD_FAILURE() << "Encryption init failed: " << ERR_peek_last_error();
+        return "Failure";
+    }
+
+    int rc = -1;
+    switch (padding) {
+        case PaddingMode::NONE:
+            rc = EVP_PKEY_CTX_set_rsa_padding(ctx.get(), RSA_NO_PADDING);
+            break;
+        case PaddingMode::RSA_PKCS1_1_5_ENCRYPT:
+            rc = EVP_PKEY_CTX_set_rsa_padding(ctx.get(), RSA_PKCS1_PADDING);
+            break;
+        case PaddingMode::RSA_OAEP:
+            rc = EVP_PKEY_CTX_set_rsa_padding(ctx.get(), RSA_PKCS1_OAEP_PADDING);
+            break;
+        default:
+            break;
+    }
+    if (rc <= 0) {
+        ADD_FAILURE() << "Set padding failed: " << ERR_peek_last_error();
+        return "Failure";
+    }
+    if (padding == PaddingMode::RSA_OAEP) {
+        if (!EVP_PKEY_CTX_set_rsa_oaep_md(ctx.get(), md)) {
+            ADD_FAILURE() << "Set digest failed: " << ERR_peek_last_error();
+            return "Failure";
+        }
+        if (!EVP_PKEY_CTX_set_rsa_mgf1_md(ctx.get(), mgf_md)) {
+            ADD_FAILURE() << "Set MGF digest failed: " << ERR_peek_last_error();
+            return "Failure";
+        }
+    }
+
+    // Determine output size.
+    size_t outlen;
+    if (EVP_PKEY_encrypt(ctx.get(), nullptr /* out */, &outlen,
+                         reinterpret_cast<const uint8_t*>(message.data()), message.size()) <= 0) {
+        ADD_FAILURE() << "Determine output size failed: " << ERR_peek_last_error();
+        return "Failure";
+    }
+
+    // Left-zero-pad the input if necessary.
+    const uint8_t* to_encrypt = reinterpret_cast<const uint8_t*>(message.data());
+    size_t to_encrypt_len = message.size();
+
+    std::unique_ptr<string> zero_padded_message;
+    if (padding == PaddingMode::NONE && to_encrypt_len < outlen) {
+        zero_padded_message.reset(new string(outlen, '\0'));
+        memcpy(zero_padded_message->data() + (outlen - to_encrypt_len), message.data(),
+               message.size());
+        to_encrypt = reinterpret_cast<const uint8_t*>(zero_padded_message->data());
+        to_encrypt_len = outlen;
+    }
+
+    // Do the encryption.
+    string output(outlen, '\0');
+    if (EVP_PKEY_encrypt(ctx.get(), reinterpret_cast<uint8_t*>(output.data()), &outlen, to_encrypt,
+                         to_encrypt_len) <= 0) {
+        ADD_FAILURE() << "Encryption failed: " << ERR_peek_last_error();
+        return "Failure";
+    }
+    return output;
+}
+
 string KeyMintAidlTestBase::EncryptMessage(const vector<uint8_t>& key_blob, const string& message,
                                            const AuthorizationSet& in_params,
                                            AuthorizationSet* out_params) {
