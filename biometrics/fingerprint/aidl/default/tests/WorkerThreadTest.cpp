@@ -40,8 +40,7 @@ TEST(WorkerThreadTest, ScheduleReturnsTrueWhenQueueHasSpace) {
             promise.set_value();
         })));
 
-        auto status = future.wait_for(1s);
-        EXPECT_EQ(status, std::future_status::ready);
+        future.wait();
     }
 }
 
@@ -56,12 +55,11 @@ TEST(WorkerThreadTest, ScheduleReturnsFalseWhenQueueIsFull) {
         // Notify that the task has started.
         promise.set_value();
         // Block for a "very long" time.
-        std::this_thread::sleep_for(2s);
+        std::this_thread::sleep_for(1s);
     })));
 
     // Make sure the long-running task began executing.
-    auto status = future.wait_for(1s);
-    ASSERT_EQ(status, std::future_status::ready);
+    future.wait();
 
     // The first task is already being worked on, which means the queue must be empty.
     // Fill the worker's queue to the maximum.
@@ -91,8 +89,7 @@ TEST(WorkerThreadTest, TasksExecuteInOrder) {
     // Schedule a special task to signal when all of the tasks are finished.
     worker.schedule(
             Callable::from([promise = std::move(promise)]() mutable { promise.set_value(); }));
-    auto status = future.wait_for(1s);
-    ASSERT_EQ(status, std::future_status::ready);
+    future.wait();
 
     ASSERT_EQ(results.size(), NUM_TASKS);
     EXPECT_TRUE(std::is_sorted(results.begin(), results.end()));
@@ -115,8 +112,7 @@ TEST(WorkerThreadTest, ExecutionStopsAfterWorkerIsDestroyed) {
         })));
 
         // The first task should start executing.
-        auto status = future1.wait_for(1s);
-        ASSERT_EQ(status, std::future_status::ready);
+        future1.wait();
 
         // The second task should schedule successfully.
         ASSERT_TRUE(
@@ -128,8 +124,7 @@ TEST(WorkerThreadTest, ExecutionStopsAfterWorkerIsDestroyed) {
     }
 
     // The second task should never execute.
-    auto status = future2.wait_for(1s);
-    ASSERT_EQ(status, std::future_status::ready);
+    future2.wait();
     // The future is expected to be ready but contain an exception.
     // Cannot use ASSERT_THROW because exceptions are disabled in this codebase.
     // ASSERT_THROW(future2.get(), std::future_error);
