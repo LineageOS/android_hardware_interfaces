@@ -243,7 +243,9 @@ TEST_P(DeviceUniqueAttestationTest, Rsa) {
 
     EXPECT_EQ(ErrorCode::OK, result);
     EXPECT_EQ(2U, cert_chain.size());
-    if (dumpAttestations) dumpContent(bin2hex(cert_chain[0]));
+    if (dumpAttestations) {
+      for (auto cert_ : cert_chain) dumpContent(bin2hex(cert_));
+    }
     auto [err, attestation] = parse_attestation_record(cert_chain[0]);
     ASSERT_EQ(ErrorCode::OK, err);
 
@@ -287,7 +289,9 @@ TEST_P(DeviceUniqueAttestationTest, Ecdsa) {
 
     EXPECT_EQ(ErrorCode::OK, result);
     EXPECT_EQ(2U, cert_chain.size());
-    if (dumpAttestations) dumpContent(bin2hex(cert_chain[0]));
+    if (dumpAttestations) {
+      for (auto cert_ : cert_chain) dumpContent(bin2hex(cert_));
+    }
     auto [err, attestation] = parse_attestation_record(cert_chain[0]);
     ASSERT_EQ(ErrorCode::OK, err);
 
