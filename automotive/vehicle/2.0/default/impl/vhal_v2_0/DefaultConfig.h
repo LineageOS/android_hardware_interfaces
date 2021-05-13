@@ -75,14 +75,6 @@ const ConfigDeclaration kVehicleProperties[]{
 
         {.config =
                  {
-                         .prop = toInt(VehicleProperty::INFO_DRIVER_SEAT),
-                         .access = VehiclePropertyAccess::READ,
-                         .changeMode = VehiclePropertyChangeMode::STATIC,
-                 },
-         .initialValue = {.int32Values = {SEAT_1_LEFT}}},
-
-        {.config =
-                 {
                          .prop = toInt(VehicleProperty::INFO_FUEL_DOOR_LOCATION),
                          .access = VehiclePropertyAccess::READ,
                          .changeMode = VehiclePropertyChangeMode::STATIC,
