@@ -103,7 +103,7 @@ interface ISensors {
      * Flush adds a FLUSH_COMPLETE metadata event to the end of the "batch mode"
      * FIFO for the specified sensor and flushes the FIFO.  If the FIFO is empty
      * or if the sensor doesn't support batching (FIFO size zero), return
-     * SUCCESS and add a trivial FLUSH_COMPLETE event added to the event stream.
+     * OK and add a trivial FLUSH_COMPLETE event added to the event stream.
      * This applies to all sensors other than one-shot sensors. If the sensor
      * is a one-shot sensor, flush must return BAD_VALUE and not generate any
      * flush complete metadata.  If the sensor is not active at the time flush()

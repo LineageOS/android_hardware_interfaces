@@ -1130,7 +1130,7 @@ enum AdditionalInfoType : uint32_t {
 
     /**
      * High performance mode hint. Device is able to use up more power and take
-     * more reources to improve throughput and latency in high performance mode.
+     * more resources to improve throughput and latency in high performance mode.
      * One possible use case is virtual reality, when sensor latency need to be
      * carefully controlled.
      * int32_t: 1 or 0, denote if device is in/out of high performance mode,
