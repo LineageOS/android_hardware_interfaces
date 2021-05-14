@@ -160,10 +160,30 @@ package android.media.tuner.testing.configuration.V1_0 {
   public class DvbtFrontendSettings {
     ctor public DvbtFrontendSettings();
     method @Nullable public java.math.BigInteger getBandwidth();
+    method @Nullable public java.math.BigInteger getConstellation();
+    method @Nullable public java.math.BigInteger getGuardInterval();
+    method @Nullable public java.math.BigInteger getHierarchy();
+    method @Nullable public java.math.BigInteger getHpCoderate();
     method @Nullable public java.math.BigInteger getIsHighPriority();
+    method @Nullable public java.math.BigInteger getIsMiso();
+    method @Nullable public java.math.BigInteger getLpCoderate();
+    method @Nullable public java.math.BigInteger getPlpGroupId();
+    method @Nullable public java.math.BigInteger getPlpId();
+    method @Nullable public java.math.BigInteger getPlpMode();
+    method @Nullable public java.math.BigInteger getStandard();
     method @Nullable public java.math.BigInteger getTransmissionMode();
     method public void setBandwidth(@Nullable java.math.BigInteger);
+    method public void setConstellation(@Nullable java.math.BigInteger);
+    method public void setGuardInterval(@Nullable java.math.BigInteger);
+    method public void setHierarchy(@Nullable java.math.BigInteger);
+    method public void setHpCoderate(@Nullable java.math.BigInteger);
     method public void setIsHighPriority(@Nullable java.math.BigInteger);
+    method public void setIsMiso(@Nullable java.math.BigInteger);
+    method public void setLpCoderate(@Nullable java.math.BigInteger);
+    method public void setPlpGroupId(@Nullable java.math.BigInteger);
+    method public void setPlpId(@Nullable java.math.BigInteger);
+    method public void setPlpMode(@Nullable java.math.BigInteger);
+    method public void setStandard(@Nullable java.math.BigInteger);
     method public void setTransmissionMode(@Nullable java.math.BigInteger);
   }
 

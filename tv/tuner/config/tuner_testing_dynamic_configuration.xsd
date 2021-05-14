@@ -52,8 +52,18 @@
 
     <xs:complexType name="dvbtFrontendSettings">
         <xs:attribute name="bandwidth" type="xs:nonNegativeInteger" use="required"/>
-        <xs:attribute name="transmissionMode" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="constellation" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="guardInterval" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="hierarchy" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="hpCoderate" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="lpCoderate" type="xs:nonNegativeInteger" use="required"/>
         <xs:attribute name="isHighPriority" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="isMiso" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="plpGroupId" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="plpId" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="plpMode" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="standard" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="transmissionMode" type="xs:nonNegativeInteger" use="required"/>
     </xs:complexType>
     <xs:complexType name="dvbsFrontendSettings">
         <xs:attribute name="inputStreamId" type="xs:nonNegativeInteger" use="required"/>

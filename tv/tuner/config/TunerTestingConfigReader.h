@@ -50,6 +50,7 @@ using android::hardware::tv::tuner::V1_0::FrontendDvbtCoderate;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtConstellation;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtGuardInterval;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtHierarchy;
+using android::hardware::tv::tuner::V1_0::FrontendDvbtPlpMode;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtSettings;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtStandard;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtTransmissionMode;
@@ -572,8 +573,26 @@ struct TunerTestingConfigReader {
                 feConfig.getFirstDvbtFrontendSettings_optional()->getTransmissionMode());
         dvbtSettings.bandwidth = static_cast<FrontendDvbtBandwidth>(
                 feConfig.getFirstDvbtFrontendSettings_optional()->getBandwidth());
+        dvbtSettings.constellation = static_cast<FrontendDvbtConstellation>(
+                feConfig.getFirstDvbtFrontendSettings_optional()->getConstellation());
+        dvbtSettings.hierarchy = static_cast<FrontendDvbtHierarchy>(
+                feConfig.getFirstDvbtFrontendSettings_optional()->getHierarchy());
+        dvbtSettings.hpCoderate = static_cast<FrontendDvbtCoderate>(
+                feConfig.getFirstDvbtFrontendSettings_optional()->getHpCoderate());
+        dvbtSettings.lpCoderate = static_cast<FrontendDvbtCoderate>(
+                feConfig.getFirstDvbtFrontendSettings_optional()->getLpCoderate());
+        dvbtSettings.guardInterval = static_cast<FrontendDvbtGuardInterval>(
+                feConfig.getFirstDvbtFrontendSettings_optional()->getGuardInterval());
         dvbtSettings.isHighPriority =
                 feConfig.getFirstDvbtFrontendSettings_optional()->getIsHighPriority();
+        dvbtSettings.standard = static_cast<FrontendDvbtStandard>(
+                feConfig.getFirstDvbtFrontendSettings_optional()->getStandard());
+        dvbtSettings.isMiso = feConfig.getFirstDvbtFrontendSettings_optional()->getIsMiso();
+        dvbtSettings.plpMode = static_cast<FrontendDvbtPlpMode>(
+                feConfig.getFirstDvbtFrontendSettings_optional()->getPlpMode());
+        dvbtSettings.plpId = feConfig.getFirstDvbtFrontendSettings_optional()->getPlpId();
+        dvbtSettings.plpGroupId = feConfig.getFirstDvbtFrontendSettings_optional()->getPlpGroupId();
+
         return dvbtSettings;
     }
 
