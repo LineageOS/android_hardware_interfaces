@@ -54,7 +54,10 @@
         <frontends>
             <frontend id="FE_DEFAULT" type="DVBT" isSoftwareFrontend="true"
                       connectToCicamId="0" frequency="578000" endFrequency="800000">
-                <dvbtFrontendSettings bandwidth="8" transmissionMode="1" isHighPriority="1"/>
+                <dvbtFrontendSettings bandwidth="8" transmissionMode="1" isHighPriority="1"
+                                      constellation="1" hierarchy="1" hpCoderate="1" lpCoderate="1"
+                                      guardInterval="1" standard="1" isMiso="0" plpMode="1"
+                                      plpId="0" plpGroupId="0"/>
             </frontend>
             <frontend id="FE_DVBS_0" type="DVBS" isSoftwareFrontend="true"
                       connectToCicamId="0" frequency="578000" endFrequency="800000">
