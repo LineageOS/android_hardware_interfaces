@@ -45,10 +45,8 @@ TEST_P(RadioHidlTest_v1_6, getAvailableNetworks) {
                ::android::hardware::radio::V1_0::RadioError::NONE) {
         static const std::regex kOperatorNumericRe("^[0-9]{5,6}$");
         for (OperatorInfo info : radioRsp_v1_6->networkInfos) {
-            if (info.operatorNumeric != nullptr) {
-                ASSERT_TRUE(
-                        std::regex_match(std::string(info.operatorNumeric), kOperatorNumericRe));
-            }
+            ASSERT_TRUE(
+                    std::regex_match(std::string(info.operatorNumeric), kOperatorNumericRe));
         }
     }
 
