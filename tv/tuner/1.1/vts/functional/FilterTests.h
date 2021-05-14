@@ -57,6 +57,7 @@ using android::hardware::tv::tuner::V1_0::Result;
 using android::hardware::tv::tuner::V1_1::AvStreamType;
 using android::hardware::tv::tuner::V1_1::DemuxFilterEventExt;
 using android::hardware::tv::tuner::V1_1::DemuxFilterMonitorEvent;
+using android::hardware::tv::tuner::V1_1::DemuxFilterMonitorEventType;
 using android::hardware::tv::tuner::V1_1::IFilterCallback;
 using android::hardware::tv::tuner::V1_1::ITuner;
 

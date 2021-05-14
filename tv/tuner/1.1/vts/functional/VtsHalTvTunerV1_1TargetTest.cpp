@@ -112,8 +112,8 @@ void TunerBroadcastHidlTest::mediaFilterUsingSharedMemoryTest(FilterConfig1_1 fi
     ASSERT_TRUE(mFilterTests.openFilterInDemux(filterConf.config1_0.type,
                                                filterConf.config1_0.bufferSize));
     ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId_64bit(filterId));
-    ASSERT_TRUE(mFilterTests.getSharedAvMemoryHandle(filterId));
     ASSERT_TRUE(mFilterTests.configFilter(filterConf.config1_0.settings, filterId));
+    ASSERT_TRUE(mFilterTests.getSharedAvMemoryHandle(filterId));
     ASSERT_TRUE(mFilterTests.configAvFilterStreamType(filterConf.streamType, filterId));
     ASSERT_TRUE(mFilterTests.getFilterMQDescriptor(filterId, filterConf.config1_0.getMqDesc));
     ASSERT_TRUE(mFilterTests.startFilter(filterId));
