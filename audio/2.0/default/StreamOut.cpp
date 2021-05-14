@@ -353,9 +353,9 @@ Return<void> StreamOut::prepareForWriting(uint32_t frameSize,
     }
 
     // Create and launch the thread.
-    auto tempWriteThread = std::make_unique<WriteThread>(
-        &mStopWriteThread, mStream, tempCommandMQ.get(), tempDataMQ.get(),
-        tempStatusMQ.get(), tempElfGroup.get());
+    sp<WriteThread> tempWriteThread =
+            new WriteThread(&mStopWriteThread, mStream, tempCommandMQ.get(), tempDataMQ.get(),
+                            tempStatusMQ.get(), tempElfGroup.get());
     if (!tempWriteThread->init()) {
         ALOGW("failed to start writer thread: %s", strerror(-status));
         sendError(Result::INVALID_ARGUMENTS);
@@ -371,7 +371,7 @@ Return<void> StreamOut::prepareForWriting(uint32_t frameSize,
     mCommandMQ = std::move(tempCommandMQ);
     mDataMQ = std::move(tempDataMQ);
     mStatusMQ = std::move(tempStatusMQ);
-    mWriteThread = tempWriteThread.release();
+    mWriteThread = tempWriteThread;
     mEfGroup = tempElfGroup.release();
     threadInfo.pid = getpid();
     threadInfo.tid = mWriteThread->getTid();
