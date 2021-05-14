@@ -122,8 +122,8 @@ struct RequestRelocation {
 // Unlike `flushDataFromPointerToShared`, this method will not copy the input pointer data to the
 // shared memory pool. Use `relocationOut` to flush the input or output data after the call.
 nn::GeneralResult<std::reference_wrapper<const nn::Request>> convertRequestFromPointerToShared(
-        const nn::Request* request, std::optional<nn::Request>* maybeRequestInSharedOut,
-        RequestRelocation* relocationOut);
+        const nn::Request* request, uint32_t alignment, uint32_t padding,
+        std::optional<nn::Request>* maybeRequestInSharedOut, RequestRelocation* relocationOut);
 
 nn::GeneralResult<std::vector<uint32_t>> countNumberOfConsumers(
         size_t numberOfOperands, const std::vector<nn::Operation>& operations);
