@@ -52,6 +52,7 @@ using android::hardware::tv::tuner::V1_0::FrontendDvbtCoderate;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtConstellation;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtGuardInterval;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtHierarchy;
+using android::hardware::tv::tuner::V1_0::FrontendDvbtPlpMode;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtSettings;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtStandard;
 using android::hardware::tv::tuner::V1_0::FrontendDvbtTransmissionMode;
@@ -593,6 +594,16 @@ struct TunerTestingConfigReader1_0 {
         }
         dvbtSettings.bandwidth = static_cast<FrontendDvbtBandwidth>(dvbt->getBandwidth());
         dvbtSettings.isHighPriority = dvbt->getIsHighPriority();
+        dvbtSettings.hierarchy = static_cast<FrontendDvbtHierarchy>(dvbt->getHierarchy());
+        dvbtSettings.hpCoderate = static_cast<FrontendDvbtCoderate>(dvbt->getHpCoderate());
+        dvbtSettings.lpCoderate = static_cast<FrontendDvbtCoderate>(dvbt->getLpCoderate());
+        dvbtSettings.guardInterval =
+                static_cast<FrontendDvbtGuardInterval>(dvbt->getGuardInterval());
+        dvbtSettings.standard = static_cast<FrontendDvbtStandard>(dvbt->getStandard());
+        dvbtSettings.isMiso = dvbt->getIsMiso();
+        dvbtSettings.plpMode = static_cast<FrontendDvbtPlpMode>(dvbt->getPlpMode());
+        dvbtSettings.plpId = dvbt->getPlpId();
+        dvbtSettings.plpGroupId = dvbt->getPlpGroupId();
         if (dvbt->hasConstellation()) {
             dvbtSettings.constellation =
                     static_cast<FrontendDvbtConstellation>(dvbt->getConstellation());
