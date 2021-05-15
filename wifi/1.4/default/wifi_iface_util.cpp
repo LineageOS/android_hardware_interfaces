@@ -53,7 +53,7 @@ std::array<uint8_t, 6> WifiIfaceUtil::getFactoryMacAddress(
 
 bool WifiIfaceUtil::setMacAddress(const std::string& iface_name,
                                   const std::array<uint8_t, 6>& mac) {
-#ifndef WIFI_AVOID_IFACE_RESET_MAC_CHANGE
+#if !defined(WIFI_AVOID_IFACE_RESET_MAC_CHANGE) && !defined(WIFI_RESET_IFACE_AFTER_MAC_CHANGE)
     if (!iface_tool_.lock()->SetUpState(iface_name.c_str(), false)) {
         LOG(ERROR) << "SetUpState(false) failed.";
         return false;
@@ -63,6 +63,12 @@ bool WifiIfaceUtil::setMacAddress(const std::string& iface_name,
         LOG(ERROR) << "SetMacAddress failed.";
         return false;
     }
+#ifdef WIFI_RESET_IFACE_AFTER_MAC_CHANGE
+    if (!iface_tool_.lock()->SetUpState(iface_name.c_str(), false)) {
+        LOG(ERROR) << "SetUpState(false) failed.";
+        return false;
+    }
+#endif
 #ifndef WIFI_AVOID_IFACE_RESET_MAC_CHANGE
     if (!iface_tool_.lock()->SetUpState(iface_name.c_str(), true)) {
         LOG(ERROR) << "SetUpState(true) failed.";
