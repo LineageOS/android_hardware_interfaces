@@ -306,8 +306,12 @@ AssertionResult FilterTests::configureMonitorEvent(uint64_t filterId, uint32_t m
             android::hardware::tv::tuner::V1_1::IFilter::castFrom(mFilters[filterId]);
     if (filter_v1_1 != NULL) {
         status = filter_v1_1->configureMonitorEvent(monitorEventTypes);
-        mFilterCallbacks[filterId]->testFilterScramblingEvent();
-        mFilterCallbacks[filterId]->testFilterIpCidEvent();
+        if (monitorEventTypes & DemuxFilterMonitorEventType::SCRAMBLING_STATUS) {
+            mFilterCallbacks[filterId]->testFilterScramblingEvent();
+        }
+        if (monitorEventTypes & DemuxFilterMonitorEventType::IP_CID_CHANGE) {
+            mFilterCallbacks[filterId]->testFilterIpCidEvent();
+        }
     } else {
         ALOGW("[vts] Can't cast IFilter into v1_1.");
         return failure();
