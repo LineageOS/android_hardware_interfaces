@@ -1,10 +1,1 @@
-# Telephony team
-refuhoo@google.com
-amitmahajan@google.com
-jackyu@google.com
-fionaxu@google.com
-# more to add
-
-# VTS team
-yuexima@google.com
-dshi@google.com
+include ../../1.0/vts/OWNERS
