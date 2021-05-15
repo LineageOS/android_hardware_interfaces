@@ -83,6 +83,13 @@ bool deviceSupportsFeature(const char* feature) {
     return hasFeature;
 }
 
+bool isSsSsEnabled() {
+    // Do not use checkSubstringInCommandOutput("getprop persist.radio.multisim.config", "")
+    // until b/148904287 is fixed. We need exact matching instead of partial matching. (i.e.
+    // by definition the empty string "" is a substring of any string).
+    return !isDsDsEnabled() && !isTsTsEnabled();
+}
+
 bool isDsDsEnabled() {
     return testing::checkSubstringInCommandOutput("getprop persist.radio.multisim.config", "dsds");
 }
