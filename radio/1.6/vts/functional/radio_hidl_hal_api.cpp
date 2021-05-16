@@ -585,7 +585,7 @@ TEST_P(RadioHidlTest_v1_6, emergencyDial_1_6) {
     // or Emergency_Only.
     if (isDsDsEnabled() || isTsTsEnabled()) {
         serial = GetRandomSerialNumber();
-        radio_v1_6->getVoiceRegistrationState(serial);
+        radio_v1_6->getVoiceRegistrationState_1_6(serial);
         EXPECT_EQ(std::cv_status::no_timeout, wait());
         if (isVoiceEmergencyOnly(radioRsp_v1_6->voiceRegResp.regState) ||
             isVoiceInService(radioRsp_v1_6->voiceRegResp.regState)) {
@@ -639,7 +639,7 @@ TEST_P(RadioHidlTest_v1_6, emergencyDial_1_6_withServices) {
     // or Emergency_Only.
     if (isDsDsEnabled() || isTsTsEnabled()) {
         serial = GetRandomSerialNumber();
-        radio_v1_6->getVoiceRegistrationState(serial);
+        radio_v1_6->getVoiceRegistrationState_1_6(serial);
         EXPECT_EQ(std::cv_status::no_timeout, wait());
         if (isVoiceEmergencyOnly(radioRsp_v1_6->voiceRegResp.regState) ||
             isVoiceInService(radioRsp_v1_6->voiceRegResp.regState)) {
@@ -692,7 +692,7 @@ TEST_P(RadioHidlTest_v1_6, emergencyDial_1_6_withEmergencyRouting) {
     // or Emergency_Only.
     if (isDsDsEnabled() || isTsTsEnabled()) {
         serial = GetRandomSerialNumber();
-        radio_v1_6->getVoiceRegistrationState(serial);
+        radio_v1_6->getVoiceRegistrationState_1_6(serial);
         EXPECT_EQ(std::cv_status::no_timeout, wait());
         if (isVoiceEmergencyOnly(radioRsp_v1_6->voiceRegResp.regState) ||
             isVoiceInService(radioRsp_v1_6->voiceRegResp.regState)) {
