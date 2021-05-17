@@ -1446,7 +1446,7 @@ enum VehicleProperty : int32_t {
      * @access VehiclePropertyAccess:READ_WRITE
      * @unit VehicleUnit:MILLI_SECS
      */
-    UNIX_TIME = (
+    EPOCH_TIME = (
         0x0606
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:INT64
