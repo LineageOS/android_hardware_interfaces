@@ -82,6 +82,14 @@ VehicleHalServer::VehicleHalServer() {
     }
 }
 
+void VehicleHalServer::sendAllValuesToClient() {
+    constexpr bool update_status = true;
+    auto values = mServerSidePropStore.readAllValues();
+    for (const auto& value : values) {
+        onPropertyValueFromCar(value, update_status);
+    }
+}
+
 GeneratorHub* VehicleHalServer::getGenerator() {
     return &mGeneratorHub;
 }
