@@ -482,7 +482,6 @@ class NewKeyGenerationTest : public KeyMintAidlTestBase {
     void CheckBaseParams(const vector<KeyCharacteristics>& keyCharacteristics) {
         AuthorizationSet auths = CheckCommonParams(keyCharacteristics);
         EXPECT_TRUE(auths.Contains(TAG_PURPOSE, KeyPurpose::SIGN));
-        EXPECT_TRUE(auths.Contains(TAG_PURPOSE, KeyPurpose::VERIFY));
 
         // Check that some unexpected tags/values are NOT present.
         EXPECT_FALSE(auths.Contains(TAG_PURPOSE, KeyPurpose::ENCRYPT));
@@ -495,7 +494,6 @@ class NewKeyGenerationTest : public KeyMintAidlTestBase {
         EXPECT_TRUE(auths.Contains(TAG_PURPOSE, KeyPurpose::DECRYPT));
 
         EXPECT_FALSE(auths.Contains(TAG_PURPOSE, KeyPurpose::SIGN));
-        EXPECT_FALSE(auths.Contains(TAG_PURPOSE, KeyPurpose::VERIFY));
     }
 
     AuthorizationSet CheckCommonParams(const vector<KeyCharacteristics>& keyCharacteristics) {
@@ -1986,6 +1984,50 @@ TEST_P(SigningOperationsTest, RsaSuccess) {
     string message = "12345678901234567890123456789012";
     string signature = SignMessage(
             message, AuthorizationSetBuilder().Digest(Digest::NONE).Padding(PaddingMode::NONE));
+    LocalVerifyMessage(message, signature,
+                       AuthorizationSetBuilder().Digest(Digest::NONE).Padding(PaddingMode::NONE));
+}
+
+/*
+ * SigningOperationsTest.RsaAllPaddingsAndDigests
+ *
+ * Verifies RSA signature/verification for all padding modes and digests.
+ */
+TEST_P(SigningOperationsTest, RsaAllPaddingsAndDigests) {
+    auto authorizations = AuthorizationSetBuilder()
+                                  .Authorization(TAG_NO_AUTH_REQUIRED)
+                                  .RsaSigningKey(2048, 65537)
+                                  .Digest(ValidDigests(true /* withNone */, true /* withMD5 */))
+                                  .Padding(PaddingMode::NONE)
+                                  .Padding(PaddingMode::RSA_PSS)
+                                  .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN)
+                                  .SetDefaultValidity();
+
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(authorizations));
+
+    string message(128, 'a');
+    string corrupt_message(message);
+    ++corrupt_message[corrupt_message.size() / 2];
+
+    for (auto padding :
+         {PaddingMode::NONE, PaddingMode::RSA_PSS, PaddingMode::RSA_PKCS1_1_5_SIGN}) {
+        for (auto digest : ValidDigests(true /* withNone */, true /* withMD5 */)) {
+            if (padding == PaddingMode::NONE && digest != Digest::NONE) {
+                // Digesting only makes sense with padding.
+                continue;
+            }
+
+            if (padding == PaddingMode::RSA_PSS && digest == Digest::NONE) {
+                // PSS requires digesting.
+                continue;
+            }
+
+            string signature =
+                    SignMessage(message, AuthorizationSetBuilder().Digest(digest).Padding(padding));
+            LocalVerifyMessage(message, signature,
+                               AuthorizationSetBuilder().Digest(digest).Padding(padding));
+        }
+    }
 }
 
 /*
@@ -2432,6 +2474,39 @@ TEST_P(SigningOperationsTest, EcdsaAllSizesAndHashes) {
 }
 
 /*
+ * SigningOperationsTest.EcdsaAllDigestsAndCurves
+ *
+ * Verifies ECDSA signature/verification for all digests and curves.
+ */
+TEST_P(SigningOperationsTest, EcdsaAllDigestsAndCurves) {
+    auto digests = ValidDigests(true /* withNone */, false /* withMD5 */);
+
+    string message = "1234567890";
+    string corrupt_message = "2234567890";
+    for (auto curve : ValidCurves()) {
+        SCOPED_TRACE(testing::Message() << "Curve::" << curve);
+        ErrorCode error = GenerateKey(AuthorizationSetBuilder()
+                                              .Authorization(TAG_NO_AUTH_REQUIRED)
+                                              .EcdsaSigningKey(curve)
+                                              .Digest(digests)
+                                              .SetDefaultValidity());
+        EXPECT_EQ(ErrorCode::OK, error) << "Failed to generate key for EC curve " << curve;
+        if (error != ErrorCode::OK) {
+            continue;
+        }
+
+        for (auto digest : digests) {
+            SCOPED_TRACE(testing::Message() << "Digest::" << digest);
+            string signature = SignMessage(message, AuthorizationSetBuilder().Digest(digest));
+            LocalVerifyMessage(message, signature, AuthorizationSetBuilder().Digest(digest));
+        }
+
+        auto rc = DeleteKey();
+        ASSERT_TRUE(rc == ErrorCode::OK || rc == ErrorCode::UNIMPLEMENTED);
+    }
+}
+
+/*
  * SigningOperationsTest.EcdsaAllCurves
  *
  * Verifies that ECDSA operations succeed with all possible curves.
@@ -2699,207 +2774,6 @@ INSTANTIATE_KEYMINT_AIDL_TEST(SigningOperationsTest);
 typedef KeyMintAidlTestBase VerificationOperationsTest;
 
 /*
- * VerificationOperationsTest.RsaSuccess
- *
- * Verifies that a simple RSA signature/verification sequence succeeds.
- */
-TEST_P(VerificationOperationsTest, RsaSuccess) {
-    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
-                                                 .RsaSigningKey(2048, 65537)
-                                                 .Digest(Digest::NONE)
-                                                 .Padding(PaddingMode::NONE)
-                                                 .SetDefaultValidity()));
-    string message = "12345678901234567890123456789012";
-    string signature = SignMessage(
-            message, AuthorizationSetBuilder().Digest(Digest::NONE).Padding(PaddingMode::NONE));
-    VerifyMessage(message, signature,
-                  AuthorizationSetBuilder().Digest(Digest::NONE).Padding(PaddingMode::NONE));
-}
-
-/*
- * VerificationOperationsTest.RsaAllPaddingsAndDigests
- *
- * Verifies RSA signature/verification for all padding modes and digests.
- */
-TEST_P(VerificationOperationsTest, RsaAllPaddingsAndDigests) {
-    auto authorizations = AuthorizationSetBuilder()
-                                  .Authorization(TAG_NO_AUTH_REQUIRED)
-                                  .RsaSigningKey(2048, 65537)
-                                  .Digest(ValidDigests(true /* withNone */, true /* withMD5 */))
-                                  .Padding(PaddingMode::NONE)
-                                  .Padding(PaddingMode::RSA_PSS)
-                                  .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN)
-                                  .SetDefaultValidity();
-
-    ASSERT_EQ(ErrorCode::OK, GenerateKey(authorizations));
-
-    string message(128, 'a');
-    string corrupt_message(message);
-    ++corrupt_message[corrupt_message.size() / 2];
-
-    for (auto padding :
-         {PaddingMode::NONE, PaddingMode::RSA_PSS, PaddingMode::RSA_PKCS1_1_5_SIGN}) {
-        for (auto digest : ValidDigests(true /* withNone */, true /* withMD5 */)) {
-            if (padding == PaddingMode::NONE && digest != Digest::NONE) {
-                // Digesting only makes sense with padding.
-                continue;
-            }
-
-            if (padding == PaddingMode::RSA_PSS && digest == Digest::NONE) {
-                // PSS requires digesting.
-                continue;
-            }
-
-            string signature =
-                    SignMessage(message, AuthorizationSetBuilder().Digest(digest).Padding(padding));
-            VerifyMessage(message, signature,
-                          AuthorizationSetBuilder().Digest(digest).Padding(padding));
-
-            /* TODO(seleneh) add exportkey tests back later when we have decided on
-             * the new api.
-                        if (digest != Digest::NONE) {
-                            // Verify with OpenSSL.
-                            vector<uint8_t> pubkey;
-                            ASSERT_EQ(ErrorCode::OK, ExportKey(KeyFormat::X509, &pubkey));
-
-                            const uint8_t* p = pubkey.data();
-                            EVP_PKEY_Ptr pkey(d2i_PUBKEY(nullptr, &p, pubkey.size()));
-                            ASSERT_TRUE(pkey.get());
-
-                            EVP_MD_CTX digest_ctx;
-                            EVP_MD_CTX_init(&digest_ctx);
-                            EVP_PKEY_CTX* pkey_ctx;
-                            const EVP_MD* md = openssl_digest(digest);
-                            ASSERT_NE(md, nullptr);
-                            EXPECT_EQ(1, EVP_DigestVerifyInit(&digest_ctx, &pkey_ctx, md,
-             nullptr, pkey.get()));
-
-                            switch (padding) {
-                                case PaddingMode::RSA_PSS:
-                                    EXPECT_GT(EVP_PKEY_CTX_set_rsa_padding(pkey_ctx,
-               RSA_PKCS1_PSS_PADDING), 0); EXPECT_GT(EVP_PKEY_CTX_set_rsa_pss_saltlen(pkey_ctx,
-               EVP_MD_size(md)), 0); break; case PaddingMode::RSA_PKCS1_1_5_SIGN:
-                                    // PKCS1 is the default; don't need to set anything.
-                                    break;
-                                default:
-                                    FAIL();
-                                    break;
-                            }
-
-                            EXPECT_EQ(1, EVP_DigestVerifyUpdate(&digest_ctx, message.data(),
-               message.size())); EXPECT_EQ(1, EVP_DigestVerifyFinal(&digest_ctx,
-                                                            reinterpret_cast<const
-               uint8_t*>(signature.data()), signature.size())); EVP_MD_CTX_cleanup(&digest_ctx);
-                        }
-            */
-
-            // Corrupt signature shouldn't verify.
-            string corrupt_signature(signature);
-            ++corrupt_signature[corrupt_signature.size() / 2];
-
-            EXPECT_EQ(ErrorCode::OK,
-                      Begin(KeyPurpose::VERIFY,
-                            AuthorizationSetBuilder().Digest(digest).Padding(padding)));
-            string result;
-            EXPECT_EQ(ErrorCode::VERIFICATION_FAILED, Finish(message, corrupt_signature, &result));
-
-            // Corrupt message shouldn't verify
-            EXPECT_EQ(ErrorCode::OK,
-                      Begin(KeyPurpose::VERIFY,
-                            AuthorizationSetBuilder().Digest(digest).Padding(padding)));
-            EXPECT_EQ(ErrorCode::VERIFICATION_FAILED, Finish(corrupt_message, signature, &result));
-        }
-    }
-}
-
-/*
- * VerificationOperationsTest.RsaAllDigestsAndCurves
- *
- * Verifies ECDSA signature/verification for all digests and curves.
- */
-TEST_P(VerificationOperationsTest, EcdsaAllDigestsAndCurves) {
-    auto digests = ValidDigests(true /* withNone */, false /* withMD5 */);
-
-    string message = "1234567890";
-    string corrupt_message = "2234567890";
-    for (auto curve : ValidCurves()) {
-        ErrorCode error = GenerateKey(AuthorizationSetBuilder()
-                                              .Authorization(TAG_NO_AUTH_REQUIRED)
-                                              .EcdsaSigningKey(curve)
-                                              .Digest(digests)
-                                              .SetDefaultValidity());
-        EXPECT_EQ(ErrorCode::OK, error) << "Failed to generate key for EC curve " << curve;
-        if (error != ErrorCode::OK) {
-            continue;
-        }
-
-        for (auto digest : digests) {
-            string signature = SignMessage(message, AuthorizationSetBuilder().Digest(digest));
-            VerifyMessage(message, signature, AuthorizationSetBuilder().Digest(digest));
-
-            /* TODO(seleneh) add exportkey tests back later when we have decided on
-             * the new api.
-
-                        // Verify with OpenSSL
-                        if (digest != Digest::NONE) {
-                            vector<uint8_t> pubkey;
-                            ASSERT_EQ(ErrorCode::OK, ExportKey(KeyFormat::X509, &pubkey))
-                                    << curve << ' ' << digest;
-
-                            const uint8_t* p = pubkey.data();
-                            EVP_PKEY_Ptr pkey(d2i_PUBKEY(nullptr, &p, pubkey.size()));
-                            ASSERT_TRUE(pkey.get());
-
-                            EVP_MD_CTX digest_ctx;
-                            EVP_MD_CTX_init(&digest_ctx);
-                            EVP_PKEY_CTX* pkey_ctx;
-                            const EVP_MD* md = openssl_digest(digest);
-
-                            EXPECT_EQ(1, EVP_DigestVerifyInit(&digest_ctx, &pkey_ctx, md,
-             nullptr, pkey.get()))
-                                    << curve << ' ' << digest;
-
-                            EXPECT_EQ(1, EVP_DigestVerifyUpdate(&digest_ctx, message.data(),
-               message.size()))
-                                    << curve << ' ' << digest;
-
-                            EXPECT_EQ(1,
-                                      EVP_DigestVerifyFinal(&digest_ctx,
-                                                            reinterpret_cast<const
-               uint8_t*>(signature.data()), signature.size()))
-                                    << curve << ' ' << digest;
-
-                            EVP_MD_CTX_cleanup(&digest_ctx);
-                        }
-            */
-            // Corrupt signature shouldn't verify.
-            string corrupt_signature(signature);
-            ++corrupt_signature[corrupt_signature.size() / 2];
-
-            EXPECT_EQ(ErrorCode::OK,
-                      Begin(KeyPurpose::VERIFY, AuthorizationSetBuilder().Digest(digest)))
-                    << curve << ' ' << digest;
-
-            string result;
-            EXPECT_EQ(ErrorCode::VERIFICATION_FAILED, Finish(message, corrupt_signature, &result))
-                    << curve << ' ' << digest;
-
-            // Corrupt message shouldn't verify
-            EXPECT_EQ(ErrorCode::OK,
-                      Begin(KeyPurpose::VERIFY, AuthorizationSetBuilder().Digest(digest)))
-                    << curve << ' ' << digest;
-
-            EXPECT_EQ(ErrorCode::VERIFICATION_FAILED, Finish(corrupt_message, signature, &result))
-                    << curve << ' ' << digest;
-        }
-
-        auto rc = DeleteKey();
-        ASSERT_TRUE(rc == ErrorCode::OK || rc == ErrorCode::UNIMPLEMENTED);
-    }
-}
-
-/*
  * VerificationOperationsTest.HmacSigningKeyCannotVerify
  *
  * Verifies HMAC signing and verification, but that a signing key cannot be used to verify.
@@ -3016,7 +2890,7 @@ TEST_P(ImportKeyTest, RsaSuccess) {
     string message(1024 / 8, 'a');
     auto params = AuthorizationSetBuilder().Digest(Digest::SHA_2_256).Padding(PaddingMode::RSA_PSS);
     string signature = SignMessage(message, params);
-    VerifyMessage(message, signature, params);
+    LocalVerifyMessage(message, signature, params);
 }
 
 /*
@@ -3058,7 +2932,7 @@ TEST_P(ImportKeyTest, RsaSuccessWithoutParams) {
     string message(1024 / 8, 'a');
     auto params = AuthorizationSetBuilder().Digest(Digest::SHA_2_256).Padding(PaddingMode::RSA_PSS);
     string signature = SignMessage(message, params);
-    VerifyMessage(message, signature, params);
+    LocalVerifyMessage(message, signature, params);
 }
 
 /*
@@ -3116,7 +2990,7 @@ TEST_P(ImportKeyTest, EcdsaSuccess) {
     string message(32, 'a');
     auto params = AuthorizationSetBuilder().Digest(Digest::SHA_2_256);
     string signature = SignMessage(message, params);
-    VerifyMessage(message, signature, params);
+    LocalVerifyMessage(message, signature, params);
 }
 
 /*
@@ -3143,7 +3017,7 @@ TEST_P(ImportKeyTest, EcdsaP256RFC5915Success) {
     string message(32, 'a');
     auto params = AuthorizationSetBuilder().Digest(Digest::SHA_2_256);
     string signature = SignMessage(message, params);
-    VerifyMessage(message, signature, params);
+    LocalVerifyMessage(message, signature, params);
 }
 
 /*
@@ -3169,7 +3043,7 @@ TEST_P(ImportKeyTest, EcdsaP256SEC1Success) {
     string message(32, 'a');
     auto params = AuthorizationSetBuilder().Digest(Digest::SHA_2_256);
     string signature = SignMessage(message, params);
-    VerifyMessage(message, signature, params);
+    LocalVerifyMessage(message, signature, params);
 }
 
 /*
@@ -3195,7 +3069,7 @@ TEST_P(ImportKeyTest, Ecdsa521Success) {
     string message(32, 'a');
     auto params = AuthorizationSetBuilder().Digest(Digest::SHA_2_256);
     string signature = SignMessage(message, params);
-    VerifyMessage(message, signature, params);
+    LocalVerifyMessage(message, signature, params);
 }
 
 /*
@@ -3753,7 +3627,7 @@ typedef KeyMintAidlTestBase EncryptionOperationsTest;
 /*
  * EncryptionOperationsTest.RsaNoPaddingSuccess
  *
- * Verifies that raw RSA encryption works.
+ * Verifies that raw RSA decryption works.
  */
 TEST_P(EncryptionOperationsTest, RsaNoPaddingSuccess) {
     for (uint64_t exponent : {3, 65537}) {
@@ -3765,10 +3639,10 @@ TEST_P(EncryptionOperationsTest, RsaNoPaddingSuccess) {
 
         string message = string(2048 / 8, 'a');
         auto params = AuthorizationSetBuilder().Padding(PaddingMode::NONE);
-        string ciphertext1 = EncryptMessage(message, params);
+        string ciphertext1 = LocalRsaEncryptMessage(message, params);
         EXPECT_EQ(2048U / 8, ciphertext1.size());
 
-        string ciphertext2 = EncryptMessage(message, params);
+        string ciphertext2 = LocalRsaEncryptMessage(message, params);
         EXPECT_EQ(2048U / 8, ciphertext2.size());
 
         // Unpadded RSA is deterministic
@@ -3781,7 +3655,7 @@ TEST_P(EncryptionOperationsTest, RsaNoPaddingSuccess) {
 /*
  * EncryptionOperationsTest.RsaNoPaddingShortMessage
  *
- * Verifies that raw RSA encryption of short messages works.
+ * Verifies that raw RSA decryption of short messages works.
  */
 TEST_P(EncryptionOperationsTest, RsaNoPaddingShortMessage) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
@@ -3793,76 +3667,47 @@ TEST_P(EncryptionOperationsTest, RsaNoPaddingShortMessage) {
     string message = "1";
     auto params = AuthorizationSetBuilder().Padding(PaddingMode::NONE);
 
-    string ciphertext = EncryptMessage(message, params);
+    string ciphertext = LocalRsaEncryptMessage(message, params);
     EXPECT_EQ(2048U / 8, ciphertext.size());
 
     string expected_plaintext = string(2048U / 8 - 1, 0) + message;
     string plaintext = DecryptMessage(ciphertext, params);
 
     EXPECT_EQ(expected_plaintext, plaintext);
-
-    // Degenerate case, encrypting a numeric 1 yields 0x00..01 as the ciphertext.
-    message = static_cast<char>(1);
-    ciphertext = EncryptMessage(message, params);
-    EXPECT_EQ(2048U / 8, ciphertext.size());
-    EXPECT_EQ(ciphertext, string(2048U / 8 - 1, 0) + message);
 }
-
-/*
- * EncryptionOperationsTest.RsaNoPaddingTooLong
- *
- * Verifies that raw RSA encryption of too-long messages fails in the expected way.
- */
-TEST_P(EncryptionOperationsTest, RsaNoPaddingTooLong) {
-    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
-                                                 .RsaEncryptionKey(2048, 65537)
-                                                 .Padding(PaddingMode::NONE)
-                                                 .SetDefaultValidity()));
-
-    string message(2048 / 8 + 1, 'a');
-
-    auto params = AuthorizationSetBuilder().Padding(PaddingMode::NONE);
-    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, params));
-
-    string result;
-    EXPECT_EQ(ErrorCode::INVALID_INPUT_LENGTH, Finish(message, &result));
-}
-
-/*
- * EncryptionOperationsTest.RsaNoPaddingTooLarge
- *
- * Verifies that raw RSA encryption of too-large (numerically) messages fails in the expected
- * way.
- */
-// TODO(seleneh) add RsaNoPaddingTooLarge test back after decided and implemented new
-// version of ExportKey inside generateKey
 
 /*
  * EncryptionOperationsTest.RsaOaepSuccess
  *
- * Verifies that RSA-OAEP encryption operations work, with all digests.
+ * Verifies that RSA-OAEP decryption operations work, with all digests.
  */
 TEST_P(EncryptionOperationsTest, RsaOaepSuccess) {
     auto digests = ValidDigests(false /* withNone */, true /* withMD5 */);
 
     size_t key_size = 2048;  // Need largish key for SHA-512 test.
-    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
-                                                 .RsaEncryptionKey(key_size, 65537)
-                                                 .Padding(PaddingMode::RSA_OAEP)
-                                                 .Digest(digests)
-                                                 .SetDefaultValidity()));
+    ASSERT_EQ(ErrorCode::OK,
+              GenerateKey(AuthorizationSetBuilder()
+                                  .Authorization(TAG_NO_AUTH_REQUIRED)
+                                  .RsaEncryptionKey(key_size, 65537)
+                                  .Padding(PaddingMode::RSA_OAEP)
+                                  .Digest(digests)
+                                  .Authorization(TAG_RSA_OAEP_MGF_DIGEST, Digest::SHA1)
+                                  .SetDefaultValidity()));
 
     string message = "Hello";
 
     for (auto digest : digests) {
-        auto params = AuthorizationSetBuilder().Digest(digest).Padding(PaddingMode::RSA_OAEP);
-        string ciphertext1 = EncryptMessage(message, params);
+        SCOPED_TRACE(testing::Message() << "digest-" << digest);
+
+        auto params = AuthorizationSetBuilder()
+                              .Digest(digest)
+                              .Padding(PaddingMode::RSA_OAEP)
+                              .Authorization(TAG_RSA_OAEP_MGF_DIGEST, Digest::SHA1);
+        string ciphertext1 = LocalRsaEncryptMessage(message, params);
         if (HasNonfatalFailure()) std::cout << "-->" << digest << std::endl;
         EXPECT_EQ(key_size / 8, ciphertext1.size());
 
-        string ciphertext2 = EncryptMessage(message, params);
+        string ciphertext2 = LocalRsaEncryptMessage(message, params);
         EXPECT_EQ(key_size / 8, ciphertext2.size());
 
         // OAEP randomizes padding so every result should be different (with astronomically high
@@ -3892,7 +3737,7 @@ TEST_P(EncryptionOperationsTest, RsaOaepSuccess) {
 /*
  * EncryptionOperationsTest.RsaOaepInvalidDigest
  *
- * Verifies that RSA-OAEP encryption operations fail in the correct way when asked to operate
+ * Verifies that RSA-OAEP decryption operations fail in the correct way when asked to operate
  * without a digest.
  */
 TEST_P(EncryptionOperationsTest, RsaOaepInvalidDigest) {
@@ -3904,13 +3749,13 @@ TEST_P(EncryptionOperationsTest, RsaOaepInvalidDigest) {
                                                  .SetDefaultValidity()));
 
     auto params = AuthorizationSetBuilder().Padding(PaddingMode::RSA_OAEP).Digest(Digest::NONE);
-    EXPECT_EQ(ErrorCode::INCOMPATIBLE_DIGEST, Begin(KeyPurpose::ENCRYPT, params));
+    EXPECT_EQ(ErrorCode::INCOMPATIBLE_DIGEST, Begin(KeyPurpose::DECRYPT, params));
 }
 
 /*
  * EncryptionOperationsTest.RsaOaepInvalidPadding
  *
- * Verifies that RSA-OAEP encryption operations fail in the correct way when asked to operate
+ * Verifies that RSA-OAEP decryption operations fail in the correct way when asked to operate
  * with a padding value that is only suitable for signing/verifying.
  */
 TEST_P(EncryptionOperationsTest, RsaOaepInvalidPadding) {
@@ -3922,13 +3767,13 @@ TEST_P(EncryptionOperationsTest, RsaOaepInvalidPadding) {
                                                  .SetDefaultValidity()));
 
     auto params = AuthorizationSetBuilder().Padding(PaddingMode::RSA_PSS).Digest(Digest::NONE);
-    EXPECT_EQ(ErrorCode::UNSUPPORTED_PADDING_MODE, Begin(KeyPurpose::ENCRYPT, params));
+    EXPECT_EQ(ErrorCode::UNSUPPORTED_PADDING_MODE, Begin(KeyPurpose::DECRYPT, params));
 }
 
 /*
  * EncryptionOperationsTest.RsaOaepDecryptWithWrongDigest
  *
- * Verifies that RSA-OAEP encryption operations fail in the correct way when asked to decrypt
+ * Verifies that RSA-OAEP decryption operations fail in the correct way when asked to decrypt
  * with a different digest than was used to encrypt.
  */
 TEST_P(EncryptionOperationsTest, RsaOaepDecryptWithWrongDigest) {
@@ -3941,7 +3786,7 @@ TEST_P(EncryptionOperationsTest, RsaOaepDecryptWithWrongDigest) {
                                                  .Digest(Digest::SHA_2_224, Digest::SHA_2_256)
                                                  .SetDefaultValidity()));
     string message = "Hello World!";
-    string ciphertext = EncryptMessage(
+    string ciphertext = LocalRsaEncryptMessage(
             message,
             AuthorizationSetBuilder().Digest(Digest::SHA_2_224).Padding(PaddingMode::RSA_OAEP));
 
@@ -3954,34 +3799,9 @@ TEST_P(EncryptionOperationsTest, RsaOaepDecryptWithWrongDigest) {
 }
 
 /*
- * EncryptionOperationsTest.RsaOaepTooLarge
- *
- * Verifies that RSA-OAEP encryption operations fail in the correct way when asked to encrypt a
- * too-large message.
- */
-TEST_P(EncryptionOperationsTest, RsaOaepTooLarge) {
-    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
-                                                 .RsaEncryptionKey(2048, 65537)
-                                                 .Padding(PaddingMode::RSA_OAEP)
-                                                 .Digest(Digest::SHA_2_256)
-                                                 .SetDefaultValidity()));
-    constexpr size_t digest_size = 256 /* SHA_2_256 */ / 8;
-    constexpr size_t oaep_overhead = 2 * digest_size + 2;
-    string message(2048 / 8 - oaep_overhead + 1, 'a');
-    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, AuthorizationSetBuilder()
-                                                                .Padding(PaddingMode::RSA_OAEP)
-                                                                .Digest(Digest::SHA_2_256)));
-    string result;
-    ErrorCode error = Finish(message, &result);
-    EXPECT_TRUE(error == ErrorCode::INVALID_INPUT_LENGTH || error == ErrorCode::INVALID_ARGUMENT);
-    EXPECT_EQ(0U, result.size());
-}
-
-/*
  * EncryptionOperationsTest.RsaOaepWithMGFDigestSuccess
  *
- * Verifies that RSA-OAEP encryption operations work, with all SHA 256 digests and all type of MGF1
+ * Verifies that RSA-OAEP decryption operations work, with all SHA 256 digests and all type of MGF1
  * digests.
  */
 TEST_P(EncryptionOperationsTest, RsaOaepWithMGFDigestSuccess) {
@@ -4003,11 +3823,11 @@ TEST_P(EncryptionOperationsTest, RsaOaepWithMGFDigestSuccess) {
                               .Authorization(TAG_RSA_OAEP_MGF_DIGEST, digest)
                               .Digest(Digest::SHA_2_256)
                               .Padding(PaddingMode::RSA_OAEP);
-        string ciphertext1 = EncryptMessage(message, params);
+        string ciphertext1 = LocalRsaEncryptMessage(message, params);
         if (HasNonfatalFailure()) std::cout << "-->" << digest << std::endl;
         EXPECT_EQ(key_size / 8, ciphertext1.size());
 
-        string ciphertext2 = EncryptMessage(message, params);
+        string ciphertext2 = LocalRsaEncryptMessage(message, params);
         EXPECT_EQ(key_size / 8, ciphertext2.size());
 
         // OAEP randomizes padding so every result should be different (with astronomically high
@@ -4037,7 +3857,7 @@ TEST_P(EncryptionOperationsTest, RsaOaepWithMGFDigestSuccess) {
 /*
  * EncryptionOperationsTest.RsaOaepWithMGFIncompatibleDigest
  *
- * Verifies that RSA-OAEP encryption operations fail in the correct way when asked to operate
+ * Verifies that RSA-OAEP decryption operations fail in the correct way when asked to operate
  * with incompatible MGF digest.
  */
 TEST_P(EncryptionOperationsTest, RsaOaepWithMGFIncompatibleDigest) {
@@ -4055,7 +3875,7 @@ TEST_P(EncryptionOperationsTest, RsaOaepWithMGFIncompatibleDigest) {
                           .Padding(PaddingMode::RSA_OAEP)
                           .Digest(Digest::SHA_2_256)
                           .Authorization(TAG_RSA_OAEP_MGF_DIGEST, Digest::SHA_2_224);
-    EXPECT_EQ(ErrorCode::INCOMPATIBLE_MGF_DIGEST, Begin(KeyPurpose::ENCRYPT, params));
+    EXPECT_EQ(ErrorCode::INCOMPATIBLE_MGF_DIGEST, Begin(KeyPurpose::DECRYPT, params));
 }
 
 /*
@@ -4079,7 +3899,7 @@ TEST_P(EncryptionOperationsTest, RsaOaepWithMGFUnsupportedDigest) {
                           .Padding(PaddingMode::RSA_OAEP)
                           .Digest(Digest::SHA_2_256)
                           .Authorization(TAG_RSA_OAEP_MGF_DIGEST, Digest::NONE);
-    EXPECT_EQ(ErrorCode::UNSUPPORTED_MGF_DIGEST, Begin(KeyPurpose::ENCRYPT, params));
+    EXPECT_EQ(ErrorCode::UNSUPPORTED_MGF_DIGEST, Begin(KeyPurpose::DECRYPT, params));
 }
 
 /*
@@ -4096,10 +3916,10 @@ TEST_P(EncryptionOperationsTest, RsaPkcs1Success) {
 
     string message = "Hello World!";
     auto params = AuthorizationSetBuilder().Padding(PaddingMode::RSA_PKCS1_1_5_ENCRYPT);
-    string ciphertext1 = EncryptMessage(message, params);
+    string ciphertext1 = LocalRsaEncryptMessage(message, params);
     EXPECT_EQ(2048U / 8, ciphertext1.size());
 
-    string ciphertext2 = EncryptMessage(message, params);
+    string ciphertext2 = LocalRsaEncryptMessage(message, params);
     EXPECT_EQ(2048U / 8, ciphertext2.size());
 
     // PKCS1 v1.5 randomizes padding so every result should be different.
@@ -4119,27 +3939,6 @@ TEST_P(EncryptionOperationsTest, RsaPkcs1Success) {
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, params));
     string result;
     EXPECT_EQ(ErrorCode::UNKNOWN_ERROR, Finish(ciphertext1, &result));
-    EXPECT_EQ(0U, result.size());
-}
-
-/*
- * EncryptionOperationsTest.RsaPkcs1TooLarge
- *
- * Verifies that RSA PKCS encryption fails in the correct way when the message is too large.
- */
-TEST_P(EncryptionOperationsTest, RsaPkcs1TooLarge) {
-    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
-                                                 .RsaEncryptionKey(2048, 65537)
-                                                 .Padding(PaddingMode::RSA_PKCS1_1_5_ENCRYPT)
-                                                 .SetDefaultValidity()));
-    string message(2048 / 8 - 10, 'a');
-
-    auto params = AuthorizationSetBuilder().Padding(PaddingMode::RSA_PKCS1_1_5_ENCRYPT);
-    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, params));
-    string result;
-    ErrorCode error = Finish(message, &result);
-    EXPECT_TRUE(error == ErrorCode::INVALID_INPUT_LENGTH || error == ErrorCode::INVALID_ARGUMENT);
     EXPECT_EQ(0U, result.size());
 }
 
