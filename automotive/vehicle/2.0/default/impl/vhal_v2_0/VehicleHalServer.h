@@ -31,6 +31,8 @@ class VehicleHalServer : public IVehicleServer {
   public:
     VehicleHalServer();
 
+    void sendAllValuesToClient();
+
     // Methods from IVehicleServer
 
     std::vector<VehiclePropConfig> onGetAllPropertyConfig() const override;
