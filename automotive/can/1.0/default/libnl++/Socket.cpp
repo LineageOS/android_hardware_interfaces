@@ -68,6 +68,11 @@ bool Socket::send(const Buffer<nlmsghdr>& msg, const sockaddr_nl& sa) {
     return true;
 }
 
+bool Socket::send(const Buffer<nlmsghdr>& msg, uint32_t destination) {
+    sockaddr_nl sa = {.nl_family = AF_NETLINK, .nl_pad = 0, .nl_pid = destination, .nl_groups = 0};
+    return send(msg, sa);
+}
+
 bool Socket::increaseReceiveBuffer(size_t maxSize) {
     if (maxSize == 0) {
         LOG(ERROR) << "Maximum receive size should not be zero";
