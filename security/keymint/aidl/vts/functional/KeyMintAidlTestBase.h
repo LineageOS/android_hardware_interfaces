@@ -165,6 +165,7 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     void LocalVerifyMessage(const string& message, const string& signature,
                             const AuthorizationSet& params);
 
+    string LocalRsaEncryptMessage(const string& message, const AuthorizationSet& params);
     string EncryptMessage(const vector<uint8_t>& key_blob, const string& message,
                           const AuthorizationSet& in_params, AuthorizationSet* out_params);
     string EncryptMessage(const string& message, const AuthorizationSet& params,

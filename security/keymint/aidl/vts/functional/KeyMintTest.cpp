@@ -3627,7 +3627,7 @@ typedef KeyMintAidlTestBase EncryptionOperationsTest;
 /*
  * EncryptionOperationsTest.RsaNoPaddingSuccess
  *
- * Verifies that raw RSA encryption works.
+ * Verifies that raw RSA decryption works.
  */
 TEST_P(EncryptionOperationsTest, RsaNoPaddingSuccess) {
     for (uint64_t exponent : {3, 65537}) {
@@ -3639,10 +3639,10 @@ TEST_P(EncryptionOperationsTest, RsaNoPaddingSuccess) {
 
         string message = string(2048 / 8, 'a');
         auto params = AuthorizationSetBuilder().Padding(PaddingMode::NONE);
-        string ciphertext1 = EncryptMessage(message, params);
+        string ciphertext1 = LocalRsaEncryptMessage(message, params);
         EXPECT_EQ(2048U / 8, ciphertext1.size());
 
-        string ciphertext2 = EncryptMessage(message, params);
+        string ciphertext2 = LocalRsaEncryptMessage(message, params);
         EXPECT_EQ(2048U / 8, ciphertext2.size());
 
         // Unpadded RSA is deterministic
@@ -3655,7 +3655,7 @@ TEST_P(EncryptionOperationsTest, RsaNoPaddingSuccess) {
 /*
  * EncryptionOperationsTest.RsaNoPaddingShortMessage
  *
- * Verifies that raw RSA encryption of short messages works.
+ * Verifies that raw RSA decryption of short messages works.
  */
 TEST_P(EncryptionOperationsTest, RsaNoPaddingShortMessage) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
@@ -3667,76 +3667,47 @@ TEST_P(EncryptionOperationsTest, RsaNoPaddingShortMessage) {
     string message = "1";
     auto params = AuthorizationSetBuilder().Padding(PaddingMode::NONE);
 
-    string ciphertext = EncryptMessage(message, params);
+    string ciphertext = LocalRsaEncryptMessage(message, params);
     EXPECT_EQ(2048U / 8, ciphertext.size());
 
     string expected_plaintext = string(2048U / 8 - 1, 0) + message;
     string plaintext = DecryptMessage(ciphertext, params);
 
     EXPECT_EQ(expected_plaintext, plaintext);
-
-    // Degenerate case, encrypting a numeric 1 yields 0x00..01 as the ciphertext.
-    message = static_cast<char>(1);
-    ciphertext = EncryptMessage(message, params);
-    EXPECT_EQ(2048U / 8, ciphertext.size());
-    EXPECT_EQ(ciphertext, string(2048U / 8 - 1, 0) + message);
 }
-
-/*
- * EncryptionOperationsTest.RsaNoPaddingTooLong
- *
- * Verifies that raw RSA encryption of too-long messages fails in the expected way.
- */
-TEST_P(EncryptionOperationsTest, RsaNoPaddingTooLong) {
-    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
-                                                 .RsaEncryptionKey(2048, 65537)
-                                                 .Padding(PaddingMode::NONE)
-                                                 .SetDefaultValidity()));
-
-    string message(2048 / 8 + 1, 'a');
-
-    auto params = AuthorizationSetBuilder().Padding(PaddingMode::NONE);
-    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, params));
-
-    string result;
-    EXPECT_EQ(ErrorCode::INVALID_INPUT_LENGTH, Finish(message, &result));
-}
-
-/*
- * EncryptionOperationsTest.RsaNoPaddingTooLarge
- *
- * Verifies that raw RSA encryption of too-large (numerically) messages fails in the expected
- * way.
- */
-// TODO(seleneh) add RsaNoPaddingTooLarge test back after decided and implemented new
-// version of ExportKey inside generateKey
 
 /*
  * EncryptionOperationsTest.RsaOaepSuccess
  *
- * Verifies that RSA-OAEP encryption operations work, with all digests.
+ * Verifies that RSA-OAEP decryption operations work, with all digests.
  */
 TEST_P(EncryptionOperationsTest, RsaOaepSuccess) {
     auto digests = ValidDigests(false /* withNone */, true /* withMD5 */);
 
     size_t key_size = 2048;  // Need largish key for SHA-512 test.
-    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
-                                                 .RsaEncryptionKey(key_size, 65537)
-                                                 .Padding(PaddingMode::RSA_OAEP)
-                                                 .Digest(digests)
-                                                 .SetDefaultValidity()));
+    ASSERT_EQ(ErrorCode::OK,
+              GenerateKey(AuthorizationSetBuilder()
+                                  .Authorization(TAG_NO_AUTH_REQUIRED)
+                                  .RsaEncryptionKey(key_size, 65537)
+                                  .Padding(PaddingMode::RSA_OAEP)
+                                  .Digest(digests)
+                                  .Authorization(TAG_RSA_OAEP_MGF_DIGEST, Digest::SHA1)
+                                  .SetDefaultValidity()));
 
     string message = "Hello";
 
     for (auto digest : digests) {
-        auto params = AuthorizationSetBuilder().Digest(digest).Padding(PaddingMode::RSA_OAEP);
-        string ciphertext1 = EncryptMessage(message, params);
+        SCOPED_TRACE(testing::Message() << "digest-" << digest);
+
+        auto params = AuthorizationSetBuilder()
+                              .Digest(digest)
+                              .Padding(PaddingMode::RSA_OAEP)
+                              .Authorization(TAG_RSA_OAEP_MGF_DIGEST, Digest::SHA1);
+        string ciphertext1 = LocalRsaEncryptMessage(message, params);
         if (HasNonfatalFailure()) std::cout << "-->" << digest << std::endl;
         EXPECT_EQ(key_size / 8, ciphertext1.size());
 
-        string ciphertext2 = EncryptMessage(message, params);
+        string ciphertext2 = LocalRsaEncryptMessage(message, params);
         EXPECT_EQ(key_size / 8, ciphertext2.size());
 
         // OAEP randomizes padding so every result should be different (with astronomically high
@@ -3766,7 +3737,7 @@ TEST_P(EncryptionOperationsTest, RsaOaepSuccess) {
 /*
  * EncryptionOperationsTest.RsaOaepInvalidDigest
  *
- * Verifies that RSA-OAEP encryption operations fail in the correct way when asked to operate
+ * Verifies that RSA-OAEP decryption operations fail in the correct way when asked to operate
  * without a digest.
  */
 TEST_P(EncryptionOperationsTest, RsaOaepInvalidDigest) {
@@ -3778,13 +3749,13 @@ TEST_P(EncryptionOperationsTest, RsaOaepInvalidDigest) {
                                                  .SetDefaultValidity()));
 
     auto params = AuthorizationSetBuilder().Padding(PaddingMode::RSA_OAEP).Digest(Digest::NONE);
-    EXPECT_EQ(ErrorCode::INCOMPATIBLE_DIGEST, Begin(KeyPurpose::ENCRYPT, params));
+    EXPECT_EQ(ErrorCode::INCOMPATIBLE_DIGEST, Begin(KeyPurpose::DECRYPT, params));
 }
 
 /*
  * EncryptionOperationsTest.RsaOaepInvalidPadding
  *
- * Verifies that RSA-OAEP encryption operations fail in the correct way when asked to operate
+ * Verifies that RSA-OAEP decryption operations fail in the correct way when asked to operate
  * with a padding value that is only suitable for signing/verifying.
  */
 TEST_P(EncryptionOperationsTest, RsaOaepInvalidPadding) {
@@ -3796,13 +3767,13 @@ TEST_P(EncryptionOperationsTest, RsaOaepInvalidPadding) {
                                                  .SetDefaultValidity()));
 
     auto params = AuthorizationSetBuilder().Padding(PaddingMode::RSA_PSS).Digest(Digest::NONE);
-    EXPECT_EQ(ErrorCode::UNSUPPORTED_PADDING_MODE, Begin(KeyPurpose::ENCRYPT, params));
+    EXPECT_EQ(ErrorCode::UNSUPPORTED_PADDING_MODE, Begin(KeyPurpose::DECRYPT, params));
 }
 
 /*
  * EncryptionOperationsTest.RsaOaepDecryptWithWrongDigest
  *
- * Verifies that RSA-OAEP encryption operations fail in the correct way when asked to decrypt
+ * Verifies that RSA-OAEP decryption operations fail in the correct way when asked to decrypt
  * with a different digest than was used to encrypt.
  */
 TEST_P(EncryptionOperationsTest, RsaOaepDecryptWithWrongDigest) {
@@ -3815,7 +3786,7 @@ TEST_P(EncryptionOperationsTest, RsaOaepDecryptWithWrongDigest) {
                                                  .Digest(Digest::SHA_2_224, Digest::SHA_2_256)
                                                  .SetDefaultValidity()));
     string message = "Hello World!";
-    string ciphertext = EncryptMessage(
+    string ciphertext = LocalRsaEncryptMessage(
             message,
             AuthorizationSetBuilder().Digest(Digest::SHA_2_224).Padding(PaddingMode::RSA_OAEP));
 
@@ -3828,34 +3799,9 @@ TEST_P(EncryptionOperationsTest, RsaOaepDecryptWithWrongDigest) {
 }
 
 /*
- * EncryptionOperationsTest.RsaOaepTooLarge
- *
- * Verifies that RSA-OAEP encryption operations fail in the correct way when asked to encrypt a
- * too-large message.
- */
-TEST_P(EncryptionOperationsTest, RsaOaepTooLarge) {
-    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
-                                                 .RsaEncryptionKey(2048, 65537)
-                                                 .Padding(PaddingMode::RSA_OAEP)
-                                                 .Digest(Digest::SHA_2_256)
-                                                 .SetDefaultValidity()));
-    constexpr size_t digest_size = 256 /* SHA_2_256 */ / 8;
-    constexpr size_t oaep_overhead = 2 * digest_size + 2;
-    string message(2048 / 8 - oaep_overhead + 1, 'a');
-    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, AuthorizationSetBuilder()
-                                                                .Padding(PaddingMode::RSA_OAEP)
-                                                                .Digest(Digest::SHA_2_256)));
-    string result;
-    ErrorCode error = Finish(message, &result);
-    EXPECT_TRUE(error == ErrorCode::INVALID_INPUT_LENGTH || error == ErrorCode::INVALID_ARGUMENT);
-    EXPECT_EQ(0U, result.size());
-}
-
-/*
  * EncryptionOperationsTest.RsaOaepWithMGFDigestSuccess
  *
- * Verifies that RSA-OAEP encryption operations work, with all SHA 256 digests and all type of MGF1
+ * Verifies that RSA-OAEP decryption operations work, with all SHA 256 digests and all type of MGF1
  * digests.
  */
 TEST_P(EncryptionOperationsTest, RsaOaepWithMGFDigestSuccess) {
@@ -3877,11 +3823,11 @@ TEST_P(EncryptionOperationsTest, RsaOaepWithMGFDigestSuccess) {
                               .Authorization(TAG_RSA_OAEP_MGF_DIGEST, digest)
                               .Digest(Digest::SHA_2_256)
                               .Padding(PaddingMode::RSA_OAEP);
-        string ciphertext1 = EncryptMessage(message, params);
+        string ciphertext1 = LocalRsaEncryptMessage(message, params);
         if (HasNonfatalFailure()) std::cout << "-->" << digest << std::endl;
         EXPECT_EQ(key_size / 8, ciphertext1.size());
 
-        string ciphertext2 = EncryptMessage(message, params);
+        string ciphertext2 = LocalRsaEncryptMessage(message, params);
         EXPECT_EQ(key_size / 8, ciphertext2.size());
 
         // OAEP randomizes padding so every result should be different (with astronomically high
@@ -3911,7 +3857,7 @@ TEST_P(EncryptionOperationsTest, RsaOaepWithMGFDigestSuccess) {
 /*
  * EncryptionOperationsTest.RsaOaepWithMGFIncompatibleDigest
  *
- * Verifies that RSA-OAEP encryption operations fail in the correct way when asked to operate
+ * Verifies that RSA-OAEP decryption operations fail in the correct way when asked to operate
  * with incompatible MGF digest.
  */
 TEST_P(EncryptionOperationsTest, RsaOaepWithMGFIncompatibleDigest) {
@@ -3929,7 +3875,7 @@ TEST_P(EncryptionOperationsTest, RsaOaepWithMGFIncompatibleDigest) {
                           .Padding(PaddingMode::RSA_OAEP)
                           .Digest(Digest::SHA_2_256)
                           .Authorization(TAG_RSA_OAEP_MGF_DIGEST, Digest::SHA_2_224);
-    EXPECT_EQ(ErrorCode::INCOMPATIBLE_MGF_DIGEST, Begin(KeyPurpose::ENCRYPT, params));
+    EXPECT_EQ(ErrorCode::INCOMPATIBLE_MGF_DIGEST, Begin(KeyPurpose::DECRYPT, params));
 }
 
 /*
@@ -3953,7 +3899,7 @@ TEST_P(EncryptionOperationsTest, RsaOaepWithMGFUnsupportedDigest) {
                           .Padding(PaddingMode::RSA_OAEP)
                           .Digest(Digest::SHA_2_256)
                           .Authorization(TAG_RSA_OAEP_MGF_DIGEST, Digest::NONE);
-    EXPECT_EQ(ErrorCode::UNSUPPORTED_MGF_DIGEST, Begin(KeyPurpose::ENCRYPT, params));
+    EXPECT_EQ(ErrorCode::UNSUPPORTED_MGF_DIGEST, Begin(KeyPurpose::DECRYPT, params));
 }
 
 /*
@@ -3970,10 +3916,10 @@ TEST_P(EncryptionOperationsTest, RsaPkcs1Success) {
 
     string message = "Hello World!";
     auto params = AuthorizationSetBuilder().Padding(PaddingMode::RSA_PKCS1_1_5_ENCRYPT);
-    string ciphertext1 = EncryptMessage(message, params);
+    string ciphertext1 = LocalRsaEncryptMessage(message, params);
     EXPECT_EQ(2048U / 8, ciphertext1.size());
 
-    string ciphertext2 = EncryptMessage(message, params);
+    string ciphertext2 = LocalRsaEncryptMessage(message, params);
     EXPECT_EQ(2048U / 8, ciphertext2.size());
 
     // PKCS1 v1.5 randomizes padding so every result should be different.
@@ -3993,27 +3939,6 @@ TEST_P(EncryptionOperationsTest, RsaPkcs1Success) {
     EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, params));
     string result;
     EXPECT_EQ(ErrorCode::UNKNOWN_ERROR, Finish(ciphertext1, &result));
-    EXPECT_EQ(0U, result.size());
-}
-
-/*
- * EncryptionOperationsTest.RsaPkcs1TooLarge
- *
- * Verifies that RSA PKCS encryption fails in the correct way when the message is too large.
- */
-TEST_P(EncryptionOperationsTest, RsaPkcs1TooLarge) {
-    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
-                                                 .RsaEncryptionKey(2048, 65537)
-                                                 .Padding(PaddingMode::RSA_PKCS1_1_5_ENCRYPT)
-                                                 .SetDefaultValidity()));
-    string message(2048 / 8 - 10, 'a');
-
-    auto params = AuthorizationSetBuilder().Padding(PaddingMode::RSA_PKCS1_1_5_ENCRYPT);
-    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, params));
-    string result;
-    ErrorCode error = Finish(message, &result);
-    EXPECT_TRUE(error == ErrorCode::INVALID_INPUT_LENGTH || error == ErrorCode::INVALID_ARGUMENT);
     EXPECT_EQ(0U, result.size());
 }
 
