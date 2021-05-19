@@ -17,6 +17,7 @@
 #pragma once
 
 #include <vhal_v2_0/VehicleObjectPool.h>
+#include <vhal_v2_0/VehiclePropertyStore.h>
 #include <vhal_v2_0/VehicleServer.h>
 
 #include "GeneratorHub.h"
@@ -28,6 +29,10 @@ namespace android::hardware::automotive::vehicle::V2_0::impl {
 // scenario, the server may be run on a different OS than Android.
 class VehicleHalServer : public IVehicleServer {
   public:
+    VehicleHalServer();
+
+    void sendAllValuesToClient();
+
     // Methods from IVehicleServer
 
     std::vector<VehiclePropConfig> onGetAllPropertyConfig() const override;
@@ -58,6 +63,7 @@ class VehicleHalServer : public IVehicleServer {
             std::bind(&VehicleHalServer::onFakeValueGenerated, this, std::placeholders::_1)};
 
     VehiclePropValuePool* mValuePool{nullptr};
+    VehiclePropertyStore mServerSidePropStore;
 };
 
 }  // namespace android::hardware::automotive::vehicle::V2_0::impl
