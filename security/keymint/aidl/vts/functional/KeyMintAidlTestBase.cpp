@@ -140,6 +140,15 @@ AuthorizationSet filtered_tags(const AuthorizationSet& set) {
     return filtered;
 }
 
+// Remove any SecurityLevel::KEYSTORE entries from a list of key characteristics.
+void strip_keystore_tags(vector<KeyCharacteristics>* characteristics) {
+    characteristics->erase(std::remove_if(characteristics->begin(), characteristics->end(),
+                                          [](const auto& entry) {
+                                              return entry.securityLevel == SecurityLevel::KEYSTORE;
+                                          }),
+                           characteristics->end());
+}
+
 string x509NameToStr(X509_NAME* name) {
     char* s = X509_NAME_oneline(name, nullptr, 0);
     string retval(s);
@@ -316,6 +325,65 @@ ErrorCode KeyMintAidlTestBase::ImportWrappedKey(string wrapped_key, string wrapp
     }
 
     return GetReturnErrorCode(result);
+}
+
+ErrorCode KeyMintAidlTestBase::GetCharacteristics(const vector<uint8_t>& key_blob,
+                                                  const vector<uint8_t>& app_id,
+                                                  const vector<uint8_t>& app_data,
+                                                  vector<KeyCharacteristics>* key_characteristics) {
+    Status result =
+            keymint_->getKeyCharacteristics(key_blob, app_id, app_data, key_characteristics);
+    return GetReturnErrorCode(result);
+}
+
+ErrorCode KeyMintAidlTestBase::GetCharacteristics(const vector<uint8_t>& key_blob,
+                                                  vector<KeyCharacteristics>* key_characteristics) {
+    vector<uint8_t> empty_app_id, empty_app_data;
+    return GetCharacteristics(key_blob, empty_app_id, empty_app_data, key_characteristics);
+}
+
+void KeyMintAidlTestBase::CheckCharacteristics(
+        const vector<uint8_t>& key_blob,
+        const vector<KeyCharacteristics>& generate_characteristics) {
+    // Any key characteristics that were in SecurityLevel::KEYSTORE when returned from
+    // generateKey() should be excluded, as KeyMint will have no record of them.
+    // This applies to CREATION_DATETIME in particular.
+    vector<KeyCharacteristics> expected_characteristics(generate_characteristics);
+    strip_keystore_tags(&expected_characteristics);
+
+    vector<KeyCharacteristics> retrieved;
+    ASSERT_EQ(ErrorCode::OK, GetCharacteristics(key_blob, &retrieved));
+    EXPECT_EQ(expected_characteristics, retrieved);
+}
+
+void KeyMintAidlTestBase::CheckAppIdCharacteristics(
+        const vector<uint8_t>& key_blob, std::string_view app_id_string,
+        std::string_view app_data_string,
+        const vector<KeyCharacteristics>& generate_characteristics) {
+    // Exclude any SecurityLevel::KEYSTORE characteristics for comparisons.
+    vector<KeyCharacteristics> expected_characteristics(generate_characteristics);
+    strip_keystore_tags(&expected_characteristics);
+
+    vector<uint8_t> app_id(app_id_string.begin(), app_id_string.end());
+    vector<uint8_t> app_data(app_data_string.begin(), app_data_string.end());
+    vector<KeyCharacteristics> retrieved;
+    ASSERT_EQ(ErrorCode::OK, GetCharacteristics(key_blob, app_id, app_data, &retrieved));
+    EXPECT_EQ(expected_characteristics, retrieved);
+
+    // Check that key characteristics can't be retrieved if the app ID or app data is missing.
+    vector<uint8_t> empty;
+    vector<KeyCharacteristics> not_retrieved;
+    EXPECT_EQ(ErrorCode::INVALID_KEY_BLOB,
+              GetCharacteristics(key_blob, empty, app_data, &not_retrieved));
+    EXPECT_EQ(not_retrieved.size(), 0);
+
+    EXPECT_EQ(ErrorCode::INVALID_KEY_BLOB,
+              GetCharacteristics(key_blob, app_id, empty, &not_retrieved));
+    EXPECT_EQ(not_retrieved.size(), 0);
+
+    EXPECT_EQ(ErrorCode::INVALID_KEY_BLOB,
+              GetCharacteristics(key_blob, empty, empty, &not_retrieved));
+    EXPECT_EQ(not_retrieved.size(), 0);
 }
 
 ErrorCode KeyMintAidlTestBase::DeleteKey(vector<uint8_t>* key_blob, bool keep_key_blob) {
