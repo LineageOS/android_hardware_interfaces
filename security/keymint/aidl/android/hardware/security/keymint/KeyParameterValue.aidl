@@ -48,7 +48,7 @@ union KeyParameterValue {
     boolean boolValue; // Always true, if present.
     int integer;
     long longInteger;
-    long dateTime;
+    long dateTime; // In milliseconds from epoch
 
     byte[] blob;
 }
