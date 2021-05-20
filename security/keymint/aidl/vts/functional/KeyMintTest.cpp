@@ -3329,7 +3329,7 @@ TEST_P(ImportKeyTest, TripleDesSuccess) {
  */
 TEST_P(ImportKeyTest, TripleDesFailure) {
     string key = hex2str("a49d7564199e97cb529d2c9d97bf2f98d35edf57ba1f7358");
-    uint32_t bitlen = key.size() * 8;
+    uint32_t bitlen = key.size() * 7;
     for (uint32_t key_size : {bitlen - 1, bitlen + 1, bitlen - 8, bitlen + 8}) {
         // Explicit key size doesn't match that of the provided key.
         auto result = ImportKey(AuthorizationSetBuilder()
@@ -3343,19 +3343,19 @@ TEST_P(ImportKeyTest, TripleDesFailure) {
                 << "unexpected result: " << result;
     }
     // Explicit key size matches that of the provided key, but it's not a valid size.
-    string long_key = hex2str("a49d7564199e97cb529d2c9d97bf2f98d35edf57ba1f7358");
+    string long_key = hex2str("a49d7564199e97cb529d2c9d97bf2f98d35edf57ba1f735800");
     ASSERT_EQ(ErrorCode::UNSUPPORTED_KEY_SIZE,
               ImportKey(AuthorizationSetBuilder()
                                 .Authorization(TAG_NO_AUTH_REQUIRED)
-                                .TripleDesEncryptionKey(long_key.size() * 8)
+                                .TripleDesEncryptionKey(long_key.size() * 7)
                                 .EcbMode()
                                 .Padding(PaddingMode::PKCS7),
                         KeyFormat::RAW, long_key));
-    string short_key = hex2str("a49d7564199e97cb529d2c9d97bf2f98d35edf57ba1f7358");
+    string short_key = hex2str("a49d7564199e97cb529d2c9d97bf2f98d35edf57ba1f73");
     ASSERT_EQ(ErrorCode::UNSUPPORTED_KEY_SIZE,
               ImportKey(AuthorizationSetBuilder()
                                 .Authorization(TAG_NO_AUTH_REQUIRED)
-                                .TripleDesEncryptionKey(short_key.size() * 8)
+                                .TripleDesEncryptionKey(short_key.size() * 7)
                                 .EcbMode()
                                 .Padding(PaddingMode::PKCS7),
                         KeyFormat::RAW, short_key));
