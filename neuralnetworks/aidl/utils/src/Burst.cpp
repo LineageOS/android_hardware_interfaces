@@ -62,7 +62,7 @@ class BurstExecution final : public nn::IExecution,
   private:
     const std::shared_ptr<const Burst> kBurst;
     const Request kRequest;
-    const std::vector<int64_t>& kMemoryIdentifierTokens;
+    const std::vector<int64_t> kMemoryIdentifierTokens;
     const bool kMeasure;
     const int64_t kLoopTimeoutDuration;
     const hal::utils::RequestRelocation kRelocation;

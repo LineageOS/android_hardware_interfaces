@@ -69,6 +69,7 @@ void GnssMeasurementInterface::start(const bool enableCorrVecOutputs) {
             std::this_thread::sleep_for(std::chrono::milliseconds(mMinIntervalMillis));
         }
     });
+    mThread.detach();
 }
 
 void GnssMeasurementInterface::stop() {
