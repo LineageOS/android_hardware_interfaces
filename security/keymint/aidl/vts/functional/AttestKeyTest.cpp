@@ -361,7 +361,7 @@ TEST_P(AttestKeyTest, EcAttestKeyChaining) {
 
         EXPECT_EQ(ErrorCode::OK,
                   GenerateKey(AuthorizationSetBuilder()
-                                      .EcdsaSigningKey(224)
+                                      .EcdsaSigningKey(EcCurve::P_256)
                                       .AttestKey()
                                       .AttestationChallenge("foo")
                                       .AttestationApplicationId("bar")
@@ -435,7 +435,7 @@ TEST_P(AttestKeyTest, AlternateAttestKeyChaining) {
         if ((i & 0x1) == 1) {
             EXPECT_EQ(ErrorCode::OK,
                       GenerateKey(AuthorizationSetBuilder()
-                                          .EcdsaSigningKey(224)
+                                          .EcdsaSigningKey(EcCurve::P_256)
                                           .AttestKey()
                                           .AttestationChallenge("foo")
                                           .AttestationApplicationId("bar")
@@ -513,7 +513,7 @@ TEST_P(AttestKeyTest, MissingChallenge) {
         vector<uint8_t> attested_key_blob;
         vector<KeyCharacteristics> attested_key_characteristics;
         vector<Certificate> attested_key_cert_chain;
-        EXPECT_EQ(ErrorCode::INVALID_ARGUMENT,
+        EXPECT_EQ(ErrorCode::ATTESTATION_CHALLENGE_MISSING,
                   GenerateKey(AuthorizationSetBuilder()
                                       .RsaSigningKey(2048, 65537)
                                       .Authorization(TAG_NO_AUTH_REQUIRED)
@@ -522,7 +522,7 @@ TEST_P(AttestKeyTest, MissingChallenge) {
                               attest_key, &attested_key_blob, &attested_key_characteristics,
                               &attested_key_cert_chain));
 
-        EXPECT_EQ(ErrorCode::INVALID_ARGUMENT,
+        EXPECT_EQ(ErrorCode::ATTESTATION_CHALLENGE_MISSING,
                   GenerateKey(AuthorizationSetBuilder()
                                       .EcdsaSigningKey(EcCurve::P_256)
                                       .Authorization(TAG_NO_AUTH_REQUIRED)
