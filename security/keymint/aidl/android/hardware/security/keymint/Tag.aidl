@@ -234,7 +234,7 @@ enum Tag {
      * IKeyMintDevice::earlyBootEnded() is called.  Early boot keys may be created after
      * early boot.  Early boot keys may not be imported at all, if Tag::EARLY_BOOT_ONLY is
      * provided to IKeyMintDevice::importKey, the import must fail with
-     * ErrorCode::INVALID_ARGUMENT.
+     * ErrorCode::EARLY_BOOT_ENDED.
      */
     EARLY_BOOT_ONLY = (7 << 28) /* TagType:BOOL */ | 305,
 
