@@ -1,4 +1,4 @@
-<compatibility-matrix version="1.0" type="framework" level="7">
+<compatibility-matrix version="1.0" type="framework" level="6">
     <hal format="hidl" optional="true">
         <name>android.hardware.atrace</name>
         <version>1.0</version>
@@ -90,7 +90,7 @@
         <version>2.0</version>
         <interface>
             <name>IVehicle</name>
-            <regex-instance>.*</regex-instance>
+            <instance>default</instance>
         </interface>
     </hal>
     <hal format="hidl" optional="true">
@@ -521,19 +521,11 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.soundtrigger</name>
-        <version>2.3-4</version>
+        <version>2.3</version>
         <interface>
             <name>ISoundTriggerHw</name>
             <instance>default</instance>
         </interface>
-    </hal>
-    <hal format="aidl" optional="true">
-         <name>android.hardware.soundtrigger3</name>
-         <version>1</version>
-         <interface>
-             <name>ISoundTriggerHw</name>
-             <instance>default</instance>
-         </interface>
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.tetheroffload.config</name>
