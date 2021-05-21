@@ -1185,6 +1185,14 @@ vector<uint8_t> build_serial_blob(const uint64_t serial_int) {
         return {};
     }
 
+    if (serial_blob.empty() || serial_blob[0] & 0x80) {
+        // An empty blob is OpenSSL's encoding of the zero value; we need single zero byte.
+        // Top bit being set indicates a negative number in two's complement, but our input
+        // was positive.
+        // In either case, prepend a zero byte.
+        serial_blob.insert(serial_blob.begin(), 0x00);
+    }
+
     return serial_blob;
 }
 
