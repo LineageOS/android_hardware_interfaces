@@ -75,6 +75,7 @@ vintf_compatibility_matrix {
 
 vintf_compatibility_matrix {
     name: "framework_compatibility_matrix.current.xml",
+    enabled: false,
     stem: "compatibility_matrix.current.xml",
     srcs: [
         "compatibility_matrix.current.xml",
