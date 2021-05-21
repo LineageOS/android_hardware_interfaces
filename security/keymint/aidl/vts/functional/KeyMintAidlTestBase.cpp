@@ -124,10 +124,10 @@ char nibble2hex[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
 // Attestations don't contain everything in key authorization lists, so we need to filter the key
 // lists to produce the lists that we expect to match the attestations.
 auto kTagsToFilter = {
-        Tag::CREATION_DATETIME,        //
-        Tag::EC_CURVE,
-        Tag::HARDWARE_TYPE,
-        Tag::INCLUDE_UNIQUE_ID,
+    Tag::CREATION_DATETIME,
+    Tag::EC_CURVE,
+    Tag::HARDWARE_TYPE,
+    Tag::INCLUDE_UNIQUE_ID,
 };
 
 AuthorizationSet filtered_tags(const AuthorizationSet& set) {
