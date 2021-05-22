@@ -318,10 +318,11 @@ interface IKeyMintDevice {
      * @param attestationKey, if provided, specifies the key that must be used to sign the
      *        attestation certificate.  If `keyParams` does not contain a Tag::ATTESTATION_CHALLENGE
      *        but `attestationKey` is non-null, the IKeyMintDevice must return
-     *        ErrorCode::INVALID_ARGUMENT.  If the provided AttestationKey does not contain a key
-     *        blob containing an asymmetric key with KeyPurpose::ATTEST_KEY, the IKeyMintDevice must
-     *        return ErrorCode::INCOMPATIBLE_PURPOSE.  If the provided AttestationKey has an empty
-     *        issuer subject name, the IKeyMintDevice must return ErrorCode::INVALID_ARGUMENT.
+     *        ErrorCode::ATTESTATION_CHALLENGE_MISSING. If the provided AttestationKey does not
+     *        contain a key blob containing an asymmetric key with KeyPurpose::ATTEST_KEY, the
+     *        IKeyMintDevice must return ErrorCode::INCOMPATIBLE_PURPOSE.  If the provided
+     *        AttestationKey has an empty issuer subject name, the IKeyMintDevice must return
+     *        ErrorCode::INVALID_ARGUMENT.
      *
      *        If `attestationKey` is null and `keyParams` contains Tag::ATTESTATION_CHALLENGE but
      *        the KeyMint implementation does not have factory-provisioned attestation keys, it must

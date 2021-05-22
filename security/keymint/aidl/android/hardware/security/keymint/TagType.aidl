@@ -39,7 +39,21 @@ enum TagType {
     DATE = 6 << 28,
     /** Boolean.  If a tag with this type is present, the value is "true".  If absent, "false". */
     BOOL = 7 << 28,
-    /** Byte string containing an arbitrary-length integer, big-endian ordering. */
+    /**
+     * Byte string containing an arbitrary-length integer, in a two's-complement big-endian
+     * ordering.  The byte array contains the minimum number of bytes needed to represent the
+     * integer, including at least one sign bit (so zero encodes as the single byte 0x00.  This
+     * matches the encoding of both java.math.BigInteger.toByteArray() and contents octets for an
+     * ASN.1 INTEGER value (X.690 section 8.3).  Examples:
+     * - value 65536 encodes as 0x01 0x00 0x00
+     * - value 65535 encodes as 0x00 0xFF 0xFF
+     * - value   255 encodes as 0x00 0xFF
+     * - value     1 encodes as 0x01
+     * - value     0 encodes as 0x00
+     * - value    -1 encodes as 0xFF
+     * - value  -255 encodes as 0xFF 0x01
+     * - value  -256 encodes as 0xFF 0x00
+     */
     BIGNUM = 8 << 28,
     /** Byte string */
     BYTES = 9 << 28,
