@@ -124,10 +124,10 @@ char nibble2hex[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
 // Attestations don't contain everything in key authorization lists, so we need to filter the key
 // lists to produce the lists that we expect to match the attestations.
 auto kTagsToFilter = {
-        Tag::CREATION_DATETIME,        //
-        Tag::EC_CURVE,
-        Tag::HARDWARE_TYPE,
-        Tag::INCLUDE_UNIQUE_ID,
+    Tag::CREATION_DATETIME,
+    Tag::EC_CURVE,
+    Tag::HARDWARE_TYPE,
+    Tag::INCLUDE_UNIQUE_ID,
 };
 
 AuthorizationSet filtered_tags(const AuthorizationSet& set) {
@@ -1183,6 +1183,14 @@ vector<uint8_t> build_serial_blob(const uint64_t serial_int) {
     vector<uint8_t> serial_blob(len);
     if (BN_bn2bin(serial.get(), serial_blob.data()) != len) {
         return {};
+    }
+
+    if (serial_blob.empty() || serial_blob[0] & 0x80) {
+        // An empty blob is OpenSSL's encoding of the zero value; we need single zero byte.
+        // Top bit being set indicates a negative number in two's complement, but our input
+        // was positive.
+        // In either case, prepend a zero byte.
+        serial_blob.insert(serial_blob.begin(), 0x00);
     }
 
     return serial_blob;
