@@ -2303,11 +2303,11 @@ TEST_P(SigningOperationsTest, RsaNonUniqueParams) {
                                               .Padding(PaddingMode::NONE)
                                               .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN)));
 
-    ASSERT_EQ(ErrorCode::UNSUPPORTED_DIGEST,
-              Begin(KeyPurpose::SIGN, AuthorizationSetBuilder()
-                                              .Digest(Digest::NONE)
-                                              .Digest(Digest::SHA1)
-                                              .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN)));
+    auto result = Begin(KeyPurpose::SIGN, AuthorizationSetBuilder()
+                                                  .Digest(Digest::NONE)
+                                                  .Digest(Digest::SHA1)
+                                                  .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN));
+    ASSERT_TRUE(result == ErrorCode::UNSUPPORTED_DIGEST || result == ErrorCode::INVALID_ARGUMENT);
 
     ASSERT_EQ(ErrorCode::UNSUPPORTED_DIGEST,
               Begin(KeyPurpose::SIGN,
@@ -6320,7 +6320,13 @@ INSTANTIATE_KEYMINT_AIDL_TEST(DestroyAttestationIdsTest);
 
 using EarlyBootKeyTest = KeyMintAidlTestBase;
 
+/*
+ * EarlyBootKeyTest.CreateEarlyBootKeys
+ *
+ * Verifies that creating early boot keys succeeds, even at a later stage (after boot).
+ */
 TEST_P(EarlyBootKeyTest, CreateEarlyBootKeys) {
+    // Early boot keys can be created after early boot.
     auto [aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData] =
             CreateTestKeys(TAG_EARLY_BOOT_ONLY, ErrorCode::OK);
 
@@ -6328,6 +6334,41 @@ TEST_P(EarlyBootKeyTest, CreateEarlyBootKeys) {
     CheckedDeleteKey(&hmacKeyData.blob);
     CheckedDeleteKey(&rsaKeyData.blob);
     CheckedDeleteKey(&ecdsaKeyData.blob);
+}
+
+/*
+ * EarlyBootKeyTest.UsetEarlyBootKeyFailure
+ *
+ * Verifies that using early boot keys at a later stage fails.
+ */
+TEST_P(EarlyBootKeyTest, UseEarlyBootKeyFailure) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                 .Authorization(TAG_EARLY_BOOT_ONLY)
+                                                 .HmacKey(128)
+                                                 .Digest(Digest::SHA_2_256)
+                                                 .Authorization(TAG_MIN_MAC_LENGTH, 256)));
+    AuthorizationSet output_params;
+    EXPECT_EQ(ErrorCode::EARLY_BOOT_ENDED, Begin(KeyPurpose::SIGN, key_blob_,
+                                                 AuthorizationSetBuilder()
+                                                         .Digest(Digest::SHA_2_256)
+                                                         .Authorization(TAG_MAC_LENGTH, 256),
+                                                 &output_params));
+}
+
+/*
+ * EarlyBootKeyTest.ImportEarlyBootKeyFailure
+ *
+ * Verifies that importing early boot keys fails.
+ */
+TEST_P(EarlyBootKeyTest, ImportEarlyBootKeyFailure) {
+    ASSERT_EQ(ErrorCode::EARLY_BOOT_ENDED, ImportKey(AuthorizationSetBuilder()
+                                                             .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                             .Authorization(TAG_EARLY_BOOT_ONLY)
+                                                             .EcdsaSigningKey(256)
+                                                             .Digest(Digest::SHA_2_256)
+                                                             .SetDefaultValidity(),
+                                                     KeyFormat::PKCS8, ec_256_key));
 }
 
 // This is a more comprehensive test, but it can only be run on a machine which is still in early

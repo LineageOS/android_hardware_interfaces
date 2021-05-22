@@ -75,7 +75,7 @@ TEST_P(DeviceUniqueAttestationTest, RsaNonStrongBoxUnimplemented) {
                                       .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION),
                               &key_blob, &key_characteristics);
 
-    ASSERT_EQ(result, ErrorCode::INVALID_ARGUMENT);
+    ASSERT_TRUE(result == ErrorCode::INVALID_ARGUMENT || result == ErrorCode::UNSUPPORTED_TAG);
 }
 
 /*
@@ -101,7 +101,7 @@ TEST_P(DeviceUniqueAttestationTest, EcdsaNonStrongBoxUnimplemented) {
                                       .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION),
                               &key_blob, &key_characteristics);
 
-    ASSERT_EQ(result, ErrorCode::INVALID_ARGUMENT);
+    ASSERT_TRUE(result == ErrorCode::INVALID_ARGUMENT || result == ErrorCode::UNSUPPORTED_TAG);
 }
 
 /*
