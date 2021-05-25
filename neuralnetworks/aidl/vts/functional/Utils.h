@@ -79,15 +79,18 @@ class TestMemoryBase {
 
 class TestAshmem : public TestMemoryBase {
   public:
-    static std::unique_ptr<TestAshmem> create(uint32_t size);
+    // If aidlReadonly is true, getAidlMemory will return a sAIDL memory with readonly access;
+    // otherwise, the sAIDL memory has read-write access. This only affects the sAIDL memory.
+    // getPointer will always return a valid address with read-write access.
+    static std::unique_ptr<TestAshmem> create(uint32_t size, bool aidlReadonly = false);
 
     // Prefer TestAshmem::create.
     // The constructor calls initialize, which constructs the memory resources. This is a workaround
     // that gtest macros cannot be used directly in a constructor.
-    TestAshmem(uint32_t size) { initialize(size); }
+    TestAshmem(uint32_t size, bool aidlReadonly) { initialize(size, aidlReadonly); }
 
   private:
-    void initialize(uint32_t size);
+    void initialize(uint32_t size, bool aidlReadonly);
     nn::Mapping mMappedMemory;
 };
 
