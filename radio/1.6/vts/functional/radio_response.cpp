@@ -1209,8 +1209,9 @@ Return<void> RadioResponse_v1_6::getSystemSelectionChannelsResponse(
 
 Return<void> RadioResponse_v1_6::getVoiceRegistrationStateResponse_1_6(
         const ::android::hardware::radio::V1_6::RadioResponseInfo& info,
-        const ::android::hardware::radio::V1_6::RegStateResult& /*regResponse*/) {
+        const ::android::hardware::radio::V1_6::RegStateResult& regResponse) {
     rspInfo = info;
+    voiceRegResp.regState = regResponse.regState;
     parent_v1_6.notify(info.serial);
     return Void();
 }
