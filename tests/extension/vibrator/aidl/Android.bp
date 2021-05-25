@@ -27,7 +27,7 @@ aidl_interface {
     // This happens to use types from a core interface, so we import it, but
     // this won't always be needed.
     imports: [
-        "android.hardware.vibrator",
+        "android.hardware.vibrator-V2",
     ],
 
     backend: {
