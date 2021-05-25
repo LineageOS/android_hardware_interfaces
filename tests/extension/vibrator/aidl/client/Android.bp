@@ -23,11 +23,11 @@ cc_test {
     shared_libs: [
         "libbinder",
         "libutils",
-        "android.hardware.vibrator-V1-cpp",
+        "android.hardware.vibrator-V2-cpp",
         "android.hardware.tests.extension.vibrator-V1-cpp",
 
         "libbinder_ndk",
-        "android.hardware.vibrator-V1-ndk_platform",
+        "android.hardware.vibrator-V2-ndk_platform",
         "android.hardware.tests.extension.vibrator-V1-ndk_platform",
     ],
 }
