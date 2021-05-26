@@ -42,4 +42,5 @@ enum Error {
   CANCELED = 5,
   UNABLE_TO_REMOVE = 6,
   VENDOR = 7,
+  BAD_CALIBRATION = 8,
 }
