@@ -56,6 +56,9 @@ public:
     YCbCrLayout lockYCbCr(buffer_handle_t& buf, uint64_t cpuUsage,
                           const IMapper::Rect& accessRegion);
 
+    // Query the stride of the first plane in bytes.
+    status_t getMonoPlanarStrideBytes(buffer_handle_t& buf, uint32_t* stride /*out*/);
+
     int unlock(buffer_handle_t& buf); // returns release fence
 
 private:
