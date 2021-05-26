@@ -37,15 +37,15 @@ cc_test {
     shared_libs: [
         "libbinder_ndk",
         "libcrypto",
-        "libkeymint",
-        "libkeymint_support",
     ],
     static_libs: [
         "android.hardware.security.keymint-V1-ndk_platform",
         "android.hardware.security.secureclock-V1-ndk_platform",
         "libcppbor_external",
         "libcppcose_rkp",
+        "libkeymint",
         "libkeymint_remote_prov_support",
+        "libkeymint_support",
         "libkeymint_vts_test_utils",
     ],
     test_suites: [
@@ -69,8 +69,6 @@ cc_test_library {
     shared_libs: [
         "libbinder_ndk",
         "libcrypto",
-        "libkeymint",
-        "libkeymint_support",
     ],
     static_libs: [
         "android.hardware.security.keymint-V1-ndk_platform",
@@ -78,7 +76,9 @@ cc_test_library {
         "libcppbor_external",
         "libcppcose_rkp",
         "libgmock_ndk",
+        "libkeymint",
         "libkeymint_remote_prov_support",
+        "libkeymint_support",
     ],
 }
 
