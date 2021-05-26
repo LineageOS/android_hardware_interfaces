@@ -123,6 +123,24 @@ YCbCrLayout HandleImporter::lockYCbCrInternal(const sp<M> mapper, buffer_handle_
     return layout;
 }
 
+std::vector<PlaneLayout> getPlaneLayouts(const sp<IMapperV4> mapper, buffer_handle_t& buf) {
+    auto buffer = const_cast<native_handle_t*>(buf);
+    std::vector<PlaneLayout> planeLayouts;
+    hidl_vec<uint8_t> encodedPlaneLayouts;
+    mapper->get(buffer, gralloc4::MetadataType_PlaneLayouts,
+                [&](const auto& tmpError, const auto& tmpEncodedPlaneLayouts) {
+                    if (tmpError == MapperErrorV4::NONE) {
+                        encodedPlaneLayouts = tmpEncodedPlaneLayouts;
+                    } else {
+                        ALOGE("%s: failed to get plane layouts %d!", __FUNCTION__, tmpError);
+                    }
+                });
+
+    gralloc4::decodePlaneLayouts(encodedPlaneLayouts, &planeLayouts);
+
+    return planeLayouts;
+}
+
 template <>
 YCbCrLayout HandleImporter::lockYCbCrInternal<IMapperV4, MapperErrorV4>(
         const sp<IMapperV4> mapper, buffer_handle_t& buf, uint64_t cpuUsage,
@@ -147,19 +165,7 @@ YCbCrLayout HandleImporter::lockYCbCrInternal<IMapperV4, MapperErrorV4>(
         return layout;
     }
 
-    hidl_vec<uint8_t> encodedPlaneLayouts;
-    mapper->get(buffer, gralloc4::MetadataType_PlaneLayouts,
-                [&](const auto& tmpError, const auto& tmpEncodedPlaneLayouts) {
-                    if (tmpError == MapperErrorV4::NONE) {
-                        encodedPlaneLayouts = tmpEncodedPlaneLayouts;
-                    } else {
-                        ALOGE("%s: failed to get plane layouts %d!", __FUNCTION__, tmpError);
-                    }
-                });
-
-    std::vector<PlaneLayout> planeLayouts;
-    gralloc4::decodePlaneLayouts(encodedPlaneLayouts, &planeLayouts);
-
+    std::vector<PlaneLayout> planeLayouts = getPlaneLayouts(mapper, buf);
     for (const auto& planeLayout : planeLayouts) {
         for (const auto& planeLayoutComponent : planeLayout.components) {
             const auto& type = planeLayoutComponent.type;
@@ -399,6 +405,33 @@ YCbCrLayout HandleImporter::lockYCbCr(
 
     ALOGE("%s: mMapperV4, mMapperV3 and mMapperV2 are all null!", __FUNCTION__);
     return {};
+}
+
+status_t HandleImporter::getMonoPlanarStrideBytes(buffer_handle_t &buf, uint32_t *stride /*out*/) {
+    if (stride == nullptr) {
+        return BAD_VALUE;
+    }
+
+    Mutex::Autolock lock(mLock);
+
+    if (!mInitialized) {
+        initializeLocked();
+    }
+
+    if (mMapperV4 != nullptr) {
+        std::vector<PlaneLayout> planeLayouts = getPlaneLayouts(mMapperV4, buf);
+        if (planeLayouts.size() != 1) {
+            ALOGE("%s: Unexpected number of planes %zu!",  __FUNCTION__, planeLayouts.size());
+            return BAD_VALUE;
+        }
+
+        *stride = planeLayouts[0].strideInBytes;
+    } else {
+        ALOGE("%s: mMapperV4 is null! Query not supported!", __FUNCTION__);
+        return NO_INIT;
+    }
+
+    return OK;
 }
 
 int HandleImporter::unlock(buffer_handle_t& buf) {
