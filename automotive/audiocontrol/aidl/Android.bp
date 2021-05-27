@@ -19,4 +19,5 @@ aidl_interface {
             sdk_version: "module_current",
         },
     },
+    versions: ["1"],
 }

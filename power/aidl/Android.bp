@@ -43,5 +43,6 @@ aidl_interface {
     },
     versions: [
         "1",
+        "2",
     ],
 }
