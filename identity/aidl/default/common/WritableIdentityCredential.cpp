@@ -210,6 +210,15 @@ ndk::ScopedAStatus WritableIdentityCredential::beginAddEntry(
                 "numAccessControlProfileRemaining_ is not zero"));
     }
 
+    // Ensure passed-in profile ids reference valid access control profiles
+    for (const int32_t id : accessControlProfileIds) {
+        if (accessControlProfileIds_.find(id) == accessControlProfileIds_.end()) {
+            return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                    IIdentityCredentialStore::STATUS_INVALID_DATA,
+                    "An id in accessControlProfileIds references non-existing ACP"));
+        }
+    }
+
     if (remainingEntryCounts_.size() == 0) {
         return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
                 IIdentityCredentialStore::STATUS_INVALID_DATA, "No more namespaces to add to"));
