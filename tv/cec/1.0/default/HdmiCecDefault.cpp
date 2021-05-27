@@ -1,0 +1,156 @@
+/*
+ * Copyright (C) 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#define LOG_TAG "android.hardware.tv.cec@1.0-impl"
+#include <android-base/logging.h>
+
+#include <errno.h>
+#include <fcntl.h>
+#include <linux/cec.h>
+#include <linux/ioctl.h>
+#include <sys/eventfd.h>
+
+#include "HdmiCecDefault.h"
+
+namespace android {
+namespace hardware {
+namespace tv {
+namespace cec {
+namespace V1_0 {
+namespace implementation {
+
+int mCecFd;
+int mExitFd;
+
+HdmiCecDefault::HdmiCecDefault() {
+    mCecFd = -1;
+    mExitFd = -1;
+}
+
+HdmiCecDefault::~HdmiCecDefault() {
+    release();
+}
+
+// Methods from ::android::hardware::tv::cec::V1_0::IHdmiCec follow.
+Return<Result> HdmiCecDefault::addLogicalAddress(CecLogicalAddress /*addr*/) {
+    return Result::FAILURE_UNKNOWN;
+}
+
+Return<void> HdmiCecDefault::clearLogicalAddress() {
+    return Void();
+}
+
+Return<void> HdmiCecDefault::getPhysicalAddress(getPhysicalAddress_cb /*_hidl_cb*/) {
+    return Void();
+}
+
+Return<SendMessageResult> HdmiCecDefault::sendMessage(const CecMessage& /*message*/) {
+    return SendMessageResult::FAIL;
+}
+
+Return<void> HdmiCecDefault::setCallback(const sp<IHdmiCecCallback>& /*callback*/) {
+    return Void();
+}
+
+Return<int32_t> HdmiCecDefault::getCecVersion() {
+    return 0;
+}
+
+Return<uint32_t> HdmiCecDefault::getVendorId() {
+    return 0;
+}
+
+Return<void> HdmiCecDefault::getPortInfo(getPortInfo_cb /*_hidl_cb*/) {
+    return Void();
+}
+
+Return<void> HdmiCecDefault::setOption(OptionKey /*key*/, bool /*value*/) {
+    return Void();
+}
+
+Return<void> HdmiCecDefault::setLanguage(const hidl_string& /*language*/) {
+    return Void();
+}
+
+Return<void> HdmiCecDefault::enableAudioReturnChannel(int32_t /*portId*/, bool /*enable*/) {
+    return Void();
+}
+
+Return<bool> HdmiCecDefault::isConnected(int32_t /*portId*/) {
+    return false;
+}
+
+// Initialise the cec file descriptor
+Return<Result> HdmiCecDefault::init() {
+    const char* path = "/dev/cec0";
+    mCecFd = open(path, O_RDWR);
+    if (mCecFd < 0) {
+        LOG(ERROR) << "Failed to open " << path << ", Error = " << strerror(errno);
+        return Result::FAILURE_NOT_SUPPORTED;
+    }
+    mExitFd = eventfd(0, EFD_NONBLOCK);
+    if (mExitFd < 0) {
+        LOG(ERROR) << "Failed to open eventfd, Error = " << strerror(errno);
+        release();
+        return Result::FAILURE_NOT_SUPPORTED;
+    }
+
+    // Ensure the CEC device supports required capabilities
+    struct cec_caps caps = {};
+    int ret = ioctl(mCecFd, CEC_ADAP_G_CAPS, &caps);
+    if (ret) {
+        LOG(ERROR) << "Unable to query cec adapter capabilities, Error = " << strerror(errno);
+        release();
+        return Result::FAILURE_NOT_SUPPORTED;
+    }
+
+    if (!(caps.capabilities & (CEC_CAP_LOG_ADDRS | CEC_CAP_TRANSMIT | CEC_CAP_PASSTHROUGH))) {
+        LOG(ERROR) << "Wrong cec adapter capabilities " << caps.capabilities;
+        release();
+        return Result::FAILURE_NOT_SUPPORTED;
+    }
+
+    uint32_t mode = CEC_MODE_INITIATOR;
+    ret = ioctl(mCecFd, CEC_S_MODE, &mode);
+    if (ret) {
+        LOG(ERROR) << "Unable to set initiator mode, Error = " << strerror(errno);
+        release();
+        return Result::FAILURE_NOT_SUPPORTED;
+    }
+
+    return Result::SUCCESS;
+}
+
+Return<void> HdmiCecDefault::release() {
+    if (mExitFd > 0) {
+        uint64_t tmp = 1;
+        write(mExitFd, &tmp, sizeof(tmp));
+    }
+    if (mExitFd > 0) {
+        close(mExitFd);
+    }
+    if (mCecFd > 0) {
+        close(mCecFd);
+    }
+    setCallback(nullptr);
+    return Void();
+}
+}  // namespace implementation
+}  // namespace V1_0
+}  // namespace cec
+}  // namespace tv
+}  // namespace hardware
+}  // namespace android

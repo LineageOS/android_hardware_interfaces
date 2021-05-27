@@ -20,6 +20,7 @@
 #include <hardware/hardware.h>
 #include <hardware/hdmi_cec.h>
 #include "HdmiCec.h"
+#include "HdmiCecDefault.h"
 
 namespace android {
 namespace hardware {
@@ -390,6 +391,15 @@ Return<bool> HdmiCec::isConnected(int32_t portId) {
     return mDevice->is_connected(mDevice, portId) > 0;
 }
 
+IHdmiCec* getHdmiCecDefault() {
+    HdmiCecDefault* hdmiCecDefault = new HdmiCecDefault();
+    Result result = hdmiCecDefault->init();
+    if (result == Result::SUCCESS) {
+        return hdmiCecDefault;
+    }
+    LOG(ERROR) << "Failed to load default HAL.";
+    return nullptr;
+}
 
 IHdmiCec* HIDL_FETCH_IHdmiCec(const char* hal) {
     hdmi_cec_device_t* hdmi_cec_device;
@@ -410,7 +420,7 @@ IHdmiCec* HIDL_FETCH_IHdmiCec(const char* hal) {
         return new HdmiCec(hdmi_cec_device);
     } else {
         LOG(ERROR) << "Passthrough failed to load legacy HAL.";
-        return nullptr;
+        return getHdmiCecDefault();
     }
 }
 
