@@ -435,8 +435,8 @@ std::optional<Request> ExecutionContext::createRequest(const TestModel& testMode
         mInputMemory = TestBlobAHWB::create(std::max<size_t>(inputSize, 1));
         mOutputMemory = TestBlobAHWB::create(std::max<size_t>(outputSize, 1));
     } else {
-        mInputMemory = TestAshmem::create(std::max<size_t>(inputSize, 1));
-        mOutputMemory = TestAshmem::create(std::max<size_t>(outputSize, 1));
+        mInputMemory = TestAshmem::create(std::max<size_t>(inputSize, 1), /*aidlReadonly=*/true);
+        mOutputMemory = TestAshmem::create(std::max<size_t>(outputSize, 1), /*aidlReadonly=*/false);
     }
     CHECK_NE(mInputMemory, nullptr);
     CHECK_NE(mOutputMemory, nullptr);
