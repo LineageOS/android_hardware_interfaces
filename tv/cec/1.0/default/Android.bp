@@ -12,7 +12,10 @@ cc_library_shared {
     defaults: ["hidl_defaults"],
     vendor: true,
     relative_install_path: "hw",
-    srcs: ["HdmiCec.cpp"],
+    srcs: [
+        "HdmiCec.cpp",
+        "HdmiCecDefault.cpp",
+    ],
 
     shared_libs: [
         "libhidlbase",
