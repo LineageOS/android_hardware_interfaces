@@ -438,6 +438,31 @@ parcelable GnssMeasurement {
      * +---------------------+-------------------+-----------------------------+
      * | HALF_CYCLE_RESOLVED | ADR(t)            | Half cycle ambiguity is     |
      * |                     |                   | resolved at time t.         |
+     * |                     |                   |                             |
+     * |                     |                   | For signals that have       |
+     * |                     |                   | databits, the carrier phase |
+     * |                     |                   | tracking loops typically    |
+     * |                     |                   | use a costas loop           |
+     * |                     |                   | discriminator. This type of |
+     * |                     |                   | tracking loop introduces a  |
+     * |                     |                   | half-cycle ambiguity that   |
+     * |                     |                   | is resolved by searching    |
+     * |                     |                   | through the received data   |
+     * |                     |                   | for known patterns of       |
+     * |                     |                   | databits (e.g. GPS uses the |
+     * |                     |                   | TLM word) which then        |
+     * |                     |                   | determines the polarity of  |
+     * |                     |                   | the incoming data and       |
+     * |                     |                   | resolves the half-cycle     |
+     * |                     |                   | ambiguity.                  |
+     * |                     |                   |                             |
+     * |                     |                   | Before the half-cycle       |
+     * |                     |                   | ambiguity has been resolved |
+     * |                     |                   | it is possible that the     |
+     * |                     |                   | ADR_STATE_VALID flag is     |
+     * |                     |                   | set, but the ADR_STATE_     |
+     * |                     |                   | HALF_CYCLE_RESOLVED flag is |
+     * |                     |                   | not set.                    |
      * +---------------------+-------------------+-----------------------------+
      */
     const int ADR_STATE_UNKNOWN = 0;
