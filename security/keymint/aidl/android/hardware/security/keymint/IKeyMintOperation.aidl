@@ -155,8 +155,7 @@ interface IKeyMintOperation {
      * it must process all but the tag length and buffer the possible tag data for processing during
      * finish().
      *
-     * @param input Data to be processed.  Note that update() may or may not consume all of the data
-     *        provided.  See return value.
+     * @param input Data to be processed.  update() must consume all input data.
      *
      * @param authToken Authentication token. Can be nullable if not provided.
      *
