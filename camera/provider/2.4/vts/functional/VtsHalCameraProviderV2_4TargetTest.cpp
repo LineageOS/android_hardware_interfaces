@@ -42,6 +42,7 @@
 #include <android/hardware/camera/device/3.6/ICameraDeviceSession.h>
 #include <android/hardware/camera/device/3.7/ICameraDevice.h>
 #include <android/hardware/camera/device/3.7/ICameraDeviceSession.h>
+#include <android/hardware/camera/device/3.7/ICameraInjectionSession.h>
 #include <android/hardware/camera/metadata/3.4/types.h>
 #include <android/hardware/camera/provider/2.4/ICameraProvider.h>
 #include <android/hardware/camera/provider/2.5/ICameraProvider.h>
@@ -767,6 +768,9 @@ public:
             sp<device::V3_5::ICameraDeviceSession> *session3_5 /*out*/,
             sp<device::V3_6::ICameraDeviceSession> *session3_6 /*out*/,
             sp<device::V3_7::ICameraDeviceSession> *session3_7 /*out*/);
+    void castInjectionSession(
+            const sp<ICameraDeviceSession>& session,
+            sp<device::V3_7::ICameraInjectionSession>* injectionSession3_7 /*out*/);
     void castDevice(const sp<device::V3_2::ICameraDevice>& device, int32_t deviceVersion,
                     sp<device::V3_5::ICameraDevice>* device3_5 /*out*/,
                     sp<device::V3_7::ICameraDevice>* device3_7 /*out*/);
@@ -5880,6 +5884,301 @@ TEST_P(CameraHidlTest, providerDeviceStateNotification) {
     notifyDeviceState(provider::V2_5::DeviceState::NORMAL);
 }
 
+// Verify that all supported stream formats and sizes can be configured
+// successfully for injection camera.
+TEST_P(CameraHidlTest, configureInjectionStreamsAvailableOutputs) {
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
+    std::vector<AvailableStream> outputStreams;
+
+    for (const auto& name : cameraDeviceNames) {
+        int deviceVersion = getCameraDeviceVersion(name, mProviderType);
+        if (deviceVersion <= 0) {
+            ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
+            ADD_FAILURE();
+            return;
+        } else if (deviceVersion < CAMERA_DEVICE_API_VERSION_3_7) {
+            continue;
+        }
+
+        camera_metadata_t* staticMetaBuffer;
+        Return<void> ret;
+        Status s;
+        sp<ICameraDeviceSession> session;
+        sp<device::V3_7::ICameraInjectionSession> injectionSession3_7;
+        openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMetaBuffer /*out*/);
+        castInjectionSession(session, &injectionSession3_7);
+        if (injectionSession3_7 == nullptr) {
+            ALOGW("%s: The provider %s doesn't support ICameraInjectionSession", __func__,
+                  mProviderType.c_str());
+            continue;
+        }
+
+        ::android::hardware::camera::device::V3_2::CameraMetadata hidlChars = {};
+        hidlChars.setToExternal(
+                reinterpret_cast<uint8_t*>(const_cast<camera_metadata_t*>(staticMetaBuffer)),
+                get_camera_metadata_size(staticMetaBuffer));
+
+        outputStreams.clear();
+        ASSERT_EQ(Status::OK, getAvailableOutputStreams(staticMetaBuffer, outputStreams));
+        ASSERT_NE(0u, outputStreams.size());
+
+        uint32_t jpegBufferSize = 0;
+        ASSERT_EQ(Status::OK, getJpegBufferSize(staticMetaBuffer, &jpegBufferSize));
+        ASSERT_NE(0u, jpegBufferSize);
+
+        int32_t streamId = 0;
+        uint32_t streamConfigCounter = 0;
+        for (auto& it : outputStreams) {
+            V3_2::Stream stream3_2;
+            V3_2::DataspaceFlags dataspaceFlag = getDataspace(static_cast<PixelFormat>(it.format));
+            stream3_2 = {streamId,
+                         StreamType::OUTPUT,
+                         static_cast<uint32_t>(it.width),
+                         static_cast<uint32_t>(it.height),
+                         static_cast<PixelFormat>(it.format),
+                         GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
+                         dataspaceFlag,
+                         StreamRotation::ROTATION_0};
+            ::android::hardware::hidl_vec<V3_2::Stream> streams3_2 = {stream3_2};
+            ::android::hardware::camera::device::V3_7::StreamConfiguration config3_7;
+            ::android::hardware::camera::device::V3_5::StreamConfiguration config3_5;
+            ::android::hardware::camera::device::V3_4::StreamConfiguration config3_4;
+            ::android::hardware::camera::device::V3_2::StreamConfiguration config3_2;
+            createStreamConfiguration(streams3_2, StreamConfigurationMode::NORMAL_MODE, &config3_2,
+                                      &config3_4, &config3_5, &config3_7, jpegBufferSize);
+
+            config3_7.streamConfigCounter = streamConfigCounter++;
+            s = injectionSession3_7->configureInjectionStreams(config3_7, hidlChars);
+            ASSERT_EQ(Status::OK, s);
+            streamId++;
+        }
+
+        free_camera_metadata(staticMetaBuffer);
+        ret = session->close();
+        ASSERT_TRUE(ret.isOk());
+    }
+}
+
+// Check for correct handling of invalid/incorrect configuration parameters for injection camera.
+TEST_P(CameraHidlTest, configureInjectionStreamsInvalidOutputs) {
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
+    std::vector<AvailableStream> outputStreams;
+
+    for (const auto& name : cameraDeviceNames) {
+        int deviceVersion = getCameraDeviceVersion(name, mProviderType);
+        if (deviceVersion <= 0) {
+            ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
+            ADD_FAILURE();
+            return;
+        } else if (deviceVersion < CAMERA_DEVICE_API_VERSION_3_7) {
+            continue;
+        }
+
+        camera_metadata_t* staticMetaBuffer;
+        Return<void> ret;
+        Status s;
+        sp<ICameraDeviceSession> session;
+        sp<device::V3_7::ICameraInjectionSession> injectionSession3_7;
+        openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMetaBuffer /*out*/);
+        castInjectionSession(session, &injectionSession3_7);
+        if (injectionSession3_7 == nullptr) {
+            ALOGW("%s: The provider %s doesn't support ICameraInjectionSession", __func__,
+                  mProviderType.c_str());
+            continue;
+        }
+
+        ::android::hardware::camera::device::V3_2::CameraMetadata hidlChars = {};
+        hidlChars.setToExternal(
+                reinterpret_cast<uint8_t*>(const_cast<camera_metadata_t*>(staticMetaBuffer)),
+                get_camera_metadata_size(staticMetaBuffer));
+
+        outputStreams.clear();
+        ASSERT_EQ(Status::OK, getAvailableOutputStreams(staticMetaBuffer, outputStreams));
+        ASSERT_NE(0u, outputStreams.size());
+
+        uint32_t jpegBufferSize = 0;
+        ASSERT_EQ(Status::OK, getJpegBufferSize(staticMetaBuffer, &jpegBufferSize));
+        ASSERT_NE(0u, jpegBufferSize);
+
+        int32_t streamId = 0;
+        V3_2::Stream stream3_2 = {streamId++,
+                                  StreamType::OUTPUT,
+                                  static_cast<uint32_t>(0),
+                                  static_cast<uint32_t>(0),
+                                  static_cast<PixelFormat>(outputStreams[0].format),
+                                  GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
+                                  0,
+                                  StreamRotation::ROTATION_0};
+        uint32_t streamConfigCounter = 0;
+        ::android::hardware::hidl_vec<V3_2::Stream> streams = {stream3_2};
+        ::android::hardware::camera::device::V3_7::StreamConfiguration config3_7;
+        ::android::hardware::camera::device::V3_5::StreamConfiguration config3_5;
+        ::android::hardware::camera::device::V3_4::StreamConfiguration config3_4;
+        ::android::hardware::camera::device::V3_2::StreamConfiguration config3_2;
+        createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE, &config3_2,
+                                  &config3_4, &config3_5, &config3_7, jpegBufferSize);
+
+        config3_7.streamConfigCounter = streamConfigCounter++;
+        s = injectionSession3_7->configureInjectionStreams(config3_7, hidlChars);
+        ASSERT_TRUE((Status::ILLEGAL_ARGUMENT == s) || (Status::INTERNAL_ERROR == s));
+
+        stream3_2 = {streamId++,
+                     StreamType::OUTPUT,
+                     static_cast<uint32_t>(UINT32_MAX),
+                     static_cast<uint32_t>(UINT32_MAX),
+                     static_cast<PixelFormat>(outputStreams[0].format),
+                     GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
+                     0,
+                     StreamRotation::ROTATION_0};
+        streams[0] = stream3_2;
+        createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE, &config3_2,
+                                  &config3_4, &config3_5, &config3_7, jpegBufferSize);
+        config3_7.streamConfigCounter = streamConfigCounter++;
+        s = injectionSession3_7->configureInjectionStreams(config3_7, hidlChars);
+        ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
+
+        for (auto& it : outputStreams) {
+            stream3_2 = {streamId++,
+                         StreamType::OUTPUT,
+                         static_cast<uint32_t>(it.width),
+                         static_cast<uint32_t>(it.height),
+                         static_cast<PixelFormat>(UINT32_MAX),
+                         GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
+                         0,
+                         StreamRotation::ROTATION_0};
+            streams[0] = stream3_2;
+            createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE, &config3_2,
+                                      &config3_4, &config3_5, &config3_7, jpegBufferSize);
+            config3_7.streamConfigCounter = streamConfigCounter++;
+            s = injectionSession3_7->configureInjectionStreams(config3_7, hidlChars);
+            ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
+
+            stream3_2 = {streamId++,
+                         StreamType::OUTPUT,
+                         static_cast<uint32_t>(it.width),
+                         static_cast<uint32_t>(it.height),
+                         static_cast<PixelFormat>(it.format),
+                         GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
+                         0,
+                         static_cast<StreamRotation>(UINT32_MAX)};
+            streams[0] = stream3_2;
+            createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE, &config3_2,
+                                      &config3_4, &config3_5, &config3_7, jpegBufferSize);
+            config3_7.streamConfigCounter = streamConfigCounter++;
+            s = injectionSession3_7->configureInjectionStreams(config3_7, hidlChars);
+            ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
+        }
+
+        free_camera_metadata(staticMetaBuffer);
+        ret = session->close();
+        ASSERT_TRUE(ret.isOk());
+    }
+}
+
+// Check whether session parameters are supported for injection camera. If Hal support for them
+// exist, then try to configure a preview stream using them.
+TEST_P(CameraHidlTest, configureInjectionStreamsWithSessionParameters) {
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
+    std::vector<AvailableStream> outputPreviewStreams;
+    AvailableStream previewThreshold = {kMaxPreviewWidth, kMaxPreviewHeight,
+                                        static_cast<int32_t>(PixelFormat::IMPLEMENTATION_DEFINED)};
+
+    for (const auto& name : cameraDeviceNames) {
+        int deviceVersion = getCameraDeviceVersion(name, mProviderType);
+        if (deviceVersion <= 0) {
+            ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
+            ADD_FAILURE();
+            return;
+        } else if (deviceVersion < CAMERA_DEVICE_API_VERSION_3_7) {
+            continue;
+        }
+
+        camera_metadata_t* staticMetaBuffer;
+        Return<void> ret;
+        Status s;
+        sp<ICameraDeviceSession> session;
+        sp<device::V3_7::ICameraInjectionSession> injectionSession3_7;
+        openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMetaBuffer /*out*/);
+        castInjectionSession(session, &injectionSession3_7);
+        if (injectionSession3_7 == nullptr) {
+            ALOGW("%s: The provider %s doesn't support ICameraInjectionSession", __func__,
+                  mProviderType.c_str());
+            continue;
+        }
+
+        ::android::hardware::camera::device::V3_2::CameraMetadata hidlChars = {};
+        hidlChars.setToExternal(
+                reinterpret_cast<uint8_t*>(const_cast<camera_metadata_t*>(staticMetaBuffer)),
+                get_camera_metadata_size(staticMetaBuffer));
+
+        std::unordered_set<int32_t> availableSessionKeys;
+        auto rc = getSupportedKeys(staticMetaBuffer, ANDROID_REQUEST_AVAILABLE_SESSION_KEYS,
+                                   &availableSessionKeys);
+        ASSERT_TRUE(Status::OK == rc);
+        if (availableSessionKeys.empty()) {
+            free_camera_metadata(staticMetaBuffer);
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
+            continue;
+        }
+
+        android::hardware::camera::common::V1_0::helper::CameraMetadata previewRequestSettings;
+        android::hardware::camera::common::V1_0::helper::CameraMetadata sessionParams,
+                modifiedSessionParams;
+        constructFilteredSettings(session, availableSessionKeys, RequestTemplate::PREVIEW,
+                                  &previewRequestSettings, &sessionParams);
+        if (sessionParams.isEmpty()) {
+            free_camera_metadata(staticMetaBuffer);
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
+            continue;
+        }
+
+        outputPreviewStreams.clear();
+
+        ASSERT_EQ(Status::OK, getAvailableOutputStreams(staticMetaBuffer, outputPreviewStreams,
+                                                        &previewThreshold));
+        ASSERT_NE(0u, outputPreviewStreams.size());
+
+        V3_4::Stream previewStream;
+        previewStream.v3_2 = {0,
+                              StreamType::OUTPUT,
+                              static_cast<uint32_t>(outputPreviewStreams[0].width),
+                              static_cast<uint32_t>(outputPreviewStreams[0].height),
+                              static_cast<PixelFormat>(outputPreviewStreams[0].format),
+                              GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
+                              0,
+                              StreamRotation::ROTATION_0};
+        previewStream.bufferSize = 0;
+        ::android::hardware::hidl_vec<V3_4::Stream> streams = {previewStream};
+        ::android::hardware::camera::device::V3_4::StreamConfiguration config;
+        ::android::hardware::camera::device::V3_5::StreamConfiguration config3_5;
+        ::android::hardware::camera::device::V3_7::StreamConfiguration config3_7;
+        config.streams = streams;
+        config.operationMode = StreamConfigurationMode::NORMAL_MODE;
+        modifiedSessionParams = sessionParams;
+        auto sessionParamsBuffer = sessionParams.release();
+        config.sessionParams.setToExternal(reinterpret_cast<uint8_t*>(sessionParamsBuffer),
+                                           get_camera_metadata_size(sessionParamsBuffer));
+        config3_5.v3_4 = config;
+        config3_5.streamConfigCounter = 0;
+        config3_7.streams = {{previewStream, -1, {ANDROID_SENSOR_PIXEL_MODE_DEFAULT}}};
+        config3_7.operationMode = config.operationMode;
+        config3_7.sessionParams.setToExternal(reinterpret_cast<uint8_t*>(sessionParamsBuffer),
+                                              get_camera_metadata_size(sessionParamsBuffer));
+        config3_7.streamConfigCounter = 0;
+        config3_7.multiResolutionInputImage = false;
+
+        s = injectionSession3_7->configureInjectionStreams(config3_7, hidlChars);
+        sessionParams.acquire(sessionParamsBuffer);
+        ASSERT_EQ(Status::OK, s);
+
+        free_camera_metadata(staticMetaBuffer);
+        ret = session->close();
+        ASSERT_TRUE(ret.isOk());
+    }
+}
+
 // Retrieve all valid output stream resolutions from the camera
 // static characteristics.
 Status CameraHidlTest::getAvailableOutputStreams(const camera_metadata_t* staticMeta,
@@ -7251,6 +7550,22 @@ void CameraHidlTest::castSession(const sp<ICameraDeviceSession> &session, int32_
             //no-op
             return;
     }
+}
+
+// Cast camera device session to injection session
+void CameraHidlTest::castInjectionSession(
+        const sp<ICameraDeviceSession>& session,
+        sp<device::V3_7::ICameraInjectionSession>* injectionSession3_7 /*out*/) {
+    ASSERT_NE(nullptr, injectionSession3_7);
+
+    sp<device::V3_7::ICameraDeviceSession> session3_7;
+    auto castResult = device::V3_7::ICameraDeviceSession::castFrom(session);
+    ASSERT_TRUE(castResult.isOk());
+    session3_7 = castResult;
+
+    auto castInjectionResult = device::V3_7::ICameraInjectionSession::castFrom(session3_7);
+    ASSERT_TRUE(castInjectionResult.isOk());
+    *injectionSession3_7 = castInjectionResult;
 }
 
 void CameraHidlTest::verifyStreamCombination(
