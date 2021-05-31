@@ -57,8 +57,40 @@ Return<void> HdmiCecDefault::getPhysicalAddress(getPhysicalAddress_cb /*_hidl_cb
     return Void();
 }
 
-Return<SendMessageResult> HdmiCecDefault::sendMessage(const CecMessage& /*message*/) {
-    return SendMessageResult::FAIL;
+Return<SendMessageResult> HdmiCecDefault::sendMessage(const CecMessage& message) {
+    struct cec_msg cecMsg;
+    memset(&cecMsg, 0, sizeof(cec_msg));
+
+    int initiator = static_cast<cec_logical_address_t>(message.initiator);
+    int destination = static_cast<cec_logical_address_t>(message.destination);
+
+    cecMsg.msg[0] = (initiator << 4) | destination;
+    for (size_t i = 0; i < message.body.size(); ++i) {
+        cecMsg.msg[i + 1] = message.body[i];
+    }
+    cecMsg.len = message.body.size() + 1;
+
+    int ret = ioctl(mCecFd, CEC_TRANSMIT, &cecMsg);
+
+    if (ret) {
+        LOG(ERROR) << "Send message failed, Error = " << strerror(errno);
+        return SendMessageResult::FAIL;
+    }
+
+    if (cecMsg.tx_status != CEC_TX_STATUS_OK) {
+        LOG(ERROR) << "Send message tx_status = " << cecMsg.tx_status;
+    }
+
+    switch (cecMsg.tx_status) {
+        case CEC_TX_STATUS_OK:
+            return SendMessageResult::SUCCESS;
+        case CEC_TX_STATUS_ARB_LOST:
+            return SendMessageResult::BUSY;
+        case CEC_TX_STATUS_NACK:
+            return SendMessageResult::NACK;
+        default:
+            return SendMessageResult::FAIL;
+    }
 }
 
 Return<void> HdmiCecDefault::setCallback(const sp<IHdmiCecCallback>& /*callback*/) {
