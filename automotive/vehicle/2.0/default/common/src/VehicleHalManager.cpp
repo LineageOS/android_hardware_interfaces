@@ -20,7 +20,9 @@
 
 #include <cmath>
 #include <fstream>
+#include <unordered_set>
 
+#include <android-base/parsedouble.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <android/hardware/automotive/vehicle/2.0/BpHwVehicleCallback.h>
@@ -44,15 +46,34 @@ using ::android::base::EqualsIgnoreCase;
 using ::android::hardware::hidl_handle;
 using ::android::hardware::hidl_string;
 
+namespace {
+
 constexpr std::chrono::milliseconds kHalEventBatchingTimeWindow(10);
 
 const VehiclePropValue kEmptyValue{};
+
+// A list of supported options for "--set" command.
+const std::unordered_set<std::string> kSetPropOptions = {
+        // integer.
+        "-i",
+        // 64bit integer.
+        "-i64",
+        // float.
+        "-f",
+        // string.
+        "-s",
+        // bytes in hex format, e.g. 0xDEADBEEF.
+        "-b",
+        // Area id in integer.
+        "-a"};
+
+}  // namespace
 
 /**
  * Indicates what's the maximum size of hidl_vec<VehiclePropValue> we want
  * to store in reusable object pool.
  */
-constexpr auto kMaxHidlVecOfVehiclPropValuePoolSize = 20;
+constexpr auto kMaxHidlVecOfVehiclePropValuePoolSize = 20;
 
 Return<void> VehicleHalManager::getAllPropConfigs(getAllPropConfigs_cb _hidl_cb) {
     ALOGI("getAllPropConfigs called");
@@ -213,6 +234,11 @@ void VehicleHalManager::cmdDump(int fd, const hidl_vec<hidl_string>& options) {
     } else if (EqualsIgnoreCase(option, "--get")) {
         cmdDumpSpecificProperties(fd, options);
     } else if (EqualsIgnoreCase(option, "--set")) {
+        if (!checkCallerHasWritePermissions(fd)) {
+            dprintf(fd, "Caller does not have write permission\n");
+            return;
+        }
+        // Ignore the return value for this.
         cmdSetOneProperty(fd, options);
     } else {
         dprintf(fd, "Invalid option: %s\n", option.c_str());
@@ -239,9 +265,18 @@ bool VehicleHalManager::checkArgumentsSize(int fd, const hidl_vec<hidl_string>& 
     return false;
 }
 
-bool VehicleHalManager::safelyParseInt(int fd, int index, std::string s, int* out) {
+template <typename T>
+bool VehicleHalManager::safelyParseInt(int fd, int index, const std::string& s, T* out) {
     if (!android::base::ParseInt(s, out)) {
         dprintf(fd, "non-integer argument at index %d: %s\n", index, s.c_str());
+        return false;
+    }
+    return true;
+}
+
+bool VehicleHalManager::safelyParseFloat(int fd, int index, const std::string& s, float* out) {
+    if (!android::base::ParseFloat(s, out)) {
+        dprintf(fd, "non-float argument at index %d: %s\n", index, s.c_str());
         return false;
     }
     return true;
@@ -253,13 +288,13 @@ void VehicleHalManager::cmdHelp(int fd) const {
     dprintf(fd, "--help: shows this help\n");
     dprintf(fd, "--list: lists the ids of all supported properties\n");
     dprintf(fd, "--get <PROP1> [PROP2] [PROPN]: dumps the value of specific properties \n");
-    // TODO: support other formats (int64, float, bytes)
     dprintf(fd,
-            "--set <PROP> <i|s> <VALUE_1> [<i|s> <VALUE_N>] [a AREA_ID] : sets the value of "
-            "property PROP, using arbitrary number of key/value parameters (i for int32, "
-            "s for string) and an optional area.\n"
-            "Notice that the string value can be set just once, while the other can have multiple "
-            "values (so they're used in the respective array)\n");
+            "--set <PROP> [-i INT_VALUE [INT_VALUE ...]] [-i64 INT64_VALUE [INT64_VALUE ...]] "
+            "[-f FLOAT_VALUE [FLOAT_VALUE ...]] [-s STR_VALUE] "
+            "[-b BYTES_VALUE] [-a AREA_ID] : sets the value of property PROP. "
+            "Notice that the string, bytes and area value can be set just once, while the other can"
+            " have multiple values (so they're used in the respective array), "
+            "BYTES_VALUE is in the form of 0xXXXX, e.g. 0xdeadbeef.\n");
 }
 
 void VehicleHalManager::cmdListAllProperties(int fd) const {
@@ -337,102 +372,49 @@ void VehicleHalManager::cmdDumpOneProperty(int fd, int32_t prop, int32_t areaId)
     VehiclePropValue input;
     input.prop = prop;
     input.areaId = areaId;
-    auto callback = [&](StatusCode status, const VehiclePropValue& output) {
+    auto callback = [&fd, &prop](StatusCode status, const VehiclePropValue& output) {
         if (status == StatusCode::OK) {
             dprintf(fd, "%s\n", toString(output).c_str());
         } else {
             dprintf(fd, "Could not get property %d. Error: %s\n", prop, toString(status).c_str());
         }
     };
-    get(input, callback);
+
+    StatusCode status;
+    auto value = mHal->get(input, &status);
+    callback(status, value.get() ? *value : kEmptyValue);
 }
 
-void VehicleHalManager::cmdSetOneProperty(int fd, const hidl_vec<hidl_string>& options) {
-    if (!checkCallerHasWritePermissions(fd) || !checkArgumentsSize(fd, options, 3)) return;
-
-    size_t size = options.size();
-
-    // Syntax is --set PROP Type1 Value1 TypeN ValueN, so number of arguments must be even
-    if (size % 2 != 0) {
-        dprintf(fd, "must pass even number of arguments (passed %zu)\n", size);
-        return;
+bool VehicleHalManager::cmdSetOneProperty(int fd, const hidl_vec<hidl_string>& options) {
+    if (!checkArgumentsSize(fd, options, 4)) {
+        dprintf(fd, "Requires at least 4 options, see help\n");
+        return false;
     }
-    int numberValues = (size - 2) / 2;
 
-    VehiclePropValue prop;
-    if (!safelyParseInt(fd, 1, options[1], &prop.prop)) return;
-    prop.timestamp = elapsedRealtimeNano();
-    prop.status = VehiclePropertyStatus::AVAILABLE;
-
-    // First pass: calculate sizes
-    int sizeInt32 = 0;
-    int stringIndex = 0;
-    int areaIndex = 0;
-    for (int i = 2, kv = 1; kv <= numberValues; kv++) {
-        // iterate through the kv=1..n key/value pairs, accessing indexes i / i+1 at each step
-        std::string type = options[i];
-        std::string value = options[i + 1];
-        if (EqualsIgnoreCase(type, "i")) {
-            sizeInt32++;
-        } else if (EqualsIgnoreCase(type, "s")) {
-            if (stringIndex != 0) {
-                dprintf(fd,
-                        "defining string value (%s) again at index %d (already defined at %d=%s"
-                        ")\n",
-                        value.c_str(), i, stringIndex, options[stringIndex + 1].c_str());
-                return;
-            }
-            stringIndex = i;
-        } else if (EqualsIgnoreCase(type, "a")) {
-            if (areaIndex != 0) {
-                dprintf(fd,
-                        "defining area value (%s) again at index %d (already defined at %d=%s"
-                        ")\n",
-                        value.c_str(), i, areaIndex, options[areaIndex + 1].c_str());
-                return;
-            }
-            areaIndex = i;
-        } else {
-            dprintf(fd, "invalid (%s) type at index %d\n", type.c_str(), i);
-            return;
-        }
-        i += 2;
-    }
-    prop.value.int32Values.resize(sizeInt32);
-
-    // Second pass: populate it
-    int indexInt32 = 0;
-    for (int i = 2, kv = 1; kv <= numberValues; kv++) {
-        // iterate through the kv=1..n key/value pairs, accessing indexes i / i+1 at each step
-        int valueIndex = i + 1;
-        std::string type = options[i];
-        std::string value = options[valueIndex];
-        if (EqualsIgnoreCase(type, "i")) {
-            int safeInt;
-            if (!safelyParseInt(fd, valueIndex, value, &safeInt)) return;
-            prop.value.int32Values[indexInt32++] = safeInt;
-        } else if (EqualsIgnoreCase(type, "s")) {
-            prop.value.stringValue = value;
-        } else if (EqualsIgnoreCase(type, "a")) {
-            if (!safelyParseInt(fd, valueIndex, value, &prop.areaId)) return;
-        }
-        i += 2;
+    VehiclePropValue prop = {};
+    if (!parseSetPropOptions(fd, options, &prop)) {
+        return false;
     }
     ALOGD("Setting prop %s", toString(prop).c_str());
-    auto status = set(prop);
+
+    // Do not use VehicleHalManager::set here because we don't want to check write permission.
+    // Caller should be able to use the debug interface to set read-only properties.
+    handlePropertySetEvent(prop);
+    auto status = mHal->set(prop);
+
     if (status == StatusCode::OK) {
         dprintf(fd, "Set property %s\n", toString(prop).c_str());
-    } else {
-        dprintf(fd, "Failed to set property %s: %s\n", toString(prop).c_str(),
-                toString(status).c_str());
+        return true;
     }
+    dprintf(fd, "Failed to set property %s: %s\n", toString(prop).c_str(),
+            toString(status).c_str());
+    return false;
 }
 
 void VehicleHalManager::init() {
     ALOGI("VehicleHalManager::init");
 
-    mHidlVecOfVehiclePropValuePool.resize(kMaxHidlVecOfVehiclPropValuePoolSize);
-
+    mHidlVecOfVehiclePropValuePool.resize(kMaxHidlVecOfVehiclePropValuePoolSize);
 
     mBatchingConsumer.run(&mEventQueue,
                           kHalEventBatchingTimeWindow,
@@ -486,7 +468,7 @@ void VehicleHalManager::onBatchHalEvent(const std::vector<VehiclePropValuePtr>& 
     for (const HalClientValues& cv : clientValues) {
         auto vecSize = cv.values.size();
         hidl_vec<VehiclePropValue> vec;
-        if (vecSize < kMaxHidlVecOfVehiclPropValuePoolSize) {
+        if (vecSize < kMaxHidlVecOfVehiclePropValuePoolSize) {
             vec.setToExternal(&mHidlVecOfVehiclePropValuePool[0], vecSize);
         } else {
             vec.resize(vecSize);
@@ -593,6 +575,158 @@ ClientId VehicleHalManager::getClientId(const sp<IVehicleCallback>& callback) {
     } else {
         return static_cast<ClientId>(reinterpret_cast<intptr_t>(callback.get()));
     }
+}
+
+std::vector<std::string> VehicleHalManager::getOptionValues(const hidl_vec<hidl_string>& options,
+                                                            size_t* index) {
+    std::vector<std::string> values;
+    while (*index < options.size()) {
+        std::string option = options[*index];
+        if (kSetPropOptions.find(option) != kSetPropOptions.end()) {
+            return std::move(values);
+        }
+        values.push_back(option);
+        (*index)++;
+    }
+    return std::move(values);
+}
+
+bool VehicleHalManager::parseSetPropOptions(int fd, const hidl_vec<hidl_string>& options,
+                                            VehiclePropValue* prop) {
+    // Options format:
+    // --set PROP [-f f1 f2...] [-i i1 i2...] [-i64 i1 i2...] [-s s1 s2...] [-b b1 b2...] [-a a]
+    size_t optionIndex = 1;
+    int propValue;
+    if (!safelyParseInt(fd, optionIndex, options[optionIndex], &propValue)) {
+        dprintf(fd, "property value: \"%s\" is not a valid int\n", options[optionIndex].c_str());
+        return false;
+    }
+    prop->prop = propValue;
+    prop->timestamp = elapsedRealtimeNano();
+    prop->status = VehiclePropertyStatus::AVAILABLE;
+    optionIndex++;
+    std::unordered_set<std::string> parsedOptions;
+
+    while (optionIndex < options.size()) {
+        std::string type = options[optionIndex];
+        optionIndex++;
+        size_t currentIndex = optionIndex;
+        std::vector<std::string> values = getOptionValues(options, &optionIndex);
+        if (parsedOptions.find(type) != parsedOptions.end()) {
+            dprintf(fd, "duplicate \"%s\" options\n", type.c_str());
+            return false;
+        }
+        parsedOptions.insert(type);
+        if (EqualsIgnoreCase(type, "-i")) {
+            if (values.size() == 0) {
+                dprintf(fd, "no values specified when using \"-i\"\n");
+                return false;
+            }
+            prop->value.int32Values.resize(values.size());
+            for (size_t i = 0; i < values.size(); i++) {
+                int32_t safeInt;
+                if (!safelyParseInt(fd, currentIndex + i, values[i], &safeInt)) {
+                    dprintf(fd, "value: \"%s\" is not a valid int\n", values[i].c_str());
+                    return false;
+                }
+                prop->value.int32Values[i] = safeInt;
+            }
+        } else if (EqualsIgnoreCase(type, "-i64")) {
+            if (values.size() == 0) {
+                dprintf(fd, "no values specified when using \"-i64\"\n");
+                return false;
+            }
+            prop->value.int64Values.resize(values.size());
+            for (size_t i = 0; i < values.size(); i++) {
+                int64_t safeInt;
+                if (!safelyParseInt(fd, currentIndex + i, values[i], &safeInt)) {
+                    dprintf(fd, "value: \"%s\" is not a valid int64\n", values[i].c_str());
+                    return false;
+                }
+                prop->value.int64Values[i] = safeInt;
+            }
+        } else if (EqualsIgnoreCase(type, "-f")) {
+            if (values.size() == 0) {
+                dprintf(fd, "no values specified when using \"-f\"\n");
+                return false;
+            }
+            prop->value.floatValues.resize(values.size());
+            for (size_t i = 0; i < values.size(); i++) {
+                float safeFloat;
+                if (!safelyParseFloat(fd, currentIndex + i, values[i], &safeFloat)) {
+                    dprintf(fd, "value: \"%s\" is not a valid float\n", values[i].c_str());
+                    return false;
+                }
+                prop->value.floatValues[i] = safeFloat;
+            }
+        } else if (EqualsIgnoreCase(type, "-s")) {
+            if (values.size() != 1) {
+                dprintf(fd, "expect exact one value when using \"-s\"\n");
+                return false;
+            }
+            prop->value.stringValue = values[0];
+        } else if (EqualsIgnoreCase(type, "-b")) {
+            if (values.size() != 1) {
+                dprintf(fd, "expect exact one value when using \"-b\"\n");
+                return false;
+            }
+            std::vector<uint8_t> bytes;
+            if (!parseHexString(fd, values[0], &bytes)) {
+                dprintf(fd, "value: \"%s\" is not a valid hex string\n", values[0].c_str());
+                return false;
+            }
+            prop->value.bytes = bytes;
+        } else if (EqualsIgnoreCase(type, "-a")) {
+            if (values.size() != 1) {
+                dprintf(fd, "expect exact one value when using \"-a\"\n");
+                return false;
+            }
+            if (!safelyParseInt(fd, currentIndex, values[0], &(prop->areaId))) {
+                dprintf(fd, "area ID: \"%s\" is not a valid int\n", values[0].c_str());
+                return false;
+            }
+        } else {
+            dprintf(fd, "unknown option: %s\n", type.c_str());
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool VehicleHalManager::parseHexString(int fd, const std::string& s, std::vector<uint8_t>* bytes) {
+    if (s.size() % 2 != 0) {
+        dprintf(fd, "invalid hex string: %s, should have even size\n", s.c_str());
+        return false;
+    }
+    if (strncmp(s.substr(0, 2).c_str(), "0x", 2)) {
+        dprintf(fd, "hex string should start with \"0x\", got %s\n", s.c_str());
+        return false;
+    }
+    std::string subs = s.substr(2);
+    std::transform(subs.begin(), subs.end(), subs.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+
+    bool highDigit = true;
+    for (size_t i = 0; i < subs.size(); i++) {
+        char c = subs[i];
+        uint8_t v;
+        if (c >= '0' && c <= '9') {
+            v = c - '0';
+        } else if (c >= 'a' && c <= 'f') {
+            v = c - 'a' + 10;
+        } else {
+            dprintf(fd, "invalid character %c in hex string %s\n", c, subs.c_str());
+            return false;
+        }
+        if (highDigit) {
+            (*bytes).push_back(v * 16);
+        } else {
+            (*bytes)[bytes->size() - 1] += v;
+        }
+        highDigit = !highDigit;
+    }
+    return true;
 }
 
 }  // namespace V2_0
