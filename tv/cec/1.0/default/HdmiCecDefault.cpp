@@ -113,7 +113,7 @@ Return<void> HdmiCecDefault::setCallback(const sp<IHdmiCecCallback>& /*callback*
 }
 
 Return<int32_t> HdmiCecDefault::getCecVersion() {
-    return 0;
+    return property_get_int32("ro.hdmi.cec_version", CEC_OP_CEC_VERSION_1_4);
 }
 
 Return<uint32_t> HdmiCecDefault::getVendorId() {
