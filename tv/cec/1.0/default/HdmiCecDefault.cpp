@@ -117,7 +117,7 @@ Return<int32_t> HdmiCecDefault::getCecVersion() {
 }
 
 Return<uint32_t> HdmiCecDefault::getVendorId() {
-    return 0;
+    return property_get_int32("ro.hdmi.vendor_id", 0x000c03 /* HDMI LLC vendor ID */);
 }
 
 Return<void> HdmiCecDefault::getPortInfo(getPortInfo_cb callback) {
