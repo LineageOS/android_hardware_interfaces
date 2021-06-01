@@ -50,6 +50,12 @@ Return<Result> HdmiCecDefault::addLogicalAddress(CecLogicalAddress /*addr*/) {
 }
 
 Return<void> HdmiCecDefault::clearLogicalAddress() {
+    struct cec_log_addrs cecLogAddrs;
+    memset(&cecLogAddrs, 0, sizeof(cecLogAddrs));
+    int ret = ioctl(mCecFd, CEC_ADAP_S_LOG_ADDRS, &cecLogAddrs);
+    if (ret) {
+        LOG(ERROR) << "Clear logical Address failed, Error = " << strerror(errno);
+    }
     return Void();
 }
 
