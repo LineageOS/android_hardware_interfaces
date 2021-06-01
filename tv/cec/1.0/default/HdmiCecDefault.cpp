@@ -17,6 +17,7 @@
 #define LOG_TAG "android.hardware.tv.cec@1.0-impl"
 #include <android-base/logging.h>
 
+#include <cutils/properties.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/cec.h>
@@ -119,7 +120,21 @@ Return<uint32_t> HdmiCecDefault::getVendorId() {
     return 0;
 }
 
-Return<void> HdmiCecDefault::getPortInfo(getPortInfo_cb /*_hidl_cb*/) {
+Return<void> HdmiCecDefault::getPortInfo(getPortInfo_cb callback) {
+    uint16_t addr;
+    int ret = ioctl(mCecFd, CEC_ADAP_G_PHYS_ADDR, &addr);
+    if (ret) {
+        LOG(ERROR) << "Get port info failed, Error = " << strerror(errno);
+    }
+
+    unsigned int type = property_get_int32("ro.hdmi.device_type", CEC_DEVICE_PLAYBACK);
+    hidl_vec<HdmiPortInfo> portInfos(1);
+    portInfos[0] = {.type = (type == CEC_DEVICE_TV ? HdmiPortType::INPUT : HdmiPortType::OUTPUT),
+                    .portId = 1,
+                    .cecSupported = true,
+                    .arcSupported = false,
+                    .physicalAddress = addr};
+    callback(portInfos);
     return Void();
 }
 
