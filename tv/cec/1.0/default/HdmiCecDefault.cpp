@@ -151,7 +151,16 @@ Return<void> HdmiCecDefault::enableAudioReturnChannel(int32_t /*portId*/, bool /
 }
 
 Return<bool> HdmiCecDefault::isConnected(int32_t /*portId*/) {
-    return false;
+    uint16_t addr;
+    int ret = ioctl(mCecFd, CEC_ADAP_G_PHYS_ADDR, &addr);
+    if (ret) {
+        LOG(ERROR) << "Is connected failed, Error = " << strerror(errno);
+        return false;
+    }
+    if (addr == CEC_PHYS_ADDR_INVALID) {
+        return false;
+    }
+    return true;
 }
 
 // Initialise the cec file descriptor
