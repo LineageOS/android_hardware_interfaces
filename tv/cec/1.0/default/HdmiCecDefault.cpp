@@ -35,10 +35,12 @@ namespace implementation {
 
 int mCecFd;
 int mExitFd;
+sp<IHdmiCecCallback> mCallback;
 
 HdmiCecDefault::HdmiCecDefault() {
     mCecFd = -1;
     mExitFd = -1;
+    mCallback = nullptr;
 }
 
 HdmiCecDefault::~HdmiCecDefault() {
@@ -185,7 +187,16 @@ Return<SendMessageResult> HdmiCecDefault::sendMessage(const CecMessage& message)
     }
 }
 
-Return<void> HdmiCecDefault::setCallback(const sp<IHdmiCecCallback>& /*callback*/) {
+Return<void> HdmiCecDefault::setCallback(const sp<IHdmiCecCallback>& callback) {
+    if (mCallback != nullptr) {
+        mCallback->unlinkToDeath(this);
+        mCallback = nullptr;
+    }
+
+    if (callback != nullptr) {
+        mCallback = callback;
+        mCallback->linkToDeath(this, 0 /*cookie*/);
+    }
     return Void();
 }
 
