@@ -644,7 +644,7 @@ optional<vector<vector<uint8_t>>> createAttestation(
     // the VTS tests. Of course, this is a pretend-only game since hopefully no
     // relying party is ever going to trust our batch key and those keys above
     // it.
-    ::keymaster::PureSoftKeymasterContext context(::keymaster::KmVersion::KEYMASTER_4_1,
+    ::keymaster::PureSoftKeymasterContext context(::keymaster::KmVersion::KEYMINT_1,
                                                   KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT);
 
     keymaster_error_t error;
@@ -682,10 +682,9 @@ optional<vector<vector<uint8_t>>> createAttestation(
 
     i2d_X509_NAME(subjectName.get(), &subjectPtr);
 
-    uint64_t nowMilliSeconds = time(nullptr) * 1000;
     ::keymaster::AuthorizationSet auth_set(
             ::keymaster::AuthorizationSetBuilder()
-                    .Authorization(::keymaster::TAG_CERTIFICATE_NOT_BEFORE, nowMilliSeconds)
+                    .Authorization(::keymaster::TAG_CERTIFICATE_NOT_BEFORE, activeTimeMilliSeconds)
                     .Authorization(::keymaster::TAG_CERTIFICATE_NOT_AFTER, expireTimeMilliSeconds)
                     .Authorization(::keymaster::TAG_ATTESTATION_CHALLENGE, challenge.data(),
                                    challenge.size())
