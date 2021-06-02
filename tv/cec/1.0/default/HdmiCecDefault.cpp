@@ -46,8 +46,85 @@ HdmiCecDefault::~HdmiCecDefault() {
 }
 
 // Methods from ::android::hardware::tv::cec::V1_0::IHdmiCec follow.
-Return<Result> HdmiCecDefault::addLogicalAddress(CecLogicalAddress /*addr*/) {
-    return Result::FAILURE_UNKNOWN;
+Return<Result> HdmiCecDefault::addLogicalAddress(CecLogicalAddress addr) {
+    if (addr < CecLogicalAddress::TV || addr >= CecLogicalAddress::BROADCAST) {
+        LOG(ERROR) << "Add logical address failed, Invalid address";
+        return Result::FAILURE_INVALID_ARGS;
+    }
+
+    struct cec_log_addrs cecLogAddrs;
+    int ret = ioctl(mCecFd, CEC_ADAP_G_LOG_ADDRS, &cecLogAddrs);
+    if (ret) {
+        LOG(ERROR) << "Add logical address failed, Error = " << strerror(errno);
+        return Result::FAILURE_BUSY;
+    }
+
+    cecLogAddrs.cec_version = getCecVersion();
+    cecLogAddrs.vendor_id = getVendorId();
+
+    unsigned int logAddrType = CEC_LOG_ADDR_TYPE_UNREGISTERED;
+    unsigned int allDevTypes = 0;
+    unsigned int primDevType = 0xff;
+    switch (addr) {
+        case CecLogicalAddress::TV:
+            primDevType = CEC_OP_PRIM_DEVTYPE_TV;
+            logAddrType = CEC_LOG_ADDR_TYPE_TV;
+            allDevTypes = CEC_OP_ALL_DEVTYPE_TV;
+            break;
+        case CecLogicalAddress::RECORDER_1:
+        case CecLogicalAddress::RECORDER_2:
+        case CecLogicalAddress::RECORDER_3:
+            primDevType = CEC_OP_PRIM_DEVTYPE_RECORD;
+            logAddrType = CEC_LOG_ADDR_TYPE_RECORD;
+            allDevTypes = CEC_OP_ALL_DEVTYPE_RECORD;
+            break;
+        case CecLogicalAddress::TUNER_1:
+        case CecLogicalAddress::TUNER_2:
+        case CecLogicalAddress::TUNER_3:
+        case CecLogicalAddress::TUNER_4:
+            primDevType = CEC_OP_PRIM_DEVTYPE_TUNER;
+            logAddrType = CEC_LOG_ADDR_TYPE_TUNER;
+            allDevTypes = CEC_OP_ALL_DEVTYPE_TUNER;
+            break;
+        case CecLogicalAddress::PLAYBACK_1:
+        case CecLogicalAddress::PLAYBACK_2:
+        case CecLogicalAddress::PLAYBACK_3:
+            primDevType = CEC_OP_PRIM_DEVTYPE_PLAYBACK;
+            logAddrType = CEC_LOG_ADDR_TYPE_PLAYBACK;
+            allDevTypes = CEC_OP_ALL_DEVTYPE_PLAYBACK;
+            cecLogAddrs.flags |= CEC_LOG_ADDRS_FL_ALLOW_RC_PASSTHRU;
+            break;
+        case CecLogicalAddress::AUDIO_SYSTEM:
+            primDevType = CEC_OP_PRIM_DEVTYPE_AUDIOSYSTEM;
+            logAddrType = CEC_LOG_ADDR_TYPE_AUDIOSYSTEM;
+            allDevTypes = CEC_OP_ALL_DEVTYPE_AUDIOSYSTEM;
+            break;
+        case CecLogicalAddress::FREE_USE:
+            primDevType = CEC_OP_PRIM_DEVTYPE_PROCESSOR;
+            logAddrType = CEC_LOG_ADDR_TYPE_SPECIFIC;
+            allDevTypes = CEC_OP_ALL_DEVTYPE_SWITCH;
+            break;
+        case CecLogicalAddress::UNREGISTERED:
+            cecLogAddrs.flags |= CEC_LOG_ADDRS_FL_ALLOW_UNREG_FALLBACK;
+            break;
+    }
+
+    int logAddrIndex = cecLogAddrs.num_log_addrs;
+
+    cecLogAddrs.num_log_addrs += 1;
+    cecLogAddrs.log_addr[logAddrIndex] = static_cast<cec_logical_address_t>(addr);
+    cecLogAddrs.log_addr_type[logAddrIndex] = logAddrType;
+    cecLogAddrs.primary_device_type[logAddrIndex] = primDevType;
+    cecLogAddrs.all_device_types[logAddrIndex] = allDevTypes;
+    cecLogAddrs.features[logAddrIndex][0] = 0;
+    cecLogAddrs.features[logAddrIndex][1] = 0;
+
+    ret = ioctl(mCecFd, CEC_ADAP_S_LOG_ADDRS, &cecLogAddrs);
+    if (ret) {
+        LOG(ERROR) << "Add logical address failed, Error = " << strerror(errno);
+        return Result::FAILURE_BUSY;
+    }
+    return Result::SUCCESS;
 }
 
 Return<void> HdmiCecDefault::clearLogicalAddress() {
