@@ -43,7 +43,6 @@ GnssHidlHal::GnssHidlHal(const std::shared_ptr<Gnss>& gnssAidl) : mGnssAidl(gnss
 
 hidl_vec<GnssSvInfo> GnssHidlHal::filterBlocklistedSatellitesV2_1(
         hidl_vec<GnssSvInfo> gnssSvInfoList) {
-    ALOGD("GnssHidlHal::filterBlocklistSatellitesV2_1");
     if (mGnssConfigurationAidl == nullptr) {
         ALOGE("Handle to AIDL GnssConfiguration is not available.");
         return gnssSvInfoList;
