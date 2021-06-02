@@ -836,4 +836,7 @@ fd43298c43f70130c747a642ee43b0c242ac0cebffb377faa24f2725f0aa6caf android.hardwar
 ead4ec8713a2cb40906fe31ba793d21a6b1190143c446690d16a6ea686aa2fea android.hardware.tetheroffload.control@1.1::ITetheringOffloadCallback
 e34b4c7bec5e032c14804707ca924dd6b99ed5ba139da7505fe7d698d0fe178f android.hardware.tetheroffload.control@1.1::types
 
+# ABI preserving changes to HALs during Android T
+62ace52d9c3ff1f60f94118557a2aaf0b953513e59dcd34d5f94ae28d4c7e780 android.hardware.fastboot@1.0::IFastboot
+
 # There should be no more HIDL HALs - please use AIDL instead.
