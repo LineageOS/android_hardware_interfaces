@@ -102,7 +102,7 @@ void DeleteCredentialTests::provisionData() {
     ASSERT_TRUE(wc->addAccessControlProfile(1, {}, false, 0, 0, &sacp).isOk());
 
     // Single entry - don't care about the returned encrypted data
-    ASSERT_TRUE(wc->beginAddEntry({0}, "ns", "Some Data", 1).isOk());
+    ASSERT_TRUE(wc->beginAddEntry({1}, "ns", "Some Data", 1).isOk());
     vector<uint8_t> encryptedData;
     ASSERT_TRUE(wc->addEntryValue({9}, &encryptedData).isOk());
 
