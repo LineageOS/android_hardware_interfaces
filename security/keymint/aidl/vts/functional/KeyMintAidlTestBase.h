@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <string_view>
+
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
 #include <binder/IServiceManager.h>
@@ -103,6 +105,18 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
         return ImportWrappedKey(wrapped_key, wrapping_key, wrapping_key_desc, masking_key,
                                 unwrapping_params, 0 /* password_sid */, 0 /* biometric_sid */);
     }
+
+    ErrorCode GetCharacteristics(const vector<uint8_t>& key_blob, const vector<uint8_t>& app_id,
+                                 const vector<uint8_t>& app_data,
+                                 vector<KeyCharacteristics>* key_characteristics);
+    ErrorCode GetCharacteristics(const vector<uint8_t>& key_blob,
+                                 vector<KeyCharacteristics>* key_characteristics);
+
+    void CheckCharacteristics(const vector<uint8_t>& key_blob,
+                              const vector<KeyCharacteristics>& generate_characteristics);
+    void CheckAppIdCharacteristics(const vector<uint8_t>& key_blob, std::string_view app_id_string,
+                                   std::string_view app_data_string,
+                                   const vector<KeyCharacteristics>& generate_characteristics);
 
     ErrorCode DeleteKey(vector<uint8_t>* key_blob, bool keep_key_blob = false);
     ErrorCode DeleteKey(bool keep_key_blob = false);
