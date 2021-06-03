@@ -33,7 +33,7 @@ interface IFastboot {
     /**
      * Executes a fastboot OEM command.
      *
-     * @param oemCmdArgs The oem command that is passed to the fastboot HAL.
+     * @param oemCmd The oem command that is passed to the fastboot HAL.
      * @return result Returns the status SUCCESS if the operation is successful,
      *     INVALID_ARGUMENT for bad arguments,
      *     FAILURE_UNKNOWN for an invalid/unsupported command.

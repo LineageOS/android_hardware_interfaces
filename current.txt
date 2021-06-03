@@ -891,4 +891,7 @@ c8a57364f6ad20842be14f4db284df5304f7521ca8eac6bcc1fa6c5b466fb8a6 android.hardwar
 2123482b69f3b531c88023aa2a007110e130efbf4ed68ac9ce0bc55d5e82bc8b android.hardware.wifi.supplicant@1.4::ISupplicantStaNetworkCallback
 0821f516e4d428bc15251969f7e19411c94d8f2ccbd99e1fc8168d8e49e38b0f android.hardware.wifi.supplicant@1.4::types
 
+# ABI preserving changes to HALs during Android T
+62ace52d9c3ff1f60f94118557a2aaf0b953513e59dcd34d5f94ae28d4c7e780 android.hardware.fastboot@1.0::IFastboot
+
 # There should be no more HIDL HALs - please use AIDL instead.
