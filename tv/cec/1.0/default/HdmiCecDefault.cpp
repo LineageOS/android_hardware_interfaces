@@ -22,7 +22,10 @@
 #include <fcntl.h>
 #include <linux/cec.h>
 #include <linux/ioctl.h>
+#include <poll.h>
+#include <pthread.h>
 #include <sys/eventfd.h>
+#include <algorithm>
 
 #include "HdmiCecDefault.h"
 
@@ -35,6 +38,7 @@ namespace implementation {
 
 int mCecFd;
 int mExitFd;
+pthread_t mEventThread;
 sp<IHdmiCecCallback> mCallback;
 
 HdmiCecDefault::HdmiCecDefault() {
@@ -281,10 +285,17 @@ Return<Result> HdmiCecDefault::init() {
         return Result::FAILURE_NOT_SUPPORTED;
     }
 
-    uint32_t mode = CEC_MODE_INITIATOR;
+    uint32_t mode = CEC_MODE_INITIATOR | CEC_MODE_EXCL_FOLLOWER_PASSTHRU;
     ret = ioctl(mCecFd, CEC_S_MODE, &mode);
     if (ret) {
         LOG(ERROR) << "Unable to set initiator mode, Error = " << strerror(errno);
+        release();
+        return Result::FAILURE_NOT_SUPPORTED;
+    }
+
+    /* thread loop for receiving cec messages and hotplug events*/
+    if (pthread_create(&mEventThread, NULL, event_thread, NULL)) {
+        LOG(ERROR) << "Can't create event thread: " << strerror(errno);
         release();
         return Result::FAILURE_NOT_SUPPORTED;
     }
@@ -296,6 +307,7 @@ Return<void> HdmiCecDefault::release() {
     if (mExitFd > 0) {
         uint64_t tmp = 1;
         write(mExitFd, &tmp, sizeof(tmp));
+        pthread_join(mEventThread, NULL);
     }
     if (mExitFd > 0) {
         close(mExitFd);
@@ -306,6 +318,83 @@ Return<void> HdmiCecDefault::release() {
     setCallback(nullptr);
     return Void();
 }
+
+void* HdmiCecDefault::event_thread(void*) {
+    struct pollfd ufds[3] = {
+            {mCecFd, POLLIN, 0},
+            {mCecFd, POLLERR, 0},
+            {mExitFd, POLLIN, 0},
+    };
+
+    while (1) {
+        ufds[0].revents = 0;
+        ufds[1].revents = 0;
+        ufds[2].revents = 0;
+
+        int ret = poll(ufds, /* size(ufds) = */ 3, /* timeout = */ -1);
+
+        if (ret <= 0) {
+            continue;
+        }
+
+        if (ufds[2].revents == POLLIN) { /* Exit */
+            break;
+        }
+
+        if (ufds[1].revents == POLLERR) { /* CEC Event */
+            struct cec_event ev;
+            ret = ioctl(mCecFd, CEC_DQEVENT, &ev);
+
+            if (ret) {
+                LOG(ERROR) << "CEC_DQEVENT failed, Error = " << strerror(errno);
+                continue;
+            }
+
+            if (ev.event == CEC_EVENT_STATE_CHANGE) {
+                if (mCallback != nullptr) {
+                    HotplugEvent hotplugEvent{
+                            .connected = (ev.state_change.phys_addr != CEC_PHYS_ADDR_INVALID),
+                            .portId = 1};
+                    mCallback->onHotplugEvent(hotplugEvent);
+                } else {
+                    LOG(ERROR) << "No event callback for hotplug";
+                }
+            }
+        }
+
+        if (ufds[0].revents == POLLIN) { /* CEC Driver */
+            struct cec_msg msg = {};
+            ret = ioctl(mCecFd, CEC_RECEIVE, &msg);
+
+            if (ret) {
+                LOG(ERROR) << "CEC_RECEIVE failed, Error = " << strerror(errno);
+                continue;
+            }
+
+            if (msg.rx_status != CEC_RX_STATUS_OK) {
+                LOG(ERROR) << "msg rx_status = " << msg.rx_status;
+                continue;
+            }
+
+            if (mCallback != nullptr) {
+                size_t length = std::min(msg.len - 1, (uint32_t)MaxLength::MESSAGE_BODY);
+                CecMessage cecMessage{
+                        .initiator = static_cast<CecLogicalAddress>(msg.msg[0] >> 4),
+                        .destination = static_cast<CecLogicalAddress>(msg.msg[0] & 0xf),
+                };
+                cecMessage.body.resize(length);
+                for (size_t i = 0; i < length; ++i) {
+                    cecMessage.body[i] = static_cast<uint8_t>(msg.msg[i + 1]);
+                }
+                mCallback->onCecMessage(cecMessage);
+            } else {
+                LOG(ERROR) << "no event callback for message";
+            }
+        }
+    }
+    return NULL;
+}
+
 }  // namespace implementation
 }  // namespace V1_0
 }  // namespace cec
