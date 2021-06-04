@@ -47,6 +47,7 @@ struct HdmiCecDefault : public IHdmiCec, public hidl_death_recipient {
 
     Return<Result> init();
     Return<void> release();
+    static void* event_thread(void*);
 };
 
 }  // namespace implementation
