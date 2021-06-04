@@ -221,7 +221,7 @@ void TunerRecordHidlTest::recordSingleFilterTestWithLnb(FilterConfig filterConf,
         return;
     }
     ASSERT_TRUE(mLnbTests.openLnbById(ids[0]));
-    *mLnbId = ids[0];
+    mLnbId = &ids[0];
     ASSERT_TRUE(mLnbTests.setLnbCallback());
     ASSERT_TRUE(mLnbTests.setVoltage(lnbConf.voltage));
     ASSERT_TRUE(mLnbTests.setTone(lnbConf.tone));
