@@ -58,10 +58,12 @@ public:
 
 TEST_F(VehicleObjectPoolTest, valuePoolBasicCorrectness) {
     auto value = valuePool->obtain(VehiclePropertyType::INT32);
-    // At this point, v1 should be recycled and the only object in the pool.
-    ASSERT_EQ(value.get(), valuePool->obtain(VehiclePropertyType::INT32).get());
+    void* raw = value.get();
+    value.reset();
+    // At this point, value should be recycled and the only object in the pool.
+    ASSERT_EQ(raw, valuePool->obtain(VehiclePropertyType::INT32).get());
     // Obtaining value of another type - should return a new object
-    ASSERT_NE(value.get(), valuePool->obtain(VehiclePropertyType::FLOAT).get());
+    ASSERT_NE(raw, valuePool->obtain(VehiclePropertyType::FLOAT).get());
 
     ASSERT_EQ(3u, stats->Obtained);
     ASSERT_EQ(2u, stats->Created);
