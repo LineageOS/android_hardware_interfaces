@@ -122,6 +122,21 @@ bool IsOffloadCodecConfigurationValid(
   return false;
 }
 
+bool IsOffloadLeAudioConfigurationValid(
+    const ::android::hardware::bluetooth::audio::V2_1::SessionType&
+        session_type,
+    const ::android::hardware::bluetooth::audio::V2_1::Lc3CodecConfiguration&) {
+
+  if (session_type != SessionType_2_1::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH &&
+      session_type != SessionType_2_1::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH) {
+    return false;
+  }
+
+  //TODO: perform checks on le_audio_codec_config once we know supported parameters
+
+  return true;
+}
+
 }  // namespace audio
 }  // namespace bluetooth
 }  // namespace android
