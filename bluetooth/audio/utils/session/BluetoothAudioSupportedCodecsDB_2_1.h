@@ -41,6 +41,11 @@ bool IsOffloadCodecConfigurationValid(
     const ::android::hardware::bluetooth::audio::V2_0::CodecConfiguration&
         codec_config);
 
+bool IsOffloadLeAudioConfigurationValid(
+    const ::android::hardware::bluetooth::audio::V2_1::SessionType&
+        session_type,
+    const ::android::hardware::bluetooth::audio::V2_1::Lc3CodecConfiguration&
+        le_audio_codec_config);
 }  // namespace audio
 }  // namespace bluetooth
 }  // namespace android
