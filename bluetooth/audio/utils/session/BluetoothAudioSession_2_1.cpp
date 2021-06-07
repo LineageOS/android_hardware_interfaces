@@ -110,20 +110,29 @@ bool BluetoothAudioSession_2_1::UpdateAudioConfig(
            SessionType_2_1::LE_AUDIO_SOFTWARE_ENCODING_DATAPATH ||
        session_type_2_1_ ==
            SessionType_2_1::LE_AUDIO_SOFTWARE_DECODED_DATAPATH);
-  bool is_offload_session =
+  bool is_offload_a2dp_session =
       (session_type_2_1_ == SessionType_2_1::A2DP_HARDWARE_OFFLOAD_DATAPATH);
+  bool is_offload_le_audio_session =
+      (session_type_2_1_ == SessionType_2_1::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH ||
+       session_type_2_1_ == SessionType_2_1::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH);
   auto audio_config_discriminator = audio_config.getDiscriminator();
   bool is_software_audio_config =
       (is_software_session &&
        audio_config_discriminator ==
            ::android::hardware::bluetooth::audio::V2_1::AudioConfiguration::
                hidl_discriminator::pcmConfig);
-  bool is_offload_audio_config =
-      (is_offload_session &&
+  bool is_a2dp_offload_audio_config =
+      (is_offload_a2dp_session &&
        audio_config_discriminator ==
            ::android::hardware::bluetooth::audio::V2_1::AudioConfiguration::
                hidl_discriminator::codecConfig);
-  if (!is_software_audio_config && !is_offload_audio_config) {
+  bool is_le_audio_offload_audio_config =
+      (is_offload_le_audio_session &&
+       audio_config_discriminator ==
+           ::android::hardware::bluetooth::audio::V2_1::AudioConfiguration::
+               hidl_discriminator::leAudioCodecConfig);
+  if (!is_software_audio_config && !is_a2dp_offload_audio_config &&
+      !is_le_audio_offload_audio_config) {
     return false;
   }
   audio_config_2_1_ = audio_config;
