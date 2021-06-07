@@ -6355,6 +6355,11 @@ TEST_P(EarlyBootKeyTest, CreateEarlyBootKeys) {
     auto [aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData] =
             CreateTestKeys(TAG_EARLY_BOOT_ONLY, ErrorCode::OK);
 
+    for (const auto& keyData : {aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData}) {
+        ASSERT_GT(keyData.blob.size(), 0U);
+        AuthorizationSet crypto_params = SecLevelAuthorizations(keyData.characteristics);
+        EXPECT_TRUE(crypto_params.Contains(TAG_EARLY_BOOT_ONLY)) << crypto_params;
+    }
     CheckedDeleteKey(&aesKeyData.blob);
     CheckedDeleteKey(&hmacKeyData.blob);
     CheckedDeleteKey(&rsaKeyData.blob);
@@ -6362,7 +6367,30 @@ TEST_P(EarlyBootKeyTest, CreateEarlyBootKeys) {
 }
 
 /*
- * EarlyBootKeyTest.UsetEarlyBootKeyFailure
+ * EarlyBootKeyTest.CreateAttestedEarlyBootKey
+ *
+ * Verifies that creating an early boot key with attestation succeeds.
+ */
+TEST_P(EarlyBootKeyTest, CreateAttestedEarlyBootKey) {
+    auto [aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData] = CreateTestKeys(
+            TAG_EARLY_BOOT_ONLY, ErrorCode::OK, [](AuthorizationSetBuilder* builder) {
+                builder->AttestationChallenge("challenge");
+                builder->AttestationApplicationId("app_id");
+            });
+
+    for (const auto& keyData : {aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData}) {
+        ASSERT_GT(keyData.blob.size(), 0U);
+        AuthorizationSet crypto_params = SecLevelAuthorizations(keyData.characteristics);
+        EXPECT_TRUE(crypto_params.Contains(TAG_EARLY_BOOT_ONLY)) << crypto_params;
+    }
+    CheckedDeleteKey(&aesKeyData.blob);
+    CheckedDeleteKey(&hmacKeyData.blob);
+    CheckedDeleteKey(&rsaKeyData.blob);
+    CheckedDeleteKey(&ecdsaKeyData.blob);
+}
+
+/*
+ * EarlyBootKeyTest.UseEarlyBootKeyFailure
  *
  * Verifies that using early boot keys at a later stage fails.
  */
