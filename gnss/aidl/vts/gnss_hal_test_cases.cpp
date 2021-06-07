@@ -29,6 +29,7 @@ using android::sp;
 using android::hardware::gnss::BlocklistedSource;
 using android::hardware::gnss::ElapsedRealtime;
 using android::hardware::gnss::GnssClock;
+using android::hardware::gnss::GnssData;
 using android::hardware::gnss::GnssMeasurement;
 using android::hardware::gnss::GnssPowerStats;
 using android::hardware::gnss::IGnss;
@@ -65,18 +66,158 @@ TEST_P(GnssHalTest, TestPsdsExtension) {
     ASSERT_FALSE(status.isOk());
 }
 
+void CheckSatellitePvt(const SatellitePvt& satellitePvt) {
+    const double kMaxOrbitRadiusMeters = 43000000.0;
+    const double kMaxVelocityMps = 4000.0;
+    // The below values are determined using GPS ICD Table 20-1
+    const double kMinHardwareCodeBiasMeters = -17.869;
+    const double kMaxHardwareCodeBiasMeters = 17.729;
+    const double kMaxTimeCorrelationMeters = 3e6;
+    const double kMaxSatClkDriftMps = 1.117;
+
+    ASSERT_TRUE(satellitePvt.flags & SatellitePvt::HAS_POSITION_VELOCITY_CLOCK_INFO ||
+                satellitePvt.flags & SatellitePvt::HAS_IONO ||
+                satellitePvt.flags & SatellitePvt::HAS_TROPO);
+    if (satellitePvt.flags & SatellitePvt::HAS_POSITION_VELOCITY_CLOCK_INFO) {
+        ALOGD("Found HAS_POSITION_VELOCITY_CLOCK_INFO");
+        ASSERT_TRUE(satellitePvt.satPosEcef.posXMeters >= -kMaxOrbitRadiusMeters &&
+                    satellitePvt.satPosEcef.posXMeters <= kMaxOrbitRadiusMeters);
+        ASSERT_TRUE(satellitePvt.satPosEcef.posYMeters >= -kMaxOrbitRadiusMeters &&
+                    satellitePvt.satPosEcef.posYMeters <= kMaxOrbitRadiusMeters);
+        ASSERT_TRUE(satellitePvt.satPosEcef.posZMeters >= -kMaxOrbitRadiusMeters &&
+                    satellitePvt.satPosEcef.posZMeters <= kMaxOrbitRadiusMeters);
+        ASSERT_TRUE(satellitePvt.satPosEcef.ureMeters > 0);
+        ASSERT_TRUE(satellitePvt.satVelEcef.velXMps >= -kMaxVelocityMps &&
+                    satellitePvt.satVelEcef.velXMps <= kMaxVelocityMps);
+        ASSERT_TRUE(satellitePvt.satVelEcef.velYMps >= -kMaxVelocityMps &&
+                    satellitePvt.satVelEcef.velYMps <= kMaxVelocityMps);
+        ASSERT_TRUE(satellitePvt.satVelEcef.velZMps >= -kMaxVelocityMps &&
+                    satellitePvt.satVelEcef.velZMps <= kMaxVelocityMps);
+        ASSERT_TRUE(satellitePvt.satVelEcef.ureRateMps > 0);
+        ASSERT_TRUE(
+                satellitePvt.satClockInfo.satHardwareCodeBiasMeters > kMinHardwareCodeBiasMeters &&
+                satellitePvt.satClockInfo.satHardwareCodeBiasMeters < kMaxHardwareCodeBiasMeters);
+        ASSERT_TRUE(satellitePvt.satClockInfo.satTimeCorrectionMeters >
+                            -kMaxTimeCorrelationMeters &&
+                    satellitePvt.satClockInfo.satTimeCorrectionMeters < kMaxTimeCorrelationMeters);
+        ASSERT_TRUE(satellitePvt.satClockInfo.satClkDriftMps > -kMaxSatClkDriftMps &&
+                    satellitePvt.satClockInfo.satClkDriftMps < kMaxSatClkDriftMps);
+    }
+    if (satellitePvt.flags & SatellitePvt::HAS_IONO) {
+        ALOGD("Found HAS_IONO");
+        ASSERT_TRUE(satellitePvt.ionoDelayMeters > 0 && satellitePvt.ionoDelayMeters < 100);
+    }
+    if (satellitePvt.flags & SatellitePvt::HAS_TROPO) {
+        ALOGD("Found HAS_TROPO");
+        ASSERT_TRUE(satellitePvt.tropoDelayMeters > 0 && satellitePvt.tropoDelayMeters < 100);
+    }
+}
+
+void CheckGnssMeasurementClockFields(const GnssData& measurement) {
+    ASSERT_TRUE(measurement.elapsedRealtime.flags >= 0 &&
+                measurement.elapsedRealtime.flags <= (ElapsedRealtime::HAS_TIMESTAMP_NS |
+                                                      ElapsedRealtime::HAS_TIME_UNCERTAINTY_NS));
+    if (measurement.elapsedRealtime.flags & ElapsedRealtime::HAS_TIMESTAMP_NS) {
+        ASSERT_TRUE(measurement.elapsedRealtime.timestampNs > 0);
+    }
+    if (measurement.elapsedRealtime.flags & ElapsedRealtime::HAS_TIME_UNCERTAINTY_NS) {
+        ASSERT_TRUE(measurement.elapsedRealtime.timeUncertaintyNs > 0);
+    }
+    ASSERT_TRUE(measurement.clock.gnssClockFlags >= 0 &&
+                measurement.clock.gnssClockFlags <=
+                        (GnssClock::HAS_LEAP_SECOND | GnssClock::HAS_TIME_UNCERTAINTY |
+                         GnssClock::HAS_FULL_BIAS | GnssClock::HAS_BIAS |
+                         GnssClock::HAS_BIAS_UNCERTAINTY | GnssClock::HAS_DRIFT |
+                         GnssClock::HAS_DRIFT_UNCERTAINTY));
+}
+
+void CheckGnssMeasurementFlags(const GnssMeasurement& measurement) {
+    ASSERT_TRUE(measurement.flags >= 0 &&
+                measurement.flags <=
+                        (GnssMeasurement::HAS_SNR | GnssMeasurement::HAS_CARRIER_FREQUENCY |
+                         GnssMeasurement::HAS_CARRIER_CYCLES | GnssMeasurement::HAS_CARRIER_PHASE |
+                         GnssMeasurement::HAS_CARRIER_PHASE_UNCERTAINTY |
+                         GnssMeasurement::HAS_AUTOMATIC_GAIN_CONTROL |
+                         GnssMeasurement::HAS_FULL_ISB | GnssMeasurement::HAS_FULL_ISB_UNCERTAINTY |
+                         GnssMeasurement::HAS_SATELLITE_ISB |
+                         GnssMeasurement::HAS_SATELLITE_ISB_UNCERTAINTY |
+                         GnssMeasurement::HAS_SATELLITE_PVT |
+                         GnssMeasurement::HAS_CORRELATION_VECTOR));
+}
+
 /*
- * TestGnssMeasurementExtension:
+ * TestGnssMeasurementExtensionAndSatellitePvt:
  * 1. Gets the GnssMeasurementExtension and verifies that it returns a non-null extension.
- * 2. Sets a GnssMeasurementCallback, waits for a measurement, and verifies fields are valid.
+ * 2. Sets a GnssMeasurementCallback, waits for a measurement, and verifies mandatory fields are
+ *    valid.
+ * 3. If SatellitePvt is supported, waits for a measurement with SatellitePvt, and verifies the
+ *    fields are valid.
  */
-TEST_P(GnssHalTest, TestGnssMeasurementExtension) {
+TEST_P(GnssHalTest, TestGnssMeasurementExtensionAndSatellitePvt) {
+    const bool kIsSatellitePvtSupported =
+            aidl_gnss_cb_->last_capabilities_ & (int)GnssCallbackAidl::CAPABILITY_SATELLITE_PVT;
+    ALOGD("SatellitePvt supported: %s", kIsSatellitePvtSupported ? "true" : "false");
+    const int kFirstGnssMeasurementTimeoutSeconds = 10;
+    const int kNumMeasurementEvents = 75;
+
+    sp<IGnssMeasurementInterface> iGnssMeasurement;
+    auto status = aidl_gnss_hal_->getExtensionGnssMeasurement(&iGnssMeasurement);
+    ASSERT_TRUE(status.isOk());
+    ASSERT_TRUE(iGnssMeasurement != nullptr);
+
+    auto callback = sp<GnssMeasurementCallbackAidl>::make();
+    status = iGnssMeasurement->setCallback(callback, /* enableFullTracking= */ true,
+                                           /* enableCorrVecOutputs */ false);
+    ASSERT_TRUE(status.isOk());
+
+    bool satellitePvtFound = false;
+    for (int i = 0; i < kNumMeasurementEvents; i++) {
+        if (i > 0 && (!kIsSatellitePvtSupported || satellitePvtFound)) {
+            break;
+        }
+        GnssData lastMeasurement;
+        ASSERT_TRUE(callback->gnss_data_cbq_.retrieve(lastMeasurement,
+                                                      kFirstGnssMeasurementTimeoutSeconds));
+        EXPECT_EQ(callback->gnss_data_cbq_.calledCount(), i + 1);
+        ASSERT_TRUE(lastMeasurement.measurements.size() > 0);
+
+        // Validity check GnssData fields
+        CheckGnssMeasurementClockFields(lastMeasurement);
+
+        for (const auto& measurement : lastMeasurement.measurements) {
+            CheckGnssMeasurementFlags(measurement);
+            if (measurement.flags & GnssMeasurement::HAS_SATELLITE_PVT &&
+                kIsSatellitePvtSupported == true) {
+                ALOGD("Found a measurement with SatellitePvt");
+                satellitePvtFound = true;
+                CheckSatellitePvt(measurement.satellitePvt);
+            }
+        }
+    }
+    if (kIsSatellitePvtSupported) {
+        ASSERT_TRUE(satellitePvtFound);
+    }
+
+    status = iGnssMeasurement->close();
+    ASSERT_TRUE(status.isOk());
+}
+
+/*
+ * TestCorrelationVector:
+ * 1. Gets the GnssMeasurementExtension and verifies that it returns a non-null extension.
+ * 2. Sets a GnssMeasurementCallback, waits for GnssMeasurements with CorrelationVector, and
+ *    verifies fields are valid.
+ */
+TEST_P(GnssHalTest, TestCorrelationVector) {
     const bool kIsCorrelationVectorSupported = aidl_gnss_cb_->last_capabilities_ &
                                                (int)GnssCallbackAidl::CAPABILITY_CORRELATION_VECTOR;
+    const int kNumMeasurementEvents = 75;
+    // Pass the test if CorrelationVector is not supported
+    if (!kIsCorrelationVectorSupported) {
+        return;
+    }
+
     const int kFirstGnssMeasurementTimeoutSeconds = 10;
-
-    bool has_capability_satpvt = false;
-
     sp<IGnssMeasurementInterface> iGnssMeasurement;
     auto status = aidl_gnss_hal_->getExtensionGnssMeasurement(&iGnssMeasurement);
     ASSERT_TRUE(status.isOk());
@@ -88,96 +229,39 @@ TEST_P(GnssHalTest, TestGnssMeasurementExtension) {
                                           /* enableCorrVecOutputs */ kIsCorrelationVectorSupported);
     ASSERT_TRUE(status.isOk());
 
-    android::hardware::gnss::GnssData lastMeasurement;
-    ASSERT_TRUE(callback->gnss_data_cbq_.retrieve(lastMeasurement,
-                                                  kFirstGnssMeasurementTimeoutSeconds));
-    EXPECT_EQ(callback->gnss_data_cbq_.calledCount(), 1);
-    ASSERT_TRUE(lastMeasurement.measurements.size() > 0);
-
-    // Validity check GnssData fields
-    ASSERT_TRUE(
-            lastMeasurement.elapsedRealtime.flags >= 0 &&
-            lastMeasurement.elapsedRealtime.flags <=
-                    (ElapsedRealtime::HAS_TIMESTAMP_NS | ElapsedRealtime::HAS_TIME_UNCERTAINTY_NS));
-    if (lastMeasurement.elapsedRealtime.flags & ElapsedRealtime::HAS_TIMESTAMP_NS) {
-        ASSERT_TRUE(lastMeasurement.elapsedRealtime.timestampNs > 0);
-    }
-    if (lastMeasurement.elapsedRealtime.flags & ElapsedRealtime::HAS_TIME_UNCERTAINTY_NS) {
-        ASSERT_TRUE(lastMeasurement.elapsedRealtime.timeUncertaintyNs > 0);
-    }
-    ASSERT_TRUE(lastMeasurement.clock.gnssClockFlags >= 0 &&
-                lastMeasurement.clock.gnssClockFlags <=
-                        (GnssClock::HAS_LEAP_SECOND | GnssClock::HAS_TIME_UNCERTAINTY |
-                         GnssClock::HAS_FULL_BIAS | GnssClock::HAS_BIAS |
-                         GnssClock::HAS_BIAS_UNCERTAINTY | GnssClock::HAS_DRIFT |
-                         GnssClock::HAS_DRIFT_UNCERTAINTY));
-
-    if (aidl_gnss_cb_->last_capabilities_ & (int)GnssCallbackAidl::CAPABILITY_SATELLITE_PVT) {
-        has_capability_satpvt = true;
-    }
-    for (const auto& measurement : lastMeasurement.measurements) {
-        ASSERT_TRUE(
-                measurement.flags >= 0 &&
-                measurement.flags <=
-                        (GnssMeasurement::HAS_SNR | GnssMeasurement::HAS_CARRIER_FREQUENCY |
-                         GnssMeasurement::HAS_CARRIER_CYCLES | GnssMeasurement::HAS_CARRIER_PHASE |
-                         GnssMeasurement::HAS_CARRIER_PHASE_UNCERTAINTY |
-                         GnssMeasurement::HAS_AUTOMATIC_GAIN_CONTROL |
-                         GnssMeasurement::HAS_FULL_ISB | GnssMeasurement::HAS_FULL_ISB_UNCERTAINTY |
-                         GnssMeasurement::HAS_SATELLITE_ISB |
-                         GnssMeasurement::HAS_SATELLITE_ISB_UNCERTAINTY |
-                         GnssMeasurement::HAS_SATELLITE_PVT |
-                         GnssMeasurement::HAS_CORRELATION_VECTOR));
-
-        if (measurement.flags & GnssMeasurement::HAS_SATELLITE_PVT &&
-            has_capability_satpvt == true) {
-            if (measurement.satellitePvt.flags & SatellitePvt::HAS_POSITION_VELOCITY_CLOCK_INFO) {
-                ASSERT_TRUE(measurement.satellitePvt.satPosEcef.posXMeters >= -43000000 &&
-                            measurement.satellitePvt.satPosEcef.posXMeters <= 43000000);
-                ASSERT_TRUE(measurement.satellitePvt.satPosEcef.posYMeters >= -43000000 &&
-                            measurement.satellitePvt.satPosEcef.posYMeters <= 43000000);
-                ASSERT_TRUE(measurement.satellitePvt.satPosEcef.posZMeters >= -43000000 &&
-                            measurement.satellitePvt.satPosEcef.posZMeters <= 43000000);
-                ASSERT_TRUE(measurement.satellitePvt.satPosEcef.ureMeters > 0);
-                ASSERT_TRUE(measurement.satellitePvt.satVelEcef.velXMps >= -4000 &&
-                            measurement.satellitePvt.satVelEcef.velXMps <= 4000);
-                ASSERT_TRUE(measurement.satellitePvt.satVelEcef.velYMps >= -4000 &&
-                            measurement.satellitePvt.satVelEcef.velYMps <= 4000);
-                ASSERT_TRUE(measurement.satellitePvt.satVelEcef.velZMps >= -4000 &&
-                            measurement.satellitePvt.satVelEcef.velZMps <= 4000);
-                ASSERT_TRUE(measurement.satellitePvt.satVelEcef.ureRateMps > 0);
-                ASSERT_TRUE(
-                        measurement.satellitePvt.satClockInfo.satHardwareCodeBiasMeters > -17.869 &&
-                        measurement.satellitePvt.satClockInfo.satHardwareCodeBiasMeters < 17.729);
-                ASSERT_TRUE(measurement.satellitePvt.satClockInfo.satTimeCorrectionMeters > -3e6 &&
-                            measurement.satellitePvt.satClockInfo.satTimeCorrectionMeters < 3e6);
-                ASSERT_TRUE(measurement.satellitePvt.satClockInfo.satClkDriftMps > -1.117 &&
-                            measurement.satellitePvt.satClockInfo.satClkDriftMps < 1.117);
-            }
-            if (measurement.satellitePvt.flags & SatellitePvt::HAS_IONO) {
-                ASSERT_TRUE(measurement.satellitePvt.ionoDelayMeters > 0 &&
-                            measurement.satellitePvt.ionoDelayMeters < 100);
-            }
-            if (measurement.satellitePvt.flags & SatellitePvt::HAS_TROPO) {
-                ASSERT_TRUE(measurement.satellitePvt.tropoDelayMeters > 0 &&
-                            measurement.satellitePvt.tropoDelayMeters < 100);
-            }
+    bool correlationVectorFound = false;
+    for (int i = 0; i < kNumMeasurementEvents; i++) {
+        // Pass the test if at least one CorrelationVector has been found.
+        if (correlationVectorFound) {
+            break;
         }
+        GnssData lastMeasurement;
+        ASSERT_TRUE(callback->gnss_data_cbq_.retrieve(lastMeasurement,
+                                                      kFirstGnssMeasurementTimeoutSeconds));
+        EXPECT_EQ(callback->gnss_data_cbq_.calledCount(), i + 1);
+        ASSERT_TRUE(lastMeasurement.measurements.size() > 0);
 
-        if (kIsCorrelationVectorSupported &&
-            measurement.flags & GnssMeasurement::HAS_CORRELATION_VECTOR) {
-            ASSERT_TRUE(measurement.correlationVectors.size() > 0);
-            for (const auto& correlationVector : measurement.correlationVectors) {
-                ASSERT_GE(correlationVector.frequencyOffsetMps, 0);
-                ASSERT_GT(correlationVector.samplingWidthM, 0);
-                ASSERT_GE(correlationVector.samplingStartM, 0);
-                ASSERT_TRUE(correlationVector.magnitude.size() > 0);
-                for (const auto& magnitude : correlationVector.magnitude) {
-                    ASSERT_TRUE(magnitude >= -32768 && magnitude <= 32767);
+        // Validity check GnssData fields
+        CheckGnssMeasurementClockFields(lastMeasurement);
+
+        for (const auto& measurement : lastMeasurement.measurements) {
+            CheckGnssMeasurementFlags(measurement);
+            if (measurement.flags & GnssMeasurement::HAS_CORRELATION_VECTOR) {
+                correlationVectorFound = true;
+                ASSERT_TRUE(measurement.correlationVectors.size() > 0);
+                for (const auto& correlationVector : measurement.correlationVectors) {
+                    ASSERT_GE(correlationVector.frequencyOffsetMps, 0);
+                    ASSERT_GT(correlationVector.samplingWidthM, 0);
+                    ASSERT_GE(correlationVector.samplingStartM, 0);
+                    ASSERT_TRUE(correlationVector.magnitude.size() > 0);
+                    for (const auto& magnitude : correlationVector.magnitude) {
+                        ASSERT_TRUE(magnitude >= -32768 && magnitude <= 32767);
+                    }
                 }
             }
         }
     }
+    ASSERT_TRUE(correlationVectorFound);
 
     status = iGnssMeasurement->close();
     ASSERT_TRUE(status.isOk());
