@@ -42,8 +42,11 @@ class DeviceUniqueAttestationTest : public KeyMintAidlTestBase {
 
         EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size)) << "Key size missing";
 
+        // The device-unique attestation chain should contain exactly two certificates:
+        // * The leaf with the attestation extension.
+        // * A self-signed root, signed using the device-unique key.
+        ASSERT_EQ(cert_chain_.size(), 2);
         EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
-        ASSERT_GT(cert_chain_.size(), 0);
 
         AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
         EXPECT_TRUE(verify_attestation_record("challenge", "foo", sw_enforced, hw_enforced,
