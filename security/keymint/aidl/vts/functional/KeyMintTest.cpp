@@ -1364,11 +1364,11 @@ TEST_P(NewKeyGenerationTest, RsaMissingParams) {
  * have correct characteristics.
  */
 TEST_P(NewKeyGenerationTest, Ecdsa) {
-    for (auto key_size : ValidKeySizes(Algorithm::EC)) {
+    for (auto curve : ValidCurves()) {
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
         ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                     .EcdsaSigningKey(key_size)
+                                                     .EcdsaSigningKey(curve)
                                                      .Digest(Digest::NONE)
                                                      .SetDefaultValidity(),
                                              &key_blob, &key_characteristics));
@@ -1379,8 +1379,7 @@ TEST_P(NewKeyGenerationTest, Ecdsa) {
         AuthorizationSet crypto_params = SecLevelAuthorizations(key_characteristics);
 
         EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::EC));
-        EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
-                << "Key size " << key_size << "missing";
+        EXPECT_TRUE(crypto_params.Contains(TAG_EC_CURVE, curve)) << "Curve " << curve << "missing";
 
         CheckedDeleteKey(&key_blob);
     }
@@ -1402,13 +1401,13 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestation) {
     uint64_t serial_int = 0xFFFFFFFFFFFFFFFF;
     vector<uint8_t> serial_blob(build_serial_blob(serial_int));
 
-    for (auto key_size : ValidKeySizes(Algorithm::EC)) {
+    for (auto curve : ValidCurves()) {
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
         ASSERT_EQ(ErrorCode::OK,
                   GenerateKey(AuthorizationSetBuilder()
                                       .Authorization(TAG_NO_AUTH_REQUIRED)
-                                      .EcdsaSigningKey(key_size)
+                                      .EcdsaSigningKey(curve)
                                       .Digest(Digest::NONE)
                                       .AttestationChallenge(challenge)
                                       .AttestationApplicationId(app_id)
@@ -1423,8 +1422,7 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestation) {
         AuthorizationSet crypto_params = SecLevelAuthorizations(key_characteristics);
 
         EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::EC));
-        EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
-                << "Key size " << key_size << "missing";
+        EXPECT_TRUE(crypto_params.Contains(TAG_EC_CURVE, curve)) << "Curve " << curve << "missing";
 
         EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
         ASSERT_GT(cert_chain_.size(), 0);
@@ -1456,7 +1454,7 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationTags) {
     const AuthorizationSetBuilder base_builder =
             AuthorizationSetBuilder()
                     .Authorization(TAG_NO_AUTH_REQUIRED)
-                    .EcdsaSigningKey(256)
+                    .EcdsaSigningKey(EcCurve::P_256)
                     .Digest(Digest::NONE)
                     .AttestationChallenge(challenge)
                     .AttestationApplicationId(app_id)
@@ -1536,7 +1534,7 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationTags) {
         AuthorizationSetBuilder builder =
                 AuthorizationSetBuilder()
                         .Authorization(TAG_NO_AUTH_REQUIRED)
-                        .EcdsaSigningKey(256)
+                        .EcdsaSigningKey(EcCurve::P_256)
                         .Digest(Digest::NONE)
                         .AttestationChallenge(challenge)
                         .AttestationApplicationId(app_id)
@@ -1617,12 +1615,12 @@ TEST_P(NewKeyGenerationTest, EcdsaSelfSignAttestation) {
     uint64_t serial_int = 0x123456FFF1234;
     vector<uint8_t> serial_blob(build_serial_blob(serial_int));
 
-    for (auto key_size : ValidKeySizes(Algorithm::EC)) {
+    for (auto curve : ValidCurves()) {
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
         ASSERT_EQ(ErrorCode::OK,
                   GenerateKey(AuthorizationSetBuilder()
-                                      .EcdsaSigningKey(key_size)
+                                      .EcdsaSigningKey(curve)
                                       .Digest(Digest::NONE)
                                       .Authorization(TAG_CERTIFICATE_SERIAL, serial_blob)
                                       .Authorization(TAG_CERTIFICATE_SUBJECT, subject_der)
@@ -1635,8 +1633,7 @@ TEST_P(NewKeyGenerationTest, EcdsaSelfSignAttestation) {
         AuthorizationSet crypto_params = SecLevelAuthorizations(key_characteristics);
 
         EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::EC));
-        EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
-                << "Key size " << key_size << "missing";
+        EXPECT_TRUE(crypto_params.Contains(TAG_EC_CURVE, curve)) << "Curve " << curve << "missing";
 
         EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
         verify_subject_and_serial(cert_chain_[0], serial_int, subject, false);
@@ -1678,11 +1675,11 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationRequireAppId) {
 TEST_P(NewKeyGenerationTest, EcdsaIgnoreAppId) {
     auto app_id = "foo";
 
-    for (auto key_size : ValidKeySizes(Algorithm::EC)) {
+    for (auto curve : ValidCurves()) {
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
         ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                     .EcdsaSigningKey(key_size)
+                                                     .EcdsaSigningKey(curve)
                                                      .Digest(Digest::NONE)
                                                      .AttestationApplicationId(app_id)
                                                      .SetDefaultValidity(),
@@ -1695,8 +1692,7 @@ TEST_P(NewKeyGenerationTest, EcdsaIgnoreAppId) {
         AuthorizationSet crypto_params = SecLevelAuthorizations(key_characteristics);
 
         EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::EC));
-        EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
-                << "Key size " << key_size << "missing";
+        EXPECT_TRUE(crypto_params.Contains(TAG_EC_CURVE, curve)) << "Curve " << curve << "missing";
 
         EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
         ASSERT_EQ(cert_chain_.size(), 1);
@@ -1718,7 +1714,6 @@ TEST_P(NewKeyGenerationTest, EcdsaIgnoreAppId) {
  */
 TEST_P(NewKeyGenerationTest, AttestationApplicationIDLengthProperlyEncoded) {
     auto challenge = "hello";
-    auto key_size = 256;
     std::vector<uint32_t> app_id_lengths{143, 258};
 
     for (uint32_t length : app_id_lengths) {
@@ -1727,7 +1722,7 @@ TEST_P(NewKeyGenerationTest, AttestationApplicationIDLengthProperlyEncoded) {
         vector<KeyCharacteristics> key_characteristics;
         ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                                      .Authorization(TAG_NO_AUTH_REQUIRED)
-                                                     .EcdsaSigningKey(key_size)
+                                                     .EcdsaSigningKey(EcCurve::P_256)
                                                      .Digest(Digest::NONE)
                                                      .AttestationChallenge(challenge)
                                                      .AttestationApplicationId(app_id)
@@ -1740,8 +1735,7 @@ TEST_P(NewKeyGenerationTest, AttestationApplicationIDLengthProperlyEncoded) {
         AuthorizationSet crypto_params = SecLevelAuthorizations(key_characteristics);
 
         EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::EC));
-        EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
-                << "Key size " << key_size << "missing";
+        EXPECT_TRUE(crypto_params.Contains(TAG_EC_CURVE, EcCurve::P_256)) << "Curve P256 missing";
 
         EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
         ASSERT_GT(cert_chain_.size(), 0);
@@ -1763,11 +1757,11 @@ TEST_P(NewKeyGenerationTest, AttestationApplicationIDLengthProperlyEncoded) {
  * resulting keys have correct characteristics.
  */
 TEST_P(NewKeyGenerationTest, LimitedUsageEcdsa) {
-    for (auto key_size : ValidKeySizes(Algorithm::EC)) {
+    for (auto curve : ValidCurves()) {
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
         ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                     .EcdsaSigningKey(key_size)
+                                                     .EcdsaSigningKey(curve)
                                                      .Digest(Digest::NONE)
                                                      .Authorization(TAG_USAGE_COUNT_LIMIT, 1)
                                                      .SetDefaultValidity(),
@@ -1780,8 +1774,7 @@ TEST_P(NewKeyGenerationTest, LimitedUsageEcdsa) {
         AuthorizationSet crypto_params = SecLevelAuthorizations(key_characteristics);
 
         EXPECT_TRUE(crypto_params.Contains(TAG_ALGORITHM, Algorithm::EC));
-        EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size))
-                << "Key size " << key_size << "missing";
+        EXPECT_TRUE(crypto_params.Contains(TAG_EC_CURVE, curve)) << "Curve " << curve << "missing";
 
         // Check the usage count limit tag appears in the authorizations.
         AuthorizationSet auths;
@@ -1798,7 +1791,7 @@ TEST_P(NewKeyGenerationTest, LimitedUsageEcdsa) {
 /*
  * NewKeyGenerationTest.EcdsaDefaultSize
  *
- * Verifies that failing to specify a key size for EC key generation returns
+ * Verifies that failing to specify a curve for EC key generation returns
  * UNSUPPORTED_KEY_SIZE.
  */
 TEST_P(NewKeyGenerationTest, EcdsaDefaultSize) {
@@ -1817,20 +1810,23 @@ TEST_P(NewKeyGenerationTest, EcdsaDefaultSize) {
  * UNSUPPORTED_KEY_SIZE.
  */
 TEST_P(NewKeyGenerationTest, EcdsaInvalidSize) {
-    for (auto key_size : InvalidKeySizes(Algorithm::EC)) {
+    for (auto curve : InvalidCurves()) {
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
         ASSERT_EQ(ErrorCode::UNSUPPORTED_KEY_SIZE, GenerateKey(AuthorizationSetBuilder()
-                                                                       .EcdsaSigningKey(key_size)
+                                                                       .EcdsaSigningKey(curve)
                                                                        .Digest(Digest::NONE)
                                                                        .SetDefaultValidity(),
                                                                &key_blob, &key_characteristics));
     }
 
-    ASSERT_EQ(ErrorCode::UNSUPPORTED_KEY_SIZE, GenerateKey(AuthorizationSetBuilder()
-                                                                   .EcdsaSigningKey(190)
-                                                                   .Digest(Digest::NONE)
-                                                                   .SetDefaultValidity()));
+    ASSERT_EQ(ErrorCode::UNSUPPORTED_KEY_SIZE,
+              GenerateKey(AuthorizationSetBuilder()
+                                  .Authorization(TAG_ALGORITHM, Algorithm::EC)
+                                  .Authorization(TAG_KEY_SIZE, 190)
+                                  .SigningKey()
+                                  .Digest(Digest::NONE)
+                                  .SetDefaultValidity()));
 }
 
 /*
@@ -1842,29 +1838,13 @@ TEST_P(NewKeyGenerationTest, EcdsaInvalidSize) {
 TEST_P(NewKeyGenerationTest, EcdsaMismatchKeySize) {
     if (SecLevel() == SecurityLevel::STRONGBOX) return;
 
-    ASSERT_EQ(ErrorCode::INVALID_ARGUMENT,
-              GenerateKey(AuthorizationSetBuilder()
-                                  .EcdsaSigningKey(224)
-                                  .Authorization(TAG_EC_CURVE, EcCurve::P_256)
-                                  .Digest(Digest::NONE)
-                                  .SetDefaultValidity()));
-}
-
-/*
- * NewKeyGenerationTest.EcdsaAllValidSizes
- *
- * Verifies that keymint supports all required EC key sizes.
- */
-TEST_P(NewKeyGenerationTest, EcdsaAllValidSizes) {
-    auto valid_sizes = ValidKeySizes(Algorithm::EC);
-    for (size_t size : valid_sizes) {
-        EXPECT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                     .EcdsaSigningKey(size)
-                                                     .Digest(Digest::NONE)
-                                                     .SetDefaultValidity()))
-                << "Failed to generate size: " << size;
-        CheckedDeleteKey();
-    }
+    auto result = GenerateKey(AuthorizationSetBuilder()
+                                      .Authorization(TAG_KEY_SIZE, 224)
+                                      .Authorization(TAG_EC_CURVE, EcCurve::P_256)
+                                      .Digest(Digest::NONE)
+                                      .SetDefaultValidity());
+    ASSERT_TRUE(result == ErrorCode::INVALID_ARGUMENT ||
+                result == ErrorCode::UNSUPPORTED_ALGORITHM);
 }
 
 /*
@@ -2637,31 +2617,6 @@ TEST_P(SigningOperationsTest, RsaSignTooLargeMessage) {
 }
 
 /*
- * SigningOperationsTest.EcdsaAllSizesAndHashes
- *
- * Verifies that ECDSA operations succeed with all possible key sizes and hashes.
- */
-TEST_P(SigningOperationsTest, EcdsaAllSizesAndHashes) {
-    for (auto key_size : ValidKeySizes(Algorithm::EC)) {
-        for (auto digest : ValidDigests(false /* withNone */, false /* withMD5 */)) {
-            ErrorCode error = GenerateKey(AuthorizationSetBuilder()
-                                                  .Authorization(TAG_NO_AUTH_REQUIRED)
-                                                  .EcdsaSigningKey(key_size)
-                                                  .Digest(digest)
-                                                  .SetDefaultValidity());
-            EXPECT_EQ(ErrorCode::OK, error) << "Failed to generate ECDSA key with size " << key_size
-                                            << " and digest " << digest;
-            if (error != ErrorCode::OK) continue;
-
-            string message(1024, 'a');
-            if (digest == Digest::NONE) message.resize(key_size / 8);
-            SignMessage(message, AuthorizationSetBuilder().Digest(digest));
-            CheckedDeleteKey();
-        }
-    }
-}
-
-/*
  * SigningOperationsTest.EcdsaAllDigestsAndCurves
  *
  * Verifies ECDSA signature/verification for all digests and curves.
@@ -2726,7 +2681,7 @@ TEST_P(SigningOperationsTest, EcdsaAllCurves) {
 TEST_P(SigningOperationsTest, EcdsaNoDigestHugeData) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                                  .Authorization(TAG_NO_AUTH_REQUIRED)
-                                                 .EcdsaSigningKey(256)
+                                                 .EcdsaSigningKey(EcCurve::P_256)
                                                  .Digest(Digest::NONE)
                                                  .SetDefaultValidity()));
     string message(1 * 1024, 'a');
@@ -2741,7 +2696,7 @@ TEST_P(SigningOperationsTest, EcdsaNoDigestHugeData) {
 TEST_P(SigningOperationsTest, EcUseRequiresCorrectAppIdAppData) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                                  .Authorization(TAG_NO_AUTH_REQUIRED)
-                                                 .EcdsaSigningKey(256)
+                                                 .EcdsaSigningKey(EcCurve::P_256)
                                                  .Digest(Digest::NONE)
                                                  .Authorization(TAG_APPLICATION_ID, "clientid")
                                                  .Authorization(TAG_APPLICATION_DATA, "appdata")
@@ -2778,7 +2733,7 @@ TEST_P(SigningOperationsTest, EcUseRequiresCorrectAppIdAppData) {
 TEST_P(SigningOperationsTest, EcdsaIncompatibleDigest) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                                  .Authorization(TAG_NO_AUTH_REQUIRED)
-                                                 .EcdsaSigningKey(256)
+                                                 .EcdsaSigningKey(EcCurve::P_256)
                                                  .Digest(Digest::NONE)
                                                  .Digest(Digest::SHA1)
                                                  .SetDefaultValidity()));
@@ -3166,13 +3121,12 @@ TEST_P(ImportKeyTest, RsaPublicExponentMismatch) {
 TEST_P(ImportKeyTest, EcdsaSuccess) {
     ASSERT_EQ(ErrorCode::OK, ImportKey(AuthorizationSetBuilder()
                                                .Authorization(TAG_NO_AUTH_REQUIRED)
-                                               .EcdsaSigningKey(256)
+                                               .EcdsaSigningKey(EcCurve::P_256)
                                                .Digest(Digest::SHA_2_256)
                                                .SetDefaultValidity(),
                                        KeyFormat::PKCS8, ec_256_key));
 
     CheckCryptoParam(TAG_ALGORITHM, Algorithm::EC);
-    CheckCryptoParam(TAG_KEY_SIZE, 256U);
     CheckCryptoParam(TAG_DIGEST, Digest::SHA_2_256);
     CheckCryptoParam(TAG_EC_CURVE, EcCurve::P_256);
 
@@ -3193,13 +3147,12 @@ TEST_P(ImportKeyTest, EcdsaSuccess) {
 TEST_P(ImportKeyTest, EcdsaP256RFC5915Success) {
     ASSERT_EQ(ErrorCode::OK, ImportKey(AuthorizationSetBuilder()
                                                .Authorization(TAG_NO_AUTH_REQUIRED)
-                                               .EcdsaSigningKey(256)
+                                               .EcdsaSigningKey(EcCurve::P_256)
                                                .Digest(Digest::SHA_2_256)
                                                .SetDefaultValidity(),
                                        KeyFormat::PKCS8, ec_256_key_rfc5915));
 
     CheckCryptoParam(TAG_ALGORITHM, Algorithm::EC);
-    CheckCryptoParam(TAG_KEY_SIZE, 256U);
     CheckCryptoParam(TAG_DIGEST, Digest::SHA_2_256);
     CheckCryptoParam(TAG_EC_CURVE, EcCurve::P_256);
 
@@ -3219,13 +3172,12 @@ TEST_P(ImportKeyTest, EcdsaP256RFC5915Success) {
 TEST_P(ImportKeyTest, EcdsaP256SEC1Success) {
     ASSERT_EQ(ErrorCode::OK, ImportKey(AuthorizationSetBuilder()
                                                .Authorization(TAG_NO_AUTH_REQUIRED)
-                                               .EcdsaSigningKey(256)
+                                               .EcdsaSigningKey(EcCurve::P_256)
                                                .Digest(Digest::SHA_2_256)
                                                .SetDefaultValidity(),
                                        KeyFormat::PKCS8, ec_256_key_sec1));
 
     CheckCryptoParam(TAG_ALGORITHM, Algorithm::EC);
-    CheckCryptoParam(TAG_KEY_SIZE, 256U);
     CheckCryptoParam(TAG_DIGEST, Digest::SHA_2_256);
     CheckCryptoParam(TAG_EC_CURVE, EcCurve::P_256);
 
@@ -3246,13 +3198,12 @@ TEST_P(ImportKeyTest, Ecdsa521Success) {
     if (SecLevel() == SecurityLevel::STRONGBOX) return;
     ASSERT_EQ(ErrorCode::OK, ImportKey(AuthorizationSetBuilder()
                                                .Authorization(TAG_NO_AUTH_REQUIRED)
-                                               .EcdsaSigningKey(521)
+                                               .EcdsaSigningKey(EcCurve::P_521)
                                                .Digest(Digest::SHA_2_256)
                                                .SetDefaultValidity(),
                                        KeyFormat::PKCS8, ec_521_key));
 
     CheckCryptoParam(TAG_ALGORITHM, Algorithm::EC);
-    CheckCryptoParam(TAG_KEY_SIZE, 521U);
     CheckCryptoParam(TAG_DIGEST, Digest::SHA_2_256);
     CheckCryptoParam(TAG_EC_CURVE, EcCurve::P_521);
     CheckOrigin();
@@ -3261,21 +3212,6 @@ TEST_P(ImportKeyTest, Ecdsa521Success) {
     auto params = AuthorizationSetBuilder().Digest(Digest::SHA_2_256);
     string signature = SignMessage(message, params);
     LocalVerifyMessage(message, signature, params);
-}
-
-/*
- * ImportKeyTest.EcdsaSizeMismatch
- *
- * Verifies that importing an ECDSA key pair with a size that doesn't match the key fails in the
- * correct way.
- */
-TEST_P(ImportKeyTest, EcdsaSizeMismatch) {
-    ASSERT_EQ(ErrorCode::IMPORT_PARAMETER_MISMATCH,
-              ImportKey(AuthorizationSetBuilder()
-                                .EcdsaSigningKey(224 /* Doesn't match key */)
-                                .Digest(Digest::NONE)
-                                .SetDefaultValidity(),
-                        KeyFormat::PKCS8, ec_256_key));
 }
 
 /*
@@ -4141,7 +4077,7 @@ TEST_P(EncryptionOperationsTest, RsaPkcs1Success) {
 TEST_P(EncryptionOperationsTest, EcdsaEncrypt) {
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
                                                  .Authorization(TAG_NO_AUTH_REQUIRED)
-                                                 .EcdsaSigningKey(256)
+                                                 .EcdsaSigningKey(EcCurve::P_256)
                                                  .Digest(Digest::NONE)
                                                  .SetDefaultValidity()));
     auto params = AuthorizationSetBuilder().Digest(Digest::NONE);
@@ -6584,7 +6520,7 @@ TEST_P(EarlyBootKeyTest, ImportEarlyBootKeyFailure) {
     ASSERT_EQ(ErrorCode::EARLY_BOOT_ENDED, ImportKey(AuthorizationSetBuilder()
                                                              .Authorization(TAG_NO_AUTH_REQUIRED)
                                                              .Authorization(TAG_EARLY_BOOT_ONLY)
-                                                             .EcdsaSigningKey(256)
+                                                             .EcdsaSigningKey(EcCurve::P_256)
                                                              .Digest(Digest::SHA_2_256)
                                                              .SetDefaultValidity(),
                                                      KeyFormat::PKCS8, ec_256_key));
