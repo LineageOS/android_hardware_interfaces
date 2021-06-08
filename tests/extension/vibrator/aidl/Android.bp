@@ -24,6 +24,9 @@ aidl_interface {
     // This is agreeing to keep the interface stable.
     stability: "vintf",
 
+    // This is a testing-purpose interface. Fine to use unstable version on REL platform.
+    owner: "test",
+
     // This happens to use types from a core interface, so we import it, but
     // this won't always be needed.
     imports: [
