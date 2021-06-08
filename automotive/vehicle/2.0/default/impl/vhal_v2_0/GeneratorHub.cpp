@@ -31,6 +31,14 @@ namespace impl {
 GeneratorHub::GeneratorHub(const OnHalEvent& onHalEvent)
     : mOnHalEvent(onHalEvent), mThread(&GeneratorHub::run, this) {}
 
+GeneratorHub::~GeneratorHub() {
+    mShuttingDownFlag.store(true);
+    mCond.notify_all();
+    if (mThread.joinable()) {
+        mThread.join();
+    }
+}
+
 void GeneratorHub::registerGenerator(int32_t cookie, FakeValueGeneratorPtr generator) {
     {
         std::lock_guard<std::mutex> g(mLock);
@@ -58,15 +66,18 @@ void GeneratorHub::unregisterGenerator(int32_t cookie) {
 }
 
 void GeneratorHub::run() {
-    while (true) {
+    while (!mShuttingDownFlag.load()) {
         std::unique_lock<std::mutex> g(mLock);
         // Pop events whose generator does not exist (may be already unregistered)
         while (!mEventQueue.empty()
                && mGenerators.find(mEventQueue.top().cookie) == mGenerators.end()) {
              mEventQueue.pop();
         }
-        // Wait until event queue is not empty
-        mCond.wait(g, [this] { return !mEventQueue.empty(); });
+        // Wait until event queue is not empty or shutting down flag is set
+        mCond.wait(g, [this] { return !mEventQueue.empty() || mShuttingDownFlag.load(); });
+        if (mShuttingDownFlag.load()) {
+            break;
+        }
 
         const VhalEvent& curEvent = mEventQueue.top();
 
