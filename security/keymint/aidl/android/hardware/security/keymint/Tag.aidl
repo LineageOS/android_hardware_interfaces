@@ -831,13 +831,23 @@ enum Tag {
     /**
      * DEVICE_UNIQUE_ATTESTATION is an argument to IKeyMintDevice::attested key generation/import
      * operations.  It indicates that attestation using a device-unique key is requested, rather
-     * than a batch key.  When a device-unique key is used, only the attestation certificate is
-     * returned; no additional chained certificates are provided.  It's up to the caller to
-     * recognize the device-unique signing key.  Only SecurityLevel::STRONGBOX IKeyMintDevices may
-     * support device-unique attestations.  SecurityLevel::TRUSTED_ENVIRONMENT IKeyMintDevices must
-     * return ErrorCode::INVALID_ARGUMENT if they receive DEVICE_UNIQUE_ATTESTATION.
+     * than a batch key.  When a device-unique key is used, the returned chain should contain two
+     * certificates:
+     *    * The attestation certificate, containing the attestation extension, as described in
+            KeyCreationResult.aidl.
+     *    * A self-signed root certificate, signed by the device-unique key.
+     * No additional chained certificates are provided. Only SecurityLevel::STRONGBOX
+     * IKeyMintDevices may support device-unique attestations.  SecurityLevel::TRUSTED_ENVIRONMENT
+     * IKeyMintDevices must return ErrorCode::INVALID_ARGUMENT if they receive
+     * DEVICE_UNIQUE_ATTESTATION.
      * SecurityLevel::STRONGBOX IKeyMintDevices need not support DEVICE_UNIQUE_ATTESTATION, and
      * return ErrorCode::CANNOT_ATTEST_IDS if they do not support it.
+     *
+     * The caller needs to obtain the device-unique keys out-of-band and compare them against the
+     * key used to sign the self-signed root certificate.
+     * To ease this process, the IKeyMintDevice implementation should include, both in the subject
+     * and issuer fields of the self-signed root, the unique identifier of the device. Using the
+     * unique identifier will make it straightforward for the caller to link a device to its key.
      *
      * IKeyMintDevice implementations that support device-unique attestation MUST add the
      * DEVICE_UNIQUE_ATTESTATION tag to device-unique attestations.
