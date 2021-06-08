@@ -81,7 +81,6 @@ Return<Result> Dvr::attachFilter(const sp<V1_0::IFilter>& filter) {
         return status;
     }
 
-    // TODO check if the attached filter is a record filter
     if (!mDemux->attachRecordFilter(filterId)) {
         return Result::INVALID_ARGUMENT;
     }
