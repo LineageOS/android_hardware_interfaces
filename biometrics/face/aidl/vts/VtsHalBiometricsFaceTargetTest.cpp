@@ -32,21 +32,8 @@ using namespace std::literals::chrono_literals;
 constexpr int kSensorId = 0;
 constexpr int kUserId = 0;
 
-enum class MethodName {
-    kOnError,
-    kOnSessionClosed,
-};
-
-struct Invocation {
-    MethodName methodName;
-    Error error;
-    int32_t vendorCode;
-};
-
 class SessionCallback : public BnSessionCallback {
   public:
-    explicit SessionCallback(Invocation* inv) : mInv(inv) {}
-
     ndk::ScopedAStatus onChallengeGenerated(int64_t /*challenge*/) override {
         return ndk::ScopedAStatus::ok();
     }
@@ -64,11 +51,11 @@ class SessionCallback : public BnSessionCallback {
     }
 
     ndk::ScopedAStatus onError(Error error, int32_t vendorCode) override {
-        *mInv = {};
-        mInv->methodName = MethodName::kOnError;
-        mInv->error = error;
-        mInv->vendorCode = vendorCode;
-
+        auto lock = std::lock_guard<std::mutex>{mMutex};
+        mError = error;
+        mVendorCode = vendorCode;
+        mOnErrorInvoked = true;
+        mCv.notify_one();
         return ndk::ScopedAStatus::ok();
     }
 
@@ -121,14 +108,18 @@ class SessionCallback : public BnSessionCallback {
     }
 
     ndk::ScopedAStatus onSessionClosed() override {
-        *mInv = {};
-        mInv->methodName = MethodName::kOnSessionClosed;
-
+        auto lock = std::lock_guard<std::mutex>{mMutex};
+        mOnSessionClosedInvoked = true;
+        mCv.notify_one();
         return ndk::ScopedAStatus::ok();
     }
 
-  private:
-    Invocation* mInv;
+    std::mutex mMutex;
+    std::condition_variable mCv;
+    Error mError = Error::UNKNOWN;
+    int32_t mVendorCode = 0;
+    bool mOnErrorInvoked = false;
+    bool mOnSessionClosedInvoked = false;
 };
 
 class Face : public testing::TestWithParam<std::string> {
@@ -140,12 +131,11 @@ class Face : public testing::TestWithParam<std::string> {
     }
 
     std::shared_ptr<IFace> mHal;
-    Invocation mInv;
 };
 
 TEST_P(Face, AuthenticateTest) {
     // Prepare the callback.
-    auto cb = ndk::SharedRefBase::make<SessionCallback>(&mInv);
+    auto cb = ndk::SharedRefBase::make<SessionCallback>();
 
     // Create a session
     std::shared_ptr<ISession> session;
@@ -155,15 +145,18 @@ TEST_P(Face, AuthenticateTest) {
     std::shared_ptr<common::ICancellationSignal> cancellationSignal;
     ASSERT_TRUE(session->authenticate(0 /* operationId */, &cancellationSignal).isOk());
 
+    auto lock = std::unique_lock<std::mutex>(cb->mMutex);
+    cb->mCv.wait(lock, [&cb] { return cb->mOnErrorInvoked; });
     // Get the results
-    EXPECT_EQ(mInv.methodName, MethodName::kOnError);
-    EXPECT_EQ(mInv.error, Error::UNABLE_TO_PROCESS);
-    EXPECT_EQ(mInv.vendorCode, 0);
+    EXPECT_EQ(cb->mError, Error::UNABLE_TO_PROCESS);
+    EXPECT_EQ(cb->mVendorCode, 0);
+    lock.unlock();
 
     // Close the session
     ASSERT_TRUE(session->close().isOk());
 
-    EXPECT_EQ(mInv.methodName, MethodName::kOnSessionClosed);
+    lock.lock();
+    cb->mCv.wait(lock, [&cb] { return cb->mOnSessionClosedInvoked; });
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(Face);
@@ -180,4 +173,3 @@ int main(int argc, char** argv) {
     ABinderProcess_startThreadPool();
     return RUN_ALL_TESTS();
 }
-
