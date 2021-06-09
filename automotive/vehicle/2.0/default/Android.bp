@@ -184,6 +184,14 @@ cc_test {
         "libbase",
         "libcutils",
     ],
+    exclude_shared_libs: [
+        "android.automotive.watchdog-V2-ndk_platform",
+        "android.hardware.automotive.vehicle@2.0",
+    ],
+    static_libs: [
+        "android.automotive.watchdog-V2-ndk_platform",
+        "android.hardware.automotive.vehicle@2.0",
+    ],
     header_libs: ["libbase_headers"],
     test_suites: ["general-tests"],
 }
@@ -196,9 +204,15 @@ cc_test {
         "impl/vhal_v2_0/tests/ProtoMessageConverter_test.cpp",
     ],
     static_libs: [
+        "android.automotive.watchdog-V2-ndk_platform",
+        "android.hardware.automotive.vehicle@2.0",
         "android.hardware.automotive.vehicle@2.0-default-impl-lib",
         "android.hardware.automotive.vehicle@2.0-libproto-native",
         "libprotobuf-cpp-lite",
+    ],
+    exclude_shared_libs: [
+        "android.automotive.watchdog-V2-ndk_platform",
+        "android.hardware.automotive.vehicle@2.0",
     ],
     test_suites: ["general-tests"],
 }

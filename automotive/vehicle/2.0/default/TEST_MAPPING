@@ -1,0 +1,10 @@
+{
+  "presubmit": [
+    {
+      "name": "android.hardware.automotive.vehicle@2.0-manager-unit-tests"
+    },
+    {
+      "name": "android.hardware.automotive.vehicle@2.0-default-impl-unit-tests"
+    }
+  ]
+}
