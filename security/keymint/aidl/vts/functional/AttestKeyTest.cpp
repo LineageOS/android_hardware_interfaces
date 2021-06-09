@@ -141,11 +141,18 @@ TEST_P(AttestKeyTest, AllRsaSizes) {
                               attest_key, &attested_key_blob, &attested_key_characteristics,
                               &attested_key_cert_chain));
 
+        // The returned key characteristics will include CREATION_DATETIME (checked below)
+        // in SecurityLevel::KEYSTORE; this will be stripped out in the CheckCharacteristics()
+        // call below, to match what getKeyCharacteristics() returns (which doesn't include
+        // any SecurityLevel::KEYSTORE characteristics).
+        CheckCharacteristics(attested_key_blob, attested_key_characteristics);
+
         CheckedDeleteKey(&attested_key_blob);
         CheckedDeleteKey(&attest_key.keyBlob);
 
         hw_enforced = HwEnforcedAuthorizations(attested_key_characteristics);
         sw_enforced = SwEnforcedAuthorizations(attested_key_characteristics);
+
         // The client-specified CREATION_DATETIME should be in sw_enforced.
         // Its presence will also trigger verify_attestation_record() to check that it
         // is in the attestation extension with a matching value.

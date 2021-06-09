@@ -16,6 +16,9 @@
 
 #pragma once
 
+#include <functional>
+#include <string_view>
+
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
 #include <binder/IServiceManager.h>
@@ -103,6 +106,18 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
         return ImportWrappedKey(wrapped_key, wrapping_key, wrapping_key_desc, masking_key,
                                 unwrapping_params, 0 /* password_sid */, 0 /* biometric_sid */);
     }
+
+    ErrorCode GetCharacteristics(const vector<uint8_t>& key_blob, const vector<uint8_t>& app_id,
+                                 const vector<uint8_t>& app_data,
+                                 vector<KeyCharacteristics>* key_characteristics);
+    ErrorCode GetCharacteristics(const vector<uint8_t>& key_blob,
+                                 vector<KeyCharacteristics>* key_characteristics);
+
+    void CheckCharacteristics(const vector<uint8_t>& key_blob,
+                              const vector<KeyCharacteristics>& generate_characteristics);
+    void CheckAppIdCharacteristics(const vector<uint8_t>& key_blob, std::string_view app_id_string,
+                                   std::string_view app_data_string,
+                                   const vector<KeyCharacteristics>& generate_characteristics);
 
     ErrorCode DeleteKey(vector<uint8_t>* key_blob, bool keep_key_blob = false);
     ErrorCode DeleteKey(bool keep_key_blob = false);
@@ -192,50 +207,58 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     template <typename TagType>
     std::tuple<KeyData /* aesKey */, KeyData /* hmacKey */, KeyData /* rsaKey */,
                KeyData /* ecdsaKey */>
-    CreateTestKeys(TagType tagToTest, ErrorCode expectedReturn) {
+    CreateTestKeys(
+            TagType tagToTest, ErrorCode expectedReturn,
+            std::function<void(AuthorizationSetBuilder*)> tagModifier =
+                    [](AuthorizationSetBuilder*) {}) {
         /* AES */
         KeyData aesKeyData;
-        ErrorCode errorCode = GenerateKey(AuthorizationSetBuilder()
-                                                  .AesEncryptionKey(128)
-                                                  .Authorization(tagToTest)
-                                                  .BlockMode(BlockMode::ECB)
-                                                  .Padding(PaddingMode::NONE)
-                                                  .Authorization(TAG_NO_AUTH_REQUIRED),
-                                          &aesKeyData.blob, &aesKeyData.characteristics);
+        AuthorizationSetBuilder aesBuilder = AuthorizationSetBuilder()
+                                                     .AesEncryptionKey(128)
+                                                     .Authorization(tagToTest)
+                                                     .BlockMode(BlockMode::ECB)
+                                                     .Padding(PaddingMode::NONE)
+                                                     .Authorization(TAG_NO_AUTH_REQUIRED);
+        tagModifier(&aesBuilder);
+        ErrorCode errorCode =
+                GenerateKey(aesBuilder, &aesKeyData.blob, &aesKeyData.characteristics);
         EXPECT_EQ(expectedReturn, errorCode);
 
         /* HMAC */
         KeyData hmacKeyData;
-        errorCode = GenerateKey(AuthorizationSetBuilder()
-                                        .HmacKey(128)
-                                        .Authorization(tagToTest)
-                                        .Digest(Digest::SHA_2_256)
-                                        .Authorization(TAG_MIN_MAC_LENGTH, 128)
-                                        .Authorization(TAG_NO_AUTH_REQUIRED),
-                                &hmacKeyData.blob, &hmacKeyData.characteristics);
+        AuthorizationSetBuilder hmacBuilder = AuthorizationSetBuilder()
+                                                      .HmacKey(128)
+                                                      .Authorization(tagToTest)
+                                                      .Digest(Digest::SHA_2_256)
+                                                      .Authorization(TAG_MIN_MAC_LENGTH, 128)
+                                                      .Authorization(TAG_NO_AUTH_REQUIRED);
+        tagModifier(&hmacBuilder);
+        errorCode = GenerateKey(hmacBuilder, &hmacKeyData.blob, &hmacKeyData.characteristics);
         EXPECT_EQ(expectedReturn, errorCode);
 
         /* RSA */
         KeyData rsaKeyData;
-        errorCode = GenerateKey(AuthorizationSetBuilder()
-                                        .RsaSigningKey(2048, 65537)
-                                        .Authorization(tagToTest)
-                                        .Digest(Digest::NONE)
-                                        .Padding(PaddingMode::NONE)
-                                        .Authorization(TAG_NO_AUTH_REQUIRED)
-                                        .SetDefaultValidity(),
-                                &rsaKeyData.blob, &rsaKeyData.characteristics);
+        AuthorizationSetBuilder rsaBuilder = AuthorizationSetBuilder()
+                                                     .RsaSigningKey(2048, 65537)
+                                                     .Authorization(tagToTest)
+                                                     .Digest(Digest::NONE)
+                                                     .Padding(PaddingMode::NONE)
+                                                     .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                     .SetDefaultValidity();
+        tagModifier(&rsaBuilder);
+        errorCode = GenerateKey(rsaBuilder, &rsaKeyData.blob, &rsaKeyData.characteristics);
         EXPECT_EQ(expectedReturn, errorCode);
 
         /* ECDSA */
         KeyData ecdsaKeyData;
-        errorCode = GenerateKey(AuthorizationSetBuilder()
-                                        .EcdsaSigningKey(256)
-                                        .Authorization(tagToTest)
-                                        .Digest(Digest::SHA_2_256)
-                                        .Authorization(TAG_NO_AUTH_REQUIRED)
-                                        .SetDefaultValidity(),
-                                &ecdsaKeyData.blob, &ecdsaKeyData.characteristics);
+        AuthorizationSetBuilder ecdsaBuilder = AuthorizationSetBuilder()
+                                                       .EcdsaSigningKey(256)
+                                                       .Authorization(tagToTest)
+                                                       .Digest(Digest::SHA_2_256)
+                                                       .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                       .SetDefaultValidity();
+        tagModifier(&ecdsaBuilder);
+        errorCode = GenerateKey(ecdsaBuilder, &ecdsaKeyData.blob, &ecdsaKeyData.characteristics);
         EXPECT_EQ(expectedReturn, errorCode);
         return {aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData};
     }
