@@ -50,6 +50,10 @@ class BluetoothAudioSession_2_1 {
       const ::android::hardware::bluetooth::audio::V2_1::SessionType&
           session_type);
 
+  // The function helps to check if this session is ready or not
+  // @return: true if the Bluetooth stack has started the specified session
+  bool IsSessionReady();
+
   std::shared_ptr<BluetoothAudioSession> GetAudioSession();
 
   // The report function is used to report that the Bluetooth stack has started
