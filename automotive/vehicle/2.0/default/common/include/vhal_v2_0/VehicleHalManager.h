@@ -76,6 +76,9 @@ public:
     Return<void> debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) override;
 
   private:
+    // Set unit test class as friend class to test private functions.
+    friend class VehicleHalManagerTestHelper;
+
     using VehiclePropValuePtr = VehicleHal::VehiclePropValuePtr;
     // Returns true if needs to call again shortly.
     using RetriableAction = std::function<bool()>;
@@ -105,14 +108,20 @@ public:
     void cmdDumpOneProperty(int fd, int32_t prop, int32_t areaId);
     void cmdDumpOneProperty(int fd, int rowNumber, const VehiclePropConfig& config);
 
+    bool cmdSetOneProperty(int fd, const hidl_vec<hidl_string>& options);
+
     static bool checkArgumentsSize(int fd, const hidl_vec<hidl_string>& options, size_t minSize);
     static bool checkCallerHasWritePermissions(int fd);
-    static bool safelyParseInt(int fd, int index, std::string s, int* out);
+    template <typename T>
+    static bool safelyParseInt(int fd, int index, const std::string& s, T* out);
+    static bool safelyParseFloat(int fd, int index, const std::string& s, float* out);
+    // Parses "s" as a hex string and populate "*bytes". The hex string must be in the format of
+    // valid hex format, e.g. "0xABCD".
+    static bool parseHexString(int fd, const std::string& s, std::vector<uint8_t>* bytes);
     void cmdHelp(int fd) const;
     void cmdListAllProperties(int fd) const;
     void cmdDumpAllProperties(int fd);
     void cmdDumpSpecificProperties(int fd, const hidl_vec<hidl_string>& options);
-    void cmdSetOneProperty(int fd, const hidl_vec<hidl_string>& options);
 
     static bool isSubscribable(const VehiclePropConfig& config,
                                SubscribeFlags flags);
@@ -120,7 +129,18 @@ public:
     static float checkSampleRate(const VehiclePropConfig& config,
                                  float sampleRate);
     static ClientId getClientId(const sp<IVehicleCallback>& callback);
-private:
+
+    // Parses the cmdline options for "--set" command. "*prop" would be populated with the
+    // the properties to be set. Returns true when the cmdline options are valid, false otherwise.
+    static bool parseSetPropOptions(int fd, const hidl_vec<hidl_string>& options,
+                                    VehiclePropValue* prop);
+    // Parses the options and get the values for the current option specified by "*index". "*index"
+    // would advance to the next option field (e.g., the next "-f"). Returns a list of values for
+    // the current option.
+    static std::vector<std::string> getOptionValues(const hidl_vec<hidl_string>& options,
+                                                    size_t* index);
+
+  private:
     VehicleHal* mHal;
     std::unique_ptr<VehiclePropConfigIndex> mConfigIndex;
     SubscriptionManager mSubscriptionManager;
