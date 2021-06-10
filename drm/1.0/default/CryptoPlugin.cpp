@@ -54,6 +54,8 @@ namespace implementation {
         sp<IMemory> hidlMemory = mapMemory(base);
         ALOGE_IF(hidlMemory == nullptr, "mapMemory returns nullptr");
 
+        std::unique_lock<std::mutex> lock(mSharedBufferLock);
+
         // allow mapMemory to return nullptr
         mSharedBufferMap[bufferId] = hidlMemory;
         return Void();
@@ -66,7 +68,7 @@ namespace implementation {
             const SharedBuffer& source, uint64_t offset,
             const DestinationBuffer& destination,
             decrypt_cb _hidl_cb) {
-
+        std::unique_lock<std::mutex> lock(mSharedBufferLock);
         if (mSharedBufferMap.find(source.bufferId) == mSharedBufferMap.end()) {
             _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, 0, "source decrypt buffer base not set");
             return Void();
@@ -80,7 +82,7 @@ namespace implementation {
             }
         }
 
-        android::CryptoPlugin::Mode legacyMode;
+        android::CryptoPlugin::Mode legacyMode = android::CryptoPlugin::kMode_Unencrypted;
         switch(mode) {
         case Mode::UNENCRYPTED:
             legacyMode = android::CryptoPlugin::kMode_Unencrypted;
@@ -149,7 +151,10 @@ namespace implementation {
                 return Void();
             }
 
-            if (destBuffer.offset + destBuffer.size > destBase->getSize()) {
+            size_t totalDstSize = 0;
+            if (__builtin_add_overflow(destBuffer.offset, destBuffer.size, &totalDstSize) ||
+                totalDstSize > destBase->getSize()) {
+                android_errorWriteLog(0x534e4554, "176496353");
                 _hidl_cb(Status::ERROR_DRM_CANNOT_HANDLE, 0, "invalid buffer size");
                 return Void();
             }
@@ -176,6 +181,9 @@ namespace implementation {
             _hidl_cb(Status::BAD_VALUE, 0, "invalid destination type");
             return Void();
         }
+
+        // release mSharedBufferLock
+        lock.unlock();
         ssize_t result = mLegacyPlugin->decrypt(secure, keyId.data(), iv.data(),
                 legacyMode, legacyPattern, srcPtr, legacySubSamples,
                 subSamples.size(), destPtr, &detailMessage);
