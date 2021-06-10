@@ -561,14 +561,25 @@ void GraphicsComposerHidlTest::Test_setActiveConfigWithConstraints(const TestPar
             setActiveConfig(display, config1);
             sendRefreshFrame(display, nullptr);
 
-            int32_t vsyncPeriod1 = mComposerClient->getDisplayAttribute_2_4(
+            const auto vsyncPeriod1 = mComposerClient->getDisplayAttribute_2_4(
                     display.get(), config1,
                     IComposerClient::IComposerClient::Attribute::VSYNC_PERIOD);
-            int32_t vsyncPeriod2 = mComposerClient->getDisplayAttribute_2_4(
+            const auto configGroup1 = mComposerClient->getDisplayAttribute_2_4(
+                    display.get(), config1,
+                    IComposerClient::IComposerClient::Attribute::CONFIG_GROUP);
+            const auto vsyncPeriod2 = mComposerClient->getDisplayAttribute_2_4(
                     display.get(), config2,
                     IComposerClient::IComposerClient::Attribute::VSYNC_PERIOD);
+            const auto configGroup2 = mComposerClient->getDisplayAttribute_2_4(
+                    display.get(), config2,
+                    IComposerClient::IComposerClient::Attribute::CONFIG_GROUP);
 
             if (vsyncPeriod1 == vsyncPeriod2) {
+                return;  // continue
+            }
+
+            // We don't allow delayed change when changing config groups
+            if (params.delayForChange > 0 && configGroup1 != configGroup2) {
                 return;  // continue
             }
 
