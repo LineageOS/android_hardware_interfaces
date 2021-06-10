@@ -35,7 +35,7 @@ class BluetoothAudioSessionControl_2_1 {
     std::shared_ptr<BluetoothAudioSession_2_1> session_ptr =
         BluetoothAudioSessionInstance_2_1::GetSessionInstance(session_type);
     if (session_ptr != nullptr) {
-      return session_ptr->GetAudioSession()->IsSessionReady();
+      return session_ptr->IsSessionReady();
     }
     return false;
   }
