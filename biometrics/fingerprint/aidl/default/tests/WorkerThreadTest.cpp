@@ -73,24 +73,29 @@ TEST(WorkerThreadTest, TasksExecuteInOrder) {
     constexpr int NUM_TASKS = 10000;
     WorkerThread worker(NUM_TASKS);
 
+    std::mutex mut;
+    std::condition_variable cv;
+    bool finished = false;
     std::vector<int> results;
+
     for (int i = 0; i < NUM_TASKS; ++i) {
-        worker.schedule(Callable::from([&results, i] {
+        worker.schedule(Callable::from([&mut, &results, i] {
             // Delay tasks differently to provoke races.
             std::this_thread::sleep_for(std::chrono::nanoseconds(100 - i % 100));
-            // Unguarded write to results to provoke races.
+            auto lock = std::lock_guard(mut);
             results.push_back(i);
         }));
     }
 
-    std::promise<void> promise;
-    auto future = promise.get_future();
-
     // Schedule a special task to signal when all of the tasks are finished.
-    worker.schedule(
-            Callable::from([promise = std::move(promise)]() mutable { promise.set_value(); }));
-    future.wait();
+    worker.schedule(Callable::from([&mut, &cv, &finished] {
+        auto lock = std::lock_guard(mut);
+        finished = true;
+        cv.notify_one();
+    }));
 
+    auto lock = std::unique_lock(mut);
+    cv.wait(lock, [&finished] { return finished; });
     ASSERT_EQ(results.size(), NUM_TASKS);
     EXPECT_TRUE(std::is_sorted(results.begin(), results.end()));
 }
