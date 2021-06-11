@@ -41,7 +41,7 @@
 
 set -euo pipefail
 
-if (echo "$@" | grep -qe -h); then
+if (echo "$@" | grep -qe "^-h"); then
     echo "This script will update Audio Policy Manager config file"
     echo "to the format required by V7.0 XSD schema from a previous"
     echo "version."
