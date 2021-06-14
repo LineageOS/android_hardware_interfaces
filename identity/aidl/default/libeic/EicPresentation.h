@@ -70,6 +70,10 @@ typedef struct {
     // Set to true initialized as a test credential.
     bool testCredential;
 
+    // Set to true if the evaluation of access control checks in
+    // eicPresentationStartRetrieveEntryValue() resulted EIC_ACCESS_CHECK_RESULT_OK
+    bool accessCheckOk;
+
     // These are bitmasks indicating which of the possible 32 access control profiles are
     // authorized. They are built up by eicPresentationValidateAccessControlProfile().
     //
