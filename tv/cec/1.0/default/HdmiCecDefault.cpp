@@ -36,6 +36,9 @@ namespace cec {
 namespace V1_0 {
 namespace implementation {
 
+// When set to false, all the CEC commands are discarded. True by default after initialization.
+bool mCecEnabled;
+
 int mCecFd;
 int mExitFd;
 pthread_t mEventThread;
@@ -44,6 +47,7 @@ sp<IHdmiCecCallback> mCallback;
 HdmiCecDefault::HdmiCecDefault() {
     mCecFd = -1;
     mExitFd = -1;
+    mCecEnabled = false;
     mCallback = nullptr;
 }
 
@@ -156,6 +160,10 @@ Return<void> HdmiCecDefault::getPhysicalAddress(getPhysicalAddress_cb callback) 
 }
 
 Return<SendMessageResult> HdmiCecDefault::sendMessage(const CecMessage& message) {
+    if (!mCecEnabled) {
+        return SendMessageResult::FAIL;
+    }
+
     struct cec_msg cecMsg;
     memset(&cecMsg, 0, sizeof(cec_msg));
 
@@ -230,7 +238,15 @@ Return<void> HdmiCecDefault::getPortInfo(getPortInfo_cb callback) {
     return Void();
 }
 
-Return<void> HdmiCecDefault::setOption(OptionKey /*key*/, bool /*value*/) {
+Return<void> HdmiCecDefault::setOption(OptionKey key, bool value) {
+    switch (key) {
+        case OptionKey::ENABLE_CEC:
+            LOG(DEBUG) << "setOption: Enable CEC: " << value;
+            mCecEnabled = value;
+            break;
+        default:
+            break;
+    }
     return Void();
 }
 
@@ -300,6 +316,7 @@ Return<Result> HdmiCecDefault::init() {
         return Result::FAILURE_NOT_SUPPORTED;
     }
 
+    mCecEnabled = true;
     return Result::SUCCESS;
 }
 
@@ -315,6 +332,7 @@ Return<void> HdmiCecDefault::release() {
     if (mCecFd > 0) {
         close(mCecFd);
     }
+    mCecEnabled = false;
     setCallback(nullptr);
     return Void();
 }
@@ -345,6 +363,10 @@ void* HdmiCecDefault::event_thread(void*) {
             struct cec_event ev;
             ret = ioctl(mCecFd, CEC_DQEVENT, &ev);
 
+            if (!mCecEnabled) {
+                continue;
+            }
+
             if (ret) {
                 LOG(ERROR) << "CEC_DQEVENT failed, Error = " << strerror(errno);
                 continue;
@@ -365,6 +387,10 @@ void* HdmiCecDefault::event_thread(void*) {
         if (ufds[0].revents == POLLIN) { /* CEC Driver */
             struct cec_msg msg = {};
             ret = ioctl(mCecFd, CEC_RECEIVE, &msg);
+
+            if (!mCecEnabled) {
+                continue;
+            }
 
             if (ret) {
                 LOG(ERROR) << "CEC_RECEIVE failed, Error = " << strerror(errno);
