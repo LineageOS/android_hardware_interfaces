@@ -311,27 +311,42 @@ TEST_P(GnssHalTest, TestGnssPowerIndication) {
     EXPECT_TRUE(gnssPowerIndicationCallback->gnss_power_stats_cbq_.retrieve(
             gnssPowerIndicationCallback->last_gnss_power_stats_, kTimeoutSec));
     EXPECT_EQ(gnssPowerIndicationCallback->gnss_power_stats_cbq_.calledCount(), 2);
+
     auto powerStats2 = gnssPowerIndicationCallback->last_gnss_power_stats_;
 
-    // Elapsed realtime must increase
-    EXPECT_GT(powerStats2.elapsedRealtime.timestampNs, powerStats1.elapsedRealtime.timestampNs);
+    if ((gnssPowerIndicationCallback->last_capabilities_ &
+         (int)GnssPowerIndicationCallback::CAPABILITY_TOTAL)) {
+        // Elapsed realtime must increase
+        EXPECT_GT(powerStats2.elapsedRealtime.timestampNs, powerStats1.elapsedRealtime.timestampNs);
 
-    // Total energy must increase
-    EXPECT_GT(powerStats2.totalEnergyMilliJoule, powerStats1.totalEnergyMilliJoule);
+        // Total energy must increase
+        EXPECT_GT(powerStats2.totalEnergyMilliJoule, powerStats1.totalEnergyMilliJoule);
+    }
 
     // At least oone of singleband and multiband acquisition energy must increase
     bool singlebandAcqEnergyIncreased = powerStats2.singlebandAcquisitionModeEnergyMilliJoule >
                                         powerStats1.singlebandAcquisitionModeEnergyMilliJoule;
     bool multibandAcqEnergyIncreased = powerStats2.multibandAcquisitionModeEnergyMilliJoule >
                                        powerStats1.multibandAcquisitionModeEnergyMilliJoule;
-    EXPECT_TRUE(singlebandAcqEnergyIncreased || multibandAcqEnergyIncreased);
+
+    if ((gnssPowerIndicationCallback->last_capabilities_ &
+         (int)GnssPowerIndicationCallback::CAPABILITY_SINGLEBAND_ACQUISITION) ||
+        (gnssPowerIndicationCallback->last_capabilities_ &
+         (int)GnssPowerIndicationCallback::CAPABILITY_MULTIBAND_ACQUISITION)) {
+        EXPECT_TRUE(singlebandAcqEnergyIncreased || multibandAcqEnergyIncreased);
+    }
 
     // At least one of singleband and multiband tracking energy must increase
     bool singlebandTrackingEnergyIncreased = powerStats2.singlebandTrackingModeEnergyMilliJoule >
                                              powerStats1.singlebandTrackingModeEnergyMilliJoule;
     bool multibandTrackingEnergyIncreased = powerStats2.multibandTrackingModeEnergyMilliJoule >
                                             powerStats1.multibandTrackingModeEnergyMilliJoule;
-    EXPECT_TRUE(singlebandTrackingEnergyIncreased || multibandTrackingEnergyIncreased);
+    if ((gnssPowerIndicationCallback->last_capabilities_ &
+         (int)GnssPowerIndicationCallback::CAPABILITY_SINGLEBAND_TRACKING) ||
+        (gnssPowerIndicationCallback->last_capabilities_ &
+         (int)GnssPowerIndicationCallback::CAPABILITY_MULTIBAND_TRACKING)) {
+        EXPECT_TRUE(singlebandTrackingEnergyIncreased || multibandTrackingEnergyIncreased);
+    }
 
     // Clean up
     StopAndClearLocations();
