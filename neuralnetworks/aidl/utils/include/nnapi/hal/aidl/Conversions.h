@@ -95,9 +95,7 @@ GeneralResult<ExecutionPreference> unvalidatedConvert(
 GeneralResult<Extension> unvalidatedConvert(const aidl_hal::Extension& extension);
 GeneralResult<Extension::OperandTypeInformation> unvalidatedConvert(
         const aidl_hal::ExtensionOperandTypeInformation& operandTypeInformation);
-GeneralResult<SharedHandle> unvalidatedConvert(
-        const ::aidl::android::hardware::common::NativeHandle& handle);
-GeneralResult<SyncFence> unvalidatedConvert(const ndk::ScopedFileDescriptor& syncFence);
+GeneralResult<SharedHandle> unvalidatedConvert(const ndk::ScopedFileDescriptor& handle);
 
 GeneralResult<std::vector<Operation>> unvalidatedConvert(
         const std::vector<aidl_hal::Operation>& operations);
@@ -113,7 +111,7 @@ GeneralResult<OperandType> convert(const aidl_hal::OperandType& operandType);
 GeneralResult<Priority> convert(const aidl_hal::Priority& priority);
 GeneralResult<Request> convert(const aidl_hal::Request& request);
 GeneralResult<Timing> convert(const aidl_hal::Timing& timing);
-GeneralResult<SyncFence> convert(const ndk::ScopedFileDescriptor& syncFence);
+GeneralResult<SharedHandle> convert(const ndk::ScopedFileDescriptor& handle);
 
 GeneralResult<std::vector<Extension>> convert(const std::vector<aidl_hal::Extension>& extension);
 GeneralResult<std::vector<SharedMemory>> convert(const std::vector<aidl_hal::Memory>& memories);
@@ -160,9 +158,7 @@ nn::GeneralResult<int64_t> unvalidatedConvert(const nn::Duration& duration);
 nn::GeneralResult<int64_t> unvalidatedConvert(const nn::OptionalDuration& optionalDuration);
 nn::GeneralResult<int64_t> unvalidatedConvert(const nn::OptionalTimePoint& optionalTimePoint);
 nn::GeneralResult<ndk::ScopedFileDescriptor> unvalidatedConvert(const nn::SyncFence& syncFence);
-nn::GeneralResult<common::NativeHandle> unvalidatedConvert(const nn::SharedHandle& sharedHandle);
-nn::GeneralResult<ndk::ScopedFileDescriptor> unvalidatedConvertCache(
-        const nn::SharedHandle& handle);
+nn::GeneralResult<ndk::ScopedFileDescriptor> unvalidatedConvert(const nn::SharedHandle& handle);
 
 nn::GeneralResult<std::vector<uint8_t>> convert(const nn::CacheToken& cacheToken);
 nn::GeneralResult<BufferDesc> convert(const nn::BufferDesc& bufferDesc);
