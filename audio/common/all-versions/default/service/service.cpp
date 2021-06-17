@@ -16,6 +16,7 @@
 
 #define LOG_TAG "audiohalservice"
 
+#include <signal.h>
 #include <string>
 #include <vector>
 
@@ -45,6 +46,8 @@ static bool registerPassthroughServiceImplementations(Iter first, Iter last) {
 }
 
 int main(int /* argc */, char* /* argv */ []) {
+    signal(SIGPIPE, SIG_IGN);
+
     ::android::ProcessState::initWithDriver("/dev/vndbinder");
     // start a threadpool for vndbinder interactions
     ::android::ProcessState::self()->startThreadPool();
