@@ -27,6 +27,8 @@
 #include <keymasterV4_1/attestation_record.h>
 #include <keymasterV4_1/authorization_set.h>
 
+using android::hardware::keymaster::V4_0::test::add_tag_from_prop;
+
 // Not to dump the attestation by default. Can enable by specify the parameter
 // "--dump_attestations" on lunching VTS
 static bool dumpAttestations = false;
@@ -173,10 +175,15 @@ void check_attestation_record(AttestationRecord attestation, const HidlBuf& chal
     attestation.software_enforced.Sort();
     attestation.hardware_enforced.Sort();
 
-    EXPECT_EQ(filter_tags(expected_sw_enforced), filter_tags(attestation.software_enforced))
-            << DIFFERENCE(expected_sw_enforced, attestation.software_enforced);
-    EXPECT_EQ(filter_tags(expected_hw_enforced), filter_tags(attestation.hardware_enforced))
-            << DIFFERENCE(expected_hw_enforced, attestation.hardware_enforced);
+    expected_sw_enforced = filter_tags(expected_sw_enforced);
+    expected_hw_enforced = filter_tags(expected_hw_enforced);
+    AuthorizationSet attestation_sw_enforced = filter_tags(attestation.software_enforced);
+    AuthorizationSet attestation_hw_enforced = filter_tags(attestation.hardware_enforced);
+
+    EXPECT_EQ(expected_sw_enforced, attestation_sw_enforced)
+            << DIFFERENCE(expected_sw_enforced, attestation_sw_enforced);
+    EXPECT_EQ(expected_hw_enforced, attestation_hw_enforced)
+            << DIFFERENCE(expected_hw_enforced, attestation_hw_enforced);
 }
 
 X509_Ptr parse_cert_blob(const std::vector<uint8_t>& blob) {
@@ -340,6 +347,106 @@ TEST_P(DeviceUniqueAttestationTest, Ecdsa) {
                     .Authorization(TAG_OS_VERSION, os_version())
                     .Authorization(TAG_OS_PATCHLEVEL, os_patch_level()),
             SecLevel());
+}
+
+TEST_P(DeviceUniqueAttestationTest, EcdsaDeviceUniqueAttestationID) {
+    if (SecLevel() != SecurityLevel::STRONGBOX) return;
+
+    ASSERT_EQ(ErrorCode::OK, convert(GenerateKey(AuthorizationSetBuilder()
+                                                         .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                         .EcdsaSigningKey(256)
+                                                         .Digest(Digest::SHA_2_256)
+                                                         .Authorization(TAG_INCLUDE_UNIQUE_ID))));
+
+    // Collection of valid attestation ID tags.
+    auto attestation_id_tags = AuthorizationSetBuilder();
+    add_tag_from_prop(&attestation_id_tags, V4_0::TAG_ATTESTATION_ID_BRAND, "ro.product.brand");
+    add_tag_from_prop(&attestation_id_tags, V4_0::TAG_ATTESTATION_ID_DEVICE, "ro.product.device");
+    add_tag_from_prop(&attestation_id_tags, V4_0::TAG_ATTESTATION_ID_PRODUCT, "ro.product.name");
+    add_tag_from_prop(&attestation_id_tags, V4_0::TAG_ATTESTATION_ID_SERIAL, "ro.serial");
+    add_tag_from_prop(&attestation_id_tags, V4_0::TAG_ATTESTATION_ID_MANUFACTURER,
+                      "ro.product.manufacturer");
+    add_tag_from_prop(&attestation_id_tags, V4_0::TAG_ATTESTATION_ID_MODEL, "ro.product.model");
+
+    for (const KeyParameter& tag : attestation_id_tags) {
+        hidl_vec<hidl_vec<uint8_t>> cert_chain;
+        HidlBuf challenge("challenge");
+        HidlBuf app_id("foo");
+        AuthorizationSetBuilder builder =
+                AuthorizationSetBuilder()
+                        .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION)
+                        .Authorization(TAG_ATTESTATION_CHALLENGE, challenge)
+                        .Authorization(TAG_ATTESTATION_APPLICATION_ID, app_id);
+        builder.push_back(tag);
+        ErrorCode result = convert(AttestKey(builder, &cert_chain));
+
+        // It is optional for Strong box to support DeviceUniqueAttestation.
+        if (result == ErrorCode::CANNOT_ATTEST_IDS) return;
+
+        ASSERT_EQ(ErrorCode::OK, result);
+        EXPECT_EQ(2U, cert_chain.size());
+        if (dumpAttestations) {
+            for (auto cert_ : cert_chain) dumpContent(bin2hex(cert_));
+        }
+        auto [err, attestation] = parse_attestation_record(cert_chain[0]);
+        ASSERT_EQ(ErrorCode::OK, err);
+
+        AuthorizationSetBuilder hw_enforced =
+                AuthorizationSetBuilder()
+                        .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION)
+                        .Authorization(TAG_NO_AUTH_REQUIRED)
+                        .EcdsaSigningKey(256)
+                        .Digest(Digest::SHA_2_256)
+                        .Authorization(TAG_ORIGIN, KeyOrigin::GENERATED)
+                        .Authorization(TAG_OS_VERSION, os_version())
+                        .Authorization(TAG_OS_PATCHLEVEL, os_patch_level());
+        hw_enforced.push_back(tag);
+        check_attestation_record(
+                attestation, challenge,
+                /* sw_enforced */
+                AuthorizationSetBuilder().Authorization(TAG_ATTESTATION_APPLICATION_ID, app_id),
+                hw_enforced, SecLevel());
+    }
+}
+
+TEST_P(DeviceUniqueAttestationTest, EcdsaDeviceUniqueAttestationMismatchID) {
+    if (SecLevel() != SecurityLevel::STRONGBOX) return;
+
+    ASSERT_EQ(ErrorCode::OK, convert(GenerateKey(AuthorizationSetBuilder()
+                                                         .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                         .EcdsaSigningKey(256)
+                                                         .Digest(Digest::SHA_2_256)
+                                                         .Authorization(TAG_INCLUDE_UNIQUE_ID))));
+
+    // Collection of invalid attestation ID tags.
+    std::string invalid = "completely-invalid";
+    auto attestation_id_tags =
+            AuthorizationSetBuilder()
+                    .Authorization(V4_0::TAG_ATTESTATION_ID_BRAND, invalid.data(), invalid.size())
+                    .Authorization(V4_0::TAG_ATTESTATION_ID_DEVICE, invalid.data(), invalid.size())
+                    .Authorization(V4_0::TAG_ATTESTATION_ID_PRODUCT, invalid.data(), invalid.size())
+                    .Authorization(V4_0::TAG_ATTESTATION_ID_SERIAL, invalid.data(), invalid.size())
+                    .Authorization(V4_0::TAG_ATTESTATION_ID_IMEI, invalid.data(), invalid.size())
+                    .Authorization(V4_0::TAG_ATTESTATION_ID_MEID, invalid.data(), invalid.size())
+                    .Authorization(V4_0::TAG_ATTESTATION_ID_MANUFACTURER, invalid.data(),
+                                   invalid.size())
+                    .Authorization(V4_0::TAG_ATTESTATION_ID_MODEL, invalid.data(), invalid.size());
+
+    for (const KeyParameter& invalid_tag : attestation_id_tags) {
+        hidl_vec<hidl_vec<uint8_t>> cert_chain;
+        HidlBuf challenge("challenge");
+        HidlBuf app_id("foo");
+        AuthorizationSetBuilder builder =
+                AuthorizationSetBuilder()
+                        .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION)
+                        .Authorization(TAG_ATTESTATION_CHALLENGE, challenge)
+                        .Authorization(TAG_ATTESTATION_APPLICATION_ID, app_id);
+        builder.push_back(invalid_tag);
+        ErrorCode result = convert(AttestKey(builder, &cert_chain));
+
+        EXPECT_TRUE(result == ErrorCode::CANNOT_ATTEST_IDS || result == ErrorCode::INVALID_TAG)
+                << "result: " << static_cast<int32_t>(result);
+    }
 }
 
 INSTANTIATE_KEYMASTER_4_1_HIDL_TEST(DeviceUniqueAttestationTest);
