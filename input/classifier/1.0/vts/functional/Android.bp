@@ -26,7 +26,10 @@ package {
 cc_test {
     name: "VtsHalInputClassifierV1_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
-    srcs: ["VtsHalInputClassifierV1_0TargetTest.cpp"],
+    srcs: [
+        ":inputconstants_aidl",
+        "VtsHalInputClassifierV1_0TargetTest.cpp",
+    ],
     header_libs: ["jni_headers"],
     static_libs: [
         "android.hardware.input.classifier@1.0",
