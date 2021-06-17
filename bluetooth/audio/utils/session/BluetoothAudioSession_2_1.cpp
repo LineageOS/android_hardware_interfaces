@@ -61,8 +61,6 @@ BluetoothAudioSession_2_1::BluetoothAudioSession_2_1(
 }
 
 bool BluetoothAudioSession_2_1::IsSessionReady() {
-  LOG(WARNING) << __func__ << " session_type: " << toString(session_type_2_1_);
-
   if (session_type_2_1_ !=
       SessionType_2_1::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH) {
     return audio_session->IsSessionReady();
