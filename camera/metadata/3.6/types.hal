@@ -348,6 +348,14 @@ enum CameraMetadataEnumAndroidScalerMultiResolutionStreamSupported : uint32_t {
     ANDROID_SCALER_MULTI_RESOLUTION_STREAM_SUPPORTED_TRUE,
 };
 
+/** android.sensor.testPatternMode enumeration values added since v3.2
+ * @see ANDROID_SENSOR_TEST_PATTERN_MODE
+ */
+enum CameraMetadataEnumAndroidSensorTestPatternMode :
+        @3.2::CameraMetadataEnumAndroidSensorTestPatternMode {
+    ANDROID_SENSOR_TEST_PATTERN_MODE_BLACK,
+};
+
 /** android.sensor.pixelMode enumeration values
  * @see ANDROID_SENSOR_PIXEL_MODE
  */
