@@ -48,6 +48,9 @@ class SharedSecretAidlTest : public ::testing::Test {
         SharedSecretParameters params;
         auto error = GetReturnErrorCode(sharedSecret->getSharedSecretParameters(&params));
         EXPECT_EQ(ErrorCode::OK, error);
+        EXPECT_TRUE(params.seed.size() == 0 || params.seed.size() == 32);
+        EXPECT_TRUE(params.nonce.size() == 32);
+
         GetParamsResult result;
         result.tie() = std::tie(error, params);
         return result;
@@ -234,6 +237,45 @@ TEST_F(SharedSecretAidlTest, ComputeSharedSecretCorruptNonce) {
     }
 }
 
+TEST_F(SharedSecretAidlTest, ComputeSharedSecretShortNonce) {
+    auto sharedSecrets = allSharedSecrets();
+    if (sharedSecrets.empty()) {
+        GTEST_SKIP() << "Skipping the test as no shared secret service is found.";
+    }
+    auto fixup_hmac = finally([&]() { computeAllSharedSecrets(getAllSharedSecretParameters()); });
+
+    auto params = getAllSharedSecretParameters();
+    ASSERT_EQ(sharedSecrets.size(), params.size())
+            << "One or more shared secret services failed to provide parameters.";
+
+    // All should be well in the normal case
+    auto responses = computeAllSharedSecrets(params);
+
+    ASSERT_GT(responses.size(), 0U);
+    vector<uint8_t> correct_response = responses[0].sharing_check;
+    verifyResponses(correct_response, responses);
+
+    // Pick a random param and shorten that nonce by one.
+    size_t param_to_tweak = rand() % params.size();
+    auto& to_tweak = params[param_to_tweak].nonce;
+    ASSERT_TRUE(to_tweak.size() == 32);
+    to_tweak.resize(31);
+
+    responses = computeAllSharedSecrets(params);
+    for (size_t i = 0; i < responses.size(); ++i) {
+        if (i == param_to_tweak) {
+            EXPECT_EQ(ErrorCode::INVALID_ARGUMENT, responses[i].error)
+                    << "Shared secret service that provided tweaked param should fail to compute "
+                       "shared secret";
+        } else {
+            EXPECT_EQ(ErrorCode::OK, responses[i].error) << "Others should succeed";
+            EXPECT_NE(correct_response, responses[i].sharing_check)
+                    << "Others should calculate a different shared secret, due to the tweaked "
+                       "nonce.";
+        }
+    }
+}
+
 TEST_F(SharedSecretAidlTest, ComputeSharedSecretCorruptSeed) {
     auto sharedSecrets = allSharedSecrets();
     if (sharedSecrets.empty()) {
@@ -275,6 +317,45 @@ TEST_F(SharedSecretAidlTest, ComputeSharedSecretCorruptSeed) {
         }
     }
 }
+
+TEST_F(SharedSecretAidlTest, ComputeSharedSecretShortSeed) {
+    auto sharedSecrets = allSharedSecrets();
+    if (sharedSecrets.empty()) {
+        GTEST_SKIP() << "Skipping the test as no shared secret service is found.";
+    }
+    auto fixup_hmac = finally([&]() { computeAllSharedSecrets(getAllSharedSecretParameters()); });
+    auto params = getAllSharedSecretParameters();
+    ASSERT_EQ(sharedSecrets.size(), params.size())
+            << "One or more shared secret service failed to provide parameters.";
+
+    // All should be well in the normal case
+    auto responses = computeAllSharedSecrets(params);
+
+    ASSERT_GT(responses.size(), 0U);
+    vector<uint8_t> correct_response = responses[0].sharing_check;
+    verifyResponses(correct_response, responses);
+
+    // Pick a random param and modify the seed to be of (invalid) length 31.
+    auto param_to_tweak = rand() % params.size();
+    auto& to_tweak = params[param_to_tweak].seed;
+    ASSERT_TRUE(to_tweak.size() == 32 || to_tweak.size() == 0);
+    to_tweak.resize(31);
+
+    responses = computeAllSharedSecrets(params);
+    for (size_t i = 0; i < responses.size(); ++i) {
+        if (i == param_to_tweak) {
+            EXPECT_EQ(ErrorCode::INVALID_ARGUMENT, responses[i].error)
+                    << "Shared secret service that provided tweaked param should fail to compute "
+                       "shared secret";
+        } else {
+            EXPECT_EQ(ErrorCode::OK, responses[i].error) << "Others should succeed";
+            EXPECT_NE(correct_response, responses[i].sharing_check)
+                    << "Others should calculate a different shared secret, due to the tweaked "
+                       "nonce.";
+        }
+    }
+}
+
 }  // namespace aidl::android::hardware::security::sharedsecret::test
 
 int main(int argc, char** argv) {
