@@ -16,6 +16,7 @@
 
 #define LOG_TAG "keymaster_hidl_hal_test"
 #include <cutils/log.h>
+#include <vector>
 
 #include "Keymaster4_1HidlTest.h"
 
@@ -178,6 +179,33 @@ void check_attestation_record(AttestationRecord attestation, const HidlBuf& chal
             << DIFFERENCE(expected_hw_enforced, attestation.hardware_enforced);
 }
 
+X509_Ptr parse_cert_blob(const std::vector<uint8_t>& blob) {
+    const uint8_t* p = blob.data();
+    return X509_Ptr(d2i_X509(nullptr /* allocate new */, &p, blob.size()));
+}
+
+bool check_certificate_chain_signatures(const hidl_vec<hidl_vec<uint8_t>>& cert_chain) {
+    // TODO: Check that root is self-signed once b/187803288 is resolved.
+    for (size_t i = 0; i < cert_chain.size() - 1; ++i) {
+        X509_Ptr key_cert(parse_cert_blob(cert_chain[i]));
+        X509_Ptr signing_cert(parse_cert_blob(cert_chain[i + 1]));
+
+        if (!key_cert.get() || !signing_cert.get()) {
+            return false;
+        }
+
+        EVP_PKEY_Ptr signing_pubkey(X509_get_pubkey(signing_cert.get()));
+        if (!signing_pubkey.get()) {
+            return false;
+        }
+
+        if (!X509_verify(key_cert.get(), signing_pubkey.get())) {
+            return false;
+        }
+    }
+    return true;
+}
+
 }  // namespace
 
 using std::string;
@@ -243,6 +271,7 @@ TEST_P(DeviceUniqueAttestationTest, Rsa) {
 
     EXPECT_EQ(ErrorCode::OK, result);
     EXPECT_EQ(2U, cert_chain.size());
+    EXPECT_TRUE(check_certificate_chain_signatures(cert_chain));
     if (dumpAttestations) {
       for (auto cert_ : cert_chain) dumpContent(bin2hex(cert_));
     }
@@ -289,6 +318,7 @@ TEST_P(DeviceUniqueAttestationTest, Ecdsa) {
 
     EXPECT_EQ(ErrorCode::OK, result);
     EXPECT_EQ(2U, cert_chain.size());
+    EXPECT_TRUE(check_certificate_chain_signatures(cert_chain));
     if (dumpAttestations) {
       for (auto cert_ : cert_chain) dumpContent(bin2hex(cert_));
     }
