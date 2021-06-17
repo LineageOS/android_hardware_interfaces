@@ -35,6 +35,7 @@
 #include "GnssDebug.h"
 #include "GnssMeasurement.h"
 #include "GnssMeasurementCorrections.h"
+#include "GnssReplayUtils.h"
 #include "MockLocation.h"
 #include "NmeaFixInfo.h"
 #include "Utils.h"
@@ -158,15 +159,9 @@ GnssTemplate<T_IGnss>::~GnssTemplate() {
 
 template <class T_IGnss>
 std::unique_ptr<V2_0::GnssLocation> GnssTemplate<T_IGnss>::getLocationFromHW() {
-    char inputBuffer[INPUT_BUFFER_SIZE];
     if (!mHardwareModeChecked) {
-        // default using gnss0
-        const char * gnss_dev_path = GNSS_PATH;
-        char devname_value[PROPERTY_VALUE_MAX] = "";
-        if (property_get("debug.location.gnss.devname", devname_value, NULL) > 0) {
-            gnss_dev_path = devname_value;
-            ALOGD("using %s instead of the default %s", gnss_dev_path, GNSS_PATH);
-        }
+        // default using /dev/gnss0
+        const char* gnss_dev_path = ReplayUtils::getGnssPath();
 
         mGnssFd = open(gnss_dev_path, O_RDWR | O_NONBLOCK);
         if (mGnssFd == -1) {
@@ -175,35 +170,8 @@ std::unique_ptr<V2_0::GnssLocation> GnssTemplate<T_IGnss>::getLocationFromHW() {
         mHardwareModeChecked = true;
     }
 
-    if (mGnssFd == -1) {
-        return nullptr;
-    }
-
-    int bytes_write = write(mGnssFd, CMD_GET_LOCATION, strlen(CMD_GET_LOCATION));
-    if (bytes_write <= 0) {
-        return nullptr;
-    }
-
-    struct epoll_event ev, events[1];
-    ev.data.fd = mGnssFd;
-    ev.events = EPOLLIN;
-    int epoll_fd = epoll_create1(0);
-    epoll_ctl(epoll_fd, EPOLL_CTL_ADD, mGnssFd, &ev);
-    int bytes_read = -1;
-    std::string inputStr = "";
-    int epoll_ret = epoll_wait(epoll_fd, events, 1, mMinIntervalMs);
-
-    if (epoll_ret == -1) {
-        return nullptr;
-    }
-    while (true) {
-        memset(inputBuffer, 0, INPUT_BUFFER_SIZE);
-        bytes_read = read(mGnssFd, &inputBuffer, INPUT_BUFFER_SIZE);
-        if (bytes_read <= 0) {
-            break;
-        }
-        inputStr += std::string(inputBuffer, bytes_read);
-    }
+    std::string inputStr = ::android::hardware::gnss::common::ReplayUtils::getDataFromDeviceFile(
+            CMD_GET_LOCATION, mMinIntervalMs);
     return NmeaFixInfo::getLocationFromInputStr(inputStr);
 }
 

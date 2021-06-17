@@ -41,6 +41,7 @@ cc_library_static {
         "MockLocation.cpp",
         "Utils.cpp",
         "NmeaFixInfo.cpp",
+        "GnssReplayUtils.cpp",
     ],
     export_include_dirs: ["include"],
     shared_libs: [
