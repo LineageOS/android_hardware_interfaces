@@ -4,6 +4,7 @@
 # Test HALs
 
 717c17cd380bb48710dff601d1a03351d4ebc28028353d5d60489248f506523c android.hardware.tests.lazy@1.0::ILazy
+67222a2ed4071b6c232e671ce0f4be4f85c1c6fb017ec2355396adaae1fe26be android.hardware.tests.lazy@1.1::ILazy
 
 # HALs released in Android O
 
