@@ -556,7 +556,7 @@ TEST_P(AttestKeyTest, AllEcCurves) {
                                                      .EcdsaSigningKey(curve)
                                                      .AttestKey()
                                                      .SetDefaultValidity(),
-                                             {} /* attestation siging key */, &attest_key.keyBlob,
+                                             {} /* attestation signing key */, &attest_key.keyBlob,
                                              &attest_key_characteristics, &attest_key_cert_chain));
 
         ASSERT_GT(attest_key_cert_chain.size(), 0);
@@ -640,7 +640,7 @@ TEST_P(AttestKeyTest, AttestWithNonAttestKey) {
             ErrorCode::OK,
             GenerateKey(
                     AuthorizationSetBuilder().EcdsaSigningKey(EcCurve::P_256).SetDefaultValidity(),
-                    {} /* attestation siging key */, &non_attest_key.keyBlob,
+                    {} /* attestation signing key */, &non_attest_key.keyBlob,
                     &non_attest_key_characteristics, &non_attest_key_cert_chain));
 
     ASSERT_GT(non_attest_key_cert_chain.size(), 0);
@@ -660,6 +660,124 @@ TEST_P(AttestKeyTest, AttestWithNonAttestKey) {
                                   .SetDefaultValidity(),
                           non_attest_key, &attested_key_blob, &attested_key_characteristics,
                           &attested_key_cert_chain));
+}
+
+TEST_P(AttestKeyTest, EcdsaAttestationID) {
+    // Create attestation key.
+    AttestationKey attest_key;
+    vector<KeyCharacteristics> attest_key_characteristics;
+    vector<Certificate> attest_key_cert_chain;
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                 .EcdsaSigningKey(EcCurve::P_256)
+                                                 .AttestKey()
+                                                 .SetDefaultValidity(),
+                                         {} /* attestation signing key */, &attest_key.keyBlob,
+                                         &attest_key_characteristics, &attest_key_cert_chain));
+    attest_key.issuerSubjectName = make_name_from_str("Android Keystore Key");
+    ASSERT_GT(attest_key_cert_chain.size(), 0);
+    EXPECT_EQ(attest_key_cert_chain.size(), 1);
+    EXPECT_TRUE(IsSelfSigned(attest_key_cert_chain));
+
+    // Collection of valid attestation ID tags.
+    auto attestation_id_tags = AuthorizationSetBuilder();
+    add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_BRAND, "ro.product.brand");
+    add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_DEVICE, "ro.product.device");
+    add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_PRODUCT, "ro.product.name");
+    add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_SERIAL, "ro.serial");
+    add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_MANUFACTURER,
+                      "ro.product.manufacturer");
+    add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_MODEL, "ro.product.model");
+
+    for (const KeyParameter& tag : attestation_id_tags) {
+        SCOPED_TRACE(testing::Message() << "+tag-" << tag);
+        // Use attestation key to sign an ECDSA key, but include an attestation ID field.
+        AuthorizationSetBuilder builder = AuthorizationSetBuilder()
+                                                  .EcdsaSigningKey(EcCurve::P_256)
+                                                  .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                  .AttestationChallenge("challenge")
+                                                  .AttestationApplicationId("foo")
+                                                  .SetDefaultValidity();
+        builder.push_back(tag);
+        vector<uint8_t> attested_key_blob;
+        vector<KeyCharacteristics> attested_key_characteristics;
+        vector<Certificate> attested_key_cert_chain;
+        auto result = GenerateKey(builder, attest_key, &attested_key_blob,
+                                  &attested_key_characteristics, &attested_key_cert_chain);
+        if (result == ErrorCode::CANNOT_ATTEST_IDS) {
+            continue;
+        }
+
+        ASSERT_EQ(result, ErrorCode::OK);
+
+        CheckedDeleteKey(&attested_key_blob);
+
+        AuthorizationSet hw_enforced = HwEnforcedAuthorizations(attested_key_characteristics);
+        AuthorizationSet sw_enforced = SwEnforcedAuthorizations(attested_key_characteristics);
+
+        // The attested key characteristics will not contain APPLICATION_ID_* fields (their
+        // spec definitions all have "Must never appear in KeyCharacteristics"), but the
+        // attestation extension should contain them, so make sure the extra tag is added.
+        hw_enforced.push_back(tag);
+
+        EXPECT_TRUE(verify_attestation_record("challenge", "foo", sw_enforced, hw_enforced,
+                                              SecLevel(),
+                                              attested_key_cert_chain[0].encodedCertificate));
+    }
+    CheckedDeleteKey(&attest_key.keyBlob);
+}
+
+TEST_P(AttestKeyTest, EcdsaAttestationMismatchID) {
+    // Create attestation key.
+    AttestationKey attest_key;
+    vector<KeyCharacteristics> attest_key_characteristics;
+    vector<Certificate> attest_key_cert_chain;
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                 .EcdsaSigningKey(EcCurve::P_256)
+                                                 .AttestKey()
+                                                 .SetDefaultValidity(),
+                                         {} /* attestation signing key */, &attest_key.keyBlob,
+                                         &attest_key_characteristics, &attest_key_cert_chain));
+    attest_key.issuerSubjectName = make_name_from_str("Android Keystore Key");
+    ASSERT_GT(attest_key_cert_chain.size(), 0);
+    EXPECT_EQ(attest_key_cert_chain.size(), 1);
+    EXPECT_TRUE(IsSelfSigned(attest_key_cert_chain));
+
+    // Collection of invalid attestation ID tags.
+    auto attestation_id_tags =
+            AuthorizationSetBuilder()
+                    .Authorization(TAG_ATTESTATION_ID_BRAND, "bogus-brand")
+                    .Authorization(TAG_ATTESTATION_ID_DEVICE, "devious-device")
+                    .Authorization(TAG_ATTESTATION_ID_PRODUCT, "punctured-product")
+                    .Authorization(TAG_ATTESTATION_ID_SERIAL, "suspicious-serial")
+                    .Authorization(TAG_ATTESTATION_ID_IMEI, "invalid-imei")
+                    .Authorization(TAG_ATTESTATION_ID_MEID, "mismatching-meid")
+                    .Authorization(TAG_ATTESTATION_ID_MANUFACTURER, "malformed-manufacturer")
+                    .Authorization(TAG_ATTESTATION_ID_MODEL, "malicious-model");
+    vector<uint8_t> key_blob;
+    vector<KeyCharacteristics> key_characteristics;
+
+    for (const KeyParameter& invalid_tag : attestation_id_tags) {
+        SCOPED_TRACE(testing::Message() << "+tag-" << invalid_tag);
+
+        // Use attestation key to sign an ECDSA key, but include an invalid
+        // attestation ID field.
+        AuthorizationSetBuilder builder = AuthorizationSetBuilder()
+                                                  .EcdsaSigningKey(EcCurve::P_256)
+                                                  .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                  .AttestationChallenge("challenge")
+                                                  .AttestationApplicationId("foo")
+                                                  .SetDefaultValidity();
+        builder.push_back(invalid_tag);
+        vector<uint8_t> attested_key_blob;
+        vector<KeyCharacteristics> attested_key_characteristics;
+        vector<Certificate> attested_key_cert_chain;
+        auto result = GenerateKey(builder, attest_key, &attested_key_blob,
+                                  &attested_key_characteristics, &attested_key_cert_chain);
+
+        ASSERT_TRUE(result == ErrorCode::CANNOT_ATTEST_IDS || result == ErrorCode::INVALID_TAG)
+                << "result = " << result;
+    }
+    CheckedDeleteKey(&attest_key.keyBlob);
 }
 
 INSTANTIATE_KEYMINT_AIDL_TEST(AttestKeyTest);
