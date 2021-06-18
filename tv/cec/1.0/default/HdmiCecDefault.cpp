@@ -38,6 +38,11 @@ namespace implementation {
 
 // When set to false, all the CEC commands are discarded. True by default after initialization.
 bool mCecEnabled;
+/*
+ * When set to false, HAL does not wake up the system upon receiving <Image View On> or
+ * <Text View On>. True by default after initialization.
+ */
+bool mWakeupEnabled;
 
 int mCecFd;
 int mExitFd;
@@ -48,6 +53,7 @@ HdmiCecDefault::HdmiCecDefault() {
     mCecFd = -1;
     mExitFd = -1;
     mCecEnabled = false;
+    mWakeupEnabled = false;
     mCallback = nullptr;
 }
 
@@ -244,6 +250,10 @@ Return<void> HdmiCecDefault::setOption(OptionKey key, bool value) {
             LOG(DEBUG) << "setOption: Enable CEC: " << value;
             mCecEnabled = value;
             break;
+        case OptionKey::WAKEUP:
+            LOG(DEBUG) << "setOption: WAKEUP: " << value;
+            mWakeupEnabled = value;
+            break;
         default:
             break;
     }
@@ -317,6 +327,7 @@ Return<Result> HdmiCecDefault::init() {
     }
 
     mCecEnabled = true;
+    mWakeupEnabled = true;
     return Result::SUCCESS;
 }
 
@@ -333,6 +344,7 @@ Return<void> HdmiCecDefault::release() {
         close(mCecFd);
     }
     mCecEnabled = false;
+    mWakeupEnabled = false;
     setCallback(nullptr);
     return Void();
 }
@@ -402,6 +414,11 @@ void* HdmiCecDefault::event_thread(void*) {
                 continue;
             }
 
+            if (!mWakeupEnabled && isWakeupMessage(msg)) {
+                LOG(DEBUG) << "Filter wakeup message";
+                continue;
+            }
+
             if (mCallback != nullptr) {
                 size_t length = std::min(msg.len - 1, (uint32_t)MaxLength::MESSAGE_BODY);
                 CecMessage cecMessage{
@@ -419,6 +436,21 @@ void* HdmiCecDefault::event_thread(void*) {
         }
     }
     return NULL;
+}
+
+int HdmiCecDefault::getOpcode(struct cec_msg message) {
+    return (static_cast<uint8_t>(message.msg[1]) & 0xff);
+}
+
+bool HdmiCecDefault::isWakeupMessage(struct cec_msg message) {
+    int opcode = getOpcode(message);
+    switch (opcode) {
+        case CEC_MESSAGE_TEXT_VIEW_ON:
+        case CEC_MESSAGE_IMAGE_VIEW_ON:
+            return true;
+        default:
+            return false;
+    }
 }
 
 }  // namespace implementation
