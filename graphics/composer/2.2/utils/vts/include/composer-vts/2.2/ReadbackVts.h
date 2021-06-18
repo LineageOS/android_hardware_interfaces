@@ -25,6 +25,8 @@
 #include <mapper-vts/2.1/MapperVts.h>
 #include <renderengine/RenderEngine.h>
 
+#include <memory>
+
 namespace android {
 namespace hardware {
 namespace graphics {
@@ -116,8 +118,6 @@ class TestBufferLayer : public TestLayer {
             PixelFormat format,
             IComposerClient::Composition composition = IComposerClient::Composition::DEVICE);
 
-    ~TestBufferLayer();
-
     void write(const std::shared_ptr<CommandWriterBase>& writer) override;
 
     LayerSettings toRenderEngineLayerSettings() override;
@@ -143,7 +143,7 @@ class TestBufferLayer : public TestLayer {
     std::shared_ptr<Gralloc> mGralloc;
     TestRenderEngine& mRenderEngine;
     int32_t mFillFence;
-    const native_handle_t* mBufferHandle = nullptr;
+    std::unique_ptr<Gralloc::NativeHandleWrapper> mBufferHandle;
 };
 
 class ReadbackHelper {
@@ -182,7 +182,6 @@ class ReadbackBuffer {
     ReadbackBuffer(Display display, const std::shared_ptr<ComposerClient>& client,
                    const std::shared_ptr<Gralloc>& gralloc, uint32_t width, uint32_t height,
                    PixelFormat pixelFormat, Dataspace dataspace);
-    ~ReadbackBuffer();
 
     void setReadbackBuffer();
 
@@ -196,7 +195,7 @@ class ReadbackBuffer {
     uint64_t mUsage;
     AccessRegion mAccessRegion;
     uint32_t mStride;
-    const native_handle_t* mBufferHandle = nullptr;
+    std::unique_ptr<Gralloc::NativeHandleWrapper> mBufferHandle = nullptr;
     PixelFormat mPixelFormat;
     Dataspace mDataspace;
     Display mDisplay;

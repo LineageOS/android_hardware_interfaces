@@ -38,12 +38,10 @@ namespace V2_3 {
 namespace vts {
 namespace {
 
-using common::V1_0::BufferUsage;
 using common::V1_1::RenderIntent;
 using common::V1_2::ColorMode;
 using common::V1_2::Dataspace;
 using common::V1_2::PixelFormat;
-using mapper::V2_0::IMapper;
 using V2_2::vts::Gralloc;
 
 class GraphicsComposerHidlTest : public ::testing::TestWithParam<std::string> {
@@ -138,12 +136,6 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
     void TearDown() override {
         ASSERT_EQ(0, mReader->mErrors.size());
         ASSERT_NO_FATAL_FAILURE(GraphicsComposerHidlTest::TearDown());
-    }
-
-    const native_handle_t* allocate() {
-        return mGralloc->allocate(
-                64, 64, 1, static_cast<common::V1_1::PixelFormat>(PixelFormat::RGBA_8888),
-                static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN | BufferUsage::CPU_READ_OFTEN));
     }
 
     void execute() { mComposerClient->execute(mReader.get(), mWriter.get()); }
