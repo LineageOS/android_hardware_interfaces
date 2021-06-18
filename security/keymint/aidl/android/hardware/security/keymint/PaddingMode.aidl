@@ -17,8 +17,6 @@
 package android.hardware.security.keymint;
 
 /**
- * TODO(seleneh) update the description.
- *
  * Padding modes that may be applied to plaintext for encryption operations.  This list includes
  * padding modes for both symmetric and asymmetric algorithms.  Note that implementations should not
  * provide all possible combinations of algorithm and padding, only the
