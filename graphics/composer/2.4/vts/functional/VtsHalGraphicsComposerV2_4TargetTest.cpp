@@ -52,8 +52,8 @@ using common::V1_1::RenderIntent;
 using common::V1_2::ColorMode;
 using common::V1_2::Dataspace;
 using common::V1_2::PixelFormat;
-using mapper::V2_0::IMapper;
 using V2_1::Layer;
+using V2_1::vts::NativeHandleWrapper;
 using V2_2::Transform;
 using V2_2::vts::Gralloc;
 
@@ -159,7 +159,7 @@ class GraphicsComposerHidlTest : public ::testing::TestWithParam<std::string> {
 
     void execute() { mComposerClient->execute(mReader.get(), mWriter.get()); }
 
-    const native_handle_t* allocate(int32_t width, int32_t height) {
+    NativeHandleWrapper allocate(int32_t width, int32_t height) {
         return mGralloc->allocate(
                 width, height, /*layerCount*/ 1,
                 static_cast<common::V1_1::PixelFormat>(PixelFormat::RGBA_8888),
@@ -493,46 +493,53 @@ void GraphicsComposerHidlTest::sendRefreshFrame(const VtsDisplay& display,
     IComposerClient::FRect displayCrop = display.getCrop();
     int32_t displayWidth = static_cast<int32_t>(std::ceilf(displayCrop.right - displayCrop.left));
     int32_t displayHeight = static_cast<int32_t>(std::ceilf(displayCrop.bottom - displayCrop.top));
-    auto handle = allocate(displayWidth, displayHeight);
-    ASSERT_NE(nullptr, handle);
-
     Layer layer;
     ASSERT_NO_FATAL_FAILURE(layer = mComposerClient->createLayer(display.get(), kBufferSlotCount));
-    mWriter->selectLayer(layer);
-    mWriter->setLayerCompositionType(IComposerClient::Composition::DEVICE);
-    mWriter->setLayerDisplayFrame(display.getFrameRect());
-    mWriter->setLayerPlaneAlpha(1);
-    mWriter->setLayerSourceCrop(display.getCrop());
-    mWriter->setLayerTransform(static_cast<Transform>(0));
-    mWriter->setLayerVisibleRegion(std::vector<IComposerClient::Rect>(1, display.getFrameRect()));
-    mWriter->setLayerZOrder(10);
-    mWriter->setLayerBlendMode(IComposerClient::BlendMode::NONE);
-    mWriter->setLayerSurfaceDamage(std::vector<IComposerClient::Rect>(1, display.getFrameRect()));
-    mWriter->setLayerBuffer(0, handle, -1);
-    mWriter->setLayerDataspace(Dataspace::UNKNOWN);
 
-    mWriter->validateDisplay();
-    execute();
-    ASSERT_EQ(0, mReader->mErrors.size());
-    mReader->mCompositionChanges.clear();
+    {
+        auto handle = allocate(displayWidth, displayHeight);
+        ASSERT_NE(nullptr, handle.get());
 
-    mWriter->presentDisplay();
-    execute();
-    ASSERT_EQ(0, mReader->mErrors.size());
+        mWriter->selectLayer(layer);
+        mWriter->setLayerCompositionType(IComposerClient::Composition::DEVICE);
+        mWriter->setLayerDisplayFrame(display.getFrameRect());
+        mWriter->setLayerPlaneAlpha(1);
+        mWriter->setLayerSourceCrop(display.getCrop());
+        mWriter->setLayerTransform(static_cast<Transform>(0));
+        mWriter->setLayerVisibleRegion(
+                std::vector<IComposerClient::Rect>(1, display.getFrameRect()));
+        mWriter->setLayerZOrder(10);
+        mWriter->setLayerBlendMode(IComposerClient::BlendMode::NONE);
+        mWriter->setLayerSurfaceDamage(
+                std::vector<IComposerClient::Rect>(1, display.getFrameRect()));
+        mWriter->setLayerBuffer(0, handle.get(), -1);
+        mWriter->setLayerDataspace(Dataspace::UNKNOWN);
 
-    mWriter->selectLayer(layer);
-    auto handle2 = allocate(displayWidth, displayHeight);
-    ASSERT_NE(nullptr, handle2);
+        mWriter->validateDisplay();
+        execute();
+        ASSERT_EQ(0, mReader->mErrors.size());
+        mReader->mCompositionChanges.clear();
 
-    mWriter->setLayerBuffer(0, handle2, -1);
-    mWriter->setLayerSurfaceDamage(std::vector<IComposerClient::Rect>(1, {0, 0, 10, 10}));
-    mWriter->validateDisplay();
-    execute();
-    ASSERT_EQ(0, mReader->mErrors.size());
-    mReader->mCompositionChanges.clear();
+        mWriter->presentDisplay();
+        execute();
+        ASSERT_EQ(0, mReader->mErrors.size());
+    }
 
-    mWriter->presentDisplay();
-    execute();
+    {
+        auto handle = allocate(displayWidth, displayHeight);
+        ASSERT_NE(nullptr, handle.get());
+
+        mWriter->selectLayer(layer);
+        mWriter->setLayerBuffer(0, handle.get(), -1);
+        mWriter->setLayerSurfaceDamage(std::vector<IComposerClient::Rect>(1, {0, 0, 10, 10}));
+        mWriter->validateDisplay();
+        execute();
+        ASSERT_EQ(0, mReader->mErrors.size());
+        mReader->mCompositionChanges.clear();
+
+        mWriter->presentDisplay();
+        execute();
+    }
 
     ASSERT_NO_FATAL_FAILURE(mComposerClient->destroyLayer(display.get(), layer));
 }
