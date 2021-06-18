@@ -233,8 +233,6 @@ interface IKeyMintDevice {
      * indistinguishable from random.  Thus, if the entropy from any source is good, the output
      * must be good.
      *
-     * TODO(seleneh) specify what mixing functions and cprng we allow.
-     *
      * @param data Bytes to be mixed into the CRNG seed.  The caller must not provide more than 2
      *        KiB of data per invocation.
      *

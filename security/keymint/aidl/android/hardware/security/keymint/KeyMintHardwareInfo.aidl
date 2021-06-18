@@ -29,7 +29,6 @@ parcelable KeyMintHardwareInfo {
      * Implementation version of the keymint hardware.  The version number is implementation
      * defined, and not necessarily globally meaningful.  The version is used to distinguish
      * between different versions of a given implementation.
-     * TODO(seleneh) add the version related info to the code.
      */
     int versionNumber;
 
