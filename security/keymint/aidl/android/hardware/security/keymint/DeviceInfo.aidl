@@ -37,10 +37,13 @@ parcelable DeviceInfo {
      *         ? "board" : tstr,
      *         ? "vb_state" : "green" / "yellow" / "orange",    // Taken from the AVB values
      *         ? "bootloader_state" : "locked" / "unlocked",    // Taken from the AVB values
+     *         ? "vbmeta_digest": bstr,                         // Taken from the AVB values
      *         ? "os_version" : tstr,                    // Same as android.os.Build.VERSION.release
      *         ? "system_patch_level" : uint,                   // YYYYMMDD
      *         ? "boot_patch_level" : uint,                     // YYYYMMDD
      *         ? "vendor_patch_level" : uint,                   // YYYYMMDD
+     *         "version" : 1,                      // The CDDL schema version.
+     *         "security_level" : "tee" / "strongbox"
      *     }
      */
     byte[] deviceInfo;
