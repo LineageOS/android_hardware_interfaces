@@ -21,6 +21,7 @@
 
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
+#include <android-base/properties.h>
 #include <binder/IServiceManager.h>
 #include <binder/ProcessState.h>
 #include <gtest/gtest.h>
@@ -312,6 +313,16 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     string author_;
     long challenge_;
 };
+
+// If the given property is available, add it to the tag set under the given tag ID.
+template <Tag tag>
+void add_tag_from_prop(AuthorizationSetBuilder* tags, TypedTag<TagType::BYTES, tag> ttag,
+                       const char* prop) {
+    std::string prop_value = ::android::base::GetProperty(prop, /* default= */ "");
+    if (!prop_value.empty()) {
+        tags->Authorization(ttag, prop_value.data(), prop_value.size());
+    }
+}
 
 vector<uint8_t> build_serial_blob(const uint64_t serial_int);
 void verify_subject(const X509* cert, const string& subject, bool self_signed);

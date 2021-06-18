@@ -29,7 +29,7 @@ class DeviceUniqueAttestationTest : public KeyMintAidlTestBase {
   protected:
     void CheckUniqueAttestationResults(const vector<uint8_t>& key_blob,
                                        const vector<KeyCharacteristics>& key_characteristics,
-                                       const AuthorizationSet& hw_enforced, int key_size) {
+                                       const AuthorizationSet& hw_enforced) {
         ASSERT_GT(cert_chain_.size(), 0);
 
         if (KeyMintAidlTestBase::dump_Attestations) {
@@ -40,10 +40,11 @@ class DeviceUniqueAttestationTest : public KeyMintAidlTestBase {
 
         AuthorizationSet crypto_params = SecLevelAuthorizations(key_characteristics);
 
-        EXPECT_TRUE(crypto_params.Contains(TAG_KEY_SIZE, key_size)) << "Key size missing";
-
+        // The device-unique attestation chain should contain exactly two certificates:
+        // * The leaf with the attestation extension.
+        // * A self-signed root, signed using the device-unique key.
+        ASSERT_EQ(cert_chain_.size(), 2);
         EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
-        ASSERT_GT(cert_chain_.size(), 0);
 
         AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
         EXPECT_TRUE(verify_attestation_record("challenge", "foo", sw_enforced, hw_enforced,
@@ -133,17 +134,32 @@ TEST_P(DeviceUniqueAttestationTest, RsaDeviceUniqueAttestation) {
 
     ASSERT_EQ(ErrorCode::OK, result);
 
-    AuthorizationSet hw_enforced = AuthorizationSetBuilder()
-                                           .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION)
-                                           .Authorization(TAG_NO_AUTH_REQUIRED)
-                                           .RsaSigningKey(2048, 65537)
-                                           .Digest(Digest::SHA_2_256)
-                                           .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN)
-                                           .Authorization(TAG_ORIGIN, KeyOrigin::GENERATED)
-                                           .Authorization(TAG_OS_VERSION, os_version())
-                                           .Authorization(TAG_OS_PATCHLEVEL, os_patch_level());
+    AuthorizationSetBuilder hw_enforced =
+            AuthorizationSetBuilder()
+                    .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION)
+                    .Authorization(TAG_NO_AUTH_REQUIRED)
+                    .RsaSigningKey(2048, 65537)
+                    .Digest(Digest::SHA_2_256)
+                    .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN)
+                    .Authorization(TAG_ORIGIN, KeyOrigin::GENERATED)
+                    .Authorization(TAG_OS_VERSION, os_version())
+                    .Authorization(TAG_OS_PATCHLEVEL, os_patch_level());
 
-    CheckUniqueAttestationResults(key_blob, key_characteristics, hw_enforced, key_size);
+    // Any patchlevels attached to the key should also be present in the attestation extension.
+    AuthorizationSet auths;
+    for (const auto& entry : key_characteristics) {
+        auths.push_back(AuthorizationSet(entry.authorizations));
+    }
+    auto vendor_pl = auths.GetTagValue(TAG_VENDOR_PATCHLEVEL);
+    if (vendor_pl) {
+        hw_enforced.Authorization(TAG_VENDOR_PATCHLEVEL, *vendor_pl);
+    }
+    auto boot_pl = auths.GetTagValue(TAG_BOOT_PATCHLEVEL);
+    if (boot_pl) {
+        hw_enforced.Authorization(TAG_BOOT_PATCHLEVEL, *boot_pl);
+    }
+
+    CheckUniqueAttestationResults(key_blob, key_characteristics, hw_enforced);
 }
 
 /*
@@ -157,11 +173,10 @@ TEST_P(DeviceUniqueAttestationTest, EcdsaDeviceUniqueAttestation) {
 
     vector<uint8_t> key_blob;
     vector<KeyCharacteristics> key_characteristics;
-    int key_size = 256;
 
     auto result = GenerateKey(AuthorizationSetBuilder()
                                       .Authorization(TAG_NO_AUTH_REQUIRED)
-                                      .EcdsaSigningKey(256)
+                                      .EcdsaSigningKey(EcCurve::P_256)
                                       .Digest(Digest::SHA_2_256)
                                       .Authorization(TAG_INCLUDE_UNIQUE_ID)
                                       .AttestationChallenge("challenge")
@@ -173,17 +188,137 @@ TEST_P(DeviceUniqueAttestationTest, EcdsaDeviceUniqueAttestation) {
     if (result == ErrorCode::CANNOT_ATTEST_IDS) return;
     ASSERT_EQ(ErrorCode::OK, result);
 
-    AuthorizationSet hw_enforced = AuthorizationSetBuilder()
-                                           .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION)
-                                           .Authorization(TAG_NO_AUTH_REQUIRED)
-                                           .EcdsaSigningKey(EcCurve::P_256)
-                                           .Digest(Digest::SHA_2_256)
-                                           .Authorization(TAG_EC_CURVE, EcCurve::P_256)
-                                           .Authorization(TAG_ORIGIN, KeyOrigin::GENERATED)
-                                           .Authorization(TAG_OS_VERSION, os_version())
-                                           .Authorization(TAG_OS_PATCHLEVEL, os_patch_level());
+    AuthorizationSetBuilder hw_enforced =
+            AuthorizationSetBuilder()
+                    .Authorization(TAG_NO_AUTH_REQUIRED)
+                    .EcdsaSigningKey(EcCurve::P_256)
+                    .Digest(Digest::SHA_2_256)
+                    .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION)
+                    .Authorization(TAG_ORIGIN, KeyOrigin::GENERATED)
+                    .Authorization(TAG_OS_VERSION, os_version())
+                    .Authorization(TAG_OS_PATCHLEVEL, os_patch_level());
+    // Any patchlevels attached to the key should also be present in the attestation extension.
+    AuthorizationSet auths;
+    for (const auto& entry : key_characteristics) {
+        auths.push_back(AuthorizationSet(entry.authorizations));
+    }
+    auto vendor_pl = auths.GetTagValue(TAG_VENDOR_PATCHLEVEL);
+    if (vendor_pl) {
+        hw_enforced.Authorization(TAG_VENDOR_PATCHLEVEL, *vendor_pl);
+    }
+    auto boot_pl = auths.GetTagValue(TAG_BOOT_PATCHLEVEL);
+    if (boot_pl) {
+        hw_enforced.Authorization(TAG_BOOT_PATCHLEVEL, *boot_pl);
+    }
 
-    CheckUniqueAttestationResults(key_blob, key_characteristics, hw_enforced, key_size);
+    CheckUniqueAttestationResults(key_blob, key_characteristics, hw_enforced);
+}
+
+/*
+ * DeviceUniqueAttestationTest.EcdsaDeviceUniqueAttestationID
+ *
+ * Verifies that device unique attestation can include IDs that do match the
+ * local device.
+ */
+TEST_P(DeviceUniqueAttestationTest, EcdsaDeviceUniqueAttestationID) {
+    if (SecLevel() != SecurityLevel::STRONGBOX) return;
+
+    // Collection of valid attestation ID tags.
+    auto attestation_id_tags = AuthorizationSetBuilder();
+    add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_BRAND, "ro.product.brand");
+    add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_DEVICE, "ro.product.device");
+    add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_PRODUCT, "ro.product.name");
+    add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_SERIAL, "ro.serial");
+    add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_MANUFACTURER,
+                      "ro.product.manufacturer");
+    add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_MODEL, "ro.product.model");
+    vector<uint8_t> key_blob;
+    vector<KeyCharacteristics> key_characteristics;
+
+    for (const KeyParameter& tag : attestation_id_tags) {
+        SCOPED_TRACE(testing::Message() << "+tag-" << tag);
+        AuthorizationSetBuilder builder = AuthorizationSetBuilder()
+                                                  .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                  .EcdsaSigningKey(EcCurve::P_256)
+                                                  .Digest(Digest::SHA_2_256)
+                                                  .Authorization(TAG_INCLUDE_UNIQUE_ID)
+                                                  .AttestationChallenge("challenge")
+                                                  .AttestationApplicationId("foo")
+                                                  .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION);
+        builder.push_back(tag);
+        auto result = GenerateKey(builder, &key_blob, &key_characteristics);
+
+        // It is optional for Strong box to support DeviceUniqueAttestation.
+        if (result == ErrorCode::CANNOT_ATTEST_IDS) return;
+        ASSERT_EQ(ErrorCode::OK, result);
+
+        AuthorizationSetBuilder hw_enforced =
+                AuthorizationSetBuilder()
+                        .Authorization(TAG_NO_AUTH_REQUIRED)
+                        .EcdsaSigningKey(EcCurve::P_256)
+                        .Digest(Digest::SHA_2_256)
+                        .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION)
+                        .Authorization(TAG_ORIGIN, KeyOrigin::GENERATED)
+                        .Authorization(TAG_OS_VERSION, os_version())
+                        .Authorization(TAG_OS_PATCHLEVEL, os_patch_level());
+        // Expect the specified tag to be present in the attestation extension.
+        hw_enforced.push_back(tag);
+        // Any patchlevels attached to the key should also be present in the attestation extension.
+        AuthorizationSet auths;
+        for (const auto& entry : key_characteristics) {
+            auths.push_back(AuthorizationSet(entry.authorizations));
+        }
+        auto vendor_pl = auths.GetTagValue(TAG_VENDOR_PATCHLEVEL);
+        if (vendor_pl) {
+            hw_enforced.Authorization(TAG_VENDOR_PATCHLEVEL, *vendor_pl);
+        }
+        auto boot_pl = auths.GetTagValue(TAG_BOOT_PATCHLEVEL);
+        if (boot_pl) {
+            hw_enforced.Authorization(TAG_BOOT_PATCHLEVEL, *boot_pl);
+        }
+        CheckUniqueAttestationResults(key_blob, key_characteristics, hw_enforced);
+    }
+}
+
+/*
+ * DeviceUniqueAttestationTest.EcdsaDeviceUniqueAttestationMismatchID
+ *
+ * Verifies that device unique attestation rejects attempts to attest to IDs that
+ * don't match the local device.
+ */
+TEST_P(DeviceUniqueAttestationTest, EcdsaDeviceUniqueAttestationMismatchID) {
+    if (SecLevel() != SecurityLevel::STRONGBOX) return;
+
+    // Collection of invalid attestation ID tags.
+    auto attestation_id_tags =
+            AuthorizationSetBuilder()
+                    .Authorization(TAG_ATTESTATION_ID_BRAND, "bogus-brand")
+                    .Authorization(TAG_ATTESTATION_ID_DEVICE, "devious-device")
+                    .Authorization(TAG_ATTESTATION_ID_PRODUCT, "punctured-product")
+                    .Authorization(TAG_ATTESTATION_ID_SERIAL, "suspicious-serial")
+                    .Authorization(TAG_ATTESTATION_ID_IMEI, "invalid-imei")
+                    .Authorization(TAG_ATTESTATION_ID_MEID, "mismatching-meid")
+                    .Authorization(TAG_ATTESTATION_ID_MANUFACTURER, "malformed-manufacturer")
+                    .Authorization(TAG_ATTESTATION_ID_MODEL, "malicious-model");
+    vector<uint8_t> key_blob;
+    vector<KeyCharacteristics> key_characteristics;
+
+    for (const KeyParameter& invalid_tag : attestation_id_tags) {
+        SCOPED_TRACE(testing::Message() << "+tag-" << invalid_tag);
+        AuthorizationSetBuilder builder = AuthorizationSetBuilder()
+                                                  .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                  .EcdsaSigningKey(EcCurve::P_256)
+                                                  .Digest(Digest::SHA_2_256)
+                                                  .Authorization(TAG_INCLUDE_UNIQUE_ID)
+                                                  .AttestationChallenge("challenge")
+                                                  .AttestationApplicationId("foo")
+                                                  .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION);
+        // Add the tag that doesn't match the local device's real ID.
+        builder.push_back(invalid_tag);
+        auto result = GenerateKey(builder, &key_blob, &key_characteristics);
+
+        ASSERT_TRUE(result == ErrorCode::CANNOT_ATTEST_IDS || result == ErrorCode::INVALID_TAG);
+    }
 }
 
 INSTANTIATE_KEYMINT_AIDL_TEST(DeviceUniqueAttestationTest);

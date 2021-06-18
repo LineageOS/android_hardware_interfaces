@@ -79,6 +79,8 @@ typedef struct km_auth_list {
     ASN1_INTEGER_SET* padding;
     ASN1_INTEGER* ec_curve;
     ASN1_INTEGER* rsa_public_exponent;
+    ASN1_NULL* rollback_resistance;
+    ASN1_NULL* early_boot_only;
     ASN1_INTEGER* active_date_time;
     ASN1_INTEGER* origination_expire_date_time;
     ASN1_INTEGER* usage_expire_date_time;
@@ -86,21 +88,27 @@ typedef struct km_auth_list {
     ASN1_INTEGER* user_auth_type;
     ASN1_INTEGER* auth_timeout;
     ASN1_NULL* allow_while_on_body;
+    ASN1_NULL* trusted_user_presence_required;
+    ASN1_NULL* trusted_confirmation_required;
+    ASN1_NULL* unlocked_device_required;
     ASN1_NULL* all_applications;
     ASN1_OCTET_STRING* application_id;
     ASN1_INTEGER* creation_date_time;
     ASN1_INTEGER* origin;
-    ASN1_NULL* rollback_resistance;
     KM_ROOT_OF_TRUST* root_of_trust;
     ASN1_INTEGER* os_version;
     ASN1_INTEGER* os_patchlevel;
     ASN1_OCTET_STRING* attestation_application_id;
-    ASN1_NULL* trusted_user_presence_required;
-    ASN1_NULL* trusted_confirmation_required;
-    ASN1_NULL* unlocked_device_required;
+    ASN1_OCTET_STRING* attestation_id_brand;
+    ASN1_OCTET_STRING* attestation_id_device;
+    ASN1_OCTET_STRING* attestation_id_product;
+    ASN1_OCTET_STRING* attestation_id_serial;
+    ASN1_OCTET_STRING* attestation_id_imei;
+    ASN1_OCTET_STRING* attestation_id_meid;
+    ASN1_OCTET_STRING* attestation_id_manufacturer;
+    ASN1_OCTET_STRING* attestation_id_model;
     ASN1_INTEGER* vendor_patchlevel;
     ASN1_INTEGER* boot_patchlevel;
-    ASN1_NULL* early_boot_only;
     ASN1_NULL* device_unique_attestation;
     ASN1_NULL* identity_credential_key;
 } KM_AUTH_LIST;
@@ -116,6 +124,7 @@ ASN1_SEQUENCE(KM_AUTH_LIST) = {
                      TAG_RSA_PUBLIC_EXPONENT.maskedTag()),
         ASN1_EXP_OPT(KM_AUTH_LIST, rollback_resistance, ASN1_NULL,
                      TAG_ROLLBACK_RESISTANCE.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, early_boot_only, ASN1_NULL, TAG_EARLY_BOOT_ONLY.maskedTag()),
         ASN1_EXP_OPT(KM_AUTH_LIST, active_date_time, ASN1_INTEGER, TAG_ACTIVE_DATETIME.maskedTag()),
         ASN1_EXP_OPT(KM_AUTH_LIST, origination_expire_date_time, ASN1_INTEGER,
                      TAG_ORIGINATION_EXPIRE_DATETIME.maskedTag()),
@@ -138,12 +147,27 @@ ASN1_SEQUENCE(KM_AUTH_LIST) = {
         ASN1_EXP_OPT(KM_AUTH_LIST, root_of_trust, KM_ROOT_OF_TRUST, TAG_ROOT_OF_TRUST.maskedTag()),
         ASN1_EXP_OPT(KM_AUTH_LIST, os_version, ASN1_INTEGER, TAG_OS_VERSION.maskedTag()),
         ASN1_EXP_OPT(KM_AUTH_LIST, os_patchlevel, ASN1_INTEGER, TAG_OS_PATCHLEVEL.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, attestation_application_id, ASN1_OCTET_STRING,
+                     TAG_ATTESTATION_APPLICATION_ID.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, attestation_id_brand, ASN1_OCTET_STRING,
+                     TAG_ATTESTATION_ID_BRAND.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, attestation_id_device, ASN1_OCTET_STRING,
+                     TAG_ATTESTATION_ID_DEVICE.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, attestation_id_product, ASN1_OCTET_STRING,
+                     TAG_ATTESTATION_ID_PRODUCT.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, attestation_id_serial, ASN1_OCTET_STRING,
+                     TAG_ATTESTATION_ID_SERIAL.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, attestation_id_imei, ASN1_OCTET_STRING,
+                     TAG_ATTESTATION_ID_IMEI.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, attestation_id_meid, ASN1_OCTET_STRING,
+                     TAG_ATTESTATION_ID_MEID.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, attestation_id_manufacturer, ASN1_OCTET_STRING,
+                     TAG_ATTESTATION_ID_MANUFACTURER.maskedTag()),
+        ASN1_EXP_OPT(KM_AUTH_LIST, attestation_id_model, ASN1_OCTET_STRING,
+                     TAG_ATTESTATION_ID_MODEL.maskedTag()),
         ASN1_EXP_OPT(KM_AUTH_LIST, vendor_patchlevel, ASN1_INTEGER,
                      TAG_VENDOR_PATCHLEVEL.maskedTag()),
         ASN1_EXP_OPT(KM_AUTH_LIST, boot_patchlevel, ASN1_INTEGER, TAG_BOOT_PATCHLEVEL.maskedTag()),
-        ASN1_EXP_OPT(KM_AUTH_LIST, attestation_application_id, ASN1_OCTET_STRING,
-                     TAG_ATTESTATION_APPLICATION_ID.maskedTag()),
-        ASN1_EXP_OPT(KM_AUTH_LIST, early_boot_only, ASN1_NULL, TAG_EARLY_BOOT_ONLY.maskedTag()),
         ASN1_EXP_OPT(KM_AUTH_LIST, device_unique_attestation, ASN1_NULL,
                      TAG_DEVICE_UNIQUE_ATTESTATION.maskedTag()),
         ASN1_EXP_OPT(KM_AUTH_LIST, identity_credential_key, ASN1_NULL,
@@ -279,6 +303,14 @@ static ErrorCode extract_auth_list(const KM_AUTH_LIST* record, AuthorizationSet*
     copyAuthTag(record->usage_expire_date_time, TAG_USAGE_EXPIRE_DATETIME, auth_list);
     copyAuthTag(record->user_auth_type, TAG_USER_AUTH_TYPE, auth_list);
     copyAuthTag(record->attestation_application_id, TAG_ATTESTATION_APPLICATION_ID, auth_list);
+    copyAuthTag(record->attestation_id_brand, TAG_ATTESTATION_ID_BRAND, auth_list);
+    copyAuthTag(record->attestation_id_device, TAG_ATTESTATION_ID_DEVICE, auth_list);
+    copyAuthTag(record->attestation_id_product, TAG_ATTESTATION_ID_PRODUCT, auth_list);
+    copyAuthTag(record->attestation_id_serial, TAG_ATTESTATION_ID_SERIAL, auth_list);
+    copyAuthTag(record->attestation_id_imei, TAG_ATTESTATION_ID_IMEI, auth_list);
+    copyAuthTag(record->attestation_id_meid, TAG_ATTESTATION_ID_MEID, auth_list);
+    copyAuthTag(record->attestation_id_manufacturer, TAG_ATTESTATION_ID_MANUFACTURER, auth_list);
+    copyAuthTag(record->attestation_id_model, TAG_ATTESTATION_ID_MODEL, auth_list);
     copyAuthTag(record->vendor_patchlevel, TAG_VENDOR_PATCHLEVEL, auth_list);
     copyAuthTag(record->boot_patchlevel, TAG_BOOT_PATCHLEVEL, auth_list);
     copyAuthTag(record->trusted_user_presence_required, TAG_TRUSTED_USER_PRESENCE_REQUIRED,
