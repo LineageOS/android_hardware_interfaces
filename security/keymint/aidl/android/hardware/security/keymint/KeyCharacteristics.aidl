@@ -32,6 +32,17 @@ import android.hardware.security.keymint.SecurityLevel;
  */
 @VintfStability
 parcelable KeyCharacteristics {
+    /**
+     * The security level enforcing this collection of key properties.
+     */
     SecurityLevel securityLevel = SecurityLevel.SOFTWARE;
+
+    /**
+     * `authorizations` is a list of key properties that are enforced at this security level.
+     * A key can have different properties enforced by components of different security levels.
+     * For example, some properties are provided by the operating system, which has a
+     * different security level to the IKeyMintDevice.
+     * See the `keyCharacteristics` field in `KeyCreationResult` for more details.
+     */
     KeyParameter[] authorizations;
 }
