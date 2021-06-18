@@ -96,6 +96,18 @@ bool contains(hidl_vec<KeyParameter>& set, TypedTag<tag_type, tag>) {
     return count > 0;
 }
 
+// If the given property is available, add it to the tag set under the given tag ID.
+template <Tag tag>
+void add_tag_from_prop(AuthorizationSetBuilder* tags, TypedTag<TagType::BYTES, tag> ttag,
+                       const char* prop) {
+    char value[PROPERTY_VALUE_MAX];
+    int len = property_get(prop, value, /* default = */ "");
+    if (len > 0) {
+        tags->Authorization(ttag, reinterpret_cast<const uint8_t*>(value),
+                            static_cast<size_t>(len));
+    }
+}
+
 constexpr char hex_value[256] = {0, 0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0,  //
                                  0, 0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0,  //
                                  0, 0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0,  //
@@ -4406,6 +4418,95 @@ TEST_P(AttestationTest, EcAttestation) {
                                           key_characteristics_.softwareEnforced,  //
                                           key_characteristics_.hardwareEnforced,  //
                                           SecLevel(), cert_chain[0]));
+}
+
+/*
+ * AttestationTest.EcAttestationID
+ *
+ * Verifies that attesting to EC keys with correct attestation ID fields works and generates the
+ * expected output.
+ */
+TEST_P(AttestationTest, EcAttestationID) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                 .EcdsaSigningKey(EcCurve::P_256)
+                                                 .Digest(Digest::SHA_2_256)
+                                                 .Authorization(TAG_INCLUDE_UNIQUE_ID)));
+
+    // Collection of valid attestation ID tags.
+    auto attestation_id_tags = AuthorizationSetBuilder();
+    add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_BRAND, "ro.product.brand");
+    add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_DEVICE, "ro.product.device");
+    add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_PRODUCT, "ro.product.name");
+    add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_SERIAL, "ro.serial");
+    add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_MANUFACTURER,
+                      "ro.product.manufacturer");
+    add_tag_from_prop(&attestation_id_tags, TAG_ATTESTATION_ID_MODEL, "ro.product.model");
+
+    for (const KeyParameter& tag : attestation_id_tags) {
+        AuthorizationSetBuilder builder =
+                AuthorizationSetBuilder()
+                        .Authorization(TAG_ATTESTATION_CHALLENGE, HidlBuf("challenge"))
+                        .Authorization(TAG_ATTESTATION_APPLICATION_ID, HidlBuf("foo"));
+        // Include one of the (valid) attestation ID tags.
+        builder.push_back(tag);
+        hidl_vec<hidl_vec<uint8_t>> cert_chain;
+        auto result = AttestKey(builder, &cert_chain);
+        if (result == ErrorCode::CANNOT_ATTEST_IDS) {
+            continue;
+        }
+
+        ASSERT_EQ(ErrorCode::OK, result);
+        EXPECT_GE(cert_chain.size(), 2U);
+
+        std::vector<KeyParameter> expected_hw_enforced = key_characteristics_.hardwareEnforced;
+        expected_hw_enforced.push_back(tag);
+
+        EXPECT_TRUE(verify_attestation_record(
+                "challenge", "foo", key_characteristics_.softwareEnforced,
+                hidl_vec<KeyParameter>(expected_hw_enforced), SecLevel(), cert_chain[0]));
+    }
+}
+
+/*
+ * AttestationTest.EcAttestationMismatchID
+ *
+ * Verifies that attesting to EC keys with incorrect attestation ID fields fails.
+ */
+TEST_P(AttestationTest, EcAttestationMismatchID) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                 .EcdsaSigningKey(EcCurve::P_256)
+                                                 .Digest(Digest::SHA_2_256)
+                                                 .Authorization(TAG_INCLUDE_UNIQUE_ID)));
+
+    // Collection of invalid attestation ID tags.
+    std::string invalid = "completely-invalid";
+    auto invalid_tags =
+            AuthorizationSetBuilder()
+                    .Authorization(V4_0::TAG_ATTESTATION_ID_BRAND, invalid.data(), invalid.size())
+                    .Authorization(V4_0::TAG_ATTESTATION_ID_DEVICE, invalid.data(), invalid.size())
+                    .Authorization(V4_0::TAG_ATTESTATION_ID_PRODUCT, invalid.data(), invalid.size())
+                    .Authorization(V4_0::TAG_ATTESTATION_ID_SERIAL, invalid.data(), invalid.size())
+                    .Authorization(V4_0::TAG_ATTESTATION_ID_IMEI, invalid.data(), invalid.size())
+                    .Authorization(V4_0::TAG_ATTESTATION_ID_MEID, invalid.data(), invalid.size())
+                    .Authorization(V4_0::TAG_ATTESTATION_ID_MANUFACTURER, invalid.data(),
+                                   invalid.size())
+                    .Authorization(V4_0::TAG_ATTESTATION_ID_MODEL, invalid.data(), invalid.size());
+
+    for (const KeyParameter& invalid_tag : invalid_tags) {
+        AuthorizationSetBuilder builder =
+                AuthorizationSetBuilder()
+                        .Authorization(TAG_ATTESTATION_CHALLENGE, HidlBuf("challenge"))
+                        .Authorization(TAG_ATTESTATION_APPLICATION_ID, HidlBuf("foo"));
+        // Include one of the invalid attestation ID tags.
+        builder.push_back(invalid_tag);
+        hidl_vec<hidl_vec<uint8_t>> cert_chain;
+        auto result = AttestKey(builder, &cert_chain);
+
+        EXPECT_TRUE(result == ErrorCode::CANNOT_ATTEST_IDS || result == ErrorCode::INVALID_TAG)
+                << "result: " << static_cast<int32_t>(result);
+    }
 }
 
 /*
