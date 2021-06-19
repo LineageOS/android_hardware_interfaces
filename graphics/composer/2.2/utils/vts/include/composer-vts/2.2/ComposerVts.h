@@ -93,10 +93,12 @@ class ComposerClient : public V2_1::vts::ComposerClient {
 
 class Gralloc : public V2_1::vts::Gralloc {
   public:
+    using NativeHandleWrapper = V2_1::vts::NativeHandleWrapper;
+
     Gralloc();
-    const native_handle_t* allocate(uint32_t width, uint32_t height, uint32_t layerCount,
-                                    PixelFormat format, uint64_t usage, bool import = true,
-                                    uint32_t* outStride = nullptr) {
+    const NativeHandleWrapper allocate(uint32_t width, uint32_t height, uint32_t layerCount,
+                                       PixelFormat format, uint64_t usage, bool import = true,
+                                       uint32_t* outStride = nullptr) {
         return V2_1::vts::Gralloc::allocate(
                 width, height, layerCount,
                 static_cast<android::hardware::graphics::common::V1_0::PixelFormat>(format), usage,
