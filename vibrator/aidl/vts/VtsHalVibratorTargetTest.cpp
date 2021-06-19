@@ -309,8 +309,8 @@ TEST_P(VibratorAidl, InvalidEffectsUnsupported) {
         for (EffectStrength strength : kEffectStrengths) {
             int32_t lengthMs;
             Status status = vibrator->perform(effect, strength, nullptr /*callback*/, &lengthMs);
-            EXPECT_EQ(status.exceptionCode(), Status::EX_UNSUPPORTED_OPERATION)
-                << toString(effect) << " " << toString(strength);
+            EXPECT_TRUE(isUnknownOrUnsupported(status))
+                    << status << toString(effect) << " " << toString(strength);
         }
     }
     for (Effect effect : kEffects) {
@@ -686,7 +686,7 @@ TEST_P(VibratorAidl, GetPwlePrimitiveDurationMax) {
         ASSERT_NE(durationMs, 0);
         EXPECT_EQ(status.exceptionCode(), Status::EX_NONE);
     } else {
-        EXPECT_EQ(status.exceptionCode(), Status::EX_UNSUPPORTED_OPERATION);
+        EXPECT_TRUE(isUnknownOrUnsupported(status)) << status;
     }
 }
 

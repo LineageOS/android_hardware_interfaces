@@ -18,6 +18,7 @@
 
 #include <android/hardware/automotive/vehicle/2.0/IVehicle.h>
 #include <utils/Log.h>
+#include <unordered_set>
 
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
@@ -184,20 +185,34 @@ TEST_P(VehicleHalHidlTest, getInvalidProp) {
 TEST_P(VehicleHalHidlTest, setProp) {
     ALOGD("VehicleHalHidlTest::setProp");
     hidl_vec<VehiclePropConfig> propConfigs;
+    // skip hvac related properties
+    std::unordered_set<int32_t> hvacProps = {(int)VehicleProperty::HVAC_DEFROSTER,
+                                             (int)VehicleProperty::HVAC_AC_ON,
+                                             (int)VehicleProperty::HVAC_MAX_AC_ON,
+                                             (int)VehicleProperty::HVAC_MAX_DEFROST_ON,
+                                             (int)VehicleProperty::HVAC_RECIRC_ON,
+                                             (int)VehicleProperty::HVAC_DUAL_ON,
+                                             (int)VehicleProperty::HVAC_AUTO_ON,
+                                             (int)VehicleProperty::HVAC_POWER_ON,
+                                             (int)VehicleProperty::HVAC_AUTO_RECIRC_ON,
+                                             (int)VehicleProperty::HVAC_ELECTRIC_DEFROSTER_ON};
     mVehicle->getAllPropConfigs(
             [&propConfigs](const hidl_vec<VehiclePropConfig>& cfgs) { propConfigs = cfgs; });
     for (const VehiclePropConfig& cfg : propConfigs) {
         // test on boolean and writable property
-        if (cfg.access == VehiclePropertyAccess::READ_WRITE && isBooleanGlobalProp(cfg.prop)) {
+        if (cfg.access == VehiclePropertyAccess::READ_WRITE && isBooleanGlobalProp(cfg.prop) &&
+            !hvacProps.count(cfg.prop)) {
             invokeGet(cfg.prop, 0);
             int setValue = mActualValue.value.int32Values[0] == 1 ? 0 : 1;
             VehiclePropValue propToSet = mActualValue;
             propToSet.value.int32Values[0] = setValue;
-            ASSERT_EQ(StatusCode::OK, mVehicle->set(propToSet));
+            ASSERT_EQ(StatusCode::OK, mVehicle->set(propToSet))
+                    << "Invalid status code for setting property: " << cfg.prop;
             // check set success
             invokeGet(cfg.prop, 0);
             ASSERT_EQ(StatusCode::OK, mActualStatusCode);
-            ASSERT_EQ(setValue, mActualValue.value.int32Values[0]);
+            ASSERT_EQ(setValue, mActualValue.value.int32Values[0])
+                    << "Failed to set value for property: " << cfg.prop;
         }
     }
 }
