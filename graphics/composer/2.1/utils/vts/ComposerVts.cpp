@@ -308,6 +308,12 @@ void ComposerClient::execute(TestCommandReader* reader, CommandWriterBase* write
     writer->reset();
 }
 
+NativeHandleWrapper::~NativeHandleWrapper() {
+    if (mHandle) {
+        mGralloc.freeBuffer(mHandle);
+    }
+}
+
 Gralloc::Gralloc() {
     [this] {
         ASSERT_NO_FATAL_FAILURE(mGralloc4 = std::make_shared<Gralloc4>("default", "default",
@@ -324,9 +330,10 @@ Gralloc::Gralloc() {
     }();
 }
 
-const native_handle_t* Gralloc::allocate(uint32_t width, uint32_t height, uint32_t layerCount,
-                                         PixelFormat format, uint64_t usage, bool import,
-                                         uint32_t* outStride) {
+const NativeHandleWrapper Gralloc::allocate(uint32_t width, uint32_t height, uint32_t layerCount,
+                                            PixelFormat format, uint64_t usage, bool import,
+                                            uint32_t* outStride) {
+    const native_handle_t* handle;
     if (mGralloc4) {
         IMapper4::BufferDescriptorInfo info{};
         info.width = width;
@@ -334,7 +341,7 @@ const native_handle_t* Gralloc::allocate(uint32_t width, uint32_t height, uint32
         info.layerCount = layerCount;
         info.format = static_cast<android::hardware::graphics::common::V1_2::PixelFormat>(format);
         info.usage = usage;
-        return mGralloc4->allocate(info, import, outStride);
+        handle = mGralloc4->allocate(info, import, outStride);
     } else if (mGralloc3) {
         IMapper3::BufferDescriptorInfo info{};
         info.width = width;
@@ -342,7 +349,7 @@ const native_handle_t* Gralloc::allocate(uint32_t width, uint32_t height, uint32
         info.layerCount = layerCount;
         info.format = static_cast<android::hardware::graphics::common::V1_2::PixelFormat>(format);
         info.usage = usage;
-        return mGralloc3->allocate(info, import, outStride);
+        handle = mGralloc3->allocate(info, import, outStride);
     } else {
         IMapper2::BufferDescriptorInfo info{};
         info.width = width;
@@ -350,8 +357,9 @@ const native_handle_t* Gralloc::allocate(uint32_t width, uint32_t height, uint32
         info.layerCount = layerCount;
         info.format = format;
         info.usage = usage;
-        return mGralloc2->allocate(info, import, outStride);
+        handle = mGralloc2->allocate(info, import, outStride);
     }
+    return NativeHandleWrapper(*this, handle);
 }
 
 void* Gralloc::lock(const native_handle_t* bufferHandle, uint64_t cpuUsage,

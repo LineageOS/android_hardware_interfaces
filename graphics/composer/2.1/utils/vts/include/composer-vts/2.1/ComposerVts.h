@@ -136,13 +136,30 @@ class AccessRegion {
     int32_t height;
 };
 
+class Gralloc;
+
+// RAII wrapper around native_handle_t*
+class NativeHandleWrapper {
+  public:
+    NativeHandleWrapper(Gralloc& gralloc, const native_handle_t* handle)
+        : mGralloc(gralloc), mHandle(handle) {}
+
+    ~NativeHandleWrapper();
+
+    const native_handle_t* get() { return mHandle; }
+
+  private:
+    Gralloc& mGralloc;
+    const native_handle_t* mHandle;
+};
+
 class Gralloc {
   public:
     explicit Gralloc();
 
-    const native_handle_t* allocate(uint32_t width, uint32_t height, uint32_t layerCount,
-                                    PixelFormat format, uint64_t usage, bool import = true,
-                                    uint32_t* outStride = nullptr);
+    const NativeHandleWrapper allocate(uint32_t width, uint32_t height, uint32_t layerCount,
+                                       PixelFormat format, uint64_t usage, bool import = true,
+                                       uint32_t* outStride = nullptr);
 
     void* lock(const native_handle_t* bufferHandle, uint64_t cpuUsage,
                const AccessRegion& accessRegionRect, int acquireFence);
