@@ -76,6 +76,8 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     uint32_t os_version() { return os_version_; }
     uint32_t os_patch_level() { return os_patch_level_; }
     uint32_t vendor_patch_level() { return vendor_patch_level_; }
+    uint32_t boot_patch_level(const vector<KeyCharacteristics>& key_characteristics);
+    uint32_t boot_patch_level();
 
     ErrorCode GetReturnErrorCode(const Status& result);
 
@@ -253,7 +255,7 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
         /* ECDSA */
         KeyData ecdsaKeyData;
         AuthorizationSetBuilder ecdsaBuilder = AuthorizationSetBuilder()
-                                                       .EcdsaSigningKey(256)
+                                                       .EcdsaSigningKey(EcCurve::P_256)
                                                        .Authorization(tagToTest)
                                                        .Digest(Digest::SHA_2_256)
                                                        .Authorization(TAG_NO_AUTH_REQUIRED)
