@@ -21,5 +21,9 @@ hidl_interface {
         "android.hardware.tetheroffload.control@1.0",
         "android.hidl.base@1.0",
     ],
+    apex_available: [
+        "//apex_available:platform", // Used by InProcessTethering
+        "com.android.tethering",
+    ],
     gen_java: true,
 }
