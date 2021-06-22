@@ -255,7 +255,7 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
         /* ECDSA */
         KeyData ecdsaKeyData;
         AuthorizationSetBuilder ecdsaBuilder = AuthorizationSetBuilder()
-                                                       .EcdsaSigningKey(256)
+                                                       .EcdsaSigningKey(EcCurve::P_256)
                                                        .Authorization(tagToTest)
                                                        .Digest(Digest::SHA_2_256)
                                                        .Authorization(TAG_NO_AUTH_REQUIRED)
