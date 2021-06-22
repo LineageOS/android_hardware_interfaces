@@ -335,8 +335,7 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
         ASSERT_TRUE(deviceInfoMap->asMap());
 
         auto& signingKey = bccContents->back().pubKey;
-        auto macKey = verifyAndParseCoseSign1(/* ignore_signature = */ false, signedMac->asArray(),
-                                              signingKey,
+        auto macKey = verifyAndParseCoseSign1(signedMac->asArray(), signingKey,
                                               cppbor::Array()  // SignedMacAad
                                                       .add(challenge_)
                                                       .add(std::move(deviceInfoMap))
