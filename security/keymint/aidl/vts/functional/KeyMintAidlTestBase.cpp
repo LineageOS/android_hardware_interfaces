@@ -62,6 +62,9 @@ namespace test {
 
 namespace {
 
+// Invalid value for a patchlevel (which is of form YYYYMMDD).
+const uint32_t kInvalidPatchlevel = 99998877;
+
 // Overhead for PKCS#1 v1.5 signature padding of undigested messages.  Digested messages have
 // additional overhead, for the digest algorithmIdentifier required by PKCS#1.
 const size_t kPkcs1UndigestedSignaturePaddingOverhead = 11;
@@ -126,10 +129,9 @@ char nibble2hex[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
 // Attestations don't contain everything in key authorization lists, so we need to filter the key
 // lists to produce the lists that we expect to match the attestations.
 auto kTagsToFilter = {
-    Tag::CREATION_DATETIME,
-    Tag::EC_CURVE,
-    Tag::HARDWARE_TYPE,
-    Tag::INCLUDE_UNIQUE_ID,
+        Tag::CREATION_DATETIME,
+        Tag::HARDWARE_TYPE,
+        Tag::INCLUDE_UNIQUE_ID,
 };
 
 AuthorizationSet filtered_tags(const AuthorizationSet& set) {
@@ -162,6 +164,28 @@ string x509NameToStr(X509_NAME* name) {
 
 bool KeyMintAidlTestBase::arm_deleteAllKeys = false;
 bool KeyMintAidlTestBase::dump_Attestations = false;
+
+uint32_t KeyMintAidlTestBase::boot_patch_level(
+        const vector<KeyCharacteristics>& key_characteristics) {
+    // The boot patchlevel is not available as a property, but should be present
+    // in the key characteristics of any created key.
+    AuthorizationSet allAuths;
+    for (auto& entry : key_characteristics) {
+        allAuths.push_back(AuthorizationSet(entry.authorizations));
+    }
+    auto patchlevel = allAuths.GetTagValue(TAG_BOOT_PATCHLEVEL);
+    if (patchlevel.has_value()) {
+        return patchlevel.value();
+    } else {
+        // No boot patchlevel is available. Return a value that won't match anything
+        // and so will trigger test failures.
+        return kInvalidPatchlevel;
+    }
+}
+
+uint32_t KeyMintAidlTestBase::boot_patch_level() {
+    return boot_patch_level(key_characteristics_);
+}
 
 ErrorCode KeyMintAidlTestBase::GetReturnErrorCode(const Status& result) {
     if (result.isOk()) return ErrorCode::OK;
@@ -1293,9 +1317,9 @@ bool verify_attestation_record(const string& challenge,                //
     AuthorizationSet att_sw_enforced;
     AuthorizationSet att_hw_enforced;
     uint32_t att_attestation_version;
-    uint32_t att_keymaster_version;
+    uint32_t att_keymint_version;
     SecurityLevel att_attestation_security_level;
-    SecurityLevel att_keymaster_security_level;
+    SecurityLevel att_keymint_security_level;
     vector<uint8_t> att_challenge;
     vector<uint8_t> att_unique_id;
     vector<uint8_t> att_app_id;
@@ -1304,8 +1328,8 @@ bool verify_attestation_record(const string& challenge,                //
                                           attest_rec->length,               //
                                           &att_attestation_version,         //
                                           &att_attestation_security_level,  //
-                                          &att_keymaster_version,           //
-                                          &att_keymaster_security_level,    //
+                                          &att_keymint_version,             //
+                                          &att_keymint_security_level,      //
                                           &att_challenge,                   //
                                           &att_sw_enforced,                 //
                                           &att_hw_enforced,                 //
@@ -1324,14 +1348,14 @@ bool verify_attestation_record(const string& challenge,                //
         expected_sw_enforced.push_back(TAG_ATTESTATION_APPLICATION_ID, appId);
     }
 
-    EXPECT_EQ(att_keymaster_version, 100U);
-    EXPECT_EQ(security_level, att_keymaster_security_level);
+    EXPECT_EQ(att_keymint_version, 100U);
+    EXPECT_EQ(security_level, att_keymint_security_level);
     EXPECT_EQ(security_level, att_attestation_security_level);
 
 
     char property_value[PROPERTY_VALUE_MAX] = {};
     // TODO(b/136282179): When running under VTS-on-GSI the TEE-backed
-    // keymaster implementation will report YYYYMM dates instead of YYYYMMDD
+    // keymint implementation will report YYYYMM dates instead of YYYYMMDD
     // for the BOOT_PATCH_LEVEL.
     if (avb_verification_enabled()) {
         for (int i = 0; i < att_hw_enforced.size(); i++) {
@@ -1369,13 +1393,6 @@ bool verify_attestation_record(const string& challenge,                //
     } else {
         EXPECT_TRUE(expected_hw_enforced.Contains(TAG_NO_AUTH_REQUIRED));
     }
-
-    // Alternatively this checks the opposite - a false boolean tag (one that isn't provided in
-    // the authorization list during key generation) isn't being attested to in the certificate.
-    EXPECT_FALSE(expected_sw_enforced.Contains(TAG_TRUSTED_USER_PRESENCE_REQUIRED));
-    EXPECT_FALSE(att_sw_enforced.Contains(TAG_TRUSTED_USER_PRESENCE_REQUIRED));
-    EXPECT_FALSE(expected_hw_enforced.Contains(TAG_TRUSTED_USER_PRESENCE_REQUIRED));
-    EXPECT_FALSE(att_hw_enforced.Contains(TAG_TRUSTED_USER_PRESENCE_REQUIRED));
 
     if (att_hw_enforced.Contains(TAG_ALGORITHM, Algorithm::EC)) {
         // For ECDSA keys, either an EC_CURVE or a KEY_SIZE can be specified, but one must be.
@@ -1442,9 +1459,7 @@ bool verify_attestation_record(const string& challenge,                //
 
     att_sw_enforced.Sort();
     expected_sw_enforced.Sort();
-    auto a = filtered_tags(expected_sw_enforced);
-    auto b = filtered_tags(att_sw_enforced);
-    EXPECT_EQ(a, b);
+    EXPECT_EQ(filtered_tags(expected_sw_enforced), filtered_tags(att_sw_enforced));
 
     att_hw_enforced.Sort();
     expected_hw_enforced.Sort();

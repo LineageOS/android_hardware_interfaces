@@ -18,6 +18,8 @@
 #include <cutils/log.h>
 
 #include <signal.h>
+
+#include <algorithm>
 #include <iostream>
 
 #include <openssl/ec.h>
@@ -1436,6 +1438,170 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestation) {
 
         CheckedDeleteKey(&key_blob);
     }
+}
+
+/*
+ * NewKeyGenerationTest.EcdsaAttestationTags
+ *
+ * Verifies that creation of an attested ECDSA key includes various tags in the
+ * attestation extension.
+ */
+TEST_P(NewKeyGenerationTest, EcdsaAttestationTags) {
+    auto challenge = "hello";
+    auto app_id = "foo";
+    auto subject = "cert subj 2";
+    vector<uint8_t> subject_der(make_name_from_str(subject));
+    uint64_t serial_int = 0x1010;
+    vector<uint8_t> serial_blob(build_serial_blob(serial_int));
+    const AuthorizationSetBuilder base_builder =
+            AuthorizationSetBuilder()
+                    .Authorization(TAG_NO_AUTH_REQUIRED)
+                    .EcdsaSigningKey(256)
+                    .Digest(Digest::NONE)
+                    .AttestationChallenge(challenge)
+                    .AttestationApplicationId(app_id)
+                    .Authorization(TAG_CERTIFICATE_SERIAL, serial_blob)
+                    .Authorization(TAG_CERTIFICATE_SUBJECT, subject_der)
+                    .SetDefaultValidity();
+
+    // Various tags that map to fields in the attestation extension ASN.1 schema.
+    auto extra_tags = AuthorizationSetBuilder()
+                              .Authorization(TAG_ROLLBACK_RESISTANCE)
+                              .Authorization(TAG_EARLY_BOOT_ONLY)
+                              .Authorization(TAG_ACTIVE_DATETIME, 1619621648000)
+                              .Authorization(TAG_ORIGINATION_EXPIRE_DATETIME, 1619621648000)
+                              .Authorization(TAG_USAGE_EXPIRE_DATETIME, 1619621999000)
+                              .Authorization(TAG_USAGE_COUNT_LIMIT, 42)
+                              .Authorization(TAG_AUTH_TIMEOUT, 100000)
+                              .Authorization(TAG_ALLOW_WHILE_ON_BODY)
+                              .Authorization(TAG_TRUSTED_USER_PRESENCE_REQUIRED)
+                              .Authorization(TAG_TRUSTED_CONFIRMATION_REQUIRED)
+                              .Authorization(TAG_UNLOCKED_DEVICE_REQUIRED)
+                              .Authorization(TAG_CREATION_DATETIME, 1619621648000);
+    for (const KeyParameter& tag : extra_tags) {
+        SCOPED_TRACE(testing::Message() << "tag-" << tag);
+        vector<uint8_t> key_blob;
+        vector<KeyCharacteristics> key_characteristics;
+        AuthorizationSetBuilder builder = base_builder;
+        builder.push_back(tag);
+        auto result = GenerateKey(builder, &key_blob, &key_characteristics);
+        if (result == ErrorCode::ROLLBACK_RESISTANCE_UNAVAILABLE &&
+            tag.tag == TAG_ROLLBACK_RESISTANCE) {
+            continue;
+        }
+        if (result == ErrorCode::UNSUPPORTED_TAG &&
+            (tag.tag == TAG_ALLOW_WHILE_ON_BODY || tag.tag == TAG_TRUSTED_USER_PRESENCE_REQUIRED)) {
+            // Optional tag not supported by this KeyMint implementation.
+            continue;
+        }
+        ASSERT_EQ(result, ErrorCode::OK);
+        ASSERT_GT(key_blob.size(), 0U);
+
+        EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
+        ASSERT_GT(cert_chain_.size(), 0);
+        verify_subject_and_serial(cert_chain_[0], serial_int, subject, /* self_signed = */ false);
+
+        AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
+        AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
+        if (tag.tag != TAG_ATTESTATION_APPLICATION_ID) {
+            // Expect to find most of the extra tags in the key characteristics
+            // of the generated key (but not for ATTESTATION_APPLICATION_ID).
+            EXPECT_TRUE(hw_enforced.Contains(tag.tag) || sw_enforced.Contains(tag.tag))
+                    << tag << " not in hw:" << hw_enforced << " nor sw:" << sw_enforced;
+        }
+
+        // Verifying the attestation record will check for the specific tag because
+        // it's included in the authorizations.
+        EXPECT_TRUE(verify_attestation_record(challenge, app_id, sw_enforced, hw_enforced,
+                                              SecLevel(), cert_chain_[0].encodedCertificate));
+
+        CheckedDeleteKey(&key_blob);
+    }
+
+    // Device attestation IDs should be rejected for normal attestation requests; these fields
+    // are only used for device unique attestation.
+    auto invalid_tags = AuthorizationSetBuilder()
+                                .Authorization(TAG_ATTESTATION_ID_BRAND, "brand")
+                                .Authorization(TAG_ATTESTATION_ID_DEVICE, "device")
+                                .Authorization(TAG_ATTESTATION_ID_PRODUCT, "product")
+                                .Authorization(TAG_ATTESTATION_ID_SERIAL, "serial")
+                                .Authorization(TAG_ATTESTATION_ID_IMEI, "imei")
+                                .Authorization(TAG_ATTESTATION_ID_MEID, "meid")
+                                .Authorization(TAG_ATTESTATION_ID_MANUFACTURER, "manufacturer")
+                                .Authorization(TAG_ATTESTATION_ID_MODEL, "model");
+    for (const KeyParameter& tag : invalid_tags) {
+        SCOPED_TRACE(testing::Message() << "tag-" << tag);
+        vector<uint8_t> key_blob;
+        vector<KeyCharacteristics> key_characteristics;
+        AuthorizationSetBuilder builder =
+                AuthorizationSetBuilder()
+                        .Authorization(TAG_NO_AUTH_REQUIRED)
+                        .EcdsaSigningKey(256)
+                        .Digest(Digest::NONE)
+                        .AttestationChallenge(challenge)
+                        .AttestationApplicationId(app_id)
+                        .Authorization(TAG_CERTIFICATE_SERIAL, serial_blob)
+                        .Authorization(TAG_CERTIFICATE_SUBJECT, subject_der)
+                        .SetDefaultValidity();
+        builder.push_back(tag);
+        ASSERT_EQ(ErrorCode::CANNOT_ATTEST_IDS,
+                  GenerateKey(builder, &key_blob, &key_characteristics));
+    }
+}
+
+/*
+ * NewKeyGenerationTest.EcdsaAttestationTagNoApplicationId
+ *
+ * Verifies that creation of an attested ECDSA key does not include APPLICATION_ID.
+ */
+TEST_P(NewKeyGenerationTest, EcdsaAttestationTagNoApplicationId) {
+    auto challenge = "hello";
+    auto attest_app_id = "foo";
+    auto subject = "cert subj 2";
+    vector<uint8_t> subject_der(make_name_from_str(subject));
+    uint64_t serial_int = 0x1010;
+    vector<uint8_t> serial_blob(build_serial_blob(serial_int));
+
+    // Earlier versions of the attestation extension schema included a slot:
+    //     applicationId  [601] EXPLICIT OCTET_STRING OPTIONAL,
+    // This should never have been included, and should never be filled in.
+    // Generate an attested key that include APPLICATION_ID and APPLICATION_DATA,
+    // to confirm that this field never makes it into the attestation extension.
+    vector<uint8_t> key_blob;
+    vector<KeyCharacteristics> key_characteristics;
+    auto result = GenerateKey(AuthorizationSetBuilder()
+                                      .Authorization(TAG_NO_AUTH_REQUIRED)
+                                      .EcdsaSigningKey(EcCurve::P_256)
+                                      .Digest(Digest::NONE)
+                                      .AttestationChallenge(challenge)
+                                      .AttestationApplicationId(attest_app_id)
+                                      .Authorization(TAG_APPLICATION_ID, "client_id")
+                                      .Authorization(TAG_APPLICATION_DATA, "appdata")
+                                      .Authorization(TAG_CERTIFICATE_SERIAL, serial_blob)
+                                      .Authorization(TAG_CERTIFICATE_SUBJECT, subject_der)
+                                      .SetDefaultValidity(),
+                              &key_blob, &key_characteristics);
+    ASSERT_EQ(result, ErrorCode::OK);
+    ASSERT_GT(key_blob.size(), 0U);
+
+    EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
+    ASSERT_GT(cert_chain_.size(), 0);
+    verify_subject_and_serial(cert_chain_[0], serial_int, subject, /* self_signed = */ false);
+
+    AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
+    AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
+    EXPECT_TRUE(verify_attestation_record(challenge, attest_app_id, sw_enforced, hw_enforced,
+                                          SecLevel(), cert_chain_[0].encodedCertificate));
+
+    // Check that the app id is not in the cert.
+    string app_id = "clientid";
+    std::vector<uint8_t> needle(reinterpret_cast<const uint8_t*>(app_id.data()),
+                                reinterpret_cast<const uint8_t*>(app_id.data()) + app_id.size());
+    ASSERT_EQ(std::search(cert_chain_[0].encodedCertificate.begin(),
+                          cert_chain_[0].encodedCertificate.end(), needle.begin(), needle.end()),
+              cert_chain_[0].encodedCertificate.end());
+
+    CheckedDeleteKey(&key_blob);
 }
 
 /*

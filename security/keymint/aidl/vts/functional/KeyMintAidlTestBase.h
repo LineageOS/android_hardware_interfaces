@@ -76,6 +76,8 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     uint32_t os_version() { return os_version_; }
     uint32_t os_patch_level() { return os_patch_level_; }
     uint32_t vendor_patch_level() { return vendor_patch_level_; }
+    uint32_t boot_patch_level(const vector<KeyCharacteristics>& key_characteristics);
+    uint32_t boot_patch_level();
 
     ErrorCode GetReturnErrorCode(const Status& result);
 
