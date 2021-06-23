@@ -6,6 +6,7 @@ cc_library_shared {
     srcs: [
         "HdmiCec.cpp",
         "HdmiCecDefault.cpp",
+        "HdmiCecPort.cpp",
     ],
 
     shared_libs: [
