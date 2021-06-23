@@ -3,4 +3,4 @@ service vendor.tuner-hal-1-0 /vendor/bin/hw/android.hardware.tv.tuner@1.0-servic
     user media
     group mediadrm drmrpc
     ioprio rt 4
-    writepid /dev/cpuset/foreground/tasks
+    task_profiles ProcessCapacityHigh
