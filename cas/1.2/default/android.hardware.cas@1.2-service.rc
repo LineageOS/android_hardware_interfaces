@@ -3,4 +3,4 @@ service vendor.cas-hal-1-2 /vendor/bin/hw/android.hardware.cas@1.2-service
     user media
     group mediadrm drmrpc
     ioprio rt 4
-    writepid /dev/cpuset/foreground/tasks
+    task_profiles ProcessCapacityHigh
