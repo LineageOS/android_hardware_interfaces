@@ -1059,7 +1059,8 @@ WifiStatus WifiChip::removeIfaceInstanceFromBridgedApIfaceInternal(
     // Requires to remove one of the instance in bridge mode
     for (auto const& it : br_ifaces_ap_instances_) {
         if (it.first == ifname) {
-            for (auto const& iface : it.second) {
+            std::vector<std::string> ap_instances = it.second;
+            for (auto const& iface : ap_instances) {
                 if (iface == ifInstanceName) {
                     if (!iface_util_->removeIfaceFromBridge(it.first, iface)) {
                         LOG(ERROR)
@@ -1075,13 +1076,20 @@ WifiStatus WifiChip::removeIfaceInstanceFromBridgedApIfaceInternal(
                                    << " " << legacyErrorToString(legacy_status);
                         return createWifiStatusFromLegacyError(legacy_status);
                     }
+                    ap_instances.erase(
+                        std::remove(ap_instances.begin(), ap_instances.end(),
+                                    ifInstanceName),
+                        ap_instances.end());
+                    br_ifaces_ap_instances_[ifname] = ap_instances;
+                    break;
                 }
             }
             break;
         }
     }
-    br_ifaces_ap_instances_.erase(ifInstanceName);
     iface->removeInstance(ifInstanceName);
+    setActiveWlanIfaceNameProperty(getFirstActiveWlanIfaceName());
+
     return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
