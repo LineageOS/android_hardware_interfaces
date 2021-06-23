@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "VehicleHalServer"
-
-#include "VehicleHalServer.h"
+#define LOG_TAG "DefaultVehicleHalServer"
 
 #include <fstream>
 
@@ -26,63 +24,56 @@
 #include "DefaultConfig.h"
 #include "JsonFakeValueGenerator.h"
 #include "LinearFakeValueGenerator.h"
-#include "Obd2SensorStore.h"
 
-namespace android::hardware::automotive::vehicle::V2_0::impl {
+#include "DefaultVehicleHalServer.h"
 
-static bool isDiagnosticProperty(VehiclePropConfig propConfig) {
-    switch (propConfig.prop) {
-        case OBD2_LIVE_FRAME:
-        case OBD2_FREEZE_FRAME:
-        case OBD2_FREEZE_FRAME_CLEAR:
-        case OBD2_FREEZE_FRAME_INFO:
-            return true;
+namespace android {
+namespace hardware {
+namespace automotive {
+namespace vehicle {
+namespace V2_0 {
+
+namespace impl {
+
+void DefaultVehicleHalServer::storePropInitialValue(const ConfigDeclaration& config) {
+    VehiclePropConfig cfg = config.config;
+
+    // A global property will have only a single area
+    int32_t numAreas = isGlobalProp(cfg.prop) ? 1 : cfg.areaConfigs.size();
+
+    for (int i = 0; i < numAreas; i++) {
+        int32_t curArea = isGlobalProp(cfg.prop) ? 0 : cfg.areaConfigs[i].areaId;
+
+        // Create a separate instance for each individual zone
+        VehiclePropValue prop = {
+                .areaId = curArea,
+                .prop = cfg.prop,
+        };
+
+        if (config.initialAreaValues.empty()) {
+            prop.value = config.initialValue;
+        } else if (auto valueForAreaIt = config.initialAreaValues.find(curArea);
+                   valueForAreaIt != config.initialAreaValues.end()) {
+            prop.value = valueForAreaIt->second;
+        } else {
+            LOG(WARNING) << __func__ << " failed to get default value for"
+                         << " prop 0x" << std::hex << cfg.prop << " area 0x" << std::hex << curArea;
+            prop.status = VehiclePropertyStatus::UNAVAILABLE;
+        }
+
+        mServerSidePropStore.writeValue(prop, true);
     }
-    return false;
 }
 
-VehicleHalServer::VehicleHalServer() {
-    constexpr bool shouldUpdateStatus = true;
-
+DefaultVehicleHalServer::DefaultVehicleHalServer() {
     for (auto& it : kVehicleProperties) {
         VehiclePropConfig cfg = it.config;
-
         mServerSidePropStore.registerProperty(cfg);
-
-        if (isDiagnosticProperty(cfg)) {
-            continue;
-        }
-
-        // A global property will have only a single area
-        int32_t numAreas = isGlobalProp(cfg.prop) ? 1 : cfg.areaConfigs.size();
-
-        for (int i = 0; i < numAreas; i++) {
-            int32_t curArea = isGlobalProp(cfg.prop) ? 0 : cfg.areaConfigs[i].areaId;
-
-            // Create a separate instance for each individual zone
-            VehiclePropValue prop = {
-                    .areaId = curArea,
-                    .prop = cfg.prop,
-            };
-
-            if (it.initialAreaValues.empty()) {
-                prop.value = it.initialValue;
-            } else if (auto valueForAreaIt = it.initialAreaValues.find(curArea);
-                       valueForAreaIt != it.initialAreaValues.end()) {
-                prop.value = valueForAreaIt->second;
-            } else {
-                LOG(WARNING) << __func__ << " failed to get default value for"
-                             << " prop 0x" << std::hex << cfg.prop << " area 0x" << std::hex
-                             << curArea;
-                prop.status = VehiclePropertyStatus::UNAVAILABLE;
-            }
-
-            mServerSidePropStore.writeValue(prop, shouldUpdateStatus);
-        }
+        storePropInitialValue(it);
     }
 }
 
-void VehicleHalServer::sendAllValuesToClient() {
+void DefaultVehicleHalServer::sendAllValuesToClient() {
     constexpr bool update_status = true;
     auto values = mServerSidePropStore.readAllValues();
     for (const auto& value : values) {
@@ -90,25 +81,25 @@ void VehicleHalServer::sendAllValuesToClient() {
     }
 }
 
-GeneratorHub* VehicleHalServer::getGenerator() {
+GeneratorHub* DefaultVehicleHalServer::getGenerator() {
     return &mGeneratorHub;
 }
 
-VehiclePropValuePool* VehicleHalServer::getValuePool() const {
+VehiclePropValuePool* DefaultVehicleHalServer::getValuePool() const {
     if (!mValuePool) {
         LOG(WARNING) << __func__ << ": Value pool not set!";
     }
     return mValuePool;
 }
 
-void VehicleHalServer::setValuePool(VehiclePropValuePool* valuePool) {
+void DefaultVehicleHalServer::setValuePool(VehiclePropValuePool* valuePool) {
     if (!valuePool) {
         LOG(WARNING) << __func__ << ": Setting value pool to nullptr!";
     }
     mValuePool = valuePool;
 }
 
-void VehicleHalServer::onFakeValueGenerated(const VehiclePropValue& value) {
+void DefaultVehicleHalServer::onFakeValueGenerated(const VehiclePropValue& value) {
     constexpr bool updateStatus = true;
     LOG(DEBUG) << __func__ << ": " << toString(value);
     auto updatedPropValue = getValuePool()->obtain(value);
@@ -120,11 +111,11 @@ void VehicleHalServer::onFakeValueGenerated(const VehiclePropValue& value) {
     }
 }
 
-std::vector<VehiclePropConfig> VehicleHalServer::onGetAllPropertyConfig() const {
+std::vector<VehiclePropConfig> DefaultVehicleHalServer::onGetAllPropertyConfig() const {
     return mServerSidePropStore.getAllConfigs();
 }
 
-StatusCode VehicleHalServer::handleGenerateFakeDataRequest(const VehiclePropValue& request) {
+StatusCode DefaultVehicleHalServer::handleGenerateFakeDataRequest(const VehiclePropValue& request) {
     constexpr bool updateStatus = true;
 
     LOG(INFO) << __func__;
@@ -209,7 +200,7 @@ StatusCode VehicleHalServer::handleGenerateFakeDataRequest(const VehiclePropValu
     return StatusCode::OK;
 }
 
-VehicleHalServer::VehiclePropValuePtr VehicleHalServer::createApPowerStateReq(
+DefaultVehicleHalServer::VehiclePropValuePtr DefaultVehicleHalServer::createApPowerStateReq(
         VehicleApPowerStateReq state, int32_t param) {
     auto req = getValuePool()->obtain(VehiclePropertyType::INT32_VEC, 2);
     req->prop = toInt(VehicleProperty::AP_POWER_STATE_REQ);
@@ -221,7 +212,7 @@ VehicleHalServer::VehiclePropValuePtr VehicleHalServer::createApPowerStateReq(
     return req;
 }
 
-VehicleHalServer::VehiclePropValuePtr VehicleHalServer::createHwInputKeyProp(
+DefaultVehicleHalServer::VehiclePropValuePtr DefaultVehicleHalServer::createHwInputKeyProp(
         VehicleHwKeyInputAction action, int32_t keyCode, int32_t targetDisplay) {
     auto keyEvent = getValuePool()->obtain(VehiclePropertyType::INT32_VEC, 3);
     keyEvent->prop = toInt(VehicleProperty::HW_KEY_INPUT);
@@ -234,7 +225,8 @@ VehicleHalServer::VehiclePropValuePtr VehicleHalServer::createHwInputKeyProp(
     return keyEvent;
 }
 
-StatusCode VehicleHalServer::onSetProperty(const VehiclePropValue& value, bool updateStatus) {
+StatusCode DefaultVehicleHalServer::onSetProperty(const VehiclePropValue& value,
+                                                  bool updateStatus) {
     LOG(DEBUG) << "onSetProperty(" << value.prop << ")";
 
     // Some properties need to be treated non-trivially
@@ -337,4 +329,10 @@ StatusCode VehicleHalServer::onSetProperty(const VehiclePropValue& value, bool u
     return StatusCode::OK;
 }
 
-}  // namespace android::hardware::automotive::vehicle::V2_0::impl
+}  // namespace impl
+
+}  // namespace V2_0
+}  // namespace vehicle
+}  // namespace automotive
+}  // namespace hardware
+}  // namespace android
