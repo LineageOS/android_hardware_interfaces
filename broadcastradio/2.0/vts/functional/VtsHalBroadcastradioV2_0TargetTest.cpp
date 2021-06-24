@@ -496,10 +496,26 @@ TEST_P(BroadcastRadioHalTest, TuneFailsWithInvalid) {
  *  - program changes exactly to what was requested.
  */
 TEST_P(BroadcastRadioHalTest, DabTune) {
+    Result halResult;
+    hidl_vec<DabTableEntry> config;
+    auto cb = [&](Result result, hidl_vec<DabTableEntry> configCb) {
+        halResult = result;
+        config = configCb;
+    };
+    auto hidlResult = mModule->getDabRegionConfig(cb);
+    ASSERT_TRUE(hidlResult.isOk());
+
+    if (halResult == Result::NOT_SUPPORTED) {
+        printSkipped("DAB not supported");
+        return;
+    }
+    ASSERT_EQ(Result::OK, halResult);
+    ASSERT_NE(config.size(), 0U);
+
     ASSERT_TRUE(openSession());
 
     ProgramSelector sel = {};
-    uint64_t freq = 178352;
+    uint64_t freq = config[config.size() / 2].frequency;
     sel.primaryId = make_identifier(IdentifierType::DAB_FREQUENCY,freq);
 
     std::this_thread::sleep_for(gTuneWorkaround);
