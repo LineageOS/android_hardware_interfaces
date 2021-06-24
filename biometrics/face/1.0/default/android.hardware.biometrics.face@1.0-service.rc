@@ -5,6 +5,6 @@ service vendor.face-hal-1-0-default /vendor/bin/hw/android.hardware.biometrics.f
     class late_start
     user system
     group system
-    writepid /dev/cpuset/foreground/tasks
+    task_profiles ProcessCapacityHigh
     capabilities SYS_NICE
     rlimit rtprio 10 10

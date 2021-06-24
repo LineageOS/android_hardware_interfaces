@@ -44,7 +44,7 @@ const V1_0::ErrorStatus versionedAfter = V1_0::utils::convert(canonical).value()
 EXPECT_EQ(versionedBefore, versionedAfter);
 ```
 
-The `convert` functions operate only on types that used in a HIDL method call directly. The
+The `convert` functions operate only on types that are used in a HIDL method call directly. The
 `unvalidatedConvert` functions operate on types that are either used in a HIDL method call directly
 (i.e., not as a nested class) or used in a subsequent version of the NN HAL. Prefer using `convert`
 over `unvalidatedConvert`.
