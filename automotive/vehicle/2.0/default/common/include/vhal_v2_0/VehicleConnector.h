@@ -20,6 +20,7 @@
 #include <vector>
 
 #include <android/hardware/automotive/vehicle/2.0/types.h>
+#include <utils/Log.h>
 
 #include "VehicleClient.h"
 #include "VehicleServer.h"
@@ -72,7 +73,21 @@ class IPassThroughConnector : public VehicleClientType, public VehicleServerType
     }
 
     bool dump(const hidl_handle& handle, const hidl_vec<hidl_string>& options) override {
-        return this->onDump(handle, options);
+        // Calls server's onDump function and print the dumped info to the handle.
+        std::vector<std::string> stdOptions;
+        for (size_t i = 0; i < options.size(); i++) {
+            stdOptions.push_back(options[i]);
+        }
+        IVehicleServer::DumpResult result = this->onDump(stdOptions);
+        int fd = handle->data[0];
+        if (fd < 0) {
+            ALOGW("Invalid fd from HIDL handle: %d", fd);
+            return false;
+        }
+        if (result.buffer.size() != 0) {
+            dprintf(fd, "[VehicleHalServer] Dumped info: %s\n", result.buffer.c_str());
+        }
+        return result.callerShouldDumpState;
     }
 
     // To be implemented:
