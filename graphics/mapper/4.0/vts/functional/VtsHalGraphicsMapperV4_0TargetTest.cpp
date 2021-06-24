@@ -59,6 +59,12 @@ using aidl::android::hardware::graphics::common::StandardMetadataType;
 using DecodeFunction = std::function<void(const IMapper::BufferDescriptorInfo& descriptorInfo,
                                           const hidl_vec<uint8_t>& vec)>;
 
+struct YCbCr {
+    android_ycbcr yCbCr;
+    int64_t horizontalSubSampling;
+    int64_t verticalSubSampling;
+};
+
 class GraphicsMapperHidlTest
     : public ::testing::TestWithParam<std::tuple<std::string, std::string>> {
   protected:
@@ -215,8 +221,8 @@ class GraphicsMapperHidlTest
                 }
                 ASSERT_EQ(0, planeLayoutComponent.offsetInBits % 8);
 
-                uint8_t* tmpData =
-                        data + planeLayout.offsetInBytes + (planeLayoutComponent.offsetInBits / 8);
+                uint8_t* tmpData = data + planeLayout.offsetInBytes +
+                                   bitsToBytes(planeLayoutComponent.offsetInBits);
                 uint64_t sampleIncrementInBytes;
 
                 auto type = static_cast<PlaneLayoutComponentType>(planeLayoutComponent.type.value);
@@ -271,6 +277,96 @@ class GraphicsMapperHidlTest
         ASSERT_NE(nullptr, outYCbCr->cr);
     }
 
+    YCbCr getAndroidYCbCr_P010(const native_handle_t* bufferHandle, uint8_t* data) {
+        YCbCr yCbCr_P010;
+        hidl_vec<uint8_t> vec;
+        EXPECT_EQ(Error::NONE,
+                  mGralloc->get(bufferHandle, gralloc4::MetadataType_PlaneLayouts, &vec));
+        std::vector<PlaneLayout> planeLayouts;
+        EXPECT_EQ(NO_ERROR, gralloc4::decodePlaneLayouts(vec, &planeLayouts));
+        EXPECT_EQ(2, planeLayouts.size());
+        EXPECT_EQ(1, planeLayouts[0].components.size());
+        EXPECT_EQ(2, planeLayouts[1].components.size());
+
+        yCbCr_P010.yCbCr.y = nullptr;
+        yCbCr_P010.yCbCr.cb = nullptr;
+        yCbCr_P010.yCbCr.cr = nullptr;
+        yCbCr_P010.yCbCr.ystride = 0;
+        yCbCr_P010.yCbCr.cstride = 0;
+        yCbCr_P010.yCbCr.chroma_step = 0;
+        int64_t cb_offset = 0;
+        int64_t cr_offset = 0;
+
+        for (const auto& planeLayout : planeLayouts) {
+            for (const auto& planeLayoutComponent : planeLayout.components) {
+                if (!gralloc4::isStandardPlaneLayoutComponentType(planeLayoutComponent.type)) {
+                    continue;
+                }
+
+                uint8_t* tmpData = data + planeLayout.offsetInBytes +
+                                   bitsToBytes(planeLayoutComponent.offsetInBits);
+                uint64_t sampleIncrementInBytes = 0;
+                auto type = static_cast<PlaneLayoutComponentType>(planeLayoutComponent.type.value);
+                switch (type) {
+                    case PlaneLayoutComponentType::Y:
+                        // For specs refer:
+                        // https://docs.microsoft.com/en-us/windows/win32/medfound/10-bit-and-16-bit-yuv-video-formats
+                        EXPECT_EQ(6, planeLayoutComponent.offsetInBits);
+                        EXPECT_EQ(nullptr, yCbCr_P010.yCbCr.y);
+                        EXPECT_EQ(10, planeLayoutComponent.sizeInBits);
+                        EXPECT_EQ(16, planeLayout.sampleIncrementInBits);
+
+                        yCbCr_P010.yCbCr.y = tmpData;
+                        yCbCr_P010.yCbCr.ystride = planeLayout.strideInBytes;
+                        break;
+
+                    case PlaneLayoutComponentType::CB:
+                    case PlaneLayoutComponentType::CR:
+                        sampleIncrementInBytes = bitsToBytes(planeLayout.sampleIncrementInBits);
+                        EXPECT_EQ(4, sampleIncrementInBytes);
+
+                        if (yCbCr_P010.yCbCr.cstride == 0 && yCbCr_P010.yCbCr.chroma_step == 0) {
+                            yCbCr_P010.yCbCr.cstride = planeLayout.strideInBytes;
+                            yCbCr_P010.yCbCr.chroma_step = sampleIncrementInBytes;
+                        } else {
+                            EXPECT_EQ(yCbCr_P010.yCbCr.cstride, planeLayout.strideInBytes);
+                            EXPECT_EQ(yCbCr_P010.yCbCr.chroma_step, sampleIncrementInBytes);
+                        }
+
+                        if (yCbCr_P010.horizontalSubSampling == 0 &&
+                            yCbCr_P010.verticalSubSampling == 0) {
+                            yCbCr_P010.horizontalSubSampling = planeLayout.horizontalSubsampling;
+                            yCbCr_P010.verticalSubSampling = planeLayout.verticalSubsampling;
+                        } else {
+                            EXPECT_EQ(yCbCr_P010.horizontalSubSampling,
+                                      planeLayout.horizontalSubsampling);
+                            EXPECT_EQ(yCbCr_P010.verticalSubSampling,
+                                      planeLayout.verticalSubsampling);
+                        }
+
+                        if (type == PlaneLayoutComponentType::CB) {
+                            EXPECT_EQ(nullptr, yCbCr_P010.yCbCr.cb);
+                            yCbCr_P010.yCbCr.cb = tmpData;
+                            cb_offset = planeLayoutComponent.offsetInBits;
+                        } else {
+                            EXPECT_EQ(nullptr, yCbCr_P010.yCbCr.cr);
+                            yCbCr_P010.yCbCr.cr = tmpData;
+                            cr_offset = planeLayoutComponent.offsetInBits;
+                        }
+                        break;
+                    default:
+                        break;
+                };
+            }
+        }
+
+        EXPECT_EQ(cb_offset + bytesToBits(2), cr_offset);
+        EXPECT_NE(nullptr, yCbCr_P010.yCbCr.y);
+        EXPECT_NE(nullptr, yCbCr_P010.yCbCr.cb);
+        EXPECT_NE(nullptr, yCbCr_P010.yCbCr.cr);
+        return yCbCr_P010;
+    }
+
     void fillRGBA8888(uint8_t* data, uint32_t height, size_t strideInBytes, size_t widthInBytes,
                       uint32_t seed = 0) {
         for (uint32_t y = 0; y < height; y++) {
@@ -297,9 +393,9 @@ class GraphicsMapperHidlTest
         }
     }
 
-    void traverseYCbCr888Data(const android_ycbcr& yCbCr, int32_t width, int32_t height,
-                              int64_t hSubsampling, int64_t vSubsampling,
-                              std::function<void(uint8_t*, uint8_t)> traverseFuncion) {
+    void traverseYCbCrData(const android_ycbcr& yCbCr, int32_t width, int32_t height,
+                           int64_t hSubsampling, int64_t vSubsampling,
+                           std::function<void(uint8_t*, uint8_t)> traverseFuncion) {
         auto yData = static_cast<uint8_t*>(yCbCr.y);
         auto cbData = static_cast<uint8_t*>(yCbCr.cb);
         auto crData = static_cast<uint8_t*>(yCbCr.cr);
@@ -327,20 +423,24 @@ class GraphicsMapperHidlTest
         }
     }
 
-    void fillYCbCr888Data(const android_ycbcr& yCbCr, int32_t width, int32_t height,
-                          int64_t hSubsampling, int64_t vSubsampling) {
-        traverseYCbCr888Data(yCbCr, width, height, hSubsampling, vSubsampling,
-                             [](auto address, auto fillingData) { *address = fillingData; });
+    void fillYCbCrData(const android_ycbcr& yCbCr, int32_t width, int32_t height,
+                       int64_t hSubsampling, int64_t vSubsampling) {
+        traverseYCbCrData(yCbCr, width, height, hSubsampling, vSubsampling,
+                          [](auto address, auto fillingData) { *address = fillingData; });
     }
 
-    void verifyYCbCr888Data(const android_ycbcr& yCbCr, int32_t width, int32_t height,
-                            int64_t hSubsampling, int64_t vSubsampling) {
-        traverseYCbCr888Data(
+    void verifyYCbCrData(const android_ycbcr& yCbCr, int32_t width, int32_t height,
+                         int64_t hSubsampling, int64_t vSubsampling) {
+        traverseYCbCrData(
                 yCbCr, width, height, hSubsampling, vSubsampling,
                 [](auto address, auto expectedData) { EXPECT_EQ(*address, expectedData); });
     }
 
     bool isEqual(float a, float b) { return abs(a - b) < 0.0001; }
+
+    uint64_t bitsToBytes(int64_t bits) { return bits / 8; }
+
+    uint64_t bytesToBits(int64_t bytes) { return bytes * 8; }
 
     std::unique_ptr<Gralloc> mGralloc;
     IMapper::BufferDescriptorInfo mDummyDescriptorInfo{};
@@ -645,7 +745,7 @@ TEST_P(GraphicsMapperHidlTest, Lock_YCRCB_420_SP) {
     ASSERT_EQ(crData + 1, cbData);
     ASSERT_EQ(2, yCbCr.chroma_step);
 
-    fillYCbCr888Data(yCbCr, info.width, info.height, hSubsampling, vSubsampling);
+    fillYCbCrData(yCbCr, info.width, info.height, hSubsampling, vSubsampling);
 
     ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
 
@@ -656,7 +756,7 @@ TEST_P(GraphicsMapperHidlTest, Lock_YCRCB_420_SP) {
     ASSERT_NO_FATAL_FAILURE(
             getAndroidYCbCr(bufferHandle, data, &yCbCr, &hSubsampling, &vSubsampling));
 
-    verifyYCbCr888Data(yCbCr, info.width, info.height, hSubsampling, vSubsampling);
+    verifyYCbCrData(yCbCr, info.width, info.height, hSubsampling, vSubsampling);
 
     ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
 }
@@ -744,7 +844,7 @@ TEST_P(GraphicsMapperHidlTest, Lock_YV12) {
     ASSERT_EQ(crData + yCbCr.cstride * info.height / vSubsampling, cbData);
     ASSERT_EQ(1, yCbCr.chroma_step);
 
-    fillYCbCr888Data(yCbCr, info.width, info.height, hSubsampling, vSubsampling);
+    fillYCbCrData(yCbCr, info.width, info.height, hSubsampling, vSubsampling);
 
     ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
 
@@ -755,7 +855,7 @@ TEST_P(GraphicsMapperHidlTest, Lock_YV12) {
     ASSERT_NO_FATAL_FAILURE(
             getAndroidYCbCr(bufferHandle, data, &yCbCr, &hSubsampling, &vSubsampling));
 
-    verifyYCbCr888Data(yCbCr, info.width, info.height, hSubsampling, vSubsampling);
+    verifyYCbCrData(yCbCr, info.width, info.height, hSubsampling, vSubsampling);
 
     ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
 }
@@ -788,7 +888,7 @@ TEST_P(GraphicsMapperHidlTest, Lock_YCBCR_420_888) {
     ASSERT_EQ(kCbCrSubSampleFactor, hSubsampling);
     ASSERT_EQ(kCbCrSubSampleFactor, vSubsampling);
 
-    fillYCbCr888Data(yCbCr, info.width, info.height, hSubsampling, vSubsampling);
+    fillYCbCrData(yCbCr, info.width, info.height, hSubsampling, vSubsampling);
 
     ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
 
@@ -799,7 +899,7 @@ TEST_P(GraphicsMapperHidlTest, Lock_YCBCR_420_888) {
     ASSERT_NO_FATAL_FAILURE(
             getAndroidYCbCr(bufferHandle, data, &yCbCr, &hSubsampling, &vSubsampling));
 
-    verifyYCbCr888Data(yCbCr, info.width, info.height, hSubsampling, vSubsampling);
+    verifyYCbCrData(yCbCr, info.width, info.height, hSubsampling, vSubsampling);
 
     ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
 }
@@ -884,6 +984,42 @@ TEST_P(GraphicsMapperHidlTest, Lock_RAW12) {
               static_cast<PlaneLayoutComponentType>(planeLayoutComponent.type.value));
     EXPECT_EQ(0, planeLayoutComponent.offsetInBits % 8);
     EXPECT_EQ(-1, planeLayoutComponent.sizeInBits);
+
+    ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
+}
+
+TEST_P(GraphicsMapperHidlTest, Lock_YCBCR_P010) {
+    auto info = mDummyDescriptorInfo;
+    info.format = PixelFormat::YCBCR_P010;
+
+    const native_handle_t* bufferHandle;
+    uint32_t stride;
+    ASSERT_NO_FATAL_FAILURE(
+            bufferHandle = mGralloc->allocate(info, true, Tolerance::kToleranceStrict, &stride));
+
+    const IMapper::Rect region{0, 0, static_cast<int32_t>(info.width),
+                               static_cast<int32_t>(info.height)};
+    unique_fd fence;
+    uint8_t* data;
+
+    ASSERT_NO_FATAL_FAILURE(data = static_cast<uint8_t*>(mGralloc->lock(bufferHandle, info.usage,
+                                                                        region, fence.release())));
+
+    YCbCr yCbCr;
+    ASSERT_NO_FATAL_FAILURE(yCbCr = getAndroidYCbCr_P010(bufferHandle, data));
+
+    constexpr uint32_t kCbCrSubSampleFactor = 2;
+    ASSERT_EQ(kCbCrSubSampleFactor, yCbCr.horizontalSubSampling);
+    ASSERT_EQ(kCbCrSubSampleFactor, yCbCr.verticalSubSampling);
+
+    ASSERT_EQ(0, info.height % 2);
+
+    // fill the data
+    fillYCbCrData(yCbCr.yCbCr, info.width, info.height, yCbCr.horizontalSubSampling,
+                  yCbCr.verticalSubSampling);
+    // verify the YCbCr data
+    verifyYCbCrData(yCbCr.yCbCr, info.width, info.height, yCbCr.horizontalSubSampling,
+                    yCbCr.verticalSubSampling);
 
     ASSERT_NO_FATAL_FAILURE(fence.reset(mGralloc->unlock(bufferHandle)));
 }
