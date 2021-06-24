@@ -44,6 +44,12 @@ parcelable DeviceInfo {
      *         ? "vendor_patch_level" : uint,                   // YYYYMMDD
      *         "version" : 1,                      // The CDDL schema version.
      *         "security_level" : "tee" / "strongbox"
+     *         "att_id_state": "locked" / "open",  // Attestation IDs State. If "locked", this
+     *                                             // indicates a device's attestable IDs are
+     *                                             // factory-locked and immutable. If "open",
+     *                                             // this indicates the device is still in a
+     *                                             // provisionable state and the attestable IDs
+     *                                             // are not yet frozen.
      *     }
      */
     byte[] deviceInfo;
