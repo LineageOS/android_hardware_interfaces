@@ -58,7 +58,7 @@ const std::string kInvalidName = "";
 const std::shared_ptr<BnDevice> kInvalidDevice;
 constexpr PerformanceInfo kNoPerformanceInfo = {.execTime = std::numeric_limits<float>::max(),
                                                 .powerUsage = std::numeric_limits<float>::max()};
-constexpr NumberOfCacheFiles kNumberOfCacheFiles = {.numModelCache = nn::kMaxNumberOfCacheFiles,
+constexpr NumberOfCacheFiles kNumberOfCacheFiles = {.numModelCache = nn::kMaxNumberOfCacheFiles - 1,
                                                     .numDataCache = nn::kMaxNumberOfCacheFiles};
 
 constexpr auto makeStatusOk = [] { return ndk::ScopedAStatus::ok(); };
@@ -298,6 +298,21 @@ TEST(DeviceTest, getSupportedExtensionsDeadObject) {
     // verify result
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, nn::ErrorStatus::DEAD_OBJECT);
+}
+
+TEST(DeviceTest, getNumberOfCacheFilesNeeded) {
+    // setup call
+    const auto mockDevice = createMockDevice();
+    EXPECT_CALL(*mockDevice, getNumberOfCacheFilesNeeded(_)).Times(1);
+
+    // run test
+    const auto result = Device::create(kName, mockDevice);
+
+    // verify result
+    ASSERT_TRUE(result.has_value());
+    constexpr auto kNumberOfCacheFilesPair = std::make_pair<uint32_t, uint32_t>(
+            kNumberOfCacheFiles.numModelCache, kNumberOfCacheFiles.numDataCache);
+    EXPECT_EQ(result.value()->getNumberOfCacheFilesNeeded(), kNumberOfCacheFilesPair);
 }
 
 TEST(DeviceTest, getNumberOfCacheFilesNeededError) {
