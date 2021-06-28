@@ -275,6 +275,10 @@ interface IKeyMintDevice {
      *   must return ErrorCode::INVALID_ARGUMENT.  The values 3 and 65537 must be supported.  It is
      *   recommended to support all prime values up to 2^64.
      *
+     * o Tag::CERTIFICATE_NOT_BEFORE and Tag::CERTIFICATE_NOT_AFTER specify the valid date range for
+     *   the returned X.509 certificate holding the public key. If omitted, generateKey must return
+     *   ErrorCode::MISSING_NOT_BEFORE or ErrorCode::MISSING_NOT_AFTER.
+     *
      * The following parameters are not necessary to generate a usable RSA key, but generateKey must
      * not return an error if they are omitted:
      *
@@ -295,6 +299,10 @@ interface IKeyMintDevice {
      * Tag::EC_CURVE must be provided to generate an ECDSA key.  If it is not provided, generateKey
      * must return ErrorCode::UNSUPPORTED_KEY_SIZE. TEE IKeyMintDevice implementations must support
      * all curves.  StrongBox implementations must support P_256.
+
+     * Tag::CERTIFICATE_NOT_BEFORE and Tag::CERTIFICATE_NOT_AFTER must be provided to specify the
+     * valid date range for the returned X.509 certificate holding the public key. If omitted,
+     * generateKey must return ErrorCode::MISSING_NOT_BEFORE or ErrorCode::MISSING_NOT_AFTER.
      *
      * == AES Keys ==
      *
