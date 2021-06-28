@@ -119,7 +119,7 @@ nn::GeneralResult<std::pair<uint32_t, uint32_t>> getNumberOfCacheFilesNeededFrom
                           << numberOfCacheFiles.numDataCache << " vs " << nn::kMaxNumberOfCacheFiles
                           << ")";
     }
-    return std::make_pair(numberOfCacheFiles.numDataCache, numberOfCacheFiles.numModelCache);
+    return std::make_pair(numberOfCacheFiles.numModelCache, numberOfCacheFiles.numDataCache);
 }
 
 }  // namespace
