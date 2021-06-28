@@ -125,6 +125,11 @@ ndk::ScopedAStatus Vibrator::getSupportedPrimitives(std::vector<CompositePrimiti
 
 ndk::ScopedAStatus Vibrator::getPrimitiveDuration(CompositePrimitive primitive,
                                                   int32_t* durationMs) {
+    std::vector<CompositePrimitive> supported;
+    getSupportedPrimitives(&supported);
+    if (std::find(supported.begin(), supported.end(), primitive) == supported.end()) {
+        return ndk::ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+    }
     if (primitive != CompositePrimitive::NOOP) {
         *durationMs = 100;
     } else {
