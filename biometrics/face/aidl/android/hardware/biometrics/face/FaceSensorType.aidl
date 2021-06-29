@@ -16,4 +16,23 @@
 
 package android.hardware.biometrics.face;
 
-@VintfStability @Backing(type="byte") enum FaceSensorType { UNKNOWN, RGB, IR }
+@VintfStability
+@Backing(type="byte")
+enum FaceSensorType {
+    /**
+     * Placeholder value used for default initialization of FaceSensorType.
+     * This value means FaceSensorType wasn't explicitly initialized and must
+     * be discarded by the recipient.
+     */
+    UNKNOWN,
+
+    /**
+     * The face sensor is an RGB camera.
+     */
+    RGB,
+
+    /**
+     * The face sensor is an infrared camera.
+     */
+    IR,
+}
