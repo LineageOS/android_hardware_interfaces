@@ -19,6 +19,15 @@ package android.hardware.biometrics.face;
 @VintfStability
 @Backing(type="byte")
 enum EnrollmentType {
+    /**
+     * Default enrollment type.
+     */
     DEFAULT,
+
+    /**
+     * Enrollment type for people with limited vision or mobility. For example,
+     * enrollment of this type will not ask the user to move their head or
+     * look directly at the device.
+     */
     ACCESSIBILITY,
 }
