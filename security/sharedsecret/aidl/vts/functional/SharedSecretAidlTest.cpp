@@ -268,10 +268,16 @@ TEST_F(SharedSecretAidlTest, ComputeSharedSecretShortNonce) {
                     << "Shared secret service that provided tweaked param should fail to compute "
                        "shared secret";
         } else {
-            EXPECT_EQ(ErrorCode::OK, responses[i].error) << "Others should succeed";
-            EXPECT_NE(correct_response, responses[i].sharing_check)
-                    << "Others should calculate a different shared secret, due to the tweaked "
-                       "nonce.";
+            // Other services *may* succeed, or may notice the invalid size for the nonce.
+            // However, if another service completes the computation, it should get the 'wrong'
+            // answer.
+            if (responses[i].error == ErrorCode::OK) {
+                EXPECT_NE(correct_response, responses[i].sharing_check)
+                        << "Others should calculate a different shared secret, due to the tweaked "
+                           "nonce.";
+            } else {
+                EXPECT_EQ(ErrorCode::INVALID_ARGUMENT, responses[i].error);
+            }
         }
     }
 }
@@ -348,10 +354,16 @@ TEST_F(SharedSecretAidlTest, ComputeSharedSecretShortSeed) {
                     << "Shared secret service that provided tweaked param should fail to compute "
                        "shared secret";
         } else {
-            EXPECT_EQ(ErrorCode::OK, responses[i].error) << "Others should succeed";
-            EXPECT_NE(correct_response, responses[i].sharing_check)
-                    << "Others should calculate a different shared secret, due to the tweaked "
-                       "nonce.";
+            // Other services *may* succeed, or may notice the invalid size for the seed.
+            // However, if another service completes the computation, it should get the 'wrong'
+            // answer.
+            if (responses[i].error == ErrorCode::OK) {
+                EXPECT_NE(correct_response, responses[i].sharing_check)
+                        << "Others should calculate a different shared secret, due to the tweaked "
+                           "seed.";
+            } else {
+                EXPECT_EQ(ErrorCode::INVALID_ARGUMENT, responses[i].error);
+            }
         }
     }
 }
