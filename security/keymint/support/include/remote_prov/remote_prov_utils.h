@@ -87,4 +87,26 @@ struct BccEntryData {
  */
 ErrMsgOr<std::vector<BccEntryData>> validateBcc(const cppbor::Array* bcc);
 
+struct JsonOutput {
+    static JsonOutput Ok(std::string json) { return {std::move(json), ""}; }
+    static JsonOutput Error(std::string error) { return {"", std::move(error)}; }
+
+    std::string output;
+    std::string error;  // if non-empty, this describes what went wrong
+};
+
+/**
+ * Take a given certificate request and output a JSON blob containing both the
+ * build fingerprint and certificate request. This data may be serialized, then
+ * later uploaded to the remote provisioning service. The input csr is not
+ * validated, only encoded.
+ *
+ * Output format:
+ *   {
+ *     "build_fingerprint": <string>
+ *     "csr": <base64 CBOR CSR>
+ *   }
+ */
+JsonOutput jsonEncodeCsrWithBuild(const cppbor::Array& csr);
+
 }  // namespace aidl::android::hardware::security::keymint::remote_prov
