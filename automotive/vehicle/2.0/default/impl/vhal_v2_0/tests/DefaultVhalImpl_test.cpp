@@ -18,6 +18,7 @@
 #include <gtest/gtest.h>
 #include <sys/mman.h>
 #include <vhal_v2_0/ConcurrentQueue.h>
+#include <vhal_v2_0/DefaultConfig.h>
 #include <vhal_v2_0/DefaultVehicleConnector.h>
 #include <vhal_v2_0/DefaultVehicleHal.h>
 #include <vhal_v2_0/PropertyUtils.h>
@@ -40,6 +41,8 @@ using ::android::hardware::automotive::vehicle::V2_0::VehiclePropValue;
 using ::android::hardware::automotive::vehicle::V2_0::VehiclePropValuePool;
 using ::android::hardware::automotive::vehicle::V2_0::impl::DefaultVehicleConnector;
 using ::android::hardware::automotive::vehicle::V2_0::impl::DefaultVehicleHal;
+using ::android::hardware::automotive::vehicle::V2_0::impl::HVAC_LEFT;
+using ::android::hardware::automotive::vehicle::V2_0::impl::kMixedTypePropertyForTest;
 
 using VehiclePropValuePtr = recyclable_ptr<VehiclePropValue>;
 
@@ -194,6 +197,32 @@ TEST_F(DefaultVhalImplTest, testSetString) {
     EXPECT_EQ("My Vehicle", gotValue->value.stringValue);
 }
 
+TEST_F(DefaultVhalImplTest, testSetMixed) {
+    VehiclePropValue value;
+    value.prop = kMixedTypePropertyForTest;
+    // mixed prop.
+    // .configArray = {1, 1, 0, 2, 0, 0, 1, 0, 0}
+    // 1 string, 1 int, 0 bool, 2 ints, 0 int64, 0 int64s, 1 float, 0 floats, 0 bytes
+    value.value.stringValue = "test";
+    value.value.int32Values.resize(3);
+    value.value.int32Values[0] = 1;
+    value.value.int32Values[1] = 2;
+    value.value.int32Values[2] = 3;
+    value.value.floatValues.resize(1);
+    value.value.floatValues[0] = 1.0f;
+
+    StatusCode status = mHal->set(value);
+    EXPECT_EQ(StatusCode::OK, status);
+
+    auto gotValue = mHal->get(value, &status);
+    EXPECT_EQ(StatusCode::OK, status);
+    EXPECT_EQ("test", gotValue->value.stringValue);
+    EXPECT_EQ(1, gotValue->value.int32Values[0]);
+    EXPECT_EQ(2, gotValue->value.int32Values[1]);
+    EXPECT_EQ(3, gotValue->value.int32Values[2]);
+    EXPECT_EQ(1.0f, gotValue->value.floatValues[0]);
+}
+
 TEST_F(DefaultVhalImplTest, testSetUnknownProperty) {
     VehiclePropValue value;
     value.prop = 0;
@@ -245,6 +274,13 @@ TEST_F(DefaultVhalImplTest, testSubscribe) {
 
 TEST_F(DefaultVhalImplTest, testSubscribeInvalidProp) {
     EXPECT_EQ(StatusCode::INVALID_ARG, mHal->subscribe(toInt(VehicleProperty::INFO_MAKE), 10));
+}
+
+TEST_F(DefaultVhalImplTest, testSubscribeSampleRateOutOfRange) {
+    EXPECT_EQ(StatusCode::INVALID_ARG,
+              mHal->subscribe(toInt(VehicleProperty::PERF_VEHICLE_SPEED), 10.1));
+    EXPECT_EQ(StatusCode::INVALID_ARG,
+              mHal->subscribe(toInt(VehicleProperty::PERF_VEHICLE_SPEED), 0.5));
 }
 
 TEST_F(DefaultVhalImplTest, testUnsubscribe) {
@@ -299,5 +335,153 @@ TEST_F(DefaultVhalImplTest, testDump) {
     std::string infoMake = toString(*gotValue);
     EXPECT_NE(std::string::npos, std::string(buf).find(infoMake));
 }
+
+class DefaultVhalImplSetInvalidPropTest : public DefaultVhalImplTest,
+                                          public testing::WithParamInterface<VehiclePropValue> {};
+
+std::vector<VehiclePropValue> GenSetInvalidPropParams() {
+    std::vector<VehiclePropValue> props;
+    // int prop with no value.
+    VehiclePropValue intProp = {.prop = toInt(VehicleProperty::INFO_MODEL_YEAR)};
+    props.push_back(intProp);
+
+    // int prop with more than one value.
+    VehiclePropValue intPropWithValues = {.prop = toInt(VehicleProperty::INFO_MODEL_YEAR)};
+    intPropWithValues.value.int32Values.resize(2);
+    props.push_back(intPropWithValues);
+
+    // int vec prop with no value.
+    VehiclePropValue intVecProp = {.prop = toInt(VehicleProperty::INFO_FUEL_TYPE)};
+    props.push_back(intVecProp);
+
+    // int64 prop with no value.
+    VehiclePropValue int64Prop = {.prop = toInt(VehicleProperty::EPOCH_TIME)};
+    props.push_back(int64Prop);
+
+    // int64 prop with more than one value.
+    VehiclePropValue int64PropWithValues = {.prop = toInt(VehicleProperty::EPOCH_TIME)};
+    int64PropWithValues.value.int64Values.resize(2);
+    props.push_back(int64PropWithValues);
+
+    // int64 vec prop with no value.
+    VehiclePropValue int64VecProp = {.prop = toInt(VehicleProperty::WHEEL_TICK)};
+    props.push_back(int64VecProp);
+
+    // float prop with no value.
+    VehiclePropValue floatProp = {.prop = toInt(VehicleProperty::INFO_FUEL_CAPACITY)};
+    props.push_back(floatProp);
+
+    // float prop with more than one value.
+    VehiclePropValue floatPropWithValues = {.prop = toInt(VehicleProperty::INFO_FUEL_CAPACITY)};
+    floatPropWithValues.value.floatValues.resize(2);
+    props.push_back(floatPropWithValues);
+
+    // float vec prop with no value.
+    VehiclePropValue floatVecProp = {
+            .prop = toInt(VehicleProperty::HVAC_TEMPERATURE_VALUE_SUGGESTION)};
+    props.push_back(floatVecProp);
+
+    // bool prop with no value.
+    VehiclePropValue boolProp = {
+            .prop = toInt(VehicleProperty::FUEL_CONSUMPTION_UNITS_DISTANCE_OVER_VOLUME)};
+    props.push_back(boolProp);
+
+    // bool prop with more than one value.
+    VehiclePropValue boolPropWithValues = {
+            .prop = toInt(VehicleProperty::FUEL_CONSUMPTION_UNITS_DISTANCE_OVER_VOLUME)};
+    boolPropWithValues.value.int32Values.resize(2);
+    props.push_back(boolPropWithValues);
+
+    // mixed prop.
+    // .configArray = {1, 1, 0, 2, 0, 0, 1, 0, 0}
+    // 1 string, 1 int, 0 bool, 2 ints, 0 int64, 0 int64s, 1 float, 0 floats, 0 bytes
+    VehiclePropValue mixedProp1 = {.prop = kMixedTypePropertyForTest};
+    // Expect 1 bool, and 2 ints, we only have 1 value.
+    mixedProp1.value.int32Values.resize(1);
+    mixedProp1.value.floatValues.resize(1);
+    props.push_back(mixedProp1);
+
+    VehiclePropValue mixedProp2 = {.prop = kMixedTypePropertyForTest};
+    mixedProp2.value.int32Values.resize(3);
+    // Missing float value.
+    mixedProp2.value.floatValues.resize(0);
+    props.push_back(mixedProp2);
+
+    return props;
+}
+
+TEST_P(DefaultVhalImplSetInvalidPropTest, testSetInvalidPropValue) {
+    VehiclePropValue value = GetParam();
+
+    StatusCode status = mHal->set(value);
+
+    EXPECT_EQ(StatusCode::INVALID_ARG, status);
+}
+
+INSTANTIATE_TEST_SUITE_P(DefaultVhalImplSetInvalidPropTests, DefaultVhalImplSetInvalidPropTest,
+                         testing::ValuesIn(GenSetInvalidPropParams()));
+
+struct SetPropRangeTestCase {
+    std::string name;
+    VehiclePropValue prop;
+    StatusCode code;
+};
+
+class DefaultVhalImplSetPropRangeTest : public DefaultVhalImplTest,
+                                        public testing::WithParamInterface<SetPropRangeTestCase> {};
+
+std::vector<SetPropRangeTestCase> GenSetPropRangeParams() {
+    std::vector<SetPropRangeTestCase> tc;
+    VehiclePropValue intPropNormal = {.prop = toInt(VehicleProperty::HVAC_FAN_SPEED),
+                                      .areaId = HVAC_LEFT,
+                                      // min: 1, max: 7
+                                      .value.int32Values = {3}};
+    tc.push_back({"normal_case_int", intPropNormal, StatusCode::OK});
+
+    VehiclePropValue intPropSmall = {.prop = toInt(VehicleProperty::HVAC_FAN_SPEED),
+                                     .areaId = HVAC_LEFT,
+                                     // min: 1, max: 7
+                                     .value.int32Values = {0}};
+    tc.push_back({"normal_case_int_too_small", intPropSmall, StatusCode::INVALID_ARG});
+
+    VehiclePropValue intPropLarge = {.prop = toInt(VehicleProperty::HVAC_FAN_SPEED),
+                                     .areaId = HVAC_LEFT,
+                                     // min: 1, max: 7
+                                     .value.int32Values = {8}};
+    tc.push_back({"normal_case_int_too_large", intPropLarge, StatusCode::INVALID_ARG});
+
+    VehiclePropValue floatPropNormal = {.prop = toInt(VehicleProperty::HVAC_TEMPERATURE_SET),
+                                        .areaId = HVAC_LEFT,
+                                        // min: 16, max: 32
+                                        .value.floatValues = {26}};
+    tc.push_back({"normal_case_float", floatPropNormal, StatusCode::OK});
+    VehiclePropValue floatPropSmall = {.prop = toInt(VehicleProperty::HVAC_TEMPERATURE_SET),
+                                       .areaId = HVAC_LEFT,
+                                       // min: 16, max: 32
+                                       .value.floatValues = {15.5}};
+    tc.push_back({"normal_case_float_too_small", floatPropSmall, StatusCode::INVALID_ARG});
+    VehiclePropValue floatPropLarge = {.prop = toInt(VehicleProperty::HVAC_TEMPERATURE_SET),
+                                       .areaId = HVAC_LEFT,
+                                       // min: 16, max: 32
+                                       .value.floatValues = {32.6}};
+    tc.push_back({"normal_case_float_too_large", floatPropLarge, StatusCode::INVALID_ARG});
+
+    return tc;
+}
+
+TEST_P(DefaultVhalImplSetPropRangeTest, testSetPropRange) {
+    SetPropRangeTestCase tc = GetParam();
+
+    StatusCode status = mHal->set(tc.prop);
+
+    EXPECT_EQ(tc.code, status);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+        DefaultVhalImplSetPropRangeTests, DefaultVhalImplSetPropRangeTest,
+        testing::ValuesIn(GenSetPropRangeParams()),
+        [](const testing::TestParamInfo<DefaultVhalImplSetPropRangeTest::ParamType>& info) {
+            return info.param.name;
+        });
 
 }  // namespace

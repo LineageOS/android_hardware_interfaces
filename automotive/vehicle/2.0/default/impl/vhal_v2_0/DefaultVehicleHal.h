@@ -61,6 +61,16 @@ class DefaultVehicleHal : public VehicleHal {
     virtual void onPropertyValue(const VehiclePropValue& value, bool updateStatus);
     // Returns a lambda that could be used in mRecurrentTimer.
     RecurrentTimer::Action getTimerAction();
+    // Check whether a propValue is valid according to its type.
+    StatusCode checkPropValue(const VehiclePropValue& propValue, const VehiclePropConfig* config);
+    // Check whether the property value is within the range according to area config.
+    StatusCode checkValueRange(const VehiclePropValue& propValue, const VehiclePropConfig* config);
+
+  private:
+    // Check whether a vendor mixed value property is valid according to its config array.
+    // See 'VehiclePropertyType' documentation in 'types.hal' for detail.
+    StatusCode checkVendorMixedPropValue(const VehiclePropValue& value,
+                                         const VehiclePropConfig* config);
 };
 
 }  // namespace impl
