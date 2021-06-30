@@ -483,12 +483,12 @@ enum Tag {
 
     /**
      * Tag::TRUSTED_CONFIRMATION_REQUIRED is only applicable to keys with KeyPurpose SIGN, and
-     *  specifies that this key must not be usable unless the user provides confirmation of the data
-     *  to be signed.  Confirmation is proven to keyMint via an approval token.  See
-     *  CONFIRMATION_TOKEN, as well as the ConfirmationUI HAL.
+     * specifies that this key must not be usable unless the user provides confirmation of the data
+     * to be signed.  Confirmation is proven to keyMint via an approval token.  See the authToken
+     * parameter of begin(), as well as the ConfirmationUI HAL.
      *
      * If an attempt to use a key with this tag does not have a cryptographically valid
-     * CONFIRMATION_TOKEN provided to finish() or if the data provided to update()/finish() does not
+     * token provided to finish() or if the data provided to update()/finish() does not
      * match the data described in the token, keyMint must return NO_USER_CONFIRMATION.
      *
      * Must be hardware-enforced.
@@ -497,9 +497,11 @@ enum Tag {
 
     /**
      * Tag::UNLOCKED_DEVICE_REQUIRED specifies that the key may only be used when the device is
-     * unlocked.
+     * unlocked, as reported to KeyMint via authToken operation parameter and the
+     * IKeyMintDevice::deviceLocked() method
      *
-     * Must be software-enforced.
+     * Must be hardware-enforced (but is also keystore-enforced on a per-user basis: see the
+     * deviceLocked() documentation).
      */
     UNLOCKED_DEVICE_REQUIRED = (7 << 28) /* TagType:BOOL */ | 509,
 
@@ -870,8 +872,9 @@ enum Tag {
      *
      * STORAGE_KEY is used to denote that a key generated or imported is a key used for storage
      * encryption. Keys of this type can either be generated or imported or secure imported using
-     * keyMint. exportKey() can be used to re-wrap storage key with a per-boot ephemeral key
-     * wrapped key once the key characteristics are enforced.
+     * keyMint. The convertStorageKeyToEphemeral() method of IKeyMintDevice can be used to re-wrap
+     * storage key with a per-boot ephemeral key wrapped key once the key characteristics are
+     * enforced.
      *
      * Keys with this tag cannot be used for any operation within keyMint.
      * ErrorCode::INVALID_OPERATION is returned when a key with Tag::STORAGE_KEY is provided to
@@ -919,11 +922,10 @@ enum Tag {
     RESET_SINCE_ID_ROTATION = (7 << 28) /* TagType:BOOL */ | 1004,
 
     /**
-     * Tag::CONFIRMATION_TOKEN is used to deliver a cryptographic token proving that the user
-     * confirmed a signing request.  The content is a full-length HMAC-SHA256 value.  See the
-     * ConfirmationUI HAL for details of token computation.
+     * OBSOLETE: Do not use. See the authToken parameter for IKeyMintDevice::begin and for
+     * IKeyMintOperation methods instead.
      *
-     * Must never appear in KeyCharacteristics.
+     * TODO(b/191738660): Delete when keystore1 is deleted.
      */
     CONFIRMATION_TOKEN = (9 << 28) /* TagType:BYTES */ | 1005,
 
