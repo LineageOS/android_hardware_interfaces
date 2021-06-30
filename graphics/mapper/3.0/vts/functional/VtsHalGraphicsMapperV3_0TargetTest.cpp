@@ -327,6 +327,39 @@ TEST_P(GraphicsMapperHidlTest, LockUnlockBasic) {
 }
 
 /**
+ * Test IMapper::lockYCbCr.  This locks a YCbCr_P010 buffer and verifies that it's initialized.
+ */
+TEST_P(GraphicsMapperHidlTest, LockYCbCrP010) {
+    auto info = mDummyDescriptorInfo;
+    info.format = PixelFormat::YCBCR_P010;
+
+    const native_handle_t* bufferHandle;
+    uint32_t stride;
+    ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(info, true, &stride));
+
+    ASSERT_NE(nullptr, bufferHandle);
+
+    const IMapper::Rect region{0, 0, static_cast<int32_t>(info.width),
+                               static_cast<int32_t>(info.height)};
+    int fence = -1;
+    YCbCrLayout y_cb_cr_layout{};
+    // lock buffer
+    ASSERT_NO_FATAL_FAILURE(y_cb_cr_layout =
+                                    mGralloc->lockYCbCr(bufferHandle, info.usage, region, fence));
+
+    ASSERT_NE(nullptr, &y_cb_cr_layout);
+    EXPECT_EQ(stride, info.width);
+    EXPECT_EQ(y_cb_cr_layout.yStride, info.height * 2);
+    EXPECT_EQ(y_cb_cr_layout.cStride, y_cb_cr_layout.yStride);
+    EXPECT_EQ(4, y_cb_cr_layout.chromaStep);
+
+    ASSERT_NO_FATAL_FAILURE(fence = mGralloc->unlock(bufferHandle));
+    if (fence >= 0) {
+        close(fence);
+    }
+}
+
+/**
  * Test IMapper::lockYCbCr.  This locks a YV12 buffer, and makes sure we can
  * write to and read from it.
  */
