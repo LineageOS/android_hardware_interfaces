@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <android-base/properties.h>
 #include <cppbor_parse.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -23,6 +24,7 @@
 #include <openssl/curve25519.h>
 #include <remote_prov/remote_prov_utils.h>
 #include <cstdint>
+#include "cppbor.h"
 #include "keymaster/cppcose/cppcose.h"
 
 namespace aidl::android::hardware::security::keymint::remote_prov {
@@ -78,6 +80,21 @@ TEST(RemoteProvUtilsTest, GetProdEekChain) {
     const std::vector<uint8_t> empty;
     EXPECT_THAT(eekId, ElementsAreArray(geek->getBstrValue(CoseKey::KEY_ID).value_or(empty)));
     EXPECT_THAT(eekPub, ElementsAreArray(geek->getBstrValue(CoseKey::PUBKEY_X).value_or(empty)));
+}
+
+TEST(RemoteProvUtilsTest, JsonEncodeCsr) {
+    cppbor::Array array;
+    array.add(1);
+
+    auto [json, error] = jsonEncodeCsrWithBuild(array);
+
+    ASSERT_TRUE(error.empty()) << error;
+
+    std::string expected = R"({"build_fingerprint":")" +
+                           ::android::base::GetProperty("ro.build.fingerprint", /*default=*/"") +
+                           R"(","csr":"gQE="})";
+
+    ASSERT_EQ(json, expected);
 }
 
 }  // namespace
