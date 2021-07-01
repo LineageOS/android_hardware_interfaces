@@ -813,9 +813,10 @@ interface IKeyMintDevice {
     byte[] convertStorageKeyToEphemeral(in byte[] storageKeyBlob);
 
     /**
-     * Returns parameters associated with the provided key. This should match the
-     * KeyCharacteristics present in the KeyCreationResult returned by generateKey(),
-     * importKey(), or importWrappedKey().
+     * Returns KeyMint-enforced parameters associated with the provided key. The returned tags are
+     * a subset of KeyCharacteristics found in the KeyCreationResult returned by generateKey(),
+     * importKey(), or importWrappedKey(). The returned value is a subset, as it does not include
+     * any Keystore-enforced parameters.
      *
      * @param keyBlob The opaque descriptor returned by generateKey, importKey or importWrappedKey.
      *
