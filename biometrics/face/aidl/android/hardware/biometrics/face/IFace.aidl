@@ -25,28 +25,30 @@ interface IFace {
     /**
      * getSensorProps:
      *
-     * @return A list of properties for all face sensors available to the HAL.
+     * @return A list of properties for all of the face sensors supported by the HAL.
      */
     SensorProps[] getSensorProps();
 
     /**
      * createSession:
      *
-     * Creates a session that can be used by the framework to perform operations such as
-     * enroll, authenticate, etc. for the given sensorId and userId.
+     * Creates an instance of ISession that can be used by the framework to perform operations such
+     * as ISession#enroll, ISession#authenticate, etc. for the given sensorId and userId.
      *
-     * Calling this method while there is an active session is considered an error. If the
-     * framework is in a bad state and for some reason cannot close its session, it should use
-     * the reset method below.
+     * Calling this method while there is an active session is considered an error. If the framework
+     * wants to create a new session when it already has an active session, it must first cancel the
+     * current operation if it's cancellable or wait until it completes. Then, the framework must
+     * explicitly close the session with ISession#close. Once the framework receives
+     * ISessionCallback#onSessionClosed, a new session can be created.
      *
      * Implementations must store user-specific state or metadata in /data/vendor_de/<user>/facedata
      * as specified by the SELinux policy. The directory /data/vendor_de is managed by vold (see
      * vold_prepare_subdirs.cpp). Implementations may store additional user-specific data, such as
-     * embeddings or templates in StrongBox.
+     * embeddings or templates, in StrongBox.
      *
-     * @param sensorId The sensorId with which this session is being created.
-     * @param userId The userId with which this session is being created.
-     * @param cb A callback to notify the framework about the session's results and events.
+     * @param sensorId The sensorId for which this session is being created.
+     * @param userId The userId for which this session is being created.
+     * @param cb A callback to notify the framework about the session's events.
      * @return A new session.
      */
     ISession createSession(in int sensorId, in int userId, in ISessionCallback cb);

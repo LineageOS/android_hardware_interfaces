@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef android_hardware_automotive_vehicle_V2_0_impl_EmulatedVehicleConnector_H_
-#define android_hardware_automotive_vehicle_V2_0_impl_EmulatedVehicleConnector_H_
+#ifndef android_hardware_automotive_vehicle_V2_0_impl_DefaultVehicleConnector_H_
+#define android_hardware_automotive_vehicle_V2_0_impl_DefaultVehicleConnector_H_
 
 #include <vhal_v2_0/VehicleConnector.h>
 
-#include "EmulatedUserHal.h"
+#include "DefaultVehicleHalServer.h"
 #include "VehicleHalClient.h"
-#include "VehicleHalServer.h"
 
 namespace android {
 namespace hardware {
@@ -31,21 +30,12 @@ namespace V2_0 {
 
 namespace impl {
 
-class EmulatedVehicleConnector : public IPassThroughConnector<VehicleHalClient, VehicleHalServer> {
+class DefaultVehicleConnector
+    : public IPassThroughConnector<VehicleHalClient, DefaultVehicleHalServer> {
   public:
-    EmulatedVehicleConnector() = default;
+    DefaultVehicleConnector() = default;
 
-    EmulatedUserHal* getEmulatedUserHal();
-
-    // Methods from VehicleHalServer
-    void triggerSendAllValues() override;
-
-    StatusCode onSetProperty(const VehiclePropValue& value, bool updateStatus) override;
-
-    bool onDump(const hidl_handle& fd, const hidl_vec<hidl_string>& options) override;
-
-  private:
-    EmulatedUserHal mEmulatedUserHal;
+    void triggerSendAllValues() { this->sendAllValuesToClient(); }
 };
 
 }  // namespace impl
@@ -56,4 +46,4 @@ class EmulatedVehicleConnector : public IPassThroughConnector<VehicleHalClient, 
 }  // namespace hardware
 }  // namespace android
 
-#endif  // android_hardware_automotive_vehicle_V2_0_impl_EmulatedVehicleConnector_H_
+#endif  // android_hardware_automotive_vehicle_V2_0_impl_DefaultVehicleConnector_H_

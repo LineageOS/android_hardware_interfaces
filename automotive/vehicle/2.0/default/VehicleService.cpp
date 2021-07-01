@@ -20,9 +20,9 @@
 
 #include <iostream>
 
-#include <vhal_v2_0/EmulatedUserHal.h>
-#include <vhal_v2_0/EmulatedVehicleConnector.h>
-#include <vhal_v2_0/EmulatedVehicleHal.h>
+#include <EmulatedUserHal.h>
+#include <EmulatedVehicleConnector.h>
+#include <EmulatedVehicleHal.h>
 #include <vhal_v2_0/VehicleHalManager.h>
 
 using namespace android;
@@ -34,7 +34,7 @@ int main(int /* argc */, char* /* argv */ []) {
     auto connector = std::make_unique<impl::EmulatedVehicleConnector>();
     auto userHal = connector->getEmulatedUserHal();
     auto hal = std::make_unique<impl::EmulatedVehicleHal>(store.get(), connector.get(), userHal);
-    auto emulator = std::make_unique<impl::VehicleEmulator>(hal.get());
+    auto emulator = connector->getEmulator();
     auto service = std::make_unique<VehicleHalManager>(hal.get());
     connector->setValuePool(hal->getValuePool());
 
