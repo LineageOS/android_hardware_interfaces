@@ -47,6 +47,7 @@ cc_defaults {
 
 cc_library_headers {
     name: "vhal_v2_0_common_headers",
+    visibility: ["//visibility:public"],
     vendor: true,
     export_include_dirs: ["common/include/vhal_v2_0"],
 }
@@ -58,6 +59,7 @@ cc_library {
     defaults: ["vhal_v2_0_target_defaults"],
     srcs: [
         "common/src/Obd2SensorStore.cpp",
+        "common/src/ProtoMessageConverter.cpp",
         "common/src/SubscriptionManager.cpp",
         "common/src/VehicleHalManager.cpp",
         "common/src/VehicleObjectPool.cpp",
@@ -68,9 +70,13 @@ cc_library {
     ],
     shared_libs: [
         "libbase",
+        "libprotobuf-cpp-lite",
     ],
     local_include_dirs: ["common/include/vhal_v2_0"],
     export_include_dirs: ["common/include"],
+    static_libs: [
+        "android.hardware.automotive.vehicle@2.0-libproto-native",
+    ],
 }
 
 // Vehicle default VehicleHAL implementation
@@ -80,24 +86,16 @@ cc_library_static {
     defaults: ["vhal_v2_0_target_defaults"],
     cflags: ["-DENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING"],
     srcs: [
-        "impl/vhal_v2_0/CommConn.cpp",
-        "impl/vhal_v2_0/EmulatedVehicleConnector.cpp",
-        "impl/vhal_v2_0/EmulatedVehicleHal.cpp",
+        "impl/vhal_v2_0/DefaultVehicleHal.cpp",
         "impl/vhal_v2_0/VehicleHalClient.cpp",
-        "impl/vhal_v2_0/VehicleHalServer.cpp",
-        "impl/vhal_v2_0/VehicleEmulator.cpp",
-        "impl/vhal_v2_0/PipeComm.cpp",
-        "impl/vhal_v2_0/ProtoMessageConverter.cpp",
-        "impl/vhal_v2_0/SocketComm.cpp",
+        "impl/vhal_v2_0/DefaultVehicleHalServer.cpp",
         "impl/vhal_v2_0/LinearFakeValueGenerator.cpp",
         "impl/vhal_v2_0/JsonFakeValueGenerator.cpp",
         "impl/vhal_v2_0/GeneratorHub.cpp",
-        "impl/vhal_v2_0/qemu_pipe.cpp",
     ],
     local_include_dirs: ["common/include/vhal_v2_0"],
     export_include_dirs: ["impl"],
     whole_static_libs: [
-        "android.hardware.automotive.vehicle@2.0-emulated-user-hal-lib",
         "android.hardware.automotive.vehicle@2.0-manager-lib",
     ],
     shared_libs: [
@@ -107,19 +105,6 @@ cc_library_static {
     ],
     static_libs: [
         "android.hardware.automotive.vehicle@2.0-libproto-native",
-    ],
-}
-
-// Library used  to emulate User HAL behavior through lshal debug requests.
-cc_library_static {
-    name: "android.hardware.automotive.vehicle@2.0-emulated-user-hal-lib",
-    vendor: true,
-    defaults: ["vhal_v2_0_target_defaults"],
-    srcs: [
-        "impl/vhal_v2_0/EmulatedUserHal.cpp",
-    ],
-    whole_static_libs: [
-        "android.hardware.automotive.vehicle@2.0-user-hal-helper-lib",
     ],
 }
 
@@ -133,9 +118,13 @@ cc_library_static {
     export_include_dirs: ["common/include"],
     srcs: [
         "common/src/Obd2SensorStore.cpp",
+        "common/src/ProtoMessageConverter.cpp",
         "common/src/VehicleObjectPool.cpp",
         "common/src/VehiclePropertyStore.cpp",
         "common/src/VehicleUtils.cpp",
+    ],
+    static_libs: [
+        "android.hardware.automotive.vehicle@2.0-libproto-native",
     ],
 }
 
@@ -151,8 +140,7 @@ cc_library_static {
         "impl/vhal_v2_0/GeneratorHub.cpp",
         "impl/vhal_v2_0/JsonFakeValueGenerator.cpp",
         "impl/vhal_v2_0/LinearFakeValueGenerator.cpp",
-        "impl/vhal_v2_0/ProtoMessageConverter.cpp",
-        "impl/vhal_v2_0/VehicleHalServer.cpp",
+        "impl/vhal_v2_0/DefaultVehicleHalServer.cpp",
     ],
     whole_static_libs: [
         "android.hardware.automotive.vehicle@2.0-server-common-lib",
@@ -234,8 +222,8 @@ cc_binary {
     ],
     static_libs: [
         "android.hardware.automotive.vehicle@2.0-manager-lib",
-        "android.hardware.automotive.vehicle@2.0-default-impl-lib",
         "android.hardware.automotive.vehicle@2.0-libproto-native",
+        "//device/generic/car/emulator/vhal_v2_0:android.hardware.automotive.vehicle@2.0-emulator-impl-lib",
     ],
 }
 

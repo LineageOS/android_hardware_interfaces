@@ -17,9 +17,9 @@
 #include <gtest/gtest.h>
 
 #include <utils/SystemClock.h>
+#include <vhal_v2_0/ProtoMessageConverter.h>
 
 #include "vhal_v2_0/DefaultConfig.h"
-#include "vhal_v2_0/ProtoMessageConverter.h"
 #include "vhal_v2_0/VehicleUtils.h"
 
 namespace android {
