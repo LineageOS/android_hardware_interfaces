@@ -34,7 +34,7 @@ aidl_interface {
             enabled: true,
         },
         java: {
-            enabled: true,
+            sdk_version: "module_current",
         },
     },
 }
