@@ -45,6 +45,8 @@ class DefaultVehicleHalServer : public IVehicleServer {
 
     StatusCode onSetProperty(const VehiclePropValue& value, bool updateStatus) override;
 
+    DumpResult onDump(const std::vector<std::string>& options) override;
+
     // Set the Property Value Pool used in this server
     void setValuePool(VehiclePropValuePool* valuePool);
 

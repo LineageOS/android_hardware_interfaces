@@ -172,6 +172,8 @@ cc_test {
         "libbase",
         "libcutils",
     ],
+    // Exclude share libraries from default because they might be missing on
+    // some test platforms and we are using static libraries instead.
     exclude_shared_libs: [
         "android.automotive.watchdog-V2-ndk_platform",
         "android.hardware.automotive.vehicle@2.0",
@@ -190,17 +192,25 @@ cc_test {
     defaults: ["vhal_v2_0_target_defaults"],
     srcs: [
         "impl/vhal_v2_0/tests/ProtoMessageConverter_test.cpp",
+        "impl/vhal_v2_0/tests/DefaultVhalImpl_test.cpp",
     ],
     static_libs: [
+        "libbase",
+        "libcutils",
+        "libjsoncpp",
+        "libprotobuf-cpp-lite",
+    ],
+    // Exclude share libraries from default because they might be missing on
+    // some test platforms and we are using static libraries instead.
+    exclude_shared_libs: [
+        "android.automotive.watchdog-V2-ndk_platform",
+        "android.hardware.automotive.vehicle@2.0",
+    ],
+    whole_static_libs: [
         "android.automotive.watchdog-V2-ndk_platform",
         "android.hardware.automotive.vehicle@2.0",
         "android.hardware.automotive.vehicle@2.0-default-impl-lib",
         "android.hardware.automotive.vehicle@2.0-libproto-native",
-        "libprotobuf-cpp-lite",
-    ],
-    exclude_shared_libs: [
-        "android.automotive.watchdog-V2-ndk_platform",
-        "android.hardware.automotive.vehicle@2.0",
     ],
     test_suites: ["general-tests"],
 }
