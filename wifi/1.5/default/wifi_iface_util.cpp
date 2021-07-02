@@ -86,9 +86,9 @@ bool WifiIfaceUtil::setMacAddress(const std::string& iface_name,
         event_handlers.on_state_toggle_off_on(iface_name);
     }
     if (!success) {
-        LOG(ERROR) << "SetMacAddress failed.";
+        LOG(ERROR) << "SetMacAddress failed on " << iface_name;
     } else {
-        LOG(DEBUG) << "SetMacAddress succeeded.";
+        LOG(DEBUG) << "SetMacAddress succeeded on " << iface_name;
     }
     return success;
 }
