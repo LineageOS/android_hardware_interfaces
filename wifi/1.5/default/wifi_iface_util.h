@@ -71,10 +71,10 @@ class WifiIfaceUtil {
 
     virtual bool removeIfaceFromBridge(const std::string& br_name,
                                        const std::string& if_name);
+    // Get a random MAC address.
+    virtual std::array<uint8_t, 6> createRandomMacAddress();
 
    private:
-    std::array<uint8_t, 6> createRandomMacAddress();
-
     std::weak_ptr<wifi_system::InterfaceTool> iface_tool_;
     std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
     std::unique_ptr<std::array<uint8_t, 6>> random_mac_address_;
