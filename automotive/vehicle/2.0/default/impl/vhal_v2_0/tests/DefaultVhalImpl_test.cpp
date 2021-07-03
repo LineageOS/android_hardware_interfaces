@@ -71,6 +71,8 @@ using ::android::hardware::automotive::vehicle::V2_0::VehiclePropValuePool;
 using ::android::hardware::automotive::vehicle::V2_0::impl::DefaultVehicleConnector;
 using ::android::hardware::automotive::vehicle::V2_0::impl::DefaultVehicleHal;
 using ::android::hardware::automotive::vehicle::V2_0::impl::DefaultVhalImplTestHelper;
+using ::android::hardware::automotive::vehicle::V2_0::impl::DOOR_1_LEFT;
+using ::android::hardware::automotive::vehicle::V2_0::impl::DOOR_1_RIGHT;
 using ::android::hardware::automotive::vehicle::V2_0::impl::HVAC_ALL;
 using ::android::hardware::automotive::vehicle::V2_0::impl::HVAC_LEFT;
 using ::android::hardware::automotive::vehicle::V2_0::impl::HVAC_RIGHT;
@@ -661,7 +663,28 @@ std::vector<OptionsTestCase> GenInvalidOptions() {
              "failed to parse keyCode as int: \"0.1\""},
             {"genfakedata_keypress_invalid_display",
              {"--debughal", "--genfakedata", "--keypress", "1", "0.1"},
-             "failed to parse display as int: \"0.1\""}};
+             "failed to parse display as int: \"0.1\""},
+            {"setint_no_args", {"--debughal", "--setint"}, "incorrect argument count"},
+            {"setint_invalid_prop_id",
+             {"--debughal", "--setint", "abcd", "0", "0", "0"},
+             "failed to parse propID as int: \"abcd\""},
+            {"setint_invalid_value",
+             {"--debughal", "--setint", "0", "1.1", "0", "0"},
+             "failed to parse value as int: \"1.1\""},
+            {"setint_invalid_timestamp",
+             {"--debughal", "--setint", "0", "0", "1.1", "0"},
+             "failed to parse timestamp as int: \"1.1\""},
+            {"setint_invalid_areaId",
+             {"--debughal", "--setint", "0", "0", "0", "1.1"},
+             "failed to parse areaID as int: \"1.1\""},
+            {"setbool_no_args", {"--debughal", "--setbool"}, "incorrect argument count"},
+            {"setbool_invalid_value",
+             {"--debughal", "--setbool", "0", "1", "0", "0"},
+             "failed to parse value as bool"},
+            {"setfloat_no_args", {"--debughal", "--setfloat"}, "incorrect argument count"},
+            {"setfloat_invalid_value",
+             {"--debughal", "--setfloat", "0", "abcd", "0", "0"},
+             "failed to parse value as float: \"abcd\""}};
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -1261,6 +1284,111 @@ TEST_F(DefaultVhalImplTest, testInitialUserInfo) {
     EXPECT_EQ(0, events[0]->value.int32Values[2]);
     // Flags: 0
     EXPECT_EQ(0, events[0]->value.int32Values[3]);
+}
+
+TEST_F(DefaultVhalImplTest, testDebugSetInt) {
+    hidl_vec<hidl_string> options = {"--debughal", "--setint",
+                                     getPropIdString(VehicleProperty::INFO_MODEL_YEAR), "2022",
+                                     "1000"};
+    hidl_handle fd = {};
+    int memfd = createMemfd(&fd);
+    // Clear existing events.
+    mEventQueue.flush();
+
+    EXPECT_FALSE(mHal->dump(fd, options));
+
+    lseek(memfd, 0, SEEK_SET);
+    char buf[10240] = {};
+    // The dumped info should be empty.
+    read(memfd, buf, sizeof(buf));
+    EXPECT_STREQ("", buf);
+
+    auto events = mEventQueue.flush();
+    ASSERT_EQ((size_t)1, events.size());
+    ASSERT_EQ((size_t)1, events[0]->value.int32Values.size());
+    EXPECT_EQ(2022, events[0]->value.int32Values[0]);
+    EXPECT_EQ(1000, events[0]->timestamp);
+
+    VehiclePropValue value;
+    StatusCode status;
+    value.prop = toInt(VehicleProperty::INFO_MODEL_YEAR);
+    auto gotValue = mHal->get(value, &status);
+    ASSERT_EQ(StatusCode::OK, status);
+    ASSERT_EQ((size_t)1, gotValue->value.int32Values.size());
+    EXPECT_EQ(2022, gotValue->value.int32Values[0]);
+}
+
+TEST_F(DefaultVhalImplTest, testDebugSetBool) {
+    char doorLeft[100];
+    snprintf(doorLeft, sizeof(doorLeft), "%d", DOOR_1_LEFT);
+    hidl_vec<hidl_string> options = {
+            "--debughal", "--setbool", getPropIdString(VehicleProperty::DOOR_LOCK),
+            "false",      "1000",      doorLeft};
+    hidl_handle fd = {};
+    int memfd = createMemfd(&fd);
+    // Clear existing events.
+    mEventQueue.flush();
+
+    EXPECT_FALSE(mHal->dump(fd, options));
+
+    lseek(memfd, 0, SEEK_SET);
+    char buf[10240] = {};
+    // The dumped info should be empty.
+    read(memfd, buf, sizeof(buf));
+    EXPECT_STREQ("", buf);
+
+    auto events = mEventQueue.flush();
+    ASSERT_EQ((size_t)1, events.size());
+    EXPECT_EQ(0, events[0]->value.int32Values[0]);
+    EXPECT_EQ(DOOR_1_LEFT, events[0]->areaId);
+    EXPECT_EQ(1000, events[0]->timestamp);
+
+    VehiclePropValue value;
+    StatusCode status;
+    value.prop = toInt(VehicleProperty::DOOR_LOCK);
+    value.areaId = DOOR_1_LEFT;
+    auto gotValue = mHal->get(value, &status);
+    ASSERT_EQ(StatusCode::OK, status);
+    ASSERT_EQ((size_t)1, gotValue->value.int32Values.size());
+    EXPECT_EQ(0, gotValue->value.int32Values[0]);
+
+    value.areaId = DOOR_1_RIGHT;
+    gotValue = mHal->get(value, &status);
+    ASSERT_EQ(StatusCode::OK, status);
+    ASSERT_EQ((size_t)1, gotValue->value.int32Values.size());
+    EXPECT_EQ(1, gotValue->value.int32Values[0]);
+}
+
+TEST_F(DefaultVhalImplTest, testDebugSetFloat) {
+    hidl_vec<hidl_string> options = {"--debughal", "--setfloat",
+                                     getPropIdString(VehicleProperty::INFO_FUEL_CAPACITY), "10.5",
+                                     "1000"};
+    hidl_handle fd = {};
+    int memfd = createMemfd(&fd);
+    // Clear existing events.
+    mEventQueue.flush();
+
+    EXPECT_FALSE(mHal->dump(fd, options));
+
+    lseek(memfd, 0, SEEK_SET);
+    char buf[10240] = {};
+    // The dumped info should be empty.
+    read(memfd, buf, sizeof(buf));
+    EXPECT_STREQ("", buf);
+
+    auto events = mEventQueue.flush();
+    ASSERT_EQ((size_t)1, events.size());
+    ASSERT_EQ((size_t)1, events[0]->value.floatValues.size());
+    EXPECT_EQ(10.5, events[0]->value.floatValues[0]);
+    EXPECT_EQ(1000, events[0]->timestamp);
+
+    VehiclePropValue value;
+    StatusCode status;
+    value.prop = toInt(VehicleProperty::INFO_FUEL_CAPACITY);
+    auto gotValue = mHal->get(value, &status);
+    ASSERT_EQ(StatusCode::OK, status);
+    ASSERT_EQ((size_t)1, gotValue->value.floatValues.size());
+    EXPECT_EQ(10.5, gotValue->value.floatValues[0]);
 }
 
 }  // namespace
