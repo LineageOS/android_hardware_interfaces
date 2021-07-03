@@ -147,7 +147,7 @@ void TunerRecordHidlTest::recordSingleFilterTest(FilterConfig1_1 filterConf,
             mFrontendTests.setSoftwareFrontendDvrConfig(dvrMap[record.dvrSoftwareFeId]);
         }
         ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
-        mFrontendTests.setDvrTests(mDvrTests);
+        mFrontendTests.setDvrTests(&mDvrTests);
     } else {
         dvrSourceConfig = dvrMap[record.dvrSourceId];
         ASSERT_TRUE(mDvrTests.openDvrInDemux(dvrSourceConfig.type, dvrSourceConfig.bufferSize));
