@@ -18,6 +18,7 @@
 
 #include <fstream>
 
+#include <android-base/format.h>
 #include <android-base/logging.h>
 #include <utils/SystemClock.h>
 
@@ -327,6 +328,21 @@ StatusCode DefaultVehicleHalServer::onSetProperty(const VehiclePropValue& value,
     mServerSidePropStore.writeValue(*updatedPropValue, updateStatus);
     onPropertyValueFromCar(*updatedPropValue, updateStatus);
     return StatusCode::OK;
+}
+
+IVehicleServer::DumpResult DefaultVehicleHalServer::onDump(
+        const std::vector<std::string>& /* options */) {
+    DumpResult result;
+    result.callerShouldDumpState = true;
+
+    result.buffer += "Server side properties: \n";
+    auto values = mServerSidePropStore.readAllValues();
+    size_t i = 0;
+    for (const auto& value : values) {
+        result.buffer += fmt::format("[{}]: {}\n", i, toString(value));
+        i++;
+    }
+    return result;
 }
 
 }  // namespace impl
