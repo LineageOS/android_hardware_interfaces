@@ -286,7 +286,7 @@ enum Tag {
      *
      * Must be hardware-enforced.
      *
-     * TODO(b/191458710): find out if this tag is still supported.
+     * TODO(b/191738660): Remove in KeyMint V2. Currently only used for FDE.
      */
     MIN_SECONDS_BETWEEN_OPS = TagType.UINT | 403,
 
@@ -878,7 +878,7 @@ enum Tag {
 
     /**
      * OBSOLETE: Do not use. See IKeyMintOperation.updateAad instead.
-     * TODO: Delete when keystore1 is deleted.
+     * TODO(b/191738660): Remove in KeyMint v2.
      */
     ASSOCIATED_DATA = TagType.BYTES | 1000,
 
