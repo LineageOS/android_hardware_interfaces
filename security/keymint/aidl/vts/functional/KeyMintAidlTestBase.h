@@ -349,7 +349,8 @@ void p256_pub_key(const vector<uint8_t>& coseKeyData, EVP_PKEY_Ptr* signingKey);
 
 AuthorizationSet HwEnforcedAuthorizations(const vector<KeyCharacteristics>& key_characteristics);
 AuthorizationSet SwEnforcedAuthorizations(const vector<KeyCharacteristics>& key_characteristics);
-::testing::AssertionResult ChainSignaturesAreValid(const vector<Certificate>& chain);
+::testing::AssertionResult ChainSignaturesAreValid(const vector<Certificate>& chain,
+                                                   bool strict_issuer_check = true);
 
 #define INSTANTIATE_KEYMINT_AIDL_TEST(name)                                          \
     INSTANTIATE_TEST_SUITE_P(PerInstance, name,                                      \
