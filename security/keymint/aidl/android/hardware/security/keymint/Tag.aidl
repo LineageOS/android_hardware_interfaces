@@ -833,11 +833,21 @@ enum Tag {
     /**
      * DEVICE_UNIQUE_ATTESTATION is an argument to IKeyMintDevice::attested key generation/import
      * operations.  It indicates that attestation using a device-unique key is requested, rather
-     * than a batch key.  When a device-unique key is used, the returned chain should contain two
-     * certificates:
+     * than a batch key. When a device-unique key is used, the returned chain contains two or
+     * three certificates.
+     *
+     * In case the chain contains two certificates, they should be:
      *    * The attestation certificate, containing the attestation extension, as described in
-            KeyCreationResult.aidl.
+     *      KeyCreationResult.aidl.
      *    * A self-signed root certificate, signed by the device-unique key.
+     *
+     * In case the chain contains three certificates, they should be:
+     *    * The attestation certificate, containing the attestation extension, as described in
+     *      KeyCreationResult.aidl, signed by the device-unique key.
+     *    * An intermediate certificate, containing the public portion of the device-unique key.
+     *    * A self-signed root certificate, signed by a dedicated key, certifying the
+     *      intermediate.
+     *
      * No additional chained certificates are provided. Only SecurityLevel::STRONGBOX
      * IKeyMintDevices may support device-unique attestations.  SecurityLevel::TRUSTED_ENVIRONMENT
      * IKeyMintDevices must return ErrorCode::INVALID_ARGUMENT if they receive
