@@ -161,11 +161,11 @@ template <class T_IGnss>
 std::unique_ptr<V2_0::GnssLocation> GnssTemplate<T_IGnss>::getLocationFromHW() {
     if (!mHardwareModeChecked) {
         // default using /dev/gnss0
-        const char* gnss_dev_path = ReplayUtils::getGnssPath();
+        std::string gnss_dev_path = ReplayUtils::getGnssPath();
 
-        mGnssFd = open(gnss_dev_path, O_RDWR | O_NONBLOCK);
+        mGnssFd = open(gnss_dev_path.c_str(), O_RDWR | O_NONBLOCK);
         if (mGnssFd == -1) {
-            ALOGW("Failed to open %s errno: %d", gnss_dev_path, errno);
+            ALOGW("Failed to open %s errno: %d", gnss_dev_path.c_str(), errno);
         }
         mHardwareModeChecked = true;
     }

@@ -35,7 +35,7 @@ namespace gnss {
 namespace common {
 
 struct ReplayUtils {
-    static const char* getGnssPath();
+    static std::string getGnssPath();
 
     static std::string getDataFromDeviceFile(const std::string& command, int mMinIntervalMs);
 
