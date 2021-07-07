@@ -710,8 +710,7 @@ class PcmOnlyConfigInputStreamTest : public InputStreamTest {
         // Returning 'true' when no source is found so the test can fail later with a more clear
         // problem description.
         return !maybeSourceAddress.has_value() ||
-               !(xsd::isTelephonyDevice(maybeSourceAddress.value().deviceType) ||
-                 xsd::isEchoReferenceDevice(maybeSourceAddress.value().deviceType));
+               !xsd::isTelephonyDevice(maybeSourceAddress.value().deviceType);
     }
 
     void createPatchIfNeeded() {
