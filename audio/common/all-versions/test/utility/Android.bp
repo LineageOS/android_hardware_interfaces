@@ -25,7 +25,7 @@ package {
 
 cc_library_static {
     name: "android.hardware.audio.common.test.utility",
-    defaults : ["hidl_defaults"],
+    defaults: ["hidl_defaults"],
     srcs: ["src/ValidateXml.cpp"],
     cflags: [
         "-O0",
@@ -34,7 +34,34 @@ cc_library_static {
     ],
     local_include_dirs: ["include/utility"],
     export_include_dirs: ["include"],
-    shared_libs: ["libxml2", "liblog"],
+    shared_libs: [
+        "libxml2",
+        "liblog",
+    ],
     static_libs: ["libgtest"],
     export_static_lib_headers: ["libgtest"],
+}
+
+// Note: this isn't a VTS test, but rather a unit test
+// to verify correctness of test utilities.
+cc_test {
+    name: "android.hardware.audio.common.test.utility_tests",
+    host_supported: true,
+    local_include_dirs: ["include/utility"],
+    srcs: [
+        "src/ValidateXml.cpp",
+        "tests/utility_tests.cpp",
+    ],
+    cflags: [
+        "-Werror",
+        "-Wall",
+        "-g",
+    ],
+    shared_libs: [
+        "libbase",
+        "libxml2",
+        "liblog",
+    ],
+    static_libs: ["libgtest"],
+    test_suites: ["general-tests"],
 }
