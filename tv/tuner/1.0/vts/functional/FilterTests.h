@@ -77,8 +77,7 @@ class FilterCallback : public IFilterCallback {
         android::Mutex::Autolock autoLock(mMsgLock);
         // Temprarily we treat the first coming back filter data on the matching pid a success
         // once all of the MQ are cleared, means we got all the expected output
-        mFilterEvent = filterEvent;
-        readFilterEventData();
+        readFilterEventData(filterEvent);
         mPidFilterOutputCount++;
         // mFilterIdToMQ.erase(filterEvent.filterId);
 
@@ -96,15 +95,15 @@ class FilterCallback : public IFilterCallback {
 
     void testFilterDataOutput();
 
-    void startFilterEventThread(DemuxFilterEvent event);
+    void startFilterEventThread(DemuxFilterEvent& event);
     static void* __threadLoopFilter(void* threadArgs);
     void filterThreadLoop(DemuxFilterEvent& event);
 
     void updateFilterMQ(MQDesc& filterMQDescriptor);
     void updateGoldenOutputMap(string goldenOutputFile);
-    bool readFilterEventData();
-    bool dumpAvData(DemuxFilterMediaEvent event);
-    bool readRecordData(DemuxFilterTsRecordEvent event);
+    bool readFilterEventData(const DemuxFilterEvent& filterEvent);
+    bool dumpAvData(DemuxFilterMediaEvent& event);
+    bool readRecordData(DemuxFilterTsRecordEvent& event);
 
   private:
     struct FilterThreadArgs {
@@ -120,7 +119,6 @@ class FilterCallback : public IFilterCallback {
     sp<IFilter> mFilter;
     std::unique_ptr<FilterMQ> mFilterMQ;
     EventFlag* mFilterMQEventFlag;
-    DemuxFilterEvent mFilterEvent;
 
     android::Mutex mMsgLock;
     android::Mutex mFilterOutputLock;
