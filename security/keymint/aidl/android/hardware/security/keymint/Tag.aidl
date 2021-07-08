@@ -293,6 +293,8 @@ enum Tag {
      * fails because the table is full, KeyMint returns ErrorCode::TOO_MANY_OPERATIONS.
      *
      * Must be hardware-enforced.
+     *
+     * TODO(b/191738660): Remove in KeyMint V2. Currently only used for FDE.
      */
     MIN_SECONDS_BETWEEN_OPS = (3 << 28) /* TagType:UINT */ | 403,
 
@@ -883,7 +885,8 @@ enum Tag {
     STORAGE_KEY = (7 << 28) /* TagType:BOOL */ | 722,
 
     /**
-     * TODO: Delete when keystore1 is deleted.
+     * OBSOLETE: Do not use. See IKeyMintOperation.updateAad instead.
+     * TODO(b/191738660): Remove in KeyMint v2.
      */
     ASSOCIATED_DATA = (9 << 28) /* TagType:BYTES */ | 1000,
 
