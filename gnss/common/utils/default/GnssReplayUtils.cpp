@@ -21,18 +21,17 @@ namespace hardware {
 namespace gnss {
 namespace common {
 
-const char* ReplayUtils::getGnssPath() {
-    const char* gnss_dev_path = GNSS_PATH;
+std::string ReplayUtils::getGnssPath() {
     char devname_value[PROPERTY_VALUE_MAX] = "";
     if (property_get("debug.location.gnss.devname", devname_value, NULL) > 0) {
-        gnss_dev_path = devname_value;
+        return devname_value;
     }
-    return gnss_dev_path;
+    return GNSS_PATH;
 }
 
 bool ReplayUtils::hasGnssDeviceFile() {
     struct stat sb;
-    return stat(getGnssPath(), &sb) != -1;
+    return stat(getGnssPath().c_str(), &sb) != -1;
 }
 
 bool ReplayUtils::isGnssRawMeasurement(const std::string& inputStr) {
@@ -47,7 +46,7 @@ bool ReplayUtils::isNMEA(const std::string& inputStr) {
 
 std::string ReplayUtils::getDataFromDeviceFile(const std::string& command, int mMinIntervalMs) {
     char inputBuffer[INPUT_BUFFER_SIZE];
-    int mGnssFd = open(getGnssPath(), O_RDWR | O_NONBLOCK);
+    int mGnssFd = open(getGnssPath().c_str(), O_RDWR | O_NONBLOCK);
 
     if (mGnssFd == -1) {
         return "";

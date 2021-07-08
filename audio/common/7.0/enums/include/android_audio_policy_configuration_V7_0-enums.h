@@ -225,14 +225,6 @@ static inline bool isTelephonyDevice(const std::string& device) {
     return isTelephonyDevice(stringToAudioDevice(device));
 }
 
-static inline bool isEchoReferenceDevice(AudioDevice device) {
-    return device == AudioDevice::AUDIO_DEVICE_IN_ECHO_REFERENCE;
-}
-
-static inline bool isEchoReferenceDevice(const std::string& device) {
-    return isEchoReferenceDevice(stringToAudioDevice(device));
-}
-
 static inline bool maybeVendorExtension(const std::string& s) {
     // Only checks whether the string starts with the "vendor prefix".
     static const std::string vendorPrefix = "VX_";
