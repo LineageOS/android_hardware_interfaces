@@ -1,0 +1,7 @@
+{
+  "presubmit": [
+    {
+      "name": "android.hardware.audio.common.test.utility_tests"
+    }
+  ]
+}
