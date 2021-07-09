@@ -591,6 +591,14 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.tv.tuner</name>
+        <version>1</version>
+        <interface>
+            <name>ITuner</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.usb</name>
         <version>1.0-3</version>
