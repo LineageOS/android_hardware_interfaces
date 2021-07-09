@@ -25,7 +25,7 @@ package {
 cc_library {
     name: "android.hardware.bluetooth@1.0-impl",
     defaults: ["hidl_defaults"],
-    vendor_available: true,
+    vendor: true,
     relative_install_path: "hw",
     srcs: [
         "bluetooth_hci.cc",
@@ -49,7 +49,7 @@ cc_library {
 
 cc_library_static {
     name: "android.hardware.bluetooth-async",
-    vendor_available: true,
+    vendor: true,
     defaults: ["hidl_defaults"],
     srcs: [
         "async_fd_watcher.cc",
@@ -62,7 +62,7 @@ cc_library_static {
 
 cc_library_static {
     name: "android.hardware.bluetooth-hci",
-    vendor_available: true,
+    vendor: true,
     defaults: ["hidl_defaults"],
     srcs: [
         "hci_packetizer.cc",
