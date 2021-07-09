@@ -1,0 +1,6 @@
+service vendor.tuner-default /vendor/bin/hw/android.hardware.tv.tuner-service.example
+    class hal
+    user media
+    group mediadrm drmrpc
+    ioprio rt 4
+    writepid /dev/cpuset/foreground/tasks
