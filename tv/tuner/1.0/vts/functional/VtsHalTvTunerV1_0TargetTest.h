@@ -50,7 +50,7 @@ bool initConfiguration() {
     return true;
 }
 
-AssertionResult filterDataOutputTestBase(FilterTests tests) {
+AssertionResult filterDataOutputTestBase(FilterTests& tests) {
     // Data Verify Module
     std::map<uint32_t, sp<FilterCallback>>::iterator it;
     std::map<uint32_t, sp<FilterCallback>> filterCallbacks = tests.getFilterCallbacks();
