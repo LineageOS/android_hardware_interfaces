@@ -29,6 +29,7 @@
 #include <openssl/ec_key.h>
 #include <openssl/x509.h>
 #include <remote_prov/remote_prov_utils.h>
+#include <vector>
 
 #include "KeyMintAidlTestBase.h"
 
@@ -297,7 +298,8 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
     }
 
     void checkProtectedData(const DeviceInfo& deviceInfo, const cppbor::Array& keysToSign,
-                            const bytevec& keysToSignMac, const ProtectedData& protectedData) {
+                            const bytevec& keysToSignMac, const ProtectedData& protectedData,
+                            std::vector<BccEntryData>* bccOutput = nullptr) {
         auto [parsedProtectedData, _, protDataErrMsg] = cppbor::parse(protectedData.protectedData);
         ASSERT_TRUE(parsedProtectedData) << protDataErrMsg;
         ASSERT_TRUE(parsedProtectedData->asArray());
@@ -354,6 +356,10 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
 
         auto macPayload = verifyAndParseCoseMac0(&coseMac0, *macKey);
         ASSERT_TRUE(macPayload) << macPayload.message();
+
+        if (bccOutput) {
+            *bccOutput = std::move(*bccContents);
+        }
     }
 
     bytevec eekId_;
@@ -383,6 +389,48 @@ TEST_P(CertificateRequestTest, EmptyRequest_testMode) {
         ASSERT_TRUE(status.isOk()) << status.getMessage();
 
         checkProtectedData(deviceInfo, cppbor::Array(), keysToSignMac, protectedData);
+    }
+}
+
+/**
+ * Ensure that test mode outputs a unique BCC root key every time we request a
+ * certificate request. Else, it's possible that the test mode API could be used
+ * to fingerprint devices. Only the GEEK should be allowed to decrypt the same
+ * device public key multiple times.
+ */
+TEST_P(CertificateRequestTest, NewKeyPerCallInTestMode) {
+    constexpr bool testMode = true;
+    constexpr size_t eekLength = 2;
+
+    generateEek(eekLength);
+
+    bytevec keysToSignMac;
+    DeviceInfo deviceInfo;
+    ProtectedData protectedData;
+    auto status = provisionable_->generateCertificateRequest(
+            testMode, {} /* keysToSign */, eekChain_.chain, challenge_, &deviceInfo, &protectedData,
+            &keysToSignMac);
+    ASSERT_TRUE(status.isOk()) << status.getMessage();
+
+    std::vector<BccEntryData> firstBcc;
+    checkProtectedData(deviceInfo, /*keysToSign=*/cppbor::Array(), keysToSignMac, protectedData,
+                       &firstBcc);
+
+    status = provisionable_->generateCertificateRequest(testMode, {} /* keysToSign */,
+                                                        eekChain_.chain, challenge_, &deviceInfo,
+                                                        &protectedData, &keysToSignMac);
+    ASSERT_TRUE(status.isOk()) << status.getMessage();
+
+    std::vector<BccEntryData> secondBcc;
+    checkProtectedData(deviceInfo, /*keysToSign=*/cppbor::Array(), keysToSignMac, protectedData,
+                       &secondBcc);
+
+    // Verify that none of the keys in the first BCC are repeated in the second one.
+    for (const auto& i : firstBcc) {
+        for (auto& j : secondBcc) {
+            ASSERT_THAT(i.pubKey, testing::Not(testing::ElementsAreArray(j.pubKey)))
+                    << "Found a repeated pubkey in two generateCertificateRequest test mode calls";
+        }
     }
 }
 
