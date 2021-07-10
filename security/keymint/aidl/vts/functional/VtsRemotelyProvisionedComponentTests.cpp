@@ -29,6 +29,7 @@
 #include <openssl/ec_key.h>
 #include <openssl/x509.h>
 #include <remote_prov/remote_prov_utils.h>
+#include <vector>
 
 #include "KeyMintAidlTestBase.h"
 
@@ -102,8 +103,8 @@ ErrMsgOr<cppbor::Array> corrupt_sig(const cppbor::Array* coseSign1) {
     return std::move(corruptSig);
 }
 
-ErrMsgOr<EekChain> corrupt_sig_chain(const EekChain& eek, int which) {
-    auto [chain, _, parseErr] = cppbor::parse(eek.chain);
+ErrMsgOr<bytevec> corrupt_sig_chain(const bytevec& encodedEekChain, int which) {
+    auto [chain, _, parseErr] = cppbor::parse(encodedEekChain);
     if (!chain || !chain->asArray()) {
         return "EekChain parse failed";
     }
@@ -125,7 +126,7 @@ ErrMsgOr<EekChain> corrupt_sig_chain(const EekChain& eek, int which) {
             corruptChain.add(eekChain->get(ii)->clone());
         }
     }
-    return EekChain{corruptChain.encode(), eek.last_pubkey, eek.last_privkey};
+    return corruptChain.encode();
 }
 
 string device_suffix(const string& name) {
@@ -271,14 +272,14 @@ TEST_P(GenerateKeyTests, generateEcdsaP256Key_testMode) {
 class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
   protected:
     CertificateRequestTest() : eekId_(string_to_bytevec("eekid")), challenge_(randomBytes(32)) {
-        generateEek(3);
+        generateTestEekChain(3);
     }
 
-    void generateEek(size_t eekLength) {
+    void generateTestEekChain(size_t eekLength) {
         auto chain = generateEekChain(eekLength, eekId_);
         EXPECT_TRUE(chain) << chain.message();
-        if (chain) eekChain_ = chain.moveValue();
-        eekLength_ = eekLength;
+        if (chain) testEekChain_ = chain.moveValue();
+        testEekLength_ = eekLength;
     }
 
     void generateKeys(bool testMode, size_t numKeys) {
@@ -297,7 +298,8 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
     }
 
     void checkProtectedData(const DeviceInfo& deviceInfo, const cppbor::Array& keysToSign,
-                            const bytevec& keysToSignMac, const ProtectedData& protectedData) {
+                            const bytevec& keysToSignMac, const ProtectedData& protectedData,
+                            std::vector<BccEntryData>* bccOutput = nullptr) {
         auto [parsedProtectedData, _, protDataErrMsg] = cppbor::parse(protectedData.protectedData);
         ASSERT_TRUE(parsedProtectedData) << protDataErrMsg;
         ASSERT_TRUE(parsedProtectedData->asArray());
@@ -307,8 +309,9 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
         ASSERT_TRUE(senderPubkey) << senderPubkey.message();
         EXPECT_EQ(senderPubkey->second, eekId_);
 
-        auto sessionKey = x25519_HKDF_DeriveKey(eekChain_.last_pubkey, eekChain_.last_privkey,
-                                                senderPubkey->first, false /* senderIsA */);
+        auto sessionKey =
+                x25519_HKDF_DeriveKey(testEekChain_.last_pubkey, testEekChain_.last_privkey,
+                                      senderPubkey->first, false /* senderIsA */);
         ASSERT_TRUE(sessionKey) << sessionKey.message();
 
         auto protectedDataPayload =
@@ -354,11 +357,15 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
 
         auto macPayload = verifyAndParseCoseMac0(&coseMac0, *macKey);
         ASSERT_TRUE(macPayload) << macPayload.message();
+
+        if (bccOutput) {
+            *bccOutput = std::move(*bccContents);
+        }
     }
 
     bytevec eekId_;
-    size_t eekLength_;
-    EekChain eekChain_;
+    size_t testEekLength_;
+    EekChain testEekChain_;
     bytevec challenge_;
     std::vector<MacedPublicKey> keysToSign_;
     cppbor::Array cborKeysToSign_;
@@ -372,13 +379,13 @@ TEST_P(CertificateRequestTest, EmptyRequest_testMode) {
     bool testMode = true;
     for (size_t eekLength : {2, 3, 7}) {
         SCOPED_TRACE(testing::Message() << "EEK of length " << eekLength);
-        generateEek(eekLength);
+        generateTestEekChain(eekLength);
 
         bytevec keysToSignMac;
         DeviceInfo deviceInfo;
         ProtectedData protectedData;
         auto status = provisionable_->generateCertificateRequest(
-                testMode, {} /* keysToSign */, eekChain_.chain, challenge_, &deviceInfo,
+                testMode, {} /* keysToSign */, testEekChain_.chain, challenge_, &deviceInfo,
                 &protectedData, &keysToSignMac);
         ASSERT_TRUE(status.isOk()) << status.getMessage();
 
@@ -387,28 +394,59 @@ TEST_P(CertificateRequestTest, EmptyRequest_testMode) {
 }
 
 /**
- * Generate an empty certificate request in prod mode.  Generation will fail because we don't have a
- * valid GEEK.
- *
- * TODO(swillden): Get a valid GEEK and use it so the generation can succeed, though we won't be
- * able to decrypt.
+ * Ensure that test mode outputs a unique BCC root key every time we request a
+ * certificate request. Else, it's possible that the test mode API could be used
+ * to fingerprint devices. Only the GEEK should be allowed to decrypt the same
+ * device public key multiple times.
  */
-TEST_P(CertificateRequestTest, EmptyRequest_prodMode) {
-    bool testMode = false;
-    for (size_t eekLength : {2, 3, 7}) {
-        SCOPED_TRACE(testing::Message() << "EEK of length " << eekLength);
-        generateEek(eekLength);
+TEST_P(CertificateRequestTest, NewKeyPerCallInTestMode) {
+    constexpr bool testMode = true;
 
-        bytevec keysToSignMac;
-        DeviceInfo deviceInfo;
-        ProtectedData protectedData;
-        auto status = provisionable_->generateCertificateRequest(
-                testMode, {} /* keysToSign */, eekChain_.chain, challenge_, &deviceInfo,
-                &protectedData, &keysToSignMac);
-        EXPECT_FALSE(status.isOk());
-        EXPECT_EQ(status.getServiceSpecificError(),
-                  BnRemotelyProvisionedComponent::STATUS_INVALID_EEK);
+    bytevec keysToSignMac;
+    DeviceInfo deviceInfo;
+    ProtectedData protectedData;
+    auto status = provisionable_->generateCertificateRequest(
+            testMode, {} /* keysToSign */, testEekChain_.chain, challenge_, &deviceInfo,
+            &protectedData, &keysToSignMac);
+    ASSERT_TRUE(status.isOk()) << status.getMessage();
+
+    std::vector<BccEntryData> firstBcc;
+    checkProtectedData(deviceInfo, /*keysToSign=*/cppbor::Array(), keysToSignMac, protectedData,
+                       &firstBcc);
+
+    status = provisionable_->generateCertificateRequest(
+            testMode, {} /* keysToSign */, testEekChain_.chain, challenge_, &deviceInfo,
+            &protectedData, &keysToSignMac);
+    ASSERT_TRUE(status.isOk()) << status.getMessage();
+
+    std::vector<BccEntryData> secondBcc;
+    checkProtectedData(deviceInfo, /*keysToSign=*/cppbor::Array(), keysToSignMac, protectedData,
+                       &secondBcc);
+
+    // Verify that none of the keys in the first BCC are repeated in the second one.
+    for (const auto& i : firstBcc) {
+        for (auto& j : secondBcc) {
+            ASSERT_THAT(i.pubKey, testing::Not(testing::ElementsAreArray(j.pubKey)))
+                    << "Found a repeated pubkey in two generateCertificateRequest test mode calls";
+        }
     }
+}
+
+/**
+ * Generate an empty certificate request in prod mode. This test must be run explicitly, and
+ * is not run by default. Not all devices are GMS devices, and therefore they do not all
+ * trust the Google EEK root.
+ */
+TEST_P(CertificateRequestTest, DISABLED_EmptyRequest_prodMode) {
+    bool testMode = false;
+
+    bytevec keysToSignMac;
+    DeviceInfo deviceInfo;
+    ProtectedData protectedData;
+    auto status = provisionable_->generateCertificateRequest(
+            testMode, {} /* keysToSign */, getProdEekChain(), challenge_, &deviceInfo,
+            &protectedData, &keysToSignMac);
+    EXPECT_TRUE(status.isOk());
 }
 
 /**
@@ -420,13 +458,13 @@ TEST_P(CertificateRequestTest, NonEmptyRequest_testMode) {
 
     for (size_t eekLength : {2, 3, 7}) {
         SCOPED_TRACE(testing::Message() << "EEK of length " << eekLength);
-        generateEek(eekLength);
+        generateTestEekChain(eekLength);
 
         bytevec keysToSignMac;
         DeviceInfo deviceInfo;
         ProtectedData protectedData;
         auto status = provisionable_->generateCertificateRequest(
-                testMode, keysToSign_, eekChain_.chain, challenge_, &deviceInfo, &protectedData,
+                testMode, keysToSign_, testEekChain_.chain, challenge_, &deviceInfo, &protectedData,
                 &keysToSignMac);
         ASSERT_TRUE(status.isOk()) << status.getMessage();
 
@@ -435,30 +473,21 @@ TEST_P(CertificateRequestTest, NonEmptyRequest_testMode) {
 }
 
 /**
- * Generate a non-empty certificate request in prod mode.  Must fail because we don't have a valid
- * GEEK.
- *
- * TODO(swillden): Get a valid GEEK and use it so the generation can succeed, though we won't be
- * able to decrypt.
+ * Generate a non-empty certificate request in prod mode. This test must be run explicitly, and
+ * is not run by default. Not all devices are GMS devices, and therefore they do not all
+ * trust the Google EEK root.
  */
-TEST_P(CertificateRequestTest, NonEmptyRequest_prodMode) {
+TEST_P(CertificateRequestTest, DISABLED_NonEmptyRequest_prodMode) {
     bool testMode = false;
     generateKeys(testMode, 4 /* numKeys */);
 
-    for (size_t eekLength : {2, 3, 7}) {
-        SCOPED_TRACE(testing::Message() << "EEK of length " << eekLength);
-        generateEek(eekLength);
-
-        bytevec keysToSignMac;
-        DeviceInfo deviceInfo;
-        ProtectedData protectedData;
-        auto status = provisionable_->generateCertificateRequest(
-                testMode, keysToSign_, eekChain_.chain, challenge_, &deviceInfo, &protectedData,
-                &keysToSignMac);
-        EXPECT_FALSE(status.isOk());
-        EXPECT_EQ(status.getServiceSpecificError(),
-                  BnRemotelyProvisionedComponent::STATUS_INVALID_EEK);
-    }
+    bytevec keysToSignMac;
+    DeviceInfo deviceInfo;
+    ProtectedData protectedData;
+    auto status = provisionable_->generateCertificateRequest(
+            testMode, keysToSign_, getProdEekChain(), challenge_, &deviceInfo, &protectedData,
+            &keysToSignMac);
+    EXPECT_TRUE(status.isOk());
 }
 
 /**
@@ -473,8 +502,8 @@ TEST_P(CertificateRequestTest, NonEmptyRequestCorruptMac_testMode) {
     DeviceInfo deviceInfo;
     ProtectedData protectedData;
     auto status = provisionable_->generateCertificateRequest(
-            testMode, {keyWithCorruptMac}, eekChain_.chain, challenge_, &deviceInfo, &protectedData,
-            &keysToSignMac);
+            testMode, {keyWithCorruptMac}, testEekChain_.chain, challenge_, &deviceInfo,
+            &protectedData, &keysToSignMac);
     ASSERT_FALSE(status.isOk()) << status.getMessage();
     EXPECT_EQ(status.getServiceSpecificError(), BnRemotelyProvisionedComponent::STATUS_INVALID_MAC);
 }
@@ -483,7 +512,7 @@ TEST_P(CertificateRequestTest, NonEmptyRequestCorruptMac_testMode) {
  * Generate a non-empty certificate request in prod mode, but with the MAC corrupted on the keypair.
  */
 TEST_P(CertificateRequestTest, NonEmptyRequestCorruptMac_prodMode) {
-    bool testMode = true;
+    bool testMode = false;
     generateKeys(testMode, 1 /* numKeys */);
     MacedPublicKey keyWithCorruptMac = corrupt_maced_key(keysToSign_[0]).moveValue();
 
@@ -491,38 +520,35 @@ TEST_P(CertificateRequestTest, NonEmptyRequestCorruptMac_prodMode) {
     DeviceInfo deviceInfo;
     ProtectedData protectedData;
     auto status = provisionable_->generateCertificateRequest(
-            testMode, {keyWithCorruptMac}, eekChain_.chain, challenge_, &deviceInfo, &protectedData,
-            &keysToSignMac);
+            testMode, {keyWithCorruptMac}, getProdEekChain(), challenge_, &deviceInfo,
+            &protectedData, &keysToSignMac);
     ASSERT_FALSE(status.isOk()) << status.getMessage();
-    auto rc = status.getServiceSpecificError();
-
-    // TODO(drysdale): drop the INVALID_EEK potential error code when a real GEEK is available.
-    EXPECT_TRUE(rc == BnRemotelyProvisionedComponent::STATUS_INVALID_EEK ||
-                rc == BnRemotelyProvisionedComponent::STATUS_INVALID_MAC);
+    EXPECT_EQ(status.getServiceSpecificError(), BnRemotelyProvisionedComponent::STATUS_INVALID_MAC);
 }
 
 /**
  * Generate a non-empty certificate request in prod mode that has a corrupt EEK chain.
  * Confirm that the request is rejected.
- *
- * TODO(drysdale): Update to use a valid GEEK, so that the test actually confirms that the
- * implementation is checking signatures.
  */
 TEST_P(CertificateRequestTest, NonEmptyCorruptEekRequest_prodMode) {
     bool testMode = false;
     generateKeys(testMode, 4 /* numKeys */);
 
-    for (size_t ii = 0; ii < eekLength_; ii++) {
-        auto chain = corrupt_sig_chain(eekChain_, ii);
+    auto prodEekChain = getProdEekChain();
+    auto [parsedChain, _, parseErr] = cppbor::parse(prodEekChain);
+    ASSERT_NE(parsedChain, nullptr) << parseErr;
+    ASSERT_NE(parsedChain->asArray(), nullptr);
+
+    for (int ii = 0; ii < parsedChain->asArray()->size(); ++ii) {
+        auto chain = corrupt_sig_chain(prodEekChain, ii);
         ASSERT_TRUE(chain) << chain.message();
-        EekChain corruptEek = chain.moveValue();
 
         bytevec keysToSignMac;
         DeviceInfo deviceInfo;
         ProtectedData protectedData;
-        auto status = provisionable_->generateCertificateRequest(
-                testMode, keysToSign_, corruptEek.chain, challenge_, &deviceInfo, &protectedData,
-                &keysToSignMac);
+        auto status = provisionable_->generateCertificateRequest(testMode, keysToSign_, *chain,
+                                                                 challenge_, &deviceInfo,
+                                                                 &protectedData, &keysToSignMac);
         ASSERT_FALSE(status.isOk());
         ASSERT_EQ(status.getServiceSpecificError(),
                   BnRemotelyProvisionedComponent::STATUS_INVALID_EEK);
@@ -532,9 +558,6 @@ TEST_P(CertificateRequestTest, NonEmptyCorruptEekRequest_prodMode) {
 /**
  * Generate a non-empty certificate request in prod mode that has an incomplete EEK chain.
  * Confirm that the request is rejected.
- *
- * TODO(drysdale): Update to use a valid GEEK, so that the test actually confirms that the
- * implementation is checking signatures.
  */
 TEST_P(CertificateRequestTest, NonEmptyIncompleteEekRequest_prodMode) {
     bool testMode = false;
@@ -542,7 +565,7 @@ TEST_P(CertificateRequestTest, NonEmptyIncompleteEekRequest_prodMode) {
 
     // Build an EEK chain that omits the first self-signed cert.
     auto truncatedChain = cppbor::Array();
-    auto [chain, _, parseErr] = cppbor::parse(eekChain_.chain);
+    auto [chain, _, parseErr] = cppbor::parse(getProdEekChain());
     ASSERT_TRUE(chain);
     auto eekChain = chain->asArray();
     ASSERT_NE(eekChain, nullptr);
@@ -571,7 +594,7 @@ TEST_P(CertificateRequestTest, NonEmptyRequest_prodKeyInTestCert) {
     DeviceInfo deviceInfo;
     ProtectedData protectedData;
     auto status = provisionable_->generateCertificateRequest(
-            true /* testMode */, keysToSign_, eekChain_.chain, challenge_, &deviceInfo,
+            true /* testMode */, keysToSign_, testEekChain_.chain, challenge_, &deviceInfo,
             &protectedData, &keysToSignMac);
     ASSERT_FALSE(status.isOk());
     ASSERT_EQ(status.getServiceSpecificError(),
@@ -589,7 +612,7 @@ TEST_P(CertificateRequestTest, NonEmptyRequest_testKeyInProdCert) {
     DeviceInfo deviceInfo;
     ProtectedData protectedData;
     auto status = provisionable_->generateCertificateRequest(
-            false /* testMode */, keysToSign_, eekChain_.chain, challenge_, &deviceInfo,
+            false /* testMode */, keysToSign_, testEekChain_.chain, challenge_, &deviceInfo,
             &protectedData, &keysToSignMac);
     ASSERT_FALSE(status.isOk());
     ASSERT_EQ(status.getServiceSpecificError(),
