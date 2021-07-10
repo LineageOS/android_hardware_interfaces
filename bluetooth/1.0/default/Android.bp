@@ -22,7 +22,7 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
-cc_library_shared {
+cc_library {
     name: "android.hardware.bluetooth@1.0-impl",
     defaults: ["hidl_defaults"],
     vendor: true,
