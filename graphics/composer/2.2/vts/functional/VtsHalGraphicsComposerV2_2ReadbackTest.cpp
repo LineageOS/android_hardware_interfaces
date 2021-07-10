@@ -458,6 +458,7 @@ TEST_P(GraphicsCompositionTest, ClientComposition) {
                           << " pixel format: PixelFormat::RGBA_8888 dataspace: "
                           << ReadbackHelper::getDataspaceString(clientDataspace)
                           << " unsupported for display" << std::endl;
+                mReader->mCompositionChanges.clear();
                 continue;
             }
 
