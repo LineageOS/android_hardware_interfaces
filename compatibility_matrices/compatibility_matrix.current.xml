@@ -524,7 +524,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="hidl" optional="false">
         <name>android.hardware.thermal</name>
         <version>2.0</version>
         <interface>
