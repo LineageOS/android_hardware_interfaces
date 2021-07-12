@@ -37,6 +37,7 @@ class Ringbuffer {
     // within |maxSize_|.
     void append(const std::vector<uint8_t>& input);
     const std::list<std::vector<uint8_t>>& getData() const;
+    void clear();
 
    private:
     std::list<std::vector<uint8_t>> data_;
