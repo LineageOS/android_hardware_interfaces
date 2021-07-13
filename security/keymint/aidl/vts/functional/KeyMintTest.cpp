@@ -1487,9 +1487,8 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationTags) {
             tag.tag == TAG_ROLLBACK_RESISTANCE) {
             continue;
         }
-        if (result == ErrorCode::UNSUPPORTED_TAG &&
-            (tag.tag == TAG_ALLOW_WHILE_ON_BODY || tag.tag == TAG_TRUSTED_USER_PRESENCE_REQUIRED)) {
-            // Optional tag not supported by this KeyMint implementation.
+        if (result == ErrorCode::UNSUPPORTED_TAG && tag.tag == TAG_TRUSTED_USER_PRESENCE_REQUIRED) {
+            // Tag not required to be supported by all KeyMint implementations.
             continue;
         }
         ASSERT_EQ(result, ErrorCode::OK);
@@ -1501,9 +1500,8 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationTags) {
 
         AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
         AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
-        if (tag.tag != TAG_ATTESTATION_APPLICATION_ID) {
-            // Expect to find most of the extra tags in the key characteristics
-            // of the generated key (but not for ATTESTATION_APPLICATION_ID).
+        // Some tags are optional, so don't require them to be in the enforcements.
+        if (tag.tag != TAG_ATTESTATION_APPLICATION_ID && tag.tag != TAG_ALLOW_WHILE_ON_BODY) {
             EXPECT_TRUE(hw_enforced.Contains(tag.tag) || sw_enforced.Contains(tag.tag))
                     << tag << " not in hw:" << hw_enforced << " nor sw:" << sw_enforced;
         }
