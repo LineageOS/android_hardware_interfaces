@@ -33,12 +33,37 @@ namespace V2_0 {
 
 namespace impl {
 
+JsonFakeValueGenerator::JsonFakeValueGenerator(const std::string& path, int32_t repetition) {
+    const char* file = path.c_str();
+    std::ifstream ifs(file);
+    if (!ifs) {
+        ALOGE("%s: couldn't open %s for parsing.", __func__, file);
+        mGenCfg = {
+                .index = 0,
+                .events = {},
+        };
+        mNumOfIterations = 0;
+        return;
+    }
+    mGenCfg = {
+            .index = 0,
+            .events = parseFakeValueJson(ifs),
+    };
+    mNumOfIterations = repetition;
+}
+
 JsonFakeValueGenerator::JsonFakeValueGenerator(const VehiclePropValue& request) {
     const auto& v = request.value;
     const char* file = v.stringValue.c_str();
     std::ifstream ifs(file);
     if (!ifs) {
         ALOGE("%s: couldn't open %s for parsing.", __func__, file);
+        mGenCfg = {
+                .index = 0,
+                .events = {},
+        };
+        mNumOfIterations = 0;
+        return;
     }
     mGenCfg = {
         .index = 0,
@@ -48,10 +73,16 @@ JsonFakeValueGenerator::JsonFakeValueGenerator(const VehiclePropValue& request) 
     mNumOfIterations = v.int32Values.size() < 2 ? -1 : v.int32Values[1];
 }
 
-JsonFakeValueGenerator::JsonFakeValueGenerator(std::string path) {
+JsonFakeValueGenerator::JsonFakeValueGenerator(const std::string& path) {
     std::ifstream ifs(path);
     if (!ifs) {
         ALOGE("%s: couldn't open %s for parsing.", __func__, path.c_str());
+        mGenCfg = {
+                .index = 0,
+                .events = {},
+        };
+        mNumOfIterations = 0;
+        return;
     }
     mGenCfg = {
         .index = 0,

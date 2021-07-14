@@ -29,23 +29,36 @@ namespace V2_0 {
 
 namespace impl {
 
+LinearFakeValueGenerator::LinearFakeValueGenerator(int32_t propId, float middleValue,
+                                                   float currentValue, float dispersion,
+                                                   float increment, int64_t interval) {
+    initGenCfg(propId, middleValue, currentValue, dispersion, increment, interval);
+}
+
 LinearFakeValueGenerator::LinearFakeValueGenerator(const VehiclePropValue& request) {
     const auto& v = request.value;
+    initGenCfg(v.int32Values[1], v.floatValues[0], v.floatValues[0], v.floatValues[1],
+               v.floatValues[2], v.int64Values[0]);
+}
+
+void LinearFakeValueGenerator::initGenCfg(int32_t propId, float middleValue, float currentValue,
+                                          float dispersion, float increment, int64_t interval) {
+    if (currentValue < middleValue - dispersion || currentValue >= middleValue + dispersion) {
+        ALOGW("%s: invalid initValue: %f, out of range, default to %f", __func__, currentValue,
+              middleValue);
+        currentValue = middleValue;
+    }
     mGenCfg = GeneratorCfg{
-        .propId = v.int32Values[1],
-        .initialValue = v.floatValues[0],
-        .currentValue = v.floatValues[0],
-        .dispersion = v.floatValues[1],
-        .increment = v.floatValues[2],
-        .interval = Nanos(v.int64Values[0]),
+            .propId = propId,
+            .middleValue = middleValue,
+            .currentValue = currentValue,
+            .dispersion = dispersion,
+            .increment = increment,
+            .interval = Nanos(interval),
     };
 }
 
 VehiclePropValue LinearFakeValueGenerator::nextEvent() {
-    mGenCfg.currentValue += mGenCfg.increment;
-    if (mGenCfg.currentValue > mGenCfg.initialValue + mGenCfg.dispersion) {
-        mGenCfg.currentValue = mGenCfg.initialValue - mGenCfg.dispersion;
-    }
     // TODO: (chenhaosjtuacm) remove "{}" if AGL compiler updated
     VehiclePropValue event = {.timestamp = {}, .areaId = {}, .prop = mGenCfg.propId};
     auto& value = event.value;
@@ -67,6 +80,12 @@ VehiclePropValue LinearFakeValueGenerator::nextEvent() {
     }
     TimePoint eventTime = Clock::now() + mGenCfg.interval;
     event.timestamp = eventTime.time_since_epoch().count();
+
+    mGenCfg.currentValue += mGenCfg.increment;
+    if (mGenCfg.currentValue >= mGenCfg.middleValue + mGenCfg.dispersion) {
+        // Wrap around, (i - d) + c - (i + d) = c - 2 * d
+        mGenCfg.currentValue = mGenCfg.currentValue - 2 * mGenCfg.dispersion;
+    }
     return event;
 }
 
