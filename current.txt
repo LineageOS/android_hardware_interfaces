@@ -768,6 +768,8 @@ a64467bae843569f0d465c5be7f0c7a5b987985b55a3ef4794dd5afc68538650 android.hardwar
 98592d193a717066facf91428426e5abe211e3bd718bc372e29fb944ddbe6e7c android.hardware.wifi.supplicant@1.3::types
 
 # ABI preserving changes to HALs during Android S
+# b/193346383
+93d29fbe2fcc5e4e053a9db7c9abbd9190c46b85b443f2698a3460db2ee76c8d android.hardware.camera.metadata@3.2::types
 159a0069336035852e9eca6354b86b7990680d1b239f23ef2f631b01807c4cb9 android.hardware.camera.metadata@3.5::types
 e042522daa4b5f7fd4a0a19bcdadb93c79a1b04c09ef2c9813a3a8941032f3f5 android.hardware.contexthub@1.0::IContexthub
 c2f64133b83ede65c9939ef97ab5bd867b73faf3dba0e7e69f77c3c43d9e487e android.hardware.contexthub@1.0::IContexthubCallback

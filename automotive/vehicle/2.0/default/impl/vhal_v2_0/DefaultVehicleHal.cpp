@@ -15,6 +15,7 @@
  */
 #define LOG_TAG "DefaultVehicleHal_v2_0"
 
+#include <assert.h>
 #include <utils/Log.h>
 #include <utils/SystemClock.h>
 #include <vhal_v2_0/RecurrentTimer.h>
@@ -72,6 +73,173 @@ bool DefaultVehicleHal::dump(const hidl_handle& fd, const hidl_vec<hidl_string>&
     return mVehicleClient->dump(fd, options);
 }
 
+StatusCode DefaultVehicleHal::checkPropValue(const VehiclePropValue& value,
+                                             const VehiclePropConfig* config) {
+    int32_t property = value.prop;
+    VehiclePropertyType type = getPropType(property);
+    switch (type) {
+        case VehiclePropertyType::BOOLEAN:
+        case VehiclePropertyType::INT32:
+            if (value.value.int32Values.size() != 1) {
+                return StatusCode::INVALID_ARG;
+            }
+            break;
+        case VehiclePropertyType::INT32_VEC:
+            if (value.value.int32Values.size() < 1) {
+                return StatusCode::INVALID_ARG;
+            }
+            break;
+        case VehiclePropertyType::INT64:
+            if (value.value.int64Values.size() != 1) {
+                return StatusCode::INVALID_ARG;
+            }
+            break;
+        case VehiclePropertyType::INT64_VEC:
+            if (value.value.int64Values.size() < 1) {
+                return StatusCode::INVALID_ARG;
+            }
+            break;
+        case VehiclePropertyType::FLOAT:
+            if (value.value.floatValues.size() != 1) {
+                return StatusCode::INVALID_ARG;
+            }
+            break;
+        case VehiclePropertyType::FLOAT_VEC:
+            if (value.value.floatValues.size() < 1) {
+                return StatusCode::INVALID_ARG;
+            }
+            break;
+        case VehiclePropertyType::BYTES:
+            // We allow setting an empty bytes array.
+            break;
+        case VehiclePropertyType::STRING:
+            // We allow setting an empty string.
+            break;
+        case VehiclePropertyType::MIXED:
+            if (getPropGroup(property) == VehiclePropertyGroup::VENDOR) {
+                // We only checks vendor mixed properties.
+                return checkVendorMixedPropValue(value, config);
+            }
+            break;
+        default:
+            ALOGW("Unknown property type: %d", type);
+            return StatusCode::INVALID_ARG;
+    }
+    return StatusCode::OK;
+}
+
+StatusCode DefaultVehicleHal::checkVendorMixedPropValue(const VehiclePropValue& value,
+                                                        const VehiclePropConfig* config) {
+    auto configArray = config->configArray;
+    // configArray[0], 1 indicates the property has a String value, we allow the string value to
+    // be empty.
+
+    size_t int32Count = 0;
+    // configArray[1], 1 indicates the property has a Boolean value.
+    if (configArray[1] == 1) {
+        int32Count++;
+    }
+    // configArray[2], 1 indicates the property has an Integer value.
+    if (configArray[2] == 1) {
+        int32Count++;
+    }
+    // configArray[3], the number indicates the size of Integer[] in the property.
+    int32Count += static_cast<size_t>(configArray[3]);
+    if (value.value.int32Values.size() != int32Count) {
+        return StatusCode::INVALID_ARG;
+    }
+
+    size_t int64Count = 0;
+    // configArray[4], 1 indicates the property has a Long value.
+    if (configArray[4] == 1) {
+        int64Count++;
+    }
+    // configArray[5], the number indicates the size of Long[] in the property.
+    int64Count += static_cast<size_t>(configArray[5]);
+    if (value.value.int64Values.size() != int64Count) {
+        return StatusCode::INVALID_ARG;
+    }
+
+    size_t floatCount = 0;
+    // configArray[6], 1 indicates the property has a Float value.
+    if (configArray[6] == 1) {
+        floatCount++;
+    }
+    // configArray[7], the number indicates the size of Float[] in the property.
+    floatCount += static_cast<size_t>(configArray[7]);
+    if (value.value.floatValues.size() != floatCount) {
+        return StatusCode::INVALID_ARG;
+    }
+
+    // configArray[8], the number indicates the size of byte[] in the property.
+    if (configArray[8] != 0 && value.value.bytes.size() != static_cast<size_t>(configArray[8])) {
+        return StatusCode::INVALID_ARG;
+    }
+    return StatusCode::OK;
+}
+
+StatusCode DefaultVehicleHal::checkValueRange(const VehiclePropValue& value,
+                                              const VehiclePropConfig* config) {
+    int32_t property = value.prop;
+    VehiclePropertyType type = getPropType(property);
+    const VehicleAreaConfig* areaConfig;
+    if (isGlobalProp(property)) {
+        if (config->areaConfigs.size() == 0) {
+            return StatusCode::OK;
+        }
+        areaConfig = &(config->areaConfigs[0]);
+    } else {
+        for (auto& c : config->areaConfigs) {
+            // areaId might contain multiple areas.
+            if (c.areaId & value.areaId) {
+                areaConfig = &c;
+                break;
+            }
+        }
+    }
+    switch (type) {
+        case VehiclePropertyType::INT32:
+            if (areaConfig->minInt32Value == 0 && areaConfig->maxInt32Value == 0) {
+                break;
+            }
+            // We already checked this in checkPropValue.
+            assert(value.value.int32Values.size() > 0);
+            if (value.value.int32Values[0] < areaConfig->minInt32Value ||
+                value.value.int32Values[0] > areaConfig->maxInt32Value) {
+                return StatusCode::INVALID_ARG;
+            }
+            break;
+        case VehiclePropertyType::INT64:
+            if (areaConfig->minInt64Value == 0 && areaConfig->maxInt64Value == 0) {
+                break;
+            }
+            // We already checked this in checkPropValue.
+            assert(value.value.int64Values.size() > 0);
+            if (value.value.int64Values[0] < areaConfig->minInt64Value ||
+                value.value.int64Values[0] > areaConfig->maxInt64Value) {
+                return StatusCode::INVALID_ARG;
+            }
+            break;
+        case VehiclePropertyType::FLOAT:
+            if (areaConfig->minFloatValue == 0 && areaConfig->maxFloatValue == 0) {
+                break;
+            }
+            // We already checked this in checkPropValue.
+            assert(value.value.floatValues.size() > 0);
+            if (value.value.floatValues[0] < areaConfig->minFloatValue ||
+                value.value.floatValues[0] > areaConfig->maxFloatValue) {
+                return StatusCode::INVALID_ARG;
+            }
+            break;
+        default:
+            // We don't check the rest of property types. Additional logic needs to be added if
+            // required for real implementation. E.g., you might want to enforce the range
+            // checks on vector as well or you might want to check the range for mixed property.
+            break;
+    }
+    return StatusCode::OK;
+}
+
 StatusCode DefaultVehicleHal::set(const VehiclePropValue& propValue) {
     if (propValue.status != VehiclePropertyStatus::AVAILABLE) {
         // Android side cannot set property status - this value is the
@@ -79,12 +247,26 @@ StatusCode DefaultVehicleHal::set(const VehiclePropValue& propValue) {
         // its underlying hardware
         return StatusCode::INVALID_ARG;
     }
-    auto currentPropValue = mPropStore->readValueOrNull(propValue);
 
-    if (currentPropValue == nullptr) {
+    int32_t property = propValue.prop;
+    const VehiclePropConfig* config = mPropStore->getConfigOrNull(property);
+    if (config == nullptr) {
+        ALOGW("no config for prop 0x%x", property);
         return StatusCode::INVALID_ARG;
     }
-    if (currentPropValue->status != VehiclePropertyStatus::AVAILABLE) {
+    auto status = checkPropValue(propValue, config);
+    if (status != StatusCode::OK) {
+        ALOGW("invalid property value: %s", toString(propValue).c_str());
+        return status;
+    }
+    status = checkValueRange(propValue, config);
+    if (status != StatusCode::OK) {
+        ALOGW("property value out of range: %s", toString(propValue).c_str());
+        return status;
+    }
+
+    auto currentPropValue = mPropStore->readValueOrNull(propValue);
+    if (currentPropValue && currentPropValue->status != VehiclePropertyStatus::AVAILABLE) {
         // do not allow Android side to set() a disabled/error property
         return StatusCode::NOT_AVAILABLE;
     }
@@ -151,6 +333,14 @@ StatusCode DefaultVehicleHal::subscribe(int32_t property, float sampleRate) {
     if (!isContinuousProperty(property)) {
         return StatusCode::INVALID_ARG;
     }
+
+    // If the config does not exist, isContinuousProperty should return false.
+    const VehiclePropConfig* config = mPropStore->getConfigOrNull(property);
+    if (sampleRate < config->minSampleRate || sampleRate > config->maxSampleRate) {
+        ALOGW("sampleRate out of range");
+        return StatusCode::INVALID_ARG;
+    }
+
     mRecurrentTimer.registerRecurrentEvent(hertzToNanoseconds(sampleRate), property);
     return StatusCode::OK;
 }
