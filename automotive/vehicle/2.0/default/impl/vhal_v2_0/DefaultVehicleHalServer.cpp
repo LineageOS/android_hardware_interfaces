@@ -20,6 +20,8 @@
 
 #include <android-base/format.h>
 #include <android-base/logging.h>
+#include <android-base/parsedouble.h>
+#include <android-base/parseint.h>
 #include <utils/SystemClock.h>
 
 #include "DefaultConfig.h"
@@ -82,7 +84,7 @@ void DefaultVehicleHalServer::sendAllValuesToClient() {
     }
 }
 
-GeneratorHub* DefaultVehicleHalServer::getGenerator() {
+GeneratorHub* DefaultVehicleHalServer::getGeneratorHub() {
     return &mGeneratorHub;
 }
 
@@ -145,8 +147,8 @@ StatusCode DefaultVehicleHalServer::handleGenerateFakeDataRequest(const VehicleP
                 return StatusCode::INVALID_ARG;
             }
             int32_t cookie = v.int32Values[1];
-            getGenerator()->registerGenerator(cookie,
-                                              std::make_unique<LinearFakeValueGenerator>(request));
+            getGeneratorHub()->registerGenerator(
+                    cookie, std::make_unique<LinearFakeValueGenerator>(request));
             break;
         }
         case FakeDataCommand::StartJson: {
@@ -156,8 +158,12 @@ StatusCode DefaultVehicleHalServer::handleGenerateFakeDataRequest(const VehicleP
                 return StatusCode::INVALID_ARG;
             }
             int32_t cookie = std::hash<std::string>()(v.stringValue);
-            getGenerator()->registerGenerator(cookie,
-                                              std::make_unique<JsonFakeValueGenerator>(request));
+            auto generator = std::make_unique<JsonFakeValueGenerator>(request);
+            if (!generator->hasNext()) {
+                LOG(ERROR) << __func__ << ": invalid JSON file, no events";
+                return StatusCode::INVALID_ARG;
+            }
+            getGeneratorHub()->registerGenerator(cookie, std::move(generator));
             break;
         }
         case FakeDataCommand::StopLinear: {
@@ -167,7 +173,7 @@ StatusCode DefaultVehicleHalServer::handleGenerateFakeDataRequest(const VehicleP
                 return StatusCode::INVALID_ARG;
             }
             int32_t cookie = v.int32Values[1];
-            getGenerator()->unregisterGenerator(cookie);
+            getGeneratorHub()->unregisterGenerator(cookie);
             break;
         }
         case FakeDataCommand::StopJson: {
@@ -177,7 +183,7 @@ StatusCode DefaultVehicleHalServer::handleGenerateFakeDataRequest(const VehicleP
                 return StatusCode::INVALID_ARG;
             }
             int32_t cookie = std::hash<std::string>()(v.stringValue);
-            getGenerator()->unregisterGenerator(cookie);
+            getGeneratorHub()->unregisterGenerator(cookie);
             break;
         }
         case FakeDataCommand::KeyPress: {
@@ -331,17 +337,225 @@ StatusCode DefaultVehicleHalServer::onSetProperty(const VehiclePropValue& value,
 }
 
 IVehicleServer::DumpResult DefaultVehicleHalServer::onDump(
-        const std::vector<std::string>& /* options */) {
+        const std::vector<std::string>& options) {
     DumpResult result;
-    result.callerShouldDumpState = true;
-
-    result.buffer += "Server side properties: \n";
-    auto values = mServerSidePropStore.readAllValues();
-    size_t i = 0;
-    for (const auto& value : values) {
-        result.buffer += fmt::format("[{}]: {}\n", i, toString(value));
-        i++;
+    if (options.size() == 0) {
+        // No options, dump all stored properties.
+        result.callerShouldDumpState = true;
+        result.buffer += "Server side properties: \n";
+        auto values = mServerSidePropStore.readAllValues();
+        size_t i = 0;
+        for (const auto& value : values) {
+            result.buffer += fmt::format("[{}]: {}\n", i, toString(value));
+            i++;
+        }
+        return result;
     }
+    if (options[0] != "--debughal") {
+        // We only expect "debughal" command. This might be some commands that the caller knows
+        // about, so let caller handle it.
+        result.callerShouldDumpState = true;
+        return result;
+    }
+
+    return debug(options);
+}
+
+IVehicleServer::DumpResult DefaultVehicleHalServer::debug(const std::vector<std::string>& options) {
+    DumpResult result;
+    // This is a debug command for the HAL, caller should not continue to dump state.
+    result.callerShouldDumpState = false;
+
+    if (options.size() < 2) {
+        result.buffer += "No command specified\n";
+        result.buffer += getHelpInfo();
+        return result;
+    }
+
+    std::string command = options[1];
+    if (command == "--help") {
+        result.buffer += getHelpInfo();
+        return result;
+    } else if (command == "--genfakedata") {
+        return genFakeData(options);
+    }
+
+    result.buffer += "Unknown command: \"" + command + "\"\n";
+    result.buffer += getHelpInfo();
+    return result;
+}
+
+std::string DefaultVehicleHalServer::getHelpInfo() {
+    return "Help: \n"
+           "Generate Fake Data: \n"
+           "\tStart a linear generator: \n"
+           "\t--debughal --genfakedata --startlinear [propID(int32)] [middleValue(float)] "
+           "[currentValue(float)] [dispersion(float)] [increment(float)] [interval(int64)]\n"
+           "\tStop a linear generator: \n"
+           "\t--debughal --genfakedata --stoplinear [propID(int32)]\n"
+           "\tStart a json generator: \n"
+           "\t--debughal --genfakedata --startjson [jsonFilePath(string)] "
+           "[repetition(int32)(optional)]\n"
+           "\tStop a json generator: \n"
+           "\t--debughal --genfakedata --stopjson [jsonFilePath(string)]\n"
+           "\tGenerate key press: \n"
+           "\t--debughal --genfakedata --keypress [keyCode(int32)] [display[int32]]\n";
+}
+
+IVehicleServer::DumpResult DefaultVehicleHalServer::genFakeData(
+        const std::vector<std::string>& options) {
+    DumpResult result;
+    // This is a debug command for the HAL, caller should not continue to dump state.
+    result.callerShouldDumpState = false;
+
+    if (options.size() < 3) {
+        result.buffer += "No subcommand specified for genfakedata\n";
+        result.buffer += getHelpInfo();
+        return result;
+    }
+
+    std::string command = options[2];
+    if (command == "--startlinear") {
+        LOG(INFO) << __func__ << "FakeDataCommand::StartLinear";
+        // --debughal --genfakedata --startlinear [propID(int32)] [middleValue(float)]
+        // [currentValue(float)] [dispersion(float)] [increment(float)] [interval(int64)]
+        if (options.size() != 9) {
+            result.buffer +=
+                    "incorrect argument count, need 9 arguments for --genfakedata --startlinear\n";
+            result.buffer += getHelpInfo();
+            return result;
+        }
+        int32_t propId;
+        float middleValue;
+        float currentValue;
+        float dispersion;
+        float increment;
+        int64_t interval;
+        if (!android::base::ParseInt(options[3], &propId)) {
+            result.buffer += "failed to parse propdID as int: \"" + options[3] + "\"\n";
+            result.buffer += getHelpInfo();
+            return result;
+        }
+        if (!android::base::ParseFloat(options[4], &middleValue)) {
+            result.buffer += "failed to parse middleValue as float: \"" + options[4] + "\"\n";
+            result.buffer += getHelpInfo();
+            return result;
+        }
+        if (!android::base::ParseFloat(options[5], &currentValue)) {
+            result.buffer += "failed to parse currentValue as float: \"" + options[5] + "\"\n";
+            result.buffer += getHelpInfo();
+            return result;
+        }
+        if (!android::base::ParseFloat(options[6], &dispersion)) {
+            result.buffer += "failed to parse dispersion as float: \"" + options[6] + "\"\n";
+            result.buffer += getHelpInfo();
+            return result;
+        }
+        if (!android::base::ParseFloat(options[7], &increment)) {
+            result.buffer += "failed to parse increment as float: \"" + options[7] + "\"\n";
+            result.buffer += getHelpInfo();
+            return result;
+        }
+        if (!android::base::ParseInt(options[8], &interval)) {
+            result.buffer += "failed to parse interval as int: \"" + options[8] + "\"\n";
+            result.buffer += getHelpInfo();
+            return result;
+        }
+        auto generator = std::make_unique<LinearFakeValueGenerator>(
+                propId, middleValue, currentValue, dispersion, increment, interval);
+        getGeneratorHub()->registerGenerator(propId, std::move(generator));
+        return result;
+    } else if (command == "--stoplinear") {
+        LOG(INFO) << __func__ << "FakeDataCommand::StopLinear";
+        // --debughal --genfakedata --stoplinear [propID(int32)]
+        if (options.size() != 4) {
+            result.buffer +=
+                    "incorrect argument count, need 4 arguments for --genfakedata --stoplinear\n";
+            result.buffer += getHelpInfo();
+            return result;
+        }
+        int32_t propId;
+        if (!android::base::ParseInt(options[3], &propId)) {
+            result.buffer += "failed to parse propdID as int: \"" + options[3] + "\"\n";
+            result.buffer += getHelpInfo();
+            return result;
+        }
+        getGeneratorHub()->unregisterGenerator(propId);
+        return result;
+    } else if (command == "--startjson") {
+        LOG(INFO) << __func__ << "FakeDataCommand::StartJson";
+        // --debughal --genfakedata --startjson [jsonFilePath(string)] [repetition(int32)(optional)]
+        if (options.size() != 4 && options.size() != 5) {
+            result.buffer +=
+                    "incorrect argument count, need 4 or 5 arguments for --genfakedata "
+                    "--startjson\n";
+            result.buffer += getHelpInfo();
+            return result;
+        }
+        std::string fileName = options[3];
+        int32_t cookie = std::hash<std::string>()(fileName);
+        // Iterate infinitely if repetition number is not provided
+        int32_t repetition = -1;
+        if (options.size() == 5) {
+            if (!android::base::ParseInt(options[4], &repetition)) {
+                result.buffer += "failed to parse repetition as int: \"" + options[4] + "\"\n";
+                result.buffer += getHelpInfo();
+                return result;
+            }
+        }
+        auto generator = std::make_unique<JsonFakeValueGenerator>(fileName, repetition);
+        if (!generator->hasNext()) {
+            result.buffer += "invalid JSON file, no events";
+            return result;
+        }
+        getGeneratorHub()->registerGenerator(cookie, std::move(generator));
+        return result;
+    } else if (command == "--stopjson") {
+        LOG(INFO) << __func__ << "FakeDataCommand::StopJson";
+        // --debughal --genfakedata --stopjson [jsonFilePath(string)]
+        if (options.size() != 4) {
+            result.buffer +=
+                    "incorrect argument count, need 4 arguments for --genfakedata --stopjson\n";
+            result.buffer += getHelpInfo();
+            return result;
+        }
+        std::string fileName = options[3];
+        int32_t cookie = std::hash<std::string>()(fileName);
+        getGeneratorHub()->unregisterGenerator(cookie);
+        return result;
+    } else if (command == "--keypress") {
+        LOG(INFO) << __func__ << "FakeDataCommand::KeyPress";
+        int32_t keyCode;
+        int32_t display;
+        // --debughal --genfakedata --keypress [keyCode(int32)] [display[int32]]
+        if (options.size() != 5) {
+            result.buffer +=
+                    "incorrect argument count, need 5 arguments for --genfakedata --keypress\n";
+            result.buffer += getHelpInfo();
+            return result;
+        }
+        if (!android::base::ParseInt(options[3], &keyCode)) {
+            result.buffer += "failed to parse keyCode as int: \"" + options[3] + "\"\n";
+            result.buffer += getHelpInfo();
+            return result;
+        }
+        if (!android::base::ParseInt(options[4], &display)) {
+            result.buffer += "failed to parse display as int: \"" + options[4] + "\"\n";
+            result.buffer += getHelpInfo();
+            return result;
+        }
+        // Send back to HAL
+        onPropertyValueFromCar(
+                *createHwInputKeyProp(VehicleHwKeyInputAction::ACTION_DOWN, keyCode, display),
+                /*updateStatus=*/true);
+        onPropertyValueFromCar(
+                *createHwInputKeyProp(VehicleHwKeyInputAction::ACTION_UP, keyCode, display),
+                /*updateStatus=*/true);
+        return result;
+    }
+
+    result.buffer += "Unknown command: \"" + command + "\"\n";
+    result.buffer += getHelpInfo();
     return result;
 }
 

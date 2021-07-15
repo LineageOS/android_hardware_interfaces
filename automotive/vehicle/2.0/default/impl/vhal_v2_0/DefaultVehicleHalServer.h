@@ -52,7 +52,7 @@ class DefaultVehicleHalServer : public IVehicleServer {
 
   protected:
     using VehiclePropValuePtr = recyclable_ptr<VehiclePropValue>;
-    GeneratorHub* getGenerator();
+    GeneratorHub* getGeneratorHub();
 
     VehiclePropValuePool* getValuePool() const;
 
@@ -66,6 +66,12 @@ class DefaultVehicleHalServer : public IVehicleServer {
                                              int32_t targetDisplay);
 
     void storePropInitialValue(const ConfigDeclaration& config);
+
+    DumpResult debug(const std::vector<std::string>& options);
+
+    std::string getHelpInfo();
+
+    DumpResult genFakeData(const std::vector<std::string>& options);
 
   protected:
     GeneratorHub mGeneratorHub{
