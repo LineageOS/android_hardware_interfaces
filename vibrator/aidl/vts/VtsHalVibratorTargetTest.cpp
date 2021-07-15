@@ -60,9 +60,10 @@ const std::vector<CompositePrimitive> kCompositePrimitives{
     android::enum_range<CompositePrimitive>().begin(),
     android::enum_range<CompositePrimitive>().end()};
 
-const std::vector<CompositePrimitive> kOptionalPrimitives = {
-    CompositePrimitive::THUD,
-    CompositePrimitive::SPIN,
+const std::vector<CompositePrimitive> kRequiredPrimitives = {
+        CompositePrimitive::CLICK,      CompositePrimitive::LIGHT_TICK,
+        CompositePrimitive::QUICK_RISE, CompositePrimitive::SLOW_RISE,
+        CompositePrimitive::QUICK_FALL,
 };
 
 const std::vector<CompositePrimitive> kInvalidPrimitives = {
@@ -393,11 +394,11 @@ TEST_P(VibratorAidl, GetSupportedPrimitives) {
         for (auto primitive : kCompositePrimitives) {
             bool isPrimitiveSupported =
                 std::find(supported.begin(), supported.end(), primitive) != supported.end();
-            bool isPrimitiveOptional =
-                std::find(kOptionalPrimitives.begin(), kOptionalPrimitives.end(), primitive) !=
-                kOptionalPrimitives.end();
+            bool isPrimitiveRequired =
+                    std::find(kRequiredPrimitives.begin(), kRequiredPrimitives.end(), primitive) !=
+                    kRequiredPrimitives.end();
 
-            EXPECT_TRUE(isPrimitiveSupported || isPrimitiveOptional) << toString(primitive);
+            EXPECT_TRUE(isPrimitiveSupported || !isPrimitiveRequired) << toString(primitive);
         }
     }
 }
