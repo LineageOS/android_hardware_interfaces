@@ -249,35 +249,40 @@ TEST_P(GnssHalTest, TestGnssAntennaInfo) {
 
 /*
  * TestGnssSvInfoFields:
- * Gets 1 location and a GnssSvInfo, and verifies
- * 1. basebandCN0DbHz is valid.
+ * Gets 1 location and a (non-empty) GnssSvInfo, and verifies basebandCN0DbHz is valid.
  */
 TEST_P(GnssHalTest, TestGnssSvInfoFields) {
     gnss_cb_->location_cbq_.reset();
+    gnss_cb_->sv_info_list_cbq_.reset();
     StartAndCheckFirstLocation(/* min_interval_msec= */ 1000, /* low_power_mode= */ false);
     int location_called_count = gnss_cb_->location_cbq_.calledCount();
-
-    // Tolerate 1 less sv status to handle edge cases in reporting.
-    int sv_info_list_cbq_size = gnss_cb_->sv_info_list_cbq_.size();
-    EXPECT_GE(sv_info_list_cbq_size, 0);
     ALOGD("Observed %d GnssSvStatus, while awaiting one location (%d received)",
-          sv_info_list_cbq_size, location_called_count);
+          gnss_cb_->sv_info_list_cbq_.size(), location_called_count);
 
-    // Get the last sv_info_list
-    std::list<hidl_vec<IGnssCallback_2_1::GnssSvInfo>> sv_info_vec_list;
-    gnss_cb_->sv_info_list_cbq_.retrieve(sv_info_vec_list, sv_info_list_cbq_size, 1);
-    hidl_vec<IGnssCallback_2_1::GnssSvInfo> last_sv_info_list = sv_info_vec_list.back();
+    // Wait for up to kNumSvInfoLists events for kTimeoutSeconds for each event.
+    int kTimeoutSeconds = 2;
+    int kNumSvInfoLists = 4;
+    std::list<hidl_vec<IGnssCallback_2_1::GnssSvInfo>> sv_info_lists;
+    hidl_vec<IGnssCallback_2_1::GnssSvInfo> last_sv_info_list;
 
+    do {
+        EXPECT_GT(gnss_cb_->sv_info_list_cbq_.retrieve(sv_info_lists, kNumSvInfoLists,
+                                                       kTimeoutSeconds),
+                  0);
+        last_sv_info_list = sv_info_lists.back();
+    } while (last_sv_info_list.size() == 0);
+
+    ALOGD("last_sv_info size = %d", (int)last_sv_info_list.size());
     bool nonZeroCn0Found = false;
     for (auto sv_info : last_sv_info_list) {
-        ASSERT_TRUE(sv_info.basebandCN0DbHz >= 0.0 && sv_info.basebandCN0DbHz <= 65.0);
+        EXPECT_TRUE(sv_info.basebandCN0DbHz >= 0.0 && sv_info.basebandCN0DbHz <= 65.0);
         if (sv_info.basebandCN0DbHz > 0.0) {
             nonZeroCn0Found = true;
         }
     }
     // Assert at least one value is non-zero. Zero is ok in status as it's possibly
     // reporting a searched but not found satellite.
-    ASSERT_TRUE(nonZeroCn0Found);
+    EXPECT_TRUE(nonZeroCn0Found);
     StopAndClearLocations();
 }
 
