@@ -21,6 +21,7 @@
 #include <vhal_v2_0/VehicleHal.h>
 #include <vhal_v2_0/VehiclePropertyStore.h>
 
+#include "EmulatedUserHal.h"
 #include "VehicleHalClient.h"
 
 namespace android {
@@ -55,6 +56,7 @@ class DefaultVehicleHal : public VehicleHal {
     VehiclePropertyStore* mPropStore;
     RecurrentTimer mRecurrentTimer;
     VehicleHalClient* mVehicleClient;
+    EmulatedUserHal mEmulatedUserHal;
 
     // The callback that would be called when a property value is updated. This function could
     // be extended to handle specific property update event.
@@ -79,6 +81,11 @@ class DefaultVehicleHal : public VehicleHal {
     // Register the heart beat event to be sent every 3s. This is required to inform watch dog that
     // VHAL is alive. Subclasses should always calls this function during onCreate.
     void registerHeartBeatEvent();
+    // Get a user HAL property.
+    VehiclePropValuePtr getUserHalProp(const VehiclePropValue& requestedPropValue,
+                                       StatusCode* outStatus);
+    // Set a user HAL property.
+    StatusCode setUserHalProp(const VehiclePropValue& propValue);
     // Create a VHAL heart beat property.
     VehicleHal::VehiclePropValuePtr createVhalHeartBeatProp();
 

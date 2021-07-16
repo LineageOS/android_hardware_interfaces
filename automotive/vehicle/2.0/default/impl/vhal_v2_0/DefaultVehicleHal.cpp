@@ -89,10 +89,37 @@ DefaultVehicleHal::DefaultVehicleHal(VehiclePropertyStore* propStore, VehicleHal
             });
 }
 
+VehicleHal::VehiclePropValuePtr DefaultVehicleHal::getUserHalProp(
+        const VehiclePropValue& requestedPropValue, StatusCode* outStatus) {
+    auto propId = requestedPropValue.prop;
+    ALOGI("get(): getting value for prop %d from User HAL", propId);
+    const auto& ret = mEmulatedUserHal.onGetProperty(requestedPropValue);
+    VehicleHal::VehiclePropValuePtr v = nullptr;
+    if (!ret.ok()) {
+        ALOGE("get(): User HAL returned error: %s", ret.error().message().c_str());
+        *outStatus = StatusCode(ret.error().code());
+    } else {
+        auto value = ret.value().get();
+        if (value != nullptr) {
+            ALOGI("get(): User HAL returned value: %s", toString(*value).c_str());
+            v = getValuePool()->obtain(*value);
+            *outStatus = StatusCode::OK;
+        } else {
+            ALOGE("get(): User HAL returned null value");
+            *outStatus = StatusCode::INTERNAL_ERROR;
+        }
+    }
+    return addTimestamp(std::move(v));
+}
+
 VehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(const VehiclePropValue& requestedPropValue,
                                                        StatusCode* outStatus) {
     auto propId = requestedPropValue.prop;
     ALOGV("get(%d)", propId);
+
+    if (mEmulatedUserHal.isSupported(propId)) {
+        return getUserHalProp(requestedPropValue, outStatus);
+    }
 
     VehiclePropValuePtr v = nullptr;
     if (propId == OBD2_FREEZE_FRAME) {
@@ -127,6 +154,36 @@ std::vector<VehiclePropConfig> DefaultVehicleHal::listProperties() {
 }
 
 bool DefaultVehicleHal::dump(const hidl_handle& fd, const hidl_vec<hidl_string>& options) {
+    int nativeFd = fd->data[0];
+    if (nativeFd < 0) {
+        ALOGW("Invalid fd from HIDL handle: %d", nativeFd);
+        return false;
+    }
+    if (options.size() > 0) {
+        if (options[0] == "--help") {
+            std::string buffer;
+            buffer += "Emulated user hal usage:\n";
+            buffer += mEmulatedUserHal.showDumpHelp();
+            buffer += "\n";
+            buffer += "VHAL server debug usage:\n";
+            buffer += "--debughal: send debug command to VHAL server, see '--debughal --help'\n";
+            buffer += "\n";
+            dprintf(nativeFd, "%s", buffer.c_str());
+            return false;
+        } else if (options[0] == kUserHalDumpOption) {
+            dprintf(nativeFd, "%s", mEmulatedUserHal.dump("").c_str());
+            return false;
+        }
+    } else {
+        // No options, dump the emulated user hal state first and then send command to VHAL server
+        // to dump its state.
+        std::string buffer;
+        buffer += "Emulator user hal state:\n";
+        buffer += mEmulatedUserHal.dump("  ");
+        buffer += "\n";
+        dprintf(nativeFd, "%s", buffer.c_str());
+    }
+
     return mVehicleClient->dump(fd, options);
 }
 
@@ -285,12 +342,33 @@ StatusCode DefaultVehicleHal::checkValueRange(const VehiclePropValue& value,
     return StatusCode::OK;
 }
 
+StatusCode DefaultVehicleHal::setUserHalProp(const VehiclePropValue& propValue) {
+    ALOGI("onSetProperty(): property %d will be handled by UserHal", propValue.prop);
+
+    const auto& ret = mEmulatedUserHal.onSetProperty(propValue);
+    if (!ret.ok()) {
+        ALOGE("onSetProperty(): HAL returned error: %s", ret.error().message().c_str());
+        return StatusCode(ret.error().code());
+    }
+    auto updatedValue = ret.value().get();
+    if (updatedValue != nullptr) {
+        ALOGI("onSetProperty(): updating property returned by HAL: %s",
+              toString(*updatedValue).c_str());
+        onPropertyValue(*updatedValue, true);
+    }
+    return StatusCode::OK;
+}
+
 StatusCode DefaultVehicleHal::set(const VehiclePropValue& propValue) {
     if (propValue.status != VehiclePropertyStatus::AVAILABLE) {
         // Android side cannot set property status - this value is the
         // purview of the HAL implementation to reflect the state of
         // its underlying hardware
         return StatusCode::INVALID_ARG;
+    }
+
+    if (mEmulatedUserHal.isSupported(propValue.prop)) {
+        return setUserHalProp(propValue);
     }
 
     std::unordered_set<int32_t> powerProps(std::begin(kHvacPowerProperties),

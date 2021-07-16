@@ -1047,4 +1047,220 @@ TEST_F(DefaultVhalImplTest, testClearObd2FreezeFrameOneFrame) {
     ASSERT_EQ(StatusCode::INVALID_ARG, status);
 }
 
+TEST_F(DefaultVhalImplTest, testGetUserPropertySetOnly) {
+    VehiclePropValue value;
+    value.prop = toInt(VehicleProperty::INITIAL_USER_INFO);
+    StatusCode status;
+
+    mHal->get(value, &status);
+
+    ASSERT_EQ(StatusCode::INVALID_ARG, status);
+
+    value.prop = toInt(VehicleProperty::SWITCH_USER);
+
+    mHal->get(value, &status);
+
+    ASSERT_EQ(StatusCode::INVALID_ARG, status);
+
+    value.prop = toInt(VehicleProperty::CREATE_USER);
+
+    mHal->get(value, &status);
+
+    ASSERT_EQ(StatusCode::INVALID_ARG, status);
+
+    value.prop = toInt(VehicleProperty::REMOVE_USER);
+
+    mHal->get(value, &status);
+
+    ASSERT_EQ(StatusCode::INVALID_ARG, status);
+}
+
+TEST_F(DefaultVhalImplTest, testGetUserIdAssoc) {
+    VehiclePropValue value;
+    value.prop = toInt(VehicleProperty::USER_IDENTIFICATION_ASSOCIATION);
+    StatusCode status;
+
+    mHal->get(value, &status);
+
+    // Default returns NOT_AVAILABLE.
+    ASSERT_EQ(StatusCode::NOT_AVAILABLE, status);
+
+    // This is the same example as used in User HAL Emulation doc.
+    VehiclePropValue setValue = {
+            .prop = toInt(VehicleProperty::USER_IDENTIFICATION_ASSOCIATION),
+            .areaId = 1,
+            .value.int32Values = {666, 1, 1, 2},
+    };
+
+    status = mHal->set(setValue);
+
+    ASSERT_EQ(StatusCode::OK, status);
+
+    auto gotValue = mHal->get(value, &status);
+
+    ASSERT_EQ(StatusCode::OK, status);
+    ASSERT_EQ((size_t)4, gotValue->value.int32Values.size());
+    EXPECT_EQ(1, gotValue->areaId);
+    EXPECT_EQ(666, gotValue->value.int32Values[0]);
+    EXPECT_EQ(1, gotValue->value.int32Values[1]);
+    EXPECT_EQ(1, gotValue->value.int32Values[2]);
+    EXPECT_EQ(2, gotValue->value.int32Values[3]);
+    EXPECT_EQ(toInt(VehicleProperty::USER_IDENTIFICATION_ASSOCIATION), gotValue->prop);
+}
+
+TEST_F(DefaultVhalImplTest, testSwitchUser) {
+    // This is the same example as used in User HAL Emulation doc.
+    VehiclePropValue setValue = {
+            .prop = toInt(VehicleProperty::SWITCH_USER),
+            .areaId = 1,
+            .value.int32Values = {666, 3, 2},
+    };
+
+    auto status = mHal->set(setValue);
+
+    ASSERT_EQ(StatusCode::OK, status);
+
+    // Simulate a request from Android side.
+    setValue = {
+            .prop = toInt(VehicleProperty::SWITCH_USER),
+            .areaId = 0,
+            .value.int32Values = {666, 3},
+    };
+    // Clear existing events.
+    mEventQueue.flush();
+
+    status = mHal->set(setValue);
+
+    ASSERT_EQ(StatusCode::OK, status);
+
+    // Should generate an event for user hal response.
+    auto events = mEventQueue.flush();
+    ASSERT_EQ((size_t)1, events.size());
+    EXPECT_EQ(1, events[0]->areaId);
+    EXPECT_EQ(toInt(VehicleProperty::SWITCH_USER), events[0]->prop);
+    ASSERT_EQ((size_t)3, events[0]->value.int32Values.size());
+    EXPECT_EQ(666, events[0]->value.int32Values[0]);
+    EXPECT_EQ(3, events[0]->value.int32Values[1]);
+    EXPECT_EQ(2, events[0]->value.int32Values[2]);
+
+    // Try to get switch_user again, should return default value.
+    status = mHal->set(setValue);
+    ASSERT_EQ(StatusCode::OK, status);
+
+    events = mEventQueue.flush();
+    ASSERT_EQ((size_t)1, events.size());
+    EXPECT_EQ(0, events[0]->areaId);
+    EXPECT_EQ(toInt(VehicleProperty::SWITCH_USER), events[0]->prop);
+    ASSERT_EQ((size_t)3, events[0]->value.int32Values.size());
+    // Request ID
+    EXPECT_EQ(666, events[0]->value.int32Values[0]);
+    // VEHICLE_RESPONSE
+    EXPECT_EQ(3, events[0]->value.int32Values[1]);
+    // SUCCESS
+    EXPECT_EQ(1, events[0]->value.int32Values[2]);
+}
+
+TEST_F(DefaultVhalImplTest, testCreateUser) {
+    // This is the same example as used in User HAL Emulation doc.
+    VehiclePropValue setValue = {
+            .prop = toInt(VehicleProperty::CREATE_USER),
+            .areaId = 1,
+            .value.int32Values = {666, 2},
+    };
+
+    auto status = mHal->set(setValue);
+
+    ASSERT_EQ(StatusCode::OK, status);
+
+    // Simulate a request from Android side.
+    setValue = {
+            .prop = toInt(VehicleProperty::CREATE_USER),
+            .areaId = 0,
+            .value.int32Values = {666},
+    };
+    // Clear existing events.
+    mEventQueue.flush();
+
+    status = mHal->set(setValue);
+
+    ASSERT_EQ(StatusCode::OK, status);
+
+    // Should generate an event for user hal response.
+    auto events = mEventQueue.flush();
+    ASSERT_EQ((size_t)1, events.size());
+    EXPECT_EQ(1, events[0]->areaId);
+    EXPECT_EQ(toInt(VehicleProperty::CREATE_USER), events[0]->prop);
+    ASSERT_EQ((size_t)2, events[0]->value.int32Values.size());
+    EXPECT_EQ(666, events[0]->value.int32Values[0]);
+    EXPECT_EQ(2, events[0]->value.int32Values[1]);
+
+    // Try to get create_user again, should return default value.
+    status = mHal->set(setValue);
+    ASSERT_EQ(StatusCode::OK, status);
+
+    events = mEventQueue.flush();
+    ASSERT_EQ((size_t)1, events.size());
+    EXPECT_EQ(0, events[0]->areaId);
+    EXPECT_EQ(toInt(VehicleProperty::CREATE_USER), events[0]->prop);
+    ASSERT_EQ((size_t)2, events[0]->value.int32Values.size());
+    // Request ID
+    EXPECT_EQ(666, events[0]->value.int32Values[0]);
+    // SUCCESS
+    EXPECT_EQ(1, events[0]->value.int32Values[1]);
+}
+
+TEST_F(DefaultVhalImplTest, testInitialUserInfo) {
+    // This is the same example as used in User HAL Emulation doc.
+    VehiclePropValue setValue = {
+            .prop = toInt(VehicleProperty::INITIAL_USER_INFO),
+            .areaId = 1,
+            .value.int32Values = {666, 1, 11},
+    };
+
+    auto status = mHal->set(setValue);
+
+    ASSERT_EQ(StatusCode::OK, status);
+
+    // Simulate a request from Android side.
+    setValue = {
+            .prop = toInt(VehicleProperty::INITIAL_USER_INFO),
+            .areaId = 0,
+            .value.int32Values = {3},
+    };
+    // Clear existing events.
+    mEventQueue.flush();
+
+    status = mHal->set(setValue);
+
+    ASSERT_EQ(StatusCode::OK, status);
+
+    // Should generate an event for user hal response.
+    auto events = mEventQueue.flush();
+    ASSERT_EQ((size_t)1, events.size());
+    EXPECT_EQ(1, events[0]->areaId);
+    EXPECT_EQ(toInt(VehicleProperty::INITIAL_USER_INFO), events[0]->prop);
+    ASSERT_EQ((size_t)3, events[0]->value.int32Values.size());
+    EXPECT_EQ(3, events[0]->value.int32Values[0]);
+    EXPECT_EQ(1, events[0]->value.int32Values[1]);
+    EXPECT_EQ(11, events[0]->value.int32Values[2]);
+
+    // Try to get create_user again, should return default value.
+    status = mHal->set(setValue);
+    ASSERT_EQ(StatusCode::OK, status);
+
+    events = mEventQueue.flush();
+    ASSERT_EQ((size_t)1, events.size());
+    EXPECT_EQ(0, events[0]->areaId);
+    EXPECT_EQ(toInt(VehicleProperty::INITIAL_USER_INFO), events[0]->prop);
+    ASSERT_EQ((size_t)4, events[0]->value.int32Values.size());
+    // Request ID
+    EXPECT_EQ(3, events[0]->value.int32Values[0]);
+    // ACTION: DEFAULT
+    EXPECT_EQ(0, events[0]->value.int32Values[1]);
+    // User id: 0
+    EXPECT_EQ(0, events[0]->value.int32Values[2]);
+    // Flags: 0
+    EXPECT_EQ(0, events[0]->value.int32Values[3]);
+}
+
 }  // namespace
