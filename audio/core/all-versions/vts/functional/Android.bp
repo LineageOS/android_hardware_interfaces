@@ -30,6 +30,7 @@ cc_defaults {
         "android.hardware.audio.common.test.utility",
         "audioclient-types-aidl-cpp",
         "libaudioclient_aidl_conversion",
+        "libstagefright_foundation",
     ],
     shared_libs: [
         "libbinder",
