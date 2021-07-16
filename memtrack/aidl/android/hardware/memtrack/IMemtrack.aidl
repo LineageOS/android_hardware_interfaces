@@ -44,6 +44,12 @@ import android.hardware.memtrack.MemtrackType;
  *     This category should report all GPU private allocations for the specified
  *     PID that are not accounted in /proc/<pid>/smaps.
  *
+ *     getMemory() called with PID 0 should report the global total GPU-private
+ *     memory, for MemtrackType::GL and MemtrackRecord::FLAG_SMAPS_UNACCOUNTED.
+ *
+ *     getMemory() called with PID 0 for a MemtrackType other than GL should
+ *     report 0.
+ *
  * - MemtrackType::OTHER and MemtrackRecord::FLAG_SMAPS_UNACCOUNTED
  *     Any other memory not accounted for in /proc/<pid>/smaps if any, otherwise
  *     this should return 0.
@@ -51,6 +57,9 @@ import android.hardware.memtrack.MemtrackType;
  * SMAPS_UNACCOUNTED memory should also include memory that is mapped with
  * VM_PFNMAP flag set. For these mappings PSS and RSS are reported as 0 in smaps.
  * Such mappings have no backing page structs from which PSS/RSS can be calculated.
+ *
+ * Any memtrack operation that is not supported should return a binder status with
+ * exception code EX_UNSUPPORTED_OPERATION.
  *
  * Constructor for the interface should be used to perform memtrack management
  * setup actions and must be called once before any calls to getMemory().
