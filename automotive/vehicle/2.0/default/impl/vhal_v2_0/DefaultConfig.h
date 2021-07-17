@@ -634,46 +634,6 @@ const ConfigDeclaration kVehicleProperties[]{
          .initialValue = {.floatValues = {101.0f}}},
 
         {
-                .config =
-                        {
-                                .prop = kGenerateFakeDataControllingProperty,
-                                .access = VehiclePropertyAccess::WRITE,
-                                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-                                .configArray = {1, 0, 0, 2, 0, 0, 0, 0, 0},
-                        },
-        },
-
-        {
-                .config =
-                        {
-                                .prop = kSetIntPropertyFromVehicleForTest,
-                                .access = VehiclePropertyAccess::WRITE,
-                                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-                                .configArray = {0, 0, 0, 2, 1, 0, 0, 0, 0},
-                        },
-        },
-
-        {
-                .config =
-                        {
-                                .prop = kSetFloatPropertyFromVehicleForTest,
-                                .access = VehiclePropertyAccess::WRITE,
-                                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-                                .configArray = {0, 0, 1, 0, 1, 0, 1, 0, 0},
-                        },
-        },
-
-        {
-                .config =
-                        {
-                                .prop = kSetBooleanPropertyFromVehicleForTest,
-                                .access = VehiclePropertyAccess::WRITE,
-                                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
-                                .configArray = {0, 1, 1, 0, 1, 0, 0, 0, 0},
-                        },
-        },
-
-        {
                 .config = {.prop = kMixedTypePropertyForTest,
                            .access = VehiclePropertyAccess::READ_WRITE,
                            .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
