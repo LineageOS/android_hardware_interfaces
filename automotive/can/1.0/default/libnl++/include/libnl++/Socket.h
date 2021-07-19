@@ -192,6 +192,22 @@ class Socket {
     pollfd preparePoll(short events = 0);
 
     /**
+     * Join a multicast group.
+     *
+     * \param group Group ID (*not* a bitfield)
+     * \return whether the operation succeeded
+     */
+    bool addMembership(unsigned group);
+
+    /**
+     * Leave a multicast group.
+     *
+     * \param group Group ID (*not* a bitfield)
+     * \return whether the operation succeeded
+     */
+    bool dropMembership(unsigned group);
+
+    /**
      * Live iterator continuously receiving messages from Netlink socket.
      *
      * Iteration ends when socket fails to receive a buffer.
