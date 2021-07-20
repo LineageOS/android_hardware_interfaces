@@ -64,7 +64,8 @@ class DefaultVehicleHal : public VehicleHal {
     // Check whether a propValue is valid according to its type.
     StatusCode checkPropValue(const VehiclePropValue& propValue, const VehiclePropConfig* config);
     // Check whether the property value is within the range according to area config.
-    StatusCode checkValueRange(const VehiclePropValue& propValue, const VehiclePropConfig* config);
+    StatusCode checkValueRange(const VehiclePropValue& propValue,
+                               const VehicleAreaConfig* areaConfig);
     // Register the heart beat event to be sent every 3s. This is required to inform watch dog that
     // VHAL is alive. Subclasses should always calls this function during onCreate.
     void registerHeartBeatEvent();
