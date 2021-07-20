@@ -343,18 +343,21 @@ TEST_P(AudioPrimaryHidlTest, setMode) {
 #endif
 
     for (int mode : {-2, -1, maxMode + 1}) {
-        ASSERT_RESULT(Result::INVALID_ARGUMENTS, getDevice()->setMode(AudioMode(mode)))
+        EXPECT_RESULT(Result::INVALID_ARGUMENTS, getDevice()->setMode(AudioMode(mode)))
                 << "mode=" << mode;
     }
-    // Test valid values
-    for (AudioMode mode : {AudioMode::IN_CALL, AudioMode::IN_COMMUNICATION, AudioMode::RINGTONE,
-                           AudioMode::NORMAL /* Make sure to leave the test in normal mode */}) {
-        ASSERT_OK(getDevice()->setMode(mode)) << "mode=" << toString(mode);
-    }
+
     // AudioMode::CALL_SCREEN as support is optional
 #if MAJOR_VERSION >= 6
-    ASSERT_RESULT(okOrNotSupportedOrInvalidArgs, getDevice()->setMode(AudioMode::CALL_SCREEN));
+    EXPECT_RESULT(okOrNotSupportedOrInvalidArgs, getDevice()->setMode(AudioMode::CALL_SCREEN));
 #endif
+    // Test valid values
+    for (AudioMode mode : {AudioMode::IN_CALL, AudioMode::IN_COMMUNICATION, AudioMode::RINGTONE,
+                           AudioMode::NORMAL}) {
+        EXPECT_OK(getDevice()->setMode(mode)) << "mode=" << toString(mode);
+    }
+    // Make sure to leave the test in normal mode
+    getDevice()->setMode(AudioMode::NORMAL);
 }
 
 TEST_P(AudioPrimaryHidlTest, setBtHfpSampleRate) {
