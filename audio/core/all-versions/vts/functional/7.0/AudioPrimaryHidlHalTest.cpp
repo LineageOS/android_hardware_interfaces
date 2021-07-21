@@ -839,3 +839,64 @@ INSTANTIATE_TEST_CASE_P(PcmOnlyConfigInputStream, PcmOnlyConfigInputStreamTest,
                         ::testing::ValuesIn(getInputDevicePcmOnlyConfigParameters()),
                         &DeviceConfigParameterToString);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(PcmOnlyConfigInputStreamTest);
+
+static const std::vector<DeviceConfigParameter>& getBuiltinMicConfigParameters() {
+    static const std::vector<DeviceConfigParameter> parameters = [] {
+        auto allParams = getInputDeviceConfigParameters();
+        std::vector<DeviceConfigParameter> builtinMicParams;
+        std::copy_if(allParams.begin(), allParams.end(), std::back_inserter(builtinMicParams),
+                     [](auto cfg) {
+                         // The built in mic may participate in various scenarios:
+                         // FAST, HW_HOTWORD, MMAP NOIRQ, which are indicated by flags.
+                         // We are only interested in testing the simplest scenario w/o any flags.
+                         if (!std::get<PARAM_FLAGS>(cfg).empty()) return false;
+                         auto maybeSourceDevice = getCachedPolicyConfig().getSourceDeviceForMixPort(
+                                 std::get<PARAM_DEVICE_NAME>(std::get<PARAM_DEVICE>(cfg)),
+                                 std::get<PARAM_PORT_NAME>(cfg));
+                         return maybeSourceDevice.has_value() &&
+                                xsd::stringToAudioDevice(maybeSourceDevice.value().deviceType) ==
+                                        xsd::AudioDevice::AUDIO_DEVICE_IN_BUILTIN_MIC;
+                     });
+        return builtinMicParams;
+    }();
+    return parameters;
+}
+
+class MicrophoneInfoInputStreamTest : public InputStreamTest {};
+
+TEST_P(MicrophoneInfoInputStreamTest, GetActiveMicrophones) {
+    doc::test(
+            "Make sure getActiveMicrophones always succeeds when recording "
+            "from the built-in microphone.");
+    hidl_vec<MicrophoneInfo> microphones;
+    ASSERT_OK(getDevice()->getMicrophones(returnIn(res, microphones)));
+    if (res == Result::NOT_SUPPORTED) {
+        GTEST_SKIP() << "getMicrophones is not supported";  // returns
+    }
+    ASSERT_OK(res);
+
+    auto maybeSourceAddress =
+            getCachedPolicyConfig().getSourceDeviceForMixPort(getDeviceName(), getMixPortName());
+    ASSERT_TRUE(maybeSourceAddress.has_value())
+            << "No source device found for mix port " << getMixPortName() << " (module "
+            << getDeviceName() << ")";
+
+    for (auto microphone : microphones) {
+        if (microphone.deviceAddress == maybeSourceAddress.value()) {
+            StreamReader reader(stream.get(), stream->getBufferSize());
+            ASSERT_TRUE(reader.start());
+            reader.pause();  // This ensures that at least one read has happened.
+            EXPECT_FALSE(reader.hasError());
+
+            hidl_vec<MicrophoneInfo> activeMicrophones;
+            ASSERT_OK(stream->getActiveMicrophones(returnIn(res, activeMicrophones)));
+            ASSERT_OK(res);
+            EXPECT_NE(0U, activeMicrophones.size());
+        }
+    }
+}
+
+INSTANTIATE_TEST_CASE_P(MicrophoneInfoInputStream, MicrophoneInfoInputStreamTest,
+                        ::testing::ValuesIn(getBuiltinMicConfigParameters()),
+                        &DeviceConfigParameterToString);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(MicrophoneInfoInputStreamTest);
