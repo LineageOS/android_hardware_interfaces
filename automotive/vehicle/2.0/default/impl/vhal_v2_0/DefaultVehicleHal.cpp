@@ -15,6 +15,7 @@
  */
 #define LOG_TAG "DefaultVehicleHal_v2_0"
 
+#include <android-base/chrono_utils.h>
 #include <assert.h>
 #include <utils/Log.h>
 #include <utils/SystemClock.h>
@@ -31,6 +32,10 @@ namespace vehicle {
 namespace V2_0 {
 
 namespace impl {
+
+namespace {
+constexpr std::chrono::nanoseconds kHeartBeatIntervalNs = 3s;
+}  // namespace
 
 DefaultVehicleHal::DefaultVehicleHal(VehiclePropertyStore* propStore, VehicleHalClient* client)
     : mPropStore(propStore), mRecurrentTimer(getTimerAction()), mVehicleClient(client) {
@@ -297,6 +302,41 @@ void DefaultVehicleHal::onCreate() {
     }
 
     mVehicleClient->triggerSendAllValues();
+    registerHeartBeatEvent();
+}
+
+DefaultVehicleHal::~DefaultVehicleHal() {
+    mRecurrentTimer.unregisterRecurrentEvent(static_cast<int32_t>(VehicleProperty::VHAL_HEARTBEAT));
+}
+
+void DefaultVehicleHal::registerHeartBeatEvent() {
+    mRecurrentTimer.registerRecurrentEvent(kHeartBeatIntervalNs,
+                                           static_cast<int32_t>(VehicleProperty::VHAL_HEARTBEAT));
+}
+
+VehicleHal::VehiclePropValuePtr DefaultVehicleHal::doInternalHealthCheck() {
+    VehicleHal::VehiclePropValuePtr v = nullptr;
+
+    // This is an example of very simple health checking. VHAL is considered healthy if we can read
+    // PERF_VEHICLE_SPEED. The more comprehensive health checking is required.
+    VehiclePropValue propValue = {
+            .prop = static_cast<int32_t>(VehicleProperty::PERF_VEHICLE_SPEED),
+    };
+    auto internalPropValue = mPropStore->readValueOrNull(propValue);
+    if (internalPropValue != nullptr) {
+        v = createVhalHeartBeatProp();
+    } else {
+        ALOGW("VHAL health check failed");
+    }
+    return v;
+}
+
+VehicleHal::VehiclePropValuePtr DefaultVehicleHal::createVhalHeartBeatProp() {
+    VehicleHal::VehiclePropValuePtr v = getValuePool()->obtainInt64(uptimeMillis());
+    v->prop = static_cast<int32_t>(VehicleProperty::VHAL_HEARTBEAT);
+    v->areaId = 0;
+    v->status = VehiclePropertyStatus::AVAILABLE;
+    return v;
 }
 
 void DefaultVehicleHal::onContinuousPropertyTimer(const std::vector<int32_t>& properties) {
@@ -309,6 +349,10 @@ void DefaultVehicleHal::onContinuousPropertyTimer(const std::vector<int32_t>& pr
             if (internalPropValue != nullptr) {
                 v = pool.obtain(*internalPropValue);
             }
+        } else if (property == static_cast<int32_t>(VehicleProperty::VHAL_HEARTBEAT)) {
+            // VHAL_HEARTBEAT is not a continuous value, but it needs to be updated periodically.
+            // So, the update is done through onContinuousPropertyTimer.
+            v = doInternalHealthCheck();
         } else {
             ALOGE("Unexpected onContinuousPropertyTimer for property: 0x%x", property);
             continue;
