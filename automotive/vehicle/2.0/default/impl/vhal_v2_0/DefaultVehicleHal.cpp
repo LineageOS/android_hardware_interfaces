@@ -23,6 +23,7 @@
 #include <vhal_v2_0/RecurrentTimer.h>
 #include <unordered_set>
 
+#include "FakeObd2Frame.h"
 #include "PropertyUtils.h"
 #include "VehicleUtils.h"
 
@@ -94,6 +95,17 @@ VehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(const VehiclePropValue& r
     ALOGV("get(%d)", propId);
 
     VehiclePropValuePtr v = nullptr;
+    if (propId == OBD2_FREEZE_FRAME) {
+        v = getValuePool()->obtainComplex();
+        *outStatus = fillObd2FreezeFrame(mPropStore, requestedPropValue, v.get());
+        return addTimestamp(std::move(v));
+    }
+
+    if (propId == OBD2_FREEZE_FRAME_INFO) {
+        v = getValuePool()->obtainComplex();
+        *outStatus = fillObd2DtcInfo(mPropStore, v.get());
+        return addTimestamp(std::move(v));
+    }
 
     auto internalPropValue = mPropStore->readValueOrNull(requestedPropValue);
     if (internalPropValue != nullptr) {
@@ -296,6 +308,9 @@ StatusCode DefaultVehicleHal::set(const VehiclePropValue& propValue) {
         }
     }
 
+    if (propValue.prop == OBD2_FREEZE_FRAME_CLEAR) {
+        return clearObd2FreezeFrames(mPropStore, propValue);
+    }
     if (propValue.prop == VEHICLE_MAP_SERVICE) {
         // Placeholder for future implementation of VMS property in the default hal. For
         // now, just returns OK; otherwise, hal clients crash with property not supported.
@@ -347,6 +362,12 @@ void DefaultVehicleHal::onCreate() {
     auto configs = mVehicleClient->getAllPropertyConfig();
 
     for (const auto& cfg : configs) {
+        if (isDiagnosticProperty(cfg)) {
+            // do not write an initial empty value for the diagnostic properties
+            // as we will initialize those separately.
+            continue;
+        }
+
         int32_t numAreas = isGlobalProp(cfg.prop) ? 1 : cfg.areaConfigs.size();
 
         for (int i = 0; i < numAreas; i++) {
@@ -364,6 +385,9 @@ void DefaultVehicleHal::onCreate() {
     }
 
     mVehicleClient->triggerSendAllValues();
+
+    initObd2LiveFrame(mPropStore, *mPropStore->getConfigOrDie(OBD2_LIVE_FRAME));
+    initObd2FreezeFrame(mPropStore, *mPropStore->getConfigOrDie(OBD2_FREEZE_FRAME));
 
     registerHeartBeatEvent();
 }
@@ -474,7 +498,21 @@ void DefaultVehicleHal::onPropertyValue(const VehiclePropValue& value, bool upda
 void DefaultVehicleHal::initStaticConfig() {
     auto configs = mVehicleClient->getAllPropertyConfig();
     for (auto&& cfg : configs) {
-        mPropStore->registerProperty(cfg, nullptr);
+        VehiclePropertyStore::TokenFunction tokenFunction = nullptr;
+
+        switch (cfg.prop) {
+            case OBD2_FREEZE_FRAME: {
+                // We use timestamp as token for OBD2_FREEZE_FRAME
+                tokenFunction = [](const VehiclePropValue& propValue) {
+                    return propValue.timestamp;
+                };
+                break;
+            }
+            default:
+                break;
+        }
+
+        mPropStore->registerProperty(cfg, tokenFunction);
     }
 }
 

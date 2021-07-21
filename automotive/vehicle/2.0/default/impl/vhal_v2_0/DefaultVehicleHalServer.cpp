@@ -27,6 +27,7 @@
 #include <utils/SystemClock.h>
 
 #include "DefaultConfig.h"
+#include "FakeObd2Frame.h"
 #include "JsonFakeValueGenerator.h"
 #include "LinearFakeValueGenerator.h"
 
@@ -78,6 +79,10 @@ DefaultVehicleHalServer::DefaultVehicleHalServer() {
     for (auto& it : kVehicleProperties) {
         VehiclePropConfig cfg = it.config;
         mServerSidePropStore.registerProperty(cfg);
+        // Skip diagnostic properties since there is special logic to handle those.
+        if (isDiagnosticProperty(cfg)) {
+            continue;
+        }
         storePropInitialValue(it);
     }
     maybeOverrideProperties(VENDOR_OVERRIDE_DIR);

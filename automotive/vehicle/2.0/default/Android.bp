@@ -92,6 +92,7 @@ cc_library_static {
         "impl/vhal_v2_0/LinearFakeValueGenerator.cpp",
         "impl/vhal_v2_0/JsonFakeValueGenerator.cpp",
         "impl/vhal_v2_0/GeneratorHub.cpp",
+        "impl/vhal_v2_0/FakeObd2Frame.cpp",
     ],
     local_include_dirs: ["common/include/vhal_v2_0"],
     export_include_dirs: ["impl"],
@@ -141,6 +142,7 @@ cc_library_static {
         "impl/vhal_v2_0/JsonFakeValueGenerator.cpp",
         "impl/vhal_v2_0/LinearFakeValueGenerator.cpp",
         "impl/vhal_v2_0/DefaultVehicleHalServer.cpp",
+        "impl/vhal_v2_0/FakeObd2Frame.cpp",
     ],
     whole_static_libs: [
         "android.hardware.automotive.vehicle@2.0-server-common-lib",

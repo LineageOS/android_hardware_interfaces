@@ -906,4 +906,145 @@ TEST_F(DefaultVhalImplTest, testVendorOverridePropertiesDirDoesNotExist) {
     ASSERT_EQ(4, gotValue->value.int32Values[0]);
 }
 
+TEST_F(DefaultVhalImplTest, testGetObd2FreezeFrameNoTimestamp) {
+    VehiclePropValue value;
+    value.prop = OBD2_FREEZE_FRAME;
+    StatusCode status;
+
+    auto gotValue = mHal->get(value, &status);
+
+    ASSERT_EQ(StatusCode::INVALID_ARG, status);
+}
+
+TEST_F(DefaultVhalImplTest, testGetObd2FreezeFrameInvalidTimestamp) {
+    VehiclePropValue value;
+    value.prop = OBD2_FREEZE_FRAME;
+    value.value.int64Values.resize(1);
+    value.value.int64Values[0] = 0;
+    StatusCode status;
+
+    auto gotValue = mHal->get(value, &status);
+
+    ASSERT_EQ(StatusCode::INVALID_ARG, status);
+}
+
+TEST_F(DefaultVhalImplTest, testGetObd2FreezeFrameInfoGetObd2FreezeFrame) {
+    VehiclePropValue value;
+    value.prop = OBD2_FREEZE_FRAME_INFO;
+    StatusCode status;
+
+    auto gotValue = mHal->get(value, &status);
+
+    ASSERT_EQ(StatusCode::OK, status);
+    ASSERT_EQ((size_t)3, gotValue->value.int64Values.size());
+
+    std::vector<std::string> dtcs;
+    std::vector<std::string> sampleDtcs = {"P0070", "P0102", "P0123"};
+    for (int64_t timestamp : gotValue->value.int64Values) {
+        VehiclePropValue freezeFrameRequest;
+        freezeFrameRequest.prop = OBD2_FREEZE_FRAME;
+        freezeFrameRequest.value.int64Values.resize(1);
+        freezeFrameRequest.value.int64Values[0] = timestamp;
+
+        auto freezeFrameValue = mHal->get(freezeFrameRequest, &status);
+
+        ASSERT_EQ(StatusCode::OK, status);
+        // Obd2IntegerSensorIndex.LAST_SYSTEM_INDEX + 1
+        EXPECT_EQ((size_t)32, freezeFrameValue->value.int32Values.size());
+        // Obd2FloatSensorIndex.LAST_SYSTEM_INDEX + 1
+        EXPECT_EQ((size_t)71, freezeFrameValue->value.floatValues.size());
+        // (intValues.size() + floatValues.size()) / 8
+        EXPECT_EQ((size_t)13, freezeFrameValue->value.bytes.size());
+
+        dtcs.push_back(freezeFrameValue->value.stringValue);
+    }
+
+    for (std::string expectDtc : sampleDtcs) {
+        EXPECT_NE(std::find(dtcs.begin(), dtcs.end(), expectDtc), dtcs.end());
+    }
+}
+
+TEST_F(DefaultVhalImplTest, testGetObd2LiveFrame) {
+    VehiclePropValue value;
+    value.prop = OBD2_LIVE_FRAME;
+    StatusCode status;
+
+    auto gotValue = mHal->get(value, &status);
+
+    ASSERT_EQ(StatusCode::OK, status);
+    // Obd2IntegerSensorIndex.LAST_SYSTEM_INDEX + 1
+    EXPECT_EQ((size_t)32, gotValue->value.int32Values.size());
+    // Obd2FloatSensorIndex.LAST_SYSTEM_INDEX + 1
+    EXPECT_EQ((size_t)71, gotValue->value.floatValues.size());
+    // (intValues.size() + floatValues.size()) / 8
+    EXPECT_EQ((size_t)13, gotValue->value.bytes.size());
+}
+
+TEST_F(DefaultVhalImplTest, testClearObd2FreezeFrameAll) {
+    VehiclePropValue value;
+    value.prop = OBD2_FREEZE_FRAME_CLEAR;
+    // No int64Values is to clear all frames.
+
+    auto status = mHal->set(value);
+
+    EXPECT_EQ(StatusCode::OK, status);
+
+    VehiclePropValue freezeFrameRequest;
+    freezeFrameRequest.prop = OBD2_FREEZE_FRAME;
+    freezeFrameRequest.value.int64Values.resize(1);
+
+    auto gotValue = mHal->get(freezeFrameRequest, &status);
+
+    EXPECT_EQ(StatusCode::NOT_AVAILABLE, status);
+
+    VehiclePropValue freezeFrameInfoRequest;
+    freezeFrameInfoRequest.prop = OBD2_FREEZE_FRAME_INFO;
+
+    gotValue = mHal->get(freezeFrameInfoRequest, &status);
+
+    EXPECT_EQ(StatusCode::OK, status);
+    EXPECT_EQ((size_t)0, gotValue->value.int64Values.size());
+}
+
+TEST_F(DefaultVhalImplTest, testClearObd2FreezeFrameOneFrame) {
+    // Get existing freeze frame info first.
+    VehiclePropValue frameInfoRequest;
+    frameInfoRequest.prop = OBD2_FREEZE_FRAME_INFO;
+    StatusCode status;
+    auto gotValue = mHal->get(frameInfoRequest, &status);
+    ASSERT_EQ(StatusCode::OK, status);
+    ASSERT_EQ((size_t)3, gotValue->value.int64Values.size());
+
+    VehiclePropValue clearRequest;
+    int64_t timestamp = gotValue->value.int64Values[0];
+    clearRequest.prop = OBD2_FREEZE_FRAME_CLEAR;
+    clearRequest.value.int64Values.resize(1);
+    clearRequest.value.int64Values[0] = timestamp;
+
+    // Try to clear the first frame.
+    status = mHal->set(clearRequest);
+
+    // Get freeze frame info again.
+    gotValue = mHal->get(frameInfoRequest, &status);
+
+    ASSERT_EQ(StatusCode::OK, status);
+    // Now we should only have 2 frames.
+    ASSERT_EQ((size_t)2, gotValue->value.int64Values.size());
+
+    // Try to get the deleted frame, should fail.
+    VehiclePropValue frameRequest;
+    frameRequest.prop = OBD2_FREEZE_FRAME;
+    frameRequest.value.int64Values.resize(1);
+    frameRequest.value.int64Values[0] = timestamp;
+
+    gotValue = mHal->get(frameRequest, &status);
+
+    ASSERT_EQ(StatusCode::INVALID_ARG, status);
+
+    // Clear the same frame again should fail.
+    status = mHal->set(clearRequest);
+
+    ASSERT_EQ(StatusCode::INVALID_ARG, status);
+}
+
 }  // namespace
