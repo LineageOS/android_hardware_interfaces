@@ -53,6 +53,11 @@ TEST_P(AudioHidlDeviceTest, GetMicrophonesTest) {
         GTEST_SKIP() << "getMicrophones is not supported";  // returns
     }
     ASSERT_OK(res);
+
+#if MAJOR_VERSION <= 6
+    // In V7, 'getActiveMicrophones' is tested by the 'MicrophoneInfoInputStream'
+    // test which uses the actual configuration of the device.
+
     if (microphones.size() > 0) {
         // When there is microphone on the phone, try to open an input stream
         // and query for the active microphones.
@@ -60,30 +65,13 @@ TEST_P(AudioHidlDeviceTest, GetMicrophonesTest) {
             "Make sure getMicrophones always succeeds"
             "and getActiveMicrophones always succeeds when recording from these microphones.");
         AudioConfig config{};
-#if MAJOR_VERSION <= 6
         config.channelMask = mkEnumBitfield(AudioChannelMask::IN_MONO);
         config.sampleRateHz = 8000;
         config.format = AudioFormat::PCM_16_BIT;
         auto flags = hidl_bitfield<AudioInputFlag>(AudioInputFlag::NONE);
         const SinkMetadata initMetadata = {{{.source = AudioSource::MIC, .gain = 1}}};
-#elif MAJOR_VERSION >= 7
-        config.base.channelMask = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_IN_MONO);
-        config.base.sampleRateHz = 8000;
-        config.base.format = toString(xsd::AudioFormat::AUDIO_FORMAT_PCM_16_BIT);
-        hidl_vec<hidl_string> flags;
-        const SinkMetadata initMetadata = {
-                {{.source = toString(xsd::AudioSource::AUDIO_SOURCE_MIC),
-                  .gain = 1,
-                  .tags = {},
-                  .channelMask = toString(xsd::AudioChannelMask::AUDIO_CHANNEL_IN_MONO)}}};
-#endif
         for (auto microphone : microphones) {
-#if MAJOR_VERSION <= 6
             if (microphone.deviceAddress.device != AudioDevice::IN_BUILTIN_MIC) {
-#elif MAJOR_VERSION >= 7
-            if (xsd::stringToAudioDevice(microphone.deviceAddress.deviceType) !=
-                xsd::AudioDevice::AUDIO_DEVICE_IN_BUILTIN_MIC) {
-#endif
                 continue;
             }
             sp<IStreamIn> stream;
@@ -106,6 +94,7 @@ TEST_P(AudioHidlDeviceTest, GetMicrophonesTest) {
             EXPECT_NE(0U, activeMicrophones.size());
         }
     }
+#endif  // MAJOR_VERSION <= 6
 }
 
 TEST_P(AudioHidlDeviceTest, SetConnectedState) {
@@ -343,18 +332,21 @@ TEST_P(AudioPrimaryHidlTest, setMode) {
 #endif
 
     for (int mode : {-2, -1, maxMode + 1}) {
-        ASSERT_RESULT(Result::INVALID_ARGUMENTS, getDevice()->setMode(AudioMode(mode)))
+        EXPECT_RESULT(Result::INVALID_ARGUMENTS, getDevice()->setMode(AudioMode(mode)))
                 << "mode=" << mode;
     }
-    // Test valid values
-    for (AudioMode mode : {AudioMode::IN_CALL, AudioMode::IN_COMMUNICATION, AudioMode::RINGTONE,
-                           AudioMode::NORMAL /* Make sure to leave the test in normal mode */}) {
-        ASSERT_OK(getDevice()->setMode(mode)) << "mode=" << toString(mode);
-    }
+
     // AudioMode::CALL_SCREEN as support is optional
 #if MAJOR_VERSION >= 6
-    ASSERT_RESULT(okOrNotSupportedOrInvalidArgs, getDevice()->setMode(AudioMode::CALL_SCREEN));
+    EXPECT_RESULT(okOrNotSupportedOrInvalidArgs, getDevice()->setMode(AudioMode::CALL_SCREEN));
 #endif
+    // Test valid values
+    for (AudioMode mode : {AudioMode::IN_CALL, AudioMode::IN_COMMUNICATION, AudioMode::RINGTONE,
+                           AudioMode::NORMAL}) {
+        EXPECT_OK(getDevice()->setMode(mode)) << "mode=" << toString(mode);
+    }
+    // Make sure to leave the test in normal mode
+    getDevice()->setMode(AudioMode::NORMAL);
 }
 
 TEST_P(AudioPrimaryHidlTest, setBtHfpSampleRate) {
