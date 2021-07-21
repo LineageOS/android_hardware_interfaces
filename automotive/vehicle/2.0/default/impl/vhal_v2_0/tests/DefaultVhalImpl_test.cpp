@@ -27,6 +27,32 @@
 #include <vhal_v2_0/VehicleObjectPool.h>
 #include <vhal_v2_0/VehiclePropertyStore.h>
 
+namespace android {
+namespace hardware {
+namespace automotive {
+namespace vehicle {
+namespace V2_0 {
+namespace impl {
+
+class DefaultVhalImplTestHelper {
+  public:
+    DefaultVhalImplTestHelper(DefaultVehicleHalServer* server) { mServer = server; }
+
+    void overrideProperties(const char* overrideDir) {
+        mServer->overrideProperties(overrideDir);
+    }
+
+  private:
+    DefaultVehicleHalServer* mServer;
+};
+
+}  // namespace impl
+}  // namespace V2_0
+}  // namespace vehicle
+}  // namespace automotive
+}  // namespace hardware
+}  // namespace android
+
 namespace {
 
 using ::android::hardware::hidl_handle;
@@ -44,9 +70,15 @@ using ::android::hardware::automotive::vehicle::V2_0::VehiclePropValue;
 using ::android::hardware::automotive::vehicle::V2_0::VehiclePropValuePool;
 using ::android::hardware::automotive::vehicle::V2_0::impl::DefaultVehicleConnector;
 using ::android::hardware::automotive::vehicle::V2_0::impl::DefaultVehicleHal;
+using ::android::hardware::automotive::vehicle::V2_0::impl::DefaultVhalImplTestHelper;
 using ::android::hardware::automotive::vehicle::V2_0::impl::HVAC_ALL;
 using ::android::hardware::automotive::vehicle::V2_0::impl::HVAC_LEFT;
+using ::android::hardware::automotive::vehicle::V2_0::impl::HVAC_RIGHT;
 using ::android::hardware::automotive::vehicle::V2_0::impl::kMixedTypePropertyForTest;
+using ::android::hardware::automotive::vehicle::V2_0::impl::OBD2_FREEZE_FRAME;
+using ::android::hardware::automotive::vehicle::V2_0::impl::OBD2_FREEZE_FRAME_CLEAR;
+using ::android::hardware::automotive::vehicle::V2_0::impl::OBD2_FREEZE_FRAME_INFO;
+using ::android::hardware::automotive::vehicle::V2_0::impl::OBD2_LIVE_FRAME;
 
 using ::testing::HasSubstr;
 
@@ -72,11 +104,23 @@ class DefaultVhalImplTest : public ::testing::Test {
         mConnector.reset(new DefaultVehicleConnector);
         mConnector->setValuePool(&mValueObjectPool);
         mHal.reset(new DefaultVehicleHal(mPropStore.get(), mConnector.get()));
+        initHal();
+    }
+
+    void initHal() {
         mHal->init(&mValueObjectPool,
                    std::bind(&DefaultVhalImplTest::onHalEvent, this, std::placeholders::_1),
                    std::bind(&DefaultVhalImplTest::onHalPropertySetError, this,
                              std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     }
+
+  protected:
+    std::unique_ptr<DefaultVehicleHal> mHal;
+    std::unique_ptr<DefaultVehicleConnector> mConnector;
+    std::unique_ptr<VehiclePropertyStore> mPropStore;
+    VehiclePropValuePool mValueObjectPool;
+    android::ConcurrentQueue<VehiclePropValuePtr> mEventQueue;
+    android::ConcurrentQueue<VehiclePropValuePtr> mHeartBeatQueue;
 
   private:
     void onHalEvent(VehiclePropValuePtr v) {
@@ -90,14 +134,6 @@ class DefaultVhalImplTest : public ::testing::Test {
 
     void onHalPropertySetError(StatusCode /*errorCode*/, int32_t /*property*/, int32_t /*areaId*/) {
     }
-
-  protected:
-    std::unique_ptr<DefaultVehicleHal> mHal;
-    std::unique_ptr<DefaultVehicleConnector> mConnector;
-    std::unique_ptr<VehiclePropertyStore> mPropStore;
-    VehiclePropValuePool mValueObjectPool;
-    android::ConcurrentQueue<VehiclePropValuePtr> mEventQueue;
-    android::ConcurrentQueue<VehiclePropValuePtr> mHeartBeatQueue;
 };
 
 TEST_F(DefaultVhalImplTest, testListProperties) {
@@ -721,12 +757,12 @@ TEST_F(DefaultVhalImplTest, testDebugGenFakeDataJson) {
     EXPECT_EQ((size_t)1, events[0]->value.int32Values.size());
     EXPECT_EQ(8, events[0]->value.int32Values[0]);
     EXPECT_EQ((size_t)1, events[3]->value.int32Values.size());
-    EXPECT_EQ(4, events[3]->value.int32Values[0]);
+    EXPECT_EQ(10, events[3]->value.int32Values[0]);
     // Second set of the same events.
     EXPECT_EQ((size_t)1, events[4]->value.int32Values.size());
     EXPECT_EQ(8, events[4]->value.int32Values[0]);
     EXPECT_EQ((size_t)1, events[7]->value.int32Values.size());
-    EXPECT_EQ(4, events[7]->value.int32Values[0]);
+    EXPECT_EQ(10, events[7]->value.int32Values[0]);
 }
 
 TEST_F(DefaultVhalImplTest, testDebugGenFakeDataKeyPress) {
@@ -766,6 +802,108 @@ TEST_F(DefaultVhalImplTest, testHeartBeatEvent) {
     auto events = mHeartBeatQueue.flush();
     ASSERT_GE(events.size(), (size_t)2);
     ASSERT_EQ(toInt(VehicleProperty::VHAL_HEARTBEAT), events[0]->prop);
+}
+
+TEST_F(DefaultVhalImplTest, testVendorOverrideProperties) {
+    // Destroy the existing VHAL first to prevent it using destroyed connector or propstore.
+    mHal.reset();
+    // Create a new Default VHAL and reinitialize it to load the override properties.
+    std::string overrideDir = android::base::GetExecutableDirectory() + "/override/";
+    mPropStore.reset(new VehiclePropertyStore);
+    mConnector.reset(new DefaultVehicleConnector);
+    mConnector->setValuePool(&mValueObjectPool);
+    mHal.reset(new DefaultVehicleHal(mPropStore.get(), mConnector.get()));
+    // Set vendor override directory.
+    DefaultVhalImplTestHelper helper(mConnector.get());
+    helper.overrideProperties(overrideDir.c_str());
+
+    initHal();
+
+    VehiclePropValue value;
+    StatusCode status;
+    // This is the same as the prop in 'gear_selection.json'.
+    value.prop = toInt(VehicleProperty::GEAR_SELECTION);
+
+    auto gotValue = mHal->get(value, &status);
+
+    ASSERT_EQ(StatusCode::OK, status);
+    ASSERT_EQ((size_t)1, gotValue->value.int32Values.size());
+    ASSERT_EQ(8, gotValue->value.int32Values[0]);
+
+    // If we set the value, it should update despite the override.
+    value.prop = toInt(VehicleProperty::GEAR_SELECTION);
+    value.value.int32Values.resize(1);
+    value.value.int32Values[0] = 5;
+
+    status = mHal->set(value);
+    ASSERT_EQ(StatusCode::OK, status);
+
+    gotValue = mHal->get(value, &status);
+    ASSERT_EQ(StatusCode::OK, status);
+    ASSERT_EQ((size_t)1, gotValue->value.int32Values.size());
+    ASSERT_EQ(5, gotValue->value.int32Values[0]);
+}
+
+TEST_F(DefaultVhalImplTest, testVendorOverridePropertiesMultipleAreas) {
+    // Destroy the existing VHAL first to prevent it using destroyed connector or propstore.
+    mHal.reset();
+    // Create a new Default VHAL and reinitialize it to load the override properties.
+    std::string overrideDir = android::base::GetExecutableDirectory() + "/override/";
+    mPropStore.reset(new VehiclePropertyStore);
+    mConnector.reset(new DefaultVehicleConnector);
+    mConnector->setValuePool(&mValueObjectPool);
+    mHal.reset(new DefaultVehicleHal(mPropStore.get(), mConnector.get()));
+    // Set vendor override directory.
+    DefaultVhalImplTestHelper helper(mConnector.get());
+    helper.overrideProperties(overrideDir.c_str());
+
+    initHal();
+
+    VehiclePropValue value;
+    StatusCode status;
+    // This is the same as the prop in 'hvac_temperature_set.json'.
+    value.prop = toInt(VehicleProperty::HVAC_TEMPERATURE_SET);
+    value.areaId = HVAC_LEFT;
+
+    auto gotValue = mHal->get(value, &status);
+
+    ASSERT_EQ(StatusCode::OK, status);
+    ASSERT_EQ((size_t)1, gotValue->value.floatValues.size());
+    ASSERT_EQ(30.0f, gotValue->value.floatValues[0]);
+
+    // HVAC_RIGHT should not be affected and return the default value.
+    value.areaId = HVAC_RIGHT;
+
+    gotValue = mHal->get(value, &status);
+
+    ASSERT_EQ(StatusCode::OK, status);
+    ASSERT_EQ((size_t)1, gotValue->value.floatValues.size());
+    ASSERT_EQ(20.0f, gotValue->value.floatValues[0]);
+}
+
+TEST_F(DefaultVhalImplTest, testVendorOverridePropertiesDirDoesNotExist) {
+    // Destroy the existing VHAL first to prevent it using destroyed connector or propstore.
+    mHal.reset();
+    // Create a new Default VHAL and reinitialize it to load the override properties.
+    mPropStore.reset(new VehiclePropertyStore);
+    mConnector.reset(new DefaultVehicleConnector);
+    mConnector->setValuePool(&mValueObjectPool);
+    mHal.reset(new DefaultVehicleHal(mPropStore.get(), mConnector.get()));
+    // Set vendor override directory to a non-existing dir
+    DefaultVhalImplTestHelper helper(mConnector.get());
+    helper.overrideProperties("123");
+    initHal();
+
+    VehiclePropValue value;
+    StatusCode status;
+    value.prop = toInt(VehicleProperty::GEAR_SELECTION);
+
+    auto gotValue = mHal->get(value, &status);
+
+    // We should get the default value.
+    ASSERT_EQ(StatusCode::OK, status);
+    ASSERT_EQ((size_t)1, gotValue->value.int32Values.size());
+    ASSERT_EQ(4, gotValue->value.int32Values[0]);
 }
 
 }  // namespace

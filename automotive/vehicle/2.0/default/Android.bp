@@ -144,7 +144,6 @@ cc_library_static {
     ],
     whole_static_libs: [
         "android.hardware.automotive.vehicle@2.0-server-common-lib",
-        "android.hardware.automotive.vehicle@2.0-user-hal-helper-lib",
     ],
     static_libs: [
         "android.hardware.automotive.vehicle@2.0-libproto-native",
@@ -213,7 +212,10 @@ cc_test {
         "android.hardware.automotive.vehicle@2.0-default-impl-lib",
         "android.hardware.automotive.vehicle@2.0-libproto-native",
     ],
-    data: [":vhal_test_json"],
+    data: [
+        ":vhal_test_override_json",
+        ":vhal_test_json",
+    ],
     test_suites: ["general-tests"],
 }
 

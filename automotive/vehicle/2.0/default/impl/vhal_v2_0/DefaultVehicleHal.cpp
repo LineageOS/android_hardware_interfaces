@@ -17,10 +17,13 @@
 
 #include <android-base/chrono_utils.h>
 #include <assert.h>
+#include <stdio.h>
 #include <utils/Log.h>
 #include <utils/SystemClock.h>
 #include <vhal_v2_0/RecurrentTimer.h>
+#include <unordered_set>
 
+#include "PropertyUtils.h"
 #include "VehicleUtils.h"
 
 #include "DefaultVehicleHal.h"
@@ -52,7 +55,29 @@ const VehicleAreaConfig* getAreaConfig(const VehiclePropValue& propValue,
     }
     return nullptr;
 }
+
+VehicleHal::VehiclePropValuePtr addTimestamp(VehicleHal::VehiclePropValuePtr v) {
+    if (v.get()) {
+        v->timestamp = elapsedRealtimeNano();
+    }
+    return v;
+}
+
+bool isDebugProperty(int propId) {
+    return (propId == kGenerateFakeDataControllingProperty ||
+            propId == kSetIntPropertyFromVehicleForTest ||
+            propId == kSetFloatPropertyFromVehicleForTest ||
+            propId == kSetBooleanPropertyFromVehicleForTest);
+}
 }  // namespace
+
+VehicleHal::VehiclePropValuePtr DefaultVehicleHal::createVhalHeartBeatProp() {
+    VehicleHal::VehiclePropValuePtr v = getValuePool()->obtainInt64(uptimeMillis());
+    v->prop = static_cast<int32_t>(VehicleProperty::VHAL_HEARTBEAT);
+    v->areaId = 0;
+    v->status = VehiclePropertyStatus::AVAILABLE;
+    return v;
+}
 
 DefaultVehicleHal::DefaultVehicleHal(VehiclePropertyStore* propStore, VehicleHalClient* client)
     : mPropStore(propStore), mRecurrentTimer(getTimerAction()), mVehicleClient(client) {
@@ -69,6 +94,7 @@ VehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(const VehiclePropValue& r
     ALOGV("get(%d)", propId);
 
     VehiclePropValuePtr v = nullptr;
+
     auto internalPropValue = mPropStore->readValueOrNull(requestedPropValue);
     if (internalPropValue != nullptr) {
         v = getValuePool()->obtain(*internalPropValue);
@@ -81,10 +107,7 @@ VehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(const VehiclePropValue& r
     } else {
         *outStatus = StatusCode::TRY_AGAIN;
     }
-    if (v.get()) {
-        v->timestamp = elapsedRealtimeNano();
-    }
-    return v;
+    return addTimestamp(std::move(v));
 }
 
 std::vector<VehiclePropConfig> DefaultVehicleHal::listProperties() {
@@ -258,6 +281,32 @@ StatusCode DefaultVehicleHal::set(const VehiclePropValue& propValue) {
         return StatusCode::INVALID_ARG;
     }
 
+    std::unordered_set<int32_t> powerProps(std::begin(kHvacPowerProperties),
+                                           std::end(kHvacPowerProperties));
+    if (powerProps.count(propValue.prop)) {
+        auto hvacPowerOn = mPropStore->readValueOrNull(
+                toInt(VehicleProperty::HVAC_POWER_ON),
+                (VehicleAreaSeat::ROW_1_LEFT | VehicleAreaSeat::ROW_1_RIGHT |
+                 VehicleAreaSeat::ROW_2_LEFT | VehicleAreaSeat::ROW_2_CENTER |
+                 VehicleAreaSeat::ROW_2_RIGHT));
+
+        if (hvacPowerOn && hvacPowerOn->value.int32Values.size() == 1 &&
+            hvacPowerOn->value.int32Values[0] == 0) {
+            return StatusCode::NOT_AVAILABLE;
+        }
+    }
+
+    if (propValue.prop == VEHICLE_MAP_SERVICE) {
+        // Placeholder for future implementation of VMS property in the default hal. For
+        // now, just returns OK; otherwise, hal clients crash with property not supported.
+        return StatusCode::OK;
+    }
+    if (isDebugProperty(propValue.prop)) {
+        // These are special debug properties and do not need a config or check.
+        // TODO(shanyu): Remove this after we remove debug properties.
+        return mVehicleClient->setProperty(propValue, /*updateStatus=*/false);
+    }
+
     int32_t property = propValue.prop;
     const VehiclePropConfig* config = mPropStore->getConfigOrNull(property);
     if (config == nullptr) {
@@ -298,7 +347,7 @@ void DefaultVehicleHal::onCreate() {
     auto configs = mVehicleClient->getAllPropertyConfig();
 
     for (const auto& cfg : configs) {
-        int32_t numAreas = isGlobalProp(cfg.prop) ? 0 : cfg.areaConfigs.size();
+        int32_t numAreas = isGlobalProp(cfg.prop) ? 1 : cfg.areaConfigs.size();
 
         for (int i = 0; i < numAreas; i++) {
             int32_t curArea = isGlobalProp(cfg.prop) ? 0 : cfg.areaConfigs[i].areaId;
@@ -315,6 +364,7 @@ void DefaultVehicleHal::onCreate() {
     }
 
     mVehicleClient->triggerSendAllValues();
+
     registerHeartBeatEvent();
 }
 
@@ -341,14 +391,6 @@ VehicleHal::VehiclePropValuePtr DefaultVehicleHal::doInternalHealthCheck() {
     } else {
         ALOGW("VHAL health check failed");
     }
-    return v;
-}
-
-VehicleHal::VehiclePropValuePtr DefaultVehicleHal::createVhalHeartBeatProp() {
-    VehicleHal::VehiclePropValuePtr v = getValuePool()->obtainInt64(uptimeMillis());
-    v->prop = static_cast<int32_t>(VehicleProperty::VHAL_HEARTBEAT);
-    v->areaId = 0;
-    v->status = VehiclePropertyStatus::AVAILABLE;
     return v;
 }
 

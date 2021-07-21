@@ -72,6 +72,10 @@ class DefaultVehicleHalServer : public IVehicleServer {
     std::string getHelpInfo();
 
     DumpResult genFakeData(const std::vector<std::string>& options);
+    // If "persist.vendor.vhal_init_value_override" is true, try to override the properties default
+    // values according to JSON files in 'overrideDir'. Would be called in constructor using
+    // VENDOR_OVERRIDE_DIR as overrideDir.
+    void maybeOverrideProperties(const char* overrideDir);
 
   protected:
     GeneratorHub mGeneratorHub{
@@ -79,6 +83,12 @@ class DefaultVehicleHalServer : public IVehicleServer {
 
     VehiclePropValuePool* mValuePool{nullptr};
     VehiclePropertyStore mServerSidePropStore;
+
+  private:
+    // Expose protected methods to unit test.
+    friend class DefaultVhalImplTestHelper;
+    // Override the properties using config files in 'overrideDir'.
+    void overrideProperties(const char* overrideDir);
 };
 
 }  // namespace impl

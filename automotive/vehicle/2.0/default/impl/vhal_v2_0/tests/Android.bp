@@ -16,3 +16,8 @@ filegroup {
     name: "vhal_test_json",
     srcs: ["prop.json"],
 }
+
+filegroup {
+    name: "vhal_test_override_json",
+    srcs: ["override/*"],
+}
