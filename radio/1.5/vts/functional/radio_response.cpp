@@ -763,8 +763,9 @@ Return<void> RadioResponse_v1_5::getCellInfoListResponse_1_2(
 
 Return<void> RadioResponse_v1_5::getVoiceRegistrationStateResponse_1_2(
         const RadioResponseInfo& info,
-        const ::android::hardware::radio::V1_2::VoiceRegStateResult& /*voiceRegResponse*/) {
+        const ::android::hardware::radio::V1_2::VoiceRegStateResult& voiceRegResponse) {
     rspInfo = info;
+    voiceRegResp = voiceRegResponse;
     parent_v1_5.notify(info.serial);
     return Void();
 }
@@ -989,8 +990,9 @@ Return<void> RadioResponse_v1_5::getBarringInfoResponse(
 
 Return<void> RadioResponse_v1_5::getVoiceRegistrationStateResponse_1_5(
         const RadioResponseInfo& info,
-        const ::android::hardware::radio::V1_5::RegStateResult& /*regResponse*/) {
+        const ::android::hardware::radio::V1_5::RegStateResult& regResponse) {
     rspInfo = info;
+    voiceRegResp.regState = regResponse.regState;
     parent_v1_5.notify(info.serial);
     return Void();
 }
