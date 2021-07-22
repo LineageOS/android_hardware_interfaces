@@ -94,6 +94,7 @@ cc_test {
         "libkeymint_vts_test_utils",
         "libpuresoftkeymasterdevice",
     ],
+    test_config: "VtsRemotelyProvisionedComponentTests.xml",
     test_suites: [
         "general-tests",
         "vts",
