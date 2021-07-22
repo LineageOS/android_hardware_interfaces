@@ -44,6 +44,7 @@ using ::android::hardware::automotive::vehicle::V2_0::VehiclePropValue;
 using ::android::hardware::automotive::vehicle::V2_0::VehiclePropValuePool;
 using ::android::hardware::automotive::vehicle::V2_0::impl::DefaultVehicleConnector;
 using ::android::hardware::automotive::vehicle::V2_0::impl::DefaultVehicleHal;
+using ::android::hardware::automotive::vehicle::V2_0::impl::HVAC_ALL;
 using ::android::hardware::automotive::vehicle::V2_0::impl::HVAC_LEFT;
 using ::android::hardware::automotive::vehicle::V2_0::impl::kMixedTypePropertyForTest;
 
@@ -366,6 +367,24 @@ TEST_F(DefaultVhalImplTest, testDump) {
     EXPECT_THAT(std::string(buf), HasSubstr(infoMake));
 }
 
+TEST_F(DefaultVhalImplTest, testSetPropInvalidAreaId) {
+    VehiclePropValue propNormal = {.prop = toInt(VehicleProperty::HVAC_FAN_SPEED),
+                                   .areaId = HVAC_ALL,
+                                   .value.int32Values = {3}};
+    StatusCode status = mHal->set(propNormal);
+
+    EXPECT_EQ(StatusCode::OK, status);
+
+    // HVAC_FAN_SPEED only have HVAC_ALL area config and is not allowed to set by LEFT/RIGHT.
+    VehiclePropValue propWrongId = {.prop = toInt(VehicleProperty::HVAC_FAN_SPEED),
+                                    .areaId = HVAC_LEFT,
+                                    .value.int32Values = {3}};
+
+    status = mHal->set(propWrongId);
+
+    EXPECT_EQ(StatusCode::INVALID_ARG, status);
+}
+
 class DefaultVhalImplSetInvalidPropTest : public DefaultVhalImplTest,
                                           public testing::WithParamInterface<VehiclePropValue> {};
 
@@ -463,19 +482,19 @@ class DefaultVhalImplSetPropRangeTest : public DefaultVhalImplTest,
 std::vector<SetPropRangeTestCase> GenSetPropRangeParams() {
     std::vector<SetPropRangeTestCase> tc;
     VehiclePropValue intPropNormal = {.prop = toInt(VehicleProperty::HVAC_FAN_SPEED),
-                                      .areaId = HVAC_LEFT,
+                                      .areaId = HVAC_ALL,
                                       // min: 1, max: 7
                                       .value.int32Values = {3}};
     tc.push_back({"normal_case_int", intPropNormal, StatusCode::OK});
 
     VehiclePropValue intPropSmall = {.prop = toInt(VehicleProperty::HVAC_FAN_SPEED),
-                                     .areaId = HVAC_LEFT,
+                                     .areaId = HVAC_ALL,
                                      // min: 1, max: 7
                                      .value.int32Values = {0}};
     tc.push_back({"normal_case_int_too_small", intPropSmall, StatusCode::INVALID_ARG});
 
     VehiclePropValue intPropLarge = {.prop = toInt(VehicleProperty::HVAC_FAN_SPEED),
-                                     .areaId = HVAC_LEFT,
+                                     .areaId = HVAC_ALL,
                                      // min: 1, max: 7
                                      .value.int32Values = {8}};
     tc.push_back({"normal_case_int_too_large", intPropLarge, StatusCode::INVALID_ARG});
