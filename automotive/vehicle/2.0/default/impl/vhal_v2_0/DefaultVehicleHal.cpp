@@ -15,6 +15,7 @@
  */
 #define LOG_TAG "DefaultVehicleHal_v2_0"
 
+#include <android-base/chrono_utils.h>
 #include <assert.h>
 #include <utils/Log.h>
 #include <utils/SystemClock.h>
@@ -31,6 +32,27 @@ namespace vehicle {
 namespace V2_0 {
 
 namespace impl {
+
+namespace {
+constexpr std::chrono::nanoseconds kHeartBeatIntervalNs = 3s;
+
+const VehicleAreaConfig* getAreaConfig(const VehiclePropValue& propValue,
+                                       const VehiclePropConfig* config) {
+    if (isGlobalProp(propValue.prop)) {
+        if (config->areaConfigs.size() == 0) {
+            return nullptr;
+        }
+        return &(config->areaConfigs[0]);
+    } else {
+        for (auto& c : config->areaConfigs) {
+            if (c.areaId == propValue.areaId) {
+                return &c;
+            }
+        }
+    }
+    return nullptr;
+}
+}  // namespace
 
 DefaultVehicleHal::DefaultVehicleHal(VehiclePropertyStore* propStore, VehicleHalClient* client)
     : mPropStore(propStore), mRecurrentTimer(getTimerAction()), mVehicleClient(client) {
@@ -179,24 +201,12 @@ StatusCode DefaultVehicleHal::checkVendorMixedPropValue(const VehiclePropValue& 
 }
 
 StatusCode DefaultVehicleHal::checkValueRange(const VehiclePropValue& value,
-                                              const VehiclePropConfig* config) {
+                                              const VehicleAreaConfig* areaConfig) {
+    if (areaConfig == nullptr) {
+        return StatusCode::OK;
+    }
     int32_t property = value.prop;
     VehiclePropertyType type = getPropType(property);
-    const VehicleAreaConfig* areaConfig;
-    if (isGlobalProp(property)) {
-        if (config->areaConfigs.size() == 0) {
-            return StatusCode::OK;
-        }
-        areaConfig = &(config->areaConfigs[0]);
-    } else {
-        for (auto& c : config->areaConfigs) {
-            // areaId might contain multiple areas.
-            if (c.areaId & value.areaId) {
-                areaConfig = &c;
-                break;
-            }
-        }
-    }
     switch (type) {
         case VehiclePropertyType::INT32:
             if (areaConfig->minInt32Value == 0 && areaConfig->maxInt32Value == 0) {
@@ -254,12 +264,20 @@ StatusCode DefaultVehicleHal::set(const VehiclePropValue& propValue) {
         ALOGW("no config for prop 0x%x", property);
         return StatusCode::INVALID_ARG;
     }
+    const VehicleAreaConfig* areaConfig = getAreaConfig(propValue, config);
+    if (!isGlobalProp(property) && areaConfig == nullptr) {
+        // Ignore areaId for global property. For non global property, check whether areaId is
+        // allowed. areaId must appear in areaConfig.
+        ALOGW("invalid area ID: 0x%x for prop 0x%x, not listed in config", propValue.areaId,
+              property);
+        return StatusCode::INVALID_ARG;
+    }
     auto status = checkPropValue(propValue, config);
     if (status != StatusCode::OK) {
         ALOGW("invalid property value: %s", toString(propValue).c_str());
         return status;
     }
-    status = checkValueRange(propValue, config);
+    status = checkValueRange(propValue, areaConfig);
     if (status != StatusCode::OK) {
         ALOGW("property value out of range: %s", toString(propValue).c_str());
         return status;
@@ -297,6 +315,41 @@ void DefaultVehicleHal::onCreate() {
     }
 
     mVehicleClient->triggerSendAllValues();
+    registerHeartBeatEvent();
+}
+
+DefaultVehicleHal::~DefaultVehicleHal() {
+    mRecurrentTimer.unregisterRecurrentEvent(static_cast<int32_t>(VehicleProperty::VHAL_HEARTBEAT));
+}
+
+void DefaultVehicleHal::registerHeartBeatEvent() {
+    mRecurrentTimer.registerRecurrentEvent(kHeartBeatIntervalNs,
+                                           static_cast<int32_t>(VehicleProperty::VHAL_HEARTBEAT));
+}
+
+VehicleHal::VehiclePropValuePtr DefaultVehicleHal::doInternalHealthCheck() {
+    VehicleHal::VehiclePropValuePtr v = nullptr;
+
+    // This is an example of very simple health checking. VHAL is considered healthy if we can read
+    // PERF_VEHICLE_SPEED. The more comprehensive health checking is required.
+    VehiclePropValue propValue = {
+            .prop = static_cast<int32_t>(VehicleProperty::PERF_VEHICLE_SPEED),
+    };
+    auto internalPropValue = mPropStore->readValueOrNull(propValue);
+    if (internalPropValue != nullptr) {
+        v = createVhalHeartBeatProp();
+    } else {
+        ALOGW("VHAL health check failed");
+    }
+    return v;
+}
+
+VehicleHal::VehiclePropValuePtr DefaultVehicleHal::createVhalHeartBeatProp() {
+    VehicleHal::VehiclePropValuePtr v = getValuePool()->obtainInt64(uptimeMillis());
+    v->prop = static_cast<int32_t>(VehicleProperty::VHAL_HEARTBEAT);
+    v->areaId = 0;
+    v->status = VehiclePropertyStatus::AVAILABLE;
+    return v;
 }
 
 void DefaultVehicleHal::onContinuousPropertyTimer(const std::vector<int32_t>& properties) {
@@ -309,6 +362,10 @@ void DefaultVehicleHal::onContinuousPropertyTimer(const std::vector<int32_t>& pr
             if (internalPropValue != nullptr) {
                 v = pool.obtain(*internalPropValue);
             }
+        } else if (property == static_cast<int32_t>(VehicleProperty::VHAL_HEARTBEAT)) {
+            // VHAL_HEARTBEAT is not a continuous value, but it needs to be updated periodically.
+            // So, the update is done through onContinuousPropertyTimer.
+            v = doInternalHealthCheck();
         } else {
             ALOGE("Unexpected onContinuousPropertyTimer for property: 0x%x", property);
             continue;

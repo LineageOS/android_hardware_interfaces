@@ -44,6 +44,7 @@ using ::android::hardware::automotive::vehicle::V2_0::VehiclePropValue;
 using ::android::hardware::automotive::vehicle::V2_0::VehiclePropValuePool;
 using ::android::hardware::automotive::vehicle::V2_0::impl::DefaultVehicleConnector;
 using ::android::hardware::automotive::vehicle::V2_0::impl::DefaultVehicleHal;
+using ::android::hardware::automotive::vehicle::V2_0::impl::HVAC_ALL;
 using ::android::hardware::automotive::vehicle::V2_0::impl::HVAC_LEFT;
 using ::android::hardware::automotive::vehicle::V2_0::impl::kMixedTypePropertyForTest;
 
@@ -56,14 +57,21 @@ const size_t MAX_PROP_ID_LENGTH = 100;
 
 class DefaultVhalImplTest : public ::testing::Test {
   public:
-    ~DefaultVhalImplTest() { mEventQueue.deactivate(); }
+    ~DefaultVhalImplTest() {
+        mEventQueue.deactivate();
+        mHeartBeatQueue.deactivate();
+        // Destroy mHal before destroying its dependencies.
+        mHal.reset();
+        mConnector.reset();
+        mPropStore.reset();
+    }
 
   protected:
     void SetUp() override {
         mPropStore.reset(new VehiclePropertyStore);
         mConnector.reset(new DefaultVehicleConnector);
-        mHal.reset(new DefaultVehicleHal(mPropStore.get(), mConnector.get()));
         mConnector->setValuePool(&mValueObjectPool);
+        mHal.reset(new DefaultVehicleHal(mPropStore.get(), mConnector.get()));
         mHal->init(&mValueObjectPool,
                    std::bind(&DefaultVhalImplTest::onHalEvent, this, std::placeholders::_1),
                    std::bind(&DefaultVhalImplTest::onHalPropertySetError, this,
@@ -71,7 +79,14 @@ class DefaultVhalImplTest : public ::testing::Test {
     }
 
   private:
-    void onHalEvent(VehiclePropValuePtr v) { mEventQueue.push(std::move(v)); }
+    void onHalEvent(VehiclePropValuePtr v) {
+        if (v->prop != toInt(VehicleProperty::VHAL_HEARTBEAT)) {
+            // Ignore heartbeat properties.
+            mEventQueue.push(std::move(v));
+        } else {
+            mHeartBeatQueue.push(std::move(v));
+        }
+    }
 
     void onHalPropertySetError(StatusCode /*errorCode*/, int32_t /*property*/, int32_t /*areaId*/) {
     }
@@ -82,6 +97,7 @@ class DefaultVhalImplTest : public ::testing::Test {
     std::unique_ptr<VehiclePropertyStore> mPropStore;
     VehiclePropValuePool mValueObjectPool;
     android::ConcurrentQueue<VehiclePropValuePtr> mEventQueue;
+    android::ConcurrentQueue<VehiclePropValuePtr> mHeartBeatQueue;
 };
 
 TEST_F(DefaultVhalImplTest, testListProperties) {
@@ -351,6 +367,24 @@ TEST_F(DefaultVhalImplTest, testDump) {
     EXPECT_THAT(std::string(buf), HasSubstr(infoMake));
 }
 
+TEST_F(DefaultVhalImplTest, testSetPropInvalidAreaId) {
+    VehiclePropValue propNormal = {.prop = toInt(VehicleProperty::HVAC_FAN_SPEED),
+                                   .areaId = HVAC_ALL,
+                                   .value.int32Values = {3}};
+    StatusCode status = mHal->set(propNormal);
+
+    EXPECT_EQ(StatusCode::OK, status);
+
+    // HVAC_FAN_SPEED only have HVAC_ALL area config and is not allowed to set by LEFT/RIGHT.
+    VehiclePropValue propWrongId = {.prop = toInt(VehicleProperty::HVAC_FAN_SPEED),
+                                    .areaId = HVAC_LEFT,
+                                    .value.int32Values = {3}};
+
+    status = mHal->set(propWrongId);
+
+    EXPECT_EQ(StatusCode::INVALID_ARG, status);
+}
+
 class DefaultVhalImplSetInvalidPropTest : public DefaultVhalImplTest,
                                           public testing::WithParamInterface<VehiclePropValue> {};
 
@@ -448,19 +482,19 @@ class DefaultVhalImplSetPropRangeTest : public DefaultVhalImplTest,
 std::vector<SetPropRangeTestCase> GenSetPropRangeParams() {
     std::vector<SetPropRangeTestCase> tc;
     VehiclePropValue intPropNormal = {.prop = toInt(VehicleProperty::HVAC_FAN_SPEED),
-                                      .areaId = HVAC_LEFT,
+                                      .areaId = HVAC_ALL,
                                       // min: 1, max: 7
                                       .value.int32Values = {3}};
     tc.push_back({"normal_case_int", intPropNormal, StatusCode::OK});
 
     VehiclePropValue intPropSmall = {.prop = toInt(VehicleProperty::HVAC_FAN_SPEED),
-                                     .areaId = HVAC_LEFT,
+                                     .areaId = HVAC_ALL,
                                      // min: 1, max: 7
                                      .value.int32Values = {0}};
     tc.push_back({"normal_case_int_too_small", intPropSmall, StatusCode::INVALID_ARG});
 
     VehiclePropValue intPropLarge = {.prop = toInt(VehicleProperty::HVAC_FAN_SPEED),
-                                     .areaId = HVAC_LEFT,
+                                     .areaId = HVAC_ALL,
                                      // min: 1, max: 7
                                      .value.int32Values = {8}};
     tc.push_back({"normal_case_int_too_large", intPropLarge, StatusCode::INVALID_ARG});
@@ -722,6 +756,16 @@ TEST_F(DefaultVhalImplTest, testDebugGenFakeDataKeyPress) {
     EXPECT_EQ(toInt(VehicleHwKeyInputAction::ACTION_UP), events[1]->value.int32Values[0]);
     EXPECT_EQ(1, events[1]->value.int32Values[1]);
     EXPECT_EQ(2, events[1]->value.int32Values[2]);
+}
+
+TEST_F(DefaultVhalImplTest, testHeartBeatEvent) {
+    // A heart beat would be sent every 3s, but let's wait for 6s to be sure at least 2 events have
+    // been generated (at 0s and 3s).
+    std::this_thread::sleep_for(std::chrono::milliseconds(6000));
+
+    auto events = mHeartBeatQueue.flush();
+    ASSERT_GE(events.size(), (size_t)2);
+    ASSERT_EQ(toInt(VehicleProperty::VHAL_HEARTBEAT), events[0]->prop);
 }
 
 }  // namespace
