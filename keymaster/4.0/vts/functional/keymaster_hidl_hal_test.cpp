@@ -940,7 +940,11 @@ TEST_P(NewKeyGenerationTest, HmacDigestNone) {
  * UNSUPPORTED_KEY_SIZE.
  */
 TEST_P(NewKeyGenerationTest, AesInvalidKeySize) {
+    int32_t firstApiLevel = property_get_int32("ro.board.first_api_level", 0);
     for (auto key_size : InvalidKeySizes(Algorithm::AES)) {
+        if (key_size == 192 && SecLevel() == SecurityLevel::STRONGBOX && firstApiLevel < 31) {
+            continue;
+        }
         ASSERT_EQ(ErrorCode::UNSUPPORTED_KEY_SIZE,
                   GenerateKey(AuthorizationSetBuilder()
                                       .Authorization(TAG_NO_AUTH_REQUIRED)
