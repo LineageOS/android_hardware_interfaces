@@ -96,7 +96,8 @@ import android.hardware.security.secureclock.TimeStampToken;
  *
  * o   AES
  *
- *      - 128 and 256-bit keys
+ *      - TRUSTED_ENVIRONMENT IKeyMintDevices must support 128, 192 and 256-bit keys.
+ *        STRONGBOX IKeyMintDevices must only support 128 and 256-bit keys.
  *      - CBC, CTR, ECB and GCM modes.  The GCM mode must not allow the use of tags smaller than 96
  *        bits or nonce lengths other than 96 bits.
  *      - CBC and ECB modes must support unpadded and PKCS7 padding modes.  With no padding CBC and
