@@ -155,10 +155,6 @@ class Dvr : public IDvr {
     std::mutex mDvrThreadLock;
 
     const bool DEBUG_DVR = false;
-
-    // Booleans to check if recording is running.
-    // Recording is ready when both of the following are set to true.
-    bool mIsRecordStarted = false;
 };
 
 }  // namespace implementation
