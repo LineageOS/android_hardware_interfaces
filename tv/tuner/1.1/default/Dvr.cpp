@@ -38,8 +38,8 @@ Dvr::Dvr(DvrType type, uint32_t bufferSize, const sp<IDvrCallback>& cb, sp<Demux
 }
 
 Dvr::~Dvr() {
-    mDvrThreadRunning = false;
-    lock_guard<mutex> lock(mDvrThreadLock);
+    // make sure thread has joined
+    close();
 }
 
 Return<void> Dvr::getQueueDesc(getQueueDesc_cb _hidl_cb) {
@@ -134,8 +134,7 @@ Return<Result> Dvr::start() {
 
     if (mType == DvrType::PLAYBACK) {
         mDvrThreadRunning = true;
-        pthread_create(&mDvrThread, NULL, __threadLoopPlayback, this);
-        pthread_setname_np(mDvrThread, "playback_waiting_loop");
+        mDvrThread = std::thread(&Dvr::playbackThreadLoop, this);
     } else if (mType == DvrType::RECORD) {
         mRecordStatus = RecordStatus::DATA_READY;
         mDemux->setIsRecording(mType == DvrType::RECORD);
@@ -150,8 +149,11 @@ Return<Result> Dvr::stop() {
     ALOGV("%s", __FUNCTION__);
 
     mDvrThreadRunning = false;
-    lock_guard<mutex> lock(mDvrThreadLock);
-
+    if (mDvrThread.joinable()) {
+        mDvrThread.join();
+    }
+    // thread should always be joinable if it is running,
+    // so it should be safe to assume recording stopped.
     mDemux->setIsRecording(false);
 
     return Result::SUCCESS;
@@ -167,9 +169,7 @@ Return<Result> Dvr::flush() {
 
 Return<Result> Dvr::close() {
     ALOGV("%s", __FUNCTION__);
-
-    mDvrThreadRunning = false;
-    lock_guard<mutex> lock(mDvrThreadLock);
+    stop();
     return Result::SUCCESS;
 }
 
@@ -196,15 +196,8 @@ EventFlag* Dvr::getDvrEventFlag() {
     return mDvrEventFlag;
 }
 
-void* Dvr::__threadLoopPlayback(void* user) {
-    Dvr* const self = static_cast<Dvr*>(user);
-    self->playbackThreadLoop();
-    return 0;
-}
-
 void Dvr::playbackThreadLoop() {
     ALOGD("[Dvr] playback threadLoop start.");
-    lock_guard<mutex> lock(mDvrThreadLock);
 
     while (mDvrThreadRunning) {
         uint32_t efState = 0;
