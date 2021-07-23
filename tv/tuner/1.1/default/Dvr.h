@@ -117,9 +117,7 @@ class Dvr : public IDvr {
      * Each filter handler handles the data filtering/output writing/filterEvent updating.
      */
     void startTpidFilter(vector<uint8_t> data);
-    static void* __threadLoopRecord(void* user);
     void playbackThreadLoop();
-    void recordThreadLoop();
 
     unique_ptr<DvrMQ> mDvrMQ;
     EventFlag* mDvrEventFlag;
