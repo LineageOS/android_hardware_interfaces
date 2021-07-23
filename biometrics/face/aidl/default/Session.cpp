@@ -107,7 +107,8 @@ ndk::ScopedAStatus Session::removeEnrollments(const std::vector<int32_t>& /*enro
 ndk::ScopedAStatus Session::getFeatures() {
     LOG(INFO) << "getFeatures";
     if (cb_) {
-        cb_->onFeaturesRetrieved({});
+        // Must error out with UNABLE_TO_PROCESS when no faces are enrolled.
+        cb_->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorCode */);
     }
     return ndk::ScopedAStatus::ok();
 }

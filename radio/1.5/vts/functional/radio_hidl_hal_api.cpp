@@ -1251,8 +1251,20 @@ TEST_P(RadioHidlTest_v1_5, sendCdmaSmsExpectMore) {
  * Test IRadio.getBarringInfo() for the response returned.
  */
 TEST_P(RadioHidlTest_v1_5, getBarringInfo) {
+    // If the previous setRadioPower_1_5_emergencyCall_cancelled test has just finished.
+    // Due to radio restarting, modem may need a little more time to acquire network service
+    // and barring infos. If voice status is in-service, waiting 3s to get barring infos ready.
+    // Or waiting 10s if voice status is not in-service.
     serial = GetRandomSerialNumber();
+    radio_v1_5->getVoiceRegistrationState_1_5(serial);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    if (isVoiceInService(radioRsp_v1_5->voiceRegResp.regState)) {
+        sleep(BARRING_INFO_MAX_WAIT_TIME_SECONDS);
+    } else {
+        sleep(VOICE_SERVICE_MAX_WAIT_TIME_SECONDS);
+    }
 
+    serial = GetRandomSerialNumber();
     Return<void> res = radio_v1_5->getBarringInfo(serial);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_5->rspInfo.type);
