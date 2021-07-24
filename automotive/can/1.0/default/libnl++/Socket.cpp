@@ -162,6 +162,26 @@ pollfd Socket::preparePoll(short events) {
     return {mFd.get(), events, 0};
 }
 
+bool Socket::addMembership(unsigned group) {
+    const auto res =
+            setsockopt(mFd.get(), SOL_NETLINK, NETLINK_ADD_MEMBERSHIP, &group, sizeof(group));
+    if (res < 0) {
+        PLOG(ERROR) << "Failed joining multicast group " << group;
+        return false;
+    }
+    return true;
+}
+
+bool Socket::dropMembership(unsigned group) {
+    const auto res =
+            setsockopt(mFd.get(), SOL_NETLINK, NETLINK_DROP_MEMBERSHIP, &group, sizeof(group));
+    if (res < 0) {
+        PLOG(ERROR) << "Failed leaving multicast group " << group;
+        return false;
+    }
+    return true;
+}
+
 Socket::receive_iterator::receive_iterator(Socket& socket, bool end)
     : mSocket(socket), mIsEnd(end) {
     if (!end) receive();
