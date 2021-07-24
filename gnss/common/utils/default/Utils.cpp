@@ -265,50 +265,50 @@ V1_0::GnssLocation Utils::getMockLocationV1_0() {
 }
 
 hidl_vec<GnssSvInfoV2_1> Utils::getMockSvInfoListV2_1() {
-    GnssSvInfoV1_0 gnssSvInfoV1_0 =
-            Utils::getMockSvInfoV1_0(3, V1_0::GnssConstellationType::GPS, 32.5, 59.1, 166.5);
+    GnssSvInfoV1_0 gnssSvInfoV1_0 = Utils::getMockSvInfoV1_0(3, V1_0::GnssConstellationType::GPS,
+                                                             32.5, 59.1, 166.5, kGpsL1FreqHz);
     GnssSvInfoV2_0 gnssSvInfoV2_0 =
             Utils::getMockSvInfoV2_0(gnssSvInfoV1_0, V2_0::GnssConstellationType::GPS);
     hidl_vec<GnssSvInfoV2_1> gnssSvInfoList = {
             Utils::getMockSvInfoV2_1(gnssSvInfoV2_0, 27.5),
             getMockSvInfoV2_1(
                     getMockSvInfoV2_0(getMockSvInfoV1_0(5, V1_0::GnssConstellationType::GPS, 27.0,
-                                                        29.0, 56.5),
+                                                        29.0, 56.5, kGpsL1FreqHz),
                                       V2_0::GnssConstellationType::GPS),
                     22.0),
             getMockSvInfoV2_1(
                     getMockSvInfoV2_0(getMockSvInfoV1_0(17, V1_0::GnssConstellationType::GPS, 30.5,
-                                                        71.0, 77.0),
+                                                        71.0, 77.0, kGpsL5FreqHz),
                                       V2_0::GnssConstellationType::GPS),
                     25.5),
             getMockSvInfoV2_1(
                     getMockSvInfoV2_0(getMockSvInfoV1_0(26, V1_0::GnssConstellationType::GPS, 24.1,
-                                                        28.0, 253.0),
+                                                        28.0, 253.0, kGpsL5FreqHz),
                                       V2_0::GnssConstellationType::GPS),
                     19.1),
             getMockSvInfoV2_1(
                     getMockSvInfoV2_0(getMockSvInfoV1_0(5, V1_0::GnssConstellationType::GLONASS,
-                                                        20.5, 11.5, 116.0),
+                                                        20.5, 11.5, 116.0, kGloG1FreqHz),
                                       V2_0::GnssConstellationType::GLONASS),
                     15.5),
             getMockSvInfoV2_1(
                     getMockSvInfoV2_0(getMockSvInfoV1_0(17, V1_0::GnssConstellationType::GLONASS,
-                                                        21.5, 28.5, 186.0),
+                                                        21.5, 28.5, 186.0, kGloG1FreqHz),
                                       V2_0::GnssConstellationType::GLONASS),
                     16.5),
             getMockSvInfoV2_1(
                     getMockSvInfoV2_0(getMockSvInfoV1_0(18, V1_0::GnssConstellationType::GLONASS,
-                                                        28.3, 38.8, 69.0),
+                                                        28.3, 38.8, 69.0, kGloG1FreqHz),
                                       V2_0::GnssConstellationType::GLONASS),
                     25.3),
             getMockSvInfoV2_1(
                     getMockSvInfoV2_0(getMockSvInfoV1_0(10, V1_0::GnssConstellationType::GLONASS,
-                                                        25.0, 66.0, 247.0),
+                                                        25.0, 66.0, 247.0, kGloG1FreqHz),
                                       V2_0::GnssConstellationType::GLONASS),
                     20.0),
             getMockSvInfoV2_1(
                     getMockSvInfoV2_0(getMockSvInfoV1_0(3, V1_0::GnssConstellationType::UNKNOWN,
-                                                        22.0, 35.0, 112.0),
+                                                        22.0, 35.0, 112.0, kIrnssL5FreqHz),
                                       V2_0::GnssConstellationType::IRNSS),
                     19.7),
     };
@@ -333,21 +333,23 @@ GnssSvInfoV2_0 Utils::getMockSvInfoV2_0(GnssSvInfoV1_0 gnssSvInfoV1_0,
 }
 
 GnssSvInfoV1_0 Utils::getMockSvInfoV1_0(int16_t svid, V1_0::GnssConstellationType type,
-                                        float cN0DbHz, float elevationDegrees,
-                                        float azimuthDegrees) {
+                                        float cN0DbHz, float elevationDegrees, float azimuthDegrees,
+                                        float carrierFrequencyHz) {
     GnssSvInfoV1_0 svInfo = {.svid = svid,
                              .constellation = type,
                              .cN0Dbhz = cN0DbHz,
                              .elevationDegrees = elevationDegrees,
                              .azimuthDegrees = azimuthDegrees,
+                             .carrierFrequencyHz = carrierFrequencyHz,
                              .svFlag = GnssSvFlags::USED_IN_FIX | GnssSvFlags::HAS_EPHEMERIS_DATA |
-                                       GnssSvFlags::HAS_ALMANAC_DATA};
+                                       GnssSvFlags::HAS_ALMANAC_DATA |
+                                       GnssSvFlags::HAS_CARRIER_FREQUENCY};
     return svInfo;
 }
 
 hidl_vec<GnssAntennaInfo> Utils::getMockAntennaInfos() {
     GnssAntennaInfo mockAntennaInfo_1 = {
-            .carrierFrequencyMHz = 123412.12,
+            .carrierFrequencyMHz = kGpsL1FreqHz * 1e-6,
             .phaseCenterOffsetCoordinateMillimeters = Coord{.x = 1,
                                                             .xUncertainty = 0.1,
                                                             .y = 2,
@@ -381,7 +383,7 @@ hidl_vec<GnssAntennaInfo> Utils::getMockAntennaInfos() {
     };
 
     GnssAntennaInfo mockAntennaInfo_2 = {
-            .carrierFrequencyMHz = 532324.23,
+            .carrierFrequencyMHz = kGpsL5FreqHz * 1e-6,
             .phaseCenterOffsetCoordinateMillimeters = Coord{.x = 5,
                                                             .xUncertainty = 0.1,
                                                             .y = 6,
