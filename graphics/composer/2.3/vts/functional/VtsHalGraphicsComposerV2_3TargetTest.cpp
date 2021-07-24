@@ -17,6 +17,7 @@
 #define LOG_TAG "graphics_composer_hidl_hal_test@2.3"
 
 #include <algorithm>
+#include <numeric>
 
 #include <android-base/logging.h>
 #include <android-base/properties.h>
@@ -155,16 +156,31 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
 TEST_P(GraphicsComposerHidlTest, GetDisplayIdentificationData) {
     uint8_t port0;
     std::vector<uint8_t> data0;
-    if (mComposerClient->getDisplayIdentificationData(mPrimaryDisplay, &port0, &data0)) {
-        uint8_t port1;
-        std::vector<uint8_t> data1;
-        ASSERT_TRUE(mComposerClient->getDisplayIdentificationData(mPrimaryDisplay, &port1, &data1));
 
-        ASSERT_EQ(port0, port1) << "ports are not stable";
-        ASSERT_TRUE(data0.size() == data1.size() &&
-                    std::equal(data0.begin(), data0.end(), data1.begin()))
-            << "data is not stable";
+    if (!mComposerClient->getDisplayIdentificationData(mPrimaryDisplay, &port0, &data0)) {
+        return;
     }
+
+    ASSERT_FALSE(data0.empty());
+    constexpr size_t kEdidBlockSize = 128;
+    ASSERT_TRUE(data0.size() % kEdidBlockSize == 0)
+            << "EDID blob length is not a multiple of " << kEdidBlockSize;
+
+    const uint8_t kEdidHeader[] = {0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00};
+    ASSERT_TRUE(std::equal(std::begin(kEdidHeader), std::end(kEdidHeader), data0.begin()))
+            << "EDID blob doesn't start with the fixed EDID header";
+    ASSERT_EQ(0, std::accumulate(data0.begin(), data0.begin() + kEdidBlockSize,
+                                 static_cast<uint8_t>(0)))
+            << "EDID base block doesn't checksum";
+
+    uint8_t port1;
+    std::vector<uint8_t> data1;
+    ASSERT_TRUE(mComposerClient->getDisplayIdentificationData(mPrimaryDisplay, &port1, &data1));
+
+    ASSERT_EQ(port0, port1) << "ports are not stable";
+    ASSERT_TRUE(data0.size() == data1.size() &&
+                std::equal(data0.begin(), data0.end(), data1.begin()))
+            << "data is not stable";
 }
 
 /**
