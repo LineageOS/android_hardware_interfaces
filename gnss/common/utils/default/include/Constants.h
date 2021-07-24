@@ -29,6 +29,10 @@ const float kMockVerticalAccuracyMeters = 5;
 const float kMockSpeedAccuracyMetersPerSecond = 1;
 const float kMockBearingAccuracyDegrees = 90;
 const int64_t kMockTimestamp = 1519930775453L;
+const float kGpsL1FreqHz = 1575.42 * 1e6;
+const float kGpsL5FreqHz = 1176.45 * 1e6;
+const float kGloG1FreqHz = 1602.0 * 1e6;
+const float kIrnssL5FreqHz = 1176.45 * 1e6;
 
 // Location replay constants
 constexpr char GNSS_PATH[] = "/dev/gnss0";

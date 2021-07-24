@@ -15,7 +15,7 @@ aidl_interface {
     ],
     imports: [
         "android.hardware.biometrics.common",
-        "android.hardware.common",
+        "android.hardware.common-V2",
         "android.hardware.keymaster",
     ],
     stability: "vintf",

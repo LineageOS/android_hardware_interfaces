@@ -48,6 +48,8 @@ cc_defaults {
         "libhidlbase",
         "liblog",
         "libmedia_helper",
+        "libmediautils_vendor",
+        "libmemunreachable",
         "libutils",
         "android.hardware.audio.common-util",
     ],
