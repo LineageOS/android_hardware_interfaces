@@ -154,7 +154,7 @@ interface ISession {
      * operation.
      */
     ICancellationSignal enroll(in HardwareAuthToken hat, in EnrollmentType type,
-            in Feature[] features, in NativeHandle previewSurface);
+            in Feature[] features, in @nullable NativeHandle previewSurface);
 
     /**
      * authenticate:
