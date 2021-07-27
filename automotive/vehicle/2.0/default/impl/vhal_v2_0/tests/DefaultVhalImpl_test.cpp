@@ -27,6 +27,32 @@
 #include <vhal_v2_0/VehicleObjectPool.h>
 #include <vhal_v2_0/VehiclePropertyStore.h>
 
+namespace android {
+namespace hardware {
+namespace automotive {
+namespace vehicle {
+namespace V2_0 {
+namespace impl {
+
+class DefaultVhalImplTestHelper {
+  public:
+    DefaultVhalImplTestHelper(DefaultVehicleHalServer* server) { mServer = server; }
+
+    void overrideProperties(const char* overrideDir) {
+        mServer->overrideProperties(overrideDir);
+    }
+
+  private:
+    DefaultVehicleHalServer* mServer;
+};
+
+}  // namespace impl
+}  // namespace V2_0
+}  // namespace vehicle
+}  // namespace automotive
+}  // namespace hardware
+}  // namespace android
+
 namespace {
 
 using ::android::hardware::hidl_handle;
@@ -44,9 +70,15 @@ using ::android::hardware::automotive::vehicle::V2_0::VehiclePropValue;
 using ::android::hardware::automotive::vehicle::V2_0::VehiclePropValuePool;
 using ::android::hardware::automotive::vehicle::V2_0::impl::DefaultVehicleConnector;
 using ::android::hardware::automotive::vehicle::V2_0::impl::DefaultVehicleHal;
+using ::android::hardware::automotive::vehicle::V2_0::impl::DefaultVhalImplTestHelper;
 using ::android::hardware::automotive::vehicle::V2_0::impl::HVAC_ALL;
 using ::android::hardware::automotive::vehicle::V2_0::impl::HVAC_LEFT;
+using ::android::hardware::automotive::vehicle::V2_0::impl::HVAC_RIGHT;
 using ::android::hardware::automotive::vehicle::V2_0::impl::kMixedTypePropertyForTest;
+using ::android::hardware::automotive::vehicle::V2_0::impl::OBD2_FREEZE_FRAME;
+using ::android::hardware::automotive::vehicle::V2_0::impl::OBD2_FREEZE_FRAME_CLEAR;
+using ::android::hardware::automotive::vehicle::V2_0::impl::OBD2_FREEZE_FRAME_INFO;
+using ::android::hardware::automotive::vehicle::V2_0::impl::OBD2_LIVE_FRAME;
 
 using ::testing::HasSubstr;
 
@@ -72,11 +104,23 @@ class DefaultVhalImplTest : public ::testing::Test {
         mConnector.reset(new DefaultVehicleConnector);
         mConnector->setValuePool(&mValueObjectPool);
         mHal.reset(new DefaultVehicleHal(mPropStore.get(), mConnector.get()));
+        initHal();
+    }
+
+    void initHal() {
         mHal->init(&mValueObjectPool,
                    std::bind(&DefaultVhalImplTest::onHalEvent, this, std::placeholders::_1),
                    std::bind(&DefaultVhalImplTest::onHalPropertySetError, this,
                              std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     }
+
+  protected:
+    std::unique_ptr<DefaultVehicleHal> mHal;
+    std::unique_ptr<DefaultVehicleConnector> mConnector;
+    std::unique_ptr<VehiclePropertyStore> mPropStore;
+    VehiclePropValuePool mValueObjectPool;
+    android::ConcurrentQueue<VehiclePropValuePtr> mEventQueue;
+    android::ConcurrentQueue<VehiclePropValuePtr> mHeartBeatQueue;
 
   private:
     void onHalEvent(VehiclePropValuePtr v) {
@@ -90,14 +134,6 @@ class DefaultVhalImplTest : public ::testing::Test {
 
     void onHalPropertySetError(StatusCode /*errorCode*/, int32_t /*property*/, int32_t /*areaId*/) {
     }
-
-  protected:
-    std::unique_ptr<DefaultVehicleHal> mHal;
-    std::unique_ptr<DefaultVehicleConnector> mConnector;
-    std::unique_ptr<VehiclePropertyStore> mPropStore;
-    VehiclePropValuePool mValueObjectPool;
-    android::ConcurrentQueue<VehiclePropValuePtr> mEventQueue;
-    android::ConcurrentQueue<VehiclePropValuePtr> mHeartBeatQueue;
 };
 
 TEST_F(DefaultVhalImplTest, testListProperties) {
@@ -721,12 +757,12 @@ TEST_F(DefaultVhalImplTest, testDebugGenFakeDataJson) {
     EXPECT_EQ((size_t)1, events[0]->value.int32Values.size());
     EXPECT_EQ(8, events[0]->value.int32Values[0]);
     EXPECT_EQ((size_t)1, events[3]->value.int32Values.size());
-    EXPECT_EQ(4, events[3]->value.int32Values[0]);
+    EXPECT_EQ(10, events[3]->value.int32Values[0]);
     // Second set of the same events.
     EXPECT_EQ((size_t)1, events[4]->value.int32Values.size());
     EXPECT_EQ(8, events[4]->value.int32Values[0]);
     EXPECT_EQ((size_t)1, events[7]->value.int32Values.size());
-    EXPECT_EQ(4, events[7]->value.int32Values[0]);
+    EXPECT_EQ(10, events[7]->value.int32Values[0]);
 }
 
 TEST_F(DefaultVhalImplTest, testDebugGenFakeDataKeyPress) {
@@ -766,6 +802,465 @@ TEST_F(DefaultVhalImplTest, testHeartBeatEvent) {
     auto events = mHeartBeatQueue.flush();
     ASSERT_GE(events.size(), (size_t)2);
     ASSERT_EQ(toInt(VehicleProperty::VHAL_HEARTBEAT), events[0]->prop);
+}
+
+TEST_F(DefaultVhalImplTest, testVendorOverrideProperties) {
+    // Destroy the existing VHAL first to prevent it using destroyed connector or propstore.
+    mHal.reset();
+    // Create a new Default VHAL and reinitialize it to load the override properties.
+    std::string overrideDir = android::base::GetExecutableDirectory() + "/override/";
+    mPropStore.reset(new VehiclePropertyStore);
+    mConnector.reset(new DefaultVehicleConnector);
+    mConnector->setValuePool(&mValueObjectPool);
+    mHal.reset(new DefaultVehicleHal(mPropStore.get(), mConnector.get()));
+    // Set vendor override directory.
+    DefaultVhalImplTestHelper helper(mConnector.get());
+    helper.overrideProperties(overrideDir.c_str());
+
+    initHal();
+
+    VehiclePropValue value;
+    StatusCode status;
+    // This is the same as the prop in 'gear_selection.json'.
+    value.prop = toInt(VehicleProperty::GEAR_SELECTION);
+
+    auto gotValue = mHal->get(value, &status);
+
+    ASSERT_EQ(StatusCode::OK, status);
+    ASSERT_EQ((size_t)1, gotValue->value.int32Values.size());
+    ASSERT_EQ(8, gotValue->value.int32Values[0]);
+
+    // If we set the value, it should update despite the override.
+    value.prop = toInt(VehicleProperty::GEAR_SELECTION);
+    value.value.int32Values.resize(1);
+    value.value.int32Values[0] = 5;
+
+    status = mHal->set(value);
+    ASSERT_EQ(StatusCode::OK, status);
+
+    gotValue = mHal->get(value, &status);
+    ASSERT_EQ(StatusCode::OK, status);
+    ASSERT_EQ((size_t)1, gotValue->value.int32Values.size());
+    ASSERT_EQ(5, gotValue->value.int32Values[0]);
+}
+
+TEST_F(DefaultVhalImplTest, testVendorOverridePropertiesMultipleAreas) {
+    // Destroy the existing VHAL first to prevent it using destroyed connector or propstore.
+    mHal.reset();
+    // Create a new Default VHAL and reinitialize it to load the override properties.
+    std::string overrideDir = android::base::GetExecutableDirectory() + "/override/";
+    mPropStore.reset(new VehiclePropertyStore);
+    mConnector.reset(new DefaultVehicleConnector);
+    mConnector->setValuePool(&mValueObjectPool);
+    mHal.reset(new DefaultVehicleHal(mPropStore.get(), mConnector.get()));
+    // Set vendor override directory.
+    DefaultVhalImplTestHelper helper(mConnector.get());
+    helper.overrideProperties(overrideDir.c_str());
+
+    initHal();
+
+    VehiclePropValue value;
+    StatusCode status;
+    // This is the same as the prop in 'hvac_temperature_set.json'.
+    value.prop = toInt(VehicleProperty::HVAC_TEMPERATURE_SET);
+    value.areaId = HVAC_LEFT;
+
+    auto gotValue = mHal->get(value, &status);
+
+    ASSERT_EQ(StatusCode::OK, status);
+    ASSERT_EQ((size_t)1, gotValue->value.floatValues.size());
+    ASSERT_EQ(30.0f, gotValue->value.floatValues[0]);
+
+    // HVAC_RIGHT should not be affected and return the default value.
+    value.areaId = HVAC_RIGHT;
+
+    gotValue = mHal->get(value, &status);
+
+    ASSERT_EQ(StatusCode::OK, status);
+    ASSERT_EQ((size_t)1, gotValue->value.floatValues.size());
+    ASSERT_EQ(20.0f, gotValue->value.floatValues[0]);
+}
+
+TEST_F(DefaultVhalImplTest, testVendorOverridePropertiesDirDoesNotExist) {
+    // Destroy the existing VHAL first to prevent it using destroyed connector or propstore.
+    mHal.reset();
+    // Create a new Default VHAL and reinitialize it to load the override properties.
+    mPropStore.reset(new VehiclePropertyStore);
+    mConnector.reset(new DefaultVehicleConnector);
+    mConnector->setValuePool(&mValueObjectPool);
+    mHal.reset(new DefaultVehicleHal(mPropStore.get(), mConnector.get()));
+    // Set vendor override directory to a non-existing dir
+    DefaultVhalImplTestHelper helper(mConnector.get());
+    helper.overrideProperties("123");
+    initHal();
+
+    VehiclePropValue value;
+    StatusCode status;
+    value.prop = toInt(VehicleProperty::GEAR_SELECTION);
+
+    auto gotValue = mHal->get(value, &status);
+
+    // We should get the default value.
+    ASSERT_EQ(StatusCode::OK, status);
+    ASSERT_EQ((size_t)1, gotValue->value.int32Values.size());
+    ASSERT_EQ(4, gotValue->value.int32Values[0]);
+}
+
+TEST_F(DefaultVhalImplTest, testGetObd2FreezeFrameNoTimestamp) {
+    VehiclePropValue value;
+    value.prop = OBD2_FREEZE_FRAME;
+    StatusCode status;
+
+    auto gotValue = mHal->get(value, &status);
+
+    ASSERT_EQ(StatusCode::INVALID_ARG, status);
+}
+
+TEST_F(DefaultVhalImplTest, testGetObd2FreezeFrameInvalidTimestamp) {
+    VehiclePropValue value;
+    value.prop = OBD2_FREEZE_FRAME;
+    value.value.int64Values.resize(1);
+    value.value.int64Values[0] = 0;
+    StatusCode status;
+
+    auto gotValue = mHal->get(value, &status);
+
+    ASSERT_EQ(StatusCode::INVALID_ARG, status);
+}
+
+TEST_F(DefaultVhalImplTest, testGetObd2FreezeFrameInfoGetObd2FreezeFrame) {
+    VehiclePropValue value;
+    value.prop = OBD2_FREEZE_FRAME_INFO;
+    StatusCode status;
+
+    auto gotValue = mHal->get(value, &status);
+
+    ASSERT_EQ(StatusCode::OK, status);
+    ASSERT_EQ((size_t)3, gotValue->value.int64Values.size());
+
+    std::vector<std::string> dtcs;
+    std::vector<std::string> sampleDtcs = {"P0070", "P0102", "P0123"};
+    for (int64_t timestamp : gotValue->value.int64Values) {
+        VehiclePropValue freezeFrameRequest;
+        freezeFrameRequest.prop = OBD2_FREEZE_FRAME;
+        freezeFrameRequest.value.int64Values.resize(1);
+        freezeFrameRequest.value.int64Values[0] = timestamp;
+
+        auto freezeFrameValue = mHal->get(freezeFrameRequest, &status);
+
+        ASSERT_EQ(StatusCode::OK, status);
+        // Obd2IntegerSensorIndex.LAST_SYSTEM_INDEX + 1
+        EXPECT_EQ((size_t)32, freezeFrameValue->value.int32Values.size());
+        // Obd2FloatSensorIndex.LAST_SYSTEM_INDEX + 1
+        EXPECT_EQ((size_t)71, freezeFrameValue->value.floatValues.size());
+        // (intValues.size() + floatValues.size()) / 8
+        EXPECT_EQ((size_t)13, freezeFrameValue->value.bytes.size());
+
+        dtcs.push_back(freezeFrameValue->value.stringValue);
+    }
+
+    for (std::string expectDtc : sampleDtcs) {
+        EXPECT_NE(std::find(dtcs.begin(), dtcs.end(), expectDtc), dtcs.end());
+    }
+}
+
+TEST_F(DefaultVhalImplTest, testGetObd2LiveFrame) {
+    VehiclePropValue value;
+    value.prop = OBD2_LIVE_FRAME;
+    StatusCode status;
+
+    auto gotValue = mHal->get(value, &status);
+
+    ASSERT_EQ(StatusCode::OK, status);
+    // Obd2IntegerSensorIndex.LAST_SYSTEM_INDEX + 1
+    EXPECT_EQ((size_t)32, gotValue->value.int32Values.size());
+    // Obd2FloatSensorIndex.LAST_SYSTEM_INDEX + 1
+    EXPECT_EQ((size_t)71, gotValue->value.floatValues.size());
+    // (intValues.size() + floatValues.size()) / 8
+    EXPECT_EQ((size_t)13, gotValue->value.bytes.size());
+}
+
+TEST_F(DefaultVhalImplTest, testClearObd2FreezeFrameAll) {
+    VehiclePropValue value;
+    value.prop = OBD2_FREEZE_FRAME_CLEAR;
+    // No int64Values is to clear all frames.
+
+    auto status = mHal->set(value);
+
+    EXPECT_EQ(StatusCode::OK, status);
+
+    VehiclePropValue freezeFrameRequest;
+    freezeFrameRequest.prop = OBD2_FREEZE_FRAME;
+    freezeFrameRequest.value.int64Values.resize(1);
+
+    auto gotValue = mHal->get(freezeFrameRequest, &status);
+
+    EXPECT_EQ(StatusCode::NOT_AVAILABLE, status);
+
+    VehiclePropValue freezeFrameInfoRequest;
+    freezeFrameInfoRequest.prop = OBD2_FREEZE_FRAME_INFO;
+
+    gotValue = mHal->get(freezeFrameInfoRequest, &status);
+
+    EXPECT_EQ(StatusCode::OK, status);
+    EXPECT_EQ((size_t)0, gotValue->value.int64Values.size());
+}
+
+TEST_F(DefaultVhalImplTest, testClearObd2FreezeFrameOneFrame) {
+    // Get existing freeze frame info first.
+    VehiclePropValue frameInfoRequest;
+    frameInfoRequest.prop = OBD2_FREEZE_FRAME_INFO;
+    StatusCode status;
+    auto gotValue = mHal->get(frameInfoRequest, &status);
+    ASSERT_EQ(StatusCode::OK, status);
+    ASSERT_EQ((size_t)3, gotValue->value.int64Values.size());
+
+    VehiclePropValue clearRequest;
+    int64_t timestamp = gotValue->value.int64Values[0];
+    clearRequest.prop = OBD2_FREEZE_FRAME_CLEAR;
+    clearRequest.value.int64Values.resize(1);
+    clearRequest.value.int64Values[0] = timestamp;
+
+    // Try to clear the first frame.
+    status = mHal->set(clearRequest);
+
+    // Get freeze frame info again.
+    gotValue = mHal->get(frameInfoRequest, &status);
+
+    ASSERT_EQ(StatusCode::OK, status);
+    // Now we should only have 2 frames.
+    ASSERT_EQ((size_t)2, gotValue->value.int64Values.size());
+
+    // Try to get the deleted frame, should fail.
+    VehiclePropValue frameRequest;
+    frameRequest.prop = OBD2_FREEZE_FRAME;
+    frameRequest.value.int64Values.resize(1);
+    frameRequest.value.int64Values[0] = timestamp;
+
+    gotValue = mHal->get(frameRequest, &status);
+
+    ASSERT_EQ(StatusCode::INVALID_ARG, status);
+
+    // Clear the same frame again should fail.
+    status = mHal->set(clearRequest);
+
+    ASSERT_EQ(StatusCode::INVALID_ARG, status);
+}
+
+TEST_F(DefaultVhalImplTest, testGetUserPropertySetOnly) {
+    VehiclePropValue value;
+    value.prop = toInt(VehicleProperty::INITIAL_USER_INFO);
+    StatusCode status;
+
+    mHal->get(value, &status);
+
+    ASSERT_EQ(StatusCode::INVALID_ARG, status);
+
+    value.prop = toInt(VehicleProperty::SWITCH_USER);
+
+    mHal->get(value, &status);
+
+    ASSERT_EQ(StatusCode::INVALID_ARG, status);
+
+    value.prop = toInt(VehicleProperty::CREATE_USER);
+
+    mHal->get(value, &status);
+
+    ASSERT_EQ(StatusCode::INVALID_ARG, status);
+
+    value.prop = toInt(VehicleProperty::REMOVE_USER);
+
+    mHal->get(value, &status);
+
+    ASSERT_EQ(StatusCode::INVALID_ARG, status);
+}
+
+TEST_F(DefaultVhalImplTest, testGetUserIdAssoc) {
+    VehiclePropValue value;
+    value.prop = toInt(VehicleProperty::USER_IDENTIFICATION_ASSOCIATION);
+    StatusCode status;
+
+    mHal->get(value, &status);
+
+    // Default returns NOT_AVAILABLE.
+    ASSERT_EQ(StatusCode::NOT_AVAILABLE, status);
+
+    // This is the same example as used in User HAL Emulation doc.
+    VehiclePropValue setValue = {
+            .prop = toInt(VehicleProperty::USER_IDENTIFICATION_ASSOCIATION),
+            .areaId = 1,
+            .value.int32Values = {666, 1, 1, 2},
+    };
+
+    status = mHal->set(setValue);
+
+    ASSERT_EQ(StatusCode::OK, status);
+
+    auto gotValue = mHal->get(value, &status);
+
+    ASSERT_EQ(StatusCode::OK, status);
+    ASSERT_EQ((size_t)4, gotValue->value.int32Values.size());
+    EXPECT_EQ(1, gotValue->areaId);
+    EXPECT_EQ(666, gotValue->value.int32Values[0]);
+    EXPECT_EQ(1, gotValue->value.int32Values[1]);
+    EXPECT_EQ(1, gotValue->value.int32Values[2]);
+    EXPECT_EQ(2, gotValue->value.int32Values[3]);
+    EXPECT_EQ(toInt(VehicleProperty::USER_IDENTIFICATION_ASSOCIATION), gotValue->prop);
+}
+
+TEST_F(DefaultVhalImplTest, testSwitchUser) {
+    // This is the same example as used in User HAL Emulation doc.
+    VehiclePropValue setValue = {
+            .prop = toInt(VehicleProperty::SWITCH_USER),
+            .areaId = 1,
+            .value.int32Values = {666, 3, 2},
+    };
+
+    auto status = mHal->set(setValue);
+
+    ASSERT_EQ(StatusCode::OK, status);
+
+    // Simulate a request from Android side.
+    setValue = {
+            .prop = toInt(VehicleProperty::SWITCH_USER),
+            .areaId = 0,
+            .value.int32Values = {666, 3},
+    };
+    // Clear existing events.
+    mEventQueue.flush();
+
+    status = mHal->set(setValue);
+
+    ASSERT_EQ(StatusCode::OK, status);
+
+    // Should generate an event for user hal response.
+    auto events = mEventQueue.flush();
+    ASSERT_EQ((size_t)1, events.size());
+    EXPECT_EQ(1, events[0]->areaId);
+    EXPECT_EQ(toInt(VehicleProperty::SWITCH_USER), events[0]->prop);
+    ASSERT_EQ((size_t)3, events[0]->value.int32Values.size());
+    EXPECT_EQ(666, events[0]->value.int32Values[0]);
+    EXPECT_EQ(3, events[0]->value.int32Values[1]);
+    EXPECT_EQ(2, events[0]->value.int32Values[2]);
+
+    // Try to get switch_user again, should return default value.
+    status = mHal->set(setValue);
+    ASSERT_EQ(StatusCode::OK, status);
+
+    events = mEventQueue.flush();
+    ASSERT_EQ((size_t)1, events.size());
+    EXPECT_EQ(0, events[0]->areaId);
+    EXPECT_EQ(toInt(VehicleProperty::SWITCH_USER), events[0]->prop);
+    ASSERT_EQ((size_t)3, events[0]->value.int32Values.size());
+    // Request ID
+    EXPECT_EQ(666, events[0]->value.int32Values[0]);
+    // VEHICLE_RESPONSE
+    EXPECT_EQ(3, events[0]->value.int32Values[1]);
+    // SUCCESS
+    EXPECT_EQ(1, events[0]->value.int32Values[2]);
+}
+
+TEST_F(DefaultVhalImplTest, testCreateUser) {
+    // This is the same example as used in User HAL Emulation doc.
+    VehiclePropValue setValue = {
+            .prop = toInt(VehicleProperty::CREATE_USER),
+            .areaId = 1,
+            .value.int32Values = {666, 2},
+    };
+
+    auto status = mHal->set(setValue);
+
+    ASSERT_EQ(StatusCode::OK, status);
+
+    // Simulate a request from Android side.
+    setValue = {
+            .prop = toInt(VehicleProperty::CREATE_USER),
+            .areaId = 0,
+            .value.int32Values = {666},
+    };
+    // Clear existing events.
+    mEventQueue.flush();
+
+    status = mHal->set(setValue);
+
+    ASSERT_EQ(StatusCode::OK, status);
+
+    // Should generate an event for user hal response.
+    auto events = mEventQueue.flush();
+    ASSERT_EQ((size_t)1, events.size());
+    EXPECT_EQ(1, events[0]->areaId);
+    EXPECT_EQ(toInt(VehicleProperty::CREATE_USER), events[0]->prop);
+    ASSERT_EQ((size_t)2, events[0]->value.int32Values.size());
+    EXPECT_EQ(666, events[0]->value.int32Values[0]);
+    EXPECT_EQ(2, events[0]->value.int32Values[1]);
+
+    // Try to get create_user again, should return default value.
+    status = mHal->set(setValue);
+    ASSERT_EQ(StatusCode::OK, status);
+
+    events = mEventQueue.flush();
+    ASSERT_EQ((size_t)1, events.size());
+    EXPECT_EQ(0, events[0]->areaId);
+    EXPECT_EQ(toInt(VehicleProperty::CREATE_USER), events[0]->prop);
+    ASSERT_EQ((size_t)2, events[0]->value.int32Values.size());
+    // Request ID
+    EXPECT_EQ(666, events[0]->value.int32Values[0]);
+    // SUCCESS
+    EXPECT_EQ(1, events[0]->value.int32Values[1]);
+}
+
+TEST_F(DefaultVhalImplTest, testInitialUserInfo) {
+    // This is the same example as used in User HAL Emulation doc.
+    VehiclePropValue setValue = {
+            .prop = toInt(VehicleProperty::INITIAL_USER_INFO),
+            .areaId = 1,
+            .value.int32Values = {666, 1, 11},
+    };
+
+    auto status = mHal->set(setValue);
+
+    ASSERT_EQ(StatusCode::OK, status);
+
+    // Simulate a request from Android side.
+    setValue = {
+            .prop = toInt(VehicleProperty::INITIAL_USER_INFO),
+            .areaId = 0,
+            .value.int32Values = {3},
+    };
+    // Clear existing events.
+    mEventQueue.flush();
+
+    status = mHal->set(setValue);
+
+    ASSERT_EQ(StatusCode::OK, status);
+
+    // Should generate an event for user hal response.
+    auto events = mEventQueue.flush();
+    ASSERT_EQ((size_t)1, events.size());
+    EXPECT_EQ(1, events[0]->areaId);
+    EXPECT_EQ(toInt(VehicleProperty::INITIAL_USER_INFO), events[0]->prop);
+    ASSERT_EQ((size_t)3, events[0]->value.int32Values.size());
+    EXPECT_EQ(3, events[0]->value.int32Values[0]);
+    EXPECT_EQ(1, events[0]->value.int32Values[1]);
+    EXPECT_EQ(11, events[0]->value.int32Values[2]);
+
+    // Try to get create_user again, should return default value.
+    status = mHal->set(setValue);
+    ASSERT_EQ(StatusCode::OK, status);
+
+    events = mEventQueue.flush();
+    ASSERT_EQ((size_t)1, events.size());
+    EXPECT_EQ(0, events[0]->areaId);
+    EXPECT_EQ(toInt(VehicleProperty::INITIAL_USER_INFO), events[0]->prop);
+    ASSERT_EQ((size_t)4, events[0]->value.int32Values.size());
+    // Request ID
+    EXPECT_EQ(3, events[0]->value.int32Values[0]);
+    // ACTION: DEFAULT
+    EXPECT_EQ(0, events[0]->value.int32Values[1]);
+    // User id: 0
+    EXPECT_EQ(0, events[0]->value.int32Values[2]);
+    // Flags: 0
+    EXPECT_EQ(0, events[0]->value.int32Values[3]);
 }
 
 }  // namespace
