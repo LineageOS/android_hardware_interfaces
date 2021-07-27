@@ -18,6 +18,7 @@
 #define LOG_TAG "android.hardware.tv.tuner-service.example-Dvr"
 
 #include <aidl/android/hardware/tv/tuner/DemuxQueueNotifyBits.h>
+#include <aidl/android/hardware/tv/tuner/Result.h>
 
 #include <utils/Log.h>
 #include "Dvr.h"
@@ -39,8 +40,8 @@ Dvr::Dvr(DvrType type, uint32_t bufferSize, const std::shared_ptr<IDvrCallback>&
 }
 
 Dvr::~Dvr() {
-    mDvrThreadRunning = false;
-    lock_guard<mutex> lock(mDvrThreadLock);
+    // make sure thread has joined
+    close();
 }
 
 ::ndk::ScopedAStatus Dvr::getQueueDesc(MQDescriptor<int8_t, SynchronizedReadWrite>* out_queue) {
@@ -70,7 +71,8 @@ Dvr::~Dvr() {
     }
 
     if (!mDemux->attachRecordFilter(filterId)) {
-        return ::ndk::ScopedAStatus::fromExceptionCode(STATUS_INVALID_OPERATION);
+        return ::ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(Result::INVALID_ARGUMENT));
     }
 
     return ::ndk::ScopedAStatus::ok();
@@ -86,7 +88,8 @@ Dvr::~Dvr() {
     }
 
     if (!mDemux->detachRecordFilter(filterId)) {
-        return ::ndk::ScopedAStatus::fromExceptionCode(STATUS_INVALID_OPERATION);
+        return ::ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(Result::INVALID_ARGUMENT));
     }
 
     return ::ndk::ScopedAStatus::ok();
@@ -99,17 +102,18 @@ Dvr::~Dvr() {
     }
 
     if (!mCallback) {
-        return ::ndk::ScopedAStatus::fromExceptionCode(STATUS_NO_INIT);
+        return ::ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(Result::NOT_INITIALIZED));
     }
 
     if (!mDvrConfigured) {
-        return ::ndk::ScopedAStatus::fromExceptionCode(STATUS_INVALID_OPERATION);
+        return ::ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(Result::INVALID_STATE));
     }
 
     if (mType == DvrType::PLAYBACK) {
         mDvrThreadRunning = true;
-        pthread_create(&mDvrThread, NULL, __threadLoopPlayback, this);
-        pthread_setname_np(mDvrThread, "playback_waiting_loop");
+        mDvrThread = std::thread(&Dvr::playbackThreadLoop, this);
     } else if (mType == DvrType::RECORD) {
         mRecordStatus = RecordStatus::DATA_READY;
         mDemux->setIsRecording(mType == DvrType::RECORD);
@@ -124,9 +128,11 @@ Dvr::~Dvr() {
     ALOGV("%s", __FUNCTION__);
 
     mDvrThreadRunning = false;
-    lock_guard<mutex> lock(mDvrThreadLock);
-
-    mIsRecordStarted = false;
+    if (mDvrThread.joinable()) {
+        mDvrThread.join();
+    }
+    // thread should always be joinable if it is running,
+    // so it should be safe to assume recording stopped.
     mDemux->setIsRecording(false);
 
     return ::ndk::ScopedAStatus::ok();
@@ -143,8 +149,8 @@ Dvr::~Dvr() {
 ::ndk::ScopedAStatus Dvr::close() {
     ALOGV("%s", __FUNCTION__);
 
-    mDvrThreadRunning = false;
-    lock_guard<mutex> lock(mDvrThreadLock);
+    stop();
+
     return ::ndk::ScopedAStatus::ok();
 }
 
@@ -171,15 +177,8 @@ EventFlag* Dvr::getDvrEventFlag() {
     return mDvrEventFlag;
 }
 
-void* Dvr::__threadLoopPlayback(void* user) {
-    Dvr* const self = static_cast<Dvr*>(user);
-    self->playbackThreadLoop();
-    return 0;
-}
-
 void Dvr::playbackThreadLoop() {
     ALOGD("[Dvr] playback threadLoop start.");
-    lock_guard<mutex> lock(mDvrThreadLock);
 
     while (mDvrThreadRunning) {
         uint32_t efState = 0;

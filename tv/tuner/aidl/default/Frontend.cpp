@@ -17,8 +17,10 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "android.hardware.tv.tuner-service.example-Frontend"
 
-#include "Frontend.h"
+#include <aidl/android/hardware/tv/tuner/Result.h>
 #include <utils/Log.h>
+
+#include "Frontend.h"
 
 namespace aidl {
 namespace android {
@@ -29,7 +31,7 @@ namespace tuner {
 Frontend::Frontend(FrontendType type, int32_t id, std::shared_ptr<Tuner> tuner) {
     mType = type;
     mId = id;
-    mTunerService = tuner;
+    mTuner = tuner;
     // Init callback to nullptr
     mCallback = nullptr;
 }
@@ -41,7 +43,7 @@ Frontend::~Frontend() {}
     // Reset callback
     mCallback = nullptr;
     mIsLocked = false;
-    mTunerService->removeFrontend(mId);
+    mTuner->removeFrontend(mId);
 
     return ::ndk::ScopedAStatus::ok();
 }
@@ -50,7 +52,8 @@ Frontend::~Frontend() {}
     ALOGV("%s", __FUNCTION__);
     if (in_callback == nullptr) {
         ALOGW("[   WARN   ] Set Frontend callback with nullptr");
-        return ::ndk::ScopedAStatus::fromExceptionCode(STATUS_INVALID_OPERATION);
+        return ::ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(Result::INVALID_ARGUMENT));
     }
 
     mCallback = in_callback;
@@ -61,10 +64,11 @@ Frontend::~Frontend() {}
     ALOGV("%s", __FUNCTION__);
     if (mCallback == nullptr) {
         ALOGW("[   WARN   ] Frontend callback is not set when tune");
-        return ::ndk::ScopedAStatus::fromExceptionCode(STATUS_INVALID_OPERATION);
+        return ::ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(Result::INVALID_STATE));
     }
 
-    mTunerService->frontendStartTune(mId);
+    mTuner->frontendStartTune(mId);
     mCallback->onEvent(FrontendEventType::LOCKED);
     mIsLocked = true;
 
@@ -74,7 +78,7 @@ Frontend::~Frontend() {}
 ::ndk::ScopedAStatus Frontend::stopTune() {
     ALOGV("%s", __FUNCTION__);
 
-    mTunerService->frontendStopTune(mId);
+    mTuner->frontendStopTune(mId);
     mIsLocked = false;
 
     return ::ndk::ScopedAStatus::ok();
@@ -82,9 +86,9 @@ Frontend::~Frontend() {}
 
 ::ndk::ScopedAStatus Frontend::scan(const FrontendSettings& in_settings, FrontendScanType in_type) {
     ALOGV("%s", __FUNCTION__);
-    FrontendScanMessage msg;
 
     if (mIsLocked) {
+        FrontendScanMessage msg;
         msg.set<FrontendScanMessage::Tag::isEnd>(true);
         mCallback->onScanMessage(FrontendScanMessageType::END, msg);
         return ::ndk::ScopedAStatus::ok();
@@ -675,7 +679,8 @@ Frontend::~Frontend() {}
 ::ndk::ScopedAStatus Frontend::setLnb(int32_t /* in_lnbId */) {
     ALOGV("%s", __FUNCTION__);
     if (!supportsSatellite()) {
-        return ::ndk::ScopedAStatus::fromExceptionCode(STATUS_INVALID_OPERATION);
+        return ::ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(Result::INVALID_STATE));
     }
     return ::ndk::ScopedAStatus::ok();
 }

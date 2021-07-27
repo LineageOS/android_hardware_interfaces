@@ -17,8 +17,10 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "android.hardware.tv.tuner-service.example-TimeFilter"
 
-#include "TimeFilter.h"
+#include <aidl/android/hardware/tv/tuner/Result.h>
 #include <utils/Log.h>
+
+#include "TimeFilter.h"
 
 namespace aidl {
 namespace android {
@@ -37,7 +39,8 @@ TimeFilter::~TimeFilter() {}
 ::ndk::ScopedAStatus TimeFilter::setTimeStamp(int64_t in_timeStamp) {
     ALOGV("%s", __FUNCTION__);
     if (in_timeStamp == INVALID_TIME_STAMP) {
-        return ::ndk::ScopedAStatus::fromExceptionCode(STATUS_INVALID_OPERATION);
+        return ::ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(Result::INVALID_ARGUMENT));
     }
     mTimeStamp = in_timeStamp;
     mBeginTime = time(NULL);
@@ -56,7 +59,8 @@ TimeFilter::~TimeFilter() {}
     ALOGV("%s", __FUNCTION__);
     if (mTimeStamp == INVALID_TIME_STAMP) {
         *_aidl_return = mTimeStamp;
-        return ::ndk::ScopedAStatus::fromExceptionCode(STATUS_INVALID_OPERATION);
+        return ::ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(Result::INVALID_ARGUMENT));
     }
 
     uint64_t currentTimeStamp = mTimeStamp + difftime(time(NULL), mBeginTime) * 900000;
