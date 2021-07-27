@@ -19,7 +19,9 @@
 
 #include <fmq/MessageQueue.h>
 #include <math.h>
+#include <atomic>
 #include <set>
+#include <thread>
 #include "Demux.h"
 #include "Frontend.h"
 #include "Tuner.h"
@@ -115,10 +117,7 @@ class Dvr : public IDvr {
      * Each filter handler handles the data filtering/output writing/filterEvent updating.
      */
     void startTpidFilter(vector<uint8_t> data);
-    static void* __threadLoopPlayback(void* user);
-    static void* __threadLoopRecord(void* user);
     void playbackThreadLoop();
-    void recordThreadLoop();
 
     unique_ptr<DvrMQ> mDvrMQ;
     EventFlag* mDvrEventFlag;
@@ -129,7 +128,7 @@ class Dvr : public IDvr {
     DvrSettings mDvrSettings;
 
     // Thread handlers
-    pthread_t mDvrThread;
+    std::thread mDvrThread;
 
     // FMQ status local records
     PlaybackStatus mPlaybackStatus;
@@ -137,7 +136,7 @@ class Dvr : public IDvr {
     /**
      * If a specific filter's writing loop is still running
      */
-    bool mDvrThreadRunning;
+    std::atomic<bool> mDvrThreadRunning;
     bool mKeepFetchingDataFromFrontend;
     /**
      * Lock to protect writes to the FMQs
@@ -148,7 +147,6 @@ class Dvr : public IDvr {
      */
     std::mutex mPlaybackStatusLock;
     std::mutex mRecordStatusLock;
-    std::mutex mDvrThreadLock;
 
     const bool DEBUG_DVR = false;
 };
