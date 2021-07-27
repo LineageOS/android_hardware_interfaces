@@ -1,0 +1,46 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_binary {
+    name: "android.hardware.tv.tuner-service.example",
+    relative_install_path: "hw",
+    init_rc: ["tuner-default.rc"],
+    vintf_fragments: ["tuner-default.xml"],
+    vendor: true,
+    compile_multilib: "first",
+    srcs: [
+        "Demux.cpp",
+        "Descrambler.cpp",
+        "Dvr.cpp",
+        "Filter.cpp",
+        "Frontend.cpp",
+        "Lnb.cpp",
+        "TimeFilter.cpp",
+        "Tuner.cpp",
+        "service.cpp",
+    ],
+    static_libs: [
+        "libaidlcommonsupport",
+    ],
+    shared_libs: [
+        "android.hardware.common.fmq-V1-ndk_platform",
+        "android.hardware.tv.tuner-V1-ndk_platform",
+        "libbase",
+        "libbinder_ndk",
+        "libcutils",
+        "libdmabufheap",
+        "libfmq",
+        "libion",
+        "liblog",
+        "libutils",
+    ],
+    header_libs: [
+        "media_plugin_headers",
+    ],
+}
