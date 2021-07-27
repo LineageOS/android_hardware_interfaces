@@ -1,0 +1,75 @@
+/*
+ * Copyright 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#pragma once
+
+#include <aidl/android/hardware/tv/tuner/BnFrontend.h>
+#include <fstream>
+#include <iostream>
+#include "Tuner.h"
+
+using namespace std;
+
+namespace aidl {
+namespace android {
+namespace hardware {
+namespace tv {
+namespace tuner {
+
+class Tuner;
+
+class Frontend : public BnFrontend {
+  public:
+    Frontend(FrontendType type, int32_t id, std::shared_ptr<Tuner> tuner);
+
+    ::ndk::ScopedAStatus setCallback(
+            const std::shared_ptr<IFrontendCallback>& in_callback) override;
+    ::ndk::ScopedAStatus tune(const FrontendSettings& in_settings) override;
+    ::ndk::ScopedAStatus stopTune() override;
+    ::ndk::ScopedAStatus close() override;
+    ::ndk::ScopedAStatus scan(const FrontendSettings& in_settings,
+                              FrontendScanType in_type) override;
+    ::ndk::ScopedAStatus stopScan() override;
+    ::ndk::ScopedAStatus getStatus(const std::vector<FrontendStatusType>& in_statusTypes,
+                                   std::vector<FrontendStatus>* _aidl_return) override;
+    ::ndk::ScopedAStatus setLnb(int32_t in_lnbId) override;
+    ::ndk::ScopedAStatus setLna(bool in_bEnable) override;
+    ::ndk::ScopedAStatus linkCiCam(int32_t in_ciCamId, int32_t* _aidl_return) override;
+    ::ndk::ScopedAStatus unlinkCiCam(int32_t in_ciCamId) override;
+
+    FrontendType getFrontendType();
+    int32_t getFrontendId();
+    string getSourceFile();
+    bool isLocked();
+
+  private:
+    virtual ~Frontend();
+    bool supportsSatellite();
+    std::shared_ptr<IFrontendCallback> mCallback;
+    std::shared_ptr<Tuner> mTunerService;
+    FrontendType mType = FrontendType::UNDEFINED;
+    int32_t mId = 0;
+    bool mIsLocked = false;
+    int32_t mCiCamId;
+
+    std::ifstream mFrontendData;
+};
+
+}  // namespace tuner
+}  // namespace tv
+}  // namespace hardware
+}  // namespace android
+}  // namespace aidl
