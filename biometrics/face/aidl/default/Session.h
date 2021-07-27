@@ -41,7 +41,7 @@ class Session : public BnSession {
 
     ndk::ScopedAStatus enroll(const keymaster::HardwareAuthToken& hat,
                               EnrollmentType enrollmentType, const std::vector<Feature>& features,
-                              const NativeHandle& previewSurface,
+                              const std::optional<NativeHandle>& previewSurface,
                               std::shared_ptr<common::ICancellationSignal>* return_val) override;
 
     ndk::ScopedAStatus authenticate(
