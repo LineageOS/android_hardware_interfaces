@@ -37,7 +37,7 @@ interface ISession {
   void generateChallenge();
   void revokeChallenge(in long challenge);
   android.hardware.biometrics.face.EnrollmentStageConfig[] getEnrollmentConfig(in android.hardware.biometrics.face.EnrollmentType enrollmentType);
-  android.hardware.biometrics.common.ICancellationSignal enroll(in android.hardware.keymaster.HardwareAuthToken hat, in android.hardware.biometrics.face.EnrollmentType type, in android.hardware.biometrics.face.Feature[] features, in android.hardware.common.NativeHandle previewSurface);
+  android.hardware.biometrics.common.ICancellationSignal enroll(in android.hardware.keymaster.HardwareAuthToken hat, in android.hardware.biometrics.face.EnrollmentType type, in android.hardware.biometrics.face.Feature[] features, in @nullable android.hardware.common.NativeHandle previewSurface);
   android.hardware.biometrics.common.ICancellationSignal authenticate(in long operationId);
   android.hardware.biometrics.common.ICancellationSignal detectInteraction();
   void enumerateEnrollments();
