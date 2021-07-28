@@ -45,6 +45,9 @@ class DefaultVehicleHalServer : public IVehicleServer {
 
     StatusCode onSetProperty(const VehiclePropValue& value, bool updateStatus) override;
 
+    // Dump/debug the Default VHAL server. If options is empty, the internal information for the
+    // server would be dumped. Otherwise, the options would be treated as debug commands and sent
+    // to debug function to handle the commands.
     DumpResult onDump(const std::vector<std::string>& options) override;
 
     // Set the Property Value Pool used in this server
@@ -67,15 +70,24 @@ class DefaultVehicleHalServer : public IVehicleServer {
 
     void storePropInitialValue(const ConfigDeclaration& config);
 
-    DumpResult debug(const std::vector<std::string>& options);
+    // Handles debug commands. The first option must be "--debughal" otherwise the command would be
+    // ignored. The second option specifies the operations to execute. Different operations require
+    // different input options, for detail, see the helpInfo printed by getHelpInfo().
+    DumpResult debugCommand(const std::vector<std::string>& options);
 
+    // Gets help info. Contains the usage for different debug commands.
     std::string getHelpInfo();
 
-    DumpResult genFakeData(const std::vector<std::string>& options);
     // If "persist.vendor.vhal_init_value_override" is true, try to override the properties default
     // values according to JSON files in 'overrideDir'. Would be called in constructor using
     // VENDOR_OVERRIDE_DIR as overrideDir.
     void maybeOverrideProperties(const char* overrideDir);
+
+    // Handles "--genfakedata" debug command.
+    DumpResult genFakeDataCommand(const std::vector<std::string>& options);
+
+    // Handles "--setint" or "--setfloat" or "--setbool" debug command.
+    DumpResult setValueCommand(const std::vector<std::string>& options);
 
   protected:
     GeneratorHub mGeneratorHub{
