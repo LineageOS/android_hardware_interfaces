@@ -12,12 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-filegroup {
-    name: "vhal_test_json",
-    srcs: ["prop.json"],
-}
-
-filegroup {
-    name: "vhal_test_override_json",
-    srcs: ["override/*"],
+// Library used to emulate User HAL behavior through lshal debug requests.
+cc_library {
+    name: "android.hardware.automotive.vehicle@2.0-emulated-user-hal-lib",
+    vendor: true,
+    defaults: ["vhal_v2_0_target_defaults"],
+    srcs: ["EmulatedUserHal.cpp"],
+    shared_libs: [
+        "libbase",
+        "libutils",
+        "libcutils",
+    ],
+    local_include_dirs: ["include"],
+    export_include_dirs: ["include"],
+    whole_static_libs: [
+        "android.hardware.automotive.vehicle@2.0-user-hal-helper-lib",
+    ],
 }
