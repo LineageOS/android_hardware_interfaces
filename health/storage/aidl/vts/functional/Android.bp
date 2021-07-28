@@ -34,7 +34,7 @@ cc_test {
         "libbinder_ndk",
     ],
     static_libs: [
-        "android.hardware.health.storage-V1-ndk_platform",
+        "android.hardware.health.storage-V1-ndk",
     ],
     header_libs: [
         "libhealth_storage_test_common_headers",
