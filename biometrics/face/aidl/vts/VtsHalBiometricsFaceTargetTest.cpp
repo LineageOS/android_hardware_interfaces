@@ -214,7 +214,7 @@ TEST_P(Face, EnrollWithBadHatResultsInErrorTest) {
     auto hat = keymaster::HardwareAuthToken{};
     std::shared_ptr<common::ICancellationSignal> cancellationSignal;
     ASSERT_TRUE(
-            mSession->enroll(hat, EnrollmentType::DEFAULT, {}, NativeHandle{}, &cancellationSignal)
+            mSession->enroll(hat, EnrollmentType::DEFAULT, {}, std::nullopt, &cancellationSignal)
                     .isOk());
 
     // Make sure an error is returned.
