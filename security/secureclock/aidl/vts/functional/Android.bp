@@ -41,8 +41,8 @@ cc_test {
         "libcrypto",
     ],
     static_libs: [
-        "android.hardware.security.keymint-V1-ndk_platform",
-        "android.hardware.security.secureclock-V1-ndk_platform",
+        "android.hardware.security.keymint-V1-ndk",
+        "android.hardware.security.secureclock-V1-ndk",
         "libkeymint",
     ],
     test_suites: [

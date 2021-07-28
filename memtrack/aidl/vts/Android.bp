@@ -19,7 +19,7 @@ cc_test {
         "libvintf",
     ],
     static_libs: [
-        "android.hardware.memtrack-V1-ndk_platform",
+        "android.hardware.memtrack-V1-ndk",
     ],
     test_suites: [
         "vts",
