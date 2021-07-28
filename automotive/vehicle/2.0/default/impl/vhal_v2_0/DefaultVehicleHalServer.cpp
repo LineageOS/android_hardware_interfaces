@@ -17,14 +17,17 @@
 #define LOG_TAG "DefaultVehicleHalServer"
 
 #include <fstream>
+#include <regex>
 
 #include <android-base/format.h>
 #include <android-base/logging.h>
 #include <android-base/parsedouble.h>
 #include <android-base/parseint.h>
+#include <android-base/properties.h>
 #include <utils/SystemClock.h>
 
 #include "DefaultConfig.h"
+#include "FakeObd2Frame.h"
 #include "JsonFakeValueGenerator.h"
 #include "LinearFakeValueGenerator.h"
 
@@ -37,6 +40,10 @@ namespace vehicle {
 namespace V2_0 {
 
 namespace impl {
+
+namespace {
+const char* VENDOR_OVERRIDE_DIR = "/vendor/etc/vhaloverride/";
+}  // namespace
 
 void DefaultVehicleHalServer::storePropInitialValue(const ConfigDeclaration& config) {
     VehiclePropConfig cfg = config.config;
@@ -72,8 +79,13 @@ DefaultVehicleHalServer::DefaultVehicleHalServer() {
     for (auto& it : kVehicleProperties) {
         VehiclePropConfig cfg = it.config;
         mServerSidePropStore.registerProperty(cfg);
+        // Skip diagnostic properties since there is special logic to handle those.
+        if (isDiagnosticProperty(cfg)) {
+            continue;
+        }
         storePropInitialValue(it);
     }
+    maybeOverrideProperties(VENDOR_OVERRIDE_DIR);
 }
 
 void DefaultVehicleHalServer::sendAllValuesToClient() {
@@ -557,6 +569,32 @@ IVehicleServer::DumpResult DefaultVehicleHalServer::genFakeData(
     result.buffer += "Unknown command: \"" + command + "\"\n";
     result.buffer += getHelpInfo();
     return result;
+}
+
+void DefaultVehicleHalServer::maybeOverrideProperties(const char* overrideDir) {
+    if (android::base::GetBoolProperty("persist.vendor.vhal_init_value_override", false)) {
+        overrideProperties(overrideDir);
+    }
+}
+
+void DefaultVehicleHalServer::overrideProperties(const char* overrideDir) {
+    LOG(INFO) << "loading vendor override properties from " << overrideDir;
+    if (auto dir = opendir(overrideDir)) {
+        std::regex reg_json(".*[.]json", std::regex::icase);
+        while (auto f = readdir(dir)) {
+            if (!regex_match(f->d_name, reg_json)) {
+                continue;
+            }
+            std::string file = overrideDir + std::string(f->d_name);
+            JsonFakeValueGenerator tmpGenerator(file);
+
+            std::vector<VehiclePropValue> propValues = tmpGenerator.getAllEvents();
+            for (const VehiclePropValue& prop : propValues) {
+                mServerSidePropStore.writeValue(prop, true);
+            }
+        }
+        closedir(dir);
+    }
 }
 
 }  // namespace impl
