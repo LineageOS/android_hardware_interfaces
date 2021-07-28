@@ -34,7 +34,7 @@ cc_binary {
         "Weaver.cpp",
     ],
     shared_libs: [
-        "android.hardware.weaver-V1-ndk_platform",
+        "android.hardware.weaver-V1-ndk",
         "libbase",
         "libbinder_ndk",
     ],

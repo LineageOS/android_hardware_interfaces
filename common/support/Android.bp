@@ -15,7 +15,7 @@ cc_library_static {
     srcs: ["NativeHandle.cpp"],
     export_include_dirs: ["include"],
     shared_libs: [
-        "android.hardware.common-V2-ndk_platform",
+        "android.hardware.common-V2-ndk",
         "libcutils",
     ],
     apex_available: [
@@ -31,7 +31,7 @@ cc_test {
     defaults: ["libbinder_ndk_host_user"],
     srcs: ["test.cpp"],
     static_libs: [
-        "android.hardware.common-V2-ndk_platform",
+        "android.hardware.common-V2-ndk",
         "libaidlcommonsupport",
     ],
     shared_libs: [

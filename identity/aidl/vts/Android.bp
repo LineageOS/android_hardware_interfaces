@@ -42,7 +42,7 @@ cc_test {
         "android.hardware.identity-support-lib",
         "android.hardware.identity-V3-cpp",
         "android.hardware.keymaster-V3-cpp",
-        "android.hardware.keymaster-V3-ndk_platform",
+        "android.hardware.keymaster-V3-ndk",
         "libkeymaster4support",
         "libkeymaster4_1support",
     ],
