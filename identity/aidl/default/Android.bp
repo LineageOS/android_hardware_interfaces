@@ -39,8 +39,8 @@ cc_library_static {
         "libsoft_attestation_cert",
         "libpuresoftkeymasterdevice",
         "android.hardware.identity-support-lib",
-        "android.hardware.identity-V3-ndk_platform",
-        "android.hardware.keymaster-V3-ndk_platform",
+        "android.hardware.identity-V3-ndk",
+        "android.hardware.keymaster-V3-ndk",
     ],
 }
 
@@ -100,8 +100,8 @@ cc_binary {
         "libsoft_attestation_cert",
         "libpuresoftkeymasterdevice",
         "android.hardware.identity-support-lib",
-        "android.hardware.identity-V3-ndk_platform",
-        "android.hardware.keymaster-V3-ndk_platform",
+        "android.hardware.identity-V3-ndk",
+        "android.hardware.keymaster-V3-ndk",
         "android.hardware.identity-libeic-hal-common",
         "android.hardware.identity-libeic-library",
     ],
@@ -127,7 +127,7 @@ cc_test {
         "-DEIC_DEBUG",
     ],
     local_include_dirs: [
-         "common",
+        "common",
     ],
     shared_libs: [
         "liblog",
