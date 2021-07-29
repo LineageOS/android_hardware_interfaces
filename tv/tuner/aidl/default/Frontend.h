@@ -59,7 +59,7 @@ class Frontend : public BnFrontend {
     virtual ~Frontend();
     bool supportsSatellite();
     std::shared_ptr<IFrontendCallback> mCallback;
-    std::shared_ptr<Tuner> mTunerService;
+    std::shared_ptr<Tuner> mTuner;
     FrontendType mType = FrontendType::UNDEFINED;
     int32_t mId = 0;
     bool mIsLocked = false;

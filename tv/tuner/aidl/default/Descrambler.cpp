@@ -18,6 +18,7 @@
 #define LOG_TAG "android.hardware.tv.tuner-service.example-Descrambler"
 
 #include <aidl/android/hardware/tv/tuner/IFrontendCallback.h>
+#include <aidl/android/hardware/tv/tuner/Result.h>
 #include <utils/Log.h>
 
 #include "Descrambler.h"
@@ -37,7 +38,8 @@ Descrambler::~Descrambler() {}
     if (mDemuxSet) {
         ALOGW("[   WARN   ] Descrambler has already been set with a demux id %" PRIu32,
               mSourceDemuxId);
-        return ::ndk::ScopedAStatus::fromExceptionCode(STATUS_INVALID_OPERATION);
+        return ::ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(Result::INVALID_STATE));
     }
     mDemuxSet = true;
     mSourceDemuxId = in_demuxId;
