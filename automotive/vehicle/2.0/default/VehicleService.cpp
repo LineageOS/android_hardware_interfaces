@@ -14,40 +14,40 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "automotive.vehicle@2.0-service"
+#define LOG_TAG "automotive.vehicle@2.0-default-service"
 #include <android/log.h>
 #include <hidl/HidlTransportSupport.h>
 
 #include <iostream>
 
-#include <EmulatedVehicleConnector.h>
-#include <EmulatedVehicleHal.h>
+#include <vhal_v2_0/DefaultVehicleConnector.h>
+#include <vhal_v2_0/DefaultVehicleHal.h>
 #include <vhal_v2_0/VehicleHalManager.h>
 
-using namespace android;
-using namespace android::hardware;
-using namespace android::hardware::automotive::vehicle::V2_0;
+using ::android::hardware::automotive::vehicle::V2_0::VehicleHalManager;
+using ::android::hardware::automotive::vehicle::V2_0::VehiclePropertyStore;
+using ::android::hardware::automotive::vehicle::V2_0::impl::DefaultVehicleConnector;
+using ::android::hardware::automotive::vehicle::V2_0::impl::DefaultVehicleHal;
 
 int main(int /* argc */, char* /* argv */ []) {
     auto store = std::make_unique<VehiclePropertyStore>();
-    auto connector = std::make_unique<impl::EmulatedVehicleConnector>();
-    auto hal = std::make_unique<impl::EmulatedVehicleHal>(store.get(), connector.get());
-    auto emulator = connector->getEmulator();
+    auto connector = std::make_unique<DefaultVehicleConnector>();
+    auto hal = std::make_unique<DefaultVehicleHal>(store.get(), connector.get());
     auto service = std::make_unique<VehicleHalManager>(hal.get());
     connector->setValuePool(hal->getValuePool());
 
-    configureRpcThreadpool(4, true /* callerWillJoin */);
+    android::hardware::configureRpcThreadpool(4, true /* callerWillJoin */);
 
     ALOGI("Registering as service...");
-    status_t status = service->registerAsService();
+    android::status_t status = service->registerAsService();
 
-    if (status != OK) {
+    if (status != android::OK) {
         ALOGE("Unable to register vehicle service (%d)", status);
         return 1;
     }
 
     ALOGI("Ready");
-    joinRpcThreadpool();
+    android::hardware::joinRpcThreadpool();
 
-    return 1;
+    return 0;
 }

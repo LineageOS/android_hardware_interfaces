@@ -370,10 +370,11 @@ IVehicleServer::DumpResult DefaultVehicleHalServer::onDump(
         return result;
     }
 
-    return debug(options);
+    return debugCommand(options);
 }
 
-IVehicleServer::DumpResult DefaultVehicleHalServer::debug(const std::vector<std::string>& options) {
+IVehicleServer::DumpResult DefaultVehicleHalServer::debugCommand(
+        const std::vector<std::string>& options) {
     DumpResult result;
     // This is a debug command for the HAL, caller should not continue to dump state.
     result.callerShouldDumpState = false;
@@ -389,7 +390,9 @@ IVehicleServer::DumpResult DefaultVehicleHalServer::debug(const std::vector<std:
         result.buffer += getHelpInfo();
         return result;
     } else if (command == "--genfakedata") {
-        return genFakeData(options);
+        return genFakeDataCommand(options);
+    } else if (command == "--setint" || command == "--setfloat" || command == "--setbool") {
+        return setValueCommand(options);
     }
 
     result.buffer += "Unknown command: \"" + command + "\"\n";
@@ -411,10 +414,19 @@ std::string DefaultVehicleHalServer::getHelpInfo() {
            "\tStop a json generator: \n"
            "\t--debughal --genfakedata --stopjson [jsonFilePath(string)]\n"
            "\tGenerate key press: \n"
-           "\t--debughal --genfakedata --keypress [keyCode(int32)] [display[int32]]\n";
+           "\t--debughal --genfakedata --keypress [keyCode(int32)] [display[int32]]\n"
+           "\tSet a int property value: \n"
+           "\t--setint [propID(int32)] [value(int32)] [timestamp(int64)] "
+           "[areaID(int32)(optional)]\n"
+           "\tSet a boolean property value: \n"
+           "\t--setbool [propID(int32)] [value(\"true\"/\"false\")] [timestamp(int64)] "
+           "[areaID(int32)(optional)]\n"
+           "\tSet a float property value: \n"
+           "\t--setfloat [propID(int32)] [value(float)] [timestamp(int64)] "
+           "[areaID(int32)(optional)]\n";
 }
 
-IVehicleServer::DumpResult DefaultVehicleHalServer::genFakeData(
+IVehicleServer::DumpResult DefaultVehicleHalServer::genFakeDataCommand(
         const std::vector<std::string>& options) {
     DumpResult result;
     // This is a debug command for the HAL, caller should not continue to dump state.
@@ -595,6 +607,80 @@ void DefaultVehicleHalServer::overrideProperties(const char* overrideDir) {
         }
         closedir(dir);
     }
+}
+
+IVehicleServer::DumpResult DefaultVehicleHalServer::setValueCommand(
+        const std::vector<std::string>& options) {
+    DumpResult result;
+    // This is a debug command for the HAL, caller should not continue to dump state.
+    result.callerShouldDumpState = false;
+    // --debughal --set* [propID(int32)] [value] [timestamp(int64)]
+    // [areaId(int32)(optional)]
+    if (options.size() != 5 && options.size() != 6) {
+        result.buffer +=
+                "incorrect argument count, need 5 or 6 arguments for --setint or --setfloat or "
+                "--setbool\n";
+        result.buffer += getHelpInfo();
+        return result;
+    }
+    std::unique_ptr<VehiclePropValue> updatedPropValue;
+    int32_t propId;
+    int32_t intValue;
+    float floatValue;
+    int64_t timestamp;
+    int32_t areaId = 0;
+    if (options[1] == "--setint") {
+        updatedPropValue = std::move(createVehiclePropValue(VehiclePropertyType::INT32, 1));
+        if (!android::base::ParseInt(options[3], &intValue)) {
+            result.buffer += "failed to parse value as int: \"" + options[3] + "\"\n";
+            result.buffer += getHelpInfo();
+            return result;
+        }
+        updatedPropValue->value.int32Values[0] = intValue;
+    } else if (options[1] == "--setbool") {
+        updatedPropValue = std::move(createVehiclePropValue(VehiclePropertyType::BOOLEAN, 1));
+        if (options[3] == "true" || options[3] == "True") {
+            updatedPropValue->value.int32Values[0] = 1;
+        } else if (options[3] == "false" || options[3] == "False") {
+            updatedPropValue->value.int32Values[0] = 0;
+        } else {
+            result.buffer += "failed to parse value as bool, only accepts true/false: \"" +
+                             options[3] + "\"\n";
+            result.buffer += getHelpInfo();
+            return result;
+        }
+    } else {
+        updatedPropValue = std::move(createVehiclePropValue(VehiclePropertyType::FLOAT, 1));
+        if (!android::base::ParseFloat(options[3], &floatValue)) {
+            result.buffer += "failed to parse value as float: \"" + options[3] + "\"\n";
+            result.buffer += getHelpInfo();
+            return result;
+        }
+        updatedPropValue->value.floatValues[0] = floatValue;
+    }
+    if (!android::base::ParseInt(options[2], &propId)) {
+        result.buffer += "failed to parse propID as int: \"" + options[2] + "\"\n";
+        result.buffer += getHelpInfo();
+        return result;
+    }
+    updatedPropValue->prop = propId;
+    if (!android::base::ParseInt(options[4], &timestamp)) {
+        result.buffer += "failed to parse timestamp as int: \"" + options[4] + "\"\n";
+        result.buffer += getHelpInfo();
+        return result;
+    }
+    updatedPropValue->timestamp = timestamp;
+    if (options.size() == 6) {
+        if (!android::base::ParseInt(options[5], &areaId)) {
+            result.buffer += "failed to parse areaID as int: \"" + options[5] + "\"\n";
+            result.buffer += getHelpInfo();
+            return result;
+        }
+    }
+    updatedPropValue->areaId = areaId;
+
+    onPropertyValueFromCar(*updatedPropValue, /*updateStatus=*/true);
+    return result;
 }
 
 }  // namespace impl

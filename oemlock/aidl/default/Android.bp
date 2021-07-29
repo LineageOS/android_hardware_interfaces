@@ -34,7 +34,7 @@ cc_binary {
         "OemLock.cpp",
     ],
     shared_libs: [
-        "android.hardware.oemlock-V1-ndk_platform",
+        "android.hardware.oemlock-V1-ndk",
         "libbase",
         "libbinder_ndk",
     ],

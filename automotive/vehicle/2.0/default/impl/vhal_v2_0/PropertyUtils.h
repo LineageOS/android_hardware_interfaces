@@ -37,6 +37,7 @@ constexpr int WINDOW_2_RIGHT = (int)VehicleAreaWindow::ROW_2_RIGHT;
 constexpr int WINDOW_ROOF_TOP_1 = (int)VehicleAreaWindow::ROOF_TOP_1;
 constexpr int FAN_DIRECTION_FACE = (int)VehicleHvacFanDirection::FACE;
 constexpr int FAN_DIRECTION_FLOOR = (int)VehicleHvacFanDirection::FLOOR;
+constexpr int FAN_DIRECTION_DEFROST = (int)VehicleHvacFanDirection::DEFROST;
 constexpr int OBD2_LIVE_FRAME = (int)VehicleProperty::OBD2_LIVE_FRAME;
 constexpr int OBD2_FREEZE_FRAME = (int)VehicleProperty::OBD2_FREEZE_FRAME;
 constexpr int OBD2_FREEZE_FRAME_INFO = (int)VehicleProperty::OBD2_FREEZE_FRAME_INFO;

@@ -100,10 +100,10 @@ cc_test {
     // These are static libs only for testing purposes and portability. Shared
     // libs should be used on device.
     static_libs: [
-        "android.hardware.common-V2-ndk_platform",
-        "android.hardware.common.fmq-V1-ndk_platform",
+        "android.hardware.common-V2-ndk",
+        "android.hardware.common.fmq-V1-ndk",
         "android.hardware.tests.msgq@1.0",
-        "android.fmq.test-ndk_platform",
+        "android.fmq.test-ndk",
     ],
     whole_static_libs: [
         "android.hardware.tests.msgq@1.0-impl",

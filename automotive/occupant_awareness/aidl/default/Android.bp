@@ -36,6 +36,6 @@ cc_binary {
         "libbase",
         "libbinder_ndk",
         "libutils",
-        "android.hardware.automotive.occupant_awareness-V1-ndk_platform",
+        "android.hardware.automotive.occupant_awareness-V1-ndk",
     ],
 }

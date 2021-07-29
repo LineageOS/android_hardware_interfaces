@@ -476,8 +476,12 @@ const ConfigDeclaration kVehicleProperties[]{
                     .changeMode = VehiclePropertyChangeMode::STATIC,
                     .areaConfigs = {VehicleAreaConfig{.areaId = HVAC_ALL}}},
          .initialValue = {.int32Values = {FAN_DIRECTION_FACE, FAN_DIRECTION_FLOOR,
-                                          FAN_DIRECTION_FACE | FAN_DIRECTION_FLOOR}}},
-
+                                          FAN_DIRECTION_FACE | FAN_DIRECTION_FLOOR,
+                                          FAN_DIRECTION_DEFROST,
+                                          FAN_DIRECTION_FACE | FAN_DIRECTION_DEFROST,
+                                          FAN_DIRECTION_FLOOR | FAN_DIRECTION_DEFROST,
+                                          FAN_DIRECTION_FLOOR | FAN_DIRECTION_DEFROST |
+                                                  FAN_DIRECTION_FACE}}},
         {.config = {.prop = toInt(VehicleProperty::HVAC_SEAT_VENTILATION),
                     .access = VehiclePropertyAccess::READ_WRITE,
                     .changeMode = VehiclePropertyChangeMode::ON_CHANGE,

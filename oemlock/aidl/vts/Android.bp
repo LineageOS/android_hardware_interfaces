@@ -34,7 +34,7 @@ cc_test {
         "libbinder_ndk",
         "libbase",
     ],
-    static_libs: ["android.hardware.oemlock-V1-ndk_platform"],
+    static_libs: ["android.hardware.oemlock-V1-ndk"],
     test_suites: [
         "general-tests",
         "vts",
