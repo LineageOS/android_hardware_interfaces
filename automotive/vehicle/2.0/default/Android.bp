@@ -223,12 +223,12 @@ cc_test {
 }
 
 cc_binary {
-    name: "android.hardware.automotive.vehicle@2.0-service",
+    name: "android.hardware.automotive.vehicle@2.0-default-service",
     defaults: ["vhal_v2_0_target_defaults"],
     vintf_fragments: [
-        "android.hardware.automotive.vehicle@2.0-service.xml",
+        "android.hardware.automotive.vehicle@2.0-default-service.xml",
     ],
-    init_rc: ["android.hardware.automotive.vehicle@2.0-service.rc"],
+    init_rc: ["android.hardware.automotive.vehicle@2.0-default-service.rc"],
     vendor: true,
     relative_install_path: "hw",
     srcs: ["VehicleService.cpp"],
@@ -240,7 +240,7 @@ cc_binary {
     static_libs: [
         "android.hardware.automotive.vehicle@2.0-manager-lib",
         "android.hardware.automotive.vehicle@2.0-libproto-native",
-        "android.hardware.automotive.vehicle@2.0-emulator-impl-lib",
+        "android.hardware.automotive.vehicle@2.0-default-impl-lib",
     ],
 }
 

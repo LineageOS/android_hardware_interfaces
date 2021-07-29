@@ -30,7 +30,7 @@ cc_test {
         "use_libaidlvintf_gtest_helper_static",
     ],
     srcs: ["VtsHalAuthSecretTargetTest.cpp"],
-    static_libs: ["android.hardware.authsecret-V1-ndk_platform"],
+    static_libs: ["android.hardware.authsecret-V1-ndk"],
     shared_libs: ["libbinder_ndk"],
     test_suites: [
         "general-tests",

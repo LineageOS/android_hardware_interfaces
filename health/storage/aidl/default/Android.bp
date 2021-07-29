@@ -29,7 +29,7 @@ cc_defaults {
     shared_libs: [
         "libbase",
         "libbinder_ndk",
-        "android.hardware.health.storage-V1-ndk_platform",
+        "android.hardware.health.storage-V1-ndk",
     ],
     static_libs: [
         "libfstab",

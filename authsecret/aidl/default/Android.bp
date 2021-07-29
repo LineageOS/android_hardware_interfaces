@@ -34,7 +34,7 @@ cc_binary {
         "AuthSecret.cpp",
     ],
     shared_libs: [
-        "android.hardware.authsecret-V1-ndk_platform",
+        "android.hardware.authsecret-V1-ndk",
         "libbase",
         "libbinder_ndk",
     ],
