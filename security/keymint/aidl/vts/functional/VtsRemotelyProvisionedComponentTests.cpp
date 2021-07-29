@@ -41,6 +41,7 @@ using ::std::vector;
 namespace {
 
 #define INSTANTIATE_REM_PROV_AIDL_TEST(name)                                         \
+    GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(name);                             \
     INSTANTIATE_TEST_SUITE_P(                                                        \
             PerInstance, name,                                                       \
             testing::ValuesIn(VtsRemotelyProvisionedComponentTests::build_params()), \
