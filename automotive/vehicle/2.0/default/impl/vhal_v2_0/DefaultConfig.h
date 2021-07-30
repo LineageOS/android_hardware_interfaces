@@ -328,6 +328,11 @@ const ConfigDeclaration kVehicleProperties[]{
                          .prop = toInt(VehicleProperty::CURRENT_GEAR),
                          .access = VehiclePropertyAccess::READ,
                          .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                         .configArray = {(int)VehicleGear::GEAR_PARK,
+                                         (int)VehicleGear::GEAR_NEUTRAL,
+                                         (int)VehicleGear::GEAR_REVERSE, (int)VehicleGear::GEAR_1,
+                                         (int)VehicleGear::GEAR_2, (int)VehicleGear::GEAR_3,
+                                         (int)VehicleGear::GEAR_4, (int)VehicleGear::GEAR_5},
                  },
          .initialValue = {.int32Values = {toInt(VehicleGear::GEAR_PARK)}}},
 
