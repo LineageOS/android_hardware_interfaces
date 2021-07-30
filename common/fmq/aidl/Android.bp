@@ -25,6 +25,7 @@ aidl_interface {
     backend: {
         java: {
             sdk_version: "module_current",
+            srcs_available: true,
         },
         cpp: {
             enabled: false,
