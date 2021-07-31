@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The Android Open Source Project
+ * Copyright 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,21 @@
  * limitations under the License.
  */
 
-package android.hardware.common.fmq;
+package android.hardware.tv.tuner;
 
-/*
- * For use with android.hardware.common.MQDescriptor to specify which type of
- * queue to use. UnsynchronizedWrite is single writer, multiple reader, with
- * overflow. If messages are not read fast enough, they can be overwritten.
+/**
+ * Tuner error codes. Aidl will return these error codes as service specific
+ * errors in EX_SERVICE_SPECIFIC.
  * @hide
  */
 @VintfStability
-enum UnsynchronizedWrite {
-    EMPTY,
+@Backing(type="int")
+enum Result {
+    SUCCESS,
+    UNAVAILABLE,
+    NOT_INITIALIZED,
+    INVALID_STATE,
+    INVALID_ARGUMENT,
+    OUT_OF_MEMORY,
+    UNKNOWN_ERROR,
 }
