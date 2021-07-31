@@ -124,7 +124,7 @@ const ConfigDeclaration kVehicleProperties[]{
                          .access = VehiclePropertyAccess::READ,
                          .changeMode = VehiclePropertyChangeMode::STATIC,
                  },
-         .initialValue = {.floatValues = {1776, 4950, 2008, 2140, 2984, 1665, 1667, 11800}}},
+         .initialValue = {.int32Values = {1776, 4950, 2008, 2140, 2984, 1665, 1667, 11800}}},
         {.config =
                  {
                          .prop = toInt(VehicleProperty::PERF_VEHICLE_SPEED),
@@ -328,6 +328,11 @@ const ConfigDeclaration kVehicleProperties[]{
                          .prop = toInt(VehicleProperty::CURRENT_GEAR),
                          .access = VehiclePropertyAccess::READ,
                          .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                         .configArray = {(int)VehicleGear::GEAR_PARK,
+                                         (int)VehicleGear::GEAR_NEUTRAL,
+                                         (int)VehicleGear::GEAR_REVERSE, (int)VehicleGear::GEAR_1,
+                                         (int)VehicleGear::GEAR_2, (int)VehicleGear::GEAR_3,
+                                         (int)VehicleGear::GEAR_4, (int)VehicleGear::GEAR_5},
                  },
          .initialValue = {.int32Values = {toInt(VehicleGear::GEAR_PARK)}}},
 
@@ -1064,8 +1069,8 @@ const ConfigDeclaration kVehicleProperties[]{
                                 .access = VehiclePropertyAccess::READ,
                                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                         },
-                .initialValue = {.int32Values = {0 /* Off */, -1, -1, -1, -1 /* Bounds */,
-                                                 -1, -1, -1, -1 /* Insets */}},
+                .initialValue = {.int32Values = {0 /* Off */, -1, -1, -1, -1 /* Bounds */, -1, -1,
+                                                 -1, -1 /* Insets */}},
         },
         {
                 .config =
@@ -1118,9 +1123,9 @@ const ConfigDeclaration kVehicleProperties[]{
                                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                                 .configArray = {0, 0, 0, 11, 0, 0, 0, 0, 16},
                         },
-                .initialValue = {.int32Values = {0 /* Off */, -1, -1, -1, -1 /* Bounds */,
-                                                 -1, -1, -1, -1 /* Insets */,
-                                                 0 /* ClusterHome */, -1 /* ClusterNone */}},
+                .initialValue = {.int32Values = {0 /* Off */, -1, -1, -1, -1 /* Bounds */, -1, -1,
+                                                 -1, -1 /* Insets */, 0 /* ClusterHome */,
+                                                 -1 /* ClusterNone */}},
         },
         {
                 .config =
