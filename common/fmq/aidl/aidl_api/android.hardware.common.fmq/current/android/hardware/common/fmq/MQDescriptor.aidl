@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.common.fmq;
+/* @hide */
 @VintfStability
 parcelable MQDescriptor<T, Flavor> {
   android.hardware.common.fmq.GrantorDescriptor[] grantors;
