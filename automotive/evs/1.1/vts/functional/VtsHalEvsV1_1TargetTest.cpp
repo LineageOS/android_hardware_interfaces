@@ -2269,48 +2269,74 @@ TEST_P(EvsHidlTest, CameraStreamExternalBuffering) {
 
     // Acquire the graphics buffer allocator
     android::GraphicBufferAllocator& alloc(android::GraphicBufferAllocator::get());
-    const auto usage = GRALLOC_USAGE_HW_TEXTURE |
-                       GRALLOC_USAGE_SW_READ_RARELY |
-                       GRALLOC_USAGE_SW_WRITE_OFTEN;
+    const auto usage =
+            GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_SW_READ_RARELY | GRALLOC_USAGE_SW_WRITE_OFTEN;
     const auto format = HAL_PIXEL_FORMAT_RGBA_8888;
-    const auto width = 640;
-    const auto height = 360;
-
-    // Allocate buffers to use
-    hidl_vec<BufferDesc> buffers;
-    buffers.resize(kBuffersToHold);
-    for (auto i = 0; i < kBuffersToHold; ++i) {
-        unsigned pixelsPerLine;
-        buffer_handle_t memHandle = nullptr;
-        android::status_t result = alloc.allocate(width,
-                                                  height,
-                                                  format,
-                                                  1,
-                                                  usage,
-                                                  &memHandle,
-                                                  &pixelsPerLine,
-                                                  0,
-                                                  "EvsApp");
-        if (result != android::NO_ERROR) {
-            LOG(ERROR) << __FUNCTION__ << " failed to allocate memory.";
-        } else {
-            BufferDesc buf;
-            AHardwareBuffer_Desc* pDesc =
-                reinterpret_cast<AHardwareBuffer_Desc *>(&buf.buffer.description);
-            pDesc->width = width;
-            pDesc->height = height;
-            pDesc->layers = 1;
-            pDesc->format = format;
-            pDesc->usage = usage;
-            pDesc->stride = pixelsPerLine;
-            buf.buffer.nativeHandle = memHandle;
-            buf.bufferId = i;   // Unique number to identify this buffer
-            buffers[i] = buf;
-        }
-    }
+    uint32_t width = 640;
+    uint32_t height = 360;
+    camera_metadata_entry_t streamCfgs;
 
     // Test each reported camera
-    for (auto&& cam: cameraInfo) {
+    for (auto&& cam : cameraInfo) {
+        bool foundCfg = false;
+        if (!find_camera_metadata_entry(reinterpret_cast<camera_metadata_t*>(cam.metadata.data()),
+                                        ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
+                                        &streamCfgs)) {
+            // Stream configurations are found in metadata
+            RawStreamConfig* ptr = reinterpret_cast<RawStreamConfig*>(streamCfgs.data.i32);
+
+            LOG(DEBUG) << __LINE__ << " start searching " << streamCfgs.count;
+            for (unsigned idx = 0; idx < streamCfgs.count; idx++) {
+                LOG(DEBUG) << "ptr->direction= " << ptr->direction
+                           << " ptr->format= " << ptr->format;
+                if (ptr->direction == ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT &&
+                    ptr->format == HAL_PIXEL_FORMAT_RGBA_8888) {
+                    width = ptr->width;
+                    height = ptr->height;
+                    foundCfg = true;
+                    // Always use the 1st available configuration
+                    break;
+                }
+                ++ptr;
+            }
+        }
+
+        if (!foundCfg) {
+            LOG(INFO) << "No configuration found. Use default stream configurations.";
+        }
+
+        // Allocate buffers to use
+        hidl_vec<BufferDesc> buffers;
+        buffers.resize(kBuffersToHold);
+        for (auto i = 0; i < kBuffersToHold; ++i) {
+            unsigned pixelsPerLine;
+            buffer_handle_t memHandle = nullptr;
+            android::status_t result =
+                    alloc.allocate(width, height, format, 1, usage, &memHandle, &pixelsPerLine, 0,
+                                   "CameraStreamExternalBufferingTest");
+            if (result != android::NO_ERROR) {
+                LOG(ERROR) << __FUNCTION__ << " failed to allocate memory.";
+                // Release previous allocated buffers
+                for (auto j = 0; j < i; j++) {
+                    alloc.free(buffers[i].buffer.nativeHandle);
+                }
+                return;
+            } else {
+                BufferDesc buf;
+                AHardwareBuffer_Desc* pDesc =
+                        reinterpret_cast<AHardwareBuffer_Desc*>(&buf.buffer.description);
+                pDesc->width = width;
+                pDesc->height = height;
+                pDesc->layers = 1;
+                pDesc->format = format;
+                pDesc->usage = usage;
+                pDesc->stride = pixelsPerLine;
+                buf.buffer.nativeHandle = memHandle;
+                buf.bufferId = i;  // Unique number to identify this buffer
+                buffers[i] = buf;
+            }
+        }
+
         bool isLogicalCam = false;
         getPhysicalCameraIds(cam.v1.cameraId, isLogicalCam);
 
@@ -2374,13 +2400,12 @@ TEST_P(EvsHidlTest, CameraStreamExternalBuffering) {
         // Explicitly release the camera
         pEnumerator->closeCamera(pCam);
         activeCameras.clear();
+        // Release buffers
+        for (auto& b : buffers) {
+            alloc.free(b.buffer.nativeHandle);
+        }
+        buffers.resize(0);
     }
-
-    // Release buffers
-    for (auto& b : buffers) {
-        alloc.free(b.buffer.nativeHandle);
-    }
-    buffers.resize(0);
 }
 
 
