@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef android_hardware_automotive_vehicle_V2_0_impl_EmulatedUserHal_H_
-#define android_hardware_automotive_vehicle_V2_0_impl_EmulatedUserHal_H_
+#ifndef android_hardware_automotive_vehicle_V2_0_impl_FakeUserHal_H_
+#define android_hardware_automotive_vehicle_V2_0_impl_FakeUserHal_H_
 
 #include <android-base/format.h>
 #include <android-base/result.h>
@@ -35,11 +35,11 @@ constexpr char kUserHalDumpOption[] = "--user-hal";
 /**
  * Class used to emulate a real User HAL behavior through lshal debug requests.
  */
-class EmulatedUserHal {
+class FakeUserHal {
   public:
-    EmulatedUserHal() {}
+    FakeUserHal() {}
 
-    ~EmulatedUserHal() = default;
+    ~FakeUserHal() = default;
 
     /**
      * Checks if the emulator can handle the property.
@@ -149,4 +149,4 @@ class EmulatedUserHal {
 }  // namespace hardware
 }  // namespace android
 
-#endif  // android_hardware_automotive_vehicle_V2_0_impl_EmulatedUserHal_H_
+#endif  // android_hardware_automotive_vehicle_V2_0_impl_FakeUserHal_H_

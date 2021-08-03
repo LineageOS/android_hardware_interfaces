@@ -86,7 +86,7 @@ VehicleHal::VehiclePropValuePtr DefaultVehicleHal::getUserHalProp(
         const VehiclePropValue& requestedPropValue, StatusCode* outStatus) {
     auto propId = requestedPropValue.prop;
     ALOGI("get(): getting value for prop %d from User HAL", propId);
-    const auto& ret = mEmulatedUserHal.onGetProperty(requestedPropValue);
+    const auto& ret = mFakeUserHal.onGetProperty(requestedPropValue);
     VehicleHal::VehiclePropValuePtr v = nullptr;
     if (!ret.ok()) {
         ALOGE("get(): User HAL returned error: %s", ret.error().message().c_str());
@@ -110,7 +110,7 @@ VehicleHal::VehiclePropValuePtr DefaultVehicleHal::get(const VehiclePropValue& r
     auto propId = requestedPropValue.prop;
     ALOGV("get(%d)", propId);
 
-    if (mEmulatedUserHal.isSupported(propId)) {
+    if (mFakeUserHal.isSupported(propId)) {
         return getUserHalProp(requestedPropValue, outStatus);
     }
 
@@ -155,8 +155,8 @@ bool DefaultVehicleHal::dump(const hidl_handle& fd, const hidl_vec<hidl_string>&
     if (options.size() > 0) {
         if (options[0] == "--help") {
             std::string buffer;
-            buffer += "Emulated user hal usage:\n";
-            buffer += mEmulatedUserHal.showDumpHelp();
+            buffer += "Fake user hal usage:\n";
+            buffer += mFakeUserHal.showDumpHelp();
             buffer += "\n";
             buffer += "VHAL server debug usage:\n";
             buffer += "--debughal: send debug command to VHAL server, see '--debughal --help'\n";
@@ -164,15 +164,15 @@ bool DefaultVehicleHal::dump(const hidl_handle& fd, const hidl_vec<hidl_string>&
             dprintf(nativeFd, "%s", buffer.c_str());
             return false;
         } else if (options[0] == kUserHalDumpOption) {
-            dprintf(nativeFd, "%s", mEmulatedUserHal.dump("").c_str());
+            dprintf(nativeFd, "%s", mFakeUserHal.dump("").c_str());
             return false;
         }
     } else {
-        // No options, dump the emulated user hal state first and then send command to VHAL server
+        // No options, dump the fake user hal state first and then send command to VHAL server
         // to dump its state.
         std::string buffer;
-        buffer += "Emulator user hal state:\n";
-        buffer += mEmulatedUserHal.dump("  ");
+        buffer += "Fake user hal state:\n";
+        buffer += mFakeUserHal.dump("  ");
         buffer += "\n";
         dprintf(nativeFd, "%s", buffer.c_str());
     }
@@ -338,7 +338,7 @@ StatusCode DefaultVehicleHal::checkValueRange(const VehiclePropValue& value,
 StatusCode DefaultVehicleHal::setUserHalProp(const VehiclePropValue& propValue) {
     ALOGI("onSetProperty(): property %d will be handled by UserHal", propValue.prop);
 
-    const auto& ret = mEmulatedUserHal.onSetProperty(propValue);
+    const auto& ret = mFakeUserHal.onSetProperty(propValue);
     if (!ret.ok()) {
         ALOGE("onSetProperty(): HAL returned error: %s", ret.error().message().c_str());
         return StatusCode(ret.error().code());
@@ -360,7 +360,7 @@ StatusCode DefaultVehicleHal::set(const VehiclePropValue& propValue) {
         return StatusCode::INVALID_ARG;
     }
 
-    if (mEmulatedUserHal.isSupported(propValue.prop)) {
+    if (mFakeUserHal.isSupported(propValue.prop)) {
         return setUserHalProp(propValue);
     }
 
