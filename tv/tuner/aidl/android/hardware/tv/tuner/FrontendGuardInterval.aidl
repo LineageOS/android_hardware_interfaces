@@ -18,15 +18,17 @@ package android.hardware.tv.tuner;
 
 import android.hardware.tv.tuner.FrontendDvbtGuardInterval;
 import android.hardware.tv.tuner.FrontendDtmbGuardInterval;
+import android.hardware.tv.tuner.FrontendIsdbtGuardInterval;
 
 /**
+ * The different Guard Interval Types.
  * @hide
  */
 @VintfStability
 union FrontendGuardInterval {
     FrontendDvbtGuardInterval dvbt = FrontendDvbtGuardInterval.UNDEFINED;
 
-    FrontendDvbtGuardInterval isdbt;
+    FrontendIsdbtGuardInterval isdbt;
 
     FrontendDtmbGuardInterval dtmb;
 }

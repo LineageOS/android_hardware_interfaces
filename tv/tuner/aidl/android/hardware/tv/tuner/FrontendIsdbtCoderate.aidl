@@ -17,7 +17,7 @@
 package android.hardware.tv.tuner;
 
 /**
- * Hierarchy Type for ISDBT.
+ * Code Rate for ISDBT.
  * @hide
  */
 @VintfStability
