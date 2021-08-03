@@ -93,8 +93,8 @@ class Filter : public V1_1::IFilter {
      */
     bool createFilterMQ();
     uint16_t getTpid();
-    void updateFilterOutput(vector<uint8_t> data);
-    void updateRecordOutput(vector<uint8_t> data);
+    void updateFilterOutput(const vector<uint8_t>& data);
+    void updateRecordOutput(const vector<uint8_t>& data);
     void updatePts(uint64_t pts);
     Result startFilterHandler();
     Result startRecordFilterHandler();
@@ -177,7 +177,7 @@ class Filter : public V1_1::IFilter {
     void deleteEventFlag();
     bool writeDataToFilterMQ(const std::vector<uint8_t>& data);
     bool readDataFromMQ();
-    bool writeSectionsAndCreateEvent(vector<uint8_t> data);
+    bool writeSectionsAndCreateEvent(const vector<uint8_t>& data);
     void maySendFilterStatusCallback();
     DemuxFilterStatus checkFilterStatusChange(uint32_t availableToWrite, uint32_t availableToRead,
                                               uint32_t highThreshold, uint32_t lowThreshold);
@@ -193,9 +193,9 @@ class Filter : public V1_1::IFilter {
     int createAvIonFd(int size);
     uint8_t* getIonBuffer(int fd, int size);
     native_handle_t* createNativeHandle(int fd);
-    Result createMediaFilterEventWithIon(vector<uint8_t> output);
-    Result createIndependentMediaEvents(vector<uint8_t> output);
-    Result createShareMemMediaEvents(vector<uint8_t> output);
+    Result createMediaFilterEventWithIon(const vector<uint8_t>& output);
+    Result createIndependentMediaEvents(const vector<uint8_t>& output);
+    Result createShareMemMediaEvents(const vector<uint8_t>& output);
     bool sameFile(int fd1, int fd2);
 
     DemuxFilterEvent createMediaEvent();
