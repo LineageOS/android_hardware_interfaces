@@ -32,7 +32,7 @@ cc_test {
         "libbinder_ndk",
     ],
     static_libs: [
-        "android.hardware.power-V2-ndk_platform",
+        "android.hardware.power-V2-ndk",
     ],
     test_suites: [
         "vts",
