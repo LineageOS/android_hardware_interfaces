@@ -253,7 +253,8 @@ PlaybackStatus Dvr::checkPlaybackStatusChange(uint32_t availableToWrite, uint32_
 bool Dvr::readPlaybackFMQ(bool isVirtualFrontend, bool isRecording) {
     // Read playback data from the input FMQ
     int size = mDvrMQ->availableToRead();
-    int playbackPacketSize = mDvrSettings.get<DvrSettings::Tag::playback>().packetSize;
+    uint8_t playbackPacketSize =
+            static_cast<uint8_t>(mDvrSettings.get<DvrSettings::Tag::playback>().packetSize);
     vector<int8_t> dataOutputBuffer;
     dataOutputBuffer.resize(playbackPacketSize);
     // Dispatch the packet to the PID matching filter output buffer
