@@ -114,10 +114,9 @@ Tuner::Tuner() {
             .modeCap = (int)FrontendIsdbtMode::MODE_1 | (int)FrontendIsdbtMode::MODE_2,
             .bandwidthCap = (int)FrontendIsdbtBandwidth::BANDWIDTH_6MHZ,
             .modulationCap = (int)FrontendIsdbtModulation::MOD_16QAM,
-            // ISDBT shares coderate and guard interval with DVBT
-            .coderateCap = (int)FrontendDvbtCoderate::CODERATE_4_5 |
-                           (int)FrontendDvbtCoderate::CODERATE_6_7,
-            .guardIntervalCap = (int)FrontendDvbtGuardInterval::INTERVAL_1_128,
+            .coderateCap = (int)FrontendIsdbtCoderate::CODERATE_4_5 |
+                           (int)FrontendIsdbtCoderate::CODERATE_6_7,
+            .guardIntervalCap = (int)FrontendIsdbtGuardInterval::INTERVAL_1_128,
     };
     capsIsdbt.set<FrontendCapabilities::Tag::isdbtCaps>(isdbtCaps);
     mFrontendCaps[5] = capsIsdbt;

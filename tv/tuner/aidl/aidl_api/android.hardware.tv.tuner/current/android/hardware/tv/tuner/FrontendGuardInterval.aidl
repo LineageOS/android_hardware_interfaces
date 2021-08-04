@@ -36,6 +36,6 @@ package android.hardware.tv.tuner;
 @VintfStability
 union FrontendGuardInterval {
   android.hardware.tv.tuner.FrontendDvbtGuardInterval dvbt = android.hardware.tv.tuner.FrontendDvbtGuardInterval.UNDEFINED;
-  android.hardware.tv.tuner.FrontendDvbtGuardInterval isdbt;
+  android.hardware.tv.tuner.FrontendIsdbtGuardInterval isdbt;
   android.hardware.tv.tuner.FrontendDtmbGuardInterval dtmb;
 }
