@@ -532,7 +532,7 @@ uint16_t Filter::getTpid() {
     return mTpid;
 }
 
-void Filter::updateFilterOutput(vector<uint8_t> data) {
+void Filter::updateFilterOutput(const vector<uint8_t>& data) {
     std::lock_guard<std::mutex> lock(mFilterOutputLock);
     mFilterOutput.insert(mFilterOutput.end(), data.begin(), data.end());
 }
@@ -542,7 +542,7 @@ void Filter::updatePts(uint64_t pts) {
     mPts = pts;
 }
 
-void Filter::updateRecordOutput(vector<uint8_t> data) {
+void Filter::updateRecordOutput(const vector<uint8_t>& data) {
     std::lock_guard<std::mutex> lock(mRecordFilterOutputLock);
     mRecordFilterOutput.insert(mRecordFilterOutput.end(), data.begin(), data.end());
 }
@@ -689,9 +689,7 @@ Result Filter::startMediaFilterHandler() {
     Result result;
     if (mPts) {
         result = createMediaFilterEventWithIon(mFilterOutput);
-        if (result == Result::SUCCESS) {
-            mFilterOutput.clear();
-        }
+        mFilterOutput.clear();
         return result;
     }
 
@@ -729,6 +727,7 @@ Result Filter::startMediaFilterHandler() {
         }
 
         result = createMediaFilterEventWithIon(mPesOutput);
+        mPesOutput.clear();
         if (result != Result::SUCCESS) {
             return result;
         }
@@ -739,7 +738,7 @@ Result Filter::startMediaFilterHandler() {
     return Result::SUCCESS;
 }
 
-Result Filter::createMediaFilterEventWithIon(vector<uint8_t> output) {
+Result Filter::createMediaFilterEventWithIon(const vector<uint8_t>& output) {
     if (mUsingSharedAvMem) {
         if (mSharedAvMemHandle.getNativeHandle() == nullptr) {
             return Result::UNKNOWN_ERROR;
@@ -793,7 +792,7 @@ Result Filter::startTemiFilterHandler() {
     return Result::SUCCESS;
 }
 
-bool Filter::writeSectionsAndCreateEvent(vector<uint8_t> data) {
+bool Filter::writeSectionsAndCreateEvent(const vector<uint8_t>& data) {
     // TODO check how many sections has been read
     ALOGD("[Filter] section handler");
     std::lock_guard<std::mutex> lock(mFilterEventLock);
@@ -874,7 +873,7 @@ native_handle_t* Filter::createNativeHandle(int fd) {
     return nativeHandle;
 }
 
-Result Filter::createIndependentMediaEvents(vector<uint8_t> output) {
+Result Filter::createIndependentMediaEvents(const vector<uint8_t>& output) {
     int av_fd = createAvIonFd(output.size());
     if (av_fd == -1) {
         return Result::UNKNOWN_ERROR;
@@ -912,8 +911,6 @@ Result Filter::createIndependentMediaEvents(vector<uint8_t> output) {
     mFilterEvent.events.resize(size + 1);
     mFilterEvent.events[size].media(mediaEvent);
 
-    // Clear and log
-    output.clear();
     mAvBufferCopyCount = 0;
     ::close(av_fd);
     if (DEBUG_FILTER) {
@@ -922,7 +919,7 @@ Result Filter::createIndependentMediaEvents(vector<uint8_t> output) {
     return Result::SUCCESS;
 }
 
-Result Filter::createShareMemMediaEvents(vector<uint8_t> output) {
+Result Filter::createShareMemMediaEvents(const vector<uint8_t>& output) {
     // copy the filtered data to the shared buffer
     uint8_t* sharedAvBuffer = getIonBuffer(mSharedAvMemHandle.getNativeHandle()->data[0],
                                            output.size() + mSharedAvMemOffset);
@@ -955,8 +952,6 @@ Result Filter::createShareMemMediaEvents(vector<uint8_t> output) {
     mFilterEvent.events.resize(size + 1);
     mFilterEvent.events[size].media(mediaEvent);
 
-    // Clear and log
-    output.clear();
     if (DEBUG_FILTER) {
         ALOGD("[Filter] shared av data length %d", mediaEvent.dataLength);
     }
