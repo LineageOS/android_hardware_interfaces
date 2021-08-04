@@ -47,10 +47,21 @@ cc_library_static {
     export_static_lib_headers: [
         "neuralnetworks_utils_hal_common",
     ],
+    target: {
+        host: {
+            cflags: [
+                "-D__INTRODUCED_IN(x)=",
+                "-D__assert(a,b,c)=",
+                // We want all the APIs to be available on the host.
+                "-D__ANDROID_API__=10000",
+            ],
+        },
+    },
 }
 
 cc_test {
     name: "neuralnetworks_utils_hal_1_3_test",
+    host_supported: true,
     srcs: ["test/*.cpp"],
     static_libs: [
         "android.hardware.neuralnetworks@1.0",
@@ -75,8 +86,12 @@ cc_test {
         "libhidlbase",
         "libhidlmemory",
         "liblog",
-        "libnativewindow",
         "libutils",
     ],
+    target: {
+        android: {
+            shared_libs: ["libnativewindow"],
+        },
+    },
     test_suites: ["general-tests"],
 }
