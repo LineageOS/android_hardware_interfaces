@@ -34,7 +34,7 @@
 package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
-union DemuxFilterTypeDemuxFilterSubType {
+union DemuxFilterSubType {
   android.hardware.tv.tuner.DemuxTsFilterType tsFilterType = android.hardware.tv.tuner.DemuxTsFilterType.UNDEFINED;
   android.hardware.tv.tuner.DemuxMmtpFilterType mmtpFilterType;
   android.hardware.tv.tuner.DemuxIpFilterType ipFilterType;

@@ -689,11 +689,11 @@ struct TunerTestingConfigAidlReader1_0 {
                 bool isTsSet = false;
                 switch (subType) {
                     case FilterSubTypeEnum::UNDEFINED:
-                        type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::tsFilterType>(
+                        type.subType.set<DemuxFilterSubType::Tag::tsFilterType>(
                                 DemuxTsFilterType::UNDEFINED);
                         break;
                     case FilterSubTypeEnum::SECTION:
-                        type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::tsFilterType>(
+                        type.subType.set<DemuxFilterSubType::Tag::tsFilterType>(
                                 DemuxTsFilterType::SECTION);
                         ts.filterSettings.set<DemuxTsFilterSettingsFilterSettings::Tag::section>(
                                 readSectionFilterSettings(filterConfig));
@@ -701,46 +701,46 @@ struct TunerTestingConfigAidlReader1_0 {
                         break;
                     case FilterSubTypeEnum::PES:
                         // TODO: b/182519645 support all the filter settings
-                        type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::tsFilterType>(
+                        type.subType.set<DemuxFilterSubType::Tag::tsFilterType>(
                                 DemuxTsFilterType::PES);
                         break;
                     case FilterSubTypeEnum::TS:
-                        type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::tsFilterType>(
+                        type.subType.set<DemuxFilterSubType::Tag::tsFilterType>(
                                 DemuxTsFilterType::TS);
                         ts.filterSettings.set<DemuxTsFilterSettingsFilterSettings::Tag::noinit>(
                                 true);
                         isTsSet = true;
                         break;
                     case FilterSubTypeEnum::PCR:
-                        type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::tsFilterType>(
+                        type.subType.set<DemuxFilterSubType::Tag::tsFilterType>(
                                 DemuxTsFilterType::PCR);
                         ts.filterSettings.set<DemuxTsFilterSettingsFilterSettings::Tag::noinit>(
                                 true);
                         isTsSet = true;
                         break;
                     case FilterSubTypeEnum::TEMI:
-                        type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::tsFilterType>(
+                        type.subType.set<DemuxFilterSubType::Tag::tsFilterType>(
                                 DemuxTsFilterType::TEMI);
                         ts.filterSettings.set<DemuxTsFilterSettingsFilterSettings::Tag::noinit>(
                                 true);
                         isTsSet = true;
                         break;
                     case FilterSubTypeEnum::AUDIO:
-                        type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::tsFilterType>(
+                        type.subType.set<DemuxFilterSubType::Tag::tsFilterType>(
                                 DemuxTsFilterType::AUDIO);
                         ts.filterSettings.set<DemuxTsFilterSettingsFilterSettings::Tag::av>(
                                 readAvFilterSettings(filterConfig));
                         isTsSet = true;
                         break;
                     case FilterSubTypeEnum::VIDEO:
-                        type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::tsFilterType>(
+                        type.subType.set<DemuxFilterSubType::Tag::tsFilterType>(
                                 DemuxTsFilterType::VIDEO);
                         ts.filterSettings.set<DemuxTsFilterSettingsFilterSettings::Tag::av>(
                                 readAvFilterSettings(filterConfig));
                         isTsSet = true;
                         break;
                     case FilterSubTypeEnum::RECORD:
-                        type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::tsFilterType>(
+                        type.subType.set<DemuxFilterSubType::Tag::tsFilterType>(
                                 DemuxTsFilterType::RECORD);
                         ts.filterSettings.set<DemuxTsFilterSettingsFilterSettings::Tag::record>(
                                 readRecordFilterSettings(filterConfig));
@@ -766,11 +766,11 @@ struct TunerTestingConfigAidlReader1_0 {
                 bool isMmtpSet = false;
                 switch (subType) {
                     case FilterSubTypeEnum::UNDEFINED:
-                        type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::mmtpFilterType>(
+                        type.subType.set<DemuxFilterSubType::Tag::mmtpFilterType>(
                                 DemuxMmtpFilterType::UNDEFINED);
                         break;
                     case FilterSubTypeEnum::SECTION:
-                        type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::mmtpFilterType>(
+                        type.subType.set<DemuxFilterSubType::Tag::mmtpFilterType>(
                                 DemuxMmtpFilterType::SECTION);
                         mmtp.filterSettings
                                 .set<DemuxMmtpFilterSettingsFilterSettings::Tag::section>(
@@ -778,40 +778,40 @@ struct TunerTestingConfigAidlReader1_0 {
                         isMmtpSet = true;
                         break;
                     case FilterSubTypeEnum::PES:
-                        type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::mmtpFilterType>(
+                        type.subType.set<DemuxFilterSubType::Tag::mmtpFilterType>(
                                 DemuxMmtpFilterType::PES);
                         // TODO: b/182519645 support all the filter settings
                         break;
                     case FilterSubTypeEnum::MMTP:
-                        type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::mmtpFilterType>(
+                        type.subType.set<DemuxFilterSubType::Tag::mmtpFilterType>(
                                 DemuxMmtpFilterType::MMTP);
                         mmtp.filterSettings.set<DemuxMmtpFilterSettingsFilterSettings::Tag::noinit>(
                                 true);
                         isMmtpSet = true;
                         break;
                     case FilterSubTypeEnum::AUDIO:
-                        type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::mmtpFilterType>(
+                        type.subType.set<DemuxFilterSubType::Tag::mmtpFilterType>(
                                 DemuxMmtpFilterType::AUDIO);
                         mmtp.filterSettings.set<DemuxMmtpFilterSettingsFilterSettings::Tag::av>(
                                 readAvFilterSettings(filterConfig));
                         isMmtpSet = true;
                         break;
                     case FilterSubTypeEnum::VIDEO:
-                        type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::mmtpFilterType>(
+                        type.subType.set<DemuxFilterSubType::Tag::mmtpFilterType>(
                                 DemuxMmtpFilterType::VIDEO);
                         mmtp.filterSettings.set<DemuxMmtpFilterSettingsFilterSettings::Tag::av>(
                                 readAvFilterSettings(filterConfig));
                         isMmtpSet = true;
                         break;
                     case FilterSubTypeEnum::RECORD:
-                        type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::mmtpFilterType>(
+                        type.subType.set<DemuxFilterSubType::Tag::mmtpFilterType>(
                                 DemuxMmtpFilterType::RECORD);
                         mmtp.filterSettings.set<DemuxMmtpFilterSettingsFilterSettings::Tag::record>(
                                 readRecordFilterSettings(filterConfig));
                         isMmtpSet = true;
                         break;
                     case FilterSubTypeEnum::DOWNLOAD:
-                        type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::mmtpFilterType>(
+                        type.subType.set<DemuxFilterSubType::Tag::mmtpFilterType>(
                                 DemuxMmtpFilterType::DOWNLOAD);
                         // TODO: b/182519645 support all the filter settings
                         break;
@@ -834,18 +834,18 @@ struct TunerTestingConfigAidlReader1_0 {
                 DemuxIpFilterSettings ip;
                 switch (subType) {
                     case FilterSubTypeEnum::UNDEFINED:
-                        type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::ipFilterType>(
+                        type.subType.set<DemuxFilterSubType::Tag::ipFilterType>(
                                 DemuxIpFilterType::UNDEFINED);
                         break;
                     case FilterSubTypeEnum::SECTION:
-                        type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::ipFilterType>(
+                        type.subType.set<DemuxFilterSubType::Tag::ipFilterType>(
                                 DemuxIpFilterType::SECTION);
                         ip.filterSettings.set<DemuxIpFilterSettingsFilterSettings::Tag::section>(
                                 readSectionFilterSettings(filterConfig));
                         settings.set<DemuxFilterSettings::Tag::ip>(ip);
                         break;
                     case FilterSubTypeEnum::NTP:
-                        type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::ipFilterType>(
+                        type.subType.set<DemuxFilterSubType::Tag::ipFilterType>(
                                 DemuxIpFilterType::NTP);
                         ip.filterSettings.set<DemuxIpFilterSettingsFilterSettings::Tag::noinit>(
                                 true);
@@ -860,14 +860,14 @@ struct TunerTestingConfigAidlReader1_0 {
                         break;
                     }
                     case FilterSubTypeEnum::IP_PAYLOAD:
-                        type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::ipFilterType>(
+                        type.subType.set<DemuxFilterSubType::Tag::ipFilterType>(
                                 DemuxIpFilterType::IP_PAYLOAD);
                         ip.filterSettings.set<DemuxIpFilterSettingsFilterSettings::Tag::noinit>(
                                 true);
                         settings.set<DemuxFilterSettings::Tag::ip>(ip);
                         break;
                     case FilterSubTypeEnum::PAYLOAD_THROUGH:
-                        type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::ipFilterType>(
+                        type.subType.set<DemuxFilterSubType::Tag::ipFilterType>(
                                 DemuxIpFilterType::PAYLOAD_THROUGH);
                         ip.filterSettings.set<DemuxIpFilterSettingsFilterSettings::Tag::noinit>(
                                 true);

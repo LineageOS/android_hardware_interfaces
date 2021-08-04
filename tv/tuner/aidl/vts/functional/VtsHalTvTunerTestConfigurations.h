@@ -119,9 +119,8 @@ inline void initFilterConfig() {
     string defaultVideoFilterId = "FILTER_VIDEO_DEFAULT";
 
     filterMap[defaultVideoFilterId].type.mainType = DemuxFilterMainType::TS;
-    filterMap[defaultVideoFilterId]
-            .type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::tsFilterType>(
-                    DemuxTsFilterType::VIDEO);
+    filterMap[defaultVideoFilterId].type.subType.set<DemuxFilterSubType::Tag::tsFilterType>(
+            DemuxTsFilterType::VIDEO);
     filterMap[defaultVideoFilterId].bufferSize = FMQ_SIZE_16M;
     filterMap[defaultVideoFilterId].settings =
             DemuxFilterSettings::make<DemuxFilterSettings::Tag::ts>();
@@ -138,9 +137,8 @@ inline void initFilterConfig() {
             VideoStreamType::MPEG1);
 
     filterMap[defaultAudioFilterId].type.mainType = DemuxFilterMainType::TS;
-    filterMap[defaultAudioFilterId]
-            .type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::tsFilterType>(
-                    DemuxTsFilterType::AUDIO);
+    filterMap[defaultAudioFilterId].type.subType.set<DemuxFilterSubType::Tag::tsFilterType>(
+            DemuxTsFilterType::AUDIO);
     filterMap[defaultAudioFilterId].bufferSize = FMQ_SIZE_16M;
     filterMap[defaultAudioFilterId].settings =
             DemuxFilterSettings::make<DemuxFilterSettings::Tag::ts>();
