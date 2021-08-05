@@ -175,9 +175,9 @@ AssertionResult DescramblerTests::getDemuxPidFromFilterSettings(DemuxFilterType 
                                                                 DemuxPid& pid) {
     switch (type.mainType) {
         case DemuxFilterMainType::TS:
-            if (type.subType.get<DemuxFilterTypeDemuxFilterSubType::Tag::tsFilterType>() ==
+            if (type.subType.get<DemuxFilterSubType::Tag::tsFilterType>() ==
                         DemuxTsFilterType::AUDIO ||
-                type.subType.get<DemuxFilterTypeDemuxFilterSubType::Tag::tsFilterType>() ==
+                type.subType.get<DemuxFilterSubType::Tag::tsFilterType>() ==
                         DemuxTsFilterType::VIDEO) {
                 pid.set<DemuxPid::Tag::tPid>(settings.get<DemuxFilterSettings::Tag::ts>().tpid);
             } else {
@@ -186,9 +186,9 @@ AssertionResult DescramblerTests::getDemuxPidFromFilterSettings(DemuxFilterType 
             }
             break;
         case DemuxFilterMainType::MMTP:
-            if (type.subType.get<DemuxFilterTypeDemuxFilterSubType::Tag::mmtpFilterType>() ==
+            if (type.subType.get<DemuxFilterSubType::Tag::mmtpFilterType>() ==
                         DemuxMmtpFilterType::AUDIO ||
-                type.subType.get<DemuxFilterTypeDemuxFilterSubType::Tag::mmtpFilterType>() ==
+                type.subType.get<DemuxFilterSubType::Tag::mmtpFilterType>() ==
                         DemuxMmtpFilterType::VIDEO) {
                 pid.set<DemuxPid::Tag::mmtpPid>(
                         settings.get<DemuxFilterSettings::Tag::mmtp>().mmtpPid);

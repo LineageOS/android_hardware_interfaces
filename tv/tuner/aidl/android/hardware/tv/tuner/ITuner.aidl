@@ -22,7 +22,6 @@ import android.hardware.tv.tuner.IDemux;
 import android.hardware.tv.tuner.IDescrambler;
 import android.hardware.tv.tuner.IFrontend;
 import android.hardware.tv.tuner.ILnb;
-import android.hardware.tv.tuner.FrontendDtmbCapabilities;
 
 /**
  * Top level interface to manage Frontend, Demux and Decrambler hardware

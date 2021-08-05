@@ -17,7 +17,7 @@
 package android.hardware.tv.tuner;
 
 import android.hardware.tv.tuner.DemuxFilterMainType;
-import android.hardware.tv.tuner.DemuxFilterTypeDemuxFilterSubType;
+import android.hardware.tv.tuner.DemuxFilterSubType;
 
 /**
  * Demux Filter Type.
@@ -27,5 +27,5 @@ import android.hardware.tv.tuner.DemuxFilterTypeDemuxFilterSubType;
 parcelable DemuxFilterType {
     DemuxFilterMainType mainType = DemuxFilterMainType.UNDEFINED;
 
-    DemuxFilterTypeDemuxFilterSubType subType;
+    DemuxFilterSubType subType;
 }

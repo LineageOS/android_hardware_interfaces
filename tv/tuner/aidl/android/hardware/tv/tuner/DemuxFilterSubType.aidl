@@ -23,10 +23,11 @@ import android.hardware.tv.tuner.DemuxTlvFilterType;
 import android.hardware.tv.tuner.DemuxTsFilterType;
 
 /**
+ * The different Demux Filter Sub Types.
  * @hide
  */
 @VintfStability
-union DemuxFilterTypeDemuxFilterSubType {
+union DemuxFilterSubType {
     DemuxTsFilterType tsFilterType = DemuxTsFilterType.UNDEFINED;
 
     DemuxMmtpFilterType mmtpFilterType;

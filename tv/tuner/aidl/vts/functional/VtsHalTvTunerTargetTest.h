@@ -146,23 +146,23 @@ class TunerFilterAidlTest : public testing::TestWithParam<std::string> {
         type.mainType = static_cast<DemuxFilterMainType>(1 << bit);
         switch (type.mainType) {
             case DemuxFilterMainType::TS:
-                type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::tsFilterType>(
+                type.subType.set<DemuxFilterSubType::Tag::tsFilterType>(
                         DemuxTsFilterType::UNDEFINED);
                 break;
             case DemuxFilterMainType::MMTP:
-                type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::mmtpFilterType>(
+                type.subType.set<DemuxFilterSubType::Tag::mmtpFilterType>(
                         DemuxMmtpFilterType::UNDEFINED);
                 break;
             case DemuxFilterMainType::IP:
-                type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::ipFilterType>(
+                type.subType.set<DemuxFilterSubType::Tag::ipFilterType>(
                         DemuxIpFilterType::UNDEFINED);
                 break;
             case DemuxFilterMainType::TLV:
-                type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::tlvFilterType>(
+                type.subType.set<DemuxFilterSubType::Tag::tlvFilterType>(
                         DemuxTlvFilterType::UNDEFINED);
                 break;
             case DemuxFilterMainType::ALP:
-                type.subType.set<DemuxFilterTypeDemuxFilterSubType::Tag::alpFilterType>(
+                type.subType.set<DemuxFilterSubType::Tag::alpFilterType>(
                         DemuxAlpFilterType::UNDEFINED);
                 break;
             default:

@@ -46,29 +46,29 @@ Filter::Filter(DemuxFilterType type, int64_t filterId, uint32_t bufferSize,
 
     switch (mType.mainType) {
         case DemuxFilterMainType::TS:
-            if (mType.subType.get<DemuxFilterTypeDemuxFilterSubType::Tag::tsFilterType>() ==
+            if (mType.subType.get<DemuxFilterSubType::Tag::tsFilterType>() ==
                         DemuxTsFilterType::AUDIO ||
-                mType.subType.get<DemuxFilterTypeDemuxFilterSubType::Tag::tsFilterType>() ==
+                mType.subType.get<DemuxFilterSubType::Tag::tsFilterType>() ==
                         DemuxTsFilterType::VIDEO) {
                 mIsMediaFilter = true;
             }
-            if (mType.subType.get<DemuxFilterTypeDemuxFilterSubType::Tag::tsFilterType>() ==
+            if (mType.subType.get<DemuxFilterSubType::Tag::tsFilterType>() ==
                 DemuxTsFilterType::PCR) {
                 mIsPcrFilter = true;
             }
-            if (mType.subType.get<DemuxFilterTypeDemuxFilterSubType::Tag::tsFilterType>() ==
+            if (mType.subType.get<DemuxFilterSubType::Tag::tsFilterType>() ==
                 DemuxTsFilterType::RECORD) {
                 mIsRecordFilter = true;
             }
             break;
         case DemuxFilterMainType::MMTP:
-            if (mType.subType.get<DemuxFilterTypeDemuxFilterSubType::Tag::mmtpFilterType>() ==
+            if (mType.subType.get<DemuxFilterSubType::Tag::mmtpFilterType>() ==
                         DemuxMmtpFilterType::AUDIO ||
-                mType.subType.get<DemuxFilterTypeDemuxFilterSubType::Tag::mmtpFilterType>() ==
+                mType.subType.get<DemuxFilterSubType::Tag::mmtpFilterType>() ==
                         DemuxMmtpFilterType::VIDEO) {
                 mIsMediaFilter = true;
             }
-            if (mType.subType.get<DemuxFilterTypeDemuxFilterSubType::Tag::mmtpFilterType>() ==
+            if (mType.subType.get<DemuxFilterSubType::Tag::mmtpFilterType>() ==
                 DemuxMmtpFilterType::RECORD) {
                 mIsRecordFilter = true;
             }
@@ -519,7 +519,7 @@ uint16_t Filter::getTpid() {
     return mTpid;
 }
 
-void Filter::updateFilterOutput(vector<int8_t> data) {
+void Filter::updateFilterOutput(vector<int8_t>& data) {
     std::lock_guard<std::mutex> lock(mFilterOutputLock);
     mFilterOutput.insert(mFilterOutput.end(), data.begin(), data.end());
 }
@@ -529,7 +529,7 @@ void Filter::updatePts(uint64_t pts) {
     mPts = pts;
 }
 
-void Filter::updateRecordOutput(vector<int8_t> data) {
+void Filter::updateRecordOutput(vector<int8_t>& data) {
     std::lock_guard<std::mutex> lock(mRecordFilterOutputLock);
     mRecordFilterOutput.insert(mRecordFilterOutput.end(), data.begin(), data.end());
 }
@@ -538,7 +538,7 @@ void Filter::updateRecordOutput(vector<int8_t> data) {
     std::lock_guard<std::mutex> lock(mFilterOutputLock);
     switch (mType.mainType) {
         case DemuxFilterMainType::TS:
-            switch (mType.subType.get<DemuxFilterTypeDemuxFilterSubType::Tag::tsFilterType>()) {
+            switch (mType.subType.get<DemuxFilterSubType::Tag::tsFilterType>()) {
                 case DemuxTsFilterType::UNDEFINED:
                     break;
                 case DemuxTsFilterType::SECTION:
