@@ -41,7 +41,7 @@ cc_defaults {
     defaults: ["vhal_v2_0_defaults"],
     shared_libs: [
         "libbinder_ndk",
-        "android.automotive.watchdog-V2-ndk_platform",
+        "android.automotive.watchdog-V2-ndk",
     ],
 }
 
@@ -177,11 +177,11 @@ cc_test {
     // Exclude share libraries from default because they might be missing on
     // some test platforms and we are using static libraries instead.
     exclude_shared_libs: [
-        "android.automotive.watchdog-V2-ndk_platform",
+        "android.automotive.watchdog-V2-ndk",
         "android.hardware.automotive.vehicle@2.0",
     ],
     static_libs: [
-        "android.automotive.watchdog-V2-ndk_platform",
+        "android.automotive.watchdog-V2-ndk",
         "android.hardware.automotive.vehicle@2.0",
     ],
     header_libs: ["libbase_headers"],
@@ -206,11 +206,11 @@ cc_test {
     // Exclude share libraries from default because they might be missing on
     // some test platforms and we are using static libraries instead.
     exclude_shared_libs: [
-        "android.automotive.watchdog-V2-ndk_platform",
+        "android.automotive.watchdog-V2-ndk",
         "android.hardware.automotive.vehicle@2.0",
     ],
     whole_static_libs: [
-        "android.automotive.watchdog-V2-ndk_platform",
+        "android.automotive.watchdog-V2-ndk",
         "android.hardware.automotive.vehicle@2.0",
         "android.hardware.automotive.vehicle@2.0-default-impl-lib",
         "android.hardware.automotive.vehicle@2.0-libproto-native",
