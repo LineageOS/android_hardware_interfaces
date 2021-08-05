@@ -20,12 +20,14 @@
 
 #include <android-base/logging.h>
 #include <android-base/unique_fd.h>
+#include <android/hardware_buffer.h>
 #include <hidl/HidlSupport.h>
 #include <nnapi/Result.h>
 #include <nnapi/SharedMemory.h>
 #include <nnapi/TypeUtils.h>
 #include <nnapi/Types.h>
 #include <nnapi/Validation.h>
+#include <vndk/hardware_buffer.h>
 
 #include <algorithm>
 #include <any>
@@ -33,11 +35,6 @@
 #include <optional>
 #include <variant>
 #include <vector>
-
-#ifdef __ANDROID__
-#include <android/hardware_buffer.h>
-#include <vndk/hardware_buffer.h>
-#endif  // __ANDROID__
 
 namespace android::hardware::neuralnetworks::utils {
 namespace {
@@ -142,7 +139,6 @@ nn::GeneralResult<hidl_memory> createHidlMemoryFrom(const nn::Memory::Fd& memory
 }
 
 nn::GeneralResult<hidl_memory> createHidlMemoryFrom(const nn::Memory::HardwareBuffer& memory) {
-#ifdef __ANDROID__
     const auto* ahwb = memory.handle.get();
     AHardwareBuffer_Desc bufferDesc;
     AHardwareBuffer_describe(ahwb, &bufferDesc);
@@ -156,12 +152,6 @@ nn::GeneralResult<hidl_memory> createHidlMemoryFrom(const nn::Memory::HardwareBu
     hidl_handle copiedHandle(hidlHandle);
 
     return hidl_memory(name, std::move(copiedHandle), size);
-#else   // __ANDROID__
-    LOG(FATAL) << "nn::GeneralResult<hidl_memory> createHidlMemoryFrom(const "
-                  "nn::Memory::HardwareBuffer& memory): Not Available on Host Build";
-    (void)memory;
-    return (NN_ERROR() << "createHidlMemoryFrom failed").operator nn::GeneralResult<hidl_memory>();
-#endif  // __ANDROID__
 }
 
 nn::GeneralResult<hidl_memory> createHidlMemoryFrom(const nn::Memory::Unknown& memory) {
@@ -343,11 +333,9 @@ nn::GeneralResult<hidl_memory> createHidlMemoryFromSharedMemory(const nn::Shared
     return std::visit([](const auto& x) { return createHidlMemoryFrom(x); }, memory->handle);
 }
 
-#ifdef __ANDROID__
 static uint32_t roundUpToMultiple(uint32_t value, uint32_t multiple) {
     return (value + multiple - 1) / multiple * multiple;
 }
-#endif  // __ANDROID__
 
 nn::GeneralResult<nn::SharedMemory> createSharedMemoryFromHidlMemory(const hidl_memory& memory) {
     CHECK_LE(memory.size(), std::numeric_limits<size_t>::max());
@@ -399,7 +387,6 @@ nn::GeneralResult<nn::SharedMemory> createSharedMemoryFromHidlMemory(const hidl_
         return std::make_shared<const nn::Memory>(nn::Memory{.handle = std::move(handle)});
     }
 
-#ifdef __ANDROID__
     const auto size = memory.size();
     const auto format = AHARDWAREBUFFER_FORMAT_BLOB;
     const auto usage = AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN | AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN;
@@ -436,13 +423,6 @@ nn::GeneralResult<nn::SharedMemory> createSharedMemoryFromHidlMemory(const hidl_
     }
 
     return nn::createSharedMemoryFromAHWB(hardwareBuffer, /*takeOwnership=*/true);
-#else   // __ANDROID__
-    LOG(FATAL) << "nn::GeneralResult<nn::SharedMemory> createSharedMemoryFromHidlMemory(const "
-                  "hidl_memory& memory): Not Available on Host Build";
-    return (NN_ERROR() << "createSharedMemoryFromHidlMemory failed")
-            .
-            operator nn::GeneralResult<nn::SharedMemory>();
-#endif  // __ANDROID__
 }
 
 nn::GeneralResult<hidl_handle> hidlHandleFromSharedHandle(const nn::Handle& handle) {
