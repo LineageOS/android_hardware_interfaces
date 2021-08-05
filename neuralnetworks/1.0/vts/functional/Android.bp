@@ -25,19 +25,10 @@ package {
 
 cc_defaults {
     name: "neuralnetworks_vts_functional_defaults",
-    defaults: ["VtsHalTargetTestDefaults"],
-    arch: {
-        x86: {
-            cflags: [ "-D_Float16=__fp16",
-                      "-Xclang", "-fnative-half-type",
-                      "-Xclang", "-fallow-half-arguments-and-returns" ],
-        },
-        x86_64: {
-            cflags: [ "-D_Float16=__fp16",
-                      "-Xclang", "-fnative-half-type",
-                      "-Xclang", "-fallow-half-arguments-and-returns" ],
-        },
-    },
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "neuralnetworks_float16",
+    ],
 }
 
 cc_library_static {
@@ -83,6 +74,7 @@ cc_test {
         "libnativewindow",
     ],
     static_libs: [
+        "VtsHalNeuralNetworksV1_0_utils",
         "android.hardware.neuralnetworks@1.0",
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",
@@ -90,7 +82,6 @@ cc_test {
         "libhidlmemory",
         "libneuralnetworks_generated_test_harness",
         "libneuralnetworks_utils",
-        "VtsHalNeuralNetworksV1_0_utils",
     ],
     whole_static_libs: [
         "neuralnetworks_generated_V1_0_example",
@@ -98,5 +89,8 @@ cc_test {
     header_libs: [
         "libneuralnetworks_headers",
     ],
-    test_suites: ["general-tests", "vts"],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
 }

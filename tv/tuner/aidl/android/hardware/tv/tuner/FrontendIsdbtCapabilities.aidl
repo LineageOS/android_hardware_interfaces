@@ -38,12 +38,12 @@ parcelable FrontendIsdbtCapabilities {
     int modulationCap;
 
     /**
-     * Code Rates defined by FrontendDvbtCoderate.
+     * Code Rates defined by FrontendIsdbtCoderate.
      */
     int coderateCap;
 
     /**
-     * Guard Interval Types defined by FrontendDvbtGuardInterval.
+     * Guard Interval Types defined by FrontendIsdbtGuardInterval.
      */
     int guardIntervalCap;
 }

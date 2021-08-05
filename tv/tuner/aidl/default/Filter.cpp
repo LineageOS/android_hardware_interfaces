@@ -519,7 +519,7 @@ uint16_t Filter::getTpid() {
     return mTpid;
 }
 
-void Filter::updateFilterOutput(vector<int8_t> data) {
+void Filter::updateFilterOutput(vector<int8_t>& data) {
     std::lock_guard<std::mutex> lock(mFilterOutputLock);
     mFilterOutput.insert(mFilterOutput.end(), data.begin(), data.end());
 }
@@ -529,7 +529,7 @@ void Filter::updatePts(uint64_t pts) {
     mPts = pts;
 }
 
-void Filter::updateRecordOutput(vector<int8_t> data) {
+void Filter::updateRecordOutput(vector<int8_t>& data) {
     std::lock_guard<std::mutex> lock(mRecordFilterOutputLock);
     mRecordFilterOutput.insert(mRecordFilterOutput.end(), data.begin(), data.end());
 }

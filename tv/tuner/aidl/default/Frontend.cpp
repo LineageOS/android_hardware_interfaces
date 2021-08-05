@@ -532,7 +532,7 @@ Frontend::~Frontend() {}
                     }
                     case FrontendType::ISDBT: {
                         interval.set<FrontendGuardInterval::Tag::isdbt>(
-                                FrontendDvbtGuardInterval::INTERVAL_1_32);  // value = 1 << 1
+                                FrontendIsdbtGuardInterval::INTERVAL_1_32);  // value = 1 << 1
                         status.set<FrontendStatus::interval>(interval);
                         break;
                     }

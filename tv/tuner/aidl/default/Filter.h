@@ -83,8 +83,8 @@ class Filter : public BnFilter {
      */
     bool createFilterMQ();
     uint16_t getTpid();
-    void updateFilterOutput(vector<int8_t> data);
-    void updateRecordOutput(vector<int8_t> data);
+    void updateFilterOutput(vector<int8_t>& data);
+    void updateRecordOutput(vector<int8_t>& data);
     void updatePts(uint64_t pts);
     ::ndk::ScopedAStatus startFilterHandler();
     ::ndk::ScopedAStatus startRecordFilterHandler();
