@@ -44,7 +44,6 @@ cc_library_static {
 
 cc_test {
     name: "neuralnetworks_utils_hal_1_0_test",
-    host_supported: true,
     srcs: ["test/*.cpp"],
     static_libs: [
         "android.hardware.neuralnetworks@1.0",
@@ -63,12 +62,8 @@ cc_test {
         "libhidlbase",
         "libhidlmemory",
         "liblog",
+        "libnativewindow",
         "libutils",
     ],
-    target: {
-        android: {
-            shared_libs: ["libnativewindow"],
-        },
-    },
     test_suites: ["general-tests"],
 }
