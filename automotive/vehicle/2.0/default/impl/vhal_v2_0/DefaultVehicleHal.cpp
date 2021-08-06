@@ -63,13 +63,6 @@ VehicleHal::VehiclePropValuePtr addTimestamp(VehicleHal::VehiclePropValuePtr v) 
     }
     return v;
 }
-
-bool isDebugProperty(int propId) {
-    return (propId == kGenerateFakeDataControllingProperty ||
-            propId == kSetIntPropertyFromVehicleForTest ||
-            propId == kSetFloatPropertyFromVehicleForTest ||
-            propId == kSetBooleanPropertyFromVehicleForTest);
-}
 }  // namespace
 
 VehicleHal::VehiclePropValuePtr DefaultVehicleHal::createVhalHeartBeatProp() {
@@ -393,11 +386,6 @@ StatusCode DefaultVehicleHal::set(const VehiclePropValue& propValue) {
         // Placeholder for future implementation of VMS property in the default hal. For
         // now, just returns OK; otherwise, hal clients crash with property not supported.
         return StatusCode::OK;
-    }
-    if (isDebugProperty(propValue.prop)) {
-        // These are special debug properties and do not need a config or check.
-        // TODO(shanyu): Remove this after we remove debug properties.
-        return mVehicleClient->setProperty(propValue, /*updateStatus=*/false);
     }
 
     int32_t property = propValue.prop;
