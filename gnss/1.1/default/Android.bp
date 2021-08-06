@@ -27,7 +27,7 @@ cc_binary {
         "android.hardware.gnss@2.0",
         "android.hardware.gnss@1.1",
         "android.hardware.gnss@1.0",
-        "android.hardware.gnss-V1-ndk_platform",
+        "android.hardware.gnss-V1-ndk",
     ],
     static_libs: [
         "android.hardware.gnss@common-default-lib",
