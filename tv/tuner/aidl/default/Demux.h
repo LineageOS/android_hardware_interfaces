@@ -50,7 +50,7 @@ class Tuner;
 
 class Demux : public BnDemux {
   public:
-    Demux(int32_t demuxId, std::shared_ptr<Tuner> tuner);
+    Demux(int32_t demuxId, Tuner* tuner);
     ~Demux();
 
     ::ndk::ScopedAStatus setFrontendDataSource(int32_t in_frontendId) override;
@@ -95,7 +95,7 @@ class Demux : public BnDemux {
 
   private:
     // Tuner service
-    std::shared_ptr<Tuner> mTuner;
+    Tuner* mTuner;
 
     // Frontend source
     std::shared_ptr<Frontend> mFrontend;

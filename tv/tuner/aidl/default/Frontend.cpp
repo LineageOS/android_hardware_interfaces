@@ -28,7 +28,7 @@ namespace hardware {
 namespace tv {
 namespace tuner {
 
-Frontend::Frontend(FrontendType type, int32_t id, std::shared_ptr<Tuner> tuner) {
+Frontend::Frontend(FrontendType type, int32_t id, Tuner* tuner) {
     mType = type;
     mId = id;
     mTuner = tuner;

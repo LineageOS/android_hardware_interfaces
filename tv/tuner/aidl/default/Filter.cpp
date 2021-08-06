@@ -37,7 +37,7 @@ namespace tuner {
 Filter::Filter() {}
 
 Filter::Filter(DemuxFilterType type, int64_t filterId, uint32_t bufferSize,
-               const std::shared_ptr<IFilterCallback>& cb, std::shared_ptr<Demux> demux) {
+               const std::shared_ptr<IFilterCallback>& cb, Demux* demux) {
     mType = type;
     mFilterId = filterId;
     mBufferSize = bufferSize;
