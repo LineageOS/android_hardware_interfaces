@@ -35,6 +35,6 @@ package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
 parcelable DemuxTsFilterSettings {
-  char tpid;
+  int tpid;
   android.hardware.tv.tuner.DemuxTsFilterSettingsFilterSettings filterSettings;
 }

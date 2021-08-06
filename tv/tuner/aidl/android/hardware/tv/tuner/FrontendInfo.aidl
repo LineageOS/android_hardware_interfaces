@@ -31,12 +31,12 @@ parcelable FrontendInfo {
     /**
      * Frequency in Hertz
      */
-    int minFrequency;
+    long minFrequency;
 
     /**
      * Frequency in Hertz
      */
-    int maxFrequency;
+    long maxFrequency;
 
     /**
      * Minimum symbols per second
@@ -51,7 +51,7 @@ parcelable FrontendInfo {
     /**
      * Range in Hertz
      */
-    int acquireRange;
+    long acquireRange;
 
     /**
      * Frontends are assigned with the same exclusiveGroupId if they can't

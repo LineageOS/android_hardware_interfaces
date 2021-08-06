@@ -35,8 +35,8 @@ package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
 parcelable DemuxFilterSectionEvent {
-  char tableId;
-  char version;
-  char sectionNum;
-  char dataLength;
+  int tableId;
+  int version;
+  int sectionNum;
+  int dataLength;
 }

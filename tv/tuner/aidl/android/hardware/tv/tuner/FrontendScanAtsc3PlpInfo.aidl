@@ -22,7 +22,7 @@ package android.hardware.tv.tuner;
  */
 @VintfStability
 parcelable FrontendScanAtsc3PlpInfo {
-    byte plpId;
+    int plpId;
 
     boolean bLlsFlag;
 }

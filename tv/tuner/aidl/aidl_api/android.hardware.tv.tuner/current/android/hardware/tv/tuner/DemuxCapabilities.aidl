@@ -44,7 +44,7 @@ parcelable DemuxCapabilities {
   int numVideoFilter;
   int numPesFilter;
   int numPcrFilter;
-  int numBytesInSectionFilter;
+  long numBytesInSectionFilter;
   int filterCaps;
   int[] linkCaps;
   boolean bTimeFilter;

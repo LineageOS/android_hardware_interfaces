@@ -35,6 +35,6 @@ package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
 union DemuxPid {
-  char tPid;
-  char mmtpPid;
+  int tPid;
+  int mmtpPid;
 }

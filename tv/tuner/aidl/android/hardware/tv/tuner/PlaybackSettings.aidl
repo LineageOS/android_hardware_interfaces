@@ -34,13 +34,13 @@ parcelable PlaybackSettings {
      * Unused space size in bytes in the playback. The HAL uses it to trigger
      * InputStatus::SPACE_ALMOST_EMPTY.
      */
-    int lowThreshold;
+    long lowThreshold;
 
     /**
      * Unused space size in bytes in the playback. The HAL uses it to trigger
      * InputStatus::SPACE_ALMOST_FULL.
      */
-    int highThreshold;
+    long highThreshold;
 
     /**
      * The data format in the playback.
@@ -50,5 +50,5 @@ parcelable PlaybackSettings {
     /**
      * The packet size in bytes in the playback.
      */
-    byte packetSize;
+    long packetSize;
 }

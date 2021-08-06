@@ -27,7 +27,7 @@ parcelable AudioExtraMetaData {
 
     byte adPan;
 
-    byte versionTextTag;
+    char  versionTextTag;
 
     byte adGainCenter;
 

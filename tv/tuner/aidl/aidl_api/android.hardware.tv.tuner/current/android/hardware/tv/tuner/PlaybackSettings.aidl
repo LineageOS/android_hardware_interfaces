@@ -36,8 +36,8 @@ package android.hardware.tv.tuner;
 @VintfStability
 parcelable PlaybackSettings {
   int statusMask;
-  int lowThreshold;
-  int highThreshold;
+  long lowThreshold;
+  long highThreshold;
   android.hardware.tv.tuner.DataFormat dataFormat = android.hardware.tv.tuner.DataFormat.UNDEFINED;
-  byte packetSize;
+  long packetSize;
 }

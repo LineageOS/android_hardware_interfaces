@@ -33,7 +33,7 @@ parcelable DemuxAlpFilterSettings {
      * 6: Packet Type Extension
      * 8: MPEG-2 Transport Stream
      */
-    byte packetType;
+    int packetType;
 
     DemuxAlpLengthType lengthType = DemuxAlpLengthType.UNDEFINED;
 

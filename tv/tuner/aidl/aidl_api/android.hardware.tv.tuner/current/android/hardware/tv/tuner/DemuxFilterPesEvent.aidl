@@ -35,7 +35,7 @@ package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
 parcelable DemuxFilterPesEvent {
-  char streamId;
-  char dataLength;
+  int streamId;
+  int dataLength;
   int mpuSequenceNumber;
 }

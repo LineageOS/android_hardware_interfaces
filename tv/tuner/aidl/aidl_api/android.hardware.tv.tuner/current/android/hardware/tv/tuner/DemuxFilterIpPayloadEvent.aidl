@@ -35,5 +35,5 @@ package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
 parcelable DemuxFilterIpPayloadEvent {
-  char dataLength;
+  int dataLength;
 }
