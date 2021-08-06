@@ -52,7 +52,7 @@ cc_binary {
         "android.hardware.gnss.measurement_corrections@1.1",
         "android.hardware.gnss.measurement_corrections@1.0",
         "android.hardware.gnss.visibility_control@1.0",
-        "android.hardware.gnss-V1-ndk_platform",
+        "android.hardware.gnss-V1-ndk",
     ],
     srcs: [
         "Gnss.cpp",

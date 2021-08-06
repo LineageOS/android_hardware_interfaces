@@ -29,8 +29,8 @@ cc_binary {
     vendor: true,
     shared_libs: [
         "android.hardware.audio.common@7.0-enums",
-        "android.frameworks.automotive.powerpolicy-V1-ndk_platform",
-        "android.hardware.automotive.audiocontrol-V1-ndk_platform",
+        "android.frameworks.automotive.powerpolicy-V1-ndk",
+        "android.hardware.automotive.audiocontrol-V1-ndk",
         "libbase",
         "libbinder_ndk",
         "libcutils",

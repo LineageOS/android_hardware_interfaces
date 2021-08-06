@@ -24,8 +24,8 @@ cc_binary {
     shared_libs: [
         "libbase",
         "libbinder_ndk",
-        "android.hardware.biometrics.fingerprint-V1-ndk_platform",
-        "android.hardware.biometrics.common-V1-ndk_platform",
+        "android.hardware.biometrics.fingerprint-V1-ndk",
+        "android.hardware.biometrics.common-V1-ndk",
     ],
 }
 
