@@ -31,7 +31,7 @@ namespace tuner {
 
 #define WAIT_TIMEOUT 3000000000
 
-Demux::Demux(int32_t demuxId, std::shared_ptr<Tuner> tuner) {
+Demux::Demux(int32_t demuxId, Tuner* tuner) {
     mDemuxId = demuxId;
     mTuner = tuner;
 }
@@ -76,7 +76,7 @@ Demux::~Demux() {
     }
 
     std::shared_ptr<Filter> filter =
-            ndk::SharedRefBase::make<Filter>(in_type, filterId, in_bufferSize, in_cb, ref<Demux>());
+            ndk::SharedRefBase::make<Filter>(in_type, filterId, in_bufferSize, in_cb, this);
     if (!filter->createFilterMQ()) {
         *_aidl_return = nullptr;
         return ::ndk::ScopedAStatus::fromServiceSpecificError(
@@ -110,7 +110,7 @@ Demux::~Demux() {
 ::ndk::ScopedAStatus Demux::openTimeFilter(std::shared_ptr<ITimeFilter>* _aidl_return) {
     ALOGV("%s", __FUNCTION__);
 
-    mTimeFilter = ndk::SharedRefBase::make<TimeFilter>(ref<Demux>());
+    mTimeFilter = ndk::SharedRefBase::make<TimeFilter>(this);
 
     *_aidl_return = mTimeFilter;
     return ::ndk::ScopedAStatus::ok();
@@ -201,8 +201,7 @@ Demux::~Demux() {
     set<int64_t>::iterator it;
     switch (in_type) {
         case DvrType::PLAYBACK:
-            mDvrPlayback =
-                    ndk::SharedRefBase::make<Dvr>(in_type, in_bufferSize, in_cb, ref<Demux>());
+            mDvrPlayback = ndk::SharedRefBase::make<Dvr>(in_type, in_bufferSize, in_cb, this);
             if (!mDvrPlayback->createDvrMQ()) {
                 mDvrPlayback = nullptr;
                 *_aidl_return = mDvrPlayback;
@@ -223,7 +222,7 @@ Demux::~Demux() {
             *_aidl_return = mDvrPlayback;
             return ::ndk::ScopedAStatus::ok();
         case DvrType::RECORD:
-            mDvrRecord = ndk::SharedRefBase::make<Dvr>(in_type, in_bufferSize, in_cb, ref<Demux>());
+            mDvrRecord = ndk::SharedRefBase::make<Dvr>(in_type, in_bufferSize, in_cb, this);
             if (!mDvrRecord->createDvrMQ()) {
                 mDvrRecord = nullptr;
                 *_aidl_return = mDvrRecord;

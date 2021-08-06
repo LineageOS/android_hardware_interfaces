@@ -33,7 +33,7 @@ class Tuner;
 
 class Frontend : public BnFrontend {
   public:
-    Frontend(FrontendType type, int32_t id, std::shared_ptr<Tuner> tuner);
+    Frontend(FrontendType type, int32_t id, Tuner* tuner);
 
     ::ndk::ScopedAStatus setCallback(
             const std::shared_ptr<IFrontendCallback>& in_callback) override;
@@ -59,7 +59,7 @@ class Frontend : public BnFrontend {
     virtual ~Frontend();
     bool supportsSatellite();
     std::shared_ptr<IFrontendCallback> mCallback;
-    std::shared_ptr<Tuner> mTuner;
+    Tuner* mTuner;
     FrontendType mType = FrontendType::UNDEFINED;
     int32_t mId = 0;
     bool mIsLocked = false;

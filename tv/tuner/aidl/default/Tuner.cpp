@@ -36,16 +36,16 @@ Tuner::Tuner() {
     // Static Frontends array to maintain local frontends information
     // Array index matches their FrontendId in the default impl
     mFrontendSize = 10;
-    mFrontends[0] = ndk::SharedRefBase::make<Frontend>(FrontendType::ISDBS, 0, ref<Tuner>());
-    mFrontends[1] = ndk::SharedRefBase::make<Frontend>(FrontendType::ATSC3, 1, ref<Tuner>());
-    mFrontends[2] = ndk::SharedRefBase::make<Frontend>(FrontendType::DVBC, 2, ref<Tuner>());
-    mFrontends[3] = ndk::SharedRefBase::make<Frontend>(FrontendType::DVBS, 3, ref<Tuner>());
-    mFrontends[4] = ndk::SharedRefBase::make<Frontend>(FrontendType::DVBT, 4, ref<Tuner>());
-    mFrontends[5] = ndk::SharedRefBase::make<Frontend>(FrontendType::ISDBT, 5, ref<Tuner>());
-    mFrontends[6] = ndk::SharedRefBase::make<Frontend>(FrontendType::ANALOG, 6, ref<Tuner>());
-    mFrontends[7] = ndk::SharedRefBase::make<Frontend>(FrontendType::ATSC, 7, ref<Tuner>());
-    mFrontends[8] = ndk::SharedRefBase::make<Frontend>(FrontendType::ISDBS3, 8, ref<Tuner>());
-    mFrontends[9] = ndk::SharedRefBase::make<Frontend>(FrontendType::DTMB, 9, ref<Tuner>());
+    mFrontends[0] = ndk::SharedRefBase::make<Frontend>(FrontendType::ISDBS, 0, this);
+    mFrontends[1] = ndk::SharedRefBase::make<Frontend>(FrontendType::ATSC3, 1, this);
+    mFrontends[2] = ndk::SharedRefBase::make<Frontend>(FrontendType::DVBC, 2, this);
+    mFrontends[3] = ndk::SharedRefBase::make<Frontend>(FrontendType::DVBS, 3, this);
+    mFrontends[4] = ndk::SharedRefBase::make<Frontend>(FrontendType::DVBT, 4, this);
+    mFrontends[5] = ndk::SharedRefBase::make<Frontend>(FrontendType::ISDBT, 5, this);
+    mFrontends[6] = ndk::SharedRefBase::make<Frontend>(FrontendType::ANALOG, 6, this);
+    mFrontends[7] = ndk::SharedRefBase::make<Frontend>(FrontendType::ATSC, 7, this);
+    mFrontends[8] = ndk::SharedRefBase::make<Frontend>(FrontendType::ISDBS3, 8, this);
+    mFrontends[9] = ndk::SharedRefBase::make<Frontend>(FrontendType::DTMB, 9, this);
 
     vector<FrontendStatusType> statusCaps;
 
@@ -212,7 +212,7 @@ Tuner::~Tuner() {}
     ALOGV("%s", __FUNCTION__);
 
     mLastUsedId += 1;
-    mDemuxes[mLastUsedId] = ndk::SharedRefBase::make<Demux>(mLastUsedId, ref<Tuner>());
+    mDemuxes[mLastUsedId] = ndk::SharedRefBase::make<Demux>(mLastUsedId, this);
 
     out_demuxId->push_back(mLastUsedId);
     *_aidl_return = mDemuxes[mLastUsedId];
