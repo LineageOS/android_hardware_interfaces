@@ -32,6 +32,8 @@ enum MsgType {
     SET_PROPERTY_CMD                    = 8;
     SET_PROPERTY_RESP                   = 9;
     SET_PROPERTY_ASYNC                  = 10;
+    DEBUG_CMD                           = 11;
+    DEBUG_RESP                          = 12;
 }
 enum Status {
     RESULT_OK                           = 0;
@@ -98,9 +100,11 @@ message VehiclePropGet {
 };
 
 message EmulatorMessage {
-    required MsgType           msg_type = 1;
-    optional Status            status   = 2;    // Only for RESP messages
-    repeated VehiclePropGet    prop     = 3;    // Provided for getConfig, getProperty commands
-    repeated VehiclePropConfig config   = 4;
-    repeated VehiclePropValue  value    = 5;
+    required MsgType           msg_type       = 1;
+    optional Status            status         = 2; // Only for RESP messages
+    repeated VehiclePropGet    prop           = 3; // Provided for getConfig, getProperty commands
+    repeated VehiclePropConfig config         = 4;
+    repeated VehiclePropValue  value          = 5;
+    repeated string            debug_commands = 6; // Required for debug command
+    optional string            debug_result   = 7; // Required for debug RESP messages
 };

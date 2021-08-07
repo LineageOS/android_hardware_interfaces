@@ -130,95 +130,6 @@ std::vector<VehiclePropConfig> DefaultVehicleHalServer::onGetAllPropertyConfig()
     return mServerSidePropStore.getAllConfigs();
 }
 
-StatusCode DefaultVehicleHalServer::handleGenerateFakeDataRequest(const VehiclePropValue& request) {
-    constexpr bool updateStatus = true;
-
-    LOG(INFO) << __func__;
-    const auto& v = request.value;
-    if (!v.int32Values.size()) {
-        LOG(ERROR) << __func__ << ": expected at least \"command\" field in int32Values";
-        return StatusCode::INVALID_ARG;
-    }
-
-    FakeDataCommand command = static_cast<FakeDataCommand>(v.int32Values[0]);
-
-    switch (command) {
-        case FakeDataCommand::StartLinear: {
-            LOG(INFO) << __func__ << ", FakeDataCommand::StartLinear";
-            if (v.int32Values.size() < 2) {
-                LOG(ERROR) << __func__ << ": expected property ID in int32Values";
-                return StatusCode::INVALID_ARG;
-            }
-            if (!v.int64Values.size()) {
-                LOG(ERROR) << __func__ << ": interval is not provided in int64Values";
-                return StatusCode::INVALID_ARG;
-            }
-            if (v.floatValues.size() < 3) {
-                LOG(ERROR) << __func__ << ": expected at least 3 elements in floatValues, got: "
-                           << v.floatValues.size();
-                return StatusCode::INVALID_ARG;
-            }
-            int32_t cookie = v.int32Values[1];
-            getGeneratorHub()->registerGenerator(
-                    cookie, std::make_unique<LinearFakeValueGenerator>(request));
-            break;
-        }
-        case FakeDataCommand::StartJson: {
-            LOG(INFO) << __func__ << ", FakeDataCommand::StartJson";
-            if (v.stringValue.empty()) {
-                LOG(ERROR) << __func__ << ": path to JSON file is missing";
-                return StatusCode::INVALID_ARG;
-            }
-            int32_t cookie = std::hash<std::string>()(v.stringValue);
-            auto generator = std::make_unique<JsonFakeValueGenerator>(request);
-            if (!generator->hasNext()) {
-                LOG(ERROR) << __func__ << ": invalid JSON file, no events";
-                return StatusCode::INVALID_ARG;
-            }
-            getGeneratorHub()->registerGenerator(cookie, std::move(generator));
-            break;
-        }
-        case FakeDataCommand::StopLinear: {
-            LOG(INFO) << __func__ << ", FakeDataCommand::StopLinear";
-            if (v.int32Values.size() < 2) {
-                LOG(ERROR) << __func__ << ": expected property ID in int32Values";
-                return StatusCode::INVALID_ARG;
-            }
-            int32_t cookie = v.int32Values[1];
-            getGeneratorHub()->unregisterGenerator(cookie);
-            break;
-        }
-        case FakeDataCommand::StopJson: {
-            LOG(INFO) << __func__ << ", FakeDataCommand::StopJson";
-            if (v.stringValue.empty()) {
-                LOG(ERROR) << __func__ << ": path to JSON file is missing";
-                return StatusCode::INVALID_ARG;
-            }
-            int32_t cookie = std::hash<std::string>()(v.stringValue);
-            getGeneratorHub()->unregisterGenerator(cookie);
-            break;
-        }
-        case FakeDataCommand::KeyPress: {
-            LOG(INFO) << __func__ << ", FakeDataCommand::KeyPress";
-            int32_t keyCode = request.value.int32Values[2];
-            int32_t display = request.value.int32Values[3];
-            // Send back to HAL
-            onPropertyValueFromCar(
-                    *createHwInputKeyProp(VehicleHwKeyInputAction::ACTION_DOWN, keyCode, display),
-                    updateStatus);
-            onPropertyValueFromCar(
-                    *createHwInputKeyProp(VehicleHwKeyInputAction::ACTION_UP, keyCode, display),
-                    updateStatus);
-            break;
-        }
-        default: {
-            LOG(ERROR) << __func__ << ": unexpected command: " << toInt(command);
-            return StatusCode::INVALID_ARG;
-        }
-    }
-    return StatusCode::OK;
-}
-
 DefaultVehicleHalServer::VehiclePropValuePtr DefaultVehicleHalServer::createApPowerStateReq(
         VehicleApPowerStateReq state, int32_t param) {
     auto req = getValuePool()->obtain(VehiclePropertyType::INT32_VEC, 2);
@@ -250,38 +161,6 @@ StatusCode DefaultVehicleHalServer::onSetProperty(const VehiclePropValue& value,
 
     // Some properties need to be treated non-trivially
     switch (value.prop) {
-        case kGenerateFakeDataControllingProperty:
-            return handleGenerateFakeDataRequest(value);
-
-        // set the value from vehicle side, used in end to end test.
-        case kSetIntPropertyFromVehicleForTest: {
-            auto updatedPropValue = createVehiclePropValue(VehiclePropertyType::INT32, 1);
-            updatedPropValue->prop = value.value.int32Values[0];
-            updatedPropValue->value.int32Values[0] = value.value.int32Values[1];
-            updatedPropValue->timestamp = value.value.int64Values[0];
-            updatedPropValue->areaId = value.areaId;
-            onPropertyValueFromCar(*updatedPropValue, updateStatus);
-            return StatusCode::OK;
-        }
-        case kSetFloatPropertyFromVehicleForTest: {
-            auto updatedPropValue = createVehiclePropValue(VehiclePropertyType::FLOAT, 1);
-            updatedPropValue->prop = value.value.int32Values[0];
-            updatedPropValue->value.floatValues[0] = value.value.floatValues[0];
-            updatedPropValue->timestamp = value.value.int64Values[0];
-            updatedPropValue->areaId = value.areaId;
-            onPropertyValueFromCar(*updatedPropValue, updateStatus);
-            return StatusCode::OK;
-        }
-        case kSetBooleanPropertyFromVehicleForTest: {
-            auto updatedPropValue = createVehiclePropValue(VehiclePropertyType::BOOLEAN, 1);
-            updatedPropValue->prop = value.value.int32Values[1];
-            updatedPropValue->value.int32Values[0] = value.value.int32Values[0];
-            updatedPropValue->timestamp = value.value.int64Values[0];
-            updatedPropValue->areaId = value.areaId;
-            onPropertyValueFromCar(*updatedPropValue, updateStatus);
-            return StatusCode::OK;
-        }
-
         case AP_POWER_STATE_REPORT:
             switch (value.value.int32Values[0]) {
                 case toInt(VehicleApPowerStateReport::DEEP_SLEEP_EXIT):
