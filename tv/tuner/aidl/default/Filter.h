@@ -54,7 +54,7 @@ class Filter : public BnFilter {
     Filter();
 
     Filter(DemuxFilterType type, int64_t filterId, uint32_t bufferSize,
-           const std::shared_ptr<IFilterCallback>& cb, Demux* demux);
+           const std::shared_ptr<IFilterCallback>& cb, std::shared_ptr<Demux> demux);
 
     ~Filter();
 
@@ -97,7 +97,7 @@ class Filter : public BnFilter {
 
   private:
     // Demux service
-    Demux* mDemux;
+    std::shared_ptr<Demux> mDemux;
     // Dvr reference once the filter is attached to any
     std::shared_ptr<Dvr> mDvr = nullptr;
     /**

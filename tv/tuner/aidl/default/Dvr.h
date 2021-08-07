@@ -57,7 +57,8 @@ class Tuner;
 
 class Dvr : public BnDvr {
   public:
-    Dvr(DvrType type, uint32_t bufferSize, const std::shared_ptr<IDvrCallback>& cb, Demux* demux);
+    Dvr(DvrType type, uint32_t bufferSize, const std::shared_ptr<IDvrCallback>& cb,
+        std::shared_ptr<Demux> demux);
     ~Dvr();
 
     ::ndk::ScopedAStatus getQueueDesc(
@@ -87,7 +88,7 @@ class Dvr : public BnDvr {
 
   private:
     // Demux service
-    Demux* mDemux;
+    std::shared_ptr<Demux> mDemux;
 
     DvrType mType;
     uint32_t mBufferSize;
