@@ -41,7 +41,7 @@ cc_defaults {
     defaults: ["vhal_v2_0_defaults"],
     shared_libs: [
         "libbinder_ndk",
-        "carwatchdog_aidl_interface-V2-ndk_platform",
+        "carwatchdog_aidl_interface-V2-ndk",
     ],
 }
 
