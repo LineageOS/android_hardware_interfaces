@@ -35,7 +35,7 @@ class Demux;
 class TimeFilter : public BnTimeFilter {
   public:
     TimeFilter();
-    TimeFilter(Demux* demux);
+    TimeFilter(std::shared_ptr<Demux> demux);
     ~TimeFilter();
 
     ::ndk::ScopedAStatus setTimeStamp(int64_t in_timeStamp) override;
@@ -45,7 +45,7 @@ class TimeFilter : public BnTimeFilter {
     ::ndk::ScopedAStatus close() override;
 
   private:
-    Demux* mDemux;
+    std::shared_ptr<Demux> mDemux;
     uint64_t mTimeStamp = INVALID_TIME_STAMP;
     time_t mBeginTime;
 };
