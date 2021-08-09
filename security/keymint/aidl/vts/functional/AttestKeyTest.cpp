@@ -312,6 +312,7 @@ TEST_P(AttestKeyTest, RsaAttestKeyChaining) {
 
         AuthorizationSet hw_enforced = HwEnforcedAuthorizations(attested_key_characteristics);
         AuthorizationSet sw_enforced = SwEnforcedAuthorizations(attested_key_characteristics);
+        ASSERT_GT(cert_chain_list[i].size(), 0);
         EXPECT_TRUE(verify_attestation_record("foo", "bar", sw_enforced, hw_enforced, SecLevel(),
                                               cert_chain_list[i][0].encodedCertificate));
 
@@ -383,6 +384,7 @@ TEST_P(AttestKeyTest, EcAttestKeyChaining) {
 
         AuthorizationSet hw_enforced = HwEnforcedAuthorizations(attested_key_characteristics);
         AuthorizationSet sw_enforced = SwEnforcedAuthorizations(attested_key_characteristics);
+        ASSERT_GT(cert_chain_list[i].size(), 0);
         EXPECT_TRUE(verify_attestation_record("foo", "bar", sw_enforced, hw_enforced, SecLevel(),
                                               cert_chain_list[i][0].encodedCertificate));
 
@@ -471,6 +473,7 @@ TEST_P(AttestKeyTest, AlternateAttestKeyChaining) {
 
         AuthorizationSet hw_enforced = HwEnforcedAuthorizations(attested_key_characteristics);
         AuthorizationSet sw_enforced = SwEnforcedAuthorizations(attested_key_characteristics);
+        ASSERT_GT(cert_chain_list[i].size(), 0);
         EXPECT_TRUE(verify_attestation_record("foo", "bar", sw_enforced, hw_enforced, SecLevel(),
                                               cert_chain_list[i][0].encodedCertificate));
 
