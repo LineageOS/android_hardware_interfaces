@@ -37,6 +37,8 @@ void TunerFilterHidlTest::configSingleFilterInDemuxTest(FilterConfig filterConf,
     uint32_t demuxId;
     sp<IDemux> demux;
     uint32_t filterId;
+    if (frontendConf.type != FrontendType::DVBC)
+        GTEST_SKIP() << "Skipping this test since not DVBC.";
 
     mFrontendTests.getFrontendIdByType(frontendConf.type, feId);
     ASSERT_TRUE(feId != INVALID_ID);
@@ -174,6 +176,9 @@ void TunerRecordHidlTest::recordSingleFilterTest(FilterConfig filterConf,
     uint32_t filterId;
     sp<IFilter> filter;
 
+    if (frontendConf.type != FrontendType::DVBC)
+        GTEST_SKIP() << "Skipping this test since not DVBC.";
+
     mFrontendTests.getFrontendIdByType(frontendConf.type, feId);
     ASSERT_TRUE(feId != INVALID_ID);
     ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
@@ -239,6 +244,9 @@ void TunerRecordHidlTest::attachSingleFilterToRecordDvrTest(FilterConfig filterC
     sp<IDemux> demux;
     uint32_t filterId;
     sp<IFilter> filter;
+
+    if (frontendConf.type != FrontendType::DVBC)
+        GTEST_SKIP() << "Skipping this test since not DVBC.";
 
     mFrontendTests.getFrontendIdByType(frontendConf.type, feId);
     ASSERT_TRUE(feId != INVALID_ID);
@@ -390,6 +398,8 @@ TEST_P(TunerDemuxHidlTest, openDemux) {
     uint32_t demuxId;
     sp<IDemux> demux;
     mFrontendTests.getFrontendIdByType(frontendArray[defaultFrontend].type, feId);
+    if (frontendArray[DVBT].type != FrontendType::DVBC)
+        GTEST_SKIP() << "Skipping this test since not DVBC.";
     ASSERT_TRUE(feId != INVALID_ID);
     ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
     ASSERT_TRUE(mFrontendTests.setFrontendCallback());
@@ -408,6 +418,8 @@ TEST_P(TunerDemuxHidlTest, getAvSyncTime) {
     uint32_t pcrFilterId;
     uint32_t avSyncHwId;
     sp<IFilter> mediaFilter;
+    if (frontendArray[DVBT].type != FrontendType::DVBC)
+        GTEST_SKIP() << "Skipping this test since not DVBC.";
 
     mFrontendTests.getFrontendIdByType(frontendArray[defaultFrontend].type, feId);
     ASSERT_TRUE(feId != INVALID_ID);
@@ -531,6 +543,8 @@ TEST_P(TunerDescramblerHidlTest, CreateDescrambler) {
     uint32_t demuxId;
     sp<IDemux> demux;
     mFrontendTests.getFrontendIdByType(frontendArray[defaultFrontend].type, feId);
+    if (frontendArray[DVBT].type != FrontendType::DVBC)
+        GTEST_SKIP() << "Skipping this test since not DVBC.";
     ASSERT_TRUE(feId != INVALID_ID);
     ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
     ASSERT_TRUE(mFrontendTests.setFrontendCallback());
