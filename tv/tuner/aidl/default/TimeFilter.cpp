@@ -30,7 +30,7 @@ namespace tuner {
 
 TimeFilter::TimeFilter() {}
 
-TimeFilter::TimeFilter(Demux* demux) {
+TimeFilter::TimeFilter(std::shared_ptr<Demux> demux) {
     mDemux = demux;
 }
 
