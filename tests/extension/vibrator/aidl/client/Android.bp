@@ -27,7 +27,7 @@ cc_test {
         "android.hardware.tests.extension.vibrator-V1-cpp",
 
         "libbinder_ndk",
-        "android.hardware.vibrator-V2-ndk_platform",
-        "android.hardware.tests.extension.vibrator-V1-ndk_platform",
+        "android.hardware.vibrator-V2-ndk",
+        "android.hardware.tests.extension.vibrator-V1-ndk",
     ],
 }
