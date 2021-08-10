@@ -31,7 +31,7 @@ namespace tuner {
 
 #define WAIT_TIMEOUT 3000000000
 
-Demux::Demux(int32_t demuxId, Tuner* tuner) {
+Demux::Demux(int32_t demuxId, std::shared_ptr<Tuner> tuner) {
     mDemuxId = demuxId;
     mTuner = tuner;
 }
@@ -75,8 +75,8 @@ Demux::~Demux() {
                 static_cast<int32_t>(Result::INVALID_ARGUMENT));
     }
 
-    std::shared_ptr<Filter> filter =
-            ndk::SharedRefBase::make<Filter>(in_type, filterId, in_bufferSize, in_cb, this);
+    std::shared_ptr<Filter> filter = ndk::SharedRefBase::make<Filter>(
+            in_type, filterId, in_bufferSize, in_cb, this->ref<Demux>());
     if (!filter->createFilterMQ()) {
         *_aidl_return = nullptr;
         return ::ndk::ScopedAStatus::fromServiceSpecificError(
@@ -110,7 +110,7 @@ Demux::~Demux() {
 ::ndk::ScopedAStatus Demux::openTimeFilter(std::shared_ptr<ITimeFilter>* _aidl_return) {
     ALOGV("%s", __FUNCTION__);
 
-    mTimeFilter = ndk::SharedRefBase::make<TimeFilter>(this);
+    mTimeFilter = ndk::SharedRefBase::make<TimeFilter>(this->ref<Demux>());
 
     *_aidl_return = mTimeFilter;
     return ::ndk::ScopedAStatus::ok();
@@ -201,7 +201,8 @@ Demux::~Demux() {
     set<int64_t>::iterator it;
     switch (in_type) {
         case DvrType::PLAYBACK:
-            mDvrPlayback = ndk::SharedRefBase::make<Dvr>(in_type, in_bufferSize, in_cb, this);
+            mDvrPlayback = ndk::SharedRefBase::make<Dvr>(in_type, in_bufferSize, in_cb,
+                                                         this->ref<Demux>());
             if (!mDvrPlayback->createDvrMQ()) {
                 mDvrPlayback = nullptr;
                 *_aidl_return = mDvrPlayback;
@@ -222,7 +223,8 @@ Demux::~Demux() {
             *_aidl_return = mDvrPlayback;
             return ::ndk::ScopedAStatus::ok();
         case DvrType::RECORD:
-            mDvrRecord = ndk::SharedRefBase::make<Dvr>(in_type, in_bufferSize, in_cb, this);
+            mDvrRecord = ndk::SharedRefBase::make<Dvr>(in_type, in_bufferSize, in_cb,
+                                                       this->ref<Demux>());
             if (!mDvrRecord->createDvrMQ()) {
                 mDvrRecord = nullptr;
                 *_aidl_return = mDvrRecord;

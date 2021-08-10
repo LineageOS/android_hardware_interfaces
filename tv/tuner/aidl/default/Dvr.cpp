@@ -31,7 +31,8 @@ namespace tuner {
 
 #define WAIT_TIMEOUT 3000000000
 
-Dvr::Dvr(DvrType type, uint32_t bufferSize, const std::shared_ptr<IDvrCallback>& cb, Demux* demux) {
+Dvr::Dvr(DvrType type, uint32_t bufferSize, const std::shared_ptr<IDvrCallback>& cb,
+         std::shared_ptr<Demux> demux) {
     mType = type;
     mBufferSize = bufferSize;
     mCallback = cb;

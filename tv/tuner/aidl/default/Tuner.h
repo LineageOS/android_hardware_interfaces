@@ -63,6 +63,7 @@ class Tuner : public BnTuner {
     void frontendStopTune(int32_t frontendId);
     void removeDemux(int32_t demuxId);
     void removeFrontend(int32_t frontendId);
+    void init();
 
   private:
     // Static mFrontends array to maintain local frontends information
