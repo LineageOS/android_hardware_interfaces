@@ -22,6 +22,10 @@ aidl_interface {
             vndk: {
                 enabled: true,
             },
+            apex_available: [
+               "com.android.uwb",
+            ],
+            min_sdk_version: "current",
         },
     },
 }
