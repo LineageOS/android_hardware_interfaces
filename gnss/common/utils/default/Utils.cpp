@@ -221,7 +221,7 @@ GnssData Utils::getMockMeasurement(const bool enableCorrVecOutputs) {
         aidl::android::hardware::gnss::CorrelationVector correlationVector2 = {
                 .frequencyOffsetMps = 20,
                 .samplingWidthM = 30,
-                .samplingStartM = 0,
+                .samplingStartM = -10,
                 .magnitude = {0, 3000, 5000, 3000, 0, 0, 1000, 0}};
         measurement.correlationVectors = {correlationVector1, correlationVector2};
         measurement.flags |= GnssMeasurement::HAS_CORRELATION_VECTOR;
