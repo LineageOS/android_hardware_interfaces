@@ -42,6 +42,8 @@ cc_library_static {
         "Utils.cpp",
         "NmeaFixInfo.cpp",
         "GnssReplayUtils.cpp",
+        "ParseUtils.cpp",
+        "GnssRawMeasurementParser.cpp",
     ],
     export_include_dirs: ["include"],
     shared_libs: [
