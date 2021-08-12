@@ -57,8 +57,28 @@ cc_library {
         "include",
     ],
     shared_libs: [
+        "libbase",
         "libcppbor_external",
         "libcppcose_rkp",
         "libcrypto",
+        "libjsoncpp",
+    ],
+}
+
+cc_test {
+    name: "libkeymint_remote_prov_support_test",
+    srcs: ["remote_prov_utils_test.cpp"],
+    static_libs: [
+        "libgmock",
+        "libgtest_main",
+    ],
+    shared_libs: [
+        "libbase",
+        "libcppbor_external",
+        "libcppcose_rkp",
+        "libcrypto",
+        "libjsoncpp",
+        "libkeymaster_portable",
+        "libkeymint_remote_prov_support",
     ],
 }

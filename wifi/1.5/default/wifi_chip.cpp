@@ -1948,8 +1948,8 @@ bool WifiChip::writeRingbufferFilesInternal() {
     // write ringbuffers to file
     {
         std::unique_lock<std::mutex> lk(lock_t);
-        for (const auto& item : ringbuffer_map_) {
-            const Ringbuffer& cur_buffer = item.second;
+        for (auto& item : ringbuffer_map_) {
+            Ringbuffer& cur_buffer = item.second;
             if (cur_buffer.getData().empty()) {
                 continue;
             }
@@ -1967,6 +1967,7 @@ bool WifiChip::writeRingbufferFilesInternal() {
                     PLOG(ERROR) << "Error writing to file";
                 }
             }
+            cur_buffer.clear();
         }
         // unique_lock unlocked here
     }

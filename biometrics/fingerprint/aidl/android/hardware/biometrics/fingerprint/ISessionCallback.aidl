@@ -34,12 +34,12 @@ interface ISessionCallback {
 
     /**
      * This method must only be used to notify the framework during the following operations:
-     *   1) ISession#enroll
-     *   2) ISession#authenticate
-     *   3) ISession#detectInteraction
+     *   - ISession#enroll
+     *   - ISession#authenticate
+     *   - ISession#detectInteraction
      *
-     * These messages may be used to provide user guidance multiple times if necessary per
-     * operation.
+     * These messages may be used to provide user guidance multiple times per operation if
+     * necessary.
      *
      * @param info See the AcquiredInfo enum.
      * @param vendorCode Only valid if info == AcquiredInfo::VENDOR. The vendorCode must be used to
@@ -51,18 +51,18 @@ interface ISessionCallback {
 
     /**
      * This method must only be used to notify the framework during the following operations:
-     *   1) ISession#enroll
-     *   2) ISession#authenticate
-     *   3) ISession#detectInteraction
-     *   4) ISession#invalidateAuthenticatorId
-     *   5) ISession#resetLockout
+     *   - ISession#enroll
+     *   - ISession#authenticate
+     *   - ISession#detectInteraction
+     *   - ISession#invalidateAuthenticatorId
+     *   - ISession#resetLockout
      *
      * These messages may be used to notify the framework or user that a non-recoverable error
      * has occurred. The operation is finished, and the HAL can proceed with the next operation
      * or return to the idling state.
      *
-     * Note that cancellation (see common::ICancellationSignal) and preemption must be followed with
-     * an Error::CANCELED message.
+     * Note that cancellation (see common::ICancellationSignal) must be followed with an
+     * Error::CANCELED message.
      *
      * @param error See the Error enum.
      * @param vendorCode Only valid if error == Error::VENDOR. The vendorCode must be used to index
@@ -100,8 +100,8 @@ interface ISessionCallback {
      * This method must only be used to notify the framework during ISession#authenticate.
      *
      * Used to notify the framework upon rejected attempts. Note that the authentication
-     * lifecycle ends when either 1) a fingerprint is accepted, or 2) an occurred. The
-     * authentication lifecycle does NOT end when a fingerprint is rejected.
+     * lifecycle ends when either 1) a fingerprint is accepted, or 2) an error occurred.
+     * The authentication lifecycle does NOT end when a fingerprint is rejected.
      */
     void onAuthenticationFailed();
 

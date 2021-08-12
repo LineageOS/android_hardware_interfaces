@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-#include <remote_prov/remote_prov_utils.h>
+#include <iterator>
+#include <tuple>
 
-#include <openssl/rand.h>
-
+#include <android-base/properties.h>
 #include <cppbor.h>
+#include <json/json.h>
+#include <openssl/base64.h>
+#include <openssl/rand.h>
+#include <remote_prov/remote_prov_utils.h>
 
 namespace aidl::android::hardware::security::keymint::remote_prov {
 
@@ -31,6 +35,10 @@ bytevec randomBytes(size_t numBytes) {
 }
 
 ErrMsgOr<EekChain> generateEekChain(size_t length, const bytevec& eekId) {
+    if (length < 2) {
+        return "EEK chain must contain at least 2 certs.";
+    }
+
     auto eekChain = cppbor::Array();
 
     bytevec prev_priv_key;
@@ -76,6 +84,18 @@ ErrMsgOr<EekChain> generateEekChain(size_t length, const bytevec& eekId) {
     eekChain.add(coseSign1.moveValue());
 
     return EekChain{eekChain.encode(), pub_key, priv_key};
+}
+
+bytevec getProdEekChain() {
+    bytevec prodEek;
+    prodEek.reserve(1 + sizeof(kCoseEncodedRootCert) + sizeof(kCoseEncodedGeekCert));
+
+    // In CBOR encoding, 0x82 indicates an array of two items
+    prodEek.push_back(0x82);
+    prodEek.insert(prodEek.end(), std::begin(kCoseEncodedRootCert), std::end(kCoseEncodedRootCert));
+    prodEek.insert(prodEek.end(), std::begin(kCoseEncodedGeekCert), std::end(kCoseEncodedGeekCert));
+
+    return prodEek;
 }
 
 ErrMsgOr<bytevec> verifyAndParseCoseSign1Cwt(const cppbor::Array* coseSign1,
@@ -160,6 +180,38 @@ ErrMsgOr<std::vector<BccEntryData>> validateBcc(const cppbor::Array* bcc) {
     }
 
     return result;
+}
+
+JsonOutput jsonEncodeCsrWithBuild(const cppbor::Array& csr) {
+    const std::string kFingerprintProp = "ro.build.fingerprint";
+
+    if (!::android::base::WaitForPropertyCreation(kFingerprintProp)) {
+        return JsonOutput::Error("Unable to read build fingerprint");
+    }
+
+    bytevec csrCbor = csr.encode();
+    size_t base64Length;
+    int rc = EVP_EncodedLength(&base64Length, csrCbor.size());
+    if (!rc) {
+        return JsonOutput::Error("Error getting base64 length. Size overflow?");
+    }
+
+    std::vector<char> base64(base64Length);
+    rc = EVP_EncodeBlock(reinterpret_cast<uint8_t*>(base64.data()), csrCbor.data(), csrCbor.size());
+    ++rc;  // Account for NUL, which BoringSSL does not for some reason.
+    if (rc != base64Length) {
+        return JsonOutput::Error("Error writing base64. Expected " + std::to_string(base64Length) +
+                                 " bytes to be written, but " + std::to_string(rc) +
+                                 " bytes were actually written.");
+    }
+
+    Json::Value json(Json::objectValue);
+    json["build_fingerprint"] = ::android::base::GetProperty(kFingerprintProp, /*default=*/"");
+    json["csr"] = base64.data();  // Boring writes a NUL-terminated c-string
+
+    Json::StreamWriterBuilder factory;
+    factory["indentation"] = "";  // disable pretty formatting
+    return JsonOutput::Ok(Json::writeString(factory, json));
 }
 
 }  // namespace aidl::android::hardware::security::keymint::remote_prov

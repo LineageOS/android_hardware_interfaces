@@ -113,6 +113,7 @@ struct GnssTemplate : public T_IGnss {
     void reportLocation(const V2_0::GnssLocation&) const;
     void reportLocation(const V1_0::GnssLocation&) const;
     void reportSvStatus(const hidl_vec<V2_1::IGnssCallback::GnssSvInfo>&) const;
+    void reportGnssStatusValue(const V1_0::IGnssCallback::GnssStatusValue) const;
 
     Return<void> help(const hidl_handle& fd);
     Return<void> setLocation(const hidl_handle& fd, const hidl_vec<hidl_string>& options);
@@ -215,6 +216,7 @@ Return<bool> GnssTemplate<T_IGnss>::start() {
     }
 
     mIsActive = true;
+    this->reportGnssStatusValue(V1_0::IGnssCallback::GnssStatusValue::SESSION_BEGIN);
     mThread = std::thread([this]() {
         while (mIsActive == true) {
             auto svStatus = filterBlocklistedSatellitesV2_1(Utils::getMockSvInfoListV2_1());
@@ -266,6 +268,7 @@ template <class T_IGnss>
 Return<bool> GnssTemplate<T_IGnss>::stop() {
     ALOGD("stop");
     mIsActive = false;
+    this->reportGnssStatusValue(V1_0::IGnssCallback::GnssStatusValue::SESSION_END);
     if (mThread.joinable()) {
         mThread.join();
     }
@@ -603,6 +606,20 @@ template <class T_IGnss>
 Return<sp<V2_1::IGnssAntennaInfo>> GnssTemplate<T_IGnss>::getExtensionGnssAntennaInfo() {
     ALOGD("Gnss::getExtensionGnssAntennaInfo");
     return new V2_1::implementation::GnssAntennaInfo();
+}
+
+template <class T_IGnss>
+void GnssTemplate<T_IGnss>::reportGnssStatusValue(
+        const V1_0::IGnssCallback::GnssStatusValue gnssStatusValue) const {
+    std::unique_lock<std::mutex> lock(mMutex);
+    if (sGnssCallback_2_1 == nullptr) {
+        ALOGE("%s: sGnssCallback v2.1 is null.", __func__);
+        return;
+    }
+    auto ret = sGnssCallback_2_1->gnssStatusCb(gnssStatusValue);
+    if (!ret.isOk()) {
+        ALOGE("%s: Unable to invoke callback", __func__);
+    }
 }
 
 template <class T_IGnss>

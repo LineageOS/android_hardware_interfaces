@@ -47,6 +47,11 @@ const std::list<std::vector<uint8_t>>& Ringbuffer::getData() const {
     return data_;
 }
 
+void Ringbuffer::clear() {
+    data_.clear();
+    size_ = 0;
+}
+
 }  // namespace implementation
 }  // namespace V1_5
 }  // namespace wifi

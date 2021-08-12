@@ -34,12 +34,15 @@ class CancellationSignal : public common::BnCancellationSignal {
     }
 };
 
-Session::Session(std::shared_ptr<ISessionCallback> cb) : cb_(std::move(cb)) {}
+Session::Session(std::shared_ptr<ISessionCallback> cb)
+    : cb_(std::move(cb)), mRandom(std::mt19937::default_seed) {}
 
 ndk::ScopedAStatus Session::generateChallenge() {
     LOG(INFO) << "generateChallenge";
     if (cb_) {
-        cb_->onChallengeGenerated(0);
+        std::uniform_int_distribution<int64_t> dist;
+        auto challenge = dist(mRandom);
+        cb_->onChallengeGenerated(challenge);
     }
     return ndk::ScopedAStatus::ok();
 }
@@ -60,9 +63,13 @@ ndk::ScopedAStatus Session::getEnrollmentConfig(EnrollmentType /*enrollmentType*
 
 ndk::ScopedAStatus Session::enroll(
         const keymaster::HardwareAuthToken& /*hat*/, EnrollmentType /*enrollmentType*/,
-        const std::vector<Feature>& /*features*/, const NativeHandle& /*previewSurface*/,
+        const std::vector<Feature>& /*features*/,
+        const std::optional<NativeHandle>& /*previewSurface*/,
         std::shared_ptr<biometrics::common::ICancellationSignal>* /*return_val*/) {
     LOG(INFO) << "enroll";
+    if (cb_) {
+        cb_->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
+    }
     return ndk::ScopedAStatus::ok();
 }
 
@@ -100,6 +107,10 @@ ndk::ScopedAStatus Session::removeEnrollments(const std::vector<int32_t>& /*enro
 
 ndk::ScopedAStatus Session::getFeatures() {
     LOG(INFO) << "getFeatures";
+    if (cb_) {
+        // Must error out with UNABLE_TO_PROCESS when no faces are enrolled.
+        cb_->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorCode */);
+    }
     return ndk::ScopedAStatus::ok();
 }
 
@@ -119,6 +130,9 @@ ndk::ScopedAStatus Session::getAuthenticatorId() {
 
 ndk::ScopedAStatus Session::invalidateAuthenticatorId() {
     LOG(INFO) << "invalidateAuthenticatorId";
+    if (cb_) {
+        cb_->onAuthenticatorIdInvalidated(0);
+    }
     return ndk::ScopedAStatus::ok();
 }
 

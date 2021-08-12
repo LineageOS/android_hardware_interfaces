@@ -24,13 +24,12 @@ import android.hardware.common.NativeHandle;
 import android.hardware.keymaster.HardwareAuthToken;
 
 /**
- * Operations that can be performed for unique sessions retrieved via IFace#createSession.
  * Operations defined within this interface can be divided into the following categories:
  * 1) Cancellable operations. These are usually the operations that can execute for several
- *     minutes. To allow for cancellation, they return an instance of ICancellationSignal that
- *     lets the framework cancel them by calling ICancellationSignal#cancel. If such an operation
- *     is cancelled, it must notify the framework by calling ISessionCallback#onError with
- *     Error::CANCELED.
+ *    minutes. To allow for cancellation, they return an instance of ICancellationSignal that
+ *    lets the framework cancel them by calling ICancellationSignal#cancel. If such an operation
+ *    is cancelled, it must notify the framework by calling ISessionCallback#onError with
+ *    Error::CANCELED.
  * 2) Non-cancellable operations. Such operations cannot be cancelled once started.
  *
  * The lifecycle of an operation ends when one of its terminal callbacks is called. For example,
@@ -83,15 +82,20 @@ interface ISession {
      * | 0        | 10     | <Time4>    | <Random4> |
      * ----------------------------------------------
      *
+     * Callbacks that signify the end of this operation's lifecycle:
+     *   - ISessionCallback#onChallengeGenerated
+     *
      */
     void generateChallenge();
 
     /**
      * revokeChallenge:
      *
-     * Revokes a challenge that was previously generated. Note that if an invalid combination of
-     * parameters is requested, the implementation must still notify the framework using the
-     * provided callback.
+     * Revokes a challenge that was previously generated. Note that if a non-existent challenge is
+     * provided, the HAL must still notify the framework using ISessionCallback#onChallengeRevoked.
+     *
+     * Callbacks that signify the end of this operation's lifecycle:
+     *   - ISessionCallback#onChallengeRevoked
      *
      * @param challenge Challenge that should be revoked.
      */
@@ -100,9 +104,9 @@ interface ISession {
     /**
      * getEnrollmentConfig:
      *
-     * Returns the enrollment configuration depending on the provided enrollment type. Enrollment
-     * configuration determines how many stages the enrollment will have and the requirements for
-     * each of the stages.
+     * Returns the enrollment configuration for the provided enrollment type. Enrollment
+     * configuration determines how many stages the enrollment will have and the requirements
+     * for each of the stages.
      *
      * @param enrollmentType See the EnrollmentType enum.
      * @return An EnrollmentStageConfig array that describes each enrollment stage.
@@ -117,22 +121,28 @@ interface ISession {
      * At any point during enrollment, if a non-recoverable error occurs, the HAL must notify the
      * framework via ISessionCallback#onError with the applicable enrollment-specific error.
      *
-     * Before capturing face data, the implementation must first verify the authenticity and
-     * integrity of the provided HardwareAuthToken. In addition, it must check that the challenge
-     * within the provided HardwareAuthToken is valid. See ISession#generateChallenge. If any of
-     * the above checks fail, the framework must be notified using ISessionCallback#onError with
-     * Error::UNABLE_TO_PROCESS.
+     * Before capturing face data, the HAL must first verify the authenticity and integrity of the
+     * provided HardwareAuthToken. In addition, it must check that the challenge within the provided
+     * HardwareAuthToken is valid. See ISession#generateChallenge. If any of the above checks fail,
+     * the framework must be notified using ISessionCallback#onError with Error::UNABLE_TO_PROCESS.
      *
-     * During enrollment, the implementation may notify the framework via
-     * ISessionCallback#onAcquired with messages that may be used to guide the user. This callback
-     * can be invoked multiple times if necessary. Similarly, the framework may be notified of
-     * enrollment progress changes via ISessionCallback#onEnrollmentProgress. Once the framework is
-     * notified that there are 0 "remaining" steps, the framework may cache the "enrollmentId". See
+     * During enrollment, the HAL may notify the framework via ISessionCallback#onAcquired with
+     * messages that may be used to guide the user. This callback can be invoked multiple times if
+     * necessary. Similarly, the framework may be notified of enrollment progress changes via
+     * ISessionCallback#onEnrollmentProgress. Once the framework is notified that there are 0
+     * "remaining" steps, the framework may cache the "enrollmentId". See
      * ISessionCallback#onEnrollmentProgress for more info.
      *
      * When a face is successfully added and before the framework is notified of remaining=0, the
-     * implementation MUST update and associate this (sensorId, userId) pair with a new
-     * entropy-encoded random identifier. See ISession#getAuthenticatorId for more information.
+     * HAL must update and associate this (sensorId, userId) pair with a new entropy-encoded random
+     * identifier. See ISession#getAuthenticatorId for more information.
+     *
+     * Callbacks that signify the end of this operation's lifecycle:
+     *   - ISessionCallback#onError
+     *   - ISessionCallback#onEnrollmentProgress(enrollmentId, remaining=0)
+     *
+     * Other applicable callbacks:
+     *   - ISessionCallback#onAcquired
      *
      * @param hat See above documentation.
      * @param enrollmentType See the EnrollmentType enum.
@@ -144,7 +154,7 @@ interface ISession {
      * operation.
      */
     ICancellationSignal enroll(in HardwareAuthToken hat, in EnrollmentType type,
-            in Feature[] features, in NativeHandle previewSurface);
+            in Feature[] features, in @nullable NativeHandle previewSurface);
 
     /**
      * authenticate:
@@ -154,15 +164,18 @@ interface ISession {
      * At any point during authentication, if a non-recoverable error occurs, the HAL must notify
      * the framework via ISessionCallback#onError with the applicable authentication-specific error.
      *
-     * During authentication, the implementation may notify the framework via
-     * ISessionCallback#onAcquired with messages that may be used to guide the user. This callback
-     * can be invoked multiple times if necessary.
+     * During authentication, the HAL may notify the framework via ISessionCallback#onAcquired with
+     * messages that may be used to guide the user. This callback can be invoked multiple times if
+     * necessary.
      *
-     * The HAL must notify the framework of accepts/rejects via ISessionCallback#onAuthentication*.
+     * The HAL must notify the framework of accepts/rejects via
+     * ISessionCallback#onAuthenticationSucceeded and ISessionCallback#onAuthenticationFailed,
+     * correspondingly.
      *
-     * The authentication lifecycle ends when either
-     *   1) A face is accepted, and ISessionCallback#onAuthenticationSucceeded is invoked, or
-     *   2) Any non-recoverable error occurs (such as lockout). See the full list of
+     * The authentication lifecycle ends when any of the following happens:
+     *   1) A face is accepted, and ISessionCallback#onAuthenticationSucceeded is invoked.
+     *   2) A face is rejected, and ISessionCallback#onAuthenticationFailed is invoked.
+     *   3) Any non-recoverable error occurs (such as lockout). See the full list of
      *      authentication-specific errors in the Error enum.
      *
      * Note that upon successful authentication, the lockout counter for this (sensorId, userId)
@@ -174,16 +187,26 @@ interface ISession {
      * must be set with the operationId passed in during #authenticate. If the sensor is NOT
      * SensorStrength::STRONG, the HardwareAuthToken MUST be null.
      *
+     * Callbacks that signify the end of this operation's lifecycle:
+     *   - ISessionCallback#onError
+     *   - ISessionCallback#onAuthenticationSucceeded
+     *   - ISessionCallback#onAuthenticationFailed
+     *
+     * Other applicable callbacks:
+     *   - ISessionCallback#onAcquired
+     *   - ISessionCallback#onLockoutTimed
+     *   - ISessionCallback#onLockoutPermanent
+     *
      * @param operationId For sensors configured as SensorStrength::STRONG, this must be used ONLY
      *                    upon successful authentication and wrapped in the HardwareAuthToken's
      *                    "challenge" field and sent to the framework via
-     *                    ISessionCallback#onAuthenticated. The operationId is an opaque identifier
-     *                    created from a separate secure subsystem such as, but not limited to
-     *                    KeyStore/KeyMaster. The HardwareAuthToken can then be used as an
-     *                    attestation for the provided operation. For example, this is used
-     *                    to unlock biometric-bound auth-per-use keys (see
+     *                    ISessionCallback#onAuthenticationSucceeded. The operationId is an opaque
+     *                    identifier created from a separate secure subsystem such as, but not
+     *                    limited to KeyStore/KeyMaster. The HardwareAuthToken can then be used as
+     *                    an attestation for the provided operation. For example, this is used to
+     *                    unlock biometric-bound auth-per-use keys (see
      *                    setUserAuthenticationParameters in KeyGenParameterSpec.Builder and
-     *                    KeyProtection.Builder.
+     *                    KeyProtection.Builder).
      * @return ICancellationSignal An object that can be used by the framework to cancel this
      * operation.
      */
@@ -193,31 +216,35 @@ interface ISession {
      * detectInteraction:
      *
      * A request to start looking for faces without performing matching. Must only be called if
-     * SensorProps#supportsDetectInteraction is true. If invoked on implementations that do not
-     * support this functionality, the HAL must respond with ISession#onError(UNABLE_TO_PROCESS, 0).
+     * SensorProps#supportsDetectInteraction is true. If invoked on HALs that do not support this
+     * functionality, the HAL must respond with ISession#onError(UNABLE_TO_PROCESS, 0).
      *
-     * The framework will use this method in cases where determing user presence is required, but
-     * identifying/authentication is not. For example, when the device is encrypted (first boot) or
-     * in lockdown mode.
+     * The framework will use this operation in cases where determining user presence is required,
+     * but identifying/authenticating is not. For example, when the device is encrypted (first boot)
+     * or in lockdown mode.
      *
      * At any point during detectInteraction, if a non-recoverable error occurs, the HAL must notify
      * the framework via ISessionCallback#onError with the applicable error.
      *
-     * The implementation must only check for a face-like image was detected (e.g. to
-     * minimize interactions due to non-face objects), and the lockout counter must not
-     * be modified.
+     * The HAL must only check whether a face-like image was detected (e.g. to minimize interactions
+     * due to non-face objects), and the lockout counter must not be modified.
      *
-     * Upon detecting any face, the implementation must invoke
-     * ISessionCallback#onInteractionDetected.
+     * Upon detecting any face, the HAL must invoke ISessionCallback#onInteractionDetected.
      *
-     * The lifecycle of this operation ends when either
+     * The lifecycle of this operation ends when either:
      * 1) Any face is detected and the framework is notified via
-     *    ISessionCallback#onInteractiondetected
-     * 2) The operation was cancelled by the framework (see ICancellationSignal)
-     * 3) An error occurred, for example ERROR::TIMEOUT
+     *    ISessionCallback#onInteractionDetected.
+     * 2) An error occurrs, for example Error::TIMEOUT.
      *
-     * Note that if the operation is canceled, the implementation must notify the framework via
+     * Note that if the operation is canceled, the HAL must notify the framework via
      * ISessionCallback#onError with Error::CANCELED.
+     *
+     * Callbacks that signify the end of this operation's lifecycle:
+     *   - ISessionCallback#onError
+     *   - ISessionCallback#onInteractionDetected
+     *
+     * Other applicable callbacks:
+     *   - ISessionCallback#onAcquired
      *
      * @return ICancellationSignal An object that can be used by the framework to cancel this
      * operation.
@@ -227,12 +254,14 @@ interface ISession {
     /*
      * enumerateEnrollments:
      *
-     * A request to enumerate (list) the enrollments for this (sensorId, userId) pair. The
-     * framework typically uses this to ensure that its cache is in sync with the HAL.
+     * A request to enumerate (list) the enrollments for this (sensorId, userId) pair. The framework
+     * typically uses this to ensure that its cache is in sync with the HAL.
      *
-     * The implementation must then notify the framework with a list of enrollments applicable
-     * for the current session via ISessionCallback#onEnrollmentsEnumerated.
+     * The HAL must then notify the framework with a list of enrollments applicable for the current
+     * session via ISessionCallback#onEnrollmentsEnumerated.
      *
+     * Callbacks that signify the end of this operation's lifecycle:
+     *   - ISessionCallback#onEnrollmentsEnumerated
      */
     void enumerateEnrollments();
 
@@ -242,8 +271,12 @@ interface ISession {
      * A request to remove the enrollments for this (sensorId, userId) pair.
      *
      * After removing the enrollmentIds from everywhere necessary (filesystem, secure subsystems,
-     * etc), the implementation must notify the framework via ISessionCallback#onEnrollmentsRemoved.
+     * etc), the HAL must notify the framework via ISessionCallback#onEnrollmentsRemoved.
      *
+     * Callbacks that signify the end of this operation's lifecycle:
+     *   - ISessionCallback#onEnrollmentsRemoved
+     *
+     * @param enrollmentIds a list of enrollments that should be removed.
      */
     void removeEnrollments(in int[] enrollmentIds);
 
@@ -257,6 +290,10 @@ interface ISession {
      *
      * The HAL must notify the framework about the result by calling
      * ISessionCallback#onFeaturesRetrieved.
+     *
+     * Callbacks that signify the end of this operation's lifecycle:
+     *   - ISessionCallback#onError
+     *   - ISessionCallback#onFeaturesRetrieved
      */
     void getFeatures();
 
@@ -264,14 +301,18 @@ interface ISession {
      * setFeature:
      *
      * Enables or disables a feature for this (sensorId, userId) pair. Because certain features may
-     * decrease security, the user must enter their password before this method is invoked
-     * (see @param hat). The HAL must verify the hat before changing any feature state.
+     * decrease security, the user must enter their password before this operation is invoked
+     * (see @param hat). The HAL must verify the HAT before changing any feature state.
      *
-     * If the hat is invalid or if the user is not enrolled, the HAL must invoke
+     * If the HAT is invalid or if the user is not enrolled, the HAL must invoke
      * ISessionCallback#onError with Error::UNABLE_TO_PROCESS.
      *
      * After the feature is successfully set, the HAL must notify the framework by calling
      * ISessionCallback#onFeatureSet.
+     *
+     * Callbacks that signify the end of this operation's lifecycle:
+     *   - ISessionCallback#onError
+     *   - ISessionCallback#onFeatureSet
      *
      * @param hat HardwareAuthToken See above documentation.
      * @param feature The feature to be enabled or disabled.
@@ -295,8 +336,8 @@ interface ISession {
      * KeyProtection.Builder.setInvalidatedByBiometricEnrollment.
      *
      * In addition, upon successful face authentication, the signed HAT that is returned to
-     * the framework via ISessionCallback#onAuthenticated must contain this identifier in the
-     * authenticatorId field.
+     * the framework via ISessionCallback#onAuthenticationSucceeded must contain this identifier in
+     * the authenticatorId field.
      *
      * Returns an entropy-encoded random identifier associated with the current set of enrollments
      * via ISessionCallback#onAuthenticatorIdRetrieved. The authenticatorId
@@ -305,20 +346,21 @@ interface ISession {
      *   3) MUST not change if a face is deleted.
      *   4) MUST be an entropy-encoded random number
      *
+     * Callbacks that signify the end of this operation's lifecycle:
+     *   - ISessionCallback#onAuthenticatorIdRetrieved
      */
     void getAuthenticatorId();
 
     /**
      * invalidateAuthenticatorId:
      *
-     * This method only applies to sensors that are configured as SensorStrength::STRONG. If invoked
-     * by the framework for sensor of other strengths, the HAL should immediately invoke
+     * This operation only applies to sensors that are configured as SensorStrength::STRONG. If
+     * invoked by the framework for sensors of other strengths, the HAL should immediately invoke
      * ISessionCallback#onAuthenticatorIdInvalidated.
      *
      * The following only applies to sensors that are configured as SensorStrength::STRONG.
      *
-     * When invoked by the framework, the implementation must perform the following sequence of
-     * events:
+     * When invoked by the framework, the HAL must perform the following sequence of events:
      *   1) Update the authenticatorId with a new entropy-encoded random number
      *   2) Persist the new authenticatorId to non-ephemeral storage
      *   3) Notify the framework that the above is completed, via
@@ -326,18 +368,20 @@ interface ISession {
      *
      * A practical use case of invalidation would be when the user adds a new enrollment to a sensor
      * managed by a different HAL instance. The public android.security.keystore APIs bind keys to
-     * "all biometrics" rather than "face-only" or "face-only" (see #getAuthenticatorId
-     * for more details). As such, the framework would coordinate invalidation across multiple
-     * biometric HALs as necessary.
+     * "all biometrics" rather than "fingerprint-only" or "face-only" (see #getAuthenticatorId for
+     * more details). As such, the framework would coordinate invalidation across multiple biometric
+     * HALs as necessary.
      *
+     * Callbacks that signify the end of this operation's lifecycle:
+     *   - ISessionCallback#onAuthenticatorIdInvalidated
      */
     void invalidateAuthenticatorId();
 
     /**
      * resetLockout:
      *
-     * Requests the implementation to clear the lockout counter. Upon receiving this request, the
-     * implementation must perform the following:
+     * Requests the HAL to clear the lockout counter. Upon receiving this request, the HAL must
+     * perform the following:
      *   1) Verify the authenticity and integrity of the provided HAT
      *   2) Verify that the timestamp provided within the HAT is relatively recent (e.g. on the
      *      order of minutes, not hours).
@@ -373,6 +417,9 @@ interface ISession {
      * See the Android CDD section 7.3.10 for the full set of lockout and rate-limiting
      * requirements.
      *
+     * Callbacks that signify the end of this operation's lifecycle:
+     *   - ISessionCallback#onLockoutCleared
+     *
      * @param hat HardwareAuthToken See above documentation.
      */
     void resetLockout(in HardwareAuthToken hat);
@@ -384,9 +431,14 @@ interface ISession {
      * If the HAL is busy performing a cancellable operation, the operation must be explicitly
      * cancelled with a call to ICancellationSignal#cancel before the session can be closed.
      *
+     * After a session is closed, the HAL must notify the framework by calling
+     * ISessionCallback#onSessionClosed.
+     *
      * All sessions must be explicitly closed. Calling IFace#createSession while there is an active
      * session is considered an error.
      *
+     * Callbacks that signify the end of this operation's lifecycle:
+     *   - ISessionCallback#onSessionClosed
      */
     void close();
 }

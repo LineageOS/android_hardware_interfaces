@@ -31,20 +31,35 @@ import android.hardware.memtrack.MemtrackType;
  * accounting for stride, bit depth, rounding up to page size, etc.
  *
  * The following getMemory() categories are important for memory accounting in
- * `dumpsys meminfo` and should be reported as described below:
+ * Android frameworks (e.g. `dumpsys meminfo`) and should be reported as described
+ * below:
  *
  * - MemtrackType::GRAPHICS and MemtrackRecord::FLAG_SMAPS_UNACCOUNTED
- *     This should report the PSS of all DMA buffers mapped by the process
- *     with the specified PID. This PSS can be calculated using ReadDmaBufPss()
- *     form libdmabufinfo.
+ *     This should report the PSS of all CPU-Mapped DMA-BUFs (buffers mapped into
+ *     the process address space) and all GPU-Mapped DMA-BUFs (buffers mapped into
+ *     the GPU device address space on behalf of the process), removing any overlap
+ *     between the CPU-mapped and GPU-mapped sets.
  *
  * - MemtrackType::GL and MemtrackRecord::FLAG_SMAPS_UNACCOUNTED
  *     This category should report all GPU private allocations for the specified
  *     PID that are not accounted in /proc/<pid>/smaps.
  *
+ *     getMemory() called with PID 0 should report the global total GPU-private
+ *     memory, for MemtrackType::GL and MemtrackRecord::FLAG_SMAPS_UNACCOUNTED.
+ *
+ *     getMemory() called with PID 0 for a MemtrackType other than GL should
+ *     report 0.
+ *
  * - MemtrackType::OTHER and MemtrackRecord::FLAG_SMAPS_UNACCOUNTED
  *     Any other memory not accounted for in /proc/<pid>/smaps if any, otherwise
  *     this should return 0.
+ *
+ * SMAPS_UNACCOUNTED memory should also include memory that is mapped with
+ * VM_PFNMAP flag set. For these mappings PSS and RSS are reported as 0 in smaps.
+ * Such mappings have no backing page structs from which PSS/RSS can be calculated.
+ *
+ * Any memtrack operation that is not supported should return a binder status with
+ * exception code EX_UNSUPPORTED_OPERATION.
  *
  * Constructor for the interface should be used to perform memtrack management
  * setup actions and must be called once before any calls to getMemory().

@@ -42,7 +42,7 @@ struct Stream {
     /**
      * The surface group id used for multi-resolution output streams.
      *
-     * This works simliar to the surfaceGroupId of OutputConfiguration in the
+     * This works similar to the surfaceGroupId of OutputConfiguration in the
      * public API, with the exception that this is for multi-resolution image
      * reader and is used by the camera HAL to choose a target stream within
      * the same group to which images are written. All streams in the same group

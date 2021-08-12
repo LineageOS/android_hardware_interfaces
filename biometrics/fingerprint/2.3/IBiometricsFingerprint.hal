@@ -19,6 +19,10 @@ package android.hardware.biometrics.fingerprint@2.3;
 import @2.2::IBiometricsFingerprint;
 
 /**
+ * New use of this interface is strongly discouraged. The recommended option is
+ * to use the AIDL interface, android.hardware.biometrics.fingerprint
+ * (IFingerprint).
+ *
  * The interface for biometric fingerprint authentication.
  */
 interface IBiometricsFingerprint extends @2.2::IBiometricsFingerprint {
