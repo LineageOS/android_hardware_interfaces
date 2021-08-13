@@ -14,10 +14,10 @@
 
 // Library used to emulate User HAL behavior through lshal debug requests.
 cc_library {
-    name: "android.hardware.automotive.vehicle@2.0-emulated-user-hal-lib",
+    name: "android.hardware.automotive.vehicle@2.0-fake-user-hal-lib",
     vendor: true,
     defaults: ["vhal_v2_0_target_defaults"],
-    srcs: ["EmulatedUserHal.cpp"],
+    srcs: ["FakeUserHal.cpp"],
     shared_libs: [
         "libbase",
         "libutils",

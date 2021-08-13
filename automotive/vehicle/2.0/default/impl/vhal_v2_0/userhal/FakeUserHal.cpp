@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "EmulatedUserHal"
+#define LOG_TAG "FakeUserHal"
 
 #include <cutils/log.h>
 #include <utils/SystemClock.h>
 
 #include "UserHalHelper.h"
 
-#include "EmulatedUserHal.h"
+#include "FakeUserHal.h"
 
 namespace android {
 namespace hardware {
@@ -60,7 +60,7 @@ Result<SwitchUserMessageType> getSwitchUserMessageType(const VehiclePropValue& v
 
 }  // namespace
 
-bool EmulatedUserHal::isSupported(int32_t prop) {
+bool FakeUserHal::isSupported(int32_t prop) {
     switch (prop) {
         case INITIAL_USER_INFO:
         case SWITCH_USER:
@@ -73,7 +73,7 @@ bool EmulatedUserHal::isSupported(int32_t prop) {
     }
 }
 
-Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetProperty(
+Result<std::unique_ptr<VehiclePropValue>> FakeUserHal::onSetProperty(
         const VehiclePropValue& value) {
     ALOGV("onSetProperty(): %s", toString(value).c_str());
 
@@ -95,7 +95,7 @@ Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetProperty(
     }
 }
 
-Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onGetProperty(
+Result<std::unique_ptr<VehiclePropValue>> FakeUserHal::onGetProperty(
         const VehiclePropValue& value) {
     ALOGV("onGetProperty(%s)", toString(value).c_str());
     switch (value.prop) {
@@ -113,7 +113,7 @@ Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onGetProperty(
     }
 }
 
-Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onGetUserIdentificationAssociation(
+Result<std::unique_ptr<VehiclePropValue>> FakeUserHal::onGetUserIdentificationAssociation(
         const VehiclePropValue& value) {
     if (mSetUserIdentificationAssociationResponseFromCmd == nullptr) {
         return defaultUserIdentificationAssociation(value);
@@ -132,7 +132,7 @@ Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onGetUserIdentificati
     return newValue;
 }
 
-Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetInitialUserInfoResponse(
+Result<std::unique_ptr<VehiclePropValue>> FakeUserHal::onSetInitialUserInfoResponse(
         const VehiclePropValue& value) {
     auto requestId = getRequestId(value);
     if (!requestId.ok()) {
@@ -164,7 +164,7 @@ Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetInitialUserInfoR
     return updatedValue;
 }
 
-Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetSwitchUserResponse(
+Result<std::unique_ptr<VehiclePropValue>> FakeUserHal::onSetSwitchUserResponse(
         const VehiclePropValue& value) {
     auto requestId = getRequestId(value);
     if (!requestId.ok()) {
@@ -217,7 +217,7 @@ Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetSwitchUserRespon
     return updatedValue;
 }
 
-Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetCreateUserResponse(
+Result<std::unique_ptr<VehiclePropValue>> FakeUserHal::onSetCreateUserResponse(
         const VehiclePropValue& value) {
     auto requestId = getRequestId(value);
     if (!requestId.ok()) {
@@ -248,7 +248,7 @@ Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetCreateUserRespon
     return updatedValue;
 }
 
-Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetUserIdentificationAssociation(
+Result<std::unique_ptr<VehiclePropValue>> FakeUserHal::onSetUserIdentificationAssociation(
         const VehiclePropValue& value) {
     auto requestId = getRequestId(value);
     if (!requestId.ok()) {
@@ -277,14 +277,14 @@ Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::onSetUserIdentificati
     return defaultUserIdentificationAssociation(value);
 }
 
-Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::defaultUserIdentificationAssociation(
+Result<std::unique_ptr<VehiclePropValue>> FakeUserHal::defaultUserIdentificationAssociation(
         const VehiclePropValue& request) {
     // TODO(b/159498909): return a response with NOT_ASSOCIATED_ANY_USER for all requested types
     ALOGE("no lshal response for %s; replying with NOT_AVAILABLE", toString(request).c_str());
     return Error(static_cast<int>(StatusCode::NOT_AVAILABLE)) << "not set by lshal";
 }
 
-Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::sendUserHalResponse(
+Result<std::unique_ptr<VehiclePropValue>> FakeUserHal::sendUserHalResponse(
         std::unique_ptr<VehiclePropValue> response, int32_t requestId) {
     switch (response->areaId) {
         case 1:
@@ -311,11 +311,11 @@ Result<std::unique_ptr<VehiclePropValue>> EmulatedUserHal::sendUserHalResponse(
     return response;
 }
 
-std::string EmulatedUserHal::showDumpHelp() {
+std::string FakeUserHal::showDumpHelp() {
     return fmt::format("{}: dumps state used for user management\n", kUserHalDumpOption);
 }
 
-std::string EmulatedUserHal::dump(std::string indent) {
+std::string FakeUserHal::dump(std::string indent) {
     std::string info;
     if (mInitialUserResponseFromCmd != nullptr) {
         info += fmt::format("{}InitialUserInfo response: {}\n", indent.c_str(),

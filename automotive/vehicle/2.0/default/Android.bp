@@ -97,7 +97,7 @@ cc_library_static {
     local_include_dirs: ["common/include/vhal_v2_0"],
     export_include_dirs: ["impl"],
     whole_static_libs: [
-        "android.hardware.automotive.vehicle@2.0-emulated-user-hal-lib",
+        "android.hardware.automotive.vehicle@2.0-fake-user-hal-lib",
         "android.hardware.automotive.vehicle@2.0-manager-lib",
     ],
     shared_libs: [
