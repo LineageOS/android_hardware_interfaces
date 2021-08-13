@@ -21,7 +21,7 @@
 #include <vhal_v2_0/VehicleHal.h>
 #include <vhal_v2_0/VehiclePropertyStore.h>
 
-#include "EmulatedUserHal.h"
+#include "FakeUserHal.h"
 #include "VehicleHalClient.h"
 
 namespace android {
@@ -56,7 +56,7 @@ class DefaultVehicleHal : public VehicleHal {
     VehiclePropertyStore* mPropStore;
     RecurrentTimer mRecurrentTimer;
     VehicleHalClient* mVehicleClient;
-    EmulatedUserHal mEmulatedUserHal;
+    FakeUserHal mFakeUserHal;
 
     // The callback that would be called when a property value is updated. This function could
     // be extended to handle specific property update event.
