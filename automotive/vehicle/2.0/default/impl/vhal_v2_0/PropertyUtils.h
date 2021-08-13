@@ -189,6 +189,19 @@ enum class FakeDataCommand : int32_t {
     KeyPress = 100,
 };
 
+/**
+ * These properties are placeholder properties for developers to test new features without
+ * implementing a real property.
+ */
+constexpr int32_t PLACEHOLDER_PROPERTY_INT =
+        0x2a11 | VehiclePropertyGroup::VENDOR | VehicleArea::GLOBAL | VehiclePropertyType::INT32;
+constexpr int32_t PLACEHOLDER_PROPERTY_FLOAT =
+        0x2a11 | VehiclePropertyGroup::VENDOR | VehicleArea::GLOBAL | VehiclePropertyType::FLOAT;
+constexpr int32_t PLACEHOLDER_PROPERTY_BOOLEAN =
+        0x2a11 | VehiclePropertyGroup::VENDOR | VehicleArea::GLOBAL | VehiclePropertyType::BOOLEAN;
+constexpr int32_t PLACEHOLDER_PROPERTY_STRING =
+        0x2a11 | VehiclePropertyGroup::VENDOR | VehicleArea::GLOBAL | VehiclePropertyType::STRING;
+
 const int32_t kHvacPowerProperties[] = {
     toInt(VehicleProperty::HVAC_FAN_SPEED),
     toInt(VehicleProperty::HVAC_FAN_DIRECTION),
