@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "VtsHalContexthubUtils.h"
+#include "VtsHalContexthubUtilsHidl.h"
 
 #include <chrono>
 #include <future>
