@@ -3271,10 +3271,10 @@ TEST_P(ImportKeyTest, AesFailure) {
     for (uint32_t key_size : {bitlen - 1, bitlen + 1, bitlen - 8, bitlen + 8}) {
         // Explicit key size doesn't match that of the provided key.
         auto result = ImportKey(AuthorizationSetBuilder()
-                                    .Authorization(TAG_NO_AUTH_REQUIRED)
-                                    .AesEncryptionKey(key_size)
-                                    .EcbMode()
-                                    .Padding(PaddingMode::PKCS7),
+                                        .Authorization(TAG_NO_AUTH_REQUIRED)
+                                        .AesEncryptionKey(key_size)
+                                        .EcbMode()
+                                        .Padding(PaddingMode::PKCS7),
                                 KeyFormat::RAW, key);
         ASSERT_TRUE(result == ErrorCode::IMPORT_PARAMETER_MISMATCH ||
                     result == ErrorCode::UNSUPPORTED_KEY_SIZE)
@@ -3338,10 +3338,10 @@ TEST_P(ImportKeyTest, TripleDesFailure) {
     for (uint32_t key_size : {bitlen - 1, bitlen + 1, bitlen - 8, bitlen + 8}) {
         // Explicit key size doesn't match that of the provided key.
         auto result = ImportKey(AuthorizationSetBuilder()
-                                    .Authorization(TAG_NO_AUTH_REQUIRED)
-                                    .TripleDesEncryptionKey(key_size)
-                                    .EcbMode()
-                                    .Padding(PaddingMode::PKCS7),
+                                        .Authorization(TAG_NO_AUTH_REQUIRED)
+                                        .TripleDesEncryptionKey(key_size)
+                                        .EcbMode()
+                                        .Padding(PaddingMode::PKCS7),
                                 KeyFormat::RAW, key);
         ASSERT_TRUE(result == ErrorCode::IMPORT_PARAMETER_MISMATCH ||
                     result == ErrorCode::UNSUPPORTED_KEY_SIZE)
@@ -6203,7 +6203,8 @@ TEST_P(KeyDeletionTest, DeleteAllKeys) {
                                      .Digest(Digest::NONE)
                                      .Padding(PaddingMode::NONE)
                                      .Authorization(TAG_NO_AUTH_REQUIRED)
-                                     .Authorization(TAG_ROLLBACK_RESISTANCE));
+                                     .Authorization(TAG_ROLLBACK_RESISTANCE)
+                                     .SetDefaultValidity());
     ASSERT_TRUE(error == ErrorCode::ROLLBACK_RESISTANCE_UNAVAILABLE || error == ErrorCode::OK);
 
     // Delete must work if rollback protection is implemented

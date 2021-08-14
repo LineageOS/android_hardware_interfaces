@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
 
-#include <android/hardware/contexthub/1.0/IContexthub.h>
-#include <gtest/gtest.h>
-#include <hidl/HidlSupport.h>
-#include <hidl/ServiceManagement.h>
-#include <utils/StrongPointer.h>
+/**
+ * Utils file for any Context Hub VTS code (i.e. not specific to e.g. HIDL).
+ */
+
+#pragma once
 
 #include <chrono>
 #include <future>
-#include <vector>
 
 namespace android {
 namespace hardware {
@@ -34,38 +32,11 @@ namespace vts_utils {
 // app ID is reserved and must never appear in the list of loaded apps.
 constexpr uint64_t kNonExistentAppId = 0x476f6f6754555555;
 
-#define ASSERT_OK(result) ASSERT_EQ(result, ::android::hardware::contexthub::V1_0::Result::OK)
-#define EXPECT_OK(result) EXPECT_EQ(result, ::android::hardware::contexthub::V1_0::Result::OK)
-
 // Helper that does explicit conversion of an enum class to its underlying/base
 // type. Useful for stream output of enum values.
 template <typename EnumType>
 inline constexpr typename std::underlying_type<EnumType>::type asBaseType(EnumType value) {
     return static_cast<typename std::underlying_type<EnumType>::type>(value);
-}
-
-// Synchronously queries IContexthub::getHubs() and returns the result
-hidl_vec<V1_0::ContextHub> getHubsSync(V1_0::IContexthub* hubApi);
-
-// Create a vector of tuples that include each IContexthub service paired with each hub ID it
-// exposes via getHubs(). Each tuple represents a test target that we should run the VTS suite
-// against.
-template <class IContexthubVersion>
-static std::vector<std::tuple<std::string, std::string>> getHalAndHubIdList() {
-    std::vector<std::tuple<std::string, std::string>> parameters;
-    std::vector<std::string> serviceNames =
-            ::android::hardware::getAllHalInstanceNames(IContexthubVersion::descriptor);
-    for (const std::string& serviceName : serviceNames) {
-        sp<IContexthubVersion> hubApi = IContexthubVersion::getService(serviceName);
-        if (hubApi != nullptr) {
-            hidl_vec<V1_0::ContextHub> hubs = getHubsSync(hubApi.get());
-            for (const V1_0::ContextHub& hub : hubs) {
-                parameters.push_back(std::make_tuple(serviceName, std::to_string(hub.hubId)));
-            }
-        }
-    }
-
-    return parameters;
 }
 
 // Wait for a callback to occur (signaled by the given future) up to the
