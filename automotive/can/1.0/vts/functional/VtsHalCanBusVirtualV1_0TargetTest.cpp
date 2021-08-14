@@ -86,7 +86,7 @@ struct Bus {
         EXPECT_EQ(ICanController::Result::OK, result);
 
         /* Not using ICanBus::getService here, since it ignores interfaces not in the manifest
-         * file -- this is a test, so we don't want to add dummy services to a device manifest. */
+         * file -- this is a test, so we don't want to add fake services to a device manifest. */
         auto manager = hidl::manager::V1_2::IServiceManager::getService();
         auto service = manager->get(ICanBus::descriptor, config.name);
         mBus = ICanBus::castFrom(service);
@@ -868,9 +868,9 @@ TEST_P(CanBusVirtualHalTest, FilterMixed) {
  * Example manual invocation:
  * adb shell /data/nativetest64/VtsHalCanBusVirtualV1_0TargetTest/VtsHalCanBusVirtualV1_0TargetTest
  */
-INSTANTIATE_TEST_SUITE_P(  //
-        PerInstance, CanBusVirtualHalTest,
-        testing::ValuesIn(getAllHalInstanceNames(ICanController::descriptor)),
-        PrintInstanceNameToString);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(CanBusVirtualHalTest);
+INSTANTIATE_TEST_SUITE_P(PerInstance, CanBusVirtualHalTest,
+                         testing::ValuesIn(getAllHalInstanceNames(ICanController::descriptor)),
+                         PrintInstanceNameToString);
 
 }  // namespace android::hardware::automotive::can::V1_0::vts

@@ -45,12 +45,21 @@ class ComposerClientImpl : public V2_3::hal::detail::ComposerClientImpl<Interfac
 
     class HalEventCallback : public Hal::EventCallback_2_4 {
       public:
-        HalEventCallback(const sp<IComposerCallback> callback,
+        HalEventCallback(Hal* hal, const sp<IComposerCallback> callback,
                          V2_1::hal::ComposerResources* resources)
-            : mCallback(callback), mResources(resources) {}
+            : mHal(hal), mCallback(callback), mResources(resources) {}
 
         void onHotplug(Display display, IComposerCallback::Connection connected) override {
             if (connected == IComposerCallback::Connection::CONNECTED) {
+                if (mResources->hasDisplay(display)) {
+                    // This is a subsequent hotplug "connected" for a display. This signals a
+                    // display change and thus the framework may want to reallocate buffers. We
+                    // need to free all cached handles, since they are holding a strong reference
+                    // to the underlying buffers.
+                    V2_1::hal::detail::ComposerClientImpl<Interface, Hal>::cleanDisplayResources(
+                            display, mResources, mHal);
+                    mResources->removeDisplay(display);
+                }
                 mResources->addPhysicalDisplay(display);
             } else if (connected == IComposerCallback::Connection::DISCONNECTED) {
                 mResources->removeDisplay(display);
@@ -91,13 +100,15 @@ class ComposerClientImpl : public V2_3::hal::detail::ComposerClientImpl<Interfac
         }
 
       protected:
+        Hal* const mHal;
         const sp<IComposerCallback> mCallback;
         V2_1::hal::ComposerResources* const mResources;
     };
 
     Return<void> registerCallback_2_4(const sp<IComposerCallback>& callback) override {
         // no locking as we require this function to be called only once
-        mHalEventCallback_2_4 = std::make_unique<HalEventCallback>(callback, mResources.get());
+        mHalEventCallback_2_4 =
+                std::make_unique<HalEventCallback>(mHal, callback, mResources.get());
         mHal->registerEventCallback_2_4(mHalEventCallback_2_4.get());
         return Void();
     }

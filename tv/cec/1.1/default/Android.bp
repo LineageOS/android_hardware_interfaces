@@ -1,0 +1,32 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_binary {
+    name: "android.hardware.tv.cec@1.1-service",
+    defaults: ["hidl_defaults"],
+    vintf_fragments: ["android.hardware.tv.cec@1.1-service.xml"],
+    relative_install_path: "hw",
+    vendor: true,
+    init_rc: ["android.hardware.tv.cec@1.1-service.rc"],
+    srcs: [
+        "serviceMock.cpp",
+        "HdmiCecMock.cpp",
+    ],
+
+    shared_libs: [
+        "liblog",
+        "libcutils",
+        "libbase",
+        "libutils",
+        "libhardware",
+        "libhidlbase",
+        "android.hardware.tv.cec@1.0",
+        "android.hardware.tv.cec@1.1",
+    ],
+}

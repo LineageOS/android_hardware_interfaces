@@ -29,10 +29,10 @@
 #include <vhal_v2_0/VehicleHal.h>
 #include "vhal_v2_0/VehiclePropertyStore.h"
 
-#include "DefaultConfig.h"
 #include "EmulatedUserHal.h"
 #include "EmulatedVehicleConnector.h"
 #include "GeneratorHub.h"
+#include "PropertyUtils.h"
 #include "VehicleEmulator.h"
 
 namespace android {
@@ -82,6 +82,8 @@ private:
                                    VehiclePropValue* outValue);
     StatusCode fillObd2DtcInfo(VehiclePropValue* outValue);
     StatusCode clearObd2FreezeFrames(const VehiclePropValue& propValue);
+    VehicleHal::VehiclePropValuePtr doInternalHealthCheck();
+    VehicleHal::VehiclePropValuePtr createVhalHeartBeatProp();
 
     /* Private members */
     VehiclePropertyStore* mPropStore;

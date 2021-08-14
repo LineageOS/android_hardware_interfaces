@@ -50,7 +50,7 @@ using ::android::hardware::bluetooth::V1_0::Status;
 #define WAIT_FOR_HCI_EVENT_TIMEOUT std::chrono::milliseconds(2000)
 #define WAIT_FOR_SCO_DATA_TIMEOUT std::chrono::milliseconds(1000)
 #define WAIT_FOR_ACL_DATA_TIMEOUT std::chrono::milliseconds(1000)
-#define INTERFACE_CLOSE_DELAY_MS std::chrono::milliseconds(200)
+#define INTERFACE_CLOSE_DELAY_MS std::chrono::milliseconds(600)
 
 #define COMMAND_HCI_SHOULD_BE_UNKNOWN \
   { 0xff, 0x3B, 0x08, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 }

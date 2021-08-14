@@ -21,6 +21,7 @@
 
 #include <android/hardware/wifi/1.3/IWifi.h>
 #include <android/hardware/wifi/1.3/IWifiStaIface.h>
+#include <android/hardware/wifi/1.5/IWifiStaIface.h>
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
@@ -88,7 +89,6 @@ TEST_P(WifiStaIfaceHidlTest, GetLinkLayerStats_1_3) {
         // No-op if link layer stats is not supported.
         return;
     }
-
     // Enable link layer stats collection.
     EXPECT_EQ(WifiStatusCode::SUCCESS,
               HIDL_INVOKE(wifi_sta_iface_, enableLinkLayerStatsCollection, true)
@@ -96,14 +96,24 @@ TEST_P(WifiStaIfaceHidlTest, GetLinkLayerStats_1_3) {
     // Retrieve link layer stats.
     const auto& status_and_stats =
         HIDL_INVOKE(wifi_sta_iface_, getLinkLayerStats_1_3);
-    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_stats.first.code);
-    EXPECT_GT(status_and_stats.second.timeStampInMs, 0u);
+    sp<android::hardware::wifi::V1_5::IWifiStaIface> staIface1_5 =
+        android::hardware::wifi::V1_5::IWifiStaIface::castFrom(wifi_sta_iface_);
+    if (staIface1_5.get() == nullptr) {
+        EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_stats.first.code);
+        EXPECT_GT(status_and_stats.second.timeStampInMs, 0u);
+    } else {
+        // not supported on 1.5 HAL.
+        EXPECT_EQ(WifiStatusCode::ERROR_NOT_SUPPORTED,
+                  status_and_stats.first.code);
+    }
+
     // Disable link layer stats collection.
     EXPECT_EQ(
         WifiStatusCode::SUCCESS,
         HIDL_INVOKE(wifi_sta_iface_, disableLinkLayerStatsCollection).code);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiStaIfaceHidlTest);
 INSTANTIATE_TEST_SUITE_P(
     PerInstance, WifiStaIfaceHidlTest,
     testing::ValuesIn(android::hardware::getAllHalInstanceNames(

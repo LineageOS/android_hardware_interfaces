@@ -68,10 +68,7 @@ class WifiChipHidlTest : public ::testing::TestWithParam<std::string> {
         ChipModeId mode_id;
         EXPECT_TRUE(configureChipToSupportIfaceType(wifi_chip_, IfaceType::STA,
                                                     &mode_id));
-        const auto& status_and_caps =
-            HIDL_INVOKE(wifi_chip_, getCapabilities_1_3);
-        EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_caps.first.code);
-        return status_and_caps.second;
+        return getChipCapabilitiesLatest(wifi_chip_);
     }
 
     sp<IWifiChip> wifi_chip_;
@@ -125,6 +122,7 @@ TEST_P(WifiChipHidlTest, GetCapabilities_1_3) {
     EXPECT_NE(0u, status_and_caps.second);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiChipHidlTest);
 INSTANTIATE_TEST_SUITE_P(
     PerInstance, WifiChipHidlTest,
     testing::ValuesIn(android::hardware::getAllHalInstanceNames(

@@ -34,4 +34,17 @@ getSupplicant_1_3(const std::string& supplicant_instance_name, bool isP2pOn);
 bool isFilsSupported(
     android::sp<android::hardware::wifi::supplicant::V1_3::ISupplicantStaIface>
         sta_iface);
+
+class SupplicantHidlTestBaseV1_3 : public SupplicantHidlTestBase {
+   public:
+    virtual void SetUp() override {
+        SupplicantHidlTestBase::SetUp();
+        supplicant_ = getSupplicant_1_3(supplicant_instance_name_, isP2pOn_);
+        ASSERT_NE(supplicant_.get(), nullptr);
+    }
+
+   protected:
+    android::sp<android::hardware::wifi::supplicant::V1_3::ISupplicant>
+        supplicant_;
+};
 #endif /* SUPPLICANT_HIDL_TEST_UTILS_1_3_H */

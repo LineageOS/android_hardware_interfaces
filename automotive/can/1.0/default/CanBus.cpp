@@ -254,7 +254,7 @@ static bool match(const hidl_vec<CanMessageFilter>& filter, CanMessageId id, boo
                                satisfiesFilterFlag(rule.extendedFormat, isExtendedId);
 
         if (rule.exclude) {
-            // Any excluded (blacklist) rule not being satisfied invalidates the whole filter set.
+            // Any exclude rule being satisfied invalidates the whole filter set.
             if (satisfied) return false;
         } else {
             anyNonExcludeRulePresent = true;

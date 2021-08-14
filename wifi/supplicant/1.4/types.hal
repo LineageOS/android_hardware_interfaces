@@ -1,0 +1,135 @@
+/*
+ * Copyright 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi.supplicant@1.4;
+
+import @1.0::SupplicantStatusCode;
+import @1.3::ConnectionCapabilities;
+import @1.3::DppFailureCode;
+import @1.3::WpaDriverCapabilitiesMask;
+
+/**
+ * Detailed network mode for legacy network
+ */
+enum LegacyMode : uint32_t {
+    UNKNOWN = 0,
+    /**
+     * For 802.11a
+     */
+    A_MODE = 1,
+    /**
+     * For 802.11b
+     */
+    B_MODE = 2,
+    /**
+     * For 802.11g
+     */
+    G_MODE = 3,
+};
+
+/**
+ * DppFailureCode: Error codes for DPP (Easy Connect)
+ */
+enum DppFailureCode : @1.3::DppFailureCode {
+    /**
+     * Failure to generate a DPP URI.
+     */
+    URI_GENERATION,
+};
+
+/**
+ * DppCurve: Elliptic curve cryptography type used to generate DPP
+ * public/private key pair.
+ */
+enum DppCurve : uint32_t {
+    PRIME256V1,
+    SECP384R1,
+    SECP521R1,
+    BRAINPOOLP256R1,
+    BRAINPOOLP384R1,
+    BRAINPOOLP512R1,
+};
+
+/**
+ * Connection Capabilities supported by current network and device
+ */
+struct ConnectionCapabilities {
+    /**
+     * Baseline information as defined in HAL 1.3.
+     */
+    @1.3::ConnectionCapabilities V1_3;
+
+    /**
+     * detailed network mode for legacy network
+     */
+    LegacyMode legacyMode;
+};
+
+/**
+ * Enum values indicating the status of any supplicant operation.
+ */
+enum SupplicantStatusCode : @1.0::SupplicantStatusCode {
+    FAILURE_UNSUPPORTED,
+};
+
+/**
+ * Generic structure to return the status of any supplicant operation.
+ */
+struct SupplicantStatus {
+    SupplicantStatusCode code;
+
+    /**
+     * A vendor specific error message to provide more information beyond the
+     * status code.
+     * This will be used for debbuging purposes only.
+     */
+    string debugMessage;
+};
+
+/**
+ * WPA Driver capability.
+ */
+enum WpaDriverCapabilitiesMask : @1.3::WpaDriverCapabilitiesMask {
+    /**
+     * WPA3 SAE Public-Key.
+     */
+    SAE_PK = 1 << 2,
+    /**
+     * Wi-Fi Display R2
+     */
+    WFD_R2 = 1 << 3,
+};
+
+/**
+ * DPP bootstrap info generated for responder mode operation
+ */
+struct DppResponderBootstrapInfo {
+    /**
+     * Generated bootstrap identifier
+     */
+    uint32_t bootstrapId;
+
+    /**
+     * The Wi-Fi channel that the DPP responder is listening on.
+     */
+    uint32_t listenChannel;
+
+    /**
+     * Bootstrapping URI per DPP specification, "section 5.2 Bootstrapping
+     * information", may contain listen channel, MAC address, public key, or other information.
+     */
+    string uri;
+};

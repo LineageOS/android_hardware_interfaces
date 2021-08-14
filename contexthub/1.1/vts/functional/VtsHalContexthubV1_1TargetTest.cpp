@@ -31,6 +31,7 @@
 
 #include <cinttypes>
 
+using ::android::hardware::contexthub::V1_0::IContexthubCallback;
 using ::android::hardware::contexthub::V1_1::IContexthub;
 using ::android::hardware::contexthub::V1_1::Setting;
 using ::android::hardware::contexthub::V1_1::SettingValue;
@@ -45,15 +46,18 @@ const std::vector<std::tuple<std::string, std::string>> kTestParameters =
 
 class ContexthubHidlTest : public ContexthubHidlTestBase<IContexthub> {};
 
+class ContexthubCallbackV1_0 : public ContexthubCallbackBase<IContexthubCallback> {};
+
 TEST_P(ContexthubHidlTest, TestOnSettingChanged) {
     // In VTS, we only test that sending the values doesn't cause things to blow up - other test
     // suites verify the expected E2E behavior in CHRE
-    ASSERT_OK(registerCallback(new ContexthubCallbackBase()));
+    ASSERT_OK(registerCallback(new ContexthubCallbackV1_0()));
     hubApi->onSettingChanged(Setting::LOCATION, SettingValue::DISABLED);
     hubApi->onSettingChanged(Setting::LOCATION, SettingValue::ENABLED);
     ASSERT_OK(registerCallback(nullptr));
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(ContexthubHidlTest);
 INSTANTIATE_TEST_SUITE_P(HubIdSpecificTests, ContexthubHidlTest, testing::ValuesIn(kTestParameters),
                          android::hardware::PrintInstanceTupleNameToString<>);
 

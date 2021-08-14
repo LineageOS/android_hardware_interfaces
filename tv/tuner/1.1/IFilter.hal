@@ -1,0 +1,107 @@
+/*
+ * Copyright 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.tv.tuner@1.1;
+
+import @1.0::IFilter;
+import @1.0::Result;
+
+/**
+ * The Filter is used to filter wanted data according to the filter's
+ * configuration.
+ *
+ * To access the v1.1 IFilter APIs, the implementation can cast the IFilter
+ * interface returned from the @1.0::IDemux openFilter into a v1.1 IFiler
+ * using V1_1::IFilter::castFrom(V1_0::IFilter).
+ *
+ * Note that reconfiguring Filter must happen after the Filter is stopped.
+ */
+interface IFilter extends @1.0::IFilter {
+    /**
+     * Get the 64-bit filter Id. This id is 32-bit in Tuner HAL 1.0.
+     *
+     * It is used by the client to ask the hardware resource id for the filter.
+     *
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     * @return filterId the hardware resource Id for the filter.
+     */
+    getId64Bit() generates (Result result, uint64_t filterId);
+
+    /**
+     * Configure additional Context ID on the IP filter.
+     *
+     * @param ipCid Context Id of the IP filter.
+     * @return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if failed for wrong state.
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    configureIpCid(uint32_t ipCid) generates (Result result);
+
+    /**
+     * Get the shared AV memory handle. Use IFilter.releaseAvHandle to release the handle.
+     *
+     * When media filters are opened, call this API to initialize the share memory handle if it's
+     * needed.
+     *
+     * If DemuxFilterMediaEvent.avMemory contains file descriptor, share memory should be ignored.
+     *
+     * @return avMemory A handle associated to the shared memory for audio or video.
+     *         avMemory.data[0] is normally an fd for ION memory. When the avMemory->numFd is 0, the
+     *         share memory is not initialized and does not contain valid fd.
+     *         avMemory.data[avMemory.numFds] is an index used as a parameter of
+     *         C2DataIdInfo to build C2 buffer in Codec. No C2 buffer would be created if the index
+     *         does not exist.
+     * @return avMemSize the size of the shared av memory. It should be ignored when the share
+     *         memory is not initialized.
+     */
+    getAvSharedHandle() generates (Result result, handle avMemory, uint64_t avMemSize);
+
+    /**
+     * Configure A/V filter’s stream type. This API only applies to A/V filters.
+     *
+     * @param avStreamType the stream type for A/V.
+     * @return return result Result status of the operation.
+     *         SUCCESS if successful,
+     *         INVALID_STATE if configure can't be applied,
+     *         UNKNOWN_ERROR if failed for other reasons.
+     */
+    configureAvStreamType(AvStreamType avStreamType) generates (Result result);
+
+    /**
+     * Configure the monitor event.
+     *
+     * The event for Scrambling Status should be sent at the following two scenarios:
+     *   1. When this method is called, the first detected scrambling status should be sent.
+     *   2. When the Scrambling status transits into different status, event should be sent.
+     *
+     * The event for IP CID change should be sent at the following two scenarios:
+     *   1. When this method is called, the first detected CID for the IP should be sent.
+     *   2. When the CID is changed to different value for the IP filter, event should be sent.
+     *
+     * @param monitorEventypes the events to monitor. Set corresponding bit of the event to monitor.
+     *                         Reset to stop monitoring.
+     * @return result Result status of the operation.
+     *                SUCCESS if successful,
+     *                INVALID_STATE if configure can't be applied,
+     *                UNKNOWN_ERROR if failed for other reasons.
+     */
+    configureMonitorEvent(bitfield<DemuxFilterMonitorEventType> monitorEventTypes)
+            generates (Result result);
+};

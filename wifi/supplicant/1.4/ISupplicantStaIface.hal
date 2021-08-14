@@ -1,0 +1,137 @@
+/*
+ * Copyright 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi.supplicant@1.4;
+
+import @1.0::SupplicantStatus;
+import @1.0::ISupplicantStaIface;
+import @1.0::MacAddress;
+import ISupplicantStaIfaceCallback;
+import @1.3::ISupplicantStaIface;
+
+/**
+ * Interface exposed by the supplicant for each station mode network
+ * interface (e.g wlan0) it controls.
+ */
+interface ISupplicantStaIface extends @1.3::ISupplicantStaIface {
+    /**
+     * Get Connection capabilities
+     *
+     * @return status Status of the operation, and connection capabilities.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     */
+    getConnectionCapabilities_1_4()
+        generates (SupplicantStatus status, ConnectionCapabilities capabilities);
+
+    /**
+     * Register for callbacks from this interface.
+     *
+     * These callbacks are invoked for events that are specific to this interface.
+     * Registration of multiple callback objects is supported. These objects must
+     * be automatically deleted when the corresponding client process is dead or
+     * if this interface is removed.
+     *
+     * @param callback An instance of the |ISupplicantStaIfaceCallback| HIDL
+     *        interface object.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     */
+    registerCallback_1_4(ISupplicantStaIfaceCallback callback)
+        generates (SupplicantStatus status);
+
+    /**
+     * Initiate Venue URL ANQP (for IEEE 802.11u Interworking/Hotspot 2.0) query with the
+     * specified access point. This specific query can be used only post connection, once security
+     * is established and PMF is enabled, to avoid spoofing preassociation ANQP responses.
+     * The ANQP data fetched must be returned in the
+     * |ISupplicantStaIfaceCallback.onAnqpQueryDone| callback.
+     *
+     * @param macAddress MAC address of the access point.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     */
+    initiateVenueUrlAnqpQuery(MacAddress macAddress) generates (SupplicantStatus status);
+
+    /**
+     * Get wpa driver capabilities.
+     *
+     * @return status Status of the operation, and a bitmap of wpa driver features.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     */
+    getWpaDriverCapabilities_1_4() generates (SupplicantStatus status,
+        bitfield<WpaDriverCapabilitiesMask> driverCapabilitiesMask);
+
+    /**
+     * Generates DPP bootstrap information: Bootstrap ID, DPP URI and listen
+     * channel for responder mode.
+     *
+     * @param MacAddress MAC address of the interface for the DPP operation.
+     * @param deviceInfo Device specific information.
+     *        As per DPP Specification V1.0 section 5.2,
+     *        allowed Range of ASCII characters in deviceInfo - %x20-7E
+     *        semicolon is not allowed.
+     * @param DppCurve Elliptic curve cryptography type used to generate DPP
+     * public/private key pair.
+     * @return status of operation and bootstrap info.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     *         |SupplicantStatusCode.FAILURE_UNSUPPORTED|
+     */
+    generateDppBootstrapInfoForResponder(MacAddress macAddress, string deviceInfo, DppCurve curve)
+        generates (SupplicantStatus status, DppResponderBootstrapInfo bootstrapInfo);
+
+    /**
+     * Start DPP in Enrollee-Responder mode.
+     * Framework must first call |generateDppBootstrapInfoForResponder| to generate
+     * the bootstrapping information: Bootstrap ID, DPP URI and the listen channel.
+     * Then call this API with derived listen channel to start listening for
+     * authentication request from Peer initiator.
+     *
+     * @param listenChannel DPP listen channel.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     *         |SupplicantStatusCode.FAILURE_UNSUPPORTED|
+     */
+    startDppEnrolleeResponder(uint32_t listenChannel) generates (SupplicantStatus status);
+
+    /**
+     * Stop DPP Responder operation - Remove the bootstrap code and stop listening.
+     *
+     * @param ownBootstrapId Local device's URI ID obtained through
+     *        |generateDppBootstrapInfoForResponder| call.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     *         |SupplicantStatusCode.FAILURE_UNSUPPORTED|
+     */
+    stopDppResponder(uint32_t ownBootstrapId) generates (SupplicantStatus status);
+};

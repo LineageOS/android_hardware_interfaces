@@ -1,0 +1,53 @@
+//
+// Copyright (C) 2019 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_library_static {
+    name: "libnl++",
+    defaults: ["android.hardware.automotive.can@defaults"],
+    vendor_available: true,
+    srcs: [
+        "protocols/common/Empty.cpp",
+        "protocols/common/Error.cpp",
+        "protocols/generic/Ctrl.cpp",
+        "protocols/generic/FamilyTracker.cpp",
+        "protocols/generic/Generic.cpp",
+        "protocols/generic/GenericMessageBase.cpp",
+        "protocols/generic/Unknown.cpp",
+        "protocols/generic/families/Nl80211.cpp",
+        "protocols/route/Link.cpp",
+        "protocols/route/Route.cpp",
+        "protocols/route/structs.cpp",
+        "protocols/MessageDefinition.cpp",
+        "protocols/NetlinkProtocol.cpp",
+        "protocols/all.cpp",
+        "Attributes.cpp",
+        "MessageFactory.cpp",
+        "MessageMutator.cpp",
+        "Socket.cpp",
+        "common.cpp",
+        "printer.cpp",
+    ],
+    export_include_dirs: ["include"],
+}

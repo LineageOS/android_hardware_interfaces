@@ -87,19 +87,28 @@ class ComposerClientImpl : public Interface {
 
     class HalEventCallback : public Hal::EventCallback {
        public:
-        HalEventCallback(const sp<IComposerCallback> callback, ComposerResources* resources)
-            : mCallback(callback), mResources(resources) {}
+         HalEventCallback(Hal* hal, const sp<IComposerCallback> callback,
+                          ComposerResources* resources)
+             : mHal(hal), mCallback(callback), mResources(resources) {}
 
-        void onHotplug(Display display, IComposerCallback::Connection connected) {
-            if (connected == IComposerCallback::Connection::CONNECTED) {
-                mResources->addPhysicalDisplay(display);
-            } else if (connected == IComposerCallback::Connection::DISCONNECTED) {
-                mResources->removeDisplay(display);
-            }
+         void onHotplug(Display display, IComposerCallback::Connection connected) {
+             if (connected == IComposerCallback::Connection::CONNECTED) {
+                 if (mResources->hasDisplay(display)) {
+                     // This is a subsequent hotplug "connected" for a display. This signals a
+                     // display change and thus the framework may want to reallocate buffers. We
+                     // need to free all cached handles, since they are holding a strong reference
+                     // to the underlying buffers.
+                     cleanDisplayResources(display, mResources, mHal);
+                     mResources->removeDisplay(display);
+                 }
+                 mResources->addPhysicalDisplay(display);
+             } else if (connected == IComposerCallback::Connection::DISCONNECTED) {
+                 mResources->removeDisplay(display);
+             }
 
-            auto ret = mCallback->onHotplug(display, connected);
-            ALOGE_IF(!ret.isOk(), "failed to send onHotplug: %s", ret.description().c_str());
-        }
+             auto ret = mCallback->onHotplug(display, connected);
+             ALOGE_IF(!ret.isOk(), "failed to send onHotplug: %s", ret.description().c_str());
+         }
 
         void onRefresh(Display display) {
             mResources->setDisplayMustValidateState(display, true);
@@ -113,13 +122,14 @@ class ComposerClientImpl : public Interface {
         }
 
        protected:
-        const sp<IComposerCallback> mCallback;
-        ComposerResources* const mResources;
+         Hal* const mHal;
+         const sp<IComposerCallback> mCallback;
+         ComposerResources* const mResources;
     };
 
     Return<void> registerCallback(const sp<IComposerCallback>& callback) override {
         // no locking as we require this function to be called only once
-        mHalEventCallback = std::make_unique<HalEventCallback>(callback, mResources.get());
+        mHalEventCallback = std::make_unique<HalEventCallback>(mHal, callback, mResources.get());
         mHal->registerEventCallback(mHalEventCallback.get());
         return Void();
     }
@@ -318,6 +328,57 @@ class ComposerClientImpl : public Interface {
 
     virtual std::unique_ptr<ComposerCommandEngine> createCommandEngine() {
         return std::make_unique<ComposerCommandEngine>(mHal, mResources.get());
+    }
+
+    static void cleanDisplayResources(Display display, ComposerResources* const resources,
+                                      Hal* const hal) {
+        size_t cacheSize;
+        Error err = resources->getDisplayClientTargetCacheSize(display, &cacheSize);
+        if (err == Error::NONE) {
+            for (int slot = 0; slot < cacheSize; slot++) {
+                ComposerResources::ReplacedHandle replacedBuffer(/*isBuffer*/ true);
+                // Replace the buffer slots with NULLs. Keep the old handle until it is
+                // replaced in ComposerHal, otherwise we risk leaving a dangling pointer.
+                const native_handle_t* clientTarget = nullptr;
+                err = resources->getDisplayClientTarget(display, slot, /*useCache*/ true,
+                                                        /*rawHandle*/ nullptr, &clientTarget,
+                                                        &replacedBuffer);
+                if (err != Error::NONE) {
+                    continue;
+                }
+                const std::vector<hwc_rect_t> damage;
+                err = hal->setClientTarget(display, clientTarget, /*fence*/ -1, 0, damage);
+                ALOGE_IF(err != Error::NONE,
+                         "Can't clean slot %d of the client target buffer"
+                         "cache for display %" PRIu64,
+                         slot, display);
+            }
+        } else {
+            ALOGE("Can't clean client target cache for display %" PRIu64, display);
+        }
+
+        err = resources->getDisplayOutputBufferCacheSize(display, &cacheSize);
+        if (err == Error::NONE) {
+            for (int slot = 0; slot < cacheSize; slot++) {
+                // Replace the buffer slots with NULLs. Keep the old handle until it is
+                // replaced in ComposerHal, otherwise we risk leaving a dangling pointer.
+                ComposerResources::ReplacedHandle replacedBuffer(/*isBuffer*/ true);
+                const native_handle_t* outputBuffer = nullptr;
+                err = resources->getDisplayOutputBuffer(display, slot, /*useCache*/ true,
+                                                        /*rawHandle*/ nullptr, &outputBuffer,
+                                                        &replacedBuffer);
+                if (err != Error::NONE) {
+                    continue;
+                }
+                err = hal->setOutputBuffer(display, outputBuffer, /*fence*/ -1);
+                ALOGE_IF(err != Error::NONE,
+                         "Can't clean slot %d of the output buffer cache"
+                         "for display %" PRIu64,
+                         slot, display);
+            }
+        } else {
+            ALOGE("Can't clean output buffer cache for display %" PRIu64, display);
+        }
     }
 
     void destroyResources() {

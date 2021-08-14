@@ -20,6 +20,7 @@
 #include <android/hardware/wifi/1.2/IWifiNanIfaceEventCallback.h>
 #include <android/hardware/wifi/1.4/IWifi.h>
 #include <android/hardware/wifi/1.4/IWifiNanIface.h>
+#include <android/hardware/wifi/1.5/IWifiNanIface.h>
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
@@ -488,6 +489,17 @@ TEST_P(WifiNanIfaceHidlTest, enableRequest_1_4InvalidArgs) {
     callbackType = INVALID;
     ::android::hardware::wifi::V1_4::NanEnableRequest nanEnableRequest = {};
     NanConfigRequestSupplemental nanConfigRequestSupp = {};
+
+    sp<::android::hardware::wifi::V1_5::IWifiNanIface> iface_converted =
+        ::android::hardware::wifi::V1_5::IWifiNanIface::castFrom(iwifiNanIface);
+    if (iface_converted != nullptr) {
+        ASSERT_EQ(WifiStatusCode::ERROR_NOT_SUPPORTED,
+                  HIDL_INVOKE(iwifiNanIface, enableRequest_1_4, inputCmdId,
+                              nanEnableRequest, nanConfigRequestSupp)
+                      .code);
+        // Skip this test since this API is deprecated in this newer HAL version
+        return;
+    }
     ASSERT_EQ(WifiStatusCode::SUCCESS,
               HIDL_INVOKE(iwifiNanIface, enableRequest_1_4, inputCmdId,
                           nanEnableRequest, nanConfigRequestSupp)
@@ -509,6 +521,17 @@ TEST_P(WifiNanIfaceHidlTest, enableRequest_1_4ShimInvalidArgs) {
     nanEnableRequest.configParams.numberOfPublishServiceIdsInBeacon =
         128;  // must be <= 127
     NanConfigRequestSupplemental nanConfigRequestSupp = {};
+
+    sp<::android::hardware::wifi::V1_5::IWifiNanIface> iface_converted =
+        ::android::hardware::wifi::V1_5::IWifiNanIface::castFrom(iwifiNanIface);
+    if (iface_converted != nullptr) {
+        ASSERT_EQ(WifiStatusCode::ERROR_NOT_SUPPORTED,
+                  HIDL_INVOKE(iwifiNanIface, enableRequest_1_4, inputCmdId,
+                              nanEnableRequest, nanConfigRequestSupp)
+                      .code);
+        // Skip this test since this API is deprecated in this newer HAL version
+        return;
+    }
     ASSERT_EQ(WifiStatusCode::ERROR_INVALID_ARGS,
               HIDL_INVOKE(iwifiNanIface, enableRequest_1_4, inputCmdId,
                           nanEnableRequest, nanConfigRequestSupp)
@@ -523,6 +546,17 @@ TEST_P(WifiNanIfaceHidlTest, configRequest_1_4InvalidArgs) {
     callbackType = INVALID;
     ::android::hardware::wifi::V1_4::NanConfigRequest nanConfigRequest = {};
     NanConfigRequestSupplemental nanConfigRequestSupp = {};
+
+    sp<::android::hardware::wifi::V1_5::IWifiNanIface> iface_converted =
+        ::android::hardware::wifi::V1_5::IWifiNanIface::castFrom(iwifiNanIface);
+    if (iface_converted != nullptr) {
+        ASSERT_EQ(WifiStatusCode::ERROR_NOT_SUPPORTED,
+                  HIDL_INVOKE(iwifiNanIface, configRequest_1_4, inputCmdId,
+                              nanConfigRequest, nanConfigRequestSupp)
+                      .code);
+        // Skip this test since this API is deprecated in this newer HAL version
+        return;
+    }
     ASSERT_EQ(WifiStatusCode::SUCCESS,
               HIDL_INVOKE(iwifiNanIface, configRequest_1_4, inputCmdId,
                           nanConfigRequest, nanConfigRequestSupp)
@@ -543,12 +577,25 @@ TEST_P(WifiNanIfaceHidlTest, configRequest_1_4ShimInvalidArgs) {
     ::android::hardware::wifi::V1_4::NanConfigRequest nanConfigRequest = {};
     nanConfigRequest.numberOfPublishServiceIdsInBeacon = 128;  // must be <= 127
     NanConfigRequestSupplemental nanConfigRequestSupp = {};
+
+    sp<::android::hardware::wifi::V1_5::IWifiNanIface> iface_converted =
+        ::android::hardware::wifi::V1_5::IWifiNanIface::castFrom(iwifiNanIface);
+    if (iface_converted != nullptr) {
+        ASSERT_EQ(WifiStatusCode::ERROR_NOT_SUPPORTED,
+                  HIDL_INVOKE(iwifiNanIface, configRequest_1_4, inputCmdId,
+                              nanConfigRequest, nanConfigRequestSupp)
+                      .code);
+        // Skip this test since this API is deprecated in this newer HAL version
+        return;
+    }
+
     ASSERT_EQ(WifiStatusCode::ERROR_INVALID_ARGS,
               HIDL_INVOKE(iwifiNanIface, configRequest_1_4, inputCmdId,
                           nanConfigRequest, nanConfigRequestSupp)
                   .code);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiNanIfaceHidlTest);
 INSTANTIATE_TEST_SUITE_P(
     PerInstance, WifiNanIfaceHidlTest,
     testing::ValuesIn(android::hardware::getAllHalInstanceNames(

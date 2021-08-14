@@ -1,0 +1,7 @@
+service vendor.contexthub-hal-1.2-mock /vendor/bin/hw/android.hardware.contexthub@1.2-service.mock
+    interface android.hardware.contexthub@1.0::IContexthub default
+    interface android.hardware.contexthub@1.1::IContexthub default
+    interface android.hardware.contexthub@1.2::IContexthub default
+    class hal
+    user context_hub
+    group context_hub

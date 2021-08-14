@@ -354,6 +354,12 @@ enum VehicleProperty : int32_t {
     /**
      * Speed of the vehicle
      *
+     * The value must be positive when the vehicle is moving forward and negative when
+     * the vehicle is moving backward. This value is independent of gear value
+     * (CURRENT_GEAR or GEAR_SELECTION), for example, if GEAR_SELECTION is GEAR_NEUTRAL,
+     * PERF_VEHICLE_SPEED is positive when the vehicle is moving forward, negative when moving
+     * backward, and zero when not moving.
+     *
      * @change_mode VehiclePropertyChangeMode:CONTINUOUS
      * @access VehiclePropertyAccess:READ
      * @unit VehicleUnit:METER_PER_SEC
@@ -635,6 +641,25 @@ enum VehicleProperty : int32_t {
         | VehicleArea:WHEEL),
 
     /**
+     * Critically low tire pressure
+     *
+     * This property indicates the critically low pressure threshold for each tire.
+     * It indicates when it is time for tires to be replaced or fixed. The value
+     * must be less than or equal to minFloatValue in TIRE_PRESSURE.
+     * Minimum and maximum property values (that is, minFloatValue, maxFloatValue)
+     * are not applicable to this property.
+     *
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
+     * @unit VehicleUnit:KILOPASCAL
+     */
+    CRITICALLY_LOW_TIRE_PRESSURE = (
+        0x030A
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:FLOAT
+        | VehicleArea:WHEEL),
+
+    /**
      * Currently selected gear
      *
      * This is the gear selected by the user.
@@ -682,7 +707,7 @@ enum VehicleProperty : int32_t {
      * Parking brake state.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @access VehiclePropertyAccess:READ
      */
     PARKING_BRAKE_ON = (
         0x0402
@@ -694,7 +719,7 @@ enum VehicleProperty : int32_t {
      * Auto-apply parking brake.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @access VehiclePropertyAccess:READ
      */
     PARKING_BRAKE_AUTO_APPLY = (
         0x0403
@@ -874,6 +899,24 @@ enum VehicleProperty : int32_t {
 
     /**
      * HVAC, target temperature set.
+     *
+     * The configArray is used to indicate the valid values for HVAC in Fahrenheit and Celsius.
+     * Android might use it in the HVAC app UI.
+     * The configArray is set as follows:
+     *      configArray[0] = [the lower bound of the supported temperature in Celsius] * 10.
+     *      configArray[1] = [the upper bound of the supported temperature in Celsius] * 10.
+     *      configArray[2] = [the increment in Celsius] * 10.
+     *      configArray[3] = [the lower bound of the supported temperature in Fahrenheit] * 10.
+     *      configArray[4] = [the upper bound of the supported temperature in Fahrenheit] * 10.
+     *      configArray[5] = [the increment in Fahrenheit] * 10.
+     * For example, if the vehicle supports temperature values as:
+     *      [16.0, 16.5, 17.0 ,..., 28.0] in Celsius
+     *      [60.5, 61.5, 62.5 ,..., 85.5] in Fahrenheit.
+     * The configArray should be configArray = {160, 280, 5, 605, 825, 10}.
+     *
+     * If the vehicle supports HVAC_TEMPERATURE_VALUE_SUGGESTION, the application can use
+     * that property to get the suggested value before setting HVAC_TEMPERATURE_SET. Otherwise,
+     * the application may choose the value in HVAC_TEMPERATURE_SET configArray by itself.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -1223,6 +1266,50 @@ enum VehicleProperty : int32_t {
         | VehiclePropertyType:BOOLEAN
         | VehicleArea:WINDOW),
 
+    /**
+     * Suggested values for setting HVAC temperature.
+     *
+     * Implement the property to help applications understand the closest supported temperature
+     * value in Celsius or Fahrenheit.
+     *
+     *      floatValues[0] = the requested value that an application wants to set a temperature to.
+     *      floatValues[1] = the unit for floatValues[0]. It should be one of
+     *                       {VehicleUnit:CELSIUS, VehicleUnit:FAHRENHEIT}.
+     *      floatValues[2] = the value OEMs suggested in CELSIUS. This value is not included
+     *                       in the request.
+     *      floatValues[3] = the value OEMs suggested in FAHRENHEIT. This value is not included
+     *                       in the request.
+     *
+     * An application calls set(VehiclePropValue propValue) with the requested value and unit for
+     * the value. OEMs need to return the suggested values in floatValues[2] and floatValues[3] by
+     * onPropertyEvent() callbacks.
+     *
+     * For example, when a user uses the voice assistant to set HVAC temperature to 66.2 in
+     * Fahrenheit.
+     * First, an application will set this property with the value
+     * [66.2, (float)VehicleUnit:FAHRENHEIT,0,0].
+     * If OEMs suggest to set 19.0 in Celsius or 66.5 in Fahrenheit for user's request, then VHAL
+     * must generate a callback with property value
+     * [66.2, (float)VehicleUnit:FAHRENHEIT, 19.0, 66.5]. After the voice assistant gets the
+     * callback, it will inform the user and set HVAC temperature to the suggested value.
+     *
+     * Another example, an application receives 21 Celsius as the current temperature value by
+     * querying HVC_TEMPERATURE_SET. But the application wants to know what value is displayed on
+     * the car's UI in Fahrenheit.
+     * For this, the application sets the property to [21, (float)VehicleUnit:CELSIUS, 0, 0]. If
+     * the suggested value by the OEM for 21 Celsius is 70 Fahrenheit, then VHAL must generate a
+     * callback with property value [21, (float)VehicleUnit:CELSIUS, 21.0, 70.0].
+     * In this case, the application can know that the value is 70.0 Fahrenheit in the car’s UI.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    HVAC_TEMPERATURE_VALUE_SUGGESTION = (
+        0x0515
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:FLOAT_VEC
+        | VehicleArea:GLOBAL),
+
    /**
      * Distance units for display
      *
@@ -1339,6 +1426,48 @@ enum VehicleProperty : int32_t {
         0x0605
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:INT32
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Current date and time, encoded as Unix time (in milliseconds).
+     * This value denotes the number of milliseconds seconds that have
+     * elapsed since 1/1/1970 UTC.
+     *
+     * Reading this value will give you the system’s time. This can be
+     * useful to synchronize other vehicle systems (dash clock etc).
+     *
+     * Writing this value will update the ‘ExternalTimeSuggestion’
+     * value (if enabled). This value may be consumed by the “Time
+     * Detector Service”, if other sources do not have a higher
+     * priority. For information on how to adjust time source
+     * priorities see Time Detector Service documentation.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     * @unit VehicleUnit:MILLI_SECS
+     */
+    EPOCH_TIME = (
+        0x0606
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT64
+        | VehicleArea:GLOBAL),
+
+    /**
+     * External encryption binding seed.
+     *
+     * This value is mixed with the local key storage encryption key.
+     * This property holds 16 bytes, and is expected to be persisted on an ECU separate from
+     * the IVI. The property is initially set by AAOS, who generates it using a CSRNG.
+     * AAOS will then read the property on subsequent boots. The binding seed is expected to be
+     * reliably persisted. Any loss of the seed results in a factory reset of the IVI.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    STORAGE_ENCRYPTION_BINDING_SEED = (
+        0x0607
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:BYTES
         | VehicleArea:GLOBAL),
 
     /**
@@ -1476,6 +1605,33 @@ enum VehicleProperty : int32_t {
      */
     HW_ROTARY_INPUT = (
         0x0A20
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32_VEC
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Defines a custom OEM partner input event.
+     *
+     * This input event must be used by OEM partners who wish to propagate events not supported
+     * by Android. It is composed by an array of int32 values only.
+     *
+     * The Android properties are:
+     *
+     * int32Values[0] : Input code identifying the function representing this event. Valid event
+     *                  types are defined by CustomInputType.CUSTOM_EVENT_F1 up to
+     *                  CustomInputType.CUSTOM_EVENT_F10. They represent the custom event to be
+     *                  defined by OEM partners.
+     * int32Values[1] : target display type defined in VehicleDisplay. Events not tied to specific
+     *                  display must be sent to VehicleDisplay#MAIN.
+     * int32Values[2] : repeat counter, if 0 then event is not repeated. Values 1 or above means
+     *                  how many times this event repeated.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @data_enum CustomInputType
+     * @access VehiclePropertyAccess:READ
+     */
+    HW_CUSTOM_INPUT = (
+        0X0A30
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:INT32_VEC
         | VehicleArea:GLOBAL),
@@ -2746,7 +2902,7 @@ enum VehicleProperty : int32_t {
      *
      * int32[0]: 42  // request id
      * int32[1]: 11  // Android id of the created user
-     * int32[2]: 3   // Android flags (ephemeral guest) of the created user
+     * int32[2]: 6   // Android flags (ephemeral guest) of the created user
      * int32[3]: 10  // current user
      * int32[4]: 0   // current user flags (none)
      * int32[5]: 3   // number of users
@@ -2755,7 +2911,7 @@ enum VehicleProperty : int32_t {
      * int32[8]: 10  // 2nd user (user 10)
      * int32[9]: 0   // 2nd user flags (none)
      * int32[19]: 11 // 3rd user (user 11)
-     * int32[11]: 3  // 3rd user flags (ephemeral guest)
+     * int32[11]: 6  // 3rd user flags (ephemeral guest)
      * string: "ElGuesto" // name of the new user
      *
      * Then if the request succeeded, the HAL would return:
@@ -2892,6 +3048,314 @@ enum VehicleProperty : int32_t {
         | VehiclePropertyGroup:SYSTEM
         | VehiclePropertyType:MIXED
         | VehicleArea:GLOBAL),
+
+    /**
+     * Enable/request an EVS service.
+     *
+     * The property provides a generalized way to trigger EVS services.  VHAL
+     * should use this property to request Android to start or stop EVS service.
+     *
+     *  int32Values[0] = a type of the EVS service. The value must be one of enums in
+     *                   EvsServiceType.
+     *  int32Values[1] = the state of the EVS service. The value must be one of enums in
+     *                   EvsServiceState.
+     *
+     * For example, to enable rear view EVS service, android side can set the property value as
+     * [EvsServiceType::REAR_VIEW, EvsServiceState::ON].
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     */
+    EVS_SERVICE_REQUEST = (
+        0x0F10
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT32_VEC
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Defines a request to apply power policy.
+     *
+     * VHAL sets this property to change car power policy. Car power policy service subscribes to
+     * this property and actually changes the power policy.
+     * The request is made by setting the VehiclePropValue with the ID of a power policy which is
+     * defined at /vendor/etc/power_policy.xml. If the given ID is not defined, car power policy
+     * service ignores the request and the current power policy is maintained.
+     *
+     *   string: "sample_policy_id" // power policy ID
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     */
+    POWER_POLICY_REQ = (
+        0x0F21
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:STRING
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Defines a request to set the power polic group used to decide a default power policy per
+     * power status transition.
+     *
+     * VHAL sets this property with the ID of a power policy group in order to set the default power
+     * policy applied at power status transition. Power policy groups are defined at
+     * /vendor/etc/power_policy.xml. If the given ID is not defined, car power policy service
+     * ignores the request.
+     * Car power policy service subscribes to this property and sets the power policy group.
+     * The actual application of power policy takes place when the system power status changes and
+     * there is a valid mapped power policy for the new power status.
+     *
+     *   string: "sample_policy_group_id" // power policy group ID
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     */
+    POWER_POLICY_GROUP_REQ = (
+        0x0F22
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:STRING
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Notifies the current power policy to VHAL layer.
+     *
+     * Car power policy service sets this property when the current power policy is changed.
+     *
+     *   string: "sample_policy_id" // power policy ID
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    CURRENT_POWER_POLICY = (
+        0x0F23
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:STRING
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Defines an event that car watchdog updates to tell it's alive.
+     *
+     * Car watchdog sets this property to system uptime in milliseconds at every 3 second.
+     * During the boot, the update may take longer time.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:WRITE
+     */
+    WATCHDOG_ALIVE = (
+        0xF31
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:INT64
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Defines a process terminated by car watchdog and the reason of termination.
+     *
+     *   int32Values[0]: 1         // ProcessTerminationReason showing why a process is terminated.
+     *   string: "/system/bin/log" // Process execution command.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:WRITE
+     */
+    WATCHDOG_TERMINATED_PROCESS = (
+        0x0F32
+        | VehiclePropertyGroup:SYSTEM
+        | VehiclePropertyType:MIXED
+        | VehicleArea:GLOBAL),
+
+    /**
+     * Defines an event that VHAL signals to car watchdog as a heartbeat.
+     *
+     * If VHAL supports this property, VHAL should write system uptime to this property at every 3
+     * second. Car watchdog subscribes to this property and checks if the property is updated at
+     * every 3 second. With the buffer time of 3 second, car watchdog waits for a heart beat to be
+     * signaled up to 6 seconds from the last heart beat. If it isn’t, car watchdog considers
+     * VHAL unhealthy and terminates it.
+     * If this property is not supported by VHAL, car watchdog doesn't check VHAL health status.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     */
+     VHAL_HEARTBEAT = (
+         0x0F33
+         | VehiclePropertyGroup:SYSTEM
+         | VehiclePropertyType:INT64
+         | VehicleArea:GLOBAL),
+
+    /**
+     * Starts the ClusterUI in cluster display.
+     *
+     * int32: the type of ClusterUI to show
+     *    0 indicates ClusterHome, that is a home screen of cluster display, and provides
+     *        the default UI and a kind of launcher functionality for cluster display.
+     *    the other values are followed by OEM's definition.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     */
+     CLUSTER_SWITCH_UI = (
+         0x0F34
+         | VehiclePropertyGroup:SYSTEM
+         | VehiclePropertyType:INT32
+         | VehicleArea:GLOBAL),
+
+    /**
+     * Changes the state of the cluster display.
+     *
+     * Bounds: the area to render the cluster Activity.
+     * Inset: the area which Activity should avoid from placing any important
+     *     information.
+     *
+     * int32[0]: on/off: 0 - off, 1 - on, -1 - don't care
+     * int32[1]: Bounds - left: positive number - left position in pixels
+                                -1 - don't care (should set all Bounds fields)
+     * int32[2]: Bounds - top:    same format with 'left'
+     * int32[3]: Bounds - right:  same format with 'left'
+     * int32[4]: Bounds - bottom: same format with 'left'
+     * int32[5]: Inset - left: positive number - actual left inset value in pixels
+                               -1 - don't care (should set "don't care" all Inset fields)
+     * int32[6]: Inset - top:    same format with 'left'
+     * int32[7]: Inset - right:  same format with 'left'
+     * int32[8]: Inset - bottom: same format with 'left'
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     */
+     CLUSTER_DISPLAY_STATE = (
+         0x0F35
+         | VehiclePropertyGroup:SYSTEM
+         | VehiclePropertyType:INT32_VEC
+         | VehicleArea:GLOBAL),
+
+    /**
+     * Reports the current display state and ClusterUI state.
+     *
+     * ClusterHome will send this message when it handles CLUSTER_SWITCH_UI, CLUSTER_DISPLAY_STATE.
+     *
+     * In addition, ClusterHome should send this message when it starts for the first time.
+     * When ClusterOS receives this message and if the internal expectation is different with the
+     * received message, then it should send CLUSTER_SWITCH_UI, CLUSTER_DISPLAY_STATE again to
+     * match the state.
+     *
+     * int32[0]: on/off: 0 - off, 1 - on
+     * int32[1]: Bounds - left
+     * int32[2]: Bounds - top
+     * int32[3]: Bounds - right
+     * int32[4]: Bounds - bottom
+     * int32[5]: Inset - left
+     * int32[6]: Inset - top
+     * int32[7]: Inset - right
+     * int32[8]: Inset - bottom
+     * int32[9]: the type of ClusterUI in the fullscreen or main screen.
+     *    0 indicates ClusterHome.
+     *    the other values are followed by OEM's definition.
+     * int32[10]: the type of ClusterUI in sub screen if the currently two UIs are shown.
+     *    -1 indicates the area isn't used any more.
+     * bytes: the array to represent the availability of ClusterUI.
+     *     0 indicates non-available and 1 indicates available.
+     *     For example, let's assume a car supports 3 OEM defined ClusterUI like HOME, MAPS, CALL,
+     *     and it only supports CALL UI only when the cellular network is available. Then, if the
+     *     nework is avaibale, it'll send [1 1 1], and if it's out of network, it'll send [1 1 0].
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:WRITE
+     */
+     CLUSTER_REPORT_STATE = (
+         0x0F36
+         | VehiclePropertyGroup:SYSTEM
+         | VehiclePropertyType:MIXED
+         | VehicleArea:GLOBAL),
+
+    /**
+     * Requests to change the cluster display state to show some ClusterUI.
+     *
+     * When the current display state is off and ClusterHome sends this message to ClusterOS to
+     * request to turn the display on to show some specific ClusterUI.
+     * ClusterOS should response this with CLUSTER_DISPLAY_STATE.
+     *
+     * int32: the type of ClusterUI to show
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:WRITE
+     */
+     CLUSTER_REQUEST_DISPLAY = (
+         0x0F37
+         | VehiclePropertyGroup:SYSTEM
+         | VehiclePropertyType:INT32
+         | VehicleArea:GLOBAL),
+
+    /**
+     * Informs the current navigation state.
+     *
+     * bytes: the serialized message of NavigationStateProto.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:WRITE
+     */
+     CLUSTER_NAVIGATION_STATE = (
+         0x0F38
+         | VehiclePropertyGroup:SYSTEM
+         | VehiclePropertyType:BYTES
+         | VehicleArea:GLOBAL),
+
+    /**
+     * Electronic Toll Collection card type.
+     *
+     * This property indicates the type of ETC card in this vehicle.
+     * If the head unit is aware of an ETC card attached to the vehicle, this property should
+     * return the type of card attached; otherwise, this property should be UNAVAILABLE.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     * @data_enum ElectronicTollCollectionCardType
+     */
+     ELECTRONIC_TOLL_COLLECTION_CARD_TYPE = (
+         0x0F39
+         | VehiclePropertyGroup:SYSTEM
+         | VehiclePropertyType:INT32
+         | VehicleArea:GLOBAL),
+
+    /**
+     * Electronic Toll Collection card status.
+     *
+     * This property indicates the status of ETC card in this vehicle.
+     * If the head unit is aware of an ETC card attached to the vehicle,
+     * ELECTRONIC_TOLL_COLLECTION_CARD_TYPE gives that status of the card; otherwise,
+     * this property should be UNAVAILABLE.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     * @data_enum ElectronicTollCollectionCardStatus
+     */
+     ELECTRONIC_TOLL_COLLECTION_CARD_STATUS = (
+         0x0F3A
+         | VehiclePropertyGroup:SYSTEM
+         | VehiclePropertyType:INT32
+         | VehicleArea:GLOBAL),
+};
+
+/**
+ * Used by ELECTRONIC_TOLL_COLLECTION_CARD_TYPE.
+ */
+enum ElectronicTollCollectionCardType : int32_t {
+    // Type is unknown or not in the list below.
+    UNKNOWN = 0,
+    // A Japanese ETC card reader that does not support ETC 2.0.
+    JP_ELECTRONIC_TOLL_COLLECTION_CARD = 1,
+    // A Japanese ETC 2.0 card reader.
+    JP_ELECTRONIC_TOLL_COLLECTION_CARD_V2 = 2,
+};
+
+/**
+ * Used by ELECTRONIC_TOLL_COLLECTION_CARD_STATUS.
+ */
+enum ElectronicTollCollectionCardStatus : int32_t {
+    // Status could not be determined
+    UNKNOWN = 0,
+    // A valid ETC card is present
+    ELECTRONIC_TOLL_COLLECTION_CARD_VALID = 1,
+    // An ETC card is present, but it is expired or otherwise invalid
+    ELECTRONIC_TOLL_COLLECTION_CARD_INVALID = 2,
+    // No ETC card is inserted in the reader.
+    ELECTRONIC_TOLL_COLLECTION_CARD_NOT_INSERTED = 3,
 };
 
 /**
@@ -2960,6 +3424,33 @@ enum  VehicleSeatOccupancyState : int32_t {
     UNKNOWN = 0,
     VACANT = 1,
     OCCUPIED = 2
+};
+
+/**
+ * Used by EVS_SERVICE_REQUEST to enumerate the service's type.
+ */
+enum EvsServiceType : int32_t {
+
+    REARVIEW = 0,
+    SURROUNDVIEW = 1,
+};
+
+/**
+ * Used by EVS_SERVICE_REQUEST to enumerate the service's state.
+ */
+enum EvsServiceState : int32_t {
+
+    OFF = 0,
+    ON = 1,
+};
+
+/**
+ * Index in int32VAlues for VehicleProperty#EVS_SERVICE_REQUEST property.
+ */
+enum EvsServiceRequestIndex : int32_t {
+
+    TYPE = 0,
+    STATE = 1,
 };
 
 /**
@@ -3323,6 +3814,7 @@ enum VehicleUnit : int32_t {
     US_GALLON           = 0x42,
     IMPERIAL_GALLON     = 0x43,
     NANO_SECS           = 0x50,
+    MILLI_SECS          = 0x51,
     SECS                = 0x53,
     YEAR                = 0x59,
 
@@ -3556,7 +4048,10 @@ struct VehiclePropConfig {
  * events.
  */
 struct VehiclePropValue {
-    /** Time is elapsed nanoseconds since boot */
+    /**
+     * Time is elapsed nanoseconds since boot. It's equivalent to
+     * {@code SystemClock.elapsedRealtimeNano()}.
+     */
     int64_t timestamp;
 
     /**
@@ -4788,5 +5283,48 @@ enum RotaryInputType : int32_t {
 
     /** Volume control for adjusting audio volume. */
     ROTARY_INPUT_TYPE_AUDIO_VOLUME = 1,
+};
+
+/**
+ * The reason why a process is terminated by car watchdog.
+ * This is used with WATCHDOG_TERMINATED_PROCESS property.
+ */
+enum ProcessTerminationReason : int32_t {
+   /**
+    * A process doesn't respond to car watchdog within the timeout.
+    */
+   NOT_RESPONDING = 1,
+
+   /**
+    * A process uses more IO operations than what is allowed.
+    */
+   IO_OVERUSE = 2,
+
+   /**
+    * A process uses more memory space than what is allowed.
+    */
+   MEMORY_OVERUSE = 3,
+};
+
+/**
+ * Input code values for HW_CUSTOM_INPUT.
+ */
+enum CustomInputType : int32_t {
+    /**
+     * Ten functions representing the custom input code to be defined and implemented by OEM
+     * partners.
+     *
+     * OEMs need to formally contact Android team if more than 10 functions are required.
+     */
+    CUSTOM_EVENT_F1 = 1001,
+    CUSTOM_EVENT_F2 = 1002,
+    CUSTOM_EVENT_F3 = 1003,
+    CUSTOM_EVENT_F4 = 1004,
+    CUSTOM_EVENT_F5 = 1005,
+    CUSTOM_EVENT_F6 = 1006,
+    CUSTOM_EVENT_F7 = 1007,
+    CUSTOM_EVENT_F8 = 1008,
+    CUSTOM_EVENT_F9 = 1009,
+    CUSTOM_EVENT_F10 = 1010,
 };
 

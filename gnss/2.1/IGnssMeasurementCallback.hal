@@ -103,6 +103,9 @@ interface IGnssMeasurementCallback extends @2.0::IGnssMeasurementCallback {
          *
          * The value does not include the inter-frequency Ionospheric bias.
          *
+         * The sign of the value is defined by the following equation:
+         *      corrected pseudorange = raw pseudorange - fullInterSignalBias
+         *
          * The full ISB of GnssClock.referenceSignalTypeForIsb is defined to be 0.0 nanoseconds.
          */
         double fullInterSignalBiasNs;
@@ -126,6 +129,9 @@ interface IGnssMeasurementCallback extends @2.0::IGnssMeasurementCallback {
          *   GnssClock.referenceSignalTypeForIsb)
          * - Satellite inter-code bias (e.g., Differential Code Bias (DCB)) (with respect to the
          *   code type in GnssClock.referenceSignalTypeForIsb)
+         *
+         * The sign of the value is defined by the following equation:
+         *      corrected pseudorange = raw pseudorange - satelliteInterSignalBias
          *
          * The satellite ISB of GnssClock.referenceSignalTypeForIsb is defined to be 0.0
          * nanoseconds.

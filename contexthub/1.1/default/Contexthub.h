@@ -15,6 +15,8 @@
  */
 #pragma once
 
+#include "ContextHub.h"
+
 #include <android/hardware/contexthub/1.1/IContexthub.h>
 
 namespace android {
@@ -23,23 +25,14 @@ namespace contexthub {
 namespace V1_1 {
 namespace implementation {
 
-class Contexthub : public V1_1::IContexthub {
-    using ContextHubMsg = ::android::hardware::contexthub::V1_0::ContextHubMsg;
-    using IContexthubCallback = ::android::hardware::contexthub::V1_0::IContexthubCallback;
-    using NanoAppBinary = ::android::hardware::contexthub::V1_0::NanoAppBinary;
+class Contexthub
+    : public ::android::hardware::contexthub::V1_X::implementation::ContextHub<IContexthub> {
     using Result = ::android::hardware::contexthub::V1_0::Result;
 
   public:
     // Methods from V1_0::IContexthub
-    Return<void> getHubs(getHubs_cb _hidl_cb) override;
-    Return<Result> registerCallback(uint32_t hubId,
-                                    const ::android::sp<IContexthubCallback>& cb) override;
-    Return<Result> sendMessageToHub(uint32_t hubId, const ContextHubMsg& msg) override;
-    Return<Result> loadNanoApp(uint32_t hubId, const NanoAppBinary& appBinary,
-                               uint32_t transactionId) override;
-    Return<Result> unloadNanoApp(uint32_t hubId, uint64_t appId, uint32_t transactionId) override;
-    Return<Result> enableNanoApp(uint32_t hubId, uint64_t appId, uint32_t transactionId) override;
-    Return<Result> disableNanoApp(uint32_t hubId, uint64_t appId, uint32_t transactionId) override;
+    Return<Result> registerCallback(uint32_t hubId, const sp<IContexthubCallback>& cb) override;
+
     Return<Result> queryApps(uint32_t hubId) override;
 
     // Methods from V1_1::IContexthub

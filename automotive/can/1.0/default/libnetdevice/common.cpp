@@ -26,9 +26,8 @@ unsigned int nametoindex(const std::string& ifname) {
     const auto ifidx = if_nametoindex(ifname.c_str());
     if (ifidx != 0) return ifidx;
 
-    const auto err = errno;
-    if (err != ENODEV) {
-        LOG(ERROR) << "if_nametoindex(" << ifname << ") failed: " << err;
+    if (errno != ENODEV) {
+        PLOG(ERROR) << "if_nametoindex(" << ifname << ") failed";
     }
     return 0;
 }
