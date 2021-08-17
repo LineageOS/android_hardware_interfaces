@@ -264,11 +264,13 @@ TEST_P(StoreHidlTest, ListRoles) {
 
         // Make sure role name follows expected format based on type and
         // isEncoder
-        const std::string role_name(
-                ::android::GetComponentRole(role.isEncoder, role.type.c_str()));
-        EXPECT_EQ(role_name, role.role) << "Role \"" << role.role << "\" does not match "
-                                        << (role.isEncoder ? "an encoder " : "a decoder ")
-                                        << "for mime type \"" << role.type << ".";
+        const char* role_name = ::android::GetComponentRole(role.isEncoder, role.type.c_str());
+        if (role_name != nullptr) {
+            EXPECT_EQ(std::string(role_name), role.role)
+                    << "Role \"" << role.role << "\" does not match "
+                    << (role.isEncoder ? "an encoder " : "a decoder ") << "for media type \""
+                    << role.type << ".";
+        }
 
         // Check the nodes for this role
         std::set<const std::string> nodeKeys;
