@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Copyright (C) 2021 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<!-- The Sample Tuner Testing Configuration.
+    Name the customized xml with "tuner_vts_config.xml" and push into the device
+    "/vendor/etc" path. Please use "tuner_testing_dynamic_configuration.xsd" to verify the xml.
+    The version section contains a “version” tag in the form “major.minor” e.g version=”1.0”
+    This shows the tuner dynamic configuration version. -->
+<TunerConfiguration version="1.0" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <!-- Hardware Configuration section contains the configurations of all the hardwares
+        that would be used in the tests. In the "dataFlowConfiguration" section, each data flow
+        under test has its required/optional hardwares. The ids configured in the
+        "dataFlowConfiguration" would be used to connect the hardware to each data flow test. -->
+    <hardwareConfiguration>
+        <!-- Frontends section:
+            This section contains configurations of all the frontends that would be used
+                in the tests.
+                - This section is optional and can be skipped to use the default fe settings.
+                - The default settings can be found in the sample_tuner_vts_configurations.xml.
+                - The users can also override the default frontend settings using id="FE_DEFAULT".
+                - The users can configure 1 or more frontend elements in the frontends sections.
+
+            Each frontend element contain the following attributes:
+                "id": unique id of the frontend that could be used to connect to the test the
+                    "dataFlowConfiguration"
+                "type": the frontend type. The enums are defined in the xsd.
+                "isSoftwareFrontend": if the test environment is using hardware or software
+                    frontend. If using software, a ts input file path needs to be configured.
+                "softwareFeInputPath": used as the source of the software frontend.
+                "connectToCicamId": if the device supports frontend connecting to cicam, the target
+                    cicam id needs to be configured here. Supported in Tuner 1.1 or higher.
+                "frequency": the frequency used to configure tune and scan.
+                "endFrequency": the end frequency of scan. Supported in Tuner 1.1 or higher.
+
+            Each frontend element also contains one and only one type-related "frontendSettings".
+                - The settings type should match the frontend "type" attribute.
+                - For example, when frontend type="DVBT", dvbtFrontendSettings can be configured.
+                - This is optional and skipping the settings would pass a setting with frequency
+                    config only to the hal.
+        -->
+        <frontends>
+            <frontend id="FE_DEFAULT" type="DVBT" isSoftwareFrontend="true"
+                      connectToCicamId="0" frequency="578000" endFrequency="800000">
+                <dvbtFrontendSettings bandwidth="8" transmissionMode="128" isHighPriority="1"/>
+            </frontend>
+            <frontend id="FE_DVBS_0" type="DVBS" isSoftwareFrontend="true"
+                      connectToCicamId="0" frequency="578000" endFrequency="800000">
+            </frontend>
+        </frontends>
+        <!-- Filter section:
+            This section contains configurations of all the filters that would be used in the tests.
+                - This section is optional and can be skipped to use the default filter settings.
+                - The default settings can be found in the sample_tuner_vts_configurations.xml.
+                - The users can also override the default filter settings using
+                - id="FILTER_AUDIO_DEFAULT" or "FILTER_VIDEO_DEFAULT".
+                - The users can configure 1 or more filter elements in the filters sections.
+
+            Each filter element contain the following attributes:
+                "id": unique id of the filter that could be used to connect to the test the
+                    "dataFlowConfiguration"
+                "mainType": the main filter type. The enums are defined in the xsd.
+                "subType": the sub filter type. The enums are defined in the xsd.
+                "bufferSize": the buffer size of the filter in hex.
+                "pid": the pid that would be used to configure the filter.
+                "useFMQ": if the filter uses FMQ.
+
+            Each filter element also contains at most one type-related "filterSettings".
+                - The settings type should match the filter "subType" attribute.
+                - For example, when filter subType is audio or video, the avFilterSettings can be
+                    configured.
+                - This is optional and skipping the settings would pass a setting with tpid config
+                    only to the hal.
+        -->
+        <filters>
+            <filter id="FILTER_AUDIO_DEFAULT" mainType="TS" subType="AUDIO"
+                    bufferSize="16777216" pid="257" useFMQ="false" monitorEventTypes="3">
+                <avFilterSettings isPassthrough="false">
+                    <audioStreamType>2</audioStreamType>
+                </avFilterSettings>
+            </filter>
+            <filter id="FILTER_VIDEO_DEFAULT" mainType="TS" subType="VIDEO"
+                    bufferSize="16777216" pid="256" useFMQ="false" monitorEventTypes="3">
+                <avFilterSettings isPassthrough="false">
+                    <videoStreamType>2</videoStreamType>
+                </avFilterSettings>
+            </filter>
+            <filter id="FILTER_TS_RECORD_0" mainType="TS" subType="RECORD"
+                    bufferSize="16777216" pid="257" useFMQ="false">
+                <recordFilterSettings tsIndexMask="1" scIndexType="NONE"/>
+            </filter>
+            <filter id="FILTER_IP_IP_0" mainType="IP" subType="IP" bufferSize="16777216" useFMQ="false">
+                <ipFilterConfig ipCid="1">
+                    <srcIpAddress isIpV4="true" ip="192 168 1 1"/>
+                    <destIpAddress isIpV4="true" ip="192 168 1 1"/>
+                </ipFilterConfig>
+            </filter>
+        </filters>
+        <!-- Dvr section:
+            This section contains configurations of all the dvrs that would be used in the tests.
+                - This section is optional and can be skipped if DVR is not supported.
+                - The users can configure 1 or more dvr elements in the dvrs sections.
+
+            Each dvr element contain the following attributes:
+                "id": unique id of the dvr that could be used to connect to the test the
+                    "dataFlowConfiguration"
+                "type": the dvr type.
+                "bufferSize": the dvr buffer size.
+                "statusMask": register callbacks of specific status.
+                "lowThreshold": the dvr status low threshold.
+                "highThreshold": the dvr status high threshold.
+                "dataFormat": the dvr data format.
+                "packetSize": the dvr packet size.
+                "inputFilePath": the dvr playback input file path. Only required in playback dvr.
+        -->
+        <dvrs>
+            <dvr id="DVR_PLAYBACK_0" type="PLAYBACK" bufferSize="4194304"
+                 statusMask="15" lowThreshold="4096" highThreshold="32767"
+                 dataFormat="TS" packetSize="188" inputFilePath="/data/local/tmp/segment000000.ts"/>
+            <dvr id="DVR_RECORD_0" type="RECORD" bufferSize="4194304"
+                 statusMask="15" lowThreshold="4096" highThreshold="32767"
+                 dataFormat="TS" packetSize="188"/>
+            <dvr id="DVR_PLAYBACK_1" type="PLAYBACK" bufferSize="4194304"
+                 statusMask="15" lowThreshold="4096" highThreshold="32767"
+                 dataFormat="ES" packetSize="188" inputFilePath="/data/local/tmp/test.es"/>
+        </dvrs>
+    </hardwareConfiguration>
+
+    <!-- Data flow configuration section connects each data flow under test to the ids of the
+        hardwares that would be used during the tests. -->
+    <dataFlowConfiguration>
+        <clearLiveBroadcast frontendConnection="FE_DEFAULT"
+                            audioFilterConnection="FILTER_AUDIO_DEFAULT"
+                            videoFilterConnection="FILTER_VIDEO_DEFAULT"
+                            ipFilterConnection="FILTER_IP_IP_0"
+                            dvrSoftwareFeConnection="DVR_PLAYBACK_1"/>
+        <scan frontendConnection="FE_DEFAULT"/>
+        <dvrPlayback dvrConnection="DVR_PLAYBACK_1"
+                     audioFilterConnection="FILTER_AUDIO_DEFAULT"
+                     videoFilterConnection="FILTER_VIDEO_DEFAULT"/>
+        <dvrRecord hasFrontendConnection="true"
+                   frontendConnection="FE_DEFAULT"
+                   recordFilterConnection="FILTER_TS_RECORD_0"
+                   dvrRecordConnection="DVR_RECORD_0"
+                   dvrSoftwareFeConnection="DVR_PLAYBACK_1"/>
+    </dataFlowConfiguration>
+</TunerConfiguration>

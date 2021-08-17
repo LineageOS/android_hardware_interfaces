@@ -87,6 +87,7 @@ class Demux : public IDemux {
     bool detachRecordFilter(int filterId);
     Result startFilterHandler(uint32_t filterId);
     void updateFilterOutput(uint16_t filterId, vector<uint8_t> data);
+    void updateMediaFilterOutput(uint16_t filterId, vector<uint8_t> data, uint64_t pts);
     uint16_t getFilterTpid(uint32_t filterId);
     void setIsRecording(bool isRecording);
     void startFrontendInputLoop();

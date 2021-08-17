@@ -1,9 +1,9 @@
 #define LOG_TAG "Gnss"
 
+#include "Gnss.h"
 #include <android/hardware/gnss/1.0/types.h>
 #include <log/log.h>
-
-#include "Gnss.h"
+#include "Constants.h"
 #include "GnssDebug.h"
 #include "GnssMeasurement.h"
 #include "Utils.h"
@@ -16,6 +16,7 @@ namespace implementation {
 
 using ::android::hardware::gnss::common::Utils;
 using GnssSvFlags = IGnssCallback::GnssSvFlags;
+using namespace ::android::hardware::gnss::common;
 
 const uint32_t MIN_INTERVAL_MILLIS = 100;
 sp<::android::hardware::gnss::V1_1::IGnssCallback> Gnss::sGnssCallback = nullptr;
@@ -197,14 +198,21 @@ Return<bool> Gnss::injectBestLocation(const GnssLocation&) {
 Return<GnssSvStatus> Gnss::getMockSvStatus() const {
     std::unique_lock<std::recursive_mutex> lock(mGnssConfiguration->getMutex());
     GnssSvInfo mockGnssSvInfoList[] = {
-            Utils::getMockSvInfoV1_0(3, GnssConstellationType::GPS, 32.5, 59.1, 166.5),
-            Utils::getMockSvInfoV1_0(5, GnssConstellationType::GPS, 27.0, 29.0, 56.5),
-            Utils::getMockSvInfoV1_0(17, GnssConstellationType::GPS, 30.5, 71.0, 77.0),
-            Utils::getMockSvInfoV1_0(26, GnssConstellationType::GPS, 24.1, 28.0, 253.0),
-            Utils::getMockSvInfoV1_0(5, GnssConstellationType::GLONASS, 20.5, 11.5, 116.0),
-            Utils::getMockSvInfoV1_0(17, GnssConstellationType::GLONASS, 21.5, 28.5, 186.0),
-            Utils::getMockSvInfoV1_0(18, GnssConstellationType::GLONASS, 28.3, 38.8, 69.0),
-            Utils::getMockSvInfoV1_0(10, GnssConstellationType::GLONASS, 25.0, 66.0, 247.0)};
+            Utils::getMockSvInfoV1_0(3, GnssConstellationType::GPS, 32.5, 59.1, 166.5,
+                                     kGpsL1FreqHz),
+            Utils::getMockSvInfoV1_0(5, GnssConstellationType::GPS, 27.0, 29.0, 56.5, kGpsL1FreqHz),
+            Utils::getMockSvInfoV1_0(17, GnssConstellationType::GPS, 30.5, 71.0, 77.0,
+                                     kGpsL5FreqHz),
+            Utils::getMockSvInfoV1_0(26, GnssConstellationType::GPS, 24.1, 28.0, 253.0,
+                                     kGpsL5FreqHz),
+            Utils::getMockSvInfoV1_0(5, GnssConstellationType::GLONASS, 20.5, 11.5, 116.0,
+                                     kGloG1FreqHz),
+            Utils::getMockSvInfoV1_0(17, GnssConstellationType::GLONASS, 21.5, 28.5, 186.0,
+                                     kGloG1FreqHz),
+            Utils::getMockSvInfoV1_0(18, GnssConstellationType::GLONASS, 28.3, 38.8, 69.0,
+                                     kGloG1FreqHz),
+            Utils::getMockSvInfoV1_0(10, GnssConstellationType::GLONASS, 25.0, 66.0, 247.0,
+                                     kGloG1FreqHz)};
 
     GnssSvStatus svStatus = {.numSvs = sizeof(mockGnssSvInfoList) / sizeof(GnssSvInfo)};
     for (uint32_t i = 0; i < svStatus.numSvs; i++) {

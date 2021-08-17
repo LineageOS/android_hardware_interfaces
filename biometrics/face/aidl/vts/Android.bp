@@ -1,0 +1,30 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_test {
+    name: "VtsHalBiometricsFaceTargetTest",
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    srcs: ["VtsHalBiometricsFaceTargetTest.cpp"],
+    static_libs: [
+        "android.hardware.biometrics.common-V1-ndk",
+        "android.hardware.biometrics.face-V1-ndk",
+        "android.hardware.common-V2-ndk",
+        "android.hardware.keymaster-V3-ndk",
+    ],
+    shared_libs: [
+        "libbinder_ndk",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+}

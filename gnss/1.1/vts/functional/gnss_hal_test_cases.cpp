@@ -90,10 +90,8 @@ TEST_P(GnssHalTest, GetLocationLowPower) {
     gnss_cb_->location_cbq_.reset();
 
     // Start of Low Power Mode test
-    SetPositionMode(kMinIntervalMsec, kLowPowerMode);
-
     // Don't expect true - as without AGPS access
-    if (!StartAndCheckFirstLocation(/* strict= */ false)) {
+    if (!StartAndCheckFirstLocation(/* strict= */ false, kMinIntervalMsec, kLowPowerMode)) {
         ALOGW("GetLocationLowPower test - no first low power location received.");
     }
 

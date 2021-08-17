@@ -1,0 +1,165 @@
+/*
+ * Copyright 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi.hostapd@1.3;
+
+import @1.2::HostapdStatus;
+import @1.2::IHostapd.BandMask;
+import @1.2::IHostapd.HwModeParams;
+import @1.2::IHostapd.IfaceParams;
+import @1.2::IHostapd.NetworkParams;
+import @1.2::IHostapd;
+import IHostapdCallback;
+
+/**
+ * Top-level object for managing SoftAPs.
+ */
+interface IHostapd extends @1.2::IHostapd {
+
+    enum BandMask : @1.2::IHostapd.BandMask {
+        /**
+         * 60 GHz band.
+         */
+        BAND_60_GHZ = 1 << 3,
+    };
+
+    /**
+     * Parameters to control the HW mode for the interface.
+     */
+    struct HwModeParams {
+        /**
+         * Baseline information as defined in HAL 1.2.
+         */
+        @1.2::IHostapd.HwModeParams V1_2;
+
+        /**
+         * Enable EDMG (802.11ay), this option is only allowed for the 60GHz band.
+         */
+        bool enableEdmg;
+    };
+
+    /**
+     * Parameters to control the channel selection for the interface.
+     */
+    struct ChannelParams {
+        /**
+         * Baseline information as defined in HAL 1.2.
+         *
+         * Includes bandMask and acsChannelFreqRangesMhz
+         */
+        @1.2::IHostapd.ChannelParams V1_2;
+
+        /**
+         * Whether to enable ACS (Automatic Channel Selection) or not.
+         * The channel can be selected automatically at run time by setting
+         * this flag, which must enable the ACS survey based algorithm.
+         *
+         * Note: It is used instead of V1_0::ChannelParams.enableAcs inside
+         * V1_3::IfaceParams.V1_2.V1_1.V1_0.
+         */
+        bool enableAcs;
+
+        /**
+         * Channel number (IEEE 802.11) to use for the interface.
+         * If ACS is enabled, this field is ignored.
+         *
+         * If |enableEdmg| is true, the channel must be set. Refer to
+         * P802.11ay_D4.0 29.3.4.
+         *
+         * Note: It is used instead of V1_0::ChannelParams.channel inside
+         * V1_3::IfaceParams.V1_2.V1_1.V1_0.
+         */
+        uint32_t channel;
+
+        /**
+         * Band to use for the SoftAp operations.
+         * Note: It is used instead of V1_2::ChannelParams.bandMask inside
+         * V1_3::IfaceParams.V1_2.channelParams
+         */
+        bitfield<BandMask> bandMask;
+    };
+
+    /**
+     * Parameters to use for setting up the dual access point interfaces.
+     */
+    struct IfaceParams {
+        /**
+         * Baseline information as defined in HAL 1.2.
+         */
+        @1.2::IHostapd.IfaceParams V1_2;
+
+        /**
+         * Additional Hw mode params for the interface
+         */
+        HwModeParams hwModeParams;
+
+        /**
+         * The list of the channel params for the dual interfaces.
+         */
+        vec<ChannelParams> channelParamsList;
+    };
+
+    /**
+     * Parameters to use for setting up the access point network.
+     */
+    struct NetworkParams {
+        /**
+         * Baseline information as defined in HAL 1.2.
+         */
+        @1.2::IHostapd.NetworkParams V1_2;
+
+        /**
+         * Enable the interworking service and set access network type to
+         * CHARGEABLE_PUBLIC_NETWORK when set to true.
+         */
+        bool isMetered;
+    };
+
+    /**
+     * Adds a new access point for hostapd to control.
+     *
+     * This should trigger the setup of an access point with the specified
+     * interface and network params.
+     *
+     * @param ifaceParams AccessPoint Params for the access point.
+     * @param nwParams Network Params for the access point.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |HostapdStatusCode.SUCCESS|,
+     *         |HostapdStatusCode.FAILURE_ARGS_INVALID|,
+     *         |HostapdStatusCode.FAILURE_UNKNOWN|,
+     *         |HostapdStatusCode.FAILURE_IFACE_EXISTS|
+     */
+    addAccessPoint_1_3(IfaceParams ifaceParams, NetworkParams nwParams)
+        generates (HostapdStatus status);
+
+    /**
+     * Register for callbacks from the hostapd service.
+     *
+     * These callbacks are invoked for global events that are not specific
+     * to any interface or network. Registration of multiple callback
+     * objects is supported. These objects must be deleted when the corresponding
+     * client process is dead.
+     *
+     * @param callback An instance of the |IHostapdCallback| HIDL interface
+     *     object.
+     * @return status Status of the operation.
+     *     Possible status codes:
+     *     |HostapdStatusCode.SUCCESS|,
+     *     |HostapdStatusCode.FAILURE_UNKNOWN|
+     */
+    registerCallback_1_3(IHostapdCallback callback) generates (HostapdStatus status);
+};

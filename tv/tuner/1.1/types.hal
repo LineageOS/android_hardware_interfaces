@@ -1,0 +1,922 @@
+/*
+ * Copyright 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.tv.tuner@1.1;
+
+import @1.0::Constant;
+import @1.0::DemuxFilterMmtpRecordEvent;
+import @1.0::DemuxFilterTsRecordEvent;
+import @1.0::DemuxScIndex;
+import @1.0::DemuxTsIndex;
+import @1.0::FrontendIsdbs3Rolloff;
+import @1.0::FrontendAtsc3Bandwidth;
+import @1.0::FrontendAtsc3Modulation;
+import @1.0::FrontendAtsc3TimeInterleaveMode;
+import @1.0::FrontendIsdbsRolloff;
+import @1.0::FrontendAtscModulation;
+import @1.0::FrontendDvbcAnnex;
+import @1.0::FrontendDvbcModulation;
+import @1.0::FrontendDvbcSpectralInversion;
+import @1.0::FrontendDvbsModulation;
+import @1.0::FrontendDvbsRolloff;
+import @1.0::FrontendDvbtBandwidth;
+import @1.0::FrontendDvbtConstellation;
+import @1.0::FrontendDvbtTransmissionMode;
+import @1.0::FrontendDvbtGuardInterval;
+import @1.0::FrontendInnerFec;
+import @1.0::FrontendIsdbs3Modulation;
+import @1.0::FrontendIsdbsModulation;
+import @1.0::FrontendIsdbtBandwidth;
+import @1.0::FrontendIsdbtGuardInterval;
+import @1.0::FrontendIsdbtMode;
+import @1.0::FrontendIsdbtModulation;
+import @1.0::FrontendScanMessageType;
+import @1.0::FrontendStatusType;
+import @1.0::FrontendType;
+import android.hidl.safe_union@1.0;
+import android.hidl.safe_union@1.0::Monostate;
+
+@export
+enum Constant : @1.0::Constant {
+    /**
+     * An invalid mpuSequenceNumber.
+     */
+    INVALID_MMTP_RECORD_EVENT_MPT_SEQUENCE_NUM = 0xFFFFFFFF,
+    /**
+     * An invalid first macroblock address.
+     */
+    INVALID_FIRST_MACROBLOCK_IN_SLICE = 0xFFFFFFFF,
+    /**
+     * An invalid frenquency that can be used as the default value of the frontend setting.
+     */
+    INVALID_FRONTEND_SETTING_FREQUENCY = 0xFFFFFFFF,
+    /**
+     * An invalid context id that can be used as the default value of the unconfigured id. It can
+     * be used to reset the configured ip context id.
+     */
+    INVALID_IP_FILTER_CONTEXT_ID = 0xFFFFFFFF,
+    /**
+     * An invalid local transport stream id used as the return value on a failed operation of
+     * IFrontend.linkCiCam.
+     */
+    INVALID_LTS_ID = 0xFFFFFFFF,
+    /**
+     * An invalid frontend ID.
+     */
+    INVALID_FRONTEND_ID = 0xFFFFFFFF,
+    /**
+     * An invalid LNB ID.
+     */
+    INVALID_LNB_ID = 0xFFFFFFFF,
+    /**
+     * An invalid key token. It is used to remove the current key from the descrambler.
+     */
+    INVALID_KEYTOKEN = 0x00,
+};
+
+@export
+enum Constant64Bit : uint64_t {
+    /**
+     * An invalid 64-bit Filter ID.
+     */
+    INVALID_FILTER_ID_64BIT = 0xFFFFFFFFFFFFFFFF,
+    /**
+     * An invalid 64-bit AV sync hardware ID.
+     */
+    INVALID_AV_SYNC_ID_64BIT = 0xFFFFFFFFFFFFFFFF,
+    /**
+     * An invalid pts.
+     */
+    INVALID_PRESENTATION_TIME_STAMP = 0xFFFFFFFFFFFFFFFF,
+};
+
+/**
+ * Extended Demux Filter TS Record Event.
+ */
+struct DemuxFilterTsRecordEventExt {
+    /**
+     * The Presentation Time Stamp(PTS) for the audio or video frame. It is based on 90KHz
+     * and has the same format as the PTS in ISO/IEC 13818-1.
+     */
+    uint64_t pts;
+
+    /**
+     * Specifies the address of the first macroblock in the slice defined in ITU-T Rec. H.264.
+     */
+    uint32_t firstMbInSlice;
+};
+
+/**
+ * Extended Demux Filter MMTP Record Event.
+ */
+struct DemuxFilterMmtpRecordEventExt {
+    /**
+     * The Presentation Time Stamp(PTS) for the audio or video frame. It is based on 90KHz
+     * and has the same format as the PTS in ISO/IEC 13818-1.
+     */
+    uint64_t pts;
+
+    /**
+     * MPU sequence number of the filtered data. This is only used for MMTP.
+     */
+    uint32_t mpuSequenceNumber;
+
+    /**
+     * Specifies the address of the first macroblock in the slice defined in ITU-T Rec. H.264.
+     */
+    uint32_t firstMbInSlice;
+
+    /**
+     * TS index mask.
+     */
+    bitfield<@1.1::DemuxTsIndex> tsIndexMask;
+};
+
+/**
+ * Extended Demux Filter Event.
+ */
+struct DemuxFilterEventExt {
+    safe_union Event {
+        /**
+         * No extended filter Event.
+         */
+        Monostate noinit;
+
+        /**
+         * Extended TS Record event sent along with @1.0::DemuxFilterEvent::Event::tsRecord.
+         * DemuxFilterEventExt.events[i] is corresponding to @1.0::DemuxFilterEvent.events[i]. If
+         * @1.0::DemuxFilterEvent.events[i] does not have extended event,
+         * DemuxFilterEventExt.events[i] should use Monostate.
+         */
+        DemuxFilterTsRecordEventExt tsRecord;
+
+        /**
+         * Extended MMTP Record event sent along with @1.0::DemuxFilterEvent::Event::mmtpRecord.
+         * DemuxFilterEventExt.events[i] is corresponding to @1.0::DemuxFilterEvent.events[i]. If
+         * @1.0::DemuxFilterEvent.events[i] does not have extended event,
+         * DemuxFilterEventExt.events[i] should use Monostate.
+         */
+        DemuxFilterMmtpRecordEventExt mmtpRecord;
+
+        /**
+         * Monitor event to notify monitored status change.
+         *
+         * When sending monitorEvent, DemuxFilterEventExt.events should only contain one
+         * monitorEvent. MonitorEvent should be sent with an empty @1.0::DemuxFilterEvent.
+         */
+        DemuxFilterMonitorEvent monitorEvent;
+
+        /**
+         * An unique ID to mark the start point of receiving the valid filter events after
+         * reconfiguring the filter. It must be sent at least once in the first event after the
+         * filter is restarted. 0 is reserved for the newly opened filter's first start, which is
+         * optional for HAL to send.
+         *
+         * When sending starId, DemuxFilterEventExt.events should only contain one startId event.
+         * StardId event should be sent with an empty @1.0::DemuxFilterEvent.
+         */
+        uint32_t startId;
+    };
+
+    /**
+     * An array of events
+     */
+    vec<Event> events;
+};
+
+/**
+ * Scrambling Status Type.
+ */
+@export
+enum ScramblingStatus : uint32_t {
+    /**
+     * Content’s scrambling status is unknown
+     */
+    UNKNOWN = 1 << 0,
+    /**
+     * Content is not scrambled.
+     */
+    NOT_SCRAMBLED = 1 << 1,
+    /**
+     * Content is scrambled.
+     */
+    SCRAMBLED = 1 << 2,
+};
+
+@export
+enum DemuxFilterMonitorEventType : uint32_t {
+    SCRAMBLING_STATUS = 1 << 0,
+    IP_CID_CHANGE = 1 << 1,
+};
+
+safe_union DemuxFilterMonitorEvent {
+    /**
+     * New scrambling status.
+     */
+    ScramblingStatus scramblingStatus;
+
+    /**
+     * New cid for the IP filter.
+     */
+    uint32_t cid;
+};
+
+typedef FrontendDvbcSpectralInversion FrontendSpectralInversion;
+
+/**
+ *  Scan type for a DVBS Frontend.
+ */
+@export
+enum FrontendDvbsScanType : uint32_t {
+    UNDEFINED = 0,
+    DIRECT,
+    DISEQC,
+    UNICABLE,
+    JESS,
+};
+
+/**
+ * AFT flag for an Analog Frontend.
+ */
+@export
+enum FrontendAnalogAftFlag : uint32_t {
+    UNDEFINED,
+    AFT_TRUE,
+    AFT_FALSE,
+};
+
+/**
+ * Time Interleave Mode for DVBC Frontend.
+ */
+@export
+enum FrontendCableTimeInterleaveMode : uint32_t {
+    UNDEFINED = 0,
+    AUTO = 1 << 0,
+    INTERLEAVING_128_1_0 = 1 << 1,
+    INTERLEAVING_128_1_1 = 1 << 2,
+    INTERLEAVING_64_2 = 1 << 3,
+    INTERLEAVING_32_4 = 1 << 4,
+    INTERLEAVING_16_8 = 1 << 5,
+    INTERLEAVING_8_16 = 1 << 6,
+    INTERLEAVING_128_2 = 1 << 7,
+    INTERLEAVING_128_3 = 1 << 8,
+    INTERLEAVING_128_4 = 1 << 9,
+};
+
+/**
+ *  Extended Transmission Mode for DVBT.
+ */
+@export
+enum FrontendDvbtTransmissionMode : @1.0::FrontendDvbtTransmissionMode {
+    MODE_8K_E = 1 << 7,
+    MODE_16K_E = 1 << 8,
+    MODE_32K_E = 1 << 9,
+};
+
+/**
+ *  Extended Constellation for DVBT.
+ */
+@export
+enum FrontendDvbtConstellation : @1.0::FrontendDvbtConstellation {
+    CONSTELLATION_QPSK_R = 1 << 5,
+    CONSTELLATION_16QAM_R = 1 << 6,
+    CONSTELLATION_64QAM_R = 1 << 7,
+    CONSTELLATION_256QAM_R = 1 << 8,
+};
+
+/**
+ *  Extended Signal Settings for a DVBS Frontend.
+ */
+struct FrontendDvbsSettingsExt1_1 {
+    FrontendDvbsScanType scanType;
+
+    bool isDiseqcRxMessage;
+};
+
+/**
+ *  Extended Signal Settings for a DVBT Frontend.
+ */
+struct FrontendDvbtSettingsExt1_1 {
+    FrontendDvbtConstellation constellation;
+
+    FrontendDvbtTransmissionMode transmissionMode;
+};
+
+/**
+ *  Extended Signal Settings for an Analog Frontend.
+ */
+struct FrontendAnalogSettingsExt1_1 {
+    FrontendAnalogAftFlag aftFlag;
+};
+
+/**
+ *  Extended Signal Settings for DVBC Frontend.
+ */
+struct FrontendDvbcSettingsExt1_1 {
+    FrontendCableTimeInterleaveMode interleaveMode;
+
+    FrontendDvbcBandwidth bandwidth;
+};
+
+/**
+ *  Extended Signal Settings for Frontend.
+ */
+struct FrontendSettingsExt1_1 {
+    uint32_t endFrequency;
+
+    FrontendSpectralInversion inversion;
+
+    safe_union SettingsExt {
+        Monostate noinit;
+
+        FrontendAnalogSettingsExt1_1 analog;
+
+        FrontendDvbcSettingsExt1_1 dvbc;
+
+        FrontendDvbsSettingsExt1_1 dvbs;
+
+        FrontendDvbtSettingsExt1_1 dvbt;
+
+        FrontendDtmbSettings dtmb;
+    } settingExt;
+};
+
+/**
+ *  Extended Frontend Type.
+ */
+@export
+enum FrontendType : @1.0::FrontendType {
+    /**
+     * DTMB (Digital Terrestrial Multimedia Broadcast) standard.
+     */
+    DTMB,
+};
+
+/**
+ *  Bandwidth Type for Cable Frontend.
+ */
+@export
+enum FrontendDvbcBandwidth : uint32_t {
+    UNDEFINED = 0,
+    BANDWIDTH_5MHZ = 1 << 0,
+    BANDWIDTH_6MHZ = 1 << 1,
+    BANDWIDTH_7MHZ = 1 << 2,
+    BANDWIDTH_8MHZ = 1 << 3,
+};
+
+/**
+ *  Bandwidth Type for DTMB.
+ */
+@export
+enum FrontendDtmbBandwidth : uint32_t {
+    UNDEFINED = 0,
+    /**
+     * hardware is able to detect and set Bandwidth automatically
+     */
+    AUTO = 1 << 0,
+    BANDWIDTH_8MHZ = 1 << 1,
+    BANDWIDTH_6MHZ = 1 << 2,
+};
+
+/**
+ *  TimeInterleaveMode Type for DTMB.
+ */
+@export
+enum FrontendDtmbTimeInterleaveMode : uint32_t {
+    UNDEFINED = 0,
+    /**
+     * hardware is able to detect and set time interleave mode automatically
+     */
+    AUTO = 1 << 0,
+    TIMER_INT_240 = 1 << 1,
+    TIMER_INT_720 = 1 << 2,
+};
+
+/**
+ *  FrontendDtmbModulation Type for DTMB.
+ */
+@export
+enum FrontendDtmbModulation : uint32_t {
+    UNDEFINED = 0,
+    /**
+     * hardware is able to detect and set Constellation automatically
+     */
+    AUTO = 1 << 0,
+    CONSTELLATION_4QAM = 1 << 1,
+    CONSTELLATION_4QAM_NR = 1 << 2,
+    CONSTELLATION_16QAM = 1 << 3,
+    CONSTELLATION_32QAM = 1 << 4,
+    CONSTELLATION_64QAM = 1 << 5,
+};
+
+/**
+ *  CODERATE Type for DTMB.
+ */
+@export
+enum FrontendDtmbCodeRate : uint32_t {
+    UNDEFINED = 0,
+    /**
+     * hardware is able to detect and set code rate automatically
+     */
+    AUTO = 1 << 0,
+    CODERATE_2_5 = 1 << 1,
+    CODERATE_3_5 = 1 << 2,
+    CODERATE_4_5 = 1 << 3,
+};
+
+/**
+ *  Guard Interval Type for DTMB.
+ */
+@export
+enum FrontendDtmbGuardInterval : uint32_t {
+    UNDEFINED = 0,
+    /**
+     * hardware is able to detect and set Guard Interval automatically
+     */
+    AUTO = 1 << 0,
+    PN_420_VARIOUS = 1 << 1,
+    PN_595_CONST = 1 << 2,
+    PN_945_VARIOUS = 1 << 3,
+    PN_420_CONST = 1 << 4,
+    PN_945_CONST = 1 << 5,
+    PN_RESERVED = 1 << 6,
+};
+
+/**
+ *  Transmission Mode for DTMB.
+ */
+@export
+enum FrontendDtmbTransmissionMode : uint32_t {
+    UNDEFINED = 0,
+    /**
+     * hardware is able to detect and set Transmission Mode automatically
+     */
+    AUTO = 1 << 0,
+    C1 = 1 << 1,
+    C3780 = 1 << 2,
+};
+
+/**
+ *  Signal Setting for DTMB Frontend.
+ */
+struct FrontendDtmbSettings {
+    uint32_t frequency;
+
+    FrontendDtmbTransmissionMode transmissionMode;
+
+    FrontendDtmbBandwidth bandwidth;
+
+    FrontendDtmbModulation modulation;
+
+    FrontendDtmbCodeRate codeRate;
+
+    FrontendDtmbGuardInterval guardInterval;
+
+    FrontendDtmbTimeInterleaveMode interleaveMode;
+};
+
+/**
+ *  Capabilities for DTMB Frontend.
+ */
+struct FrontendDtmbCapabilities {
+    bitfield<FrontendDtmbTransmissionMode> transmissionModeCap;
+
+    bitfield<FrontendDtmbBandwidth> bandwidthCap;
+
+    bitfield<FrontendDtmbModulation> modulationCap;
+
+    bitfield<FrontendDtmbCodeRate> codeRateCap;
+
+    bitfield<FrontendDtmbGuardInterval> guardIntervalCap;
+
+    bitfield<FrontendDtmbTimeInterleaveMode> interleaveModeCap;
+};
+
+safe_union FrontendModulation {
+    @1.0::FrontendDvbcModulation dvbc;
+
+    @1.0::FrontendDvbsModulation dvbs;
+
+    FrontendDvbtConstellation dvbt;
+
+    @1.0::FrontendIsdbsModulation isdbs;
+
+    @1.0::FrontendIsdbs3Modulation isdbs3;
+
+    @1.0::FrontendIsdbtModulation isdbt;
+
+    @1.0::FrontendAtscModulation atsc;
+
+    @1.0::FrontendAtsc3Modulation atsc3;
+
+    FrontendDtmbModulation dtmb;
+};
+
+safe_union FrontendInterleaveMode {
+    @1.0::FrontendAtsc3TimeInterleaveMode atsc3;
+
+    FrontendCableTimeInterleaveMode dvbc;
+
+    FrontendDtmbTimeInterleaveMode dtmb;
+};
+
+@export
+enum FrontendInnerFec : @1.0::FrontendInnerFec {
+    FEC_2_15 = 1 << 36,
+    FEC_3_15 = 1 << 37,
+    FEC_5_15 = 1 << 38,
+    FEC_6_15 = 1 << 39,
+    FEC_9_15 = 1 << 40,
+    FEC_10_15 = 1 << 41,
+    FEC_12_15 = 1 << 42,
+    FEC_13_15 = 1 << 43,
+    FEC_18_30 = 1 << 44,
+    FEC_20_30 = 1 << 45,
+    FEC_90_180 = 1 << 46,
+    FEC_96_180 = 1 << 47,
+    FEC_104_180 = 1 << 48,
+    FEC_128_180 = 1 << 49,
+    FEC_132_180 = 1 << 50,
+    FEC_135_180 = 1 << 51,
+    FEC_140_180 = 1 << 52,
+};
+
+safe_union FrontendBandwidth {
+    @1.0::FrontendAtsc3Bandwidth atsc3;
+
+    FrontendDvbcBandwidth dvbc;
+
+    @1.0::FrontendDvbtBandwidth dvbt;
+
+    @1.0::FrontendIsdbtBandwidth isdbt;
+
+    FrontendDtmbBandwidth dtmb;
+};
+
+safe_union FrontendGuardInterval {
+    @1.0::FrontendDvbtGuardInterval dvbt;
+
+    @1.0::FrontendIsdbtGuardInterval isdbt;
+
+    FrontendDtmbGuardInterval dtmb;
+};
+
+safe_union FrontendTransmissionMode {
+    FrontendDvbtTransmissionMode dvbt;
+
+    @1.0::FrontendIsdbtMode isdbt;
+
+    FrontendDtmbTransmissionMode dtmb;
+};
+
+safe_union FrontendRollOff {
+    @1.0::FrontendDvbsRolloff dvbs;
+
+    @1.0::FrontendIsdbsRolloff isdbs;
+
+    @1.0::FrontendIsdbs3Rolloff isdbs3;
+};
+
+@export
+enum FrontendStatusTypeExt1_1 : uint32_t {
+    /**
+     * Modulation Types.
+     */
+    MODULATIONS = @1.0::FrontendStatusType:ATSC3_PLP_INFO + 1,
+    /**
+     * Bit Error Ratios.
+     */
+    BERS,
+    /**
+     * Code Rates.
+     */
+    CODERATES,
+    /**
+     * Extended Bandwidth.
+     */
+    BANDWIDTH,
+    /**
+     * Extended Guard Intervals.
+     */
+    GUARD_INTERVAL,
+    /**
+     * Extended Transmission Mode.
+     */
+    TRANSMISSION_MODE,
+    /**
+     * Uncorrectable Error Counts of the frontend's Physical Layer Pipe (PLP)
+     * since the last tune operation.
+     */
+    UEC,
+    /**
+     * DVB-T2 System Id.
+     */
+    T2_SYSTEM_ID,
+    /**
+     * Frontend Interleaving Modes.
+     */
+    INTERLEAVINGS,
+    /**
+     * Segments in ISDB-T Specification of all the channels.
+     */
+    ISDBT_SEGMENTS,
+    /**
+     * Transport Stream Data Rate in BPS of the current channel.
+     */
+    TS_DATA_RATES,
+    /**
+     * Roll Off Type status of the frontend.
+     */
+    ROLL_OFF,
+    /**
+     * If the frontend currently supports MISO or not.
+     */
+    IS_MISO,
+    /**
+     * If the frontend code rate is linear or not.
+     */
+    IS_LINEAR,
+    /**
+     * If short frames is enabled or not.
+     */
+    IS_SHORT_FRAMES,
+};
+
+safe_union FrontendStatusExt1_1 {
+    /**
+     * Extended modulation status.
+     */
+    vec<FrontendModulation> modulations;
+
+    /**
+     * Extended bit error ratio status.
+     */
+    vec<uint32_t> bers;
+
+    /**
+     * Extended code rate status.
+     */
+    vec<FrontendInnerFec> codeRates;
+
+    /**
+     * Extended bandwidth status.
+     */
+    FrontendBandwidth bandwidth;
+
+    /**
+     * Extended guard interval status.
+     */
+    FrontendGuardInterval interval;
+
+    /**
+     * Extended transmission mode status.
+     */
+    FrontendTransmissionMode transmissionMode;
+
+    /**
+     * Uncorrectable Error Counts of the frontend's Physical Layer Pipe (PLP)
+     * since the last tune operation.
+     */
+    uint32_t uec;
+
+    /**
+     * The current DVB-T2 system id status.
+     */
+    uint16_t systemId;
+
+    /**
+     * Frontend Interleaving Modes.
+     */
+    vec<FrontendInterleaveMode> interleaving;
+
+    /**
+     * Segments in ISDB-T Specification of all the channels.
+     */
+    vec<uint8_t> isdbtSegment;
+
+    /**
+     * Transport Stream Data Rate in BPS of the current channel.
+     */
+    vec<uint32_t> tsDataRate;
+    /**
+     * Roll Off Type status of the frontend.
+     */
+    FrontendRollOff rollOff;
+    /**
+     * If the frontend currently supports MISO or not.
+     */
+    bool isMiso;
+    /**
+     * If the frontend code rate is linear or not.
+     */
+    bool isLinear;
+    /**
+     * If short frames is enabled or not.
+     */
+    bool isShortFrames;
+};
+
+enum FrontendScanMessageTypeExt1_1 : uint32_t {
+    MODULATION = @1.0::FrontendScanMessageType:ATSC3_PLP_INFO + 1,
+    DVBC_ANNEX,
+    HIGH_PRIORITY,
+};
+
+safe_union FrontendScanMessageExt1_1 {
+    FrontendModulation modulation;
+
+    @1.0::FrontendDvbcAnnex annex;
+
+    bool isHighPriority;
+};
+
+@export
+enum VideoStreamType : uint32_t {
+    UNDEFINED,
+    /*
+     * ITU-T | ISO/IEC Reserved
+     */
+    RESERVED,
+    /*
+     * ISO/IEC 11172
+     */
+    MPEG1,
+    /*
+     * ITU-T Rec.H.262 and ISO/IEC 13818-2
+     */
+    MPEG2,
+    /*
+     * ISO/IEC 14496-2 (MPEG-4 H.263 based video)
+     */
+    MPEG4P2,
+    /*
+     * ITU-T Rec.H.264 and ISO/IEC 14496-10
+     */
+    AVC,
+    /*
+     * ITU-T Rec. H.265 and ISO/IEC 23008-2
+     */
+    HEVC,
+    /*
+     * Microsoft VC.1
+     */
+    VC1,
+    /*
+     * Google VP8
+     */
+    VP8,
+    /*
+     * Google VP9
+     */
+    VP9,
+    /*
+     * AOMedia Video 1
+     */
+    AV1,
+    /*
+     * Chinese Standard
+     */
+    AVS,
+    /*
+     * New Chinese Standard
+     */
+    AVS2,
+};
+
+@export
+enum AudioStreamType : uint32_t {
+    UNDEFINED,
+    /*
+     * Uncompressed Audio
+     */
+    PCM,
+    /*
+     * MPEG Audio Layer III versions
+     */
+    MP3,
+    /*
+     * ISO/IEC 11172 Audio
+     */
+    MPEG1,
+    /*
+     * ISO/IEC 13818-3
+     */
+    MPEG2,
+    /*
+     * ISO/IEC 23008-3 (MPEG-H Part 3)
+     */
+    MPEGH,
+    /*
+     * ISO/IEC 14496-3
+     */
+    AAC,
+    /*
+     * Dolby Digital
+     */
+    AC3,
+    /*
+     * Dolby Digital Plus
+     */
+    EAC3,
+    /*
+     * Dolby AC-4
+     */
+    AC4,
+    /*
+     * Basic DTS
+     */
+    DTS,
+    /*
+     * High Resolution DTS
+     */
+    DTS_HD,
+    /*
+     * Windows Media Audio
+     */
+    WMA,
+    /*
+     * Opus Interactive Audio Codec
+     */
+    OPUS,
+    /*
+     * VORBIS Interactive Audio Codec
+     */
+    VORBIS,
+    /*
+     * SJ/T 11368-2006
+     */
+    DRA,
+};
+
+/**
+ *  Stream type for A/V filter.
+ */
+safe_union AvStreamType {
+    VideoStreamType video;
+
+    AudioStreamType audio;
+};
+
+/**
+ * Indexes can be tagged by start point of slice groups according to ISO/IEC 14496-10.
+ */
+@export
+enum DemuxScIndex : @1.0::DemuxScIndex {
+    /**
+     * All blocks are coded as I blocks.
+     */
+    I_SLICE = 1 << 4,
+    /**
+     * Blocks are coded as I or P blocks.
+     */
+    P_SLICE = 1 << 5,
+    /**
+     * Blocks are coded as I, P or B blocks.
+     */
+    B_SLICE = 1 << 6,
+    /**
+     * A so-called switching I slice that is coded.
+     */
+    SI_SLICE = 1 << 7,
+    /**
+     * A so-called switching P slice that is coded.
+     */
+    SP_SLICE = 1 << 8,
+};
+
+@export
+enum DemuxTsIndex : @1.0::DemuxTsIndex {
+    /**
+     * Index the address of MMT Packet Table(MPT).
+     */
+    MPT_INDEX_MPT = 1 << 16,
+    /**
+     * Index the address of Video.
+     */
+    MPT_INDEX_VIDEO = 1 << 17,
+    /**
+     * Index the address of Audio.
+     */
+    MPT_INDEX_AUDIO = 1 << 18,
+    /**
+     * Index to indicate this is a target of timestamp extraction for video.
+     */
+    MPT_INDEX_TIMESTAMP_TARGET_VIDEO = 1 << 19,
+    /**
+     * Index to indicate this is a target of timestamp extraction for audio.
+     */
+    MPT_INDEX_TIMESTAMP_TARGET_AUDIO = 1 << 20,
+};

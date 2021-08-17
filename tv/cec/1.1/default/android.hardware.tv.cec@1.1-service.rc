@@ -1,0 +1,6 @@
+service vendor.cec-hal-1-1 /vendor/bin/hw/android.hardware.tv.cec@1.1-service
+    interface android.hardware.tv.cec@1.0::IHdmiCec default
+    interface android.hardware.tv.cec@1.1::IHdmiCec default
+    class hal
+    user system
+    group system

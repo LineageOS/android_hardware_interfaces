@@ -25,7 +25,11 @@ package {
 
 cc_test {
     name: "VtsHalGraphicsComposerV2_2TargetTest",
-    defaults: ["VtsHalTargetTestDefaults"],
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        // Needed for librenderengine
+        "skia_deps",
+    ],
     srcs: [
         "VtsHalGraphicsComposerV2_2ReadbackTest.cpp",
         "VtsHalGraphicsComposerV2_2TargetTest.cpp",

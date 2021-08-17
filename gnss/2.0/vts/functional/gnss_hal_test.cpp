@@ -97,7 +97,9 @@ void GnssHalTest::SetPositionMode(const int min_interval_msec, const bool low_po
     EXPECT_TRUE(result);
 }
 
-bool GnssHalTest::StartAndCheckFirstLocation(bool strict) {
+bool GnssHalTest::StartAndCheckFirstLocation(const bool strict, const int min_interval_msec,
+                                             const bool low_power_mode) {
+    SetPositionMode(min_interval_msec, low_power_mode);
     const auto result = gnss_hal_->start();
 
     EXPECT_TRUE(result.isOk());
@@ -137,7 +139,9 @@ void GnssHalTest::StartAndCheckLocations(int count) {
 
     SetPositionMode(kMinIntervalMsec, kLowPowerMode);
 
-    EXPECT_TRUE(StartAndCheckFirstLocation(/* strict= */ true));
+    EXPECT_TRUE(StartAndCheckFirstLocation(/* strict= */ true,
+                                           /* min_interval_msec= */ 1000,
+                                           /* low_power_mode= */ false));
 
     for (int i = 1; i < count; i++) {
         EXPECT_TRUE(gnss_cb_->location_cbq_.retrieve(gnss_cb_->last_location_,

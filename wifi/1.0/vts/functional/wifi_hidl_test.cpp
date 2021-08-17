@@ -52,6 +52,7 @@ TEST_P(WifiHidlTest, Create) {
     // The creation of a proxy object is tested as part of SetUp method.
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiHidlTest);
 INSTANTIATE_TEST_SUITE_P(
     PerInstance, WifiHidlTest,
     testing::ValuesIn(

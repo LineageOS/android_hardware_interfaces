@@ -1,0 +1,70 @@
+/*
+ * Copyright (C) 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.tv.cec@1.1;
+
+import @1.0::IHdmiCec;
+import @1.0::Result;
+import @1.0::SendMessageResult;
+
+import IHdmiCecCallback;
+
+/**
+ * HDMI-CEC HAL interface definition.
+ */
+interface IHdmiCec extends @1.0::IHdmiCec {
+    /**
+     * Passes the logical address that must be used in this system.
+     *
+     * HAL must use it to configure the hardware so that the CEC commands
+     * addressed the given logical address can be filtered in. This method must
+     * be able to be called as many times as necessary in order to support
+     * multiple logical devices.
+     *
+     * @param addr Logical address that must be used in this system. It must be
+     *        in the range of valid logical addresses for the call to succeed.
+     * @return result Result status of the operation. SUCCESS if successful,
+     *         FAILURE_INVALID_ARGS if the given logical address is invalid,
+     *         FAILURE_BUSY if device or resource is busy
+     */
+    addLogicalAddress_1_1(CecLogicalAddress addr) generates (Result result);
+
+    /**
+     * Transmits HDMI-CEC message to other HDMI device.
+     *
+     * The method must be designed to return in a certain amount of time and not
+     * hanging forever which may happen if CEC signal line is pulled low for
+     * some reason.
+     *
+     * It must try retransmission at least once as specified in the section '7.1
+     * Frame Re-transmissions' of the CEC Spec 1.4b.
+     *
+     * @param message CEC message to be sent to other HDMI device.
+     * @return result Result status of the operation. SUCCESS if successful,
+     *         NACK if the sent message is not acknowledged,
+     *         BUSY if the CEC bus is busy.
+     */
+    sendMessage_1_1(CecMessage message) generates (SendMessageResult result);
+
+    /**
+     * Sets a callback that HDMI-CEC HAL must later use for incoming CEC
+     * messages or internal HDMI events.
+     *
+     * @param callback Callback object to pass hdmi events to the system. The
+     *        previously registered callback must be replaced with this one.
+     */
+    setCallback_1_1(IHdmiCecCallback callback);
+};

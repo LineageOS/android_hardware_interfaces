@@ -191,6 +191,8 @@ TEST_P(WifiRttControllerHidlTest, Request2SidedRangeMeasurement) {
     const auto& status =
         HIDL_INVOKE(wifi_rtt_controller_, rangeRequest_1_4, cmdId, configs);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status.code);
+    // sleep for 2 seconds to wait for driver/firmware to complete RTT
+    sleep(2);
 }
 /*
  * rangeRequest_1_4
@@ -242,6 +244,8 @@ TEST_P(WifiRttControllerHidlTest, RangeRequest_1_4) {
     const auto& status =
         HIDL_INVOKE(wifi_rtt_controller_, rangeRequest_1_4, cmdId, configs);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status.code);
+    // sleep for 2 seconds to wait for driver/firmware to complete RTT
+    sleep(2);
 }
 
 /*
@@ -289,6 +293,7 @@ TEST_P(WifiRttControllerHidlTest, EnableResponder_1_4) {
     EXPECT_EQ(WifiStatusCode::SUCCESS, status.code);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiRttControllerHidlTest);
 INSTANTIATE_TEST_SUITE_P(
     PerInstance, WifiRttControllerHidlTest,
     testing::ValuesIn(android::hardware::getAllHalInstanceNames(

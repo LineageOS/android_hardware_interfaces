@@ -16,10 +16,26 @@
 
 #pragma once
 
+#include <linux/if_ether.h>
+
+#include <array>
 #include <optional>
+#include <set>
 #include <string>
 
 namespace android::netdevice {
+
+typedef std::array<uint8_t, ETH_ALEN> hwaddr_t;
+
+/**
+ * Configures libnetdevice to use other socket domain than AF_INET,
+ * what requires less permissive SEPolicy rules for a given process.
+ *
+ * In such case, the process would only be able to control interfaces of a given kind.
+
+ * \param domain Socket domain to use (e.g. AF_CAN), see socket(2) for details
+ */
+void useSocketDomain(int domain);
 
 /**
  * Checks, if the network interface exists.
@@ -36,6 +52,36 @@ bool exists(std::string ifname);
  * \return true/false if the check succeeded, nullopt otherwise
  */
 std::optional<bool> isUp(std::string ifname);
+
+/**
+ * Interface condition to wait for.
+ */
+enum class WaitCondition {
+    /**
+     * Interface is present (but not necessarily up).
+     */
+    PRESENT,
+
+    /**
+     * Interface is up.
+     */
+    PRESENT_AND_UP,
+
+    /**
+     * Interface is down or not present (disconnected) at all.
+     */
+    DOWN_OR_GONE,
+};
+
+/**
+ * Listens for interface changes until anticipated condition takes place.
+ *
+ * \param ifnames List of interfaces to watch for.
+ * \param cnd Awaited condition.
+ * \param allOf true if all interfaces need to satisfy the condition, false if only one satistying
+ *        interface should stop the wait.
+ */
+void waitFor(std::set<std::string> ifnames, WaitCondition cnd, bool allOf = true);
 
 /**
  * Brings network interface up.
@@ -70,4 +116,22 @@ bool add(std::string dev, std::string type);
  */
 bool del(std::string dev);
 
+/**
+ * Fetches interface's hardware address.
+ *
+ * \param ifname Interface name
+ * \return Hardware address (MAC address) or nullopt if the lookup failed
+ */
+std::optional<hwaddr_t> getHwAddr(const std::string& ifname);
+
+/**
+ * Changes interface's hardware address.
+ *
+ * \param ifname Interface name
+ * \param hwaddr New hardware address to set
+ */
+bool setHwAddr(const std::string& ifname, hwaddr_t hwaddr);
+
 }  // namespace android::netdevice
+
+bool operator==(const android::netdevice::hwaddr_t lhs, const unsigned char rhs[ETH_ALEN]);

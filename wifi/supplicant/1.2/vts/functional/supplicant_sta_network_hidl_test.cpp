@@ -37,10 +37,10 @@ using ::android::hardware::wifi::supplicant::V1_2::ISupplicantStaNetwork;
 // constexpr uint8_t kTestEncryptedIdentity[] = {0x35, 0x37, 0x58, 0x57, 0x26};
 //}  // namespace
 
-class SupplicantStaNetworkHidlTest : public SupplicantHidlTestBase {
+class SupplicantStaNetworkHidlTest : public SupplicantHidlTestBaseV1_2 {
    public:
     virtual void SetUp() override {
-        SupplicantHidlTestBase::SetUp();
+        SupplicantHidlTestBaseV1_2::SetUp();
         sta_network_ = createSupplicantStaNetwork_1_2(supplicant_);
         ASSERT_NE(sta_network_.get(), nullptr);
     }

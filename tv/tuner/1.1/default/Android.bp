@@ -1,0 +1,62 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_defaults {
+    name: "tuner_service_defaults@1.1",
+    defaults: ["hidl_defaults"],
+    vendor: true,
+    relative_install_path: "hw",
+    srcs: [
+        "Demux.cpp",
+        "Descrambler.cpp",
+        "Dvr.cpp",
+        "Filter.cpp",
+        "Frontend.cpp",
+        "Lnb.cpp",
+        "TimeFilter.cpp",
+        "Tuner.cpp",
+        "service.cpp",
+    ],
+
+    compile_multilib: "first",
+
+    shared_libs: [
+        "android.hardware.tv.tuner@1.0",
+        "android.hardware.tv.tuner@1.1",
+        "android.hidl.memory@1.0",
+        "libcutils",
+        "libdmabufheap",
+        "libfmq",
+        "libhidlbase",
+        "libhidlmemory",
+        "libion",
+        "liblog",
+        "libstagefright_foundation",
+        "libutils",
+    ],
+    header_libs: [
+        "media_plugin_headers",
+    ],
+}
+
+cc_binary {
+    name: "android.hardware.tv.tuner@1.1-service",
+    vintf_fragments: ["android.hardware.tv.tuner@1.1-service.xml"],
+    defaults: ["tuner_service_defaults@1.1"],
+    init_rc: ["android.hardware.tv.tuner@1.1-service.rc"],
+}
+
+cc_binary {
+    name: "android.hardware.tv.tuner@1.1-service-lazy",
+    vintf_fragments: ["android.hardware.tv.tuner@1.1-service-lazy.xml"],
+    overrides: ["android.hardware.tv.tuner@1.1-service"],
+    defaults: ["tuner_service_defaults@1.1"],
+    init_rc: ["android.hardware.tv.tuner@1.1-service-lazy.rc"],
+    cflags: ["-DLAZY_SERVICE"],
+}

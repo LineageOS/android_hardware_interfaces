@@ -286,8 +286,6 @@ interface IStreamOut extends IStream {
      * timestamp must correspond to N rather than N+M. The terms 'recent' and
      * 'small' are not defined. They reflect the quality of the implementation.
      *
-     * Optional method
-     *
      * @return retval operation completion status.
      * @return frames count of presented audio frames.
      * @return timeStamp associated clock time.

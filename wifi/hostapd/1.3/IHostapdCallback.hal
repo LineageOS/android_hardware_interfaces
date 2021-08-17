@@ -1,0 +1,61 @@
+/*
+ * Copyright 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi.hostapd@1.3;
+
+import @1.1::IHostapdCallback;
+import @1.2::MacAddress;
+import Bandwidth;
+import Generation;
+
+/**
+ * Top-level callback object for managing SoftAPs.
+ */
+interface IHostapdCallback extends @1.1::IHostapdCallback {
+    /**
+     * Invoked when information changes for one of the AP instances.
+     *
+     * @param ifaceName Name of the interface which was added via
+     * |IHostapd.addAccessPoint|.
+     * @param apIfaceInstance The identity of the AP instance. The interface
+     * will have two instances (e.q. 2.4 Ghz AP and 5 GHz AP) in dual AP mode.
+     * The apIfaceInstance can be used to identify which instance the callback
+     * is from.
+     * Note: The apIfaceInstance must be same as ifaceName in single AP mode.
+     * @param freqMhz The operational frequency of the AP in Mhz.
+     * @param bandwidth The operational bandwidth of the AP.
+     * @param generation The operational mode of the AP (e.g. 11ac, 11ax).
+     * @param apIfaceInstanceMacAddress MAC Address of the apIfaceInstance.
+     */
+    oneway onApInstanceInfoChanged(string ifaceName, string apIfaceInstance, uint32_t freqMhz,
+        Bandwidth bandwidth, Generation generation, MacAddress apIfaceInstanceMacAddress);
+
+    /**
+     * Invoked when a client connects/disconnects from the hotspot.
+     *
+     * @param ifaceName Name of the interface which was added via
+     * |IHostapd.addAccessPoint|.
+     * @param apIfaceInstance The identity of the AP instance. The interface
+     * will have two instances in dual AP mode. The apIfaceInstance can be used
+     * to identify which instance the callback is from.
+     * Note: The apIfaceInstance must be same as ifaceName in single AP mode.
+     * @param clientAddress MAC Address of hotspot client.
+     * @param isConnected true when client connected, false when client
+     * disconnected.
+     */
+    oneway onConnectedClientsChanged(string ifaceName, string apIfaceInstance,
+        MacAddress clientAddress, bool isConnected);
+};

@@ -1,0 +1,151 @@
+/**
+ * Copyright (C) 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.drm@1.4;
+
+import @1.2::Status;
+
+enum LogPriority : uint32_t {
+    UNKNOWN,
+    DEFAULT,
+    VERBOSE,
+    DEBUG,
+    INFO,
+    WARN,
+    ERROR,
+    FATAL,
+};
+
+/**
+ * Returned by getLogMessages to report error diagnostics to the
+ * app.
+ *
+ * The |message| field is for informational purposes only, and
+ * NOT meant to be parsed programmatically when handling errors.
+ * For programmatic error handling, please check the return |Status|
+ * of APIs instead.
+ */
+struct LogMessage {
+  /**
+   * Epoch time in milliseconds.
+   */
+  int64_t timeMs;
+  LogPriority priority;
+  string message;
+};
+
+enum Status : @1.2::Status {
+    /**
+     * queueSecureInput buffer called with 0 subsamples.
+     */
+    CANNOT_DECRYPT_ZERO_SUBSAMPLES,
+    /**
+     * An error happened within the crypto library used by the drm plugin.
+     */
+    CRYPTO_LIBRARY_ERROR,
+    /**
+     * Non-specific error reported by the device OEM subsystem.
+     */
+    GENERAL_OEM_ERROR,
+    /**
+     * Unexpected internal failure in the drm/crypto plugin.
+     */
+    GENERAL_PLUGIN_ERROR,
+    /**
+     * The init data parameter passed to getKeyRequest is empty or invalid.
+     */
+    INIT_DATA_INVALID,
+    /**
+     * Either the key was not loaded from the license before attempting the
+     * operation, or the key ID parameter provided by the app is incorrect.
+     */
+    KEY_NOT_LOADED,
+    /**
+     * The license response was empty, fields are missing or otherwise unable
+     * to be parsed.
+     */
+    LICENSE_PARSE_ERROR,
+    /**
+     * The operation (e.g. to renew or persist a license) is prohibited by the
+     * license policy.
+     */
+    LICENSE_POLICY_ERROR,
+    /**
+     * Failed to generate a release request because a field in the stored
+     * license is empty or malformed.
+     */
+    LICENSE_RELEASE_ERROR,
+    /**
+     * The license server detected an error in the license request.
+     */
+    LICENSE_REQUEST_REJECTED,
+    /**
+     * Failed to restore an offline license because a field is empty or
+     * malformed.
+     */
+    LICENSE_RESTORE_ERROR,
+    /**
+     * License is in an invalid state for the attempted operation.
+     */
+    LICENSE_STATE_ERROR,
+    /**
+     * Certificate is malformed or is of the wrong type.
+     */
+    MALFORMED_CERTIFICATE,
+    /**
+     * Failure in the media framework.
+     */
+    MEDIA_FRAMEWORK_ERROR,
+    /**
+     * Certificate has not been set.
+     */
+    MISSING_CERTIFICATE,
+    /**
+     * There was an error loading the provisioned certificate.
+     */
+    PROVISIONING_CERTIFICATE_ERROR,
+    /**
+     * Required steps where not performed before provisioning was attempted.
+     */
+    PROVISIONING_CONFIGURATION_ERROR,
+    /**
+     * The provisioning response was empty, fields are missing or otherwise
+     * unable to be parsed.
+     */
+    PROVISIONING_PARSE_ERROR,
+    /**
+     * The provisioning server detected an error in the provisioning request.
+     */
+    PROVISIONING_REQUEST_REJECTED,
+    /**
+     * Provisioning failed in a way that is likely to succeed on a subsequent
+     * attempt.
+     */
+    RETRYABLE_PROVISIONING_ERROR,
+    /**
+     * Failed to generate a secure stop request because a field in the stored
+     * license is empty or malformed.
+     */
+    SECURE_STOP_RELEASE_ERROR,
+    /**
+     * The plugin was unable to read data from the filesystem.
+     */
+    STORAGE_READ_FAILURE,
+    /**
+     * The plugin was unable to write data to the filesystem.
+     */
+    STORAGE_WRITE_FAILURE,
+};

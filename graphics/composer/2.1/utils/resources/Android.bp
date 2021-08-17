@@ -24,6 +24,7 @@ package {
 
 cc_library {
     name: "android.hardware.graphics.composer@2.1-resources",
+    system_ext_specific: true,
     defaults: ["hidl_defaults"],
     vendor_available: true,
     shared_libs: [

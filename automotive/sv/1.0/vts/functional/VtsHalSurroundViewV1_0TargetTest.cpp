@@ -1127,6 +1127,7 @@ TEST_P(SurroundViewHidlTest, projectPointsInvalidPointsFail) {
     mSurroundViewService->stop3dSession(surroundView3dSession);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SurroundViewHidlTest);
 INSTANTIATE_TEST_SUITE_P(
     PerInstance,
     SurroundViewHidlTest,

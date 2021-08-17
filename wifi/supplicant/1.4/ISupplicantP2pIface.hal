@@ -1,0 +1,84 @@
+/*
+ * Copyright 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi.supplicant@1.4;
+
+import @1.2::ISupplicantP2pIface;
+import ISupplicantP2pIfaceCallback;
+
+/**
+ * Interface exposed by the supplicant for each P2P mode network
+ * interface (e.g p2p0) it controls.
+ * To use 1.4 features you must cast specific interfaces returned from the
+ * 1.4 HAL. For example V1_4::ISupplicant::addIface() adds V1_4::ISupplicantIface,
+ * which can be cast to V1_4::ISupplicantP2pIface.
+ */
+interface ISupplicantP2pIface extends @1.2::ISupplicantP2pIface {
+    /**
+     * Set whether to enable EDMG(802.11ay). Only allowed if hw mode is |HOSTAPD_MODE_IEEE80211AD|
+     *
+     * @param enable true to set, false otherwise.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    setEdmg(bool enable) generates (SupplicantStatus status);
+
+    /**
+     * Get whether EDMG(802.11ay) is enabled for this network.
+     *
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     * @return enabled true if set, false otherwise.
+     */
+    getEdmg() generates (SupplicantStatus status, bool enabled);
+
+    /**
+     * Register for callbacks from this interface.
+     *
+     * These callbacks are invoked for events that are specific to this interface.
+     * Registration of multiple callback objects is supported. These objects must
+     * be automatically deleted when the corresponding client process is dead or
+     * if this interface is removed.
+     *
+     * @param callback An instance of the |ISupplicantP2pIfaceCallback| HIDL
+     *        interface object.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     */
+    registerCallback_1_4(ISupplicantP2pIfaceCallback callback)
+        generates (SupplicantStatus status);
+
+    /*
+     * Set Wifi Display R2 device info.
+     *
+     * @param info WFD R2 device info as described in section 5.1.12 of WFD technical
+     *        specification v2.1.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     */
+    setWfdR2DeviceInfo(uint8_t[4] info) generates (SupplicantStatus status);
+};

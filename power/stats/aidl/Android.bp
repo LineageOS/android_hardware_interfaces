@@ -42,4 +42,5 @@ aidl_interface {
         },
     },
     host_supported: true,
+    versions: ["1"],
 }

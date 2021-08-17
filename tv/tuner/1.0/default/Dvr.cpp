@@ -129,7 +129,7 @@ Return<Result> Dvr::stop() {
 
     mDvrThreadRunning = false;
 
-    std::lock_guard<std::mutex> lock(mDvrThreadLock);
+    lock_guard<mutex> lock(mDvrThreadLock);
 
     mIsRecordStarted = false;
     mDemux->setIsRecording(false);
@@ -155,14 +155,13 @@ bool Dvr::createDvrMQ() {
     ALOGV("%s", __FUNCTION__);
 
     // Create a synchronized FMQ that supports blocking read/write
-    std::unique_ptr<DvrMQ> tmpDvrMQ =
-            std::unique_ptr<DvrMQ>(new (std::nothrow) DvrMQ(mBufferSize, true));
+    unique_ptr<DvrMQ> tmpDvrMQ = unique_ptr<DvrMQ>(new (nothrow) DvrMQ(mBufferSize, true));
     if (!tmpDvrMQ->isValid()) {
         ALOGW("[Dvr] Failed to create FMQ of DVR");
         return false;
     }
 
-    mDvrMQ = std::move(tmpDvrMQ);
+    mDvrMQ = move(tmpDvrMQ);
 
     if (EventFlag::createEventFlag(mDvrMQ->getEventFlagWord(), &mDvrEventFlag) != OK) {
         return false;
@@ -183,7 +182,7 @@ void* Dvr::__threadLoopPlayback(void* user) {
 
 void Dvr::playbackThreadLoop() {
     ALOGD("[Dvr] playback threadLoop start.");
-    std::lock_guard<std::mutex> lock(mDvrThreadLock);
+    lock_guard<mutex> lock(mDvrThreadLock);
     mDvrThreadRunning = true;
 
     while (mDvrThreadRunning) {
@@ -194,6 +193,14 @@ void Dvr::playbackThreadLoop() {
         if (status != OK) {
             ALOGD("[Dvr] wait for data ready on the playback FMQ");
             continue;
+        }
+
+        if (mDvrSettings.playback().dataFormat == DataFormat::ES) {
+            if (!processEsDataOnPlayback(false /*isVirtualFrontend*/, false /*isRecording*/)) {
+                ALOGE("[Dvr] playback es data failed to be filtered. Ending thread");
+                break;
+            }
+            maySendPlaybackStatusCallback();
         }
         // Our current implementation filter the data and write it into the filter FMQ immediately
         // after the DATA_READY from the VTS/framework
@@ -211,7 +218,7 @@ void Dvr::playbackThreadLoop() {
 }
 
 void Dvr::maySendPlaybackStatusCallback() {
-    std::lock_guard<std::mutex> lock(mPlaybackStatusLock);
+    lock_guard<mutex> lock(mPlaybackStatusLock);
     int availableToRead = mDvrMQ->availableToRead();
     int availableToWrite = mDvrMQ->availableToWrite();
 
@@ -263,8 +270,128 @@ bool Dvr::readPlaybackFMQ(bool isVirtualFrontend, bool isRecording) {
     return true;
 }
 
+bool Dvr::processEsDataOnPlayback(bool isVirtualFrontend, bool isRecording) {
+    // Read ES from the DVR FMQ
+    // Note that currently we only provides ES with metaData in a specific format to be parsed.
+    // The ES size should be smaller than the Playback FMQ size to avoid reading truncated data.
+    int size = mDvrMQ->availableToRead();
+    vector<uint8_t> dataOutputBuffer;
+    dataOutputBuffer.resize(size);
+    if (!mDvrMQ->read(dataOutputBuffer.data(), size)) {
+        return false;
+    }
+
+    int metaDataSize = size;
+    int totalFrames = 0;
+    int videoEsDataSize = 0;
+    int audioEsDataSize = 0;
+    int audioPid = 0;
+    int videoPid = 0;
+
+    vector<MediaEsMetaData> esMeta;
+    int videoReadPointer = 0;
+    int audioReadPointer = 0;
+    int frameCount = 0;
+    // Get meta data from the es
+    for (int i = 0; i < metaDataSize; i++) {
+        switch (dataOutputBuffer[i]) {
+            case 'm':
+                metaDataSize = 0;
+                getMetaDataValue(i, dataOutputBuffer.data(), metaDataSize);
+                videoReadPointer = metaDataSize;
+                continue;
+            case 'l':
+                getMetaDataValue(i, dataOutputBuffer.data(), totalFrames);
+                esMeta.resize(totalFrames);
+                continue;
+            case 'V':
+                getMetaDataValue(i, dataOutputBuffer.data(), videoEsDataSize);
+                audioReadPointer = metaDataSize + videoEsDataSize;
+                continue;
+            case 'A':
+                getMetaDataValue(i, dataOutputBuffer.data(), audioEsDataSize);
+                continue;
+            case 'p':
+                if (dataOutputBuffer[++i] == 'a') {
+                    getMetaDataValue(i, dataOutputBuffer.data(), audioPid);
+                } else if (dataOutputBuffer[i] == 'v') {
+                    getMetaDataValue(i, dataOutputBuffer.data(), videoPid);
+                }
+                continue;
+            case 'v':
+            case 'a':
+                if (dataOutputBuffer[i + 1] != ',') {
+                    ALOGE("[Dvr] Invalid format meta data.");
+                    return false;
+                }
+                esMeta[frameCount] = {
+                        .isAudio = dataOutputBuffer[i] == 'a' ? true : false,
+                };
+                i += 5;  // Move to Len
+                getMetaDataValue(i, dataOutputBuffer.data(), esMeta[frameCount].len);
+                if (esMeta[frameCount].isAudio) {
+                    esMeta[frameCount].startIndex = audioReadPointer;
+                    audioReadPointer += esMeta[frameCount].len;
+                } else {
+                    esMeta[frameCount].startIndex = videoReadPointer;
+                    videoReadPointer += esMeta[frameCount].len;
+                }
+                i += 4;  // move to PTS
+                getMetaDataValue(i, dataOutputBuffer.data(), esMeta[frameCount].pts);
+                frameCount++;
+                continue;
+            default:
+                continue;
+        }
+    }
+
+    if (frameCount != totalFrames) {
+        ALOGE("[Dvr] Invalid meta data, frameCount=%d, totalFrames reported=%d", frameCount,
+              totalFrames);
+        return false;
+    }
+
+    if (metaDataSize + audioEsDataSize + videoEsDataSize != size) {
+        ALOGE("[Dvr] Invalid meta data, metaSize=%d, videoSize=%d, audioSize=%d, totolSize=%d",
+              metaDataSize, videoEsDataSize, audioEsDataSize, size);
+        return false;
+    }
+
+    // Read es raw data from the FMQ per meta data built previously
+    vector<uint8_t> frameData;
+    map<uint32_t, sp<IFilter>>::iterator it;
+    int pid = 0;
+    for (int i = 0; i < totalFrames; i++) {
+        frameData.resize(esMeta[i].len);
+        pid = esMeta[i].isAudio ? audioPid : videoPid;
+        memcpy(frameData.data(), dataOutputBuffer.data() + esMeta[i].startIndex, esMeta[i].len);
+        // Send to the media filter
+        if (isVirtualFrontend && isRecording) {
+            // TODO validate record
+            mDemux->sendFrontendInputToRecord(frameData);
+        } else {
+            for (it = mFilters.begin(); it != mFilters.end(); it++) {
+                if (pid == mDemux->getFilterTpid(it->first)) {
+                    mDemux->updateMediaFilterOutput(it->first, frameData,
+                                                    static_cast<uint64_t>(esMeta[i].pts));
+                    startFilterDispatcher(isVirtualFrontend, isRecording);
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+void Dvr::getMetaDataValue(int& index, uint8_t* dataOutputBuffer, int& value) {
+    index += 2;  // Move the pointer across the ":" to the value
+    while (dataOutputBuffer[index] != ',' && dataOutputBuffer[index] != '\n') {
+        value = ((dataOutputBuffer[index++] - 48) + value * 10);
+    }
+}
+
 void Dvr::startTpidFilter(vector<uint8_t> data) {
-    std::map<uint32_t, sp<IFilter>>::iterator it;
+    map<uint32_t, sp<IFilter>>::iterator it;
     for (it = mFilters.begin(); it != mFilters.end(); it++) {
         uint16_t pid = ((data[1] & 0x1f) << 8) | ((data[2] & 0xff));
         if (DEBUG_DVR) {
@@ -285,7 +412,7 @@ bool Dvr::startFilterDispatcher(bool isVirtualFrontend, bool isRecording) {
         }
     }
 
-    std::map<uint32_t, sp<IFilter>>::iterator it;
+    map<uint32_t, sp<IFilter>>::iterator it;
     // Handle the output data per filter type
     for (it = mFilters.begin(); it != mFilters.end(); it++) {
         if (mDemux->startFilterHandler(it->first) != Result::SUCCESS) {
@@ -296,8 +423,8 @@ bool Dvr::startFilterDispatcher(bool isVirtualFrontend, bool isRecording) {
     return true;
 }
 
-bool Dvr::writeRecordFMQ(const std::vector<uint8_t>& data) {
-    std::lock_guard<std::mutex> lock(mWriteLock);
+bool Dvr::writeRecordFMQ(const vector<uint8_t>& data) {
+    lock_guard<mutex> lock(mWriteLock);
     if (mRecordStatus == RecordStatus::OVERFLOW) {
         ALOGW("[Dvr] stops writing and wait for the client side flushing.");
         return true;
@@ -313,7 +440,7 @@ bool Dvr::writeRecordFMQ(const std::vector<uint8_t>& data) {
 }
 
 void Dvr::maySendRecordStatusCallback() {
-    std::lock_guard<std::mutex> lock(mRecordStatusLock);
+    lock_guard<mutex> lock(mRecordStatusLock);
     int availableToRead = mDvrMQ->availableToRead();
     int availableToWrite = mDvrMQ->availableToWrite();
 

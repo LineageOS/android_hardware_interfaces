@@ -70,7 +70,7 @@ EvsEnumerator::EvsEnumerator(sp<IAutomotiveDisplayProxyService> windowService) {
 
     // Add ultrasonics array desc.
     sUltrasonicsArrayRecordList.emplace_back(
-            EvsUltrasonicsArray::GetDummyArrayDesc("front_array"));
+            EvsUltrasonicsArray::GetMockArrayDesc("front_array"));
 }
 
 

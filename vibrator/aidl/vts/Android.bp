@@ -18,7 +18,26 @@ cc_test {
         "libbinder",
     ],
     static_libs: [
-        "android.hardware.vibrator-V1-cpp",
+        "android.hardware.vibrator-V2-cpp",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+}
+
+cc_test {
+    name: "VtsHalVibratorManagerTargetTest",
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    srcs: ["VtsHalVibratorManagerTargetTest.cpp"],
+    shared_libs: [
+        "libbinder",
+    ],
+    static_libs: [
+        "android.hardware.vibrator-V2-cpp",
     ],
     test_suites: [
         "general-tests",

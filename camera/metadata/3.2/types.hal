@@ -686,7 +686,9 @@ enum CameraMetadataTag : uint32_t {
     /** android.jpeg.maxSize [static, int32, system]
      *
      * <p>Maximum size in bytes for the compressed
-     * JPEG buffer</p>
+     * JPEG buffer, in default sensor pixel mode (see ANDROID_SENSOR_PIXEL_MODE)</p>
+     *
+     * @see ANDROID_SENSOR_PIXEL_MODE
      */
     ANDROID_JPEG_MAX_SIZE,
 

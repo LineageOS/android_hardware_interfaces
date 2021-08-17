@@ -1,0 +1,146 @@
+/*
+ * Copyright (C) 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.camera.device@3.7;
+
+import @3.2::CameraMetadata;
+import @3.2::StreamConfigurationMode;
+import @3.4::CaptureRequest;
+import @3.4::Stream;
+
+import android.hardware.camera.metadata@3.6::CameraMetadataEnumAndroidSensorPixelMode;
+
+/**
+ * Stream:
+ *
+ * A descriptor for a single camera input or output stream. A stream is defined
+ * by the framework by its buffer resolution and format, and additionally by the
+ * HAL with the gralloc usage flags and the maximum in-flight buffer count.
+ *
+ * This version extends the @3.4 Stream with the multi-resolution output surface
+ * group Id field.
+ */
+struct Stream {
+    /**
+     * The definition of Stream from the prior version.
+     */
+    @3.4::Stream v3_4;
+
+    /**
+     * The surface group id used for multi-resolution output streams.
+     *
+     * This works similar to the surfaceGroupId of OutputConfiguration in the
+     * public API, with the exception that this is for multi-resolution image
+     * reader and is used by the camera HAL to choose a target stream within
+     * the same group to which images are written. All streams in the same group
+     * will have the same image format, data space, and usage flag.
+     *
+     * The framework must only call processCaptureRequest on at most one of the
+     * streams within a surface group. Depending on current active physical
+     * camera backing the logical multi-camera, or the pixel mode the camera is
+     * running in, the HAL can choose to request and return a buffer from any
+     * stream within the same group. -1 means that this stream is an input
+     * stream, or is an output stream which doesn't belong to any group.
+     *
+     * Streams with the same non-negative group id must have the same format and
+     * usage flag.
+     */
+    int32_t groupId;
+
+    /**
+     *  The sensor pixel modes used by this stream. This can assist the camera
+     *  HAL in decision making about stream combination support.
+     *  If this is empty, the HAL must assume that this stream will only be used
+     *  with ANDROID_SENSOR_PIXEL_MODE set to ANDROID_SENSOR_PIXEL_MODE_DEFAULT.
+     */
+    vec<CameraMetadataEnumAndroidSensorPixelMode> sensorPixelModesUsed;
+};
+
+/**
+ * StreamConfiguration:
+ *
+ * Identical to @3.5::StreamConfiguration, except that the streams
+ * vector contains @3.7::Stream.
+ */
+struct StreamConfiguration {
+    /**
+     * An array of camera stream pointers, defining the input/output
+     * configuration for the camera HAL device.
+     */
+    vec<Stream> streams;
+
+    /**
+     * The definition of operation mode from prior version.
+     *
+     */
+    @3.2::StreamConfigurationMode operationMode;
+
+    /**
+     * The definition of session parameters from prior version.
+     */
+    @3.2::CameraMetadata sessionParams;
+
+    /**
+     * The definition of stream configuration counter from prior version.
+     */
+    uint32_t streamConfigCounter;
+
+    /**
+     * If an input stream is configured, whether the input stream is expected to
+     * receive variable resolution images.
+     *
+     * This flag can only be set to true if the camera device supports
+     * multi-resolution input streams by advertising input stream configurations in
+     * physicalCameraMultiResolutionStreamConfigurations in its physical cameras'
+     * characteristics.
+     *
+     * When this flag is set to true, the input stream's width and height can be
+     * any one of the supported multi-resolution input stream sizes.
+     */
+    bool multiResolutionInputImage;
+};
+
+/**
+ * CaptureRequest:
+ *
+ * This version extends 3.4::CaptureRequest with the input buffer's width and
+ * height.
+ */
+struct CaptureRequest {
+    /**
+     * The definition of CaptureRequest from the prior version.
+     */
+    @3.4::CaptureRequest v3_4;
+
+    /**
+     * The width and height of the input buffer for this capture request.
+     *
+     * These fields will be [0, 0] if no input buffer exists in the capture
+     * request.
+     *
+     * If the stream configuration contains an input stream and has the
+     * multiResolutionInputImage flag set to true, the camera client may submit a
+     * reprocessing request with input buffer size different than the
+     * configured input stream size. In that case, the inputWith and inputHeight
+     * fields will be the actual size of the input image.
+     *
+     * If the stream configuration contains an input stream and the
+     * multiResolutionInputImage flag is false, the inputWidth and inputHeight must
+     * match the input stream size.
+     */
+    uint32_t inputWidth;
+    uint32_t inputHeight;
+};
