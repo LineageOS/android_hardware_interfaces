@@ -34,13 +34,13 @@ parcelable RecordSettings {
      * Unconsumed data size in bytes in the record. The HAL uses it to trigger
      * OutputStatus::LOW_WATER.
      */
-    int lowThreshold;
+    long lowThreshold;
 
     /**
      * Unconsumed data size in bytes in the record. The HAL uses it to trigger
      * OutputStatus::High_WATER.
      */
-    int highThreshold;
+    long highThreshold;
 
     /**
      * The data format in the record.
@@ -50,5 +50,5 @@ parcelable RecordSettings {
     /**
      * The packet size in bytes in the record.
      */
-    byte packetSize;
+    long packetSize;
 }

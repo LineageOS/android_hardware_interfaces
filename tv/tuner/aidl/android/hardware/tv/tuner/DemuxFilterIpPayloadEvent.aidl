@@ -25,5 +25,5 @@ parcelable DemuxFilterIpPayloadEvent {
     /**
      * Data size in bytes of IP data
      */
-    char dataLength;
+    int dataLength;
 }

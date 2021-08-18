@@ -53,8 +53,8 @@ class FrontendCallback : public BnFrontendCallback {
                   FrontendScanType type);
 
     // Helper methods
-    int32_t getTargetFrequency(FrontendSettings& settings);
-    void resetBlindScanStartingFrequency(FrontendConfig& config, int32_t resetingFreq);
+    int64_t getTargetFrequency(FrontendSettings& settings);
+    void resetBlindScanStartingFrequency(FrontendConfig& config, int64_t resetingFreq);
 
   private:
     void readFrontendScanMessage_Modulation(FrontendModulation modulation);
@@ -113,7 +113,7 @@ class FrontendTests {
                 .lowThreshold = 0x1000,
                 .highThreshold = 0x07fff,
                 .dataFormat = DataFormat::ES,
-                .packetSize = static_cast<int8_t>(188),
+                .packetSize = static_cast<int64_t>(188),
         };
         dvrConfig.type = DvrType::PLAYBACK;
         dvrConfig.playbackInputFile = "/data/local/tmp/test.es";

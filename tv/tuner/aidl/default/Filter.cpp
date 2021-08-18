@@ -646,8 +646,8 @@ void Filter::updateRecordOutput(vector<int8_t>& data) {
         DemuxFilterPesEvent pesEvent;
         pesEvent = {
                 // temp dump meta data
-                .streamId = static_cast<char16_t>(mPesOutput[3]),
-                .dataLength = static_cast<char16_t>(mPesOutput.size()),
+                .streamId = static_cast<int32_t>(mPesOutput[3]),
+                .dataLength = static_cast<int32_t>(mPesOutput.size()),
         };
         if (DEBUG_FILTER) {
             ALOGD("[Filter] assembled pes data length %d", pesEvent.dataLength);
@@ -793,7 +793,7 @@ bool Filter::writeSectionsAndCreateEvent(vector<int8_t>& data) {
             .tableId = 0,
             .version = 1,
             .sectionNum = 1,
-            .dataLength = static_cast<char16_t>(data.size()),
+            .dataLength = static_cast<int32_t>(data.size()),
     };
     mFilterEvents[size].set<DemuxFilterEvent::Tag::section>(secEvent);
     return true;
@@ -891,7 +891,7 @@ native_handle_t* Filter::createNativeHandle(int fd) {
     mFilterEvents[size].get<DemuxFilterEvent::Tag::media>().avMemory =
             ::android::dupToAidl(nativeHandle);
     mFilterEvents[size].get<DemuxFilterEvent::Tag::media>().dataLength =
-            static_cast<int32_t>(output.size());
+            static_cast<int64_t>(output.size());
     mFilterEvents[size].get<DemuxFilterEvent::Tag::media>().avDataId = static_cast<int64_t>(dataId);
     if (mPts) {
         mFilterEvents[size].get<DemuxFilterEvent::Tag::media>().pts = mPts;
@@ -932,10 +932,9 @@ native_handle_t* Filter::createNativeHandle(int fd) {
     mFilterEvents[size] = DemuxFilterEvent::make<DemuxFilterEvent::Tag::media>();
     mFilterEvents[size].get<DemuxFilterEvent::Tag::media>().avMemory =
             ::android::dupToAidl(nativeHandle);
-    mFilterEvents[size].get<DemuxFilterEvent::Tag::media>().offset =
-            static_cast<int32_t>(mSharedAvMemOffset);
+    mFilterEvents[size].get<DemuxFilterEvent::Tag::media>().offset = mSharedAvMemOffset;
     mFilterEvents[size].get<DemuxFilterEvent::Tag::media>().dataLength =
-            static_cast<int32_t>(output.size());
+            static_cast<int64_t>(output.size());
     if (mPts) {
         mFilterEvents[size].get<DemuxFilterEvent::Tag::media>().pts = mPts;
         mPts = 0;

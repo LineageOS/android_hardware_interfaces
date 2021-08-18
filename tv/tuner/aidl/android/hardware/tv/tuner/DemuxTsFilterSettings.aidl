@@ -27,7 +27,7 @@ parcelable DemuxTsFilterSettings {
     /**
      * Packet ID is used to specify packets in transport stream.
      */
-    char tpid;
+    int tpid;
 
     DemuxTsFilterSettingsFilterSettings filterSettings;
 }

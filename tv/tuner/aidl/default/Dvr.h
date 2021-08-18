@@ -101,9 +101,9 @@ class Dvr : public BnDvr {
     void maySendPlaybackStatusCallback();
     void maySendRecordStatusCallback();
     PlaybackStatus checkPlaybackStatusChange(uint32_t availableToWrite, uint32_t availableToRead,
-                                             uint32_t highThreshold, uint32_t lowThreshold);
+                                             int64_t highThreshold, int64_t lowThreshold);
     RecordStatus checkRecordStatusChange(uint32_t availableToWrite, uint32_t availableToRead,
-                                         uint32_t highThreshold, uint32_t lowThreshold);
+                                         int64_t highThreshold, int64_t lowThreshold);
     /**
      * A dispatcher to read and dispatch input data to all the started filters.
      * Each filter handler handles the data filtering/output writing/filterEvent updating.

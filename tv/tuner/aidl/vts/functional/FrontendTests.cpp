@@ -120,7 +120,7 @@ void FrontendCallback::tuneTestOnLock(std::shared_ptr<IFrontend>& frontend,
 
 void FrontendCallback::scanTest(std::shared_ptr<IFrontend>& frontend, FrontendConfig config,
                                 FrontendScanType type) {
-    int32_t targetFrequency = getTargetFrequency(config.settings);
+    int64_t targetFrequency = getTargetFrequency(config.settings);
     if (type == FrontendScanType::SCAN_BLIND) {
         // reset the frequency in the scan configuration to test blind scan. The settings param of
         // passed in means the real input config on the transponder connected to the DUT.
@@ -176,7 +176,7 @@ wait:
     mScanMsgProcessed = true;
 }
 
-int32_t FrontendCallback::getTargetFrequency(FrontendSettings& settings) {
+int64_t FrontendCallback::getTargetFrequency(FrontendSettings& settings) {
     switch (settings.getTag()) {
         case FrontendSettings::Tag::analog:
             return settings.get<FrontendSettings::Tag::analog>().frequency;
@@ -202,7 +202,7 @@ int32_t FrontendCallback::getTargetFrequency(FrontendSettings& settings) {
 }
 
 void FrontendCallback::resetBlindScanStartingFrequency(FrontendConfig& config,
-                                                       int32_t resetingFreq) {
+                                                       int64_t resetingFreq) {
     switch (config.settings.getTag()) {
         case FrontendSettings::Tag::analog:
             config.settings.get<FrontendSettings::Tag::analog>().frequency = resetingFreq;

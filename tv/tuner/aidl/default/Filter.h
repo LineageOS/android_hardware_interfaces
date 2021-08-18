@@ -221,7 +221,7 @@ class Filter : public BnFilter {
     // Shared A/V memory handle
     native_handle_t* mSharedAvMemHandle = nullptr;
     bool mUsingSharedAvMem = false;
-    uint32_t mSharedAvMemOffset = 0;
+    int64_t mSharedAvMemOffset = 0;
 
     uint32_t mAudioStreamType;
     uint32_t mVideoStreamType;

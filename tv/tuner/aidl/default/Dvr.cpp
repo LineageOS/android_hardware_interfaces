@@ -237,7 +237,7 @@ void Dvr::maySendPlaybackStatusCallback() {
 }
 
 PlaybackStatus Dvr::checkPlaybackStatusChange(uint32_t availableToWrite, uint32_t availableToRead,
-                                              uint32_t highThreshold, uint32_t lowThreshold) {
+                                              int64_t highThreshold, int64_t lowThreshold) {
     if (availableToWrite == 0) {
         return PlaybackStatus::SPACE_FULL;
     } else if (availableToRead > highThreshold) {
@@ -252,9 +252,8 @@ PlaybackStatus Dvr::checkPlaybackStatusChange(uint32_t availableToWrite, uint32_
 
 bool Dvr::readPlaybackFMQ(bool isVirtualFrontend, bool isRecording) {
     // Read playback data from the input FMQ
-    int size = mDvrMQ->availableToRead();
-    uint8_t playbackPacketSize =
-            static_cast<uint8_t>(mDvrSettings.get<DvrSettings::Tag::playback>().packetSize);
+    size_t size = mDvrMQ->availableToRead();
+    int64_t playbackPacketSize = mDvrSettings.get<DvrSettings::Tag::playback>().packetSize;
     vector<int8_t> dataOutputBuffer;
     dataOutputBuffer.resize(playbackPacketSize);
     // Dispatch the packet to the PID matching filter output buffer
@@ -461,7 +460,7 @@ void Dvr::maySendRecordStatusCallback() {
 }
 
 RecordStatus Dvr::checkRecordStatusChange(uint32_t availableToWrite, uint32_t availableToRead,
-                                          uint32_t highThreshold, uint32_t lowThreshold) {
+                                          int64_t highThreshold, int64_t lowThreshold) {
     if (availableToWrite == 0) {
         return RecordStatus::OVERFLOW;
     } else if (availableToRead > highThreshold) {

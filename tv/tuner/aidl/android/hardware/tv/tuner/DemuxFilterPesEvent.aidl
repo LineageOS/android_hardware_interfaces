@@ -22,12 +22,12 @@ package android.hardware.tv.tuner;
  */
 @VintfStability
 parcelable DemuxFilterPesEvent {
-    char streamId;
+    int streamId;
 
     /**
      * Data size in bytes of PES data
      */
-    char dataLength;
+    int dataLength;
 
     /**
      * MPU sequence number of filtered data (only for MMTP)

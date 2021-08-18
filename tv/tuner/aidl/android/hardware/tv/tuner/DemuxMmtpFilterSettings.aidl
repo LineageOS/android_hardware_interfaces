@@ -24,7 +24,7 @@ import android.hardware.tv.tuner.DemuxMmtpFilterSettingsFilterSettings;
  */
 @VintfStability
 parcelable DemuxMmtpFilterSettings {
-    char mmtpPid;
+    int mmtpPid;
 
     DemuxMmtpFilterSettingsFilterSettings filterSettings;
 }

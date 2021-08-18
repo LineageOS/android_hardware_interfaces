@@ -35,7 +35,7 @@ package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
 parcelable FrontendStatusAtsc3PlpInfo {
-  byte plpId;
+  int plpId;
   boolean isLocked;
   int uec;
 }

@@ -35,9 +35,9 @@ package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
 parcelable FrontendIsdbsSettings {
-  int frequency;
-  int endFrequency;
-  char streamId;
+  long frequency;
+  long endFrequency;
+  int streamId;
   android.hardware.tv.tuner.FrontendIsdbsStreamIdType streamIdType = android.hardware.tv.tuner.FrontendIsdbsStreamIdType.UNDEFINED;
   android.hardware.tv.tuner.FrontendIsdbsModulation modulation = android.hardware.tv.tuner.FrontendIsdbsModulation.UNDEFINED;
   android.hardware.tv.tuner.FrontendIsdbsCoderate coderate = android.hardware.tv.tuner.FrontendIsdbsCoderate.UNDEFINED;

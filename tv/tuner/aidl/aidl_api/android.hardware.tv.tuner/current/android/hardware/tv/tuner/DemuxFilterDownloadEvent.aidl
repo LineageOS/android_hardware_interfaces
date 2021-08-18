@@ -39,5 +39,5 @@ parcelable DemuxFilterDownloadEvent {
   int mpuSequenceNumber;
   int itemFragmentIndex;
   int lastItemFragmentIndex;
-  char dataLength;
+  int dataLength;
 }

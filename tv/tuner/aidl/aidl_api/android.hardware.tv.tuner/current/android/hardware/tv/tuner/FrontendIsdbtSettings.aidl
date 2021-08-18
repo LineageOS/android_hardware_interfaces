@@ -35,8 +35,8 @@ package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
 parcelable FrontendIsdbtSettings {
-  int frequency;
-  int endFrequency;
+  long frequency;
+  long endFrequency;
   android.hardware.tv.tuner.FrontendSpectralInversion inversion = android.hardware.tv.tuner.FrontendSpectralInversion.UNDEFINED;
   android.hardware.tv.tuner.FrontendIsdbtModulation modulation = android.hardware.tv.tuner.FrontendIsdbtModulation.UNDEFINED;
   android.hardware.tv.tuner.FrontendIsdbtBandwidth bandwidth = android.hardware.tv.tuner.FrontendIsdbtBandwidth.UNDEFINED;

@@ -35,11 +35,11 @@ package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
 parcelable DemuxFilterMediaEvent {
-  char streamId;
+  int streamId;
   boolean isPtsPresent;
   long pts;
-  int dataLength;
-  int offset;
+  long dataLength;
+  long offset;
   android.hardware.common.NativeHandle avMemory;
   boolean isSecureMemory;
   long avDataId;

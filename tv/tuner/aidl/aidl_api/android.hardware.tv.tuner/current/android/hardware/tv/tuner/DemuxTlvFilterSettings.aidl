@@ -35,7 +35,7 @@ package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
 parcelable DemuxTlvFilterSettings {
-  byte packetType;
+  int packetType;
   boolean isCompressedIpPacket;
   android.hardware.tv.tuner.DemuxTlvFilterSettingsFilterSettings filterSettings;
 }
