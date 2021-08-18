@@ -21,7 +21,6 @@
 
 #include <android-base/logging.h>
 #include <android/hidl/manager/1.0/IServiceManager.h>
-#include <cutils/properties.h>
 
 #include <keymasterV4_0/key_param_output.h>
 #include <keymasterV4_0/keymaster_utils.h>
@@ -686,9 +685,6 @@ std::vector<uint32_t> KeymasterHidlTest::InvalidKeySizes(Algorithm algorithm) {
             case Algorithm::EC:
                 return {224, 384, 521};
             case Algorithm::AES:
-                // The HAL language was clarified to exclude AES key sizes of 192 for StrongBox
-                // instances on devices launched on API Level 31 and above.
-                if (property_get_int32("ro.board.first_api_level", 0) < 31) return {};
                 return {192};
             default:
                 return {};
