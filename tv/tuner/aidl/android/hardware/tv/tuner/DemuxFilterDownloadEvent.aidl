@@ -39,5 +39,5 @@ parcelable DemuxFilterDownloadEvent {
     /**
      * Data size in bytes of filtered data
      */
-    char dataLength;
+    int dataLength;
 }

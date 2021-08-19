@@ -35,8 +35,8 @@ package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
 parcelable FrontendDvbtSettings {
-  int frequency;
-  int endFrequency;
+  long frequency;
+  long endFrequency;
   android.hardware.tv.tuner.FrontendSpectralInversion inversion = android.hardware.tv.tuner.FrontendSpectralInversion.UNDEFINED;
   android.hardware.tv.tuner.FrontendDvbtTransmissionMode transmissionMode = android.hardware.tv.tuner.FrontendDvbtTransmissionMode.UNDEFINED;
   android.hardware.tv.tuner.FrontendDvbtBandwidth bandwidth = android.hardware.tv.tuner.FrontendDvbtBandwidth.UNDEFINED;
@@ -49,6 +49,6 @@ parcelable FrontendDvbtSettings {
   android.hardware.tv.tuner.FrontendDvbtStandard standard = android.hardware.tv.tuner.FrontendDvbtStandard.UNDEFINED;
   boolean isMiso;
   android.hardware.tv.tuner.FrontendDvbtPlpMode plpMode = android.hardware.tv.tuner.FrontendDvbtPlpMode.UNDEFINED;
-  byte plpId;
-  byte plpGroupId;
+  int plpId;
+  int plpGroupId;
 }

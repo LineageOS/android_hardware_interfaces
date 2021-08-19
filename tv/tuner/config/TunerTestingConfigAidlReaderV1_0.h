@@ -334,7 +334,7 @@ struct TunerTestingConfigAidlReader1_0 {
                 filterMap[id].settings = settings;
 
                 if (filterConfig.hasMonitorEventTypes()) {
-                    filterMap[id].monitorEventTypes = (uint32_t)filterConfig.getMonitorEventTypes();
+                    filterMap[id].monitorEventTypes = (int32_t)filterConfig.getMonitorEventTypes();
                 }
                 if (filterConfig.hasAvFilterSettings_optional()) {
                     auto av = filterConfig.getFirstAvFilterSettings_optional();
@@ -380,7 +380,7 @@ struct TunerTestingConfigAidlReader1_0 {
                         return;
                 }
                 dvrMap[id].type = type;
-                dvrMap[id].bufferSize = static_cast<uint32_t>(dvrConfig.getBufferSize());
+                dvrMap[id].bufferSize = static_cast<int32_t>(dvrConfig.getBufferSize());
                 if (dvrConfig.hasInputFilePath()) {
                     dvrMap[id].playbackInputFile = dvrConfig.getInputFilePath();
                 }
@@ -413,7 +413,7 @@ struct TunerTestingConfigAidlReader1_0 {
             for (auto descramblerConfig : descramblers.getDescrambler()) {
                 string id = descramblerConfig.getId();
                 descramblerMap[id].casSystemId =
-                        static_cast<uint32_t>(descramblerConfig.getCasSystemId());
+                        static_cast<int32_t>(descramblerConfig.getCasSystemId());
                 if (descramblerConfig.hasProvisionStr()) {
                     descramblerMap[id].provisionStr = descramblerConfig.getProvisionStr();
                 } else {
@@ -450,8 +450,7 @@ struct TunerTestingConfigAidlReader1_0 {
             auto timeFilters = *hardwareConfig.getFirstTimeFilters();
             for (auto timeFilterConfig : timeFilters.getTimeFilter()) {
                 string id = timeFilterConfig.getId();
-                timeFilterMap[id].timeStamp =
-                        static_cast<uint64_t>(timeFilterConfig.getTimeStamp());
+                timeFilterMap[id].timeStamp = static_cast<int64_t>(timeFilterConfig.getTimeStamp());
             }
         }
     }
@@ -625,14 +624,17 @@ struct TunerTestingConfigAidlReader1_0 {
     static FrontendDvbtSettings readDvbtFrontendSettings(Frontend feConfig) {
         ALOGW("[ConfigReader] fe type is dvbt");
         FrontendDvbtSettings dvbtSettings{
-                .frequency = (int32_t)feConfig.getFrequency(),
+                .frequency = (int64_t)feConfig.getFrequency(),
         };
+        if (feConfig.hasEndFrequency()) {
+            dvbtSettings.endFrequency = (int64_t)feConfig.getEndFrequency();
+        }
         if (!feConfig.hasDvbtFrontendSettings_optional()) {
             ALOGW("[ConfigReader] no more dvbt settings");
             return dvbtSettings;
         }
         auto dvbt = feConfig.getFirstDvbtFrontendSettings_optional();
-        uint32_t trans = static_cast<uint32_t>(dvbt->getTransmissionMode());
+        int32_t trans = static_cast<int32_t>(dvbt->getTransmissionMode());
         dvbtSettings.transmissionMode = static_cast<FrontendDvbtTransmissionMode>(trans);
         dvbtSettings.bandwidth = static_cast<FrontendDvbtBandwidth>(dvbt->getBandwidth());
         dvbtSettings.isHighPriority = dvbt->getIsHighPriority();
@@ -656,15 +658,18 @@ struct TunerTestingConfigAidlReader1_0 {
     static FrontendDvbsSettings readDvbsFrontendSettings(Frontend feConfig) {
         ALOGW("[ConfigReader] fe type is dvbs");
         FrontendDvbsSettings dvbsSettings{
-                .frequency = (int32_t)feConfig.getFrequency(),
+                .frequency = (int64_t)feConfig.getFrequency(),
         };
+        if (feConfig.hasEndFrequency()) {
+            dvbsSettings.endFrequency = (int64_t)feConfig.getEndFrequency();
+        }
         if (!feConfig.hasDvbsFrontendSettings_optional()) {
             ALOGW("[ConfigReader] no more dvbs settings");
             return dvbsSettings;
         }
-        dvbsSettings.symbolRate = static_cast<uint32_t>(
+        dvbsSettings.symbolRate = static_cast<int32_t>(
                 feConfig.getFirstDvbsFrontendSettings_optional()->getSymbolRate());
-        dvbsSettings.inputStreamId = static_cast<uint32_t>(
+        dvbsSettings.inputStreamId = static_cast<int32_t>(
                 feConfig.getFirstDvbsFrontendSettings_optional()->getInputStreamId());
         auto dvbs = feConfig.getFirstDvbsFrontendSettings_optional();
         if (dvbs->hasScanType()) {
@@ -968,11 +973,11 @@ struct TunerTestingConfigAidlReader1_0 {
     static PlaybackSettings readPlaybackSettings(Dvr dvrConfig) {
         ALOGW("[ConfigReader] dvr type is playback");
         PlaybackSettings playbackSettings{
-                .statusMask = static_cast<uint8_t>(dvrConfig.getStatusMask()),
-                .lowThreshold = static_cast<int32_t>(dvrConfig.getLowThreshold()),
-                .highThreshold = static_cast<int32_t>(dvrConfig.getHighThreshold()),
+                .statusMask = static_cast<int8_t>(dvrConfig.getStatusMask()),
+                .lowThreshold = static_cast<int64_t>(dvrConfig.getLowThreshold()),
+                .highThreshold = static_cast<int64_t>(dvrConfig.getHighThreshold()),
                 .dataFormat = static_cast<DataFormat>(dvrConfig.getDataFormat()),
-                .packetSize = static_cast<int8_t>(dvrConfig.getPacketSize()),
+                .packetSize = static_cast<int64_t>(dvrConfig.getPacketSize()),
         };
         return playbackSettings;
     }
@@ -980,11 +985,11 @@ struct TunerTestingConfigAidlReader1_0 {
     static RecordSettings readRecordSettings(Dvr dvrConfig) {
         ALOGW("[ConfigReader] dvr type is record");
         RecordSettings recordSettings{
-                .statusMask = static_cast<uint8_t>(dvrConfig.getStatusMask()),
-                .lowThreshold = static_cast<int32_t>(dvrConfig.getLowThreshold()),
-                .highThreshold = static_cast<int32_t>(dvrConfig.getHighThreshold()),
+                .statusMask = static_cast<int8_t>(dvrConfig.getStatusMask()),
+                .lowThreshold = static_cast<int64_t>(dvrConfig.getLowThreshold()),
+                .highThreshold = static_cast<int64_t>(dvrConfig.getHighThreshold()),
                 .dataFormat = static_cast<DataFormat>(dvrConfig.getDataFormat()),
-                .packetSize = static_cast<int8_t>(dvrConfig.getPacketSize()),
+                .packetSize = static_cast<int64_t>(dvrConfig.getPacketSize()),
         };
         return recordSettings;
     }

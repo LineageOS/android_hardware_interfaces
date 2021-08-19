@@ -25,10 +25,10 @@ union DemuxPid {
     /**
      * Packet ID is used to specify packets in transport stream.
      */
-    char tPid;
+    int tPid;
 
     /**
      * Packet ID is used to specify packets in MMTP.
      */
-    char mmtpPid;
+    int mmtpPid;
 }

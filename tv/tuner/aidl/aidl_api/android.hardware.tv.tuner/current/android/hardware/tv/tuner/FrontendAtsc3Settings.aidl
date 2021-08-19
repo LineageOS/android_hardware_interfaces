@@ -35,8 +35,8 @@ package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
 parcelable FrontendAtsc3Settings {
-  int frequency;
-  int endFrequency;
+  long frequency;
+  long endFrequency;
   android.hardware.tv.tuner.FrontendAtsc3Bandwidth bandwidth = android.hardware.tv.tuner.FrontendAtsc3Bandwidth.UNDEFINED;
   android.hardware.tv.tuner.FrontendSpectralInversion inversion = android.hardware.tv.tuner.FrontendSpectralInversion.UNDEFINED;
   android.hardware.tv.tuner.FrontendAtsc3DemodOutputFormat demodOutputFormat = android.hardware.tv.tuner.FrontendAtsc3DemodOutputFormat.UNDEFINED;

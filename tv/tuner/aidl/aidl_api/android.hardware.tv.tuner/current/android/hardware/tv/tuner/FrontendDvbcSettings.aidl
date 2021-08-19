@@ -35,8 +35,8 @@ package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
 parcelable FrontendDvbcSettings {
-  int frequency;
-  int endFrequency;
+  long frequency;
+  long endFrequency;
   android.hardware.tv.tuner.FrontendDvbcModulation modulation = android.hardware.tv.tuner.FrontendDvbcModulation.UNDEFINED;
   android.hardware.tv.tuner.FrontendInnerFec fec = android.hardware.tv.tuner.FrontendInnerFec.FEC_UNDEFINED;
   int symbolRate;

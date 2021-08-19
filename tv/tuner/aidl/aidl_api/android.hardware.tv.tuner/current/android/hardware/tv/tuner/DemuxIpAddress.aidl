@@ -37,6 +37,6 @@ package android.hardware.tv.tuner;
 parcelable DemuxIpAddress {
   android.hardware.tv.tuner.DemuxIpAddressIpAddress srcIpAddress;
   android.hardware.tv.tuner.DemuxIpAddressIpAddress dstIpAddress;
-  char srcPort;
-  char dstPort;
+  int srcPort;
+  int dstPort;
 }

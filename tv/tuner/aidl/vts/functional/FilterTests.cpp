@@ -118,8 +118,8 @@ void FilterCallback::readFilterEventsData(const vector<DemuxFilterEvent>& events
 }
 
 bool FilterCallback::dumpAvData(const DemuxFilterMediaEvent& event) {
-    int32_t length = event.dataLength;
-    int32_t offset = event.offset;
+    int64_t length = event.dataLength;
+    int64_t offset = event.offset;
     int av_fd;
     // read data from buffer pointed by a handle
     if (event.avMemory.fds.size() == 0) {

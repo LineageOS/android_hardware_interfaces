@@ -35,6 +35,6 @@ package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
 parcelable DemuxFilterSectionSettingsConditionTableInfo {
-  char tableId;
-  char version;
+  int tableId;
+  int version;
 }

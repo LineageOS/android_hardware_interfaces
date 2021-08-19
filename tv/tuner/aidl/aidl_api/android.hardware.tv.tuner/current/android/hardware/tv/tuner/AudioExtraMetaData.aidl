@@ -37,7 +37,7 @@ package android.hardware.tv.tuner;
 parcelable AudioExtraMetaData {
   byte adFade;
   byte adPan;
-  byte versionTextTag;
+  char versionTextTag;
   byte adGainCenter;
   byte adGainFront;
   byte adGainSurround;

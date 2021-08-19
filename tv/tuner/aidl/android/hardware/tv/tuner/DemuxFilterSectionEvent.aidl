@@ -25,20 +25,20 @@ parcelable DemuxFilterSectionEvent {
     /**
      * Table ID of filtered data
      */
-    char tableId;
+    int tableId;
 
     /**
      * Version number of filtered data
      */
-    char version;
+    int version;
 
     /**
      * Section number of filtered data
      */
-    char sectionNum;
+    int sectionNum;
 
     /**
      * Data size in bytes of filtered data
      */
-    char dataLength;
+    int dataLength;
 }

@@ -25,7 +25,7 @@ parcelable FrontendStatusAtsc3PlpInfo {
     /**
      * PLP Id value.
      */
-    byte plpId;
+    int plpId;
 
     /**
      * Demod Lock/Unlock status of this particular PLP.

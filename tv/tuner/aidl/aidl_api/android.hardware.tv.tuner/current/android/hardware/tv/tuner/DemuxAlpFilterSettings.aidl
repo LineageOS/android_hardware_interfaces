@@ -35,7 +35,7 @@ package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
 parcelable DemuxAlpFilterSettings {
-  byte packetType;
+  int packetType;
   android.hardware.tv.tuner.DemuxAlpLengthType lengthType = android.hardware.tv.tuner.DemuxAlpLengthType.UNDEFINED;
   android.hardware.tv.tuner.DemuxAlpFilterSettingsFilterSettings filterSettings;
 }
