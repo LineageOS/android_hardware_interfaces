@@ -22,7 +22,7 @@ package android.hardware.tv.tuner;
  */
 @VintfStability
 parcelable DemuxFilterPesDataSettings {
-    char streamId;
+    int streamId;
 
     /**
      * true if the filter send onFilterStatus instead of onFilterEvent.

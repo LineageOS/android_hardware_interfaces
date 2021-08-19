@@ -83,14 +83,14 @@ union FrontendStatus {
 
     LnbVoltage lnbVoltage;
 
-    byte plpId;
+    int plpId;
 
     boolean isEWBS;
 
     /**
      * AGC value is normalized from 0 to 255.
      */
-    byte agc;
+    int agc;
 
     boolean isLnaOn;
 
@@ -104,7 +104,7 @@ union FrontendStatus {
     /**
      * Frequency difference in Hertz.
      */
-    int freqOffset;
+    long freqOffset;
 
     FrontendDvbtHierarchy hierarchy;
 
@@ -154,7 +154,7 @@ union FrontendStatus {
     /**
      * The current DVB-T2 system id status.
      */
-    char systemId;
+    int systemId;
 
     /**
      * Frontend Interleaving Modes.
@@ -164,7 +164,7 @@ union FrontendStatus {
     /**
      * Segments in ISDB-T Specification of all the channels.
      */
-    byte[] isdbtSegment;
+    int[] isdbtSegment;
 
     /**
      * Transport Stream Data Rate in BPS of the current channel.

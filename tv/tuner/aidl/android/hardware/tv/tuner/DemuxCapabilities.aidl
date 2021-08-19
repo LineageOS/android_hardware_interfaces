@@ -70,7 +70,7 @@ parcelable DemuxCapabilities {
     /**
      * The maximum number of bytes is supported in the mask of Section Filter.
      */
-    int numBytesInSectionFilter;
+    long numBytesInSectionFilter;
 
     /**
      * Filter Main Types defined by DemuxFilterMainType. The DemuxFilterMainTypes

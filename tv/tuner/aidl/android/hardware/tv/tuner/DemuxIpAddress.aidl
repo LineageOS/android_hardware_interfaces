@@ -31,10 +31,10 @@ parcelable DemuxIpAddress {
     /**
      * 0 is invalid. should be ignored.
      */
-    char srcPort;
+    int srcPort;
 
     /**
      * 0 is invalid. should be ignored.
      */
-    char dstPort;
+    int dstPort;
 }

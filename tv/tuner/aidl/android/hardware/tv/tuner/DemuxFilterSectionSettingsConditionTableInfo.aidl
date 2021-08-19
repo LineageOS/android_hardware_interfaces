@@ -25,10 +25,10 @@ parcelable DemuxFilterSectionSettingsConditionTableInfo {
     /**
      * Table ID for Section Filter
      */
-    char tableId;
+    int tableId;
 
     /**
      * Version number for Section Filter
      */
-    char version;
+    int version;
 }

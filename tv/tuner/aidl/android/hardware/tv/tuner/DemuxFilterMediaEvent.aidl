@@ -26,7 +26,7 @@ import android.hardware.tv.tuner.DemuxFilterMediaEventExtraMetaData;
  */
 @VintfStability
 parcelable DemuxFilterMediaEvent {
-    char streamId;
+    int streamId;
 
     /**
      * true if PTS is present in PES header.
@@ -42,13 +42,13 @@ parcelable DemuxFilterMediaEvent {
     /**
      * Data size in bytes of audio or video frame
      */
-    int dataLength;
+    long dataLength;
 
     /**
      *  The offset in the memory block which is shared among multiple
      *  MediaEvents.
      */
-    int offset;
+    long offset;
 
     /**
      * A handle associated to the memory where audio or video data stays.

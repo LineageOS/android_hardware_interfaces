@@ -27,7 +27,7 @@ import android.hardware.tv.tuner.FrontendAtsc3TimeInterleaveMode;
  */
 @VintfStability
 parcelable FrontendAtsc3PlpSettings {
-    byte plpId;
+    int plpId;
 
     FrontendAtsc3Modulation modulation = FrontendAtsc3Modulation.UNDEFINED;
 

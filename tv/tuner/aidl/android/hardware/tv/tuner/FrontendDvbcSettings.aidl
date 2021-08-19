@@ -33,12 +33,12 @@ parcelable FrontendDvbcSettings {
     /**
      * Signal frequency in Hertz
      */
-    int frequency;
+    long frequency;
 
     /**
      * Signal end frequency in Hertz used by scan
      */
-    int endFrequency;
+    long endFrequency;
 
     FrontendDvbcModulation modulation = FrontendDvbcModulation.UNDEFINED;
 

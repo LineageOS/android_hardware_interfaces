@@ -47,13 +47,13 @@ union FrontendStatus {
   android.hardware.tv.tuner.FrontendModulationStatus modulationStatus;
   android.hardware.tv.tuner.FrontendSpectralInversion inversion;
   android.hardware.tv.tuner.LnbVoltage lnbVoltage;
-  byte plpId;
+  int plpId;
   boolean isEWBS;
-  byte agc;
+  int agc;
   boolean isLnaOn;
   boolean[] isLayerError;
   int mer;
-  int freqOffset;
+  long freqOffset;
   android.hardware.tv.tuner.FrontendDvbtHierarchy hierarchy;
   boolean isRfLocked;
   android.hardware.tv.tuner.FrontendStatusAtsc3PlpInfo[] plpInfo;
@@ -64,9 +64,9 @@ union FrontendStatus {
   android.hardware.tv.tuner.FrontendGuardInterval interval;
   android.hardware.tv.tuner.FrontendTransmissionMode transmissionMode;
   int uec;
-  char systemId;
+  int systemId;
   android.hardware.tv.tuner.FrontendInterleaveMode[] interleaving;
-  byte[] isdbtSegment;
+  int[] isdbtSegment;
   int[] tsDataRate;
   android.hardware.tv.tuner.FrontendRollOff rollOff;
   boolean isMiso;

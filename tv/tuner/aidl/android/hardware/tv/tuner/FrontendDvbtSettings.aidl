@@ -35,12 +35,12 @@ parcelable FrontendDvbtSettings {
     /**
      * Signal frequency in Hertz
      */
-    int frequency;
+    long frequency;
 
     /**
      * Signal end frequency in Hertz used by scan
      */
-    int endFrequency;
+    long endFrequency;
 
     FrontendSpectralInversion inversion = FrontendSpectralInversion.UNDEFINED;
 
@@ -75,10 +75,10 @@ parcelable FrontendDvbtSettings {
     /**
      * Physical Layer Pipe (PLP) Id
      */
-    byte plpId;
+    int plpId;
 
     /**
      * Group Id for Physical Layer Pipe (PLP)
      */
-    byte plpGroupId;
+    int plpGroupId;
 }

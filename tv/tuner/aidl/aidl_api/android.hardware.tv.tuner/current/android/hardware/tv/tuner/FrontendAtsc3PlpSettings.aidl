@@ -35,7 +35,7 @@ package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
 parcelable FrontendAtsc3PlpSettings {
-  byte plpId;
+  int plpId;
   android.hardware.tv.tuner.FrontendAtsc3Modulation modulation = android.hardware.tv.tuner.FrontendAtsc3Modulation.UNDEFINED;
   android.hardware.tv.tuner.FrontendAtsc3TimeInterleaveMode interleaveMode = android.hardware.tv.tuner.FrontendAtsc3TimeInterleaveMode.UNDEFINED;
   android.hardware.tv.tuner.FrontendAtsc3CodeRate codeRate = android.hardware.tv.tuner.FrontendAtsc3CodeRate.UNDEFINED;

@@ -35,6 +35,6 @@ package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
 parcelable DemuxFilterPesDataSettings {
-  char streamId;
+  int streamId;
   boolean isRaw;
 }

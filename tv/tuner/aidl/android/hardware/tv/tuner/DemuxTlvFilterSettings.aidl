@@ -32,7 +32,7 @@ parcelable DemuxTlvFilterSettings {
      * 0xFE: Signaling packet
      * 0xFF: NULL packet
      */
-    byte packetType;
+    int packetType;
 
     /**
      * true if the filtered data is commpressed ip packet

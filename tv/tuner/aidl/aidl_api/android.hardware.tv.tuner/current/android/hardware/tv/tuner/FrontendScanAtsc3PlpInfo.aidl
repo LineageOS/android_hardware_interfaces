@@ -35,6 +35,6 @@ package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
 parcelable FrontendScanAtsc3PlpInfo {
-  byte plpId;
+  int plpId;
   boolean bLlsFlag;
 }

@@ -35,8 +35,8 @@ package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
 parcelable FrontendDtmbSettings {
-  int frequency;
-  int endFrequency;
+  long frequency;
+  long endFrequency;
   android.hardware.tv.tuner.FrontendSpectralInversion inversion = android.hardware.tv.tuner.FrontendSpectralInversion.UNDEFINED;
   android.hardware.tv.tuner.FrontendDtmbTransmissionMode transmissionMode = android.hardware.tv.tuner.FrontendDtmbTransmissionMode.UNDEFINED;
   android.hardware.tv.tuner.FrontendDtmbBandwidth bandwidth = android.hardware.tv.tuner.FrontendDtmbBandwidth.UNDEFINED;

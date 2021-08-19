@@ -94,7 +94,7 @@ Frontend::~Frontend() {}
         return ::ndk::ScopedAStatus::ok();
     }
 
-    int32_t frequency = 0;
+    int64_t frequency = 0;
     switch (in_settings.getTag()) {
         case FrontendSettings::Tag::analog:
             frequency = in_settings.get<FrontendSettings::Tag::analog>().frequency;
@@ -133,7 +133,7 @@ Frontend::~Frontend() {}
 
     {
         FrontendScanMessage msg;
-        vector<int32_t> frequencies = {frequency};
+        vector<int64_t> frequencies = {frequency};
         msg.set<FrontendScanMessage::Tag::frequencies>(frequencies);
         mCallback->onScanMessage(FrontendScanMessageType::FREQUENCY, msg);
     }
@@ -165,21 +165,21 @@ Frontend::~Frontend() {}
 
     {
         FrontendScanMessage msg;
-        vector<uint8_t> plpIds = {2};
+        vector<int32_t> plpIds = {2};
         msg.set<FrontendScanMessage::Tag::plpIds>(plpIds);
         mCallback->onScanMessage(FrontendScanMessageType::PLP_IDS, msg);
     }
 
     {
         FrontendScanMessage msg;
-        vector<uint8_t> groupIds = {3};
+        vector<int32_t> groupIds = {3};
         msg.set<FrontendScanMessage::Tag::groupIds>(groupIds);
         mCallback->onScanMessage(FrontendScanMessageType::GROUP_IDS, msg);
     }
 
     {
         FrontendScanMessage msg;
-        vector<char16_t> inputStreamIds = {1};
+        vector<int32_t> inputStreamIds = {1};
         msg.set<FrontendScanMessage::Tag::inputStreamIds>(inputStreamIds);
         mCallback->onScanMessage(FrontendScanMessageType::INPUT_STREAM_IDS, msg);
     }
@@ -350,7 +350,7 @@ Frontend::~Frontend() {}
                 break;
             }
             case FrontendStatusType::PLP_ID: {
-                status.set<FrontendStatus::plpId>(101);  // type uint8_t
+                status.set<FrontendStatus::plpId>(101);
                 break;
             }
             case FrontendStatusType::EWBS: {
@@ -613,7 +613,7 @@ Frontend::~Frontend() {}
                 break;
             }
             case FrontendStatusType::ISDBT_SEGMENTS: {
-                vector<uint8_t> segments = {2, 3};
+                vector<int32_t> segments = {2, 3};
                 status.set<FrontendStatus::isdbtSegment>(segments);
                 break;
             }

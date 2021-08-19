@@ -36,11 +36,11 @@ package android.hardware.tv.tuner;
 @VintfStability
 parcelable FrontendInfo {
   android.hardware.tv.tuner.FrontendType type = android.hardware.tv.tuner.FrontendType.UNDEFINED;
-  int minFrequency;
-  int maxFrequency;
+  long minFrequency;
+  long maxFrequency;
   int minSymbolRate;
   int maxSymbolRate;
-  int acquireRange;
+  long acquireRange;
   int exclusiveGroupId;
   android.hardware.tv.tuner.FrontendStatusType[] statusCaps;
   android.hardware.tv.tuner.FrontendCapabilities frontendCaps;

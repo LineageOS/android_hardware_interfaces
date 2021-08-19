@@ -36,12 +36,12 @@ union FrontendScanMessage {
     /**
      * scan progress percent (0..100)
      */
-    byte progressPercent;
+    int progressPercent;
 
     /**
      * Signal frequencies in Hertz
      */
-    int[] frequencies;
+    long[] frequencies;
 
     /**
      * Symbols per second
@@ -52,11 +52,11 @@ union FrontendScanMessage {
 
     FrontendAnalogType analogType;
 
-    byte[] plpIds;
+    int[] plpIds;
 
-    byte[] groupIds;
+    int[] groupIds;
 
-    char[] inputStreamIds;
+    int[] inputStreamIds;
 
     FrontendScanMessageStandard std;
 
