@@ -1843,12 +1843,13 @@ TEST_P(NewKeyGenerationTest, EcdsaMismatchKeySize) {
     if (SecLevel() == SecurityLevel::STRONGBOX) return;
 
     auto result = GenerateKey(AuthorizationSetBuilder()
+                                      .Authorization(TAG_ALGORITHM, Algorithm::EC)
                                       .Authorization(TAG_KEY_SIZE, 224)
                                       .Authorization(TAG_EC_CURVE, EcCurve::P_256)
+                                      .SigningKey()
                                       .Digest(Digest::NONE)
                                       .SetDefaultValidity());
-    ASSERT_TRUE(result == ErrorCode::INVALID_ARGUMENT ||
-                result == ErrorCode::UNSUPPORTED_ALGORITHM);
+    ASSERT_TRUE(result == ErrorCode::INVALID_ARGUMENT);
 }
 
 /*
