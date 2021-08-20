@@ -45,7 +45,6 @@ cc_defaults {
     header_libs: [
         "android.hardware.audio.common.util@all-versions",
         "libaudio_system_headers",
-        "libaudioclient_headers",
         "libeffects_headers",
         "libhardware_headers",
         "libmedia_headers",
