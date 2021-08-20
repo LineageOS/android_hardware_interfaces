@@ -204,6 +204,7 @@ bool DvrCallback::readRecordFMQ() {
 void DvrCallback::stopRecordThread() {
     mKeepReadingRecordFMQ = false;
     mRecordThreadRunning = false;
+    android::Mutex::Autolock autoLock(mRecordThreadLock);
 }
 
 AssertionResult DvrTests::openDvrInDemux(DvrType type, uint32_t bufferSize) {
