@@ -17,11 +17,15 @@
 #ifndef WIFI_H_
 #define WIFI_H_
 
-#include <functional>
+// HACK: NAN is a macro defined in math.h, which can be included in various
+// headers. This wifi HAL uses an enum called NAN, which does not compile when
+// the macro is defined. Undefine NAN to work around it.
+#undef NAN
+#include <android/hardware/wifi/1.5/IWifi.h>
 
 #include <android-base/macros.h>
-#include <android/hardware/wifi/1.5/IWifi.h>
 #include <utils/Looper.h>
+#include <functional>
 
 #include "hidl_callback_util.h"
 #include "wifi_chip.h"
