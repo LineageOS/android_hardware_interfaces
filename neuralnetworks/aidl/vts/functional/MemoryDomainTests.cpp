@@ -233,6 +233,9 @@ class MemoryDomainTestBase : public testing::Test {
     void SetUp() override {
         testing::Test::SetUp();
         ASSERT_NE(kDevice, nullptr);
+        const bool deviceIsResponsive =
+                ndk::ScopedAStatus::fromStatus(AIBinder_ping(kDevice->asBinder().get())).isOk();
+        ASSERT_TRUE(deviceIsResponsive);
     }
 
     std::shared_ptr<IPreparedModel> createConvPreparedModel(const TestOperand& testOperand,
