@@ -904,6 +904,9 @@ void Execute(const std::shared_ptr<IDevice>& device, const TestModel& testModel,
 void GeneratedTestBase::SetUp() {
     testing::TestWithParam<GeneratedTestParam>::SetUp();
     ASSERT_NE(kDevice, nullptr);
+    const bool deviceIsResponsive =
+            ndk::ScopedAStatus::fromStatus(AIBinder_ping(kDevice->asBinder().get())).isOk();
+    ASSERT_TRUE(deviceIsResponsive);
 }
 
 std::vector<NamedModel> getNamedModels(const FilterFn& filter) {
