@@ -243,6 +243,8 @@ class MemoryDomainTestBase : public testing::Test {
     void SetUp() override {
         testing::Test::SetUp();
         ASSERT_NE(kDevice, nullptr);
+        const bool deviceIsResponsive = kDevice->ping().isOk();
+        ASSERT_TRUE(deviceIsResponsive);
     }
 
     sp<IPreparedModel> createConvPreparedModel(const TestOperand& testOperand,
