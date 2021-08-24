@@ -91,6 +91,9 @@ void createPreparedModel(const std::shared_ptr<IDevice>& device, const Model& mo
 void NeuralNetworksAidlTest::SetUp() {
     testing::TestWithParam<NeuralNetworksAidlTestParam>::SetUp();
     ASSERT_NE(kDevice, nullptr);
+    const bool deviceIsResponsive =
+            ndk::ScopedAStatus::fromStatus(AIBinder_ping(kDevice->asBinder().get())).isOk();
+    ASSERT_TRUE(deviceIsResponsive);
 }
 
 static NamedDevice makeNamedDevice(const std::string& name) {
