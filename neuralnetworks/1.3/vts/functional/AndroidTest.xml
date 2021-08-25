@@ -29,5 +29,6 @@
         <option name="native-test-device-path" value="/data/local/tmp" />
         <option name="module-name" value="VtsHalNeuralnetworksV1_3TargetTest" />
         <option name="native-test-timeout" value="20m" />
+        <option name="native-test-flag" value="--gtest_break_on_failure" />
     </test>
 </configuration>
