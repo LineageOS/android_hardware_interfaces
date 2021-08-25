@@ -384,6 +384,8 @@ void Execute(const sp<IDevice>& device, const TestModel& testModel, bool testDyn
 void GeneratedTestBase::SetUp() {
     testing::TestWithParam<GeneratedTestParam>::SetUp();
     ASSERT_NE(kDevice, nullptr);
+    const bool deviceIsResponsive = kDevice->ping().isOk();
+    ASSERT_TRUE(deviceIsResponsive);
 }
 
 std::vector<NamedModel> getNamedModels(const FilterFn& filter) {
