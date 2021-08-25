@@ -19,7 +19,11 @@ import android.annotation.NonNull;
 import android.hardware.soundtrigger3.ISoundTriggerHw;
 import android.hardware.soundtrigger3.ISoundTriggerHwCallback;
 import android.hardware.soundtrigger3.ISoundTriggerHwGlobalCallback;
+import android.media.audio.common.AudioChannelLayout;
 import android.media.audio.common.AudioConfig;
+import android.media.audio.common.AudioFormatDescription;
+import android.media.audio.common.AudioFormatType;
+import android.media.audio.common.PcmType;
 import android.media.soundtrigger.ConfidenceLevel;
 import android.media.soundtrigger.ModelParameterRange;
 import android.media.soundtrigger.PhraseRecognitionEvent;
@@ -36,7 +40,6 @@ import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.os.SystemProperties;
-
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -196,9 +199,7 @@ public class SthalCli {
                 event.type = SoundModelType.GENERIC;
                 event.status = status;
                 event.captureAvailable = true;
-                event.audioConfig.channelMask = 16;
-                event.audioConfig.format = 1;
-                event.audioConfig.sampleRateHz = 16000;
+                event.audioConfig = createConfig();
                 try {
                     model.callback.recognitionCallback(modelHandle, event);
                 } catch (RemoteException e) {
@@ -216,10 +217,7 @@ public class SthalCli {
                 event.common.type = SoundModelType.KEYPHRASE;
                 event.common.status = status;
                 event.common.captureAvailable = true;
-                event.common.audioConfig = new AudioConfig();
-                event.common.audioConfig.channelMask = 16;
-                event.common.audioConfig.format = 1;
-                event.common.audioConfig.sampleRateHz = 16000;
+                event.common.audioConfig = createConfig();
                 if (model.phraseModel.phrases.length > 0) {
                     PhraseRecognitionExtra extra = new PhraseRecognitionExtra();
                     extra.id = model.phraseModel.phrases[0].id;
@@ -248,6 +246,16 @@ public class SthalCli {
                     e.printStackTrace();
                 }
             }
+        }
+
+        private AudioConfig createConfig() {
+            AudioConfig config = new AudioConfig();
+            config.channelMask = AudioChannelLayout.layoutMask(AudioChannelLayout.LAYOUT_MONO);
+            config.format = new AudioFormatDescription();
+            config.format.type = AudioFormatType.PCM;
+            config.format.pcm = PcmType.INT_16_BIT;
+            config.sampleRateHz = 16000;
+            return config;
         }
 
         @Override
