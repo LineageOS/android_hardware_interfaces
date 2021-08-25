@@ -23,9 +23,16 @@ aidl_interface {
                 enabled: true,
             },
             apex_available: [
-               "com.android.uwb",
+                "com.android.uwb",
             ],
             min_sdk_version: "current",
+        },
+        rust: {
+            enabled: true,
+            apex_available: [
+                "//apex_available:platform",
+                "com.android.uwb",
+            ],
         },
     },
 }
