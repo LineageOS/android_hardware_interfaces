@@ -13,7 +13,7 @@ cc_library_static {
     shared_libs: [
         "libbase",
         "libbinder_ndk",
-        "android.hardware.vibrator-V1-ndk_platform",
+        "android.hardware.vibrator-V1-ndk",
     ],
     export_include_dirs: ["include"],
     srcs: ["Vibrator.cpp"],
@@ -32,7 +32,7 @@ cc_binary {
     shared_libs: [
         "libbase",
         "libbinder_ndk",
-        "android.hardware.vibrator-V1-ndk_platform",
+        "android.hardware.vibrator-V1-ndk",
     ],
     static_libs: [
         "libvibratorexampleimpl",
