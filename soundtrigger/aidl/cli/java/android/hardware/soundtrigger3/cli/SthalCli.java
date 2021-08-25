@@ -248,16 +248,6 @@ public class SthalCli {
             }
         }
 
-        private AudioConfig createConfig() {
-            AudioConfig config = new AudioConfig();
-            config.channelMask = AudioChannelLayout.layoutMask(AudioChannelLayout.LAYOUT_MONO);
-            config.format = new AudioFormatDescription();
-            config.format.type = AudioFormatType.PCM;
-            config.format.pcm = PcmType.INT_16_BIT;
-            config.sampleRateHz = 16000;
-            return config;
-        }
-
         @Override
         public void registerGlobalCallback(ISoundTriggerHwGlobalCallback callback) {
             System.out.println("registerGlobalCallback()");
@@ -354,6 +344,16 @@ public class SthalCli {
         @Override
         public int getParameter(int modelHandle, int modelParam) {
             throw new IllegalArgumentException();
+        }
+
+        private static AudioConfig createConfig() {
+            AudioConfig config = new AudioConfig();
+            config.channelMask = AudioChannelLayout.layoutMask(AudioChannelLayout.LAYOUT_MONO);
+            config.format = new AudioFormatDescription();
+            config.format.type = AudioFormatType.PCM;
+            config.format.pcm = PcmType.INT_16_BIT;
+            config.sampleRateHz = 16000;
+            return config;
         }
     }
 }
