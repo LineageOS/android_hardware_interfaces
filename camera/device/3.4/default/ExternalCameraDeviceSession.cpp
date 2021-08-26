@@ -1462,14 +1462,50 @@ bool ExternalCameraDeviceSession::OutputThread::threadLoop() {
         return onDeviceError("%s: V4L2 buffer map failed", __FUNCTION__);
     }
 
+    // Process camera mute state
+    auto testPatternMode = req->setting.find(ANDROID_SENSOR_TEST_PATTERN_MODE);
+    if (testPatternMode.count == 1) {
+        if (mCameraMuted != (testPatternMode.data.u8[0] != ANDROID_SENSOR_TEST_PATTERN_MODE_OFF)) {
+            mCameraMuted = !mCameraMuted;
+            // Get solid color for test pattern, if any was set
+            if (testPatternMode.data.u8[0] == ANDROID_SENSOR_TEST_PATTERN_MODE_SOLID_COLOR) {
+                auto entry = req->setting.find(ANDROID_SENSOR_TEST_PATTERN_DATA);
+                if (entry.count == 4) {
+                    // Update the mute frame if the pattern color has changed
+                    if (memcmp(entry.data.i32, mTestPatternData, sizeof(mTestPatternData)) != 0) {
+                        memcpy(mTestPatternData, entry.data.i32, sizeof(mTestPatternData));
+                        // Fill the mute frame with the solid color, use only 8 MSB of RGGB as RGB
+                        for (int i = 0; i < mMuteTestPatternFrame.size(); i += 3) {
+                            mMuteTestPatternFrame[i] = entry.data.i32[0] >> 24;
+                            mMuteTestPatternFrame[i + 1] = entry.data.i32[1] >> 24;
+                            mMuteTestPatternFrame[i + 2] = entry.data.i32[3] >> 24;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // TODO: in some special case maybe we can decode jpg directly to gralloc output?
     if (req->frameIn->mFourcc == V4L2_PIX_FMT_MJPEG) {
         ATRACE_BEGIN("MJPGtoI420");
-        int res = libyuv::MJPGToI420(
-            inData, inDataSize, static_cast<uint8_t*>(mYu12FrameLayout.y), mYu12FrameLayout.yStride,
-            static_cast<uint8_t*>(mYu12FrameLayout.cb), mYu12FrameLayout.cStride,
-            static_cast<uint8_t*>(mYu12FrameLayout.cr), mYu12FrameLayout.cStride,
-            mYu12Frame->mWidth, mYu12Frame->mHeight, mYu12Frame->mWidth, mYu12Frame->mHeight);
+        int res = 0;
+        if (mCameraMuted) {
+            res = libyuv::ConvertToI420(
+                    mMuteTestPatternFrame.data(), mMuteTestPatternFrame.size(),
+                    static_cast<uint8_t*>(mYu12FrameLayout.y), mYu12FrameLayout.yStride,
+                    static_cast<uint8_t*>(mYu12FrameLayout.cb), mYu12FrameLayout.cStride,
+                    static_cast<uint8_t*>(mYu12FrameLayout.cr), mYu12FrameLayout.cStride, 0, 0,
+                    mYu12Frame->mWidth, mYu12Frame->mHeight, mYu12Frame->mWidth,
+                    mYu12Frame->mHeight, libyuv::kRotate0, libyuv::FOURCC_RAW);
+        } else {
+            res = libyuv::MJPGToI420(
+                    inData, inDataSize, static_cast<uint8_t*>(mYu12FrameLayout.y),
+                    mYu12FrameLayout.yStride, static_cast<uint8_t*>(mYu12FrameLayout.cb),
+                    mYu12FrameLayout.cStride, static_cast<uint8_t*>(mYu12FrameLayout.cr),
+                    mYu12FrameLayout.cStride, mYu12Frame->mWidth, mYu12Frame->mHeight,
+                    mYu12Frame->mWidth, mYu12Frame->mHeight);
+        }
         ATRACE_END();
 
         if (res != 0) {
@@ -1670,6 +1706,9 @@ Status ExternalCameraDeviceSession::OutputThread::allocateIntermediateBuffers(
         }
     }
 
+    // Allocate mute test pattern frame
+    mMuteTestPatternFrame.resize(mYu12Frame->mWidth * mYu12Frame->mHeight * 3);
+
     mBlobBufferSize = blobBufferSize;
     return Status::OK;
 }
@@ -1679,6 +1718,7 @@ void ExternalCameraDeviceSession::OutputThread::clearIntermediateBuffers() {
     mYu12Frame.clear();
     mYu12ThumbFrame.clear();
     mIntermediateBuffers.clear();
+    mMuteTestPatternFrame.clear();
     mBlobBufferSize = 0;
 }
 
