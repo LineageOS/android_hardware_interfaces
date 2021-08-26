@@ -35,7 +35,11 @@
 
 package android.hardware.uwb;
 @VintfStability
-interface IUwb {
-  List<String> getChips();
-  android.hardware.uwb.IUwbChip getChip(String name);
+interface IUwbChip {
+  String getName();
+  void open(in android.hardware.uwb.IUwbClientCallback clientCallback);
+  void close();
+  void coreInit();
+  int getSupportedVendorUciVersion();
+  int sendUciMessage(in byte[] data);
 }
