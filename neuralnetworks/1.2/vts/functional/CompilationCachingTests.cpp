@@ -225,6 +225,8 @@ class CompilationCachingTestBase : public testing::Test {
     void SetUp() override {
         testing::Test::SetUp();
         ASSERT_NE(kDevice.get(), nullptr);
+        const bool deviceIsResponsive = kDevice->ping().isOk();
+        ASSERT_TRUE(deviceIsResponsive);
 
         // Create cache directory. The cache directory and a temporary cache file is always created
         // to test the behavior of prepareModelFromCache, even when caching is not supported.

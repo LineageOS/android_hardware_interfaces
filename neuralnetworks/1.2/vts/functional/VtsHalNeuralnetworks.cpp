@@ -87,6 +87,8 @@ void createPreparedModel(const sp<IDevice>& device, const Model& model,
 void NeuralnetworksHidlTest::SetUp() {
     testing::TestWithParam<NeuralnetworksHidlTestParam>::SetUp();
     ASSERT_NE(kDevice, nullptr);
+    const bool deviceIsResponsive = kDevice->ping().isOk();
+    ASSERT_TRUE(deviceIsResponsive);
 }
 
 static NamedDevice makeNamedDevice(const std::string& name) {
