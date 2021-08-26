@@ -20,7 +20,10 @@
 
 #include <fmq/AidlMessageQueue.h>
 #include <math.h>
+#include <atomic>
 #include <set>
+#include <thread>
+
 #include "Dvr.h"
 #include "Filter.h"
 #include "Frontend.h"
@@ -155,12 +158,14 @@ class Demux : public BnDemux {
     std::shared_ptr<Dvr> mDvrRecord;
 
     // Thread handlers
-    pthread_t mFrontendInputThread;
+    std::thread mFrontendInputThread;
+
     /**
      * If a specific filter's writing loop is still running
      */
-    bool mFrontendInputThreadRunning;
-    bool mKeepFetchingDataFromFrontend;
+    std::atomic<bool> mFrontendInputThreadRunning;
+    std::atomic<bool> mKeepFetchingDataFromFrontend;
+
     /**
      * If the dvr recording is running.
      */
@@ -169,10 +174,6 @@ class Demux : public BnDemux {
      * Lock to protect writes to the FMQs
      */
     std::mutex mWriteLock;
-    /**
-     * Lock to protect writes to the input status
-     */
-    std::mutex mFrontendInputThreadLock;
 
     // temp handle single PES filter
     // TODO handle mulptiple Pes filters
