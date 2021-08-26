@@ -22,9 +22,11 @@
 #include <log/log.h>
 #include <utils/Condition.h>
 #include <utils/Mutex.h>
+#include <atomic>
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <thread>
 
 #include <aidl/android/hardware/tv/tuner/BnDvrCallback.h>
 #include <aidl/android/hardware/tv/tuner/IDvr.h>
@@ -94,7 +96,7 @@ class DvrCallback : public BnDvrCallback {
     static void* __threadLoopPlayback(void* user);
     static void* __threadLoopRecord(void* threadArgs);
     void playbackThreadLoop();
-    void recordThreadLoop(RecordSettings* recordSetting, bool* keepWritingPlaybackFMQ);
+    void recordThreadLoop();
 
     bool readRecordFMQ();
 
@@ -115,16 +117,14 @@ class DvrCallback : public BnDvrCallback {
     std::map<uint32_t, EventFlag*> mFilterMQEventFlag;
 
     android::Mutex mMsgLock;
-    android::Mutex mPlaybackThreadLock;
-    android::Mutex mRecordThreadLock;
     android::Condition mMsgCondition;
 
-    bool mKeepWritingPlaybackFMQ = true;
-    bool mKeepReadingRecordFMQ = true;
-    bool mPlaybackThreadRunning;
-    bool mRecordThreadRunning;
-    pthread_t mPlaybackThread;
-    pthread_t mRecordThread;
+    std::atomic<bool> mKeepWritingPlaybackFMQ = true;
+    std::atomic<bool> mKeepReadingRecordFMQ = true;
+    std::atomic<bool> mPlaybackThreadRunning;
+    std::atomic<bool> mRecordThreadRunning;
+    std::thread mPlaybackThread;
+    std::thread mRecordThread;
     string mInputDataFile;
     PlaybackSettings mPlaybackSettings;
 
