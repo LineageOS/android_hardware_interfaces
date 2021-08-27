@@ -24,26 +24,22 @@ void DvrCallback::startPlaybackInputThread(string& dataInputFile, PlaybackSettin
     mPlaybackSettings = settings;
     mPlaybackMQ = std::make_unique<FilterMQ>(playbackMQDescriptor, true /* resetPointers */);
     EXPECT_TRUE(mPlaybackMQ);
-    pthread_create(&mPlaybackThread, NULL, __threadLoopPlayback, this);
-    pthread_setname_np(mPlaybackThread, "test_playback_input_loop");
+
+    mPlaybackThread = std::thread(&DvrCallback::playbackThreadLoop, this);
 }
 
 void DvrCallback::stopPlaybackThread() {
     mPlaybackThreadRunning = false;
     mKeepWritingPlaybackFMQ = false;
 
-    android::Mutex::Autolock autoLock(mPlaybackThreadLock);
-}
-
-void* DvrCallback::__threadLoopPlayback(void* user) {
-    DvrCallback* const self = static_cast<DvrCallback*>(user);
-    self->playbackThreadLoop();
-    return 0;
+    if (mPlaybackThread.joinable()) {
+        mPlaybackThread.join();
+    }
 }
 
 void DvrCallback::playbackThreadLoop() {
-    android::Mutex::Autolock autoLock(mPlaybackThreadLock);
     mPlaybackThreadRunning = true;
+    mKeepWritingPlaybackFMQ = true;
 
     // Create the EventFlag that is used to signal the HAL impl that data have been
     // written into the Playback FMQ
@@ -121,43 +117,31 @@ void DvrCallback::playbackThreadLoop() {
 }
 
 void DvrCallback::testRecordOutput() {
-    android::Mutex::Autolock autoLock(mMsgLock);
-    while (mDataOutputBuffer.empty()) {
-        if (-ETIMEDOUT == mMsgCondition.waitRelative(mMsgLock, WAIT_TIMEOUT)) {
-            EXPECT_TRUE(false) << "record output matching pid does not output within timeout";
-            stopRecordThread();
-            return;
+    bool passed = true;
+    {
+        android::Mutex::Autolock autoLock(mMsgLock);
+        while (mDataOutputBuffer.empty()) {
+            if (-ETIMEDOUT == mMsgCondition.waitRelative(mMsgLock, WAIT_TIMEOUT)) {
+                EXPECT_TRUE(false) << "record output matching pid does not output within timeout";
+                passed = false;
+                break;
+            }
         }
     }
     stopRecordThread();
-    ALOGW("[vts] record pass and stop");
+    if (passed) ALOGW("[vts] record pass and stop");
 }
 
-void DvrCallback::startRecordOutputThread(RecordSettings recordSettings,
+void DvrCallback::startRecordOutputThread(RecordSettings /* recordSettings */,
                                           MQDesc& recordMQDescriptor) {
     mRecordMQ = std::make_unique<FilterMQ>(recordMQDescriptor, true /* resetPointers */);
     EXPECT_TRUE(mRecordMQ);
-    struct RecordThreadArgs* threadArgs =
-            (struct RecordThreadArgs*)malloc(sizeof(struct RecordThreadArgs));
-    threadArgs->user = this;
-    threadArgs->recordSettings = &recordSettings;
-    threadArgs->keepReadingRecordFMQ = &mKeepReadingRecordFMQ;
 
-    pthread_create(&mRecordThread, NULL, __threadLoopRecord, (void*)threadArgs);
-    pthread_setname_np(mRecordThread, "test_record_input_loop");
+    mRecordThread = std::thread(&DvrCallback::recordThreadLoop, this);
 }
 
-void* DvrCallback::__threadLoopRecord(void* threadArgs) {
-    DvrCallback* const self =
-            static_cast<DvrCallback*>(((struct RecordThreadArgs*)threadArgs)->user);
-    self->recordThreadLoop(((struct RecordThreadArgs*)threadArgs)->recordSettings,
-                           ((struct RecordThreadArgs*)threadArgs)->keepReadingRecordFMQ);
-    return 0;
-}
-
-void DvrCallback::recordThreadLoop(RecordSettings* /*recordSettings*/, bool* keepReadingRecordFMQ) {
+void DvrCallback::recordThreadLoop() {
     ALOGD("[vts] DvrCallback record threadLoop start.");
-    android::Mutex::Autolock autoLock(mRecordThreadLock);
     mRecordThreadRunning = true;
     mKeepReadingRecordFMQ = true;
 
@@ -168,7 +152,7 @@ void DvrCallback::recordThreadLoop(RecordSettings* /*recordSettings*/, bool* kee
                 android::OK);
 
     while (mRecordThreadRunning) {
-        while (*keepReadingRecordFMQ) {
+        while (mKeepReadingRecordFMQ) {
             uint32_t efState = 0;
             android::status_t status = recordMQEventFlag->wait(
                     static_cast<int32_t>(DemuxQueueNotifyBits::DATA_READY), &efState, WAIT_TIMEOUT,
@@ -206,6 +190,10 @@ bool DvrCallback::readRecordFMQ() {
 void DvrCallback::stopRecordThread() {
     mKeepReadingRecordFMQ = false;
     mRecordThreadRunning = false;
+
+    if (mRecordThread.joinable()) {
+        mRecordThread.join();
+    }
 }
 
 AssertionResult DvrTests::openDvrInDemux(DvrType type, int32_t bufferSize) {

@@ -85,8 +85,7 @@ Filter::Filter(DemuxFilterType type, int64_t filterId, uint32_t bufferSize,
 }
 
 Filter::~Filter() {
-    mFilterThreadRunning = false;
-    std::lock_guard<std::mutex> lock(mFilterThreadLock);
+    close();
 }
 
 ::ndk::ScopedAStatus Filter::getId64Bit(int64_t* _aidl_return) {
@@ -187,8 +186,12 @@ Filter::~Filter() {
 
 ::ndk::ScopedAStatus Filter::stop() {
     ALOGV("%s", __FUNCTION__);
+
     mFilterThreadRunning = false;
-    std::lock_guard<std::mutex> lock(mFilterThreadLock);
+    if (mFilterThread.joinable()) {
+        mFilterThread.join();
+    }
+
     return ::ndk::ScopedAStatus::ok();
 }
 
@@ -226,8 +229,8 @@ Filter::~Filter() {
 ::ndk::ScopedAStatus Filter::close() {
     ALOGV("%s", __FUNCTION__);
 
-    mFilterThreadRunning = false;
-    std::lock_guard<std::mutex> lock(mFilterThreadLock);
+    stop();
+
     return mDemux->removeFilter(mFilterId);
 }
 
@@ -376,22 +379,15 @@ bool Filter::createFilterMQ() {
 }
 
 ::ndk::ScopedAStatus Filter::startFilterLoop() {
-    pthread_create(&mFilterThread, NULL, __threadLoopFilter, this);
-    pthread_setname_np(mFilterThread, "filter_waiting_loop");
+    mFilterThread = std::thread(&Filter::filterThreadLoop, this);
     return ::ndk::ScopedAStatus::ok();
-}
-
-void* Filter::__threadLoopFilter(void* user) {
-    Filter* const self = static_cast<Filter*>(user);
-    self->filterThreadLoop();
-    return 0;
 }
 
 void Filter::filterThreadLoop() {
     if (!mFilterThreadRunning) {
         return;
     }
-    std::lock_guard<std::mutex> lock(mFilterThreadLock);
+
     ALOGD("[Filter] filter %" PRIu64 " threadLoop start.", mFilterId);
 
     // For the first time of filter output, implementation needs to send the filter

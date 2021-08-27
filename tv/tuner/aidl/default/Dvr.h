@@ -129,7 +129,7 @@ class Dvr : public BnDvr {
      * If a specific filter's writing loop is still running
      */
     std::atomic<bool> mDvrThreadRunning;
-    bool mKeepFetchingDataFromFrontend;
+
     /**
      * Lock to protect writes to the FMQs
      */

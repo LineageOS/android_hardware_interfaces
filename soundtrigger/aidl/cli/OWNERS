@@ -1,1 +1,1 @@
-include /media/java/android/media/soundtrigger_middleware/OWNERS
+include platform/frameworks/base:/media/aidl/android/media/soundtrigger_middleware/OWNERS

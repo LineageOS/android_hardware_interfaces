@@ -18,8 +18,7 @@
 
 package android.hardware.uwb;
 
-import android.hardware.uwb.IUwbClientCallback;
-import android.hardware.uwb.UwbStatus;
+import android.hardware.uwb.IUwbChip;
 
 /**
  * HAL Interface for UWB (Ultrawideband) subsystem.
@@ -28,38 +27,14 @@ import android.hardware.uwb.UwbStatus;
 @VintfStability
 interface IUwb {
     /**
-     * Close the UWB Subsystem. Should free all resources.
-     *
+     * Returns list of IUwbChip instance names representing each UWB chip on the device.
      */
-    void close();
+    List<String> getChips();
 
     /**
-     * Perform UWB Subsystem initialization by applying all vendor configuration.
+     * Returns IUwbChip instance corresponding to the name.
      *
+     * @param Unique identifier of the chip.
      */
-    void coreInit();
-
-    /**
-     * Performs the UWB HAL initialization and power on UWB Subsystem. If open completes
-     * successfully, then UWB Subsystem is ready to accept UCI message through write() API
-     *
-     * @param clientCallback Client callback instance.
-     */
-    void open(in IUwbClientCallback clientCallback);
-
-    /**
-     * Write the UCI message to the UWB Subsystem.
-     * The UCI message format is as per UCI  protocol and it is
-     * defined in "FiRa Consortium - UCI Generic Specification_v1.0" specification at FiRa
-     * consortium.
-     * WIP doc link: https://groups.firaconsortium.org/wg/Technical/document/folder/127.
-     * TODO(b/196004116): Link to the published specification.
-     *
-     * This method may queue writes and return immediately, or it may block until data is written.
-     * Implementation must guarantee that writes are executed in order.
-     *
-     * @param data UCI packet to write.
-     * @return number of bytes written to the UWB Subsystem
-     */
-    int write(in byte[] data);
+    IUwbChip getChip(String name);
 }
