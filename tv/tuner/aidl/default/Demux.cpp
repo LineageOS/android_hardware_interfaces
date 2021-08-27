@@ -37,8 +37,7 @@ Demux::Demux(int32_t demuxId, std::shared_ptr<Tuner> tuner) {
 }
 
 Demux::~Demux() {
-    mFrontendInputThreadRunning = false;
-    std::lock_guard<std::mutex> lock(mFrontendInputThreadLock);
+    close();
 }
 
 ::ndk::ScopedAStatus Demux::setFrontendDataSource(int32_t in_frontendId) {
@@ -171,6 +170,8 @@ Demux::~Demux() {
 ::ndk::ScopedAStatus Demux::close() {
     ALOGV("%s", __FUNCTION__);
 
+    stopFrontendInput();
+
     set<int64_t>::iterator it;
     for (it = mPlaybackFilterIds.begin(); it != mPlaybackFilterIds.end(); it++) {
         mDvrPlayback->removePlaybackFilter(*it);
@@ -180,8 +181,6 @@ Demux::~Demux() {
     mFilters.clear();
     mLastUsedFilterId = -1;
     mTuner->removeDemux(mDemuxId);
-    mFrontendInputThreadRunning = false;
-    std::lock_guard<std::mutex> lock(mFrontendInputThreadLock);
 
     return ::ndk::ScopedAStatus::ok();
 }
@@ -345,14 +344,7 @@ uint16_t Demux::getFilterTpid(int64_t filterId) {
 
 void Demux::startFrontendInputLoop() {
     mFrontendInputThreadRunning = true;
-    pthread_create(&mFrontendInputThread, NULL, __threadLoopFrontend, this);
-    pthread_setname_np(mFrontendInputThread, "frontend_input_thread");
-}
-
-void* Demux::__threadLoopFrontend(void* user) {
-    Demux* const self = static_cast<Demux*>(user);
-    self->frontendInputThreadLoop();
-    return 0;
+    mFrontendInputThread = std::thread(&Demux::frontendInputThreadLoop, this);
 }
 
 void Demux::frontendInputThreadLoop() {
@@ -360,7 +352,6 @@ void Demux::frontendInputThreadLoop() {
         return;
     }
 
-    std::lock_guard<std::mutex> lock(mFrontendInputThreadLock);
     if (!mDvrPlayback) {
         ALOGW("[Demux] No software Frontend input configured. Ending Frontend thread loop.");
         mFrontendInputThreadRunning = false;
@@ -402,7 +393,9 @@ void Demux::stopFrontendInput() {
     ALOGD("[Demux] stop frontend on demux");
     mKeepFetchingDataFromFrontend = false;
     mFrontendInputThreadRunning = false;
-    std::lock_guard<std::mutex> lock(mFrontendInputThreadLock);
+    if (mFrontendInputThread.joinable()) {
+        mFrontendInputThread.join();
+    }
 }
 
 void Demux::setIsRecording(bool isRecording) {

@@ -25,7 +25,8 @@ import android.hardware.uwb.UwbStatus;
 oneway interface IUwbClientCallback {
     /**
      * The callback passed in from the UWB stack that the HAL
-     * can use to pass incomming data to the stack.
+     * can use to pass incoming data to the stack.  These include UCI
+     * responses and notifications from the UWB subsystem.
      *
      * WIP doc link: https://groups.firaconsortium.org/wg/Technical/document/folder/127.
      * TODO(b/196004116): Link to the published specification.

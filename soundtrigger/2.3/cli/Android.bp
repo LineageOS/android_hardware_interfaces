@@ -8,10 +8,10 @@ package {
 }
 
 java_binary {
-    name: "sthal_cli_2.4",
-    wrapper: "sthal_cli_2.4",
+    name: "sthal_cli_2.3",
+    wrapper: "sthal_cli_2.3",
     srcs: ["java/**/*.java"],
     static_libs: [
-        "android.hardware.soundtrigger-V2.4-java",
+        "android.hardware.soundtrigger-V2.3-java",
     ],
 }

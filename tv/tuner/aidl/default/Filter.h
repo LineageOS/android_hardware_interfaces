@@ -24,7 +24,10 @@
 #include <ion/ion.h>
 #include <math.h>
 #include <sys/stat.h>
+#include <atomic>
 #include <set>
+#include <thread>
+
 #include "Demux.h"
 #include "Dvr.h"
 #include "Frontend.h"
@@ -126,15 +129,14 @@ class Filter : public BnFilter {
     vector<DemuxFilterEvent> mFilterEvents;
 
     // Thread handlers
-    pthread_t mFilterThread;
+    std::thread mFilterThread;
 
     // FMQ status local records
     DemuxFilterStatus mFilterStatus;
     /**
      * If a specific filter's writing loop is still running
      */
-    bool mFilterThreadRunning;
-    bool mKeepFetchingDataFromFrontend;
+    std::atomic<bool> mFilterThreadRunning;
 
     /**
      * How many times a filter should write
@@ -204,7 +206,6 @@ class Filter : public BnFilter {
      * Lock to protect writes to the input status
      */
     std::mutex mFilterStatusLock;
-    std::mutex mFilterThreadLock;
     std::mutex mFilterOutputLock;
     std::mutex mRecordFilterOutputLock;
 
