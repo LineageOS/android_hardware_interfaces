@@ -45,6 +45,7 @@ namespace android::hardware::gnss::common::implementation {
 constexpr int INPUT_BUFFER_SIZE = 128;
 constexpr char CMD_GET_LOCATION[] = "CMD_GET_LOCATION";
 constexpr char GNSS_PATH[] = "/dev/gnss0";
+constexpr int TTFF_MILLIS = 2200;
 
 template <class T_IGnss>
 struct GnssTemplate : public T_IGnss {
@@ -130,6 +131,7 @@ struct GnssTemplate : public T_IGnss {
     std::atomic<bool> mHardwareModeChecked;
     std::atomic<int> mGnssFd;
     std::thread mThread;
+    std::atomic<bool> mFirstFixReceived;
 
     mutable std::mutex mMutex;
     virtual hidl_vec<V2_1::IGnssCallback::GnssSvInfo> filterBlocklistedSatellitesV2_1(
@@ -151,7 +153,8 @@ GnssTemplate<T_IGnss>::GnssTemplate()
     : mMinIntervalMs(1000),
       mGnssConfiguration{new V2_1::implementation::GnssConfiguration()},
       mHardwareModeChecked(false),
-      mGnssFd(-1) {}
+      mGnssFd(-1),
+      mFirstFixReceived(false) {}
 
 template <class T_IGnss>
 GnssTemplate<T_IGnss>::~GnssTemplate() {
@@ -186,6 +189,12 @@ Return<bool> GnssTemplate<T_IGnss>::start() {
     mIsActive = true;
     this->reportGnssStatusValue(V1_0::IGnssCallback::GnssStatusValue::SESSION_BEGIN);
     mThread = std::thread([this]() {
+        auto svStatus = filterBlocklistedSatellitesV2_1(Utils::getMockSvInfoListV2_1());
+        this->reportSvStatus(svStatus);
+        if (!mFirstFixReceived) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(TTFF_MILLIS));
+            mFirstFixReceived = true;
+        }
         while (mIsActive == true) {
             auto svStatus = filterBlocklistedSatellitesV2_1(Utils::getMockSvInfoListV2_1());
             this->reportSvStatus(svStatus);
@@ -288,7 +297,7 @@ Return<bool> GnssTemplate<T_IGnss>::injectLocation(double, double, float) {
 
 template <class T_IGnss>
 Return<void> GnssTemplate<T_IGnss>::deleteAidingData(V1_0::IGnss::GnssAidingData) {
-    // TODO implement
+    mFirstFixReceived = false;
     return Void();
 }
 
