@@ -1,3 +1,4 @@
+
 /*
  * Copyright (C) 2021 The Android Open Source Project
  *
@@ -13,38 +14,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef android_hardware_gnss_common_default_DeviceFileReader_H_
+#define android_hardware_gnss_common_default_DeviceFileReader_H_
 
+#include <log/log.h>
+#include <mutex>
+#include <string>
+#include <unordered_map>
+#include "Constants.h"
 #include "GnssReplayUtils.h"
 
 namespace android {
 namespace hardware {
 namespace gnss {
 namespace common {
-
-std::string ReplayUtils::getGnssPath() {
-    char devname_value[PROPERTY_VALUE_MAX] = "";
-    if (property_get("debug.location.gnss.devname", devname_value, NULL) > 0) {
-        return devname_value;
+class DeviceFileReader {
+  public:
+    static DeviceFileReader& Instance() {
+        static DeviceFileReader reader;
+        return reader;
     }
-    return GNSS_PATH;
-}
+    std::string getLocationData();
+    std::string getGnssRawMeasurementData();
+    void getDataFromDeviceFile(const std::string& command, int mMinIntervalMs);
 
-bool ReplayUtils::hasGnssDeviceFile() {
-    struct stat sb;
-    return stat(getGnssPath().c_str(), &sb) != -1;
-}
-
-bool ReplayUtils::isGnssRawMeasurement(const std::string& inputStr) {
-    // TODO: add more logic check to by pass invalid data.
-    return !inputStr.empty() && (inputStr.find("Raw") != std::string::npos);
-}
-
-bool ReplayUtils::isNMEA(const std::string& inputStr) {
-    return !inputStr.empty() && (inputStr.find("$GPRMC,", 0) != std::string::npos ||
-                                 inputStr.find("$GPRMA,", 0) != std::string::npos);
-}
-
+  private:
+    DeviceFileReader();
+    ~DeviceFileReader();
+    std::unordered_map<std::string, std::string> data_;
+    std::string s_buffer_;
+    std::mutex mMutex;
+};
 }  // namespace common
 }  // namespace gnss
 }  // namespace hardware
 }  // namespace android
+
+#endif  // android_hardware_gnss_common_default_DeviceFileReader_H_
