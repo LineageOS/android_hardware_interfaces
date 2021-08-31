@@ -58,8 +58,6 @@ cc_defaults {
         "libhidl_gtest_helper",
     ],
 
-    group_static_libs: true,
-
     // Lists all system dependencies that can be expected on the device.
     shared_libs: [
         "libbase",
