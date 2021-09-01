@@ -19,7 +19,7 @@ aidl_interface {
         "android/hardware/common/fmq/*.aidl",
     ],
     imports: [
-        "android.hardware.common",
+        "android.hardware.common-V2",
     ],
     stability: "vintf",
     backend: {
