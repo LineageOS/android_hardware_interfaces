@@ -21,6 +21,7 @@ import android.hardware.soundtrigger3.ISoundTriggerHwCallback;
 import android.hardware.soundtrigger3.ISoundTriggerHwGlobalCallback;
 import android.media.audio.common.AudioChannelLayout;
 import android.media.audio.common.AudioConfig;
+import android.media.audio.common.AudioConfigBase;
 import android.media.audio.common.AudioFormatDescription;
 import android.media.audio.common.AudioFormatType;
 import android.media.audio.common.PcmType;
@@ -348,11 +349,12 @@ public class SthalCli {
 
         private static AudioConfig createConfig() {
             AudioConfig config = new AudioConfig();
-            config.channelMask = AudioChannelLayout.layoutMask(AudioChannelLayout.LAYOUT_MONO);
-            config.format = new AudioFormatDescription();
-            config.format.type = AudioFormatType.PCM;
-            config.format.pcm = PcmType.INT_16_BIT;
-            config.sampleRateHz = 16000;
+            config.base = new AudioConfigBase();
+            config.base.channelMask = AudioChannelLayout.layoutMask(AudioChannelLayout.LAYOUT_MONO);
+            config.base.format = new AudioFormatDescription();
+            config.base.format.type = AudioFormatType.PCM;
+            config.base.format.pcm = PcmType.INT_16_BIT;
+            config.base.sampleRate = 16000;
             return config;
         }
     }
