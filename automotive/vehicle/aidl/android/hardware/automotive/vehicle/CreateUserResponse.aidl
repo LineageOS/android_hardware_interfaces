@@ -24,7 +24,7 @@ import android.hardware.automotive.vehicle.CreateUserStatus;
  * NOTE: this struct is not used in the HAL properties directly, it must be converted to
  * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
  */
-// @VintfStability
+@VintfStability
 parcelable CreateUserResponse {
     /**
      * Id of the request being responded.
@@ -33,7 +33,7 @@ parcelable CreateUserResponse {
     /**
      * Status of the request.
      */
-    CreateUserStatus status;
+    CreateUserStatus status = CreateUserStatus.SUCCESS;
     /**
      * HAL-specific error message.
      *

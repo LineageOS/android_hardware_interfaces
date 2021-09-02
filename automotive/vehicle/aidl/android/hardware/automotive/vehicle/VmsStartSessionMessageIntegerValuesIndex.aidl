@@ -35,7 +35,7 @@ import android.hardware.automotive.vehicle.VmsBaseMessageIntegerValuesIndex;
  * Any VMS messages received between initiation and completion of the handshake
  * must be discarded.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VmsStartSessionMessageIntegerValuesIndex {
     /*

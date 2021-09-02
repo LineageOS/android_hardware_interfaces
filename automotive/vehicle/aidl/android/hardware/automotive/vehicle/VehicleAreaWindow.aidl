@@ -19,7 +19,7 @@ package android.hardware.automotive.vehicle;
 /**
  * Various windshields/windows in the car.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VehicleAreaWindow {
     FRONT_WINDSHIELD = 0x00000001,

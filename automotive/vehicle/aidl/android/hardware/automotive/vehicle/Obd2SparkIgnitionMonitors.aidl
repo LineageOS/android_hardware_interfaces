@@ -22,7 +22,7 @@ import android.hardware.automotive.vehicle.Obd2CommonIgnitionMonitors;
  * Ignition monitors available for SPARK vehicles.
  * These values come from the SAE J1979 standard.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum Obd2SparkIgnitionMonitors {
     COMPONENTS_AVAILABLE = 0x1 << 0,

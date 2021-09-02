@@ -22,7 +22,7 @@ import android.hardware.automotive.vehicle.UserIdentificationAssociationType;
 /**
  * Helper struct used when setting a user/identification association type.
  */
-// @VintfStability
+@VintfStability
 parcelable UserIdentificationSetAssociation {
     UserIdentificationAssociationType type = UserIdentificationAssociationType.INVALID;
     UserIdentificationAssociationSetValue value = UserIdentificationAssociationSetValue.INVALID;

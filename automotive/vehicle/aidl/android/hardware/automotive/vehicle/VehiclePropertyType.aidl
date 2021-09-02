@@ -21,7 +21,7 @@ package android.hardware.automotive.vehicle;
  *
  * Used to create property ID in VehicleProperty enum.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VehiclePropertyType {
     STRING = 0x00100000,

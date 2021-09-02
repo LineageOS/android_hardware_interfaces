@@ -23,7 +23,7 @@ import android.hardware.automotive.vehicle.VmsMessageWithLayerIntegerValuesIndex
  * VmsMessageType.SUBSCRIBE_TO_PUBLISHER, VmsMessageType.UNSUBSCRIBE_TO_PUBLISHER messages and
  * VmsMessageType.DATA .
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VmsMessageWithLayerAndPublisherIdIntegerValuesIndex {
     /*

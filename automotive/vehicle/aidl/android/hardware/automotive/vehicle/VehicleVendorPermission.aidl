@@ -19,7 +19,7 @@ package android.hardware.automotive.vehicle;
 /**
  * Used by SUPPORT_CUSTOMIZE_VENDOR_PERMISSION to indicate the permission of vendor properties.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VehicleVendorPermission {
     PERMISSION_DEFAULT = 0x00000000,

@@ -19,7 +19,7 @@ package android.hardware.automotive.vehicle;
 /**
  * Input code values for HW_CUSTOM_INPUT.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum CustomInputType {
     /**

@@ -21,7 +21,7 @@ package android.hardware.automotive.vehicle;
  *
  * See USER_IDENTIFICATION_ASSOCIATION for more details and example.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum UserIdentificationAssociationType {
     INVALID = 0,

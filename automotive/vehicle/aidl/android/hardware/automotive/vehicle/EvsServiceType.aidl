@@ -19,7 +19,7 @@ package android.hardware.automotive.vehicle;
 /**
  * Used by EVS_SERVICE_REQUEST to enumerate the service's type.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum EvsServiceType {
     REARVIEW = 0,

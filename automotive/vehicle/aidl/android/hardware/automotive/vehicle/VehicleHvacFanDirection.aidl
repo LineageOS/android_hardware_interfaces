@@ -19,7 +19,7 @@ package android.hardware.automotive.vehicle;
 /**
  * Bit flags for fan direction
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VehicleHvacFanDirection {
     UNKNOWN = 0x0,

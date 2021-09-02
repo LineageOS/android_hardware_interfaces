@@ -19,7 +19,7 @@ package android.hardware.automotive.vehicle;
 /**
  * Units used for int or float type with no attached enum types.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VehicleUnit {
     SHOULD_NOT_USE = 0x000,

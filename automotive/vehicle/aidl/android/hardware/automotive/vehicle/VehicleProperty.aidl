@@ -36,7 +36,7 @@ import android.hardware.automotive.vehicle.VehiclePropertyType;
  * Properties set to values out of range must be ignored and no action taken
  * in response to such ill formed requests.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VehicleProperty {
     /**

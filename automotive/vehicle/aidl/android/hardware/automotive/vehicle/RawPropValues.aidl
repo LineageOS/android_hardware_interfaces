@@ -16,32 +16,26 @@
 
 package android.hardware.automotive.vehicle;
 
-/**
- * Contains value for a single property. Depending on property data type of
- * this property (VehiclePropetyType) one field of this structure must be filled in.
- */
-// @VintfStability
-parcelable VehiclePropValueRawValue {
+@VintfStability
+parcelable RawPropValues {
     /**
      * This is used for properties of types VehiclePropertyType#INT
      * and VehiclePropertyType#INT_VEC
      */
-    int[] int32Values;
+    int[] int32Values = {};
+
     /**
      * This is used for properties of types VehiclePropertyType#FLOAT
      * and VehiclePropertyType#FLOAT_VEC
      */
     float[] floatValues;
-    /**
-     * This is used for properties of type VehiclePropertyType#INT64
-     */
+
+    /** This is used for properties of type VehiclePropertyType#INT64 */
     long[] int64Values;
-    /**
-     * This is used for properties of type VehiclePropertyType#BYTES
-     */
-    byte[] bytes;
-    /**
-     * This is used for properties of type VehiclePropertyType#STRING
-     */
+
+    /** This is used for properties of type VehiclePropertyType#BYTES */
+    byte[] byteValues;
+
+    /** This is used for properties of type VehiclePropertyType#STRING */
     @utf8InCpp String stringValue;
 }

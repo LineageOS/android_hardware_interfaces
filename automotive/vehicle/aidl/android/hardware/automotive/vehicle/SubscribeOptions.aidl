@@ -16,16 +16,18 @@
 
 package android.hardware.automotive.vehicle;
 
-import android.hardware.automotive.vehicle.SubscribeFlags;
-
 /**
  * Encapsulates information about subscription to vehicle property events.
  */
-// @VintfStability
+@VintfStability
 parcelable SubscribeOptions {
     /** Property to subscribe */
     int propId;
-
+    /**
+     * Optional areas to subscribe for this property, if empty, would subscribe
+     * to all areas configured for this property.
+     */
+    int[] areaIds;
     /**
      * Sample rate in Hz.
      *
@@ -36,7 +38,4 @@ parcelable SubscribeOptions {
      * This value indicates how many updates per second client wants to receive.
      */
     float sampleRate;
-
-    /** Flags that indicate to which event sources to listen. */
-    SubscribeFlags flags;
 }

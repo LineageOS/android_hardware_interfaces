@@ -25,7 +25,7 @@ import android.hardware.automotive.vehicle.VmsBaseMessageIntegerValuesIndex;
  * The layer type is defined in the VMS protocol, and the subtype and version are
  * controlled by the implementer of the publisher.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VmsMessageWithLayerIntegerValuesIndex {
     /*

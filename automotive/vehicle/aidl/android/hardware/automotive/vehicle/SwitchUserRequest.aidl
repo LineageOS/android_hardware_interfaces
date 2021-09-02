@@ -26,7 +26,7 @@ import android.hardware.automotive.vehicle.UsersInfo;
  * NOTE: this struct is not used in the HAL properties directly, it must be converted to
  * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
  */
-// @VintfStability
+@VintfStability
 parcelable SwitchUserRequest {
     /**
      * Arbitrary id used to map the response to the request.
@@ -35,7 +35,7 @@ parcelable SwitchUserRequest {
     /**
      * Type of message.
      */
-    SwitchUserMessageType messageType;
+    SwitchUserMessageType messageType = SwitchUserMessageType.UNKNOWN;
     /**
      * Information about the Android user being switched to.
      *
