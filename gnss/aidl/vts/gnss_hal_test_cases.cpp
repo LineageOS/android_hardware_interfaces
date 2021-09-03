@@ -53,17 +53,16 @@ TEST_P(GnssHalTest, SetupTeardownCreateCleanup) {}
 
 /*
  * TestPsdsExtension:
- * 1. Gets the PsdsExtension and verifies that it returns a non-null extension.
+ * 1. Gets the PsdsExtension
  * 2. Injects empty PSDS data and verifies that it returns an error.
  */
 TEST_P(GnssHalTest, TestPsdsExtension) {
     sp<IGnssPsds> iGnssPsds;
     auto status = aidl_gnss_hal_->getExtensionPsds(&iGnssPsds);
-    ASSERT_TRUE(status.isOk());
-    ASSERT_TRUE(iGnssPsds != nullptr);
-
-    status = iGnssPsds->injectPsdsData(PsdsType::LONG_TERM, std::vector<uint8_t>());
-    ASSERT_FALSE(status.isOk());
+    if (status.isOk() && iGnssPsds != nullptr) {
+        status = iGnssPsds->injectPsdsData(PsdsType::LONG_TERM, std::vector<uint8_t>());
+        ASSERT_FALSE(status.isOk());
+    }
 }
 
 void CheckSatellitePvt(const SatellitePvt& satellitePvt) {
