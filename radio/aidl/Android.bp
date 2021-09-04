@@ -1,0 +1,54 @@
+aidl_interface {
+    name: "android.hardware.radio",
+    vendor_available: true,
+    srcs: ["android/hardware/radio/*.aidl"],
+    stability: "vintf",
+    backend: {
+        cpp: {
+            enabled: false,
+        },
+        java: {
+            sdk_version: "module_current",
+        },
+        ndk: {
+            vndk: {
+                enabled: true,
+            },
+        },
+    },
+}
+
+cc_library {
+    name: "android.hardware.radio-translate-ndk",
+    vendor_available: true,
+    srcs: ["android/hardware/radio/translate-ndk.cpp"],
+    shared_libs: [
+        "libbinder_ndk",
+        "libhidlbase",
+        "android.hardware.radio-V1-ndk_platform",
+        "android.hardware.radio@1.0",
+        "android.hardware.radio@1.1",
+        "android.hardware.radio@1.2",
+        "android.hardware.radio@1.3",
+        "android.hardware.radio@1.4",
+        "android.hardware.radio@1.5",
+        "android.hardware.radio@1.6",
+    ],
+    export_include_dirs: ["include"],
+}
+
+java_library {
+    name: "android.hardware.radio-translate-java",
+    srcs: ["android/hardware/radio/Translate.java"],
+    libs: [
+        "android.hardware.radio-V1-java",
+        "android.hardware.radio-V1.0-java",
+        "android.hardware.radio-V1.1-java",
+        "android.hardware.radio-V1.2-java",
+        "android.hardware.radio-V1.3-java",
+        "android.hardware.radio-V1.4-java",
+        "android.hardware.radio-V1.5-java",
+        "android.hardware.radio-V1.6-java",
+    ],
+    sdk_version: "module_current",
+}
