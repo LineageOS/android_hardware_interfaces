@@ -114,7 +114,7 @@ void Sensor::run() {
             });
         } else {
             timespec curTime;
-            clock_gettime(CLOCK_REALTIME, &curTime);
+            clock_gettime(CLOCK_BOOTTIME, &curTime);
             int64_t now = (curTime.tv_sec * kNanosecondsInSeconds) + curTime.tv_nsec;
             int64_t nextSampleTime = mLastSampleTimeNs + mSamplingPeriodNs;
 
