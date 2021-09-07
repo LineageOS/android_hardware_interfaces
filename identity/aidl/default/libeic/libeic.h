@@ -30,6 +30,7 @@ extern "C" {
 #include "EicOps.h"
 #include "EicPresentation.h"
 #include "EicProvisioning.h"
+#include "EicCommon.h"
 #undef EIC_INSIDE_LIBEIC_H
 
 #ifdef __cplusplus

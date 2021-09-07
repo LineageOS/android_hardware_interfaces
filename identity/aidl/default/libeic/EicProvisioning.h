@@ -65,7 +65,7 @@ typedef struct {
 bool eicProvisioningInit(EicProvisioning* ctx, bool testCredential);
 
 bool eicProvisioningInitForUpdate(EicProvisioning* ctx, bool testCredential, const char* docType,
-                                  const uint8_t* encryptedCredentialKeys,
+                                  size_t docTypeLength, const uint8_t* encryptedCredentialKeys,
                                   size_t encryptedCredentialKeysSize);
 
 bool eicProvisioningCreateCredentialKey(EicProvisioning* ctx, const uint8_t* challenge,
@@ -75,21 +75,27 @@ bool eicProvisioningCreateCredentialKey(EicProvisioning* ctx, const uint8_t* cha
 
 bool eicProvisioningStartPersonalization(EicProvisioning* ctx, int accessControlProfileCount,
                                          const int* entryCounts, size_t numEntryCounts,
-                                         const char* docType,
+                                         const char* docType, size_t docTypeLength,
                                          size_t expectedProofOfProvisioningingSize);
-
-bool eicProvisioningAddAccessControlProfile(EicProvisioning* ctx, int id,
-                                            const uint8_t* readerCertificate,
-                                            size_t readerCertificateSize,
-                                            bool userAuthenticationRequired, uint64_t timeoutMillis,
-                                            uint64_t secureUserId, uint8_t outMac[28]);
 
 // The scratchSpace should be set to a buffer at least 512 bytes. It's done this way to
 // avoid allocating stack space.
 //
-bool eicProvisioningBeginAddEntry(EicProvisioning* ctx, const int* accessControlProfileIds,
+bool eicProvisioningAddAccessControlProfile(EicProvisioning* ctx, int id,
+                                            const uint8_t* readerCertificate,
+                                            size_t readerCertificateSize,
+                                            bool userAuthenticationRequired,
+                                            uint64_t timeoutMillis, uint64_t secureUserId,
+                                            uint8_t outMac[28], uint8_t* scratchSpace,
+                                            size_t scratchSpaceSize);
+
+// The scratchSpace should be set to a buffer at least 512 bytes. It's done this way to
+// avoid allocating stack space.
+//
+bool eicProvisioningBeginAddEntry(EicProvisioning* ctx, const uint8_t* accessControlProfileIds,
                                   size_t numAccessControlProfileIds, const char* nameSpace,
-                                  const char* name, uint64_t entrySize, uint8_t* scratchSpace,
+                                  size_t nameSpaceLength, const char* name, size_t nameLength,
+                                  uint64_t entrySize, uint8_t* scratchSpace,
                                   size_t scratchSpaceSize);
 
 // The outEncryptedContent array must be contentSize + 28 bytes long.
@@ -97,9 +103,10 @@ bool eicProvisioningBeginAddEntry(EicProvisioning* ctx, const int* accessControl
 // The scratchSpace should be set to a buffer at least 512 bytes. It's done this way to
 // avoid allocating stack space.
 //
-bool eicProvisioningAddEntryValue(EicProvisioning* ctx, const int* accessControlProfileIds,
+bool eicProvisioningAddEntryValue(EicProvisioning* ctx, const uint8_t* accessControlProfileIds,
                                   size_t numAccessControlProfileIds, const char* nameSpace,
-                                  const char* name, const uint8_t* content, size_t contentSize,
+                                  size_t nameSpaceLength, const char* name, size_t nameLength,
+                                  const uint8_t* content, size_t contentSize,
                                   uint8_t* outEncryptedContent, uint8_t* scratchSpace,
                                   size_t scratchSpaceSize);
 
@@ -128,6 +135,7 @@ bool eicProvisioningFinishAddingEntries(
 // |encryptedCredentialKeys| will be no longer than 86 + 28 = 114 bytes.
 //
 bool eicProvisioningFinishGetCredentialData(EicProvisioning* ctx, const char* docType,
+                                            size_t docTypeLength,
                                             uint8_t* encryptedCredentialKeys,
                                             size_t* encryptedCredentialKeysSize);
 

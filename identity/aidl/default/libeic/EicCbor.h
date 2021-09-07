@@ -102,13 +102,16 @@ void eicCborAppend(EicCbor* cbor, const uint8_t* data, size_t size);
 #define EIC_CBOR_SEMANTIC_TAG_ENCODED_CBOR 24
 
 /* Begins a new CBOR value. */
-void eicCborBegin(EicCbor* cbor, int majorType, size_t size);
+void eicCborBegin(EicCbor* cbor, int majorType, uint64_t size);
 
 /* Appends a bytestring. */
 void eicCborAppendByteString(EicCbor* cbor, const uint8_t* data, size_t dataSize);
 
+/* Appends a UTF-8 string. */
+void eicCborAppendString(EicCbor* cbor, const char* str, size_t strLength);
+
 /* Appends a NUL-terminated UTF-8 string. */
-void eicCborAppendString(EicCbor* cbor, const char* str);
+void eicCborAppendStringZ(EicCbor* cbor, const char* str);
 
 /* Appends a simple value. */
 void eicCborAppendSimple(EicCbor* cbor, uint8_t simpleValue);
@@ -144,21 +147,12 @@ bool eicCborCalcAccessControl(EicCbor* cborBuilder, int id, const uint8_t* reade
                               size_t readerCertificateSize, bool userAuthenticationRequired,
                               uint64_t timeoutMillis, uint64_t secureUserId);
 
-bool eicCborCalcEntryAdditionalData(const int* accessControlProfileIds,
+bool eicCborCalcEntryAdditionalData(const uint8_t* accessControlProfileIds,
                                     size_t numAccessControlProfileIds, const char* nameSpace,
-                                    const char* name, uint8_t* cborBuffer, size_t cborBufferSize,
-                                    size_t* outAdditionalDataCborSize,
+                                    size_t nameSpaceLength, const char* name,
+                                    size_t nameLength, uint8_t* cborBuffer,
+                                    size_t cborBufferSize, size_t* outAdditionalDataCborSize,
                                     uint8_t additionalDataSha256[EIC_SHA256_DIGEST_SIZE]);
-
-// The maximum size of an encoded Secure Access Control Profile that we
-// support. Since the SACP may contain a reader certificate chain these can get
-// pretty big.
-//
-// Currently we allocate space on the stack for this structure which is why we
-// have a maximum size. We can get rid of the maximum size by incrementally
-// building/verifying the SACP. TODO: actually do this.
-//
-#define EIC_MAX_CBOR_SIZE_FOR_ACCESS_CONTROL_PROFILE 512
 
 #ifdef __cplusplus
 }
