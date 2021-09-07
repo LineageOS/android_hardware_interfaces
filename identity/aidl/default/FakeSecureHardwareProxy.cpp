@@ -70,6 +70,7 @@ bool FakeSecureHardwareProvisioningProxy::initialize(bool testCredential) {
 bool FakeSecureHardwareProvisioningProxy::initializeForUpdate(
         bool testCredential, string docType, vector<uint8_t> encryptedCredentialKeys) {
     return eicProvisioningInitForUpdate(&ctx_, testCredential, docType.c_str(),
+                                        docType.size(),
                                         encryptedCredentialKeys.data(),
                                         encryptedCredentialKeys.size());
 }
@@ -92,8 +93,11 @@ optional<vector<uint8_t>> FakeSecureHardwareProvisioningProxy::createCredentialK
 bool FakeSecureHardwareProvisioningProxy::startPersonalization(
         int accessControlProfileCount, vector<int> entryCounts, const string& docType,
         size_t expectedProofOfProvisioningSize) {
-    if (!eicProvisioningStartPersonalization(&ctx_, accessControlProfileCount, entryCounts.data(),
-                                             entryCounts.size(), docType.c_str(),
+
+    if (!eicProvisioningStartPersonalization(&ctx_, accessControlProfileCount,
+                                             entryCounts.data(),
+                                             entryCounts.size(),
+                                             docType.c_str(), docType.size(),
                                              expectedProofOfProvisioningSize)) {
         return false;
     }
@@ -105,9 +109,11 @@ optional<vector<uint8_t>> FakeSecureHardwareProvisioningProxy::addAccessControlP
         int id, const vector<uint8_t>& readerCertificate, bool userAuthenticationRequired,
         uint64_t timeoutMillis, uint64_t secureUserId) {
     vector<uint8_t> mac(28);
+    uint8_t scratchSpace[512];
     if (!eicProvisioningAddAccessControlProfile(
                 &ctx_, id, readerCertificate.data(), readerCertificate.size(),
-                userAuthenticationRequired, timeoutMillis, secureUserId, mac.data())) {
+                userAuthenticationRequired, timeoutMillis, secureUserId, mac.data(),
+                scratchSpace, sizeof(scratchSpace))) {
         return {};
     }
     return mac;
@@ -117,9 +123,15 @@ bool FakeSecureHardwareProvisioningProxy::beginAddEntry(const vector<int>& acces
                                                         const string& nameSpace, const string& name,
                                                         uint64_t entrySize) {
     uint8_t scratchSpace[512];
-    return eicProvisioningBeginAddEntry(&ctx_, accessControlProfileIds.data(),
-                                        accessControlProfileIds.size(), nameSpace.c_str(),
-                                        name.c_str(), entrySize, scratchSpace, sizeof scratchSpace);
+    vector<uint8_t> uint8AccessControlProfileIds;
+    for (size_t i = 0; i < accessControlProfileIds.size(); i++) {
+        uint8AccessControlProfileIds.push_back(accessControlProfileIds[i] & 0xFF);
+    }
+
+    return eicProvisioningBeginAddEntry(&ctx_, uint8AccessControlProfileIds.data(),
+                                        uint8AccessControlProfileIds.size(), nameSpace.c_str(),
+                                        nameSpace.size(), name.c_str(), name.size(), entrySize,
+                                        scratchSpace, sizeof(scratchSpace));
 }
 
 // Returns encryptedContent.
@@ -128,11 +140,16 @@ optional<vector<uint8_t>> FakeSecureHardwareProvisioningProxy::addEntryValue(
         const vector<uint8_t>& content) {
     vector<uint8_t> eicEncryptedContent;
     uint8_t scratchSpace[512];
+    vector<uint8_t> uint8AccessControlProfileIds;
+    for (size_t i = 0; i < accessControlProfileIds.size(); i++) {
+        uint8AccessControlProfileIds.push_back(accessControlProfileIds[i] & 0xFF);
+    }
+
     eicEncryptedContent.resize(content.size() + 28);
     if (!eicProvisioningAddEntryValue(
-                &ctx_, accessControlProfileIds.data(), accessControlProfileIds.size(),
-                nameSpace.c_str(), name.c_str(), content.data(), content.size(),
-                eicEncryptedContent.data(), scratchSpace, sizeof scratchSpace)) {
+                &ctx_, uint8AccessControlProfileIds.data(), uint8AccessControlProfileIds.size(),
+                nameSpace.c_str(), nameSpace.size(), name.c_str(), name.size(), content.data(),
+                content.size(), eicEncryptedContent.data(), scratchSpace, sizeof(scratchSpace))) {
         return {};
     }
     return eicEncryptedContent;
@@ -152,7 +169,7 @@ optional<vector<uint8_t>> FakeSecureHardwareProvisioningProxy::finishGetCredenti
         const string& docType) {
     vector<uint8_t> encryptedCredentialKeys(116);
     size_t size = encryptedCredentialKeys.size();
-    if (!eicProvisioningFinishGetCredentialData(&ctx_, docType.c_str(),
+    if (!eicProvisioningFinishGetCredentialData(&ctx_, docType.c_str(), docType.size(),
                                                 encryptedCredentialKeys.data(), &size)) {
         return {};
     }
@@ -170,7 +187,7 @@ bool FakeSecureHardwarePresentationProxy::initialize(bool testCredential, string
                                                      vector<uint8_t> encryptedCredentialKeys) {
     LOG(INFO) << "FakeSecureHardwarePresentationProxy created, sizeof(EicPresentation): "
               << sizeof(EicPresentation);
-    return eicPresentationInit(&ctx_, testCredential, docType.c_str(),
+    return eicPresentationInit(&ctx_, testCredential, docType.c_str(), docType.size(),
                                encryptedCredentialKeys.data(), encryptedCredentialKeys.size());
 }
 
@@ -181,8 +198,9 @@ FakeSecureHardwarePresentationProxy::generateSigningKeyPair(string docType, time
     size_t publicKeyCertSize = sizeof(publicKeyCert);
     vector<uint8_t> signingKeyBlob(60);
 
-    if (!eicPresentationGenerateSigningKeyPair(&ctx_, docType.c_str(), now, publicKeyCert,
-                                               &publicKeyCertSize, signingKeyBlob.data())) {
+    if (!eicPresentationGenerateSigningKeyPair(&ctx_, docType.c_str(), docType.size(), now,
+                                               publicKeyCert, &publicKeyCertSize,
+                                               signingKeyBlob.data())) {
         return {};
     }
 
@@ -244,10 +262,12 @@ optional<bool> FakeSecureHardwarePresentationProxy::validateAccessControlProfile
         int id, const vector<uint8_t>& readerCertificate, bool userAuthenticationRequired,
         int timeoutMillis, uint64_t secureUserId, const vector<uint8_t>& mac) {
     bool accessGranted = false;
+    uint8_t scratchSpace[512];
     if (!eicPresentationValidateAccessControlProfile(&ctx_, id, readerCertificate.data(),
                                                      readerCertificate.size(),
                                                      userAuthenticationRequired, timeoutMillis,
-                                                     secureUserId, mac.data(), &accessGranted)) {
+                                                     secureUserId, mac.data(), &accessGranted,
+                                                     scratchSpace, sizeof(scratchSpace))) {
         return {};
     }
     return accessGranted;
@@ -267,7 +287,7 @@ bool FakeSecureHardwarePresentationProxy::calcMacKey(
     }
     return eicPresentationCalcMacKey(&ctx_, sessionTranscript.data(), sessionTranscript.size(),
                                      readerEphemeralPublicKey.data(), signingKeyBlob.data(),
-                                     docType.c_str(), numNamespacesWithValues,
+                                     docType.c_str(), docType.size(), numNamespacesWithValues,
                                      expectedProofOfProvisioningSize);
 }
 
@@ -275,10 +295,16 @@ AccessCheckResult FakeSecureHardwarePresentationProxy::startRetrieveEntryValue(
         const string& nameSpace, const string& name, unsigned int newNamespaceNumEntries,
         int32_t entrySize, const vector<int32_t>& accessControlProfileIds) {
     uint8_t scratchSpace[512];
+    vector<uint8_t> uint8AccessControlProfileIds;
+    for (size_t i = 0; i < accessControlProfileIds.size(); i++) {
+        uint8AccessControlProfileIds.push_back(accessControlProfileIds[i] & 0xFF);
+    }
+
     EicAccessCheckResult result = eicPresentationStartRetrieveEntryValue(
-            &ctx_, nameSpace.c_str(), name.c_str(), newNamespaceNumEntries, entrySize,
-            accessControlProfileIds.data(), accessControlProfileIds.size(), scratchSpace,
-            sizeof scratchSpace);
+            &ctx_, nameSpace.c_str(), nameSpace.size(), name.c_str(), name.size(),
+            newNamespaceNumEntries, entrySize, uint8AccessControlProfileIds.data(),
+            uint8AccessControlProfileIds.size(), scratchSpace,
+            sizeof(scratchSpace));
     switch (result) {
         case EIC_ACCESS_CHECK_RESULT_OK:
             return AccessCheckResult::kOk;
@@ -299,12 +325,18 @@ optional<vector<uint8_t>> FakeSecureHardwarePresentationProxy::retrieveEntryValu
         const vector<uint8_t>& encryptedContent, const string& nameSpace, const string& name,
         const vector<int32_t>& accessControlProfileIds) {
     uint8_t scratchSpace[512];
+    vector<uint8_t> uint8AccessControlProfileIds;
+    for (size_t i = 0; i < accessControlProfileIds.size(); i++) {
+        uint8AccessControlProfileIds.push_back(accessControlProfileIds[i] & 0xFF);
+    }
+
     vector<uint8_t> content;
     content.resize(encryptedContent.size() - 28);
     if (!eicPresentationRetrieveEntryValue(
                 &ctx_, encryptedContent.data(), encryptedContent.size(), content.data(),
-                nameSpace.c_str(), name.c_str(), accessControlProfileIds.data(),
-                accessControlProfileIds.size(), scratchSpace, sizeof scratchSpace)) {
+                nameSpace.c_str(), nameSpace.size(), name.c_str(), name.size(),
+                uint8AccessControlProfileIds.data(), uint8AccessControlProfileIds.size(),
+                scratchSpace, sizeof(scratchSpace))) {
         return {};
     }
     return content;
@@ -324,9 +356,9 @@ optional<vector<uint8_t>> FakeSecureHardwarePresentationProxy::deleteCredential(
         const string& docType, const vector<uint8_t>& challenge, bool includeChallenge,
         size_t proofOfDeletionCborSize) {
     vector<uint8_t> signatureOfToBeSigned(EIC_ECDSA_P256_SIGNATURE_SIZE);
-    if (!eicPresentationDeleteCredential(&ctx_, docType.c_str(), challenge.data(), challenge.size(),
-                                         includeChallenge, proofOfDeletionCborSize,
-                                         signatureOfToBeSigned.data())) {
+    if (!eicPresentationDeleteCredential(&ctx_, docType.c_str(), docType.size(), challenge.data(),
+                                         challenge.size(), includeChallenge,
+                                         proofOfDeletionCborSize, signatureOfToBeSigned.data())) {
         return {};
     }
     return signatureOfToBeSigned;
@@ -336,8 +368,8 @@ optional<vector<uint8_t>> FakeSecureHardwarePresentationProxy::proveOwnership(
         const string& docType, bool testCredential, const vector<uint8_t>& challenge,
         size_t proofOfOwnershipCborSize) {
     vector<uint8_t> signatureOfToBeSigned(EIC_ECDSA_P256_SIGNATURE_SIZE);
-    if (!eicPresentationProveOwnership(&ctx_, docType.c_str(), testCredential, challenge.data(),
-                                       challenge.size(), proofOfOwnershipCborSize,
+    if (!eicPresentationProveOwnership(&ctx_, docType.c_str(), docType.size(), testCredential,
+                                       challenge.data(), challenge.size(), proofOfOwnershipCborSize,
                                        signatureOfToBeSigned.data())) {
         return {};
     }

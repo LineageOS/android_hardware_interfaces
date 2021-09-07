@@ -15,22 +15,23 @@
  */
 
 #include "EicPresentation.h"
+#include "EicCommon.h"
 
 #include <inttypes.h>
 
 bool eicPresentationInit(EicPresentation* ctx, bool testCredential, const char* docType,
-                         const uint8_t* encryptedCredentialKeys,
+                         size_t docTypeLength, const uint8_t* encryptedCredentialKeys,
                          size_t encryptedCredentialKeysSize) {
-    uint8_t credentialKeys[86];
+    uint8_t credentialKeys[EIC_CREDENTIAL_KEYS_CBOR_SIZE_FEATURE_VERSION_202101];
     bool expectPopSha256 = false;
 
     // For feature version 202009 it's 52 bytes long and for feature version 202101 it's 86
     // bytes (the additional data is the ProofOfProvisioning SHA-256). We need
     // to support loading all feature versions.
     //
-    if (encryptedCredentialKeysSize == 52 + 28) {
+    if (encryptedCredentialKeysSize == EIC_CREDENTIAL_KEYS_CBOR_SIZE_FEATURE_VERSION_202009 + 28) {
         /* do nothing */
-    } else if (encryptedCredentialKeysSize == 86 + 28) {
+    } else if (encryptedCredentialKeysSize == EIC_CREDENTIAL_KEYS_CBOR_SIZE_FEATURE_VERSION_202101 + 28) {
         expectPopSha256 = true;
     } else {
         eicDebug("Unexpected size %zd for encryptedCredentialKeys", encryptedCredentialKeysSize);
@@ -42,7 +43,7 @@ bool eicPresentationInit(EicPresentation* ctx, bool testCredential, const char* 
     if (!eicOpsDecryptAes128Gcm(eicOpsGetHardwareBoundKey(testCredential), encryptedCredentialKeys,
                                 encryptedCredentialKeysSize,
                                 // DocType is the additionalAuthenticatedData
-                                (const uint8_t*)docType, eicStrLen(docType), credentialKeys)) {
+                                (const uint8_t*)docType, docTypeLength, credentialKeys)) {
         eicDebug("Error decrypting CredentialKeys");
         return false;
     }
@@ -88,7 +89,8 @@ bool eicPresentationInit(EicPresentation* ctx, bool testCredential, const char* 
     return true;
 }
 
-bool eicPresentationGenerateSigningKeyPair(EicPresentation* ctx, const char* docType, time_t now,
+bool eicPresentationGenerateSigningKeyPair(EicPresentation* ctx, const char* docType,
+                                           size_t docTypeLength, time_t now,
                                            uint8_t* publicKeyCert, size_t* publicKeyCertSize,
                                            uint8_t signingKeyBlob[60]) {
     uint8_t signingKeyPriv[EIC_P256_PRIV_KEY_SIZE];
@@ -114,7 +116,7 @@ bool eicPresentationGenerateSigningKeyPair(EicPresentation* ctx, const char* doc
     EicCbor cbor;
     eicCborInit(&cbor, cborBuf, sizeof cborBuf);
     eicCborAppendArray(&cbor, 2);
-    eicCborAppendString(&cbor, "ProofOfBinding");
+    eicCborAppendStringZ(&cbor, "ProofOfBinding");
     eicCborAppendByteString(&cbor, ctx->proofOfProvisioningSha256, EIC_SHA256_DIGEST_SIZE);
     if (cbor.size > sizeof(cborBuf)) {
         eicDebug("Exceeded buffer size");
@@ -147,7 +149,7 @@ bool eicPresentationGenerateSigningKeyPair(EicPresentation* ctx, const char* doc
     }
     if (!eicOpsEncryptAes128Gcm(ctx->storageKey, nonce, signingKeyPriv, sizeof(signingKeyPriv),
                                 // DocType is the additionalAuthenticatedData
-                                (const uint8_t*)docType, eicStrLen(docType), signingKeyBlob)) {
+                                (const uint8_t*)docType, docTypeLength, signingKeyBlob)) {
         eicDebug("Error encrypting signing key");
         return false;
     }
@@ -219,7 +221,7 @@ bool eicPresentationValidateRequestMessage(EicPresentation* ctx, const uint8_t* 
     EicCbor cbor;
     eicCborInit(&cbor, NULL, 0);
     eicCborAppendArray(&cbor, 4);
-    eicCborAppendString(&cbor, "Signature1");
+    eicCborAppendStringZ(&cbor, "Signature1");
 
     // The COSE Encoded protected headers is just a single field with
     // COSE_LABEL_ALG (1) -> coseSignAlg (e.g. -7). For simplicitly we just
@@ -277,7 +279,7 @@ bool eicPresentationValidateRequestMessage(EicPresentation* ctx, const uint8_t* 
     //
     size_t payloadOffset = cbor.size;
     eicCborBegin(&cbor, EIC_CBOR_MAJOR_TYPE_ARRAY, 3);
-    eicCborAppendString(&cbor, "ReaderAuthentication");
+    eicCborAppendStringZ(&cbor, "ReaderAuthentication");
     eicCborAppend(&cbor, sessionTranscript, sessionTranscriptSize);
     eicCborAppendSemantic(&cbor, EIC_CBOR_SEMANTIC_TAG_ENCODED_CBOR);
     eicCborBegin(&cbor, EIC_CBOR_MAJOR_TYPE_BYTE_STRING, requestMessageSize);
@@ -438,18 +440,18 @@ bool eicPresentationValidateAccessControlProfile(EicPresentation* ctx, int id,
                                                  size_t readerCertificateSize,
                                                  bool userAuthenticationRequired, int timeoutMillis,
                                                  uint64_t secureUserId, const uint8_t mac[28],
-                                                 bool* accessGranted) {
+                                                 bool* accessGranted,
+                                                 uint8_t* scratchSpace,
+                                                 size_t scratchSpaceSize) {
     *accessGranted = false;
-
     if (id < 0 || id >= 32) {
         eicDebug("id value of %d is out of allowed range [0, 32[", id);
         return false;
     }
 
     // Validate the MAC
-    uint8_t cborBuffer[EIC_MAX_CBOR_SIZE_FOR_ACCESS_CONTROL_PROFILE];
     EicCbor cborBuilder;
-    eicCborInit(&cborBuilder, cborBuffer, EIC_MAX_CBOR_SIZE_FOR_ACCESS_CONTROL_PROFILE);
+    eicCborInit(&cborBuilder, scratchSpace, scratchSpaceSize);
     if (!eicCborCalcAccessControl(&cborBuilder, id, readerCertificate, readerCertificateSize,
                                   userAuthenticationRequired, timeoutMillis, secureUserId)) {
         return false;
@@ -464,15 +466,15 @@ bool eicPresentationValidateAccessControlProfile(EicPresentation* ctx, int id,
             checkUserAuth(ctx, userAuthenticationRequired, timeoutMillis, secureUserId);
     bool passedReaderAuth = checkReaderAuth(ctx, readerCertificate, readerCertificateSize);
 
-    ctx->accessControlProfileMaskValidated |= (1 << id);
+    ctx->accessControlProfileMaskValidated |= (1U << id);
     if (readerCertificateSize > 0) {
-        ctx->accessControlProfileMaskUsesReaderAuth |= (1 << id);
+        ctx->accessControlProfileMaskUsesReaderAuth |= (1U << id);
     }
     if (!passedReaderAuth) {
-        ctx->accessControlProfileMaskFailedReaderAuth |= (1 << id);
+        ctx->accessControlProfileMaskFailedReaderAuth |= (1U << id);
     }
     if (!passedUserAuth) {
-        ctx->accessControlProfileMaskFailedUserAuth |= (1 << id);
+        ctx->accessControlProfileMaskFailedUserAuth |= (1U << id);
     }
 
     if (passedUserAuth && passedReaderAuth) {
@@ -486,11 +488,11 @@ bool eicPresentationCalcMacKey(EicPresentation* ctx, const uint8_t* sessionTrans
                                size_t sessionTranscriptSize,
                                const uint8_t readerEphemeralPublicKey[EIC_P256_PUB_KEY_SIZE],
                                const uint8_t signingKeyBlob[60], const char* docType,
-                               unsigned int numNamespacesWithValues,
+                               size_t docTypeLength, unsigned int numNamespacesWithValues,
                                size_t expectedDeviceNamespacesSize) {
     uint8_t signingKeyPriv[EIC_P256_PRIV_KEY_SIZE];
     if (!eicOpsDecryptAes128Gcm(ctx->storageKey, signingKeyBlob, 60, (const uint8_t*)docType,
-                                eicStrLen(docType), signingKeyPriv)) {
+                                docTypeLength, signingKeyPriv)) {
         eicDebug("Error decrypting signingKeyBlob");
         return false;
     }
@@ -530,7 +532,7 @@ bool eicPresentationCalcMacKey(EicPresentation* ctx, const uint8_t* sessionTrans
     // ]
     //
     eicCborAppendArray(&ctx->cbor, 4);
-    eicCborAppendString(&ctx->cbor, "MAC0");
+    eicCborAppendStringZ(&ctx->cbor, "MAC0");
 
     // The COSE Encoded protected headers is just a single field with
     // COSE_LABEL_ALG (1) -> COSE_ALG_HMAC_256_256 (5). For simplicitly we just
@@ -566,8 +568,7 @@ bool eicPresentationCalcMacKey(EicPresentation* ctx, const uint8_t* sessionTrans
     calculatedSize += 1;  // "DeviceAuthentication" less than 24 bytes
     calculatedSize += sizeof("DeviceAuthentication") - 1;  // Don't include trailing NUL
     calculatedSize += sessionTranscriptSize;               // Already CBOR encoded
-    size_t docTypeLen = eicStrLen(docType);
-    calculatedSize += 1 + eicCborAdditionalLengthBytesFor(docTypeLen) + docTypeLen;
+    calculatedSize += 1 + eicCborAdditionalLengthBytesFor(docTypeLength) + docTypeLength;
     calculatedSize += 2;  // Semantic tag EIC_CBOR_SEMANTIC_TAG_ENCODED_CBOR (24)
     calculatedSize += 1 + eicCborAdditionalLengthBytesFor(expectedDeviceNamespacesSize);
     calculatedSize += expectedDeviceNamespacesSize;
@@ -589,9 +590,9 @@ bool eicPresentationCalcMacKey(EicPresentation* ctx, const uint8_t* sessionTrans
     eicCborBegin(&ctx->cbor, EIC_CBOR_MAJOR_TYPE_BYTE_STRING, calculatedSize);
 
     eicCborAppendArray(&ctx->cbor, 4);
-    eicCborAppendString(&ctx->cbor, "DeviceAuthentication");
+    eicCborAppendStringZ(&ctx->cbor, "DeviceAuthentication");
     eicCborAppend(&ctx->cbor, sessionTranscript, sessionTranscriptSize);
-    eicCborAppendString(&ctx->cbor, docType);
+    eicCborAppendString(&ctx->cbor, docType, docTypeLength);
 
     // For the payload, the _encoded_ form follows here. We handle this by simply
     // opening a bstr, and then writing the CBOR. This requires us to know the
@@ -618,16 +619,18 @@ bool eicPresentationStartRetrieveEntries(EicPresentation* ctx) {
 }
 
 EicAccessCheckResult eicPresentationStartRetrieveEntryValue(
-        EicPresentation* ctx, const char* nameSpace, const char* name,
-        unsigned int newNamespaceNumEntries, int32_t /* entrySize */,
-        const int* accessControlProfileIds, size_t numAccessControlProfileIds,
+        EicPresentation* ctx, const char* nameSpace, size_t nameSpaceLength,
+        const char* name, size_t nameLength,
+        unsigned int newNamespaceNumEntries, int32_t entrySize,
+        const uint8_t* accessControlProfileIds, size_t numAccessControlProfileIds,
         uint8_t* scratchSpace, size_t scratchSpaceSize) {
+    (void)entrySize;
     uint8_t* additionalDataCbor = scratchSpace;
-    const size_t additionalDataCborBufSize = scratchSpaceSize;
+    size_t additionalDataCborBufferSize = scratchSpaceSize;
     size_t additionalDataCborSize;
 
     if (newNamespaceNumEntries > 0) {
-        eicCborAppendString(&ctx->cbor, nameSpace);
+        eicCborAppendString(&ctx->cbor, nameSpace, nameSpaceLength);
         eicCborAppendMap(&ctx->cbor, newNamespaceNumEntries);
     }
 
@@ -636,8 +639,9 @@ EicAccessCheckResult eicPresentationStartRetrieveEntryValue(
     //
     ctx->accessCheckOk = false;
     if (!eicCborCalcEntryAdditionalData(accessControlProfileIds, numAccessControlProfileIds,
-                                        nameSpace, name, additionalDataCbor,
-                                        additionalDataCborBufSize, &additionalDataCborSize,
+                                        nameSpace, nameSpaceLength, name, nameLength,
+                                        additionalDataCbor, additionalDataCborBufferSize,
+                                        &additionalDataCborSize,
                                         ctx->additionalDataSha256)) {
         return EIC_ACCESS_CHECK_RESULT_FAILED;
     }
@@ -681,7 +685,7 @@ EicAccessCheckResult eicPresentationStartRetrieveEntryValue(
     eicDebug("Result %d for name %s", result, name);
 
     if (result == EIC_ACCESS_CHECK_RESULT_OK) {
-        eicCborAppendString(&ctx->cbor, name);
+        eicCborAppendString(&ctx->cbor, name, nameLength);
         ctx->accessCheckOk = true;
     }
     return result;
@@ -690,18 +694,21 @@ EicAccessCheckResult eicPresentationStartRetrieveEntryValue(
 // Note: |content| must be big enough to hold |encryptedContentSize| - 28 bytes.
 bool eicPresentationRetrieveEntryValue(EicPresentation* ctx, const uint8_t* encryptedContent,
                                        size_t encryptedContentSize, uint8_t* content,
-                                       const char* nameSpace, const char* name,
-                                       const int* accessControlProfileIds,
-                                       size_t numAccessControlProfileIds, uint8_t* scratchSpace,
+                                       const char* nameSpace, size_t nameSpaceLength,
+                                       const char* name, size_t nameLength,
+                                       const uint8_t* accessControlProfileIds,
+                                       size_t numAccessControlProfileIds,
+                                       uint8_t* scratchSpace,
                                        size_t scratchSpaceSize) {
     uint8_t* additionalDataCbor = scratchSpace;
-    const size_t additionalDataCborBufSize = scratchSpaceSize;
+    size_t additionalDataCborBufferSize = scratchSpaceSize;
     size_t additionalDataCborSize;
 
     uint8_t calculatedSha256[EIC_SHA256_DIGEST_SIZE];
     if (!eicCborCalcEntryAdditionalData(accessControlProfileIds, numAccessControlProfileIds,
-                                        nameSpace, name, additionalDataCbor,
-                                        additionalDataCborBufSize, &additionalDataCborSize,
+                                        nameSpace, nameSpaceLength, name, nameLength,
+                                        additionalDataCbor, additionalDataCborBufferSize,
+                                        &additionalDataCborSize,
                                         calculatedSha256)) {
         return false;
     }
@@ -746,9 +753,10 @@ bool eicPresentationFinishRetrieval(EicPresentation* ctx, uint8_t* digestToBeMac
     return true;
 }
 
-bool eicPresentationDeleteCredential(EicPresentation* ctx, const char* docType,
+bool eicPresentationDeleteCredential(EicPresentation* ctx, const char* docType, size_t docTypeLength,
                                      const uint8_t* challenge, size_t challengeSize,
-                                     bool includeChallenge, size_t proofOfDeletionCborSize,
+                                     bool includeChallenge,
+                                     size_t proofOfDeletionCborSize,
                                      uint8_t signatureOfToBeSigned[EIC_ECDSA_P256_SIGNATURE_SIZE]) {
     EicCbor cbor;
 
@@ -766,7 +774,7 @@ bool eicPresentationDeleteCredential(EicPresentation* ctx, const char* docType,
     //  ]
     //
     eicCborAppendArray(&cbor, 4);
-    eicCborAppendString(&cbor, "Signature1");
+    eicCborAppendStringZ(&cbor, "Signature1");
 
     // The COSE Encoded protected headers is just a single field with
     // COSE_LABEL_ALG (1) -> COSE_ALG_ECSDA_256 (-7). For simplicitly we just
@@ -787,8 +795,8 @@ bool eicPresentationDeleteCredential(EicPresentation* ctx, const char* docType,
 
     // Finally, the CBOR that we're actually signing.
     eicCborAppendArray(&cbor, includeChallenge ? 4 : 3);
-    eicCborAppendString(&cbor, "ProofOfDeletion");
-    eicCborAppendString(&cbor, docType);
+    eicCborAppendStringZ(&cbor, "ProofOfDeletion");
+    eicCborAppendString(&cbor, docType, docTypeLength);
     if (includeChallenge) {
         eicCborAppendByteString(&cbor, challenge, challengeSize);
     }
@@ -804,7 +812,8 @@ bool eicPresentationDeleteCredential(EicPresentation* ctx, const char* docType,
     return true;
 }
 
-bool eicPresentationProveOwnership(EicPresentation* ctx, const char* docType, bool testCredential,
+bool eicPresentationProveOwnership(EicPresentation* ctx, const char* docType,
+                                   size_t docTypeLength, bool testCredential,
                                    const uint8_t* challenge, size_t challengeSize,
                                    size_t proofOfOwnershipCborSize,
                                    uint8_t signatureOfToBeSigned[EIC_ECDSA_P256_SIGNATURE_SIZE]) {
@@ -824,7 +833,7 @@ bool eicPresentationProveOwnership(EicPresentation* ctx, const char* docType, bo
     //  ]
     //
     eicCborAppendArray(&cbor, 4);
-    eicCborAppendString(&cbor, "Signature1");
+    eicCborAppendStringZ(&cbor, "Signature1");
 
     // The COSE Encoded protected headers is just a single field with
     // COSE_LABEL_ALG (1) -> COSE_ALG_ECSDA_256 (-7). For simplicitly we just
@@ -845,8 +854,8 @@ bool eicPresentationProveOwnership(EicPresentation* ctx, const char* docType, bo
 
     // Finally, the CBOR that we're actually signing.
     eicCborAppendArray(&cbor, 4);
-    eicCborAppendString(&cbor, "ProofOfOwnership");
-    eicCborAppendString(&cbor, docType);
+    eicCborAppendStringZ(&cbor, "ProofOfOwnership");
+    eicCborAppendString(&cbor, docType, docTypeLength);
     eicCborAppendByteString(&cbor, challenge, challengeSize);
     eicCborAppendBool(&cbor, testCredential);
 
