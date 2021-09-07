@@ -94,10 +94,11 @@ typedef struct {
 } EicPresentation;
 
 bool eicPresentationInit(EicPresentation* ctx, bool testCredential, const char* docType,
-                         const uint8_t* encryptedCredentialKeys,
+                         size_t docTypeLength, const uint8_t* encryptedCredentialKeys,
                          size_t encryptedCredentialKeysSize);
 
-bool eicPresentationGenerateSigningKeyPair(EicPresentation* ctx, const char* docType, time_t now,
+bool eicPresentationGenerateSigningKeyPair(EicPresentation* ctx, const char* docType,
+                                           size_t docTypeLength, time_t now,
                                            uint8_t* publicKeyCert, size_t* publicKeyCertSize,
                                            uint8_t signingKeyBlob[60]);
 
@@ -148,12 +149,17 @@ bool eicPresentationPushReaderCert(EicPresentation* ctx, const uint8_t* certX509
 // be called after pushing that certificate using
 // eicPresentationPushReaderCert().
 //
+// The scratchSpace should be set to a buffer at least 512 bytes. It's done
+// this way to avoid allocating stack space.
+//
 bool eicPresentationValidateAccessControlProfile(EicPresentation* ctx, int id,
                                                  const uint8_t* readerCertificate,
                                                  size_t readerCertificateSize,
                                                  bool userAuthenticationRequired, int timeoutMillis,
                                                  uint64_t secureUserId, const uint8_t mac[28],
-                                                 bool* accessGranted);
+                                                 bool* accessGranted,
+                                                 uint8_t* scratchSpace,
+                                                 size_t scratchSpaceSize);
 
 // Validates that the given requestMessage is signed by the public key in the
 // certificate last set with eicPresentationPushReaderCert().
@@ -196,7 +202,7 @@ bool eicPresentationCalcMacKey(EicPresentation* ctx, const uint8_t* sessionTrans
                                size_t sessionTranscriptSize,
                                const uint8_t readerEphemeralPublicKey[EIC_P256_PUB_KEY_SIZE],
                                const uint8_t signingKeyBlob[60], const char* docType,
-                               unsigned int numNamespacesWithValues,
+                               size_t docTypeLength, unsigned int numNamespacesWithValues,
                                size_t expectedDeviceNamespacesSize);
 
 // The scratchSpace should be set to a buffer at least 512 bytes (ideally 1024
@@ -204,9 +210,11 @@ bool eicPresentationCalcMacKey(EicPresentation* ctx, const uint8_t* sessionTrans
 // space.
 //
 EicAccessCheckResult eicPresentationStartRetrieveEntryValue(
-        EicPresentation* ctx, const char* nameSpace, const char* name,
-        unsigned int newNamespaceNumEntries, int32_t entrySize, const int* accessControlProfileIds,
-        size_t numAccessControlProfileIds, uint8_t* scratchSpace, size_t scratchSpaceSize);
+        EicPresentation* ctx, const char* nameSpace, size_t nameSpaceLength,
+        const char* name, size_t nameLength,
+        unsigned int newNamespaceNumEntries, int32_t entrySize,
+        const uint8_t* accessControlProfileIds, size_t numAccessControlProfileIds,
+        uint8_t* scratchSpace, size_t scratchSpaceSize);
 
 // Note: |content| must be big enough to hold |encryptedContentSize| - 28 bytes.
 //
@@ -215,9 +223,11 @@ EicAccessCheckResult eicPresentationStartRetrieveEntryValue(
 //
 bool eicPresentationRetrieveEntryValue(EicPresentation* ctx, const uint8_t* encryptedContent,
                                        size_t encryptedContentSize, uint8_t* content,
-                                       const char* nameSpace, const char* name,
-                                       const int* accessControlProfileIds,
-                                       size_t numAccessControlProfileIds, uint8_t* scratchSpace,
+                                       const char* nameSpace, size_t nameSpaceLength,
+                                       const char* name, size_t nameLength,
+                                       const uint8_t* accessControlProfileIds,
+                                       size_t numAccessControlProfileIds,
+                                       uint8_t* scratchSpace,
                                        size_t scratchSpaceSize);
 
 // Returns the HMAC-SHA256 of |ToBeMaced| as per RFC 8051 "6.3. How to Compute
@@ -229,7 +239,7 @@ bool eicPresentationFinishRetrieval(EicPresentation* ctx, uint8_t* digestToBeMac
 // the ToBeSigned CBOR from RFC 8051 "4.4. Signing and Verification Process"
 // where content is set to the ProofOfDeletion CBOR.
 //
-bool eicPresentationDeleteCredential(EicPresentation* ctx, const char* docType,
+bool eicPresentationDeleteCredential(EicPresentation* ctx, const char* docType, size_t docTypeLength,
                                      const uint8_t* challenge, size_t challengeSize,
                                      bool includeChallenge, size_t proofOfDeletionCborSize,
                                      uint8_t signatureOfToBeSigned[EIC_ECDSA_P256_SIGNATURE_SIZE]);
@@ -238,8 +248,8 @@ bool eicPresentationDeleteCredential(EicPresentation* ctx, const char* docType,
 // the ToBeSigned CBOR from RFC 8051 "4.4. Signing and Verification Process"
 // where content is set to the ProofOfOwnership CBOR.
 //
-bool eicPresentationProveOwnership(EicPresentation* ctx, const char* docType, bool testCredential,
-                                   const uint8_t* challenge, size_t challengeSize,
+bool eicPresentationProveOwnership(EicPresentation* ctx, const char* docType, size_t docTypeLength,
+                                   bool testCredential, const uint8_t* challenge, size_t challengeSize,
                                    size_t proofOfOwnershipCborSize,
                                    uint8_t signatureOfToBeSigned[EIC_ECDSA_P256_SIGNATURE_SIZE]);
 
