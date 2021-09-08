@@ -16,18 +16,23 @@
 
 package android.hardware.radio;
 
-import android.hardware.radio.CallForwardInfoStatus;
-
 /**
  * See also com.android.internal.telephony.gsm.CallForwardInfo
  */
 @VintfStability
 parcelable CallForwardInfo {
+    const int STATUS_DISABLE = 0;
+    const int STATUS_ENABLE = 1;
+    const int STATUS_INTERROGATE = 2;
+    const int STATUS_REGISTRATION = 3;
+    const int STATUS_ERASURE = 4;
+
     /**
      * For queryCallForwardStatus() status is DISABLE (Not used by vendor code currently)
      * For setCallForward() status must be DISABLE, ENABLE, INTERROGATE, REGISTRATION, ERASURE
+     * Values are STATUS_
      */
-    CallForwardInfoStatus status;
+    int status;
     /**
      * From TS 27.007 7.11 "reason"
      */

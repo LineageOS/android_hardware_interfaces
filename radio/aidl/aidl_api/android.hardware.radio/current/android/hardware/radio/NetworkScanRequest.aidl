@@ -34,11 +34,19 @@
 package android.hardware.radio;
 @VintfStability
 parcelable NetworkScanRequest {
-  android.hardware.radio.ScanType type;
+  int type;
   int interval;
   android.hardware.radio.RadioAccessSpecifier[] specifiers;
   int maxSearchTime;
   boolean incrementalResults;
   int incrementalResultsPeriodicity;
   String[] mccMncs;
+  const int INCREMENTAL_RESULTS_PREIODICITY_RANGE_MIN = 1;
+  const int INCREMENTAL_RESULTS_PREIODICITY_RANGE_MAX = 10;
+  const int MAX_SEARCH_TIME_RANGE_MIN = 60;
+  const int MAX_SEARCH_TIME_RANGE_MAX = 3600;
+  const int SCAN_INTERVAL_RANGE_MIN = 5;
+  const int SCAN_INTERVAL_RANGE_MAX = 300;
+  const int SCAN_TYPE_ONE_SHOT = 0;
+  const int SCAN_TYPE_PERIODIC = 1;
 }

@@ -113,7 +113,6 @@ interface IRadio {
   oneway void nvResetConfig(in int serial, in android.hardware.radio.ResetNvType resetType);
   oneway void nvWriteCdmaPrl(in int serial, in byte[] prl);
   oneway void nvWriteItem(in int serial, in android.hardware.radio.NvWriteItem item);
-  oneway void pullLceData(in int serial);
   oneway void rejectCall(in int serial);
   oneway void releasePduSessionId(in int serial, in int id);
   oneway void reportSmsMemoryStatus(in int serial, in boolean available);
@@ -131,13 +130,12 @@ interface IRadio {
   oneway void sendEnvelope(in int serial, in String command);
   oneway void sendEnvelopeWithStatus(in int serial, in String contents);
   oneway void sendImsSms(in int serial, in android.hardware.radio.ImsSmsMessage message);
-  oneway void sendSMSExpectMore(in int serial, in android.hardware.radio.GsmSmsMessage message);
   oneway void sendSms(in int serial, in android.hardware.radio.GsmSmsMessage message);
   oneway void sendSmsExpectMore(in int serial, in android.hardware.radio.GsmSmsMessage message);
   oneway void sendTerminalResponseToSim(in int serial, in String commandResponse);
   oneway void sendUssd(in int serial, in String ussd);
   oneway void separateConnection(in int serial, in int gsmIndex);
-  oneway void setAllowedCarriers(in int serial, in android.hardware.radio.CarrierRestrictionsWithPriority carriers, in android.hardware.radio.SimLockMultiSimPolicy multiSimPolicy);
+  oneway void setAllowedCarriers(in int serial, in android.hardware.radio.CarrierRestrictions carriers, in android.hardware.radio.SimLockMultiSimPolicy multiSimPolicy);
   oneway void setAllowedNetworkTypesBitmap(in int serial, in android.hardware.radio.RadioAccessFamily networkTypeBitmap);
   oneway void setBandMode(in int serial, in android.hardware.radio.RadioBandMode mode);
   oneway void setBarringPassword(in int serial, in String facility, in String oldPassword, in String newPassword);
@@ -169,7 +167,7 @@ interface IRadio {
   oneway void setPreferredVoicePrivacy(in int serial, in boolean enable);
   oneway void setRadioCapability(in int serial, in android.hardware.radio.RadioCapability rc);
   oneway void setRadioPower(in int serial, in boolean powerOn, in boolean forEmergencyCall, in boolean preferredForEmergencyCall);
-  void setResponseFunctions(in android.hardware.radio.IRadioResponse radioResponse, in android.hardware.radio.IRadioIndication radioIndication);
+  oneway void setResponseFunctions(in android.hardware.radio.IRadioResponse radioResponse, in android.hardware.radio.IRadioIndication radioIndication);
   oneway void setSignalStrengthReportingCriteria(in int serial, in android.hardware.radio.SignalThresholdInfo signalThresholdInfo, in android.hardware.radio.AccessNetwork accessNetwork);
   oneway void setSimCardPower(in int serial, in android.hardware.radio.CardPowerState powerUp);
   oneway void setSmscAddress(in int serial, in String smsc);
@@ -177,15 +175,13 @@ interface IRadio {
   oneway void setSystemSelectionChannels(in int serial, in boolean specifyChannels, in android.hardware.radio.RadioAccessSpecifier[] specifiers);
   oneway void setTTYMode(in int serial, in android.hardware.radio.TtyMode mode);
   oneway void setUiccSubscription(in int serial, in android.hardware.radio.SelectUiccSub uiccSub);
-  oneway void setupDataCall(in int serial, in android.hardware.radio.AccessNetwork accessNetwork, in android.hardware.radio.DataProfileInfo dataProfileInfo, in boolean roamingAllowed, in android.hardware.radio.DataRequestReason reason, in android.hardware.radio.LinkAddress[] addresses, in String[] dnses, in int pduSessionId, in android.hardware.radio.OptionalSliceInfo sliceInfo, in android.hardware.radio.OptionalTrafficDescriptor trafficDescriptor, in boolean matchAllRuleAllowed);
+  oneway void setupDataCall(in int serial, in android.hardware.radio.AccessNetwork accessNetwork, in android.hardware.radio.DataProfileInfo dataProfileInfo, in boolean roamingAllowed, in android.hardware.radio.DataRequestReason reason, in android.hardware.radio.LinkAddress[] addresses, in String[] dnses, in int pduSessionId, in @nullable android.hardware.radio.SliceInfo sliceInfo, in @nullable android.hardware.radio.TrafficDescriptor trafficDescriptor, in boolean matchAllRuleAllowed);
   oneway void startDtmf(in int serial, in String s);
   oneway void startHandover(in int serial, in int callId);
   oneway void startKeepalive(in int serial, in android.hardware.radio.KeepaliveRequest keepalive);
-  oneway void startLceService(in int serial, in int reportInterval, in boolean pullMode);
   oneway void startNetworkScan(in int serial, in android.hardware.radio.NetworkScanRequest request);
   oneway void stopDtmf(in int serial);
   oneway void stopKeepalive(in int serial, in int sessionHandle);
-  oneway void stopLceService(in int serial);
   oneway void stopNetworkScan(in int serial);
   oneway void supplyIccPin2ForApp(in int serial, in String pin2, in String aid);
   oneway void supplyIccPinForApp(in int serial, in String pin, in String aid);

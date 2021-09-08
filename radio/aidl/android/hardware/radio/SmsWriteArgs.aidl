@@ -16,14 +16,18 @@
 
 package android.hardware.radio;
 
-import android.hardware.radio.SmsWriteArgsStatus;
-
 @VintfStability
 parcelable SmsWriteArgs {
+    const int STATUS_REC_UNREAD = 0;
+    const int STATUS_REC_READ = 1;
+    const int STATUS_STO_UNSENT = 2;
+    const int STATUS_STO_SENT = 3;
+
     /**
      * Status of message. See TS 27.005 3.1.
+     * Values are STATUS_
      */
-    SmsWriteArgsStatus status;
+    int status;
     /**
      * PDU of message to write, as an ASCII hex string less the SMSC address, the TP-layer length
      * is strlen(pdu)/2.

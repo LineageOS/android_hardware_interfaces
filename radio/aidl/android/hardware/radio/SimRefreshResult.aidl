@@ -16,11 +16,25 @@
 
 package android.hardware.radio;
 
-import android.hardware.radio.SimRefreshType;
-
 @VintfStability
 parcelable SimRefreshResult {
-    SimRefreshType type;
+    /**
+     * A file on SIM has been updated.
+     */
+    const int TYPE_SIM_FILE_UPDATE = 0;
+    /**
+     * SIM initialized. All files should be re-read.
+     */
+    const int TYPE_SIM_INIT = 1;
+    /**
+     * SIM reset. SIM power required, SIM may be locked and all files must be re-read.
+     */
+    const int TYPE_SIM_RESET = 2;
+
+    /**
+     * Values are TYPE_SIM_
+     */
+    int type;
     /**
      * EFID of the updated file if the result is SIM_FILE_UPDATE or 0 for any other result.
      */

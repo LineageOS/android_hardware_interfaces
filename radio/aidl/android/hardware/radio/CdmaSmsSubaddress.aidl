@@ -16,11 +16,21 @@
 
 package android.hardware.radio;
 
-import android.hardware.radio.CdmaSmsSubaddressType;
-
 @VintfStability
 parcelable CdmaSmsSubaddress {
-    CdmaSmsSubaddressType subaddressType;
+    /**
+     * CCITT X.213 or ISO 8348 AD2
+     */
+    const int SUBADDRESS_TYPE_NSAP = 0;
+    /**
+     * e.g. X.25
+     */
+    const int SUBADDRESS_TYPE_USER_SPECIFIED = 1;
+
+    /**
+     * Values are SUBADDRESS_TYPE_
+     */
+    int subaddressType;
     /**
      * True means the last byte's lower 4 bits must be ignored
      */
