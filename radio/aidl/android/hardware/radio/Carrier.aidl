@@ -16,16 +16,36 @@
 
 package android.hardware.radio;
 
-import android.hardware.radio.CarrierMatchType;
-
 @VintfStability
 parcelable Carrier {
+    /**
+     * Apply to all carrier with the same mcc/mnc
+     */
+    const int MATCH_TYPE_ALL = 0;
+    /**
+     * Use SPN and mcc/mnc to identify the carrier
+     */
+    const int MATCH_TYPE_SPN = 1;
+    /**
+     * Use IMSI prefix and mcc/mnc to identify the carrier
+     */
+    const int MATCH_TYPE_IMSI_PREFIX = 2;
+    /**
+     * Use GID1 and mcc/mnc to identify the carrier
+     */
+    const int MATCH_TYPE_GID1 = 3;
+    /**
+     * Use GID2 and mcc/mnc to identify the carrier
+     */
+    const int MATCH_TYPE_GID2 = 4;
+
     String mcc;
     String mnc;
     /**
      * Specify match type for the carrier. If it’s ALL, matchData is empty string; otherwise,
      * matchData is the value for the match type.
+     * Values are MATCH_TYPE_
      */
-    CarrierMatchType matchType;
+    int matchType;
     String matchData;
 }

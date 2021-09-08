@@ -17,7 +17,6 @@
 package android.hardware.radio;
 
 import android.hardware.radio.CdmaDisplayInfoRecord;
-import android.hardware.radio.CdmaInfoRecName;
 import android.hardware.radio.CdmaLineControlInfoRecord;
 import android.hardware.radio.CdmaNumberInfoRecord;
 import android.hardware.radio.CdmaRedirectingNumberInfoRecord;
@@ -28,10 +27,26 @@ import android.hardware.radio.CdmaT53ClirInfoRecord;
 @VintfStability
 parcelable CdmaInformationRecord {
     /**
+     * Names of the CDMA info records (C.S0005 section 3.7.5)
+     */
+    const int NAME_DISPLAY = 0;
+    const int NAME_CALLED_PARTY_NUMBER = 1;
+    const int NAME_CALLING_PARTY_NUMBER = 2;
+    const int NAME_CONNECTED_NUMBER = 3;
+    const int NAME_SIGNAL = 4;
+    const int NAME_REDIRECTING_NUMBER = 5;
+    const int NAME_LINE_CONTROL = 6;
+    const int NAME_EXTENDED_DISPLAY = 7;
+    const int NAME_T53_CLIR = 8;
+    const int NAME_T53_RELEASE = 9;
+    const int NAME_T53_AUDIO_CONTROL = 10;
+
+    /**
      * Based on CdmaInfoRecName, only one of the below vectors must have size = 1.
      * All other vectors must have size 0.
+     * Values are NAME_
      */
-    CdmaInfoRecName name;
+    int name;
     /**
      * Display and extended display info rec
      */

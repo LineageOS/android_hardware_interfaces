@@ -18,14 +18,23 @@ package android.hardware.radio;
 
 import android.hardware.radio.CellInfo;
 import android.hardware.radio.RadioError;
-import android.hardware.radio.ScanStatus;
 
 @VintfStability
 parcelable NetworkScanResult {
     /**
-     * The status of the scan.
+     * The result contains a part of the scan results.
      */
-    ScanStatus status;
+    const int SCAN_STATUS_PARTIAL = 1;
+    /**
+     * The result contains the last part of the scan results.
+     */
+    const int SCAN_STATUS_COMPLETE = 2;
+
+    /**
+     * The status of the scan.
+     * Values are SCAN_STATUS_
+     */
+    int status;
     /**
      * The error code of the incremental result.
      */

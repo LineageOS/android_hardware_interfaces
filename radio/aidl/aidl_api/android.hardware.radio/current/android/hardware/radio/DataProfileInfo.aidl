@@ -34,14 +34,14 @@
 package android.hardware.radio;
 @VintfStability
 parcelable DataProfileInfo {
-  android.hardware.radio.DataProfileId profileId;
+  int profileId;
   String apn;
   android.hardware.radio.PdpProtocolType protocol;
   android.hardware.radio.PdpProtocolType roamingProtocol;
   android.hardware.radio.ApnAuthType authType;
   String user;
   String password;
-  android.hardware.radio.DataProfileInfoType type;
+  int type;
   int maxConnsTime;
   int maxConns;
   int waitTime;
@@ -52,4 +52,14 @@ parcelable DataProfileInfo {
   int mtuV6;
   boolean preferred;
   boolean persistent;
+  const int ID_DEFAULT = 0;
+  const int ID_TETHERED = 1;
+  const int ID_IMS = 2;
+  const int ID_FOTA = 3;
+  const int ID_CBS = 4;
+  const int ID_OEM_BASE = 1000;
+  const int ID_INVALID = -1;
+  const int TYPE_COMMON = 0;
+  const int TYPE_THREE_GPP = 1;
+  const int TYPE_THREE_GPP2 = 2;
 }

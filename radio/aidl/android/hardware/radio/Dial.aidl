@@ -16,13 +16,28 @@
 
 package android.hardware.radio;
 
-import android.hardware.radio.Clir;
 import android.hardware.radio.UusInfo;
 
 @VintfStability
 parcelable Dial {
+    /**
+     * Use subscription default value
+     */
+    const int CLIR_DEFAULT = 0;
+    /**
+     * Restrict CLI presentation
+     */
+    const int CLIR_INVOCATION = 1;
+    /**
+     * Allow CLI presentation
+     */
+    const int CLIR_SUPPRESSION = 2;
+
     String address;
-    Clir clir;
+    /**
+     * Values are CLIR_
+     */
+    int clir;
     /**
      * Vector of User-User Signaling Information
      */

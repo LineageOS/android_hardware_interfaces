@@ -35,8 +35,12 @@ package android.hardware.radio;
 @VintfStability
 parcelable RouteSelectionDescriptor {
   byte precedence;
-  android.hardware.radio.OptionalPdpProtocolType sessionType;
-  android.hardware.radio.OptionalSscMode sscMode;
+  android.hardware.radio.PdpProtocolType sessionType;
+  byte sscMode;
   android.hardware.radio.SliceInfo[] sliceInfo;
   String[] dnn;
+  const byte SSC_MODE_UNKNOWN = -1;
+  const byte SSC_MODE_1 = 1;
+  const byte SSC_MODE_2 = 2;
+  const byte SSC_MODE_3 = 3;
 }

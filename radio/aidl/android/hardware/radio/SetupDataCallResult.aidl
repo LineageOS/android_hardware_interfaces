@@ -17,17 +17,48 @@
 package android.hardware.radio;
 
 import android.hardware.radio.DataCallFailCause;
-import android.hardware.radio.DataConnActiveStatus;
-import android.hardware.radio.HandoverFailureMode;
 import android.hardware.radio.LinkAddress;
-import android.hardware.radio.OptionalSliceInfo;
 import android.hardware.radio.PdpProtocolType;
 import android.hardware.radio.Qos;
 import android.hardware.radio.QosSession;
+import android.hardware.radio.SliceInfo;
 import android.hardware.radio.TrafficDescriptor;
 
 @VintfStability
 parcelable SetupDataCallResult {
+    /**
+     * Indicates the data connection is inactive.
+     */
+    const int DATA_CONNECTION_STATUS_INACTIVE = 0;
+    /**
+     * Indicates the data connection is active with physical link dormant.
+     */
+    const int DATA_CONNECTION_STATUS_DORMANT = 1;
+    /**
+     * Indicates the data connection is active with physical link up.
+     */
+    const int DATA_CONNECTION_STATUS_ACTIVE = 2;
+
+    /**
+     * On data handover failure, fallback to the source data transport when the fail cause is due
+     * to a hand off preference change.
+     */
+    const byte HANDOVER_FAILURE_MODE_LEGACY = 0;
+    /**
+     * On data handover failure, fallback to the source data transport.
+     */
+    const byte HANDOVER_FAILURE_MODE_DO_FALLBACK = 1;
+    /**
+     * On data handover failure, retry the handover instead of falling back to the source data
+     * transport.
+     */
+    const byte HANDOVER_FAILURE_MODE_NO_FALLBACK_RETRY_HANDOVER = 2;
+    /**
+     * On data handover failure, setup a new data connection by sending a normal request to the
+     * underlying data service.
+     */
+    const byte HANDOVER_FAILURE_MODE_NO_FALLBACK_RETRY_SETUP_NORMAL = 3;
+
     /**
      * Data call fail cause. DataCallFailCause.NONE if no error.
      */
@@ -47,8 +78,9 @@ parcelable SetupDataCallResult {
     int cid;
     /**
      * Data connection active status.
+     * Values are DATA_CONNECTION_STATUS_
      */
-    DataConnActiveStatus active;
+    int active;
     /**
      * PDP protocol type. If cause is DataCallFailCause.ONLY_SINGLE_BEARER_ALLOWED, this is the
      * protocol type supported, such as "IP" or "IPV6".
@@ -98,8 +130,9 @@ parcelable SetupDataCallResult {
     QosSession[] qosSessions;
     /**
      * Specifies the fallback mode on an IWLAN handover failure.
+     * Values are HANDOVER_FAILURE_MODE_
      */
-    HandoverFailureMode handoverFailureMode;
+    byte handoverFailureMode;
     /**
      * The allocated pdu session id for this data call. A value of 0 means no pdu session id was
      * attached to this call. Reference: 3GPP TS 24.007 section 11.2.3.1b.
@@ -108,7 +141,7 @@ parcelable SetupDataCallResult {
     /**
      * Slice used for this data call. It is valid only when this data call is on AccessNetwork:NGRAN
      */
-    OptionalSliceInfo sliceInfo;
+    @nullable SliceInfo sliceInfo;
     /**
      * TrafficDescriptors for which this data call must be used. It only includes the TDs for which
      * a data call has been requested so far; it is not an exhaustive list.

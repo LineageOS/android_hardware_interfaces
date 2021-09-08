@@ -16,11 +16,9 @@
 
 package android.hardware.radio;
 
-import android.hardware.radio.CdmaSmsErrorClass;
-
 @VintfStability
 parcelable CdmaSmsAck {
-    CdmaSmsErrorClass errorClass;
+    boolean errorClass;
     /**
      * SMS cause code as defined in N.S00005, 6.5.2.125.
      * Currently, only 35 (resource shortage) and 39 (other terminal problem) are reported.

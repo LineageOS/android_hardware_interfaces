@@ -39,6 +39,6 @@ parcelable DataRegStateResult {
   int reasonDataDenied;
   int maxDataCalls;
   android.hardware.radio.CellIdentity cellIdentity;
-  android.hardware.radio.DataRegStateResultVopsInfo vopsInfo;
+  @nullable android.hardware.radio.LteVopsInfo lteVopsInfo;
   android.hardware.radio.NrIndicators nrIndicators;
 }

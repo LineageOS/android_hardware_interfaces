@@ -39,5 +39,9 @@ parcelable EmergencyNumber {
   String mnc;
   android.hardware.radio.EmergencyServiceCategory categories;
   String[] urns;
-  android.hardware.radio.EmergencyNumberSource sources;
+  int sources;
+  const int SOURCE_NETWORK_SIGNALING = 1;
+  const int SOURCE_SIM = 2;
+  const int SOURCE_MODEM_CONFIG = 4;
+  const int SOURCE_DEFAULT = 8;
 }

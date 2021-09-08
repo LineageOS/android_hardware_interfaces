@@ -16,8 +16,7 @@
 
 package android.hardware.radio;
 
-import android.hardware.radio.OptionalDnn;
-import android.hardware.radio.OptionalOsAppId;
+import android.hardware.radio.OsAppId;
 
 /**
  * This struct represents a traffic descriptor. A valid struct must have at least one of the
@@ -29,9 +28,9 @@ parcelable TrafficDescriptor {
     /**
      * DNN stands for Data Network Name and represents an APN as defined in 3GPP TS 23.003.
      */
-    OptionalDnn dnn;
+    @nullable String dnn;
     /**
      * Indicates the OsId + OsAppId (used as category in Android).
      */
-    OptionalOsAppId osAppId;
+    @nullable OsAppId osAppId;
 }

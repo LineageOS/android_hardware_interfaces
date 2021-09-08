@@ -22,7 +22,6 @@ import android.hardware.radio.Call;
 import android.hardware.radio.CallForwardInfo;
 import android.hardware.radio.CardStatus;
 import android.hardware.radio.CarrierRestrictions;
-import android.hardware.radio.CarrierRestrictionsWithPriority;
 import android.hardware.radio.CdmaBroadcastSmsConfigInfo;
 import android.hardware.radio.CdmaRoamingType;
 import android.hardware.radio.CdmaSubscriptionSource;
@@ -62,7 +61,7 @@ import android.hardware.radio.VoiceRegStateResult;
  * Interface declaring response functions to solicited radio requests.
  */
 @VintfStability
-interface IRadioResponse {
+oneway interface IRadioResponse {
     /**
      * @param info Response info struct containing response type, serial no. and error
      *
@@ -81,7 +80,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void acceptCallResponse(in RadioResponseInfo info);
+    void acceptCallResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -95,7 +94,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void acknowledgeIncomingGsmSmsWithPduResponse(in RadioResponseInfo info);
+    void acknowledgeIncomingGsmSmsWithPduResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -118,7 +117,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void acknowledgeLastIncomingCdmaSmsResponse(in RadioResponseInfo info);
+    void acknowledgeLastIncomingCdmaSmsResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -132,7 +131,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void acknowledgeLastIncomingGsmSmsResponse(in RadioResponseInfo info);
+    void acknowledgeLastIncomingGsmSmsResponse(in RadioResponseInfo info);
 
     /**
      * Acknowledge the receipt of radio request sent to the vendor. This must be sent only for
@@ -141,7 +140,7 @@ interface IRadioResponse {
      *
      * @param serial Serial no. of the request whose acknowledgement is sent.
      */
-    oneway void acknowledgeRequest(in int serial);
+    void acknowledgeRequest(in int serial);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -154,7 +153,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES- Indicates that no pdu session ids are available
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void allocatePduSessionIdResponse(in RadioResponseInfo info, in int id);
+    void allocatePduSessionIdResponse(in RadioResponseInfo info, in int id);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -166,7 +165,7 @@ interface IRadioResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
      */
-    oneway void areUiccApplicationsEnabledResponse(in RadioResponseInfo info, in boolean enabled);
+    void areUiccApplicationsEnabledResponse(in RadioResponseInfo info, in boolean enabled);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -180,7 +179,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:INVALID_CALL_ID
      */
-    oneway void cancelHandoverResponse(in RadioResponseInfo info);
+    void cancelHandoverResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -201,7 +200,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void cancelPendingUssdResponse(in RadioResponseInfo info);
+    void cancelPendingUssdResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -220,7 +219,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:SIM_PUK2
      */
-    oneway void changeIccPin2ForAppResponse(in RadioResponseInfo info, in int remainingRetries);
+    void changeIccPin2ForAppResponse(in RadioResponseInfo info, in int remainingRetries);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -238,7 +237,7 @@ interface IRadioResponse {
      *   RadioError:INVALID_SIM_STATE
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void changeIccPinForAppResponse(in RadioResponseInfo info, in int remainingRetries);
+    void changeIccPinForAppResponse(in RadioResponseInfo info, in int remainingRetries);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -259,7 +258,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void conferenceResponse(in RadioResponseInfo info);
+    void conferenceResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -277,7 +276,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:SIM_ABSENT
      */
-    oneway void deactivateDataCallResponse(in RadioResponseInfo info);
+    void deactivateDataCallResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -299,7 +298,7 @@ interface IRadioResponse {
      *   RadioError:OPERATION_NOT_ALLOWED
      *   RadioError:SIM_ABSENT
      */
-    oneway void deleteSmsOnRuimResponse(in RadioResponseInfo info);
+    void deleteSmsOnRuimResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -321,7 +320,7 @@ interface IRadioResponse {
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:SIM_ABSENT
      */
-    oneway void deleteSmsOnSimResponse(in RadioResponseInfo info);
+    void deleteSmsOnSimResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -350,7 +349,7 @@ interface IRadioResponse {
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:CANCELLED
      */
-    oneway void dialResponse(in RadioResponseInfo info);
+    void dialResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -373,7 +372,7 @@ interface IRadioResponse {
      *   RadioError:ABORTED
      *   RadioError:INVALID_MODEM_STATE
      */
-    oneway void emergencyDialResponse(in RadioResponseInfo info);
+    void emergencyDialResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -386,7 +385,7 @@ interface IRadioResponse {
      *              mode, or when there is only one modem available, as this API should only
      *              be called in multi sim status.
      */
-    oneway void enableModemResponse(in RadioResponseInfo info);
+    void enableModemResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -398,7 +397,7 @@ interface IRadioResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:BUSY
      */
-    oneway void enableUiccApplicationsResponse(in RadioResponseInfo info);
+    void enableUiccApplicationsResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -417,7 +416,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:SIM_ABSENT
      */
-    oneway void exitEmergencyCallbackModeResponse(in RadioResponseInfo info);
+    void exitEmergencyCallbackModeResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -439,7 +438,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void explicitCallTransferResponse(in RadioResponseInfo info);
+    void explicitCallTransferResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -451,8 +450,8 @@ interface IRadioResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void getAllowedCarriersResponse(in RadioResponseInfo info,
-            in CarrierRestrictionsWithPriority carriers, in SimLockMultiSimPolicy multiSimPolicy);
+    void getAllowedCarriersResponse(in RadioResponseInfo info, in CarrierRestrictions carriers,
+            in SimLockMultiSimPolicy multiSimPolicy);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -469,7 +468,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      */
-    oneway void getAllowedNetworkTypesBitmapResponse(
+    void getAllowedNetworkTypesBitmapResponse(
             in RadioResponseInfo info, in RadioAccessFamily networkTypeBitmap);
 
     /**
@@ -488,8 +487,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void getAvailableBandModesResponse(
-            in RadioResponseInfo info, in RadioBandMode[] bandModes);
+    void getAvailableBandModesResponse(in RadioResponseInfo info, in RadioBandMode[] bandModes);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -510,8 +508,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:INTERNAL_ERR
      */
-    oneway void getAvailableNetworksResponse(
-            in RadioResponseInfo info, in OperatorInfo[] networkInfos);
+    void getAvailableNetworksResponse(in RadioResponseInfo info, in OperatorInfo[] networkInfos);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -524,7 +521,7 @@ interface IRadioResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:MODEM_ERR
      */
-    oneway void getBarringInfoResponse(
+    void getBarringInfoResponse(
             in RadioResponseInfo info, in CellIdentity cellIdentity, in BarringInfo[] barringInfos);
 
     /**
@@ -544,7 +541,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void getBasebandVersionResponse(in RadioResponseInfo info, in String version);
+    void getBasebandVersionResponse(in RadioResponseInfo info, in String version);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -571,8 +568,8 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:SIM_ABSENT
      */
-    oneway void getCDMASubscriptionResponse(in RadioResponseInfo info, in String mdn,
-            in String hSid, in String hNid, in String min, in String prl);
+    void getCDMASubscriptionResponse(in RadioResponseInfo info, in String mdn, in String hSid,
+            in String hNid, in String min, in String prl);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -599,7 +596,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void getCallForwardStatusResponse(
+    void getCallForwardStatusResponse(
             in RadioResponseInfo info, in CallForwardInfo[] callForwardInfos);
 
     /**
@@ -627,8 +624,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void getCallWaitingResponse(
-            in RadioResponseInfo info, in boolean enable, in int serviceClass);
+    void getCallWaitingResponse(in RadioResponseInfo info, in boolean enable, in int serviceClass);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -650,7 +646,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
      */
-    oneway void getCdmaBroadcastConfigResponse(
+    void getCdmaBroadcastConfigResponse(
             in RadioResponseInfo info, in CdmaBroadcastSmsConfigInfo[] configs);
 
     /**
@@ -670,8 +666,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:SIM_ABSENT
      */
-    oneway void getCdmaRoamingPreferenceResponse(
-            in RadioResponseInfo info, in CdmaRoamingType type);
+    void getCdmaRoamingPreferenceResponse(in RadioResponseInfo info, in CdmaRoamingType type);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -688,7 +683,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:SIM_ABSENT
      */
-    oneway void getCdmaSubscriptionSourceResponse(
+    void getCdmaSubscriptionSourceResponse(
             in RadioResponseInfo info, in CdmaSubscriptionSource source);
 
     /**
@@ -700,7 +695,7 @@ interface IRadioResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
      */
-    oneway void getCellInfoListResponse(in RadioResponseInfo info, in CellInfo[] cellInfo);
+    void getCellInfoListResponse(in RadioResponseInfo info, in CellInfo[] cellInfo);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -719,7 +714,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void getClipResponse(in RadioResponseInfo info, in ClipStatus status);
+    void getClipResponse(in RadioResponseInfo info, in ClipStatus status);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -742,7 +737,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void getClirResponse(in RadioResponseInfo info, in int n, in int m);
+    void getClirResponse(in RadioResponseInfo info, in int n, in int m);
 
     /**
      * @param info Response info struct containing respontype, serial no. and error
@@ -757,7 +752,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void getCurrentCallsResponse(in RadioResponseInfo info, in Call[] calls);
+    void getCurrentCallsResponse(in RadioResponseInfo info, in Call[] calls);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -769,8 +764,7 @@ interface IRadioResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:SIM_ABSENT
      */
-    oneway void getDataCallListResponse(
-            in RadioResponseInfo info, in SetupDataCallResult[] dcResponse);
+    void getDataCallListResponse(in RadioResponseInfo info, in SetupDataCallResult[] dcResponse);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -783,7 +777,7 @@ interface IRadioResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:NOT_PROVISIONED
      */
-    oneway void getDataRegistrationStateResponse(
+    void getDataRegistrationStateResponse(
             in RadioResponseInfo info, in RegStateResult dataRegResponse);
 
     /**
@@ -809,8 +803,8 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void getDeviceIdentityResponse(in RadioResponseInfo info, in String imei,
-            in String imeisv, in String esn, in String meid);
+    void getDeviceIdentityResponse(in RadioResponseInfo info, in String imei, in String imeisv,
+            in String esn, in String meid);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -833,7 +827,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void getFacilityLockForAppResponse(in RadioResponseInfo info, in int response);
+    void getFacilityLockForAppResponse(in RadioResponseInfo info, in int response);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -855,7 +849,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
      */
-    oneway void getGsmBroadcastConfigResponse(
+    void getGsmBroadcastConfigResponse(
             in RadioResponseInfo info, in GsmBroadcastSmsConfigInfo[] configs);
 
     /**
@@ -867,7 +861,7 @@ interface IRadioResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void getHardwareConfigResponse(in RadioResponseInfo info, in HardwareConfig[] config);
+    void getHardwareConfigResponse(in RadioResponseInfo info, in HardwareConfig[] config);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -884,7 +878,7 @@ interface IRadioResponse {
      *   RadioError:SIM_ERR
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void getIMSIForAppResponse(in RadioResponseInfo info, in String imsi);
+    void getIMSIForAppResponse(in RadioResponseInfo info, in String imsi);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -897,7 +891,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void getIccCardStatusResponse(in RadioResponseInfo info, in CardStatus cardStatus);
+    void getIccCardStatusResponse(in RadioResponseInfo info, in CardStatus cardStatus);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -915,7 +909,7 @@ interface IRadioResponse {
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void getImsRegistrationStateResponse(
+    void getImsRegistrationStateResponse(
             in RadioResponseInfo info, in boolean isRegistered, in RadioTechnologyFamily ratFamily);
 
     /**
@@ -963,7 +957,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void getLastCallFailCauseResponse(
+    void getLastCallFailCauseResponse(
             in RadioResponseInfo info, in LastCallFailCauseInfo failCauseinfo);
 
     /**
@@ -982,8 +976,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void getModemActivityInfoResponse(
-            in RadioResponseInfo info, in ActivityStatsInfo activityInfo);
+    void getModemActivityInfoResponse(in RadioResponseInfo info, in ActivityStatsInfo activityInfo);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -993,7 +986,7 @@ interface IRadioResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:MODEM_ERR
      */
-    oneway void getModemStackStatusResponse(in RadioResponseInfo info, in boolean isEnabled);
+    void getModemStackStatusResponse(in RadioResponseInfo info, in boolean isEnabled);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1014,7 +1007,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void getMuteResponse(in RadioResponseInfo info, in boolean enable);
+    void getMuteResponse(in RadioResponseInfo info, in boolean enable);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1033,7 +1026,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void getNeighboringCidsResponse(in RadioResponseInfo info, in NeighboringCell[] cells);
+    void getNeighboringCidsResponse(in RadioResponseInfo info, in NeighboringCell[] cells);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1051,7 +1044,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void getNetworkSelectionModeResponse(in RadioResponseInfo info, in boolean manual);
+    void getNetworkSelectionModeResponse(in RadioResponseInfo info, in boolean manual);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1069,7 +1062,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void getOperatorResponse(
+    void getOperatorResponse(
             in RadioResponseInfo info, in String longName, in String shortName, in String numeric);
 
     /**
@@ -1085,7 +1078,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      */
-    oneway void getPreferredNetworkTypeBitmapResponse(
+    void getPreferredNetworkTypeBitmapResponse(
             in RadioResponseInfo info, in RadioAccessFamily networkTypeBitmap);
 
     /**
@@ -1104,8 +1097,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void getPreferredNetworkTypeResponse(
-            in RadioResponseInfo info, in PreferredNetworkType nwType);
+    void getPreferredNetworkTypeResponse(in RadioResponseInfo info, in PreferredNetworkType nwType);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1124,7 +1116,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void getPreferredVoicePrivacyResponse(in RadioResponseInfo info, in boolean enable);
+    void getPreferredVoicePrivacyResponse(in RadioResponseInfo info, in boolean enable);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1141,7 +1133,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void getRadioCapabilityResponse(in RadioResponseInfo info, in RadioCapability rc);
+    void getRadioCapabilityResponse(in RadioResponseInfo info, in RadioCapability rc);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1152,8 +1144,7 @@ interface IRadioResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
      */
-    oneway void getSignalStrengthResponse(
-            in RadioResponseInfo info, in SignalStrength signalStrength);
+    void getSignalStrengthResponse(in RadioResponseInfo info, in SignalStrength signalStrength);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1170,8 +1161,7 @@ interface IRadioResponse {
      * REQUEST_NOT_SUPPORTED may only be returned on devices that don't support this API,
      * indicated by the HAL capability CAPABILITY_SIM_PHONEBOOK_IN_MODEM.
      */
-    oneway void getSimPhonebookCapacityResponse(
-            in RadioResponseInfo info, in PhonebookCapacity capacity);
+    void getSimPhonebookCapacityResponse(in RadioResponseInfo info, in PhonebookCapacity capacity);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1187,7 +1177,7 @@ interface IRadioResponse {
      * REQUEST_NOT_SUPPORTED may only be returned on devices that don't support this API,
      * indicated by the HAL capability CAPABILITY_SIM_PHONEBOOK_IN_MODEM.
      */
-    oneway void getSimPhonebookRecordsResponse(in RadioResponseInfo info);
+    void getSimPhonebookRecordsResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1199,7 +1189,7 @@ interface IRadioResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:MODEM_ERR
      */
-    oneway void getSlicingConfigResponse(in RadioResponseInfo info, in SlicingConfig slicingConfig);
+    void getSlicingConfigResponse(in RadioResponseInfo info, in SlicingConfig slicingConfig);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1222,7 +1212,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:SIM_ABSENT
      */
-    oneway void getSmscAddressResponse(in RadioResponseInfo info, in String smsc);
+    void getSmscAddressResponse(in RadioResponseInfo info, in String smsc);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1234,7 +1224,7 @@ interface IRadioResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_ARGUMENTS
      */
-    oneway void getSystemSelectionChannelsResponse(
+    void getSystemSelectionChannelsResponse(
             in RadioResponseInfo info, in RadioAccessSpecifier[] specifiers);
 
     /**
@@ -1253,7 +1243,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void getTTYModeResponse(in RadioResponseInfo info, in TtyMode mode);
+    void getTTYModeResponse(in RadioResponseInfo info, in TtyMode mode);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1268,7 +1258,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void getVoiceRadioTechnologyResponse(in RadioResponseInfo info, in RadioTechnology rat);
+    void getVoiceRadioTechnologyResponse(in RadioResponseInfo info, in RadioTechnology rat);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1279,7 +1269,7 @@ interface IRadioResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
      */
-    oneway void getVoiceRegistrationStateResponse(
+    void getVoiceRegistrationStateResponse(
             in RadioResponseInfo info, in RegStateResult voiceRegResponse);
 
     /**
@@ -1298,7 +1288,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:SIM_ABSENT
      */
-    oneway void handleStkCallSetupRequestFromSimResponse(in RadioResponseInfo info);
+    void handleStkCallSetupRequestFromSimResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1316,28 +1306,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void hangupConnectionResponse(in RadioResponseInfo info);
-
-    /**
-     * @param info Response info struct containing response type, serial no. and error
-     *
-     * Valid errors returned:
-     *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE (radio resetting)
-     *   RadioError:INVALID_STATE
-     *   RadioError:NO_MEMORY
-     *   RadioError:MODEM_ERR
-     *   RadioError:INTERNAL_ERR
-     *   RadioError:INVALID_CALL_ID
-     *   RadioError:NO_RESOURCES
-     *   RadioError:OPERATION_NOT_ALLOWED
-     *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:SYSTEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
-     *   RadioError:NO_RESOURCES
-     *   RadioError:CANCELLED
-     */
-    oneway void hangupForegroundResumeBackgroundResponse(in RadioResponseInfo info);
+    void hangupConnectionResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1355,9 +1324,30 @@ interface IRadioResponse {
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:SYSTEM_ERR
      *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void hangupWaitingOrBackgroundResponse(in RadioResponseInfo info);
+    void hangupForegroundResumeBackgroundResponse(in RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE (radio resetting)
+     *   RadioError:INVALID_STATE
+     *   RadioError:NO_MEMORY
+     *   RadioError:MODEM_ERR
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:INVALID_CALL_ID
+     *   RadioError:NO_RESOURCES
+     *   RadioError:OPERATION_NOT_ALLOWED
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:SYSTEM_ERR
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:CANCELLED
+     */
+    void hangupWaitingOrBackgroundResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1371,7 +1361,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void iccCloseLogicalChannelResponse(in RadioResponseInfo info);
+    void iccCloseLogicalChannelResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1390,7 +1380,7 @@ interface IRadioResponse {
      *   RadioError:SIM_ERR
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void iccIOForAppResponse(in RadioResponseInfo info, in IccIoResult iccIo);
+    void iccIOForAppResponse(in RadioResponseInfo info, in IccIoResult iccIo);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1412,7 +1402,7 @@ interface IRadioResponse {
      *   RadioError:MISSING_RESOURCE
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void iccOpenLogicalChannelResponse(
+    void iccOpenLogicalChannelResponse(
             in RadioResponseInfo info, in int channelId, in byte[] selectResponse);
 
     /**
@@ -1428,8 +1418,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void iccTransmitApduBasicChannelResponse(
-            in RadioResponseInfo info, in IccIoResult result);
+    void iccTransmitApduBasicChannelResponse(in RadioResponseInfo info, in IccIoResult result);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1444,8 +1433,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void iccTransmitApduLogicalChannelResponse(
-            in RadioResponseInfo info, in IccIoResult result);
+    void iccTransmitApduLogicalChannelResponse(in RadioResponseInfo info, in IccIoResult result);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1458,8 +1446,7 @@ interface IRadioResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void isNrDualConnectivityEnabledResponse(
-            in RadioResponseInfo info, in boolean isEnabled);
+    void isNrDualConnectivityEnabledResponse(in RadioResponseInfo info, in boolean isEnabled);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1470,7 +1457,7 @@ interface IRadioResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void nvReadItemResponse(in RadioResponseInfo info, in String result);
+    void nvReadItemResponse(in RadioResponseInfo info, in String result);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1480,7 +1467,7 @@ interface IRadioResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void nvResetConfigResponse(in RadioResponseInfo info);
+    void nvResetConfigResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1490,7 +1477,7 @@ interface IRadioResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void nvWriteCdmaPrlResponse(in RadioResponseInfo info);
+    void nvWriteCdmaPrlResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1500,7 +1487,7 @@ interface IRadioResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void nvWriteItemResponse(in RadioResponseInfo info);
+    void nvWriteItemResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1517,7 +1504,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:SIM_ABSENT
      */
-    oneway void pullLceDataResponse(in RadioResponseInfo info, in LceDataInfo lceInfo);
+    void pullLceDataResponse(in RadioResponseInfo info, in LceDataInfo lceInfo);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1539,7 +1526,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void rejectCallResponse(in RadioResponseInfo info);
+    void rejectCallResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1551,7 +1538,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void releasePduSessionIdResponse(in RadioResponseInfo info);
+    void releasePduSessionIdResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1571,7 +1558,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:SIM_ABSENT
      */
-    oneway void reportSmsMemoryStatusResponse(in RadioResponseInfo info);
+    void reportSmsMemoryStatusResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1585,7 +1572,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void reportStkServiceIsRunningResponse(in RadioResponseInfo info);
+    void reportStkServiceIsRunningResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1603,8 +1590,7 @@ interface IRadioResponse {
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void requestIccSimAuthenticationResponse(
-            in RadioResponseInfo info, in IccIoResult result);
+    void requestIccSimAuthenticationResponse(in RadioResponseInfo info, in IccIoResult result);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1622,7 +1608,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:SIM_ABSENT
      */
-    oneway void requestIsimAuthenticationResponse(in RadioResponseInfo info, in String response);
+    void requestIsimAuthenticationResponse(in RadioResponseInfo info, in String response);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1638,7 +1624,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void requestShutdownResponse(in RadioResponseInfo info);
+    void requestShutdownResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1659,7 +1645,7 @@ interface IRadioResponse {
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:OPERATION_NOT_ALLOWED
      */
-    oneway void sendBurstDtmfResponse(in RadioResponseInfo info);
+    void sendBurstDtmfResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1680,7 +1666,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:OPERATION_NOT_ALLOWED
      */
-    oneway void sendCDMAFeatureCodeResponse(in RadioResponseInfo info);
+    void sendCDMAFeatureCodeResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1714,7 +1700,7 @@ interface IRadioResponse {
      *   RadioError:ACCESS_BARRED
      *   RadioError:BLOCKED_DUE_TO_CALL
      */
-    oneway void sendCdmaSmsExpectMoreResponse(in RadioResponseInfo info, in SendSmsResult sms);
+    void sendCdmaSmsExpectMoreResponse(in RadioResponseInfo info, in SendSmsResult sms);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1748,7 +1734,7 @@ interface IRadioResponse {
      *   RadioError:ACCESS_BARRED
      *   RadioError:BLOCKED_DUE_TO_CALL
      */
-    oneway void sendCdmaSmsResponse(in RadioResponseInfo info, in SendSmsResult sms);
+    void sendCdmaSmsResponse(in RadioResponseInfo info, in SendSmsResult sms);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1764,7 +1750,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void sendDeviceStateResponse(in RadioResponseInfo info);
+    void sendDeviceStateResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1783,7 +1769,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
      */
-    oneway void sendDtmfResponse(in RadioResponseInfo info);
+    void sendDtmfResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1804,7 +1790,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:SIM_ABSENT
      */
-    oneway void sendEnvelopeResponse(in RadioResponseInfo info, in String commandResponse);
+    void sendEnvelopeResponse(in RadioResponseInfo info, in String commandResponse);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1822,7 +1808,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:SIM_ABSENT
      */
-    oneway void sendEnvelopeWithStatusResponse(in RadioResponseInfo info, in IccIoResult iccIo);
+    void sendEnvelopeWithStatusResponse(in RadioResponseInfo info, in IccIoResult iccIo);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1850,38 +1836,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void sendImsSmsResponse(in RadioResponseInfo info, in SendSmsResult sms);
-
-    /**
-     * @param info Response info struct containing response type, serial no. and error
-     * @param sms Response to sms sent as defined by SendSmsResult in types.hal
-     *
-     * Valid errors returned:
-     *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:SMS_SEND_FAIL_RETRY
-     *   RadioError:NETWORK_REJECT
-     *   RadioError:INVALID_STATE
-     *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:NO_MEMORY
-     *   RadioError:REQUEST_RATE_LIMITED
-     *   RadioError:INVALID_SMS_FORMAT
-     *   RadioError:SYSTEM_ERR
-     *   RadioError:FDN_CHECK_FAILURE
-     *   RadioError:ENCODING_ERR
-     *   RadioError:INVALID_SMSC_ADDRESS
-     *   RadioError:MODEM_ERR
-     *   RadioError:NETWORK_ERR
-     *   RadioError:INTERNAL_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
-     *   RadioError:INVALID_MODEM_STATE
-     *   RadioError:NETWORK_NOT_READY
-     *   RadioError:OPERATION_NOT_ALLOWED
-     *   RadioError:NO_RESOURCES
-     *   RadioError:CANCELLED
-     *   RadioError:SIM_ABSENT
-     */
-    oneway void sendSMSExpectMoreResponse(in RadioResponseInfo info, in SendSmsResult sms);
+    void sendImsSmsResponse(in RadioResponseInfo info, in SendSmsResult sms);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1911,10 +1866,8 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      *   RadioError:SIM_ABSENT
-     *   RadioError:ACCESS_BARRED
-     *   RadioError:BLOCKED_DUE_TO_CALL
      */
-    oneway void sendSmsExpectMoreResponse(in RadioResponseInfo info, in SendSmsResult sms);
+    void sendSMSExpectMoreResponse(in RadioResponseInfo info, in SendSmsResult sms);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1931,6 +1884,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_RATE_LIMITED
      *   RadioError:INVALID_SMS_FORMAT
      *   RadioError:SYSTEM_ERR
+     *   RadioError:FDN_CHECK_FAILURE
      *   RadioError:ENCODING_ERR
      *   RadioError:INVALID_SMSC_ADDRESS
      *   RadioError:MODEM_ERR
@@ -1946,7 +1900,39 @@ interface IRadioResponse {
      *   RadioError:ACCESS_BARRED
      *   RadioError:BLOCKED_DUE_TO_CALL
      */
-    oneway void sendSmsResponse(in RadioResponseInfo info, in SendSmsResult sms);
+    void sendSmsExpectMoreResponse(in RadioResponseInfo info, in SendSmsResult sms);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     * @param sms Response to sms sent as defined by SendSmsResult in types.hal
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:SMS_SEND_FAIL_RETRY
+     *   RadioError:NETWORK_REJECT
+     *   RadioError:INVALID_STATE
+     *   RadioError:INVALID_ARGUMENTS
+     *   RadioError:NO_MEMORY
+     *   RadioError:REQUEST_RATE_LIMITED
+     *   RadioError:INVALID_SMS_FORMAT
+     *   RadioError:SYSTEM_ERR
+     *   RadioError:ENCODING_ERR
+     *   RadioError:INVALID_SMSC_ADDRESS
+     *   RadioError:MODEM_ERR
+     *   RadioError:NETWORK_ERR
+     *   RadioError:INTERNAL_ERR
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:INVALID_MODEM_STATE
+     *   RadioError:NETWORK_NOT_READY
+     *   RadioError:OPERATION_NOT_ALLOWED
+     *   RadioError:NO_RESOURCES
+     *   RadioError:CANCELLED
+     *   RadioError:SIM_ABSENT
+     *   RadioError:ACCESS_BARRED
+     *   RadioError:BLOCKED_DUE_TO_CALL
+     */
+    void sendSmsResponse(in RadioResponseInfo info, in SendSmsResult sms);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1964,7 +1950,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:SIM_ABSENT
      */
-    oneway void sendTerminalResponseToSimResponse(in RadioResponseInfo info);
+    void sendTerminalResponseToSimResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -1990,7 +1976,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void sendUssdResponse(in RadioResponseInfo info);
+    void sendUssdResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2011,7 +1997,7 @@ interface IRadioResponse {
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:CANCELLED
      */
-    oneway void separateConnectionResponse(in RadioResponseInfo info);
+    void separateConnectionResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2022,7 +2008,7 @@ interface IRadioResponse {
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void setAllowedCarriersResponse(in RadioResponseInfo info);
+    void setAllowedCarriersResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2038,7 +2024,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      */
-    oneway void setAllowedNetworkTypesBitmapResponse(in RadioResponseInfo info);
+    void setAllowedNetworkTypesBitmapResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2056,7 +2042,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void setBandModeResponse(in RadioResponseInfo info);
+    void setBandModeResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2077,7 +2063,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void setBarringPasswordResponse(in RadioResponseInfo info);
+    void setBarringPasswordResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2100,7 +2086,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void setCallForwardResponse(in RadioResponseInfo info);
+    void setCallForwardResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2123,7 +2109,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void setCallWaitingResponse(in RadioResponseInfo info);
+    void setCallWaitingResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2136,7 +2122,7 @@ interface IRadioResponse {
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:MODEM_INTERNAL_FAILURE
      */
-    oneway void setCarrierInfoForImsiEncryptionResponse(in RadioResponseInfo info);
+    void setCarrierInfoForImsiEncryptionResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2157,7 +2143,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
      */
-    oneway void setCdmaBroadcastActivationResponse(in RadioResponseInfo info);
+    void setCdmaBroadcastActivationResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2177,7 +2163,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
      */
-    oneway void setCdmaBroadcastConfigResponse(in RadioResponseInfo info);
+    void setCdmaBroadcastConfigResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2196,7 +2182,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:SIM_ABSENT
      */
-    oneway void setCdmaRoamingPreferenceResponse(in RadioResponseInfo info);
+    void setCdmaRoamingPreferenceResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2212,7 +2198,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void setCdmaSubscriptionSourceResponse(in RadioResponseInfo info);
+    void setCdmaSubscriptionSourceResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2228,7 +2214,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void setCellInfoListRateResponse(in RadioResponseInfo info);
+    void setCellInfoListRateResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2247,7 +2233,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void setClirResponse(in RadioResponseInfo info);
+    void setClirResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2266,7 +2252,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void setDataAllowedResponse(in RadioResponseInfo info);
+    void setDataAllowedResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2282,7 +2268,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:SIM_ABSENT
      */
-    oneway void setDataProfileResponse(in RadioResponseInfo info);
+    void setDataProfileResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2294,7 +2280,7 @@ interface IRadioResponse {
      *  RadioError:INVALID_ARGUMENTS
      *  RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void setDataThrottlingResponse(in RadioResponseInfo info);
+    void setDataThrottlingResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2318,7 +2304,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void setFacilityLockForAppResponse(in RadioResponseInfo info, in int retry);
+    void setFacilityLockForAppResponse(in RadioResponseInfo info, in int retry);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2339,7 +2325,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
      */
-    oneway void setGsmBroadcastActivationResponse(in RadioResponseInfo info);
+    void setGsmBroadcastActivationResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2359,7 +2345,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
      */
-    oneway void setGsmBroadcastConfigResponse(in RadioResponseInfo info);
+    void setGsmBroadcastConfigResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2371,7 +2357,7 @@ interface IRadioResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:SYSTEM_ERR
      */
-    oneway void setIndicationFilterResponse(in RadioResponseInfo info);
+    void setIndicationFilterResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2390,7 +2376,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void setInitialAttachApnResponse(in RadioResponseInfo info);
+    void setInitialAttachApnResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2401,7 +2387,7 @@ interface IRadioResponse {
      *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INTERNAL_ERR
      */
-    oneway void setLinkCapacityReportingCriteriaResponse(in RadioResponseInfo info);
+    void setLinkCapacityReportingCriteriaResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2419,7 +2405,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:SIM_ABSENT
      */
-    oneway void setLocationUpdatesResponse(in RadioResponseInfo info);
+    void setLocationUpdatesResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2436,7 +2422,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void setMuteResponse(in RadioResponseInfo info);
+    void setMuteResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2458,7 +2444,7 @@ interface IRadioResponse {
      * Returns RadioError:ILLEGAL_SIM_OR_ME when the failure is permanent and
      * no retries needed, such as illegal SIM or ME.
      */
-    oneway void setNetworkSelectionModeAutomaticResponse(in RadioResponseInfo info);
+    void setNetworkSelectionModeAutomaticResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2481,7 +2467,7 @@ interface IRadioResponse {
      * Returns RadioError:ILLEGAL_SIM_OR_ME when the failure is permanent and
      * no retries needed, such as illegal SIM or ME.
      */
-    oneway void setNetworkSelectionModeManualResponse(in RadioResponseInfo info);
+    void setNetworkSelectionModeManualResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2493,7 +2479,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:INVALID_STATE
      */
-    oneway void setNrDualConnectivityStateResponse(in RadioResponseInfo info);
+    void setNrDualConnectivityStateResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2509,7 +2495,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      */
-    oneway void setPreferredNetworkTypeBitmapResponse(in RadioResponseInfo info);
+    void setPreferredNetworkTypeBitmapResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2528,7 +2514,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void setPreferredNetworkTypeResponse(in RadioResponseInfo info);
+    void setPreferredNetworkTypeResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2546,7 +2532,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void setPreferredVoicePrivacyResponse(in RadioResponseInfo info);
+    void setPreferredVoicePrivacyResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2567,7 +2553,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void setRadioCapabilityResponse(in RadioResponseInfo info, in RadioCapability rc);
+    void setRadioCapabilityResponse(in RadioResponseInfo info, in RadioCapability rc);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2579,7 +2565,7 @@ interface IRadioResponse {
      *   RadioError:RF_HARDWARE_ISSUE
      *   RadioError:NO_RF_CALIBRATION_INFO
      */
-    oneway void setRadioPowerResponse(in RadioResponseInfo info);
+    void setRadioPowerResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2589,7 +2575,7 @@ interface IRadioResponse {
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:RADIO_NOT_AVAILABLE
      */
-    oneway void setSignalStrengthReportingCriteriaResponse(in RadioResponseInfo info);
+    void setSignalStrengthReportingCriteriaResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2600,7 +2586,7 @@ interface IRadioResponse {
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:SIM_ERR (indicates a timeout or other issue making the SIM unresponsive)
      */
-    oneway void setSimCardPowerResponse(in RadioResponseInfo info);
+    void setSimCardPowerResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2622,7 +2608,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:SIM_ABSENT
      */
-    oneway void setSmscAddressResponse(in RadioResponseInfo info);
+    void setSmscAddressResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2641,7 +2627,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:SIM_ABSENT
      */
-    oneway void setSuppServiceNotificationsResponse(in RadioResponseInfo info);
+    void setSuppServiceNotificationsResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2652,7 +2638,7 @@ interface IRadioResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:INVALID_ARGUMENTS
      */
-    oneway void setSystemSelectionChannelsResponse(in RadioResponseInfo info);
+    void setSystemSelectionChannelsResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2669,7 +2655,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void setTTYModeResponse(in RadioResponseInfo info);
+    void setTTYModeResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2687,7 +2673,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void setUiccSubscriptionResponse(in RadioResponseInfo info);
+    void setUiccSubscriptionResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2705,7 +2691,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES if the vendor is unable handle due to resources are full.
      *   RadioError:SIM_ABSENT
      */
-    oneway void setupDataCallResponse(in RadioResponseInfo info, in SetupDataCallResult dcResponse);
+    void setupDataCallResponse(in RadioResponseInfo info, in SetupDataCallResult dcResponse);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2725,7 +2711,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
      */
-    oneway void startDtmfResponse(in RadioResponseInfo info);
+    void startDtmfResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2738,7 +2724,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:INVALID_CALL_ID
      */
-    oneway void startHandoverResponse(in RadioResponseInfo info);
+    void startHandoverResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2751,7 +2737,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:INVALID_ARGUMENTS
      */
-    oneway void startKeepaliveResponse(in RadioResponseInfo info, in KeepaliveStatus status);
+    void startKeepaliveResponse(in RadioResponseInfo info, in KeepaliveStatus status);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2767,7 +2753,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void startLceServiceResponse(in RadioResponseInfo info, in LceStatusInfo statusInfo);
+    void startLceServiceResponse(in RadioResponseInfo info, in LceStatusInfo statusInfo);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2780,7 +2766,7 @@ interface IRadioResponse {
      *   RadioError:MODEM_ERR
      *   RadioError:INVALID_ARGUMENTS
      */
-    oneway void startNetworkScanResponse(in RadioResponseInfo info);
+    void startNetworkScanResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2800,7 +2786,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:INVALID_MODEM_STATE
      */
-    oneway void stopDtmfResponse(in RadioResponseInfo info);
+    void stopDtmfResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2809,7 +2795,7 @@ interface IRadioResponse {
      *   RadioError:NONE
      *   RadioError:INVALID_ARGUMENTS
      */
-    oneway void stopKeepaliveResponse(in RadioResponseInfo info);
+    void stopKeepaliveResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2826,7 +2812,7 @@ interface IRadioResponse {
      *   RadioError:CANCELLED
      *   RadioError:SIM_ABSENT
      */
-    oneway void stopLceServiceResponse(in RadioResponseInfo info, in LceStatusInfo statusInfo);
+    void stopLceServiceResponse(in RadioResponseInfo info, in LceStatusInfo statusInfo);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2836,7 +2822,7 @@ interface IRadioResponse {
      *   RadioError:INTERNAL_ERR
      *   RadioError:MODEM_ERR
      */
-    oneway void stopNetworkScanResponse(in RadioResponseInfo info);
+    void stopNetworkScanResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2855,7 +2841,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:SIM_PUK2
      */
-    oneway void supplyIccPin2ForAppResponse(in RadioResponseInfo info, in int remainingRetries);
+    void supplyIccPin2ForAppResponse(in RadioResponseInfo info, in int remainingRetries);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2873,7 +2859,7 @@ interface IRadioResponse {
      *   RadioError:INVALID_SIM_STATE
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void supplyIccPinForAppResponse(in RadioResponseInfo info, in int remainingRetries);
+    void supplyIccPinForAppResponse(in RadioResponseInfo info, in int remainingRetries);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2891,7 +2877,7 @@ interface IRadioResponse {
      *   RadioError:INVALID_SIM_STATE
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void supplyIccPuk2ForAppResponse(in RadioResponseInfo info, in int remainingRetries);
+    void supplyIccPuk2ForAppResponse(in RadioResponseInfo info, in int remainingRetries);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2909,7 +2895,7 @@ interface IRadioResponse {
      *   RadioError:INVALID_SIM_STATE
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void supplyIccPukForAppResponse(in RadioResponseInfo info, in int remainingRetries);
+    void supplyIccPukForAppResponse(in RadioResponseInfo info, in int remainingRetries);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2930,8 +2916,7 @@ interface IRadioResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:SIM_ABSENT
      */
-    oneway void supplyNetworkDepersonalizationResponse(
-            in RadioResponseInfo info, in int remainingRetries);
+    void supplyNetworkDepersonalizationResponse(in RadioResponseInfo info, in int remainingRetries);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2952,7 +2937,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
-    oneway void supplySimDepersonalizationResponse(
+    void supplySimDepersonalizationResponse(
             in RadioResponseInfo info, in PersoSubstate persoType, in int remainingRetries);
 
     /**
@@ -2975,7 +2960,7 @@ interface IRadioResponse {
      *   RadioError:NO_RESOURCES
      *   RadioError:CANCELLED
      */
-    oneway void switchWaitingOrHoldingAndActiveResponse(in RadioResponseInfo info);
+    void switchWaitingOrHoldingAndActiveResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -2996,8 +2981,7 @@ interface IRadioResponse {
      * REQUEST_NOT_SUPPORTED may only be returned on devices that don't support this API,
      * indicated by the HAL capability CAPABILITY_SIM_PHONEBOOK_IN_MODEM.
      */
-    oneway void updateSimPhonebookRecordsResponse(
-            in RadioResponseInfo info, in int updatedRecordIndex);
+    void updateSimPhonebookRecordsResponse(in RadioResponseInfo info, in int updatedRecordIndex);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -3024,7 +3008,7 @@ interface IRadioResponse {
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:SIM_ABSENT
      */
-    oneway void writeSmsToRuimResponse(in RadioResponseInfo info, in int index);
+    void writeSmsToRuimResponse(in RadioResponseInfo info, in int index);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -3051,5 +3035,5 @@ interface IRadioResponse {
      *   RadioError:INVALID_MODEM_STATE
      *   RadioError:SIM_ABSENT
      */
-    oneway void writeSmsToSimResponse(in RadioResponseInfo info, in int index);
+    void writeSmsToSimResponse(in RadioResponseInfo info, in int index);
 }
