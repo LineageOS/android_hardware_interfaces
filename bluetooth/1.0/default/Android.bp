@@ -22,9 +22,8 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
-cc_library {
-    name: "android.hardware.bluetooth@1.0-impl",
-    defaults: ["hidl_defaults"],
+cc_defaults {
+    name: "android.hardware.bluetooth@1.0-defaults",
     vendor: true,
     relative_install_path: "hw",
     srcs: [
@@ -44,6 +43,25 @@ cc_library {
     static_libs: [
         "android.hardware.bluetooth-async",
         "android.hardware.bluetooth-hci",
+    ],
+}
+
+cc_library {
+    name: "android.hardware.bluetooth@1.0-impl",
+    defaults: [
+        "hidl_defaults",
+        "android.hardware.bluetooth@1.0-defaults",
+    ],
+}
+
+cc_library {
+    name: "android.hardware.bluetooth@1.0-impl-test",
+    defaults: [
+        "hidl_defaults",
+        "android.hardware.bluetooth@1.0-defaults",
+    ],
+    cflags: [
+        "-DBT_FUZZER",
     ],
 }
 
