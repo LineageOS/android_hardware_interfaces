@@ -838,5 +838,7 @@ e34b4c7bec5e032c14804707ca924dd6b99ed5ba139da7505fe7d698d0fe178f android.hardwar
 
 # ABI preserving changes to HALs during Android T
 62ace52d9c3ff1f60f94118557a2aaf0b953513e59dcd34d5f94ae28d4c7e780 android.hardware.fastboot@1.0::IFastboot
+ca62a2a95d173ed323309e5e00f653ad3cceec82a6e5e4976a249cb5aafe2515 android.hardware.neuralnetworks@1.2::types
+fa76bced6b1b71c40fc706c508a9011284c57f57831cd0cf5f45653ed4ea463e android.hardware.neuralnetworks@1.3::types
 
 # There should be no more HIDL HALs - please use AIDL instead.
