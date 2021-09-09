@@ -1,0 +1,27 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_test {
+    name: "VtsHalHostapdTargetTest",
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    srcs: ["VtsHalHostapdTargetTest.cpp"],
+    shared_libs: [
+        "libbinder",
+    ],
+    static_libs: [
+        "android.hardware.wifi.hostapd-V1-cpp",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+}
