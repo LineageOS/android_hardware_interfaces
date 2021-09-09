@@ -24,35 +24,30 @@ package android.hardware.neuralnetworks;
  * Types prefaced with TENSOR_* must be used for tensor data (i.e., tensors
  * with at least one dimension). Types not prefaced by TENSOR_* represent
  * scalar values and must have no dimensions.
+ *
+ * Although we define many types, most operators accept just a few
+ * types. Most used are {@link OperandType::TENSOR_FLOAT32},
+ * {@link OperandType::TENSOR_QUANT8_ASYMM},
+ * and {@link OperandType::INT32}.
  */
 @VintfStability
 @Backing(type="int")
 enum OperandType {
-    /**
-     * A 32 bit floating point scalar value.
-     */
+    /** A 32 bit floating point scalar value. */
     FLOAT32 = 0,
-    /**
-     * A signed 32 bit integer scalar value.
-     */
+    /** A signed 32 bit integer scalar value. */
     INT32 = 1,
-    /**
-     * An unsigned 32 bit integer scalar value.
-     */
+    /** An unsigned 32 bit integer scalar value. */
     UINT32 = 2,
-    /**
-     * A tensor of 32 bit floating point values.
-     */
+    /** A tensor of 32 bit floating point values. */
     TENSOR_FLOAT32 = 3,
-    /**
-     * A tensor of 32 bit integer values.
-     */
+    /** A tensor of 32 bit integer values. */
     TENSOR_INT32 = 4,
     /**
      * A tensor of 8 bit unsigned integers that represent real numbers.
      *
-     * Attached to this tensor are two numbers that can be used to convert the 8 bit integer to the
-     * real value and vice versa. These two numbers are:
+     * Attached to this tensor are two numbers that can be used to convert the
+     * 8 bit integer to the real value and vice versa. These two numbers are:
      * - scale: a 32 bit floating point value greater than zero.
      * - zeroPoint: a 32 bit integer, in range [0, 255].
      *
@@ -63,15 +58,15 @@ enum OperandType {
     /**
      * An 8 bit boolean scalar value.
      *
-     * Values of this operand type are either true or false. A zero value represents false; any
-     * other value represents true.
+     * Values of this operand type are either true or false. A zero value
+     * represents false; any other value represents true.
      */
     BOOL = 6,
     /**
      * A tensor of 16 bit signed integers that represent real numbers.
      *
-     * Attached to this tensor is a number representing real value scale that is used to convert the
-     * 16 bit number to a real value in the following way:
+     * Attached to this tensor is a number representing real value scale that is
+     * used to convert the 16 bit number to a real value in the following way:
      * realValue = integerValue * scale.
      *
      * scale is a 32 bit floating point with value greater than zero.
@@ -84,8 +79,8 @@ enum OperandType {
     /**
      * A tensor of 8 bit boolean values.
      *
-     * Values of this operand type are either true or false. A zero value represents false; any
-     * other value represents true.
+     * Values of this operand type are either true or false. A zero value
+     * represents false; any other value represents true.
      */
     TENSOR_BOOL8 = 9,
     /**
@@ -95,8 +90,9 @@ enum OperandType {
     /**
      * A tensor of 8 bit signed integers that represent real numbers.
      *
-     * This tensor is associated with additional fields that can be used to convert the 8 bit signed
-     * integer to the real value and vice versa. These fields are:
+     * This tensor is associated with additional fields that can
+     * be used to convert the 8 bit signed integer to the real value and vice versa.
+     * These fields are:
      * - channelDim: a 32 bit unsigned integer indicating channel dimension.
      * - scales: an array of positive 32 bit floating point values.
      * The size of the scales array must be equal to dimensions[channelDim].
@@ -113,8 +109,8 @@ enum OperandType {
     /**
      * A tensor of 16 bit unsigned integers that represent real numbers.
      *
-     * Attached to this tensor are two numbers that can be used to convert the 16 bit integer to the
-     * real value and vice versa. These two numbers are:
+     * Attached to this tensor are two numbers that can be used to convert the
+     * 16 bit integer to the real value and vice versa. These two numbers are:
      * - scale: a 32 bit floating point value greater than zero.
      * - zeroPoint: a 32 bit integer, in range [0, 65535].
      *
@@ -125,8 +121,8 @@ enum OperandType {
     /**
      * A tensor of 8 bit signed integers that represent real numbers.
      *
-     * Attached to this tensor is a number representing real value scale that is used to convert the
-     * 8 bit number to a real value in the following way:
+     * Attached to this tensor is a number representing real value scale that is
+     * used to convert the 8 bit number to a real value in the following way:
      * realValue = integerValue * scale.
      *
      * scale is a 32 bit floating point with value greater than zero.
@@ -135,8 +131,8 @@ enum OperandType {
     /**
      * A tensor of 8 bit signed integers that represent real numbers.
      *
-     * Attached to this tensor are two numbers that can be used to convert the 8 bit integer to the
-     * real value and vice versa. These two numbers are:
+     * Attached to this tensor are two numbers that can be used to convert the
+     * 8 bit integer to the real value and vice versa. These two numbers are:
      * - scale: a 32 bit floating point value greater than zero.
      * - zeroPoint: a 32 bit integer, in range [-128, 127].
      *
