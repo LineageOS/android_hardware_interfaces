@@ -41,7 +41,6 @@ enum OperandType : @1.2::OperandType {
      * real_value = (integer_value - zeroPoint) * scale.
      */
     TENSOR_QUANT8_ASYMM_SIGNED = 14,
-
     /**
      * A reference to a subgraph.
      *
@@ -5230,7 +5229,7 @@ enum OperationType : int32_t {
      * The output is calculated using the following formula:
      *
      *     h-swish(x) = x * max(0, min(6, (x + 3))) / 6
-
+     *
      * Supported tensor {@link OperandType}:
      * * {@link OperandType::TENSOR_FLOAT16}
      * * {@link OperandType::TENSOR_FLOAT32}
