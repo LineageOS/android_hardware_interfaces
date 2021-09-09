@@ -1,0 +1,55 @@
+/*
+ * Copyright (C) 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at:
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+cc_library {
+    name: "libbt-vendor-fuzz",
+    vendor: true,
+    srcs: [
+        "bt_vendor.cpp",
+    ],
+    static_libs: [
+        "android.hardware.bluetooth@1.0-impl-test",
+        "android.hardware.bluetooth-hci",
+    ],
+}
+
+cc_fuzz {
+    name: "bluetoothV1.0_fuzzer",
+    vendor: true,
+    srcs: [
+        "bluetoothV1.0_fuzzer.cpp",
+    ],
+    static_libs: [
+        "android.hardware.bluetooth@1.0-impl-test",
+        "android.hardware.bluetooth-async",
+        "android.hardware.bluetooth-hci",
+        "libcutils",
+        "libutils",
+    ],
+    shared_libs: [
+        "android.hardware.bluetooth@1.0",
+        "libhardware",
+        "libhidlbase",
+        "libbt-vendor-fuzz",
+        "liblog",
+    ],
+    fuzz_config: {
+        cc: [
+            "android-media-fuzzing-reports@google.com",
+        ],
+        componentid: 533764,
+    },
+}
