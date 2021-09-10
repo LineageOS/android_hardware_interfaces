@@ -22,6 +22,11 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
+filegroup {
+    name: "android.hardware.sensors@2.1.xml",
+    srcs: ["android.hardware.sensors@2.1.xml"],
+}
+
 cc_binary {
     name: "android.hardware.sensors@2.1-service.mock",
     defaults: ["hidl_defaults"],
@@ -50,5 +55,5 @@ cc_binary {
         "android.hardware.sensors@1.0-convert",
         "android.hardware.sensors@2.X-shared-impl",
     ],
-    vintf_fragments: ["android.hardware.sensors@2.1.xml"],
+    vintf_fragments: [":android.hardware.sensors@2.1.xml"],
 }
