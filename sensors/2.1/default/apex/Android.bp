@@ -1,0 +1,46 @@
+package {
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+apex_key {
+    name: "com.android.hardware.sensors.key",
+    public_key: "com.android.hardware.sensors.avbpubkey",
+    private_key: "com.android.hardware.sensors.pem",
+}
+
+android_app_certificate {
+    name: "com.android.hardware.sensors.certificate",
+    certificate: "com.android.hardware.sensors",
+}
+
+prebuilt_etc {
+    name: "com.android.hardware.sensors.rc",
+    src: "com.android.hardware.sensors.rc",
+    installable: false,
+}
+
+// Default vendor APEX for android.hardware.sensors.
+// Custom implementations may use override_apex based on this APEX.
+apex {
+    name: "com.android.hardware.sensors",
+    manifest: "apex_manifest.json",
+    key: "com.android.hardware.sensors.key",
+    certificate: ":com.android.hardware.sensors.certificate",
+    file_contexts: "file_contexts",
+    use_vndk_as_stable: true,
+    updatable: false,
+    // Install the apex in /vendor/apex
+    soc_specific: true,
+    binaries: ["android.hardware.sensors@2.1-service.mock"],
+    prebuilts: [
+        "com.android.hardware.sensors.rc",
+        "android.hardware.sensor.ambient_temperature.prebuilt.xml",
+        "android.hardware.sensor.barometer.prebuilt.xml",
+        "android.hardware.sensor.gyroscope.prebuilt.xml",
+        "android.hardware.sensor.hinge_angle.prebuilt.xml",
+        "android.hardware.sensor.light.prebuilt.xml",
+        "android.hardware.sensor.proximity.prebuilt.xml",
+        "android.hardware.sensor.relative_humidity.prebuilt.xml",
+    ],
+    vintf_fragments: [":android.hardware.sensors@2.1.xml"],
+}
