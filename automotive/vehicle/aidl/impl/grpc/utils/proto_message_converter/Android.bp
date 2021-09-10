@@ -14,21 +14,37 @@
  * limitations under the License.
  */
 
-package {
-    default_applicable_licenses: ["Android-Apache-2.0"],
-}
-
 cc_library {
-    name: "VehicleHalUtils",
-    srcs: ["src/*.cpp"],
+    name: "VehicleHalProtoMessageConverter",
+    srcs: [
+        "src/*.cpp",
+    ],
     vendor: true,
     local_include_dirs: ["include"],
     export_include_dirs: ["include"],
+    shared_libs: ["libprotobuf-cpp-full"],
+    static_libs: [
+        "VehicleHalProtos",
+        "VehicleHalUtils",
+    ],
     defaults: ["VehicleHalDefaults"],
+    export_static_lib_headers: ["VehicleHalUtils"],
 }
 
-cc_library_headers {
-    name: "VehicleHalUtilHeaders",
-    export_include_dirs: ["include"],
+cc_test {
+    name: "VehicleHalProtoMessageConverterTest",
+    srcs: [
+        "test/*.cpp",
+    ],
     vendor: true,
+    defaults: ["VehicleHalDefaults"],
+    shared_libs: ["libprotobuf-cpp-full"],
+    static_libs: [
+        "VehicleHalProtoMessageConverter",
+        "VehicleHalProtos",
+        "VehicleHalUtils",
+        "libgtest",
+    ],
+    header_libs: ["VehicleHalDefaultConfig"],
+    test_suites: ["device-tests"],
 }
