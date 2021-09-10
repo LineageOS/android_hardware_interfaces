@@ -30,6 +30,7 @@
 
 #include <cutils/properties.h>
 
+#include "DeviceFileReader.h"
 #include "GnssAntennaInfo.h"
 #include "GnssConfiguration.h"
 #include "GnssDebug.h"
@@ -163,19 +164,9 @@ GnssTemplate<T_IGnss>::~GnssTemplate() {
 
 template <class T_IGnss>
 std::unique_ptr<V2_0::GnssLocation> GnssTemplate<T_IGnss>::getLocationFromHW() {
-    if (!mHardwareModeChecked) {
-        // default using /dev/gnss0
-        std::string gnss_dev_path = ReplayUtils::getGnssPath();
-
-        mGnssFd = open(gnss_dev_path.c_str(), O_RDWR | O_NONBLOCK);
-        if (mGnssFd == -1) {
-            ALOGW("Failed to open %s errno: %d", gnss_dev_path.c_str(), errno);
-        }
-        mHardwareModeChecked = true;
-    }
-
-    std::string inputStr = ::android::hardware::gnss::common::ReplayUtils::getDataFromDeviceFile(
-            CMD_GET_LOCATION, mMinIntervalMs);
+    mHardwareModeChecked = true;
+    std::string inputStr =
+            ::android::hardware::gnss::common::DeviceFileReader::Instance().getLocationData();
     return NmeaFixInfo::getLocationFromInputStr(inputStr);
 }
 
