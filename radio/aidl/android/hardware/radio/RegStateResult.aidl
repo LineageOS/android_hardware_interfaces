@@ -16,10 +16,10 @@
 
 package android.hardware.radio;
 
+import android.hardware.radio.AccessTechnologySpecificInfo;
 import android.hardware.radio.CellIdentity;
 import android.hardware.radio.RadioTechnology;
 import android.hardware.radio.RegState;
-import android.hardware.radio.RegStateResultAccessTechnologySpecificInfo;
 import android.hardware.radio.RegistrationFailCause;
 
 @VintfStability
@@ -56,5 +56,5 @@ parcelable RegStateResult {
     /**
      * Access-technology-specific registration information, such as for CDMA2000.
      */
-    RegStateResultAccessTechnologySpecificInfo accessTechnologySpecificInfo;
+    AccessTechnologySpecificInfo accessTechnologySpecificInfo;
 }

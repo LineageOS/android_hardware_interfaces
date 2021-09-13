@@ -22,7 +22,7 @@ import android.hardware.radio.SapResultCode;
 import android.hardware.radio.SapStatus;
 
 @VintfStability
-interface ISapCallback {
+oneway interface ISapCallback {
     /**
      * TRANSFER_APDU_RESP from SAP 1.1 spec 5.1.7
      *
@@ -37,7 +37,7 @@ interface ISapCallback {
      * @param apduRsp APDU Response. Valid only if command was processed correctly and no error
      *        occurred.
      */
-    oneway void apduResponse(in int token, in SapResultCode resultCode, in byte[] apduRsp);
+    void apduResponse(in int token, in SapResultCode resultCode, in byte[] apduRsp);
 
     /**
      * CONNECT_RESP from SAP 1.1 spec 5.1.2
@@ -47,7 +47,7 @@ interface ISapCallback {
      * @param maxMsgSize MaxMsgSize supported by server if request cannot be fulfilled.
      *        Valid only if connectResponse is SapConnectResponse:MSG_SIZE_TOO_LARGE.
      */
-    oneway void connectResponse(in int token, in SapConnectRsp sapConnectRsp, in int maxMsgSize);
+    void connectResponse(in int token, in SapConnectRsp sapConnectRsp, in int maxMsgSize);
 
     /**
      * DISCONNECT_IND from SAP 1.1 spec 5.1.5
@@ -55,21 +55,21 @@ interface ISapCallback {
      * @param token Id to match req-resp. Value must match the one in req.
      * @param disconnectType Disconnect Type to indicate if shutdown is graceful or immediate
      */
-    oneway void disconnectIndication(in int token, in SapDisconnectType disconnectType);
+    void disconnectIndication(in int token, in SapDisconnectType disconnectType);
 
     /**
      * DISCONNECT_RESP from SAP 1.1 spec 5.1.4
      *
      * @param token Id to match req-resp. Value must match the one in req.
      */
-    oneway void disconnectResponse(in int token);
+    void disconnectResponse(in int token);
 
     /**
      * ERROR_RESP from SAP 1.1 spec 5.1.19
      *
      * @param token Id to match req-resp. Value must match the one in req.
      */
-    oneway void errorResponse(in int token);
+    void errorResponse(in int token);
 
     /**
      * POWER_SIM_OFF_RESP and POWER_SIM_ON_RESP from SAP 1.1 spec 5.1.11 + 5.1.13
@@ -84,7 +84,7 @@ interface ISapCallback {
      *        SapResultCode:CARD_REMOVED,
      *        SapResultCode:CARD_ALREADY_POWERED_ON (possible only for power on req)
      */
-    oneway void powerResponse(in int token, in SapResultCode resultCode);
+    void powerResponse(in int token, in SapResultCode resultCode);
 
     /**
      * RESET_SIM_RESP from SAP 1.1 spec 5.1.15
@@ -98,7 +98,7 @@ interface ISapCallback {
      *        SapResultCode:CARD_ALREADY_POWERED_OFF,
      *        SapResultCode:CARD_REMOVED
      */
-    oneway void resetSimResponse(in int token, in SapResultCode resultCode);
+    void resetSimResponse(in int token, in SapResultCode resultCode);
 
     /**
      * STATUS_IND from SAP 1.1 spec 5.1.16
@@ -106,7 +106,7 @@ interface ISapCallback {
      * @param token Id to match req-resp. Value must match the one in req.
      * @param status Parameter to indicate reason for the status change.
      */
-    oneway void statusIndication(in int token, in SapStatus status);
+    void statusIndication(in int token, in SapStatus status);
 
     /**
      * TRANSFER_ATR_RESP from SAP 1.1 spec 5.1.9
@@ -122,7 +122,7 @@ interface ISapCallback {
      * @param atr Answer to Reset from the subscription module. Included only if no error occurred,
      *        otherwise empty.
      */
-    oneway void transferAtrResponse(in int token, in SapResultCode resultCode, in byte[] atr);
+    void transferAtrResponse(in int token, in SapResultCode resultCode, in byte[] atr);
 
     /**
      * TRANSFER_CARD_READER_STATUS_REQ from SAP 1.1 spec 5.1.18
@@ -136,7 +136,7 @@ interface ISapCallback {
      * @param cardReaderStatus Card Reader Status coded as described in 3GPP TS 11.14 Section 12.33
      *        and TS 31.111 Section 8.33
      */
-    oneway void transferCardReaderStatusResponse(
+    void transferCardReaderStatusResponse(
             in int token, in SapResultCode resultCode, in int cardReaderStatus);
 
     /**
@@ -148,5 +148,5 @@ interface ISapCallback {
      *        SapResultCode:SUCCESS
      *        SapResultCode:NOT_SUPPORTED
      */
-    oneway void transferProtocolResponse(in int token, in SapResultCode resultCode);
+    void transferProtocolResponse(in int token, in SapResultCode resultCode);
 }

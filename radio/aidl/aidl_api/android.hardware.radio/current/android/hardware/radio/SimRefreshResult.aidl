@@ -34,7 +34,10 @@
 package android.hardware.radio;
 @VintfStability
 parcelable SimRefreshResult {
-  android.hardware.radio.SimRefreshType type;
+  int type;
   int efId;
   String aid;
+  const int TYPE_SIM_FILE_UPDATE = 0;
+  const int TYPE_SIM_INIT = 1;
+  const int TYPE_SIM_RESET = 2;
 }

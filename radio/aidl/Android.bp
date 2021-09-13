@@ -21,7 +21,6 @@ aidl_interface {
 cc_library {
     name: "android.hardware.radio-translate-ndk",
     vendor_available: true,
-    srcs: ["android/hardware/radio/translate-ndk.cpp"],
     shared_libs: [
         "libbinder_ndk",
         "libhidlbase",
@@ -34,12 +33,10 @@ cc_library {
         "android.hardware.radio@1.5",
         "android.hardware.radio@1.6",
     ],
-    export_include_dirs: ["include"],
 }
 
 java_library {
     name: "android.hardware.radio-translate-java",
-    srcs: ["android/hardware/radio/Translate.java"],
     libs: [
         "android.hardware.radio-V1-java",
         "android.hardware.radio-V1.0-java",

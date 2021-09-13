@@ -17,13 +17,18 @@
 package android.hardware.radio;
 
 import android.hardware.radio.CdmaSmsMessage;
-import android.hardware.radio.CdmaSmsWriteArgsStatus;
 
 @VintfStability
 parcelable CdmaSmsWriteArgs {
+    const int STATUS_REC_UNREAD = 0;
+    const int STATUS_REC_READ = 1;
+    const int STATUS_STO_UNSENT = 2;
+    const int STATUS_STO_SENT = 3;
+
     /**
      * Status of message. See TS 27.005 3.1
+     * Values are STATUS_
      */
-    CdmaSmsWriteArgsStatus status;
+    int status;
     CdmaSmsMessage message;
 }
