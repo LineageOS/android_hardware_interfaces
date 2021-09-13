@@ -16,10 +16,13 @@
 
 package android.hardware.radio;
 
-import android.hardware.radio.OperatorStatus;
-
 @VintfStability
 parcelable OperatorInfo {
+    const int STATUS_UNKNOWN = 0;
+    const int STATUS_AVAILABLE = 1;
+    const int STATUS_CURRENT = 2;
+    const int STATUS_FORBIDDEN = 3;
+
     /**
      * Long alpha ONS or EONS
      */
@@ -32,5 +35,8 @@ parcelable OperatorInfo {
      * 5 or 6 digit numeric code (MCC + MNC)
      */
     String operatorNumeric;
-    OperatorStatus status;
+    /**
+     * Values are STATUS_
+     */
+    int status;
 }

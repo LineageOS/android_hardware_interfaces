@@ -34,12 +34,24 @@
 package android.hardware.radio;
 @VintfStability
 parcelable AppStatus {
-  android.hardware.radio.AppType appType;
-  android.hardware.radio.AppState appState;
+  int appType;
+  int appState;
   android.hardware.radio.PersoSubstate persoSubstate;
   String aidPtr;
   String appLabelPtr;
-  int pin1Replaced;
+  boolean pin1Replaced;
   android.hardware.radio.PinState pin1;
   android.hardware.radio.PinState pin2;
+  const int APP_STATE_UNKNOWN = 0;
+  const int APP_STATE_DETECTED = 1;
+  const int APP_STATE_PIN = 2;
+  const int APP_STATE_PUK = 3;
+  const int APP_STATE_SUBSCRIPTION_PERSO = 4;
+  const int APP_STATE_READY = 5;
+  const int APP_TYPE_UNKNOWN = 0;
+  const int APP_TYPE_SIM = 1;
+  const int APP_TYPE_USIM = 2;
+  const int APP_TYPE_RUIM = 3;
+  const int APP_TYPE_CSIM = 4;
+  const int APP_TYPE_ISIM = 5;
 }

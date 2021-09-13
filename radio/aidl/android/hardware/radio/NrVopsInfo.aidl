@@ -16,10 +16,6 @@
 
 package android.hardware.radio;
 
-import android.hardware.radio.EmcIndicator;
-import android.hardware.radio.EmfIndicator;
-import android.hardware.radio.VopsIndicator;
-
 /**
  * Type to define the NR specific network capabilities for voice over PS including emergency and
  * normal voice calls.
@@ -27,12 +23,60 @@ import android.hardware.radio.VopsIndicator;
 @VintfStability
 parcelable NrVopsInfo {
     /**
+     * Emergency services not supported
+     */
+    const byte EMC_INDICATOR_NOT_SUPPORTED = 0;
+    /**
+     * Emergency services supported in NR connected to 5GCN only
+     */
+    const byte EMC_INDICATOR_NR_CONNECTED_TO_5GCN = 1;
+    /**
+     * Emergency services supported in E-UTRA connected to 5GCN only
+     */
+    const byte EMC_INDICATOR_EUTRA_CONNECTED_TO_5GCN = 2;
+    /**
+     * Emergency services supported in NR connected to 5GCN and E-UTRA connected to 5GCN
+     */
+    const byte EMC_INDICATOR_BOTH_NR_EUTRA_CONNECTED_TO_5GCN = 3;
+
+    /**
+     * Emergency services fallback not supported
+     */
+    const byte EMF_INDICATOR_NOT_SUPPORTED = 0;
+    /**
+     * Emergency services fallback supported in NR connected to 5GCN only
+     */
+    const byte EMF_INDICATOR_NR_CONNECTED_TO_5GCN = 1;
+    /**
+     * Emergency services fallback supported in E-UTRA connected to 5GCN only
+     */
+    const byte EMF_INDICATOR_EUTRA_CONNECTED_TO_5GCN = 2;
+    /**
+     * Emergency services fallback supported in NR connected to 5GCN and E-UTRA connected to 5GCN.
+     */
+    const byte EMF_INDICATOR_BOTH_NR_EUTRA_CONNECTED_TO_5GCN = 3;
+
+    /**
+     * IMS voice over PS session not supported
+     */
+    const byte VOPS_INDICATOR_VOPS_NOT_SUPPORTED = 0;
+    /**
+     * IMS voice over PS session supported over 3GPP access
+     */
+    const byte VOPS_INDICATOR_VOPS_OVER_3GPP = 1;
+    /**
+     * IMS voice over PS session supported over non-3GPP access
+     */
+    const byte VOPS_INDICATOR_VOPS_OVER_NON_3GPP = 2;
+
+    /**
      * This indicates if the camped network supports VoNR services, and what kind of services
      * it supports. This information is received from NR network during NR NAS registration
      * procedure through NR REGISTRATION ACCEPT.
      * Refer 3GPP 24.501 EPS 5GS network feature support -> IMS VoPS
+     * Values are VOPS_INDICATOR
      */
-    VopsIndicator vopsSupported;
+    byte vopsSupported;
     /**
      * This indicates if the camped network supports VoNR emergency service. This information
      * is received from NR network through two sources:
@@ -42,13 +86,15 @@ parcelable NrVopsInfo {
      *    Refer 3GPP 38.331 SIB1 : ims-EmergencySupport
      *    If device is registered on NR, then this field indicates whether the cell
      *    supports IMS emergency bearer services for UEs in limited service mode.
+     * Values are EMC_INDICATOR_
      */
-    EmcIndicator emcSupported;
+    byte emcSupported;
     /**
      * This indicates if the camped network supports VoNR emergency service fallback. This
      * information is received from NR network during NR NAS registration procedure through
      * NR REGISTRATION ACCEPT.
      * Refer 3GPP 24.501 EPS 5GS network feature support -> EMF
+     * Values are EMF_INDICATOR_ from TS 24.501 sec 9.10.3.5.
      */
-    EmfIndicator emfSupported;
+    byte emfSupported;
 }

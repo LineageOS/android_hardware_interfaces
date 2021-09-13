@@ -17,12 +17,30 @@
 package android.hardware.radio;
 
 import android.hardware.radio.AppStatus;
-import android.hardware.radio.CardState;
 import android.hardware.radio.PinState;
 
 @VintfStability
 parcelable CardStatus {
-    CardState cardState;
+    /*
+     * Card is physically absent from device. (Some old modems use CardState.ABSENT when the SIM
+     * is powered off. This is no longer correct, however the platform will still support this
+     * legacy behavior.)
+     */
+    const int STATE_ABSENT = 0;
+    /*
+     * Card is inserted in the device
+     */
+    const int STATE_PRESENT = 1;
+    const int STATE_ERROR = 2;
+    /*
+     * Card is present but not usable due to carrier restrictions
+     */
+    const int STATE_RESTRICTED = 3;
+
+    /**
+     * Values are STATE_
+     */
+    int cardState;
     /**
      * Applicable to USIM and CSIM
      */

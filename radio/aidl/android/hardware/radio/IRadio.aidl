@@ -20,7 +20,6 @@ import android.hardware.radio.AccessNetwork;
 import android.hardware.radio.CallForwardInfo;
 import android.hardware.radio.CardPowerState;
 import android.hardware.radio.CarrierRestrictions;
-import android.hardware.radio.CarrierRestrictionsWithPriority;
 import android.hardware.radio.CdmaBroadcastSmsConfigInfo;
 import android.hardware.radio.CdmaRoamingType;
 import android.hardware.radio.CdmaSmsAck;
@@ -48,8 +47,6 @@ import android.hardware.radio.NetworkScanRequest;
 import android.hardware.radio.NrDualConnectivityState;
 import android.hardware.radio.NvItem;
 import android.hardware.radio.NvWriteItem;
-import android.hardware.radio.OptionalSliceInfo;
-import android.hardware.radio.OptionalTrafficDescriptor;
 import android.hardware.radio.PersoSubstate;
 import android.hardware.radio.PhonebookRecordInfo;
 import android.hardware.radio.PreferredNetworkType;
@@ -64,8 +61,10 @@ import android.hardware.radio.SelectUiccSub;
 import android.hardware.radio.SignalThresholdInfo;
 import android.hardware.radio.SimApdu;
 import android.hardware.radio.SimLockMultiSimPolicy;
+import android.hardware.radio.SliceInfo;
 import android.hardware.radio.SmsAcknowledgeFailCause;
 import android.hardware.radio.SmsWriteArgs;
+import android.hardware.radio.TrafficDescriptor;
 import android.hardware.radio.TtyMode;
 
 /**
@@ -77,7 +76,7 @@ import android.hardware.radio.TtyMode;
  * setResponseFunctions must work with IRadioResponse and IRadioIndication.
  */
 @VintfStability
-interface IRadio {
+oneway interface IRadio {
     /**
      * Answer incoming call. Must not be called for WAITING calls.
      * switchWaitingOrHoldingAndActive() must be used in this case instead
@@ -86,7 +85,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.acceptCallResponse()
      */
-    oneway void acceptCall(in int serial);
+    void acceptCall(in int serial);
 
     /**
      * Acknowledge successful or failed receipt of SMS previously indicated via unsol
@@ -100,8 +99,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.acknowledgeIncomingGsmSmsWithPduResponse()
      */
-    oneway void acknowledgeIncomingGsmSmsWithPdu(
-            in int serial, in boolean success, in String ackPdu);
+    void acknowledgeIncomingGsmSmsWithPdu(in int serial, in boolean success, in String ackPdu);
 
     /**
      * Acknowledge the success or failure in the receipt of SMS previously indicated
@@ -112,7 +110,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.acknowledgeLastIncomingCdmaSmsResponse()
      */
-    oneway void acknowledgeLastIncomingCdmaSms(in int serial, in CdmaSmsAck smsAck);
+    void acknowledgeLastIncomingCdmaSms(in int serial, in CdmaSmsAck smsAck);
 
     /**
      * Acknowledge successful or failed receipt of SMS previously indicated via unsolResponseNewSms
@@ -126,7 +124,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.acknowledgeLastIncomingGsmSmsResponse()
      */
-    oneway void acknowledgeLastIncomingGsmSms(
+    void acknowledgeLastIncomingGsmSms(
             in int serial, in boolean success, in SmsAcknowledgeFailCause cause);
 
     /**
@@ -140,7 +138,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.allocatePduSessionIdResponse()
      */
-    oneway void allocatePduSessionId(in int serial);
+    void allocatePduSessionId(in int serial);
 
     /**
      * Whether uiccApplications are enabled, or disabled.
@@ -151,7 +149,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.areUiccApplicationsEnabledResponse()
      */
-    oneway void areUiccApplicationsEnabled(in int serial);
+    void areUiccApplicationsEnabled(in int serial);
 
     /**
      * Indicates that a handover was cancelled after a call to IRadio::startHandover.
@@ -163,7 +161,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.cancelHandoverResponse()
      */
-    oneway void cancelHandover(in int serial, in int callId);
+    void cancelHandover(in int serial, in int callId);
 
     /**
      * Cancel the current USSD session if one exists.
@@ -172,7 +170,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.cancelPendingUssdResponse()
      */
-    oneway void cancelPendingUssd(in int serial);
+    void cancelPendingUssd(in int serial);
 
     /**
      * Supplies old ICC PIN2 and new PIN2.
@@ -184,8 +182,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.changeIccPin2ForAppResponse()
      */
-    oneway void changeIccPin2ForApp(
-            in int serial, in String oldPin2, in String newPin2, in String aid);
+    void changeIccPin2ForApp(in int serial, in String oldPin2, in String newPin2, in String aid);
 
     /**
      * Supplies old ICC PIN and new PIN.
@@ -197,8 +194,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.changeIccPinForAppResponse()
      */
-    oneway void changeIccPinForApp(
-            in int serial, in String oldPin, in String newPin, in String aid);
+    void changeIccPinForApp(in int serial, in String oldPin, in String newPin, in String aid);
 
     /**
      * Conference holding and active (like AT+CHLD=3)
@@ -207,7 +203,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.conferenceResponse()
      */
-    oneway void conference(in int serial);
+    void conference(in int serial);
 
     /**
      * Deactivate packet data connection and remove from the data call list. An
@@ -219,7 +215,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.deactivateDataCallResponse()
      */
-    oneway void deactivateDataCall(in int serial, in int cid, in DataRequestReason reason);
+    void deactivateDataCall(in int serial, in int cid, in DataRequestReason reason);
 
     /**
      * Deletes a CDMA SMS message from RUIM memory.
@@ -229,7 +225,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.deleteSmsOnRuimResponse()
      */
-    oneway void deleteSmsOnRuim(in int serial, in int index);
+    void deleteSmsOnRuim(in int serial, in int index);
 
     /**
      * Deletes a SMS message from SIM memory.
@@ -239,7 +235,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.deleteSmsOnSimResponse()
      */
-    oneway void deleteSmsOnSim(in int serial, in int index);
+    void deleteSmsOnSim(in int serial, in int index);
 
     /**
      * Initiate voice call. This method is never used for supplementary service codes.
@@ -249,35 +245,35 @@ interface IRadio {
      *
      * Response function is IRadioResponse.dialResponse()
      */
-    oneway void dial(in int serial, in Dial dialInfo);
+    void dial(in int serial, in Dial dialInfo);
 
     /**
      * Initiate emergency voice call, with zero or more emergency service category(s), zero or
      * more emergency Uniform Resource Names (URN), and routing information for handling the call.
-     * Android uses this request to make its emergency call instead of using @1.0::IRadio.dial
-     * if the 'address' in the 'dialInfo' field is identified as an emergency number by Android.
+     * Android uses this request to make its emergency call instead of using IRadio.dial if the
+     * 'address' in the 'dialInfo' field is identified as an emergency number by Android.
      *
      * In multi-sim scenario, if the emergency number is from a specific subscription, this radio
      * request can still be sent out on the other subscription as long as routing is set to
-     * @1.4::EmergencyNumberRouting#EMERGENCY. This radio request will not be sent on an inactive
+     * EmergencyNumberRouting#EMERGENCY. This radio request will not be sent on an inactive
      * (PIN/PUK locked) subscription unless both subscriptions are PIN/PUK locked. In this case,
      * the request will be sent on the primary subscription.
      *
      * Some countries or carriers require some emergency numbers that must be handled with normal
      * call routing if possible or emergency routing. 1) if the 'routing' field is specified as
-     * @1.4::EmergencyNumberRouting#NORMAL, the implementation must try the full radio service to
-     * use normal call routing to handle the call; if service cannot support normal routing, the
+     * EmergencyNumberRouting#NORMAL, the implementation must try the full radio service to use
+     * normal call routing to handle the call; if service cannot support normal routing, the
      * implementation must use emergency routing to handle the call. 2) if 'routing' is specified
-     * as @1.4::EmergencyNumberRouting#EMERGENCY, the implementation must use emergency routing to
-     * handle the call. 3) if 'routing' is specified as @1.4::EmergencyNumberRouting#UNKNOWN,
-     * Android does not know how to handle the call.
+     * as EmergencyNumberRouting#EMERGENCY, the implementation must use emergency routing to handle
+     * the call. 3) if 'routing' is specified as EmergencyNumberRouting#UNKNOWN, Android does not
+     * know how to handle the call.
      *
      * If the dialed emergency number does not have a specified emergency service category, the
-     * 'categories' field is set to @1.4::EmergencyServiceCategory#UNSPECIFIED; if the dialed
-     * emergency number does not have specified emergency Uniform Resource Names, the 'urns' field
-     * is set to an empty list. If the underlying technology used to request emergency services
-     * does not support the emergency service category or emergency uniform resource names, the
-     * field 'categories' or 'urns' may be ignored.
+     * 'categories' field is set to EmergencyServiceCategory#UNSPECIFIED; if the dialed emergency
+     * number does not have specified emergency Uniform Resource Names, the 'urns' field is set to
+     * an empty list. If the underlying technology used to request emergency services does not
+     * support the emergency service category or emergency uniform resource names, the field
+     * 'categories' or 'urns' may be ignored.
      *
      * In the scenarios that the 'address' in the 'dialInfo' field has other functions besides the
      * emergency number function, if the 'hasKnownUserIntentEmergency' field is true, the user's
@@ -294,24 +290,23 @@ interface IRadio {
      *            RFC 5031
      *
      * @param serial Serial number of request.
-     * @param dialInfo the same @1.0::Dial information used by @1.0::IRadio.dial.
-     * @param categories bitfield<@1.4::EmergencyServiceCategory> the Emergency Service Category(s)
+     * @param dialInfo the same Dial information used by IRadio.dial.
+     * @param categories bitfield<EmergencyServiceCategory> the Emergency Service Category(s)
      *        of the call.
      * @param urns the emergency Uniform Resource Names (URN)
-     * @param routing @1.4::EmergencyCallRouting the emergency call routing information.
+     * @param routing EmergencyCallRouting the emergency call routing information.
      * @param hasKnownUserIntentEmergency Flag indicating if user's intent for the emergency call
      *        is known.
      * @param isTesting Flag indicating if this request is for testing purpose.
      *
      * Response function is IRadioResponse.emergencyDialResponse()
      */
-    oneway void emergencyDial(in int serial, in Dial dialInfo,
-            in EmergencyServiceCategory categories, in String[] urns,
-            in EmergencyCallRouting routing, in boolean hasKnownUserIntentEmergency,
-            in boolean isTesting);
+    void emergencyDial(in int serial, in Dial dialInfo, in EmergencyServiceCategory categories,
+            in String[] urns, in EmergencyCallRouting routing,
+            in boolean hasKnownUserIntentEmergency, in boolean isTesting);
 
     /**
-     * Toggle logical modem on/off. This is similar to @1.0::IRadio.setRadioPower(), however that
+     * Toggle logical modem on/off. This is similar to IRadio.setRadioPower(), however that
      * does not enforce that radio power is toggled only for the corresponding radio and certain
      * vendor implementations do it for all radios. This new API should affect only the modem for
      * which it is called. A modem stack must be on/active only when both setRadioPower() and
@@ -324,7 +319,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.enableModemResponse()
      */
-    oneway void enableModem(in int serial, in boolean on);
+    void enableModem(in int serial, in boolean on);
 
     /**
      * Enable or disable UiccApplications on the SIM. If disabled:
@@ -342,7 +337,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.enableUiccApplicationsResponse()
      */
-    oneway void enableUiccApplications(in int serial, in boolean enable);
+    void enableUiccApplications(in int serial, in boolean enable);
 
     /**
      * Request the radio's system selection module to exit emergency callback mode. Radio must not
@@ -352,7 +347,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.exitEmergencyCallbackModeResponse()
      */
-    oneway void exitEmergencyCallbackMode(in int serial);
+    void exitEmergencyCallbackMode(in int serial);
 
     /**
      * Connects the two calls and disconnects the subscriber from both calls.
@@ -361,16 +356,16 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.explicitCallTransferResponse()
      */
-    oneway void explicitCallTransfer(in int serial);
+    void explicitCallTransfer(in int serial);
 
     /**
      * Get carrier restrictions.
      *
      * @param serial Serial number of request.
      *
-     * Response callback is IRadioResponse.getAllowedCarriersResponse_1_4()
+     * Response callback is IRadioResponse.getAllowedCarriersResponse()
      */
-    oneway void getAllowedCarriers(in int serial);
+    void getAllowedCarriers(in int serial);
 
     /**
      * Requests bitmap representing the currently allowed network types.
@@ -381,7 +376,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.getAllowedNetworkTypesBitmapResponse()
      */
-    oneway void getAllowedNetworkTypesBitmap(in int serial);
+    void getAllowedNetworkTypesBitmap(in int serial);
 
     /**
      * Get the list of band modes supported by RF.
@@ -390,7 +385,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.getAvailableBandModesResponse()
      */
-    oneway void getAvailableBandModes(in int serial);
+    void getAvailableBandModes(in int serial);
 
     /**
      * Scans for available networks
@@ -399,7 +394,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.getAvailableNetworksResponse()
      */
-    oneway void getAvailableNetworks(in int serial);
+    void getAvailableNetworks(in int serial);
 
     /**
      * Get all the barring info for the current camped cell applicable to the current user.
@@ -408,7 +403,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.getBarringInfoResponse()
      */
-    oneway void getBarringInfo(in int serial);
+    void getBarringInfo(in int serial);
 
     /**
      * Return string value indicating baseband version, eg response from AT+CGMR
@@ -417,7 +412,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.getBasebandVersionResponse()
      */
-    oneway void getBasebandVersion(in int serial);
+    void getBasebandVersion(in int serial);
 
     /**
      * Request the device MDN / H_SID / H_NID. The request is only allowed when CDMA subscription
@@ -428,7 +423,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.getCDMASubscriptionResponse()
      */
-    oneway void getCDMASubscription(in int serial);
+    void getCDMASubscription(in int serial);
 
     /**
      * Request call forward status.
@@ -438,7 +433,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.getCallForwardStatusResponse()
      */
-    oneway void getCallForwardStatus(in int serial, in CallForwardInfo callInfo);
+    void getCallForwardStatus(in int serial, in CallForwardInfo callInfo);
 
     /**
      * Query current call waiting state
@@ -448,7 +443,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.getCallWaitingResponse()
      */
-    oneway void getCallWaiting(in int serial, in int serviceClass);
+    void getCallWaiting(in int serial, in int serviceClass);
 
     /**
      * Request the setting of CDMA Broadcast SMS config
@@ -457,7 +452,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.getCdmaBroadcastConfigResponse()
      */
-    oneway void getCdmaBroadcastConfig(in int serial);
+    void getCdmaBroadcastConfig(in int serial);
 
     /**
      * Request the actual setting of the roaming preferences in CDMA in the modem
@@ -466,7 +461,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.getCdmaRoamingPreferenceResponse()
      */
-    oneway void getCdmaRoamingPreference(in int serial);
+    void getCdmaRoamingPreference(in int serial);
 
     /**
      * Request to query the location where the CDMA subscription shall be retrieved.
@@ -475,19 +470,19 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.getCdmaSubscriptionSourceResponse()
      */
-    oneway void getCdmaSubscriptionSource(in int serial);
+    void getCdmaSubscriptionSource(in int serial);
 
     /**
-     * Request all of the current cell information known to the radio. The radio
-     * must return list of all current cells, including the neighboring cells. If for a particular
-     * cell information isn't known then the appropriate unknown value will be returned.
+     * Request all of the current cell information known to the radio. The radio must return a list
+     * of all current cells, including the neighboring cells. If for a particular cell information
+     * isn't known then the appropriate unknown value will be returned.
      * This does not cause or change the rate of unsolicited cellInfoList().
      *
      * @param serial Serial number of request.
      *
      * Response callback is IRadioResponse.getCellInfoListResponse()
      */
-    oneway void getCellInfoList(in int serial);
+    void getCellInfoList(in int serial);
 
     /**
      * Queries the status of the CLIP supplementary service (for MMI code "*#30#")
@@ -496,7 +491,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.getClipResponse()
      */
-    oneway void getClip(in int serial);
+    void getClip(in int serial);
 
     /**
      * Gets current CLIR status
@@ -505,16 +500,16 @@ interface IRadio {
      *
      * Response function is IRadioResponse.getClirResponse()
      */
-    oneway void getClir(in int serial);
+    void getClir(in int serial);
 
     /**
      * Requests current call list
      *
      * @param serial Serial number of request.
      *
-     * Response function is IRadioResponse.getCurrentCallsResponse_1_6()
+     * Response function is IRadioResponse.getCurrentCallsResponse()
      */
-    oneway void getCurrentCalls(in int serial);
+    void getCurrentCalls(in int serial);
 
     /**
      * Returns the data call list. An entry is added when a setupDataCall() is issued and removed
@@ -523,18 +518,18 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      *
-     * Response function is IRadioResponse.getDataCallListResponse_1_6()
+     * Response function is IRadioResponse.getDataCallListResponse()
      */
-    oneway void getDataCallList(in int serial);
+    void getDataCallList(in int serial);
 
     /**
      * Request current data registration state.
      *
      * @param serial Serial number of request.
      *
-     * Response function is IRadioResponse.getDataRegistrationStateResponse_1_6()
+     * Response function is IRadioResponse.getDataRegistrationStateResponse()
      */
-    oneway void getDataRegistrationState(in int serial);
+    void getDataRegistrationState(in int serial);
 
     /**
      * Request the device ESN / MEID / IMEI / IMEISV. The request is always allowed and contains
@@ -545,7 +540,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.getDeviceIdentityResponse()
      */
-    oneway void getDeviceIdentity(in int serial);
+    void getDeviceIdentity(in int serial);
 
     /**
      * Query the status of a facility lock state
@@ -560,7 +555,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.getFacilityLockForAppResponse()
      */
-    oneway void getFacilityLockForApp(in int serial, in String facility, in String password,
+    void getFacilityLockForApp(in int serial, in String facility, in String password,
             in int serviceClass, in String appId);
 
     /**
@@ -570,7 +565,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.getGsmBroadcastConfigResponse()
      */
-    oneway void getGsmBroadcastConfig(in int serial);
+    void getGsmBroadcastConfig(in int serial);
 
     /**
      * Request all of the current hardware (modem and sim) associated with Radio.
@@ -579,7 +574,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.getHardwareConfigResponse()
      */
-    oneway void getHardwareConfig(in int serial);
+    void getHardwareConfig(in int serial);
 
     /**
      * Requests status of the ICC card
@@ -589,7 +584,7 @@ interface IRadio {
      * Response function is IRadioResponse.getIccCardStatusResponse()
      *
      */
-    oneway void getIccCardStatus(in int serial);
+    void getIccCardStatus(in int serial);
 
     /**
      * Request current IMS registration state
@@ -598,7 +593,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.getImsRegistrationStateResponse()
      */
-    oneway void getImsRegistrationState(in int serial);
+    void getImsRegistrationState(in int serial);
 
     /**
      * Get the SIM IMSI. Only valid when radio state is "RADIO_STATE_ON"
@@ -609,7 +604,7 @@ interface IRadio {
      * Response function is IRadioResponse.getImsiForAppResponse()
      *
      */
-    oneway void getImsiForApp(in int serial, in String aid);
+    void getImsiForApp(in int serial, in String aid);
 
     /**
      * Requests the failure cause code for the most recently terminated call.
@@ -619,7 +614,7 @@ interface IRadio {
      * Response function is IRadioResponse.getLastCallFailCauseResponse()
      *
      */
-    oneway void getLastCallFailCause(in int serial);
+    void getLastCallFailCause(in int serial);
 
     /**
      * Get modem activity information for power consumption estimation. Request clear-on-read
@@ -630,7 +625,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.getModemActivityInfoResponse()
      */
-    oneway void getModemActivityInfo(in int serial);
+    void getModemActivityInfo(in int serial);
 
     /**
      * Request status of logical modem. It returns isEnabled=true if the logical modem is on.
@@ -640,7 +635,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.getModemStackStatusResponse()
      */
-    oneway void getModemStackStatus(in int serial);
+    void getModemStackStatus(in int serial);
 
     /**
      * Queries the current state of the uplink mute setting
@@ -649,7 +644,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.getMuteResponse()
      */
-    oneway void getMute(in int serial);
+    void getMute(in int serial);
 
     /**
      * Request neighboring cell id in GSM network
@@ -658,7 +653,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.getNeighboringCidsResponse()
      */
-    oneway void getNeighboringCids(in int serial);
+    void getNeighboringCids(in int serial);
 
     /**
      * Query current network selection mode
@@ -667,7 +662,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.getNetworkSelectionModeResponse()
      */
-    oneway void getNetworkSelectionMode(in int serial);
+    void getNetworkSelectionMode(in int serial);
 
     /**
      * Request current operator ONS or EONS
@@ -676,7 +671,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.getOperatorResponse()
      */
-    oneway void getOperator(in int serial);
+    void getOperator(in int serial);
 
     /**
      * Query the preferred network type (CS/PS domain, RAT, and operation mode)
@@ -686,7 +681,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.getPreferredNetworkTypeResponse()
      */
-    oneway void getPreferredNetworkType(in int serial);
+    void getPreferredNetworkType(in int serial);
 
     /**
      * Query the preferred network type bitmap.
@@ -695,7 +690,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.getPreferredNetworkTypeBitmapResponse()
      */
-    oneway void getPreferredNetworkTypeBitmap(in int serial);
+    void getPreferredNetworkTypeBitmap(in int serial);
 
     /**
      * Request the setting of preferred voice privacy mode.
@@ -704,7 +699,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.getPreferredVoicePrivacyResponse()
      */
-    oneway void getPreferredVoicePrivacy(in int serial);
+    void getPreferredVoicePrivacy(in int serial);
 
     /**
      * Used to get phone radio capability.
@@ -713,16 +708,16 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.getRadioCapabilityResponse()
      */
-    oneway void getRadioCapability(in int serial);
+    void getRadioCapability(in int serial);
 
     /**
      * Requests current signal strength and associated information. Must succeed if radio is on.
      *
      * @param serial Serial number of request.
      *
-     * Response function is IRadioResponse.getSignalStrengthResponse_1_6()
+     * Response function is IRadioResponse.getSignalStrengthResponse()
      */
-    oneway void getSignalStrength(in int serial);
+    void getSignalStrength(in int serial);
 
     /**
      * Get the phone book capacity
@@ -731,7 +726,7 @@ interface IRadio {
      *
      * Response function is defined from IRadioResponse.getSimPhonebookCapacityResponse()
      */
-    oneway void getSimPhonebookCapacity(in int serial);
+    void getSimPhonebookCapacity(in int serial);
 
     /**
      * Get the local and global phonebook records from the SIM card.
@@ -742,7 +737,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.getSimPhonebookRecordsResponse()
      */
-    oneway void getSimPhonebookRecords(in int serial);
+    void getSimPhonebookRecords(in int serial);
 
     /**
      * Request to get the current slicing configuration including URSP rules and NSSAIs
@@ -753,7 +748,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.getSlicingConfigResponse()
      */
-    oneway void getSlicingConfig(in int serial);
+    void getSlicingConfig(in int serial);
 
     /**
      * Get the default Short Message Service Center address on the device.
@@ -762,7 +757,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.getSmscAddressResponse()
      */
-    oneway void getSmscAddress(in int serial);
+    void getSmscAddress(in int serial);
 
     /**
      * Get which bands the modem's background scan is acting on.
@@ -771,7 +766,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.getSystemSelectionChannelsResponse()
      */
-    oneway void getSystemSelectionChannels(in int serial);
+    void getSystemSelectionChannels(in int serial);
 
     /**
      * Request the setting of TTY mode
@@ -780,7 +775,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.getTTYModeResponse()
      */
-    oneway void getTTYMode(in int serial);
+    void getTTYMode(in int serial);
 
     /**
      * Query the radio technology type (3GPP/3GPP2) used for voice. Query is valid only
@@ -790,7 +785,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.getVoiceRadioTechnologyResponse()
      */
-    oneway void getVoiceRadioTechnology(in int serial);
+    void getVoiceRadioTechnology(in int serial);
 
     /**
      * Request current voice registration state.
@@ -799,7 +794,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.getVoiceRegistrationStateResponse()
      */
-    oneway void getVoiceRegistrationState(in int serial);
+    void getVoiceRegistrationState(in int serial);
 
     /**
      * When STK application gets stkCallSetup(), the call actually has been initialized by the
@@ -811,7 +806,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.handleStkCallSetupRequestFromSimResponse()
      */
-    oneway void handleStkCallSetupRequestFromSim(in int serial, in boolean accept);
+    void handleStkCallSetupRequestFromSim(in int serial, in boolean accept);
 
     /**
      * Hang up a specific line (like AT+CHLD=1x). After this HANGUP request returns, Radio must
@@ -822,7 +817,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.hangupResponse()
      */
-    oneway void hangup(in int serial, in int gsmIndex);
+    void hangup(in int serial, in int gsmIndex);
 
     /**
      * Hang up waiting or held (like AT+CHLD=1). After this HANGUP request returns, Radio must show
@@ -832,7 +827,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.hangupForegroundResumeBackgroundResponse()
      */
-    oneway void hangupForegroundResumeBackground(in int serial);
+    void hangupForegroundResumeBackground(in int serial);
 
     /**
      * Hang up waiting or held (like AT+CHLD=0). After this HANGUP request returns, Radio must show
@@ -842,7 +837,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.hangupWaitingOrBackgroundResponse()
      */
-    oneway void hangupWaitingOrBackground(in int serial);
+    void hangupWaitingOrBackground(in int serial);
 
     /**
      * Close a previously opened logical channel. This command reflects TS 27.007
@@ -853,7 +848,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.iccCloseLogicalChannelResponse()
      */
-    oneway void iccCloseLogicalChannel(in int serial, in int channelId);
+    void iccCloseLogicalChannel(in int serial, in int channelId);
 
     /**
      * Request ICC I/O operation. This is similar to the TS 27.007 "restricted SIM" operation where
@@ -867,7 +862,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.iccIOForAppResponse()
      */
-    oneway void iccIOForApp(in int serial, in IccIo iccIo);
+    void iccIOForApp(in int serial, in IccIo iccIo);
 
     /**
      * Open a new logical channel and select the given application. This command
@@ -875,11 +870,11 @@ interface IRadio {
      *
      * @param serial Serial number of request.
      * @param aid AID value, See ETSI 102.221 and 101.220.
-     * @param p2 P2 value, described in ISO 7816-4. Ignore if equal to P2Constant:NO_P2
+     * @param p2 P2 value, described in ISO 7816-4. Ignore if equal to RadioConst:P2_CONSTANT_NO_P2
      *
      * Response callback is IRadioResponse.iccOpenLogicalChannelResponse()
      */
-    oneway void iccOpenLogicalChannel(in int serial, in String aid, in int p2);
+    void iccOpenLogicalChannel(in int serial, in String aid, in int p2);
 
     /**
      * Request APDU exchange on the basic channel. This command reflects TS 27.007
@@ -892,7 +887,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.iccTransmitApduBasicChannelResponse()
      */
-    oneway void iccTransmitApduBasicChannel(in int serial, in SimApdu message);
+    void iccTransmitApduBasicChannel(in int serial, in SimApdu message);
 
     /**
      * Exchange APDUs with a UICC over a previously opened logical channel. This command reflects
@@ -904,7 +899,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.iccTransmitApduLogicalChannelResponse()
      */
-    oneway void iccTransmitApduLogicalChannel(in int serial, in SimApdu message);
+    void iccTransmitApduLogicalChannel(in int serial, in SimApdu message);
 
     /**
      * Is E-UTRA-NR Dual Connectivity enabled
@@ -912,7 +907,7 @@ interface IRadio {
      * @param serial Serial number of request.
      * Response callback is IRadioResponse.isNrDualConnectivityEnabledResponse()
      */
-    oneway void isNrDualConnectivityEnabled(in int serial);
+    void isNrDualConnectivityEnabled(in int serial);
 
     /**
      * Read one of the radio NV items.
@@ -923,7 +918,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.nvReadItemResponse()
      */
-    oneway void nvReadItem(in int serial, in NvItem itemId);
+    void nvReadItem(in int serial, in NvItem itemId);
 
     /**
      * Reset the radio NV configuration to the factory state.
@@ -934,7 +929,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.nvResetConfigResponse()
      */
-    oneway void nvResetConfig(in int serial, in ResetNvType resetType);
+    void nvResetConfig(in int serial, in ResetNvType resetType);
 
     /**
      * Update the CDMA Preferred Roaming List (PRL) in the radio NV storage.
@@ -945,7 +940,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.nvWriteCdmaPrlResponse()
      */
-    oneway void nvWriteCdmaPrl(in int serial, in byte[] prl);
+    void nvWriteCdmaPrl(in int serial, in byte[] prl);
 
     /**
      * Write one of the radio NV items.
@@ -956,19 +951,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.nvWriteItemResponse()
      */
-    oneway void nvWriteItem(in int serial, in NvWriteItem item);
-
-    /**
-     * Pull LCE service for capacity information.
-     *
-     * @param serial Serial number of request.
-     *
-     * Response callback is IRadioResponse.pullLceDataResponse() which may return
-     * RadioError:REQUEST_NOT_SUPPORTED if @1.2::IRadio or higher is supported.
-     *
-     * DEPRECATED in @1.2 or higher which use the always-on LCE that relies on indications.
-     */
-    oneway void pullLceData(in int serial);
+    void nvWriteItem(in int serial, in NvWriteItem item);
 
     /**
      * Send UDUB (user determined user busy) to ringing or waiting call answer)
@@ -977,7 +960,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.rejectCallResponse()
      */
-    oneway void rejectCall(in int serial);
+    void rejectCall(in int serial);
 
     /**
      * Releases a pdu session id that was previously allocated using allocatePduSessionId.
@@ -988,7 +971,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.releasePduSessionIdResponse()
      */
-    oneway void releasePduSessionId(in int serial, in int id);
+    void releasePduSessionId(in int serial, in int id);
 
     /**
      * Indicates whether there is storage available for new SMS messages.
@@ -999,7 +982,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.reportSmsMemoryStatusResponse()
      */
-    oneway void reportSmsMemoryStatus(in int serial, in boolean available);
+    void reportSmsMemoryStatus(in int serial, in boolean available);
 
     /**
      * Indicates that the StkService is running and is ready to receive unsolicited stk commands.
@@ -1008,7 +991,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.reportStkServiceIsRunningResponse()
      */
-    oneway void reportStkServiceIsRunning(in int serial);
+    void reportStkServiceIsRunning(in int serial);
 
     /**
      * Returns the response of SIM Authentication through Radio challenge request.
@@ -1021,7 +1004,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.requestIccSimAuthenticationResponse()
      */
-    oneway void requestIccSimAuthentication(
+    void requestIccSimAuthentication(
             in int serial, in int authContext, in String authData, in String aid);
 
     /**
@@ -1033,7 +1016,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.requestIsimAuthenticationResponse()
      */
-    oneway void requestIsimAuthentication(in int serial, in String challenge);
+    void requestIsimAuthentication(in int serial, in String challenge);
 
     /**
      * Device is shutting down. All further commands are ignored and RADIO_NOT_AVAILABLE
@@ -1043,14 +1026,14 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.requestShutdownResponse()
      */
-    oneway void requestShutdown(in int serial);
+    void requestShutdown(in int serial);
 
     /**
      * When response type received from a radio indication or radio response is
      * RadioIndicationType:UNSOLICITED_ACK_EXP or RadioResponseType:SOLICITED_ACK_EXP respectively,
      * acknowledge the receipt of those messages by sending responseAcknowledgement().
      */
-    oneway void responseAcknowledgement();
+    void responseAcknowledgement();
 
     /**
      * Send DTMF string
@@ -1062,7 +1045,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.sendBurstDtmfResponse()
      */
-    oneway void sendBurstDtmf(in int serial, in String dtmf, in int on, in int off);
+    void sendBurstDtmf(in int serial, in String dtmf, in int on, in int off);
 
     /**
      * Send FLASH command
@@ -1072,7 +1055,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.sendCDMAFeatureCodeResponse()
      */
-    oneway void sendCDMAFeatureCode(in int serial, in String featureCode);
+    void sendCDMAFeatureCode(in int serial, in String featureCode);
 
     /**
      * Send a CDMA SMS message
@@ -1082,7 +1065,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.sendCdmaSmsResponse()
      */
-    oneway void sendCdmaSms(in int serial, in CdmaSmsMessage sms);
+    void sendCdmaSms(in int serial, in CdmaSmsMessage sms);
 
     /**
      * Send an SMS message. Identical to sendCdmaSms, except that more messages are expected to be
@@ -1093,7 +1076,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.sendCdmaSMSExpectMoreResponse()
      */
-    oneway void sendCdmaSmsExpectMore(in int serial, in CdmaSmsMessage sms);
+    void sendCdmaSmsExpectMore(in int serial, in CdmaSmsMessage sms);
 
     /**
      * Send the updated device state. This is providing the device state information for the modem
@@ -1105,8 +1088,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.sendDeviceStateResponse()
      */
-    oneway void sendDeviceState(
-            in int serial, in DeviceStateType deviceStateType, in boolean state);
+    void sendDeviceState(in int serial, in DeviceStateType deviceStateType, in boolean state);
 
     /**
      * Send a DTMF tone. If the implementation is currently playing a tone requested via
@@ -1117,7 +1099,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.sendDtmfResponse()
      */
-    oneway void sendDtmf(in int serial, in String s);
+    void sendDtmf(in int serial, in String s);
 
     /**
      * Requests to send a SAT/USAT envelope command to SIM.
@@ -1128,7 +1110,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.sendEnvelopeResponse()
      */
-    oneway void sendEnvelope(in int serial, in String command);
+    void sendEnvelope(in int serial, in String command);
 
     /**
      * Requests to send a SAT/USAT envelope command to SIM. The SAT/USAT envelope command refers to
@@ -1143,7 +1125,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.sendEnvelopeWithStatusResponse()
      */
-    oneway void sendEnvelopeWithStatus(in int serial, in String contents);
+    void sendEnvelopeWithStatus(in int serial, in String contents);
 
     /**
      * Send a SMS message over IMS. Based on the return error, caller decides to resend if sending
@@ -1155,23 +1137,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.sendImsSmsResponse()
      */
-    oneway void sendImsSms(in int serial, in ImsSmsMessage message);
-
-    /**
-     * Send an SMS message. Identical to sendSms, except that more messages are expected to be sent
-     * soon. If possible, keep SMS relay protocol link open (eg TS 27.005 AT+CMMS command).
-     * Based on the returned error, caller decides to resend if sending sms fails.
-     * RadioError:SMS_SEND_FAIL_RETRY means retry (i.e. error cause is 332) and
-     * RadioError:GENERIC_FAILURE means no retry (i.e. error cause is 500)
-     *
-     * @param serial Serial number of request.
-     * @param message GsmSmsMessage as defined in types.hal
-     *
-     * Response function is IRadioResponse.sendSMSExpectMoreResponse()
-     *
-     * DEPRECATED in @1.6 or higher which uses sendSmsExpectMore().
-     */
-    oneway void sendSMSExpectMore(in int serial, in GsmSmsMessage message);
+    void sendImsSms(in int serial, in ImsSmsMessage message);
 
     /**
      * Send an SMS message. Based on the returned error, caller decides to resend if sending sms
@@ -1183,7 +1149,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.sendSmsResponse()
      */
-    oneway void sendSms(in int serial, in GsmSmsMessage message);
+    void sendSms(in int serial, in GsmSmsMessage message);
 
     /**
      * Send an SMS message. Identical to sendSms, except that more messages are expected to be sent
@@ -1197,7 +1163,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.sendSmsExpectMoreResponse()
      */
-    oneway void sendSmsExpectMore(in int serial, in GsmSmsMessage message);
+    void sendSmsExpectMore(in int serial, in GsmSmsMessage message);
 
     /**
      * Requests to send a terminal response to SIM for a received proactive command
@@ -1208,7 +1174,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.sendTerminalResponseResponseToSim()
      */
-    oneway void sendTerminalResponseToSim(in int serial, in String commandResponse);
+    void sendTerminalResponseToSim(in int serial, in String commandResponse);
 
     /**
      * Send a USSD message. If a USSD session already exists, the message must be sent in the
@@ -1227,7 +1193,7 @@ interface IRadio {
      *
      * See also requestCancelUssd, unsolOnUssd
      */
-    oneway void sendUssd(in int serial, in String ussd);
+    void sendUssd(in int serial, in String ussd);
 
     /**
      * Separate a party from a multiparty call placing the multiparty call (less the specified
@@ -1243,7 +1209,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.separateConnectionResponse()
      */
-    oneway void separateConnection(in int serial, in int gsmIndex);
+    void separateConnection(in int serial, in int gsmIndex);
 
     /**
      * Set carrier restrictions. Expected modem behavior:
@@ -1257,13 +1223,12 @@ interface IRadio {
      *    CardState:RESTRICTED. Emergency service must be enabled.
      *
      * @param serial Serial number of request.
-     * @param carriers CarrierRestrictionsWithPriority consisting allowed and excluded carriers
-     *        as defined in types.hal
+     * @param carriers CarrierRestrictions consisting allowed and excluded carriers
      * @param multiSimPolicy Policy to be used for devices with multiple SIMs.
      *
      * Response callback is IRadioResponse.setAllowedCarriersResponse()
      */
-    oneway void setAllowedCarriers(in int serial, in CarrierRestrictionsWithPriority carriers,
+    void setAllowedCarriers(in int serial, in CarrierRestrictions carriers,
             in SimLockMultiSimPolicy multiSimPolicy);
 
     /**
@@ -1277,7 +1242,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setAllowedNetworkTypesBitmapResponse()
      */
-    oneway void setAllowedNetworkTypesBitmap(in int serial, in RadioAccessFamily networkTypeBitmap);
+    void setAllowedNetworkTypesBitmap(in int serial, in RadioAccessFamily networkTypeBitmap);
 
     /**
      * Assign a specified band for RF configuration.
@@ -1287,7 +1252,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.setBandModeResponse()
      */
-    oneway void setBandMode(in int serial, in RadioBandMode mode);
+    void setBandMode(in int serial, in RadioBandMode mode);
 
     /**
      * Change call barring facility password
@@ -1299,7 +1264,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.setBarringPasswordResponse()
      */
-    oneway void setBarringPassword(
+    void setBarringPassword(
             in int serial, in String facility, in String oldPassword, in String newPassword);
 
     /**
@@ -1310,7 +1275,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.setCallForwardResponse()
      */
-    oneway void setCallForward(in int serial, in CallForwardInfo callInfo);
+    void setCallForward(in int serial, in CallForwardInfo callInfo);
 
     /**
      * Configure current call waiting state
@@ -1321,7 +1286,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.setCallWaitingResponse()
      */
-    oneway void setCallWaiting(in int serial, in boolean enable, in int serviceClass);
+    void setCallWaiting(in int serial, in boolean enable, in int serviceClass);
 
     /**
      * Provide Carrier specific information to the modem that must be used to encrypt the IMSI and
@@ -1333,8 +1298,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setCarrierInfoForImsiEncryptionResponse()
      */
-    oneway void setCarrierInfoForImsiEncryption(
-            in int serial, in ImsiEncryptionInfo imsiEncryptionInfo);
+    void setCarrierInfoForImsiEncryption(in int serial, in ImsiEncryptionInfo imsiEncryptionInfo);
 
     /**
      * Enable or disable the reception of CDMA Cell Broadcast SMS
@@ -1345,7 +1309,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setCdmaBroadcastActivationResponse()
      */
-    oneway void setCdmaBroadcastActivation(in int serial, in boolean activate);
+    void setCdmaBroadcastActivation(in int serial, in boolean activate);
 
     /**
      * Set CDMA Broadcast SMS config
@@ -1355,7 +1319,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setCdmaBroadcastConfigResponse()
      */
-    oneway void setCdmaBroadcastConfig(in int serial, in CdmaBroadcastSmsConfigInfo[] configInfo);
+    void setCdmaBroadcastConfig(in int serial, in CdmaBroadcastSmsConfigInfo[] configInfo);
 
     /**
      * Request to set the roaming preferences in CDMA
@@ -1365,7 +1329,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setCdmaRoamingPreferenceResponse()
      */
-    oneway void setCdmaRoamingPreference(in int serial, in CdmaRoamingType type);
+    void setCdmaRoamingPreference(in int serial, in CdmaRoamingType type);
 
     /**
      * Request to set the location where the CDMA subscription shall be retrieved
@@ -1375,7 +1339,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setCdmaSubscriptionSourceResponse()
      */
-    oneway void setCdmaSubscriptionSource(in int serial, in CdmaSubscriptionSource cdmaSub);
+    void setCdmaSubscriptionSource(in int serial, in CdmaSubscriptionSource cdmaSub);
 
     /**
      * Sets the minimum time between when unsolicited cellInfoList() must be invoked.
@@ -1387,7 +1351,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setCellInfoListRateResponse()
      */
-    oneway void setCellInfoListRate(in int serial, in int rate);
+    void setCellInfoListRate(in int serial, in int rate);
 
     /**
      * Set current CLIR status
@@ -1397,7 +1361,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.setClirResponse()
      */
-    oneway void setClir(in int serial, in int status);
+    void setClir(in int serial, in int status);
 
     /**
      * Tells the modem whether data calls are allowed or not
@@ -1407,7 +1371,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setDataAllowedResponse()
      */
-    oneway void setDataAllowed(in int serial, in boolean allow);
+    void setDataAllowed(in int serial, in boolean allow);
 
     /**
      * Send data profiles of the current carrier to the modem.
@@ -1417,7 +1381,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setDataProfileResponse()
      */
-    oneway void setDataProfile(in int serial, in DataProfileInfo[] profiles);
+    void setDataProfile(in int serial, in DataProfileInfo[] profiles);
 
     /**
      * Control data throttling at modem.
@@ -1438,7 +1402,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.setDataThrottlingResponse()
      */
-    oneway void setDataThrottling(in int serial, in DataThrottlingAction dataThrottlingAction,
+    void setDataThrottling(in int serial, in DataThrottlingAction dataThrottlingAction,
             in long completionDurationMillis);
 
     /**
@@ -1455,7 +1419,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.setFacilityLockForAppResponse()
      */
-    oneway void setFacilityLockForApp(in int serial, in String facility, in boolean lockState,
+    void setFacilityLockForApp(in int serial, in String facility, in boolean lockState,
             in String password, in int serviceClass, in String appId);
 
     /**
@@ -1467,7 +1431,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setGsmBroadcastActivationResponse()
      */
-    oneway void setGsmBroadcastActivation(in int serial, in boolean activate);
+    void setGsmBroadcastActivation(in int serial, in boolean activate);
 
     /**
      * Set GSM/WCDMA Cell Broadcast SMS config
@@ -1477,7 +1441,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setGsmBroadcastConfigResponse()
      */
-    oneway void setGsmBroadcastConfig(in int serial, in GsmBroadcastSmsConfigInfo[] configInfo);
+    void setGsmBroadcastConfig(in int serial, in GsmBroadcastSmsConfigInfo[] configInfo);
 
     /**
      * Sets the indication filter. Prevents the reporting of specified unsolicited indications from
@@ -1490,7 +1454,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setIndicationFilterResponse()
      */
-    oneway void setIndicationFilter(in int serial, in IndicationFilter indicationFilter);
+    void setIndicationFilter(in int serial, in IndicationFilter indicationFilter);
 
     /**
      * Set an APN to initial attach network.
@@ -1500,7 +1464,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setInitialAttachApnResponse()
      */
-    oneway void setInitialAttachApn(in int serial, in DataProfileInfo dataProfileInfo);
+    void setInitialAttachApn(in int serial, in DataProfileInfo dataProfileInfo);
 
     /**
      * Sets the link capacity reporting criteria. The resulting reporting criteria are the AND of
@@ -1524,7 +1488,7 @@ interface IRadio {
      *        vector size of 0 disables the use of UL thresholds for reporting.
      * @param accessNetwork The type of network for which to apply these thresholds.
      */
-    oneway void setLinkCapacityReportingCriteria(in int serial, in int hysteresisMs,
+    void setLinkCapacityReportingCriteria(in int serial, in int hysteresisMs,
             in int hysteresisDlKbps, in int hysteresisUlKbps, in int[] thresholdsDownlinkKbps,
             in int[] thresholdsUplinkKbps, in AccessNetwork accessNetwork);
 
@@ -1539,7 +1503,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setLocationUpdatesResponse()
      */
-    oneway void setLocationUpdates(in int serial, in boolean enable);
+    void setLocationUpdates(in int serial, in boolean enable);
 
     /**
      * Turn on or off uplink (microphone) mute. Must only be sent while voice call is active.
@@ -1550,7 +1514,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.setMuteResponse()
      */
-    oneway void setMute(in int serial, in boolean enable);
+    void setMute(in int serial, in boolean enable);
 
     /**
      * Specify that the network must be selected automatically.
@@ -1560,7 +1524,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.setNetworkSelectionModeAutomaticResponse()
      */
-    oneway void setNetworkSelectionModeAutomatic(in int serial);
+    void setNetworkSelectionModeAutomatic(in int serial);
 
     /**
      * Manually select a specified network. This request must not respond until the new operator is
@@ -1576,7 +1540,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.setNetworkSelectionModeManualResponse()
      */
-    oneway void setNetworkSelectionModeManual(
+    void setNetworkSelectionModeManual(
             in int serial, in String operatorNumeric, in RadioAccessNetworks ran);
 
     /**
@@ -1592,7 +1556,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setNRDualConnectivityStateResponse()
      */
-    oneway void setNrDualConnectivityState(
+    void setNrDualConnectivityState(
             in int serial, in NrDualConnectivityState nrDualConnectivityState);
 
     /**
@@ -1604,7 +1568,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setPreferredNetworkTypeResponse()
      */
-    oneway void setPreferredNetworkType(in int serial, in PreferredNetworkType nwType);
+    void setPreferredNetworkType(in int serial, in PreferredNetworkType nwType);
 
     /**
      * Requests to set the preferred network type for searching and registering.
@@ -1614,8 +1578,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setPreferredNetworkTypeBitmapResponse()
      */
-    oneway void setPreferredNetworkTypeBitmap(
-            in int serial, in RadioAccessFamily networkTypeBitmap);
+    void setPreferredNetworkTypeBitmap(in int serial, in RadioAccessFamily networkTypeBitmap);
 
     /**
      * Request to set the preferred voice privacy mode used in voice scrambling.
@@ -1626,7 +1589,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setPreferredVoicePrivacyResponse()
      */
-    oneway void setPreferredVoicePrivacy(in int serial, in boolean enable);
+    void setPreferredVoicePrivacy(in int serial, in boolean enable);
 
     /**
      * Used to set the phones radio capability. Be VERY careful using this request as it may cause
@@ -1638,7 +1601,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setRadioCapabilityResponse()
      */
-    oneway void setRadioCapability(in int serial, in RadioCapability rc);
+    void setRadioCapability(in int serial, in RadioCapability rc);
 
     /**
      * Toggle radio on and off (for "airplane" mode). If the radio is turned off/on the radio modem
@@ -1648,7 +1611,7 @@ interface IRadio {
      * logical modem, powerOn, forEmergencyCall and preferredForEmergencyCall must be true. In
      * this case, this modem is optimized to scan only emergency call bands, until:
      * 1) Emergency call is completed; or
-     * 2) Another setRadioPower_1_5 is issued with forEmergencyCall being false or
+     * 2) Another setRadioPower is issued with forEmergencyCall being false or
      *    preferredForEmergencyCall being false; or
      * 3) Timeout after 30 seconds if dial or emergencyDial is not called.
      * Once one of these conditions is reached, the modem should move into normal operation.
@@ -1662,7 +1625,7 @@ interface IRadio {
      *
      * Response callback is IRadioConfigResponse.setRadioPowerResponse.
      */
-    oneway void setRadioPower(in int serial, in boolean powerOn, in boolean forEmergencyCall,
+    void setRadioPower(in int serial, in boolean powerOn, in boolean forEmergencyCall,
             in boolean preferredForEmergencyCall);
 
     /**
@@ -1695,7 +1658,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setSignalStrengthReportingCriteriaResponse()
      */
-    oneway void setSignalStrengthReportingCriteria(in int serial,
+    void setSignalStrengthReportingCriteria(in int serial,
             in SignalThresholdInfo signalThresholdInfo, in AccessNetwork accessNetwork);
 
     /**
@@ -1725,7 +1688,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setSimCardPowerResponse().
      */
-    oneway void setSimCardPower(in int serial, in CardPowerState powerUp);
+    void setSimCardPower(in int serial, in CardPowerState powerUp);
 
     /**
      * Set the default Short Message Service Center address on the device.
@@ -1735,7 +1698,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setSmscAddressResponse()
      */
-    oneway void setSmscAddress(in int serial, in String smsc);
+    void setSmscAddress(in int serial, in String smsc);
 
     /**
      * Enables/disables supplementary service related notifications from the network.
@@ -1746,7 +1709,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.setSuppServiceNotificationsResponse()
      */
-    oneway void setSuppServiceNotifications(in int serial, in boolean enable);
+    void setSuppServiceNotifications(in int serial, in boolean enable);
 
     /**
      * Specify which bands modem's background scan must act on. If specifyChannels is true, it only
@@ -1759,7 +1722,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setSystemSelectionChannelsResponse()
      */
-    oneway void setSystemSelectionChannels(
+    void setSystemSelectionChannels(
             in int serial, in boolean specifyChannels, in RadioAccessSpecifier[] specifiers);
 
     /**
@@ -1770,7 +1733,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setTTYModeResponse()
      */
-    oneway void setTTYMode(in int serial, in TtyMode mode);
+    void setTTYMode(in int serial, in TtyMode mode);
 
     /**
      * Selection/de-selection of a subscription from a SIM card
@@ -1780,7 +1743,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.setUiccSubscriptionResponse()
      */
-    oneway void setUiccSubscription(in int serial, in SelectUiccSub uiccSub);
+    void setUiccSubscription(in int serial, in SelectUiccSub uiccSub);
 
     /**
      * Setup a packet data connection. If DataCallResponse.status returns DataCallFailCause:NONE,
@@ -1839,11 +1802,12 @@ interface IRadio {
      *
      * Response function is IRadioResponse.setupDataCallResponse()
      */
-    oneway void setupDataCall(in int serial, in AccessNetwork accessNetwork,
+    void setupDataCall(in int serial, in AccessNetwork accessNetwork,
             in DataProfileInfo dataProfileInfo, in boolean roamingAllowed,
             in DataRequestReason reason, in LinkAddress[] addresses, in String[] dnses,
-            in int pduSessionId, in OptionalSliceInfo sliceInfo,
-            in OptionalTrafficDescriptor trafficDescriptor, in boolean matchAllRuleAllowed);
+            in int pduSessionId, in @nullable SliceInfo sliceInfo,
+            in @nullable TrafficDescriptor trafficDescriptor,
+            in boolean matchAllRuleAllowed);
 
     /**
      * Start playing a DTMF tone. Continue playing DTMF tone until stopDtmf is received. If a
@@ -1855,7 +1819,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.startDtmfResponse()
      */
-    oneway void startDtmf(in int serial, in String s);
+    void startDtmf(in int serial, in String s);
 
     /**
      * Indicates that a handover to the IWLAN transport has begun. Any resources being transferred
@@ -1872,7 +1836,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.startHandoverResponse()
      */
-    oneway void startHandover(in int serial, in int callId);
+    void startHandover(in int serial, in int callId);
 
     /**
      * Start a Keepalive session (for IPsec)
@@ -1882,20 +1846,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.startKeepaliveResponse()
      */
-    oneway void startKeepalive(in int serial, in KeepaliveRequest keepalive);
-
-    /**
-     * Start Link Capacity Estimate (LCE) service if supported by the radio.
-     *
-     * @param serial Serial number of request.
-     * @param reportInterval desired reporting interval (ms).
-     * @param pullMode LCE service mode. true: PULL; false: PUSH.
-     *
-     * Response callback is IRadioResponse.startLceServiceResponse()
-     *
-     * DEPRECATED in @1.2 or higher which use the always-on LCE that relies on indications.
-     */
-    oneway void startLceService(in int serial, in int reportInterval, in boolean pullMode);
+    void startKeepalive(in int serial, in KeepaliveRequest keepalive);
 
     /**
      * Starts a network scan.
@@ -1905,7 +1856,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.startNetworkScanResponse()
      */
-    oneway void startNetworkScan(in int serial, in NetworkScanRequest request);
+    void startNetworkScan(in int serial, in NetworkScanRequest request);
 
     /**
      * Stop playing a currently playing DTMF tone.
@@ -1914,7 +1865,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.stopDtmfResponse()
      */
-    oneway void stopDtmf(in int serial);
+    void stopDtmf(in int serial);
 
     /**
      * Stop an ongoing Keepalive session (for IPsec)
@@ -1924,19 +1875,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.stopKeepaliveResponse()
      */
-    oneway void stopKeepalive(in int serial, in int sessionHandle);
-
-    /**
-     * Stop Link Capacity Estimate (LCE) service, the STOP operation must be idempotent for the
-     * radio modem.
-     *
-     * @param serial Serial number of request.
-     *
-     * Response callback is IRadioResponse.stopLceServiceResponse()
-     *
-     * DEPRECATED in @1.2 or higher which use the always-on LCE that relies on indications.
-     */
-    oneway void stopLceService(in int serial);
+    void stopKeepalive(in int serial, in int sessionHandle);
 
     /**
      * Stops ongoing network scan
@@ -1945,7 +1884,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.stopNetworkScanResponse()
      */
-    oneway void stopNetworkScan(in int serial);
+    void stopNetworkScan(in int serial);
 
     /**
      * Supplies ICC PIN2. Only called following operation where SIM_PIN2 was returned as a failure
@@ -1957,7 +1896,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.supplyIccPin2ForAppResponse()
      */
-    oneway void supplyIccPin2ForApp(in int serial, in String pin2, in String aid);
+    void supplyIccPin2ForApp(in int serial, in String pin2, in String aid);
 
     /**
      * Supplies ICC PIN. Only called if CardStatus has AppState.PIN state
@@ -1968,7 +1907,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.supplyIccPinForAppResponse()
      */
-    oneway void supplyIccPinForApp(in int serial, in String pin, in String aid);
+    void supplyIccPinForApp(in int serial, in String pin, in String aid);
 
     /**
      * Supplies ICC PUK2 and new PIN2.
@@ -1980,7 +1919,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.supplyIccPuk2ForAppResponse()
      */
-    oneway void supplyIccPuk2ForApp(in int serial, in String puk2, in String pin2, in String aid);
+    void supplyIccPuk2ForApp(in int serial, in String puk2, in String pin2, in String aid);
 
     /**
      * Supplies ICC PUK and new PIN.
@@ -1992,7 +1931,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.supplyIccPukForAppResponse()
      */
-    oneway void supplyIccPukForApp(in int serial, in String puk, in String pin, in String aid);
+    void supplyIccPukForApp(in int serial, in String puk, in String pin, in String aid);
 
     /**
      * Requests that network personalization be deactivated
@@ -2002,7 +1941,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.supplyNetworkDepersonalizationResponse()
      */
-    oneway void supplyNetworkDepersonalization(in int serial, in String netPin);
+    void supplyNetworkDepersonalization(in int serial, in String netPin);
 
     /**
      * Request that deactivates one category of device personalization. Device personalization
@@ -2017,7 +1956,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.supplySimDepersonalizationResponse()
      */
-    oneway void supplySimDepersonalization(
+    void supplySimDepersonalization(
             in int serial, in PersoSubstate persoType, in String controlKey);
 
     /**
@@ -2035,7 +1974,7 @@ interface IRadio {
      *
      * Response function is IRadioResponse.switchWaitingOrHoldingAndActiveResponse()
      */
-    oneway void switchWaitingOrHoldingAndActive(in int serial);
+    void switchWaitingOrHoldingAndActive(in int serial);
 
     /**
      * Insert, delete or update a phonebook record on the SIM card. If the index of recordInfo is 0,
@@ -2049,7 +1988,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.updateSimPhonebookRecordsResponse()
      */
-    oneway void updateSimPhonebookRecords(in int serial, in PhonebookRecordInfo recordInfo);
+    void updateSimPhonebookRecords(in int serial, in PhonebookRecordInfo recordInfo);
 
     /**
      * Stores a CDMA SMS message to RUIM memory.
@@ -2059,7 +1998,7 @@ interface IRadio {
      *
      * Response callback is IRadioResponse.writeSmsToRuimResponse()
      */
-    oneway void writeSmsToRuim(in int serial, in CdmaSmsWriteArgs cdmaSms);
+    void writeSmsToRuim(in int serial, in CdmaSmsWriteArgs cdmaSms);
 
     /**
      * Stores a SMS message to SIM memory.
@@ -2069,5 +2008,5 @@ interface IRadio {
      *
      * Response function is IRadioResponse.writeSmsToSimResponse()
      */
-    oneway void writeSmsToSim(in int serial, in SmsWriteArgs smsWriteArgs);
+    void writeSmsToSim(in int serial, in SmsWriteArgs smsWriteArgs);
 }

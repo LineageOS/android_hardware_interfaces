@@ -16,16 +16,26 @@
 
 package android.hardware.radio;
 
-import android.hardware.radio.SubscriptionType;
-import android.hardware.radio.UiccSubActStatus;
-
 @VintfStability
 parcelable SelectUiccSub {
+    const int SUBSCRIPTION_TYPE_1 = 0;
+    const int SUBSCRIPTION_TYPE_2 = 1;
+    const int SUBSCRIPTION_TYPE_3 = 2;
+
+    const int ACT_STATUS_DEACTIVATE = 0;
+    const int ACT_STATUS_ACTIVATE = 1;
+
     int slot;
     /**
      * Array subscriptor from applications[RadioConst:CARD_MAX_APPS] in getIccCardStatus()
      */
     int appIndex;
-    SubscriptionType subType;
-    UiccSubActStatus actStatus;
+    /**
+     * Values are SUBSCRIPTION_TYPE_
+     */
+    int subType;
+    /**
+     * Values are ACT_STATUS_
+     */
+    int actStatus;
 }

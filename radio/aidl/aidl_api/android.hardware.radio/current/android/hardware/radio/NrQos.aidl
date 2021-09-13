@@ -39,4 +39,6 @@ parcelable NrQos {
   android.hardware.radio.QosBandwidth uplink;
   byte qfi;
   char averagingWindowMs;
+  const byte FLOW_ID_RANGE_MIN = 1;
+  const byte FLOW_ID_RANGE_MAX = 63;
 }

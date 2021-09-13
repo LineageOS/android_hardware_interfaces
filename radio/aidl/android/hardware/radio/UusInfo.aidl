@@ -16,22 +16,52 @@
 
 package android.hardware.radio;
 
-import android.hardware.radio.UusDcs;
-import android.hardware.radio.UusType;
-
 /**
  * User-to-User Signaling Information defined in 3GPP 23.087 v8.0
  */
 @VintfStability
 parcelable UusInfo {
     /**
-     * UUS type
+     * User specified protocol
      */
-    UusType uusType;
+    const int UUS_DCS_USP = 0;
     /**
-     * UUS data coding scheme
+     * OSI higher layer protocol
      */
-    UusDcs uusDcs;
+    const int UUS_DCS_OSIHLP = 1;
+    /**
+     * X.244
+     */
+    const int UUS_DCS_X244 = 2;
+    /**
+     * Reserved for system management
+     */
+    const int UUS_DCS_RMCF = 3;
+    /**
+     * IA5 characters
+     */
+    const int UUS_DCS_IA5C = 4;
+
+    const int UUS_TYPE_TYPE1_IMPLICIT = 0;
+    const int UUS_TYPE_TYPE1_REQUIRED = 1;
+    const int UUS_TYPE_TYPE1_NOT_REQUIRED = 2;
+    const int UUS_TYPE_TYPE2_REQUIRED = 3;
+    const int UUS_TYPE_TYPE2_NOT_REQUIRED = 4;
+    const int UUS_TYPE_TYPE3_REQUIRED = 5;
+    const int UUS_TYPE_TYPE3_NOT_REQUIRED = 6;
+
+    /**
+     * User-to-User Signaling Information activation types derived from 3GPP 23.087 v8.0
+     * Values are UUS_TYPE_
+     */
+    int uusType;
+    /**
+     * User-to-User Signaling Information data coding schemes. Possible values for Octet 3 (Protocol
+     * Discriminator field) in the UUIE. The values have been specified in section 10.5.4.25 of
+     * 3GPP TS 24.008
+     * Values are UUS_DCS_
+     */
+    int uusDcs;
     /**
      * UUS data
      */

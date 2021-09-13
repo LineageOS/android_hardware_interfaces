@@ -16,13 +16,20 @@
 
 package android.hardware.radio;
 
-import android.hardware.radio.PublicKeyType;
-
 /**
  * Carrier specific Information sent by the carrier, which will be used to encrypt IMSI and IMPI.
  */
 @VintfStability
 parcelable ImsiEncryptionInfo {
+    /**
+     * Key type to be used for ePDG
+     */
+    const byte PUBLIC_KEY_TYPE_EPDG = 1;
+    /**
+     * Key type to be used for WLAN
+     */
+    const byte PUBLIC_KEY_TYPE_WLAN = 2;
+
     /**
      * MCC of the Carrier.
      */
@@ -51,7 +58,8 @@ parcelable ImsiEncryptionInfo {
      */
     long expirationTime;
     /**
-     * Public key type.
+     * Public key type from carrier certificate.
+     * Values are PUBLIC_KEY_TYPE_
      */
-    PublicKeyType keyType;
+    byte keyType;
 }

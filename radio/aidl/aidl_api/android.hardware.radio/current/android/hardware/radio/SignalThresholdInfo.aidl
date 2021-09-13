@@ -34,9 +34,17 @@
 package android.hardware.radio;
 @VintfStability
 parcelable SignalThresholdInfo {
-  android.hardware.radio.SignalMeasurementType signalMeasurement;
+  int signalMeasurement;
   int hysteresisMs;
   int hysteresisDb;
   int[] thresholds;
   boolean isEnabled;
+  const int SIGNAL_MEASUREMENT_TYPE_RSSI = 1;
+  const int SIGNAL_MEASUREMENT_TYPE_RSCP = 2;
+  const int SIGNAL_MEASUREMENT_TYPE_RSRP = 3;
+  const int SIGNAL_MEASUREMENT_TYPE_RSRQ = 4;
+  const int SIGNAL_MEASUREMENT_TYPE_RSSNR = 5;
+  const int SIGNAL_MEASUREMENT_TYPE_SSRSRP = 6;
+  const int SIGNAL_MEASUREMENT_TYPE_SSRSRQ = 7;
+  const int SIGNAL_MEASUREMENT_TYPE_SSSINR = 8;
 }
