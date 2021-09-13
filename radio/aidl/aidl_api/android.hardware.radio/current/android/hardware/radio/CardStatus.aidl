@@ -34,7 +34,7 @@
 package android.hardware.radio;
 @VintfStability
 parcelable CardStatus {
-  android.hardware.radio.CardState cardState;
+  int cardState;
   android.hardware.radio.PinState universalPinState;
   int gsmUmtsSubscriptionAppIndex;
   int cdmaSubscriptionAppIndex;
@@ -44,4 +44,8 @@ parcelable CardStatus {
   String atr;
   String iccid;
   String eid;
+  const int STATE_ABSENT = 0;
+  const int STATE_PRESENT = 1;
+  const int STATE_ERROR = 2;
+  const int STATE_RESTRICTED = 3;
 }

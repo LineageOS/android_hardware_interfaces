@@ -27,7 +27,7 @@ parcelable UrspRule {
     /**
      * Precedence value in the range of 0 to 255. Higher value has lower precedence.
      */
-    byte precedence;
+    int precedence;
     /**
      * Used as a matcher for network requests.
      */

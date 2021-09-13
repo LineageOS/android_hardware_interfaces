@@ -36,12 +36,20 @@ package android.hardware.radio;
 parcelable QosFilter {
   String[] localAddresses;
   String[] remoteAddresses;
-  android.hardware.radio.MaybePort localPort;
-  android.hardware.radio.MaybePort remotePort;
-  android.hardware.radio.QosProtocol protocol;
+  @nullable android.hardware.radio.PortRange localPort;
+  @nullable android.hardware.radio.PortRange remotePort;
+  byte protocol;
   android.hardware.radio.QosFilterTypeOfService tos;
   android.hardware.radio.QosFilterIpv6FlowLabel flowLabel;
   android.hardware.radio.QosFilterIpsecSpi spi;
-  android.hardware.radio.QosFilterDirection direction;
+  byte direction;
   int precedence;
+  const byte DIRECTION_DOWNLINK = 0;
+  const byte DIRECTION_UPLINK = 1;
+  const byte DIRECTION_BIDIRECTIONAL = 2;
+  const byte PROTOCOL_UNSPECIFIED = -1;
+  const byte PROTOCOL_TCP = 6;
+  const byte PROTOCOL_UDP = 17;
+  const byte PROTOCOL_ESP = 50;
+  const byte PROTOCOL_AH = 51;
 }
