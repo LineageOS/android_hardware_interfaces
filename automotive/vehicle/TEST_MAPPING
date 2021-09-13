@@ -8,6 +8,9 @@
     },
     {
       "name": "VehicleHalVehicleUtilsTest"
+    },
+    {
+      "name": "FakeVehicleHardwareTest"
     }
   ]
 }
