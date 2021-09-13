@@ -55,7 +55,7 @@ interface IRadioResponse {
   oneway void enableUiccApplicationsResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void exitEmergencyCallbackModeResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void explicitCallTransferResponse(in android.hardware.radio.RadioResponseInfo info);
-  oneway void getAllowedCarriersResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.CarrierRestrictionsWithPriority carriers, in android.hardware.radio.SimLockMultiSimPolicy multiSimPolicy);
+  oneway void getAllowedCarriersResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.CarrierRestrictions carriers, in android.hardware.radio.SimLockMultiSimPolicy multiSimPolicy);
   oneway void getAllowedNetworkTypesBitmapResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.RadioAccessFamily networkTypeBitmap);
   oneway void getAvailableBandModesResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.RadioBandMode[] bandModes);
   oneway void getAvailableNetworksResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.OperatorInfo[] networkInfos);

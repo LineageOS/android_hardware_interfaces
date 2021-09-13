@@ -42,5 +42,5 @@ parcelable CellIdentityTdscdma {
   int uarfcn;
   android.hardware.radio.CellIdentityOperatorNames operatorNames;
   String[] additionalPlmns;
-  android.hardware.radio.OptionalCsgInfo optionalCsgInfo;
+  @nullable android.hardware.radio.ClosedSubscriberGroupInfo csgInfo;
 }

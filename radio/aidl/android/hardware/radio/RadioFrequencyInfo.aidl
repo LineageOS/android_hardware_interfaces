@@ -16,15 +16,31 @@
 
 package android.hardware.radio;
 
-import android.hardware.radio.FrequencyRange;
-
 @VintfStability
 union RadioFrequencyInfo {
+    /**
+     * Indicates the frequency range is below 1GHz.
+     */
+    const int FREQUENCY_RANGE_LOW = 1;
+    /**
+     * Indicates the frequency range is between 1GHz and 3GHz.
+     */
+    const int FREQUENCY_RANGE_MID = 2;
+    /**
+     * Indicates the frequency range is between 3GHz and 6GHz.
+     */
+    const int FREQUENCY_RANGE_HIGH = 3;
+    /**
+     * Indicates the frequency range is above 6GHz (millimeter wave frequency).
+     */
+    const int FREQUENCY_RANGE_MMWAVE = 4;
+
     boolean noinit;
     /**
      * A rough frequency range.
+     * Values are FREQUENCY_RANGE_
      */
-    FrequencyRange range;
+    int range;
     /**
      * The Absolute Radio Frequency Channel Number.
      */

@@ -34,7 +34,7 @@
 package android.hardware.radio;
 @VintfStability
 parcelable UrspRule {
-  byte precedence;
+  int precedence;
   android.hardware.radio.TrafficDescriptor[] trafficDescriptors;
   android.hardware.radio.RouteSelectionDescriptor[] routeSelectionDescriptor;
 }

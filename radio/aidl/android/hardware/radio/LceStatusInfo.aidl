@@ -16,11 +16,16 @@
 
 package android.hardware.radio;
 
-import android.hardware.radio.LceStatus;
-
 @VintfStability
 parcelable LceStatusInfo {
-    LceStatus lceStatus;
+    const int LCE_STATUS_NOT_SUPPORTED = 0;
+    const int LCE_STATUS_STOPPED = 1;
+    const int LCE_STATUS_ACTIVE = 2;
+
+    /**
+     * Values are LCE_STATUS_
+     */
+    int lceStatus;
     /**
      * Actual LCE reporting interval, meaningful only if LceStatus = ACTIVE.
      */

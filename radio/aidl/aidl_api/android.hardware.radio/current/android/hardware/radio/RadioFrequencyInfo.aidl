@@ -35,6 +35,10 @@ package android.hardware.radio;
 @VintfStability
 union RadioFrequencyInfo {
   boolean noinit;
-  android.hardware.radio.FrequencyRange range;
+  int range;
   int channelNumber;
+  const int FREQUENCY_RANGE_LOW = 1;
+  const int FREQUENCY_RANGE_MID = 2;
+  const int FREQUENCY_RANGE_HIGH = 3;
+  const int FREQUENCY_RANGE_MMWAVE = 4;
 }

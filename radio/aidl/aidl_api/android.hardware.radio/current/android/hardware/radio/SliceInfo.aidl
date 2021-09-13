@@ -34,9 +34,19 @@
 package android.hardware.radio;
 @VintfStability
 parcelable SliceInfo {
-  android.hardware.radio.SliceServiceType sst;
+  byte sliceServiceType;
   int sliceDifferentiator;
-  android.hardware.radio.SliceServiceType mappedHplmnSst;
+  byte mappedHplmnSst;
   int mappedHplmnSD;
-  android.hardware.radio.SliceStatus status;
+  byte status;
+  const byte SERVICE_TYPE_NONE = 0;
+  const byte SERVICE_TYPE_EMBB = 1;
+  const byte SERVICE_TYPE_URLLC = 2;
+  const byte SERVICE_TYPE_MIOT = 3;
+  const byte STATUS_UNKNOWN = 0;
+  const byte STATUS_CONFIGURED = 1;
+  const byte STATUS_ALLOWED = 2;
+  const byte STATUS_REJECTED_NOT_AVAILABLE_IN_PLMN = 3;
+  const byte STATUS_REJECTED_NOT_AVAILABLE_IN_REG_AREA = 4;
+  const byte STATUS_DEFAULT_CONFIGURED = 5;
 }
