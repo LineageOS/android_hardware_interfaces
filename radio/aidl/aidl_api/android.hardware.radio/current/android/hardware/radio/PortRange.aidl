@@ -36,4 +36,6 @@ package android.hardware.radio;
 parcelable PortRange {
   int start;
   int end;
+  const int PORT_RANGE_MIN = 20;
+  const int PORT_RANGE_MAX = 65535;
 }

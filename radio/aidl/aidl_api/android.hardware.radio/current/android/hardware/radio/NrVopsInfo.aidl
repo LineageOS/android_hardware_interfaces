@@ -34,7 +34,18 @@
 package android.hardware.radio;
 @VintfStability
 parcelable NrVopsInfo {
-  android.hardware.radio.VopsIndicator vopsSupported;
-  android.hardware.radio.EmcIndicator emcSupported;
-  android.hardware.radio.EmfIndicator emfSupported;
+  byte vopsSupported;
+  byte emcSupported;
+  byte emfSupported;
+  const byte EMC_INDICATOR_NOT_SUPPORTED = 0;
+  const byte EMC_INDICATOR_NR_CONNECTED_TO_5GCN = 1;
+  const byte EMC_INDICATOR_EUTRA_CONNECTED_TO_5GCN = 2;
+  const byte EMC_INDICATOR_BOTH_NR_EUTRA_CONNECTED_TO_5GCN = 3;
+  const byte EMF_INDICATOR_NOT_SUPPORTED = 0;
+  const byte EMF_INDICATOR_NR_CONNECTED_TO_5GCN = 1;
+  const byte EMF_INDICATOR_EUTRA_CONNECTED_TO_5GCN = 2;
+  const byte EMF_INDICATOR_BOTH_NR_EUTRA_CONNECTED_TO_5GCN = 3;
+  const byte VOPS_INDICATOR_VOPS_NOT_SUPPORTED = 0;
+  const byte VOPS_INDICATOR_VOPS_OVER_3GPP = 1;
+  const byte VOPS_INDICATOR_VOPS_OVER_NON_3GPP = 2;
 }

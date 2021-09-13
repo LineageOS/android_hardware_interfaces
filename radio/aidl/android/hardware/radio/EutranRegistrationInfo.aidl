@@ -16,29 +16,20 @@
 
 package android.hardware.radio;
 
-@VintfStability
-parcelable KeepaliveStatus {
-    /**
-     * Keepalive is currently active.
-     */
-    const int CODE_ACTIVE = 0;
-    /**
-     * Keepalive is inactive, which indicates an error.
-     */
-    const int CODE_INACTIVE = 1;
-    /**
-     * Requested keepalive has not yet been processed by the modem.
-     * Only allowed in a RESPONSE message to a REQUEST.
-     */
-    const int CODE_PENDING = 2;
+import android.hardware.radio.LteVopsInfo;
+import android.hardware.radio.NrIndicators;
 
+@VintfStability
+parcelable EutranRegistrationInfo {
     /**
-     * The sessionHandle provided by the API.
+     * Network capabilities for voice over PS services. This info is valid only on LTE network and
+     * must be present when device is camped on LTE. VopsInfo must be empty when device is camped
+     * only on 2G/3G.
      */
-    int sessionHandle;
+    LteVopsInfo lteVopsInfo;
     /**
-     * Status for the given keepalive.
-     * Values are CODE_
+     * The parameters of NR 5G Non-Standalone. This value is only valid on E-UTRAN, otherwise must
+     * be empty.
      */
-    int code;
+    NrIndicators nrIndicators;
 }

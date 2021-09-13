@@ -33,4 +33,8 @@ enum RadioConst {
     NUM_SERVICE_CLASSES = 7,
     NUM_TX_POWER_LEVELS = 5,
     RADIO_ACCESS_SPECIFIER_MAX_SIZE = 8,
+    /**
+     * No P2 value is provided
+     */
+    P2_CONSTANT_NO_P2 = -1,
 }

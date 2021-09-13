@@ -16,14 +16,22 @@
 
 package android.hardware.radio;
 
-import android.hardware.radio.KeepaliveType;
-
 @VintfStability
 parcelable KeepaliveRequest {
     /**
-     * The format of the keepalive packet
+     * Keepalive specified by RFC 3948 Sec. 2.3 using IPv4
      */
-    KeepaliveType type;
+    const int TYPE_NATT_IPV4 = 0;
+    /**
+     * Keepalive specified by RFC 3948 Sec. 2.3 using IPv6
+     */
+    const int TYPE_NATT_IPV6 = 1;
+
+    /**
+     * The format of the keepalive packet
+     * Values are TYPE_
+     */
+    int type;
     /**
      * Source address with type = family, in network byte order
      */

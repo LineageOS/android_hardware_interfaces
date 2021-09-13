@@ -30,4 +30,18 @@ parcelable CarrierRestrictions {
      * is ABCD, all carriers with the same mcc/mnc are allowed.
      */
     Carrier[] excludedCarriers;
+    /**
+     * Whether this is a carrier restriction with priority or not.
+     * If this is false, allowedCarriersPrioritized is not applicable.
+     */
+    boolean priority;
+    /**
+     * True means that only carriers included in the allowed list and not in the excluded list
+     * are permitted. Eg. allowedCarriers match mcc/mnc, excludedCarriers has same mcc/mnc and
+     * gid1 is ABCD. It means except the carrier whose gid1 is ABCD, all carriers with the
+     * same mcc/mnc are allowed.
+     * False means that all carriers are allowed except those included in the excluded list
+     * and not in the allowed list.
+     */
+    boolean allowedCarriersPrioritized;
 }

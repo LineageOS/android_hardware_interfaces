@@ -18,17 +18,31 @@ package android.hardware.radio;
 
 import android.hardware.radio.ApnAuthType;
 import android.hardware.radio.ApnTypes;
-import android.hardware.radio.DataProfileId;
-import android.hardware.radio.DataProfileInfoType;
 import android.hardware.radio.PdpProtocolType;
 import android.hardware.radio.RadioAccessFamily;
 
 @VintfStability
 parcelable DataProfileInfo {
+    const int ID_DEFAULT = 0;
+    const int ID_TETHERED = 1;
+    const int ID_IMS = 2;
+    const int ID_FOTA = 3;
+    const int ID_CBS = 4;
+    /**
+     * Start of OEM-specific profiles
+     */
+    const int ID_OEM_BASE = 1000;
+    const int ID_INVALID = 0xFFFFFFFF;
+
+    const int TYPE_COMMON = 0;
+    const int TYPE_THREE_GPP = 1;
+    const int TYPE_THREE_GPP2 = 2;
+
     /**
      * ID of the data profile.
+     * Values are ID_
      */
-    DataProfileId profileId;
+    int profileId;
     /**
      * The APN name.
      */
@@ -55,8 +69,9 @@ parcelable DataProfileInfo {
     String password;
     /**
      * Data profile technology type.
+     * Values are TYPE_
      */
-    DataProfileInfoType type;
+    int type;
     /**
      * The period in seconds to limit the maximum connections.
      */

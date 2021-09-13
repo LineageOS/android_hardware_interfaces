@@ -16,29 +16,23 @@
 
 package android.hardware.radio;
 
-@VintfStability
-parcelable KeepaliveStatus {
-    /**
-     * Keepalive is currently active.
-     */
-    const int CODE_ACTIVE = 0;
-    /**
-     * Keepalive is inactive, which indicates an error.
-     */
-    const int CODE_INACTIVE = 1;
-    /**
-     * Requested keepalive has not yet been processed by the modem.
-     * Only allowed in a RESPONSE message to a REQUEST.
-     */
-    const int CODE_PENDING = 2;
+import android.hardware.radio.Cdma2000RegistrationInfo;
+import android.hardware.radio.EutranRegistrationInfo;
+import android.hardware.radio.NrVopsInfo;
 
+@VintfStability
+union AccessTechnologySpecificInfo {
+    boolean noinit;
+    Cdma2000RegistrationInfo cdmaInfo;
+    EutranRegistrationInfo eutranInfo;
     /**
-     * The sessionHandle provided by the API.
+     * Network capabilities for voice over PS services. This info is valid only on NR network and
+     * must be present when the device is camped on NR. VopsInfo must be empty when the device is
+     * not camped on NR.
      */
-    int sessionHandle;
+    NrVopsInfo ngranNrVopsInfo;
     /**
-     * Status for the given keepalive.
-     * Values are CODE_
+     * True if the dual transfer mode is supported. Refer to 3GPP TS 44.108 section 3.4.25.3
      */
-    int code;
+    boolean geranDtmSupported;
 }

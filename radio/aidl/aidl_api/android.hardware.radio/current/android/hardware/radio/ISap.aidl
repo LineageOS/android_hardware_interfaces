@@ -39,7 +39,7 @@ interface ISap {
   oneway void disconnectReq(in int token);
   oneway void powerReq(in int token, in boolean state);
   oneway void resetSimReq(in int token);
-  void setCallback(in android.hardware.radio.ISapCallback sapCallback);
+  oneway void setCallback(in android.hardware.radio.ISapCallback sapCallback);
   oneway void setTransferProtocolReq(in int token, in android.hardware.radio.SapTransferProtocol transferProtocol);
   oneway void transferAtrReq(in int token);
   oneway void transferCardReaderStatusReq(in int token);

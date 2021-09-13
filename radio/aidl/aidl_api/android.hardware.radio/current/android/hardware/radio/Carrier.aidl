@@ -36,6 +36,11 @@ package android.hardware.radio;
 parcelable Carrier {
   String mcc;
   String mnc;
-  android.hardware.radio.CarrierMatchType matchType;
+  int matchType;
   String matchData;
+  const int MATCH_TYPE_ALL = 0;
+  const int MATCH_TYPE_SPN = 1;
+  const int MATCH_TYPE_IMSI_PREFIX = 2;
+  const int MATCH_TYPE_GID1 = 3;
+  const int MATCH_TYPE_GID2 = 4;
 }
