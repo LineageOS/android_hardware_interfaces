@@ -25,7 +25,7 @@ import android.hardware.automotive.vehicle.UserInfo;
  * in turn are converted to a VehiclePropValue.RawValue through libraries provided by the default
  * Vehicle HAL implementation.
  */
-// @VintfStability
+@VintfStability
 parcelable UsersInfo {
     /**
      * The current foreground user.

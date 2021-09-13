@@ -19,7 +19,7 @@ package android.hardware.automotive.vehicle;
 /**
  * Used by seat occupancy to enumerate the current occupancy state of the seat.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VehicleSeatOccupancyState {
     UNKNOWN = 0,

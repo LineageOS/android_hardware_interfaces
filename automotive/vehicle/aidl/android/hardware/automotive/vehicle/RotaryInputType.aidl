@@ -20,7 +20,7 @@ package android.hardware.automotive.vehicle;
  * A rotary control which can rotate without limits. These controls use HW_ROTARY_INPUT to report
  * relative clockwise or counterclockwise motion. They have no absolute position.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum RotaryInputType {
     /**

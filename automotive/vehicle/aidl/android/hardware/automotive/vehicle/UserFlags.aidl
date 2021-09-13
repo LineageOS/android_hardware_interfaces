@@ -19,7 +19,7 @@ package android.hardware.automotive.vehicle;
 /**
  * Flags used to define the characteristics of an Android user.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum UserFlags {
     /**

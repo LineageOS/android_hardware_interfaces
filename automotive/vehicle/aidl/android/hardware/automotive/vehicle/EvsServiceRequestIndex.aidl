@@ -19,7 +19,7 @@ package android.hardware.automotive.vehicle;
 /**
  * Index in int32VAlues for VehicleProperty#EVS_SERVICE_REQUEST property.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum EvsServiceRequestIndex {
     TYPE = 0,

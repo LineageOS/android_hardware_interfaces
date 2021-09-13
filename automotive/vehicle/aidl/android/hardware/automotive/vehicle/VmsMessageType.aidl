@@ -21,7 +21,7 @@ package android.hardware.automotive.vehicle;
  * integer in the vehicle property integers array and determines how the rest of
  * the message is decoded.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VmsMessageType {
     /**

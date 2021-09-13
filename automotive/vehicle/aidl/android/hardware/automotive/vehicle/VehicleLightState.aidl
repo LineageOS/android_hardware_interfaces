@@ -22,7 +22,7 @@ package android.hardware.automotive.vehicle;
  * Most XXX_LIGHTS_STATE properties will only report ON and OFF states.  Only
  * the HEADLIGHTS_STATE property will report DAYTIME_RUNNING.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VehicleLightState {
     OFF = 0,

@@ -20,7 +20,7 @@ package android.hardware.automotive.vehicle;
  * Used by INFO_FUEL_TYPE to enumerate the type of fuels this vehicle uses.
  * Consistent with projection protocol.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum FuelType {
     /**

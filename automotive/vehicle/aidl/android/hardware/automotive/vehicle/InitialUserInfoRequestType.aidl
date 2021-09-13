@@ -19,9 +19,10 @@ package android.hardware.automotive.vehicle;
 /**
  * Defines when a INITIAL_USER_INFO request was made.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum InitialUserInfoRequestType {
+    UNKNOWN = 0,
     /**
      * At the first time Android was booted (or after a factory reset).
      */

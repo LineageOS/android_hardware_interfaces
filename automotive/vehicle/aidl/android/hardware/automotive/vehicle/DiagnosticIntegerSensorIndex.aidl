@@ -25,7 +25,7 @@ package android.hardware.automotive.vehicle;
  * While these values do not directly map to SAE J1979 PIDs, an equivalence is listed next
  * to each one to aid implementors.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum DiagnosticIntegerSensorIndex {
     /**

@@ -19,7 +19,7 @@ package android.hardware.automotive.vehicle;
 /**
  * Index in int32Values for VehicleProperty#AP_POWER_STATE_REQ property.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VehicleApPowerStateReqIndex {
     STATE = 0,

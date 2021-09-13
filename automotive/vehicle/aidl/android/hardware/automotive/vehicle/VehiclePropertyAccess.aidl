@@ -22,7 +22,7 @@ package android.hardware.automotive.vehicle;
  * commands and also to ensure that set() or events commands are in sync with
  * the expected output.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VehiclePropertyAccess {
     NONE = 0x00,

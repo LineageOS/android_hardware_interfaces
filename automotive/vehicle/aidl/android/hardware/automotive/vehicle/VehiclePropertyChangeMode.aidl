@@ -19,7 +19,7 @@ package android.hardware.automotive.vehicle;
 /**
  * This describes how value of property can change.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VehiclePropertyChangeMode {
     /**

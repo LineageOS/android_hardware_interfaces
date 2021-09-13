@@ -36,7 +36,7 @@ import android.hardware.automotive.vehicle.VmsBaseMessageIntegerValuesIndex;
  * - Number of publisher IDs (N)
  * - N x publisher ID
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VmsSubscriptionsStateIntegerValuesIndex {
     /*

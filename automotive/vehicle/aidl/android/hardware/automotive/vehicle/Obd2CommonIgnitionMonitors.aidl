@@ -20,7 +20,7 @@ package android.hardware.automotive.vehicle;
  * Ignition monitors common to both SPARK and COMPRESSION.
  * These values come from the SAE J1979 standard.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum Obd2CommonIgnitionMonitors {
     COMPONENTS_AVAILABLE = 0x1 << 0,

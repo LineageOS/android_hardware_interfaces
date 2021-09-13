@@ -21,7 +21,7 @@ package android.hardware.automotive.vehicle;
  * Messages with no parameters such as VmsMessageType.AVAILABILITY_REQUEST,
  * VmsMessageType.SUBSCRIPTIONS_REQUEST and VmsMessageType.DATA are also based on this enum.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VmsBaseMessageIntegerValuesIndex {
     /*

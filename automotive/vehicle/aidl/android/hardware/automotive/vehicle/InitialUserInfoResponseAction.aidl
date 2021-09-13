@@ -19,7 +19,7 @@ package android.hardware.automotive.vehicle;
 /**
  * Defines which action the Android system should take in an INITIAL_USER_INFO request.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum InitialUserInfoResponseAction {
     /**

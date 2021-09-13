@@ -16,7 +16,7 @@
 
 package android.hardware.automotive.vehicle;
 
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VehicleAreaMirror {
     DRIVER_LEFT = 0x00000001,

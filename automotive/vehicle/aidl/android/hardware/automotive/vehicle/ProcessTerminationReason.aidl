@@ -20,7 +20,7 @@ package android.hardware.automotive.vehicle;
  * The reason why a process is terminated by car watchdog.
  * This is used with WATCHDOG_TERMINATED_PROCESS property.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum ProcessTerminationReason {
     /**
