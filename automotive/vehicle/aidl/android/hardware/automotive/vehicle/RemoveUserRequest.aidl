@@ -25,7 +25,7 @@ import android.hardware.automotive.vehicle.UsersInfo;
  * NOTE: this struct is not used in the HAL properties directly, it must be converted to
  * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
  */
-// @VintfStability
+@VintfStability
 parcelable RemoveUserRequest {
     /**
      * Arbitrary id used to map the response to the request.

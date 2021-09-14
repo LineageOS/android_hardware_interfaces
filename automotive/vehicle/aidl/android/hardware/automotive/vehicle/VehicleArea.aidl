@@ -16,7 +16,7 @@
 
 package android.hardware.automotive.vehicle;
 
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VehicleArea {
     GLOBAL = 0x01000000,

@@ -20,7 +20,7 @@ package android.hardware.automotive.vehicle;
  * Used by INFO_EV_CONNECTOR_TYPE to enumerate the type of connectors
  * available to charge the vehicle.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum EvConnectorType {
     /**

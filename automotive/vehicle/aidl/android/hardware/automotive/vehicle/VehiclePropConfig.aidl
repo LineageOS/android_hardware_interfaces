@@ -20,7 +20,7 @@ import android.hardware.automotive.vehicle.VehicleAreaConfig;
 import android.hardware.automotive.vehicle.VehiclePropertyAccess;
 import android.hardware.automotive.vehicle.VehiclePropertyChangeMode;
 
-// @VintfStability
+@VintfStability
 parcelable VehiclePropConfig {
     /** Property identifier */
     int prop;

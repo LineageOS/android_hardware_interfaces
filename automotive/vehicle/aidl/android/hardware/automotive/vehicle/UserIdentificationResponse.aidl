@@ -24,7 +24,7 @@ import android.hardware.automotive.vehicle.UserIdentificationAssociation;
  * NOTE: this struct is not used in the HAL properties directly, it must be converted to
  * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
  */
-// @VintfStability
+@VintfStability
 parcelable UserIdentificationResponse {
     /**
      * Id of the request being responded.

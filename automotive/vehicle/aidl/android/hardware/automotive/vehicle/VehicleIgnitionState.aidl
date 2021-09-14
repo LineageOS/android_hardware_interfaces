@@ -16,7 +16,7 @@
 
 package android.hardware.automotive.vehicle;
 
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VehicleIgnitionState {
     UNDEFINED = 0,

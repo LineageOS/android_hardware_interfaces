@@ -19,7 +19,7 @@ package android.hardware.automotive.vehicle;
 /**
  * Various Seats in the car.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VehicleAreaSeat {
     ROW_1_LEFT = 0x0001,

@@ -19,7 +19,7 @@ package android.hardware.automotive.vehicle;
 /**
  * Defines which ignition monitors are available to be read.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum Obd2IgnitionMonitorKind {
     SPARK = 0,

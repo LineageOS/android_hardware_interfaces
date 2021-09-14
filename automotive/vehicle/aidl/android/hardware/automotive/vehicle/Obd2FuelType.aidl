@@ -20,7 +20,7 @@ package android.hardware.automotive.vehicle;
  * The fuel type(s) supported by a vehicle.
  * These values come from the SAE J1979 standard.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum Obd2FuelType {
     NOT_AVAILABLE = 0,

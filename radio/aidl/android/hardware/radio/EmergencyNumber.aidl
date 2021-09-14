@@ -16,7 +16,6 @@
 
 package android.hardware.radio;
 
-import android.hardware.radio.EmergencyNumberSource;
 import android.hardware.radio.EmergencyServiceCategory;
 
 /**
@@ -44,6 +43,25 @@ import android.hardware.radio.EmergencyServiceCategory;
 @VintfStability
 parcelable EmergencyNumber {
     /**
+     * Indicates the number is from the network signal.
+     */
+    const int SOURCE_NETWORK_SIGNALING = 1 << 0;
+    /**
+     * Indicates the number is from the sim card.
+     */
+    const int SOURCE_SIM = 1 << 1;
+    /**
+     * Indicates the number is from the modem config.
+     */
+    const int SOURCE_MODEM_CONFIG = 1 << 2;
+    /**
+     * Indicates the number is available as default. Per the reference, 112, 911 must always be
+     * available; additionally, 000, 08, 110, 999, 118 and 119 must be available when sim is not
+     * present.
+     */
+    const int SOURCE_DEFAULT = 1 << 3;
+
+    /**
      * The emergency number. The character in the number string should only be the dial pad
      * character('0'-'9', '*', or '#'). For example: 911.
      */
@@ -66,8 +84,9 @@ parcelable EmergencyNumber {
      */
     String[] urns;
     /**
-     * The bitfield of EmergencyNumberSource(s). See EmergencyNumberSource for the value of
-     * each bit.
+     * The bitfield of EmergencyNumberSource(s) to tell where the EmergencyNumber comes from.
+     * Reference: 3gpp 22.101, Section 10 - Emergency Calls
+     * Values are SOURCE_
      */
-    EmergencyNumberSource sources;
+    int sources;
 }

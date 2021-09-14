@@ -16,16 +16,29 @@
 
 package android.hardware.radio;
 
-import android.hardware.radio.KeepaliveStatusCode;
-
 @VintfStability
 parcelable KeepaliveStatus {
     /**
-     * The sessionHandle provided by the API
+     * Keepalive is currently active.
+     */
+    const int CODE_ACTIVE = 0;
+    /**
+     * Keepalive is inactive, which indicates an error.
+     */
+    const int CODE_INACTIVE = 1;
+    /**
+     * Requested keepalive has not yet been processed by the modem.
+     * Only allowed in a RESPONSE message to a REQUEST.
+     */
+    const int CODE_PENDING = 2;
+
+    /**
+     * The sessionHandle provided by the API.
      */
     int sessionHandle;
     /**
-     * Status for the given keepalive
+     * Status for the given keepalive.
+     * Values are CODE_
      */
-    KeepaliveStatusCode code;
+    int code;
 }

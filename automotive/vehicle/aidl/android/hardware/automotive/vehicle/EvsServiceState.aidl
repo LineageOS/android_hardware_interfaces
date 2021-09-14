@@ -19,7 +19,7 @@ package android.hardware.automotive.vehicle;
 /**
  * Used by EVS_SERVICE_REQUEST to enumerate the service's state.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum EvsServiceState {
     OFF = 0,

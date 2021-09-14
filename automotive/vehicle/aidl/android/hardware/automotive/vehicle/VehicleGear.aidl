@@ -19,7 +19,7 @@ package android.hardware.automotive.vehicle;
 /**
  * Various gears which can be selected by user and chosen in system.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VehicleGear {
     GEAR_UNKNOWN = 0x0000,

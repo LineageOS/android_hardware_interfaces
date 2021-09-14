@@ -23,7 +23,7 @@ import android.hardware.automotive.vehicle.VmsBaseMessageIntegerValuesIndex;
  * Subscribers can request the publisher information for a publisher ID they received in other
  * messages.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VmsPublisherInformationIntegerValuesIndex {
     /*

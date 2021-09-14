@@ -17,7 +17,7 @@
 package android.hardware.radio;
 
 import android.hardware.radio.CellIdentityOperatorNames;
-import android.hardware.radio.OptionalCsgInfo;
+import android.hardware.radio.ClosedSubscriberGroupInfo;
 
 @VintfStability
 parcelable CellIdentityTdscdma {
@@ -53,5 +53,5 @@ parcelable CellIdentityTdscdma {
     /**
      * Information about any closed subscriber group ID for this cell.
      */
-    OptionalCsgInfo optionalCsgInfo;
+    @nullable ClosedSubscriberGroupInfo csgInfo;
 }

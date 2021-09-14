@@ -21,7 +21,7 @@ import android.hardware.automotive.vehicle.UserFlags;
 /**
  * Information about a specific Android user.
  */
-// @VintfStability
+@VintfStability
 parcelable UserInfo {
     int userId = 0;
     UserFlags flags = UserFlags.NONE;

@@ -25,7 +25,7 @@ import android.hardware.automotive.vehicle.UsersInfo;
  * NOTE: this struct is not used in the HAL properties directly, it must be converted to
  * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
  */
-// @VintfStability
+@VintfStability
 parcelable InitialUserInfoRequest {
     /**
      * Arbitrary id used to map the HAL response to the request.
@@ -34,7 +34,7 @@ parcelable InitialUserInfoRequest {
     /**
      * Type of request.
      */
-    InitialUserInfoRequestType requestType;
+    InitialUserInfoRequestType requestType = InitialUserInfoRequestType.UNKNOWN;
     /**
      * Information about the current state of the Android system.
      */

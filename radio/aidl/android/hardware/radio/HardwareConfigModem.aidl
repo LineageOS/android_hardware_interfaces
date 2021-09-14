@@ -18,12 +18,31 @@ package android.hardware.radio;
 
 @VintfStability
 parcelable HardwareConfigModem {
+    /**
+     * RIL attachment model. Values are:
+     * 0: single
+     * 1: multiple
+     * If single, there is a one-to-one relationship between a modem hardware and a ril daemon.
+     * If multiple, there is a one-to-many relationship between a modem hardware and several
+     * simultaneous ril daemons.
+     */
     int rilModel;
     /**
-     * bitset - ref. RadioTechnology.
+     * Bitset value, based on RadioTechnology.
      */
     int rat;
+    /**
+     * Maximum number of concurrent active voice calls.
+     */
     int maxVoice;
+    /**
+     * Maximum number of concurrent active data calls.
+     */
     int maxData;
+    /**
+     * Maximum number of concurrent standby connections. This is not necessarily an equal sum of the
+     * maxVoice and maxData (or a derivative of it) since it really depends on the modem capability,
+     * hence it is left for the hardware to define.
+     */
     int maxStandby;
 }

@@ -34,7 +34,7 @@
 package android.hardware.radio;
 @VintfStability
 parcelable CdmaInformationRecord {
-  android.hardware.radio.CdmaInfoRecName name;
+  int name;
   android.hardware.radio.CdmaDisplayInfoRecord[] display;
   android.hardware.radio.CdmaNumberInfoRecord[] number;
   android.hardware.radio.CdmaSignalInfoRecord[] signal;
@@ -42,4 +42,15 @@ parcelable CdmaInformationRecord {
   android.hardware.radio.CdmaLineControlInfoRecord[] lineCtrl;
   android.hardware.radio.CdmaT53ClirInfoRecord[] clir;
   android.hardware.radio.CdmaT53AudioControlInfoRecord[] audioCtrl;
+  const int NAME_DISPLAY = 0;
+  const int NAME_CALLED_PARTY_NUMBER = 1;
+  const int NAME_CALLING_PARTY_NUMBER = 2;
+  const int NAME_CONNECTED_NUMBER = 3;
+  const int NAME_SIGNAL = 4;
+  const int NAME_REDIRECTING_NUMBER = 5;
+  const int NAME_LINE_CONTROL = 6;
+  const int NAME_EXTENDED_DISPLAY = 7;
+  const int NAME_T53_CLIR = 8;
+  const int NAME_T53_RELEASE = 9;
+  const int NAME_T53_AUDIO_CONTROL = 10;
 }

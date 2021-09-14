@@ -20,7 +20,7 @@ package android.hardware.automotive.vehicle;
  * The status of the vehicle's fuel system.
  * These values come from the SAE J1979 standard.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum Obd2FuelSystemStatus {
     OPEN_INSUFFICIENT_ENGINE_TEMPERATURE = 1,

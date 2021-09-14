@@ -25,7 +25,7 @@ import android.hardware.automotive.vehicle.SwitchUserStatus;
  * NOTE: this struct is not used in the HAL properties directly, it must be converted to
  * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
  */
-// @VintfStability
+@VintfStability
 parcelable SwitchUserResponse {
     /**
      * Id of the request being responded.
@@ -34,11 +34,11 @@ parcelable SwitchUserResponse {
     /**
      * Type of message.
      */
-    SwitchUserMessageType messageType;
+    SwitchUserMessageType messageType = SwitchUserMessageType.UNKNOWN;
     /**
      * Status of the request.
      */
-    SwitchUserStatus status;
+    SwitchUserStatus status = SwitchUserStatus.SUCCESS;
     /**
      * HAL-specific error message.
      *

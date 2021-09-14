@@ -34,10 +34,15 @@
 package android.hardware.radio;
 @VintfStability
 parcelable CallForwardInfo {
-  android.hardware.radio.CallForwardInfoStatus status;
+  int status;
   int reason;
   int serviceClass;
   int toa;
   String number;
   int timeSeconds;
+  const int STATUS_DISABLE = 0;
+  const int STATUS_ENABLE = 1;
+  const int STATUS_INTERROGATE = 2;
+  const int STATUS_REGISTRATION = 3;
+  const int STATUS_ERASURE = 4;
 }
