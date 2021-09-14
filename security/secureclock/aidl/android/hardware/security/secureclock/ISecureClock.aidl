@@ -25,6 +25,10 @@ import android.hardware.security.secureclock.TimeStampToken;
  * secret. The shared secret must be available to secure clock service by implementing
  * ISharedSecret aidl. Note: ISecureClock depends on the shared secret, without which the secure
  * time stamp token cannot be generated.
+ *
+ * The timer must be the same that is used for HardwareAuthTokens. The ISecureClock interface is
+ * used to convey a fresh timestamp to those components that do not share a timer with the
+ * authenticators.
  * @hide
  */
 @VintfStability
