@@ -16,7 +16,9 @@
 
 #include <PropertyUtils.h>
 #include <VehicleUtils.h>
+
 #include <gtest/gtest.h>
+#include <vector>
 
 namespace android {
 namespace hardware {
@@ -120,6 +122,129 @@ TEST(VehicleUtilsTest, testGetAreaConfigNonGlobalNull) {
     const VehicleAreaConfig* gotConfig = getAreaConfig(testPropValue, testConfig);
 
     ASSERT_EQ(gotConfig, nullptr);
+}
+
+TEST(VehicleUtilsTest, testCreateVehiclePropValueInt32) {
+    std::unique_ptr<VehiclePropValue> value = createVehiclePropValue(VehiclePropertyType::INT32);
+
+    ASSERT_NE(value, nullptr);
+    ASSERT_EQ(1u, value->value.int32Values.size());
+}
+
+TEST(VehicleUtilsTest, testCreateVehiclePropValueInt32Vec) {
+    std::unique_ptr<VehiclePropValue> value =
+            createVehiclePropValue(VehiclePropertyType::INT32_VEC);
+
+    ASSERT_NE(value, nullptr);
+    ASSERT_EQ(1u, value->value.int32Values.size());
+}
+
+TEST(VehicleUtilsTest, testCreateVehiclePropValueInt64) {
+    std::unique_ptr<VehiclePropValue> value = createVehiclePropValue(VehiclePropertyType::INT64);
+
+    ASSERT_NE(value, nullptr);
+    ASSERT_EQ(1u, value->value.int64Values.size());
+}
+
+TEST(VehicleUtilsTest, testCreateVehiclePropValueInt64Vec) {
+    std::unique_ptr<VehiclePropValue> value =
+            createVehiclePropValue(VehiclePropertyType::INT64_VEC);
+
+    ASSERT_NE(value, nullptr);
+    ASSERT_EQ(1u, value->value.int64Values.size());
+}
+
+TEST(VehicleUtilsTest, testCreateVehiclePropValueFloat) {
+    std::unique_ptr<VehiclePropValue> value = createVehiclePropValue(VehiclePropertyType::FLOAT);
+
+    ASSERT_NE(value, nullptr);
+    ASSERT_EQ(1u, value->value.floatValues.size());
+}
+
+TEST(VehicleUtilsTest, testCreateVehiclePropValueFloatVec) {
+    std::unique_ptr<VehiclePropValue> value =
+            createVehiclePropValue(VehiclePropertyType::FLOAT_VEC);
+
+    ASSERT_NE(value, nullptr);
+    ASSERT_EQ(1u, value->value.floatValues.size());
+}
+
+TEST(VehicleUtilsTest, testCreateVehiclePropValueBytes) {
+    std::unique_ptr<VehiclePropValue> value = createVehiclePropValue(VehiclePropertyType::BYTES);
+
+    ASSERT_NE(value, nullptr);
+    ASSERT_EQ(1u, value->value.byteValues.size());
+}
+
+TEST(VehicleUtilsTest, testCreateVehiclePropValueString) {
+    std::unique_ptr<VehiclePropValue> value = createVehiclePropValue(VehiclePropertyType::STRING);
+
+    ASSERT_NE(value, nullptr);
+}
+
+TEST(VehicleUtilsTest, testCreateVehiclePropValueMixed) {
+    std::unique_ptr<VehiclePropValue> value = createVehiclePropValue(VehiclePropertyType::MIXED);
+
+    ASSERT_NE(value, nullptr);
+}
+
+TEST(VehicleUtilsTest, testCreateVehiclePropValueVecInt32) {
+    std::unique_ptr<VehiclePropValue> value =
+            createVehiclePropValueVec(VehiclePropertyType::INT32, /*vecSize=*/2);
+
+    ASSERT_NE(value, nullptr);
+    ASSERT_EQ(1u, value->value.int32Values.size())
+            << "vector size should always be 1 for single value type";
+}
+
+TEST(VehicleUtilsTest, testCreateVehiclePropValueIntVec32Vec) {
+    std::unique_ptr<VehiclePropValue> value =
+            createVehiclePropValueVec(VehiclePropertyType::INT32_VEC, /*vecSize=*/2);
+
+    ASSERT_NE(value, nullptr);
+    ASSERT_EQ(2u, value->value.int32Values.size());
+}
+
+TEST(VehicleUtilsTest, testCreateVehiclePropValueVecInt64) {
+    std::unique_ptr<VehiclePropValue> value =
+            createVehiclePropValueVec(VehiclePropertyType::INT64, /*vecSize=*/2);
+
+    ASSERT_NE(value, nullptr);
+    ASSERT_EQ(1u, value->value.int64Values.size())
+            << "vector size should always be 1 for single value type";
+}
+
+TEST(VehicleUtilsTest, testCreateVehiclePropValueIntVec64Vec) {
+    std::unique_ptr<VehiclePropValue> value =
+            createVehiclePropValueVec(VehiclePropertyType::INT64_VEC, /*vecSize=*/2);
+
+    ASSERT_NE(value, nullptr);
+    ASSERT_EQ(2u, value->value.int64Values.size());
+}
+
+TEST(VehicleUtilsTest, testCreateVehiclePropValueVecFloat) {
+    std::unique_ptr<VehiclePropValue> value =
+            createVehiclePropValueVec(VehiclePropertyType::FLOAT, /*vecSize=*/2);
+
+    ASSERT_NE(value, nullptr);
+    ASSERT_EQ(1u, value->value.floatValues.size())
+            << "vector size should always be 1 for single value type";
+}
+
+TEST(VehicleUtilsTest, testCreateVehiclePropValueFloVecatVec) {
+    std::unique_ptr<VehiclePropValue> value =
+            createVehiclePropValueVec(VehiclePropertyType::FLOAT_VEC, /*vecSize=*/2);
+
+    ASSERT_NE(value, nullptr);
+    ASSERT_EQ(2u, value->value.floatValues.size());
+}
+
+TEST(VehicleUtilsTest, testCreateVehiclePropValueVecBytes) {
+    std::unique_ptr<VehiclePropValue> value =
+            createVehiclePropValueVec(VehiclePropertyType::BYTES, /*vecSize=*/2);
+
+    ASSERT_NE(value, nullptr);
+    ASSERT_EQ(2u, value->value.byteValues.size());
 }
 
 }  // namespace vehicle
