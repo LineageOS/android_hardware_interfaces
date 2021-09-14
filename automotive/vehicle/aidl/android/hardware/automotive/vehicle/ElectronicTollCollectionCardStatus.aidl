@@ -19,7 +19,7 @@ package android.hardware.automotive.vehicle;
 /**
  * Used by ELECTRONIC_TOLL_COLLECTION_CARD_STATUS.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum ElectronicTollCollectionCardStatus {
     UNKNOWN = 0,

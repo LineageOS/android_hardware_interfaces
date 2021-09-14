@@ -16,45 +16,84 @@
 
 package android.hardware.automotive.vehicle;
 
+import android.hardware.automotive.vehicle.GetValueResults;
+import android.hardware.automotive.vehicle.SetValueResults;
 import android.hardware.automotive.vehicle.StatusCode;
-import android.hardware.automotive.vehicle.VehiclePropValue;
+import android.hardware.automotive.vehicle.VehiclePropErrors;
+import android.hardware.automotive.vehicle.VehiclePropValues;
 
-// @VintfStability
+@VintfStability
 interface IVehicleCallback {
     /**
-     * Event callback happens whenever a variable that the API user has
-     * subscribed to needs to be reported. This may be based purely on
-     * threshold and frequency (a regular subscription, see subscribe call's
-     * arguments) or when the IVehicle#set method was called and the actual
-     * change needs to be reported.
+     * Callback for {@link IVehicle#getValues} function.
      *
-     * These callbacks are chunked.
+     * Called when some of the values to fetch are ready. This might be called
+     * once or multiple times for one 'getValues' request. Each callback
+     * contains part of the requested values. It is guaranteed that all the
+     * requested values would be returned in one of the callbacks, but the order
+     * each values are ready is not guaranteed.
      *
-     * @param values that has been updated.
+     * @param responses An object either contains a list of
+     *    {@link GetValueResult} if they fits the binder memory limitation or a
+     *    shared memory file that contains responses. Each
+     *    {@link GetValueResult} either contains the property value or contains
+     *    an error happened while getting the value.
+     *
+     *    {@link GetValueResult} also contains a requestId which indicates which
+     *    request this response is for. The responses object should be parsed by
+     *    {@code android-automotive-large-parcelable} library.
      */
-    oneway void onPropertyEvent(in VehiclePropValue[] propValues);
+    oneway void onGetValues(in GetValueResults responses);
 
     /**
-     * This method gets called if the client was subscribed to a property using
-     * SubscribeFlags::EVENTS_FROM_ANDROID flag and IVehicle#set(...) method was called.
+     * Callback for {@link IVehicle#setValues} function.
      *
-     * These events must be delivered to subscriber immediately without any
-     * batching.
+     * Called when VHAL have finished handling some of the property set request.
+     * This might be called once or multiple times for one 'setValues' requests.
+     * Each callback contains part of the requested values. It is guaranteed
+     * that all the set value statuses would be returned in one of the
+     * callbacks, but the order each values are set is not guaranteed.
      *
-     * @param value Value that was set by a client.
+     * @param responses A list of {@link SetValueResult}. Each SetValueResult
+     *    contains a status indicating the status for setting the specific
+     *    property. The requestId indicates which request the response is for.
      */
-    oneway void onPropertySet(in VehiclePropValue propValue);
+    oneway void onSetValues(in SetValueResults responses);
+
+    /**
+     * Event callback happens whenever one or more variables that the API user
+     * has subscribed to need to be reported. This may be based purely on
+     * threshold and frequency (a regular subscription, see subscribe call's
+     * arguments) or when the {@link IVehicle#setValues} method was called and
+     * the actual change needs to be reported.
+     *
+     * @param propValues The updated property values wrapped in an object.
+     *    If the properties fit within binder limitation, they would be in
+     *    {@code propValues.payloads}, otherwise, they would be in a shared
+     *    memory file {@code propValues.sharedMemoryFd}.
+     *    The shared memory file is created by VHAL and must be returned to
+     *    VHAL using {@link IVehicle#returnSharedMemory} after use. There are
+     *    limited number of memory files created for each subscription, if
+     *    the client doesn't return the shared memory, the client might not get
+     *    event in the future.
+     * @param sharedMemoryFileCount Number of shared memory file allocated for
+     *    this subscription. This value could be used to tweak
+     *    {@code maxSharedMemoryFileCount} in {@link IVehicle#subscribe}. For
+     *    example, if you usually see sharedMemoryFileCount being the
+     *    maxSharedMemoryFileCount you set, this means you might need to
+     *    increase maxSharedMemoryFileCount.
+     */
+    oneway void onPropertyEvent(in VehiclePropValues propValues, int sharedMemoryFileCount);
 
     /**
      * Set property value is usually asynchronous operation. Thus even if
-     * client received StatusCode::OK from the IVehicle::set(...) this
-     * doesn't guarantee that the value was successfully propagated to the
-     * vehicle network. If such rare event occurs this method must be called.
+     * client received {@link StatusCode#OK} from {@link IVehicle#setValues}, or
+     * received {@link StatusCode#OK} in {@link #onSetValues}, this doesn't
+     * guarantee that the value was successfully propagated to the vehicle
+     * network. If such rare event occurs this method must be called.
      *
-     * @param errorCode - any value from StatusCode enum.
-     * @param property - a property where error has happened.
-     * @param areaId - bitmask that specifies in which areas the problem has
-     *                 occurred, must be 0 for global properties
+     * @param errors A list of property set errors. If the VHAL implementation
+     *     does not batch the errors, this may only contain one error.
      */
-    oneway void onPropertySetError(in StatusCode errorCode, in int propId, in int areaId);
+    oneway void onPropertySetError(in VehiclePropErrors errors);
 }

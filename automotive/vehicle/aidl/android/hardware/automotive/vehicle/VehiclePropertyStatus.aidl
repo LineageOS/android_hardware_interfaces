@@ -19,7 +19,7 @@ package android.hardware.automotive.vehicle;
 /**
  * Property status is a dynamic value that may change based on the vehicle state.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VehiclePropertyStatus {
     /** Property is available and behaving normally */

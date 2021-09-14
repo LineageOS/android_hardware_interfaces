@@ -22,7 +22,7 @@ import android.hardware.automotive.vehicle.Obd2CommonIgnitionMonitors;
  * Ignition monitors only available for COMPRESSION vehicles.
  * These values come from the SAE J1979 standard.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum Obd2CompressionIgnitionMonitors {
     COMPONENTS_AVAILABLE = 0x1 << 0,

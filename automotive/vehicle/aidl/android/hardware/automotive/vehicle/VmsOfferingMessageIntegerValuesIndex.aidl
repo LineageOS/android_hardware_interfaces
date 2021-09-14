@@ -30,7 +30,7 @@ import android.hardware.automotive.vehicle.VmsBaseMessageIntegerValuesIndex;
  * - Number of dependencies (N)
  * - N x (Layer type, Layer subtype, Layer version)
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VmsOfferingMessageIntegerValuesIndex {
     /*

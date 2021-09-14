@@ -35,6 +35,9 @@ package android.hardware.radio;
 @VintfStability
 parcelable Dial {
   String address;
-  android.hardware.radio.Clir clir;
+  int clir;
   android.hardware.radio.UusInfo[] uusInfo;
+  const int CLIR_DEFAULT = 0;
+  const int CLIR_INVOCATION = 1;
+  const int CLIR_SUPPRESSION = 2;
 }

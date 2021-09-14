@@ -34,7 +34,7 @@
 package android.hardware.radio;
 @VintfStability
 parcelable Call {
-  android.hardware.radio.CallState state;
+  int state;
   int index;
   int toa;
   boolean isMpty;
@@ -43,10 +43,20 @@ parcelable Call {
   boolean isVoice;
   boolean isVoicePrivacy;
   String number;
-  android.hardware.radio.CallPresentation numberPresentation;
+  int numberPresentation;
   String name;
-  android.hardware.radio.CallPresentation namePresentation;
+  int namePresentation;
   android.hardware.radio.UusInfo[] uusInfo;
   android.hardware.radio.AudioQuality audioQuality;
   String forwardedNumber;
+  const int PRESENTATION_ALLOWED = 0;
+  const int PRESENTATION_RESTRICTED = 1;
+  const int PRESENTATION_UNKNOWN = 2;
+  const int PRESENTATION_PAYPHONE = 3;
+  const int STATE_ACTIVE = 0;
+  const int STATE_HOLDING = 1;
+  const int STATE_DIALING = 2;
+  const int STATE_ALERTING = 3;
+  const int STATE_INCOMING = 4;
+  const int STATE_WAITING = 5;
 }

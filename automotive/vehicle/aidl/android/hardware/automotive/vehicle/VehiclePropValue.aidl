@@ -16,6 +16,7 @@
 
 package android.hardware.automotive.vehicle;
 
+import android.hardware.automotive.vehicle.RawPropValues;
 import android.hardware.automotive.vehicle.VehiclePropertyStatus;
 
 /**
@@ -23,7 +24,7 @@ import android.hardware.automotive.vehicle.VehiclePropertyStatus;
  * is used across various API calls to set values, get values or to register for
  * events.
  */
-// @VintfStability
+@VintfStability
 parcelable VehiclePropValue {
     /** Time is elapsed nanoseconds since boot */
     long timestamp;
@@ -38,26 +39,7 @@ parcelable VehiclePropValue {
     int prop;
 
     /** Status of the property */
-    VehiclePropertyStatus status;
+    VehiclePropertyStatus status = VehiclePropertyStatus.AVAILABLE;
 
-    /**
-     * This is used for properties of types VehiclePropertyType#INT
-     * and VehiclePropertyType#INT_VEC
-     */
-    int[] int32Values;
-
-    /**
-     * This is used for properties of types VehiclePropertyType#FLOAT
-     * and VehiclePropertyType#FLOAT_VEC
-     */
-    float[] floatValues;
-
-    /** This is used for properties of type VehiclePropertyType#INT64 */
-    long[] int64Values;
-
-    /** This is used for properties of type VehiclePropertyType#BYTES */
-    byte[] byteValues;
-
-    /** This is used for properties of type VehiclePropertyType#STRING */
-    @utf8InCpp String stringValue;
+    RawPropValues value;
 }

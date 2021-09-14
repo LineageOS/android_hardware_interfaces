@@ -16,7 +16,7 @@
 
 package android.hardware.automotive.vehicle;
 
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VehicleTurnSignal {
     NONE = 0x00,

@@ -35,5 +35,12 @@ package android.hardware.radio;
 @VintfStability
 parcelable CdmaRedirectingNumberInfoRecord {
   android.hardware.radio.CdmaNumberInfoRecord redirectingNumber;
-  android.hardware.radio.CdmaRedirectingReason redirectingReason;
+  int redirectingReason;
+  const int REDIRECTING_REASON_UNKNOWN = 0;
+  const int REDIRECTING_REASON_CALL_FORWARDING_BUSY = 1;
+  const int REDIRECTING_REASON_CALL_FORWARDING_NO_REPLY = 2;
+  const int REDIRECTING_REASON_CALLED_DTE_OUT_OF_ORDER = 9;
+  const int REDIRECTING_REASON_CALL_FORWARDING_BY_THE_CALLED_DTE = 10;
+  const int REDIRECTING_REASON_CALL_FORWARDING_UNCONDITIONAL = 15;
+  const int REDIRECTING_REASON_RESERVED = 16;
 }

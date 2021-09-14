@@ -18,11 +18,14 @@ package android.hardware.radio;
 
 /**
  * Defines range of ports. start and end are the first and last port numbers (inclusive) in the
- * range. Both start and end are in QosPortRange.MIN to QosPortRange.MAX range. A single port shall
+ * range. Both start and end are in PORT_RANGE_MIN to PORT_RANGE_MAX range. A single port shall
  * be represented by the same start and end value.
  */
 @VintfStability
 parcelable PortRange {
+    const int PORT_RANGE_MIN = 20;
+    const int PORT_RANGE_MAX = 65535;
+
     int start;
     int end;
 }

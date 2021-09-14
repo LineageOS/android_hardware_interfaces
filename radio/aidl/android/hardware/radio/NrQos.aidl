@@ -23,6 +23,9 @@ import android.hardware.radio.QosBandwidth;
  */
 @VintfStability
 parcelable NrQos {
+    const byte FLOW_ID_RANGE_MIN = 1;
+    const byte FLOW_ID_RANGE_MAX = 63;
+
     /**
      * 5G QOS Identifier (5QI), see 3GPP TS 24.501 and 23.501. The allowed values are standard
      * values (1-9, 65-68, 69-70, 75, 79-80, 82-85) defined in the spec and operator specific values
@@ -33,7 +36,7 @@ parcelable NrQos {
     QosBandwidth uplink;
     /**
      * QOS flow identifier of the QOS flow description in the range
-     * (QosFlowIdRange::MIN, QosFlowIdRange::MAX)
+     * (FLOW_ID_RANGE_MIN, FLOW_ID_RANGE_MAX)
      */
     byte qfi;
     char averagingWindowMs;

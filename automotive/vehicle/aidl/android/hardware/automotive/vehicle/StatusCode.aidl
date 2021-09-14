@@ -19,7 +19,7 @@ package android.hardware.automotive.vehicle;
 /**
  * Error codes used in vehicle HAL interface.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum StatusCode {
     OK = 0,

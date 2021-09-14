@@ -20,7 +20,7 @@ package android.hardware.automotive.vehicle;
  * Used by INFO_FUEL_DOOR_LOCATION/INFO_CHARGE_PORT_LOCATION to enumerate fuel door or
  * ev port location.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum PortLocationType {
     /**

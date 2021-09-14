@@ -21,9 +21,10 @@ package android.hardware.automotive.vehicle;
  *
  * The meaning of each constant is explained in that property.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum SwitchUserMessageType {
+    UNKNOWN = 0,
     LEGACY_ANDROID_SWITCH = 1,
     ANDROID_SWITCH = 2,
     VEHICLE_RESPONSE = 3,

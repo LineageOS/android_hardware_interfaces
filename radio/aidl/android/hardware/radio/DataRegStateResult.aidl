@@ -17,7 +17,7 @@
 package android.hardware.radio;
 
 import android.hardware.radio.CellIdentity;
-import android.hardware.radio.DataRegStateResultVopsInfo;
+import android.hardware.radio.LteVopsInfo;
 import android.hardware.radio.NrIndicators;
 import android.hardware.radio.RegState;
 
@@ -54,7 +54,7 @@ parcelable DataRegStateResult {
      * must be present when device is camped on LTE. vopsInfo must be empty when device is camped
      * only on 2G/3G.
      */
-    DataRegStateResultVopsInfo vopsInfo;
+    @nullable LteVopsInfo lteVopsInfo;
     /**
      * The parameters of NR 5G Non-Standalone. This value is only valid on E-UTRAN, otherwise
      * must be empty.

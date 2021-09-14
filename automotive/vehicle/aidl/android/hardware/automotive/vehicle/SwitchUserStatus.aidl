@@ -19,7 +19,7 @@ package android.hardware.automotive.vehicle;
 /**
  * Status of the response to a SwitchUserRequest.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum SwitchUserStatus {
     /**

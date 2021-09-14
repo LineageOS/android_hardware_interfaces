@@ -34,7 +34,19 @@
 package android.hardware.radio;
 @VintfStability
 parcelable UusInfo {
-  android.hardware.radio.UusType uusType;
-  android.hardware.radio.UusDcs uusDcs;
+  int uusType;
+  int uusDcs;
   String uusData;
+  const int UUS_DCS_USP = 0;
+  const int UUS_DCS_OSIHLP = 1;
+  const int UUS_DCS_X244 = 2;
+  const int UUS_DCS_RMCF = 3;
+  const int UUS_DCS_IA5C = 4;
+  const int UUS_TYPE_TYPE1_IMPLICIT = 0;
+  const int UUS_TYPE_TYPE1_REQUIRED = 1;
+  const int UUS_TYPE_TYPE1_NOT_REQUIRED = 2;
+  const int UUS_TYPE_TYPE2_REQUIRED = 3;
+  const int UUS_TYPE_TYPE2_NOT_REQUIRED = 4;
+  const int UUS_TYPE_TYPE3_REQUIRED = 5;
+  const int UUS_TYPE_TYPE3_NOT_REQUIRED = 6;
 }

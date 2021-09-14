@@ -17,8 +17,8 @@
 package android.hardware.radio;
 
 import android.hardware.radio.CellIdentityOperatorNames;
+import android.hardware.radio.ClosedSubscriberGroupInfo;
 import android.hardware.radio.EutranBands;
-import android.hardware.radio.OptionalCsgInfo;
 
 @VintfStability
 parcelable CellIdentityLte {
@@ -58,7 +58,7 @@ parcelable CellIdentityLte {
     /**
      * Information about any closed subscriber group ID for this cell
      */
-    OptionalCsgInfo optionalCsgInfo;
+    @nullable ClosedSubscriberGroupInfo csgInfo;
     /**
      * Bands used by the cell.
      */

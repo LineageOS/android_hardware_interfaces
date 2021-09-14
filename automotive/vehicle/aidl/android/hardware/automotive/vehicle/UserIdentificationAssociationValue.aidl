@@ -19,7 +19,7 @@ package android.hardware.automotive.vehicle;
 /**
  * Whether a UserIdentificationAssociationType is associate with an Android user.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum UserIdentificationAssociationValue {
     /**

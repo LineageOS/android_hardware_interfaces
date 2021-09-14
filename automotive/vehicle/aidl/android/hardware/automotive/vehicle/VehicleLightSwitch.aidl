@@ -23,7 +23,7 @@ package android.hardware.automotive.vehicle;
  * selects.  The switch setting may be decoupled from the state reported if the
  * user selects AUTOMATIC.
  */
-// @VintfStability
+@VintfStability
 @Backing(type="int")
 enum VehicleLightSwitch {
     OFF = 0,
