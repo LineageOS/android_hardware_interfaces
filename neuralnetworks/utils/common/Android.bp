@@ -35,7 +35,7 @@ cc_library_static {
         "neuralnetworks_types",
     ],
     shared_libs: [
-        "android.hardware.neuralnetworks-V1-ndk",
+        "android.hardware.neuralnetworks-V2-ndk",
         "libhidlbase",
         "libbinder_ndk",
     ],
