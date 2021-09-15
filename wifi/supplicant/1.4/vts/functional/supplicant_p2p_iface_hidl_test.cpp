@@ -49,6 +49,9 @@ class SupplicantP2pIfaceHidlTest : public SupplicantHidlTestBaseV1_4 {
    public:
     virtual void SetUp() override {
         SupplicantHidlTestBaseV1_4::SetUp();
+        if (!isP2pOn_) {
+            GTEST_SKIP() << "Wi-Fi Direct is not supported, skip this test.";
+        }
         p2p_iface_ = getSupplicantP2pIface_1_4(supplicant_);
         ASSERT_NE(p2p_iface_.get(), nullptr);
     }
