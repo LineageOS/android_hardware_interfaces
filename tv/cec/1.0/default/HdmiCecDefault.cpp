@@ -16,14 +16,13 @@
 
 #define LOG_TAG "android.hardware.tv.cec@1.0-impl"
 #include <android-base/logging.h>
+#include <android-base/properties.h>
 
 #include <cutils/properties.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <linux/cec.h>
 #include <linux/ioctl.h>
 #include <poll.h>
-#include <pthread.h>
 #include <sys/eventfd.h>
 #include <algorithm>
 
@@ -36,18 +35,7 @@ namespace cec {
 namespace V1_0 {
 namespace implementation {
 
-// When set to false, all the CEC commands are discarded. True by default after initialization.
-bool mCecEnabled;
-/*
- * When set to false, HAL does not wake up the system upon receiving <Image View On> or
- * <Text View On>. True by default after initialization.
- */
-bool mWakeupEnabled;
-
-int mCecFd;
-int mExitFd;
-pthread_t mEventThread;
-sp<IHdmiCecCallback> mCallback;
+using android::base::GetUintProperty;
 
 HdmiCecDefault::HdmiCecDefault() {
     mCecFd = -1;
@@ -68,7 +56,7 @@ Return<Result> HdmiCecDefault::addLogicalAddress(CecLogicalAddress addr) {
         return Result::FAILURE_INVALID_ARGS;
     }
 
-    struct cec_log_addrs cecLogAddrs;
+    cec_log_addrs cecLogAddrs;
     int ret = ioctl(mCecFd, CEC_ADAP_G_LOG_ADDRS, &cecLogAddrs);
     if (ret) {
         LOG(ERROR) << "Add logical address failed, Error = " << strerror(errno);
@@ -144,7 +132,7 @@ Return<Result> HdmiCecDefault::addLogicalAddress(CecLogicalAddress addr) {
 }
 
 Return<void> HdmiCecDefault::clearLogicalAddress() {
-    struct cec_log_addrs cecLogAddrs;
+    cec_log_addrs cecLogAddrs;
     memset(&cecLogAddrs, 0, sizeof(cecLogAddrs));
     int ret = ioctl(mCecFd, CEC_ADAP_S_LOG_ADDRS, &cecLogAddrs);
     if (ret) {
@@ -170,7 +158,7 @@ Return<SendMessageResult> HdmiCecDefault::sendMessage(const CecMessage& message)
         return SendMessageResult::FAIL;
     }
 
-    struct cec_msg cecMsg;
+    cec_msg cecMsg;
     memset(&cecMsg, 0, sizeof(cec_msg));
 
     int initiator = static_cast<cec_logical_address_t>(message.initiator);
@@ -233,7 +221,7 @@ Return<void> HdmiCecDefault::getPortInfo(getPortInfo_cb callback) {
         LOG(ERROR) << "Get port info failed, Error = " << strerror(errno);
     }
 
-    unsigned int type = property_get_int32("ro.hdmi.device_type", CEC_DEVICE_PLAYBACK);
+    uint32_t type = GetUintProperty<uint32_t>("ro.hdmi.device_type", CEC_DEVICE_PLAYBACK);
     hidl_vec<HdmiPortInfo> portInfos(1);
     portInfos[0] = {.type = (type == CEC_DEVICE_TV ? HdmiPortType::INPUT : HdmiPortType::OUTPUT),
                     .portId = 1,
@@ -297,7 +285,7 @@ Return<Result> HdmiCecDefault::init() {
     }
 
     // Ensure the CEC device supports required capabilities
-    struct cec_caps caps = {};
+    cec_caps caps = {};
     int ret = ioctl(mCecFd, CEC_ADAP_G_CAPS, &caps);
     if (ret) {
         LOG(ERROR) << "Unable to query cec adapter capabilities, Error = " << strerror(errno);
@@ -319,12 +307,7 @@ Return<Result> HdmiCecDefault::init() {
         return Result::FAILURE_NOT_SUPPORTED;
     }
 
-    /* thread loop for receiving cec messages and hotplug events*/
-    if (pthread_create(&mEventThread, NULL, event_thread, NULL)) {
-        LOG(ERROR) << "Can't create event thread: " << strerror(errno);
-        release();
-        return Result::FAILURE_NOT_SUPPORTED;
-    }
+    mEventThread = thread(&HdmiCecDefault::event_thread, this);
 
     mCecEnabled = true;
     mWakeupEnabled = true;
@@ -335,7 +318,9 @@ Return<void> HdmiCecDefault::release() {
     if (mExitFd > 0) {
         uint64_t tmp = 1;
         write(mExitFd, &tmp, sizeof(tmp));
-        pthread_join(mEventThread, NULL);
+        if (mEventThread.joinable()) {
+            mEventThread.join();
+        }
     }
     if (mExitFd > 0) {
         close(mExitFd);
@@ -349,8 +334,8 @@ Return<void> HdmiCecDefault::release() {
     return Void();
 }
 
-void* HdmiCecDefault::event_thread(void*) {
-    struct pollfd ufds[3] = {
+void HdmiCecDefault::event_thread() {
+    pollfd ufds[3] = {
             {mCecFd, POLLIN, 0},
             {mCecFd, POLLERR, 0},
             {mExitFd, POLLIN, 0},
@@ -372,15 +357,15 @@ void* HdmiCecDefault::event_thread(void*) {
         }
 
         if (ufds[1].revents == POLLERR) { /* CEC Event */
-            struct cec_event ev;
+            cec_event ev;
             ret = ioctl(mCecFd, CEC_DQEVENT, &ev);
-
-            if (!mCecEnabled) {
-                continue;
-            }
 
             if (ret) {
                 LOG(ERROR) << "CEC_DQEVENT failed, Error = " << strerror(errno);
+                continue;
+            }
+
+            if (!mCecEnabled) {
                 continue;
             }
 
@@ -397,12 +382,8 @@ void* HdmiCecDefault::event_thread(void*) {
         }
 
         if (ufds[0].revents == POLLIN) { /* CEC Driver */
-            struct cec_msg msg = {};
+            cec_msg msg = {};
             ret = ioctl(mCecFd, CEC_RECEIVE, &msg);
-
-            if (!mCecEnabled) {
-                continue;
-            }
 
             if (ret) {
                 LOG(ERROR) << "CEC_RECEIVE failed, Error = " << strerror(errno);
@@ -411,6 +392,10 @@ void* HdmiCecDefault::event_thread(void*) {
 
             if (msg.rx_status != CEC_RX_STATUS_OK) {
                 LOG(ERROR) << "msg rx_status = " << msg.rx_status;
+                continue;
+            }
+
+            if (!mCecEnabled) {
                 continue;
             }
 
@@ -435,14 +420,13 @@ void* HdmiCecDefault::event_thread(void*) {
             }
         }
     }
-    return NULL;
 }
 
-int HdmiCecDefault::getOpcode(struct cec_msg message) {
-    return (static_cast<uint8_t>(message.msg[1]) & 0xff);
+int HdmiCecDefault::getOpcode(cec_msg message) {
+    return static_cast<uint8_t>(message.msg[1]);
 }
 
-bool HdmiCecDefault::isWakeupMessage(struct cec_msg message) {
+bool HdmiCecDefault::isWakeupMessage(cec_msg message) {
     int opcode = getOpcode(message);
     switch (opcode) {
         case CEC_MESSAGE_TEXT_VIEW_ON:
