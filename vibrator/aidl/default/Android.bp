@@ -23,11 +23,16 @@ cc_library_static {
     ],
 }
 
+filegroup {
+    name: "android.hardware.vibrator.xml",
+    srcs: ["android.hardware.vibrator.xml"],
+}
+
 cc_binary {
     name: "android.hardware.vibrator-service.example",
     relative_install_path: "hw",
     init_rc: ["vibrator-default.rc"],
-    vintf_fragments: ["vibrator-default.xml"],
+    vintf_fragments: [":android.hardware.vibrator.xml"],
     vendor: true,
     shared_libs: [
         "libbase",
