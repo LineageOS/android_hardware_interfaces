@@ -307,6 +307,18 @@ const ConfigDeclaration kVehicleProperties[]{
                          .prop = toInt(VehicleProperty::CRITICALLY_LOW_TIRE_PRESSURE),
                          .access = VehiclePropertyAccess::READ,
                          .changeMode = VehiclePropertyChangeMode::STATIC,
+                         .areaConfigs = {VehicleAreaConfig{
+                                                 .areaId = WHEEL_FRONT_LEFT,
+                                         },
+                                         VehicleAreaConfig{
+                                                 .areaId = WHEEL_FRONT_RIGHT,
+                                         },
+                                         VehicleAreaConfig{
+                                                 .areaId = WHEEL_REAR_LEFT,
+                                         },
+                                         VehicleAreaConfig{
+                                                 .areaId = WHEEL_REAR_RIGHT,
+                                         }},
                  },
          .initialAreaValues = {{WHEEL_FRONT_LEFT, {.floatValues = {137.0f}}},
                                {WHEEL_FRONT_RIGHT, {.floatValues = {137.0f}}},
