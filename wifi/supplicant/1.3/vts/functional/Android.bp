@@ -74,5 +74,4 @@ cc_test {
         "general-tests",
         "vts",
     ],
-    disable_framework: true,
 }
