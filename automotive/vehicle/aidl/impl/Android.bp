@@ -32,5 +32,6 @@ cc_defaults {
         "-Wall",
         "-Wextra",
         "-Werror",
+        "-Wthread-safety",
     ],
 }
