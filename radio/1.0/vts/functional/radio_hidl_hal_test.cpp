@@ -17,12 +17,42 @@
 #include <android-base/logging.h>
 #include <radio_hidl_hal_utils_v1_0.h>
 
+bool isServiceValidForDeviceConfiguration(hidl_string& serviceName) {
+    if (isSsSsEnabled()) {
+        // Device is configured as SSSS.
+        if (serviceName != RADIO_SERVICE_SLOT1_NAME) {
+            ALOGI("%s instance is not valid for SSSS device.", serviceName.c_str());
+            return false;
+        }
+    } else if (isDsDsEnabled()) {
+        // Device is configured as DSDS.
+        if (serviceName != RADIO_SERVICE_SLOT1_NAME && serviceName != RADIO_SERVICE_SLOT2_NAME) {
+            ALOGI("%s instance is not valid for DSDS device.", serviceName.c_str());
+            return false;
+        }
+    } else if (isTsTsEnabled()) {
+        // Device is configured as TSTS.
+        if (serviceName != RADIO_SERVICE_SLOT1_NAME && serviceName != RADIO_SERVICE_SLOT2_NAME &&
+            serviceName != RADIO_SERVICE_SLOT3_NAME) {
+            ALOGI("%s instance is not valid for TSTS device.", serviceName.c_str());
+            return false;
+        }
+    }
+    return true;
+}
+
 void RadioHidlTest::SetUp() {
-    radio = IRadio::getService(GetParam());
+    hidl_string serviceName = GetParam();
+    if (!isServiceValidForDeviceConfiguration(serviceName)) {
+        ALOGI("Skipped the test due to device configuration.");
+        GTEST_SKIP();
+    }
+
+    radio = IRadio::getService(serviceName);
     if (radio == NULL) {
         LOG(DEBUG) << "Radio is NULL, waiting 1 minute to retry";
         sleep(60);
-        radio = IRadio::getService(GetParam());
+        radio = IRadio::getService(serviceName);
     }
     ASSERT_NE(nullptr, radio.get());
 
