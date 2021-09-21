@@ -22,26 +22,50 @@ parcelable ActivePwle {
      * Amplitude ranging from 0.0 (inclusive) to 1.0 (inclusive)
      * in units of output acceleration amplitude, not voltage amplitude.
      *
+     * Values should fall within the range of 0.0 (inclusive) to the maximum defined
+     * by the corresponding entries in IVibrator#getBandwidthAmplitudeMap (inclusive).
+     * If startFrequency falls between two entries, the value will not exceed the
+     * largest amplitude of the two bounding frequencies.
+     *
      * 0.0 represents no output acceleration amplitude
-     * 1.0 represents maximum output acceleration amplitude at resonant frequency
+     * 1.0 represents maximum output acceleration amplitude
+     *     across all supported frequencies
      */
     float startAmplitude;
+
     /**
      * Absolute frequency point in the units of hertz
+     *
+     * Values are within the continuous inclusive frequency range defined by
+     * IVibrator#getBandwidthAmplitudeMap, and not limited by the
+     * IVibrator#getFrequencyResolution.
      */
     float startFrequency;
+
     /**
      * Amplitude ranging from 0.0 (inclusive) to 1.0 (inclusive)
      * in units of output acceleration amplitude, not voltage amplitude.
      *
+     * Values should fall within the range of 0.0 (inclusive) to the maximum defined
+     * by the corresponding entries in IVibrator#getBandwidthAmplitudeMap (inclusive).
+     * If endFrequency falls between two entries, the value will not exceed the
+     * largest amplitude of the two bounding frequencies.
+     *
      * 0.0 represents no output acceleration amplitude
-     * 1.0 represents maximum output acceleration amplitude at resonant frequency
+     * 1.0 represents maximum output acceleration amplitude
+     *     across all supported frequencies
      */
     float endAmplitude;
+
     /**
      * Absolute frequency point in the units of hertz
+     *
+     * Values are within the continuous inclusive frequency range defined by
+     * IVibrator#getBandwidthAmplitudeMap, and not limited by the
+     * IVibrator#getFrequencyResolution.
      */
     float endFrequency;
+
     /**
      * Total duration from start point to end point in the units of milliseconds
      */
