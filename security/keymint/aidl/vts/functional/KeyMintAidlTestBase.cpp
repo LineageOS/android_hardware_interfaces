@@ -77,12 +77,18 @@ bool KeyCharacteristicsBasicallyValid(SecurityLevel secLevel,
 
     std::unordered_set<SecurityLevel> levels_seen;
     for (auto& entry : key_characteristics) {
-        if (entry.authorizations.empty()) return false;
+        if (entry.authorizations.empty()) {
+            GTEST_LOG_(ERROR) << "empty authorizations for " << entry.securityLevel;
+            return false;
+        }
 
         // Just ignore the SecurityLevel::KEYSTORE as the KM won't do any enforcement on this.
         if (entry.securityLevel == SecurityLevel::KEYSTORE) continue;
 
-        if (levels_seen.find(entry.securityLevel) != levels_seen.end()) return false;
+        if (levels_seen.find(entry.securityLevel) != levels_seen.end()) {
+            GTEST_LOG_(ERROR) << "duplicate authorizations for " << entry.securityLevel;
+            return false;
+        }
         levels_seen.insert(entry.securityLevel);
 
         // Generally, we should only have one entry, at the same security level as the KM
@@ -92,7 +98,10 @@ bool KeyCharacteristicsBasicallyValid(SecurityLevel secLevel,
                                        (secLevel == SecurityLevel::STRONGBOX &&
                                         entry.securityLevel == SecurityLevel::TRUSTED_ENVIRONMENT);
 
-        if (!isExpectedSecurityLevel) return false;
+        if (!isExpectedSecurityLevel) {
+            GTEST_LOG_(ERROR) << "Unexpected security level " << entry.securityLevel;
+            return false;
+        }
     }
     return true;
 }
