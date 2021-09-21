@@ -305,6 +305,10 @@ interface IVibrator {
      * of getFrequencyResolution(). The value returned by getResonantFrequency() must be
      * represented in the returned list.
      *
+     * The amplitude values represent the maximum output acceleration amplitude supported for each
+     * given frequency. Equal amplitude values for different frequencies represent equal output
+     * accelerations.
+     *
      * @return The maximum output acceleration amplitude for each supported frequency,
      *         starting at getMinimumFrequency()
      */
