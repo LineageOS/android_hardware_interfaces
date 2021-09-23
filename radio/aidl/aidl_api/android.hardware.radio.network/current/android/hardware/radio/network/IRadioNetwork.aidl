@@ -64,7 +64,7 @@ interface IRadioNetwork {
   oneway void setNetworkSelectionModeManual(in int serial, in String operatorNumeric, in android.hardware.radio.AccessNetwork ran);
   oneway void setNrDualConnectivityState(in int serial, in android.hardware.radio.network.NrDualConnectivityState nrDualConnectivityState);
   oneway void setResponseFunctions(in android.hardware.radio.network.IRadioNetworkResponse radioNetworkResponse, in android.hardware.radio.network.IRadioNetworkIndication radioNetworkIndication);
-  oneway void setSignalStrengthReportingCriteria(in int serial, in android.hardware.radio.network.SignalThresholdInfo signalThresholdInfo, in android.hardware.radio.AccessNetwork accessNetwork);
+  oneway void setSignalStrengthReportingCriteria(in int serial, in android.hardware.radio.network.SignalThresholdInfo[] signalThresholdInfos);
   oneway void setSuppServiceNotifications(in int serial, in boolean enable);
   oneway void setSystemSelectionChannels(in int serial, in boolean specifyChannels, in android.hardware.radio.network.RadioAccessSpecifier[] specifiers);
   oneway void startNetworkScan(in int serial, in android.hardware.radio.network.NetworkScanRequest request);
