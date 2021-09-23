@@ -22,7 +22,11 @@ cc_test {
     name: "VehicleHalVehicleUtilsTest",
     srcs: ["*.cpp"],
     vendor: true,
-    static_libs: ["VehicleHalUtils"],
+    static_libs: [
+        "VehicleHalUtils",
+        "libgtest",
+        "libgmock",
+    ],
     defaults: ["VehicleHalDefaults"],
     test_suites: ["general-tests"],
 }
