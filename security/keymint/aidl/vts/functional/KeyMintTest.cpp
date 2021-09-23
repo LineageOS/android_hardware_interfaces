@@ -4665,6 +4665,49 @@ TEST_P(EncryptionOperationsTest, AesCbcRoundTripSuccess) {
 }
 
 /*
+ * EncryptionOperationsTest.AesCbcZeroInputSuccessb
+ *
+ * Verifies that keymaster generates correct output on zero-input with
+ * NonePadding mode
+ */
+TEST_P(EncryptionOperationsTest, AesCbcZeroInputSuccess) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                 .AesEncryptionKey(128)
+                                                 .BlockMode(BlockMode::CBC)
+                                                 .Padding(PaddingMode::NONE, PaddingMode::PKCS7)));
+
+    // Zero input message
+    string message = "";
+    for (auto padding : {PaddingMode::NONE, PaddingMode::PKCS7}) {
+        auto params = AuthorizationSetBuilder().BlockMode(BlockMode::CBC).Padding(padding);
+        AuthorizationSet out_params;
+        string ciphertext1 = EncryptMessage(message, params, &out_params);
+        vector<uint8_t> iv1 = CopyIv(out_params);
+        if (padding == PaddingMode::NONE)
+            EXPECT_EQ(message.size(), ciphertext1.size()) << "PaddingMode: " << padding;
+        else
+            EXPECT_EQ(message.size(), ciphertext1.size() - 16) << "PaddingMode: " << padding;
+
+        out_params.Clear();
+
+        string ciphertext2 = EncryptMessage(message, params, &out_params);
+        vector<uint8_t> iv2 = CopyIv(out_params);
+        if (padding == PaddingMode::NONE)
+            EXPECT_EQ(message.size(), ciphertext2.size()) << "PaddingMode: " << padding;
+        else
+            EXPECT_EQ(message.size(), ciphertext2.size() - 16) << "PaddingMode: " << padding;
+
+        // IVs should be random
+        EXPECT_NE(iv1, iv2) << "PaddingMode: " << padding;
+
+        params.push_back(TAG_NONCE, iv1);
+        string plaintext = DecryptMessage(ciphertext1, params);
+        EXPECT_EQ(message, plaintext) << "PaddingMode: " << padding;
+    }
+}
+
+/*
  * EncryptionOperationsTest.AesCallerNonce
  *
  * Verifies that AES caller-provided nonces work correctly.
