@@ -39,6 +39,7 @@ parcelable SignalThresholdInfo {
   int hysteresisDb;
   int[] thresholds;
   boolean isEnabled;
+  android.hardware.radio.AccessNetwork ran;
   const int SIGNAL_MEASUREMENT_TYPE_RSSI = 1;
   const int SIGNAL_MEASUREMENT_TYPE_RSCP = 2;
   const int SIGNAL_MEASUREMENT_TYPE_RSRP = 3;
