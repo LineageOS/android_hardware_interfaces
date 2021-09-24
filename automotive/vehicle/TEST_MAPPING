@@ -1,0 +1,13 @@
+{
+  "presubmit": [
+    {
+      "name": "VehicleHalAidlHidlCompatibilityTest"
+    },
+    {
+      "name": "VehicleHalDefaultConfigTest"
+    },
+    {
+      "name": "VehicleHalVehicleUtilsTest"
+    }
+  ]
+}

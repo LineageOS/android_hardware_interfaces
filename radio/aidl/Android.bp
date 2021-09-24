@@ -27,34 +27,128 @@ aidl_interface {
     },
 }
 
-cc_library {
-    name: "android.hardware.radio-translate-ndk",
+aidl_interface {
+    name: "android.hardware.radio.data",
     vendor_available: true,
-    shared_libs: [
-        "libbinder_ndk",
-        "libhidlbase",
-        "android.hardware.radio-V1-ndk_platform",
-        "android.hardware.radio@1.0",
-        "android.hardware.radio@1.1",
-        "android.hardware.radio@1.2",
-        "android.hardware.radio@1.3",
-        "android.hardware.radio@1.4",
-        "android.hardware.radio@1.5",
-        "android.hardware.radio@1.6",
-    ],
+    srcs: ["android/hardware/radio/data/*.aidl"],
+    stability: "vintf",
+    imports: ["android.hardware.radio"],
+    backend: {
+        cpp: {
+            enabled: false,
+        },
+        java: {
+            sdk_version: "module_current",
+        },
+        ndk: {
+            vndk: {
+                enabled: true,
+            },
+        },
+    },
 }
 
-java_library {
-    name: "android.hardware.radio-translate-java",
-    libs: [
-        "android.hardware.radio-V1-java",
-        "android.hardware.radio-V1.0-java",
-        "android.hardware.radio-V1.1-java",
-        "android.hardware.radio-V1.2-java",
-        "android.hardware.radio-V1.3-java",
-        "android.hardware.radio-V1.4-java",
-        "android.hardware.radio-V1.5-java",
-        "android.hardware.radio-V1.6-java",
-    ],
-    sdk_version: "module_current",
+aidl_interface {
+    name: "android.hardware.radio.messaging",
+    vendor_available: true,
+    srcs: ["android/hardware/radio/messaging/*.aidl"],
+    stability: "vintf",
+    imports: ["android.hardware.radio"],
+    backend: {
+        cpp: {
+            enabled: false,
+        },
+        java: {
+            sdk_version: "module_current",
+        },
+        ndk: {
+            vndk: {
+                enabled: true,
+            },
+        },
+    },
+}
+
+aidl_interface {
+    name: "android.hardware.radio.modem",
+    vendor_available: true,
+    srcs: ["android/hardware/radio/modem/*.aidl"],
+    stability: "vintf",
+    imports: ["android.hardware.radio"],
+    backend: {
+        cpp: {
+            enabled: false,
+        },
+        java: {
+            sdk_version: "module_current",
+        },
+        ndk: {
+            vndk: {
+                enabled: true,
+            },
+        },
+    },
+}
+
+aidl_interface {
+    name: "android.hardware.radio.network",
+    vendor_available: true,
+    srcs: ["android/hardware/radio/network/*.aidl"],
+    stability: "vintf",
+    imports: ["android.hardware.radio"],
+    backend: {
+        cpp: {
+            enabled: false,
+        },
+        java: {
+            sdk_version: "module_current",
+        },
+        ndk: {
+            vndk: {
+                enabled: true,
+            },
+        },
+    },
+}
+
+aidl_interface {
+    name: "android.hardware.radio.sim",
+    vendor_available: true,
+    srcs: ["android/hardware/radio/sim/*.aidl"],
+    stability: "vintf",
+    imports: ["android.hardware.radio"],
+    backend: {
+        cpp: {
+            enabled: false,
+        },
+        java: {
+            sdk_version: "module_current",
+        },
+        ndk: {
+            vndk: {
+                enabled: true,
+            },
+        },
+    },
+}
+
+aidl_interface {
+    name: "android.hardware.radio.voice",
+    vendor_available: true,
+    srcs: ["android/hardware/radio/voice/*.aidl"],
+    stability: "vintf",
+    imports: ["android.hardware.radio"],
+    backend: {
+        cpp: {
+            enabled: false,
+        },
+        java: {
+            sdk_version: "module_current",
+        },
+        ndk: {
+            vndk: {
+                enabled: true,
+            },
+        },
+    },
 }
