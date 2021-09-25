@@ -3837,6 +3837,8 @@ TEST_P(CameraHidlTest, configureStreamsZSLInputOutputs) {
                       getAvailableOutputStreams(staticMeta, outputStreams,
                               &outputThreshold));
             for (auto& outputIter : outputStreams) {
+                V3_2::DataspaceFlags outputDataSpace =
+                        getDataspace(static_cast<PixelFormat>(outputIter.format));
                 V3_2::Stream zslStream = {streamId++,
                                     StreamType::OUTPUT,
                                     static_cast<uint32_t>(input.width),
@@ -3859,7 +3861,7 @@ TEST_P(CameraHidlTest, configureStreamsZSLInputOutputs) {
                                        static_cast<uint32_t>(outputIter.height),
                                        static_cast<PixelFormat>(outputIter.format),
                                        GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
-                                       0,
+                                       outputDataSpace,
                                        StreamRotation::ROTATION_0};
 
                 ::android::hardware::hidl_vec<V3_2::Stream> streams = {inputStream, zslStream,
