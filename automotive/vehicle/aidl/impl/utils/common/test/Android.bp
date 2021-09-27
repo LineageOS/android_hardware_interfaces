@@ -28,5 +28,5 @@ cc_test {
         "libgmock",
     ],
     defaults: ["VehicleHalDefaults"],
-    test_suites: ["general-tests"],
+    test_suites: ["device-tests"],
 }
