@@ -285,7 +285,7 @@ bool turnOnExcessiveLogging(const sp<ISupplicant>& supplicant) {
 }
 
 bool waitForFrameworkReady() {
-    int waitCount = 10;
+    int waitCount = 15;
     do {
         // Check whether package service is ready or not.
         if (!testing::checkSubstringInCommandOutput(
