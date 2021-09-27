@@ -28,6 +28,27 @@ aidl_interface {
 }
 
 aidl_interface {
+    name: "android.hardware.radio.config",
+    vendor_available: true,
+    srcs: ["android/hardware/radio/config/*.aidl"],
+    stability: "vintf",
+    imports: ["android.hardware.radio"],
+    backend: {
+        cpp: {
+            enabled: false,
+        },
+        java: {
+            sdk_version: "module_current",
+        },
+        ndk: {
+            vndk: {
+                enabled: true,
+            },
+        },
+    },
+}
+
+aidl_interface {
     name: "android.hardware.radio.data",
     vendor_available: true,
     srcs: ["android/hardware/radio/data/*.aidl"],
