@@ -17,7 +17,7 @@ aidl_interface {
     stability: "vintf",
     imports: [
         "android.hardware.common-V2",
-        "android.hardware.graphics.common-V2",
+        "android.hardware.graphics.common-V3",
     ],
     backend: {
         java: {

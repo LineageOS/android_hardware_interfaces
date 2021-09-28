@@ -50,7 +50,7 @@ cc_test {
     ],
     static_libs: [
         "android.hardware.common-V2-ndk",
-        "android.hardware.graphics.common-V2-ndk",
+        "android.hardware.graphics.common-V3-ndk",
         "android.hardware.neuralnetworks-V1-ndk",
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",
