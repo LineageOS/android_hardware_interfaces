@@ -16,6 +16,8 @@
 
 package android.hardware.radio.network;
 
+import android.hardware.radio.AccessNetwork;
+
 /**
  * Contains the threshold values of each signal measurement type.
  */
@@ -86,18 +88,20 @@ parcelable SignalThresholdInfo {
      */
     int signalMeasurement;
     /**
-     * A hysteresis time in milliseconds to prevent flapping. A value of 0 disables hysteresis.
+     * A hysteresis time in milliseconds for current signal measurement type to prevent flapping.
+     * A value of 0 disables hysteresis.
      */
     int hysteresisMs;
     /**
-     * An interval in dB defining the required magnitude change between reports. This must be
-     * smaller than the smallest threshold delta. An interval value of 0 disables hysteresis.
+     * An interval in dB for current signal measurement type defining the required magnitude change
+     * between reports. This must be smaller than the smallest threshold delta. An interval value of
+     * 0 disables hysteresis.
      */
     int hysteresisDb;
     /**
-     * List of threshold values. Range and unit must reference specific SignalMeasurementType.
-     * The threshold values for which to apply criteria. A vector size of 0 disables the use of
-     * thresholds for reporting.
+     * List of threshold values for current signal measurement type. Range and unit must reference
+     * specific SignalMeasurementType. The threshold values for which to apply criteria. A vector
+     * size of 0 disables the use of thresholds for reporting.
      */
     int[] thresholds;
     /**
@@ -106,4 +110,8 @@ parcelable SignalThresholdInfo {
      * If disabled, modem must not trigger the report based on the criteria.
      */
     boolean isEnabled;
+    /**
+     * The Radio Access Network for current threshold info.
+     */
+    AccessNetwork ran;
 }
