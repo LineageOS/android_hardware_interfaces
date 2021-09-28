@@ -58,7 +58,16 @@ TEST_P(RadioConfigHidlTest, setModemsConfig_invalidArgument) {
 TEST_P(RadioConfigHidlTest, setModemsConfig_goodRequest) {
     serial = GetRandomSerialNumber();
     ModemsConfig* mConfig = new ModemsConfig();
-    mConfig->numOfLiveModems = 1;
+    if (isSsSsEnabled()) {
+        mConfig->numOfLiveModems = 1;
+    } else if (isDsDsEnabled()) {
+        mConfig->numOfLiveModems = 2;
+    } else if (isTsTsEnabled()) {
+        mConfig->numOfLiveModems = 3;
+    } else {
+        ALOGI("Skipping setModemsConfig_goodRequest, unsupported multisim number");
+        return;
+    }
     Return<void> res = radioConfig->setModemsConfig(serial, *mConfig);
     ASSERT_OK(res);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
