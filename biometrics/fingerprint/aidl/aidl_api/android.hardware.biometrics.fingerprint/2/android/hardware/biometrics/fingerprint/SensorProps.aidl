@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,10 +33,12 @@
 
 package android.hardware.biometrics.fingerprint;
 @VintfStability
-parcelable SensorLocation {
-  int displayId;
-  int sensorLocationX;
-  int sensorLocationY;
-  int sensorRadius;
-  String display = "";
+parcelable SensorProps {
+  android.hardware.biometrics.common.CommonProps commonProps;
+  android.hardware.biometrics.fingerprint.FingerprintSensorType sensorType = android.hardware.biometrics.fingerprint.FingerprintSensorType.UNKNOWN;
+  android.hardware.biometrics.fingerprint.SensorLocation[] sensorLocations;
+  boolean supportsNavigationGestures;
+  boolean supportsDetectInteraction;
+  boolean halHandlesDisplayTouches;
+  boolean halControlsIllumination;
 }

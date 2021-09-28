@@ -125,6 +125,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.biometrics.fingerprint</name>
+        <version>2</version>
         <interface>
             <name>IFingerprint</name>
             <instance>default</instance>
