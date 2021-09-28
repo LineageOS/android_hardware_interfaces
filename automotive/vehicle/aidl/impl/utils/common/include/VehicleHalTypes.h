@@ -39,6 +39,7 @@
 #include <aidl/android/hardware/automotive/vehicle/VehicleLightSwitch.h>
 #include <aidl/android/hardware/automotive/vehicle/VehicleOilLevel.h>
 #include <aidl/android/hardware/automotive/vehicle/VehiclePropConfig.h>
+#include <aidl/android/hardware/automotive/vehicle/VehiclePropConfigs.h>
 #include <aidl/android/hardware/automotive/vehicle/VehiclePropError.h>
 #include <aidl/android/hardware/automotive/vehicle/VehiclePropValue.h>
 #include <aidl/android/hardware/automotive/vehicle/VehicleProperty.h>

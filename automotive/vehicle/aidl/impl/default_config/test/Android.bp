@@ -30,5 +30,5 @@ cc_test {
     header_libs: [
         "VehicleHalDefaultConfig",
     ],
-    test_suites: ["general-tests"],
+    test_suites: ["device-tests"],
 }
