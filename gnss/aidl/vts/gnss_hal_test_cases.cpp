@@ -252,7 +252,6 @@ TEST_P(GnssHalTest, TestCorrelationVector) {
                 for (const auto& correlationVector : measurement.correlationVectors) {
                     ASSERT_GE(correlationVector.frequencyOffsetMps, 0);
                     ASSERT_GT(correlationVector.samplingWidthM, 0);
-                    ASSERT_GE(correlationVector.samplingStartM, 0);
                     ASSERT_TRUE(correlationVector.magnitude.size() > 0);
                     for (const auto& magnitude : correlationVector.magnitude) {
                         ASSERT_TRUE(magnitude >= -32768 && magnitude <= 32767);
