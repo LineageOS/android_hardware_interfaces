@@ -31,7 +31,7 @@ cc_library_static {
     export_include_dirs: ["include"],
     cflags: ["-Wthread-safety"],
     static_libs: [
-        "android.hardware.graphics.common-V2-ndk",
+        "android.hardware.graphics.common-V3-ndk",
         "libaidlcommonsupport",
         "libarect",
         "neuralnetworks_types",
@@ -57,7 +57,7 @@ cc_test {
     ],
     static_libs: [
         "android.hardware.common-V2-ndk",
-        "android.hardware.graphics.common-V2-ndk",
+        "android.hardware.graphics.common-V3-ndk",
         "android.hardware.neuralnetworks-V1-ndk",
         "libaidlcommonsupport",
         "libgmock",
