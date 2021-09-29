@@ -1,0 +1,49 @@
+/**
+ * Copyright (c) 2021, The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.graphics.composer3;
+
+/**
+ * Optional capabilities which may be supported by some devices. The
+ * particular set of supported capabilities for a given device may be
+ * retrieved using getCapabilities.
+ */
+@VintfStability
+@Backing(type="int")
+enum Capability {
+    INVALID = 0,
+    /**
+     * Specifies that the device supports sideband stream layers, for
+     * which buffer content updates and other synchronization will not be
+     * provided through the usual validate/present cycle and must be
+     * handled by an external implementation-defined mechanism. Only
+     * changes to layer state (such as position, size, etc.) need to be
+     * performed through the validate/present cycle.
+     */
+    SIDEBAND_STREAM = 1,
+    /**
+     * Specifies that the device will apply a color transform even when
+     * either the client or the device has chosen that all layers should
+     * be composed by the client. This will prevent the client from
+     * applying the color transform during its composition step.
+     */
+    SKIP_CLIENT_COLOR_TRANSFORM = 2,
+    /**
+     * Specifies that the present fence must not be used as an accurate
+     * representation of the actual present time of a frame.
+     */
+    PRESENT_FENCE_IS_NOT_RELIABLE = 3,
+}
