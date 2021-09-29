@@ -900,4 +900,7 @@ c8a57364f6ad20842be14f4db284df5304f7521ca8eac6bcc1fa6c5b466fb8a6 android.hardwar
 0821f516e4d428bc15251969f7e19411c94d8f2ccbd99e1fc8168d8e49e38b0f android.hardware.wifi.supplicant@1.4::types
 4a087a308608d146b022ebc15633de989f5f4dfe1491a83fa41763290a82e40d android.hardware.automotive.vehicle@2.0::types
 
+# HALs released in Android SCv2
+77f6fcf3fd0dd3e424d8a0292094ebd17e4c35454bb9abbd3a6cbed1aba70765 android.hardware.camera.metadata@3.7::types
+
 # There should be no more HIDL HALs - please use AIDL instead.
