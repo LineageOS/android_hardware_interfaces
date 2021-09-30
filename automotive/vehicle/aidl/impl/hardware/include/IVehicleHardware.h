@@ -1,0 +1,106 @@
+/*
+ * Copyright (C) 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef android_hardware_automotive_vehicle_aidl_impl_hardware_include_IVehicleHardware_H_
+#define android_hardware_automotive_vehicle_aidl_impl_hardware_include_IVehicleHardware_H_
+
+#include <VehicleHalTypes.h>
+
+#include <vector>
+
+namespace android {
+namespace hardware {
+namespace automotive {
+namespace vehicle {
+
+// A structure used to return dumped information.
+struct DumpResult {
+    // If callerShouldDumpState is true, caller would print the information in buffer and
+    // continue to dump its state, otherwise would just dump the buffer and skip its own
+    // dumping logic.
+    bool callerShouldDumpState;
+    // The dumped information for the caller to print.
+    std::string buffer;
+};
+
+// A request type for 'setValues' or 'getValues' method.
+struct VehiclePropValueRequest {
+    // A unique request ID set by the sender.
+    int requestId;
+    // The property to get/set.
+    ::aidl::android::hardware::automotive::vehicle::VehiclePropValue value;
+};
+
+// A structure to represent a set value error event reported from vehicle.
+struct SetValueErrorEvent {
+    ::aidl::android::hardware::automotive::vehicle::StatusCode errorCode;
+    int32_t propId;
+    int32_t areaId;
+};
+
+// An abstract interface to access vehicle hardware.
+// For virtualized VHAL, GrpcVehicleHardware would communicate with a VehicleHardware
+// implementation in another VM through GRPC. For non-virtualzied VHAL, VHAL directly communicates
+// with a VehicleHardware through this interface.
+class IVehicleHardware {
+  public:
+    virtual ~IVehicleHardware() = default;
+
+    // Get all the property configs.
+    virtual std::vector<::aidl::android::hardware::automotive::vehicle::VehiclePropConfig>
+    getAllPropertyConfigs() const = 0;
+
+    // Set property values asynchronously. Server could return before the property set requests
+    // are sent to vehicle bus or before property set confirmation is received. The callback is
+    // safe to be called after the function returns and is safe to be called in a different thread.
+    virtual ::aidl::android::hardware::automotive::vehicle::StatusCode setValues(
+            std::function<void(const std::vector<
+                               ::aidl::android::hardware::automotive::vehicle::SetValueResult>&)>&&
+                    callback,
+            const std::vector<VehiclePropValueRequest>& requests) = 0;
+
+    // Get property values asynchronously. Server could return before the property values are ready.
+    // The callback is safe to be called after the function returns and is safe to be called in a
+    // different thread.
+    virtual ::aidl::android::hardware::automotive::vehicle::StatusCode getValues(
+            std::function<void(const std::vector<
+                               ::aidl::android::hardware::automotive::vehicle::GetValueResult>&)>&&
+                    callback,
+            const std::vector<VehiclePropValueRequest>& requests) const = 0;
+
+    // Dump debug information in the server.
+    virtual DumpResult dump(const std::vector<std::string>& options) = 0;
+
+    // Check whether the system is healthy, return {@code StatusCode::OK} for healthy.
+    virtual ::aidl::android::hardware::automotive::vehicle::StatusCode checkHealth() = 0;
+
+    // Register a callback that would be called when there is a property change event from vehicle.
+    virtual void registerOnPropertyChangeEvent(
+            std::function<void(const std::vector<::aidl::android::hardware::automotive::vehicle::
+                                                         VehiclePropValue>&)>&& callback) = 0;
+
+    // Register a callback that would be called when there is a property set error event from
+    // vehicle.
+    virtual void registerOnPropertySetErrorEvent(
+            std::function<void(const std::vector<SetValueErrorEvent>&)>&& callback) = 0;
+};
+
+}  // namespace vehicle
+}  // namespace automotive
+}  // namespace hardware
+}  // namespace android
+
+#endif  // android_hardware_automotive_vehicle_aidl_impl_hardware_include_IVehicleHardware_H_
