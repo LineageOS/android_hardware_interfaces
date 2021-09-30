@@ -49,7 +49,15 @@ using ::android::hardware::radio::V1_0::RadioResponseInfo;
 using ::android::hardware::radio::V1_0::RadioResponseType;
 
 #define TIMEOUT_PERIOD 75
-#define RADIO_SERVICE_NAME "slot1"
+
+// HAL instance name for SIM slot 1 or single SIM device
+#define RADIO_SERVICE_SLOT1_NAME "slot1"
+
+// HAL instance name for SIM slot 2 on dual SIM device
+#define RADIO_SERVICE_SLOT2_NAME "slot2"
+
+// HAL instance name for SIM slot 3 on triple SIM device
+#define RADIO_SERVICE_SLOT3_NAME "slot3"
 
 class RadioHidlTest_v1_2;
 extern ::android::hardware::radio::V1_2::CardStatus cardStatus;
