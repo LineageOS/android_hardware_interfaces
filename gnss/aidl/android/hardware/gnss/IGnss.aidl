@@ -19,6 +19,7 @@ package android.hardware.gnss;
 import android.hardware.gnss.IGnssBatching;
 import android.hardware.gnss.IGnssCallback;
 import android.hardware.gnss.IGnssConfiguration;
+import android.hardware.gnss.IGnssGeofence;
 import android.hardware.gnss.IGnssMeasurementInterface;
 import android.hardware.gnss.IGnssPowerIndication;
 import android.hardware.gnss.IGnssPsds;
@@ -110,4 +111,11 @@ interface IGnss {
      * @return Handle to the IGnssBatching interface.
      */
     @nullable IGnssBatching getExtensionGnssBatching();
+
+    /**
+     * This method returns the IGnssGeofence interface.
+     *
+     * @return Handle to the IGnssGeofence interface.
+     */
+    @nullable IGnssGeofence getExtensionGnssGeofence();
 }

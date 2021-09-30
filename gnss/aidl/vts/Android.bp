@@ -32,6 +32,7 @@ cc_test {
         "gnss_hal_test_cases.cpp",
         "GnssBatchingCallback.cpp",
         "GnssCallbackAidl.cpp",
+        "GnssGeofenceCallback.cpp",
         "GnssMeasurementCallbackAidl.cpp",
         "GnssPowerIndicationCallback.cpp",
         "VtsHalGnssTargetTest.cpp",
