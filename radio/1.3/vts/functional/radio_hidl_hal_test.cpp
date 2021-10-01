@@ -16,11 +16,40 @@
 
 #include <radio_hidl_hal_utils_v1_3.h>
 
+bool isServiceValidForDeviceConfiguration(hidl_string& serviceName) {
+    if (isSsSsEnabled()) {
+        // Device is configured as SSSS.
+        if (serviceName != RADIO_SERVICE_SLOT1_NAME) {
+            ALOGI("%s instance is not valid for SSSS device.", serviceName.c_str());
+            return false;
+        }
+    } else if (isDsDsEnabled()) {
+        // Device is configured as DSDS.
+        if (serviceName != RADIO_SERVICE_SLOT1_NAME && serviceName != RADIO_SERVICE_SLOT2_NAME) {
+            ALOGI("%s instance is not valid for DSDS device.", serviceName.c_str());
+            return false;
+        }
+    } else if (isTsTsEnabled()) {
+        // Device is configured as TSTS.
+        if (serviceName != RADIO_SERVICE_SLOT1_NAME && serviceName != RADIO_SERVICE_SLOT2_NAME &&
+            serviceName != RADIO_SERVICE_SLOT3_NAME) {
+            ALOGI("%s instance is not valid for TSTS device.", serviceName.c_str());
+            return false;
+        }
+    }
+    return true;
+}
+
 void RadioHidlTest_v1_3::SetUp() {
-    radio_v1_3 = ::android::hardware::radio::V1_3::IRadio::getService(GetParam());
+    hidl_string serviceName = GetParam();
+    if (!isServiceValidForDeviceConfiguration(serviceName)) {
+        ALOGI("Skipped the test due to device configuration.");
+        GTEST_SKIP();
+    }
+    radio_v1_3 = ::android::hardware::radio::V1_3::IRadio::getService(serviceName);
     if (radio_v1_3 == NULL) {
         sleep(60);
-        radio_v1_3 = ::android::hardware::radio::V1_3::IRadio::getService(GetParam());
+        radio_v1_3 = ::android::hardware::radio::V1_3::IRadio::getService(serviceName);
     }
     ASSERT_NE(nullptr, radio_v1_3.get());
 
