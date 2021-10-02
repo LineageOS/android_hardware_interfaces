@@ -11,6 +11,9 @@
     },
     {
       "name": "FakeVehicleHardwareTest"
+    },
+    {
+      "name": "FakeVehicleHalValueGeneratorsTest"
     }
   ]
 }

@@ -27,5 +27,19 @@ cc_test {
         "VehicleHalUtils",
         "FakeVehicleHalValueGenerators",
     ],
+    shared_libs: [
+        "libjsoncpp",
+    ],
+    data: [
+        ":FakeVehicleHalValueGeneratorsTestFiles",
+    ],
     test_suites: ["device-tests"],
+}
+
+filegroup {
+    name: "FakeVehicleHalValueGeneratorsTestFiles",
+    srcs: [
+        "prop.json",
+        "prop_invalid.json",
+    ],
 }

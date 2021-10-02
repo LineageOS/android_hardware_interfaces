@@ -32,6 +32,7 @@ namespace android {
 namespace hardware {
 namespace automotive {
 namespace vehicle {
+namespace fake {
 
 class FakeVehicleHardware final : public IVehicleHardware {
   public:
@@ -94,6 +95,7 @@ class FakeVehicleHardware final : public IVehicleHardware {
     OnPropertySetErrorCallback mOnPropertySetErrorCallback GUARDED_BY(mCallbackLock);
 };
 
+}  // namespace fake
 }  // namespace vehicle
 }  // namespace automotive
 }  // namespace hardware

@@ -17,6 +17,8 @@
 #ifndef android_hardware_automotive_vehicle_aidl_impl_utils_common_include_VehicleHalTypes_H_
 #define android_hardware_automotive_vehicle_aidl_impl_utils_common_include_VehicleHalTypes_H_
 
+#include <aidl/android/hardware/automotive/vehicle/DiagnosticFloatSensorIndex.h>
+#include <aidl/android/hardware/automotive/vehicle/DiagnosticIntegerSensorIndex.h>
 #include <aidl/android/hardware/automotive/vehicle/EvConnectorType.h>
 #include <aidl/android/hardware/automotive/vehicle/EvsServiceState.h>
 #include <aidl/android/hardware/automotive/vehicle/EvsServiceType.h>
