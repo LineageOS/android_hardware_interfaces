@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,17 +33,36 @@
 
 package android.hardware.gnss;
 @VintfStability
-interface IGnss {
-  void setCallback(in android.hardware.gnss.IGnssCallback callback);
-  void close();
-  @nullable android.hardware.gnss.IGnssPsds getExtensionPsds();
-  android.hardware.gnss.IGnssConfiguration getExtensionGnssConfiguration();
-  android.hardware.gnss.IGnssMeasurementInterface getExtensionGnssMeasurement();
-  android.hardware.gnss.IGnssPowerIndication getExtensionGnssPowerIndication();
-  @nullable android.hardware.gnss.IGnssBatching getExtensionGnssBatching();
-  @nullable android.hardware.gnss.IGnssGeofence getExtensionGnssGeofence();
-  @nullable android.hardware.gnss.IGnssNavigationMessageInterface getExtensionGnssNavigationMessage();
-  const int ERROR_INVALID_ARGUMENT = 1;
-  const int ERROR_ALREADY_INIT = 2;
-  const int ERROR_GENERIC = 3;
+interface IGnssNavigationMessageCallback {
+  void gnssNavigationMessageCb(in android.hardware.gnss.IGnssNavigationMessageCallback.GnssNavigationMessage message);
+  @VintfStability
+  parcelable GnssNavigationMessage {
+    int svid;
+    android.hardware.gnss.IGnssNavigationMessageCallback.GnssNavigationMessage.GnssNavigationMessageType type;
+    int status;
+    int messageId;
+    int submessageId;
+    byte[] data;
+    const int STATUS_PARITY_PASSED = 1;
+    const int STATUS_PARITY_REBUILT = 2;
+    const int STATUS_UNKNOWN = 0;
+    @Backing(type="int") @VintfStability
+    enum GnssNavigationMessageType {
+      UNKNOWN = 0,
+      GPS_L1CA = 257,
+      GPS_L2CNAV = 258,
+      GPS_L5CNAV = 259,
+      SBS = 513,
+      GPS_CNAV2 = 260,
+      GLO_L1CA = 769,
+      QZS_L1CA = 1025,
+      BDS_D1 = 1281,
+      BDS_D2 = 1282,
+      BDS_CNAV1 = 1283,
+      BDS_CNAV2 = 1284,
+      GAL_I = 1537,
+      GAL_F = 1538,
+      IRN_L5CA = 1793,
+    }
+  }
 }

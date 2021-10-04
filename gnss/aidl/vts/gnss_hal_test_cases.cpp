@@ -25,6 +25,7 @@
 #include "GnssBatchingCallback.h"
 #include "GnssGeofenceCallback.h"
 #include "GnssMeasurementCallbackAidl.h"
+#include "GnssNavigationMessageCallback.h"
 #include "GnssPowerIndicationCallback.h"
 #include "gnss_hal_test.h"
 
@@ -43,6 +44,7 @@ using android::hardware::gnss::IGnssGeofence;
 using android::hardware::gnss::IGnssGeofenceCallback;
 using android::hardware::gnss::IGnssMeasurementCallback;
 using android::hardware::gnss::IGnssMeasurementInterface;
+using android::hardware::gnss::IGnssNavigationMessageInterface;
 using android::hardware::gnss::IGnssPowerIndication;
 using android::hardware::gnss::IGnssPsds;
 using android::hardware::gnss::PsdsType;
@@ -777,6 +779,17 @@ TEST_P(GnssHalTest, TestAllExtensions) {
     if (status.isOk() && iGnssGeofence != nullptr) {
         auto gnssGeofenceCallback = sp<GnssGeofenceCallback>::make();
         status = iGnssGeofence->setCallback(gnssGeofenceCallback);
+        ASSERT_TRUE(status.isOk());
+    }
+
+    sp<IGnssNavigationMessageInterface> iGnssNavMsgIface;
+    status = aidl_gnss_hal_->getExtensionGnssNavigationMessage(&iGnssNavMsgIface);
+    if (status.isOk() && iGnssNavMsgIface != nullptr) {
+        auto gnssNavMsgCallback = sp<GnssNavigationMessageCallback>::make();
+        status = iGnssNavMsgIface->setCallback(gnssNavMsgCallback);
+        ASSERT_TRUE(status.isOk());
+
+        status = iGnssNavMsgIface->close();
         ASSERT_TRUE(status.isOk());
     }
 }

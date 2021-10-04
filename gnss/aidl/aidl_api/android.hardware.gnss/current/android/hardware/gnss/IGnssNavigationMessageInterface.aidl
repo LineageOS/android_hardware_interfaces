@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,17 +33,7 @@
 
 package android.hardware.gnss;
 @VintfStability
-interface IGnss {
-  void setCallback(in android.hardware.gnss.IGnssCallback callback);
+interface IGnssNavigationMessageInterface {
+  void setCallback(in android.hardware.gnss.IGnssNavigationMessageCallback callback);
   void close();
-  @nullable android.hardware.gnss.IGnssPsds getExtensionPsds();
-  android.hardware.gnss.IGnssConfiguration getExtensionGnssConfiguration();
-  android.hardware.gnss.IGnssMeasurementInterface getExtensionGnssMeasurement();
-  android.hardware.gnss.IGnssPowerIndication getExtensionGnssPowerIndication();
-  @nullable android.hardware.gnss.IGnssBatching getExtensionGnssBatching();
-  @nullable android.hardware.gnss.IGnssGeofence getExtensionGnssGeofence();
-  @nullable android.hardware.gnss.IGnssNavigationMessageInterface getExtensionGnssNavigationMessage();
-  const int ERROR_INVALID_ARGUMENT = 1;
-  const int ERROR_ALREADY_INIT = 2;
-  const int ERROR_GENERIC = 3;
 }
