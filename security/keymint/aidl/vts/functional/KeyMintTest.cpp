@@ -3284,6 +3284,26 @@ TEST_P(ImportKeyTest, RsaPublicExponentMismatch) {
 }
 
 /*
+ * ImportKeyTest.RsaAttestMultiPurposeFail
+ *
+ * Verifies that importing an RSA key pair with purpose ATTEST_KEY+SIGN fails.
+ */
+TEST_P(ImportKeyTest, RsaAttestMultiPurposeFail) {
+    uint32_t key_size = 2048;
+    string key = rsa_2048_key;
+
+    ASSERT_EQ(ErrorCode::INCOMPATIBLE_PURPOSE,
+              ImportKey(AuthorizationSetBuilder()
+                                .Authorization(TAG_NO_AUTH_REQUIRED)
+                                .RsaSigningKey(key_size, 65537)
+                                .AttestKey()
+                                .Digest(Digest::SHA_2_256)
+                                .Padding(PaddingMode::RSA_PSS)
+                                .SetDefaultValidity(),
+                        KeyFormat::PKCS8, key));
+}
+
+/*
  * ImportKeyTest.EcdsaSuccess
  *
  * Verifies that importing and using an ECDSA P-256 key pair works correctly.
@@ -3397,6 +3417,22 @@ TEST_P(ImportKeyTest, EcdsaCurveMismatch) {
               ImportKey(AuthorizationSetBuilder()
                                 .EcdsaSigningKey(EcCurve::P_224 /* Doesn't match key */)
                                 .Digest(Digest::NONE)
+                                .SetDefaultValidity(),
+                        KeyFormat::PKCS8, ec_256_key));
+}
+
+/*
+ * ImportKeyTest.EcdsaAttestMultiPurposeFail
+ *
+ * Verifies that importing and using an ECDSA P-256 key pair with purpose ATTEST_KEY+SIGN fails.
+ */
+TEST_P(ImportKeyTest, EcdsaAttestMultiPurposeFail) {
+    ASSERT_EQ(ErrorCode::INCOMPATIBLE_PURPOSE,
+              ImportKey(AuthorizationSetBuilder()
+                                .Authorization(TAG_NO_AUTH_REQUIRED)
+                                .EcdsaSigningKey(EcCurve::P_256)
+                                .AttestKey()
+                                .Digest(Digest::SHA_2_256)
                                 .SetDefaultValidity(),
                         KeyFormat::PKCS8, ec_256_key));
 }

@@ -175,6 +175,24 @@ TEST_P(AttestKeyTest, AllRsaSizes) {
 }
 
 /*
+ * AttestKeyTest.RsaAttestKeyMultiPurposeFail
+ *
+ * This test attempts to create an RSA attestation key that also allows signing.
+ */
+TEST_P(AttestKeyTest, RsaAttestKeyMultiPurposeFail) {
+    vector<uint8_t> attest_key_blob;
+    vector<KeyCharacteristics> attest_key_characteristics;
+    vector<Certificate> attest_key_cert_chain;
+    ASSERT_EQ(ErrorCode::INCOMPATIBLE_PURPOSE,
+              GenerateKey(AuthorizationSetBuilder()
+                                  .RsaSigningKey(2048, 65537)
+                                  .AttestKey()
+                                  .SetDefaultValidity(),
+                          {} /* attestation signing key */, &attest_key_blob,
+                          &attest_key_characteristics, &attest_key_cert_chain));
+}
+
+/*
  * AttestKeyTest.RsaAttestedAttestKeys
  *
  * This test creates an RSA attestation key signed by factory keys, and varifies it can be
@@ -409,6 +427,24 @@ TEST_P(AttestKeyTest, EcAttestKeyChaining) {
     for (int i = 0; i < chain_size; i++) {
         CheckedDeleteKey(&key_blob_list[i]);
     }
+}
+
+/*
+ * AttestKeyTest.EcAttestKeyMultiPurposeFail
+ *
+ * This test attempts to create an EC attestation key that also allows signing.
+ */
+TEST_P(AttestKeyTest, EcAttestKeyMultiPurposeFail) {
+    vector<uint8_t> attest_key_blob;
+    vector<KeyCharacteristics> attest_key_characteristics;
+    vector<Certificate> attest_key_cert_chain;
+    ASSERT_EQ(ErrorCode::INCOMPATIBLE_PURPOSE,
+              GenerateKey(AuthorizationSetBuilder()
+                                  .EcdsaSigningKey(EcCurve::P_256)
+                                  .AttestKey()
+                                  .SetDefaultValidity(),
+                          {} /* attestation signing key */, &attest_key_blob,
+                          &attest_key_characteristics, &attest_key_cert_chain));
 }
 
 /*
