@@ -69,8 +69,6 @@ namespace aidl::android::hardware::security::keymint::test {
 
 namespace {
 
-bool check_patchLevels = false;
-
 // The maximum number of times we'll attempt to verify that corruption
 // of an ecrypted blob results in an error. Retries are necessary as there
 // is a small (roughly 1/256) chance that corrupting ciphertext still results
@@ -529,14 +527,12 @@ class NewKeyGenerationTest : public KeyMintAidlTestBase {
         EXPECT_TRUE(os_pl);
         EXPECT_EQ(*os_pl, os_patch_level());
 
-        if (check_patchLevels) {
-            // Should include vendor and boot patchlevels.
-            auto vendor_pl = auths.GetTagValue(TAG_VENDOR_PATCHLEVEL);
-            EXPECT_TRUE(vendor_pl);
-            EXPECT_EQ(*vendor_pl, vendor_patch_level());
-            auto boot_pl = auths.GetTagValue(TAG_BOOT_PATCHLEVEL);
-            EXPECT_TRUE(boot_pl);
-        }
+        // Should include vendor and boot patchlevels.
+        auto vendor_pl = auths.GetTagValue(TAG_VENDOR_PATCHLEVEL);
+        EXPECT_TRUE(vendor_pl);
+        EXPECT_EQ(*vendor_pl, vendor_patch_level());
+        auto boot_pl = auths.GetTagValue(TAG_BOOT_PATCHLEVEL);
+        EXPECT_TRUE(boot_pl);
 
         return auths;
     }
@@ -6676,10 +6672,6 @@ int main(int argc, char** argv) {
                         dump_Attestations = true;
             } else {
                 std::cout << "NOT dumping attestations" << std::endl;
-            }
-            // TODO(drysdale): Remove this flag when available KeyMint devices comply with spec
-            if (std::string(argv[i]) == "--check_patchLevels") {
-                aidl::android::hardware::security::keymint::test::check_patchLevels = true;
             }
         }
     }
