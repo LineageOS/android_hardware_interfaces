@@ -23,6 +23,7 @@
 #include <aidl/android/hardware/neuralnetworks/ExecutionResult.h>
 #include <aidl/android/hardware/neuralnetworks/FencedExecutionResult.h>
 #include <aidl/android/hardware/neuralnetworks/IBurst.h>
+#include <aidl/android/hardware/neuralnetworks/IExecution.h>
 #include <aidl/android/hardware/neuralnetworks/Request.h>
 #include <android/binder_auto_utils.h>
 #include <nnapi/IPreparedModel.h>
@@ -50,6 +51,9 @@ class PreparedModel : public BnPreparedModel {
                                      int64_t loopTimeoutDurationNs, int64_t durationNs,
                                      FencedExecutionResult* executionResult) override;
     ndk::ScopedAStatus configureExecutionBurst(std::shared_ptr<IBurst>* burst) override;
+    ndk::ScopedAStatus createReusableExecution(const Request& request, bool measureTiming,
+                                               int64_t loopTimeoutDurationNs,
+                                               std::shared_ptr<IExecution>* execution) override;
 
     ::android::nn::SharedPreparedModel getUnderlyingPreparedModel() const;
 
