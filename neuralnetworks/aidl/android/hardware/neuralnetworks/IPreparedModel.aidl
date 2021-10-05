@@ -21,6 +21,7 @@ import android.hardware.neuralnetworks.ErrorStatus;
 import android.hardware.neuralnetworks.ExecutionResult;
 import android.hardware.neuralnetworks.FencedExecutionResult;
 import android.hardware.neuralnetworks.IBurst;
+import android.hardware.neuralnetworks.IExecution;
 import android.hardware.neuralnetworks.Request;
 
 /**
@@ -105,11 +106,12 @@ interface IPreparedModel {
      * IDevice::allocate are valid. If there is an error, executeFenced must immediately return a
      * service specific exception with the corresponding ErrorStatus. If the inputs to the function
      * are valid and there is no error, executeFenced must dispatch an asynchronous task to perform
-     * the execution in the background, assign a sync fence that will be signaled once the execution
-     * is completed and immediately return a callback that can be used by the client to query the
-     * duration and runtime error status. If the task has finished before the call returns,
-     * syncFence file descriptor may be set to -1. The execution must wait for all the sync fences
-     * (if any) in waitFor to be signaled before starting the actual execution.
+     * the execution in the background, and immediately return a {@link FencedExecutionResult}
+     * containing two fields: a callback (which can be used by the client to query the duration and
+     * runtime error status) and a sync fence (which will be signaled once the execution is
+     * completed). If the task has finished before the call returns, syncFence file descriptor may
+     * be set to -1. The execution must wait for all the sync fences (if any) in waitFor to be
+     * signaled before starting the actual execution.
      *
      * When the asynchronous task has finished its execution, it must immediately signal the
      * syncFence returned from the executeFenced call. After the syncFence is signaled, the task
@@ -186,4 +188,36 @@ interface IPreparedModel {
      *     - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
      */
     IBurst configureExecutionBurst();
+
+    /**
+     * Create a reusable execution object to launch multiple executions with the same request and
+     * properties.
+     *
+     * createReusableExecution must verify the inputs to the function are correct, and the usages of
+     * memory pools allocated by IDevice::allocate are valid. If there is an error,
+     * createReusableExecution must immediately return a service specific exception with the
+     * appropriate ErrorStatus value. If the inputs to the function are valid and there is no error,
+     * createReusableExecution must construct a reusable execution.
+     *
+     * @param request The input and output information on which the prepared model is to be
+     *                executed.
+     * @param measure Specifies whether or not to measure duration of the execution.
+     * @param loopTimeoutDurationNs The maximum amount of time in nanoseconds that should be spent
+     *                              executing a {@link OperationType::WHILE} operation. If a loop
+     *                              condition model does not output false within this duration, the
+     *                              computation performed on the returned reusable execution object
+     *                              must be aborted. If -1 is provided, the maximum amount
+     *                              of time is {@link DEFAULT_LOOP_TIMEOUT_DURATION_NS}. Other
+     *                              negative values are invalid. When provided, the duration must
+     *                              not exceed {@link MAXIMUM_LOOP_TIMEOUT_DURATION_NS}.
+     * @return execution An IExecution object representing a reusable execution that has been
+     *                   specialized for a fixed request.
+     * @throws ServiceSpecificException with one of the following ErrorStatus values:
+     *     - DEVICE_UNAVAILABLE if driver is offline or busy
+     *     - GENERAL_FAILURE if there is an unspecified error
+     *     - INVALID_ARGUMENT if one of the input arguments is invalid
+     *     - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
+     */
+    IExecution createReusableExecution(
+            in Request request, in boolean measureTiming, in long loopTimeoutDurationNs);
 }
