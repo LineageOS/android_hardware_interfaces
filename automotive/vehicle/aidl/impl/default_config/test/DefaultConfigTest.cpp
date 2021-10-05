@@ -22,17 +22,19 @@ namespace android {
 namespace hardware {
 namespace automotive {
 namespace vehicle {
+namespace defaultconfig {
 
 namespace test {
 
 TEST(DefaultConfigTest, loadDefaultConfigs) {
-    for (ConfigDeclaration config : kVehicleProperties) {
+    for (ConfigDeclaration config : getDefaultConfigs()) {
         ASSERT_NE(0, config.config.prop);
     }
 }
 
 }  // namespace test
 
+}  // namespace defaultconfig
 }  // namespace vehicle
 }  // namespace automotive
 }  // namespace hardware

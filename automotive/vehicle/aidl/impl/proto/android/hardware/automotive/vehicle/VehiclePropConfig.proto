@@ -1,0 +1,53 @@
+/*
+ * Copyright (C) 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+package android.hardware.automotive.vehicle.proto;
+
+import "android/hardware/automotive/vehicle/VehicleAreaConfig.proto";
+import "android/hardware/automotive/vehicle/VehiclePropertyAccess.proto";
+import "android/hardware/automotive/vehicle/VehiclePropertyChangeMode.proto";
+
+/* Must be in sync with VehiclePropConfig.aidl. */
+message VehiclePropConfig {
+    /* Property identifier */
+    int32 prop = 1;
+
+    /* Defines if the property is read or write or both. */
+    VehiclePropertyAccess access = 2;
+
+    /* Defines the change mode of the property. */
+    VehiclePropertyChangeMode change_mode = 3;
+
+    /* Contains per-area configuration. */
+    repeated VehicleAreaConfig area_configs = 4;
+
+    /* Contains additional configuration parameters */
+    repeated int32 config_array = 5;
+
+    /* Some properties may require additional information passed over this
+     * string. Most properties do not need to set this. */
+    bytes config_string = 6;
+
+    /* Min sample rate in Hz.
+     * Must be defined for VehiclePropertyChangeMode::CONTINUOUS */
+    float min_sample_rate = 7;
+
+    /* Must be defined for VehiclePropertyChangeMode::CONTINUOUS
+     * Max sample rate in Hz. */
+    float max_sample_rate = 8;
+};
