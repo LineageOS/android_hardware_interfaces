@@ -14,21 +14,15 @@
  * limitations under the License.
  */
 
-package {
-    default_applicable_licenses: ["Android-Apache-2.0"],
-}
+syntax = "proto3";
 
-cc_library {
-    name: "VehicleHalUtils",
-    srcs: ["src/*.cpp"],
-    vendor: true,
-    local_include_dirs: ["include"],
-    export_include_dirs: ["include"],
-    defaults: ["VehicleHalDefaults"],
-}
+package android.hardware.automotive.vehicle.proto;
 
-cc_library_headers {
-    name: "VehicleHalUtilHeaders",
-    export_include_dirs: ["include"],
-    vendor: true,
+message DumpResult {
+    /* If callerShouldDumpState is true, caller would print the information in buffer and
+     * continue to dump its state, otherwise would just dump the buffer and skip its own
+     * dumping logic. */
+    bool caller_should_dump_state = 1;
+    /* The dumped information for the caller to print. */
+    string buffer = 2;
 }

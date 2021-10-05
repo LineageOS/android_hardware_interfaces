@@ -14,21 +14,13 @@
  * limitations under the License.
  */
 
-package {
-    default_applicable_licenses: ["Android-Apache-2.0"],
-}
+syntax = "proto3";
 
-cc_library {
-    name: "VehicleHalUtils",
-    srcs: ["src/*.cpp"],
-    vendor: true,
-    local_include_dirs: ["include"],
-    export_include_dirs: ["include"],
-    defaults: ["VehicleHalDefaults"],
-}
+package android.hardware.automotive.vehicle.proto;
 
-cc_library_headers {
-    name: "VehicleHalUtilHeaders",
-    export_include_dirs: ["include"],
-    vendor: true,
-}
+import "android/hardware/automotive/vehicle/VehiclePropValue.proto";
+
+message VehiclePropValueRequest {
+    int32 request_id = 1;
+    VehiclePropValue value = 2;
+};
