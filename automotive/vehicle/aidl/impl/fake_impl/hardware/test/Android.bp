@@ -29,9 +29,21 @@ cc_test {
     static_libs: [
         "VehicleHalUtils",
         "FakeVehicleHardware",
+        "FakeVehicleHalValueGenerators",
         "libgtest",
         "libgmock",
     ],
+    shared_libs: [
+        "libjsoncpp",
+    ],
+    data: [
+        ":FakeVehicleHardwareTestOverrideJson",
+    ],
     defaults: ["VehicleHalDefaults"],
     test_suites: ["device-tests"],
+}
+
+filegroup {
+    name: "FakeVehicleHardwareTestOverrideJson",
+    srcs: ["override/*"],
 }
