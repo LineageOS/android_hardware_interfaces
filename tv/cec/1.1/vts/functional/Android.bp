@@ -1,0 +1,23 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_test {
+    name: "VtsHalTvCecV1_1TargetTest",
+    defaults: ["VtsHalTargetTestDefaults"],
+    srcs: ["VtsHalTvCecV1_1TargetTest.cpp"],
+    static_libs: [
+        "android.hardware.tv.cec@1.1",
+        "android.hardware.tv.cec@1.0",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+    disable_framework: true,
+}

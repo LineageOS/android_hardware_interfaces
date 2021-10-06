@@ -37,11 +37,10 @@ constexpr uint8_t kTestIdentity[] = {0x45, 0x67, 0x98, 0x67, 0x56};
 constexpr uint8_t kTestEncryptedIdentity[] = {0x35, 0x37, 0x58, 0x57, 0x26};
 }  // namespace
 
-class SupplicantStaNetworkHidlTest : public SupplicantHidlTestBase {
+class SupplicantStaNetworkHidlTest : public SupplicantHidlTestBaseV1_1 {
    public:
     virtual void SetUp() override {
-        SupplicantHidlTestBase::SetUp();
-        EXPECT_TRUE(turnOnExcessiveLogging(supplicant_));
+        SupplicantHidlTestBaseV1_1::SetUp();
         sta_network_ = createSupplicantStaNetwork_1_1(supplicant_);
         ASSERT_NE(sta_network_.get(), nullptr);
     }
@@ -59,9 +58,9 @@ class SupplicantStaNetworkHidlTest : public SupplicantHidlTestBase {
 TEST_P(SupplicantStaNetworkHidlTest, Create) {
     stopSupplicant(wifi_v1_0_instance_name_);
     startSupplicantAndWaitForHidlService(wifi_v1_0_instance_name_,
-                                         supplicant_v1_1_instance_name_);
+                                         supplicant_instance_name_);
     sp<ISupplicant> supplicant =
-        getSupplicant_1_1(supplicant_v1_1_instance_name_, isP2pOn_);
+        getSupplicant_1_1(supplicant_instance_name_, isP2pOn_);
     EXPECT_NE(nullptr, createSupplicantStaNetwork_1_1(supplicant).get());
 }
 

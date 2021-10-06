@@ -39,6 +39,8 @@ cc_library_static {
     ],
     static_libs: [
         "android.hardware.wifi@1.0",
+        "android.hardware.wifi@1.3",
+        "android.hardware.wifi@1.5",
         "libwifi-system-iface",
     ],
 }
@@ -58,6 +60,8 @@ cc_test {
         "android.hardware.wifi@1.1",
         "android.hardware.wifi@1.2",
         "android.hardware.wifi@1.3",
+        "android.hardware.wifi@1.4",
+        "android.hardware.wifi@1.5",
         "libwifi-system-iface",
     ],
     test_suites: [
@@ -78,6 +82,11 @@ cc_test {
     static_libs: [
         "VtsHalWifiV1_0TargetTestUtil",
         "android.hardware.wifi@1.0",
+        "android.hardware.wifi@1.1",
+        "android.hardware.wifi@1.2",
+        "android.hardware.wifi@1.3",
+        "android.hardware.wifi@1.4",
+        "android.hardware.wifi@1.5",
         "libwifi-system-iface",
     ],
     test_suites: [

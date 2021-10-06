@@ -25,6 +25,7 @@
 #include <android/hardware/wifi/supplicant/1.2/types.h>
 #include <android/hardware/wifi/supplicant/1.3/ISupplicantStaIface.h>
 #include <android/hardware/wifi/supplicant/1.3/types.h>
+#include <android/hardware/wifi/supplicant/1.4/ISupplicantStaIface.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/HidlSupport.h>
 #include <hidl/ServiceManagement.h>
@@ -53,14 +54,18 @@ using ::android::hardware::wifi::supplicant::V1_2::ISupplicantStaNetwork;
 #define TIMEOUT_PERIOD 60
 class IfaceDppCallback;
 
-class SupplicantStaIfaceHidlTest : public SupplicantHidlTestBase {
+class SupplicantStaIfaceHidlTest : public SupplicantHidlTestBaseV1_2 {
    public:
     virtual void SetUp() override {
-        SupplicantHidlTestBase::SetUp();
-        EXPECT_TRUE(turnOnExcessiveLogging(supplicant_));
+        SupplicantHidlTestBaseV1_2::SetUp();
         sta_iface_ = getSupplicantStaIface_1_2(supplicant_);
         ASSERT_NE(sta_iface_.get(), nullptr);
         count_ = 0;
+
+        v1_3 = ::android::hardware::wifi::supplicant::V1_3::
+            ISupplicantStaIface::castFrom(sta_iface_);
+        v1_4 = ::android::hardware::wifi::supplicant::V1_4::
+            ISupplicantStaIface::castFrom(sta_iface_);
     }
 
     enum DppCallbackType {
@@ -103,6 +108,8 @@ class SupplicantStaIfaceHidlTest : public SupplicantHidlTestBase {
    protected:
     // ISupplicantStaIface object used for all tests in this fixture.
     sp<ISupplicantStaIface> sta_iface_;
+    sp<::android::hardware::wifi::supplicant::V1_3::ISupplicantStaIface> v1_3;
+    sp<::android::hardware::wifi::supplicant::V1_4::ISupplicantStaIface> v1_4;
 
     bool isDppSupported() {
         uint32_t keyMgmtMask = 0;
@@ -263,10 +270,14 @@ class IfaceDppCallback : public IfaceCallback {
  * RegisterCallback_1_2
  */
 TEST_P(SupplicantStaIfaceHidlTest, RegisterCallback_1_2) {
-    sta_iface_->registerCallback_1_2(
-        new IfaceCallback(), [](const SupplicantStatus& status) {
-            EXPECT_EQ(SupplicantStatusCode::SUCCESS, status.code);
-        });
+    // This API is deprecated from v1.4 HAL.
+    SupplicantStatusCode expectedCode =
+        (nullptr != v1_4) ? SupplicantStatusCode::FAILURE_UNKNOWN
+                          : SupplicantStatusCode::SUCCESS;
+    sta_iface_->registerCallback_1_2(new IfaceCallback(),
+                                     [&](const SupplicantStatus& status) {
+                                         EXPECT_EQ(expectedCode, status.code);
+                                     });
 }
 
 /*
@@ -340,9 +351,6 @@ TEST_P(SupplicantStaIfaceHidlTest, StartDppEnrolleeInitiator) {
      * it is waiting for will never be called. Note that this test is also
      * implemented in the 1.3 VTS test.
      */
-    sp<::android::hardware::wifi::supplicant::V1_3::ISupplicantStaIface> v1_3 =
-        ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaIface::
-            castFrom(sta_iface_);
     if (v1_3 != nullptr) {
         GTEST_SKIP() << "Test not supported with this HAL version";
     }
@@ -405,10 +413,6 @@ TEST_P(SupplicantStaIfaceHidlTest, StartDppConfiguratorInitiator) {
      * it is waiting for will never be called. Note that this test is also
      * implemented in the 1.3 VTS test.
      */
-    sp<::android::hardware::wifi::supplicant::V1_3::ISupplicantStaIface> v1_3 =
-        ::android::hardware::wifi::supplicant::V1_3::ISupplicantStaIface::
-            castFrom(sta_iface_);
-
     if (v1_3 != nullptr) {
         GTEST_SKIP() << "Test not supported with this HAL version";
         return;

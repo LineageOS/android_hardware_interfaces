@@ -41,7 +41,7 @@ cc_defaults {
     defaults: ["vhal_v2_0_defaults"],
     shared_libs: [
         "libbinder_ndk",
-        "carwatchdog_aidl_interface-V2-ndk",
+        "android.automotive.watchdog-V2-ndk",
     ],
 }
 
@@ -78,6 +78,7 @@ cc_library_static {
     name: "android.hardware.automotive.vehicle@2.0-default-impl-lib",
     vendor: true,
     defaults: ["vhal_v2_0_target_defaults"],
+    cflags: ["-DENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING"],
     srcs: [
         "impl/vhal_v2_0/CommConn.cpp",
         "impl/vhal_v2_0/EmulatedVehicleConnector.cpp",
@@ -133,6 +134,7 @@ cc_library_static {
     srcs: [
         "common/src/Obd2SensorStore.cpp",
         "common/src/VehicleObjectPool.cpp",
+        "common/src/VehiclePropertyStore.cpp",
         "common/src/VehicleUtils.cpp",
     ],
 }

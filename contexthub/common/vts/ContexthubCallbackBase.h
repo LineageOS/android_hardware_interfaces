@@ -27,7 +27,8 @@ namespace vts_utils {
 
 // Base callback implementation that just logs all callbacks by default, but
 // records a failure if
-class ContexthubCallbackBase : public V1_0::IContexthubCallback {
+template <class CallbackType>
+class ContexthubCallbackBase : public CallbackType {
   public:
     virtual Return<void> handleClientMsg(const V1_0::ContextHubMsg& /*msg*/) override {
         ALOGD("Got client message callback");

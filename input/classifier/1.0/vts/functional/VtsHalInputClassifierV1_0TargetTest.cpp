@@ -168,6 +168,7 @@ TEST_P(InputClassifierHidlTest_1_0, Classify_TwoVideoFrames) {
     classifier->reset();
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(InputClassifierHidlTest_1_0);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, InputClassifierHidlTest_1_0,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IInputClassifier::descriptor)),

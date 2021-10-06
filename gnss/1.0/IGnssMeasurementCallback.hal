@@ -106,8 +106,63 @@ interface IGnssMeasurementCallback {
         STATE_GLO_TOD_KNOWN          = 1 << 15,
     };
 
-    /**
+     /**
      * Flags indicating the Accumulated Delta Range's states.
+     *
+     * See the table below for a detailed interpretation of each state.
+     *
+     * +---------------------+-------------------+-----------------------------+
+     * | ADR_STATE           | Time of relevance | Interpretation              |
+     * +---------------------+-------------------+-----------------------------+
+     * | UNKNOWN             | ADR(t)            | No valid carrier phase      |
+     * |                     |                   | information is available    |
+     * |                     |                   | at time t.                  |
+     * +---------------------+-------------------+-----------------------------+
+     * | VALID               | ADR(t)            | Valid carrier phase         |
+     * |                     |                   | information is available    |
+     * |                     |                   | at time t. This indicates   |
+     * |                     |                   | that this measurement can   |
+     * |                     |                   | be used as a reference for  |
+     * |                     |                   | future measurements.        |
+     * |                     |                   | However, to compare it to   |
+     * |                     |                   | previous measurements to    |
+     * |                     |                   | compute delta range,        |
+     * |                     |                   | other bits should be        |
+     * |                     |                   | checked. Specifically, it   |
+     * |                     |                   | can be used for delta range |
+     * |                     |                   | computation if it is valid  |
+     * |                     |                   | and has no reset or cycle   |
+     * |                     |                   | slip at this epoch i.e.     |
+     * |                     |                   | if VALID_BIT == 1 &&        |
+     * |                     |                   | CYCLE_SLIP_BIT == 0 &&      |
+     * |                     |                   | RESET_BIT == 0.             |
+     * +---------------------+-------------------+-----------------------------+
+     * | RESET               | ADR(t) - ADR(t-1) | Carrier phase accumulation  |
+     * |                     |                   | has been restarted between  |
+     * |                     |                   | current time t and previous |
+     * |                     |                   | time t-1. This indicates    |
+     * |                     |                   | that this measurement can   |
+     * |                     |                   | be used as a reference for  |
+     * |                     |                   | future measurements, but it |
+     * |                     |                   | should not be compared to   |
+     * |                     |                   | previous measurements to    |
+     * |                     |                   | compute delta range.        |
+     * +---------------------+-------------------+-----------------------------+
+     * | CYCLE_SLIP          | ADR(t) - ADR(t-1) | Cycle slip(s) have been     |
+     * |                     |                   | detected between the        |
+     * |                     |                   | current time t and previous |
+     * |                     |                   | time t-1. This indicates    |
+     * |                     |                   | that this measurement can   |
+     * |                     |                   | be used as a reference for  |
+     * |                     |                   | future measurements.        |
+     * |                     |                   | Clients can use a           |
+     * |                     |                   | measurement with a cycle    |
+     * |                     |                   | slip to compute delta range |
+     * |                     |                   | against previous            |
+     * |                     |                   | measurements at their own   |
+     * |                     |                   | risk.                       |
+     * +---------------------+-------------------+-----------------------------+
+     *
      */
     @export(name="", value_prefix="GNSS_")
     enum GnssAccumulatedDeltaRangeState : uint16_t {
@@ -589,22 +644,19 @@ interface IGnssMeasurementCallback {
          */
         double snrDb;
 
-        /**
-         * Automatic gain control (AGC) level. AGC acts as a variable gain
-         * amplifier adjusting the power of the incoming signal. The AGC level
-         * may be used to indicate potential interference. When AGC is at a
-         * nominal level, this value must be set as 0. Higher gain (and/or lower
-         * input power) must be output as a positive number. Hence in cases of
-         * strong jamming, in the band of this signal, this value must go more
-         * negative.
-         *
-         * Note: Different hardware designs (e.g. antenna, pre-amplification, or
-         * other RF HW components) may also affect the typical output of of this
-         * value on any given hardware design in an open sky test - the
-         * important aspect of this output is that changes in this value are
-         * indicative of changes on input signal power in the frequency band for
-         * this measurement.
-         */
+
+    /**
+     * Automatic gain control (AGC) level. AGC acts as a variable gain amplifier adjusting the power
+     * of the incoming signal. The AGC level may be used to indicate potential interference. Higher
+     * gain (and/or lower input power) must be output as a positive number. Hence in cases of strong
+     * jamming, in the band of this signal, this value must go more negative. This value must be
+     * consistent given the same level of the incoming signal power.
+     *
+     * Note: Different hardware designs (e.g. antenna, pre-amplification, or other RF HW components)
+     * may also affect the typical output of this value on any given hardware design in an open sky
+     * test - the important aspect of this output is that changes in this value are indicative of
+     * changes on input signal power in the frequency band for this measurement.
+     */
         double agcLevelDb;
     };
 

@@ -15,11 +15,13 @@
  */
 #define LOG_TAG "DefaultVehicleHal_v2_0"
 
+#include <android-base/chrono_utils.h>
 #include <android-base/macros.h>
 #include <android-base/properties.h>
 #include <android/log.h>
 #include <dirent.h>
 #include <sys/system_properties.h>
+#include <utils/SystemClock.h>
 #include <fstream>
 #include <regex>
 
@@ -35,6 +37,8 @@ namespace vehicle {
 namespace V2_0 {
 
 namespace impl {
+
+static constexpr std::chrono::nanoseconds kHeartBeatIntervalNs = 3s;
 
 static std::unique_ptr<Obd2SensorStore> fillDefaultObd2Frame(size_t numVendorIntegerSensors,
                                                              size_t numVendorFloatSensors) {
@@ -101,9 +105,6 @@ EmulatedVehicleHal::EmulatedVehicleHal(VehiclePropertyStore* propStore, VehicleH
       mVehicleClient(client),
       mEmulatedUserHal(emulatedUserHal) {
     initStaticConfig();
-    for (size_t i = 0; i < arraysize(kVehicleProperties); i++) {
-        mPropStore->registerProperty(kVehicleProperties[i].config);
-    }
     mVehicleClient->registerPropertyValueCallback(std::bind(&EmulatedVehicleHal::onPropertyValue,
                                                             this, std::placeholders::_1,
                                                             std::placeholders::_2));
@@ -176,7 +177,13 @@ VehicleHal::VehiclePropValuePtr EmulatedVehicleHal::get(
                 v = getValuePool()->obtain(*internalPropValue);
             }
 
-            *outStatus = v != nullptr ? StatusCode::OK : StatusCode::INVALID_ARG;
+            if (!v) {
+                *outStatus = StatusCode::INVALID_ARG;
+            } else if (v->status == VehiclePropertyStatus::AVAILABLE) {
+                *outStatus = StatusCode::OK;
+            } else {
+                *outStatus = StatusCode::TRY_AGAIN;
+            }
             break;
     }
     if (v.get()) {
@@ -276,61 +283,47 @@ static bool isDiagnosticProperty(VehiclePropConfig propConfig) {
 void EmulatedVehicleHal::onCreate() {
     static constexpr bool shouldUpdateStatus = true;
 
-    for (auto& it : kVehicleProperties) {
-        VehiclePropConfig cfg = it.config;
-        int32_t numAreas = cfg.areaConfigs.size();
+    auto configs = mVehicleClient->getAllPropertyConfig();
 
+    for (const auto& cfg : configs) {
         if (isDiagnosticProperty(cfg)) {
             // do not write an initial empty value for the diagnostic properties
             // as we will initialize those separately.
             continue;
         }
 
-        // A global property will have only a single area
-        if (isGlobalProp(cfg.prop)) {
-            numAreas = 1;
-        }
+        int32_t numAreas = isGlobalProp(cfg.prop) ? 0 : cfg.areaConfigs.size();
 
         for (int i = 0; i < numAreas; i++) {
-            int32_t curArea;
-
-            if (isGlobalProp(cfg.prop)) {
-                curArea = 0;
-            } else {
-                curArea = cfg.areaConfigs[i].areaId;
-            }
+            int32_t curArea = isGlobalProp(cfg.prop) ? 0 : cfg.areaConfigs[i].areaId;
 
             // Create a separate instance for each individual zone
             VehiclePropValue prop = {
                     .areaId = curArea,
                     .prop = cfg.prop,
+                    .status = VehiclePropertyStatus::UNAVAILABLE,
             };
 
-            if (it.initialAreaValues.size() > 0) {
-                auto valueForAreaIt = it.initialAreaValues.find(curArea);
-                if (valueForAreaIt != it.initialAreaValues.end()) {
-                    prop.value = valueForAreaIt->second;
-                } else {
-                    ALOGW("%s failed to get default value for prop 0x%x area 0x%x",
-                            __func__, cfg.prop, curArea);
-                }
-            } else {
-                prop.value = it.initialValue;
-                if (mInitVhalValueOverride) {
-                    for (auto& itOverride : mVehiclePropertiesOverride) {
-                        if (itOverride.prop == cfg.prop) {
-                            prop.value = itOverride.value;
-                        }
+            if (mInitVhalValueOverride) {
+                for (auto& itOverride : mVehiclePropertiesOverride) {
+                    if (itOverride.prop == cfg.prop) {
+                        prop.status = VehiclePropertyStatus::AVAILABLE;
+                        prop.value = itOverride.value;
                     }
                 }
             }
             mPropStore->writeValue(prop, shouldUpdateStatus);
         }
     }
+
+    mVehicleClient->triggerSendAllValues();
+
     initObd2LiveFrame(*mPropStore->getConfigOrDie(OBD2_LIVE_FRAME));
     initObd2FreezeFrame(*mPropStore->getConfigOrDie(OBD2_FREEZE_FRAME));
     mInEmulator = isInEmulator();
     ALOGD("mInEmulator=%s", mInEmulator ? "true" : "false");
+    mRecurrentTimer.registerRecurrentEvent(kHeartBeatIntervalNs,
+                                           static_cast<int32_t>(VehicleProperty::VHAL_HEARTBEAT));
 }
 
 std::vector<VehiclePropConfig> EmulatedVehicleHal::listProperties()  {
@@ -348,6 +341,10 @@ void EmulatedVehicleHal::onContinuousPropertyTimer(const std::vector<int32_t>& p
             if (internalPropValue != nullptr) {
                 v = pool.obtain(*internalPropValue);
             }
+        } else if (property == static_cast<int32_t>(VehicleProperty::VHAL_HEARTBEAT)) {
+            // VHAL_HEARTBEAT is not a continuous value, but it needs to be updated periodically.
+            // So, the update is done through onContinuousPropertyTimer.
+            v = doInternalHealthCheck();
         } else {
             ALOGE("Unexpected onContinuousPropertyTimer for property: 0x%x", property);
         }
@@ -404,8 +401,8 @@ void EmulatedVehicleHal::onPropertyValue(const VehiclePropValue& value, bool upd
 }
 
 void EmulatedVehicleHal::initStaticConfig() {
-    for (auto&& it = std::begin(kVehicleProperties); it != std::end(kVehicleProperties); ++it) {
-        const auto& cfg = it->config;
+    auto configs = mVehicleClient->getAllPropertyConfig();
+    for (auto&& cfg : configs) {
         VehiclePropertyStore::TokenFunction tokenFunction = nullptr;
 
         switch (cfg.prop) {
@@ -499,6 +496,31 @@ StatusCode EmulatedVehicleHal::fillObd2DtcInfo(VehiclePropValue* outValue) {
     outValue->value.int64Values = timestamps;
     outValue->prop = OBD2_FREEZE_FRAME_INFO;
     return StatusCode::OK;
+}
+
+VehicleHal::VehiclePropValuePtr EmulatedVehicleHal::doInternalHealthCheck() {
+    VehicleHal::VehiclePropValuePtr v = nullptr;
+
+    // This is an example of very simpe health checking. VHAL is considered healthy if we can read
+    // PERF_VEHICLE_SPEED. The more comprehensive health checking is required.
+    VehiclePropValue propValue = {
+            .prop = static_cast<int32_t>(VehicleProperty::PERF_VEHICLE_SPEED),
+    };
+    auto internalPropValue = mPropStore->readValueOrNull(propValue);
+    if (internalPropValue != nullptr) {
+        v = createVhalHeartBeatProp();
+    } else {
+        ALOGW("VHAL health check failed");
+    }
+    return v;
+}
+
+VehicleHal::VehiclePropValuePtr EmulatedVehicleHal::createVhalHeartBeatProp() {
+    VehicleHal::VehiclePropValuePtr v = getValuePool()->obtainInt64(uptimeMillis());
+    v->prop = static_cast<int32_t>(VehicleProperty::VHAL_HEARTBEAT);
+    v->areaId = 0;
+    v->status = VehiclePropertyStatus::AVAILABLE;
+    return v;
 }
 
 }  // impl

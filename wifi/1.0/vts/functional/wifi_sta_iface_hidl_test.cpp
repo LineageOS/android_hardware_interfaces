@@ -298,6 +298,7 @@ TEST_P(WifiStaIfaceHidlTest, PacketFateMonitoring) {
               HIDL_INVOKE(wifi_sta_iface_, getDebugRxPacketFates).first.code);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiStaIfaceHidlTest);
 INSTANTIATE_TEST_SUITE_P(
     PerInstance, WifiStaIfaceHidlTest,
     testing::ValuesIn(

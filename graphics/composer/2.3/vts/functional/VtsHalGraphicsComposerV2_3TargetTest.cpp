@@ -17,6 +17,7 @@
 #define LOG_TAG "graphics_composer_hidl_hal_test@2.3"
 
 #include <algorithm>
+#include <numeric>
 
 #include <android-base/logging.h>
 #include <android-base/properties.h>
@@ -38,12 +39,10 @@ namespace V2_3 {
 namespace vts {
 namespace {
 
-using common::V1_0::BufferUsage;
 using common::V1_1::RenderIntent;
 using common::V1_2::ColorMode;
 using common::V1_2::Dataspace;
 using common::V1_2::PixelFormat;
-using mapper::V2_0::IMapper;
 using V2_2::vts::Gralloc;
 
 class GraphicsComposerHidlTest : public ::testing::TestWithParam<std::string> {
@@ -140,12 +139,6 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
         ASSERT_NO_FATAL_FAILURE(GraphicsComposerHidlTest::TearDown());
     }
 
-    const native_handle_t* allocate() {
-        return mGralloc->allocate(
-                64, 64, 1, static_cast<common::V1_1::PixelFormat>(PixelFormat::RGBA_8888),
-                static_cast<uint64_t>(BufferUsage::CPU_WRITE_OFTEN | BufferUsage::CPU_READ_OFTEN));
-    }
-
     void execute() { mComposerClient->execute(mReader.get(), mWriter.get()); }
 
     std::unique_ptr<CommandWriterBase> mWriter;
@@ -163,16 +156,31 @@ class GraphicsComposerHidlCommandTest : public GraphicsComposerHidlTest {
 TEST_P(GraphicsComposerHidlTest, GetDisplayIdentificationData) {
     uint8_t port0;
     std::vector<uint8_t> data0;
-    if (mComposerClient->getDisplayIdentificationData(mPrimaryDisplay, &port0, &data0)) {
-        uint8_t port1;
-        std::vector<uint8_t> data1;
-        ASSERT_TRUE(mComposerClient->getDisplayIdentificationData(mPrimaryDisplay, &port1, &data1));
 
-        ASSERT_EQ(port0, port1) << "ports are not stable";
-        ASSERT_TRUE(data0.size() == data1.size() &&
-                    std::equal(data0.begin(), data0.end(), data1.begin()))
-            << "data is not stable";
+    if (!mComposerClient->getDisplayIdentificationData(mPrimaryDisplay, &port0, &data0)) {
+        return;
     }
+
+    ASSERT_FALSE(data0.empty());
+    constexpr size_t kEdidBlockSize = 128;
+    ASSERT_TRUE(data0.size() % kEdidBlockSize == 0)
+            << "EDID blob length is not a multiple of " << kEdidBlockSize;
+
+    const uint8_t kEdidHeader[] = {0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00};
+    ASSERT_TRUE(std::equal(std::begin(kEdidHeader), std::end(kEdidHeader), data0.begin()))
+            << "EDID blob doesn't start with the fixed EDID header";
+    ASSERT_EQ(0, std::accumulate(data0.begin(), data0.begin() + kEdidBlockSize,
+                                 static_cast<uint8_t>(0)))
+            << "EDID base block doesn't checksum";
+
+    uint8_t port1;
+    std::vector<uint8_t> data1;
+    ASSERT_TRUE(mComposerClient->getDisplayIdentificationData(mPrimaryDisplay, &port1, &data1));
+
+    ASSERT_EQ(port0, port1) << "ports are not stable";
+    ASSERT_TRUE(data0.size() == data1.size() &&
+                std::equal(data0.begin(), data0.end(), data1.begin()))
+            << "data is not stable";
 }
 
 /**
@@ -612,11 +620,13 @@ TEST_P(GraphicsComposerHidlTest, setDisplayBrightness) {
     EXPECT_EQ(mComposerClient->setDisplayBrightness(mPrimaryDisplay, -2.0f), Error::BAD_PARAMETER);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GraphicsComposerHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, GraphicsComposerHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IComposer::descriptor)),
         android::hardware::PrintInstanceNameToString);
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GraphicsComposerHidlCommandTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, GraphicsComposerHidlCommandTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IComposer::descriptor)),

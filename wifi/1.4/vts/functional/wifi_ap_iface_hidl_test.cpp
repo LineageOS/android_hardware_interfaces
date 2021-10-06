@@ -59,7 +59,7 @@ class WifiApIfaceHidlTest : public ::testing::TestWithParam<std::string> {
  * code.
  */
 TEST_P(WifiApIfaceHidlTest, SetMacAddress) {
-    const hidl_array<uint8_t, 6> kMac{{0x12, 0x22, 0x33, 0x52, 0x10, 0x41}};
+    const hidl_array<uint8_t, 6> kMac{{0x12, 0x22, 0x33, 0x52, 0x10, 0x44}};
     EXPECT_EQ(WifiStatusCode::SUCCESS,
               HIDL_INVOKE(wifi_ap_iface_, setMacAddress, kMac).code);
 }
@@ -77,6 +77,7 @@ TEST_P(WifiApIfaceHidlTest, GetFactoryMacAddress) {
     EXPECT_NE(all_zero, status_and_mac.second);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiApIfaceHidlTest);
 INSTANTIATE_TEST_SUITE_P(
     PerInstance, WifiApIfaceHidlTest,
     testing::ValuesIn(

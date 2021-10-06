@@ -13,10 +13,13 @@ cc_library_static {
     shared_libs: [
         "libbase",
         "libbinder_ndk",
-        "android.hardware.vibrator-V1-ndk",
+        "android.hardware.vibrator-V2-ndk",
     ],
     export_include_dirs: ["include"],
-    srcs: ["Vibrator.cpp"],
+    srcs: [
+        "Vibrator.cpp",
+        "VibratorManager.cpp",
+    ],
     visibility: [
         ":__subpackages__",
         "//hardware/interfaces/tests/extension/vibrator:__subpackages__",
@@ -37,7 +40,7 @@ cc_binary {
     shared_libs: [
         "libbase",
         "libbinder_ndk",
-        "android.hardware.vibrator-V1-ndk",
+        "android.hardware.vibrator-V2-ndk",
     ],
     static_libs: [
         "libvibratorexampleimpl",

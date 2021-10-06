@@ -27,13 +27,16 @@ cc_library_static {
     name: "android.hardware.automotive.can@libnetdevice",
     defaults: ["android.hardware.automotive.can@defaults"],
     vendor_available: true,
-    relative_install_path: "hw",
     srcs: [
-        "NetlinkRequest.cpp",
-        "NetlinkSocket.cpp",
         "can.cpp",
         "common.cpp",
+        "ethtool.cpp",
+        "ifreqs.cpp",
         "libnetdevice.cpp",
+        "vlan.cpp",
     ],
     export_include_dirs: ["include"],
+    static_libs: [
+        "libnl++",
+    ],
 }

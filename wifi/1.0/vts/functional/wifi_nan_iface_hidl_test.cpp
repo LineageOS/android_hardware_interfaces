@@ -20,6 +20,7 @@
 #include <android/hardware/wifi/1.0/IWifi.h>
 #include <android/hardware/wifi/1.0/IWifiNanIface.h>
 #include <android/hardware/wifi/1.0/IWifiNanIfaceEventCallback.h>
+#include <android/hardware/wifi/1.5/IWifiNanIface.h>
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
@@ -483,6 +484,16 @@ TEST_P(WifiNanIfaceHidlTest, FailOnIfaceInvalid) {
 TEST_P(WifiNanIfaceHidlTest, getCapabilitiesRequest) {
     uint16_t inputCmdId = 10;
     callbackType = INVALID;
+    sp<::android::hardware::wifi::V1_5::IWifiNanIface> iface_converted =
+        ::android::hardware::wifi::V1_5::IWifiNanIface::castFrom(iwifiNanIface);
+    if (iface_converted != nullptr) {
+        ASSERT_EQ(WifiStatusCode::ERROR_NOT_SUPPORTED,
+                  HIDL_INVOKE(iwifiNanIface, getCapabilitiesRequest, inputCmdId)
+                      .code);
+        // Skip this test since this API is deprecated in this newer HAL version
+        return;
+    }
+
     ASSERT_EQ(
         WifiStatusCode::SUCCESS,
         HIDL_INVOKE(iwifiNanIface, getCapabilitiesRequest, inputCmdId).code);
@@ -509,6 +520,7 @@ TEST_P(WifiNanIfaceHidlTest, getCapabilitiesRequest) {
     EXPECT_NE(capabilities.supportedCipherSuites, (unsigned int)0);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiNanIfaceHidlTest);
 INSTANTIATE_TEST_SUITE_P(
     PerInstance, WifiNanIfaceHidlTest,
     testing::ValuesIn(

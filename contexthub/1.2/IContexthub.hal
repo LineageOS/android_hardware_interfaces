@@ -1,0 +1,61 @@
+/*
+ * Copyright (C) 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.contexthub@1.2;
+
+import @1.0::ContextHub;
+import @1.0::Result;
+import @1.1::IContexthub;
+import @1.1::SettingValue;
+import IContexthubCallback;
+
+interface IContexthub extends @1.1::IContexthub {
+    /**
+     * Enumerate all available context hubs on the system.
+     *
+     * @return hubs                 list of hubs on this system.
+     * @return supportedPermissions list of Android permissions all hubs
+     *                              support for nanoapps to enforce host
+     *                              endpoints are granted in order to
+     *                              communicate with them.
+     */
+    getHubs_1_2() generates (vec<ContextHub> hubs, vec<string> supportedPermissions);
+
+    /**
+     * Register a callback for the HAL implementation to send asynchronous
+     * messages to the service from a context hub. There can be a maximum of
+     * one callback registered with the HAL. A call to this function when a
+     * callback has already been registered must override the previous
+     * registration.
+     *
+     * @param hubId    identifier for the hub
+     * @param callback an implementation of the IContextHubCallbacks
+     *
+     * @return result OK on success
+     *                BAD_VALUE if parameters are not valid
+     *
+     */
+    registerCallback_1_2(uint32_t hubId, IContexthubCallback cb) generates (Result result);
+
+    /**
+     * Notification sent by the framework to indicate that the user
+     * has changed a setting.
+     *
+     * @param setting User setting that has been modified.
+     * @param newValue The update value of the user setting.
+     */
+    onSettingChanged_1_2(Setting setting, @1.1::SettingValue newValue);
+};

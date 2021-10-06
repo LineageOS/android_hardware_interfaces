@@ -1,0 +1,180 @@
+/*
+ * Copyright 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi.supplicant@1.4;
+
+import @1.0::ISupplicantStaIfaceCallback.AnqpData;
+import @1.0::ISupplicantStaIfaceCallback.Hs20AnqpData;
+import @1.3::ISupplicantStaIfaceCallback;
+import @1.0::ISupplicantStaIfaceCallback.State;
+import @1.0::ISupplicantStaIfaceCallback.StatusCode;
+import @1.0::Bssid;
+import @1.0::Ssid;
+
+/**
+ * Callback Interface exposed by the supplicant service
+ * for each station mode interface (ISupplicantStaIface).
+ *
+ * Clients need to host an instance of this HIDL interface object and
+ * pass a reference of the object to the supplicant via the
+ * corresponding |ISupplicantStaIface.registerCallback_1_4| method.
+ */
+interface ISupplicantStaIfaceCallback extends @1.3::ISupplicantStaIfaceCallback {
+    /**
+     *  MBO spec v1.2, 4.2.4 Table 14: MBO Association disallowed reason code attribute
+     *  values.
+     */
+    enum MboAssocDisallowedReasonCode : uint8_t {
+        RESERVED = 0,
+        UNSPECIFIED = 1,
+        MAX_NUM_STA_ASSOCIATED = 2,
+        AIR_INTERFACE_OVERLOADED = 3,
+        AUTH_SERVER_OVERLOADED = 4,
+        INSUFFICIENT_RSSI = 5,
+    };
+
+    /**
+     * ANQP data for IEEE Std 802.11-2016.
+     * The format of the data within these elements follows the IEEE
+     * Std 802.11-2016 standard, section 9.4.5.
+     */
+    struct AnqpData {
+        /**
+         * Baseline information as defined in HAL 1.0.
+         */
+        @1.0::ISupplicantStaIfaceCallback.AnqpData V1_0;
+
+        /*
+         * Container for v1.0 of this struct
+         */
+        vec<uint8_t> venueUrl;
+    };
+
+    /**
+     * OceRssiBasedAssocRejectAttr is extracted from (Re-)Association response
+     * frame from an OCE AP to indicate that the AP has rejected the
+     * (Re-)Association request on the basis of insufficient RSSI.
+     * Refer OCE spec v1.0 section 4.2.2 Table 7.
+     */
+    struct OceRssiBasedAssocRejectAttr {
+        /*
+         * Delta RSSI - The difference in dB between the minimum RSSI at which
+         * the AP would accept a (Re-)Association request from the STA before
+         * Retry Delay expires and the AP's measurement of the RSSI at which the
+         * (Re-)Association request was received.
+         */
+        uint32_t deltaRssi;
+
+        /*
+         * Retry Delay - The time period in seconds for which the AP will not
+         * accept any subsequent (Re-)Association requests from the STA, unless
+         * the received RSSI has improved by Delta RSSI.
+         */
+        uint32_t retryDelayS;
+    };
+
+    /**
+     * Association Rejection related information.
+     */
+    struct AssociationRejectionData {
+        /**
+         * SSID of the AP that rejected the association.
+         */
+        Ssid ssid;
+
+        /**
+         * BSSID of the AP that rejected the association.
+         */
+        Bssid bssid;
+
+        /*
+         * 802.11 code to indicate the reject reason.
+         * Refer to section 8.4.1.9 of IEEE 802.11 spec.
+         */
+        StatusCode statusCode;
+
+        /*
+         * Flag to indicate that failure is due to timeout rather than
+         * explicit rejection response from the AP.
+         */
+        bool timedOut;
+
+        /**
+         * Flag to indicate that MboAssocDisallowedReasonCode is present
+         * in the (Re-)Association response frame.
+         */
+        bool isMboAssocDisallowedReasonCodePresent;
+
+        /**
+         * mboAssocDisallowedReason is extracted from MBO association disallowed attribute
+         * in (Re-)Association response frame to indicate that the AP is not accepting new
+         * associations.
+         * Refer MBO spec v1.2 section 4.2.4 Table 13 for the details of reason code.
+         * The value is undefined if isMboAssocDisallowedReasonCodePresent is false.
+         */
+        MboAssocDisallowedReasonCode mboAssocDisallowedReason;
+
+        /**
+         * Flag to indicate that OceRssiBasedAssocRejectAttr is present
+         * in the (Re-)Association response frame.
+         */
+        bool isOceRssiBasedAssocRejectAttrPresent;
+
+        /*
+         * OCE RSSI-based (Re-)Association rejection attribute.
+         * The contents are undefined if isOceRssiBasedAssocRejectAttrPresent is false.
+         */
+        OceRssiBasedAssocRejectAttr oceRssiBasedAssocRejectData;
+    };
+
+    /**
+     * Used to indicate a Hotspot 2.0 terms and conditions acceptance is requested from the user
+     * before allowing the device to get internet access.
+     *
+     * @param bssid BSSID of the access point.
+     * @param url URL of the T&C server.
+     */
+    oneway onHs20TermsAndConditionsAcceptanceRequestedNotification(Bssid bssid, string url);
+
+    /**
+     * Used to indicate the result of ANQP (either for IEEE 802.11u Interworking
+     * or Hotspot 2.0) query.
+     *
+     * @param bssid BSSID of the access point.
+     * @param data ANQP data fetched from the access point.
+     *        All the fields in this struct must be empty if the query failed.
+     * @param hs20Data ANQP data fetched from the Hotspot 2.0 access point.
+     *        All the fields in this struct must be empty if the query failed.
+     */
+    oneway onAnqpQueryDone_1_4(Bssid bssid, AnqpData data, Hs20AnqpData hs20Data);
+
+    /**
+     * Used to indicate an association rejection received from the AP
+     * to which the connection is being attempted.
+     *
+     * @param assocRejectData Association Rejection related information.
+     */
+    oneway onAssociationRejected_1_4(AssociationRejectionData assocRejectData);
+
+    /**
+     * Used to indicate that the supplicant failed to find a network in scan result
+     * which matches with the network capabilities requested by upper layer
+     * for connection.
+     *
+     * @param ssid network name supplicant tried to connect.
+     */
+    oneway onNetworkNotFound(Ssid ssid);
+};

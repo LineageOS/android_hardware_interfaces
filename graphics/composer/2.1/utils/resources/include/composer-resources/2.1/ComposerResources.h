@@ -74,6 +74,7 @@ class ComposerHandleCache {
     ComposerHandleCache& operator=(const ComposerHandleCache&) = delete;
 
     bool initCache(HandleType type, uint32_t cacheSize);
+    size_t getCacheSize() const;
     Error lookupCache(uint32_t slot, const native_handle_t** outHandle);
     Error updateCache(uint32_t slot, const native_handle_t* handle,
                       const native_handle** outReplacedHandle);
@@ -120,7 +121,8 @@ class ComposerDisplayResource {
                             uint32_t outputBufferCacheSize);
 
     bool initClientTargetCache(uint32_t cacheSize);
-
+    size_t getClientTargetCacheSize() const;
+    size_t getOutputBufferCacheSize() const;
     bool isVirtual() const;
 
     Error getClientTarget(uint32_t slot, bool fromCache, const native_handle_t* inHandle,
@@ -162,12 +164,15 @@ class ComposerResources {
             std::function<void(Display display, bool isVirtual, const std::vector<Layer>& layers)>;
     void clear(RemoveDisplay removeDisplay);
 
+    bool hasDisplay(Display display);
     Error addPhysicalDisplay(Display display);
     Error addVirtualDisplay(Display display, uint32_t outputBufferCacheSize);
 
     Error removeDisplay(Display display);
 
     Error setDisplayClientTargetCacheSize(Display display, uint32_t clientTargetCacheSize);
+    Error getDisplayClientTargetCacheSize(Display display, size_t* outCacheSize);
+    Error getDisplayOutputBufferCacheSize(Display display, size_t* outCacheSize);
 
     Error addLayer(Display display, Layer layer, uint32_t bufferCacheSize);
     Error removeLayer(Display display, Layer layer);
@@ -177,7 +182,8 @@ class ComposerResources {
     bool mustValidateDisplay(Display display);
 
     // When a buffer in the cache is replaced by a new one, we must keep it
-    // alive until it has been replaced in ComposerHal.
+    // alive until it has been replaced in ComposerHal because it is still using
+    // the old buffer.
     class ReplacedHandle {
       public:
         explicit ReplacedHandle(bool isBuffer) : mIsBuffer(isBuffer) {}

@@ -163,6 +163,7 @@ Return<Result> Demux::close() {
     mRecordFilterIds.clear();
     mFilters.clear();
     mLastUsedFilterId = -1;
+    mTunerService->removeDemux(mDemuxId);
 
     return Result::SUCCESS;
 }
@@ -294,6 +295,11 @@ void Demux::updateFilterOutput(uint16_t filterId, vector<uint8_t> data) {
     mFilters[filterId]->updateFilterOutput(data);
 }
 
+void Demux::updateMediaFilterOutput(uint16_t filterId, vector<uint8_t> data, uint64_t pts) {
+    updateFilterOutput(filterId, data);
+    mFilters[filterId]->updatePts(pts);
+}
+
 uint16_t Demux::getFilterTpid(uint32_t filterId) {
     return mFilters[filterId]->getTpid();
 }
@@ -313,6 +319,12 @@ void Demux::frontendInputThreadLoop() {
     std::lock_guard<std::mutex> lock(mFrontendInputThreadLock);
     mFrontendInputThreadRunning = true;
 
+    if (!mDvrPlayback) {
+        ALOGW("[Demux] No software Frontend input configured. Ending Frontend thread loop.");
+        mFrontendInputThreadRunning = false;
+        return;
+    }
+
     while (mFrontendInputThreadRunning) {
         uint32_t efState = 0;
         status_t status = mDvrPlayback->getDvrEventFlag()->wait(
@@ -321,6 +333,12 @@ void Demux::frontendInputThreadLoop() {
         if (status != OK) {
             ALOGD("[Demux] wait for data ready on the playback FMQ");
             continue;
+        }
+        if (mDvrPlayback->getSettings().playback().dataFormat == DataFormat::ES) {
+            if (!mDvrPlayback->processEsDataOnPlayback(true /*isVirtualFrontend*/, mIsRecording)) {
+                ALOGE("[Demux] playback es data failed to be filtered. Ending thread");
+                break;
+            }
         }
         // Our current implementation filter the data and write it into the filter FMQ immediately
         // after the DATA_READY from the VTS/framework

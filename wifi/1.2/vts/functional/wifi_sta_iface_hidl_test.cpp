@@ -117,6 +117,7 @@ TEST_P(WifiStaIfaceHidlTest, DISABLED_ReadApfPacketFilterData) {
     EXPECT_EQ(status_and_data.second, data);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiStaIfaceHidlTest);
 INSTANTIATE_TEST_SUITE_P(
     PerInstance, WifiStaIfaceHidlTest,
     testing::ValuesIn(android::hardware::getAllHalInstanceNames(

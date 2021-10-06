@@ -18,6 +18,7 @@
 
 #include <android-base/logging.h>
 #include <hidl/HidlTransportSupport.h>
+#include <libnetdevice/libnetdevice.h>
 
 namespace android::hardware::automotive::can::V1_0::implementation {
 
@@ -26,6 +27,8 @@ static void canControllerService() {
     base::SetMinimumLogSeverity(android::base::VERBOSE);
     configureRpcThreadpool(16, true);
     LOG(DEBUG) << "CAN controller service starting...";
+
+    netdevice::useSocketDomain(AF_CAN);
 
     sp<CanController> canController(new CanController);
     if (canController->registerAsService("socketcan") != OK) {

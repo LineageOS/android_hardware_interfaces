@@ -36,7 +36,7 @@
 
 #include "vts_test_util.h"
 
-using namespace ::android::hardware::radio::config::V1_2;
+using namespace ::android::hardware::radio::config::V1_3;
 
 using ::android::sp;
 using ::android::hardware::hidl_string;
@@ -45,8 +45,10 @@ using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::radio::config::V1_1::ModemsConfig;
 using ::android::hardware::radio::config::V1_1::PhoneCapability;
+using ::android::hardware::radio::config::V1_2::IRadioConfigIndication;
 using ::android::hardware::radio::config::V1_2::SimSlotStatus;
 using ::android::hardware::radio::config::V1_3::IRadioConfig;
+using ::android::hardware::radio::config::V1_3::IRadioConfigResponse;
 using ::android::hardware::radio::V1_0::RadioResponseInfo;
 
 #define RADIO_SERVICE_NAME "slot1"

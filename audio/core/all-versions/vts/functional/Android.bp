@@ -28,11 +28,13 @@ cc_defaults {
     defaults: ["VtsHalTargetTestDefaults"],
     static_libs: [
         "android.hardware.audio.common.test.utility",
-        "libxml2",
+        "audioclient-types-aidl-cpp",
+        "libaudioclient_aidl_conversion",
     ],
     shared_libs: [
         "libbinder",
         "libfmq",
+        "libxml2",
     ],
     header_libs: [
         "android.hardware.audio.common.util@all-versions",
