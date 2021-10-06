@@ -347,7 +347,7 @@ void VendorInterface::OnFirmwareConfigured(uint8_t result) {
   lib_interface_->op(BT_VND_OP_GET_LPM_IDLE_TIMEOUT, &lpm_timeout_ms);
   ALOGI("%s: lpm_timeout_ms %d", __func__, lpm_timeout_ms);
 
-  bt_vendor_lpm_mode_t mode = BT_VND_LPM_ENABLE;
+  bt_vendor_lpm_mode_t mode = BT_VND_LPM_DISABLE;
   lib_interface_->op(BT_VND_OP_LPM_SET_MODE, &mode);
 
   ALOGD("%s Calling StartLowPowerWatchdog()", __func__);
