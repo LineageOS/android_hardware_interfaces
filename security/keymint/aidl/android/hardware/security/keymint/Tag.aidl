@@ -186,10 +186,16 @@ enum Tag {
      * Tag::RSA_OAEP_MGF_DIGEST specifies the MGF1 digest algorithms that may be used with RSA
      * encryption/decryption with OAEP padding.  Possible values are defined by the Digest enum.
      *
-     * This tag is repeatable for key generation/import.  RSA cipher operations with OAEP padding
-     * must specify an MGF1 digest in the params argument of begin(). If this tag is missing or the
-     * specified digest is not in the MGF1 digests associated with the key then begin operation must
-     * fail with ErrorCode::INCOMPATIBLE_MGF_DIGEST.
+     * This tag is repeatable for key generation/import.
+     *
+     * If the caller specifies an MGF1 digest in the params argument of begin(), that digest must be
+     * present as an RSA_OAEP_MGF_DIGEST value in the key characteristics (or the begin() operation
+     * must fail with ErrorCode::INCOMPATIBLE_MGF_DIGEST).
+     *
+     * If the caller does not specify an MGF1 digest in the params argument of begin(), a default
+     * MGF1 digest of SHA1 is used.  If the key characteristics have any explicitly specified values
+     * for RSA_OAEP_MGF_DIGEST, then SHA1 must be included (or the begin() operation must fail with
+     * ErrorCode::INCOMPATIBLE_MGF_DIGEST).
      *
      * Must be hardware-enforced.
      */

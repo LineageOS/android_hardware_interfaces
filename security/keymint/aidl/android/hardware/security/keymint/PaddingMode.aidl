@@ -26,7 +26,7 @@ package android.hardware.security.keymint;
 @VintfStability
 @Backing(type="int")
 enum PaddingMode {
-    NONE = 1, /* deprecated */
+    NONE = 1,
     RSA_OAEP = 2,
     RSA_PSS = 3,
     RSA_PKCS1_1_5_ENCRYPT = 4,
