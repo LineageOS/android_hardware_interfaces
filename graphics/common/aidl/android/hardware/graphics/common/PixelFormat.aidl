@@ -25,7 +25,7 @@ enum PixelFormat {
     /**
      * This value may be used in an operation where the format is optional.
      */
-    UNSPECIFIED                        = 0,
+    UNSPECIFIED = 0,
     /**
      * 32-bit format that has 8-bit R, G, B, and A components, in that order,
      * from the lowest memory address to the highest memory address.
@@ -33,7 +33,7 @@ enum PixelFormat {
      * The component values are unsigned normalized to the range [0, 1], whose
      * interpretation is defined by the dataspace.
      */
-    RGBA_8888                          = 0x1,
+    RGBA_8888 = 0x1,
 
     /**
      * 32-bit format that has 8-bit R, G, B, and unused components, in that
@@ -42,7 +42,7 @@ enum PixelFormat {
      * The component values are unsigned normalized to the range [0, 1], whose
      * interpretation is defined by the dataspace.
      */
-    RGBX_8888                          = 0x2,
+    RGBX_8888 = 0x2,
 
     /**
      * 24-bit format that has 8-bit R, G, and B components, in that order,
@@ -51,7 +51,7 @@ enum PixelFormat {
      * The component values are unsigned normalized to the range [0, 1], whose
      * interpretation is defined by the dataspace.
      */
-    RGB_888                            = 0x3,
+    RGB_888 = 0x3,
 
     /**
      * 16-bit packed format that has 5-bit R, 6-bit G, and 5-bit B components,
@@ -61,7 +61,7 @@ enum PixelFormat {
      * The component values are unsigned normalized to the range [0, 1], whose
      * interpretation is defined by the dataspace.
      */
-    RGB_565                            = 0x4,
+    RGB_565 = 0x4,
 
     /**
      * 32-bit format that has 8-bit B, G, R, and A components, in that order,
@@ -70,14 +70,14 @@ enum PixelFormat {
      * The component values are unsigned normalized to the range [0, 1], whose
      * interpretation is defined by the dataspace.
      */
-    BGRA_8888                          = 0x5,
+    BGRA_8888 = 0x5,
 
     /**
      * Legacy formats deprecated in favor of YCBCR_420_888.
      */
-    YCBCR_422_SP                       = 0x10,  // NV16
-    YCRCB_420_SP                       = 0x11,  // NV21
-    YCBCR_422_I                        = 0x14,  // YUY2
+    YCBCR_422_SP = 0x10, // NV16
+    YCRCB_420_SP = 0x11, // NV21
+    YCBCR_422_I = 0x14, // YUY2
 
     /**
      * 64-bit format that has 16-bit R, G, B, and A components, in that order,
@@ -86,7 +86,7 @@ enum PixelFormat {
      * The component values are signed floats, whose interpretation is defined
      * by the dataspace.
      */
-    RGBA_FP16                          = 0x16,
+    RGBA_FP16 = 0x16,
 
     /**
      * RAW16 is a single-channel, 16-bit, little endian format, typically
@@ -129,7 +129,7 @@ enum PixelFormat {
      *                                | samples.
      *  Other                         | Unsupported
      */
-    RAW16                              = 0x20,
+    RAW16 = 0x20,
 
     /**
      * BLOB is used to carry task-specific data which does not have a standard
@@ -152,7 +152,7 @@ enum PixelFormat {
      *  Dataspace::SENSOR             | Sensor event data.
      *  Other                         | Unsupported
      */
-    BLOB                               = 0x21,
+    BLOB = 0x21,
 
     /**
      * A format indicating that the choice of format is entirely up to the
@@ -168,7 +168,7 @@ enum PixelFormat {
      *
      * The interpretation of the component values is defined by the dataspace.
      */
-    IMPLEMENTATION_DEFINED             = 0x22,
+    IMPLEMENTATION_DEFINED = 0x22,
 
     /**
      * This format allows platforms to use an efficient YCbCr/YCrCb 4:2:0
@@ -185,7 +185,7 @@ enum PixelFormat {
      *
      * The interpretation of the component values is defined by the dataspace.
      */
-    YCBCR_420_888                      = 0x23,
+    YCBCR_420_888 = 0x23,
 
     /**
      * RAW_OPAQUE is a format for unprocessed raw image buffers coming from an
@@ -207,7 +207,7 @@ enum PixelFormat {
      *  Dataspace::ARBITRARY          | Raw image sensor data.
      *  Other                         | Unsupported
      */
-    RAW_OPAQUE                         = 0x24,
+    RAW_OPAQUE = 0x24,
 
     /**
      * RAW10 is a single-channel, 10-bit per pixel, densely packed in each row,
@@ -262,7 +262,7 @@ enum PixelFormat {
      *  Dataspace::ARBITRARY          | Raw image sensor data.
      *  Other                         | Unsupported
      */
-    RAW10                              = 0x25,
+    RAW10 = 0x25,
 
     /**
      * RAW12 is a single-channel, 12-bit per pixel, densely packed in each row,
@@ -313,7 +313,7 @@ enum PixelFormat {
      *  Dataspace::ARBITRARY          | Raw image sensor data.
      *  Other                         | Unsupported
      */
-    RAW12                              = 0x26,
+    RAW12 = 0x26,
 
     /** 0x27 to 0x2A are reserved for flexible formats */
 
@@ -325,7 +325,7 @@ enum PixelFormat {
      * The component values are unsigned normalized to the range [0, 1], whose
      * interpretation is defined by the dataspace.
      */
-    RGBA_1010102                       = 0x2B,
+    RGBA_1010102 = 0x2B,
 
     /**
      * 0x100 - 0x1FF
@@ -357,7 +357,7 @@ enum PixelFormat {
      * The component values are unsigned normalized to the range [0, 1], whose
      * interpretation is defined by the dataspace.
      */
-    Y8                                 = 0x20203859,
+    Y8 = 0x20203859,
 
     /**
      * Y16 is a YUV planar format comprised of a WxH Y plane, with each pixel
@@ -384,7 +384,7 @@ enum PixelFormat {
      * Dataspace::DEPTH, each pixel is a distance value measured by a depth
      * camera, plus an associated confidence value.
      */
-    Y16                                = 0x20363159,
+    Y16 = 0x20363159,
 
     /**
      * YV12 is a 4:2:0 YCrCb planar format comprised of a WxH Y plane followed
@@ -413,7 +413,7 @@ enum PixelFormat {
      * The component values are unsigned normalized to the range [0, 1], whose
      * interpretation is defined by the dataspace.
      */
-    YV12                               = 0x32315659, // YCrCb 4:2:0 Planar
+    YV12 = 0x32315659, // YCrCb 4:2:0 Planar
 
     /**
      * 16-bit format that has a single 16-bit depth component.
@@ -421,7 +421,7 @@ enum PixelFormat {
      * The component values are unsigned normalized to the range [0, 1], whose
      * interpretation is defined by the dataspace.
      */
-    DEPTH_16                           = 0x30,
+    DEPTH_16 = 0x30,
 
     /**
      * 32-bit format that has a single 24-bit depth component and, optionally,
@@ -430,7 +430,7 @@ enum PixelFormat {
      * The component values are unsigned normalized to the range [0, 1], whose
      * interpretation is defined by the dataspace.
      */
-    DEPTH_24                           = 0x31,
+    DEPTH_24 = 0x31,
 
     /**
      * 32-bit format that has a 24-bit depth component and an 8-bit stencil
@@ -440,7 +440,7 @@ enum PixelFormat {
      * whose interpretation is defined by the dataspace. The stencil values are
      * unsigned integers, whose interpretation is defined by the dataspace.
      */
-    DEPTH_24_STENCIL_8                 = 0x32,
+    DEPTH_24_STENCIL_8 = 0x32,
 
     /**
      * 32-bit format that has a single 32-bit depth component.
@@ -448,7 +448,7 @@ enum PixelFormat {
      * The component values are signed floats, whose interpretation is defined
      * by the dataspace.
      */
-    DEPTH_32F                          = 0x33,
+    DEPTH_32F = 0x33,
 
     /**
      * Two-component format that has a 32-bit depth component, an 8-bit stencil
@@ -458,7 +458,7 @@ enum PixelFormat {
      * defined by the dataspace. The stencil bits are unsigned integers, whose
      * interpretation is defined by the dataspace.
      */
-    DEPTH_32F_STENCIL_8                = 0x34,
+    DEPTH_32F_STENCIL_8 = 0x34,
 
     /**
      * 8-bit format that has a single 8-bit stencil component.
@@ -466,23 +466,12 @@ enum PixelFormat {
      * The component values are unsigned integers, whose interpretation is
      * defined by the dataspace.
      */
-    STENCIL_8                          = 0x35,
+    STENCIL_8 = 0x35,
 
     /**
      * P010 is a 4:2:0 YCbCr semiplanar format comprised of a WxH Y plane
-     * followed immediately by a Wx(H/2) CbCr plane. Each sample is
-     * represented by a 16-bit little-endian value, with the lower 6 bits set
-     * to zero.
-     *
-     * This format assumes
-     * - an even height
-     * - a vertical stride equal to the height
-     *
-     *   stride_in_bytes = stride * 2
-     *   y_size = stride_in_bytes * height
-     *   cbcr_size = stride_in_bytes * (height / 2)
-     *   cb_offset = y_size
-     *   cr_offset = cb_offset + 2
+     * followed by a Wx(H/2) CbCr plane. Each sample is represented by a 16-bit
+     * little-endian value, with the lower 6 bits set to zero.
      *
      * This format must be accepted by the allocator when used with the
      * following usage flags:
@@ -499,7 +488,7 @@ enum PixelFormat {
      * Buffers with this format must be locked with IMapper::lockYCbCr
      * or with IMapper::lock.
      */
-    YCBCR_P010                         = 0x36,
+    YCBCR_P010 = 0x36,
 
     /**
      * 24-bit format that has 8-bit H, S, and V components, in that order,
@@ -507,6 +496,6 @@ enum PixelFormat {
      *
      * The component values are unsigned normalized to the range [0, 1], whose
      * interpretation is defined by the dataspace.
-    */
-    HSV_888                            = 0x37,
+     */
+    HSV_888 = 0x37,
 }
