@@ -42,4 +42,6 @@ enum VehicleApPowerStateReport {
   ON = 6,
   SHUTDOWN_PREPARE = 7,
   SHUTDOWN_CANCELLED = 8,
+  HIBERNATION_ENTRY = 9,
+  HIBERNATION_EXIT = 10,
 }

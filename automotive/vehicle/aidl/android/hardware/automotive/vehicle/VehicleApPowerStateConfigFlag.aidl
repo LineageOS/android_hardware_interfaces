@@ -20,8 +20,10 @@ package android.hardware.automotive.vehicle;
 @Backing(type="int")
 enum VehicleApPowerStateConfigFlag {
     /**
-     * AP can enter deep sleep state. If not set, AP will always shutdown from
-     * VehicleApPowerState#SHUTDOWN_PREPARE power state.
+     * AP can enter deep sleep state. If not set, AP will shutdown from
+     * VehicleApPowerState#SHUTDOWN_PREPARE power state when deep sleep is requested
+     * (via VehicleApPowerStateShutdownParam#CAN_SLEEP or
+     * VehicleApPowerStateShutdownParam#SLEEP_IMMEDIATELY flags)/
      */
     ENABLE_DEEP_SLEEP_FLAG = 0x1,
     /**
@@ -29,4 +31,11 @@ enum VehicleApPowerStateConfigFlag {
      * specified in VehicleApPowerSet VEHICLE_AP_POWER_SET_SHUTDOWN_READY message.
      */
     CONFIG_SUPPORT_TIMER_POWER_ON_FLAG = 0x2,
+    /**
+     * AP can enter hibernation state. If not set, AP will shutdown from
+     * VehicleApPowerState#SHUTDOWN_PREPARE when hibernation is requested
+     * (via VehicleApPowerStateShutdownParam#CAN_HIBERNATE or
+     *  VehicleApPowerStateShutdownParam#HIBERNATE_IMMEDIATELY flags)
+     */
+    ENABLE_HIBERNATION_FLAG = 0x3,
 }

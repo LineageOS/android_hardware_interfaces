@@ -89,4 +89,22 @@ enum VehicleApPowerStateReport {
      * VehicleApPowerStateReq#SHUTDOWN_PREPARE. Other power state requests are ignored.
      */
     SHUTDOWN_CANCELLED = 0x8,
+    /**
+     * AP is ready to hibernate.
+     * The AP will not send any more state reports after this.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#FINISHED.
+     * Other power state requests are ignored.
+     *
+     * int32Values[1]: Time to turn AP back on, in seconds. Power controller should turn on
+     *                 AP after the specified time has elapsed, so AP can run tasks like
+     *                 update. If this value is 0, no wake up is requested. The power
+     *                 controller may not necessarily support timed wake-up.
+     */
+    HIBERNATION_ENTRY = 0x9,
+    /**
+     * AP is exiting from hibernation state.
+     * After reporting this state, AP will accept VehicleApPowerStateReq#ON or
+     * VehicleApPowerStateReq#SHUTDOWN_PREPARE. Other power state requests are ignored.
+     */
+    HIBERNATION_EXIT = 0xA,
 }
