@@ -24,8 +24,8 @@ using android::hardware::biometrics::face::V1_0::OptionalUint64;
 constexpr uint64_t kDeviceId = 123;
 // Arbitrary value.
 constexpr uint64_t kAuthenticatorId = 987;
-// Arbitrary value.
-constexpr uint64_t kLockoutDuration = 555;
+// Not locked out.
+constexpr uint64_t kLockoutDuration = 0;
 
 BiometricsFace::BiometricsFace() : mRandom(std::mt19937::default_seed) {}
 

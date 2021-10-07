@@ -360,6 +360,7 @@ TEST_P(UsbHidlTest, contaminantPresenceProtectionStability) {
     if (!supported) EXPECT_GE(successCount, 9);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(UsbHidlTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, UsbHidlTest,
         testing::ValuesIn(android::hardware::getAllHalInstanceNames(IUsb::descriptor)),

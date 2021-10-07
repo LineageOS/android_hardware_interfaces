@@ -1,0 +1,124 @@
+/*
+ * Copyright (C) 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.camera.device@3.7;
+
+import android.hardware.camera.common@1.0::Status;
+import @3.2::BufferCache;
+import @3.5::StreamConfiguration;
+import @3.6::ICameraDeviceSession;
+import @3.6::HalStreamConfiguration;
+
+/**
+ * Camera device active session interface.
+ *
+ * Obtained via ICameraDevice::open(), this interface contains the methods to
+ * configure and request captures from an active camera device.
+ */
+interface ICameraDeviceSession extends @3.6::ICameraDeviceSession {
+    /**
+     * configureStreams_3_7:
+     *
+     * Identical to @3.6::ICameraDeviceSession.configureStreams_3_6, except that:
+     *
+     * - The requestedConfiguration allows the camera framework to configure
+     *   stream groups.
+     * - For requested configurations of streams within the same group, the
+     *   corresponding halConfiguration must have the same usage flags and
+     *   maxBuffers.
+     * - Within a CaptureRequest, the application is guaranteed not to request
+     *   more than one streams within the same stream group. When one of the
+     *   stream within a stream group is requested, the camera HAL can either
+     *   produce output on that stream, or any other stream within the same
+     *   stream group.
+     * - The requestedConfiguration allows the camera framework to indicate that
+     *   input images of different sizes may be submitted within capture
+     *   requests.
+     *
+     * @return status Status code for the operation, one of:
+     *     OK:
+     *         On successful stream configuration.
+     *     INTERNAL_ERROR:
+     *         If there has been a fatal error and the device is no longer
+     *         operational. Only close() can be called successfully by the
+     *         framework after this error is returned.
+     *     ILLEGAL_ARGUMENT:
+     *         If the requested stream configuration is invalid. Some examples
+     *         of invalid stream configurations include:
+     *           - Including more than 1 INPUT stream
+     *           - Not including any OUTPUT streams
+     *           - Including streams with unsupported formats, or an unsupported
+     *             size for that format.
+     *           - Including too many output streams of a certain format.
+     *           - Unsupported rotation configuration
+     *           - Stream sizes/formats don't satisfy the
+     *             StreamConfigurationMode requirements
+     *             for non-NORMAL mode, or the requested operation_mode is not
+     *             supported by the HAL.
+     *           - Unsupported usage flag
+     *           - Unsupported stream groupIds, or unsupported multi-resolution
+     *             input stream.
+     *         The camera service cannot filter out all possible illegal stream
+     *         configurations, since some devices may support more simultaneous
+     *         streams or larger stream resolutions than the minimum required
+     *         for a given camera device hardware level. The HAL must return an
+     *         ILLEGAL_ARGUMENT for any unsupported stream set, and then be
+     *         ready to accept a future valid stream configuration in a later
+     *         configureStreams call.
+     * @return halConfiguration The stream parameters desired by the HAL for
+     *     each stream, including maximum buffers, the usage flags, and the
+     *     override format.
+     */
+    configureStreams_3_7(StreamConfiguration requestedConfiguration)
+        generates (Status status, @3.6::HalStreamConfiguration halConfiguration);
+
+    /**
+     * processCaptureRequest_3_7:
+     *
+     * Identical to @3.4::ICameraDeviceSession.processCaptureRequest, except that:
+     *
+     * - The capture request can include width and height of the input buffer for
+     *   a reprocessing request.
+     *
+     * @return status Status code for the operation, one of:
+     *     OK:
+     *         On a successful start to processing the capture request
+     *     ILLEGAL_ARGUMENT:
+     *         If the input is malformed (the settings are empty when not
+     *         allowed, the physical camera settings are invalid, there are 0
+     *         output buffers, etc) and capture processing
+     *         cannot start. Failures during request processing must be
+     *         handled by calling ICameraDeviceCallback::notify(). In case of
+     *         this error, the framework retains responsibility for the
+     *         stream buffers' fences and the buffer handles; the HAL must not
+     *         close the fences or return these buffers with
+     *         ICameraDeviceCallback::processCaptureResult().
+     *         In case of multi-resolution input image, this error must be returned
+     *         if the caller passes in a CaptureRequest with an invalid
+     *         [inputWith, inputHeight].
+     *     INTERNAL_ERROR:
+     *         If the camera device has encountered a serious error. After this
+     *         error is returned, only the close() method can be successfully
+     *         called by the framework.
+     * @return numRequestProcessed Number of requests successfully processed by
+     *     camera HAL. When status is OK, this must be equal to the size of
+     *     requests. When the call fails, this number is the number of requests
+     *     that HAL processed successfully before HAL runs into an error.
+     *
+     */
+    processCaptureRequest_3_7(vec<CaptureRequest> requests, vec<BufferCache> cachesToRemove)
+            generates (Status status, uint32_t numRequestProcessed);
+};

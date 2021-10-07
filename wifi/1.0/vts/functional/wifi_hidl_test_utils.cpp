@@ -16,6 +16,8 @@
 
 #include <android/log.h>
 
+#include <android/hardware/wifi/1.3/IWifiChip.h>
+#include <android/hardware/wifi/1.5/IWifiChip.h>
 #include <wifi_system/interface_tool.h>
 
 #include "wifi_hidl_call_util.h"
@@ -112,7 +114,7 @@ sp<IWifiChip> getWifiChip(const std::string& instance_name) {
     const auto& status_and_chip_ids = HIDL_INVOKE(wifi, getChipIds);
     const auto& chip_ids = status_and_chip_ids.second;
     if (status_and_chip_ids.first.code != WifiStatusCode::SUCCESS ||
-        chip_ids.size() != 1) {
+        chip_ids.size() < 1) {
         return nullptr;
     }
     const auto& status_and_chip = HIDL_INVOKE(wifi, getChip, chip_ids[0]);
@@ -207,4 +209,25 @@ void stopWifi(const std::string& instance_name) {
     sp<IWifi> wifi = IWifi::getService(instance_name);
     ASSERT_NE(wifi, nullptr);
     HIDL_INVOKE(wifi, stop);
+}
+
+uint32_t getChipCapabilitiesLatest(const sp<IWifiChip>& wifi_chip) {
+    sp<::android::hardware::wifi::V1_5::IWifiChip> chip_converted15 =
+        ::android::hardware::wifi::V1_5::IWifiChip::castFrom(wifi_chip);
+    sp<::android::hardware::wifi::V1_3::IWifiChip> chip_converted13 =
+        ::android::hardware::wifi::V1_3::IWifiChip::castFrom(wifi_chip);
+    std::pair<WifiStatus, uint32_t> status_and_caps;
+
+    if (chip_converted15 != nullptr) {
+        // Call the newer HAL 1.5 version
+        status_and_caps = HIDL_INVOKE(chip_converted15, getCapabilities_1_5);
+    } else if (chip_converted13 != nullptr) {
+        // Call the newer HAL 1.3 version
+        status_and_caps = HIDL_INVOKE(chip_converted13, getCapabilities_1_3);
+    } else {
+        status_and_caps = HIDL_INVOKE(wifi_chip, getCapabilities);
+    }
+
+    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_caps.first.code);
+    return status_and_caps.second;
 }

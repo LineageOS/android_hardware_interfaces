@@ -52,40 +52,17 @@ using ::android::hardware::contexthub::vts_utils::ContexthubCallbackBase;
 using ::android::hardware::contexthub::vts_utils::ContexthubHidlTestBase;
 using ::android::hardware::contexthub::vts_utils::getHalAndHubIdList;
 using ::android::hardware::contexthub::vts_utils::getHubsSync;
+using ::android::hardware::contexthub::vts_utils::kNonExistentAppId;
+using ::android::hardware::contexthub::vts_utils::waitForCallback;
 
 namespace {
-
-// App ID with vendor "GoogT" (Google Testing), app identifier 0x555555. This
-// app ID is reserved and must never appear in the list of loaded apps.
-constexpr uint64_t kNonExistentAppId = 0x476f6f6754555555;
 
 const std::vector<std::tuple<std::string, std::string>> kTestParameters =
         getHalAndHubIdList<IContexthub>();
 
 class ContexthubHidlTest : public ContexthubHidlTestBase<IContexthub> {};
 
-// Wait for a callback to occur (signaled by the given future) up to the
-// provided timeout. If the future is invalid or the callback does not come
-// within the given time, returns false.
-template <class ReturnType>
-bool waitForCallback(std::future<ReturnType> future, ReturnType* result,
-                     std::chrono::milliseconds timeout = std::chrono::seconds(5)) {
-    auto expiration = std::chrono::system_clock::now() + timeout;
-
-    EXPECT_NE(result, nullptr);
-    EXPECT_TRUE(future.valid());
-    if (result != nullptr && future.valid()) {
-        std::future_status status = future.wait_until(expiration);
-        EXPECT_NE(status, std::future_status::timeout) << "Timed out waiting for callback";
-
-        if (status == std::future_status::ready) {
-            *result = future.get();
-            return true;
-        }
-    }
-
-    return false;
-}
+class ContexthubCallbackV1_0 : public ContexthubCallbackBase<IContexthubCallback> {};
 
 // Ensures that the metadata reported in getHubs() is sane
 TEST_P(ContexthubHidlTest, TestGetHubs) {
@@ -110,7 +87,7 @@ TEST_P(ContexthubHidlTest, TestGetHubs) {
 
 TEST_P(ContexthubHidlTest, TestRegisterCallback) {
     ALOGD("TestRegisterCallback called, hubId %" PRIu32, getHubId());
-    ASSERT_OK(registerCallback(new ContexthubCallbackBase()));
+    ASSERT_OK(registerCallback(new ContexthubCallbackV1_0()));
 }
 
 TEST_P(ContexthubHidlTest, TestRegisterNullCallback) {
@@ -119,7 +96,7 @@ TEST_P(ContexthubHidlTest, TestRegisterNullCallback) {
 }
 
 // Helper callback that puts the async appInfo callback data into a promise
-class QueryAppsCallback : public ContexthubCallbackBase {
+class QueryAppsCallback : public ContexthubCallbackV1_0 {
   public:
     virtual Return<void> handleAppsInfo(const hidl_vec<HubAppInfo>& appInfo) override {
         ALOGD("Got app info callback with %zu apps", appInfo.size());
@@ -150,7 +127,7 @@ TEST_P(ContexthubHidlTest, TestQueryApps) {
 
 // Helper callback that puts the TransactionResult for the expectedTxnId into a
 // promise
-class TxnResultCallback : public ContexthubCallbackBase {
+class TxnResultCallback : public ContexthubCallbackV1_0 {
   public:
     virtual Return<void> handleTxnResult(uint32_t txnId, TransactionResult result) override {
         ALOGD("Got transaction result callback for txnId %" PRIu32 " (expecting %" PRIu32
@@ -261,9 +238,11 @@ TEST_P(ContexthubTxnTest, TestDisableNonexistentNanoApp) {
     EXPECT_TRUE(checkFailureSyncOrAsync(result, Result::BAD_PARAMS, cb->promise.get_future()));
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(ContexthubHidlTest);
 INSTANTIATE_TEST_SUITE_P(HubIdSpecificTests, ContexthubHidlTest, testing::ValuesIn(kTestParameters),
                          android::hardware::PrintInstanceTupleNameToString<>);
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(ContexthubTxnTest);
 INSTANTIATE_TEST_SUITE_P(HubIdSpecificTests, ContexthubTxnTest, testing::ValuesIn(kTestParameters),
                          android::hardware::PrintInstanceTupleNameToString<>);
 

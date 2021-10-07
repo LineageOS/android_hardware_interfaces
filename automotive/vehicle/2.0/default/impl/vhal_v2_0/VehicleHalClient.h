@@ -27,6 +27,10 @@ class VehicleHalClient : public IVehicleClient {
     // Type of callback function for handling the new property values
     using PropertyCallBackType = std::function<void(const VehiclePropValue&, bool updateStatus)>;
 
+    // The server will call sendAllValuesToClient, onPropertyValue will be called when values are
+    // received.
+    virtual void triggerSendAllValues() = 0;
+
     // Method from IVehicleClient
     void onPropertyValue(const VehiclePropValue& value, bool updateStatus) override;
 

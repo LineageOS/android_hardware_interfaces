@@ -16,6 +16,7 @@
 
 #include "VtsHalSensorsV2_XTargetTest.h"
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SensorsHidlTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, SensorsHidlTest,
                          testing::ValuesIn(android::hardware::getAllHalInstanceNames(
                                  android::hardware::sensors::V2_1::ISensors::descriptor)),

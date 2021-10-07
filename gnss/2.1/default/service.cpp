@@ -18,17 +18,17 @@
 
 #include <hidl/HidlSupport.h>
 #include <hidl/HidlTransportSupport.h>
-#include "Gnss.h"
+#include "v2_1/GnssTemplate.h"
 
 using ::android::OK;
 using ::android::sp;
 using ::android::hardware::configureRpcThreadpool;
 using ::android::hardware::joinRpcThreadpool;
+using ::android::hardware::gnss::common::implementation::GnssTemplate;
 using ::android::hardware::gnss::V2_1::IGnss;
-using ::android::hardware::gnss::V2_1::implementation::Gnss;
 
 int main(int /* argc */, char* /* argv */[]) {
-    sp<IGnss> gnss = new Gnss();
+    sp<IGnss> gnss = new GnssTemplate<IGnss>();
     configureRpcThreadpool(1, true /* will join */);
     if (gnss->registerAsService() != OK) {
         ALOGE("Could not register gnss 2.1 service.");

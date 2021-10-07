@@ -276,6 +276,7 @@ package android.audio.policy.configuration.V7_0 {
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_DIRECT;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_DIRECT_PCM;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_FAST;
+    enum_constant public static final android.audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_GAPLESS_OFFLOAD;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_HW_AV_SYNC;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_IEC958_NONAUDIO;
     enum_constant public static final android.audio.policy.configuration.V7_0.AudioInOutFlag AUDIO_OUTPUT_FLAG_INCALL_MUSIC;

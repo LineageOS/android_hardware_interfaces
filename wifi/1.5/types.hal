@@ -1,0 +1,285 @@
+/*
+ * Copyright 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi@1.5;
+
+import @1.0::StaLinkLayerIfaceStats;
+import @1.0::StaLinkLayerIfacePacketStats;
+import @1.0::TimeStampInMs;
+import @1.4::WifiBand;
+import @1.0::NanCipherSuiteType;
+import @1.0::NanCapabilities;
+import @1.2::NanConfigRequestSupplemental;
+import @1.3::StaLinkLayerRadioStats;
+import @1.0::WifiChannelInMhz;
+import @1.0::WifiChannelWidthInMhz;
+import @1.4::WifiRateInfo;
+
+/**
+ * Wifi bands defined in 80211 spec.
+ */
+enum WifiBand : @1.4::WifiBand {
+    /**
+     * 60 GHz.
+     */
+    BAND_60GHZ = 16,
+    /**
+     * 2.4 GHz + 5 GHz no DFS + 6 GHz + 60 GHz.
+     */
+    BAND_24GHZ_5GHZ_6GHZ_60GHZ = 27,
+    /**
+     * 2.4 GHz + 5 GHz with DFS + 6 GHz + 60 GHz.
+     */
+    BAND_24GHZ_5GHZ_WITH_DFS_6GHZ_60GHZ = 31,
+};
+
+/**
+ * Interface operating modes.
+ */
+enum WifiIfaceMode : uint32_t {
+    /**
+     * Interface operation mode is client.
+     */
+    IFACE_MODE_STA = 1 << 0,
+    /**
+     * Interface operation mode is Hotspot.
+     */
+    IFACE_MODE_SOFTAP = 1 << 1,
+    /**
+     * Interface operation mode is Ad-Hoc network.
+     */
+    IFACE_MODE_IBSS = 1 << 2,
+    /**
+     * Interface operation mode is Wifi Direct Client.
+     */
+    IFACE_MODE_P2P_CLIENT = 1 << 3,
+    /**
+     * Interface operation mode is Wifi Direct Group Owner.
+     */
+    IFACE_MODE_P2P_GO = 1 << 4,
+    /**
+     * Interface operation mode is Aware.
+     */
+    IFACE_MODE_NAN = 1 << 5,
+    /**
+     * Interface operation mode is Mesh network.
+     */
+    IFACE_MODE_MESH = 1 << 6,
+    /**
+     * Interface operation mode is Tunneled Direct Link Setup.
+     */
+    IFACE_MODE_TDLS = 1 << 7,
+};
+
+/**
+ * Wifi usable channel information.
+ */
+struct WifiUsableChannel {
+    /**
+     * Wifi channel freqeuncy in MHz.
+     */
+    WifiChannelInMhz channel;
+
+    /**
+     * Wifi channel bandwidth in MHz.
+     */
+    WifiChannelWidthInMhz channelBandwidth;
+
+    /**
+     * Iface modes feasible on this channel.
+     */
+    bitfield<WifiIfaceMode> ifaceModeMask;
+};
+
+/**
+ * NAN configuration request parameters added in the 1.2 HAL. These are supplemental to previous
+ * versions.
+ */
+struct NanConfigRequestSupplemental {
+    /**
+     * Baseline information as defined in HAL 1.2.
+     */
+    @1.2::NanConfigRequestSupplemental V1_2;
+
+    /**
+     * Controls whether NAN instant communication mode is enabled.
+     */
+    bool enableInstantCommunicationMode;
+};
+
+/**
+ * NDP Capabilities response.
+ */
+struct NanCapabilities {
+    /**
+     * Baseline information as defined in HAL 1.0.
+     */
+    @1.0::NanCapabilities V1_0;
+
+    /**
+     * Flag to indicate id instant communication mode is supported.
+     */
+    bool instantCommunicationModeSupportFlag;
+};
+
+/**
+ * Contention time statistics for different traffic categories.
+ */
+struct StaLinkLayerIfaceContentionTimeStats {
+    /**
+     * Data packet min contention time (usec).  It includes both the internal contention time
+     * among different access categories within the chipset and the contention time for the medium.
+     */
+    uint32_t contentionTimeMinInUsec;
+
+    /**
+     * Data packet max contention time (usec).  It includes both the internal contention time
+     * among different access categories within the chipset and the contention time for the medium.
+     */
+    uint32_t contentionTimeMaxInUsec;
+    /**
+     * Data packet average contention time (usec).  It includes both the internal contention time
+     * among different access categories within the chipset and the contention time for the medium.
+     */
+    uint32_t contentionTimeAvgInUsec;
+
+    /**
+     * Number of data packets used for contention statistics.
+     */
+    uint32_t contentionNumSamples;
+};
+
+/**
+ * Per rate statistics.  The rate is characterized by the combination of preamble, number of spatial
+ * streams, transmission bandwidth, and modulation and coding scheme (MCS).
+ */
+struct StaRateStat{
+    /**
+     * Wifi rate information: preamble, number of spatial streams, bandwidth, MCS, etc.
+     */
+    WifiRateInfo rateInfo;
+    /**
+     * Number of successfully transmitted data packets (ACK received)
+     */
+    uint32_t txMpdu;
+    /**
+     * Number of received data packets
+     */
+    uint32_t rxMpdu;
+    /**
+     * Number of data packet losses (no ACK)
+     */
+    uint32_t mpduLost;
+    /**
+     * Number of data packet retries
+     */
+    uint32_t retries;
+};
+
+/**
+ * Per peer statistics.  The types of peer include the Access Point (AP), the Tunneled Direct Link
+ * Setup (TDLS), the Group Owner (GO), the Neighbor Awareness Networking (NAN), etc.
+ */
+struct StaPeerInfo {
+    /**
+     * Station count: The total number of stations currently associated with the peer.
+     */
+    uint16_t staCount;
+    /**
+     * Channel utilization: The percentage of time (normalized to 255, i.e., x% corresponds to
+     * (int) x * 255 / 100) that the medium is sensed as busy measured by either physical or
+     * virtual carrier sense (CS) mechanism.
+     */
+    uint16_t chanUtil;
+    /**
+     * Per rate statistics
+     */
+    vec<StaRateStat> rateStats;
+};
+
+/**
+ * Iface statistics for the current connection.
+ */
+struct StaLinkLayerIfaceStats {
+    /**
+     * Baseline information as defined in HAL 1.0.
+     */
+    @1.0::StaLinkLayerIfaceStats V1_0;
+
+    /**
+     * Duty cycle for the iface.
+     * if this iface is being served using time slicing on a radio with one or more ifaces
+     * (i.e MCC), then the duty cycle assigned to this iface in %.
+     * If not using time slicing (i.e SCC or DBS), set to 100.
+     */
+    uint8_t timeSliceDutyCycleInPercent;
+
+    /**
+     * WME Best Effort (BE) Access Category (AC) contention time statistics.
+     */
+    StaLinkLayerIfaceContentionTimeStats wmeBeContentionTimeStats;
+
+    /**
+     * WME Background (BK) Access Category (AC) contention time statistics.
+     */
+    StaLinkLayerIfaceContentionTimeStats wmeBkContentionTimeStats;
+
+    /**
+     * WME Video (VI) Access Category (AC) contention time statistics.
+     */
+    StaLinkLayerIfaceContentionTimeStats wmeViContentionTimeStats;
+
+    /**
+     * WME Voice (VO) Access Category (AC) contention time statistics.
+     */
+    StaLinkLayerIfaceContentionTimeStats wmeVoContentionTimeStats;
+
+    /**
+     * Per peer statistics.
+     */
+    vec<StaPeerInfo> peers;
+};
+
+struct StaLinkLayerRadioStats {
+    /**
+     * Baseline information as defined in HAL 1.3.
+     */
+    @1.3::StaLinkLayerRadioStats V1_3;
+
+    /**
+     * Radio ID: An implementation specific value identifying the radio interface for which the
+     * stats are produced. Framework must not interpret this value. It must use this value for
+     * persistently identifying the statistics between calls,
+     * e.g. if the HAL provides them in different order.
+     */
+    int32_t radioId;
+};
+
+/**
+ * Link layer stats retrieved via |getLinkLayerStats|.
+ */
+struct StaLinkLayerStats {
+    StaLinkLayerIfaceStats iface;
+
+    vec<StaLinkLayerRadioStats> radios;
+
+    /**
+     * TimeStamp for each stats sample.
+     * This is the absolute milliseconds from boot when these stats were
+     * sampled.
+     */
+    TimeStampInMs timeStampInMs;
+};

@@ -144,6 +144,10 @@ ComposerHandleCache::~ComposerHandleCache() {
     }
 }
 
+size_t ComposerHandleCache::getCacheSize() const {
+    return mHandles.size();
+}
+
 bool ComposerHandleCache::initCache(HandleType type, uint32_t cacheSize) {
     // already initialized
     if (mHandleType != HandleType::INVALID) {
@@ -220,6 +224,14 @@ bool ComposerDisplayResource::initClientTargetCache(uint32_t cacheSize) {
     return mClientTargetCache.initCache(ComposerHandleCache::HandleType::BUFFER, cacheSize);
 }
 
+size_t ComposerDisplayResource::getClientTargetCacheSize() const {
+    return mClientTargetCache.getCacheSize();
+}
+
+size_t ComposerDisplayResource::getOutputBufferCacheSize() const {
+    return mOutputBufferCache.getCacheSize();
+}
+
 bool ComposerDisplayResource::isVirtual() const {
     return mType == DisplayType::VIRTUAL;
 }
@@ -293,6 +305,10 @@ void ComposerResources::clear(RemoveDisplay removeDisplay) {
     mDisplayResources.clear();
 }
 
+bool ComposerResources::hasDisplay(Display display) {
+    return mDisplayResources.count(display) > 0;
+}
+
 Error ComposerResources::addPhysicalDisplay(Display display) {
     auto displayResource = createDisplayResource(ComposerDisplayResource::DisplayType::PHYSICAL, 0);
 
@@ -325,6 +341,26 @@ Error ComposerResources::setDisplayClientTargetCacheSize(Display display,
 
     return displayResource->initClientTargetCache(clientTargetCacheSize) ? Error::NONE
                                                                          : Error::BAD_PARAMETER;
+}
+
+Error ComposerResources::getDisplayClientTargetCacheSize(Display display, size_t* outCacheSize) {
+    std::lock_guard<std::mutex> lock(mDisplayResourcesMutex);
+    ComposerDisplayResource* displayResource = findDisplayResourceLocked(display);
+    if (!displayResource) {
+        return Error::BAD_DISPLAY;
+    }
+    *outCacheSize = displayResource->getClientTargetCacheSize();
+    return Error::NONE;
+}
+
+Error ComposerResources::getDisplayOutputBufferCacheSize(Display display, size_t* outCacheSize) {
+    std::lock_guard<std::mutex> lock(mDisplayResourcesMutex);
+    ComposerDisplayResource* displayResource = findDisplayResourceLocked(display);
+    if (!displayResource) {
+        return Error::BAD_DISPLAY;
+    }
+    *outCacheSize = displayResource->getOutputBufferCacheSize();
+    return Error::NONE;
 }
 
 Error ComposerResources::addLayer(Display display, Layer layer, uint32_t bufferCacheSize) {

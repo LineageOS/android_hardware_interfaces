@@ -190,6 +190,7 @@ TEST_P(OccupantAwarenessAidl, GetLatestDetectionTest) {
     ASSERT_LE(elapsed, kTimeout);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(OccupantAwarenessAidl);
 INSTANTIATE_TEST_SUITE_P(
         InstantiationName, OccupantAwarenessAidl,
         testing::ValuesIn(android::getAidlHalInstanceNames(IOccupantAwareness::descriptor)),

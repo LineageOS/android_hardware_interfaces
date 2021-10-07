@@ -1,0 +1,76 @@
+/**
+ * Copyright (C) 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package android.hardware.drm@1.4;
+
+import @1.0::Status;
+import @1.0::SessionId;
+import @1.1::SecurityLevel;
+import @1.2::IDrmPlugin;
+import @1.4::LogMessage;
+import @1.4::Status;
+
+/**
+ * IDrmPlugin is used to interact with a specific drm plugin that was
+ * created by IDrmFactory::createPlugin. A drm plugin provides methods for
+ * obtaining drm keys to be used by a codec to decrypt protected video
+ * content.
+ */
+interface IDrmPlugin extends @1.2::IDrmPlugin {
+
+    /**
+     * Check if the specified mime-type & security level require a secure decoder
+     * component.
+     *
+     * @param mime The content mime-type
+     * @param level the requested security level
+     * @return secureRequired must be true if and only if a secure decoder is required
+     * for the specified mime-type & security level
+     */
+    requiresSecureDecoder(string mime, @1.1::SecurityLevel level) generates (bool secureRequired);
+
+    /**
+     * Check if the specified mime-type requires a secure decoder component
+     * at the highest security level supported on the device.
+     *
+     * @param mime The content mime-type
+     * @return secureRequired must be true if and only if a secure decoder is required
+     * for the specified mime-type
+     */
+    requiresSecureDecoderDefault(string mime) generates (bool secureRequired);
+
+    /**
+     * Set playback id of a drm session. The playback id can be used to join drm session metrics
+     * with metrics from other low level media components, e.g. codecs, or metrics from the high
+     * level player.
+     *
+     * @param sessionId drm session id
+     * @param playbackId high level playback id
+     * @return status the status of the call. The status must be OK on success, or
+     *     ERROR_DRM_SESSION_NOT_OPENED if the drm session cannot be found
+     */
+    setPlaybackId(SessionId sessionId, string playbackId) generates (@1.0::Status status);
+
+    /**
+     * @return logMessages latest plugin level log messages. Can be used
+     *     by apps in diagnosis of errors.
+     * @return status the status of the call. The status must be:
+     *     OK on success;
+     *     GENERAL_OEM_ERROR on OEM-provided, low-level component failures;
+     *     GENERAL_PLUGIN_ERROR on unexpected plugin-level errors.
+     */
+    getLogMessages() generates (@1.4::Status status, vec<LogMessage> logMessages);
+
+};

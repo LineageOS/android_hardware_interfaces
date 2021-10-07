@@ -1,0 +1,74 @@
+/*
+ * Copyright (C) 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.contexthub@1.2;
+
+import @1.0::ContextHubMsg;
+import @1.0::HubAppInfo;
+import @1.1::Setting;
+
+/**
+ * Used to indicate the type of user setting that has changed.
+ */
+enum Setting : @1.1::Setting {
+    /**
+     * Indicates that the WiFi capabilities can be used in CHRE. This setting
+     * follows the overall availability of WiFi-related functionality within
+     * the Android framework, for example if WiFi is disabled for connectivity
+     * purposes but is enabled for location purposes (scanning), then
+     * WIFI_AVAILABLE is enabled.
+     */
+    WIFI_AVAILABLE,
+    AIRPLANE_MODE,
+
+    /**
+     * Indicates if the microphone access is available for CHRE. Microphone
+     * access is disabled if the user has turned off the microphone as a
+     * privacy setting, in which case audio data cannot be used and propagated
+     * by CHRE.
+     */
+    MICROPHONE,
+};
+
+struct ContextHubMsg {
+    @1.0::ContextHubMsg msg_1_0;
+
+    /**
+     * The list of Android permissions held by the sending nanoapp at the time
+     * the message was sent.
+     *
+     * The framework MUST drop messages to host apps that don't have a superset
+     * of the permissions that the sending nanoapp is using.
+     */
+    vec<string> permissions;
+};
+
+struct HubAppInfo {
+    @1.0::HubAppInfo info_1_0;
+
+    /**
+     * The list of Android permissions used by this nanoapp. This list MUST
+     * correspond to the permissions required for an equivalent Android app to
+     * sample similar signals through the Android framework.
+     *
+     * For example, if a nanoapp used location-based signals, the permissions
+     * list MUST contains android.permission.ACCESS_FINE_LOCATION and
+     * android.permission.ACCESS_BACKGROUND_LOCATION. If it were to also list to
+     * audio data, it would require adding android.permission.RECORD_AUDIO to
+     * this list.
+     */
+    vec<string> permissions;
+};

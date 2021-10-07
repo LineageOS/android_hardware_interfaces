@@ -412,9 +412,9 @@ Return<void> StreamIn::prepareForReading(uint32_t frameSize, uint32_t framesCoun
     }
 
     // Create and launch the thread.
-    sp<ReadThread> tempReadThread =
-            new ReadThread(&mStopReadThread, mStream, tempCommandMQ.get(), tempDataMQ.get(),
-                           tempStatusMQ.get(), tempElfGroup.get());
+    auto tempReadThread =
+            sp<ReadThread>::make(&mStopReadThread, mStream, tempCommandMQ.get(), tempDataMQ.get(),
+                                 tempStatusMQ.get(), tempElfGroup.get());
     if (!tempReadThread->init()) {
         ALOGW("failed to start reader thread: %s", strerror(-status));
         sendError(Result::INVALID_ARGUMENTS);

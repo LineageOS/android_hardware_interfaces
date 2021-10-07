@@ -1,0 +1,203 @@
+/*
+ * Copyright 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi.supplicant@1.4;
+
+import @1.3::ISupplicantStaNetwork;
+import ISupplicantStaNetworkCallback;
+
+/**
+ * Interface exposed by the supplicant for each station mode network
+ * configuration it controls.
+ */
+interface ISupplicantStaNetwork extends @1.3::ISupplicantStaNetwork {
+    /**
+     * Possible mask of values for KeyMgmt param.
+     */
+    enum KeyMgmtMask : @1.3::ISupplicantStaNetwork.KeyMgmtMask {
+        /**
+         * SAE PK mode
+         */
+        SAE_PK,
+    };
+
+    /**
+     * Possible mask of values for PairwiseCipher param.
+     */
+    enum PairwiseCipherMask : @1.3::ISupplicantStaNetwork.PairwiseCipherMask {
+        /**
+         * GCMP-128 Pairwise Cipher
+         */
+        GCMP_128 = 1 << 6,
+    };
+
+    /**
+     * Possible mask of values for GroupCipher param.
+     */
+    enum GroupCipherMask : @1.3::ISupplicantStaNetwork.GroupCipherMask {
+        /**
+         * GCMP-128 Group Cipher
+         */
+        GCMP_128 = 1 << 6,
+    };
+
+    /**
+     * SAE Hash-to-Element mode.
+     */
+    enum SaeH2eMode : uint8_t {
+        /**
+         * Hash-to-Element is disabled, only Hunting & Pecking is allowed.
+         */
+        DISABLED,
+        /**
+         * Both Hash-to-Element and Hunting & Pecking are allowed.
+         */
+        H2E_OPTIONAL,
+        /**
+         * Only Hash-to-Element is allowed.
+         */
+        H2E_MANDATORY,
+    };
+
+    /**
+     * Set group cipher mask for the network.
+     *
+     * @param groupCipherMask value to set.
+     *        Combination of |ProtoMask| values.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     */
+    setGroupCipher_1_4(bitfield<GroupCipherMask> groupCipherMask)
+        generates (SupplicantStatus status);
+
+    /**
+     * Get the group cipher mask set for the network.
+     *
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     * @return groupCipherMask Combination of |GroupCipherMask| values.
+     */
+    getGroupCipher_1_4()
+        generates (SupplicantStatus status, bitfield<GroupCipherMask> groupCipherMask);
+
+    /**
+     * Set pairwise cipher mask for the network.
+     *
+     * @param pairwiseCipherMask value to set.
+     *        Combination of |ProtoMask| values.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     */
+    setPairwiseCipher_1_4(bitfield<PairwiseCipherMask> pairwiseCipherMask)
+        generates (SupplicantStatus status);
+
+    /**
+     * Get the pairwise cipher mask set for the network.
+     *
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     * @return pairwiseCipherMask Combination of |PairwiseCipherMask| values.
+     */
+    getPairwiseCipher_1_4()
+        generates (SupplicantStatus status, bitfield<PairwiseCipherMask> pairwiseCipherMask);
+
+    /**
+     * Set whether to enable enhanced directional multi-gigabit (802.11ay EDMG).
+     * Only allowed if hw mode is |HOSTAPD_MODE_IEEE80211AD|
+     *
+     * @param enable true to set, false otherwise.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    setEdmg(bool enable) generates (SupplicantStatus status);
+
+    /**
+     * Get whether enhanced directional multi-gigabit (802.11ay EDMG) is enabled for this network.
+     *
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     * @return enabled true if set, false otherwise.
+     */
+    getEdmg() generates (SupplicantStatus status, bool enabled);
+
+    /**
+     * Register for callbacks from this network.
+     *
+     * These callbacks are invoked for events that are specific to this network.
+     * Registration of multiple callback objects is supported. These objects must
+     * be automatically deleted when the corresponding client process is dead or
+     * if this network is removed.
+     *
+     * @param callback An instance of the |ISupplicantStaNetworkCallback| HIDL
+     *        interface object.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    registerCallback_1_4(ISupplicantStaNetworkCallback callback)
+        generates (SupplicantStatus status);
+
+    /**
+     * Set SAE H2E (Hash-to-Element) mode.
+     *
+     * @param mode SAE H2E supporting mode.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    setSaeH2eMode(SaeH2eMode mode) generates (SupplicantStatus status);
+
+    /**
+     * Set whether to enable SAE PK (Public Key) only mode to enable public AP validation.
+     * When enabled, only SAE PK network is allowed; otherwise PK is optional.
+     * If this API is not called before connecting to an SAE
+     * network, SAE PK mode depends on SAE PK config in wpa_supplicant configuration.
+     * If SAE PK config of wpa_supplicant configuration is not set,
+     * the default mode is optional (support for both PK and standard mode).
+     *
+     * @param enable true to set, false otherwise.
+     * @return status Status of the operation.
+     *         Possible status codes:
+     *         |SupplicantStatusCode.SUCCESS|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNSUPPORTED|
+     */
+    enableSaePkOnlyMode(bool enable) generates (SupplicantStatus status);
+};

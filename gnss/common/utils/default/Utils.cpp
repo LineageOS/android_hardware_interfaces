@@ -15,7 +15,9 @@
  */
 
 #include <Constants.h>
+#include <MockLocation.h>
 #include <Utils.h>
+#include <aidl/android/hardware/gnss/BnGnss.h>
 #include <utils/SystemClock.h>
 
 namespace android {
@@ -23,15 +25,31 @@ namespace hardware {
 namespace gnss {
 namespace common {
 
+using aidl::android::hardware::gnss::ElapsedRealtime;
+using aidl::android::hardware::gnss::GnssClock;
+using aidl::android::hardware::gnss::GnssData;
+using aidl::android::hardware::gnss::GnssMeasurement;
+using aidl::android::hardware::gnss::IGnss;
+using aidl::android::hardware::gnss::IGnssMeasurementCallback;
+using aidl::android::hardware::gnss::SatellitePvt;
+
 using GnssSvFlags = V1_0::IGnssCallback::GnssSvFlags;
 using GnssMeasurementFlagsV1_0 = V1_0::IGnssMeasurementCallback::GnssMeasurementFlags;
 using GnssMeasurementFlagsV2_1 = V2_1::IGnssMeasurementCallback::GnssMeasurementFlags;
 using GnssMeasurementStateV2_0 = V2_0::IGnssMeasurementCallback::GnssMeasurementState;
-using ElapsedRealtime = V2_0::ElapsedRealtime;
 using ElapsedRealtimeFlags = V2_0::ElapsedRealtimeFlags;
 using GnssConstellationTypeV2_0 = V2_0::GnssConstellationType;
 using IGnssMeasurementCallbackV2_0 = V2_0::IGnssMeasurementCallback;
 using GnssSignalType = V2_1::GnssSignalType;
+
+using GnssDataV2_0 = V2_0::IGnssMeasurementCallback::GnssData;
+using GnssDataV2_1 = V2_1::IGnssMeasurementCallback::GnssData;
+using GnssSvInfoV1_0 = V1_0::IGnssCallback::GnssSvInfo;
+using GnssSvInfoV2_0 = V2_0::IGnssCallback::GnssSvInfo;
+using GnssSvInfoV2_1 = V2_1::IGnssCallback::GnssSvInfo;
+using GnssAntennaInfo = ::android::hardware::gnss::V2_1::IGnssAntennaInfoCallback::GnssAntennaInfo;
+using Row = V2_1::IGnssAntennaInfoCallback::Row;
+using Coord = V2_1::IGnssAntennaInfoCallback::Coord;
 
 GnssDataV2_1 Utils::getMockMeasurementV2_1() {
     GnssDataV2_0 gnssDataV2_0 = Utils::getMockMeasurementV2_0();
@@ -109,7 +127,7 @@ GnssDataV2_0 Utils::getMockMeasurementV2_0() {
                                                        .driftUncertaintyNsps = 310.64968328491528,
                                                        .hwClockDiscontinuityCount = 1};
 
-    ElapsedRealtime timestamp = {
+    V2_0::ElapsedRealtime timestamp = {
             .flags = ElapsedRealtimeFlags::HAS_TIMESTAMP_NS |
                      ElapsedRealtimeFlags::HAS_TIME_UNCERTAINTY_NS,
             .timestampNs = static_cast<uint64_t>(::android::elapsedRealtimeNano()),
@@ -120,6 +138,97 @@ GnssDataV2_0 Utils::getMockMeasurementV2_0() {
 
     GnssDataV2_0 gnssData = {
             .measurements = measurements, .clock = clock, .elapsedRealtime = timestamp};
+    return gnssData;
+}
+
+GnssData Utils::getMockMeasurement(const bool enableCorrVecOutputs) {
+    aidl::android::hardware::gnss::GnssSignalType signalType = {
+            .constellation = aidl::android::hardware::gnss::GnssConstellationType::GLONASS,
+            .carrierFrequencyHz = 1.59975e+09,
+            .codeType = aidl::android::hardware::gnss::GnssSignalType::CODE_TYPE_C,
+    };
+    GnssMeasurement measurement = {
+            .flags = GnssMeasurement::HAS_AUTOMATIC_GAIN_CONTROL |
+                     GnssMeasurement::HAS_CARRIER_FREQUENCY | GnssMeasurement::HAS_CARRIER_PHASE |
+                     GnssMeasurement::HAS_CARRIER_PHASE_UNCERTAINTY |
+                     GnssMeasurement::HAS_FULL_ISB | GnssMeasurement::HAS_FULL_ISB_UNCERTAINTY |
+                     GnssMeasurement::HAS_SATELLITE_ISB |
+                     GnssMeasurement::HAS_SATELLITE_ISB_UNCERTAINTY |
+                     GnssMeasurement::HAS_SATELLITE_PVT,
+            .svid = 13,
+            .signalType = signalType,
+            .receivedSvTimeInNs = 8195997131077,
+            .receivedSvTimeUncertaintyInNs = 15,
+            .antennaCN0DbHz = 30.0,
+            .basebandCN0DbHz = 26.5,
+            .agcLevelDb = 2.3,
+            .pseudorangeRateMps = -484.13739013671875,
+            .pseudorangeRateUncertaintyMps = 1.0379999876022339,
+            .accumulatedDeltaRangeState = GnssMeasurement::ADR_STATE_UNKNOWN,
+            .accumulatedDeltaRangeM = 1.52,
+            .accumulatedDeltaRangeUncertaintyM = 2.43,
+            .multipathIndicator = aidl::android::hardware::gnss::GnssMultipathIndicator::UNKNOWN,
+            .state = GnssMeasurement::STATE_CODE_LOCK | GnssMeasurement::STATE_BIT_SYNC |
+                     GnssMeasurement::STATE_SUBFRAME_SYNC | GnssMeasurement::STATE_TOW_DECODED |
+                     GnssMeasurement::STATE_GLO_STRING_SYNC |
+                     GnssMeasurement::STATE_GLO_TOD_DECODED,
+            .fullInterSignalBiasNs = 21.5,
+            .fullInterSignalBiasUncertaintyNs = 792.0,
+            .satelliteInterSignalBiasNs = 233.9,
+            .satelliteInterSignalBiasUncertaintyNs = 921.2,
+            .satellitePvt = {.flags = SatellitePvt::HAS_POSITION_VELOCITY_CLOCK_INFO |
+                                      SatellitePvt::HAS_IONO | SatellitePvt::HAS_TROPO,
+                             .satPosEcef = {.posXMeters = 10442993.1153328,
+                                            .posYMeters = -19926932.8051666,
+                                            .posZMeters = -12034295.0216203,
+                                            .ureMeters = 1000.2345678},
+                             .satVelEcef = {.velXMps = -478.667183715732,
+                                            .velYMps = 1580.68371984114,
+                                            .velZMps = -3030.52994449997,
+                                            .ureRateMps = 10.2345678},
+                             .satClockInfo = {.satHardwareCodeBiasMeters = 1.396983861923e-09,
+                                              .satTimeCorrectionMeters = -7113.08964331,
+                                              .satClkDriftMps = 0},
+                             .ionoDelayMeters = 3.069949602639317e-08,
+                             .tropoDelayMeters = 3.882265204404031},
+            .correlationVectors = {}};
+
+    GnssClock clock = {.gnssClockFlags = GnssClock::HAS_FULL_BIAS | GnssClock::HAS_BIAS |
+                                         GnssClock::HAS_BIAS_UNCERTAINTY | GnssClock::HAS_DRIFT |
+                                         GnssClock::HAS_DRIFT_UNCERTAINTY,
+                       .timeNs = 35854545000000,
+                       .fullBiasNs = -234621900521857520,
+                       .biasNs = 0.2352389998626708984,
+                       .biasUncertaintyNs = 274.989972114563,
+                       .driftNsps = -124.3742360,
+                       .driftUncertaintyNsps = 239.6234285828,
+                       .hwClockDiscontinuityCount = 999};
+
+    ElapsedRealtime timestamp = {
+            .flags = ElapsedRealtime::HAS_TIMESTAMP_NS | ElapsedRealtime::HAS_TIME_UNCERTAINTY_NS,
+            .timestampNs = ::android::elapsedRealtimeNano(),
+            // This is an hardcoded value indicating a 1ms of uncertainty between the two clocks.
+            // In an actual implementation provide an estimate of the synchronization uncertainty
+            // or don't set the field.
+            .timeUncertaintyNs = 1020400};
+
+    if (enableCorrVecOutputs) {
+        aidl::android::hardware::gnss::CorrelationVector correlationVector1 = {
+                .frequencyOffsetMps = 10,
+                .samplingWidthM = 30,
+                .samplingStartM = 0,
+                .magnitude = {0, 5000, 10000, 5000, 0, 0, 3000, 0}};
+        aidl::android::hardware::gnss::CorrelationVector correlationVector2 = {
+                .frequencyOffsetMps = 20,
+                .samplingWidthM = 30,
+                .samplingStartM = -10,
+                .magnitude = {0, 3000, 5000, 3000, 0, 0, 1000, 0}};
+        measurement.correlationVectors = {correlationVector1, correlationVector2};
+        measurement.flags |= GnssMeasurement::HAS_CORRELATION_VECTOR;
+    }
+
+    GnssData gnssData = {
+            .measurements = {measurement}, .clock = clock, .elapsedRealtime = timestamp};
     return gnssData;
 }
 
@@ -141,64 +250,65 @@ V2_0::GnssLocation Utils::getMockLocationV2_0() {
 V1_0::GnssLocation Utils::getMockLocationV1_0() {
     V1_0::GnssLocation location = {
             .gnssLocationFlags = 0xFF,
-            .latitudeDegrees = kMockLatitudeDegrees,
-            .longitudeDegrees = kMockLongitudeDegrees,
-            .altitudeMeters = kMockAltitudeMeters,
-            .speedMetersPerSec = kMockSpeedMetersPerSec,
-            .bearingDegrees = kMockBearingDegrees,
+            .latitudeDegrees = gMockLatitudeDegrees,
+            .longitudeDegrees = gMockLongitudeDegrees,
+            .altitudeMeters = gMockAltitudeMeters,
+            .speedMetersPerSec = gMockSpeedMetersPerSec,
+            .bearingDegrees = gMockBearingDegrees,
             .horizontalAccuracyMeters = kMockHorizontalAccuracyMeters,
             .verticalAccuracyMeters = kMockVerticalAccuracyMeters,
             .speedAccuracyMetersPerSecond = kMockSpeedAccuracyMetersPerSecond,
             .bearingAccuracyDegrees = kMockBearingAccuracyDegrees,
-            .timestamp = kMockTimestamp};
+            .timestamp =
+                    static_cast<int64_t>(kMockTimestamp + ::android::elapsedRealtimeNano() / 1e6)};
     return location;
 }
 
 hidl_vec<GnssSvInfoV2_1> Utils::getMockSvInfoListV2_1() {
-    GnssSvInfoV1_0 gnssSvInfoV1_0 =
-            Utils::getMockSvInfoV1_0(3, V1_0::GnssConstellationType::GPS, 32.5, 59.1, 166.5);
+    GnssSvInfoV1_0 gnssSvInfoV1_0 = Utils::getMockSvInfoV1_0(3, V1_0::GnssConstellationType::GPS,
+                                                             32.5, 59.1, 166.5, kGpsL1FreqHz);
     GnssSvInfoV2_0 gnssSvInfoV2_0 =
             Utils::getMockSvInfoV2_0(gnssSvInfoV1_0, V2_0::GnssConstellationType::GPS);
     hidl_vec<GnssSvInfoV2_1> gnssSvInfoList = {
             Utils::getMockSvInfoV2_1(gnssSvInfoV2_0, 27.5),
             getMockSvInfoV2_1(
                     getMockSvInfoV2_0(getMockSvInfoV1_0(5, V1_0::GnssConstellationType::GPS, 27.0,
-                                                        29.0, 56.5),
+                                                        29.0, 56.5, kGpsL1FreqHz),
                                       V2_0::GnssConstellationType::GPS),
                     22.0),
             getMockSvInfoV2_1(
                     getMockSvInfoV2_0(getMockSvInfoV1_0(17, V1_0::GnssConstellationType::GPS, 30.5,
-                                                        71.0, 77.0),
+                                                        71.0, 77.0, kGpsL5FreqHz),
                                       V2_0::GnssConstellationType::GPS),
                     25.5),
             getMockSvInfoV2_1(
                     getMockSvInfoV2_0(getMockSvInfoV1_0(26, V1_0::GnssConstellationType::GPS, 24.1,
-                                                        28.0, 253.0),
+                                                        28.0, 253.0, kGpsL5FreqHz),
                                       V2_0::GnssConstellationType::GPS),
                     19.1),
             getMockSvInfoV2_1(
                     getMockSvInfoV2_0(getMockSvInfoV1_0(5, V1_0::GnssConstellationType::GLONASS,
-                                                        20.5, 11.5, 116.0),
+                                                        20.5, 11.5, 116.0, kGloG1FreqHz),
                                       V2_0::GnssConstellationType::GLONASS),
                     15.5),
             getMockSvInfoV2_1(
                     getMockSvInfoV2_0(getMockSvInfoV1_0(17, V1_0::GnssConstellationType::GLONASS,
-                                                        21.5, 28.5, 186.0),
+                                                        21.5, 28.5, 186.0, kGloG1FreqHz),
                                       V2_0::GnssConstellationType::GLONASS),
                     16.5),
             getMockSvInfoV2_1(
                     getMockSvInfoV2_0(getMockSvInfoV1_0(18, V1_0::GnssConstellationType::GLONASS,
-                                                        28.3, 38.8, 69.0),
+                                                        28.3, 38.8, 69.0, kGloG1FreqHz),
                                       V2_0::GnssConstellationType::GLONASS),
                     25.3),
             getMockSvInfoV2_1(
                     getMockSvInfoV2_0(getMockSvInfoV1_0(10, V1_0::GnssConstellationType::GLONASS,
-                                                        25.0, 66.0, 247.0),
+                                                        25.0, 66.0, 247.0, kGloG1FreqHz),
                                       V2_0::GnssConstellationType::GLONASS),
                     20.0),
             getMockSvInfoV2_1(
                     getMockSvInfoV2_0(getMockSvInfoV1_0(3, V1_0::GnssConstellationType::UNKNOWN,
-                                                        22.0, 35.0, 112.0),
+                                                        22.0, 35.0, 112.0, kIrnssL5FreqHz),
                                       V2_0::GnssConstellationType::IRNSS),
                     19.7),
     };
@@ -223,21 +333,23 @@ GnssSvInfoV2_0 Utils::getMockSvInfoV2_0(GnssSvInfoV1_0 gnssSvInfoV1_0,
 }
 
 GnssSvInfoV1_0 Utils::getMockSvInfoV1_0(int16_t svid, V1_0::GnssConstellationType type,
-                                        float cN0DbHz, float elevationDegrees,
-                                        float azimuthDegrees) {
+                                        float cN0DbHz, float elevationDegrees, float azimuthDegrees,
+                                        float carrierFrequencyHz) {
     GnssSvInfoV1_0 svInfo = {.svid = svid,
                              .constellation = type,
                              .cN0Dbhz = cN0DbHz,
                              .elevationDegrees = elevationDegrees,
                              .azimuthDegrees = azimuthDegrees,
+                             .carrierFrequencyHz = carrierFrequencyHz,
                              .svFlag = GnssSvFlags::USED_IN_FIX | GnssSvFlags::HAS_EPHEMERIS_DATA |
-                                       GnssSvFlags::HAS_ALMANAC_DATA};
+                                       GnssSvFlags::HAS_ALMANAC_DATA |
+                                       GnssSvFlags::HAS_CARRIER_FREQUENCY};
     return svInfo;
 }
 
 hidl_vec<GnssAntennaInfo> Utils::getMockAntennaInfos() {
     GnssAntennaInfo mockAntennaInfo_1 = {
-            .carrierFrequencyMHz = 123412.12,
+            .carrierFrequencyMHz = kGpsL1FreqHz * 1e-6,
             .phaseCenterOffsetCoordinateMillimeters = Coord{.x = 1,
                                                             .xUncertainty = 0.1,
                                                             .y = 2,
@@ -271,7 +383,7 @@ hidl_vec<GnssAntennaInfo> Utils::getMockAntennaInfos() {
     };
 
     GnssAntennaInfo mockAntennaInfo_2 = {
-            .carrierFrequencyMHz = 532324.23,
+            .carrierFrequencyMHz = kGpsL5FreqHz * 1e-6,
             .phaseCenterOffsetCoordinateMillimeters = Coord{.x = 5,
                                                             .xUncertainty = 0.1,
                                                             .y = 6,

@@ -1,0 +1,7 @@
+service vendor.usb-gadget-hal-1-2 /vendor/bin/hw/android.hardware.usb.gadget@1.2-service
+    interface android.hardware.usb.gadget@1.0::IUsbGadget default
+    interface android.hardware.usb.gadget@1.1::IUsbGadget default
+    interface android.hardware.usb.gadget@1.2::IUsbGadget default
+    class hal
+    user system
+    group system shell mtp

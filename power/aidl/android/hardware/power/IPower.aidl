@@ -17,6 +17,7 @@
 package android.hardware.power;
 
 import android.hardware.power.Boost;
+import android.hardware.power.IPowerHintSession;
 import android.hardware.power.Mode;
 
 @VintfStability
@@ -69,4 +70,37 @@ interface IPower {
      * @param type Boost to be queried
      */
     boolean isBoostSupported(in Boost type);
+
+    /**
+     * A Session represents a group of threads with an inter-related workload such that hints for
+     * their performance should be considered as a unit. The threads in a given session should be
+     * long-life and not created or destroyed dynamically.
+     *
+     * Each session is expected to have a periodic workload with a target duration for each
+     * cycle. The cycle duration is likely greater than the target work duration to allow other
+     * parts of the pipeline to run within the available budget. For example, a renderer thread may
+     * work at 60hz in order to produce frames at the display's frame but have a target work
+     * duration of only 6ms.
+     *
+     * Creates a session for the given set of threads and sets their initial target work
+     * duration.
+     *
+     * @return  the new session if it is supported on this device, otherwise return with
+     *          EX_UNSUPPORTED_OPERATION error if hint session is not supported on this device.
+     * @param   tgid The TGID to be associated with this session.
+     * @param   uid The UID to be associated with this session.
+     * @param   threadIds The list of threads to be associated with this session.
+     * @param   durationNanos The desired duration in nanoseconds for this session.
+     */
+    IPowerHintSession createHintSession(
+            in int tgid, in int uid, in int[] threadIds, in long durationNanos);
+
+    /**
+     * Get preferred update rate (interval) information for this device. Framework must communicate
+     * this rate to Apps, and also ensure the session hint sent no faster than the update rate.
+     *
+     * @return the preferred update rate in nanoseconds supported by device software. Return with
+     *         EX_UNSUPPORTED_OPERATION if hint session is not supported.
+     */
+    long getHintSessionPreferredRate();
 }

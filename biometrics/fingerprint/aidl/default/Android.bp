@@ -1,0 +1,43 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_binary {
+    name: "android.hardware.biometrics.fingerprint-service.example",
+    vendor: true,
+    relative_install_path: "hw",
+    init_rc: ["fingerprint-default.rc"],
+    vintf_fragments: ["fingerprint-default.xml"],
+    local_include_dirs: ["include"],
+    srcs: [
+        "CancellationSignal.cpp",
+        "Fingerprint.cpp",
+        "Session.cpp",
+        "WorkerThread.cpp",
+        "main.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "android.hardware.biometrics.fingerprint-V1-ndk",
+        "android.hardware.biometrics.common-V1-ndk",
+    ],
+}
+
+cc_test_host {
+    name: "android.hardware.biometrics.fingerprint.WorkerThreadTest",
+    local_include_dirs: ["include"],
+    srcs: [
+        "tests/WorkerThreadTest.cpp",
+        "WorkerThread.cpp",
+    ],
+    shared_libs: [
+        "libcutils",
+    ],
+    test_suites: ["general-tests"],
+}

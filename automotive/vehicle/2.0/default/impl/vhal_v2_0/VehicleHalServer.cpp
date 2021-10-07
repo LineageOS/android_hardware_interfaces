@@ -30,6 +30,66 @@
 
 namespace android::hardware::automotive::vehicle::V2_0::impl {
 
+static bool isDiagnosticProperty(VehiclePropConfig propConfig) {
+    switch (propConfig.prop) {
+        case OBD2_LIVE_FRAME:
+        case OBD2_FREEZE_FRAME:
+        case OBD2_FREEZE_FRAME_CLEAR:
+        case OBD2_FREEZE_FRAME_INFO:
+            return true;
+    }
+    return false;
+}
+
+VehicleHalServer::VehicleHalServer() {
+    constexpr bool shouldUpdateStatus = true;
+
+    for (auto& it : kVehicleProperties) {
+        VehiclePropConfig cfg = it.config;
+
+        mServerSidePropStore.registerProperty(cfg);
+
+        if (isDiagnosticProperty(cfg)) {
+            continue;
+        }
+
+        // A global property will have only a single area
+        int32_t numAreas = isGlobalProp(cfg.prop) ? 1 : cfg.areaConfigs.size();
+
+        for (int i = 0; i < numAreas; i++) {
+            int32_t curArea = isGlobalProp(cfg.prop) ? 0 : cfg.areaConfigs[i].areaId;
+
+            // Create a separate instance for each individual zone
+            VehiclePropValue prop = {
+                    .areaId = curArea,
+                    .prop = cfg.prop,
+            };
+
+            if (it.initialAreaValues.empty()) {
+                prop.value = it.initialValue;
+            } else if (auto valueForAreaIt = it.initialAreaValues.find(curArea);
+                       valueForAreaIt != it.initialAreaValues.end()) {
+                prop.value = valueForAreaIt->second;
+            } else {
+                LOG(WARNING) << __func__ << " failed to get default value for"
+                             << " prop 0x" << std::hex << cfg.prop << " area 0x" << std::hex
+                             << curArea;
+                prop.status = VehiclePropertyStatus::UNAVAILABLE;
+            }
+
+            mServerSidePropStore.writeValue(prop, shouldUpdateStatus);
+        }
+    }
+}
+
+void VehicleHalServer::sendAllValuesToClient() {
+    constexpr bool update_status = true;
+    auto values = mServerSidePropStore.readAllValues();
+    for (const auto& value : values) {
+        onPropertyValueFromCar(value, update_status);
+    }
+}
+
 GeneratorHub* VehicleHalServer::getGenerator() {
     return &mGeneratorHub;
 }
@@ -55,19 +115,13 @@ void VehicleHalServer::onFakeValueGenerated(const VehiclePropValue& value) {
     if (updatedPropValue) {
         updatedPropValue->timestamp = value.timestamp;
         updatedPropValue->status = VehiclePropertyStatus::AVAILABLE;
+        mServerSidePropStore.writeValue(*updatedPropValue, updateStatus);
         onPropertyValueFromCar(*updatedPropValue, updateStatus);
     }
 }
 
 std::vector<VehiclePropConfig> VehicleHalServer::onGetAllPropertyConfig() const {
-    std::vector<VehiclePropConfig> vehiclePropConfigs;
-    constexpr size_t numOfVehiclePropConfigs =
-            sizeof(kVehicleProperties) / sizeof(kVehicleProperties[0]);
-    vehiclePropConfigs.reserve(numOfVehiclePropConfigs);
-    for (auto& it : kVehicleProperties) {
-        vehiclePropConfigs.emplace_back(it.config);
-    }
-    return vehiclePropConfigs;
+    return mServerSidePropStore.getAllConfigs();
 }
 
 StatusCode VehicleHalServer::handleGenerateFakeDataRequest(const VehiclePropValue& request) {
@@ -247,6 +301,28 @@ StatusCode VehicleHalServer::onSetProperty(const VehiclePropValue& value, bool u
                     break;
             }
             break;
+
+#ifdef ENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING
+        case toInt(VehicleProperty::CLUSTER_REPORT_STATE):
+        case toInt(VehicleProperty::CLUSTER_REQUEST_DISPLAY):
+        case toInt(VehicleProperty::CLUSTER_NAVIGATION_STATE):
+        case VENDOR_CLUSTER_SWITCH_UI:
+        case VENDOR_CLUSTER_DISPLAY_STATE: {
+            auto updatedPropValue = createVehiclePropValue(getPropType(value.prop), 0);
+            updatedPropValue->prop = value.prop & ~toInt(VehiclePropertyGroup::MASK);
+            if (isSystemProperty(value.prop)) {
+                updatedPropValue->prop |= toInt(VehiclePropertyGroup::VENDOR);
+            } else {
+                updatedPropValue->prop |= toInt(VehiclePropertyGroup::SYSTEM);
+            }
+            updatedPropValue->value = value.value;
+            updatedPropValue->timestamp = elapsedRealtimeNano();
+            updatedPropValue->areaId = value.areaId;
+            onPropertyValueFromCar(*updatedPropValue, updateStatus);
+            return StatusCode::OK;
+        }
+#endif  // ENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING
+
         default:
             break;
     }
@@ -256,6 +332,7 @@ StatusCode VehicleHalServer::onSetProperty(const VehiclePropValue& value, bool u
     auto updatedPropValue = getValuePool()->obtain(value);
     updatedPropValue->timestamp = elapsedRealtimeNano();
 
+    mServerSidePropStore.writeValue(*updatedPropValue, updateStatus);
     onPropertyValueFromCar(*updatedPropValue, updateStatus);
     return StatusCode::OK;
 }

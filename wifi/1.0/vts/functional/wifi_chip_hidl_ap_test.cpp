@@ -176,6 +176,7 @@ TEST_P(WifiChipHidlApTest, RemoveApIface) {
     EXPECT_EQ(WifiStatusCode::ERROR_INVALID_ARGS, removeApIface(iface_name));
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiChipHidlApTest);
 INSTANTIATE_TEST_SUITE_P(
     PerInstance, WifiChipHidlApTest,
     testing::ValuesIn(
