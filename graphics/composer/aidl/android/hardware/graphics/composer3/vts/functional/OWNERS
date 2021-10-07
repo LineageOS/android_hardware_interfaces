@@ -1,0 +1,9 @@
+# Bug component: 199413815
+
+# Graphics team
+adyabr@google.com
+alecmouri@google.com
+ramindani@google.com
+
+# VTS team
+include platform/hardware/interfaces:/OWNERS

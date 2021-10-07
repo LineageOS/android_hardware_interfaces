@@ -344,7 +344,7 @@ enum StandardMetadataType {
     /**
      * Can be used to get or set dynamic HDR metadata specified by SMPTE ST 2094-40:2016.
      *
-     * This metadata is uint8_t byte array.
+     * This metadata is a uint8_t byte array.
      *
      * This is not used in tone mapping until it has been set for the first time.
      *
@@ -353,4 +353,17 @@ enum StandardMetadataType {
      * If this is unset when encoded into a byte stream, the byte stream is empty.
      */
     SMPTE2094_40 = 21,
+
+    /**
+     * Can be used to get or set dynamic HDR metadata specified by SMPTE ST 2094-10:2016.
+     *
+     * This metadata is a uint8_t byte array.
+     *
+     * This is not used in tone mapping until it has been set for the first time.
+     *
+     * When it is encoded into a byte stream, the length of the HDR metadata byte array is written
+     * using 8 bytes in little endian. It is followed by the uint8_t byte array.
+     * If this is unset when encoded into a byte stream, the byte stream is empty.
+     */
+    SMPTE2094_10 = 22,
 }
