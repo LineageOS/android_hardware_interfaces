@@ -26,6 +26,7 @@ package android.hardware.radio.config;
 
 import android.hardware.radio.config.IRadioConfigIndication;
 import android.hardware.radio.config.IRadioConfigResponse;
+import android.hardware.radio.config.SlotPortMapping;
 
 @VintfStability
 oneway interface IRadioConfig {
@@ -120,30 +121,57 @@ oneway interface IRadioConfig {
     /**
      * Set SIM Slot mapping.
      *
-     * Maps the logical slots to the physical slots. Logical slot is the slot that is seen by modem.
-     * Physical slot is the actual physical slot. Request maps the physical slot to logical slot.
-     * Logical slots that are already mapped to the requested physical slot are not impacted.
+     * Maps the logical slots to the SlotPortMapping which consist of both physical slot id and port
+     * id. Logical slot is the slot that is seen by modem. Physical slot is the actual physical
+     * slot. PortId is the id (enumerated value) for the associated port available on the SIM. Each
+     * physical slot can have multiple ports which enables multi-enabled profile(MEP). If eUICC
+     * physical slot supports 2 ports, then the portId is numbered 0,1 and if eUICC2 supports 4
+     * ports then the portID is numbered 0,1,2,3. Each portId is unique within a UICC physical slot
+     * but not necessarily unique across UICC’s. SEP(Single enabled profile) eUICC and non-eUICC
+     * will only have portId 0.
      *
-     * Example no. of logical slots 1 and physical slots 2:
-     * The only logical slot (index 0) can be mapped to first physical slot (value 0) or second
-     * physical slot(value 1), while the other physical slot remains unmapped and inactive.
-     * slotMap[0] = 1 or slotMap[0] = 0
+     * Logical slots that are already mapped to the requested SlotPortMapping are not impacted.
      *
-     * Example no. of logical slots 2 and physical slots 2:
-     * First logical slot (index 0) can be mapped to physical slot 1 or 2 and other logical slot
-     * can be mapped to other physical slot. Each logical slot must be mapped to a physical slot.
-     * slotMap[0] = 0 and slotMap[1] = 1 or slotMap[0] = 1 and slotMap[1] = 0
+     * Example no. of logical slots 1 and physical slots 2 do not support MEP, each physical slot
+     * has one port:
+     * The only logical slot (index 0) can be mapped to first physical slot (value 0), port(index
+     * 0). or second
+     * physical slot(value 1), port (index 0), while the other physical slot remains unmapped and
+     * inactive.
+     * slotMap[0] = SlotPortMapping{0 //physical slot//, 0 //port//}
+     * slotMap[0] = SlotPortMapping{1 //physical slot//, 0 //port//}
+     *
+     * Example no. of logical slots 2 and physical slots 2 supports MEP with 2 ports available:
+     * Each logical slot must be mapped to a port (physical slot and port combination).
+     * First logical slot (index 0) can be mapped to physical slot 1 and the second logical slot
+     * can be mapped to either port from physical slot 2.
+     *
+     * slotMap[0] = SlotPortMapping{0, 0} and slotMap[1] = SlotPortMapping{1, 0} or
+     * slotMap[0] = SlotPortMapping{0, 0} and slotMap[1] = SlotPortMapping{1, 1}
+     *
+     * or the other way around, the second logical slot(index 1) can be mapped to physical slot 1
+     * and the first logical slot can be mapped to either port from physical slot 2.
+     *
+     * slotMap[1] = SlotPortMapping{0, 0} and slotMap[0] = SlotPortMapping{1, 0} or
+     * slotMap[1] = SlotPortMapping{0, 0} and slotMap[0] = SlotPortMapping{1, 1}
+     *
+     * another possible mapping is each logical slot maps to each port of physical slot 2 and there
+     * is no active logical modem mapped to physical slot 1.
+     *
+     * slotMap[0] = SlotPortMapping{1, 0} and slotMap[1] = SlotPortMapping{1, 1} or
+     * slotMap[0] = SlotPortMapping{1, 1} and slotMap[1] = SlotPortMapping{1, 0}
      *
      * @param serial Serial number of request
-     * @param slotMap Logical to physical slot mapping, size == no. of radio instances. Index is
-     *        mapping to logical slot and value to physical slot, need to provide all the slots
-     *        mapping when sending request in case of multi slot device.
-     *        EX: uint32_t slotMap[logical slot] = physical slot
+     * @param slotMap Logical to physical slot and port mapping.
+     *        Index is mapping to logical slot and value to physical slot and port id, need to
+     *        provide all the slots mapping when sending request in case of multi slot device.
+     *
+     *        EX: SlotPortMapping(physical slot, port id)
      *        index 0 is the first logical_slot number of logical slots is equal to number of Radio
      *        instances and number of physical slots is equal to size of slotStatus in
      *        getSimSlotsStatusResponse
      *
      * Response callback is IRadioConfigResponse.setSimSlotsMappingResponse()
      */
-    void setSimSlotsMapping(in int serial, in int[] slotMap);
+    void setSimSlotsMapping(in int serial, in SlotPortMapping[] slotMap);
 }

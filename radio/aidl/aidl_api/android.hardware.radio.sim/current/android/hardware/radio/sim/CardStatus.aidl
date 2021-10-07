@@ -40,10 +40,10 @@ parcelable CardStatus {
   int cdmaSubscriptionAppIndex;
   int imsSubscriptionAppIndex;
   android.hardware.radio.sim.AppStatus[] applications;
-  int physicalSlotId;
   String atr;
   String iccid;
   String eid;
+  android.hardware.radio.config.SlotPortMapping slotMap;
   const int STATE_ABSENT = 0;
   const int STATE_PRESENT = 1;
   const int STATE_ERROR = 2;
