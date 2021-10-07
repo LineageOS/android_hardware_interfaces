@@ -49,5 +49,5 @@ interface IRadioConfig {
   oneway void setNumOfLiveModems(in int serial, in byte numOfLiveModems);
   oneway void setPreferredDataModem(in int serial, in byte modemId);
   oneway void setResponseFunctions(in android.hardware.radio.config.IRadioConfigResponse radioConfigResponse, in android.hardware.radio.config.IRadioConfigIndication radioConfigIndication);
-  oneway void setSimSlotsMapping(in int serial, in int[] slotMap);
+  oneway void setSimSlotsMapping(in int serial, in android.hardware.radio.config.SlotPortMapping[] slotMap);
 }
