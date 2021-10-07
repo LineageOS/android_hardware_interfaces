@@ -103,6 +103,14 @@ class FakeVehicleHardware final : public IVehicleHardware {
     void maybeOverrideProperties(const char* overrideDir);
     // Override the properties using config files in 'overrideDir'.
     void overrideProperties(const char* overrideDir);
+
+    ::aidl::android::hardware::automotive::vehicle::StatusCode maybeSetSpecialValue(
+            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
+            bool* isSpecialValue);
+    ::aidl::android::hardware::automotive::vehicle::StatusCode setApPowerStateReport(
+            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
+    VehiclePropValuePool::RecyclableType createApPowerStateReq(
+            ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq state);
 };
 
 }  // namespace fake

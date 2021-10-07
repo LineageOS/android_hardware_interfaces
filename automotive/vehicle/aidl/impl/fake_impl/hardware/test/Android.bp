@@ -22,9 +22,11 @@ cc_test {
     name: "FakeVehicleHardwareTest",
     vendor: true,
     srcs: ["*.cpp"],
+    cflags: ["-DENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING"],
     header_libs: [
         "IVehicleHardware",
         "VehicleHalDefaultConfig",
+        "VehicleHalTestUtilHeaders",
     ],
     static_libs: [
         "VehicleHalUtils",

@@ -29,6 +29,7 @@ namespace testpropertyutils_impl {
 
 // These names are not part of the API since we only expose ints.
 using ::aidl::android::hardware::automotive::vehicle::VehicleArea;
+using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyGroup;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType;
 
@@ -44,16 +45,16 @@ inline constexpr int32_t toVendor(
 }
 
 // These properties are used for the end-to-end testing of ClusterHomeService.
-constexpr int32_t VENDOR_CLUSTER_SWITCH_UI = toVendor(
-        ::aidl::android::hardware::automotive::vehicle::VehicleProperty::CLUSTER_SWITCH_UI);
+constexpr int32_t VENDOR_CLUSTER_SWITCH_UI =
+        toVendor(testpropertyutils_impl::VehicleProperty::CLUSTER_SWITCH_UI);
 constexpr int32_t VENDOR_CLUSTER_DISPLAY_STATE =
-        toVendor(::aidl::hardware::automotive::vehicle::VehicleProperty::CLUSTER_DISPLAY_STATE);
+        toVendor(testpropertyutils_impl::VehicleProperty::CLUSTER_DISPLAY_STATE);
 constexpr int32_t VENDOR_CLUSTER_REPORT_STATE =
-        toVendor(::aidl::hardware::automotive::vehicle::VehicleProperty::CLUSTER_REPORT_STATE);
+        toVendor(testpropertyutils_impl::VehicleProperty::CLUSTER_REPORT_STATE);
 constexpr int32_t VENDOR_CLUSTER_REQUEST_DISPLAY =
-        toVendor(::aidl::hardware::automotive::vehicle::VehicleProperty::CLUSTER_REQUEST_DISPLAY);
+        toVendor(testpropertyutils_impl::VehicleProperty::CLUSTER_REQUEST_DISPLAY);
 constexpr int32_t VENDOR_CLUSTER_NAVIGATION_STATE =
-        toVendor(::aidl::hardware::automotive::vehicle::VehicleProperty::CLUSTER_NAVIGATION_STATE);
+        toVendor(testpropertyutils_impl::VehicleProperty::CLUSTER_NAVIGATION_STATE);
 #endif  // ENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING
 
 // These properties are placeholder properties for developers to test new features without
