@@ -24,4 +24,8 @@ hidl_interface {
         "android.hidl.safe_union@1.0",
     ],
     gen_java: true,
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.car.framework",
+    ],
 }
