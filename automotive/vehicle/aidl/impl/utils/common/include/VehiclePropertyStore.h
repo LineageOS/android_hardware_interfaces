@@ -110,6 +110,8 @@ class VehiclePropertyStore final {
     // Set a callback that would be called when a property value has been updated.
     void setOnValueChangeCallback(const OnValueChangeCallback& callback);
 
+    inline std::shared_ptr<VehiclePropValuePool> getValuePool() { return mValuePool; }
+
   private:
     struct RecordId {
         int32_t area;

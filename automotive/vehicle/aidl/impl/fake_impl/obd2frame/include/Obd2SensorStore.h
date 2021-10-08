@@ -60,7 +60,6 @@ class Obd2SensorStore final {
     // Stores an integer-valued sensor.
     ::aidl::android::hardware::automotive::vehicle::StatusCode setIntegerSensor(size_t index,
                                                                                 int32_t value);
-
     // Stores a float-valued sensor.
     ::aidl::android::hardware::automotive::vehicle::StatusCode setFloatSensor(
             ::aidl::android::hardware::automotive::vehicle::DiagnosticFloatSensorIndex index,
