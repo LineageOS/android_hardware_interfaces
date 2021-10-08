@@ -1035,24 +1035,32 @@ enum VehicleProperty {
     VEHICLE_SPEED_DISPLAY_UNITS = 0x0605 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
     /**
-     * Current date and time, encoded as Unix time (in milliseconds).
+     * Current date and time, encoded as Epoch time (in milliseconds).
      * This value denotes the number of milliseconds seconds that have
      * elapsed since 1/1/1970 UTC.
      *
-     * Reading this value will give you the system’s time. This can be
-     * useful to synchronize other vehicle systems (dash clock etc).
+     * CarServices will write to this value to give VHAL the Android system's
+     * time, if the VHAL supports this property. This can be useful to
+     * synchronize other vehicle systems (dash clock etc) with Android's time.
      *
-     * Writing this value will update the ‘ExternalTimeSuggestion’
-     * value (if enabled). This value may be consumed by the “Time
-     * Detector Service”, if other sources do not have a higher
-     * priority. For information on how to adjust time source
-     * priorities see Time Detector Service documentation.
+     * AAOS writes to this property once during boot, and
+     * will thereafter write only when some time-source changes are propagated.
+     * AAOS will fill in VehiclePropValue.timestamp correctly.
+     * Note that AAOS will not send updates for natural elapse of time.
+     *     int64Values[0] = provided Unix time (in milliseconds)
+     *
+     * Note that the property may take >0 ms to get propagated through the stack
+     * and, having a timestamped property helps reduce any time drift. So,
+     * for all writes to the property, the timestamp can be used to negate this
+     * drift:
+     *     drift = elapsedTime - PropValue.timestamp
+     *     effectiveTime = PropValue.value.int64Values[0] + drift
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @access VehiclePropertyAccess:WRITE_ONLY
      * @unit VehicleUnit:MILLI_SECS
      */
-    EPOCH_TIME = 0x0606 + 0x10000000 + 0x01000000
+    ANDROID_EPOCH_TIME = 0x0606 + 0x10000000 + 0x01000000
             + 0x00500000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT64
     /**
      * External encryption binding seed.
