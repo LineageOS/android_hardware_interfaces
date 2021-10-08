@@ -343,6 +343,10 @@ uint16_t Demux::getFilterTpid(int64_t filterId) {
 }
 
 void Demux::startFrontendInputLoop() {
+    ALOGD("[Demux] start frontend on demux");
+    // Stop current Frontend thread loop first, in case the user starts a new
+    // tuning before stopping current tuning.
+    stopFrontendInput();
     mFrontendInputThreadRunning = true;
     mFrontendInputThread = std::thread(&Demux::frontendInputThreadLoop, this);
 }

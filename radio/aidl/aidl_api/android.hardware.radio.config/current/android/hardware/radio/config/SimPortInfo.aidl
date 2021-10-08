@@ -33,10 +33,10 @@
 
 package android.hardware.radio.config;
 @VintfStability
-parcelable SimSlotStatus {
-  boolean cardActive;
-  int cardState;
-  String atr;
-  String eid;
-  android.hardware.radio.config.SimPortInfo[] portInfo;
+parcelable SimPortInfo {
+  String iccId;
+  int logicalSlotId;
+  int portState;
+  const int PORT_STATE_INACTIVE = 0;
+  const int PORT_STATE_ACTIVE = 1;
 }
