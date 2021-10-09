@@ -36,7 +36,10 @@ cc_test {
     static_libs: [
         "android.hardware.keymaster@3.0",
         "libcrypto_static",
-        "libsoftkeymasterdevice",
+        "libpuresoftkeymasterdevice",
     ],
-    test_suites: ["general-tests", "vts"],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
 }
