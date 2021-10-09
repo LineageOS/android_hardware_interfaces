@@ -12,7 +12,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_SHARED_LIBRARIES := \
     liblog \
-    libsoftkeymasterdevice \
+    libpuresoftkeymasterdevice \
     libcrypto \
     libkeymaster_portable \
     libpuresoftkeymasterdevice \
