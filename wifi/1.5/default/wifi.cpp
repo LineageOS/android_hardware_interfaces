@@ -131,8 +131,14 @@ WifiStatus Wifi::startInternal() {
                 WifiStatus wifi_status =
                     createWifiStatus(WifiStatusCode::ERROR_UNKNOWN, error);
                 for (const auto& callback : event_cb_handler_.getCallbacks()) {
+                    LOG(INFO) << "Attempting to invoke onSubsystemRestart "
+                                 "callback";
                     if (!callback->onSubsystemRestart(wifi_status).isOk()) {
-                        LOG(ERROR) << "Failed to invoke onFailure callback";
+                        LOG(ERROR)
+                            << "Failed to invoke onSubsystemRestart callback";
+                    } else {
+                        LOG(INFO) << "Succeeded to invoke onSubsystemRestart "
+                                     "callback";
                     }
                 }
             };
