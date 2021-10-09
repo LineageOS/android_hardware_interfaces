@@ -1052,7 +1052,7 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
                                 .access = VehiclePropertyAccess::READ,
                                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                         },
-                .initialValue = {.int32Values = {0 /* ClusterHome */, -1 /* ClusterNone */}},
+                .initialValue = {.int32Values = {0 /* ClusterHome */}},
         },
         {
                 .config =
