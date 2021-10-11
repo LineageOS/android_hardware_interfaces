@@ -49,6 +49,14 @@ size_t VehiclePropertyStore::RecordIdHash::operator()(RecordId const& recordId) 
     return res;
 }
 
+VehiclePropertyStore::~VehiclePropertyStore() {
+    std::lock_guard<std::mutex> lockGuard(mLock);
+
+    // Recycling record requires mValuePool, so need to recycle them before destroying mValuePool.
+    mRecordsByPropId.clear();
+    mValuePool.reset();
+}
+
 const VehiclePropertyStore::Record* VehiclePropertyStore::getRecordLocked(int32_t propId) const
         REQUIRES(mLock) {
     auto RecordIt = mRecordsByPropId.find(propId);
@@ -75,11 +83,10 @@ VehiclePropertyStore::RecordId VehiclePropertyStore::getRecordIdLocked(
 
 Result<VehiclePropValuePool::RecyclableType> VehiclePropertyStore::readValueLocked(
         const RecordId& recId, const Record& record) const REQUIRES(mLock) {
-    auto it = record.values.find(recId);
-    if (it == record.values.end()) {
-        return Errorf("Record ID: {} is not found", recId.toString());
+    if (auto it = record.values.find(recId); it != record.values.end()) {
+        return mValuePool->obtain(*(it->second));
     }
-    return mValuePool->obtain(*(it->second));
+    return Errorf("Record ID: {} is not found", recId.toString());
 }
 
 void VehiclePropertyStore::registerProperty(const VehiclePropConfig& config,
@@ -108,26 +115,31 @@ Result<void> VehiclePropertyStore::writeValue(VehiclePropValuePool::RecyclableTy
     }
 
     VehiclePropertyStore::RecordId recId = getRecordIdLocked(*propValue, *record);
-    auto it = record->values.find(recId);
-    if (it == record->values.end()) {
-        record->values[recId] = std::move(propValue);
-        if (!updateStatus) {
-            record->values[recId]->status = VehiclePropertyStatus::AVAILABLE;
+    bool valueUpdated = true;
+    if (auto it = record->values.find(recId); it != record->values.end()) {
+        const VehiclePropValue* valueToUpdate = it->second.get();
+        int64_t oldTimestamp = valueToUpdate->timestamp;
+        VehiclePropertyStatus oldStatus = valueToUpdate->status;
+        // propValue is outdated and drops it.
+        if (oldTimestamp > propValue->timestamp) {
+            return Errorf("outdated timestamp: {:d}", propValue->timestamp);
         }
-        return {};
-    }
-    const VehiclePropValue* valueToUpdate = it->second.get();
-    long oldTimestamp = valueToUpdate->timestamp;
-    VehiclePropertyStatus oldStatus = valueToUpdate->status;
-    // propValue is outdated and drops it.
-    if (oldTimestamp > propValue->timestamp) {
-        return Errorf("outdated timestamp: {:d}", propValue->timestamp);
-    }
-    record->values[recId] = std::move(propValue);
-    if (!updateStatus) {
-        record->values[recId]->status = oldStatus;
+        if (!updateStatus) {
+            propValue->status = oldStatus;
+        }
+
+        valueUpdated = (valueToUpdate->value != propValue->value ||
+                        valueToUpdate->status != propValue->status ||
+                        valueToUpdate->prop != propValue->prop ||
+                        valueToUpdate->areaId != propValue->areaId);
+    } else if (!updateStatus) {
+        propValue->status = VehiclePropertyStatus::AVAILABLE;
     }
 
+    record->values[recId] = std::move(propValue);
+    if (valueUpdated && mOnValueChangeCallback != nullptr) {
+        mOnValueChangeCallback(*(record->values[recId]));
+    }
     return {};
 }
 
@@ -234,6 +246,13 @@ Result<const VehiclePropConfig*> VehiclePropertyStore::getConfig(int32_t propId)
     }
 
     return &record->propConfig;
+}
+
+void VehiclePropertyStore::setOnValueChangeCallback(
+        const VehiclePropertyStore::OnValueChangeCallback& callback) {
+    std::lock_guard<std::mutex> g(mLock);
+
+    mOnValueChangeCallback = callback;
 }
 
 }  // namespace vehicle
