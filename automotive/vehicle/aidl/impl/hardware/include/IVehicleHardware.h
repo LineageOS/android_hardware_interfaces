@@ -39,7 +39,7 @@ struct DumpResult {
 // A request type for 'setValues' or 'getValues' method.
 struct VehiclePropValueRequest {
     // A unique request ID set by the sender.
-    int requestId;
+    int64_t requestId;
     // The property to get/set.
     ::aidl::android::hardware::automotive::vehicle::VehiclePropValue value;
 };
