@@ -25,6 +25,12 @@
 #include <aidl/android/hardware/automotive/vehicle/FuelType.h>
 #include <aidl/android/hardware/automotive/vehicle/GetValueRequest.h>
 #include <aidl/android/hardware/automotive/vehicle/GetValueResult.h>
+#include <aidl/android/hardware/automotive/vehicle/Obd2CommonIgnitionMonitors.h>
+#include <aidl/android/hardware/automotive/vehicle/Obd2FuelSystemStatus.h>
+#include <aidl/android/hardware/automotive/vehicle/Obd2FuelType.h>
+#include <aidl/android/hardware/automotive/vehicle/Obd2IgnitionMonitorKind.h>
+#include <aidl/android/hardware/automotive/vehicle/Obd2SecondaryAirStatus.h>
+#include <aidl/android/hardware/automotive/vehicle/Obd2SparkIgnitionMonitors.h>
 #include <aidl/android/hardware/automotive/vehicle/PortLocationType.h>
 #include <aidl/android/hardware/automotive/vehicle/SetValueRequest.h>
 #include <aidl/android/hardware/automotive/vehicle/SetValueResult.h>
