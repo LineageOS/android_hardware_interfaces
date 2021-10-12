@@ -182,17 +182,17 @@ StatusCode FakeVehicleHardware::checkHealth() {
 }
 
 void FakeVehicleHardware::registerOnPropertyChangeEvent(OnPropertyChangeCallback&& callback) {
-    std::lock_guard<std::mutex> lockGuard(mCallbackLock);
+    std::scoped_lock<std::mutex> lockGuard(mCallbackLock);
     mOnPropertyChangeCallback = std::move(callback);
 }
 
 void FakeVehicleHardware::registerOnPropertySetErrorEvent(OnPropertySetErrorCallback&& callback) {
-    std::lock_guard<std::mutex> lockGuard(mCallbackLock);
+    std::scoped_lock<std::mutex> lockGuard(mCallbackLock);
     mOnPropertySetErrorCallback = std::move(callback);
 }
 
 void FakeVehicleHardware::onValueChangeCallback(const VehiclePropValue& value) {
-    std::lock_guard<std::mutex> lockGuard(mCallbackLock);
+    std::scoped_lock<std::mutex> lockGuard(mCallbackLock);
     if (mOnPropertyChangeCallback != nullptr) {
         std::vector<VehiclePropValue> updatedValues;
         updatedValues.push_back(value);

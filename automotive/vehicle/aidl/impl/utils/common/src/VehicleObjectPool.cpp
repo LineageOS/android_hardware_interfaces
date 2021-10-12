@@ -101,7 +101,7 @@ VehiclePropValuePool::RecyclableType VehiclePropValuePool::obtainComplex() {
 
 VehiclePropValuePool::RecyclableType VehiclePropValuePool::obtainRecyclable(
         VehiclePropertyType type, size_t vectorSize) {
-    std::lock_guard<std::mutex> lock(mLock);
+    std::scoped_lock<std::mutex> lock(mLock);
     assert(vectorSize > 0);
 
     // VehiclePropertyType is not overlapping with vectorSize.
