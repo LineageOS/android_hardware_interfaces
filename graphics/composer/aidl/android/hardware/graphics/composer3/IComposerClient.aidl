@@ -690,9 +690,8 @@ interface IComposerClient {
      * If the display is internally connected (not through HDMI), and such modes are available,
      * this method should trigger them.
      *
-     * This function should only be called if the display reports support for the corresponding
-     * content type (ContentType::{GRAPHICS, PHOTO, CINEMA, GAME}) from getSupportedContentTypes.
-     * ContentType::NONE is supported by default and can always be set.
+     * This function can be called for a content type even if no support for it is
+     * reported from getSupportedContentTypes.
      *
      * @exception EX_BAD_DISPLAY when an invalid display handle was passed in.
      * @exception EX_UNSUPPORTED when the given content type is not supported by the composer
