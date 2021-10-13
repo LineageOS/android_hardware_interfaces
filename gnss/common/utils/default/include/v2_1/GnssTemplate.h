@@ -223,14 +223,8 @@ Return<bool> GnssTemplate<T_IGnss>::start() {
             this->reportSvStatus(svStatus);
             auto currentLocation = getLocationFromHW();
             notePowerConsumption();
-            if (mGnssFd != -1) {
-                // Only report location if the return from hardware is valid
-                // note that we can not merge these two "if" together, if didn't
-                // get location from hardware, we shouldn't report location, not
-                // report the "default" one.
-                if (currentLocation != nullptr) {
-                    this->reportLocation(*currentLocation);
-                }
+            if (currentLocation != nullptr) {
+                this->reportLocation(*currentLocation);
             } else {
                 if (sGnssCallback_2_1 != nullptr || sGnssCallback_2_0 != nullptr) {
                     const auto location = Utils::getMockLocationV2_0();
