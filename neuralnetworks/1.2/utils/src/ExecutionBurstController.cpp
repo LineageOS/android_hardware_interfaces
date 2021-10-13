@@ -176,7 +176,10 @@ void ExecutionBurstController::MemoryCache::freeMemory(const nn::SharedMemory& m
         std::lock_guard guard(mMutex);
         const int32_t slot = mMemoryIdToSlot.at(memory);
         if (mBurstContext) {
-            mBurstContext->freeMemory(slot);
+            const auto ret = mBurstContext->freeMemory(slot);
+            if (!ret.isOk()) {
+                LOG(ERROR) << "IBustContext::freeMemory failed: " << ret.description();
+            }
         }
         mMemoryIdToSlot.erase(memory);
         mMemoryCache[slot] = {};
