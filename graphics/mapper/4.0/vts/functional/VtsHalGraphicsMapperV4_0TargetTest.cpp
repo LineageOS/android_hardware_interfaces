@@ -1482,6 +1482,18 @@ TEST_P(GraphicsMapperHidlTest, GetSmpte2094_40) {
 }
 
 /**
+ * Test IMapper::get(Smpte2094_10)
+ */
+TEST_P(GraphicsMapperHidlTest, GetSmpte2094_10) {
+    testGet(mDummyDescriptorInfo, gralloc4::MetadataType_Smpte2094_10,
+            [](const IMapper::BufferDescriptorInfo& /*info*/, const hidl_vec<uint8_t>& vec) {
+                std::optional<std::vector<uint8_t>> smpte2094_10;
+                ASSERT_EQ(NO_ERROR, gralloc4::decodeSmpte2094_10(vec, &smpte2094_10));
+                EXPECT_FALSE(smpte2094_10.has_value());
+            });
+}
+
+/**
  * Test IMapper::get(metadata) with a bad buffer
  */
 TEST_P(GraphicsMapperHidlTest, GetMetadataBadValue) {
@@ -1544,6 +1556,9 @@ TEST_P(GraphicsMapperHidlTest, GetMetadataBadValue) {
     ASSERT_EQ(0, vec.size());
     ASSERT_EQ(Error::BAD_BUFFER,
               mGralloc->get(bufferHandle, gralloc4::MetadataType_Smpte2094_40, &vec));
+    ASSERT_EQ(0, vec.size());
+    ASSERT_EQ(Error::BAD_BUFFER,
+              mGralloc->get(bufferHandle, gralloc4::MetadataType_Smpte2094_10, &vec));
     ASSERT_EQ(0, vec.size());
 }
 
@@ -1937,6 +1952,20 @@ TEST_P(GraphicsMapperHidlTest, SetSmpte2094_40) {
 }
 
 /**
+ * Test IMapper::set(Smpte2094_10)
+ */
+TEST_P(GraphicsMapperHidlTest, SetSmpte2094_10) {
+    hidl_vec<uint8_t> vec;
+
+    testSet(mDummyDescriptorInfo, gralloc4::MetadataType_Smpte2094_10, vec,
+            [&](const IMapper::BufferDescriptorInfo& /*info*/, const hidl_vec<uint8_t>& vec) {
+                std::optional<std::vector<uint8_t>> realSmpte2094_10;
+                ASSERT_EQ(NO_ERROR, gralloc4::decodeSmpte2094_10(vec, &realSmpte2094_10));
+                EXPECT_FALSE(realSmpte2094_10.has_value());
+            });
+}
+
+/**
  * Test IMapper::set(metadata) with a bad buffer
  */
 TEST_P(GraphicsMapperHidlTest, SetMetadataNullBuffer) {
@@ -1977,6 +2006,8 @@ TEST_P(GraphicsMapperHidlTest, SetMetadataNullBuffer) {
     ASSERT_EQ(Error::BAD_BUFFER, mGralloc->set(bufferHandle, gralloc4::MetadataType_Cta861_3, vec));
     ASSERT_EQ(Error::BAD_BUFFER,
               mGralloc->set(bufferHandle, gralloc4::MetadataType_Smpte2094_40, vec));
+    ASSERT_EQ(Error::BAD_BUFFER,
+              mGralloc->set(bufferHandle, gralloc4::MetadataType_Smpte2094_10, vec));
 }
 
 /**
@@ -2479,6 +2510,24 @@ TEST_P(GraphicsMapperHidlTest, GetFromBufferDescriptorInfoSmpte2094_40) {
     std::optional<std::vector<uint8_t>> smpte2094_40;
     ASSERT_EQ(NO_ERROR, gralloc4::decodeSmpte2094_40(vec, &smpte2094_40));
     EXPECT_FALSE(smpte2094_40.has_value());
+}
+
+/**
+ * Test IMapper::getFromBufferDescriptorInfo(Smpte2094_10)
+ */
+TEST_P(GraphicsMapperHidlTest, GetFromBufferDescriptorInfoSmpte2094_10) {
+    hidl_vec<uint8_t> vec;
+    auto err = mGralloc->getFromBufferDescriptorInfo(mDummyDescriptorInfo,
+                                                     gralloc4::MetadataType_Smpte2094_10, &vec);
+    if (err == Error::UNSUPPORTED) {
+        GTEST_SUCCEED() << "setting this metadata is unsupported";
+        return;
+    }
+    ASSERT_EQ(err, Error::NONE);
+
+    std::optional<std::vector<uint8_t>> smpte2094_10;
+    ASSERT_EQ(NO_ERROR, gralloc4::decodeSmpte2094_10(vec, &smpte2094_10));
+    EXPECT_FALSE(smpte2094_10.has_value());
 }
 
 /**
