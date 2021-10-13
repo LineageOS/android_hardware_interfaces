@@ -86,11 +86,15 @@ class VehiclePropertyStore final {
     ::android::base::Result<std::vector<VehiclePropValuePool::RecyclableType>>
     readValuesForProperty(int32_t propId) const;
 
-    // Read the value for the requested property.
+    // Read the value for the requested property. Returns {@code StatusCode::NOT_AVAILABLE} if the
+    // value has not been set yet. Returns {@code StatusCode::INVALID_ARG} if the property is
+    // not configured.
     ::android::base::Result<VehiclePropValuePool::RecyclableType> readValue(
             const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& request) const;
 
-    // Read the value for the requested property.
+    // Read the value for the requested property. Returns {@code StatusCode::NOT_AVAILABLE} if the
+    // value has not been set yet. Returns {@code StatusCode::INVALID_ARG} if the property is
+    // not configured.
     ::android::base::Result<VehiclePropValuePool::RecyclableType> readValue(
             int32_t prop, int32_t area = 0, int64_t token = 0) const;
 
