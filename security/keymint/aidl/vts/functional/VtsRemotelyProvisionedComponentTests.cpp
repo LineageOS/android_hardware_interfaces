@@ -222,7 +222,7 @@ TEST_P(GenerateKeyTests, generateAndUseEcdsaP256Key_prodMode) {
     // Generate an ECDSA key that is attested by the generated P256 keypair.
     AuthorizationSet keyDesc = AuthorizationSetBuilder()
                                        .Authorization(TAG_NO_AUTH_REQUIRED)
-                                       .EcdsaSigningKey(256)
+                                       .EcdsaSigningKey(EcCurve::P_256)
                                        .AttestationChallenge("foo")
                                        .AttestationApplicationId("bar")
                                        .Digest(Digest::NONE)
