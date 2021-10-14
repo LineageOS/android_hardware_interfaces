@@ -25,6 +25,7 @@
 #include <cppbor_parse.h>
 #include <cutils/properties.h>
 #include <gmock/gmock.h>
+#include <openssl/evp.h>
 #include <openssl/mem.h>
 #include <remote_prov/remote_prov_utils.h>
 
@@ -204,6 +205,21 @@ uint32_t KeyMintAidlTestBase::boot_patch_level(
 
 uint32_t KeyMintAidlTestBase::boot_patch_level() {
     return boot_patch_level(key_characteristics_);
+}
+
+bool KeyMintAidlTestBase::Curve25519Supported() {
+    // Strongbox never supports curve 25519.
+    if (SecLevel() == SecurityLevel::STRONGBOX) {
+        return false;
+    }
+
+    // Curve 25519 was included in version 2 of the KeyMint interface.
+    int32_t version = 0;
+    auto status = keymint_->getInterfaceVersion(&version);
+    if (!status.isOk()) {
+        ADD_FAILURE() << "Failed to determine interface version";
+    }
+    return version >= 2;
 }
 
 ErrorCode KeyMintAidlTestBase::GetReturnErrorCode(const Status& result) {
@@ -740,6 +756,19 @@ void KeyMintAidlTestBase::LocalVerifyMessage(const string& message, const string
 
     if (digest == Digest::NONE) {
         switch (EVP_PKEY_id(pub_key.get())) {
+            case EVP_PKEY_ED25519: {
+                ASSERT_EQ(64, signature.size());
+                uint8_t pub_keydata[32];
+                size_t pub_len = sizeof(pub_keydata);
+                ASSERT_EQ(1, EVP_PKEY_get_raw_public_key(pub_key.get(), pub_keydata, &pub_len));
+                ASSERT_EQ(sizeof(pub_keydata), pub_len);
+                ASSERT_EQ(1, ED25519_verify(reinterpret_cast<const uint8_t*>(message.data()),
+                                            message.size(),
+                                            reinterpret_cast<const uint8_t*>(signature.data()),
+                                            pub_keydata));
+                break;
+            }
+
             case EVP_PKEY_EC: {
                 vector<uint8_t> data((EVP_PKEY_bits(pub_key.get()) + 7) / 8);
                 size_t data_size = std::min(data.size(), message.size());
@@ -1165,16 +1194,31 @@ vector<PaddingMode> KeyMintAidlTestBase::InvalidPaddingModes(Algorithm algorithm
 vector<EcCurve> KeyMintAidlTestBase::ValidCurves() {
     if (securityLevel_ == SecurityLevel::STRONGBOX) {
         return {EcCurve::P_256};
+    } else if (Curve25519Supported()) {
+        return {EcCurve::P_224, EcCurve::P_256, EcCurve::P_384, EcCurve::P_521,
+                EcCurve::CURVE_25519};
     } else {
-        return {EcCurve::P_224, EcCurve::P_256, EcCurve::P_384, EcCurve::P_521};
+        return {
+                EcCurve::P_224,
+                EcCurve::P_256,
+                EcCurve::P_384,
+                EcCurve::P_521,
+        };
     }
 }
 
 vector<EcCurve> KeyMintAidlTestBase::InvalidCurves() {
     if (SecLevel() == SecurityLevel::STRONGBOX) {
-        return {EcCurve::P_224, EcCurve::P_384, EcCurve::P_521};
+        // Curve 25519 is not supported, either because:
+        // - KeyMint v1: it's an unknown enum value
+        // - KeyMint v2+: it's not supported by StrongBox.
+        return {EcCurve::P_224, EcCurve::P_384, EcCurve::P_521, EcCurve::CURVE_25519};
     } else {
-        return {};
+        if (Curve25519Supported()) {
+            return {};
+        } else {
+            return {EcCurve::CURVE_25519};
+        }
     }
 }
 
