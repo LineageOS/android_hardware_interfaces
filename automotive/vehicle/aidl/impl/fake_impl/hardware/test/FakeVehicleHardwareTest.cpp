@@ -17,6 +17,8 @@
 #include <FakeVehicleHardware.h>
 
 #include <DefaultConfig.h>
+#include <FakeObd2Frame.h>
+#include <PropertyUtils.h>
 #include <TestPropertyUtils.h>
 
 #include <android-base/expected.h>
@@ -249,6 +251,12 @@ TEST_F(FakeVehicleHardwareTest, testGetDefaultValues) {
     int64_t requestId = 1;
 
     for (auto& config : defaultconfig::getDefaultConfigs()) {
+        if (obd2frame::FakeObd2Frame::isDiagnosticProperty(config.config)) {
+            // Ignore storing default value for diagnostic property. They have special get/set
+            // logic.
+            continue;
+        }
+
         int propId = config.config.prop;
         if (isGlobalProp(propId)) {
             if (config.initialValue == RawPropValues{}) {
@@ -900,6 +908,67 @@ INSTANTIATE_TEST_SUITE_P(
         [](const testing::TestParamInfo<FakeVehicleHardwareSpecialValuesTest::ParamType>& info) {
             return info.param.name;
         });
+
+TEST_F(FakeVehicleHardwareTest, testGetObd2FreezeFrame) {
+    int64_t timestamp = elapsedRealtimeNano();
+
+    auto result = getValue(VehiclePropValue{.prop = OBD2_FREEZE_FRAME_INFO});
+
+    ASSERT_TRUE(result.ok());
+
+    auto propValue = result.value();
+    ASSERT_GE(propValue.timestamp, timestamp);
+    ASSERT_EQ(propValue.value.int64Values.size(), static_cast<size_t>(3))
+            << "expect 3 obd2 freeze frames stored";
+
+    for (int64_t timestamp : propValue.value.int64Values) {
+        auto freezeFrameResult = getValue(VehiclePropValue{
+                .prop = OBD2_FREEZE_FRAME,
+                .value.int64Values = {timestamp},
+        });
+
+        EXPECT_TRUE(result.ok()) << "expect to get freeze frame for timestamp " << timestamp
+                                 << " ok";
+        EXPECT_GE(freezeFrameResult.value().timestamp, timestamp);
+    }
+}
+
+TEST_F(FakeVehicleHardwareTest, testClearObd2FreezeFrame) {
+    int64_t timestamp = elapsedRealtimeNano();
+
+    auto getValueResult = getValue(VehiclePropValue{.prop = OBD2_FREEZE_FRAME_INFO});
+
+    ASSERT_TRUE(getValueResult.ok());
+
+    auto propValue = getValueResult.value();
+    ASSERT_GE(propValue.timestamp, timestamp);
+    ASSERT_EQ(propValue.value.int64Values.size(), static_cast<size_t>(3))
+            << "expect 3 obd2 freeze frames stored";
+
+    // No int64Values should clear all freeze frames.
+    StatusCode status = setValue(VehiclePropValue{.prop = OBD2_FREEZE_FRAME_CLEAR});
+
+    ASSERT_EQ(status, StatusCode::OK);
+
+    getValueResult = getValue(VehiclePropValue{.prop = OBD2_FREEZE_FRAME_INFO});
+
+    ASSERT_TRUE(getValueResult.ok());
+    ASSERT_EQ(getValueResult.value().value.int64Values.size(), static_cast<size_t>(0))
+            << "expect 0 obd2 freeze frames after cleared";
+}
+
+TEST_F(FakeVehicleHardwareTest, testSetVehicleMapService) {
+    StatusCode status =
+            setValue(VehiclePropValue{.prop = toInt(VehicleProperty::VEHICLE_MAP_SERVICE)});
+
+    EXPECT_EQ(status, StatusCode::OK);
+
+    auto getValueResult =
+            getValue(VehiclePropValue{.prop = toInt(VehicleProperty::VEHICLE_MAP_SERVICE)});
+
+    EXPECT_FALSE(getValueResult.ok());
+    EXPECT_EQ(getValueResult.error(), StatusCode::NOT_AVAILABLE);
+}
 
 }  // namespace fake
 }  // namespace vehicle
