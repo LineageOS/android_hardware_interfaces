@@ -189,25 +189,6 @@ interface IComposerClient {
     int getActiveConfig(long display);
 
     /**
-     * Returns whether a client target with the given properties can be
-     * handled by the device.
-     *
-     * This function must return true for a client target with width and
-     * height equal to the active display configuration dimensions,
-     * PixelFormat::RGBA_8888, and Dataspace::UNKNOWN. It is not required to
-     * return true for any other configuration.
-     *
-     * @param display is the display to query.
-     * @param width is the client target width in pixels.
-     * @param height is the client target height in pixels.
-     * @param clientTargetProperty is the client target format and dataspace.
-     * @exception EX_BAD_DISPLAY when an invalid display handle was passed in.
-     * @exception EX_UNSUPPORTED when the given configuration is not supported.
-     */
-    void getClientTargetSupport(
-            long display, int width, int height, in ClientTargetProperty clientTargetProperty);
-
-    /**
      * Returns the color modes supported on this display.
      *
      * All devices must support at least ColorMode::NATIVE.

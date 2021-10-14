@@ -40,7 +40,6 @@ interface IComposerClient {
   void destroyVirtualDisplay(long display);
   android.hardware.graphics.composer3.ExecuteCommandsStatus executeCommands(int inLength, in android.hardware.common.NativeHandle[] inHandles);
   int getActiveConfig(long display);
-  void getClientTargetSupport(long display, int width, int height, in android.hardware.graphics.composer3.ClientTargetProperty clientTargetProperty);
   android.hardware.graphics.composer3.ColorMode[] getColorModes(long display);
   float[] getDataspaceSaturationMatrix(android.hardware.graphics.common.Dataspace dataspace);
   int getDisplayAttribute(long display, int config, android.hardware.graphics.composer3.DisplayAttribute attribute);
