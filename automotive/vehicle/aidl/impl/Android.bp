@@ -21,7 +21,7 @@ package {
 cc_defaults {
     name: "VehicleHalDefaults",
     static_libs: [
-        "android.hardware.automotive.vehicle-V1-ndk_platform",
+        "android.hardware.automotive.vehicle-V1-ndk",
     ],
     shared_libs: [
         "libbase",
