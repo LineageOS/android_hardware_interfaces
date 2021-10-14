@@ -1482,6 +1482,7 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationTags) {
                               .Authorization(TAG_TRUSTED_CONFIRMATION_REQUIRED)
                               .Authorization(TAG_UNLOCKED_DEVICE_REQUIRED)
                               .Authorization(TAG_CREATION_DATETIME, 1619621648000);
+
     for (const KeyParameter& tag : extra_tags) {
         SCOPED_TRACE(testing::Message() << "tag-" << tag);
         vector<uint8_t> key_blob;
@@ -1520,19 +1521,19 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationTags) {
         CheckedDeleteKey(&key_blob);
     }
 
-    // Device attestation IDs should be rejected for normal attestation requests; these fields
-    // are only used for device unique attestation.
-    auto invalid_tags = AuthorizationSetBuilder()
-                                .Authorization(TAG_ATTESTATION_ID_BRAND, "brand")
-                                .Authorization(TAG_ATTESTATION_ID_DEVICE, "device")
-                                .Authorization(TAG_ATTESTATION_ID_PRODUCT, "product")
-                                .Authorization(TAG_ATTESTATION_ID_SERIAL, "serial")
-                                .Authorization(TAG_ATTESTATION_ID_IMEI, "imei")
-                                .Authorization(TAG_ATTESTATION_ID_MEID, "meid")
-                                .Authorization(TAG_ATTESTATION_ID_MANUFACTURER, "manufacturer")
-                                .Authorization(TAG_ATTESTATION_ID_MODEL, "model");
+    // Collection of invalid attestation ID tags.
+    auto invalid_tags =
+            AuthorizationSetBuilder()
+                    .Authorization(TAG_ATTESTATION_ID_BRAND, "bogus-brand")
+                    .Authorization(TAG_ATTESTATION_ID_DEVICE, "devious-device")
+                    .Authorization(TAG_ATTESTATION_ID_PRODUCT, "punctured-product")
+                    .Authorization(TAG_ATTESTATION_ID_SERIAL, "suspicious-serial")
+                    .Authorization(TAG_ATTESTATION_ID_IMEI, "invalid-imei")
+                    .Authorization(TAG_ATTESTATION_ID_MEID, "mismatching-meid")
+                    .Authorization(TAG_ATTESTATION_ID_MANUFACTURER, "malformed-manufacturer")
+                    .Authorization(TAG_ATTESTATION_ID_MODEL, "malicious-model");
     for (const KeyParameter& tag : invalid_tags) {
-        SCOPED_TRACE(testing::Message() << "tag-" << tag);
+        SCOPED_TRACE(testing::Message() << "-incorrect-tag-" << tag);
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
         AuthorizationSetBuilder builder =
@@ -1548,6 +1549,74 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationTags) {
         builder.push_back(tag);
         ASSERT_EQ(ErrorCode::CANNOT_ATTEST_IDS,
                   GenerateKey(builder, &key_blob, &key_characteristics));
+    }
+}
+
+/*
+ * NewKeyGenerationTest.EcdsaAttestationIdTags
+ *
+ * Verifies that creation of an attested ECDSA key includes various ID tags in the
+ * attestation extension.
+ */
+TEST_P(NewKeyGenerationTest, EcdsaAttestationIdTags) {
+    auto challenge = "hello";
+    auto app_id = "foo";
+    auto subject = "cert subj 2";
+    vector<uint8_t> subject_der(make_name_from_str(subject));
+    uint64_t serial_int = 0x1010;
+    vector<uint8_t> serial_blob(build_serial_blob(serial_int));
+    const AuthorizationSetBuilder base_builder =
+            AuthorizationSetBuilder()
+                    .Authorization(TAG_NO_AUTH_REQUIRED)
+                    .EcdsaSigningKey(EcCurve::P_256)
+                    .Digest(Digest::NONE)
+                    .AttestationChallenge(challenge)
+                    .AttestationApplicationId(app_id)
+                    .Authorization(TAG_CERTIFICATE_SERIAL, serial_blob)
+                    .Authorization(TAG_CERTIFICATE_SUBJECT, subject_der)
+                    .SetDefaultValidity();
+
+    // Various ATTESTATION_ID_* tags that map to fields in the attestation extension ASN.1 schema.
+    auto extra_tags = AuthorizationSetBuilder();
+    add_tag_from_prop(&extra_tags, TAG_ATTESTATION_ID_BRAND, "ro.product.brand");
+    add_tag_from_prop(&extra_tags, TAG_ATTESTATION_ID_DEVICE, "ro.product.device");
+    add_tag_from_prop(&extra_tags, TAG_ATTESTATION_ID_PRODUCT, "ro.product.name");
+    add_tag_from_prop(&extra_tags, TAG_ATTESTATION_ID_SERIAL, "ro.serial");
+    add_tag_from_prop(&extra_tags, TAG_ATTESTATION_ID_MANUFACTURER, "ro.product.manufacturer");
+    add_tag_from_prop(&extra_tags, TAG_ATTESTATION_ID_MODEL, "ro.product.model");
+
+    for (const KeyParameter& tag : extra_tags) {
+        SCOPED_TRACE(testing::Message() << "tag-" << tag);
+        vector<uint8_t> key_blob;
+        vector<KeyCharacteristics> key_characteristics;
+        AuthorizationSetBuilder builder = base_builder;
+        builder.push_back(tag);
+        auto result = GenerateKey(builder, &key_blob, &key_characteristics);
+        if (result == ErrorCode::CANNOT_ATTEST_IDS) {
+            // Device ID attestation is optional; KeyMint may not support it at all.
+            continue;
+        }
+        ASSERT_EQ(result, ErrorCode::OK);
+        ASSERT_GT(key_blob.size(), 0U);
+
+        EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
+        ASSERT_GT(cert_chain_.size(), 0);
+        verify_subject_and_serial(cert_chain_[0], serial_int, subject, /* self_signed = */ false);
+
+        AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
+        AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
+
+        // The attested key characteristics will not contain APPLICATION_ID_* fields (their
+        // spec definitions all have "Must never appear in KeyCharacteristics"), but the
+        // attestation extension should contain them, so make sure the extra tag is added.
+        hw_enforced.push_back(tag);
+
+        // Verifying the attestation record will check for the specific tag because
+        // it's included in the authorizations.
+        EXPECT_TRUE(verify_attestation_record(challenge, app_id, sw_enforced, hw_enforced,
+                                              SecLevel(), cert_chain_[0].encodedCertificate));
+
+        CheckedDeleteKey(&key_blob);
     }
 }
 
