@@ -34,6 +34,9 @@ class GeneratedTestBase : public testing::TestWithParam<GeneratedTestParam> {
     void SetUp() override;
     const std::shared_ptr<IDevice> kDevice = getData(std::get<NamedDevice>(GetParam()));
     const test_helper::TestModel& kTestModel = *getData(std::get<NamedModel>(GetParam()));
+
+  private:
+    void SkipIfDriverOlderThanTestModel();
 };
 
 using FilterFn = std::function<bool(const test_helper::TestModel&)>;
