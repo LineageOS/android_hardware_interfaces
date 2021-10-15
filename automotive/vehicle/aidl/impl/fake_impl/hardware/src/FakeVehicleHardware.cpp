@@ -62,27 +62,6 @@ using ::android::base::Result;
 const char* VENDOR_OVERRIDE_DIR = "/vendor/etc/automotive/vhaloverride/";
 const char* OVERRIDE_PROPERTY = "persist.vendor.vhal_init_value_override";
 
-template <class T>
-StatusCode getErrorCode(const Result<T>& result) {
-    if (result.ok()) {
-        return StatusCode::OK;
-    }
-    return static_cast<StatusCode>(result.error().code());
-}
-
-template <class T>
-int getIntErrorCode(const Result<T>& result) {
-    return toInt(getErrorCode(result));
-}
-
-template <class T>
-std::string getErrorMsg(const Result<T>& result) {
-    if (result.ok()) {
-        return "";
-    }
-    return result.error().message();
-}
-
 }  // namespace
 
 void FakeVehicleHardware::storePropInitialValue(const defaultconfig::ConfigDeclaration& config) {

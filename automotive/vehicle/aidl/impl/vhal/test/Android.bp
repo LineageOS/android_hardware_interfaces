@@ -18,34 +18,29 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_library {
-    name: "FakeVehicleHardware",
+cc_test {
+    name: "DefaultVehicleHalTest",
     vendor: true,
-    srcs: ["src/*.cpp"],
-    local_include_dirs: ["include"],
-    export_include_dirs: ["include"],
-    defaults: [
-        "VehicleHalDefaults",
-        "FakeVehicleHardwareDefaults",
-    ],
-}
-
-cc_defaults {
-    name: "FakeVehicleHardwareDefaults",
-    cflags: ["-DENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING"],
-    header_libs: [
-        "IVehicleHardware",
-        "VehicleHalDefaultConfig",
-    ],
-    export_header_lib_headers: ["IVehicleHardware"],
+    srcs: ["*.cpp"],
     static_libs: [
+        "DefaultVehicleHal",
         "VehicleHalUtils",
-        "FakeVehicleHalValueGenerators",
-        "FakeObd2Frame",
-        "FakeUserHal",
+        "android-automotive-large-parcelable-vendor-lib",
+        "libgtest",
+        "libgmock",
     ],
     shared_libs: [
-        "libjsoncpp",
+        "libbase",
+        "libbinder_ndk",
+        "liblog",
+        "libutils",
     ],
-    export_static_lib_headers: ["VehicleHalUtils"],
+    header_libs: [
+        "IVehicleHardware",
+    ],
+    defaults: [
+        "VehicleHalDefaults",
+        "android-automotive-large-parcelable-defaults",
+    ],
+    test_suites: ["device-tests"],
 }

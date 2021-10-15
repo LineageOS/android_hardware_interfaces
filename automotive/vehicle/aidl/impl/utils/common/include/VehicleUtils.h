@@ -18,6 +18,8 @@
 #define android_hardware_automotive_vehicle_aidl_impl_utils_common_include_VehicleUtils_H_
 
 #include <VehicleHalTypes.h>
+
+#include <android-base/result.h>
 #include <utils/Log.h>
 
 namespace android {
@@ -181,6 +183,29 @@ inline size_t getVehiclePropValueSize(
     size += prop.value.byteValues.size() * sizeof(uint8_t);
     size += prop.value.stringValue.size();
     return size;
+}
+
+template <class T>
+::aidl::android::hardware::automotive::vehicle::StatusCode getErrorCode(
+        const ::android::base::Result<T>& result) {
+    if (result.ok()) {
+        return ::aidl::android::hardware::automotive::vehicle::StatusCode::OK;
+    }
+    return static_cast<::aidl::android::hardware::automotive::vehicle::StatusCode>(
+            result.error().code());
+}
+
+template <class T>
+int getIntErrorCode(const ::android::base::Result<T>& result) {
+    return toInt(getErrorCode(result));
+}
+
+template <class T>
+std::string getErrorMsg(const ::android::base::Result<T>& result) {
+    if (result.ok()) {
+        return "";
+    }
+    return result.error().message();
 }
 
 }  // namespace vehicle

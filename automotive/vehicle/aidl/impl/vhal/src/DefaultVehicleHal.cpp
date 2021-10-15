@@ -18,7 +18,11 @@
 
 #include <DefaultVehicleHal.h>
 
+#include <LargeParcelableBase.h>
 #include <VehicleHalTypes.h>
+#include <VehicleUtils.h>
+#include <android-base/result.h>
+#include <utils/Log.h>
 
 namespace android {
 namespace hardware {
@@ -28,12 +32,41 @@ namespace vehicle {
 using ::aidl::android::hardware::automotive::vehicle::GetValueRequests;
 using ::aidl::android::hardware::automotive::vehicle::IVehicleCallback;
 using ::aidl::android::hardware::automotive::vehicle::SetValueRequests;
+using ::aidl::android::hardware::automotive::vehicle::StatusCode;
 using ::aidl::android::hardware::automotive::vehicle::SubscribeOptions;
+using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfigs;
+using ::android::automotive::car_binder_lib::LargeParcelableBase;
+using ::android::base::Result;
 using ::ndk::ScopedAStatus;
 
-ScopedAStatus DefaultVehicleHal::getAllPropConfigs(VehiclePropConfigs*) {
-    // TODO(b/200737967): implement this.
+DefaultVehicleHal::DefaultVehicleHal(std::unique_ptr<IVehicleHardware> hardware)
+    : mVehicleHardware(std::move(hardware)) {
+    auto configs = mVehicleHardware->getAllPropertyConfigs();
+    for (auto& config : configs) {
+        mConfigsByPropId[config.prop] = config;
+    }
+    auto result = LargeParcelableBase::parcelableVectorToStableLargeParcelable(configs);
+    if (!result.ok()) {
+        ALOGE("failed to convert configs to shared memory file, error: %s, code: %d",
+              getErrorMsg(result).c_str(), getIntErrorCode(result));
+        return;
+    }
+
+    if (result.value() != nullptr) {
+        mConfigFile = std::move(result.value());
+    }
+}
+
+ScopedAStatus DefaultVehicleHal::getAllPropConfigs(VehiclePropConfigs* output) {
+    if (mConfigFile != nullptr) {
+        output->sharedMemoryFd.set(dup(mConfigFile->get()));
+        return ScopedAStatus::ok();
+    }
+    output->payloads.reserve(mConfigsByPropId.size());
+    for (const auto& [_, config] : mConfigsByPropId) {
+        output->payloads.push_back(config);
+    }
     return ScopedAStatus::ok();
 }
 
@@ -49,9 +82,15 @@ ScopedAStatus DefaultVehicleHal::setValues(const std::shared_ptr<IVehicleCallbac
     return ScopedAStatus::ok();
 }
 
-ScopedAStatus DefaultVehicleHal::getPropConfigs(const std::vector<int32_t>&, VehiclePropConfigs*) {
-    // TODO(b/200737967): implement this.
-    return ScopedAStatus::ok();
+ScopedAStatus DefaultVehicleHal::getPropConfigs(const std::vector<int32_t>& props,
+                                                VehiclePropConfigs* output) {
+    std::vector<VehiclePropConfig> configs;
+    for (int32_t prop : props) {
+        if (mConfigsByPropId.find(prop) != mConfigsByPropId.end()) {
+            configs.push_back(mConfigsByPropId[prop]);
+        }
+    }
+    return defaultvehiclehal_impl::vectorToStableLargeParcelable(configs, output);
 }
 
 ScopedAStatus DefaultVehicleHal::subscribe(const std::shared_ptr<IVehicleCallback>&,
@@ -70,6 +109,10 @@ ScopedAStatus DefaultVehicleHal::returnSharedMemory(const std::shared_ptr<IVehic
                                                     int64_t) {
     // TODO(b/200737967): implement this.
     return ScopedAStatus::ok();
+}
+
+IVehicleHardware* DefaultVehicleHal::getHardware() {
+    return mVehicleHardware.get();
 }
 
 }  // namespace vehicle
