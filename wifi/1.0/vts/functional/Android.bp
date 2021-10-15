@@ -107,8 +107,10 @@ cc_test {
     static_libs: [
         "VtsHalWifiV1_0TargetTestUtil",
         "android.hardware.wifi@1.0",
+        "android.hardware.wifi.hostapd@1.0",
         "libwifi-system-iface",
     ],
+    disable_framework: true,
     test_suites: [
         "general-tests",
         "vts",
