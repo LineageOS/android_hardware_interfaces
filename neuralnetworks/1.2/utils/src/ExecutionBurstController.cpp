@@ -317,8 +317,7 @@ ExecutionBurstController::execute(const nn::Request& request, nn::MeasureTiming 
 
     // if the request is valid but of a higher version than what's supported in burst execution,
     // fall back to another execution path
-    if (const auto version = NN_TRY(hal::utils::makeExecutionFailure(nn::validate(request)));
-        version > nn::Version::ANDROID_Q) {
+    if (const auto version = NN_TRY(nn::validate(request)); version > nn::Version::ANDROID_Q) {
         // fallback to another execution path if the packet could not be sent
         return kPreparedModel->execute(request, measure, deadline, loopTimeoutDuration);
     }
@@ -326,17 +325,15 @@ ExecutionBurstController::execute(const nn::Request& request, nn::MeasureTiming 
     // ensure that request is ready for IPC
     std::optional<nn::Request> maybeRequestInShared;
     hal::utils::RequestRelocation relocation;
-    const nn::Request& requestInShared =
-            NN_TRY(hal::utils::makeExecutionFailure(hal::utils::convertRequestFromPointerToShared(
-                    &request, nn::kDefaultRequestMemoryAlignment, nn::kMinMemoryPadding,
-                    &maybeRequestInShared, &relocation)));
+    const nn::Request& requestInShared = NN_TRY(hal::utils::convertRequestFromPointerToShared(
+            &request, nn::kDefaultRequestMemoryAlignment, nn::kMinMemoryPadding,
+            &maybeRequestInShared, &relocation));
 
     // clear pools field of request, as they will be provided via slots
     const auto requestWithoutPools = nn::Request{
             .inputs = requestInShared.inputs, .outputs = requestInShared.outputs, .pools = {}};
-    auto hidlRequest = NN_TRY(
-            hal::utils::makeExecutionFailure(V1_0::utils::unvalidatedConvert(requestWithoutPools)));
-    const auto hidlMeasure = NN_TRY(hal::utils::makeExecutionFailure(convert(measure)));
+    auto hidlRequest = NN_TRY(V1_0::utils::unvalidatedConvert(requestWithoutPools));
+    const auto hidlMeasure = NN_TRY(convert(measure));
 
     std::vector<int32_t> slots;
     std::vector<OptionalCacheHold> holds;
@@ -364,8 +361,7 @@ nn::GeneralResult<nn::SharedExecution> ExecutionBurstController::createReusableE
 
     // if the request is valid but of a higher version than what's supported in burst execution,
     // fall back to another execution path
-    if (const auto version = NN_TRY(hal::utils::makeGeneralFailure(nn::validate(request)));
-        version > nn::Version::ANDROID_Q) {
+    if (const auto version = NN_TRY(nn::validate(request)); version > nn::Version::ANDROID_Q) {
         // fallback to another execution path if the packet could not be sent
         return kPreparedModel->createReusableExecution(request, measure, loopTimeoutDuration);
     }
@@ -427,8 +423,7 @@ ExecutionBurstController::executeInternal(const std::vector<FmqRequestDatum>& re
     }
 
     // get result packet
-    const auto [status, outputShapes, timing] =
-            NN_TRY(hal::utils::makeExecutionFailure(mResultChannelReceiver->getBlocking()));
+    const auto [status, outputShapes, timing] = NN_TRY(mResultChannelReceiver->getBlocking());
 
     if (relocation.output) {
         relocation.output->flush();
