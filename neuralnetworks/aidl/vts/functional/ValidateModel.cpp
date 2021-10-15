@@ -1122,6 +1122,7 @@ static bool removeOperationInputSkip(const Operation& op, size_t input) {
     //   align_corners and half_pixel_centers parameters.
     // - L2_NORMALIZATION, LOCAL_RESPONSE_NORMALIZATION, SOFTMAX can have an optional axis
     //   parameter.
+    // - PACK has at least 2 inputs, with the first element being INT32.
     switch (op.type) {
         case OperationType::CONCATENATION: {
             if (op.inputs.size() > 2 && input != op.inputs.size() - 1) {
@@ -1175,6 +1176,11 @@ static bool removeOperationInputSkip(const Operation& op, size_t input) {
         } break;
         case OperationType::SOFTMAX: {
             if (op.inputs.size() == 3 && input == 2) {
+                return true;
+            }
+        } break;
+        case OperationType::PACK: {
+            if (op.inputs.size() > 2 && input != 0) {
                 return true;
             }
         } break;
