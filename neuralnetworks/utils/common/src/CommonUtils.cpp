@@ -331,11 +331,6 @@ nn::GeneralResult<std::reference_wrapper<const nn::Request>> convertRequestFromP
     return **maybeRequestInSharedOut;
 }
 
-nn::GeneralResult<std::vector<uint32_t>> countNumberOfConsumers(
-        size_t numberOfOperands, const std::vector<nn::Operation>& operations) {
-    return nn::countNumberOfConsumers(numberOfOperands, operations);
-}
-
 nn::GeneralResult<hidl_memory> createHidlMemoryFromSharedMemory(const nn::SharedMemory& memory) {
     if (memory == nullptr) {
         return NN_ERROR() << "Memory must be non-empty";
