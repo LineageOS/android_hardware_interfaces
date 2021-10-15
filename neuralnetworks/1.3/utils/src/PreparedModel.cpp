@@ -186,7 +186,7 @@ PreparedModel::executeFenced(const nn::Request& request, const std::vector<nn::S
             &maybeRequestInShared, &relocation));
 
     const auto hidlRequest = NN_TRY(convert(requestInShared));
-    const auto hidlWaitFor = NN_TRY(hal::utils::convertSyncFences(waitFor));
+    const auto hidlWaitFor = NN_TRY(convertSyncFences(waitFor));
     const auto hidlMeasure = NN_TRY(convert(measure));
     const auto hidlDeadline = NN_TRY(convert(deadline));
     const auto hidlLoopTimeoutDuration = NN_TRY(convert(loopTimeoutDuration));

@@ -264,14 +264,6 @@ GeneralResult<Extension::OperandTypeInformation> unvalidatedConvert(
     };
 }
 
-GeneralResult<SharedHandle> unvalidatedConvert(const hidl_handle& hidlHandle) {
-    if (hidlHandle.getNativeHandle() == nullptr) {
-        return nullptr;
-    }
-    auto handle = NN_TRY(hal::utils::sharedHandleFromNativeHandle(hidlHandle.getNativeHandle()));
-    return std::make_shared<const Handle>(std::move(handle));
-}
-
 GeneralResult<DeviceType> convert(const hal::V1_2::DeviceType& deviceType) {
     return validatedConvert(deviceType);
 }
@@ -332,6 +324,10 @@ nn::GeneralResult<V1_0::DataLocation> unvalidatedConvert(const nn::DataLocation&
 nn::GeneralResult<hidl_vec<uint8_t>> unvalidatedConvert(
         const nn::Model::OperandValues& operandValues) {
     return V1_0::utils::unvalidatedConvert(operandValues);
+}
+
+nn::GeneralResult<hidl_handle> unvalidatedConvert(const nn::SharedHandle& handle) {
+    return V1_0::utils::unvalidatedConvert(handle);
 }
 
 nn::GeneralResult<hidl_memory> unvalidatedConvert(const nn::SharedMemory& memory) {
@@ -542,13 +538,6 @@ nn::GeneralResult<Extension::OperandTypeInformation> unvalidatedConvert(
             .isTensor = operandTypeInformation.isTensor,
             .byteSize = operandTypeInformation.byteSize,
     };
-}
-
-nn::GeneralResult<hidl_handle> unvalidatedConvert(const nn::SharedHandle& handle) {
-    if (handle == nullptr) {
-        return {};
-    }
-    return hal::utils::hidlHandleFromSharedHandle(*handle);
 }
 
 nn::GeneralResult<DeviceType> convert(const nn::DeviceType& deviceType) {

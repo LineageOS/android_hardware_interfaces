@@ -380,7 +380,7 @@ nn::GeneralResult<hidl_vec<uint8_t>> unvalidatedConvert(
 }
 
 nn::GeneralResult<hidl_handle> unvalidatedConvert(const nn::SharedHandle& handle) {
-    return V1_2::utils::unvalidatedConvert(handle);
+    return V1_0::utils::unvalidatedConvert(handle);
 }
 
 nn::GeneralResult<hidl_memory> unvalidatedConvert(const nn::SharedMemory& memory) {
@@ -725,6 +725,15 @@ nn::GeneralResult<V1_2::MeasureTiming> convert(const nn::MeasureTiming& measureT
 
 nn::GeneralResult<V1_2::Timing> convert(const nn::Timing& timing) {
     return V1_2::utils::convert(timing);
+}
+
+nn::GeneralResult<hidl_vec<hidl_handle>> convertSyncFences(
+        const std::vector<nn::SyncFence>& syncFences) {
+    std::vector<nn::SharedHandle> handles;
+    handles.reserve(syncFences.size());
+    std::transform(syncFences.begin(), syncFences.end(), std::back_inserter(handles),
+                   [](const nn::SyncFence& syncFence) { return syncFence.getSharedHandle(); });
+    return convert(handles);
 }
 
 }  // namespace android::hardware::neuralnetworks::V1_3::utils
