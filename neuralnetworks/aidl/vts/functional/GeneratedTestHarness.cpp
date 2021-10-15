@@ -907,6 +907,20 @@ void GeneratedTestBase::SetUp() {
     const bool deviceIsResponsive =
             ndk::ScopedAStatus::fromStatus(AIBinder_ping(kDevice->asBinder().get())).isOk();
     ASSERT_TRUE(deviceIsResponsive);
+    //  TODO(b/201260787): We should require old drivers to report the model as
+    //  unsupported instead of simply skipping the test.
+    SkipIfDriverOlderThanTestModel();
+}
+
+void GeneratedTestBase::SkipIfDriverOlderThanTestModel() {
+    int32_t deviceVersion;
+    ASSERT_TRUE(kDevice->getInterfaceVersion(&deviceVersion).isOk());
+    const int32_t modelVersion = kTestModel.getAidlVersionInt();
+    if (deviceVersion < modelVersion) {
+        GTEST_SKIP() << "Device interface version " << deviceVersion
+                     << " is older than test model's minimum supported HAL version " << modelVersion
+                     << ". Skipping test.";
+    }
 }
 
 std::vector<NamedModel> getNamedModels(const FilterFn& filter) {
