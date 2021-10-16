@@ -33,13 +33,13 @@
 #include <nnapi/OperandTypes.h>
 #include <nnapi/Result.h>
 #include <nnapi/Types.h>
+#include <nnapi/hal/1.0/HandleError.h>
 #include <nnapi/hal/1.0/ProtectCallback.h>
 #include <nnapi/hal/1.1/Conversions.h>
 #include <nnapi/hal/1.2/Conversions.h>
 #include <nnapi/hal/1.2/Device.h>
 #include <nnapi/hal/1.2/Utils.h>
 #include <nnapi/hal/CommonUtils.h>
-#include <nnapi/hal/HandleError.h>
 
 #include <any>
 #include <functional>
@@ -72,7 +72,7 @@ nn::GeneralResult<hidl_vec<sp<IPreparedModel>>> convert(
 
 nn::GeneralResult<nn::Capabilities> capabilitiesCallback(ErrorStatus status,
                                                          const Capabilities& capabilities) {
-    HANDLE_HAL_STATUS(status) << "getting capabilities failed with " << toString(status);
+    HANDLE_STATUS_HIDL(status) << "getting capabilities failed with " << toString(status);
     return nn::convert(capabilities);
 }
 
@@ -89,7 +89,7 @@ nn::GeneralResult<nn::Capabilities> getCapabilitiesFrom(V1_3::IDevice* device) {
 
 nn::GeneralResult<nn::SharedBuffer> allocationCallback(ErrorStatus status,
                                                        const sp<IBuffer>& buffer, uint32_t token) {
-    HANDLE_HAL_STATUS(status) << "IDevice::allocate failed with " << toString(status);
+    HANDLE_STATUS_HIDL(status) << "IDevice::allocate failed with " << toString(status);
     return Buffer::create(buffer, static_cast<nn::Request::MemoryDomainToken>(token));
 }
 
@@ -208,7 +208,7 @@ nn::GeneralResult<nn::SharedPreparedModel> Device::prepareModel(
             kDevice->prepareModel_1_3(hidlModel, hidlPreference, hidlPriority, hidlDeadline,
                                       hidlModelCache, hidlDataCache, hidlToken, cb);
     const auto status = HANDLE_TRANSPORT_FAILURE(ret);
-    HANDLE_HAL_STATUS(status) << "model preparation failed with " << toString(status);
+    HANDLE_STATUS_HIDL(status) << "model preparation failed with " << toString(status);
 
     return cb->get();
 }
@@ -227,7 +227,7 @@ nn::GeneralResult<nn::SharedPreparedModel> Device::prepareModelFromCache(
     const auto ret = kDevice->prepareModelFromCache_1_3(hidlDeadline, hidlModelCache, hidlDataCache,
                                                         hidlToken, cb);
     const auto status = HANDLE_TRANSPORT_FAILURE(ret);
-    HANDLE_HAL_STATUS(status) << "model preparation from cache failed with " << toString(status);
+    HANDLE_STATUS_HIDL(status) << "model preparation from cache failed with " << toString(status);
 
     return cb->get();
 }

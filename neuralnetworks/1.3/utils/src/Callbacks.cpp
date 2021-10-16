@@ -30,13 +30,13 @@
 #include <nnapi/Types.h>
 #include <nnapi/hal/1.0/Callbacks.h>
 #include <nnapi/hal/1.0/Conversions.h>
+#include <nnapi/hal/1.0/HandleError.h>
 #include <nnapi/hal/1.0/PreparedModel.h>
 #include <nnapi/hal/1.0/ProtectCallback.h>
 #include <nnapi/hal/1.2/Callbacks.h>
 #include <nnapi/hal/1.2/Conversions.h>
 #include <nnapi/hal/1.2/PreparedModel.h>
 #include <nnapi/hal/CommonUtils.h>
-#include <nnapi/hal/HandleError.h>
 #include <nnapi/hal/TransferValue.h>
 
 #include <utility>
@@ -71,13 +71,13 @@ convertExecutionGeneralResultsHelper(const hidl_vec<V1_2::OutputShape>& outputSh
 
 nn::GeneralResult<std::vector<bool>> supportedOperationsCallback(
         ErrorStatus status, const hidl_vec<bool>& supportedOperations) {
-    HANDLE_HAL_STATUS(status) << "get supported operations failed with " << toString(status);
+    HANDLE_STATUS_HIDL(status) << "get supported operations failed with " << toString(status);
     return supportedOperations;
 }
 
 nn::GeneralResult<nn::SharedPreparedModel> prepareModelCallback(
         ErrorStatus status, const sp<IPreparedModel>& preparedModel) {
-    HANDLE_HAL_STATUS(status) << "model preparation failed with " << toString(status);
+    HANDLE_STATUS_HIDL(status) << "model preparation failed with " << toString(status);
     return NN_TRY(PreparedModel::create(preparedModel, /*executeSynchronously=*/true));
 }
 
@@ -90,7 +90,7 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> executi
         return NN_ERROR(nn::ErrorStatus::OUTPUT_INSUFFICIENT_SIZE, std::move(canonicalOutputShapes))
                << "execution failed with " << toString(status);
     }
-    HANDLE_HAL_STATUS(status) << "execution failed with " << toString(status);
+    HANDLE_STATUS_HIDL(status) << "execution failed with " << toString(status);
     return convertExecutionGeneralResultsHelper(outputShapes, timing);
 }
 

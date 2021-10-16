@@ -28,7 +28,6 @@
 #include <nnapi/hal/1.0/Conversions.h>
 #include <nnapi/hal/1.2/Conversions.h>
 #include <nnapi/hal/CommonUtils.h>
-#include <nnapi/hal/HandleError.h>
 
 #include <algorithm>
 #include <chrono>

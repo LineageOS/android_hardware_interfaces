@@ -30,13 +30,8 @@ cc_library_static {
     local_include_dirs: ["include/nnapi/hal"],
     export_include_dirs: ["include"],
     cflags: ["-Wthread-safety"],
-    static_libs: [
-        "neuralnetworks_types",
-    ],
-    shared_libs: [
-        "libhidlbase",
-        "libbinder_ndk",
-    ],
+    static_libs: ["neuralnetworks_types"],
+    shared_libs: ["libbinder_ndk"],
 }
 
 cc_test {

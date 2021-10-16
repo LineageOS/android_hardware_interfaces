@@ -20,6 +20,7 @@
 #include "Callbacks.h"
 #include "Conversions.h"
 #include "Execution.h"
+#include "HandleError.h"
 #include "ProtectCallback.h"
 #include "Utils.h"
 
@@ -29,7 +30,6 @@
 #include <nnapi/Result.h>
 #include <nnapi/Types.h>
 #include <nnapi/hal/CommonUtils.h>
-#include <nnapi/hal/HandleError.h>
 
 #include <memory>
 #include <tuple>
@@ -84,7 +84,7 @@ PreparedModel::executeInternal(const V1_0::Request& request,
 
     const auto ret = kPreparedModel->execute(request, cb);
     const auto status = HANDLE_TRANSPORT_FAILURE(ret);
-    HANDLE_HAL_STATUS(status) << "execution failed with " << toString(status);
+    HANDLE_STATUS_HIDL(status) << "execution failed with " << toString(status);
 
     auto result = NN_TRY(cb->get());
     if (relocation.output) {

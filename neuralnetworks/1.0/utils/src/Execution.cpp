@@ -18,6 +18,7 @@
 
 #include "Callbacks.h"
 #include "Conversions.h"
+#include "HandleError.h"
 #include "ProtectCallback.h"
 #include "Utils.h"
 
@@ -28,7 +29,6 @@
 #include <nnapi/TypeUtils.h>
 #include <nnapi/Types.h>
 #include <nnapi/hal/CommonUtils.h>
-#include <nnapi/hal/HandleError.h>
 
 #include <memory>
 #include <utility>

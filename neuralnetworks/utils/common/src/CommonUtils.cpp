@@ -16,8 +16,6 @@
 
 #include "CommonUtils.h"
 
-#include "HandleError.h"
-
 #include <android-base/logging.h>
 #include <nnapi/Result.h>
 #include <nnapi/SharedMemory.h>

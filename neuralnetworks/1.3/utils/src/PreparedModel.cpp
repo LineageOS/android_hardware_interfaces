@@ -30,12 +30,12 @@
 #include <nnapi/Result.h>
 #include <nnapi/TypeUtils.h>
 #include <nnapi/Types.h>
+#include <nnapi/hal/1.0/HandleError.h>
 #include <nnapi/hal/1.0/ProtectCallback.h>
 #include <nnapi/hal/1.2/Conversions.h>
 #include <nnapi/hal/1.2/ExecutionBurstController.h>
 #include <nnapi/hal/1.2/ExecutionBurstUtils.h>
 #include <nnapi/hal/CommonUtils.h>
-#include <nnapi/hal/HandleError.h>
 
 #include <memory>
 #include <tuple>
@@ -50,14 +50,14 @@ namespace {
 
 nn::GeneralResult<std::pair<nn::Timing, nn::Timing>> convertFencedExecutionCallbackResults(
         ErrorStatus status, const V1_2::Timing& timingLaunched, const V1_2::Timing& timingFenced) {
-    HANDLE_HAL_STATUS(status) << "fenced execution callback info failed with " << toString(status);
+    HANDLE_STATUS_HIDL(status) << "fenced execution callback info failed with " << toString(status);
     return std::make_pair(NN_TRY(nn::convert(timingLaunched)), NN_TRY(nn::convert(timingFenced)));
 }
 
 nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>> fencedExecutionCallback(
         ErrorStatus status, const hidl_handle& syncFence,
         const sp<IFencedExecutionCallback>& callback) {
-    HANDLE_HAL_STATUS(status) << "fenced execution failed with " << toString(status);
+    HANDLE_STATUS_HIDL(status) << "fenced execution failed with " << toString(status);
 
     auto resultSyncFence = nn::SyncFence::createAsSignaled();
     if (syncFence.getNativeHandle() != nullptr) {
@@ -127,7 +127,7 @@ PreparedModel::executeAsynchronously(const Request& request, V1_2::MeasureTiming
             kPreparedModel->execute_1_3(request, measure, deadline, loopTimeoutDuration, cb);
     const auto status = HANDLE_TRANSPORT_FAILURE(ret);
     if (status != ErrorStatus::OUTPUT_INSUFFICIENT_SIZE) {
-        HANDLE_HAL_STATUS(status) << "execution failed with " << toString(status);
+        HANDLE_STATUS_HIDL(status) << "execution failed with " << toString(status);
     }
 
     return cb->get();

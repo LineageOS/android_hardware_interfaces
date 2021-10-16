@@ -18,6 +18,7 @@
 
 #include "Callbacks.h"
 #include "Conversions.h"
+#include "HandleError.h"
 #include "ProtectCallback.h"
 #include "Utils.h"
 
@@ -30,7 +31,6 @@
 #include <nnapi/Result.h>
 #include <nnapi/Types.h>
 #include <nnapi/hal/CommonUtils.h>
-#include <nnapi/hal/HandleError.h>
 #include <nnapi/hal/TransferValue.h>
 
 #include <functional>
@@ -47,7 +47,7 @@ namespace {
 
 nn::GeneralResult<nn::Capabilities> capabilitiesCallback(ErrorStatus status,
                                                          const Capabilities& capabilities) {
-    HANDLE_HAL_STATUS(status) << "getting capabilities failed with " << toString(status);
+    HANDLE_STATUS_HIDL(status) << "getting capabilities failed with " << toString(status);
     return nn::convert(capabilities);
 }
 
@@ -156,7 +156,7 @@ nn::GeneralResult<nn::SharedPreparedModel> Device::prepareModel(
 
     const auto ret = kDevice->prepareModel(hidlModel, cb);
     const auto status = HANDLE_TRANSPORT_FAILURE(ret);
-    HANDLE_HAL_STATUS(status) << "model preparation failed with " << toString(status);
+    HANDLE_STATUS_HIDL(status) << "model preparation failed with " << toString(status);
 
     return cb->get();
 }
