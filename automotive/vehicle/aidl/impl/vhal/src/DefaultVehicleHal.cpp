@@ -21,6 +21,7 @@
 #include <LargeParcelableBase.h>
 #include <VehicleHalTypes.h>
 #include <VehicleUtils.h>
+
 #include <android-base/result.h>
 #include <utils/Log.h>
 
@@ -29,14 +30,19 @@ namespace hardware {
 namespace automotive {
 namespace vehicle {
 
+using ::aidl::android::hardware::automotive::vehicle::GetValueRequest;
 using ::aidl::android::hardware::automotive::vehicle::GetValueRequests;
+using ::aidl::android::hardware::automotive::vehicle::GetValueResult;
+using ::aidl::android::hardware::automotive::vehicle::GetValueResults;
 using ::aidl::android::hardware::automotive::vehicle::IVehicleCallback;
 using ::aidl::android::hardware::automotive::vehicle::SetValueRequests;
 using ::aidl::android::hardware::automotive::vehicle::StatusCode;
 using ::aidl::android::hardware::automotive::vehicle::SubscribeOptions;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfigs;
+using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 using ::android::automotive::car_binder_lib::LargeParcelableBase;
+using ::android::base::expected;
 using ::android::base::Result;
 using ::ndk::ScopedAStatus;
 
@@ -70,14 +76,58 @@ ScopedAStatus DefaultVehicleHal::getAllPropConfigs(VehiclePropConfigs* output) {
     return ScopedAStatus::ok();
 }
 
-ScopedAStatus DefaultVehicleHal::getValues(const std::shared_ptr<IVehicleCallback>&,
-                                           const GetValueRequests&) {
-    // TODO(b/200737967): implement this.
+template <class T>
+std::shared_ptr<T> DefaultVehicleHal::getOrCreateClient(
+        std::unordered_map<CallbackType, std::shared_ptr<T>>* clients,
+        const CallbackType& callback) {
+    if (clients->find(callback) == clients->end()) {
+        // TODO(b/204943359): Remove client from clients when linkToDeath is implemented.
+        (*clients)[callback] = std::make_shared<T>(callback);
+    }
+    return (*clients)[callback];
+}
+
+template std::shared_ptr<DefaultVehicleHal::GetValuesClient>
+DefaultVehicleHal::getOrCreateClient<DefaultVehicleHal::GetValuesClient>(
+        std::unordered_map<CallbackType, std::shared_ptr<GetValuesClient>>* clients,
+        const CallbackType& callback);
+
+ScopedAStatus DefaultVehicleHal::getValues(const CallbackType& callback,
+                                           const GetValueRequests& requests) {
+    // TODO(b/203713317): check for duplicate properties and duplicate request IDs.
+
+    const std::vector<GetValueRequest>* getValueRequests;
+    // Define deserializedResults here because we need it to have the same lifetime as
+    // getValueRequests.
+    expected<std::vector<GetValueRequest>, ScopedAStatus> deserializedResults;
+    if (!requests.payloads.empty()) {
+        getValueRequests = &requests.payloads;
+    } else {
+        deserializedResults = stableLargeParcelableToVector<GetValueRequest>(requests);
+        if (!deserializedResults.ok()) {
+            ALOGE("failed to parse getValues requests");
+            return std::move(deserializedResults.error());
+        }
+        getValueRequests = &deserializedResults.value();
+    }
+
+    std::shared_ptr<GetValuesClient> client;
+    {
+        std::scoped_lock<std::mutex> lockGuard(mLock);
+        client = getOrCreateClient(&mGetValuesClients, callback);
+    }
+
+    if (StatusCode status =
+                mVehicleHardware->getValues(client->getResultCallback(), *getValueRequests);
+        status != StatusCode::OK) {
+        return ScopedAStatus::fromServiceSpecificErrorWithMessage(
+                toInt(status), "failed to get value from VehicleHardware");
+    }
+
     return ScopedAStatus::ok();
 }
 
-ScopedAStatus DefaultVehicleHal::setValues(const std::shared_ptr<IVehicleCallback>&,
-                                           const SetValueRequests&) {
+ScopedAStatus DefaultVehicleHal::setValues(const CallbackType&, const SetValueRequests&) {
     // TODO(b/200737967): implement this.
     return ScopedAStatus::ok();
 }
@@ -90,23 +140,21 @@ ScopedAStatus DefaultVehicleHal::getPropConfigs(const std::vector<int32_t>& prop
             configs.push_back(mConfigsByPropId[prop]);
         }
     }
-    return defaultvehiclehal_impl::vectorToStableLargeParcelable(configs, output);
+    return vectorToStableLargeParcelable(std::move(configs), output);
 }
 
-ScopedAStatus DefaultVehicleHal::subscribe(const std::shared_ptr<IVehicleCallback>&,
+ScopedAStatus DefaultVehicleHal::subscribe(const CallbackType&,
                                            const std::vector<SubscribeOptions>&, int32_t) {
     // TODO(b/200737967): implement this.
     return ScopedAStatus::ok();
 }
 
-ScopedAStatus DefaultVehicleHal::unsubscribe(const std::shared_ptr<IVehicleCallback>&,
-                                             const std::vector<int32_t>&) {
+ScopedAStatus DefaultVehicleHal::unsubscribe(const CallbackType&, const std::vector<int32_t>&) {
     // TODO(b/200737967): implement this.
     return ScopedAStatus::ok();
 }
 
-ScopedAStatus DefaultVehicleHal::returnSharedMemory(const std::shared_ptr<IVehicleCallback>&,
-                                                    int64_t) {
+ScopedAStatus DefaultVehicleHal::returnSharedMemory(const CallbackType&, int64_t) {
     // TODO(b/200737967): implement this.
     return ScopedAStatus::ok();
 }
