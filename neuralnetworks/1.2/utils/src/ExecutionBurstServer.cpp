@@ -27,8 +27,8 @@
 #include <nnapi/Types.h>
 #include <nnapi/Validation.h>
 #include <nnapi/hal/1.0/Conversions.h>
+#include <nnapi/hal/1.0/ProtectCallback.h>
 #include <nnapi/hal/HandleError.h>
-#include <nnapi/hal/ProtectCallback.h>
 #include <nnapi/hal/TransferValue.h>
 
 #include <algorithm>

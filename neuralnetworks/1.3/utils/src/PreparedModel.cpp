@@ -30,12 +30,12 @@
 #include <nnapi/Result.h>
 #include <nnapi/TypeUtils.h>
 #include <nnapi/Types.h>
+#include <nnapi/hal/1.0/ProtectCallback.h>
 #include <nnapi/hal/1.2/Conversions.h>
 #include <nnapi/hal/1.2/ExecutionBurstController.h>
 #include <nnapi/hal/1.2/ExecutionBurstUtils.h>
 #include <nnapi/hal/CommonUtils.h>
 #include <nnapi/hal/HandleError.h>
-#include <nnapi/hal/ProtectCallback.h>
 
 #include <memory>
 #include <tuple>

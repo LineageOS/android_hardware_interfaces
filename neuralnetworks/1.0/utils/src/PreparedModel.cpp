@@ -20,6 +20,7 @@
 #include "Callbacks.h"
 #include "Conversions.h"
 #include "Execution.h"
+#include "ProtectCallback.h"
 #include "Utils.h"
 
 #include <android/hardware/neuralnetworks/1.0/IPreparedModel.h>
@@ -29,7 +30,6 @@
 #include <nnapi/Types.h>
 #include <nnapi/hal/CommonUtils.h>
 #include <nnapi/hal/HandleError.h>
-#include <nnapi/hal/ProtectCallback.h>
 
 #include <memory>
 #include <tuple>

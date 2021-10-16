@@ -24,7 +24,8 @@
 #include <nnapi/Result.h>
 #include <nnapi/Types.h>
 #include <nnapi/hal/CommonUtils.h>
-#include <nnapi/hal/ProtectCallback.h>
+
+#include "nnapi/hal/1.0/ProtectCallback.h"
 
 #include <functional>
 #include <memory>

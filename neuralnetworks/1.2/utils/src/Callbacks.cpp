@@ -30,9 +30,9 @@
 #include <nnapi/hal/1.0/Callbacks.h>
 #include <nnapi/hal/1.0/Conversions.h>
 #include <nnapi/hal/1.0/PreparedModel.h>
+#include <nnapi/hal/1.0/ProtectCallback.h>
 #include <nnapi/hal/CommonUtils.h>
 #include <nnapi/hal/HandleError.h>
-#include <nnapi/hal/ProtectCallback.h>
 #include <nnapi/hal/TransferValue.h>
 
 #include <utility>
