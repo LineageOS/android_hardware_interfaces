@@ -200,15 +200,12 @@ interface IComposerClient {
      * @param display is the display to query.
      * @param width is the client target width in pixels.
      * @param height is the client target height in pixels.
-     * @param format is the client target format.
-     * @param dataspace is the client target dataspace, as described in
-     *     setLayerDataspace.
+     * @param clientTargetProperty is the client target format and dataspace.
      * @exception EX_BAD_DISPLAY when an invalid display handle was passed in.
      * @exception EX_UNSUPPORTED when the given configuration is not supported.
      */
-    void getClientTargetSupport(long display, int width, int height,
-            android.hardware.graphics.common.PixelFormat format,
-            android.hardware.graphics.common.Dataspace dataspace);
+    void getClientTargetSupport(
+            long display, int width, int height, in ClientTargetProperty clientTargetProperty);
 
     /**
      * Returns the color modes supported on this display.

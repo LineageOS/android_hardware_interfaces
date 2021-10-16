@@ -689,8 +689,16 @@ enum Command {
      *
      *     0 - 3: clientTargetProperty.pixelFormat
      *     4 - 7: clientTargetProperty.dataspace
+     *     8 - 11: whitePointNits
      *
-     *   setClientTargetProperty(ClientTargetProperty clientTargetProperty);
+     * The white point parameter describes the intended white point of the client target buffer.
+     * When client composition blends both HDR and SDR content, the client must composite to the
+     * brightness space as specified by the hardware composer. This is so that adjusting the real
+     * display brightness may be applied atomically with compensating the client target output. For
+     * instance, client-compositing a list of SDR layers requires dimming the brightness space of
+     * the SDR buffers when an HDR layer is simultaneously device-composited.
+     *
+     *   setClientTargetProperty(ClientTargetProperty clientTargetProperty, float whitePointNits);
      */
     SET_CLIENT_TARGET_PROPERTY = 0x105 << OPCODE_SHIFT,
 
@@ -738,4 +746,18 @@ enum Command {
      *        corresponding to the key as described above
      */
     SET_LAYER_GENERIC_METADATA = 0x40e << OPCODE_SHIFT,
+
+    /**
+     * SET_LAYER_WHITE_POINT_NITS has this pseudo prototype
+     *
+     *   setLayerWhitePointNits(float sdrWhitePointNits);
+     *
+     * Sets the desired white point for the layer. This is intended to be used when presenting
+     * an SDR layer alongside HDR content. The HDR content will be presented at the display
+     * brightness in nits, and accordingly SDR content shall be dimmed to the desired white point
+     * provided.
+     *
+     * @param whitePointNits is the white point in nits.
+     */
+    SET_LAYER_WHITE_POINT_NITS = 0x305 << OPCODE_SHIFT,
 }
