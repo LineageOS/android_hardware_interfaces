@@ -32,23 +32,17 @@ TEST_P(RadioHidlTest_v1_6, setAllowedNetworkTypesBitmap) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_v1_6->rspInfo.serial);
-
-    if (getRadioHalCapabilities()) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-                radioRsp_v1_6->rspInfo.error,
-                {::android::hardware::radio::V1_6::RadioError::REQUEST_NOT_SUPPORTED}));
-    } else {
-        ASSERT_TRUE(CheckAnyOfErrors(
-                radioRsp_v1_6->rspInfo.error,
-                {::android::hardware::radio::V1_6::RadioError::NONE,
-                 ::android::hardware::radio::V1_6::RadioError::RADIO_NOT_AVAILABLE,
-                 ::android::hardware::radio::V1_6::RadioError::OPERATION_NOT_ALLOWED,
-                 ::android::hardware::radio::V1_6::RadioError::MODE_NOT_SUPPORTED,
-                 ::android::hardware::radio::V1_6::RadioError::INTERNAL_ERR,
-                 ::android::hardware::radio::V1_6::RadioError::INVALID_ARGUMENTS,
-                 ::android::hardware::radio::V1_6::RadioError::MODEM_ERR,
-                 ::android::hardware::radio::V1_6::RadioError::NO_RESOURCES}));
-    }
+    ASSERT_TRUE(
+            CheckAnyOfErrors(radioRsp_v1_6->rspInfo.error,
+                             {::android::hardware::radio::V1_6::RadioError::NONE,
+                              ::android::hardware::radio::V1_6::RadioError::RADIO_NOT_AVAILABLE,
+                              ::android::hardware::radio::V1_6::RadioError::OPERATION_NOT_ALLOWED,
+                              ::android::hardware::radio::V1_6::RadioError::MODE_NOT_SUPPORTED,
+                              ::android::hardware::radio::V1_6::RadioError::INTERNAL_ERR,
+                              ::android::hardware::radio::V1_6::RadioError::INVALID_ARGUMENTS,
+                              ::android::hardware::radio::V1_6::RadioError::MODEM_ERR,
+                              ::android::hardware::radio::V1_6::RadioError::REQUEST_NOT_SUPPORTED,
+                              ::android::hardware::radio::V1_6::RadioError::NO_RESOURCES}));
 }
 
 /*
@@ -74,23 +68,17 @@ TEST_P(RadioHidlTest_v1_6, getAllowedNetworkTypesBitmap) {
         EXPECT_EQ(std::cv_status::no_timeout, wait());
         EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_v1_6->rspInfo.type);
         EXPECT_EQ(serial, radioRsp_v1_6->rspInfo.serial);
-
-        if (getRadioHalCapabilities()) {
-            ASSERT_TRUE(CheckAnyOfErrors(
-                    radioRsp_v1_6->rspInfo.error,
-                    {::android::hardware::radio::V1_6::RadioError::REQUEST_NOT_SUPPORTED}));
-        } else {
-            ASSERT_TRUE(CheckAnyOfErrors(
-                    radioRsp_v1_6->rspInfo.error,
-                    {::android::hardware::radio::V1_6::RadioError::NONE,
-                     ::android::hardware::radio::V1_6::RadioError::RADIO_NOT_AVAILABLE,
-                     ::android::hardware::radio::V1_6::RadioError::OPERATION_NOT_ALLOWED,
-                     ::android::hardware::radio::V1_6::RadioError::MODE_NOT_SUPPORTED,
-                     ::android::hardware::radio::V1_6::RadioError::INTERNAL_ERR,
-                     ::android::hardware::radio::V1_6::RadioError::INVALID_ARGUMENTS,
-                     ::android::hardware::radio::V1_6::RadioError::MODEM_ERR,
-                     ::android::hardware::radio::V1_6::RadioError::NO_RESOURCES}));
-        }
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_v1_6->rspInfo.error,
+                {::android::hardware::radio::V1_6::RadioError::NONE,
+                 ::android::hardware::radio::V1_6::RadioError::RADIO_NOT_AVAILABLE,
+                 ::android::hardware::radio::V1_6::RadioError::OPERATION_NOT_ALLOWED,
+                 ::android::hardware::radio::V1_6::RadioError::MODE_NOT_SUPPORTED,
+                 ::android::hardware::radio::V1_6::RadioError::INTERNAL_ERR,
+                 ::android::hardware::radio::V1_6::RadioError::INVALID_ARGUMENTS,
+                 ::android::hardware::radio::V1_6::RadioError::MODEM_ERR,
+                 ::android::hardware::radio::V1_6::RadioError::REQUEST_NOT_SUPPORTED,
+                 ::android::hardware::radio::V1_6::RadioError::NO_RESOURCES}));
     }
 }
 
