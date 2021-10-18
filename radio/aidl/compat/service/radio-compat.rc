@@ -1,0 +1,4 @@
+service vendor.radio-compat /vendor/bin/hw/android.hardware.radio-service.compat
+    class hal
+    user nobody
+    group system
