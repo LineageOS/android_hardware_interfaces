@@ -62,8 +62,7 @@ nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>> fence
     auto resultSyncFence = nn::SyncFence::createAsSignaled();
     if (syncFence.getNativeHandle() != nullptr) {
         auto sharedHandle = NN_TRY(nn::convert(syncFence));
-        resultSyncFence = NN_TRY(hal::utils::makeGeneralFailure(
-                nn::SyncFence::create(std::move(sharedHandle)), nn::ErrorStatus::GENERAL_FAILURE));
+        resultSyncFence = NN_TRY(nn::SyncFence::create(std::move(sharedHandle)));
     }
 
     if (callback == nullptr) {
@@ -141,16 +140,14 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Prepare
     // Ensure that request is ready for IPC.
     std::optional<nn::Request> maybeRequestInShared;
     hal::utils::RequestRelocation relocation;
-    const nn::Request& requestInShared =
-            NN_TRY(hal::utils::makeExecutionFailure(hal::utils::convertRequestFromPointerToShared(
-                    &request, nn::kDefaultRequestMemoryAlignment, nn::kMinMemoryPadding,
-                    &maybeRequestInShared, &relocation)));
+    const nn::Request& requestInShared = NN_TRY(hal::utils::convertRequestFromPointerToShared(
+            &request, nn::kDefaultRequestMemoryAlignment, nn::kMinMemoryPadding,
+            &maybeRequestInShared, &relocation));
 
-    const auto hidlRequest = NN_TRY(hal::utils::makeExecutionFailure(convert(requestInShared)));
-    const auto hidlMeasure = NN_TRY(hal::utils::makeExecutionFailure(convert(measure)));
-    const auto hidlDeadline = NN_TRY(hal::utils::makeExecutionFailure(convert(deadline)));
-    const auto hidlLoopTimeoutDuration =
-            NN_TRY(hal::utils::makeExecutionFailure(convert(loopTimeoutDuration)));
+    const auto hidlRequest = NN_TRY(convert(requestInShared));
+    const auto hidlMeasure = NN_TRY(convert(measure));
+    const auto hidlDeadline = NN_TRY(convert(deadline));
+    const auto hidlLoopTimeoutDuration = NN_TRY(convert(loopTimeoutDuration));
 
     return executeInternal(hidlRequest, hidlMeasure, hidlDeadline, hidlLoopTimeoutDuration,
                            relocation);
