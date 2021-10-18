@@ -1,3 +1,4 @@
+# Bug component: 345036
 include platform/frameworks/base:/services/core/java/com/android/server/vibrator/OWNERS
 chasewu@google.com
 leungv@google.com
