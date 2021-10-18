@@ -65,7 +65,7 @@ Execution::Execution(PrivateConstructorTag /*tag*/,
 
 nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Execution::compute(
         const nn::OptionalTimePoint& deadline) const {
-    const auto hidlDeadline = NN_TRY(hal::utils::makeExecutionFailure(convert(deadline)));
+    const auto hidlDeadline = NN_TRY(convert(deadline));
     return kPreparedModel->executeInternal(kRequest, kMeasure, hidlDeadline, kLoopTimeoutDuration,
                                            kRelocation);
 }

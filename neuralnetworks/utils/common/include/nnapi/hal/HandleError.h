@@ -52,38 +52,6 @@ nn::GeneralResult<Type> handleTransportError(const hardware::Return<Type>& ret) 
         std::move(result).value();                                                           \
     })
 
-template <typename Type>
-nn::GeneralResult<Type> makeGeneralFailure(
-        nn::Result<Type> result, nn::ErrorStatus status = nn::ErrorStatus::GENERAL_FAILURE) {
-    if (!result.has_value()) {
-        return nn::error(status) << std::move(result).error();
-    }
-    if constexpr (!std::is_same_v<Type, void>) {
-        return std::move(result).value();
-    } else {
-        return {};
-    }
-}
-
-template <typename Type>
-nn::ExecutionResult<Type> makeExecutionFailure(nn::GeneralResult<Type> result) {
-    if (!result.has_value()) {
-        const auto [message, status] = std::move(result).error();
-        return nn::error(status) << message;
-    }
-    if constexpr (!std::is_same_v<Type, void>) {
-        return std::move(result).value();
-    } else {
-        return {};
-    }
-}
-
-template <typename Type>
-nn::ExecutionResult<Type> makeExecutionFailure(
-        nn::Result<Type> result, nn::ErrorStatus status = nn::ErrorStatus::GENERAL_FAILURE) {
-    return makeExecutionFailure(makeGeneralFailure(result, status));
-}
-
 #define HANDLE_HAL_STATUS(status)                                       \
     if (const auto canonical = ::android::nn::convert(status).value_or( \
                 ::android::nn::ErrorStatus::GENERAL_FAILURE);           \
