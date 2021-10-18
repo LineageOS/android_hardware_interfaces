@@ -95,13 +95,12 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Prepare
     // Ensure that request is ready for IPC.
     std::optional<nn::Request> maybeRequestInShared;
     hal::utils::RequestRelocation relocation;
-    const nn::Request& requestInShared =
-            NN_TRY(hal::utils::makeExecutionFailure(hal::utils::convertRequestFromPointerToShared(
-                    &request, nn::kDefaultRequestMemoryAlignment, nn::kMinMemoryPadding,
-                    &maybeRequestInShared, &relocation)));
+    const nn::Request& requestInShared = NN_TRY(hal::utils::convertRequestFromPointerToShared(
+            &request, nn::kDefaultRequestMemoryAlignment, nn::kMinMemoryPadding,
+            &maybeRequestInShared, &relocation));
 
-    const auto hidlRequest = NN_TRY(hal::utils::makeExecutionFailure(convert(requestInShared)));
-    const auto hidlMeasure = NN_TRY(hal::utils::makeExecutionFailure(convert(measure)));
+    const auto hidlRequest = NN_TRY(convert(requestInShared));
+    const auto hidlMeasure = NN_TRY(convert(measure));
 
     return executeInternal(hidlRequest, hidlMeasure, relocation);
 }
