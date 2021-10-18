@@ -75,8 +75,7 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> executi
                << "execution failed with " << toString(status);
     }
     HANDLE_HAL_STATUS(status) << "execution failed with " << toString(status);
-    return hal::utils::makeExecutionFailure(
-            convertExecutionGeneralResultsHelper(outputShapes, timing));
+    return convertExecutionGeneralResultsHelper(outputShapes, timing);
 }
 
 Return<void> PreparedModelCallback::notify(V1_0::ErrorStatus status,
