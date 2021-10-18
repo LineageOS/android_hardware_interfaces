@@ -1471,6 +1471,7 @@ enum OperationType {
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} (since HAL version 1.3)
+     * * {@link OperandType::TENSOR_INT32} (since NNAPI feature level 6)
      *
      * Supported tensor rank: up to 4.
      *
@@ -5236,4 +5237,40 @@ enum OperationType {
      *      of the input tensor.
      */
     RANK = 101,
+
+    /**
+     * Performs multiplication of two tensors in batches.
+     *
+     * Multiplies all slices of two input tensors and arranges the individual
+     * results in a single output tensor of the same batch size. Each pair of
+     * slices in the same batch have identical {@link OperandType}. Each
+     * slice can optionally be adjointed (transpose and conjugate) before
+     * multiplication.
+     *
+     * The two input tensors and the output tensor must be 2-D or higher and
+     * have the same batch size.
+     *
+     * Supported tensor {@link OperandType}:
+     * * {@link OperandType::TENSOR_FLOAT16}
+     * * {@link OperandType::TENSOR_FLOAT32}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED}
+     * * {@link OperandType::TENSOR_INT32}
+     *
+     * Supported tensor rank: at least 2 and up to 4
+     *
+     * Inputs:
+     * * 0: A tensor with 2-D or higher shape [..., r_x, c_x].
+     * * 1: A tensor with 2-D or higher shape [..., r_y, c_y]. It has the same
+     *      {@link OperandType} and batch size as input0.
+     * * 2: An optional {@link OperandType::BOOL} scalar adj_x, default
+     *      to false. Set to true to adjoint the slices of input0.
+     * * 3: An optional {@link OperandType::BOOL} scalar adj_y, default
+     *      to false. Set to true to adjoint the slices of input1.
+     *
+     * Outputs:
+     * * 0: A tensor with 2-D or higher shape [..., r_o, c_o], where
+     *      r_o = c_x if adj_x else r_x
+     *      c_o = r_y if adj_y else c_y
+     */
+    BATCH_MATMUL = 102,
 }
