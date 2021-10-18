@@ -17,6 +17,7 @@ aidl_interface {
     backend: {
         java: {
             sdk_version: "module_current",
+            enabled: false,
         },
         ndk: {
             vndk: {
@@ -34,6 +35,32 @@ aidl_interface {
                 "//apex_available:platform",
                 "com.android.uwb",
             ],
+        },
+    },
+}
+
+aidl_interface {
+    name: "android.hardware.uwb.fira_android",
+    vendor_available: true,
+    srcs: ["android/hardware/uwb/fira_android/*.aidl"],
+    stability: "vintf",
+    backend: {
+        java: {
+            sdk_version: "module_current",
+            enabled: true,
+            apex_available: [
+                "com.android.uwb",
+            ],
+        },
+        ndk: {
+            vndk: {
+                enabled: true,
+            },
+            apex_available: [
+                "//apex_available:platform",
+                "com.android.uwb",
+            ],
+            min_sdk_version: "current",
         },
     },
 }
