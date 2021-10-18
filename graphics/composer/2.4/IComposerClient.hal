@@ -34,9 +34,7 @@ interface IComposerClient extends @2.3::IComposerClient {
         /**
          * The configuration group ID (as int32_t) this config is associated to.
          * Switching between configurations within the same group may be done seamlessly
-         * in some conditions via setActiveConfigWithConstraints. Configurations which
-         * share the same config group are similar in all attributes except for the
-         * vsync period.
+         * in some conditions via setActiveConfigWithConstraints.
          */
         CONFIG_GROUP = 7,
     };
