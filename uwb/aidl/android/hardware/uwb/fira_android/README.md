@@ -1,4 +1,4 @@
-The android.hardware.uwb.fira_android package is used to add any Android specific
+The `android.hardware.uwb.fira_android` package is used to add any Android specific
 additions to the UCI specification defined by FIRA standards body. These
 additions should be added to the vendor specific portions carved out in the UCI
 specification.
@@ -8,6 +8,8 @@ These include:
  - Andriod specific params in an existing UCI specified command/response/notification.
 
 All other interactions sent/received over the HAL interface is expected to
-comply with the UCI specification that can be found here:
-https://groups.firaconsortium.org/wg/Technical/document/folder/127
-(TODO(b/196004116): Link to the published specification)
+comply with the UCI specification that can be found [here](
+https://groups.firaconsortium.org/wg/Technical/document/folder/127).
+
+TODO([b/196004116](b/196004116)): Link to the published specification.
+
