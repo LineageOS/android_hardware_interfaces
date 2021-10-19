@@ -56,14 +56,21 @@ std::array<uint8_t, 6> WifiIfaceUtil::getFactoryMacAddress(
 bool WifiIfaceUtil::setMacAddress(const std::string& iface_name,
                                   const std::array<uint8_t, 6>& mac) {
 #ifndef WIFI_AVOID_IFACE_RESET_MAC_CHANGE
-    if (!iface_tool_.lock()->SetUpState(iface_name.c_str(), false)) {
+    legacy_hal::wifi_error legacy_status;
+    uint64_t legacy_feature_set;
+    std::tie(legacy_status, legacy_feature_set) =
+        legacy_hal_.lock()->getSupportedFeatureSet(iface_name);
+
+    if (!(legacy_feature_set & WIFI_FEATURE_DYNAMIC_SET_MAC) &&
+        !iface_tool_.lock()->SetUpState(iface_name.c_str(), false)) {
         LOG(ERROR) << "SetUpState(false) failed.";
         return false;
     }
 #endif
     bool success = iface_tool_.lock()->SetMacAddress(iface_name.c_str(), mac);
 #ifndef WIFI_AVOID_IFACE_RESET_MAC_CHANGE
-    if (!iface_tool_.lock()->SetUpState(iface_name.c_str(), true)) {
+    if (!(legacy_feature_set & WIFI_FEATURE_DYNAMIC_SET_MAC) &&
+        !iface_tool_.lock()->SetUpState(iface_name.c_str(), true)) {
         LOG(ERROR) << "SetUpState(true) failed. Wait for driver ready.";
         // Wait for driver ready and try to set iface UP again
         if (legacy_hal_.lock()->waitForDriverReady() !=
