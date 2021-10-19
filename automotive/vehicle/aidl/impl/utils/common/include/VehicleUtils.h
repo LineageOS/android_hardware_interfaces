@@ -213,7 +213,7 @@ template <class T>
 ::ndk::ScopedAStatus toScopedAStatus(
         const ::android::base::Result<T>& result,
         ::aidl::android::hardware::automotive::vehicle::StatusCode status,
-        std::string additionalErrorMsg) {
+        const std::string& additionalErrorMsg) {
     if (result.ok()) {
         return ::ndk::ScopedAStatus::ok();
     }
@@ -236,7 +236,7 @@ template <class T>
 
 template <class T>
 ::ndk::ScopedAStatus toScopedAStatus(const ::android::base::Result<T>& result,
-                                     std::string additionalErrorMsg) {
+                                     const std::string& additionalErrorMsg) {
     return toScopedAStatus(result, getErrorCode(result), additionalErrorMsg);
 }
 
