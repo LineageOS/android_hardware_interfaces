@@ -128,7 +128,7 @@ Frontend::~Frontend() {}
     }
 
     if (in_type == FrontendScanType::SCAN_BLIND) {
-        frequency += 100;
+        frequency += 100 * 1000;
     }
 
     {
