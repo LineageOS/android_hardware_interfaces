@@ -1,8 +1,2 @@
-# Graphics team
-chrisforbes@google.com
-jreck@google.com
-lpy@google.com
-
-# VTS team
-yim@google.com
-zhuoyao@google.com
+# Bug component: 25423
+include ../../2.0/vts/OWNERS

@@ -45,7 +45,7 @@ std::vector<aidl_vehicle::VehiclePropConfig> prepareTestConfigs() {
 
 std::vector<aidl_vehicle::VehiclePropValue> prepareTestValues() {
     std::vector<aidl_vehicle::VehiclePropValue> values;
-    long timestamp = 1;
+    int64_t timestamp = 1;
     for (auto& property : defaultconfig::getDefaultConfigs()) {
         values.push_back({
                 .timestamp = timestamp,
