@@ -1,0 +1,72 @@
+/*
+ * Copyright 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.bluetooth.audio@2.2;
+
+import @2.1::Lc3Parameters;
+import @2.1::PcmParameters;
+import @2.0::CodecConfiguration;
+
+enum LeAudioMode : uint8_t {
+    UNKNOWN = 0x00,
+    UNICAST = 0x01,
+    BROADCAST = 0x02,
+};
+
+struct UnicastStreamMap {
+    /* The connection handle used for a unicast or a broadcast group. */
+    uint16_t streamHandle;
+    /* Audio channel allocation is  a bit field, each enabled bit means that given audio direction,
+     * i.e. "left", or "right" is used. Ordering of audio channels comes from the least significant
+     * bit to the most significant bit. */
+    uint32_t audioChannelAllocation;
+};
+
+struct BroadcastStreamMap {
+    /* The connection handle used for a unicast or a broadcast group. */
+    uint16_t streamHandle;
+    /* Audio channel allocation is  a bit field, each enabled bit means that given audio direction,
+     * i.e. "left", or "right" is used. Ordering of audio channels comes from the least significant
+     * bit to the most significant bit. */
+    uint32_t audioChannelAllocation;
+    Lc3Parameters lc3Config;
+};
+
+struct UnicastConfig {
+    vec<UnicastStreamMap> streamMap;
+    uint32_t peerDelay;
+    Lc3Parameters lc3Config;
+};
+
+struct BroadcastConfig {
+    vec<BroadcastStreamMap> streamMap;
+};
+
+struct LeAudioConfiguration {
+    /* The mode of the LE audio */
+    LeAudioMode mode;
+    safe_union CodecConfig {
+        UnicastConfig unicastConfig;
+        BroadcastConfig broadcastConfig;
+    } config;
+};
+
+/** Used to configure either a Hardware or Software Encoding session based on session type */
+safe_union AudioConfiguration {
+    PcmParameters pcmConfig;
+    CodecConfiguration CodecConfig;
+    LeAudioConfiguration leAudioCofiguration;
+};
