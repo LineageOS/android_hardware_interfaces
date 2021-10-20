@@ -18,6 +18,8 @@
 
 #include <keymasterV4_1/authorization_set.h>
 
+#include <android-base/properties.h>
+
 namespace android::hardware::keymaster::V4_1::test {
 
 using std::string;
@@ -30,6 +32,8 @@ using EarlyBootKeyTest = Keymaster4_1HidlTest;
 // creates/uses early boot keys during boot.  It should fail to boot if the early boot key usage
 // fails.
 TEST_P(EarlyBootKeyTest, CannotCreateEarlyBootKeys) {
+    // In R, this works only on devices with metadata encryption.
+    if (!android::base::GetBoolProperty("ro.crypto.metadata.enabled", false)) return;
     auto [aesKeyData, hmacKeyData, rsaKeyData, ecdsaKeyData] =
             CreateTestKeys(TAG_EARLY_BOOT_ONLY, ErrorCode::EARLY_BOOT_ENDED);
 
