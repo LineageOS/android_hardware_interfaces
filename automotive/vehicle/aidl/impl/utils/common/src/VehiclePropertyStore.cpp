@@ -19,6 +19,7 @@
 
 #include "VehiclePropertyStore.h"
 
+#include <VehicleHalTypes.h>
 #include <VehicleUtils.h>
 #include <android-base/format.h>
 #include <math/HashCombine.h>
@@ -28,10 +29,12 @@ namespace hardware {
 namespace automotive {
 namespace vehicle {
 
+using ::aidl::android::hardware::automotive::vehicle::StatusCode;
 using ::aidl::android::hardware::automotive::vehicle::VehicleAreaConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyStatus;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
+using ::android::base::Error;
 using ::android::base::Result;
 
 bool VehiclePropertyStore::RecordId::operator==(const VehiclePropertyStore::RecordId& other) const {
@@ -86,7 +89,8 @@ Result<VehiclePropValuePool::RecyclableType> VehiclePropertyStore::readValueLock
     if (auto it = record.values.find(recId); it != record.values.end()) {
         return mValuePool->obtain(*(it->second));
     }
-    return Errorf("Record ID: {} is not found", recId.toString());
+    return Error(toInt(StatusCode::NOT_AVAILABLE))
+           << "Record ID: " << recId.toString() << " is not found";
 }
 
 void VehiclePropertyStore::registerProperty(const VehiclePropConfig& config,
@@ -103,15 +107,16 @@ Result<void> VehiclePropertyStore::writeValue(VehiclePropValuePool::RecyclableTy
                                               bool updateStatus) {
     std::lock_guard<std::mutex> g(mLock);
 
-    VehiclePropertyStore::Record* record = getRecordLocked(propValue->prop);
+    int32_t propId = propValue->prop;
+
+    VehiclePropertyStore::Record* record = getRecordLocked(propId);
     if (record == nullptr) {
-        return Errorf("property: {:d} not registered", propValue->prop);
+        return Error(toInt(StatusCode::INVALID_ARG)) << "property: " << propId << " not registered";
     }
 
-    if (!isGlobalProp(propValue->prop) &&
-        getAreaConfig(*propValue, record->propConfig) == nullptr) {
-        return Errorf("no config for property: {:d} area: {:d}", propValue->prop,
-                      propValue->areaId);
+    if (!isGlobalProp(propId) && getAreaConfig(*propValue, record->propConfig) == nullptr) {
+        return Error(toInt(StatusCode::INVALID_ARG))
+               << "no config for property: " << propId << " area: " << propValue->areaId;
     }
 
     VehiclePropertyStore::RecordId recId = getRecordIdLocked(*propValue, *record);
@@ -122,7 +127,8 @@ Result<void> VehiclePropertyStore::writeValue(VehiclePropValuePool::RecyclableTy
         VehiclePropertyStatus oldStatus = valueToUpdate->status;
         // propValue is outdated and drops it.
         if (oldTimestamp > propValue->timestamp) {
-            return Errorf("outdated timestamp: {:d}", propValue->timestamp);
+            return Error(toInt(StatusCode::INVALID_ARG))
+                   << "outdated timestamp: " << propValue->timestamp;
         }
         if (!updateStatus) {
             propValue->status = oldStatus;
@@ -190,7 +196,7 @@ VehiclePropertyStore::readValuesForProperty(int32_t propId) const {
 
     const VehiclePropertyStore::Record* record = getRecordLocked(propId);
     if (record == nullptr) {
-        return Errorf("property: {:d} not registered", propId);
+        return Error(toInt(StatusCode::INVALID_ARG)) << "property: " << propId << " not registered";
     }
 
     for (auto const& [_, value] : record->values) {
@@ -203,9 +209,10 @@ Result<VehiclePropValuePool::RecyclableType> VehiclePropertyStore::readValue(
         const VehiclePropValue& propValue) const {
     std::lock_guard<std::mutex> g(mLock);
 
-    const VehiclePropertyStore::Record* record = getRecordLocked(propValue.prop);
+    int32_t propId = propValue.prop;
+    const VehiclePropertyStore::Record* record = getRecordLocked(propId);
     if (record == nullptr) {
-        return Errorf("property: {:d} not registered", propValue.prop);
+        return Error(toInt(StatusCode::INVALID_ARG)) << "property: " << propId << " not registered";
     }
 
     VehiclePropertyStore::RecordId recId = getRecordIdLocked(propValue, *record);
@@ -219,7 +226,7 @@ Result<VehiclePropValuePool::RecyclableType> VehiclePropertyStore::readValue(int
 
     const VehiclePropertyStore::Record* record = getRecordLocked(propId);
     if (record == nullptr) {
-        return Errorf("property: {:d} not registered", propId);
+        return Error(toInt(StatusCode::INVALID_ARG)) << "property: " << propId << " not registered";
     }
 
     VehiclePropertyStore::RecordId recId{.area = isGlobalProp(propId) ? 0 : areaId, .token = token};
@@ -242,7 +249,7 @@ Result<const VehiclePropConfig*> VehiclePropertyStore::getConfig(int32_t propId)
 
     const VehiclePropertyStore::Record* record = getRecordLocked(propId);
     if (record == nullptr) {
-        return Errorf("property: {:d} not registered", propId);
+        return Error(toInt(StatusCode::INVALID_ARG)) << "property: " << propId << " not registered";
     }
 
     return &record->propConfig;
