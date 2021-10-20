@@ -252,8 +252,8 @@ Tuner::~Tuner() {}
     // assign randomly selected values for testing.
     *_aidl_return = {
             .type = mFrontends[in_frontendId]->getFrontendType(),
-            .minFrequency = 139,
-            .maxFrequency = 1139,
+            .minFrequency = 139000000,
+            .maxFrequency = 1139000000,
             .minSymbolRate = 45,
             .maxSymbolRate = 1145,
             .acquireRange = 30,

@@ -126,7 +126,7 @@ void FrontendCallback::scanTest(std::shared_ptr<IFrontend>& frontend, FrontendCo
         // passed in means the real input config on the transponder connected to the DUT.
         // We want the blind the test to start from lower frequency than this to check the blind
         // scan implementation.
-        resetBlindScanStartingFrequency(config, targetFrequency - 100);
+        resetBlindScanStartingFrequency(config, targetFrequency - 100 * 1000);
     }
 
     ndk::ScopedAStatus result = frontend->scan(config.settings, type);
@@ -446,7 +446,6 @@ AssertionResult FrontendTests::closeFrontend() {
 
 void FrontendTests::getFrontendIdByType(FrontendType feType, int32_t& feId) {
     ASSERT_TRUE(getFrontendIds());
-    ASSERT_TRUE(mFeIds.size() > 0);
     for (size_t i = 0; i < mFeIds.size(); i++) {
         ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
         if (mFrontendInfo.type != feType) {

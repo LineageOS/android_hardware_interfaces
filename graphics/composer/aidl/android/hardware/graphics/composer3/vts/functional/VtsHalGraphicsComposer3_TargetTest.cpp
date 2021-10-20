@@ -13,17 +13,15 @@
 #undef LOG_TAG
 #define LOG_TAG "VtsHalGraphicsComposer3_TargetTest"
 
-typedef uint64_t DisplayId;
-
 namespace aidl::android::hardware::graphics::composer3::vts {
 namespace {
 
 class VtsDisplay {
   public:
-    VtsDisplay(DisplayId displayId, int32_t displayWidth, int32_t displayHeight)
+    VtsDisplay(uint64_t displayId, int32_t displayWidth, int32_t displayHeight)
         : mDisplayId(displayId), mDisplayWidth(displayWidth), mDisplayHeight(displayHeight) {}
 
-    DisplayId get() const { return mDisplayId; }
+    uint64_t get() const { return mDisplayId; }
 
     void setDimensions(int32_t displayWidth, int32_t displayHeight) {
         mDisplayWidth = displayWidth;
@@ -31,7 +29,7 @@ class VtsDisplay {
     }
 
   private:
-    const DisplayId mDisplayId;
+    const uint64_t mDisplayId;
     int32_t mDisplayWidth;
     int32_t mDisplayHeight;
 };
@@ -51,7 +49,7 @@ class GraphicsComposerAidlTest : public ::testing::TestWithParam<std::string> {
     // returns an invalid display id (one that has not been registered to a
     // display.  Currently assuming that a device will never have close to
     // std::numeric_limit<uint64_t>::max() displays registered while running tests
-    DisplayId GetInvalidDisplayId() {
+    uint64_t GetInvalidDisplayId() {
         uint64_t id = std::numeric_limits<uint64_t>::max();
         while (id > 0) {
             if (std::none_of(mDisplays.begin(), mDisplays.end(),
@@ -65,8 +63,8 @@ class GraphicsComposerAidlTest : public ::testing::TestWithParam<std::string> {
     }
 
     std::shared_ptr<IComposer> mComposer;
-    std::shared_ptr<IComposerClient> mComposerClient{};
-    DisplayId mInvalidDisplayId;
+    std::shared_ptr<IComposerClient> mComposerClient;
+    uint64_t mInvalidDisplayId;
     std::vector<VtsDisplay>
             mDisplays;  // TODO(b/202401906) populate all the displays available for test.
 };
@@ -74,15 +72,16 @@ class GraphicsComposerAidlTest : public ::testing::TestWithParam<std::string> {
 TEST_P(GraphicsComposerAidlTest, getDisplayCapabilitiesBadDisplay) {
     std::vector<DisplayCapability> capabilities;
     const auto error = mComposerClient->getDisplayCapabilities(mInvalidDisplayId, &capabilities);
+
+    EXPECT_FALSE(error.isOk());
     EXPECT_EQ(IComposerClient::EX_BAD_DISPLAY, error.getServiceSpecificError());
 }
 
 TEST_P(GraphicsComposerAidlTest, getDisplayCapabilities) {
     for (const auto& display : mDisplays) {
         std::vector<DisplayCapability> capabilities;
-        const auto error = mComposerClient->getDisplayCapabilities(display.get(), &capabilities);
 
-        EXPECT_NE(IComposerClient::EX_BAD_DISPLAY, error.getServiceSpecificError());
+        EXPECT_TRUE(mComposerClient->getDisplayCapabilities(display.get(), &capabilities).isOk());
     }
 }
 
