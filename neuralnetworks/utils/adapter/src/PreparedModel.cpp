@@ -57,6 +57,15 @@ auto convertInput(const Type& object) -> decltype(nn::convert(std::declval<Type>
     return result;
 }
 
+nn::GeneralResult<nn::Version> validateRequestForModel(const nn::Request& request,
+                                                       const nn::Model& model) {
+    nn::GeneralResult<nn::Version> version = nn::validateRequestForModel(request, model);
+    if (!version.ok()) {
+        version.error().code = nn::ErrorStatus::INVALID_ARGUMENT;
+    }
+    return version;
+}
+
 class FencedExecutionCallback final : public V1_3::IFencedExecutionCallback {
   public:
     explicit FencedExecutionCallback(const nn::ExecuteFencedInfoCallback& callback)
@@ -148,8 +157,7 @@ nn::GeneralResult<void> execute(const nn::SharedPreparedModel& preparedModel, ui
     const std::any resource = preparedModel->getUnderlyingResource();
     if (const auto* model = std::any_cast<const nn::Model*>(&resource)) {
         CHECK(*model != nullptr);
-        NN_TRY(utils::makeGeneralFailure(nn::validateRequestForModel(nnRequest, **model),
-                                         nn::ErrorStatus::INVALID_ARGUMENT));
+        NN_TRY(adapter::validateRequestForModel(nnRequest, **model));
     }
 
     Task task = [preparedModel, nnRequest = std::move(nnRequest), callback] {
@@ -175,8 +183,7 @@ nn::GeneralResult<void> execute_1_2(const nn::SharedPreparedModel& preparedModel
     const std::any resource = preparedModel->getUnderlyingResource();
     if (const auto* model = std::any_cast<const nn::Model*>(&resource)) {
         CHECK(*model != nullptr);
-        NN_TRY(utils::makeGeneralFailure(nn::validateRequestForModel(nnRequest, **model),
-                                         nn::ErrorStatus::INVALID_ARGUMENT));
+        NN_TRY(adapter::validateRequestForModel(nnRequest, **model));
     }
 
     Task task = [preparedModel, nnRequest = std::move(nnRequest), nnMeasure, callback] {
@@ -206,8 +213,7 @@ nn::GeneralResult<void> execute_1_3(const nn::SharedPreparedModel& preparedModel
     const std::any resource = preparedModel->getUnderlyingResource();
     if (const auto* model = std::any_cast<const nn::Model*>(&resource)) {
         CHECK(*model != nullptr);
-        NN_TRY(utils::makeGeneralFailure(nn::validateRequestForModel(nnRequest, **model),
-                                         nn::ErrorStatus::INVALID_ARGUMENT));
+        NN_TRY(adapter::validateRequestForModel(nnRequest, **model));
     }
 
     Task task = [preparedModel, nnRequest = std::move(nnRequest), nnMeasure, nnDeadline,
@@ -224,14 +230,14 @@ nn::GeneralResult<void> execute_1_3(const nn::SharedPreparedModel& preparedModel
 nn::ExecutionResult<std::pair<hidl_vec<V1_2::OutputShape>, V1_2::Timing>> executeSynchronously(
         const nn::SharedPreparedModel& preparedModel, const V1_0::Request& request,
         V1_2::MeasureTiming measure) {
-    const auto nnRequest = NN_TRY(utils::makeExecutionFailure(convertInput(request)));
-    const auto nnMeasure = NN_TRY(utils::makeExecutionFailure(convertInput(measure)));
+    const auto nnRequest = NN_TRY(convertInput(request));
+    const auto nnMeasure = NN_TRY(convertInput(measure));
 
     const auto [outputShapes, timing] =
             NN_TRY(preparedModel->execute(nnRequest, nnMeasure, {}, {}));
 
-    auto hidlOutputShapes = NN_TRY(utils::makeExecutionFailure(V1_2::utils::convert(outputShapes)));
-    const auto hidlTiming = NN_TRY(utils::makeExecutionFailure(V1_2::utils::convert(timing)));
+    auto hidlOutputShapes = NN_TRY(V1_2::utils::convert(outputShapes));
+    const auto hidlTiming = NN_TRY(V1_2::utils::convert(timing));
     return std::make_pair(std::move(hidlOutputShapes), hidlTiming);
 }
 
@@ -239,29 +245,30 @@ nn::ExecutionResult<std::pair<hidl_vec<V1_2::OutputShape>, V1_2::Timing>> execut
         const nn::SharedPreparedModel& preparedModel, const V1_3::Request& request,
         V1_2::MeasureTiming measure, const V1_3::OptionalTimePoint& deadline,
         const V1_3::OptionalTimeoutDuration& loopTimeoutDuration) {
-    const auto nnRequest = NN_TRY(utils::makeExecutionFailure(convertInput(request)));
-    const auto nnMeasure = NN_TRY(utils::makeExecutionFailure(convertInput(measure)));
-    const auto nnDeadline = NN_TRY(utils::makeExecutionFailure(convertInput(deadline)));
-    const auto nnLoopTimeoutDuration =
-            NN_TRY(utils::makeExecutionFailure(convertInput(loopTimeoutDuration)));
+    const auto nnRequest = NN_TRY(convertInput(request));
+    const auto nnMeasure = NN_TRY(convertInput(measure));
+    const auto nnDeadline = NN_TRY(convertInput(deadline));
+    const auto nnLoopTimeoutDuration = NN_TRY(convertInput(loopTimeoutDuration));
 
     const auto [outputShapes, timing] =
             NN_TRY(preparedModel->execute(nnRequest, nnMeasure, nnDeadline, nnLoopTimeoutDuration));
 
-    auto hidlOutputShapes = NN_TRY(utils::makeExecutionFailure(V1_3::utils::convert(outputShapes)));
-    const auto hidlTiming = NN_TRY(utils::makeExecutionFailure(V1_3::utils::convert(timing)));
+    auto hidlOutputShapes = NN_TRY(V1_3::utils::convert(outputShapes));
+    const auto hidlTiming = NN_TRY(V1_3::utils::convert(timing));
     return std::make_pair(std::move(hidlOutputShapes), hidlTiming);
 }
 
 nn::GeneralResult<std::vector<nn::SyncFence>> convertSyncFences(
         const hidl_vec<hidl_handle>& handles) {
+    auto nnHandles = NN_TRY(convertInput(handles));
     std::vector<nn::SyncFence> syncFences;
     syncFences.reserve(handles.size());
-    for (const auto& handle : handles) {
-        auto nativeHandle = NN_TRY(convertInput(handle));
-        auto syncFence = NN_TRY(utils::makeGeneralFailure(
-                nn::SyncFence::create(std::move(nativeHandle)), nn::ErrorStatus::INVALID_ARGUMENT));
-        syncFences.push_back(std::move(syncFence));
+    for (auto&& handle : nnHandles) {
+        if (auto syncFence = nn::SyncFence::create(std::move(handle)); !syncFence.ok()) {
+            return nn::error(nn::ErrorStatus::INVALID_ARGUMENT) << std::move(syncFence).error();
+        } else {
+            syncFences.push_back(std::move(syncFence).value());
+        }
     }
     return syncFences;
 }

@@ -24,6 +24,7 @@
         <option name="cleanup" value="true" />
         <option name="push" value="VtsHalTvTunerTargetTest->/data/local/tmp/VtsHalTvTunerTargetTest" />
         <option name="push" value="test.es->/data/local/tmp/test.es" />
+        <option name="push" value="segment000000.ts->/data/local/tmp/segment000000.ts" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.GTest" >

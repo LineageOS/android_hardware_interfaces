@@ -81,7 +81,7 @@ inline void initFrontendConfig() {
     // without overriding in the xml config.
     string defaultFeId = "FE_DEFAULT";
     FrontendDvbtSettings dvbtSettings{
-            .frequency = 578000,
+            .frequency = 578000000,
             .transmissionMode = FrontendDvbtTransmissionMode::AUTO,
             .bandwidth = FrontendDvbtBandwidth::BANDWIDTH_8MHZ,
             .isHighPriority = true,

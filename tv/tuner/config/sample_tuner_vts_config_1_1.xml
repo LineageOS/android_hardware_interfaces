@@ -53,11 +53,11 @@
         -->
         <frontends>
             <frontend id="FE_DEFAULT" type="DVBT" isSoftwareFrontend="true"
-                      connectToCicamId="0" frequency="578000" endFrequency="800000">
+                      connectToCicamId="0" frequency="578000000" endFrequency="800000000">
                 <dvbtFrontendSettings bandwidth="8" transmissionMode="128" isHighPriority="1"/>
             </frontend>
             <frontend id="FE_DVBS_0" type="DVBS" isSoftwareFrontend="true"
-                      connectToCicamId="0" frequency="578000" endFrequency="800000">
+                      connectToCicamId="0" frequency="578000000" endFrequency="800000000">
             </frontend>
         </frontends>
         <!-- Filter section:
