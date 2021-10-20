@@ -40,10 +40,16 @@ namespace vehicle {
 // to get value for all areas for particular property.
 //
 // This class is thread-safe, however it uses blocking synchronization across all methods.
-class VehiclePropertyStore {
+class VehiclePropertyStore final {
   public:
     explicit VehiclePropertyStore(std::shared_ptr<VehiclePropValuePool> valuePool)
         : mValuePool(valuePool) {}
+
+    ~VehiclePropertyStore();
+
+    // Callback when a property value has been updated or a new value added.
+    using OnValueChangeCallback = std::function<void(
+            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue&)>;
 
     // Function that used to calculate unique token for given VehiclePropValue.
     using TokenFunction = ::std::function<int64_t(
@@ -97,6 +103,9 @@ class VehiclePropertyStore {
             const ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig*>
     getConfig(int32_t propId) const;
 
+    // Set a callback that would be called when a property value has been updated.
+    void setOnValueChangeCallback(const OnValueChangeCallback& callback);
+
   private:
     struct RecordId {
         int32_t area;
@@ -117,10 +126,11 @@ class VehiclePropertyStore {
         std::unordered_map<RecordId, VehiclePropValuePool::RecyclableType, RecordIdHash> values;
     };
 
-    mutable std::mutex mLock;
-    std::unordered_map<int32_t, Record> mRecordsByPropId GUARDED_BY(mLock);
     // {@code VehiclePropValuePool} is thread-safe.
     std::shared_ptr<VehiclePropValuePool> mValuePool;
+    mutable std::mutex mLock;
+    std::unordered_map<int32_t, Record> mRecordsByPropId GUARDED_BY(mLock);
+    OnValueChangeCallback mOnValueChangeCallback GUARDED_BY(mLock);
 
     const Record* getRecordLocked(int32_t propId) const;
 
