@@ -33,7 +33,7 @@
 
 package android.hardware.automotive.vehicle;
 @VintfStability
-parcelable GetValueRequests {
-  android.hardware.automotive.vehicle.GetValueRequest[] payloads;
-  @nullable ParcelFileDescriptor sharedMemoryFd;
+parcelable GetValueRequest {
+  long requestId;
+  android.hardware.automotive.vehicle.VehiclePropValue prop;
 }
