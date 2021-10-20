@@ -35,5 +35,11 @@ package android.hardware.automotive.vehicle;
 @VintfStability
 parcelable UserInfo {
   int userId = 0;
-  android.hardware.automotive.vehicle.UserFlags flags = android.hardware.automotive.vehicle.UserFlags.NONE;
+  int flags;
+  const int USER_FLAG_SYSTEM = 1;
+  const int USER_FLAG_GUEST = 2;
+  const int USER_FLAG_EPHEMERAL = 4;
+  const int USER_FLAG_ADMIN = 8;
+  const int USER_FLAG_DISABLED = 16;
+  const int USER_FLAG_PROFILE = 32;
 }
