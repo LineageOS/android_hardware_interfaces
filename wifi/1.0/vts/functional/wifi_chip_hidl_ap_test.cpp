@@ -15,9 +15,9 @@
  */
 
 #include <android-base/logging.h>
-
 #include <android/hardware/wifi/1.0/IWifi.h>
 #include <android/hardware/wifi/1.0/IWifiChip.h>
+#include <android/hardware/wifi/hostapd/1.0/IHostapd.h>
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
@@ -26,6 +26,7 @@
 #include "wifi_hidl_test_utils.h"
 
 using ::android::sp;
+using ::android::hardware::wifi::hostapd::V1_0::IHostapd;
 using ::android::hardware::wifi::V1_0::ChipModeId;
 using ::android::hardware::wifi::V1_0::IfaceType;
 using ::android::hardware::wifi::V1_0::IWifi;
@@ -41,6 +42,10 @@ using ::android::hardware::wifi::V1_0::WifiStatusCode;
 class WifiChipHidlApTest : public ::testing::TestWithParam<std::string> {
    public:
     virtual void SetUp() override {
+        if (android::hardware::getAllHalInstanceNames(IHostapd::descriptor)
+                .empty()) {
+            GTEST_SKIP() << "Device does not support AP";
+        }
         // Make sure test starts with a clean state
         stopWifi(GetInstanceName());
 
