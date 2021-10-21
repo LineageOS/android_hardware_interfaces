@@ -70,6 +70,9 @@ static_assert(
         static_cast<aidl::android::hardware::graphics::composer3::Capability>(
                 ::android::hardware::graphics::composer::V2_1::IComposer::Capability::
                         PRESENT_FENCE_IS_NOT_RELIABLE));
+// HWC2_CAPABILITY_SKIP_VALIDATE was never defined for HIDL, so we just hardcode its value
+static_assert(aidl::android::hardware::graphics::composer3::Capability::SKIP_VALIDATE ==
+              static_cast<aidl::android::hardware::graphics::composer3::Capability>(4));
 
 static_assert(aidl::android::hardware::graphics::composer3::LayerRequest::CLEAR_CLIENT_TARGET ==
               static_cast<aidl::android::hardware::graphics::composer3::LayerRequest>(
