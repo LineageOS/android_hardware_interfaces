@@ -36,14 +36,6 @@ struct DumpResult {
     std::string buffer;
 };
 
-// A request type for 'setValues' or 'getValues' method.
-struct VehiclePropValueRequest {
-    // A unique request ID set by the sender.
-    int64_t requestId;
-    // The property to get/set.
-    ::aidl::android::hardware::automotive::vehicle::VehiclePropValue value;
-};
-
 // A structure to represent a set value error event reported from vehicle.
 struct SetValueErrorEvent {
     ::aidl::android::hardware::automotive::vehicle::StatusCode errorCode;
@@ -70,7 +62,8 @@ class IVehicleHardware {
             std::function<void(const std::vector<
                                ::aidl::android::hardware::automotive::vehicle::SetValueResult>&)>&&
                     callback,
-            const std::vector<VehiclePropValueRequest>& requests) = 0;
+            const std::vector<::aidl::android::hardware::automotive::vehicle::SetValueRequest>&
+                    requests) = 0;
 
     // Get property values asynchronously. Server could return before the property values are ready.
     // The callback is safe to be called after the function returns and is safe to be called in a
@@ -79,7 +72,8 @@ class IVehicleHardware {
             std::function<void(const std::vector<
                                ::aidl::android::hardware::automotive::vehicle::GetValueResult>&)>&&
                     callback,
-            const std::vector<VehiclePropValueRequest>& requests) const = 0;
+            const std::vector<::aidl::android::hardware::automotive::vehicle::GetValueRequest>&
+                    requests) const = 0;
 
     // Dump debug information in the server.
     virtual DumpResult dump(const std::vector<std::string>& options) = 0;

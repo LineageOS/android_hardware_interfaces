@@ -15,6 +15,7 @@
  */
 
 #include <PropertyUtils.h>
+#include <VehicleHalTypes.h>
 #include <VehiclePropertyStore.h>
 #include <VehicleUtils.h>
 #include <gmock/gmock.h>
@@ -27,6 +28,7 @@ namespace vehicle {
 
 namespace {
 
+using ::aidl::android::hardware::automotive::vehicle::StatusCode;
 using ::aidl::android::hardware::automotive::vehicle::VehicleAreaConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
@@ -111,7 +113,8 @@ TEST_F(VehiclePropertyStoreTest, testGetConfig) {
 TEST_F(VehiclePropertyStoreTest, testGetConfigWithInvalidPropId) {
     Result<const VehiclePropConfig*> result = mStore->getConfig(INVALID_PROP_ID);
 
-    ASSERT_FALSE(result.ok()) << "expect error when getting a config for an invalid property ID";
+    EXPECT_FALSE(result.ok()) << "expect error when getting a config for an invalid property ID";
+    EXPECT_EQ(result.error().code(), toInt(StatusCode::INVALID_ARG));
 }
 
 std::vector<VehiclePropValue> getTestPropValues() {
@@ -180,7 +183,8 @@ TEST_F(VehiclePropertyStoreTest, testReadValuesForPropertyMultipleValues) {
 TEST_F(VehiclePropertyStoreTest, testReadValuesForPropertyError) {
     auto result = mStore->readValuesForProperty(INVALID_PROP_ID);
 
-    ASSERT_FALSE(result.ok()) << "expect error when reading values for an invalid property";
+    EXPECT_FALSE(result.ok()) << "expect error when reading values for an invalid property";
+    EXPECT_EQ(result.error().code(), toInt(StatusCode::INVALID_ARG));
 }
 
 TEST_F(VehiclePropertyStoreTest, testReadValueOk) {
@@ -219,15 +223,19 @@ TEST_F(VehiclePropertyStoreTest, testReadValueError) {
 
     auto result = mStore->readValue(toInt(VehicleProperty::TIRE_PRESSURE), WHEEL_REAR_LEFT);
 
-    ASSERT_FALSE(result.ok()) << "expect error when reading a value that has not been written";
+    EXPECT_FALSE(result.ok()) << "expect error when reading a value that has not been written";
+    EXPECT_EQ(result.error().code(), toInt(StatusCode::NOT_AVAILABLE));
 }
 
 TEST_F(VehiclePropertyStoreTest, testWriteValueError) {
     auto v = mValuePool->obtain(VehiclePropertyType::FLOAT);
     v->prop = INVALID_PROP_ID;
     v->value.floatValues = {1.0};
-    ASSERT_FALSE(mStore->writeValue(std::move(v)).ok())
-            << "expect error when writing value for an invalid property ID";
+
+    auto result = mStore->writeValue(std::move(v));
+
+    EXPECT_FALSE(result.ok()) << "expect error when writing value for an invalid property ID";
+    EXPECT_EQ(result.error().code(), toInt(StatusCode::INVALID_ARG));
 }
 
 TEST_F(VehiclePropertyStoreTest, testWriteValueNoAreaConfig) {
@@ -236,8 +244,11 @@ TEST_F(VehiclePropertyStoreTest, testWriteValueNoAreaConfig) {
     v->value.floatValues = {1.0};
     // There is no config for ALL_WHEELS.
     v->areaId = ALL_WHEELS;
-    ASSERT_FALSE(mStore->writeValue(std::move(v)).ok())
-            << "expect error when writing value for an area without config";
+
+    auto result = mStore->writeValue(std::move(v));
+
+    EXPECT_FALSE(result.ok()) << "expect error when writing value for an area without config";
+    EXPECT_EQ(result.error().code(), toInt(StatusCode::INVALID_ARG));
 }
 
 TEST_F(VehiclePropertyStoreTest, testWriteOutdatedValue) {
@@ -254,8 +265,11 @@ TEST_F(VehiclePropertyStoreTest, testWriteOutdatedValue) {
     v2->prop = toInt(VehicleProperty::TIRE_PRESSURE);
     v2->value.floatValues = {180.0};
     v2->areaId = WHEEL_FRONT_LEFT;
-    ASSERT_FALSE(mStore->writeValue(std::move(v2)).ok())
-            << "expect error when writing an outdated value";
+
+    auto result = mStore->writeValue(std::move(v2));
+
+    EXPECT_FALSE(result.ok()) << "expect error when writing an outdated value";
+    EXPECT_EQ(result.error().code(), toInt(StatusCode::INVALID_ARG));
 }
 
 TEST_F(VehiclePropertyStoreTest, testToken) {
@@ -300,8 +314,10 @@ TEST_F(VehiclePropertyStoreTest, testRemoveValue) {
     }
 
     mStore->removeValue(values[0]);
+    auto result = mStore->readValue(values[0]);
 
-    ASSERT_FALSE(mStore->readValue(values[0]).ok()) << "expect error when reading a removed value";
+    EXPECT_FALSE(result.ok()) << "expect error when reading a removed value";
+    EXPECT_EQ(result.error().code(), toInt(StatusCode::NOT_AVAILABLE));
 
     auto leftTirePressureResult = mStore->readValue(values[1]);
 
@@ -380,6 +396,57 @@ TEST_F(VehiclePropertyStoreTest, testWriteValueNoUpdateStatusForNewValue) {
 
     ASSERT_RESULT_OK(result);
     ASSERT_EQ(result.value()->status, VehiclePropertyStatus::AVAILABLE);
+}
+
+TEST_F(VehiclePropertyStoreTest, testPropertyChangeCallbackNewValue) {
+    VehiclePropValue updatedValue;
+    mStore->setOnValueChangeCallback(
+            [&updatedValue](const VehiclePropValue& value) { updatedValue = value; });
+    VehiclePropValue fuelCapacity = {
+            .prop = toInt(VehicleProperty::INFO_FUEL_CAPACITY),
+            .value = {.floatValues = {1.0}},
+    };
+    ASSERT_RESULT_OK(mStore->writeValue(mValuePool->obtain(fuelCapacity)));
+
+    ASSERT_EQ(updatedValue, fuelCapacity);
+}
+
+TEST_F(VehiclePropertyStoreTest, testPropertyChangeCallbackUpdateValue) {
+    VehiclePropValue updatedValue;
+    VehiclePropValue fuelCapacity = {
+            .prop = toInt(VehicleProperty::INFO_FUEL_CAPACITY),
+            .value = {.floatValues = {1.0}},
+    };
+    ASSERT_RESULT_OK(mStore->writeValue(mValuePool->obtain(fuelCapacity)));
+
+    mStore->setOnValueChangeCallback(
+            [&updatedValue](const VehiclePropValue& value) { updatedValue = value; });
+
+    fuelCapacity.value.floatValues[0] = 2.0;
+    fuelCapacity.timestamp = 1;
+
+    ASSERT_RESULT_OK(mStore->writeValue(mValuePool->obtain(fuelCapacity)));
+
+    ASSERT_EQ(updatedValue, fuelCapacity);
+}
+
+TEST_F(VehiclePropertyStoreTest, testPropertyChangeCallbackNoUpdate) {
+    VehiclePropValue updatedValue{
+            .prop = INVALID_PROP_ID,
+    };
+    VehiclePropValue fuelCapacity = {
+            .prop = toInt(VehicleProperty::INFO_FUEL_CAPACITY),
+            .value = {.floatValues = {1.0}},
+    };
+    ASSERT_RESULT_OK(mStore->writeValue(mValuePool->obtain(fuelCapacity)));
+
+    mStore->setOnValueChangeCallback(
+            [&updatedValue](const VehiclePropValue& value) { updatedValue = value; });
+
+    // Write the same value again should succeed but should not trigger callback.
+    ASSERT_RESULT_OK(mStore->writeValue(mValuePool->obtain(fuelCapacity)));
+
+    ASSERT_EQ(updatedValue.prop, INVALID_PROP_ID);
 }
 
 }  // namespace vehicle

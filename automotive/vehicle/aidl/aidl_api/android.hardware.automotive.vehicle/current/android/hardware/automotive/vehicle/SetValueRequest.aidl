@@ -34,6 +34,6 @@
 package android.hardware.automotive.vehicle;
 @VintfStability
 parcelable SetValueRequest {
-  android.hardware.automotive.vehicle.VehiclePropValue value;
   long requestId;
+  android.hardware.automotive.vehicle.VehiclePropValue value;
 }
