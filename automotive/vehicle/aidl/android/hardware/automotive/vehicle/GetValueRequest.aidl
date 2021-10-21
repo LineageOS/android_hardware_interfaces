@@ -16,16 +16,16 @@
 
 package android.hardware.automotive.vehicle;
 
-import android.hardware.automotive.vehicle.GetValueRequest;
-import android.os.ParcelFileDescriptor;
+import android.hardware.automotive.vehicle.VehiclePropValue;
 
 @VintfStability
-parcelable GetValueRequests {
-    // A list of GetValueRequest to get if they fit the binder memory
-    // limitation.
-    GetValueRequest[] payloads;
-    // Shared memory file to store requests if they exceed binder memory
-    // limitation. Created by client, readable only at VHAL during the call.
-    // Caller could close it after the call.
-    @nullable ParcelFileDescriptor sharedMemoryFd;
+parcelable GetValueRequest {
+    // A unique request ID. For every client, the request ID must start with 1
+    // and monotonically increase for every SetValueRequest. If it hits
+    // LONG_MAX (very unlikely), it must loop back to 0.
+    long requestId;
+    // The property to get, for most properties, only the property ID or area
+    // ID would be used to identify the property, but for some properties, other
+    // fields might be used.
+    VehiclePropValue prop;
 }

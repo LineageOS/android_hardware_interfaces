@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
+#include <ConcurrentQueue.h>
 #include <PropertyUtils.h>
 #include <VehicleUtils.h>
 
 #include <gtest/gtest.h>
+
+#include <atomic>
+#include <thread>
 #include <vector>
 
 namespace android {
@@ -231,7 +235,7 @@ TEST(VehicleUtilsTest, testCreateVehiclePropValueVecFloat) {
             << "vector size should always be 1 for single value type";
 }
 
-TEST(VehicleUtilsTest, testCreateVehiclePropValueFloVecatVec) {
+TEST(VehicleUtilsTest, testCreateVehiclePropValueFloatVecMultiValues) {
     std::unique_ptr<VehiclePropValue> value =
             createVehiclePropValueVec(VehiclePropertyType::FLOAT_VEC, /*vecSize=*/2);
 
@@ -245,6 +249,90 @@ TEST(VehicleUtilsTest, testCreateVehiclePropValueVecBytes) {
 
     ASSERT_NE(value, nullptr);
     ASSERT_EQ(2u, value->value.byteValues.size());
+}
+
+TEST(VehicleUtilsTest, testConcurrentQueueOneThread) {
+    ConcurrentQueue<int> queue;
+
+    queue.push(1);
+    queue.push(2);
+    auto result = queue.flush();
+
+    ASSERT_EQ(result, std::vector<int>({1, 2}));
+}
+
+TEST(VehicleUtilsTest, testConcurrentQueueMultipleThreads) {
+    ConcurrentQueue<int> queue;
+    std::vector<int> results;
+    std::atomic<bool> stop = false;
+
+    std::thread t1([&queue]() {
+        for (int i = 0; i < 100; i++) {
+            queue.push(0);
+        }
+    });
+    std::thread t2([&queue]() {
+        for (int i = 0; i < 100; i++) {
+            queue.push(1);
+        }
+    });
+    std::thread t3([&queue, &results, &stop]() {
+        while (!stop) {
+            queue.waitForItems();
+            for (int i : queue.flush()) {
+                results.push_back(i);
+            }
+        }
+
+        // After we stop, get all the remaining values in the queue.
+        for (int i : queue.flush()) {
+            results.push_back(i);
+        }
+    });
+
+    t1.join();
+    t2.join();
+
+    stop = true;
+    queue.deactivate();
+    t3.join();
+
+    size_t zeroCount = 0;
+    size_t oneCount = 0;
+    for (int i : results) {
+        if (i == 0) {
+            zeroCount++;
+        }
+        if (i == 1) {
+            oneCount++;
+        }
+    }
+
+    EXPECT_EQ(results.size(), static_cast<size_t>(200));
+    EXPECT_EQ(zeroCount, static_cast<size_t>(100));
+    EXPECT_EQ(oneCount, static_cast<size_t>(100));
+}
+
+TEST(VehicleUtilsTest, testConcurrentQueuePushAfterDeactivate) {
+    ConcurrentQueue<int> queue;
+
+    queue.deactivate();
+    queue.push(1);
+
+    ASSERT_TRUE(queue.flush().empty());
+}
+
+TEST(VehicleUtilsTest, testConcurrentQueueDeactivateNotifyWaitingThread) {
+    ConcurrentQueue<int> queue;
+
+    std::thread t([&queue]() {
+        // This would block until queue is deactivated.
+        queue.waitForItems();
+    });
+
+    queue.deactivate();
+
+    t.join();
 }
 
 }  // namespace vehicle

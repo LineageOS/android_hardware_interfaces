@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
-package android.hardware.automotive.vehicle;
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
 
-import android.hardware.automotive.vehicle.GetValueRequest;
-import android.os.ParcelFileDescriptor;
-
-@VintfStability
-parcelable GetValueRequests {
-    // A list of GetValueRequest to get if they fit the binder memory
-    // limitation.
-    GetValueRequest[] payloads;
-    // Shared memory file to store requests if they exceed binder memory
-    // limitation. Created by client, readable only at VHAL during the call.
-    // Caller could close it after the call.
-    @nullable ParcelFileDescriptor sharedMemoryFd;
+cc_library {
+    name: "FakeVehicleHardware",
+    vendor: true,
+    srcs: ["src/*.cpp"],
+    local_include_dirs: ["include"],
+    export_include_dirs: ["include"],
+    defaults: ["VehicleHalDefaults"],
+    header_libs: [
+        "IVehicleHardware",
+        "VehicleHalDefaultConfig",
+    ],
+    export_header_lib_headers: ["IVehicleHardware"],
+    static_libs: ["VehicleHalUtils"],
+    export_static_lib_headers: ["VehicleHalUtils"],
 }

@@ -40,10 +40,16 @@ namespace vehicle {
 // to get value for all areas for particular property.
 //
 // This class is thread-safe, however it uses blocking synchronization across all methods.
-class VehiclePropertyStore {
+class VehiclePropertyStore final {
   public:
     explicit VehiclePropertyStore(std::shared_ptr<VehiclePropValuePool> valuePool)
         : mValuePool(valuePool) {}
+
+    ~VehiclePropertyStore();
+
+    // Callback when a property value has been updated or a new value added.
+    using OnValueChangeCallback = std::function<void(
+            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue&)>;
 
     // Function that used to calculate unique token for given VehiclePropValue.
     using TokenFunction = ::std::function<int64_t(
@@ -80,11 +86,15 @@ class VehiclePropertyStore {
     ::android::base::Result<std::vector<VehiclePropValuePool::RecyclableType>>
     readValuesForProperty(int32_t propId) const;
 
-    // Read the value for the requested property.
+    // Read the value for the requested property. Returns {@code StatusCode::NOT_AVAILABLE} if the
+    // value has not been set yet. Returns {@code StatusCode::INVALID_ARG} if the property is
+    // not configured.
     ::android::base::Result<VehiclePropValuePool::RecyclableType> readValue(
             const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& request) const;
 
-    // Read the value for the requested property.
+    // Read the value for the requested property. Returns {@code StatusCode::NOT_AVAILABLE} if the
+    // value has not been set yet. Returns {@code StatusCode::INVALID_ARG} if the property is
+    // not configured.
     ::android::base::Result<VehiclePropValuePool::RecyclableType> readValue(
             int32_t prop, int32_t area = 0, int64_t token = 0) const;
 
@@ -96,6 +106,9 @@ class VehiclePropertyStore {
     ::android::base::Result<
             const ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig*>
     getConfig(int32_t propId) const;
+
+    // Set a callback that would be called when a property value has been updated.
+    void setOnValueChangeCallback(const OnValueChangeCallback& callback);
 
   private:
     struct RecordId {
@@ -117,10 +130,11 @@ class VehiclePropertyStore {
         std::unordered_map<RecordId, VehiclePropValuePool::RecyclableType, RecordIdHash> values;
     };
 
-    mutable std::mutex mLock;
-    std::unordered_map<int32_t, Record> mRecordsByPropId GUARDED_BY(mLock);
     // {@code VehiclePropValuePool} is thread-safe.
     std::shared_ptr<VehiclePropValuePool> mValuePool;
+    mutable std::mutex mLock;
+    std::unordered_map<int32_t, Record> mRecordsByPropId GUARDED_BY(mLock);
+    OnValueChangeCallback mOnValueChangeCallback GUARDED_BY(mLock);
 
     const Record* getRecordLocked(int32_t propId) const;
 

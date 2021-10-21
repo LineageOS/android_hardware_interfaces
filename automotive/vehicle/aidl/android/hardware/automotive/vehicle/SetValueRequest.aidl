@@ -20,10 +20,10 @@ import android.hardware.automotive.vehicle.VehiclePropValue;
 
 @VintfStability
 parcelable SetValueRequest {
-    // The value to set.
-    VehiclePropValue value;
     // A unique request ID. For every client, the request ID must start with 1
     // and monotonically increase for every SetValueRequest. If it hits
     // LONG_MAX (very unlikely), it must loop back to 0.
     long requestId;
+    // The value to set.
+    VehiclePropValue value;
 }

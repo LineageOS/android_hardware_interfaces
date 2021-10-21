@@ -67,3 +67,22 @@ cc_library {
     ],
     export_include_dirs: ["include"],
 }
+
+cc_library_headers {
+    name: "android.hardware.graphics.composer3-command-buffer",
+    vendor_available: true,
+    shared_libs: [
+        "android.hardware.graphics.composer3-V1-ndk",
+        "libbase",
+        "libfmq",
+        "libsync",
+    ],
+    static_libs: [
+        "libaidlcommonsupport",
+    ],
+    export_shared_lib_headers: [
+        "libfmq",
+        "libsync",
+    ],
+    export_include_dirs: ["include"],
+}
