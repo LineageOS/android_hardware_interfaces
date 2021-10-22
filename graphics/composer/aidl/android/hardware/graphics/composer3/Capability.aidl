@@ -46,4 +46,15 @@ enum Capability {
      * representation of the actual present time of a frame.
      */
     PRESENT_FENCE_IS_NOT_RELIABLE = 3,
+    /**
+     * Specifies that a device is able to skip the validateDisplay call before
+     * receiving a call to presentDisplay. The client will always skip
+     * validateDisplay and try to call presentDisplay regardless of the changes
+     * in the properties of the layers. If the device returns anything else than
+     * no error, it will call validateDisplay then presentDisplay again.
+     * For this capability to be worthwhile the device implementation of
+     * presentDisplay should fail as fast as possible in the case a
+     * validateDisplay step is needed.
+     */
+    SKIP_VALIDATE = 4,
 }
