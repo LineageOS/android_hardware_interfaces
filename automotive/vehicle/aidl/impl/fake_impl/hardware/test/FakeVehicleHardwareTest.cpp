@@ -24,6 +24,7 @@ namespace android {
 namespace hardware {
 namespace automotive {
 namespace vehicle {
+namespace fake {
 
 namespace {
 
@@ -423,6 +424,7 @@ TEST_F(FakeVehicleHardwareTest, testSetStatusMustIgnore) {
     ASSERT_EQ(getGetValueResults()[1].prop->status, VehiclePropertyStatus::AVAILABLE);
 }
 
+}  // namespace fake
 }  // namespace vehicle
 }  // namespace automotive
 }  // namespace hardware

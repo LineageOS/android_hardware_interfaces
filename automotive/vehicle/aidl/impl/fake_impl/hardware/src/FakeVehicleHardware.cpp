@@ -28,6 +28,7 @@ namespace android {
 namespace hardware {
 namespace automotive {
 namespace vehicle {
+namespace fake {
 
 using ::aidl::android::hardware::automotive::vehicle::GetValueRequest;
 using ::aidl::android::hardware::automotive::vehicle::GetValueResult;
@@ -200,6 +201,7 @@ void FakeVehicleHardware::onValueChangeCallback(const VehiclePropValue& value) {
     }
 }
 
+}  // namespace fake
 }  // namespace vehicle
 }  // namespace automotive
 }  // namespace hardware
