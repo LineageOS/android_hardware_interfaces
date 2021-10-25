@@ -54,6 +54,10 @@ constexpr int32_t VEHICLE_REQUEST = static_cast<int32_t>(SwitchUserMessageType::
 constexpr int32_t GUEST_USER = static_cast<int32_t>(UserFlags::GUEST);
 constexpr int32_t NONE_USER = static_cast<int32_t>(UserFlags::NONE);
 constexpr int32_t SYSTEM_USER = static_cast<int32_t>(UserFlags::SYSTEM);
+constexpr int32_t ADMIN_USER = static_cast<int32_t>(UserFlags::ADMIN);
+constexpr int32_t SYSTEM_ADMIN_USER = static_cast<int32_t>(UserFlags::SYSTEM | UserFlags::ADMIN);
+// 0x1111 is not a valid UserFlags combination.
+constexpr int32_t INVALID_USER_FLAG = 0x1111;
 
 constexpr int32_t USER_ID_ASSOC_KEY_FOB =
         static_cast<int32_t>(UserIdentificationAssociationType::KEY_FOB);
@@ -72,7 +76,7 @@ constexpr int32_t USER_ID_ASSOC_NO_USER =
 
 }  // namespace
 
-TEST(UserHalHelperTest, TestToInitialUserInfoRequest) {
+TEST(UserHalHelperTest, TestToInitialUserInfoRequestSystemUser) {
     VehiclePropValue propValue{
             .prop = INITIAL_USER_INFO,
             .value = {.int32Values = {23, FIRST_BOOT_AFTER_OTA, 10, NONE_USER, 2, 0, SYSTEM_USER,
@@ -90,6 +94,58 @@ TEST(UserHalHelperTest, TestToInitialUserInfoRequest) {
 
     ASSERT_TRUE(actual.ok()) << actual.error().message();
     EXPECT_THAT(actual.value(), Eq(expected));
+}
+
+TEST(UserHalHelperTest, TestToInitialUserInfoRequestAdminUser) {
+    VehiclePropValue propValue{
+            .prop = INITIAL_USER_INFO,
+            .value = {.int32Values = {23, FIRST_BOOT_AFTER_OTA, 10, NONE_USER, 2, 0, ADMIN_USER, 10,
+                                      NONE_USER}},
+    };
+    InitialUserInfoRequest expected{
+            .requestId = 23,
+            .requestType = InitialUserInfoRequestType::FIRST_BOOT_AFTER_OTA,
+            .usersInfo = {{10, UserFlags::NONE}, 2, {{0, UserFlags::ADMIN}, {10, UserFlags::NONE}}},
+    };
+
+    auto actual = toInitialUserInfoRequest(propValue);
+
+    ASSERT_TRUE(actual.ok()) << actual.error().message();
+    EXPECT_THAT(actual.value(), Eq(expected));
+}
+
+TEST(UserHalHelperTest, TestToInitialUserInfoRequestUserFlagsBitCombination) {
+    // SYSTEM_ADMIN_USER is two UserFlags combined and is itself not a defined UserFlags enum.
+    VehiclePropValue propValue{
+            .prop = INITIAL_USER_INFO,
+            .value = {.int32Values = {23, FIRST_BOOT_AFTER_OTA, 10, NONE_USER, 2, 0,
+                                      SYSTEM_ADMIN_USER, 10, NONE_USER}},
+    };
+    InitialUserInfoRequest expected{
+            .requestId = 23,
+            .requestType = InitialUserInfoRequestType::FIRST_BOOT_AFTER_OTA,
+            .usersInfo = {{10, UserFlags::NONE},
+                          2,
+                          {{0, static_cast<UserFlags>(SYSTEM_ADMIN_USER)}, {10, UserFlags::NONE}}},
+    };
+
+    auto actual = toInitialUserInfoRequest(propValue);
+
+    ASSERT_TRUE(actual.ok()) << actual.error().message();
+    EXPECT_THAT(actual.value(), Eq(expected));
+}
+
+TEST(UserHalHelperTest, TestToInitialUserInfoRequestUserInvalidUserFlag) {
+    // 0x1111 is not a valid UserFlags flag combination.
+    VehiclePropValue propValue{
+            .prop = INITIAL_USER_INFO,
+            .value = {.int32Values = {23, FIRST_BOOT_AFTER_OTA, 10, NONE_USER, 2, 0,
+                                      INVALID_USER_FLAG, 10, NONE_USER}},
+    };
+
+    auto actual = toInitialUserInfoRequest(propValue);
+
+    EXPECT_FALSE(actual.ok()) << "No error returned on invalid user flags";
 }
 
 TEST(UserHalHelperTest, TestFailsToInitialUserInfoRequestWithMismatchingPropType) {
