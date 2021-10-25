@@ -51,6 +51,10 @@ interface IUwbChip {
 
      /**
       * Supported version of vendor UCI specification.
+      *
+      * This corresponds to the version of the "android.hardware.uwb.fira_android" types-only
+      * package included in the HAL implementation. This vendor params/commands package will be
+      * updated on a different cadence to the main UWB HAL interface package.
       */
     int getSupportedVendorUciVersion();
 
