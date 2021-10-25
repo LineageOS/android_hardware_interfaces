@@ -80,7 +80,7 @@ class ObjectPool {
     virtual ~ObjectPool() = default;
 
     virtual recyclable_ptr<T> obtain() {
-        std::lock_guard<std::mutex> lock(mLock);
+        std::scoped_lock<std::mutex> lock(mLock);
         INC_METRIC_IF_DEBUG(Obtained)
         if (mObjects.empty()) {
             INC_METRIC_IF_DEBUG(Created)
@@ -100,7 +100,7 @@ class ObjectPool {
     virtual T* createObject() = 0;
 
     virtual void recycle(T* o) {
-        std::lock_guard<std::mutex> lock(mLock);
+        std::scoped_lock<std::mutex> lock(mLock);
         size_t objectSize = mGetSizeFunc(*o);
 
         if (objectSize > mMaxPoolObjectsSize ||
