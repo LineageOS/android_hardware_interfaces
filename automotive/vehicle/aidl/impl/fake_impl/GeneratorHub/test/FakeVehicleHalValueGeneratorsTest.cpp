@@ -191,7 +191,7 @@ TEST_F(FakeVehicleHalValueGeneratorsTest, testLinerFakeValueGeneratorInt32) {
 
 TEST_F(FakeVehicleHalValueGeneratorsTest, testLinerFakeValueGeneratorInt64) {
     std::unique_ptr<LinearFakeValueGenerator> generator =
-            std::make_unique<LinearFakeValueGenerator>(toInt(VehicleProperty::EPOCH_TIME),
+            std::make_unique<LinearFakeValueGenerator>(toInt(VehicleProperty::ANDROID_EPOCH_TIME),
                                                        /*middleValue=*/50.0,
                                                        /*initValue=*/30.0,
                                                        /*dispersion=*/50.0,
