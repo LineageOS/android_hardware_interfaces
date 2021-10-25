@@ -1,13 +1,23 @@
+// TODO(b/129481165): remove the #pragma below and fix conversion issues
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
 
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
+#include <aidl/android/hardware/graphics/common/BufferUsage.h>
+#include <aidl/android/hardware/graphics/common/FRect.h>
+#include <aidl/android/hardware/graphics/common/Rect.h>
+#include <aidl/android/hardware/graphics/composer3/BlendMode.h>
+#include <aidl/android/hardware/graphics/composer3/Composition.h>
 #include <aidl/android/hardware/graphics/composer3/IComposer.h>
 #include <android-base/properties.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
+#include <android/hardware/graphics/composer3/command-buffer.h>
 #include <binder/ProcessState.h>
-#include <composer-vts/include/GraphicsComposerCallback.h>
 #include <gtest/gtest.h>
+#include <ui/GraphicBuffer.h>
+#include <ui/PixelFormat.h>
 #include <algorithm>
 #include <numeric>
 #include <regex>
@@ -16,8 +26,12 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include "composer-vts/include/GraphicsComposerCallback.h"
+#include "composer-vts/include/TestCommandReader.h"
 
-#pragma push_macro("LOG_TAG")
+// TODO(b/129481165): remove the #pragma below and fix conversion issues
+#pragma clang diagnostic pop  // ignored "-Wconversion
+
 #undef LOG_TAG
 #define LOG_TAG "VtsHalGraphicsComposer3_TargetTest"
 
@@ -32,6 +46,12 @@ class VtsDisplay {
         : mDisplayId(displayId), mDisplayWidth(displayWidth), mDisplayHeight(displayHeight) {}
 
     int64_t get() const { return mDisplayId; }
+
+    FRect getCrop() const {
+        return {0, 0, static_cast<float>(mDisplayWidth), static_cast<float>(mDisplayHeight)};
+    }
+
+    Rect getFrameRect() const { return {0, 0, mDisplayWidth, mDisplayHeight}; }
 
     void setDimensions(int32_t displayWidth, int32_t displayHeight) {
         mDisplayWidth = displayWidth;
@@ -60,10 +80,30 @@ class GraphicsComposerAidlTest : public ::testing::TestWithParam<std::string> {
 
         // assume the first displays are built-in and are never removed
         mDisplays = waitForDisplays();
+
+        // explicitly disable vsync
+        for (const auto& display : mDisplays) {
+            EXPECT_TRUE(mComposerClient->setVsyncEnabled(display.get(), false).isOk());
+        }
+        mComposerCallback->setVsyncAllowed(false);
+
+        mWriter = std::make_unique<CommandWriterBase>(1024);
+        mReader = std::make_unique<TestCommandReader>();
     }
 
-    // use the slot count usually set by SF
-    static constexpr uint32_t kBufferSlotCount = 64;
+    void TearDown() override {
+        ASSERT_EQ(0, mReader->mErrors.size());
+        ASSERT_EQ(0, mReader->mCompositionChanges.size());
+
+        if (mComposerCallback != nullptr) {
+            EXPECT_EQ(0, mComposerCallback->getInvalidHotplugCount());
+            EXPECT_EQ(0, mComposerCallback->getInvalidRefreshCount());
+            EXPECT_EQ(0, mComposerCallback->getInvalidVsyncCount());
+            EXPECT_EQ(0, mComposerCallback->getInvalidVsyncCount());
+            EXPECT_EQ(0, mComposerCallback->getInvalidVsyncPeriodChangeCount());
+            EXPECT_EQ(0, mComposerCallback->getInvalidSeamlessPossibleCount());
+        }
+    }
 
     // returns an invalid display id (one that has not been registered to a
     // display.  Currently assuming that a device will never have close to
@@ -168,6 +208,282 @@ class GraphicsComposerAidlTest : public ::testing::TestWithParam<std::string> {
         }
     }
 
+    void execute() {
+        TestCommandReader* reader = mReader.get();
+        CommandWriterBase* writer = mWriter.get();
+        bool queueChanged = false;
+        int32_t commandLength = 0;
+        std::vector<NativeHandle> commandHandles;
+        ASSERT_TRUE(writer->writeQueue(&queueChanged, &commandLength, &commandHandles));
+
+        if (queueChanged) {
+            auto ret = mComposerClient->setInputCommandQueue(writer->getMQDescriptor());
+            ASSERT_TRUE(ret.isOk());
+        }
+
+        ExecuteCommandsStatus commandStatus;
+        EXPECT_TRUE(mComposerClient->executeCommands(commandLength, commandHandles, &commandStatus)
+                            .isOk());
+
+        if (commandStatus.queueChanged) {
+            MQDescriptor<int32_t, SynchronizedReadWrite> outputCommandQueue;
+            ASSERT_TRUE(mComposerClient->getOutputCommandQueue(&outputCommandQueue).isOk());
+            reader->setMQDescriptor(outputCommandQueue);
+        }
+        ASSERT_TRUE(reader->readQueue(commandStatus.length, std::move(commandStatus.handles)));
+        reader->parse();
+        reader->reset();
+        writer->reset();
+    }
+
+    ::android::sp<::android::GraphicBuffer> allocate(uint32_t width, uint32_t height) {
+        ::android::sp<::android::GraphicBuffer> buffer =
+                ::android::sp<::android::GraphicBuffer>::make(
+                        width, height, ::android::PIXEL_FORMAT_RGBA_8888,
+                        /*layerCount*/ 1,
+                        static_cast<uint64_t>(
+                                static_cast<int>(common::BufferUsage::CPU_WRITE_OFTEN) |
+                                static_cast<int>(common::BufferUsage::CPU_READ_OFTEN)),
+                        "VtsHalGraphicsComposer3_TargetTest");
+
+        return buffer;
+    }
+
+    struct TestParameters {
+        nsecs_t delayForChange;
+        bool refreshMiss;
+    };
+
+    static inline auto toTimePoint(nsecs_t time) {
+        return std::chrono::time_point<std::chrono::steady_clock>(std::chrono::nanoseconds(time));
+    }
+
+    int64_t createLayer(const VtsDisplay& display) {
+        int64_t layer;
+        EXPECT_TRUE(mComposerClient->createLayer(display.get(), kBufferSlotCount, &layer).isOk());
+
+        auto resourceIt = mDisplayResources.find(display.get());
+        if (resourceIt == mDisplayResources.end()) {
+            resourceIt = mDisplayResources.insert({display.get(), DisplayResource(false)}).first;
+        }
+
+        EXPECT_TRUE(resourceIt->second.layers.insert(layer).second)
+                << "duplicated layer id " << layer;
+
+        return layer;
+    }
+
+    void destroyLayer(const VtsDisplay& display, int64_t layer) {
+        auto const error = mComposerClient->destroyLayer(display.get(), layer);
+        ASSERT_TRUE(error.isOk()) << "failed to destroy layer " << layer;
+
+        auto resourceIt = mDisplayResources.find(display.get());
+        ASSERT_NE(mDisplayResources.end(), resourceIt);
+        resourceIt->second.layers.erase(layer);
+    }
+
+    void forEachTwoConfigs(int64_t display, std::function<void(int32_t, int32_t)> func) {
+        std::vector<int32_t> displayConfigs;
+        EXPECT_TRUE(mComposerClient->getDisplayConfigs(display, &displayConfigs).isOk());
+        for (const int32_t config1 : displayConfigs) {
+            for (const int32_t config2 : displayConfigs) {
+                if (config1 != config2) {
+                    func(config1, config2);
+                }
+            }
+        }
+    }
+
+    void setActiveConfig(VtsDisplay& display, int32_t config) {
+        EXPECT_TRUE(mComposerClient->setActiveConfig(display.get(), config).isOk());
+        int32_t displayWidth;
+        EXPECT_TRUE(mComposerClient
+                            ->getDisplayAttribute(display.get(), config, DisplayAttribute::WIDTH,
+                                                  &displayWidth)
+                            .isOk());
+        int32_t displayHeight;
+        EXPECT_TRUE(mComposerClient
+                            ->getDisplayAttribute(display.get(), config, DisplayAttribute::HEIGHT,
+                                                  &displayHeight)
+                            .isOk());
+        display.setDimensions(displayWidth, displayHeight);
+    }
+
+    void sendRefreshFrame(const VtsDisplay& display, const VsyncPeriodChangeTimeline* timeline) {
+        if (timeline != nullptr) {
+            // Refresh time should be before newVsyncAppliedTimeNanos
+            EXPECT_LT(timeline->refreshTimeNanos, timeline->newVsyncAppliedTimeNanos);
+
+            std::this_thread::sleep_until(toTimePoint(timeline->refreshTimeNanos));
+        }
+
+        mWriter->selectDisplay(display.get());
+        setPowerMode(display.get(), PowerMode::ON);
+        EXPECT_TRUE(
+                mComposerClient
+                        ->setColorMode(display.get(), ColorMode::NATIVE, RenderIntent::COLORIMETRIC)
+                        .isOk());
+
+        FRect displayCrop = display.getCrop();
+        auto displayWidth = static_cast<uint32_t>(std::ceilf(displayCrop.right - displayCrop.left));
+        auto displayHeight =
+                static_cast<uint32_t>(std::ceilf(displayCrop.bottom - displayCrop.top));
+        int64_t layer = 0;
+        ASSERT_NO_FATAL_FAILURE(layer = createLayer(display));
+        {
+            auto buffer = allocate(displayWidth, displayHeight);
+            ASSERT_NE(nullptr, buffer);
+            ASSERT_EQ(::android::OK, buffer->initCheck());
+            ASSERT_NE(nullptr, buffer->handle);
+
+            mWriter->selectLayer(layer);
+            mWriter->setLayerCompositionType(Composition::DEVICE);
+            mWriter->setLayerDisplayFrame(display.getFrameRect());
+            mWriter->setLayerPlaneAlpha(1);
+            mWriter->setLayerSourceCrop(display.getCrop());
+            mWriter->setLayerTransform(static_cast<Transform>(0));
+            mWriter->setLayerVisibleRegion(std::vector<Rect>(1, display.getFrameRect()));
+            mWriter->setLayerZOrder(10);
+            mWriter->setLayerBlendMode(BlendMode::NONE);
+            mWriter->setLayerSurfaceDamage(std::vector<Rect>(1, display.getFrameRect()));
+            mWriter->setLayerBuffer(0, buffer->handle, -1);
+            mWriter->setLayerDataspace(common::Dataspace::UNKNOWN);
+
+            mWriter->validateDisplay();
+            execute();
+            ASSERT_EQ(0, mReader->mErrors.size());
+            mReader->mCompositionChanges.clear();
+
+            mWriter->presentDisplay();
+            execute();
+            ASSERT_EQ(0, mReader->mErrors.size());
+        }
+
+        {
+            auto buffer = allocate(displayWidth, displayHeight);
+            ASSERT_NE(nullptr, buffer->handle);
+
+            mWriter->selectLayer(layer);
+            mWriter->setLayerBuffer(0, buffer->handle, -1);
+            mWriter->setLayerSurfaceDamage(std::vector<Rect>(1, {0, 0, 10, 10}));
+            mWriter->validateDisplay();
+            execute();
+            ASSERT_EQ(0, mReader->mErrors.size());
+            mReader->mCompositionChanges.clear();
+
+            mWriter->presentDisplay();
+            execute();
+        }
+
+        ASSERT_NO_FATAL_FAILURE(destroyLayer(display, layer));
+    }
+
+    void waitForVsyncPeriodChange(int64_t display, const VsyncPeriodChangeTimeline& timeline,
+                                  int64_t desiredTimeNanos, int64_t oldPeriodNanos,
+                                  int64_t newPeriodNanos) {
+        const auto kChangeDeadline = toTimePoint(timeline.newVsyncAppliedTimeNanos) + 100ms;
+        while (std::chrono::steady_clock::now() <= kChangeDeadline) {
+            int32_t vsyncPeriodNanos;
+            EXPECT_TRUE(mComposerClient->getDisplayVsyncPeriod(display, &vsyncPeriodNanos).isOk());
+            if (systemTime() <= desiredTimeNanos) {
+                EXPECT_EQ(vsyncPeriodNanos, oldPeriodNanos);
+            } else if (vsyncPeriodNanos == newPeriodNanos) {
+                break;
+            }
+            std::this_thread::sleep_for(std::chrono::nanoseconds(oldPeriodNanos));
+        }
+    }
+
+    void Test_setActiveConfigWithConstraints(const TestParameters& params) {
+        for (VtsDisplay& display : mDisplays) {
+            forEachTwoConfigs(display.get(), [&](int32_t config1, int32_t config2) {
+                setActiveConfig(display, config1);
+                sendRefreshFrame(display, nullptr);
+
+                int32_t vsyncPeriod1;
+                EXPECT_TRUE(mComposerClient
+                                    ->getDisplayAttribute(display.get(), config1,
+                                                          DisplayAttribute::VSYNC_PERIOD,
+                                                          &vsyncPeriod1)
+                                    .isOk());
+                int32_t configGroup1;
+                EXPECT_TRUE(mComposerClient
+                                    ->getDisplayAttribute(display.get(), config1,
+                                                          DisplayAttribute::CONFIG_GROUP,
+                                                          &configGroup1)
+                                    .isOk());
+                int32_t vsyncPeriod2;
+                EXPECT_TRUE(mComposerClient
+                                    ->getDisplayAttribute(display.get(), config2,
+                                                          DisplayAttribute::VSYNC_PERIOD,
+                                                          &vsyncPeriod2)
+                                    .isOk());
+                int32_t configGroup2;
+                EXPECT_TRUE(mComposerClient
+                                    ->getDisplayAttribute(display.get(), config2,
+                                                          DisplayAttribute::CONFIG_GROUP,
+                                                          &configGroup2)
+                                    .isOk());
+
+                if (vsyncPeriod1 == vsyncPeriod2) {
+                    return;  // continue
+                }
+
+                // We don't allow delayed change when changing config groups
+                if (params.delayForChange > 0 && configGroup1 != configGroup2) {
+                    return;  // continue
+                }
+
+                VsyncPeriodChangeTimeline timeline;
+                VsyncPeriodChangeConstraints constraints = {
+                        .desiredTimeNanos = systemTime() + params.delayForChange,
+                        .seamlessRequired = false};
+                EXPECT_TRUE(setActiveConfigWithConstraints(display, config2, constraints, &timeline)
+                                    .isOk());
+
+                EXPECT_TRUE(timeline.newVsyncAppliedTimeNanos >= constraints.desiredTimeNanos);
+                // Refresh rate should change within a reasonable time
+                constexpr std::chrono::nanoseconds kReasonableTimeForChange = 1s;  // 1 second
+                EXPECT_TRUE(timeline.newVsyncAppliedTimeNanos - constraints.desiredTimeNanos <=
+                            kReasonableTimeForChange.count());
+
+                if (timeline.refreshRequired) {
+                    if (params.refreshMiss) {
+                        // Miss the refresh frame on purpose to make sure the implementation sends a
+                        // callback
+                        std::this_thread::sleep_until(toTimePoint(timeline.refreshTimeNanos) +
+                                                      100ms);
+                    }
+                    sendRefreshFrame(display, &timeline);
+                }
+                waitForVsyncPeriodChange(display.get(), timeline, constraints.desiredTimeNanos,
+                                         vsyncPeriod1, vsyncPeriod2);
+
+                // At this point the refresh rate should have changed already, however in rare
+                // cases the implementation might have missed the deadline. In this case a new
+                // timeline should have been provided.
+                auto newTimeline = mComposerCallback->takeLastVsyncPeriodChangeTimeline();
+                if (timeline.refreshRequired && params.refreshMiss) {
+                    EXPECT_TRUE(newTimeline.has_value());
+                }
+
+                if (newTimeline.has_value()) {
+                    if (newTimeline->refreshRequired) {
+                        sendRefreshFrame(display, &newTimeline.value());
+                    }
+                    waitForVsyncPeriodChange(display.get(), newTimeline.value(),
+                                             constraints.desiredTimeNanos, vsyncPeriod1,
+                                             vsyncPeriod2);
+                }
+
+                int32_t vsyncPeriodNanos;
+                EXPECT_TRUE(mComposerClient->getDisplayVsyncPeriod(display.get(), &vsyncPeriodNanos)
+                                    .isOk());
+                EXPECT_EQ(vsyncPeriodNanos, vsyncPeriod2);
+            });
+        }
+    }
+
     void setPowerMode(int64_t display, PowerMode powerMode) {
         ::ndk::ScopedAStatus error = mComposerClient->setPowerMode(display, powerMode);
         ASSERT_TRUE(error.isOk() ||
@@ -181,7 +497,7 @@ class GraphicsComposerAidlTest : public ::testing::TestWithParam<std::string> {
         DisplayResource(bool isVirtual_) : isVirtual(isVirtual_) {}
 
         bool isVirtual;
-        std::unordered_set<int32_t> layers;
+        std::unordered_set<int64_t> layers;
     };
 
     std::shared_ptr<IComposer> mComposer;
@@ -190,6 +506,10 @@ class GraphicsComposerAidlTest : public ::testing::TestWithParam<std::string> {
     int64_t mPrimaryDisplay;
     std::vector<VtsDisplay> mDisplays;
     std::shared_ptr<GraphicsComposerCallback> mComposerCallback;
+    std::unique_ptr<CommandWriterBase> mWriter;
+    std::unique_ptr<TestCommandReader> mReader;
+    // use the slot count usually set by SF
+    static constexpr uint32_t kBufferSlotCount = 64;
     std::unordered_map<int64_t, DisplayResource> mDisplayResources;
 };
 
@@ -209,6 +529,94 @@ TEST_P(GraphicsComposerAidlTest, getDisplayCapabilities) {
     }
 }
 
+TEST_P(GraphicsComposerAidlTest, getDisplayVsyncPeriod) {
+    for (VtsDisplay& display : mDisplays) {
+        std::vector<int32_t> configs;
+        EXPECT_TRUE(mComposerClient->getDisplayConfigs(display.get(), &configs).isOk());
+        for (int32_t config : configs) {
+            int32_t expectedVsyncPeriodNanos = -1;
+            EXPECT_TRUE(mComposerClient
+                                ->getDisplayAttribute(display.get(), config,
+                                                      DisplayAttribute::VSYNC_PERIOD,
+                                                      &expectedVsyncPeriodNanos)
+                                .isOk());
+
+            VsyncPeriodChangeTimeline timeline;
+            VsyncPeriodChangeConstraints constraints;
+
+            constraints.desiredTimeNanos = systemTime();
+            constraints.seamlessRequired = false;
+            EXPECT_TRUE(mComposerClient
+                                ->setActiveConfigWithConstraints(display.get(), config, constraints,
+                                                                 &timeline)
+                                .isOk());
+
+            if (timeline.refreshRequired) {
+                sendRefreshFrame(display, &timeline);
+            }
+            waitForVsyncPeriodChange(display.get(), timeline, constraints.desiredTimeNanos, 0,
+                                     expectedVsyncPeriodNanos);
+
+            int32_t vsyncPeriodNanos;
+            int retryCount = 100;
+            do {
+                std::this_thread::sleep_for(10ms);
+                vsyncPeriodNanos = 0;
+                EXPECT_TRUE(mComposerClient->getDisplayVsyncPeriod(display.get(), &vsyncPeriodNanos)
+                                    .isOk());
+                --retryCount;
+            } while (vsyncPeriodNanos != expectedVsyncPeriodNanos && retryCount > 0);
+
+            EXPECT_EQ(vsyncPeriodNanos, expectedVsyncPeriodNanos);
+
+            // Make sure that the vsync period stays the same if the active config is not
+            // changed.
+            auto timeout = 1ms;
+            for (int i = 0; i < 10; i++) {
+                std::this_thread::sleep_for(timeout);
+                timeout *= 2;
+                vsyncPeriodNanos = 0;
+                EXPECT_TRUE(mComposerClient->getDisplayVsyncPeriod(display.get(), &vsyncPeriodNanos)
+                                    .isOk());
+                EXPECT_EQ(vsyncPeriodNanos, expectedVsyncPeriodNanos);
+            }
+        }
+    }
+}
+
+TEST_P(GraphicsComposerAidlTest, setActiveConfigWithConstraints_SeamlessNotAllowed) {
+    VsyncPeriodChangeTimeline timeline;
+    VsyncPeriodChangeConstraints constraints;
+
+    constraints.seamlessRequired = true;
+    constraints.desiredTimeNanos = systemTime();
+
+    for (VtsDisplay& display : mDisplays) {
+        forEachTwoConfigs(display.get(), [&](int32_t config1, int32_t config2) {
+            int32_t configGroup1;
+            EXPECT_TRUE(mComposerClient
+                                ->getDisplayAttribute(display.get(), config1,
+                                                      DisplayAttribute::CONFIG_GROUP, &configGroup1)
+                                .isOk());
+            int32_t configGroup2;
+            EXPECT_TRUE(mComposerClient
+                                ->getDisplayAttribute(display.get(), config2,
+                                                      DisplayAttribute::CONFIG_GROUP, &configGroup2)
+                                .isOk());
+            if (configGroup1 != configGroup2) {
+                setActiveConfig(display, config1);
+                sendRefreshFrame(display, nullptr);
+                EXPECT_EQ(IComposerClient::EX_SEAMLESS_NOT_ALLOWED,
+                          setActiveConfigWithConstraints(display, config2, constraints, &timeline)
+                                  .getServiceSpecificError());
+            }
+        });
+    }
+}
+
+TEST_P(GraphicsComposerAidlTest, setActiveConfigWithConstraints) {
+    Test_setActiveConfigWithConstraints({.delayForChange = 0, .refreshMiss = false});
+}
 TEST_P(GraphicsComposerAidlTest, GetDisplayIdentificationData) {
     DisplayIdentification displayIdentification0;
 
@@ -423,9 +831,9 @@ TEST_P(GraphicsComposerAidlTest, GetDisplayedContentSample) {
                                                                 &displayContentSamplingAttributes)
                         .isOk());
 
-    uint64_t maxFrames = 10;
-    uint64_t timestamp = 0;
-    uint64_t frameCount = 0;
+    int64_t maxFrames = 10;
+    int64_t timestamp = 0;
+    int64_t frameCount = 0;
     DisplayContentSample displayContentSample;
     auto error = mComposerClient->getDisplayedContentSample(mPrimaryDisplay, maxFrames, timestamp,
                                                             &displayContentSample);
@@ -440,12 +848,10 @@ TEST_P(GraphicsComposerAidlTest, GetDisplayedContentSample) {
             displayContentSample.sampleComponent0, displayContentSample.sampleComponent1,
             displayContentSample.sampleComponent2, displayContentSample.sampleComponent3};
 
-    for (auto i = 0; i < histogram.size(); i++) {
-        if (static_cast<int>(displayContentSamplingAttributes.componentMask) & (1 << i)) {
-            EXPECT_NE(histogram[i].size(), 0);
-        } else {
-            EXPECT_EQ(histogram[i].size(), 0);
-        }
+    for (size_t i = 0; i < histogram.size(); i++) {
+        const bool shouldHaveHistogram =
+                static_cast<int>(displayContentSamplingAttributes.componentMask) & (1 << i);
+        EXPECT_EQ(shouldHaveHistogram, !histogram[i].empty());
     }
 }
 
@@ -510,7 +916,7 @@ TEST_P(GraphicsComposerAidlTest, getDisplayConnectionType) {
 TEST_P(GraphicsComposerAidlTest, getDisplayAttribute) {
     for (const auto& display : mDisplays) {
         std::vector<int32_t> configs;
-        mComposerClient->getDisplayConfigs(display.get(), &configs);
+        EXPECT_TRUE(mComposerClient->getDisplayConfigs(display.get(), &configs).isOk());
         for (const auto& config : configs) {
             const std::array<DisplayAttribute, 4> requiredAttributes = {{
                     DisplayAttribute::WIDTH,
@@ -546,7 +952,7 @@ TEST_P(GraphicsComposerAidlTest, getDisplayAttribute) {
 TEST_P(GraphicsComposerAidlTest, checkConfigsAreValid) {
     for (const auto& display : mDisplays) {
         std::vector<int32_t> configs;
-        mComposerClient->getDisplayConfigs(display.get(), &configs);
+        EXPECT_TRUE(mComposerClient->getDisplayConfigs(display.get(), &configs).isOk());
 
         EXPECT_FALSE(std::any_of(configs.begin(), configs.end(), [](auto config) {
             return config == IComposerClient::INVALID_CONFIGURATION;
@@ -748,7 +1154,7 @@ TEST_P(GraphicsComposerAidlTest, getLayerGenericMetadataKeys) {
     std::regex reverseDomainName("^[a-zA-Z-]{2,}(\\.[a-zA-Z0-9-]+)+$");
     std::unordered_set<std::string> uniqueNames;
     for (const auto& key : keys) {
-        std::string name(key.name.c_str());
+        std::string name(key.name);
 
         // Keys must not start with 'android' or 'com.android'
         EXPECT_FALSE(name.find("android") == 0);
@@ -862,7 +1268,7 @@ TEST_P(GraphicsComposerAidlTest, SetPowerModeBadParameter) {
 
 TEST_P(GraphicsComposerAidlTest, SetPowerModeUnsupported) {
     bool isDozeSupported = false;
-    mComposerClient->getDozeSupport(mPrimaryDisplay, &isDozeSupported);
+    EXPECT_TRUE(mComposerClient->getDozeSupport(mPrimaryDisplay, &isDozeSupported).isOk());
     if (!isDozeSupported) {
         auto error = mComposerClient->setPowerMode(mPrimaryDisplay, PowerMode::DOZE);
         EXPECT_FALSE(error.isOk());
