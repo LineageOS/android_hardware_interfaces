@@ -1016,8 +1016,8 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
         {
                 .config =
                         {
-                                .prop = toInt(VehicleProperty::EPOCH_TIME),
-                                .access = VehiclePropertyAccess::READ_WRITE,
+                                .prop = toInt(VehicleProperty::ANDROID_EPOCH_TIME),
+                                .access = VehiclePropertyAccess::WRITE,
                                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                         },
         },

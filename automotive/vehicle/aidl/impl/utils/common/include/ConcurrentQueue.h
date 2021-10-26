@@ -44,7 +44,7 @@ class ConcurrentQueue {
     std::vector<T> flush() {
         std::vector<T> items;
 
-        std::lock_guard<std::mutex> lockGuard(mLock);
+        std::scoped_lock<std::mutex> lockGuard(mLock);
         if (mQueue.empty()) {
             return items;
         }
@@ -59,7 +59,7 @@ class ConcurrentQueue {
 
     void push(T&& item) {
         {
-            std::lock_guard<std::mutex> lockGuard(mLock);
+            std::scoped_lock<std::mutex> lockGuard(mLock);
             if (!mIsActive) {
                 return;
             }
@@ -72,7 +72,7 @@ class ConcurrentQueue {
     // The items already in the queue could still be flushed even after the queue is deactivated.
     void deactivate() {
         {
-            std::lock_guard<std::mutex> lockGuard(mLock);
+            std::scoped_lock<std::mutex> lockGuard(mLock);
             mIsActive = false;
         }
         // To unblock all waiting consumers.

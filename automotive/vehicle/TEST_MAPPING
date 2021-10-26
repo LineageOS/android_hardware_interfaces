@@ -8,6 +8,12 @@
     },
     {
       "name": "VehicleHalVehicleUtilsTest"
+    },
+    {
+      "name": "FakeVehicleHardwareTest"
+    },
+    {
+      "name": "FakeVehicleHalValueGeneratorsTest"
     }
   ]
 }

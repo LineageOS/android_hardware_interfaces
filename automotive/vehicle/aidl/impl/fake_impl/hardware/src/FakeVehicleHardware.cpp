@@ -28,6 +28,7 @@ namespace android {
 namespace hardware {
 namespace automotive {
 namespace vehicle {
+namespace fake {
 
 using ::aidl::android::hardware::automotive::vehicle::GetValueRequest;
 using ::aidl::android::hardware::automotive::vehicle::GetValueResult;
@@ -106,15 +107,67 @@ std::vector<VehiclePropConfig> FakeVehicleHardware::getAllPropertyConfigs() cons
     return mServerSidePropStore->getAllConfigs();
 }
 
-StatusCode FakeVehicleHardware::setValues(FakeVehicleHardware::SetValuesCallback&&,
-                                          const std::vector<SetValueRequest>&) {
-    // TODO(b/201830716): Implement this.
+StatusCode FakeVehicleHardware::setValues(FakeVehicleHardware::SetValuesCallback&& callback,
+                                          const std::vector<SetValueRequest>& requests) {
+    std::vector<VehiclePropValue> updatedValues;
+    std::vector<SetValueResult> results;
+    for (auto& request : requests) {
+        const VehiclePropValue* value = &request.value;
+        ALOGD("setValues(%d)", value->prop);
+
+        auto updatedValue = mValuePool->obtain(*value);
+        int64_t timestamp = elapsedRealtimeNano();
+        updatedValue->timestamp = timestamp;
+
+        auto writeResult = mServerSidePropStore->writeValue(std::move(updatedValue));
+        SetValueResult setValueResult;
+        setValueResult.requestId = request.requestId;
+        if (!writeResult.ok()) {
+            ALOGE("failed to write value into property store, error: %s, code: %d",
+                  writeResult.error().message().c_str(), writeResult.error().code());
+            setValueResult.status = StatusCode::INVALID_ARG;
+        } else {
+            setValueResult.status = StatusCode::OK;
+        }
+        results.push_back(std::move(setValueResult));
+    }
+
+    // In the real vhal, the values will be sent to Car ECU. We just pretend it is done here and
+    // send back the updated property values to client.
+    callback(std::move(results));
+
     return StatusCode::OK;
 }
 
-StatusCode FakeVehicleHardware::getValues(FakeVehicleHardware::GetValuesCallback&&,
-                                          const std::vector<GetValueRequest>&) const {
-    // TODO(b/201830716): Implement this.
+StatusCode FakeVehicleHardware::getValues(FakeVehicleHardware::GetValuesCallback&& callback,
+                                          const std::vector<GetValueRequest>& requests) const {
+    std::vector<GetValueResult> results;
+    for (auto& request : requests) {
+        const VehiclePropValue* value = &request.prop;
+        ALOGD("getValues(%d)", value->prop);
+
+        auto readResult = mServerSidePropStore->readValue(*value);
+        GetValueResult getValueResult;
+        getValueResult.requestId = request.requestId;
+        if (!readResult.ok()) {
+            auto error = readResult.error();
+            if (error.code() == toInt(StatusCode::NOT_AVAILABLE)) {
+                ALOGW("%s", "value has not been set yet");
+                getValueResult.status = StatusCode::NOT_AVAILABLE;
+            } else {
+                ALOGE("failed to get value, error: %s, code: %d", error.message().c_str(),
+                      error.code());
+                getValueResult.status = StatusCode::INVALID_ARG;
+            }
+        } else {
+            getValueResult.status = StatusCode::OK;
+            getValueResult.prop = *readResult.value();
+        }
+        results.push_back(std::move(getValueResult));
+    }
+
+    callback(std::move(results));
+
     return StatusCode::OK;
 }
 
@@ -130,17 +183,17 @@ StatusCode FakeVehicleHardware::checkHealth() {
 }
 
 void FakeVehicleHardware::registerOnPropertyChangeEvent(OnPropertyChangeCallback&& callback) {
-    std::lock_guard<std::mutex> lockGuard(mCallbackLock);
+    std::scoped_lock<std::mutex> lockGuard(mCallbackLock);
     mOnPropertyChangeCallback = std::move(callback);
 }
 
 void FakeVehicleHardware::registerOnPropertySetErrorEvent(OnPropertySetErrorCallback&& callback) {
-    std::lock_guard<std::mutex> lockGuard(mCallbackLock);
+    std::scoped_lock<std::mutex> lockGuard(mCallbackLock);
     mOnPropertySetErrorCallback = std::move(callback);
 }
 
 void FakeVehicleHardware::onValueChangeCallback(const VehiclePropValue& value) {
-    std::lock_guard<std::mutex> lockGuard(mCallbackLock);
+    std::scoped_lock<std::mutex> lockGuard(mCallbackLock);
     if (mOnPropertyChangeCallback != nullptr) {
         std::vector<VehiclePropValue> updatedValues;
         updatedValues.push_back(value);
@@ -148,6 +201,7 @@ void FakeVehicleHardware::onValueChangeCallback(const VehiclePropValue& value) {
     }
 }
 
+}  // namespace fake
 }  // namespace vehicle
 }  // namespace automotive
 }  // namespace hardware
