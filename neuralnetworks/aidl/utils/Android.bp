@@ -40,7 +40,6 @@ cc_library_static {
     shared_libs: [
         "android.hardware.neuralnetworks-V2-ndk",
         "libbinder_ndk",
-        "libhidlbase",
     ],
     target: {
         android: {

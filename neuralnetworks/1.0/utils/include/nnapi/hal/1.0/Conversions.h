@@ -36,6 +36,7 @@ GeneralResult<Operand> unvalidatedConvert(const hal::V1_0::Operand& operand);
 GeneralResult<Operation> unvalidatedConvert(const hal::V1_0::Operation& operation);
 GeneralResult<Model::OperandValues> unvalidatedConvert(
         const hardware::hidl_vec<uint8_t>& operandValues);
+GeneralResult<SharedHandle> unvalidatedConvert(const hardware::hidl_handle& handle);
 GeneralResult<SharedMemory> unvalidatedConvert(const hardware::hidl_memory& memory);
 GeneralResult<Model> unvalidatedConvert(const hal::V1_0::Model& model);
 GeneralResult<Request::Argument> unvalidatedConvert(
@@ -65,6 +66,7 @@ nn::GeneralResult<Operand> unvalidatedConvert(const nn::Operand& operand);
 nn::GeneralResult<Operation> unvalidatedConvert(const nn::Operation& operation);
 nn::GeneralResult<hidl_vec<uint8_t>> unvalidatedConvert(
         const nn::Model::OperandValues& operandValues);
+nn::GeneralResult<hidl_handle> unvalidatedConvert(const nn::SharedHandle& handle);
 nn::GeneralResult<hidl_memory> unvalidatedConvert(const nn::SharedMemory& memory);
 nn::GeneralResult<Model> unvalidatedConvert(const nn::Model& model);
 nn::GeneralResult<RequestArgument> unvalidatedConvert(const nn::Request::Argument& requestArgument);
