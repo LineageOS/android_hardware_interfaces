@@ -298,6 +298,15 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <!-- TODO(b/177269435): require health AIDL HAL and deprecate HIDL HAL -->
+    <hal format="aidl" optional="true">
+        <name>android.hardware.health</name>
+        <version>1</version>
+        <interface>
+            <name>IHealth</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.health.storage</name>
         <version>1</version>
