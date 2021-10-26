@@ -15,27 +15,26 @@
  */
 #pragma once
 
-#include <android-base/logging.h>
+#include "RadioIndication.h"
+#include "RadioResponse.h"
+
+#include <android/hardware/radio/1.6/IRadio.h>
 
 namespace android::hardware::radio::compat {
 
-namespace debug {
+class RadioCompatBase {
+  protected:
+    sp<V1_5::IRadio> mHal1_5;
+    sp<V1_6::IRadio> mHal1_6;
 
-static constexpr bool kSuperVerbose = true;
+    sp<RadioResponse> mRadioResponse;
+    sp<RadioIndication> mRadioIndication;
 
-#define LOG_CALL \
-    if constexpr (debug::kSuperVerbose) LOG(VERBOSE) << (RADIO_MODULE ".") << __func__ << ' '
+    V1_6::IRadioResponse& respond();
 
-#define CHECK_CB(field)                     \
-    if (!field) {                           \
-        LOG(WARNING) << "Callback not set"; \
-        return {};                          \
-    }
-
-}  // namespace debug
-
-inline std::ostream& operator<<(std::ostream& os, const V1_0::RadioIndicationType& type) {
-    return os << static_cast<int>(type);
-}
+  public:
+    RadioCompatBase(sp<V1_5::IRadio> hidlHal, sp<RadioResponse> radioResponse,
+                    sp<RadioIndication> radioIndication);
+};
 
 }  // namespace android::hardware::radio::compat

@@ -17,6 +17,7 @@
 #include "hidl-utils.h"
 
 #include <android-base/logging.h>
+#include <android/hidl/manager/1.2/IServiceManager.h>
 
 namespace android::hardware::hidl_utils {
 
@@ -31,6 +32,15 @@ static const auto gHalDeathRecipient = sp<HalDeathRecipient>::make();
 void linkDeathToDeath(sp<::android::hidl::base::V1_0::IBase> hal) {
     const auto linkStatus = hal->linkToDeath(gHalDeathRecipient, 0);
     CHECK(linkStatus.withDefault(false)) << "Failed to link to HAL death";
+}
+
+hidl_vec<hidl_string> listManifestByInterface(const char* descriptor) {
+    auto manager = hidl::manager::V1_2::IServiceManager::getService();
+    hidl_vec<hidl_string> services;
+    manager->listManifestByInterface(descriptor, hidl_utils::fill(&services));
+    CHECK_GT(services.size(), 0u) << "No " << descriptor
+                                  << " services in manifest (missing privileges?)" << std::endl;
+    return services;
 }
 
 }  // namespace android::hardware::hidl_utils

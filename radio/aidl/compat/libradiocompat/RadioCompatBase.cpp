@@ -13,29 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
+
+#include <libradiocompat/RadioCompatBase.h>
 
 #include <android-base/logging.h>
 
 namespace android::hardware::radio::compat {
 
-namespace debug {
+RadioCompatBase::RadioCompatBase(sp<V1_5::IRadio> hidlHal, sp<RadioResponse> radioResponse,
+                                 sp<RadioIndication> radioIndication)
+    : mHal1_5(hidlHal),
+      mHal1_6(V1_6::IRadio::castFrom(hidlHal)),
+      mRadioResponse(radioResponse),
+      mRadioIndication(radioIndication) {}
 
-static constexpr bool kSuperVerbose = true;
-
-#define LOG_CALL \
-    if constexpr (debug::kSuperVerbose) LOG(VERBOSE) << (RADIO_MODULE ".") << __func__ << ' '
-
-#define CHECK_CB(field)                     \
-    if (!field) {                           \
-        LOG(WARNING) << "Callback not set"; \
-        return {};                          \
-    }
-
-}  // namespace debug
-
-inline std::ostream& operator<<(std::ostream& os, const V1_0::RadioIndicationType& type) {
-    return os << static_cast<int>(type);
+V1_6::IRadioResponse& RadioCompatBase::respond() {
+    CHECK(mRadioResponse) << "This shouldn't happen (response functions are passed in constructor)";
+    return *mRadioResponse;
 }
 
 }  // namespace android::hardware::radio::compat
