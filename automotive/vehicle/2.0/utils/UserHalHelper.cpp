@@ -60,11 +60,22 @@ Result<void> parseUserInfo(const hidl_vec<int32_t>& int32Values, size_t startPos
                        << int32Values.size();
     }
     userInfo->userId = int32Values[startPos];
-    auto userFlags = verifyAndCast<UserFlags>(int32Values[startPos + 1]);
-    if (!userFlags.ok()) {
-        return Error() << "Invalid user flags: " << userFlags.error();
+    int32_t intUserFlags = int32Values[startPos + 1];
+    int32_t expectedUserFlags = 0;
+    for (const auto& v : hidl_enum_range<UserFlags>()) {
+        int32_t intEnumUserFlag = static_cast<int32_t>(v);
+        if ((intUserFlags & intEnumUserFlag) != 0) {
+            expectedUserFlags |= intEnumUserFlag;
+        }
     }
-    userInfo->flags = *userFlags;
+    if (intUserFlags != expectedUserFlags) {
+        return Error() << "Invalid user flags: " << intUserFlags << ", must be '|' of UserFlags";
+    }
+    // intUserFlags is actually not a valid UserFlags enum, instead, it is a 'bit or' of possible
+    // multiple UserFlags. However, because the HAL interface was defined incorrectly, we have to
+    // cast it to UserFlags here, which is defined behavior because the underlying type for
+    // UserFlags is int32_t and our intUserFlags is within the range of int32_t.
+    userInfo->flags = static_cast<UserFlags>(intUserFlags);
     return {};
 }
 
