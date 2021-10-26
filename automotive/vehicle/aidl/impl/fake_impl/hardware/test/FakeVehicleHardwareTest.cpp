@@ -154,7 +154,7 @@ class FakeVehicleHardwareTest : public ::testing::Test {
         return toInt(result.error());
     }
 
-    void onSetValues(const std::vector<SetValueResult> results) {
+    void onSetValues(std::vector<SetValueResult> results) {
         for (auto& result : results) {
             mSetValueResults.push_back(result);
         }
@@ -162,7 +162,7 @@ class FakeVehicleHardwareTest : public ::testing::Test {
 
     const std::vector<SetValueResult>& getSetValueResults() { return mSetValueResults; }
 
-    void onGetValues(const std::vector<GetValueResult> results) {
+    void onGetValues(std::vector<GetValueResult> results) {
         for (auto& result : results) {
             mGetValueResults.push_back(result);
         }
@@ -170,7 +170,7 @@ class FakeVehicleHardwareTest : public ::testing::Test {
 
     const std::vector<GetValueResult>& getGetValueResults() { return mGetValueResults; }
 
-    void onPropertyChangeEvent(const std::vector<VehiclePropValue>& values) {
+    void onPropertyChangeEvent(std::vector<VehiclePropValue> values) {
         for (auto& value : values) {
             mChangedProperties.push_back(value);
         }

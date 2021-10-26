@@ -56,6 +56,7 @@ cc_library {
     srcs: [
         "src/ConnectedClient.cpp",
         "src/DefaultVehicleHal.cpp",
+        "src/PendingRequestPool.cpp",
     ],
     static_libs: [
         "VehicleHalUtils",
