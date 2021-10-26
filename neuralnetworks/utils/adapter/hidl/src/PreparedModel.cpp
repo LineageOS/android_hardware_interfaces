@@ -159,7 +159,7 @@ nn::GeneralResult<void> execute(const nn::SharedPreparedModel& preparedModel,
     }
 
     Task task = [preparedModel, nnRequest = std::move(nnRequest), callback] {
-        auto result = preparedModel->execute(nnRequest, nn::MeasureTiming::NO, {}, {});
+        auto result = preparedModel->execute(nnRequest, nn::MeasureTiming::NO, {}, {}, {}, {});
         notify(callback.get(), std::move(result));
     };
     executor(std::move(task), {});
@@ -185,7 +185,7 @@ nn::GeneralResult<void> execute_1_2(const nn::SharedPreparedModel& preparedModel
     }
 
     Task task = [preparedModel, nnRequest = std::move(nnRequest), nnMeasure, callback] {
-        auto result = preparedModel->execute(nnRequest, nnMeasure, {}, {});
+        auto result = preparedModel->execute(nnRequest, nnMeasure, {}, {}, {}, {});
         notify(callback.get(), std::move(result));
     };
     executor(std::move(task), {});
@@ -216,8 +216,8 @@ nn::GeneralResult<void> execute_1_3(const nn::SharedPreparedModel& preparedModel
 
     Task task = [preparedModel, nnRequest = std::move(nnRequest), nnMeasure, nnDeadline,
                  nnLoopTimeoutDuration, callback] {
-        auto result =
-                preparedModel->execute(nnRequest, nnMeasure, nnDeadline, nnLoopTimeoutDuration);
+        auto result = preparedModel->execute(nnRequest, nnMeasure, nnDeadline,
+                                             nnLoopTimeoutDuration, {}, {});
         notify(callback.get(), std::move(result));
     };
     executor(std::move(task), nnDeadline);
@@ -232,7 +232,7 @@ nn::ExecutionResult<std::pair<hidl_vec<V1_2::OutputShape>, V1_2::Timing>> execut
     const auto nnMeasure = NN_TRY(convertInput(measure));
 
     const auto [outputShapes, timing] =
-            NN_TRY(preparedModel->execute(nnRequest, nnMeasure, {}, {}));
+            NN_TRY(preparedModel->execute(nnRequest, nnMeasure, {}, {}, {}, {}));
 
     auto hidlOutputShapes = NN_TRY(V1_2::utils::convert(outputShapes));
     const auto hidlTiming = NN_TRY(V1_2::utils::convert(timing));
@@ -248,8 +248,8 @@ nn::ExecutionResult<std::pair<hidl_vec<V1_2::OutputShape>, V1_2::Timing>> execut
     const auto nnDeadline = NN_TRY(convertInput(deadline));
     const auto nnLoopTimeoutDuration = NN_TRY(convertInput(loopTimeoutDuration));
 
-    const auto [outputShapes, timing] =
-            NN_TRY(preparedModel->execute(nnRequest, nnMeasure, nnDeadline, nnLoopTimeoutDuration));
+    const auto [outputShapes, timing] = NN_TRY(preparedModel->execute(
+            nnRequest, nnMeasure, nnDeadline, nnLoopTimeoutDuration, {}, {}));
 
     auto hidlOutputShapes = NN_TRY(V1_3::utils::convert(outputShapes));
     const auto hidlTiming = NN_TRY(V1_3::utils::convert(timing));
@@ -293,8 +293,9 @@ nn::GeneralResult<std::pair<hidl_handle, sp<V1_3::IFencedExecutionCallback>>> ex
     const auto nnLoopTimeoutDuration = NN_TRY(convertInput(loopTimeoutDuration));
     const auto nnDuration = NN_TRY(convertInput(duration));
 
-    auto [syncFence, executeFencedCallback] = NN_TRY(preparedModel->executeFenced(
-            nnRequest, nnWaitFor, nnMeasure, nnDeadline, nnLoopTimeoutDuration, nnDuration));
+    auto [syncFence, executeFencedCallback] =
+            NN_TRY(preparedModel->executeFenced(nnRequest, nnWaitFor, nnMeasure, nnDeadline,
+                                                nnLoopTimeoutDuration, nnDuration, {}, {}));
 
     auto hidlSyncFence = NN_TRY(V1_3::utils::convert(syncFence.getSharedHandle()));
     auto hidlExecuteFencedCallback = sp<FencedExecutionCallback>::make(executeFencedCallback);

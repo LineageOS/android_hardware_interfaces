@@ -45,12 +45,15 @@ class Burst final : public nn::IBurst {
 
     nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> execute(
             const nn::Request& request, nn::MeasureTiming measure,
-            const nn::OptionalTimePoint& deadline,
-            const nn::OptionalDuration& loopTimeoutDuration) const override;
+            const nn::OptionalTimePoint& deadline, const nn::OptionalDuration& loopTimeoutDuration,
+            const std::vector<nn::TokenValuePair>& hints,
+            const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const override;
 
     nn::GeneralResult<nn::SharedExecution> createReusableExecution(
             const nn::Request& request, nn::MeasureTiming measure,
-            const nn::OptionalDuration& loopTimeoutDuration) const override;
+            const nn::OptionalDuration& loopTimeoutDuration,
+            const std::vector<nn::TokenValuePair>& hints,
+            const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const override;
 
   private:
     const nn::SharedPreparedModel kPreparedModel;

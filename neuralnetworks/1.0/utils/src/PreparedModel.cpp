@@ -59,7 +59,9 @@ PreparedModel::PreparedModel(PrivateConstructorTag /*tag*/, sp<V1_0::IPreparedMo
 nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> PreparedModel::execute(
         const nn::Request& request, nn::MeasureTiming /*measure*/,
         const nn::OptionalTimePoint& /*deadline*/,
-        const nn::OptionalDuration& /*loopTimeoutDuration*/) const {
+        const nn::OptionalDuration& /*loopTimeoutDuration*/,
+        const std::vector<nn::TokenValuePair>& /*hints*/,
+        const std::vector<nn::ExtensionNameAndPrefix>& /*extensionNameToPrefix*/) const {
     // Ensure that request is ready for IPC.
     std::optional<nn::Request> maybeRequestInShared;
     hal::utils::RequestRelocation relocation;
@@ -94,19 +96,22 @@ PreparedModel::executeInternal(const V1_0::Request& request,
 }
 
 nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>>
-PreparedModel::executeFenced(const nn::Request& /*request*/,
-                             const std::vector<nn::SyncFence>& /*waitFor*/,
-                             nn::MeasureTiming /*measure*/,
-                             const nn::OptionalTimePoint& /*deadline*/,
-                             const nn::OptionalDuration& /*loopTimeoutDuration*/,
-                             const nn::OptionalDuration& /*timeoutDurationAfterFence*/) const {
+PreparedModel::executeFenced(
+        const nn::Request& /*request*/, const std::vector<nn::SyncFence>& /*waitFor*/,
+        nn::MeasureTiming /*measure*/, const nn::OptionalTimePoint& /*deadline*/,
+        const nn::OptionalDuration& /*loopTimeoutDuration*/,
+        const nn::OptionalDuration& /*timeoutDurationAfterFence*/,
+        const std::vector<nn::TokenValuePair>& /*hints*/,
+        const std::vector<nn::ExtensionNameAndPrefix>& /*extensionNameToPrefix*/) const {
     return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
            << "IPreparedModel::executeFenced is not supported on 1.0 HAL service";
 }
 
 nn::GeneralResult<nn::SharedExecution> PreparedModel::createReusableExecution(
         const nn::Request& request, nn::MeasureTiming /*measure*/,
-        const nn::OptionalDuration& /*loopTimeoutDuration*/) const {
+        const nn::OptionalDuration& /*loopTimeoutDuration*/,
+        const std::vector<nn::TokenValuePair>& /*hints*/,
+        const std::vector<nn::ExtensionNameAndPrefix>& /*extensionNameToPrefix*/) const {
     // Ensure that request is ready for IPC.
     std::optional<nn::Request> maybeRequestInShared;
     hal::utils::RequestRelocation relocation;

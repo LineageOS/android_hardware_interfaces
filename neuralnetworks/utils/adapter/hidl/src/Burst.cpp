@@ -250,7 +250,7 @@ nn::ExecutionResult<std::pair<hidl_vec<V1_2::OutputShape>, V1_2::Timing>> Burst:
     nn::MeasureTiming canonicalMeasure = NN_TRY(nn::convert(measure));
 
     const auto [outputShapes, timing] =
-            NN_TRY(mBurstExecutor->execute(canonicalRequest, canonicalMeasure, {}, {}));
+            NN_TRY(mBurstExecutor->execute(canonicalRequest, canonicalMeasure, {}, {}, {}, {}));
 
     return std::make_pair(NN_TRY(V1_2::utils::convert(outputShapes)),
                           NN_TRY(V1_2::utils::convert(timing)));
