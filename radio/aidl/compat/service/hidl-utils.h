@@ -18,13 +18,61 @@
 
 #include <android/hidl/base/1.0/IBase.h>
 
+#include <functional>
+
 namespace android::hardware::hidl_utils {
 
 /**
- * Link to a given HALs death and restart the current process in such a case.
+ * Helper functor to fetch results from multi-return HIDL calls.
+ * It's meant to be used in place of _hidl_cb callbacks.
  *
+ * Please note extracting these return variables outside of the callback scope requires making
+ * a copy of each return variable. This may be costly for frequently called HIDL methods with
+ * non-negligible return object size. Please be cautious about performance when using this.
+ *
+ * Example usage:
+ *     Result result;
+ *     sp<ISomeInterface> iface;
+ *     hidlObject->someMethod(arg1, arg2, hidl_utils::fill(&result, &iface)).assertOk();
+ *     // use result and iface
+ */
+template <typename... T>
+struct fill : public std::function<void(const T&...)> {
+    /**
+     * Create _hidl_cb functor that copies the call arguments to specified pointers.
+     *
+     * \param args... Targets to copy the call arguments to
+     */
+    fill(T*... args) : mTargets(args...) {}
+
+    void operator()(const T&... args) { copy<0, T...>(args...); }
+
+  private:
+    std::tuple<T*...> mTargets;
+
+    template <int Pos, typename First>
+    inline void copy(const First& first) {
+        *std::get<Pos>(mTargets) = first;
+    }
+
+    template <int Pos, typename First, typename... Rest>
+    inline void copy(const First& first, const Rest&... rest) {
+        *std::get<Pos>(mTargets) = first;
+        copy<Pos + 1, Rest...>(rest...);
+    }
+};
+
+/**
+ * Link to a given HALs death and restart the current process in such a case.
  * \param hal HAL to which death to link
  */
 void linkDeathToDeath(sp<hidl::base::V1_0::IBase> hal);
+
+/**
+ * List HAL instances of a given interface.
+ *
+ * \descriptor HIDL HAL descriptor
+ */
+hidl_vec<hidl_string> listManifestByInterface(const char* descriptor);
 
 }  // namespace android::hardware::hidl_utils

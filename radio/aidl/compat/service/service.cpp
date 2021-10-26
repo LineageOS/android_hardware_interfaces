@@ -20,12 +20,44 @@
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 #include <libradiocompat/RadioConfig.h>
+#include <libradiocompat/RadioIndication.h>
+#include <libradiocompat/RadioMessaging.h>
+#include <libradiocompat/RadioResponse.h>
 
 namespace android::hardware::radio::service {
 
 using namespace std::string_literals;
 
 static std::vector<std::shared_ptr<ndk::ICInterface>> gPublishedHals;
+
+template <typename T>
+static void publishRadioHal(sp<V1_5::IRadio> hidlHal, sp<compat::RadioResponse> responseCb,
+                            sp<compat::RadioIndication> indicationCb, const std::string& slot) {
+    const auto instance = T::descriptor + "/"s + slot;
+    if (!AServiceManager_isDeclared(instance.c_str())) {
+        LOG(INFO) << instance << " is not declared in VINTF (this may be intentional)";
+        return;
+    }
+    LOG(DEBUG) << "Publishing " << instance;
+
+    auto aidlHal = ndk::SharedRefBase::make<T>(hidlHal, responseCb, indicationCb);
+    gPublishedHals.push_back(aidlHal);
+    const auto status = AServiceManager_addService(aidlHal->asBinder().get(), instance.c_str());
+    CHECK_EQ(status, STATUS_OK);
+}
+
+static void publishRadio(std::string slot) {
+    auto radioHidl = V1_5::IRadio::getService(slot);
+    CHECK(radioHidl) << "HIDL IRadio not present in VINTF";
+
+    hidl_utils::linkDeathToDeath(radioHidl);
+
+    auto responseCb = sp<compat::RadioResponse>::make();
+    auto indicationCb = sp<compat::RadioIndication>::make();
+    radioHidl->setResponseFunctions(responseCb, indicationCb).assertOk();
+
+    publishRadioHal<compat::RadioMessaging>(radioHidl, responseCb, indicationCb, slot);
+}
 
 static void publishRadioConfig() {
     auto hidlHal = config::V1_1::IRadioConfig::getService();
@@ -46,6 +78,12 @@ static void main() {
     LOG(DEBUG) << "Radio HAL compat service starting...";
 
     publishRadioConfig();
+
+    const auto slots = hidl_utils::listManifestByInterface(V1_0::IRadio::descriptor);
+    LOG(INFO) << "Found " << slots.size() << " slot(s)";
+    for (const auto& slot : slots) {
+        publishRadio(slot);
+    }
 
     LOG(DEBUG) << "Radio HAL compat service is operational";
     ABinderProcess_joinThreadPool();

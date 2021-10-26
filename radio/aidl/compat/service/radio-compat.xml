@@ -3,4 +3,15 @@
         <name>android.hardware.radio.config</name>
         <fqname>IRadioConfig/default</fqname>
     </hal>
+<!--
+    Instances other than config are configured per-device, depending on the slot count (framework
+    currently supports slot1, slot2 and slot3 instances) and Radio HALs device wishes to provide.
+    You can either copy the following tags to device manifest or simply uncomment them here for
+    quick testing.
+
+    <hal format="aidl">
+        <name>android.hardware.radio.messaging</name>
+        <fqname>IRadioMessaging/slot1</fqname>
+    </hal>
+-->
 </manifest>
