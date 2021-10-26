@@ -45,7 +45,7 @@ static void validateReusableExecution(const std::shared_ptr<IPreparedModel>& pre
     {
         SCOPED_TRACE(message + " [createReusableExecution]");
         const auto createStatus = preparedModel->createReusableExecution(
-                request, measure, kOmittedTimeoutDuration, &execution);
+                request, {measure, kOmittedTimeoutDuration, {}, {}}, &execution);
         if (!createStatus.isOk()) {
             ASSERT_EQ(createStatus.getExceptionCode(), EX_SERVICE_SPECIFIC);
             ASSERT_EQ(static_cast<ErrorStatus>(createStatus.getServiceSpecificError()),
@@ -149,10 +149,59 @@ static void validate(const std::shared_ptr<IPreparedModel>& preparedModel,
 
     int32_t aidlVersion;
     ASSERT_TRUE(preparedModel->getInterfaceVersion(&aidlVersion).isOk());
+    if (aidlVersion < kMinAidlLevelForFL8) {
+        return;
+    }
 
     // validate reusable execution
-    if (aidlVersion >= kMinAidlLevelForFL8) {
-        validateReusableExecution(preparedModel, message, request, measure);
+    validateReusableExecution(preparedModel, message, request, measure);
+
+    // synchronous with empty hints
+    {
+        SCOPED_TRACE(message + " [executeSynchronouslyWithConfig]");
+        ExecutionResult executionResult;
+        const auto executeStatus = preparedModel->executeSynchronouslyWithConfig(
+                request, {measure, kOmittedTimeoutDuration, {}, {}}, kNoDeadline, &executionResult);
+        ASSERT_FALSE(executeStatus.isOk());
+        ASSERT_EQ(executeStatus.getExceptionCode(), EX_SERVICE_SPECIFIC);
+        ASSERT_EQ(static_cast<ErrorStatus>(executeStatus.getServiceSpecificError()),
+                  ErrorStatus::INVALID_ARGUMENT);
+    }
+
+    // fenced with empty hints
+    {
+        SCOPED_TRACE(message + " [executeFencedWithConfig]");
+        FencedExecutionResult executionResult;
+        const auto executeStatus = preparedModel->executeFencedWithConfig(
+                request, {}, {false, kOmittedTimeoutDuration, {}, {}}, kNoDeadline, kNoDuration,
+                &executionResult);
+        ASSERT_FALSE(executeStatus.isOk());
+        ASSERT_EQ(executeStatus.getExceptionCode(), EX_SERVICE_SPECIFIC);
+        ASSERT_EQ(static_cast<ErrorStatus>(executeStatus.getServiceSpecificError()),
+                  ErrorStatus::INVALID_ARGUMENT);
+    }
+
+    // burst with empty hints
+    {
+        SCOPED_TRACE(message + " [burst executeSynchronouslyWithConfig]");
+
+        // create burst
+        std::shared_ptr<IBurst> burst;
+        auto ret = preparedModel->configureExecutionBurst(&burst);
+        ASSERT_TRUE(ret.isOk()) << ret.getDescription();
+        ASSERT_NE(nullptr, burst.get());
+
+        // use -1 for all memory identifier tokens
+        const std::vector<int64_t> slots(request.pools.size(), -1);
+
+        ExecutionResult executionResult;
+        const auto executeStatus = burst->executeSynchronouslyWithConfig(
+                request, slots, {measure, kOmittedTimeoutDuration, {}, {}}, kNoDeadline,
+                &executionResult);
+        ASSERT_FALSE(executeStatus.isOk());
+        ASSERT_EQ(executeStatus.getExceptionCode(), EX_SERVICE_SPECIFIC);
+        ASSERT_EQ(static_cast<ErrorStatus>(executeStatus.getServiceSpecificError()),
+                  ErrorStatus::INVALID_ARGUMENT);
     }
 }
 

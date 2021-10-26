@@ -212,9 +212,9 @@ GeneralResult<Model> unvalidatedConvert(const hal::V1_2::Model& model) {
     };
 }
 
-GeneralResult<Model::ExtensionNameAndPrefix> unvalidatedConvert(
+GeneralResult<ExtensionNameAndPrefix> unvalidatedConvert(
         const hal::V1_2::Model::ExtensionNameAndPrefix& extensionNameAndPrefix) {
-    return Model::ExtensionNameAndPrefix{
+    return ExtensionNameAndPrefix{
             .name = extensionNameAndPrefix.name,
             .prefix = extensionNameAndPrefix.prefix,
     };
@@ -495,7 +495,7 @@ nn::GeneralResult<Model> unvalidatedConvert(const nn::Model& model) {
 }
 
 nn::GeneralResult<Model::ExtensionNameAndPrefix> unvalidatedConvert(
-        const nn::Model::ExtensionNameAndPrefix& extensionNameAndPrefix) {
+        const nn::ExtensionNameAndPrefix& extensionNameAndPrefix) {
     return Model::ExtensionNameAndPrefix{
             .name = extensionNameAndPrefix.name,
             .prefix = extensionNameAndPrefix.prefix,

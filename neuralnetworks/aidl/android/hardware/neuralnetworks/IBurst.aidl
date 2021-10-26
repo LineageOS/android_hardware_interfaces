@@ -17,6 +17,7 @@
 package android.hardware.neuralnetworks;
 
 import android.hardware.neuralnetworks.ErrorStatus;
+import android.hardware.neuralnetworks.ExecutionConfig;
 import android.hardware.neuralnetworks.ExecutionResult;
 import android.hardware.neuralnetworks.Request;
 
@@ -68,6 +69,8 @@ interface IBurst {
      *
      * Only a single execution on a given burst object may be active at any time.
      *
+     * Also see {@link IBurst::executeSynchronouslyWithConfig}.
+     *
      * @param request The input and output information on which the prepared model is to be
      *                executed.
      * @param memoryIdentifierTokens A list of tokens where each token is a non-negative number
@@ -117,4 +120,13 @@ interface IBurst {
      *     - INVALID_ARGUMENT if one of the input arguments is invalid
      */
     void releaseMemoryResource(in long memoryIdentifierToken);
+
+    /**
+     * For detailed specification, please refer to {@link IBurst::executeSynchronously}. The
+     * difference between the two methods is that executeSynchronouslyWithConfig takes {@link
+     * ExecutionConfig} instead of a list of configuration parameters, and ExecutionConfig contains
+     * more configuration parameters than are passed to executeSynchronously.
+     */
+    ExecutionResult executeSynchronouslyWithConfig(in Request request,
+            in long[] memoryIdentifierTokens, in ExecutionConfig config, in long deadlineNs);
 }

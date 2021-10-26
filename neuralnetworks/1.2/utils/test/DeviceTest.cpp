@@ -636,7 +636,7 @@ TEST(DeviceTest, prepareModel) {
 
     // run test
     const auto result = device->prepareModel(kSimpleModel, nn::ExecutionPreference::DEFAULT,
-                                             nn::Priority::DEFAULT, {}, {}, {}, {});
+                                             nn::Priority::DEFAULT, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_TRUE(result.has_value())
@@ -655,7 +655,7 @@ TEST(DeviceTest, prepareModelLaunchError) {
 
     // run test
     const auto result = device->prepareModel(kSimpleModel, nn::ExecutionPreference::DEFAULT,
-                                             nn::Priority::DEFAULT, {}, {}, {}, {});
+                                             nn::Priority::DEFAULT, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -673,7 +673,7 @@ TEST(DeviceTest, prepareModelReturnError) {
 
     // run test
     const auto result = device->prepareModel(kSimpleModel, nn::ExecutionPreference::DEFAULT,
-                                             nn::Priority::DEFAULT, {}, {}, {}, {});
+                                             nn::Priority::DEFAULT, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -691,7 +691,7 @@ TEST(DeviceTest, prepareModelNullptrError) {
 
     // run test
     const auto result = device->prepareModel(kSimpleModel, nn::ExecutionPreference::DEFAULT,
-                                             nn::Priority::DEFAULT, {}, {}, {}, {});
+                                             nn::Priority::DEFAULT, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -708,7 +708,7 @@ TEST(DeviceTest, prepareModelTransportFailure) {
 
     // run test
     const auto result = device->prepareModel(kSimpleModel, nn::ExecutionPreference::DEFAULT,
-                                             nn::Priority::DEFAULT, {}, {}, {}, {});
+                                             nn::Priority::DEFAULT, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -725,7 +725,7 @@ TEST(DeviceTest, prepareModelDeadObject) {
 
     // run test
     const auto result = device->prepareModel(kSimpleModel, nn::ExecutionPreference::DEFAULT,
-                                             nn::Priority::DEFAULT, {}, {}, {}, {});
+                                             nn::Priority::DEFAULT, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -746,7 +746,7 @@ TEST(DeviceTest, prepareModelAsyncCrash) {
 
     // run test
     const auto result = device->prepareModel(kSimpleModel, nn::ExecutionPreference::DEFAULT,
-                                             nn::Priority::DEFAULT, {}, {}, {}, {});
+                                             nn::Priority::DEFAULT, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
