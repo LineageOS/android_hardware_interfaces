@@ -26,7 +26,6 @@ package {
 cc_test {
     name: "VtsHalNeuralnetworksTargetTest",
     defaults: [
-        "neuralnetworks_use_latest_utils_hal_aidl",
         "neuralnetworks_vts_functional_defaults",
         "use_libaidlvintf_gtest_helper_static",
     ],
@@ -52,14 +51,16 @@ cc_test {
     static_libs: [
         "android.hardware.common-V2-ndk",
         "android.hardware.graphics.common-V2-ndk",
+        "android.hardware.neuralnetworks-V2-ndk",
         "android.hidl.allocator@1.0",
         "android.hidl.memory@1.0",
         "libaidlcommonsupport",
         "libgmock",
         "libhidlmemory",
-        "libneuralnetworks_common",
         "libneuralnetworks_generated_test_harness",
+        "libneuralnetworks_utils",
         "libsync",
+        "neuralnetworks_utils_hal_aidl",
     ],
     whole_static_libs: [
         "neuralnetworks_generated_V1_0_example",

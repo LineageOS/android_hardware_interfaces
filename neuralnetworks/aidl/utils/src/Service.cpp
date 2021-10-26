@@ -17,7 +17,6 @@
 #include "Service.h"
 
 #include <AndroidVersionUtil.h>
-#include <aidl/android/hardware/neuralnetworks/IDevice.h>
 #include <android/binder_auto_utils.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
@@ -29,33 +28,8 @@
 #include <string>
 
 #include "Device.h"
-#include "Utils.h"
 
 namespace aidl::android::hardware::neuralnetworks::utils {
-namespace {
-
-// Map the AIDL version of an IDevice to NNAPI canonical feature level.
-nn::GeneralResult<nn::Version> getAidlServiceFeatureLevel(IDevice* service) {
-    CHECK(service != nullptr);
-    int aidlVersion;
-    const auto ret = service->getInterfaceVersion(&aidlVersion);
-    HANDLE_ASTATUS(ret) << "getInterfaceVersion failed";
-
-    // For service AIDL versions greater than or equal to the AIDL library version that the runtime
-    // was built against, clamp it to the runtime AIDL library version.
-    aidlVersion = std::min(aidlVersion, IDevice::version);
-
-    // Map stable AIDL versions to canonical versions.
-    switch (aidlVersion) {
-        case 1:
-            return nn::Version::ANDROID_S;
-        case 2:
-            return nn::Version::FEATURE_LEVEL_6;
-    }
-    return NN_ERROR() << "Unknown AIDL service version: " << aidlVersion;
-}
-
-}  // namespace
 
 nn::GeneralResult<nn::SharedDevice> getDevice(const std::string& instanceName) {
     auto fullName = std::string(IDevice::descriptor) + "/" + instanceName;
@@ -81,8 +55,7 @@ nn::GeneralResult<nn::SharedDevice> getDevice(const std::string& instanceName) {
                    << " returned nullptr";
         }
         ABinderProcess_startThreadPool();
-        const auto featureLevel = NN_TRY(getAidlServiceFeatureLevel(service.get()));
-        return Device::create(instanceName, std::move(service), featureLevel);
+        return Device::create(instanceName, std::move(service));
     };
 
     return hal::utils::ResilientDevice::create(std::move(makeDevice));
