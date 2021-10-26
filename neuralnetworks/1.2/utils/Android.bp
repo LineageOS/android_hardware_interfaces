@@ -71,7 +71,7 @@ cc_test {
         "android.hardware.neuralnetworks@1.1",
         "android.hardware.neuralnetworks@1.2",
         "libgmock",
-        "libneuralnetworks_common_hidl",
+        "libneuralnetworks_common",
         "neuralnetworks_types",
         "neuralnetworks_utils_hal_common",
         "neuralnetworks_utils_hal_1_0",

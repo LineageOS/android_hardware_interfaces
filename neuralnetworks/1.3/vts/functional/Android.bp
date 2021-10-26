@@ -66,6 +66,7 @@ cc_test {
         "VtsHalNeuralNetworksV1_0_utils",
         "VtsHalNeuralNetworksV1_2_utils",
         "VtsHalNeuralNetworksV1_3_utils",
+        "android.hardware.neuralnetworks-V2-ndk",
         "android.hardware.neuralnetworks@1.0",
         "android.hardware.neuralnetworks@1.1",
         "android.hardware.neuralnetworks@1.2",
@@ -75,7 +76,7 @@ cc_test {
         "libgmock",
         "libhidlmemory",
         "libneuralnetworks_generated_test_harness",
-        "libneuralnetworks_common_hidl",
+        "libneuralnetworks_utils",
         "libsync",
     ],
     whole_static_libs: [
