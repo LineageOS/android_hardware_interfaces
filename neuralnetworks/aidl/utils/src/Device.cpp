@@ -125,7 +125,7 @@ nn::GeneralResult<std::pair<uint32_t, uint32_t>> getNumberOfCacheFilesNeededFrom
 }  // namespace
 
 nn::GeneralResult<std::shared_ptr<const Device>> Device::create(
-        std::string name, std::shared_ptr<aidl_hal::IDevice> device, nn::Version featureLevel) {
+        std::string name, std::shared_ptr<aidl_hal::IDevice> device) {
     if (name.empty()) {
         return NN_ERROR(nn::ErrorStatus::INVALID_ARGUMENT)
                << "aidl_hal::utils::Device::create must have non-empty name";
@@ -143,19 +143,18 @@ nn::GeneralResult<std::shared_ptr<const Device>> Device::create(
 
     auto deathHandler = NN_TRY(DeathHandler::create(device));
     return std::make_shared<const Device>(
-            PrivateConstructorTag{}, std::move(name), std::move(versionString), featureLevel,
-            deviceType, std::move(extensions), std::move(capabilities), numberOfCacheFilesNeeded,
+            PrivateConstructorTag{}, std::move(name), std::move(versionString), deviceType,
+            std::move(extensions), std::move(capabilities), numberOfCacheFilesNeeded,
             std::move(device), std::move(deathHandler));
 }
 
 Device::Device(PrivateConstructorTag /*tag*/, std::string name, std::string versionString,
-               nn::Version featureLevel, nn::DeviceType deviceType,
-               std::vector<nn::Extension> extensions, nn::Capabilities capabilities,
+               nn::DeviceType deviceType, std::vector<nn::Extension> extensions,
+               nn::Capabilities capabilities,
                std::pair<uint32_t, uint32_t> numberOfCacheFilesNeeded,
                std::shared_ptr<aidl_hal::IDevice> device, DeathHandler deathHandler)
     : kName(std::move(name)),
       kVersionString(std::move(versionString)),
-      kFeatureLevel(featureLevel),
       kDeviceType(deviceType),
       kExtensions(std::move(extensions)),
       kCapabilities(std::move(capabilities)),
@@ -172,7 +171,7 @@ const std::string& Device::getVersionString() const {
 }
 
 nn::Version Device::getFeatureLevel() const {
-    return kFeatureLevel;
+    return nn::Version::ANDROID_S;
 }
 
 nn::DeviceType Device::getType() const {
