@@ -27,6 +27,7 @@
 #include <gtest/gtest.h>
 #include <utils/Log.h>
 
+#include <chrono>
 #include <list>
 #include <memory>
 #include <mutex>
@@ -67,6 +68,7 @@ using ::ndk::ScopedAStatus;
 using ::ndk::ScopedFileDescriptor;
 
 using ::testing::Eq;
+using ::testing::UnorderedElementsAreArray;
 using ::testing::WhenSortedBy;
 
 constexpr int32_t INVALID_PROP_ID = 0;
@@ -356,6 +358,11 @@ class DefaultVehicleHalTest : public ::testing::Test {
         mCallbackClient = IVehicleCallback::fromBinder(mCallback->asBinder());
     }
 
+    void TearDown() override {
+        ASSERT_EQ(countPendingRequests(), static_cast<size_t>(0))
+                << "must have no pending requests when test finishes";
+    }
+
     MockVehicleHardware* getHardware() { return mHardwarePtr; }
 
     std::shared_ptr<IVehicle> getClient() { return mVhal; }
@@ -363,6 +370,12 @@ class DefaultVehicleHalTest : public ::testing::Test {
     std::shared_ptr<IVehicleCallback> getCallbackClient() { return mCallbackClient; }
 
     MockVehicleCallback* getCallback() { return mCallback.get(); }
+
+    void setTimeout(int64_t timeoutInNano) { mVhal->setTimeout(timeoutInNano); }
+
+    size_t countPendingRequests() { return mVhal->mPendingRequestPool->countPendingRequests(); }
+
+    std::shared_ptr<PendingRequestPool> getPool() { return mVhal->mPendingRequestPool; }
 
     static Result<void> getValuesTestCases(size_t size, GetValueRequests& requests,
                                            std::vector<GetValueResult>& expectedResults,
@@ -570,6 +583,145 @@ TEST_F(DefaultVehicleHalTest, testGetValuesInvalidLargeParcelableInput) {
     ASSERT_EQ(status.getServiceSpecificError(), toInt(StatusCode::INVALID_ARG));
 }
 
+TEST_F(DefaultVehicleHalTest, testGetValuesFinishBeforeTimeout) {
+    // timeout: 0.1s
+    int64_t timeout = 100000000;
+    setTimeout(timeout);
+
+    GetValueRequests requests;
+    std::vector<GetValueResult> expectedResults;
+    std::vector<GetValueRequest> expectedHardwareRequests;
+
+    ASSERT_TRUE(getValuesTestCases(10, requests, expectedResults, expectedHardwareRequests).ok());
+
+    // The response would be returned after 0.05s.
+    getHardware()->setSleepTime(timeout / 2);
+    getHardware()->addGetValueResponses(expectedResults);
+
+    auto status = getClient()->getValues(getCallbackClient(), requests);
+
+    ASSERT_TRUE(status.isOk()) << "getValues failed: " << status.getMessage();
+
+    // Wait for the response.
+    std::this_thread::sleep_for(std::chrono::nanoseconds(timeout));
+
+    auto maybeGetValueResults = getCallback()->nextGetValueResults();
+    ASSERT_TRUE(maybeGetValueResults.has_value()) << "no results in callback";
+    EXPECT_EQ(maybeGetValueResults.value().payloads, expectedResults) << "results mismatch";
+    ASSERT_FALSE(getCallback()->nextGetValueResults().has_value()) << "more results than expected";
+}
+
+TEST_F(DefaultVehicleHalTest, testGetValuesFinishAfterTimeout) {
+    // timeout: 0.1s
+    int64_t timeout = 100000000;
+    setTimeout(timeout);
+
+    GetValueRequests requests;
+    std::vector<GetValueResult> expectedResults;
+    std::vector<GetValueRequest> expectedHardwareRequests;
+
+    ASSERT_TRUE(getValuesTestCases(10, requests, expectedResults, expectedHardwareRequests).ok());
+
+    // The response would be returned after 0.2s.
+    getHardware()->setSleepTime(timeout * 2);
+    getHardware()->addGetValueResponses(expectedResults);
+
+    auto status = getClient()->getValues(getCallbackClient(), requests);
+
+    ASSERT_TRUE(status.isOk()) << "getValues failed: " << status.getMessage();
+
+    // Wait for the response.
+    std::this_thread::sleep_for(std::chrono::nanoseconds(timeout * 5));
+
+    for (size_t i = 0; i < expectedResults.size(); i++) {
+        expectedResults[i] = {
+                .requestId = expectedResults[i].requestId,
+                .status = StatusCode::TRY_AGAIN,
+                .prop = std::nullopt,
+        };
+    }
+
+    auto maybeGetValueResults = getCallback()->nextGetValueResults();
+    ASSERT_TRUE(maybeGetValueResults.has_value()) << "no results in callback";
+    ASSERT_THAT(maybeGetValueResults.value().payloads, UnorderedElementsAreArray(expectedResults))
+            << "results mismatch, expect TRY_AGAIN error.";
+    ASSERT_FALSE(getCallback()->nextGetValueResults().has_value()) << "more results than expected";
+}
+
+TEST_F(DefaultVehicleHalTest, testGetValuesDuplicateRequestIdsInTwoRequests) {
+    // timeout: 0.1s
+    int64_t timeout = 100000000;
+    setTimeout(timeout);
+
+    GetValueRequests requests;
+    std::vector<GetValueResult> expectedResults;
+    std::vector<GetValueRequest> expectedHardwareRequests;
+
+    ASSERT_TRUE(getValuesTestCases(1, requests, expectedResults, expectedHardwareRequests).ok());
+
+    getHardware()->setSleepTime(timeout * 2);
+    getHardware()->addGetValueResponses(expectedResults);
+
+    auto status = getClient()->getValues(getCallbackClient(), requests);
+
+    ASSERT_TRUE(status.isOk()) << "getValues failed: " << status.getMessage();
+
+    // Use the same request ID again.
+    status = getClient()->getValues(getCallbackClient(), requests);
+
+    ASSERT_FALSE(status.isOk())
+            << "Use the same request ID before the previous request finishes must fail";
+
+    // Wait for the request to finish.
+    std::this_thread::sleep_for(std::chrono::nanoseconds(timeout * 5));
+}
+
+TEST_F(DefaultVehicleHalTest, testGetValuesDuplicateRequestIdsInOneRequest) {
+    GetValueRequests requests = {.payloads = {
+                                         {
+                                                 .requestId = 0,
+                                                 .prop =
+                                                         VehiclePropValue{
+                                                                 .prop = testInt32VecProp(0),
+                                                         },
+                                         },
+                                         {
+                                                 .requestId = 0,
+                                                 .prop =
+                                                         VehiclePropValue{
+                                                                 .prop = testInt32VecProp(1),
+                                                         },
+                                         },
+                                 }};
+
+    auto status = getClient()->getValues(getCallbackClient(), requests);
+
+    ASSERT_FALSE(status.isOk()) << "duplicate Ids in one request must fail";
+}
+
+TEST_F(DefaultVehicleHalTest, testGetValuesDuplicateRequestProps) {
+    GetValueRequests requests = {.payloads = {
+                                         {
+                                                 .requestId = 0,
+                                                 .prop =
+                                                         VehiclePropValue{
+                                                                 .prop = testInt32VecProp(0),
+                                                         },
+                                         },
+                                         {
+                                                 .requestId = 1,
+                                                 .prop =
+                                                         VehiclePropValue{
+                                                                 .prop = testInt32VecProp(0),
+                                                         },
+                                         },
+                                 }};
+
+    auto status = getClient()->getValues(getCallbackClient(), requests);
+
+    ASSERT_FALSE(status.isOk()) << "duplicate request properties in one request must fail";
+}
+
 TEST_F(DefaultVehicleHalTest, testSetValuesSmall) {
     SetValueRequests requests;
     std::vector<SetValueResult> expectedResults;
@@ -673,6 +825,148 @@ TEST_P(SetValuesInvalidRequestTest, testSetValuesInvalidRequest) {
     ASSERT_TRUE(maybeSetValueResults.has_value()) << "no results from hardware in callback";
     EXPECT_EQ(maybeSetValueResults.value().payloads, expectedHardwareResults)
             << "results from hardware mismatch";
+}
+
+TEST_F(DefaultVehicleHalTest, testSetValuesFinishBeforeTimeout) {
+    // timeout: 0.1s
+    int64_t timeout = 100000000;
+    setTimeout(timeout);
+
+    SetValueRequests requests;
+    std::vector<SetValueResult> expectedResults;
+    std::vector<SetValueRequest> expectedHardwareRequests;
+
+    ASSERT_TRUE(setValuesTestCases(10, requests, expectedResults, expectedHardwareRequests).ok());
+
+    // The response would be returned after 0.05s.
+    getHardware()->setSleepTime(timeout / 2);
+    getHardware()->addSetValueResponses(expectedResults);
+
+    auto status = getClient()->setValues(getCallbackClient(), requests);
+
+    ASSERT_TRUE(status.isOk()) << "setValues failed: " << status.getMessage();
+
+    // Wait for the response.
+    std::this_thread::sleep_for(std::chrono::nanoseconds(timeout));
+
+    auto maybeSetValueResults = getCallback()->nextSetValueResults();
+    ASSERT_TRUE(maybeSetValueResults.has_value()) << "no results in callback";
+    EXPECT_EQ(maybeSetValueResults.value().payloads, expectedResults) << "results mismatch";
+    ASSERT_FALSE(getCallback()->nextSetValueResults().has_value()) << "more results than expected";
+}
+
+TEST_F(DefaultVehicleHalTest, testSetValuesFinishAfterTimeout) {
+    // timeout: 0.1s
+    int64_t timeout = 100000000;
+    setTimeout(timeout);
+
+    SetValueRequests requests;
+    std::vector<SetValueResult> expectedResults;
+    std::vector<SetValueRequest> expectedHardwareRequests;
+
+    ASSERT_TRUE(setValuesTestCases(10, requests, expectedResults, expectedHardwareRequests).ok());
+
+    // The response would be returned after 0.2s.
+    getHardware()->setSleepTime(timeout * 2);
+    getHardware()->addSetValueResponses(expectedResults);
+
+    auto status = getClient()->setValues(getCallbackClient(), requests);
+
+    ASSERT_TRUE(status.isOk()) << "setValues failed: " << status.getMessage();
+
+    // Wait for the response.
+    std::this_thread::sleep_for(std::chrono::nanoseconds(timeout * 5));
+
+    for (size_t i = 0; i < expectedResults.size(); i++) {
+        expectedResults[i] = {
+                .requestId = expectedResults[i].requestId,
+                .status = StatusCode::TRY_AGAIN,
+        };
+    }
+
+    auto maybeSetValueResults = getCallback()->nextSetValueResults();
+    ASSERT_TRUE(maybeSetValueResults.has_value()) << "no results in callback";
+    ASSERT_THAT(maybeSetValueResults.value().payloads, UnorderedElementsAreArray(expectedResults))
+            << "results mismatch, expect TRY_AGAIN error.";
+    ASSERT_FALSE(getCallback()->nextSetValueResults().has_value()) << "more results than expected";
+}
+
+TEST_F(DefaultVehicleHalTest, testSetValuesDuplicateRequestIdsInTwoRequests) {
+    // timeout: 0.1s
+    int64_t timeout = 100000000;
+    setTimeout(timeout);
+
+    SetValueRequests requests;
+    std::vector<SetValueResult> expectedResults;
+    std::vector<SetValueRequest> expectedHardwareRequests;
+
+    ASSERT_TRUE(setValuesTestCases(1, requests, expectedResults, expectedHardwareRequests).ok());
+
+    getHardware()->setSleepTime(timeout * 2);
+    getHardware()->addSetValueResponses(expectedResults);
+
+    auto status = getClient()->setValues(getCallbackClient(), requests);
+
+    ASSERT_TRUE(status.isOk()) << "setValues failed: " << status.getMessage();
+
+    // Use the same request ID again.
+    status = getClient()->setValues(getCallbackClient(), requests);
+
+    ASSERT_FALSE(status.isOk())
+            << "Use the same request ID before the previous request finishes must fail";
+
+    // Wait for the request to finish.
+    std::this_thread::sleep_for(std::chrono::nanoseconds(timeout * 5));
+}
+
+TEST_F(DefaultVehicleHalTest, testSetValuesDuplicateRequestIdsInOneRequest) {
+    SetValueRequests requests = {.payloads = {
+                                         {
+                                                 .requestId = 0,
+                                                 .value =
+                                                         VehiclePropValue{
+                                                                 .prop = testInt32VecProp(0),
+                                                                 .value.int32Values = {0},
+                                                         },
+                                         },
+                                         {
+                                                 .requestId = 0,
+                                                 .value =
+                                                         VehiclePropValue{
+                                                                 .prop = testInt32VecProp(1),
+                                                                 .value.int32Values = {0},
+                                                         },
+                                         },
+                                 }};
+
+    auto status = getClient()->setValues(getCallbackClient(), requests);
+
+    ASSERT_FALSE(status.isOk()) << "duplicate Ids in one request must fail";
+}
+
+TEST_F(DefaultVehicleHalTest, testSetValuesDuplicateRequestProps) {
+    SetValueRequests requests = {.payloads = {
+                                         {
+                                                 .requestId = 0,
+                                                 .value =
+                                                         VehiclePropValue{
+                                                                 .prop = testInt32VecProp(0),
+                                                                 .value.int32Values = {0},
+                                                         },
+                                         },
+                                         {
+                                                 .requestId = 1,
+                                                 .value =
+                                                         VehiclePropValue{
+                                                                 .prop = testInt32VecProp(0),
+                                                                 .value.int32Values = {0},
+                                                         },
+                                         },
+                                 }};
+
+    auto status = getClient()->setValues(getCallbackClient(), requests);
+
+    ASSERT_FALSE(status.isOk()) << "duplicate request properties in one request must fail";
 }
 
 }  // namespace vehicle

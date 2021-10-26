@@ -102,6 +102,53 @@ void sendGetOrSetValueResults(std::shared_ptr<IVehicleCallback> callback,
     sendGetOrSetValueResultsSeparately<ResultType, ResultsType>(callback, results);
 }
 
+// The timeout callback for GetValues/SetValues.
+template <class ResultType, class ResultsType>
+void onTimeout(
+        std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback> callback,
+        const std::unordered_set<int64_t>& timeoutIds) {
+    std::vector<ResultType> timeoutResults;
+    for (int64_t requestId : timeoutIds) {
+        ALOGD("hardware request timeout, request ID: %" PRId64, requestId);
+        timeoutResults.push_back({
+                .requestId = requestId,
+                .status = StatusCode::TRY_AGAIN,
+        });
+    }
+    sendGetOrSetValueResults<ResultType, ResultsType>(callback, timeoutResults);
+}
+
+// The on-results callback for GetValues/SetValues.
+template <class ResultType, class ResultsType>
+void getOrSetValuesCallback(
+        const void* clientId,
+        std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback> callback,
+        std::vector<ResultType> results, std::shared_ptr<PendingRequestPool> requestPool) {
+    std::unordered_set<int64_t> requestIds;
+    for (const auto& result : results) {
+        requestIds.insert(result.requestId);
+    }
+
+    auto finishedRequests = requestPool->tryFinishRequests(clientId, requestIds);
+
+    auto it = results.begin();
+    while (it != results.end()) {
+        int64_t requestId = it->requestId;
+        if (finishedRequests.find(requestId) == finishedRequests.end()) {
+            ALOGD("no pending request for the result from hardware, "
+                  "possibly already time-out, ID: %" PRId64,
+                  requestId);
+            it = results.erase(it);
+        } else {
+            it++;
+        }
+    }
+
+    if (!results.empty()) {
+        sendGetOrSetValueResults<ResultType, ResultsType>(callback, results);
+    }
+}
+
 // Specify the functions for GetValues and SetValues types.
 template void sendGetOrSetValueResult<GetValueResult, GetValueResults>(
         std::shared_ptr<IVehicleCallback> callback, const GetValueResult& result);
@@ -118,18 +165,55 @@ template void sendGetOrSetValueResultsSeparately<GetValueResult, GetValueResults
 template void sendGetOrSetValueResultsSeparately<SetValueResult, SetValueResults>(
         std::shared_ptr<IVehicleCallback> callback, const std::vector<SetValueResult>& results);
 
+template void onTimeout<GetValueResult, GetValueResults>(
+        std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback> callback,
+        const std::unordered_set<int64_t>& timeoutIds);
+template void onTimeout<SetValueResult, SetValueResults>(
+        std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback> callback,
+        const std::unordered_set<int64_t>& timeoutIds);
+
+template void getOrSetValuesCallback<GetValueResult, GetValueResults>(
+        const void* clientId,
+        std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback> callback,
+        std::vector<GetValueResult> results, std::shared_ptr<PendingRequestPool> requestPool);
+template void getOrSetValuesCallback<SetValueResult, SetValueResults>(
+        const void* clientId,
+        std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback> callback,
+        std::vector<SetValueResult> results, std::shared_ptr<PendingRequestPool> requestPool);
+
 }  // namespace
 
-ConnectedClient::ConnectedClient(std::shared_ptr<IVehicleCallback> callback)
-    : mCallback(callback) {}
+ConnectedClient::ConnectedClient(std::shared_ptr<PendingRequestPool> requestPool,
+                                 std::shared_ptr<IVehicleCallback> callback)
+    : mRequestPool(requestPool), mCallback(callback) {}
+
+const void* ConnectedClient::id() {
+    return reinterpret_cast<const void*>(this);
+}
+
+Result<void> ConnectedClient::addRequests(const std::unordered_set<int64_t>& requestIds) {
+    return mRequestPool->addRequests(id(), requestIds, getTimeoutCallback());
+}
+
+std::unordered_set<int64_t> ConnectedClient::tryFinishRequests(
+        const std::unordered_set<int64_t>& requestIds) {
+    return mRequestPool->tryFinishRequests(id(), requestIds);
+}
 
 template <class ResultType, class ResultsType>
 GetSetValuesClient<ResultType, ResultsType>::GetSetValuesClient(
-        std::shared_ptr<IVehicleCallback> callback)
-    : ConnectedClient(callback) {
+        std::shared_ptr<PendingRequestPool> requestPool, std::shared_ptr<IVehicleCallback> callback)
+    : ConnectedClient(requestPool, callback) {
+    mTimeoutCallback = std::make_shared<const PendingRequestPool::TimeoutCallbackFunc>(
+            [callback](const std::unordered_set<int64_t>& timeoutIds) {
+                return onTimeout<ResultType, ResultsType>(callback, timeoutIds);
+            });
+    auto requestPoolCopy = mRequestPool;
+    const void* clientId = id();
     mResultCallback = std::make_shared<const std::function<void(std::vector<ResultType>)>>(
-            [callback](std::vector<ResultType> results) {
-                return sendGetOrSetValueResults<ResultType, ResultsType>(callback, results);
+            [clientId, callback, requestPoolCopy](std::vector<ResultType> results) {
+                return getOrSetValuesCallback<ResultType, ResultsType>(
+                        clientId, callback, std::move(results), requestPoolCopy);
             });
 }
 
@@ -137,6 +221,12 @@ template <class ResultType, class ResultsType>
 std::shared_ptr<const std::function<void(std::vector<ResultType>)>>
 GetSetValuesClient<ResultType, ResultsType>::getResultCallback() {
     return mResultCallback;
+}
+
+template <class ResultType, class ResultsType>
+std::shared_ptr<const PendingRequestPool::TimeoutCallbackFunc>
+GetSetValuesClient<ResultType, ResultsType>::getTimeoutCallback() {
+    return mTimeoutCallback;
 }
 
 template <class ResultType, class ResultsType>

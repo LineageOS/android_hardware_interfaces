@@ -53,7 +53,7 @@ class PendingRequestPoolTest : public ::testing::Test {
 
     int64_t getTimeout() { return TEST_TIMEOUT; }
 
-    void* getTestClientId() { return reinterpret_cast<void*>(0); }
+    const void* getTestClientId() { return reinterpret_cast<const void*>(0); }
 
   private:
     // Test timeout is 0.1s.
@@ -239,12 +239,12 @@ TEST_F(PendingRequestPoolTest, testSameRequestIdForDifferentClient) {
     auto callback = std::make_shared<PendingRequestPool::TimeoutCallbackFunc>(
             [](std::unordered_set<int64_t>) {});
 
-    ASSERT_RESULT_OK(getPool()->addRequests(reinterpret_cast<void*>(0), {0}, callback));
-    ASSERT_RESULT_OK(getPool()->addRequests(reinterpret_cast<void*>(1), {1, 2, 0}, callback));
+    ASSERT_RESULT_OK(getPool()->addRequests(reinterpret_cast<const void*>(0), {0}, callback));
+    ASSERT_RESULT_OK(getPool()->addRequests(reinterpret_cast<const void*>(1), {1, 2, 0}, callback));
 
-    ASSERT_THAT(getPool()->tryFinishRequests(reinterpret_cast<void*>(0), {0}),
+    ASSERT_THAT(getPool()->tryFinishRequests(reinterpret_cast<const void*>(0), {0}),
                 UnorderedElementsAre(0));
-    ASSERT_THAT(getPool()->tryFinishRequests(reinterpret_cast<void*>(1), {1, 2, 0}),
+    ASSERT_THAT(getPool()->tryFinishRequests(reinterpret_cast<const void*>(1), {1, 2, 0}),
                 UnorderedElementsAre(0, 1, 2));
 }
 
@@ -258,14 +258,14 @@ TEST_F(PendingRequestPoolTest, testPendingRequestCountLimit) {
     for (size_t i = 0; i < 10000; i++) {
         requests.insert(static_cast<int64_t>(i));
     }
-    ASSERT_RESULT_OK(getPool()->addRequests(reinterpret_cast<void*>(0), requests, callback));
+    ASSERT_RESULT_OK(getPool()->addRequests(reinterpret_cast<const void*>(0), requests, callback));
 
-    auto result = getPool()->addRequests(reinterpret_cast<void*>(0), {static_cast<int64_t>(10000)},
-                                         callback);
+    auto result = getPool()->addRequests(reinterpret_cast<const void*>(0),
+                                         {static_cast<int64_t>(10000)}, callback);
     ASSERT_FALSE(result.ok()) << "adding more pending requests than limit must fail";
     ASSERT_EQ(result.error().code(), toInt(StatusCode::TRY_AGAIN));
 
-    getPool()->tryFinishRequests(reinterpret_cast<void*>(0), requests);
+    getPool()->tryFinishRequests(reinterpret_cast<const void*>(0), requests);
 }
 
 }  // namespace vehicle
