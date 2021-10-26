@@ -53,7 +53,7 @@ size_t VehiclePropertyStore::RecordIdHash::operator()(RecordId const& recordId) 
 }
 
 VehiclePropertyStore::~VehiclePropertyStore() {
-    std::lock_guard<std::mutex> lockGuard(mLock);
+    std::scoped_lock<std::mutex> lockGuard(mLock);
 
     // Recycling record requires mValuePool, so need to recycle them before destroying mValuePool.
     mRecordsByPropId.clear();
@@ -95,7 +95,7 @@ Result<VehiclePropValuePool::RecyclableType> VehiclePropertyStore::readValueLock
 
 void VehiclePropertyStore::registerProperty(const VehiclePropConfig& config,
                                             VehiclePropertyStore::TokenFunction tokenFunc) {
-    std::lock_guard<std::mutex> g(mLock);
+    std::scoped_lock<std::mutex> g(mLock);
 
     mRecordsByPropId[config.prop] = Record{
             .propConfig = config,
@@ -105,7 +105,7 @@ void VehiclePropertyStore::registerProperty(const VehiclePropConfig& config,
 
 Result<void> VehiclePropertyStore::writeValue(VehiclePropValuePool::RecyclableType propValue,
                                               bool updateStatus) {
-    std::lock_guard<std::mutex> g(mLock);
+    std::scoped_lock<std::mutex> g(mLock);
 
     int32_t propId = propValue->prop;
 
@@ -150,7 +150,7 @@ Result<void> VehiclePropertyStore::writeValue(VehiclePropValuePool::RecyclableTy
 }
 
 void VehiclePropertyStore::removeValue(const VehiclePropValue& propValue) {
-    std::lock_guard<std::mutex> g(mLock);
+    std::scoped_lock<std::mutex> g(mLock);
 
     VehiclePropertyStore::Record* record = getRecordLocked(propValue.prop);
     if (record == nullptr) {
@@ -164,7 +164,7 @@ void VehiclePropertyStore::removeValue(const VehiclePropValue& propValue) {
 }
 
 void VehiclePropertyStore::removeValuesForProperty(int32_t propId) {
-    std::lock_guard<std::mutex> g(mLock);
+    std::scoped_lock<std::mutex> g(mLock);
 
     VehiclePropertyStore::Record* record = getRecordLocked(propId);
     if (record == nullptr) {
@@ -175,7 +175,7 @@ void VehiclePropertyStore::removeValuesForProperty(int32_t propId) {
 }
 
 std::vector<VehiclePropValuePool::RecyclableType> VehiclePropertyStore::readAllValues() const {
-    std::lock_guard<std::mutex> g(mLock);
+    std::scoped_lock<std::mutex> g(mLock);
 
     std::vector<VehiclePropValuePool::RecyclableType> allValues;
 
@@ -190,7 +190,7 @@ std::vector<VehiclePropValuePool::RecyclableType> VehiclePropertyStore::readAllV
 
 Result<std::vector<VehiclePropValuePool::RecyclableType>>
 VehiclePropertyStore::readValuesForProperty(int32_t propId) const {
-    std::lock_guard<std::mutex> g(mLock);
+    std::scoped_lock<std::mutex> g(mLock);
 
     std::vector<VehiclePropValuePool::RecyclableType> values;
 
@@ -207,7 +207,7 @@ VehiclePropertyStore::readValuesForProperty(int32_t propId) const {
 
 Result<VehiclePropValuePool::RecyclableType> VehiclePropertyStore::readValue(
         const VehiclePropValue& propValue) const {
-    std::lock_guard<std::mutex> g(mLock);
+    std::scoped_lock<std::mutex> g(mLock);
 
     int32_t propId = propValue.prop;
     const VehiclePropertyStore::Record* record = getRecordLocked(propId);
@@ -222,7 +222,7 @@ Result<VehiclePropValuePool::RecyclableType> VehiclePropertyStore::readValue(
 Result<VehiclePropValuePool::RecyclableType> VehiclePropertyStore::readValue(int32_t propId,
                                                                              int32_t areaId,
                                                                              int64_t token) const {
-    std::lock_guard<std::mutex> g(mLock);
+    std::scoped_lock<std::mutex> g(mLock);
 
     const VehiclePropertyStore::Record* record = getRecordLocked(propId);
     if (record == nullptr) {
@@ -234,7 +234,7 @@ Result<VehiclePropValuePool::RecyclableType> VehiclePropertyStore::readValue(int
 }
 
 std::vector<VehiclePropConfig> VehiclePropertyStore::getAllConfigs() const {
-    std::lock_guard<std::mutex> g(mLock);
+    std::scoped_lock<std::mutex> g(mLock);
 
     std::vector<VehiclePropConfig> configs;
     configs.reserve(mRecordsByPropId.size());
@@ -245,7 +245,7 @@ std::vector<VehiclePropConfig> VehiclePropertyStore::getAllConfigs() const {
 }
 
 Result<const VehiclePropConfig*> VehiclePropertyStore::getConfig(int32_t propId) const {
-    std::lock_guard<std::mutex> g(mLock);
+    std::scoped_lock<std::mutex> g(mLock);
 
     const VehiclePropertyStore::Record* record = getRecordLocked(propId);
     if (record == nullptr) {
@@ -257,7 +257,7 @@ Result<const VehiclePropConfig*> VehiclePropertyStore::getConfig(int32_t propId)
 
 void VehiclePropertyStore::setOnValueChangeCallback(
         const VehiclePropertyStore::OnValueChangeCallback& callback) {
-    std::lock_guard<std::mutex> g(mLock);
+    std::scoped_lock<std::mutex> g(mLock);
 
     mOnValueChangeCallback = callback;
 }
