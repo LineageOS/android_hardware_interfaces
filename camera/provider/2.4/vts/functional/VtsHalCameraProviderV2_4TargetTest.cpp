@@ -6197,14 +6197,13 @@ TEST_P(CameraHidlTest, grfSMultiCameraTest) {
         return;
     }
 
-    // Test that if more than one color cameras facing the same direction are
-    // supported, there must be at least one logical camera facing that
-    // direction.
+    // Test that if more than one rear-facing color camera is
+    // supported, there must be at least one rear-facing logical camera.
     hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
-    // Front and back facing non-logical color cameras
-    std::set<std::string> frontColorCameras, rearColorCameras;
-    // Front and back facing logical cameras' physical camera Id sets
-    std::set<std::set<std::string>> frontPhysicalIds, rearPhysicalIds;
+    // Back facing non-logical color cameras
+    std::set<std::string> rearColorCameras;
+    // Back facing logical cameras' physical camera Id sets
+    std::set<std::set<std::string>> rearPhysicalIds;
     for (const auto& name : cameraDeviceNames) {
         std::string cameraId;
         int deviceVersion = getCameraDeviceVersionAndId(name, mProviderType, &cameraId);
@@ -6236,8 +6235,8 @@ TEST_P(CameraHidlTest, grfSMultiCameraTest) {
                         return;
                     }
 
-                    // Check camera facing. Skip if facing is neither FRONT
-                    // nor BACK. If this is not a logical camera, only note down
+                    // Check camera facing. Skip if facing is not BACK.
+                    // If this is not a logical camera, only note down
                     // the camera ID, and skip.
                     camera_metadata_ro_entry entry;
                     int retcode = find_camera_metadata_ro_entry(
@@ -6246,18 +6245,12 @@ TEST_P(CameraHidlTest, grfSMultiCameraTest) {
                     ASSERT_GT(entry.count, 0);
                     uint8_t facing = entry.data.u8[0];
                     bool isLogicalCamera = (isLogicalMultiCamera(metadata) == Status::OK);
-                    if (facing == ANDROID_LENS_FACING_FRONT) {
-                        if (!isLogicalCamera) {
-                            frontColorCameras.insert(cameraId);
-                            return;
-                        }
-                    } else if (facing == ANDROID_LENS_FACING_BACK) {
-                        if (!isLogicalCamera) {
-                            rearColorCameras.insert(cameraId);
-                            return;
-                        }
-                    } else {
-                        // Not FRONT or BACK facing. Skip.
+                    if (facing != ANDROID_LENS_FACING_BACK) {
+                        // Not BACK facing. Skip.
+                        return;
+                    }
+                    if (!isLogicalCamera) {
+                        rearColorCameras.insert(cameraId);
                         return;
                     }
 
@@ -6266,11 +6259,7 @@ TEST_P(CameraHidlTest, grfSMultiCameraTest) {
                     std::unordered_set<std::string> physicalCameraIds;
                     Status s = getPhysicalCameraIds(metadata, &physicalCameraIds);
                     ASSERT_EQ(Status::OK, s);
-                    if (facing == ANDROID_LENS_FACING_FRONT) {
-                        frontPhysicalIds.emplace(physicalCameraIds.begin(), physicalCameraIds.end());
-                    } else {
-                        rearPhysicalIds.emplace(physicalCameraIds.begin(), physicalCameraIds.end());
-                    }
+                    rearPhysicalIds.emplace(physicalCameraIds.begin(), physicalCameraIds.end());
                     for (const auto& physicalId : physicalCameraIds) {
                         // Skip if the physicalId is publicly available
                         for (auto& deviceName : cameraDeviceNames) {
@@ -6297,11 +6286,7 @@ TEST_P(CameraHidlTest, grfSMultiCameraTest) {
                                     (camera_metadata_t*)chars.data();
 
                             if (CameraHidlTest::isColorCamera(physicalMetadata)) {
-                                if (facing == ANDROID_LENS_FACING_FRONT) {
-                                    frontColorCameras.insert(physicalId);
-                                } else if (facing == ANDROID_LENS_FACING_BACK) {
-                                    rearColorCameras.insert(physicalId);
-                                }
+                                rearColorCameras.insert(physicalId);
                             }
                         });
                         ASSERT_TRUE(ret.isOk());
@@ -6319,20 +6304,9 @@ TEST_P(CameraHidlTest, grfSMultiCameraTest) {
         }
     }
 
-    // If there are more than one color cameras facing one direction, a logical
-    // multi-camera must be defined consisting of all color cameras facing that
-    // direction.
-    if (frontColorCameras.size() > 1) {
-        bool hasFrontLogical = false;
-        for (const auto& physicalIds : frontPhysicalIds) {
-            if (std::includes(physicalIds.begin(), physicalIds.end(),
-                    frontColorCameras.begin(), frontColorCameras.end())) {
-                hasFrontLogical = true;
-                break;
-            }
-        }
-        ASSERT_TRUE(hasFrontLogical);
-    }
+    // If there are more than one rear-facing color camera, a logical
+    // multi-camera must be defined consisting of all rear-facing color
+    // cameras.
     if (rearColorCameras.size() > 1) {
         bool hasRearLogical = false;
         for (const auto& physicalIds : rearPhysicalIds) {
