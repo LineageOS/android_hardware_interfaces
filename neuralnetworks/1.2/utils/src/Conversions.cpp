@@ -28,7 +28,6 @@
 #include <nnapi/hal/1.0/Conversions.h>
 #include <nnapi/hal/1.1/Conversions.h>
 #include <nnapi/hal/CommonUtils.h>
-#include <nnapi/hal/HandleError.h>
 
 #include <algorithm>
 #include <functional>
@@ -187,7 +186,7 @@ GeneralResult<Model> unvalidatedConvert(const hal::V1_2::Model& model) {
 
     // Verify number of consumers.
     const auto numberOfConsumers =
-            NN_TRY(hal::utils::countNumberOfConsumers(model.operands.size(), operations));
+            NN_TRY(countNumberOfConsumers(model.operands.size(), operations));
     CHECK(model.operands.size() == numberOfConsumers.size());
     for (size_t i = 0; i < model.operands.size(); ++i) {
         if (model.operands[i].numberOfConsumers != numberOfConsumers[i]) {
@@ -264,14 +263,6 @@ GeneralResult<Extension::OperandTypeInformation> unvalidatedConvert(
     };
 }
 
-GeneralResult<SharedHandle> unvalidatedConvert(const hidl_handle& hidlHandle) {
-    if (hidlHandle.getNativeHandle() == nullptr) {
-        return nullptr;
-    }
-    auto handle = NN_TRY(hal::utils::sharedHandleFromNativeHandle(hidlHandle.getNativeHandle()));
-    return std::make_shared<const Handle>(std::move(handle));
-}
-
 GeneralResult<DeviceType> convert(const hal::V1_2::DeviceType& deviceType) {
     return validatedConvert(deviceType);
 }
@@ -332,6 +323,10 @@ nn::GeneralResult<V1_0::DataLocation> unvalidatedConvert(const nn::DataLocation&
 nn::GeneralResult<hidl_vec<uint8_t>> unvalidatedConvert(
         const nn::Model::OperandValues& operandValues) {
     return V1_0::utils::unvalidatedConvert(operandValues);
+}
+
+nn::GeneralResult<hidl_handle> unvalidatedConvert(const nn::SharedHandle& handle) {
+    return V1_0::utils::unvalidatedConvert(handle);
 }
 
 nn::GeneralResult<hidl_memory> unvalidatedConvert(const nn::SharedMemory& memory) {
@@ -481,7 +476,7 @@ nn::GeneralResult<Model> unvalidatedConvert(const nn::Model& model) {
 
     // Update number of consumers.
     const auto numberOfConsumers =
-            NN_TRY(hal::utils::countNumberOfConsumers(operands.size(), model.main.operations));
+            NN_TRY(countNumberOfConsumers(operands.size(), model.main.operations));
     CHECK(operands.size() == numberOfConsumers.size());
     for (size_t i = 0; i < operands.size(); ++i) {
         operands[i].numberOfConsumers = numberOfConsumers[i];
@@ -542,13 +537,6 @@ nn::GeneralResult<Extension::OperandTypeInformation> unvalidatedConvert(
             .isTensor = operandTypeInformation.isTensor,
             .byteSize = operandTypeInformation.byteSize,
     };
-}
-
-nn::GeneralResult<hidl_handle> unvalidatedConvert(const nn::SharedHandle& handle) {
-    if (handle == nullptr) {
-        return {};
-    }
-    return hal::utils::hidlHandleFromSharedHandle(*handle);
 }
 
 nn::GeneralResult<DeviceType> convert(const nn::DeviceType& deviceType) {

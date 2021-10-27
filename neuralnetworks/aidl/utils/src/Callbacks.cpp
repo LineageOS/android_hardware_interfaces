@@ -38,7 +38,7 @@ namespace {
 // nn::Version::ANDROID_S. On failure, this function returns with the appropriate nn::GeneralError.
 nn::GeneralResult<nn::SharedPreparedModel> prepareModelCallback(
         ErrorStatus status, const std::shared_ptr<IPreparedModel>& preparedModel) {
-    HANDLE_HAL_STATUS(status) << "model preparation failed with " << toString(status);
+    HANDLE_STATUS_AIDL(status) << "model preparation failed with " << toString(status);
     return NN_TRY(PreparedModel::create(preparedModel));
 }
 

@@ -30,7 +30,6 @@
 #include <nnapi/hal/1.1/Utils.h>
 #include <nnapi/hal/1.2/Conversions.h>
 #include <nnapi/hal/1.2/Utils.h>
-#include <nnapi/hal/HandleError.h>
 
 namespace android::hardware::neuralnetworks::V1_3::utils {
 

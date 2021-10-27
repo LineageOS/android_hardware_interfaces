@@ -1315,8 +1315,8 @@ static void mutateExecutionPriorityTest(const std::shared_ptr<IDevice>& device,
 
 void validateModel(const std::shared_ptr<IDevice>& device, const Model& model) {
     const auto numberOfConsumers =
-            nn::countNumberOfConsumers(model.main.operands.size(),
-                                       nn::unvalidatedConvert(model.main.operations).value())
+            countNumberOfConsumers(model.main.operands.size(),
+                                   nn::unvalidatedConvert(model.main.operations).value())
                     .value();
     mutateExecutionOrderTest(device, model, numberOfConsumers);
     mutateOperandTypeTest(device, model);
