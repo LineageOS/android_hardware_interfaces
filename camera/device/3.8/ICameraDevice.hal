@@ -16,6 +16,7 @@
 
 package android.hardware.camera.device@3.8;
 
+import android.hardware.camera.common@1.0::Status;
 import @3.7::ICameraDevice;
 
 /**
@@ -29,4 +30,81 @@ import @3.7::ICameraDevice;
  * @3.7::ICameraDeviceSession.
  */
 interface ICameraDevice extends @3.7::ICameraDevice {
+    /**
+     * turnOnTorchWithStrengthLevel:
+     *
+     * Change the brightness level of the flash unit associated with this camera device
+     * and set it to value in torchStrength. This function also turns ON the torch
+     * with specified torchStrength if the torch is OFF.
+     *
+     * The torchStrength value must be within the valid range i.e. >=1 and
+     * <= FLASH_INFO_STRENGTH_MAXIMUM_LEVEL. Whenever the torch is turned OFF,
+     * the brightness level will reset to FLASH_INFO_STRENGTH_DEFAULT_LEVEL.
+     * When the client calls setTorchMode(ON) after turnOnTorchWithStrengthLevel(N),
+     * the flash unit will have brightness level equal to N. This level does not
+     * represent the real brightness units. It is linear in nature i.e. flashlight
+     * at level 10 is twice as bright as at level 5.
+     *
+     * @param torchStrength Brightness level to be set for the flashlight.
+     *
+     * @return status Status code for the operation, one of:
+     *     OK:
+     *         On a successful change to the torch strength level.
+     *     INTERNAL_ERROR:
+     *         The flash unit cannot be operated due to an unexpected internal
+     *         error.
+     *     CAMERA_IN_USE:
+     *         This status code is returned when:
+     *           - This camera device has been opened, so the torch cannot be
+     *             controlled until it is closed.
+     *           - Due to other camera devices being open, or due to other
+     *             resource constraints, the torch cannot be controlled currently.
+     *     ILLEGAL_ARGUMENT:
+     *         If the torchStrength value is not within the range i.e. < 1 or
+     *         > FLASH_INFO_STRENGTH_MAXIMUM_LEVEL.
+     *     METHOD_NOT_SUPPORTED:
+     *         This status code is returned when:
+     *           - This camera device does not support direct operation of flashlight
+     *             torch mode. The framework must open the camera device and turn
+     *             the torch on through the device interface.
+     *           - This camera device does not have a flash unit.
+     *           - This camera device has flash unit but does not support torch
+     *             strength control.
+     *     CAMERA_DISCONNECTED:
+     *         An external camera device has been disconnected, and is no longer
+     *         available. This camera device interface is now stale, and a new
+     *         instance must be acquired if the device is reconnected. All
+     *         subsequent calls on this interface must return
+     *         CAMERA_DISCONNECTED.
+     *
+     */
+    turnOnTorchWithStrengthLevel(int32_t torchStrength) generates (Status status);
+
+    /**
+     * getTorchStrengthLevel:
+     *
+     * Get current torch strength level.
+     * If the device supports torch strength control, when the torch is OFF the
+     * strength level will reset to default level, so the return
+     * value in this case will be equal to FLASH_INFO_STRENGTH_DEFAULT_LEVEL.
+     *
+     * @return status Status code for the operation, one of:
+     *      OK:
+     *           On success.
+     *      INTERNAL_ERROR:
+     *           An unexpected error occurred and the information is not
+     *           available.
+     *      METHOD_NOT_SUPPORTED:
+     *          This status code is returned when:
+     *            - This camera device does not support direct operation of flashlight
+     *              torch mode. The framework must open the camera device and turn
+     *              the torch on through the device interface.
+     *            - This camera device does not have a flash unit.
+     *            - This camera device has flash unit but does not support torch
+     *              strength control.
+     *
+     * @return torchStrength Current torch strength level.
+     *
+     */
+    getTorchStrengthLevel() generates (Status status, int32_t torchStrength);
 };
