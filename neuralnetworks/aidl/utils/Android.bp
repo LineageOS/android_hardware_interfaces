@@ -23,8 +23,8 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
-cc_defaults {
-    name: "neuralnetworks_utils_hal_aidl_defaults",
+cc_library_static {
+    name: "neuralnetworks_utils_hal_aidl",
     defaults: ["neuralnetworks_utils_defaults"],
     srcs: ["src/*"],
     local_include_dirs: ["include/nnapi/hal/aidl/"],
@@ -38,6 +38,7 @@ cc_defaults {
         "neuralnetworks_utils_hal_common",
     ],
     shared_libs: [
+        "android.hardware.neuralnetworks-V2-ndk",
         "libbinder_ndk",
         "libhidlbase",
     ],
@@ -48,49 +49,21 @@ cc_defaults {
     },
 }
 
-cc_library_static {
-    name: "neuralnetworks_utils_hal_aidl_v1",
-    defaults: ["neuralnetworks_utils_hal_aidl_defaults"],
-    shared_libs: [
-        "android.hardware.neuralnetworks-V1-ndk",
-    ],
-}
-
-cc_library_static {
-    name: "neuralnetworks_utils_hal_aidl_v2",
-    defaults: ["neuralnetworks_utils_hal_aidl_defaults"],
-    shared_libs: [
-        "android.hardware.neuralnetworks-V2-ndk",
-    ],
-}
-
-// A cc_defaults that includes the latest non-experimental AIDL utilities and other AIDL libraries
-// that are commonly used together. Modules that always depend on the latest non-experimental
-// AIDL features can include this cc_defaults to avoid managing dependency versions explicitly.
-cc_defaults {
-    name: "neuralnetworks_use_latest_utils_hal_aidl",
-    static_libs: [
-        "android.hardware.common-V2-ndk",
-        "android.hardware.graphics.common-V3-ndk",
-        "android.hardware.neuralnetworks-V2-ndk",
-        "neuralnetworks_utils_hal_aidl_v2",
-    ],
-}
-
 cc_test {
     name: "neuralnetworks_utils_hal_aidl_test",
-    defaults: [
-        "neuralnetworks_use_latest_utils_hal_aidl",
-        "neuralnetworks_utils_defaults",
-    ],
+    defaults: ["neuralnetworks_utils_defaults"],
     srcs: [
         "test/*.cpp",
     ],
     static_libs: [
+        "android.hardware.common-V2-ndk",
+        "android.hardware.graphics.common-V3-ndk",
+        "android.hardware.neuralnetworks-V2-ndk",
         "libaidlcommonsupport",
         "libgmock",
         "libneuralnetworks_common",
         "neuralnetworks_types",
+        "neuralnetworks_utils_hal_aidl",
         "neuralnetworks_utils_hal_common",
     ],
     shared_libs: [
