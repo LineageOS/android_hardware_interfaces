@@ -31,6 +31,7 @@ cc_library_static {
     export_include_dirs: ["include"],
     cflags: ["-Wthread-safety"],
     static_libs: [
+        "libarect",
         "neuralnetworks_types",
         "neuralnetworks_utils_hal_common",
     ],
@@ -40,6 +41,11 @@ cc_library_static {
     export_static_lib_headers: [
         "neuralnetworks_utils_hal_common",
     ],
+    target: {
+        android: {
+            shared_libs: ["libnativewindow"],
+        },
+    },
 }
 
 cc_test {

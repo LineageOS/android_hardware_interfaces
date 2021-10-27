@@ -36,7 +36,6 @@
 #include <nnapi/hal/1.2/Utils.h>
 #include <nnapi/hal/1.3/Conversions.h>
 #include <nnapi/hal/1.3/Utils.h>
-#include <nnapi/hal/HandleError.h>
 #include <sys/types.h>
 
 #include <memory>

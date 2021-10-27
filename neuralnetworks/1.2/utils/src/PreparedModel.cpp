@@ -31,9 +31,9 @@
 #include <nnapi/Result.h>
 #include <nnapi/Types.h>
 #include <nnapi/hal/1.0/Conversions.h>
+#include <nnapi/hal/1.0/HandleError.h>
+#include <nnapi/hal/1.0/ProtectCallback.h>
 #include <nnapi/hal/CommonUtils.h>
-#include <nnapi/hal/HandleError.h>
-#include <nnapi/hal/ProtectCallback.h>
 
 #include <chrono>
 #include <memory>
@@ -82,7 +82,7 @@ PreparedModel::executeAsynchronously(const V1_0::Request& request, MeasureTiming
     const auto ret = kPreparedModel->execute_1_2(request, measure, cb);
     const auto status = HANDLE_TRANSPORT_FAILURE(ret);
     if (status != V1_0::ErrorStatus::OUTPUT_INSUFFICIENT_SIZE) {
-        HANDLE_HAL_STATUS(status) << "execution failed with " << toString(status);
+        HANDLE_STATUS_HIDL(status) << "execution failed with " << toString(status);
     }
 
     return cb->get();

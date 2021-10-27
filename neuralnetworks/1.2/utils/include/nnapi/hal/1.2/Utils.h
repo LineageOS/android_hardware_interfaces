@@ -28,7 +28,6 @@
 #include <nnapi/hal/1.0/Conversions.h>
 #include <nnapi/hal/1.1/Conversions.h>
 #include <nnapi/hal/1.1/Utils.h>
-#include <nnapi/hal/HandleError.h>
 
 #include <limits>
 

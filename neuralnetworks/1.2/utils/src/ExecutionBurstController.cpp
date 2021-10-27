@@ -28,9 +28,9 @@
 #include <nnapi/Types.h>
 #include <nnapi/Validation.h>
 #include <nnapi/hal/1.0/Conversions.h>
+#include <nnapi/hal/1.0/HandleError.h>
+#include <nnapi/hal/1.0/ProtectCallback.h>
 #include <nnapi/hal/CommonUtils.h>
-#include <nnapi/hal/HandleError.h>
-#include <nnapi/hal/ProtectCallback.h>
 #include <nnapi/hal/TransferValue.h>
 
 #include <algorithm>
@@ -82,8 +82,8 @@ class BurstExecution final : public nn::IExecution,
 
 nn::GeneralResult<sp<IBurstContext>> executionBurstResultCallback(
         V1_0::ErrorStatus status, const sp<IBurstContext>& burstContext) {
-    HANDLE_HAL_STATUS(status) << "IPreparedModel::configureExecutionBurst failed with status "
-                              << toString(status);
+    HANDLE_STATUS_HIDL(status) << "IPreparedModel::configureExecutionBurst failed with status "
+                               << toString(status);
     if (burstContext == nullptr) {
         return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
                << "IPreparedModel::configureExecutionBurst returned nullptr for burst";
