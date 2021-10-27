@@ -16,16 +16,21 @@
 
 #include <DefaultConfig.h>
 #include <FakeVehicleHardware.h>
+
+#include <android-base/expected.h>
+#include <android-base/file.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <utils/Log.h>
 #include <utils/SystemClock.h>
+
+#include <inttypes.h>
 
 namespace android {
 namespace hardware {
 namespace automotive {
 namespace vehicle {
 namespace fake {
-
 namespace {
 
 using ::aidl::android::hardware::automotive::vehicle::GetValueRequest;
@@ -38,6 +43,8 @@ using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyStatus;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
+using ::android::base::expected;
+using ::android::base::unexpected;
 using ::testing::ContainerEq;
 using ::testing::Eq;
 using ::testing::WhenSortedBy;
@@ -45,6 +52,17 @@ using ::testing::WhenSortedBy;
 constexpr int INVALID_PROP_ID = 0;
 
 }  // namespace
+
+// A helper class to access private methods for FakeVehicleHardware.
+class FakeVehicleHardwareTestHelper {
+  public:
+    FakeVehicleHardwareTestHelper(FakeVehicleHardware* hardware) { mHardware = hardware; }
+
+    void overrideProperties(const char* overrideDir) { mHardware->overrideProperties(overrideDir); }
+
+  private:
+    FakeVehicleHardware* mHardware;
+};
 
 class FakeVehicleHardwareTest : public ::testing::Test {
   protected:
@@ -62,6 +80,63 @@ class FakeVehicleHardwareTest : public ::testing::Test {
         return getHardware()->getValues(
                 [this](const std::vector<GetValueResult> results) { return onGetValues(results); },
                 requests);
+    }
+
+    StatusCode setValue(const VehiclePropValue& value) {
+        std::vector<SetValueRequest> requests = {
+                SetValueRequest{
+                        .requestId = 0,
+                        .value = value,
+                },
+        };
+
+        if (StatusCode status = setValues(requests); status != StatusCode::OK) {
+            return status;
+        }
+
+        const SetValueResult& result = getSetValueResults().back();
+
+        if (result.requestId != 0) {
+            ALOGE("request ID mismatch, got %" PRId64 ", expect 0", result.requestId);
+            return StatusCode::INTERNAL_ERROR;
+        }
+
+        return result.status;
+    }
+
+    expected<VehiclePropValue, StatusCode> getValue(const VehiclePropValue& value) {
+        std::vector<GetValueRequest> requests = {
+                GetValueRequest{
+                        .requestId = 0,
+                        .prop = value,
+                },
+        };
+
+        if (StatusCode status = getValues(requests); status != StatusCode::OK) {
+            return unexpected(status);
+        }
+
+        const GetValueResult& result = getGetValueResults().back();
+        if (result.requestId != 0) {
+            ALOGE("request ID mismatch, got %" PRId64 ", expect 0", result.requestId);
+            return unexpected(StatusCode::INTERNAL_ERROR);
+        }
+
+        if (result.status != StatusCode::OK) {
+            return unexpected(result.status);
+        }
+
+        if (!result.prop.has_value()) {
+            ALOGE("%s", "result property is empty");
+            return unexpected(StatusCode::INTERNAL_ERROR);
+        }
+
+        return result.prop.value();
+    }
+
+    template <class T>
+    int getStatus(expected<T, StatusCode> result) {
+        return toInt(result.error());
     }
 
     void onSetValues(const std::vector<SetValueResult> results) {
@@ -422,6 +497,86 @@ TEST_F(FakeVehicleHardwareTest, testSetStatusMustIgnore) {
     ASSERT_EQ(getGetValueResults().size(), static_cast<size_t>(2));
     ASSERT_EQ(getGetValueResults()[1].status, StatusCode::OK);
     ASSERT_EQ(getGetValueResults()[1].prop->status, VehiclePropertyStatus::AVAILABLE);
+}
+
+TEST_F(FakeVehicleHardwareTest, testVendorOverrideProperties) {
+    std::string overrideDir = android::base::GetExecutableDirectory() + "/override/";
+    // Set vendor override directory.
+    FakeVehicleHardwareTestHelper helper(getHardware());
+    helper.overrideProperties(overrideDir.c_str());
+
+    // This is the same as the prop in 'gear_selection.json'.
+    int gearProp = toInt(VehicleProperty::GEAR_SELECTION);
+
+    auto result = getValue(VehiclePropValue{
+            .prop = gearProp,
+    });
+
+    ASSERT_TRUE(result.ok()) << "expect to get the overridden property ok: " << getStatus(result);
+    ASSERT_EQ(static_cast<size_t>(1), result.value().value.int32Values.size());
+    ASSERT_EQ(8, result.value().value.int32Values[0]);
+
+    // If we set the value, it should update despite the override.
+    ASSERT_EQ(setValue(VehiclePropValue{
+                      .prop = gearProp,
+                      .value =
+                              {
+                                      .int32Values = {5},
+                              },
+                      .timestamp = elapsedRealtimeNano(),
+              }),
+              StatusCode::OK)
+            << "expect to set the overridden property ok";
+
+    result = getValue(VehiclePropValue{
+            .prop = gearProp,
+    });
+
+    ASSERT_TRUE(result.ok()) << "expect to get the overridden property after setting value ok";
+    ASSERT_EQ(static_cast<size_t>(1), result.value().value.int32Values.size());
+    ASSERT_EQ(5, result.value().value.int32Values[0]);
+}
+
+TEST_F(FakeVehicleHardwareTest, testVendorOverridePropertiesMultipleAreas) {
+    std::string overrideDir = android::base::GetExecutableDirectory() + "/override/";
+    // Set vendor override directory.
+    FakeVehicleHardwareTestHelper helper(getHardware());
+    helper.overrideProperties(overrideDir.c_str());
+
+    // This is the same as the prop in 'hvac_temperature_set.json'.
+    int hvacProp = toInt(VehicleProperty::HVAC_TEMPERATURE_SET);
+
+    auto result = getValue(VehiclePropValue{
+            .prop = hvacProp,
+            .areaId = HVAC_LEFT,
+    });
+
+    ASSERT_TRUE(result.ok()) << "expect to get the overridden property ok: " << getStatus(result);
+    ASSERT_EQ(static_cast<size_t>(1), result.value().value.floatValues.size());
+    ASSERT_EQ(30.0f, result.value().value.floatValues[0]);
+
+    // HVAC_RIGHT should not be affected and return the default value.
+    result = getValue(VehiclePropValue{
+            .prop = hvacProp,
+            .areaId = HVAC_RIGHT,
+    });
+
+    ASSERT_TRUE(result.ok()) << "expect to get the default property ok: " << getStatus(result);
+    ASSERT_EQ(static_cast<size_t>(1), result.value().value.floatValues.size());
+    ASSERT_EQ(20.0f, result.value().value.floatValues[0]);
+}
+
+TEST_F(FakeVehicleHardwareTest, testVendorOverridePropertiesDirDoesNotExist) {
+    // Set vendor override directory to a non-existing dir
+    FakeVehicleHardwareTestHelper helper(getHardware());
+    helper.overrideProperties("123");
+    auto result = getValue(VehiclePropValue{
+            .prop = toInt(VehicleProperty::GEAR_SELECTION),
+    });
+
+    ASSERT_TRUE(result.ok()) << "expect to get the default property ok: " << getStatus(result);
+    ASSERT_EQ(static_cast<size_t>(1), result.value().value.int32Values.size());
+    ASSERT_EQ(4, result.value().value.int32Values[0]);
 }
 
 }  // namespace fake
