@@ -45,7 +45,6 @@ GeneralResult<Timing> unvalidatedConvert(const hal::V1_2::Timing& timing);
 GeneralResult<Extension> unvalidatedConvert(const hal::V1_2::Extension& extension);
 GeneralResult<Extension::OperandTypeInformation> unvalidatedConvert(
         const hal::V1_2::Extension::OperandTypeInformation& operandTypeInformation);
-GeneralResult<SharedHandle> unvalidatedConvert(const hardware::hidl_handle& handle);
 
 GeneralResult<DeviceType> convert(const hal::V1_2::DeviceType& deviceType);
 GeneralResult<Capabilities> convert(const hal::V1_2::Capabilities& capabilities);
@@ -86,7 +85,6 @@ nn::GeneralResult<Timing> unvalidatedConvert(const nn::Timing& timing);
 nn::GeneralResult<Extension> unvalidatedConvert(const nn::Extension& extension);
 nn::GeneralResult<Extension::OperandTypeInformation> unvalidatedConvert(
         const nn::Extension::OperandTypeInformation& operandTypeInformation);
-nn::GeneralResult<hidl_handle> unvalidatedConvert(const nn::SharedHandle& handle);
 
 nn::GeneralResult<DeviceType> convert(const nn::DeviceType& deviceType);
 nn::GeneralResult<Capabilities> convert(const nn::Capabilities& capabilities);

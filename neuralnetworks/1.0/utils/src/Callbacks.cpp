@@ -17,7 +17,9 @@
 #include "Callbacks.h"
 
 #include "Conversions.h"
+#include "HandleError.h"
 #include "PreparedModel.h"
+#include "ProtectCallback.h"
 #include "Utils.h"
 
 #include <android/hardware/neuralnetworks/1.0/IExecutionCallback.h>
@@ -27,8 +29,6 @@
 #include <nnapi/Result.h>
 #include <nnapi/Types.h>
 #include <nnapi/hal/CommonUtils.h>
-#include <nnapi/hal/HandleError.h>
-#include <nnapi/hal/ProtectCallback.h>
 #include <nnapi/hal/TransferValue.h>
 
 #include <utility>
@@ -40,19 +40,19 @@ namespace android::hardware::neuralnetworks::V1_0::utils {
 
 nn::GeneralResult<std::vector<bool>> supportedOperationsCallback(
         ErrorStatus status, const hidl_vec<bool>& supportedOperations) {
-    HANDLE_HAL_STATUS(status) << "get supported operations failed with " << toString(status);
+    HANDLE_STATUS_HIDL(status) << "get supported operations failed with " << toString(status);
     return supportedOperations;
 }
 
 nn::GeneralResult<nn::SharedPreparedModel> prepareModelCallback(
         ErrorStatus status, const sp<IPreparedModel>& preparedModel) {
-    HANDLE_HAL_STATUS(status) << "model preparation failed with " << toString(status);
+    HANDLE_STATUS_HIDL(status) << "model preparation failed with " << toString(status);
     return NN_TRY(PreparedModel::create(preparedModel));
 }
 
 nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> executionCallback(
         ErrorStatus status) {
-    HANDLE_HAL_STATUS(status) << "execution failed with " << toString(status);
+    HANDLE_STATUS_HIDL(status) << "execution failed with " << toString(status);
     return {};
 }
 

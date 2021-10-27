@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_UTILS_COMMON_HANDLE_ERROR_H
-#define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_UTILS_COMMON_HANDLE_ERROR_H
+#ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_0_UTILS_HANDLE_ERROR_H
+#define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_0_UTILS_HANDLE_ERROR_H
 
 #include <android/hidl/base/1.0/IBase.h>
 #include <hidl/HidlSupport.h>
@@ -27,7 +27,7 @@
 namespace android::hardware::neuralnetworks::utils {
 
 template <typename Type>
-nn::GeneralResult<Type> handleTransportError(const hardware::Return<Type>& ret) {
+nn::GeneralResult<Type> handleTransportError(const Return<Type>& ret) {
     if (ret.isDeadObject()) {
         return nn::error(nn::ErrorStatus::DEAD_OBJECT)
                << "Return<>::isDeadObject returned true: " << ret.description();
@@ -52,13 +52,13 @@ nn::GeneralResult<Type> handleTransportError(const hardware::Return<Type>& ret) 
         std::move(result).value();                                                           \
     })
 
-#define HANDLE_HAL_STATUS(status)                                       \
-    if (const auto canonical = ::android::nn::convert(status).value_or( \
-                ::android::nn::ErrorStatus::GENERAL_FAILURE);           \
-        canonical == ::android::nn::ErrorStatus::NONE) {                \
-    } else                                                              \
+#define HANDLE_STATUS_HIDL(status)                                                            \
+    if (const ::android::nn::ErrorStatus canonical = ::android::nn::convert(status).value_or( \
+                ::android::nn::ErrorStatus::GENERAL_FAILURE);                                 \
+        canonical == ::android::nn::ErrorStatus::NONE) {                                      \
+    } else                                                                                    \
         return NN_ERROR(canonical)
 
 }  // namespace android::hardware::neuralnetworks::utils
 
-#endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_UTILS_COMMON_HANDLE_ERROR_H
+#endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_0_UTILS_HANDLE_ERROR_H
