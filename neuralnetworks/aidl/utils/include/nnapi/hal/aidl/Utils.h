@@ -28,7 +28,7 @@
 namespace aidl::android::hardware::neuralnetworks::utils {
 
 constexpr auto kDefaultPriority = Priority::MEDIUM;
-constexpr auto kVersion = nn::Version::ANDROID_S;
+constexpr auto kVersion = nn::Version::FEATURE_LEVEL_6;
 
 template <typename Type>
 nn::Result<void> validate(const Type& halObject) {
