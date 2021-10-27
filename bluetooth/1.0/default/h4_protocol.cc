@@ -30,21 +30,52 @@ namespace bluetooth {
 namespace hci {
 
 size_t H4Protocol::Send(uint8_t type, const uint8_t* data, size_t length) {
-  struct iovec iov[] = {{&type, sizeof(type)},
-                        {const_cast<uint8_t*>(data), length}};
-  ssize_t ret = 0;
-  do {
-    ret =
-        TEMP_FAILURE_RETRY(writev(uart_fd_, iov, sizeof(iov) / sizeof(iov[0])));
-  } while (-1 == ret && EAGAIN == errno);
-
-  if (ret == -1) {
-    ALOGE("%s error writing to UART (%s)", __func__, strerror(errno));
-  } else if (ret < static_cast<ssize_t>(length + 1)) {
-    ALOGE("%s: %d / %d bytes written - something went wrong...", __func__,
-          static_cast<int>(ret), static_cast<int>(length + 1));
+  struct iovec iov_array[] = {{&type, sizeof(type)},
+                              {const_cast<uint8_t*>(data), length}};
+  struct iovec* iov = iov_array;
+  int iovcnt = sizeof(iov_array) / sizeof(iov_array[0]);
+  size_t total_bytes = 0;
+  for (int i = 0; i < iovcnt; i++) {
+    total_bytes += iov_array[i].iov_len;
   }
-  return ret;
+  size_t bytes_written = 0;
+  size_t remaining_bytes = total_bytes;
+
+  while (remaining_bytes > 0) {
+    ssize_t ret = TEMP_FAILURE_RETRY(writev(uart_fd_, iov, iovcnt));
+    if (ret == -1) {
+      if (errno == EAGAIN) continue;
+      ALOGE("%s error writing to UART (%s)", __func__, strerror(errno));
+      break;
+    } else if (ret == 0) {
+      // Nothing written
+      ALOGE("%s zero bytes written - something went wrong...", __func__);
+      break;
+    } else if (ret == remaining_bytes) {
+      // Everything written
+      bytes_written += ret;
+      break;
+    }
+
+    bytes_written += ret;
+    remaining_bytes -= ret;
+    ALOGW("%s: %d/%d bytes written - retrying remaining %d bytes", __func__,
+          static_cast<int>(bytes_written), static_cast<int>(total_bytes),
+          static_cast<int>(remaining_bytes));
+
+    // Remove iovs which are written from the list
+    while (ret >= iov->iov_len) {
+      ret -= iov->iov_len;
+      ++iov;
+      --iovcnt;
+    }
+    // Adjust the iov to point to the remaining data which needs to be written
+    if (ret) {
+      iov->iov_base = static_cast<uint8_t*>(iov->iov_base) + ret;
+      iov->iov_len -= ret;
+    }
+  }
+  return bytes_written;
 }
 
 void H4Protocol::OnPacketReady() {
