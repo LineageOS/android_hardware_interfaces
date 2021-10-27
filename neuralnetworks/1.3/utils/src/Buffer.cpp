@@ -25,7 +25,7 @@
 #include <nnapi/Result.h>
 #include <nnapi/Types.h>
 #include <nnapi/hal/1.0/Conversions.h>
-#include <nnapi/hal/HandleError.h>
+#include <nnapi/hal/1.0/HandleError.h>
 
 #include "Conversions.h"
 #include "Utils.h"
@@ -66,7 +66,7 @@ nn::GeneralResult<void> Buffer::copyTo(const nn::SharedMemory& dst) const {
 
     const auto ret = kBuffer->copyTo(hidlDst);
     const auto status = HANDLE_TRANSPORT_FAILURE(ret);
-    HANDLE_HAL_STATUS(status) << "IBuffer::copyTo failed with " << toString(status);
+    HANDLE_STATUS_HIDL(status) << "IBuffer::copyTo failed with " << toString(status);
 
     return {};
 }
@@ -78,7 +78,7 @@ nn::GeneralResult<void> Buffer::copyFrom(const nn::SharedMemory& src,
 
     const auto ret = kBuffer->copyFrom(hidlSrc, hidlDimensions);
     const auto status = HANDLE_TRANSPORT_FAILURE(ret);
-    HANDLE_HAL_STATUS(status) << "IBuffer::copyFrom failed with " << toString(status);
+    HANDLE_STATUS_HIDL(status) << "IBuffer::copyFrom failed with " << toString(status);
 
     return {};
 }

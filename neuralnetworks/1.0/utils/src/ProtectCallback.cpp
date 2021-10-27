@@ -22,7 +22,8 @@
 #include <android/hidl/base/1.0/IBase.h>
 #include <hidl/HidlSupport.h>
 #include <nnapi/Result.h>
-#include <nnapi/hal/HandleError.h>
+
+#include "HandleError.h"
 
 #include <algorithm>
 #include <functional>

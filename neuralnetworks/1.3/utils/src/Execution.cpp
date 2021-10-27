@@ -29,7 +29,6 @@
 #include <nnapi/Result.h>
 #include <nnapi/Types.h>
 #include <nnapi/hal/CommonUtils.h>
-#include <nnapi/hal/HandleError.h>
 
 #include <memory>
 #include <utility>
@@ -73,7 +72,7 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Executi
 nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>> Execution::computeFenced(
         const std::vector<nn::SyncFence>& waitFor, const nn::OptionalTimePoint& deadline,
         const nn::OptionalDuration& timeoutDurationAfterFence) const {
-    const auto hidlWaitFor = NN_TRY(hal::utils::convertSyncFences(waitFor));
+    const auto hidlWaitFor = NN_TRY(convertSyncFences(waitFor));
     const auto hidlDeadline = NN_TRY(convert(deadline));
     const auto hidlTimeoutDurationAfterFence = NN_TRY(convert(timeoutDurationAfterFence));
     return kPreparedModel->executeFencedInternal(kRequest, hidlWaitFor, kMeasure, hidlDeadline,

@@ -30,7 +30,6 @@
 #include <nnapi/TypeUtils.h>
 #include <nnapi/Types.h>
 #include <nnapi/hal/CommonUtils.h>
-#include <nnapi/hal/HandleError.h>
 
 #include <memory>
 #include <tuple>
@@ -51,7 +50,7 @@ nn::GeneralResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> convertEx
 nn::GeneralResult<std::pair<nn::Timing, nn::Timing>> convertFencedExecutionResults(
         ErrorStatus status, const aidl_hal::Timing& timingLaunched,
         const aidl_hal::Timing& timingFenced) {
-    HANDLE_HAL_STATUS(status) << "fenced execution callback info failed with " << toString(status);
+    HANDLE_STATUS_AIDL(status) << "fenced execution callback info failed with " << toString(status);
     return std::make_pair(NN_TRY(nn::convert(timingLaunched)), NN_TRY(nn::convert(timingFenced)));
 }
 
