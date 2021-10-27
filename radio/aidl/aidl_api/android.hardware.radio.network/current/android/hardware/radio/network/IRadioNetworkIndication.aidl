@@ -43,7 +43,7 @@ interface IRadioNetworkIndication {
   oneway void imsNetworkStateChanged(in android.hardware.radio.RadioIndicationType type);
   oneway void networkScanResult(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.network.NetworkScanResult result);
   oneway void networkStateChanged(in android.hardware.radio.RadioIndicationType type);
-  oneway void nitzTimeReceived(in android.hardware.radio.RadioIndicationType type, in String nitzTime, in long receivedTime);
+  oneway void nitzTimeReceived(in android.hardware.radio.RadioIndicationType type, in String nitzTime, in long receivedTimeMs, in long ageMs);
   oneway void registrationFailed(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.network.CellIdentity cellIdentity, in String chosenPlmn, in android.hardware.radio.network.Domain domain, in int causeCode, in int additionalCauseCode);
   oneway void restrictedStateChanged(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.network.PhoneRestrictedState state);
   oneway void suppSvcNotify(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.network.SuppSvcNotification suppSvc);
