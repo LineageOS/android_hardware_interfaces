@@ -67,6 +67,6 @@ struct LeAudioConfiguration {
 /** Used to configure either a Hardware or Software Encoding session based on session type */
 safe_union AudioConfiguration {
     PcmParameters pcmConfig;
-    CodecConfiguration CodecConfig;
-    LeAudioConfiguration leAudioCofiguration;
+    CodecConfiguration codecConfig;
+    LeAudioConfiguration leAudioConfig;
 };
