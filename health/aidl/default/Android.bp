@@ -1,0 +1,76 @@
+// Copyright (C) 2021 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+cc_defaults {
+    name: "libhealth_aidl_common_defaults",
+    vendor: true,
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "libcutils",
+        "liblog",
+        "libutils",
+        "android.hardware.health-V1-ndk",
+
+        // TODO(b/177269435): remove when BatteryMonitor works with AIDL HealthInfo.
+        "libhidlbase",
+    ],
+    static_libs: [
+        "libbatterymonitor",
+        "libhealthloop",
+
+        // TODO(b/177269435): remove when BatteryMonitor works with AIDL HealthInfo.
+        "android.hardware.health-translate-ndk",
+    ],
+}
+
+// AIDL version of libhealth2impl.
+// A helper library for health HAL implementation.
+// HAL implementations can link to this library and extend the Health class.
+cc_library_static {
+    name: "libhealth_aidl_impl",
+    defaults: [
+        "libhealth_aidl_common_defaults",
+    ],
+    export_include_dirs: ["include"],
+    export_static_lib_headers: [
+        "libbatterymonitor",
+    ],
+    srcs: [
+        "health-convert.cpp",
+        "HalHealthLoop.cpp",
+        "Health.cpp",
+        "LinkedCallback.cpp",
+    ],
+    visibility: [
+        ":__subpackages__",
+        "//hardware/interfaces/tests/extension/health:__subpackages__",
+    ],
+}
+
+// AIDL version of android.hardware.health@2.1-service.
+// Default binder service of the health HAL.
+cc_binary {
+    name: "android.hardware.health-service.example",
+    relative_install_path: "hw",
+    init_rc: ["android.hardware.health-service.example.rc"],
+    vintf_fragments: ["android.hardware.health-service.example.xml"],
+    defaults: [
+        "libhealth_aidl_common_defaults",
+    ],
+    static_libs: [
+        "libhealth_aidl_impl",
+    ],
+    srcs: ["main.cpp"],
+}
