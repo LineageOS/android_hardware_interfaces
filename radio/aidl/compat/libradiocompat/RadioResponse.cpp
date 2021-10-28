@@ -27,42 +27,9 @@ namespace android::hardware::radio::compat {
 
 Return<void> RadioResponse::acknowledgeRequest(int32_t serial) {
     LOG_CALL << serial;
+    // TODO(b/203699028): send to correct requestor or confirm if spam is not a problem
     if (mMessagingCb) mMessagingCb->acknowledgeRequest(serial);
-    return {};
-}
-
-Return<void> RadioResponse::getIccCardStatusResponse(const V1_0::RadioResponseInfo& info,
-                                                     const V1_0::CardStatus& cardStatus) {
-    return {};
-}
-
-Return<void> RadioResponse::supplyIccPinForAppResponse(const V1_0::RadioResponseInfo& info,
-                                                       int32_t remainingRetries) {
-    return {};
-}
-
-Return<void> RadioResponse::supplyIccPukForAppResponse(const V1_0::RadioResponseInfo& info,
-                                                       int32_t remainingRetries) {
-    return {};
-}
-
-Return<void> RadioResponse::supplyIccPin2ForAppResponse(const V1_0::RadioResponseInfo& info,
-                                                        int32_t remainingRetries) {
-    return {};
-}
-
-Return<void> RadioResponse::supplyIccPuk2ForAppResponse(const V1_0::RadioResponseInfo& info,
-                                                        int32_t remainingRetries) {
-    return {};
-}
-
-Return<void> RadioResponse::changeIccPinForAppResponse(const V1_0::RadioResponseInfo& info,
-                                                       int32_t remainingRetries) {
-    return {};
-}
-
-Return<void> RadioResponse::changeIccPin2ForAppResponse(const V1_0::RadioResponseInfo& info,
-                                                        int32_t remainingRetries) {
+    if (mSimCb) mSimCb->acknowledgeRequest(serial);
     return {};
 }
 
@@ -77,11 +44,6 @@ Return<void> RadioResponse::getCurrentCallsResponse(const V1_0::RadioResponseInf
 }
 
 Return<void> RadioResponse::dialResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getIMSIForAppResponse(const V1_0::RadioResponseInfo& info,
-                                                  const hidl_string& imsi) {
     return {};
 }
 
@@ -150,11 +112,6 @@ Return<void> RadioResponse::setupDataCallResponse(const V1_0::RadioResponseInfo&
     return {};
 }
 
-Return<void> RadioResponse::iccIOForAppResponse(const V1_0::RadioResponseInfo& info,
-                                                const V1_0::IccIoResult& iccIo) {
-    return {};
-}
-
 Return<void> RadioResponse::getClirResponse(const V1_0::RadioResponseInfo& info, int32_t n,
                                             int32_t m) {
     return {};
@@ -187,16 +144,6 @@ Return<void> RadioResponse::acceptCallResponse(const V1_0::RadioResponseInfo& in
 }
 
 Return<void> RadioResponse::deactivateDataCallResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getFacilityLockForAppResponse(const V1_0::RadioResponseInfo& info,
-                                                          int32_t response) {
-    return {};
-}
-
-Return<void> RadioResponse::setFacilityLockForAppResponse(const V1_0::RadioResponseInfo& info,
-                                                          int32_t retry) {
     return {};
 }
 
@@ -273,15 +220,6 @@ Return<void> RadioResponse::getAvailableBandModesResponse(
     return {};
 }
 
-Return<void> RadioResponse::sendEnvelopeResponse(const V1_0::RadioResponseInfo& info,
-                                                 const hidl_string& commandResponse) {
-    return {};
-}
-
-Return<void> RadioResponse::sendTerminalResponseToSimResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
 Return<void> RadioResponse::handleStkCallSetupRequestFromSimResponse(
         const V1_0::RadioResponseInfo& info) {
     return {};
@@ -306,10 +244,6 @@ Return<void> RadioResponse::getNeighboringCidsResponse(
 }
 
 Return<void> RadioResponse::setLocationUpdatesResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::setCdmaSubscriptionSourceResponse(const V1_0::RadioResponseInfo& info) {
     return {};
 }
 
@@ -348,12 +282,6 @@ Return<void> RadioResponse::sendBurstDtmfResponse(const V1_0::RadioResponseInfo&
     return {};
 }
 
-Return<void> RadioResponse::getCDMASubscriptionResponse(
-        const V1_0::RadioResponseInfo& info, const hidl_string& mdn, const hidl_string& hSid,
-        const hidl_string& hNid, const hidl_string& min, const hidl_string& prl) {
-    return {};
-}
-
 Return<void> RadioResponse::getDeviceIdentityResponse(  //
         const V1_0::RadioResponseInfo& info, const hidl_string& imei, const hidl_string& imeisv,
         const hidl_string& esn, const hidl_string& meid) {
@@ -361,25 +289,6 @@ Return<void> RadioResponse::getDeviceIdentityResponse(  //
 }
 
 Return<void> RadioResponse::exitEmergencyCallbackModeResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::reportStkServiceIsRunningResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getCdmaSubscriptionSourceResponse(const V1_0::RadioResponseInfo& info,
-                                                              V1_0::CdmaSubscriptionSource source) {
-    return {};
-}
-
-Return<void> RadioResponse::requestIsimAuthenticationResponse(const V1_0::RadioResponseInfo& info,
-                                                              const hidl_string& response) {
-    return {};
-}
-
-Return<void> RadioResponse::sendEnvelopeWithStatusResponse(const V1_0::RadioResponseInfo& info,
-                                                           const V1_0::IccIoResult& iccIo) {
     return {};
 }
 
@@ -406,25 +315,6 @@ Return<void> RadioResponse::getImsRegistrationStateResponse(  //
     return {};
 }
 
-Return<void> RadioResponse::iccTransmitApduBasicChannelResponse(const V1_0::RadioResponseInfo& info,
-                                                                const V1_0::IccIoResult& result) {
-    return {};
-}
-
-Return<void> RadioResponse::iccOpenLogicalChannelResponse(  //
-        const V1_0::RadioResponseInfo& info, int32_t chanId, const hidl_vec<int8_t>& selectResp) {
-    return {};
-}
-
-Return<void> RadioResponse::iccCloseLogicalChannelResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::iccTransmitApduLogicalChannelResponse(
-        const V1_0::RadioResponseInfo& info, const V1_0::IccIoResult& result) {
-    return {};
-}
-
 Return<void> RadioResponse::nvReadItemResponse(const V1_0::RadioResponseInfo& info,
                                                const hidl_string& result) {
     return {};
@@ -442,21 +332,12 @@ Return<void> RadioResponse::nvResetConfigResponse(const V1_0::RadioResponseInfo&
     return {};
 }
 
-Return<void> RadioResponse::setUiccSubscriptionResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
 Return<void> RadioResponse::setDataAllowedResponse(const V1_0::RadioResponseInfo& info) {
     return {};
 }
 
 Return<void> RadioResponse::getHardwareConfigResponse(
         const V1_0::RadioResponseInfo& info, const hidl_vec<V1_0::HardwareConfig>& config) {
-    return {};
-}
-
-Return<void> RadioResponse::requestIccSimAuthenticationResponse(const V1_0::RadioResponseInfo& info,
-                                                                const V1_0::IccIoResult& result) {
     return {};
 }
 
@@ -498,34 +379,11 @@ Return<void> RadioResponse::getModemActivityInfoResponse(
     return {};
 }
 
-Return<void> RadioResponse::setAllowedCarriersResponse(const V1_0::RadioResponseInfo& info,
-                                                       int32_t numAllowed) {
-    return {};
-}
-
-Return<void> RadioResponse::getAllowedCarriersResponse(  //
-        const V1_0::RadioResponseInfo& info, bool allAllowed, const V1_0::CarrierRestrictions& cr) {
-    return {};
-}
-
 Return<void> RadioResponse::sendDeviceStateResponse(const V1_0::RadioResponseInfo& info) {
     return {};
 }
 
 Return<void> RadioResponse::setIndicationFilterResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::setSimCardPowerResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::setCarrierInfoForImsiEncryptionResponse(
-        const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::setSimCardPowerResponse_1_1(const V1_0::RadioResponseInfo& info) {
     return {};
 }
 
@@ -548,11 +406,6 @@ Return<void> RadioResponse::stopKeepaliveResponse(const V1_0::RadioResponseInfo&
 
 Return<void> RadioResponse::getCellInfoListResponse_1_2(const V1_0::RadioResponseInfo& info,
                                                         const hidl_vec<V1_2::CellInfo>& cellInfo) {
-    return {};
-}
-
-Return<void> RadioResponse::getIccCardStatusResponse_1_2(const V1_0::RadioResponseInfo& info,
-                                                         const V1_2::CardStatus& cardStatus) {
     return {};
 }
 
@@ -618,11 +471,6 @@ Return<void> RadioResponse::getDataRegistrationStateResponse_1_4(
     return {};
 }
 
-Return<void> RadioResponse::getIccCardStatusResponse_1_4(const V1_0::RadioResponseInfo& info,
-                                                         const V1_4::CardStatus& cardStatus) {
-    return {};
-}
-
 Return<void> RadioResponse::getPreferredNetworkTypeBitmapResponse(
         const V1_0::RadioResponseInfo& info,
         hidl_bitfield<V1_4::RadioAccessFamily> networkTypeBitmap) {
@@ -645,16 +493,6 @@ Return<void> RadioResponse::setupDataCallResponse_1_4(const V1_0::RadioResponseI
     return {};
 }
 
-Return<void> RadioResponse::setAllowedCarriersResponse_1_4(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getAllowedCarriersResponse_1_4(
-        const V1_0::RadioResponseInfo& info, const V1_4::CarrierRestrictionsWithPriority& carriers,
-        V1_4::SimLockMultiSimPolicy multiSimPolicy) {
-    return {};
-}
-
 Return<void> RadioResponse::getSignalStrengthResponse_1_4(
         const V1_0::RadioResponseInfo& info, const V1_4::SignalStrength& signalStrength) {
     return {};
@@ -667,15 +505,6 @@ Return<void> RadioResponse::setSignalStrengthReportingCriteriaResponse_1_5(
 
 Return<void> RadioResponse::setLinkCapacityReportingCriteriaResponse_1_5(
         const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::enableUiccApplicationsResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::areUiccApplicationsEnabledResponse(const V1_0::RadioResponseInfo& info,
-                                                               bool enabled) {
     return {};
 }
 
@@ -741,17 +570,6 @@ Return<void> RadioResponse::setNetworkSelectionModeManualResponse_1_5(
     return {};
 }
 
-Return<void> RadioResponse::supplySimDepersonalizationResponse(const V1_0::RadioResponseInfo& info,
-                                                               V1_5::PersoSubstate persoType,
-                                                               int32_t remainingRetries) {
-    return {};
-}
-
-Return<void> RadioResponse::getIccCardStatusResponse_1_5(const V1_0::RadioResponseInfo& info,
-                                                         const V1_5::CardStatus& cardStatus) {
-    return {};
-}
-
 Return<void> RadioResponse::setRadioPowerResponse_1_6(const V1_6::RadioResponseInfo& info) {
     return {};
 }
@@ -764,10 +582,6 @@ Return<void> RadioResponse::setupDataCallResponse_1_6(const V1_6::RadioResponseI
 Return<void> RadioResponse::getDataCallListResponse_1_6(
         const V1_6::RadioResponseInfo& info,
         const hidl_vec<V1_6::SetupDataCallResult>& dcResponse) {
-    return {};
-}
-
-Return<void> RadioResponse::setSimCardPowerResponse_1_6(const V1_6::RadioResponseInfo& info) {
     return {};
 }
 
@@ -846,20 +660,6 @@ Return<void> RadioResponse::getCurrentCallsResponse_1_6(const V1_6::RadioRespons
 
 Return<void> RadioResponse::getSlicingConfigResponse(const V1_6::RadioResponseInfo& info,
                                                      const V1_6::SlicingConfig& slicingConfig) {
-    return {};
-}
-
-Return<void> RadioResponse::getSimPhonebookRecordsResponse(const V1_6::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getSimPhonebookCapacityResponse(
-        const V1_6::RadioResponseInfo& info, const V1_6::PhonebookCapacity& capacity) {
-    return {};
-}
-
-Return<void> RadioResponse::updateSimPhonebookRecordsResponse(const V1_6::RadioResponseInfo& info,
-                                                              int32_t updatedRecordIndex) {
     return {};
 }
 

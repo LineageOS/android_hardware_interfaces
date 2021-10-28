@@ -28,6 +28,18 @@ V1_6::RadioResponseInfo notSupported(int32_t serial) {
     };
 }
 
+std::string toAidl(const hidl_string& str) {
+    return str;
+}
+
+hidl_string toHidl(const std::string& str) {
+    return str;
+}
+
+uint8_t toAidl(int8_t v) {
+    return v;
+}
+
 aidl::RadioIndicationType toAidl(V1_0::RadioIndicationType type) {
     return aidl::RadioIndicationType(type);
 }
