@@ -74,8 +74,8 @@ TEST_P(ContextHubAidl, TestGetHubs) {
         EXPECT_GT(hub.peakMips, 0);
         EXPECT_GT(hub.chrePlatformId, 0);
         EXPECT_GT(hub.chreApiMajorVersion, 0);
-        EXPECT_GT(hub.chreApiMinorVersion, 0);
-        EXPECT_GT(hub.chrePatchVersion, 0);
+        EXPECT_GE(hub.chreApiMinorVersion, 0);
+        EXPECT_GE(hub.chrePatchVersion, 0);
 
         // Minimum 128 byte MTU as required by CHRE API v1.0
         EXPECT_GE(hub.maxSupportedMessageLengthBytes, UINT32_C(128));
