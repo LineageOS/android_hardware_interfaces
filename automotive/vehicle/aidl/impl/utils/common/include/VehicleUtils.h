@@ -130,10 +130,9 @@ inline size_t getVehicleRawValueVectorSize(
         const ::aidl::android::hardware::automotive::vehicle::RawPropValues& value,
         ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType type) {
     switch (type) {
-        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::INT32:  // fall
-                                                                                          // through
-        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::
-                BOOLEAN:  // fall through
+        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::INT32:
+            [[fallthrough]];
+        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::BOOLEAN:
             return std::min(value.int32Values.size(), static_cast<size_t>(1));
         case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::FLOAT:
             return std::min(value.floatValues.size(), static_cast<size_t>(1));
@@ -147,6 +146,10 @@ inline size_t getVehicleRawValueVectorSize(
             return value.int64Values.size();
         case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::BYTES:
             return value.byteValues.size();
+        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::STRING:
+            [[fallthrough]];
+        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::MIXED:
+            return 0;
         default:
             ALOGE("getVehicleRawValueVectorSize: unknown type: %d", toInt(type));
             return 0;

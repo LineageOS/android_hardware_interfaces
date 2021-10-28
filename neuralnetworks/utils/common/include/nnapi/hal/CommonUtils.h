@@ -17,8 +17,6 @@
 #ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_UTILS_COMMON_COMMON_UTILS_H
 #define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_UTILS_COMMON_COMMON_UTILS_H
 
-#include <cutils/native_handle.h>
-#include <hidl/HidlSupport.h>
 #include <nnapi/Result.h>
 #include <nnapi/SharedMemory.h>
 #include <nnapi/Types.h>
@@ -124,18 +122,6 @@ struct RequestRelocation {
 nn::GeneralResult<std::reference_wrapper<const nn::Request>> convertRequestFromPointerToShared(
         const nn::Request* request, uint32_t alignment, uint32_t padding,
         std::optional<nn::Request>* maybeRequestInSharedOut, RequestRelocation* relocationOut);
-
-nn::GeneralResult<std::vector<uint32_t>> countNumberOfConsumers(
-        size_t numberOfOperands, const std::vector<nn::Operation>& operations);
-
-nn::GeneralResult<hidl_memory> createHidlMemoryFromSharedMemory(const nn::SharedMemory& memory);
-nn::GeneralResult<nn::SharedMemory> createSharedMemoryFromHidlMemory(const hidl_memory& memory);
-
-nn::GeneralResult<hidl_handle> hidlHandleFromSharedHandle(const nn::Handle& handle);
-nn::GeneralResult<nn::Handle> sharedHandleFromNativeHandle(const native_handle_t* handle);
-
-nn::GeneralResult<hidl_vec<hidl_handle>> convertSyncFences(
-        const std::vector<nn::SyncFence>& fences);
 
 }  // namespace android::hardware::neuralnetworks::utils
 

@@ -32,8 +32,7 @@
 namespace aidl::android::hardware::neuralnetworks::utils {
 
 // An AIDL callback class to receive the results of IDevice::prepareModel* asynchronously.
-class PreparedModelCallback final : public BnPreparedModelCallback,
-                                    public hal::utils::IProtectedCallback {
+class PreparedModelCallback final : public BnPreparedModelCallback, public IProtectedCallback {
   public:
     using Data = nn::GeneralResult<nn::SharedPreparedModel>;
 

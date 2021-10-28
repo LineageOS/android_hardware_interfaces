@@ -30,20 +30,8 @@ cc_library_static {
     local_include_dirs: ["include/nnapi/hal"],
     export_include_dirs: ["include"],
     cflags: ["-Wthread-safety"],
-    static_libs: [
-        "libarect",
-        "neuralnetworks_types",
-    ],
-    shared_libs: [
-        "android.hardware.neuralnetworks-V2-ndk",
-        "libhidlbase",
-        "libbinder_ndk",
-    ],
-    target: {
-        android: {
-            shared_libs: ["libnativewindow"],
-        },
-    },
+    static_libs: ["neuralnetworks_types"],
+    shared_libs: ["libbinder_ndk"],
 }
 
 cc_test {
@@ -51,7 +39,6 @@ cc_test {
     host_supported: true,
     srcs: ["test/*.cpp"],
     static_libs: [
-        "android.hardware.neuralnetworks@1.0",
         "libgmock",
         "libneuralnetworks_common",
         "neuralnetworks_types",

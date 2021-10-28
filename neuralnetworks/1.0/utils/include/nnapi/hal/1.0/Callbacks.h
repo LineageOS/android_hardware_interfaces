@@ -24,8 +24,9 @@
 #include <nnapi/Result.h>
 #include <nnapi/Types.h>
 #include <nnapi/hal/CommonUtils.h>
-#include <nnapi/hal/ProtectCallback.h>
 #include <nnapi/hal/TransferValue.h>
+
+#include "nnapi/hal/1.0/ProtectCallback.h"
 
 // See hardware/interfaces/neuralnetworks/utils/README.md for more information on HIDL interface
 // lifetimes across processes and for protecting asynchronous calls across HIDL.

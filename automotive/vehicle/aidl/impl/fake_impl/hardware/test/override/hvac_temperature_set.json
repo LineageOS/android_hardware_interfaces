@@ -1,0 +1,10 @@
+[
+  {
+    "timestamp": 1000000,
+    // HVAC_LEFT
+    "areaId": 49,
+    "value": 30,
+    // HVAC_TEMPERATURE_SET
+    "prop": 358614275
+  }
+]

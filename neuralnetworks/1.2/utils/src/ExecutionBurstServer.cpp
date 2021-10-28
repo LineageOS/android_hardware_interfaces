@@ -27,8 +27,8 @@
 #include <nnapi/Types.h>
 #include <nnapi/Validation.h>
 #include <nnapi/hal/1.0/Conversions.h>
-#include <nnapi/hal/HandleError.h>
-#include <nnapi/hal/ProtectCallback.h>
+#include <nnapi/hal/1.0/HandleError.h>
+#include <nnapi/hal/1.0/ProtectCallback.h>
 #include <nnapi/hal/TransferValue.h>
 
 #include <algorithm>
@@ -50,7 +50,7 @@ constexpr V1_2::Timing kNoTiming = {std::numeric_limits<uint64_t>::max(),
 
 nn::GeneralResult<std::vector<nn::SharedMemory>> getMemoriesCallback(
         V1_0::ErrorStatus status, const hidl_vec<hidl_memory>& memories) {
-    HANDLE_HAL_STATUS(status) << "getting burst memories failed with " << toString(status);
+    HANDLE_STATUS_HIDL(status) << "getting burst memories failed with " << toString(status);
     std::vector<nn::SharedMemory> canonicalMemories;
     canonicalMemories.reserve(memories.size());
     for (const auto& memory : memories) {
