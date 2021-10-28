@@ -606,7 +606,8 @@ TEST_P(RadioHidlTest_v1_6, setSimCardPower_1_6) {
     if (radioRsp_v1_6->rspInfo.error == ::android::hardware::radio::V1_6::RadioError::NONE) {
         /* Wait some time for setting sim power down and then verify it */
         updateSimCardStatus();
-        EXPECT_EQ(CardState::PRESENT, cardStatus.base.base.base.cardState);
+        // We cannot assert the consistency of CardState here due to b/203031664
+        // EXPECT_EQ(CardState::PRESENT, cardStatus.base.base.base.cardState);
         // applications should be an empty vector of AppStatus
         EXPECT_EQ(0, cardStatus.applications.size());
     }
