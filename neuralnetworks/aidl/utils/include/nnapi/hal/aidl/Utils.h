@@ -24,12 +24,11 @@
 #include <nnapi/TypeUtils.h>
 #include <nnapi/Types.h>
 #include <nnapi/Validation.h>
-#include <nnapi/hal/HandleError.h>
 
 namespace aidl::android::hardware::neuralnetworks::utils {
 
 constexpr auto kDefaultPriority = Priority::MEDIUM;
-constexpr auto kVersion = nn::Version::ANDROID_S;
+constexpr auto kVersion = nn::Version::FEATURE_LEVEL_6;
 
 template <typename Type>
 nn::Result<void> validate(const Type& halObject) {
@@ -74,6 +73,13 @@ nn::GeneralResult<void> handleTransportError(const ndk::ScopedAStatus& ret);
 #define HANDLE_ASTATUS(ret)                                            \
     for (const auto status = handleTransportError(ret); !status.ok();) \
     return NN_ERROR(status.error().code) << status.error().message << ": "
+
+#define HANDLE_STATUS_AIDL(status)                                                            \
+    if (const ::android::nn::ErrorStatus canonical = ::android::nn::convert(status).value_or( \
+                ::android::nn::ErrorStatus::GENERAL_FAILURE);                                 \
+        canonical == ::android::nn::ErrorStatus::NONE) {                                      \
+    } else                                                                                    \
+        return NN_ERROR(canonical)
 
 }  // namespace aidl::android::hardware::neuralnetworks::utils
 

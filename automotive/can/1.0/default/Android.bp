@@ -64,4 +64,5 @@ cc_binary {
         "android.hardware.automotive@libc++fs",
         "libnl++",
     ],
+    vintf_fragments: ["manifest_android.hardware.automotive.can@1.0.xml"],
 }

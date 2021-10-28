@@ -1,0 +1,9 @@
+[
+  {
+    "timestamp": 1000000,
+    "areaId": 0,
+    "value": 8,
+    // GEAR_SELECTION
+    "prop": 289408000
+  }
+]

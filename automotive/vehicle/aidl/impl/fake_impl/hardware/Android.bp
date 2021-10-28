@@ -30,6 +30,12 @@ cc_library {
         "VehicleHalDefaultConfig",
     ],
     export_header_lib_headers: ["IVehicleHardware"],
-    static_libs: ["VehicleHalUtils"],
+    static_libs: [
+        "VehicleHalUtils",
+        "FakeVehicleHalValueGenerators",
+    ],
+    shared_libs: [
+        "libjsoncpp",
+    ],
     export_static_lib_headers: ["VehicleHalUtils"],
 }

@@ -113,6 +113,9 @@ nn::GeneralResult<V1_2::DeviceType> convert(const nn::DeviceType& deviceType);
 nn::GeneralResult<V1_2::MeasureTiming> convert(const nn::MeasureTiming& measureTiming);
 nn::GeneralResult<V1_2::Timing> convert(const nn::Timing& timing);
 
+nn::GeneralResult<hidl_vec<hidl_handle>> convertSyncFences(
+        const std::vector<nn::SyncFence>& fences);
+
 }  // namespace android::hardware::neuralnetworks::V1_3::utils
 
 #endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_3_CONVERSIONS_H
