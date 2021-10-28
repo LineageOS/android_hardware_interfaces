@@ -54,35 +54,12 @@ Return<void> RadioIndication::suppSvcNotify(V1_0::RadioIndicationType type,
     return {};
 }
 
-Return<void> RadioIndication::stkSessionEnd(V1_0::RadioIndicationType type) {
-    return {};
-}
-
-Return<void> RadioIndication::stkProactiveCommand(V1_0::RadioIndicationType type,
-                                                  const hidl_string& cmd) {
-    return {};
-}
-
-Return<void> RadioIndication::stkEventNotify(V1_0::RadioIndicationType type,
-                                             const hidl_string& cmd) {
-    return {};
-}
-
 Return<void> RadioIndication::stkCallSetup(V1_0::RadioIndicationType type, int64_t timeout) {
-    return {};
-}
-
-Return<void> RadioIndication::simRefresh(V1_0::RadioIndicationType type,
-                                         const V1_0::SimRefreshResult& refreshResult) {
     return {};
 }
 
 Return<void> RadioIndication::callRing(V1_0::RadioIndicationType type, bool isGsm,
                                        const V1_0::CdmaSignalInfoRecord& record) {
-    return {};
-}
-
-Return<void> RadioIndication::simStatusChanged(V1_0::RadioIndicationType type) {
     return {};
 }
 
@@ -118,11 +95,6 @@ Return<void> RadioIndication::resendIncallMute(V1_0::RadioIndicationType type) {
     return {};
 }
 
-Return<void> RadioIndication::cdmaSubscriptionSourceChanged(
-        V1_0::RadioIndicationType type, V1_0::CdmaSubscriptionSource cdmaSource) {
-    return {};
-}
-
 Return<void> RadioIndication::cdmaPrlChanged(V1_0::RadioIndicationType type, int32_t version) {
     return {};
 }
@@ -146,11 +118,6 @@ Return<void> RadioIndication::cellInfoList(V1_0::RadioIndicationType type,
 }
 
 Return<void> RadioIndication::imsNetworkStateChanged(V1_0::RadioIndicationType type) {
-    return {};
-}
-
-Return<void> RadioIndication::subscriptionStatusChanged(V1_0::RadioIndicationType type,
-                                                        bool activate) {
     return {};
 }
 
@@ -191,10 +158,6 @@ Return<void> RadioIndication::pcoData(V1_0::RadioIndicationType type,
 
 Return<void> RadioIndication::modemReset(V1_0::RadioIndicationType type,
                                          const hidl_string& reason) {
-    return {};
-}
-
-Return<void> RadioIndication::carrierInfoForImsiEncryption(V1_0::RadioIndicationType info) {
     return {};
 }
 
@@ -263,11 +226,6 @@ Return<void> RadioIndication::currentSignalStrength_1_4(
     return {};
 }
 
-Return<void> RadioIndication::uiccApplicationsEnablementChanged(V1_0::RadioIndicationType type,
-                                                                bool enabled) {
-    return {};
-}
-
 Return<void> RadioIndication::registrationFailed(  //
         V1_0::RadioIndicationType type, const V1_5::CellIdentity& cellIdentity,
         const hidl_string& chosenPlmn, hidl_bitfield<V1_5::Domain> domain, int32_t causeCode,
@@ -328,16 +286,6 @@ Return<void> RadioIndication::networkScanResult_1_6(V1_0::RadioIndicationType ty
 
 Return<void> RadioIndication::currentPhysicalChannelConfigs_1_6(
         V1_0::RadioIndicationType type, const hidl_vec<V1_6::PhysicalChannelConfig>& configs) {
-    return {};
-}
-
-Return<void> RadioIndication::simPhonebookChanged(V1_0::RadioIndicationType type) {
-    return {};
-}
-
-Return<void> RadioIndication::simPhonebookRecordsReceived(
-        V1_0::RadioIndicationType type, V1_6::PbReceivedStatus status,
-        const hidl_vec<V1_6::PhonebookRecordInfo>& records) {
     return {};
 }
 

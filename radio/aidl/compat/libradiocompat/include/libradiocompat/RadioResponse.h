@@ -16,6 +16,7 @@
 #pragma once
 
 #include <aidl/android/hardware/radio/messaging/IRadioMessagingResponse.h>
+#include <aidl/android/hardware/radio/sim/IRadioSimResponse.h>
 #include <android/hardware/radio/1.6/IRadioResponse.h>
 
 namespace android::hardware::radio::compat {
@@ -23,6 +24,7 @@ namespace android::hardware::radio::compat {
 class RadioResponse : public V1_6::IRadioResponse {
     std::shared_ptr<::aidl::android::hardware::radio::messaging::IRadioMessagingResponse>
             mMessagingCb;
+    std::shared_ptr<::aidl::android::hardware::radio::sim::IRadioSimResponse> mSimCb;
 
     // IRadioResponse @ 1.0
     Return<void> getIccCardStatusResponse(const V1_0::RadioResponseInfo& info,
@@ -402,6 +404,8 @@ class RadioResponse : public V1_6::IRadioResponse {
     void setResponseFunction(
             std::shared_ptr<::aidl::android::hardware::radio::messaging::IRadioMessagingResponse>
                     radioMessagingResponse);
+    void setResponseFunction(
+            std::shared_ptr<::aidl::android::hardware::radio::sim::IRadioSimResponse> simCb);
 };
 
 }  // namespace android::hardware::radio::compat

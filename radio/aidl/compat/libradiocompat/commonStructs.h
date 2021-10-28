@@ -23,6 +23,10 @@ namespace android::hardware::radio::compat {
 
 V1_6::RadioResponseInfo notSupported(int32_t serial);
 
+std::string toAidl(const hidl_string& str);
+hidl_string toHidl(const std::string& str);
+uint8_t toAidl(int8_t v);
+
 aidl::android::hardware::radio::RadioIndicationType toAidl(V1_0::RadioIndicationType type);
 aidl::android::hardware::radio::RadioResponseType toAidl(V1_0::RadioResponseType type);
 aidl::android::hardware::radio::RadioError toAidl(V1_0::RadioError type);
