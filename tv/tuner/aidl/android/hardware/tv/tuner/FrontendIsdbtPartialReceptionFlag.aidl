@@ -16,22 +16,21 @@
 
 package android.hardware.tv.tuner;
 
-import android.hardware.tv.tuner.FrontendAtsc3TimeInterleaveMode;
-import android.hardware.tv.tuner.FrontendCableTimeInterleaveMode;
-import android.hardware.tv.tuner.FrontendDtmbTimeInterleaveMode;
-import android.hardware.tv.tuner.FrontendIsdbtTimeInterleaveMode;
-
 /**
+ * Partial Reception Flag for an ISTB-T Frontend.
  * @hide
  */
 @VintfStability
-union FrontendInterleaveMode {
-    FrontendAtsc3TimeInterleaveMode atsc3
-        = FrontendAtsc3TimeInterleaveMode.UNDEFINED;
+@Backing(type="int")
+enum FrontendIsdbtPartialReceptionFlag {
+    UNDEFINED = 0,
 
-    FrontendCableTimeInterleaveMode dvbc;
+    /**
+     * Hardware is able to detect and set Partial Reception Flag automatically.
+     */
+    AUTO = 1 << 0,
 
-    FrontendDtmbTimeInterleaveMode dtmb;
+    FALSE = 1 << 1,
 
-    FrontendIsdbtTimeInterleaveMode isdbt;
+    TRUE = 1 << 2,
 }

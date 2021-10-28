@@ -72,4 +72,6 @@ union FrontendStatus {
   boolean isMiso;
   boolean isLinear;
   boolean isShortFrames;
+  android.hardware.tv.tuner.FrontendIsdbtMode isdbtMode;
+  android.hardware.tv.tuner.FrontendIsdbtPartialReceptionFlag partialReceptionFlag;
 }

@@ -607,6 +607,13 @@ Frontend::~Frontend() {}
                         status.set<FrontendStatus::interleaving>(interleaves);
                         break;
                     }
+                    case FrontendType::ISDBT: {
+                        interleave.set<FrontendInterleaveMode::Tag::isdbt>(
+                                FrontendIsdbtTimeInterleaveMode::INTERLEAVE_1_0); // value = 1 << 1
+                        interleaves.push_back(interleave);
+                        status.set<FrontendStatus::interleaving>(interleaves);
+                        break;
+                    }
                     default:
                         break;
                 }
@@ -658,6 +665,15 @@ Frontend::~Frontend() {}
             }
             case FrontendStatusType::IS_SHORT_FRAMES: {
                 status.set<FrontendStatus::isShortFrames>(true);
+                break;
+            }
+            case FrontendStatusType::ISDBT_MODE: {
+                status.set<FrontendStatus::isdbtMode>(FrontendIsdbtMode::AUTO);
+                break;
+            }
+            case FrontendStatusType::ISDBT_PARTIAL_RECEPTION_FLAG: {
+                status.set<FrontendStatus::partialReceptionFlag>(
+                        FrontendIsdbtPartialReceptionFlag::AUTO);
                 break;
             }
             default: {

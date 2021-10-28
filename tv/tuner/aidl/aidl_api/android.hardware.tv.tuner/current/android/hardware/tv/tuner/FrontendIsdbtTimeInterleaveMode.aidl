@@ -33,15 +33,20 @@
 
 package android.hardware.tv.tuner;
 /* @hide */
-@VintfStability
-parcelable FrontendIsdbtSettings {
-  long frequency;
-  long endFrequency;
-  android.hardware.tv.tuner.FrontendSpectralInversion inversion = android.hardware.tv.tuner.FrontendSpectralInversion.UNDEFINED;
-  android.hardware.tv.tuner.FrontendIsdbtBandwidth bandwidth = android.hardware.tv.tuner.FrontendIsdbtBandwidth.UNDEFINED;
-  android.hardware.tv.tuner.FrontendIsdbtMode mode = android.hardware.tv.tuner.FrontendIsdbtMode.UNDEFINED;
-  android.hardware.tv.tuner.FrontendIsdbtGuardInterval guardInterval = android.hardware.tv.tuner.FrontendIsdbtGuardInterval.UNDEFINED;
-  int serviceAreaId;
-  android.hardware.tv.tuner.FrontendIsdbtPartialReceptionFlag partialReceptionFlag = android.hardware.tv.tuner.FrontendIsdbtPartialReceptionFlag.UNDEFINED;
-  android.hardware.tv.tuner.FrontendIsdbtLayerSettings[] layerSettings;
+@Backing(type="int") @VintfStability
+enum FrontendIsdbtTimeInterleaveMode {
+  UNDEFINED = 0,
+  AUTO = 1,
+  INTERLEAVE_1_0 = 2,
+  INTERLEAVE_1_4 = 4,
+  INTERLEAVE_1_8 = 8,
+  INTERLEAVE_1_16 = 16,
+  INTERLEAVE_2_0 = 32,
+  INTERLEAVE_2_2 = 64,
+  INTERLEAVE_2_4 = 128,
+  INTERLEAVE_2_8 = 256,
+  INTERLEAVE_3_0 = 512,
+  INTERLEAVE_3_1 = 1024,
+  INTERLEAVE_3_2 = 2048,
+  INTERLEAVE_3_4 = 4096,
 }

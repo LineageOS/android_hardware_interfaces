@@ -16,22 +16,41 @@
 
 package android.hardware.tv.tuner;
 
-import android.hardware.tv.tuner.FrontendAtsc3TimeInterleaveMode;
-import android.hardware.tv.tuner.FrontendCableTimeInterleaveMode;
-import android.hardware.tv.tuner.FrontendDtmbTimeInterleaveMode;
-import android.hardware.tv.tuner.FrontendIsdbtTimeInterleaveMode;
-
 /**
+ * Time Interleave Mode for ISDB-T Frontend.
  * @hide
  */
 @VintfStability
-union FrontendInterleaveMode {
-    FrontendAtsc3TimeInterleaveMode atsc3
-        = FrontendAtsc3TimeInterleaveMode.UNDEFINED;
+@Backing(type="int")
+enum FrontendIsdbtTimeInterleaveMode {
+    UNDEFINED = 0,
 
-    FrontendCableTimeInterleaveMode dvbc;
+    /**
+     * Hardware is able to detect and set Time Interleave Mode automatically.
+     */
+    AUTO = 1 << 0,
 
-    FrontendDtmbTimeInterleaveMode dtmb;
+    INTERLEAVE_1_0 = 1 << 1,
 
-    FrontendIsdbtTimeInterleaveMode isdbt;
+    INTERLEAVE_1_4 = 1 << 2,
+
+    INTERLEAVE_1_8 = 1 << 3,
+
+    INTERLEAVE_1_16 = 1 << 4,
+
+    INTERLEAVE_2_0 = 1 << 5,
+
+    INTERLEAVE_2_2 = 1 << 6,
+
+    INTERLEAVE_2_4 = 1 << 7,
+
+    INTERLEAVE_2_8 = 1 << 8,
+
+    INTERLEAVE_3_0 = 1 << 9,
+
+    INTERLEAVE_3_1 = 1 << 10,
+
+    INTERLEAVE_3_2 = 1 << 11,
+
+    INTERLEAVE_3_4 = 1 << 12,
 }
