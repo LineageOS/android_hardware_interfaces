@@ -48,7 +48,7 @@ cc_test {
         "libgmock",
         "libhidlmemory",
         "libneuralnetworks_generated_test_harness",
-        "libneuralnetworks_utils",
+        "libneuralnetworks_common_hidl",
     ],
     whole_static_libs: [
         "neuralnetworks_generated_V1_0_example",
