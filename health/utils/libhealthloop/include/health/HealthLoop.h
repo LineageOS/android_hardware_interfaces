@@ -46,6 +46,12 @@ class HealthLoop {
     // Init is called right after epollfd_ is initialized (so RegisterEvent
     // is allowed) but before other things are initialized (so SetChargerOnline
     // is not allowed.)
+    // The implementation of Init() should pull configuration from the
+    // underlying health HAL (via getHealthConfig()), and store it into
+    // |config|. The implementation may not initialize:
+    // - screen_on, because charger calls getScreenOn() from the HAL directly
+    // - ignorePowerSupplyNames, because it isn't used by any clients of the
+    // health HAL.
     virtual void Init(healthd_config* config) = 0;
     virtual void Heartbeat() = 0;
     virtual int PrepareToWait() = 0;
