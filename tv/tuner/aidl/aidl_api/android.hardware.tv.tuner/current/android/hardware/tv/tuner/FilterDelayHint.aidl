@@ -34,20 +34,7 @@
 package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
-interface IFilter {
-  void getQueueDesc(out android.hardware.common.fmq.MQDescriptor<byte,android.hardware.common.fmq.SynchronizedReadWrite> queue);
-  void close();
-  void configure(in android.hardware.tv.tuner.DemuxFilterSettings settings);
-  void configureAvStreamType(in android.hardware.tv.tuner.AvStreamType avStreamType);
-  void configureIpCid(in int ipCid);
-  void configureMonitorEvent(in int monitorEventTypes);
-  void start();
-  void stop();
-  void flush();
-  long getAvSharedHandle(out android.hardware.common.NativeHandle avMemory);
-  int getId();
-  long getId64Bit();
-  void releaseAvHandle(in android.hardware.common.NativeHandle avMemory, in long avDataId);
-  void setDataSource(in android.hardware.tv.tuner.IFilter filter);
-  void setDelayHint(in android.hardware.tv.tuner.FilterDelayHint hint);
+parcelable FilterDelayHint {
+  android.hardware.tv.tuner.FilterDelayHintType hintType = android.hardware.tv.tuner.FilterDelayHintType.INVALID;
+  int hintValue;
 }
