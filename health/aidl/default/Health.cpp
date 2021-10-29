@@ -261,7 +261,7 @@ ndk::ScopedAStatus Health::unregisterCallback(
     std::lock_guard<decltype(callbacks_lock_)> lock(callbacks_lock_);
 
     auto matches = [callback](const auto& linked) {
-        return linked->callback() == callback;  // compares shared_ptr
+        return linked->callback()->asBinder() == callback->asBinder();  // compares binder object
     };
     auto it = std::remove_if(callbacks_.begin(), callbacks_.end(), matches);
     bool removed = (it != callbacks_.end());
