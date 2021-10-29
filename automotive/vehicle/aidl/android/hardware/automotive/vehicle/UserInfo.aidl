@@ -16,13 +16,44 @@
 
 package android.hardware.automotive.vehicle;
 
-import android.hardware.automotive.vehicle.UserFlags;
-
 /**
  * Information about a specific Android user.
  */
 @VintfStability
 parcelable UserInfo {
+    /**
+     * System user.
+     *
+     * On automotive, that user is always running, although never on foreground (except during
+     * boot or exceptional circumstances).
+     */
+    const int USER_FLAG_SYSTEM = 0x01;
+    /**
+     * Guest users have restrictions.
+     */
+    const int USER_FLAG_GUEST = 0x02;
+    /**
+     * Ephemeral users have non-persistent state.
+     */
+    const int USER_FLAG_EPHEMERAL = 0x04;
+    /**
+     * Admin users have additional privileges such as permission to create other users.
+     */
+    const int USER_FLAG_ADMIN = 0x08;
+    /**
+     * Disabled users are marked for deletion.
+     */
+    const int USER_FLAG_DISABLED = 0x10;
+    /**
+     * Profile user is a profile of another user.
+     */
+    const int USER_FLAG_PROFILE = 0x20;
+    /*
+     * The user ID.
+     */
     int userId = 0;
-    UserFlags flags = UserFlags.NONE;
+    /*
+     * Bitmask for the user flags defined above (USER_FLAG_*).
+     */
+    int flags;
 }
