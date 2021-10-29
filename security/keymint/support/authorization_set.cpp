@@ -161,11 +161,6 @@ AuthorizationSetBuilder& AuthorizationSetBuilder::RsaEncryptionKey(uint32_t key_
     return EncryptionKey();
 }
 
-AuthorizationSetBuilder& AuthorizationSetBuilder::EcdsaSigningKey(uint32_t key_size) {
-    EcdsaKey(key_size);
-    return SigningKey();
-}
-
 AuthorizationSetBuilder& AuthorizationSetBuilder::EcdsaSigningKey(EcCurve curve) {
     EcdsaKey(curve);
     return SigningKey();
