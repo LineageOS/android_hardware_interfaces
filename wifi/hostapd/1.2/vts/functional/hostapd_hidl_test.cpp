@@ -75,6 +75,8 @@ class HostapdHidlTest
 
     virtual void TearDown() override {
         HIDL_INVOKE_VOID_WITHOUT_ARGUMENTS(hostapd_, terminate);
+        // Wait 3 seconds to allow terminate processing before kill hostapd.
+        sleep(3);
         stopHostapd(wifi_instance_name_);
     }
 
