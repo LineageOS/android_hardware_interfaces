@@ -32,5 +32,11 @@ cc_test {
         "android.hardware.health@1.0",
         "android.hardware.health@2.0",
     ],
-    test_suites: ["general-tests", "vts"],
+    header_libs: [
+        "libhealthtest_headers",
+    ],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
 }

@@ -14,14 +14,17 @@ cc_library_shared {
     srcs: [
         "session/BluetoothAudioSession.cpp",
         "session/BluetoothAudioSession_2_1.cpp",
+        "session/BluetoothAudioSession_2_2.cpp",
         "session/BluetoothAudioSupportedCodecsDB.cpp",
         "session/BluetoothAudioSupportedCodecsDB_2_1.cpp",
+        "session/BluetoothAudioSupportedCodecsDB_2_2.cpp",
     ],
     export_include_dirs: ["session/"],
     header_libs: ["libhardware_headers"],
     shared_libs: [
         "android.hardware.bluetooth.audio@2.0",
         "android.hardware.bluetooth.audio@2.1",
+        "android.hardware.bluetooth.audio@2.2",
         "libbase",
         "libcutils",
         "libfmq",

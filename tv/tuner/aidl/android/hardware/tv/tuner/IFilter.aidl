@@ -16,14 +16,14 @@
 
 package android.hardware.tv.tuner;
 
+import android.hardware.common.NativeHandle;
 import android.hardware.common.fmq.MQDescriptor;
 import android.hardware.common.fmq.SynchronizedReadWrite;
-import android.hardware.common.NativeHandle;
-
-import android.hardware.tv.tuner.DemuxFilterSettings;
-import android.hardware.tv.tuner.IFilter;
 import android.hardware.tv.tuner.AvStreamType;
 import android.hardware.tv.tuner.DemuxFilterMonitorEventType;
+import android.hardware.tv.tuner.DemuxFilterSettings;
+import android.hardware.tv.tuner.FilterDelayHint;
+import android.hardware.tv.tuner.IFilter;
 
 /**
  * The Filter is used to filter wanted data according to the filter's
@@ -187,4 +187,13 @@ interface IFilter {
      * use demux as data source if the filter instance is NULL.
      */
     void setDataSource(in IFilter filter);
+
+    /**
+     * Set a delay hint.
+     *
+     * A delay hint should be used by the filter to rate limit calls to on
+     * FilterCallback.onFilterEvent by aggregating data according to the hint's
+     * specification.
+     */
+    void setDelayHint(in FilterDelayHint hint);
 }

@@ -41,6 +41,10 @@ class ContextHub : public BnContextHub {
     ::ndk::ScopedAStatus sendMessageToHub(int32_t in_contextHubId,
                                           const ContextHubMessage& in_message,
                                           bool* _aidl_return) override;
+
+  private:
+    static constexpr uint32_t kMockHubId = 0;
+    std::shared_ptr<IContextHubCallback> mCallback;
 };
 
 }  // namespace contexthub
