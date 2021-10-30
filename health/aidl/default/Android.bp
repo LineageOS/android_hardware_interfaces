@@ -23,6 +23,7 @@ package {
 
 cc_defaults {
     name: "libhealth_aidl_common_defaults",
+    recovery_available: true,
     vendor: true,
     shared_libs: [
         "libbase",
