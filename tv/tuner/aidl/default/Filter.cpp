@@ -111,6 +111,14 @@ Filter::~Filter() {
     return ::ndk::ScopedAStatus::ok();
 }
 
+::ndk::ScopedAStatus Filter::setDelayHint(const FilterDelayHint& in_hint) {
+    ALOGV("%s", __FUNCTION__);
+    (void)in_hint;
+    // TODO: implement
+
+    return ::ndk::ScopedAStatus::ok();
+}
+
 ::ndk::ScopedAStatus Filter::getQueueDesc(MQDescriptor<int8_t, SynchronizedReadWrite>* out_queue) {
     ALOGV("%s", __FUNCTION__);
 

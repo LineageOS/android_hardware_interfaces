@@ -78,6 +78,7 @@ class Filter : public BnFilter {
     ::ndk::ScopedAStatus releaseAvHandle(const NativeHandle& in_avMemory,
                                          int64_t in_avDataId) override;
     ::ndk::ScopedAStatus setDataSource(const std::shared_ptr<IFilter>& in_filter) override;
+    ::ndk::ScopedAStatus setDelayHint(const FilterDelayHint& in_hint) override;
 
     /**
      * To create a FilterMQ and its Event Flag.

@@ -29,6 +29,7 @@
 #include <android/hardware/health/2.0/types.h>
 #include <gflags/gflags.h>
 #include <gtest/gtest.h>
+#include <health-test/TestUtils.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
 #include <log/log.h>
@@ -51,6 +52,7 @@ namespace android {
 namespace hardware {
 namespace health {
 
+using test_utils::SucceedOnce;
 using V1_0::BatteryStatus;
 using V1_0::toString;
 
@@ -356,64 +358,9 @@ static AssertionResult IsBatteryCurrentSignCorrect(HalResult<BatteryStatus> stat
                                   << toString(current.result) << ", skipping";
     }
 
-    // For IHealth.getCurrentNow/Average, if current is not available, it is expected that
-    // current.result == Result::NOT_SUPPORTED, which is checked above. Hence, zero current is
-    // not treated as unknown values.
-    // For IHealth.getHealthInfo, if current is not available, health_info.current_* == 0.
-    // Caller of this function provides current.result == Result::SUCCESS. Hence, just skip the
-    // check.
-    if (current.value == 0 && acceptZeroCurrentAsUnknown) {
-        return AssertionSuccess()
-               << "current is 0, which indicates the value may not be available. Skipping.";
-    }
-
-    switch (status.value) {
-        case BatteryStatus::UNKNOWN:
-            if (current.value != 0) {
-                // BatteryStatus may be UNKNOWN initially with a non-zero current value, but
-                // after it is initialized, it should be known.
-                return AssertionFailure()
-                       << "BatteryStatus is UNKNOWN but current is not 0. Actual: "
-                       << current.value;
-            }
-            break;
-        case BatteryStatus::CHARGING:
-            if (current.value <= 0) {
-                return AssertionFailure()
-                       << "BatteryStatus is CHARGING but current is not positive. Actual: "
-                       << current.value;
-            }
-            break;
-        case BatteryStatus::NOT_CHARGING:
-            if (current.value > 0) {
-                return AssertionFailure() << "BatteryStatus is " << toString(status.value)
-                                          << " but current is positive. Actual: " << current.value;
-            }
-            break;
-        case BatteryStatus::DISCHARGING:
-            if (current.value >= 0) {
-                return AssertionFailure()
-                       << "BatteryStatus is " << toString(status.value)
-                       << " but current is not negative. Actual: " << current.value;
-            }
-            break;
-        case BatteryStatus::FULL:
-            // Battery current may be positive or negative depending on the load.
-            break;
-        default:
-            return AssertionFailure() << "Unknown BatteryStatus " << toString(status.value);
-    }
-
-    return AssertionSuccess() << "BatteryStatus is " << toString(status.value)
-                              << " and current has the correct sign: " << current.value;
-}
-
-static AssertionResult IsValueSimilar(int32_t dividend, int32_t divisor, double factor) {
-    auto difference = abs(dividend - divisor);
-    if (difference > factor * abs(divisor)) {
-        return AssertionFailure() << dividend << " and " << divisor << " are not similar.";
-    }
-    return AssertionSuccess() << dividend << " and " << divisor << " are similar.";
+    return test_utils::IsBatteryCurrentSignCorrect(
+            status.value, current.value, acceptZeroCurrentAsUnknown,
+            [](BatteryStatus status) { return toString(status); });
 }
 
 static AssertionResult IsBatteryCurrentSimilar(HalResult<BatteryStatus> status,
@@ -437,31 +384,8 @@ static AssertionResult IsBatteryCurrentSimilar(HalResult<BatteryStatus> status,
                                   << currentAverage.value << ", skipping";
     }
 
-    // Check that the two values are similar. Note that the two tests uses a different
-    // divisor to ensure that they are actually pretty similar. For example,
-    // IsValueSimilar(5,10,0.4) returns true, but IsValueSimlar(10,5,0.4) returns false.
-    TEST_AND_RETURN(IsValueSimilar(currentNow.value, currentAverage.value, gCurrentCompareFactor)
-                    << " for now vs. average. Check units.");
-    TEST_AND_RETURN(IsValueSimilar(currentAverage.value, currentNow.value, gCurrentCompareFactor)
-                    << " for average vs. now. Check units.");
-    return AssertionSuccess() << "currentNow = " << currentNow.value
-                              << " and currentAverage = " << currentAverage.value
-                              << " are considered similar.";
-}
-
-// Test that f() returns AssertionSuccess() once in a given period of time.
-template <typename Duration, typename Function>
-static AssertionResult SucceedOnce(Duration d, Function f) {
-    AssertionResult result = AssertionFailure() << "Function never evaluated.";
-    auto end = std::chrono::system_clock::now() + d;
-    while (std::chrono::system_clock::now() <= end) {
-        result = f();
-        if (result) {
-            return result;
-        }
-        std::this_thread::sleep_for(2s);
-    }
-    return result;
+    return test_utils::IsBatteryCurrentSimilar(currentNow.value, currentAverage.value,
+                                               gCurrentCompareFactor);
 }
 
 uint64_t GetShippingApiLevel() {
@@ -603,40 +527,8 @@ AssertionResult IsBatteryStatusCorrect(HalResult<BatteryStatus> status,
     }
 
     const auto& batteryInfo = healthInfo.value.legacy;
-    bool isConnected = batteryInfo.chargerAcOnline || batteryInfo.chargerUsbOnline ||
-                       batteryInfo.chargerWirelessOnline;
-
-    std::stringstream message;
-    message << "BatteryStatus is " << toString(status.value) << " and "
-            << (isConnected ? "" : "no ")
-            << "power source is connected: ac=" << batteryInfo.chargerAcOnline
-            << ", usb=" << batteryInfo.chargerUsbOnline
-            << ", wireless=" << batteryInfo.chargerWirelessOnline;
-
-    switch (status.value) {
-        case BatteryStatus::UNKNOWN: {
-            // Don't enforce anything on isConnected on unknown battery status.
-            // Battery-less devices must report UNKNOWN battery status, but may report true
-            // or false on isConnected.
-        } break;
-        case BatteryStatus::CHARGING:
-        case BatteryStatus::NOT_CHARGING:
-        case BatteryStatus::FULL: {
-            if (!isConnected) {
-                return AssertionFailure() << message.str();
-            }
-        } break;
-        case BatteryStatus::DISCHARGING: {
-            if (isConnected) {
-                return AssertionFailure() << message.str();
-            }
-        } break;
-        default: {
-            return AssertionFailure() << "Unknown battery status value " << toString(status.value);
-        } break;
-    }
-
-    return AssertionSuccess() << message.str();
+    return test_utils::IsBatteryStatusCorrect(
+            status.value, batteryInfo, [](BatteryStatus status) { return toString(status); });
 }
 
 TEST_P(BatteryTest, ConnectedAgainstStatusFromHal) {

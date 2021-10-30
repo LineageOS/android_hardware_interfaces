@@ -1,0 +1,37 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_library_shared {
+    name: "android.hardware.bluetooth.audio@2.2-impl",
+    defaults: ["hidl_defaults"],
+    vendor: true,
+    relative_install_path: "hw",
+    srcs: [
+        "BluetoothAudioProvidersFactory.cpp",
+        "BluetoothAudioProvider.cpp",
+        "A2dpOffloadAudioProvider.cpp",
+        "A2dpSoftwareAudioProvider.cpp",
+        "HearingAidAudioProvider.cpp",
+        "LeAudioAudioProvider.cpp",
+        "LeAudioOffloadAudioProvider.cpp",
+    ],
+    header_libs: ["libhardware_headers"],
+    shared_libs: [
+        "android.hardware.bluetooth.audio@2.0",
+        "android.hardware.bluetooth.audio@2.1",
+        "android.hardware.bluetooth.audio@2.2",
+        "libbase",
+        "libbluetooth_audio_session",
+        "libcutils",
+        "libfmq",
+        "libhidlbase",
+        "liblog",
+        "libutils",
+    ],
+}
