@@ -24,6 +24,7 @@ package {
 aidl_interface {
     name: "android.hardware.health",
     vendor_available: true,
+    recovery_available: true,
     srcs: ["android/hardware/health/*.aidl"],
     stability: "vintf",
     backend: {
@@ -46,6 +47,7 @@ aidl_interface {
 cc_library {
     name: "android.hardware.health-translate-ndk",
     vendor_available: true,
+    recovery_available: true,
     srcs: ["android/hardware/health/translate-ndk.cpp"],
     shared_libs: [
         "libbinder_ndk",
