@@ -16,6 +16,7 @@
 
 package android.hardware.tv.tuner;
 
+import android.hardware.tv.tuner.DemuxScAvcIndex;
 import android.hardware.tv.tuner.DemuxScHevcIndex;
 import android.hardware.tv.tuner.DemuxScIndex;
 
@@ -28,6 +29,11 @@ union DemuxFilterScIndexMask {
      * Indexes defined by DemuxScIndex.
      */
     int scIndex;
+
+    /**
+     * Indexes defined by DemuxScAvcIndex.
+     */
+    int scAvc;
 
     /**
      * Indexes defined by DemuxScHevcIndex.

@@ -83,4 +83,9 @@ enum Constant {
      * An invalid key token. It is used to remove the current key from the descrambler.
      */
     INVALID_KEYTOKEN = 0x00,
+
+     /**
+     * An invalid section filter version number.
+     */
+    INVALID_TABINFO_VERSION = 0xFFFFFFFF,
 }
