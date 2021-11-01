@@ -37,6 +37,7 @@
 #include <aidl/android/hardware/automotive/vehicle/SetValueResult.h>
 #include <aidl/android/hardware/automotive/vehicle/SetValueResults.h>
 #include <aidl/android/hardware/automotive/vehicle/StatusCode.h>
+#include <aidl/android/hardware/automotive/vehicle/SubscribeOptions.h>
 #include <aidl/android/hardware/automotive/vehicle/VehicleApPowerStateReport.h>
 #include <aidl/android/hardware/automotive/vehicle/VehicleApPowerStateReq.h>
 #include <aidl/android/hardware/automotive/vehicle/VehicleArea.h>
