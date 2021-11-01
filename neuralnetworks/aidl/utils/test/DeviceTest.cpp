@@ -146,28 +146,45 @@ constexpr auto makeDeadObjectFailure = [] {
     return ndk::ScopedAStatus::fromStatus(STATUS_DEAD_OBJECT);
 };
 
+class DeviceTest : public ::testing::TestWithParam<nn::Version> {
+  protected:
+    const nn::Version kVersion = GetParam();
+};
+
+std::string printDeviceTest(const testing::TestParamInfo<nn::Version>& info) {
+    switch (info.param) {
+        case nn::Version::ANDROID_S:
+            return "v1";
+        case nn::Version::FEATURE_LEVEL_6:
+            return "v2";
+        default:
+            LOG(FATAL) << "Invalid AIDL version: " << info.param;
+            return "invalid";
+    }
+}
+
 }  // namespace
 
-TEST(DeviceTest, invalidName) {
+TEST_P(DeviceTest, invalidName) {
     // run test
     const auto device = MockDevice::create();
-    const auto result = Device::create(kInvalidName, device);
+    const auto result = Device::create(kInvalidName, device, kVersion);
 
     // verify result
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, nn::ErrorStatus::INVALID_ARGUMENT);
 }
 
-TEST(DeviceTest, invalidDevice) {
+TEST_P(DeviceTest, invalidDevice) {
     // run test
-    const auto result = Device::create(kName, kInvalidDevice);
+    const auto result = Device::create(kName, kInvalidDevice, kVersion);
 
     // verify result
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, nn::ErrorStatus::INVALID_ARGUMENT);
 }
 
-TEST(DeviceTest, getVersionStringError) {
+TEST_P(DeviceTest, getVersionStringError) {
     // setup call
     const auto mockDevice = createMockDevice();
     EXPECT_CALL(*mockDevice, getVersionString(_))
@@ -175,14 +192,14 @@ TEST(DeviceTest, getVersionStringError) {
             .WillOnce(InvokeWithoutArgs(makeGeneralFailure));
 
     // run test
-    const auto result = Device::create(kName, mockDevice);
+    const auto result = Device::create(kName, mockDevice, kVersion);
 
     // verify result
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-TEST(DeviceTest, getVersionStringTransportFailure) {
+TEST_P(DeviceTest, getVersionStringTransportFailure) {
     // setup call
     const auto mockDevice = createMockDevice();
     EXPECT_CALL(*mockDevice, getVersionString(_))
@@ -190,14 +207,14 @@ TEST(DeviceTest, getVersionStringTransportFailure) {
             .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
 
     // run test
-    const auto result = Device::create(kName, mockDevice);
+    const auto result = Device::create(kName, mockDevice, kVersion);
 
     // verify result
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-TEST(DeviceTest, getVersionStringDeadObject) {
+TEST_P(DeviceTest, getVersionStringDeadObject) {
     // setup call
     const auto mockDevice = createMockDevice();
     EXPECT_CALL(*mockDevice, getVersionString(_))
@@ -205,27 +222,27 @@ TEST(DeviceTest, getVersionStringDeadObject) {
             .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
 
     // run test
-    const auto result = Device::create(kName, mockDevice);
+    const auto result = Device::create(kName, mockDevice, kVersion);
 
     // verify result
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, nn::ErrorStatus::DEAD_OBJECT);
 }
 
-TEST(DeviceTest, getTypeError) {
+TEST_P(DeviceTest, getTypeError) {
     // setup call
     const auto mockDevice = createMockDevice();
     EXPECT_CALL(*mockDevice, getType(_)).Times(1).WillOnce(InvokeWithoutArgs(makeGeneralFailure));
 
     // run test
-    const auto result = Device::create(kName, mockDevice);
+    const auto result = Device::create(kName, mockDevice, kVersion);
 
     // verify result
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-TEST(DeviceTest, getTypeTransportFailure) {
+TEST_P(DeviceTest, getTypeTransportFailure) {
     // setup call
     const auto mockDevice = createMockDevice();
     EXPECT_CALL(*mockDevice, getType(_))
@@ -233,14 +250,14 @@ TEST(DeviceTest, getTypeTransportFailure) {
             .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
 
     // run test
-    const auto result = Device::create(kName, mockDevice);
+    const auto result = Device::create(kName, mockDevice, kVersion);
 
     // verify result
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-TEST(DeviceTest, getTypeDeadObject) {
+TEST_P(DeviceTest, getTypeDeadObject) {
     // setup call
     const auto mockDevice = createMockDevice();
     EXPECT_CALL(*mockDevice, getType(_))
@@ -248,14 +265,14 @@ TEST(DeviceTest, getTypeDeadObject) {
             .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
 
     // run test
-    const auto result = Device::create(kName, mockDevice);
+    const auto result = Device::create(kName, mockDevice, kVersion);
 
     // verify result
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, nn::ErrorStatus::DEAD_OBJECT);
 }
 
-TEST(DeviceTest, getSupportedExtensionsError) {
+TEST_P(DeviceTest, getSupportedExtensionsError) {
     // setup call
     const auto mockDevice = createMockDevice();
     EXPECT_CALL(*mockDevice, getSupportedExtensions(_))
@@ -263,14 +280,14 @@ TEST(DeviceTest, getSupportedExtensionsError) {
             .WillOnce(InvokeWithoutArgs(makeGeneralFailure));
 
     // run test
-    const auto result = Device::create(kName, mockDevice);
+    const auto result = Device::create(kName, mockDevice, kVersion);
 
     // verify result
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-TEST(DeviceTest, getSupportedExtensionsTransportFailure) {
+TEST_P(DeviceTest, getSupportedExtensionsTransportFailure) {
     // setup call
     const auto mockDevice = createMockDevice();
     EXPECT_CALL(*mockDevice, getSupportedExtensions(_))
@@ -278,14 +295,14 @@ TEST(DeviceTest, getSupportedExtensionsTransportFailure) {
             .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
 
     // run test
-    const auto result = Device::create(kName, mockDevice);
+    const auto result = Device::create(kName, mockDevice, kVersion);
 
     // verify result
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-TEST(DeviceTest, getSupportedExtensionsDeadObject) {
+TEST_P(DeviceTest, getSupportedExtensionsDeadObject) {
     // setup call
     const auto mockDevice = createMockDevice();
     EXPECT_CALL(*mockDevice, getSupportedExtensions(_))
@@ -293,20 +310,20 @@ TEST(DeviceTest, getSupportedExtensionsDeadObject) {
             .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
 
     // run test
-    const auto result = Device::create(kName, mockDevice);
+    const auto result = Device::create(kName, mockDevice, kVersion);
 
     // verify result
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, nn::ErrorStatus::DEAD_OBJECT);
 }
 
-TEST(DeviceTest, getNumberOfCacheFilesNeeded) {
+TEST_P(DeviceTest, getNumberOfCacheFilesNeeded) {
     // setup call
     const auto mockDevice = createMockDevice();
     EXPECT_CALL(*mockDevice, getNumberOfCacheFilesNeeded(_)).Times(1);
 
     // run test
-    const auto result = Device::create(kName, mockDevice);
+    const auto result = Device::create(kName, mockDevice, kVersion);
 
     // verify result
     ASSERT_TRUE(result.has_value());
@@ -315,7 +332,7 @@ TEST(DeviceTest, getNumberOfCacheFilesNeeded) {
     EXPECT_EQ(result.value()->getNumberOfCacheFilesNeeded(), kNumberOfCacheFilesPair);
 }
 
-TEST(DeviceTest, getNumberOfCacheFilesNeededError) {
+TEST_P(DeviceTest, getNumberOfCacheFilesNeededError) {
     // setup call
     const auto mockDevice = createMockDevice();
     EXPECT_CALL(*mockDevice, getNumberOfCacheFilesNeeded(_))
@@ -323,14 +340,14 @@ TEST(DeviceTest, getNumberOfCacheFilesNeededError) {
             .WillOnce(InvokeWithoutArgs(makeGeneralFailure));
 
     // run test
-    const auto result = Device::create(kName, mockDevice);
+    const auto result = Device::create(kName, mockDevice, kVersion);
 
     // verify result
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-TEST(DeviceTest, dataCacheFilesExceedsSpecifiedMax) {
+TEST_P(DeviceTest, dataCacheFilesExceedsSpecifiedMax) {
     // setup test
     const auto mockDevice = createMockDevice();
     EXPECT_CALL(*mockDevice, getNumberOfCacheFilesNeeded(_))
@@ -341,14 +358,14 @@ TEST(DeviceTest, dataCacheFilesExceedsSpecifiedMax) {
                             InvokeWithoutArgs(makeStatusOk)));
 
     // run test
-    const auto result = Device::create(kName, mockDevice);
+    const auto result = Device::create(kName, mockDevice, kVersion);
 
     // verify result
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-TEST(DeviceTest, modelCacheFilesExceedsSpecifiedMax) {
+TEST_P(DeviceTest, modelCacheFilesExceedsSpecifiedMax) {
     // setup test
     const auto mockDevice = createMockDevice();
     EXPECT_CALL(*mockDevice, getNumberOfCacheFilesNeeded(_))
@@ -359,14 +376,14 @@ TEST(DeviceTest, modelCacheFilesExceedsSpecifiedMax) {
                             InvokeWithoutArgs(makeStatusOk)));
 
     // run test
-    const auto result = Device::create(kName, mockDevice);
+    const auto result = Device::create(kName, mockDevice, kVersion);
 
     // verify result
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-TEST(DeviceTest, getNumberOfCacheFilesNeededTransportFailure) {
+TEST_P(DeviceTest, getNumberOfCacheFilesNeededTransportFailure) {
     // setup call
     const auto mockDevice = createMockDevice();
     EXPECT_CALL(*mockDevice, getNumberOfCacheFilesNeeded(_))
@@ -374,14 +391,14 @@ TEST(DeviceTest, getNumberOfCacheFilesNeededTransportFailure) {
             .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
 
     // run test
-    const auto result = Device::create(kName, mockDevice);
+    const auto result = Device::create(kName, mockDevice, kVersion);
 
     // verify result
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-TEST(DeviceTest, getNumberOfCacheFilesNeededDeadObject) {
+TEST_P(DeviceTest, getNumberOfCacheFilesNeededDeadObject) {
     // setup call
     const auto mockDevice = createMockDevice();
     EXPECT_CALL(*mockDevice, getNumberOfCacheFilesNeeded(_))
@@ -389,14 +406,14 @@ TEST(DeviceTest, getNumberOfCacheFilesNeededDeadObject) {
             .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
 
     // run test
-    const auto result = Device::create(kName, mockDevice);
+    const auto result = Device::create(kName, mockDevice, kVersion);
 
     // verify result
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, nn::ErrorStatus::DEAD_OBJECT);
 }
 
-TEST(DeviceTest, getCapabilitiesError) {
+TEST_P(DeviceTest, getCapabilitiesError) {
     // setup call
     const auto mockDevice = createMockDevice();
     EXPECT_CALL(*mockDevice, getCapabilities(_))
@@ -404,14 +421,14 @@ TEST(DeviceTest, getCapabilitiesError) {
             .WillOnce(InvokeWithoutArgs(makeGeneralFailure));
 
     // run test
-    const auto result = Device::create(kName, mockDevice);
+    const auto result = Device::create(kName, mockDevice, kVersion);
 
     // verify result
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-TEST(DeviceTest, getCapabilitiesTransportFailure) {
+TEST_P(DeviceTest, getCapabilitiesTransportFailure) {
     // setup call
     const auto mockDevice = createMockDevice();
     EXPECT_CALL(*mockDevice, getCapabilities(_))
@@ -419,14 +436,14 @@ TEST(DeviceTest, getCapabilitiesTransportFailure) {
             .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
 
     // run test
-    const auto result = Device::create(kName, mockDevice);
+    const auto result = Device::create(kName, mockDevice, kVersion);
 
     // verify result
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-TEST(DeviceTest, getCapabilitiesDeadObject) {
+TEST_P(DeviceTest, getCapabilitiesDeadObject) {
     // setup call
     const auto mockDevice = createMockDevice();
     EXPECT_CALL(*mockDevice, getCapabilities(_))
@@ -434,17 +451,17 @@ TEST(DeviceTest, getCapabilitiesDeadObject) {
             .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
 
     // run test
-    const auto result = Device::create(kName, mockDevice);
+    const auto result = Device::create(kName, mockDevice, kVersion);
 
     // verify result
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, nn::ErrorStatus::DEAD_OBJECT);
 }
 
-TEST(DeviceTest, getName) {
+TEST_P(DeviceTest, getName) {
     // setup call
     const auto mockDevice = createMockDevice();
-    const auto device = Device::create(kName, mockDevice).value();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
 
     // run test
     const auto& name = device->getName();
@@ -453,19 +470,19 @@ TEST(DeviceTest, getName) {
     EXPECT_EQ(name, kName);
 }
 
-TEST(DeviceTest, getFeatureLevel) {
+TEST_P(DeviceTest, getFeatureLevel) {
     // setup call
     const auto mockDevice = createMockDevice();
-    const auto device = Device::create(kName, mockDevice).value();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
 
     // run test
     const auto featureLevel = device->getFeatureLevel();
 
     // verify result
-    EXPECT_EQ(featureLevel, nn::Version::ANDROID_S);
+    EXPECT_EQ(featureLevel, kVersion);
 }
 
-TEST(DeviceTest, getCachedData) {
+TEST_P(DeviceTest, getCachedData) {
     // setup call
     const auto mockDevice = createMockDevice();
     EXPECT_CALL(*mockDevice, getVersionString(_)).Times(1);
@@ -474,7 +491,7 @@ TEST(DeviceTest, getCachedData) {
     EXPECT_CALL(*mockDevice, getNumberOfCacheFilesNeeded(_)).Times(1);
     EXPECT_CALL(*mockDevice, getCapabilities(_)).Times(1);
 
-    const auto result = Device::create(kName, mockDevice);
+    const auto result = Device::create(kName, mockDevice, kVersion);
     ASSERT_TRUE(result.has_value())
             << "Failed with " << result.error().code << ": " << result.error().message;
     const auto& device = result.value();
@@ -487,10 +504,10 @@ TEST(DeviceTest, getCachedData) {
     EXPECT_EQ(device->getCapabilities(), device->getCapabilities());
 }
 
-TEST(DeviceTest, getSupportedOperations) {
+TEST_P(DeviceTest, getSupportedOperations) {
     // setup call
     const auto mockDevice = createMockDevice();
-    const auto device = Device::create(kName, mockDevice).value();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
     EXPECT_CALL(*mockDevice, getSupportedOperations(_, _))
             .Times(1)
             .WillOnce(DoAll(
@@ -508,10 +525,10 @@ TEST(DeviceTest, getSupportedOperations) {
     EXPECT_THAT(supportedOperations, Each(testing::IsTrue()));
 }
 
-TEST(DeviceTest, getSupportedOperationsError) {
+TEST_P(DeviceTest, getSupportedOperationsError) {
     // setup call
     const auto mockDevice = createMockDevice();
-    const auto device = Device::create(kName, mockDevice).value();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
     EXPECT_CALL(*mockDevice, getSupportedOperations(_, _))
             .Times(1)
             .WillOnce(InvokeWithoutArgs(makeGeneralFailure));
@@ -524,10 +541,10 @@ TEST(DeviceTest, getSupportedOperationsError) {
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-TEST(DeviceTest, getSupportedOperationsTransportFailure) {
+TEST_P(DeviceTest, getSupportedOperationsTransportFailure) {
     // setup call
     const auto mockDevice = createMockDevice();
-    const auto device = Device::create(kName, mockDevice).value();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
     EXPECT_CALL(*mockDevice, getSupportedOperations(_, _))
             .Times(1)
             .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
@@ -540,10 +557,10 @@ TEST(DeviceTest, getSupportedOperationsTransportFailure) {
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-TEST(DeviceTest, getSupportedOperationsDeadObject) {
+TEST_P(DeviceTest, getSupportedOperationsDeadObject) {
     // setup call
     const auto mockDevice = createMockDevice();
-    const auto device = Device::create(kName, mockDevice).value();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
     EXPECT_CALL(*mockDevice, getSupportedOperations(_, _))
             .Times(1)
             .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
@@ -556,10 +573,10 @@ TEST(DeviceTest, getSupportedOperationsDeadObject) {
     EXPECT_EQ(result.error().code, nn::ErrorStatus::DEAD_OBJECT);
 }
 
-TEST(DeviceTest, prepareModel) {
+TEST_P(DeviceTest, prepareModel) {
     // setup call
     const auto mockDevice = createMockDevice();
-    const auto device = Device::create(kName, mockDevice).value();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
     const auto mockPreparedModel = MockPreparedModel::create();
     EXPECT_CALL(*mockDevice, prepareModel(_, _, _, _, _, _, _, _))
             .Times(1)
@@ -576,10 +593,10 @@ TEST(DeviceTest, prepareModel) {
     EXPECT_NE(result.value(), nullptr);
 }
 
-TEST(DeviceTest, prepareModelLaunchError) {
+TEST_P(DeviceTest, prepareModelLaunchError) {
     // setup call
     const auto mockDevice = createMockDevice();
-    const auto device = Device::create(kName, mockDevice).value();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
     EXPECT_CALL(*mockDevice, prepareModel(_, _, _, _, _, _, _, _))
             .Times(1)
             .WillOnce(Invoke(makePreparedModelReturn(ErrorStatus::GENERAL_FAILURE,
@@ -594,10 +611,10 @@ TEST(DeviceTest, prepareModelLaunchError) {
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-TEST(DeviceTest, prepareModelReturnError) {
+TEST_P(DeviceTest, prepareModelReturnError) {
     // setup call
     const auto mockDevice = createMockDevice();
-    const auto device = Device::create(kName, mockDevice).value();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
     EXPECT_CALL(*mockDevice, prepareModel(_, _, _, _, _, _, _, _))
             .Times(1)
             .WillOnce(Invoke(makePreparedModelReturn(ErrorStatus::NONE,
@@ -612,10 +629,10 @@ TEST(DeviceTest, prepareModelReturnError) {
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-TEST(DeviceTest, prepareModelNullptrError) {
+TEST_P(DeviceTest, prepareModelNullptrError) {
     // setup call
     const auto mockDevice = createMockDevice();
-    const auto device = Device::create(kName, mockDevice).value();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
     EXPECT_CALL(*mockDevice, prepareModel(_, _, _, _, _, _, _, _))
             .Times(1)
             .WillOnce(
@@ -630,10 +647,10 @@ TEST(DeviceTest, prepareModelNullptrError) {
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-TEST(DeviceTest, prepareModelTransportFailure) {
+TEST_P(DeviceTest, prepareModelTransportFailure) {
     // setup call
     const auto mockDevice = createMockDevice();
-    const auto device = Device::create(kName, mockDevice).value();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
     EXPECT_CALL(*mockDevice, prepareModel(_, _, _, _, _, _, _, _))
             .Times(1)
             .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
@@ -647,10 +664,10 @@ TEST(DeviceTest, prepareModelTransportFailure) {
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-TEST(DeviceTest, prepareModelDeadObject) {
+TEST_P(DeviceTest, prepareModelDeadObject) {
     // setup call
     const auto mockDevice = createMockDevice();
-    const auto device = Device::create(kName, mockDevice).value();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
     EXPECT_CALL(*mockDevice, prepareModel(_, _, _, _, _, _, _, _))
             .Times(1)
             .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
@@ -664,10 +681,10 @@ TEST(DeviceTest, prepareModelDeadObject) {
     EXPECT_EQ(result.error().code, nn::ErrorStatus::DEAD_OBJECT);
 }
 
-TEST(DeviceTest, prepareModelAsyncCrash) {
+TEST_P(DeviceTest, prepareModelAsyncCrash) {
     // setup test
     const auto mockDevice = createMockDevice();
-    const auto device = Device::create(kName, mockDevice).value();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
     const auto ret = [&device]() {
         DeathMonitor::serviceDied(device->getDeathMonitor());
         return ndk::ScopedAStatus::ok();
@@ -685,10 +702,10 @@ TEST(DeviceTest, prepareModelAsyncCrash) {
     EXPECT_EQ(result.error().code, nn::ErrorStatus::DEAD_OBJECT);
 }
 
-TEST(DeviceTest, prepareModelFromCache) {
+TEST_P(DeviceTest, prepareModelFromCache) {
     // setup call
     const auto mockDevice = createMockDevice();
-    const auto device = Device::create(kName, mockDevice).value();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
     const auto mockPreparedModel = MockPreparedModel::create();
     EXPECT_CALL(*mockDevice, prepareModelFromCache(_, _, _, _, _))
             .Times(1)
@@ -704,10 +721,10 @@ TEST(DeviceTest, prepareModelFromCache) {
     EXPECT_NE(result.value(), nullptr);
 }
 
-TEST(DeviceTest, prepareModelFromCacheLaunchError) {
+TEST_P(DeviceTest, prepareModelFromCacheLaunchError) {
     // setup call
     const auto mockDevice = createMockDevice();
-    const auto device = Device::create(kName, mockDevice).value();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
     EXPECT_CALL(*mockDevice, prepareModelFromCache(_, _, _, _, _))
             .Times(1)
             .WillOnce(Invoke(makePreparedModelFromCacheReturn(
@@ -721,10 +738,10 @@ TEST(DeviceTest, prepareModelFromCacheLaunchError) {
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-TEST(DeviceTest, prepareModelFromCacheReturnError) {
+TEST_P(DeviceTest, prepareModelFromCacheReturnError) {
     // setup call
     const auto mockDevice = createMockDevice();
-    const auto device = Device::create(kName, mockDevice).value();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
     EXPECT_CALL(*mockDevice, prepareModelFromCache(_, _, _, _, _))
             .Times(1)
             .WillOnce(Invoke(makePreparedModelFromCacheReturn(
@@ -738,10 +755,10 @@ TEST(DeviceTest, prepareModelFromCacheReturnError) {
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-TEST(DeviceTest, prepareModelFromCacheNullptrError) {
+TEST_P(DeviceTest, prepareModelFromCacheNullptrError) {
     // setup call
     const auto mockDevice = createMockDevice();
-    const auto device = Device::create(kName, mockDevice).value();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
     EXPECT_CALL(*mockDevice, prepareModelFromCache(_, _, _, _, _))
             .Times(1)
             .WillOnce(Invoke(makePreparedModelFromCacheReturn(ErrorStatus::NONE, ErrorStatus::NONE,
@@ -755,10 +772,10 @@ TEST(DeviceTest, prepareModelFromCacheNullptrError) {
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-TEST(DeviceTest, prepareModelFromCacheTransportFailure) {
+TEST_P(DeviceTest, prepareModelFromCacheTransportFailure) {
     // setup call
     const auto mockDevice = createMockDevice();
-    const auto device = Device::create(kName, mockDevice).value();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
     EXPECT_CALL(*mockDevice, prepareModelFromCache(_, _, _, _, _))
             .Times(1)
             .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
@@ -771,10 +788,10 @@ TEST(DeviceTest, prepareModelFromCacheTransportFailure) {
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-TEST(DeviceTest, prepareModelFromCacheDeadObject) {
+TEST_P(DeviceTest, prepareModelFromCacheDeadObject) {
     // setup call
     const auto mockDevice = createMockDevice();
-    const auto device = Device::create(kName, mockDevice).value();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
     EXPECT_CALL(*mockDevice, prepareModelFromCache(_, _, _, _, _))
             .Times(1)
             .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
@@ -787,10 +804,10 @@ TEST(DeviceTest, prepareModelFromCacheDeadObject) {
     EXPECT_EQ(result.error().code, nn::ErrorStatus::DEAD_OBJECT);
 }
 
-TEST(DeviceTest, prepareModelFromCacheAsyncCrash) {
+TEST_P(DeviceTest, prepareModelFromCacheAsyncCrash) {
     // setup test
     const auto mockDevice = createMockDevice();
-    const auto device = Device::create(kName, mockDevice).value();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
     const auto ret = [&device]() {
         DeathMonitor::serviceDied(device->getDeathMonitor());
         return ndk::ScopedAStatus::ok();
@@ -807,10 +824,10 @@ TEST(DeviceTest, prepareModelFromCacheAsyncCrash) {
     EXPECT_EQ(result.error().code, nn::ErrorStatus::DEAD_OBJECT);
 }
 
-TEST(DeviceTest, allocate) {
+TEST_P(DeviceTest, allocate) {
     // setup call
     const auto mockDevice = createMockDevice();
-    const auto device = Device::create(kName, mockDevice).value();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
     const auto mockBuffer = DeviceBuffer{.buffer = MockBuffer::create(), .token = 1};
     EXPECT_CALL(*mockDevice, allocate(_, _, _, _, _))
             .Times(1)
@@ -825,10 +842,10 @@ TEST(DeviceTest, allocate) {
     EXPECT_NE(result.value(), nullptr);
 }
 
-TEST(DeviceTest, allocateError) {
+TEST_P(DeviceTest, allocateError) {
     // setup call
     const auto mockDevice = createMockDevice();
-    const auto device = Device::create(kName, mockDevice).value();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
     EXPECT_CALL(*mockDevice, allocate(_, _, _, _, _))
             .Times(1)
             .WillOnce(InvokeWithoutArgs(makeGeneralFailure));
@@ -841,10 +858,10 @@ TEST(DeviceTest, allocateError) {
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-TEST(DeviceTest, allocateTransportFailure) {
+TEST_P(DeviceTest, allocateTransportFailure) {
     // setup call
     const auto mockDevice = createMockDevice();
-    const auto device = Device::create(kName, mockDevice).value();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
     EXPECT_CALL(*mockDevice, allocate(_, _, _, _, _))
             .Times(1)
             .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
@@ -857,10 +874,10 @@ TEST(DeviceTest, allocateTransportFailure) {
     EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
 }
 
-TEST(DeviceTest, allocateDeadObject) {
+TEST_P(DeviceTest, allocateDeadObject) {
     // setup call
     const auto mockDevice = createMockDevice();
-    const auto device = Device::create(kName, mockDevice).value();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
     EXPECT_CALL(*mockDevice, allocate(_, _, _, _, _))
             .Times(1)
             .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
@@ -872,5 +889,9 @@ TEST(DeviceTest, allocateDeadObject) {
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, nn::ErrorStatus::DEAD_OBJECT);
 }
+
+INSTANTIATE_TEST_SUITE_P(TestDevice, DeviceTest,
+                         ::testing::Values(nn::Version::ANDROID_S, nn::Version::FEATURE_LEVEL_6),
+                         printDeviceTest);
 
 }  // namespace aidl::android::hardware::neuralnetworks::utils
