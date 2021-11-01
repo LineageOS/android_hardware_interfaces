@@ -16,6 +16,8 @@
 
 #include "PreparedModel.h"
 
+#include "Burst.h"
+
 #include <android-base/logging.h>
 #include <android/hardware/neuralnetworks/1.0/IExecutionCallback.h>
 #include <android/hardware/neuralnetworks/1.0/types.h>
@@ -32,7 +34,6 @@
 #include <nnapi/Types.h>
 #include <nnapi/Validation.h>
 #include <nnapi/hal/1.0/Utils.h>
-#include <nnapi/hal/1.2/ExecutionBurstServer.h>
 #include <nnapi/hal/1.2/Utils.h>
 #include <nnapi/hal/1.3/Conversions.h>
 #include <nnapi/hal/1.3/Utils.h>
@@ -277,9 +278,8 @@ nn::GeneralResult<sp<V1_2::IBurstContext>> configureExecutionBurst(
         const MQDescriptorSync<V1_2::FmqRequestDatum>& requestChannel,
         const MQDescriptorSync<V1_2::FmqResultDatum>& resultChannel) {
     auto burstExecutor = NN_TRY(preparedModel->configureExecutionBurst());
-    return V1_2::utils::ExecutionBurstServer::create(
-            callback, requestChannel, resultChannel, std::move(burstExecutor),
-            V1_2::utils::getBurstServerPollingTimeWindow());
+    return Burst::create(callback, requestChannel, resultChannel, std::move(burstExecutor),
+                         V1_2::utils::getBurstServerPollingTimeWindow());
 }
 
 nn::GeneralResult<std::pair<hidl_handle, sp<V1_3::IFencedExecutionCallback>>> executeFenced(
