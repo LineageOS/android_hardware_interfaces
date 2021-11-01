@@ -1627,13 +1627,13 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationIdTags) {
  */
 TEST_P(NewKeyGenerationTest, EcdsaAttestationUniqueId) {
     auto get_unique_id = [this](const std::string& app_id, uint64_t datetime,
-                                vector<uint8_t>* unique_id) {
+                                vector<uint8_t>* unique_id, bool reset = false) {
         auto challenge = "hello";
         auto subject = "cert subj 2";
         vector<uint8_t> subject_der(make_name_from_str(subject));
         uint64_t serial_int = 0x1010;
         vector<uint8_t> serial_blob(build_serial_blob(serial_int));
-        const AuthorizationSetBuilder builder =
+        AuthorizationSetBuilder builder =
                 AuthorizationSetBuilder()
                         .Authorization(TAG_NO_AUTH_REQUIRED)
                         .Authorization(TAG_INCLUDE_UNIQUE_ID)
@@ -1645,6 +1645,9 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationUniqueId) {
                         .AttestationApplicationId(app_id)
                         .Authorization(TAG_CREATION_DATETIME, datetime)
                         .SetDefaultValidity();
+        if (reset) {
+            builder.Authorization(TAG_RESET_SINCE_ID_ROTATION);
+        }
 
         ASSERT_EQ(ErrorCode::OK, GenerateKey(builder));
         ASSERT_GT(key_blob_.size(), 0U);
@@ -1706,6 +1709,11 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationUniqueId) {
     vector<uint8_t> unique_id8;
     get_unique_id(app_id, min_date - 1, &unique_id8);
     EXPECT_NE(unique_id, unique_id8);
+
+    // Marking RESET_SINCE_ID_ROTATION should give a different unique ID.
+    vector<uint8_t> unique_id9;
+    get_unique_id(app_id, cert_date, &unique_id9, /* reset_id = */ true);
+    EXPECT_NE(unique_id, unique_id9);
 }
 
 /*
