@@ -56,7 +56,10 @@ class HdmiCecDefault : public IHdmiCec, public hidl_death_recipient {
   private:
     void event_thread();
     static int getOpcode(cec_msg message);
+    static int getFirstParam(cec_msg message);
     static bool isWakeupMessage(cec_msg message);
+    static bool isTransferableInSleep(cec_msg message);
+    static bool isPowerUICommand(cec_msg message);
 
     thread mEventThread;
 
@@ -67,6 +70,13 @@ class HdmiCecDefault : public IHdmiCec, public hidl_death_recipient {
      * <Text View On>. True by default after initialization.
      */
     bool mWakeupEnabled;
+    /*
+     * Updated when system goes into or comes out of standby mode.
+     * When set to true, Android system is handling CEC commands.
+     * When set to false, microprocessor is handling CEC commands.
+     * True by default after initialization.
+     */
+    bool mCecControlEnabled;
     sp<IHdmiCecCallback> mCallback;
 
     int mCecFd;
