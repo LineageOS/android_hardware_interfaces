@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "ExecutionBurstUtils"
-
-#include "ExecutionBurstUtils.h"
+#include "BurstUtils.h"
 
 #include <android-base/logging.h>
 #include <android-base/properties.h>

@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "ExecutionBurstController"
-
-#include "ExecutionBurstController.h"
-#include "ExecutionBurstUtils.h"
+#include "Burst.h"
+#include "BurstUtils.h"
 
 #include <android-base/logging.h>
 #include <android-base/thread_annotations.h>
@@ -57,14 +55,13 @@ class BurstExecution final : public nn::IExecution,
 
   public:
     static nn::GeneralResult<std::shared_ptr<const BurstExecution>> create(
-            std::shared_ptr<const ExecutionBurstController> controller,
-            std::vector<FmqRequestDatum> request, hal::utils::RequestRelocation relocation,
-            std::vector<ExecutionBurstController::OptionalCacheHold> cacheHolds);
+            std::shared_ptr<const Burst> controller, std::vector<FmqRequestDatum> request,
+            hal::utils::RequestRelocation relocation,
+            std::vector<Burst::OptionalCacheHold> cacheHolds);
 
-    BurstExecution(PrivateConstructorTag tag,
-                   std::shared_ptr<const ExecutionBurstController> controller,
+    BurstExecution(PrivateConstructorTag tag, std::shared_ptr<const Burst> controller,
                    std::vector<FmqRequestDatum> request, hal::utils::RequestRelocation relocation,
-                   std::vector<ExecutionBurstController::OptionalCacheHold> cacheHolds);
+                   std::vector<Burst::OptionalCacheHold> cacheHolds);
 
     nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> compute(
             const nn::OptionalTimePoint& deadline) const override;
@@ -74,10 +71,10 @@ class BurstExecution final : public nn::IExecution,
             const nn::OptionalDuration& timeoutDurationAfterFence) const override;
 
   private:
-    const std::shared_ptr<const ExecutionBurstController> kController;
+    const std::shared_ptr<const Burst> kController;
     const std::vector<FmqRequestDatum> kRequest;
     const hal::utils::RequestRelocation kRelocation;
-    const std::vector<ExecutionBurstController::OptionalCacheHold> kCacheHolds;
+    const std::vector<Burst::OptionalCacheHold> kCacheHolds;
 };
 
 nn::GeneralResult<sp<IBurstContext>> executionBurstResultCallback(
@@ -92,8 +89,7 @@ nn::GeneralResult<sp<IBurstContext>> executionBurstResultCallback(
 }
 
 nn::GeneralResult<hidl_vec<hidl_memory>> getMemoriesHelper(
-        const hidl_vec<int32_t>& slots,
-        const std::shared_ptr<ExecutionBurstController::MemoryCache>& memoryCache) {
+        const hidl_vec<int32_t>& slots, const std::shared_ptr<Burst::MemoryCache>& memoryCache) {
     hidl_vec<hidl_memory> memories(slots.size());
     for (size_t i = 0; i < slots.size(); ++i) {
         const int32_t slot = slots[i];
@@ -110,7 +106,7 @@ nn::GeneralResult<hidl_vec<hidl_memory>> getMemoriesHelper(
 
 // MemoryCache methods
 
-ExecutionBurstController::MemoryCache::MemoryCache() {
+Burst::MemoryCache::MemoryCache() {
     constexpr size_t kPreallocatedCount = 1024;
     std::vector<int32_t> freeSlotsSpace;
     freeSlotsSpace.reserve(kPreallocatedCount);
@@ -119,13 +115,13 @@ ExecutionBurstController::MemoryCache::MemoryCache() {
     mCacheCleaner.reserve(kPreallocatedCount);
 }
 
-void ExecutionBurstController::MemoryCache::setBurstContext(sp<IBurstContext> burstContext) {
+void Burst::MemoryCache::setBurstContext(sp<IBurstContext> burstContext) {
     std::lock_guard guard(mMutex);
     mBurstContext = std::move(burstContext);
 }
 
-std::pair<int32_t, ExecutionBurstController::MemoryCache::SharedCleanup>
-ExecutionBurstController::MemoryCache::cacheMemory(const nn::SharedMemory& memory) {
+std::pair<int32_t, Burst::MemoryCache::SharedCleanup> Burst::MemoryCache::cacheMemory(
+        const nn::SharedMemory& memory) {
     std::unique_lock lock(mMutex);
     base::ScopedLockAssertion lockAssert(mMutex);
 
@@ -163,7 +159,7 @@ ExecutionBurstController::MemoryCache::cacheMemory(const nn::SharedMemory& memor
     return std::make_pair(slot, std::move(cleaner));
 }
 
-nn::GeneralResult<nn::SharedMemory> ExecutionBurstController::MemoryCache::getMemory(int32_t slot) {
+nn::GeneralResult<nn::SharedMemory> Burst::MemoryCache::getMemory(int32_t slot) {
     std::lock_guard guard(mMutex);
     if (slot < 0 || static_cast<size_t>(slot) >= mMemoryCache.size()) {
         return NN_ERROR() << "Invalid slot: " << slot << " vs " << mMemoryCache.size();
@@ -171,7 +167,7 @@ nn::GeneralResult<nn::SharedMemory> ExecutionBurstController::MemoryCache::getMe
     return mMemoryCache[slot];
 }
 
-void ExecutionBurstController::MemoryCache::freeMemory(const nn::SharedMemory& memory) {
+void Burst::MemoryCache::freeMemory(const nn::SharedMemory& memory) {
     {
         std::lock_guard guard(mMutex);
         const int32_t slot = mMemoryIdToSlot.at(memory);
@@ -189,7 +185,7 @@ void ExecutionBurstController::MemoryCache::freeMemory(const nn::SharedMemory& m
     mCond.notify_all();
 }
 
-int32_t ExecutionBurstController::MemoryCache::allocateSlotLocked() {
+int32_t Burst::MemoryCache::allocateSlotLocked() {
     constexpr size_t kMaxNumberOfSlots = std::numeric_limits<int32_t>::max();
 
     // If there is a free slot, use it.
@@ -210,18 +206,18 @@ int32_t ExecutionBurstController::MemoryCache::allocateSlotLocked() {
 
 // ExecutionBurstCallback methods
 
-ExecutionBurstController::ExecutionBurstCallback::ExecutionBurstCallback(
+Burst::ExecutionBurstCallback::ExecutionBurstCallback(
         const std::shared_ptr<MemoryCache>& memoryCache)
     : kMemoryCache(memoryCache) {
     CHECK(memoryCache != nullptr);
 }
 
-Return<void> ExecutionBurstController::ExecutionBurstCallback::getMemories(
-        const hidl_vec<int32_t>& slots, getMemories_cb cb) {
+Return<void> Burst::ExecutionBurstCallback::getMemories(const hidl_vec<int32_t>& slots,
+                                                        getMemories_cb cb) {
     const auto memoryCache = kMemoryCache.lock();
     if (memoryCache == nullptr) {
-        LOG(ERROR) << "ExecutionBurstController::ExecutionBurstCallback::getMemories called after "
-                      "the MemoryCache has been freed";
+        LOG(ERROR) << "Burst::ExecutionBurstCallback::getMemories called after the MemoryCache has "
+                      "been freed";
         cb(V1_0::ErrorStatus::GENERAL_FAILURE, {});
         return Void();
     }
@@ -229,8 +225,8 @@ Return<void> ExecutionBurstController::ExecutionBurstCallback::getMemories(
     const auto maybeMemories = getMemoriesHelper(slots, memoryCache);
     if (!maybeMemories.has_value()) {
         const auto& [message, code] = maybeMemories.error();
-        LOG(ERROR) << "ExecutionBurstController::ExecutionBurstCallback::getMemories failed with "
-                   << code << ": " << message;
+        LOG(ERROR) << "Burst::ExecutionBurstCallback::getMemories failed with " << code << ": "
+                   << message;
         cb(V1_0::ErrorStatus::INVALID_ARGUMENT, {});
         return Void();
     }
@@ -239,14 +235,14 @@ Return<void> ExecutionBurstController::ExecutionBurstCallback::getMemories(
     return Void();
 }
 
-// ExecutionBurstController methods
+// Burst methods
 
-nn::GeneralResult<std::shared_ptr<const ExecutionBurstController>> ExecutionBurstController::create(
+nn::GeneralResult<std::shared_ptr<const Burst>> Burst::create(
         nn::SharedPreparedModel preparedModel, const sp<V1_2::IPreparedModel>& hidlPreparedModel,
         std::chrono::microseconds pollingTimeWindow) {
     // check inputs
     if (preparedModel == nullptr || hidlPreparedModel == nullptr) {
-        return NN_ERROR() << "ExecutionBurstController::create passed a nullptr";
+        return NN_ERROR() << "Burst::create passed a nullptr";
     }
 
     // create FMQ objects
@@ -282,18 +278,18 @@ nn::GeneralResult<std::shared_ptr<const ExecutionBurstController>> ExecutionBurs
     deathHandler.protectCallbackForLifetimeOfDeathHandler(resultChannelReceiver.get());
 
     // make and return controller
-    return std::make_shared<const ExecutionBurstController>(
+    return std::make_shared<const Burst>(
             PrivateConstructorTag{}, std::move(preparedModel), std::move(requestChannelSender),
             std::move(resultChannelReceiver), std::move(burstCallback), std::move(burstContext),
             std::move(memoryCache), std::move(deathHandler));
 }
 
-ExecutionBurstController::ExecutionBurstController(
-        PrivateConstructorTag /*tag*/, nn::SharedPreparedModel preparedModel,
-        std::unique_ptr<RequestChannelSender> requestChannelSender,
-        std::unique_ptr<ResultChannelReceiver> resultChannelReceiver,
-        sp<ExecutionBurstCallback> callback, sp<IBurstContext> burstContext,
-        std::shared_ptr<MemoryCache> memoryCache, neuralnetworks::utils::DeathHandler deathHandler)
+Burst::Burst(PrivateConstructorTag /*tag*/, nn::SharedPreparedModel preparedModel,
+             std::unique_ptr<RequestChannelSender> requestChannelSender,
+             std::unique_ptr<ResultChannelReceiver> resultChannelReceiver,
+             sp<ExecutionBurstCallback> callback, sp<IBurstContext> burstContext,
+             std::shared_ptr<MemoryCache> memoryCache,
+             neuralnetworks::utils::DeathHandler deathHandler)
     : kPreparedModel(std::move(preparedModel)),
       mRequestChannelSender(std::move(requestChannelSender)),
       mResultChannelReceiver(std::move(resultChannelReceiver)),
@@ -302,21 +298,20 @@ ExecutionBurstController::ExecutionBurstController(
       mMemoryCache(std::move(memoryCache)),
       kDeathHandler(std::move(deathHandler)) {}
 
-ExecutionBurstController::OptionalCacheHold ExecutionBurstController::cacheMemory(
-        const nn::SharedMemory& memory) const {
+Burst::OptionalCacheHold Burst::cacheMemory(const nn::SharedMemory& memory) const {
     auto [slot, hold] = mMemoryCache->cacheMemory(memory);
     return hold;
 }
 
-nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>>
-ExecutionBurstController::execute(const nn::Request& request, nn::MeasureTiming measure,
-                                  const nn::OptionalTimePoint& deadline,
-                                  const nn::OptionalDuration& loopTimeoutDuration) const {
+nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Burst::execute(
+        const nn::Request& request, nn::MeasureTiming measure,
+        const nn::OptionalTimePoint& deadline,
+        const nn::OptionalDuration& loopTimeoutDuration) const {
     // This is the first point when we know an execution is occurring, so begin to collect
     // systraces. Note that the first point we can begin collecting systraces in
     // ExecutionBurstServer is when the RequestChannelReceiver realizes there is data in the FMQ, so
     // ExecutionBurstServer collects systraces at different points in the code.
-    NNTRACE_RT(NNTRACE_PHASE_EXECUTION, "ExecutionBurstController::execute");
+    NNTRACE_RT(NNTRACE_PHASE_EXECUTION, "Burst::execute");
 
     // if the request is valid but of a higher version than what's supported in burst execution,
     // fall back to another execution path
@@ -357,10 +352,10 @@ ExecutionBurstController::execute(const nn::Request& request, nn::MeasureTiming 
 }
 
 // See IBurst::createReusableExecution for information on this method.
-nn::GeneralResult<nn::SharedExecution> ExecutionBurstController::createReusableExecution(
+nn::GeneralResult<nn::SharedExecution> Burst::createReusableExecution(
         const nn::Request& request, nn::MeasureTiming measure,
         const nn::OptionalDuration& loopTimeoutDuration) const {
-    NNTRACE_RT(NNTRACE_PHASE_EXECUTION, "ExecutionBurstController::createReusableExecution");
+    NNTRACE_RT(NNTRACE_PHASE_EXECUTION, "Burst::createReusableExecution");
 
     // if the request is valid but of a higher version than what's supported in burst execution,
     // fall back to another execution path
@@ -397,12 +392,10 @@ nn::GeneralResult<nn::SharedExecution> ExecutionBurstController::createReusableE
                                   std::move(relocation), std::move(holds));
 }
 
-nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>>
-ExecutionBurstController::executeInternal(const std::vector<FmqRequestDatum>& requestPacket,
-                                          const hal::utils::RequestRelocation& relocation,
-                                          FallbackFunction fallback) const {
-    NNTRACE_FULL(NNTRACE_LAYER_IPC, NNTRACE_PHASE_EXECUTION,
-                 "ExecutionBurstController::executeInternal");
+nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Burst::executeInternal(
+        const std::vector<FmqRequestDatum>& requestPacket,
+        const hal::utils::RequestRelocation& relocation, FallbackFunction fallback) const {
+    NNTRACE_FULL(NNTRACE_LAYER_IPC, NNTRACE_PHASE_EXECUTION, "Burst::executeInternal");
 
     // Ensure that at most one execution is in flight at any given time.
     const bool alreadyInFlight = mExecutionInFlight.test_and_set();
@@ -435,9 +428,9 @@ ExecutionBurstController::executeInternal(const std::vector<FmqRequestDatum>& re
 }
 
 nn::GeneralResult<std::shared_ptr<const BurstExecution>> BurstExecution::create(
-        std::shared_ptr<const ExecutionBurstController> controller,
-        std::vector<FmqRequestDatum> request, hal::utils::RequestRelocation relocation,
-        std::vector<ExecutionBurstController::OptionalCacheHold> cacheHolds) {
+        std::shared_ptr<const Burst> controller, std::vector<FmqRequestDatum> request,
+        hal::utils::RequestRelocation relocation,
+        std::vector<Burst::OptionalCacheHold> cacheHolds) {
     if (controller == nullptr) {
         return NN_ERROR() << "V1_2::utils::BurstExecution::create must have non-null controller";
     }
@@ -448,10 +441,10 @@ nn::GeneralResult<std::shared_ptr<const BurstExecution>> BurstExecution::create(
 }
 
 BurstExecution::BurstExecution(PrivateConstructorTag /*tag*/,
-                               std::shared_ptr<const ExecutionBurstController> controller,
+                               std::shared_ptr<const Burst> controller,
                                std::vector<FmqRequestDatum> request,
                                hal::utils::RequestRelocation relocation,
-                               std::vector<ExecutionBurstController::OptionalCacheHold> cacheHolds)
+                               std::vector<Burst::OptionalCacheHold> cacheHolds)
     : kController(std::move(controller)),
       kRequest(std::move(request)),
       kRelocation(std::move(relocation)),

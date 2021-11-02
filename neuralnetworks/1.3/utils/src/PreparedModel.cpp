@@ -32,9 +32,9 @@
 #include <nnapi/Types.h>
 #include <nnapi/hal/1.0/HandleError.h>
 #include <nnapi/hal/1.0/ProtectCallback.h>
+#include <nnapi/hal/1.2/Burst.h>
+#include <nnapi/hal/1.2/BurstUtils.h>
 #include <nnapi/hal/1.2/Conversions.h>
-#include <nnapi/hal/1.2/ExecutionBurstController.h>
-#include <nnapi/hal/1.2/ExecutionBurstUtils.h>
 #include <nnapi/hal/CommonUtils.h>
 
 #include <memory>
@@ -246,17 +246,8 @@ nn::GeneralResult<nn::SharedExecution> PreparedModel::createReusableExecution(
 }
 
 nn::GeneralResult<nn::SharedBurst> PreparedModel::configureExecutionBurst() const {
-    auto self = shared_from_this();
-    auto fallback = [preparedModel = std::move(self)](
-                            const nn::Request& request, nn::MeasureTiming measure,
-                            const nn::OptionalTimePoint& deadline,
-                            const nn::OptionalDuration& loopTimeoutDuration)
-            -> nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> {
-        return preparedModel->execute(request, measure, deadline, loopTimeoutDuration);
-    };
     const auto pollingTimeWindow = V1_2::utils::getBurstControllerPollingTimeWindow();
-    return V1_2::utils::ExecutionBurstController::create(shared_from_this(), kPreparedModel,
-                                                         pollingTimeWindow);
+    return V1_2::utils::Burst::create(shared_from_this(), kPreparedModel, pollingTimeWindow);
 }
 
 std::any PreparedModel::getUnderlyingResource() const {
