@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_2_UTILS_EXECUTION_BURST_SERVER_H
-#define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_2_UTILS_EXECUTION_BURST_SERVER_H
-
-#include "ExecutionBurstUtils.h"
+#ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_UTILS_ADAPTER_BURST_H
+#define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_UTILS_ADAPTER_BURST_H
 
 #include <android-base/thread_annotations.h>
 #include <android/hardware/neuralnetworks/1.0/types.h>
 #include <android/hardware/neuralnetworks/1.2/IBurstCallback.h>
+#include <android/hardware/neuralnetworks/1.2/IBurstContext.h>
 #include <android/hardware/neuralnetworks/1.2/IPreparedModel.h>
 #include <android/hardware/neuralnetworks/1.2/types.h>
 #include <fmq/MessageQueue.h>
@@ -30,6 +29,7 @@
 #include <nnapi/Result.h>
 #include <nnapi/Types.h>
 #include <nnapi/hal/1.0/ProtectCallback.h>
+#include <nnapi/hal/1.2/BurstUtils.h>
 
 #include <atomic>
 #include <chrono>
@@ -39,13 +39,13 @@
 #include <tuple>
 #include <vector>
 
-namespace android::hardware::neuralnetworks::V1_2::utils {
+namespace android::hardware::neuralnetworks::adapter {
 
 /**
- * The ExecutionBurstServer class is responsible for waiting for and deserializing a request object
- * from a FMQ, performing the inference, and serializing the result back across another FMQ.
+ * The Burst class is responsible for waiting for and deserializing a request object from a FMQ,
+ * performing the inference, and serializing the result back across another FMQ.
  */
-class ExecutionBurstServer : public IBurstContext {
+class Burst : public V1_2::IBurstContext {
     struct PrivateConstructorTag {};
 
   public:
@@ -58,13 +58,13 @@ class ExecutionBurstServer : public IBurstContext {
       public:
         // Precondition: burstExecutor != nullptr
         // Precondition: burstCallback != nullptr
-        MemoryCache(nn::SharedBurst burstExecutor, sp<IBurstCallback> burstCallback);
+        MemoryCache(nn::SharedBurst burstExecutor, sp<V1_2::IBurstCallback> burstCallback);
 
         /**
          * Get the cached memory objects corresponding to provided slot identifiers.
          *
-         * If the slot entry is not present in the cache, this class will use IBurstCallback to
-         * retrieve those entries that are not present in the cache, then cache them.
+         * If the slot entry is not present in the cache, this class will use V1_2::IBurstCallback
+         * to retrieve those entries that are not present in the cache, then cache them.
          *
          * @param slots Identifiers of memory objects to be retrieved.
          * @return A vector where each element is the memory object and a ref-counted cache "hold"
@@ -93,7 +93,7 @@ class ExecutionBurstServer : public IBurstContext {
         std::map<int32_t, std::pair<nn::SharedMemory, nn::IBurst::OptionalCacheHold>> mCache
                 GUARDED_BY(mMutex);
         nn::SharedBurst kBurstExecutor;
-        const sp<IBurstCallback> kBurstCallback;
+        const sp<V1_2::IBurstCallback> kBurstCallback;
     };
 
     /**
@@ -111,45 +111,45 @@ class ExecutionBurstServer : public IBurstContext {
      *     execution.
      * @param burstExecutor Object which maintains a local cache of the memory pools and executes
      *     using the cached memory pools.
-     * @param pollingTimeWindow How much time (in microseconds) the ExecutionBurstServer is allowed
-     *     to poll the FMQ before waiting on the blocking futex. Polling may result in lower
-     *     latencies at the potential cost of more power usage.
-     * @return IBurstContext Handle to the burst context.
+     * @param pollingTimeWindow How much time (in microseconds) the Burst is allowed to poll the FMQ
+     *     before waiting on the blocking futex. Polling may result in lower latencies at the
+     *     potential cost of more power usage.
+     * @return V1_2::IBurstContext Handle to the burst context.
      */
-    static nn::GeneralResult<sp<ExecutionBurstServer>> create(
-            const sp<IBurstCallback>& callback,
-            const MQDescriptorSync<FmqRequestDatum>& requestChannel,
-            const MQDescriptorSync<FmqResultDatum>& resultChannel, nn::SharedBurst burstExecutor,
+    static nn::GeneralResult<sp<Burst>> create(
+            const sp<V1_2::IBurstCallback>& callback,
+            const MQDescriptorSync<V1_2::FmqRequestDatum>& requestChannel,
+            const MQDescriptorSync<V1_2::FmqResultDatum>& resultChannel,
+            nn::SharedBurst burstExecutor,
             std::chrono::microseconds pollingTimeWindow = std::chrono::microseconds{0});
 
-    ExecutionBurstServer(PrivateConstructorTag tag, const sp<IBurstCallback>& callback,
-                         std::unique_ptr<RequestChannelReceiver> requestChannel,
-                         std::unique_ptr<ResultChannelSender> resultChannel,
-                         nn::SharedBurst burstExecutor);
-    ~ExecutionBurstServer();
+    Burst(PrivateConstructorTag tag, const sp<V1_2::IBurstCallback>& callback,
+          std::unique_ptr<V1_2::utils::RequestChannelReceiver> requestChannel,
+          std::unique_ptr<V1_2::utils::ResultChannelSender> resultChannel,
+          nn::SharedBurst burstExecutor);
+    ~Burst();
 
     // Used by the NN runtime to preemptively remove any stored memory. See
-    // IBurstContext::freeMemory for more information.
+    // V1_2::IBurstContext::freeMemory for more information.
     Return<void> freeMemory(int32_t slot) override;
 
   private:
-    // Work loop that will continue processing execution requests until the ExecutionBurstServer
-    // object is freed.
+    // Work loop that will continue processing execution requests until the Burst object is freed.
     void task();
 
-    nn::ExecutionResult<std::pair<hidl_vec<OutputShape>, Timing>> execute(
+    nn::ExecutionResult<std::pair<hidl_vec<V1_2::OutputShape>, V1_2::Timing>> execute(
             const V1_0::Request& requestWithoutPools, const std::vector<int32_t>& slotsOfPools,
-            MeasureTiming measure);
+            V1_2::MeasureTiming measure);
 
     std::thread mWorker;
     std::atomic<bool> mTeardown{false};
-    const sp<IBurstCallback> mCallback;
-    const std::unique_ptr<RequestChannelReceiver> mRequestChannelReceiver;
-    const std::unique_ptr<ResultChannelSender> mResultChannelSender;
+    const sp<V1_2::IBurstCallback> mCallback;
+    const std::unique_ptr<V1_2::utils::RequestChannelReceiver> mRequestChannelReceiver;
+    const std::unique_ptr<V1_2::utils::ResultChannelSender> mResultChannelSender;
     const nn::SharedBurst mBurstExecutor;
     MemoryCache mMemoryCache;
 };
 
-}  // namespace android::hardware::neuralnetworks::V1_2::utils
+}  // namespace android::hardware::neuralnetworks::adapter
 
-#endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_2_UTILS_EXECUTION_BURST_SERVER_H
+#endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_UTILS_ADAPTER_BURST_H
