@@ -26,6 +26,8 @@ V1_6::RadioResponseInfo notSupported(int32_t serial);
 std::string toAidl(const hidl_string& str);
 hidl_string toHidl(const std::string& str);
 uint8_t toAidl(int8_t v);
+int8_t toAidl(uint8_t v);
+int32_t toAidl(uint32_t v);
 
 aidl::android::hardware::radio::RadioIndicationType toAidl(V1_0::RadioIndicationType type);
 aidl::android::hardware::radio::RadioResponseType toAidl(V1_0::RadioResponseType type);

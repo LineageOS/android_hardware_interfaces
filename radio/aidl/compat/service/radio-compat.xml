@@ -10,6 +10,10 @@
     quick testing.
 
     <hal format="aidl">
+        <name>android.hardware.radio.data</name>
+        <fqname>IRadioData/slot1</fqname>
+    </hal>
+    <hal format="aidl">
         <name>android.hardware.radio.messaging</name>
         <fqname>IRadioMessaging/slot1</fqname>
     </hal>

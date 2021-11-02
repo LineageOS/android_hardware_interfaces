@@ -28,6 +28,7 @@ namespace android::hardware::radio::compat {
 Return<void> RadioResponse::acknowledgeRequest(int32_t serial) {
     LOG_CALL << serial;
     // TODO(b/203699028): send to correct requestor or confirm if spam is not a problem
+    if (mDataCb) mDataCb->acknowledgeRequest(serial);
     if (mMessagingCb) mMessagingCb->acknowledgeRequest(serial);
     if (mSimCb) mSimCb->acknowledgeRequest(serial);
     return {};
@@ -107,11 +108,6 @@ Return<void> RadioResponse::sendDtmfResponse(const V1_0::RadioResponseInfo& info
     return {};
 }
 
-Return<void> RadioResponse::setupDataCallResponse(const V1_0::RadioResponseInfo& info,
-                                                  const V1_0::SetupDataCallResult& dcResponse) {
-    return {};
-}
-
 Return<void> RadioResponse::getClirResponse(const V1_0::RadioResponseInfo& info, int32_t n,
                                             int32_t m) {
     return {};
@@ -140,10 +136,6 @@ Return<void> RadioResponse::setCallWaitingResponse(const V1_0::RadioResponseInfo
 }
 
 Return<void> RadioResponse::acceptCallResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::deactivateDataCallResponse(const V1_0::RadioResponseInfo& info) {
     return {};
 }
 
@@ -198,11 +190,6 @@ Return<void> RadioResponse::getMuteResponse(const V1_0::RadioResponseInfo& info,
 
 Return<void> RadioResponse::getClipResponse(const V1_0::RadioResponseInfo& info,
                                             V1_0::ClipStatus status) {
-    return {};
-}
-
-Return<void> RadioResponse::getDataCallListResponse(
-        const V1_0::RadioResponseInfo& info, const hidl_vec<V1_0::SetupDataCallResult>& dcResp) {
     return {};
 }
 
@@ -306,10 +293,6 @@ Return<void> RadioResponse::setCellInfoListRateResponse(const V1_0::RadioRespons
     return {};
 }
 
-Return<void> RadioResponse::setInitialAttachApnResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
 Return<void> RadioResponse::getImsRegistrationStateResponse(  //
         const V1_0::RadioResponseInfo& info, bool isRegd, V1_0::RadioTechnologyFamily ratFamily) {
     return {};
@@ -332,16 +315,8 @@ Return<void> RadioResponse::nvResetConfigResponse(const V1_0::RadioResponseInfo&
     return {};
 }
 
-Return<void> RadioResponse::setDataAllowedResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
 Return<void> RadioResponse::getHardwareConfigResponse(
         const V1_0::RadioResponseInfo& info, const hidl_vec<V1_0::HardwareConfig>& config) {
-    return {};
-}
-
-Return<void> RadioResponse::setDataProfileResponse(const V1_0::RadioResponseInfo& info) {
     return {};
 }
 
@@ -392,15 +367,6 @@ Return<void> RadioResponse::startNetworkScanResponse(const V1_0::RadioResponseIn
 }
 
 Return<void> RadioResponse::stopNetworkScanResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::startKeepaliveResponse(const V1_0::RadioResponseInfo& info,
-                                                   const V1_1::KeepaliveStatus& status) {
-    return {};
-}
-
-Return<void> RadioResponse::stopKeepaliveResponse(const V1_0::RadioResponseInfo& info) {
     return {};
 }
 
@@ -482,17 +448,6 @@ Return<void> RadioResponse::setPreferredNetworkTypeBitmapResponse(
     return {};
 }
 
-Return<void> RadioResponse::getDataCallListResponse_1_4(
-        const V1_0::RadioResponseInfo& info,
-        const hidl_vec<V1_4::SetupDataCallResult>& dcResponse) {
-    return {};
-}
-
-Return<void> RadioResponse::setupDataCallResponse_1_4(const V1_0::RadioResponseInfo& info,
-                                                      const V1_4::SetupDataCallResult& dcResponse) {
-    return {};
-}
-
 Return<void> RadioResponse::getSignalStrengthResponse_1_4(
         const V1_0::RadioResponseInfo& info, const V1_4::SignalStrength& signalStrength) {
     return {};
@@ -514,25 +469,6 @@ Return<void> RadioResponse::setSystemSelectionChannelsResponse_1_5(
 }
 
 Return<void> RadioResponse::startNetworkScanResponse_1_5(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::setupDataCallResponse_1_5(const V1_0::RadioResponseInfo& info,
-                                                      const V1_5::SetupDataCallResult& dcResponse) {
-    return {};
-}
-
-Return<void> RadioResponse::getDataCallListResponse_1_5(
-        const V1_0::RadioResponseInfo& info,
-        const hidl_vec<V1_5::SetupDataCallResult>& dcResponse) {
-    return {};
-}
-
-Return<void> RadioResponse::setInitialAttachApnResponse_1_5(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::setDataProfileResponse_1_5(const V1_0::RadioResponseInfo& info) {
     return {};
 }
 
@@ -574,17 +510,6 @@ Return<void> RadioResponse::setRadioPowerResponse_1_6(const V1_6::RadioResponseI
     return {};
 }
 
-Return<void> RadioResponse::setupDataCallResponse_1_6(const V1_6::RadioResponseInfo& info,
-                                                      const V1_6::SetupDataCallResult& dcResponse) {
-    return {};
-}
-
-Return<void> RadioResponse::getDataCallListResponse_1_6(
-        const V1_6::RadioResponseInfo& info,
-        const hidl_vec<V1_6::SetupDataCallResult>& dcResponse) {
-    return {};
-}
-
 Return<void> RadioResponse::setNrDualConnectivityStateResponse(
         const V1_6::RadioResponseInfo& info) {
     return {};
@@ -592,23 +517,6 @@ Return<void> RadioResponse::setNrDualConnectivityStateResponse(
 
 Return<void> RadioResponse::isNrDualConnectivityEnabledResponse(const V1_6::RadioResponseInfo& info,
                                                                 bool isEnabled) {
-    return {};
-}
-
-Return<void> RadioResponse::allocatePduSessionIdResponse(const V1_6::RadioResponseInfo& info,
-                                                         int32_t id) {
-    return {};
-}
-
-Return<void> RadioResponse::releasePduSessionIdResponse(const V1_6::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::startHandoverResponse(const V1_6::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::cancelHandoverResponse(const V1_6::RadioResponseInfo& info) {
     return {};
 }
 
@@ -620,10 +528,6 @@ Return<void> RadioResponse::setAllowedNetworkTypesBitmapResponse(
 Return<void> RadioResponse::getAllowedNetworkTypesBitmapResponse(
         const V1_6::RadioResponseInfo& info,
         hidl_bitfield<V1_4::RadioAccessFamily> networkTypeBitmap) {
-    return {};
-}
-
-Return<void> RadioResponse::setDataThrottlingResponse(const V1_6::RadioResponseInfo& info) {
     return {};
 }
 
@@ -655,11 +559,6 @@ Return<void> RadioResponse::getDataRegistrationStateResponse_1_6(
 
 Return<void> RadioResponse::getCurrentCallsResponse_1_6(const V1_6::RadioResponseInfo& info,
                                                         const hidl_vec<V1_6::Call>& calls) {
-    return {};
-}
-
-Return<void> RadioResponse::getSlicingConfigResponse(const V1_6::RadioResponseInfo& info,
-                                                     const V1_6::SlicingConfig& slicingConfig) {
     return {};
 }
 
