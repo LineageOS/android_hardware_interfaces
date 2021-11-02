@@ -20,6 +20,7 @@ package {
 
 cc_library_headers {
     name: "VehicleHalTestUtilHeaders",
-    export_include_dirs: ["include"],
     vendor: true,
+    header_libs: ["VehicleHalUtilHeaders"],
+    export_include_dirs: ["include"],
 }
