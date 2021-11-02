@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_FRAMEWORKS_ML_NN_COMMON_AIDL_HAL_UTILS_H
-#define ANDROID_FRAMEWORKS_ML_NN_COMMON_AIDL_HAL_UTILS_H
+#ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_HAL_UTILS_H
+#define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_HAL_UTILS_H
 
 #include <vector>
 
-#include "AidlHalInterfaces.h"
+#include "nnapi/hal/aidl/HalInterfaces.h"
 
 namespace android {
 namespace nn {
@@ -49,4 +49,4 @@ bool isNonExtensionScalar(aidl_hal::OperandType type);
 }  // namespace nn
 }  // namespace android
 
-#endif  // ANDROID_FRAMEWORKS_ML_NN_COMMON_AIDL_HAL_UTILS_H
+#endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_HAL_UTILS_H
