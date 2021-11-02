@@ -15,6 +15,7 @@
  */
 #pragma once
 
+#include <aidl/android/hardware/radio/data/IRadioDataIndication.h>
 #include <aidl/android/hardware/radio/messaging/IRadioMessagingIndication.h>
 #include <aidl/android/hardware/radio/sim/IRadioSimIndication.h>
 #include <android/hardware/radio/1.6/IRadioIndication.h>
@@ -22,6 +23,7 @@
 namespace android::hardware::radio::compat {
 
 class RadioIndication : public V1_6::IRadioIndication {
+    std::shared_ptr<::aidl::android::hardware::radio::data::IRadioDataIndication> mDataCb;
     std::shared_ptr<::aidl::android::hardware::radio::messaging::IRadioMessagingIndication>
             mMessagingCb;
     std::shared_ptr<::aidl::android::hardware::radio::sim::IRadioSimIndication> mSimCb;
@@ -173,6 +175,8 @@ class RadioIndication : public V1_6::IRadioIndication {
             const hidl_vec<V1_6::PhonebookRecordInfo>& records) override;
 
   public:
+    void setResponseFunction(
+            std::shared_ptr<::aidl::android::hardware::radio::data::IRadioDataIndication> dataCb);
     void setResponseFunction(
             std::shared_ptr<::aidl::android::hardware::radio::messaging::IRadioMessagingIndication>
                     radioMessagingIndication);

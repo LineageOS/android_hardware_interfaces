@@ -44,11 +44,6 @@ Return<void> RadioIndication::currentSignalStrength(V1_0::RadioIndicationType ty
     return {};
 }
 
-Return<void> RadioIndication::dataCallListChanged(
-        V1_0::RadioIndicationType type, const hidl_vec<V1_0::SetupDataCallResult>& dcList) {
-    return {};
-}
-
 Return<void> RadioIndication::suppSvcNotify(V1_0::RadioIndicationType type,
                                             const V1_0::SuppSvcNotification& suppSvc) {
     return {};
@@ -151,11 +146,6 @@ Return<void> RadioIndication::lceData(V1_0::RadioIndicationType type,
     return {};
 }
 
-Return<void> RadioIndication::pcoData(V1_0::RadioIndicationType type,
-                                      const V1_0::PcoDataInfo& pco) {
-    return {};
-}
-
 Return<void> RadioIndication::modemReset(V1_0::RadioIndicationType type,
                                          const hidl_string& reason) {
     return {};
@@ -163,11 +153,6 @@ Return<void> RadioIndication::modemReset(V1_0::RadioIndicationType type,
 
 Return<void> RadioIndication::networkScanResult(V1_0::RadioIndicationType type,
                                                 const V1_1::NetworkScanResult& result) {
-    return {};
-}
-
-Return<void> RadioIndication::keepaliveStatus(V1_0::RadioIndicationType type,
-                                              const V1_1::KeepaliveStatus& status) {
     return {};
 }
 
@@ -216,11 +201,6 @@ Return<void> RadioIndication::currentPhysicalChannelConfigs_1_4(
     return {};
 }
 
-Return<void> RadioIndication::dataCallListChanged_1_4(
-        V1_0::RadioIndicationType type, const hidl_vec<V1_4::SetupDataCallResult>& dcList) {
-    return {};
-}
-
 Return<void> RadioIndication::currentSignalStrength_1_4(
         V1_0::RadioIndicationType type, const V1_4::SignalStrength& signalStrength) {
     return {};
@@ -246,21 +226,6 @@ Return<void> RadioIndication::cellInfoList_1_5(V1_0::RadioIndicationType type,
 
 Return<void> RadioIndication::networkScanResult_1_5(V1_0::RadioIndicationType type,
                                                     const V1_5::NetworkScanResult& result) {
-    return {};
-}
-
-Return<void> RadioIndication::dataCallListChanged_1_5(
-        V1_0::RadioIndicationType type, const hidl_vec<V1_5::SetupDataCallResult>& dcList) {
-    return {};
-}
-
-Return<void> RadioIndication::dataCallListChanged_1_6(
-        V1_0::RadioIndicationType type, const hidl_vec<V1_6::SetupDataCallResult>& dcList) {
-    return {};
-}
-
-Return<void> RadioIndication::unthrottleApn(V1_0::RadioIndicationType type,
-                                            const hidl_string& apn) {
     return {};
 }
 

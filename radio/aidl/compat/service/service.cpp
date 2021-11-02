@@ -20,6 +20,7 @@
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 #include <libradiocompat/RadioConfig.h>
+#include <libradiocompat/RadioData.h>
 #include <libradiocompat/RadioIndication.h>
 #include <libradiocompat/RadioMessaging.h>
 #include <libradiocompat/RadioResponse.h>
@@ -57,6 +58,7 @@ static void publishRadio(std::string slot) {
     auto indicationCb = sp<compat::RadioIndication>::make();
     radioHidl->setResponseFunctions(responseCb, indicationCb).assertOk();
 
+    publishRadioHal<compat::RadioData>(radioHidl, responseCb, indicationCb, slot);
     publishRadioHal<compat::RadioMessaging>(radioHidl, responseCb, indicationCb, slot);
     publishRadioHal<compat::RadioSim>(radioHidl, responseCb, indicationCb, slot);
 }

@@ -17,6 +17,9 @@
 
 #include <hidl/HidlSupport.h>
 
+#include <type_traits>
+#include <variant>
+
 namespace android::hardware::radio::compat {
 
 /**
@@ -49,6 +52,55 @@ auto toHidl(const std::vector<T>& inp) {
         out[i] = toHidl(inp[i]);
     }
     return out;
+}
+
+/**
+ * Converts T=OptionalX HIDL value to std::optional<X> AIDL value.
+ *
+ * To convert values, the template uses toAidl functions for a given type T.value.
+ */
+template <typename T>
+std::optional<decltype(toAidl(T{}.value()))> toAidl(const T& opt) {
+    if (opt.getDiscriminator() == T::hidl_discriminator::noinit) return std::nullopt;
+    return toAidl(opt.value());
+}
+
+/**
+ * Converts T=OptionalX HIDL value to std::variant<bool, X> AIDL value.
+ *
+ * For some reason, not every OptionalX gets generated into a std::optional<X>.
+ */
+template <typename T>
+std::variant<bool, decltype(toAidl(T{}.value()))> toAidlVariant(const T& opt) {
+    if (opt.getDiscriminator() == T::hidl_discriminator::noinit) return false;
+    return toAidl(opt.value());
+}
+
+/**
+ * Converts std::optional<X> AIDL value to T=OptionalX HIDL value.
+ *
+ * X is inferred from toAidl(T.value) declaration. Please note that toAidl(T.value) doesn't have to
+ * be implemented if it's not needed for anything else than giving this hint to type system.
+ *
+ * To convert values, the template uses toHidl functions for a given type T, assuming it's defined.
+ *
+ * \param opt value to convert
+ */
+template <typename T>
+T toHidl(const std::optional<decltype(toAidl(T{}.value()))>& opt) {
+    T hidl;
+    if (opt.has_value()) hidl.value(toHidl(*opt));
+    return hidl;
+}
+
+/**
+ * Converts U AIDL bitfield value to HIDL T bitfield value.
+ *
+ * \param val value to convert
+ */
+template <typename T, typename U>
+hidl_bitfield<T> toHidlBitfield(U val) {
+    return static_cast<int>(val);
 }
 
 }  // namespace android::hardware::radio::compat

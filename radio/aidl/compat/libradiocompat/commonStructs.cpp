@@ -40,6 +40,14 @@ uint8_t toAidl(int8_t v) {
     return v;
 }
 
+int8_t toAidl(uint8_t v) {
+    return v;
+}
+
+int32_t toAidl(uint32_t v) {
+    return v;
+}
+
 aidl::RadioIndicationType toAidl(V1_0::RadioIndicationType type) {
     return aidl::RadioIndicationType(type);
 }
