@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "ExecutionBurstServer"
-
-#include "ExecutionBurstServer.h"
-#include "Conversions.h"
-#include "ExecutionBurstUtils.h"
+#include "Burst.h"
 
 #include <android-base/logging.h>
 #include <nnapi/IBurst.h>
@@ -29,6 +25,8 @@
 #include <nnapi/hal/1.0/Conversions.h>
 #include <nnapi/hal/1.0/HandleError.h>
 #include <nnapi/hal/1.0/ProtectCallback.h>
+#include <nnapi/hal/1.2/BurstUtils.h>
+#include <nnapi/hal/1.2/Conversions.h>
 #include <nnapi/hal/TransferValue.h>
 
 #include <algorithm>
@@ -42,11 +40,11 @@
 
 #include "Tracing.h"
 
-namespace android::hardware::neuralnetworks::V1_2::utils {
+namespace android::hardware::neuralnetworks::adapter {
 namespace {
 
-constexpr V1_2::Timing kNoTiming = {std::numeric_limits<uint64_t>::max(),
-                                    std::numeric_limits<uint64_t>::max()};
+constexpr V1_2::Timing kTiming = {std::numeric_limits<uint64_t>::max(),
+                                  std::numeric_limits<uint64_t>::max()};
 
 nn::GeneralResult<std::vector<nn::SharedMemory>> getMemoriesCallback(
         V1_0::ErrorStatus status, const hidl_vec<hidl_memory>& memories) {
@@ -61,15 +59,15 @@ nn::GeneralResult<std::vector<nn::SharedMemory>> getMemoriesCallback(
 
 }  // anonymous namespace
 
-ExecutionBurstServer::MemoryCache::MemoryCache(nn::SharedBurst burstExecutor,
-                                               sp<IBurstCallback> burstCallback)
+Burst::MemoryCache::MemoryCache(nn::SharedBurst burstExecutor,
+                                sp<V1_2::IBurstCallback> burstCallback)
     : kBurstExecutor(std::move(burstExecutor)), kBurstCallback(std::move(burstCallback)) {
     CHECK(kBurstExecutor != nullptr);
     CHECK(kBurstCallback != nullptr);
 }
 
 nn::GeneralResult<std::vector<std::pair<nn::SharedMemory, nn::IBurst::OptionalCacheHold>>>
-ExecutionBurstServer::MemoryCache::getCacheEntries(const std::vector<int32_t>& slots) {
+Burst::MemoryCache::getCacheEntries(const std::vector<int32_t>& slots) {
     std::lock_guard guard(mMutex);
     NN_TRY(ensureCacheEntriesArePresentLocked(slots));
 
@@ -82,7 +80,7 @@ ExecutionBurstServer::MemoryCache::getCacheEntries(const std::vector<int32_t>& s
     return results;
 }
 
-nn::GeneralResult<void> ExecutionBurstServer::MemoryCache::ensureCacheEntriesArePresentLocked(
+nn::GeneralResult<void> Burst::MemoryCache::ensureCacheEntriesArePresentLocked(
         const std::vector<int32_t>& slots) {
     const auto slotIsKnown = [this](int32_t slot)
                                      REQUIRES(mMutex) { return mCache.count(slot) > 0; };
@@ -107,11 +105,10 @@ nn::GeneralResult<void> ExecutionBurstServer::MemoryCache::ensureCacheEntriesAre
     auto returnedMemories = NN_TRY(cb.take());
 
     if (returnedMemories.size() != unknownSlots.size()) {
-        return NN_ERROR()
-               << "ExecutionBurstServer::MemoryCache::ensureCacheEntriesArePresentLocked: Error "
-                  "retrieving memories -- count mismatch between requested memories ("
-               << unknownSlots.size() << ") and returned memories (" << returnedMemories.size()
-               << ")";
+        return NN_ERROR() << "Burst::MemoryCache::ensureCacheEntriesArePresentLocked: Error "
+                             "retrieving memories -- count mismatch between requested memories ("
+                          << unknownSlots.size() << ") and returned memories ("
+                          << returnedMemories.size() << ")";
     }
 
     // add memories to unknown slots
@@ -123,56 +120,54 @@ nn::GeneralResult<void> ExecutionBurstServer::MemoryCache::ensureCacheEntriesAre
 }
 
 nn::GeneralResult<std::pair<nn::SharedMemory, nn::IBurst::OptionalCacheHold>>
-ExecutionBurstServer::MemoryCache::getCacheEntryLocked(int32_t slot) {
+Burst::MemoryCache::getCacheEntryLocked(int32_t slot) {
     if (const auto iter = mCache.find(slot); iter != mCache.end()) {
         return iter->second;
     }
-    return NN_ERROR()
-           << "ExecutionBurstServer::MemoryCache::getCacheEntryLocked failed because slot " << slot
-           << " is not present in the cache";
+    return NN_ERROR() << "Burst::MemoryCache::getCacheEntryLocked failed because slot " << slot
+                      << " is not present in the cache";
 }
 
-void ExecutionBurstServer::MemoryCache::addCacheEntryLocked(int32_t slot, nn::SharedMemory memory) {
+void Burst::MemoryCache::addCacheEntryLocked(int32_t slot, nn::SharedMemory memory) {
     auto hold = kBurstExecutor->cacheMemory(memory);
     mCache.emplace(slot, std::make_pair(std::move(memory), std::move(hold)));
 }
 
-void ExecutionBurstServer::MemoryCache::removeCacheEntry(int32_t slot) {
+void Burst::MemoryCache::removeCacheEntry(int32_t slot) {
     std::lock_guard guard(mMutex);
     mCache.erase(slot);
 }
 
-// ExecutionBurstServer methods
+// Burst methods
 
-nn::GeneralResult<sp<ExecutionBurstServer>> ExecutionBurstServer::create(
-        const sp<IBurstCallback>& callback, const MQDescriptorSync<FmqRequestDatum>& requestChannel,
-        const MQDescriptorSync<FmqResultDatum>& resultChannel, nn::SharedBurst burstExecutor,
+nn::GeneralResult<sp<Burst>> Burst::create(
+        const sp<V1_2::IBurstCallback>& callback,
+        const MQDescriptorSync<V1_2::FmqRequestDatum>& requestChannel,
+        const MQDescriptorSync<V1_2::FmqResultDatum>& resultChannel, nn::SharedBurst burstExecutor,
         std::chrono::microseconds pollingTimeWindow) {
     // check inputs
     if (callback == nullptr || burstExecutor == nullptr) {
-        return NN_ERROR() << "ExecutionBurstServer::create passed a nullptr";
+        return NN_ERROR() << "Burst::create passed a nullptr";
     }
 
     // create FMQ objects
     auto requestChannelReceiver =
-            NN_TRY(RequestChannelReceiver::create(requestChannel, pollingTimeWindow));
-    auto resultChannelSender = NN_TRY(ResultChannelSender::create(resultChannel));
+            NN_TRY(V1_2::utils::RequestChannelReceiver::create(requestChannel, pollingTimeWindow));
+    auto resultChannelSender = NN_TRY(V1_2::utils::ResultChannelSender::create(resultChannel));
 
     // check FMQ objects
     CHECK(requestChannelReceiver != nullptr);
     CHECK(resultChannelSender != nullptr);
 
     // make and return context
-    return sp<ExecutionBurstServer>::make(PrivateConstructorTag{}, callback,
-                                          std::move(requestChannelReceiver),
-                                          std::move(resultChannelSender), std::move(burstExecutor));
+    return sp<Burst>::make(PrivateConstructorTag{}, callback, std::move(requestChannelReceiver),
+                           std::move(resultChannelSender), std::move(burstExecutor));
 }
 
-ExecutionBurstServer::ExecutionBurstServer(PrivateConstructorTag /*tag*/,
-                                           const sp<IBurstCallback>& callback,
-                                           std::unique_ptr<RequestChannelReceiver> requestChannel,
-                                           std::unique_ptr<ResultChannelSender> resultChannel,
-                                           nn::SharedBurst burstExecutor)
+Burst::Burst(PrivateConstructorTag /*tag*/, const sp<V1_2::IBurstCallback>& callback,
+             std::unique_ptr<V1_2::utils::RequestChannelReceiver> requestChannel,
+             std::unique_ptr<V1_2::utils::ResultChannelSender> resultChannel,
+             nn::SharedBurst burstExecutor)
     : mCallback(callback),
       mRequestChannelReceiver(std::move(requestChannel)),
       mResultChannelSender(std::move(resultChannel)),
@@ -182,7 +177,7 @@ ExecutionBurstServer::ExecutionBurstServer(PrivateConstructorTag /*tag*/,
     mWorker = std::thread([this] { task(); });
 }
 
-ExecutionBurstServer::~ExecutionBurstServer() {
+Burst::~Burst() {
     // set teardown flag
     mTeardown = true;
     mRequestChannelReceiver->invalidate();
@@ -191,12 +186,12 @@ ExecutionBurstServer::~ExecutionBurstServer() {
     mWorker.join();
 }
 
-Return<void> ExecutionBurstServer::freeMemory(int32_t slot) {
+Return<void> Burst::freeMemory(int32_t slot) {
     mMemoryCache.removeCacheEntry(slot);
     return Void();
 }
 
-void ExecutionBurstServer::task() {
+void Burst::task() {
     // loop until the burst object is being destroyed
     while (!mTeardown) {
         // receive request
@@ -208,12 +203,12 @@ void ExecutionBurstServer::task() {
         // if the burst is being torn down, skip the execution so the "task" function can end
         if (!arguments.has_value()) {
             if (!mTeardown) {
-                mResultChannelSender->send(V1_0::ErrorStatus::GENERAL_FAILURE, {}, kNoTiming);
+                mResultChannelSender->send(V1_0::ErrorStatus::GENERAL_FAILURE, {}, kTiming);
             }
             continue;
         }
 
-        // unpack the arguments; types are Request, std::vector<int32_t>, and MeasureTiming,
+        // unpack the arguments; types are Request, std::vector<int32_t>, and V1_2::MeasureTiming,
         // respectively
         const auto [requestWithoutPools, slotsOfPools, measure] = std::move(arguments).value();
 
@@ -226,17 +221,17 @@ void ExecutionBurstServer::task() {
         } else {
             const auto& [message, code, outputShapes] = result.error();
             LOG(ERROR) << "IBurst::execute failed with " << code << ": " << message;
-            mResultChannelSender->send(convert(code).value(), convert(outputShapes).value(),
-                                       kNoTiming);
+            mResultChannelSender->send(V1_2::utils::convert(code).value(),
+                                       V1_2::utils::convert(outputShapes).value(), kTiming);
         }
     }
 }
 
-nn::ExecutionResult<std::pair<hidl_vec<OutputShape>, Timing>> ExecutionBurstServer::execute(
+nn::ExecutionResult<std::pair<hidl_vec<V1_2::OutputShape>, V1_2::Timing>> Burst::execute(
         const V1_0::Request& requestWithoutPools, const std::vector<int32_t>& slotsOfPools,
-        MeasureTiming measure) {
+        V1_2::MeasureTiming measure) {
     NNTRACE_FULL(NNTRACE_LAYER_IPC, NNTRACE_PHASE_EXECUTION,
-                 "ExecutionBurstServer getting memory, executing, and returning results");
+                 "Burst getting memory, executing, and returning results");
 
     // ensure executor with cache has required memory
     const auto cacheEntries = NN_TRY(mMemoryCache.getCacheEntries(slotsOfPools));
@@ -257,7 +252,8 @@ nn::ExecutionResult<std::pair<hidl_vec<OutputShape>, Timing>> ExecutionBurstServ
     const auto [outputShapes, timing] =
             NN_TRY(mBurstExecutor->execute(canonicalRequest, canonicalMeasure, {}, {}));
 
-    return std::make_pair(NN_TRY(convert(outputShapes)), NN_TRY(convert(timing)));
+    return std::make_pair(NN_TRY(V1_2::utils::convert(outputShapes)),
+                          NN_TRY(V1_2::utils::convert(timing)));
 }
 
-}  // namespace android::hardware::neuralnetworks::V1_2::utils
+}  // namespace android::hardware::neuralnetworks::adapter
