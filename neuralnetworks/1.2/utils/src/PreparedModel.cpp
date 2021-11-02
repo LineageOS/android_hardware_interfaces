@@ -16,11 +16,11 @@
 
 #include "PreparedModel.h"
 
+#include "Burst.h"
+#include "BurstUtils.h"
 #include "Callbacks.h"
 #include "Conversions.h"
 #include "Execution.h"
-#include "ExecutionBurstController.h"
-#include "ExecutionBurstUtils.h"
 #include "Utils.h"
 
 #include <android/hardware/neuralnetworks/1.0/types.h>
@@ -150,16 +150,8 @@ nn::GeneralResult<nn::SharedExecution> PreparedModel::createReusableExecution(
 }
 
 nn::GeneralResult<nn::SharedBurst> PreparedModel::configureExecutionBurst() const {
-    auto self = shared_from_this();
-    auto fallback = [preparedModel = std::move(self)](
-                            const nn::Request& request, nn::MeasureTiming measure,
-                            const nn::OptionalTimePoint& deadline,
-                            const nn::OptionalDuration& loopTimeoutDuration)
-            -> nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> {
-        return preparedModel->execute(request, measure, deadline, loopTimeoutDuration);
-    };
     const auto pollingTimeWindow = getBurstControllerPollingTimeWindow();
-    return ExecutionBurstController::create(shared_from_this(), kPreparedModel, pollingTimeWindow);
+    return Burst::create(shared_from_this(), kPreparedModel, pollingTimeWindow);
 }
 
 std::any PreparedModel::getUnderlyingResource() const {
