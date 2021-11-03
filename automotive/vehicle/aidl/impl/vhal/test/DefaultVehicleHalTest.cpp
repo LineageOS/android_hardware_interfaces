@@ -31,6 +31,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -48,6 +49,7 @@ using ::aidl::android::hardware::automotive::vehicle::GetValueResults;
 using ::aidl::android::hardware::automotive::vehicle::IVehicle;
 using ::aidl::android::hardware::automotive::vehicle::IVehicleCallback;
 using ::aidl::android::hardware::automotive::vehicle::SetValueRequest;
+using ::aidl::android::hardware::automotive::vehicle::SetValueRequests;
 using ::aidl::android::hardware::automotive::vehicle::SetValueResult;
 using ::aidl::android::hardware::automotive::vehicle::SetValueResults;
 using ::aidl::android::hardware::automotive::vehicle::StatusCode;
@@ -83,16 +85,25 @@ class MockVehicleHardware final : public IVehicleHardware {
         return mPropertyConfigs;
     }
 
+    ~MockVehicleHardware() {
+        std::scoped_lock<std::mutex> lockGuard(mLock);
+        for (auto& thread : mThreads) {
+            thread.join();
+        }
+    }
+
     StatusCode setValues(std::shared_ptr<const SetValuesCallback> callback,
                          const std::vector<SetValueRequest>& requests) override {
         std::scoped_lock<std::mutex> lockGuard(mLock);
-        return handleRequests(__func__, callback, requests, mSetValueRequests, mSetValueResponses);
+        return handleRequests(__func__, callback, requests, &mSetValueRequests,
+                              &mSetValueResponses);
     }
 
     StatusCode getValues(std::shared_ptr<const GetValuesCallback> callback,
                          const std::vector<GetValueRequest>& requests) const override {
         std::scoped_lock<std::mutex> lockGuard(mLock);
-        return handleRequests(__func__, callback, requests, mGetValueRequests, mGetValueResponses);
+        return handleRequests(__func__, callback, requests, &mGetValueRequests,
+                              &mGetValueResponses);
     }
 
     DumpResult dump(const std::vector<std::string>&) override {
@@ -124,6 +135,11 @@ class MockVehicleHardware final : public IVehicleHardware {
         mGetValueResponses.push_back(responses);
     }
 
+    void addSetValueResponses(const std::vector<SetValueResult>& responses) {
+        std::scoped_lock<std::mutex> lockGuard(mLock);
+        mSetValueResponses.push_back(responses);
+    }
+
     std::vector<GetValueRequest> nextGetValueRequests() {
         std::scoped_lock<std::mutex> lockGuard(mLock);
         std::optional<std::vector<GetValueRequest>> request = pop(mGetValueRequests);
@@ -147,6 +163,11 @@ class MockVehicleHardware final : public IVehicleHardware {
         mStatusByFunctions[functionName] = status;
     }
 
+    void setSleepTime(int64_t timeInNano) {
+        std::scoped_lock<std::mutex> lockGuard(mLock);
+        mSleepTime = timeInNano;
+    }
+
   private:
     mutable std::mutex mLock;
     std::vector<VehiclePropConfig> mPropertyConfigs GUARDED_BY(mLock);
@@ -155,28 +176,30 @@ class MockVehicleHardware final : public IVehicleHardware {
     mutable std::list<std::vector<SetValueRequest>> mSetValueRequests GUARDED_BY(mLock);
     mutable std::list<std::vector<SetValueResult>> mSetValueResponses GUARDED_BY(mLock);
     std::unordered_map<const char*, StatusCode> mStatusByFunctions GUARDED_BY(mLock);
+    int64_t mSleepTime GUARDED_BY(mLock) = 0;
+    mutable std::vector<std::thread> mThreads GUARDED_BY(mLock);
 
     template <class ResultType>
     StatusCode returnResponse(
             std::shared_ptr<const std::function<void(std::vector<ResultType>)>> callback,
-            std::list<std::vector<ResultType>>& storedResponses) const;
+            std::list<std::vector<ResultType>>* storedResponses) const;
 
     template <class RequestType, class ResultType>
     StatusCode handleRequests(
             const char* functionName,
             std::shared_ptr<const std::function<void(std::vector<ResultType>)>> callback,
             const std::vector<RequestType>& requests,
-            std::list<std::vector<RequestType>>& storedRequests,
-            std::list<std::vector<ResultType>>& storedResponses) const REQUIRES(mLock);
+            std::list<std::vector<RequestType>>* storedRequests,
+            std::list<std::vector<ResultType>>* storedResponses) const REQUIRES(mLock);
 };
 
 template <class ResultType>
 StatusCode MockVehicleHardware::returnResponse(
         std::shared_ptr<const std::function<void(std::vector<ResultType>)>> callback,
-        std::list<std::vector<ResultType>>& storedResponses) const {
-    if (storedResponses.size() > 0) {
-        (*callback)(std::move(storedResponses.front()));
-        storedResponses.pop_front();
+        std::list<std::vector<ResultType>>* storedResponses) const {
+    if (storedResponses->size() > 0) {
+        (*callback)(std::move(storedResponses->front()));
+        storedResponses->pop_front();
         return StatusCode::OK;
     } else {
         ALOGE("no more response");
@@ -186,42 +209,52 @@ StatusCode MockVehicleHardware::returnResponse(
 
 template StatusCode MockVehicleHardware::returnResponse<GetValueResult>(
         std::shared_ptr<const std::function<void(std::vector<GetValueResult>)>> callback,
-        std::list<std::vector<GetValueResult>>& storedResponses) const;
+        std::list<std::vector<GetValueResult>>* storedResponses) const;
 
 template StatusCode MockVehicleHardware::returnResponse<SetValueResult>(
         std::shared_ptr<const std::function<void(std::vector<SetValueResult>)>> callback,
-        std::list<std::vector<SetValueResult>>& storedResponses) const;
+        std::list<std::vector<SetValueResult>>* storedResponses) const;
 
 template <class RequestType, class ResultType>
 StatusCode MockVehicleHardware::handleRequests(
         const char* functionName,
         std::shared_ptr<const std::function<void(std::vector<ResultType>)>> callback,
         const std::vector<RequestType>& requests,
-        std::list<std::vector<RequestType>>& storedRequests,
-        std::list<std::vector<ResultType>>& storedResponses) const {
-    storedRequests.push_back(requests);
+        std::list<std::vector<RequestType>>* storedRequests,
+        std::list<std::vector<ResultType>>* storedResponses) const {
+    storedRequests->push_back(requests);
     if (auto it = mStatusByFunctions.find(functionName); it != mStatusByFunctions.end()) {
         if (StatusCode status = it->second; status != StatusCode::OK) {
             return status;
         }
     }
 
-    return returnResponse(callback, storedResponses);
+    if (mSleepTime != 0) {
+        int64_t sleepTime = mSleepTime;
+        mThreads.emplace_back([this, callback, sleepTime, storedResponses]() {
+            std::this_thread::sleep_for(std::chrono::nanoseconds(sleepTime));
+            returnResponse(callback, storedResponses);
+        });
+        return StatusCode::OK;
+
+    } else {
+        return returnResponse(callback, storedResponses);
+    }
 }
 
 template StatusCode MockVehicleHardware::handleRequests<GetValueRequest, GetValueResult>(
         const char* functionName,
         std::shared_ptr<const std::function<void(std::vector<GetValueResult>)>> callback,
         const std::vector<GetValueRequest>& requests,
-        std::list<std::vector<GetValueRequest>>& storedRequests,
-        std::list<std::vector<GetValueResult>>& storedResponses) const;
+        std::list<std::vector<GetValueRequest>>* storedRequests,
+        std::list<std::vector<GetValueResult>>* storedResponses) const;
 
 template StatusCode MockVehicleHardware::handleRequests<SetValueRequest, SetValueResult>(
         const char* functionName,
         std::shared_ptr<const std::function<void(std::vector<SetValueResult>)>> callback,
         const std::vector<SetValueRequest>& requests,
-        std::list<std::vector<SetValueRequest>>& storedRequests,
-        std::list<std::vector<SetValueResult>>& storedResponses) const;
+        std::list<std::vector<SetValueRequest>>* storedRequests,
+        std::list<std::vector<SetValueResult>>* storedResponses) const;
 
 struct PropConfigCmp {
     bool operator()(const VehiclePropConfig& a, const VehiclePropConfig& b) const {
