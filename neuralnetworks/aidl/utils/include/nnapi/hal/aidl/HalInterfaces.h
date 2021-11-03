@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_FRAMEWORKS_ML_NN_COMMON_AIDL_HAL_INTERFACES_H
-#define ANDROID_FRAMEWORKS_ML_NN_COMMON_AIDL_HAL_INTERFACES_H
+#ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_HAL_INTERFACES_H
+#define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_HAL_INTERFACES_H
 
 #include <aidl/android/hardware/neuralnetworks/BnBuffer.h>
 #include <aidl/android/hardware/neuralnetworks/BnBurst.h>
@@ -69,4 +69,4 @@ inline constexpr aidl_hal::Priority kDefaultPriorityAidl = aidl_hal::Priority::M
 
 }  // namespace android::nn
 
-#endif  // ANDROID_FRAMEWORKS_ML_NN_COMMON_AIDL_HAL_INTERFACES_H
+#endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_HAL_INTERFACES_H

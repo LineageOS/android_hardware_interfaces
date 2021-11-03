@@ -39,7 +39,7 @@ cc_test {
     srcs: ["test/*.cpp"],
     static_libs: [
         "libgmock",
-        "libneuralnetworks_common_hidl",
+        "libneuralnetworks_common",
         "neuralnetworks_types",
         "neuralnetworks_utils_hal_common",
     ],
