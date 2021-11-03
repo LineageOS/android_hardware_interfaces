@@ -417,6 +417,9 @@ TEST_P(VibratorAidl, GetPrimitiveDuration) {
 
             if (isPrimitiveSupported) {
                 EXPECT_EQ(Status::EX_NONE, status.exceptionCode());
+                if (primitive != CompositePrimitive::NOOP) {
+                    ASSERT_GT(duration, 0) << toString(primitive) << " " << duration;
+                }
             } else {
                 EXPECT_TRUE(isUnknownOrUnsupported(status)) << status;
             }
