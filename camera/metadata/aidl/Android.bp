@@ -1,0 +1,19 @@
+aidl_interface {
+    name: "android.hardware.camera.metadata",
+    vendor_available: true,
+    srcs: ["android/hardware/camera/metadata/*.aidl"],
+    stability: "vintf",
+    backend: {
+        cpp: {
+            enabled: false,
+        },
+        java: {
+            enabled: false,
+        },
+        ndk: {
+            vndk: {
+                enabled: true,
+            },
+        },
+    },
+}
