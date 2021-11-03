@@ -13,14 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <android/hardware/tv/cec/1.0/IHdmiCec.h>
 
-package {
-    default_applicable_licenses: ["Android-Apache-2.0"],
-}
+namespace android {
+namespace hardware {
+namespace tv {
+namespace cec {
+namespace V1_0 {
+namespace implementation {
 
-cc_library_headers {
-    name: "VehicleHalTestUtilHeaders",
-    vendor: true,
-    header_libs: ["VehicleHalUtilHeaders"],
-    export_include_dirs: ["include"],
-}
+class HdmiCecPort {
+  public:
+    HdmiCecPort(unsigned int portId);
+    ~HdmiCecPort();
+    Return<Result> init(const char* path);
+    Return<void> release();
+
+    unsigned int mPortId;
+    int mCecFd;
+    int mExitFd;
+};
+
+}  // namespace implementation
+}  // namespace V1_0
+}  // namespace cec
+}  // namespace tv
+}  // namespace hardware
+}  // namespace android

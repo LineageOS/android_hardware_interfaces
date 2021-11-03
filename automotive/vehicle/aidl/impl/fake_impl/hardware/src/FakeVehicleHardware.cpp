@@ -44,8 +44,13 @@ using ::aidl::android::hardware::automotive::vehicle::RawPropValues;
 using ::aidl::android::hardware::automotive::vehicle::SetValueRequest;
 using ::aidl::android::hardware::automotive::vehicle::SetValueResult;
 using ::aidl::android::hardware::automotive::vehicle::StatusCode;
+using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReport;
+using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
+using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
+using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyGroup;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyStatus;
+using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 
 const char* VENDOR_OVERRIDE_DIR = "/vendor/etc/automotive/vhaloverride/";
@@ -122,27 +127,160 @@ std::vector<VehiclePropConfig> FakeVehicleHardware::getAllPropertyConfigs() cons
     return mServerSidePropStore->getAllConfigs();
 }
 
+VehiclePropValuePool::RecyclableType FakeVehicleHardware::createApPowerStateReq(
+        VehicleApPowerStateReq state) {
+    auto req = mValuePool->obtain(VehiclePropertyType::INT32_VEC, 2);
+    req->prop = toInt(VehicleProperty::AP_POWER_STATE_REQ);
+    req->areaId = 0;
+    req->timestamp = elapsedRealtimeNano();
+    req->status = VehiclePropertyStatus::AVAILABLE;
+    req->value.int32Values[0] = toInt(state);
+    // Param = 0.
+    req->value.int32Values[1] = 0;
+    return req;
+}
+
+StatusCode FakeVehicleHardware::setApPowerStateReport(const VehiclePropValue& value) {
+    auto updatedValue = mValuePool->obtain(value);
+    updatedValue->timestamp = elapsedRealtimeNano();
+
+    if (auto writeResult = mServerSidePropStore->writeValue(std::move(updatedValue));
+        !writeResult.ok()) {
+        ALOGE("failed to write value into property store, error: %s",
+              writeResult.error().message().c_str());
+        return StatusCode::INVALID_ARG;
+    }
+
+    VehiclePropValuePool::RecyclableType prop;
+    int32_t state = value.value.int32Values[0];
+    switch (state) {
+        case toInt(VehicleApPowerStateReport::DEEP_SLEEP_EXIT):
+            [[fallthrough]];
+        case toInt(VehicleApPowerStateReport::HIBERNATION_EXIT):
+            [[fallthrough]];
+        case toInt(VehicleApPowerStateReport::SHUTDOWN_CANCELLED):
+            [[fallthrough]];
+        case toInt(VehicleApPowerStateReport::WAIT_FOR_VHAL):
+            // CPMS is in WAIT_FOR_VHAL state, simply move to ON
+            // Send back to HAL
+            // ALWAYS update status for generated property value
+            prop = createApPowerStateReq(VehicleApPowerStateReq::ON);
+            if (auto writeResult =
+                        mServerSidePropStore->writeValue(std::move(prop), /*updateStatus=*/true);
+                !writeResult.ok()) {
+                ALOGE("failed to write AP_POWER_STATE_REQ into property store, error: %s",
+                      writeResult.error().message().c_str());
+                return StatusCode::INTERNAL_ERROR;
+            }
+            break;
+        case toInt(VehicleApPowerStateReport::DEEP_SLEEP_ENTRY):
+            [[fallthrough]];
+        case toInt(VehicleApPowerStateReport::HIBERNATION_ENTRY):
+            [[fallthrough]];
+        case toInt(VehicleApPowerStateReport::SHUTDOWN_START):
+            // CPMS is in WAIT_FOR_FINISH state, send the FINISHED command
+            // Send back to HAL
+            // ALWAYS update status for generated property value
+            prop = createApPowerStateReq(VehicleApPowerStateReq::FINISHED);
+            if (auto writeResult =
+                        mServerSidePropStore->writeValue(std::move(prop), /*updateStatus=*/true);
+                !writeResult.ok()) {
+                ALOGE("failed to write AP_POWER_STATE_REQ into property store, error: %s",
+                      writeResult.error().message().c_str());
+                return StatusCode::INTERNAL_ERROR;
+            }
+            break;
+        default:
+            ALOGE("Unknown VehicleApPowerStateReport: %d", state);
+            break;
+    }
+    return StatusCode::OK;
+}
+
+StatusCode FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValue& value,
+                                                     bool* isSpecialValue) {
+    *isSpecialValue = false;
+    VehiclePropValuePool::RecyclableType updatedValue;
+
+    switch (value.prop) {
+        case toInt(VehicleProperty::AP_POWER_STATE_REPORT):
+            *isSpecialValue = true;
+            return setApPowerStateReport(value);
+
+#ifdef ENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING
+        case toInt(VehicleProperty::CLUSTER_REPORT_STATE):
+            [[fallthrough]];
+        case toInt(VehicleProperty::CLUSTER_REQUEST_DISPLAY):
+            [[fallthrough]];
+        case toInt(VehicleProperty::CLUSTER_NAVIGATION_STATE):
+            [[fallthrough]];
+        case VENDOR_CLUSTER_SWITCH_UI:
+            [[fallthrough]];
+        case VENDOR_CLUSTER_DISPLAY_STATE:
+            *isSpecialValue = true;
+            updatedValue = mValuePool->obtain(getPropType(value.prop));
+            updatedValue->prop = value.prop & ~toInt(VehiclePropertyGroup::MASK);
+            if (getPropGroup(value.prop) == VehiclePropertyGroup::SYSTEM) {
+                updatedValue->prop |= toInt(VehiclePropertyGroup::VENDOR);
+            } else {
+                updatedValue->prop |= toInt(VehiclePropertyGroup::SYSTEM);
+            }
+            updatedValue->value = value.value;
+            updatedValue->timestamp = elapsedRealtimeNano();
+            updatedValue->areaId = value.areaId;
+            if (auto writeResult = mServerSidePropStore->writeValue(std::move(updatedValue));
+                !writeResult.ok()) {
+                ALOGE("failed to write value into property store, error: %s",
+                      writeResult.error().message().c_str());
+                return StatusCode::INVALID_ARG;
+            }
+            return StatusCode::OK;
+#endif  // ENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING
+
+        default:
+            break;
+    }
+    return StatusCode::OK;
+}
+
 StatusCode FakeVehicleHardware::setValues(FakeVehicleHardware::SetValuesCallback&& callback,
                                           const std::vector<SetValueRequest>& requests) {
     std::vector<VehiclePropValue> updatedValues;
     std::vector<SetValueResult> results;
     for (auto& request : requests) {
-        const VehiclePropValue* value = &request.value;
-        ALOGD("setValues(%d)", value->prop);
+        const VehiclePropValue& value = request.value;
+        int propId = value.prop;
 
-        auto updatedValue = mValuePool->obtain(*value);
+        ALOGD("Set value for property ID: %d", propId);
+
+        SetValueResult setValueResult;
+        setValueResult.requestId = request.requestId;
+        setValueResult.status = StatusCode::OK;
+
+        bool isSpecialValue = false;
+        StatusCode status = maybeSetSpecialValue(value, &isSpecialValue);
+
+        if (isSpecialValue) {
+            if (status != StatusCode::OK) {
+                ALOGE("failed to set special value for property ID: %d, status: %d", propId,
+                      status);
+                setValueResult.status = status;
+            }
+
+            // Special values are already handled.
+            results.push_back(std::move(setValueResult));
+            continue;
+        }
+
+        auto updatedValue = mValuePool->obtain(value);
         int64_t timestamp = elapsedRealtimeNano();
         updatedValue->timestamp = timestamp;
 
         auto writeResult = mServerSidePropStore->writeValue(std::move(updatedValue));
-        SetValueResult setValueResult;
-        setValueResult.requestId = request.requestId;
         if (!writeResult.ok()) {
             ALOGE("failed to write value into property store, error: %s, code: %d",
                   writeResult.error().message().c_str(), writeResult.error().code());
             setValueResult.status = StatusCode::INVALID_ARG;
-        } else {
-            setValueResult.status = StatusCode::OK;
         }
         results.push_back(std::move(setValueResult));
     }

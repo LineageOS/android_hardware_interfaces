@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_2_UTILS_EXECUTION_BURST_UTILS_H
-#define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_2_UTILS_EXECUTION_BURST_UTILS_H
+#ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_2_UTILS_BURST_UTILS_H
+#define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_2_UTILS_BURST_UTILS_H
 
 #include <android/hardware/neuralnetworks/1.0/types.h>
 #include <android/hardware/neuralnetworks/1.2/types.h>
@@ -298,4 +298,4 @@ class ResultChannelReceiver final : public neuralnetworks::utils::IProtectedCall
 
 }  // namespace android::hardware::neuralnetworks::V1_2::utils
 
-#endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_2_UTILS_EXECUTION_BURST_UTILS_H
+#endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_2_UTILS_BURST_UTILS_H
