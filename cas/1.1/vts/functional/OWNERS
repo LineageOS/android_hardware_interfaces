@@ -1,3 +1,2 @@
-nchalko@google.com
-chz@google.com
-quxiangfang@google.com
+# Bug component: 1344
+include ../../../1.2/vts/functional/OWNERS
