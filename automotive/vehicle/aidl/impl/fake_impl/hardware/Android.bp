@@ -34,6 +34,7 @@ cc_library {
     static_libs: [
         "VehicleHalUtils",
         "FakeVehicleHalValueGenerators",
+        "FakeObd2Frame",
     ],
     shared_libs: [
         "libjsoncpp",

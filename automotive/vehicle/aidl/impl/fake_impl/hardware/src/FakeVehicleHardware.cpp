@@ -17,7 +17,9 @@
 #include "FakeVehicleHardware.h"
 
 #include <DefaultConfig.h>
+#include <FakeObd2Frame.h>
 #include <JsonFakeValueGenerator.h>
+#include <PropertyUtils.h>
 #include <VehicleHalTypes.h>
 #include <VehicleUtils.h>
 #include <android-base/properties.h>
@@ -53,8 +55,26 @@ using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyStatus;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 
+using ::android::base::Result;
+
 const char* VENDOR_OVERRIDE_DIR = "/vendor/etc/automotive/vhaloverride/";
 const char* OVERRIDE_PROPERTY = "persist.vendor.vhal_init_value_override";
+
+template <class T>
+StatusCode getErrorCode(const Result<T>& result) {
+    if (result.ok()) {
+        return StatusCode::OK;
+    }
+    return static_cast<StatusCode>(result.error().code());
+}
+
+template <class T>
+std::string getErrorMsg(const Result<T>& result) {
+    if (result.ok()) {
+        return "";
+    }
+    return result.error().message();
+}
 
 }  // namespace
 
@@ -93,31 +113,50 @@ void FakeVehicleHardware::storePropInitialValue(const defaultconfig::ConfigDecla
         auto result =
                 mServerSidePropStore->writeValue(mValuePool->obtain(prop), /*updateStatus=*/true);
         if (!result.ok()) {
-            ALOGE("failed to write default config value, error: %s",
-                  result.error().message().c_str());
+            ALOGE("failed to write default config value, error: %s, status: %d",
+                  getErrorMsg(result).c_str(), getErrorCode(result));
         }
     }
 }
 
-FakeVehicleHardware::FakeVehicleHardware() {
-    mValuePool = std::make_shared<VehiclePropValuePool>();
-    init(mValuePool);
+FakeVehicleHardware::FakeVehicleHardware()
+    : mValuePool(new VehiclePropValuePool),
+      mServerSidePropStore(new VehiclePropertyStore(mValuePool)),
+      mFakeObd2Frame(new obd2frame::FakeObd2Frame(mServerSidePropStore)) {
+    init();
 }
 
 FakeVehicleHardware::FakeVehicleHardware(std::unique_ptr<VehiclePropValuePool> valuePool)
-    : mValuePool(std::move(valuePool)) {
-    init(mValuePool);
+    : mValuePool(std::move(valuePool)),
+      mServerSidePropStore(new VehiclePropertyStore(mValuePool)),
+      mFakeObd2Frame(new obd2frame::FakeObd2Frame(mServerSidePropStore)) {
+    init();
 }
 
-void FakeVehicleHardware::init(std::shared_ptr<VehiclePropValuePool> valuePool) {
-    mServerSidePropStore.reset(new VehiclePropertyStore(valuePool));
+void FakeVehicleHardware::init() {
     for (auto& it : defaultconfig::getDefaultConfigs()) {
         VehiclePropConfig cfg = it.config;
-        mServerSidePropStore->registerProperty(cfg);
+        VehiclePropertyStore::TokenFunction tokenFunction = nullptr;
+
+        if (cfg.prop == OBD2_FREEZE_FRAME) {
+            tokenFunction = [](const VehiclePropValue& propValue) { return propValue.timestamp; };
+        }
+
+        mServerSidePropStore->registerProperty(cfg, tokenFunction);
+        if (obd2frame::FakeObd2Frame::isDiagnosticProperty(cfg)) {
+            // Ignore storing default value for diagnostic property. They have special get/set
+            // logic.
+            continue;
+        }
         storePropInitialValue(it);
     }
 
     maybeOverrideProperties(VENDOR_OVERRIDE_DIR);
+
+    // OBD2_LIVE_FRAME and OBD2_FREEZE_FRAME must be configured in default configs.
+    mFakeObd2Frame->initObd2LiveFrame(*mServerSidePropStore->getConfig(OBD2_LIVE_FRAME).value());
+    mFakeObd2Frame->initObd2FreezeFrame(
+            *mServerSidePropStore->getConfig(OBD2_FREEZE_FRAME).value());
 
     mServerSidePropStore->setOnValueChangeCallback(
             [this](const VehiclePropValue& value) { return onValueChangeCallback(value); });
@@ -146,9 +185,10 @@ StatusCode FakeVehicleHardware::setApPowerStateReport(const VehiclePropValue& va
 
     if (auto writeResult = mServerSidePropStore->writeValue(std::move(updatedValue));
         !writeResult.ok()) {
-        ALOGE("failed to write value into property store, error: %s",
-              writeResult.error().message().c_str());
-        return StatusCode::INVALID_ARG;
+        StatusCode errorCode = getErrorCode(writeResult);
+        ALOGE("failed to write value into property store, error: %s, code: %d",
+              getErrorMsg(writeResult).c_str(), errorCode);
+        return errorCode;
     }
 
     VehiclePropValuePool::RecyclableType prop;
@@ -168,9 +208,10 @@ StatusCode FakeVehicleHardware::setApPowerStateReport(const VehiclePropValue& va
             if (auto writeResult =
                         mServerSidePropStore->writeValue(std::move(prop), /*updateStatus=*/true);
                 !writeResult.ok()) {
-                ALOGE("failed to write AP_POWER_STATE_REQ into property store, error: %s",
-                      writeResult.error().message().c_str());
-                return StatusCode::INTERNAL_ERROR;
+                StatusCode errorCode = getErrorCode(writeResult);
+                ALOGE("failed to write AP_POWER_STATE_REQ into property store, error: %s, code: %d",
+                      getErrorMsg(writeResult).c_str(), errorCode);
+                return errorCode;
             }
             break;
         case toInt(VehicleApPowerStateReport::DEEP_SLEEP_ENTRY):
@@ -185,9 +226,10 @@ StatusCode FakeVehicleHardware::setApPowerStateReport(const VehiclePropValue& va
             if (auto writeResult =
                         mServerSidePropStore->writeValue(std::move(prop), /*updateStatus=*/true);
                 !writeResult.ok()) {
-                ALOGE("failed to write AP_POWER_STATE_REQ into property store, error: %s",
-                      writeResult.error().message().c_str());
-                return StatusCode::INTERNAL_ERROR;
+                StatusCode errorCode = getErrorCode(writeResult);
+                ALOGE("failed to write AP_POWER_STATE_REQ into property store, error: %s, code: %d",
+                      getErrorMsg(writeResult).c_str(), errorCode);
+                return errorCode;
             }
             break;
         default:
@@ -195,6 +237,35 @@ StatusCode FakeVehicleHardware::setApPowerStateReport(const VehiclePropValue& va
             break;
     }
     return StatusCode::OK;
+}
+
+Result<VehiclePropValuePool::RecyclableType> FakeVehicleHardware::maybeGetSpecialValue(
+        const VehiclePropValue& value, bool* isSpecialValue) const {
+    *isSpecialValue = false;
+    int32_t propId = value.prop;
+    Result<VehiclePropValuePool::RecyclableType> result;
+
+    switch (propId) {
+        case OBD2_FREEZE_FRAME:
+            *isSpecialValue = true;
+            result = mFakeObd2Frame->getObd2FreezeFrame(value);
+            if (result.ok()) {
+                result.value()->timestamp = elapsedRealtimeNano();
+            }
+            return result;
+        case OBD2_FREEZE_FRAME_INFO:
+            *isSpecialValue = true;
+            result = mFakeObd2Frame->getObd2DtcInfo();
+            if (result.ok()) {
+                result.value()->timestamp = elapsedRealtimeNano();
+            }
+            return result;
+        default:
+            // Do nothing.
+            break;
+    }
+
+    return nullptr;
 }
 
 StatusCode FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValue& value,
@@ -206,6 +277,14 @@ StatusCode FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValue& val
         case toInt(VehicleProperty::AP_POWER_STATE_REPORT):
             *isSpecialValue = true;
             return setApPowerStateReport(value);
+        case toInt(VehicleProperty::VEHICLE_MAP_SERVICE):
+            // Placeholder for future implementation of VMS property in the default hal. For
+            // now, just returns OK; otherwise, hal clients crash with property not supported.
+            *isSpecialValue = true;
+            return StatusCode::OK;
+        case OBD2_FREEZE_FRAME_CLEAR:
+            *isSpecialValue = true;
+            return mFakeObd2Frame->clearObd2FreezeFrames(value);
 
 #ifdef ENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING
         case toInt(VehicleProperty::CLUSTER_REPORT_STATE):
@@ -230,9 +309,10 @@ StatusCode FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValue& val
             updatedValue->areaId = value.areaId;
             if (auto writeResult = mServerSidePropStore->writeValue(std::move(updatedValue));
                 !writeResult.ok()) {
-                ALOGE("failed to write value into property store, error: %s",
-                      writeResult.error().message().c_str());
-                return StatusCode::INVALID_ARG;
+                StatusCode errorCode = getErrorCode(writeResult);
+                ALOGE("failed to write value into property store, error: %s, code: %d",
+                      getErrorMsg(writeResult).c_str(), errorCode);
+                return errorCode;
             }
             return StatusCode::OK;
 #endif  // ENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING
@@ -278,9 +358,10 @@ StatusCode FakeVehicleHardware::setValues(FakeVehicleHardware::SetValuesCallback
 
         auto writeResult = mServerSidePropStore->writeValue(std::move(updatedValue));
         if (!writeResult.ok()) {
+            StatusCode errorCode = getErrorCode(writeResult);
             ALOGE("failed to write value into property store, error: %s, code: %d",
-                  writeResult.error().message().c_str(), writeResult.error().code());
-            setValueResult.status = StatusCode::INVALID_ARG;
+                  getErrorMsg(writeResult).c_str(), errorCode);
+            setValueResult.status = errorCode;
         }
         results.push_back(std::move(setValueResult));
     }
@@ -296,22 +377,38 @@ StatusCode FakeVehicleHardware::getValues(FakeVehicleHardware::GetValuesCallback
                                           const std::vector<GetValueRequest>& requests) const {
     std::vector<GetValueResult> results;
     for (auto& request : requests) {
-        const VehiclePropValue* value = &request.prop;
-        ALOGD("getValues(%d)", value->prop);
+        const VehiclePropValue& value = request.prop;
+        ALOGD("getValues(%d)", value.prop);
 
-        auto readResult = mServerSidePropStore->readValue(*value);
         GetValueResult getValueResult;
         getValueResult.requestId = request.requestId;
-        if (!readResult.ok()) {
-            auto error = readResult.error();
-            if (error.code() == toInt(StatusCode::NOT_AVAILABLE)) {
-                ALOGW("%s", "value has not been set yet");
-                getValueResult.status = StatusCode::NOT_AVAILABLE;
+        bool isSpecialValue = false;
+
+        auto result = maybeGetSpecialValue(value, &isSpecialValue);
+        if (isSpecialValue) {
+            if (!result.ok()) {
+                StatusCode errorCode = getErrorCode(result);
+                ALOGE("failed to get special value: %d, error: %s, code: %d", value.prop,
+                      getErrorMsg(result).c_str(), errorCode);
+                getValueResult.status = errorCode;
             } else {
-                ALOGE("failed to get value, error: %s, code: %d", error.message().c_str(),
-                      error.code());
-                getValueResult.status = StatusCode::INVALID_ARG;
+                getValueResult.status = StatusCode::OK;
+                getValueResult.prop = *result.value();
             }
+            results.push_back(std::move(getValueResult));
+            continue;
+        }
+
+        auto readResult = mServerSidePropStore->readValue(value);
+        if (!readResult.ok()) {
+            StatusCode errorCode = getErrorCode(readResult);
+            if (errorCode == StatusCode::NOT_AVAILABLE) {
+                ALOGW("%s", "value has not been set yet");
+            } else {
+                ALOGE("failed to get value, error: %s, code: %d", getErrorMsg(readResult).c_str(),
+                      errorCode);
+            }
+            getValueResult.status = errorCode;
         } else {
             getValueResult.status = StatusCode::OK;
             getValueResult.prop = *readResult.value();
@@ -378,8 +475,8 @@ void FakeVehicleHardware::overrideProperties(const char* overrideDir) {
                 if (auto result = mServerSidePropStore->writeValue(std::move(propToStore),
                                                                    /*updateStatus=*/true);
                     !result.ok()) {
-                    ALOGW("failed to write vendor override properties: %d, error: %s", prop.prop,
-                          result.error().message().c_str());
+                    ALOGW("failed to write vendor override properties: %d, error: %s, code: %d",
+                          prop.prop, getErrorMsg(result).c_str(), getErrorCode(result));
                 }
             }
         }

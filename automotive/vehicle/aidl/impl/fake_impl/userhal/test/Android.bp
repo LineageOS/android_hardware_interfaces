@@ -19,34 +19,15 @@ package {
 }
 
 cc_test {
-    name: "FakeVehicleHardwareTest",
+    name: "FakeUserHalTest",
     vendor: true,
     srcs: ["*.cpp"],
-    cflags: ["-DENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING"],
-    header_libs: [
-        "IVehicleHardware",
-        "VehicleHalDefaultConfig",
-        "VehicleHalTestUtilHeaders",
-    ],
+    defaults: ["VehicleHalDefaults"],
     static_libs: [
+        "FakeUserHal",
         "VehicleHalUtils",
-        "FakeVehicleHardware",
-        "FakeVehicleHalValueGenerators",
-        "FakeObd2Frame",
         "libgtest",
         "libgmock",
     ],
-    shared_libs: [
-        "libjsoncpp",
-    ],
-    data: [
-        ":FakeVehicleHardwareTestOverrideJson",
-    ],
-    defaults: ["VehicleHalDefaults"],
     test_suites: ["device-tests"],
-}
-
-filegroup {
-    name: "FakeVehicleHardwareTestOverrideJson",
-    srcs: ["override/*"],
 }
