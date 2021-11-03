@@ -239,6 +239,7 @@ cc_test {
     data: [
         "tests/apm_config_no_vx_7_0.xml",
         "tests/apm_config_with_vx_7_0.xml",
+        "tests/apm_config_b_204314749_7_0.xml",
     ],
     test_config: "tests/HalAudioV7_0GeneratorTest.xml",
 }
