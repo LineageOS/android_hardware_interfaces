@@ -169,20 +169,21 @@ Result<VehiclePropValuePool::RecyclableType> FakeObd2Frame::getObd2DtcInfo() con
     return outValue;
 }
 
-StatusCode FakeObd2Frame::clearObd2FreezeFrames(const VehiclePropValue& propValue) {
+Result<void> FakeObd2Frame::clearObd2FreezeFrames(const VehiclePropValue& propValue) {
     if (propValue.value.int64Values.size() == 0) {
         mPropStore->removeValuesForProperty(OBD2_FREEZE_FRAME);
-        return StatusCode::OK;
+        return {};
     }
     for (int64_t timestamp : propValue.value.int64Values) {
-        auto result = mPropStore->readValue(OBD2_FREEZE_FRAME, /*area=*/0, timestamp);
+        auto result = mPropStore->readValue(OBD2_FREEZE_FRAME, 0, timestamp);
         if (!result.ok()) {
-            ALOGE("asked for OBD2_FREEZE_FRAME at invalid timestamp");
-            return StatusCode::INVALID_ARG;
+            return Error(toInt(StatusCode::INVALID_ARG))
+                   << "asked for OBD2_FREEZE_FRAME at invalid timestamp, error: %s"
+                   << result.error().message();
         }
         mPropStore->removeValue(*result.value());
     }
-    return StatusCode::OK;
+    return {};
 }
 
 bool FakeObd2Frame::isDiagnosticProperty(const VehiclePropConfig& propConfig) {

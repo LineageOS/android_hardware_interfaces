@@ -18,6 +18,7 @@
 
 #include <DefaultConfig.h>
 #include <FakeObd2Frame.h>
+#include <FakeUserHal.h>
 #include <PropertyUtils.h>
 #include <TestPropertyUtils.h>
 
@@ -74,7 +75,12 @@ class FakeVehicleHardwareTestHelper {
 
 class FakeVehicleHardwareTest : public ::testing::Test {
   protected:
-    void SetUp() override {}
+    void SetUp() override {
+        getHardware()->registerOnPropertyChangeEvent(
+                [this](const std::vector<VehiclePropValue>& values) {
+                    return onPropertyChangeEvent(values);
+                });
+    }
 
     FakeVehicleHardware* getHardware() { return &mHardware; }
 
@@ -171,6 +177,8 @@ class FakeVehicleHardwareTest : public ::testing::Test {
 
     const std::vector<VehiclePropValue>& getChangedProperties() { return mChangedProperties; }
 
+    void clearChangedProperties() { mChangedProperties.clear(); }
+
     static void addSetValueRequest(std::vector<SetValueRequest>& requests,
                                    std::vector<SetValueResult>& expectedResults, int64_t requestId,
                                    const VehiclePropValue& value, StatusCode expectedStatus) {
@@ -254,6 +262,11 @@ TEST_F(FakeVehicleHardwareTest, testGetDefaultValues) {
         if (obd2frame::FakeObd2Frame::isDiagnosticProperty(config.config)) {
             // Ignore storing default value for diagnostic property. They have special get/set
             // logic.
+            continue;
+        }
+
+        if (FakeUserHal::isSupported(config.config.prop)) {
+            // Ignore fake user HAL properties, they have special logic for getting values.
             continue;
         }
 
@@ -353,6 +366,7 @@ TEST_F(FakeVehicleHardwareTest, testSetValuesError) {
 }
 
 TEST_F(FakeVehicleHardwareTest, testRegisterOnPropertyChangeEvent) {
+    // We have already registered this callback in Setup, here we are registering again.
     getHardware()->registerOnPropertyChangeEvent(std::bind(
             &FakeVehicleHardwareTest_testRegisterOnPropertyChangeEvent_Test::onPropertyChangeEvent,
             this, std::placeholders::_1));
@@ -870,11 +884,6 @@ class FakeVehicleHardwareSpecialValuesTest
       public testing::WithParamInterface<SetSpecialValueTestCase> {};
 
 TEST_P(FakeVehicleHardwareSpecialValuesTest, testSetSpecialProperties) {
-    getHardware()->registerOnPropertyChangeEvent(
-            [this](const std::vector<VehiclePropValue>& values) {
-                return onPropertyChangeEvent(values);
-            });
-
     const SetSpecialValueTestCase& tc = GetParam();
 
     for (const auto& value : tc.valuesToSet) {
@@ -968,6 +977,227 @@ TEST_F(FakeVehicleHardwareTest, testSetVehicleMapService) {
 
     EXPECT_FALSE(getValueResult.ok());
     EXPECT_EQ(getValueResult.error(), StatusCode::NOT_AVAILABLE);
+}
+
+TEST_F(FakeVehicleHardwareTest, testGetUserPropertySetOnly) {
+    for (VehicleProperty prop : std::vector<VehicleProperty>({
+                 VehicleProperty::INITIAL_USER_INFO,
+                 VehicleProperty::SWITCH_USER,
+                 VehicleProperty::CREATE_USER,
+                 VehicleProperty::REMOVE_USER,
+         })) {
+        auto result = getValue(VehiclePropValue{.prop = toInt(prop)});
+
+        EXPECT_FALSE(result.ok());
+        if (!result.ok()) {
+            EXPECT_EQ(result.error(), StatusCode::INVALID_ARG);
+        }
+    }
+}
+
+TEST_F(FakeVehicleHardwareTest, testGetUserIdAssoc) {
+    int32_t userIdAssocProp = toInt(VehicleProperty::USER_IDENTIFICATION_ASSOCIATION);
+
+    auto result = getValue(VehiclePropValue{.prop = userIdAssocProp});
+
+    // Default returns NOT_AVAILABLE.
+    ASSERT_FALSE(result.ok());
+    ASSERT_EQ(result.error(), StatusCode::NOT_AVAILABLE);
+
+    // This is the same example as used in User HAL Emulation doc.
+    VehiclePropValue valueToSet = {
+            .prop = toInt(VehicleProperty::USER_IDENTIFICATION_ASSOCIATION),
+            .areaId = 1,
+            .value.int32Values = {666, 1, 1, 2},
+    };
+
+    StatusCode status = setValue(valueToSet);
+
+    ASSERT_EQ(status, StatusCode::OK);
+
+    result = getValue(VehiclePropValue{
+            .prop = userIdAssocProp,
+            // Request ID
+            .value.int32Values = {1},
+    });
+
+    ASSERT_TRUE(result.ok());
+
+    auto& gotValue = result.value();
+    gotValue.timestamp = 0;
+
+    // Expect to get the same request ID.
+    valueToSet.value.int32Values[0] = 1;
+
+    ASSERT_EQ(gotValue, valueToSet);
+}
+
+TEST_F(FakeVehicleHardwareTest, testSwitchUser) {
+    // This is the same example as used in User HAL Emulation doc.
+    VehiclePropValue valueToSet = {
+            .prop = toInt(VehicleProperty::SWITCH_USER),
+            .areaId = 1,
+            .value.int32Values = {666, 3, 2},
+    };
+
+    StatusCode status = setValue(valueToSet);
+
+    ASSERT_EQ(status, StatusCode::OK);
+
+    // Simulate a request from Android side.
+    VehiclePropValue switchUserRequest = {
+            .prop = toInt(VehicleProperty::SWITCH_USER),
+            .areaId = 0,
+            .value.int32Values = {666, 3},
+    };
+    // Clear existing events.
+    clearChangedProperties();
+
+    status = setValue(switchUserRequest);
+
+    ASSERT_EQ(status, StatusCode::OK);
+
+    // Should generate an event for user hal response.
+    auto events = getChangedProperties();
+    ASSERT_EQ(events.size(), static_cast<size_t>(1));
+
+    events[0].timestamp = 0;
+    ASSERT_EQ(events[0], valueToSet);
+
+    // Try to get switch_user again, should return default value.
+    clearChangedProperties();
+    status = setValue(switchUserRequest);
+    ASSERT_EQ(status, StatusCode::OK);
+
+    events = getChangedProperties();
+    ASSERT_EQ(events.size(), static_cast<size_t>(1));
+    events[0].timestamp = 0;
+    ASSERT_EQ(events[0], (VehiclePropValue{
+                                 .areaId = 0,
+                                 .prop = toInt(VehicleProperty::SWITCH_USER),
+                                 .value.int32Values =
+                                         {
+                                                 // Request ID
+                                                 666,
+                                                 // VEHICLE_RESPONSE
+                                                 3,
+                                                 // SUCCESS
+                                                 1,
+                                         },
+                         }));
+}
+
+TEST_F(FakeVehicleHardwareTest, testCreateUser) {
+    // This is the same example as used in User HAL Emulation doc.
+    VehiclePropValue valueToSet = {
+            .prop = toInt(VehicleProperty::CREATE_USER),
+            .areaId = 1,
+            .value.int32Values = {666, 2},
+    };
+
+    StatusCode status = setValue(valueToSet);
+
+    ASSERT_EQ(status, StatusCode::OK);
+
+    // Simulate a request from Android side.
+    VehiclePropValue createUserRequest = {
+            .prop = toInt(VehicleProperty::CREATE_USER),
+            .areaId = 0,
+            .value.int32Values = {666},
+    };
+    // Clear existing events.
+    clearChangedProperties();
+
+    status = setValue(createUserRequest);
+
+    ASSERT_EQ(status, StatusCode::OK);
+
+    // Should generate an event for user hal response.
+    auto events = getChangedProperties();
+    ASSERT_EQ(events.size(), static_cast<size_t>(1));
+    events[0].timestamp = 0;
+    EXPECT_EQ(events[0], valueToSet);
+
+    // Try to get create_user again, should return default value.
+    clearChangedProperties();
+    status = setValue(createUserRequest);
+    ASSERT_EQ(status, StatusCode::OK);
+
+    events = getChangedProperties();
+    ASSERT_EQ(events.size(), static_cast<size_t>(1));
+    events[0].timestamp = 0;
+    ASSERT_EQ(events[0], (VehiclePropValue{
+                                 .areaId = 0,
+                                 .prop = toInt(VehicleProperty::CREATE_USER),
+                                 .value.int32Values =
+                                         {
+                                                 // Request ID
+                                                 666,
+                                                 // SUCCESS
+                                                 1,
+                                         },
+                         }));
+}
+
+TEST_F(FakeVehicleHardwareTest, testInitialUserInfo) {
+    // This is the same example as used in User HAL Emulation doc.
+    VehiclePropValue valueToSet = {
+            .prop = toInt(VehicleProperty::INITIAL_USER_INFO),
+            .areaId = 1,
+            .value.int32Values = {666, 1, 11},
+    };
+
+    StatusCode status = setValue(valueToSet);
+
+    ASSERT_EQ(status, StatusCode::OK);
+
+    // Simulate a request from Android side.
+    VehiclePropValue initialUserInfoRequest = {
+            .prop = toInt(VehicleProperty::INITIAL_USER_INFO),
+            .areaId = 0,
+            .value.int32Values = {3},
+    };
+    // Clear existing events.
+    clearChangedProperties();
+
+    status = setValue(initialUserInfoRequest);
+
+    ASSERT_EQ(status, StatusCode::OK);
+
+    // Should generate an event for user hal response.
+    auto events = getChangedProperties();
+    ASSERT_EQ(events.size(), static_cast<size_t>(1));
+    events[0].timestamp = 0;
+    EXPECT_EQ(events[0], (VehiclePropValue{
+                                 .areaId = 1,
+                                 .prop = toInt(VehicleProperty::INITIAL_USER_INFO),
+                                 .value.int32Values = {3, 1, 11},
+                         }));
+
+    // Try to get create_user again, should return default value.
+    clearChangedProperties();
+    status = setValue(initialUserInfoRequest);
+    ASSERT_EQ(status, StatusCode::OK);
+
+    events = getChangedProperties();
+    ASSERT_EQ(events.size(), static_cast<size_t>(1));
+    events[0].timestamp = 0;
+    EXPECT_EQ(events[0], (VehiclePropValue{
+                                 .areaId = 0,
+                                 .prop = toInt(VehicleProperty::INITIAL_USER_INFO),
+                                 .value.int32Values =
+                                         {
+                                                 // Request ID
+                                                 3,
+                                                 // ACTION: DEFAULT
+                                                 0,
+                                                 // User id: 0
+                                                 0,
+                                                 // Flags: 0
+                                                 0,
+                                         },
+                                 .value.stringValue = "||",
+                         }));
 }
 
 }  // namespace fake

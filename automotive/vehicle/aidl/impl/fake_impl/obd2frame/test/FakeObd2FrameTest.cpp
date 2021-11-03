@@ -167,7 +167,7 @@ TEST_F(FakeObd2FrameTest, testClearObd2FreezeFrameAll) {
     ASSERT_EQ(result.value()->prop, OBD2_FREEZE_FRAME_INFO);
     ASSERT_EQ(result.value()->value.int64Values.size(), static_cast<size_t>(3));
 
-    getFakeObd2Frame()->clearObd2FreezeFrames(VehiclePropValue{});
+    ASSERT_TRUE(getFakeObd2Frame()->clearObd2FreezeFrames(VehiclePropValue{}).ok());
 
     result = getFakeObd2Frame()->getObd2DtcInfo();
 
@@ -185,9 +185,11 @@ TEST_F(FakeObd2FrameTest, testClearObd2FreezeFrameByTimestamp) {
     ASSERT_EQ(result.value()->prop, OBD2_FREEZE_FRAME_INFO);
     ASSERT_EQ(result.value()->value.int64Values.size(), static_cast<size_t>(3));
 
-    getFakeObd2Frame()->clearObd2FreezeFrames(
-            VehiclePropValue{.value.int64Values = {result.value()->value.int64Values[0],
-                                                   result.value()->value.int64Values[1]}});
+    ASSERT_TRUE(getFakeObd2Frame()
+                        ->clearObd2FreezeFrames(VehiclePropValue{
+                                .value.int64Values = {result.value()->value.int64Values[0],
+                                                      result.value()->value.int64Values[1]}})
+                        .ok());
 
     result = getFakeObd2Frame()->getObd2DtcInfo();
 
