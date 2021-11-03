@@ -23,6 +23,7 @@
 #include <libradiocompat/RadioData.h>
 #include <libradiocompat/RadioIndication.h>
 #include <libradiocompat/RadioMessaging.h>
+#include <libradiocompat/RadioNetwork.h>
 #include <libradiocompat/RadioResponse.h>
 #include <libradiocompat/RadioSim.h>
 
@@ -60,6 +61,7 @@ static void publishRadio(std::string slot) {
 
     publishRadioHal<compat::RadioData>(radioHidl, responseCb, indicationCb, slot);
     publishRadioHal<compat::RadioMessaging>(radioHidl, responseCb, indicationCb, slot);
+    publishRadioHal<compat::RadioNetwork>(radioHidl, responseCb, indicationCb, slot);
     publishRadioHal<compat::RadioSim>(radioHidl, responseCb, indicationCb, slot);
 }
 
