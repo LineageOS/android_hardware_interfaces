@@ -6,22 +6,28 @@
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 #include <binder/ProcessState.h>
+#include <composer-vts/include/GraphicsComposerCallback.h>
 #include <gtest/gtest.h>
 #include <string>
+#include <thread>
 
 #pragma push_macro("LOG_TAG")
 #undef LOG_TAG
 #define LOG_TAG "VtsHalGraphicsComposer3_TargetTest"
 
+typedef int32_t Config;
+
 namespace aidl::android::hardware::graphics::composer3::vts {
 namespace {
 
+using namespace std::chrono_literals;
+
 class VtsDisplay {
   public:
-    VtsDisplay(uint64_t displayId, int32_t displayWidth, int32_t displayHeight)
+    VtsDisplay(int64_t displayId, int32_t displayWidth, int32_t displayHeight)
         : mDisplayId(displayId), mDisplayWidth(displayWidth), mDisplayHeight(displayHeight) {}
 
-    uint64_t get() const { return mDisplayId; }
+    int64_t get() const { return mDisplayId; }
 
     void setDimensions(int32_t displayWidth, int32_t displayHeight) {
         mDisplayWidth = displayWidth;
@@ -29,7 +35,7 @@ class VtsDisplay {
     }
 
   private:
-    const uint64_t mDisplayId;
+    const int64_t mDisplayId;
     int32_t mDisplayWidth;
     int32_t mDisplayHeight;
 };
@@ -44,6 +50,12 @@ class GraphicsComposerAidlTest : public ::testing::TestWithParam<std::string> {
         ASSERT_NE(mComposer, nullptr);
         ASSERT_NO_FATAL_FAILURE(mComposer->createClient(&mComposerClient));
         mInvalidDisplayId = GetInvalidDisplayId();
+
+        mComposerCallback = ::ndk::SharedRefBase::make<GraphicsComposerCallback>();
+        EXPECT_TRUE(mComposerClient->registerCallback(mComposerCallback).isOk());
+
+        // assume the first displays are built-in and are never removed
+        mDisplays = waitForDisplays();
     }
 
     // returns an invalid display id (one that has not been registered to a
@@ -62,11 +74,43 @@ class GraphicsComposerAidlTest : public ::testing::TestWithParam<std::string> {
         return 0;
     }
 
+    std::vector<VtsDisplay> waitForDisplays() {
+        while (true) {
+            // Sleep for a small period of time to allow all built-in displays
+            // to post hotplug events
+            std::this_thread::sleep_for(5ms);
+            std::vector<int64_t> displays = mComposerCallback->getDisplays();
+            if (displays.empty()) {
+                continue;
+            }
+
+            std::vector<VtsDisplay> vtsDisplays;
+            vtsDisplays.reserve(displays.size());
+            for (int64_t display : displays) {
+                Config activeConfig;
+                EXPECT_TRUE(mComposerClient->getActiveConfig(display, &activeConfig).isOk());
+                int32_t displayWidth;
+                EXPECT_TRUE(mComposerClient
+                                    ->getDisplayAttribute(display, activeConfig,
+                                                          DisplayAttribute::WIDTH, &displayWidth)
+                                    .isOk());
+                int32_t displayHeight;
+                EXPECT_TRUE(mComposerClient
+                                    ->getDisplayAttribute(display, activeConfig,
+                                                          DisplayAttribute::HEIGHT, &displayHeight)
+                                    .isOk());
+                vtsDisplays.emplace_back(VtsDisplay{display, displayWidth, displayHeight});
+            }
+
+            return vtsDisplays;
+        }
+    }
+
     std::shared_ptr<IComposer> mComposer;
     std::shared_ptr<IComposerClient> mComposerClient;
-    uint64_t mInvalidDisplayId;
-    std::vector<VtsDisplay>
-            mDisplays;  // TODO(b/202401906) populate all the displays available for test.
+    int64_t mInvalidDisplayId;
+    std::vector<VtsDisplay> mDisplays;
+    std::shared_ptr<GraphicsComposerCallback> mComposerCallback;
 };
 
 TEST_P(GraphicsComposerAidlTest, getDisplayCapabilitiesBadDisplay) {
