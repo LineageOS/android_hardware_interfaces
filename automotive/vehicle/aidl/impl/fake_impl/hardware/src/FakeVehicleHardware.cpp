@@ -379,7 +379,7 @@ Result<void> FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValue& v
     return {};
 }
 
-StatusCode FakeVehicleHardware::setValues(FakeVehicleHardware::SetValuesCallback&& callback,
+StatusCode FakeVehicleHardware::setValues(std::shared_ptr<const SetValuesCallback> callback,
                                           const std::vector<SetValueRequest>& requests) {
     std::vector<VehiclePropValue> updatedValues;
     std::vector<SetValueResult> results;
@@ -424,12 +424,12 @@ StatusCode FakeVehicleHardware::setValues(FakeVehicleHardware::SetValuesCallback
 
     // In the real vhal, the values will be sent to Car ECU. We just pretend it is done here and
     // send back the updated property values to client.
-    callback(std::move(results));
+    (*callback)(std::move(results));
 
     return StatusCode::OK;
 }
 
-StatusCode FakeVehicleHardware::getValues(FakeVehicleHardware::GetValuesCallback&& callback,
+StatusCode FakeVehicleHardware::getValues(std::shared_ptr<const GetValuesCallback> callback,
                                           const std::vector<GetValueRequest>& requests) const {
     std::vector<GetValueResult> results;
     for (auto& request : requests) {
@@ -471,7 +471,7 @@ StatusCode FakeVehicleHardware::getValues(FakeVehicleHardware::GetValuesCallback
         results.push_back(std::move(getValueResult));
     }
 
-    callback(std::move(results));
+    (*callback)(std::move(results));
 
     return StatusCode::OK;
 }
@@ -487,23 +487,28 @@ StatusCode FakeVehicleHardware::checkHealth() {
     return StatusCode::OK;
 }
 
-void FakeVehicleHardware::registerOnPropertyChangeEvent(OnPropertyChangeCallback&& callback) {
+void FakeVehicleHardware::registerOnPropertyChangeEvent(
+        std::unique_ptr<const PropertyChangeCallback> callback) {
     std::scoped_lock<std::mutex> lockGuard(mCallbackLock);
     mOnPropertyChangeCallback = std::move(callback);
 }
 
-void FakeVehicleHardware::registerOnPropertySetErrorEvent(OnPropertySetErrorCallback&& callback) {
+void FakeVehicleHardware::registerOnPropertySetErrorEvent(
+        std::unique_ptr<const PropertySetErrorCallback> callback) {
     std::scoped_lock<std::mutex> lockGuard(mCallbackLock);
     mOnPropertySetErrorCallback = std::move(callback);
 }
 
 void FakeVehicleHardware::onValueChangeCallback(const VehiclePropValue& value) {
     std::scoped_lock<std::mutex> lockGuard(mCallbackLock);
-    if (mOnPropertyChangeCallback != nullptr) {
-        std::vector<VehiclePropValue> updatedValues;
-        updatedValues.push_back(value);
-        mOnPropertyChangeCallback(std::move(updatedValues));
+
+    if (mOnPropertyChangeCallback == nullptr) {
+        return;
     }
+
+    std::vector<VehiclePropValue> updatedValues;
+    updatedValues.push_back(value);
+    (*mOnPropertyChangeCallback)(std::move(updatedValues));
 }
 
 void FakeVehicleHardware::maybeOverrideProperties(const char* overrideDir) {
