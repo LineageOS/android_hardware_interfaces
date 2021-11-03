@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_2_UTILS_EXECUTION_BURST_CONTROLLER_H
-#define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_2_UTILS_EXECUTION_BURST_CONTROLLER_H
+#ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_2_UTILS_BURST_H
+#define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_2_UTILS_BURST_H
 
-#include "ExecutionBurstUtils.h"
+#include "nnapi/hal/1.2/BurstUtils.h"
 
 #include <android-base/thread_annotations.h>
 #include <android/hardware/neuralnetworks/1.0/types.h>
@@ -49,13 +49,11 @@
 namespace android::hardware::neuralnetworks::V1_2::utils {
 
 /**
- * The ExecutionBurstController class manages both the serialization and deserialization of data
- * across FMQ, making it appear to the runtime as a regular synchronous inference. Additionally,
- * this class manages the burst's memory cache.
+ * The Burst class manages both the serialization and deserialization of data across FMQ, making it
+ * appear to the runtime as a regular synchronous inference. Additionally, this class manages the
+ * burst's memory cache.
  */
-class ExecutionBurstController final
-    : public nn::IBurst,
-      public std::enable_shared_from_this<ExecutionBurstController> {
+class Burst final : public nn::IBurst, public std::enable_shared_from_this<Burst> {
     struct PrivateConstructorTag {};
 
   public:
@@ -150,21 +148,21 @@ class ExecutionBurstController final
      * Creates a burst controller on a prepared model.
      *
      * @param preparedModel Model prepared for execution to execute on.
-     * @param pollingTimeWindow How much time (in microseconds) the ExecutionBurstController is
-     *     allowed to poll the FMQ before waiting on the blocking futex. Polling may result in lower
-     *     latencies at the potential cost of more power usage.
-     * @return ExecutionBurstController Execution burst controller object.
+     * @param pollingTimeWindow How much time (in microseconds) the Burst is allowed to poll the FMQ
+     *     before waiting on the blocking futex. Polling may result in lower latencies at the
+     *     potential cost of more power usage.
+     * @return Burst Execution burst controller object.
      */
-    static nn::GeneralResult<std::shared_ptr<const ExecutionBurstController>> create(
+    static nn::GeneralResult<std::shared_ptr<const Burst>> create(
             nn::SharedPreparedModel preparedModel, const sp<IPreparedModel>& hidlPreparedModel,
             std::chrono::microseconds pollingTimeWindow);
 
-    ExecutionBurstController(PrivateConstructorTag tag, nn::SharedPreparedModel preparedModel,
-                             std::unique_ptr<RequestChannelSender> requestChannelSender,
-                             std::unique_ptr<ResultChannelReceiver> resultChannelReceiver,
-                             sp<ExecutionBurstCallback> callback, sp<IBurstContext> burstContext,
-                             std::shared_ptr<MemoryCache> memoryCache,
-                             neuralnetworks::utils::DeathHandler deathHandler);
+    Burst(PrivateConstructorTag tag, nn::SharedPreparedModel preparedModel,
+          std::unique_ptr<RequestChannelSender> requestChannelSender,
+          std::unique_ptr<ResultChannelReceiver> resultChannelReceiver,
+          sp<ExecutionBurstCallback> callback, sp<IBurstContext> burstContext,
+          std::shared_ptr<MemoryCache> memoryCache,
+          neuralnetworks::utils::DeathHandler deathHandler);
 
     // See IBurst::cacheMemory for information on this method.
     OptionalCacheHold cacheMemory(const nn::SharedMemory& memory) const override;
@@ -202,4 +200,4 @@ class ExecutionBurstController final
 
 }  // namespace android::hardware::neuralnetworks::V1_2::utils
 
-#endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_2_UTILS_EXECUTION_BURST_CONTROLLER_H
+#endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_1_2_UTILS_BURST_H

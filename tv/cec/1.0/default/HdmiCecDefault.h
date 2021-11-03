@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include <android/hardware/tv/cec/1.0/IHdmiCec.h>
 #include <hardware/hdmi_cec.h>
+#include <linux/cec.h>
+#include <thread>
+#include <vector>
+#include "HdmiCecPort.h"
 
 namespace android {
 namespace hardware {
@@ -24,7 +26,12 @@ namespace cec {
 namespace V1_0 {
 namespace implementation {
 
-struct HdmiCecDefault : public IHdmiCec, public hidl_death_recipient {
+using std::shared_ptr;
+using std::thread;
+using std::vector;
+
+class HdmiCecDefault : public IHdmiCec, public hidl_death_recipient {
+  public:
     HdmiCecDefault();
     ~HdmiCecDefault();
     // Methods from ::android::hardware::tv::cec::V1_0::IHdmiCec follow.
@@ -47,11 +54,35 @@ struct HdmiCecDefault : public IHdmiCec, public hidl_death_recipient {
 
     Return<Result> init();
     Return<void> release();
-    static void* event_thread(void*);
-    static int getOpcode(struct cec_msg message);
-    static bool isWakeupMessage(struct cec_msg message);
-};
 
+  private:
+    void event_thread(HdmiCecPort* hdmiCecPort);
+    static int getOpcode(cec_msg message);
+    static int getFirstParam(cec_msg message);
+    static bool isWakeupMessage(cec_msg message);
+    static bool isTransferableInSleep(cec_msg message);
+    static bool isPowerUICommand(cec_msg message);
+    static Return<SendMessageResult> getSendMessageResult(int tx_status);
+
+    vector<thread> mEventThreads;
+    vector<shared_ptr<HdmiCecPort>> mHdmiCecPorts;
+
+    // When set to false, all the CEC commands are discarded. True by default after initialization.
+    bool mCecEnabled;
+    /*
+     * When set to false, HAL does not wake up the system upon receiving <Image View On> or
+     * <Text View On>. True by default after initialization.
+     */
+    bool mWakeupEnabled;
+    /*
+     * Updated when system goes into or comes out of standby mode.
+     * When set to true, Android system is handling CEC commands.
+     * When set to false, microprocessor is handling CEC commands.
+     * True by default after initialization.
+     */
+    bool mCecControlEnabled;
+    sp<IHdmiCecCallback> mCallback;
+};
 }  // namespace implementation
 }  // namespace V1_0
 }  // namespace cec

@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-#include <DefaultConfig.h>
 #include <FakeVehicleHardware.h>
+
+#include <DefaultConfig.h>
+#include <TestPropertyUtils.h>
 
 #include <android-base/expected.h>
 #include <android-base/file.h>
@@ -25,6 +27,7 @@
 #include <utils/SystemClock.h>
 
 #include <inttypes.h>
+#include <vector>
 
 namespace android {
 namespace hardware {
@@ -39,6 +42,8 @@ using ::aidl::android::hardware::automotive::vehicle::RawPropValues;
 using ::aidl::android::hardware::automotive::vehicle::SetValueRequest;
 using ::aidl::android::hardware::automotive::vehicle::SetValueResult;
 using ::aidl::android::hardware::automotive::vehicle::StatusCode;
+using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReport;
+using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyStatus;
@@ -47,6 +52,7 @@ using ::android::base::expected;
 using ::android::base::unexpected;
 using ::testing::ContainerEq;
 using ::testing::Eq;
+using ::testing::IsSubsetOf;
 using ::testing::WhenSortedBy;
 
 constexpr int INVALID_PROP_ID = 0;
@@ -578,6 +584,322 @@ TEST_F(FakeVehicleHardwareTest, testVendorOverridePropertiesDirDoesNotExist) {
     ASSERT_EQ(static_cast<size_t>(1), result.value().value.int32Values.size());
     ASSERT_EQ(4, result.value().value.int32Values[0]);
 }
+
+struct SetSpecialValueTestCase {
+    std::string name;
+    std::vector<VehiclePropValue> valuesToSet;
+    std::vector<VehiclePropValue> expectedValuesToGet;
+};
+
+std::vector<SetSpecialValueTestCase> setSpecialValueTestCases() {
+    return {
+            SetSpecialValueTestCase{
+                    .name = "set_ap_power_state_report_deep_sleep_exit",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::AP_POWER_STATE_REPORT),
+                                            .value.int32Values = {toInt(
+                                                    VehicleApPowerStateReport::DEEP_SLEEP_EXIT)},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::AP_POWER_STATE_REPORT),
+                                            .value.int32Values = {toInt(
+                                                    VehicleApPowerStateReport::DEEP_SLEEP_EXIT)},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::AP_POWER_STATE_REQ),
+                                            .status = VehiclePropertyStatus::AVAILABLE,
+                                            .value.int32Values = {toInt(VehicleApPowerStateReq::ON),
+                                                                  0},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_ap_power_state_report_hibernation_exit",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::AP_POWER_STATE_REPORT),
+                                            .value.int32Values = {toInt(
+                                                    VehicleApPowerStateReport::HIBERNATION_EXIT)},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::AP_POWER_STATE_REPORT),
+                                            .value.int32Values = {toInt(
+                                                    VehicleApPowerStateReport::HIBERNATION_EXIT)},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::AP_POWER_STATE_REQ),
+                                            .status = VehiclePropertyStatus::AVAILABLE,
+                                            .value.int32Values = {toInt(VehicleApPowerStateReq::ON),
+                                                                  0},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_ap_power_state_report_shutdown_cancelled",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::AP_POWER_STATE_REPORT),
+                                            .value.int32Values = {toInt(
+                                                    VehicleApPowerStateReport::SHUTDOWN_CANCELLED)},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::AP_POWER_STATE_REPORT),
+                                            .value.int32Values = {toInt(
+                                                    VehicleApPowerStateReport::SHUTDOWN_CANCELLED)},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::AP_POWER_STATE_REQ),
+                                            .status = VehiclePropertyStatus::AVAILABLE,
+                                            .value.int32Values = {toInt(VehicleApPowerStateReq::ON),
+                                                                  0},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_ap_power_state_report_wait_for_vhal",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::AP_POWER_STATE_REPORT),
+                                            .value.int32Values = {toInt(
+                                                    VehicleApPowerStateReport::WAIT_FOR_VHAL)},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::AP_POWER_STATE_REPORT),
+                                            .value.int32Values = {toInt(
+                                                    VehicleApPowerStateReport::WAIT_FOR_VHAL)},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::AP_POWER_STATE_REQ),
+                                            .status = VehiclePropertyStatus::AVAILABLE,
+                                            .value.int32Values = {toInt(VehicleApPowerStateReq::ON),
+                                                                  0},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_ap_power_state_report_deep_sleep_entry",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::AP_POWER_STATE_REPORT),
+                                            .value.int32Values = {toInt(
+                                                    VehicleApPowerStateReport::DEEP_SLEEP_ENTRY)},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::AP_POWER_STATE_REPORT),
+                                            .value.int32Values = {toInt(
+                                                    VehicleApPowerStateReport::DEEP_SLEEP_ENTRY)},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::AP_POWER_STATE_REQ),
+                                            .status = VehiclePropertyStatus::AVAILABLE,
+                                            .value.int32Values =
+                                                    {toInt(VehicleApPowerStateReq::FINISHED), 0},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_ap_power_state_report_hibernation_entry",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::AP_POWER_STATE_REPORT),
+                                            .value.int32Values = {toInt(
+                                                    VehicleApPowerStateReport::HIBERNATION_ENTRY)},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::AP_POWER_STATE_REPORT),
+                                            .value.int32Values = {toInt(
+                                                    VehicleApPowerStateReport::HIBERNATION_ENTRY)},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::AP_POWER_STATE_REQ),
+                                            .status = VehiclePropertyStatus::AVAILABLE,
+                                            .value.int32Values =
+                                                    {toInt(VehicleApPowerStateReq::FINISHED), 0},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "set_ap_power_state_report_shutdown_start",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::AP_POWER_STATE_REPORT),
+                                            .value.int32Values = {toInt(
+                                                    VehicleApPowerStateReport::SHUTDOWN_START)},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::AP_POWER_STATE_REPORT),
+                                            .value.int32Values = {toInt(
+                                                    VehicleApPowerStateReport::SHUTDOWN_START)},
+                                    },
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::AP_POWER_STATE_REQ),
+                                            .status = VehiclePropertyStatus::AVAILABLE,
+                                            .value.int32Values =
+                                                    {toInt(VehicleApPowerStateReq::FINISHED), 0},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "cluster_report_state_to_vendor",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::CLUSTER_REPORT_STATE),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = VENDOR_CLUSTER_REPORT_STATE,
+                                            .value.int32Values = {1},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "cluster_request_display_to_vendor",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::CLUSTER_REQUEST_DISPLAY),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = VENDOR_CLUSTER_REQUEST_DISPLAY,
+                                            .value.int32Values = {1},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "cluster_navigation_state_to_vendor",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(
+                                                    VehicleProperty::CLUSTER_NAVIGATION_STATE),
+                                            .value.byteValues = {0x1},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = VENDOR_CLUSTER_NAVIGATION_STATE,
+                                            .value.byteValues = {0x1},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "vendor_cluster_switch_ui_to_system",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = VENDOR_CLUSTER_SWITCH_UI,
+                                            .value.int32Values = {1},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::CLUSTER_SWITCH_UI),
+                                            .value.int32Values = {1},
+                                    },
+                            },
+            },
+            SetSpecialValueTestCase{
+                    .name = "vendor_cluster_display_state_to_system",
+                    .valuesToSet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = VENDOR_CLUSTER_DISPLAY_STATE,
+                                            .value.int32Values = {1, 2},
+                                    },
+                            },
+                    .expectedValuesToGet =
+                            {
+                                    VehiclePropValue{
+                                            .prop = toInt(VehicleProperty::CLUSTER_DISPLAY_STATE),
+                                            .value.int32Values = {1, 2},
+                                    },
+                            },
+            },
+    };
+}
+
+class FakeVehicleHardwareSpecialValuesTest
+    : public FakeVehicleHardwareTest,
+      public testing::WithParamInterface<SetSpecialValueTestCase> {};
+
+TEST_P(FakeVehicleHardwareSpecialValuesTest, testSetSpecialProperties) {
+    getHardware()->registerOnPropertyChangeEvent(
+            [this](const std::vector<VehiclePropValue>& values) {
+                return onPropertyChangeEvent(values);
+            });
+
+    const SetSpecialValueTestCase& tc = GetParam();
+
+    for (const auto& value : tc.valuesToSet) {
+        ASSERT_EQ(setValue(value), StatusCode::OK) << "failed to set property " << value.prop;
+    }
+
+    std::vector<VehiclePropValue> gotValues;
+
+    for (const auto& value : tc.expectedValuesToGet) {
+        auto result = getValue(VehiclePropValue{.prop = value.prop});
+
+        ASSERT_TRUE(result.ok()) << "failed to get property " << value.prop
+                                 << " status:" << getStatus(result);
+
+        gotValues.push_back(result.value());
+        VehiclePropValue valueWithNoTimestamp = result.value();
+        valueWithNoTimestamp.timestamp = 0;
+
+        ASSERT_EQ(valueWithNoTimestamp, value);
+    }
+
+    // Some of the updated properties might be the same as default config, thus not causing
+    // a property change event. So the changed properties should be a subset of all the updated
+    // properties.
+    ASSERT_THAT(getChangedProperties(), WhenSortedBy(mPropValueCmp, IsSubsetOf(gotValues)));
+}
+
+INSTANTIATE_TEST_SUITE_P(
+        SpecialValuesTests, FakeVehicleHardwareSpecialValuesTest,
+        testing::ValuesIn(setSpecialValueTestCases()),
+        [](const testing::TestParamInfo<FakeVehicleHardwareSpecialValuesTest::ParamType>& info) {
+            return info.param.name;
+        });
 
 }  // namespace fake
 }  // namespace vehicle
