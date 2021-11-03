@@ -22,6 +22,7 @@
 #include <type_traits>
 #include <typeinfo>
 
+#include <Obd2SensorStore.h>
 #include <VehicleUtils.h>
 #include <android/binder_enums.h>
 #include <utils/Log.h>
@@ -41,16 +42,6 @@ using ::aidl::android::hardware::automotive::vehicle::RawPropValues;
 using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
-
-template <class T>
-int getLastIndex() {
-    auto range = ::ndk::enum_range<T>();
-    auto it = range.begin();
-    while (std::next(it) != range.end()) {
-        it++;
-    }
-    return toInt(*it);
-}
 
 bool isDiagnosticProperty(int32_t prop) {
     return prop == toInt(VehicleProperty::OBD2_LIVE_FRAME) ||
@@ -84,9 +75,10 @@ void copyMixedValueJson(const Json::Value& jsonValue, RawPropValues& dest) {
 }
 
 std::vector<uint8_t> generateDiagnosticBytes(const RawPropValues& diagnosticValue) {
-    size_t lastIntegerSensorIndex =
-            static_cast<size_t>(getLastIndex<DiagnosticIntegerSensorIndex>());
-    size_t lastFloatSensorIndex = static_cast<size_t>(getLastIndex<DiagnosticFloatSensorIndex>());
+    size_t lastIntegerSensorIndex = static_cast<size_t>(
+            obd2frame::Obd2SensorStore::getLastIndex<DiagnosticIntegerSensorIndex>());
+    size_t lastFloatSensorIndex = static_cast<size_t>(
+            obd2frame::Obd2SensorStore::getLastIndex<DiagnosticFloatSensorIndex>());
 
     size_t byteSize = (lastIntegerSensorIndex + lastFloatSensorIndex + 2);
     std::vector<uint8_t> bytes((byteSize + 7) / 8);
