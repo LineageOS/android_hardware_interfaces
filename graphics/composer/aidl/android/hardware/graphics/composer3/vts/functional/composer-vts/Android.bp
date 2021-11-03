@@ -23,33 +23,22 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
-cc_test {
-    name: "VtsHalGraphicsComposer3_TargetTest",
-    defaults: [
-        "VtsHalTargetTestDefaults",
-        "use_libaidlvintf_gtest_helper_static",
-    ],
+cc_library_static {
+    name: "android.hardware.graphics.composer@3-vts",
+    defaults: ["hidl_defaults"],
     srcs: [
-        "VtsHalGraphicsComposer3_TargetTest.cpp",
-        "composer-vts/GraphicsComposerCallback.cpp",
-    ],
-
-    // TODO(b/64437680): Assume these libs are always available on the device.
-    shared_libs: [
-        "libbinder_ndk",
-        "libbinder",
+        "GraphicsComposerCallback.cpp",
     ],
     static_libs: [
         "android.hardware.graphics.composer3-V1-ndk",
         "android.hardware.graphics.common-V3-ndk",
-        "android.hardware.graphics.common@1.2",
-        "android.hardware.common-V2-ndk",
-        "android.hardware.common.fmq-V1-ndk",
-        "android.hardware.graphics.composer@3-vts",
+        "libgtest",
+        "libbase",
     ],
-
-    test_suites: [
-        "general-tests",
-        "vts",
+    cflags: [
+        "-O0",
+        "-g",
+        "-DLOG_TAG=\"ComposerVts\"",
     ],
+    export_include_dirs: ["include"],
 }
