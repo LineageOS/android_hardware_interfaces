@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,10 +33,21 @@
 
 package android.hardware.biometrics.fingerprint;
 @VintfStability
-parcelable SensorLocation {
-  int displayId;
-  int sensorLocationX;
-  int sensorLocationY;
-  int sensorRadius;
-  String display = "";
+interface ISessionCallback {
+  void onChallengeGenerated(in long challenge);
+  void onChallengeRevoked(in long challenge);
+  void onAcquired(in android.hardware.biometrics.fingerprint.AcquiredInfo info, in int vendorCode);
+  void onError(in android.hardware.biometrics.fingerprint.Error error, in int vendorCode);
+  void onEnrollmentProgress(in int enrollmentId, int remaining);
+  void onAuthenticationSucceeded(in int enrollmentId, in android.hardware.keymaster.HardwareAuthToken hat);
+  void onAuthenticationFailed();
+  void onLockoutTimed(in long durationMillis);
+  void onLockoutPermanent();
+  void onLockoutCleared();
+  void onInteractionDetected();
+  void onEnrollmentsEnumerated(in int[] enrollmentIds);
+  void onEnrollmentsRemoved(in int[] enrollmentIds);
+  void onAuthenticatorIdRetrieved(in long authenticatorId);
+  void onAuthenticatorIdInvalidated(in long newAuthenticatorId);
+  void onSessionClosed();
 }

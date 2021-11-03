@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,19 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.biometrics.fingerprint;
-@VintfStability
-parcelable SensorLocation {
-  int displayId;
-  int sensorLocationX;
-  int sensorLocationY;
-  int sensorRadius;
-  String display = "";
+@Backing(type="byte") @VintfStability
+enum AcquiredInfo {
+  UNKNOWN = 0,
+  GOOD = 1,
+  PARTIAL = 2,
+  INSUFFICIENT = 3,
+  SENSOR_DIRTY = 4,
+  TOO_SLOW = 5,
+  TOO_FAST = 6,
+  VENDOR = 7,
+  START = 8,
+  TOO_DARK = 9,
+  TOO_BRIGHT = 10,
+  IMMOBILE = 11,
+  RETRYING_CAPTURE = 12,
 }
