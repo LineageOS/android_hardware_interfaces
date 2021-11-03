@@ -85,4 +85,5 @@ interface IComposerClient {
   const int EX_UNSUPPORTED = 8;
   const int EX_SEAMLESS_NOT_ALLOWED = 9;
   const int EX_SEAMLESS_NOT_POSSIBLE = 10;
+  const int INVALID_CONFIGURATION = 2147483647;
 }
