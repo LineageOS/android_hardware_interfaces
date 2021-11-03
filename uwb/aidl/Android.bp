@@ -35,6 +35,7 @@ aidl_interface {
                 "//apex_available:platform",
                 "com.android.uwb",
             ],
+            min_sdk_version: "current",
         },
     },
 }
