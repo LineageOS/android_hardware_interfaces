@@ -18,35 +18,15 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_test {
-    name: "FakeVehicleHardwareTest",
+cc_library {
+    name: "FakeUserHal",
     vendor: true,
-    srcs: ["*.cpp"],
-    cflags: ["-DENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING"],
-    header_libs: [
-        "IVehicleHardware",
-        "VehicleHalDefaultConfig",
-        "VehicleHalTestUtilHeaders",
-    ],
+    srcs: ["src/*.cpp"],
+    local_include_dirs: ["include"],
+    export_include_dirs: ["include"],
+    defaults: ["VehicleHalDefaults"],
     static_libs: [
         "VehicleHalUtils",
-        "FakeVehicleHardware",
-        "FakeVehicleHalValueGenerators",
-        "FakeObd2Frame",
-        "libgtest",
-        "libgmock",
     ],
-    shared_libs: [
-        "libjsoncpp",
-    ],
-    data: [
-        ":FakeVehicleHardwareTestOverrideJson",
-    ],
-    defaults: ["VehicleHalDefaults"],
-    test_suites: ["device-tests"],
-}
-
-filegroup {
-    name: "FakeVehicleHardwareTestOverrideJson",
-    srcs: ["override/*"],
+    export_static_lib_headers: ["VehicleHalUtils"],
 }
