@@ -30,12 +30,8 @@ Return<void> RadioResponse::acknowledgeRequest(int32_t serial) {
     // TODO(b/203699028): send to correct requestor or confirm if spam is not a problem
     if (mDataCb) mDataCb->acknowledgeRequest(serial);
     if (mMessagingCb) mMessagingCb->acknowledgeRequest(serial);
+    if (mNetworkCb) mNetworkCb->acknowledgeRequest(serial);
     if (mSimCb) mSimCb->acknowledgeRequest(serial);
-    return {};
-}
-
-Return<void> RadioResponse::supplyNetworkDepersonalizationResponse(
-        const V1_0::RadioResponseInfo& info, int32_t remainingRetries) {
     return {};
 }
 
@@ -79,27 +75,6 @@ Return<void> RadioResponse::getLastCallFailCauseResponse(
     return {};
 }
 
-Return<void> RadioResponse::getSignalStrengthResponse(const V1_0::RadioResponseInfo& info,
-                                                      const V1_0::SignalStrength& sigStrength) {
-    return {};
-}
-
-Return<void> RadioResponse::getVoiceRegistrationStateResponse(
-        const V1_0::RadioResponseInfo& info, const V1_0::VoiceRegStateResult& voiceRegResponse) {
-    return {};
-}
-
-Return<void> RadioResponse::getDataRegistrationStateResponse(
-        const V1_0::RadioResponseInfo& info, const V1_0::DataRegStateResult& dataRegResponse) {
-    return {};
-}
-
-Return<void> RadioResponse::getOperatorResponse(  //
-        const V1_0::RadioResponseInfo& info, const hidl_string& longName,
-        const hidl_string& shortName, const hidl_string& numeric) {
-    return {};
-}
-
 Return<void> RadioResponse::setRadioPowerResponse(const V1_0::RadioResponseInfo& info) {
     return {};
 }
@@ -139,30 +114,6 @@ Return<void> RadioResponse::acceptCallResponse(const V1_0::RadioResponseInfo& in
     return {};
 }
 
-Return<void> RadioResponse::setBarringPasswordResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getNetworkSelectionModeResponse(const V1_0::RadioResponseInfo& info,
-                                                            bool manual) {
-    return {};
-}
-
-Return<void> RadioResponse::setNetworkSelectionModeAutomaticResponse(
-        const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::setNetworkSelectionModeManualResponse(
-        const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getAvailableNetworksResponse(
-        const V1_0::RadioResponseInfo& info, const hidl_vec<V1_0::OperatorInfo>& networkInfos) {
-    return {};
-}
-
 Return<void> RadioResponse::startDtmfResponse(const V1_0::RadioResponseInfo& info) {
     return {};
 }
@@ -193,53 +144,12 @@ Return<void> RadioResponse::getClipResponse(const V1_0::RadioResponseInfo& info,
     return {};
 }
 
-Return<void> RadioResponse::setSuppServiceNotificationsResponse(
-        const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::setBandModeResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getAvailableBandModesResponse(
-        const V1_0::RadioResponseInfo& info, const hidl_vec<V1_0::RadioBandMode>& bandModes) {
-    return {};
-}
-
 Return<void> RadioResponse::handleStkCallSetupRequestFromSimResponse(
         const V1_0::RadioResponseInfo& info) {
     return {};
 }
 
 Return<void> RadioResponse::explicitCallTransferResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::setPreferredNetworkTypeResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getPreferredNetworkTypeResponse(const V1_0::RadioResponseInfo& info,
-                                                            V1_0::PreferredNetworkType nwType) {
-    return {};
-}
-
-Return<void> RadioResponse::getNeighboringCidsResponse(
-        const V1_0::RadioResponseInfo& info, const hidl_vec<V1_0::NeighboringCell>& cells) {
-    return {};
-}
-
-Return<void> RadioResponse::setLocationUpdatesResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::setCdmaRoamingPreferenceResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getCdmaRoamingPreferenceResponse(const V1_0::RadioResponseInfo& info,
-                                                             V1_0::CdmaRoamingType type) {
     return {};
 }
 
@@ -279,25 +189,6 @@ Return<void> RadioResponse::exitEmergencyCallbackModeResponse(const V1_0::RadioR
     return {};
 }
 
-Return<void> RadioResponse::getVoiceRadioTechnologyResponse(const V1_0::RadioResponseInfo& info,
-                                                            V1_0::RadioTechnology rat) {
-    return {};
-}
-
-Return<void> RadioResponse::getCellInfoListResponse(const V1_0::RadioResponseInfo& info,
-                                                    const hidl_vec<V1_0::CellInfo>& cellInfo) {
-    return {};
-}
-
-Return<void> RadioResponse::setCellInfoListRateResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getImsRegistrationStateResponse(  //
-        const V1_0::RadioResponseInfo& info, bool isRegd, V1_0::RadioTechnologyFamily ratFamily) {
-    return {};
-}
-
 Return<void> RadioResponse::nvReadItemResponse(const V1_0::RadioResponseInfo& info,
                                                const hidl_string& result) {
     return {};
@@ -334,21 +225,6 @@ Return<void> RadioResponse::setRadioCapabilityResponse(const V1_0::RadioResponse
     return {};
 }
 
-Return<void> RadioResponse::startLceServiceResponse(const V1_0::RadioResponseInfo& info,
-                                                    const V1_0::LceStatusInfo& statusInfo) {
-    return {};
-}
-
-Return<void> RadioResponse::stopLceServiceResponse(const V1_0::RadioResponseInfo& info,
-                                                   const V1_0::LceStatusInfo& statusInfo) {
-    return {};
-}
-
-Return<void> RadioResponse::pullLceDataResponse(const V1_0::RadioResponseInfo& info,
-                                                const V1_0::LceDataInfo& lceInfo) {
-    return {};
-}
-
 Return<void> RadioResponse::getModemActivityInfoResponse(
         const V1_0::RadioResponseInfo& info, const V1_0::ActivityStatsInfo& activityInfo) {
     return {};
@@ -358,55 +234,8 @@ Return<void> RadioResponse::sendDeviceStateResponse(const V1_0::RadioResponseInf
     return {};
 }
 
-Return<void> RadioResponse::setIndicationFilterResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::startNetworkScanResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::stopNetworkScanResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getCellInfoListResponse_1_2(const V1_0::RadioResponseInfo& info,
-                                                        const hidl_vec<V1_2::CellInfo>& cellInfo) {
-    return {};
-}
-
-Return<void> RadioResponse::setSignalStrengthReportingCriteriaResponse(
-        const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::setLinkCapacityReportingCriteriaResponse(
-        const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
 Return<void> RadioResponse::getCurrentCallsResponse_1_2(const V1_0::RadioResponseInfo& info,
                                                         const hidl_vec<V1_2::Call>& calls) {
-    return {};
-}
-
-Return<void> RadioResponse::getSignalStrengthResponse_1_2(
-        const V1_0::RadioResponseInfo& info, const V1_2::SignalStrength& signalStrength) {
-    return {};
-}
-
-Return<void> RadioResponse::getVoiceRegistrationStateResponse_1_2(
-        const V1_0::RadioResponseInfo& info, const V1_2::VoiceRegStateResult& voiceRegResponse) {
-    return {};
-}
-
-Return<void> RadioResponse::getDataRegistrationStateResponse_1_2(
-        const V1_0::RadioResponseInfo& info, const V1_2::DataRegStateResult& dataRegResponse) {
-    return {};
-}
-
-Return<void> RadioResponse::setSystemSelectionChannelsResponse(
-        const V1_0::RadioResponseInfo& info) {
     return {};
 }
 
@@ -423,137 +252,11 @@ Return<void> RadioResponse::emergencyDialResponse(const V1_0::RadioResponseInfo&
     return {};
 }
 
-Return<void> RadioResponse::startNetworkScanResponse_1_4(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getCellInfoListResponse_1_4(const V1_0::RadioResponseInfo& info,
-                                                        const hidl_vec<V1_4::CellInfo>& cellInfo) {
-    return {};
-}
-
-Return<void> RadioResponse::getDataRegistrationStateResponse_1_4(
-        const V1_0::RadioResponseInfo& info, const V1_4::DataRegStateResult& dataRegResponse) {
-    return {};
-}
-
-Return<void> RadioResponse::getPreferredNetworkTypeBitmapResponse(
-        const V1_0::RadioResponseInfo& info,
-        hidl_bitfield<V1_4::RadioAccessFamily> networkTypeBitmap) {
-    return {};
-}
-
-Return<void> RadioResponse::setPreferredNetworkTypeBitmapResponse(
-        const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getSignalStrengthResponse_1_4(
-        const V1_0::RadioResponseInfo& info, const V1_4::SignalStrength& signalStrength) {
-    return {};
-}
-
-Return<void> RadioResponse::setSignalStrengthReportingCriteriaResponse_1_5(
-        const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::setLinkCapacityReportingCriteriaResponse_1_5(
-        const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::setSystemSelectionChannelsResponse_1_5(
-        const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::startNetworkScanResponse_1_5(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
 Return<void> RadioResponse::setRadioPowerResponse_1_5(const V1_0::RadioResponseInfo& info) {
     return {};
 }
 
-Return<void> RadioResponse::setIndicationFilterResponse_1_5(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getBarringInfoResponse(
-        const V1_0::RadioResponseInfo& info, const V1_5::CellIdentity& cellIdentity,
-        const hidl_vec<V1_5::BarringInfo>& barringInfos) {
-    return {};
-}
-
-Return<void> RadioResponse::getVoiceRegistrationStateResponse_1_5(
-        const V1_0::RadioResponseInfo& info, const V1_5::RegStateResult& voiceRegResponse) {
-    return {};
-}
-
-Return<void> RadioResponse::getDataRegistrationStateResponse_1_5(
-        const V1_0::RadioResponseInfo& info, const V1_5::RegStateResult& dataRegResponse) {
-    return {};
-}
-
-Return<void> RadioResponse::getCellInfoListResponse_1_5(const V1_0::RadioResponseInfo& info,
-                                                        const hidl_vec<V1_5::CellInfo>& cellInfo) {
-    return {};
-}
-
-Return<void> RadioResponse::setNetworkSelectionModeManualResponse_1_5(
-        const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
 Return<void> RadioResponse::setRadioPowerResponse_1_6(const V1_6::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::setNrDualConnectivityStateResponse(
-        const V1_6::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::isNrDualConnectivityEnabledResponse(const V1_6::RadioResponseInfo& info,
-                                                                bool isEnabled) {
-    return {};
-}
-
-Return<void> RadioResponse::setAllowedNetworkTypesBitmapResponse(
-        const V1_6::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getAllowedNetworkTypesBitmapResponse(
-        const V1_6::RadioResponseInfo& info,
-        hidl_bitfield<V1_4::RadioAccessFamily> networkTypeBitmap) {
-    return {};
-}
-
-Return<void> RadioResponse::getSystemSelectionChannelsResponse(
-        const V1_6::RadioResponseInfo& info,
-        const hidl_vec<V1_5::RadioAccessSpecifier>& specifiers) {
-    return {};
-}
-
-Return<void> RadioResponse::getCellInfoListResponse_1_6(const V1_6::RadioResponseInfo& info,
-                                                        const hidl_vec<V1_6::CellInfo>& cellInfo) {
-    return {};
-}
-
-Return<void> RadioResponse::getSignalStrengthResponse_1_6(
-        const V1_6::RadioResponseInfo& info, const V1_6::SignalStrength& signalStrength) {
-    return {};
-}
-
-Return<void> RadioResponse::getVoiceRegistrationStateResponse_1_6(
-        const V1_6::RadioResponseInfo& info, const V1_6::RegStateResult& voiceRegResponse) {
-    return {};
-}
-
-Return<void> RadioResponse::getDataRegistrationStateResponse_1_6(
-        const V1_6::RadioResponseInfo& info, const V1_6::RegStateResult& dataRegResponse) {
     return {};
 }
 
