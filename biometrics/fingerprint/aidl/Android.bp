@@ -26,5 +26,8 @@ aidl_interface {
             enabled: false,
         },
     },
-    versions: ["1"],
+    versions: [
+        "1",
+        "2",
+    ],
 }

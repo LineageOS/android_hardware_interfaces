@@ -18,9 +18,12 @@
 #define android_hardware_automotive_vehicle_aidl_impl_fake_impl_hardware_include_FakeVehicleHardware_H_
 
 #include <DefaultConfig.h>
+#include <FakeObd2Frame.h>
+#include <FakeUserHal.h>
 #include <IVehicleHardware.h>
 #include <VehicleHalTypes.h>
 #include <VehiclePropertyStore.h>
+#include <android-base/result.h>
 #include <android-base/thread_annotations.h>
 
 #include <map>
@@ -85,14 +88,16 @@ class FakeVehicleHardware final : public IVehicleHardware {
     // Expose private methods to unit test.
     friend class FakeVehicleHardwareTestHelper;
 
-    std::unique_ptr<VehiclePropertyStore> mServerSidePropStore;
     // mValuePool is also used in mServerSidePropStore.
-    std::shared_ptr<VehiclePropValuePool> mValuePool;
+    const std::shared_ptr<VehiclePropValuePool> mValuePool;
+    const std::shared_ptr<VehiclePropertyStore> mServerSidePropStore;
+    const std::unique_ptr<obd2frame::FakeObd2Frame> mFakeObd2Frame;
+    const std::unique_ptr<FakeUserHal> mFakeUserHal;
     std::mutex mCallbackLock;
     OnPropertyChangeCallback mOnPropertyChangeCallback GUARDED_BY(mCallbackLock);
     OnPropertySetErrorCallback mOnPropertySetErrorCallback GUARDED_BY(mCallbackLock);
 
-    void init(std::shared_ptr<VehiclePropValuePool> valuePool);
+    void init();
     // Stores the initial value to property store.
     void storePropInitialValue(const defaultconfig::ConfigDeclaration& config);
     // The callback that would be called when a vehicle property value change happens.
@@ -104,13 +109,21 @@ class FakeVehicleHardware final : public IVehicleHardware {
     // Override the properties using config files in 'overrideDir'.
     void overrideProperties(const char* overrideDir);
 
-    ::aidl::android::hardware::automotive::vehicle::StatusCode maybeSetSpecialValue(
+    ::android::base::Result<void> maybeSetSpecialValue(
             const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
             bool* isSpecialValue);
-    ::aidl::android::hardware::automotive::vehicle::StatusCode setApPowerStateReport(
+    ::android::base::Result<VehiclePropValuePool::RecyclableType> maybeGetSpecialValue(
+            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
+            bool* isSpecialValue) const;
+    ::android::base::Result<void> setApPowerStateReport(
             const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
     VehiclePropValuePool::RecyclableType createApPowerStateReq(
             ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq state);
+    ::android::base::Result<void> setUserHalProp(
+            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
+    ::android::base::Result<VehiclePropValuePool::RecyclableType> getUserHalProp(
+            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
+    bool isHvacPropAndHvacNotAvailable(int32_t propId);
 };
 
 }  // namespace fake

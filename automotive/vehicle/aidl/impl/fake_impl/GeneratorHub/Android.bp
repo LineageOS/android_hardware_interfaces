@@ -25,7 +25,10 @@ cc_library {
     local_include_dirs: ["include"],
     export_include_dirs: ["include"],
     defaults: ["VehicleHalDefaults"],
-    static_libs: ["VehicleHalUtils"],
+    static_libs: [
+        "VehicleHalUtils",
+        "FakeObd2Frame",
+    ],
     shared_libs: [
         "libjsoncpp",
     ],
