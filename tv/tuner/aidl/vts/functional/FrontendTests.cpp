@@ -387,6 +387,16 @@ void FrontendTests::verifyFrontendStatus(vector<FrontendStatusType> statusTypes,
                             expectStatuses[i].get<FrontendStatus::Tag::isShortFrames>());
                 break;
             }
+            case FrontendStatusType::ISDBT_MODE: {
+                ASSERT_TRUE(realStatuses[i].get<FrontendStatus::Tag::isdbtMode>() ==
+                            expectStatuses[i].get<FrontendStatus::Tag::isdbtMode>());
+                break;
+            }
+            case FrontendStatusType::ISDBT_PARTIAL_RECEPTION_FLAG: {
+                ASSERT_TRUE(realStatuses[i].get<FrontendStatus::Tag::partialReceptionFlag>() ==
+                            expectStatuses[i].get<FrontendStatus::Tag::partialReceptionFlag>());
+                break;
+            }
             default: {
                 continue;
             }

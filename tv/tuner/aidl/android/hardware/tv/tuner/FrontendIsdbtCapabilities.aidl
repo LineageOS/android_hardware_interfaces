@@ -46,4 +46,19 @@ parcelable FrontendIsdbtCapabilities {
      * Guard Interval Types defined by FrontendIsdbtGuardInterval.
      */
     int guardIntervalCap;
+
+    /**
+     * Time Interleaves defined by FrontendIsdbtTimeInterleaveMode.
+     */
+    int timeInterleaveCap;
+
+    /**
+     * If segment auto Supported or not.
+     */
+    boolean isSegmentAuto;
+
+    /**
+     * If full segment supported or not.
+     */
+    boolean isFullSegment;
 }
