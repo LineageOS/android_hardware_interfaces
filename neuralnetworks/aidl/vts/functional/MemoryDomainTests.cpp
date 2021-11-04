@@ -28,9 +28,9 @@
 #include <Utils.h>
 #include <nnapi/SharedMemory.h>
 #include <nnapi/hal/aidl/Conversions.h>
+#include <nnapi/hal/aidl/HalInterfaces.h>
 #include <nnapi/hal/aidl/Utils.h>
 
-#include "AidlHalInterfaces.h"
 #include "Callbacks.h"
 #include "GeneratedTestHarness.h"
 #include "MemoryUtils.h"

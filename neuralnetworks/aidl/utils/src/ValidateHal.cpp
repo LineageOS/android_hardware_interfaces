@@ -16,9 +16,12 @@
 
 #define LOG_TAG "ValidateHal"
 
-#include "AidlValidateHal.h"
+#include "ValidateHal.h"
+
+#include "HalUtils.h"
 
 #include <android-base/logging.h>
+#include <nnapi/TypeUtils.h>
 #include <nnapi/hal/aidl/Conversions.h>
 
 #include <algorithm>
@@ -26,9 +29,6 @@
 #include <set>
 #include <utility>
 #include <vector>
-
-#include "AidlHalUtils.h"
-#include "nnapi/TypeUtils.h"
 
 namespace android {
 namespace nn {
