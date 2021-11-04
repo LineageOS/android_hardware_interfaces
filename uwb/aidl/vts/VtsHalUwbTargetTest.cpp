@@ -166,13 +166,21 @@ TEST_P(UwbAidl, ChipCoreInit) {
     EXPECT_TRUE(iuwb_chip->coreInit().isOk());
 }
 
-TEST_P(UwbAidl, ChipGetSupportedVendorUciVersion) {
+TEST_P(UwbAidl, ChipGetSupportedAndroidUciVersion) {
     const auto iuwb_chip = getAnyChipAndOpen();
     EXPECT_TRUE(iuwb_chip->coreInit().isOk());
 
-    int version;
-    EXPECT_TRUE(iuwb_chip->getSupportedVendorUciVersion(&version).isOk());
+    int32_t version;
+    EXPECT_TRUE(iuwb_chip->getSupportedAndroidUciVersion(&version).isOk());
     EXPECT_GT(version, 0);
+}
+
+TEST_P(UwbAidl, ChipGetSupportedAndroidCapabilities) {
+    const auto iuwb_chip = getAnyChipAndOpen();
+    EXPECT_TRUE(iuwb_chip->coreInit().isOk());
+
+    int64_t capabilities;
+    EXPECT_TRUE(iuwb_chip->getSupportedAndroidCapabilities(&capabilities).isOk());
 }
 
 TEST_P(UwbAidl, ChipGetName) {
