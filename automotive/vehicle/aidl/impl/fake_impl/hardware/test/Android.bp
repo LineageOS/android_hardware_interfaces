@@ -32,6 +32,8 @@ cc_test {
         "VehicleHalUtils",
         "FakeVehicleHardware",
         "FakeVehicleHalValueGenerators",
+        "FakeObd2Frame",
+        "FakeUserHal",
         "libgtest",
         "libgmock",
     ],

@@ -29,7 +29,10 @@ cc_test {
         "VtsHalTargetTestDefaults",
         "use_libaidlvintf_gtest_helper_static",
     ],
-    srcs: ["VtsHalGraphicsComposer3_TargetTest.cpp"],
+    srcs: [
+        "VtsHalGraphicsComposer3_TargetTest.cpp",
+        "composer-vts/GraphicsComposerCallback.cpp",
+    ],
 
     // TODO(b/64437680): Assume these libs are always available on the device.
     shared_libs: [
@@ -42,6 +45,7 @@ cc_test {
         "android.hardware.graphics.common@1.2",
         "android.hardware.common-V2-ndk",
         "android.hardware.common.fmq-V1-ndk",
+        "android.hardware.graphics.composer@3-vts",
     ],
 
     test_suites: [
