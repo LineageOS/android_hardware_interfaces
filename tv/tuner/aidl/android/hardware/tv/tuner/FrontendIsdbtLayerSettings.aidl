@@ -16,22 +16,24 @@
 
 package android.hardware.tv.tuner;
 
-import android.hardware.tv.tuner.FrontendAtsc3TimeInterleaveMode;
-import android.hardware.tv.tuner.FrontendCableTimeInterleaveMode;
-import android.hardware.tv.tuner.FrontendDtmbTimeInterleaveMode;
+import android.hardware.tv.tuner.FrontendIsdbtCoderate;
+import android.hardware.tv.tuner.FrontendIsdbtModulation;
 import android.hardware.tv.tuner.FrontendIsdbtTimeInterleaveMode;
 
 /**
+ * Layer Settings for ISDB-T Frontend.
  * @hide
  */
 @VintfStability
-union FrontendInterleaveMode {
-    FrontendAtsc3TimeInterleaveMode atsc3
-        = FrontendAtsc3TimeInterleaveMode.UNDEFINED;
+parcelable FrontendIsdbtLayerSettings {
+    FrontendIsdbtModulation modulation = FrontendIsdbtModulation.UNDEFINED;
 
-    FrontendCableTimeInterleaveMode dvbc;
+    FrontendIsdbtCoderate coderate = FrontendIsdbtCoderate.UNDEFINED;
 
-    FrontendDtmbTimeInterleaveMode dtmb;
+    FrontendIsdbtTimeInterleaveMode timeInterleave = FrontendIsdbtTimeInterleaveMode.UNDEFINED;
 
-    FrontendIsdbtTimeInterleaveMode isdbt;
+    /**
+     * 0 ~ 13 and 0xFF(Auto)
+     */
+    int numOfSegment;
 }

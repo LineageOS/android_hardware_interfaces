@@ -208,4 +208,14 @@ enum FrontendStatusType {
      * If short frames is enabled or not.
      */
     IS_SHORT_FRAMES,
+
+    /**
+     * ISDB-T Mode.
+     */
+    ISDBT_MODE,
+
+    /**
+     * ISDB-T Partial Reception Flag.
+     */
+    ISDBT_PARTIAL_RECEPTION_FLAG,
 }

@@ -38,4 +38,5 @@ union FrontendInterleaveMode {
   android.hardware.tv.tuner.FrontendAtsc3TimeInterleaveMode atsc3 = android.hardware.tv.tuner.FrontendAtsc3TimeInterleaveMode.UNDEFINED;
   android.hardware.tv.tuner.FrontendCableTimeInterleaveMode dvbc;
   android.hardware.tv.tuner.FrontendDtmbTimeInterleaveMode dtmb;
+  android.hardware.tv.tuner.FrontendIsdbtTimeInterleaveMode isdbt;
 }

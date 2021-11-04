@@ -21,6 +21,8 @@ import android.hardware.tv.tuner.FrontendDvbtHierarchy;
 import android.hardware.tv.tuner.FrontendGuardInterval;
 import android.hardware.tv.tuner.FrontendInnerFec;
 import android.hardware.tv.tuner.FrontendInterleaveMode;
+import android.hardware.tv.tuner.FrontendIsdbtMode;
+import android.hardware.tv.tuner.FrontendIsdbtPartialReceptionFlag;
 import android.hardware.tv.tuner.FrontendModulation;
 import android.hardware.tv.tuner.FrontendModulationStatus;
 import android.hardware.tv.tuner.FrontendRollOff;
@@ -190,4 +192,14 @@ union FrontendStatus {
      * If short frames is enabled or not.
      */
     boolean isShortFrames;
+
+    /**
+     * ISDB-T Mode.
+     */
+    FrontendIsdbtMode isdbtMode;
+
+    /**
+     * ISDB-T Partial Reception Flag.
+     */
+    FrontendIsdbtPartialReceptionFlag partialReceptionFlag;
 }
