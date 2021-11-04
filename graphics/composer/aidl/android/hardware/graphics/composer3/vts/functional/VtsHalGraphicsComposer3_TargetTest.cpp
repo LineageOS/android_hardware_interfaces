@@ -9,6 +9,7 @@
 #include <composer-vts/include/GraphicsComposerCallback.h>
 #include <gtest/gtest.h>
 #include <algorithm>
+#include <numeric>
 #include <regex>
 #include <string>
 #include <thread>
@@ -167,6 +168,7 @@ class GraphicsComposerAidlTest : public ::testing::TestWithParam<std::string> {
     std::shared_ptr<IComposer> mComposer;
     std::shared_ptr<IComposerClient> mComposerClient;
     int64_t mInvalidDisplayId;
+    int64_t mPrimaryDisplay;
     std::vector<VtsDisplay> mDisplays;
     std::shared_ptr<GraphicsComposerCallback> mComposerCallback;
 };
@@ -185,6 +187,293 @@ TEST_P(GraphicsComposerAidlTest, getDisplayCapabilities) {
 
         EXPECT_TRUE(mComposerClient->getDisplayCapabilities(display.get(), &capabilities).isOk());
     }
+}
+
+TEST_P(GraphicsComposerAidlTest, GetDisplayIdentificationData) {
+    DisplayIdentification displayIdentification0;
+
+    const auto error =
+            mComposerClient->getDisplayIdentificationData(mPrimaryDisplay, &displayIdentification0);
+    if (error.getServiceSpecificError() == IComposerClient::EX_UNSUPPORTED) {
+        return;
+    }
+    ASSERT_TRUE(error.isOk()) << "failed to get display identification data";
+    ASSERT_FALSE(displayIdentification0.data.empty());
+
+    constexpr size_t kEdidBlockSize = 128;
+    ASSERT_TRUE(displayIdentification0.data.size() % kEdidBlockSize == 0)
+            << "EDID blob length is not a multiple of " << kEdidBlockSize;
+
+    const uint8_t kEdidHeader[] = {0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00};
+    ASSERT_TRUE(std::equal(std::begin(kEdidHeader), std::end(kEdidHeader),
+                           displayIdentification0.data.begin()))
+            << "EDID blob doesn't start with the fixed EDID header";
+    ASSERT_EQ(0, std::accumulate(displayIdentification0.data.begin(),
+                                 displayIdentification0.data.begin() + kEdidBlockSize,
+                                 static_cast<uint8_t>(0)))
+            << "EDID base block doesn't checksum";
+
+    DisplayIdentification displayIdentification1;
+    ASSERT_TRUE(
+            mComposerClient->getDisplayIdentificationData(mPrimaryDisplay, &displayIdentification1)
+                    .isOk());
+
+    ASSERT_EQ(displayIdentification0.port, displayIdentification1.port) << "ports are not stable";
+    ASSERT_TRUE(displayIdentification0.data.size() == displayIdentification1.data.size() &&
+                std::equal(displayIdentification0.data.begin(), displayIdentification0.data.end(),
+                           displayIdentification1.data.begin()))
+            << "data is not stable";
+}
+
+TEST_P(GraphicsComposerAidlTest, GetHdrCapabilities) {
+    HdrCapabilities hdrCapabilities;
+    const auto error = mComposerClient->getHdrCapabilities(mPrimaryDisplay, &hdrCapabilities);
+
+    ASSERT_TRUE(error.isOk());
+    ASSERT_TRUE(hdrCapabilities.maxLuminance >= hdrCapabilities.minLuminance);
+}
+
+TEST_P(GraphicsComposerAidlTest, GetPerFrameMetadataKeys) {
+    std::vector<PerFrameMetadataKey> keys;
+    const auto error = mComposerClient->getPerFrameMetadataKeys(mPrimaryDisplay, &keys);
+
+    if (error.isOk()) {
+        EXPECT_EQ(EX_NONE, error.getServiceSpecificError());
+    }
+}
+
+TEST_P(GraphicsComposerAidlTest, GetReadbackBufferAttributes) {
+    ReadbackBufferAttributes readBackBufferAttributes;
+    const auto error = mComposerClient->getReadbackBufferAttributes(mPrimaryDisplay,
+                                                                    &readBackBufferAttributes);
+
+    if (error.isOk()) {
+        EXPECT_EQ(EX_NONE, error.getServiceSpecificError());
+    }
+}
+
+TEST_P(GraphicsComposerAidlTest, GetRenderIntents) {
+    std::vector<ColorMode> modes;
+    EXPECT_TRUE(mComposerClient->getColorModes(mPrimaryDisplay, &modes).isOk());
+    for (auto mode : modes) {
+        std::vector<RenderIntent> intents;
+        EXPECT_TRUE(mComposerClient->getRenderIntents(mPrimaryDisplay, mode, &intents).isOk());
+
+        bool isHdr;
+        switch (mode) {
+            case ColorMode::BT2100_PQ:
+            case ColorMode::BT2100_HLG:
+                isHdr = true;
+                break;
+            default:
+                isHdr = false;
+                break;
+        }
+        RenderIntent requiredIntent =
+                isHdr ? RenderIntent::TONE_MAP_COLORIMETRIC : RenderIntent::COLORIMETRIC;
+
+        auto iter = std::find(intents.cbegin(), intents.cend(), requiredIntent);
+        EXPECT_NE(intents.cend(), iter);
+    }
+}
+
+TEST_P(GraphicsComposerAidlTest, GetRenderIntentsBadDisplay) {
+    std::vector<ColorMode> modes;
+    EXPECT_TRUE(mComposerClient->getColorModes(mPrimaryDisplay, &modes).isOk());
+    for (auto mode : modes) {
+        std::vector<RenderIntent> renderIntents;
+        const auto error =
+                mComposerClient->getRenderIntents(mInvalidDisplayId, mode, &renderIntents);
+        EXPECT_FALSE(error.isOk());
+        EXPECT_EQ(IComposerClient::EX_BAD_DISPLAY, error.getServiceSpecificError());
+    }
+}
+
+TEST_P(GraphicsComposerAidlTest, GetRenderIntentsBadParameter) {
+    std::vector<RenderIntent> renderIntents;
+    const auto error = mComposerClient->getRenderIntents(
+            mPrimaryDisplay, static_cast<ColorMode>(-1), &renderIntents);
+    EXPECT_FALSE(error.isOk());
+    EXPECT_EQ(IComposerClient::EX_BAD_PARAMETER, error.getServiceSpecificError());
+}
+
+TEST_P(GraphicsComposerAidlTest, GetColorModes) {
+    std::vector<ColorMode> colorModes;
+    EXPECT_TRUE(mComposerClient->getColorModes(mPrimaryDisplay, &colorModes).isOk());
+
+    auto native = std::find(colorModes.cbegin(), colorModes.cend(), ColorMode::NATIVE);
+    ASSERT_NE(colorModes.cend(), native);
+}
+
+TEST_P(GraphicsComposerAidlTest, GetColorModeBadDisplay) {
+    std::vector<ColorMode> colorModes;
+    const auto error = mComposerClient->getColorModes(mInvalidDisplayId, &colorModes);
+
+    EXPECT_FALSE(error.isOk());
+    EXPECT_EQ(IComposerClient::EX_BAD_DISPLAY, error.getServiceSpecificError());
+}
+
+TEST_P(GraphicsComposerAidlTest, SetColorMode) {
+    std::vector<ColorMode> colorModes;
+    EXPECT_TRUE(mComposerClient->getColorModes(mPrimaryDisplay, &colorModes).isOk());
+    for (auto mode : colorModes) {
+        std::vector<RenderIntent> intents;
+        EXPECT_TRUE(mComposerClient->getRenderIntents(mPrimaryDisplay, mode, &intents).isOk())
+                << "failed to get render intents";
+        for (auto intent : intents) {
+            const auto error = mComposerClient->setColorMode(mPrimaryDisplay, mode, intent);
+            EXPECT_TRUE(error.isOk() ||
+                        IComposerClient::EX_UNSUPPORTED == error.getServiceSpecificError())
+                    << "failed to set color mode";
+        }
+    }
+
+    const auto error = mComposerClient->setColorMode(mPrimaryDisplay, ColorMode::NATIVE,
+                                                     RenderIntent::COLORIMETRIC);
+    EXPECT_TRUE(error.isOk() || IComposerClient::EX_UNSUPPORTED == error.getServiceSpecificError())
+            << "failed to set color mode";
+}
+
+TEST_P(GraphicsComposerAidlTest, SetColorModeBadDisplay) {
+    auto const error = mComposerClient->setColorMode(mInvalidDisplayId, ColorMode::NATIVE,
+                                                     RenderIntent::COLORIMETRIC);
+
+    EXPECT_FALSE(error.isOk());
+    ASSERT_EQ(IComposerClient::EX_BAD_DISPLAY, error.getServiceSpecificError());
+}
+
+TEST_P(GraphicsComposerAidlTest, SetColorModeBadParameter) {
+    const auto colorModeError = mComposerClient->setColorMode(
+            mPrimaryDisplay, static_cast<ColorMode>(-1), RenderIntent::COLORIMETRIC);
+
+    EXPECT_FALSE(colorModeError.isOk());
+    EXPECT_EQ(IComposerClient::EX_BAD_PARAMETER, colorModeError.getServiceSpecificError());
+
+    const auto renderIntentError = mComposerClient->setColorMode(mPrimaryDisplay, ColorMode::NATIVE,
+                                                                 static_cast<RenderIntent>(-1));
+
+    EXPECT_FALSE(renderIntentError.isOk());
+    EXPECT_EQ(IComposerClient::EX_BAD_PARAMETER, renderIntentError.getServiceSpecificError());
+}
+
+TEST_P(GraphicsComposerAidlTest, GetDisplayedContentSamplingAttributes) {
+    int constexpr invalid = -1;
+
+    DisplayContentSamplingAttributes format;
+    auto error = mComposerClient->getDisplayedContentSamplingAttributes(mPrimaryDisplay, &format);
+
+    if (error.getServiceSpecificError() == IComposerClient::EX_UNSUPPORTED) {
+        SUCCEED() << "Device does not support optional extension. Test skipped";
+        return;
+    }
+
+    EXPECT_TRUE(error.isOk());
+    EXPECT_NE(format.format, static_cast<common::PixelFormat>(invalid));
+    EXPECT_NE(format.dataspace, static_cast<common::Dataspace>(invalid));
+    EXPECT_NE(format.componentMask, static_cast<FormatColorComponent>(invalid));
+};
+
+TEST_P(GraphicsComposerAidlTest, SetDisplayedContentSamplingEnabled) {
+    auto const maxFrames = 10;
+    FormatColorComponent enableAllComponents = FormatColorComponent::FORMAT_COMPONENT_0;
+    auto error = mComposerClient->setDisplayedContentSamplingEnabled(
+            mPrimaryDisplay, true, enableAllComponents, maxFrames);
+    if (error.getServiceSpecificError() == IComposerClient::EX_UNSUPPORTED) {
+        SUCCEED() << "Device does not support optional extension. Test skipped";
+        return;
+    }
+    EXPECT_TRUE(error.isOk());
+
+    error = mComposerClient->setDisplayedContentSamplingEnabled(mPrimaryDisplay, false,
+                                                                enableAllComponents, maxFrames);
+    EXPECT_TRUE(error.isOk());
+}
+
+TEST_P(GraphicsComposerAidlTest, GetDisplayedContentSample) {
+    DisplayContentSamplingAttributes displayContentSamplingAttributes;
+    int constexpr invalid = -1;
+    displayContentSamplingAttributes.format = static_cast<common::PixelFormat>(invalid);
+    displayContentSamplingAttributes.dataspace = static_cast<common::Dataspace>(invalid);
+    displayContentSamplingAttributes.componentMask = static_cast<FormatColorComponent>(invalid);
+    EXPECT_TRUE(mComposerClient
+                        ->getDisplayedContentSamplingAttributes(mPrimaryDisplay,
+                                                                &displayContentSamplingAttributes)
+                        .isOk());
+
+    uint64_t maxFrames = 10;
+    uint64_t timestamp = 0;
+    uint64_t frameCount = 0;
+    DisplayContentSample displayContentSample;
+    auto error = mComposerClient->getDisplayedContentSample(mPrimaryDisplay, maxFrames, timestamp,
+                                                            &displayContentSample);
+    if (error.getServiceSpecificError() == IComposerClient::EX_UNSUPPORTED) {
+        SUCCEED() << "Device does not support optional extension. Test skipped";
+        return;
+    }
+
+    EXPECT_TRUE(error.isOk());
+    EXPECT_LE(frameCount, maxFrames);
+    std::vector<std::vector<int64_t>> histogram = {
+            displayContentSample.sampleComponent0, displayContentSample.sampleComponent1,
+            displayContentSample.sampleComponent2, displayContentSample.sampleComponent3};
+
+    for (auto i = 0; i < histogram.size(); i++) {
+        if (static_cast<int>(displayContentSamplingAttributes.componentMask) & (1 << i)) {
+            EXPECT_NE(histogram[i].size(), 0);
+        } else {
+            EXPECT_EQ(histogram[i].size(), 0);
+        }
+    }
+}
+
+TEST_P(GraphicsComposerAidlTest, getDisplayCapabilitiesBasic) {
+    std::vector<DisplayCapability> capabilities;
+    const auto error = mComposerClient->getDisplayCapabilities(mPrimaryDisplay, &capabilities);
+    ASSERT_TRUE(error.isOk());
+    const bool hasDozeSupport = std::find(capabilities.begin(), capabilities.end(),
+                                          DisplayCapability::DOZE) != capabilities.end();
+    bool isDozeSupported = false;
+    EXPECT_TRUE(mComposerClient->getDozeSupport(mPrimaryDisplay, &isDozeSupported).isOk());
+    EXPECT_EQ(hasDozeSupport, isDozeSupported);
+
+    bool hasBrightnessSupport = std::find(capabilities.begin(), capabilities.end(),
+                                          DisplayCapability::BRIGHTNESS) != capabilities.end();
+    bool isBrightnessSupported = false;
+    EXPECT_TRUE(
+            mComposerClient->getDisplayBrightnessSupport(mPrimaryDisplay, &isBrightnessSupported)
+                    .isOk());
+    EXPECT_EQ(isBrightnessSupported, hasBrightnessSupport);
+}
+
+/*
+ * Test that if brightness operations are supported, setDisplayBrightness works as expected.
+ */
+TEST_P(GraphicsComposerAidlTest, setDisplayBrightness) {
+    std::vector<DisplayCapability> capabilities;
+    auto error = mComposerClient->getDisplayCapabilities(mPrimaryDisplay, &capabilities);
+    ASSERT_TRUE(error.isOk());
+    bool brightnessSupport = std::find(capabilities.begin(), capabilities.end(),
+                                       DisplayCapability::BRIGHTNESS) != capabilities.end();
+    if (!brightnessSupport) {
+        EXPECT_EQ(mComposerClient->setDisplayBrightness(mPrimaryDisplay, 0.5f)
+                          .getServiceSpecificError(),
+                  IComposerClient::EX_UNSUPPORTED);
+        GTEST_SUCCEED() << "Brightness operations are not supported";
+        return;
+    }
+
+    EXPECT_TRUE(mComposerClient->setDisplayBrightness(mPrimaryDisplay, 0.0f).isOk());
+    EXPECT_TRUE(mComposerClient->setDisplayBrightness(mPrimaryDisplay, 0.5f).isOk());
+    EXPECT_TRUE(mComposerClient->setDisplayBrightness(mPrimaryDisplay, 1.0f).isOk());
+    EXPECT_TRUE(mComposerClient->setDisplayBrightness(mPrimaryDisplay, -1.0f).isOk());
+
+    error = mComposerClient->setDisplayBrightness(mPrimaryDisplay, +2.0f);
+    EXPECT_FALSE(error.isOk());
+    EXPECT_EQ(error.getServiceSpecificError(), IComposerClient::EX_BAD_PARAMETER);
+
+    error = mComposerClient->setDisplayBrightness(mPrimaryDisplay, -2.0f);
+    EXPECT_FALSE(error.isOk());
+    EXPECT_EQ(error.getServiceSpecificError(), IComposerClient::EX_BAD_PARAMETER);
 }
 
 TEST_P(GraphicsComposerAidlTest, getDisplayConnectionType) {
