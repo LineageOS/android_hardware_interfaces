@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,15 +33,25 @@
 
 package android.hardware.gnss;
 @VintfStability
-interface IGnss {
-  void setCallback(in android.hardware.gnss.IGnssCallback callback);
-  void close();
-  @nullable android.hardware.gnss.IGnssPsds getExtensionPsds();
-  android.hardware.gnss.IGnssConfiguration getExtensionGnssConfiguration();
-  android.hardware.gnss.IGnssMeasurementInterface getExtensionGnssMeasurement();
-  android.hardware.gnss.IGnssPowerIndication getExtensionGnssPowerIndication();
-  @nullable android.hardware.gnss.IGnssBatching getExtensionGnssBatching();
-  const int ERROR_INVALID_ARGUMENT = 1;
-  const int ERROR_ALREADY_INIT = 2;
-  const int ERROR_GENERIC = 3;
+parcelable GnssLocation {
+  int gnssLocationFlags;
+  double latitudeDegrees;
+  double longitudeDegrees;
+  double altitudeMeters;
+  double speedMetersPerSec;
+  double bearingDegrees;
+  double horizontalAccuracyMeters;
+  double verticalAccuracyMeters;
+  double speedAccuracyMetersPerSecond;
+  double bearingAccuracyDegrees;
+  long timestampMillis;
+  android.hardware.gnss.ElapsedRealtime elapsedRealtime;
+  const int HAS_LAT_LONG = 1;
+  const int HAS_ALTITUDE = 2;
+  const int HAS_SPEED = 4;
+  const int HAS_BEARING = 8;
+  const int HAS_HORIZONTAL_ACCURACY = 16;
+  const int HAS_VERTICAL_ACCURACY = 32;
+  const int HAS_SPEED_ACCURACY = 64;
+  const int HAS_BEARING_ACCURACY = 128;
 }
