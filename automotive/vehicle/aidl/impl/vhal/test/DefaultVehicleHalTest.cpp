@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "ConnectedClient.h"
 #include "DefaultVehicleHal.h"
 #include "MockVehicleCallback.h"
 
