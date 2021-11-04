@@ -90,6 +90,12 @@ interface IComposerClient {
     const int EX_SEAMLESS_NOT_POSSIBLE = 10;
 
     /**
+     * Integer.MAX_VALUE is reserved for the invalid configuration.
+     * This should not be returned as a valid configuration.
+     */
+    const int INVALID_CONFIGURATION = 0x7fffffff;
+
+    /**
      * Creates a new layer on the given display.
      *
      * @param display is the display on which to create the layer.
@@ -282,6 +288,7 @@ interface IComposerClient {
     /**
      * Returns handles for all of the valid display configurations on this
      * display.
+     * This should never return INVALID_CONFIGURATION as a valid value.
      *
      * @param display is the display to query.
      *
