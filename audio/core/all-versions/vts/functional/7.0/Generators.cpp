@@ -102,6 +102,9 @@ std::vector<DeviceConfigParameter> generateOutputDeviceConfigParameters(bool one
             if (mixPort.getRole() != xsd::Role::source) continue;  // not an output profile
             auto [flags, isOffload] = generateOutFlags(mixPort);
             for (const auto& profile : mixPort.getProfile()) {
+                if (!profile.hasFormat() || !profile.hasSamplingRates() ||
+                    !profile.hasChannelMasks())
+                    continue;
                 auto configs = combineAudioConfig(profile.getChannelMasks(),
                                                   profile.getSamplingRates(), profile.getFormat());
                 for (auto& config : configs) {
@@ -231,6 +234,9 @@ std::vector<DeviceConfigParameter> generateInputDeviceConfigParameters(bool oneP
                                std::back_inserter(flags), [](auto flag) { return toString(flag); });
             }
             for (const auto& profile : mixPort.getProfile()) {
+                if (!profile.hasFormat() || !profile.hasSamplingRates() ||
+                    !profile.hasChannelMasks())
+                    continue;
                 auto configs = combineAudioConfig(profile.getChannelMasks(),
                                                   profile.getSamplingRates(), profile.getFormat());
                 for (const auto& config : configs) {
