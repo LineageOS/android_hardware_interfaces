@@ -32,93 +32,11 @@ Return<void> RadioResponse::acknowledgeRequest(int32_t serial) {
     if (mMessagingCb) mMessagingCb->acknowledgeRequest(serial);
     if (mNetworkCb) mNetworkCb->acknowledgeRequest(serial);
     if (mSimCb) mSimCb->acknowledgeRequest(serial);
-    return {};
-}
-
-Return<void> RadioResponse::getCurrentCallsResponse(const V1_0::RadioResponseInfo& info,
-                                                    const hidl_vec<V1_0::Call>& calls) {
-    return {};
-}
-
-Return<void> RadioResponse::dialResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::hangupConnectionResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::hangupWaitingOrBackgroundResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::hangupForegroundResumeBackgroundResponse(
-        const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::switchWaitingOrHoldingAndActiveResponse(
-        const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::conferenceResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::rejectCallResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getLastCallFailCauseResponse(
-        const V1_0::RadioResponseInfo& info, const V1_0::LastCallFailCauseInfo& failCauseinfo) {
+    if (mVoiceCb) mVoiceCb->acknowledgeRequest(serial);
     return {};
 }
 
 Return<void> RadioResponse::setRadioPowerResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::sendDtmfResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getClirResponse(const V1_0::RadioResponseInfo& info, int32_t n,
-                                            int32_t m) {
-    return {};
-}
-
-Return<void> RadioResponse::setClirResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getCallForwardStatusResponse(
-        const V1_0::RadioResponseInfo& info, const hidl_vec<V1_0::CallForwardInfo>& callFwdInfos) {
-    return {};
-}
-
-Return<void> RadioResponse::setCallForwardResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getCallWaitingResponse(const V1_0::RadioResponseInfo& info, bool enable,
-                                                   int32_t serviceClass) {
-    return {};
-}
-
-Return<void> RadioResponse::setCallWaitingResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::acceptCallResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::startDtmfResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::stopDtmfResponse(const V1_0::RadioResponseInfo& info) {
     return {};
 }
 
@@ -127,65 +45,9 @@ Return<void> RadioResponse::getBasebandVersionResponse(const V1_0::RadioResponse
     return {};
 }
 
-Return<void> RadioResponse::separateConnectionResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::setMuteResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getMuteResponse(const V1_0::RadioResponseInfo& info, bool enable) {
-    return {};
-}
-
-Return<void> RadioResponse::getClipResponse(const V1_0::RadioResponseInfo& info,
-                                            V1_0::ClipStatus status) {
-    return {};
-}
-
-Return<void> RadioResponse::handleStkCallSetupRequestFromSimResponse(
-        const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::explicitCallTransferResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::setTTYModeResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getTTYModeResponse(const V1_0::RadioResponseInfo& info,
-                                               V1_0::TtyMode mode) {
-    return {};
-}
-
-Return<void> RadioResponse::setPreferredVoicePrivacyResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getPreferredVoicePrivacyResponse(const V1_0::RadioResponseInfo& info,
-                                                             bool enable) {
-    return {};
-}
-
-Return<void> RadioResponse::sendCDMAFeatureCodeResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::sendBurstDtmfResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
 Return<void> RadioResponse::getDeviceIdentityResponse(  //
         const V1_0::RadioResponseInfo& info, const hidl_string& imei, const hidl_string& imeisv,
         const hidl_string& esn, const hidl_string& meid) {
-    return {};
-}
-
-Return<void> RadioResponse::exitEmergencyCallbackModeResponse(const V1_0::RadioResponseInfo& info) {
     return {};
 }
 
@@ -234,11 +96,6 @@ Return<void> RadioResponse::sendDeviceStateResponse(const V1_0::RadioResponseInf
     return {};
 }
 
-Return<void> RadioResponse::getCurrentCallsResponse_1_2(const V1_0::RadioResponseInfo& info,
-                                                        const hidl_vec<V1_2::Call>& calls) {
-    return {};
-}
-
 Return<void> RadioResponse::enableModemResponse(const V1_0::RadioResponseInfo& info) {
     return {};
 }
@@ -248,20 +105,11 @@ Return<void> RadioResponse::getModemStackStatusResponse(const V1_0::RadioRespons
     return {};
 }
 
-Return<void> RadioResponse::emergencyDialResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
 Return<void> RadioResponse::setRadioPowerResponse_1_5(const V1_0::RadioResponseInfo& info) {
     return {};
 }
 
 Return<void> RadioResponse::setRadioPowerResponse_1_6(const V1_6::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getCurrentCallsResponse_1_6(const V1_6::RadioResponseInfo& info,
-                                                        const hidl_vec<V1_6::Call>& calls) {
     return {};
 }
 

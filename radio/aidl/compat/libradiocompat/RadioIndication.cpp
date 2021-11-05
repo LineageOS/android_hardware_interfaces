@@ -26,56 +26,7 @@ Return<void> RadioIndication::radioStateChanged(V1_0::RadioIndicationType type,
     return {};
 }
 
-Return<void> RadioIndication::callStateChanged(V1_0::RadioIndicationType type) {
-    return {};
-}
-
-Return<void> RadioIndication::stkCallSetup(V1_0::RadioIndicationType type, int64_t timeout) {
-    return {};
-}
-
-Return<void> RadioIndication::callRing(V1_0::RadioIndicationType type, bool isGsm,
-                                       const V1_0::CdmaSignalInfoRecord& record) {
-    return {};
-}
-
-Return<void> RadioIndication::enterEmergencyCallbackMode(V1_0::RadioIndicationType type) {
-    return {};
-}
-
-Return<void> RadioIndication::cdmaCallWaiting(V1_0::RadioIndicationType type,
-                                              const V1_0::CdmaCallWaiting& callWaitingRecord) {
-    return {};
-}
-
-Return<void> RadioIndication::cdmaOtaProvisionStatus(V1_0::RadioIndicationType type,
-                                                     V1_0::CdmaOtaProvisionStatus status) {
-    return {};
-}
-
-Return<void> RadioIndication::cdmaInfoRec(V1_0::RadioIndicationType type,
-                                          const V1_0::CdmaInformationRecords& records) {
-    return {};
-}
-
-Return<void> RadioIndication::indicateRingbackTone(V1_0::RadioIndicationType type, bool start) {
-    return {};
-}
-
-Return<void> RadioIndication::resendIncallMute(V1_0::RadioIndicationType type) {
-    return {};
-}
-
-Return<void> RadioIndication::exitEmergencyCallbackMode(V1_0::RadioIndicationType type) {
-    return {};
-}
-
 Return<void> RadioIndication::rilConnected(V1_0::RadioIndicationType type) {
-    return {};
-}
-
-Return<void> RadioIndication::srvccStateNotify(V1_0::RadioIndicationType type,
-                                               V1_0::SrvccState state) {
     return {};
 }
 
@@ -89,23 +40,8 @@ Return<void> RadioIndication::radioCapabilityIndication(V1_0::RadioIndicationTyp
     return {};
 }
 
-Return<void> RadioIndication::onSupplementaryServiceIndication(V1_0::RadioIndicationType type,
-                                                               const V1_0::StkCcUnsolSsResult& ss) {
-    return {};
-}
-
-Return<void> RadioIndication::stkCallControlAlphaNotify(V1_0::RadioIndicationType type,
-                                                        const hidl_string& alpha) {
-    return {};
-}
-
 Return<void> RadioIndication::modemReset(V1_0::RadioIndicationType type,
                                          const hidl_string& reason) {
-    return {};
-}
-
-Return<void> RadioIndication::currentEmergencyNumberList(
-        V1_0::RadioIndicationType type, const hidl_vec<V1_4::EmergencyNumber>& emergencyNumbers) {
     return {};
 }
 
