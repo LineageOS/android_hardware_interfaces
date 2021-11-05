@@ -88,12 +88,9 @@ void FilterCallbackScheduler::start() {
 }
 
 void FilterCallbackScheduler::stop() {
-    {
-        std::unique_lock<std::mutex> lock(mLock);
-        mIsRunning = false;
-        mCv.notify_all();
-    }
+    mIsRunning = false;
     if (mCallbackThread.joinable()) {
+        mCv.notify_all();
         mCallbackThread.join();
     }
 }
@@ -117,13 +114,11 @@ void FilterCallbackScheduler::threadLoopOnce() {
         // okay to send data.
         mCv.wait(lock);
     }
-    if (!mIsRunning) {
-        lock.unlock();
-        return;
-    }
 
     // condition_variable wait locks mutex on timeout / notify
-    if (!mCallbackBuffer.empty()) {
+    // Note: if stop() has been called in the meantime, do not send more filter
+    // events.
+    if (mIsRunning && !mCallbackBuffer.empty()) {
         if (mCallback) {
             mCallback->onFilterEvent(mCallbackBuffer);
         }
