@@ -1390,6 +1390,9 @@ static void testSetAudioProperties(IStream* stream) {
                 config.channelMask.value(channelMask);
                 auto ret = stream->setAudioProperties(config);
                 EXPECT_TRUE(ret.isOk());
+                if (ret == Result::NOT_SUPPORTED) {
+                    GTEST_SKIP() << "setAudioProperties is not supported";
+                }
                 EXPECT_EQ(Result::OK, ret)
                         << profile.format << "; " << sampleRate << "; " << channelMask;
             }
