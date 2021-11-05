@@ -19,6 +19,7 @@
 
 #include <VehicleHalTypes.h>
 
+#include <android-base/format.h>
 #include <android-base/result.h>
 #include <utils/Log.h>
 
@@ -206,6 +207,37 @@ std::string getErrorMsg(const ::android::base::Result<T>& result) {
         return "";
     }
     return result.error().message();
+}
+
+template <class T>
+::ndk::ScopedAStatus toScopedAStatus(
+        const ::android::base::Result<T>& result,
+        ::aidl::android::hardware::automotive::vehicle::StatusCode status,
+        std::string additionalErrorMsg) {
+    if (result.ok()) {
+        return ::ndk::ScopedAStatus::ok();
+    }
+    return ::ndk::ScopedAStatus::fromServiceSpecificErrorWithMessage(
+            toInt(status),
+            fmt::format("{}, error: {}", additionalErrorMsg, getErrorMsg(result)).c_str());
+}
+
+template <class T>
+::ndk::ScopedAStatus toScopedAStatus(
+        const ::android::base::Result<T>& result,
+        ::aidl::android::hardware::automotive::vehicle::StatusCode status) {
+    return toScopedAStatus(result, status, "");
+}
+
+template <class T>
+::ndk::ScopedAStatus toScopedAStatus(const ::android::base::Result<T>& result) {
+    return toScopedAStatus(result, getErrorCode(result));
+}
+
+template <class T>
+::ndk::ScopedAStatus toScopedAStatus(const ::android::base::Result<T>& result,
+                                     std::string additionalErrorMsg) {
+    return toScopedAStatus(result, getErrorCode(result), additionalErrorMsg);
 }
 
 }  // namespace vehicle
