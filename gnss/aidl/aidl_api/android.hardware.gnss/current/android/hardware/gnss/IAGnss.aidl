@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,18 +33,17 @@
 
 package android.hardware.gnss;
 @VintfStability
-interface IGnss {
-  void setCallback(in android.hardware.gnss.IGnssCallback callback);
-  void close();
-  @nullable android.hardware.gnss.IGnssPsds getExtensionPsds();
-  android.hardware.gnss.IGnssConfiguration getExtensionGnssConfiguration();
-  android.hardware.gnss.IGnssMeasurementInterface getExtensionGnssMeasurement();
-  android.hardware.gnss.IGnssPowerIndication getExtensionGnssPowerIndication();
-  @nullable android.hardware.gnss.IGnssBatching getExtensionGnssBatching();
-  @nullable android.hardware.gnss.IGnssGeofence getExtensionGnssGeofence();
-  @nullable android.hardware.gnss.IGnssNavigationMessageInterface getExtensionGnssNavigationMessage();
-  android.hardware.gnss.IAGnss getExtensionAGnss();
-  const int ERROR_INVALID_ARGUMENT = 1;
-  const int ERROR_ALREADY_INIT = 2;
-  const int ERROR_GENERIC = 3;
+interface IAGnss {
+  void setCallback(in android.hardware.gnss.IAGnssCallback callback);
+  void dataConnClosed();
+  void dataConnFailed();
+  void setServer(in android.hardware.gnss.IAGnssCallback.AGnssType type, in String hostname, in int port);
+  void dataConnOpen(in long networkHandle, in String apn, in android.hardware.gnss.IAGnss.ApnIpType apnIpType);
+  @Backing(type="int") @VintfStability
+  enum ApnIpType {
+    INVALID = 0,
+    IPV4 = 1,
+    IPV6 = 2,
+    IPV4V6 = 3,
+  }
 }
