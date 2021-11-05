@@ -41,6 +41,7 @@ cc_library {
         "android.hardware.radio.messaging-V1-ndk",
         "android.hardware.radio.network-V1-ndk",
         "android.hardware.radio.sim-V1-ndk",
+        "android.hardware.radio.voice-V1-ndk",
         "android.hardware.radio@1.0",
         "android.hardware.radio@1.1",
         "android.hardware.radio@1.2",
@@ -79,6 +80,10 @@ cc_library {
         "sim/RadioResponse-sim.cpp",
         "sim/RadioSim.cpp",
         "sim/structs.cpp",
+        "voice/RadioIndication-voice.cpp",
+        "voice/RadioResponse-voice.cpp",
+        "voice/RadioVoice.cpp",
+        "voice/structs.cpp",
     ],
     export_include_dirs: ["include"],
 }

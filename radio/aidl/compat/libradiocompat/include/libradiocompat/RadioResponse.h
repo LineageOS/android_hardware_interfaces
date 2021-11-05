@@ -19,6 +19,7 @@
 #include <aidl/android/hardware/radio/messaging/IRadioMessagingResponse.h>
 #include <aidl/android/hardware/radio/network/IRadioNetworkResponse.h>
 #include <aidl/android/hardware/radio/sim/IRadioSimResponse.h>
+#include <aidl/android/hardware/radio/voice/IRadioVoiceResponse.h>
 #include <android/hardware/radio/1.6/IRadioResponse.h>
 
 namespace android::hardware::radio::compat {
@@ -29,6 +30,7 @@ class RadioResponse : public V1_6::IRadioResponse {
             mMessagingCb;
     std::shared_ptr<::aidl::android::hardware::radio::network::IRadioNetworkResponse> mNetworkCb;
     std::shared_ptr<::aidl::android::hardware::radio::sim::IRadioSimResponse> mSimCb;
+    std::shared_ptr<::aidl::android::hardware::radio::voice::IRadioVoiceResponse> mVoiceCb;
 
     // IRadioResponse @ 1.0
     Return<void> getIccCardStatusResponse(const V1_0::RadioResponseInfo& info,
@@ -414,6 +416,8 @@ class RadioResponse : public V1_6::IRadioResponse {
             std::shared_ptr<::aidl::android::hardware::radio::network::IRadioNetworkResponse> nwCb);
     void setResponseFunction(
             std::shared_ptr<::aidl::android::hardware::radio::sim::IRadioSimResponse> simCb);
+    void setResponseFunction(
+            std::shared_ptr<::aidl::android::hardware::radio::voice::IRadioVoiceResponse> voiceCb);
 };
 
 }  // namespace android::hardware::radio::compat

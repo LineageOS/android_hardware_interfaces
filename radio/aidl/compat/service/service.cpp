@@ -26,6 +26,7 @@
 #include <libradiocompat/RadioNetwork.h>
 #include <libradiocompat/RadioResponse.h>
 #include <libradiocompat/RadioSim.h>
+#include <libradiocompat/RadioVoice.h>
 
 namespace android::hardware::radio::service {
 
@@ -63,6 +64,7 @@ static void publishRadio(std::string slot) {
     publishRadioHal<compat::RadioMessaging>(radioHidl, responseCb, indicationCb, slot);
     publishRadioHal<compat::RadioNetwork>(radioHidl, responseCb, indicationCb, slot);
     publishRadioHal<compat::RadioSim>(radioHidl, responseCb, indicationCb, slot);
+    publishRadioHal<compat::RadioVoice>(radioHidl, responseCb, indicationCb, slot);
 }
 
 static void publishRadioConfig() {
