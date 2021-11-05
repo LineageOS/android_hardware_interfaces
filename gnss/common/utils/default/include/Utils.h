@@ -17,6 +17,7 @@
 #ifndef android_hardware_gnss_common_default_Utils_H_
 #define android_hardware_gnss_common_default_Utils_H_
 
+#include <aidl/android/hardware/gnss/BnGnss.h>
 #include <aidl/android/hardware/gnss/BnGnssMeasurementInterface.h>
 #include <android/hardware/gnss/1.0/IGnss.h>
 #include <android/hardware/gnss/2.0/IGnss.h>
@@ -34,6 +35,7 @@ struct Utils {
             const bool enableCorrVecOutputs);
     static V2_0::IGnssMeasurementCallback::GnssData getMockMeasurementV2_0();
     static V2_1::IGnssMeasurementCallback::GnssData getMockMeasurementV2_1();
+    static aidl::android::hardware::gnss::GnssLocation getMockLocation();
     static V2_0::GnssLocation getMockLocationV2_0();
     static V1_0::GnssLocation getMockLocationV1_0();
     static hidl_vec<V2_1::IGnssCallback::GnssSvInfo> getMockSvInfoListV2_1();

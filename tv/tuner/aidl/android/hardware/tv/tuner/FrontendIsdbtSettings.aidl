@@ -17,10 +17,10 @@
 package android.hardware.tv.tuner;
 
 import android.hardware.tv.tuner.FrontendIsdbtBandwidth;
-import android.hardware.tv.tuner.FrontendIsdbtCoderate;
 import android.hardware.tv.tuner.FrontendIsdbtGuardInterval;
+import android.hardware.tv.tuner.FrontendIsdbtLayerSettings;
 import android.hardware.tv.tuner.FrontendIsdbtMode;
-import android.hardware.tv.tuner.FrontendIsdbtModulation;
+import android.hardware.tv.tuner.FrontendIsdbtPartialReceptionFlag;
 import android.hardware.tv.tuner.FrontendSpectralInversion;
 
 /**
@@ -41,15 +41,15 @@ parcelable FrontendIsdbtSettings {
 
     FrontendSpectralInversion inversion = FrontendSpectralInversion.UNDEFINED;
 
-    FrontendIsdbtModulation modulation = FrontendIsdbtModulation.UNDEFINED;
-
     FrontendIsdbtBandwidth bandwidth = FrontendIsdbtBandwidth.UNDEFINED;
 
     FrontendIsdbtMode mode = FrontendIsdbtMode.UNDEFINED;
 
-    FrontendIsdbtCoderate coderate = FrontendIsdbtCoderate.UNDEFINED;
-
     FrontendIsdbtGuardInterval guardInterval = FrontendIsdbtGuardInterval.UNDEFINED;
 
     int serviceAreaId;
+
+    FrontendIsdbtPartialReceptionFlag partialReceptionFlag = FrontendIsdbtPartialReceptionFlag.UNDEFINED;
+
+    FrontendIsdbtLayerSettings[] layerSettings;
 }

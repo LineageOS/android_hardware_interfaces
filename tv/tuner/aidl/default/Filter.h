@@ -18,6 +18,8 @@
 
 #include <aidl/android/hardware/tv/tuner/BnFilter.h>
 #include <aidl/android/hardware/tv/tuner/Constant.h>
+#include <aidl/android/hardware/tv/tuner/DemuxFilterEvent.h>
+#include <aidl/android/hardware/tv/tuner/DemuxFilterStatus.h>
 
 #include <fmq/AidlMessageQueue.h>
 #include <inttypes.h>
@@ -25,6 +27,7 @@
 #include <math.h>
 #include <sys/stat.h>
 #include <atomic>
+#include <condition_variable>
 #include <set>
 #include <thread>
 
@@ -52,10 +55,49 @@ const uint32_t BUFFER_SIZE_16M = 0x1000000;
 class Demux;
 class Dvr;
 
-class Filter : public BnFilter {
+class FilterCallbackScheduler final {
   public:
-    Filter();
+    FilterCallbackScheduler(const std::shared_ptr<IFilterCallback>& cb);
+    ~FilterCallbackScheduler();
 
+    void onFilterEvent(DemuxFilterEvent&& event);
+    void onFilterStatus(const DemuxFilterStatus& status);
+
+    void setTimeDelayHint(int timeDelay);
+    void setDataSizeDelayHint(int dataSizeDelay);
+
+    bool hasCallbackRegistered() const;
+
+  private:
+    void start();
+    void stop();
+
+    void threadLoop();
+    void threadLoopOnce();
+
+    static int getDemuxFilterEventDataLength(const DemuxFilterEvent& event);
+
+  private:
+    std::shared_ptr<IFilterCallback> mCallback;
+    std::thread mCallbackThread;
+    std::atomic<bool> mIsRunning;
+
+    // mLock protects mCallbackBuffer, mCv, and mDataLength
+    std::mutex mLock;
+    std::vector<DemuxFilterEvent> mCallbackBuffer;
+    std::condition_variable mCv;
+    int mDataLength;
+
+    // both of these need to be atomic (not just mTimeDelayInMs) as this class
+    // needs to be threadsafe.
+    std::atomic<int> mTimeDelayInMs;
+    std::atomic<int> mDataSizeDelayInBytes;
+};
+
+class Filter : public BnFilter {
+    friend class FilterCallbackScheduler;
+
+  public:
     Filter(DemuxFilterType type, int64_t filterId, uint32_t bufferSize,
            const std::shared_ptr<IFilterCallback>& cb, std::shared_ptr<Demux> demux);
 
@@ -104,10 +146,8 @@ class Filter : public BnFilter {
     std::shared_ptr<Demux> mDemux;
     // Dvr reference once the filter is attached to any
     std::shared_ptr<Dvr> mDvr = nullptr;
-    /**
-     * Filter callbacks used on filter events or FMQ status
-     */
-    std::shared_ptr<IFilterCallback> mCallback = nullptr;
+
+    FilterCallbackScheduler mCallbackScheduler;
 
     int64_t mFilterId;
     int32_t mCid = static_cast<int32_t>(Constant::INVALID_IP_FILTER_CONTEXT_ID);

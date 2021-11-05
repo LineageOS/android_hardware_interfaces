@@ -17,10 +17,12 @@
 #define LOG_TAG "GnssHalTestCases"
 
 #include <android/hardware/gnss/IGnss.h>
+#include <android/hardware/gnss/IGnssBatching.h>
 #include <android/hardware/gnss/IGnssMeasurementCallback.h>
 #include <android/hardware/gnss/IGnssMeasurementInterface.h>
 #include <android/hardware/gnss/IGnssPowerIndication.h>
 #include <android/hardware/gnss/IGnssPsds.h>
+#include "GnssBatchingCallback.h"
 #include "GnssMeasurementCallbackAidl.h"
 #include "GnssPowerIndicationCallback.h"
 #include "gnss_hal_test.h"
@@ -33,6 +35,8 @@ using android::hardware::gnss::GnssData;
 using android::hardware::gnss::GnssMeasurement;
 using android::hardware::gnss::GnssPowerStats;
 using android::hardware::gnss::IGnss;
+using android::hardware::gnss::IGnssBatching;
+using android::hardware::gnss::IGnssBatchingCallback;
 using android::hardware::gnss::IGnssConfiguration;
 using android::hardware::gnss::IGnssMeasurementCallback;
 using android::hardware::gnss::IGnssMeasurementInterface;
@@ -747,5 +751,27 @@ TEST_P(GnssHalTest, BlocklistConstellationLocationOn) {
     StopAndClearLocations();
     sources.resize(0);
     status = gnss_configuration_hal->setBlocklist(sources);
+    ASSERT_TRUE(status.isOk());
+}
+
+/*
+ * TestGnssBatchingExtension:
+ * 1. Gets the IGnssBatching extension.
+ * 2. Initializes the interface with an IGnssBatchingCallback.
+ * 3. Clean up.
+ */
+TEST_P(GnssHalTest, TestGnssBatchingExtension) {
+    sp<IGnssBatching> iGnssBatching;
+    auto status = aidl_gnss_hal_->getExtensionGnssBatching(&iGnssBatching);
+    if (!status.isOk() || iGnssBatching == nullptr) {
+        // Device doesn't support batching. Skip the test.
+        return;
+    }
+
+    sp<IGnssBatchingCallback> iGnssBatchingCallback;
+    status = iGnssBatching->init(iGnssBatchingCallback);
+    ASSERT_TRUE(status.isOk());
+
+    status = iGnssBatching->cleanup();
     ASSERT_TRUE(status.isOk());
 }

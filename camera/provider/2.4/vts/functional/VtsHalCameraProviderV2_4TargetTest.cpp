@@ -936,6 +936,9 @@ public:
             camera_metadata_ro_entry* streamConfigs,
             camera_metadata_ro_entry* maxResolutionStreamConfigs,
             const camera_metadata_t* staticMetadata);
+    void getPrivacyTestPatternModes(
+            const camera_metadata_t* staticMetadata,
+            std::unordered_set<int32_t>* privacyTestPatternModes/*out*/);
     static bool isColorCamera(const camera_metadata_t *metadata);
 
     static V3_2::DataspaceFlags getDataspace(PixelFormat format);
@@ -6762,6 +6765,25 @@ void CameraHidlTest::getMultiResolutionStreamConfigurations(
     ASSERT_TRUE(-ENOENT == retcode || 0 == retcode);
 }
 
+void CameraHidlTest::getPrivacyTestPatternModes(
+        const camera_metadata_t* staticMetadata,
+        std::unordered_set<int32_t>* privacyTestPatternModes/*out*/) {
+    ASSERT_NE(staticMetadata, nullptr);
+    ASSERT_NE(privacyTestPatternModes, nullptr);
+
+    camera_metadata_ro_entry entry;
+    int retcode = find_camera_metadata_ro_entry(
+            staticMetadata, ANDROID_SENSOR_AVAILABLE_TEST_PATTERN_MODES, &entry);
+    ASSERT_TRUE(0 == retcode);
+
+    for (auto i = 0; i < entry.count; i++) {
+        if (entry.data.i32[i] == ANDROID_SENSOR_TEST_PATTERN_MODE_SOLID_COLOR ||
+                entry.data.i32[i] == ANDROID_SENSOR_TEST_PATTERN_MODE_BLACK) {
+            privacyTestPatternModes->insert(entry.data.i32[i]);
+        }
+    }
+}
+
 // Select an appropriate dataspace given a specific pixel format.
 V3_2::DataspaceFlags CameraHidlTest::getDataspace(PixelFormat format) {
     switch (format) {
@@ -7816,6 +7838,16 @@ void CameraHidlTest::verifyLogicalOrUltraHighResCameraMetadata(
         ASSERT_TRUE(isUltraHighResCamera && !isMultiCamera);
         physicalIds.insert(cameraId);
     }
+
+    std::unordered_set<int32_t> physicalRequestKeyIDs;
+    rc = getSupportedKeys(const_cast<camera_metadata_t *>(metadata),
+            ANDROID_REQUEST_AVAILABLE_PHYSICAL_CAMERA_REQUEST_KEYS, &physicalRequestKeyIDs);
+    ASSERT_TRUE(Status::OK == rc);
+    bool hasTestPatternPhysicalRequestKey = physicalRequestKeyIDs.find(
+            ANDROID_SENSOR_TEST_PATTERN_MODE) != physicalRequestKeyIDs.end();
+    std::unordered_set<int32_t> privacyTestPatternModes;
+    getPrivacyTestPatternModes(metadata, &privacyTestPatternModes);
+
     // Map from image format to number of multi-resolution sizes for that format
     std::unordered_map<int32_t, size_t> multiResOutputFormatCounterMap;
     std::unordered_map<int32_t, size_t> multiResInputFormatCounterMap;
@@ -7837,6 +7869,7 @@ void CameraHidlTest::verifyLogicalOrUltraHighResCameraMetadata(
         camera_metadata_ro_entry physicalStreamConfigs;
         camera_metadata_ro_entry physicalMaxResolutionStreamConfigs;
         bool isUltraHighRes = false;
+        std::unordered_set<int32_t> subCameraPrivacyTestPatterns;
         if (isPublicId) {
             ::android::sp<::android::hardware::camera::device::V3_2::ICameraDevice> subDevice;
             Return<void> ret;
@@ -7867,6 +7900,8 @@ void CameraHidlTest::verifyLogicalOrUltraHighResCameraMetadata(
                         &physicalMultiResStreamConfigs, &physicalStreamConfigs,
                         &physicalMaxResolutionStreamConfigs, staticMetadata);
                 isUltraHighRes = isUltraHighResolution(staticMetadata);
+
+                getPrivacyTestPatternModes(staticMetadata, &subCameraPrivacyTestPatterns);
             });
             ASSERT_TRUE(ret.isOk());
         } else {
@@ -7893,6 +7928,7 @@ void CameraHidlTest::verifyLogicalOrUltraHighResCameraMetadata(
                                 &physicalMultiResStreamConfigs, &physicalStreamConfigs,
                                 &physicalMaxResolutionStreamConfigs, staticMetadata);
                         isUltraHighRes = isUltraHighResolution(staticMetadata);
+                        getPrivacyTestPatternModes(staticMetadata, &subCameraPrivacyTestPatterns);
                     });
             ASSERT_TRUE(ret.isOk());
 
@@ -7907,6 +7943,10 @@ void CameraHidlTest::verifyLogicalOrUltraHighResCameraMetadata(
                         ASSERT_EQ(device3_x, nullptr);
                     });
             ASSERT_TRUE(ret.isOk());
+        }
+
+        if (hasTestPatternPhysicalRequestKey) {
+            ASSERT_TRUE(privacyTestPatternModes == subCameraPrivacyTestPatterns);
         }
 
         if (physicalMultiResStreamConfigs.count > 0) {

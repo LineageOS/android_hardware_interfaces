@@ -119,6 +119,10 @@ void Tuner::init() {
             .coderateCap = (int)FrontendIsdbtCoderate::CODERATE_4_5 |
                            (int)FrontendIsdbtCoderate::CODERATE_6_7,
             .guardIntervalCap = (int)FrontendIsdbtGuardInterval::INTERVAL_1_128,
+            .timeInterleaveCap = (int)FrontendIsdbtTimeInterleaveMode::AUTO |
+                                 (int)FrontendIsdbtTimeInterleaveMode::INTERLEAVE_1_0,
+            .isSegmentAuto = true,
+            .isFullSegment = true,
     };
     capsIsdbt.set<FrontendCapabilities::Tag::isdbtCaps>(isdbtCaps);
     mFrontendCaps[5] = capsIsdbt;
@@ -131,6 +135,9 @@ void Tuner::init() {
             FrontendStatusType::GUARD_INTERVAL,
             FrontendStatusType::TRANSMISSION_MODE,
             FrontendStatusType::ISDBT_SEGMENTS,
+            FrontendStatusType::ISDBT_MODE,
+            FrontendStatusType::ISDBT_PARTIAL_RECEPTION_FLAG,
+            FrontendStatusType::INTERLEAVINGS,
     };
     mFrontendStatusCaps[5] = statusCaps;
 
