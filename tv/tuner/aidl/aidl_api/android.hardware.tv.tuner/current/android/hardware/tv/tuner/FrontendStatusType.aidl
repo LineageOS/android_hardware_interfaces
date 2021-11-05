@@ -72,4 +72,6 @@ enum FrontendStatusType {
   IS_MISO = 34,
   IS_LINEAR = 35,
   IS_SHORT_FRAMES = 36,
+  ISDBT_MODE = 37,
+  ISDBT_PARTIAL_RECEPTION_FLAG = 38,
 }

@@ -40,4 +40,7 @@ parcelable FrontendIsdbtCapabilities {
   int modulationCap;
   int coderateCap;
   int guardIntervalCap;
+  int timeInterleaveCap;
+  boolean isSegmentAuto;
+  boolean isFullSegment;
 }

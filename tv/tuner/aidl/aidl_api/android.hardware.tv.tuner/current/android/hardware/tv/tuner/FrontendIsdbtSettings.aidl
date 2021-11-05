@@ -38,10 +38,10 @@ parcelable FrontendIsdbtSettings {
   long frequency;
   long endFrequency;
   android.hardware.tv.tuner.FrontendSpectralInversion inversion = android.hardware.tv.tuner.FrontendSpectralInversion.UNDEFINED;
-  android.hardware.tv.tuner.FrontendIsdbtModulation modulation = android.hardware.tv.tuner.FrontendIsdbtModulation.UNDEFINED;
   android.hardware.tv.tuner.FrontendIsdbtBandwidth bandwidth = android.hardware.tv.tuner.FrontendIsdbtBandwidth.UNDEFINED;
   android.hardware.tv.tuner.FrontendIsdbtMode mode = android.hardware.tv.tuner.FrontendIsdbtMode.UNDEFINED;
-  android.hardware.tv.tuner.FrontendIsdbtCoderate coderate = android.hardware.tv.tuner.FrontendIsdbtCoderate.UNDEFINED;
   android.hardware.tv.tuner.FrontendIsdbtGuardInterval guardInterval = android.hardware.tv.tuner.FrontendIsdbtGuardInterval.UNDEFINED;
   int serviceAreaId;
+  android.hardware.tv.tuner.FrontendIsdbtPartialReceptionFlag partialReceptionFlag = android.hardware.tv.tuner.FrontendIsdbtPartialReceptionFlag.UNDEFINED;
+  android.hardware.tv.tuner.FrontendIsdbtLayerSettings[] layerSettings;
 }

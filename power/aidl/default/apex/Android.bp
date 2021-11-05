@@ -1,0 +1,72 @@
+// Copyright (C) 2021 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+apex_key {
+    name: "com.android.hardware.power.key",
+    public_key: "com.android.hardware.power.avbpubkey",
+    private_key: "com.android.hardware.power.pem",
+}
+
+android_app_certificate {
+    name: "com.android.hardware.power.certificate",
+    certificate: "com.android.hardware.power",
+}
+
+genrule {
+    name: "com.android.hardware.power.rc-srcs",
+    srcs: [
+        ":android.hardware.power.rc",
+        ":android.hardware.power.stats.rc",
+    ],
+    out: ["com.android.hardware.power.rc"],
+    cmd: "sed -E 's/\\/vendor/\\/apex\\/com.android.hardware.power/' $(in) > $(out)",
+}
+
+prebuilt_etc {
+    name: "com.android.hardware.power.rc",
+    src: ":com.android.hardware.power.rc-srcs",
+    installable: false,
+}
+
+apex {
+    name: "com.android.hardware.power",
+    manifest: "apex_manifest.json",
+    key: "com.android.hardware.power.key",
+    certificate: ":com.android.hardware.power.certificate",
+    file_contexts: "file_contexts",
+    use_vndk_as_stable: true,
+    updatable: false,
+    // Install the apex in /vendor/apex
+    soc_specific: true,
+    // Bundle the Power and PowerStats HALs into this one APEX.
+    binaries: [
+        "android.hardware.power-service.example",
+        "android.hardware.power.stats-service.example",
+    ],
+    prebuilts: [
+        "com.android.hardware.power.rc",
+    ],
+    vintf_fragments: [
+        ":android.hardware.power.xml",
+        ":android.hardware.power.stats.xml",
+    ],
+    overrides: [
+        // Shared lib installed by default but unused by the AIDL implementation.
+        "power.default",
+    ],
+}

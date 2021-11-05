@@ -36,10 +36,11 @@ package android.hardware.gnss;
 interface IGnss {
   void setCallback(in android.hardware.gnss.IGnssCallback callback);
   void close();
-  android.hardware.gnss.IGnssPsds getExtensionPsds();
+  @nullable android.hardware.gnss.IGnssPsds getExtensionPsds();
   android.hardware.gnss.IGnssConfiguration getExtensionGnssConfiguration();
   android.hardware.gnss.IGnssMeasurementInterface getExtensionGnssMeasurement();
   android.hardware.gnss.IGnssPowerIndication getExtensionGnssPowerIndication();
+  @nullable android.hardware.gnss.IGnssBatching getExtensionGnssBatching();
   const int ERROR_INVALID_ARGUMENT = 1;
   const int ERROR_ALREADY_INIT = 2;
   const int ERROR_GENERIC = 3;

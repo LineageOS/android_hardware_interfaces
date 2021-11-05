@@ -74,7 +74,6 @@ class FilterCallback : public BnFilterCallback {
 
     void setFilterId(int32_t filterId) { mFilterId = filterId; }
     void setFilterInterface(std::shared_ptr<IFilter> filter) { mFilter = filter; }
-    void setFilterEventType(FilterEventType type) { mFilterEventType = type; }
     void setSharedHandle(native_handle_t* sharedHandle) { mAvSharedHandle = sharedHandle; }
     void setMemSize(uint64_t size) { mAvSharedMemSize = size; }
 
@@ -89,7 +88,6 @@ class FilterCallback : public BnFilterCallback {
   private:
     int32_t mFilterId;
     std::shared_ptr<IFilter> mFilter;
-    FilterEventType mFilterEventType;
 
     native_handle_t* mAvSharedHandle = nullptr;
     uint64_t mAvSharedMemSize = -1;

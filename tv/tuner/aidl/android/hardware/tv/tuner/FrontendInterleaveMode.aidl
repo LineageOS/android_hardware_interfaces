@@ -19,6 +19,7 @@ package android.hardware.tv.tuner;
 import android.hardware.tv.tuner.FrontendAtsc3TimeInterleaveMode;
 import android.hardware.tv.tuner.FrontendCableTimeInterleaveMode;
 import android.hardware.tv.tuner.FrontendDtmbTimeInterleaveMode;
+import android.hardware.tv.tuner.FrontendIsdbtTimeInterleaveMode;
 
 /**
  * @hide
@@ -31,4 +32,6 @@ union FrontendInterleaveMode {
     FrontendCableTimeInterleaveMode dvbc;
 
     FrontendDtmbTimeInterleaveMode dtmb;
+
+    FrontendIsdbtTimeInterleaveMode isdbt;
 }
