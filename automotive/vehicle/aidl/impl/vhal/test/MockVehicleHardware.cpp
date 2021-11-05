@@ -64,6 +64,9 @@ StatusCode MockVehicleHardware::setValues(std::shared_ptr<const SetValuesCallbac
 StatusCode MockVehicleHardware::getValues(std::shared_ptr<const GetValuesCallback> callback,
                                           const std::vector<GetValueRequest>& requests) const {
     std::scoped_lock<std::mutex> lockGuard(mLock);
+    if (mGetValueResponder != nullptr) {
+        return mGetValueResponder(callback, requests);
+    }
     return handleRequestsLocked(__func__, callback, requests, &mGetValueRequests,
                                 &mGetValueResponses);
 }
@@ -102,6 +105,13 @@ void MockVehicleHardware::addGetValueResponses(const std::vector<GetValueResult>
 void MockVehicleHardware::addSetValueResponses(const std::vector<SetValueResult>& responses) {
     std::scoped_lock<std::mutex> lockGuard(mLock);
     mSetValueResponses.push_back(responses);
+}
+
+void MockVehicleHardware::setGetValueResponder(
+        std::function<StatusCode(std::shared_ptr<const GetValuesCallback>,
+                                 const std::vector<GetValueRequest>&)>&& responder) {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    mGetValueResponder = responder;
 }
 
 std::vector<GetValueRequest> MockVehicleHardware::nextGetValueRequests() {

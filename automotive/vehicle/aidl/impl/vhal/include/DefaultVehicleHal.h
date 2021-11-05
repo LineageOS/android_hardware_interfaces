@@ -53,7 +53,7 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
 
     explicit DefaultVehicleHal(std::unique_ptr<IVehicleHardware> hardware);
 
-    ~DefaultVehicleHal();
+    ~DefaultVehicleHal() = default;
 
     ::ndk::ScopedAStatus getAllPropConfigs(
             ::aidl::android::hardware::automotive::vehicle::VehiclePropConfigs* returnConfigs)
@@ -93,11 +93,40 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
             GetSetValuesClient<::aidl::android::hardware::automotive::vehicle::SetValueResult,
                                ::aidl::android::hardware::automotive::vehicle::SetValueResults>;
 
+    // A thread safe class to maintain an increasing request ID for each subscribe client. This
+    // class is safe to pass to async callbacks.
+    class SubscribeIdByClient {
+      public:
+        int64_t getId(const CallbackType& callback);
+
+      private:
+        std::mutex mLock;
+        std::unordered_map<CallbackType, int64_t> mIds GUARDED_BY(mLock);
+    };
+
+    // A thread safe class to store all subscribe clients. This class is safe to pass to async
+    // callbacks.
+    class SubscriptionClients {
+      public:
+        SubscriptionClients(std::shared_ptr<PendingRequestPool> pool) : mPendingRequestPool(pool) {}
+
+        std::shared_ptr<SubscriptionClient> getClient(const CallbackType& callback);
+
+        size_t countClients();
+
+      private:
+        std::mutex mLock;
+        std::unordered_map<CallbackType, std::shared_ptr<SubscriptionClient>> mClients
+                GUARDED_BY(mLock);
+        // PendingRequestPool is thread-safe.
+        std::shared_ptr<PendingRequestPool> mPendingRequestPool;
+    };
+
     // The default timeout of get or set value requests is 30s.
     // TODO(b/214605968): define TIMEOUT_IN_NANO in IVehicle and allow getValues/setValues/subscribe
     // to specify custom timeouts.
     static constexpr int64_t TIMEOUT_IN_NANO = 30'000'000'000;
-    const std::unique_ptr<IVehicleHardware> mVehicleHardware;
+    const std::shared_ptr<IVehicleHardware> mVehicleHardware;
 
     // mConfigsByPropId and mConfigFile are only modified during initialization, so no need to
     // lock guard them.
@@ -108,22 +137,15 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
     // PendingRequestPool is thread-safe.
     std::shared_ptr<PendingRequestPool> mPendingRequestPool;
     // SubscriptionManager is thread-safe.
-    std::unique_ptr<SubscriptionManager> mSubscriptionManager;
+    std::shared_ptr<SubscriptionManager> mSubscriptionManager;
 
     std::mutex mLock;
     std::unordered_map<CallbackType, std::shared_ptr<GetValuesClient>> mGetValuesClients
             GUARDED_BY(mLock);
     std::unordered_map<CallbackType, std::shared_ptr<SetValuesClient>> mSetValuesClients
             GUARDED_BY(mLock);
-    std::unordered_map<CallbackType, std::shared_ptr<SubscriptionClient>> mSubscriptionClients
-            GUARDED_BY(mLock);
-    // An increasing request ID we keep for subscribe clients.
-    std::unordered_map<CallbackType, int64_t> mSubscribeIdByClient GUARDED_BY(mLock);
-
-    template <class T>
-    std::shared_ptr<T> getOrCreateClient(
-            std::unordered_map<CallbackType, std::shared_ptr<T>>* clients,
-            const CallbackType& callback) REQUIRES(mLock);
+    // SubscriptionClients is thread-safe.
+    std::shared_ptr<SubscriptionClients> mSubscriptionClients;
 
     ::android::base::Result<void> checkProperty(
             const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue);
@@ -136,9 +158,25 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
             const std::vector<::aidl::android::hardware::automotive::vehicle::SetValueRequest>&
                     requests);
 
-    void getValueFromHardwareCallCallback(
-            const CallbackType& callback,
+    ::android::base::Result<void> checkSubscribeOptions(
+            const std::vector<::aidl::android::hardware::automotive::vehicle::SubscribeOptions>&
+                    options);
+
+    template <class T>
+    static std::shared_ptr<T> getOrCreateClient(
+            std::unordered_map<CallbackType, std::shared_ptr<T>>* clients,
+            const CallbackType& callback, std::shared_ptr<PendingRequestPool> pendingRequestPool);
+
+    static void getValueFromHardwareCallCallback(
+            std::weak_ptr<IVehicleHardware> vehicleHardware,
+            std::shared_ptr<SubscribeIdByClient> subscribeIdByClient,
+            std::shared_ptr<SubscriptionClients> subscriptionClients, const CallbackType& callback,
             const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
+
+    static void onPropertyChangeEvent(
+            std::weak_ptr<SubscriptionManager> subscriptionManager,
+            const std::vector<::aidl::android::hardware::automotive::vehicle::VehiclePropValue>&
+                    updatedValues);
 
     // Test-only
     // Set the default timeout for pending requests.
