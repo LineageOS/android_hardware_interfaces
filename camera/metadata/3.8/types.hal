@@ -58,3 +58,11 @@ enum CameraMetadataTag : @3.7::CameraMetadataTag {
 /*
  * Enumeration definitions for the various entries that need them
  */
+
+/** android.control.videoStabilizationMode enumeration values added since v3.2
+ * @see ANDROID_CONTROL_VIDEO_STABILIZATION_MODE
+ */
+enum CameraMetadataEnumAndroidControlVideoStabilizationMode :
+        @3.2::CameraMetadataEnumAndroidControlVideoStabilizationMode {
+    ANDROID_CONTROL_VIDEO_STABILIZATION_MODE_PREVIEW_STABILIZATION,
+};
