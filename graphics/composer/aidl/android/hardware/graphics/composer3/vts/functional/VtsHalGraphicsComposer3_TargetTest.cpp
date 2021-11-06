@@ -62,6 +62,9 @@ class GraphicsComposerAidlTest : public ::testing::TestWithParam<std::string> {
         mDisplays = waitForDisplays();
     }
 
+    // use the slot count usually set by SF
+    static constexpr uint32_t kBufferSlotCount = 64;
+
     // returns an invalid display id (one that has not been registered to a
     // display.  Currently assuming that a device will never have close to
     // std::numeric_limit<uint64_t>::max() displays registered while running tests
@@ -165,12 +168,29 @@ class GraphicsComposerAidlTest : public ::testing::TestWithParam<std::string> {
         }
     }
 
+    void setPowerMode(int64_t display, PowerMode powerMode) {
+        ::ndk::ScopedAStatus error = mComposerClient->setPowerMode(display, powerMode);
+        ASSERT_TRUE(error.isOk() ||
+                    IComposerClient::EX_UNSUPPORTED == error.getServiceSpecificError())
+                << "failed to set power mode";
+    }
+
+    // Keep track of all virtual displays and layers.  When a test fails with
+    // ASSERT_*, the destructor will clean up the resources for the test.
+    struct DisplayResource {
+        DisplayResource(bool isVirtual_) : isVirtual(isVirtual_) {}
+
+        bool isVirtual;
+        std::unordered_set<int32_t> layers;
+    };
+
     std::shared_ptr<IComposer> mComposer;
     std::shared_ptr<IComposerClient> mComposerClient;
     int64_t mInvalidDisplayId;
     int64_t mPrimaryDisplay;
     std::vector<VtsDisplay> mDisplays;
     std::shared_ptr<GraphicsComposerCallback> mComposerCallback;
+    std::unordered_map<int64_t, DisplayResource> mDisplayResources;
 };
 
 TEST_P(GraphicsComposerAidlTest, getDisplayCapabilitiesBadDisplay) {
@@ -237,9 +257,12 @@ TEST_P(GraphicsComposerAidlTest, GetPerFrameMetadataKeys) {
     std::vector<PerFrameMetadataKey> keys;
     const auto error = mComposerClient->getPerFrameMetadataKeys(mPrimaryDisplay, &keys);
 
-    if (error.isOk()) {
-        EXPECT_EQ(EX_NONE, error.getServiceSpecificError());
+    if (error.getServiceSpecificError() == IComposerClient::EX_UNSUPPORTED) {
+        GTEST_SUCCEED() << "getPerFrameMetadataKeys is not supported";
+        return;
     }
+    EXPECT_TRUE(error.isOk());
+    ASSERT_TRUE(keys.size() >= 0);
 }
 
 TEST_P(GraphicsComposerAidlTest, GetReadbackBufferAttributes) {
@@ -738,6 +761,138 @@ TEST_P(GraphicsComposerAidlTest, getLayerGenericMetadataKeys) {
         const auto& [iter, inserted] = uniqueNames.insert(name);
         EXPECT_TRUE(inserted);
     }
+}
+
+TEST_P(GraphicsComposerAidlTest, CreateVirtualDisplay) {
+    int32_t maxVirtualDisplayCount;
+    EXPECT_TRUE(mComposerClient->getMaxVirtualDisplayCount(&maxVirtualDisplayCount).isOk());
+    if (maxVirtualDisplayCount == 0) {
+        GTEST_SUCCEED() << "no virtual display support";
+        return;
+    }
+
+    VirtualDisplay virtualDisplay;
+
+    EXPECT_TRUE(mComposerClient
+                        ->createVirtualDisplay(64, 64, common::PixelFormat::IMPLEMENTATION_DEFINED,
+                                               kBufferSlotCount, &virtualDisplay)
+                        .isOk());
+
+    ASSERT_TRUE(mDisplayResources.insert({virtualDisplay.display, DisplayResource(true)}).second)
+            << "duplicated virtual display id " << virtualDisplay.display;
+
+    EXPECT_TRUE(mComposerClient->destroyVirtualDisplay(virtualDisplay.display).isOk());
+}
+
+TEST_P(GraphicsComposerAidlTest, SetPowerMode) {
+    std::vector<PowerMode> modes;
+    modes.push_back(PowerMode::OFF);
+    modes.push_back(PowerMode::ON_SUSPEND);
+    modes.push_back(PowerMode::ON);
+
+    for (auto mode : modes) {
+        setPowerMode(mPrimaryDisplay, mode);
+    }
+}
+
+TEST_P(GraphicsComposerAidlTest, SetPowerModeVariations) {
+    std::vector<PowerMode> modes;
+
+    modes.push_back(PowerMode::OFF);
+    modes.push_back(PowerMode::OFF);
+
+    for (auto mode : modes) {
+        setPowerMode(mPrimaryDisplay, mode);
+    }
+
+    modes.clear();
+
+    modes.push_back(PowerMode::ON);
+    modes.push_back(PowerMode::ON);
+
+    for (auto mode : modes) {
+        setPowerMode(mPrimaryDisplay, mode);
+    }
+
+    modes.clear();
+
+    modes.push_back(PowerMode::ON_SUSPEND);
+    modes.push_back(PowerMode::ON_SUSPEND);
+
+    for (auto mode : modes) {
+        setPowerMode(mPrimaryDisplay, mode);
+    }
+
+    bool isDozeSupported = false;
+    ASSERT_TRUE(mComposerClient->getDozeSupport(mPrimaryDisplay, &isDozeSupported).isOk());
+    if (isDozeSupported) {
+        modes.clear();
+
+        modes.push_back(PowerMode::DOZE);
+        modes.push_back(PowerMode::DOZE);
+
+        for (auto mode : modes) {
+            setPowerMode(mPrimaryDisplay, mode);
+        }
+
+        modes.clear();
+
+        modes.push_back(PowerMode::DOZE_SUSPEND);
+        modes.push_back(PowerMode::DOZE_SUSPEND);
+
+        for (auto mode : modes) {
+            setPowerMode(mPrimaryDisplay, mode);
+        }
+    }
+}
+
+TEST_P(GraphicsComposerAidlTest, SetPowerModeBadDisplay) {
+    const auto error = mComposerClient->setPowerMode(mInvalidDisplayId, PowerMode::ON);
+
+    EXPECT_FALSE(error.isOk());
+    ASSERT_EQ(IComposerClient::EX_BAD_DISPLAY, error.getServiceSpecificError());
+}
+
+TEST_P(GraphicsComposerAidlTest, SetPowerModeBadParameter) {
+    const auto error = mComposerClient->setPowerMode(mPrimaryDisplay, static_cast<PowerMode>(-1));
+
+    EXPECT_FALSE(error.isOk());
+    ASSERT_EQ(IComposerClient::EX_BAD_PARAMETER, error.getServiceSpecificError());
+}
+
+TEST_P(GraphicsComposerAidlTest, SetPowerModeUnsupported) {
+    bool isDozeSupported = false;
+    mComposerClient->getDozeSupport(mPrimaryDisplay, &isDozeSupported);
+    if (!isDozeSupported) {
+        auto error = mComposerClient->setPowerMode(mPrimaryDisplay, PowerMode::DOZE);
+        EXPECT_FALSE(error.isOk());
+        EXPECT_EQ(IComposerClient::EX_UNSUPPORTED, error.getServiceSpecificError());
+
+        error = mComposerClient->setPowerMode(mPrimaryDisplay, PowerMode::DOZE_SUSPEND);
+        EXPECT_FALSE(error.isOk());
+        EXPECT_EQ(IComposerClient::EX_UNSUPPORTED, error.getServiceSpecificError());
+    }
+}
+
+TEST_P(GraphicsComposerAidlTest, GetDataspaceSaturationMatrix) {
+    std::vector<float> matrix;
+    EXPECT_TRUE(
+            mComposerClient->getDataspaceSaturationMatrix(common::Dataspace::SRGB_LINEAR, &matrix)
+                    .isOk());
+    // the last row is known
+    ASSERT_EQ(0.0f, matrix[12]);
+    ASSERT_EQ(0.0f, matrix[13]);
+    ASSERT_EQ(0.0f, matrix[14]);
+    ASSERT_EQ(1.0f, matrix[15]);
+}
+
+TEST_P(GraphicsComposerAidlTest, GetDataspaceSaturationMatrixBadParameter) {
+    std::vector<float> matrix;
+    const auto error =
+            mComposerClient->getDataspaceSaturationMatrix(common::Dataspace::UNKNOWN, &matrix);
+
+    EXPECT_FALSE(error.isOk());
+    EXPECT_EQ(IComposerClient::EX_BAD_PARAMETER, error.getServiceSpecificError());
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GraphicsComposerAidlTest);
