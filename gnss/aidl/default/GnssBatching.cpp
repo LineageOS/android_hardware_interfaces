@@ -78,9 +78,6 @@ ndk::ScopedAStatus GnssBatching::start(int64_t periodNanos, int flags) {
 
 ndk::ScopedAStatus GnssBatching::flush() {
     ALOGD("flush");
-    if (mBatchedLocations.empty()) {
-        return ndk::ScopedAStatus::ok();
-    }
     std::vector<GnssLocation> copy = std::vector<GnssLocation>(mBatchedLocations);
     ndk::ScopedAStatus status;
     if (sCallback != nullptr) {
