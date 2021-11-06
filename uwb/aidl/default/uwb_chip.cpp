@@ -17,7 +17,8 @@
 #include "uwb.h"
 
 namespace {
-constexpr static int kVendorUciVersion = 1;
+constexpr static int32_t kAndroidUciVersion = 1;
+constexpr static int64_t kAndroidCapabilities = 0;
 }
 
 namespace android {
@@ -50,8 +51,13 @@ UwbChip::~UwbChip() {}
     return ndk::ScopedAStatus::ok();
 }
 
-::ndk::ScopedAStatus UwbChip::getSupportedVendorUciVersion(int32_t* version) {
-    *version = kVendorUciVersion;
+::ndk::ScopedAStatus UwbChip::getSupportedAndroidUciVersion(int32_t* version) {
+    *version = kAndroidUciVersion;
+    return ndk::ScopedAStatus::ok();
+}
+
+::ndk::ScopedAStatus UwbChip::getSupportedAndroidCapabilities(int64_t* capabilities) {
+    *capabilities = kAndroidCapabilities;
     return ndk::ScopedAStatus::ok();
 }
 
