@@ -49,14 +49,24 @@ interface IUwbChip {
      */
     void coreInit();
 
-     /**
-      * Supported version of vendor UCI specification.
-      *
-      * This corresponds to the version of the "android.hardware.uwb.fira_android" types-only
-      * package included in the HAL implementation. This vendor params/commands package will be
-      * updated on a different cadence to the main UWB HAL interface package.
-      */
-    int getSupportedVendorUciVersion();
+    /**
+     * Supported version of vendor UCI specification.
+     *
+     * @return Returns the version of the "android.hardware.uwb.fira_android" types-only
+     * package included in the HAL implementation. This vendor params/commands package will be
+     * updated on a different cadence to the main UWB HAL interface package.
+     */
+    int getSupportedAndroidUciVersion();
+
+    /**
+     * Mechanism to allow HAL implementation to optionally expose features that are defined
+     * in the "android.hardware.uwb.fira_android" types-only package.
+     *
+     * @return Returns the bitmask of capabilities
+     * (android.hardware.uwb.fira_android.UwbAndroidCapabilities) that is supported by the
+     * HAL implementation.
+     */
+    long getSupportedAndroidCapabilities();
 
     /**
      * Write the UCI message to the UWB Subsystem.

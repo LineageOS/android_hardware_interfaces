@@ -1,8 +1,6 @@
 /*
  * Copyright (C) 2021 The Android Open Source Project
  *
- * Copyright 2021 NXP.
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * You may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -33,14 +31,8 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.uwb;
-@VintfStability
-interface IUwbChip {
-  String getName();
-  void open(in android.hardware.uwb.IUwbClientCallback clientCallback);
-  void close();
-  void coreInit();
-  int getSupportedAndroidUciVersion();
-  long getSupportedAndroidCapabilities();
-  int sendUciMessage(in byte[] data);
+package android.hardware.uwb.fira_android;
+@Backing(type="long") @VintfStability
+enum UwbAndroidCapabilities {
+  POWER_STATS_QUERY = 1,
 }
