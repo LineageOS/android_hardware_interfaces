@@ -45,6 +45,52 @@ cc_defaults {
     ],
 }
 
+// Dependency to libhealthd_charger_ui. No UI in recovery.
+cc_defaults {
+    name: "libhealth_aidl_charger_defaults",
+    shared_libs: [
+        // common
+        "android.hardware.health-V1-ndk",
+        "libbase",
+        "libcutils",
+        "liblog",
+        "libutils",
+
+        // charger UI only
+        "libpng",
+    ],
+
+    static_libs: [
+        // common
+        "libbatterymonitor",
+        "libhealthloop",
+
+        // charger UI only
+        "libhealthd_draw",
+        "libhealthd_charger_ui",
+        "libminui",
+        "libsuspend",
+    ],
+
+    target: {
+        recovery: {
+            // No UI and libsuspend for recovery charger.
+            cflags: [
+                "-DCHARGER_FORCE_NO_UI=1",
+            ],
+            exclude_shared_libs: [
+                "libpng",
+            ],
+            exclude_static_libs: [
+                "libhealthd_draw",
+                "libhealthd_charger_ui",
+                "libminui",
+                "libsuspend",
+            ],
+        },
+    },
+}
+
 // AIDL version of libhealth2impl.
 // A helper library for health HAL implementation.
 // HAL implementations can link to this library and extend the Health class.
@@ -52,12 +98,14 @@ cc_library_static {
     name: "libhealth_aidl_impl",
     defaults: [
         "libhealth_aidl_common_defaults",
+        "libhealth_aidl_charger_defaults",
     ],
     export_include_dirs: ["include"],
     export_static_lib_headers: [
         "libbatterymonitor",
     ],
     srcs: [
+        "ChargerUtils.cpp",
         "health-convert.cpp",
         "HalHealthLoop.cpp",
         "Health.cpp",
@@ -67,6 +115,13 @@ cc_library_static {
         ":__subpackages__",
         "//hardware/interfaces/tests/extension/health:__subpackages__",
     ],
+    target: {
+        recovery: {
+            exclude_srcs: [
+                "ChargerUtils.cpp",
+            ],
+        },
+    },
 }
 
 // AIDL version of android.hardware.health@2.1-service.
@@ -78,9 +133,13 @@ cc_binary {
     vintf_fragments: ["android.hardware.health-service.example.xml"],
     defaults: [
         "libhealth_aidl_common_defaults",
+        "libhealth_aidl_charger_defaults",
     ],
     static_libs: [
         "libhealth_aidl_impl",
     ],
     srcs: ["main.cpp"],
+    overrides: [
+        "charger",
+    ],
 }
