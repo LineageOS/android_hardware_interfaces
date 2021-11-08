@@ -534,8 +534,14 @@ TEST_P(EvsHidlTest, CameraStreamPerformance) {
 TEST_P(EvsHidlTest, CameraStreamBuffering) {
     LOG(INFO) << "Starting CameraStreamBuffering test";
 
-    // Arbitrary constant (should be > 1 and not too big)
-    static const unsigned int kBuffersToHold = 2;
+    // Maximum number of frames in flight this test case will attempt. This test
+    // case chooses an arbitrary number that is large enough to run a camera
+    // pipeline for a single client.
+    constexpr unsigned int kMaxBuffersToHold = 20;
+
+    // Initial value for setMaxFramesInFlight() call. This number should be
+    // greater than 1.
+    unsigned int buffersToHold = 2;
 
     // Get the camera list
     loadCameraList();
@@ -567,9 +573,15 @@ TEST_P(EvsHidlTest, CameraStreamBuffering) {
         EXPECT_EQ(EvsResult::BUFFER_NOT_AVAILABLE, badResult);
 
         // Now ask for exactly two buffers in flight as we'll test behavior in that case
-        Return<EvsResult> goodResult = pCam->setMaxFramesInFlight(kBuffersToHold);
-        EXPECT_EQ(EvsResult::OK, goodResult);
+        while (buffersToHold < kMaxBuffersToHold) {
+            Return<EvsResult> goodResult = pCam->setMaxFramesInFlight(buffersToHold);
+            if (goodResult == EvsResult::OK) {
+                break;
+            }
 
+            ++buffersToHold;
+        }
+        EXPECT_LE(buffersToHold, kMaxBuffersToHold);
 
         // Set up a frame receiver object which will fire up its own thread.
         sp<FrameHandler> frameHandler = new FrameHandler(pCam, cam,
@@ -585,7 +597,7 @@ TEST_P(EvsHidlTest, CameraStreamBuffering) {
         sleep(1);   // 1 second should be enough for at least 5 frames to be delivered worst case
         unsigned framesReceived = 0;
         frameHandler->getFramesCounters(&framesReceived, nullptr);
-        ASSERT_EQ(kBuffersToHold, framesReceived) << "Stream didn't stall at expected buffer limit";
+        ASSERT_EQ(buffersToHold, framesReceived) << "Stream didn't stall at expected buffer limit";
 
 
         // Give back one buffer
@@ -596,7 +608,7 @@ TEST_P(EvsHidlTest, CameraStreamBuffering) {
         // filled since we require 10fps minimum -- but give a 10% allowance just in case.
         usleep(110 * kMillisecondsToMicroseconds);
         frameHandler->getFramesCounters(&framesReceived, nullptr);
-        EXPECT_EQ(kBuffersToHold+1, framesReceived) << "Stream should've resumed";
+        EXPECT_EQ(buffersToHold+1, framesReceived) << "Stream should've resumed";
 
         // Even when the camera pointer goes out of scope, the FrameHandler object will
         // keep the stream alive unless we tell it to shutdown.
