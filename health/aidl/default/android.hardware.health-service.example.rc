@@ -4,3 +4,13 @@ service vendor.health-default /vendor/bin/hw/android.hardware.health-service.exa
     group system
     capabilities WAKE_ALARM BLOCK_SUSPEND
     file /dev/kmsg w
+
+service vendor.charger-default /vendor/bin/hw/android.hardware.health-service.example --charger
+    class charger
+    user system
+    group system wakelock input
+    capabilities SYS_BOOT
+    file /dev/kmsg w
+    file /sys/fs/pstore/console-ramoops-0 r
+    file /sys/fs/pstore/console-ramoops r
+    file /proc/last_kmsg r
