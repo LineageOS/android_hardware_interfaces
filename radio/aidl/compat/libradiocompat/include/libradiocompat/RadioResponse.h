@@ -17,6 +17,7 @@
 
 #include <aidl/android/hardware/radio/data/IRadioDataResponse.h>
 #include <aidl/android/hardware/radio/messaging/IRadioMessagingResponse.h>
+#include <aidl/android/hardware/radio/modem/IRadioModemResponse.h>
 #include <aidl/android/hardware/radio/network/IRadioNetworkResponse.h>
 #include <aidl/android/hardware/radio/sim/IRadioSimResponse.h>
 #include <aidl/android/hardware/radio/voice/IRadioVoiceResponse.h>
@@ -28,6 +29,7 @@ class RadioResponse : public V1_6::IRadioResponse {
     std::shared_ptr<::aidl::android::hardware::radio::data::IRadioDataResponse> mDataCb;
     std::shared_ptr<::aidl::android::hardware::radio::messaging::IRadioMessagingResponse>
             mMessagingCb;
+    std::shared_ptr<::aidl::android::hardware::radio::modem::IRadioModemResponse> mModemCb;
     std::shared_ptr<::aidl::android::hardware::radio::network::IRadioNetworkResponse> mNetworkCb;
     std::shared_ptr<::aidl::android::hardware::radio::sim::IRadioSimResponse> mSimCb;
     std::shared_ptr<::aidl::android::hardware::radio::voice::IRadioVoiceResponse> mVoiceCb;
@@ -412,6 +414,8 @@ class RadioResponse : public V1_6::IRadioResponse {
     void setResponseFunction(
             std::shared_ptr<::aidl::android::hardware::radio::messaging::IRadioMessagingResponse>
                     radioMessagingResponse);
+    void setResponseFunction(
+            std::shared_ptr<::aidl::android::hardware::radio::modem::IRadioModemResponse> modemCb);
     void setResponseFunction(
             std::shared_ptr<::aidl::android::hardware::radio::network::IRadioNetworkResponse> nwCb);
     void setResponseFunction(

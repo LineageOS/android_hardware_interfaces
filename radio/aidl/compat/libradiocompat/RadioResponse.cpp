@@ -18,9 +18,6 @@
 
 #include "debug.h"
 
-// TODO(b/203699028): remove when fully implemented
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-
 #define RADIO_MODULE "Common"
 
 namespace android::hardware::radio::compat {
@@ -30,86 +27,10 @@ Return<void> RadioResponse::acknowledgeRequest(int32_t serial) {
     // TODO(b/203699028): send to correct requestor or confirm if spam is not a problem
     if (mDataCb) mDataCb->acknowledgeRequest(serial);
     if (mMessagingCb) mMessagingCb->acknowledgeRequest(serial);
+    if (mModemCb) mModemCb->acknowledgeRequest(serial);
     if (mNetworkCb) mNetworkCb->acknowledgeRequest(serial);
     if (mSimCb) mSimCb->acknowledgeRequest(serial);
     if (mVoiceCb) mVoiceCb->acknowledgeRequest(serial);
-    return {};
-}
-
-Return<void> RadioResponse::setRadioPowerResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getBasebandVersionResponse(const V1_0::RadioResponseInfo& info,
-                                                       const hidl_string& version) {
-    return {};
-}
-
-Return<void> RadioResponse::getDeviceIdentityResponse(  //
-        const V1_0::RadioResponseInfo& info, const hidl_string& imei, const hidl_string& imeisv,
-        const hidl_string& esn, const hidl_string& meid) {
-    return {};
-}
-
-Return<void> RadioResponse::nvReadItemResponse(const V1_0::RadioResponseInfo& info,
-                                               const hidl_string& result) {
-    return {};
-}
-
-Return<void> RadioResponse::nvWriteItemResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::nvWriteCdmaPrlResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::nvResetConfigResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getHardwareConfigResponse(
-        const V1_0::RadioResponseInfo& info, const hidl_vec<V1_0::HardwareConfig>& config) {
-    return {};
-}
-
-Return<void> RadioResponse::requestShutdownResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getRadioCapabilityResponse(const V1_0::RadioResponseInfo& info,
-                                                       const V1_0::RadioCapability& rc) {
-    return {};
-}
-
-Return<void> RadioResponse::setRadioCapabilityResponse(const V1_0::RadioResponseInfo& info,
-                                                       const V1_0::RadioCapability& rc) {
-    return {};
-}
-
-Return<void> RadioResponse::getModemActivityInfoResponse(
-        const V1_0::RadioResponseInfo& info, const V1_0::ActivityStatsInfo& activityInfo) {
-    return {};
-}
-
-Return<void> RadioResponse::sendDeviceStateResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::enableModemResponse(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::getModemStackStatusResponse(const V1_0::RadioResponseInfo& info,
-                                                        bool isEnabled) {
-    return {};
-}
-
-Return<void> RadioResponse::setRadioPowerResponse_1_5(const V1_0::RadioResponseInfo& info) {
-    return {};
-}
-
-Return<void> RadioResponse::setRadioPowerResponse_1_6(const V1_6::RadioResponseInfo& info) {
     return {};
 }
 

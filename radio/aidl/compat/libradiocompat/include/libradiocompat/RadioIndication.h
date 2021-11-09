@@ -17,6 +17,7 @@
 
 #include <aidl/android/hardware/radio/data/IRadioDataIndication.h>
 #include <aidl/android/hardware/radio/messaging/IRadioMessagingIndication.h>
+#include <aidl/android/hardware/radio/modem/IRadioModemIndication.h>
 #include <aidl/android/hardware/radio/network/IRadioNetworkIndication.h>
 #include <aidl/android/hardware/radio/sim/IRadioSimIndication.h>
 #include <aidl/android/hardware/radio/voice/IRadioVoiceIndication.h>
@@ -28,6 +29,7 @@ class RadioIndication : public V1_6::IRadioIndication {
     std::shared_ptr<::aidl::android::hardware::radio::data::IRadioDataIndication> mDataCb;
     std::shared_ptr<::aidl::android::hardware::radio::messaging::IRadioMessagingIndication>
             mMessagingCb;
+    std::shared_ptr<::aidl::android::hardware::radio::modem::IRadioModemIndication> mModemCb;
     std::shared_ptr<::aidl::android::hardware::radio::network::IRadioNetworkIndication> mNetworkCb;
     std::shared_ptr<::aidl::android::hardware::radio::sim::IRadioSimIndication> mSimCb;
     std::shared_ptr<::aidl::android::hardware::radio::voice::IRadioVoiceIndication> mVoiceCb;
@@ -184,6 +186,8 @@ class RadioIndication : public V1_6::IRadioIndication {
     void setResponseFunction(
             std::shared_ptr<::aidl::android::hardware::radio::messaging::IRadioMessagingIndication>
                     radioMessagingIndication);
+    void setResponseFunction(
+            std::shared_ptr<::aidl::android::hardware::radio::modem::IRadioModemIndication> modmCb);
     void setResponseFunction(
             std::shared_ptr<::aidl::android::hardware::radio::network::IRadioNetworkIndication> ni);
     void setResponseFunction(

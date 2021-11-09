@@ -55,6 +55,22 @@ auto toHidl(const std::vector<T>& inp) {
 }
 
 /**
+ * Converts hidl_array<T> HIDL list to std::vector<T> AIDL list.
+ *
+ * To convert values, the template uses toAidl functions for a given type T, assuming it's defined.
+ *
+ * \param inp array to convert
+ */
+template <typename T, size_t N>
+auto toAidl(const hidl_array<T, N>& inp) {
+    std::vector<decltype(toAidl(T{}))> out(N);
+    for (size_t i = 0; i < N; i++) {
+        out[i] = toAidl(inp[i]);
+    }
+    return out;
+}
+
+/**
  * Converts T=OptionalX HIDL value to std::optional<X> AIDL value.
  *
  * To convert values, the template uses toAidl functions for a given type T.value.

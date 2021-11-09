@@ -18,6 +18,10 @@
         <fqname>IRadioMessaging/slot1</fqname>
     </hal>
     <hal format="aidl">
+        <name>android.hardware.radio.modem</name>
+        <fqname>IRadioModem/slot1</fqname>
+    </hal>
+    <hal format="aidl">
         <name>android.hardware.radio.network</name>
         <fqname>IRadioNetwork/slot1</fqname>
     </hal>
