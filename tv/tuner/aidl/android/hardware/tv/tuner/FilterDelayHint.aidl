@@ -22,6 +22,7 @@ import android.hardware.tv.tuner.FilterDelayHintType;
  * Filter Delay Hint
  * Gives information to the filter to assist in delaying / accumulating filter events.
  * See FilterDelayHintType for more information regarding the hintValue units.
+ * Note: this hint is not valid for media filters.
  * @hide
  */
 @VintfStability
