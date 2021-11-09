@@ -16,32 +16,57 @@
 
 #include <libradiocompat/RadioIndication.h>
 
-// TODO(b/203699028): remove when fully implemented
-#pragma GCC diagnostic ignored "-Wunused-parameter"
+#include "commonStructs.h"
+#include "debug.h"
+#include "structs.h"
+
+#include "collections.h"
+
+#define RADIO_MODULE "ModemIndication"
 
 namespace android::hardware::radio::compat {
 
-Return<void> RadioIndication::radioStateChanged(V1_0::RadioIndicationType type,
-                                                V1_0::RadioState radioState) {
-    return {};
-}
+namespace aidl = ::aidl::android::hardware::radio::modem;
 
-Return<void> RadioIndication::rilConnected(V1_0::RadioIndicationType type) {
-    return {};
+void RadioIndication::setResponseFunction(std::shared_ptr<aidl::IRadioModemIndication> modemCb) {
+    CHECK(modemCb);
+    mModemCb = modemCb;
 }
 
 Return<void> RadioIndication::hardwareConfigChanged(V1_0::RadioIndicationType type,
                                                     const hidl_vec<V1_0::HardwareConfig>& configs) {
+    LOG_CALL << type;
+    CHECK_CB(mModemCb);
+    mModemCb->hardwareConfigChanged(toAidl(type), toAidl(configs));
+    return {};
+}
+
+Return<void> RadioIndication::modemReset(V1_0::RadioIndicationType type, const hidl_string& reasn) {
+    LOG_CALL << type;
+    CHECK_CB(mModemCb);
+    mModemCb->modemReset(toAidl(type), reasn);
     return {};
 }
 
 Return<void> RadioIndication::radioCapabilityIndication(V1_0::RadioIndicationType type,
                                                         const V1_0::RadioCapability& rc) {
+    LOG_CALL << type;
+    CHECK_CB(mModemCb);
+    mModemCb->radioCapabilityIndication(toAidl(type), toAidl(rc));
     return {};
 }
 
-Return<void> RadioIndication::modemReset(V1_0::RadioIndicationType type,
-                                         const hidl_string& reason) {
+Return<void> RadioIndication::radioStateChanged(V1_0::RadioIndicationType t, V1_0::RadioState st) {
+    LOG_CALL << t;
+    CHECK_CB(mModemCb);
+    mModemCb->radioStateChanged(toAidl(t), aidl::RadioState(st));
+    return {};
+}
+
+Return<void> RadioIndication::rilConnected(V1_0::RadioIndicationType type) {
+    LOG_CALL << type;
+    CHECK_CB(mModemCb);
+    mModemCb->rilConnected(toAidl(type));
     return {};
 }
 
