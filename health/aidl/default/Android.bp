@@ -111,10 +111,6 @@ cc_library_static {
         "Health.cpp",
         "LinkedCallback.cpp",
     ],
-    visibility: [
-        ":__subpackages__",
-        "//hardware/interfaces/tests/extension/health:__subpackages__",
-    ],
     target: {
         recovery: {
             exclude_srcs: [
