@@ -256,8 +256,8 @@ TEST_P(SensorsHidlTest, CleanupDirectConnectionOnInitialize) {
     // Clear the active direct connections so they are not stopped during TearDown
     auto handles = mDirectChannelHandles;
     mDirectChannelHandles.clear();
-    getEnvironment()->HidlTearDown();
-    getEnvironment()->HidlSetUp();
+    getEnvironment()->TearDown();
+    getEnvironment()->SetUp();
     if (HasFatalFailure()) {
         return;  // Exit early if resetting the environment failed
     }
