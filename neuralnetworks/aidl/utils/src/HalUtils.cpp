@@ -17,18 +17,18 @@
 // utilities. LegacyUtils.h is the subset of these utilities that do not touch
 // HAL.
 
-#include "AidlHalUtils.h"
+#include "HalUtils.h"
+
+#include "HalInterfaces.h"
 
 #include <android-base/logging.h>
+#include <nnapi/TypeUtils.h>
 #include <nnapi/hal/aidl/Conversions.h>
 
 #include <algorithm>
 #include <iterator>
 #include <type_traits>
 #include <vector>
-
-#include "AidlHalInterfaces.h"
-#include "nnapi/TypeUtils.h"
 
 namespace android::nn {
 
