@@ -22,7 +22,6 @@
 
 #include "Conversions.h"
 #include "Utils.h"
-#include "nnapi/hal/aidl/Conversions.h"
 
 #include <memory>
 #include <utility>
