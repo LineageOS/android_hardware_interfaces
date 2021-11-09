@@ -14,33 +14,33 @@
  * limitations under the License.
  */
 #include <VtsCoreUtil.h>
-
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
-#include <android/hardware/wifi/hostapd/BnHostapd.h>
+#include <aidl/android/hardware/wifi/hostapd/BnHostapd.h>
+#include <aidl/android/hardware/wifi/hostapd/BnHostapdCallback.h>
+#include <android/binder_manager.h>
 #include <binder/IServiceManager.h>
 #include <binder/ProcessState.h>
 
+using aidl::android::hardware::wifi::hostapd::BandMask;
+using aidl::android::hardware::wifi::hostapd::BnHostapdCallback;
+using aidl::android::hardware::wifi::hostapd::ChannelParams;
+using aidl::android::hardware::wifi::hostapd::DebugLevel;
+using aidl::android::hardware::wifi::hostapd::EncryptionType;
+using aidl::android::hardware::wifi::hostapd::FrequencyRange;
+using aidl::android::hardware::wifi::hostapd::Ieee80211ReasonCode;
+using aidl::android::hardware::wifi::hostapd::IfaceParams;
+using aidl::android::hardware::wifi::hostapd::IHostapd;
+using aidl::android::hardware::wifi::hostapd::NetworkParams;
 using android::ProcessState;
-using android::sp;
-using android::String16;
-using android::hardware::wifi::hostapd::BandMask;
-using android::hardware::wifi::hostapd::ChannelParams;
-using android::hardware::wifi::hostapd::DebugLevel;
-using android::hardware::wifi::hostapd::EncryptionType;
-using android::hardware::wifi::hostapd::FrequencyRange;
-using android::hardware::wifi::hostapd::Ieee80211ReasonCode;
-using android::hardware::wifi::hostapd::IfaceParams;
-using android::hardware::wifi::hostapd::IHostapd;
-using android::hardware::wifi::hostapd::NetworkParams;
 
 namespace {
 const unsigned char kNwSsid[] = {'t', 'e', 's', 't', '1', '2', '3', '4', '5'};
-const String16 kIfaceName = String16("wlan0");
-const String16 kPassphrase = String16("test12345");
-const String16 kInvalidMinPassphrase = String16("test");
-const String16 kInvalidMaxPassphrase = String16(
-    "0123456789012345678901234567890123456789012345678901234567890123456789");
+const std::string kIfaceName = "wlan0";
+const std::string kPassphrase = "test12345";
+const std::string kInvalidMinPassphrase = "test";
+const std::string kInvalidMaxPassphrase =
+    "0123456789012345678901234567890123456789012345678901234567890123456789";
 const int kIfaceChannel = 6;
 const int kIfaceInvalidChannel = 567;
 const std::vector<uint8_t> kTestZeroMacAddr(6, 0x0);
@@ -56,8 +56,8 @@ inline BandMask operator|(BandMask a, BandMask b) {
 class HostapdAidl : public testing::TestWithParam<std::string> {
    public:
     virtual void SetUp() override {
-        hostapd = android::waitForDeclaredService<IHostapd>(
-            String16(GetParam().c_str()));
+        hostapd = IHostapd::fromBinder(ndk::SpAIBinder(
+            AServiceManager_waitForService(GetParam().c_str())));
         ASSERT_NE(hostapd, nullptr);
         EXPECT_TRUE(hostapd->setDebugParams(DebugLevel::EXCESSIVE).isOk());
         isAcsSupport = testing::checkSubstringInCommandOutput(
@@ -77,12 +77,12 @@ class HostapdAidl : public testing::TestWithParam<std::string> {
         sleep(3);
     }
 
-    sp<IHostapd> hostapd;
+    std::shared_ptr<IHostapd> hostapd;
     bool isAcsSupport;
     bool isWpa3SaeSupport;
     bool isBridgedSupport;
 
-    IfaceParams getIfaceParamsWithoutAcs(String16 iface_name) {
+    IfaceParams getIfaceParamsWithoutAcs(std::string iface_name) {
         IfaceParams iface_params;
         ChannelParams channelParams;
         std::vector<ChannelParams> vec_channelParams;
@@ -103,7 +103,7 @@ class HostapdAidl : public testing::TestWithParam<std::string> {
         return iface_params;
     }
 
-    IfaceParams getIfaceParamsWithBridgedModeACS(String16 iface_name) {
+    IfaceParams getIfaceParamsWithBridgedModeACS(std::string iface_name) {
         IfaceParams iface_params = getIfaceParamsWithoutAcs(iface_name);
         iface_params.channelParams[0].enableAcs = true;
         iface_params.channelParams[0].acsShouldExcludeDfs = true;
@@ -121,7 +121,7 @@ class HostapdAidl : public testing::TestWithParam<std::string> {
         return iface_params;
     }
 
-    IfaceParams getIfaceParamsWithAcs(String16 iface_name) {
+    IfaceParams getIfaceParamsWithAcs(std::string iface_name) {
         IfaceParams iface_params = getIfaceParamsWithoutAcs(iface_name);
         iface_params.channelParams[0].enableAcs = true;
         iface_params.channelParams[0].acsShouldExcludeDfs = true;
@@ -131,7 +131,7 @@ class HostapdAidl : public testing::TestWithParam<std::string> {
         return iface_params;
     }
 
-    IfaceParams getIfaceParamsWithAcsAndFreqRange(String16 iface_name) {
+    IfaceParams getIfaceParamsWithAcsAndFreqRange(std::string iface_name) {
         IfaceParams iface_params = getIfaceParamsWithAcs(iface_name);
         FrequencyRange freqRange;
         freqRange.startMhz = 2412;
@@ -143,7 +143,8 @@ class HostapdAidl : public testing::TestWithParam<std::string> {
         return iface_params;
     }
 
-    IfaceParams getIfaceParamsWithAcsAndInvalidFreqRange(String16 iface_name) {
+    IfaceParams getIfaceParamsWithAcsAndInvalidFreqRange(
+        std::string iface_name) {
         IfaceParams iface_params =
             getIfaceParamsWithAcsAndFreqRange(iface_name);
         iface_params.channelParams[0].acsChannelFreqRangesMhz[0].startMhz =
@@ -153,7 +154,7 @@ class HostapdAidl : public testing::TestWithParam<std::string> {
         return iface_params;
     }
 
-    IfaceParams getIfaceParamsWithInvalidChannel(String16 iface_name) {
+    IfaceParams getIfaceParamsWithInvalidChannel(std::string iface_name) {
         IfaceParams iface_params = getIfaceParamsWithoutAcs(iface_name);
         iface_params.channelParams[0].channel = kIfaceInvalidChannel;
         return iface_params;
@@ -215,10 +216,36 @@ class HostapdAidl : public testing::TestWithParam<std::string> {
     NetworkParams getInvalidSaeNwParams() {
         NetworkParams nw_params = getOpenNwParams();
         nw_params.encryptionType = EncryptionType::WPA3_SAE;
-        nw_params.passphrase = String16("");
+        nw_params.passphrase = "";
         return nw_params;
     }
 };
+
+class HostapdCallback : public BnHostapdCallback {
+   public:
+    HostapdCallback() = default;
+    ::ndk::ScopedAStatus onApInstanceInfoChanged(
+        const ::aidl::android::hardware::wifi::hostapd::ApInfo &) override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onConnectedClientsChanged(
+        const ::aidl::android::hardware::wifi::hostapd::ClientInfo &) override {
+        return ndk::ScopedAStatus::ok();
+    }
+    ::ndk::ScopedAStatus onFailure(const std::string &) override {
+        return ndk::ScopedAStatus::ok();
+    }
+};
+
+/**
+ * Register callback
+ */
+TEST_P(HostapdAidl, RegisterCallback) {
+    std::shared_ptr<HostapdCallback> callback =
+        ndk::SharedRefBase::make<HostapdCallback>();
+    ASSERT_NE(callback, nullptr);
+    EXPECT_TRUE(hostapd->registerCallback(callback).isOk());
+}
 
 /**
  * Adds an access point with PSK network config & ACS enabled.
