@@ -1,4 +1,4 @@
 # Bug component: 27441
-include platform/system/bt:/OWNERS
+include platform/packages/modules/Bluetooth:/OWNERS
 
 cheneyni@google.com
