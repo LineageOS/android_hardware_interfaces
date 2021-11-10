@@ -39,6 +39,7 @@ enum RadioAccessFamily {
     HSPAP = 1 << RadioTechnology.HSPAP,
     GSM = 1 << RadioTechnology.GSM,
     TD_SCDMA = 1 << RadioTechnology.TD_SCDMA,
+    IWLAN = 1 << RadioTechnology.IWLAN,
     LTE_CA = 1 << RadioTechnology.LTE_CA,
     /**
      * 5G NR. This is only use in 5G Standalone mode.

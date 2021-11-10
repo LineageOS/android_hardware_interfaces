@@ -16,8 +16,8 @@
 
 package android.hardware.radio.network;
 
-import android.hardware.radio.network.CellIdentityOperatorNames;
 import android.hardware.radio.network.NgranBands;
+import android.hardware.radio.network.OperatorInfo;
 
 /**
  * The CellIdentity structure should be reported once for each element of the PLMN-IdentityInfoList
@@ -55,7 +55,10 @@ parcelable CellIdentityNr {
      * This value must be valid.
      */
     int nrarfcn;
-    CellIdentityOperatorNames operatorNames;
+    /**
+     * OperatorInfo containing alphaLong and alphaShort
+     */
+    OperatorInfo operatorNames;
     /**
      * Additional PLMN-IDs beyond the primary PLMN broadcast for this cell
      */

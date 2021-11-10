@@ -42,7 +42,6 @@ interface IRadioNetwork {
   oneway void getCellInfoList(in int serial);
   oneway void getDataRegistrationState(in int serial);
   oneway void getImsRegistrationState(in int serial);
-  oneway void getNeighboringCids(in int serial);
   oneway void getNetworkSelectionMode(in int serial);
   oneway void getOperator(in int serial);
   oneway void getSignalStrength(in int serial);
@@ -50,7 +49,6 @@ interface IRadioNetwork {
   oneway void getVoiceRadioTechnology(in int serial);
   oneway void getVoiceRegistrationState(in int serial);
   oneway void isNrDualConnectivityEnabled(in int serial);
-  oneway void pullLceData(in int serial);
   oneway void responseAcknowledgement();
   oneway void setAllowedNetworkTypesBitmap(in int serial, in android.hardware.radio.RadioAccessFamily networkTypeBitmap);
   oneway void setBandMode(in int serial, in android.hardware.radio.network.RadioBandMode mode);

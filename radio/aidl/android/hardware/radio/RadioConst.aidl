@@ -17,24 +17,12 @@
 package android.hardware.radio;
 
 @VintfStability
-@Backing(type="int")
-enum RadioConst {
-    CDMA_ALPHA_INFO_BUFFER_LENGTH = 64,
-    CDMA_NUMBER_INFO_BUFFER_LENGTH = 81,
-    MAX_RILDS = 3,
-    MAX_SOCKET_NAME_LENGTH = 6,
-    MAX_CLIENT_ID_LENGTH = 2,
-    MAX_DEBUG_SOCKET_NAME_LENGTH = 12,
-    MAX_QEMU_PIPE_NAME_LENGTH = 11,
-    MAX_UUID_LENGTH = 64,
-    CARD_MAX_APPS = 8,
-    CDMA_MAX_NUMBER_OF_INFO_RECS = 10,
-    SS_INFO_MAX = 4,
-    NUM_SERVICE_CLASSES = 7,
-    NUM_TX_POWER_LEVELS = 5,
-    RADIO_ACCESS_SPECIFIER_MAX_SIZE = 8,
+parcelable RadioConst {
+    const int MAX_RILDS = 3;
+    const int MAX_UUID_LENGTH = 64;
+    const int CARD_MAX_APPS = 8;
     /**
      * No P2 value is provided
      */
-    P2_CONSTANT_NO_P2 = -1,
+    const int P2_CONSTANT_NO_P2 = -1;
 }

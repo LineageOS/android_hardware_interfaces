@@ -42,6 +42,7 @@ parcelable CdmaInformationRecord {
   android.hardware.radio.voice.CdmaLineControlInfoRecord[] lineCtrl;
   android.hardware.radio.voice.CdmaT53ClirInfoRecord[] clir;
   android.hardware.radio.voice.CdmaT53AudioControlInfoRecord[] audioCtrl;
+  const int CDMA_MAX_NUMBER_OF_INFO_RECS = 10;
   const int NAME_DISPLAY = 0;
   const int NAME_CALLED_PARTY_NUMBER = 1;
   const int NAME_CALLING_PARTY_NUMBER = 2;
