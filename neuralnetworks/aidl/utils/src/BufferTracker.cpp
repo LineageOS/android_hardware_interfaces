@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-#include "AidlBufferTracker.h"
+#include "BufferTracker.h"
+
+#include "HalInterfaces.h"
 
 #include <android-base/macros.h>
+#include <nnapi/TypeUtils.h>
 
 #include <memory>
 #include <mutex>
@@ -24,9 +27,6 @@
 #include <stack>
 #include <utility>
 #include <vector>
-
-#include "AidlHalInterfaces.h"
-#include "nnapi/TypeUtils.h"
 
 namespace android::nn {
 
