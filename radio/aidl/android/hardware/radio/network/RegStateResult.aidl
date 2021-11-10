@@ -32,10 +32,11 @@ parcelable RegStateResult {
      */
     RegState regState;
     /**
-     * Indicates the available voice radio technology, valid values as defined by RadioTechnology,
-     * except LTE_CA, which is no longer a valid value on 1.5 or above. When the device is on
-     * carrier aggregation, vendor RIL service should properly report multiple PhysicalChannelConfig
-     * elements through IRadioNetwork::currentPhysicalChannelConfigs.
+     * Indicates the radio technology (except LTE_CA, which is no longer a valid value), which
+     * must not be UNKNOWN if regState is REG_HOME, REG_ROAMING, NOT_REG_MT_NOT_SEARCHING_OP_EM,
+     * NOT_REG_MT_SEARCHING_OP_EM, REG_DENIED_EM, or UNKNOWN_EM.
+     * When the device is on carrier aggregation, vendor RIL service must properly report multiple
+     * PhysicalChannelConfig elements through IRadioNetwork::currentPhysicalChannelConfigs.
      */
     RadioTechnology rat;
     /**

@@ -53,11 +53,10 @@ interface IRadioSim {
   oneway void iccTransmitApduLogicalChannel(in int serial, in android.hardware.radio.sim.SimApdu message);
   oneway void reportStkServiceIsRunning(in int serial);
   oneway void requestIccSimAuthentication(in int serial, in int authContext, in String authData, in String aid);
-  oneway void requestIsimAuthentication(in int serial, in String challenge);
   oneway void responseAcknowledgement();
-  oneway void sendEnvelope(in int serial, in String command);
+  oneway void sendEnvelope(in int serial, in String contents);
   oneway void sendEnvelopeWithStatus(in int serial, in String contents);
-  oneway void sendTerminalResponseToSim(in int serial, in String commandResponse);
+  oneway void sendTerminalResponseToSim(in int serial, in String contents);
   oneway void setAllowedCarriers(in int serial, in android.hardware.radio.sim.CarrierRestrictions carriers, in android.hardware.radio.sim.SimLockMultiSimPolicy multiSimPolicy);
   oneway void setCarrierInfoForImsiEncryption(in int serial, in android.hardware.radio.sim.ImsiEncryptionInfo imsiEncryptionInfo);
   oneway void setCdmaSubscriptionSource(in int serial, in android.hardware.radio.sim.CdmaSubscriptionSource cdmaSub);

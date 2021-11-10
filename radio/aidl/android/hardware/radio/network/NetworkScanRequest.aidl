@@ -20,6 +20,8 @@ import android.hardware.radio.network.RadioAccessSpecifier;
 
 @VintfStability
 parcelable NetworkScanRequest {
+    const int RADIO_ACCESS_SPECIFIER_MAX_SIZE = 8;
+
     const int INCREMENTAL_RESULTS_PREIODICITY_RANGE_MIN = 1;
     const int INCREMENTAL_RESULTS_PREIODICITY_RANGE_MAX = 10;
 
@@ -50,7 +52,7 @@ parcelable NetworkScanRequest {
     int interval;
     /**
      * Networks with bands/channels to scan.
-     * Maximum length of the vector is RadioConst:RADIO_ACCESS_SPECIFIER_MAX_SIZE.
+     * Maximum length of the vector is RADIO_ACCESS_SPECIFIER_MAX_SIZE.
      */
     RadioAccessSpecifier[] specifiers;
     /**

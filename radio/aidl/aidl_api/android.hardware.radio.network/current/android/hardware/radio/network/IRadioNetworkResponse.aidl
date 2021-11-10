@@ -43,7 +43,6 @@ interface IRadioNetworkResponse {
   oneway void getCellInfoListResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.CellInfo[] cellInfo);
   oneway void getDataRegistrationStateResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.RegStateResult dataRegResponse);
   oneway void getImsRegistrationStateResponse(in android.hardware.radio.RadioResponseInfo info, in boolean isRegistered, in android.hardware.radio.RadioTechnologyFamily ratFamily);
-  oneway void getNeighboringCidsResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.NeighboringCell[] cells);
   oneway void getNetworkSelectionModeResponse(in android.hardware.radio.RadioResponseInfo info, in boolean manual);
   oneway void getOperatorResponse(in android.hardware.radio.RadioResponseInfo info, in String longName, in String shortName, in String numeric);
   oneway void getSignalStrengthResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.SignalStrength signalStrength);
@@ -51,7 +50,6 @@ interface IRadioNetworkResponse {
   oneway void getVoiceRadioTechnologyResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.RadioTechnology rat);
   oneway void getVoiceRegistrationStateResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.RegStateResult voiceRegResponse);
   oneway void isNrDualConnectivityEnabledResponse(in android.hardware.radio.RadioResponseInfo info, in boolean isEnabled);
-  oneway void pullLceDataResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.LceDataInfo lceInfo);
   oneway void setAllowedNetworkTypesBitmapResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void setBandModeResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void setBarringPasswordResponse(in android.hardware.radio.RadioResponseInfo info);
