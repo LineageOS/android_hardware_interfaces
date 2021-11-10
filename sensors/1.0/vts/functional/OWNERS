@@ -1,8 +1,2 @@
-# Sensors team
-arthuri@google.com
-bduddie@google.com
-stange@google.com
-
-# VTS team
-trong@google.com
-yim@google.com
+# Bug component: 62965
+include ../../../common/vts/OWNERS

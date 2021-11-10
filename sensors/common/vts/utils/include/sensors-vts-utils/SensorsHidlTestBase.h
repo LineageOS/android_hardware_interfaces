@@ -18,8 +18,8 @@
 #define ANDROID_SENSORS_HIDL_TEST_BASE_H
 
 #include "sensors-vts-utils/SensorEventsChecker.h"
-#include "sensors-vts-utils/SensorsHidlEnvironmentBase.h"
 #include "sensors-vts-utils/SensorsTestSharedMemory.h"
+#include "sensors-vts-utils/SensorsVtsEnvironmentBase.h"
 
 #include <android/hardware/sensors/1.0/ISensors.h>
 #include <android/hardware/sensors/1.0/types.h>
@@ -163,7 +163,7 @@ class SensorsHidlTestBase : public testing::TestWithParam<std::string> {
         : mAccelNormChecker(Vec3NormChecker<EventType>::byNominal(GRAVITY_EARTH, 1.0f /*m/s^2*/)),
           mGyroNormChecker(Vec3NormChecker<EventType>::byNominal(0.f, 0.1f /*rad/s*/)) {}
 
-    virtual SensorsHidlEnvironmentBase<EventType>* getEnvironment() = 0;
+    virtual SensorsVtsEnvironmentBase<EventType>* getEnvironment() = 0;
 
     virtual void SetUp() override {}
 
@@ -206,7 +206,7 @@ class SensorsHidlTestBase : public testing::TestWithParam<std::string> {
     }
 
     std::vector<EventType> collectEvents(useconds_t timeLimitUs, size_t nEventLimit,
-                                         SensorsHidlEnvironmentBase<EventType>* environment,
+                                         SensorsVtsEnvironmentBase<EventType>* environment,
                                          bool clearBeforeStart = true,
                                          bool changeCollection = true) {
         std::vector<EventType> events;
