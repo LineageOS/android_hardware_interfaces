@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,14 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.radio.config;
-@VintfStability
-parcelable SimPortInfo {
-  String iccId;
-  int logicalSlotId;
-  boolean portActive;
+package android.hardware.neuralnetworks;
+@Backing(type="int") @VintfStability
+enum OperandLifeTime {
+  TEMPORARY_VARIABLE = 0,
+  SUBGRAPH_INPUT = 1,
+  SUBGRAPH_OUTPUT = 2,
+  CONSTANT_COPY = 3,
+  CONSTANT_POOL = 4,
+  NO_VALUE = 5,
+  SUBGRAPH = 6,
 }

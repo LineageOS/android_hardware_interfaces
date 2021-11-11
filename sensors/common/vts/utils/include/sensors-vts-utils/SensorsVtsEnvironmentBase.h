@@ -25,6 +25,8 @@
 #include <thread>
 #include <vector>
 
+#include <log/log.h>
+
 template <class Event>
 class IEventCallback {
   public:
@@ -72,6 +74,40 @@ class SensorsVtsEnvironmentBase {
     void unregisterCallback() {
         std::lock_guard<std::mutex> lock(mEventsMutex);
         mCallback = nullptr;
+    }
+
+    std::vector<Event> collectEvents(useconds_t timeLimitUs, size_t nEventLimit,
+                                     bool clearBeforeStart = true, bool changeCollection = true) {
+        std::vector<Event> events;
+        constexpr useconds_t SLEEP_GRANULARITY = 100 * 1000;  // granularity 100 ms
+
+        ALOGI("collect max of %zu events for %d us, clearBeforeStart %d", nEventLimit, timeLimitUs,
+              clearBeforeStart);
+
+        if (changeCollection) {
+            setCollection(true);
+        }
+        if (clearBeforeStart) {
+            catEvents(nullptr);
+        }
+
+        while (timeLimitUs > 0) {
+            useconds_t duration = std::min(SLEEP_GRANULARITY, timeLimitUs);
+            usleep(duration);
+            timeLimitUs -= duration;
+
+            catEvents(&events);
+            if (events.size() >= nEventLimit) {
+                break;
+            }
+            ALOGV("time to go = %d, events to go = %d", (int)timeLimitUs,
+                  (int)(nEventLimit - events.size()));
+        }
+
+        if (changeCollection) {
+            setCollection(false);
+        }
+        return events;
     }
 
   protected:

@@ -537,10 +537,9 @@ TEST_P(SensorsHidlTest, CallInitializeTwice) {
 
     activateAllSensors(true);
     // Verify that the old environment does not receive any events
-    EXPECT_EQ(collectEvents(kCollectionTimeoutUs, kNumEvents, getEnvironment()).size(), 0);
+    EXPECT_EQ(getEnvironment()->collectEvents(kCollectionTimeoutUs, kNumEvents).size(), 0);
     // Verify that the new event queue receives sensor events
-    EXPECT_GE(collectEvents(kCollectionTimeoutUs, kNumEvents, newEnv.get(), newEnv.get()).size(),
-              kNumEvents);
+    EXPECT_GE(newEnv.get()->collectEvents(kCollectionTimeoutUs, kNumEvents).size(), kNumEvents);
     activateAllSensors(false);
 
     // Cleanup the test environment
@@ -555,7 +554,7 @@ TEST_P(SensorsHidlTest, CallInitializeTwice) {
 
     // Ensure that the original environment is receiving events
     activateAllSensors(true);
-    EXPECT_GE(collectEvents(kCollectionTimeoutUs, kNumEvents).size(), kNumEvents);
+    EXPECT_GE(getEnvironment()->collectEvents(kCollectionTimeoutUs, kNumEvents).size(), kNumEvents);
     activateAllSensors(false);
 }
 
@@ -565,7 +564,7 @@ TEST_P(SensorsHidlTest, CleanupConnectionsOnInitialize) {
     // Verify that events are received
     constexpr useconds_t kCollectionTimeoutUs = 1000 * 1000;  // 1s
     constexpr int32_t kNumEvents = 1;
-    ASSERT_GE(collectEvents(kCollectionTimeoutUs, kNumEvents, getEnvironment()).size(), kNumEvents);
+    ASSERT_GE(getEnvironment()->collectEvents(kCollectionTimeoutUs, kNumEvents).size(), kNumEvents);
 
     // Clear the active sensor handles so they are not disabled during TearDown
     auto handles = mSensorHandles;
@@ -577,9 +576,9 @@ TEST_P(SensorsHidlTest, CleanupConnectionsOnInitialize) {
     }
 
     // Verify no events are received until sensors are re-activated
-    ASSERT_EQ(collectEvents(kCollectionTimeoutUs, kNumEvents, getEnvironment()).size(), 0);
+    ASSERT_EQ(getEnvironment()->collectEvents(kCollectionTimeoutUs, kNumEvents).size(), 0);
     activateAllSensors(true);
-    ASSERT_GE(collectEvents(kCollectionTimeoutUs, kNumEvents, getEnvironment()).size(), kNumEvents);
+    ASSERT_GE(getEnvironment()->collectEvents(kCollectionTimeoutUs, kNumEvents).size(), kNumEvents);
 
     // Disable sensors
     activateAllSensors(false);
