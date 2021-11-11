@@ -60,6 +60,12 @@ void FilterCallbackScheduler::onFilterStatus(const DemuxFilterStatus& status) {
     }
 }
 
+void FilterCallbackScheduler::flushEvents() {
+    std::unique_lock<std::mutex> lock(mLock);
+    mCallbackBuffer.clear();
+    mDataLength = 0;
+}
+
 void FilterCallbackScheduler::setTimeDelayHint(int timeDelay) {
     // updating the setTimeDelay does not go into effect until the condition
     // variable times out or is notified.
@@ -334,6 +340,8 @@ Filter::~Filter() {
     if (mFilterThread.joinable()) {
         mFilterThread.join();
     }
+
+    mCallbackScheduler.flushEvents();
 
     return ::ndk::ScopedAStatus::ok();
 }
