@@ -68,6 +68,8 @@ class FilterCallbackScheduler final {
 
     bool hasCallbackRegistered() const;
 
+    void flushEvents();
+
   private:
     void start();
     void stop();
