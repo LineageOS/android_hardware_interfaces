@@ -35,4 +35,5 @@ package android.hardware.radio.voice;
 @VintfStability
 parcelable CdmaDisplayInfoRecord {
   String alphaBuf;
+  const int CDMA_ALPHA_INFO_BUFFER_LENGTH = 64;
 }

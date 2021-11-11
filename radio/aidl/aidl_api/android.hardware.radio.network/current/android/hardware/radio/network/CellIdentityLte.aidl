@@ -40,7 +40,7 @@ parcelable CellIdentityLte {
   int pci;
   int tac;
   int earfcn;
-  android.hardware.radio.network.CellIdentityOperatorNames operatorNames;
+  android.hardware.radio.network.OperatorInfo operatorNames;
   int bandwidth;
   String[] additionalPlmns;
   @nullable android.hardware.radio.network.ClosedSubscriberGroupInfo csgInfo;
