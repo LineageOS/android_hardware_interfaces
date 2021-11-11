@@ -44,25 +44,37 @@ public class Translate {
         return out;
     }
 
+    private static void h2aTranslateInternal(
+            android.hardware.health.HealthInfo out, android.hardware.health.V1_0.HealthInfo in) {
+        out.chargerAcOnline = in.chargerAcOnline;
+        out.chargerUsbOnline = in.chargerUsbOnline;
+        out.chargerWirelessOnline = in.chargerWirelessOnline;
+        out.maxChargingCurrentMicroamps = in.maxChargingCurrent;
+        out.maxChargingVoltageMicrovolts = in.maxChargingVoltage;
+        out.batteryStatus = in.batteryStatus;
+        out.batteryHealth = in.batteryHealth;
+        out.batteryPresent = in.batteryPresent;
+        out.batteryLevel = in.batteryLevel;
+        out.batteryVoltageMillivolts = in.batteryVoltage;
+        out.batteryTemperatureTenthsCelsius = in.batteryTemperature;
+        out.batteryCurrentMicroamps = in.batteryCurrent;
+        out.batteryCycleCount = in.batteryCycleCount;
+        out.batteryFullChargeUah = in.batteryFullCharge;
+        out.batteryChargeCounterUah = in.batteryChargeCounter;
+        out.batteryTechnology = in.batteryTechnology;
+    }
+
+    public static android.hardware.health.HealthInfo h2aTranslate(
+            android.hardware.health.V1_0.HealthInfo in) {
+        android.hardware.health.HealthInfo out = new android.hardware.health.HealthInfo();
+        h2aTranslateInternal(out, in);
+        return out;
+    }
+
     static public android.hardware.health.HealthInfo h2aTranslate(
             android.hardware.health.V2_1.HealthInfo in) {
         android.hardware.health.HealthInfo out = new android.hardware.health.HealthInfo();
-        out.chargerAcOnline = in.legacy.legacy.chargerAcOnline;
-        out.chargerUsbOnline = in.legacy.legacy.chargerUsbOnline;
-        out.chargerWirelessOnline = in.legacy.legacy.chargerWirelessOnline;
-        out.maxChargingCurrentMicroamps = in.legacy.legacy.maxChargingCurrent;
-        out.maxChargingVoltageMicrovolts = in.legacy.legacy.maxChargingVoltage;
-        out.batteryStatus = in.legacy.legacy.batteryStatus;
-        out.batteryHealth = in.legacy.legacy.batteryHealth;
-        out.batteryPresent = in.legacy.legacy.batteryPresent;
-        out.batteryLevel = in.legacy.legacy.batteryLevel;
-        out.batteryVoltageMillivolts = in.legacy.legacy.batteryVoltage;
-        out.batteryTemperatureTenthsCelsius = in.legacy.legacy.batteryTemperature;
-        out.batteryCurrentMicroamps = in.legacy.legacy.batteryCurrent;
-        out.batteryCycleCount = in.legacy.legacy.batteryCycleCount;
-        out.batteryFullChargeUah = in.legacy.legacy.batteryFullCharge;
-        out.batteryChargeCounterUah = in.legacy.legacy.batteryChargeCounter;
-        out.batteryTechnology = in.legacy.legacy.batteryTechnology;
+        h2aTranslateInternal(out, in.legacy.legacy);
         out.batteryCurrentAverageMicroamps = in.legacy.batteryCurrentAverage;
         out.diskStats = new android.hardware.health.DiskStats[in.legacy.diskStats.size()];
         for (int i = 0; i < in.legacy.diskStats.size(); i++) {

@@ -31,10 +31,9 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.radio.config;
+package android.hardware.neuralnetworks;
 @VintfStability
-parcelable SimPortInfo {
-  String iccId;
-  int logicalSlotId;
-  boolean portActive;
+interface IBurst {
+  android.hardware.neuralnetworks.ExecutionResult executeSynchronously(in android.hardware.neuralnetworks.Request request, in long[] memoryIdentifierTokens, in boolean measureTiming, in long deadlineNs, in long loopTimeoutDurationNs);
+  void releaseMemoryResource(in long memoryIdentifierToken);
 }
