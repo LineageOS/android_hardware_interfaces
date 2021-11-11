@@ -30,17 +30,16 @@ cc_library_static {
     local_include_dirs: ["include/nnapi/hal"],
     export_include_dirs: ["include"],
     static_libs: [
-        "neuralnetworks_types",
-        "neuralnetworks_utils_hal_1_0",
-        "neuralnetworks_utils_hal_1_1",
-        "neuralnetworks_utils_hal_1_2",
-        "neuralnetworks_utils_hal_1_3",
-    ],
-    shared_libs: [
         "android.hardware.neuralnetworks@1.0",
         "android.hardware.neuralnetworks@1.1",
         "android.hardware.neuralnetworks@1.2",
         "android.hardware.neuralnetworks@1.3",
         "libfmq",
+        "neuralnetworks_types",
+        "neuralnetworks_utils_hal_1_0",
+        "neuralnetworks_utils_hal_1_1",
+        "neuralnetworks_utils_hal_1_2",
+        "neuralnetworks_utils_hal_1_3",
+        "neuralnetworks_utils_hal_common",
     ],
 }

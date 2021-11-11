@@ -111,19 +111,13 @@ cc_test {
     static_libs: [
         "libaidlcommonsupport",
         "libgmock",
-        "libneuralnetworks_common",
         "neuralnetworks_types",
         "neuralnetworks_utils_hal_common",
     ],
     shared_libs: [
-        "android.hidl.allocator@1.0",
         "libbase",
         "libbinder_ndk",
         "libcutils",
-        "libhidlbase",
-        "libhidlmemory",
-        "liblog",
-        "libutils",
     ],
     target: {
         android: {
