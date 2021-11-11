@@ -39,5 +39,5 @@ parcelable CellIdentityCdma {
   int baseStationId;
   int longitude;
   int latitude;
-  android.hardware.radio.network.CellIdentityOperatorNames operatorNames;
+  android.hardware.radio.network.OperatorInfo operatorNames;
 }
