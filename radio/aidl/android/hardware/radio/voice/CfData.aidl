@@ -20,9 +20,10 @@ import android.hardware.radio.voice.CallForwardInfo;
 
 @VintfStability
 parcelable CfData {
+    const int NUM_SERVICE_CLASSES = 7;
     /**
      * This is the response data for SS request to query call forward status.
-     * See getCallForwardStatus(). Max size = RadioConst:NUM_SERVICE_CLASSES.
+     * See getCallForwardStatus(). Max size = NUM_SERVICE_CLASSES.
      */
     CallForwardInfo[] cfInfo;
 }

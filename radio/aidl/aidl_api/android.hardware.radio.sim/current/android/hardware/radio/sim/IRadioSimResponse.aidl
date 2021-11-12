@@ -54,7 +54,6 @@ interface IRadioSimResponse {
   oneway void iccTransmitApduLogicalChannelResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.sim.IccIoResult result);
   oneway void reportStkServiceIsRunningResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void requestIccSimAuthenticationResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.sim.IccIoResult result);
-  oneway void requestIsimAuthenticationResponse(in android.hardware.radio.RadioResponseInfo info, in String response);
   oneway void sendEnvelopeResponse(in android.hardware.radio.RadioResponseInfo info, in String commandResponse);
   oneway void sendEnvelopeWithStatusResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.sim.IccIoResult iccIo);
   oneway void sendTerminalResponseToSimResponse(in android.hardware.radio.RadioResponseInfo info);

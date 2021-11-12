@@ -179,25 +179,6 @@ oneway interface IRadioNetworkResponse {
 
     /**
      * @param info Response info struct containing response type, serial no. and error
-     * @param cells Vector of neighboring radio cell
-     *
-     * Valid errors returned:
-     *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:NO_MEMORY
-     *   RadioError:INTERNAL_ERR
-     *   RadioError:SYSTEM_ERR
-     *   RadioError:MODEM_ERR
-     *   RadioError:NO_NETWORK_FOUND
-     *   RadioError:REQUEST_NOT_SUPPORTED
-     *   RadioError:NO_RESOURCES
-     *   RadioError:CANCELLED
-     */
-    void getNeighboringCidsResponse(in RadioResponseInfo info, in NeighboringCell[] cells);
-
-    /**
-     * @param info Response info struct containing response type, serial no. and error
      * @param selection false for automatic selection, true for manual selection
      *
      * Valid errors returned:
@@ -296,23 +277,6 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      */
     void isNrDualConnectivityEnabledResponse(in RadioResponseInfo info, in boolean isEnabled);
-
-    /**
-     * @param info Response info struct containing response type, serial no. and error
-     * @param lceInfo LceDataInfo indicating LCE data
-     *
-     * Valid errors returned:
-     *   RadioError:REQUEST_NOT_SUPPORTED may be returned when HAL 1.2 or higher is supported.
-     *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:LCE_NOT_SUPPORTED
-     *   RadioError:INTERNAL_ERR
-     *   RadioError:NO_MEMORY
-     *   RadioError:NO_RESOURCES
-     *   RadioError:CANCELLED
-     *   RadioError:SIM_ABSENT
-     */
-    void pullLceDataResponse(in RadioResponseInfo info, in LceDataInfo lceInfo);
 
     /**
      * @param info Response info struct containing response type, serial no. and error

@@ -262,17 +262,6 @@ oneway interface IRadioSim {
             in int serial, in int authContext, in String authData, in String aid);
 
     /**
-     * Request the ISIM application on the UICC to perform AKA challenge/response algorithm
-     * for IMS authentication
-     *
-     * @param serial Serial number of request.
-     * @param challenge challenge string in Base64 format
-     *
-     * Response function is IRadioSimResponse.requestIsimAuthenticationResponse()
-     */
-    void requestIsimAuthentication(in int serial, in String challenge);
-
-    /**
      * When response type received from a radio indication or radio response is
      * RadioIndicationType:UNSOLICITED_ACK_EXP or RadioResponseType:SOLICITED_ACK_EXP respectively,
      * acknowledge the receipt of those messages by sending responseAcknowledgement().
@@ -284,11 +273,11 @@ oneway interface IRadioSim {
      * The SAT/USAT envelope command refers to 3GPP TS 11.14 and 3GPP TS 31.111
      *
      * @param serial Serial number of request.
-     * @param command SAT/USAT command in hexadecimal format string starting with command tag
+     * @param contents SAT/USAT command in hexadecimal format string starting with command tag
      *
      * Response function is IRadioSimResponse.sendEnvelopeResponse()
      */
-    void sendEnvelope(in int serial, in String command);
+    void sendEnvelope(in int serial, in String contents);
 
     /**
      * Requests to send a SAT/USAT envelope command to SIM. The SAT/USAT envelope command refers to
@@ -309,12 +298,12 @@ oneway interface IRadioSim {
      * Requests to send a terminal response to SIM for a received proactive command
      *
      * @param serial Serial number of request.
-     * @param commandResponse SAT/USAT response in hexadecimal format string starting with
+     * @param contents SAT/USAT response in hexadecimal format string starting with
      *        first byte of response data
      *
      * Response function is IRadioSimResponse.sendTerminalResponseResponseToSim()
      */
-    void sendTerminalResponseToSim(in int serial, in String commandResponse);
+    void sendTerminalResponseToSim(in int serial, in String contents);
 
     /**
      * Set carrier restrictions. Expected modem behavior:

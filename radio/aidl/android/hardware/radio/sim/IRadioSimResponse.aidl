@@ -365,24 +365,6 @@ oneway interface IRadioSimResponse {
 
     /**
      * @param info Response info struct containing response type, serial no. and error
-     * @param response response string of the challenge/response algo for ISIM auth in base64 format
-     *
-     * Valid errors returned:
-     *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:INTERNAL_ERR
-     *   RadioError:NO_MEMORY
-     *   RadioError:NO_RESOURCES
-     *   RadioError:CANCELLED
-     *   RadioError:INVALID_MODEM_STATE
-     *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:REQUEST_NOT_SUPPORTED
-     *   RadioError:SIM_ABSENT
-     */
-    void requestIsimAuthenticationResponse(in RadioResponseInfo info, in String response);
-
-    /**
-     * @param info Response info struct containing response type, serial no. and error
      * @param commandResponse SAT/USAT response in hexadecimal format string starting with first
      *        byte of response
      *

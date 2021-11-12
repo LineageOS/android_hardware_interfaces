@@ -52,6 +52,7 @@ enum RadioAccessFamily {
   HSPAP = 32768,
   GSM = 65536,
   TD_SCDMA = 131072,
+  IWLAN = 262144,
   LTE_CA = 524288,
   NR = 1048576,
 }
