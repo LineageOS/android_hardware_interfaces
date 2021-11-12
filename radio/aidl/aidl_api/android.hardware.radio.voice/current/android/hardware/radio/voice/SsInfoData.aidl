@@ -35,4 +35,5 @@ package android.hardware.radio.voice;
 @VintfStability
 parcelable SsInfoData {
   int[] ssInfo;
+  const int SS_INFO_MAX = 4;
 }

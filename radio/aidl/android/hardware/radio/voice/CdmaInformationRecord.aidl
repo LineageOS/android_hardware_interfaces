@@ -25,7 +25,11 @@ import android.hardware.radio.voice.CdmaT53AudioControlInfoRecord;
 import android.hardware.radio.voice.CdmaT53ClirInfoRecord;
 
 @VintfStability
+/**
+ * Max length of CdmaInformationRecords[] is CDMA_MAX_NUMBER_OF_INFO_RECS
+ */
 parcelable CdmaInformationRecord {
+    const int CDMA_MAX_NUMBER_OF_INFO_RECS = 10;
     /**
      * Names of the CDMA info records (C.S0005 section 3.7.5)
      */

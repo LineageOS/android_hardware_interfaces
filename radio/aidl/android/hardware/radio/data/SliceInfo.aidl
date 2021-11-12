@@ -83,7 +83,7 @@ parcelable SliceInfo {
      * value. A value of -1 indicates that there is no corresponding SliceInfo of the HPLMN.
      * See: 3GPP TS 24.501 Section 9.11.2.8.
      */
-    int mappedHplmnSD;
+    int mappedHplmnSd;
     /**
      * Field to indicate the current status of the slice.
      * Values are STATUS_

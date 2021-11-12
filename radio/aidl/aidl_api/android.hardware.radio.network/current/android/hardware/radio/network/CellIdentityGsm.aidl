@@ -40,6 +40,6 @@ parcelable CellIdentityGsm {
   int cid;
   int arfcn;
   byte bsic;
-  android.hardware.radio.network.CellIdentityOperatorNames operatorNames;
+  android.hardware.radio.network.OperatorInfo operatorNames;
   String[] additionalPlmns;
 }
