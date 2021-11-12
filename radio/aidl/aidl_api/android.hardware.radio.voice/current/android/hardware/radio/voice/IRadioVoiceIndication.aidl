@@ -37,7 +37,7 @@ interface IRadioVoiceIndication {
   oneway void callRing(in android.hardware.radio.RadioIndicationType type, in boolean isGsm, in android.hardware.radio.voice.CdmaSignalInfoRecord record);
   oneway void callStateChanged(in android.hardware.radio.RadioIndicationType type);
   oneway void cdmaCallWaiting(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.voice.CdmaCallWaiting callWaitingRecord);
-  oneway void cdmaInfoRec(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.voice.CdmaInformationRecords records);
+  oneway void cdmaInfoRec(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.voice.CdmaInformationRecord[] records);
   oneway void cdmaOtaProvisionStatus(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.voice.CdmaOtaProvisionStatus status);
   oneway void currentEmergencyNumberList(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.voice.EmergencyNumber[] emergencyNumberList);
   oneway void enterEmergencyCallbackMode(in android.hardware.radio.RadioIndicationType type);
