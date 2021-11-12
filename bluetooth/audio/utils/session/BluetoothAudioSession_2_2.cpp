@@ -29,6 +29,9 @@ using SessionType_2_1 =
 using SessionType_2_0 =
     ::android::hardware::bluetooth::audio::V2_0::SessionType;
 
+using AudioConfiguration_2_1 =
+    ::android::hardware::bluetooth::audio::V2_1::AudioConfiguration;
+
 ::android::hardware::bluetooth::audio::V2_2::AudioConfiguration
     BluetoothAudioSession_2_2::invalidSoftwareAudioConfiguration = {};
 ::android::hardware::bluetooth::audio::V2_2::AudioConfiguration
@@ -52,7 +55,9 @@ BluetoothAudioSession_2_2::BluetoothAudioSession_2_2(
     const ::android::hardware::bluetooth::audio::V2_1::SessionType&
         session_type)
     : audio_session(BluetoothAudioSessionInstance::GetSessionInstance(
-          static_cast<SessionType_2_0>(session_type))) {
+          static_cast<SessionType_2_0>(session_type))),
+      audio_session_2_1(
+          BluetoothAudioSessionInstance_2_1::GetSessionInstance(session_type)) {
   if (is_2_0_session_type(session_type)) {
     session_type_2_1_ = (SessionType_2_1::UNKNOWN);
   } else {
@@ -74,6 +79,10 @@ std::shared_ptr<BluetoothAudioSession>
 BluetoothAudioSession_2_2::GetAudioSession() {
   return audio_session;
 }
+std::shared_ptr<BluetoothAudioSession_2_1>
+BluetoothAudioSession_2_2::GetAudioSession_2_1() {
+  return audio_session_2_1;
+}
 
 // The control function is for the bluetooth_audio module to get the current
 // AudioConfiguration
@@ -82,7 +91,19 @@ BluetoothAudioSession_2_2::GetAudioConfig() {
   std::lock_guard<std::recursive_mutex> guard(audio_session->mutex_);
   if (IsSessionReady()) {
     // If session is unknown it means it should be 2.0 type
-    if (session_type_2_1_ != SessionType_2_1::UNKNOWN) return audio_config_2_2_;
+    if (session_type_2_1_ != SessionType_2_1::UNKNOWN) {
+      if (audio_config_2_2_ != invalidSoftwareAudioConfiguration)
+        return audio_config_2_2_;
+
+      ::android::hardware::bluetooth::audio::V2_2::AudioConfiguration toConf;
+      const AudioConfiguration_2_1 fromConf =
+          GetAudioSession_2_1()->GetAudioConfig();
+      if (fromConf.getDiscriminator() ==
+          AudioConfiguration_2_1::hidl_discriminator::pcmConfig) {
+        toConf.pcmConfig() = fromConf.pcmConfig();
+        return toConf;
+      }
+    }
 
     ::android::hardware::bluetooth::audio::V2_2::AudioConfiguration toConf;
     const AudioConfiguration fromConf = GetAudioSession()->GetAudioConfig();

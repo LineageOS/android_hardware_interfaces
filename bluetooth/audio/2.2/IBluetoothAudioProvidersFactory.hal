@@ -16,7 +16,10 @@
 
 package android.hardware.bluetooth.audio@2.2;
 
+import IBluetoothAudioProvider;
 import @2.1::IBluetoothAudioProvidersFactory;
+import @2.0::Status;
+import @2.1::SessionType;
 
 /**
  * This factory allows a HAL implementation to be split into multiple
@@ -30,4 +33,19 @@ import @2.1::IBluetoothAudioProvidersFactory;
  * for return value must be invoked synchronously before the API call returns.
  */
 interface IBluetoothAudioProvidersFactory extends @2.1::IBluetoothAudioProvidersFactory {
+    /**
+     * Opens an audio provider for a session type. To close the provider, it is
+     * necessary to release references to the returned provider object.
+     *
+     * @param sessionType The session type (e.g.
+     *    LE_AUDIO_SOFTWARE_ENCODING_DATAPATH).
+     *
+     * @return status One of the following
+     *    SUCCESS if the Audio HAL successfully opens the provider with the
+     *        given session type
+     *    FAILURE if the Audio HAL cannot open the provider
+     * @return provider The provider of the specified session type
+     */
+    openProvider_2_2(SessionType sessionType)
+        generates (Status status, IBluetoothAudioProvider provider);
 };
