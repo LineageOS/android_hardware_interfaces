@@ -114,15 +114,6 @@ oneway interface IRadioNetwork {
     void getImsRegistrationState(in int serial);
 
     /**
-     * Request neighboring cell id in GSM network
-     *
-     * @param serial Serial number of request.
-     *
-     * Response function is IRadioNetworkResponse.getNeighboringCidsResponse()
-     */
-    void getNeighboringCids(in int serial);
-
-    /**
      * Query current network selection mode
      *
      * @param serial Serial number of request.
@@ -185,15 +176,6 @@ oneway interface IRadioNetwork {
      * Response function is IRadioNetworkResponse.isNrDualConnectivityEnabledResponse()
      */
     void isNrDualConnectivityEnabled(in int serial);
-
-    /**
-     * Pull LCE service for capacity information.
-     *
-     * @param serial Serial number of request.
-     *
-     * Response function is IRadioNetworkResponse.pullLceDataResponse()
-     */
-    void pullLceData(in int serial);
 
     /**
      * When response type received from a radio indication or radio response is

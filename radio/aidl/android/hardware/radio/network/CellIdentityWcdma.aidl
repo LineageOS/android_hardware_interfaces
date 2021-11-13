@@ -16,8 +16,8 @@
 
 package android.hardware.radio.network;
 
-import android.hardware.radio.network.CellIdentityOperatorNames;
 import android.hardware.radio.network.ClosedSubscriberGroupInfo;
+import android.hardware.radio.network.OperatorInfo;
 
 @VintfStability
 parcelable CellIdentityWcdma {
@@ -45,7 +45,10 @@ parcelable CellIdentityWcdma {
      * 16-bit UMTS Absolute RF Channel Number; this value must be valid.
      */
     int uarfcn;
-    CellIdentityOperatorNames operatorNames;
+    /**
+     * OperatorInfo containing alphaLong and alphaShort
+     */
+    OperatorInfo operatorNames;
     /**
      * Additional PLMN-IDs beyond the primary PLMN broadcast for this cell.
      */

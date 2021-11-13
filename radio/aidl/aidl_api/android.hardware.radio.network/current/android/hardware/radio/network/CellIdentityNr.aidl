@@ -40,7 +40,7 @@ parcelable CellIdentityNr {
   int pci;
   int tac;
   int nrarfcn;
-  android.hardware.radio.network.CellIdentityOperatorNames operatorNames;
+  android.hardware.radio.network.OperatorInfo operatorNames;
   String[] additionalPlmns;
   android.hardware.radio.network.NgranBands[] bands;
 }

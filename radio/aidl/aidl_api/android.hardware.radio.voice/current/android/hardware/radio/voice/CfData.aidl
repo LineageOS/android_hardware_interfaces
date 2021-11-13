@@ -35,4 +35,5 @@ package android.hardware.radio.voice;
 @VintfStability
 parcelable CfData {
   android.hardware.radio.voice.CallForwardInfo[] cfInfo;
+  const int NUM_SERVICE_CLASSES = 7;
 }

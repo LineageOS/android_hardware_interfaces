@@ -39,4 +39,5 @@ parcelable CdmaNumberInfoRecord {
   byte numberPlan;
   byte pi;
   byte si;
+  const int CDMA_NUMBER_INFO_BUFFER_LENGTH = 81;
 }
