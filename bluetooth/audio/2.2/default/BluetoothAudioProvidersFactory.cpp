@@ -122,6 +122,49 @@ Return<void> BluetoothAudioProvidersFactory::openProvider_2_1(
   return Void();
 }
 
+Return<void> BluetoothAudioProvidersFactory::openProvider_2_2(
+    const V2_1::SessionType sessionType, openProvider_2_2_cb _hidl_cb) {
+  LOG(INFO) << __func__ << " - SessionType=" << toString(sessionType);
+  BluetoothAudioStatus status = BluetoothAudioStatus::SUCCESS;
+  BluetoothAudioProvider* provider = nullptr;
+
+  switch (sessionType) {
+    case V2_1::SessionType::A2DP_SOFTWARE_ENCODING_DATAPATH:
+      provider = &a2dp_software_provider_instance_;
+      break;
+    case V2_1::SessionType::A2DP_HARDWARE_OFFLOAD_DATAPATH:
+      provider = &a2dp_offload_provider_instance_;
+      break;
+    case V2_1::SessionType::HEARING_AID_SOFTWARE_ENCODING_DATAPATH:
+      provider = &hearing_aid_provider_instance_;
+      break;
+    case V2_1::SessionType::LE_AUDIO_SOFTWARE_ENCODING_DATAPATH:
+      provider = &leaudio_output_provider_instance_;
+      break;
+    case V2_1::SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH:
+      provider = &leaudio_offload_output_provider_instance_;
+      break;
+    case V2_1::SessionType::LE_AUDIO_SOFTWARE_DECODED_DATAPATH:
+      provider = &leaudio_input_provider_instance_;
+      break;
+    case V2_1::SessionType::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH:
+      provider = &leaudio_offload_input_provider_instance_;
+      break;
+    default:
+      status = BluetoothAudioStatus::FAILURE;
+  }
+
+  if (provider == nullptr || !provider->isValid(sessionType)) {
+    provider = nullptr;
+    status = BluetoothAudioStatus::FAILURE;
+    LOG(ERROR) << __func__ << " - SessionType=" << toString(sessionType)
+               << ", status=" << toString(status);
+  }
+
+  _hidl_cb(status, provider);
+  return Void();
+}
+
 Return<void> BluetoothAudioProvidersFactory::getProviderCapabilities(
     const V2_0::SessionType sessionType, getProviderCapabilities_cb _hidl_cb) {
   hidl_vec<V2_0::AudioCapabilities> audio_capabilities =
