@@ -41,6 +41,7 @@ parcelable NetworkScanRequest {
   boolean incrementalResults;
   int incrementalResultsPeriodicity;
   String[] mccMncs;
+  const int RADIO_ACCESS_SPECIFIER_MAX_SIZE = 8;
   const int INCREMENTAL_RESULTS_PREIODICITY_RANGE_MIN = 1;
   const int INCREMENTAL_RESULTS_PREIODICITY_RANGE_MAX = 10;
   const int MAX_SEARCH_TIME_RANGE_MIN = 60;

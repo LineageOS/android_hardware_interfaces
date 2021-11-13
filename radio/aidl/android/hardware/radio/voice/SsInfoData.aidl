@@ -18,11 +18,12 @@ package android.hardware.radio.voice;
 
 @VintfStability
 parcelable SsInfoData {
+    const int SS_INFO_MAX = 4;
     /**
      * This is the response data for all of the SS GET/SET Radio requests.
      * E.g. IRadioVoice.getClir() returns two ints, so first two values of ssInfo[] will be used for
      * response if serviceType is SS_CLIR and requestType is SS_INTERROGATION.
-     * Max size = RadioConst:SS_INFO_MAX
+     * Max size = SS_INFO_MAX
      */
     int[] ssInfo;
 }
