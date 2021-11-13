@@ -29,6 +29,8 @@ namespace composer {
 namespace V2_2 {
 namespace hal {
 
+using V2_1::Display;
+using V2_1::Error;
 using V2_1::hal::ComposerHandleCache;
 using V2_1::hal::ComposerHandleImporter;
 
