@@ -32,11 +32,27 @@ cc_test {
     srcs: [
         "VtsHalGraphicsComposer3_TargetTest.cpp",
         "composer-vts/GraphicsComposerCallback.cpp",
+        "composer-vts/TestCommandReader.cpp",
     ],
 
     shared_libs: [
         "libbinder_ndk",
         "libbinder",
+        "libfmq",
+        "libbase",
+        "libsync",
+        "libui",
+        "android.hardware.graphics.mapper@2.0",
+        "android.hardware.graphics.mapper@2.1",
+        "android.hardware.graphics.mapper@3.0",
+        "android.hardware.graphics.mapper@4.0",
+        "android.hardware.graphics.allocator@2.0",
+        "android.hardware.graphics.allocator@3.0",
+        "android.hardware.graphics.allocator@4.0",
+        "libvndksupport",
+    ],
+    header_libs: [
+        "android.hardware.graphics.composer3-command-buffer",
     ],
     static_libs: [
         "android.hardware.graphics.composer3-V1-ndk",
@@ -44,9 +60,19 @@ cc_test {
         "android.hardware.graphics.common@1.2",
         "android.hardware.common-V2-ndk",
         "android.hardware.common.fmq-V1-ndk",
+        "android.hardware.graphics.allocator@2.0",
+        "android.hardware.graphics.allocator@3.0",
+        "android.hardware.graphics.allocator@4.0",
         "android.hardware.graphics.composer@3-vts",
+        "android.hardware.graphics.mapper@2.0-vts",
+        "android.hardware.graphics.mapper@2.1-vts",
+        "android.hardware.graphics.mapper@3.0-vts",
+        "android.hardware.graphics.mapper@4.0-vts",
+        "libaidlcommonsupport",
     ],
-
+    cflags: [
+        "-Wconversion",
+    ],
     test_suites: [
         "general-tests",
         "vts",
