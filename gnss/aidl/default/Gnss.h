@@ -20,6 +20,7 @@
 #include <aidl/android/hardware/gnss/BnGnss.h>
 #include <aidl/android/hardware/gnss/BnGnssBatching.h>
 #include <aidl/android/hardware/gnss/BnGnssConfiguration.h>
+#include <aidl/android/hardware/gnss/BnGnssDebug.h>
 #include <aidl/android/hardware/gnss/BnGnssMeasurementInterface.h>
 #include <aidl/android/hardware/gnss/BnGnssPowerIndication.h>
 #include <aidl/android/hardware/gnss/BnGnssPsds.h>
@@ -46,6 +47,7 @@ class Gnss : public BnGnss {
     ndk::ScopedAStatus getExtensionGnssNavigationMessage(
             std::shared_ptr<IGnssNavigationMessageInterface>* iGnssNavigationMessage) override;
     ndk::ScopedAStatus getExtensionAGnss(std::shared_ptr<IAGnss>* iAGnss) override;
+    ndk::ScopedAStatus getExtensionGnssDebug(std::shared_ptr<IGnssDebug>* iGnssDebug) override;
 
     std::shared_ptr<GnssConfiguration> mGnssConfiguration;
     std::shared_ptr<GnssPowerIndication> mGnssPowerIndication;
