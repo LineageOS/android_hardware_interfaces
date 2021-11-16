@@ -54,6 +54,7 @@ interface IRadioVoiceResponse {
   oneway void hangupConnectionResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void hangupForegroundResumeBackgroundResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void hangupWaitingOrBackgroundResponse(in android.hardware.radio.RadioResponseInfo info);
+  oneway void isVoNrEnabledResponse(in android.hardware.radio.RadioResponseInfo info, in boolean enable);
   oneway void rejectCallResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void sendBurstDtmfResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void sendCdmaFeatureCodeResponse(in android.hardware.radio.RadioResponseInfo info);
@@ -65,6 +66,7 @@ interface IRadioVoiceResponse {
   oneway void setMuteResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void setPreferredVoicePrivacyResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void setTtyModeResponse(in android.hardware.radio.RadioResponseInfo info);
+  oneway void setVoNrEnabledResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void startDtmfResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void stopDtmfResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void switchWaitingOrHoldingAndActiveResponse(in android.hardware.radio.RadioResponseInfo info);
