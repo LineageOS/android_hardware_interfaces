@@ -115,4 +115,11 @@ parcelable DataProfileInfo {
      * If the same data profile exists, this data profile must overwrite it.
      */
     boolean persistent;
+    /**
+     * Indicates the PDU session brought up by this data profile should be always-on.
+     * An always-on PDU Session is a PDU Session for which User Plane resources have to be
+     * activated during every transition from CM-IDLE mode to CM-CONNECTED state.
+     * See 3GPP TS 23.501 section 5.6.13 for the details.
+     */
+    boolean alwaysOn;
 }
