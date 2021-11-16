@@ -28,17 +28,38 @@ cc_library_static {
     defaults: ["hidl_defaults"],
     srcs: [
         "GraphicsComposerCallback.cpp",
+        "TestCommandReader.cpp",
+    ],
+    header_libs: [
+        "android.hardware.graphics.composer3-command-buffer",
     ],
     static_libs: [
         "android.hardware.graphics.composer3-V1-ndk",
         "android.hardware.graphics.common-V3-ndk",
+        "android.hardware.common-V2-ndk",
+        "android.hardware.common.fmq-V1-ndk",
         "libgtest",
         "libbase",
+        "libfmq",
+        "libsync",
+        "libaidlcommonsupport",
+        "android.hardware.graphics.mapper@2.0-vts",
+        "android.hardware.graphics.mapper@3.0-vts",
+        "android.hardware.graphics.mapper@4.0-vts",
+    ],
+    shared_libs: [
+        "libbinder_ndk",
+        "libhidlbase",
+        "android.hardware.graphics.composer3-V1-ndk",
     ],
     cflags: [
         "-O0",
         "-g",
         "-DLOG_TAG=\"ComposerVts\"",
+        "-Wconversion",
+    ],
+    export_header_lib_headers: [
+        "android.hardware.graphics.composer3-command-buffer",
     ],
     export_include_dirs: ["include"],
 }
