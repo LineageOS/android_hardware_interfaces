@@ -1,37 +1,65 @@
-// Copyright (C) 2021 The Android Open Source Project
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright (C) 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package {
-    // See: http://go/android-license-faq
-    // A large-scale-change added 'default_applicable_licenses' to import
-    // all of the 'license_kinds' from "hardware_interfaces_license"
-    // to get the below license kinds:
-    //   SPDX-license-identifier-Apache-2.0
-    default_applicable_licenses: ["hardware_interfaces_license"],
+    default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
 cc_binary {
     name: "android.hardware.automotive.vehicle-aidl-default-service",
-    defaults: ["VehicleHalDefaults"],
-    local_include_dirs: ["include"],
+    vendor: true,
+    defaults: [
+        "FakeVehicleHardwareDefaults",
+        "VehicleHalDefaults",
+        "android-automotive-large-parcelable-defaults",
+    ],
     vintf_fragments: ["vhal-default-service.xml"],
     init_rc: ["vhal-default-service.rc"],
-    vendor: true,
     relative_install_path: "hw",
-    srcs: ["src/*.cpp"],
+    srcs: ["src/VehicleService.cpp"],
+    static_libs: [
+        "DefaultVehicleHal",
+        "FakeVehicleHardware",
+        "VehicleHalUtils",
+        "android-automotive-large-parcelable-vendor-lib",
+    ],
+    header_libs: [
+        "IVehicleHardware",
+    ],
+    shared_libs: [
+        "libbinder_ndk",
+    ],
+}
+
+cc_library {
+    name: "DefaultVehicleHal",
+    vendor: true,
+    defaults: [
+        "VehicleHalDefaults",
+        "android-automotive-large-parcelable-defaults",
+    ],
+    local_include_dirs: ["include"],
+    export_include_dirs: ["include"],
+    srcs: ["src/DefaultVehicleHal.cpp"],
     static_libs: [
         "VehicleHalUtils",
+        "android-automotive-large-parcelable-vendor-lib",
+    ],
+    header_libs: [
+        "IVehicleHardware",
     ],
     shared_libs: [
         "libbinder_ndk",
