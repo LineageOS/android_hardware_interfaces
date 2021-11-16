@@ -20,6 +20,9 @@
     },
     {
       "name": "FakeUserHalTest"
+    },
+    {
+      "name": "DefaultVehicleHalTest"
     }
   ]
 }
