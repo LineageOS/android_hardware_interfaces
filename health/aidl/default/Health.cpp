@@ -60,6 +60,8 @@ Health::Health(std::string_view instance_name, std::unique_ptr<struct healthd_co
     battery_monitor_.init(healthd_config_.get());
 }
 
+Health::~Health() {}
+
 //
 // Getters.
 //
