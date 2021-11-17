@@ -43,6 +43,7 @@ class Health : public BnHealth, public HalHealthLoopCallback {
     // A subclass may modify |config| before passing it to the parent constructor.
     // See implementation of Health for code samples.
     Health(std::string_view instance_name, std::unique_ptr<struct healthd_config>&& config);
+    virtual ~Health();
 
     ndk::ScopedAStatus registerCallback(
             const std::shared_ptr<IHealthInfoCallback>& callback) override;
