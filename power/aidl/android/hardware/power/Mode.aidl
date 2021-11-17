@@ -162,4 +162,9 @@ enum Mode {
      * This hint indicates that camera high resolution stream is being started.
      */
     CAMERA_STREAMING_HIGH,
+
+    /**
+     * This mode indicates that the user is waiting for loading in a game.
+     */
+    GAME_LOADING,
 }
