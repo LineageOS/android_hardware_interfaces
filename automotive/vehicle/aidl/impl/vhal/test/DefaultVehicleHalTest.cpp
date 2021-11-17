@@ -28,6 +28,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <utils/Log.h>
+#include <utils/SystemClock.h>
 
 #include <chrono>
 #include <list>
@@ -61,6 +62,8 @@ using ::aidl::android::hardware::automotive::vehicle::VehicleAreaWindow;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfigs;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropErrors;
+using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
+using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyAccess;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyChangeMode;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValues;
@@ -87,6 +90,10 @@ constexpr int32_t GLOBAL_CONTINUOUS_PROP = 10003 + 0x10000000 + 0x01000000 + 0x0
 constexpr int32_t AREA_ON_CHANGE_PROP = 10004 + 0x10000000 + 0x03000000 + 0x00400000;
 // VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:INT32
 constexpr int32_t AREA_CONTINUOUS_PROP = 10005 + 0x10000000 + 0x03000000 + 0x00400000;
+// VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+constexpr int32_t READ_ONLY_PROP = 10006 + 0x10000000 + 0x01000000 + 0x00400000;
+// VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+constexpr int32_t WRITE_ONLY_PROP = 10007 + 0x10000000 + 0x01000000 + 0x00400000;
 
 int32_t testInt32VecProp(size_t i) {
     // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
@@ -145,6 +152,15 @@ std::vector<SetValuesInvalidRequestTestCase> getSetValuesInvalidRequestTestCases
                                     .areaId = toInt(VehicleAreaWindow::ROW_1_RIGHT),
                             },
                     .expectedStatus = StatusCode::INVALID_ARG,
+            },
+            {
+                    .name = "no_write_permission",
+                    .request =
+                            {
+                                    .prop = READ_ONLY_PROP,
+                                    .value.int32Values = {0},
+                            },
+                    .expectedStatus = StatusCode::ACCESS_DENIED,
             }};
 }
 
@@ -205,6 +221,7 @@ class DefaultVehicleHalTest : public ::testing::Test {
         for (size_t i = 0; i < 10000; i++) {
             testConfigs.push_back(VehiclePropConfig{
                     .prop = testInt32VecProp(i),
+                    .access = VehiclePropertyAccess::READ_WRITE,
                     .areaConfigs =
                             {
                                     {
@@ -218,6 +235,7 @@ class DefaultVehicleHalTest : public ::testing::Test {
         // A property with area config.
         testConfigs.push_back(
                 VehiclePropConfig{.prop = INT32_WINDOW_PROP,
+                                  .access = VehiclePropertyAccess::READ_WRITE,
                                   .areaConfigs = {{
                                           .areaId = toInt(VehicleAreaWindow::ROW_1_LEFT),
                                           .minInt32Value = 0,
@@ -226,11 +244,13 @@ class DefaultVehicleHalTest : public ::testing::Test {
         // A global on-change property.
         testConfigs.push_back(VehiclePropConfig{
                 .prop = GLOBAL_ON_CHANGE_PROP,
+                .access = VehiclePropertyAccess::READ_WRITE,
                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         });
         // A global continuous property.
         testConfigs.push_back(VehiclePropConfig{
                 .prop = GLOBAL_CONTINUOUS_PROP,
+                .access = VehiclePropertyAccess::READ_WRITE,
                 .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
                 .minSampleRate = 0.0,
                 .maxSampleRate = 100.0,
@@ -238,6 +258,7 @@ class DefaultVehicleHalTest : public ::testing::Test {
         // A per-area on-change property.
         testConfigs.push_back(VehiclePropConfig{
                 .prop = AREA_ON_CHANGE_PROP,
+                .access = VehiclePropertyAccess::READ_WRITE,
                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                 .areaConfigs =
                         {
@@ -257,6 +278,7 @@ class DefaultVehicleHalTest : public ::testing::Test {
         // A per-area continuous property.
         testConfigs.push_back(VehiclePropConfig{
                 .prop = AREA_CONTINUOUS_PROP,
+                .access = VehiclePropertyAccess::READ_WRITE,
                 .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
                 .minSampleRate = 0.0,
                 .maxSampleRate = 1000.0,
@@ -274,6 +296,28 @@ class DefaultVehicleHalTest : public ::testing::Test {
                                         .maxInt32Value = 100,
                                 },
                         },
+        });
+        // A read-only property.
+        testConfigs.push_back(VehiclePropConfig{
+                .prop = READ_ONLY_PROP,
+                .access = VehiclePropertyAccess::READ,
+                .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
+                .minSampleRate = 0.0,
+                .maxSampleRate = 1000.0,
+        });
+        // A write-only property.
+        testConfigs.push_back(VehiclePropConfig{
+                .prop = WRITE_ONLY_PROP,
+                .access = VehiclePropertyAccess::WRITE,
+                .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
+                .minSampleRate = 0.0,
+                .maxSampleRate = 1000.0,
+        });
+        // Register the heartbeat event property.
+        testConfigs.push_back(VehiclePropConfig{
+                .prop = toInt(VehicleProperty::VHAL_HEARTBEAT),
+                .access = VehiclePropertyAccess::READ,
+                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
         });
         hardware->setPropertyConfigs(testConfigs);
         mHardwarePtr = hardware.get();
@@ -507,6 +551,39 @@ TEST_F(DefaultVehicleHalTest, testGetValuesInvalidLargeParcelableInput) {
 
     ASSERT_FALSE(status.isOk()) << "expect getValues to fail when input parcelable is not valid";
     ASSERT_EQ(status.getServiceSpecificError(), toInt(StatusCode::INVALID_ARG));
+}
+
+TEST_F(DefaultVehicleHalTest, testGetValuesNoReadPermission) {
+    GetValueRequests requests = {
+            .sharedMemoryFd = {},
+            .payloads =
+                    {
+                            {
+                                    .requestId = 0,
+                                    .prop =
+                                            {
+                                                    .prop = WRITE_ONLY_PROP,
+                                            },
+                            },
+                    },
+    };
+
+    auto status = getClient()->getValues(getCallbackClient(), requests);
+
+    ASSERT_TRUE(status.isOk()) << "getValue with no read permission should return okay with error "
+                                  "returned from callback"
+                               << ", error: " << status.getMessage();
+    EXPECT_TRUE(getHardware()->nextGetValueRequests().empty()) << "expect no request to hardware";
+
+    auto maybeResult = getCallback()->nextGetValueResults();
+    ASSERT_TRUE(maybeResult.has_value()) << "no results in callback";
+    EXPECT_EQ(maybeResult.value().payloads, std::vector<GetValueResult>({
+                                                    {
+                                                            .requestId = 0,
+                                                            .status = StatusCode::ACCESS_DENIED,
+                                                    },
+                                            }))
+            << "expect to get ACCESS_DENIED status if no read permission";
 }
 
 TEST_F(DefaultVehicleHalTest, testGetValuesFinishBeforeTimeout) {
@@ -1318,7 +1395,7 @@ INSTANTIATE_TEST_SUITE_P(
             return info.param.name;
         });
 
-TEST_P(SubscribeInvalidOptionsTest, testSubscribeInvalidRequest) {
+TEST_P(SubscribeInvalidOptionsTest, testSubscribeInvalidOptions) {
     std::vector<SubscribeOptions> options = {GetParam().option};
 
     auto status = getClient()->subscribe(getCallbackClient(), options, 0);
@@ -1327,12 +1404,45 @@ TEST_P(SubscribeInvalidOptionsTest, testSubscribeInvalidRequest) {
     ASSERT_EQ(status.getServiceSpecificError(), toInt(StatusCode::INVALID_ARG));
 }
 
+TEST_F(DefaultVehicleHalTest, testSubscribeNoReadPermission) {
+    std::vector<SubscribeOptions> options = {{
+            .propId = WRITE_ONLY_PROP,
+    }};
+
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+
+    ASSERT_FALSE(status.isOk()) << "subscribe to a write-only property must fail";
+    ASSERT_EQ(status.getServiceSpecificError(), toInt(StatusCode::ACCESS_DENIED));
+}
+
 TEST_F(DefaultVehicleHalTest, testUnsubscribeFailure) {
     auto status = getClient()->unsubscribe(getCallbackClient(),
                                            std::vector<int32_t>({GLOBAL_ON_CHANGE_PROP}));
 
     ASSERT_FALSE(status.isOk()) << "unsubscribe to a not-subscribed property must fail";
     ASSERT_EQ(status.getServiceSpecificError(), toInt(StatusCode::INVALID_ARG));
+}
+
+TEST_F(DefaultVehicleHalTest, testHeartbeatEvent) {
+    std::vector<SubscribeOptions> options = {{
+            .propId = toInt(VehicleProperty::VHAL_HEARTBEAT),
+    }};
+    int64_t currentTime = uptimeMillis();
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+
+    ASSERT_TRUE(status.isOk()) << "unable to subscribe to heartbeat event: " << status.getMessage();
+
+    // We send out a heartbeat event every 3s, so sleep for 3s.
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+
+    auto maybeResults = getCallback()->nextOnPropertyEventResults();
+    ASSERT_TRUE(maybeResults.has_value()) << "no results in callback";
+    ASSERT_EQ(maybeResults.value().payloads.size(), static_cast<size_t>(1));
+    VehiclePropValue gotValue = maybeResults.value().payloads[0];
+    ASSERT_EQ(gotValue.prop, toInt(VehicleProperty::VHAL_HEARTBEAT));
+    ASSERT_EQ(gotValue.value.int64Values.size(), static_cast<size_t>(1));
+    ASSERT_GE(gotValue.value.int64Values[0], currentTime)
+            << "expect to get the latest timestamp with the heartbeat event";
 }
 
 }  // namespace vehicle
