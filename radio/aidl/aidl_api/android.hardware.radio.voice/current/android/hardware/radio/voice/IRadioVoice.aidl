@@ -53,6 +53,7 @@ interface IRadioVoice {
   oneway void hangup(in int serial, in int gsmIndex);
   oneway void hangupForegroundResumeBackground(in int serial);
   oneway void hangupWaitingOrBackground(in int serial);
+  oneway void isVoNrEnabled(in int serial);
   oneway void rejectCall(in int serial);
   oneway void responseAcknowledgement();
   oneway void sendBurstDtmf(in int serial, in String dtmf, in int on, in int off);
@@ -66,6 +67,7 @@ interface IRadioVoice {
   oneway void setPreferredVoicePrivacy(in int serial, in boolean enable);
   oneway void setResponseFunctions(in android.hardware.radio.voice.IRadioVoiceResponse radioVoiceResponse, in android.hardware.radio.voice.IRadioVoiceIndication radioVoiceIndication);
   oneway void setTtyMode(in int serial, in android.hardware.radio.voice.TtyMode mode);
+  oneway void setVoNrEnabled(in int serial, in boolean enable);
   oneway void startDtmf(in int serial, in String s);
   oneway void stopDtmf(in int serial);
   oneway void switchWaitingOrHoldingAndActive(in int serial);
