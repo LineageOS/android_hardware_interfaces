@@ -315,7 +315,7 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Burst::
 
     // if the request is valid but of a higher version than what's supported in burst execution,
     // fall back to another execution path
-    if (const auto version = NN_TRY(nn::validate(request)); version > nn::Version::ANDROID_Q) {
+    if (!compliantVersion(request).ok()) {
         // fallback to another execution path if the packet could not be sent
         return kPreparedModel->execute(request, measure, deadline, loopTimeoutDuration);
     }
@@ -359,7 +359,7 @@ nn::GeneralResult<nn::SharedExecution> Burst::createReusableExecution(
 
     // if the request is valid but of a higher version than what's supported in burst execution,
     // fall back to another execution path
-    if (const auto version = NN_TRY(nn::validate(request)); version > nn::Version::ANDROID_Q) {
+    if (!compliantVersion(request).ok()) {
         // fallback to another execution path if the packet could not be sent
         return kPreparedModel->createReusableExecution(request, measure, loopTimeoutDuration);
     }

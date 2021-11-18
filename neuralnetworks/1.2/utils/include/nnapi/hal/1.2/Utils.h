@@ -39,7 +39,7 @@ using V1_1::utils::kDefaultExecutionPreference;
 constexpr auto kDefaultMesaureTiming = MeasureTiming::NO;
 constexpr auto kNoTiming = Timing{.timeOnDevice = std::numeric_limits<uint64_t>::max(),
                                   .timeInDriver = std::numeric_limits<uint64_t>::max()};
-constexpr auto kVersion = nn::Version::ANDROID_Q;
+const auto kVersion = nn::Version::ANDROID_Q;
 
 template <typename Type>
 nn::Result<void> validate(const Type& halObject) {
@@ -62,7 +62,7 @@ bool valid(const Type& halObject) {
 template <typename Type>
 nn::Result<void> compliantVersion(const Type& canonical) {
     const auto version = NN_TRY(nn::validate(canonical));
-    if (version > kVersion) {
+    if (!nn::isCompliantVersion(version, kVersion)) {
         return NN_ERROR() << "Insufficient version: " << version << " vs required " << kVersion;
     }
     return {};
