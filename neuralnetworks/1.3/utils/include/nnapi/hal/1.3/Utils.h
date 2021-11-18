@@ -39,7 +39,7 @@ using V1_2::utils::kDefaultMesaureTiming;
 using V1_2::utils::kNoTiming;
 
 constexpr auto kDefaultPriority = Priority::MEDIUM;
-const auto kVersion = nn::Version::ANDROID_R;
+constexpr auto kVersion = nn::kVersionFeatureLevel4;
 
 template <typename Type>
 nn::Result<void> validate(const Type& halObject) {

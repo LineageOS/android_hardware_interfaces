@@ -192,7 +192,7 @@ const std::string& Device::getVersionString() const {
 }
 
 nn::Version Device::getFeatureLevel() const {
-    return nn::Version::ANDROID_Q;
+    return kVersion;
 }
 
 nn::DeviceType Device::getType() const {

@@ -39,7 +39,7 @@ using V1_1::utils::kDefaultExecutionPreference;
 constexpr auto kDefaultMesaureTiming = MeasureTiming::NO;
 constexpr auto kNoTiming = Timing{.timeOnDevice = std::numeric_limits<uint64_t>::max(),
                                   .timeInDriver = std::numeric_limits<uint64_t>::max()};
-const auto kVersion = nn::Version::ANDROID_Q;
+constexpr auto kVersion = nn::kVersionFeatureLevel3;
 
 template <typename Type>
 nn::Result<void> validate(const Type& halObject) {
