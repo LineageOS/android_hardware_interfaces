@@ -145,7 +145,7 @@ TEST_P(HdmiCecTest, SendMessage) {
     message.initiator = CecLogicalAddress::PLAYBACK_1;
     message.destination = CecLogicalAddress::BROADCAST;
     message.body.resize(1);
-    message.body[0] = 131;
+    message.body[0] = 133;
     SendMessageResult ret = hdmiCec->sendMessage_1_1(message);
     EXPECT_EQ(ret, SendMessageResult::SUCCESS);
 }
