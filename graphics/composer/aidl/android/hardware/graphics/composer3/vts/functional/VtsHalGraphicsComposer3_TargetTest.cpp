@@ -81,6 +81,8 @@ class GraphicsComposerAidlTest : public ::testing::TestWithParam<std::string> {
         // assume the first displays are built-in and are never removed
         mDisplays = waitForDisplays();
 
+        mPrimaryDisplay = mDisplays[0].get();
+
         // explicitly disable vsync
         for (const auto& display : mDisplays) {
             EXPECT_TRUE(mComposerClient->setVsyncEnabled(display.get(), false).isOk());
@@ -318,7 +320,7 @@ class GraphicsComposerAidlTest : public ::testing::TestWithParam<std::string> {
         }
 
         mWriter->selectDisplay(display.get());
-        setPowerMode(display.get(), PowerMode::ON);
+        EXPECT_TRUE(mComposerClient->setPowerMode(display.get(), PowerMode::ON).isOk());
         EXPECT_TRUE(
                 mComposerClient
                         ->setColorMode(display.get(), ColorMode::NATIVE, RenderIntent::COLORIMETRIC)
@@ -484,13 +486,6 @@ class GraphicsComposerAidlTest : public ::testing::TestWithParam<std::string> {
         }
     }
 
-    void setPowerMode(int64_t display, PowerMode powerMode) {
-        ::ndk::ScopedAStatus error = mComposerClient->setPowerMode(display, powerMode);
-        ASSERT_TRUE(error.isOk() ||
-                    IComposerClient::EX_UNSUPPORTED == error.getServiceSpecificError())
-                << "failed to set power mode";
-    }
-
     // Keep track of all virtual displays and layers.  When a test fails with
     // ASSERT_*, the destructor will clean up the resources for the test.
     struct DisplayResource {
@@ -617,6 +612,7 @@ TEST_P(GraphicsComposerAidlTest, setActiveConfigWithConstraints_SeamlessNotAllow
 TEST_P(GraphicsComposerAidlTest, setActiveConfigWithConstraints) {
     Test_setActiveConfigWithConstraints({.delayForChange = 0, .refreshMiss = false});
 }
+
 TEST_P(GraphicsComposerAidlTest, GetDisplayIdentificationData) {
     DisplayIdentification displayIdentification0;
 
@@ -826,17 +822,19 @@ TEST_P(GraphicsComposerAidlTest, GetDisplayedContentSample) {
     displayContentSamplingAttributes.format = static_cast<common::PixelFormat>(invalid);
     displayContentSamplingAttributes.dataspace = static_cast<common::Dataspace>(invalid);
     displayContentSamplingAttributes.componentMask = static_cast<FormatColorComponent>(invalid);
-    EXPECT_TRUE(mComposerClient
-                        ->getDisplayedContentSamplingAttributes(mPrimaryDisplay,
-                                                                &displayContentSamplingAttributes)
-                        .isOk());
+    auto error = mComposerClient->getDisplayedContentSamplingAttributes(
+            mPrimaryDisplay, &displayContentSamplingAttributes);
+    if (error.getServiceSpecificError() == IComposerClient::EX_UNSUPPORTED) {
+        SUCCEED() << "Sampling attributes aren't supported on this device, test skipped";
+        return;
+    }
 
     int64_t maxFrames = 10;
     int64_t timestamp = 0;
     int64_t frameCount = 0;
     DisplayContentSample displayContentSample;
-    auto error = mComposerClient->getDisplayedContentSample(mPrimaryDisplay, maxFrames, timestamp,
-                                                            &displayContentSample);
+    error = mComposerClient->getDisplayedContentSample(mPrimaryDisplay, maxFrames, timestamp,
+                                                       &displayContentSample);
     if (error.getServiceSpecificError() == IComposerClient::EX_UNSUPPORTED) {
         SUCCEED() << "Device does not support optional extension. Test skipped";
         return;
@@ -1197,7 +1195,7 @@ TEST_P(GraphicsComposerAidlTest, SetPowerMode) {
     modes.push_back(PowerMode::ON);
 
     for (auto mode : modes) {
-        setPowerMode(mPrimaryDisplay, mode);
+        EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, mode).isOk());
     }
 }
 
@@ -1208,7 +1206,7 @@ TEST_P(GraphicsComposerAidlTest, SetPowerModeVariations) {
     modes.push_back(PowerMode::OFF);
 
     for (auto mode : modes) {
-        setPowerMode(mPrimaryDisplay, mode);
+        EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, mode).isOk());
     }
 
     modes.clear();
@@ -1217,7 +1215,7 @@ TEST_P(GraphicsComposerAidlTest, SetPowerModeVariations) {
     modes.push_back(PowerMode::ON);
 
     for (auto mode : modes) {
-        setPowerMode(mPrimaryDisplay, mode);
+        EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, mode).isOk());
     }
 
     modes.clear();
@@ -1226,7 +1224,7 @@ TEST_P(GraphicsComposerAidlTest, SetPowerModeVariations) {
     modes.push_back(PowerMode::ON_SUSPEND);
 
     for (auto mode : modes) {
-        setPowerMode(mPrimaryDisplay, mode);
+        EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, mode).isOk());
     }
 
     bool isDozeSupported = false;
@@ -1238,7 +1236,7 @@ TEST_P(GraphicsComposerAidlTest, SetPowerModeVariations) {
         modes.push_back(PowerMode::DOZE);
 
         for (auto mode : modes) {
-            setPowerMode(mPrimaryDisplay, mode);
+            EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, mode).isOk());
         }
 
         modes.clear();
@@ -1247,7 +1245,7 @@ TEST_P(GraphicsComposerAidlTest, SetPowerModeVariations) {
         modes.push_back(PowerMode::DOZE_SUSPEND);
 
         for (auto mode : modes) {
-            setPowerMode(mPrimaryDisplay, mode);
+            EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, mode).isOk());
         }
     }
 }
@@ -1285,6 +1283,7 @@ TEST_P(GraphicsComposerAidlTest, GetDataspaceSaturationMatrix) {
     EXPECT_TRUE(
             mComposerClient->getDataspaceSaturationMatrix(common::Dataspace::SRGB_LINEAR, &matrix)
                     .isOk());
+
     // the last row is known
     ASSERT_EQ(0.0f, matrix[12]);
     ASSERT_EQ(0.0f, matrix[13]);

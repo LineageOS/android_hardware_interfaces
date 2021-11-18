@@ -19,7 +19,7 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wconversion"
 
-#include <aidl/android/hardware/graphics/composer3/IComposerCallback.h>
+#include <aidl/android/hardware/graphics/composer3/BnComposerCallback.h>
 #include <android-base/thread_annotations.h>
 #include <mutex>
 #include <unordered_set>
@@ -29,8 +29,7 @@
 
 namespace aidl::android::hardware::graphics::composer3::vts {
 
-// IComposerCallback to be installed with IComposerClient::registerCallback.
-class GraphicsComposerCallback : public IComposerCallback {
+class GraphicsComposerCallback : public BnComposerCallback {
   public:
     void setVsyncAllowed(bool allowed);
 
@@ -58,9 +57,6 @@ class GraphicsComposerCallback : public IComposerCallback {
             int64_t in_display,
             const ::aidl::android::hardware::graphics::composer3::VsyncPeriodChangeTimeline&
                     in_updatedTimeline) override;
-
-    ::ndk::SpAIBinder asBinder() override;
-    bool isRemote() override;
 
     mutable std::mutex mMutex;
     // the set of all currently connected displays
