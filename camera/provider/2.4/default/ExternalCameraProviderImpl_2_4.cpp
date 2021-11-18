@@ -65,10 +65,10 @@ bool matchDeviceName(int cameraIdOffset,
 
 } // anonymous namespace
 
-ExternalCameraProviderImpl_2_4::ExternalCameraProviderImpl_2_4() :
-        mCfg(ExternalCameraConfig::loadFromCfg()),
-        mHotPlugThread(this) {
-    mHotPlugThread.run("ExtCamHotPlug", PRIORITY_BACKGROUND);
+ExternalCameraProviderImpl_2_4::ExternalCameraProviderImpl_2_4()
+    : mCfg(ExternalCameraConfig::loadFromCfg()) {
+    mHotPlugThread = sp<HotplugThread>::make(this);
+    mHotPlugThread->run("ExtCamHotPlug", PRIORITY_BACKGROUND);
 
     mPreferredHal3MinorVersion =
         property_get_int32("ro.vendor.camera.external.hal3TrebleMinorVersion", 4);
@@ -88,7 +88,7 @@ ExternalCameraProviderImpl_2_4::ExternalCameraProviderImpl_2_4() :
 }
 
 ExternalCameraProviderImpl_2_4::~ExternalCameraProviderImpl_2_4() {
-    mHotPlugThread.requestExit();
+    mHotPlugThread->requestExit();
 }
 
 
