@@ -39,14 +39,16 @@ static constexpr const char* gInstanceName = "default";
 static constexpr std::string_view gChargerArg{"--charger"};
 
 int main(int argc, char** argv) {
+#ifdef __ANDROID_RECOVERY__
+    android::base::InitLogging(argv, android::base::KernelLogger);
+#endif
+
     // make a default health service
     auto config = std::make_unique<healthd_config>();
     ::android::hardware::health::InitHealthdConfig(config.get());
     auto binder = ndk::SharedRefBase::make<Health>(gInstanceName, std::move(config));
 
     if (argc >= 2 && argv[1] == gChargerArg) {
-        android::base::InitLogging(argv, &android::base::KernelLogger);
-
 #if !CHARGER_FORCE_NO_UI
         // If charger shouldn't have UI for your device, simply drop the line below
         // for your service implementation. This corresponds to
