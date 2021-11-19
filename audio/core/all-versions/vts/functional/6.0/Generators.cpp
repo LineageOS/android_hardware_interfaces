@@ -36,9 +36,14 @@ using namespace ::android::hardware::audio::CPP_VERSION;
 std::vector<DeviceConfigParameter> generateOutputDeviceConfigParameters(bool oneProfilePerDevice) {
     std::vector<DeviceConfigParameter> result;
     for (const auto& device : getDeviceParameters()) {
-        auto module =
-                getCachedPolicyConfig().getModuleFromName(std::get<PARAM_DEVICE_NAME>(device));
+        const std::string moduleName = std::get<PARAM_DEVICE_NAME>(device);
+        auto module = getCachedPolicyConfig().getModuleFromName(moduleName);
         for (const auto& ioProfile : module->getOutputProfiles()) {
+            if (getCachedPolicyConfig()
+                        .getAttachedSinkDeviceForMixPort(moduleName, ioProfile->getName())
+                        .empty()) {
+                continue;  // no attached device
+            }
             for (const auto& profile : ioProfile->getAudioProfiles()) {
                 const auto& channels = profile->getChannels();
                 const auto& sampleRates = profile->getSampleRates();
@@ -94,9 +99,14 @@ const std::vector<DeviceConfigParameter>& getOutputDeviceSingleConfigParameters(
 std::vector<DeviceConfigParameter> generateInputDeviceConfigParameters(bool oneProfilePerDevice) {
     std::vector<DeviceConfigParameter> result;
     for (const auto& device : getDeviceParameters()) {
-        auto module =
-                getCachedPolicyConfig().getModuleFromName(std::get<PARAM_DEVICE_NAME>(device));
+        const std::string moduleName = std::get<PARAM_DEVICE_NAME>(device);
+        auto module = getCachedPolicyConfig().getModuleFromName(moduleName);
         for (const auto& ioProfile : module->getInputProfiles()) {
+            if (getCachedPolicyConfig()
+                        .getAttachedSourceDeviceForMixPort(moduleName, ioProfile->getName())
+                        .empty()) {
+                continue;  // no attached device
+            }
             for (const auto& profile : ioProfile->getAudioProfiles()) {
                 const auto& channels = profile->getChannels();
                 const auto& sampleRates = profile->getSampleRates();
