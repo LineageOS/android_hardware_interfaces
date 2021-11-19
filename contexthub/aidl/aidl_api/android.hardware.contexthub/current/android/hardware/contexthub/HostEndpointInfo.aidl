@@ -33,16 +33,14 @@
 
 package android.hardware.contexthub;
 @VintfStability
-interface IContextHub {
-  List<android.hardware.contexthub.ContextHubInfo> getContextHubs();
-  boolean loadNanoapp(in int contextHubId, in android.hardware.contexthub.NanoappBinary appBinary, in int transactionId);
-  boolean unloadNanoapp(in int contextHubId, in long appId, in int transactionId);
-  boolean disableNanoapp(in int contextHubId, in long appId, in int transactionId);
-  boolean enableNanoapp(in int contextHubId, in long appId, in int transactionId);
-  void onSettingChanged(in android.hardware.contexthub.Setting setting, in boolean enabled);
-  boolean queryNanoapps(in int contextHubId);
-  boolean registerCallback(in int contextHubId, in android.hardware.contexthub.IContextHubCallback cb);
-  boolean sendMessageToHub(in int contextHubId, in android.hardware.contexthub.ContextHubMessage message);
-  void onHostEndpointConnected(in android.hardware.contexthub.HostEndpointInfo hostEndpointInfo);
-  void onHostEndpointDisconnected(char hostEndpointId);
+parcelable HostEndpointInfo {
+  char hostEndpointId;
+  android.hardware.contexthub.HostEndpointInfo.Type type;
+  @nullable String[] packageName;
+  @nullable String[] attributionTag;
+  @Backing(type="int") @VintfStability
+  enum Type {
+    TYPE_FRAMEWORK = 1,
+    TYPE_APP = 2,
+  }
 }
