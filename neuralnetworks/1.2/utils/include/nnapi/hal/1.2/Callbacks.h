@@ -38,7 +38,8 @@ namespace android::hardware::neuralnetworks::V1_2::utils {
 
 // Converts the results of IDevice::prepareModel* to the NN canonical format. On success, this
 // function returns with a non-null nn::SharedPreparedModel with a feature level of
-// nn::Version::ANDROID_Q. On failure, this function returns with the appropriate nn::GeneralError.
+// nn::kVersionFeatureLevel3. On failure, this function returns with the appropriate
+// nn::GeneralError.
 nn::GeneralResult<nn::SharedPreparedModel> prepareModelCallback(
         V1_0::ErrorStatus status, const sp<IPreparedModel>& preparedModel);
 
