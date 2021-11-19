@@ -24,7 +24,9 @@
 #include <log/log.h>
 #include <utils/Condition.h>
 #include <utils/Mutex.h>
+#include <future>
 #include <map>
+#include <unordered_map>
 
 #include <fmq/AidlMessageQueue.h>
 
@@ -58,15 +60,9 @@ using MQDesc = MQDescriptor<int8_t, SynchronizedReadWrite>;
 
 class FilterCallback : public BnFilterCallback {
   public:
-    virtual ::ndk::ScopedAStatus onFilterEvent(const vector<DemuxFilterEvent>& events) override {
-        android::Mutex::Autolock autoLock(mMsgLock);
-        // Temprarily we treat the first coming back filter data on the matching pid a success
-        // once all of the MQ are cleared, means we got all the expected output
-        readFilterEventsData(events);
-        mPidFilterOutputCount++;
-        mMsgCondition.signal();
-        return ::ndk::ScopedAStatus::ok();
-    }
+    virtual ::ndk::ScopedAStatus onFilterEvent(const vector<DemuxFilterEvent>& events) override;
+
+    std::future<DemuxFilterEvent> getNextFilterEventWithTag(DemuxFilterEvent::Tag tag);
 
     virtual ::ndk::ScopedAStatus onFilterStatus(const DemuxFilterStatus /*status*/) override {
         return ::ndk::ScopedAStatus::ok();
@@ -89,6 +85,7 @@ class FilterCallback : public BnFilterCallback {
     int32_t mFilterId;
     std::shared_ptr<IFilter> mFilter;
 
+    std::unordered_map<DemuxFilterEvent::Tag, std::promise<DemuxFilterEvent>> mFilterEventPromises;
     native_handle_t* mAvSharedHandle = nullptr;
     uint64_t mAvSharedMemSize = -1;
 
