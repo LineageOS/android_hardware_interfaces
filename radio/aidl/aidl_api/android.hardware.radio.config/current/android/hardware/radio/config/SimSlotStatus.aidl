@@ -34,7 +34,6 @@
 package android.hardware.radio.config;
 @VintfStability
 parcelable SimSlotStatus {
-  boolean cardActive;
   int cardState;
   String atr;
   String eid;
