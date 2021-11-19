@@ -16,6 +16,8 @@
 
 package android.hardware.radio.modem;
 
+import android.hardware.radio.modem.ActivityStatsTechSpecificInfo;
+
 @VintfStability
 parcelable ActivityStatsInfo {
     /**
@@ -28,17 +30,10 @@ parcelable ActivityStatsInfo {
      */
     int idleModeTimeMs;
     /**
-     * Each index represent total time (in ms) during which the transmitter is active/awake for a
-     * particular power range as shown below.
-     * index 0 = tx_power < 0dBm
-     * index 1 = 0dBm < tx_power < 5dBm
-     * index 2 = 5dBm < tx_power < 15dBm
-     * index 3 = 15dBm < tx_power < 20dBm
-     * index 4 = tx_power > 20dBm
+     * Technology specific activity stats info.
+     * List of the activity stats for each RATs (2G, 3G, 4G and 5G) and frequency ranges (HIGH for
+     * sub6 and MMWAVE) in case of 5G. In case implementation doesn't have RAT specific activity
+     * stats then send only one activity stats info with RAT unknown.
      */
-    int[] txmModetimeMs;
-    /**
-     * Total time (in ms) for which receiver is active/awake and the transmitter is inactive
-     */
-    int rxModeTimeMs;
+    ActivityStatsTechSpecificInfo[] techSpecificInfo;
 }
