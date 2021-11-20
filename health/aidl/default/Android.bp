@@ -23,8 +23,6 @@ package {
 
 cc_defaults {
     name: "libhealth_aidl_common_defaults",
-    recovery_available: true,
-    vendor: true,
     shared_libs: [
         "libbase",
         "libbinder_ndk",
@@ -100,6 +98,8 @@ cc_library_static {
         "libhealth_aidl_common_defaults",
         "libhealth_aidl_charger_defaults",
     ],
+    vendor: true,
+    recovery_available: true,
     export_include_dirs: ["include"],
     export_static_lib_headers: [
         "libbatterymonitor",
@@ -122,10 +122,9 @@ cc_library_static {
 
 // AIDL version of android.hardware.health@2.1-service.
 // Default binder service of the health HAL.
-cc_binary {
-    name: "android.hardware.health-service.example",
+cc_defaults {
+    name: "android.hardware.health-service.example-defaults",
     relative_install_path: "hw",
-    init_rc: ["android.hardware.health-service.example.rc"],
     vintf_fragments: ["android.hardware.health-service.example.xml"],
     defaults: [
         "libhealth_aidl_common_defaults",
@@ -135,7 +134,20 @@ cc_binary {
         "libhealth_aidl_impl",
     ],
     srcs: ["main.cpp"],
-    overrides: [
-        "charger",
-    ],
+}
+
+cc_binary {
+    name: "android.hardware.health-service.example",
+    vendor: true,
+    defaults: ["android.hardware.health-service.example-defaults"],
+    init_rc: ["android.hardware.health-service.example.rc"],
+    overrides: ["charger"],
+}
+
+cc_binary {
+    name: "android.hardware.health-service.example_recovery",
+    recovery: true,
+    defaults: ["android.hardware.health-service.example-defaults"],
+    init_rc: ["android.hardware.health-service.example_recovery.rc"],
+    overrides: ["charger.recovery"],
 }
