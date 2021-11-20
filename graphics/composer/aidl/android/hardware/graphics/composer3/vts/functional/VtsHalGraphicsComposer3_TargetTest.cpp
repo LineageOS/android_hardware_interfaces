@@ -653,6 +653,51 @@ TEST_P(GraphicsComposerAidlTest, GetDisplayIdentificationData) {
             << "data is not stable";
 }
 
+TEST_P(GraphicsComposerAidlTest, SET_LAYER_PER_FRAME_METADATA) {
+    int64_t layer;
+    EXPECT_TRUE(mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount, &layer).isOk());
+
+    mWriter->selectDisplay(mPrimaryDisplay);
+    mWriter->selectLayer(layer);
+
+    /**
+     * DISPLAY_P3 is a color space that uses the DCI_P3 primaries,
+     * the D65 white point and the SRGB transfer functions.
+     * Rendering Intent: Colorimetric
+     * Primaries:
+     *                  x       y
+     *  green           0.265   0.690
+     *  blue            0.150   0.060
+     *  red             0.680   0.320
+     *  white (D65)     0.3127  0.3290
+     */
+
+    std::vector<PerFrameMetadata> aidlMetadata;
+    aidlMetadata.push_back({PerFrameMetadataKey::DISPLAY_RED_PRIMARY_X, 0.680f});
+    aidlMetadata.push_back({PerFrameMetadataKey::DISPLAY_RED_PRIMARY_Y, 0.320f});
+    aidlMetadata.push_back({PerFrameMetadataKey::DISPLAY_GREEN_PRIMARY_X, 0.265f});
+    aidlMetadata.push_back({PerFrameMetadataKey::DISPLAY_GREEN_PRIMARY_Y, 0.690f});
+    aidlMetadata.push_back({PerFrameMetadataKey::DISPLAY_BLUE_PRIMARY_X, 0.150f});
+    aidlMetadata.push_back({PerFrameMetadataKey::DISPLAY_BLUE_PRIMARY_Y, 0.060f});
+    aidlMetadata.push_back({PerFrameMetadataKey::WHITE_POINT_X, 0.3127f});
+    aidlMetadata.push_back({PerFrameMetadataKey::WHITE_POINT_Y, 0.3290f});
+    aidlMetadata.push_back({PerFrameMetadataKey::MAX_LUMINANCE, 100.0f});
+    aidlMetadata.push_back({PerFrameMetadataKey::MIN_LUMINANCE, 0.1f});
+    aidlMetadata.push_back({PerFrameMetadataKey::MAX_CONTENT_LIGHT_LEVEL, 78.0});
+    aidlMetadata.push_back({PerFrameMetadataKey::MAX_FRAME_AVERAGE_LIGHT_LEVEL, 62.0});
+    mWriter->setLayerPerFrameMetadata(aidlMetadata);
+    execute();
+
+    if (mReader->mErrors.size() == 1 && mReader->mErrors[0].second == EX_UNSUPPORTED_OPERATION) {
+        mReader->mErrors.clear();
+        GTEST_SUCCEED() << "SetLayerPerFrameMetadata is not supported";
+        EXPECT_TRUE(mComposerClient->destroyLayer(mPrimaryDisplay, layer).isOk());
+        return;
+    }
+
+    EXPECT_TRUE(mComposerClient->destroyLayer(mPrimaryDisplay, layer).isOk());
+}
+
 TEST_P(GraphicsComposerAidlTest, GetHdrCapabilities) {
     HdrCapabilities hdrCapabilities;
     const auto error = mComposerClient->getHdrCapabilities(mPrimaryDisplay, &hdrCapabilities);
@@ -785,6 +830,31 @@ TEST_P(GraphicsComposerAidlTest, SetColorModeBadParameter) {
 
     EXPECT_FALSE(renderIntentError.isOk());
     EXPECT_EQ(IComposerClient::EX_BAD_PARAMETER, renderIntentError.getServiceSpecificError());
+}
+
+TEST_P(GraphicsComposerAidlTest, SetLayerColorTransform) {
+    int64_t layer;
+    EXPECT_TRUE(mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount, &layer).isOk());
+    mWriter->selectDisplay(mPrimaryDisplay);
+    mWriter->selectLayer(layer);
+
+    // clang-format off
+    const std::array<float, 16> matrix = {{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }};
+    // clang-format on
+
+    mWriter->setLayerColorTransform(matrix.data());
+    execute();
+
+    if (mReader->mErrors.size() == 1 && mReader->mErrors[0].second == EX_UNSUPPORTED_OPERATION) {
+        mReader->mErrors.clear();
+        GTEST_SUCCEED() << "setLayerColorTransform is not supported";
+        return;
+    }
 }
 
 TEST_P(GraphicsComposerAidlTest, GetDisplayedContentSamplingAttributes) {
