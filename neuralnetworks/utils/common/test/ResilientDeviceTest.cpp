@@ -28,7 +28,6 @@ namespace android::hardware::neuralnetworks::utils {
 namespace {
 
 using ::testing::_;
-using ::testing::InvokeWithoutArgs;
 using ::testing::Return;
 
 using SharedMockDevice = std::shared_ptr<const nn::MockDevice>;
@@ -54,7 +53,7 @@ SharedMockDevice createConfiguredMockDevice() {
     // Setup default actions for each relevant call.
     constexpr auto getName_ret = []() -> const std::string& { return kName; };
     constexpr auto getVersionString_ret = []() -> const std::string& { return kVersionString; };
-    constexpr auto kFeatureLevel = nn::Version::ANDROID_OC_MR1;
+    constexpr auto kFeatureLevel = nn::kVersionFeatureLevel1;
     constexpr auto kDeviceType = nn::DeviceType::ACCELERATOR;
     constexpr auto getSupportedExtensions_ret = []() -> const std::vector<nn::Extension>& {
         return kExtensions;
@@ -142,7 +141,7 @@ TEST(ResilientDeviceTest, cachedData) {
 TEST(ResilientDeviceTest, getFeatureLevel) {
     // setup call
     const auto [mockDevice, mockDeviceFactory, device] = setup();
-    constexpr auto kFeatureLevel = nn::Version::ANDROID_OC_MR1;
+    constexpr auto kFeatureLevel = nn::kVersionFeatureLevel1;
     EXPECT_CALL(*mockDevice, getFeatureLevel()).Times(1).WillOnce(Return(kFeatureLevel));
 
     // run test
@@ -592,7 +591,7 @@ TEST(ResilientDeviceTest, recoverCacheMismatchGetFeatureLevel) {
     const auto recoveredMockDevice = createConfiguredMockDevice();
     EXPECT_CALL(*recoveredMockDevice, getFeatureLevel())
             .Times(1)
-            .WillOnce(Return(nn::Version::ANDROID_P));
+            .WillOnce(Return(nn::kVersionFeatureLevel2));
     EXPECT_CALL(*mockDeviceFactory, Call(false)).Times(1).WillOnce(Return(recoveredMockDevice));
 
     // run test

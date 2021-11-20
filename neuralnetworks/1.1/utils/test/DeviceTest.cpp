@@ -243,7 +243,7 @@ TEST(DeviceTest, getFeatureLevel) {
     const auto featureLevel = device->getFeatureLevel();
 
     // verify result
-    EXPECT_EQ(featureLevel, nn::Version::ANDROID_P);
+    EXPECT_EQ(featureLevel, nn::kVersionFeatureLevel2);
 }
 
 TEST(DeviceTest, getCachedData) {
