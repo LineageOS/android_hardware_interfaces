@@ -640,6 +640,57 @@ TEST_P(TunerFilterAidlTest, testTimeFilter) {
     testTimeFilter(timeFilterMap[timeFilter.timeFilterId]);
 }
 
+// TODO: move boilerplate into text fixture
+TEST_P(TunerFilterAidlTest, FilterTimeDelayHintTest) {
+    description("Test filter delay hint.");
+
+    int32_t feId;
+    int32_t demuxId;
+    std::shared_ptr<IDemux> demux;
+    int64_t filterId;
+
+    mFrontendTests.getFrontendIdByType(frontendMap[live.frontendId].type, feId);
+    ASSERT_TRUE(feId != INVALID_ID);
+    ASSERT_TRUE(mFrontendTests.openFrontendById(feId));
+    ASSERT_TRUE(mFrontendTests.setFrontendCallback());
+    ASSERT_TRUE(mDemuxTests.openDemux(demux, demuxId));
+    ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
+    mFilterTests.setDemux(demux);
+
+    const auto& filterConf = filterMap[live.ipFilterId];
+    ASSERT_TRUE(mFilterTests.openFilterInDemux(filterConf.type, filterConf.bufferSize));
+    ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId_64bit(filterId));
+    ASSERT_TRUE(mFilterTests.configFilter(filterConf.settings, filterId));
+    ASSERT_TRUE(mFilterTests.configIpFilterCid(filterConf.ipCid, filterId));
+
+    auto filter = mFilterTests.getFilterById(filterId);
+
+    auto delayValue = std::chrono::milliseconds(5000);
+    FilterDelayHint delayHint;
+    delayHint.hintType = FilterDelayHintType::TIME_DELAY_IN_MS;
+    delayHint.hintValue = delayValue.count();
+
+    auto status = filter->setDelayHint(delayHint);
+    ASSERT_TRUE(status.isOk());
+
+    auto startTime = std::chrono::steady_clock::now();
+    ASSERT_TRUE(mFilterTests.startFilter(filterId));
+
+    auto cb = mFilterTests.getFilterCallbacks().at(filterId);
+    auto future = cb->getNextFilterEventWithTag(DemuxFilterEvent::Tag::ipPayload);
+
+    // block and wait for callback to be received.
+    ASSERT_EQ(future.wait_for(std::chrono::seconds(10)), std::future_status::ready);
+    auto duration = std::chrono::steady_clock::now() - startTime;
+    ASSERT_GE(duration, delayValue);
+
+    // cleanup
+    ASSERT_TRUE(mFilterTests.stopFilter(filterId));
+    ASSERT_TRUE(mFilterTests.closeFilter(filterId));
+    ASSERT_TRUE(mDemuxTests.closeDemux());
+    ASSERT_TRUE(mFrontendTests.closeFrontend());
+}
+
 TEST_P(TunerPlaybackAidlTest, PlaybackDataFlowWithTsSectionFilterTest) {
     description("Feed ts data from playback and configure Ts section filter to get output");
     if (!playback.support || playback.sectionFilterId.compare(emptyHardwareId) == 0) {
