@@ -1018,6 +1018,37 @@ TEST_P(NewKeyGenerationTest, Rsa) {
 }
 
 /*
+ * NewKeyGenerationTest.RsaWithMissingValidity
+ *
+ * Verifies that keymint returns an error while generating asymmetric key
+ * without providing NOT_BEFORE and NOT_AFTER parameters.
+ */
+TEST_P(NewKeyGenerationTest, RsaWithMissingValidity) {
+    // Per RFC 5280 4.1.2.5, an undefined expiration (not-after) field should be set to
+    // GeneralizedTime 999912312359559, which is 253402300799000 ms from Jan 1, 1970.
+    constexpr uint64_t kUndefinedExpirationDateTime = 253402300799000;
+
+    vector<uint8_t> key_blob;
+    vector<KeyCharacteristics> key_characteristics;
+    ASSERT_EQ(ErrorCode::MISSING_NOT_BEFORE,
+              GenerateKey(AuthorizationSetBuilder()
+                                  .RsaSigningKey(2048, 65537)
+                                  .Digest(Digest::NONE)
+                                  .Padding(PaddingMode::NONE)
+                                  .Authorization(TAG_CERTIFICATE_NOT_AFTER,
+                                                 kUndefinedExpirationDateTime),
+                          &key_blob, &key_characteristics));
+
+    ASSERT_EQ(ErrorCode::MISSING_NOT_AFTER,
+              GenerateKey(AuthorizationSetBuilder()
+                                  .RsaSigningKey(2048, 65537)
+                                  .Digest(Digest::NONE)
+                                  .Padding(PaddingMode::NONE)
+                                  .Authorization(TAG_CERTIFICATE_NOT_BEFORE, 0),
+                          &key_blob, &key_characteristics));
+}
+
+/*
  * NewKeyGenerationTest.RsaWithAttestation
  *
  * Verifies that keymint can generate all required RSA key sizes with attestation, and that the
@@ -1580,6 +1611,35 @@ TEST_P(NewKeyGenerationTest, EcdsaCurve25519MultiPurposeFail) {
                                            .SetDefaultValidity(),
                                    &key_blob, &key_characteristics);
     ASSERT_EQ(result, ErrorCode::INCOMPATIBLE_PURPOSE);
+}
+
+/*
+ * NewKeyGenerationTest.EcdsaWithMissingValidity
+ *
+ * Verifies that keymint returns an error while generating asymmetric key
+ * without providing NOT_BEFORE and NOT_AFTER parameters.
+ */
+TEST_P(NewKeyGenerationTest, EcdsaWithMissingValidity) {
+    // Per RFC 5280 4.1.2.5, an undefined expiration (not-after) field should be set to
+    // GeneralizedTime 999912312359559, which is 253402300799000 ms from Jan 1, 1970.
+    constexpr uint64_t kUndefinedExpirationDateTime = 253402300799000;
+
+    vector<uint8_t> key_blob;
+    vector<KeyCharacteristics> key_characteristics;
+    ASSERT_EQ(ErrorCode::MISSING_NOT_BEFORE,
+              GenerateKey(AuthorizationSetBuilder()
+                                  .EcdsaSigningKey(EcCurve::P_256)
+                                  .Digest(Digest::NONE)
+                                  .Authorization(TAG_CERTIFICATE_NOT_AFTER,
+                                                 kUndefinedExpirationDateTime),
+                          &key_blob, &key_characteristics));
+
+    ASSERT_EQ(ErrorCode::MISSING_NOT_AFTER,
+              GenerateKey(AuthorizationSetBuilder()
+                                  .EcdsaSigningKey(EcCurve::P_256)
+                                  .Digest(Digest::NONE)
+                                  .Authorization(TAG_CERTIFICATE_NOT_BEFORE, 0),
+                          &key_blob, &key_characteristics));
 }
 
 /*
