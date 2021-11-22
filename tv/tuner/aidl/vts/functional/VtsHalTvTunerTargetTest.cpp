@@ -640,10 +640,51 @@ TEST_P(TunerFilterAidlTest, testTimeFilter) {
     testTimeFilter(timeFilterMap[timeFilter.timeFilterId]);
 }
 
-// TODO: move boilerplate into text fixture
-TEST_P(TunerFilterAidlTest, FilterTimeDelayHintTest) {
-    description("Test filter delay hint.");
+static bool isMediaFilter(const FilterConfig& filterConfig) {
+    switch (filterConfig.type.mainType) {
+        case DemuxFilterMainType::TS: {
+            // TS Audio and Video filters are media filters
+            auto tsFilterType =
+                    filterConfig.type.subType.get<DemuxFilterSubType::Tag::tsFilterType>();
+            return (tsFilterType == DemuxTsFilterType::AUDIO ||
+                    tsFilterType == DemuxTsFilterType::VIDEO);
+        }
+        case DemuxFilterMainType::MMTP: {
+            // MMTP Audio and Video filters are media filters
+            auto mmtpFilterType =
+                    filterConfig.type.subType.get<DemuxFilterSubType::Tag::mmtpFilterType>();
+            return (mmtpFilterType == DemuxMmtpFilterType::AUDIO ||
+                    mmtpFilterType == DemuxMmtpFilterType::VIDEO);
+        }
+        default:
+            return false;
+    }
+}
 
+static int getDemuxFilterEventDataLength(const DemuxFilterEvent& event) {
+    switch (event.getTag()) {
+        case DemuxFilterEvent::Tag::section:
+            return event.get<DemuxFilterEvent::Tag::section>().dataLength;
+        case DemuxFilterEvent::Tag::media:
+            return event.get<DemuxFilterEvent::Tag::media>().dataLength;
+        case DemuxFilterEvent::Tag::pes:
+            return event.get<DemuxFilterEvent::Tag::pes>().dataLength;
+        case DemuxFilterEvent::Tag::download:
+            return event.get<DemuxFilterEvent::Tag::download>().dataLength;
+        case DemuxFilterEvent::Tag::ipPayload:
+            return event.get<DemuxFilterEvent::Tag::ipPayload>().dataLength;
+
+        case DemuxFilterEvent::Tag::tsRecord:
+        case DemuxFilterEvent::Tag::mmtpRecord:
+        case DemuxFilterEvent::Tag::temi:
+        case DemuxFilterEvent::Tag::monitorEvent:
+        case DemuxFilterEvent::Tag::startId:
+            return 0;
+    }
+}
+
+// TODO: move boilerplate into text fixture
+void TunerFilterAidlTest::testDelayHint(const FilterConfig& filterConf) {
     int32_t feId;
     int32_t demuxId;
     std::shared_ptr<IDemux> demux;
@@ -657,38 +698,85 @@ TEST_P(TunerFilterAidlTest, FilterTimeDelayHintTest) {
     ASSERT_TRUE(mDemuxTests.setDemuxFrontendDataSource(feId));
     mFilterTests.setDemux(demux);
 
-    const auto& filterConf = filterMap[live.ipFilterId];
     ASSERT_TRUE(mFilterTests.openFilterInDemux(filterConf.type, filterConf.bufferSize));
     ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId_64bit(filterId));
-    ASSERT_TRUE(mFilterTests.configFilter(filterConf.settings, filterId));
-    ASSERT_TRUE(mFilterTests.configIpFilterCid(filterConf.ipCid, filterId));
 
+    bool mediaFilter = isMediaFilter(filterConf);
     auto filter = mFilterTests.getFilterById(filterId);
 
-    auto delayValue = std::chrono::milliseconds(5000);
-    FilterDelayHint delayHint;
-    delayHint.hintType = FilterDelayHintType::TIME_DELAY_IN_MS;
-    delayHint.hintValue = delayValue.count();
+    auto timeDelayInMs = std::chrono::milliseconds(filterConf.timeDelayInMs);
+    if (timeDelayInMs.count() > 0) {
+        FilterDelayHint delayHint;
+        delayHint.hintType = FilterDelayHintType::TIME_DELAY_IN_MS;
+        delayHint.hintValue = timeDelayInMs.count();
 
-    auto status = filter->setDelayHint(delayHint);
-    ASSERT_TRUE(status.isOk());
+        // setDelayHint should fail for media filters.
+        ASSERT_EQ(filter->setDelayHint(delayHint).isOk(), !mediaFilter);
+    }
 
-    auto startTime = std::chrono::steady_clock::now();
-    ASSERT_TRUE(mFilterTests.startFilter(filterId));
+    int dataDelayInBytes = filterConf.dataDelayInBytes;
+    if (dataDelayInBytes > 0) {
+        FilterDelayHint delayHint;
+        delayHint.hintType = FilterDelayHintType::DATA_SIZE_DELAY_IN_BYTES;
+        delayHint.hintValue = dataDelayInBytes;
 
-    auto cb = mFilterTests.getFilterCallbacks().at(filterId);
-    auto future = cb->getNextFilterEventWithTag(DemuxFilterEvent::Tag::ipPayload);
+        // setDelayHint should fail for media filters.
+        ASSERT_EQ(filter->setDelayHint(delayHint).isOk(), !mediaFilter);
+    }
 
-    // block and wait for callback to be received.
-    ASSERT_EQ(future.wait_for(std::chrono::seconds(10)), std::future_status::ready);
-    auto duration = std::chrono::steady_clock::now() - startTime;
-    ASSERT_GE(duration, delayValue);
+    // start and stop filter in order to circumvent callback scheduler race
+    // conditions after adjusting filter delays.
+    mFilterTests.startFilter(filterId);
+    mFilterTests.stopFilter(filterId);
 
-    // cleanup
-    ASSERT_TRUE(mFilterTests.stopFilter(filterId));
+    if (!mediaFilter) {
+        auto cb = mFilterTests.getFilterCallbacks().at(filterId);
+        int callbackSize = 0;
+        auto future = cb->verifyFilterCallback(
+                [&callbackSize](const std::vector<DemuxFilterEvent>& events) {
+                    for (const auto& event : events) {
+                        callbackSize += getDemuxFilterEventDataLength(event);
+                    }
+                    return true;
+                });
+
+        // The configure stage can also produce events, so we should set the delay
+        // hint beforehand.
+        ASSERT_TRUE(mFilterTests.configFilter(filterConf.settings, filterId));
+
+        auto startTime = std::chrono::steady_clock::now();
+        ASSERT_TRUE(mFilterTests.startFilter(filterId));
+
+        // block and wait for callback to be received.
+        auto timeout = std::chrono::seconds(30);
+        ASSERT_EQ(future.wait_for(timeout), std::future_status::ready);
+        auto duration = std::chrono::steady_clock::now() - startTime;
+
+        bool delayHintTest = duration >= timeDelayInMs;
+        bool dataSizeTest = callbackSize >= dataDelayInBytes;
+
+        if (timeDelayInMs.count() > 0 && dataDelayInBytes > 0) {
+            ASSERT_TRUE(delayHintTest || dataSizeTest);
+        } else {
+            // if only one of time delay / data delay is configured, one of them
+            // holds true by default, so we want both assertions to be true.
+            ASSERT_TRUE(delayHintTest && dataSizeTest);
+        }
+
+        ASSERT_TRUE(mFilterTests.stopFilter(filterId));
+    }
+
     ASSERT_TRUE(mFilterTests.closeFilter(filterId));
     ASSERT_TRUE(mDemuxTests.closeDemux());
     ASSERT_TRUE(mFrontendTests.closeFrontend());
+}
+
+TEST_P(TunerFilterAidlTest, FilterDelayHintTest) {
+    description("Test filter time delay hint.");
+
+    for (const auto& obj : filterMap) {
+        testDelayHint(obj.second);
+    }
 }
 
 TEST_P(TunerPlaybackAidlTest, PlaybackDataFlowWithTsSectionFilterTest) {

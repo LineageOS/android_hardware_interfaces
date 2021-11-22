@@ -243,6 +243,10 @@
                     "bufferSize": the buffer size of the filter in hex.
                     "pid": the pid that would be used to configure the filter.
                     "useFMQ": if the filter uses FMQ.
+                    "timeDelayInMs": the filter's time delay hint. 0 by default.  Must not be
+                        longer than 30 seconds.
+                    "dataDelayInBytes": the filter's data delay hint. 0 by default. Configured data
+                        size must be received within 30 seconds.
 
                 Each filter element also contains at most one type-related "filterSettings".
                     - The settings type should match the filter "subType" attribute.
@@ -274,6 +278,8 @@
         <xs:attribute name="pid" type="xs:nonNegativeInteger" use="optional"/>
         <xs:attribute name="useFMQ" type="xs:boolean" use="required"/>
         <xs:attribute name="monitorEventTypes" type="monitoEvents" use="optional"/>
+        <xs:attribute name="timeDelayInMs" type="xs:nonNegativeInteger" use="optional"/>
+        <xs:attribute name="dataDelayInBytes" type="xs:nonNegativeInteger" use="optional"/>
     </xs:complexType>
 
     <!-- DVR SESSION -->

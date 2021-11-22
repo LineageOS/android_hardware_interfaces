@@ -256,6 +256,7 @@ package android.media.tuner.testing.configuration.V1_0 {
     ctor public Filter();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.AvFilterSettings getAvFilterSettings_optional();
     method @Nullable public java.math.BigInteger getBufferSize();
+    method @Nullable public java.math.BigInteger getDataDelayInBytes();
     method @Nullable public String getId();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.IpFilterConfig getIpFilterConfig_optional();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.FilterMainTypeEnum getMainType();
@@ -264,9 +265,11 @@ package android.media.tuner.testing.configuration.V1_0 {
     method @Nullable public android.media.tuner.testing.configuration.V1_0.RecordFilterSettings getRecordFilterSettings_optional();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.SectionFilterSettings getSectionFilterSettings_optional();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.FilterSubTypeEnum getSubType();
+    method @Nullable public java.math.BigInteger getTimeDelayInMs();
     method @Nullable public boolean getUseFMQ();
     method public void setAvFilterSettings_optional(@Nullable android.media.tuner.testing.configuration.V1_0.AvFilterSettings);
     method public void setBufferSize(@Nullable java.math.BigInteger);
+    method public void setDataDelayInBytes(@Nullable java.math.BigInteger);
     method public void setId(@Nullable String);
     method public void setIpFilterConfig_optional(@Nullable android.media.tuner.testing.configuration.V1_0.IpFilterConfig);
     method public void setMainType(@Nullable android.media.tuner.testing.configuration.V1_0.FilterMainTypeEnum);
@@ -275,6 +278,7 @@ package android.media.tuner.testing.configuration.V1_0 {
     method public void setRecordFilterSettings_optional(@Nullable android.media.tuner.testing.configuration.V1_0.RecordFilterSettings);
     method public void setSectionFilterSettings_optional(@Nullable android.media.tuner.testing.configuration.V1_0.SectionFilterSettings);
     method public void setSubType(@Nullable android.media.tuner.testing.configuration.V1_0.FilterSubTypeEnum);
+    method public void setTimeDelayInMs(@Nullable java.math.BigInteger);
     method public void setUseFMQ(@Nullable boolean);
   }
 
