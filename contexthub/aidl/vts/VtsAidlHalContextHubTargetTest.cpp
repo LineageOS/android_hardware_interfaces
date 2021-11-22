@@ -36,6 +36,7 @@ using ::android::binder::Status;
 using ::android::hardware::contexthub::AsyncEventType;
 using ::android::hardware::contexthub::ContextHubInfo;
 using ::android::hardware::contexthub::ContextHubMessage;
+using ::android::hardware::contexthub::HostEndpointInfo;
 using ::android::hardware::contexthub::IContextHub;
 using ::android::hardware::contexthub::IContextHubCallbackDefault;
 using ::android::hardware::contexthub::NanoappBinary;
@@ -328,6 +329,22 @@ std::vector<std::tuple<std::string, int32_t>> generateContextHubMapping() {
     }
 
     return tuples;
+}
+
+TEST_P(ContextHubAidl, TestHostConnection) {
+    constexpr char16_t kHostEndpointId = 1;
+    HostEndpointInfo hostEndpointInfo;
+    hostEndpointInfo.hostEndpointId = kHostEndpointId;
+
+    ASSERT_TRUE(contextHub->onHostEndpointConnected(hostEndpointInfo).isOk());
+    ASSERT_TRUE(contextHub->onHostEndpointDisconnected(kHostEndpointId).isOk());
+}
+
+TEST_P(ContextHubAidl, TestInvalidHostConnection) {
+    constexpr char16_t kHostEndpointId = 1;
+
+    Status status = contextHub->onHostEndpointDisconnected(kHostEndpointId);
+    ASSERT_EQ(status.exceptionCode(), android::binder::Status::EX_ILLEGAL_ARGUMENT);
 }
 
 std::string PrintGeneratedTest(const testing::TestParamInfo<ContextHubAidl::ParamType>& info) {

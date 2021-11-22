@@ -18,6 +18,7 @@ package android.hardware.contexthub;
 
 import android.hardware.contexthub.ContextHubInfo;
 import android.hardware.contexthub.ContextHubMessage;
+import android.hardware.contexthub.HostEndpointInfo;
 import android.hardware.contexthub.IContextHubCallback;
 import android.hardware.contexthub.NanoappBinary;
 import android.hardware.contexthub.Setting;
@@ -151,4 +152,29 @@ interface IContextHub {
      * @return true on success
      */
     boolean sendMessageToHub(in int contextHubId, in ContextHubMessage message);
+
+    /**
+     * Invoked when a host endpoint has connected with the ContextHubService.
+     *
+     * The host associated with this invocation may initiate a communication channel with
+     * the Context Hub using sendMessageToHub.
+     *
+     * @param hostEndpointInfo Metadata associated with this host endpoint.
+     */
+    void onHostEndpointConnected(in HostEndpointInfo hostEndpointInfo);
+
+    /**
+     * Invoked when a host endpoint has disconnected from the framework. This could be as a result
+     * of an explicit connection closure, or unexpected restarts.
+     *
+     * Note that hostEndpointId is the same as the value in HostEndpointInfo. When this function is
+     * called, the HAL is expected to clean up any resources attached to the messaging channel
+     * associated with this host endpoint ID.
+     *
+     * @param hostEndPointId The ID of the host that has disconnected.
+     *
+     * @return Status::ok on success
+     *         EX_ILLEGAL_ARGUMENT if hostEndpointId is not associated with a connected host.
+     */
+    void onHostEndpointDisconnected(char hostEndpointId);
 }
