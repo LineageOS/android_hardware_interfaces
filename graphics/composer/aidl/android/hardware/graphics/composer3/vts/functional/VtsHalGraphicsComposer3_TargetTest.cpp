@@ -613,6 +613,15 @@ TEST_P(GraphicsComposerAidlTest, setActiveConfigWithConstraints) {
     Test_setActiveConfigWithConstraints({.delayForChange = 0, .refreshMiss = false});
 }
 
+TEST_P(GraphicsComposerAidlTest, setActiveConfigWithConstraints_Delayed) {
+    Test_setActiveConfigWithConstraints({.delayForChange = 300'000'000,  // 300ms
+                                         .refreshMiss = false});
+}
+
+TEST_P(GraphicsComposerAidlTest, setActiveConfigWithConstraints_MissRefresh) {
+    Test_setActiveConfigWithConstraints({.delayForChange = 0, .refreshMiss = true});
+}
+
 TEST_P(GraphicsComposerAidlTest, GetDisplayIdentificationData) {
     DisplayIdentification displayIdentification0;
 
