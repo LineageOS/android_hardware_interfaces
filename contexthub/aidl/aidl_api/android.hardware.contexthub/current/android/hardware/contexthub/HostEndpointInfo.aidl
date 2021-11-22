@@ -36,8 +36,8 @@ package android.hardware.contexthub;
 parcelable HostEndpointInfo {
   char hostEndpointId;
   android.hardware.contexthub.HostEndpointInfo.Type type;
-  @nullable String[] packageName;
-  @nullable String[] attributionTag;
+  @nullable String packageName;
+  @nullable String attributionTag;
   @Backing(type="int") @VintfStability
   enum Type {
     TYPE_FRAMEWORK = 1,

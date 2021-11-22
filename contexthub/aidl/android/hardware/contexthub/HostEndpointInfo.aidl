@@ -28,10 +28,10 @@ parcelable HostEndpointInfo {
     Type type;
 
     /** The (optional) package name of the host. */
-    @nullable String[] packageName;
+    @nullable String packageName;
 
     /** The (optional) attribution tag associated with this host. */
-    @nullable String[] attributionTag;
+    @nullable String attributionTag;
 
     @VintfStability
     @Backing(type="int")
