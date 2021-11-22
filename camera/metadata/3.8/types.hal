@@ -47,7 +47,7 @@ enum CameraMetadataTag : @3.7::CameraMetadataTag {
     /** android.flash.info.strengthDefaultLevel [static, int32, public]
      *
      * <p>Default flashlight brightness level to be set via
-     * {android.hardware.camera2.CameraManager#setTorchStrengthLevel}.</p>
+     * {android.hardware.camera2.CameraManager#turnOnTorchWithStrengthLevel}.</p>
      */
     ANDROID_FLASH_INFO_STRENGTH_DEFAULT_LEVEL,
 
