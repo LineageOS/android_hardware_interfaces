@@ -37,15 +37,15 @@ void TestCommandReader::parseSingleCommand(int32_t commandRaw, uint16_t length) 
     auto command = static_cast<Command>(commandRaw);
 
     switch (command) {
-        case Command::SET_CLIENT_TARGET_PROPERTY:
+        case Command::SET_CLIENT_TARGET_PROPERTY: {
             ASSERT_EQ(2, length);
             read();
             close(readFence());
-            break;
-        case Command::SELECT_DISPLAY:
+        } break;
+        case Command::SELECT_DISPLAY: {
             ASSERT_EQ(2, length);
             read64();  // display
-            break;
+        } break;
         case Command::SET_ERROR: {
             ASSERT_EQ(2, length);
             auto loc = read();
@@ -53,7 +53,7 @@ void TestCommandReader::parseSingleCommand(int32_t commandRaw, uint16_t length) 
             std::pair<uint32_t, uint32_t> error(loc, err);
             mErrors.push_back(error);
         } break;
-        case Command::SET_CHANGED_COMPOSITION_TYPES:
+        case Command::SET_CHANGED_COMPOSITION_TYPES: {
             ASSERT_EQ(0, length % 3);
             for (uint16_t count = 0; count < length / 3; ++count) {
                 uint64_t layerId = read64();
@@ -62,8 +62,8 @@ void TestCommandReader::parseSingleCommand(int32_t commandRaw, uint16_t length) 
                 std::pair<uint64_t, uint32_t> compositionChange(layerId, composition);
                 mCompositionChanges.push_back(compositionChange);
             }
-            break;
-        case Command::SET_DISPLAY_REQUESTS:
+        } break;
+        case Command::SET_DISPLAY_REQUESTS: {
             ASSERT_EQ(1, length % 3);
             read();  // displayRequests, ignored for now
             for (uint16_t count = 0; count < (length - 1) / 3; ++count) {
@@ -72,18 +72,18 @@ void TestCommandReader::parseSingleCommand(int32_t commandRaw, uint16_t length) 
                 // client composition anyway
                 ASSERT_EQ(1u, read());
             }
-            break;
-        case Command::SET_PRESENT_FENCE:
+        } break;
+        case Command::SET_PRESENT_FENCE: {
             ASSERT_EQ(1, length);
             close(readFence());
-            break;
-        case Command::SET_RELEASE_FENCES:
+        } break;
+        case Command::SET_RELEASE_FENCES: {
             ASSERT_EQ(0, length % 3);
             for (uint16_t count = 0; count < length / 3; ++count) {
                 read64();
                 close(readFence());
             }
-            break;
+        } break;
         default:
             GTEST_FAIL() << "unexpected return command " << std::hex << static_cast<int>(command);
             break;
