@@ -63,4 +63,5 @@ enum PixelFormat {
   STENCIL_8 = 53,
   YCBCR_P010 = 54,
   HSV_888 = 55,
+  R_8 = 56,
 }
