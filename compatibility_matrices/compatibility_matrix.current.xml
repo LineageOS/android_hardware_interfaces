@@ -325,6 +325,13 @@
         </interface>
     </hal>
     <hal format="aidl" optional="true">
+        <name>android.hardware.net.nlinterceptor</name>
+        <interface>
+            <name>IInterceptor</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
         <name>android.hardware.oemlock</name>
         <version>1</version>
         <interface>
