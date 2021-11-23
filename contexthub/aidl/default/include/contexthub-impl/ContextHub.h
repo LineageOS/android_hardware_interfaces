@@ -18,6 +18,8 @@
 
 #include <aidl/android/hardware/contexthub/BnContextHub.h>
 
+#include <unordered_set>
+
 namespace aidl {
 namespace android {
 namespace hardware {
@@ -41,10 +43,15 @@ class ContextHub : public BnContextHub {
     ::ndk::ScopedAStatus sendMessageToHub(int32_t in_contextHubId,
                                           const ContextHubMessage& in_message,
                                           bool* _aidl_return) override;
+    ::ndk::ScopedAStatus onHostEndpointConnected(const HostEndpointInfo& in_info) override;
+
+    ::ndk::ScopedAStatus onHostEndpointDisconnected(char16_t in_hostEndpointId) override;
 
   private:
     static constexpr uint32_t kMockHubId = 0;
     std::shared_ptr<IContextHubCallback> mCallback;
+
+    std::unordered_set<char16_t> mConnectedHostEndpoints;
 };
 
 }  // namespace contexthub

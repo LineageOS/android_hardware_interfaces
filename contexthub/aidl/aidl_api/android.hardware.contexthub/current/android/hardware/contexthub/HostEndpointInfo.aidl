@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,18 +31,16 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.gnss;
+package android.hardware.contexthub;
 @VintfStability
-interface IGnss {
-  void setCallback(in android.hardware.gnss.IGnssCallback callback);
-  void close();
-  @nullable android.hardware.gnss.IGnssPsds getExtensionPsds();
-  android.hardware.gnss.IGnssConfiguration getExtensionGnssConfiguration();
-  android.hardware.gnss.IGnssMeasurementInterface getExtensionGnssMeasurement();
-  android.hardware.gnss.IGnssPowerIndication getExtensionGnssPowerIndication();
-  @nullable android.hardware.gnss.IGnssBatching getExtensionGnssBatching();
-  @nullable android.hardware.gnss.IGnssGeofence getExtensionGnssGeofence();
-  const int ERROR_INVALID_ARGUMENT = 1;
-  const int ERROR_ALREADY_INIT = 2;
-  const int ERROR_GENERIC = 3;
+parcelable HostEndpointInfo {
+  char hostEndpointId;
+  android.hardware.contexthub.HostEndpointInfo.Type type;
+  @nullable String packageName;
+  @nullable String attributionTag;
+  @Backing(type="int") @VintfStability
+  enum Type {
+    TYPE_FRAMEWORK = 1,
+    TYPE_APP = 2,
+  }
 }

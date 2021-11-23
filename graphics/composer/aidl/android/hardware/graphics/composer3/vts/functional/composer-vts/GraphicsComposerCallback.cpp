@@ -125,12 +125,4 @@ GraphicsComposerCallback::takeLastVsyncPeriodChangeTimeline() {
     return ::ndk::ScopedAStatus::ok();
 }
 
-::ndk::SpAIBinder GraphicsComposerCallback::asBinder() {
-    return nullptr;
-}
-
-bool GraphicsComposerCallback::isRemote() {
-    return true;
-}
-
 }  // namespace aidl::android::hardware::graphics::composer3::vts
