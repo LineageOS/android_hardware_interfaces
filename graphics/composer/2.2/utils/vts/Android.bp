@@ -43,6 +43,7 @@ cc_library_static {
         "libmath",
         "libnativewindow",
         "librenderengine",
+        "libshaders",
         "libtonemap",
         "android.hardware.graphics.mapper@3.0",
         "android.hardware.graphics.mapper@3.0-vts",
