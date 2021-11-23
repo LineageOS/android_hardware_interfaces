@@ -55,9 +55,13 @@ void Tuner::init() {
     capsIsdbs.set<FrontendCapabilities::Tag::isdbsCaps>(FrontendIsdbsCapabilities());
     mFrontendCaps[0] = capsIsdbs;
     statusCaps = {
-            FrontendStatusType::DEMOD_LOCK,  FrontendStatusType::SNR,
-            FrontendStatusType::FEC,         FrontendStatusType::MODULATION,
-            FrontendStatusType::MODULATIONS, FrontendStatusType::ROLL_OFF,
+            FrontendStatusType::DEMOD_LOCK,
+            FrontendStatusType::SNR,
+            FrontendStatusType::FEC,
+            FrontendStatusType::MODULATION,
+            FrontendStatusType::MODULATIONS,
+            FrontendStatusType::ROLL_OFF,
+            FrontendStatusType::STREAM_ID_LIST,
     };
     mFrontendStatusCaps[0] = statusCaps;
 
@@ -169,7 +173,7 @@ void Tuner::init() {
     statusCaps = {
             FrontendStatusType::DEMOD_LOCK,      FrontendStatusType::MODULATION,
             FrontendStatusType::MODULATIONS,     FrontendStatusType::ROLL_OFF,
-            FrontendStatusType::IS_SHORT_FRAMES,
+            FrontendStatusType::IS_SHORT_FRAMES, FrontendStatusType::STREAM_ID_LIST,
     };
     mFrontendStatusCaps[8] = statusCaps;
 
@@ -313,6 +317,33 @@ std::shared_ptr<Frontend> Tuner::getFrontendById(int32_t frontendId) {
     return ::ndk::ScopedAStatus::ok();
 }
 
+binder_status_t Tuner::dump(int fd, const char** args, uint32_t numArgs) {
+    ALOGV("%s", __FUNCTION__);
+    {
+        dprintf(fd, "Frontends:\n");
+        for (int i = 0; i < mFrontendSize; i++) {
+            mFrontends[i]->dump(fd, args, numArgs);
+            for (int j = 0; j < mFrontendStatusCaps[i].size(); j++) {
+                dprintf(fd, "    statusCap: %d\n", mFrontendStatusCaps[i][j]);
+            }
+        }
+    }
+    {
+        dprintf(fd, "Demuxs:\n");
+        map<int32_t, std::shared_ptr<Demux>>::iterator it;
+        for (it = mDemuxes.begin(); it != mDemuxes.end(); it++) {
+            it->second->dump(fd, args, numArgs);
+        }
+    }
+    {
+        dprintf(fd, "Lnbs:\n");
+        for (int i = 0; i < mLnbs.size(); i++) {
+            mLnbs[i]->dump(fd, args, numArgs);
+        }
+    }
+    return STATUS_OK;
+}
+
 void Tuner::setFrontendAsDemuxSource(int32_t frontendId, int32_t demuxId) {
     mFrontendToDemux[frontendId] = demuxId;
     if (mFrontends[frontendId] != nullptr && mFrontends[frontendId]->isLocked()) {
@@ -332,6 +363,10 @@ void Tuner::removeDemux(int32_t demuxId) {
 }
 
 void Tuner::removeFrontend(int32_t frontendId) {
+    map<int32_t, int32_t>::iterator it = mFrontendToDemux.find(frontendId);
+    if (it != mFrontendToDemux.end()) {
+        mDemuxes.erase(it->second);
+    }
     mFrontendToDemux.erase(frontendId);
 }
 

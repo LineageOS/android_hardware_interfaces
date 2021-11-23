@@ -202,4 +202,10 @@ union FrontendStatus {
      * ISDB-T Partial Reception Flag.
      */
     FrontendIsdbtPartialReceptionFlag partialReceptionFlag;
+
+    /**
+     * Stream ID list included in a transponder.
+     */
+    int[] streamIdList;
+
 }

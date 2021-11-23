@@ -57,6 +57,8 @@ class Tuner : public BnTuner {
                                        std::vector<int32_t>* out_lnbId,
                                        std::shared_ptr<ILnb>* _aidl_return) override;
 
+    binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
+
     std::shared_ptr<Frontend> getFrontendById(int32_t frontendId);
     void setFrontendAsDemuxSource(int32_t frontendId, int32_t demuxId);
     void frontendStartTune(int32_t frontendId);

@@ -410,6 +410,37 @@ bool Demux::isRecording() {
     return mIsRecording;
 }
 
+binder_status_t Demux::dump(int fd, const char** args, uint32_t numArgs) {
+    dprintf(fd, " Demux %d:\n", mDemuxId);
+    dprintf(fd, "  mIsRecording %d\n", mIsRecording);
+    {
+        dprintf(fd, "  Filters:\n");
+        map<int64_t, std::shared_ptr<Filter>>::iterator it;
+        for (it = mFilters.begin(); it != mFilters.end(); it++) {
+            it->second->dump(fd, args, numArgs);
+        }
+    }
+    {
+        dprintf(fd, "  TimeFilter:\n");
+        if (mTimeFilter != nullptr) {
+            mTimeFilter->dump(fd, args, numArgs);
+        }
+    }
+    {
+        dprintf(fd, "  DvrPlayback:\n");
+        if (mDvrPlayback != nullptr) {
+            mDvrPlayback->dump(fd, args, numArgs);
+        }
+    }
+    {
+        dprintf(fd, "  DvrRecord:\n");
+        if (mDvrRecord != nullptr) {
+            mDvrRecord->dump(fd, args, numArgs);
+        }
+    }
+    return STATUS_OK;
+}
+
 bool Demux::attachRecordFilter(int64_t filterId) {
     if (mFilters[filterId] == nullptr || mDvrRecord == nullptr ||
         !mFilters[filterId]->isRecordFilter()) {

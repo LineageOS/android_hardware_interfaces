@@ -71,6 +71,8 @@ class Demux : public BnDemux {
     ::ndk::ScopedAStatus connectCiCam(int32_t in_ciCamId) override;
     ::ndk::ScopedAStatus disconnectCiCam() override;
 
+    binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
+
     // Functions interacts with Tuner Service
     void stopFrontendInput();
     ::ndk::ScopedAStatus removeFilter(int64_t filterId);

@@ -44,8 +44,10 @@ class TimeFilter : public BnTimeFilter {
     ::ndk::ScopedAStatus getSourceTime(int64_t* _aidl_return) override;
     ::ndk::ScopedAStatus close() override;
 
+    binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
+
   private:
-    std::shared_ptr<Demux> mDemux;
+    ::std::shared_ptr<Demux> mDemux;
     uint64_t mTimeStamp = INVALID_TIME_STAMP;
     time_t mBeginTime;
 };

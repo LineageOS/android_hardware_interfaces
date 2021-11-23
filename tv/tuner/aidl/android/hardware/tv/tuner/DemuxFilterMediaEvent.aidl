@@ -40,6 +40,16 @@ parcelable DemuxFilterMediaEvent {
     long pts;
 
     /**
+     * true if DTS is present in the PES header.
+     */
+    boolean isDtsPresent;
+
+    /**
+     * Decode TimeStamp for audio or video frame.
+     */
+    long dts;
+
+    /**
      * Data size in bytes of audio or video frame
      */
     long dataLength;

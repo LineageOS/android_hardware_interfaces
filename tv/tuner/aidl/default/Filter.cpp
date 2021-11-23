@@ -22,6 +22,7 @@
 #include <aidl/android/hardware/tv/tuner/DemuxQueueNotifyBits.h>
 #include <aidl/android/hardware/tv/tuner/Result.h>
 #include <aidlcommonsupport/NativeHandle.h>
+#include <inttypes.h>
 #include <utils/Log.h>
 
 #include "Filter.h"
@@ -655,6 +656,17 @@ void Filter::freeSharedAvHandle() {
     mSharedAvMemHandle = nullptr;
 }
 
+binder_status_t Filter::dump(int fd, const char** /* args */, uint32_t /* numArgs */) {
+    dprintf(fd, "    Filter %" PRIu64 ":\n", mFilterId);
+    dprintf(fd, "      Main type: %d\n", mType.mainType);
+    dprintf(fd, "      mIsMediaFilter: %d\n", mIsMediaFilter);
+    dprintf(fd, "      mIsPcrFilter: %d\n", mIsPcrFilter);
+    dprintf(fd, "      mIsRecordFilter: %d\n", mIsRecordFilter);
+    dprintf(fd, "      mIsUsingFMQ: %d\n", mIsUsingFMQ);
+    dprintf(fd, "      mFilterThreadRunning: %d\n", (bool)mFilterThreadRunning);
+    return STATUS_OK;
+}
+
 void Filter::maySendFilterStatusCallback() {
     if (!mIsUsingFMQ) {
         return;
@@ -1148,6 +1160,7 @@ void Filter::createMediaEvent(vector<DemuxFilterEvent>& events) {
     DemuxFilterMediaEvent mediaEvent;
     mediaEvent.streamId = 1;
     mediaEvent.isPtsPresent = true;
+    mediaEvent.isDtsPresent = false;
     mediaEvent.dataLength = 3;
     mediaEvent.offset = 4;
     mediaEvent.isSecureMemory = true;
@@ -1238,6 +1251,7 @@ void Filter::createPesEvent(vector<DemuxFilterEvent>& events) {
 void Filter::createDownloadEvent(vector<DemuxFilterEvent>& events) {
     DemuxFilterDownloadEvent download;
     download.itemId = 1;
+    download.downloadId = 1;
     download.mpuSequenceNumber = 2;
     download.itemFragmentIndex = 3;
     download.lastItemFragmentIndex = 4;

@@ -126,6 +126,8 @@ class Filter : public BnFilter {
     ::ndk::ScopedAStatus setDataSource(const std::shared_ptr<IFilter>& in_filter) override;
     ::ndk::ScopedAStatus setDelayHint(const FilterDelayHint& in_hint) override;
 
+    binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
+
     /**
      * To create a FilterMQ and its Event Flag.
      *

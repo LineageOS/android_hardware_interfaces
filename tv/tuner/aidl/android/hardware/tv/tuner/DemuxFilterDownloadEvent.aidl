@@ -28,6 +28,11 @@ parcelable DemuxFilterDownloadEvent {
     int itemId;
 
     /**
+     * Uniquely identify data content within the same Package ID (PID).
+     */
+    int downloadId;
+
+    /**
      * MPU sequence number of filtered data (only for MMTP)
      */
     int mpuSequenceNumber;
