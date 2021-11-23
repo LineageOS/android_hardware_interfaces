@@ -23,6 +23,33 @@
 
 using ::aidl::android::hardware::common::NativeHandle;
 
+::ndk::ScopedAStatus FilterCallback::onFilterEvent(const vector<DemuxFilterEvent>& events) {
+    android::Mutex::Autolock autoLock(mMsgLock);
+    // Temprarily we treat the first coming back filter data on the matching pid a success
+    // once all of the MQ are cleared, means we got all the expected output
+    readFilterEventsData(events);
+    mPidFilterOutputCount++;
+    mMsgCondition.signal();
+
+    // HACK: we need to cast the const away as DemuxFilterEvent contains a ScopedFileDescriptor
+    // that cannot be copied.
+    for (auto&& e : const_cast<std::vector<DemuxFilterEvent>&>(events)) {
+        auto it = mFilterEventPromises.find(e.getTag());
+        if (it != mFilterEventPromises.cend()) {
+            it->second.set_value(std::move(e));
+            mFilterEventPromises.erase(it);
+        }
+    }
+
+    return ::ndk::ScopedAStatus::ok();
+}
+
+std::future<DemuxFilterEvent> FilterCallback::getNextFilterEventWithTag(DemuxFilterEvent::Tag tag) {
+    // Note: this currently only supports one future per DemuxFilterEvent::Tag.
+    mFilterEventPromises[tag] = std::promise<DemuxFilterEvent>();
+    return mFilterEventPromises[tag].get_future();
+}
+
 void FilterCallback::testFilterDataOutput() {
     android::Mutex::Autolock autoLock(mMsgLock);
     while (mPidFilterOutputCount < 1) {

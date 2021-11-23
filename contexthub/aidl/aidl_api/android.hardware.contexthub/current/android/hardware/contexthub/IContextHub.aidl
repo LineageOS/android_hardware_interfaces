@@ -43,4 +43,6 @@ interface IContextHub {
   boolean queryNanoapps(in int contextHubId);
   boolean registerCallback(in int contextHubId, in android.hardware.contexthub.IContextHubCallback cb);
   boolean sendMessageToHub(in int contextHubId, in android.hardware.contexthub.ContextHubMessage message);
+  void onHostEndpointConnected(in android.hardware.contexthub.HostEndpointInfo hostEndpointInfo);
+  void onHostEndpointDisconnected(char hostEndpointId);
 }

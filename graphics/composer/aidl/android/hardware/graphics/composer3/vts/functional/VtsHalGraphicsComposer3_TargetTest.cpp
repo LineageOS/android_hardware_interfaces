@@ -81,6 +81,8 @@ class GraphicsComposerAidlTest : public ::testing::TestWithParam<std::string> {
         // assume the first displays are built-in and are never removed
         mDisplays = waitForDisplays();
 
+        mPrimaryDisplay = mDisplays[0].get();
+
         // explicitly disable vsync
         for (const auto& display : mDisplays) {
             EXPECT_TRUE(mComposerClient->setVsyncEnabled(display.get(), false).isOk());
@@ -318,7 +320,7 @@ class GraphicsComposerAidlTest : public ::testing::TestWithParam<std::string> {
         }
 
         mWriter->selectDisplay(display.get());
-        setPowerMode(display.get(), PowerMode::ON);
+        EXPECT_TRUE(mComposerClient->setPowerMode(display.get(), PowerMode::ON).isOk());
         EXPECT_TRUE(
                 mComposerClient
                         ->setColorMode(display.get(), ColorMode::NATIVE, RenderIntent::COLORIMETRIC)
@@ -484,13 +486,6 @@ class GraphicsComposerAidlTest : public ::testing::TestWithParam<std::string> {
         }
     }
 
-    void setPowerMode(int64_t display, PowerMode powerMode) {
-        ::ndk::ScopedAStatus error = mComposerClient->setPowerMode(display, powerMode);
-        ASSERT_TRUE(error.isOk() ||
-                    IComposerClient::EX_UNSUPPORTED == error.getServiceSpecificError())
-                << "failed to set power mode";
-    }
-
     // Keep track of all virtual displays and layers.  When a test fails with
     // ASSERT_*, the destructor will clean up the resources for the test.
     struct DisplayResource {
@@ -617,6 +612,16 @@ TEST_P(GraphicsComposerAidlTest, setActiveConfigWithConstraints_SeamlessNotAllow
 TEST_P(GraphicsComposerAidlTest, setActiveConfigWithConstraints) {
     Test_setActiveConfigWithConstraints({.delayForChange = 0, .refreshMiss = false});
 }
+
+TEST_P(GraphicsComposerAidlTest, setActiveConfigWithConstraints_Delayed) {
+    Test_setActiveConfigWithConstraints({.delayForChange = 300'000'000,  // 300ms
+                                         .refreshMiss = false});
+}
+
+TEST_P(GraphicsComposerAidlTest, setActiveConfigWithConstraints_MissRefresh) {
+    Test_setActiveConfigWithConstraints({.delayForChange = 0, .refreshMiss = true});
+}
+
 TEST_P(GraphicsComposerAidlTest, GetDisplayIdentificationData) {
     DisplayIdentification displayIdentification0;
 
@@ -651,6 +656,51 @@ TEST_P(GraphicsComposerAidlTest, GetDisplayIdentificationData) {
                 std::equal(displayIdentification0.data.begin(), displayIdentification0.data.end(),
                            displayIdentification1.data.begin()))
             << "data is not stable";
+}
+
+TEST_P(GraphicsComposerAidlTest, SET_LAYER_PER_FRAME_METADATA) {
+    int64_t layer;
+    EXPECT_TRUE(mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount, &layer).isOk());
+
+    mWriter->selectDisplay(mPrimaryDisplay);
+    mWriter->selectLayer(layer);
+
+    /**
+     * DISPLAY_P3 is a color space that uses the DCI_P3 primaries,
+     * the D65 white point and the SRGB transfer functions.
+     * Rendering Intent: Colorimetric
+     * Primaries:
+     *                  x       y
+     *  green           0.265   0.690
+     *  blue            0.150   0.060
+     *  red             0.680   0.320
+     *  white (D65)     0.3127  0.3290
+     */
+
+    std::vector<PerFrameMetadata> aidlMetadata;
+    aidlMetadata.push_back({PerFrameMetadataKey::DISPLAY_RED_PRIMARY_X, 0.680f});
+    aidlMetadata.push_back({PerFrameMetadataKey::DISPLAY_RED_PRIMARY_Y, 0.320f});
+    aidlMetadata.push_back({PerFrameMetadataKey::DISPLAY_GREEN_PRIMARY_X, 0.265f});
+    aidlMetadata.push_back({PerFrameMetadataKey::DISPLAY_GREEN_PRIMARY_Y, 0.690f});
+    aidlMetadata.push_back({PerFrameMetadataKey::DISPLAY_BLUE_PRIMARY_X, 0.150f});
+    aidlMetadata.push_back({PerFrameMetadataKey::DISPLAY_BLUE_PRIMARY_Y, 0.060f});
+    aidlMetadata.push_back({PerFrameMetadataKey::WHITE_POINT_X, 0.3127f});
+    aidlMetadata.push_back({PerFrameMetadataKey::WHITE_POINT_Y, 0.3290f});
+    aidlMetadata.push_back({PerFrameMetadataKey::MAX_LUMINANCE, 100.0f});
+    aidlMetadata.push_back({PerFrameMetadataKey::MIN_LUMINANCE, 0.1f});
+    aidlMetadata.push_back({PerFrameMetadataKey::MAX_CONTENT_LIGHT_LEVEL, 78.0});
+    aidlMetadata.push_back({PerFrameMetadataKey::MAX_FRAME_AVERAGE_LIGHT_LEVEL, 62.0});
+    mWriter->setLayerPerFrameMetadata(aidlMetadata);
+    execute();
+
+    if (mReader->mErrors.size() == 1 && mReader->mErrors[0].second == EX_UNSUPPORTED_OPERATION) {
+        mReader->mErrors.clear();
+        GTEST_SUCCEED() << "SetLayerPerFrameMetadata is not supported";
+        EXPECT_TRUE(mComposerClient->destroyLayer(mPrimaryDisplay, layer).isOk());
+        return;
+    }
+
+    EXPECT_TRUE(mComposerClient->destroyLayer(mPrimaryDisplay, layer).isOk());
 }
 
 TEST_P(GraphicsComposerAidlTest, GetHdrCapabilities) {
@@ -787,6 +837,31 @@ TEST_P(GraphicsComposerAidlTest, SetColorModeBadParameter) {
     EXPECT_EQ(IComposerClient::EX_BAD_PARAMETER, renderIntentError.getServiceSpecificError());
 }
 
+TEST_P(GraphicsComposerAidlTest, SetLayerColorTransform) {
+    int64_t layer;
+    EXPECT_TRUE(mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount, &layer).isOk());
+    mWriter->selectDisplay(mPrimaryDisplay);
+    mWriter->selectLayer(layer);
+
+    // clang-format off
+    const std::array<float, 16> matrix = {{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }};
+    // clang-format on
+
+    mWriter->setLayerColorTransform(matrix.data());
+    execute();
+
+    if (mReader->mErrors.size() == 1 && mReader->mErrors[0].second == EX_UNSUPPORTED_OPERATION) {
+        mReader->mErrors.clear();
+        GTEST_SUCCEED() << "setLayerColorTransform is not supported";
+        return;
+    }
+}
+
 TEST_P(GraphicsComposerAidlTest, GetDisplayedContentSamplingAttributes) {
     int constexpr invalid = -1;
 
@@ -826,17 +901,19 @@ TEST_P(GraphicsComposerAidlTest, GetDisplayedContentSample) {
     displayContentSamplingAttributes.format = static_cast<common::PixelFormat>(invalid);
     displayContentSamplingAttributes.dataspace = static_cast<common::Dataspace>(invalid);
     displayContentSamplingAttributes.componentMask = static_cast<FormatColorComponent>(invalid);
-    EXPECT_TRUE(mComposerClient
-                        ->getDisplayedContentSamplingAttributes(mPrimaryDisplay,
-                                                                &displayContentSamplingAttributes)
-                        .isOk());
+    auto error = mComposerClient->getDisplayedContentSamplingAttributes(
+            mPrimaryDisplay, &displayContentSamplingAttributes);
+    if (error.getServiceSpecificError() == IComposerClient::EX_UNSUPPORTED) {
+        SUCCEED() << "Sampling attributes aren't supported on this device, test skipped";
+        return;
+    }
 
     int64_t maxFrames = 10;
     int64_t timestamp = 0;
     int64_t frameCount = 0;
     DisplayContentSample displayContentSample;
-    auto error = mComposerClient->getDisplayedContentSample(mPrimaryDisplay, maxFrames, timestamp,
-                                                            &displayContentSample);
+    error = mComposerClient->getDisplayedContentSample(mPrimaryDisplay, maxFrames, timestamp,
+                                                       &displayContentSample);
     if (error.getServiceSpecificError() == IComposerClient::EX_UNSUPPORTED) {
         SUCCEED() << "Device does not support optional extension. Test skipped";
         return;
@@ -1197,7 +1274,7 @@ TEST_P(GraphicsComposerAidlTest, SetPowerMode) {
     modes.push_back(PowerMode::ON);
 
     for (auto mode : modes) {
-        setPowerMode(mPrimaryDisplay, mode);
+        EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, mode).isOk());
     }
 }
 
@@ -1208,7 +1285,7 @@ TEST_P(GraphicsComposerAidlTest, SetPowerModeVariations) {
     modes.push_back(PowerMode::OFF);
 
     for (auto mode : modes) {
-        setPowerMode(mPrimaryDisplay, mode);
+        EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, mode).isOk());
     }
 
     modes.clear();
@@ -1217,7 +1294,7 @@ TEST_P(GraphicsComposerAidlTest, SetPowerModeVariations) {
     modes.push_back(PowerMode::ON);
 
     for (auto mode : modes) {
-        setPowerMode(mPrimaryDisplay, mode);
+        EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, mode).isOk());
     }
 
     modes.clear();
@@ -1226,7 +1303,7 @@ TEST_P(GraphicsComposerAidlTest, SetPowerModeVariations) {
     modes.push_back(PowerMode::ON_SUSPEND);
 
     for (auto mode : modes) {
-        setPowerMode(mPrimaryDisplay, mode);
+        EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, mode).isOk());
     }
 
     bool isDozeSupported = false;
@@ -1238,7 +1315,7 @@ TEST_P(GraphicsComposerAidlTest, SetPowerModeVariations) {
         modes.push_back(PowerMode::DOZE);
 
         for (auto mode : modes) {
-            setPowerMode(mPrimaryDisplay, mode);
+            EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, mode).isOk());
         }
 
         modes.clear();
@@ -1247,7 +1324,7 @@ TEST_P(GraphicsComposerAidlTest, SetPowerModeVariations) {
         modes.push_back(PowerMode::DOZE_SUSPEND);
 
         for (auto mode : modes) {
-            setPowerMode(mPrimaryDisplay, mode);
+            EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, mode).isOk());
         }
     }
 }
@@ -1285,6 +1362,7 @@ TEST_P(GraphicsComposerAidlTest, GetDataspaceSaturationMatrix) {
     EXPECT_TRUE(
             mComposerClient->getDataspaceSaturationMatrix(common::Dataspace::SRGB_LINEAR, &matrix)
                     .isOk());
+
     // the last row is known
     ASSERT_EQ(0.0f, matrix[12]);
     ASSERT_EQ(0.0f, matrix[13]);

@@ -111,6 +111,21 @@ namespace contexthub {
     return ndk::ScopedAStatus::ok();
 }
 
+::ndk::ScopedAStatus ContextHub::onHostEndpointConnected(const HostEndpointInfo& in_info) {
+    mConnectedHostEndpoints.insert(in_info.hostEndpointId);
+
+    return ndk::ScopedAStatus::ok();
+}
+
+::ndk::ScopedAStatus ContextHub::onHostEndpointDisconnected(char16_t in_hostEndpointId) {
+    if (mConnectedHostEndpoints.count(in_hostEndpointId) > 0) {
+        mConnectedHostEndpoints.erase(in_hostEndpointId);
+        return ndk::ScopedAStatus::ok();
+    } else {
+        return ndk::ScopedAStatus(AStatus_fromExceptionCode(EX_ILLEGAL_ARGUMENT));
+    }
+}
+
 }  // namespace contexthub
 }  // namespace hardware
 }  // namespace android
