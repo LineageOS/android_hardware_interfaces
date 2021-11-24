@@ -18,7 +18,7 @@ package android.hardware.tv.tuner;
 
 /**
  * Indexes can be tagged by Start Code in PES (Packetized Elementary Stream)
- * according to ISO/IEC 13818-1 and Slice Groups according to ISO/IEC 14496-10.
+ * according to ISO/IEC 13818-1.
  * @hide
  */
 @VintfStability
@@ -45,29 +45,4 @@ enum DemuxScIndex {
      * Start Code is for a new Sequence
      */
     SEQUENCE = 1 << 3,
-
-    /**
-     * All blocks are coded as I blocks.
-     */
-    I_SLICE = 1 << 4,
-
-    /**
-     * Blocks are coded as I or P blocks.
-     */
-    P_SLICE = 1 << 5,
-
-    /**
-     * Blocks are coded as I, P or B blocks.
-     */
-    B_SLICE = 1 << 6,
-
-    /**
-     * A so-called switching I slice that is coded.
-     */
-    SI_SLICE = 1 << 7,
-
-    /**
-     * A so-called switching P slice that is coded.
-     */
-    SP_SLICE = 1 << 8,
 }

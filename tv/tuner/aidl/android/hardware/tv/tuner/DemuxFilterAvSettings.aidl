@@ -26,4 +26,9 @@ parcelable DemuxFilterAvSettings {
      * true if the filter output goes to decoder directly in pass through mode.
      */
     boolean isPassthrough;
+
+    /**
+     * true if the avMemory should be allocated from secure area.
+     */
+    boolean isSecureMemory;
 }
