@@ -20,6 +20,7 @@ import android.hardware.automotive.vehicle.VehiclePropConfig;
 import android.os.ParcelFileDescriptor;
 
 @VintfStability
+@JavaDerive(equals=true, toString=true)
 parcelable VehiclePropConfigs {
     // The list of vehicle property configs if they fit the binder memory
     // limitation.

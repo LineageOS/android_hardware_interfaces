@@ -32,7 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.automotive.vehicle;
-@VintfStability
+@JavaDerive(equals=true, toString=true) @VintfStability
 parcelable CreateUserResponse {
   int requestId;
   android.hardware.automotive.vehicle.CreateUserStatus status = android.hardware.automotive.vehicle.CreateUserStatus.SUCCESS;
