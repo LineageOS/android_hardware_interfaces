@@ -17,27 +17,36 @@
 package android.hardware.tv.tuner;
 
 /**
- * Indexes can be tagged by NAL unit group in HEVC according to ISO/IEC 23008-2.
+ * Indexes can be tagged by start point of slice groups according to ISO/IEC 14496-10.
  * @hide
  */
 @VintfStability
 @Backing(type="int")
-enum DemuxScHevcIndex {
+enum DemuxScAvcIndex {
     UNDEFINED = 0,
 
-    SPS = 1 << 0,
+    /**
+     * All blocks are coded as I blocks.
+     */
+    I_SLICE = 1 << 0,
 
-    AUD = 1 << 1,
+    /**
+     * Blocks are coded as I or P blocks.
+     */
+    P_SLICE = 1 << 1,
 
-    SLICE_CE_BLA_W_LP = 1 << 2,
+    /**
+     * Blocks are coded as I, P or B blocks.
+     */
+    B_SLICE = 1 << 2,
 
-    SLICE_BLA_W_RADL = 1 << 3,
+    /**
+     * A so-called switching I slice that is coded.
+     */
+    SI_SLICE = 1 << 3,
 
-    SLICE_BLA_N_LP = 1 << 4,
-
-    SLICE_IDR_W_RADL = 1 << 5,
-
-    SLICE_IDR_N_LP = 1 << 6,
-
-    SLICE_TRAIL_CRA = 1 << 7,
+    /**
+     * A so-called switching P slice that is coded.
+     */
+    SP_SLICE = 1 << 4,
 }

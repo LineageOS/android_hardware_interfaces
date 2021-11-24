@@ -191,7 +191,7 @@
             <xs:enumeration value="IP"/>
             <xs:enumeration value="NTP"/>
             <xs:enumeration value="IP_PAYLOAD"/>
-            <xs:enumeration value="PAYLOAD_THROUGH"/>            
+            <xs:enumeration value="PAYLOAD_THROUGH"/>
         </xs:restriction>
     </xs:simpleType>
 
@@ -220,6 +220,7 @@
             <xs:element name="videoStreamType" type="xs:unsignedByte"/>
         </xs:choice>
         <xs:attribute name="isPassthrough" type="xs:boolean" use="required"/>
+        <xs:attribute name="isSecureMemory" type="xs:boolean" use="required"/>
     </xs:complexType>
     <xs:complexType name="sectionFilterSettings">
         <xs:attribute name="isCheckCrc" type="xs:boolean" use="required"/>

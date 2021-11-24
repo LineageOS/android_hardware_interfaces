@@ -5,9 +5,11 @@ package android.media.tuner.testing.configuration.V1_0 {
     ctor public AvFilterSettings();
     method @Nullable public short getAudioStreamType_optional();
     method @Nullable public boolean getIsPassthrough();
+    method @Nullable public boolean getIsSecureMemory();
     method @Nullable public short getVideoStreamType_optional();
     method public void setAudioStreamType_optional(@Nullable short);
     method public void setIsPassthrough(@Nullable boolean);
+    method public void setIsSecureMemory(@Nullable boolean);
     method public void setVideoStreamType_optional(@Nullable short);
   }
 

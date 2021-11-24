@@ -36,4 +36,5 @@ package android.hardware.tv.tuner;
 @VintfStability
 parcelable DemuxFilterAvSettings {
   boolean isPassthrough;
+  boolean isSecureMemory;
 }
