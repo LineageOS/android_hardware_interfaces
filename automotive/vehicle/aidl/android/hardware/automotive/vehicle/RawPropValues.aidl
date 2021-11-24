@@ -17,6 +17,7 @@
 package android.hardware.automotive.vehicle;
 
 @VintfStability
+@JavaDerive(equals=true, toString=true)
 parcelable RawPropValues {
     /**
      * This is used for properties of types VehiclePropertyType#INT

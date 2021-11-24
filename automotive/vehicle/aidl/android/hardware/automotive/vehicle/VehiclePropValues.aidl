@@ -20,6 +20,7 @@ import android.hardware.automotive.vehicle.VehiclePropValue;
 import android.os.ParcelFileDescriptor;
 
 @VintfStability
+@JavaDerive(equals=true, toString=true)
 parcelable VehiclePropValues {
     // The list of vehicle properties if they fit the binder memory limitation.
     VehiclePropValue[] payloads;

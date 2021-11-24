@@ -27,6 +27,7 @@ import android.hardware.automotive.vehicle.UsersInfo;
  * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
  */
 @VintfStability
+@JavaDerive(equals=true, toString=true)
 parcelable SwitchUserRequest {
     /**
      * Arbitrary id used to map the response to the request.

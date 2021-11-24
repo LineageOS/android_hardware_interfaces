@@ -20,6 +20,7 @@ import android.hardware.automotive.vehicle.SetValueRequest;
 import android.os.ParcelFileDescriptor;
 
 @VintfStability
+@JavaDerive(equals=true, toString=true)
 parcelable SetValueRequests {
     // The list of request if they fit the binder memory limitation.
     SetValueRequest[] payloads;
