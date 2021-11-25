@@ -30,7 +30,7 @@ parcelable DemuxFilterRecordSettings {
      */
     int tsIndexMask;
 
-    DemuxRecordScIndexType scIndexType = DemuxRecordScIndexType.UNDEFINED;
+    DemuxRecordScIndexType scIndexType = DemuxRecordScIndexType.NONE;
 
     DemuxFilterScIndexMask scIndexMask;
 }

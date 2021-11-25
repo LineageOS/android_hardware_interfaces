@@ -20,6 +20,7 @@ import android.hardware.automotive.vehicle.VehiclePropError;
 import android.os.ParcelFileDescriptor;
 
 @VintfStability
+@JavaDerive(equals=true, toString=true)
 parcelable VehiclePropErrors {
     // List of property set errors if they fit binder memory limitation.
     VehiclePropError[] payloads;

@@ -17,6 +17,7 @@
 package android.hardware.automotive.vehicle;
 
 @VintfStability
+@JavaDerive(equals=true, toString=true)
 parcelable VehicleAreaConfig {
     /**
      * Area id is ignored for VehiclePropertyGroup:GLOBAL properties.

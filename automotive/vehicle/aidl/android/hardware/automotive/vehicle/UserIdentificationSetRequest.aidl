@@ -25,6 +25,7 @@ import android.hardware.automotive.vehicle.UserInfo;
  * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
  */
 @VintfStability
+@JavaDerive(equals=true, toString=true)
 parcelable UserIdentificationSetRequest {
     /**
      * Id of the request being responded.

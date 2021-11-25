@@ -21,6 +21,7 @@ import android.hardware.automotive.vehicle.VehiclePropertyAccess;
 import android.hardware.automotive.vehicle.VehiclePropertyChangeMode;
 
 @VintfStability
+@JavaDerive(equals=true, toString=true)
 parcelable VehiclePropConfig {
     /** Property identifier */
     int prop;

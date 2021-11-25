@@ -956,6 +956,7 @@ struct TunerTestingConfigAidlReader1_0 {
         }
         auto av = filterConfig.getFirstAvFilterSettings_optional();
         settings.isPassthrough = av->getIsPassthrough();
+        settings.isSecureMemory = av->getIsSecureMemory();
         return settings;
     }
 

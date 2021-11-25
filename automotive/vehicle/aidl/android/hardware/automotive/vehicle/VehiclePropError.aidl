@@ -19,6 +19,7 @@ package android.hardware.automotive.vehicle;
 import android.hardware.automotive.vehicle.StatusCode;
 
 @VintfStability
+@JavaDerive(equals=true, toString=true)
 parcelable VehiclePropError {
     // Property ID.
     int propId;

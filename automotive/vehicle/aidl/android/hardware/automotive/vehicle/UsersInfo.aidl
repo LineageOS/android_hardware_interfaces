@@ -26,6 +26,7 @@ import android.hardware.automotive.vehicle.UserInfo;
  * Vehicle HAL implementation.
  */
 @VintfStability
+@JavaDerive(equals=true, toString=true)
 parcelable UsersInfo {
     /**
      * The current foreground user.

@@ -19,6 +19,7 @@ package android.hardware.automotive.vehicle;
 import android.hardware.automotive.vehicle.VehiclePropValue;
 
 @VintfStability
+@JavaDerive(equals=true, toString=true)
 parcelable GetValueRequest {
     // A unique request ID. For every client, the request ID must start with 1
     // and monotonically increase for every SetValueRequest. If it hits

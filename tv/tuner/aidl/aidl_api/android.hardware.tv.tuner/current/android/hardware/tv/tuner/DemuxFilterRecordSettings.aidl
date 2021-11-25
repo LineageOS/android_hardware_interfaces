@@ -36,6 +36,6 @@ package android.hardware.tv.tuner;
 @VintfStability
 parcelable DemuxFilterRecordSettings {
   int tsIndexMask;
-  android.hardware.tv.tuner.DemuxRecordScIndexType scIndexType = android.hardware.tv.tuner.DemuxRecordScIndexType.UNDEFINED;
+  android.hardware.tv.tuner.DemuxRecordScIndexType scIndexType = android.hardware.tv.tuner.DemuxRecordScIndexType.NONE;
   android.hardware.tv.tuner.DemuxFilterScIndexMask scIndexMask;
 }
