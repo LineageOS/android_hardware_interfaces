@@ -20,6 +20,7 @@ package android.hardware.automotive.vehicle;
  * Information about a specific Android user.
  */
 @VintfStability
+@JavaDerive(equals=true, toString=true)
 parcelable UserInfo {
     /**
      * System user.

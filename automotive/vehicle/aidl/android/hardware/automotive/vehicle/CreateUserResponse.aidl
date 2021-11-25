@@ -25,6 +25,7 @@ import android.hardware.automotive.vehicle.CreateUserStatus;
  * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
  */
 @VintfStability
+@JavaDerive(equals=true, toString=true)
 parcelable CreateUserResponse {
     /**
      * Id of the request being responded.

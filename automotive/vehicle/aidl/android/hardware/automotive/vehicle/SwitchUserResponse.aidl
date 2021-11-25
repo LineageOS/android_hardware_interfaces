@@ -26,6 +26,7 @@ import android.hardware.automotive.vehicle.SwitchUserStatus;
  * VehiclePropValue.RawValue through libraries provided by the default Vehicle HAL implementation.
  */
 @VintfStability
+@JavaDerive(equals=true, toString=true)
 parcelable SwitchUserResponse {
     /**
      * Id of the request being responded.

@@ -39,7 +39,7 @@ enum DemuxRecordScIndexType {
     SC_HEVC,
 
     /**
-     * SC index is undefined
+     * Use Start Code index for AVC
      */
-    UNDEFINED,
+    SC_AVC,
 }

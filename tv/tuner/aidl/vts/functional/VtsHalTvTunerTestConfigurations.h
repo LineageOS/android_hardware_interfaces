@@ -52,7 +52,7 @@ using namespace android::media::tuner::testing::configuration::V1_0;
 const int32_t FMQ_SIZE_4M = 0x400000;
 const int32_t FMQ_SIZE_16M = 0x1000000;
 
-const string configFilePath = "/vendor/etc/tuner_vts_config_1_1.xml";
+const string configFilePath = "/vendor/etc/tuner_vts_config_aidl_V1.xml";
 
 #define FILTER_MAIN_TYPE_BIT_COUNT 5
 
