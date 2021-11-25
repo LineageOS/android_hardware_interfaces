@@ -48,4 +48,5 @@ parcelable PortStatus {
   boolean supportsEnableContaminantPresenceDetection;
   android.hardware.usb.ContaminantDetectionStatus contaminantDetectionStatus = android.hardware.usb.ContaminantDetectionStatus.NOT_SUPPORTED;
   boolean usbDataEnabled;
+  boolean powerTransferLimited;
 }

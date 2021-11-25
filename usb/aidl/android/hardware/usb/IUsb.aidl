@@ -82,4 +82,17 @@ oneway interface IUsb {
      * @param transactionId ID to be used when invoking the callback.
      */
     void switchRole(in String portName, in PortRole role, long transactionId);
+
+    /**
+     * This function is used to limit power transfer in and out of the port.
+     * When limited, the port does not charge from the partner port.
+     * Also, the port limits sourcing power to the partner port when the USB
+     * specification allows it to do so.
+     *
+     * @param portName name of the port for which power transfer is being limited.
+     * @param limit true limit power transfer.
+     *              false relax limiting power transfer.
+     * @param transactionId ID to be used when invoking the callback.
+     */
+    void limitPowerTransfer(in String portName, boolean limit, long transactionId);
 }
