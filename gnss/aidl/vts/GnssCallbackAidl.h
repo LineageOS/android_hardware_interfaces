@@ -22,11 +22,37 @@
 /* Callback class for data & Event. */
 class GnssCallbackAidl : public android::hardware::gnss::BnGnssCallback {
   public:
-    GnssCallbackAidl() : capabilities_cbq_("capabilities"){};
+    GnssCallbackAidl()
+        : capabilities_cbq_("capabilities"),
+          info_cbq_("system_info"),
+          location_cbq_("location"),
+          sv_info_list_cbq_("sv_info"){};
     ~GnssCallbackAidl(){};
 
     android::binder::Status gnssSetCapabilitiesCb(const int capabilities) override;
+    android::binder::Status gnssStatusCb(const GnssStatusValue status) override;
+    android::binder::Status gnssSvStatusCb(const std::vector<GnssSvInfo>& svInfoList) override;
+    android::binder::Status gnssLocationCb(
+            const android::hardware::gnss::GnssLocation& location) override;
+    android::binder::Status gnssNmeaCb(const int64_t timestamp, const std::string& nmea) override;
+    android::binder::Status gnssAcquireWakelockCb() override;
+    android::binder::Status gnssReleaseWakelockCb() override;
+    android::binder::Status gnssSetSystemInfoCb(const GnssSystemInfo& info) override;
+    android::binder::Status gnssRequestTimeCb() override;
+    android::binder::Status gnssRequestLocationCb(const bool independentFromGnss,
+                                                  const bool isUserEmergency) override;
 
     int last_capabilities_;
+    android::hardware::gnss::IGnssCallback::GnssSystemInfo last_info_;
+    android::hardware::gnss::GnssLocation last_location_;
+
     android::hardware::gnss::common::GnssCallbackEventQueue<int> capabilities_cbq_;
+    android::hardware::gnss::common::GnssCallbackEventQueue<
+            android::hardware::gnss::IGnssCallback::GnssSystemInfo>
+            info_cbq_;
+    android::hardware::gnss::common::GnssCallbackEventQueue<android::hardware::gnss::GnssLocation>
+            location_cbq_;
+    android::hardware::gnss::common::GnssCallbackEventQueue<
+            std::vector<android::hardware::gnss::IGnssCallback::GnssSvInfo>>
+            sv_info_list_cbq_;
 };
