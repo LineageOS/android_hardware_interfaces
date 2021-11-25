@@ -77,6 +77,9 @@ class FilterCallbackScheduler final {
     void threadLoop();
     void threadLoopOnce();
 
+    // function needs to be called while holding mLock
+    bool isDataSizeDelayConditionMetLocked();
+
     static int getDemuxFilterEventDataLength(const DemuxFilterEvent& event);
 
   private:
@@ -84,16 +87,15 @@ class FilterCallbackScheduler final {
     std::thread mCallbackThread;
     std::atomic<bool> mIsRunning;
 
-    // mLock protects mCallbackBuffer, mCv, and mDataLength
+    // mLock protects mCallbackBuffer, mIsConditionMet, mCv, mDataLength,
+    // mTimeDelayInMs, and mDataSizeDelayInBytes
     std::mutex mLock;
     std::vector<DemuxFilterEvent> mCallbackBuffer;
+    bool mIsConditionMet;
     std::condition_variable mCv;
     int mDataLength;
-
-    // both of these need to be atomic (not just mTimeDelayInMs) as this class
-    // needs to be threadsafe.
-    std::atomic<int> mTimeDelayInMs;
-    std::atomic<int> mDataSizeDelayInBytes;
+    int mTimeDelayInMs;
+    int mDataSizeDelayInBytes;
 };
 
 class Filter : public BnFilter {

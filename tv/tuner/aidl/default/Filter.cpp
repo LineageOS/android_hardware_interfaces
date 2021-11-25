@@ -35,7 +35,11 @@ namespace tuner {
 #define WAIT_TIMEOUT 3000000000
 
 FilterCallbackScheduler::FilterCallbackScheduler(const std::shared_ptr<IFilterCallback>& cb)
-    : mCallback(cb), mDataLength(0), mTimeDelayInMs(0), mDataSizeDelayInBytes(0) {
+    : mCallback(cb),
+      mIsConditionMet(false),
+      mDataLength(0),
+      mTimeDelayInMs(0),
+      mDataSizeDelayInBytes(0) {
     start();
 }
 
@@ -44,12 +48,14 @@ FilterCallbackScheduler::~FilterCallbackScheduler() {
 }
 
 void FilterCallbackScheduler::onFilterEvent(DemuxFilterEvent&& event) {
-    std::lock_guard<std::mutex> lock(mLock);
+    std::unique_lock<std::mutex> lock(mLock);
     mCallbackBuffer.push_back(std::move(event));
     mDataLength += getDemuxFilterEventDataLength(event);
 
-    if (mDataLength >= mDataSizeDelayInBytes) {
-        // size limit has been reached, send out events
+    if (isDataSizeDelayConditionMetLocked()) {
+        mIsConditionMet = true;
+        // unlock, so thread is not immediately blocked when it is notified.
+        lock.unlock();
         mCv.notify_all();
     }
 }
@@ -67,21 +73,22 @@ void FilterCallbackScheduler::flushEvents() {
 }
 
 void FilterCallbackScheduler::setTimeDelayHint(int timeDelay) {
-    // updating the setTimeDelay does not go into effect until the condition
-    // variable times out or is notified.
-    // One possibility is to notify the condition variable right away when the
-    // time delay changes, but I don't see the benefit over waiting for the next
-    // timeout / push, since -- in any case -- this will not change very often.
+    std::unique_lock<std::mutex> lock(mLock);
     mTimeDelayInMs = timeDelay;
+    // always notify condition variable to update timeout
+    mIsConditionMet = true;
+    lock.unlock();
+    mCv.notify_all();
 }
 
 void FilterCallbackScheduler::setDataSizeDelayHint(int dataSizeDelay) {
-    // similar to updating the time delay hint, when mDataSizeDelayInBytes
-    // changes, this will not go into immediate effect, but will wait until the
-    // next filterEvent.
-    // We could technically check the current data length and notify the
-    // condition variable if we wanted to, but again, this may be overkill.
+    std::unique_lock<std::mutex> lock(mLock);
     mDataSizeDelayInBytes = dataSizeDelay;
+    if (isDataSizeDelayConditionMetLocked()) {
+        mIsConditionMet = true;
+        lock.unlock();
+        mCv.notify_all();
+    }
 }
 
 bool FilterCallbackScheduler::hasCallbackRegistered() const {
@@ -96,6 +103,10 @@ void FilterCallbackScheduler::start() {
 void FilterCallbackScheduler::stop() {
     mIsRunning = false;
     if (mCallbackThread.joinable()) {
+        {
+            std::lock_guard<std::mutex> lock(mLock);
+            mIsConditionMet = true;
+        }
         mCv.notify_all();
         mCallbackThread.join();
     }
@@ -109,17 +120,15 @@ void FilterCallbackScheduler::threadLoop() {
 
 void FilterCallbackScheduler::threadLoopOnce() {
     std::unique_lock<std::mutex> lock(mLock);
-    // mTimeDelayInMs is an atomic value, so it should be copied into a local
-    // variable before use (to make sure both the if statement and wait_for use
-    // the same value).
-    int timeDelayInMs = mTimeDelayInMs;
-    if (timeDelayInMs > 0) {
-        mCv.wait_for(lock, std::chrono::milliseconds(timeDelayInMs));
+    if (mTimeDelayInMs > 0) {
+        // Note: predicate protects from lost and spurious wakeups
+        mCv.wait_for(lock, std::chrono::milliseconds(mTimeDelayInMs),
+                     [this] { return mIsConditionMet; });
     } else {
-        // no reason to timeout, just wait until main thread determines it's
-        // okay to send data.
-        mCv.wait(lock);
+        // Note: predicate protects from lost and spurious wakeups
+        mCv.wait(lock, [this] { return mIsConditionMet; });
     }
+    mIsConditionMet = false;
 
     // condition_variable wait locks mutex on timeout / notify
     // Note: if stop() has been called in the meantime, do not send more filter
@@ -131,7 +140,22 @@ void FilterCallbackScheduler::threadLoopOnce() {
         mCallbackBuffer.clear();
         mDataLength = 0;
     }
-    lock.unlock();
+}
+
+// mLock needs to be held to call this function
+bool FilterCallbackScheduler::isDataSizeDelayConditionMetLocked() {
+    if (mDataSizeDelayInBytes == 0) {
+        // Data size delay is disabled.
+        if (mTimeDelayInMs == 0) {
+            // Events should only be sent immediately if time delay is disabled
+            // as well.
+            return true;
+        }
+        return false;
+    }
+
+    // Data size delay is enabled.
+    return mDataLength >= mDataSizeDelayInBytes;
 }
 
 int FilterCallbackScheduler::getDemuxFilterEventDataLength(const DemuxFilterEvent& event) {
