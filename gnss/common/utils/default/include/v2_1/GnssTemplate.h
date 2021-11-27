@@ -523,7 +523,7 @@ Return<bool> GnssTemplate<T_IGnss>::setCallback_2_1(const sp<V2_1::IGnssCallback
     using Capabilities = V2_1::IGnssCallback::Capabilities;
     const auto capabilities = Capabilities::MEASUREMENTS | Capabilities::MEASUREMENT_CORRECTIONS |
                               Capabilities::LOW_POWER_MODE | Capabilities::SATELLITE_BLACKLIST |
-                              Capabilities::ANTENNA_INFO;
+                              Capabilities::ANTENNA_INFO | Capabilities::NAV_MESSAGES;
     auto ret = sGnssCallback_2_1->gnssSetCapabilitiesCb_2_1(capabilities);
     if (!ret.isOk()) {
         ALOGE("%s: Unable to invoke callback", __func__);
