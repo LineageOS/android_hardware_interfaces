@@ -42,6 +42,8 @@ class Gnss : public BnGnss {
             std::shared_ptr<IGnssBatching>* iGnssBatching) override;
     ndk::ScopedAStatus getExtensionGnssGeofence(
             std::shared_ptr<IGnssGeofence>* iGnssGeofence) override;
+    ndk::ScopedAStatus getExtensionGnssNavigationMessage(
+            std::shared_ptr<IGnssNavigationMessageInterface>* iGnssNavigationMessage) override;
 
     std::shared_ptr<GnssConfiguration> mGnssConfiguration;
     std::shared_ptr<GnssPowerIndication> mGnssPowerIndication;
