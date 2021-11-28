@@ -22,6 +22,7 @@
 #include "GnssConfiguration.h"
 #include "GnssGeofence.h"
 #include "GnssMeasurementInterface.h"
+#include "GnssNavigationMessageInterface.h"
 #include "GnssPsds.h"
 
 namespace aidl::android::hardware::gnss {
@@ -101,6 +102,14 @@ ndk::ScopedAStatus Gnss::getExtensionGnssGeofence(std::shared_ptr<IGnssGeofence>
     ALOGD("Gnss::getExtensionGnssGeofence");
 
     *iGnssGeofence = SharedRefBase::make<GnssGeofence>();
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Gnss::getExtensionGnssNavigationMessage(
+        std::shared_ptr<IGnssNavigationMessageInterface>* iGnssNavigationMessage) {
+    ALOGD("Gnss::getExtensionGnssNavigationMessage");
+
+    *iGnssNavigationMessage = SharedRefBase::make<GnssNavigationMessageInterface>();
     return ndk::ScopedAStatus::ok();
 }
 

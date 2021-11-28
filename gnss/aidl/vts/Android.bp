@@ -34,6 +34,7 @@ cc_test {
         "GnssCallbackAidl.cpp",
         "GnssGeofenceCallback.cpp",
         "GnssMeasurementCallbackAidl.cpp",
+        "GnssNavigationMessageCallback.cpp",
         "GnssPowerIndicationCallback.cpp",
         "VtsHalGnssTargetTest.cpp",
     ],
