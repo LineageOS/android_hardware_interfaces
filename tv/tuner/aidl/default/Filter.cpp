@@ -1114,8 +1114,6 @@ bool Filter::sameFile(int fd1, int fd2) {
 
 void Filter::createMediaEvent(vector<DemuxFilterEvent>& events) {
     AudioExtraMetaData audio;
-    events.resize(1);
-
     audio.adFade = 1;
     audio.adPan = 2;
     audio.versionTextTag = 3;
@@ -1123,17 +1121,15 @@ void Filter::createMediaEvent(vector<DemuxFilterEvent>& events) {
     audio.adGainFront = 5;
     audio.adGainSurround = 6;
 
-    events[0] = DemuxFilterEvent::make<DemuxFilterEvent::Tag::media>();
-    events[0].get<DemuxFilterEvent::Tag::media>().streamId = 1;
-    events[0].get<DemuxFilterEvent::Tag::media>().isPtsPresent = true;
-    events[0].get<DemuxFilterEvent::Tag::media>().dataLength = 3;
-    events[0].get<DemuxFilterEvent::Tag::media>().offset = 4;
-    events[0].get<DemuxFilterEvent::Tag::media>().isSecureMemory = true;
-    events[0].get<DemuxFilterEvent::Tag::media>().mpuSequenceNumber = 6;
-    events[0].get<DemuxFilterEvent::Tag::media>().isPesPrivateData = true;
-    events[0]
-            .get<DemuxFilterEvent::Tag::media>()
-            .extraMetaData.set<DemuxFilterMediaEventExtraMetaData::Tag::audio>(audio);
+    DemuxFilterMediaEvent mediaEvent;
+    mediaEvent.streamId = 1;
+    mediaEvent.isPtsPresent = true;
+    mediaEvent.dataLength = 3;
+    mediaEvent.offset = 4;
+    mediaEvent.isSecureMemory = true;
+    mediaEvent.mpuSequenceNumber = 6;
+    mediaEvent.isPesPrivateData = true;
+    mediaEvent.extraMetaData.set<DemuxFilterMediaEventExtraMetaData::Tag::audio>(audio);
 
     int av_fd = createAvIonFd(BUFFER_SIZE_16M);
     if (av_fd == -1) {
@@ -1151,16 +1147,16 @@ void Filter::createMediaEvent(vector<DemuxFilterEvent>& events) {
     uint64_t dataId = mLastUsedDataId++ /*createdUID*/;
     mDataId2Avfd[dataId] = dup(av_fd);
 
-    events[0].get<DemuxFilterEvent::Tag::media>().avDataId = static_cast<int64_t>(dataId);
-    events[0].get<DemuxFilterEvent::Tag::media>().avMemory = ::android::dupToAidl(nativeHandle);
+    mediaEvent.avDataId = static_cast<int64_t>(dataId);
+    mediaEvent.avMemory = ::android::dupToAidl(nativeHandle);
+
+    events.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::media>(std::move(mediaEvent)));
 
     native_handle_close(nativeHandle);
     native_handle_delete(nativeHandle);
 }
 
 void Filter::createTsRecordEvent(vector<DemuxFilterEvent>& events) {
-    events.resize(2);
-
     DemuxPid pid;
     DemuxFilterScIndexMask mask;
     DemuxFilterTsRecordEvent tsRecord1;
@@ -1175,13 +1171,11 @@ void Filter::createTsRecordEvent(vector<DemuxFilterEvent>& events) {
     tsRecord2.pts = 1;
     tsRecord2.firstMbInSlice = 2;  // random address
 
-    events[0].set<DemuxFilterEvent::Tag::tsRecord>(tsRecord1);
-    events[1].set<DemuxFilterEvent::Tag::tsRecord>(tsRecord2);
+    events.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::tsRecord>(std::move(tsRecord1)));
+    events.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::tsRecord>(std::move(tsRecord2)));
 }
 
 void Filter::createMmtpRecordEvent(vector<DemuxFilterEvent>& events) {
-    events.resize(2);
-
     DemuxFilterMmtpRecordEvent mmtpRecord1;
     mmtpRecord1.scHevcIndexMask = 1;
     mmtpRecord1.byteNumber = 2;
@@ -1192,36 +1186,32 @@ void Filter::createMmtpRecordEvent(vector<DemuxFilterEvent>& events) {
     mmtpRecord2.firstMbInSlice = 3;
     mmtpRecord2.tsIndexMask = 4;
 
-    events[0].set<DemuxFilterEvent::Tag::mmtpRecord>(mmtpRecord1);
-    events[1].set<DemuxFilterEvent::Tag::mmtpRecord>(mmtpRecord2);
+    events.push_back(
+            DemuxFilterEvent::make<DemuxFilterEvent::Tag::mmtpRecord>(std::move(mmtpRecord1)));
+    events.push_back(
+            DemuxFilterEvent::make<DemuxFilterEvent::Tag::mmtpRecord>(std::move(mmtpRecord2)));
 }
 
 void Filter::createSectionEvent(vector<DemuxFilterEvent>& events) {
-    events.resize(1);
-
     DemuxFilterSectionEvent section;
     section.tableId = 1;
     section.version = 2;
     section.sectionNum = 3;
     section.dataLength = 0;
 
-    events[0].set<DemuxFilterEvent::Tag::section>(section);
+    events.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::section>(std::move(section)));
 }
 
 void Filter::createPesEvent(vector<DemuxFilterEvent>& events) {
-    events.resize(1);
-
     DemuxFilterPesEvent pes;
     pes.streamId = 1;
     pes.dataLength = 1;
     pes.mpuSequenceNumber = 2;
 
-    events[0].set<DemuxFilterEvent::Tag::pes>(pes);
+    events.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::pes>(std::move(pes)));
 }
 
 void Filter::createDownloadEvent(vector<DemuxFilterEvent>& events) {
-    events.resize(1);
-
     DemuxFilterDownloadEvent download;
     download.itemId = 1;
     download.mpuSequenceNumber = 2;
@@ -1229,41 +1219,36 @@ void Filter::createDownloadEvent(vector<DemuxFilterEvent>& events) {
     download.lastItemFragmentIndex = 4;
     download.dataLength = 0;
 
-    events[0].set<DemuxFilterEvent::Tag::download>(download);
+    events.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::download>(std::move(download)));
 }
 
 void Filter::createIpPayloadEvent(vector<DemuxFilterEvent>& events) {
-    events.resize(1);
-
     DemuxFilterIpPayloadEvent ipPayload;
     ipPayload.dataLength = 0;
 
-    events[0].set<DemuxFilterEvent::Tag::ipPayload>(ipPayload);
+    events.push_back(
+            DemuxFilterEvent::make<DemuxFilterEvent::Tag::ipPayload>(std::move(ipPayload)));
 }
 
 void Filter::createTemiEvent(vector<DemuxFilterEvent>& events) {
-    events.resize(1);
-
     DemuxFilterTemiEvent temi;
     temi.pts = 1;
     temi.descrTag = 2;
     temi.descrData = {3};
 
-    events[0].set<DemuxFilterEvent::Tag::temi>(temi);
+    events.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::temi>(std::move(temi)));
 }
 
 void Filter::createMonitorEvent(vector<DemuxFilterEvent>& events) {
-    events.resize(1);
-
     DemuxFilterMonitorEvent monitor;
     monitor.set<DemuxFilterMonitorEvent::Tag::scramblingStatus>(ScramblingStatus::SCRAMBLED);
-    events[0].set<DemuxFilterEvent::Tag::monitorEvent>(monitor);
+
+    events.push_back(
+            DemuxFilterEvent::make<DemuxFilterEvent::Tag::monitorEvent>(std::move(monitor)));
 }
 
 void Filter::createRestartEvent(vector<DemuxFilterEvent>& events) {
-    events.resize(1);
-
-    events[0].set<DemuxFilterEvent::Tag::startId>(1);
+    events.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::startId>(1));
 }
 
 }  // namespace tuner
