@@ -542,7 +542,9 @@ void Filter::filterThreadLoop() {
     // For the first time of filter output, implementation needs to send the filter
     // Event Callback without waiting for the DATA_CONSUMED to init the process.
     while (mFilterThreadRunning) {
+        std::unique_lock<std::mutex> lock(mFilterEventsLock);
         if (mFilterEvents.size() == 0) {
+            lock.unlock();
             if (DEBUG_FILTER) {
                 ALOGD("[Filter] wait for filter data output.");
             }
@@ -559,6 +561,7 @@ void Filter::filterThreadLoop() {
                 mConfigured = false;
             }
 
+            // lock is still being held
             for (auto&& event : mFilterEvents) {
                 mCallbackScheduler.onFilterEvent(std::move(event));
             }
@@ -741,7 +744,6 @@ void Filter::updateRecordOutput(vector<int8_t>& data) {
 }
 
 ::ndk::ScopedAStatus Filter::startPesFilterHandler() {
-    std::lock_guard<std::mutex> lock(mFilterEventsLock);
     if (mFilterOutput.empty()) {
         return ::ndk::ScopedAStatus::ok();
     }
@@ -796,7 +798,11 @@ void Filter::updateRecordOutput(vector<int8_t>& data) {
             ALOGD("[Filter] assembled pes data length %d", pesEvent.dataLength);
         }
 
-        mFilterEvents.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::pes>(pesEvent));
+        {
+            std::lock_guard<std::mutex> lock(mFilterEventsLock);
+            mFilterEvents.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::pes>(pesEvent));
+        }
+
         mPesOutput.clear();
     }
 
@@ -811,7 +817,6 @@ void Filter::updateRecordOutput(vector<int8_t>& data) {
 }
 
 ::ndk::ScopedAStatus Filter::startMediaFilterHandler() {
-    std::lock_guard<std::mutex> lock(mFilterEventsLock);
     if (mFilterOutput.empty()) {
         return ::ndk::ScopedAStatus::ok();
     }
@@ -900,7 +905,12 @@ void Filter::updateRecordOutput(vector<int8_t>& data) {
             .firstMbInSlice = 0,  // random address
     };
 
-    mFilterEvents.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::tsRecord>(recordEvent));
+    {
+        std::lock_guard<std::mutex> lock(mFilterEventsLock);
+        mFilterEvents.push_back(
+                DemuxFilterEvent::make<DemuxFilterEvent::Tag::tsRecord>(recordEvent));
+    }
+
     mRecordFilterOutput.clear();
     return ::ndk::ScopedAStatus::ok();
 }
@@ -918,7 +928,6 @@ void Filter::updateRecordOutput(vector<int8_t>& data) {
 bool Filter::writeSectionsAndCreateEvent(vector<int8_t>& data) {
     // TODO check how many sections has been read
     ALOGD("[Filter] section handler");
-    std::lock_guard<std::mutex> lock(mFilterEventsLock);
     if (!writeDataToFilterMQ(data)) {
         return false;
     }
@@ -930,7 +939,12 @@ bool Filter::writeSectionsAndCreateEvent(vector<int8_t>& data) {
             .sectionNum = 1,
             .dataLength = static_cast<int32_t>(data.size()),
     };
-    mFilterEvents.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::section>(secEvent));
+
+    {
+        std::lock_guard<std::mutex> lock(mFilterEventsLock);
+        mFilterEvents.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::section>(secEvent));
+    }
+
     return true;
 }
 
@@ -1028,7 +1042,11 @@ native_handle_t* Filter::createNativeHandle(int fd) {
         mediaEvent.pts = mPts;
         mPts = 0;
     }
-    mFilterEvents.push_back(std::move(event));
+
+    {
+        std::lock_guard<std::mutex> lock(mFilterEventsLock);
+        mFilterEvents.push_back(std::move(event));
+    }
 
     // Clear and log
     native_handle_close(nativeHandle);
@@ -1068,7 +1086,11 @@ native_handle_t* Filter::createNativeHandle(int fd) {
         mediaEvent.pts = mPts;
         mPts = 0;
     }
-    mFilterEvents.push_back(std::move(event));
+
+    {
+        std::lock_guard<std::mutex> lock(mFilterEventsLock);
+        mFilterEvents.push_back(std::move(event));
+    }
 
     mSharedAvMemOffset += output.size();
 
