@@ -70,7 +70,7 @@ namespace aidl::android::hardware::security::keymint::test {
 namespace {
 
 // The maximum number of times we'll attempt to verify that corruption
-// of an ecrypted blob results in an error. Retries are necessary as there
+// of an encrypted blob results in an error. Retries are necessary as there
 // is a small (roughly 1/256) chance that corrupting ciphertext still results
 // in valid PKCS7 padding.
 constexpr size_t kMaxPaddingCorruptionRetries = 8;
