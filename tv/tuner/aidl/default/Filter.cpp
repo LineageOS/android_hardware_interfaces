@@ -35,7 +35,11 @@ namespace tuner {
 #define WAIT_TIMEOUT 3000000000
 
 FilterCallbackScheduler::FilterCallbackScheduler(const std::shared_ptr<IFilterCallback>& cb)
-    : mCallback(cb), mDataLength(0), mTimeDelayInMs(0), mDataSizeDelayInBytes(0) {
+    : mCallback(cb),
+      mIsConditionMet(false),
+      mDataLength(0),
+      mTimeDelayInMs(0),
+      mDataSizeDelayInBytes(0) {
     start();
 }
 
@@ -44,12 +48,14 @@ FilterCallbackScheduler::~FilterCallbackScheduler() {
 }
 
 void FilterCallbackScheduler::onFilterEvent(DemuxFilterEvent&& event) {
-    std::lock_guard<std::mutex> lock(mLock);
+    std::unique_lock<std::mutex> lock(mLock);
     mCallbackBuffer.push_back(std::move(event));
     mDataLength += getDemuxFilterEventDataLength(event);
 
-    if (mDataLength >= mDataSizeDelayInBytes) {
-        // size limit has been reached, send out events
+    if (isDataSizeDelayConditionMetLocked()) {
+        mIsConditionMet = true;
+        // unlock, so thread is not immediately blocked when it is notified.
+        lock.unlock();
         mCv.notify_all();
     }
 }
@@ -67,21 +73,22 @@ void FilterCallbackScheduler::flushEvents() {
 }
 
 void FilterCallbackScheduler::setTimeDelayHint(int timeDelay) {
-    // updating the setTimeDelay does not go into effect until the condition
-    // variable times out or is notified.
-    // One possibility is to notify the condition variable right away when the
-    // time delay changes, but I don't see the benefit over waiting for the next
-    // timeout / push, since -- in any case -- this will not change very often.
+    std::unique_lock<std::mutex> lock(mLock);
     mTimeDelayInMs = timeDelay;
+    // always notify condition variable to update timeout
+    mIsConditionMet = true;
+    lock.unlock();
+    mCv.notify_all();
 }
 
 void FilterCallbackScheduler::setDataSizeDelayHint(int dataSizeDelay) {
-    // similar to updating the time delay hint, when mDataSizeDelayInBytes
-    // changes, this will not go into immediate effect, but will wait until the
-    // next filterEvent.
-    // We could technically check the current data length and notify the
-    // condition variable if we wanted to, but again, this may be overkill.
+    std::unique_lock<std::mutex> lock(mLock);
     mDataSizeDelayInBytes = dataSizeDelay;
+    if (isDataSizeDelayConditionMetLocked()) {
+        mIsConditionMet = true;
+        lock.unlock();
+        mCv.notify_all();
+    }
 }
 
 bool FilterCallbackScheduler::hasCallbackRegistered() const {
@@ -96,6 +103,10 @@ void FilterCallbackScheduler::start() {
 void FilterCallbackScheduler::stop() {
     mIsRunning = false;
     if (mCallbackThread.joinable()) {
+        {
+            std::lock_guard<std::mutex> lock(mLock);
+            mIsConditionMet = true;
+        }
         mCv.notify_all();
         mCallbackThread.join();
     }
@@ -109,17 +120,15 @@ void FilterCallbackScheduler::threadLoop() {
 
 void FilterCallbackScheduler::threadLoopOnce() {
     std::unique_lock<std::mutex> lock(mLock);
-    // mTimeDelayInMs is an atomic value, so it should be copied into a local
-    // variable before use (to make sure both the if statement and wait_for use
-    // the same value).
-    int timeDelayInMs = mTimeDelayInMs;
-    if (timeDelayInMs > 0) {
-        mCv.wait_for(lock, std::chrono::milliseconds(timeDelayInMs));
+    if (mTimeDelayInMs > 0) {
+        // Note: predicate protects from lost and spurious wakeups
+        mCv.wait_for(lock, std::chrono::milliseconds(mTimeDelayInMs),
+                     [this] { return mIsConditionMet; });
     } else {
-        // no reason to timeout, just wait until main thread determines it's
-        // okay to send data.
-        mCv.wait(lock);
+        // Note: predicate protects from lost and spurious wakeups
+        mCv.wait(lock, [this] { return mIsConditionMet; });
     }
+    mIsConditionMet = false;
 
     // condition_variable wait locks mutex on timeout / notify
     // Note: if stop() has been called in the meantime, do not send more filter
@@ -131,7 +140,22 @@ void FilterCallbackScheduler::threadLoopOnce() {
         mCallbackBuffer.clear();
         mDataLength = 0;
     }
-    lock.unlock();
+}
+
+// mLock needs to be held to call this function
+bool FilterCallbackScheduler::isDataSizeDelayConditionMetLocked() {
+    if (mDataSizeDelayInBytes == 0) {
+        // Data size delay is disabled.
+        if (mTimeDelayInMs == 0) {
+            // Events should only be sent immediately if time delay is disabled
+            // as well.
+            return true;
+        }
+        return false;
+    }
+
+    // Data size delay is enabled.
+    return mDataLength >= mDataSizeDelayInBytes;
 }
 
 int FilterCallbackScheduler::getDemuxFilterEventDataLength(const DemuxFilterEvent& event) {
@@ -542,7 +566,9 @@ void Filter::filterThreadLoop() {
     // For the first time of filter output, implementation needs to send the filter
     // Event Callback without waiting for the DATA_CONSUMED to init the process.
     while (mFilterThreadRunning) {
+        std::unique_lock<std::mutex> lock(mFilterEventsLock);
         if (mFilterEvents.size() == 0) {
+            lock.unlock();
             if (DEBUG_FILTER) {
                 ALOGD("[Filter] wait for filter data output.");
             }
@@ -559,6 +585,7 @@ void Filter::filterThreadLoop() {
                 mConfigured = false;
             }
 
+            // lock is still being held
             for (auto&& event : mFilterEvents) {
                 mCallbackScheduler.onFilterEvent(std::move(event));
             }
@@ -741,7 +768,6 @@ void Filter::updateRecordOutput(vector<int8_t>& data) {
 }
 
 ::ndk::ScopedAStatus Filter::startPesFilterHandler() {
-    std::lock_guard<std::mutex> lock(mFilterEventsLock);
     if (mFilterOutput.empty()) {
         return ::ndk::ScopedAStatus::ok();
     }
@@ -796,7 +822,11 @@ void Filter::updateRecordOutput(vector<int8_t>& data) {
             ALOGD("[Filter] assembled pes data length %d", pesEvent.dataLength);
         }
 
-        mFilterEvents.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::pes>(pesEvent));
+        {
+            std::lock_guard<std::mutex> lock(mFilterEventsLock);
+            mFilterEvents.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::pes>(pesEvent));
+        }
+
         mPesOutput.clear();
     }
 
@@ -811,7 +841,6 @@ void Filter::updateRecordOutput(vector<int8_t>& data) {
 }
 
 ::ndk::ScopedAStatus Filter::startMediaFilterHandler() {
-    std::lock_guard<std::mutex> lock(mFilterEventsLock);
     if (mFilterOutput.empty()) {
         return ::ndk::ScopedAStatus::ok();
     }
@@ -900,7 +929,12 @@ void Filter::updateRecordOutput(vector<int8_t>& data) {
             .firstMbInSlice = 0,  // random address
     };
 
-    mFilterEvents.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::tsRecord>(recordEvent));
+    {
+        std::lock_guard<std::mutex> lock(mFilterEventsLock);
+        mFilterEvents.push_back(
+                DemuxFilterEvent::make<DemuxFilterEvent::Tag::tsRecord>(recordEvent));
+    }
+
     mRecordFilterOutput.clear();
     return ::ndk::ScopedAStatus::ok();
 }
@@ -918,7 +952,6 @@ void Filter::updateRecordOutput(vector<int8_t>& data) {
 bool Filter::writeSectionsAndCreateEvent(vector<int8_t>& data) {
     // TODO check how many sections has been read
     ALOGD("[Filter] section handler");
-    std::lock_guard<std::mutex> lock(mFilterEventsLock);
     if (!writeDataToFilterMQ(data)) {
         return false;
     }
@@ -930,7 +963,12 @@ bool Filter::writeSectionsAndCreateEvent(vector<int8_t>& data) {
             .sectionNum = 1,
             .dataLength = static_cast<int32_t>(data.size()),
     };
-    mFilterEvents.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::section>(secEvent));
+
+    {
+        std::lock_guard<std::mutex> lock(mFilterEventsLock);
+        mFilterEvents.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::section>(secEvent));
+    }
+
     return true;
 }
 
@@ -1028,7 +1066,11 @@ native_handle_t* Filter::createNativeHandle(int fd) {
         mediaEvent.pts = mPts;
         mPts = 0;
     }
-    mFilterEvents.push_back(std::move(event));
+
+    {
+        std::lock_guard<std::mutex> lock(mFilterEventsLock);
+        mFilterEvents.push_back(std::move(event));
+    }
 
     // Clear and log
     native_handle_close(nativeHandle);
@@ -1068,7 +1110,11 @@ native_handle_t* Filter::createNativeHandle(int fd) {
         mediaEvent.pts = mPts;
         mPts = 0;
     }
-    mFilterEvents.push_back(std::move(event));
+
+    {
+        std::lock_guard<std::mutex> lock(mFilterEventsLock);
+        mFilterEvents.push_back(std::move(event));
+    }
 
     mSharedAvMemOffset += output.size();
 
@@ -1092,8 +1138,6 @@ bool Filter::sameFile(int fd1, int fd2) {
 
 void Filter::createMediaEvent(vector<DemuxFilterEvent>& events) {
     AudioExtraMetaData audio;
-    events.resize(1);
-
     audio.adFade = 1;
     audio.adPan = 2;
     audio.versionTextTag = 3;
@@ -1101,17 +1145,15 @@ void Filter::createMediaEvent(vector<DemuxFilterEvent>& events) {
     audio.adGainFront = 5;
     audio.adGainSurround = 6;
 
-    events[0] = DemuxFilterEvent::make<DemuxFilterEvent::Tag::media>();
-    events[0].get<DemuxFilterEvent::Tag::media>().streamId = 1;
-    events[0].get<DemuxFilterEvent::Tag::media>().isPtsPresent = true;
-    events[0].get<DemuxFilterEvent::Tag::media>().dataLength = 3;
-    events[0].get<DemuxFilterEvent::Tag::media>().offset = 4;
-    events[0].get<DemuxFilterEvent::Tag::media>().isSecureMemory = true;
-    events[0].get<DemuxFilterEvent::Tag::media>().mpuSequenceNumber = 6;
-    events[0].get<DemuxFilterEvent::Tag::media>().isPesPrivateData = true;
-    events[0]
-            .get<DemuxFilterEvent::Tag::media>()
-            .extraMetaData.set<DemuxFilterMediaEventExtraMetaData::Tag::audio>(audio);
+    DemuxFilterMediaEvent mediaEvent;
+    mediaEvent.streamId = 1;
+    mediaEvent.isPtsPresent = true;
+    mediaEvent.dataLength = 3;
+    mediaEvent.offset = 4;
+    mediaEvent.isSecureMemory = true;
+    mediaEvent.mpuSequenceNumber = 6;
+    mediaEvent.isPesPrivateData = true;
+    mediaEvent.extraMetaData.set<DemuxFilterMediaEventExtraMetaData::Tag::audio>(audio);
 
     int av_fd = createAvIonFd(BUFFER_SIZE_16M);
     if (av_fd == -1) {
@@ -1129,16 +1171,16 @@ void Filter::createMediaEvent(vector<DemuxFilterEvent>& events) {
     uint64_t dataId = mLastUsedDataId++ /*createdUID*/;
     mDataId2Avfd[dataId] = dup(av_fd);
 
-    events[0].get<DemuxFilterEvent::Tag::media>().avDataId = static_cast<int64_t>(dataId);
-    events[0].get<DemuxFilterEvent::Tag::media>().avMemory = ::android::dupToAidl(nativeHandle);
+    mediaEvent.avDataId = static_cast<int64_t>(dataId);
+    mediaEvent.avMemory = ::android::dupToAidl(nativeHandle);
+
+    events.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::media>(std::move(mediaEvent)));
 
     native_handle_close(nativeHandle);
     native_handle_delete(nativeHandle);
 }
 
 void Filter::createTsRecordEvent(vector<DemuxFilterEvent>& events) {
-    events.resize(2);
-
     DemuxPid pid;
     DemuxFilterScIndexMask mask;
     DemuxFilterTsRecordEvent tsRecord1;
@@ -1153,13 +1195,11 @@ void Filter::createTsRecordEvent(vector<DemuxFilterEvent>& events) {
     tsRecord2.pts = 1;
     tsRecord2.firstMbInSlice = 2;  // random address
 
-    events[0].set<DemuxFilterEvent::Tag::tsRecord>(tsRecord1);
-    events[1].set<DemuxFilterEvent::Tag::tsRecord>(tsRecord2);
+    events.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::tsRecord>(std::move(tsRecord1)));
+    events.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::tsRecord>(std::move(tsRecord2)));
 }
 
 void Filter::createMmtpRecordEvent(vector<DemuxFilterEvent>& events) {
-    events.resize(2);
-
     DemuxFilterMmtpRecordEvent mmtpRecord1;
     mmtpRecord1.scHevcIndexMask = 1;
     mmtpRecord1.byteNumber = 2;
@@ -1170,36 +1210,32 @@ void Filter::createMmtpRecordEvent(vector<DemuxFilterEvent>& events) {
     mmtpRecord2.firstMbInSlice = 3;
     mmtpRecord2.tsIndexMask = 4;
 
-    events[0].set<DemuxFilterEvent::Tag::mmtpRecord>(mmtpRecord1);
-    events[1].set<DemuxFilterEvent::Tag::mmtpRecord>(mmtpRecord2);
+    events.push_back(
+            DemuxFilterEvent::make<DemuxFilterEvent::Tag::mmtpRecord>(std::move(mmtpRecord1)));
+    events.push_back(
+            DemuxFilterEvent::make<DemuxFilterEvent::Tag::mmtpRecord>(std::move(mmtpRecord2)));
 }
 
 void Filter::createSectionEvent(vector<DemuxFilterEvent>& events) {
-    events.resize(1);
-
     DemuxFilterSectionEvent section;
     section.tableId = 1;
     section.version = 2;
     section.sectionNum = 3;
     section.dataLength = 0;
 
-    events[0].set<DemuxFilterEvent::Tag::section>(section);
+    events.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::section>(std::move(section)));
 }
 
 void Filter::createPesEvent(vector<DemuxFilterEvent>& events) {
-    events.resize(1);
-
     DemuxFilterPesEvent pes;
     pes.streamId = 1;
     pes.dataLength = 1;
     pes.mpuSequenceNumber = 2;
 
-    events[0].set<DemuxFilterEvent::Tag::pes>(pes);
+    events.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::pes>(std::move(pes)));
 }
 
 void Filter::createDownloadEvent(vector<DemuxFilterEvent>& events) {
-    events.resize(1);
-
     DemuxFilterDownloadEvent download;
     download.itemId = 1;
     download.mpuSequenceNumber = 2;
@@ -1207,41 +1243,36 @@ void Filter::createDownloadEvent(vector<DemuxFilterEvent>& events) {
     download.lastItemFragmentIndex = 4;
     download.dataLength = 0;
 
-    events[0].set<DemuxFilterEvent::Tag::download>(download);
+    events.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::download>(std::move(download)));
 }
 
 void Filter::createIpPayloadEvent(vector<DemuxFilterEvent>& events) {
-    events.resize(1);
-
     DemuxFilterIpPayloadEvent ipPayload;
     ipPayload.dataLength = 0;
 
-    events[0].set<DemuxFilterEvent::Tag::ipPayload>(ipPayload);
+    events.push_back(
+            DemuxFilterEvent::make<DemuxFilterEvent::Tag::ipPayload>(std::move(ipPayload)));
 }
 
 void Filter::createTemiEvent(vector<DemuxFilterEvent>& events) {
-    events.resize(1);
-
     DemuxFilterTemiEvent temi;
     temi.pts = 1;
     temi.descrTag = 2;
     temi.descrData = {3};
 
-    events[0].set<DemuxFilterEvent::Tag::temi>(temi);
+    events.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::temi>(std::move(temi)));
 }
 
 void Filter::createMonitorEvent(vector<DemuxFilterEvent>& events) {
-    events.resize(1);
-
     DemuxFilterMonitorEvent monitor;
     monitor.set<DemuxFilterMonitorEvent::Tag::scramblingStatus>(ScramblingStatus::SCRAMBLED);
-    events[0].set<DemuxFilterEvent::Tag::monitorEvent>(monitor);
+
+    events.push_back(
+            DemuxFilterEvent::make<DemuxFilterEvent::Tag::monitorEvent>(std::move(monitor)));
 }
 
 void Filter::createRestartEvent(vector<DemuxFilterEvent>& events) {
-    events.resize(1);
-
-    events[0].set<DemuxFilterEvent::Tag::startId>(1);
+    events.push_back(DemuxFilterEvent::make<DemuxFilterEvent::Tag::startId>(1));
 }
 
 }  // namespace tuner
