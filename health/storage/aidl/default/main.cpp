@@ -24,14 +24,19 @@ using aidl::android::hardware::health::storage::Storage;
 using std::string_literals::operator""s;
 
 int main() {
+    LOG(INFO) << "Health storage AIDL HAL starting...";
     ABinderProcess_setThreadPoolMaxThreadCount(0);
 
     // make a default storage service
     auto storage = ndk::SharedRefBase::make<Storage>();
     const std::string name = Storage::descriptor + "/default"s;
+    LOG(INFO) << "Health storage AIDL HAL registering...";
     CHECK_EQ(STATUS_OK,
              AServiceManager_registerLazyService(storage->asBinder().get(), name.c_str()));
 
+    LOG(INFO) << "Health storage AIDL HAL joining...";
     ABinderProcess_joinThreadPool();
+
+    LOG(ERROR) << "Health storage AIDL HAL join thread ends, exiting...";
     return EXIT_FAILURE;  // should not reach
 }
