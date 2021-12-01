@@ -73,4 +73,17 @@ enum Composition {
      * will display correctly in these cases.
      */
     SIDEBAND = 5,
+    /**
+     * A display decoration layer contains a buffer which is an 8 bit
+     * alpha mask. Pixels in the mask with an alpha of 0 (transparent) will
+     * show the content underneath, and pixels with an alpha of 255 will be
+     * be rendered in black. An alpha in between will show the content
+     * blended with black. This is useful, for example, to provide
+     * anti-aliasing on the cutout region/rounded corners on the top and
+     * bottom of a display.
+     *
+     * Upon validateDisplay, the device may request a change from this type
+     * to CLIENT.
+     */
+    DISPLAY_DECORATION = 6,
 }
