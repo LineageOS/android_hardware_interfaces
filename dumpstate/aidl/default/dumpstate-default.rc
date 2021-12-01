@@ -1,0 +1,7 @@
+service vendor.dumpstate-default /vendor/bin/hw/android.hardware.dumpstate-service.example
+    class hal
+    user nobody
+    group nobody
+    interface aidl android.hardware.dumpstate.IDumpstateDevice/default
+    oneshot
+    disabled
