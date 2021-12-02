@@ -73,15 +73,14 @@ class GraphicsComposerAidlTest : public ::testing::TestWithParam<std::string> {
         ASSERT_NO_FATAL_FAILURE(mComposer = IComposer::fromBinder(binder));
         ASSERT_NE(mComposer, nullptr);
         ASSERT_NO_FATAL_FAILURE(mComposer->createClient(&mComposerClient));
-        mInvalidDisplayId = GetInvalidDisplayId();
 
         mComposerCallback = ::ndk::SharedRefBase::make<GraphicsComposerCallback>();
         EXPECT_TRUE(mComposerClient->registerCallback(mComposerCallback).isOk());
 
         // assume the first displays are built-in and are never removed
         mDisplays = waitForDisplays();
-
         mPrimaryDisplay = mDisplays[0].get();
+        ASSERT_NO_FATAL_FAILURE(mInvalidDisplayId = GetInvalidDisplayId());
 
         // explicitly disable vsync
         for (const auto& display : mDisplays) {
@@ -101,7 +100,6 @@ class GraphicsComposerAidlTest : public ::testing::TestWithParam<std::string> {
             EXPECT_EQ(0, mComposerCallback->getInvalidHotplugCount());
             EXPECT_EQ(0, mComposerCallback->getInvalidRefreshCount());
             EXPECT_EQ(0, mComposerCallback->getInvalidVsyncCount());
-            EXPECT_EQ(0, mComposerCallback->getInvalidVsyncCount());
             EXPECT_EQ(0, mComposerCallback->getInvalidVsyncPeriodChangeCount());
             EXPECT_EQ(0, mComposerCallback->getInvalidSeamlessPossibleCount());
         }
@@ -120,7 +118,11 @@ class GraphicsComposerAidlTest : public ::testing::TestWithParam<std::string> {
             id--;
         }
 
-        return 0;
+        // Although 0 could be an invalid display, a return value of 0
+        // from GetInvalidDisplayId means all other ids are in use, a condition which
+        // we are assuming a device will never have
+        EXPECT_NE(0, id);
+        return id;
     }
 
     std::vector<VtsDisplay> waitForDisplays() {
@@ -816,11 +818,19 @@ TEST_P(GraphicsComposerAidlTest, SetColorMode) {
 }
 
 TEST_P(GraphicsComposerAidlTest, SetColorModeBadDisplay) {
-    auto const error = mComposerClient->setColorMode(mInvalidDisplayId, ColorMode::NATIVE,
-                                                     RenderIntent::COLORIMETRIC);
+    std::vector<ColorMode> colorModes;
+    EXPECT_TRUE(mComposerClient->getColorModes(mPrimaryDisplay, &colorModes).isOk());
+    for (auto mode : colorModes) {
+        std::vector<RenderIntent> intents;
+        EXPECT_TRUE(mComposerClient->getRenderIntents(mPrimaryDisplay, mode, &intents).isOk())
+                << "failed to get render intents";
+        for (auto intent : intents) {
+            auto const error = mComposerClient->setColorMode(mInvalidDisplayId, mode, intent);
 
-    EXPECT_FALSE(error.isOk());
-    ASSERT_EQ(IComposerClient::EX_BAD_DISPLAY, error.getServiceSpecificError());
+            EXPECT_FALSE(error.isOk());
+            ASSERT_EQ(IComposerClient::EX_BAD_DISPLAY, error.getServiceSpecificError());
+        }
+    }
 }
 
 TEST_P(GraphicsComposerAidlTest, SetColorModeBadParameter) {
@@ -1273,6 +1283,13 @@ TEST_P(GraphicsComposerAidlTest, SetPowerMode) {
     modes.push_back(PowerMode::ON_SUSPEND);
     modes.push_back(PowerMode::ON);
 
+    bool isDozeSupported;
+    EXPECT_TRUE(mComposerClient->getDozeSupport(mPrimaryDisplay, &isDozeSupported).isOk());
+    if (isDozeSupported) {
+        modes.push_back(PowerMode::DOZE);
+        modes.push_back(PowerMode::DOZE_SUSPEND);
+    }
+
     for (auto mode : modes) {
         EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, mode).isOk());
     }
@@ -1282,47 +1299,46 @@ TEST_P(GraphicsComposerAidlTest, SetPowerModeVariations) {
     std::vector<PowerMode> modes;
 
     modes.push_back(PowerMode::OFF);
+    modes.push_back(PowerMode::ON);
     modes.push_back(PowerMode::OFF);
-
     for (auto mode : modes) {
         EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, mode).isOk());
     }
+    modes.clear();
 
+    modes.push_back(PowerMode::OFF);
+    modes.push_back(PowerMode::OFF);
+    for (auto mode : modes) {
+        EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, mode).isOk());
+    }
     modes.clear();
 
     modes.push_back(PowerMode::ON);
     modes.push_back(PowerMode::ON);
-
     for (auto mode : modes) {
         EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, mode).isOk());
     }
-
     modes.clear();
 
     modes.push_back(PowerMode::ON_SUSPEND);
     modes.push_back(PowerMode::ON_SUSPEND);
-
     for (auto mode : modes) {
         EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, mode).isOk());
     }
+    modes.clear();
 
     bool isDozeSupported = false;
     ASSERT_TRUE(mComposerClient->getDozeSupport(mPrimaryDisplay, &isDozeSupported).isOk());
     if (isDozeSupported) {
-        modes.clear();
-
         modes.push_back(PowerMode::DOZE);
         modes.push_back(PowerMode::DOZE);
-
         for (auto mode : modes) {
             EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, mode).isOk());
         }
-
         modes.clear();
 
         modes.push_back(PowerMode::DOZE_SUSPEND);
         modes.push_back(PowerMode::DOZE_SUSPEND);
-
         for (auto mode : modes) {
             EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, mode).isOk());
         }
