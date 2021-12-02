@@ -23,6 +23,7 @@ enum VehicleApPowerStateReq {
      * This requests Android to enter its normal operating state.
      * This may be sent after the AP has reported
      * VehicleApPowerStateReport#DEEP_SLEEP_EXIT,
+     * VehicleApPowerStateReport#HIBERNATION_EXIT,
      * VehicleApPowerStateReport#SHUTDOWN_CANCELLED, or
      * VehicleApPowerStateReport#WAIT_FOR_VHAL.
      */
@@ -31,6 +32,7 @@ enum VehicleApPowerStateReq {
      * The power controller issues this request to shutdown the system.
      * This may be sent after the AP has reported
      * VehicleApPowerStateReport#DEEP_SLEEP_EXIT,
+     * VehicleApPowerStateReport#HIBERNATION_EXIT,
      * VehicleApPowerStateReport#ON,
      * VehicleApPowerStateReport#SHUTDOWN_CANCELLED,
      * VehicleApPowerStateReport#SHUTDOWN_POSTPONE,
@@ -59,6 +61,7 @@ enum VehicleApPowerStateReq {
      * Completes the shutdown process.
      * This may be sent after the AP has reported
      * VehicleApPowerStateReport#DEEP_SLEEP_ENTRY or
+     * VehicleApPowerStateReport#HIBERNATION_ENTRY or
      * VehicleApPowerStateReport#SHUTDOWN_START. The AP will not report new
      * state information after receiving this request.
      */
