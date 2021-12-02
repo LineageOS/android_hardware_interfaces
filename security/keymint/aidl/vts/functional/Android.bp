@@ -26,6 +26,7 @@ package {
 cc_defaults {
     name: "keymint_vts_defaults",
     defaults: [
+        "keymint_use_latest_hal_aidl_ndk_static",
         "use_libaidlvintf_gtest_helper_static",
         "VtsHalTargetTestDefaults",
     ],
@@ -34,7 +35,6 @@ cc_defaults {
         "libcrypto",
     ],
     static_libs: [
-        "android.hardware.security.keymint-V1-ndk",
         "android.hardware.security.secureclock-V1-ndk",
         "libcppbor_external",
         "libcppcose_rkp",
