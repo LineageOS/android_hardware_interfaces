@@ -69,6 +69,9 @@ namespace aidl::android::hardware::security::keymint::test {
 
 namespace {
 
+// Whether to check that BOOT_PATCHLEVEL is populated.
+bool check_boot_pl = true;
+
 // The maximum number of times we'll attempt to verify that corruption
 // of an ecrypted blob results in an error. Retries are necessary as there
 // is a small (roughly 1/256) chance that corrupting ciphertext still results
@@ -527,12 +530,17 @@ class NewKeyGenerationTest : public KeyMintAidlTestBase {
         EXPECT_TRUE(os_pl);
         EXPECT_EQ(*os_pl, os_patch_level());
 
-        // Should include vendor and boot patchlevels.
+        // Should include vendor patchlevel.
         auto vendor_pl = auths.GetTagValue(TAG_VENDOR_PATCHLEVEL);
         EXPECT_TRUE(vendor_pl);
         EXPECT_EQ(*vendor_pl, vendor_patch_level());
-        auto boot_pl = auths.GetTagValue(TAG_BOOT_PATCHLEVEL);
-        EXPECT_TRUE(boot_pl);
+
+        // Should include boot patchlevel (but there are some test scenarios where this is not
+        // possible).
+        if (check_boot_pl) {
+            auto boot_pl = auths.GetTagValue(TAG_BOOT_PATCHLEVEL);
+            EXPECT_TRUE(boot_pl);
+        }
 
         return auths;
     }
@@ -6870,6 +6878,12 @@ int main(int argc, char** argv) {
                         dump_Attestations = true;
             } else {
                 std::cout << "NOT dumping attestations" << std::endl;
+            }
+            if (std::string(argv[i]) == "--skip_boot_pl_check") {
+                // Allow checks of BOOT_PATCHLEVEL to be disabled, so that the tests can
+                // be run in emulated environments that don't have the normal bootloader
+                // interactions.
+                aidl::android::hardware::security::keymint::test::check_boot_pl = false;
             }
         }
     }
