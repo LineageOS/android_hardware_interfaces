@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,11 @@
 
 package android.hardware.biometrics.fingerprint;
 @VintfStability
-interface IFingerprint {
-  android.hardware.biometrics.fingerprint.SensorProps[] getSensorProps();
-  android.hardware.biometrics.fingerprint.ISession createSession(in int sensorId, in int userId, in android.hardware.biometrics.fingerprint.ISessionCallback cb);
+parcelable PointerContext {
+  int pointerId = 0;
+  int x = 0;
+  int y = 0;
+  float minor = 0.000000f;
+  float major = 0.000000f;
+  boolean isAoD = false;
 }

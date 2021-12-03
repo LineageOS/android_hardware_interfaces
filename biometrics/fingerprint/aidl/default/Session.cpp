@@ -244,4 +244,30 @@ ndk::ScopedAStatus Session::onUiReady() {
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus Session::authenticateWithContext(
+        int64_t operationId, const common::OperationContext& /*context*/,
+        std::shared_ptr<common::ICancellationSignal>* out) {
+    return authenticate(operationId, out);
+}
+
+ndk::ScopedAStatus Session::enrollWithContext(const keymaster::HardwareAuthToken& hat,
+                                              const common::OperationContext& /*context*/,
+                                              std::shared_ptr<common::ICancellationSignal>* out) {
+    return enroll(hat, out);
+}
+
+ndk::ScopedAStatus Session::detectInteractionWithContext(
+        const common::OperationContext& /*context*/,
+        std::shared_ptr<common::ICancellationSignal>* out) {
+    return detectInteraction(out);
+}
+
+ndk::ScopedAStatus Session::onPointerDownWithContext(const PointerContext& context) {
+    return onPointerDown(context.pointerId, context.x, context.y, context.minor, context.major);
+}
+
+ndk::ScopedAStatus Session::onPointerUpWithContext(const PointerContext& context) {
+    return onPointerUp(context.pointerId);
+}
+
 }  // namespace aidl::android::hardware::biometrics::fingerprint

@@ -31,12 +31,11 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.biometrics.fingerprint;
+package android.hardware.biometrics.common;
 @VintfStability
-parcelable SensorLocation {
-  int displayId;
-  int sensorLocationX;
-  int sensorLocationY;
-  int sensorRadius;
-  String display = "";
+parcelable OperationContext {
+  int id = 0;
+  android.hardware.biometrics.common.OperationReason reason = android.hardware.biometrics.common.OperationReason.UNKNOWN;
+  boolean isAoD = false;
+  boolean isCrypto = false;
 }
