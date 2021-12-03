@@ -40,8 +40,10 @@ cc_library {
     export_include_dirs: [
         "include",
     ],
+    defaults: [
+        "keymint_use_latest_hal_aidl_ndk_shared",
+    ],
     shared_libs: [
-        "android.hardware.security.keymint-V1-ndk",
         "libbase",
         "libcrypto",
         "libutils",
