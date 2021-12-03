@@ -27,4 +27,7 @@ enum UwbVendorGidAndroidOids {
     // Supported only if the value returned by getSupportedAndroidCapabilities()
     // has the bit of UwbAndroidCapabilities.POWER_STATS_QUERY set to 1.
     ANDROID_GET_POWER_STATS = 0x0,
+    // Used to set the current regulatory country code (determined usinag
+    // SIM or hardcoded by OEM).
+    ANDROID_SET_COUNTRY_CODE = 0x1,
 }
