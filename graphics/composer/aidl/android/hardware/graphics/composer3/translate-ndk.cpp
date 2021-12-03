@@ -74,7 +74,7 @@ static_assert(
 static_assert(aidl::android::hardware::graphics::composer3::Capability::SKIP_VALIDATE ==
               static_cast<aidl::android::hardware::graphics::composer3::Capability>(4));
 
-static_assert(aidl::android::hardware::graphics::composer3::command::DisplayRequest::LayerRequest::
+static_assert(aidl::android::hardware::graphics::composer3::DisplayRequest::LayerRequest::
                       CLEAR_CLIENT_TARGET ==
               static_cast<int>(::android::hardware::graphics::composer::V2_1::IComposerClient::
                                        LayerRequest::CLEAR_CLIENT_TARGET));
@@ -121,11 +121,10 @@ static_assert(aidl::android::hardware::graphics::composer3::Composition::SIDEBAN
                       ::android::hardware::graphics::composer::V2_1::IComposerClient::Composition::
                               SIDEBAND));
 
-static_assert(
-        aidl::android::hardware::graphics::composer3::command::DisplayRequest::FLIP_CLIENT_TARGET ==
-        static_cast<int>(::android::hardware::graphics::composer::V2_1::IComposerClient::
-                                 DisplayRequest::FLIP_CLIENT_TARGET));
-static_assert(aidl::android::hardware::graphics::composer3::command::DisplayRequest::
+static_assert(aidl::android::hardware::graphics::composer3::DisplayRequest::FLIP_CLIENT_TARGET ==
+              static_cast<int>(::android::hardware::graphics::composer::V2_1::IComposerClient::
+                                       DisplayRequest::FLIP_CLIENT_TARGET));
+static_assert(aidl::android::hardware::graphics::composer3::DisplayRequest::
                       WRITE_CLIENT_TARGET_TO_OUTPUT ==
               static_cast<int>(::android::hardware::graphics::composer::V2_1::IComposerClient::
                                        DisplayRequest::WRITE_CLIENT_TARGET_TO_OUTPUT));

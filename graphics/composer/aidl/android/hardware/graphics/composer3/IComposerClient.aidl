@@ -18,9 +18,11 @@ package android.hardware.graphics.composer3;
 
 import android.hardware.graphics.composer3.ClientTargetProperty;
 import android.hardware.graphics.composer3.ColorMode;
+import android.hardware.graphics.composer3.CommandResultPayload;
 import android.hardware.graphics.composer3.ContentType;
 import android.hardware.graphics.composer3.DisplayAttribute;
 import android.hardware.graphics.composer3.DisplayCapability;
+import android.hardware.graphics.composer3.DisplayCommand;
 import android.hardware.graphics.composer3.DisplayConnectionType;
 import android.hardware.graphics.composer3.DisplayContentSample;
 import android.hardware.graphics.composer3.DisplayContentSamplingAttributes;
@@ -36,8 +38,6 @@ import android.hardware.graphics.composer3.RenderIntent;
 import android.hardware.graphics.composer3.VirtualDisplay;
 import android.hardware.graphics.composer3.VsyncPeriodChangeConstraints;
 import android.hardware.graphics.composer3.VsyncPeriodChangeTimeline;
-import android.hardware.graphics.composer3.command.CommandPayload;
-import android.hardware.graphics.composer3.command.CommandResultPayload;
 
 @VintfStability
 interface IComposerClient {
@@ -163,7 +163,7 @@ interface IComposerClient {
      *
      * @return are the command statuses.
      */
-    CommandResultPayload[] executeCommands(in CommandPayload[] commands);
+    CommandResultPayload[] executeCommands(in DisplayCommand[] commands);
 
     /**
      * Retrieves which display configuration is currently active.
