@@ -53,7 +53,7 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
 
     explicit DefaultVehicleHal(std::unique_ptr<IVehicleHardware> hardware);
 
-    ~DefaultVehicleHal() = default;
+    ~DefaultVehicleHal();
 
     ::ndk::ScopedAStatus getAllPropConfigs(
             ::aidl::android::hardware::automotive::vehicle::VehiclePropConfigs* returnConfigs)
@@ -101,7 +101,7 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
 
       private:
         std::mutex mLock;
-        std::unordered_map<CallbackType, int64_t> mIds GUARDED_BY(mLock);
+        std::unordered_map<const AIBinder*, int64_t> mIds GUARDED_BY(mLock);
     };
 
     // A thread safe class to store all subscribe clients. This class is safe to pass to async
@@ -112,14 +112,40 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
 
         std::shared_ptr<SubscriptionClient> getClient(const CallbackType& callback);
 
+        void removeClient(const AIBinder* clientId);
+
         size_t countClients();
 
       private:
         std::mutex mLock;
-        std::unordered_map<CallbackType, std::shared_ptr<SubscriptionClient>> mClients
+        std::unordered_map<const AIBinder*, std::shared_ptr<SubscriptionClient>> mClients
                 GUARDED_BY(mLock);
         // PendingRequestPool is thread-safe.
         std::shared_ptr<PendingRequestPool> mPendingRequestPool;
+    };
+
+    // A wrapper for linkToDeath to enable stubbing for test.
+    class ILinkToDeath {
+      public:
+        virtual ~ILinkToDeath() = default;
+
+        virtual binder_status_t linkToDeath(AIBinder* binder, AIBinder_DeathRecipient* recipient,
+                                            void* cookie) = 0;
+    };
+
+    // A real implementation for ILinkToDeath.
+    class AIBinderLinkToDeathImpl final : public ILinkToDeath {
+      public:
+        binder_status_t linkToDeath(AIBinder* binder, AIBinder_DeathRecipient* recipient,
+                                    void* cookie) override;
+    };
+
+    // OnBinderDiedContext is a type used as a cookie passed deathRecipient. The deathRecipient's
+    // onBinderDied function takes only a cookie as input and we have to store all the contexts
+    // as the cookie.
+    struct OnBinderDiedContext {
+        DefaultVehicleHal* vhal;
+        const AIBinder* clientId;
     };
 
     // The default timeout of get or set value requests is 30s.
@@ -142,14 +168,21 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
     std::shared_ptr<SubscriptionManager> mSubscriptionManager;
 
     std::mutex mLock;
-    std::unordered_map<CallbackType, std::shared_ptr<GetValuesClient>> mGetValuesClients
+    std::unordered_map<const AIBinder*, std::unique_ptr<OnBinderDiedContext>> mOnBinderDiedContexts
             GUARDED_BY(mLock);
-    std::unordered_map<CallbackType, std::shared_ptr<SetValuesClient>> mSetValuesClients
+    std::unordered_map<const AIBinder*, std::shared_ptr<GetValuesClient>> mGetValuesClients
+            GUARDED_BY(mLock);
+    std::unordered_map<const AIBinder*, std::shared_ptr<SetValuesClient>> mSetValuesClients
             GUARDED_BY(mLock);
     // SubscriptionClients is thread-safe.
     std::shared_ptr<SubscriptionClients> mSubscriptionClients;
+    // mLinkToDeathImpl is only going to be changed in test.
+    std::unique_ptr<ILinkToDeath> mLinkToDeathImpl;
+
     // RecurrentTimer is thread-safe.
     RecurrentTimer mRecurrentTimer;
+
+    ::ndk::ScopedAIBinder_DeathRecipient mDeathRecipient;
 
     ::android::base::Result<void> checkProperty(
             const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue);
@@ -176,9 +209,15 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
             const ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig*>
     getConfig(int32_t propId) const;
 
+    void onBinderDiedWithContext(const AIBinder* clientId);
+
+    void onBinderUnlinkedWithContext(const AIBinder* clientId);
+
+    void monitorBinderLifeCycle(const CallbackType& callback);
+
     template <class T>
     static std::shared_ptr<T> getOrCreateClient(
-            std::unordered_map<CallbackType, std::shared_ptr<T>>* clients,
+            std::unordered_map<const AIBinder*, std::shared_ptr<T>>* clients,
             const CallbackType& callback, std::shared_ptr<PendingRequestPool> pendingRequestPool);
 
     static void getValueFromHardwareCallCallback(
@@ -195,9 +234,16 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
     static void checkHealth(std::weak_ptr<IVehicleHardware> hardware,
                             std::weak_ptr<SubscriptionManager> subscriptionManager);
 
+    static void onBinderDied(void* cookie);
+
+    static void onBinderUnlinked(void* cookie);
+
     // Test-only
     // Set the default timeout for pending requests.
     void setTimeout(int64_t timeoutInNano);
+
+    // Test-only
+    void setLinkToDeathImpl(std::unique_ptr<ILinkToDeath> impl);
 };
 
 }  // namespace vehicle
