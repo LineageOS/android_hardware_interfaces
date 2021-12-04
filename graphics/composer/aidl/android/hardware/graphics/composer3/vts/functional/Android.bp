@@ -19,7 +19,7 @@ package {
     // A large-scale-change added 'default_applicable_licenses' to import
     // all of the 'license_kinds' from "hardware_interfaces_license"
     // to get the below license kinds:
-    //   SPDX-license-identifier-Apache-2.0
+    // SPDX-license-identifier-Apache-2.0
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
@@ -28,20 +28,29 @@ cc_test {
     defaults: [
         "VtsHalTargetTestDefaults",
         "use_libaidlvintf_gtest_helper_static",
+        // Needed for librenderengine
+        "skia_deps",
     ],
     srcs: [
         "VtsHalGraphicsComposer3_TargetTest.cpp",
+        "VtsHalGraphicsComposer3_ReadbackTest.cpp",
         "composer-vts/GraphicsComposerCallback.cpp",
         "composer-vts/TestCommandReader.cpp",
     ],
 
     shared_libs: [
+        "libEGL",
+        "libGLESv1_CM",
+        "libGLESv2",
         "libbinder_ndk",
         "libbinder",
         "libfmq",
         "libbase",
         "libsync",
         "libui",
+        "libgui",
+        "libhidlbase",
+        "libprocessgroup",
         "android.hardware.graphics.mapper@2.0",
         "android.hardware.graphics.mapper@2.1",
         "android.hardware.graphics.mapper@3.0",
@@ -69,6 +78,10 @@ cc_test {
         "android.hardware.graphics.mapper@3.0-vts",
         "android.hardware.graphics.mapper@4.0-vts",
         "libaidlcommonsupport",
+        "libgtest",
+        "librenderengine",
+        "libshaders",
+        "libtonemap",
     ],
     cflags: [
         "-Wconversion",
