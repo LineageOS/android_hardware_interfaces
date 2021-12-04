@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *        http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,9 +31,21 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.uwb.fira_android;
-@Backing(type="byte") @VintfStability
-enum UwbVendorGidAndroidOids {
-  ANDROID_GET_POWER_STATS = 0,
-  ANDROID_SET_COUNTRY_CODE = 1,
+package android.hardware.bluetooth.audio;
+@VintfStability
+parcelable LeAudioCapabilities {
+  android.hardware.bluetooth.audio.LeAudioMode mode;
+  android.hardware.bluetooth.audio.CodecType codecType;
+  android.hardware.bluetooth.audio.AudioLocation supportedChannel;
+  int supportedChannelCount;
+  android.hardware.bluetooth.audio.LeAudioCapabilities.LeaudioCodecCapabilities leaudioCodecCapabilities;
+  @VintfStability
+  parcelable VendorCapabilities {
+    ParcelableHolder extension;
+  }
+  @VintfStability
+  union LeaudioCodecCapabilities {
+    android.hardware.bluetooth.audio.Lc3Capabilities lc3Capabilities;
+    android.hardware.bluetooth.audio.LeAudioCapabilities.VendorCapabilities vendorCapabillities;
+  }
 }
