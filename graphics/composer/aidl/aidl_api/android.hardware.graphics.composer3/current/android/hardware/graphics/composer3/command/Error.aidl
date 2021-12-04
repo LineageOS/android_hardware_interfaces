@@ -31,11 +31,9 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.graphics.composer3;
-@Backing(type="int") @VintfStability
-enum BlendMode {
-  INVALID = 0,
-  NONE = 1,
-  PREMULTIPLIED = 2,
-  COVERAGE = 3,
+package android.hardware.graphics.composer3.command;
+@VintfStability
+parcelable Error {
+  int commandIndex;
+  int errorCode;
 }

@@ -38,7 +38,7 @@ interface IComposerClient {
   android.hardware.graphics.composer3.VirtualDisplay createVirtualDisplay(int width, int height, android.hardware.graphics.common.PixelFormat formatHint, int outputBufferSlotCount);
   void destroyLayer(long display, long layer);
   void destroyVirtualDisplay(long display);
-  android.hardware.graphics.composer3.ExecuteCommandsStatus executeCommands(int inLength, in android.hardware.common.NativeHandle[] inHandles);
+  android.hardware.graphics.composer3.command.CommandResultPayload[] executeCommands(in android.hardware.graphics.composer3.command.CommandPayload[] commands);
   int getActiveConfig(long display);
   android.hardware.graphics.composer3.ColorMode[] getColorModes(long display);
   float[] getDataspaceSaturationMatrix(android.hardware.graphics.common.Dataspace dataspace);
@@ -56,7 +56,6 @@ interface IComposerClient {
   android.hardware.graphics.composer3.HdrCapabilities getHdrCapabilities(long display);
   android.hardware.graphics.composer3.LayerGenericMetadataKey[] getLayerGenericMetadataKeys();
   int getMaxVirtualDisplayCount();
-  android.hardware.common.fmq.MQDescriptor<int,android.hardware.common.fmq.SynchronizedReadWrite> getOutputCommandQueue();
   android.hardware.graphics.composer3.PerFrameMetadataKey[] getPerFrameMetadataKeys(long display);
   android.hardware.graphics.composer3.ReadbackBufferAttributes getReadbackBufferAttributes(long display);
   ParcelFileDescriptor getReadbackBufferFence(long display);
@@ -71,7 +70,6 @@ interface IComposerClient {
   void setContentType(long display, android.hardware.graphics.composer3.ContentType type);
   void setDisplayBrightness(long display, float brightness);
   void setDisplayedContentSamplingEnabled(long display, boolean enable, android.hardware.graphics.composer3.FormatColorComponent componentMask, long maxFrames);
-  void setInputCommandQueue(in android.hardware.common.fmq.MQDescriptor<int,android.hardware.common.fmq.SynchronizedReadWrite> descriptor);
   void setPowerMode(long display, android.hardware.graphics.composer3.PowerMode mode);
   void setReadbackBuffer(long display, in android.hardware.common.NativeHandle buffer, in ParcelFileDescriptor releaseFence);
   void setVsyncEnabled(long display, boolean enabled);
