@@ -274,7 +274,7 @@ LayerSettings TestColorLayer::toRenderEngineLayerSettings() {
 
 TestBufferLayer::TestBufferLayer(const std::shared_ptr<IComposerClient>& client,
                                  const ::android::sp<::android::GraphicBuffer>& graphicBuffer,
-                                 TestRenderEngine& renderEngine, int32_t display, uint32_t width,
+                                 TestRenderEngine& renderEngine, int64_t display, uint32_t width,
                                  uint32_t height, common::PixelFormat format,
                                  Composition composition)
     : TestLayer{client, display}, mRenderEngine(renderEngine) {

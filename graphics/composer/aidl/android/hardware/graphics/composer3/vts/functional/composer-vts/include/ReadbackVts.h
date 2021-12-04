@@ -53,7 +53,7 @@ class TestRenderEngine;
 
 class TestLayer {
   public:
-    TestLayer(const std::shared_ptr<IComposerClient>& client, int32_t display)
+    TestLayer(const std::shared_ptr<IComposerClient>& client, int64_t display)
         : mComposerClient(client) {
         client->createLayer(display, kBufferSlotCount, &mLayer);
     }
@@ -100,7 +100,7 @@ class TestLayer {
 
 class TestColorLayer : public TestLayer {
   public:
-    TestColorLayer(const std::shared_ptr<IComposerClient>& client, int32_t display)
+    TestColorLayer(const std::shared_ptr<IComposerClient>& client, int64_t display)
         : TestLayer{client, display} {}
 
     void write(const std::shared_ptr<CommandWriterBase>& writer) override;
@@ -117,7 +117,7 @@ class TestBufferLayer : public TestLayer {
   public:
     TestBufferLayer(const std::shared_ptr<IComposerClient>& client,
                     const ::android::sp<::android::GraphicBuffer>& graphicBuffer,
-                    TestRenderEngine& renderEngine, int32_t display, uint32_t width,
+                    TestRenderEngine& renderEngine, int64_t display, uint32_t width,
                     uint32_t height, common::PixelFormat format,
                     Composition composition = Composition::DEVICE);
 
