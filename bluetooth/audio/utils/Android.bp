@@ -22,6 +22,7 @@ cc_library_shared {
     export_include_dirs: ["session/"],
     header_libs: ["libhardware_headers"],
     shared_libs: [
+        "android.hardware.audio.common@5.0",
         "android.hardware.bluetooth.audio@2.0",
         "android.hardware.bluetooth.audio@2.1",
         "android.hardware.bluetooth.audio@2.2",
