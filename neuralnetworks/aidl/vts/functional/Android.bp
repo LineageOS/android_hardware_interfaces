@@ -60,6 +60,7 @@ cc_test {
         "libsync",
     ],
     whole_static_libs: [
+        "neuralnetworks_generated_AIDL_V3_example",
         "neuralnetworks_generated_AIDL_V2_example",
         "neuralnetworks_generated_V1_0_example",
         "neuralnetworks_generated_V1_1_example",
