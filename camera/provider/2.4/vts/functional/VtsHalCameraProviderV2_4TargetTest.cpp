@@ -4796,15 +4796,24 @@ void CameraHidlTest::processCaptureRequestInternal(uint64_t bufferUsage,
             ASSERT_EQ(testStream.id, inflightReq.resultOutputBuffers[0].streamId);
 
             // For camera device 3.8 or newer, shutterReadoutTimestamp must be
-            // available, and it must be shutterTimestamp + exposureTime.
+            // available, and it must be >= shutterTimestamp + exposureTime, and
+            // < shutterTimestamp + exposureTime + rollingShutterSkew / 2.
             if (deviceVersion >= CAMERA_DEVICE_API_VERSION_3_8) {
                 ASSERT_TRUE(inflightReq.shutterReadoutTimestampValid);
                 ASSERT_FALSE(inflightReq.collectedResult.isEmpty());
                 if (inflightReq.collectedResult.exists(ANDROID_SENSOR_EXPOSURE_TIME)) {
                     camera_metadata_entry_t exposureTimeResult = inflightReq.collectedResult.find(
                             ANDROID_SENSOR_EXPOSURE_TIME);
-                    ASSERT_EQ(inflightReq.shutterReadoutTimestamp - inflightReq.shutterTimestamp,
-                            exposureTimeResult.data.i64[0]);
+                    nsecs_t exposureToReadout =
+                            inflightReq.shutterReadoutTimestamp - inflightReq.shutterTimestamp;
+                    ASSERT_GE(exposureToReadout, exposureTimeResult.data.i64[0]);
+                    if (inflightReq.collectedResult.exists(ANDROID_SENSOR_ROLLING_SHUTTER_SKEW)) {
+                        camera_metadata_entry_t rollingShutterSkew =
+                                inflightReq.collectedResult.find(
+                                        ANDROID_SENSOR_ROLLING_SHUTTER_SKEW);
+                        ASSERT_LT(exposureToReadout, exposureTimeResult.data.i64[0] +
+                                                             rollingShutterSkew.data.i64[0] / 2);
+                    }
                 }
             }
 
