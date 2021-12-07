@@ -21,11 +21,21 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
+filegroup {
+    name: "android.hardware.usb@1.0-service.xml",
+    srcs: ["android.hardware.usb@1.0-service.xml"],
+}
+
+filegroup {
+    name: "android.hardware.usb@1.0-service.rc",
+    srcs: ["android.hardware.usb@1.0-service.rc"],
+}
+
 cc_binary {
     name: "android.hardware.usb@1.0-service",
     defaults: ["hidl_defaults"],
-    init_rc: ["android.hardware.usb@1.0-service.rc"],
-    vintf_fragments: ["android.hardware.usb@1.0-service.xml"],
+    init_rc: [":android.hardware.usb@1.0-service.rc"],
+    vintf_fragments: [":android.hardware.usb@1.0-service.xml"],
     relative_install_path: "hw",
     vendor: true,
     srcs: [
