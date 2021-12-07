@@ -16,6 +16,7 @@
 
 package android.hardware.gnss;
 
+import android.hardware.gnss.IAGnss;
 import android.hardware.gnss.IGnssBatching;
 import android.hardware.gnss.IGnssCallback;
 import android.hardware.gnss.IGnssConfiguration;
@@ -75,7 +76,7 @@ interface IGnss {
     /**
      * This method returns the IGnssPsds interface.
      *
-     * @return Handle to the IGnssPsds interface.
+     * @return The IGnssPsds interface.
      */
     @nullable IGnssPsds getExtensionPsds();
 
@@ -84,7 +85,7 @@ interface IGnss {
      *
      * This method must return non-null.
      *
-     * @return Handle to the IGnssConfiguration interface.
+     * @return The IGnssConfiguration interface.
      */
     IGnssConfiguration getExtensionGnssConfiguration();
 
@@ -93,7 +94,7 @@ interface IGnss {
      *
      * This method must return non-null.
      *
-     * @return Handle to the IGnssMeasurementInterface interface.
+     * @return The IGnssMeasurementInterface interface.
      */
     IGnssMeasurementInterface getExtensionGnssMeasurement();
 
@@ -102,28 +103,35 @@ interface IGnss {
      *
      * This method must return non-null.
      *
-     * @return Handle to the IGnssPowerIndication interface.
+     * @return The IGnssPowerIndication interface.
      */
     IGnssPowerIndication getExtensionGnssPowerIndication();
 
     /**
      * This method returns the IGnssBatching interface.
      *
-     * @return Handle to the IGnssBatching interface.
+     * @return The IGnssBatching interface.
      */
     @nullable IGnssBatching getExtensionGnssBatching();
 
     /**
      * This method returns the IGnssGeofence interface.
      *
-     * @return Handle to the IGnssGeofence interface.
+     * @return The IGnssGeofence interface.
      */
     @nullable IGnssGeofence getExtensionGnssGeofence();
 
     /**
      * This method returns the IGnssNavigationMessageInterface.
      *
-     * @return Handle to the IGnssNavigationMessageInterface.
+     * @return The IGnssNavigationMessageInterface.
      */
     @nullable IGnssNavigationMessageInterface getExtensionGnssNavigationMessage();
+
+    /**
+     * This method returns the IAGnss interface.
+     *
+     * @return The IAGnss interface.
+     */
+    IAGnss getExtensionAGnss();
 }

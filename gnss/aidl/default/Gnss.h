@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <aidl/android/hardware/gnss/BnAGnss.h>
 #include <aidl/android/hardware/gnss/BnGnss.h>
 #include <aidl/android/hardware/gnss/BnGnssBatching.h>
 #include <aidl/android/hardware/gnss/BnGnssConfiguration.h>
@@ -44,6 +45,7 @@ class Gnss : public BnGnss {
             std::shared_ptr<IGnssGeofence>* iGnssGeofence) override;
     ndk::ScopedAStatus getExtensionGnssNavigationMessage(
             std::shared_ptr<IGnssNavigationMessageInterface>* iGnssNavigationMessage) override;
+    ndk::ScopedAStatus getExtensionAGnss(std::shared_ptr<IAGnss>* iAGnss) override;
 
     std::shared_ptr<GnssConfiguration> mGnssConfiguration;
     std::shared_ptr<GnssPowerIndication> mGnssPowerIndication;
