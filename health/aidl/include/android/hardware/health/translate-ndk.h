@@ -33,6 +33,9 @@ __attribute__((warn_unused_result)) bool translate(
         const ::android::hardware::health::V2_0::DiskStats& in,
         aidl::android::hardware::health::DiskStats* out);
 __attribute__((warn_unused_result)) bool translate(
+        const ::android::hardware::health::V2_0::HealthInfo& in,
+        aidl::android::hardware::health::HealthInfo* out);
+__attribute__((warn_unused_result)) bool translate(
         const ::android::hardware::health::V2_1::HealthInfo& in,
         aidl::android::hardware::health::HealthInfo* out);
 
