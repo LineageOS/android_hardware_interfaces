@@ -198,7 +198,7 @@ static int defaultScanFrontend = SCAN_DVBT;
 /** Configuration array for the frontend tune test */
 inline void initFrontendConfig() {
     FrontendDvbtSettings dvbtSettings{
-            .frequency = 578000,
+            .frequency = 578000000,
             .transmissionMode = FrontendDvbtTransmissionMode::AUTO,
             .bandwidth = FrontendDvbtBandwidth::BANDWIDTH_8MHZ,
             .constellation = FrontendDvbtConstellation::AUTO,
