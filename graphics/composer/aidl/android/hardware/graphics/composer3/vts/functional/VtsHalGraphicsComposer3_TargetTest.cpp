@@ -1950,5 +1950,41 @@ int main(int argc, char** argv) {
         ALOGE("Failed to stop init.svc.surfaceflinger");
         return -1;
     }
+
+    android::ProcessState::self()->setThreadPoolMaxThreadCount(4);
+
+    // The binder threadpool we start will inherit sched policy and priority
+    // of (this) creating thread. We want the binder thread pool to have
+    // SCHED_FIFO policy and priority 1 (lowest RT priority)
+    // Once the pool is created we reset this thread's priority back to
+    // original.
+    // This thread policy is based on what we do in the SurfaceFlinger while starting
+    // the thread pool and we need to replicate that for the VTS tests.
+    int newPriority = 0;
+    int origPolicy = sched_getscheduler(0);
+    struct sched_param origSchedParam;
+
+    int errorInPriorityModification = sched_getparam(0, &origSchedParam);
+    if (errorInPriorityModification == 0) {
+        int policy = SCHED_FIFO;
+        newPriority = sched_get_priority_min(policy);
+
+        struct sched_param param;
+        param.sched_priority = newPriority;
+
+        errorInPriorityModification = sched_setscheduler(0, policy, &param);
+    }
+
+    // start the thread pool
+    android::ProcessState::self()->startThreadPool();
+
+    // Reset current thread's policy and priority
+    if (errorInPriorityModification == 0) {
+        errorInPriorityModification = sched_setscheduler(0, origPolicy, &origSchedParam);
+    } else {
+        ALOGE("Failed to set VtsHalGraphicsComposer3_TargetTest binder threadpool priority to "
+              "SCHED_FIFO");
+    }
+
     return RUN_ALL_TESTS();
 }
