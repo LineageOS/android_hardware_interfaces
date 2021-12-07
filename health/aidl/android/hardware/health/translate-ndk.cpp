@@ -106,36 +106,41 @@ __attribute__((warn_unused_result)) bool translate(
 }
 
 __attribute__((warn_unused_result)) bool translate(
+        const ::android::hardware::health::V2_0::HealthInfo& in,
+        aidl::android::hardware::health::HealthInfo* out) {
+    out->chargerAcOnline = static_cast<bool>(in.legacy.chargerAcOnline);
+    out->chargerUsbOnline = static_cast<bool>(in.legacy.chargerUsbOnline);
+    out->chargerWirelessOnline = static_cast<bool>(in.legacy.chargerWirelessOnline);
+    out->maxChargingCurrentMicroamps = static_cast<int32_t>(in.legacy.maxChargingCurrent);
+    out->maxChargingVoltageMicrovolts = static_cast<int32_t>(in.legacy.maxChargingVoltage);
+    out->batteryStatus =
+            static_cast<aidl::android::hardware::health::BatteryStatus>(in.legacy.batteryStatus);
+    out->batteryHealth =
+            static_cast<aidl::android::hardware::health::BatteryHealth>(in.legacy.batteryHealth);
+    out->batteryPresent = static_cast<bool>(in.legacy.batteryPresent);
+    out->batteryLevel = static_cast<int32_t>(in.legacy.batteryLevel);
+    out->batteryVoltageMillivolts = static_cast<int32_t>(in.legacy.batteryVoltage);
+    out->batteryTemperatureTenthsCelsius = static_cast<int32_t>(in.legacy.batteryTemperature);
+    out->batteryCurrentMicroamps = static_cast<int32_t>(in.legacy.batteryCurrent);
+    out->batteryCycleCount = static_cast<int32_t>(in.legacy.batteryCycleCount);
+    out->batteryFullChargeUah = static_cast<int32_t>(in.legacy.batteryFullCharge);
+    out->batteryChargeCounterUah = static_cast<int32_t>(in.legacy.batteryChargeCounter);
+    out->batteryTechnology = in.legacy.batteryTechnology;
+    out->batteryCurrentAverageMicroamps = static_cast<int32_t>(in.batteryCurrentAverage);
+    out->diskStats.clear();
+    out->diskStats.resize(in.diskStats.size());
+    for (size_t i = 0; i < in.diskStats.size(); ++i)
+        if (!translate(in.diskStats[i], &out->diskStats[i])) return false;
+    out->storageInfos.clear();
+    out->storageInfos.resize(in.storageInfos.size());
+    for (size_t i = 0; i < in.storageInfos.size(); ++i)
+        if (!translate(in.storageInfos[i], &out->storageInfos[i])) return false;
+    return true;
+}
+__attribute__((warn_unused_result)) bool translate(
         const ::android::hardware::health::V2_1::HealthInfo& in,
         aidl::android::hardware::health::HealthInfo* out) {
-    out->chargerAcOnline = static_cast<bool>(in.legacy.legacy.chargerAcOnline);
-    out->chargerUsbOnline = static_cast<bool>(in.legacy.legacy.chargerUsbOnline);
-    out->chargerWirelessOnline = static_cast<bool>(in.legacy.legacy.chargerWirelessOnline);
-    out->maxChargingCurrentMicroamps = static_cast<int32_t>(in.legacy.legacy.maxChargingCurrent);
-    out->maxChargingVoltageMicrovolts = static_cast<int32_t>(in.legacy.legacy.maxChargingVoltage);
-    out->batteryStatus = static_cast<aidl::android::hardware::health::BatteryStatus>(
-            in.legacy.legacy.batteryStatus);
-    out->batteryHealth = static_cast<aidl::android::hardware::health::BatteryHealth>(
-            in.legacy.legacy.batteryHealth);
-    out->batteryPresent = static_cast<bool>(in.legacy.legacy.batteryPresent);
-    out->batteryLevel = static_cast<int32_t>(in.legacy.legacy.batteryLevel);
-    out->batteryVoltageMillivolts = static_cast<int32_t>(in.legacy.legacy.batteryVoltage);
-    out->batteryTemperatureTenthsCelsius =
-            static_cast<int32_t>(in.legacy.legacy.batteryTemperature);
-    out->batteryCurrentMicroamps = static_cast<int32_t>(in.legacy.legacy.batteryCurrent);
-    out->batteryCycleCount = static_cast<int32_t>(in.legacy.legacy.batteryCycleCount);
-    out->batteryFullChargeUah = static_cast<int32_t>(in.legacy.legacy.batteryFullCharge);
-    out->batteryChargeCounterUah = static_cast<int32_t>(in.legacy.legacy.batteryChargeCounter);
-    out->batteryTechnology = in.legacy.legacy.batteryTechnology;
-    out->batteryCurrentAverageMicroamps = static_cast<int32_t>(in.legacy.batteryCurrentAverage);
-    out->diskStats.clear();
-    out->diskStats.resize(in.legacy.diskStats.size());
-    for (size_t i = 0; i < in.legacy.diskStats.size(); ++i)
-        if (!translate(in.legacy.diskStats[i], &out->diskStats[i])) return false;
-    out->storageInfos.clear();
-    out->storageInfos.resize(in.legacy.storageInfos.size());
-    for (size_t i = 0; i < in.legacy.storageInfos.size(); ++i)
-        if (!translate(in.legacy.storageInfos[i], &out->storageInfos[i])) return false;
+    if (!translate(in.legacy, out)) return false;
     out->batteryCapacityLevel = static_cast<aidl::android::hardware::health::BatteryCapacityLevel>(
             in.batteryCapacityLevel);
     out->batteryChargeTimeToFullNowSeconds =
