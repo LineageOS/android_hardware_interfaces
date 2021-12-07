@@ -105,4 +105,13 @@ oneway interface IUsbCallback {
      * @param transactionId ID sent during limitPowerTransfer request.
      */
     void notifyLimitPowerTransferStatus(in String portName, boolean limit, in Status retval, long transactionId);
+
+    /**
+     * Used to notify the result of requesting resetUsbPort.
+     *
+     * @param portName name of the port that was being reset.
+     * @param retval SUCCESS if current request succeeded. FAILURE otherwise.
+     * @param transactionId current transactionId sent during resetUsbPort request.
+     */
+    void notifyResetUsbPortStatus(in String portName, in Status retval, long transactionId);
 }
