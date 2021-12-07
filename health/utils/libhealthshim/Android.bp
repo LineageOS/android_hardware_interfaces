@@ -1,0 +1,78 @@
+// Copyright (C) 2021 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_defaults {
+    name: "libhealthshim_defaults",
+    host_supported: true, // for testing
+    defaults: [
+        "libbinder_ndk_host_user",
+    ],
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+    static_libs: [
+        "android.hardware.health-V1-ndk",
+        "android.hardware.health-translate-ndk",
+        "android.hardware.health@1.0",
+        "android.hardware.health@2.0",
+    ],
+    shared_libs: [
+        // These can be expected from the device or from host.
+        "libbase",
+        "libbinder_ndk",
+        "libcutils",
+        "libhidlbase",
+        "liblog",
+        "libutils",
+    ],
+}
+
+// Shim library that wraps a HIDL IHealth object into an AIDL IHealth object.
+cc_library_static {
+    name: "libhealthshim",
+    defaults: ["libhealthshim_defaults"],
+    recovery_available: true,
+    srcs: [
+        "shim.cpp",
+    ],
+    export_include_dirs: [
+        "include",
+    ],
+}
+
+cc_test {
+    name: "libhealthshim_test",
+    defaults: ["libhealthshim_defaults"],
+    static_libs: [
+        "libhealthshim",
+        "libgmock",
+    ],
+    srcs: [
+        "test.cpp",
+    ],
+    test_suites: ["general-tests"],
+    test_options: {
+        unit_test: true,
+    },
+}
