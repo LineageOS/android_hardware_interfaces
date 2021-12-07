@@ -41,6 +41,10 @@ cc_test {
         "general-tests",
         "vts",
     ],
+    sanitize: {
+        cfi: false,
+    },
+
 }
 
 cc_test_library {
