@@ -26,6 +26,6 @@ package android.hardware.uwb.fira_android;
 @VintfStability
 @Backing(type="long")
 enum UwbAndroidCapabilities {
-    /** TODO: Change the name if necessary when the corresponding vendor commands are added */
     POWER_STATS_QUERY = 0x1,
+    ANTENNAE_INTERLEAVING = 0x2,
 }
