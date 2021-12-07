@@ -43,6 +43,15 @@ using ::android::sp;
 #define SKIP_TEST_IF_REQUEST_NOT_SUPPORTED_WITH_HAL_VERSION_AT_LEAST(__ver__) \
     SKIP_TEST_IF_REQUEST_NOT_SUPPORTED_WITH_HAL(__ver__, radio_v1_1, radioRsp_v1_1)
 
+// HAL instance name for SIM slot 1 or single SIM device
+#define RADIO_SERVICE_SLOT1_NAME "slot1"
+
+// HAL instance name for SIM slot 2 on dual SIM device
+#define RADIO_SERVICE_SLOT2_NAME "slot2"
+
+// HAL instance name for SIM slot 3 on triple SIM device
+#define RADIO_SERVICE_SLOT3_NAME "slot3"
+
 class RadioHidlTest_v1_1;
 extern CardStatus cardStatus;
 
