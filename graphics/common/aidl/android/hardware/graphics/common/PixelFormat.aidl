@@ -498,4 +498,11 @@ enum PixelFormat {
      * interpretation is defined by the dataspace.
      */
     HSV_888 = 0x37,
+
+    /**
+     * 8 bit format with a single 8-bit component.
+     *
+     * The component values are unsigned normalized to the range [0, 1].
+     */
+    R_8 = 0x38,
 }
