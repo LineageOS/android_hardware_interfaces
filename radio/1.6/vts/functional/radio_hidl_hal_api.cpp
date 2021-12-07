@@ -645,6 +645,10 @@ TEST_P(RadioHidlTest_v1_6, emergencyDial_1_6) {
     if (!deviceSupportsFeature(FEATURE_VOICE_CALL)) {
         ALOGI("Skipping emergencyDial because voice call is not supported in device");
         return;
+    } else if (!deviceSupportsFeature(FEATURE_TELEPHONY_GSM) &&
+               !deviceSupportsFeature(FEATURE_TELEPHONY_CDMA)) {
+        ALOGI("Skipping emergencyDial because gsm/cdma radio is not supported in device");
+        return;
     } else {
         ALOGI("Running emergencyDial because voice call is supported in device");
     }
@@ -699,6 +703,10 @@ TEST_P(RadioHidlTest_v1_6, emergencyDial_1_6_withServices) {
     if (!deviceSupportsFeature(FEATURE_VOICE_CALL)) {
         ALOGI("Skipping emergencyDial because voice call is not supported in device");
         return;
+    } else if (!deviceSupportsFeature(FEATURE_TELEPHONY_GSM) &&
+               !deviceSupportsFeature(FEATURE_TELEPHONY_CDMA)) {
+        ALOGI("Skipping emergencyDial because gsm/cdma radio is not supported in device");
+        return;
     } else {
         ALOGI("Running emergencyDial because voice call is supported in device");
     }
@@ -751,6 +759,10 @@ TEST_P(RadioHidlTest_v1_6, emergencyDial_1_6_withServices) {
 TEST_P(RadioHidlTest_v1_6, emergencyDial_1_6_withEmergencyRouting) {
     if (!deviceSupportsFeature(FEATURE_VOICE_CALL)) {
         ALOGI("Skipping emergencyDial because voice call is not supported in device");
+        return;
+    } else if (!deviceSupportsFeature(FEATURE_TELEPHONY_GSM) &&
+               !deviceSupportsFeature(FEATURE_TELEPHONY_CDMA)) {
+        ALOGI("Skipping emergencyDial because gsm/cdma radio is not supported in device");
         return;
     } else {
         ALOGI("Running emergencyDial because voice call is supported in device");
