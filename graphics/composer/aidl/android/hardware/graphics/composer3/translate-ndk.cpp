@@ -74,25 +74,25 @@ static_assert(
 static_assert(aidl::android::hardware::graphics::composer3::Capability::SKIP_VALIDATE ==
               static_cast<aidl::android::hardware::graphics::composer3::Capability>(4));
 
-static_assert(aidl::android::hardware::graphics::composer3::LayerRequest::CLEAR_CLIENT_TARGET ==
-              static_cast<aidl::android::hardware::graphics::composer3::LayerRequest>(
-                      ::android::hardware::graphics::composer::V2_1::IComposerClient::LayerRequest::
-                              CLEAR_CLIENT_TARGET));
+static_assert(aidl::android::hardware::graphics::composer3::command::DisplayRequest::LayerRequest::
+                      CLEAR_CLIENT_TARGET ==
+              static_cast<int>(::android::hardware::graphics::composer::V2_1::IComposerClient::
+                                       LayerRequest::CLEAR_CLIENT_TARGET));
 
-static_assert(aidl::android::hardware::graphics::composer3::BlendMode::INVALID ==
-              static_cast<aidl::android::hardware::graphics::composer3::BlendMode>(
+static_assert(aidl::android::hardware::graphics::common::BlendMode::INVALID ==
+              static_cast<aidl::android::hardware::graphics::common::BlendMode>(
                       ::android::hardware::graphics::composer::V2_1::IComposerClient::BlendMode::
                               INVALID));
 static_assert(
-        aidl::android::hardware::graphics::composer3::BlendMode::NONE ==
-        static_cast<aidl::android::hardware::graphics::composer3::BlendMode>(
+        aidl::android::hardware::graphics::common::BlendMode::NONE ==
+        static_cast<aidl::android::hardware::graphics::common::BlendMode>(
                 ::android::hardware::graphics::composer::V2_1::IComposerClient::BlendMode::NONE));
-static_assert(aidl::android::hardware::graphics::composer3::BlendMode::PREMULTIPLIED ==
-              static_cast<aidl::android::hardware::graphics::composer3::BlendMode>(
+static_assert(aidl::android::hardware::graphics::common::BlendMode::PREMULTIPLIED ==
+              static_cast<aidl::android::hardware::graphics::common::BlendMode>(
                       ::android::hardware::graphics::composer::V2_1::IComposerClient::BlendMode::
                               PREMULTIPLIED));
-static_assert(aidl::android::hardware::graphics::composer3::BlendMode::COVERAGE ==
-              static_cast<aidl::android::hardware::graphics::composer3::BlendMode>(
+static_assert(aidl::android::hardware::graphics::common::BlendMode::COVERAGE ==
+              static_cast<aidl::android::hardware::graphics::common::BlendMode>(
                       ::android::hardware::graphics::composer::V2_1::IComposerClient::BlendMode::
                               COVERAGE));
 
@@ -121,15 +121,14 @@ static_assert(aidl::android::hardware::graphics::composer3::Composition::SIDEBAN
                       ::android::hardware::graphics::composer::V2_1::IComposerClient::Composition::
                               SIDEBAND));
 
-static_assert(aidl::android::hardware::graphics::composer3::DisplayRequest::FLIP_CLIENT_TARGET ==
-              static_cast<aidl::android::hardware::graphics::composer3::DisplayRequest>(
-                      ::android::hardware::graphics::composer::V2_1::IComposerClient::
-                              DisplayRequest::FLIP_CLIENT_TARGET));
-static_assert(aidl::android::hardware::graphics::composer3::DisplayRequest::
+static_assert(
+        aidl::android::hardware::graphics::composer3::command::DisplayRequest::FLIP_CLIENT_TARGET ==
+        static_cast<int>(::android::hardware::graphics::composer::V2_1::IComposerClient::
+                                 DisplayRequest::FLIP_CLIENT_TARGET));
+static_assert(aidl::android::hardware::graphics::composer3::command::DisplayRequest::
                       WRITE_CLIENT_TARGET_TO_OUTPUT ==
-              static_cast<aidl::android::hardware::graphics::composer3::DisplayRequest>(
-                      ::android::hardware::graphics::composer::V2_1::IComposerClient::
-                              DisplayRequest::WRITE_CLIENT_TARGET_TO_OUTPUT));
+              static_cast<int>(::android::hardware::graphics::composer::V2_1::IComposerClient::
+                                       DisplayRequest::WRITE_CLIENT_TARGET_TO_OUTPUT));
 
 static_assert(aidl::android::hardware::graphics::composer3::HandleIndex::EMPTY ==
               static_cast<aidl::android::hardware::graphics::composer3::HandleIndex>(
@@ -187,162 +186,6 @@ static_assert(
         static_cast<aidl::android::hardware::graphics::composer3::DisplayCapability>(
                 ::android::hardware::graphics::composer::V2_4::IComposerClient::DisplayCapability::
                         AUTO_LOW_LATENCY_MODE));
-
-static_assert(aidl::android::hardware::graphics::composer3::Command::LENGTH_MASK ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              LENGTH_MASK));
-static_assert(aidl::android::hardware::graphics::composer3::Command::OPCODE_SHIFT ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              OPCODE_SHIFT));
-static_assert(aidl::android::hardware::graphics::composer3::Command::OPCODE_MASK ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              OPCODE_MASK));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SELECT_DISPLAY ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SELECT_DISPLAY));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SELECT_LAYER ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SELECT_LAYER));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_ERROR ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_ERROR));
-static_assert(
-        aidl::android::hardware::graphics::composer3::Command::SET_CHANGED_COMPOSITION_TYPES ==
-        static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                        SET_CHANGED_COMPOSITION_TYPES));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_DISPLAY_REQUESTS ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_DISPLAY_REQUESTS));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_PRESENT_FENCE ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_PRESENT_FENCE));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_RELEASE_FENCES ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_RELEASE_FENCES));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_COLOR_TRANSFORM ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_COLOR_TRANSFORM));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_CLIENT_TARGET ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_CLIENT_TARGET));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_OUTPUT_BUFFER ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_OUTPUT_BUFFER));
-static_assert(aidl::android::hardware::graphics::composer3::Command::VALIDATE_DISPLAY ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              VALIDATE_DISPLAY));
-static_assert(aidl::android::hardware::graphics::composer3::Command::ACCEPT_DISPLAY_CHANGES ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              ACCEPT_DISPLAY_CHANGES));
-static_assert(aidl::android::hardware::graphics::composer3::Command::PRESENT_DISPLAY ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              PRESENT_DISPLAY));
-static_assert(aidl::android::hardware::graphics::composer3::Command::PRESENT_OR_VALIDATE_DISPLAY ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              PRESENT_OR_VALIDATE_DISPLAY));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_LAYER_CURSOR_POSITION ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_LAYER_CURSOR_POSITION));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_LAYER_BUFFER ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_LAYER_BUFFER));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_LAYER_SURFACE_DAMAGE ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_LAYER_SURFACE_DAMAGE));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_LAYER_BLEND_MODE ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_LAYER_BLEND_MODE));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_LAYER_COLOR ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_LAYER_COLOR));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_LAYER_COMPOSITION_TYPE ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_LAYER_COMPOSITION_TYPE));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_LAYER_DATASPACE ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_LAYER_DATASPACE));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_LAYER_DISPLAY_FRAME ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_LAYER_DISPLAY_FRAME));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_LAYER_PLANE_ALPHA ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_LAYER_PLANE_ALPHA));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_LAYER_SIDEBAND_STREAM ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_LAYER_SIDEBAND_STREAM));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_LAYER_SOURCE_CROP ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_LAYER_SOURCE_CROP));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_LAYER_TRANSFORM ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_LAYER_TRANSFORM));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_LAYER_VISIBLE_REGION ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_LAYER_VISIBLE_REGION));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_LAYER_Z_ORDER ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_LAYER_Z_ORDER));
-static_assert(aidl::android::hardware::graphics::composer3::Command::
-                      SET_PRESENT_OR_VALIDATE_DISPLAY_RESULT ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_PRESENT_OR_VALIDATE_DISPLAY_RESULT));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_LAYER_PER_FRAME_METADATA ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_LAYER_PER_FRAME_METADATA));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_LAYER_FLOAT_COLOR ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_LAYER_FLOAT_COLOR));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_LAYER_COLOR_TRANSFORM ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_LAYER_COLOR_TRANSFORM));
-static_assert(
-        aidl::android::hardware::graphics::composer3::Command::SET_LAYER_PER_FRAME_METADATA_BLOBS ==
-        static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                        SET_LAYER_PER_FRAME_METADATA_BLOBS));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_CLIENT_TARGET_PROPERTY ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_CLIENT_TARGET_PROPERTY));
-static_assert(aidl::android::hardware::graphics::composer3::Command::SET_LAYER_GENERIC_METADATA ==
-              static_cast<aidl::android::hardware::graphics::composer3::Command>(
-                      ::android::hardware::graphics::composer::V2_4::IComposerClient::Command::
-                              SET_LAYER_GENERIC_METADATA));
 
 static_assert(aidl::android::hardware::graphics::composer3::DisplayAttribute::INVALID ==
               static_cast<aidl::android::hardware::graphics::composer3::DisplayAttribute>(

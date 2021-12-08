@@ -16,8 +16,6 @@
 
 package android.hardware.graphics.composer3;
 
-import android.hardware.graphics.composer3.PerFrameMetadataKey;
-
 /**
  * PerFrameMetadataKey
  *

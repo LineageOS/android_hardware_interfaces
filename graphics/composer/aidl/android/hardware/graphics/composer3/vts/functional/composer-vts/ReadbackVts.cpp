@@ -32,15 +32,14 @@ const std::vector<ColorMode> ReadbackHelper::colorModes = {ColorMode::SRGB, Colo
 const std::vector<Dataspace> ReadbackHelper::dataspaces = {common::Dataspace::SRGB,
                                                            common::Dataspace::DISPLAY_P3};
 
-void TestLayer::write(const std::shared_ptr<CommandWriterBase>& writer) {
-    writer->selectLayer(mLayer);
-    writer->setLayerDisplayFrame(mDisplayFrame);
-    writer->setLayerSourceCrop(mSourceCrop);
-    writer->setLayerZOrder(mZOrder);
-    writer->setLayerSurfaceDamage(mSurfaceDamage);
-    writer->setLayerTransform(mTransform);
-    writer->setLayerPlaneAlpha(mAlpha);
-    writer->setLayerBlendMode(mBlendMode);
+void TestLayer::write(CommandWriterBase& writer) {
+    writer.setLayerDisplayFrame(mDisplay, mLayer, mDisplayFrame);
+    writer.setLayerSourceCrop(mDisplay, mLayer, mSourceCrop);
+    writer.setLayerZOrder(mDisplay, mLayer, mZOrder);
+    writer.setLayerSurfaceDamage(mDisplay, mLayer, mSurfaceDamage);
+    writer.setLayerTransform(mDisplay, mLayer, mTransform);
+    writer.setLayerPlaneAlpha(mDisplay, mLayer, mAlpha);
+    writer.setLayerBlendMode(mDisplay, mLayer, mBlendMode);
 }
 
 std::string ReadbackHelper::getColorModeString(ColorMode mode) {
@@ -254,10 +253,10 @@ void ReadbackBuffer::checkReadbackBuffer(std::vector<Color> expectedColors) {
     EXPECT_EQ(::android::OK, status);
 }
 
-void TestColorLayer::write(const std::shared_ptr<CommandWriterBase>& writer) {
+void TestColorLayer::write(CommandWriterBase& writer) {
     TestLayer::write(writer);
-    writer->setLayerCompositionType(Composition::SOLID_COLOR);
-    writer->setLayerColor(mColor);
+    writer.setLayerCompositionType(mDisplay, mLayer, Composition::SOLID_COLOR);
+    writer.setLayerColor(mDisplay, mLayer, mColor);
 }
 
 LayerSettings TestColorLayer::toRenderEngineLayerSettings() {
@@ -297,12 +296,12 @@ TestBufferLayer::TestBufferLayer(const std::shared_ptr<IComposerClient>& client,
     setSourceCrop({0, 0, (float)width, (float)height});
 }
 
-void TestBufferLayer::write(const std::shared_ptr<CommandWriterBase>& writer) {
+void TestBufferLayer::write(CommandWriterBase& writer) {
     TestLayer::write(writer);
-    writer->setLayerCompositionType(mComposition);
-    writer->setLayerVisibleRegion(std::vector<Rect>(1, mDisplayFrame));
+    writer.setLayerCompositionType(mDisplay, mLayer, mComposition);
+    writer.setLayerVisibleRegion(mDisplay, mLayer, std::vector<Rect>(1, mDisplayFrame));
     if (mGraphicBuffer->handle != nullptr)
-        writer->setLayerBuffer(0, mGraphicBuffer->handle, mFillFence);
+        writer.setLayerBuffer(mDisplay, mLayer, 0, mGraphicBuffer->handle, mFillFence);
 }
 
 LayerSettings TestBufferLayer::toRenderEngineLayerSettings() {
@@ -346,15 +345,12 @@ void TestBufferLayer::setBuffer(std::vector<Color> colors) {
     ASSERT_EQ(::android::OK, mGraphicBuffer->initCheck());
 }
 
-void TestBufferLayer::setDataspace(common::Dataspace dataspace,
-                                   const std::shared_ptr<CommandWriterBase>& writer) {
-    writer->selectLayer(mLayer);
-    writer->setLayerDataspace(dataspace);
+void TestBufferLayer::setDataspace(common::Dataspace dataspace, CommandWriterBase& writer) {
+    writer.setLayerDataspace(mDisplay, mLayer, dataspace);
 }
 
-void TestBufferLayer::setToClientComposition(const std::shared_ptr<CommandWriterBase>& writer) {
-    writer->selectLayer(mLayer);
-    writer->setLayerCompositionType(Composition::CLIENT);
+void TestBufferLayer::setToClientComposition(CommandWriterBase& writer) {
+    writer.setLayerCompositionType(mDisplay, mLayer, Composition::CLIENT);
 }
 
 }  // namespace aidl::android::hardware::graphics::composer3::vts
