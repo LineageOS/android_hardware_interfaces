@@ -30,6 +30,7 @@ cc_test {
     srcs: [
         "gnss_hal_test.cpp",
         "gnss_hal_test_cases.cpp",
+        "AGnssCallbackAidl.cpp",
         "GnssBatchingCallback.cpp",
         "GnssCallbackAidl.cpp",
         "GnssGeofenceCallback.cpp",

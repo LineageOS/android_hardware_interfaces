@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,37 +31,19 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.graphics.common;
-@Backing(type="int") @VintfStability
-enum PixelFormat {
-  UNSPECIFIED = 0,
-  RGBA_8888 = 1,
-  RGBX_8888 = 2,
-  RGB_888 = 3,
-  RGB_565 = 4,
-  BGRA_8888 = 5,
-  YCBCR_422_SP = 16,
-  YCRCB_420_SP = 17,
-  YCBCR_422_I = 20,
-  RGBA_FP16 = 22,
-  RAW16 = 32,
-  BLOB = 33,
-  IMPLEMENTATION_DEFINED = 34,
-  YCBCR_420_888 = 35,
-  RAW_OPAQUE = 36,
-  RAW10 = 37,
-  RAW12 = 38,
-  RGBA_1010102 = 43,
-  Y8 = 538982489,
-  Y16 = 540422489,
-  YV12 = 842094169,
-  DEPTH_16 = 48,
-  DEPTH_24 = 49,
-  DEPTH_24_STENCIL_8 = 50,
-  DEPTH_32F = 51,
-  DEPTH_32F_STENCIL_8 = 52,
-  STENCIL_8 = 53,
-  YCBCR_P010 = 54,
-  HSV_888 = 55,
-  R_8 = 56,
+package android.hardware.gnss;
+@VintfStability
+interface IAGnss {
+  void setCallback(in android.hardware.gnss.IAGnssCallback callback);
+  void dataConnClosed();
+  void dataConnFailed();
+  void setServer(in android.hardware.gnss.IAGnssCallback.AGnssType type, in String hostname, in int port);
+  void dataConnOpen(in long networkHandle, in String apn, in android.hardware.gnss.IAGnss.ApnIpType apnIpType);
+  @Backing(type="int") @VintfStability
+  enum ApnIpType {
+    INVALID = 0,
+    IPV4 = 1,
+    IPV6 = 2,
+    IPV4V6 = 3,
+  }
 }

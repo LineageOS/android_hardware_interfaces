@@ -18,6 +18,7 @@
 
 #include "Gnss.h"
 #include <log/log.h>
+#include "AGnss.h"
 #include "GnssBatching.h"
 #include "GnssConfiguration.h"
 #include "GnssGeofence.h"
@@ -53,6 +54,12 @@ ndk::ScopedAStatus Gnss::setCallback(const std::shared_ptr<IGnssCallback>& callb
 ndk::ScopedAStatus Gnss::close() {
     ALOGD("Gnss::close");
     sGnssCallback = nullptr;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Gnss::getExtensionAGnss(std::shared_ptr<IAGnss>* iAGnss) {
+    ALOGD("Gnss::getExtensionAGnss");
+    *iAGnss = SharedRefBase::make<AGnss>();
     return ndk::ScopedAStatus::ok();
 }
 

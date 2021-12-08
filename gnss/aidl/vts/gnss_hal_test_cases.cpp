@@ -16,12 +16,14 @@
 
 #define LOG_TAG "GnssHalTestCases"
 
+#include <android/hardware/gnss/IAGnss.h>
 #include <android/hardware/gnss/IGnss.h>
 #include <android/hardware/gnss/IGnssBatching.h>
 #include <android/hardware/gnss/IGnssMeasurementCallback.h>
 #include <android/hardware/gnss/IGnssMeasurementInterface.h>
 #include <android/hardware/gnss/IGnssPowerIndication.h>
 #include <android/hardware/gnss/IGnssPsds.h>
+#include "AGnssCallbackAidl.h"
 #include "GnssBatchingCallback.h"
 #include "GnssGeofenceCallback.h"
 #include "GnssMeasurementCallbackAidl.h"
@@ -36,6 +38,7 @@ using android::hardware::gnss::GnssClock;
 using android::hardware::gnss::GnssData;
 using android::hardware::gnss::GnssMeasurement;
 using android::hardware::gnss::GnssPowerStats;
+using android::hardware::gnss::IAGnss;
 using android::hardware::gnss::IGnss;
 using android::hardware::gnss::IGnssBatching;
 using android::hardware::gnss::IGnssBatchingCallback;
@@ -792,4 +795,25 @@ TEST_P(GnssHalTest, TestAllExtensions) {
         status = iGnssNavMsgIface->close();
         ASSERT_TRUE(status.isOk());
     }
+}
+
+/*
+ * TestAGnssExtension:
+ * 1. Gets the IAGnss extension.
+ * 2. Sets AGnssCallback.
+ * 3. Sets SUPL server host/port.
+ */
+TEST_P(GnssHalTest, TestAGnssExtension) {
+    sp<IAGnss> iAGnss;
+    auto status = aidl_gnss_hal_->getExtensionAGnss(&iAGnss);
+    ASSERT_TRUE(status.isOk());
+    ASSERT_TRUE(iAGnss != nullptr);
+
+    auto agnssCallback = sp<AGnssCallbackAidl>::make();
+    status = iAGnss->setCallback(agnssCallback);
+    ASSERT_TRUE(status.isOk());
+
+    // Set SUPL server host/port
+    status = iAGnss->setServer(AGnssType::SUPL, String16("supl.google.com"), 7275);
+    ASSERT_TRUE(status.isOk());
 }

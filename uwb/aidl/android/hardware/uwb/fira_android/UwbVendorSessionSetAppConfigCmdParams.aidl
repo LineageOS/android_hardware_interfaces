@@ -29,9 +29,29 @@ package android.hardware.uwb.fira_android;
 enum UwbVendorSessionSetAppConfigCmdParams {
     /** CCC params for ranging start */
 
-    /** Added in vendor version 0. */
+    /**
+     * Added in vendor version 0.
+     * Range 0xA0 - 0xDF reserved for CCC use.
+     */
     CCC_RANGING_PROTOCOL_VER = 0xA3,
     CCC_UWB_CONFIG_ID = 0xA4,
     CCC_PULSESHAPE_COMBO = 0xA5,
     CCC_URSK_TTL = 0xA6,
+
+    /**
+     * Range 0xE3 - 0xFF is reserved for proprietary use in the FIRA spec.
+     * In Android, this range is reserved by the Android platform for Android-specific
+     * app config cmd params.
+     * Vendors must not define additional app config cmd params in this range.
+     */
+
+    /**
+     * Added in vendor version 0.
+     * Interleaving ratio if AOA_RESULT_REQ is set to 0xF0.
+     * Supported only if the value returned by getSupportedAndroidCapabilities()
+     * has the bit of UwbAndroidCapabilities.ANTENNAE_INTERLEAVING set to 1.
+     */
+    NB_OF_RANGE_MEASUREMENTS = 0xE3,
+    NB_OF_AZIMUTH_MEASUREMENTS = 0xE4,
+    NB_OF_ELEVATION_MEASUREMENTS = 0xE5,
 }

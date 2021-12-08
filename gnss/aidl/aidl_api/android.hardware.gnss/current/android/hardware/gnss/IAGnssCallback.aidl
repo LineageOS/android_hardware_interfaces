@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,37 +31,23 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.graphics.common;
-@Backing(type="int") @VintfStability
-enum PixelFormat {
-  UNSPECIFIED = 0,
-  RGBA_8888 = 1,
-  RGBX_8888 = 2,
-  RGB_888 = 3,
-  RGB_565 = 4,
-  BGRA_8888 = 5,
-  YCBCR_422_SP = 16,
-  YCRCB_420_SP = 17,
-  YCBCR_422_I = 20,
-  RGBA_FP16 = 22,
-  RAW16 = 32,
-  BLOB = 33,
-  IMPLEMENTATION_DEFINED = 34,
-  YCBCR_420_888 = 35,
-  RAW_OPAQUE = 36,
-  RAW10 = 37,
-  RAW12 = 38,
-  RGBA_1010102 = 43,
-  Y8 = 538982489,
-  Y16 = 540422489,
-  YV12 = 842094169,
-  DEPTH_16 = 48,
-  DEPTH_24 = 49,
-  DEPTH_24_STENCIL_8 = 50,
-  DEPTH_32F = 51,
-  DEPTH_32F_STENCIL_8 = 52,
-  STENCIL_8 = 53,
-  YCBCR_P010 = 54,
-  HSV_888 = 55,
-  R_8 = 56,
+package android.hardware.gnss;
+@VintfStability
+interface IAGnssCallback {
+  void agnssStatusCb(in android.hardware.gnss.IAGnssCallback.AGnssType type, in android.hardware.gnss.IAGnssCallback.AGnssStatusValue status);
+  @Backing(type="int") @VintfStability
+  enum AGnssType {
+    SUPL = 1,
+    C2K = 2,
+    SUPL_EIMS = 3,
+    SUPL_IMS = 4,
+  }
+  @Backing(type="int") @VintfStability
+  enum AGnssStatusValue {
+    REQUEST_AGNSS_DATA_CONN = 1,
+    RELEASE_AGNSS_DATA_CONN = 2,
+    AGNSS_DATA_CONNECTED = 3,
+    AGNSS_DATA_CONN_DONE = 4,
+    AGNSS_DATA_CONN_FAILED = 5,
+  }
 }
