@@ -1,0 +1,64 @@
+// Copyright (C) 2021 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_binary {
+    name: "android.hardware.radio-service.compat",
+    relative_install_path: "hw",
+    init_rc: ["radio-compat.rc"],
+    vintf_fragments: ["radio-compat.xml"],
+    vendor: true,
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-DANDROID_UTILS_REF_BASE_DISABLE_IMPLICIT_CONSTRUCTION",
+    ],
+    shared_libs: [
+        "android.hardware.radio-library.compat",
+        "android.hardware.radio.config-V1-ndk",
+        "android.hardware.radio.config@1.0",
+        "android.hardware.radio.config@1.1",
+        "android.hardware.radio.config@1.2",
+        "android.hardware.radio.config@1.3",
+        "android.hardware.radio.data-V1-ndk",
+        "android.hardware.radio.messaging-V1-ndk",
+        "android.hardware.radio.modem-V1-ndk",
+        "android.hardware.radio.network-V1-ndk",
+        "android.hardware.radio.sim-V1-ndk",
+        "android.hardware.radio.voice-V1-ndk",
+        "android.hardware.radio@1.0",
+        "android.hardware.radio@1.1",
+        "android.hardware.radio@1.2",
+        "android.hardware.radio@1.3",
+        "android.hardware.radio@1.4",
+        "android.hardware.radio@1.5",
+        "android.hardware.radio@1.6",
+        "libbase",
+        "libbinder_ndk",
+        "libhidlbase",
+        "libutils",
+    ],
+    srcs: [
+        "hidl-utils.cpp",
+        "service.cpp",
+    ],
+}
