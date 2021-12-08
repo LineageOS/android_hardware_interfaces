@@ -55,6 +55,7 @@ cc_binary {
         "android.hardware.gnss-V2-ndk",
     ],
     srcs: [
+        "AGnss.cpp",
         "Gnss.cpp",
         "GnssBatching.cpp",
         "GnssGeofence.cpp",
