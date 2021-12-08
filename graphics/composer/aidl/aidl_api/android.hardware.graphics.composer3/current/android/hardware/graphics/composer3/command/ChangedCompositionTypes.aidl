@@ -31,10 +31,14 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.graphics.composer3;
+package android.hardware.graphics.composer3.command;
 @VintfStability
-parcelable ExecuteCommandsStatus {
-  boolean queueChanged;
-  int length;
-  android.hardware.common.NativeHandle[] handles;
+parcelable ChangedCompositionTypes {
+  long display;
+  android.hardware.graphics.composer3.command.ChangedCompositionTypes.Layer[] layers;
+  @VintfStability
+  parcelable Layer {
+    long layer;
+    android.hardware.graphics.composer3.Composition composition;
+  }
 }

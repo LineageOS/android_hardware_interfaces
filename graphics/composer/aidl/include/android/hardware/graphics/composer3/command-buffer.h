@@ -19,15 +19,16 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include <inttypes.h>
 #include <string.h>
 
-#include <aidl/android/hardware/graphics/composer3/BlendMode.h>
+#include <aidl/android/hardware/graphics/common/BlendMode.h>
 #include <aidl/android/hardware/graphics/composer3/ClientTargetProperty.h>
 #include <aidl/android/hardware/graphics/composer3/Color.h>
-#include <aidl/android/hardware/graphics/composer3/Command.h>
 #include <aidl/android/hardware/graphics/composer3/Composition.h>
 #include <aidl/android/hardware/graphics/composer3/FloatColor.h>
 #include <aidl/android/hardware/graphics/composer3/HandleIndex.h>
@@ -36,39 +37,29 @@
 #include <aidl/android/hardware/graphics/composer3/PerFrameMetadata.h>
 #include <aidl/android/hardware/graphics/composer3/PerFrameMetadataBlob.h>
 
+#include <aidl/android/hardware/graphics/composer3/command/CommandPayload.h>
+#include <aidl/android/hardware/graphics/composer3/command/CommandResultPayload.h>
+
 #include <aidl/android/hardware/graphics/common/ColorTransform.h>
 #include <aidl/android/hardware/graphics/common/FRect.h>
 #include <aidl/android/hardware/graphics/common/Rect.h>
 #include <aidl/android/hardware/graphics/common/Transform.h>
 
-#include <fmq/AidlMessageQueue.h>
 #include <log/log.h>
 #include <sync/sync.h>
 
 #include <aidlcommonsupport/NativeHandle.h>
 
+using aidl::android::hardware::graphics::common::BlendMode;
 using aidl::android::hardware::graphics::common::ColorTransform;
 using aidl::android::hardware::graphics::common::Dataspace;
 using aidl::android::hardware::graphics::common::FRect;
 using aidl::android::hardware::graphics::common::Rect;
 using aidl::android::hardware::graphics::common::Transform;
 
-using aidl::android::hardware::graphics::composer3::BlendMode;
-using aidl::android::hardware::graphics::composer3::ClientTargetProperty;
-using aidl::android::hardware::graphics::composer3::Color;
-using aidl::android::hardware::graphics::composer3::Command;
-using aidl::android::hardware::graphics::composer3::Composition;
-using aidl::android::hardware::graphics::composer3::FloatColor;
-using aidl::android::hardware::graphics::composer3::HandleIndex;
-using aidl::android::hardware::graphics::composer3::PerFrameMetadata;
-using aidl::android::hardware::graphics::composer3::PerFrameMetadataBlob;
+using namespace aidl::android::hardware::graphics::composer3;
 
 using aidl::android::hardware::common::NativeHandle;
-using aidl::android::hardware::common::fmq::SynchronizedReadWrite;
-using android::AidlMessageQueue;
-using CommandQueueType = AidlMessageQueue<int32_t, SynchronizedReadWrite>;
-using aidl::android::hardware::common::fmq::MQDescriptor;
-using DescriptorType = MQDescriptor<int32_t, SynchronizedReadWrite>;
 
 namespace aidl::android::hardware::graphics::composer3 {
 
@@ -76,820 +67,541 @@ namespace aidl::android::hardware::graphics::composer3 {
 // units of uint32_t's.
 class CommandWriterBase {
   public:
-    CommandWriterBase(uint32_t initialMaxSize) : mDataMaxSize(initialMaxSize) {
-        mData = std::make_unique<int32_t[]>(mDataMaxSize);
-        reset();
-    }
+    CommandWriterBase() { reset(); }
 
     virtual ~CommandWriterBase() { reset(); }
 
     void reset() {
-        mDataWritten = 0;
-        mCommandEnd = 0;
-
-        // handles in mDataHandles are owned by the caller
-        mDataHandles.clear();
-
-        // handles in mTemporaryHandles are owned by the writer
-        for (auto handle : mTemporaryHandles) {
-            native_handle_close(handle);
-            native_handle_delete(handle);
-        }
-        mTemporaryHandles.clear();
+        mDisplayCommand.reset();
+        mLayerCommand.reset();
+        mCommands.clear();
+        mCommandsResults.clear();
     }
 
-    Command getCommand(uint32_t offset) {
-        uint32_t val = (offset < mDataWritten) ? mData[offset] : 0;
-        return static_cast<Command>(val & static_cast<uint32_t>(Command::OPCODE_MASK));
+    void setError(int32_t index, int32_t errorCode) {
+        command::Error error;
+        error.commandIndex = index;
+        error.errorCode = errorCode;
+        mCommandsResults.emplace_back(std::move(error));
     }
 
-    bool writeQueue(bool* outQueueChanged, int32_t* outCommandLength,
-                    std::vector<NativeHandle>* outCommandHandles) {
-        if (mDataWritten == 0) {
-            *outQueueChanged = false;
-            *outCommandLength = 0;
-            outCommandHandles->clear();
-            return true;
-        }
-
-        // After data are written to the queue, it may not be read by the
-        // remote reader when
-        //
-        //  - the writer does not send them (because of other errors)
-        //  - the hwbinder transaction fails
-        //  - the reader does not read them (because of other errors)
-        //
-        // Discard the stale data here.
-        size_t staleDataSize = mQueue ? mQueue->availableToRead() : 0;
-        if (staleDataSize > 0) {
-            ALOGW("discarding stale data from message queue");
-            CommandQueueType::MemTransaction tx;
-            if (mQueue->beginRead(staleDataSize, &tx)) {
-                mQueue->commitRead(staleDataSize);
-            }
-        }
-
-        // write data to queue, optionally resizing it
-        if (mQueue && (mDataMaxSize <= mQueue->getQuantumCount())) {
-            if (!mQueue->write(mData.get(), mDataWritten)) {
-                ALOGE("failed to write commands to message queue");
-                return false;
-            }
-
-            *outQueueChanged = false;
-        } else {
-            auto newQueue = std::make_unique<CommandQueueType>(mDataMaxSize);
-            if (!newQueue->isValid() || !newQueue->write(mData.get(), mDataWritten)) {
-                ALOGE("failed to prepare a new message queue ");
-                return false;
-            }
-
-            mQueue = std::move(newQueue);
-            *outQueueChanged = true;
-        }
-
-        *outCommandLength = mDataWritten;
-        *outCommandHandles = std::move(mDataHandles);
-
-        return true;
+    void setPresentOrValidateResult(int64_t display, command::PresentOrValidate::Result result) {
+        command::PresentOrValidate presentOrValidate;
+        presentOrValidate.display = display;
+        presentOrValidate.result = result;
+        mCommandsResults.emplace_back(std::move(presentOrValidate));
     }
 
-    DescriptorType getMQDescriptor() const {
-        return (mQueue) ? mQueue->dupeDesc() : DescriptorType{};
-    }
-
-    static constexpr uint16_t kSelectDisplayLength = 2;
-    void selectDisplay(int64_t display) {
-        beginCommand(Command::SELECT_DISPLAY, kSelectDisplayLength);
-        write64(display);
-        endCommand();
-    }
-
-    static constexpr uint16_t kSelectLayerLength = 2;
-    void selectLayer(int64_t layer) {
-        beginCommand(Command::SELECT_LAYER, kSelectLayerLength);
-        write64(layer);
-        endCommand();
-    }
-
-    static constexpr uint16_t kSetErrorLength = 2;
-    void setError(uint32_t location, int32_t error) {
-        beginCommand(Command::SET_ERROR, kSetErrorLength);
-        write(location);
-        writeSigned(error);
-        endCommand();
-    }
-
-    static constexpr uint32_t kPresentOrValidateDisplayResultLength = 1;
-    void setPresentOrValidateResult(uint32_t state) {
-        beginCommand(Command::SET_PRESENT_OR_VALIDATE_DISPLAY_RESULT,
-                     kPresentOrValidateDisplayResultLength);
-        write(state);
-        endCommand();
-    }
-
-    void setChangedCompositionTypes(const std::vector<int64_t>& layers,
+    void setChangedCompositionTypes(int64_t display, const std::vector<int64_t>& layers,
                                     const std::vector<Composition>& types) {
-        size_t totalLayers = std::min(layers.size(), types.size());
-        size_t currentLayer = 0;
+        command::ChangedCompositionTypes changedCompositionTypes;
+        changedCompositionTypes.display = display;
+        changedCompositionTypes.layers.reserve(layers.size());
+        for (int i = 0; i < layers.size(); i++) {
+            auto layer = command::ChangedCompositionTypes::Layer{.layer = layers[i],
+                                                                 .composition = types[i]};
+            changedCompositionTypes.layers.emplace_back(std::move(layer));
+        }
+        mCommandsResults.emplace_back(std::move(changedCompositionTypes));
+    }
 
-        while (currentLayer < totalLayers) {
-            size_t count =
-                    std::min(totalLayers - currentLayer, static_cast<size_t>(kMaxLength) / 3);
+    void setDisplayRequests(int64_t display, int32_t displayRequestMask,
+                            const std::vector<int64_t>& layers,
+                            const std::vector<int32_t>& layerRequestMasks) {
+        command::DisplayRequest displayRequest;
+        displayRequest.display = display;
+        displayRequest.mask = displayRequestMask;
+        displayRequest.layerRequests.reserve(layers.size());
+        for (int i = 0; i < layers.size(); i++) {
+            auto layerRequest = command::DisplayRequest::LayerRequest{.layer = layers[i],
+                                                                      .mask = layerRequestMasks[i]};
+            displayRequest.layerRequests.emplace_back(std::move(layerRequest));
+        }
+        mCommandsResults.emplace_back(std::move(displayRequest));
+    }
 
-            beginCommand(Command::SET_CHANGED_COMPOSITION_TYPES, count * 3);
-            for (size_t i = 0; i < count; i++) {
-                write64(layers[currentLayer + i]);
-                writeSigned(static_cast<int32_t>(types[currentLayer + i]));
+    void setPresentFence(int64_t display, ::ndk::ScopedFileDescriptor presentFence) {
+        if (presentFence.get() >= 0) {
+            command::PresentFence presentFenceCommand;
+            presentFenceCommand.fence = std::move(presentFence);
+            presentFenceCommand.display = display;
+            mCommandsResults.emplace_back(std::move(presentFenceCommand));
+        } else {
+            ALOGW("%s: invalid present fence %d", __func__, presentFence.get());
+        }
+    }
+
+    void setReleaseFences(int64_t display, const std::vector<int64_t>& layers,
+                          std::vector<::ndk::ScopedFileDescriptor> releaseFences) {
+        command::ReleaseFences releaseFencesCommand;
+        releaseFencesCommand.display = display;
+        for (int i = 0; i < layers.size(); i++) {
+            if (releaseFences[i].get() >= 0) {
+                command::ReleaseFences::Layer layer;
+                layer.layer = layers[i];
+                layer.fence = std::move(releaseFences[i]);
+                releaseFencesCommand.layers.emplace_back(std::move(layer));
+            } else {
+                ALOGW("%s: invalid release fence %d", __func__, releaseFences[i].get());
             }
-            endCommand();
-
-            currentLayer += count;
         }
+        mCommandsResults.emplace_back(std::move(releaseFencesCommand));
     }
 
-    void setDisplayRequests(uint32_t displayRequestMask, const std::vector<int64_t>& layers,
-                            const std::vector<uint32_t>& layerRequestMasks) {
-        size_t totalLayers = std::min(layers.size(), layerRequestMasks.size());
-        size_t currentLayer = 0;
+    void setClientTargetProperty(int64_t display, const ClientTargetProperty& clientTargetProperty,
+                                 float whitePointNits) {
+        command::ClientTargetPropertyWithNits clientTargetPropertyWithNits;
+        clientTargetPropertyWithNits.display = display;
+        clientTargetPropertyWithNits.clientTargetProperty = clientTargetProperty;
+        clientTargetPropertyWithNits.whitePointNits = whitePointNits;
+        mCommandsResults.emplace_back(std::move(clientTargetPropertyWithNits));
+    }
 
-        while (currentLayer < totalLayers) {
-            size_t count =
-                    std::min(totalLayers - currentLayer, static_cast<size_t>(kMaxLength - 1) / 3);
+    void setColorTransform(int64_t display, const float* matrix, ColorTransform hint) {
+        command::ColorTransformPayload colorTransformPayload;
+        colorTransformPayload.matrix.assign(matrix, matrix + 16);
+        colorTransformPayload.hint = hint;
+        getDisplayCommand(display).colorTransform.emplace(std::move(colorTransformPayload));
+    }
 
-            beginCommand(Command::SET_DISPLAY_REQUESTS, 1 + count * 3);
-            write(displayRequestMask);
-            for (size_t i = 0; i < count; i++) {
-                write64(layers[currentLayer + i]);
-                write(static_cast<int32_t>(layerRequestMasks[currentLayer + i]));
-            }
-            endCommand();
+    void setClientTarget(int64_t display, uint32_t slot, const native_handle_t* target,
+                         int acquireFence, Dataspace dataspace, const std::vector<Rect>& damage) {
+        command::ClientTarget clientTargetCommand;
+        clientTargetCommand.buffer = getBuffer(slot, target, acquireFence);
+        clientTargetCommand.dataspace = dataspace;
+        clientTargetCommand.damage.assign(damage.begin(), damage.end());
+        getDisplayCommand(display).clientTarget.emplace(std::move(clientTargetCommand));
+    }
 
-            currentLayer += count;
+    void setOutputBuffer(int64_t display, uint32_t slot, const native_handle_t* buffer,
+                         int releaseFence) {
+        getDisplayCommand(display).virtualDisplayOutputBuffer.emplace(
+                getBuffer(slot, buffer, releaseFence));
+    }
+
+    void validateDisplay(int64_t display) { getDisplayCommand(display).validateDisplay = true; }
+
+    void presentOrvalidateDisplay(int64_t display) {
+        getDisplayCommand(display).presentOrValidateDisplay = true;
+    }
+
+    void acceptDisplayChanges(int64_t display) {
+        getDisplayCommand(display).acceptDisplayChanges = true;
+    }
+
+    void presentDisplay(int64_t display) { getDisplayCommand(display).presentDisplay = true; }
+
+    void setLayerCursorPosition(int64_t display, int64_t layer, int32_t x, int32_t y) {
+        common::Point cursorPosition;
+        cursorPosition.x = x;
+        cursorPosition.y = y;
+        getLayerCommand(display, layer).cursorPosition.emplace(std::move(cursorPosition));
+    }
+
+    void setLayerBuffer(int64_t display, int64_t layer, uint32_t slot,
+                        const native_handle_t* buffer, int acquireFence) {
+        getLayerCommand(display, layer).buffer = getBuffer(slot, buffer, acquireFence);
+    }
+
+    void setLayerSurfaceDamage(int64_t display, int64_t layer, const std::vector<Rect>& damage) {
+        getLayerCommand(display, layer).damage.emplace(damage.begin(), damage.end());
+    }
+
+    void setLayerBlendMode(int64_t display, int64_t layer, BlendMode mode) {
+        command::ParcelableBlendMode parcelableBlendMode;
+        parcelableBlendMode.blendMode = mode;
+        getLayerCommand(display, layer).blendMode.emplace(std::move(parcelableBlendMode));
+    }
+
+    void setLayerColor(int64_t display, int64_t layer, Color color) {
+        getLayerCommand(display, layer).color.emplace(std::move(color));
+    }
+
+    void setLayerCompositionType(int64_t display, int64_t layer, Composition type) {
+        command::ParcelableComposition compositionPayload;
+        compositionPayload.composition = type;
+        getLayerCommand(display, layer).composition.emplace(std::move(compositionPayload));
+    }
+
+    void setLayerDataspace(int64_t display, int64_t layer, Dataspace dataspace) {
+        command::ParcelableDataspace dataspacePayload;
+        dataspacePayload.dataspace = dataspace;
+        getLayerCommand(display, layer).dataspace.emplace(std::move(dataspacePayload));
+    }
+
+    void setLayerDisplayFrame(int64_t display, int64_t layer, const Rect& frame) {
+        getLayerCommand(display, layer).displayFrame.emplace(frame);
+    }
+
+    void setLayerPlaneAlpha(int64_t display, int64_t layer, float alpha) {
+        command::PlaneAlpha planeAlpha;
+        planeAlpha.alpha = alpha;
+        getLayerCommand(display, layer).planeAlpha.emplace(std::move(planeAlpha));
+    }
+
+    void setLayerSidebandStream(int64_t display, int64_t layer, const native_handle_t* stream) {
+        NativeHandle handle;
+        if (stream) handle = ::android::dupToAidl(stream);
+        getLayerCommand(display, layer).sidebandStream.emplace(std::move(handle));
+    }
+
+    void setLayerSourceCrop(int64_t display, int64_t layer, const FRect& crop) {
+        getLayerCommand(display, layer).sourceCrop.emplace(crop);
+    }
+
+    void setLayerTransform(int64_t display, int64_t layer, Transform transform) {
+        command::ParcelableTransform transformPayload;
+        transformPayload.transform = transform;
+        getLayerCommand(display, layer).transform.emplace(std::move(transformPayload));
+    }
+
+    void setLayerVisibleRegion(int64_t display, int64_t layer, const std::vector<Rect>& visible) {
+        getLayerCommand(display, layer).visibleRegion.emplace(visible.begin(), visible.end());
+    }
+
+    void setLayerZOrder(int64_t display, int64_t layer, uint32_t z) {
+        command::ZOrder zorder;
+        zorder.z = z;
+        getLayerCommand(display, layer).z.emplace(std::move(zorder));
+    }
+
+    void setLayerPerFrameMetadata(int64_t display, int64_t layer,
+                                  const std::vector<PerFrameMetadata>& metadataVec) {
+        getLayerCommand(display, layer)
+                .perFrameMetadata.emplace(metadataVec.begin(), metadataVec.end());
+    }
+
+    void setLayerColorTransform(int64_t display, int64_t layer, const float* matrix) {
+        getLayerCommand(display, layer).colorTransform.emplace(matrix, matrix + 16);
+    }
+
+    void setLayerPerFrameMetadataBlobs(int64_t display, int64_t layer,
+                                       const std::vector<PerFrameMetadataBlob>& metadata) {
+        getLayerCommand(display, layer)
+                .perFrameMetadataBlob.emplace(metadata.begin(), metadata.end());
+    }
+
+    void setLayerFloatColor(int64_t display, int64_t layer, FloatColor color) {
+        getLayerCommand(display, layer).floatColor.emplace(color);
+    }
+
+    void setLayerGenericMetadata(int64_t display, int64_t layer, const std::string& key,
+                                 const bool mandatory, const std::vector<uint8_t>& value) {
+        command::GenericMetadata metadata;
+        metadata.key.name = key;
+        metadata.key.mandatory = mandatory;
+        metadata.value.assign(value.begin(), value.end());
+        getLayerCommand(display, layer).genericMetadata.emplace(std::move(metadata));
+    }
+
+    const std::vector<command::CommandPayload>& getPendingCommands() {
+        if (mLayerCommand.has_value()) {
+            mCommands.emplace_back(std::move(*mLayerCommand));
+            mLayerCommand.reset();
         }
-    }
-
-    static constexpr uint16_t kSetPresentFenceLength = 1;
-    void setPresentFence(int presentFence) {
-        beginCommand(Command::SET_PRESENT_FENCE, kSetPresentFenceLength);
-        writeFence(presentFence);
-        endCommand();
-    }
-
-    void setReleaseFences(const std::vector<int64_t>& layers,
-                          const std::vector<int>& releaseFences) {
-        size_t totalLayers = std::min(layers.size(), releaseFences.size());
-        size_t currentLayer = 0;
-
-        while (currentLayer < totalLayers) {
-            size_t count =
-                    std::min(totalLayers - currentLayer, static_cast<size_t>(kMaxLength) / 3);
-
-            beginCommand(Command::SET_RELEASE_FENCES, count * 3);
-            for (size_t i = 0; i < count; i++) {
-                write64(layers[currentLayer + i]);
-                writeFence(releaseFences[currentLayer + i]);
-            }
-            endCommand();
-
-            currentLayer += count;
+        if (mDisplayCommand.has_value()) {
+            mCommands.emplace_back(std::move(*mDisplayCommand));
+            mDisplayCommand.reset();
         }
+        return mCommands;
     }
-
-    static constexpr uint16_t kSetColorTransformLength = 17;
-    void setColorTransform(const float* matrix, ColorTransform hint) {
-        beginCommand(Command::SET_COLOR_TRANSFORM, kSetColorTransformLength);
-        for (int i = 0; i < 16; i++) {
-            writeFloat(matrix[i]);
-        }
-        writeSigned(static_cast<int32_t>(hint));
-        endCommand();
-    }
-
-    void setClientTarget(uint32_t slot, const native_handle_t* target, int acquireFence,
-                         Dataspace dataspace, const std::vector<Rect>& damage) {
-        setClientTargetInternal(slot, target, acquireFence, static_cast<int32_t>(dataspace),
-                                damage);
-    }
-
-    static constexpr uint16_t kSetOutputBufferLength = 3;
-    void setOutputBuffer(uint32_t slot, const native_handle_t* buffer, int releaseFence) {
-        beginCommand(Command::SET_OUTPUT_BUFFER, kSetOutputBufferLength);
-        write(slot);
-        writeHandle(buffer, true);
-        writeFence(releaseFence);
-        endCommand();
-    }
-
-    static constexpr uint16_t kValidateDisplayLength = 0;
-    void validateDisplay() {
-        beginCommand(Command::VALIDATE_DISPLAY, kValidateDisplayLength);
-        endCommand();
-    }
-
-    static constexpr uint16_t kPresentOrValidateDisplayLength = 0;
-    void presentOrvalidateDisplay() {
-        beginCommand(Command::PRESENT_OR_VALIDATE_DISPLAY, kPresentOrValidateDisplayLength);
-        endCommand();
-    }
-
-    static constexpr uint16_t kAcceptDisplayChangesLength = 0;
-    void acceptDisplayChanges() {
-        beginCommand(Command::ACCEPT_DISPLAY_CHANGES, kAcceptDisplayChangesLength);
-        endCommand();
-    }
-
-    static constexpr uint16_t kPresentDisplayLength = 0;
-    void presentDisplay() {
-        beginCommand(Command::PRESENT_DISPLAY, kPresentDisplayLength);
-        endCommand();
-    }
-
-    static constexpr uint16_t kSetLayerCursorPositionLength = 2;
-    void setLayerCursorPosition(int32_t x, int32_t y) {
-        beginCommand(Command::SET_LAYER_CURSOR_POSITION, kSetLayerCursorPositionLength);
-        writeSigned(x);
-        writeSigned(y);
-        endCommand();
-    }
-
-    static constexpr uint16_t kSetLayerBufferLength = 3;
-    void setLayerBuffer(uint32_t slot, const native_handle_t* buffer, int acquireFence) {
-        beginCommand(Command::SET_LAYER_BUFFER, kSetLayerBufferLength);
-        write(slot);
-        writeHandle(buffer, true);
-        writeFence(acquireFence);
-        endCommand();
-    }
-
-    void setLayerSurfaceDamage(const std::vector<Rect>& damage) {
-        bool doWrite = (damage.size() <= kMaxLength / 4);
-        size_t length = (doWrite) ? damage.size() * 4 : 0;
-
-        beginCommand(Command::SET_LAYER_SURFACE_DAMAGE, length);
-        // When there are too many rectangles in the damage region and doWrite
-        // is false, we write no rectangle at all which means the entire
-        // layer is damaged.
-        if (doWrite) {
-            writeRegion(damage);
-        }
-        endCommand();
-    }
-
-    static constexpr uint16_t kSetLayerBlendModeLength = 1;
-    void setLayerBlendMode(BlendMode mode) {
-        beginCommand(Command::SET_LAYER_BLEND_MODE, kSetLayerBlendModeLength);
-        writeSigned(static_cast<int32_t>(mode));
-        endCommand();
-    }
-
-    static constexpr uint16_t kSetLayerColorLength = 1;
-    void setLayerColor(Color color) {
-        beginCommand(Command::SET_LAYER_COLOR, kSetLayerColorLength);
-        writeColor(color);
-        endCommand();
-    }
-
-    static constexpr uint16_t kSetLayerCompositionTypeLength = 1;
-    void setLayerCompositionType(Composition type) {
-        beginCommand(Command::SET_LAYER_COMPOSITION_TYPE, kSetLayerCompositionTypeLength);
-        writeSigned(static_cast<int32_t>(type));
-        endCommand();
-    }
-
-    static constexpr uint16_t kSetLayerDataspaceLength = 1;
-    void setLayerDataspace(Dataspace dataspace) {
-        setLayerDataspaceInternal(static_cast<int32_t>(dataspace));
-    }
-
-    static constexpr uint16_t kSetLayerDisplayFrameLength = 4;
-    void setLayerDisplayFrame(const Rect& frame) {
-        beginCommand(Command::SET_LAYER_DISPLAY_FRAME, kSetLayerDisplayFrameLength);
-        writeRect(frame);
-        endCommand();
-    }
-
-    static constexpr uint16_t kSetLayerPlaneAlphaLength = 1;
-    void setLayerPlaneAlpha(float alpha) {
-        beginCommand(Command::SET_LAYER_PLANE_ALPHA, kSetLayerPlaneAlphaLength);
-        writeFloat(alpha);
-        endCommand();
-    }
-
-    static constexpr uint16_t kSetLayerSidebandStreamLength = 1;
-    void setLayerSidebandStream(const native_handle_t* stream) {
-        beginCommand(Command::SET_LAYER_SIDEBAND_STREAM, kSetLayerSidebandStreamLength);
-        writeHandle(stream);
-        endCommand();
-    }
-
-    static constexpr uint16_t kSetLayerSourceCropLength = 4;
-    void setLayerSourceCrop(const FRect& crop) {
-        beginCommand(Command::SET_LAYER_SOURCE_CROP, kSetLayerSourceCropLength);
-        writeFRect(crop);
-        endCommand();
-    }
-
-    static constexpr uint16_t kSetLayerTransformLength = 1;
-    void setLayerTransform(Transform transform) {
-        beginCommand(Command::SET_LAYER_TRANSFORM, kSetLayerTransformLength);
-        writeSigned(static_cast<int32_t>(transform));
-        endCommand();
-    }
-
-    void setLayerVisibleRegion(const std::vector<Rect>& visible) {
-        bool doWrite = (visible.size() <= kMaxLength / 4);
-        size_t length = (doWrite) ? visible.size() * 4 : 0;
-
-        beginCommand(Command::SET_LAYER_VISIBLE_REGION, length);
-        // When there are too many rectangles in the visible region and
-        // doWrite is false, we write no rectangle at all which means the
-        // entire layer is visible.
-        if (doWrite) {
-            writeRegion(visible);
-        }
-        endCommand();
-    }
-
-    static constexpr uint16_t kSetLayerZOrderLength = 1;
-    void setLayerZOrder(uint32_t z) {
-        beginCommand(Command::SET_LAYER_Z_ORDER, kSetLayerZOrderLength);
-        write(z);
-        endCommand();
-    }
-
-    void setLayerPerFrameMetadata(const std::vector<PerFrameMetadata>& metadataVec) {
-        beginCommand(Command::SET_LAYER_PER_FRAME_METADATA, metadataVec.size() * 2);
-        for (const auto& metadata : metadataVec) {
-            writeSigned(static_cast<int32_t>(metadata.key));
-            writeFloat(metadata.value);
-        }
-        endCommand();
-    }
-
-    static constexpr uint16_t kSetLayerColorTransformLength = 16;
-    void setLayerColorTransform(const float* matrix) {
-        beginCommand(Command::SET_LAYER_COLOR_TRANSFORM, kSetLayerColorTransformLength);
-        for (int i = 0; i < 16; i++) {
-            writeFloat(matrix[i]);
-        }
-        endCommand();
-    }
-
-    void setLayerPerFrameMetadataBlobs(const std::vector<PerFrameMetadataBlob>& metadata) {
-        // in units of uint32_t's
-        size_t commandLength = 0;
-
-        if (metadata.size() > std::numeric_limits<uint32_t>::max()) {
-            LOG_FATAL("too many metadata blobs - dynamic metadata size is too large");
-            return;
-        }
-
-        // space for numElements
-        commandLength += 1;
-
-        for (auto metadataBlob : metadata) {
-            commandLength += 1;  // key of metadata blob
-            commandLength += 1;  // size information of metadata blob
-
-            // metadata content size
-            size_t metadataSize = metadataBlob.blob.size() / sizeof(uint32_t);
-            commandLength += metadataSize;
-            commandLength +=
-                    (metadataBlob.blob.size() - (metadataSize * sizeof(uint32_t)) > 0) ? 1 : 0;
-        }
-
-        if (commandLength > std::numeric_limits<uint16_t>::max()) {
-            LOG_FATAL("dynamic metadata size is too large");
-            return;
-        }
-
-        // Blobs are written as:
-        // {numElements, key1, size1, blob1, key2, size2, blob2, key3, size3...}
-        uint16_t length = static_cast<uint16_t>(commandLength);
-        beginCommand(Command::SET_LAYER_PER_FRAME_METADATA_BLOBS, length);
-        write(static_cast<uint32_t>(metadata.size()));
-        for (auto metadataBlob : metadata) {
-            writeSigned(static_cast<int32_t>(metadataBlob.key));
-            write(static_cast<uint32_t>(metadataBlob.blob.size()));
-            writeBlob(static_cast<uint32_t>(metadataBlob.blob.size()), metadataBlob.blob.data());
-        }
-        endCommand();
-    }
-
-    static constexpr uint16_t kSetLayerFloatColorLength = 4;
-    void setLayerFloatColor(FloatColor color) {
-        beginCommand(Command::SET_LAYER_FLOAT_COLOR, kSetLayerFloatColorLength);
-        writeFloatColor(color);
-        endCommand();
-    }
-
-    static constexpr uint16_t kSetClientTargetPropertyLength = 2;
-    void setClientTargetProperty(const ClientTargetProperty& clientTargetProperty) {
-        beginCommand(Command::SET_CLIENT_TARGET_PROPERTY, kSetClientTargetPropertyLength);
-        writeSigned(static_cast<int32_t>(clientTargetProperty.pixelFormat));
-        writeSigned(static_cast<int32_t>(clientTargetProperty.dataspace));
-        endCommand();
-    }
-
-    void setLayerGenericMetadata(const std::string& key, const bool mandatory,
-                                 const std::vector<uint8_t>& value) {
-        const size_t commandSize = 3 + sizeToElements(key.size()) + sizeToElements(value.size());
-        if (commandSize > std::numeric_limits<uint16_t>::max()) {
-            LOG_FATAL("Too much generic metadata (%zu elements)", commandSize);
-            return;
-        }
-
-        beginCommand(Command::SET_LAYER_GENERIC_METADATA, static_cast<uint16_t>(commandSize));
-        write(key.size());
-        writeBlob(key.size(), reinterpret_cast<const unsigned char*>(key.c_str()));
-        write(mandatory);
-        write(value.size());
-        writeBlob(value.size(), value.data());
-        endCommand();
+    std::vector<command::CommandResultPayload> getPendingCommandResults() {
+        return std::move(mCommandsResults);
     }
 
   protected:
-    template <typename T>
-    void beginCommand(T command, uint16_t length) {
-        beginCommandBase(static_cast<Command>(command), length);
+    command::Buffer getBuffer(int slot, const native_handle_t* bufferHandle, int fence) {
+        command::Buffer bufferCommand;
+        bufferCommand.slot = slot;
+        if (bufferHandle) bufferCommand.handle.emplace(::android::dupToAidl(bufferHandle));
+        if (fence > 0) bufferCommand.fence = ::ndk::ScopedFileDescriptor(fence);
+        return bufferCommand;
     }
 
-    void setClientTargetInternal(uint32_t slot, const native_handle_t* target, int acquireFence,
-                                 int32_t dataspace, const std::vector<Rect>& damage) {
-        bool doWrite = (damage.size() <= (kMaxLength - 4) / 4);
-        size_t length = 4 + ((doWrite) ? damage.size() * 4 : 0);
-
-        beginCommand(Command::SET_CLIENT_TARGET, length);
-        write(slot);
-        writeHandle(target, true);
-        writeFence(acquireFence);
-        writeSigned(dataspace);
-        // When there are too many rectangles in the damage region and doWrite
-        // is false, we write no rectangle at all which means the entire
-        // client target is damaged.
-        if (doWrite) {
-            writeRegion(damage);
-        }
-        endCommand();
-    }
-
-    void setLayerDataspaceInternal(int32_t dataspace) {
-        beginCommand(Command::SET_LAYER_DATASPACE, kSetLayerDataspaceLength);
-        writeSigned(dataspace);
-        endCommand();
-    }
-
-    void beginCommandBase(Command command, uint16_t length) {
-        if (mCommandEnd) {
-            LOG_FATAL("endCommand was not called before command 0x%x", command);
-        }
-
-        growData(1 + length);
-        write(static_cast<uint32_t>(command) | length);
-
-        mCommandEnd = mDataWritten + length;
-    }
-
-    void endCommand() {
-        if (!mCommandEnd) {
-            LOG_FATAL("beginCommand was not called");
-        } else if (mDataWritten > mCommandEnd) {
-            LOG_FATAL("too much data written");
-            mDataWritten = mCommandEnd;
-        } else if (mDataWritten < mCommandEnd) {
-            LOG_FATAL("too little data written");
-            while (mDataWritten < mCommandEnd) {
-                write(0);
-            }
-        }
-
-        mCommandEnd = 0;
-    }
-
-    void write(uint32_t val) { mData[mDataWritten++] = val; }
-
-    void writeSigned(int32_t val) { memcpy(&mData[mDataWritten++], &val, sizeof(val)); }
-
-    void writeFloat(float val) { memcpy(&mData[mDataWritten++], &val, sizeof(val)); }
-
-    void write64(uint64_t val) {
-        uint32_t lo = static_cast<uint32_t>(val & 0xffffffff);
-        uint32_t hi = static_cast<uint32_t>(val >> 32);
-        write(lo);
-        write(hi);
-    }
-
-    void writeRect(const Rect& rect) {
-        writeSigned(rect.left);
-        writeSigned(rect.top);
-        writeSigned(rect.right);
-        writeSigned(rect.bottom);
-    }
-
-    void writeRegion(const std::vector<Rect>& region) {
-        for (const auto& rect : region) {
-            writeRect(rect);
-        }
-    }
-
-    void writeFRect(const FRect& rect) {
-        writeFloat(rect.left);
-        writeFloat(rect.top);
-        writeFloat(rect.right);
-        writeFloat(rect.bottom);
-    }
-
-    void writeColor(const Color& color) {
-        write((color.r << 0) | (color.g << 8) | (color.b << 16) | (color.a << 24));
-    }
-
-    void writeFloatColor(const FloatColor& color) {
-        writeFloat(color.r);
-        writeFloat(color.g);
-        writeFloat(color.b);
-        writeFloat(color.a);
-    }
-
-    void writeBlob(uint32_t length, const unsigned char* blob) {
-        memcpy(&mData[mDataWritten], blob, length);
-        uint32_t numElements = length / 4;
-        mDataWritten += numElements;
-        mDataWritten += (length - (numElements * 4) > 0) ? 1 : 0;
-    }
-
-    // ownership of handle is not transferred
-    void writeHandle(const native_handle_t* handle, bool useCache) {
-        if (!handle) {
-            writeSigned(
-                    static_cast<int32_t>((useCache) ? HandleIndex::CACHED : HandleIndex::EMPTY));
-            return;
-        }
-
-        mDataHandles.push_back(::android::dupToAidl(handle));
-        writeSigned(mDataHandles.size() - 1);
-    }
-
-    void writeHandle(const native_handle_t* handle) { writeHandle(handle, false); }
-
-    // ownership of fence is transferred
-    void writeFence(int fence) {
-        native_handle_t* handle = nullptr;
-        if (fence >= 0) {
-            handle = getTemporaryHandle(1, 0);
-            if (handle) {
-                handle->data[0] = fence;
-            } else {
-                ALOGW("failed to get temporary handle for fence %d", fence);
-                sync_wait(fence, -1);
-                close(fence);
-            }
-        }
-
-        writeHandle(handle);
-    }
-
-    native_handle_t* getTemporaryHandle(int numFds, int numInts) {
-        native_handle_t* handle = native_handle_create(numFds, numInts);
-        if (handle) {
-            mTemporaryHandles.push_back(handle);
-        }
-        return handle;
-    }
-
-    static constexpr uint16_t kMaxLength = std::numeric_limits<uint16_t>::max();
-
-    std::unique_ptr<int32_t[]> mData;
-    uint32_t mDataWritten;
+    std::optional<command::DisplayCommand> mDisplayCommand;
+    std::optional<command::LayerCommand> mLayerCommand;
+    std::vector<command::CommandPayload> mCommands;
+    std::vector<command::CommandResultPayload> mCommandsResults;
 
   private:
-    void growData(uint32_t grow) {
-        uint32_t newWritten = mDataWritten + grow;
-        if (newWritten < mDataWritten) {
-            LOG_ALWAYS_FATAL("buffer overflowed; data written %" PRIu32 ", growing by %" PRIu32,
-                             mDataWritten, grow);
-        }
+    // std::vector<native_handle_t*> mTemporaryHandles;
 
-        if (newWritten <= mDataMaxSize) {
-            return;
+    command::DisplayCommand& getDisplayCommand(int64_t display) {
+        if (!mDisplayCommand.has_value() || mDisplayCommand->display != display) {
+            if (mDisplayCommand.has_value()) mCommands.emplace_back(std::move(*mDisplayCommand));
+            mDisplayCommand.emplace();
+            mDisplayCommand->display = display;
+            return *mDisplayCommand;
         }
-
-        uint32_t newMaxSize = mDataMaxSize << 1;
-        if (newMaxSize < newWritten) {
-            newMaxSize = newWritten;
-        }
-
-        auto newData = std::make_unique<int32_t[]>(newMaxSize);
-        std::copy_n(mData.get(), mDataWritten, newData.get());
-        mDataMaxSize = newMaxSize;
-        mData = std::move(newData);
+        return *mDisplayCommand;
     }
 
-    uint32_t sizeToElements(uint32_t size) { return (size + 3) / 4; }
-
-    uint32_t mDataMaxSize;
-    // end offset of the current command
-    uint32_t mCommandEnd;
-
-    std::vector<NativeHandle> mDataHandles;
-    std::vector<native_handle_t*> mTemporaryHandles;
-
-    std::unique_ptr<CommandQueueType> mQueue;
+    command::LayerCommand& getLayerCommand(int64_t display, int64_t layer) {
+        if (!mLayerCommand.has_value() || mLayerCommand->display != display ||
+            mLayerCommand->layer != layer) {
+            if (mLayerCommand.has_value()) mCommands.emplace_back(std::move(*mLayerCommand));
+            mLayerCommand.emplace();
+            mLayerCommand->display = display;
+            mLayerCommand->layer = layer;
+            return *mLayerCommand;
+        }
+        return *mLayerCommand;
+    }
 };
 
-// This class helps parse a command queue.  Note that all sizes/lengths are in
-// units of uint32_t's.
 class CommandReaderBase {
   public:
-    CommandReaderBase() : mDataMaxSize(0) { reset(); }
+    ~CommandReaderBase() { resetData(); }
 
-    bool setMQDescriptor(const DescriptorType& descriptor) {
-        mQueue = std::make_unique<CommandQueueType>(descriptor, false);
-        if (mQueue->isValid()) {
-            return true;
-        } else {
-            mQueue = nullptr;
-            return false;
+    // Parse and execute commands from the command queue.  The commands are
+    // actually return values from the server and will be saved in ReturnData.
+    void parse(const std::vector<command::CommandResultPayload>& results) {
+        resetData();
+
+        for (const auto& result : results) {
+            switch (result.getTag()) {
+                case command::CommandResultPayload::Tag::error:
+                    parseSetError(result.get<command::CommandResultPayload::Tag::error>());
+                    break;
+                case command::CommandResultPayload::Tag::changedCompositionType:
+                    parseSetChangedCompositionTypes(
+                            result.get<
+                                    command::CommandResultPayload::Tag::changedCompositionType>());
+                    break;
+                case command::CommandResultPayload::Tag::displayRequest:
+                    parseSetDisplayRequests(
+                            result.get<command::CommandResultPayload::Tag::displayRequest>());
+                    break;
+                case command::CommandResultPayload::Tag::presentFence:
+                    parseSetPresentFence(
+                            result.get<command::CommandResultPayload::Tag::presentFence>());
+                    break;
+                case command::CommandResultPayload::Tag::releaseFences:
+                    parseSetReleaseFences(
+                            result.get<command::CommandResultPayload::Tag::releaseFences>());
+                    break;
+                case command::CommandResultPayload::Tag::presentOrValidateResult:
+                    parseSetPresentOrValidateDisplayResult(
+                            result.get<
+                                    command::CommandResultPayload::Tag::presentOrValidateResult>());
+                    break;
+                case command::CommandResultPayload::Tag::clientTargetProperty:
+                    parseSetClientTargetProperty(
+                            result.get<command::CommandResultPayload::Tag::clientTargetProperty>());
+                    break;
+            }
         }
     }
 
-    bool readQueue(int32_t commandLength, std::vector<NativeHandle> commandHandles) {
-        if (!mQueue) {
-            return false;
-        }
+    std::vector<command::Error> takeErrors() { return std::move(mErrors); }
 
-        auto quantumCount = mQueue->getQuantumCount();
-        if (mDataMaxSize < quantumCount) {
-            mDataMaxSize = quantumCount;
-            mData = std::make_unique<int32_t[]>(mDataMaxSize);
-        }
-
-        if (commandLength > mDataMaxSize || !mQueue->read(mData.get(), commandLength)) {
-            ALOGE("failed to read commands from message queue");
-            return false;
-        }
-
-        mDataSize = commandLength;
-        mDataRead = 0;
-        mCommandBegin = 0;
-        mCommandEnd = 0;
-        mDataHandles = std::move(commandHandles);
-        return true;
-    }
-
-    void reset() {
-        mDataSize = 0;
-        mDataRead = 0;
-        mCommandBegin = 0;
-        mCommandEnd = 0;
-        mDataHandles.clear();
-    }
-
-  protected:
-    template <typename T>
-    bool beginCommand(T* outCommand, uint16_t* outLength) {
-        return beginCommandBase(reinterpret_cast<Command*>(outCommand), outLength);
-    }
-
-    bool isEmpty() const { return (mDataRead >= mDataSize); }
-
-    bool beginCommandBase(Command* outCommand, uint16_t* outLength) {
-        if (mCommandEnd) {
-            LOG_FATAL("endCommand was not called for last command");
-        }
-
-        constexpr uint32_t opcode_mask = static_cast<uint32_t>(Command::OPCODE_MASK);
-        constexpr uint32_t length_mask = static_cast<uint32_t>(Command::LENGTH_MASK);
-
-        uint32_t val = read();
-        *outCommand = static_cast<Command>(val & opcode_mask);
-        *outLength = static_cast<uint16_t>(val & length_mask);
-
-        if (mDataRead + *outLength > mDataSize) {
-            ALOGE("command 0x%x has invalid command length %" PRIu16, *outCommand, *outLength);
-            // undo the read() above
-            mDataRead--;
+    bool hasChanges(int64_t display, uint32_t* outNumChangedCompositionTypes,
+                    uint32_t* outNumLayerRequestMasks) const {
+        auto found = mReturnData.find(display);
+        if (found == mReturnData.end()) {
+            *outNumChangedCompositionTypes = 0;
+            *outNumLayerRequestMasks = 0;
             return false;
         }
 
-        mCommandEnd = mDataRead + *outLength;
+        const ReturnData& data = found->second;
 
-        return true;
+        *outNumChangedCompositionTypes = static_cast<uint32_t>(data.compositionTypes.size());
+        *outNumLayerRequestMasks = static_cast<uint32_t>(data.requestMasks.size());
+
+        return !(data.compositionTypes.empty() && data.requestMasks.empty());
     }
 
-    void endCommand() {
-        if (!mCommandEnd) {
-            LOG_FATAL("beginCommand was not called");
-        } else if (mDataRead > mCommandEnd) {
-            LOG_FATAL("too much data read");
-            mDataRead = mCommandEnd;
-        } else if (mDataRead < mCommandEnd) {
-            LOG_FATAL("too little data read");
-            mDataRead = mCommandEnd;
+    // Get and clear saved changed composition types.
+    void takeChangedCompositionTypes(int64_t display, std::vector<int64_t>* outLayers,
+                                     std::vector<Composition>* outTypes) {
+        auto found = mReturnData.find(display);
+        if (found == mReturnData.end()) {
+            outLayers->clear();
+            outTypes->clear();
+            return;
         }
 
-        mCommandBegin = mCommandEnd;
-        mCommandEnd = 0;
+        ReturnData& data = found->second;
+
+        *outLayers = std::move(data.changedLayers);
+        *outTypes = std::move(data.compositionTypes);
     }
 
-    uint32_t getCommandLoc() const { return mCommandBegin; }
-
-    uint32_t read() { return mData[mDataRead++]; }
-
-    int32_t readSigned() {
-        int32_t val;
-        memcpy(&val, &mData[mDataRead++], sizeof(val));
-        return val;
-    }
-
-    float readFloat() {
-        float val;
-        memcpy(&val, &mData[mDataRead++], sizeof(val));
-        return val;
-    }
-
-    uint64_t read64() {
-        uint32_t lo = read();
-        uint32_t hi = read();
-        return (static_cast<uint64_t>(hi) << 32) | lo;
-    }
-
-    Color readColor() {
-        uint32_t val = read();
-        return Color{
-                static_cast<int8_t>((val >> 0) & 0xff),
-                static_cast<int8_t>((val >> 8) & 0xff),
-                static_cast<int8_t>((val >> 16) & 0xff),
-                static_cast<int8_t>((val >> 24) & 0xff),
-        };
-    }
-
-    // ownership of handle is not transferred
-    const native_handle_t* readHandle(bool* outUseCache) {
-        const native_handle_t* handle = nullptr;
-
-        int32_t index = readSigned();
-        switch (index) {
-            case static_cast<int32_t>(HandleIndex::EMPTY):
-                *outUseCache = false;
-                break;
-            case static_cast<int32_t>(HandleIndex::CACHED):
-                *outUseCache = true;
-                break;
-            default:
-                if (static_cast<size_t>(index) < mDataHandles.size()) {
-                    handle = ::android::makeFromAidl(mDataHandles[index]);
-                } else {
-                    ALOGE("invalid handle index %zu", static_cast<size_t>(index));
-                }
-                *outUseCache = false;
-                break;
+    // Get and clear saved display requests.
+    void takeDisplayRequests(int64_t display, uint32_t* outDisplayRequestMask,
+                             std::vector<int64_t>* outLayers,
+                             std::vector<uint32_t>* outLayerRequestMasks) {
+        auto found = mReturnData.find(display);
+        if (found == mReturnData.end()) {
+            *outDisplayRequestMask = 0;
+            outLayers->clear();
+            outLayerRequestMasks->clear();
+            return;
         }
 
-        return handle;
+        ReturnData& data = found->second;
+
+        *outDisplayRequestMask = data.displayRequests;
+        *outLayers = std::move(data.requestedLayers);
+        *outLayerRequestMasks = std::move(data.requestMasks);
     }
 
-    const native_handle_t* readHandle() {
-        bool useCache;
-        return readHandle(&useCache);
+    // Get and clear saved release fences.
+    void takeReleaseFences(int64_t display, std::vector<int64_t>* outLayers,
+                           std::vector<int>* outReleaseFences) {
+        auto found = mReturnData.find(display);
+        if (found == mReturnData.end()) {
+            outLayers->clear();
+            outReleaseFences->clear();
+            return;
+        }
+
+        ReturnData& data = found->second;
+
+        *outLayers = std::move(data.releasedLayers);
+        *outReleaseFences = std::move(data.releaseFences);
     }
 
-    // ownership of fence is transferred
-    int readFence() {
-        auto handle = readHandle();
-        if (!handle || handle->numFds == 0) {
-            return -1;
+    // Get and clear saved present fence.
+    void takePresentFence(int64_t display, int* outPresentFence) {
+        auto found = mReturnData.find(display);
+        if (found == mReturnData.end()) {
+            *outPresentFence = -1;
+            return;
         }
 
-        if (handle->numFds != 1) {
-            ALOGE("invalid fence handle with %d fds", handle->numFds);
-            return -1;
-        }
+        ReturnData& data = found->second;
 
-        int fd = dup(handle->data[0]);
-        if (fd < 0) {
-            ALOGW("failed to dup fence %d", handle->data[0]);
-            sync_wait(handle->data[0], -1);
-            fd = -1;
-        }
-
-        return fd;
+        *outPresentFence = data.presentFence;
+        data.presentFence = -1;
     }
 
-    std::unique_ptr<int32_t[]> mData;
-    uint32_t mDataRead;
+    // Get what stage succeeded during PresentOrValidate: Present or Validate
+    void takePresentOrValidateStage(int64_t display, uint32_t* state) {
+        auto found = mReturnData.find(display);
+        if (found == mReturnData.end()) {
+            *state = static_cast<uint32_t>(-1);
+            return;
+        }
+        ReturnData& data = found->second;
+        *state = data.presentOrValidateState;
+    }
+
+    // Get the client target properties requested by hardware composer.
+    void takeClientTargetProperty(int64_t display, ClientTargetProperty* outClientTargetProperty) {
+        auto found = mReturnData.find(display);
+
+        // If not found, return the default values.
+        if (found == mReturnData.end()) {
+            outClientTargetProperty->pixelFormat = common::PixelFormat::RGBA_8888;
+            outClientTargetProperty->dataspace = Dataspace::UNKNOWN;
+            return;
+        }
+
+        ReturnData& data = found->second;
+        *outClientTargetProperty = data.clientTargetProperty;
+    }
 
   private:
-    std::unique_ptr<CommandQueueType> mQueue;
-    uint32_t mDataMaxSize;
+    void resetData() {
+        mErrors.clear();
 
-    uint32_t mDataSize;
+        for (auto& data : mReturnData) {
+            if (data.second.presentFence >= 0) {
+                close(data.second.presentFence);
+            }
+            for (auto fence : data.second.releaseFences) {
+                if (fence >= 0) {
+                    close(fence);
+                }
+            }
+        }
 
-    // begin/end offsets of the current command
-    uint32_t mCommandBegin;
-    uint32_t mCommandEnd;
+        mReturnData.clear();
+    }
 
-    std::vector<NativeHandle> mDataHandles;
+    void parseSetError(const command::Error& error) { mErrors.emplace_back(error); }
+
+    void parseSetChangedCompositionTypes(
+            const command::ChangedCompositionTypes& changedCompositionTypes) {
+        auto& data = mReturnData[changedCompositionTypes.display];
+
+        data.changedLayers.reserve(changedCompositionTypes.layers.size());
+        data.compositionTypes.reserve(changedCompositionTypes.layers.size());
+        for (const auto& layer : changedCompositionTypes.layers) {
+            data.changedLayers.push_back(layer.layer);
+            data.compositionTypes.push_back(layer.composition);
+        }
+    }
+
+    void parseSetDisplayRequests(const command::DisplayRequest& displayRequest) {
+        auto& data = mReturnData[displayRequest.display];
+
+        data.displayRequests = displayRequest.mask;
+        data.requestedLayers.reserve(displayRequest.layerRequests.size());
+        data.requestMasks.reserve(displayRequest.layerRequests.size());
+        for (const auto& layerRequest : displayRequest.layerRequests) {
+            data.requestedLayers.push_back(layerRequest.layer);
+            data.requestMasks.push_back(layerRequest.mask);
+        }
+    }
+
+    void parseSetPresentFence(const command::PresentFence& presentFence) {
+        auto& data = mReturnData[presentFence.display];
+        if (data.presentFence >= 0) {
+            close(data.presentFence);
+        }
+        data.presentFence = dup(presentFence.fence.get());
+    }
+
+    void parseSetReleaseFences(const command::ReleaseFences& releaseFences) {
+        auto& data = mReturnData[releaseFences.display];
+        data.releasedLayers.reserve(releaseFences.layers.size());
+        data.releaseFences.reserve(releaseFences.layers.size());
+        for (const auto& layer : releaseFences.layers) {
+            data.releasedLayers.push_back(layer.layer);
+            data.releaseFences.push_back(dup(layer.fence.get()));
+        }
+    }
+
+    void parseSetPresentOrValidateDisplayResult(
+            const command::PresentOrValidate& presentOrValidate) {
+        auto& data = mReturnData[presentOrValidate.display];
+        data.presentOrValidateState =
+                presentOrValidate.result == command::PresentOrValidate::Result::Presented ? 1 : 0;
+    }
+
+    void parseSetClientTargetProperty(
+            const command::ClientTargetPropertyWithNits& clientTargetProperty) {
+        auto& data = mReturnData[clientTargetProperty.display];
+        data.clientTargetProperty.pixelFormat =
+                clientTargetProperty.clientTargetProperty.pixelFormat;
+        data.clientTargetProperty.dataspace = clientTargetProperty.clientTargetProperty.dataspace;
+    }
+
+    struct ReturnData {
+        int32_t displayRequests = 0;
+
+        std::vector<int64_t> changedLayers;
+        std::vector<Composition> compositionTypes;
+
+        std::vector<int64_t> requestedLayers;
+        std::vector<uint32_t> requestMasks;
+
+        int presentFence = -1;
+
+        std::vector<int64_t> releasedLayers;
+        std::vector<int> releaseFences;
+
+        uint32_t presentOrValidateState;
+
+        ClientTargetProperty clientTargetProperty{common::PixelFormat::RGBA_8888,
+                                                  Dataspace::UNKNOWN};
+    };
+
+    std::vector<command::Error> mErrors;
+    std::unordered_map<int64_t, ReturnData> mReturnData;
 };
 
 }  // namespace aidl::android::hardware::graphics::composer3

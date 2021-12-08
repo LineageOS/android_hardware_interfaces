@@ -31,9 +31,9 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.graphics.composer3;
-@Backing(type="int") @VintfStability
-enum DisplayRequest {
-  FLIP_CLIENT_TARGET = 1,
-  WRITE_CLIENT_TARGET_TO_OUTPUT = 2,
+package android.hardware.graphics.composer3.command;
+@VintfStability
+parcelable ColorTransformPayload {
+  float[] matrix;
+  android.hardware.graphics.common.ColorTransform hint;
 }

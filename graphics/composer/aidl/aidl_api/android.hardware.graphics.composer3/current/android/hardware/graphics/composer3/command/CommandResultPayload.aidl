@@ -31,8 +31,14 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.graphics.composer3;
-@Backing(type="int") @VintfStability
-enum LayerRequest {
-  CLEAR_CLIENT_TARGET = 1,
+package android.hardware.graphics.composer3.command;
+@VintfStability
+union CommandResultPayload {
+  android.hardware.graphics.composer3.command.Error error;
+  android.hardware.graphics.composer3.command.ChangedCompositionTypes changedCompositionType;
+  android.hardware.graphics.composer3.command.DisplayRequest displayRequest;
+  android.hardware.graphics.composer3.command.PresentFence presentFence;
+  android.hardware.graphics.composer3.command.ReleaseFences releaseFences;
+  android.hardware.graphics.composer3.command.PresentOrValidate presentOrValidateResult;
+  android.hardware.graphics.composer3.command.ClientTargetPropertyWithNits clientTargetProperty;
 }

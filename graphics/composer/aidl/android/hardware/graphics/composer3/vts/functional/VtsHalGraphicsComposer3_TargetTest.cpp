@@ -4,10 +4,10 @@
 
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
+#include <aidl/android/hardware/graphics/common/BlendMode.h>
 #include <aidl/android/hardware/graphics/common/BufferUsage.h>
 #include <aidl/android/hardware/graphics/common/FRect.h>
 #include <aidl/android/hardware/graphics/common/Rect.h>
-#include <aidl/android/hardware/graphics/composer3/BlendMode.h>
 #include <aidl/android/hardware/graphics/composer3/Composition.h>
 #include <aidl/android/hardware/graphics/composer3/IComposer.h>
 #include <android-base/properties.h>
@@ -27,7 +27,6 @@
 #include <unordered_set>
 #include <utility>
 #include "composer-vts/include/GraphicsComposerCallback.h"
-#include "composer-vts/include/TestCommandReader.h"
 
 // TODO(b/129481165): remove the #pragma below and fix conversion issues
 #pragma clang diagnostic pop  // ignored "-Wconversion
@@ -1148,45 +1147,33 @@ TEST_P(GraphicsComposerAidlTest, GetDataspaceSaturationMatrixBadParameter) {
 // Tests for Command.
 class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
   protected:
-    void SetUp() override {
-        ASSERT_NO_FATAL_FAILURE(GraphicsComposerAidlTest::SetUp());
-
-        mWriter = std::make_unique<CommandWriterBase>(1024);
-        mReader = std::make_unique<TestCommandReader>();
-    }
-
     void TearDown() override {
-        ASSERT_EQ(0, mReader->mErrors.size());
-        ASSERT_EQ(0, mReader->mCompositionChanges.size());
+        const auto errors = mReader.takeErrors();
+        ASSERT_TRUE(mReader.takeErrors().empty());
+
+        std::vector<int64_t> layers;
+        std::vector<Composition> types;
+        mReader.takeChangedCompositionTypes(mPrimaryDisplay, &layers, &types);
+
+        ASSERT_TRUE(layers.empty());
+        ASSERT_TRUE(types.empty());
+
         ASSERT_NO_FATAL_FAILURE(GraphicsComposerAidlTest::TearDown());
     }
 
     void execute() {
-        TestCommandReader* reader = mReader.get();
-        CommandWriterBase* writer = mWriter.get();
-        bool queueChanged = false;
-        int32_t commandLength = 0;
-        std::vector<NativeHandle> commandHandles;
-        ASSERT_TRUE(writer->writeQueue(&queueChanged, &commandLength, &commandHandles));
-
-        if (queueChanged) {
-            auto ret = mComposerClient->setInputCommandQueue(writer->getMQDescriptor());
-            ASSERT_TRUE(ret.isOk());
+        const auto& commands = mWriter.getPendingCommands();
+        if (commands.empty()) {
+            mWriter.reset();
+            return;
         }
 
-        ExecuteCommandsStatus commandStatus;
-        EXPECT_TRUE(mComposerClient->executeCommands(commandLength, commandHandles, &commandStatus)
-                            .isOk());
+        std::vector<command::CommandResultPayload> results;
+        const auto status = mComposerClient->executeCommands(commands, &results);
+        ASSERT_TRUE(status.isOk()) << "executeCommands failed " << status.getDescription();
 
-        if (commandStatus.queueChanged) {
-            MQDescriptor<int32_t, SynchronizedReadWrite> outputCommandQueue;
-            ASSERT_TRUE(mComposerClient->getOutputCommandQueue(&outputCommandQueue).isOk());
-            reader->setMQDescriptor(outputCommandQueue);
-        }
-        ASSERT_TRUE(reader->readQueue(commandStatus.length, std::move(commandStatus.handles)));
-        reader->parse();
-        reader->reset();
-        writer->reset();
+        mReader.parse(results);
+        mWriter.reset();
     }
 
     static inline auto toTimePoint(nsecs_t time) {
@@ -1255,7 +1242,6 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
             std::this_thread::sleep_until(toTimePoint(timeline->refreshTimeNanos));
         }
 
-        mWriter->selectDisplay(display.get());
         EXPECT_TRUE(mComposerClient->setPowerMode(display.get(), PowerMode::ON).isOk());
         EXPECT_TRUE(
                 mComposerClient
@@ -1270,42 +1256,41 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
             ASSERT_EQ(::android::OK, buffer->initCheck());
             ASSERT_NE(nullptr, buffer->handle);
 
-            mWriter->selectLayer(layer);
-            mWriter->setLayerCompositionType(Composition::DEVICE);
-            mWriter->setLayerDisplayFrame(display.getFrameRect());
-            mWriter->setLayerPlaneAlpha(1);
-            mWriter->setLayerSourceCrop(display.getCrop());
-            mWriter->setLayerTransform(static_cast<Transform>(0));
-            mWriter->setLayerVisibleRegion(std::vector<Rect>(1, display.getFrameRect()));
-            mWriter->setLayerZOrder(10);
-            mWriter->setLayerBlendMode(BlendMode::NONE);
-            mWriter->setLayerSurfaceDamage(std::vector<Rect>(1, display.getFrameRect()));
-            mWriter->setLayerBuffer(0, buffer->handle, -1);
-            mWriter->setLayerDataspace(common::Dataspace::UNKNOWN);
+            mWriter.setLayerCompositionType(display.get(), layer, Composition::DEVICE);
+            mWriter.setLayerDisplayFrame(display.get(), layer, display.getFrameRect());
+            mWriter.setLayerPlaneAlpha(display.get(), layer, 1);
+            mWriter.setLayerSourceCrop(display.get(), layer, display.getCrop());
+            mWriter.setLayerTransform(display.get(), layer, static_cast<Transform>(0));
+            mWriter.setLayerVisibleRegion(display.get(), layer,
+                                          std::vector<Rect>(1, display.getFrameRect()));
+            mWriter.setLayerZOrder(display.get(), layer, 10);
+            mWriter.setLayerBlendMode(display.get(), layer, BlendMode::NONE);
+            mWriter.setLayerSurfaceDamage(display.get(), layer,
+                                          std::vector<Rect>(1, display.getFrameRect()));
+            mWriter.setLayerBuffer(display.get(), layer, 0, buffer->handle, -1);
+            mWriter.setLayerDataspace(display.get(), layer, common::Dataspace::UNKNOWN);
 
-            mWriter->validateDisplay();
+            mWriter.validateDisplay(display.get());
             execute();
-            ASSERT_EQ(0, mReader->mErrors.size());
-            mReader->mCompositionChanges.clear();
+            ASSERT_TRUE(mReader.takeErrors().empty());
 
-            mWriter->presentDisplay();
+            mWriter.presentDisplay(display.get());
             execute();
-            ASSERT_EQ(0, mReader->mErrors.size());
+            ASSERT_TRUE(mReader.takeErrors().empty());
         }
 
         {
             auto buffer = allocate();
             ASSERT_NE(nullptr, buffer->handle);
 
-            mWriter->selectLayer(layer);
-            mWriter->setLayerBuffer(0, buffer->handle, -1);
-            mWriter->setLayerSurfaceDamage(std::vector<Rect>(1, {0, 0, 10, 10}));
-            mWriter->validateDisplay();
+            mWriter.setLayerBuffer(display.get(), layer, 0, buffer->handle, -1);
+            mWriter.setLayerSurfaceDamage(display.get(), layer,
+                                          std::vector<Rect>(1, {0, 0, 10, 10}));
+            mWriter.validateDisplay(display.get());
             execute();
-            ASSERT_EQ(0, mReader->mErrors.size());
-            mReader->mCompositionChanges.clear();
+            ASSERT_TRUE(mReader.takeErrors().empty());
 
-            mWriter->presentDisplay();
+            mWriter.presentDisplay(display.get());
             execute();
         }
 
@@ -1411,26 +1396,23 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
     }};
     // clang-format on
 
-    std::unique_ptr<CommandWriterBase> mWriter;
-    std::unique_ptr<TestCommandReader> mReader;
+    CommandWriterBase mWriter;
+    CommandReaderBase mReader;
 };
 
 TEST_P(GraphicsComposerAidlCommandTest, SET_COLOR_TRANSFORM) {
-    mWriter->selectDisplay(mPrimaryDisplay);
-    mWriter->setColorTransform(kIdentity.data(), ColorTransform::IDENTITY);
+    mWriter.setColorTransform(mPrimaryDisplay, kIdentity.data(), ColorTransform::IDENTITY);
     execute();
 }
 
 TEST_P(GraphicsComposerAidlCommandTest, SetLayerColorTransform) {
     int64_t layer;
     EXPECT_TRUE(mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount, &layer).isOk());
-    mWriter->selectDisplay(mPrimaryDisplay);
-    mWriter->selectLayer(layer);
-    mWriter->setLayerColorTransform(kIdentity.data());
+    mWriter.setLayerColorTransform(mPrimaryDisplay, layer, kIdentity.data());
     execute();
 
-    if (mReader->mErrors.size() == 1 && mReader->mErrors[0].second == EX_UNSUPPORTED_OPERATION) {
-        mReader->mErrors.clear();
+    const auto errors = mReader.takeErrors();
+    if (errors.size() == 1 && errors[0].errorCode == EX_UNSUPPORTED_OPERATION) {
         GTEST_SUCCEED() << "setLayerColorTransform is not supported";
         return;
     }
@@ -1440,8 +1422,8 @@ TEST_P(GraphicsComposerAidlCommandTest, SET_CLIENT_TARGET) {
     EXPECT_TRUE(
             mComposerClient->setClientTargetSlotCount(mPrimaryDisplay, kBufferSlotCount).isOk());
 
-    mWriter->selectDisplay(mPrimaryDisplay);
-    mWriter->setClientTarget(0, nullptr, -1, Dataspace::UNKNOWN, std::vector<Rect>());
+    mWriter.setClientTarget(mPrimaryDisplay, 0, nullptr, -1, Dataspace::UNKNOWN,
+                            std::vector<Rect>());
 
     execute();
 }
@@ -1460,30 +1442,26 @@ TEST_P(GraphicsComposerAidlCommandTest, SET_OUTPUT_BUFFER) {
                                                kBufferSlotCount, &display)
                         .isOk());
 
-    mWriter->selectDisplay(display.display);
     auto handle = allocate()->handle;
-    mWriter->setOutputBuffer(0, handle, -1);
+    mWriter.setOutputBuffer(display.display, 0, handle, -1);
     execute();
 }
 
 TEST_P(GraphicsComposerAidlCommandTest, VALIDATE_DISPLAY) {
-    mWriter->selectDisplay(mPrimaryDisplay);
-    mWriter->validateDisplay();
+    mWriter.validateDisplay(mPrimaryDisplay);
     execute();
 }
 
 TEST_P(GraphicsComposerAidlCommandTest, ACCEPT_DISPLAY_CHANGES) {
-    mWriter->selectDisplay(mPrimaryDisplay);
-    mWriter->validateDisplay();
-    mWriter->acceptDisplayChanges();
+    mWriter.validateDisplay(mPrimaryDisplay);
+    mWriter.acceptDisplayChanges(mPrimaryDisplay);
     execute();
 }
 
 // TODO(b/208441745) fix the test failure
 TEST_P(GraphicsComposerAidlCommandTest, PRESENT_DISPLAY) {
-    mWriter->selectDisplay(mPrimaryDisplay);
-    mWriter->validateDisplay();
-    mWriter->presentDisplay();
+    mWriter.validateDisplay(mPrimaryDisplay);
+    mWriter.presentDisplay(mPrimaryDisplay);
     execute();
 }
 
@@ -1503,7 +1481,6 @@ TEST_P(GraphicsComposerAidlCommandTest, PRESENT_DISPLAY_NO_LAYER_STATE_CHANGES) 
         GTEST_SUCCEED() << "Device does not have skip validate capability, skipping";
         return;
     }
-    mWriter->selectDisplay(mPrimaryDisplay);
     mComposerClient->setPowerMode(mPrimaryDisplay, PowerMode::ON);
 
     std::vector<RenderIntent> renderIntents;
@@ -1518,37 +1495,39 @@ TEST_P(GraphicsComposerAidlCommandTest, PRESENT_DISPLAY_NO_LAYER_STATE_CHANGES) 
 
         int64_t layer;
         EXPECT_TRUE(mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount, &layer).isOk());
-        mWriter->selectLayer(layer);
-        mWriter->setLayerCompositionType(Composition::DEVICE);
-        mWriter->setLayerDisplayFrame(displayFrame);
-        mWriter->setLayerPlaneAlpha(1);
-        mWriter->setLayerSourceCrop({0, 0, (float)mDisplayWidth, (float)mDisplayHeight});
-        mWriter->setLayerTransform(static_cast<Transform>(0));
-        mWriter->setLayerVisibleRegion(std::vector<Rect>(1, displayFrame));
-        mWriter->setLayerZOrder(10);
-        mWriter->setLayerBlendMode(BlendMode::NONE);
-        mWriter->setLayerSurfaceDamage(std::vector<Rect>(1, displayFrame));
-        mWriter->setLayerBuffer(0, handle, -1);
-        mWriter->setLayerDataspace(Dataspace::UNKNOWN);
+        mWriter.setLayerCompositionType(mPrimaryDisplay, layer, Composition::DEVICE);
+        mWriter.setLayerDisplayFrame(mPrimaryDisplay, layer, displayFrame);
+        mWriter.setLayerPlaneAlpha(mPrimaryDisplay, layer, 1);
+        mWriter.setLayerSourceCrop(mPrimaryDisplay, layer,
+                                   {0, 0, (float)mDisplayWidth, (float)mDisplayHeight});
+        mWriter.setLayerTransform(mPrimaryDisplay, layer, static_cast<Transform>(0));
+        mWriter.setLayerVisibleRegion(mPrimaryDisplay, layer, std::vector<Rect>(1, displayFrame));
+        mWriter.setLayerZOrder(mPrimaryDisplay, layer, 10);
+        mWriter.setLayerBlendMode(mPrimaryDisplay, layer, BlendMode::NONE);
+        mWriter.setLayerSurfaceDamage(mPrimaryDisplay, layer, std::vector<Rect>(1, displayFrame));
+        mWriter.setLayerBuffer(mPrimaryDisplay, layer, 0, handle, -1);
+        mWriter.setLayerDataspace(mPrimaryDisplay, layer, Dataspace::UNKNOWN);
 
-        mWriter->validateDisplay();
+        mWriter.validateDisplay(mPrimaryDisplay);
         execute();
-        if (mReader->mCompositionChanges.size() != 0) {
+        std::vector<int64_t> layers;
+        std::vector<Composition> types;
+        mReader.takeChangedCompositionTypes(mPrimaryDisplay, &layers, &types);
+        if (!layers.empty()) {
             GTEST_SUCCEED() << "Composition change requested, skipping test";
             return;
         }
 
-        ASSERT_EQ(0, mReader->mErrors.size());
-        mWriter->presentDisplay();
+        ASSERT_TRUE(mReader.takeErrors().empty());
+        mWriter.presentDisplay(mPrimaryDisplay);
         execute();
-        ASSERT_EQ(0, mReader->mErrors.size());
+        ASSERT_TRUE(mReader.takeErrors().empty());
 
-        mWriter->selectLayer(layer);
         auto handle2 = allocate()->handle;
         ASSERT_NE(nullptr, handle2);
-        mWriter->setLayerBuffer(0, handle2, -1);
-        mWriter->setLayerSurfaceDamage(std::vector<Rect>(1, {0, 0, 10, 10}));
-        mWriter->presentDisplay();
+        mWriter.setLayerBuffer(mPrimaryDisplay, layer, 0, handle2, -1);
+        mWriter.setLayerSurfaceDamage(mPrimaryDisplay, layer, std::vector<Rect>(1, {0, 0, 10, 10}));
+        mWriter.presentDisplay(mPrimaryDisplay);
         execute();
     }
 }
@@ -1562,33 +1541,37 @@ TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_CURSOR_POSITION) {
     ASSERT_NE(nullptr, handle);
     Rect displayFrame{0, 0, mDisplayWidth, mDisplayHeight};
 
-    mWriter->selectDisplay(mPrimaryDisplay);
-    mWriter->selectLayer(layer);
-    mWriter->setLayerBuffer(0, handle, -1);
-    mWriter->setLayerCompositionType(Composition::CURSOR);
-    mWriter->setLayerDisplayFrame(displayFrame);
-    mWriter->setLayerPlaneAlpha(1);
-    mWriter->setLayerSourceCrop({0, 0, (float)mDisplayWidth, (float)mDisplayHeight});
-    mWriter->setLayerTransform(static_cast<Transform>(0));
-    mWriter->setLayerVisibleRegion(std::vector<Rect>(1, displayFrame));
-    mWriter->setLayerZOrder(10);
-    mWriter->setLayerBlendMode(BlendMode::NONE);
-    mWriter->setLayerSurfaceDamage(std::vector<Rect>(1, displayFrame));
-    mWriter->setLayerDataspace(Dataspace::UNKNOWN);
-    mWriter->validateDisplay();
+    mWriter.setLayerBuffer(mPrimaryDisplay, layer, 0, handle, -1);
+    mWriter.setLayerCompositionType(mPrimaryDisplay, layer, Composition::CURSOR);
+    mWriter.setLayerDisplayFrame(mPrimaryDisplay, layer, displayFrame);
+    mWriter.setLayerPlaneAlpha(mPrimaryDisplay, layer, 1);
+    mWriter.setLayerSourceCrop(mPrimaryDisplay, layer,
+                               {0, 0, (float)mDisplayWidth, (float)mDisplayHeight});
+    mWriter.setLayerTransform(mPrimaryDisplay, layer, static_cast<Transform>(0));
+    mWriter.setLayerVisibleRegion(mPrimaryDisplay, layer, std::vector<Rect>(1, displayFrame));
+    mWriter.setLayerZOrder(mPrimaryDisplay, layer, 10);
+    mWriter.setLayerBlendMode(mPrimaryDisplay, layer, BlendMode::NONE);
+    mWriter.setLayerSurfaceDamage(mPrimaryDisplay, layer, std::vector<Rect>(1, displayFrame));
+    mWriter.setLayerDataspace(mPrimaryDisplay, layer, Dataspace::UNKNOWN);
+    mWriter.validateDisplay(mPrimaryDisplay);
 
     execute();
-    if (mReader->mCompositionChanges.size() != 0) {
+    std::vector<int64_t> layers;
+    std::vector<Composition> types;
+    mReader.takeChangedCompositionTypes(mPrimaryDisplay, &layers, &types);
+    if (!layers.empty()) {
         GTEST_SUCCEED() << "Composition change requested, skipping test";
         return;
     }
-    mWriter->presentDisplay();
-    ASSERT_EQ(0, mReader->mErrors.size());
+    mWriter.presentDisplay(mPrimaryDisplay);
+    ASSERT_TRUE(mReader.takeErrors().empty());
 
-    mWriter->setLayerCursorPosition(1, 1);
-    mWriter->setLayerCursorPosition(0, 0);
-    mWriter->validateDisplay();
-    mWriter->presentDisplay();
+    mWriter.setLayerCursorPosition(mPrimaryDisplay, layer, 1, 1);
+    execute();
+
+    mWriter.setLayerCursorPosition(mPrimaryDisplay, layer, 0, 0);
+    mWriter.validateDisplay(mPrimaryDisplay);
+    mWriter.presentDisplay(mPrimaryDisplay);
     execute();
 }
 
@@ -1598,10 +1581,7 @@ TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_BUFFER) {
 
     int64_t layer;
     EXPECT_TRUE(mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount, &layer).isOk());
-
-    mWriter->selectDisplay(mPrimaryDisplay);
-    mWriter->selectLayer(layer);
-    mWriter->setLayerBuffer(0, handle, -1);
+    mWriter.setLayerBuffer(mPrimaryDisplay, layer, 0, handle, -1);
     execute();
 }
 
@@ -1612,58 +1592,77 @@ TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_SURFACE_DAMAGE) {
     Rect empty{0, 0, 0, 0};
     Rect unit{0, 0, 1, 1};
 
-    mWriter->selectDisplay(mPrimaryDisplay);
-    mWriter->selectLayer(layer);
-    mWriter->setLayerSurfaceDamage(std::vector<Rect>(1, empty));
-    mWriter->setLayerSurfaceDamage(std::vector<Rect>(1, unit));
-    mWriter->setLayerSurfaceDamage(std::vector<Rect>());
+    mWriter.setLayerSurfaceDamage(mPrimaryDisplay, layer, std::vector<Rect>(1, empty));
     execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setLayerSurfaceDamage(mPrimaryDisplay, layer, std::vector<Rect>(1, unit));
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setLayerSurfaceDamage(mPrimaryDisplay, layer, std::vector<Rect>());
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
 }
 
 TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_BLEND_MODE) {
     int64_t layer;
     EXPECT_TRUE(mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount, &layer).isOk());
 
-    mWriter->selectDisplay(mPrimaryDisplay);
-    mWriter->selectLayer(layer);
-    mWriter->setLayerBlendMode(BlendMode::NONE);
-    mWriter->setLayerBlendMode(BlendMode::PREMULTIPLIED);
-    mWriter->setLayerBlendMode(BlendMode::COVERAGE);
+    mWriter.setLayerBlendMode(mPrimaryDisplay, layer, BlendMode::NONE);
     execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setLayerBlendMode(mPrimaryDisplay, layer, BlendMode::PREMULTIPLIED);
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setLayerBlendMode(mPrimaryDisplay, layer, BlendMode::COVERAGE);
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
 }
 
 TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_COLOR) {
     int64_t layer;
     EXPECT_TRUE(mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount, &layer).isOk());
 
-    mWriter->selectDisplay(mPrimaryDisplay);
-    mWriter->selectLayer(layer);
-    mWriter->setLayerColor(Color{static_cast<int8_t>(0xff), static_cast<int8_t>(0xff),
-                                 static_cast<int8_t>(0xff), static_cast<int8_t>(0xff)});
-    mWriter->setLayerColor(Color{0, 0, 0, 0});
+    mWriter.setLayerColor(mPrimaryDisplay, layer,
+                          Color{static_cast<int8_t>(0xff), static_cast<int8_t>(0xff),
+                                static_cast<int8_t>(0xff), static_cast<int8_t>(0xff)});
     execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setLayerColor(mPrimaryDisplay, layer, Color{0, 0, 0, 0});
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
 }
 
 TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_COMPOSITION_TYPE) {
     int64_t layer;
     EXPECT_TRUE(mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount, &layer).isOk());
 
-    mWriter->selectDisplay(mPrimaryDisplay);
-    mWriter->selectLayer(layer);
-    mWriter->setLayerCompositionType(Composition::CLIENT);
-    mWriter->setLayerCompositionType(Composition::DEVICE);
-    mWriter->setLayerCompositionType(Composition::SOLID_COLOR);
-    mWriter->setLayerCompositionType(Composition::CURSOR);
+    mWriter.setLayerCompositionType(mPrimaryDisplay, layer, Composition::CLIENT);
     execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setLayerCompositionType(mPrimaryDisplay, layer, Composition::DEVICE);
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setLayerCompositionType(mPrimaryDisplay, layer, Composition::SOLID_COLOR);
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setLayerCompositionType(mPrimaryDisplay, layer, Composition::CURSOR);
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
 }
 
 TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_DATASPACE) {
     int64_t layer;
     EXPECT_TRUE(mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount, &layer).isOk());
 
-    mWriter->selectDisplay(mPrimaryDisplay);
-    mWriter->selectLayer(layer);
-    mWriter->setLayerDataspace(Dataspace::UNKNOWN);
+    mWriter.setLayerDataspace(mPrimaryDisplay, layer, Dataspace::UNKNOWN);
     execute();
 }
 
@@ -1671,9 +1670,7 @@ TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_DISPLAY_FRAME) {
     int64_t layer;
     EXPECT_TRUE(mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount, &layer).isOk());
 
-    mWriter->selectDisplay(mPrimaryDisplay);
-    mWriter->selectLayer(layer);
-    mWriter->setLayerDisplayFrame(Rect{0, 0, 1, 1});
+    mWriter.setLayerDisplayFrame(mPrimaryDisplay, layer, Rect{0, 0, 1, 1});
     execute();
 }
 
@@ -1681,11 +1678,13 @@ TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_PLANE_ALPHA) {
     int64_t layer;
     EXPECT_TRUE(mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount, &layer).isOk());
 
-    mWriter->selectDisplay(mPrimaryDisplay);
-    mWriter->selectLayer(layer);
-    mWriter->setLayerPlaneAlpha(0.0f);
-    mWriter->setLayerPlaneAlpha(1.0f);
+    mWriter.setLayerPlaneAlpha(mPrimaryDisplay, layer, 0.0f);
     execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setLayerPlaneAlpha(mPrimaryDisplay, layer, 1.0f);
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
 }
 
 TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_SIDEBAND_STREAM) {
@@ -1703,9 +1702,7 @@ TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_SIDEBAND_STREAM) {
     int64_t layer;
     EXPECT_TRUE(mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount, &layer).isOk());
 
-    mWriter->selectDisplay(mPrimaryDisplay);
-    mWriter->selectLayer(layer);
-    mWriter->setLayerSidebandStream(handle);
+    mWriter.setLayerSidebandStream(mPrimaryDisplay, layer, handle);
     execute();
 }
 
@@ -1713,9 +1710,7 @@ TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_SOURCE_CROP) {
     int64_t layer;
     EXPECT_TRUE(mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount, &layer).isOk());
 
-    mWriter->selectDisplay(mPrimaryDisplay);
-    mWriter->selectLayer(layer);
-    mWriter->setLayerSourceCrop(FRect{0.0f, 0.0f, 1.0f, 1.0f});
+    mWriter.setLayerSourceCrop(mPrimaryDisplay, layer, FRect{0.0f, 0.0f, 1.0f, 1.0f});
     execute();
 }
 
@@ -1723,19 +1718,41 @@ TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_TRANSFORM) {
     int64_t layer;
     EXPECT_TRUE(mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount, &layer).isOk());
 
-    mWriter->selectDisplay(mPrimaryDisplay);
-    mWriter->selectLayer(layer);
-    mWriter->setLayerTransform(static_cast<Transform>(0));
-    mWriter->setLayerTransform(Transform::FLIP_H);
-    mWriter->setLayerTransform(Transform::FLIP_V);
-    mWriter->setLayerTransform(Transform::ROT_90);
-    mWriter->setLayerTransform(Transform::ROT_180);
-    mWriter->setLayerTransform(Transform::ROT_270);
-    mWriter->setLayerTransform(static_cast<Transform>(static_cast<int>(Transform::FLIP_H) |
-                                                      static_cast<int>(Transform::ROT_90)));
-    mWriter->setLayerTransform(static_cast<Transform>(static_cast<int>(Transform::FLIP_V) |
-                                                      static_cast<int>(Transform::ROT_90)));
+    mWriter.setLayerTransform(mPrimaryDisplay, layer, static_cast<Transform>(0));
     execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setLayerTransform(mPrimaryDisplay, layer, Transform::FLIP_H);
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setLayerTransform(mPrimaryDisplay, layer, Transform::FLIP_V);
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setLayerTransform(mPrimaryDisplay, layer, Transform::ROT_90);
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setLayerTransform(mPrimaryDisplay, layer, Transform::ROT_180);
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setLayerTransform(mPrimaryDisplay, layer, Transform::ROT_270);
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setLayerTransform(mPrimaryDisplay, layer,
+                              static_cast<Transform>(static_cast<int>(Transform::FLIP_H) |
+                                                     static_cast<int>(Transform::ROT_90)));
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setLayerTransform(mPrimaryDisplay, layer,
+                              static_cast<Transform>(static_cast<int>(Transform::FLIP_V) |
+                                                     static_cast<int>(Transform::ROT_90)));
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
 }
 
 TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_VISIBLE_REGION) {
@@ -1745,31 +1762,35 @@ TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_VISIBLE_REGION) {
     Rect empty{0, 0, 0, 0};
     Rect unit{0, 0, 1, 1};
 
-    mWriter->selectDisplay(mPrimaryDisplay);
-    mWriter->selectLayer(layer);
-    mWriter->setLayerVisibleRegion(std::vector<Rect>(1, empty));
-    mWriter->setLayerVisibleRegion(std::vector<Rect>(1, unit));
-    mWriter->setLayerVisibleRegion(std::vector<Rect>());
+    mWriter.setLayerVisibleRegion(mPrimaryDisplay, layer, std::vector<Rect>(1, empty));
     execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setLayerVisibleRegion(mPrimaryDisplay, layer, std::vector<Rect>(1, unit));
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setLayerVisibleRegion(mPrimaryDisplay, layer, std::vector<Rect>());
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
 }
 
 TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_Z_ORDER) {
     int64_t layer;
     EXPECT_TRUE(mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount, &layer).isOk());
 
-    mWriter->selectDisplay(mPrimaryDisplay);
-    mWriter->selectLayer(layer);
-    mWriter->setLayerZOrder(10);
-    mWriter->setLayerZOrder(0);
+    mWriter.setLayerZOrder(mPrimaryDisplay, layer, 10);
     execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setLayerZOrder(mPrimaryDisplay, layer, 0);
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
 }
 
 TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_PER_FRAME_METADATA) {
     int64_t layer;
     EXPECT_TRUE(mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount, &layer).isOk());
-
-    mWriter->selectDisplay(mPrimaryDisplay);
-    mWriter->selectLayer(layer);
 
     /**
      * DISPLAY_P3 is a color space that uses the DCI_P3 primaries,
@@ -1796,11 +1817,11 @@ TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_PER_FRAME_METADATA) {
     aidlMetadata.push_back({PerFrameMetadataKey::MIN_LUMINANCE, 0.1f});
     aidlMetadata.push_back({PerFrameMetadataKey::MAX_CONTENT_LIGHT_LEVEL, 78.0});
     aidlMetadata.push_back({PerFrameMetadataKey::MAX_FRAME_AVERAGE_LIGHT_LEVEL, 62.0});
-    mWriter->setLayerPerFrameMetadata(aidlMetadata);
+    mWriter.setLayerPerFrameMetadata(mPrimaryDisplay, layer, aidlMetadata);
     execute();
 
-    if (mReader->mErrors.size() == 1 && mReader->mErrors[0].second == EX_UNSUPPORTED_OPERATION) {
-        mReader->mErrors.clear();
+    const auto errors = mReader.takeErrors();
+    if (errors.size() == 1 && errors[0].errorCode == EX_UNSUPPORTED_OPERATION) {
         GTEST_SUCCEED() << "SetLayerPerFrameMetadata is not supported";
         EXPECT_TRUE(mComposerClient->destroyLayer(mPrimaryDisplay, layer).isOk());
         return;
