@@ -27,6 +27,7 @@ import android.hardware.radio.network.NrDualConnectivityState;
 import android.hardware.radio.network.RadioAccessSpecifier;
 import android.hardware.radio.network.RadioBandMode;
 import android.hardware.radio.network.SignalThresholdInfo;
+import android.hardware.radio.network.UsageSetting;
 
 /**
  * This interface is used by telephony and telecom to talk to cellular radio for network APIs.
@@ -416,4 +417,25 @@ oneway interface IRadioNetwork {
      * Response function is IRadioNetworkResponse.supplyNetworkDepersonalizationResponse()
      */
     void supplyNetworkDepersonalization(in int serial, in String netPin);
+
+    /**
+     * Set the UE usage setting for data/voice centric usage.
+     *
+     * <p>Sets the usage setting in accordance with 3gpp 24.301 sec 4.3 and 3gpp 24.501 sec 4.3.
+     * <p>This value must be independently preserved for each SIM; (setting the value is not a
+     * "global" override).
+     *
+     * @param serial Serial number of request.
+     * @param usageSetting the usage setting for the current SIM.
+     */
+    oneway void setUsageSetting(in int serial, in UsageSetting usageSetting);
+
+    /**
+     * Get the UE usage setting for data/voice centric usage.
+     *
+     * <p>Gets the usage setting in accordance with 3gpp 24.301 sec 4.3 and 3gpp 24.501 sec 4.3.
+     *
+     * @param serial Serial number of request.
+     */
+    oneway void getUsageSetting(in int serial);
 }
