@@ -159,6 +159,10 @@ class SupplicantP2pIfaceCallback : public BnSupplicantP2pIfaceCallback {
         const std::vector<uint8_t>& /* p2pDeviceAddress */) override {
         return ndk::ScopedAStatus::ok();
     }
+    ::ndk::ScopedAStatus onGroupFrequencyChanged(const std::string& /* groupIfname */,
+                                                 int32_t /* frequency */) override {
+        return ndk::ScopedAStatus::ok();
+    }
 };
 
 class SupplicantP2pIfaceAidlTest : public testing::TestWithParam<std::string> {
