@@ -20,10 +20,16 @@
 
 #include <android-base/logging.h>
 #include <android-base/stringprintf.h>
+#include <android/hardware/bluetooth/audio/2.2/IBluetoothAudioPort.h>
 
 namespace android {
 namespace bluetooth {
 namespace audio {
+
+using ::android::hardware::audio::common::V5_0::AudioSource;
+using ::android::hardware::audio::common::V5_0::RecordTrackMetadata;
+using ::android::hardware::audio::common::V5_0::SinkMetadata;
+
 using SessionType_2_1 =
     ::android::hardware::bluetooth::audio::V2_1::SessionType;
 using SessionType_2_0 =
@@ -36,6 +42,9 @@ using AudioConfiguration_2_1 =
     BluetoothAudioSession_2_2::invalidSoftwareAudioConfiguration = {};
 ::android::hardware::bluetooth::audio::V2_2::AudioConfiguration
     BluetoothAudioSession_2_2::invalidOffloadAudioConfiguration = {};
+
+using IBluetoothAudioPort_2_2 =
+    ::android::hardware::bluetooth::audio::V2_2::IBluetoothAudioPort;
 
 namespace {
 bool is_2_0_session_type(
@@ -82,6 +91,54 @@ BluetoothAudioSession_2_2::GetAudioSession() {
 std::shared_ptr<BluetoothAudioSession_2_1>
 BluetoothAudioSession_2_2::GetAudioSession_2_1() {
   return audio_session_2_1;
+}
+
+void BluetoothAudioSession_2_2::UpdateSinkMetadata(
+    const struct sink_metadata* sink_metadata) {
+  std::lock_guard<std::recursive_mutex> guard(audio_session->mutex_);
+  if (!IsSessionReady()) {
+    LOG(DEBUG) << __func__ << " - SessionType=" << toString(session_type_2_1_)
+               << " has NO session";
+    return;
+  }
+
+  ssize_t track_count = sink_metadata->track_count;
+  LOG(INFO) << __func__ << " - SessionType=" << toString(session_type_2_1_)
+            << ", " << track_count << " track(s)";
+  if (session_type_2_1_ == SessionType_2_1::A2DP_SOFTWARE_ENCODING_DATAPATH ||
+      session_type_2_1_ == SessionType_2_1::A2DP_HARDWARE_OFFLOAD_DATAPATH) {
+    return;
+  }
+
+  struct record_track_metadata* track = sink_metadata->tracks;
+  SinkMetadata sinkMetadata;
+  RecordTrackMetadata* halMetadata;
+
+  sinkMetadata.tracks.resize(track_count);
+  halMetadata = sinkMetadata.tracks.data();
+  while (track_count && track) {
+    halMetadata->source = static_cast<AudioSource>(track->source);
+    halMetadata->gain = track->gain;
+    // halMetadata->destination leave unspecified
+    LOG(INFO) << __func__
+              << " - SessionType=" << toString(GetAudioSession()->session_type_)
+              << ", source=" << track->source
+              << ", dest_device=" << track->dest_device
+              << ", gain=" << track->gain
+              << ", dest_device_address=" << track->dest_device_address;
+    --track_count;
+    ++track;
+    ++halMetadata;
+  }
+
+  /* This is called just for 2.2 sessions, so it's safe to do this casting*/
+  IBluetoothAudioPort_2_2* stack_iface_2_2_ =
+      static_cast<IBluetoothAudioPort_2_2*>(audio_session->stack_iface_.get());
+  auto hal_retval = stack_iface_2_2_->updateSinkMetadata(sinkMetadata);
+  if (!hal_retval.isOk()) {
+    LOG(WARNING) << __func__ << " - IBluetoothAudioPort SessionType="
+                 << toString(session_type_2_1_) << " failed";
+  }
 }
 
 // The control function is for the bluetooth_audio module to get the current

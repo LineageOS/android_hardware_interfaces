@@ -38,7 +38,7 @@ class LeAudioOffloadAudioProvider : public BluetoothAudioProvider {
                                 const V2_1::AudioConfiguration& audioConfig,
                                 startSession_cb _hidl_cb) override;
 
-  Return<void> startSession_2_2(const sp<V2_0::IBluetoothAudioPort>& hostIf,
+  Return<void> startSession_2_2(const sp<V2_2::IBluetoothAudioPort>& hostIf,
                                 const AudioConfiguration& audioConfig,
                                 startSession_cb _hidl_cb) override;
 
