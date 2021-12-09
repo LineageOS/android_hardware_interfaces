@@ -35,7 +35,6 @@ cc_test {
         "VtsHalGraphicsComposer3_TargetTest.cpp",
         "VtsHalGraphicsComposer3_ReadbackTest.cpp",
         "composer-vts/GraphicsComposerCallback.cpp",
-        "composer-vts/TestCommandReader.cpp",
     ],
 
     shared_libs: [

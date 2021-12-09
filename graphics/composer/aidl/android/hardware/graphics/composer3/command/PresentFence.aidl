@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package android.hardware.graphics.composer3;
+package android.hardware.graphics.composer3.command;
 
-/**
- * Layer requests returned from getDisplayRequests.
- */
 @VintfStability
-@Backing(type="int")
-enum LayerRequest {
+parcelable PresentFence {
     /**
-     * The client must clear its target with transparent pixels where
-     * this layer would be. The client may ignore this request if the
-     * layer must be blended.
+     * The display which this commands refers to.
+     * @see IComposer.createDisplay
      */
-    CLEAR_CLIENT_TARGET = 1 << 0,
+    long display;
+
+    /**
+     * The present fence for this display.
+     */
+    ParcelFileDescriptor fence;
 }
