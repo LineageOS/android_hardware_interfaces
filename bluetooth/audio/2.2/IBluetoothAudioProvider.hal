@@ -17,7 +17,7 @@
 package android.hardware.bluetooth.audio@2.2;
 
 import @2.1::IBluetoothAudioProvider;
-import @2.0::IBluetoothAudioPort;
+import @2.2::IBluetoothAudioPort;
 import @2.0::Status;
 
 /**
