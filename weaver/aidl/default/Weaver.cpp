@@ -15,30 +15,52 @@
  */
 
 #include "Weaver.h"
+#include <array>
 
 namespace aidl {
 namespace android {
 namespace hardware {
 namespace weaver {
 
+struct Slotinfo {
+    int slot_id;
+    std::vector<uint8_t> key;
+    std::vector<uint8_t> value;
+};
+
+std::array<struct Slotinfo, 16> slot_array;
 // Methods from ::android::hardware::weaver::IWeaver follow.
 
 ::ndk::ScopedAStatus Weaver::getConfig(WeaverConfig* out_config) {
-    (void)out_config;
+    *out_config = {16, 16, 16};
     return ::ndk::ScopedAStatus::ok();
 }
 
 ::ndk::ScopedAStatus Weaver::read(int32_t in_slotId, const std::vector<uint8_t>& in_key, WeaverReadResponse* out_response) {
-    (void)in_slotId;
-    (void)in_key;
-    (void)out_response;
+
+    if (in_slotId > 15 || in_key.size() > 16) {
+        *out_response = {0, {}};
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificError(Weaver::STATUS_FAILED));
+    }
+
+    if (slot_array[in_slotId].key != in_key) {
+        *out_response = {0, {}};
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificError(Weaver::STATUS_INCORRECT_KEY));
+    }
+
+    *out_response = {0, slot_array[in_slotId].value};
+
     return ::ndk::ScopedAStatus::ok();
 }
 
 ::ndk::ScopedAStatus Weaver::write(int32_t in_slotId, const std::vector<uint8_t>& in_key, const std::vector<uint8_t>& in_value) {
-    (void)in_slotId;
-    (void)in_key;
-    (void)in_value;
+
+    if (in_slotId > 15 || in_key.size() > 16 || in_value.size() > 16)
+        return ::ndk::ScopedAStatus::fromStatus(STATUS_FAILED_TRANSACTION);
+
+    slot_array[in_slotId].key = in_key;
+    slot_array[in_slotId].value = in_value;
+
     return ::ndk::ScopedAStatus::ok();
 }
 
