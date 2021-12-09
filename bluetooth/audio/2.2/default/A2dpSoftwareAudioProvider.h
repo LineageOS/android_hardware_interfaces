@@ -40,7 +40,7 @@ class A2dpSoftwareAudioProvider : public BluetoothAudioProvider {
   bool isValid(const V2_1::SessionType& sessionType) override;
   bool isValid(const V2_0::SessionType& sessionType) override;
 
-  Return<void> startSession(const sp<IBluetoothAudioPort>& hostIf,
+  Return<void> startSession(const sp<V2_0::IBluetoothAudioPort>& hostIf,
                             const V2_0::AudioConfiguration& audioConfig,
                             startSession_cb _hidl_cb) override;
 

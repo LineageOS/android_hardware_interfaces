@@ -70,7 +70,7 @@ bool A2dpSoftwareAudioProvider::isValid(const V2_1::SessionType& sessionType) {
 }
 
 Return<void> A2dpSoftwareAudioProvider::startSession(
-    const sp<IBluetoothAudioPort>& hostIf,
+    const sp<V2_0::IBluetoothAudioPort>& hostIf,
     const AudioConfiguration& audioConfig, startSession_cb _hidl_cb) {
   /**
    * Initialize the audio platform if audioConfiguration is supported.
