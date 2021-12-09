@@ -247,22 +247,6 @@ interface IComposerClient {
     int getDisplayAttribute(long display, int config, DisplayAttribute attribute);
 
     /**
-     * Use getDisplayCapabilities instead. If brightness is supported, must return
-     * DisplayCapability::BRIGHTNESS as one of the display capabilities via getDisplayCapabilities.
-     * Only use getDisplayCapabilities as the source of truth to query brightness support.
-     *
-     * Gets whether brightness operations are supported on a display.
-     *
-     * @param display The display.
-     *
-     * @return Whether brightness operations are supported on the display.
-     *
-     * @exception EX_BAD_DISPLAY   when the display is invalid, or
-     * @exception EX_BAD_PARAMETER when the output parameter is invalid.
-     */
-    boolean getDisplayBrightnessSupport(long display);
-
-    /**
      * Provides a list of supported capabilities (as described in the
      * definition of DisplayCapability above). This list must not change after
      * initialization.
@@ -369,21 +353,6 @@ interface IComposerClient {
      * @exception EX_UNSUPPORTED when there is no efficient way to sample.
      */
     DisplayContentSamplingAttributes getDisplayedContentSamplingAttributes(long display);
-
-    /**
-     * Returns whether the given display supports PowerMode::DOZE and
-     * PowerMode::DOZE_SUSPEND. DOZE_SUSPEND may not provide any benefit over
-     * DOZE (see the definition of PowerMode for more information), but if
-     * both DOZE and DOZE_SUSPEND are no different from PowerMode::ON, the
-     * device must not claim support.
-     *
-     * @param display is the display to query.
-     *
-     * @return is true only when the display supports doze modes.
-     *
-     * @exception EX_BAD_DISPLAY when an invalid display handle was passed in.
-     */
-    boolean getDozeSupport(long display);
 
     /**
      * Returns the high dynamic range (HDR) capabilities of the given display,
