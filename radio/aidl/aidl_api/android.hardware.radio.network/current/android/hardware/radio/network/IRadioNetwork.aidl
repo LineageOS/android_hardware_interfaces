@@ -68,4 +68,6 @@ interface IRadioNetwork {
   oneway void startNetworkScan(in int serial, in android.hardware.radio.network.NetworkScanRequest request);
   oneway void stopNetworkScan(in int serial);
   oneway void supplyNetworkDepersonalization(in int serial, in String netPin);
+  oneway void setUsageSetting(in int serial, in android.hardware.radio.network.UsageSetting usageSetting);
+  oneway void getUsageSetting(in int serial);
 }
