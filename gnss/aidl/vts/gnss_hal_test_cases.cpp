@@ -804,6 +804,9 @@ TEST_P(GnssHalTest, TestAllExtensions) {
  * 3. Sets SUPL server host/port.
  */
 TEST_P(GnssHalTest, TestAGnssExtension) {
+    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+        return;
+    }
     sp<IAGnss> iAGnss;
     auto status = aidl_gnss_hal_->getExtensionAGnss(&iAGnss);
     ASSERT_TRUE(status.isOk());
