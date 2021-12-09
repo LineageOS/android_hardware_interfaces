@@ -28,7 +28,6 @@ cc_library_static {
     defaults: ["hidl_defaults"],
     srcs: [
         "GraphicsComposerCallback.cpp",
-        "TestCommandReader.cpp",
         "ReadbackVts.cpp",
         "RenderEngineVts.cpp",
     ],

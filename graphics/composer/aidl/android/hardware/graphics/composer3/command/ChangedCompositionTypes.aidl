@@ -14,25 +14,34 @@
  * limitations under the License.
  */
 
-package android.hardware.graphics.composer3;
+package android.hardware.graphics.composer3.command;
 
-/**
- * Blend modes, settable per layer.
- */
+import android.hardware.graphics.composer3.Composition;
+
 @VintfStability
-@Backing(type="int")
-enum BlendMode {
-    INVALID = 0,
+parcelable ChangedCompositionTypes {
     /**
-     * colorOut = colorSrc
+     * The display which this commands refers to.
+     * @see IComposer.createDisplay
      */
-    NONE = 1,
+    long display;
+
+    @VintfStability
+    parcelable Layer {
+        /**
+         * The layer which this commands refers to.
+         * @see IComposer.createLayer
+         */
+        long layer;
+
+        /**
+         * The new composition type.
+         */
+        Composition composition;
+    }
+
     /**
-     * colorOut = colorSrc + colorDst * (1 - alphaSrc)
+     * Indicates which layers has composition changes
      */
-    PREMULTIPLIED = 2,
-    /**
-     * colorOut = colorSrc * alphaSrc + colorDst * (1 - alphaSrc)
-     */
-    COVERAGE = 3,
+    Layer[] layers;
 }
