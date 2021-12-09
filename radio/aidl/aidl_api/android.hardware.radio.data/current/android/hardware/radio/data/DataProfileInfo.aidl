@@ -53,6 +53,7 @@ parcelable DataProfileInfo {
   boolean preferred;
   boolean persistent;
   boolean alwaysOn;
+  @nullable android.hardware.radio.data.TrafficDescriptor trafficDescriptor;
   const int ID_DEFAULT = 0;
   const int ID_TETHERED = 1;
   const int ID_IMS = 2;

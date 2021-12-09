@@ -36,7 +36,8 @@ using namespace std::string_literals;
 static std::vector<std::shared_ptr<ndk::ICInterface>> gPublishedHals;
 
 template <typename T>
-static void publishRadioHal(sp<V1_5::IRadio> hidlHal, sp<compat::RadioResponse> responseCb,
+static void publishRadioHal(std::shared_ptr<compat::DriverContext> context,
+                            sp<V1_5::IRadio> hidlHal, sp<compat::RadioResponse> responseCb,
                             sp<compat::RadioIndication> indicationCb, const std::string& slot) {
     const auto instance = T::descriptor + "/"s + slot;
     if (!AServiceManager_isDeclared(instance.c_str())) {
@@ -45,7 +46,7 @@ static void publishRadioHal(sp<V1_5::IRadio> hidlHal, sp<compat::RadioResponse> 
     }
     LOG(DEBUG) << "Publishing " << instance;
 
-    auto aidlHal = ndk::SharedRefBase::make<T>(hidlHal, responseCb, indicationCb);
+    auto aidlHal = ndk::SharedRefBase::make<T>(context, hidlHal, responseCb, indicationCb);
     gPublishedHals.push_back(aidlHal);
     const auto status = AServiceManager_addService(aidlHal->asBinder().get(), instance.c_str());
     CHECK_EQ(status, STATUS_OK);
@@ -57,16 +58,18 @@ static void publishRadio(std::string slot) {
 
     hidl_utils::linkDeathToDeath(radioHidl);
 
-    auto responseCb = sp<compat::RadioResponse>::make();
-    auto indicationCb = sp<compat::RadioIndication>::make();
+    auto context = std::make_shared<compat::DriverContext>();
+
+    auto responseCb = sp<compat::RadioResponse>::make(context);
+    auto indicationCb = sp<compat::RadioIndication>::make(context);
     radioHidl->setResponseFunctions(responseCb, indicationCb).assertOk();
 
-    publishRadioHal<compat::RadioData>(radioHidl, responseCb, indicationCb, slot);
-    publishRadioHal<compat::RadioMessaging>(radioHidl, responseCb, indicationCb, slot);
-    publishRadioHal<compat::RadioModem>(radioHidl, responseCb, indicationCb, slot);
-    publishRadioHal<compat::RadioNetwork>(radioHidl, responseCb, indicationCb, slot);
-    publishRadioHal<compat::RadioSim>(radioHidl, responseCb, indicationCb, slot);
-    publishRadioHal<compat::RadioVoice>(radioHidl, responseCb, indicationCb, slot);
+    publishRadioHal<compat::RadioData>(context, radioHidl, responseCb, indicationCb, slot);
+    publishRadioHal<compat::RadioMessaging>(context, radioHidl, responseCb, indicationCb, slot);
+    publishRadioHal<compat::RadioModem>(context, radioHidl, responseCb, indicationCb, slot);
+    publishRadioHal<compat::RadioNetwork>(context, radioHidl, responseCb, indicationCb, slot);
+    publishRadioHal<compat::RadioSim>(context, radioHidl, responseCb, indicationCb, slot);
+    publishRadioHal<compat::RadioVoice>(context, radioHidl, responseCb, indicationCb, slot);
 }
 
 static void publishRadioConfig() {
