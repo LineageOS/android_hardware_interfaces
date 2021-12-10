@@ -60,16 +60,6 @@ BluetoothAudioSession_2_1::BluetoothAudioSession_2_1(
   }
 }
 
-bool BluetoothAudioSession_2_1::IsSessionReady() {
-  if (session_type_2_1_ !=
-      SessionType_2_1::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH) {
-    return audio_session->IsSessionReady();
-  }
-
-  std::lock_guard<std::recursive_mutex> guard(audio_session->mutex_);
-  return audio_session->stack_iface_ != nullptr;
-}
-
 std::shared_ptr<BluetoothAudioSession>
 BluetoothAudioSession_2_1::GetAudioSession() {
   return audio_session;
@@ -80,7 +70,7 @@ BluetoothAudioSession_2_1::GetAudioSession() {
 const ::android::hardware::bluetooth::audio::V2_1::AudioConfiguration
 BluetoothAudioSession_2_1::GetAudioConfig() {
   std::lock_guard<std::recursive_mutex> guard(audio_session->mutex_);
-  if (IsSessionReady()) {
+  if (audio_session->IsSessionReady()) {
     // If session is unknown it means it should be 2.0 type
     if (session_type_2_1_ != SessionType_2_1::UNKNOWN)
       return audio_config_2_1_;
@@ -122,9 +112,6 @@ bool BluetoothAudioSession_2_1::UpdateAudioConfig(
            SessionType_2_1::LE_AUDIO_SOFTWARE_DECODED_DATAPATH);
   bool is_offload_a2dp_session =
       (session_type_2_1_ == SessionType_2_1::A2DP_HARDWARE_OFFLOAD_DATAPATH);
-  bool is_offload_le_audio_session =
-      (session_type_2_1_ == SessionType_2_1::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH ||
-       session_type_2_1_ == SessionType_2_1::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH);
   auto audio_config_discriminator = audio_config.getDiscriminator();
   bool is_software_audio_config =
       (is_software_session &&
@@ -136,13 +123,7 @@ bool BluetoothAudioSession_2_1::UpdateAudioConfig(
        audio_config_discriminator ==
            ::android::hardware::bluetooth::audio::V2_1::AudioConfiguration::
                hidl_discriminator::codecConfig);
-  bool is_le_audio_offload_audio_config =
-      (is_offload_le_audio_session &&
-       audio_config_discriminator ==
-           ::android::hardware::bluetooth::audio::V2_1::AudioConfiguration::
-               hidl_discriminator::leAudioCodecConfig);
-  if (!is_software_audio_config && !is_a2dp_offload_audio_config &&
-      !is_le_audio_offload_audio_config) {
+  if (!is_software_audio_config && !is_a2dp_offload_audio_config) {
     return false;
   }
   audio_config_2_1_ = audio_config;
