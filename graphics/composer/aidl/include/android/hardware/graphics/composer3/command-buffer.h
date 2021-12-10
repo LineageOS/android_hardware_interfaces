@@ -294,6 +294,11 @@ class CommandWriterBase {
         getLayerCommand(display, layer).genericMetadata.emplace(std::move(metadata));
     }
 
+    void setLayerWhitePointNits(int64_t display, int64_t layer, float whitePointNits) {
+        getLayerCommand(display, layer)
+                .whitePointNits.emplace(command::WhitePointNits{.nits = whitePointNits});
+    }
+
     const std::vector<command::CommandPayload>& getPendingCommands() {
         if (mLayerCommand.has_value()) {
             mCommands.emplace_back(std::move(*mLayerCommand));
@@ -305,6 +310,7 @@ class CommandWriterBase {
         }
         return mCommands;
     }
+
     std::vector<command::CommandResultPayload> getPendingCommandResults() {
         return std::move(mCommandsResults);
     }
@@ -489,18 +495,21 @@ class CommandReaderBase {
     }
 
     // Get the client target properties requested by hardware composer.
-    void takeClientTargetProperty(int64_t display, ClientTargetProperty* outClientTargetProperty) {
+    void takeClientTargetProperty(int64_t display, ClientTargetProperty* outClientTargetProperty,
+                                  float* outWhitePointNits) {
         auto found = mReturnData.find(display);
 
         // If not found, return the default values.
         if (found == mReturnData.end()) {
             outClientTargetProperty->pixelFormat = common::PixelFormat::RGBA_8888;
             outClientTargetProperty->dataspace = Dataspace::UNKNOWN;
+            *outWhitePointNits = -1.f;
             return;
         }
 
         ReturnData& data = found->second;
         *outClientTargetProperty = data.clientTargetProperty;
+        *outWhitePointNits = data.clientTargetWhitePointNits;
     }
 
   private:
@@ -578,6 +587,7 @@ class CommandReaderBase {
         data.clientTargetProperty.pixelFormat =
                 clientTargetProperty.clientTargetProperty.pixelFormat;
         data.clientTargetProperty.dataspace = clientTargetProperty.clientTargetProperty.dataspace;
+        data.clientTargetWhitePointNits = clientTargetProperty.whitePointNits;
     }
 
     struct ReturnData {
@@ -598,6 +608,7 @@ class CommandReaderBase {
 
         ClientTargetProperty clientTargetProperty{common::PixelFormat::RGBA_8888,
                                                   Dataspace::UNKNOWN};
+        float clientTargetWhitePointNits = -1.f;
     };
 
     std::vector<command::Error> mErrors;
