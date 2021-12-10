@@ -16,6 +16,7 @@ cc_binary {
     local_include_dirs: ["include"],
     srcs: [
         "CancellationSignal.cpp",
+        "FakeFingerprintEngine.cpp",
         "Fingerprint.cpp",
         "Session.cpp",
         "WorkerThread.cpp",
@@ -27,6 +28,7 @@ cc_binary {
         "android.hardware.biometrics.fingerprint-V2-ndk",
         "android.hardware.biometrics.common-V2-ndk",
     ],
+    static_libs: ["android.hardware.biometrics.fingerprint.VirtualProps"],
 }
 
 cc_test_host {
@@ -40,4 +42,34 @@ cc_test_host {
         "libcutils",
     ],
     test_suites: ["general-tests"],
+}
+
+cc_test {
+    name: "android.hardware.biometrics.fingerprint.FakeFingerprintEngineTest",
+    local_include_dirs: ["include"],
+    srcs: [
+        "CancellationSignal.cpp",
+        "tests/FakeFingerprintEngineTest.cpp",
+        "FakeFingerprintEngine.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+    ],
+    static_libs: [
+        "android.hardware.biometrics.fingerprint.VirtualProps",
+        "android.hardware.biometrics.fingerprint-V2-ndk",
+        "android.hardware.biometrics.common-V2-ndk",
+        "android.hardware.keymaster-V3-ndk",
+    ],
+    vendor: true,
+    test_suites: ["general-tests"],
+    require_root: true,
+}
+
+sysprop_library {
+    name: "android.hardware.biometrics.fingerprint.VirtualProps",
+    srcs: ["fingerprint.sysprop"],
+    property_owner: "Vendor",
+    vendor: true,
 }

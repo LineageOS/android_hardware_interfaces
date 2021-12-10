@@ -1,0 +1,135 @@
+# fingerprint.sysprop
+# module becomes static class (Java) / namespace (C++) for serving API
+module: "android.fingerprint.virt.FingerprintHalProperties"
+owner: Vendor
+
+# type of fingerprint sensor
+prop {
+    prop_name: "persist.vendor.fingerprint.virtual.type"
+    type: String
+    scope: Public
+    access: ReadWrite
+    enum_values: "default|rear|udfps|side"
+    api_name: "type"
+}
+
+# ids of call current enrollments
+prop {
+    prop_name: "persist.vendor.fingerprint.virtual.enrollments"
+    type: IntegerList
+    scope: Public
+    access: ReadWrite
+    api_name: "enrollments"
+}
+
+# authenticate and detectInteraction will succeed with this
+# enrollment id, when present, otherwise they will error
+prop {
+    prop_name: "vendor.fingerprint.virtual.enrollment_hit"
+    type: Integer
+    scope: Public
+    access: ReadWrite
+    api_name: "enrollment_hit"
+}
+
+# the next enrollment in the format: "<id>:<delay>,<delay>,...:<result>"
+# for example: "2:0:true"
+# this property is reset after enroll completes
+prop {
+    prop_name: "vendor.fingerprint.virtual.next_enrollment"
+    type: String
+    scope: Public
+    access: ReadWrite
+    api_name: "next_enrollment"
+}
+
+# value for getAuthenticatorId or 0
+prop {
+    prop_name: "vendor.fingerprint.virtual.authenticator_id"
+    type: Long
+    scope: Public
+    access: ReadWrite
+    api_name: "authenticator_id"
+}
+
+# value for generateChallenge
+prop {
+    prop_name: "vendor.fingerprint.virtual.challenge"
+    type: Long
+    scope: Public
+    access: ReadWrite
+    api_name: "challenge"
+}
+
+# if locked out
+prop {
+    prop_name: "vendor.fingerprint.virtual.lockout"
+    type: Boolean
+    scope: Public
+    access: ReadWrite
+    api_name: "lockout"
+}
+
+# force all authenticate operations to fail
+prop {
+    prop_name: "vendor.fingerprint.virtual.operation_authenticate_fails"
+    type: Boolean
+    scope: Public
+    access: ReadWrite
+    api_name: "operation_authenticate_fails"
+}
+
+# force all detectInteraction operations to fail
+prop {
+    prop_name: "vendor.fingerprint.virtual.operation_detect_interaction_fails"
+    type: Boolean
+    scope: Public
+    access: ReadWrite
+    api_name: "operation_detect_interaction_fails"
+}
+
+# force all enroll operations to fail
+prop {
+    prop_name: "vendor.fingerprint.virtual.operation_enroll_fails"
+    type: Boolean
+    scope: Public
+    access: ReadWrite
+    api_name: "operation_enroll_fails"
+}
+
+# add a latency to authentication operations
+prop {
+    prop_name: "vendor.fingerprint.virtual.operation_authenticate_latency"
+    type: Integer
+    scope: Public
+    access: ReadWrite
+    api_name: "operation_authenticate_latency"
+}
+
+# add a latency to detectInteraction operations
+prop {
+    prop_name: "vendor.fingerprint.virtual.operation_detect_interaction_latency"
+    type: Integer
+    scope: Public
+    access: ReadWrite
+    api_name: "operation_detect_interaction_latency"
+}
+
+# add a latency to enroll operations
+prop {
+    prop_name: "vendor.fingerprint.virtual.operation_enroll_latency"
+    type: Integer
+    scope: Public
+    access: ReadWrite
+    api_name: "operation_enroll_latency"
+}
+
+# millisecond duration for authenticate operations
+# (waits for changes to enrollment_hit)
+prop {
+    prop_name: "vendor.fingerprint.virtual.operation_authenticate_duration"
+    type: Integer
+    scope: Public
+    access: ReadWrite
+    api_name: "operation_authenticate_duration"
+}
