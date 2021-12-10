@@ -38,5 +38,6 @@ interface IBluetoothAudioPort {
   void startStream();
   void stopStream();
   void suspendStream();
-  void updateMetadata(in android.hardware.audio.common.SourceMetadata sourceMetadata);
+  void updateSourceMetadata(in android.hardware.audio.common.SourceMetadata sourceMetadata);
+  void updateSinkMetadata(in android.hardware.audio.common.SinkMetadata sinkMetadata);
 }
