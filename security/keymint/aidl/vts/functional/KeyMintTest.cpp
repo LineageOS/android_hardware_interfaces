@@ -942,7 +942,7 @@ TEST_P(NewKeyGenerationTest, RsaWithAttestation) {
 
         AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
         AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
-        EXPECT_TRUE(verify_attestation_record(challenge, app_id,  //
+        EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id,  //
                                               sw_enforced, hw_enforced, SecLevel(),
                                               cert_chain_[0].encodedCertificate));
 
@@ -1093,7 +1093,7 @@ TEST_P(NewKeyGenerationTest, RsaEncryptionWithAttestation) {
 
     AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
     AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
-    EXPECT_TRUE(verify_attestation_record(challenge, app_id,  //
+    EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id,  //
                                           sw_enforced, hw_enforced, SecLevel(),
                                           cert_chain_[0].encodedCertificate));
 
@@ -1315,7 +1315,7 @@ TEST_P(NewKeyGenerationTest, LimitedUsageRsaWithAttestation) {
 
         AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
         AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
-        EXPECT_TRUE(verify_attestation_record(challenge, app_id,  //
+        EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id,  //
                                               sw_enforced, hw_enforced, SecLevel(),
                                               cert_chain_[0].encodedCertificate));
 
@@ -1444,7 +1444,7 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestation) {
 
         AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
         AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
-        EXPECT_TRUE(verify_attestation_record(challenge, app_id,  //
+        EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id,  //
                                               sw_enforced, hw_enforced, SecLevel(),
                                               cert_chain_[0].encodedCertificate));
 
@@ -1523,8 +1523,9 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationTags) {
 
         // Verifying the attestation record will check for the specific tag because
         // it's included in the authorizations.
-        EXPECT_TRUE(verify_attestation_record(challenge, app_id, sw_enforced, hw_enforced,
-                                              SecLevel(), cert_chain_[0].encodedCertificate));
+        EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id, sw_enforced,
+                                              hw_enforced, SecLevel(),
+                                              cert_chain_[0].encodedCertificate));
 
         CheckedDeleteKey(&key_blob);
     }
@@ -1621,8 +1622,9 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationIdTags) {
 
         // Verifying the attestation record will check for the specific tag because
         // it's included in the authorizations.
-        EXPECT_TRUE(verify_attestation_record(challenge, app_id, sw_enforced, hw_enforced,
-                                              SecLevel(), cert_chain_[0].encodedCertificate));
+        EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id, sw_enforced,
+                                              hw_enforced, SecLevel(),
+                                              cert_chain_[0].encodedCertificate));
 
         CheckedDeleteKey(&key_blob);
     }
@@ -1668,9 +1670,9 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationUniqueId) {
         AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics_);
 
         // Check that the unique ID field in the extension is non-empty.
-        EXPECT_TRUE(verify_attestation_record(challenge, app_id, sw_enforced, hw_enforced,
-                                              SecLevel(), cert_chain_[0].encodedCertificate,
-                                              unique_id));
+        EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id, sw_enforced,
+                                              hw_enforced, SecLevel(),
+                                              cert_chain_[0].encodedCertificate, unique_id));
         EXPECT_GT(unique_id->size(), 0);
         CheckedDeleteKey();
     };
@@ -1765,8 +1767,9 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationTagNoApplicationId) {
 
     AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
     AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
-    EXPECT_TRUE(verify_attestation_record(challenge, attest_app_id, sw_enforced, hw_enforced,
-                                          SecLevel(), cert_chain_[0].encodedCertificate));
+    EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, attest_app_id, sw_enforced,
+                                          hw_enforced, SecLevel(),
+                                          cert_chain_[0].encodedCertificate));
 
     // Check that the app id is not in the cert.
     string app_id = "clientid";
@@ -1919,7 +1922,7 @@ TEST_P(NewKeyGenerationTest, AttestationApplicationIDLengthProperlyEncoded) {
 
         AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
         AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
-        EXPECT_TRUE(verify_attestation_record(challenge, app_id,  //
+        EXPECT_TRUE(verify_attestation_record(AidlVersion(), challenge, app_id,  //
                                               sw_enforced, hw_enforced, SecLevel(),
                                               cert_chain_[0].encodedCertificate));
 
