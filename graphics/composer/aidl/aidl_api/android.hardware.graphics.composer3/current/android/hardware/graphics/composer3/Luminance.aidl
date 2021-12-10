@@ -33,6 +33,6 @@
 
 package android.hardware.graphics.composer3;
 @VintfStability
-parcelable WhitePointNits {
+parcelable Luminance {
   float nits;
 }
