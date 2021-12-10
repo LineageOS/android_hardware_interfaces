@@ -166,6 +166,11 @@ TEST_P(UwbAidl, ChipCoreInit) {
     EXPECT_TRUE(iuwb_chip->coreInit().isOk());
 }
 
+TEST_P(UwbAidl, ChipSessionInit) {
+    const auto iuwb_chip = getAnyChipAndOpen();
+    EXPECT_TRUE(iuwb_chip->sessionInit(0).isOk());
+}
+
 TEST_P(UwbAidl, ChipGetSupportedAndroidUciVersion) {
     const auto iuwb_chip = getAnyChipAndOpen();
     EXPECT_TRUE(iuwb_chip->coreInit().isOk());
