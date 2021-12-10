@@ -101,7 +101,7 @@
                     bufferSize="16777216" pid="257" useFMQ="false">
                 <recordFilterSettings tsIndexMask="1" scIndexType="NONE"/>
             </filter>
-            <filter id="FILTER_IP_IP_0" mainType="IP" subType="IP" bufferSize="16777216" useFMQ="false">
+            <filter id="FILTER_IP_IP_0" mainType="IP" subType="IP" bufferSize="16777216" useFMQ="false" timeDelayInMs="5000">
                 <ipFilterConfig ipCid="1">
                     <srcIpAddress isIpV4="true" ip="192 168 1 1"/>
                     <destIpAddress isIpV4="true" ip="192 168 1 1"/>

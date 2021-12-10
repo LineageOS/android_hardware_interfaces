@@ -60,9 +60,18 @@ using MQDesc = MQDescriptor<int8_t, SynchronizedReadWrite>;
 
 class FilterCallback : public BnFilterCallback {
   public:
+    /**
+     * A FilterCallbackVerifier is used to test and verify filter callbacks.
+     * The function should return true when a callback has been handled by this
+     * filter verifier. This will cause the associated future to be unblocked.
+     * If the function returns false, we continue to wait for future callbacks
+     * (the future remains blocked).
+     */
+    using FilterCallbackVerifier = std::function<bool(const std::vector<DemuxFilterEvent>&)>;
+
     virtual ::ndk::ScopedAStatus onFilterEvent(const vector<DemuxFilterEvent>& events) override;
 
-    std::future<DemuxFilterEvent> getNextFilterEventWithTag(DemuxFilterEvent::Tag tag);
+    std::future<void> verifyFilterCallback(FilterCallbackVerifier&& verifier);
 
     virtual ::ndk::ScopedAStatus onFilterStatus(const DemuxFilterStatus /*status*/) override {
         return ::ndk::ScopedAStatus::ok();
@@ -85,7 +94,7 @@ class FilterCallback : public BnFilterCallback {
     int32_t mFilterId;
     std::shared_ptr<IFilter> mFilter;
 
-    std::unordered_map<DemuxFilterEvent::Tag, std::promise<DemuxFilterEvent>> mFilterEventPromises;
+    std::vector<std::pair<FilterCallbackVerifier, std::promise<void>>> mFilterCallbackVerifiers;
     native_handle_t* mAvSharedHandle = nullptr;
     uint64_t mAvSharedMemSize = -1;
 

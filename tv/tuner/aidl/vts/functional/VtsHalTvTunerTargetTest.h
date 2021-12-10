@@ -140,6 +140,7 @@ class TunerFilterAidlTest : public testing::TestWithParam<std::string> {
     void reconfigSingleFilterInDemuxTest(FilterConfig filterConf, FilterConfig filterReconf,
                                          FrontendConfig frontendConf);
     void testTimeFilter(TimeFilterConfig filterConf);
+    void testDelayHint(const FilterConfig& filterConf);
 
     DemuxFilterType getLinkageFilterType(int bit) {
         DemuxFilterType type;

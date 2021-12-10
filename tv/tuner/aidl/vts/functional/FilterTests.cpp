@@ -17,6 +17,7 @@
 #include "FilterTests.h"
 
 #include <inttypes.h>
+#include <algorithm>
 
 #include <aidl/android/hardware/tv/tuner/DemuxFilterMonitorEventType.h>
 #include <aidlcommonsupport/NativeHandle.h>
@@ -31,23 +32,24 @@ using ::aidl::android::hardware::common::NativeHandle;
     mPidFilterOutputCount++;
     mMsgCondition.signal();
 
-    // HACK: we need to cast the const away as DemuxFilterEvent contains a ScopedFileDescriptor
-    // that cannot be copied.
-    for (auto&& e : const_cast<std::vector<DemuxFilterEvent>&>(events)) {
-        auto it = mFilterEventPromises.find(e.getTag());
-        if (it != mFilterEventPromises.cend()) {
-            it->second.set_value(std::move(e));
-            mFilterEventPromises.erase(it);
+    for (auto it = mFilterCallbackVerifiers.begin(); it != mFilterCallbackVerifiers.end();) {
+        auto& [verifier, promise] = *it;
+        if (verifier(events)) {
+            promise.set_value();
+            it = mFilterCallbackVerifiers.erase(it);
+        } else {
+            ++it;
         }
-    }
+    };
 
     return ::ndk::ScopedAStatus::ok();
 }
 
-std::future<DemuxFilterEvent> FilterCallback::getNextFilterEventWithTag(DemuxFilterEvent::Tag tag) {
-    // Note: this currently only supports one future per DemuxFilterEvent::Tag.
-    mFilterEventPromises[tag] = std::promise<DemuxFilterEvent>();
-    return mFilterEventPromises[tag].get_future();
+std::future<void> FilterCallback::verifyFilterCallback(FilterCallbackVerifier&& verifier) {
+    std::promise<void> promise;
+    auto future = promise.get_future();
+    mFilterCallbackVerifiers.emplace_back(std::move(verifier), std::move(promise));
+    return future;
 }
 
 void FilterCallback::testFilterDataOutput() {
