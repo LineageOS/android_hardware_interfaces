@@ -26,7 +26,7 @@ namespace V2_2 {
 namespace implementation {
 
 using ::android::sp;
-using ::android::hardware::bluetooth::audio::V2_0::IBluetoothAudioPort;
+using ::android::hardware::bluetooth::audio::V2_2::IBluetoothAudioPort;
 
 using BluetoothAudioStatus =
     ::android::hardware::bluetooth::audio::V2_0::Status;
@@ -41,13 +41,13 @@ class BluetoothAudioProvider : public IBluetoothAudioProvider {
   virtual bool isValid(const V2_1::SessionType& sessionType) = 0;
   virtual bool isValid(const V2_0::SessionType& sessionType) = 0;
 
-  Return<void> startSession(const sp<IBluetoothAudioPort>& hostIf,
+  Return<void> startSession(const sp<V2_0::IBluetoothAudioPort>& hostIf,
                             const V2_0::AudioConfiguration& audioConfig,
                             startSession_cb _hidl_cb) override;
-  Return<void> startSession_2_1(const sp<IBluetoothAudioPort>& hostIf,
+  Return<void> startSession_2_1(const sp<V2_0::IBluetoothAudioPort>& hostIf,
                                 const V2_1::AudioConfiguration& audioConfig,
                                 startSession_cb _hidl_cb) override;
-  Return<void> startSession_2_2(const sp<IBluetoothAudioPort>& hostIf,
+  Return<void> startSession_2_2(const sp<V2_2::IBluetoothAudioPort>& hostIf,
                                 const AudioConfiguration& audioConfig,
                                 startSession_cb _hidl_cb) override;
   Return<void> streamStarted(BluetoothAudioStatus status) override;
@@ -59,7 +59,7 @@ class BluetoothAudioProvider : public IBluetoothAudioProvider {
 
   V2_1::SessionType session_type_;
   AudioConfiguration audio_config_;
-  sp<V2_0::IBluetoothAudioPort> stack_iface_;
+  sp<V2_2::IBluetoothAudioPort> stack_iface_;
 
   virtual Return<void> onSessionReady(startSession_cb _hidl_cb) = 0;
 };

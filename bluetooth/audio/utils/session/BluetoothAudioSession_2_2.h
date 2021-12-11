@@ -74,6 +74,8 @@ class BluetoothAudioSession_2_2 {
   const ::android::hardware::bluetooth::audio::V2_2::AudioConfiguration
   GetAudioConfig();
 
+  void UpdateSinkMetadata(const struct sink_metadata* sink_metadata);
+
   static constexpr ::android::hardware::bluetooth::audio::V2_2::
       AudioConfiguration& kInvalidSoftwareAudioConfiguration =
           invalidSoftwareAudioConfiguration;

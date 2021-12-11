@@ -20,6 +20,7 @@
 
 #include <android-base/logging.h>
 
+#include "AudioPort_2_0_to_2_2_Wrapper.h"
 #include "BluetoothAudioSessionReport_2_2.h"
 #include "BluetoothAudioSupportedCodecsDB_2_1.h"
 
@@ -51,7 +52,7 @@ BluetoothAudioProvider::BluetoothAudioProvider()
       audio_config_({}) {}
 
 Return<void> BluetoothAudioProvider::startSession(
-    const sp<IBluetoothAudioPort>& hostIf,
+    const sp<V2_0::IBluetoothAudioPort>& hostIf,
     const V2_0::AudioConfiguration& audioConfig, startSession_cb _hidl_cb) {
   AudioConfiguration audioConfig_2_2;
 
@@ -67,11 +68,13 @@ Return<void> BluetoothAudioProvider::startSession(
     audioConfig_2_2.codecConfig(audioConfig.codecConfig());
   }
 
-  return startSession_2_2(hostIf, audioConfig_2_2, _hidl_cb);
+  sp<V2_2::IBluetoothAudioPort> hostIf_2_2 =
+      new AudioPort_2_0_to_2_2_Wrapper(hostIf);
+  return startSession_2_2(hostIf_2_2, audioConfig_2_2, _hidl_cb);
 }
 
 Return<void> BluetoothAudioProvider::startSession_2_1(
-    const sp<IBluetoothAudioPort>& hostIf,
+    const sp<V2_0::IBluetoothAudioPort>& hostIf,
     const V2_1::AudioConfiguration& audioConfig, startSession_cb _hidl_cb) {
   AudioConfiguration audioConfig_2_2;
   if (audioConfig.getDiscriminator() ==
@@ -92,11 +95,13 @@ Return<void> BluetoothAudioProvider::startSession_2_1(
     audioConfig_2_2.codecConfig(audioConfig.codecConfig());
   }
 
-  return startSession_2_2(hostIf, audioConfig_2_2, _hidl_cb);
+  sp<V2_2::IBluetoothAudioPort> hostIf_2_2 =
+      new AudioPort_2_0_to_2_2_Wrapper(hostIf);
+  return startSession_2_2(hostIf_2_2, audioConfig_2_2, _hidl_cb);
 }
 
 Return<void> BluetoothAudioProvider::startSession_2_2(
-    const sp<IBluetoothAudioPort>& hostIf,
+    const sp<V2_2::IBluetoothAudioPort>& hostIf,
     const AudioConfiguration& audioConfig, startSession_cb _hidl_cb) {
   if (hostIf == nullptr) {
     _hidl_cb(BluetoothAudioStatus::FAILURE, DataMQ::Descriptor());
