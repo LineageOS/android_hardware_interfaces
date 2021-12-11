@@ -63,6 +63,8 @@ namespace aidl::android::hardware::graphics::composer3 {
 
 class ComposerClientWriter {
   public:
+    static constexpr std::optional<ClockMonotonicTimestamp> kNoTimestamp = std::nullopt;
+
     ComposerClientWriter() { reset(); }
 
     virtual ~ComposerClientWriter() { reset(); }
@@ -95,10 +97,18 @@ class ComposerClientWriter {
                 getBuffer(slot, buffer, releaseFence));
     }
 
-    void validateDisplay(int64_t display) { getDisplayCommand(display).validateDisplay = true; }
+    void validateDisplay(int64_t display,
+                         std::optional<ClockMonotonicTimestamp> expectedPresentTime) {
+        auto& command = getDisplayCommand(display);
+        command.expectedPresentTime = expectedPresentTime;
+        command.validateDisplay = true;
+    }
 
-    void presentOrvalidateDisplay(int64_t display) {
-        getDisplayCommand(display).presentOrValidateDisplay = true;
+    void presentOrvalidateDisplay(int64_t display,
+                                  std::optional<ClockMonotonicTimestamp> expectedPresentTime) {
+        auto& command = getDisplayCommand(display);
+        command.expectedPresentTime = expectedPresentTime;
+        command.presentOrValidateDisplay = true;
     }
 
     void acceptDisplayChanges(int64_t display) {

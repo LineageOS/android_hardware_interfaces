@@ -18,6 +18,7 @@ package android.hardware.graphics.composer3;
 
 import android.hardware.graphics.composer3.Buffer;
 import android.hardware.graphics.composer3.ClientTarget;
+import android.hardware.graphics.composer3.ClockMonotonicTimestamp;
 import android.hardware.graphics.composer3.ColorTransformPayload;
 import android.hardware.graphics.composer3.LayerCommand;
 
@@ -113,6 +114,14 @@ parcelable DisplayCommand {
      * any interaction with layer state or display validation.
      */
     @nullable Buffer virtualDisplayOutputBuffer;
+
+    /**
+     * Sets the expected present time to present the current content on screen.
+     * The implementation should try to present the display as close as possible
+     * to the given expectedPresentTime. If expectedPresentTime is 0, the
+     * implementation should present the display as soon as possible.
+     */
+    @nullable ClockMonotonicTimestamp expectedPresentTime;
 
     /**
      * Instructs the device to inspect all of the layer state and determine if

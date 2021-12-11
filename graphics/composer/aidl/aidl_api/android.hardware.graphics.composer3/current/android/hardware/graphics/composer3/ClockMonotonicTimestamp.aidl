@@ -33,15 +33,6 @@
 
 package android.hardware.graphics.composer3;
 @VintfStability
-parcelable DisplayCommand {
-  long display;
-  android.hardware.graphics.composer3.LayerCommand[] layers;
-  @nullable android.hardware.graphics.composer3.ColorTransformPayload colorTransform;
-  @nullable android.hardware.graphics.composer3.ClientTarget clientTarget;
-  @nullable android.hardware.graphics.composer3.Buffer virtualDisplayOutputBuffer;
-  @nullable android.hardware.graphics.composer3.ClockMonotonicTimestamp expectedPresentTime;
-  boolean validateDisplay;
-  boolean acceptDisplayChanges;
-  boolean presentDisplay;
-  boolean presentOrValidateDisplay;
+parcelable ClockMonotonicTimestamp {
+  long timestamp;
 }
