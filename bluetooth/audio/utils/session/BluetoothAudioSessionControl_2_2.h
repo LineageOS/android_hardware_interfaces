@@ -132,6 +132,15 @@ class BluetoothAudioSessionControl_2_2 {
     }
   }
 
+  static void UpdateSinkMetadata(const SessionType_2_1& session_type,
+                                 const struct sink_metadata* sink_metadata) {
+    std::shared_ptr<BluetoothAudioSession_2_2> session_ptr =
+        BluetoothAudioSessionInstance_2_2::GetSessionInstance(session_type);
+    if (session_ptr != nullptr) {
+      session_ptr->UpdateSinkMetadata(sink_metadata);
+    }
+  }
+
   // The control API writes stream to FMQ
   static size_t OutWritePcmData(const SessionType_2_1& session_type,
                                 const void* buffer, size_t bytes) {

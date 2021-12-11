@@ -20,6 +20,7 @@
 
 #include <android-base/logging.h>
 
+#include "AudioPort_2_0_to_2_2_Wrapper.h"
 #include "BluetoothAudioSessionReport_2_2.h"
 #include "BluetoothAudioSupportedCodecsDB_2_1.h"
 #include "BluetoothAudioSupportedCodecsDB_2_2.h"
@@ -91,11 +92,13 @@ Return<void> LeAudioOffloadAudioProvider::startSession_2_1(
       .peerDelay = 0,
       .lc3Config = audioConfig.leAudioCodecConfig().lc3Config};
 
-  return startSession_2_2(hostIf, audioConfig_2_2, _hidl_cb);
+  sp<V2_2::IBluetoothAudioPort> hostIf_2_2 =
+      new AudioPort_2_0_to_2_2_Wrapper(hostIf);
+  return startSession_2_2(hostIf_2_2, audioConfig_2_2, _hidl_cb);
 }
 
 Return<void> LeAudioOffloadAudioProvider::startSession_2_2(
-    const sp<V2_0::IBluetoothAudioPort>& hostIf,
+    const sp<V2_2::IBluetoothAudioPort>& hostIf,
     const AudioConfiguration& audioConfig, startSession_cb _hidl_cb) {
   /**
    * Initialize the audio platform if audioConfiguration is supported.

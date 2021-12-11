@@ -50,6 +50,14 @@ interface IUwbChip {
     void coreInit();
 
     /**
+     * Perform any necessary UWB session initializations.
+     * This must be invoked by the framework at the beginging of every new ranging session.
+     *
+     * @param sessionId Session identifier as defined in the UCI specification.
+     */
+    void sessionInit(int sessionId);
+
+    /**
      * Supported version of vendor UCI specification.
      *
      * @return Returns the version of the "android.hardware.uwb.fira_android" types-only
