@@ -19,7 +19,7 @@ package {
 }
 
 cc_binary {
-    name: "android.hardware.automotive.vehicle-aidl-default-service",
+    name: "android.hardware.automotive.vehicle@V1-default-service",
     vendor: true,
     defaults: [
         "FakeVehicleHardwareDefaults",
