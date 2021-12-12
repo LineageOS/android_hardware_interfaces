@@ -32,8 +32,8 @@ int main(int /* argc */, char* /* argv */[]) {
             ::ndk::SharedRefBase::make<DefaultVehicleHal>(std::move(hardware));
 
     ALOGI("Registering as service...");
-    binder_exception_t err = AServiceManager_addService(vhal->asBinder().get(),
-                                                        "android.hardware.automotive.vehicle");
+    binder_exception_t err = AServiceManager_addService(
+            vhal->asBinder().get(), "android.hardware.automotive.vehicle.IVehicle/default");
     if (err != EX_NONE) {
         ALOGE("failed to register android.hardware.automotive.vehicle service, exception: %d", err);
         return 1;
