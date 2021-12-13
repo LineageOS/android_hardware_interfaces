@@ -19,6 +19,11 @@ package android.hardware.camera.device@3.8;
 import @3.2::ErrorMsg;
 import @3.2::MsgType;
 import @3.2::ShutterMsg;
+import @3.2::CameraMetadata;
+import @3.2::StreamConfigurationMode;
+import @3.7::Stream;
+
+import android.hardware.camera.metadata@3.8::CameraMetadataEnumAndroidRequestAvailableDynamicRangeProfilesMap;
 
 /**
  * ShutterMsg:
@@ -67,3 +72,75 @@ struct NotifyMsg {
         ShutterMsg shutter;
     } msg;
 };
+
+/**
+ * Stream:
+ *
+ * A descriptor for a single camera input or output stream. A stream is defined
+ * by the framework by its buffer resolution and format, and additionally by the
+ * HAL with the gralloc usage flags and the maximum in-flight buffer count.
+ *
+ * This version extends the @3.7 Stream with the dynamic range profile field.
+ */
+struct Stream {
+    /**
+     * The definition of Stream from the prior version.
+     */
+    @3.7::Stream v3_7;
+
+    /**
+     * The dynamic range profile for this stream.
+     *
+     * This field is valid and must only be considered for streams with format
+     * android.hardware.graphics.common.PixelFormat.YCBCR_P010 or
+     * android.hardware.graphics.common.PixelFormat.IMPLEMENTATION_DEFINED on devices supporting the
+     * ANDROID_REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_10_BIT capability.
+     *
+     */
+    CameraMetadataEnumAndroidRequestAvailableDynamicRangeProfilesMap dynamicRangeProfile;
+};
+
+/**
+ * StreamConfiguration:
+ *
+ * Identical to @3.7::StreamConfiguration, except that the streams
+ * vector contains @3.8::Stream.
+ */
+struct StreamConfiguration {
+    /**
+     * An array of camera stream pointers, defining the input/output
+     * configuration for the camera HAL device.
+     */
+    vec<Stream> streams;
+
+    /**
+     * The definition of operation mode from prior version.
+     *
+     */
+    @3.2::StreamConfigurationMode operationMode;
+
+    /**
+     * The definition of session parameters from prior version.
+     */
+    @3.2::CameraMetadata sessionParams;
+
+    /**
+     * The definition of stream configuration counter from prior version.
+     */
+    uint32_t streamConfigCounter;
+
+    /**
+     * If an input stream is configured, whether the input stream is expected to
+     * receive variable resolution images.
+     *
+     * This flag can only be set to true if the camera device supports
+     * multi-resolution input streams by advertising input stream configurations in
+     * physicalCameraMultiResolutionStreamConfigurations in its physical cameras'
+     * characteristics.
+     *
+     * When this flag is set to true, the input stream's width and height can be
+     * any one of the supported multi-resolution input stream sizes.
+     */
+    bool multiResolutionInputImage;
+};
+
