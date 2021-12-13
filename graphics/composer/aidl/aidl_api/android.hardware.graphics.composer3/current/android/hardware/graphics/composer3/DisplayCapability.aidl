@@ -40,4 +40,5 @@ enum DisplayCapability {
   BRIGHTNESS = 3,
   PROTECTED_CONTENTS = 4,
   AUTO_LOW_LATENCY_MODE = 5,
+  SUSPEND = 6,
 }

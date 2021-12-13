@@ -566,25 +566,6 @@ TEST_P(GraphicsComposerAidlTest, GetDisplayedContentSample) {
     }
 }
 
-TEST_P(GraphicsComposerAidlTest, getDisplayCapabilitiesBasic) {
-    std::vector<DisplayCapability> capabilities;
-    const auto error = mComposerClient->getDisplayCapabilities(mPrimaryDisplay, &capabilities);
-    ASSERT_TRUE(error.isOk());
-    const bool hasDozeSupport = std::find(capabilities.begin(), capabilities.end(),
-                                          DisplayCapability::DOZE) != capabilities.end();
-    bool isDozeSupported = false;
-    EXPECT_TRUE(mComposerClient->getDozeSupport(mPrimaryDisplay, &isDozeSupported).isOk());
-    EXPECT_EQ(hasDozeSupport, isDozeSupported);
-
-    bool hasBrightnessSupport = std::find(capabilities.begin(), capabilities.end(),
-                                          DisplayCapability::BRIGHTNESS) != capabilities.end();
-    bool isBrightnessSupported = false;
-    EXPECT_TRUE(
-            mComposerClient->getDisplayBrightnessSupport(mPrimaryDisplay, &isBrightnessSupported)
-                    .isOk());
-    EXPECT_EQ(isBrightnessSupported, hasBrightnessSupport);
-}
-
 /*
  * Test that if brightness operations are supported, setDisplayBrightness works as expected.
  */
@@ -1009,18 +990,26 @@ TEST_P(GraphicsComposerAidlTest, SetActiveConfigPowerCycle) {
     }
 }
 
-TEST_P(GraphicsComposerAidlTest, GetDozeSupportBadDisplay) {
-    bool isDozeSupport;
-    const auto error = mComposerClient->getDozeSupport(mInvalidDisplayId, &isDozeSupport);
-    EXPECT_FALSE(error.isOk());
-    ASSERT_EQ(IComposerClient::EX_BAD_DISPLAY, error.getServiceSpecificError());
-}
-
 TEST_P(GraphicsComposerAidlTest, SetPowerModeUnsupported) {
-    bool isDozeSupported;
-    mComposerClient->getDozeSupport(mPrimaryDisplay, &isDozeSupported).isOk();
+    std::vector<DisplayCapability> capabilities;
+    const auto error = mComposerClient->getDisplayCapabilities(mPrimaryDisplay, &capabilities);
+    ASSERT_TRUE(error.isOk());
+    const bool isDozeSupported = std::find(capabilities.begin(), capabilities.end(),
+                                           DisplayCapability::DOZE) != capabilities.end();
+    const bool isSuspendSupported = std::find(capabilities.begin(), capabilities.end(),
+                                              DisplayCapability::SUSPEND) != capabilities.end();
     if (!isDozeSupported) {
         auto error = mComposerClient->setPowerMode(mPrimaryDisplay, PowerMode::DOZE);
+        EXPECT_FALSE(error.isOk());
+        EXPECT_EQ(IComposerClient::EX_UNSUPPORTED, error.getServiceSpecificError());
+
+        error = mComposerClient->setPowerMode(mPrimaryDisplay, PowerMode::DOZE_SUSPEND);
+        EXPECT_FALSE(error.isOk());
+        EXPECT_EQ(IComposerClient::EX_UNSUPPORTED, error.getServiceSpecificError());
+    }
+
+    if (!isSuspendSupported) {
+        auto error = mComposerClient->setPowerMode(mPrimaryDisplay, PowerMode::ON_SUSPEND);
         EXPECT_FALSE(error.isOk());
         EXPECT_EQ(IComposerClient::EX_UNSUPPORTED, error.getServiceSpecificError());
 
@@ -1041,15 +1030,27 @@ TEST_P(GraphicsComposerAidlTest, SetVsyncEnabled) {
 }
 
 TEST_P(GraphicsComposerAidlTest, SetPowerMode) {
+    std::vector<DisplayCapability> capabilities;
+    const auto error = mComposerClient->getDisplayCapabilities(mPrimaryDisplay, &capabilities);
+    ASSERT_TRUE(error.isOk());
+    const bool isDozeSupported = std::find(capabilities.begin(), capabilities.end(),
+                                           DisplayCapability::DOZE) != capabilities.end();
+    const bool isSuspendSupported = std::find(capabilities.begin(), capabilities.end(),
+                                              DisplayCapability::SUSPEND) != capabilities.end();
+
     std::vector<PowerMode> modes;
     modes.push_back(PowerMode::OFF);
-    modes.push_back(PowerMode::ON_SUSPEND);
     modes.push_back(PowerMode::ON);
 
-    bool isDozeSupported;
-    EXPECT_TRUE(mComposerClient->getDozeSupport(mPrimaryDisplay, &isDozeSupported).isOk());
+    if (isSuspendSupported) {
+        modes.push_back(PowerMode::ON_SUSPEND);
+    }
+
     if (isDozeSupported) {
         modes.push_back(PowerMode::DOZE);
+    }
+
+    if (isSuspendSupported && isDozeSupported) {
         modes.push_back(PowerMode::DOZE_SUSPEND);
     }
 
@@ -1059,6 +1060,14 @@ TEST_P(GraphicsComposerAidlTest, SetPowerMode) {
 }
 
 TEST_P(GraphicsComposerAidlTest, SetPowerModeVariations) {
+    std::vector<DisplayCapability> capabilities;
+    const auto error = mComposerClient->getDisplayCapabilities(mPrimaryDisplay, &capabilities);
+    ASSERT_TRUE(error.isOk());
+    const bool isDozeSupported = std::find(capabilities.begin(), capabilities.end(),
+                                           DisplayCapability::DOZE) != capabilities.end();
+    const bool isSuspendSupported = std::find(capabilities.begin(), capabilities.end(),
+                                              DisplayCapability::SUSPEND) != capabilities.end();
+
     std::vector<PowerMode> modes;
 
     modes.push_back(PowerMode::OFF);
@@ -1083,15 +1092,15 @@ TEST_P(GraphicsComposerAidlTest, SetPowerModeVariations) {
     }
     modes.clear();
 
-    modes.push_back(PowerMode::ON_SUSPEND);
-    modes.push_back(PowerMode::ON_SUSPEND);
-    for (auto mode : modes) {
-        EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, mode).isOk());
+    if (isSuspendSupported) {
+        modes.push_back(PowerMode::ON_SUSPEND);
+        modes.push_back(PowerMode::ON_SUSPEND);
+        for (auto mode : modes) {
+            EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, mode).isOk());
+        }
+        modes.clear();
     }
-    modes.clear();
 
-    bool isDozeSupported = false;
-    ASSERT_TRUE(mComposerClient->getDozeSupport(mPrimaryDisplay, &isDozeSupported).isOk());
     if (isDozeSupported) {
         modes.push_back(PowerMode::DOZE);
         modes.push_back(PowerMode::DOZE);
@@ -1099,12 +1108,15 @@ TEST_P(GraphicsComposerAidlTest, SetPowerModeVariations) {
             EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, mode).isOk());
         }
         modes.clear();
+    }
 
+    if (isSuspendSupported && isDozeSupported) {
         modes.push_back(PowerMode::DOZE_SUSPEND);
         modes.push_back(PowerMode::DOZE_SUSPEND);
         for (auto mode : modes) {
             EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, mode).isOk());
         }
+        modes.clear();
     }
 }
 
