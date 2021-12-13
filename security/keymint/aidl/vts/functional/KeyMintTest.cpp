@@ -6618,7 +6618,7 @@ INSTANTIATE_KEYMINT_AIDL_TEST(TransportLimitTest);
 
 typedef KeyMintAidlTestBase KeyAgreementTest;
 
-static int EcdhCurveToOpenSslCurveName(EcCurve curve) {
+int CurveToOpenSslCurveName(EcCurve curve) {
     switch (curve) {
         case EcCurve::P_224:
             return NID_secp224r1;
@@ -6628,8 +6628,6 @@ static int EcdhCurveToOpenSslCurveName(EcCurve curve) {
             return NID_secp384r1;
         case EcCurve::P_521:
             return NID_secp521r1;
-        case EcCurve::CURVE_25519:
-            return NID_X25519;
     }
 }
 
@@ -6651,7 +6649,7 @@ TEST_P(KeyAgreementTest, Ecdh) {
         for (auto localCurve : ValidCurves()) {
             // Generate EC key locally (with access to private key material)
             auto ecKey = EC_KEY_Ptr(EC_KEY_new());
-            int curveName = EcdhCurveToOpenSslCurveName(localCurve);
+            int curveName = CurveToOpenSslCurveName(localCurve);
             auto group = EC_GROUP_Ptr(EC_GROUP_new_by_curve_name(curveName));
             ASSERT_NE(group, nullptr);
             ASSERT_EQ(EC_KEY_set_group(ecKey.get(), group.get()), 1);
