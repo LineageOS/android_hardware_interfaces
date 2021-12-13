@@ -343,7 +343,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.security.keymint</name>
-        <version>1-2</version>
+        <version>1</version>
         <interface>
             <name>IKeyMintDevice</name>
             <instance>default</instance>
@@ -352,7 +352,6 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.security.keymint</name>
-        <version>1-2</version>
         <interface>
             <name>IRemotelyProvisionedComponent</name>
             <instance>default</instance>
