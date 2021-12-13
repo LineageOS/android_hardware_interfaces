@@ -140,7 +140,7 @@ class GraphicsCompositionTestBase : public ::testing::Test {
             return;
         }
 
-        std::vector<command::CommandResultPayload> results;
+        std::vector<CommandResultPayload> results;
         const auto status = mComposerClient->executeCommands(commands, &results);
         ASSERT_TRUE(status.isOk()) << "executeCommands failed " << status.getDescription();
 
