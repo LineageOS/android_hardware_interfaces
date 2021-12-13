@@ -1263,7 +1263,7 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
         int64_t layer = 0;
         ASSERT_NO_FATAL_FAILURE(layer = createLayer(display));
         {
-            auto buffer = allocate();
+            const auto buffer = allocate();
             ASSERT_NE(nullptr, buffer);
             ASSERT_EQ(::android::OK, buffer->initCheck());
             ASSERT_NE(nullptr, buffer->handle);
@@ -1292,7 +1292,7 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
         }
 
         {
-            auto buffer = allocate();
+            const auto buffer = allocate();
             ASSERT_NE(nullptr, buffer->handle);
 
             mWriter.setLayerBuffer(display.get(), layer, 0, buffer->handle, -1);
@@ -1454,7 +1454,8 @@ TEST_P(GraphicsComposerAidlCommandTest, SET_OUTPUT_BUFFER) {
                                                kBufferSlotCount, &display)
                         .isOk());
 
-    auto handle = allocate()->handle;
+    const auto buffer = allocate();
+    const auto handle = buffer->handle;
     mWriter.setOutputBuffer(display.display, 0, handle, -1);
     execute();
 }
@@ -1500,7 +1501,8 @@ TEST_P(GraphicsComposerAidlCommandTest, PRESENT_DISPLAY_NO_LAYER_STATE_CHANGES) 
     for (auto intent : renderIntents) {
         mComposerClient->setColorMode(mPrimaryDisplay, ColorMode::NATIVE, intent);
 
-        auto handle = allocate()->handle;
+        const auto buffer = allocate();
+        const auto handle = buffer->handle;
         ASSERT_NE(nullptr, handle);
 
         Rect displayFrame{0, 0, mDisplayWidth, mDisplayHeight};
@@ -1535,7 +1537,8 @@ TEST_P(GraphicsComposerAidlCommandTest, PRESENT_DISPLAY_NO_LAYER_STATE_CHANGES) 
         execute();
         ASSERT_TRUE(mReader.takeErrors().empty());
 
-        auto handle2 = allocate()->handle;
+        const auto buffer2 = allocate();
+        const auto handle2 = buffer2->handle;
         ASSERT_NE(nullptr, handle2);
         mWriter.setLayerBuffer(mPrimaryDisplay, layer, 0, handle2, -1);
         mWriter.setLayerSurfaceDamage(mPrimaryDisplay, layer, std::vector<Rect>(1, {0, 0, 10, 10}));
@@ -1549,7 +1552,8 @@ TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_CURSOR_POSITION) {
     int64_t layer;
     EXPECT_TRUE(mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount, &layer).isOk());
 
-    auto handle = allocate()->handle;
+    const auto buffer = allocate();
+    const auto handle = buffer->handle;
     ASSERT_NE(nullptr, handle);
     Rect displayFrame{0, 0, mDisplayWidth, mDisplayHeight};
 
@@ -1588,7 +1592,8 @@ TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_CURSOR_POSITION) {
 }
 
 TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_BUFFER) {
-    auto handle = allocate()->handle;
+    const auto buffer = allocate();
+    const auto handle = buffer->handle;
     ASSERT_NE(nullptr, handle);
 
     int64_t layer;
@@ -1708,7 +1713,8 @@ TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_SIDEBAND_STREAM) {
         return;
     }
 
-    auto handle = allocate()->handle;
+    const auto buffer = allocate();
+    const auto handle = buffer->handle;
     ASSERT_NE(nullptr, handle);
 
     int64_t layer;
