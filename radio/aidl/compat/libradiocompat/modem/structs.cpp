@@ -24,6 +24,7 @@
 
 namespace android::hardware::radio::compat {
 
+using ::aidl::android::hardware::radio::AccessNetwork;
 using ::aidl::android::hardware::radio::RadioAccessFamily;
 using ::aidl::android::hardware::radio::RadioTechnology;
 namespace aidl = ::aidl::android::hardware::radio::modem;
@@ -82,11 +83,18 @@ aidl::HardwareConfigSim toAidl(const V1_0::HardwareConfigSim& sim) {
 }
 
 aidl::ActivityStatsInfo toAidl(const V1_0::ActivityStatsInfo& info) {
+    const aidl::ActivityStatsTechSpecificInfo techSpecificInfo = {
+            .rat = AccessNetwork(AccessNetwork::UNKNOWN),
+            .frequencyRange = static_cast<int32_t>(
+                    aidl::ActivityStatsTechSpecificInfo::FREQUENCY_RANGE_UNKNOWN),
+            .txmModetimeMs = toAidl(info.txmModetimeMs),
+            .rxModeTimeMs = static_cast<int32_t>(info.rxModeTimeMs),
+    };
+
     return {
             .sleepModeTimeMs = static_cast<int32_t>(info.sleepModeTimeMs),
             .idleModeTimeMs = static_cast<int32_t>(info.idleModeTimeMs),
-            .txmModetimeMs = toAidl(info.txmModetimeMs),
-            .rxModeTimeMs = static_cast<int32_t>(info.rxModeTimeMs),
+            .techSpecificInfo = {techSpecificInfo},
     };
 }
 
