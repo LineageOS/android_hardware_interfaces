@@ -41,15 +41,15 @@ enum DisplayCapability {
      */
     SKIP_CLIENT_COLOR_TRANSFORM = 1,
     /**
-     * Indicates that the display supports PowerMode::DOZE and
-     * potentially PowerMode::DOZE_SUSPEND if DisplayCapability.SUSPEND is also
+     * Indicates that the display supports PowerMode.DOZE and
+     * potentially PowerMode.DOZE_SUSPEND if DisplayCapability.SUSPEND is also
      * supported. DOZE_SUSPEND may not provide any benefit
      * over DOZE (see the definition of PowerMode for more information),
      * but if both DOZE and DOZE_SUSPEND are no different from
-     * PowerMode::ON, the device must not claim support.
+     * PowerMode.ON, the device must not claim support.
      * Must be returned by getDisplayCapabilities when getDozeSupport
-     * indicates the display supports PowerMode::DOZE and
-     * PowerMode::DOZE_SUSPEND.
+     * indicates the display supports PowerMode.DOZE and
+     * PowerMode.DOZE_SUSPEND.
      */
     DOZE = 2,
     /**

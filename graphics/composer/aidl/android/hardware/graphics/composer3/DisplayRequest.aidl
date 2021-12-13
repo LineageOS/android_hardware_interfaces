@@ -27,7 +27,7 @@ parcelable DisplayRequest {
     /**
      * Instructs the client to write the result of client composition
      * directly into the virtual display output buffer. If any of the
-     * layers are not marked as Composition::CLIENT or the given display
+     * layers are not marked as Composition.CLIENT or the given display
      * is not a virtual display, this request has no effect.
      */
     const int WRITE_CLIENT_TARGET_TO_OUTPUT = 1 << 1;

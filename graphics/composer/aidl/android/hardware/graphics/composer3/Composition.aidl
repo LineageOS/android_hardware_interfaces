@@ -66,7 +66,7 @@ enum Composition {
     /**
      * The device must handle the composition of this layer, as well as
      * its buffer updates and content synchronization. Only supported on
-     * devices which provide Capability::SIDEBAND_STREAM.
+     * devices which provide Capability.SIDEBAND_STREAM.
      *
      * Upon validateDisplay, the device may request a change from this
      * type to either DEVICE or CLIENT, but it is unlikely that content

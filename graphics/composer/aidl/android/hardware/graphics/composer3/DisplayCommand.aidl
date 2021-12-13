@@ -38,7 +38,7 @@ parcelable DisplayCommand {
     /**
      * Sets a color transform which will be applied after composition.
      *
-     * If hint is not ColorTransform::ARBITRARY, then the device may use the
+     * If hint is not ColorTransform.ARBITRARY, then the device may use the
      * hint to apply the desired color transform instead of using the color
      * matrix directly.
      *
@@ -46,7 +46,7 @@ parcelable DisplayCommand {
      * apply the desired color transform, it must force all layers to client
      * composition during VALIDATE_DISPLAY.
      *
-     * If IComposer::Capability::SKIP_CLIENT_COLOR_TRANSFORM is present, then
+     * If Capability.SKIP_CLIENT_COLOR_TRANSFORM is present, then
      * the client must never apply the color transform during client
      * composition, even if all layers are being composed by the client.
      *
@@ -74,9 +74,9 @@ parcelable DisplayCommand {
 
     /**
      * Sets the buffer handle which will receive the output of client
-     * composition.  Layers marked as Composition::CLIENT must be composited
+     * composition.  Layers marked as Composition.CLIENT must be composited
      * into this buffer prior to the call to PRESENT_DISPLAY, and layers not
-     * marked as Composition::CLIENT must be composited with this buffer by
+     * marked as Composition.CLIENT must be composited with this buffer by
      * the device.
      *
      * The buffer handle provided may be empty if no layers are being
@@ -94,7 +94,7 @@ parcelable DisplayCommand {
      * the description of SET_LAYER_SURFACE_DAMAGE.
      *
      * Will be called before PRESENT_DISPLAY if any of the layers are marked
-     * as Composition::CLIENT. If no layers are so marked, then it is not
+     * as Composition.CLIENT. If no layers are so marked, then it is not
      * necessary to call this function. It is not necessary to call
      * validateDisplay after changing the target through this function.
      */

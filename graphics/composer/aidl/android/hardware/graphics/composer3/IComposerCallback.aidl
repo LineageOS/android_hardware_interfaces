@@ -26,7 +26,7 @@ interface IComposerCallback {
      * must trigger at least one hotplug notification, even if it only occurs
      * immediately after callback registration.
      *
-     * Displays which have been connected are assumed to be in PowerMode::OFF,
+     * Displays which have been connected are assumed to be in PowerMode.OFF,
      * and the onVsync callback should not be called for a display until vsync
      * has been enabled with setVsyncEnabled.
      *
