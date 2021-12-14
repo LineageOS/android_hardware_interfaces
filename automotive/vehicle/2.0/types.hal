@@ -487,8 +487,11 @@ enum VehicleProperty : int32_t {
      *  int64Values[3] = rear right ticks
      *  int64Values[4] = rear left ticks
      *
-     * configArray is used to indicate the micrometers-per-wheel-tick value and
-     * which wheels are supported.  configArray is set as follows:
+     * configArray is used to indicate the micrometers-per-wheel-tick values and
+     * which wheels are supported. Each micrometers-per-wheel-tick value is static (i.e. will not
+     * update based on wheel's status) and a best approximation. For example, if a vehicle has
+     * multiple rim/tire size options, the micrometers-per-wheel-tick values are set to those for
+     * the typically expected rim/tire size. configArray is set as follows:
      *
      *  configArray[0], bits [0:3] = supported wheels.  Uses enum Wheel.
      *  configArray[1] = micrometers per front left wheel tick
@@ -1433,17 +1436,29 @@ enum VehicleProperty : int32_t {
      * This value denotes the number of milliseconds seconds that have
      * elapsed since 1/1/1970 UTC.
      *
-     * Reading this value will give you the system’s time. This can be
-     * useful to synchronize other vehicle systems (dash clock etc).
+     * AAOS will write to this value to give VHAL the Android system's time,
+     * if the VHAL supports this property. This can be useful to synchronize
+     * other vehicle systems (dash clock etc) with Android's time.
      *
-     * Writing this value will update the ‘ExternalTimeSuggestion’
-     * value (if enabled). This value may be consumed by the “Time
-     * Detector Service”, if other sources do not have a higher
-     * priority. For information on how to adjust time source
-     * priorities see Time Detector Service documentation.
+     * AAOS writes to this property once during boot, and
+     * will thereafter write only when some time-source changes are propagated.
+     * AAOS will fill in VehiclePropValue.timestamp correctly.
+     * Note that AAOS will not send updates for natural elapse of time.
+     *     int64Values[0] = provided Unix time (in milliseconds)
+     *
+     * Note that the property may take >0 ms to get propagated through the stack
+     * and, having a timestamped property helps reduce any time drift. So,
+     * for all writes to the property, the timestamp can be used to negate this
+     * drift:
+     *     drift = currentTimeMillis - PropValue.timestamp
+     *     effectiveTime = PropValue.value.int64Values[0] + diff
+     *
+     * Aside, this property could have been better named ANDROID_EPOCH_TIME, but it
+     * continues to be called EPOCH_TIME for legacy reasons. We will try to fix
+     * this naming discrepancy when we migrate to AIDL.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @access VehiclePropertyAccess:WRITE_ONLY
      * @unit VehicleUnit:MILLI_SECS
      */
     EPOCH_TIME = (
