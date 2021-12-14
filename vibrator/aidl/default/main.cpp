@@ -31,14 +31,14 @@ int main() {
     auto vib = ndk::SharedRefBase::make<Vibrator>();
     const std::string vibName = std::string() + Vibrator::descriptor + "/default";
     binder_status_t status = AServiceManager_addService(vib->asBinder().get(), vibName.c_str());
-    CHECK(status == STATUS_OK);
+    CHECK_EQ(status, STATUS_OK);
 
     // make the vibrator manager service with a different vibrator
     auto managedVib = ndk::SharedRefBase::make<Vibrator>();
     auto vibManager = ndk::SharedRefBase::make<VibratorManager>(std::move(managedVib));
     const std::string vibManagerName = std::string() + VibratorManager::descriptor + "/default";
     status = AServiceManager_addService(vibManager->asBinder().get(), vibManagerName.c_str());
-    CHECK(status == STATUS_OK);
+    CHECK_EQ(status, STATUS_OK);
 
     ABinderProcess_joinThreadPool();
     return EXIT_FAILURE;  // should not reach
