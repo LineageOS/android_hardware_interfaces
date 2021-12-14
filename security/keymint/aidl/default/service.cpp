@@ -39,7 +39,7 @@ std::shared_ptr<T> addService(Args&&... args) {
     LOG(INFO) << "adding keymint service instance: " << instanceName;
     binder_status_t status =
             AServiceManager_addService(ser->asBinder().get(), instanceName.c_str());
-    CHECK(status == STATUS_OK);
+    CHECK_EQ(status, STATUS_OK);
     return ser;
 }
 
