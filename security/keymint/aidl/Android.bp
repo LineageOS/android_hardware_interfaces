@@ -45,14 +45,14 @@ aidl_interface {
 cc_defaults {
     name: "keymint_use_latest_hal_aidl_ndk_static",
     static_libs: [
-        "android.hardware.security.keymint-V1-ndk",
+        "android.hardware.security.keymint-V2-ndk",
     ],
 }
 
 cc_defaults {
     name: "keymint_use_latest_hal_aidl_ndk_shared",
     shared_libs: [
-        "android.hardware.security.keymint-V1-ndk",
+        "android.hardware.security.keymint-V2-ndk",
     ],
 }
 
@@ -62,6 +62,6 @@ cc_defaults {
 rust_defaults {
     name: "keymint_use_latest_hal_aidl_rust",
     rustlibs: [
-        "android.hardware.security.keymint-V1-rust",
+        "android.hardware.security.keymint-V2-rust",
     ],
 }
