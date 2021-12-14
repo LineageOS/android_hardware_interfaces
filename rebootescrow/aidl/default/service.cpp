@@ -34,7 +34,7 @@ int main() {
     auto re = ndk::SharedRefBase::make<RebootEscrow>(rebootEscrowDevicePath);
     const std::string instance = std::string() + RebootEscrow::descriptor + "/default";
     binder_status_t status = AServiceManager_addService(re->asBinder().get(), instance.c_str());
-    CHECK(status == STATUS_OK);
+    CHECK_EQ(status, STATUS_OK);
 
     ABinderProcess_joinThreadPool();
     return EXIT_FAILURE;
