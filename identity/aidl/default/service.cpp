@@ -43,7 +43,7 @@ int main(int /*argc*/, char* argv[]) {
 
     const std::string instance = std::string() + IdentityCredentialStore::descriptor + "/default";
     binder_status_t status = AServiceManager_addService(store->asBinder().get(), instance.c_str());
-    CHECK(status == STATUS_OK);
+    CHECK_EQ(status, STATUS_OK);
 
     ABinderProcess_joinThreadPool();
     return EXIT_FAILURE;  // should not reach

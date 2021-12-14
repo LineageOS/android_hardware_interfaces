@@ -42,7 +42,7 @@ int main() {
     const std::string instance = std::string() + Gnss::descriptor + "/default";
     binder_status_t status =
             AServiceManager_addService(gnssAidl->asBinder().get(), instance.c_str());
-    CHECK(status == STATUS_OK);
+    CHECK_EQ(status, STATUS_OK);
 
     sp<IGnss> gnss = new GnssHidlHal(gnssAidl);
     configureRpcThreadpool(1, true /* will join */);
