@@ -945,8 +945,12 @@ TEST_P(NewKeyGenerationTest, RsaWithAttestation) {
  *
  * Verifies that keymint can generate all required RSA key sizes, using an attestation key
  * that has been generated using an associate IRemotelyProvisionedComponent.
+ *
+ * This test is disabled because the KeyMint specification does not require that implementations
+ * of the first version of KeyMint have to also implement IRemotelyProvisionedComponent.
+ * However, the test is kept in the code because KeyMint v2 will impose this requirement.
  */
-TEST_P(NewKeyGenerationTest, RsaWithRpkAttestation) {
+TEST_P(NewKeyGenerationTest, DISABLED_RsaWithRpkAttestation) {
     // There should be an IRemotelyProvisionedComponent instance associated with the KeyMint
     // instance.
     std::shared_ptr<IRemotelyProvisionedComponent> rp;
@@ -1837,12 +1841,13 @@ TEST_P(NewKeyGenerationTest, EcdsaMismatchKeySize) {
     if (SecLevel() == SecurityLevel::STRONGBOX) return;
 
     auto result = GenerateKey(AuthorizationSetBuilder()
+                                      .Authorization(TAG_ALGORITHM, Algorithm::EC)
                                       .Authorization(TAG_KEY_SIZE, 224)
                                       .Authorization(TAG_EC_CURVE, EcCurve::P_256)
+                                      .SigningKey()
                                       .Digest(Digest::NONE)
                                       .SetDefaultValidity());
-    ASSERT_TRUE(result == ErrorCode::INVALID_ARGUMENT ||
-                result == ErrorCode::UNSUPPORTED_ALGORITHM);
+    ASSERT_TRUE(result == ErrorCode::INVALID_ARGUMENT);
 }
 
 /*

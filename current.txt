@@ -898,5 +898,7 @@ ea465970e96d9605ee6f6706b3b512726c66d2644738added9128c739f8f8b0c android.hardwar
 c8a57364f6ad20842be14f4db284df5304f7521ca8eac6bcc1fa6c5b466fb8a6 android.hardware.wifi.supplicant@1.4::ISupplicantStaNetwork
 2123482b69f3b531c88023aa2a007110e130efbf4ed68ac9ce0bc55d5e82bc8b android.hardware.wifi.supplicant@1.4::ISupplicantStaNetworkCallback
 0821f516e4d428bc15251969f7e19411c94d8f2ccbd99e1fc8168d8e49e38b0f android.hardware.wifi.supplicant@1.4::types
+4a087a308608d146b022ebc15633de989f5f4dfe1491a83fa41763290a82e40d android.hardware.automotive.vehicle@2.0::types
+70eb14415391f835fb218b43a1e25f5d6495f098f96fa2acaea70985e98e1ce8 android.hardware.automotive.vehicle@2.0::types
 
 # There should be no more HIDL HALs - please use AIDL instead.

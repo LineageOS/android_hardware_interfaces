@@ -1025,7 +1025,7 @@ const ConfigDeclaration kVehicleProperties[]{
                 .config =
                         {
                                 .prop = toInt(VehicleProperty::EPOCH_TIME),
-                                .access = VehiclePropertyAccess::READ_WRITE,
+                                .access = VehiclePropertyAccess::WRITE,
                                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                         },
         },
