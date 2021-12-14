@@ -71,6 +71,8 @@ class Dvr : public BnDvr {
     ::ndk::ScopedAStatus flush() override;
     ::ndk::ScopedAStatus close() override;
 
+    binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
+
     /**
      * To create a DvrMQ and its Event Flag.
      *

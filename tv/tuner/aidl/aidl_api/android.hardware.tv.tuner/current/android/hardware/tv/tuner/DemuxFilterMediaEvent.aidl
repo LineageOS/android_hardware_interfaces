@@ -38,6 +38,8 @@ parcelable DemuxFilterMediaEvent {
   int streamId;
   boolean isPtsPresent;
   long pts;
+  boolean isDtsPresent;
+  long dts;
   long dataLength;
   long offset;
   android.hardware.common.NativeHandle avMemory;
