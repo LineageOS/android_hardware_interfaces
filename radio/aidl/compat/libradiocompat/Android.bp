@@ -28,7 +28,6 @@ cc_library {
     cflags: [
         "-Wall",
         "-Wextra",
-        //"-Wold-style-cast",  // TODO(b/203699028) enable after aosp/1900880 gets merged
         "-DANDROID_UTILS_REF_BASE_DISABLE_IMPLICIT_CONSTRUCTION",
     ],
     shared_libs: [

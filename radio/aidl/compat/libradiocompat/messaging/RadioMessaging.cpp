@@ -29,6 +29,10 @@ using ::ndk::ScopedAStatus;
 namespace aidl = ::aidl::android::hardware::radio::messaging;
 constexpr auto ok = &ScopedAStatus::ok;
 
+std::shared_ptr<aidl::IRadioMessagingResponse> RadioMessaging::respond() {
+    return mRadioResponse->messagingCb();
+}
+
 ScopedAStatus RadioMessaging::acknowledgeIncomingGsmSmsWithPdu(  //
         int32_t serial, bool success, const std::string& ackPdu) {
     LOG_CALL << serial << ' ' << success << ' ' << ackPdu;

@@ -33,8 +33,6 @@ class RadioCompatBase {
     sp<RadioResponse> mRadioResponse;
     sp<RadioIndication> mRadioIndication;
 
-    V1_6::IRadioResponse& respond();
-
   public:
     RadioCompatBase(std::shared_ptr<DriverContext> context, sp<V1_5::IRadio> hidlHal,
                     sp<RadioResponse> radioResponse, sp<RadioIndication> radioIndication);

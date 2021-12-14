@@ -16,8 +16,6 @@
 
 #include <libradiocompat/RadioConfig.h>
 
-#include "RadioConfigIndication.h"
-#include "RadioConfigResponse.h"
 #include "commonStructs.h"
 #include "debug.h"
 #include "structs.h"
@@ -31,11 +29,13 @@ namespace aidl = ::aidl::android::hardware::radio::config;
 constexpr auto ok = &ScopedAStatus::ok;
 
 RadioConfig::RadioConfig(sp<config::V1_1::IRadioConfig> hidlHal)
-    : mHal1_1(hidlHal), mHal1_3(config::V1_3::IRadioConfig::castFrom(hidlHal)) {}
+    : mHal1_1(hidlHal),
+      mHal1_3(config::V1_3::IRadioConfig::castFrom(hidlHal)),
+      mRadioConfigResponse(sp<RadioConfigResponse>::make()),
+      mRadioConfigIndication(sp<RadioConfigIndication>::make()) {}
 
-config::V1_3::IRadioConfigResponse& RadioConfig::respond() {
-    CHECK(mRadioConfigResponse) << "setResponseFunctions was not called yet";
-    return *mRadioConfigResponse;
+std::shared_ptr<aidl::IRadioConfigResponse> RadioConfig::respond() {
+    return mRadioConfigResponse->respond();
 }
 
 ScopedAStatus RadioConfig::getHalDeviceCapabilities(int32_t serial) {
@@ -43,7 +43,7 @@ ScopedAStatus RadioConfig::getHalDeviceCapabilities(int32_t serial) {
     if (mHal1_3) {
         mHal1_3->getHalDeviceCapabilities(serial);
     } else {
-        respond().getHalDeviceCapabilitiesResponse(notSupported(serial), false);
+        respond()->getHalDeviceCapabilitiesResponse(notSupported(serial), false);
     }
     return ok();
 }
@@ -86,8 +86,8 @@ ScopedAStatus RadioConfig::setResponseFunctions(
     CHECK(radioConfigResponse);
     CHECK(radioConfigIndication);
 
-    mRadioConfigResponse = sp<RadioConfigResponse>::make(radioConfigResponse);
-    mRadioConfigIndication = sp<RadioConfigIndication>::make(radioConfigIndication);
+    mRadioConfigResponse->setResponseFunction(radioConfigResponse);
+    mRadioConfigIndication->setResponseFunction(radioConfigIndication);
     mHal1_1->setResponseFunctions(mRadioConfigResponse, mRadioConfigIndication);
 
     return ok();
