@@ -120,4 +120,11 @@ interface ITuner {
      * @return the newly opened Lnb iterface.
      */
     ILnb openLnbByName(in String lnbName, out int[] lnbId);
+
+    /**
+     * Enable or Disable Low Noise Amplifier (LNA).
+     *
+     * @param bEnable true if activate LNA module; false if deactivate LNA
+     */
+    void setLna(in boolean bEnable);
 }

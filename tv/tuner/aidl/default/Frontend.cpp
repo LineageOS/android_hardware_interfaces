@@ -691,12 +691,6 @@ Frontend::~Frontend() {}
     return ::ndk::ScopedAStatus::ok();
 }
 
-::ndk::ScopedAStatus Frontend::setLna(bool /* in_bEnable */) {
-    ALOGV("%s", __FUNCTION__);
-
-    return ::ndk::ScopedAStatus::ok();
-}
-
 ::ndk::ScopedAStatus Frontend::setLnb(int32_t /* in_lnbId */) {
     ALOGV("%s", __FUNCTION__);
     if (!supportsSatellite()) {
@@ -729,6 +723,13 @@ binder_status_t Frontend::dump(int fd, const char** /* args */, uint32_t /* numA
     dprintf(fd, "    mIsLocked: %d\n", mIsLocked);
     dprintf(fd, "    mCiCamId: %d\n", mCiCamId);
     return STATUS_OK;
+}
+
+::ndk::ScopedAStatus Frontend::getHardwareInfo(std::string* _aidl_return) {
+    ALOGV("%s", __FUNCTION__);
+
+    *_aidl_return = "Sample Frontend";
+    return ::ndk::ScopedAStatus::ok();
 }
 
 FrontendType Frontend::getFrontendType() {

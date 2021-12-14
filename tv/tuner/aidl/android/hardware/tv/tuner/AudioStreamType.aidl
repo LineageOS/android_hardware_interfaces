@@ -99,4 +99,24 @@ enum AudioStreamType {
      * SJ/T 11368-2006
      */
     DRA,
+
+    /*
+     * AAC with ADTS (Audio Data Transport Format).
+     */
+    AAC_ADTS,
+
+    /*
+     * AAC with ADTS with LATM (Low-overhead MPEG-4 Audio Transport Multiplex).
+     */
+    AAC_LATM,
+
+    /*
+     * High-Efficiency AAC (HE-AAC) with ADTS (Audio Data Transport Format).
+     */
+    AAC_HE_ADTS,
+
+    /*
+     * High-Efficiency AAC (HE-AAC) with LATM (Low-overhead MPEG-4 Audio Transport Multiplex).
+     */
+    AAC_HE_LATM,
 }
