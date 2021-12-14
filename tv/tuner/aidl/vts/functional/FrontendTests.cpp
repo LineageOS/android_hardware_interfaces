@@ -398,6 +398,13 @@ void FrontendTests::verifyFrontendStatus(vector<FrontendStatusType> statusTypes,
                             expectStatuses[i].get<FrontendStatus::Tag::partialReceptionFlag>());
                 break;
             }
+            case FrontendStatusType::STREAM_ID_LIST: {
+                ASSERT_TRUE(std::equal(
+                        realStatuses[i].get<FrontendStatus::Tag::streamIdList>().begin(),
+                        realStatuses[i].get<FrontendStatus::Tag::streamIdList>().end(),
+                        expectStatuses[i].get<FrontendStatus::Tag::streamIdList>().begin()));
+                break;
+            }
             default: {
                 continue;
             }

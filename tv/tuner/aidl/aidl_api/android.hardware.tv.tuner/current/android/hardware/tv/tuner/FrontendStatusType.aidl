@@ -74,4 +74,5 @@ enum FrontendStatusType {
   IS_SHORT_FRAMES = 36,
   ISDBT_MODE = 37,
   ISDBT_PARTIAL_RECEPTION_FLAG = 38,
+  STREAM_ID_LIST = 39,
 }

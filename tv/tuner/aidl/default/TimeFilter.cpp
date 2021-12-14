@@ -83,6 +83,12 @@ TimeFilter::~TimeFilter() {}
     return ::ndk::ScopedAStatus::ok();
 }
 
+binder_status_t TimeFilter::dump(int fd, const char** /* args */, uint32_t /* numArgs */) {
+    dprintf(fd, "    TimeFilter:\n");
+    dprintf(fd, "      mTimeStamp: %" PRIu64 "\n", mTimeStamp);
+    return STATUS_OK;
+}
+
 }  // namespace tuner
 }  // namespace tv
 }  // namespace hardware

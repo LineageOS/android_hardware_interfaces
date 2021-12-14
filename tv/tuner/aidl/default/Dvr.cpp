@@ -177,6 +177,13 @@ EventFlag* Dvr::getDvrEventFlag() {
     return mDvrEventFlag;
 }
 
+binder_status_t Dvr::dump(int fd, const char** /* args */, uint32_t /* numArgs */) {
+    dprintf(fd, "    Dvr:\n");
+    dprintf(fd, "      mType: %hhd\n", mType);
+    dprintf(fd, "      mDvrThreadRunning: %d\n", (bool)mDvrThreadRunning);
+    return STATUS_OK;
+}
+
 void Dvr::playbackThreadLoop() {
     ALOGD("[Dvr] playback threadLoop start.");
 
