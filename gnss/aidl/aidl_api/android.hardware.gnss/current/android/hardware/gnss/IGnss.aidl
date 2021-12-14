@@ -44,6 +44,7 @@ interface IGnss {
   @nullable android.hardware.gnss.IGnssGeofence getExtensionGnssGeofence();
   @nullable android.hardware.gnss.IGnssNavigationMessageInterface getExtensionGnssNavigationMessage();
   android.hardware.gnss.IAGnss getExtensionAGnss();
+  android.hardware.gnss.IAGnssRil getExtensionAGnssRil();
   android.hardware.gnss.IGnssDebug getExtensionGnssDebug();
   android.hardware.gnss.visibility_control.IGnssVisibilityControl getExtensionGnssVisibilityControl();
   void start();

@@ -20,6 +20,7 @@
 #include <inttypes.h>
 #include <log/log.h>
 #include "AGnss.h"
+#include "AGnssRil.h"
 #include "DeviceFileReader.h"
 #include "GnssAntennaInfo.h"
 #include "GnssBatching.h"
@@ -171,7 +172,7 @@ ScopedAStatus Gnss::close() {
     return ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Gnss::getExtensionAGnss(std::shared_ptr<IAGnss>* iAGnss) {
+ScopedAStatus Gnss::getExtensionAGnss(std::shared_ptr<IAGnss>* iAGnss) {
     ALOGD("Gnss::getExtensionAGnss");
     *iAGnss = SharedRefBase::make<AGnss>();
     return ndk::ScopedAStatus::ok();
@@ -181,6 +182,12 @@ ScopedAStatus Gnss::injectTime(int64_t timeMs, int64_t timeReferenceMs, int unce
     ALOGD("injectTime. timeMs:%" PRId64 ", timeReferenceMs:%" PRId64 ", uncertaintyMs:%d", timeMs,
           timeReferenceMs, uncertaintyMs);
     return ScopedAStatus::ok();
+}
+
+ScopedAStatus Gnss::getExtensionAGnssRil(std::shared_ptr<IAGnssRil>* iAGnssRil) {
+    ALOGD("Gnss::getExtensionAGnssRil");
+    *iAGnssRil = SharedRefBase::make<AGnssRil>();
+    return ndk::ScopedAStatus::ok();
 }
 
 ScopedAStatus Gnss::injectLocation(const GnssLocation& location) {
