@@ -31,7 +31,7 @@ int main() {
     const std::string instance = std::string() + AudioControl::descriptor + "/default";
     binder_status_t status =
             AServiceManager_addService(audioControl->asBinder().get(), instance.c_str());
-    CHECK(status == STATUS_OK);
+    CHECK_EQ(status, STATUS_OK);
 
     std::shared_ptr<PowerPolicyClient> powerPolicyClient =
             ::ndk::SharedRefBase::make<PowerPolicyClient>(audioControl);
