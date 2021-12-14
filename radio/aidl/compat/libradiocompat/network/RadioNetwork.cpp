@@ -33,6 +33,10 @@ using ::ndk::ScopedAStatus;
 namespace aidl = ::aidl::android::hardware::radio::network;
 constexpr auto ok = &ScopedAStatus::ok;
 
+std::shared_ptr<aidl::IRadioNetworkResponse> RadioNetwork::respond() {
+    return mRadioResponse->networkCb();
+}
+
 ScopedAStatus RadioNetwork::getAllowedNetworkTypesBitmap(int32_t serial) {
     LOG_CALL << serial;
     if (mHal1_6) {
@@ -108,7 +112,7 @@ ScopedAStatus RadioNetwork::getSystemSelectionChannels(int32_t serial) {
     if (mHal1_6) {
         mHal1_6->getSystemSelectionChannels(serial);
     } else {
-        respond().getSystemSelectionChannelsResponse(notSupported(serial), {});
+        respond()->getSystemSelectionChannelsResponse(notSupported(serial), {});
     }
     return ok();
 }
@@ -130,7 +134,7 @@ ScopedAStatus RadioNetwork::isNrDualConnectivityEnabled(int32_t serial) {
     if (mHal1_6) {
         mHal1_6->isNrDualConnectivityEnabled(serial);
     } else {
-        respond().isNrDualConnectivityEnabledResponse(notSupported(serial), false);
+        respond()->isNrDualConnectivityEnabledResponse(notSupported(serial), false);
     }
     return ok();
 }
@@ -219,7 +223,7 @@ ScopedAStatus RadioNetwork::setNrDualConnectivityState(int32_t serial,
     if (mHal1_6) {
         mHal1_6->setNrDualConnectivityState(serial, V1_6::NrDualConnectivityState(st));
     } else {
-        respond().setNrDualConnectivityStateResponse(notSupported(serial));
+        respond()->setNrDualConnectivityStateResponse(notSupported(serial));
     }
     return ok();
 }

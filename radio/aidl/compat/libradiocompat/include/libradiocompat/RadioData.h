@@ -22,6 +22,8 @@
 namespace android::hardware::radio::compat {
 
 class RadioData : public RadioCompatBase, public aidl::android::hardware::radio::data::BnRadioData {
+    std::shared_ptr<::aidl::android::hardware::radio::data::IRadioDataResponse> respond();
+
     ::ndk::ScopedAStatus allocatePduSessionId(int32_t serial) override;
     ::ndk::ScopedAStatus cancelHandover(int32_t serial, int32_t callId) override;
     ::ndk::ScopedAStatus deactivateDataCall(

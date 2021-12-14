@@ -16,6 +16,7 @@
 #pragma once
 
 #include "DriverContext.h"
+#include "GuaranteedCallback.h"
 
 #include <aidl/android/hardware/radio/data/IRadioDataIndication.h>
 #include <aidl/android/hardware/radio/messaging/IRadioMessagingIndication.h>
@@ -30,13 +31,30 @@ namespace android::hardware::radio::compat {
 class RadioIndication : public V1_6::IRadioIndication {
     std::shared_ptr<DriverContext> mContext;
 
-    std::shared_ptr<::aidl::android::hardware::radio::data::IRadioDataIndication> mDataCb;
-    std::shared_ptr<::aidl::android::hardware::radio::messaging::IRadioMessagingIndication>
+    GuaranteedCallback<  //
+            ::aidl::android::hardware::radio::data::IRadioDataIndication,
+            ::aidl::android::hardware::radio::data::IRadioDataIndicationDefault, true>
+            mDataCb;
+    GuaranteedCallback<  //
+            ::aidl::android::hardware::radio::messaging::IRadioMessagingIndication,
+            ::aidl::android::hardware::radio::messaging::IRadioMessagingIndicationDefault, true>
             mMessagingCb;
-    std::shared_ptr<::aidl::android::hardware::radio::modem::IRadioModemIndication> mModemCb;
-    std::shared_ptr<::aidl::android::hardware::radio::network::IRadioNetworkIndication> mNetworkCb;
-    std::shared_ptr<::aidl::android::hardware::radio::sim::IRadioSimIndication> mSimCb;
-    std::shared_ptr<::aidl::android::hardware::radio::voice::IRadioVoiceIndication> mVoiceCb;
+    GuaranteedCallback<  //
+            ::aidl::android::hardware::radio::modem::IRadioModemIndication,
+            ::aidl::android::hardware::radio::modem::IRadioModemIndicationDefault, true>
+            mModemCb;
+    GuaranteedCallback<  //
+            ::aidl::android::hardware::radio::network::IRadioNetworkIndication,
+            ::aidl::android::hardware::radio::network::IRadioNetworkIndicationDefault, true>
+            mNetworkCb;
+    GuaranteedCallback<  //
+            ::aidl::android::hardware::radio::sim::IRadioSimIndication,
+            ::aidl::android::hardware::radio::sim::IRadioSimIndicationDefault, true>
+            mSimCb;
+    GuaranteedCallback<  //
+            ::aidl::android::hardware::radio::voice::IRadioVoiceIndication,
+            ::aidl::android::hardware::radio::voice::IRadioVoiceIndicationDefault, true>
+            mVoiceCb;
 
     // IRadioIndication @ 1.0
     Return<void> radioStateChanged(V1_0::RadioIndicationType type,
@@ -200,6 +218,14 @@ class RadioIndication : public V1_6::IRadioIndication {
             std::shared_ptr<::aidl::android::hardware::radio::sim::IRadioSimIndication> simCb);
     void setResponseFunction(
             std::shared_ptr<::aidl::android::hardware::radio::voice::IRadioVoiceIndication> voicCb);
+
+    std::shared_ptr<::aidl::android::hardware::radio::data::IRadioDataIndication> dataCb();
+    std::shared_ptr<::aidl::android::hardware::radio::messaging::IRadioMessagingIndication>
+    messagingCb();
+    std::shared_ptr<::aidl::android::hardware::radio::modem::IRadioModemIndication> modemCb();
+    std::shared_ptr<::aidl::android::hardware::radio::network::IRadioNetworkIndication> networkCb();
+    std::shared_ptr<::aidl::android::hardware::radio::sim::IRadioSimIndication> simCb();
+    std::shared_ptr<::aidl::android::hardware::radio::voice::IRadioVoiceIndication> voiceCb();
 };
 
 }  // namespace android::hardware::radio::compat
