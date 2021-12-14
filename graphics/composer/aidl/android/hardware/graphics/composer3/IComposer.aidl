@@ -27,7 +27,7 @@ interface IComposer {
     const int EX_NO_RESOURCES = 6;
 
     /**
-     * Creates a v2.4 client of the composer. Supersedes @2.3::createClient.
+     * Creates a client of the composer.
      *
      * @return is the newly created client.
      *

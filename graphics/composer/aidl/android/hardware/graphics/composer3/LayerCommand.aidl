@@ -45,7 +45,7 @@ parcelable LayerCommand {
     /**
      * Asynchronously sets the position of a cursor layer.
      *
-     * Prior to validateDisplay, a layer may be marked as Composition::CURSOR.
+     * Prior to validateDisplay, a layer may be marked as Composition.CURSOR.
      * If validation succeeds (i.e., the device does not request a composition
      * change for that layer), then once a buffer has been set for the layer
      * and it has been presented, its position may be set by this function at
@@ -73,8 +73,8 @@ parcelable LayerCommand {
      * may be passed instead.
      *
      * This function must return NONE and have no other effect if called for a
-     * layer with a composition type of Composition::SOLID_COLOR (because it
-     * has no buffer) or Composition::SIDEBAND or Composition::CLIENT (because
+     * layer with a composition type of Composition.SOLID_COLOR (because it
+     * has no buffer) or Composition.SIDEBAND or Composition.CLIENT (because
      * synchronization and buffer updates for these layers are handled
      * elsewhere).
      */
@@ -109,14 +109,14 @@ parcelable LayerCommand {
 
     /**
      * Sets the color of the given layer. If the composition type of the layer
-     * is not Composition::SOLID_COLOR, this call must succeed and have no
+     * is not Composition.SOLID_COLOR, this call must succeed and have no
      * other effect.
      */
     @nullable Color color;
 
     /**
      * Sets the color of the given layer. If the composition type of the layer
-     * is not Composition::SOLID_COLOR, this call must succeed and have no
+     * is not Composition.SOLID_COLOR, this call must succeed and have no
      * other effect.
      */
     @nullable FloatColor floatColor;
@@ -149,20 +149,20 @@ parcelable LayerCommand {
      * Sets an alpha value (a floating point value in the range [0.0, 1.0])
      * which will be applied to the whole layer. It can be conceptualized as a
      * preprocessing step which applies the following function:
-     *   if (blendMode == BlendMode::PREMULTIPLIED)
+     *   if (blendMode == BlendMode.PREMULTIPLIED)
      *       out.rgb = in.rgb * planeAlpha
      *   out.a = in.a * planeAlpha
      *
      * If the device does not support this operation on a layer which is
-     * marked Composition::DEVICE, it must request a composition type change
-     * to Composition::CLIENT upon the next validateDisplay call.
+     * marked Composition.DEVICE, it must request a composition type change
+     * to Composition.CLIENT upon the next validateDisplay call.
      *
      */
     @nullable PlaneAlpha planeAlpha;
 
     /**
      * Sets the sideband stream for this layer. If the composition type of the
-     * given layer is not Composition::SIDEBAND, this call must succeed and
+     * given layer is not Composition.SIDEBAND, this call must succeed and
      * have no other effect.
      */
     @nullable NativeHandle sidebandStream;
@@ -174,7 +174,7 @@ parcelable LayerCommand {
      *
      * If the device is not capable of supporting a true float source crop
      * (i.e., it will truncate or round the floats to integers), it must set
-     * this layer to Composition::CLIENT when crop is non-integral for the
+     * this layer to Composition.CLIENT when crop is non-integral for the
      * most accurate rendering.
      *
      * If the device cannot support float source crops, but still wants to

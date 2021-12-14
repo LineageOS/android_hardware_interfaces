@@ -185,7 +185,7 @@ interface IComposerClient {
     /**
      * Returns the color modes supported on this display.
      *
-     * All devices must support at least ColorMode::NATIVE.
+     * All devices must support at least ColorMode.NATIVE.
      *
      * @param display is the display to query.
      *
@@ -201,7 +201,7 @@ interface IComposerClient {
      *
      * When the layer dataspace is a legacy dataspace (see
      * common@1.1::Dataspace) and the display render intent is
-     * RenderIntent::ENHANCE, the pixel values can go through an
+     * RenderIntent.ENHANCE, the pixel values can go through an
      * implementation-defined saturation transform before being mapped to the
      * current color mode colorimetrically.
      *
@@ -409,8 +409,8 @@ interface IComposerClient {
      *
      * The width and height of this buffer must be those of the currently-active
      * display configuration, and the usage flags must consist of the following:
-     *   BufferUsage::CPU_READ | BufferUsage::GPU_TEXTURE |
-     *   BufferUsage::COMPOSER_OUTPUT
+     *   BufferUsage.CPU_READ | BufferUsage.GPU_TEXTURE |
+     *   BufferUsage.COMPOSER_OUTPUT
      *
      * The format and dataspace provided must be sufficient such that if a
      * correctly-configured buffer is passed into setReadbackBuffer, filled by
@@ -485,8 +485,8 @@ interface IComposerClient {
      * Returns the render intents supported by the specified display and color
      * mode.
      *
-     * For SDR color modes, RenderIntent::COLORIMETRIC must be supported. For
-     * HDR color modes, RenderIntent::TONE_MAP_COLORIMETRIC must be supported.
+     * For SDR color modes, RenderIntent.COLORIMETRIC must be supported. For
+     * HDR color modes, RenderIntent.TONE_MAP_COLORIMETRIC must be supported.
      *
      * @param display is the display to query.
      * @param mode is the color mode to query.
@@ -500,11 +500,11 @@ interface IComposerClient {
 
     /**
      * Provides a list of all the content types supported by this display (any of
-     * ContentType::{GRAPHICS, PHOTO, CINEMA, GAME}). This list must not change after
+     * ContentType.{GRAPHICS, PHOTO, CINEMA, GAME}). This list must not change after
      * initialization.
      *
      * Content types are introduced in HDMI 1.4 and supporting them is optional. The
-     * ContentType::NONE is always supported and will not be returned by this method..
+     * ContentType.NONE is always supported and will not be returned by this method..
      *
      * @return out is a list of supported content types.
      *
@@ -571,7 +571,7 @@ interface IComposerClient {
      * be triggered.
      *
      * This function should only be called if the display reports support for
-     * DisplayCapability::AUTO_LOW_LATENCY_MODE from getDisplayCapabilities_2_4.
+     * DisplayCapability.AUTO_LOW_LATENCY_MODE from getDisplayCapabilities_2_4.
      *
      * @exception EX_BAD_DISPLAY when an invalid display handle was passed in.
      * @exception EX_UNSUPPORTED when AUTO_LOW_LATENCY_MODE is not supported by the composer
@@ -595,8 +595,8 @@ interface IComposerClient {
      * The color mode and render intent change must take effect on next
      * presentDisplay.
      *
-     * All devices must support at least ColorMode::NATIVE and
-     * RenderIntent::COLORIMETRIC, and displays are assumed to be in this mode
+     * All devices must support at least ColorMode.NATIVE and
+     * RenderIntent.COLORIMETRIC, and displays are assumed to be in this mode
      * upon hotplug.
      *
      * @param display is the display to which the color mode is set.
@@ -682,8 +682,8 @@ interface IComposerClient {
      * complete when this function returns. It is valid to call this function
      * multiple times with the same power mode.
      *
-     * All displays must support PowerMode::ON and PowerMode::OFF.  Whether a
-     * display supports PowerMode::DOZE or PowerMode::DOZE_SUSPEND may be
+     * All displays must support PowerMode.ON and PowerMode.OFF.  Whether a
+     * display supports PowerMode.DOZE or PowerMode.DOZE_SUSPEND may be
      * queried using getDozeSupport.
      *
      * @param display is the display to which the power mode is set.

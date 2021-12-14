@@ -27,7 +27,7 @@ parcelable ColorTransformPayload {
 
     /**
      * Hint value which may be used instead of the given matrix unless it
-     * is ColorTransform::ARBITRARY.
+     * is ColorTransform.ARBITRARY.
      */
     ColorTransform hint;
 }
