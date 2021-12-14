@@ -79,6 +79,30 @@ parcelable LayerCommand {
     @nullable Buffer buffer;
 
     /**
+     * Sets a buffer handle to be displayed for this layer and a file descriptor
+     * referring to an acquire sync fence object, which must be signaled when it is
+     * safe to read from the given buffer.
+     *
+     * When bufferAhead is provided, the implementation should try to
+     * present it on the next scanout as long as its acquire sync fence
+     * is signaled by that time. Otherwise the bufferAhead should be dropped.
+     * This allows the client to set an
+     * unsignaled buffer on the layer without causing the entire display to miss
+     * an update if the buffer is not ready by the next scanout time.
+     *
+     * In case bufferAhead is dropped and LayerCommand.buffer is provided, LayerCommand.buffer
+     * should be used as the next layer buffer.
+     *
+     * The implementation is expected to populate the CommandResultPayload.bufferAheadResult
+     * with information about whether bufferAhead was presented or dropped.
+     * Since this information is not known at the current presentDisplay call
+     * of frame N (as the scanout happens after the call returns),
+     * the implementation should populate it when presentDisplay is
+     * called for frame N+1.
+     */
+    @nullable Buffer bufferAhead;
+
+    /**
      * Provides the region of the source buffer which has been modified since
      * the last frame. This region does not need to be validated before
      * calling presentDisplay.

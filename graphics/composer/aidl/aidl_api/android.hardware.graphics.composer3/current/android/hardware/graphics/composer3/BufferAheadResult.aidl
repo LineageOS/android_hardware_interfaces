@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021, The Android Open Source Project
+ * Copyright (c) 2022, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,26 +33,12 @@
 
 package android.hardware.graphics.composer3;
 @VintfStability
-parcelable LayerCommand {
-  long layer;
-  @nullable android.hardware.graphics.common.Point cursorPosition;
-  @nullable android.hardware.graphics.composer3.Buffer buffer;
-  @nullable android.hardware.graphics.composer3.Buffer bufferAhead;
-  @nullable android.hardware.graphics.common.Rect[] damage;
-  @nullable android.hardware.graphics.composer3.ParcelableBlendMode blendMode;
-  @nullable android.hardware.graphics.composer3.Color color;
-  @nullable android.hardware.graphics.composer3.ParcelableComposition composition;
-  @nullable android.hardware.graphics.composer3.ParcelableDataspace dataspace;
-  @nullable android.hardware.graphics.common.Rect displayFrame;
-  @nullable android.hardware.graphics.composer3.PlaneAlpha planeAlpha;
-  @nullable android.hardware.common.NativeHandle sidebandStream;
-  @nullable android.hardware.graphics.common.FRect sourceCrop;
-  @nullable android.hardware.graphics.composer3.ParcelableTransform transform;
-  @nullable android.hardware.graphics.common.Rect[] visibleRegion;
-  @nullable android.hardware.graphics.composer3.ZOrder z;
-  @nullable float[] colorTransform;
-  @nullable android.hardware.graphics.composer3.Luminance whitePointNits;
-  @nullable android.hardware.graphics.composer3.PerFrameMetadata[] perFrameMetadata;
-  @nullable android.hardware.graphics.composer3.PerFrameMetadataBlob[] perFrameMetadataBlob;
-  @nullable android.hardware.graphics.common.Rect[] blockingRegion;
+parcelable BufferAheadResult {
+  long display;
+  android.hardware.graphics.composer3.BufferAheadResult.Layer[] layers;
+  @VintfStability
+  parcelable Layer {
+    long layer;
+    boolean presented;
+  }
 }
