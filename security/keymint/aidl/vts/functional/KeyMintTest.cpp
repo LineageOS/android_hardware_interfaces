@@ -3151,6 +3151,58 @@ TEST_P(VerificationOperationsTest, HmacSigningKeyCannotVerify) {
     CheckedDeleteKey(&verification_key);
 }
 
+/*
+ * VerificationOperationsTest.HmacVerificationFailsForCorruptSignature
+ *
+ * Verifies HMAC signature verification should fails if message or signature is corrupted.
+ */
+TEST_P(VerificationOperationsTest, HmacVerificationFailsForCorruptSignature) {
+    string key_material = "HelloThisIsAKey";
+
+    vector<uint8_t> signing_key, verification_key;
+    vector<KeyCharacteristics> signing_key_chars, verification_key_chars;
+    EXPECT_EQ(ErrorCode::OK,
+              ImportKey(AuthorizationSetBuilder()
+                                .Authorization(TAG_NO_AUTH_REQUIRED)
+                                .Authorization(TAG_ALGORITHM, Algorithm::HMAC)
+                                .Authorization(TAG_PURPOSE, KeyPurpose::SIGN)
+                                .Digest(Digest::SHA_2_256)
+                                .Authorization(TAG_MIN_MAC_LENGTH, 160),
+                        KeyFormat::RAW, key_material, &signing_key, &signing_key_chars));
+    EXPECT_EQ(ErrorCode::OK,
+              ImportKey(AuthorizationSetBuilder()
+                                .Authorization(TAG_NO_AUTH_REQUIRED)
+                                .Authorization(TAG_ALGORITHM, Algorithm::HMAC)
+                                .Authorization(TAG_PURPOSE, KeyPurpose::VERIFY)
+                                .Digest(Digest::SHA_2_256)
+                                .Authorization(TAG_MIN_MAC_LENGTH, 160),
+                        KeyFormat::RAW, key_material, &verification_key, &verification_key_chars));
+
+    string message = "This is a message.";
+    string signature = SignMessage(
+            signing_key, message,
+            AuthorizationSetBuilder().Digest(Digest::SHA_2_256).Authorization(TAG_MAC_LENGTH, 160));
+
+    AuthorizationSet begin_out_params;
+    ASSERT_EQ(ErrorCode::OK,
+              Begin(KeyPurpose::VERIFY, verification_key,
+                    AuthorizationSetBuilder().Digest(Digest::SHA_2_256), &begin_out_params));
+
+    string corruptMessage = "This is b message.";  // Corrupted message
+    string output;
+    EXPECT_EQ(ErrorCode::VERIFICATION_FAILED, Finish(corruptMessage, signature, &output));
+
+    ASSERT_EQ(ErrorCode::OK,
+              Begin(KeyPurpose::VERIFY, verification_key,
+                    AuthorizationSetBuilder().Digest(Digest::SHA_2_256), &begin_out_params));
+
+    signature[0] += 1;  // Corrupt a signature
+    EXPECT_EQ(ErrorCode::VERIFICATION_FAILED, Finish(message, signature, &output));
+
+    CheckedDeleteKey(&signing_key);
+    CheckedDeleteKey(&verification_key);
+}
+
 INSTANTIATE_KEYMINT_AIDL_TEST(VerificationOperationsTest);
 
 typedef KeyMintAidlTestBase ExportKeyTest;
