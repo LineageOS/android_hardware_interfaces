@@ -74,4 +74,5 @@ union FrontendStatus {
   boolean isShortFrames;
   android.hardware.tv.tuner.FrontendIsdbtMode isdbtMode;
   android.hardware.tv.tuner.FrontendIsdbtPartialReceptionFlag partialReceptionFlag;
+  int[] streamIdList;
 }

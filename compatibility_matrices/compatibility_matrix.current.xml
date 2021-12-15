@@ -298,16 +298,7 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="false">
-        <name>android.hardware.health</name>
-        <version>2.1</version>
-        <interface>
-            <name>IHealth</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <!-- TODO(b/177269435): require health AIDL HAL and deprecate HIDL HAL -->
-    <hal format="aidl" optional="true">
+    <hal format="aidl" optional="false">
         <name>android.hardware.health</name>
         <version>1</version>
         <interface>
@@ -381,7 +372,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.security.keymint</name>
-        <version>1</version>
+        <version>1-2</version>
         <interface>
             <name>IKeyMintDevice</name>
             <instance>default</instance>
@@ -390,6 +381,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.security.keymint</name>
+        <version>1-2</version>
         <interface>
             <name>IRemotelyProvisionedComponent</name>
             <instance>default</instance>

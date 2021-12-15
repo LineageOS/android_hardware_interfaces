@@ -40,5 +40,5 @@ parcelable DemuxFilterSectionEvent {
     /**
      * Data size in bytes of filtered data
      */
-    int dataLength;
+    long dataLength;
 }

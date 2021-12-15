@@ -25,8 +25,8 @@ package android.hardware.graphics.composer3;
  * modes should not affect the mapping.
  *
  * RenderIntent overrides the render intents defined for individual color
- * modes. It is ignored when the color mode is ColorMode::NATIVE, because
- * ColorMode::NATIVE colors are already display colors.
+ * modes. It is ignored when the color mode is ColorMode.NATIVE, because
+ * ColorMode.NATIVE colors are already display colors.
  */
 @VintfStability
 @Backing(type="int")
@@ -36,7 +36,7 @@ enum RenderIntent {
      * gamut are hard-clipped.
      *
      * This implies that the display must have been calibrated unless
-     * ColorMode::NATIVE is the only supported color mode.
+     * ColorMode.NATIVE is the only supported color mode.
      */
     COLORIMETRIC = 0,
     /**

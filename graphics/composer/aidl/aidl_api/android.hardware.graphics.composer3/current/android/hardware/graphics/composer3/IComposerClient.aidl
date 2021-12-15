@@ -38,12 +38,11 @@ interface IComposerClient {
   android.hardware.graphics.composer3.VirtualDisplay createVirtualDisplay(int width, int height, android.hardware.graphics.common.PixelFormat formatHint, int outputBufferSlotCount);
   void destroyLayer(long display, long layer);
   void destroyVirtualDisplay(long display);
-  android.hardware.graphics.composer3.command.CommandResultPayload[] executeCommands(in android.hardware.graphics.composer3.command.CommandPayload[] commands);
+  android.hardware.graphics.composer3.CommandResultPayload[] executeCommands(in android.hardware.graphics.composer3.DisplayCommand[] commands);
   int getActiveConfig(long display);
   android.hardware.graphics.composer3.ColorMode[] getColorModes(long display);
   float[] getDataspaceSaturationMatrix(android.hardware.graphics.common.Dataspace dataspace);
   int getDisplayAttribute(long display, int config, android.hardware.graphics.composer3.DisplayAttribute attribute);
-  boolean getDisplayBrightnessSupport(long display);
   android.hardware.graphics.composer3.DisplayCapability[] getDisplayCapabilities(long display);
   int[] getDisplayConfigs(long display);
   android.hardware.graphics.composer3.DisplayConnectionType getDisplayConnectionType(long display);
@@ -52,7 +51,6 @@ interface IComposerClient {
   int getDisplayVsyncPeriod(long display);
   android.hardware.graphics.composer3.DisplayContentSample getDisplayedContentSample(long display, long maxFrames, long timestamp);
   android.hardware.graphics.composer3.DisplayContentSamplingAttributes getDisplayedContentSamplingAttributes(long display);
-  boolean getDozeSupport(long display);
   android.hardware.graphics.composer3.HdrCapabilities getHdrCapabilities(long display);
   android.hardware.graphics.composer3.LayerGenericMetadataKey[] getLayerGenericMetadataKeys();
   int getMaxVirtualDisplayCount();

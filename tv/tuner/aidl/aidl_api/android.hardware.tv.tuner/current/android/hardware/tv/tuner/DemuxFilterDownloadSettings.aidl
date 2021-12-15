@@ -35,5 +35,6 @@ package android.hardware.tv.tuner;
 /* @hide */
 @VintfStability
 parcelable DemuxFilterDownloadSettings {
+  boolean useDownloadId;
   int downloadId;
 }

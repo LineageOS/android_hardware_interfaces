@@ -41,6 +41,7 @@
 #include <android/hardware/camera/device/3.6/ICameraDevice.h>
 #include <android/hardware/camera/device/3.6/ICameraDeviceSession.h>
 #include <android/hardware/camera/device/3.7/ICameraDevice.h>
+#include <android/hardware/camera/device/3.8/ICameraDevice.h>
 #include <android/hardware/camera/device/3.7/ICameraDeviceSession.h>
 #include <android/hardware/camera/device/3.7/ICameraInjectionSession.h>
 #include <android/hardware/camera/device/3.8/ICameraDeviceCallback.h>
@@ -911,6 +912,7 @@ public:
             uint32_t* outBufSize);
     static Status isConstrainedModeAvailable(camera_metadata_t *staticMeta);
     static Status isLogicalMultiCamera(const camera_metadata_t *staticMeta);
+    static bool isTorchStrengthControlSupported(const camera_metadata_t *staticMeta);
     static Status isOfflineSessionSupported(const camera_metadata_t *staticMeta);
     static Status getPhysicalCameraIds(const camera_metadata_t *staticMeta,
             std::unordered_set<std::string> *physicalIds/*out*/);
@@ -2926,6 +2928,137 @@ TEST_P(CameraHidlTest, getCameraCharacteristics) {
             break;
             default: {
                 ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
+                ADD_FAILURE();
+            }
+            break;
+        }
+    }
+}
+
+// Verify that the torch strength level can be set and retrieved successfully.
+TEST_P(CameraHidlTest, turnOnTorchWithStrengthLevel) {
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
+    bool torchControlSupported = false;
+    bool torchStrengthControlSupported = false;
+    Return<void> ret;
+
+    ret = mProvider->isSetTorchModeSupported([&](auto status, bool support) {
+        ALOGI("isSetTorchModeSupported returns status:%d supported:%d", (int)status, support);
+        ASSERT_EQ(Status::OK, status);
+        torchControlSupported = support;
+    });
+
+    sp<TorchProviderCb> cb = new TorchProviderCb(this);
+    Return<Status> returnStatus = mProvider->setCallback(cb);
+    ASSERT_TRUE(returnStatus.isOk());
+    ASSERT_EQ(Status::OK, returnStatus);
+
+    for (const auto& name : cameraDeviceNames) {
+        int deviceVersion = getCameraDeviceVersion(name, mProviderType);
+        int32_t defaultLevel;
+        switch (deviceVersion) {
+            case CAMERA_DEVICE_API_VERSION_3_8: {
+                ::android::sp<::android::hardware::camera::device::V3_8::ICameraDevice> device3_8;
+                ALOGI("%s: Testing camera device %s", __FUNCTION__, name.c_str());
+                ret = mProvider->getCameraDeviceInterface_V3_x(
+                        name, [&](auto status, const auto& device) {
+                            ASSERT_EQ(Status::OK, status);
+                            ASSERT_NE(device, nullptr);
+                            auto castResult = device::V3_8::ICameraDevice::castFrom(device);
+                            ASSERT_TRUE(castResult.isOk());
+                            device3_8 = castResult;
+                        });
+                ASSERT_TRUE(ret.isOk());
+
+                ret = device3_8->getCameraCharacteristics([&] (auto s, const auto& chars) {
+                    ASSERT_EQ(Status::OK, s);
+                    const camera_metadata_t* staticMeta =
+                            reinterpret_cast<const camera_metadata_t*>(chars.data());
+                    ASSERT_NE(nullptr, staticMeta);
+                    torchStrengthControlSupported = isTorchStrengthControlSupported(staticMeta);
+                    camera_metadata_ro_entry entry;
+                    int rc = find_camera_metadata_ro_entry(staticMeta,
+                            ANDROID_FLASH_INFO_STRENGTH_DEFAULT_LEVEL, &entry);
+                    if (torchStrengthControlSupported) {
+                        ASSERT_EQ(rc, 0);
+                        ASSERT_GT(entry.count, 0);
+                        defaultLevel = *entry.data.i32;
+                        ALOGI("Default level is:%d", defaultLevel);
+                    }
+                });
+                ASSERT_TRUE(ret.isOk());
+                // If torchStrengthControl is supported, torchControlSupported should be true.
+                if (torchStrengthControlSupported) {
+                    ASSERT_TRUE(torchControlSupported);
+                }
+                mTorchStatus = TorchModeStatus::NOT_AVAILABLE;
+                returnStatus = device3_8->turnOnTorchWithStrengthLevel(2);
+                ASSERT_TRUE(returnStatus.isOk());
+                // Method_not_supported check
+                if (!torchStrengthControlSupported) {
+                    ALOGI("Torch strength control not supported.");
+                    ASSERT_EQ(Status::METHOD_NOT_SUPPORTED, returnStatus);
+                } else {
+                    ASSERT_EQ(Status::OK, returnStatus);
+                    if (returnStatus == Status::OK) {
+                        {
+                            std::unique_lock<std::mutex> l(mTorchLock);
+                            while (TorchModeStatus::NOT_AVAILABLE == mTorchStatus) {
+                                auto timeout = std::chrono::system_clock::now() +
+                                        std::chrono::seconds(kTorchTimeoutSec);
+                                ASSERT_NE(std::cv_status::timeout, mTorchCond.wait_until(l,
+                                        timeout));
+                            }
+                            ASSERT_EQ(TorchModeStatus::AVAILABLE_ON, mTorchStatus);
+                            mTorchStatus = TorchModeStatus::NOT_AVAILABLE;
+                        }
+                        ALOGI("getTorchStrengthLevel: Testing");
+                        ret = device3_8->getTorchStrengthLevel([&]
+                                (auto status, const auto& strengthLevel) {
+                                    ASSERT_TRUE(ret.isOk());
+                                    ASSERT_EQ(Status::OK, status);
+                                    ALOGI("Torch strength level is : %d", strengthLevel);
+                                    ASSERT_EQ(strengthLevel, 2);
+                                });
+                        // Turn OFF the torch and verify torch strength level is reset to default level.
+                        ALOGI("Testing torch strength level reset after turning the torch OFF.");
+                        returnStatus = device3_8->setTorchMode(TorchMode::OFF);
+                        ASSERT_TRUE(returnStatus.isOk());
+                        ASSERT_EQ(Status::OK, returnStatus);
+                        {
+                            std::unique_lock<std::mutex> l(mTorchLock);
+                            while (TorchModeStatus::NOT_AVAILABLE == mTorchStatus) {
+                                auto timeout = std::chrono::system_clock::now() +
+                                        std::chrono::seconds(kTorchTimeoutSec);
+                                ASSERT_NE(std::cv_status::timeout, mTorchCond.wait_until(l,
+                                        timeout));
+                            }
+                            ASSERT_EQ(TorchModeStatus::AVAILABLE_OFF, mTorchStatus);
+                        }
+                        ret = device3_8->getTorchStrengthLevel([&]
+                                (auto status, const auto& strengthLevel) {
+                                    ASSERT_TRUE(ret.isOk());
+                                    ASSERT_EQ(Status::OK, status);
+                                    ALOGI("Torch strength level after turning OFF torch is : %d",
+                                            strengthLevel);
+                                    ASSERT_EQ(strengthLevel, defaultLevel);
+                                });
+                    }
+                }
+            }
+            break;
+            case CAMERA_DEVICE_API_VERSION_3_7:
+            case CAMERA_DEVICE_API_VERSION_3_6:
+            case CAMERA_DEVICE_API_VERSION_3_5:
+            case CAMERA_DEVICE_API_VERSION_3_4:
+            case CAMERA_DEVICE_API_VERSION_3_3:
+            case CAMERA_DEVICE_API_VERSION_3_2:
+            case CAMERA_DEVICE_API_VERSION_1_0: {
+                ALOGI("Torch strength control feature not supported.");
+            }
+            break;
+            default: {
+                ALOGI("Invalid device version.");
                 ADD_FAILURE();
             }
             break;
@@ -6598,6 +6731,22 @@ Status CameraHidlTest::isLogicalMultiCamera(const camera_metadata_t *staticMeta)
     }
 
     return ret;
+}
+
+bool CameraHidlTest::isTorchStrengthControlSupported(const camera_metadata_t *staticMetadata) {
+    int32_t maxLevel = 0;
+    camera_metadata_ro_entry maxEntry;
+    int rc = find_camera_metadata_ro_entry(staticMetadata,
+            ANDROID_FLASH_INFO_STRENGTH_MAXIMUM_LEVEL, &maxEntry);
+    if (rc != 0) {
+        return false;
+    }
+    maxLevel = *maxEntry.data.i32;
+    if (maxLevel > 1) {
+        ALOGI("Torch strength control supported.");
+        return true;
+    }
+    return false;
 }
 
 // Check if the camera device has logical multi-camera capability.

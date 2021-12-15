@@ -38,5 +38,5 @@ parcelable DemuxFilterSectionEvent {
   int tableId;
   int version;
   int sectionNum;
-  int dataLength;
+  long dataLength;
 }

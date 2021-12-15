@@ -50,6 +50,8 @@ class Frontend : public BnFrontend {
     ::ndk::ScopedAStatus linkCiCam(int32_t in_ciCamId, int32_t* _aidl_return) override;
     ::ndk::ScopedAStatus unlinkCiCam(int32_t in_ciCamId) override;
 
+    binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
+
     FrontendType getFrontendType();
     int32_t getFrontendId();
     string getSourceFile();
