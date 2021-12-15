@@ -17,6 +17,7 @@
 package android.hardware.camera.device@3.8;
 
 import @3.2::ErrorMsg;
+import @3.2::CameraMetadata;
 import @3.2::MsgType;
 import @3.2::ShutterMsg;
 import @3.2::CameraMetadata;
@@ -24,6 +25,7 @@ import @3.2::StreamConfigurationMode;
 import @3.7::Stream;
 
 import android.hardware.camera.metadata@3.8::CameraMetadataEnumAndroidRequestAvailableDynamicRangeProfilesMap;
+import android.hardware.camera.metadata@3.8::CameraMetadataEnumAndroidScalerAvailableStreamUseCases;
 
 /**
  * ShutterMsg:
@@ -80,7 +82,8 @@ struct NotifyMsg {
  * by the framework by its buffer resolution and format, and additionally by the
  * HAL with the gralloc usage flags and the maximum in-flight buffer count.
  *
- * This version extends the @3.7 Stream with the dynamic range profile field.
+ * This version extends the @3.7 Stream with the dynamic range profile and the
+ * stream use case field.
  */
 struct Stream {
     /**
@@ -98,6 +101,25 @@ struct Stream {
      *
      */
     CameraMetadataEnumAndroidRequestAvailableDynamicRangeProfilesMap dynamicRangeProfile;
+
+    /**
+     * The stream use case describing the stream's purpose
+     *
+     * This flag provides the camera device a hint on what user scenario this
+     * stream is intended for. With this flag, the camera device can optimize
+     * camera pipeline parameters, such as tuning, sensor mode, and ISP settings,
+     * for the intended use case.
+     *
+     * When this field is set to DEFAULT, the camera device should behave in
+     * the same way as in previous HAL versions, and optimize the camera pipeline
+     * based on stream format, data space, usage flag, and other stream properties.
+     *
+     * The HAL reports supported stream use cases in
+     * ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES. If the HAL doesn't support
+     * setting stream use cases, the camera framework leaves this field as
+     * DEFAULT.
+     */
+    CameraMetadataEnumAndroidScalerAvailableStreamUseCases useCase;
 };
 
 /**
@@ -115,7 +137,6 @@ struct StreamConfiguration {
 
     /**
      * The definition of operation mode from prior version.
-     *
      */
     @3.2::StreamConfigurationMode operationMode;
 
@@ -130,17 +151,7 @@ struct StreamConfiguration {
     uint32_t streamConfigCounter;
 
     /**
-     * If an input stream is configured, whether the input stream is expected to
-     * receive variable resolution images.
-     *
-     * This flag can only be set to true if the camera device supports
-     * multi-resolution input streams by advertising input stream configurations in
-     * physicalCameraMultiResolutionStreamConfigurations in its physical cameras'
-     * characteristics.
-     *
-     * When this flag is set to true, the input stream's width and height can be
-     * any one of the supported multi-resolution input stream sizes.
+     * The definition of multi-resolution input image flag from prior version.
      */
     bool multiResolutionInputImage;
 };
-
