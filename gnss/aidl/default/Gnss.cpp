@@ -21,6 +21,7 @@
 #include "AGnss.h"
 #include "GnssBatching.h"
 #include "GnssConfiguration.h"
+#include "GnssDebug.h"
 #include "GnssGeofence.h"
 #include "GnssMeasurementInterface.h"
 #include "GnssNavigationMessageInterface.h"
@@ -117,6 +118,13 @@ ndk::ScopedAStatus Gnss::getExtensionGnssNavigationMessage(
     ALOGD("Gnss::getExtensionGnssNavigationMessage");
 
     *iGnssNavigationMessage = SharedRefBase::make<GnssNavigationMessageInterface>();
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Gnss::getExtensionGnssDebug(std::shared_ptr<IGnssDebug>* iGnssDebug) {
+    ALOGD("Gnss::getExtensionGnssDebug");
+
+    *iGnssDebug = SharedRefBase::make<GnssDebug>();
     return ndk::ScopedAStatus::ok();
 }
 
