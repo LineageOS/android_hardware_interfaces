@@ -36,6 +36,7 @@ package android.hardware.tv.tuner;
 @VintfStability
 parcelable DemuxFilterDownloadEvent {
   int itemId;
+  int downloadId;
   int mpuSequenceNumber;
   int itemFragmentIndex;
   int lastItemFragmentIndex;

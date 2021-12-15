@@ -218,4 +218,9 @@ enum FrontendStatusType {
      * ISDB-T Partial Reception Flag.
      */
     ISDBT_PARTIAL_RECEPTION_FLAG,
+
+    /**
+     * Stream ID list included in a transponder.
+     */
+   STREAM_ID_LIST,
 }

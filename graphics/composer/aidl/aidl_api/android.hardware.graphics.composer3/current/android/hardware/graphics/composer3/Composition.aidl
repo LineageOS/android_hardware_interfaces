@@ -40,4 +40,5 @@ enum Composition {
   SOLID_COLOR = 3,
   CURSOR = 4,
   SIDEBAND = 5,
+  DISPLAY_DECORATION = 6,
 }

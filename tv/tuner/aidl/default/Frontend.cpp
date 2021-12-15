@@ -676,6 +676,11 @@ Frontend::~Frontend() {}
                         FrontendIsdbtPartialReceptionFlag::AUTO);
                 break;
             }
+            case FrontendStatusType::STREAM_ID_LIST: {
+                vector<int32_t> streamIds = {0, 1};
+                status.set<FrontendStatus::streamIdList>(streamIds);
+                break;
+            }
             default: {
                 continue;
             }
@@ -716,6 +721,14 @@ Frontend::~Frontend() {}
     mCiCamId = -1;
 
     return ::ndk::ScopedAStatus::ok();
+}
+
+binder_status_t Frontend::dump(int fd, const char** /* args */, uint32_t /* numArgs */) {
+    dprintf(fd, "  Frontend %d\n", mId);
+    dprintf(fd, "    mType: %d\n", mType);
+    dprintf(fd, "    mIsLocked: %d\n", mIsLocked);
+    dprintf(fd, "    mCiCamId: %d\n", mCiCamId);
+    return STATUS_OK;
 }
 
 FrontendType Frontend::getFrontendType() {

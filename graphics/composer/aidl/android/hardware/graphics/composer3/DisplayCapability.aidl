@@ -41,14 +41,15 @@ enum DisplayCapability {
      */
     SKIP_CLIENT_COLOR_TRANSFORM = 1,
     /**
-     * Indicates that the display supports PowerMode::DOZE and
-     * PowerMode::DOZE_SUSPEND. DOZE_SUSPEND may not provide any benefit
+     * Indicates that the display supports PowerMode.DOZE and
+     * potentially PowerMode.DOZE_SUSPEND if DisplayCapability.SUSPEND is also
+     * supported. DOZE_SUSPEND may not provide any benefit
      * over DOZE (see the definition of PowerMode for more information),
      * but if both DOZE and DOZE_SUSPEND are no different from
-     * PowerMode::ON, the device must not claim support.
+     * PowerMode.ON, the device must not claim support.
      * Must be returned by getDisplayCapabilities when getDozeSupport
-     * indicates the display supports PowerMode::DOZE and
-     * PowerMode::DOZE_SUSPEND.
+     * indicates the display supports PowerMode.DOZE and
+     * PowerMode.DOZE_SUSPEND.
      */
     DOZE = 2,
     /**
@@ -66,4 +67,12 @@ enum DisplayCapability {
      * support a low latency mode, such as HDMI 2.1 Auto Low Latency Mode.
      */
     AUTO_LOW_LATENCY_MODE = 5,
+    /**
+     * Indicates that the display supports PowerMode.ON_SUSPEND.
+     * If PowerMode.ON_SUSPEND is no different from PowerMode.ON, the device must not
+     * claim support.
+     * If the display supports DisplayCapability.DOZE and DisplayCapability.SUSPEND, then
+     * PowerMode.ON_SUSPEND and PowerMode.DOZE_SUSPEND must be supported.
+     */
+    SUSPEND = 6,
 }

@@ -23,6 +23,11 @@ package android.hardware.tv.tuner;
 @VintfStability
 parcelable DemuxFilterDownloadSettings {
     /**
+     * Whether download ID should be used.
+     */
+    boolean useDownloadId;
+
+    /**
      * Download ID (also known as the carousel ID) is carried in the PMT in
      * ISO/IEC 13818-1 for the service containing the object carousel.
      */

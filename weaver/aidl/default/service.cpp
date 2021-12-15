@@ -28,7 +28,7 @@ int main() {
 
     const std::string instance = std::string() + Weaver::descriptor + "/default";
     binder_status_t status = AServiceManager_addService(weaver->asBinder().get(), instance.c_str());
-    CHECK(status == STATUS_OK);
+    CHECK_EQ(status, STATUS_OK);
 
     ABinderProcess_joinThreadPool();
     return -1; // Should never be reached
