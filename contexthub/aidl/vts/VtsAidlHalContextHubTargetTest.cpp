@@ -41,6 +41,7 @@ using ::android::hardware::contexthub::IContextHub;
 using ::android::hardware::contexthub::IContextHubCallbackDefault;
 using ::android::hardware::contexthub::NanoappBinary;
 using ::android::hardware::contexthub::NanoappInfo;
+using ::android::hardware::contexthub::NanoappRpcService;
 using ::android::hardware::contexthub::Setting;
 using ::android::hardware::contexthub::vts_utils::kNonExistentAppId;
 using ::android::hardware::contexthub::vts_utils::waitForCallback;
@@ -151,6 +152,14 @@ TEST_P(ContextHubAidl, TestQueryApps) {
     for (const NanoappInfo& appInfo : appInfoList) {
         EXPECT_NE(appInfo.nanoappId, UINT64_C(0));
         EXPECT_NE(appInfo.nanoappId, kNonExistentAppId);
+
+        // Verify services are unique.
+        std::set<uint64_t> existingServiceIds;
+        for (const NanoappRpcService& rpcService : appInfo.rpcServices) {
+            EXPECT_NE(rpcService.id, UINT64_C(0));
+            EXPECT_EQ(existingServiceIds.count(rpcService.id), 0);
+            existingServiceIds.insert(rpcService.id);
+        }
     }
 }
 
