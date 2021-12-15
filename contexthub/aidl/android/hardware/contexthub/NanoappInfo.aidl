@@ -16,6 +16,8 @@
 
 package android.hardware.contexthub;
 
+import android.hardware.contexthub.NanoappRpcService;
+
 @VintfStability
 parcelable NanoappInfo {
     /** The unique identifier of the nanoapp. */
@@ -39,4 +41,9 @@ parcelable NanoappInfo {
      * this list.
      */
     String[] permissions;
+
+    /**
+     * The list of RPC services supported by this nanoapp.
+     */
+    NanoappRpcService[] rpcServices;
 }

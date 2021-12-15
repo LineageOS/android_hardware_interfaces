@@ -33,10 +33,7 @@
 
 package android.hardware.contexthub;
 @VintfStability
-parcelable NanoappInfo {
-  long nanoappId;
-  int nanoappVersion;
-  boolean enabled;
-  String[] permissions;
-  android.hardware.contexthub.NanoappRpcService[] rpcServices;
+parcelable NanoappRpcService {
+  long id;
+  int version;
 }
