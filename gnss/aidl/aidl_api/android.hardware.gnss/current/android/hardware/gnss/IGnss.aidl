@@ -44,6 +44,7 @@ interface IGnss {
   @nullable android.hardware.gnss.IGnssGeofence getExtensionGnssGeofence();
   @nullable android.hardware.gnss.IGnssNavigationMessageInterface getExtensionGnssNavigationMessage();
   android.hardware.gnss.IAGnss getExtensionAGnss();
+  android.hardware.gnss.IGnssDebug getExtensionGnssDebug();
   const int ERROR_INVALID_ARGUMENT = 1;
   const int ERROR_ALREADY_INIT = 2;
   const int ERROR_GENERIC = 3;

@@ -58,6 +58,7 @@ cc_binary {
         "AGnss.cpp",
         "Gnss.cpp",
         "GnssBatching.cpp",
+        "GnssDebug.cpp",
         "GnssGeofence.cpp",
         "GnssHidlHal.cpp",
         "GnssNavigationMessageInterface.cpp",

@@ -20,6 +20,7 @@ import android.hardware.gnss.IAGnss;
 import android.hardware.gnss.IGnssBatching;
 import android.hardware.gnss.IGnssCallback;
 import android.hardware.gnss.IGnssConfiguration;
+import android.hardware.gnss.IGnssDebug;
 import android.hardware.gnss.IGnssGeofence;
 import android.hardware.gnss.IGnssMeasurementInterface;
 import android.hardware.gnss.IGnssNavigationMessageInterface;
@@ -134,4 +135,13 @@ interface IGnss {
      * @return The IAGnss interface.
      */
     IAGnss getExtensionAGnss();
+
+    /**
+     * This method returns the IGnssDebug interface.
+     *
+     * This method must return non-null.
+     *
+     * @return Handle to the IGnssDebug interface.
+     */
+    IGnssDebug getExtensionGnssDebug();
 }
