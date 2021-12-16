@@ -34,8 +34,10 @@ Lnb::Lnb(int id) {
 
 Lnb::~Lnb() {}
 
-::ndk::ScopedAStatus Lnb::setCallback(const std::shared_ptr<ILnbCallback>& /* in_callback */) {
+::ndk::ScopedAStatus Lnb::setCallback(const std::shared_ptr<ILnbCallback>& in_callback) {
     ALOGV("%s", __FUNCTION__);
+
+    mCallback = in_callback;
 
     return ::ndk::ScopedAStatus::ok();
 }
@@ -58,8 +60,16 @@ Lnb::~Lnb() {}
     return ::ndk::ScopedAStatus::ok();
 }
 
-::ndk::ScopedAStatus Lnb::sendDiseqcMessage(const std::vector<uint8_t>& /* in_diseqcMessage */) {
+::ndk::ScopedAStatus Lnb::sendDiseqcMessage(const std::vector<uint8_t>& in_diseqcMessage) {
     ALOGV("%s", __FUNCTION__);
+
+    if (mCallback != nullptr) {
+        // The correct implementation should be to return the response from the
+        // device via onDiseqcMessage(). The below implementation is only to enable
+        // testing for LnbCallbacks.
+        ALOGV("[aidl] %s - this is for test purpose only, and must be replaced!", __FUNCTION__);
+        mCallback->onDiseqcMessage(in_diseqcMessage);
+    }
 
     return ::ndk::ScopedAStatus::ok();
 }
