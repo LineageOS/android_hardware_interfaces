@@ -32,14 +32,10 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.bluetooth.audio;
-@VintfStability
-parcelable LeAudioConfiguration {
-  android.hardware.bluetooth.audio.LeAudioMode mode;
-  android.hardware.bluetooth.audio.LeAudioConfiguration.LeAudioModeConfig modeConfig;
-  android.hardware.bluetooth.audio.CodecType codecType;
-  @VintfStability
-  union LeAudioModeConfig {
-    android.hardware.bluetooth.audio.UnicastConfiguration unicastConfig;
-    android.hardware.bluetooth.audio.BroadcastConfiguration broadcastConfig;
-  }
+@Backing(type="int") @VintfStability
+enum BluetoothAudioStatus {
+  UNKNOWN = 0,
+  SUCCESS = 1,
+  UNSUPPORTED_CODEC_CONFIGURATION = 2,
+  FAILURE = 3,
 }
