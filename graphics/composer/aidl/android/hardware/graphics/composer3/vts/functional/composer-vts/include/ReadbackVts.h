@@ -23,7 +23,8 @@
 #include <GraphicsComposerCallback.h>
 #include <aidl/android/hardware/graphics/composer3/IComposerClient.h>
 #include <android-base/unique_fd.h>
-#include <android/hardware/graphics/composer3/command-buffer.h>
+#include <android/hardware/graphics/composer3/ComposerClientReader.h>
+#include <android/hardware/graphics/composer3/ComposerClientWriter.h>
 #include <mapper-vts/2.1/MapperVts.h>
 #include <renderengine/RenderEngine.h>
 #include <ui/GraphicBuffer.h>
@@ -61,7 +62,7 @@ class TestLayer {
     // call destroyLayers here
     virtual ~TestLayer(){};
 
-    virtual void write(CommandWriterBase& writer);
+    virtual void write(ComposerClientWriter& writer);
     virtual LayerSettings toRenderEngineLayerSettings();
 
     void setDisplayFrame(Rect frame) { mDisplayFrame = frame; }
@@ -105,7 +106,7 @@ class TestColorLayer : public TestLayer {
     TestColorLayer(const std::shared_ptr<IComposerClient>& client, int64_t display)
         : TestLayer{client, display} {}
 
-    void write(CommandWriterBase& writer) override;
+    void write(ComposerClientWriter& writer) override;
 
     LayerSettings toRenderEngineLayerSettings() override;
 
@@ -123,7 +124,7 @@ class TestBufferLayer : public TestLayer {
                     uint32_t height, common::PixelFormat format,
                     Composition composition = Composition::DEVICE);
 
-    void write(CommandWriterBase& writer) override;
+    void write(ComposerClientWriter& writer) override;
 
     LayerSettings toRenderEngineLayerSettings() override;
 
@@ -131,9 +132,9 @@ class TestBufferLayer : public TestLayer {
 
     void setBuffer(std::vector<Color> colors);
 
-    void setDataspace(Dataspace dataspace, CommandWriterBase& writer);
+    void setDataspace(Dataspace dataspace, ComposerClientWriter& writer);
 
-    void setToClientComposition(CommandWriterBase& writer);
+    void setToClientComposition(ComposerClientWriter& writer);
 
     uint32_t getWidth() const { return mWidth; }
 
