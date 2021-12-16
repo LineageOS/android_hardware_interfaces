@@ -32,7 +32,16 @@ parcelable DemuxFilterSectionSettings {
     boolean isCheckCrc;
 
     /**
-     * true if the filter repeats the data with the same version
+     * true if the filter repeats the data.
+     *
+     * If false, for DemuxFilterSectionSettingsConditionTableInfo, HAL filters out all sections
+     * based on tableId and version, and stops filtering data. For DemuxFilterSectionBits, HAL
+     * filters out first section which matches the DemuxFilterSectionBits configuration, and stops
+     * filtering data.
+     *
+     * If true, for DemuxFilterSectionSettingsConditionTableInfo, HAL filters out all sections based
+     * on tableId and version, and repeats. For DemuxFilterSectionBits, HAL filters out sections
+     * which match the DemuxFilterSectionBits configuration, and repeats.
      */
     boolean isRepeat;
 
