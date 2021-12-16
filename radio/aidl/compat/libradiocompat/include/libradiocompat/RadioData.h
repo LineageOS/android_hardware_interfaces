@@ -55,7 +55,6 @@ class RadioData : public RadioCompatBase, public aidl::android::hardware::radio:
             const std::vector<::aidl::android::hardware::radio::data::LinkAddress>& addresses,
             const std::vector<std::string>& dnses, int32_t pduSessionId,
             const std::optional<::aidl::android::hardware::radio::data::SliceInfo>& sliceInfo,
-            const std::optional<::aidl::android::hardware::radio::data::TrafficDescriptor>& trDescr,
             bool matchAllRuleAllowed) override;
     ::ndk::ScopedAStatus startHandover(int32_t serial, int32_t callId) override;
     ::ndk::ScopedAStatus startKeepalive(
