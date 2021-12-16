@@ -73,6 +73,7 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
 
     void InitializeKeyMint(std::shared_ptr<IKeyMintDevice> keyMint);
     IKeyMintDevice& keyMint() { return *keymint_; }
+    int32_t AidlVersion();
     uint32_t os_version() { return os_version_; }
     uint32_t os_patch_level() { return os_patch_level_; }
     uint32_t vendor_patch_level() { return vendor_patch_level_; }
@@ -333,7 +334,8 @@ void verify_subject_and_serial(const Certificate& certificate,  //
                                const uint64_t expected_serial,  //
                                const string& subject, bool self_signed);
 
-bool verify_attestation_record(const string& challenge,                //
+bool verify_attestation_record(int aidl_version,                       //
+                               const string& challenge,                //
                                const string& app_id,                   //
                                AuthorizationSet expected_sw_enforced,  //
                                AuthorizationSet expected_hw_enforced,  //
