@@ -19,10 +19,12 @@
 #include <android/hardware/gnss/IAGnss.h>
 #include <android/hardware/gnss/IGnss.h>
 #include <android/hardware/gnss/IGnssBatching.h>
+#include <android/hardware/gnss/IGnssDebug.h>
 #include <android/hardware/gnss/IGnssMeasurementCallback.h>
 #include <android/hardware/gnss/IGnssMeasurementInterface.h>
 #include <android/hardware/gnss/IGnssPowerIndication.h>
 #include <android/hardware/gnss/IGnssPsds.h>
+#include <cutils/properties.h>
 #include "AGnssCallbackAidl.h"
 #include "GnssBatchingCallback.h"
 #include "GnssGeofenceCallback.h"
@@ -43,6 +45,7 @@ using android::hardware::gnss::IGnss;
 using android::hardware::gnss::IGnssBatching;
 using android::hardware::gnss::IGnssBatchingCallback;
 using android::hardware::gnss::IGnssConfiguration;
+using android::hardware::gnss::IGnssDebug;
 using android::hardware::gnss::IGnssGeofence;
 using android::hardware::gnss::IGnssGeofenceCallback;
 using android::hardware::gnss::IGnssMeasurementCallback;
@@ -54,6 +57,12 @@ using android::hardware::gnss::PsdsType;
 using android::hardware::gnss::SatellitePvt;
 
 using GnssConstellationTypeAidl = android::hardware::gnss::GnssConstellationType;
+
+static bool IsAutomotiveDevice() {
+    char buffer[PROPERTY_VALUE_MAX] = {0};
+    property_get("ro.hardware.type", buffer, "");
+    return strncmp(buffer, "automotive", PROPERTY_VALUE_MAX) == 0;
+}
 
 /*
  * SetupTeardownCreateCleanup:
@@ -819,4 +828,51 @@ TEST_P(GnssHalTest, TestAGnssExtension) {
     // Set SUPL server host/port
     status = iAGnss->setServer(AGnssType::SUPL, String16("supl.google.com"), 7275);
     ASSERT_TRUE(status.isOk());
+}
+
+/*
+ * GnssDebugValuesSanityTest:
+ * Ensures that GnssDebug values make sense.
+ */
+TEST_P(GnssHalTest, GnssDebugValuesSanityTest) {
+    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+        return;
+    }
+    sp<IGnssDebug> iGnssDebug;
+    auto status = aidl_gnss_hal_->getExtensionGnssDebug(&iGnssDebug);
+    ASSERT_TRUE(status.isOk());
+
+    if (!IsAutomotiveDevice() && gnss_cb_->info_cbq_.calledCount() > 0) {
+        ASSERT_TRUE(iGnssDebug != nullptr);
+
+        IGnssDebug::DebugData data;
+        auto status = iGnssDebug->getDebugData(&data);
+        ASSERT_TRUE(status.isOk());
+
+        if (data.position.valid) {
+            ASSERT_TRUE(data.position.latitudeDegrees >= -90 &&
+                        data.position.latitudeDegrees <= 90);
+            ASSERT_TRUE(data.position.longitudeDegrees >= -180 &&
+                        data.position.longitudeDegrees <= 180);
+            ASSERT_TRUE(data.position.altitudeMeters >= -1000 &&  // Dead Sea: -414m
+                        data.position.altitudeMeters <= 20000);   // Mount Everest: 8850m
+            ASSERT_TRUE(data.position.speedMetersPerSec >= 0 &&
+                        data.position.speedMetersPerSec <= 600);
+            ASSERT_TRUE(data.position.bearingDegrees >= -360 &&
+                        data.position.bearingDegrees <= 360);
+            ASSERT_TRUE(data.position.horizontalAccuracyMeters > 0 &&
+                        data.position.horizontalAccuracyMeters <= 20000000);
+            ASSERT_TRUE(data.position.verticalAccuracyMeters > 0 &&
+                        data.position.verticalAccuracyMeters <= 20000);
+            ASSERT_TRUE(data.position.speedAccuracyMetersPerSecond > 0 &&
+                        data.position.speedAccuracyMetersPerSecond <= 500);
+            ASSERT_TRUE(data.position.bearingAccuracyDegrees > 0 &&
+                        data.position.bearingAccuracyDegrees <= 180);
+            ASSERT_TRUE(data.position.ageSeconds >= 0);
+        }
+        ASSERT_TRUE(data.time.timeEstimateMs >= 1483228800000);  // Jan 01 2017 00:00:00 GMT.
+        ASSERT_TRUE(data.time.timeUncertaintyNs > 0);
+        ASSERT_TRUE(data.time.frequencyUncertaintyNsPerSec > 0 &&
+                    data.time.frequencyUncertaintyNsPerSec <= 2.0e5);  // 200 ppm
+    }
 }
