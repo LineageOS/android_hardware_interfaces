@@ -91,11 +91,19 @@ union FrontendStatus {
 
     /**
      * AGC value is normalized from 0 to 255.
+     * Larger AGC values indicate it is applying more gain.
      */
     int agc;
 
     boolean isLnaOn;
 
+    /**
+     * Layer Error status.
+     *
+     * The order of the vectors is in ascending order of the required CNR (Contrast-to-noise ratio).
+     * The most robust layer is the first. For example, in ISDB-T, isLayerError[0] is the
+     * information of layer A. isLayerError[1] is the information of layer B.
+     */
     boolean[] isLayerError;
 
     /**
@@ -119,16 +127,28 @@ union FrontendStatus {
 
     /**
      * Modulation status.
+     *
+     * The order of the vectors is in ascending order of the required CNR (Contrast-to-noise ratio).
+     * The most robust layer is the first. For example, in ISDB-T, modulations[0] is the information
+     * of layer A. modulations[1] is the information of layer B.
      */
     FrontendModulation[] modulations;
 
     /**
      * Bit error ratio status.
+     *
+     * The order of the vectors is in ascending order of the required CNR (Contrast-to-noise ratio).
+     * The most robust layer is the first. For example, in ISDB-T, bers[0] is the information of
+     * layer A. bers[1] is the information of layer B.
      */
     int[] bers;
 
     /**
      * Code rate status.
+     *
+     * The order of the vectors is in ascending order of the required CN. The most robust layer is
+     * the first. For example, in ISDB-T, codeRates[0] is the information of layer A. codeRates[1]
+     * is the information of layer B.
      */
     FrontendInnerFec[] codeRates;
 
@@ -160,11 +180,19 @@ union FrontendStatus {
 
     /**
      * Frontend Interleaving Modes.
+     *
+     * The order of the vectors is in ascending order of the required CNR (Contrast-to-noise ratio).
+     * The most robust layer is the first. For example, in ISDB-T, interleaving[0] is the
+     * information of layer A. interleaving[1] is the information of layer B.
      */
     FrontendInterleaveMode[] interleaving;
 
     /**
      * Segments in ISDB-T Specification of all the channels.
+     *
+     * The order of the vectors is in ascending order of the required CNR (Contrast-to-noise ratio).
+     * The most robust layer is the first. For example, in ISDB-T, isdbtSegment[0] is the
+     * information of layer A. isdbtSegment[1] is the information of layer B.
      */
     int[] isdbtSegment;
 
