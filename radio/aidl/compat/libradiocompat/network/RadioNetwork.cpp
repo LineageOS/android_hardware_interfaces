@@ -73,13 +73,21 @@ ScopedAStatus RadioNetwork::getCdmaRoamingPreference(int32_t serial) {
 
 ScopedAStatus RadioNetwork::getCellInfoList(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getCellInfoList(serial);
+    if (mHal1_6) {
+        mHal1_6->getCellInfoList_1_6(serial);
+    } else {
+        mHal1_5->getCellInfoList(serial);
+    }
     return ok();
 }
 
 ScopedAStatus RadioNetwork::getDataRegistrationState(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getDataRegistrationState(serial);
+    if (mHal1_6) {
+        mHal1_6->getDataRegistrationState_1_6(serial);
+    } else {
+        mHal1_5->getDataRegistrationState_1_5(serial);
+    }
     return ok();
 }
 
@@ -103,7 +111,11 @@ ScopedAStatus RadioNetwork::getOperator(int32_t serial) {
 
 ScopedAStatus RadioNetwork::getSignalStrength(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getSignalStrength(serial);
+    if (mHal1_6) {
+        mHal1_6->getSignalStrength_1_6(serial);
+    } else {
+        mHal1_5->getSignalStrength_1_4(serial);
+    }
     return ok();
 }
 
@@ -125,7 +137,11 @@ ScopedAStatus RadioNetwork::getVoiceRadioTechnology(int32_t serial) {
 
 ScopedAStatus RadioNetwork::getVoiceRegistrationState(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getVoiceRegistrationState(serial);
+    if (mHal1_6) {
+        mHal1_6->getVoiceRegistrationState_1_6(serial);
+    } else {
+        mHal1_5->getVoiceRegistrationState_1_5(serial);
+    }
     return ok();
 }
 
@@ -183,7 +199,7 @@ ScopedAStatus RadioNetwork::setCellInfoListRate(int32_t serial, int32_t rate) {
 
 ScopedAStatus RadioNetwork::setIndicationFilter(int32_t serial, aidl::IndicationFilter indFilter) {
     LOG_CALL << serial;
-    mHal1_5->setIndicationFilter(serial, toHidlBitfield<V1_0::IndicationFilter>(indFilter));
+    mHal1_5->setIndicationFilter_1_5(serial, toHidlBitfield<V1_5::IndicationFilter>(indFilter));
     return ok();
 }
 
@@ -192,9 +208,9 @@ ScopedAStatus RadioNetwork::setLinkCapacityReportingCriteria(  //
         const std::vector<int32_t>& thrDownlinkKbps, const std::vector<int32_t>& thrUplinkKbps,
         AccessNetwork accessNetwork) {
     LOG_CALL << serial;
-    mHal1_5->setLinkCapacityReportingCriteria(  //
+    mHal1_5->setLinkCapacityReportingCriteria_1_5(  //
             serial, hysteresisMs, hysteresisDlKbps, hysteresisUlKbps, thrDownlinkKbps,
-            thrUplinkKbps, V1_2::AccessNetwork(accessNetwork));
+            thrUplinkKbps, V1_5::AccessNetwork(accessNetwork));
     return ok();
 }
 

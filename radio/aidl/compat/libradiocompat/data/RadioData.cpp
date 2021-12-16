@@ -64,7 +64,11 @@ ScopedAStatus RadioData::deactivateDataCall(int32_t serial, int32_t cid,
 
 ScopedAStatus RadioData::getDataCallList(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getDataCallList(serial);
+    if (mHal1_6) {
+        mHal1_6->getDataCallList_1_6(serial);
+    } else {
+        mHal1_5->getDataCallList(serial);
+    }
     return ok();
 }
 
