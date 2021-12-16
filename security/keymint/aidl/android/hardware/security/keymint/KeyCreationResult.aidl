@@ -122,9 +122,9 @@ parcelable KeyCreationResult {
      * straightforward translation of the KeyMint tag/value parameter lists to ASN.1.
      *
      * KeyDescription ::= SEQUENCE {
-     *     attestationVersion         INTEGER, # Value 100
+     *     attestationVersion         INTEGER, # Value 200
      *     attestationSecurityLevel   SecurityLevel, # See below
-     *     keyMintVersion             INTEGER, # Value 100
+     *     keyMintVersion             INTEGER, # Value 200
      *     keymintSecurityLevel       SecurityLevel, # See below
      *     attestationChallenge       OCTET_STRING, # Tag::ATTESTATION_CHALLENGE from attestParams
      *     uniqueId                   OCTET_STRING, # Empty unless key has Tag::INCLUDE_UNIQUE_ID
