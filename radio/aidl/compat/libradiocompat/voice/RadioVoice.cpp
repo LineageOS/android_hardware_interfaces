@@ -31,7 +31,7 @@ namespace aidl = ::aidl::android::hardware::radio::voice;
 constexpr auto ok = &ScopedAStatus::ok;
 
 std::shared_ptr<aidl::IRadioVoiceResponse> RadioVoice::respond() {
-    return mRadioResponse->voiceCb();
+    return mCallbackManager->response().voiceCb();
 }
 
 ScopedAStatus RadioVoice::acceptCall(int32_t serial) {
@@ -238,16 +238,10 @@ ScopedAStatus RadioVoice::setPreferredVoicePrivacy(int32_t serial, bool enable) 
 }
 
 ScopedAStatus RadioVoice::setResponseFunctions(
-        const std::shared_ptr<aidl::IRadioVoiceResponse>& voiceResponse,
-        const std::shared_ptr<aidl::IRadioVoiceIndication>& voiceIndication) {
-    LOG_CALL << voiceResponse << ' ' << voiceIndication;
-
-    CHECK(voiceResponse);
-    CHECK(voiceIndication);
-
-    mRadioResponse->setResponseFunction(voiceResponse);
-    mRadioIndication->setResponseFunction(voiceIndication);
-
+        const std::shared_ptr<aidl::IRadioVoiceResponse>& response,
+        const std::shared_ptr<aidl::IRadioVoiceIndication>& indication) {
+    LOG_CALL << response << ' ' << indication;
+    mCallbackManager->setResponseFunctions(response, indication);
     return ok();
 }
 

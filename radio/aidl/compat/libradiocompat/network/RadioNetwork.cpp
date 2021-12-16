@@ -34,7 +34,7 @@ namespace aidl = ::aidl::android::hardware::radio::network;
 constexpr auto ok = &ScopedAStatus::ok;
 
 std::shared_ptr<aidl::IRadioNetworkResponse> RadioNetwork::respond() {
-    return mRadioResponse->networkCb();
+    return mCallbackManager->response().networkCb();
 }
 
 ScopedAStatus RadioNetwork::getAllowedNetworkTypesBitmap(int32_t serial) {
@@ -245,16 +245,10 @@ ScopedAStatus RadioNetwork::setNrDualConnectivityState(int32_t serial,
 }
 
 ScopedAStatus RadioNetwork::setResponseFunctions(
-        const std::shared_ptr<aidl::IRadioNetworkResponse>& networkResponse,
-        const std::shared_ptr<aidl::IRadioNetworkIndication>& networkIndication) {
-    LOG_CALL << networkResponse << ' ' << networkIndication;
-
-    CHECK(networkResponse);
-    CHECK(networkIndication);
-
-    mRadioResponse->setResponseFunction(networkResponse);
-    mRadioIndication->setResponseFunction(networkIndication);
-
+        const std::shared_ptr<aidl::IRadioNetworkResponse>& response,
+        const std::shared_ptr<aidl::IRadioNetworkIndication>& indication) {
+    LOG_CALL << response << ' ' << indication;
+    mCallbackManager->setResponseFunctions(response, indication);
     return ok();
 }
 
