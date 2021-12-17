@@ -13,7 +13,8 @@
 #include <android-base/properties.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
-#include <android/hardware/graphics/composer3/command-buffer.h>
+#include <android/hardware/graphics/composer3/ComposerClientReader.h>
+#include <android/hardware/graphics/composer3/ComposerClientWriter.h>
 #include <binder/ProcessState.h>
 #include <gtest/gtest.h>
 #include <ui/GraphicBuffer.h>
@@ -1408,8 +1409,8 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
     }};
     // clang-format on
 
-    CommandWriterBase mWriter;
-    CommandReaderBase mReader;
+    ComposerClientWriter mWriter;
+    ComposerClientReader mReader;
 };
 
 TEST_P(GraphicsComposerAidlCommandTest, SET_COLOR_TRANSFORM) {

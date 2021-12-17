@@ -167,8 +167,8 @@ class GraphicsCompositionTestBase : public ::testing::Test {
     int32_t mDisplayWidth;
     int32_t mDisplayHeight;
     std::vector<ColorMode> mTestColorModes;
-    CommandWriterBase mWriter;
-    CommandReaderBase mReader;
+    ComposerClientWriter mWriter;
+    ComposerClientReader mReader;
     ::android::sp<::android::GraphicBuffer> mGraphicBuffer;
     std::unique_ptr<TestRenderEngine> mTestRenderEngine;
 
