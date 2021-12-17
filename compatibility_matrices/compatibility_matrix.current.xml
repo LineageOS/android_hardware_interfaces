@@ -371,6 +371,14 @@
         </interface>
     </hal>
     <hal format="aidl" optional="true">
+        <name>android.hardware.security.dice</name>
+        <version>1</version>
+        <interface>
+            <name>IDiceDevice</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
         <name>android.hardware.security.keymint</name>
         <version>1-2</version>
         <interface>
