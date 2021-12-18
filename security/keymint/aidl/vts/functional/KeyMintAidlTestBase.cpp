@@ -127,6 +127,16 @@ ASN1_OCTET_STRING* get_attestation_record(X509* certificate) {
     return attest_rec;
 }
 
+void check_attestation_version(uint32_t attestation_version, int32_t aidl_version) {
+    // Version numbers in attestation extensions should be a multiple of 100.
+    EXPECT_EQ(attestation_version % 100, 0);
+
+    // The multiplier should never be higher than the AIDL version, but can be less
+    // (for example, if the implementation is from an earlier version but the HAL service
+    // uses the default libraries and so reports the current AIDL version).
+    EXPECT_TRUE((attestation_version / 100) <= aidl_version);
+}
+
 bool avb_verification_enabled() {
     char value[PROPERTY_VALUE_MAX];
     return property_get("ro.boot.vbmeta.device_state", value, "") != 0;
@@ -221,6 +231,15 @@ void KeyMintAidlTestBase::InitializeKeyMint(std::shared_ptr<IKeyMintDevice> keyM
     os_version_ = getOsVersion();
     os_patch_level_ = getOsPatchlevel();
     vendor_patch_level_ = getVendorPatchlevel();
+}
+
+int32_t KeyMintAidlTestBase::AidlVersion() {
+    int32_t version = 0;
+    auto status = keymint_->getInterfaceVersion(&version);
+    if (!status.isOk()) {
+        ADD_FAILURE() << "Failed to determine interface version";
+    }
+    return version;
 }
 
 void KeyMintAidlTestBase::SetUp() {
@@ -1304,7 +1323,8 @@ void verify_subject_and_serial(const Certificate& certificate,  //
     verify_subject(cert.get(), subject, self_signed);
 }
 
-bool verify_attestation_record(const string& challenge,                //
+bool verify_attestation_record(int32_t aidl_version,                   //
+                               const string& challenge,                //
                                const string& app_id,                   //
                                AuthorizationSet expected_sw_enforced,  //
                                AuthorizationSet expected_hw_enforced,  //
@@ -1342,7 +1362,7 @@ bool verify_attestation_record(const string& challenge,                //
     EXPECT_EQ(ErrorCode::OK, error);
     if (error != ErrorCode::OK) return false;
 
-    EXPECT_EQ(att_attestation_version, 100U);
+    check_attestation_version(att_attestation_version, aidl_version);
     vector<uint8_t> appId(app_id.begin(), app_id.end());
 
     // check challenge and app id only if we expects a non-fake certificate
@@ -1353,7 +1373,7 @@ bool verify_attestation_record(const string& challenge,                //
         expected_sw_enforced.push_back(TAG_ATTESTATION_APPLICATION_ID, appId);
     }
 
-    EXPECT_EQ(att_keymint_version, 100U);
+    check_attestation_version(att_keymint_version, aidl_version);
     EXPECT_EQ(security_level, att_keymint_security_level);
     EXPECT_EQ(security_level, att_attestation_security_level);
 
