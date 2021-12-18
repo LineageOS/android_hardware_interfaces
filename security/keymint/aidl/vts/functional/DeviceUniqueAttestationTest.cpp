@@ -52,8 +52,9 @@ class DeviceUniqueAttestationTest : public KeyMintAidlTestBase {
         EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_, /* strict_issuer_check= */ false));
 
         AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
-        EXPECT_TRUE(verify_attestation_record("challenge", "foo", sw_enforced, hw_enforced,
-                                              SecLevel(), cert_chain_[0].encodedCertificate));
+        EXPECT_TRUE(verify_attestation_record(AidlVersion(), "challenge", "foo", sw_enforced,
+                                              hw_enforced, SecLevel(),
+                                              cert_chain_[0].encodedCertificate));
     }
 };
 

@@ -22,6 +22,8 @@
 
 namespace android::hardware::radio::compat {
 
+RadioResponse::RadioResponse(std::shared_ptr<DriverContext> context) : mContext(context) {}
+
 Return<void> RadioResponse::acknowledgeRequest(int32_t serial) {
     LOG_CALL << serial;
     // TODO(b/203699028): send to correct requestor or confirm if spam is not a problem
