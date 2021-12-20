@@ -76,7 +76,9 @@ BluetoothAudioSession_2_2::BluetoothAudioSession_2_2(
 
 bool BluetoothAudioSession_2_2::IsSessionReady() {
   if (session_type_2_1_ !=
-      SessionType_2_1::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH) {
+          SessionType_2_1::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH &&
+      session_type_2_1_ !=
+          SessionType_2_1::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH) {
     return audio_session->IsSessionReady();
   }
 
@@ -157,7 +159,7 @@ BluetoothAudioSession_2_2::GetAudioConfig() {
           GetAudioSession_2_1()->GetAudioConfig();
       if (fromConf.getDiscriminator() ==
           AudioConfiguration_2_1::hidl_discriminator::pcmConfig) {
-        toConf.pcmConfig() = fromConf.pcmConfig();
+        toConf.pcmConfig(fromConf.pcmConfig());
         return toConf;
       }
     }
@@ -167,7 +169,7 @@ BluetoothAudioSession_2_2::GetAudioConfig() {
     // pcmConfig only differs between 2.0 and 2.1 in AudioConfiguration
     if (fromConf.getDiscriminator() ==
         AudioConfiguration::hidl_discriminator::codecConfig) {
-      toConf.codecConfig() = fromConf.codecConfig();
+      toConf.codecConfig(fromConf.codecConfig());
     } else {
       toConf.pcmConfig() = {
           .sampleRate = static_cast<
@@ -183,6 +185,52 @@ BluetoothAudioSession_2_2::GetAudioConfig() {
     return kInvalidOffloadAudioConfiguration;
   } else {
     return kInvalidSoftwareAudioConfiguration;
+  }
+}
+
+// Those control functions are for the bluetooth_audio module to start, suspend,
+// stop stream, to check position, and to update metadata.
+bool BluetoothAudioSession_2_2::StartStream() {
+  std::lock_guard<std::recursive_mutex> guard(audio_session->mutex_);
+  if (!IsSessionReady()) {
+    LOG(DEBUG) << __func__ << " - SessionType=" << toString(session_type_2_1_)
+               << " has NO session";
+    return false;
+  }
+  auto hal_retval = audio_session->stack_iface_->startStream();
+  if (!hal_retval.isOk()) {
+    LOG(WARNING) << __func__ << " - IBluetoothAudioPort SessionType="
+                 << toString(session_type_2_1_) << " failed";
+    return false;
+  }
+  return true;
+}
+
+bool BluetoothAudioSession_2_2::SuspendStream() {
+  std::lock_guard<std::recursive_mutex> guard(audio_session->mutex_);
+  if (!IsSessionReady()) {
+    LOG(DEBUG) << __func__ << " - SessionType=" << toString(session_type_2_1_)
+               << " has NO session";
+    return false;
+  }
+  auto hal_retval = audio_session->stack_iface_->suspendStream();
+  if (!hal_retval.isOk()) {
+    LOG(WARNING) << __func__ << " - IBluetoothAudioPort SessionType="
+                 << toString(session_type_2_1_) << " failed";
+    return false;
+  }
+  return true;
+}
+
+void BluetoothAudioSession_2_2::StopStream() {
+  std::lock_guard<std::recursive_mutex> guard(audio_session->mutex_);
+  if (!IsSessionReady()) {
+    return;
+  }
+  auto hal_retval = audio_session->stack_iface_->stopStream();
+  if (!hal_retval.isOk()) {
+    LOG(WARNING) << __func__ << " - IBluetoothAudioPort SessionType="
+                 << toString(session_type_2_1_) << " failed";
   }
 }
 

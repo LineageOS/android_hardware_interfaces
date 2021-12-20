@@ -157,7 +157,11 @@ Return<void> BluetoothAudioProvidersFactory::getProviderCapabilities_2_1(
         audio_capabilities[i].codecCapabilities(db_codec_capabilities[i]);
       }
     }
-  } else if (sessionType != SessionType::UNKNOWN) {
+  } else if (sessionType !=
+                 SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH &&
+             sessionType !=
+                 SessionType::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH &&
+             sessionType != SessionType::UNKNOWN) {
     std::vector<PcmParameters> db_pcm_capabilities =
         android::bluetooth::audio::GetSoftwarePcmCapabilities_2_1();
     if (db_pcm_capabilities.size() == 1) {
