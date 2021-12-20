@@ -22,7 +22,7 @@
 
 #include "AudioPort_2_0_to_2_2_Wrapper.h"
 #include "BluetoothAudioSessionReport_2_2.h"
-#include "BluetoothAudioSupportedCodecsDB_2_1.h"
+#include "BluetoothAudioSupportedCodecsDB_2_2.h"
 
 namespace android {
 namespace hardware {
