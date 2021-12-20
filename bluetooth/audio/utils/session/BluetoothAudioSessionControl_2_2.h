@@ -87,7 +87,7 @@ class BluetoothAudioSessionControl_2_2 {
     std::shared_ptr<BluetoothAudioSession_2_2> session_ptr =
         BluetoothAudioSessionInstance_2_2::GetSessionInstance(session_type);
     if (session_ptr != nullptr) {
-      return session_ptr->GetAudioSession()->StartStream();
+      return session_ptr->StartStream();
     }
     return false;
   }
@@ -96,7 +96,7 @@ class BluetoothAudioSessionControl_2_2 {
     std::shared_ptr<BluetoothAudioSession_2_2> session_ptr =
         BluetoothAudioSessionInstance_2_2::GetSessionInstance(session_type);
     if (session_ptr != nullptr) {
-      return session_ptr->GetAudioSession()->SuspendStream();
+      return session_ptr->SuspendStream();
     }
     return false;
   }
@@ -105,7 +105,7 @@ class BluetoothAudioSessionControl_2_2 {
     std::shared_ptr<BluetoothAudioSession_2_2> session_ptr =
         BluetoothAudioSessionInstance_2_2::GetSessionInstance(session_type);
     if (session_ptr != nullptr) {
-      session_ptr->GetAudioSession()->StopStream();
+      session_ptr->StopStream();
     }
   }
 
