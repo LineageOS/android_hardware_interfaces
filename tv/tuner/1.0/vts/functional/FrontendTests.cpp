@@ -376,6 +376,7 @@ AssertionResult FrontendTests::tuneFrontend(FrontendConfig config, bool testWith
         result &= mDvrTests.getDvrPlaybackMQDescriptor() == success();
         mDvrTests.startPlaybackInputThread(mDvrConfig.playbackInputFile,
                                            mDvrConfig.settings.playback());
+        mDvrTests.startDvrPlayback();
         if (!result) {
             ALOGW("[vts] Software frontend dvr configure failed.");
             return failure();
@@ -399,6 +400,7 @@ AssertionResult FrontendTests::stopTuneFrontend(bool testWithDemux) {
     status = mFrontend->stopTune();
     if (mIsSoftwareFe && testWithDemux) {
         mDvrTests.stopPlaybackThread();
+        mDvrTests.stopDvrPlayback();
         mDvrTests.closeDvrPlayback();
     }
     return AssertionResult(status == Result::SUCCESS);
