@@ -129,15 +129,6 @@ static_assert(aidl::android::hardware::graphics::composer3::DisplayRequest::
               static_cast<int>(::android::hardware::graphics::composer::V2_1::IComposerClient::
                                        DisplayRequest::WRITE_CLIENT_TARGET_TO_OUTPUT));
 
-static_assert(aidl::android::hardware::graphics::composer3::HandleIndex::EMPTY ==
-              static_cast<aidl::android::hardware::graphics::composer3::HandleIndex>(
-                      ::android::hardware::graphics::composer::V2_1::IComposerClient::HandleIndex::
-                              EMPTY));
-static_assert(aidl::android::hardware::graphics::composer3::HandleIndex::CACHED ==
-              static_cast<aidl::android::hardware::graphics::composer3::HandleIndex>(
-                      ::android::hardware::graphics::composer::V2_1::IComposerClient::HandleIndex::
-                              CACHED));
-
 static_assert(
         aidl::android::hardware::graphics::composer3::PowerMode::OFF ==
         static_cast<aidl::android::hardware::graphics::composer3::PowerMode>(

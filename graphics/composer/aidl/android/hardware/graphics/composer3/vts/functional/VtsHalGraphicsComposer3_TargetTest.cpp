@@ -1142,13 +1142,7 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
     void TearDown() override {
         const auto errors = mReader.takeErrors();
         ASSERT_TRUE(mReader.takeErrors().empty());
-
-        std::vector<int64_t> layers;
-        std::vector<Composition> types;
-        mReader.takeChangedCompositionTypes(mPrimaryDisplay, &layers, &types);
-
-        ASSERT_TRUE(layers.empty());
-        ASSERT_TRUE(types.empty());
+        ASSERT_TRUE(mReader.takeChangedCompositionTypes(mPrimaryDisplay).empty());
 
         ASSERT_NO_FATAL_FAILURE(GraphicsComposerAidlTest::TearDown());
     }
@@ -1164,7 +1158,7 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
         const auto status = mComposerClient->executeCommands(commands, &results);
         ASSERT_TRUE(status.isOk()) << "executeCommands failed " << status.getDescription();
 
-        mReader.parse(results);
+        mReader.parse(std::move(results));
         mWriter.reset();
     }
 
@@ -1299,10 +1293,12 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
         execute();
         EXPECT_TRUE(mReader.takeErrors().empty());
 
-        int presentFence;
-        mReader.takePresentFence(mPrimaryDisplay, &presentFence);
-        EXPECT_NE(-1, presentFence);
-        return sp<::android::Fence>::make(presentFence);
+        auto presentFence = mReader.takePresentFence(mPrimaryDisplay);
+        // take ownership
+        const int fenceOwner = presentFence.get();
+        *presentFence.getR() = -1;
+        EXPECT_NE(-1, fenceOwner);
+        return sp<::android::Fence>::make(fenceOwner);
     }
 
     int32_t getVsyncPeriod() {
@@ -1592,10 +1588,7 @@ TEST_P(GraphicsComposerAidlCommandTest, PRESENT_DISPLAY_NO_LAYER_STATE_CHANGES) 
 
         mWriter.validateDisplay(mPrimaryDisplay, ComposerClientWriter::kNoTimestamp);
         execute();
-        std::vector<int64_t> layers;
-        std::vector<Composition> types;
-        mReader.takeChangedCompositionTypes(mPrimaryDisplay, &layers, &types);
-        if (!layers.empty()) {
+        if (!mReader.takeChangedCompositionTypes(mPrimaryDisplay).empty()) {
             GTEST_SUCCEED() << "Composition change requested, skipping test";
             return;
         }
@@ -1640,10 +1633,8 @@ TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_CURSOR_POSITION) {
     mWriter.validateDisplay(mPrimaryDisplay, ComposerClientWriter::kNoTimestamp);
 
     execute();
-    std::vector<int64_t> layers;
-    std::vector<Composition> types;
-    mReader.takeChangedCompositionTypes(mPrimaryDisplay, &layers, &types);
-    if (!layers.empty()) {
+
+    if (!mReader.takeChangedCompositionTypes(mPrimaryDisplay).empty()) {
         GTEST_SUCCEED() << "Composition change requested, skipping test";
         return;
     }
