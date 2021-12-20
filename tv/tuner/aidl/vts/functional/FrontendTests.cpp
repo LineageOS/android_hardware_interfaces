@@ -405,6 +405,13 @@ void FrontendTests::verifyFrontendStatus(vector<FrontendStatusType> statusTypes,
                         expectStatuses[i].get<FrontendStatus::Tag::streamIdList>().begin()));
                 break;
             }
+            case FrontendStatusType::DVBT_CELL_IDS: {
+                ASSERT_TRUE(std::equal(
+                        realStatuses[i].get<FrontendStatus::Tag::dvbtCellIds>().begin(),
+                        realStatuses[i].get<FrontendStatus::Tag::dvbtCellIds>().end(),
+                        expectStatuses[i].get<FrontendStatus::Tag::dvbtCellIds>().begin()));
+                break;
+            }
             default: {
                 continue;
             }
