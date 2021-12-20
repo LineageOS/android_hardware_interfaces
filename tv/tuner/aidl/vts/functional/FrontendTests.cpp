@@ -437,6 +437,7 @@ AssertionResult FrontendTests::tuneFrontend(FrontendConfig config, bool testWith
         getDvrTests()->startPlaybackInputThread(
                 mDvrConfig.playbackInputFile,
                 mDvrConfig.settings.get<DvrSettings::Tag::playback>());
+        getDvrTests()->startDvrPlayback();
     }
     mFrontendCallback->tuneTestOnLock(mFrontend, config.settings);
     return AssertionResult(true);
@@ -448,6 +449,7 @@ AssertionResult FrontendTests::stopTuneFrontend(bool testWithDemux) {
     status = mFrontend->stopTune();
     if (mIsSoftwareFe && testWithDemux) {
         getDvrTests()->stopPlaybackThread();
+        getDvrTests()->stopDvrPlayback();
         getDvrTests()->closeDvrPlayback();
     }
     return AssertionResult(status.isOk());
