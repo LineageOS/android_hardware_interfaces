@@ -75,11 +75,11 @@ class ComposerClientWriter {
         mCommands.clear();
     }
 
-    void setColorTransform(int64_t display, const float* matrix, ColorTransform hint) {
-        ColorTransformPayload colorTransformPayload;
-        colorTransformPayload.matrix.assign(matrix, matrix + 16);
-        colorTransformPayload.hint = hint;
-        getDisplayCommand(display).colorTransform.emplace(std::move(colorTransformPayload));
+    void setColorTransform(int64_t display, const float* matrix) {
+        std::vector<float> matVec;
+        matVec.reserve(16);
+        matVec.assign(matrix, matrix + 16);
+        getDisplayCommand(display).colorTransformMatrix.emplace(std::move(matVec));
     }
 
     void setClientTarget(int64_t display, uint32_t slot, const native_handle_t* target,

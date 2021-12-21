@@ -1503,7 +1503,7 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
 };
 
 TEST_P(GraphicsComposerAidlCommandTest, SET_COLOR_TRANSFORM) {
-    mWriter.setColorTransform(mPrimaryDisplay, kIdentity.data(), ColorTransform::IDENTITY);
+    mWriter.setColorTransform(mPrimaryDisplay, kIdentity.data());
     execute();
 }
 

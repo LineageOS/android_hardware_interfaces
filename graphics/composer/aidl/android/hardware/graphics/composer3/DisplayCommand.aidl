@@ -19,7 +19,6 @@ package android.hardware.graphics.composer3;
 import android.hardware.graphics.composer3.Buffer;
 import android.hardware.graphics.composer3.ClientTarget;
 import android.hardware.graphics.composer3.ClockMonotonicTimestamp;
-import android.hardware.graphics.composer3.ColorTransformPayload;
 import android.hardware.graphics.composer3.LayerCommand;
 
 @VintfStability
@@ -39,11 +38,7 @@ parcelable DisplayCommand {
     /**
      * Sets a color transform which will be applied after composition.
      *
-     * If hint is not ColorTransform.ARBITRARY, then the device may use the
-     * hint to apply the desired color transform instead of using the color
-     * matrix directly.
-     *
-     * If the device is not capable of either using the hint or the matrix to
+     * If the device is not capable of either using the matrix to
      * apply the desired color transform, it must force all layers to client
      * composition during VALIDATE_DISPLAY.
      *
@@ -71,7 +66,7 @@ parcelable DisplayCommand {
      * B_out = R_in * r.b + G_in * g.b + B_in * b.b + Tb
      *
      */
-    @nullable ColorTransformPayload colorTransform;
+    @nullable float[] colorTransformMatrix;
 
     /**
      * Sets the buffer handle which will receive the output of client

@@ -36,7 +36,7 @@ package android.hardware.graphics.composer3;
 parcelable DisplayCommand {
   long display;
   android.hardware.graphics.composer3.LayerCommand[] layers;
-  @nullable android.hardware.graphics.composer3.ColorTransformPayload colorTransform;
+  @nullable float[] colorTransformMatrix;
   @nullable android.hardware.graphics.composer3.ClientTarget clientTarget;
   @nullable android.hardware.graphics.composer3.Buffer virtualDisplayOutputBuffer;
   @nullable android.hardware.graphics.composer3.ClockMonotonicTimestamp expectedPresentTime;
