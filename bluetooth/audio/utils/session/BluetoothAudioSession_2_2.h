@@ -47,6 +47,8 @@ class BluetoothAudioSession_2_2 {
       invalidSoftwareAudioConfiguration;
   static ::android::hardware::bluetooth::audio::V2_2::AudioConfiguration
       invalidOffloadAudioConfiguration;
+  static ::android::hardware::bluetooth::audio::V2_2::AudioConfiguration
+      invalidLeOffloadAudioConfiguration;
 
  public:
   BluetoothAudioSession_2_2(
@@ -69,6 +71,11 @@ class BluetoothAudioSession_2_2 {
       const ::android::hardware::bluetooth::audio::V2_2::AudioConfiguration&
           audio_config);
 
+  // The report function is used to report that the Bluetooth stack has ended
+  // the session, and will invoke session_changed_cb_ to notify registered
+  // bluetooth_audio outputs
+  void OnSessionEnded();
+
   // Those control functions are for the bluetooth_audio module to start,
   // suspend, stop stream, to check position, and to update metadata.
   bool StartStream();
@@ -88,6 +95,9 @@ class BluetoothAudioSession_2_2 {
   static constexpr ::android::hardware::bluetooth::audio::V2_2::
       AudioConfiguration& kInvalidOffloadAudioConfiguration =
           invalidOffloadAudioConfiguration;
+  static constexpr ::android::hardware::bluetooth::audio::V2_2::
+      AudioConfiguration& kInvalidLeOffloadAudioConfiguration =
+          invalidLeOffloadAudioConfiguration;
 };
 
 class BluetoothAudioSessionInstance_2_2 {
