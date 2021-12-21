@@ -88,7 +88,7 @@ ScopedAStatus RadioConfig::setResponseFunctions(
 
     mRadioConfigResponse->setResponseFunction(radioConfigResponse);
     mRadioConfigIndication->setResponseFunction(radioConfigIndication);
-    mHal1_1->setResponseFunctions(mRadioConfigResponse, mRadioConfigIndication);
+    mHal1_1->setResponseFunctions(mRadioConfigResponse, mRadioConfigIndication).assertOk();
 
     return ok();
 }
