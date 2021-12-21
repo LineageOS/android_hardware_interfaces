@@ -52,7 +52,6 @@ parcelable LayerCommand {
   @nullable android.hardware.graphics.composer3.ZOrder z;
   @nullable float[] colorTransform;
   @nullable android.hardware.graphics.composer3.WhitePointNits whitePointNits;
-  @nullable android.hardware.graphics.composer3.GenericMetadata genericMetadata;
   @nullable android.hardware.graphics.composer3.PerFrameMetadata[] perFrameMetadata;
   @nullable android.hardware.graphics.composer3.PerFrameMetadataBlob[] perFrameMetadataBlob;
 }

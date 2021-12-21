@@ -201,15 +201,6 @@ class ComposerClientWriter {
         getLayerCommand(display, layer).floatColor.emplace(color);
     }
 
-    void setLayerGenericMetadata(int64_t display, int64_t layer, const std::string& key,
-                                 const bool mandatory, const std::vector<uint8_t>& value) {
-        GenericMetadata metadata;
-        metadata.key.name = key;
-        metadata.key.mandatory = mandatory;
-        metadata.value.assign(value.begin(), value.end());
-        getLayerCommand(display, layer).genericMetadata.emplace(std::move(metadata));
-    }
-
     void setLayerWhitePointNits(int64_t display, int64_t layer, float whitePointNits) {
         getLayerCommand(display, layer)
                 .whitePointNits.emplace(WhitePointNits{.nits = whitePointNits});

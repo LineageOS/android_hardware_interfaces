@@ -30,7 +30,6 @@ import android.hardware.graphics.composer3.DisplayIdentification;
 import android.hardware.graphics.composer3.FormatColorComponent;
 import android.hardware.graphics.composer3.HdrCapabilities;
 import android.hardware.graphics.composer3.IComposerCallback;
-import android.hardware.graphics.composer3.LayerGenericMetadataKey;
 import android.hardware.graphics.composer3.PerFrameMetadataKey;
 import android.hardware.graphics.composer3.PowerMode;
 import android.hardware.graphics.composer3.ReadbackBufferAttributes;
@@ -367,20 +366,6 @@ interface IComposerClient {
      * @exception EX_BAD_DISPLAY when an invalid display handle was passed in.
      */
     HdrCapabilities getHdrCapabilities(long display);
-
-    /**
-     * Retrieves the set of keys that may be passed into setLayerGenericMetadata
-     *
-     * Key names must meet the following requirements:
-     * - Must be specified in reverse domain name notation
-     * - Must not start with 'com.android' or 'android'
-     * - Must be unique within the returned vector
-     * - Must correspond to a matching HIDL struct type, which defines the
-     *   structure of its values. For example, the key 'com.example.V1-3.Foo'
-     *   should correspond to a value of type com.example@1.3::Foo, which is
-     *   defined in a vendor HAL extension
-     */
-    LayerGenericMetadataKey[] getLayerGenericMetadataKeys();
 
     /**
      * Returns the maximum number of virtual displays supported by this device
