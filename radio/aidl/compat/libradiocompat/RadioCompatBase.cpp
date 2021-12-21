@@ -28,9 +28,4 @@ RadioCompatBase::RadioCompatBase(std::shared_ptr<DriverContext> context, sp<V1_5
       mRadioResponse(radioResponse),
       mRadioIndication(radioInd) {}
 
-V1_6::IRadioResponse& RadioCompatBase::respond() {
-    CHECK(mRadioResponse) << "This shouldn't happen (response functions are passed in constructor)";
-    return *mRadioResponse;
-}
-
 }  // namespace android::hardware::radio::compat

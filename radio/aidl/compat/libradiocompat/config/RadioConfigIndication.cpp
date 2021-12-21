@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "RadioConfigIndication.h"
+#include <libradiocompat/RadioConfigIndication.h>
 
 #include "commonStructs.h"
 #include "debug.h"
@@ -28,20 +28,26 @@ namespace android::hardware::radio::compat {
 
 namespace aidl = ::aidl::android::hardware::radio::config;
 
-RadioConfigIndication::RadioConfigIndication(std::shared_ptr<aidl::IRadioConfigIndication> callback)
-    : mCallback(callback) {}
+void RadioConfigIndication::setResponseFunction(
+        std::shared_ptr<aidl::IRadioConfigIndication> callback) {
+    mCallback = callback;
+}
+
+std::shared_ptr<aidl::IRadioConfigIndication> RadioConfigIndication::indicate() {
+    return mCallback.get();
+}
 
 Return<void> RadioConfigIndication::simSlotsStatusChanged(
         V1_0::RadioIndicationType type, const hidl_vec<config::V1_0::SimSlotStatus>& slotStatus) {
     LOG_CALL << type;
-    mCallback->simSlotsStatusChanged(toAidl(type), toAidl(slotStatus));
+    indicate()->simSlotsStatusChanged(toAidl(type), toAidl(slotStatus));
     return {};
 }
 
 Return<void> RadioConfigIndication::simSlotsStatusChanged_1_2(
         V1_0::RadioIndicationType type, const hidl_vec<config::V1_2::SimSlotStatus>& slotStatus) {
     LOG_CALL << type;
-    mCallback->simSlotsStatusChanged(toAidl(type), toAidl(slotStatus));
+    indicate()->simSlotsStatusChanged(toAidl(type), toAidl(slotStatus));
     return {};
 }
 

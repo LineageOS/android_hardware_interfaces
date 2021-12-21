@@ -15,13 +15,17 @@
  */
 #pragma once
 
+#include "GuaranteedCallback.h"
+
 #include <aidl/android/hardware/radio/config/IRadioConfigResponse.h>
 #include <android/hardware/radio/config/1.3/IRadioConfigResponse.h>
 
 namespace android::hardware::radio::compat {
 
 class RadioConfigResponse : public config::V1_3::IRadioConfigResponse {
-    std::shared_ptr<aidl::android::hardware::radio::config::IRadioConfigResponse> mCallback;
+    GuaranteedCallback<aidl::android::hardware::radio::config::IRadioConfigResponse,
+                       aidl::android::hardware::radio::config::IRadioConfigResponseDefault>
+            mCallback;
 
     Return<void> getSimSlotsStatusResponse(
             const V1_0::RadioResponseInfo& info,
@@ -41,8 +45,10 @@ class RadioConfigResponse : public config::V1_3::IRadioConfigResponse {
                                                   bool modemReducedFeatureSet1) override;
 
   public:
-    RadioConfigResponse(
+    void setResponseFunction(
             std::shared_ptr<aidl::android::hardware::radio::config::IRadioConfigResponse> callback);
+
+    std::shared_ptr<aidl::android::hardware::radio::config::IRadioConfigResponse> respond();
 };
 
 }  // namespace android::hardware::radio::compat

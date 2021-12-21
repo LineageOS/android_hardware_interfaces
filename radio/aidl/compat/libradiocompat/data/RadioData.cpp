@@ -31,12 +31,16 @@ namespace aidl = ::aidl::android::hardware::radio::data;
 namespace aidlCommon = ::aidl::android::hardware::radio;
 constexpr auto ok = &ScopedAStatus::ok;
 
+std::shared_ptr<aidl::IRadioDataResponse> RadioData::respond() {
+    return mRadioResponse->dataCb();
+}
+
 ScopedAStatus RadioData::allocatePduSessionId(int32_t serial) {
     LOG_CALL << serial;
     if (mHal1_6) {
         mHal1_6->allocatePduSessionId(serial);
     } else {
-        respond().allocatePduSessionIdResponse(notSupported(serial), 0);
+        respond()->allocatePduSessionIdResponse(notSupported(serial), 0);
     }
     return ok();
 }
@@ -46,7 +50,7 @@ ScopedAStatus RadioData::cancelHandover(int32_t serial, int32_t callId) {
     if (mHal1_6) {
         mHal1_6->cancelHandover(serial, callId);
     } else {
-        respond().cancelHandoverResponse(notSupported(serial));
+        respond()->cancelHandoverResponse(notSupported(serial));
     }
     return ok();
 }
@@ -69,7 +73,7 @@ ScopedAStatus RadioData::getSlicingConfig(int32_t serial) {
     if (mHal1_6) {
         mHal1_6->getSlicingConfig(serial);
     } else {
-        respond().getSlicingConfigResponse(notSupported(serial), {});
+        respond()->getSlicingConfigResponse(notSupported(serial), {});
     }
     return ok();
 }
@@ -79,7 +83,7 @@ ScopedAStatus RadioData::releasePduSessionId(int32_t serial, int32_t id) {
     if (mHal1_6) {
         mHal1_6->releasePduSessionId(serial, id);
     } else {
-        respond().releasePduSessionIdResponse(notSupported(serial));
+        respond()->releasePduSessionIdResponse(notSupported(serial));
     }
     return ok();
 }
@@ -109,7 +113,7 @@ ScopedAStatus RadioData::setDataThrottling(int32_t serial, aidl::DataThrottlingA
     if (mHal1_6) {
         mHal1_6->setDataThrottling(serial, V1_6::DataThrottlingAction(dta), completionDurationMs);
     } else {
-        respond().setDataThrottlingResponse(notSupported(serial));
+        respond()->setDataThrottlingResponse(notSupported(serial));
     }
     return ok();
 }
@@ -161,7 +165,7 @@ ScopedAStatus RadioData::startHandover(int32_t serial, int32_t callId) {
     if (mHal1_6) {
         mHal1_6->startHandover(serial, callId);
     } else {
-        respond().startHandoverResponse(notSupported(serial));
+        respond()->startHandoverResponse(notSupported(serial));
     }
     return ok();
 }
