@@ -76,6 +76,12 @@ class BluetoothAudioSessionControl_2_2 {
     } else if (session_type ==
                SessionType_2_1::A2DP_HARDWARE_OFFLOAD_DATAPATH) {
       return BluetoothAudioSession_2_2::kInvalidOffloadAudioConfiguration;
+    } else if (
+        session_type ==
+            SessionType_2_1::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH ||
+        session_type ==
+            SessionType_2_1::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH) {
+      return BluetoothAudioSession_2_2::kInvalidLeOffloadAudioConfiguration;
     } else {
       return BluetoothAudioSession_2_2::kInvalidSoftwareAudioConfiguration;
     }
