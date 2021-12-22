@@ -15,9 +15,8 @@
  */
 #pragma once
 
+#include "CallbackManager.h"
 #include "DriverContext.h"
-#include "RadioIndication.h"
-#include "RadioResponse.h"
 
 #include <android/hardware/radio/1.6/IRadio.h>
 
@@ -30,14 +29,11 @@ class RadioCompatBase {
     sp<V1_5::IRadio> mHal1_5;
     sp<V1_6::IRadio> mHal1_6;
 
-    sp<RadioResponse> mRadioResponse;
-    sp<RadioIndication> mRadioIndication;
-
-    V1_6::IRadioResponse& respond();
+    std::shared_ptr<CallbackManager> mCallbackManager;
 
   public:
     RadioCompatBase(std::shared_ptr<DriverContext> context, sp<V1_5::IRadio> hidlHal,
-                    sp<RadioResponse> radioResponse, sp<RadioIndication> radioIndication);
+                    std::shared_ptr<CallbackManager> cbMgr);
 };
 
 }  // namespace android::hardware::radio::compat

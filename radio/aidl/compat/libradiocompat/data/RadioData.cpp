@@ -31,12 +31,16 @@ namespace aidl = ::aidl::android::hardware::radio::data;
 namespace aidlCommon = ::aidl::android::hardware::radio;
 constexpr auto ok = &ScopedAStatus::ok;
 
+std::shared_ptr<aidl::IRadioDataResponse> RadioData::respond() {
+    return mCallbackManager->response().dataCb();
+}
+
 ScopedAStatus RadioData::allocatePduSessionId(int32_t serial) {
     LOG_CALL << serial;
     if (mHal1_6) {
         mHal1_6->allocatePduSessionId(serial);
     } else {
-        respond().allocatePduSessionIdResponse(notSupported(serial), 0);
+        respond()->allocatePduSessionIdResponse(notSupported(serial), 0);
     }
     return ok();
 }
@@ -46,7 +50,7 @@ ScopedAStatus RadioData::cancelHandover(int32_t serial, int32_t callId) {
     if (mHal1_6) {
         mHal1_6->cancelHandover(serial, callId);
     } else {
-        respond().cancelHandoverResponse(notSupported(serial));
+        respond()->cancelHandoverResponse(notSupported(serial));
     }
     return ok();
 }
@@ -60,7 +64,11 @@ ScopedAStatus RadioData::deactivateDataCall(int32_t serial, int32_t cid,
 
 ScopedAStatus RadioData::getDataCallList(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getDataCallList(serial);
+    if (mHal1_6) {
+        mHal1_6->getDataCallList_1_6(serial);
+    } else {
+        mHal1_5->getDataCallList(serial);
+    }
     return ok();
 }
 
@@ -69,7 +77,7 @@ ScopedAStatus RadioData::getSlicingConfig(int32_t serial) {
     if (mHal1_6) {
         mHal1_6->getSlicingConfig(serial);
     } else {
-        respond().getSlicingConfigResponse(notSupported(serial), {});
+        respond()->getSlicingConfigResponse(notSupported(serial), {});
     }
     return ok();
 }
@@ -79,7 +87,7 @@ ScopedAStatus RadioData::releasePduSessionId(int32_t serial, int32_t id) {
     if (mHal1_6) {
         mHal1_6->releasePduSessionId(serial, id);
     } else {
-        respond().releasePduSessionIdResponse(notSupported(serial));
+        respond()->releasePduSessionIdResponse(notSupported(serial));
     }
     return ok();
 }
@@ -109,7 +117,7 @@ ScopedAStatus RadioData::setDataThrottling(int32_t serial, aidl::DataThrottlingA
     if (mHal1_6) {
         mHal1_6->setDataThrottling(serial, V1_6::DataThrottlingAction(dta), completionDurationMs);
     } else {
-        respond().setDataThrottlingResponse(notSupported(serial));
+        respond()->setDataThrottlingResponse(notSupported(serial));
     }
     return ok();
 }
@@ -121,16 +129,10 @@ ScopedAStatus RadioData::setInitialAttachApn(int32_t serial, const aidl::DataPro
 }
 
 ScopedAStatus RadioData::setResponseFunctions(
-        const std::shared_ptr<aidl::IRadioDataResponse>& dataResponse,
-        const std::shared_ptr<aidl::IRadioDataIndication>& dataIndication) {
-    LOG_CALL << dataResponse << ' ' << dataIndication;
-
-    CHECK(dataResponse);
-    CHECK(dataIndication);
-
-    mRadioResponse->setResponseFunction(dataResponse);
-    mRadioIndication->setResponseFunction(dataIndication);
-
+        const std::shared_ptr<aidl::IRadioDataResponse>& response,
+        const std::shared_ptr<aidl::IRadioDataIndication>& indication) {
+    LOG_CALL << response << ' ' << indication;
+    mCallbackManager->setResponseFunctions(response, indication);
     return ok();
 }
 
@@ -161,7 +163,7 @@ ScopedAStatus RadioData::startHandover(int32_t serial, int32_t callId) {
     if (mHal1_6) {
         mHal1_6->startHandover(serial, callId);
     } else {
-        respond().startHandoverResponse(notSupported(serial));
+        respond()->startHandoverResponse(notSupported(serial));
     }
     return ok();
 }

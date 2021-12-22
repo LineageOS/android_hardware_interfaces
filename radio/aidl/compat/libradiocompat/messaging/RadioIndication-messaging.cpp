@@ -27,67 +27,62 @@ namespace android::hardware::radio::compat {
 namespace aidl = ::aidl::android::hardware::radio::messaging;
 
 void RadioIndication::setResponseFunction(std::shared_ptr<aidl::IRadioMessagingIndication> rmiCb) {
-    CHECK(rmiCb);
     mMessagingCb = rmiCb;
+}
+
+std::shared_ptr<aidl::IRadioMessagingIndication> RadioIndication::messagingCb() {
+    return mMessagingCb.get();
 }
 
 Return<void> RadioIndication::cdmaNewSms(V1_0::RadioIndicationType type,
                                          const V1_0::CdmaSmsMessage& msg) {
     LOG_CALL << type;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->cdmaNewSms(toAidl(type), toAidl(msg));
+    messagingCb()->cdmaNewSms(toAidl(type), toAidl(msg));
     return {};
 }
 
 Return<void> RadioIndication::cdmaRuimSmsStorageFull(V1_0::RadioIndicationType type) {
     LOG_CALL << type;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->cdmaRuimSmsStorageFull(toAidl(type));
+    messagingCb()->cdmaRuimSmsStorageFull(toAidl(type));
     return {};
 }
 
 Return<void> RadioIndication::newBroadcastSms(V1_0::RadioIndicationType type,
                                               const hidl_vec<uint8_t>& data) {
     LOG_CALL << type;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->newBroadcastSms(toAidl(type), data);
+    messagingCb()->newBroadcastSms(toAidl(type), data);
     return {};
 }
 
 Return<void> RadioIndication::newSms(V1_0::RadioIndicationType type, const hidl_vec<uint8_t>& pdu) {
     LOG_CALL << type;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->newSms(toAidl(type), pdu);
+    messagingCb()->newSms(toAidl(type), pdu);
     return {};
 }
 
 Return<void> RadioIndication::newSmsOnSim(V1_0::RadioIndicationType type, int32_t recordNumber) {
     LOG_CALL << type;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->newSmsOnSim(toAidl(type), recordNumber);
+    messagingCb()->newSmsOnSim(toAidl(type), recordNumber);
     return {};
 }
 
 Return<void> RadioIndication::newSmsStatusReport(V1_0::RadioIndicationType type,
                                                  const hidl_vec<uint8_t>& pdu) {
     LOG_CALL << type;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->newSmsStatusReport(toAidl(type), pdu);
+    messagingCb()->newSmsStatusReport(toAidl(type), pdu);
     return {};
 }
 
 Return<void> RadioIndication::onUssd(V1_0::RadioIndicationType type, V1_0::UssdModeType modeType,
                                      const hidl_string& msg) {
     LOG_CALL << type;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->onUssd(toAidl(type), aidl::UssdModeType(modeType), msg);
+    messagingCb()->onUssd(toAidl(type), aidl::UssdModeType(modeType), msg);
     return {};
 }
 
 Return<void> RadioIndication::simSmsStorageFull(V1_0::RadioIndicationType type) {
     LOG_CALL << type;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->simSmsStorageFull(toAidl(type));
+    messagingCb()->simSmsStorageFull(toAidl(type));
     return {};
 }
 

@@ -29,52 +29,49 @@ namespace android::hardware::radio::compat {
 namespace aidl = ::aidl::android::hardware::radio::messaging;
 
 void RadioResponse::setResponseFunction(std::shared_ptr<aidl::IRadioMessagingResponse> rmrCb) {
-    CHECK(rmrCb);
     mMessagingCb = rmrCb;
+}
+
+std::shared_ptr<aidl::IRadioMessagingResponse> RadioResponse::messagingCb() {
+    return mMessagingCb.get();
 }
 
 Return<void> RadioResponse::acknowledgeIncomingGsmSmsWithPduResponse(
         const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->acknowledgeIncomingGsmSmsWithPduResponse(toAidl(info));
+    messagingCb()->acknowledgeIncomingGsmSmsWithPduResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::acknowledgeLastIncomingCdmaSmsResponse(
         const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->acknowledgeLastIncomingCdmaSmsResponse(toAidl(info));
+    messagingCb()->acknowledgeLastIncomingCdmaSmsResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::acknowledgeLastIncomingGsmSmsResponse(
         const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->acknowledgeLastIncomingGsmSmsResponse(toAidl(info));
+    messagingCb()->acknowledgeLastIncomingGsmSmsResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::cancelPendingUssdResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->cancelPendingUssdResponse(toAidl(info));
+    messagingCb()->cancelPendingUssdResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::deleteSmsOnRuimResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->deleteSmsOnRuimResponse(toAidl(info));
+    messagingCb()->deleteSmsOnRuimResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::deleteSmsOnSimResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->deleteSmsOnSimResponse(toAidl(info));
+    messagingCb()->deleteSmsOnSimResponse(toAidl(info));
     return {};
 }
 
@@ -82,162 +79,141 @@ Return<void> RadioResponse::getCdmaBroadcastConfigResponse(
         const V1_0::RadioResponseInfo& info,
         const hidl_vec<V1_0::CdmaBroadcastSmsConfigInfo>& configs) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->getCdmaBroadcastConfigResponse(toAidl(info), toAidl(configs));
+    messagingCb()->getCdmaBroadcastConfigResponse(toAidl(info), toAidl(configs));
     return {};
 }
 
 Return<void> RadioResponse::getGsmBroadcastConfigResponse(
         const V1_0::RadioResponseInfo& info, const hidl_vec<V1_0::GsmBroadcastSmsConfigInfo>& cfg) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->getGsmBroadcastConfigResponse(toAidl(info), toAidl(cfg));
+    messagingCb()->getGsmBroadcastConfigResponse(toAidl(info), toAidl(cfg));
     return {};
 }
 
 Return<void> RadioResponse::getSmscAddressResponse(const V1_0::RadioResponseInfo& info,
                                                    const hidl_string& smsc) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->getSmscAddressResponse(toAidl(info), smsc);
+    messagingCb()->getSmscAddressResponse(toAidl(info), smsc);
     return {};
 }
 
 Return<void> RadioResponse::reportSmsMemoryStatusResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->reportSmsMemoryStatusResponse(toAidl(info));
+    messagingCb()->reportSmsMemoryStatusResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::sendCdmaSmsExpectMoreResponse(const V1_0::RadioResponseInfo& info,
                                                           const V1_0::SendSmsResult& sms) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->sendCdmaSmsExpectMoreResponse(toAidl(info), toAidl(sms));
+    messagingCb()->sendCdmaSmsExpectMoreResponse(toAidl(info), toAidl(sms));
     return {};
 }
 
 Return<void> RadioResponse::sendCdmaSmsExpectMoreResponse_1_6(const V1_6::RadioResponseInfo& info,
                                                               const V1_0::SendSmsResult& sms) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->sendCdmaSmsExpectMoreResponse(toAidl(info), toAidl(sms));
+    messagingCb()->sendCdmaSmsExpectMoreResponse(toAidl(info), toAidl(sms));
     return {};
 }
 
 Return<void> RadioResponse::sendCdmaSmsResponse(const V1_0::RadioResponseInfo& info,
                                                 const V1_0::SendSmsResult& sms) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->sendCdmaSmsResponse(toAidl(info), toAidl(sms));
+    messagingCb()->sendCdmaSmsResponse(toAidl(info), toAidl(sms));
     return {};
 }
 
 Return<void> RadioResponse::sendCdmaSmsResponse_1_6(const V1_6::RadioResponseInfo& info,
                                                     const V1_0::SendSmsResult& sms) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->sendCdmaSmsResponse(toAidl(info), toAidl(sms));
+    messagingCb()->sendCdmaSmsResponse(toAidl(info), toAidl(sms));
     return {};
 }
 
 Return<void> RadioResponse::sendImsSmsResponse(const V1_0::RadioResponseInfo& info,
                                                const V1_0::SendSmsResult& sms) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->sendImsSmsResponse(toAidl(info), toAidl(sms));
+    messagingCb()->sendImsSmsResponse(toAidl(info), toAidl(sms));
     return {};
 }
 
 Return<void> RadioResponse::sendSMSExpectMoreResponse(const V1_0::RadioResponseInfo& info,
                                                       const V1_0::SendSmsResult& sms) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->sendSmsExpectMoreResponse(toAidl(info), toAidl(sms));
+    messagingCb()->sendSmsExpectMoreResponse(toAidl(info), toAidl(sms));
     return {};
 }
 
 Return<void> RadioResponse::sendSmsExpectMoreResponse_1_6(const V1_6::RadioResponseInfo& info,
                                                           const V1_0::SendSmsResult& sms) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->sendSmsExpectMoreResponse(toAidl(info), toAidl(sms));
+    messagingCb()->sendSmsExpectMoreResponse(toAidl(info), toAidl(sms));
     return {};
 }
 
 Return<void> RadioResponse::sendSmsResponse(const V1_0::RadioResponseInfo& info,
                                             const V1_0::SendSmsResult& sms) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->sendSmsResponse(toAidl(info), toAidl(sms));
+    messagingCb()->sendSmsResponse(toAidl(info), toAidl(sms));
     return {};
 }
 
 Return<void> RadioResponse::sendSmsResponse_1_6(const V1_6::RadioResponseInfo& info,
                                                 const V1_0::SendSmsResult& sms) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->sendSmsResponse(toAidl(info), toAidl(sms));
+    messagingCb()->sendSmsResponse(toAidl(info), toAidl(sms));
     return {};
 }
 
 Return<void> RadioResponse::sendUssdResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->sendUssdResponse(toAidl(info));
+    messagingCb()->sendUssdResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::setCdmaBroadcastActivationResponse(
         const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->setCdmaBroadcastActivationResponse(toAidl(info));
+    messagingCb()->setCdmaBroadcastActivationResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::setCdmaBroadcastConfigResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->setCdmaBroadcastConfigResponse(toAidl(info));
+    messagingCb()->setCdmaBroadcastConfigResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::setGsmBroadcastActivationResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->setGsmBroadcastActivationResponse(toAidl(info));
+    messagingCb()->setGsmBroadcastActivationResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::setGsmBroadcastConfigResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->setGsmBroadcastConfigResponse(toAidl(info));
+    messagingCb()->setGsmBroadcastConfigResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::setSmscAddressResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->setSmscAddressResponse(toAidl(info));
+    messagingCb()->setSmscAddressResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::writeSmsToRuimResponse(const V1_0::RadioResponseInfo& info,
                                                    uint32_t index) {
     LOG_CALL << info.serial << ' ' << index;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->writeSmsToRuimResponse(toAidl(info), index);
+    messagingCb()->writeSmsToRuimResponse(toAidl(info), index);
     return {};
 }
 
 Return<void> RadioResponse::writeSmsToSimResponse(const V1_0::RadioResponseInfo& info,
                                                   int32_t index) {
     LOG_CALL << info.serial << ' ' << index;
-    CHECK_CB(mMessagingCb);
-    mMessagingCb->writeSmsToSimResponse(toAidl(info), index);
+    messagingCb()->writeSmsToSimResponse(toAidl(info), index);
     return {};
 }
 

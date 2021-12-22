@@ -23,6 +23,8 @@ namespace android::hardware::radio::compat {
 
 class RadioModem : public RadioCompatBase,
                    public aidl::android::hardware::radio::modem::BnRadioModem {
+    std::shared_ptr<::aidl::android::hardware::radio::modem::IRadioModemResponse> respond();
+
     ::ndk::ScopedAStatus enableModem(int32_t serial, bool on) override;
     ::ndk::ScopedAStatus getBasebandVersion(int32_t serial) override;
     ::ndk::ScopedAStatus getDeviceIdentity(int32_t serial) override;
