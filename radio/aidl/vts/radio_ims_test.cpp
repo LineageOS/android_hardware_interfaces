@@ -162,6 +162,58 @@ TEST_P(RadioImsTest, performAcbCheck) {
     verifyError(radioRsp_ims->rspInfo.error);
 }
 
+/*
+ * Test IRadioIms.setAnbrEnabled() for the response returned.
+ */
+TEST_P(RadioImsTest, setAnbrEnabled) {
+    if (!deviceSupportsFeature(FEATURE_TELEPHONY_IMS)) {
+        ALOGI("Skipping setAnbrEnabled because ims is not supported in device");
+        return;
+    } else {
+        ALOGI("Running setAnbrEnabled because ims is supported in device");
+    }
+
+    serial = GetRandomSerialNumber();
+
+    ndk::ScopedAStatus res =
+            radio_ims->setAnbrEnabled(serial, 1, true);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_ims->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_ims->rspInfo.serial);
+
+    ALOGI("setAnbrEnabled, rspInfo.error = %s\n",
+              toString(radioRsp_ims->rspInfo.error).c_str());
+
+    verifyError(radioRsp_ims->rspInfo.error);
+}
+
+/*
+ * Test IRadioIms.sendAnbrQuery() for the response returned.
+ */
+TEST_P(RadioImsTest, sendAnbrQuery) {
+    if (!deviceSupportsFeature(FEATURE_TELEPHONY_IMS)) {
+        ALOGI("Skipping sendAnbrQuery because ims is not supported in device");
+        return;
+    } else {
+        ALOGI("Running sendAnbrQuery because ims is supported in device");
+    }
+
+    serial = GetRandomSerialNumber();
+
+    ndk::ScopedAStatus res =
+            radio_ims->sendAnbrQuery(serial, 1, 0, 13200);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_ims->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_ims->rspInfo.serial);
+
+    ALOGI("sendAnbrQuery, rspInfo.error = %s\n",
+              toString(radioRsp_ims->rspInfo.error).c_str());
+
+    verifyError(radioRsp_ims->rspInfo.error);
+}
+
 void RadioImsTest::verifyError(RadioError resp) {
     switch (resp) {
         case RadioError::NONE:
