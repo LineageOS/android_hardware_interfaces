@@ -16,22 +16,12 @@
 
 package android.hardware.bluetooth.audio;
 
-import android.hardware.bluetooth.audio.BroadcastConfiguration;
-import android.hardware.bluetooth.audio.CodecType;
-import android.hardware.bluetooth.audio.LeAudioMode;
-import android.hardware.bluetooth.audio.UnicastConfiguration;
-
 @VintfStability
-parcelable LeAudioConfiguration {
-    @VintfStability
-    union LeAudioModeConfig {
-        UnicastConfiguration unicastConfig;
-        BroadcastConfiguration broadcastConfig;
-    }
-    /*
-     * The mode of the LE audio
-     */
-    LeAudioMode mode;
-    LeAudioModeConfig modeConfig;
-    CodecType codecType;
+@Backing(type="int")
+enum BluetoothAudioStatus {
+    UNKNOWN = 0,
+    SUCCESS = 1,
+    UNSUPPORTED_CODEC_CONFIGURATION = 2,
+    // General failure
+    FAILURE = 3
 }
