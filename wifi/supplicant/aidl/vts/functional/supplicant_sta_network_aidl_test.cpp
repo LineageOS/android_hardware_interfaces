@@ -92,6 +92,12 @@ class SupplicantStaNetworkCallback : public BnSupplicantStaNetworkCallback {
         TransitionDisableIndication /* ind */) override {
         return ndk::ScopedAStatus::ok();
     }
+    ::ndk::ScopedAStatus onServerCertificateAvailable(
+            int32_t /* depth */, const std::vector<uint8_t>& /* subject */,
+            const std::vector<uint8_t>& /* certHash */,
+            const std::vector<uint8_t>& /* certBlob */) override {
+        return ndk::ScopedAStatus::ok();
+    }
 };
 
 class SupplicantStaNetworkAidlTest
