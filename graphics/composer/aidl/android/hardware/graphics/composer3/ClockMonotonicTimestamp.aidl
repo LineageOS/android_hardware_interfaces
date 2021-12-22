@@ -16,18 +16,10 @@
 
 package android.hardware.graphics.composer3;
 
-import android.hardware.graphics.common.ColorTransform;
-
+/**
+ * Represents a nanoseconds timestamp in CLOCK_MONOTONIC.
+ */
 @VintfStability
-parcelable ColorTransformPayload {
-    /**
-     * 4x4 transform matrix (16 floats) as described in DisplayCommand.colorTransform.
-     */
-    float[] matrix;
-
-    /**
-     * Hint value which may be used instead of the given matrix unless it
-     * is ColorTransform.ARBITRARY.
-     */
-    ColorTransform hint;
+parcelable ClockMonotonicTimestamp {
+    long timestamp;
 }
