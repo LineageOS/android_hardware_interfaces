@@ -236,4 +236,10 @@ union FrontendStatus {
      */
     int[] streamIdList;
 
+    /**
+     * DVB-T Cell Id.
+     */
+    int[] dvbtCellIds;
+
+
 }

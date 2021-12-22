@@ -70,4 +70,10 @@ union FrontendScanMessage {
     FrontendDvbcAnnex annex;
 
     boolean isHighPriority;
+
+    /**
+     * DVB-T Cell Ids.
+     */
+    int[] dvbtCellIds;
+
 }
