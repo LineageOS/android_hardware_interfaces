@@ -95,4 +95,5 @@ interface ISupplicantP2pIface {
   void stopFind();
   void findOnSocialChannels(in int timeoutInSec);
   void findOnSpecificFrequency(in int freqInHz, in int timeoutInSec);
+  void setVendorElements(in android.hardware.wifi.supplicant.P2pFrameTypeMask frameTypeMask, in byte[] vendorElemBytes);
 }
