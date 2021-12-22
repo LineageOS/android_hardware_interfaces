@@ -479,7 +479,7 @@ interface IComposerClient {
      *   getReadbackBufferAttributes
      *   setReadbackBuffer
      */
-    ParcelFileDescriptor getReadbackBufferFence(long display);
+    @nullable ParcelFileDescriptor getReadbackBufferFence(long display);
 
     /**
      * Returns the render intents supported by the specified display and color
@@ -702,13 +702,15 @@ interface IComposerClient {
      * This buffer must have been allocated as described in
      * getReadbackBufferAttributes and is in the dataspace provided by the same.
      *
+     * Also provides a file descriptor referring to a release sync fence
+     * object, which must be signaled when it is safe to write to the readback
+     * buffer. If it is already safe to write to the readback buffer, null may be passed instead.
+     *
      * If there is hardware protected content on the display at the time of the next
      * composition, the area of the readback buffer covered by such content must be
      * completely black. Any areas of the buffer not covered by such content may
      * optionally be black as well.
      *
-     * The release fence file descriptor provided works identically to the one
-     * described for setOutputBuffer.
      *
      * This function must not be called between any call to validateDisplay and a
      * subsequent call to presentDisplay.
@@ -716,7 +718,8 @@ interface IComposerClient {
      * Parameters:
      * @param display - the display on which to create the layer.
      * @param buffer - the new readback buffer
-     * @param releaseFence - a sync fence file descriptor as described in setOutputBuffer
+     * @param releaseFence - a sync fence file descriptor as described above or null if it is
+     *                       already safe to write to the readback buffer.
      *
      * @exception EX_BAD_DISPLAY - an invalid display handle was passed in
      * @exception EX_BAD_PARAMETER - the new readback buffer handle was invalid
@@ -726,7 +729,7 @@ interface IComposerClient {
      *   getReadbackBufferFence
      */
     void setReadbackBuffer(long display, in android.hardware.common.NativeHandle buffer,
-            in ParcelFileDescriptor releaseFence);
+            in @nullable ParcelFileDescriptor releaseFence);
 
     /**
      * Enables or disables the vsync signal for the given display. Virtual
