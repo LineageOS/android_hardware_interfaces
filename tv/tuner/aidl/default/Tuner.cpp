@@ -112,6 +112,7 @@ void Tuner::init() {
             FrontendStatusType::GUARD_INTERVAL,
             FrontendStatusType::TRANSMISSION_MODE,
             FrontendStatusType::T2_SYSTEM_ID,
+            FrontendStatusType::DVBT_CELL_IDS,
     };
     mFrontendStatusCaps[4] = statusCaps;
 

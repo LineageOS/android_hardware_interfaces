@@ -86,4 +86,10 @@ enum FrontendScanMessageType {
     DVBC_ANNEX,
 
     HIGH_PRIORITY,
+
+    /**
+     * DVB-T CELL ID.
+     */
+    DVBT_CELL_IDS,
+
 }

@@ -237,6 +237,13 @@ Frontend::~Frontend() {}
         mCallback->onScanMessage(FrontendScanMessageType::HIGH_PRIORITY, msg);
     }
 
+    if (mType == FrontendType::DVBT) {
+        FrontendScanMessage msg;
+        vector<int32_t> dvbtCellIds = {0, 1};
+        msg.set<FrontendScanMessage::Tag::dvbtCellIds>(dvbtCellIds);
+        mCallback->onScanMessage(FrontendScanMessageType::DVBT_CELL_IDS, msg);
+    }
+
     {
         FrontendScanMessage msg;
         msg.set<FrontendScanMessage::Tag::isLocked>(true);
@@ -679,6 +686,11 @@ Frontend::~Frontend() {}
             case FrontendStatusType::STREAM_ID_LIST: {
                 vector<int32_t> streamIds = {0, 1};
                 status.set<FrontendStatus::streamIdList>(streamIds);
+                break;
+            }
+            case FrontendStatusType::DVBT_CELL_IDS: {
+                vector<int32_t> dvbtCellIds = {0, 1};
+                status.set<FrontendStatus::dvbtCellIds>(dvbtCellIds);
                 break;
             }
             default: {
