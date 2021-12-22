@@ -29,22 +29,23 @@ namespace android::hardware::radio::compat {
 namespace aidl = ::aidl::android::hardware::radio::modem;
 
 void RadioResponse::setResponseFunction(std::shared_ptr<aidl::IRadioModemResponse> modemCb) {
-    CHECK(modemCb);
     mModemCb = modemCb;
+}
+
+std::shared_ptr<aidl::IRadioModemResponse> RadioResponse::modemCb() {
+    return mModemCb.get();
 }
 
 Return<void> RadioResponse::enableModemResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mModemCb);
-    mModemCb->enableModemResponse(toAidl(info));
+    modemCb()->enableModemResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::getBasebandVersionResponse(const V1_0::RadioResponseInfo& info,
                                                        const hidl_string& version) {
     LOG_CALL << info.serial;
-    CHECK_CB(mModemCb);
-    mModemCb->getBasebandVersionResponse(toAidl(info), version);
+    modemCb()->getBasebandVersionResponse(toAidl(info), version);
     return {};
 }
 
@@ -52,112 +53,97 @@ Return<void> RadioResponse::getDeviceIdentityResponse(  //
         const V1_0::RadioResponseInfo& info, const hidl_string& imei, const hidl_string& imeisv,
         const hidl_string& esn, const hidl_string& meid) {
     LOG_CALL << info.serial;
-    CHECK_CB(mModemCb);
-    mModemCb->getDeviceIdentityResponse(toAidl(info), imei, imeisv, esn, meid);
+    modemCb()->getDeviceIdentityResponse(toAidl(info), imei, imeisv, esn, meid);
     return {};
 }
 
 Return<void> RadioResponse::getHardwareConfigResponse(
         const V1_0::RadioResponseInfo& info, const hidl_vec<V1_0::HardwareConfig>& config) {
     LOG_CALL << info.serial;
-    CHECK_CB(mModemCb);
-    mModemCb->getHardwareConfigResponse(toAidl(info), toAidl(config));
+    modemCb()->getHardwareConfigResponse(toAidl(info), toAidl(config));
     return {};
 }
 
 Return<void> RadioResponse::getModemActivityInfoResponse(
         const V1_0::RadioResponseInfo& info, const V1_0::ActivityStatsInfo& activityInfo) {
     LOG_CALL << info.serial;
-    CHECK_CB(mModemCb);
-    mModemCb->getModemActivityInfoResponse(toAidl(info), toAidl(activityInfo));
+    modemCb()->getModemActivityInfoResponse(toAidl(info), toAidl(activityInfo));
     return {};
 }
 
 Return<void> RadioResponse::getModemStackStatusResponse(const V1_0::RadioResponseInfo& info,
                                                         bool isEnabled) {
     LOG_CALL << info.serial;
-    CHECK_CB(mModemCb);
-    mModemCb->getModemStackStatusResponse(toAidl(info), isEnabled);
+    modemCb()->getModemStackStatusResponse(toAidl(info), isEnabled);
     return {};
 }
 
 Return<void> RadioResponse::getRadioCapabilityResponse(const V1_0::RadioResponseInfo& info,
                                                        const V1_0::RadioCapability& rc) {
     LOG_CALL << info.serial;
-    CHECK_CB(mModemCb);
-    mModemCb->getRadioCapabilityResponse(toAidl(info), toAidl(rc));
+    modemCb()->getRadioCapabilityResponse(toAidl(info), toAidl(rc));
     return {};
 }
 
 Return<void> RadioResponse::nvReadItemResponse(const V1_0::RadioResponseInfo& info,
                                                const hidl_string& result) {
     LOG_CALL << info.serial;
-    CHECK_CB(mModemCb);
-    mModemCb->nvReadItemResponse(toAidl(info), result);
+    modemCb()->nvReadItemResponse(toAidl(info), result);
     return {};
 }
 
 Return<void> RadioResponse::nvResetConfigResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mModemCb);
-    mModemCb->nvResetConfigResponse(toAidl(info));
+    modemCb()->nvResetConfigResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::nvWriteCdmaPrlResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mModemCb);
-    mModemCb->nvWriteCdmaPrlResponse(toAidl(info));
+    modemCb()->nvWriteCdmaPrlResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::nvWriteItemResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mModemCb);
-    mModemCb->nvWriteItemResponse(toAidl(info));
+    modemCb()->nvWriteItemResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::requestShutdownResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mModemCb);
-    mModemCb->requestShutdownResponse(toAidl(info));
+    modemCb()->requestShutdownResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::sendDeviceStateResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mModemCb);
-    mModemCb->sendDeviceStateResponse(toAidl(info));
+    modemCb()->sendDeviceStateResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::setRadioCapabilityResponse(const V1_0::RadioResponseInfo& info,
                                                        const V1_0::RadioCapability& rc) {
     LOG_CALL << info.serial;
-    CHECK_CB(mModemCb);
-    mModemCb->setRadioCapabilityResponse(toAidl(info), toAidl(rc));
+    modemCb()->setRadioCapabilityResponse(toAidl(info), toAidl(rc));
     return {};
 }
 
 Return<void> RadioResponse::setRadioPowerResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mModemCb);
-    mModemCb->setRadioPowerResponse(toAidl(info));
+    modemCb()->setRadioPowerResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::setRadioPowerResponse_1_5(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mModemCb);
-    mModemCb->setRadioPowerResponse(toAidl(info));
+    modemCb()->setRadioPowerResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::setRadioPowerResponse_1_6(const V1_6::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mModemCb);
-    mModemCb->setRadioPowerResponse(toAidl(info));
+    modemCb()->setRadioPowerResponse(toAidl(info));
     return {};
 }
 

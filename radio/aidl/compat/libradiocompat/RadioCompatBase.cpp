@@ -21,16 +21,10 @@
 namespace android::hardware::radio::compat {
 
 RadioCompatBase::RadioCompatBase(std::shared_ptr<DriverContext> context, sp<V1_5::IRadio> hidlHal,
-                                 sp<RadioResponse> radioResponse, sp<RadioIndication> radioInd)
+                                 std::shared_ptr<CallbackManager> cbMgr)
     : mContext(context),
       mHal1_5(hidlHal),
       mHal1_6(V1_6::IRadio::castFrom(hidlHal)),
-      mRadioResponse(radioResponse),
-      mRadioIndication(radioInd) {}
-
-V1_6::IRadioResponse& RadioCompatBase::respond() {
-    CHECK(mRadioResponse) << "This shouldn't happen (response functions are passed in constructor)";
-    return *mRadioResponse;
-}
+      mCallbackManager(cbMgr) {}
 
 }  // namespace android::hardware::radio::compat

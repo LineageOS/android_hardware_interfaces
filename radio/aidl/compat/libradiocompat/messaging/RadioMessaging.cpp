@@ -29,6 +29,10 @@ using ::ndk::ScopedAStatus;
 namespace aidl = ::aidl::android::hardware::radio::messaging;
 constexpr auto ok = &ScopedAStatus::ok;
 
+std::shared_ptr<aidl::IRadioMessagingResponse> RadioMessaging::respond() {
+    return mCallbackManager->response().messagingCb();
+}
+
 ScopedAStatus RadioMessaging::acknowledgeIncomingGsmSmsWithPdu(  //
         int32_t serial, bool success, const std::string& ackPdu) {
     LOG_CALL << serial << ' ' << success << ' ' << ackPdu;
@@ -100,13 +104,21 @@ ScopedAStatus RadioMessaging::responseAcknowledgement() {
 
 ScopedAStatus RadioMessaging::sendCdmaSms(int32_t serial, const aidl::CdmaSmsMessage& sms) {
     LOG_CALL << serial;
-    mHal1_5->sendCdmaSms(serial, toHidl(sms));
+    if (mHal1_6) {
+        mHal1_6->sendCdmaSms_1_6(serial, toHidl(sms));
+    } else {
+        mHal1_5->sendCdmaSms(serial, toHidl(sms));
+    }
     return ok();
 }
 
 ScopedAStatus RadioMessaging::sendCdmaSmsExpectMore(int32_t serial, const aidl::CdmaSmsMessage& m) {
     LOG_CALL << serial;
-    mHal1_5->sendCdmaSmsExpectMore(serial, toHidl(m));
+    if (mHal1_6) {
+        mHal1_6->sendCdmaSmsExpectMore_1_6(serial, toHidl(m));
+    } else {
+        mHal1_5->sendCdmaSmsExpectMore(serial, toHidl(m));
+    }
     return ok();
 }
 
@@ -118,13 +130,21 @@ ScopedAStatus RadioMessaging::sendImsSms(int32_t serial, const aidl::ImsSmsMessa
 
 ScopedAStatus RadioMessaging::sendSms(int32_t serial, const aidl::GsmSmsMessage& message) {
     LOG_CALL << serial;
-    mHal1_5->sendSms(serial, toHidl(message));
+    if (mHal1_6) {
+        mHal1_6->sendSms_1_6(serial, toHidl(message));
+    } else {
+        mHal1_5->sendSms(serial, toHidl(message));
+    }
     return ok();
 }
 
 ScopedAStatus RadioMessaging::sendSmsExpectMore(int32_t serial, const aidl::GsmSmsMessage& msg) {
     LOG_CALL << serial;
-    mHal1_5->sendSMSExpectMore(serial, toHidl(msg));
+    if (mHal1_6) {
+        mHal1_6->sendSmsExpectMore_1_6(serial, toHidl(msg));
+    } else {
+        mHal1_5->sendSMSExpectMore(serial, toHidl(msg));
+    }
     return ok();
 }
 
@@ -161,16 +181,10 @@ ScopedAStatus RadioMessaging::setGsmBroadcastConfig(
 }
 
 ScopedAStatus RadioMessaging::setResponseFunctions(
-        const std::shared_ptr<aidl::IRadioMessagingResponse>& messagingResponse,
-        const std::shared_ptr<aidl::IRadioMessagingIndication>& messagingIndication) {
-    LOG_CALL << messagingResponse << ' ' << messagingIndication;
-
-    CHECK(messagingResponse);
-    CHECK(messagingIndication);
-
-    mRadioResponse->setResponseFunction(messagingResponse);
-    mRadioIndication->setResponseFunction(messagingIndication);
-
+        const std::shared_ptr<aidl::IRadioMessagingResponse>& response,
+        const std::shared_ptr<aidl::IRadioMessagingIndication>& indication) {
+    LOG_CALL << response << ' ' << indication;
+    mCallbackManager->setResponseFunctions(response, indication);
     return ok();
 }
 

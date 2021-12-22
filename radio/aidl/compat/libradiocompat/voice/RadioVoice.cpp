@@ -30,6 +30,10 @@ using ::ndk::ScopedAStatus;
 namespace aidl = ::aidl::android::hardware::radio::voice;
 constexpr auto ok = &ScopedAStatus::ok;
 
+std::shared_ptr<aidl::IRadioVoiceResponse> RadioVoice::respond() {
+    return mCallbackManager->response().voiceCb();
+}
+
 ScopedAStatus RadioVoice::acceptCall(int32_t serial) {
     LOG_CALL << serial;
     mHal1_5->acceptCall(serial);
@@ -49,13 +53,19 @@ ScopedAStatus RadioVoice::dial(int32_t serial, const aidl::Dial& dialInfo) {
 }
 
 ScopedAStatus RadioVoice::emergencyDial(  //
-        int32_t serial, const aidl::Dial& dialInfo, aidl::EmergencyServiceCategory categories,
+        int32_t serial, const aidl::Dial& info, aidl::EmergencyServiceCategory categories,
         const std::vector<std::string>& urns, aidl::EmergencyCallRouting routing,
-        bool hasKnownUserIntentEmerg, bool isTesting) {
+        bool knownUserIntentEmerg, bool isTesting) {
     LOG_CALL << serial;
-    mHal1_5->emergencyDial(serial, toHidl(dialInfo),
-                           toHidlBitfield<V1_4::EmergencyServiceCategory>(categories), toHidl(urns),
-                           V1_4::EmergencyCallRouting(routing), hasKnownUserIntentEmerg, isTesting);
+    if (mHal1_6) {
+        mHal1_6->emergencyDial_1_6(  //
+                serial, toHidl(info), toHidlBitfield<V1_4::EmergencyServiceCategory>(categories),
+                toHidl(urns), V1_4::EmergencyCallRouting(routing), knownUserIntentEmerg, isTesting);
+    } else {
+        mHal1_5->emergencyDial(  //
+                serial, toHidl(info), toHidlBitfield<V1_4::EmergencyServiceCategory>(categories),
+                toHidl(urns), V1_4::EmergencyCallRouting(routing), knownUserIntentEmerg, isTesting);
+    }
     return ok();
 }
 
@@ -98,7 +108,11 @@ ScopedAStatus RadioVoice::getClir(int32_t serial) {
 
 ScopedAStatus RadioVoice::getCurrentCalls(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getCurrentCalls(serial);
+    if (mHal1_6) {
+        mHal1_6->getCurrentCalls_1_6(serial);
+    } else {
+        mHal1_5->getCurrentCalls(serial);
+    }
     return ok();
 }
 
@@ -152,7 +166,7 @@ ScopedAStatus RadioVoice::hangupWaitingOrBackground(int32_t serial) {
 
 ScopedAStatus RadioVoice::isVoNrEnabled(int32_t serial) {
     LOG_CALL << serial;
-    // TODO(b/203699028): can't call isVoNrEnabledResponse with 1.6 callback
+    respond()->isVoNrEnabledResponse(notSupported(serial), false);
     return ok();
 }
 
@@ -224,16 +238,10 @@ ScopedAStatus RadioVoice::setPreferredVoicePrivacy(int32_t serial, bool enable) 
 }
 
 ScopedAStatus RadioVoice::setResponseFunctions(
-        const std::shared_ptr<aidl::IRadioVoiceResponse>& voiceResponse,
-        const std::shared_ptr<aidl::IRadioVoiceIndication>& voiceIndication) {
-    LOG_CALL << voiceResponse << ' ' << voiceIndication;
-
-    CHECK(voiceResponse);
-    CHECK(voiceIndication);
-
-    mRadioResponse->setResponseFunction(voiceResponse);
-    mRadioIndication->setResponseFunction(voiceIndication);
-
+        const std::shared_ptr<aidl::IRadioVoiceResponse>& response,
+        const std::shared_ptr<aidl::IRadioVoiceIndication>& indication) {
+    LOG_CALL << response << ' ' << indication;
+    mCallbackManager->setResponseFunctions(response, indication);
     return ok();
 }
 
@@ -245,7 +253,8 @@ ScopedAStatus RadioVoice::setTtyMode(int32_t serial, aidl::TtyMode mode) {
 
 ndk::ScopedAStatus RadioVoice::setVoNrEnabled(int32_t serial, [[maybe_unused]] bool enable) {
     LOG_CALL << serial;
-    // TODO(b/203699028): should set `persist.radio.is_vonr_enabled_` property instead
+    // Note: a workaround for older HALs could also be setting persist.radio.is_vonr_enabled_
+    respond()->setVoNrEnabledResponse(notSupported(serial));
     return ok();
 }
 

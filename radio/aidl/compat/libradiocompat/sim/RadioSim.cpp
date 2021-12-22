@@ -30,6 +30,10 @@ using ::ndk::ScopedAStatus;
 namespace aidl = ::aidl::android::hardware::radio::sim;
 constexpr auto ok = &ScopedAStatus::ok;
 
+std::shared_ptr<aidl::IRadioSimResponse> RadioSim::respond() {
+    return mCallbackManager->response().simCb();
+}
+
 ScopedAStatus RadioSim::areUiccApplicationsEnabled(int32_t serial) {
     LOG_CALL << serial;
     mHal1_5->areUiccApplicationsEnabled(serial);
@@ -58,7 +62,7 @@ ScopedAStatus RadioSim::enableUiccApplications(int32_t serial, bool enable) {
 
 ScopedAStatus RadioSim::getAllowedCarriers(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getAllowedCarriers(serial);
+    mHal1_5->getAllowedCarriers_1_4(serial);
     return ok();
 }
 
@@ -99,7 +103,7 @@ ScopedAStatus RadioSim::getSimPhonebookCapacity(int32_t serial) {
     if (mHal1_6) {
         mHal1_6->getSimPhonebookCapacity(serial);
     } else {
-        respond().getSimPhonebookCapacityResponse(notSupported(serial), {});
+        respond()->getSimPhonebookCapacityResponse(notSupported(serial), {});
     }
     return ok();
 }
@@ -109,7 +113,7 @@ ScopedAStatus RadioSim::getSimPhonebookRecords(int32_t serial) {
     if (mHal1_6) {
         mHal1_6->getSimPhonebookRecords(serial);
     } else {
-        respond().getSimPhonebookRecordsResponse(notSupported(serial));
+        respond()->getSimPhonebookRecordsResponse(notSupported(serial));
     }
     return ok();
 }
@@ -217,16 +221,10 @@ ScopedAStatus RadioSim::setFacilityLockForApp(  //
 }
 
 ScopedAStatus RadioSim::setResponseFunctions(
-        const std::shared_ptr<aidl::IRadioSimResponse>& simResponse,
-        const std::shared_ptr<aidl::IRadioSimIndication>& simIndication) {
-    LOG_CALL << simResponse << ' ' << simIndication;
-
-    CHECK(simResponse);
-    CHECK(simIndication);
-
-    mRadioResponse->setResponseFunction(simResponse);
-    mRadioIndication->setResponseFunction(simIndication);
-
+        const std::shared_ptr<aidl::IRadioSimResponse>& response,
+        const std::shared_ptr<aidl::IRadioSimIndication>& indication) {
+    LOG_CALL << response << ' ' << indication;
+    mCallbackManager->setResponseFunctions(response, indication);
     return ok();
 }
 
@@ -287,7 +285,7 @@ ScopedAStatus RadioSim::updateSimPhonebookRecords(int32_t serial,
     if (mHal1_6) {
         mHal1_6->updateSimPhonebookRecords(serial, toHidl(recordInfo));
     } else {
-        respond().updateSimPhonebookRecordsResponse(notSupported(serial), 0);
+        respond()->updateSimPhonebookRecordsResponse(notSupported(serial), 0);
     }
     return ok();
 }
