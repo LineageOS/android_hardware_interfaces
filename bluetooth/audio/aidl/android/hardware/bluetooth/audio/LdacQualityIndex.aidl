@@ -22,17 +22,17 @@ enum LdacQualityIndex {
     /**
      * 990kbps
      */
-    QUALITY_HIGH = 1,
+    HIGH = 1,
     /**
      * 660kbps
      */
-    QUALITY_MID = 1 << 1,
+    MID = 1 << 1,
     /**
      * 330kbps
      */
-    QUALITY_LOW = 1 << 2,
+    LOW = 1 << 2,
     /**
      * Adaptive Bit Rate mode
      */
-    QUALITY_ABR = 1 << 3,
+    ABR = 1 << 3,
 }

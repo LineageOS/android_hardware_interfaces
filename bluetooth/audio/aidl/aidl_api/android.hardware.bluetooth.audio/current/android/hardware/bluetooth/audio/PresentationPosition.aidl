@@ -36,7 +36,7 @@ package android.hardware.bluetooth.audio;
 parcelable PresentationPosition {
   long remoteDeviceAudioDelayNanos;
   long transmittedOctets;
-  android.hardware.bluetooth.audio.PresentationPosition.TimeSpec transmittedOctetsTimeStamp;
+  android.hardware.bluetooth.audio.PresentationPosition.TimeSpec transmittedOctetsTimestamp;
   @VintfStability
   parcelable TimeSpec {
     long tvSec;

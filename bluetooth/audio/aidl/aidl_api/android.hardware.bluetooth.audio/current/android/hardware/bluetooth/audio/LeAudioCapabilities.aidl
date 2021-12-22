@@ -38,13 +38,13 @@ parcelable LeAudioCapabilities {
   android.hardware.bluetooth.audio.CodecType codecType;
   android.hardware.bluetooth.audio.AudioLocation supportedChannel;
   int supportedChannelCount;
-  android.hardware.bluetooth.audio.LeAudioCapabilities.LeaudioCodecCapabilities leaudioCodecCapabilities;
+  android.hardware.bluetooth.audio.LeAudioCapabilities.LeAudioCodecCapabilities leAudioCodecCapabilities;
   @VintfStability
   parcelable VendorCapabilities {
     ParcelableHolder extension;
   }
   @VintfStability
-  union LeaudioCodecCapabilities {
+  union LeAudioCodecCapabilities {
     android.hardware.bluetooth.audio.Lc3Capabilities lc3Capabilities;
     android.hardware.bluetooth.audio.LeAudioCapabilities.VendorCapabilities vendorCapabillities;
   }
