@@ -30,9 +30,6 @@
 #include <aidl/android/hardware/graphics/composer3/Color.h>
 #include <aidl/android/hardware/graphics/composer3/Composition.h>
 #include <aidl/android/hardware/graphics/composer3/FloatColor.h>
-#include <aidl/android/hardware/graphics/composer3/HandleIndex.h>
-#include <aidl/android/hardware/graphics/composer3/IComposer.h>
-#include <aidl/android/hardware/graphics/composer3/IComposerClient.h>
 #include <aidl/android/hardware/graphics/composer3/PerFrameMetadata.h>
 #include <aidl/android/hardware/graphics/composer3/PerFrameMetadataBlob.h>
 
