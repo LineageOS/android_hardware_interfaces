@@ -445,13 +445,4 @@ __attribute__((warn_unused_result)) bool translate(
     return true;
 }
 
-__attribute__((warn_unused_result)) bool translate(
-        const ::android::hardware::graphics::composer::V2_4::IComposerClient::
-                LayerGenericMetadataKey& in,
-        aidl::android::hardware::graphics::composer3::LayerGenericMetadataKey* out) {
-    out->name = in.name;
-    out->mandatory = static_cast<bool>(in.mandatory);
-    return true;
-}
-
 }  // namespace android::h2a

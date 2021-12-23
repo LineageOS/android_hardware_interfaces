@@ -52,7 +52,6 @@ interface IComposerClient {
   android.hardware.graphics.composer3.DisplayContentSample getDisplayedContentSample(long display, long maxFrames, long timestamp);
   android.hardware.graphics.composer3.DisplayContentSamplingAttributes getDisplayedContentSamplingAttributes(long display);
   android.hardware.graphics.composer3.HdrCapabilities getHdrCapabilities(long display);
-  android.hardware.graphics.composer3.LayerGenericMetadataKey[] getLayerGenericMetadataKeys();
   int getMaxVirtualDisplayCount();
   android.hardware.graphics.composer3.PerFrameMetadataKey[] getPerFrameMetadataKeys(long display);
   android.hardware.graphics.composer3.ReadbackBufferAttributes getReadbackBufferAttributes(long display);

@@ -23,7 +23,6 @@ import android.hardware.graphics.common.Rect;
 import android.hardware.graphics.composer3.Buffer;
 import android.hardware.graphics.composer3.Color;
 import android.hardware.graphics.composer3.FloatColor;
-import android.hardware.graphics.composer3.GenericMetadata;
 import android.hardware.graphics.composer3.ParcelableBlendMode;
 import android.hardware.graphics.composer3.ParcelableComposition;
 import android.hardware.graphics.composer3.ParcelableDataspace;
@@ -245,33 +244,6 @@ parcelable LayerCommand {
      * provided.
      */
     @nullable WhitePointNits whitePointNits;
-
-    /**
-     * Sets a piece of generic metadata for the given layer. If this
-     * function is called twice with the same key but different values, the
-     * newer value must override the older one. Calling this function with a
-     * 0-length value must reset that key's metadata as if it had not been
-     * set.
-     *
-     * A given piece of metadata may either be mandatory or a hint
-     * (non-mandatory) as indicated by the second parameter. Mandatory
-     * metadata may affect the composition result, which is to say that it
-     * may cause a visible change in the final image. By contrast, hints may
-     * only affect the composition strategy, such as which layers are
-     * composited by the client, but must not cause a visible change in the
-     * final image. The value of the mandatory flag shall match the value
-     * returned from getLayerGenericMetadataKeys for the given key.
-     *
-     * Only keys which have been returned from getLayerGenericMetadataKeys()
-     * shall be accepted. Any other keys must result in an UNSUPPORTED error.
-     *
-     * The value passed into this function shall be the binary
-     * representation of a stable AIDL type corresponding to the given key. For
-     * example, a key of 'com.example.Foo-V2' shall be paired with a
-     * value of type com.exampleFoo-V2, which would be defined in a
-     * vendor HAL extension.
-     */
-    @nullable GenericMetadata genericMetadata;
 
     /**
      * Sets the PerFrameMetadata for the display. This metadata must be used
