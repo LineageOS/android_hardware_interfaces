@@ -841,28 +841,6 @@ TEST_P(GraphicsComposerAidlTest, setGameContentType) {
     Test_setContentType(ContentType::GAME, "GAME");
 }
 
-TEST_P(GraphicsComposerAidlTest, getLayerGenericMetadataKeys) {
-    std::vector<LayerGenericMetadataKey> keys;
-    EXPECT_TRUE(mComposerClient->getLayerGenericMetadataKeys(&keys).isOk());
-
-    std::regex reverseDomainName("^[a-zA-Z-]{2,}(\\.[a-zA-Z0-9-]+)+$");
-    std::unordered_set<std::string> uniqueNames;
-    for (const auto& key : keys) {
-        std::string name(key.name);
-
-        // Keys must not start with 'android' or 'com.android'
-        EXPECT_FALSE(name.find("android") == 0);
-        EXPECT_FALSE(name.find("com.android") == 0);
-
-        // Keys must be in reverse domain name format
-        EXPECT_TRUE(std::regex_match(name, reverseDomainName));
-
-        // Keys must be unique within this list
-        const auto& [iter, inserted] = uniqueNames.insert(name);
-        EXPECT_TRUE(inserted);
-    }
-}
-
 TEST_P(GraphicsComposerAidlTest, CreateVirtualDisplay) {
     int32_t maxVirtualDisplayCount;
     EXPECT_TRUE(mComposerClient->getMaxVirtualDisplayCount(&maxVirtualDisplayCount).isOk());
