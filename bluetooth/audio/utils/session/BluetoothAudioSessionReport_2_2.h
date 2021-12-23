@@ -48,7 +48,7 @@ class BluetoothAudioSessionReport_2_2 {
     std::shared_ptr<BluetoothAudioSession_2_2> session_ptr =
         BluetoothAudioSessionInstance_2_2::GetSessionInstance(session_type);
     if (session_ptr != nullptr) {
-      session_ptr->GetAudioSession()->OnSessionEnded();
+      session_ptr->OnSessionEnded();
     }
   }
   // The API reports the Bluetooth stack has replied the result of startStream

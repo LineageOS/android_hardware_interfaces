@@ -24,7 +24,7 @@ import android.hardware.bluetooth.audio.UnicastConfiguration;
 @VintfStability
 parcelable LeAudioConfiguration {
     @VintfStability
-    union LeAuioModeConfig {
+    union LeAudioModeConfig {
         UnicastConfiguration unicastConfig;
         BroadcastConfiguration broadcastConfig;
     }
@@ -32,6 +32,6 @@ parcelable LeAudioConfiguration {
      * The mode of the LE audio
      */
     LeAudioMode mode;
-    LeAuioModeConfig modeConfig;
+    LeAudioModeConfig modeConfig;
     CodecType codecType;
 }

@@ -31,7 +31,7 @@ parcelable LeAudioCapabilities {
         ParcelableHolder extension;
     }
     @VintfStability
-    union LeaudioCodecCapabilities {
+    union LeAudioCodecCapabilities {
         Lc3Capabilities lc3Capabilities;
         VendorCapabilities vendorCapabillities;
     }
@@ -43,5 +43,5 @@ parcelable LeAudioCapabilities {
      */
     AudioLocation supportedChannel;
     int supportedChannelCount;
-    LeaudioCodecCapabilities leaudioCodecCapabilities;
+    LeAudioCodecCapabilities leAudioCodecCapabilities;
 }

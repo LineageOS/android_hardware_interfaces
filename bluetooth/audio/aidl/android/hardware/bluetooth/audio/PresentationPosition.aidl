@@ -44,9 +44,9 @@ parcelable PresentationPosition {
      */
     long transmittedOctets;
     /*
-     * transmittedOctetsTimeStamp the value of CLOCK_MONOTONIC
+     * transmittedOctetsTimestamp the value of CLOCK_MONOTONIC
      * corresponding to transmittedOctets. If the software data path is
      * unused (e.g., for Hardware Offload), the value is set to zero.
      */
-    TimeSpec transmittedOctetsTimeStamp;
+    TimeSpec transmittedOctetsTimestamp;
 }
