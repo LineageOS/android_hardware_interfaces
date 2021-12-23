@@ -117,13 +117,6 @@ interface IFrontend {
     void setLnb(in int lnbId);
 
     /**
-     * Enable or Disable Low Noise Amplifier (LNA).
-     *
-     * @param bEnable true if activate LNA module; false if deactivate LNA
-     */
-    void setLna(in boolean bEnable);
-
-    /**
      * Link Conditional Access Modules (CAM) to Frontend support Common
      * Interface (CI) bypass mode.
      *
@@ -143,4 +136,14 @@ interface IFrontend {
      * @param ciCamId specify CI-CAM Id to unlink.
      */
     void unlinkCiCam(in int ciCamId);
+
+    /**
+     * Request Hardware information about the frontend.
+     *
+     * The client may use this to collect vendor specific hardware information, e.g. RF
+     * chip version, Demod chip version, detailed status of dvbs blind scan, etc.
+     *
+     * @return the frontend hardware information.
+     */
+    String getHardwareInfo();
 }

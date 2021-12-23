@@ -484,6 +484,13 @@ void FrontendTests::getFrontendIdByType(FrontendType feType, int32_t& feId) {
     feId = INVALID_ID;
 }
 
+AssertionResult FrontendTests::verifyHardwareInfo() {
+    EXPECT_TRUE(mFrontend) << "Test with openFrontendById first.";
+    std::string info;
+    ndk::ScopedAStatus status = mFrontend->getHardwareInfo(&info);
+    return AssertionResult(status.isOk() && !info.empty());
+}
+
 void FrontendTests::tuneTest(FrontendConfig frontendConf) {
     int32_t feId;
     getFrontendIdByType(frontendConf.type, feId);
@@ -496,6 +503,18 @@ void FrontendTests::tuneTest(FrontendConfig frontendConf) {
     }
     ASSERT_TRUE(tuneFrontend(frontendConf, false /*testWithDemux*/));
     verifyFrontendStatus(frontendConf.tuneStatusTypes, frontendConf.expectTuneStatuses);
+    ASSERT_TRUE(stopTuneFrontend(false /*testWithDemux*/));
+    ASSERT_TRUE(closeFrontend());
+}
+
+void FrontendTests::debugInfoTest(FrontendConfig frontendConf) {
+    int32_t feId;
+    getFrontendIdByType(frontendConf.type, feId);
+    ASSERT_TRUE(feId != INVALID_ID);
+    ASSERT_TRUE(openFrontendById(feId));
+    ASSERT_TRUE(setFrontendCallback());
+    ASSERT_TRUE(tuneFrontend(frontendConf, false /*testWithDemux*/));
+    ASSERT_TRUE(verifyHardwareInfo());
     ASSERT_TRUE(stopTuneFrontend(false /*testWithDemux*/));
     ASSERT_TRUE(closeFrontend());
 }

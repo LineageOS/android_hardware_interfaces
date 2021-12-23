@@ -883,6 +883,14 @@ TEST_P(TunerFrontendAidlTest, LinkToCiCam) {
     mFrontendTests.tuneTest(frontendMap[live.frontendId]);
 }
 
+TEST_P(TunerFrontendAidlTest, getHardwareInfo) {
+    description("Test Frontend get hardware info");
+    if (!live.hasFrontendConnection) {
+        return;
+    }
+    mFrontendTests.debugInfoTest(frontendMap[live.frontendId]);
+}
+
 TEST_P(TunerBroadcastAidlTest, BroadcastDataFlowVideoFilterTest) {
     description("Test Video Filter functionality in Broadcast use case.");
     if (!live.hasFrontendConnection) {
