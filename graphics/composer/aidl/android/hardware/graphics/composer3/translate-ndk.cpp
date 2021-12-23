@@ -129,15 +129,6 @@ static_assert(aidl::android::hardware::graphics::composer3::DisplayRequest::
               static_cast<int>(::android::hardware::graphics::composer::V2_1::IComposerClient::
                                        DisplayRequest::WRITE_CLIENT_TARGET_TO_OUTPUT));
 
-static_assert(aidl::android::hardware::graphics::composer3::HandleIndex::EMPTY ==
-              static_cast<aidl::android::hardware::graphics::composer3::HandleIndex>(
-                      ::android::hardware::graphics::composer::V2_1::IComposerClient::HandleIndex::
-                              EMPTY));
-static_assert(aidl::android::hardware::graphics::composer3::HandleIndex::CACHED ==
-              static_cast<aidl::android::hardware::graphics::composer3::HandleIndex>(
-                      ::android::hardware::graphics::composer::V2_1::IComposerClient::HandleIndex::
-                              CACHED));
-
 static_assert(
         aidl::android::hardware::graphics::composer3::PowerMode::OFF ==
         static_cast<aidl::android::hardware::graphics::composer3::PowerMode>(
@@ -326,6 +317,13 @@ static_assert(
         aidl::android::hardware::graphics::composer3::ContentType::GAME ==
         static_cast<aidl::android::hardware::graphics::composer3::ContentType>(
                 ::android::hardware::graphics::composer::V2_4::IComposerClient::ContentType::GAME));
+
+static_assert(
+        aidl::android::hardware::graphics::composer3::PresentOrValidate::Result::Presented ==
+        static_cast<aidl::android::hardware::graphics::composer3::PresentOrValidate::Result>(1));
+static_assert(
+        aidl::android::hardware::graphics::composer3::PresentOrValidate::Result::Validated ==
+        static_cast<aidl::android::hardware::graphics::composer3::PresentOrValidate::Result>(0));
 
 __attribute__((warn_unused_result)) bool translate(
         const ::android::hardware::graphics::composer::V2_4::VsyncPeriodChangeTimeline& in,
