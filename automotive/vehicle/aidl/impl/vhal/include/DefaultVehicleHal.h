@@ -39,13 +39,6 @@ namespace hardware {
 namespace automotive {
 namespace vehicle {
 
-// private namespace
-namespace defaultvehiclehal_impl {
-
-constexpr int INVALID_MEMORY_FD = -1;
-
-}  // namespace defaultvehiclehal_impl
-
 class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::vehicle::BnVehicle {
   public:
     using CallbackType =

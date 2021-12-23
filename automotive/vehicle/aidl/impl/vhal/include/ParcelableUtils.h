@@ -29,6 +29,9 @@ namespace hardware {
 namespace automotive {
 namespace vehicle {
 
+// Turns the values into a stable large parcelable that could be sent via binder.
+// If values is small enough, it would be put into output.payloads, otherwise a shared memory file
+// would be created and output.sharedMemoryFd would be filled in.
 template <class T1, class T2>
 ::ndk::ScopedAStatus vectorToStableLargeParcelable(std::vector<T1>&& values, T2* output) {
     output->payloads = std::move(values);
@@ -44,6 +47,9 @@ template <class T1, class T2>
         // 'sharedMemoryFd' field.
         output->payloads.clear();
         output->sharedMemoryFd = std::move(*fd);
+    } else {
+        output->sharedMemoryFd = ::ndk::ScopedFileDescriptor();
+        // Do not modify payloads.
     }
     return ::ndk::ScopedAStatus::ok();
 }

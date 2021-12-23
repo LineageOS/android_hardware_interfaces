@@ -387,7 +387,7 @@ ScopedAStatus DefaultVehicleHal::getValues(const CallbackType& callback,
 
     if (!failedResults.empty()) {
         // First send the failed results we already know back to the client.
-        client->sendResults(failedResults);
+        client->sendResults(std::move(failedResults));
     }
 
     if (hardwareRequests.empty()) {
@@ -476,7 +476,7 @@ ScopedAStatus DefaultVehicleHal::setValues(const CallbackType& callback,
 
     if (!failedResults.empty()) {
         // First send the failed results we already know back to the client.
-        client->sendResults(failedResults);
+        client->sendResults(std::move(failedResults));
     }
 
     if (hardwareRequests.empty()) {

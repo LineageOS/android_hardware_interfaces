@@ -371,7 +371,7 @@ class DefaultVehicleHalTest : public ::testing::Test {
         return mVhal->mOnBinderDiedContexts[clientId].get();
     }
 
-    bool countOnBinderDiedContexts() {
+    size_t countOnBinderDiedContexts() {
         std::scoped_lock<std::mutex> lockGuard(mVhal->mLock);
         return mVhal->mOnBinderDiedContexts.size();
     }
@@ -444,6 +444,7 @@ class DefaultVehicleHalTest : public ::testing::Test {
         if (result.value() != nullptr) {
             requests.payloads.clear();
             requests.sharedMemoryFd = std::move(*result.value());
+            requests.payloads.clear();
         }
         return {};
     }
