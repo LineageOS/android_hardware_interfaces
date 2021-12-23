@@ -21,5 +21,5 @@ package android.hardware.graphics.composer3;
  */
 @VintfStability
 parcelable ClockMonotonicTimestamp {
-    long timestamp;
+    long timestampNanos;
 }
