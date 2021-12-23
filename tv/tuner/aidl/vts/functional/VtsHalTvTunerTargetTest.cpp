@@ -891,6 +891,14 @@ TEST_P(TunerFrontendAidlTest, getHardwareInfo) {
     mFrontendTests.debugInfoTest(frontendMap[live.frontendId]);
 }
 
+TEST_P(TunerFrontendAidlTest, maxNumberOfFrontends) {
+    description("Test Max Frontend number");
+    if (!live.hasFrontendConnection) {
+        return;
+    }
+    mFrontendTests.maxNumberOfFrontendsTest();
+}
+
 TEST_P(TunerBroadcastAidlTest, BroadcastDataFlowVideoFilterTest) {
     description("Test Video Filter functionality in Broadcast use case.");
     if (!live.hasFrontendConnection) {
