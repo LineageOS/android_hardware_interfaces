@@ -19,6 +19,7 @@
 #include <aidl/android/hardware/tv/tuner/BnFrontend.h>
 #include <fstream>
 #include <iostream>
+#include <thread>
 #include "Tuner.h"
 
 using namespace std;
@@ -60,13 +61,17 @@ class Frontend : public BnFrontend {
   private:
     virtual ~Frontend();
     bool supportsSatellite();
+    void scanThreadLoop();
+
     std::shared_ptr<IFrontendCallback> mCallback;
     std::shared_ptr<Tuner> mTuner;
     FrontendType mType = FrontendType::UNDEFINED;
     int32_t mId = 0;
     bool mIsLocked = false;
     int32_t mCiCamId;
-
+    std::thread mScanThread;
+    FrontendSettings mFrontendSettings;
+    FrontendScanType mFrontendScanType;
     std::ifstream mFrontendData;
 };
 
