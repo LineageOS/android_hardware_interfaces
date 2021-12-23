@@ -232,7 +232,7 @@ class HostapdCallback : public BnHostapdCallback {
         const ::aidl::android::hardware::wifi::hostapd::ClientInfo &) override {
         return ndk::ScopedAStatus::ok();
     }
-    ::ndk::ScopedAStatus onFailure(const std::string &) override {
+    ::ndk::ScopedAStatus onFailure(const std::string&, const std::string&) override {
         return ndk::ScopedAStatus::ok();
     }
 };
