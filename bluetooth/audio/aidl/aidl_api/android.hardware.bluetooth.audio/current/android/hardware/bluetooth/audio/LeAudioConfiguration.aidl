@@ -35,10 +35,10 @@ package android.hardware.bluetooth.audio;
 @VintfStability
 parcelable LeAudioConfiguration {
   android.hardware.bluetooth.audio.LeAudioMode mode;
-  android.hardware.bluetooth.audio.LeAudioConfiguration.LeAuioModeConfig modeConfig;
+  android.hardware.bluetooth.audio.LeAudioConfiguration.LeAudioModeConfig modeConfig;
   android.hardware.bluetooth.audio.CodecType codecType;
   @VintfStability
-  union LeAuioModeConfig {
+  union LeAudioModeConfig {
     android.hardware.bluetooth.audio.UnicastConfiguration unicastConfig;
     android.hardware.bluetooth.audio.BroadcastConfiguration broadcastConfig;
   }
