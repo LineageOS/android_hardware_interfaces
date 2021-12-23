@@ -327,6 +327,13 @@ static_assert(
         static_cast<aidl::android::hardware::graphics::composer3::ContentType>(
                 ::android::hardware::graphics::composer::V2_4::IComposerClient::ContentType::GAME));
 
+static_assert(
+        aidl::android::hardware::graphics::composer3::PresentOrValidate::Result::Presented ==
+        static_cast<aidl::android::hardware::graphics::composer3::PresentOrValidate::Result>(1));
+static_assert(
+        aidl::android::hardware::graphics::composer3::PresentOrValidate::Result::Validated ==
+        static_cast<aidl::android::hardware::graphics::composer3::PresentOrValidate::Result>(0));
+
 __attribute__((warn_unused_result)) bool translate(
         const ::android::hardware::graphics::composer::V2_4::VsyncPeriodChangeTimeline& in,
         aidl::android::hardware::graphics::composer3::VsyncPeriodChangeTimeline* out) {
