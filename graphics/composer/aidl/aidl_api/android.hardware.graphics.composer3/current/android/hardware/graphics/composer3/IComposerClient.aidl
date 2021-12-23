@@ -56,7 +56,7 @@ interface IComposerClient {
   int getMaxVirtualDisplayCount();
   android.hardware.graphics.composer3.PerFrameMetadataKey[] getPerFrameMetadataKeys(long display);
   android.hardware.graphics.composer3.ReadbackBufferAttributes getReadbackBufferAttributes(long display);
-  ParcelFileDescriptor getReadbackBufferFence(long display);
+  @nullable ParcelFileDescriptor getReadbackBufferFence(long display);
   android.hardware.graphics.composer3.RenderIntent[] getRenderIntents(long display, android.hardware.graphics.composer3.ColorMode mode);
   android.hardware.graphics.composer3.ContentType[] getSupportedContentTypes(long display);
   void registerCallback(in android.hardware.graphics.composer3.IComposerCallback callback);
@@ -69,7 +69,7 @@ interface IComposerClient {
   void setDisplayBrightness(long display, float brightness);
   void setDisplayedContentSamplingEnabled(long display, boolean enable, android.hardware.graphics.composer3.FormatColorComponent componentMask, long maxFrames);
   void setPowerMode(long display, android.hardware.graphics.composer3.PowerMode mode);
-  void setReadbackBuffer(long display, in android.hardware.common.NativeHandle buffer, in ParcelFileDescriptor releaseFence);
+  void setReadbackBuffer(long display, in android.hardware.common.NativeHandle buffer, in @nullable ParcelFileDescriptor releaseFence);
   void setVsyncEnabled(long display, boolean enabled);
   const int EX_BAD_CONFIG = 1;
   const int EX_BAD_DISPLAY = 2;
