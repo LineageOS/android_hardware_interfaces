@@ -88,46 +88,60 @@ Return<Result> Frontend::stopTune() {
 
 Return<Result> Frontend::scan(const FrontendSettings& settings, FrontendScanType type) {
     ALOGV("%s", __FUNCTION__);
+
+    // If it's in middle of scanning, stop it first.
+    if (mScanThread.joinable()) {
+        mScanThread.join();
+    }
+
+    mFrontendSettings = settings;
+    mFrontendScanType = type;
+    mScanThread = std::thread(&Frontend::scanThreadLoop, this);
+
+    return Result::SUCCESS;
+}
+
+void Frontend::scanThreadLoop() {
     FrontendScanMessage msg;
 
     if (mIsLocked) {
         msg.isEnd(true);
         mCallback->onScanMessage(FrontendScanMessageType::END, msg);
-        return Result::SUCCESS;
+        return;
     }
 
     uint32_t frequency;
-    switch (settings.getDiscriminator()) {
+    switch (mFrontendSettings.getDiscriminator()) {
         case FrontendSettings::hidl_discriminator::analog:
-            frequency = settings.analog().frequency;
+            frequency = mFrontendSettings.analog().frequency;
             break;
         case FrontendSettings::hidl_discriminator::atsc:
-            frequency = settings.atsc().frequency;
+            frequency = mFrontendSettings.atsc().frequency;
             break;
         case FrontendSettings::hidl_discriminator::atsc3:
-            frequency = settings.atsc3().frequency;
+            frequency = mFrontendSettings.atsc3().frequency;
             break;
         case FrontendSettings::hidl_discriminator::dvbs:
-            frequency = settings.dvbs().frequency;
+            frequency = mFrontendSettings.dvbs().frequency;
             break;
         case FrontendSettings::hidl_discriminator::dvbc:
-            frequency = settings.dvbc().frequency;
+            frequency = mFrontendSettings.dvbc().frequency;
             break;
         case FrontendSettings::hidl_discriminator::dvbt:
-            frequency = settings.dvbt().frequency;
+            frequency = mFrontendSettings.dvbt().frequency;
             break;
         case FrontendSettings::hidl_discriminator::isdbs:
-            frequency = settings.isdbs().frequency;
+            frequency = mFrontendSettings.isdbs().frequency;
             break;
         case FrontendSettings::hidl_discriminator::isdbs3:
-            frequency = settings.isdbs3().frequency;
+            frequency = mFrontendSettings.isdbs3().frequency;
             break;
         case FrontendSettings::hidl_discriminator::isdbt:
-            frequency = settings.isdbt().frequency;
+            frequency = mFrontendSettings.isdbt().frequency;
             break;
     }
 
-    if (type == FrontendScanType::SCAN_BLIND) {
+    if (mFrontendScanType == FrontendScanType::SCAN_BLIND) {
         frequency += 100 * 1000;
     }
 
@@ -204,8 +218,6 @@ Return<Result> Frontend::scan(const FrontendSettings& settings, FrontendScanType
     msg.isLocked(true);
     mCallback->onScanMessage(FrontendScanMessageType::LOCKED, msg);
     mIsLocked = true;
-
-    return Result::SUCCESS;
 }
 
 Return<Result> Frontend::scan_1_1(const FrontendSettings& settings, FrontendScanType type,
@@ -217,6 +229,10 @@ Return<Result> Frontend::scan_1_1(const FrontendSettings& settings, FrontendScan
 
 Return<Result> Frontend::stopScan() {
     ALOGV("%s", __FUNCTION__);
+
+    if (mScanThread.joinable()) {
+        mScanThread.join();
+    }
 
     mIsLocked = false;
     return Result::SUCCESS;
