@@ -147,3 +147,113 @@ TEST_P(RadioNetworkTest, isNrDualConnectivityEnabled) {
                 {RadioError::RADIO_NOT_AVAILABLE, RadioError::INTERNAL_ERR, RadioError::NONE}));
     }
 }
+
+void RadioNetworkTest::invokeAndExpectResponse(
+        std::function<ndk::ScopedAStatus(int32_t serial)> request,
+        std::vector<RadioError> errors_to_check) {
+    serial = GetRandomSerialNumber();
+
+    ndk::ScopedAStatus res = request(serial);
+    ASSERT_OK(res);
+
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error, errors_to_check));
+}
+
+/*
+ * Test IRadioNetwork.getUsageSetting()
+ *
+ * Verify that the usage setting can be retrieved.
+ */
+TEST_P(RadioNetworkTest, getUsageSetting) {
+    invokeAndExpectResponse([&](int serial) { return radio_network->getUsageSetting(serial); },
+                            {RadioError::RADIO_NOT_AVAILABLE, RadioError::INVALID_STATE,
+                             RadioError::SIM_ABSENT, RadioError::INTERNAL_ERR, RadioError::NONE});
+
+    ASSERT_TRUE(radioRsp_network->usageSetting == UsageSetting::VOICE_CENTRIC ||
+                radioRsp_network->usageSetting == UsageSetting::DATA_CENTRIC);
+}
+
+void RadioNetworkTest::testSetUsageSetting_InvalidValues(std::vector<RadioError> errors) {
+    invokeAndExpectResponse(
+            [&](int serial) {
+                return radio_network->setUsageSetting(serial,
+                                                      UsageSetting(0) /*below valid range*/);
+            },
+            errors);
+    invokeAndExpectResponse(
+            [&](int serial) {
+                return radio_network->setUsageSetting(serial, UsageSetting(-1) /*negative*/);
+            },
+            errors);
+    invokeAndExpectResponse(
+            [&](int serial) {
+                return radio_network->setUsageSetting(serial,
+                                                      UsageSetting(3) /*above valid range*/);
+            },
+            errors);
+}
+
+/*
+ * Test IRadioNetwork.setUsageSetting() and IRadioNetwork.getUsageSetting()
+ *
+ * Verify the following:
+ * -That the usage setting can be retrieved.
+ * -That the usage setting can be successfully set to allowed values.
+ * -That the usage setting cannot be set to invalid values.
+ */
+TEST_P(RadioNetworkTest, setUsageSetting) {
+    invokeAndExpectResponse([&](int serial) { return radio_network->getUsageSetting(serial); },
+                            {RadioError::RADIO_NOT_AVAILABLE, RadioError::INVALID_STATE,
+                             RadioError::SIM_ABSENT, RadioError::INTERNAL_ERR, RadioError::NONE});
+
+    if (radioRsp_network->rspInfo.error != RadioError::NONE) {
+        // Test only for invalid values, with the only allowable response being the same error
+        // that was previously provided, or an error indicating invalid arguments.
+        testSetUsageSetting_InvalidValues(
+                {radioRsp_network->rspInfo.error, RadioError::INVALID_ARGUMENTS});
+        // It is unsafe to proceed with setting valid values without knowing the starting value, but
+        // we expect errors anyway, so not necessary.
+        return;
+    } else {
+        // Because querying succeeded, the device is in a valid state to test for invalid values
+        // and the only thing that can change is that we expect to have an EINVAL return each time.
+        testSetUsageSetting_InvalidValues({RadioError::INVALID_ARGUMENTS});
+    }
+
+    // Store the original setting value to reset later.
+    const UsageSetting originalSetting = radioRsp_network->usageSetting;
+
+    // Choose the "other" value that is not the current value for test.
+    const UsageSetting testSetting = radioRsp_network->usageSetting == UsageSetting::VOICE_CENTRIC
+                                             ? UsageSetting::DATA_CENTRIC
+                                             : UsageSetting::VOICE_CENTRIC;
+
+    // Set an alternative setting; it may either succeed or be disallowed as out of range for
+    // the current device (if the device only supports its current mode).
+    invokeAndExpectResponse(
+            [&](int serial) { return radio_network->setUsageSetting(serial, testSetting); },
+            {RadioError::INVALID_ARGUMENTS, RadioError::NONE});
+
+    // If there was no error, then we expect the test setting to be set, or if there is an error
+    // we expect the original setting to be maintained.
+    const UsageSetting expectedSetting =
+            radioRsp_network->rspInfo.error == RadioError::NONE ? testSetting : originalSetting;
+    invokeAndExpectResponse([&](int serial) { return radio_network->getUsageSetting(serial); },
+                            {RadioError::NONE});
+
+    const UsageSetting updatedSetting = radioRsp_network->usageSetting;
+
+    // Re-set the original setting, which must always succeed.
+    invokeAndExpectResponse(
+            [&](int serial) { return radio_network->setUsageSetting(serial, originalSetting); },
+            {RadioError::NONE});
+
+    // Check that indeed the updated setting was set. We do this after resetting to original
+    // conditions to avoid early-exiting the test and leaving the device in a modified state.
+    ASSERT_TRUE(expectedSetting == updatedSetting);
+    // Check that indeed the original setting was reset.
+    ASSERT_TRUE(originalSetting == radioRsp_network->usageSetting);
+}

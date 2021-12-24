@@ -94,10 +94,12 @@ class FrontendTests {
 
     AssertionResult linkCiCam(int32_t ciCamId);
     AssertionResult unlinkCiCam(int32_t ciCamId);
+    AssertionResult verifyHardwareInfo();
 
     void getFrontendIdByType(FrontendType feType, int32_t& feId);
     void tuneTest(FrontendConfig frontendConf);
     void scanTest(FrontendConfig frontend, FrontendScanType type);
+    void debugInfoTest(FrontendConfig frontendConf);
 
     void setDvrTests(DvrTests* dvrTests) { mExternalDvrTests = dvrTests; }
     void setDemux(std::shared_ptr<IDemux> demux) { getDvrTests()->setDemux(demux); }
