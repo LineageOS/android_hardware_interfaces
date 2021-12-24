@@ -14,7 +14,33 @@
  * limitations under the License.
  */
 
-#include "android/hardware/graphics/composer3/translate-ndk.h"
+#include "aidl/android/hardware/graphics/common/BlendMode.h"
+#include "aidl/android/hardware/graphics/common/FRect.h"
+#include "aidl/android/hardware/graphics/common/Rect.h"
+#include "aidl/android/hardware/graphics/composer3/Capability.h"
+#include "aidl/android/hardware/graphics/composer3/ClientTargetProperty.h"
+#include "aidl/android/hardware/graphics/composer3/Color.h"
+#include "aidl/android/hardware/graphics/composer3/Composition.h"
+#include "aidl/android/hardware/graphics/composer3/ContentType.h"
+#include "aidl/android/hardware/graphics/composer3/DisplayAttribute.h"
+#include "aidl/android/hardware/graphics/composer3/DisplayCapability.h"
+#include "aidl/android/hardware/graphics/composer3/DisplayConnectionType.h"
+#include "aidl/android/hardware/graphics/composer3/FloatColor.h"
+#include "aidl/android/hardware/graphics/composer3/FormatColorComponent.h"
+#include "aidl/android/hardware/graphics/composer3/IComposer.h"
+#include "aidl/android/hardware/graphics/composer3/PerFrameMetadata.h"
+#include "aidl/android/hardware/graphics/composer3/PerFrameMetadataBlob.h"
+#include "aidl/android/hardware/graphics/composer3/PerFrameMetadataKey.h"
+#include "aidl/android/hardware/graphics/composer3/PowerMode.h"
+#include "aidl/android/hardware/graphics/composer3/VsyncPeriodChangeConstraints.h"
+#include "aidl/android/hardware/graphics/composer3/VsyncPeriodChangeTimeline.h"
+#include "android/hardware/graphics/composer/2.1/IComposer.h"
+#include "android/hardware/graphics/composer/2.1/IComposerCallback.h"
+#include "android/hardware/graphics/composer/2.1/IComposerClient.h"
+#include "android/hardware/graphics/composer/2.2/IComposerClient.h"
+#include "android/hardware/graphics/composer/2.3/IComposerClient.h"
+#include "android/hardware/graphics/composer/2.4/IComposerClient.h"
+#include "android/hardware/graphics/composer/2.4/types.h"
 
 namespace android::h2a {
 
@@ -324,123 +350,5 @@ static_assert(
 static_assert(
         aidl::android::hardware::graphics::composer3::PresentOrValidate::Result::Validated ==
         static_cast<aidl::android::hardware::graphics::composer3::PresentOrValidate::Result>(0));
-
-__attribute__((warn_unused_result)) bool translate(
-        const ::android::hardware::graphics::composer::V2_4::VsyncPeriodChangeTimeline& in,
-        aidl::android::hardware::graphics::composer3::VsyncPeriodChangeTimeline* out) {
-    out->newVsyncAppliedTimeNanos = static_cast<int64_t>(in.newVsyncAppliedTimeNanos);
-    out->refreshRequired = static_cast<bool>(in.refreshRequired);
-    out->refreshTimeNanos = static_cast<int64_t>(in.refreshTimeNanos);
-    return true;
-}
-
-__attribute__((warn_unused_result)) bool translate(
-        const ::android::hardware::graphics::composer::V2_1::IComposerClient::Rect& in,
-        aidl::android::hardware::graphics::common::Rect* out) {
-    out->left = static_cast<int32_t>(in.left);
-    out->top = static_cast<int32_t>(in.top);
-    out->right = static_cast<int32_t>(in.right);
-    out->bottom = static_cast<int32_t>(in.bottom);
-    return true;
-}
-
-__attribute__((warn_unused_result)) bool translate(
-        const ::android::hardware::graphics::composer::V2_1::IComposerClient::FRect& in,
-        aidl::android::hardware::graphics::common::FRect* out) {
-    out->left = static_cast<float>(in.left);
-    out->top = static_cast<float>(in.top);
-    out->right = static_cast<float>(in.right);
-    out->bottom = static_cast<float>(in.bottom);
-    return true;
-}
-
-__attribute__((warn_unused_result)) bool translate(
-        const ::android::hardware::graphics::composer::V2_1::IComposerClient::Color& in,
-        aidl::android::hardware::graphics::composer3::Color* out) {
-    // FIXME This requires conversion between signed and unsigned. Change this if it doesn't suit
-    // your needs.
-    if (in.r > std::numeric_limits<int8_t>::max() || in.r < 0) {
-        return false;
-    }
-    out->r = static_cast<int8_t>(in.r);
-    // FIXME This requires conversion between signed and unsigned. Change this if it doesn't suit
-    // your needs.
-    if (in.g > std::numeric_limits<int8_t>::max() || in.g < 0) {
-        return false;
-    }
-    out->g = static_cast<int8_t>(in.g);
-    // FIXME This requires conversion between signed and unsigned. Change this if it doesn't suit
-    // your needs.
-    if (in.b > std::numeric_limits<int8_t>::max() || in.b < 0) {
-        return false;
-    }
-    out->b = static_cast<int8_t>(in.b);
-    // FIXME This requires conversion between signed and unsigned. Change this if it doesn't suit
-    // your needs.
-    if (in.a > std::numeric_limits<int8_t>::max() || in.a < 0) {
-        return false;
-    }
-    out->a = static_cast<int8_t>(in.a);
-    return true;
-}
-
-__attribute__((warn_unused_result)) bool translate(
-        const ::android::hardware::graphics::composer::V2_3::IComposerClient::PerFrameMetadata& in,
-        aidl::android::hardware::graphics::composer3::PerFrameMetadata* out) {
-    out->key =
-            static_cast<aidl::android::hardware::graphics::composer3::PerFrameMetadataKey>(in.key);
-    out->value = static_cast<float>(in.value);
-    return true;
-}
-
-__attribute__((warn_unused_result)) bool translate(
-        const ::android::hardware::graphics::composer::V2_2::IComposerClient::FloatColor& in,
-        aidl::android::hardware::graphics::composer3::FloatColor* out) {
-    out->r = static_cast<float>(in.r);
-    out->g = static_cast<float>(in.g);
-    out->b = static_cast<float>(in.b);
-    out->a = static_cast<float>(in.a);
-    return true;
-}
-
-__attribute__((warn_unused_result)) bool translate(
-        const ::android::hardware::graphics::composer::V2_3::IComposerClient::PerFrameMetadataBlob&
-                in,
-        aidl::android::hardware::graphics::composer3::PerFrameMetadataBlob* out) {
-    out->key =
-            static_cast<aidl::android::hardware::graphics::composer3::PerFrameMetadataKey>(in.key);
-    {
-        size_t size = in.blob.size();
-        for (size_t i = 0; i < size; i++) {
-            // FIXME This requires conversion between signed and unsigned. Change this if it doesn't
-            // suit your needs.
-            if (in.blob[i] > std::numeric_limits<int8_t>::max() || in.blob[i] < 0) {
-                return false;
-            }
-            out->blob.push_back(static_cast<int8_t>(in.blob[i]));
-        }
-    }
-    return true;
-}
-
-__attribute__((warn_unused_result)) bool translate(
-        const ::android::hardware::graphics::composer::V2_4::IComposerClient::
-                VsyncPeriodChangeConstraints& in,
-        aidl::android::hardware::graphics::composer3::VsyncPeriodChangeConstraints* out) {
-    out->desiredTimeNanos = static_cast<int64_t>(in.desiredTimeNanos);
-    out->seamlessRequired = static_cast<bool>(in.seamlessRequired);
-    return true;
-}
-
-__attribute__((warn_unused_result)) bool translate(
-        const ::android::hardware::graphics::composer::V2_4::IComposerClient::ClientTargetProperty&
-                in,
-        aidl::android::hardware::graphics::composer3::ClientTargetProperty* out) {
-    out->pixelFormat =
-            static_cast<aidl::android::hardware::graphics::common::PixelFormat>(in.pixelFormat);
-    out->dataspace =
-            static_cast<aidl::android::hardware::graphics::common::Dataspace>(in.dataspace);
-    return true;
-}
 
 }  // namespace android::h2a
