@@ -20,6 +20,7 @@
 #include <android/hardware/tv/tuner/1.1/IFrontend.h>
 #include <fstream>
 #include <iostream>
+#include <thread>
 #include "Tuner.h"
 
 using namespace std;
@@ -81,13 +82,17 @@ class Frontend : public V1_1::IFrontend {
   private:
     virtual ~Frontend();
     bool supportsSatellite();
+    void scanThreadLoop();
+
     sp<IFrontendCallback> mCallback;
     sp<Tuner> mTunerService;
     FrontendType mType = FrontendType::UNDEFINED;
     FrontendId mId = 0;
     bool mIsLocked = false;
     uint32_t mCiCamId;
-
+    std::thread mScanThread;
+    FrontendSettings mFrontendSettings;
+    FrontendScanType mFrontendScanType;
     std::ifstream mFrontendData;
 };
 

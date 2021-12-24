@@ -36,5 +36,5 @@ package android.hardware.wifi.hostapd;
 interface IHostapdCallback {
   oneway void onApInstanceInfoChanged(in android.hardware.wifi.hostapd.ApInfo apInfo);
   oneway void onConnectedClientsChanged(in android.hardware.wifi.hostapd.ClientInfo clientInfo);
-  oneway void onFailure(in String ifaceName);
+  oneway void onFailure(in String ifaceName, in String instanceName);
 }

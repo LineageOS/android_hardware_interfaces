@@ -17,17 +17,9 @@
 package android.hardware.graphics.composer3;
 
 /**
- * Special index values (always negative) for command queue commands.
+ * Represents a nanoseconds timestamp in CLOCK_MONOTONIC.
  */
 @VintfStability
-@Backing(type="int")
-enum HandleIndex {
-    /**
-     * No handle
-     */
-    EMPTY = -1,
-    /**
-     * Use cached handle
-     */
-    CACHED = -2,
+parcelable ClockMonotonicTimestamp {
+    long timestampNanos;
 }

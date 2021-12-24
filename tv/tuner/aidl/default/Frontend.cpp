@@ -87,47 +87,60 @@ Frontend::~Frontend() {}
 ::ndk::ScopedAStatus Frontend::scan(const FrontendSettings& in_settings, FrontendScanType in_type) {
     ALOGV("%s", __FUNCTION__);
 
+    // If it's in middle of scanning, stop it first.
+    if (mScanThread.joinable()) {
+        mScanThread.join();
+    }
+
+    mFrontendSettings = in_settings;
+    mFrontendScanType = in_type;
+    mScanThread = std::thread(&Frontend::scanThreadLoop, this);
+
+    return ::ndk::ScopedAStatus::ok();
+}
+
+void Frontend::scanThreadLoop() {
     if (mIsLocked) {
         FrontendScanMessage msg;
         msg.set<FrontendScanMessage::Tag::isEnd>(true);
         mCallback->onScanMessage(FrontendScanMessageType::END, msg);
-        return ::ndk::ScopedAStatus::ok();
+        return;
     }
 
     int64_t frequency = 0;
-    switch (in_settings.getTag()) {
+    switch (mFrontendSettings.getTag()) {
         case FrontendSettings::Tag::analog:
-            frequency = in_settings.get<FrontendSettings::Tag::analog>().frequency;
+            frequency = mFrontendSettings.get<FrontendSettings::Tag::analog>().frequency;
             break;
         case FrontendSettings::Tag::atsc:
-            frequency = in_settings.get<FrontendSettings::Tag::atsc>().frequency;
+            frequency = mFrontendSettings.get<FrontendSettings::Tag::atsc>().frequency;
             break;
         case FrontendSettings::Tag::atsc3:
-            frequency = in_settings.get<FrontendSettings::Tag::atsc3>().frequency;
+            frequency = mFrontendSettings.get<FrontendSettings::Tag::atsc3>().frequency;
             break;
         case FrontendSettings::Tag::dvbs:
-            frequency = in_settings.get<FrontendSettings::Tag::dvbs>().frequency;
+            frequency = mFrontendSettings.get<FrontendSettings::Tag::dvbs>().frequency;
             break;
         case FrontendSettings::Tag::dvbc:
-            frequency = in_settings.get<FrontendSettings::Tag::dvbc>().frequency;
+            frequency = mFrontendSettings.get<FrontendSettings::Tag::dvbc>().frequency;
             break;
         case FrontendSettings::Tag::dvbt:
-            frequency = in_settings.get<FrontendSettings::Tag::dvbt>().frequency;
+            frequency = mFrontendSettings.get<FrontendSettings::Tag::dvbt>().frequency;
             break;
         case FrontendSettings::Tag::isdbs:
-            frequency = in_settings.get<FrontendSettings::Tag::isdbs>().frequency;
+            frequency = mFrontendSettings.get<FrontendSettings::Tag::isdbs>().frequency;
             break;
         case FrontendSettings::Tag::isdbs3:
-            frequency = in_settings.get<FrontendSettings::Tag::isdbs3>().frequency;
+            frequency = mFrontendSettings.get<FrontendSettings::Tag::isdbs3>().frequency;
             break;
         case FrontendSettings::Tag::isdbt:
-            frequency = in_settings.get<FrontendSettings::Tag::isdbt>().frequency;
+            frequency = mFrontendSettings.get<FrontendSettings::Tag::isdbt>().frequency;
             break;
         default:
             break;
     }
 
-    if (in_type == FrontendScanType::SCAN_BLIND) {
+    if (mFrontendScanType == FrontendScanType::SCAN_BLIND) {
         frequency += 100 * 1000;
     }
 
@@ -250,12 +263,14 @@ Frontend::~Frontend() {}
         mCallback->onScanMessage(FrontendScanMessageType::LOCKED, msg);
         mIsLocked = true;
     }
-
-    return ::ndk::ScopedAStatus::ok();
 }
 
 ::ndk::ScopedAStatus Frontend::stopScan() {
     ALOGV("%s", __FUNCTION__);
+
+    if (mScanThread.joinable()) {
+        mScanThread.join();
+    }
 
     mIsLocked = false;
     return ::ndk::ScopedAStatus::ok();
@@ -703,12 +718,6 @@ Frontend::~Frontend() {}
     return ::ndk::ScopedAStatus::ok();
 }
 
-::ndk::ScopedAStatus Frontend::setLna(bool /* in_bEnable */) {
-    ALOGV("%s", __FUNCTION__);
-
-    return ::ndk::ScopedAStatus::ok();
-}
-
 ::ndk::ScopedAStatus Frontend::setLnb(int32_t /* in_lnbId */) {
     ALOGV("%s", __FUNCTION__);
     if (!supportsSatellite()) {
@@ -741,6 +750,13 @@ binder_status_t Frontend::dump(int fd, const char** /* args */, uint32_t /* numA
     dprintf(fd, "    mIsLocked: %d\n", mIsLocked);
     dprintf(fd, "    mCiCamId: %d\n", mCiCamId);
     return STATUS_OK;
+}
+
+::ndk::ScopedAStatus Frontend::getHardwareInfo(std::string* _aidl_return) {
+    ALOGV("%s", __FUNCTION__);
+
+    *_aidl_return = "Sample Frontend";
+    return ::ndk::ScopedAStatus::ok();
 }
 
 FrontendType Frontend::getFrontendType() {

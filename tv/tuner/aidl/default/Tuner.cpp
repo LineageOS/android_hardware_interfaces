@@ -318,6 +318,12 @@ std::shared_ptr<Frontend> Tuner::getFrontendById(int32_t frontendId) {
     return ::ndk::ScopedAStatus::ok();
 }
 
+::ndk::ScopedAStatus Tuner::setLna(bool /* in_bEnable */) {
+    ALOGV("%s", __FUNCTION__);
+
+    return ::ndk::ScopedAStatus::ok();
+}
+
 binder_status_t Tuner::dump(int fd, const char** args, uint32_t numArgs) {
     ALOGV("%s", __FUNCTION__);
     {

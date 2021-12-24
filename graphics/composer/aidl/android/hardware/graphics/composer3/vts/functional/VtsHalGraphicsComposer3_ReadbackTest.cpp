@@ -19,6 +19,7 @@
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
 #include <aidl/android/hardware/graphics/common/BufferUsage.h>
+#include <aidl/android/hardware/graphics/composer3/IComposer.h>
 #include <android/binder_manager.h>
 #include <composer-vts/include/ReadbackVts.h>
 #include <composer-vts/include/RenderEngineVts.h>
@@ -103,13 +104,8 @@ class GraphicsCompositionTestBase : public ::testing::Test {
         ASSERT_NO_FATAL_FAILURE(mComposerClient->setPowerMode(mPrimaryDisplay, PowerMode::OFF));
         const auto errors = mReader.takeErrors();
         ASSERT_TRUE(mReader.takeErrors().empty());
+        ASSERT_TRUE(mReader.takeChangedCompositionTypes(mPrimaryDisplay).empty());
 
-        std::vector<int64_t> layers;
-        std::vector<Composition> types;
-        mReader.takeChangedCompositionTypes(mPrimaryDisplay, &layers, &types);
-
-        ASSERT_TRUE(layers.empty());
-        ASSERT_TRUE(types.empty());
         if (mComposerCallback != nullptr) {
             EXPECT_EQ(0, mComposerCallback->getInvalidHotplugCount());
             EXPECT_EQ(0, mComposerCallback->getInvalidRefreshCount());
@@ -118,12 +114,14 @@ class GraphicsCompositionTestBase : public ::testing::Test {
     }
 
     ::android::sp<::android::GraphicBuffer> allocate() {
+        const auto width = static_cast<uint32_t>(mDisplayWidth);
+        const auto height = static_cast<uint32_t>(mDisplayHeight);
+        const auto usage = static_cast<uint32_t>(common::BufferUsage::CPU_WRITE_OFTEN) |
+                           static_cast<uint32_t>(common::BufferUsage::CPU_READ_OFTEN);
+
         return ::android::sp<::android::GraphicBuffer>::make(
-                mDisplayWidth, mDisplayHeight, ::android::PIXEL_FORMAT_RGBA_8888,
-                /*layerCount*/ 1,
-                static_cast<uint64_t>(static_cast<int>(common::BufferUsage::CPU_WRITE_OFTEN) |
-                                      static_cast<int>(common::BufferUsage::CPU_READ_OFTEN)),
-                "VtsHalGraphicsComposer3_ReadbackTest");
+                width, height, ::android::PIXEL_FORMAT_RGBA_8888,
+                /*layerCount*/ 1u, usage, "VtsHalGraphicsComposer3_ReadbackTest");
     }
 
     void writeLayers(const std::vector<std::shared_ptr<TestLayer>>& layers) {
@@ -141,10 +139,10 @@ class GraphicsCompositionTestBase : public ::testing::Test {
         }
 
         std::vector<CommandResultPayload> results;
-        const auto status = mComposerClient->executeCommands(commands, &results);
+        auto status = mComposerClient->executeCommands(commands, &results);
         ASSERT_TRUE(status.isOk()) << "executeCommands failed " << status.getDescription();
 
-        mReader.parse(results);
+        mReader.parse(std::move(results));
         mWriter.reset();
     }
 
@@ -258,15 +256,11 @@ TEST_P(GraphicsCompositionTest, SingleSolidColorLayer) {
 
         writeLayers(layers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter.validateDisplay(mPrimaryDisplay);
+        mWriter.validateDisplay(mPrimaryDisplay, ComposerClientWriter::kNoTimestamp);
         execute();
         // if hwc cannot handle and asks for composition change,
         // just succeed the test
-        std::vector<int64_t> changedCompositionLayers;
-        std::vector<Composition> changedCompositionTypes;
-        mReader.takeChangedCompositionTypes(mPrimaryDisplay, &changedCompositionLayers,
-                                            &changedCompositionTypes);
-        if (!changedCompositionLayers.empty()) {
+        if (!mReader.takeChangedCompositionTypes(mPrimaryDisplay).empty()) {
             GTEST_SUCCEED();
             return;
         }
@@ -317,14 +311,10 @@ TEST_P(GraphicsCompositionTest, SetLayerBuffer) {
 
         writeLayers(layers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter.validateDisplay(mPrimaryDisplay);
+        mWriter.validateDisplay(mPrimaryDisplay, ComposerClientWriter::kNoTimestamp);
         execute();
 
-        std::vector<int64_t> changedCompositionLayers;
-        std::vector<Composition> changedCompositionTypes;
-        mReader.takeChangedCompositionTypes(mPrimaryDisplay, &changedCompositionLayers,
-                                            &changedCompositionTypes);
-        if (!changedCompositionLayers.empty()) {
+        if (!mReader.takeChangedCompositionTypes(mPrimaryDisplay).empty()) {
             GTEST_SUCCEED();
             return;
         }
@@ -377,14 +367,10 @@ TEST_P(GraphicsCompositionTest, SetLayerBufferNoEffect) {
                                       mDisplayWidth, mDisplayHeight, mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
 
-        mWriter.validateDisplay(mPrimaryDisplay);
+        mWriter.validateDisplay(mPrimaryDisplay, ComposerClientWriter::kNoTimestamp);
         execute();
 
-        std::vector<int64_t> changedCompositionLayers;
-        std::vector<Composition> changedCompositionTypes;
-        mReader.takeChangedCompositionTypes(mPrimaryDisplay, &changedCompositionLayers,
-                                            &changedCompositionTypes);
-        if (!changedCompositionLayers.empty()) {
+        if (!mReader.takeChangedCompositionTypes(mPrimaryDisplay).empty()) {
             GTEST_SUCCEED();
             return;
         }
@@ -492,17 +478,13 @@ TEST_P(GraphicsCompositionTest, ClientComposition) {
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
         writeLayers(layers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter.validateDisplay(mPrimaryDisplay);
+        mWriter.validateDisplay(mPrimaryDisplay, ComposerClientWriter::kNoTimestamp);
         execute();
 
-        std::vector<int64_t> changedCompositionLayers;
-        std::vector<Composition> changedCompositionTypes;
-        mReader.takeChangedCompositionTypes(mPrimaryDisplay, &changedCompositionLayers,
-                                            &changedCompositionTypes);
-        if (!changedCompositionLayers.empty()) {
-            ASSERT_EQ(1, changedCompositionLayers.size());
+        auto changedCompositionTypes = mReader.takeChangedCompositionTypes(mPrimaryDisplay);
+        if (!changedCompositionTypes.empty()) {
             ASSERT_EQ(1, changedCompositionTypes.size());
-            ASSERT_EQ(Composition::CLIENT, changedCompositionTypes[0]);
+            ASSERT_EQ(Composition::CLIENT, changedCompositionTypes[0].composition);
 
             PixelFormat clientFormat = PixelFormat::RGBA_8888;
             auto clientUsage = static_cast<uint32_t>(
@@ -537,9 +519,8 @@ TEST_P(GraphicsCompositionTest, ClientComposition) {
             mWriter.setClientTarget(mPrimaryDisplay, 0, mGraphicBuffer->handle, fenceHandle.get(),
                                     clientDataspace, std::vector<common::Rect>(1, damage));
             execute();
-            mReader.takeChangedCompositionTypes(mPrimaryDisplay, &changedCompositionLayers,
-                                                &changedCompositionTypes);
-            ASSERT_TRUE(changedCompositionLayers.empty());
+            changedCompositionTypes = mReader.takeChangedCompositionTypes(mPrimaryDisplay);
+            ASSERT_TRUE(changedCompositionTypes.empty());
         }
         ASSERT_TRUE(mReader.takeErrors().empty());
 
@@ -606,18 +587,15 @@ TEST_P(GraphicsCompositionTest, DeviceAndClientComposition) {
         clientLayer->setDisplayFrame(clientFrame);
         clientLayer->setZOrder(0);
         clientLayer->write(mWriter);
-        mWriter.validateDisplay(mPrimaryDisplay);
+        mWriter.validateDisplay(mPrimaryDisplay, ComposerClientWriter::kNoTimestamp);
         execute();
 
-        std::vector<int64_t> changedCompositionLayers;
-        std::vector<Composition> changedCompositionTypes;
-        mReader.takeChangedCompositionTypes(mPrimaryDisplay, &changedCompositionLayers,
-                                            &changedCompositionTypes);
+        auto changedCompositionTypes = mReader.takeChangedCompositionTypes(mPrimaryDisplay);
         if (changedCompositionTypes.size() != 1) {
             continue;
         }
         // create client target buffer
-        ASSERT_EQ(Composition::CLIENT, changedCompositionTypes[0]);
+        ASSERT_EQ(Composition::CLIENT, changedCompositionTypes[0].composition);
         mGraphicBuffer->reallocate(static_cast<uint32_t>(mDisplayWidth),
                                    static_cast<uint32_t>(mDisplayHeight),
                                    static_cast<int32_t>(common::PixelFormat::RGBA_8888),
@@ -642,9 +620,8 @@ TEST_P(GraphicsCompositionTest, DeviceAndClientComposition) {
         mWriter.setClientTarget(mPrimaryDisplay, 0, mGraphicBuffer->handle, fenceHandle.get(),
                                 clientDataspace, std::vector<common::Rect>(1, clientFrame));
         execute();
-        mReader.takeChangedCompositionTypes(mPrimaryDisplay, &changedCompositionLayers,
-                                            &changedCompositionTypes);
-        ASSERT_EQ(0, changedCompositionLayers.size());
+        changedCompositionTypes = mReader.takeChangedCompositionTypes(mPrimaryDisplay);
+        ASSERT_TRUE(changedCompositionTypes.empty());
         ASSERT_TRUE(mReader.takeErrors().empty());
 
         mWriter.presentDisplay(mPrimaryDisplay);
@@ -685,13 +662,9 @@ TEST_P(GraphicsCompositionTest, SetLayerDamage) {
 
         writeLayers(layers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter.validateDisplay(mPrimaryDisplay);
+        mWriter.validateDisplay(mPrimaryDisplay, ComposerClientWriter::kNoTimestamp);
         execute();
-        std::vector<int64_t> changedCompositionLayers;
-        std::vector<Composition> changedCompositionTypes;
-        mReader.takeChangedCompositionTypes(mPrimaryDisplay, &changedCompositionLayers,
-                                            &changedCompositionTypes);
-        if (!changedCompositionLayers.empty()) {
+        if (!mReader.takeChangedCompositionTypes(mPrimaryDisplay).empty()) {
             GTEST_SUCCEED();
             return;
         }
@@ -715,13 +688,10 @@ TEST_P(GraphicsCompositionTest, SetLayerDamage) {
 
         writeLayers(layers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter.validateDisplay(mPrimaryDisplay);
+        mWriter.validateDisplay(mPrimaryDisplay, ComposerClientWriter::kNoTimestamp);
         execute();
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mReader.takeChangedCompositionTypes(mPrimaryDisplay, &changedCompositionLayers,
-                                            &changedCompositionTypes);
-        ASSERT_TRUE(changedCompositionLayers.empty());
-        ASSERT_TRUE(changedCompositionTypes.empty());
+        ASSERT_TRUE(mReader.takeChangedCompositionTypes(mPrimaryDisplay).empty());
         mWriter.presentDisplay(mPrimaryDisplay);
         execute();
         ASSERT_TRUE(mReader.takeErrors().empty());
@@ -756,13 +726,9 @@ TEST_P(GraphicsCompositionTest, SetLayerPlaneAlpha) {
 
         writeLayers(layers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter.validateDisplay(mPrimaryDisplay);
+        mWriter.validateDisplay(mPrimaryDisplay, ComposerClientWriter::kNoTimestamp);
         execute();
-        std::vector<int64_t> changedCompositionLayers;
-        std::vector<Composition> changedCompositionTypes;
-        mReader.takeChangedCompositionTypes(mPrimaryDisplay, &changedCompositionLayers,
-                                            &changedCompositionTypes);
-        if (!changedCompositionLayers.empty()) {
+        if (!mReader.takeChangedCompositionTypes(mPrimaryDisplay).empty()) {
             GTEST_SUCCEED();
             return;
         }
@@ -819,13 +785,9 @@ TEST_P(GraphicsCompositionTest, SetLayerSourceCrop) {
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
         writeLayers(layers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter.validateDisplay(mPrimaryDisplay);
+        mWriter.validateDisplay(mPrimaryDisplay, ComposerClientWriter::kNoTimestamp);
         execute();
-        std::vector<int64_t> changedCompositionLayers;
-        std::vector<Composition> changedCompositionTypes;
-        mReader.takeChangedCompositionTypes(mPrimaryDisplay, &changedCompositionLayers,
-                                            &changedCompositionTypes);
-        if (!changedCompositionLayers.empty()) {
+        if (!mReader.takeChangedCompositionTypes(mPrimaryDisplay).empty()) {
             GTEST_SUCCEED();
             return;
         }
@@ -877,13 +839,9 @@ TEST_P(GraphicsCompositionTest, SetLayerZOrder) {
 
         writeLayers(layers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter.validateDisplay(mPrimaryDisplay);
+        mWriter.validateDisplay(mPrimaryDisplay, ComposerClientWriter::kNoTimestamp);
         execute();
-        std::vector<int64_t> changedCompositionLayers;
-        std::vector<Composition> changedCompositionTypes;
-        mReader.takeChangedCompositionTypes(mPrimaryDisplay, &changedCompositionLayers,
-                                            &changedCompositionTypes);
-        if (!changedCompositionLayers.empty()) {
+        if (!mReader.takeChangedCompositionTypes(mPrimaryDisplay).empty()) {
             GTEST_SUCCEED();
             return;
         }
@@ -902,12 +860,9 @@ TEST_P(GraphicsCompositionTest, SetLayerZOrder) {
 
         writeLayers(layers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter.validateDisplay(mPrimaryDisplay);
+        mWriter.validateDisplay(mPrimaryDisplay, ComposerClientWriter::kNoTimestamp);
         execute();
-        mReader.takeChangedCompositionTypes(mPrimaryDisplay, &changedCompositionLayers,
-                                            &changedCompositionTypes);
-        ASSERT_TRUE(changedCompositionLayers.empty());
-        ASSERT_TRUE(changedCompositionTypes.empty());
+        ASSERT_TRUE(mReader.takeChangedCompositionTypes(mPrimaryDisplay).empty());
         ASSERT_TRUE(mReader.takeErrors().empty());
         mWriter.presentDisplay(mPrimaryDisplay);
         execute();
@@ -1027,13 +982,9 @@ TEST_P(GraphicsBlendModeCompositionTest, None) {
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
         writeLayers(mLayers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter.validateDisplay(mPrimaryDisplay);
+        mWriter.validateDisplay(mPrimaryDisplay, ComposerClientWriter::kNoTimestamp);
         execute();
-        std::vector<int64_t> changedCompositionLayers;
-        std::vector<Composition> changedCompositionTypes;
-        mReader.takeChangedCompositionTypes(mPrimaryDisplay, &changedCompositionLayers,
-                                            &changedCompositionTypes);
-        if (!changedCompositionLayers.empty()) {
+        if (!mReader.takeChangedCompositionTypes(mPrimaryDisplay).empty()) {
             GTEST_SUCCEED();
             return;
         }
@@ -1072,13 +1023,9 @@ TEST_P(GraphicsBlendModeCompositionTest, Coverage) {
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
         writeLayers(mLayers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter.validateDisplay(mPrimaryDisplay);
+        mWriter.validateDisplay(mPrimaryDisplay, ComposerClientWriter::kNoTimestamp);
         execute();
-        std::vector<int64_t> changedCompositionLayers;
-        std::vector<Composition> changedCompositionTypes;
-        mReader.takeChangedCompositionTypes(mPrimaryDisplay, &changedCompositionLayers,
-                                            &changedCompositionTypes);
-        if (!changedCompositionLayers.empty()) {
+        if (!mReader.takeChangedCompositionTypes(mPrimaryDisplay).empty()) {
             GTEST_SUCCEED();
             return;
         }
@@ -1112,13 +1059,9 @@ TEST_P(GraphicsBlendModeCompositionTest, Premultiplied) {
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
         writeLayers(mLayers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter.validateDisplay(mPrimaryDisplay);
+        mWriter.validateDisplay(mPrimaryDisplay, ComposerClientWriter::kNoTimestamp);
         execute();
-        std::vector<int64_t> changedCompositionLayers;
-        std::vector<Composition> changedCompositionTypes;
-        mReader.takeChangedCompositionTypes(mPrimaryDisplay, &changedCompositionLayers,
-                                            &changedCompositionTypes);
-        if (!changedCompositionLayers.empty()) {
+        if (!mReader.takeChangedCompositionTypes(mPrimaryDisplay).empty()) {
             GTEST_SUCCEED();
             return;
         }
@@ -1195,13 +1138,9 @@ TEST_P(GraphicsTransformCompositionTest, FLIP_H) {
 
         writeLayers(mLayers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter.validateDisplay(mPrimaryDisplay);
+        mWriter.validateDisplay(mPrimaryDisplay, ComposerClientWriter::kNoTimestamp);
         execute();
-        std::vector<int64_t> changedCompositionLayers;
-        std::vector<Composition> changedCompositionTypes;
-        mReader.takeChangedCompositionTypes(mPrimaryDisplay, &changedCompositionLayers,
-                                            &changedCompositionTypes);
-        if (!changedCompositionLayers.empty()) {
+        if (!mReader.takeChangedCompositionTypes(mPrimaryDisplay).empty()) {
             GTEST_SUCCEED();
             return;
         }
@@ -1241,13 +1180,9 @@ TEST_P(GraphicsTransformCompositionTest, FLIP_V) {
 
         writeLayers(mLayers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter.validateDisplay(mPrimaryDisplay);
+        mWriter.validateDisplay(mPrimaryDisplay, ComposerClientWriter::kNoTimestamp);
         execute();
-        std::vector<int64_t> changedCompositionLayers;
-        std::vector<Composition> changedCompositionTypes;
-        mReader.takeChangedCompositionTypes(mPrimaryDisplay, &changedCompositionLayers,
-                                            &changedCompositionTypes);
-        if (!changedCompositionLayers.empty()) {
+        if (!mReader.takeChangedCompositionTypes(mPrimaryDisplay).empty()) {
             GTEST_SUCCEED();
             return;
         }
@@ -1287,12 +1222,9 @@ TEST_P(GraphicsTransformCompositionTest, ROT_180) {
 
         writeLayers(mLayers);
         ASSERT_TRUE(mReader.takeErrors().empty());
-        mWriter.validateDisplay(mPrimaryDisplay);
+        mWriter.validateDisplay(mPrimaryDisplay, ComposerClientWriter::kNoTimestamp);
         execute();
-        std::vector<int64_t> layers;
-        std::vector<Composition> types;
-        mReader.takeChangedCompositionTypes(mPrimaryDisplay, &layers, &types);
-        if (!layers.empty()) {
+        if (!mReader.takeChangedCompositionTypes(mPrimaryDisplay).empty()) {
             GTEST_SUCCEED();
             return;
         }
