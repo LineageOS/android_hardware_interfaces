@@ -39,7 +39,7 @@ class RadioNetworkResponse : public BnRadioNetworkResponse {
     std::vector<RadioBandMode> radioBandModes;
     std::vector<OperatorInfo> networkInfos;
     bool isNrDualConnectivityEnabled;
-    RadioAccessFamily networkTypeBitmapResponse;
+    int networkTypeBitmapResponse;
     RegStateResult regStateResp;
     CellIdentity barringCellIdentity;
     std::vector<BarringInfo> barringInfos;
@@ -48,7 +48,7 @@ class RadioNetworkResponse : public BnRadioNetworkResponse {
     virtual ndk::ScopedAStatus acknowledgeRequest(int32_t serial) override;
 
     virtual ndk::ScopedAStatus getAllowedNetworkTypesBitmapResponse(
-            const RadioResponseInfo& info, const RadioAccessFamily networkTypeBitmap) override;
+            const RadioResponseInfo& info, const int32_t networkTypeBitmap) override;
 
     virtual ndk::ScopedAStatus getAvailableBandModesResponse(
             const RadioResponseInfo& info, const std::vector<RadioBandMode>& bandModes) override;
@@ -187,7 +187,7 @@ class RadioNetworkIndication : public BnRadioNetworkIndication {
 
     virtual ndk::ScopedAStatus registrationFailed(RadioIndicationType type,
                                                   const CellIdentity& cellIdentity,
-                                                  const std::string& chosenPlmn, Domain domain,
+                                                  const std::string& chosenPlmn, int32_t domain,
                                                   int32_t causeCode,
                                                   int32_t additionalCauseCode) override;
 

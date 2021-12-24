@@ -37,7 +37,7 @@ interface IRadioVoice {
   oneway void acceptCall(in int serial);
   oneway void conference(in int serial);
   oneway void dial(in int serial, in android.hardware.radio.voice.Dial dialInfo);
-  oneway void emergencyDial(in int serial, in android.hardware.radio.voice.Dial dialInfo, in android.hardware.radio.voice.EmergencyServiceCategory categories, in String[] urns, in android.hardware.radio.voice.EmergencyCallRouting routing, in boolean hasKnownUserIntentEmergency, in boolean isTesting);
+  oneway void emergencyDial(in int serial, in android.hardware.radio.voice.Dial dialInfo, in int categories, in String[] urns, in android.hardware.radio.voice.EmergencyCallRouting routing, in boolean hasKnownUserIntentEmergency, in boolean isTesting);
   oneway void exitEmergencyCallbackMode(in int serial);
   oneway void explicitCallTransfer(in int serial);
   oneway void getCallForwardStatus(in int serial, in android.hardware.radio.voice.CallForwardInfo callInfo);
