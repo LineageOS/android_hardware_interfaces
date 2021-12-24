@@ -242,13 +242,13 @@ void ReadbackBuffer::checkReadbackBuffer(std::vector<Color> expectedColors) {
 
     int outBytesPerPixel;
     int outBytesPerStride;
-    auto status = mGraphicBuffer->lockAsync(mUsage, mAccessRegion, nullptr, fenceHandle.get(),
+    void* bufData = nullptr;
+    auto status = mGraphicBuffer->lockAsync(mUsage, mAccessRegion, &bufData, fenceHandle.get(),
                                             &outBytesPerPixel, &outBytesPerStride);
     EXPECT_EQ(::android::OK, status);
     ASSERT_TRUE(mPixelFormat == PixelFormat::RGB_888 || mPixelFormat == PixelFormat::RGBA_8888);
-    ReadbackHelper::compareColorBuffers(expectedColors, mGraphicBuffer.get(),
-                                        static_cast<int32_t>(mStride), mWidth, mHeight,
-                                        mPixelFormat);
+    ReadbackHelper::compareColorBuffers(expectedColors, bufData, static_cast<int32_t>(mStride),
+                                        mWidth, mHeight, mPixelFormat);
     status = mGraphicBuffer->unlock();
     EXPECT_EQ(::android::OK, status);
 }
