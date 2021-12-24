@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#define LOG_TAG "FakeVehicleHardware"
+#define FAKE_VEHICLEHARDWARE_DEBUG false  // STOPSHIP if true.
+
 #include "FakeVehicleHardware.h"
 
 #include <DefaultConfig.h>
@@ -387,7 +390,9 @@ StatusCode FakeVehicleHardware::setValues(std::shared_ptr<const SetValuesCallbac
         const VehiclePropValue& value = request.value;
         int propId = value.prop;
 
-        ALOGD("Set value for property ID: %d", propId);
+        if (FAKE_VEHICLEHARDWARE_DEBUG) {
+            ALOGD("Set value for property ID: %d", propId);
+        }
 
         SetValueResult setValueResult;
         setValueResult.requestId = request.requestId;
@@ -434,7 +439,10 @@ StatusCode FakeVehicleHardware::getValues(std::shared_ptr<const GetValuesCallbac
     std::vector<GetValueResult> results;
     for (auto& request : requests) {
         const VehiclePropValue& value = request.prop;
-        ALOGD("getValues(%d)", value.prop);
+
+        if (FAKE_VEHICLEHARDWARE_DEBUG) {
+            ALOGD("getValues(%d)", value.prop);
+        }
 
         GetValueResult getValueResult;
         getValueResult.requestId = request.requestId;
