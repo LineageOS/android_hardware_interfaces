@@ -37,6 +37,7 @@ cc_test {
         "GnssMeasurementCallbackAidl.cpp",
         "GnssNavigationMessageCallback.cpp",
         "GnssPowerIndicationCallback.cpp",
+        "GnssVisibilityControlCallback.cpp",
         "VtsHalGnssTargetTest.cpp",
     ],
     shared_libs: [
@@ -49,6 +50,7 @@ cc_test {
     static_libs: [
         "android.hardware.gnss-V2-cpp",
         "android.hardware.gnss@common-vts-lib",
+        "android.hardware.gnss.visibility_control-V1-cpp",
     ],
     test_suites: [
         "general-tests",
