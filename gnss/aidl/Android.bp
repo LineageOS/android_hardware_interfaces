@@ -24,9 +24,27 @@ package {
 }
 
 aidl_interface {
+    name: "android.hardware.gnss.visibility_control",
+    vendor_available: true,
+    srcs: ["android/hardware/gnss/visibility_control/*.aidl"],
+    stability: "vintf",
+    backend: {
+        java: {
+            platform_apis: true,
+        },
+        ndk: {
+            vndk: {
+                enabled: true,
+            },
+        },
+    },
+}
+
+aidl_interface {
     name: "android.hardware.gnss",
     vendor_available: true,
     srcs: ["android/hardware/gnss/*.aidl"],
+    imports: ["android.hardware.gnss.visibility_control"],
     stability: "vintf",
     backend: {
         java: {
