@@ -25,6 +25,7 @@
 #include <android/hardware/gnss/IGnssMeasurementInterface.h>
 #include <android/hardware/gnss/IGnssPowerIndication.h>
 #include <android/hardware/gnss/IGnssPsds.h>
+#include <android/hardware/gnss/measurement_corrections/IMeasurementCorrectionsInterface.h>
 #include <android/hardware/gnss/visibility_control/IGnssVisibilityControl.h>
 #include <cutils/properties.h>
 #include "AGnssCallbackAidl.h"
@@ -35,6 +36,8 @@
 #include "GnssNavigationMessageCallback.h"
 #include "GnssPowerIndicationCallback.h"
 #include "GnssVisibilityControlCallback.h"
+#include "MeasurementCorrectionsCallback.h"
+#include "Utils.h"
 #include "gnss_hal_test.h"
 
 using android::sp;
@@ -62,6 +65,8 @@ using android::hardware::gnss::IGnssPowerIndication;
 using android::hardware::gnss::IGnssPsds;
 using android::hardware::gnss::PsdsType;
 using android::hardware::gnss::SatellitePvt;
+using android::hardware::gnss::common::Utils;
+using android::hardware::gnss::measurement_corrections::IMeasurementCorrectionsInterface;
 using android::hardware::gnss::visibility_control::IGnssVisibilityControl;
 
 using GnssConstellationTypeV2_0 = android::hardware::gnss::V2_0::GnssConstellationType;
@@ -909,7 +914,6 @@ TEST_P(GnssHalTest, GnssDebugValuesSanityTest) {
 }
 
 /*
- * TestAGnssExtension:
  * TestGnssVisibilityControlExtension:
  * 1. Gets the IGnssVisibilityControl extension.
  * 2. Sets GnssVisibilityControlCallback
@@ -1094,4 +1098,44 @@ TEST_P(GnssHalTest, TestGnssAntennaInfo) {
     }
 
     iGnssAntennaInfo->close();
+}
+
+/*
+ * TestGnssMeasurementCorrections:
+ * If measurement corrections capability is supported, verifies that the measurement corrections
+ * capabilities are reported and the mandatory LOS_SATS or the EXCESS_PATH_LENGTH
+ * capability flag is set.
+ */
+TEST_P(GnssHalTest, TestGnssMeasurementCorrections) {
+    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+        return;
+    }
+    if (!(aidl_gnss_cb_->last_capabilities_ &
+          (int)GnssCallbackAidl::CAPABILITY_MEASUREMENT_CORRECTIONS)) {
+        return;
+    }
+
+    sp<IMeasurementCorrectionsInterface> iMeasurementCorrectionsAidl;
+    auto status = aidl_gnss_hal_->getExtensionMeasurementCorrections(&iMeasurementCorrectionsAidl);
+    ASSERT_TRUE(status.isOk());
+    ASSERT_TRUE(iMeasurementCorrectionsAidl != nullptr);
+
+    // Setup measurement corrections callback.
+    auto gnssMeasurementCorrectionsCallback = sp<MeasurementCorrectionsCallback>::make();
+    status = iMeasurementCorrectionsAidl->setCallback(gnssMeasurementCorrectionsCallback);
+    ASSERT_TRUE(status.isOk());
+
+    const int kTimeoutSec = 5;
+    EXPECT_TRUE(gnssMeasurementCorrectionsCallback->capabilities_cbq_.retrieve(
+            gnssMeasurementCorrectionsCallback->last_capabilities_, kTimeoutSec));
+    ASSERT_TRUE(gnssMeasurementCorrectionsCallback->capabilities_cbq_.calledCount() > 0);
+
+    ASSERT_TRUE((gnssMeasurementCorrectionsCallback->last_capabilities_ &
+                 (MeasurementCorrectionsCallback::CAPABILITY_LOS_SATS |
+                  MeasurementCorrectionsCallback::CAPABILITY_EXCESS_PATH_LENGTH)) != 0);
+
+    // Set a mock MeasurementCorrections.
+    status = iMeasurementCorrectionsAidl->setCorrections(
+            Utils::getMockMeasurementCorrections_aidl());
+    ASSERT_TRUE(status.isOk());
 }

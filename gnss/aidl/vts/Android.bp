@@ -39,6 +39,7 @@ cc_test {
         "GnssNavigationMessageCallback.cpp",
         "GnssPowerIndicationCallback.cpp",
         "GnssVisibilityControlCallback.cpp",
+        "MeasurementCorrectionsCallback.cpp",
         "VtsHalGnssTargetTest.cpp",
     ],
     shared_libs: [
