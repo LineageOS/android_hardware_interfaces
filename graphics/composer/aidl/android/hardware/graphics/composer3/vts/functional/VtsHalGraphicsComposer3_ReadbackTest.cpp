@@ -419,7 +419,8 @@ TEST_P(GraphicsCompositionTest, SetReadbackBufferBadParameter) {
         return;
     }
 
-    aidl::android::hardware::common::NativeHandle bufferHandle = ::android::dupToAidl(nullptr);
+    aidl::android::hardware::common::NativeHandle bufferHandle =
+            ::android::dupToAidl(mGraphicBuffer->handle);
     ndk::ScopedFileDescriptor releaseFence = ndk::ScopedFileDescriptor(-1);
     const auto error =
             mComposerClient->setReadbackBuffer(mPrimaryDisplay, bufferHandle, releaseFence);
