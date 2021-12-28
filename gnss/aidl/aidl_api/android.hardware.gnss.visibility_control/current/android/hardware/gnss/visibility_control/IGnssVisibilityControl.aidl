@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,22 +31,9 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.gnss;
+package android.hardware.gnss.visibility_control;
 @VintfStability
-interface IGnss {
-  void setCallback(in android.hardware.gnss.IGnssCallback callback);
-  void close();
-  @nullable android.hardware.gnss.IGnssPsds getExtensionPsds();
-  android.hardware.gnss.IGnssConfiguration getExtensionGnssConfiguration();
-  android.hardware.gnss.IGnssMeasurementInterface getExtensionGnssMeasurement();
-  android.hardware.gnss.IGnssPowerIndication getExtensionGnssPowerIndication();
-  @nullable android.hardware.gnss.IGnssBatching getExtensionGnssBatching();
-  @nullable android.hardware.gnss.IGnssGeofence getExtensionGnssGeofence();
-  @nullable android.hardware.gnss.IGnssNavigationMessageInterface getExtensionGnssNavigationMessage();
-  android.hardware.gnss.IAGnss getExtensionAGnss();
-  android.hardware.gnss.IGnssDebug getExtensionGnssDebug();
-  android.hardware.gnss.visibility_control.IGnssVisibilityControl getExtensionGnssVisibilityControl();
-  const int ERROR_INVALID_ARGUMENT = 1;
-  const int ERROR_ALREADY_INIT = 2;
-  const int ERROR_GENERIC = 3;
+interface IGnssVisibilityControl {
+  void enableNfwLocationAccess(in String[] proxyApps);
+  void setCallback(in android.hardware.gnss.visibility_control.IGnssVisibilityControlCallback callback);
 }

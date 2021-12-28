@@ -52,6 +52,7 @@ cc_binary {
         "android.hardware.gnss.measurement_corrections@1.1",
         "android.hardware.gnss.measurement_corrections@1.0",
         "android.hardware.gnss.visibility_control@1.0",
+        "android.hardware.gnss.visibility_control-V1-ndk",
         "android.hardware.gnss-V2-ndk",
     ],
     srcs: [
@@ -66,6 +67,7 @@ cc_binary {
         "GnssPsds.cpp",
         "GnssConfiguration.cpp",
         "GnssMeasurementInterface.cpp",
+        "GnssVisibilityControl.cpp",
         "service.cpp",
     ],
     static_libs: [
