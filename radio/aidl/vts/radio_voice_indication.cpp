@@ -16,7 +16,7 @@
 
 #include "radio_voice_utils.h"
 
-RadioVoiceIndication::RadioVoiceIndication(RadioVoiceTest& parent) : parent_voice(parent) {}
+RadioVoiceIndication::RadioVoiceIndication(RadioServiceTest& parent) : parent_voice(parent) {}
 
 ndk::ScopedAStatus RadioVoiceIndication::callRing(RadioIndicationType /*type*/, bool /*isGsm*/,
                                                   const CdmaSignalInfoRecord& /*record*/) {

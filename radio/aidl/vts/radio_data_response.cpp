@@ -16,7 +16,7 @@
 
 #include "radio_data_utils.h"
 
-RadioDataResponse::RadioDataResponse(RadioResponseWaiter& parent) : parent_data(parent) {}
+RadioDataResponse::RadioDataResponse(RadioServiceTest& parent) : parent_data(parent) {}
 
 ndk::ScopedAStatus RadioDataResponse::acknowledgeRequest(int32_t /*serial*/) {
     return ndk::ScopedAStatus::ok();
