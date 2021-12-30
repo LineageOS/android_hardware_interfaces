@@ -81,6 +81,7 @@ static void publishRadioConfig() {
 }
 
 static void main() {
+    base::InitLogging(nullptr, base::LogdLogger(base::RADIO));
     base::SetDefaultTag("radiocompat");
     base::SetMinimumLogSeverity(base::VERBOSE);
     LOG(DEBUG) << "Radio HAL compat service starting...";
