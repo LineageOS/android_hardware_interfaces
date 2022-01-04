@@ -83,7 +83,7 @@ Return<void> RadioIndication::unthrottleApn(V1_0::RadioIndicationType type,
                                             const hidl_string& apn) {
     LOG_CALL << type;
     CHECK_CB(mDataCb);
-    mDataCb->unthrottleApn(toAidl(type), apn);
+    mDataCb->unthrottleApn(toAidl(type), mContext->getDataProfile(apn));
     return {};
 }
 
