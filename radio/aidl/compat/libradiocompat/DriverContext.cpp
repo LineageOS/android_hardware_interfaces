@@ -13,31 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
 
-#include "DriverContext.h"
-#include "RadioIndication.h"
-#include "RadioResponse.h"
-
-#include <android/hardware/radio/1.6/IRadio.h>
+#include <libradiocompat/DriverContext.h>
 
 namespace android::hardware::radio::compat {
 
-class RadioCompatBase {
-  protected:
-    std::shared_ptr<DriverContext> mContext;
+namespace aidl = ::aidl::android::hardware::radio;
 
-    sp<V1_5::IRadio> mHal1_5;
-    sp<V1_6::IRadio> mHal1_6;
+void DriverContext::addDataProfile(const aidl::data::DataProfileInfo& profile) {
+    mDataProfiles[profile.apn] = profile;
+}
 
-    sp<RadioResponse> mRadioResponse;
-    sp<RadioIndication> mRadioIndication;
+aidl::data::DataProfileInfo DriverContext::getDataProfile(const std::string& apn) {
+    const auto it = mDataProfiles.find(apn);
+    if (it != mDataProfiles.end()) return it->second;
 
-    V1_6::IRadioResponse& respond();
-
-  public:
-    RadioCompatBase(std::shared_ptr<DriverContext> context, sp<V1_5::IRadio> hidlHal,
-                    sp<RadioResponse> radioResponse, sp<RadioIndication> radioIndication);
-};
+    // if not found in cache, return a made up default
+    return {
+            .apn = apn,
+    };
+}
 
 }  // namespace android::hardware::radio::compat
