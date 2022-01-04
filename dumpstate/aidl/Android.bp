@@ -34,7 +34,6 @@ aidl_interface {
             enabled: false,
         },
         ndk: {
-            separate_platform_variant: false,
             vndk: {
                 enabled: true,
             },
