@@ -219,12 +219,6 @@ oneway interface IRadioData {
      *        EPDG to 5G. It is valid only when accessNetwork is AccessNetwork:NGRAN. If the slice
      *        passed from EPDG is rejected, then the data failure cause must be
      *        DataCallFailCause:SLICE_REJECTED.
-     * @param trafficDescriptor TrafficDescriptor for which data connection needs to be established.
-     *        It is used for URSP traffic matching as described in TS 24.526 Section 4.2.2.
-     *        It includes an optional DNN which, if present, must be used for traffic matching --
-     *        it does not specify the end point to be used for the data call. The end point is
-     *        specified by DataProfileInfo.apn; DataProfileInfo.apn must be used as the end point if
-     *        one is not specified through URSP rules.
      * @param matchAllRuleAllowed bool to indicate if using default match-all URSP rule for this
      *        request is allowed. If false, this request must not use the match-all URSP rule and if
      *        a non-match-all rule is not found (or if URSP rules are not available) it should
@@ -238,7 +232,6 @@ oneway interface IRadioData {
             in DataProfileInfo dataProfileInfo, in boolean roamingAllowed,
             in DataRequestReason reason, in LinkAddress[] addresses, in String[] dnses,
             in int pduSessionId, in @nullable SliceInfo sliceInfo,
-            in @nullable TrafficDescriptor trafficDescriptor,
             in boolean matchAllRuleAllowed);
 
     /**
