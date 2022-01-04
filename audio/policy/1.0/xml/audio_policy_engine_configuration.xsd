@@ -190,6 +190,7 @@
     <xs:complexType name="valueType">
         <xs:attribute name="literal" type="xs:string" use="required"/>
         <xs:attribute name="numerical" type="xs:int" use="required"/>
+        <xs:attribute name="android_type" type="xs:int" use="optional"/>
     </xs:complexType>
 
     <xs:complexType name="attributesRefType">
