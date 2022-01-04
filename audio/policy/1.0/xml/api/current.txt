@@ -232,8 +232,10 @@ package audio.policy.V1_0 {
 
   public class ValueType {
     ctor public ValueType();
+    method public int getAndroid_type();
     method public String getLiteral();
     method public int getNumerical();
+    method public void setAndroid_type(int);
     method public void setLiteral(String);
     method public void setNumerical(int);
   }
