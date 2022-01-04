@@ -64,6 +64,7 @@ void Tuner::init() {
             FrontendStatusType::STREAM_ID_LIST,
     };
     mFrontendStatusCaps[0] = statusCaps;
+    mMaxUsableFrontends[FrontendType::ISDBS] = 1;
 
     FrontendCapabilities capsAtsc3;
     capsAtsc3.set<FrontendCapabilities::Tag::atsc3Caps>(FrontendAtsc3Capabilities());
@@ -78,6 +79,7 @@ void Tuner::init() {
             FrontendStatusType::BANDWIDTH,
     };
     mFrontendStatusCaps[1] = statusCaps;
+    mMaxUsableFrontends[FrontendType::ATSC3] = 1;
 
     FrontendCapabilities capsDvbc;
     capsDvbc.set<FrontendCapabilities::Tag::dvbcCaps>(FrontendDvbcCapabilities());
@@ -89,6 +91,7 @@ void Tuner::init() {
             FrontendStatusType::INTERLEAVINGS, FrontendStatusType::BANDWIDTH,
     };
     mFrontendStatusCaps[2] = statusCaps;
+    mMaxUsableFrontends[FrontendType::DVBC] = 1;
 
     FrontendCapabilities capsDvbs;
     capsDvbs.set<FrontendCapabilities::Tag::dvbsCaps>(FrontendDvbsCapabilities());
@@ -99,6 +102,7 @@ void Tuner::init() {
             FrontendStatusType::ROLL_OFF,        FrontendStatusType::IS_MISO,
     };
     mFrontendStatusCaps[3] = statusCaps;
+    mMaxUsableFrontends[FrontendType::DVBS] = 1;
 
     FrontendCapabilities capsDvbt;
     capsDvbt.set<FrontendCapabilities::Tag::dvbtCaps>(FrontendDvbtCapabilities());
@@ -115,6 +119,7 @@ void Tuner::init() {
             FrontendStatusType::DVBT_CELL_IDS,
     };
     mFrontendStatusCaps[4] = statusCaps;
+    mMaxUsableFrontends[FrontendType::DVBT] = 1;
 
     FrontendCapabilities capsIsdbt;
     FrontendIsdbtCapabilities isdbtCaps{
@@ -145,6 +150,7 @@ void Tuner::init() {
             FrontendStatusType::INTERLEAVINGS,
     };
     mFrontendStatusCaps[5] = statusCaps;
+    mMaxUsableFrontends[FrontendType::ISDBT] = 1;
 
     FrontendCapabilities capsAnalog;
     capsAnalog.set<FrontendCapabilities::Tag::analogCaps>(FrontendAnalogCapabilities());
@@ -156,6 +162,7 @@ void Tuner::init() {
             FrontendStatusType::TS_DATA_RATES,
     };
     mFrontendStatusCaps[6] = statusCaps;
+    mMaxUsableFrontends[FrontendType::ANALOG] = 1;
 
     FrontendCapabilities capsAtsc;
     capsAtsc.set<FrontendCapabilities::Tag::atscCaps>(FrontendAtscCapabilities());
@@ -167,6 +174,7 @@ void Tuner::init() {
             FrontendStatusType::IS_LINEAR,
     };
     mFrontendStatusCaps[7] = statusCaps;
+    mMaxUsableFrontends[FrontendType::ATSC] = 1;
 
     FrontendCapabilities capsIsdbs3;
     capsIsdbs3.set<FrontendCapabilities::Tag::isdbs3Caps>(FrontendIsdbs3Capabilities());
@@ -177,6 +185,7 @@ void Tuner::init() {
             FrontendStatusType::IS_SHORT_FRAMES, FrontendStatusType::STREAM_ID_LIST,
     };
     mFrontendStatusCaps[8] = statusCaps;
+    mMaxUsableFrontends[FrontendType::ISDBS3] = 1;
 
     FrontendCapabilities capsDtmb;
     capsDtmb.set<FrontendCapabilities::Tag::dtmbCaps>(FrontendDtmbCapabilities());
@@ -187,6 +196,7 @@ void Tuner::init() {
             FrontendStatusType::TRANSMISSION_MODE,
     };
     mFrontendStatusCaps[9] = statusCaps;
+    mMaxUsableFrontends[FrontendType::DTMB] = 1;
 
     mLnbs.resize(2);
     mLnbs[0] = ndk::SharedRefBase::make<Lnb>(0);
@@ -321,6 +331,25 @@ std::shared_ptr<Frontend> Tuner::getFrontendById(int32_t frontendId) {
 ::ndk::ScopedAStatus Tuner::setLna(bool /* in_bEnable */) {
     ALOGV("%s", __FUNCTION__);
 
+    return ::ndk::ScopedAStatus::ok();
+}
+
+::ndk::ScopedAStatus Tuner::setMaxNumberOfFrontends(FrontendType in_frontendType,
+                                                    int32_t in_maxNumber) {
+    ALOGV("%s", __FUNCTION__);
+
+    // In the default implementation, every type only has one frontend.
+    if (in_maxNumber < 0 || in_maxNumber > 1) {
+        return ::ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(Result::INVALID_ARGUMENT));
+    }
+    mMaxUsableFrontends[in_frontendType] = in_maxNumber;
+    return ::ndk::ScopedAStatus::ok();
+}
+
+::ndk::ScopedAStatus Tuner::getMaxNumberOfFrontends(FrontendType in_frontendType,
+                                                    int32_t* _aidl_return) {
+    *_aidl_return = mMaxUsableFrontends[in_frontendType];
     return ::ndk::ScopedAStatus::ok();
 }
 
