@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <aidl/android/hardware/tv/tuner/Result.h>
+
 #include "FrontendTests.h"
 
 ndk::ScopedAStatus FrontendCallback::onEvent(FrontendEventType frontendEventType) {
@@ -517,6 +519,41 @@ void FrontendTests::debugInfoTest(FrontendConfig frontendConf) {
     ASSERT_TRUE(verifyHardwareInfo());
     ASSERT_TRUE(stopTuneFrontend(false /*testWithDemux*/));
     ASSERT_TRUE(closeFrontend());
+}
+
+void FrontendTests::maxNumberOfFrontendsTest() {
+    ASSERT_TRUE(getFrontendIds());
+    for (size_t i = 0; i < mFeIds.size(); i++) {
+        ASSERT_TRUE(getFrontendInfo(mFeIds[i]));
+        int32_t defaultMax = -1;
+        ndk::ScopedAStatus status;
+        // Check default value
+        status = mService->getMaxNumberOfFrontends(mFrontendInfo.type, &defaultMax);
+        ASSERT_TRUE(status.isOk());
+        ASSERT_TRUE(defaultMax > 0);
+        // Set to -1
+        status = mService->setMaxNumberOfFrontends(mFrontendInfo.type, -1);
+        ASSERT_TRUE(status.getServiceSpecificError() ==
+                    static_cast<int32_t>(Result::INVALID_ARGUMENT));
+        // Set to defaultMax + 1
+        status = mService->setMaxNumberOfFrontends(mFrontendInfo.type, defaultMax + 1);
+        ASSERT_TRUE(status.getServiceSpecificError() ==
+                    static_cast<int32_t>(Result::INVALID_ARGUMENT));
+        // Set to 0
+        status = mService->setMaxNumberOfFrontends(mFrontendInfo.type, 0);
+        ASSERT_TRUE(status.isOk());
+        // Check after set
+        int32_t currentMax = -1;
+        status = mService->getMaxNumberOfFrontends(mFrontendInfo.type, &currentMax);
+        ASSERT_TRUE(status.isOk());
+        ASSERT_TRUE(currentMax == 0);
+        // Reset to default
+        status = mService->setMaxNumberOfFrontends(mFrontendInfo.type, defaultMax);
+        ASSERT_TRUE(status.isOk());
+        status = mService->getMaxNumberOfFrontends(mFrontendInfo.type, &currentMax);
+        ASSERT_TRUE(status.isOk());
+        ASSERT_TRUE(defaultMax == currentMax);
+    }
 }
 
 void FrontendTests::scanTest(FrontendConfig frontendConf, FrontendScanType scanType) {
