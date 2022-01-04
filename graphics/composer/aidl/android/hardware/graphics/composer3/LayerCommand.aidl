@@ -264,4 +264,15 @@ parcelable LayerCommand {
      * This command may be called every frame.
      */
     @nullable PerFrameMetadataBlob[] perFrameMetadataBlob;
+
+    /**
+     * Specifies a region of the layer that is transparent and may be skipped
+     * by the DPU, e.g. using a blocking region, in order to save power. This
+     * is only a hint, so the composition of the layer must look the same
+     * whether or not this region is skipped.
+     *
+     * The region is in screen space and must not exceed the dimensions of
+     * the screen.
+     */
+    @nullable Rect[] blockingRegion;
 }
