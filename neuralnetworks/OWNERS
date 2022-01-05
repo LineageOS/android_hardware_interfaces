@@ -1,10 +1,2 @@
 # Bug component: 195575
-# Neuralnetworks team
-butlermichael@google.com
-dgross@google.com
-galarragas@google.com
-ianhua@google.com
-jeanluc@google.com
-miaowang@google.com
-pszczepaniak@google.com
-xusongw@google.com
+include platform/packages/modules/NeuralNetworks:/NNAPI_OWNERS  # Neuralnetworks team
