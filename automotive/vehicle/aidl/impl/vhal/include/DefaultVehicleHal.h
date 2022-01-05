@@ -21,7 +21,6 @@
 #include "ParcelableUtils.h"
 
 #include <IVehicleHardware.h>
-#include <LargeParcelableBase.h>
 #include <VehicleUtils.h>
 #include <aidl/android/hardware/automotive/vehicle/BnVehicle.h>
 #include <android-base/expected.h>
@@ -41,36 +40,6 @@ namespace vehicle {
 namespace defaultvehiclehal_impl {
 
 constexpr int INVALID_MEMORY_FD = -1;
-
-template <class T>
-::ndk::ScopedAStatus toScopedAStatus(
-        const ::android::base::Result<T>& result,
-        ::aidl::android::hardware::automotive::vehicle::StatusCode status,
-        const std::string& additionalErrorMsg) {
-    if (result.ok()) {
-        return ::ndk::ScopedAStatus::ok();
-    }
-    return ::ndk::ScopedAStatus::fromServiceSpecificErrorWithMessage(
-            toInt(status), (additionalErrorMsg + getErrorMsg(result)).c_str());
-}
-
-template <class T>
-::ndk::ScopedAStatus toScopedAStatus(
-        const ::android::base::Result<T>& result,
-        ::aidl::android::hardware::automotive::vehicle::StatusCode status) {
-    return toScopedAStatus(result, status, "");
-}
-
-template <class T>
-::ndk::ScopedAStatus toScopedAStatus(const ::android::base::Result<T>& result) {
-    return toScopedAStatus(result, getErrorCode(result));
-}
-
-template <class T>
-::ndk::ScopedAStatus toScopedAStatus(const ::android::base::Result<T>& result,
-                                     const std::string& additionalErrorMsg) {
-    return toScopedAStatus(result, getErrorCode(result), additionalErrorMsg);
-}
 
 }  // namespace defaultvehiclehal_impl
 
@@ -115,8 +84,14 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
     using GetValuesClient =
             GetSetValuesClient<::aidl::android::hardware::automotive::vehicle::GetValueResult,
                                ::aidl::android::hardware::automotive::vehicle::GetValueResults>;
+    using SetValuesClient =
+            GetSetValuesClient<::aidl::android::hardware::automotive::vehicle::SetValueResult,
+                               ::aidl::android::hardware::automotive::vehicle::SetValueResults>;
 
     const std::unique_ptr<IVehicleHardware> mVehicleHardware;
+
+    // mConfigsByPropId and mConfigFile are only modified during initialization, so no need to
+    // lock guard them.
     std::unordered_map<int32_t, ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig>
             mConfigsByPropId;
     std::unique_ptr<::ndk::ScopedFileDescriptor> mConfigFile;
@@ -124,11 +99,16 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
     std::mutex mLock;
     std::unordered_map<CallbackType, std::shared_ptr<GetValuesClient>> mGetValuesClients
             GUARDED_BY(mLock);
+    std::unordered_map<CallbackType, std::shared_ptr<SetValuesClient>> mSetValuesClients
+            GUARDED_BY(mLock);
 
     template <class T>
     std::shared_ptr<T> getOrCreateClient(
             std::unordered_map<CallbackType, std::shared_ptr<T>>* clients,
             const CallbackType& callback) REQUIRES(mLock);
+
+    ::android::base::Result<void> checkProperty(
+            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue);
 };
 
 }  // namespace vehicle
