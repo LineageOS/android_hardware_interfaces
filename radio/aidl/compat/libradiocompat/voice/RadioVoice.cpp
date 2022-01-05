@@ -53,7 +53,7 @@ ScopedAStatus RadioVoice::dial(int32_t serial, const aidl::Dial& dialInfo) {
 }
 
 ScopedAStatus RadioVoice::emergencyDial(  //
-        int32_t serial, const aidl::Dial& info, aidl::EmergencyServiceCategory categories,
+        int32_t serial, const aidl::Dial& info, int32_t categories,
         const std::vector<std::string>& urns, aidl::EmergencyCallRouting routing,
         bool knownUserIntentEmerg, bool isTesting) {
     LOG_CALL << serial;

@@ -23,7 +23,7 @@ ndk::ScopedAStatus RadioNetworkResponse::acknowledgeRequest(int32_t /*serial*/) 
 }
 
 ndk::ScopedAStatus RadioNetworkResponse::getAllowedNetworkTypesBitmapResponse(
-        const RadioResponseInfo& info, const RadioAccessFamily networkTypeBitmap) {
+        const RadioResponseInfo& info, const int32_t networkTypeBitmap) {
     rspInfo = info;
     networkTypeBitmapResponse = networkTypeBitmap;
     parent_network.notify(info.serial);

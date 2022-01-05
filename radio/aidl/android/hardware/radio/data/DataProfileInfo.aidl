@@ -93,11 +93,11 @@ parcelable DataProfileInfo {
     /**
      * Supported APN types bitmap. See ApnTypes for the value of each bit.
      */
-    ApnTypes supportedApnTypesBitmap;
+    int supportedApnTypesBitmap;
     /**
      * The bearer bitmap. See RadioAccessFamily for the value of each bit.
      */
-    RadioAccessFamily bearerBitmap;
+    int bearerBitmap;
     /**
      * Maximum transmission unit (MTU) size in bytes for IPv4.
      */
