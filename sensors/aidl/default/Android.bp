@@ -28,12 +28,15 @@ cc_library_static {
     vendor: true,
     shared_libs: [
         "libbase",
+        "libfmq",
+        "libpower",
         "libbinder_ndk",
         "android.hardware.sensors-V1-ndk",
     ],
     export_include_dirs: ["include"],
     srcs: [
         "Sensors.cpp",
+        "Sensor.cpp",
     ],
     visibility: [
         ":__subpackages__",
@@ -50,6 +53,11 @@ cc_binary {
     shared_libs: [
         "libbase",
         "libbinder_ndk",
+        "libfmq",
+        "libpower",
+        "libcutils",
+        "liblog",
+        "libutils",
         "android.hardware.sensors-V1-ndk",
     ],
     static_libs: [
