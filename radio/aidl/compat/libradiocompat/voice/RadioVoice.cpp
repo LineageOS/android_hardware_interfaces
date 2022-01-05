@@ -53,13 +53,19 @@ ScopedAStatus RadioVoice::dial(int32_t serial, const aidl::Dial& dialInfo) {
 }
 
 ScopedAStatus RadioVoice::emergencyDial(  //
-        int32_t serial, const aidl::Dial& dialInfo, aidl::EmergencyServiceCategory categories,
+        int32_t serial, const aidl::Dial& info, aidl::EmergencyServiceCategory categories,
         const std::vector<std::string>& urns, aidl::EmergencyCallRouting routing,
-        bool hasKnownUserIntentEmerg, bool isTesting) {
+        bool knownUserIntentEmerg, bool isTesting) {
     LOG_CALL << serial;
-    mHal1_5->emergencyDial(serial, toHidl(dialInfo),
-                           toHidlBitfield<V1_4::EmergencyServiceCategory>(categories), toHidl(urns),
-                           V1_4::EmergencyCallRouting(routing), hasKnownUserIntentEmerg, isTesting);
+    if (mHal1_6) {
+        mHal1_6->emergencyDial_1_6(  //
+                serial, toHidl(info), toHidlBitfield<V1_4::EmergencyServiceCategory>(categories),
+                toHidl(urns), V1_4::EmergencyCallRouting(routing), knownUserIntentEmerg, isTesting);
+    } else {
+        mHal1_5->emergencyDial(  //
+                serial, toHidl(info), toHidlBitfield<V1_4::EmergencyServiceCategory>(categories),
+                toHidl(urns), V1_4::EmergencyCallRouting(routing), knownUserIntentEmerg, isTesting);
+    }
     return ok();
 }
 
@@ -102,7 +108,11 @@ ScopedAStatus RadioVoice::getClir(int32_t serial) {
 
 ScopedAStatus RadioVoice::getCurrentCalls(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getCurrentCalls(serial);
+    if (mHal1_6) {
+        mHal1_6->getCurrentCalls_1_6(serial);
+    } else {
+        mHal1_5->getCurrentCalls(serial);
+    }
     return ok();
 }
 
