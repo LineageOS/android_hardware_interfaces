@@ -19,15 +19,20 @@
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
 #include <aidl/android/hardware/radio/RadioError.h>
+#include <aidl/android/hardware/radio/config/IRadioConfig.h>
 #include <aidl/android/hardware/radio/network/RegState.h>
 #include <aidl/android/hardware/radio/sim/CardStatus.h>
+#include <aidl/android/hardware/radio/sim/IRadioSim.h>
 #include <utils/Log.h>
 #include <vector>
 
 using namespace aidl::android::hardware::radio;
+using aidl::android::hardware::radio::network::RegState;
 using aidl::android::hardware::radio::sim::CardStatus;
 
 extern CardStatus cardStatus;
+extern int serial;
+extern int count_;
 
 /*
  * MACRO used to skip test case when radio response return error REQUEST_NOT_SUPPORTED
@@ -102,12 +107,12 @@ bool isTsTsEnabled();
 /*
  * Check if voice status is in emergency only.
  */
-bool isVoiceEmergencyOnly(aidl::android::hardware::radio::network::RegState state);
+bool isVoiceEmergencyOnly(RegState state);
 
 /*
  * Check if voice status is in service.
  */
-bool isVoiceInService(aidl::android::hardware::radio::network::RegState state);
+bool isVoiceInService(RegState state);
 
 /*
  * Check if service is valid for device configuration
@@ -115,26 +120,25 @@ bool isVoiceInService(aidl::android::hardware::radio::network::RegState state);
 bool isServiceValidForDeviceConfiguration(std::string& serviceName);
 
 /**
- * Used when waiting for an asynchronous response from the HAL.
+ * RadioServiceTest base class
  */
-class RadioResponseWaiter {
+class RadioServiceTest {
   protected:
     std::mutex mtx_;
     std::condition_variable cv_;
-    int count_;
+    std::shared_ptr<config::IRadioConfig> radio_config;
+    std::shared_ptr<sim::IRadioSim> radio_sim;
 
   public:
-    /* Serial number for radio request */
-    int serial;
-
     /* Used as a mechanism to inform the test about data/event callback */
     void notify(int receivedSerial);
 
     /* Test code calls this function to wait for response */
     std::cv_status wait();
 
-    // TODO(b/210712359): this probably isn't the best place to put this, but it works for now
-    //  since all RadioXTest extend RadioResponseWaiter
-    /* Used to get the radio HAL capabilities */
+    /* Get the radio HAL capabilities */
     bool getRadioHalCapabilities();
+
+    /* Update SIM card status */
+    void updateSimCardStatus();
 };

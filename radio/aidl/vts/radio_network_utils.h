@@ -29,10 +29,10 @@ class RadioNetworkTest;
 /* Callback class for radio network response */
 class RadioNetworkResponse : public BnRadioNetworkResponse {
   protected:
-    RadioResponseWaiter& parent_network;
+    RadioServiceTest& parent_network;
 
   public:
-    RadioNetworkResponse(RadioResponseWaiter& parent_network);
+    RadioNetworkResponse(RadioServiceTest& parent_network);
     virtual ~RadioNetworkResponse() = default;
 
     RadioResponseInfo rspInfo;
@@ -40,7 +40,7 @@ class RadioNetworkResponse : public BnRadioNetworkResponse {
     std::vector<OperatorInfo> networkInfos;
     bool isNrDualConnectivityEnabled;
     int networkTypeBitmapResponse;
-    RegStateResult regStateResp;
+    RegStateResult voiceRegResp;
     CellIdentity barringCellIdentity;
     std::vector<BarringInfo> barringInfos;
     UsageSetting usageSetting;
@@ -150,10 +150,10 @@ class RadioNetworkResponse : public BnRadioNetworkResponse {
 /* Callback class for radio network indication */
 class RadioNetworkIndication : public BnRadioNetworkIndication {
   protected:
-    RadioNetworkTest& parent_network;
+    RadioServiceTest& parent_network;
 
   public:
-    RadioNetworkIndication(RadioNetworkTest& parent_network);
+    RadioNetworkIndication(RadioServiceTest& parent_network);
     virtual ~RadioNetworkIndication() = default;
 
     virtual ndk::ScopedAStatus barringInfoChanged(
@@ -202,7 +202,7 @@ class RadioNetworkIndication : public BnRadioNetworkIndication {
 };
 
 // The main test class for Radio AIDL Network.
-class RadioNetworkTest : public ::testing::TestWithParam<std::string>, public RadioResponseWaiter {
+class RadioNetworkTest : public ::testing::TestWithParam<std::string>, public RadioServiceTest {
   public:
     virtual void SetUp() override;
 
