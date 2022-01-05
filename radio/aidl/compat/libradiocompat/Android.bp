@@ -55,6 +55,7 @@ cc_library {
         "libutils",
     ],
     srcs: [
+        "CallbackManager.cpp",
         "DriverContext.cpp",
         "RadioCompatBase.cpp",
         "RadioIndication.cpp",
