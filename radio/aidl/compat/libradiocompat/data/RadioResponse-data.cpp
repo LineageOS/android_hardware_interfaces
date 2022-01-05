@@ -29,29 +29,29 @@ namespace android::hardware::radio::compat {
 namespace aidl = ::aidl::android::hardware::radio::data;
 
 void RadioResponse::setResponseFunction(std::shared_ptr<aidl::IRadioDataResponse> dataCb) {
-    CHECK(dataCb);
     mDataCb = dataCb;
+}
+
+std::shared_ptr<aidl::IRadioDataResponse> RadioResponse::dataCb() {
+    return mDataCb.get();
 }
 
 Return<void> RadioResponse::allocatePduSessionIdResponse(const V1_6::RadioResponseInfo& info,
                                                          int32_t id) {
     LOG_CALL << info.serial;
-    CHECK_CB(mDataCb);
-    mDataCb->allocatePduSessionIdResponse(toAidl(info), id);
+    dataCb()->allocatePduSessionIdResponse(toAidl(info), id);
     return {};
 }
 
 Return<void> RadioResponse::cancelHandoverResponse(const V1_6::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mDataCb);
-    mDataCb->cancelHandoverResponse(toAidl(info));
+    dataCb()->cancelHandoverResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::deactivateDataCallResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mDataCb);
-    mDataCb->deactivateDataCallResponse(toAidl(info));
+    dataCb()->deactivateDataCallResponse(toAidl(info));
     return {};
 }
 
@@ -73,8 +73,7 @@ Return<void> RadioResponse::getDataCallListResponse_1_5(
         const V1_0::RadioResponseInfo& info,
         const hidl_vec<V1_5::SetupDataCallResult>& dcResponse) {
     LOG_CALL << info.serial;
-    CHECK_CB(mDataCb);
-    mDataCb->getDataCallListResponse(toAidl(info), toAidl(dcResponse));
+    dataCb()->getDataCallListResponse(toAidl(info), toAidl(dcResponse));
     return {};
 }
 
@@ -82,65 +81,56 @@ Return<void> RadioResponse::getDataCallListResponse_1_6(
         const V1_6::RadioResponseInfo& info,
         const hidl_vec<V1_6::SetupDataCallResult>& dcResponse) {
     LOG_CALL << info.serial;
-    CHECK_CB(mDataCb);
-    mDataCb->getDataCallListResponse(toAidl(info), toAidl(dcResponse));
+    dataCb()->getDataCallListResponse(toAidl(info), toAidl(dcResponse));
     return {};
 }
 
 Return<void> RadioResponse::getSlicingConfigResponse(const V1_6::RadioResponseInfo& info,
                                                      const V1_6::SlicingConfig& slicingConfig) {
     LOG_CALL << info.serial;
-    CHECK_CB(mDataCb);
-    mDataCb->getSlicingConfigResponse(toAidl(info), toAidl(slicingConfig));
+    dataCb()->getSlicingConfigResponse(toAidl(info), toAidl(slicingConfig));
     return {};
 }
 
 Return<void> RadioResponse::releasePduSessionIdResponse(const V1_6::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mDataCb);
-    mDataCb->releasePduSessionIdResponse(toAidl(info));
+    dataCb()->releasePduSessionIdResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::setDataAllowedResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mDataCb);
-    mDataCb->setDataAllowedResponse(toAidl(info));
+    dataCb()->setDataAllowedResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::setDataProfileResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mDataCb);
-    mDataCb->setDataProfileResponse(toAidl(info));
+    dataCb()->setDataProfileResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::setDataProfileResponse_1_5(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mDataCb);
-    mDataCb->setDataProfileResponse(toAidl(info));
+    dataCb()->setDataProfileResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::setDataThrottlingResponse(const V1_6::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mDataCb);
-    mDataCb->setDataThrottlingResponse(toAidl(info));
+    dataCb()->setDataThrottlingResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::setInitialAttachApnResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mDataCb);
-    mDataCb->setInitialAttachApnResponse(toAidl(info));
+    dataCb()->setInitialAttachApnResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::setInitialAttachApnResponse_1_5(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mDataCb);
-    mDataCb->setInitialAttachApnResponse(toAidl(info));
+    dataCb()->setInitialAttachApnResponse(toAidl(info));
     return {};
 }
 
@@ -161,38 +151,33 @@ Return<void> RadioResponse::setupDataCallResponse_1_4(const V1_0::RadioResponseI
 Return<void> RadioResponse::setupDataCallResponse_1_5(const V1_0::RadioResponseInfo& info,
                                                       const V1_5::SetupDataCallResult& dcResponse) {
     LOG_CALL << info.serial;
-    CHECK_CB(mDataCb);
-    mDataCb->setupDataCallResponse(toAidl(info), toAidl(dcResponse));
+    dataCb()->setupDataCallResponse(toAidl(info), toAidl(dcResponse));
     return {};
 }
 
 Return<void> RadioResponse::setupDataCallResponse_1_6(const V1_6::RadioResponseInfo& info,
                                                       const V1_6::SetupDataCallResult& dcResponse) {
     LOG_CALL << info.serial;
-    CHECK_CB(mDataCb);
-    mDataCb->setupDataCallResponse(toAidl(info), toAidl(dcResponse));
+    dataCb()->setupDataCallResponse(toAidl(info), toAidl(dcResponse));
     return {};
 }
 
 Return<void> RadioResponse::startHandoverResponse(const V1_6::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mDataCb);
-    mDataCb->startHandoverResponse(toAidl(info));
+    dataCb()->startHandoverResponse(toAidl(info));
     return {};
 }
 
 Return<void> RadioResponse::startKeepaliveResponse(const V1_0::RadioResponseInfo& info,
                                                    const V1_1::KeepaliveStatus& status) {
     LOG_CALL << info.serial;
-    CHECK_CB(mDataCb);
-    mDataCb->startKeepaliveResponse(toAidl(info), toAidl(status));
+    dataCb()->startKeepaliveResponse(toAidl(info), toAidl(status));
     return {};
 }
 
 Return<void> RadioResponse::stopKeepaliveResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    CHECK_CB(mDataCb);
-    mDataCb->stopKeepaliveResponse(toAidl(info));
+    dataCb()->stopKeepaliveResponse(toAidl(info));
     return {};
 }
 
