@@ -18,6 +18,7 @@ package android.hardware.tv.tuner;
 
 import android.hardware.tv.tuner.DemuxCapabilities;
 import android.hardware.tv.tuner.FrontendInfo;
+import android.hardware.tv.tuner.FrontendType;
 import android.hardware.tv.tuner.IDemux;
 import android.hardware.tv.tuner.IDescrambler;
 import android.hardware.tv.tuner.IFrontend;
@@ -127,4 +128,24 @@ interface ITuner {
      * @param bEnable true if activate LNA module; false if deactivate LNA
      */
     void setLna(in boolean bEnable);
+
+    /**
+     * Set the maximum usable frontends number of a given frontend type.
+     *
+     * It is used by the client to enable or disable frontends when cable connection status
+     * is changed by user.
+     *
+     * @param frontendType the frontend type which the maximum usable number will be set.
+     * @param maxNumber the new maximum usable number.
+     */
+    void setMaxNumberOfFrontends(in FrontendType frontendType, in int maxNumber);
+
+    /**
+     * Get the maximum usable frontends number of a given frontend type.
+     *
+     * @param frontendType the frontend type which the maximum usable number will be queried.
+     *
+     * @return the maximum usable number of the queried frontend type.
+     */
+    int getMaxNumberOfFrontends(in FrontendType frontendType);
 }
