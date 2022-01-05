@@ -30,7 +30,7 @@ namespace aidl = ::aidl::android::hardware::radio::messaging;
 constexpr auto ok = &ScopedAStatus::ok;
 
 std::shared_ptr<aidl::IRadioMessagingResponse> RadioMessaging::respond() {
-    return mRadioResponse->messagingCb();
+    return mCallbackManager->response().messagingCb();
 }
 
 ScopedAStatus RadioMessaging::acknowledgeIncomingGsmSmsWithPdu(  //
@@ -181,16 +181,10 @@ ScopedAStatus RadioMessaging::setGsmBroadcastConfig(
 }
 
 ScopedAStatus RadioMessaging::setResponseFunctions(
-        const std::shared_ptr<aidl::IRadioMessagingResponse>& messagingResponse,
-        const std::shared_ptr<aidl::IRadioMessagingIndication>& messagingIndication) {
-    LOG_CALL << messagingResponse << ' ' << messagingIndication;
-
-    CHECK(messagingResponse);
-    CHECK(messagingIndication);
-
-    mRadioResponse->setResponseFunction(messagingResponse);
-    mRadioIndication->setResponseFunction(messagingIndication);
-
+        const std::shared_ptr<aidl::IRadioMessagingResponse>& response,
+        const std::shared_ptr<aidl::IRadioMessagingIndication>& indication) {
+    LOG_CALL << response << ' ' << indication;
+    mCallbackManager->setResponseFunctions(response, indication);
     return ok();
 }
 
