@@ -27,12 +27,12 @@ RadioResponse::RadioResponse(std::shared_ptr<DriverContext> context) : mContext(
 Return<void> RadioResponse::acknowledgeRequest(int32_t serial) {
     LOG_CALL << serial;
     // TODO(b/203699028): send to correct requestor or confirm if spam is not a problem
-    if (mDataCb) mDataCb->acknowledgeRequest(serial);
-    if (mMessagingCb) mMessagingCb->acknowledgeRequest(serial);
-    if (mModemCb) mModemCb->acknowledgeRequest(serial);
-    if (mNetworkCb) mNetworkCb->acknowledgeRequest(serial);
-    if (mSimCb) mSimCb->acknowledgeRequest(serial);
-    if (mVoiceCb) mVoiceCb->acknowledgeRequest(serial);
+    if (mDataCb) mDataCb.get()->acknowledgeRequest(serial);
+    if (mMessagingCb) mMessagingCb.get()->acknowledgeRequest(serial);
+    if (mModemCb) mModemCb.get()->acknowledgeRequest(serial);
+    if (mNetworkCb) mNetworkCb.get()->acknowledgeRequest(serial);
+    if (mSimCb) mSimCb.get()->acknowledgeRequest(serial);
+    if (mVoiceCb) mVoiceCb.get()->acknowledgeRequest(serial);
     return {};
 }
 

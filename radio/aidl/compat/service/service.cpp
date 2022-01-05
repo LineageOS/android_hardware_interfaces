@@ -19,13 +19,12 @@
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
+#include <libradiocompat/CallbackManager.h>
 #include <libradiocompat/RadioConfig.h>
 #include <libradiocompat/RadioData.h>
-#include <libradiocompat/RadioIndication.h>
 #include <libradiocompat/RadioMessaging.h>
 #include <libradiocompat/RadioModem.h>
 #include <libradiocompat/RadioNetwork.h>
-#include <libradiocompat/RadioResponse.h>
 #include <libradiocompat/RadioSim.h>
 #include <libradiocompat/RadioVoice.h>
 
@@ -36,9 +35,8 @@ using namespace std::string_literals;
 static std::vector<std::shared_ptr<ndk::ICInterface>> gPublishedHals;
 
 template <typename T>
-static void publishRadioHal(std::shared_ptr<compat::DriverContext> context,
-                            sp<V1_5::IRadio> hidlHal, sp<compat::RadioResponse> responseCb,
-                            sp<compat::RadioIndication> indicationCb, const std::string& slot) {
+static void publishRadioHal(std::shared_ptr<compat::DriverContext> ctx, sp<V1_5::IRadio> hidlHal,
+                            std::shared_ptr<compat::CallbackManager> cm, const std::string& slot) {
     const auto instance = T::descriptor + "/"s + slot;
     if (!AServiceManager_isDeclared(instance.c_str())) {
         LOG(INFO) << instance << " is not declared in VINTF (this may be intentional)";
@@ -46,7 +44,7 @@ static void publishRadioHal(std::shared_ptr<compat::DriverContext> context,
     }
     LOG(DEBUG) << "Publishing " << instance;
 
-    auto aidlHal = ndk::SharedRefBase::make<T>(context, hidlHal, responseCb, indicationCb);
+    auto aidlHal = ndk::SharedRefBase::make<T>(ctx, hidlHal, cm);
     gPublishedHals.push_back(aidlHal);
     const auto status = AServiceManager_addService(aidlHal->asBinder().get(), instance.c_str());
     CHECK_EQ(status, STATUS_OK);
@@ -59,17 +57,14 @@ static void publishRadio(std::string slot) {
     hidl_utils::linkDeathToDeath(radioHidl);
 
     auto context = std::make_shared<compat::DriverContext>();
+    auto callbackMgr = std::make_shared<compat::CallbackManager>(context, radioHidl);
 
-    auto responseCb = sp<compat::RadioResponse>::make(context);
-    auto indicationCb = sp<compat::RadioIndication>::make(context);
-    radioHidl->setResponseFunctions(responseCb, indicationCb).assertOk();
-
-    publishRadioHal<compat::RadioData>(context, radioHidl, responseCb, indicationCb, slot);
-    publishRadioHal<compat::RadioMessaging>(context, radioHidl, responseCb, indicationCb, slot);
-    publishRadioHal<compat::RadioModem>(context, radioHidl, responseCb, indicationCb, slot);
-    publishRadioHal<compat::RadioNetwork>(context, radioHidl, responseCb, indicationCb, slot);
-    publishRadioHal<compat::RadioSim>(context, radioHidl, responseCb, indicationCb, slot);
-    publishRadioHal<compat::RadioVoice>(context, radioHidl, responseCb, indicationCb, slot);
+    publishRadioHal<compat::RadioData>(context, radioHidl, callbackMgr, slot);
+    publishRadioHal<compat::RadioMessaging>(context, radioHidl, callbackMgr, slot);
+    publishRadioHal<compat::RadioModem>(context, radioHidl, callbackMgr, slot);
+    publishRadioHal<compat::RadioNetwork>(context, radioHidl, callbackMgr, slot);
+    publishRadioHal<compat::RadioSim>(context, radioHidl, callbackMgr, slot);
+    publishRadioHal<compat::RadioVoice>(context, radioHidl, callbackMgr, slot);
 }
 
 static void publishRadioConfig() {
@@ -86,6 +81,7 @@ static void publishRadioConfig() {
 }
 
 static void main() {
+    base::InitLogging(nullptr, base::LogdLogger(base::RADIO));
     base::SetDefaultTag("radiocompat");
     base::SetMinimumLogSeverity(base::VERBOSE);
     LOG(DEBUG) << "Radio HAL compat service starting...";
