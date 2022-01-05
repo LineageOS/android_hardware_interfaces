@@ -48,20 +48,38 @@ class BluetoothAudioSessionControl_2_2 {
     std::shared_ptr<BluetoothAudioSession_2_2> session_ptr =
         BluetoothAudioSessionInstance_2_2::GetSessionInstance(session_type);
     if (session_ptr != nullptr) {
-      return session_ptr->GetAudioSession()->RegisterStatusCback(cbacks);
+      PortStatusCallbacks_2_2 cb = {
+          .control_result_cb_ = cbacks.control_result_cb_,
+          .session_changed_cb_ = cbacks.session_changed_cb_,
+          .audio_configuration_changed_cb_ = nullptr};
+      return session_ptr->RegisterStatusCback(cb);
+    }
+    return kObserversCookieUndefined;
+  }
+
+  // The control API helps the bluetooth_audio module to register
+  // PortStatusCallbacks_2_2
+  // @return: cookie - the assigned number to this bluetooth_audio output
+  static uint16_t RegisterControlResultCback(
+      const SessionType_2_1& session_type,
+      const PortStatusCallbacks_2_2& cbacks) {
+    std::shared_ptr<BluetoothAudioSession_2_2> session_ptr =
+        BluetoothAudioSessionInstance_2_2::GetSessionInstance(session_type);
+    if (session_ptr != nullptr) {
+      return session_ptr->RegisterStatusCback(cbacks);
     }
     return kObserversCookieUndefined;
   }
 
   // The control API helps the bluetooth_audio module to unregister
-  // PortStatusCallbacks
+  // PortStatusCallbacks and PortStatusCallbacks_2_2
   // @param: cookie - indicates which bluetooth_audio output is
   static void UnregisterControlResultCback(const SessionType_2_1& session_type,
                                            uint16_t cookie) {
     std::shared_ptr<BluetoothAudioSession_2_2> session_ptr =
         BluetoothAudioSessionInstance_2_2::GetSessionInstance(session_type);
     if (session_ptr != nullptr) {
-      session_ptr->GetAudioSession()->UnregisterStatusCback(cookie);
+      session_ptr->UnregisterStatusCback(cookie);
     }
   }
 
