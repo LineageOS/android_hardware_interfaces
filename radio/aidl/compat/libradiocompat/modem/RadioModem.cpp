@@ -28,7 +28,7 @@ namespace aidl = ::aidl::android::hardware::radio::modem;
 constexpr auto ok = &ScopedAStatus::ok;
 
 std::shared_ptr<aidl::IRadioModemResponse> RadioModem::respond() {
-    return mRadioResponse->modemCb();
+    return mCallbackManager->response().modemCb();
 }
 
 ScopedAStatus RadioModem::enableModem(int32_t serial, bool on) {
@@ -133,16 +133,10 @@ ScopedAStatus RadioModem::setRadioPower(int32_t serial, bool powerOn, bool forEm
 }
 
 ScopedAStatus RadioModem::setResponseFunctions(
-        const std::shared_ptr<aidl::IRadioModemResponse>& modemResponse,
-        const std::shared_ptr<aidl::IRadioModemIndication>& modemIndication) {
-    LOG_CALL << modemResponse << ' ' << modemIndication;
-
-    CHECK(modemResponse);
-    CHECK(modemIndication);
-
-    mRadioResponse->setResponseFunction(modemResponse);
-    mRadioIndication->setResponseFunction(modemIndication);
-
+        const std::shared_ptr<aidl::IRadioModemResponse>& response,
+        const std::shared_ptr<aidl::IRadioModemIndication>& indication) {
+    LOG_CALL << response << ' ' << indication;
+    mCallbackManager->setResponseFunctions(response, indication);
     return ok();
 }
 
