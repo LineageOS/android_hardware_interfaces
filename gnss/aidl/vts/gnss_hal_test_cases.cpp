@@ -903,3 +903,42 @@ TEST_P(GnssHalTest, TestGnssVisibilityControlExtension) {
     status = iGnssVisibilityControl->enableNfwLocationAccess(proxyApps);
     ASSERT_TRUE(status.isOk());
 }
+
+/*
+ * TestGnssMeasurementSetCallbackWithOptions:
+ * 1. Gets the GnssMeasurementExtension and verifies that it returns a non-null extension.
+ * 2. Sets a GnssMeasurementCallback with intervalMillis option, waits for measurements reported,
+ *    and verifies mandatory fields are valid.
+ */
+TEST_P(GnssHalTest, TestGnssMeasurementSetCallbackWithOptions) {
+    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+        return;
+    }
+    const int kFirstGnssMeasurementTimeoutSeconds = 10;
+    const int kNumMeasurementEvents = 5;
+
+    sp<IGnssMeasurementInterface> iGnssMeasurement;
+    auto status = aidl_gnss_hal_->getExtensionGnssMeasurement(&iGnssMeasurement);
+    ASSERT_TRUE(status.isOk());
+    ASSERT_TRUE(iGnssMeasurement != nullptr);
+
+    auto callback = sp<GnssMeasurementCallbackAidl>::make();
+    IGnssMeasurementInterface::Options options;
+    options.intervalMs = 2000;
+    status = iGnssMeasurement->setCallbackWithOptions(callback, options);
+    ASSERT_TRUE(status.isOk());
+
+    for (int i = 0; i < kNumMeasurementEvents; i++) {
+        GnssData lastMeasurement;
+        ASSERT_TRUE(callback->gnss_data_cbq_.retrieve(lastMeasurement,
+                                                      kFirstGnssMeasurementTimeoutSeconds));
+        EXPECT_EQ(callback->gnss_data_cbq_.calledCount(), i + 1);
+        ASSERT_TRUE(lastMeasurement.measurements.size() > 0);
+
+        // Validity check GnssData fields
+        CheckGnssMeasurementClockFields(lastMeasurement);
+    }
+
+    status = iGnssMeasurement->close();
+    ASSERT_TRUE(status.isOk());
+}
