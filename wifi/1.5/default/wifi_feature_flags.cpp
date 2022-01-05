@@ -157,43 +157,42 @@ constexpr char kDebugPresetInterfaceCombinationIdxProperty[] =
 // List of pre-defined interface combinations that can be enabled at runtime via
 // setting the property: "kDebugPresetInterfaceCombinationIdxProperty" to the
 // corresponding index value.
-static const std::vector<
-    std::pair<std::string, std::vector<IWifiChip::ChipMode>>>
-    kDebugChipModes{
+static const std::vector<std::pair<std::string, std::vector<IWifiChip::ChipMode>>> kDebugChipModes{
         // Legacy combination - No STA/AP concurrencies.
         // 0 - (1 AP) or (1 STA + 1 of (P2P or NAN))
         {"No STA/AP Concurrency",
          {{kMainModeId,
-           ChipIfaceCombination::make_vec(
-               {{{{AP}, 1}}, {{{STA}, 1}, {{P2P, NAN}, 1}}})}}},
+           ChipIfaceCombination::make_vec({{{{AP}, 1}}, {{{STA}, 1}, {{P2P, NAN}, 1}}})}}},
 
         // STA + AP concurrency
         // 1 - (1 STA + 1 AP) or (1 STA + 1 of (P2P or NAN))
         {"STA + AP Concurrency",
-         {{kMainModeId,
-           ChipIfaceCombination::make_vec(
-               {{{{STA}, 1}, {{AP}, 1}}, {{{STA}, 1}, {{P2P, NAN}, 1}}})}}},
+         {{kMainModeId, ChipIfaceCombination::make_vec(
+                                {{{{STA}, 1}, {{AP}, 1}}, {{{STA}, 1}, {{P2P, NAN}, 1}}})}}},
 
         // STA + STA concurrency
         // 2 - (1 STA + 1 AP) or (2 STA + 1 of (P2P or NAN))
         {"Dual STA Concurrency",
-         {{kMainModeId,
-           ChipIfaceCombination::make_vec(
-               {{{{STA}, 1}, {{AP}, 1}}, {{{STA}, 2}, {{P2P, NAN}, 1}}})}}},
+         {{kMainModeId, ChipIfaceCombination::make_vec(
+                                {{{{STA}, 1}, {{AP}, 1}}, {{{STA}, 2}, {{P2P, NAN}, 1}}})}}},
 
         // AP + AP + STA concurrency
         // 3 - (1 STA + 2 AP) or (1 STA + 1 of (P2P or NAN))
         {"Dual AP Concurrency",
-         {{kMainModeId,
-           ChipIfaceCombination::make_vec(
-               {{{{STA}, 1}, {{AP}, 2}}, {{{STA}, 1}, {{P2P, NAN}, 1}}})}}},
+         {{kMainModeId, ChipIfaceCombination::make_vec(
+                                {{{{STA}, 1}, {{AP}, 2}}, {{{STA}, 1}, {{P2P, NAN}, 1}}})}}},
 
         // STA + STA concurrency and AP + AP + STA concurrency
         // 4 - (1 STA + 2 AP) or (2 STA + 1 of (P2P or NAN))
         {"Dual STA & Dual AP Concurrency",
+         {{kMainModeId, ChipIfaceCombination::make_vec(
+                                {{{{STA}, 1}, {{AP}, 2}}, {{{STA}, 2}, {{P2P, NAN}, 1}}})}}},
+
+        // STA + STA concurrency
+        // 5 - (1 STA + 1 AP (bridged or single) | P2P | NAN), or (2 STA))
+        {"Dual STA or STA plus single other interface",
          {{kMainModeId,
-           ChipIfaceCombination::make_vec(
-               {{{{STA}, 1}, {{AP}, 2}}, {{{STA}, 2}, {{P2P, NAN}, 1}}})}}}};
+           ChipIfaceCombination::make_vec({{{{STA}, 1}, {{P2P, NAN, AP}, 1}}, {{{STA}, 2}}})}}}};
 
 #undef STA
 #undef AP
