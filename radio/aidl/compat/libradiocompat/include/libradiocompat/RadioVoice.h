@@ -23,6 +23,8 @@ namespace android::hardware::radio::compat {
 
 class RadioVoice : public RadioCompatBase,
                    public aidl::android::hardware::radio::voice::BnRadioVoice {
+    std::shared_ptr<::aidl::android::hardware::radio::voice::IRadioVoiceResponse> respond();
+
     ::ndk::ScopedAStatus acceptCall(int32_t serial) override;
     ::ndk::ScopedAStatus conference(int32_t serial) override;
     ::ndk::ScopedAStatus dial(
