@@ -16,7 +16,7 @@
 
 #include "radio_data_utils.h"
 
-RadioDataIndication::RadioDataIndication(RadioDataTest& parent) : parent_data(parent) {}
+RadioDataIndication::RadioDataIndication(RadioServiceTest& parent) : parent_data(parent) {}
 
 ndk::ScopedAStatus RadioDataIndication::dataCallListChanged(
         RadioIndicationType /*type*/, const std::vector<SetupDataCallResult>& /*dcList*/) {

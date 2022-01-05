@@ -44,12 +44,17 @@ void RadioModemTest::SetUp() {
 
     radio_modem->setResponseFunctions(radioRsp_modem, radioInd_modem);
 
+    // Assert IRadioSim exists and SIM is present before testing
+    radio_sim = sim::IRadioSim::fromBinder(ndk::SpAIBinder(
+            AServiceManager_waitForService("android.hardware.radio.sim.IRadioSim/slot1")));
+    ASSERT_NE(nullptr, radio_sim.get());
+    updateSimCardStatus();
+    EXPECT_EQ(CardStatus::STATE_PRESENT, cardStatus.cardState);
+
     // Assert IRadioConfig exists before testing
-    std::shared_ptr<aidl::android::hardware::radio::config::IRadioConfig> radioConfig =
-            aidl::android::hardware::radio::config::IRadioConfig::fromBinder(
-                    ndk::SpAIBinder(AServiceManager_waitForService(
-                            "android.hardware.radio.config.IRadioConfig/default")));
-    ASSERT_NE(nullptr, radioConfig.get());
+    radio_config = config::IRadioConfig::fromBinder(ndk::SpAIBinder(
+            AServiceManager_waitForService("android.hardware.radio.config.IRadioConfig/default")));
+    ASSERT_NE(nullptr, radio_config.get());
 }
 
 /*
