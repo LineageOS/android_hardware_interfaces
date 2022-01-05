@@ -15,6 +15,7 @@
  */
 
 #include <aidl/android/hardware/radio/config/IRadioConfig.h>
+#include <aidl/android/hardware/radio/voice/EmergencyServiceCategory.h>
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
 
@@ -95,7 +96,7 @@ TEST_P(RadioVoiceTest, emergencyDial) {
 
     Dial dialInfo;
     dialInfo.address = std::string("911");
-    EmergencyServiceCategory categories = EmergencyServiceCategory::UNSPECIFIED;
+    int32_t categories = static_cast<int32_t>(EmergencyServiceCategory::UNSPECIFIED);
     std::vector<std::string> urns = {""};
     EmergencyCallRouting routing = EmergencyCallRouting::UNKNOWN;
 
@@ -152,7 +153,7 @@ TEST_P(RadioVoiceTest, emergencyDial_withServices) {
 
     Dial dialInfo;
     dialInfo.address = std::string("911");
-    EmergencyServiceCategory categories = EmergencyServiceCategory::AMBULANCE;
+    int32_t categories = static_cast<int32_t>(EmergencyServiceCategory::AMBULANCE);
     std::vector<std::string> urns = {"urn:service:sos.ambulance"};
     EmergencyCallRouting routing = EmergencyCallRouting::UNKNOWN;
 
@@ -209,7 +210,7 @@ TEST_P(RadioVoiceTest, emergencyDial_withEmergencyRouting) {
 
     Dial dialInfo;
     dialInfo.address = std::string("911");
-    EmergencyServiceCategory categories = EmergencyServiceCategory::UNSPECIFIED;
+    int32_t categories = static_cast<int32_t>(EmergencyServiceCategory::UNSPECIFIED);
     std::vector<std::string> urns = {""};
     EmergencyCallRouting routing = EmergencyCallRouting::EMERGENCY;
 
