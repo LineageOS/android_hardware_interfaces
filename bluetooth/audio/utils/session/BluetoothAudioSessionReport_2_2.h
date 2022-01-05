@@ -60,7 +60,20 @@ class BluetoothAudioSessionReport_2_2 {
     std::shared_ptr<BluetoothAudioSession_2_2> session_ptr =
         BluetoothAudioSessionInstance_2_2::GetSessionInstance(session_type);
     if (session_ptr != nullptr) {
-      session_ptr->GetAudioSession()->ReportControlStatus(start_resp, status);
+      session_ptr->ReportControlStatus(start_resp, status);
+    }
+  }
+  // The API reports the Bluetooth stack has replied the changed of the audio
+  // configuration, and will inform registered bluetooth_audio outputs
+  static void ReportAudioConfigChanged(
+      const ::android::hardware::bluetooth::audio::V2_1::SessionType&
+          session_type,
+      const ::android::hardware::bluetooth::audio::V2_2::AudioConfiguration&
+          audio_config) {
+    std::shared_ptr<BluetoothAudioSession_2_2> session_ptr =
+        BluetoothAudioSessionInstance_2_2::GetSessionInstance(session_type);
+    if (session_ptr != nullptr) {
+      session_ptr->ReportAudioConfigChanged(audio_config);
     }
   }
 };

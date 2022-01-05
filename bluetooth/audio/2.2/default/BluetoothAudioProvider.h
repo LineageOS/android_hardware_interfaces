@@ -53,6 +53,8 @@ class BluetoothAudioProvider : public IBluetoothAudioProvider {
   Return<void> streamStarted(BluetoothAudioStatus status) override;
   Return<void> streamSuspended(BluetoothAudioStatus status) override;
   Return<void> endSession() override;
+  Return<void> updateAudioConfiguration(
+      const AudioConfiguration& audioConfig) override;
 
  protected:
   sp<BluetoothAudioDeathRecipient> death_recipient_;

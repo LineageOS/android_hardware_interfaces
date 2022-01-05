@@ -28,6 +28,40 @@ namespace android {
 namespace bluetooth {
 namespace audio {
 
+inline uint16_t ObserversCookieGetInitValue(
+    const ::android::hardware::bluetooth::audio::V2_1::SessionType&
+        session_type) {
+  return (static_cast<uint16_t>(session_type) << 8 & 0xff00);
+}
+inline uint16_t ObserversCookieGetUpperBound(
+    const ::android::hardware::bluetooth::audio::V2_1::SessionType&
+        session_type) {
+  return (static_cast<uint16_t>(session_type) << 8 & 0xff00) +
+         kObserversCookieSize;
+}
+
+struct PortStatusCallbacks_2_2 {
+  // control_result_cb_ - when the Bluetooth stack reports results of
+  // streamStarted or streamSuspended, the BluetoothAudioProvider will invoke
+  // this callback to report to the bluetooth_audio module.
+  // @param: cookie - indicates which bluetooth_audio output should handle
+  // @param: start_resp - this report is for startStream or not
+  // @param: status - the result of startStream
+  std::function<void(uint16_t cookie, bool start_resp,
+                     const BluetoothAudioStatus& status)>
+      control_result_cb_;
+  // session_changed_cb_ - when the Bluetooth stack start / end session, the
+  // BluetoothAudioProvider will invoke this callback to notify to the
+  // bluetooth_audio module.
+  // @param: cookie - indicates which bluetooth_audio output should handle
+  std::function<void(uint16_t cookie)> session_changed_cb_;
+  // audio_configuration_changed_cb_ - when the Bluetooth stack change the audio
+  // configuration, the BluetoothAudioProvider will invoke this callback to
+  // notify to the bluetooth_audio module.
+  // @param: cookie - indicates which bluetooth_audio output should handle
+  std::function<void(uint16_t cookie)> audio_configuration_changed_cb_;
+};
+
 class BluetoothAudioSession_2_2 {
  private:
   std::shared_ptr<BluetoothAudioSession> audio_session;
@@ -49,6 +83,13 @@ class BluetoothAudioSession_2_2 {
       invalidOffloadAudioConfiguration;
   static ::android::hardware::bluetooth::audio::V2_2::AudioConfiguration
       invalidLeOffloadAudioConfiguration;
+
+  // saving those registered bluetooth_audio's callbacks
+  std::unordered_map<uint16_t, std::shared_ptr<struct PortStatusCallbacks_2_2>>
+      observers_;
+
+  // invoking the registered session_changed_cb_
+  void ReportSessionStatus();
 
  public:
   BluetoothAudioSession_2_2(
@@ -81,6 +122,29 @@ class BluetoothAudioSession_2_2 {
   bool StartStream();
   bool SuspendStream();
   void StopStream();
+
+  // The control function helps the bluetooth_audio module to register
+  // PortStatusCallbacks_2_2
+  // @return: cookie - the assigned number to this bluetooth_audio output
+  uint16_t RegisterStatusCback(const PortStatusCallbacks_2_2& cbacks);
+
+  // The control function helps the bluetooth_audio module to unregister
+  // PortStatusCallbacks_2_2
+  // @param: cookie - indicates which bluetooth_audio output is
+  void UnregisterStatusCback(uint16_t cookie);
+
+  // The report function is used to report that the Bluetooth stack has notified
+  // the result of startStream or suspendStream, and will invoke
+  // control_result_cb_ to notify registered bluetooth_audio outputs
+  void ReportControlStatus(bool start_resp, const BluetoothAudioStatus& status);
+
+  // The report function is used to report that the Bluetooth stack has notified
+  // the audio configuration changed, and will invoke
+  // audio_configuration_changed_cb_ to notify registered bluetooth_audio
+  // outputs
+  void ReportAudioConfigChanged(
+      const ::android::hardware::bluetooth::audio::V2_2::AudioConfiguration&
+          audio_config);
 
   // The control function is for the bluetooth_audio module to get the current
   // AudioConfiguration
