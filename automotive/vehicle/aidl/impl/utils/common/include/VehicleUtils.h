@@ -240,6 +240,46 @@ template <class T>
     return toScopedAStatus(result, getErrorCode(result), additionalErrorMsg);
 }
 
+// Check whether the value is valid according to config.
+// We check for the following:
+// *  If the type is INT32, {@code value.int32Values} must contain one element.
+// *  If the type is INT32_VEC, {@code value.int32Values} must contain at least one element.
+// *  If the type is INT64, {@code value.int64Values} must contain one element.
+// *  If the type is INT64_VEC, {@code value.int64Values} must contain at least one element.
+// *  If the type is FLOAT, {@code value.floatValues} must contain one element.
+// *  If the type is FLOAT_VEC, {@code value.floatValues} must contain at least one element.
+// *  If the type is MIXED, see checkVendorMixedPropValue.
+::android::base::Result<void> checkPropValue(
+        const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
+        const ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig* config);
+
+// Check whether the Mixed type value is valid according to config.
+// We check for the following:
+// *  configArray[1] + configArray[2] + configArray[3] must be equal to the number of
+//    {@code value.int32Values} elements.
+// *  configArray[4] + configArray[5] must be equal to the number of {@code value.int64Values}
+//    elements.
+// *  configArray[6] + configArray[7] must be equal to the number of {@code value.floatValues}
+//    elements.
+// *  configArray[8] must be equal to the number of {@code value.byteValues} elements.
+::android::base::Result<void> checkVendorMixedPropValue(
+        const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
+        const ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig* config);
+
+// Check whether the value is within the configured range.
+// We check for the following types:
+// *  If type is INT32 or INT32_VEC, all {@code value.int32Values} elements must be within
+//    {@code minInt32Value} and {@code maxInt32Value} if either of them is not 0.
+// *  If type is INT64 or INT64_VEC, all {@code value.int64Values} elements must be within
+//    {@code minInt64Value} and {@code maxInt64Value} if either of them is not 0.
+// *  If type is FLOAT or FLOAT_VEC, all {@code value.floatValues} elements must be within
+//    {@code minFloatValues} and {@code maxFloatValues} if either of them is not 0.
+// We don't check other types. If more checks are required, they should be added in VehicleHardware
+// implementation.
+::android::base::Result<void> checkValueRange(
+        const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
+        const ::aidl::android::hardware::automotive::vehicle::VehicleAreaConfig* config);
+
 }  // namespace vehicle
 }  // namespace automotive
 }  // namespace hardware
