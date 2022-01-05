@@ -62,7 +62,7 @@ ScopedAStatus RadioSim::enableUiccApplications(int32_t serial, bool enable) {
 
 ScopedAStatus RadioSim::getAllowedCarriers(int32_t serial) {
     LOG_CALL << serial;
-    mHal1_5->getAllowedCarriers(serial);
+    mHal1_5->getAllowedCarriers_1_4(serial);
     return ok();
 }
 
