@@ -205,6 +205,12 @@ oneway interface IRadioSim {
      * Open a new logical channel and select the given application. This command
      * reflects TS 27.007 "open logical channel" operation (+CCHO).
      *
+     * For MEP-A(Multiple enabled profile), only dedicated port 0 is ISDR selectable.
+     * e.g., Port0 - for ISDR access and Port1/Port2 - the currently active ports/subscriptions.
+     * Port 0 should be transparent to AP and iccLogicalChannel API should remain the same.
+     * Even if the ISDR request comes over port1 or port2, Modem would just internally convert the
+     * portID to port0 and add the real port index as the payload of MANAGE_CHANNEL command.
+     *
      * @param serial Serial number of request.
      * @param aid AID value, See ETSI 102.221 and 101.220.
      * @param p2 P2 value, described in ISO 7816-4. Ignore if equal to RadioConst:P2_CONSTANT_NO_P2
