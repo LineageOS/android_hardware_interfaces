@@ -27,6 +27,10 @@ using ::ndk::ScopedAStatus;
 namespace aidl = ::aidl::android::hardware::radio::modem;
 constexpr auto ok = &ScopedAStatus::ok;
 
+std::shared_ptr<aidl::IRadioModemResponse> RadioModem::respond() {
+    return mRadioResponse->modemCb();
+}
+
 ScopedAStatus RadioModem::enableModem(int32_t serial, bool on) {
     LOG_CALL << serial;
     mHal1_5->enableModem(serial, on);

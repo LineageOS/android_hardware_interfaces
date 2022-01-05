@@ -29,8 +29,11 @@ namespace android::hardware::radio::compat {
 namespace aidl = ::aidl::android::hardware::radio::data;
 
 void RadioIndication::setResponseFunction(std::shared_ptr<aidl::IRadioDataIndication> dataCb) {
-    CHECK(dataCb);
     mDataCb = dataCb;
+}
+
+std::shared_ptr<aidl::IRadioDataIndication> RadioIndication::dataCb() {
+    return mDataCb.get();
 }
 
 Return<void> RadioIndication::dataCallListChanged(V1_0::RadioIndicationType type,
@@ -50,40 +53,35 @@ Return<void> RadioIndication::dataCallListChanged_1_4(V1_0::RadioIndicationType 
 Return<void> RadioIndication::dataCallListChanged_1_5(
         V1_0::RadioIndicationType type, const hidl_vec<V1_5::SetupDataCallResult>& dcList) {
     LOG_CALL << type;
-    CHECK_CB(mDataCb);
-    mDataCb->dataCallListChanged(toAidl(type), toAidl(dcList));
+    dataCb()->dataCallListChanged(toAidl(type), toAidl(dcList));
     return {};
 }
 
 Return<void> RadioIndication::dataCallListChanged_1_6(
         V1_0::RadioIndicationType type, const hidl_vec<V1_6::SetupDataCallResult>& dcList) {
     LOG_CALL << type;
-    CHECK_CB(mDataCb);
-    mDataCb->dataCallListChanged(toAidl(type), toAidl(dcList));
+    dataCb()->dataCallListChanged(toAidl(type), toAidl(dcList));
     return {};
 }
 
 Return<void> RadioIndication::keepaliveStatus(V1_0::RadioIndicationType type,
                                               const V1_1::KeepaliveStatus& status) {
     LOG_CALL << type;
-    CHECK_CB(mDataCb);
-    mDataCb->keepaliveStatus(toAidl(type), toAidl(status));
+    dataCb()->keepaliveStatus(toAidl(type), toAidl(status));
     return {};
 }
 
 Return<void> RadioIndication::pcoData(V1_0::RadioIndicationType type,
                                       const V1_0::PcoDataInfo& pco) {
     LOG_CALL << type;
-    CHECK_CB(mDataCb);
-    mDataCb->pcoData(toAidl(type), toAidl(pco));
+    dataCb()->pcoData(toAidl(type), toAidl(pco));
     return {};
 }
 
 Return<void> RadioIndication::unthrottleApn(V1_0::RadioIndicationType type,
                                             const hidl_string& apn) {
     LOG_CALL << type;
-    CHECK_CB(mDataCb);
-    mDataCb->unthrottleApn(toAidl(type), mContext->getDataProfile(apn));
+    dataCb()->unthrottleApn(toAidl(type), mContext->getDataProfile(apn));
     return {};
 }
 

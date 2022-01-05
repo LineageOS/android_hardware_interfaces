@@ -30,6 +30,10 @@ using ::ndk::ScopedAStatus;
 namespace aidl = ::aidl::android::hardware::radio::voice;
 constexpr auto ok = &ScopedAStatus::ok;
 
+std::shared_ptr<aidl::IRadioVoiceResponse> RadioVoice::respond() {
+    return mRadioResponse->voiceCb();
+}
+
 ScopedAStatus RadioVoice::acceptCall(int32_t serial) {
     LOG_CALL << serial;
     mHal1_5->acceptCall(serial);
@@ -152,7 +156,7 @@ ScopedAStatus RadioVoice::hangupWaitingOrBackground(int32_t serial) {
 
 ScopedAStatus RadioVoice::isVoNrEnabled(int32_t serial) {
     LOG_CALL << serial;
-    // TODO(b/203699028): can't call isVoNrEnabledResponse with 1.6 callback
+    respond()->isVoNrEnabledResponse(notSupported(serial), false);
     return ok();
 }
 
@@ -245,7 +249,8 @@ ScopedAStatus RadioVoice::setTtyMode(int32_t serial, aidl::TtyMode mode) {
 
 ndk::ScopedAStatus RadioVoice::setVoNrEnabled(int32_t serial, [[maybe_unused]] bool enable) {
     LOG_CALL << serial;
-    // TODO(b/203699028): should set `persist.radio.is_vonr_enabled_` property instead
+    // Note: a workaround for older HALs could also be setting persist.radio.is_vonr_enabled_
+    respond()->setVoNrEnabledResponse(notSupported(serial));
     return ok();
 }
 
