@@ -17,10 +17,15 @@
 #ifndef android_hardware_automotive_vehicle_aidl_impl_vhal_include_DefaultVehicleHal_H_
 #define android_hardware_automotive_vehicle_aidl_impl_vhal_include_DefaultVehicleHal_H_
 
+#include "ConnectedClient.h"
+#include "ParcelableUtils.h"
+
 #include <IVehicleHardware.h>
 #include <LargeParcelableBase.h>
 #include <VehicleUtils.h>
 #include <aidl/android/hardware/automotive/vehicle/BnVehicle.h>
+#include <android-base/expected.h>
+#include <android-base/thread_annotations.h>
 #include <android/binder_auto_utils.h>
 
 #include <memory>
@@ -40,12 +45,20 @@ constexpr int INVALID_MEMORY_FD = -1;
 template <class T>
 ::ndk::ScopedAStatus toScopedAStatus(
         const ::android::base::Result<T>& result,
-        ::aidl::android::hardware::automotive::vehicle::StatusCode status) {
+        ::aidl::android::hardware::automotive::vehicle::StatusCode status,
+        const std::string& additionalErrorMsg) {
     if (result.ok()) {
         return ::ndk::ScopedAStatus::ok();
     }
-    return ::ndk::ScopedAStatus::fromServiceSpecificErrorWithMessage(toInt(status),
-                                                                     getErrorMsg(result).c_str());
+    return ::ndk::ScopedAStatus::fromServiceSpecificErrorWithMessage(
+            toInt(status), (additionalErrorMsg + getErrorMsg(result)).c_str());
+}
+
+template <class T>
+::ndk::ScopedAStatus toScopedAStatus(
+        const ::android::base::Result<T>& result,
+        ::aidl::android::hardware::automotive::vehicle::StatusCode status) {
+    return toScopedAStatus(result, status, "");
 }
 
 template <class T>
@@ -53,43 +66,30 @@ template <class T>
     return toScopedAStatus(result, getErrorCode(result));
 }
 
-template <class T1, class T2>
-::ndk::ScopedAStatus vectorToStableLargeParcelable(std::vector<T1>& values, T2* output) {
-    auto result = ::android::automotive::car_binder_lib::LargeParcelableBase::
-            parcelableVectorToStableLargeParcelable(values);
-    if (!result.ok()) {
-        return toScopedAStatus(
-                result, ::aidl::android::hardware::automotive::vehicle::StatusCode::INTERNAL_ERROR);
-    }
-    auto& fd = result.value();
-    if (fd == nullptr) {
-        output->payloads = values;
-    } else {
-        // Move the returned ScopedFileDescriptor pointer to ScopedFileDescriptor value in
-        // 'sharedMemoryFd' field.
-        output->sharedMemoryFd.set(fd->get());
-        *(fd->getR()) = INVALID_MEMORY_FD;
-    }
-    return ::ndk::ScopedAStatus::ok();
+template <class T>
+::ndk::ScopedAStatus toScopedAStatus(const ::android::base::Result<T>& result,
+                                     const std::string& additionalErrorMsg) {
+    return toScopedAStatus(result, getErrorCode(result), additionalErrorMsg);
 }
 
 }  // namespace defaultvehiclehal_impl
 
 class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::vehicle::BnVehicle {
   public:
+    using CallbackType =
+            std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback>;
+
     explicit DefaultVehicleHal(std::unique_ptr<IVehicleHardware> hardware);
 
     ::ndk::ScopedAStatus getAllPropConfigs(
             ::aidl::android::hardware::automotive::vehicle::VehiclePropConfigs* returnConfigs)
             override;
     ::ndk::ScopedAStatus getValues(
-            const std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback>&
-                    callback,
+            const CallbackType& callback,
             const ::aidl::android::hardware::automotive::vehicle::GetValueRequests& requests)
             override;
     ::ndk::ScopedAStatus setValues(
-            const std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback>&
-                    callback,
+            const CallbackType& callback,
             const ::aidl::android::hardware::automotive::vehicle::SetValueRequests& requests)
             override;
     ::ndk::ScopedAStatus getPropConfigs(
@@ -97,27 +97,38 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
             ::aidl::android::hardware::automotive::vehicle::VehiclePropConfigs* returnConfigs)
             override;
     ::ndk::ScopedAStatus subscribe(
-            const std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback>&
-                    callback,
+            const CallbackType& callback,
             const std::vector<::aidl::android::hardware::automotive::vehicle::SubscribeOptions>&
                     options,
             int32_t maxSharedMemoryFileCount) override;
-    ::ndk::ScopedAStatus unsubscribe(
-            const std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback>&
-                    callback,
-            const std::vector<int32_t>& propIds) override;
-    ::ndk::ScopedAStatus returnSharedMemory(
-            const std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback>&
-                    callback,
-            int64_t sharedMemoryId) override;
+    ::ndk::ScopedAStatus unsubscribe(const CallbackType& callback,
+                                     const std::vector<int32_t>& propIds) override;
+    ::ndk::ScopedAStatus returnSharedMemory(const CallbackType& callback,
+                                            int64_t sharedMemoryId) override;
 
     IVehicleHardware* getHardware();
 
   private:
+    // friend class for unit testing.
+    friend class DefaultVehicleHalTest;
+
+    using GetValuesClient =
+            GetSetValuesClient<::aidl::android::hardware::automotive::vehicle::GetValueResult,
+                               ::aidl::android::hardware::automotive::vehicle::GetValueResults>;
+
     const std::unique_ptr<IVehicleHardware> mVehicleHardware;
     std::unordered_map<int32_t, ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig>
             mConfigsByPropId;
     std::unique_ptr<::ndk::ScopedFileDescriptor> mConfigFile;
+
+    std::mutex mLock;
+    std::unordered_map<CallbackType, std::shared_ptr<GetValuesClient>> mGetValuesClients
+            GUARDED_BY(mLock);
+
+    template <class T>
+    std::shared_ptr<T> getOrCreateClient(
+            std::unordered_map<CallbackType, std::shared_ptr<T>>* clients,
+            const CallbackType& callback) REQUIRES(mLock);
 };
 
 }  // namespace vehicle
