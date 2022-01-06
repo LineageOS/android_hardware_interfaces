@@ -16,7 +16,7 @@
 
 #include "radio_modem_utils.h"
 
-RadioModemResponse::RadioModemResponse(RadioResponseWaiter& parent) : parent_modem(parent) {}
+RadioModemResponse::RadioModemResponse(RadioServiceTest& parent) : parent_modem(parent) {}
 
 ndk::ScopedAStatus RadioModemResponse::acknowledgeRequest(int32_t /*serial*/) {
     return ndk::ScopedAStatus::ok();

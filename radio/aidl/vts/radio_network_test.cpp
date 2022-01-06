@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <aidl/android/hardware/radio/RadioAccessFamily.h>
 #include <aidl/android/hardware/radio/config/IRadioConfig.h>
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
@@ -44,12 +45,17 @@ void RadioNetworkTest::SetUp() {
 
     radio_network->setResponseFunctions(radioRsp_network, radioInd_network);
 
+    // Assert IRadioSim exists and SIM is present before testing
+    radio_sim = sim::IRadioSim::fromBinder(ndk::SpAIBinder(
+            AServiceManager_waitForService("android.hardware.radio.sim.IRadioSim/slot1")));
+    ASSERT_NE(nullptr, radio_sim.get());
+    updateSimCardStatus();
+    EXPECT_EQ(CardStatus::STATE_PRESENT, cardStatus.cardState);
+
     // Assert IRadioConfig exists before testing
-    std::shared_ptr<aidl::android::hardware::radio::config::IRadioConfig> radioConfig =
-            aidl::android::hardware::radio::config::IRadioConfig::fromBinder(
-                    ndk::SpAIBinder(AServiceManager_waitForService(
-                            "android.hardware.radio.config.IRadioConfig/default")));
-    ASSERT_NE(nullptr, radioConfig.get());
+    radio_config = config::IRadioConfig::fromBinder(ndk::SpAIBinder(
+            AServiceManager_waitForService("android.hardware.radio.config.IRadioConfig/default")));
+    ASSERT_NE(nullptr, radio_config.get());
 }
 
 /*
@@ -57,7 +63,7 @@ void RadioNetworkTest::SetUp() {
  */
 TEST_P(RadioNetworkTest, setAllowedNetworkTypesBitmap) {
     serial = GetRandomSerialNumber();
-    RadioAccessFamily allowedNetworkTypesBitmap = RadioAccessFamily::LTE;
+    int32_t allowedNetworkTypesBitmap = static_cast<int32_t>(RadioAccessFamily::LTE);
 
     radio_network->setAllowedNetworkTypesBitmap(serial, allowedNetworkTypesBitmap);
 
@@ -77,7 +83,7 @@ TEST_P(RadioNetworkTest, setAllowedNetworkTypesBitmap) {
  */
 TEST_P(RadioNetworkTest, getAllowedNetworkTypesBitmap) {
     serial = GetRandomSerialNumber();
-    RadioAccessFamily allowedNetworkTypesBitmap = RadioAccessFamily::LTE;
+    int32_t allowedNetworkTypesBitmap = static_cast<int32_t>(RadioAccessFamily::LTE);
 
     radio_network->setAllowedNetworkTypesBitmap(serial, allowedNetworkTypesBitmap);
 

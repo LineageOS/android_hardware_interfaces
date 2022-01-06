@@ -16,7 +16,7 @@
 
 #include "radio_modem_utils.h"
 
-RadioModemIndication::RadioModemIndication(RadioModemTest& parent) : parent_modem(parent) {}
+RadioModemIndication::RadioModemIndication(RadioServiceTest& parent) : parent_modem(parent) {}
 
 ndk::ScopedAStatus RadioModemIndication::hardwareConfigChanged(
         RadioIndicationType /*type*/, const std::vector<HardwareConfig>& /*configs*/) {
