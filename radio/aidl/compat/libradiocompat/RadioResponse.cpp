@@ -26,7 +26,10 @@ RadioResponse::RadioResponse(std::shared_ptr<DriverContext> context) : mContext(
 
 Return<void> RadioResponse::acknowledgeRequest(int32_t serial) {
     LOG_CALL << serial;
-    // TODO(b/203699028): send to correct requestor or confirm if spam is not a problem
+    /* We send ACKs to all callbacks instead of the one requested it to make implementation simpler.
+     * If it turns out to be a problem, we would have to track where serials come from and make sure
+     * this tracking data (e.g. a map) doesn't grow indefinitely.
+     */
     if (mDataCb) mDataCb.get()->acknowledgeRequest(serial);
     if (mMessagingCb) mMessagingCb.get()->acknowledgeRequest(serial);
     if (mModemCb) mModemCb.get()->acknowledgeRequest(serial);
