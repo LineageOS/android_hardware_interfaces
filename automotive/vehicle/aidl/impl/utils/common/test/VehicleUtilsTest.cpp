@@ -16,6 +16,7 @@
 
 #include <ConcurrentQueue.h>
 #include <PropertyUtils.h>
+#include <TestPropertyUtils.h>
 #include <VehicleUtils.h>
 
 #include <gtest/gtest.h>
@@ -29,6 +30,8 @@ namespace hardware {
 namespace automotive {
 namespace vehicle {
 
+namespace {
+
 using ::aidl::android::hardware::automotive::vehicle::VehicleArea;
 using ::aidl::android::hardware::automotive::vehicle::VehicleAreaConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
@@ -36,6 +39,427 @@ using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyGroup;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
+
+struct InvalidPropValueTestCase {
+    std::string name;
+    VehiclePropValue value;
+    bool valid = false;
+    VehiclePropConfig config;
+};
+
+constexpr int32_t int32Prop = toInt(VehicleProperty::INFO_MODEL_YEAR);
+constexpr int32_t int32VecProp = toInt(VehicleProperty::INFO_FUEL_TYPE);
+constexpr int32_t int64Prop = toInt(VehicleProperty::ANDROID_EPOCH_TIME);
+constexpr int32_t int64VecProp = toInt(VehicleProperty::WHEEL_TICK);
+constexpr int32_t floatProp = toInt(VehicleProperty::ENV_OUTSIDE_TEMPERATURE);
+constexpr int32_t floatVecProp = toInt(VehicleProperty::HVAC_TEMPERATURE_VALUE_SUGGESTION);
+
+std::vector<InvalidPropValueTestCase> getInvalidPropValuesTestCases() {
+    return std::vector<InvalidPropValueTestCase>(
+            {
+                    InvalidPropValueTestCase{
+                            .name = "int32_normal",
+                            .value =
+                                    {
+                                            .prop = int32Prop,
+                                            .value.int32Values = {0},
+                                    },
+                            .valid = true,
+                    },
+                    InvalidPropValueTestCase{
+                            .name = "int32_no_value",
+                            .value =
+                                    {
+                                            .prop = int32Prop,
+                                    },
+                    },
+                    InvalidPropValueTestCase{
+                            .name = "int32_more_than_one_value",
+                            .value =
+                                    {
+                                            .prop = int32Prop,
+                                            .value.int32Values = {0, 1},
+                                    },
+                    },
+                    InvalidPropValueTestCase{
+                            .name = "int32_vec_normal",
+                            .value =
+                                    {
+                                            .prop = int32VecProp,
+                                            .value.int32Values = {0, 1},
+                                    },
+                            .valid = true,
+                    },
+                    InvalidPropValueTestCase{
+                            .name = "int32_vec_no_value",
+                            .value =
+                                    {
+                                            .prop = int32VecProp,
+                                    },
+                    },
+                    InvalidPropValueTestCase{
+                            .name = "int64_normal",
+                            .value =
+                                    {
+                                            .prop = int64Prop,
+                                            .value.int64Values = {0},
+                                    },
+                            .valid = true,
+                    },
+                    InvalidPropValueTestCase{
+                            .name = "int64_no_value",
+                            .value =
+                                    {
+                                            .prop = int64Prop,
+                                    },
+                    },
+                    InvalidPropValueTestCase{
+                            .name = "int64_more_than_one_value",
+                            .value =
+                                    {
+                                            .prop = int64Prop,
+                                            .value.int64Values = {0, 1},
+                                    },
+                    },
+                    InvalidPropValueTestCase{
+                            .name = "int64_vec_normal",
+                            .value =
+                                    {
+                                            .prop = int64VecProp,
+                                            .value.int64Values = {0, 1},
+                                    },
+                            .valid = true,
+                    },
+                    InvalidPropValueTestCase{
+                            .name = "int64_vec_no_value",
+                            .value =
+                                    {
+                                            .prop = int64VecProp,
+                                    },
+                    },
+                    InvalidPropValueTestCase{
+                            .name = "float_normal",
+                            .value =
+                                    {
+                                            .prop = floatProp,
+                                            .value.floatValues = {0.0},
+                                    },
+                            .valid = true,
+                    },
+                    InvalidPropValueTestCase{
+                            .name = "float_no_value",
+                            .value =
+                                    {
+                                            .prop = floatProp,
+                                    },
+                    },
+                    InvalidPropValueTestCase{
+                            .name = "float_more_than_one_value",
+                            .value =
+                                    {
+                                            .prop = floatProp,
+                                            .value.floatValues = {0.0, 1.0},
+                                    },
+                    },
+                    InvalidPropValueTestCase{
+                            .name = "float_vec_normal",
+                            .value =
+                                    {
+                                            .prop = floatVecProp,
+                                            .value.floatValues = {0.0, 1.0},
+                                    },
+                            .valid = true,
+                    },
+                    InvalidPropValueTestCase{
+                            .name = "float_vec_no_value",
+                            .value =
+                                    {
+                                            .prop = floatVecProp,
+                                    },
+                    },
+                    InvalidPropValueTestCase{
+                            .name = "mixed_normal",
+                            .value =
+                                    {
+                                            .prop = kMixedTypePropertyForTest,
+                                            // Expect 3 values.
+                                            .value.int32Values = {0, 1, 2},
+                                            // Expect 2 values.
+                                            .value.int64Values = {0, 1},
+                                            // Expect 2 values.
+                                            .value.floatValues = {0.0, 1.0},
+                                            // Expect 1 value.
+                                            .value.byteValues = {static_cast<uint8_t>(0)},
+                                    },
+                            .config =
+                                    {
+                                            .prop = kMixedTypePropertyForTest,
+                                            .configArray = {0, 1, 1, 1, 1, 1, 1, 1, 1},
+                                    },
+                            .valid = true,
+                    },
+                    InvalidPropValueTestCase{
+                            .name = "mixed_mismatch_int32_values_count",
+                            .value =
+                                    {
+                                            .prop = kMixedTypePropertyForTest,
+                                            // Expect 3 values.
+                                            .value.int32Values = {0, 1},
+                                            // Expect 2 values.
+                                            .value.int64Values = {0, 1},
+                                            // Expect 2 values.
+                                            .value.floatValues = {0.0, 1.0},
+                                            // Expect 1 value.
+                                            .value.byteValues = {static_cast<uint8_t>(0)},
+                                    },
+                            .config =
+                                    {
+                                            .prop = kMixedTypePropertyForTest,
+                                            .configArray = {0, 1, 1, 1, 1, 1, 1, 1, 1},
+                                    },
+                    },
+                    InvalidPropValueTestCase{
+                            .name = "mixed_mismatch_int64_values_count",
+                            .value =
+                                    {
+                                            .prop = kMixedTypePropertyForTest,
+                                            // Expect 3 values.
+                                            .value.int32Values = {0, 1, 2},
+                                            // Expect 2 values.
+                                            .value.int64Values = {0},
+                                            // Expect 2 values.
+                                            .value.floatValues = {0.0, 1.0},
+                                            // Expect 1 value.
+                                            .value.byteValues = {static_cast<uint8_t>(0)},
+                                    },
+                            .config =
+                                    {
+                                            .prop = kMixedTypePropertyForTest,
+                                            .configArray = {0, 1, 1, 1, 1, 1, 1, 1, 1},
+                                    },
+                    },
+                    InvalidPropValueTestCase{
+                            .name = "mixed_mismatch_float_values_count",
+                            .value =
+                                    {
+                                            .prop = kMixedTypePropertyForTest,
+                                            // Expect 3 values.
+                                            .value.int32Values = {0, 1, 2},
+                                            // Expect 2 values.
+                                            .value.int64Values = {0, 1},
+                                            // Expect 2 values.
+                                            .value.floatValues = {0.0},
+                                            // Expect 1 value.
+                                            .value.byteValues = {static_cast<uint8_t>(0)},
+                                    },
+                            .config =
+                                    {
+                                            .prop = kMixedTypePropertyForTest,
+                                            .configArray = {0, 1, 1, 1, 1, 1, 1, 1, 1},
+                                    },
+                    },
+                    InvalidPropValueTestCase{
+                            .name = "mixed_mismatch_byte_values_count",
+                            .value =
+                                    {
+                                            .prop = kMixedTypePropertyForTest,
+                                            // Expect 3 values.
+                                            .value.int32Values = {0, 1, 2},
+                                            // Expect 2 values.
+                                            .value.int64Values = {0, 1},
+                                            // Expect 2 values.
+                                            .value.floatValues = {0.0, 1.0},
+                                            // Expect 1 value.
+                                            .value.byteValues = {static_cast<uint8_t>(0),
+                                                                 static_cast<uint8_t>(1)},
+                                    },
+                            .config =
+                                    {
+                                            .prop = kMixedTypePropertyForTest,
+                                            .configArray = {0, 1, 1, 1, 1, 1, 1, 1, 1},
+                                    },
+                    },
+            });
+}
+
+struct InvalidValueRangeTestCase {
+    std::string name;
+    VehiclePropValue value;
+    bool valid = false;
+    VehicleAreaConfig config;
+};
+
+std::vector<InvalidValueRangeTestCase> getInvalidValueRangeTestCases() {
+    return std::vector<InvalidValueRangeTestCase>({{
+            InvalidValueRangeTestCase{
+                    .name = "int32_normal",
+                    .value =
+                            {
+                                    .prop = int32Prop,
+                                    .value.int32Values = {0},
+                            },
+                    .valid = true,
+                    .config =
+                            {
+                                    .minInt32Value = 0,
+                                    .maxInt32Value = 10,
+                            },
+            },
+            InvalidValueRangeTestCase{
+                    .name = "int32_vec_normal",
+                    .value =
+                            {
+                                    .prop = int32VecProp,
+                                    .value.int32Values = {0, 1},
+                            },
+                    .valid = true,
+                    .config =
+                            {
+                                    .minInt32Value = 0,
+                                    .maxInt32Value = 10,
+                            },
+            },
+            InvalidValueRangeTestCase{
+                    .name = "int32_vec_underflow",
+                    .value =
+                            {
+                                    .prop = int32VecProp,
+                                    .value.int32Values = {-1, 1},
+                            },
+
+                    .config =
+                            {
+                                    .minInt32Value = 0,
+                                    .maxInt32Value = 10,
+                            },
+            },
+            InvalidValueRangeTestCase{
+                    .name = "int32_vec_overflow",
+                    .value =
+                            {
+                                    .prop = int32VecProp,
+                                    .value.int32Values = {0, 100},
+                            },
+                    .config =
+                            {
+                                    .minInt32Value = 0,
+                                    .maxInt32Value = 10,
+                            },
+            },
+            InvalidValueRangeTestCase{
+                    .name = "int64_normal",
+                    .value =
+                            {
+                                    .prop = int64Prop,
+                                    .value.int64Values = {0},
+                            },
+                    .valid = true,
+                    .config =
+                            {
+                                    .minInt64Value = 0,
+                                    .maxInt64Value = 10,
+                            },
+            },
+            InvalidValueRangeTestCase{
+                    .name = "int64_vec_normal",
+                    .value =
+                            {
+                                    .prop = int64VecProp,
+                                    .value.int64Values = {0, 1},
+                            },
+                    .valid = true,
+                    .config =
+                            {
+                                    .minInt64Value = 0,
+                                    .maxInt64Value = 10,
+                            },
+            },
+            InvalidValueRangeTestCase{
+                    .name = "int64_vec_underflow",
+                    .value =
+                            {
+                                    .prop = int64VecProp,
+                                    .value.int64Values = {-1, 1},
+                            },
+
+                    .config =
+                            {
+                                    .minInt64Value = 0,
+                                    .maxInt64Value = 10,
+                            },
+            },
+            InvalidValueRangeTestCase{
+                    .name = "int64_vec_overflow",
+                    .value =
+                            {
+                                    .prop = int64VecProp,
+                                    .value.int64Values = {0, 100},
+                            },
+                    .config =
+                            {
+                                    .minInt64Value = 0,
+                                    .maxInt64Value = 10,
+                            },
+            },
+            InvalidValueRangeTestCase{
+                    .name = "float_normal",
+                    .value =
+                            {
+                                    .prop = floatProp,
+                                    .value.floatValues = {0.0},
+                            },
+                    .valid = true,
+                    .config =
+                            {
+                                    .minFloatValue = 0.0,
+                                    .maxFloatValue = 10.0,
+                            },
+            },
+            InvalidValueRangeTestCase{
+                    .name = "float_vec_normal",
+                    .value =
+                            {
+                                    .prop = floatVecProp,
+                                    .value.floatValues = {0.0, 10.0},
+                            },
+                    .valid = true,
+                    .config =
+                            {
+                                    .minFloatValue = 0.0,
+                                    .maxFloatValue = 10.0,
+                            },
+            },
+            InvalidValueRangeTestCase{
+                    .name = "float_vec_underflow",
+                    .value =
+                            {
+                                    .prop = floatVecProp,
+                                    .value.floatValues = {-0.1, 1.1},
+                            },
+
+                    .config =
+                            {
+                                    .minFloatValue = 0.0,
+                                    .maxFloatValue = 10.0,
+                            },
+            },
+            InvalidValueRangeTestCase{
+                    .name = "float_vec_overflow",
+                    .value =
+                            {
+                                    .prop = floatVecProp,
+                                    .value.floatValues = {0.0, 10.1},
+                            },
+                    .config =
+                            {
+                                    .minFloatValue = 0.0,
+                                    .maxFloatValue = 10.0,
+                            },
+            },
+    }});
+}
+
+}  // namespace
 
 TEST(VehicleUtilsTest, testToInt) {
     int areaGlobal = toInt(VehicleArea::GLOBAL);
@@ -333,6 +757,40 @@ TEST(VehicleUtilsTest, testConcurrentQueueDeactivateNotifyWaitingThread) {
     queue.deactivate();
 
     t.join();
+}
+
+class InvalidPropValueTest : public testing::TestWithParam<InvalidPropValueTestCase> {};
+
+INSTANTIATE_TEST_SUITE_P(InvalidPropValueTests, InvalidPropValueTest,
+                         testing::ValuesIn(getInvalidPropValuesTestCases()),
+                         [](const testing::TestParamInfo<InvalidPropValueTest::ParamType>& info) {
+                             return info.param.name;
+                         });
+
+TEST_P(InvalidPropValueTest, testCheckPropValue) {
+    InvalidPropValueTestCase tc = GetParam();
+
+    // Config is not used for non-mixed types.
+    auto result = checkPropValue(tc.value, &tc.config);
+
+    ASSERT_EQ(tc.valid, result.ok());
+}
+
+class InvalidValueRangeTest : public testing::TestWithParam<InvalidValueRangeTestCase> {};
+
+INSTANTIATE_TEST_SUITE_P(InvalidValueRangeTests, InvalidValueRangeTest,
+                         testing::ValuesIn(getInvalidValueRangeTestCases()),
+                         [](const testing::TestParamInfo<InvalidValueRangeTest::ParamType>& info) {
+                             return info.param.name;
+                         });
+
+TEST_P(InvalidValueRangeTest, testCheckValueRange) {
+    InvalidValueRangeTestCase tc = GetParam();
+
+    // Config is not used for non-mixed types.
+    auto result = checkValueRange(tc.value, &tc.config);
+
+    ASSERT_EQ(tc.valid, result.ok());
 }
 
 }  // namespace vehicle

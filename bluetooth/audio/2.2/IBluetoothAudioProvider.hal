@@ -59,4 +59,14 @@ interface IBluetoothAudioProvider extends @2.1::IBluetoothAudioProvider {
      */
     startSession_2_2(IBluetoothAudioPort hostIf, AudioConfiguration audioConfig)
                 generates (Status status, fmq_sync<uint8_t> dataMQ);
+
+    /**
+     * Called when the audio configuration of the stream has been changed.
+     *
+     * @param audioConfig The audio configuration negotiated with the remote
+     *    device. The PCM parameters are set if software based encoding,
+     *    otherwise the correct codec configuration is used for hardware
+     *    encoding.
+     */
+    updateAudioConfiguration(AudioConfiguration audioConfig);
 };

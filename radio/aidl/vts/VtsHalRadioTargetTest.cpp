@@ -16,12 +16,19 @@
 
 #include <android/binder_process.h>
 
+#include "radio_config_utils.h"
 #include "radio_data_utils.h"
 #include "radio_messaging_utils.h"
 #include "radio_modem_utils.h"
 #include "radio_network_utils.h"
 #include "radio_sim_utils.h"
 #include "radio_voice_utils.h"
+
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(RadioConfigTest);
+INSTANTIATE_TEST_SUITE_P(
+        PerInstance, RadioConfigTest,
+        testing::ValuesIn(android::getAidlHalInstanceNames(IRadioConfig::descriptor)),
+        android::PrintInstanceNameToString);
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(RadioDataTest);
 INSTANTIATE_TEST_SUITE_P(

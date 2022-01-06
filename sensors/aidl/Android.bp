@@ -1,0 +1,25 @@
+// This is the expected build file, but it may not be right in all cases
+
+aidl_interface {
+    name: "android.hardware.sensors",
+    vendor_available: true,
+    srcs: ["android/hardware/sensors/*.aidl"],
+    imports: [
+        "android.hardware.common-V2",
+        "android.hardware.common.fmq-V1",
+    ],
+    stability: "vintf",
+    backend: {
+        cpp: {
+            enabled: false,
+        },
+        java: {
+            enabled: false,
+        },
+        ndk: {
+            vndk: {
+                enabled: true,
+            },
+        },
+    },
+}
