@@ -16,7 +16,7 @@
 
 #include "radio_voice_utils.h"
 
-RadioVoiceResponse::RadioVoiceResponse(RadioResponseWaiter& parent) : parent_voice(parent) {}
+RadioVoiceResponse::RadioVoiceResponse(RadioServiceTest& parent) : parent_voice(parent) {}
 
 ndk::ScopedAStatus RadioVoiceResponse::acceptCallResponse(const RadioResponseInfo& /*info*/) {
     return ndk::ScopedAStatus::ok();

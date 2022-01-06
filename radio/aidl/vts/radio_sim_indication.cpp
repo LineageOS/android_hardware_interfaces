@@ -16,7 +16,7 @@
 
 #include "radio_sim_utils.h"
 
-RadioSimIndication::RadioSimIndication(RadioSimTest& parent) : parent_sim(parent) {}
+RadioSimIndication::RadioSimIndication(RadioServiceTest& parent) : parent_sim(parent) {}
 
 ndk::ScopedAStatus RadioSimIndication::carrierInfoForImsiEncryption(RadioIndicationType /*info*/) {
     return ndk::ScopedAStatus::ok();

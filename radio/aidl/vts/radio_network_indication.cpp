@@ -16,7 +16,7 @@
 
 #include "radio_network_utils.h"
 
-RadioNetworkIndication::RadioNetworkIndication(RadioNetworkTest& parent) : parent_network(parent) {}
+RadioNetworkIndication::RadioNetworkIndication(RadioServiceTest& parent) : parent_network(parent) {}
 
 ndk::ScopedAStatus RadioNetworkIndication::barringInfoChanged(
         RadioIndicationType /*type*/, const CellIdentity& /*cellIdentity*/,
