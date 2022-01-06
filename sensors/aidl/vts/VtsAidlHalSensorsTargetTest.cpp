@@ -26,6 +26,7 @@
 #include <utils/SystemClock.h>
 
 #include "SensorsAidlEnvironment.h"
+#include "SensorsAidlTestSharedMemory.h"
 #include "sensors-vts-utils/SensorsVtsEnvironmentBase.h"
 
 #include <cinttypes>
@@ -42,6 +43,9 @@ using aidl::android::hardware::sensors::SensorStatus;
 using aidl::android::hardware::sensors::SensorType;
 using android::ProcessState;
 using std::chrono::duration_cast;
+
+constexpr size_t kEventSize =
+        static_cast<size_t>(ISensors::DIRECT_REPORT_SENSOR_EVENT_TOTAL_LENGTH);
 
 namespace {
 
@@ -95,6 +99,24 @@ static void assertTypeMatchStringType(SensorType type, const std::string& string
                    << "stringType = " << stringType;
 #undef CHECK_TYPE_STRING_FOR_SENSOR_TYPE
     }
+}
+
+bool isDirectChannelTypeSupported(SensorInfo sensor, ISensors::SharedMemInfo::SharedMemType type) {
+    switch (type) {
+        case ISensors::SharedMemInfo::SharedMemType::ASHMEM:
+            return (sensor.flags & SensorInfo::SENSOR_FLAG_BITS_DIRECT_CHANNEL_ASHMEM) != 0;
+        case ISensors::SharedMemInfo::SharedMemType::GRALLOC:
+            return (sensor.flags & SensorInfo::SENSOR_FLAG_BITS_DIRECT_CHANNEL_GRALLOC) != 0;
+        default:
+            return false;
+    }
+}
+
+bool isDirectReportRateSupported(SensorInfo sensor, ISensors::RateLevel rate) {
+    unsigned int r = static_cast<unsigned int>(sensor.flags &
+                                               SensorInfo::SENSOR_FLAG_BITS_MASK_DIRECT_REPORT) >>
+                     static_cast<unsigned int>(SensorInfo::SENSOR_FLAG_SHIFT_DIRECT_REPORT);
+    return r >= static_cast<unsigned int>(rate);
 }
 
 int expectedReportModeForType(SensorType type) {
@@ -286,6 +308,24 @@ class SensorsAidlTest : public testing::TestWithParam<std::string> {
     std::vector<SensorInfo> getOneShotSensors();
     std::vector<SensorInfo> getInjectEventSensors();
 
+    void verifyDirectChannel(ISensors::SharedMemInfo::SharedMemType memType);
+
+    void verifyRegisterDirectChannel(
+            std::shared_ptr<SensorsAidlTestSharedMemory<SensorType, Event>> mem,
+            int32_t* directChannelHandle, bool supportsSharedMemType,
+            bool supportsAnyDirectChannel);
+
+    void verifyConfigure(const SensorInfo& sensor, ISensors::SharedMemInfo::SharedMemType memType,
+                         int32_t directChannelHandle, bool directChannelSupported);
+
+    void queryDirectChannelSupport(ISensors::SharedMemInfo::SharedMemType memType,
+                                   bool* supportsSharedMemType, bool* supportsAnyDirectChannel);
+
+    void verifyUnregisterDirectChannel(int32_t* directChannelHandle, bool supportsAnyDirectChannel);
+
+    void checkRateLevel(const SensorInfo& sensor, int32_t directChannelHandle,
+                        ISensors::RateLevel rateLevel, int32_t* reportToken);
+
     inline std::shared_ptr<ISensors>& getSensors() { return mEnvironment->mSensors; }
 
     inline SensorsAidlEnvironment* getEnvironment() { return mEnvironment; }
@@ -313,6 +353,18 @@ class SensorsAidlTest : public testing::TestWithParam<std::string> {
 
     ndk::ScopedAStatus flush(int32_t sensorHandle) { return getSensors()->flush(sensorHandle); }
 
+    ndk::ScopedAStatus registerDirectChannel(const ISensors::SharedMemInfo& mem,
+                                             int32_t* aidlReturn);
+
+    ndk::ScopedAStatus unregisterDirectChannel(int32_t* channelHandle) {
+        return getSensors()->unregisterDirectChannel(*channelHandle);
+    }
+
+    ndk::ScopedAStatus configDirectReport(int32_t sensorHandle, int32_t channelHandle,
+                                          ISensors::RateLevel rate, int32_t* reportToken) {
+        return getSensors()->configDirectReport(sensorHandle, channelHandle, rate, reportToken);
+    }
+
     void runSingleFlushTest(const std::vector<SensorInfo>& sensors, bool activateSensor,
                             int32_t expectedFlushCount, bool expectedResult);
 
@@ -333,6 +385,19 @@ class SensorsAidlTest : public testing::TestWithParam<std::string> {
   private:
     SensorsAidlEnvironment* mEnvironment;
 };
+
+ndk::ScopedAStatus SensorsAidlTest::registerDirectChannel(const ISensors::SharedMemInfo& mem,
+                                                          int32_t* aidlReturn) {
+    // If registeration of a channel succeeds, add the handle of channel to a set so that it can be
+    // unregistered when test fails. Unregister a channel does not remove the handle on purpose.
+    // Unregistering a channel more than once should not have negative effect.
+
+    ndk::ScopedAStatus status = getSensors()->registerDirectChannel(mem, aidlReturn);
+    if (status.isOk()) {
+        mDirectChannelHandles.insert(*aidlReturn);
+    }
+    return status;
+}
 
 std::vector<SensorInfo> SensorsAidlTest::getSensorsList() {
     std::vector<SensorInfo> sensorInfoList;
@@ -850,12 +915,141 @@ TEST_P(SensorsAidlTest, NoStaleEvents) {
     }
 }
 
+void SensorsAidlTest::checkRateLevel(const SensorInfo& sensor, int32_t directChannelHandle,
+                                     ISensors::RateLevel rateLevel, int32_t* reportToken) {
+    ndk::ScopedAStatus status =
+            configDirectReport(sensor.sensorHandle, directChannelHandle, rateLevel, reportToken);
+
+    SCOPED_TRACE(::testing::Message()
+                 << " handle=0x" << std::hex << std::setw(8) << std::setfill('0')
+                 << sensor.sensorHandle << std::dec << " type=" << static_cast<int>(sensor.type)
+                 << " name=" << sensor.name);
+
+    if (isDirectReportRateSupported(sensor, rateLevel)) {
+        ASSERT_TRUE(status.isOk());
+        if (rateLevel != ISensors::RateLevel::STOP) {
+            ASSERT_GT(*reportToken, 0);
+        } else {
+            ASSERT_EQ(status.getExceptionCode(), EX_ILLEGAL_ARGUMENT);
+        }
+    }
+}
+
+void SensorsAidlTest::queryDirectChannelSupport(ISensors::SharedMemInfo::SharedMemType memType,
+                                                bool* supportsSharedMemType,
+                                                bool* supportsAnyDirectChannel) {
+    *supportsSharedMemType = false;
+    *supportsAnyDirectChannel = false;
+    for (const SensorInfo& curSensor : getSensorsList()) {
+        if (isDirectChannelTypeSupported(curSensor, memType)) {
+            *supportsSharedMemType = true;
+        }
+        if (isDirectChannelTypeSupported(curSensor,
+                                         ISensors::SharedMemInfo::SharedMemType::ASHMEM) ||
+            isDirectChannelTypeSupported(curSensor,
+                                         ISensors::SharedMemInfo::SharedMemType::GRALLOC)) {
+            *supportsAnyDirectChannel = true;
+        }
+
+        if (*supportsSharedMemType && *supportsAnyDirectChannel) {
+            break;
+        }
+    }
+}
+
+void SensorsAidlTest::verifyRegisterDirectChannel(
+        std::shared_ptr<SensorsAidlTestSharedMemory<SensorType, Event>> mem,
+        int32_t* directChannelHandle, bool supportsSharedMemType, bool supportsAnyDirectChannel) {
+    char* buffer = mem->getBuffer();
+    size_t size = mem->getSize();
+
+    if (supportsSharedMemType) {
+        memset(buffer, 0xff, size);
+    }
+
+    int32_t channelHandle;
+
+    ::ndk::ScopedAStatus status = registerDirectChannel(mem->getSharedMemInfo(), &channelHandle);
+    if (supportsSharedMemType) {
+        ASSERT_TRUE(status.isOk());
+        ASSERT_EQ(channelHandle, 0);
+    } else {
+        int32_t error = supportsAnyDirectChannel ? EX_ILLEGAL_ARGUMENT : EX_UNSUPPORTED_OPERATION;
+        ASSERT_EQ(status.getExceptionCode(), error);
+        ASSERT_EQ(channelHandle, -1);
+    }
+    directChannelHandle = &channelHandle;
+}
+
+void SensorsAidlTest::verifyUnregisterDirectChannel(int32_t* channelHandle,
+                                                    bool supportsAnyDirectChannel) {
+    int result = supportsAnyDirectChannel ? EX_NONE : EX_UNSUPPORTED_OPERATION;
+    ndk::ScopedAStatus status = unregisterDirectChannel(channelHandle);
+    ASSERT_EQ(status.getExceptionCode(), result);
+}
+
+void SensorsAidlTest::verifyDirectChannel(ISensors::SharedMemInfo::SharedMemType memType) {
+    constexpr size_t kNumEvents = 1;
+    constexpr size_t kMemSize = kNumEvents * kEventSize;
+
+    std::shared_ptr<SensorsAidlTestSharedMemory<SensorType, Event>> mem(
+            SensorsAidlTestSharedMemory<SensorType, Event>::create(memType, kMemSize));
+    ASSERT_NE(mem, nullptr);
+
+    bool supportsSharedMemType;
+    bool supportsAnyDirectChannel;
+    queryDirectChannelSupport(memType, &supportsSharedMemType, &supportsAnyDirectChannel);
+
+    for (const SensorInfo& sensor : getSensorsList()) {
+        int32_t directChannelHandle = 0;
+        verifyRegisterDirectChannel(mem, &directChannelHandle, supportsSharedMemType,
+                                    supportsAnyDirectChannel);
+        verifyConfigure(sensor, memType, directChannelHandle, supportsAnyDirectChannel);
+        verifyUnregisterDirectChannel(&directChannelHandle, supportsAnyDirectChannel);
+    }
+}
+
+void SensorsAidlTest::verifyConfigure(const SensorInfo& sensor,
+                                      ISensors::SharedMemInfo::SharedMemType memType,
+                                      int32_t directChannelHandle, bool supportsAnyDirectChannel) {
+    SCOPED_TRACE(::testing::Message()
+                 << " handle=0x" << std::hex << std::setw(8) << std::setfill('0')
+                 << sensor.sensorHandle << std::dec << " type=" << static_cast<int>(sensor.type)
+                 << " name=" << sensor.name);
+
+    int32_t reportToken = 0;
+    if (isDirectChannelTypeSupported(sensor, memType)) {
+        // Verify that each rate level is properly supported
+        checkRateLevel(sensor, directChannelHandle, ISensors::RateLevel::NORMAL, &reportToken);
+        checkRateLevel(sensor, directChannelHandle, ISensors::RateLevel::FAST, &reportToken);
+        checkRateLevel(sensor, directChannelHandle, ISensors::RateLevel::VERY_FAST, &reportToken);
+        checkRateLevel(sensor, directChannelHandle, ISensors::RateLevel::STOP, &reportToken);
+
+        // Verify that a sensor handle of -1 is only acceptable when using RateLevel::STOP
+        ndk::ScopedAStatus status = configDirectReport(-1 /* sensorHandle */, directChannelHandle,
+                                                       ISensors::RateLevel::NORMAL, &reportToken);
+        ASSERT_EQ(status.getServiceSpecificError(), android::BAD_VALUE);
+
+        status = configDirectReport(-1 /* sensorHandle */, directChannelHandle,
+                                    ISensors::RateLevel::STOP, &reportToken);
+        ASSERT_TRUE(status.isOk());
+    } else {
+        // directChannelHandle will be -1 here, HAL should either reject it as a bad value if there
+        // is some level of direct channel report, otherwise return INVALID_OPERATION if direct
+        // channel is not supported at all
+        int error = supportsAnyDirectChannel ? EX_ILLEGAL_ARGUMENT : EX_UNSUPPORTED_OPERATION;
+        ndk::ScopedAStatus status = configDirectReport(sensor.sensorHandle, directChannelHandle,
+                                                       ISensors::RateLevel::NORMAL, &reportToken);
+        ASSERT_EQ(status.getExceptionCode(), error);
+    }
+}
+
 TEST_P(SensorsAidlTest, DirectChannelAshmem) {
-    // TODO(b/195593357): Implement this
+    verifyDirectChannel(ISensors::SharedMemInfo::SharedMemType::ASHMEM);
 }
 
 TEST_P(SensorsAidlTest, DirectChannelGralloc) {
-    // TODO(b/195593357): Implement this
+    verifyDirectChannel(ISensors::SharedMemInfo::SharedMemType::GRALLOC);
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SensorsAidlTest);
