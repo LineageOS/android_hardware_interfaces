@@ -20,6 +20,8 @@
 #include "debug.h"
 #include "structs.h"
 
+#include "collections.h"
+
 #define RADIO_MODULE "Config"
 
 namespace android::hardware::radio::compat {
