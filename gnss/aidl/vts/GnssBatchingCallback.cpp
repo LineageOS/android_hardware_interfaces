@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#define LOG_TAG "GnssBatchingCallbackAidl"
+
 #include "GnssBatchingCallback.h"
 #include <inttypes.h>
 #include <log/log.h>

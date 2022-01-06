@@ -35,9 +35,13 @@ struct Utils {
             const bool enableCorrVecOutputs);
     static V2_0::IGnssMeasurementCallback::GnssData getMockMeasurementV2_0();
     static V2_1::IGnssMeasurementCallback::GnssData getMockMeasurementV2_1();
+
     static aidl::android::hardware::gnss::GnssLocation getMockLocation();
     static V2_0::GnssLocation getMockLocationV2_0();
     static V1_0::GnssLocation getMockLocationV1_0();
+
+    static std::vector<aidl::android::hardware::gnss::IGnssCallback::GnssSvInfo>
+    getMockSvInfoList();
     static hidl_vec<V2_1::IGnssCallback::GnssSvInfo> getMockSvInfoListV2_1();
     static V2_1::IGnssCallback::GnssSvInfo getMockSvInfoV2_1(
             V2_0::IGnssCallback::GnssSvInfo gnssSvInfoV2_0, float basebandCN0DbHz);
@@ -48,6 +52,7 @@ struct Utils {
                                                              float cN0DbHz, float elevationDegrees,
                                                              float azimuthDegrees,
                                                              float carrierFrequencyHz);
+
     static hidl_vec<V2_1::IGnssAntennaInfoCallback::GnssAntennaInfo> getMockAntennaInfos();
 };
 
