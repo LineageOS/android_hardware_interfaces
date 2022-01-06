@@ -477,9 +477,11 @@ package android.media.tuner.testing.configuration.V1_0 {
 
   public class SectionFilterSettings {
     ctor public SectionFilterSettings();
+    method @Nullable public java.math.BigInteger getBitWidthOfLengthField();
     method @Nullable public boolean getIsCheckCrc();
     method @Nullable public boolean getIsRaw();
     method @Nullable public boolean getIsRepeat();
+    method public void setBitWidthOfLengthField(@Nullable java.math.BigInteger);
     method public void setIsCheckCrc(@Nullable boolean);
     method public void setIsRaw(@Nullable boolean);
     method public void setIsRepeat(@Nullable boolean);
