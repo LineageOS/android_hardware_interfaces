@@ -46,8 +46,8 @@ parcelable DataProfileInfo {
   int maxConns;
   int waitTime;
   boolean enabled;
-  android.hardware.radio.data.ApnTypes supportedApnTypesBitmap;
-  android.hardware.radio.RadioAccessFamily bearerBitmap;
+  int supportedApnTypesBitmap;
+  int bearerBitmap;
   int mtuV4;
   int mtuV6;
   boolean preferred;

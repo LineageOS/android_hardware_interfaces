@@ -147,7 +147,7 @@ aidl::EmergencyNumber toAidl(const V1_4::EmergencyNumber& num) {
             .number = num.number,
             .mcc = num.mcc,
             .mnc = num.mnc,
-            .categories = aidl::EmergencyServiceCategory(num.categories),
+            .categories = num.categories,
             .urns = toAidl(num.urns),
             .sources = num.sources,
     };

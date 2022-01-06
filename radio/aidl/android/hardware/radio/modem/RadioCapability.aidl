@@ -71,7 +71,7 @@ parcelable RadioCapability {
     /**
      * 32-bit bitmap of RadioAccessFamily.
      */
-    RadioAccessFamily raf;
+    int raf;
     /**
      * A UUID typically "com.xxxx.lmX" where X is the logical modem.
      * RadioConst:MAX_UUID_LENGTH is the max length.

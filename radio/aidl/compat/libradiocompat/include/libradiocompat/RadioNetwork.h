@@ -41,9 +41,8 @@ class RadioNetwork : public RadioCompatBase,
     ::ndk::ScopedAStatus getVoiceRegistrationState(int32_t serial) override;
     ::ndk::ScopedAStatus isNrDualConnectivityEnabled(int32_t serial) override;
     ::ndk::ScopedAStatus responseAcknowledgement() override;
-    ::ndk::ScopedAStatus setAllowedNetworkTypesBitmap(
-            int32_t serial,
-            ::aidl::android::hardware::radio::RadioAccessFamily networkTypeBitmap) override;
+    ::ndk::ScopedAStatus setAllowedNetworkTypesBitmap(int32_t serial,
+                                                      int32_t networkTypeBitmap) override;
     ::ndk::ScopedAStatus setBandMode(
             int32_t serial, ::aidl::android::hardware::radio::network::RadioBandMode mode) override;
     ::ndk::ScopedAStatus setBarringPassword(int32_t serial, const std::string& facility,
@@ -53,9 +52,7 @@ class RadioNetwork : public RadioCompatBase,
             int32_t serial,
             ::aidl::android::hardware::radio::network::CdmaRoamingType type) override;
     ::ndk::ScopedAStatus setCellInfoListRate(int32_t serial, int32_t rate) override;
-    ::ndk::ScopedAStatus setIndicationFilter(
-            int32_t serial,
-            ::aidl::android::hardware::radio::network::IndicationFilter indicationFilter) override;
+    ::ndk::ScopedAStatus setIndicationFilter(int32_t serial, int32_t indicationFilter) override;
     ::ndk::ScopedAStatus setLinkCapacityReportingCriteria(
             int32_t serial, int32_t hysteresisMs, int32_t hysteresisDlKbps,
             int32_t hysteresisUlKbps, const std::vector<int32_t>& thresholdsDownlinkKbps,

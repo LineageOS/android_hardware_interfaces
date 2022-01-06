@@ -72,7 +72,7 @@ ndk::ScopedAStatus RadioNetworkIndication::nitzTimeReceived(RadioIndicationType 
 ndk::ScopedAStatus RadioNetworkIndication::registrationFailed(RadioIndicationType /*type*/,
                                                               const CellIdentity& /*cellIdentity*/,
                                                               const std::string& /*chosenPlmn*/,
-                                                              Domain /*domain*/,
+                                                              int32_t /*domain*/,
                                                               int32_t /*causeCode*/,
                                                               int32_t /*additionalCauseCode*/) {
     return ndk::ScopedAStatus::ok();
