@@ -29,10 +29,10 @@ class RadioMessagingTest;
 /* Callback class for radio messaging response */
 class RadioMessagingResponse : public BnRadioMessagingResponse {
   protected:
-    RadioResponseWaiter& parent_messaging;
+    RadioServiceTest& parent_messaging;
 
   public:
-    RadioMessagingResponse(RadioResponseWaiter& parent_messaging);
+    RadioMessagingResponse(RadioServiceTest& parent_messaging);
     virtual ~RadioMessagingResponse() = default;
 
     RadioResponseInfo rspInfo;
@@ -110,10 +110,10 @@ class RadioMessagingResponse : public BnRadioMessagingResponse {
 /* Callback class for radio messaging indication */
 class RadioMessagingIndication : public BnRadioMessagingIndication {
   protected:
-    RadioMessagingTest& parent_messaging;
+    RadioServiceTest& parent_messaging;
 
   public:
-    RadioMessagingIndication(RadioMessagingTest& parent_messaging);
+    RadioMessagingIndication(RadioServiceTest& parent_messaging);
     virtual ~RadioMessagingIndication() = default;
 
     virtual ndk::ScopedAStatus cdmaNewSms(RadioIndicationType type,
@@ -139,8 +139,7 @@ class RadioMessagingIndication : public BnRadioMessagingIndication {
 };
 
 // The main test class for Radio AIDL Messaging.
-class RadioMessagingTest : public ::testing::TestWithParam<std::string>,
-                           public RadioResponseWaiter {
+class RadioMessagingTest : public ::testing::TestWithParam<std::string>, public RadioServiceTest {
   public:
     virtual void SetUp() override;
 
