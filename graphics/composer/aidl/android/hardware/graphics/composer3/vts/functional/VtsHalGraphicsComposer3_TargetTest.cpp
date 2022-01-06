@@ -1922,6 +1922,27 @@ TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_PER_FRAME_METADATA) {
     EXPECT_TRUE(mComposerClient->destroyLayer(mPrimaryDisplay, layer).isOk());
 }
 
+TEST_P(GraphicsComposerAidlCommandTest, setLayerWhitePointNits) {
+    int64_t layer;
+    EXPECT_TRUE(mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount, &layer).isOk());
+
+    mWriter.setLayerWhitePointNits(mPrimaryDisplay, layer, 200.f);
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setLayerWhitePointNits(mPrimaryDisplay, layer, 1000.f);
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setLayerWhitePointNits(mPrimaryDisplay, layer, 0.f);
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setLayerWhitePointNits(mPrimaryDisplay, layer, -1.f);
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+}
+
 TEST_P(GraphicsComposerAidlCommandTest, setActiveConfigWithConstraints) {
     Test_setActiveConfigWithConstraints({.delayForChange = 0, .refreshMiss = false});
 }
