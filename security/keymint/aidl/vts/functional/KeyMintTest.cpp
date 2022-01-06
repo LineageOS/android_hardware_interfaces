@@ -70,6 +70,9 @@ namespace aidl::android::hardware::security::keymint::test {
 
 namespace {
 
+// Maximum supported Ed25519 message size.
+const size_t MAX_ED25519_MSG_SIZE = 16 * 1024;
+
 // Whether to check that BOOT_PATCHLEVEL is populated.
 bool check_boot_pl = true;
 
@@ -3123,6 +3126,97 @@ TEST_P(SigningOperationsTest, EcdsaCurve25519) {
 
     string message(1024, 'a');
     SignMessage(message, AuthorizationSetBuilder().Digest(Digest::NONE));
+    CheckedDeleteKey();
+}
+
+/*
+ * SigningOperationsTest.EcdsaCurve25519MaxSize
+ *
+ * Verifies that EDDSA operations with curve25519 under the maximum message size succeed.
+ */
+TEST_P(SigningOperationsTest, EcdsaCurve25519MaxSize) {
+    if (!Curve25519Supported()) {
+        GTEST_SKIP() << "Test not applicable to device that is not expected to support curve 25519";
+    }
+
+    EcCurve curve = EcCurve::CURVE_25519;
+    ErrorCode error = GenerateKey(AuthorizationSetBuilder()
+                                          .Authorization(TAG_NO_AUTH_REQUIRED)
+                                          .EcdsaSigningKey(curve)
+                                          .Digest(Digest::NONE)
+                                          .SetDefaultValidity());
+    ASSERT_EQ(ErrorCode::OK, error) << "Failed to generate ECDSA key with curve " << curve;
+
+    auto params = AuthorizationSetBuilder().Digest(Digest::NONE);
+
+    for (size_t msg_size : {MAX_ED25519_MSG_SIZE - 1, MAX_ED25519_MSG_SIZE}) {
+        SCOPED_TRACE(testing::Message() << "-msg-size=" << msg_size);
+        string message(msg_size, 'a');
+
+        // Attempt to sign via Begin+Finish.
+        AuthorizationSet out_params;
+        ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::SIGN, key_blob_, params, &out_params));
+        EXPECT_TRUE(out_params.empty());
+        string signature;
+        auto result = Finish(message, &signature);
+        EXPECT_EQ(result, ErrorCode::OK);
+        LocalVerifyMessage(message, signature, params);
+
+        // Attempt to sign via Begin+Update+Finish
+        ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::SIGN, key_blob_, params, &out_params));
+        EXPECT_TRUE(out_params.empty());
+        string output;
+        result = Update(message, &output);
+        EXPECT_EQ(result, ErrorCode::OK);
+        EXPECT_EQ(output.size(), 0);
+        string signature2;
+        EXPECT_EQ(ErrorCode::OK, Finish({}, &signature2));
+        LocalVerifyMessage(message, signature2, params);
+    }
+
+    CheckedDeleteKey();
+}
+
+/*
+ * SigningOperationsTest.EcdsaCurve25519MaxSizeFail
+ *
+ * Verifies that EDDSA operations with curve25519 fail when message size is too large.
+ */
+TEST_P(SigningOperationsTest, EcdsaCurve25519MaxSizeFail) {
+    if (!Curve25519Supported()) {
+        GTEST_SKIP() << "Test not applicable to device that is not expected to support curve 25519";
+    }
+
+    EcCurve curve = EcCurve::CURVE_25519;
+    ErrorCode error = GenerateKey(AuthorizationSetBuilder()
+                                          .Authorization(TAG_NO_AUTH_REQUIRED)
+                                          .EcdsaSigningKey(curve)
+                                          .Digest(Digest::NONE)
+                                          .SetDefaultValidity());
+    ASSERT_EQ(ErrorCode::OK, error) << "Failed to generate ECDSA key with curve " << curve;
+
+    auto params = AuthorizationSetBuilder().Digest(Digest::NONE);
+
+    for (size_t msg_size : {MAX_ED25519_MSG_SIZE + 1, MAX_ED25519_MSG_SIZE * 2}) {
+        SCOPED_TRACE(testing::Message() << "-msg-size=" << msg_size);
+        string message(msg_size, 'a');
+
+        // Attempt to sign via Begin+Finish.
+        AuthorizationSet out_params;
+        ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::SIGN, key_blob_, params, &out_params));
+        EXPECT_TRUE(out_params.empty());
+        string signature;
+        auto result = Finish(message, &signature);
+        EXPECT_EQ(result, ErrorCode::INVALID_INPUT_LENGTH);
+
+        // Attempt to sign via Begin+Update (but never get to Finish)
+        ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::SIGN, key_blob_, params, &out_params));
+        EXPECT_TRUE(out_params.empty());
+        string output;
+        result = Update(message, &output);
+        EXPECT_EQ(result, ErrorCode::INVALID_INPUT_LENGTH);
+    }
+
     CheckedDeleteKey();
 }
 

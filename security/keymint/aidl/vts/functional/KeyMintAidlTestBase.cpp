@@ -559,7 +559,12 @@ ErrorCode KeyMintAidlTestBase::Update(const string& input, string* output) {
     std::vector<uint8_t> o_put;
     result = op_->update(vector<uint8_t>(input.begin(), input.end()), {}, {}, &o_put);
 
-    if (result.isOk()) output->append(o_put.begin(), o_put.end());
+    if (result.isOk()) {
+        output->append(o_put.begin(), o_put.end());
+    } else {
+        // Failure always terminates the operation.
+        op_ = {};
+    }
 
     return GetReturnErrorCode(result);
 }
