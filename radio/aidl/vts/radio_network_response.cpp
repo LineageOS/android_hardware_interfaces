@@ -16,14 +16,14 @@
 
 #include "radio_network_utils.h"
 
-RadioNetworkResponse::RadioNetworkResponse(RadioResponseWaiter& parent) : parent_network(parent) {}
+RadioNetworkResponse::RadioNetworkResponse(RadioServiceTest& parent) : parent_network(parent) {}
 
 ndk::ScopedAStatus RadioNetworkResponse::acknowledgeRequest(int32_t /*serial*/) {
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioNetworkResponse::getAllowedNetworkTypesBitmapResponse(
-        const RadioResponseInfo& info, const RadioAccessFamily networkTypeBitmap) {
+        const RadioResponseInfo& info, const int32_t networkTypeBitmap) {
     rspInfo = info;
     networkTypeBitmapResponse = networkTypeBitmap;
     parent_network.notify(info.serial);
@@ -112,7 +112,7 @@ ndk::ScopedAStatus RadioNetworkResponse::getVoiceRadioTechnologyResponse(
 ndk::ScopedAStatus RadioNetworkResponse::getVoiceRegistrationStateResponse(
         const RadioResponseInfo& info, const RegStateResult& regResponse) {
     rspInfo = info;
-    regStateResp.regState = regResponse.regState;
+    voiceRegResp.regState = regResponse.regState;
     parent_network.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }

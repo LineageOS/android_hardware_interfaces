@@ -25,7 +25,7 @@ package {
 
 cc_library_static {
     name: "libprotocan",
-    defaults: ["android.hardware.automotive.vehicle@2.0-protocan-defaults"],
+    defaults: ["android.hardware.automotive.can@defaults"],
     vendor: true,
     srcs: [
         "Checksum.cpp",

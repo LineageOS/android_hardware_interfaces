@@ -29,6 +29,9 @@ cc_test {
     ],
     srcs: [
         "radio_aidl_hal_utils.cpp",
+        "radio_config_indication.cpp",
+        "radio_config_response.cpp",
+        "radio_config_test.cpp",
         "radio_data_indication.cpp",
         "radio_data_response.cpp",
         "radio_data_test.cpp",

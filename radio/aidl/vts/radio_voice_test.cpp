@@ -15,6 +15,7 @@
  */
 
 #include <aidl/android/hardware/radio/config/IRadioConfig.h>
+#include <aidl/android/hardware/radio/voice/EmergencyServiceCategory.h>
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
 
@@ -44,12 +45,26 @@ void RadioVoiceTest::SetUp() {
 
     radio_voice->setResponseFunctions(radioRsp_voice, radioInd_voice);
 
+    // Assert IRadioSim exists and SIM is present before testing
+    radio_sim = sim::IRadioSim::fromBinder(ndk::SpAIBinder(
+            AServiceManager_waitForService("android.hardware.radio.sim.IRadioSim/slot1")));
+    ASSERT_NE(nullptr, radio_sim.get());
+    updateSimCardStatus();
+    EXPECT_EQ(CardStatus::STATE_PRESENT, cardStatus.cardState);
+
     // Assert IRadioConfig exists before testing
-    std::shared_ptr<aidl::android::hardware::radio::config::IRadioConfig> radioConfig =
-            aidl::android::hardware::radio::config::IRadioConfig::fromBinder(
-                    ndk::SpAIBinder(AServiceManager_waitForService(
-                            "android.hardware.radio.config.IRadioConfig/default")));
-    ASSERT_NE(nullptr, radioConfig.get());
+    radio_config = config::IRadioConfig::fromBinder(ndk::SpAIBinder(
+            AServiceManager_waitForService("android.hardware.radio.config.IRadioConfig/default")));
+    ASSERT_NE(nullptr, radio_config.get());
+
+    if (isDsDsEnabled() || isTsTsEnabled()) {
+        radio_network = IRadioNetwork::fromBinder(ndk::SpAIBinder(AServiceManager_waitForService(
+                "android.hardware.radio.network.IRadioNetwork/slot1")));
+        ASSERT_NE(nullptr, radio_network.get());
+        radioRsp_network = ndk::SharedRefBase::make<RadioNetworkResponse>(*this);
+        radioInd_network = ndk::SharedRefBase::make<RadioNetworkIndication>(*this);
+        radio_network->setResponseFunctions(radioRsp_network, radioInd_network);
+    }
 }
 
 ndk::ScopedAStatus RadioVoiceTest::clearPotentialEstablishedCalls() {
@@ -95,7 +110,7 @@ TEST_P(RadioVoiceTest, emergencyDial) {
 
     Dial dialInfo;
     dialInfo.address = std::string("911");
-    EmergencyServiceCategory categories = EmergencyServiceCategory::UNSPECIFIED;
+    int32_t categories = static_cast<int32_t>(EmergencyServiceCategory::UNSPECIFIED);
     std::vector<std::string> urns = {""};
     EmergencyCallRouting routing = EmergencyCallRouting::UNKNOWN;
 
@@ -112,16 +127,13 @@ TEST_P(RadioVoiceTest, emergencyDial) {
     // In DSDS or TSTS, we only check the result if the current slot is IN_SERVICE
     // or Emergency_Only.
     if (isDsDsEnabled() || isTsTsEnabled()) {
-        // TODO(b/210712359): maybe create a local RadioNetwork instance
-        /**
         serial = GetRandomSerialNumber();
-        radio_v1_6->getVoiceRegistrationState(serial);
+        radio_network->getVoiceRegistrationState(serial);
         EXPECT_EQ(std::cv_status::no_timeout, wait());
-        if (isVoiceEmergencyOnly(radioRsp_v1_6->voiceRegResp.regState) ||
-            isVoiceInService(radioRsp_v1_6->voiceRegResp.regState)) {
+        if (isVoiceEmergencyOnly(radioRsp_network->voiceRegResp.regState) ||
+            isVoiceInService(radioRsp_network->voiceRegResp.regState)) {
             EXPECT_EQ(RadioError::NONE, rspEmergencyDial);
         }
-        **/
     } else {
         EXPECT_EQ(RadioError::NONE, rspEmergencyDial);
     }
@@ -152,7 +164,7 @@ TEST_P(RadioVoiceTest, emergencyDial_withServices) {
 
     Dial dialInfo;
     dialInfo.address = std::string("911");
-    EmergencyServiceCategory categories = EmergencyServiceCategory::AMBULANCE;
+    int32_t categories = static_cast<int32_t>(EmergencyServiceCategory::AMBULANCE);
     std::vector<std::string> urns = {"urn:service:sos.ambulance"};
     EmergencyCallRouting routing = EmergencyCallRouting::UNKNOWN;
 
@@ -170,16 +182,13 @@ TEST_P(RadioVoiceTest, emergencyDial_withServices) {
     // In DSDS or TSTS, we only check the result if the current slot is IN_SERVICE
     // or Emergency_Only.
     if (isDsDsEnabled() || isTsTsEnabled()) {
-        // TODO(b/210712359): maybe create a local RadioNetwork instance
-        /**
         serial = GetRandomSerialNumber();
-        radio_v1_6->getVoiceRegistrationState_1_6(serial);
+        radio_network->getVoiceRegistrationState(serial);
         EXPECT_EQ(std::cv_status::no_timeout, wait());
-        if (isVoiceEmergencyOnly(radioRsp_v1_6->voiceRegResp.regState) ||
-            isVoiceInService(radioRsp_v1_6->voiceRegResp.regState)) {
+        if (isVoiceEmergencyOnly(radioRsp_network->voiceRegResp.regState) ||
+            isVoiceInService(radioRsp_network->voiceRegResp.regState)) {
             EXPECT_EQ(RadioError::NONE, rspEmergencyDial);
         }
-        **/
     } else {
         EXPECT_EQ(RadioError::NONE, rspEmergencyDial);
     }
@@ -209,7 +218,7 @@ TEST_P(RadioVoiceTest, emergencyDial_withEmergencyRouting) {
 
     Dial dialInfo;
     dialInfo.address = std::string("911");
-    EmergencyServiceCategory categories = EmergencyServiceCategory::UNSPECIFIED;
+    int32_t categories = static_cast<int32_t>(EmergencyServiceCategory::UNSPECIFIED);
     std::vector<std::string> urns = {""};
     EmergencyCallRouting routing = EmergencyCallRouting::EMERGENCY;
 
@@ -227,16 +236,13 @@ TEST_P(RadioVoiceTest, emergencyDial_withEmergencyRouting) {
     // In DSDS or TSTS, we only check the result if the current slot is IN_SERVICE
     // or Emergency_Only.
     if (isDsDsEnabled() || isTsTsEnabled()) {
-        // TODO(b/210712359): maybe create a local RadioNetwork instance
-        /**
         serial = GetRandomSerialNumber();
-        radio_v1_6->getVoiceRegistrationState_1_6(serial);
+        radio_network->getVoiceRegistrationState(serial);
         EXPECT_EQ(std::cv_status::no_timeout, wait());
-        if (isVoiceEmergencyOnly(radioRsp_v1_6->voiceRegResp.regState) ||
-            isVoiceInService(radioRsp_v1_6->voiceRegResp.regState)) {
+        if (isVoiceEmergencyOnly(radioRsp_network->voiceRegResp.regState) ||
+            isVoiceInService(radioRsp_network->voiceRegResp.regState)) {
             EXPECT_EQ(RadioError::NONE, rspEmergencyDial);
         }
-        **/
     } else {
         EXPECT_EQ(RadioError::NONE, rspEmergencyDial);
     }

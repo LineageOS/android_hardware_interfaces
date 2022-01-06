@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+#include <aidl/android/hardware/radio/RadioAccessFamily.h>
 #include <aidl/android/hardware/radio/config/IRadioConfig.h>
+#include <aidl/android/hardware/radio/data/ApnTypes.h>
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
-#include <algorithm>
 
 #include "radio_data_utils.h"
 
@@ -45,12 +46,17 @@ void RadioDataTest::SetUp() {
 
     radio_data->setResponseFunctions(radioRsp_data, radioInd_data);
 
+    // Assert IRadioSim exists and SIM is present before testing
+    radio_sim = sim::IRadioSim::fromBinder(ndk::SpAIBinder(
+            AServiceManager_waitForService("android.hardware.radio.sim.IRadioSim/slot1")));
+    ASSERT_NE(nullptr, radio_sim.get());
+    updateSimCardStatus();
+    EXPECT_EQ(CardStatus::STATE_PRESENT, cardStatus.cardState);
+
     // Assert IRadioConfig exists before testing
-    std::shared_ptr<aidl::android::hardware::radio::config::IRadioConfig> radioConfig =
-            aidl::android::hardware::radio::config::IRadioConfig::fromBinder(
-                    ndk::SpAIBinder(AServiceManager_waitForService(
-                            "android.hardware.radio.config.IRadioConfig/default")));
-    ASSERT_NE(nullptr, radioConfig.get());
+    radio_config = config::IRadioConfig::fromBinder(ndk::SpAIBinder(
+            AServiceManager_waitForService("android.hardware.radio.config.IRadioConfig/default")));
+    ASSERT_NE(nullptr, radio_config.get());
 }
 
 ndk::ScopedAStatus RadioDataTest::getDataCallList() {
@@ -82,10 +88,18 @@ TEST_P(RadioDataTest, setupDataCall) {
     dataProfileInfo.maxConns = 20;
     dataProfileInfo.waitTime = 0;
     dataProfileInfo.enabled = true;
-    // TODO(b/210712359): 320 was the previous value; need to support bitmaps
-    dataProfileInfo.supportedApnTypesBitmap = ApnTypes::DEFAULT;
-    // TODO(b/210712359): 161543 was the previous value; need to support bitmaps
-    dataProfileInfo.bearerBitmap = RadioAccessFamily::LTE;
+    dataProfileInfo.supportedApnTypesBitmap =
+            static_cast<int32_t>(ApnTypes::IMS) | static_cast<int32_t>(ApnTypes::IA);
+    dataProfileInfo.bearerBitmap = static_cast<int32_t>(RadioAccessFamily::GPRS) |
+                                   static_cast<int32_t>(RadioAccessFamily::EDGE) |
+                                   static_cast<int32_t>(RadioAccessFamily::UMTS) |
+                                   static_cast<int32_t>(RadioAccessFamily::HSDPA) |
+                                   static_cast<int32_t>(RadioAccessFamily::HSUPA) |
+                                   static_cast<int32_t>(RadioAccessFamily::HSPA) |
+                                   static_cast<int32_t>(RadioAccessFamily::EHRPD) |
+                                   static_cast<int32_t>(RadioAccessFamily::LTE) |
+                                   static_cast<int32_t>(RadioAccessFamily::HSPAP) |
+                                   static_cast<int32_t>(RadioAccessFamily::IWLAN);
     dataProfileInfo.mtuV4 = 0;
     dataProfileInfo.mtuV6 = 0;
     dataProfileInfo.preferred = true;
@@ -130,11 +144,8 @@ TEST_P(RadioDataTest, setupDataCall_osAppId) {
     TrafficDescriptor trafficDescriptor;
     OsAppId osAppId;
     std::string osAppIdString("osAppId");
-    // TODO(b/210712359): there should be a cleaner way to convert this
-    std::vector<unsigned char> output(osAppIdString.length());
-    std::transform(osAppIdString.begin(), osAppIdString.end(), output.begin(),
-                   [](char c) { return static_cast<unsigned char>(c); });
-    osAppId.osAppId = output;
+    std::vector<unsigned char> osAppIdVec(osAppIdString.begin(), osAppIdString.end());
+    osAppId.osAppId = osAppIdVec;
     trafficDescriptor.osAppId = osAppId;
 
     DataProfileInfo dataProfileInfo;
@@ -151,10 +162,18 @@ TEST_P(RadioDataTest, setupDataCall_osAppId) {
     dataProfileInfo.maxConns = 20;
     dataProfileInfo.waitTime = 0;
     dataProfileInfo.enabled = true;
-    // TODO(b/210712359): 320 was the previous value; need to support bitmaps
-    dataProfileInfo.supportedApnTypesBitmap = ApnTypes::DEFAULT;
-    // TODO(b/210712359): 161543 was the previous value; need to support bitmaps
-    dataProfileInfo.bearerBitmap = RadioAccessFamily::LTE;
+    dataProfileInfo.supportedApnTypesBitmap =
+            static_cast<int32_t>(ApnTypes::IMS) | static_cast<int32_t>(ApnTypes::IA);
+    dataProfileInfo.bearerBitmap = static_cast<int32_t>(RadioAccessFamily::GPRS) |
+                                   static_cast<int32_t>(RadioAccessFamily::EDGE) |
+                                   static_cast<int32_t>(RadioAccessFamily::UMTS) |
+                                   static_cast<int32_t>(RadioAccessFamily::HSDPA) |
+                                   static_cast<int32_t>(RadioAccessFamily::HSUPA) |
+                                   static_cast<int32_t>(RadioAccessFamily::HSPA) |
+                                   static_cast<int32_t>(RadioAccessFamily::EHRPD) |
+                                   static_cast<int32_t>(RadioAccessFamily::LTE) |
+                                   static_cast<int32_t>(RadioAccessFamily::HSPAP) |
+                                   static_cast<int32_t>(RadioAccessFamily::IWLAN);
     dataProfileInfo.mtuV4 = 0;
     dataProfileInfo.mtuV6 = 0;
     dataProfileInfo.preferred = true;

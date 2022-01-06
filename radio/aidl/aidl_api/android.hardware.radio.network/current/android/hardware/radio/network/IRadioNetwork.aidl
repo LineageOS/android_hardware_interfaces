@@ -50,12 +50,12 @@ interface IRadioNetwork {
   oneway void getVoiceRegistrationState(in int serial);
   oneway void isNrDualConnectivityEnabled(in int serial);
   oneway void responseAcknowledgement();
-  oneway void setAllowedNetworkTypesBitmap(in int serial, in android.hardware.radio.RadioAccessFamily networkTypeBitmap);
+  oneway void setAllowedNetworkTypesBitmap(in int serial, in int networkTypeBitmap);
   oneway void setBandMode(in int serial, in android.hardware.radio.network.RadioBandMode mode);
   oneway void setBarringPassword(in int serial, in String facility, in String oldPassword, in String newPassword);
   oneway void setCdmaRoamingPreference(in int serial, in android.hardware.radio.network.CdmaRoamingType type);
   oneway void setCellInfoListRate(in int serial, in int rate);
-  oneway void setIndicationFilter(in int serial, in android.hardware.radio.network.IndicationFilter indicationFilter);
+  oneway void setIndicationFilter(in int serial, in int indicationFilter);
   oneway void setLinkCapacityReportingCriteria(in int serial, in int hysteresisMs, in int hysteresisDlKbps, in int hysteresisUlKbps, in int[] thresholdsDownlinkKbps, in int[] thresholdsUplinkKbps, in android.hardware.radio.AccessNetwork accessNetwork);
   oneway void setLocationUpdates(in int serial, in boolean enable);
   oneway void setNetworkSelectionModeAutomatic(in int serial);
