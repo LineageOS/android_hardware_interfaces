@@ -31,8 +31,7 @@ class RadioVoice : public RadioCompatBase,
             int32_t serial, const ::aidl::android::hardware::radio::voice::Dial& dialInfo) override;
     ::ndk::ScopedAStatus emergencyDial(
             int32_t serial, const ::aidl::android::hardware::radio::voice::Dial& dialInfo,
-            ::aidl::android::hardware::radio::voice::EmergencyServiceCategory categories,
-            const std::vector<std::string>& urns,
+            int32_t categories, const std::vector<std::string>& urns,
             ::aidl::android::hardware::radio::voice::EmergencyCallRouting routing,
             bool hasKnownUserIntentEmergency, bool isTesting) override;
     ::ndk::ScopedAStatus exitEmergencyCallbackMode(int32_t serial) override;

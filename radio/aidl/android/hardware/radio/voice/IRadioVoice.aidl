@@ -117,9 +117,9 @@ oneway interface IRadioVoice {
      *
      * Response function is IRadioVoiceResponse.emergencyDialResponse()
      */
-    void emergencyDial(in int serial, in Dial dialInfo, in EmergencyServiceCategory categories,
-            in String[] urns, in EmergencyCallRouting routing,
-            in boolean hasKnownUserIntentEmergency, in boolean isTesting);
+    void emergencyDial(in int serial, in Dial dialInfo, in int categories, in String[] urns,
+            in EmergencyCallRouting routing, in boolean hasKnownUserIntentEmergency,
+            in boolean isTesting);
 
     /**
      * Request the radio's system selection module to exit emergency callback mode. Radio must not

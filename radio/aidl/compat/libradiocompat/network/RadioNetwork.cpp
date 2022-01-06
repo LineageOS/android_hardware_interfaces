@@ -28,7 +28,6 @@
 namespace android::hardware::radio::compat {
 
 using ::aidl::android::hardware::radio::AccessNetwork;
-using ::aidl::android::hardware::radio::RadioAccessFamily;
 using ::ndk::ScopedAStatus;
 namespace aidl = ::aidl::android::hardware::radio::network;
 constexpr auto ok = &ScopedAStatus::ok;
@@ -161,7 +160,7 @@ ScopedAStatus RadioNetwork::responseAcknowledgement() {
     return ok();
 }
 
-ScopedAStatus RadioNetwork::setAllowedNetworkTypesBitmap(int32_t serial, RadioAccessFamily ntype) {
+ScopedAStatus RadioNetwork::setAllowedNetworkTypesBitmap(int32_t serial, int32_t ntype) {
     LOG_CALL << serial;
     const auto raf = toHidlBitfield<V1_4::RadioAccessFamily>(ntype);
     if (mHal1_6) {
@@ -197,7 +196,7 @@ ScopedAStatus RadioNetwork::setCellInfoListRate(int32_t serial, int32_t rate) {
     return ok();
 }
 
-ScopedAStatus RadioNetwork::setIndicationFilter(int32_t serial, aidl::IndicationFilter indFilter) {
+ScopedAStatus RadioNetwork::setIndicationFilter(int32_t serial, int32_t indFilter) {
     LOG_CALL << serial;
     mHal1_5->setIndicationFilter_1_5(serial, toHidlBitfield<V1_5::IndicationFilter>(indFilter));
     return ok();
