@@ -16,7 +16,7 @@
 
 #include "radio_sim_utils.h"
 
-RadioSimResponse::RadioSimResponse(RadioResponseWaiter& parent) : parent_sim(parent) {}
+RadioSimResponse::RadioSimResponse(RadioServiceTest& parent) : parent_sim(parent) {}
 
 ndk::ScopedAStatus RadioSimResponse::acknowledgeRequest(int32_t /*serial*/) {
     return ndk::ScopedAStatus::ok();
