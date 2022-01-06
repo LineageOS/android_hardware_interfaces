@@ -16,6 +16,7 @@
 
 package android.hardware.gnss;
 
+import android.hardware.gnss.GnssLocation;
 import android.hardware.gnss.IAGnss;
 import android.hardware.gnss.IGnssBatching;
 import android.hardware.gnss.IGnssCallback;
@@ -44,6 +45,53 @@ interface IGnss {
 
     /** Any other error. */
     const int ERROR_GENERIC = 3;
+
+    /** Requested operational mode for GNSS operation. */
+    @VintfStability
+    @Backing(type="int")
+    enum GnssPositionMode {
+        /** Mode for running GNSS standalone (no assistance). */
+        STANDALONE = 0,
+        /** AGNSS MS-Based mode. */
+        MS_BASED = 1,
+        /**
+         * AGNSS MS-Assisted mode. This mode is not maintained by the platform anymore.
+         * It is strongly recommended to use MS_BASED instead.
+         */
+        MS_ASSISTED = 2,
+    }
+
+    /** Requested recurrence mode for GNSS operation. */
+    @VintfStability
+    @Backing(type="int")
+    enum GnssPositionRecurrence {
+        /** Receive GNSS fixes on a recurring basis at a specified period. */
+        RECURRENCE_PERIODIC = 0,
+        /** Request a single shot GNSS fix. */
+        RECURRENCE_SINGLE = 1,
+    }
+
+    /**
+     * Flags used to specify which aiding data to delete when calling
+     * deleteAidingData().
+     */
+    @VintfStability
+    @Backing(type="int")
+    enum GnssAidingData {
+        DELETE_EPHEMERIS = 0x0001,
+        DELETE_ALMANAC = 0x0002,
+        DELETE_POSITION = 0x0004,
+        DELETE_TIME = 0x0008,
+        DELETE_IONO = 0x0010,
+        DELETE_UTC = 0x0020,
+        DELETE_HEALTH = 0x0040,
+        DELETE_SVDIR = 0x0080,
+        DELETE_SVSTEER = 0x0100,
+        DELETE_SADATA = 0x0200,
+        DELETE_RTI = 0x0400,
+        DELETE_CELLDB_INFO = 0x8000,
+        DELETE_ALL = 0xFFFF
+    }
 
     /**
      * Opens the interface and provides the callback routines to the implementation of this
@@ -152,4 +200,81 @@ interface IGnss {
      * @return Handle to the IGnssVisibilityControl.
      */
     IGnssVisibilityControl getExtensionGnssVisibilityControl();
+
+    /**
+     * Starts a location output stream using the IGnssCallback gnssLocationCb(), following the
+     * settings from the most recent call to setPositionMode().
+     *
+     * This output must operate independently of any GNSS location batching operations,
+     * see the IGnssBatching for details.
+     */
+    void start();
+
+    /**
+     * Stops the location output stream.
+     */
+    void stop();
+
+    /**
+     * Injects the current time.
+     *
+     * @param timeMs This is the UTC time received from the NTP server, its value is given in
+     *     milliseconds since January 1, 1970.
+     * @param timeReferenceMs The corresponding value of SystemClock.elapsedRealtime() from the
+     *     device when the NTP response was received in milliseconds.
+     * @param uncertaintyMs Uncertainty associated with the value represented by time. Represented
+     *     in milliseconds.
+     */
+    void injectTime(in long timeMs, in long timeReferenceMs, in int uncertaintyMs);
+
+    /**
+     * Injects current location from another (typically network) location provider.
+     *
+     * @param location Current location from the location provider
+     */
+    void injectLocation(in GnssLocation location);
+
+    /**
+     * Injects current location from the best available location provider.
+     *
+     * Unlike injectLocation, this method may inject a recent GNSS location from the HAL
+     * implementation, if that is the best available location known to the framework.
+     *
+     * @param location Location information from the best available location provider.
+     */
+    void injectBestLocation(in GnssLocation location);
+
+    /**
+     * Specifies that the next call to start will not use the information defined in the flags.
+     * GnssAidingData value of DELETE_ALL is passed for a cold start.
+     *
+     * @param aidingDataFlags Flags specifying the aiding data to be deleted.
+     */
+    void deleteAidingData(in GnssAidingData aidingDataFlags);
+
+    /**
+     * Sets the GnssPositionMode parameter, its associated recurrence value, the time between fixes,
+     * requested fix accuracy, time to first fix.
+     *
+     * @param mode Parameter must be one of MS_BASED or STANDALONE. It is allowed by the platform
+     *     (and it is recommended) to fallback to MS_BASED if MS_ASSISTED is passed in, and MS_BASED
+     *     is supported.
+     * @param recurrence GNSS position recurrence value, either periodic or single.
+     * @param minIntervalMs Represents the time between fixes in milliseconds.
+     * @param preferredAccuracyMeters Represents the requested fix accuracy in meters.
+     * @param preferredTimeMs Represents the requested time to first fix in milliseconds.
+     * @param lowPowerMode When true, and IGnss is the only client to the GNSS hardware, the GNSS
+     *     hardware must make strong tradeoffs to substantially restrict power use. Specifically, in
+     *     the case of a several second long minIntervalMs, the GNSS hardware must not, on average,
+     *     run power hungry operations like RF and signal searches for more than one second per
+     *     interval, and must make exactly one call to gnssSvStatusCb(), and either zero or one call
+     *     to GnssLocationCb() at each interval. When false, HAL must operate in the nominal mode
+     *     and is expected to make power and performance tradoffs such as duty-cycling when signal
+     *     conditions are good and more active searches to reacquire GNSS signals when no signals
+     *     are present. When there are additional clients using the GNSS hardware other than IGnss,
+     *     the GNSS hardware may operate in a higher power mode, on behalf of those clients.
+     */
+    void setPositionMode(in GnssPositionMode mode, in GnssPositionRecurrence recurrence,
+            in int minIntervalMs, in int preferredAccuracyMeters, in int preferredTimeMs,
+            in boolean lowPowerMode);
 }

@@ -25,6 +25,9 @@
 #include <aidl/android/hardware/gnss/BnGnssPowerIndication.h>
 #include <aidl/android/hardware/gnss/BnGnssPsds.h>
 #include <aidl/android/hardware/gnss/visibility_control/BnGnssVisibilityControl.h>
+#include <atomic>
+#include <mutex>
+#include <thread>
 #include "GnssConfiguration.h"
 #include "GnssPowerIndication.h"
 
@@ -32,8 +35,22 @@ namespace aidl::android::hardware::gnss {
 
 class Gnss : public BnGnss {
   public:
+    Gnss();
+    ~Gnss() { stop(); };
     ndk::ScopedAStatus setCallback(const std::shared_ptr<IGnssCallback>& callback) override;
+    ndk::ScopedAStatus start() override;
+    ndk::ScopedAStatus stop() override;
     ndk::ScopedAStatus close() override;
+
+    ndk::ScopedAStatus injectTime(int64_t timeMs, int64_t timeReferenceMs,
+                                  int uncertaintyMs) override;
+    ndk::ScopedAStatus injectLocation(const GnssLocation& location) override;
+    ndk::ScopedAStatus injectBestLocation(const GnssLocation& location) override;
+    ndk::ScopedAStatus deleteAidingData(GnssAidingData aidingDataFlags) override;
+    ndk::ScopedAStatus setPositionMode(GnssPositionMode mode, GnssPositionRecurrence recurrence,
+                                       int minIntervalMs, int preferredAccuracyMeters,
+                                       int preferredTimeMs, bool lowPowerMode) override;
+
     ndk::ScopedAStatus getExtensionPsds(std::shared_ptr<IGnssPsds>* iGnssPsds) override;
     ndk::ScopedAStatus getExtensionGnssConfiguration(
             std::shared_ptr<IGnssConfiguration>* iGnssConfiguration) override;
@@ -57,7 +74,20 @@ class Gnss : public BnGnss {
     std::shared_ptr<GnssPowerIndication> mGnssPowerIndication;
 
   private:
+    void reportLocation(const GnssLocation&) const;
+    void reportSvStatus(const std::vector<IGnssCallback::GnssSvInfo>& svInfoList) const;
+    std::vector<IGnssCallback::GnssSvInfo> filterBlocklistedSatellites(
+            std::vector<IGnssCallback::GnssSvInfo> gnssSvInfoList);
+    void reportGnssStatusValue(const IGnssCallback::GnssStatusValue gnssStatusValue) const;
+
     static std::shared_ptr<IGnssCallback> sGnssCallback;
+
+    std::atomic<long> mMinIntervalMs;
+    std::atomic<bool> mIsActive;
+    std::atomic<bool> mFirstFixReceived;
+    std::thread mThread;
+
+    mutable std::mutex mMutex;
 };
 
 }  // namespace aidl::android::hardware::gnss
