@@ -37,7 +37,7 @@ parcelable EmergencyNumber {
   String number;
   String mcc;
   String mnc;
-  android.hardware.radio.voice.EmergencyServiceCategory categories;
+  int categories;
   String[] urns;
   int sources;
   const int SOURCE_NETWORK_SIGNALING = 1;

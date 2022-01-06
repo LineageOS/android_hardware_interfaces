@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <aidl/android/hardware/radio/RadioAccessFamily.h>
 #include <aidl/android/hardware/radio/config/IRadioConfig.h>
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
@@ -57,7 +58,7 @@ void RadioNetworkTest::SetUp() {
  */
 TEST_P(RadioNetworkTest, setAllowedNetworkTypesBitmap) {
     serial = GetRandomSerialNumber();
-    RadioAccessFamily allowedNetworkTypesBitmap = RadioAccessFamily::LTE;
+    int32_t allowedNetworkTypesBitmap = static_cast<int32_t>(RadioAccessFamily::LTE);
 
     radio_network->setAllowedNetworkTypesBitmap(serial, allowedNetworkTypesBitmap);
 
@@ -77,7 +78,7 @@ TEST_P(RadioNetworkTest, setAllowedNetworkTypesBitmap) {
  */
 TEST_P(RadioNetworkTest, getAllowedNetworkTypesBitmap) {
     serial = GetRandomSerialNumber();
-    RadioAccessFamily allowedNetworkTypesBitmap = RadioAccessFamily::LTE;
+    int32_t allowedNetworkTypesBitmap = static_cast<int32_t>(RadioAccessFamily::LTE);
 
     radio_network->setAllowedNetworkTypesBitmap(serial, allowedNetworkTypesBitmap);
 

@@ -208,8 +208,8 @@ Return<void> RadioIndication::registrationFailed(  //
         const hidl_string& chosenPlmn, hidl_bitfield<V1_5::Domain> domain, int32_t causeCode,
         int32_t additionalCauseCode) {
     LOG_CALL << type;
-    networkCb()->registrationFailed(toAidl(type), toAidl(cellIdentity), chosenPlmn,
-                                    aidl::Domain(domain), causeCode, additionalCauseCode);
+    networkCb()->registrationFailed(toAidl(type), toAidl(cellIdentity), chosenPlmn, domain,
+                                    causeCode, additionalCauseCode);
     return {};
 }
 

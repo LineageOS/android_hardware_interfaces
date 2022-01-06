@@ -62,8 +62,7 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      */
-    void getAllowedNetworkTypesBitmapResponse(
-            in RadioResponseInfo info, in RadioAccessFamily networkTypeBitmap);
+    void getAllowedNetworkTypesBitmapResponse(in RadioResponseInfo info, in int networkTypeBitmap);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
