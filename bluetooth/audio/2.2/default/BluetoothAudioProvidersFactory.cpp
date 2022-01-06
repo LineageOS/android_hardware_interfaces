@@ -239,7 +239,7 @@ Return<void> BluetoothAudioProvidersFactory::getProviderCapabilities_2_2(
                                 LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH ||
              sessionType == V2_1::SessionType::
                                 LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH) {
-    std::vector<LeAudioCodecCapabilitiesPair> db_codec_capabilities =
+    std::vector<LeAudioCodecCapabilitiesSetting> db_codec_capabilities =
         android::bluetooth::audio::GetLeAudioOffloadCodecCapabilities(
             sessionType);
     if (db_codec_capabilities.size()) {
