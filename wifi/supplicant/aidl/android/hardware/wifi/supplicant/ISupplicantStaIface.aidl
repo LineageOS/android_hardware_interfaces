@@ -179,6 +179,24 @@ interface ISupplicantStaIface {
             in byte[] macAddress, in String deviceInfo, in DppCurve curve);
 
     /**
+     * To Onboard / Configure self with DPP credentials.
+     *
+     * This is used to generate DppConnectionKeys for self. Thus a configurator
+     * can use the credentials to connect to an AP which it has configured for
+     * DPP AKM. This should be called before initiating first DPP connection
+     * on Configurator side. This API generates onDppSuccessConfigReceived()
+     * callback event asynchronously with DppConnectionKeys.
+     *
+     * @param ssid Network SSID configured profile
+     * @param privEcKey Private EC keys for this profile which was used to
+     *        configure other enrollee in network.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     *         |SupplicantStatusCode.FAILURE_UNSUPPORTED|
+     */
+    void generateSelfDppConfiguration(in String ssid, in byte[] privEcKey);
+
+    /**
      * Get Connection capabilities
      *
      * @return Connection capabilities.
@@ -620,20 +638,27 @@ interface ISupplicantStaIface {
      *
      * @param peerBootstrapId Peer device's URI ID.
      * @param ownBootstrapId Local device's URI ID (0 for none, optional).
-     * @param ssid Network SSID to send to peer (SAE/PSK mode).
+     * @param ssid Network SSID to send to peer (SAE/PSK/DPP mode).
      * @param password Network password to send to peer (SAE/PSK mode).
      * @param psk Network PSK to send to peer (PSK mode only). Either password or psk should be set.
      * @param netRole Role to configure the peer, |DppNetRole.DPP_NET_ROLE_STA| or
      *        |DppNetRole.DPP_NET_ROLE_AP|.
      * @param securityAkm Security AKM to use (See DppAkm).
+     * @param privEcKey Private EC keys for this profile which was used to
+     *        configure other enrollee in network. This param is valid only for DPP AKM.
+     *        This param is set to Null by configurator to indicate first DPP-AKM based
+     *        configuration to an Enrollee. non-Null value indicates configurator had
+     *        previously configured an enrollee.
+     * @return Return the Private EC key when securityAkm is DPP and privEcKey was Null.
+     *         Otherwise return Null.
      * @throws ServiceSpecificException with one of the following values:
      *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
      *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
      *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
      */
-    void startDppConfiguratorInitiator(in int peerBootstrapId, in int ownBootstrapId,
+    byte[] startDppConfiguratorInitiator(in int peerBootstrapId, in int ownBootstrapId,
             in String ssid, in String password, in String psk, in DppNetRole netRole,
-            in DppAkm securityAkm);
+            in DppAkm securityAkm, in byte[] privEcKey);
 
     /**
      * Start DPP in Enrollee-Initiator mode.
