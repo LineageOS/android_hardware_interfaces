@@ -22,7 +22,6 @@ import android.hardware.graphics.common.Point;
 import android.hardware.graphics.common.Rect;
 import android.hardware.graphics.composer3.Buffer;
 import android.hardware.graphics.composer3.Color;
-import android.hardware.graphics.composer3.FloatColor;
 import android.hardware.graphics.composer3.Luminance;
 import android.hardware.graphics.composer3.ParcelableBlendMode;
 import android.hardware.graphics.composer3.ParcelableComposition;
@@ -112,13 +111,6 @@ parcelable LayerCommand {
      * other effect.
      */
     @nullable Color color;
-
-    /**
-     * Sets the color of the given layer. If the composition type of the layer
-     * is not Composition.SOLID_COLOR, this call must succeed and have no
-     * other effect.
-     */
-    @nullable FloatColor floatColor;
 
     /**
      * Sets the desired composition type of the given layer. During
