@@ -18,7 +18,7 @@
 #include <android/hardware/graphics/composer/2.4/IComposerCallback.h>
 
 #include <mutex>
-#include <unordered_set>
+#include <vector>
 
 namespace android::hardware::graphics::composer::V2_4::vts {
 
@@ -56,7 +56,7 @@ class GraphicsComposerCallback : public IComposerCallback {
 
     mutable std::mutex mMutex;
     // the set of all currently connected displays
-    std::unordered_set<Display> mDisplays;
+    std::vector<Display> mDisplays;
     // true only when vsync is enabled
     bool mVsyncAllowed = true;
 
