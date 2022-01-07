@@ -29,9 +29,11 @@
 #include <aidl/android/hardware/graphics/common/BlendMode.h>
 #include <aidl/android/hardware/graphics/composer3/Color.h>
 #include <aidl/android/hardware/graphics/composer3/Composition.h>
+#include <aidl/android/hardware/graphics/composer3/DisplayBrightness.h>
 #include <aidl/android/hardware/graphics/composer3/FloatColor.h>
 #include <aidl/android/hardware/graphics/composer3/PerFrameMetadata.h>
 #include <aidl/android/hardware/graphics/composer3/PerFrameMetadataBlob.h>
+#include <aidl/android/hardware/graphics/composer3/WhitePointNits.h>
 
 #include <aidl/android/hardware/graphics/composer3/DisplayCommand.h>
 
@@ -77,6 +79,10 @@ class ComposerClientWriter {
         matVec.reserve(16);
         matVec.assign(matrix, matrix + 16);
         getDisplayCommand(display).colorTransformMatrix.emplace(std::move(matVec));
+    }
+
+    void setDisplayBrightness(int64_t display, float brightness) {
+        getDisplayCommand(display).brightness.emplace(DisplayBrightness{.brightness = brightness});
     }
 
     void setClientTarget(int64_t display, uint32_t slot, const native_handle_t* target,
