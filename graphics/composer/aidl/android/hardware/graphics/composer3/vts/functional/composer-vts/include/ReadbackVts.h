@@ -43,6 +43,10 @@ using IMapper2_1 = ::android::hardware::graphics::mapper::V2_1::IMapper;
 
 static const Color BLACK = {0.0f, 0.0f, 0.0f, 1.0f};
 static const Color RED = {1.0f, 0.0f, 0.0f, 1.0f};
+// DIM_RED is 90% dimmed from RED in linear space
+// hard-code as value 243 in 8-bit space here, as calculating it requires
+// oetf(eotf(value) * .9), which is a complex non-linear transformation
+static const Color DIM_RED = {243.f / 255.f, 0.0f, 0.0f, 1.0f};
 static const Color TRANSLUCENT_RED = {1.0f, 0.0f, 0.0f, 0.3f};
 static const Color GREEN = {0.0f, 1.0f, 0.0f, 1.0f};
 static const Color BLUE = {0.0f, 0.0f, 1.0f, 1.0f};
@@ -67,6 +71,7 @@ class TestLayer {
     void setDisplayFrame(Rect frame) { mDisplayFrame = frame; }
     void setSourceCrop(FRect crop) { mSourceCrop = crop; }
     void setZOrder(uint32_t z) { mZOrder = z; }
+    void setWhitePointNits(float whitePointNits) { mWhitePointNits = whitePointNits; }
 
     void setSurfaceDamage(std::vector<Rect> surfaceDamage) {
         mSurfaceDamage = std::move(surfaceDamage);
@@ -84,10 +89,13 @@ class TestLayer {
 
     int64_t getLayer() const { return mLayer; }
 
+    float getWhitePointNits() const { return mWhitePointNits; }
+
   protected:
     int64_t mDisplay;
     int64_t mLayer;
     Rect mDisplayFrame = {0, 0, 0, 0};
+    float mWhitePointNits = -1.f;
     std::vector<Rect> mSurfaceDamage;
     Transform mTransform = static_cast<Transform>(0);
     FRect mSourceCrop = {0, 0, 0, 0};
