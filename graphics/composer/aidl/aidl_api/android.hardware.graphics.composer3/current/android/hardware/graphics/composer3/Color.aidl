@@ -34,8 +34,8 @@
 package android.hardware.graphics.composer3;
 @VintfStability
 parcelable Color {
-  byte r;
-  byte g;
-  byte b;
-  byte a;
+  float r;
+  float g;
+  float b;
+  float a;
 }
