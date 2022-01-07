@@ -52,6 +52,8 @@ parcelable Event {
     android.hardware.sensors.AdditionalInfo additional;
     android.hardware.sensors.Event.EventPayload.Data data;
     android.hardware.sensors.Event.EventPayload.HeadTracker headTracker;
+    android.hardware.sensors.Event.EventPayload.LimitedAxesImu limitedAxesImu;
+    android.hardware.sensors.Event.EventPayload.LimitedAxesImuUncal limitedAxesImuUncal;
     @FixedSize @VintfStability
     parcelable Vec4 {
       float x;
@@ -84,6 +86,27 @@ parcelable Event {
       float vy;
       float vz;
       int discontinuityCount;
+    }
+    @FixedSize @VintfStability
+    parcelable LimitedAxesImu {
+      float x;
+      float y;
+      float z;
+      float xSupported;
+      float ySupported;
+      float zSupported;
+    }
+    @FixedSize @VintfStability
+    parcelable LimitedAxesImuUncal {
+      float x;
+      float y;
+      float z;
+      float xBias;
+      float yBias;
+      float zBias;
+      float xSupported;
+      float ySupported;
+      float zSupported;
     }
     @FixedSize @VintfStability
     parcelable HeartRate {
