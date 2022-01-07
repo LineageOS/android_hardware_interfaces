@@ -83,23 +83,22 @@ safe_union AudioConfiguration {
 safe_union AudioCapabilities {
     PcmParameters pcmCapabilities;
     CodecCapabilities codecCapabilities;
-    LeAudioCodecCapabilitiesPair leAudioCapabilities;
+    LeAudioCodecCapabilitiesSetting leAudioCapabilities;
 };
 
 /**
- * Used to specify th le audio capabilities pair of the Hardware offload encode and decode.
+ * Used to specify the le audio capabilities for unicast and broadcast hardware offload.
  */
-struct LeAudioCodecCapabilitiesPair{
-    LeAudioMode mode;
-    LeAudioCodecCapability encodeCapability;
-    LeAudioCodecCapability decodeCapability;
+struct LeAudioCodecCapabilitiesSetting{
+    UnicastCapability unicastEncodeCapability;
+    UnicastCapability unicastDecodeCapability;
+    BroadcastCapability broadcastCapability;
 };
 
 /**
- * Used to specify the le audio capabilities of the codecs supported by Hardware offload
- * for encode or decode.
+ * Used to specify the le audio unicast codec capabilities for hardware offload.
  */
-struct LeAudioCodecCapability {
+struct UnicastCapability {
     CodecType codecType;
     AudioLocation supportedChannel;
 
@@ -111,4 +110,18 @@ struct LeAudioCodecCapability {
 
     // Should use safe union when there is more than one codec
     Lc3Parameters capabilities;
+};
+
+/**
+ * Used to specify the le audio broadcast codec capabilities for hardware offload.
+ */
+struct BroadcastCapability {
+    CodecType codecType;
+    AudioLocation supportedChannel;
+
+    // Supported channel count for each stream
+    uint8_t channelCountPerStream;
+
+    // Should use safe union when there is more than one codec
+    vec<Lc3Parameters> capabilities;
 };
