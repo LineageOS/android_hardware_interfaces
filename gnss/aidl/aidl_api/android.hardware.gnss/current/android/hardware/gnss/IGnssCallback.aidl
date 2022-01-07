@@ -35,8 +35,60 @@ package android.hardware.gnss;
 @VintfStability
 interface IGnssCallback {
   void gnssSetCapabilitiesCb(in int capabilities);
+  void gnssStatusCb(in android.hardware.gnss.IGnssCallback.GnssStatusValue status);
+  void gnssSvStatusCb(in android.hardware.gnss.IGnssCallback.GnssSvInfo[] svInfoList);
+  void gnssLocationCb(in android.hardware.gnss.GnssLocation location);
+  void gnssNmeaCb(in long timestamp, in @utf8InCpp String nmea);
+  void gnssAcquireWakelockCb();
+  void gnssReleaseWakelockCb();
+  void gnssSetSystemInfoCb(in android.hardware.gnss.IGnssCallback.GnssSystemInfo info);
+  void gnssRequestTimeCb();
+  void gnssRequestLocationCb(in boolean independentFromGnss, in boolean isUserEmergency);
+  const int CAPABILITY_SCHEDULING = 1;
+  const int CAPABILITY_MSB = 2;
+  const int CAPABILITY_MSA = 4;
+  const int CAPABILITY_SINGLE_SHOT = 8;
+  const int CAPABILITY_ON_DEMAND_TIME = 16;
+  const int CAPABILITY_GEOFENCING = 32;
+  const int CAPABILITY_MEASUREMENTS = 64;
+  const int CAPABILITY_NAV_MESSAGES = 128;
+  const int CAPABILITY_LOW_POWER_MODE = 256;
   const int CAPABILITY_SATELLITE_BLOCKLIST = 512;
+  const int CAPABILITY_MEASUREMENT_CORRECTIONS = 1024;
+  const int CAPABILITY_ANTENNA_INFO = 2048;
   const int CAPABILITY_CORRELATION_VECTOR = 4096;
   const int CAPABILITY_SATELLITE_PVT = 8192;
   const int CAPABILITY_MEASUREMENT_CORRECTIONS_FOR_DRIVING = 16384;
+  @Backing(type="int") @VintfStability
+  enum GnssStatusValue {
+    NONE = 0,
+    SESSION_BEGIN = 1,
+    SESSION_END = 2,
+    ENGINE_ON = 3,
+    ENGINE_OFF = 4,
+  }
+  @Backing(type="int") @VintfStability
+  enum GnssSvFlags {
+    NONE = 0,
+    HAS_EPHEMERIS_DATA = 1,
+    HAS_ALMANAC_DATA = 2,
+    USED_IN_FIX = 4,
+    HAS_CARRIER_FREQUENCY = 8,
+  }
+  @VintfStability
+  parcelable GnssSvInfo {
+    int svid;
+    android.hardware.gnss.GnssConstellationType constellation;
+    float cN0Dbhz;
+    float basebandCN0DbHz;
+    float elevationDegrees;
+    float azimuthDegrees;
+    long carrierFrequencyHz;
+    int svFlag;
+  }
+  @VintfStability
+  parcelable GnssSystemInfo {
+    int yearOfHw;
+    @utf8InCpp String name;
+  }
 }

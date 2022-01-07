@@ -14,11 +14,62 @@
  * limitations under the License.
  */
 
+#define LOG_TAG "GnssCallbackAidl"
+
 #include "GnssCallbackAidl.h"
 #include <log/log.h>
 
-android::binder::Status GnssCallbackAidl::gnssSetCapabilitiesCb(const int capabilities) {
-    ALOGI("Capabilities received %d", capabilities);
+using android::binder::Status;
+using android::hardware::gnss::GnssLocation;
+using GnssSvInfo = android::hardware::gnss::IGnssCallback::GnssSvInfo;
+using GnssSystemInfo = android::hardware::gnss::IGnssCallback::GnssSystemInfo;
+
+Status GnssCallbackAidl::gnssSetCapabilitiesCb(const int capabilities) {
+    ALOGI("Capabilities received %#08x", capabilities);
     capabilities_cbq_.store(capabilities);
-    return android::binder::Status::ok();
+    return Status::ok();
+}
+
+Status GnssCallbackAidl::gnssStatusCb(const GnssStatusValue /* status */) {
+    ALOGI("gnssSvStatusCb");
+    return Status::ok();
+}
+
+Status GnssCallbackAidl::gnssSvStatusCb(const std::vector<GnssSvInfo>& svInfoList) {
+    ALOGI("gnssSvStatusCb. Size = %d", (int)svInfoList.size());
+    sv_info_list_cbq_.store(svInfoList);
+    return Status::ok();
+}
+
+Status GnssCallbackAidl::gnssLocationCb(const GnssLocation& location) {
+    ALOGI("Location received");
+    location_cbq_.store(location);
+    return Status::ok();
+}
+
+Status GnssCallbackAidl::gnssNmeaCb(const int64_t /* timestamp */, const std::string& /* nmea */) {
+    return Status::ok();
+}
+
+Status GnssCallbackAidl::gnssAcquireWakelockCb() {
+    return Status::ok();
+}
+
+Status GnssCallbackAidl::gnssReleaseWakelockCb() {
+    return Status::ok();
+}
+
+Status GnssCallbackAidl::gnssSetSystemInfoCb(const GnssSystemInfo& info) {
+    ALOGI("gnssSetSystemInfoCb, year=%d, name=%s", info.yearOfHw, info.name.c_str());
+    info_cbq_.store(info);
+    return Status::ok();
+}
+
+Status GnssCallbackAidl::gnssRequestTimeCb() {
+    return Status::ok();
+}
+
+Status GnssCallbackAidl::gnssRequestLocationCb(const bool /* independentFromGnss */,
+                                               const bool /* isUserEmergency */) {
+    return Status::ok();
 }

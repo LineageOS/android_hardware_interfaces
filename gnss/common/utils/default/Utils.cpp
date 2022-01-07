@@ -27,14 +27,17 @@ namespace common {
 
 using aidl::android::hardware::gnss::ElapsedRealtime;
 using aidl::android::hardware::gnss::GnssClock;
+using aidl::android::hardware::gnss::GnssConstellationType;
 using aidl::android::hardware::gnss::GnssData;
 using aidl::android::hardware::gnss::GnssLocation;
 using aidl::android::hardware::gnss::GnssMeasurement;
 using aidl::android::hardware::gnss::IGnss;
 using aidl::android::hardware::gnss::IGnssMeasurementCallback;
 using aidl::android::hardware::gnss::SatellitePvt;
+using GnssSvInfo = aidl::android::hardware::gnss::IGnssCallback::GnssSvInfo;
+using GnssSvFlags = aidl::android::hardware::gnss::IGnssCallback::GnssSvFlags;
 
-using GnssSvFlags = V1_0::IGnssCallback::GnssSvFlags;
+using GnssSvFlagsV1_0 = V1_0::IGnssCallback::GnssSvFlags;
 using GnssMeasurementFlagsV1_0 = V1_0::IGnssMeasurementCallback::GnssMeasurementFlags;
 using GnssMeasurementFlagsV2_1 = V2_1::IGnssMeasurementCallback::GnssMeasurementFlags;
 using GnssMeasurementStateV2_0 = V2_0::IGnssMeasurementCallback::GnssMeasurementState;
@@ -144,7 +147,7 @@ GnssDataV2_0 Utils::getMockMeasurementV2_0() {
 
 GnssData Utils::getMockMeasurement(const bool enableCorrVecOutputs) {
     aidl::android::hardware::gnss::GnssSignalType signalType = {
-            .constellation = aidl::android::hardware::gnss::GnssConstellationType::GLONASS,
+            .constellation = GnssConstellationType::GLONASS,
             .carrierFrequencyHz = 1.59975e+09,
             .codeType = aidl::android::hardware::gnss::GnssSignalType::CODE_TYPE_C,
     };
@@ -289,6 +292,40 @@ V1_0::GnssLocation Utils::getMockLocationV1_0() {
     return location;
 }
 
+namespace {
+GnssSvInfo getMockSvInfo(int svid, GnssConstellationType type, float cN0DbHz, float basebandCN0DbHz,
+                         float elevationDegrees, float azimuthDegrees, long carrierFrequencyHz) {
+    GnssSvInfo svInfo = {
+            .svid = svid,
+            .constellation = type,
+            .cN0Dbhz = cN0DbHz,
+            .basebandCN0DbHz = basebandCN0DbHz,
+            .elevationDegrees = elevationDegrees,
+            .azimuthDegrees = azimuthDegrees,
+            .carrierFrequencyHz = carrierFrequencyHz,
+            .svFlag = (int)GnssSvFlags::USED_IN_FIX | (int)GnssSvFlags::HAS_EPHEMERIS_DATA |
+                      (int)GnssSvFlags::HAS_ALMANAC_DATA | (int)GnssSvFlags::HAS_CARRIER_FREQUENCY};
+    return svInfo;
+}
+}  // anonymous namespace
+
+std::vector<GnssSvInfo> Utils::getMockSvInfoList() {
+    std::vector<GnssSvInfo> gnssSvInfoList = {
+            getMockSvInfo(3, GnssConstellationType::GPS, 32.5, 27.5, 59.1, 166.5, kGpsL1FreqHz),
+            getMockSvInfo(5, GnssConstellationType::GPS, 27.0, 22.0, 29.0, 56.5, kGpsL1FreqHz),
+            getMockSvInfo(17, GnssConstellationType::GPS, 30.5, 25.5, 71.0, 77.0, kGpsL5FreqHz),
+            getMockSvInfo(26, GnssConstellationType::GPS, 24.1, 19.1, 28.0, 253.0, kGpsL5FreqHz),
+            getMockSvInfo(5, GnssConstellationType::GLONASS, 20.5, 15.5, 11.5, 116.0, kGloG1FreqHz),
+            getMockSvInfo(17, GnssConstellationType::GLONASS, 21.5, 16.5, 28.5, 186.0,
+                          kGloG1FreqHz),
+            getMockSvInfo(18, GnssConstellationType::GLONASS, 28.3, 25.3, 38.8, 69.0, kGloG1FreqHz),
+            getMockSvInfo(10, GnssConstellationType::GLONASS, 25.0, 20.0, 66.0, 247.0,
+                          kGloG1FreqHz),
+            getMockSvInfo(3, GnssConstellationType::IRNSS, 22.0, 19.7, 35.0, 112.0, kIrnssL5FreqHz),
+    };
+    return gnssSvInfoList;
+}
+
 hidl_vec<GnssSvInfoV2_1> Utils::getMockSvInfoListV2_1() {
     GnssSvInfoV1_0 gnssSvInfoV1_0 = Utils::getMockSvInfoV1_0(3, V1_0::GnssConstellationType::GPS,
                                                              32.5, 59.1, 166.5, kGpsL1FreqHz);
@@ -360,15 +397,15 @@ GnssSvInfoV2_0 Utils::getMockSvInfoV2_0(GnssSvInfoV1_0 gnssSvInfoV1_0,
 GnssSvInfoV1_0 Utils::getMockSvInfoV1_0(int16_t svid, V1_0::GnssConstellationType type,
                                         float cN0DbHz, float elevationDegrees, float azimuthDegrees,
                                         float carrierFrequencyHz) {
-    GnssSvInfoV1_0 svInfo = {.svid = svid,
-                             .constellation = type,
-                             .cN0Dbhz = cN0DbHz,
-                             .elevationDegrees = elevationDegrees,
-                             .azimuthDegrees = azimuthDegrees,
-                             .carrierFrequencyHz = carrierFrequencyHz,
-                             .svFlag = GnssSvFlags::USED_IN_FIX | GnssSvFlags::HAS_EPHEMERIS_DATA |
-                                       GnssSvFlags::HAS_ALMANAC_DATA |
-                                       GnssSvFlags::HAS_CARRIER_FREQUENCY};
+    GnssSvInfoV1_0 svInfo = {
+            .svid = svid,
+            .constellation = type,
+            .cN0Dbhz = cN0DbHz,
+            .elevationDegrees = elevationDegrees,
+            .azimuthDegrees = azimuthDegrees,
+            .carrierFrequencyHz = carrierFrequencyHz,
+            .svFlag = GnssSvFlagsV1_0::USED_IN_FIX | GnssSvFlagsV1_0::HAS_EPHEMERIS_DATA |
+                      GnssSvFlagsV1_0::HAS_ALMANAC_DATA | GnssSvFlagsV1_0::HAS_CARRIER_FREQUENCY};
     return svInfo;
 }
 

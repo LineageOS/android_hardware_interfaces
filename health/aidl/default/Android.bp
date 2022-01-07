@@ -120,6 +120,15 @@ cc_library_static {
     },
 }
 
+// Users of libhealth_aidl_impl should use this defaults.
+cc_defaults {
+    name: "libhealth_aidl_impl_user",
+    defaults: [
+        "libhealth_aidl_common_defaults",
+        "libhealth_aidl_charger_defaults",
+    ],
+}
+
 // AIDL version of android.hardware.health@2.1-service.
 // Default binder service of the health HAL.
 cc_defaults {
@@ -127,8 +136,7 @@ cc_defaults {
     relative_install_path: "hw",
     vintf_fragments: ["android.hardware.health-service.example.xml"],
     defaults: [
-        "libhealth_aidl_common_defaults",
-        "libhealth_aidl_charger_defaults",
+        "libhealth_aidl_impl_user",
     ],
     static_libs: [
         "libhealth_aidl_impl",
