@@ -31,7 +31,7 @@ bool IsOffloadLeAudioConfigurationValid(
     const ::android::hardware::bluetooth::audio::V2_2::LeAudioConfiguration&
         le_audio_codec_config);
 
-std::vector<hardware::bluetooth::audio::V2_2::LeAudioCodecCapabilitiesPair>
+std::vector<hardware::bluetooth::audio::V2_2::LeAudioCodecCapabilitiesSetting>
 GetLeAudioOffloadCodecCapabilities(
     const ::android::hardware::bluetooth::audio::V2_1::SessionType&
         session_type);
