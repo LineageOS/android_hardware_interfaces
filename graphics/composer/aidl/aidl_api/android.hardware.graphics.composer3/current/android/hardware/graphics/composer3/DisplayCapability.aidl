@@ -41,4 +41,5 @@ enum DisplayCapability {
   PROTECTED_CONTENTS = 4,
   AUTO_LOW_LATENCY_MODE = 5,
   SUSPEND = 6,
+  DISPLAY_DECORATION = 7,
 }
