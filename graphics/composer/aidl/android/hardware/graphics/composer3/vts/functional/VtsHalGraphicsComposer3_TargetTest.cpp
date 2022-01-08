@@ -568,37 +568,6 @@ TEST_P(GraphicsComposerAidlTest, GetDisplayedContentSample) {
     }
 }
 
-/*
- * Test that if brightness operations are supported, setDisplayBrightness works as expected.
- */
-TEST_P(GraphicsComposerAidlTest, setDisplayBrightness) {
-    std::vector<DisplayCapability> capabilities;
-    auto error = mComposerClient->getDisplayCapabilities(mPrimaryDisplay, &capabilities);
-    ASSERT_TRUE(error.isOk());
-    bool brightnessSupport = std::find(capabilities.begin(), capabilities.end(),
-                                       DisplayCapability::BRIGHTNESS) != capabilities.end();
-    if (!brightnessSupport) {
-        EXPECT_EQ(mComposerClient->setDisplayBrightness(mPrimaryDisplay, 0.5f)
-                          .getServiceSpecificError(),
-                  IComposerClient::EX_UNSUPPORTED);
-        GTEST_SUCCEED() << "Brightness operations are not supported";
-        return;
-    }
-
-    EXPECT_TRUE(mComposerClient->setDisplayBrightness(mPrimaryDisplay, 0.0f).isOk());
-    EXPECT_TRUE(mComposerClient->setDisplayBrightness(mPrimaryDisplay, 0.5f).isOk());
-    EXPECT_TRUE(mComposerClient->setDisplayBrightness(mPrimaryDisplay, 1.0f).isOk());
-    EXPECT_TRUE(mComposerClient->setDisplayBrightness(mPrimaryDisplay, -1.0f).isOk());
-
-    error = mComposerClient->setDisplayBrightness(mPrimaryDisplay, +2.0f);
-    EXPECT_FALSE(error.isOk());
-    EXPECT_EQ(error.getServiceSpecificError(), IComposerClient::EX_BAD_PARAMETER);
-
-    error = mComposerClient->setDisplayBrightness(mPrimaryDisplay, -2.0f);
-    EXPECT_FALSE(error.isOk());
-    EXPECT_EQ(error.getServiceSpecificError(), IComposerClient::EX_BAD_PARAMETER);
-}
-
 TEST_P(GraphicsComposerAidlTest, getDisplayConnectionType) {
     DisplayConnectionType type;
     EXPECT_FALSE(mComposerClient->getDisplayConnectionType(mInvalidDisplayId, &type).isOk());
@@ -1491,6 +1460,55 @@ TEST_P(GraphicsComposerAidlCommandTest, SetLayerColorTransform) {
     if (errors.size() == 1 && errors[0].errorCode == EX_UNSUPPORTED_OPERATION) {
         GTEST_SUCCEED() << "setLayerColorTransform is not supported";
         return;
+    }
+}
+
+TEST_P(GraphicsComposerAidlCommandTest, SetDisplayBrightness) {
+    std::vector<DisplayCapability> capabilities;
+    auto error = mComposerClient->getDisplayCapabilities(mPrimaryDisplay, &capabilities);
+    ASSERT_TRUE(error.isOk());
+    bool brightnessSupport = std::find(capabilities.begin(), capabilities.end(),
+                                       DisplayCapability::BRIGHTNESS) != capabilities.end();
+    if (!brightnessSupport) {
+        mWriter.setDisplayBrightness(mPrimaryDisplay, 0.5f);
+        execute();
+        const auto errors = mReader.takeErrors();
+        EXPECT_EQ(1, errors.size());
+        EXPECT_EQ(EX_UNSUPPORTED_OPERATION, errors[0].errorCode);
+        GTEST_SUCCEED() << "SetDisplayBrightness is not supported";
+        return;
+    }
+
+    mWriter.setDisplayBrightness(mPrimaryDisplay, 0.0f);
+    execute();
+    EXPECT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setDisplayBrightness(mPrimaryDisplay, 0.5f);
+    execute();
+    EXPECT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setDisplayBrightness(mPrimaryDisplay, 1.0f);
+    execute();
+    EXPECT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setDisplayBrightness(mPrimaryDisplay, -1.0f);
+    execute();
+    EXPECT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setDisplayBrightness(mPrimaryDisplay, 2.0f);
+    execute();
+    {
+        const auto errors = mReader.takeErrors();
+        EXPECT_EQ(1, errors.size());
+        EXPECT_EQ(IComposerClient::EX_BAD_PARAMETER, errors[0].errorCode);
+    }
+
+    mWriter.setDisplayBrightness(mPrimaryDisplay, -2.0f);
+    execute();
+    {
+        const auto errors = mReader.takeErrors();
+        EXPECT_EQ(1, errors.size());
+        EXPECT_EQ(IComposerClient::EX_BAD_PARAMETER, errors[0].errorCode);
     }
 }
 

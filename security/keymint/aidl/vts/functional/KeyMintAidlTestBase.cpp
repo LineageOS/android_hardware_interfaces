@@ -537,6 +537,9 @@ ErrorCode KeyMintAidlTestBase::Update(const string& input, string* output) {
     Status result;
     if (!output) return ErrorCode::UNEXPECTED_NULL_POINTER;
 
+    EXPECT_NE(op_, nullptr);
+    if (!op_) return ErrorCode::UNEXPECTED_NULL_POINTER;
+
     std::vector<uint8_t> o_put;
     result = op_->update(vector<uint8_t>(input.begin(), input.end()), {}, {}, &o_put);
 
