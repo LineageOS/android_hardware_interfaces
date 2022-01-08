@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 The Android Open Source Project
+ * Copyright 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,15 +32,15 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.bluetooth.audio;
-@Backing(type="int") @VintfStability
-enum CodecType {
-  UNKNOWN = 0,
-  SBC = 1,
-  AAC = 2,
-  APTX = 3,
-  APTX_HD = 4,
-  LDAC = 5,
-  LC3 = 6,
-  VENDOR = 7,
-  APTX_ADAPTIVE = 8,
+@VintfStability
+parcelable AptxAdaptiveConfiguration {
+  int sampleRateHz;
+  android.hardware.bluetooth.audio.AptxAdaptiveChannelMode channelMode;
+  byte bitsPerSample;
+  android.hardware.bluetooth.audio.AptxMode aptxMode;
+  android.hardware.bluetooth.audio.AptxSinkBuffering sinkBufferingMs;
+  android.hardware.bluetooth.audio.AptxAdaptiveTimeToPlay ttp;
+  android.hardware.bluetooth.audio.AptxAdaptiveInputMode inputMode;
+  int inputFadeDurationMs;
+  byte[] aptxAdaptiveConfigStream;
 }

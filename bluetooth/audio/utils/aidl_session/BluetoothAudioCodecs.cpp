@@ -356,6 +356,7 @@ BluetoothAudioCodecs::GetA2dpOffloadCodecCapabilities(
         break;
       case CodecType::UNKNOWN:
       case CodecType::VENDOR:
+      case CodecType::APTX_ADAPTIVE:
         break;
     }
   }
@@ -419,6 +420,7 @@ bool BluetoothAudioCodecs::IsOffloadCodecConfigurationValid(
         return true;
       }
       break;
+    case CodecType::APTX_ADAPTIVE:
     case CodecType::UNKNOWN:
     case CodecType::VENDOR:
       break;
