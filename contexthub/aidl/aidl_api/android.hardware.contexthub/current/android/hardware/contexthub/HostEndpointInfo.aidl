@@ -40,7 +40,7 @@ parcelable HostEndpointInfo {
   @nullable String attributionTag;
   @Backing(type="int") @VintfStability
   enum Type {
-    TYPE_FRAMEWORK = 1,
-    TYPE_APP = 2,
+    FRAMEWORK = 1,
+    APP = 2,
   }
 }
