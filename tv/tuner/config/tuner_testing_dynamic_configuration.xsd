@@ -226,6 +226,7 @@
         <xs:attribute name="isCheckCrc" type="xs:boolean" use="required"/>
         <xs:attribute name="isRepeat" type="xs:boolean" use="required"/>
         <xs:attribute name="isRaw" type="xs:boolean" use="required"/>
+        <xs:attribute name="bitWidthOfLengthField" type="xs:nonNegativeInteger" use="required"/>
     </xs:complexType>
     <xs:complexType name="recordFilterSettings">
         <xs:attribute name="tsIndexMask" type="tsIndexMask" use="required"/>
