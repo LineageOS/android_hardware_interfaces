@@ -616,25 +616,6 @@ interface IComposerClient {
     void setContentType(long display, ContentType type);
 
     /**
-     * Sets the brightness of a display.
-     *
-     * Ideally, the brightness change should take effect in the next frame post (so that it can be
-     * aligned with color transforms).
-     *
-     * @param display
-     *      The display whose brightness is set.
-     * @param brightness
-     *      A number between 0.0f (minimum brightness) and 1.0f (maximum brightness), or -1.0 to
-     *      turn the backlight off.
-     *
-     * @exception EX_BAD_DISPLAY   when the display is invalid, or
-     * @exception EX_UNSUPPORTED   when brightness operations are not supported, or
-     * @exception EX_BAD_PARAMETER when the brightness is invalid, or
-     * @exception EX_NO_RESOURCES  when the brightness cannot be applied.
-     */
-    void setDisplayBrightness(long display, float brightness);
-
-    /**
      * Enables or disables the collection of color content statistics
      * on this display.
      *

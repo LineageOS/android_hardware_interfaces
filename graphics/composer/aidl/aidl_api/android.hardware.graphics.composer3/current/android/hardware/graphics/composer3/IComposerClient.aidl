@@ -65,7 +65,6 @@ interface IComposerClient {
   void setClientTargetSlotCount(long display, int clientTargetSlotCount);
   void setColorMode(long display, android.hardware.graphics.composer3.ColorMode mode, android.hardware.graphics.composer3.RenderIntent intent);
   void setContentType(long display, android.hardware.graphics.composer3.ContentType type);
-  void setDisplayBrightness(long display, float brightness);
   void setDisplayedContentSamplingEnabled(long display, boolean enable, android.hardware.graphics.composer3.FormatColorComponent componentMask, long maxFrames);
   void setPowerMode(long display, android.hardware.graphics.composer3.PowerMode mode);
   void setReadbackBuffer(long display, in android.hardware.common.NativeHandle buffer, in @nullable ParcelFileDescriptor releaseFence);

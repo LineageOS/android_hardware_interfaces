@@ -23,6 +23,7 @@ import android.hardware.graphics.common.Rect;
 import android.hardware.graphics.composer3.Buffer;
 import android.hardware.graphics.composer3.Color;
 import android.hardware.graphics.composer3.FloatColor;
+import android.hardware.graphics.composer3.Luminance;
 import android.hardware.graphics.composer3.ParcelableBlendMode;
 import android.hardware.graphics.composer3.ParcelableComposition;
 import android.hardware.graphics.composer3.ParcelableDataspace;
@@ -30,7 +31,6 @@ import android.hardware.graphics.composer3.ParcelableTransform;
 import android.hardware.graphics.composer3.PerFrameMetadata;
 import android.hardware.graphics.composer3.PerFrameMetadataBlob;
 import android.hardware.graphics.composer3.PlaneAlpha;
-import android.hardware.graphics.composer3.WhitePointNits;
 import android.hardware.graphics.composer3.ZOrder;
 
 @VintfStability
@@ -243,7 +243,7 @@ parcelable LayerCommand {
      * brightness in nits, and accordingly SDR content shall be dimmed to the desired white point
      * provided.
      */
-    @nullable WhitePointNits whitePointNits;
+    @nullable Luminance whitePointNits;
 
     /**
      * Sets the PerFrameMetadata for the display. This metadata must be used
