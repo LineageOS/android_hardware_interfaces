@@ -17,13 +17,10 @@
 package android.hardware.graphics.composer3;
 
 @VintfStability
-parcelable WhitePointNits {
+parcelable Luminance {
     /**
-     * The desired white point for the layer. This is intended to be used when presenting
-     * an SDR layer alongside HDR content. The HDR content will be presented at the display
-     * brightness in nits, and accordingly SDR content shall be dimmed to the desired white point
-     * provided.
-     * @see LayerCommand.whitePointNits.
+     * Photometric measure of luminous intensity per unit area of light.
+     * Units are nits, or cd/m^2.
      */
     float nits;
 }
