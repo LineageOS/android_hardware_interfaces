@@ -703,6 +703,21 @@ enum SensorType {
     GYROSCOPE_LIMITED_AXES_UNCALIBRATED = 41,
 
     /**
+     * HEADING
+     * reporting-mode: continuous
+     *
+     * A sensor of this type measures the direction in which the device is
+     * pointing relative to true north in degrees.
+     *
+     * This sensor was added for automotive form factors. Other devices with a
+     * clear forward direction might find it useful as well. However, devices
+     * with a more ambiguous orientation such as phones or wearables might want
+     * to consider using other sensors such as Sensor.TYPE_ROTATION_VECTOR
+     * which might be more suitable.
+     */
+    HEADING = 42,
+
+    /**
      * Base for device manufacturers private sensor types.
      * These sensor types can't be exposed in the SDK.
      */
