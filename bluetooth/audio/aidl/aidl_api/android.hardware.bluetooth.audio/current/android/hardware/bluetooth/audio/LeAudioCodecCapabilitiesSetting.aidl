@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 The Android Open Source Project
+ * Copyright 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,10 +33,8 @@
 
 package android.hardware.bluetooth.audio;
 @VintfStability
-interface IBluetoothAudioProvider {
-  void endSession();
-  android.hardware.common.fmq.MQDescriptor<byte,android.hardware.common.fmq.SynchronizedReadWrite> startSession(in android.hardware.bluetooth.audio.IBluetoothAudioPort hostIf, in android.hardware.bluetooth.audio.AudioConfiguration audioConfig);
-  void streamStarted(in android.hardware.bluetooth.audio.BluetoothAudioStatus status);
-  void streamSuspended(in android.hardware.bluetooth.audio.BluetoothAudioStatus status);
-  void updateAudioConfiguration(in android.hardware.bluetooth.audio.AudioConfiguration audioConfig);
+parcelable LeAudioCodecCapabilitiesSetting {
+  android.hardware.bluetooth.audio.UnicastCapability unicastEncodeCapability;
+  android.hardware.bluetooth.audio.UnicastCapability unicastDecodeCapability;
+  android.hardware.bluetooth.audio.BroadcastCapability broadcastCapability;
 }
