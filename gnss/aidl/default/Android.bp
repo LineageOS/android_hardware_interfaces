@@ -56,6 +56,7 @@ cc_binary {
         "android.hardware.gnss-V2-ndk",
     ],
     srcs: [
+        "AGnssRil.cpp",
         "AGnss.cpp",
         "Gnss.cpp",
         "GnssBatching.cpp",
