@@ -1445,6 +1445,7 @@ enum OperationType {
      * * {@link OperandType::TENSOR_FLOAT32}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM}
      * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} (since HAL version 1.3)
+     * * {@link OperandType::TENSOR_INT32} (since NNAPI feature level 6)
      *
      * Supported tensor rank: up to 4.
      *
@@ -5128,4 +5129,89 @@ enum OperationType {
      *      of the input tensor.
      */
     RANK = 101,
+
+    /**
+     * Performs multiplication of two tensors in batches.
+     *
+     * Multiplies all slices of two input tensors and arranges the individual
+     * results in a single output tensor of the same batch size. Each pair of
+     * slices in the same batch have identical {@link OperandType}. Each
+     * slice can optionally be adjointed (transpose and conjugate) before
+     * multiplication.
+     *
+     * The two input tensors and the output tensor must be 2-D or higher and
+     * have the same batch size.
+     *
+     * Supported tensor {@link OperandType}:
+     * * {@link OperandType::TENSOR_FLOAT16}
+     * * {@link OperandType::TENSOR_FLOAT32}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED}
+     * * {@link OperandType::TENSOR_INT32}
+     *
+     * Supported tensor rank: at least 2 and up to 4
+     *
+     * Inputs:
+     * * 0: A tensor with 2-D or higher shape [..., r_x, c_x].
+     * * 1: A tensor with 2-D or higher shape [..., r_y, c_y]. It has the same
+     *      {@link OperandType} and batch size as input0.
+     * * 2: An optional {@link OperandType::BOOL} scalar adj_x, default
+     *      to false. Set to true to adjoint the slices of input0.
+     * * 3: An optional {@link OperandType::BOOL} scalar adj_y, default
+     *      to false. Set to true to adjoint the slices of input1.
+     *
+     * Outputs:
+     * * 0: A tensor with 2-D or higher shape [..., r_o, c_o], where
+     *      r_o = c_x if adj_x else r_x
+     *      c_o = r_y if adj_y else c_y
+     */
+    BATCH_MATMUL = 102,
+
+    /**
+     * Packs N input tensors (N >= 1) of rank R into one output tensor of rank R+1.
+     * The tensors are packed along a given axis.
+     *
+     * The input tensors must have identical {@link OperandType} and dimensions.
+     *
+     * For example, suppose there are N input tensors of shape (A, B, C).
+     * If axis is 0, the output tensor will have shape (N, A, B, C).
+     * If axis is 1, the output tensor will have shape (A, N, B, C).
+     *
+     * All dimensions through the axis dimension determine the output tile count;
+     * the remaining dimensions determine the tile shape.
+     *
+     * Return to the example of N input tensors of shape (A, B, C).
+     * If axis is 0, there are N tiles in the output, each of shape (A, B, C).
+     * If axis is 1, there are A*N tiles in the output, each of shape (B, C).
+     *
+     * The coordinates of a tile within the output tensor are (t[0],...,t[axis]).
+     * The coordinates of a tile within an input tensor are (t[0],...,t[axis-1]).
+     * (If axis is 0, an input tensor consists of a single tile.)
+     * If we index input tensors starting with 0 (rather than by operand number),
+     * then output_tile[t[0],...,t[axis]] = input_tile[t[axis]][t[0],...,t[axis-1]].
+     * That is, all output tile coordinates except for the axis coordinate select
+     * the corresponding location within some input tensor; and the axis coordinate
+     * selects the input tensor.
+     *
+     * Supported tensor {@link OperandType}:
+     * * {@link OperandType::TENSOR_FLOAT16}
+     * * {@link OperandType::TENSOR_FLOAT32}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM}
+     * * {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED}
+     * * {@link OperandType::TENSOR_INT32}
+     *
+     * Supported input tensor rank: from 1
+     *
+     * Inputs:
+     * * 0: A scalar of type {@link OperandType::INT32}, specifying
+     *      the axis along which to pack.  The valid range is [0, R+1).
+     * * 1 ~ N: Input tensors to be packed together.
+     *          For {@link OperandType::TENSOR_QUANT8_ASYMM} and
+     *          {@link OperandType::TENSOR_QUANT8_ASYMM_SIGNED} tensors,
+     *          the scales and zeroPoint must be the same for all input tensors,
+     *          and will be the same for the output tensor.
+     *
+     * Outputs:
+     * * 0: The packed tensor.
+     */
+    PACK = 103,
 }
