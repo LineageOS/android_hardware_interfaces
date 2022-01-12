@@ -16,6 +16,7 @@
 
 package android.hardware.bluetooth.audio;
 
+import android.hardware.audio.common.SinkMetadata;
 import android.hardware.audio.common.SourceMetadata;
 import android.hardware.bluetooth.audio.PresentationPosition;
 
@@ -69,5 +70,12 @@ interface IBluetoothAudioPort {
      * @param sourceMetadata Description of the audio that is played by the
      *    clients.
      */
-    void updateMetadata(in SourceMetadata sourceMetadata);
+    void updateSourceMetadata(in SourceMetadata sourceMetadata);
+
+    /**
+     * Called when the metadata of the stream's sink has been changed.
+     *
+     * @param sinkMetadata as passed from Audio Framework
+     */
+    void updateSinkMetadata(in SinkMetadata sinkMetadata);
 }
