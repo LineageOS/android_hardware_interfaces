@@ -1499,7 +1499,7 @@ TEST_P(GraphicsComposerAidlCommandTest, SetDisplayBrightness) {
     execute();
     {
         const auto errors = mReader.takeErrors();
-        EXPECT_EQ(1, errors.size());
+        ASSERT_EQ(1, errors.size());
         EXPECT_EQ(IComposerClient::EX_BAD_PARAMETER, errors[0].errorCode);
     }
 
@@ -1507,7 +1507,7 @@ TEST_P(GraphicsComposerAidlCommandTest, SetDisplayBrightness) {
     execute();
     {
         const auto errors = mReader.takeErrors();
-        EXPECT_EQ(1, errors.size());
+        ASSERT_EQ(1, errors.size());
         EXPECT_EQ(IComposerClient::EX_BAD_PARAMETER, errors[0].errorCode);
     }
 }
