@@ -777,7 +777,7 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.wifi</name>
-        <version>1.3-5</version>
+        <version>1.3-6</version>
         <interface>
             <name>IWifi</name>
             <instance>default</instance>
