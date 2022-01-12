@@ -54,7 +54,7 @@ cc_test {
     static_libs: [
         "android.hardware.common-V2-ndk",
         "android.hardware.graphics.common-V2-ndk",
-        "android.hardware.neuralnetworks-V2-ndk",
+        "android.hardware.neuralnetworks-V3-ndk",
         "libaidlcommonsupport",
         "libgmock",
         "libneuralnetworks_common",
