@@ -34,6 +34,7 @@ cc_test {
     shared_libs: [
         "libbinder",
         "libbinder_ndk",
+        "libvndksupport",
         "libfmq",
         "android.hardware.common-V2-ndk",
         "android.hardware.common.fmq-V1-ndk",
@@ -41,6 +42,7 @@ cc_test {
     static_libs: [
         "android.hardware.sensors-V1-ndk",
         "VtsHalSensorsTargetTestUtils",
+        "libaidlcommonsupport",
     ],
     test_suites: [
         "general-tests",
