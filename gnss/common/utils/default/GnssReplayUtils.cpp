@@ -41,7 +41,7 @@ bool ReplayUtils::isGnssRawMeasurement(const std::string& inputStr) {
 
 bool ReplayUtils::isNMEA(const std::string& inputStr) {
     return !inputStr.empty() && (inputStr.find("$GPRMC,", 0) != std::string::npos ||
-                                 inputStr.find("$GPRMA,", 0) != std::string::npos);
+                                 inputStr.find("$GPGGA,", 0) != std::string::npos);
 }
 
 }  // namespace common
