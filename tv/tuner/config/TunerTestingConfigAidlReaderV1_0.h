@@ -954,6 +954,7 @@ struct TunerTestingConfigAidlReader1_0 {
         settings.isCheckCrc = section->getIsCheckCrc();
         settings.isRepeat = section->getIsRepeat();
         settings.isRaw = section->getIsRaw();
+        settings.bitWidthOfLengthField = section->getBitWidthOfLengthField();
         return settings;
     }
 

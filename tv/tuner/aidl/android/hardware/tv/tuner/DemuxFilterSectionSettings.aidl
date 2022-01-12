@@ -19,7 +19,7 @@ package android.hardware.tv.tuner;
 import android.hardware.tv.tuner.DemuxFilterSectionSettingsCondition;
 
 /**
- * Filter Settings for Section data according to ISO/IEC 13818-1.
+ * Filter Settings for Section data according to ISO/IEC 13818-1 and ISO/IEC 23008-1.
  * @hide
  */
 @VintfStability
@@ -49,4 +49,12 @@ parcelable DemuxFilterSectionSettings {
      * true if the filter send onFilterStatus instead of onFilterEvent.
      */
     boolean isRaw;
+
+    /**
+     * The bit width of the MMTP (MPEG Media Transport Protocol) section message's length field
+     * according to ISO/IEC 23008-1.
+     *
+     * The filter uses this for CRC checking when isCheckCrc is true.
+     */
+    int bitWidthOfLengthField;
 }
