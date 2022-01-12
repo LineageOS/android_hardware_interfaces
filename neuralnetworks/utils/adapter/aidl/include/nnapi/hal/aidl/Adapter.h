@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_UTILS_ADAPTER_ADAPTER_H
-#define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_UTILS_ADAPTER_ADAPTER_H
+#ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_UTILS_ADAPTER_AIDL_ADAPTER_H
+#define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_UTILS_ADAPTER_AIDL_ADAPTER_H
 
-#include <android/hardware/neuralnetworks/1.3/IDevice.h>
+#include <aidl/android/hardware/neuralnetworks/BnDevice.h>
 #include <nnapi/IDevice.h>
 #include <nnapi/Types.h>
-#include <sys/types.h>
+
 #include <functional>
 #include <memory>
 
-// See hardware/interfaces/neuralnetworks/utils/README.md for more information on HIDL interface
-// lifetimes across processes and for protecting asynchronous calls across HIDL.
+// See hardware/interfaces/neuralnetworks/utils/README.md for more information on AIDL interface
+// lifetimes across processes and for protecting asynchronous calls across AIDL.
 
-namespace android::hardware::neuralnetworks::adapter {
+namespace aidl::android::hardware::neuralnetworks::adapter {
 
 /**
  * A self-contained unit of work to be executed.
@@ -37,25 +37,26 @@ using Task = std::function<void()>;
 /**
  * A type-erased executor which executes a task asynchronously.
  *
- * This executor is also provided with an Application ID (Android User ID) and an optional deadline
- * for when the caller expects is the upper bound for the amount of time to complete the task.
+ * This executor is also provided an optional deadline for when the caller expects is the upper
+ * bound for the amount of time to complete the task. If needed, the Executor can retrieve the
+ * Application ID (Android User ID) by calling AIBinder_getCallingUid in android/binder_ibinder.h.
  */
-using Executor = std::function<void(Task, uid_t, nn::OptionalTimePoint)>;
+using Executor = std::function<void(Task, ::android::nn::OptionalTimePoint)>;
 
 /**
- * Adapt an NNAPI canonical interface object to a HIDL NN HAL interface object.
+ * Adapt an NNAPI canonical interface object to a AIDL NN HAL interface object.
  *
  * The IPreparedModel object created from IDevice::prepareModel or IDevice::preparedModelFromCache
  * must return "const nn::Model*" from IPreparedModel::getUnderlyingResource().
  *
  * @param device NNAPI canonical IDevice interface object to be adapted.
  * @param executor Type-erased executor to handle executing tasks asynchronously.
- * @return HIDL NN HAL IDevice interface object.
+ * @return AIDL NN HAL IDevice interface object.
  */
-sp<V1_3::IDevice> adapt(nn::SharedDevice device, Executor executor);
+std::shared_ptr<BnDevice> adapt(::android::nn::SharedDevice device, Executor executor);
 
 /**
- * Adapt an NNAPI canonical interface object to a HIDL NN HAL interface object.
+ * Adapt an NNAPI canonical interface object to a AIDL NN HAL interface object.
  *
  * The IPreparedModel object created from IDevice::prepareModel or IDevice::preparedModelFromCache
  * must return "const nn::Model*" from IPreparedModel::getUnderlyingResource().
@@ -63,10 +64,10 @@ sp<V1_3::IDevice> adapt(nn::SharedDevice device, Executor executor);
  * This function uses a default executor, which will execute tasks from a detached thread.
  *
  * @param device NNAPI canonical IDevice interface object to be adapted.
- * @return HIDL NN HAL IDevice interface object.
+ * @return AIDL NN HAL IDevice interface object.
  */
-sp<V1_3::IDevice> adapt(nn::SharedDevice device);
+std::shared_ptr<BnDevice> adapt(::android::nn::SharedDevice device);
 
-}  // namespace android::hardware::neuralnetworks::adapter
+}  // namespace aidl::android::hardware::neuralnetworks::adapter
 
-#endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_UTILS_ADAPTER_ADAPTER_H
+#endif  // ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_UTILS_ADAPTER_AIDL_ADAPTER_H
