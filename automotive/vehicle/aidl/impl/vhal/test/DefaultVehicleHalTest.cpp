@@ -27,6 +27,7 @@
 #include <android-base/thread_annotations.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <sys/mman.h>
 #include <utils/Log.h>
 #include <utils/SystemClock.h>
 
@@ -75,6 +76,7 @@ using ::ndk::ScopedAStatus;
 using ::ndk::ScopedFileDescriptor;
 using ::ndk::SpAIBinder;
 
+using ::testing::ContainsRegex;
 using ::testing::Eq;
 using ::testing::UnorderedElementsAre;
 using ::testing::UnorderedElementsAreArray;
@@ -1543,6 +1545,45 @@ TEST_F(DefaultVehicleHalTest, testOnBinderDiedUnlinked) {
 
     ASSERT_EQ(countOnBinderDiedContexts(), static_cast<size_t>(0))
             << "expect OnBinderDied context to be deleted when binder is unlinked";
+}
+
+TEST_F(DefaultVehicleHalTest, testDumpCallerShouldDump) {
+    std::string buffer = "Dump from hardware";
+    getHardware()->setDumpResult({
+            .callerShouldDumpState = true,
+            .buffer = buffer,
+    });
+    int fd = memfd_create("memfile", 0);
+    getClient()->dump(fd, nullptr, 0);
+
+    lseek(fd, 0, SEEK_SET);
+    char buf[10240] = {};
+    read(fd, buf, sizeof(buf));
+    close(fd);
+
+    std::string msg(buf);
+
+    ASSERT_THAT(msg, ContainsRegex(buffer + "\nVehicle HAL State: \n"));
+}
+
+TEST_F(DefaultVehicleHalTest, testDumpCallerShouldNotDump) {
+    std::string buffer = "Dump from hardware";
+    getHardware()->setDumpResult({
+            .callerShouldDumpState = false,
+            .buffer = buffer,
+    });
+    int fd = memfd_create("memfile", 0);
+    getClient()->dump(fd, nullptr, 0);
+
+    lseek(fd, 0, SEEK_SET);
+    char buf[10240] = {};
+    read(fd, buf, sizeof(buf));
+    close(fd);
+
+    std::string msg(buf);
+
+    ASSERT_THAT(msg, ContainsRegex(buffer));
+    ASSERT_EQ(msg.find("Vehicle HAL State: "), std::string::npos);
 }
 
 }  // namespace vehicle

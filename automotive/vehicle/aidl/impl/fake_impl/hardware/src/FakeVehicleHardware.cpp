@@ -26,6 +26,7 @@
 #include <VehicleHalTypes.h>
 #include <VehicleUtils.h>
 #include <android-base/properties.h>
+#include <android-base/strings.h>
 #include <utils/Log.h>
 #include <utils/SystemClock.h>
 
@@ -59,8 +60,10 @@ using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyStatus;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 
+using ::android::base::EqualsIgnoreCase;
 using ::android::base::Error;
 using ::android::base::Result;
+using ::android::base::StringPrintf;
 
 const char* VENDOR_OVERRIDE_DIR = "/vendor/etc/automotive/vhaloverride/";
 const char* OVERRIDE_PROPERTY = "persist.vendor.vhal_init_value_override";
@@ -484,14 +487,148 @@ StatusCode FakeVehicleHardware::getValues(std::shared_ptr<const GetValuesCallbac
     return StatusCode::OK;
 }
 
-DumpResult FakeVehicleHardware::dump(const std::vector<std::string>&) {
+DumpResult FakeVehicleHardware::dump(const std::vector<std::string>& options) {
     DumpResult result;
-    // TODO(b/201830716): Implement this.
+    result.callerShouldDumpState = false;
+    if (options.size() == 0) {
+        // We only want caller to dump default state when there is no options.
+        result.callerShouldDumpState = true;
+        result.buffer = dumpAllProperties();
+        return result;
+    }
+    std::string option = options[0];
+    if (EqualsIgnoreCase(option, "--help")) {
+        result.buffer = dumpHelp();
+        return result;
+    } else if (EqualsIgnoreCase(option, "--list")) {
+        result.buffer = dumpListProperties();
+    } else if (EqualsIgnoreCase(option, "--get")) {
+        result.buffer = dumpSpecificProperty(options);
+    } else if (EqualsIgnoreCase(option, "--set")) {
+        // TODO(b/214613918): Support debug set values.
+    } else {
+        result.buffer = StringPrintf("Invalid option: %s\n", option.c_str());
+    }
     return result;
 }
 
+std::string FakeVehicleHardware::dumpHelp() {
+    return "Usage: \n\n"
+           "[no args]: dumps (id and value) all supported properties \n"
+           "--help: shows this help\n"
+           "--list: lists the ids of all supported properties\n"
+           "--get <PROP1> [PROP2] [PROPN]: dumps the value of specific properties \n"
+           "--set <PROP> [-i INT_VALUE [INT_VALUE ...]] [-i64 INT64_VALUE [INT64_VALUE ...]] "
+           "[-f FLOAT_VALUE [FLOAT_VALUE ...]] [-s STR_VALUE] "
+           "[-b BYTES_VALUE] [-a AREA_ID] : sets the value of property PROP. "
+           "Notice that the string, bytes and area value can be set just once, while the other can"
+           " have multiple values (so they're used in the respective array), "
+           "BYTES_VALUE is in the form of 0xXXXX, e.g. 0xdeadbeef.\n";
+}
+
+std::string FakeVehicleHardware::dumpAllProperties() {
+    auto configs = mServerSidePropStore->getAllConfigs();
+    if (configs.size() == 0) {
+        return "no properties to dump\n";
+    }
+    std::string msg = StringPrintf("dumping %zu properties\n", configs.size());
+    int rowNumber = 1;
+    for (const VehiclePropConfig& config : configs) {
+        msg += dumpOnePropertyByConfig(rowNumber++, config);
+    }
+    return msg;
+}
+
+std::string FakeVehicleHardware::dumpOnePropertyByConfig(int rowNumber,
+                                                         const VehiclePropConfig& config) {
+    size_t numberAreas = config.areaConfigs.size();
+    std::string msg = "";
+    if (numberAreas == 0) {
+        msg += StringPrintf("%d: ", rowNumber);
+        msg += dumpOnePropertyById(config.prop, /* areaId= */ 0);
+        return msg;
+    }
+    for (size_t j = 0; j < numberAreas; ++j) {
+        if (numberAreas > 1) {
+            msg += StringPrintf("%d-%zu: ", rowNumber, j);
+        } else {
+            msg += StringPrintf("%d: ", rowNumber);
+        }
+        msg += dumpOnePropertyById(config.prop, config.areaConfigs[j].areaId);
+    }
+    return msg;
+}
+
+std::string FakeVehicleHardware::dumpOnePropertyById(int32_t propId, int32_t areaId) {
+    VehiclePropValue value = {
+            .prop = propId,
+            .areaId = areaId,
+    };
+    bool isSpecialValue = false;
+    auto result = maybeGetSpecialValue(value, &isSpecialValue);
+    if (!isSpecialValue) {
+        result = mServerSidePropStore->readValue(value);
+    }
+    if (!result.ok()) {
+        return StringPrintf("failed to read property value: %d, error: %s, code: %d\n", propId,
+                            getErrorMsg(result).c_str(), getIntErrorCode(result));
+
+    } else {
+        return result.value()->toString() + "\n";
+    }
+}
+
+std::string FakeVehicleHardware::dumpListProperties() {
+    auto configs = mServerSidePropStore->getAllConfigs();
+    if (configs.size() == 0) {
+        return "no properties to list\n";
+    }
+    int rowNumber = 1;
+    std::string msg = StringPrintf("listing %zu properties\n", configs.size());
+    for (const auto& config : configs) {
+        msg += StringPrintf("%d: %d\n", rowNumber++, config.prop);
+    }
+    return msg;
+}
+
+Result<void> FakeVehicleHardware::checkArgumentsSize(const std::vector<std::string>& options,
+                                                     size_t minSize) {
+    size_t size = options.size();
+    if (size >= minSize) {
+        return {};
+    }
+    return Error() << StringPrintf("Invalid number of arguments: required at least %zu, got %zu\n",
+                                   minSize, size);
+}
+
+std::string FakeVehicleHardware::dumpSpecificProperty(const std::vector<std::string>& options) {
+    if (auto result = checkArgumentsSize(options, /*minSize=*/2); !result.ok()) {
+        return getErrorMsg(result);
+    }
+
+    // options[0] is the command itself...
+    int rowNumber = 1;
+    size_t size = options.size();
+    std::string msg = "";
+    for (size_t i = 1; i < size; ++i) {
+        auto propResult = safelyParseInt<int32_t>(i, options[i]);
+        if (!propResult.ok()) {
+            msg += getErrorMsg(propResult);
+            continue;
+        }
+        int32_t prop = propResult.value();
+        auto result = mServerSidePropStore->getConfig(prop);
+        if (!result.ok()) {
+            msg += StringPrintf("No property %d\n", prop);
+            continue;
+        }
+        msg += dumpOnePropertyByConfig(rowNumber++, *result.value());
+    }
+    return msg;
+}
+
 StatusCode FakeVehicleHardware::checkHealth() {
-    // TODO(b/201830716): Implement this.
+    // Always return OK for checkHealth.
     return StatusCode::OK;
 }
 

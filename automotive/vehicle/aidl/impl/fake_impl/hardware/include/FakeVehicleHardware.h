@@ -23,7 +23,9 @@
 #include <IVehicleHardware.h>
 #include <VehicleHalTypes.h>
 #include <VehiclePropertyStore.h>
+#include <android-base/parseint.h>
 #include <android-base/result.h>
+#include <android-base/stringprintf.h>
 #include <android-base/thread_annotations.h>
 
 #include <map>
@@ -120,6 +122,28 @@ class FakeVehicleHardware final : public IVehicleHardware {
     ::android::base::Result<VehiclePropValuePool::RecyclableType> getUserHalProp(
             const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
     bool isHvacPropAndHvacNotAvailable(int32_t propId);
+
+    std::string dumpAllProperties();
+    std::string dumpOnePropertyByConfig(
+            int rowNumber,
+            const ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig& config);
+    std::string dumpOnePropertyById(int32_t propId, int32_t areaId);
+    std::string dumpHelp();
+    std::string dumpListProperties();
+    std::string dumpSpecificProperty(const std::vector<std::string>& options);
+
+    template <typename T>
+    ::android::base::Result<T> safelyParseInt(int index, const std::string& s) {
+        T out;
+        if (!::android::base::ParseInt(s, &out)) {
+            return ::android::base::Error() << ::android::base::StringPrintf(
+                           "non-integer argument at index %d: %s\n", index, s.c_str());
+        }
+        return out;
+    }
+
+    ::android::base::Result<void> checkArgumentsSize(const std::vector<std::string>& options,
+                                                     size_t minSize);
 };
 
 }  // namespace fake

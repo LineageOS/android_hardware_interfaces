@@ -24,6 +24,7 @@
 
 #include <android-base/expected.h>
 #include <android-base/file.h>
+#include <android-base/stringprintf.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <utils/Log.h>
@@ -52,8 +53,10 @@ using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyStatus;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 using ::android::base::expected;
+using ::android::base::StringPrintf;
 using ::android::base::unexpected;
 using ::testing::ContainerEq;
+using ::testing::ContainsRegex;
 using ::testing::Eq;
 using ::testing::IsSubsetOf;
 using ::testing::WhenSortedBy;
@@ -1201,6 +1204,82 @@ TEST_F(FakeVehicleHardwareTest, testInitialUserInfo) {
                                          },
                                  .value.stringValue = "||",
                          }));
+}
+
+TEST_F(FakeVehicleHardwareTest, testDumpAllProperties) {
+    std::vector<std::string> options;
+    DumpResult result = getHardware()->dump(options);
+    ASSERT_TRUE(result.callerShouldDumpState);
+    ASSERT_NE(result.buffer, "");
+    ASSERT_THAT(result.buffer, ContainsRegex("dumping .+ properties"));
+}
+
+TEST_F(FakeVehicleHardwareTest, testDumpHelp) {
+    std::vector<std::string> options;
+    options.push_back("--help");
+    DumpResult result = getHardware()->dump(options);
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_NE(result.buffer, "");
+    ASSERT_THAT(result.buffer, ContainsRegex("Usage: "));
+}
+
+TEST_F(FakeVehicleHardwareTest, testDumpListProperties) {
+    std::vector<std::string> options;
+    options.push_back("--list");
+    DumpResult result = getHardware()->dump(options);
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_NE(result.buffer, "");
+    ASSERT_THAT(result.buffer, ContainsRegex("listing .+ properties"));
+}
+
+TEST_F(FakeVehicleHardwareTest, testDumpSpecificProperties) {
+    std::vector<std::string> options;
+    options.push_back("--get");
+    std::string prop1 = std::to_string(toInt(VehicleProperty::INFO_FUEL_CAPACITY));
+    std::string prop2 = std::to_string(toInt(VehicleProperty::TIRE_PRESSURE));
+    options.push_back(prop1);
+    options.push_back(prop2);
+    DumpResult result = getHardware()->dump(options);
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_NE(result.buffer, "");
+    ASSERT_THAT(result.buffer,
+                ContainsRegex(StringPrintf("1:.*prop: %s.*\n2-0:.*prop: %s.*\n2-1:.*prop: %s.*\n",
+                                           prop1.c_str(), prop2.c_str(), prop2.c_str())));
+}
+
+TEST_F(FakeVehicleHardwareTest, testDumpSpecificPropertiesInvalidProp) {
+    std::vector<std::string> options;
+    options.push_back("--get");
+    std::string prop1 = std::to_string(toInt(VehicleProperty::INFO_FUEL_CAPACITY));
+    std::string prop2 = std::to_string(INVALID_PROP_ID);
+    options.push_back(prop1);
+    options.push_back(prop2);
+    DumpResult result = getHardware()->dump(options);
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_NE(result.buffer, "");
+    ASSERT_THAT(result.buffer, ContainsRegex(StringPrintf("1:.*prop: %s.*\nNo property %d\n",
+                                                          prop1.c_str(), INVALID_PROP_ID)));
+}
+
+TEST_F(FakeVehicleHardwareTest, testDumpSpecificPropertiesNoArg) {
+    std::vector<std::string> options;
+    options.push_back("--get");
+
+    // No arguments.
+    DumpResult result = getHardware()->dump(options);
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_NE(result.buffer, "");
+    ASSERT_THAT(result.buffer, ContainsRegex("Invalid number of arguments"));
+}
+
+TEST_F(FakeVehicleHardwareTest, testDumpInvalidOptions) {
+    std::vector<std::string> options;
+    options.push_back("--invalid");
+
+    DumpResult result = getHardware()->dump(options);
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_NE(result.buffer, "");
+    ASSERT_THAT(result.buffer, ContainsRegex("Invalid option: --invalid"));
 }
 
 }  // namespace fake
