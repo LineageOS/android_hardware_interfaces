@@ -142,6 +142,10 @@ enum SensorType {
      * The rotation vector symbolizes the orientation of the device relative to
      * the East-North-Up coordinates frame.
      *
+     * Note that despite the name, SensorType::ROTATION_VECTOR uses
+     * quaternion representation, rather than the rotation vector representation
+     * (aka Euler vector) seen in SensorType::HEAD_TRACKER.
+     *
      * Implement the non-wake-up version of this sensor and implement the
      * wake-up version if the system possesses a wake up fifo.
      */
@@ -632,6 +636,35 @@ enum SensorType {
      * proximity sensor.
      */
     HINGE_ANGLE = 36,
+
+    /**
+     * HEAD_TRACKER
+     * reporting-mode: continuous
+     *
+     * A sensor of this type measures the orientation of a user's head relative
+     * to an arbitrary reference frame, and the rate of rotation.
+     *
+     * Events produced by this sensor follow a special head-centric coordinate
+     * frame, where:
+     *   - The X axis crosses through the user's ears, with the positive X
+     *     direction extending out of the user's right ear
+     *   - The Y axis crosses from the back of the user's head through their
+     *     nose, with the positive direction extending out of the nose, and the
+     *     X/Y plane being nominally parallel to the ground when the user is
+     *     upright and looking straight ahead
+     *   - The Z axis crosses from the neck through the top of the user's head,
+     *     with the positive direction extending out from the top of the head
+     *
+     * When this sensor type is exposed as a dynamic sensor through a
+     * communications channel that uses HID, such as Bluetooth or USB, as part
+     * of a device with audio output capability (e.g. headphones), then the
+     * DynamicSensorInfo::uuid field shall be set to contents of the HID
+     * Persistent Unique ID to permit association between the sensor and audio
+     * device. Accordingly, the HID Persistent Unique ID (Sensors Page 0x20,
+     * Usage ID 0x302) must be populated as a UUID in binary representation,
+     * following RFC 4122 byte order.
+     */
+    HEAD_TRACKER = 37,
 
     /**
      * Base for device manufacturers private sensor types.

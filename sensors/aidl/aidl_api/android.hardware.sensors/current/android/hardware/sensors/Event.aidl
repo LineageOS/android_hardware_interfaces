@@ -51,6 +51,7 @@ parcelable Event {
     android.hardware.sensors.DynamicSensorInfo dynamic;
     android.hardware.sensors.AdditionalInfo additional;
     android.hardware.sensors.Event.EventPayload.Data data;
+    android.hardware.sensors.Event.EventPayload.HeadTracker headTracker;
     @FixedSize @VintfStability
     parcelable Vec4 {
       float x;
@@ -73,6 +74,16 @@ parcelable Event {
       float xBias;
       float yBias;
       float zBias;
+    }
+    @FixedSize @VintfStability
+    parcelable HeadTracker {
+      float rx;
+      float ry;
+      float rz;
+      float vx;
+      float vy;
+      float vz;
+      int discontinuityCount;
     }
     @FixedSize @VintfStability
     parcelable HeartRate {

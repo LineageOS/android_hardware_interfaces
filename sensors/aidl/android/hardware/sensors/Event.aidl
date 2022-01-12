@@ -127,6 +127,11 @@ parcelable Event {
          */
         Data data;
 
+        /**
+         * SensorType::HEAD_TRACKER
+         */
+        HeadTracker headTracker;
+
         @FixedSize
         @VintfStability
         parcelable Vec4 {
@@ -154,6 +159,46 @@ parcelable Event {
             float xBias;
             float yBias;
             float zBias;
+        }
+
+        /**
+         * Payload of the HEAD_TRACKER sensor type. Note that the axis
+         * definition of this sensor type differs from the rest of Android. See
+         * SensorType::HEAD_TRACKER for more information.
+         */
+        @FixedSize
+        @VintfStability
+        parcelable HeadTracker {
+            /**
+             * An Euler vector (rotation vector, i.e. a vector whose direction
+             * indicates the axis of rotation and magnitude indicates the angle
+             * to rotate around that axis) representing the transform from
+             * the (arbitrary, possibly slowly drifting) reference frame to the
+             * head frame. Expressed in radians. Magnitude of the vector must be
+             * in the range [0, pi], while the value of individual axes are
+             * in the range [-pi, pi].
+             */
+            float rx;
+            float ry;
+            float rz;
+
+            /**
+             * An Euler vector (rotation vector) representing the angular
+             * velocity of the head (relative to itself), in radians per second.
+             * The direction of this vector indicates the axis of rotation, and
+             * the magnitude indicates the rate of rotation.
+             */
+            float vx;
+            float vy;
+            float vz;
+
+            /**
+             * This value increments (or wraps around to 0) each time the
+             * reference frame is suddenly and significantly changed, for
+             * example if an orientation filter algorithm used for determining
+             * the orientation has had its state reset.
+             */
+            int discontinuityCount;
         }
 
         @FixedSize
