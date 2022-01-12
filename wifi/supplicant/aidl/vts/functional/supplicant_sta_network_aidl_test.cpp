@@ -778,6 +778,7 @@ TEST_P(SupplicantStaNetworkAidlTest, GetWpsNfcConfigurationToken) {
     EXPECT_NE(retrievedToken.size(), 0);
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SupplicantStaNetworkAidlTest);
 INSTANTIATE_TEST_SUITE_P(Supplicant, SupplicantStaNetworkAidlTest,
                          testing::ValuesIn(android::getAidlHalInstanceNames(
                              ISupplicant::descriptor)),

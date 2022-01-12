@@ -620,6 +620,7 @@ TEST_P(SupplicantP2pIfaceAidlTest, AddAndRemoveUpnpService) {
         p2p_iface_->removeUpnpService(0 /* version */, upnpServiceName).isOk());
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SupplicantP2pIfaceAidlTest);
 INSTANTIATE_TEST_SUITE_P(Supplicant, SupplicantP2pIfaceAidlTest,
                          testing::ValuesIn(android::getAidlHalInstanceNames(
                              ISupplicant::descriptor)),
