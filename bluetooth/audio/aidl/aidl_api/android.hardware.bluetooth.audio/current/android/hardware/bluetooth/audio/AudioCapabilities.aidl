@@ -36,5 +36,5 @@ package android.hardware.bluetooth.audio;
 union AudioCapabilities {
   android.hardware.bluetooth.audio.PcmCapabilities pcmCapabilities;
   android.hardware.bluetooth.audio.CodecCapabilities codecCapabilities;
-  android.hardware.bluetooth.audio.LeAudioCapabilities leAudioCapabilities;
+  android.hardware.bluetooth.audio.LeAudioCodecCapabilitiesSetting leAudioCapabilities;
 }
