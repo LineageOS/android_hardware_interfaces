@@ -42,5 +42,6 @@ parcelable CodecCapabilities {
     android.hardware.bluetooth.audio.AacCapabilities aacCapabilities;
     android.hardware.bluetooth.audio.LdacCapabilities ldacCapabilities;
     android.hardware.bluetooth.audio.AptxCapabilities aptxCapabilities;
+    android.hardware.bluetooth.audio.Lc3Capabilities lc3Capabilities;
   }
 }
