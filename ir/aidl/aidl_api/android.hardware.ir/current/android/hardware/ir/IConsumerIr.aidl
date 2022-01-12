@@ -35,5 +35,5 @@ package android.hardware.ir;
 @VintfStability
 interface IConsumerIr {
   android.hardware.ir.ConsumerIrFreqRange[] getCarrierFreqs();
-  void transmit(in int carrierFreq, in int[] pattern);
+  void transmit(in int carrierFreqHz, in int[] pattern);
 }
