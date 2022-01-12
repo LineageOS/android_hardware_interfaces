@@ -23,23 +23,21 @@ interface IConsumerIr {
     /**
      * Enumerates which frequencies the IR transmitter supports.
      *
-     * Status OK (EX_NONE) on success.
-     *
      * @return - an array of all supported frequency ranges.
      */
     ConsumerIrFreqRange[] getCarrierFreqs();
 
     /**
      * Sends an IR pattern at a given frequency in HZ.
-     *
-     * The pattern is alternating series of carrier on and off periods measured in
-     * microseconds. The carrier should be turned off at the end of a transmit
-     * even if there are and odd number of entries in the pattern array.
-     *
      * This call must return when the transmit is complete or encounters an error.
      *
-     * Status OK (EX_NONE) on success.
-     * EX_UNSUPPORTED_OPERATION when the frequency is not supported.
+     * @param carrierFreq - Frequency of the transmission in HZ.
+     *
+     * @param pattern - Alternating series of on and off periods measured in
+     * microseconds. The carrier should be turned off at the end of a transmit
+     * even if there are an odd number of entries in the pattern array.
+     *
+     * @throws EX_UNSUPPORTED_OPERATION when the frequency is not supported.
      */
-    void transmit(in int carrierFreq, in int[] pattern);
+    void transmit(in int carrierFreqHz, in int[] pattern);
 }
