@@ -20,7 +20,6 @@
 #include <android/hardware/neuralnetworks/1.3/IDevice.h>
 #include <nnapi/IDevice.h>
 #include <nnapi/Types.h>
-#include <sys/types.h>
 #include <functional>
 #include <memory>
 
@@ -37,10 +36,12 @@ using Task = std::function<void()>;
 /**
  * A type-erased executor which executes a task asynchronously.
  *
- * This executor is also provided with an Application ID (Android User ID) and an optional deadline
- * for when the caller expects is the upper bound for the amount of time to complete the task.
+ * This executor is also provided an optional deadline for when the caller expects is the upper
+ * bound for the amount of time to complete the task. If needed, the Executor can retrieve the
+ * Application ID (Android User ID) by calling IPCThreadState::self()->getCallingUid() in
+ * hwbinder/IPCThreadState.h.
  */
-using Executor = std::function<void(Task, uid_t, nn::OptionalTimePoint)>;
+using Executor = std::function<void(Task, nn::OptionalTimePoint)>;
 
 /**
  * Adapt an NNAPI canonical interface object to a HIDL NN HAL interface object.
