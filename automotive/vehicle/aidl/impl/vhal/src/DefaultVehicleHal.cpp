@@ -57,7 +57,9 @@ DefaultVehicleHal::DefaultVehicleHal(std::unique_ptr<IVehicleHardware> hardware)
     for (auto& config : configs) {
         mConfigsByPropId[config.prop] = config;
     }
-    auto result = LargeParcelableBase::parcelableVectorToStableLargeParcelable(configs);
+    VehiclePropConfigs vehiclePropConfigs;
+    vehiclePropConfigs.payloads = std::move(configs);
+    auto result = LargeParcelableBase::parcelableToStableLargeParcelable(vehiclePropConfigs);
     if (!result.ok()) {
         ALOGE("failed to convert configs to shared memory file, error: %s, code: %d",
               getErrorMsg(result).c_str(), getIntErrorCode(result));
@@ -71,6 +73,7 @@ DefaultVehicleHal::DefaultVehicleHal(std::unique_ptr<IVehicleHardware> hardware)
 
 ScopedAStatus DefaultVehicleHal::getAllPropConfigs(VehiclePropConfigs* output) {
     if (mConfigFile != nullptr) {
+        output->payloads.clear();
         output->sharedMemoryFd.set(dup(mConfigFile->get()));
         return ScopedAStatus::ok();
     }
@@ -131,20 +134,14 @@ ScopedAStatus DefaultVehicleHal::getValues(const CallbackType& callback,
                                            const GetValueRequests& requests) {
     // TODO(b/203713317): check for duplicate properties and duplicate request IDs.
 
-    const std::vector<GetValueRequest>* getValueRequests;
-    // Define deserializedResults here because we need it to have the same lifetime as
-    // getValueRequests.
-    expected<std::vector<GetValueRequest>, ScopedAStatus> deserializedResults;
-    if (!requests.payloads.empty()) {
-        getValueRequests = &requests.payloads;
-    } else {
-        deserializedResults = stableLargeParcelableToVector<GetValueRequest>(requests);
-        if (!deserializedResults.ok()) {
-            ALOGE("failed to parse getValues requests");
-            return std::move(deserializedResults.error());
-        }
-        getValueRequests = &deserializedResults.value();
+    expected<LargeParcelableBase::BorrowedOwnedObject<GetValueRequests>, ScopedAStatus>
+            deserializedResults = fromStableLargeParcelable(requests);
+    if (!deserializedResults.ok()) {
+        ALOGE("getValues: failed to parse getValues requests");
+        return std::move(deserializedResults.error());
     }
+    const std::vector<GetValueRequest>& getValueRequests =
+            deserializedResults.value().getObject()->payloads;
 
     std::shared_ptr<GetValuesClient> client;
     {
@@ -153,7 +150,7 @@ ScopedAStatus DefaultVehicleHal::getValues(const CallbackType& callback,
     }
 
     if (StatusCode status =
-                mVehicleHardware->getValues(client->getResultCallback(), *getValueRequests);
+                mVehicleHardware->getValues(client->getResultCallback(), getValueRequests);
         status != StatusCode::OK) {
         return ScopedAStatus::fromServiceSpecificErrorWithMessage(
                 toInt(status), "failed to get value from VehicleHardware");
@@ -166,27 +163,21 @@ ScopedAStatus DefaultVehicleHal::setValues(const CallbackType& callback,
                                            const SetValueRequests& requests) {
     // TODO(b/203713317): check for duplicate properties and duplicate request IDs.
 
-    const std::vector<SetValueRequest>* setValueRequests;
-    // Define deserializedResults here because we need it to have the same lifetime as
-    // setValueRequests.
-    expected<std::vector<SetValueRequest>, ScopedAStatus> deserializedResults;
-    if (!requests.payloads.empty()) {
-        setValueRequests = &requests.payloads;
-    } else {
-        deserializedResults = stableLargeParcelableToVector<SetValueRequest>(requests);
-        if (!deserializedResults.ok()) {
-            ALOGE("failed to parse setValues requests");
-            return std::move(deserializedResults.error());
-        }
-        setValueRequests = &deserializedResults.value();
+    expected<LargeParcelableBase::BorrowedOwnedObject<SetValueRequests>, ScopedAStatus>
+            deserializedResults = fromStableLargeParcelable(requests);
+    if (!deserializedResults.ok()) {
+        ALOGE("setValues: failed to parse setValues requests");
+        return std::move(deserializedResults.error());
     }
+    const std::vector<SetValueRequest>& setValueRequests =
+            deserializedResults.value().getObject()->payloads;
 
     // A list of failed result we already know before sending to hardware.
     std::vector<SetValueResult> failedResults;
     // The list of requests that we would send to hardware.
     std::vector<SetValueRequest> hardwareRequests;
 
-    for (auto& request : *setValueRequests) {
+    for (auto& request : setValueRequests) {
         int64_t requestId = request.requestId;
         if (auto result = checkProperty(request.value); !result.ok()) {
             ALOGW("property not valid: %s", result.error().message().c_str());
