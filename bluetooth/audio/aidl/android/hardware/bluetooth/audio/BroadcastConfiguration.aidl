@@ -33,7 +33,7 @@ parcelable BroadcastConfiguration {
          * least significant bit to the most significant bit.
          */
         int audioChannelAllocation;
-        LeAudioCodecConfiguration leAudioCondecConfig;
+        LeAudioCodecConfiguration leAudioCodecConfig;
     }
     BroadcastStreamMap[] streamMap;
 }
