@@ -414,6 +414,13 @@ void FrontendTests::verifyFrontendStatus(vector<FrontendStatusType> statusTypes,
                         expectStatuses[i].get<FrontendStatus::Tag::dvbtCellIds>().begin()));
                 break;
             }
+            case FrontendStatusType::ATSC3_ALL_PLP_INFO: {
+                ASSERT_TRUE(std::equal(
+                        realStatuses[i].get<FrontendStatus::Tag::allPlpInfo>().begin(),
+                        realStatuses[i].get<FrontendStatus::Tag::allPlpInfo>().end(),
+                        expectStatuses[i].get<FrontendStatus::Tag::allPlpInfo>().begin()));
+                break;
+            }
             default: {
                 continue;
             }
