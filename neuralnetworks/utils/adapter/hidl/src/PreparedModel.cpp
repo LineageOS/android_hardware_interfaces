@@ -28,7 +28,6 @@
 #include <android/hardware/neuralnetworks/1.3/IFencedExecutionCallback.h>
 #include <android/hardware/neuralnetworks/1.3/IPreparedModel.h>
 #include <android/hardware/neuralnetworks/1.3/types.h>
-#include <hwbinder/IPCThreadState.h>
 #include <nnapi/IPreparedModel.h>
 #include <nnapi/TypeUtils.h>
 #include <nnapi/Types.h>
@@ -37,7 +36,6 @@
 #include <nnapi/hal/1.2/Utils.h>
 #include <nnapi/hal/1.3/Conversions.h>
 #include <nnapi/hal/1.3/Utils.h>
-#include <sys/types.h>
 
 #include <memory>
 #include <thread>
@@ -145,7 +143,7 @@ void notify(CallbackType* callback, ExecutionResult result) {
     }
 }
 
-nn::GeneralResult<void> execute(const nn::SharedPreparedModel& preparedModel, uid_t userId,
+nn::GeneralResult<void> execute(const nn::SharedPreparedModel& preparedModel,
                                 const Executor& executor, const V1_0::Request& request,
                                 const sp<V1_0::IExecutionCallback>& callback) {
     if (callback.get() == nullptr) {
@@ -164,12 +162,12 @@ nn::GeneralResult<void> execute(const nn::SharedPreparedModel& preparedModel, ui
         auto result = preparedModel->execute(nnRequest, nn::MeasureTiming::NO, {}, {});
         notify(callback.get(), std::move(result));
     };
-    executor(std::move(task), userId, {});
+    executor(std::move(task), {});
 
     return {};
 }
 
-nn::GeneralResult<void> execute_1_2(const nn::SharedPreparedModel& preparedModel, uid_t userId,
+nn::GeneralResult<void> execute_1_2(const nn::SharedPreparedModel& preparedModel,
                                     const Executor& executor, const V1_0::Request& request,
                                     V1_2::MeasureTiming measure,
                                     const sp<V1_2::IExecutionCallback>& callback) {
@@ -190,12 +188,12 @@ nn::GeneralResult<void> execute_1_2(const nn::SharedPreparedModel& preparedModel
         auto result = preparedModel->execute(nnRequest, nnMeasure, {}, {});
         notify(callback.get(), std::move(result));
     };
-    executor(std::move(task), userId, {});
+    executor(std::move(task), {});
 
     return {};
 }
 
-nn::GeneralResult<void> execute_1_3(const nn::SharedPreparedModel& preparedModel, uid_t userId,
+nn::GeneralResult<void> execute_1_3(const nn::SharedPreparedModel& preparedModel,
                                     const Executor& executor, const V1_3::Request& request,
                                     V1_2::MeasureTiming measure,
                                     const V1_3::OptionalTimePoint& deadline,
@@ -222,7 +220,7 @@ nn::GeneralResult<void> execute_1_3(const nn::SharedPreparedModel& preparedModel
                 preparedModel->execute(nnRequest, nnMeasure, nnDeadline, nnLoopTimeoutDuration);
         notify(callback.get(), std::move(result));
     };
-    executor(std::move(task), userId, nnDeadline);
+    executor(std::move(task), nnDeadline);
 
     return {};
 }
@@ -305,8 +303,8 @@ nn::GeneralResult<std::pair<hidl_handle, sp<V1_3::IFencedExecutionCallback>>> ex
 
 }  // namespace
 
-PreparedModel::PreparedModel(nn::SharedPreparedModel preparedModel, Executor executor, uid_t userId)
-    : kPreparedModel(std::move(preparedModel)), kExecutor(std::move(executor)), kUserId(userId) {
+PreparedModel::PreparedModel(nn::SharedPreparedModel preparedModel, Executor executor)
+    : kPreparedModel(std::move(preparedModel)), kExecutor(std::move(executor)) {
     CHECK(kPreparedModel != nullptr);
     CHECK(kExecutor != nullptr);
 }
@@ -317,7 +315,7 @@ nn::SharedPreparedModel PreparedModel::getUnderlyingPreparedModel() const {
 
 Return<V1_0::ErrorStatus> PreparedModel::execute(const V1_0::Request& request,
                                                  const sp<V1_0::IExecutionCallback>& callback) {
-    auto result = adapter::execute(kPreparedModel, kUserId, kExecutor, request, callback);
+    auto result = adapter::execute(kPreparedModel, kExecutor, request, callback);
     if (!result.has_value()) {
         auto [message, code] = std::move(result).error();
         LOG(ERROR) << "adapter::PreparedModel::execute failed with " << code << ": " << message;
@@ -330,8 +328,7 @@ Return<V1_0::ErrorStatus> PreparedModel::execute(const V1_0::Request& request,
 Return<V1_0::ErrorStatus> PreparedModel::execute_1_2(const V1_0::Request& request,
                                                      V1_2::MeasureTiming measure,
                                                      const sp<V1_2::IExecutionCallback>& callback) {
-    auto result =
-            adapter::execute_1_2(kPreparedModel, kUserId, kExecutor, request, measure, callback);
+    auto result = adapter::execute_1_2(kPreparedModel, kExecutor, request, measure, callback);
     if (!result.has_value()) {
         auto [message, code] = std::move(result).error();
         LOG(ERROR) << "adapter::PreparedModel::execute_1_2 failed with " << code << ": " << message;
@@ -346,8 +343,8 @@ Return<V1_3::ErrorStatus> PreparedModel::execute_1_3(
         const V1_3::OptionalTimePoint& deadline,
         const V1_3::OptionalTimeoutDuration& loopTimeoutDuration,
         const sp<V1_3::IExecutionCallback>& callback) {
-    auto result = adapter::execute_1_3(kPreparedModel, kUserId, kExecutor, request, measure,
-                                       deadline, loopTimeoutDuration, callback);
+    auto result = adapter::execute_1_3(kPreparedModel, kExecutor, request, measure, deadline,
+                                       loopTimeoutDuration, callback);
     if (!result.has_value()) {
         auto [message, code] = std::move(result).error();
         LOG(ERROR) << "adapter::PreparedModel::execute_1_3 failed with " << code << ": " << message;

@@ -30,7 +30,7 @@ const std::vector<ConsumerIrFreqRange> kSupportedFreqs = {
 
 class ConsumerIr : public BnConsumerIr {
     ::ndk::ScopedAStatus getCarrierFreqs(std::vector<ConsumerIrFreqRange>* _aidl_return) override;
-    ::ndk::ScopedAStatus transmit(int32_t in_carrierFreq,
+    ::ndk::ScopedAStatus transmit(int32_t in_carrierFreqHz,
                                   const std::vector<int32_t>& in_pattern) override;
 };
 
@@ -46,9 +46,9 @@ bool isSupportedFreq(int32_t freq) {
     return false;
 }
 
-::ndk::ScopedAStatus ConsumerIr::transmit(int32_t in_carrierFreq,
+::ndk::ScopedAStatus ConsumerIr::transmit(int32_t in_carrierFreqHz,
                                           const std::vector<int32_t>& in_pattern) {
-    if (isSupportedFreq(in_carrierFreq)) {
+    if (isSupportedFreq(in_carrierFreqHz)) {
         // trasmit the pattern, each integer is number of microseconds in an
         // alternating on/off state.
         usleep(std::accumulate(in_pattern.begin(), in_pattern.end(), 0));

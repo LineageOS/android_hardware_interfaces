@@ -1,11 +1,11 @@
-/**
- * Copyright (c) 2021, The Android Open Source Project
+/*
+ * Copyright 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-package android.hardware.graphics.composer3;
+package android.hardware.bluetooth.audio;
+
+import android.hardware.bluetooth.audio.BroadcastCapability;
+import android.hardware.bluetooth.audio.UnicastCapability;
 
 /**
- * Color representation as a floating point number in the range [0.0 - 1.0]
+ * Used to specify the le audio capabilities for unicast and broadcast hardware offload.
  */
-
 @VintfStability
-parcelable FloatColor {
-    float r;
-    float g;
-    float b;
-    float a;
+parcelable LeAudioCodecCapabilitiesSetting {
+    UnicastCapability unicastEncodeCapability;
+    UnicastCapability unicastDecodeCapability;
+    BroadcastCapability broadcastCapability;
 }

@@ -21,7 +21,6 @@
 #include <android/hardware/neuralnetworks/1.3/IDevice.h>
 #include <nnapi/IDevice.h>
 #include <nnapi/Types.h>
-#include <sys/types.h>
 
 #include <functional>
 #include <memory>
@@ -37,7 +36,7 @@ sp<V1_3::IDevice> adapt(nn::SharedDevice device, Executor executor) {
 }
 
 sp<V1_3::IDevice> adapt(nn::SharedDevice device) {
-    Executor defaultExecutor = [](Task task, uid_t /*uid*/, nn::OptionalTimePoint /*deadline*/) {
+    Executor defaultExecutor = [](Task task, nn::OptionalTimePoint /*deadline*/) {
         std::thread(std::move(task)).detach();
     };
     return adapt(std::move(device), std::move(defaultExecutor));

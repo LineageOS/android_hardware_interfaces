@@ -16,27 +16,30 @@
 
 package android.hardware.bluetooth.audio;
 
-import android.hardware.bluetooth.audio.AacCapabilities;
-import android.hardware.bluetooth.audio.AptxCapabilities;
+import android.hardware.bluetooth.audio.AudioLocation;
 import android.hardware.bluetooth.audio.CodecType;
 import android.hardware.bluetooth.audio.Lc3Capabilities;
-import android.hardware.bluetooth.audio.LdacCapabilities;
-import android.hardware.bluetooth.audio.SbcCapabilities;
+import android.hardware.bluetooth.audio.LeAudioMode;
 
 /**
- * Used to specify the capabilities of the codecs supported by Hardware Encoding.
- * AptX and AptX-HD both use the AptxCapabilities field.
+ * Used to specify the le audio unicast codec capabilities for hardware offload.
  */
 @VintfStability
-parcelable CodecCapabilities {
+parcelable UnicastCapability {
     @VintfStability
-    union Capabilities {
-        SbcCapabilities sbcCapabilities;
-        AacCapabilities aacCapabilities;
-        LdacCapabilities ldacCapabilities;
-        AptxCapabilities aptxCapabilities;
+    parcelable VendorCapabilities {
+        ParcelableHolder extension;
+    }
+    @VintfStability
+    union LeAudioCodecCapabilities {
         Lc3Capabilities lc3Capabilities;
+        VendorCapabilities vendorCapabillities;
     }
     CodecType codecType;
-    Capabilities capabilities;
+    AudioLocation supportedChannel;
+    // The number of connected device
+    int deviceCount;
+    // Supported channel count for each device
+    int channelCountPerDevice;
+    LeAudioCodecCapabilities leAudioCodecCapabilities;
 }

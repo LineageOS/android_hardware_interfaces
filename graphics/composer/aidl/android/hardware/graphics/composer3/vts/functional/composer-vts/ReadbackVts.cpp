@@ -131,12 +131,12 @@ void ReadbackHelper::fillBuffer(uint32_t width, uint32_t height, uint32_t stride
 
             int offset = (row * static_cast<int32_t>(stride) + col) * bytesPerPixel;
             uint8_t* pixelColor = (uint8_t*)bufferData + offset;
-            pixelColor[0] = static_cast<uint8_t>(srcColor.r);
-            pixelColor[1] = static_cast<uint8_t>(srcColor.g);
-            pixelColor[2] = static_cast<uint8_t>(srcColor.b);
+            pixelColor[0] = static_cast<uint8_t>(std::round(255.0f * srcColor.r));
+            pixelColor[1] = static_cast<uint8_t>(std::round(255.0f * srcColor.g));
+            pixelColor[2] = static_cast<uint8_t>(std::round(255.0f * srcColor.b));
 
             if (bytesPerPixel == 4) {
-                pixelColor[3] = static_cast<uint8_t>(srcColor.a);
+                pixelColor[3] = static_cast<uint8_t>(std::round(255.0f * srcColor.a));
             }
         }
     }
@@ -184,13 +184,11 @@ void ReadbackHelper::compareColorBuffers(std::vector<Color>& expectedColors, voi
             auto pixel = row * static_cast<int32_t>(width) + col;
             int offset = (row * stride + col) * bytesPerPixel;
             uint8_t* pixelColor = (uint8_t*)bufferData + offset;
+            const Color expectedColor = expectedColors[static_cast<size_t>(pixel)];
 
-            ASSERT_EQ(static_cast<int8_t>(expectedColors[static_cast<size_t>(pixel)].r),
-                      pixelColor[0]);
-            ASSERT_EQ(static_cast<int8_t>(expectedColors[static_cast<size_t>(pixel)].g),
-                      pixelColor[1]);
-            ASSERT_EQ(static_cast<int8_t>(expectedColors[static_cast<size_t>(pixel)].b),
-                      pixelColor[2]);
+            ASSERT_EQ(std::round(255.0f * expectedColor.r), pixelColor[0]);
+            ASSERT_EQ(std::round(255.0f * expectedColor.g), pixelColor[1]);
+            ASSERT_EQ(std::round(255.0f * expectedColor.b), pixelColor[2]);
         }
     }
 }
@@ -262,12 +260,8 @@ void TestColorLayer::write(ComposerClientWriter& writer) {
 LayerSettings TestColorLayer::toRenderEngineLayerSettings() {
     LayerSettings layerSettings = TestLayer::toRenderEngineLayerSettings();
 
-    layerSettings.source.solidColor =
-            ::android::half3(static_cast<::android::half>(mColor.r) / 255.0,
-                             static_cast<::android::half>(mColor.g) / 255.0,
-                             static_cast<::android::half>(mColor.b) / 255.0);
-    layerSettings.alpha =
-            mAlpha * static_cast<float>((static_cast<::android::half>(mColor.a) / 255.0));
+    layerSettings.source.solidColor = ::android::half3(mColor.r, mColor.g, mColor.b);
+    layerSettings.alpha = mAlpha * mColor.a;
     return layerSettings;
 }
 

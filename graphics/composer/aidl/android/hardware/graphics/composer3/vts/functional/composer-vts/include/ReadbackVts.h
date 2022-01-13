@@ -41,13 +41,12 @@ using common::Dataspace;
 using common::PixelFormat;
 using IMapper2_1 = ::android::hardware::graphics::mapper::V2_1::IMapper;
 
-static const Color BLACK = {0, 0, 0, static_cast<int8_t>(0xff)};
-static const Color RED = {static_cast<int8_t>(0xff), 0, 0, static_cast<int8_t>(0xff)};
-static const Color TRANSLUCENT_RED = {static_cast<int8_t>(0xff), 0, 0, 0x33};
-static const Color GREEN = {0, static_cast<int8_t>(0xff), 0, static_cast<int8_t>(0xff)};
-static const Color BLUE = {0, 0, static_cast<int8_t>(0xff), static_cast<int8_t>(0xff)};
-static const Color WHITE = {static_cast<int8_t>(0xff), static_cast<int8_t>(0xff),
-                            static_cast<int8_t>(0xff), static_cast<int8_t>(0xff)};
+static const Color BLACK = {0.0f, 0.0f, 0.0f, 1.0f};
+static const Color RED = {1.0f, 0.0f, 0.0f, 1.0f};
+static const Color TRANSLUCENT_RED = {1.0f, 0.0f, 0.0f, 0.3f};
+static const Color GREEN = {0.0f, 1.0f, 0.0f, 1.0f};
+static const Color BLUE = {0.0f, 0.0f, 1.0f, 1.0f};
+static const Color WHITE = {1.0f, 1.0f, 1.0f, 1.0f};
 
 class TestRenderEngine;
 
