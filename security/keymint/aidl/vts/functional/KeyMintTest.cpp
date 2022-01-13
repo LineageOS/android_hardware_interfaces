@@ -4608,8 +4608,10 @@ TEST_P(EncryptionOperationsTest, AesEcbPkcs7Padding) {
     auto params = AuthorizationSetBuilder().BlockMode(BlockMode::ECB).Padding(PaddingMode::PKCS7);
 
     // Try various message lengths; all should work.
-    for (size_t i = 0; i < 32; ++i) {
-        string message(i, 'a');
+    for (size_t i = 0; i <= 48; i++) {
+        SCOPED_TRACE(testing::Message() << "i = " << i);
+        // Edge case: '\t' (0x09) is also a valid PKCS7 padding character.
+        string message(i, '\t');
         string ciphertext = EncryptMessage(message, params);
         EXPECT_EQ(i + 16 - (i % 16), ciphertext.size());
         string plaintext = DecryptMessage(ciphertext, params);
@@ -4633,7 +4635,7 @@ TEST_P(EncryptionOperationsTest, AesEcbWrongPadding) {
     auto params = AuthorizationSetBuilder().BlockMode(BlockMode::ECB).Padding(PaddingMode::PKCS7);
 
     // Try various message lengths; all should fail
-    for (size_t i = 0; i < 32; ++i) {
+    for (size_t i = 0; i <= 48; i++) {
         string message(i, 'a');
         EXPECT_EQ(ErrorCode::INCOMPATIBLE_PADDING_MODE, Begin(KeyPurpose::ENCRYPT, params));
     }
@@ -5775,8 +5777,8 @@ TEST_P(EncryptionOperationsTest, TripleDesCbcRoundTripSuccess) {
 
     ASSERT_GT(key_blob_.size(), 0U);
 
-    // Two-block message.
-    string message = "1234567890123456";
+    // Four-block message.
+    string message = "12345678901234561234567890123456";
     vector<uint8_t> iv1;
     string ciphertext1 = EncryptMessage(message, BlockMode::CBC, PaddingMode::NONE, &iv1);
     EXPECT_EQ(message.size(), ciphertext1.size());
@@ -5936,8 +5938,10 @@ TEST_P(EncryptionOperationsTest, TripleDesCbcPkcs7Padding) {
                                                  .Padding(PaddingMode::PKCS7)));
 
     // Try various message lengths; all should work.
-    for (size_t i = 0; i < 32; ++i) {
-        string message(i, 'a');
+    for (size_t i = 0; i <= 32; i++) {
+        SCOPED_TRACE(testing::Message() << "i = " << i);
+        // Edge case: '\t' (0x09) is also a valid PKCS7 padding character, albeit not for 3DES.
+        string message(i, '\t');
         vector<uint8_t> iv;
         string ciphertext = EncryptMessage(message, BlockMode::CBC, PaddingMode::PKCS7, &iv);
         EXPECT_EQ(i + 8 - (i % 8), ciphertext.size());
@@ -5959,7 +5963,7 @@ TEST_P(EncryptionOperationsTest, TripleDesCbcNoPaddingKeyWithPkcs7Padding) {
                                                  .Padding(PaddingMode::NONE)));
 
     // Try various message lengths; all should fail.
-    for (size_t i = 0; i < 32; ++i) {
+    for (size_t i = 0; i <= 32; i++) {
         auto begin_params =
                 AuthorizationSetBuilder().BlockMode(BlockMode::CBC).Padding(PaddingMode::PKCS7);
         EXPECT_EQ(ErrorCode::INCOMPATIBLE_PADDING_MODE, Begin(KeyPurpose::ENCRYPT, begin_params));
@@ -5990,6 +5994,7 @@ TEST_P(EncryptionOperationsTest, TripleDesCbcPkcs7PaddingCorrupted) {
                                 .Authorization(TAG_NONCE, iv);
 
     for (size_t i = 0; i < kMaxPaddingCorruptionRetries; ++i) {
+        SCOPED_TRACE(testing::Message() << "i = " << i);
         ++ciphertext[ciphertext.size() / 2];
         EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, begin_params));
         string plaintext;
