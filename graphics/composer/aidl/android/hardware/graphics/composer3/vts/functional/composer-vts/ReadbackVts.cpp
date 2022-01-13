@@ -22,6 +22,7 @@
 #include <aidl/android/hardware/graphics/common/BufferUsage.h>
 #include "include/RenderEngineVts.h"
 #include "renderengine/ExternalTexture.h"
+#include "renderengine/impl/ExternalTexture.h"
 
 // TODO(b/129481165): remove the #pragma below and fix conversion issues
 #pragma clang diagnostic pop  // ignored "-Wconversion
@@ -306,12 +307,13 @@ void TestBufferLayer::write(ComposerClientWriter& writer) {
 
 LayerSettings TestBufferLayer::toRenderEngineLayerSettings() {
     LayerSettings layerSettings = TestLayer::toRenderEngineLayerSettings();
-    layerSettings.source.buffer.buffer = std::make_shared<::android::renderengine::ExternalTexture>(
-            ::android::sp<::android::GraphicBuffer>::make(
-                    mGraphicBuffer->handle, ::android::GraphicBuffer::CLONE_HANDLE, mWidth, mHeight,
-                    static_cast<int32_t>(mPixelFormat), 1, mUsage, mStride),
-            mRenderEngine.getInternalRenderEngine(),
-            ::android::renderengine::ExternalTexture::Usage::READABLE);
+    layerSettings.source.buffer.buffer =
+            std::make_shared<::android::renderengine::impl::ExternalTexture>(
+                    ::android::sp<::android::GraphicBuffer>::make(
+                            mGraphicBuffer->handle, ::android::GraphicBuffer::CLONE_HANDLE, mWidth,
+                            mHeight, static_cast<int32_t>(mPixelFormat), 1, mUsage, mStride),
+                    mRenderEngine.getInternalRenderEngine(),
+                    ::android::renderengine::impl::ExternalTexture::Usage::READABLE);
 
     layerSettings.source.buffer.usePremultipliedAlpha = mBlendMode == BlendMode::PREMULTIPLIED;
 
