@@ -205,4 +205,12 @@ interface ISupplicantP2pIfaceCallback {
      * @param p2pDeviceAddress P2P device address.
      */
     oneway void onStaDeauthorized(in byte[] srcAddress, in byte[] p2pDeviceAddress);
+
+    /**
+     * Used to indicate that operating frequency has changed for this P2P group interface.
+     *
+     * @param groupIfName Interface name of the group. (For ex: p2p-p2p0-1)
+     * @param frequency New operating frequency in MHz.
+     */
+    oneway void onGroupFrequencyChanged(in String groupIfname, in int frequency);
 }
