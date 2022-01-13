@@ -48,4 +48,7 @@ interface ISession {
   void invalidateAuthenticatorId();
   void resetLockout(in android.hardware.keymaster.HardwareAuthToken hat);
   void close();
+  android.hardware.biometrics.common.ICancellationSignal authenticateWithContext(in long operationId, in android.hardware.biometrics.common.OperationContext context);
+  android.hardware.biometrics.common.ICancellationSignal enrollWithContext(in android.hardware.keymaster.HardwareAuthToken hat, in android.hardware.biometrics.face.EnrollmentType type, in android.hardware.biometrics.face.Feature[] features, in @nullable android.hardware.common.NativeHandle previewSurface, in android.hardware.biometrics.common.OperationContext context);
+  android.hardware.biometrics.common.ICancellationSignal detectInteractionWithContext(in android.hardware.biometrics.common.OperationContext context);
 }
