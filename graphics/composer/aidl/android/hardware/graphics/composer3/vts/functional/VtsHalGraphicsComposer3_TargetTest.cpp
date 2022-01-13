@@ -18,6 +18,7 @@
 #include <aidl/android/hardware/graphics/common/BlendMode.h>
 #include <aidl/android/hardware/graphics/common/BufferUsage.h>
 #include <aidl/android/hardware/graphics/common/FRect.h>
+#include <aidl/android/hardware/graphics/common/PixelFormat.h>
 #include <aidl/android/hardware/graphics/common/Rect.h>
 #include <aidl/android/hardware/graphics/composer3/Composition.h>
 #include <aidl/android/hardware/graphics/composer3/IComposer.h>
@@ -1035,11 +1036,10 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
         }
     }
 
-    sp<GraphicBuffer> allocate() {
+    sp<GraphicBuffer> allocate(::android::PixelFormat pixelFormat) {
         return sp<GraphicBuffer>::make(
                 static_cast<uint32_t>(getPrimaryDisplay().getDisplayWidth()),
-                static_cast<uint32_t>(getPrimaryDisplay().getDisplayHeight()),
-                ::android::PIXEL_FORMAT_RGBA_8888,
+                static_cast<uint32_t>(getPrimaryDisplay().getDisplayHeight()), pixelFormat,
                 /*layerCount*/ 1U,
                 (static_cast<uint64_t>(common::BufferUsage::CPU_WRITE_OFTEN) |
                  static_cast<uint64_t>(common::BufferUsage::CPU_READ_OFTEN) |
@@ -1065,7 +1065,7 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
                 mComposerClient->createLayer(display.getDisplayId(), kBufferSlotCount);
         EXPECT_TRUE(status.isOk());
         {
-            const auto buffer = allocate();
+            const auto buffer = allocate(::android::PIXEL_FORMAT_RGBA_8888);
             ASSERT_NE(nullptr, buffer);
             ASSERT_EQ(::android::OK, buffer->initCheck());
             ASSERT_NE(nullptr, buffer->handle);
@@ -1086,7 +1086,7 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
         }
 
         {
-            const auto buffer = allocate();
+            const auto buffer = allocate(::android::PIXEL_FORMAT_RGBA_8888);
             ASSERT_NE(nullptr, buffer->handle);
 
             mWriter.setLayerBuffer(display.getDisplayId(), layer, /*slot*/ 0, buffer->handle,
@@ -1236,8 +1236,8 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
 
         const auto vsyncPeriod = getVsyncPeriod();
 
-        const auto buffer1 = allocate();
-        const auto buffer2 = allocate();
+        const auto buffer1 = allocate(::android::PIXEL_FORMAT_RGBA_8888);
+        const auto buffer2 = allocate(::android::PIXEL_FORMAT_RGBA_8888);
         ASSERT_NE(nullptr, buffer1);
         ASSERT_NE(nullptr, buffer2);
 
@@ -1391,7 +1391,7 @@ TEST_P(GraphicsComposerAidlCommandTest, SetOutputBuffer) {
             kBufferSlotCount);
     EXPECT_TRUE(displayStatus.isOk());
 
-    const auto buffer = allocate();
+    const auto buffer = allocate(::android::PIXEL_FORMAT_RGBA_8888);
     const auto handle = buffer->handle;
     mWriter.setOutputBuffer(display.display, /*slot*/ 0, handle, /*releaseFence*/ -1);
     execute();
@@ -1435,7 +1435,7 @@ TEST_P(GraphicsComposerAidlCommandTest, PresentDisplayNoLayerStateChanges) {
         EXPECT_TRUE(mComposerClient->setColorMode(getPrimaryDisplayId(), ColorMode::NATIVE, intent)
                             .isOk());
 
-        const auto buffer = allocate();
+        const auto buffer = allocate(::android::PIXEL_FORMAT_RGBA_8888);
         const auto handle = buffer->handle;
         ASSERT_NE(nullptr, handle);
 
@@ -1463,7 +1463,7 @@ TEST_P(GraphicsComposerAidlCommandTest, PresentDisplayNoLayerStateChanges) {
         execute();
         ASSERT_TRUE(mReader.takeErrors().empty());
 
-        const auto buffer2 = allocate();
+        const auto buffer2 = allocate(::android::PIXEL_FORMAT_RGBA_8888);
         const auto handle2 = buffer2->handle;
         ASSERT_NE(nullptr, handle2);
         mWriter.setLayerBuffer(getPrimaryDisplayId(), layer, /*slot*/ 0, handle2,
@@ -1480,7 +1480,7 @@ TEST_P(GraphicsComposerAidlCommandTest, SetLayerCursorPosition) {
             mComposerClient->createLayer(getPrimaryDisplayId(), kBufferSlotCount);
     EXPECT_TRUE(layerStatus.isOk());
 
-    const auto buffer = allocate();
+    const auto buffer = allocate(::android::PIXEL_FORMAT_RGBA_8888);
     const auto handle = buffer->handle;
     ASSERT_NE(nullptr, handle);
 
@@ -1513,7 +1513,7 @@ TEST_P(GraphicsComposerAidlCommandTest, SetLayerCursorPosition) {
 }
 
 TEST_P(GraphicsComposerAidlCommandTest, SetLayerBuffer) {
-    const auto buffer = allocate();
+    const auto buffer = allocate(::android::PIXEL_FORMAT_RGBA_8888);
     const auto handle = buffer->handle;
     ASSERT_NE(nullptr, handle);
 
@@ -1619,6 +1619,54 @@ TEST_P(GraphicsComposerAidlCommandTest, SetLayerCompositionType) {
     execute();
 }
 
+TEST_P(GraphicsComposerAidlCommandTest, DisplayDecoration) {
+    for (VtsDisplay& display : mDisplays) {
+        const auto [layerStatus, layer] =
+                mComposerClient->createLayer(display.getDisplayId(), kBufferSlotCount);
+        EXPECT_TRUE(layerStatus.isOk());
+
+        const auto [error, support] =
+                mComposerClient->getDisplayDecorationSupport(display.getDisplayId());
+        EXPECT_TRUE(error.isOk());
+
+        const auto format =
+                support ? support->format
+                        : aidl::android::hardware::graphics::common::PixelFormat::RGBA_8888;
+        const auto decorBuffer = allocate(static_cast<::android::PixelFormat>(format));
+        ASSERT_NE(nullptr, decorBuffer);
+        if (::android::OK != decorBuffer->initCheck()) {
+            if (support) {
+                FAIL() << "Device advertised display decoration support with format  "
+                       << aidl::android::hardware::graphics::common::toString(format)
+                       << " but failed to allocate it!";
+            } else {
+                FAIL() << "Device advertised NO display decoration support, but it should "
+                       << "still be able to allocate "
+                       << aidl::android::hardware::graphics::common::toString(format);
+            }
+        }
+
+        mWriter.setLayerBuffer(display.getDisplayId(), layer, /*slot*/ 0, decorBuffer->handle,
+                               /*acquireFence*/ -1);
+        mWriter.setLayerCompositionType(display.getDisplayId(), layer,
+                                        Composition::DISPLAY_DECORATION);
+        mWriter.validateDisplay(display.getDisplayId(), ComposerClientWriter::kNoTimestamp);
+        execute();
+        if (support) {
+            ASSERT_TRUE(mReader.takeErrors().empty());
+        } else {
+            const auto errors = mReader.takeErrors();
+            ASSERT_EQ(1, errors.size());
+            EXPECT_EQ(EX_UNSUPPORTED_OPERATION, errors[0].errorCode);
+
+            const auto changedTypes = mReader.takeChangedCompositionTypes(display.getDisplayId());
+            ASSERT_EQ(1u, changedTypes.size());
+            const auto changedType = changedTypes[0].composition;
+            EXPECT_TRUE(changedType == Composition::DEVICE || changedType == Composition::CLIENT);
+        }
+    }
+}
+
 TEST_P(GraphicsComposerAidlCommandTest, SetLayerDataspace) {
     const auto& [layerStatus, layer] =
             mComposerClient->createLayer(getPrimaryDisplayId(), kBufferSlotCount);
@@ -1657,7 +1705,7 @@ TEST_P(GraphicsComposerAidlCommandTest, SetLayerSidebandStream) {
         return;
     }
 
-    const auto buffer = allocate();
+    const auto buffer = allocate(::android::PIXEL_FORMAT_RGBA_8888);
     const auto handle = buffer->handle;
     ASSERT_NE(nullptr, handle);
 
@@ -1971,7 +2019,7 @@ TEST_P(GraphicsComposerAidlCommandTest, SetIdleTimerEnabled_Timeout_2) {
     EXPECT_TRUE(mComposerClient->setPowerMode(getPrimaryDisplayId(), PowerMode::ON).isOk());
     EXPECT_TRUE(mComposerClient->setIdleTimerEnabled(getPrimaryDisplayId(), /*timeout*/ 0).isOk());
 
-    const auto buffer = allocate();
+    const auto buffer = allocate(::android::PIXEL_FORMAT_RGBA_8888);
     ASSERT_NE(nullptr, buffer->handle);
 
     const auto layer = createOnScreenLayer();
