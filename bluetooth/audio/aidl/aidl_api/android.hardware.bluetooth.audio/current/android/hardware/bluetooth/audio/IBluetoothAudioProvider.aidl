@@ -38,4 +38,5 @@ interface IBluetoothAudioProvider {
   android.hardware.common.fmq.MQDescriptor<byte,android.hardware.common.fmq.SynchronizedReadWrite> startSession(in android.hardware.bluetooth.audio.IBluetoothAudioPort hostIf, in android.hardware.bluetooth.audio.AudioConfiguration audioConfig);
   void streamStarted(in android.hardware.bluetooth.audio.BluetoothAudioStatus status);
   void streamSuspended(in android.hardware.bluetooth.audio.BluetoothAudioStatus status);
+  void updateAudioConfiguration(in android.hardware.bluetooth.audio.AudioConfiguration audioConfig);
 }

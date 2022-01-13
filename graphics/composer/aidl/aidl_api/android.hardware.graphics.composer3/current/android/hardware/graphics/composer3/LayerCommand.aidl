@@ -40,7 +40,6 @@ parcelable LayerCommand {
   @nullable android.hardware.graphics.common.Rect[] damage;
   @nullable android.hardware.graphics.composer3.ParcelableBlendMode blendMode;
   @nullable android.hardware.graphics.composer3.Color color;
-  @nullable android.hardware.graphics.composer3.FloatColor floatColor;
   @nullable android.hardware.graphics.composer3.ParcelableComposition composition;
   @nullable android.hardware.graphics.composer3.ParcelableDataspace dataspace;
   @nullable android.hardware.graphics.common.Rect displayFrame;

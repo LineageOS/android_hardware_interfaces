@@ -922,35 +922,30 @@ class GraphicsBlendModeCompositionTest
 
         auto layer = mLayers[1];
         BlendMode blendMode = layer->getBlendMode();
-        float alpha = mTopLayerColor.a / 255.0f * layer->getAlpha();
+        float alpha = mTopLayerColor.a * layer->getAlpha();
         if (blendMode == BlendMode::NONE) {
             for (auto& expectedColor : expectedColors) {
-                expectedColor.r = mTopLayerColor.r * static_cast<int8_t>(layer->getAlpha());
-                expectedColor.g = mTopLayerColor.g * static_cast<int8_t>(layer->getAlpha());
-                expectedColor.b = mTopLayerColor.b * static_cast<int8_t>(layer->getAlpha());
-                expectedColor.a = static_cast<int8_t>(alpha * 255.0);
+                expectedColor.r = mTopLayerColor.r * layer->getAlpha();
+                expectedColor.g = mTopLayerColor.g * layer->getAlpha();
+                expectedColor.b = mTopLayerColor.b * layer->getAlpha();
+                expectedColor.a = alpha;
             }
         } else if (blendMode == BlendMode::PREMULTIPLIED) {
             for (auto& expectedColor : expectedColors) {
-                expectedColor.r = static_cast<int8_t>(
-                        mTopLayerColor.r * static_cast<int8_t>(layer->getAlpha()) +
-                        mBackgroundColor.r * (1.0 - alpha));
-                expectedColor.g = static_cast<int8_t>(mTopLayerColor.g * layer->getAlpha() +
-                                                      mBackgroundColor.g * (1.0 - alpha));
-                expectedColor.b = static_cast<int8_t>(mTopLayerColor.b * layer->getAlpha() +
-                                                      mBackgroundColor.b * (1.0 - alpha));
-                expectedColor.a = static_cast<int8_t>(alpha + mBackgroundColor.a * (1.0 - alpha));
+                expectedColor.r =
+                        mTopLayerColor.r * layer->getAlpha() + mBackgroundColor.r * (1.0f - alpha);
+                expectedColor.g =
+                        mTopLayerColor.g * layer->getAlpha() + mBackgroundColor.g * (1.0f - alpha);
+                expectedColor.b =
+                        mTopLayerColor.b * layer->getAlpha() + mBackgroundColor.b * (1.0f - alpha);
+                expectedColor.a = alpha + mBackgroundColor.a * (1.0f - alpha);
             }
         } else if (blendMode == BlendMode::COVERAGE) {
             for (auto& expectedColor : expectedColors) {
-                expectedColor.r = static_cast<int8_t>(mTopLayerColor.r * alpha +
-                                                      mBackgroundColor.r * (1.0 - alpha));
-                expectedColor.g = static_cast<int8_t>(mTopLayerColor.g * alpha +
-                                                      mBackgroundColor.g * (1.0 - alpha));
-                expectedColor.b = static_cast<int8_t>(mTopLayerColor.b * alpha +
-                                                      mBackgroundColor.b * (1.0 - alpha));
-                expectedColor.a = static_cast<int8_t>(mTopLayerColor.a * alpha +
-                                                      mBackgroundColor.a * (1.0 - alpha));
+                expectedColor.r = mTopLayerColor.r * alpha + mBackgroundColor.r * (1.0f - alpha);
+                expectedColor.g = mTopLayerColor.g * alpha + mBackgroundColor.g * (1.0f - alpha);
+                expectedColor.b = mTopLayerColor.b * alpha + mBackgroundColor.b * (1.0f - alpha);
+                expectedColor.a = mTopLayerColor.a * alpha + mBackgroundColor.a * (1.0f - alpha);
             }
         }
     }
@@ -1083,7 +1078,7 @@ class GraphicsTransformCompositionTest : public GraphicsCompositionTest {
         GraphicsCompositionTest::SetUp();
 
         auto backgroundLayer = std::make_shared<TestColorLayer>(mComposerClient, mPrimaryDisplay);
-        backgroundLayer->setColor({0, 0, 0, 0});
+        backgroundLayer->setColor({0.0f, 0.0f, 0.0f, 0.0f});
         backgroundLayer->setDisplayFrame({0, 0, mDisplayWidth, mDisplayHeight});
         backgroundLayer->setZOrder(0);
 

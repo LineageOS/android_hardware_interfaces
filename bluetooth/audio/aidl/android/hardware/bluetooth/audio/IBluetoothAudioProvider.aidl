@@ -72,4 +72,14 @@ interface IBluetoothAudioProvider {
      * @param status true for SUCCESS or false for FAILURE
      */
     void streamSuspended(in BluetoothAudioStatus status);
+
+    /**
+     * Called when the audio configuration of the stream has been changed.
+     *
+     * @param audioConfig The audio configuration negotiated with the remote
+     *    device. The PCM parameters are set if software based encoding,
+     *    otherwise the correct codec configuration is used for hardware
+     *    encoding.
+     */
+    void updateAudioConfiguration(in AudioConfiguration audioConfig);
 }
