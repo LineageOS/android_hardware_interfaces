@@ -27,7 +27,6 @@ import IWifiRttController;
  * Interface that represents a chip that must be configured as a single unit.
  */
 interface IWifiChip extends @1.5::IWifiChip {
-
     /**
      * Create a RTTController instance.
      *
@@ -85,6 +84,6 @@ interface IWifiChip extends @1.5::IWifiChip {
      *         represents whether particular mode is allowed on that channel.
      */
     getUsableChannels_1_6(WifiBand band, bitfield<WifiIfaceMode> ifaceModeMask,
-            bitfield<UsableChannelFilter> filterMask)
+        bitfield<UsableChannelFilter> filterMask)
         generates (WifiStatus status, vec<WifiUsableChannel> channels);
 };
