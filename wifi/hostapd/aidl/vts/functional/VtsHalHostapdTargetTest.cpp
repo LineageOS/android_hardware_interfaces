@@ -431,6 +431,7 @@ TEST_P(HostapdAidl, AddAccessPointWithDualBandConfig) {
     EXPECT_TRUE(status.isOk());
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(HostapdAidl);
 INSTANTIATE_TEST_SUITE_P(
     Hostapd, HostapdAidl,
     testing::ValuesIn(android::getAidlHalInstanceNames(IHostapd::descriptor)),
