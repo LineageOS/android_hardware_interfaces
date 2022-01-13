@@ -20,6 +20,7 @@
 #include <inttypes.h>
 #include <log/log.h>
 #include "AGnss.h"
+#include "DeviceFileReader.h"
 #include "GnssBatching.h"
 #include "GnssConfiguration.h"
 #include "GnssDebug.h"
@@ -28,10 +29,13 @@
 #include "GnssNavigationMessageInterface.h"
 #include "GnssPsds.h"
 #include "GnssVisibilityControl.h"
+#include "NmeaFixInfo.h"
 #include "Utils.h"
 
 namespace aidl::android::hardware::gnss {
+using ::android::hardware::gnss::common::NmeaFixInfo;
 using ::android::hardware::gnss::common::Utils;
+
 using ndk::ScopedAStatus;
 using GnssSvInfo = IGnssCallback::GnssSvInfo;
 
@@ -62,6 +66,12 @@ ScopedAStatus Gnss::setCallback(const std::shared_ptr<IGnssCallback>& callback) 
     return ScopedAStatus::ok();
 }
 
+std::unique_ptr<GnssLocation> Gnss::getLocationFromHW() {
+    std::string inputStr =
+            ::android::hardware::gnss::common::DeviceFileReader::Instance().getLocationData();
+    return ::android::hardware::gnss::common::NmeaFixInfo::getAidlLocationFromInputStr(inputStr);
+}
+
 ScopedAStatus Gnss::start() {
     ALOGD("start()");
     if (mIsActive) {
@@ -82,9 +92,14 @@ ScopedAStatus Gnss::start() {
             auto svStatus = filterBlocklistedSatellites(Utils::getMockSvInfoList());
             this->reportSvStatus(svStatus);
 
+            auto currentLocation = getLocationFromHW();
             mGnssPowerIndication->notePowerConsumption();
-            const auto location = Utils::getMockLocation();
-            this->reportLocation(location);
+            if (currentLocation != nullptr) {
+                this->reportLocation(*currentLocation);
+            } else {
+                const auto location = Utils::getMockLocation();
+                this->reportLocation(location);
+            }
             std::this_thread::sleep_for(std::chrono::milliseconds(mMinIntervalMs));
         }
     });
