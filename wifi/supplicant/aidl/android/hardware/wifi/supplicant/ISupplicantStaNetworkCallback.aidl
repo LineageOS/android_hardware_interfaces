@@ -62,4 +62,13 @@ interface ISupplicantStaNetworkCallback {
      * Used to notify WPA3 transition disable.
      */
     oneway void onTransitionDisable(in TransitionDisableIndication ind);
+
+    /**
+     * Used to notify EAP certificate event.
+     *
+     * On receiving a server certifidate from TLS handshake, send this certificate
+     * to the framework for Trust On First Use.
+     */
+    oneway void onServerCertificateAvailable(
+            in int depth, in byte[] subject, in byte[] certHash, in byte[] certBlob);
 }

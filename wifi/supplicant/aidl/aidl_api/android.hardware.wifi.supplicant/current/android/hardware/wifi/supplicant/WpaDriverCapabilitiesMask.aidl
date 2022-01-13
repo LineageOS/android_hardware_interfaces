@@ -38,4 +38,5 @@ enum WpaDriverCapabilitiesMask {
   OCE = 2,
   SAE_PK = 4,
   WFD_R2 = 8,
+  TRUST_ON_FIRST_USE = 16,
 }
