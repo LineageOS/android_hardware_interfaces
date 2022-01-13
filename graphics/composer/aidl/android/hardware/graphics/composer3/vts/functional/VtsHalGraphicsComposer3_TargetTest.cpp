@@ -1383,6 +1383,14 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
         return layer;
     }
 
+    bool hasDisplayCapability(int64_t display, DisplayCapability cap) {
+        std::vector<DisplayCapability> capabilities;
+        const auto error = mComposerClient->getDisplayCapabilities(display, &capabilities);
+        EXPECT_TRUE(error.isOk());
+
+        return std::find(capabilities.begin(), capabilities.end(), cap) != capabilities.end();
+    }
+
     void Test_setActiveConfigWithConstraints(const TestParameters& params) {
         for (VtsDisplay& display : mDisplays) {
             forEachTwoConfigs(display.get(), [&](int32_t config1, int32_t config2) {
@@ -2132,6 +2140,74 @@ TEST_P(GraphicsComposerAidlCommandTest, expectedPresentTime_0) {
 
 TEST_P(GraphicsComposerAidlCommandTest, expectedPresentTime_5) {
     ASSERT_NO_FATAL_FAILURE(Test_expectedPresentTime(5));
+}
+
+TEST_P(GraphicsComposerAidlCommandTest, setIdleTimerEnabled_Unsupported) {
+    const bool hasDisplayIdleTimerSupport = hasDisplayCapability(mPrimaryDisplay,
+                                        DisplayCapability::DISPLAY_IDLE_TIMER);
+    if (!hasDisplayIdleTimerSupport) {
+        const auto error = mComposerClient->setIdleTimerEnabled(mPrimaryDisplay, 0);
+        EXPECT_FALSE(error.isOk());
+        EXPECT_EQ(IComposerClient::EX_UNSUPPORTED, error.getServiceSpecificError());
+    }
+}
+
+TEST_P(GraphicsComposerAidlCommandTest, setIdleTimerEnabled_BadParameter) {
+    const bool hasDisplayIdleTimerSupport = hasDisplayCapability(mPrimaryDisplay,
+                                        DisplayCapability::DISPLAY_IDLE_TIMER);
+    if (!hasDisplayIdleTimerSupport) {
+        GTEST_SUCCEED() << "DisplayCapability::DISPLAY_IDLE_TIMER is not supported";
+        return;
+    }
+
+    const auto error = mComposerClient->setIdleTimerEnabled(mPrimaryDisplay, -1);
+    EXPECT_FALSE(error.isOk());
+    EXPECT_EQ(IComposerClient::EX_BAD_PARAMETER, error.getServiceSpecificError());
+}
+
+TEST_P(GraphicsComposerAidlCommandTest, setIdleTimerEnabled_Disable) {
+    const bool hasDisplayIdleTimerSupport = hasDisplayCapability(mPrimaryDisplay,
+                                        DisplayCapability::DISPLAY_IDLE_TIMER);
+    if (!hasDisplayIdleTimerSupport) {
+        GTEST_SUCCEED() << "DisplayCapability::DISPLAY_IDLE_TIMER is not supported";
+        return;
+    }
+
+    EXPECT_TRUE(mComposerClient->setIdleTimerEnabled(mPrimaryDisplay, 0).isOk());
+    std::this_thread::sleep_for(1s);
+    EXPECT_EQ(0, mComposerCallback->getVsyncIdleCount());
+}
+
+TEST_P(GraphicsComposerAidlCommandTest, setIdleTimerEnabled_Timeout_2) {
+    const bool hasDisplayIdleTimerSupport = hasDisplayCapability(mPrimaryDisplay,
+                                        DisplayCapability::DISPLAY_IDLE_TIMER);
+    if (!hasDisplayIdleTimerSupport) {
+        GTEST_SUCCEED() << "DisplayCapability::DISPLAY_IDLE_TIMER is not supported";
+        return;
+    }
+
+    EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, PowerMode::ON).isOk());
+    EXPECT_TRUE(mComposerClient->setIdleTimerEnabled(mPrimaryDisplay, 0).isOk());
+
+    const auto buffer = allocate();
+    ASSERT_NE(nullptr, buffer->handle);
+
+    const auto layer = createOnScreenLayer();
+    mWriter.setLayerBuffer(mPrimaryDisplay, layer, 0, buffer->handle, -1);
+    int32_t vsyncIdleCount = mComposerCallback->getVsyncIdleCount();
+    auto earlyVsyncIdleTime = systemTime() + std::chrono::nanoseconds(2s).count();
+    EXPECT_TRUE(mComposerClient->setIdleTimerEnabled(mPrimaryDisplay, 2000).isOk());
+
+    const sp<::android::Fence> presentFence =
+        presentAndGetFence(ComposerClientWriter::kNoTimestamp);
+    presentFence->waitForever(LOG_TAG);
+
+    std::this_thread::sleep_for(3s);
+    if (vsyncIdleCount < mComposerCallback->getVsyncIdleCount()) {
+        EXPECT_GE(mComposerCallback->getVsyncIdleTime(), earlyVsyncIdleTime);
+    }
+
+    EXPECT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, PowerMode::OFF).isOk());
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GraphicsComposerAidlCommandTest);

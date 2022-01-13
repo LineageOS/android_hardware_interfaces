@@ -86,4 +86,14 @@ interface IComposerCallback {
      */
     oneway void onVsyncPeriodTimingChanged(
             long display, in VsyncPeriodChangeTimeline updatedTimeline);
+
+    /**
+     * Notifies the client that the display is idle, the refresh rate changed to a lower setting to
+     * preserve power and vsync cadence changed. When a new frame is queued for presentation, the
+     * client is expected to enable vsync callbacks to learn the new vsync cadence before sending
+     * a new frame.
+     *
+     * @param display is the display whose vsync cadence changed due to panel idle mode.
+     */
+    oneway void onVsyncIdle(long display);
 }
