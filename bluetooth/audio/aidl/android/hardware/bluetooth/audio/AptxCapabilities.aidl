@@ -24,7 +24,6 @@ import android.hardware.bluetooth.audio.ChannelMode;
 @VintfStability
 parcelable AptxCapabilities {
     int[] sampleRateHz;
-    /* bitfield */
-    ChannelMode channelMode;
+    ChannelMode[] channelMode;
     byte[] bitsPerSample;
 }
