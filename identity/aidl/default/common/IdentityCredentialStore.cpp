@@ -20,6 +20,7 @@
 
 #include "IdentityCredential.h"
 #include "IdentityCredentialStore.h"
+#include "PresentationSession.h"
 #include "WritableIdentityCredential.h"
 
 namespace aidl::android::hardware::identity {
@@ -61,15 +62,35 @@ ndk::ScopedAStatus IdentityCredentialStore::getCredential(
                 "Unsupported cipher suite"));
     }
 
-    sp<SecureHardwarePresentationProxy> hwProxy = hwProxyFactory_->createPresentationProxy();
-    shared_ptr<IdentityCredential> credential =
-            ndk::SharedRefBase::make<IdentityCredential>(hwProxyFactory_, hwProxy, credentialData);
+    shared_ptr<IdentityCredential> credential = ndk::SharedRefBase::make<IdentityCredential>(
+            hwProxyFactory_, credentialData, nullptr /* session */);
     auto ret = credential->initialize();
     if (ret != IIdentityCredentialStore::STATUS_OK) {
         return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
                 int(ret), "Error initializing IdentityCredential"));
     }
     *outCredential = credential;
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus IdentityCredentialStore::createPresentationSession(
+        CipherSuite cipherSuite, shared_ptr<IPresentationSession>* outSession) {
+    // We only support CIPHERSUITE_ECDHE_HKDF_ECDSA_WITH_AES_256_GCM_SHA256 right now.
+    if (cipherSuite != CipherSuite::CIPHERSUITE_ECDHE_HKDF_ECDSA_WITH_AES_256_GCM_SHA256) {
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                IIdentityCredentialStore::STATUS_CIPHER_SUITE_NOT_SUPPORTED,
+                "Unsupported cipher suite"));
+    }
+
+    sp<SecureHardwareSessionProxy> hwProxy = hwProxyFactory_->createSessionProxy();
+    shared_ptr<PresentationSession> session =
+            ndk::SharedRefBase::make<PresentationSession>(hwProxyFactory_, hwProxy);
+    auto ret = session->initialize();
+    if (ret != IIdentityCredentialStore::STATUS_OK) {
+        return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
+                int(ret), "Error initializing PresentationSession"));
+    }
+    *outSession = session;
     return ndk::ScopedAStatus::ok();
 }
 
