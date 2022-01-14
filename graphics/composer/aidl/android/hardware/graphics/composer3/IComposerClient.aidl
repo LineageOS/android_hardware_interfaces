@@ -549,6 +549,58 @@ interface IComposerClient {
             long display, int config, in VsyncPeriodChangeConstraints vsyncPeriodChangeConstraints);
 
     /**
+     * Sets the display config in which the device boots.
+     *
+     * If the device is unable to boot in this config for any reason (example HDMI display changed),
+     * the implementation should try to find a config which matches the resolution and refresh-rate
+     * of this config. If no such config exists, the implementation's preferred display config
+     * should be used.
+     *
+     * @param display is the display for which the boot config is set.
+     * @param config is the new boot config for the display.
+     *
+     * @exception EX_BAD_DISPLAY when an invalid display handle was passed in.
+     * @exception EX_BAD_CONFIG when an invalid config id was passed in.
+     *
+     * @see getDisplayConfigs
+     * @see clearBootDisplayConfig
+     * @see getPreferredBootDisplayConfig
+     */
+    void setBootDisplayConfig(long display, int config);
+
+    /**
+     * Clears the boot display config.
+     *
+     * The device should boot in the implementation's preferred display config.
+     *
+     * @param display is the display for which the cached boot config is cleared.
+     *
+     * @exception EX_BAD_DISPLAY when an invalid display handle was passed in.
+     *
+     * @see getDisplayConfigs
+     * @see setBootDisplayConfig
+     * @see getPreferredBootDisplayConfig
+     */
+    void clearBootDisplayConfig(long display);
+
+    /**
+     * Returns the implementation's preferred display config.
+     *
+     * This is the display config used by the implementation at boot time, if the boot display
+     * config has not been requested yet, or if it has been previously cleared.
+     *
+     * @param display is the display to which the preferred config is queried.
+     * @return the implementation's preferred display config.
+     *
+     * @exception EX_BAD_DISPLAY when an invalid display handle was passed in.
+     *
+     * @see getDisplayConfigs
+     * @see setBootDisplayConfig
+     * @see clearBootDisplayConfig
+     */
+    int getPreferredBootDisplayConfig(long display);
+
+    /**
      * Requests the display to enable/disable its low latency mode.
      *
      * If the display is connected via HDMI 2.1, then Auto Low Latency Mode should be triggered. If
