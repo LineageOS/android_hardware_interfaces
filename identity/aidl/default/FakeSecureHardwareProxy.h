@@ -27,21 +27,23 @@ namespace android::hardware::identity {
 //
 class FakeSecureHardwareProvisioningProxy : public SecureHardwareProvisioningProxy {
   public:
-    FakeSecureHardwareProvisioningProxy();
+    FakeSecureHardwareProvisioningProxy() = default;
     virtual ~FakeSecureHardwareProvisioningProxy();
 
     bool initialize(bool testCredential) override;
 
-    bool initializeForUpdate(bool testCredential, string docType,
-                             vector<uint8_t> encryptedCredentialKeys) override;
+    bool initializeForUpdate(bool testCredential, const string& docType,
+                             const vector<uint8_t>& encryptedCredentialKeys) override;
 
     bool shutdown() override;
+
+    optional<uint32_t> getId() override;
 
     // Returns public key certificate.
     optional<vector<uint8_t>> createCredentialKey(const vector<uint8_t>& challenge,
                                                   const vector<uint8_t>& applicationId) override;
 
-    bool startPersonalization(int accessControlProfileCount, vector<int> entryCounts,
+    bool startPersonalization(int accessControlProfileCount, const vector<int>& entryCounts,
                               const string& docType,
                               size_t expectedProofOfProvisioningSize) override;
 
@@ -67,21 +69,81 @@ class FakeSecureHardwareProvisioningProxy : public SecureHardwareProvisioningPro
     optional<vector<uint8_t>> finishGetCredentialData(const string& docType) override;
 
   protected:
-    EicProvisioning ctx_;
+    // See docs for id_.
+    //
+    bool validateId(const string& callerName);
+
+    // We use a singleton libeic object, shared by all proxy instances.  This is to
+    // properly simulate a situation where libeic is used on constrained hardware
+    // with only enough RAM for a single instance of the libeic object.
+    //
+    static EicProvisioning ctx_;
+
+    // On the HAL side we keep track of the ID that was assigned to the libeic object
+    // created in secure hardware. For every call into libeic we validate that this
+    // identifier matches what is on the secure side. This is what the validateId()
+    // method does.
+    //
+    uint32_t id_ = 0;
+};
+
+// This implementation uses libEmbeddedIC in-process.
+//
+class FakeSecureHardwareSessionProxy : public SecureHardwareSessionProxy {
+  public:
+    FakeSecureHardwareSessionProxy() = default;
+    virtual ~FakeSecureHardwareSessionProxy();
+
+    bool initialize() override;
+
+    bool shutdown() override;
+
+    optional<uint32_t> getId() override;
+
+    optional<uint64_t> getAuthChallenge() override;
+
+    // Returns private key
+    optional<vector<uint8_t>> getEphemeralKeyPair() override;
+
+    bool setReaderEphemeralPublicKey(const vector<uint8_t>& readerEphemeralPublicKey) override;
+
+    bool setSessionTranscript(const vector<uint8_t>& sessionTranscript) override;
+
+  protected:
+    // See docs for id_.
+    //
+    bool validateId(const string& callerName);
+
+    // We use a singleton libeic object, shared by all proxy instances.  This is to
+    // properly simulate a situation where libeic is used on constrained hardware
+    // with only enough RAM for a single instance of the libeic object.
+    //
+    static EicSession ctx_;
+
+    // On the HAL side we keep track of the ID that was assigned to the libeic object
+    // created in secure hardware. For every call into libeic we validate that this
+    // identifier matches what is on the secure side. This is what the validateId()
+    // method does.
+    //
+    uint32_t id_ = 0;
 };
 
 // This implementation uses libEmbeddedIC in-process.
 //
 class FakeSecureHardwarePresentationProxy : public SecureHardwarePresentationProxy {
   public:
-    FakeSecureHardwarePresentationProxy();
+    FakeSecureHardwarePresentationProxy() = default;
     virtual ~FakeSecureHardwarePresentationProxy();
 
-    bool initialize(bool testCredential, string docType,
-                    vector<uint8_t> encryptedCredentialKeys) override;
+    bool initialize(uint32_t sessionId, bool testCredential, const string& docType,
+                    const vector<uint8_t>& encryptedCredentialKeys) override;
+
+    bool shutdown() override;
+
+    optional<uint32_t> getId() override;
 
     // Returns publicKeyCert (1st component) and signingKeyBlob (2nd component)
-    optional<pair<vector<uint8_t>, vector<uint8_t>>> generateSigningKeyPair(string docType,
+    optional<pair<vector<uint8_t>, vector<uint8_t>>> generateSigningKeyPair(const string& docType,
                                                                             time_t now) override;
 
     // Returns private key
@@ -133,10 +195,23 @@ class FakeSecureHardwarePresentationProxy : public SecureHardwarePresentationPro
                                              const vector<uint8_t>& challenge,
                                              size_t proofOfOwnershipCborSize) override;
 
-    bool shutdown() override;
-
   protected:
-    EicPresentation ctx_;
+    // See docs for id_.
+    //
+    bool validateId(const string& callerName);
+
+    // We use a singleton libeic object, shared by all proxy instances.  This is to
+    // properly simulate a situation where libeic is used on constrained hardware
+    // with only enough RAM for a single instance of the libeic object.
+    //
+    static EicPresentation ctx_;
+
+    // On the HAL side we keep track of the ID that was assigned to the libeic object
+    // created in secure hardware. For every call into libeic we validate that this
+    // identifier matches what is on the secure side. This is what the validateId()
+    // method does.
+    //
+    uint32_t id_ = 0;
 };
 
 // Factory implementation.
@@ -148,6 +223,10 @@ class FakeSecureHardwareProxyFactory : public SecureHardwareProxyFactory {
 
     sp<SecureHardwareProvisioningProxy> createProvisioningProxy() override {
         return new FakeSecureHardwareProvisioningProxy();
+    }
+
+    sp<SecureHardwareSessionProxy> createSessionProxy() override {
+        return new FakeSecureHardwareSessionProxy();
     }
 
     sp<SecureHardwarePresentationProxy> createPresentationProxy() override {

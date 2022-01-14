@@ -66,7 +66,8 @@ TEST(EicTest, AccessControlIsEnforced) {
     // Then present data from it...
     //
     FakeSecureHardwarePresentationProxy presentationProxy;
-    ASSERT_TRUE(presentationProxy.initialize(isTestCredential, docType, credData.value()));
+    ASSERT_TRUE(presentationProxy.initialize(0 /* sessionId */, isTestCredential, docType,
+                                             credData.value()));
     AccessCheckResult res =
             presentationProxy.startRetrieveEntryValue(nameSpace, name, 1, content.size(), acpIds);
     ASSERT_EQ(res, AccessCheckResult::kNoAccessControlProfiles);
