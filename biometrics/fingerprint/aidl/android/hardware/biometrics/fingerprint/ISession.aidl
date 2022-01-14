@@ -17,6 +17,8 @@
 package android.hardware.biometrics.fingerprint;
 
 import android.hardware.biometrics.common.ICancellationSignal;
+import android.hardware.biometrics.common.OperationContext;
+import android.hardware.biometrics.fingerprint.PointerContext;
 import android.hardware.keymaster.HardwareAuthToken;
 
 /**
@@ -140,7 +142,7 @@ interface ISession {
      *
      * @param hat See above documentation.
      * @return ICancellationSignal An object that can be used by the framework to cancel this
-     * operation.
+     *                             operation.
      */
     ICancellationSignal enroll(in HardwareAuthToken hat);
 
@@ -234,7 +236,7 @@ interface ISession {
      *   - ISessionCallback#onAcquired
      *
      * @return ICancellationSignal An object that can be used by the framework to cancel this
-     * operation.
+     *                             operation.
      */
     ICancellationSignal detectInteraction();
 
@@ -448,4 +450,27 @@ interface ISession {
      * HAL, the framework will invoke this operation to notify when the illumination is showing.
      */
     void onUiReady();
+
+    /**
+     * These are alternative methods for some operations to allow the HAL to make optional
+     * optimizations during execution.
+     *
+     * HALs may ignore the additional context and treat all *WithContext methods the same as
+     * the original methods.
+     */
+
+    /** See ISession#authenticate(long) */
+    ICancellationSignal authenticateWithContext(in long operationId, in OperationContext context);
+
+    /** See ISession#enroll(HardwareAuthToken) */
+    ICancellationSignal enrollWithContext(in HardwareAuthToken hat, in OperationContext context);
+
+    /** See ISession#detectInteraction() */
+    ICancellationSignal detectInteractionWithContext(in OperationContext context);
+
+    /** See ISession#onPointerDown(int, int, int, float, float) */
+    void onPointerDownWithContext(in PointerContext context);
+
+    /** See ISession#onPointerUp(int) */
+    void onPointerUpWithContext(in PointerContext context);
 }
