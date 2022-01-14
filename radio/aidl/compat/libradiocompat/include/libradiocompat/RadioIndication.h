@@ -186,6 +186,8 @@ class RadioIndication : public V1_6::IRadioIndication {
             V1_0::RadioIndicationType type,
             const hidl_vec<V1_6::SetupDataCallResult>& dcList) override;
     Return<void> unthrottleApn(V1_0::RadioIndicationType type, const hidl_string& apn) override;
+    Return<void> slicingConfigChanged(V1_0::RadioIndicationType type,
+                                      const V1_6::SlicingConfig& slicingConfig);
     Return<void> currentLinkCapacityEstimate_1_6(V1_0::RadioIndicationType type,
                                                  const V1_6::LinkCapacityEstimate& lce) override;
     Return<void> currentSignalStrength_1_6(V1_0::RadioIndicationType type,
