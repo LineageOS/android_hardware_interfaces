@@ -1753,6 +1753,26 @@ TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_SURFACE_DAMAGE) {
     ASSERT_TRUE(mReader.takeErrors().empty());
 }
 
+TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_BLOCKING_REGION) {
+    int64_t layer;
+    EXPECT_TRUE(mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount, &layer).isOk());
+
+    Rect empty{0, 0, 0, 0};
+    Rect unit{0, 0, 1, 1};
+
+    mWriter.setLayerBlockingRegion(mPrimaryDisplay, layer, std::vector<Rect>(1, empty));
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setLayerBlockingRegion(mPrimaryDisplay, layer, std::vector<Rect>(1, unit));
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+
+    mWriter.setLayerBlockingRegion(mPrimaryDisplay, layer, std::vector<Rect>());
+    execute();
+    ASSERT_TRUE(mReader.takeErrors().empty());
+}
+
 TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_BLEND_MODE) {
     int64_t layer;
     EXPECT_TRUE(mComposerClient->createLayer(mPrimaryDisplay, kBufferSlotCount, &layer).isOk());
