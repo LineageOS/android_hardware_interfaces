@@ -17,6 +17,7 @@
 package android.hardware.gnss;
 
 import android.hardware.gnss.GnssConstellationType;
+import android.hardware.gnss.SatellitePvt.SatelliteEphemerisSource;
 
 /**
  * Extended interface for GNSS Debug support
@@ -33,16 +34,6 @@ interface IGnssDebug {
         EPHEMERIS = 0,
         ALMANAC_ONLY = 1,
         NOT_AVAILABLE = 2,
-    }
-
-    /** Satellite's ephemeris source */
-    @VintfStability
-    @Backing(type="int")
-    enum SatelliteEphemerisSource {
-        DEMODULATED = 0,
-        SUPL_PROVIDED = 1,
-        OTHER_SERVER_PROVIDED = 2,
-        OTHER = 3,
     }
 
     /** Satellite's ephemeris health */

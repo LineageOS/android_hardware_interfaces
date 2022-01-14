@@ -32,6 +32,7 @@ using aidl::android::hardware::gnss::GnssData;
 using aidl::android::hardware::gnss::GnssLocation;
 using aidl::android::hardware::gnss::GnssMeasurement;
 using aidl::android::hardware::gnss::IGnss;
+using aidl::android::hardware::gnss::IGnssDebug;
 using aidl::android::hardware::gnss::IGnssMeasurementCallback;
 using aidl::android::hardware::gnss::SatellitePvt;
 using GnssSvInfo = aidl::android::hardware::gnss::IGnssCallback::GnssSvInfo;
@@ -181,21 +182,30 @@ GnssData Utils::getMockMeasurement(const bool enableCorrVecOutputs) {
             .fullInterSignalBiasUncertaintyNs = 792.0,
             .satelliteInterSignalBiasNs = 233.9,
             .satelliteInterSignalBiasUncertaintyNs = 921.2,
-            .satellitePvt = {.flags = SatellitePvt::HAS_POSITION_VELOCITY_CLOCK_INFO |
-                                      SatellitePvt::HAS_IONO | SatellitePvt::HAS_TROPO,
-                             .satPosEcef = {.posXMeters = 10442993.1153328,
-                                            .posYMeters = -19926932.8051666,
-                                            .posZMeters = -12034295.0216203,
-                                            .ureMeters = 1000.2345678},
-                             .satVelEcef = {.velXMps = -478.667183715732,
-                                            .velYMps = 1580.68371984114,
-                                            .velZMps = -3030.52994449997,
-                                            .ureRateMps = 10.2345678},
-                             .satClockInfo = {.satHardwareCodeBiasMeters = 1.396983861923e-09,
-                                              .satTimeCorrectionMeters = -7113.08964331,
-                                              .satClkDriftMps = 0},
-                             .ionoDelayMeters = 3.069949602639317e-08,
-                             .tropoDelayMeters = 3.882265204404031},
+            .satellitePvt =
+                    {
+                            .flags = SatellitePvt::HAS_POSITION_VELOCITY_CLOCK_INFO |
+                                     SatellitePvt::HAS_IONO | SatellitePvt::HAS_TROPO,
+                            .satPosEcef = {.posXMeters = 10442993.1153328,
+                                           .posYMeters = -19926932.8051666,
+                                           .posZMeters = -12034295.0216203,
+                                           .ureMeters = 1000.2345678},
+                            .satVelEcef = {.velXMps = -478.667183715732,
+                                           .velYMps = 1580.68371984114,
+                                           .velZMps = -3030.52994449997,
+                                           .ureRateMps = 10.2345678},
+                            .satClockInfo = {.satHardwareCodeBiasMeters = 1.396983861923e-09,
+                                             .satTimeCorrectionMeters = -7113.08964331,
+                                             .satClkDriftMps = 0},
+                            .ionoDelayMeters = 3.069949602639317e-08,
+                            .tropoDelayMeters = 3.882265204404031,
+                            .ephemerisSource =
+                                    SatellitePvt::SatelliteEphemerisSource::SERVER_LONG_TERM,
+                            .TOC = 12345,
+                            .IODC = 143,
+                            .TOE = 9876,
+                            .IODE = 48,
+                    },
             .correlationVectors = {}};
 
     GnssClock clock = {.gnssClockFlags = GnssClock::HAS_FULL_BIAS | GnssClock::HAS_BIAS |
