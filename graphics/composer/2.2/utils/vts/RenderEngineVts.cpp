@@ -15,6 +15,7 @@
  */
 
 #include <composer-vts/2.2/RenderEngineVts.h>
+#include "renderengine/impl/ExternalTexture.h"
 
 namespace android {
 namespace hardware {
@@ -68,8 +69,8 @@ void TestRenderEngine::drawLayers() {
                    [](renderengine::LayerSettings& settings) -> renderengine::LayerSettings {
                        return settings;
                    });
-    auto texture = std::make_shared<renderengine::ExternalTexture>(
-            mGraphicBuffer, *mRenderEngine, renderengine::ExternalTexture::Usage::WRITEABLE);
+    auto texture = std::make_shared<renderengine::impl::ExternalTexture>(
+            mGraphicBuffer, *mRenderEngine, renderengine::impl::ExternalTexture::Usage::WRITEABLE);
     auto [status, readyFence] = mRenderEngine
                                         ->drawLayers(mDisplaySettings, compositionLayers, texture,
                                                      true, std::move(bufferFence))
