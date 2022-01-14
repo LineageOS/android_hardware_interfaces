@@ -34,6 +34,6 @@
 package android.hardware.gnss.visibility_control;
 @VintfStability
 interface IGnssVisibilityControl {
-  void enableNfwLocationAccess(in String[] proxyApps);
+  void enableNfwLocationAccess(in @utf8InCpp String[] proxyApps);
   void setCallback(in android.hardware.gnss.visibility_control.IGnssVisibilityControlCallback callback);
 }

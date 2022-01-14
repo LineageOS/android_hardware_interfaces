@@ -923,7 +923,8 @@ TEST_P(GnssHalTest, TestGnssVisibilityControlExtension) {
     status = iGnssVisibilityControl->setCallback(gnssVisibilityControlCallback);
     ASSERT_TRUE(status.isOk());
 
-    std::vector<String16> proxyApps{String16("com.example.ims"), String16("com.example.mdt")};
+    std::vector<std::string> proxyApps{std::string("com.example.ims"),
+                                       std::string("com.example.mdt")};
     status = iGnssVisibilityControl->enableNfwLocationAccess(proxyApps);
     ASSERT_TRUE(status.isOk());
 }
