@@ -37,4 +37,11 @@ parcelable GnssData {
   android.hardware.gnss.GnssMeasurement[] measurements;
   android.hardware.gnss.GnssClock clock;
   android.hardware.gnss.ElapsedRealtime elapsedRealtime;
+  @nullable android.hardware.gnss.GnssData.GnssAgc[] gnssAgcs;
+  @VintfStability
+  parcelable GnssAgc {
+    double agcLevelDb;
+    android.hardware.gnss.GnssConstellationType constellation = android.hardware.gnss.GnssConstellationType.UNKNOWN;
+    long carrierFrequencyHz;
+  }
 }
