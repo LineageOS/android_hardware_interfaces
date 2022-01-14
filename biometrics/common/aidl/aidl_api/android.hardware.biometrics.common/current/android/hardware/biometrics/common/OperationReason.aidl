@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,23 +31,10 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.biometrics.fingerprint;
-@VintfStability
-interface ISessionCallback {
-  void onChallengeGenerated(in long challenge);
-  void onChallengeRevoked(in long challenge);
-  void onAcquired(in android.hardware.biometrics.fingerprint.AcquiredInfo info, in int vendorCode);
-  void onError(in android.hardware.biometrics.fingerprint.Error error, in int vendorCode);
-  void onEnrollmentProgress(in int enrollmentId, int remaining);
-  void onAuthenticationSucceeded(in int enrollmentId, in android.hardware.keymaster.HardwareAuthToken hat);
-  void onAuthenticationFailed();
-  void onLockoutTimed(in long durationMillis);
-  void onLockoutPermanent();
-  void onLockoutCleared();
-  void onInteractionDetected();
-  void onEnrollmentsEnumerated(in int[] enrollmentIds);
-  void onEnrollmentsRemoved(in int[] enrollmentIds);
-  void onAuthenticatorIdRetrieved(in long authenticatorId);
-  void onAuthenticatorIdInvalidated(in long newAuthenticatorId);
-  void onSessionClosed();
+package android.hardware.biometrics.common;
+@Backing(type="byte") @VintfStability
+enum OperationReason {
+  UNKNOWN = 0,
+  BIOMETRIC_PROMPT = 1,
+  KEYGUARD = 2,
 }
