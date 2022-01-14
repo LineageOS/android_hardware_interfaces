@@ -17,6 +17,7 @@
 package android.hardware.biometrics.face;
 
 import android.hardware.biometrics.common.ICancellationSignal;
+import android.hardware.biometrics.common.OperationContext;
 import android.hardware.biometrics.face.EnrollmentStageConfig;
 import android.hardware.biometrics.face.EnrollmentType;
 import android.hardware.biometrics.face.Feature;
@@ -441,4 +442,23 @@ interface ISession {
      *   - ISessionCallback#onSessionClosed
      */
     void close();
+
+    /**
+     * These are alternative methods for some operations to allow the HAL to make optional
+     * optimizations during execution.
+     *
+     * HALs may ignore the additional context and treat all *WithContext methods the same as
+     * the original methods.
+     */
+
+    /* See ISession#authenticateWithContext(long) */
+    ICancellationSignal authenticateWithContext(in long operationId, in OperationContext context);
+
+    /* See ISession#enroll(HardwareAuthToken, EnrollmentType, Feature[], NativeHandle) */
+    ICancellationSignal enrollWithContext(in HardwareAuthToken hat, in EnrollmentType type,
+            in Feature[] features, in @nullable NativeHandle previewSurface,
+            in OperationContext context);
+
+    /* See ISession#detectInteraction() */
+    ICancellationSignal detectInteractionWithContext(in OperationContext context);
 }
