@@ -23,6 +23,7 @@
 #include <android-base/logging.h>
 #include <android-base/stringprintf.h>
 #include <string.h>
+#include <map>
 
 #include <openssl/sha.h>
 
@@ -52,38 +53,110 @@ namespace android::hardware::identity {
 
 // ----------------------------------------------------------------------
 
-FakeSecureHardwareProvisioningProxy::FakeSecureHardwareProvisioningProxy() {}
+// The singleton EicProvisioning object used everywhere.
+//
+EicProvisioning FakeSecureHardwareProvisioningProxy::ctx_;
 
-FakeSecureHardwareProvisioningProxy::~FakeSecureHardwareProvisioningProxy() {}
-
-bool FakeSecureHardwareProvisioningProxy::shutdown() {
-    LOG(INFO) << "FakeSecureHardwarePresentationProxy shutdown";
-    return true;
+FakeSecureHardwareProvisioningProxy::~FakeSecureHardwareProvisioningProxy() {
+    if (id_ != 0) {
+        shutdown();
+    }
 }
 
 bool FakeSecureHardwareProvisioningProxy::initialize(bool testCredential) {
-    LOG(INFO) << "FakeSecureHardwareProvisioningProxy created, sizeof(EicProvisioning): "
-              << sizeof(EicProvisioning);
-    return eicProvisioningInit(&ctx_, testCredential);
+    if (id_ != 0) {
+        LOG(WARNING) << "Proxy is already initialized";
+        return false;
+    }
+    bool initialized = eicProvisioningInit(&ctx_, testCredential);
+    if (!initialized) {
+        return false;
+    }
+    optional<uint32_t> id = getId();
+    if (!id) {
+        LOG(WARNING) << "Error getting id";
+        return false;
+    }
+    id_ = id.value();
+    return true;
 }
 
 bool FakeSecureHardwareProvisioningProxy::initializeForUpdate(
-        bool testCredential, string docType, vector<uint8_t> encryptedCredentialKeys) {
-    return eicProvisioningInitForUpdate(&ctx_, testCredential, docType.c_str(),
-                                        docType.size(),
-                                        encryptedCredentialKeys.data(),
-                                        encryptedCredentialKeys.size());
+        bool testCredential, const string& docType,
+        const vector<uint8_t>& encryptedCredentialKeys) {
+    if (id_ != 0) {
+        LOG(WARNING) << "Proxy is already initialized";
+        return false;
+    }
+    bool initialized = eicProvisioningInitForUpdate(&ctx_, testCredential, docType.c_str(),
+                                                    docType.size(), encryptedCredentialKeys.data(),
+                                                    encryptedCredentialKeys.size());
+    if (!initialized) {
+        return false;
+    }
+    optional<uint32_t> id = getId();
+    if (!id) {
+        LOG(WARNING) << "Error getting id";
+        return false;
+    }
+    id_ = id.value();
+    return true;
+}
+
+optional<uint32_t> FakeSecureHardwareProvisioningProxy::getId() {
+    uint32_t id;
+    if (!eicProvisioningGetId(&ctx_, &id)) {
+        return std::nullopt;
+    }
+    return id;
+}
+
+bool FakeSecureHardwareProvisioningProxy::validateId(const string& callerName) {
+    if (id_ == 0) {
+        LOG(WARNING) << "FakeSecureHardwareProvisioningProxy::" << callerName
+                     << ": While validating expected id is 0";
+        return false;
+    }
+    optional<uint32_t> id = getId();
+    if (!id) {
+        LOG(WARNING) << "FakeSecureHardwareProvisioningProxy::" << callerName
+                     << ": Error getting id for validating";
+        return false;
+    }
+    if (id.value() != id_) {
+        LOG(WARNING) << "FakeSecureHardwareProvisioningProxy::" << callerName
+                     << ": While validating expected id " << id_ << " but got " << id.value();
+        return false;
+    }
+    return true;
+}
+
+bool FakeSecureHardwareProvisioningProxy::shutdown() {
+    bool validated = validateId(__func__);
+    id_ = 0;
+    if (!validated) {
+        return false;
+    }
+    if (!eicProvisioningShutdown(&ctx_)) {
+        LOG(INFO) << "Error shutting down provisioning";
+        return false;
+    }
+    return true;
 }
 
 // Returns public key certificate.
 optional<vector<uint8_t>> FakeSecureHardwareProvisioningProxy::createCredentialKey(
         const vector<uint8_t>& challenge, const vector<uint8_t>& applicationId) {
+    if (!validateId(__func__)) {
+        return std::nullopt;
+    }
+
     uint8_t publicKeyCert[4096];
     size_t publicKeyCertSize = sizeof publicKeyCert;
     if (!eicProvisioningCreateCredentialKey(&ctx_, challenge.data(), challenge.size(),
                                             applicationId.data(), applicationId.size(),
                                             publicKeyCert, &publicKeyCertSize)) {
-        return {};
+        return std::nullopt;
     }
     vector<uint8_t> pubKeyCert(publicKeyCertSize);
     memcpy(pubKeyCert.data(), publicKeyCert, publicKeyCertSize);
@@ -91,8 +164,11 @@ optional<vector<uint8_t>> FakeSecureHardwareProvisioningProxy::createCredentialK
 }
 
 bool FakeSecureHardwareProvisioningProxy::startPersonalization(
-        int accessControlProfileCount, vector<int> entryCounts, const string& docType,
+        int accessControlProfileCount, const vector<int>& entryCounts, const string& docType,
         size_t expectedProofOfProvisioningSize) {
+    if (!validateId(__func__)) {
+        return false;
+    }
 
     if (!eicProvisioningStartPersonalization(&ctx_, accessControlProfileCount,
                                              entryCounts.data(),
@@ -108,13 +184,17 @@ bool FakeSecureHardwareProvisioningProxy::startPersonalization(
 optional<vector<uint8_t>> FakeSecureHardwareProvisioningProxy::addAccessControlProfile(
         int id, const vector<uint8_t>& readerCertificate, bool userAuthenticationRequired,
         uint64_t timeoutMillis, uint64_t secureUserId) {
+    if (!validateId(__func__)) {
+        return std::nullopt;
+    }
+
     vector<uint8_t> mac(28);
     uint8_t scratchSpace[512];
     if (!eicProvisioningAddAccessControlProfile(
                 &ctx_, id, readerCertificate.data(), readerCertificate.size(),
                 userAuthenticationRequired, timeoutMillis, secureUserId, mac.data(),
                 scratchSpace, sizeof(scratchSpace))) {
-        return {};
+        return std::nullopt;
     }
     return mac;
 }
@@ -122,6 +202,10 @@ optional<vector<uint8_t>> FakeSecureHardwareProvisioningProxy::addAccessControlP
 bool FakeSecureHardwareProvisioningProxy::beginAddEntry(const vector<int>& accessControlProfileIds,
                                                         const string& nameSpace, const string& name,
                                                         uint64_t entrySize) {
+    if (!validateId(__func__)) {
+        return false;
+    }
+
     uint8_t scratchSpace[512];
     vector<uint8_t> uint8AccessControlProfileIds;
     for (size_t i = 0; i < accessControlProfileIds.size(); i++) {
@@ -138,6 +222,10 @@ bool FakeSecureHardwareProvisioningProxy::beginAddEntry(const vector<int>& acces
 optional<vector<uint8_t>> FakeSecureHardwareProvisioningProxy::addEntryValue(
         const vector<int>& accessControlProfileIds, const string& nameSpace, const string& name,
         const vector<uint8_t>& content) {
+    if (!validateId(__func__)) {
+        return std::nullopt;
+    }
+
     vector<uint8_t> eicEncryptedContent;
     uint8_t scratchSpace[512];
     vector<uint8_t> uint8AccessControlProfileIds;
@@ -150,16 +238,20 @@ optional<vector<uint8_t>> FakeSecureHardwareProvisioningProxy::addEntryValue(
                 &ctx_, uint8AccessControlProfileIds.data(), uint8AccessControlProfileIds.size(),
                 nameSpace.c_str(), nameSpace.size(), name.c_str(), name.size(), content.data(),
                 content.size(), eicEncryptedContent.data(), scratchSpace, sizeof(scratchSpace))) {
-        return {};
+        return std::nullopt;
     }
     return eicEncryptedContent;
 }
 
 // Returns signatureOfToBeSigned (EIC_ECDSA_P256_SIGNATURE_SIZE bytes).
 optional<vector<uint8_t>> FakeSecureHardwareProvisioningProxy::finishAddingEntries() {
+    if (!validateId(__func__)) {
+        return std::nullopt;
+    }
+
     vector<uint8_t> signatureOfToBeSigned(EIC_ECDSA_P256_SIGNATURE_SIZE);
     if (!eicProvisioningFinishAddingEntries(&ctx_, signatureOfToBeSigned.data())) {
-        return {};
+        return std::nullopt;
     }
     return signatureOfToBeSigned;
 }
@@ -167,11 +259,15 @@ optional<vector<uint8_t>> FakeSecureHardwareProvisioningProxy::finishAddingEntri
 // Returns encryptedCredentialKeys.
 optional<vector<uint8_t>> FakeSecureHardwareProvisioningProxy::finishGetCredentialData(
         const string& docType) {
+    if (!validateId(__func__)) {
+        return std::nullopt;
+    }
+
     vector<uint8_t> encryptedCredentialKeys(116);
     size_t size = encryptedCredentialKeys.size();
     if (!eicProvisioningFinishGetCredentialData(&ctx_, docType.c_str(), docType.size(),
                                                 encryptedCredentialKeys.data(), &size)) {
-        return {};
+        return std::nullopt;
     }
     encryptedCredentialKeys.resize(size);
     return encryptedCredentialKeys;
@@ -179,21 +275,200 @@ optional<vector<uint8_t>> FakeSecureHardwareProvisioningProxy::finishGetCredenti
 
 // ----------------------------------------------------------------------
 
-FakeSecureHardwarePresentationProxy::FakeSecureHardwarePresentationProxy() {}
+// The singleton EicSession object used everywhere.
+//
+EicSession FakeSecureHardwareSessionProxy::ctx_;
 
-FakeSecureHardwarePresentationProxy::~FakeSecureHardwarePresentationProxy() {}
+FakeSecureHardwareSessionProxy::~FakeSecureHardwareSessionProxy() {
+    if (id_ != 0) {
+        shutdown();
+    }
+}
 
-bool FakeSecureHardwarePresentationProxy::initialize(bool testCredential, string docType,
-                                                     vector<uint8_t> encryptedCredentialKeys) {
-    LOG(INFO) << "FakeSecureHardwarePresentationProxy created, sizeof(EicPresentation): "
-              << sizeof(EicPresentation);
-    return eicPresentationInit(&ctx_, testCredential, docType.c_str(), docType.size(),
-                               encryptedCredentialKeys.data(), encryptedCredentialKeys.size());
+bool FakeSecureHardwareSessionProxy::initialize() {
+    if (id_ != 0) {
+        LOG(WARNING) << "Proxy is already initialized";
+        return false;
+    }
+    bool initialized = eicSessionInit(&ctx_);
+    if (!initialized) {
+        return false;
+    }
+    optional<uint32_t> id = getId();
+    if (!id) {
+        LOG(WARNING) << "Error getting id";
+        return false;
+    }
+    id_ = id.value();
+    return true;
+}
+
+optional<uint32_t> FakeSecureHardwareSessionProxy::getId() {
+    uint32_t id;
+    if (!eicSessionGetId(&ctx_, &id)) {
+        return std::nullopt;
+    }
+    return id;
+}
+
+bool FakeSecureHardwareSessionProxy::shutdown() {
+    bool validated = validateId(__func__);
+    id_ = 0;
+    if (!validated) {
+        return false;
+    }
+    if (!eicSessionShutdown(&ctx_)) {
+        LOG(INFO) << "Error shutting down session";
+        return false;
+    }
+    return true;
+}
+
+bool FakeSecureHardwareSessionProxy::validateId(const string& callerName) {
+    if (id_ == 0) {
+        LOG(WARNING) << "FakeSecureHardwareSessionProxy::" << callerName
+                     << ": While validating expected id is 0";
+        return false;
+    }
+    optional<uint32_t> id = getId();
+    if (!id) {
+        LOG(WARNING) << "FakeSecureHardwareSessionProxy::" << callerName
+                     << ": Error getting id for validating";
+        return false;
+    }
+    if (id.value() != id_) {
+        LOG(WARNING) << "FakeSecureHardwareSessionProxy::" << callerName
+                     << ": While validating expected id " << id_ << " but got " << id.value();
+        return false;
+    }
+    return true;
+}
+
+optional<uint64_t> FakeSecureHardwareSessionProxy::getAuthChallenge() {
+    if (!validateId(__func__)) {
+        return std::nullopt;
+    }
+
+    uint64_t authChallenge;
+    if (!eicSessionGetAuthChallenge(&ctx_, &authChallenge)) {
+        return std::nullopt;
+    }
+    return authChallenge;
+}
+
+optional<vector<uint8_t>> FakeSecureHardwareSessionProxy::getEphemeralKeyPair() {
+    if (!validateId(__func__)) {
+        return std::nullopt;
+    }
+
+    vector<uint8_t> priv(EIC_P256_PRIV_KEY_SIZE);
+    if (!eicSessionGetEphemeralKeyPair(&ctx_, priv.data())) {
+        return std::nullopt;
+    }
+    return priv;
+}
+
+bool FakeSecureHardwareSessionProxy::setReaderEphemeralPublicKey(
+        const vector<uint8_t>& readerEphemeralPublicKey) {
+    if (!validateId(__func__)) {
+        return false;
+    }
+
+    return eicSessionSetReaderEphemeralPublicKey(&ctx_, readerEphemeralPublicKey.data());
+}
+
+bool FakeSecureHardwareSessionProxy::setSessionTranscript(
+        const vector<uint8_t>& sessionTranscript) {
+    if (!validateId(__func__)) {
+        return false;
+    }
+
+    return eicSessionSetSessionTranscript(&ctx_, sessionTranscript.data(),
+                                          sessionTranscript.size());
+}
+
+// ----------------------------------------------------------------------
+
+// The singleton EicPresentation object used everywhere.
+//
+EicPresentation FakeSecureHardwarePresentationProxy::ctx_;
+
+FakeSecureHardwarePresentationProxy::~FakeSecureHardwarePresentationProxy() {
+    if (id_ != 0) {
+        shutdown();
+    }
+}
+
+bool FakeSecureHardwarePresentationProxy::initialize(
+        uint32_t sessionId, bool testCredential, const string& docType,
+        const vector<uint8_t>& encryptedCredentialKeys) {
+    if (id_ != 0) {
+        LOG(WARNING) << "Proxy is already initialized";
+        return false;
+    }
+    bool initialized =
+            eicPresentationInit(&ctx_, sessionId, testCredential, docType.c_str(), docType.size(),
+                                encryptedCredentialKeys.data(), encryptedCredentialKeys.size());
+    if (!initialized) {
+        return false;
+    }
+    optional<uint32_t> id = getId();
+    if (!id) {
+        LOG(WARNING) << "Error getting id";
+        return false;
+    }
+    id_ = id.value();
+    return true;
+}
+
+optional<uint32_t> FakeSecureHardwarePresentationProxy::getId() {
+    uint32_t id;
+    if (!eicPresentationGetId(&ctx_, &id)) {
+        return std::nullopt;
+    }
+    return id;
+}
+
+bool FakeSecureHardwarePresentationProxy::validateId(const string& callerName) {
+    if (id_ == 0) {
+        LOG(WARNING) << "FakeSecureHardwarePresentationProxy::" << callerName
+                     << ": While validating expected id is 0";
+        return false;
+    }
+    optional<uint32_t> id = getId();
+    if (!id) {
+        LOG(WARNING) << "FakeSecureHardwarePresentationProxy::" << callerName
+                     << ": Error getting id for validating";
+        return false;
+    }
+    if (id.value() != id_) {
+        LOG(WARNING) << "FakeSecureHardwarePresentationProxy::" << callerName
+                     << ": While validating expected id " << id_ << " but got " << id.value();
+        return false;
+    }
+    return true;
+}
+
+bool FakeSecureHardwarePresentationProxy::shutdown() {
+    bool validated = validateId(__func__);
+    id_ = 0;
+    if (!validated) {
+        return false;
+    }
+    if (!eicPresentationShutdown(&ctx_)) {
+        LOG(INFO) << "Error shutting down presentation";
+        return false;
+    }
+    return true;
 }
 
 // Returns publicKeyCert (1st component) and signingKeyBlob (2nd component)
 optional<pair<vector<uint8_t>, vector<uint8_t>>>
-FakeSecureHardwarePresentationProxy::generateSigningKeyPair(string docType, time_t now) {
+FakeSecureHardwarePresentationProxy::generateSigningKeyPair(const string& docType, time_t now) {
+    if (!validateId(__func__)) {
+        return std::nullopt;
+    }
+
     uint8_t publicKeyCert[512];
     size_t publicKeyCertSize = sizeof(publicKeyCert);
     vector<uint8_t> signingKeyBlob(60);
@@ -201,7 +476,7 @@ FakeSecureHardwarePresentationProxy::generateSigningKeyPair(string docType, time
     if (!eicPresentationGenerateSigningKeyPair(&ctx_, docType.c_str(), docType.size(), now,
                                                publicKeyCert, &publicKeyCertSize,
                                                signingKeyBlob.data())) {
-        return {};
+        return std::nullopt;
     }
 
     vector<uint8_t> cert;
@@ -213,33 +488,44 @@ FakeSecureHardwarePresentationProxy::generateSigningKeyPair(string docType, time
 
 // Returns private key
 optional<vector<uint8_t>> FakeSecureHardwarePresentationProxy::createEphemeralKeyPair() {
+    if (!validateId(__func__)) {
+        return std::nullopt;
+    }
+
     vector<uint8_t> priv(EIC_P256_PRIV_KEY_SIZE);
     if (!eicPresentationCreateEphemeralKeyPair(&ctx_, priv.data())) {
-        return {};
+        return std::nullopt;
     }
     return priv;
 }
 
 optional<uint64_t> FakeSecureHardwarePresentationProxy::createAuthChallenge() {
+    if (!validateId(__func__)) {
+        return std::nullopt;
+    }
+
     uint64_t challenge;
     if (!eicPresentationCreateAuthChallenge(&ctx_, &challenge)) {
-        return {};
+        return std::nullopt;
     }
     return challenge;
 }
 
-bool FakeSecureHardwarePresentationProxy::shutdown() {
-    LOG(INFO) << "FakeSecureHardwarePresentationProxy shutdown";
-    return true;
-}
-
 bool FakeSecureHardwarePresentationProxy::pushReaderCert(const vector<uint8_t>& certX509) {
+    if (!validateId(__func__)) {
+        return false;
+    }
+
     return eicPresentationPushReaderCert(&ctx_, certX509.data(), certX509.size());
 }
 
 bool FakeSecureHardwarePresentationProxy::validateRequestMessage(
         const vector<uint8_t>& sessionTranscript, const vector<uint8_t>& requestMessage,
         int coseSignAlg, const vector<uint8_t>& readerSignatureOfToBeSigned) {
+    if (!validateId(__func__)) {
+        return false;
+    }
+
     return eicPresentationValidateRequestMessage(
             &ctx_, sessionTranscript.data(), sessionTranscript.size(), requestMessage.data(),
             requestMessage.size(), coseSignAlg, readerSignatureOfToBeSigned.data(),
@@ -251,6 +537,10 @@ bool FakeSecureHardwarePresentationProxy::setAuthToken(
         int hardwareAuthenticatorType, uint64_t timeStamp, const vector<uint8_t>& mac,
         uint64_t verificationTokenChallenge, uint64_t verificationTokenTimestamp,
         int verificationTokenSecurityLevel, const vector<uint8_t>& verificationTokenMac) {
+    if (!validateId(__func__)) {
+        return false;
+    }
+
     return eicPresentationSetAuthToken(&ctx_, challenge, secureUserId, authenticatorId,
                                        hardwareAuthenticatorType, timeStamp, mac.data(), mac.size(),
                                        verificationTokenChallenge, verificationTokenTimestamp,
@@ -261,6 +551,10 @@ bool FakeSecureHardwarePresentationProxy::setAuthToken(
 optional<bool> FakeSecureHardwarePresentationProxy::validateAccessControlProfile(
         int id, const vector<uint8_t>& readerCertificate, bool userAuthenticationRequired,
         int timeoutMillis, uint64_t secureUserId, const vector<uint8_t>& mac) {
+    if (!validateId(__func__)) {
+        return std::nullopt;
+    }
+
     bool accessGranted = false;
     uint8_t scratchSpace[512];
     if (!eicPresentationValidateAccessControlProfile(&ctx_, id, readerCertificate.data(),
@@ -268,12 +562,16 @@ optional<bool> FakeSecureHardwarePresentationProxy::validateAccessControlProfile
                                                      userAuthenticationRequired, timeoutMillis,
                                                      secureUserId, mac.data(), &accessGranted,
                                                      scratchSpace, sizeof(scratchSpace))) {
-        return {};
+        return std::nullopt;
     }
     return accessGranted;
 }
 
 bool FakeSecureHardwarePresentationProxy::startRetrieveEntries() {
+    if (!validateId(__func__)) {
+        return false;
+    }
+
     return eicPresentationStartRetrieveEntries(&ctx_);
 }
 
@@ -281,6 +579,10 @@ bool FakeSecureHardwarePresentationProxy::calcMacKey(
         const vector<uint8_t>& sessionTranscript, const vector<uint8_t>& readerEphemeralPublicKey,
         const vector<uint8_t>& signingKeyBlob, const string& docType,
         unsigned int numNamespacesWithValues, size_t expectedProofOfProvisioningSize) {
+    if (!validateId(__func__)) {
+        return false;
+    }
+
     if (signingKeyBlob.size() != 60) {
         eicDebug("Unexpected size %zd of signingKeyBlob, expected 60", signingKeyBlob.size());
         return false;
@@ -294,6 +596,10 @@ bool FakeSecureHardwarePresentationProxy::calcMacKey(
 AccessCheckResult FakeSecureHardwarePresentationProxy::startRetrieveEntryValue(
         const string& nameSpace, const string& name, unsigned int newNamespaceNumEntries,
         int32_t entrySize, const vector<int32_t>& accessControlProfileIds) {
+    if (!validateId(__func__)) {
+        return AccessCheckResult::kFailed;
+    }
+
     uint8_t scratchSpace[512];
     vector<uint8_t> uint8AccessControlProfileIds;
     for (size_t i = 0; i < accessControlProfileIds.size(); i++) {
@@ -324,6 +630,10 @@ AccessCheckResult FakeSecureHardwarePresentationProxy::startRetrieveEntryValue(
 optional<vector<uint8_t>> FakeSecureHardwarePresentationProxy::retrieveEntryValue(
         const vector<uint8_t>& encryptedContent, const string& nameSpace, const string& name,
         const vector<int32_t>& accessControlProfileIds) {
+    if (!validateId(__func__)) {
+        return std::nullopt;
+    }
+
     uint8_t scratchSpace[512];
     vector<uint8_t> uint8AccessControlProfileIds;
     for (size_t i = 0; i < accessControlProfileIds.size(); i++) {
@@ -337,16 +647,20 @@ optional<vector<uint8_t>> FakeSecureHardwarePresentationProxy::retrieveEntryValu
                 nameSpace.c_str(), nameSpace.size(), name.c_str(), name.size(),
                 uint8AccessControlProfileIds.data(), uint8AccessControlProfileIds.size(),
                 scratchSpace, sizeof(scratchSpace))) {
-        return {};
+        return std::nullopt;
     }
     return content;
 }
 
 optional<vector<uint8_t>> FakeSecureHardwarePresentationProxy::finishRetrieval() {
+    if (!validateId(__func__)) {
+        return std::nullopt;
+    }
+
     vector<uint8_t> mac(32);
     size_t macSize = 32;
     if (!eicPresentationFinishRetrieval(&ctx_, mac.data(), &macSize)) {
-        return {};
+        return std::nullopt;
     }
     mac.resize(macSize);
     return mac;
@@ -355,11 +669,15 @@ optional<vector<uint8_t>> FakeSecureHardwarePresentationProxy::finishRetrieval()
 optional<vector<uint8_t>> FakeSecureHardwarePresentationProxy::deleteCredential(
         const string& docType, const vector<uint8_t>& challenge, bool includeChallenge,
         size_t proofOfDeletionCborSize) {
+    if (!validateId(__func__)) {
+        return std::nullopt;
+    }
+
     vector<uint8_t> signatureOfToBeSigned(EIC_ECDSA_P256_SIGNATURE_SIZE);
     if (!eicPresentationDeleteCredential(&ctx_, docType.c_str(), docType.size(), challenge.data(),
                                          challenge.size(), includeChallenge,
                                          proofOfDeletionCborSize, signatureOfToBeSigned.data())) {
-        return {};
+        return std::nullopt;
     }
     return signatureOfToBeSigned;
 }
@@ -367,11 +685,15 @@ optional<vector<uint8_t>> FakeSecureHardwarePresentationProxy::deleteCredential(
 optional<vector<uint8_t>> FakeSecureHardwarePresentationProxy::proveOwnership(
         const string& docType, bool testCredential, const vector<uint8_t>& challenge,
         size_t proofOfOwnershipCborSize) {
+    if (!validateId(__func__)) {
+        return std::nullopt;
+    }
+
     vector<uint8_t> signatureOfToBeSigned(EIC_ECDSA_P256_SIGNATURE_SIZE);
     if (!eicPresentationProveOwnership(&ctx_, docType.c_str(), docType.size(), testCredential,
                                        challenge.data(), challenge.size(), proofOfOwnershipCborSize,
                                        signatureOfToBeSigned.data())) {
-        return {};
+        return std::nullopt;
     }
     return signatureOfToBeSigned;
 }

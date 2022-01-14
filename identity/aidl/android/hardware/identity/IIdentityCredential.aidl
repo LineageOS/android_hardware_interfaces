@@ -17,9 +17,9 @@
 package android.hardware.identity;
 
 import android.hardware.identity.Certificate;
+import android.hardware.identity.IWritableIdentityCredential;
 import android.hardware.identity.RequestNamespace;
 import android.hardware.identity.SecureAccessControlProfile;
-import android.hardware.identity.IWritableIdentityCredential;
 import android.hardware.keymaster.HardwareAuthToken;
 import android.hardware.keymaster.VerificationToken;
 
@@ -44,6 +44,9 @@ interface IIdentityCredential {
      * This method was deprecated in API version 3 because there's no challenge so freshness
      * can't be checked. Use deleteCredentalWithChallenge() instead.
      *
+     * If the method is called on an instance obtained via IPresentationSession.getCredential(),
+     * STATUS_FAILED must be returned.
+     *
      * @return a COSE_Sign1 signature described above
      * @deprecated use deleteCredentalWithChallenge() instead.
      */
@@ -60,6 +63,9 @@ interface IIdentityCredential {
      * This method may only be called once per instance. If called more than once, STATUS_FAILED
      * will be returned.
      *
+     * If the method is called on an instance obtained via IPresentationSession.getCredential(),
+     * STATUS_FAILED must be returned.
+     *
      * @return the private key, in DER format as specified in RFC 5915.
      */
     byte[] createEphemeralKeyPair();
@@ -69,6 +75,9 @@ interface IIdentityCredential {
      *
      * This method may only be called once per instance. If called more than once, STATUS_FAILED
      * will be returned.
+     *
+     * If the method is called on an instance obtained via IPresentationSession.getCredential(),
+     * STATUS_FAILED must be returned.
      *
      * @param publicKey contains the reader's ephemeral public key, in uncompressed
      *        form (e.g. 0x04 || X || Y).
@@ -82,6 +91,9 @@ interface IIdentityCredential {
      *
      * This method may only be called once per instance. If called more than once, STATUS_FAILED
      * will be returned. If user authentication is not needed, this method may not be called.
+     *
+     * If the method is called on an instance obtained via IPresentationSession.getCredential(),
+     * STATUS_FAILED must be returned.
      *
      * @return challenge, a non-zero number.
      */
@@ -371,6 +383,9 @@ interface IIdentityCredential {
      * This CBOR enables an issuer to determine the exact state of the credential it
      * returns issuer-signed data for.
      *
+     * If the method is called on an instance obtained via IPresentationSession.getCredential(),
+     * STATUS_FAILED must be returned.
+     *
      * @param out signingKeyBlob contains an AES-GCM-ENC(storageKey, R, signingKey, docType)
      *     where signingKey is an EC private key in uncompressed form. That is, the returned
      *     blob is an encrypted copy of the newly-generated private signing key.
@@ -420,6 +435,9 @@ interface IIdentityCredential {
      *
      * This method was introduced in API version 3.
      *
+     * If the method is called on an instance obtained via IPresentationSession.getCredential(),
+     * STATUS_FAILED must be returned.
+     *
      * @param challenge a challenge set by the issuer to ensure freshness. Maximum size is 32 bytes
      *     and it may be empty. Fails with STATUS_INVALID_DATA if bigger than 32 bytes.
      * @return a COSE_Sign1 signature described above.
@@ -442,6 +460,9 @@ interface IIdentityCredential {
      *
      * This method was introduced in API version 3.
      *
+     * If the method is called on an instance obtained via IPresentationSession.getCredential(),
+     * STATUS_FAILED must be returned.
+     *
      * @param challenge a challenge set by the issuer to ensure freshness. Maximum size is 32 bytes
      *     and it may be empty. Fails with STATUS_INVALID_DATA if bigger than 32 bytes.
      * @return a COSE_Sign1 signature described above.
@@ -455,6 +476,9 @@ interface IIdentityCredential {
      * it fails with the error STATUS_FAILED.
      *
      * This method was introduced in API version 3.
+     *
+     * If the method is called on an instance obtained via IPresentationSession.getCredential(),
+     * STATUS_FAILED must be returned.
      *
      * @return an IWritableIdentityCredential
      */

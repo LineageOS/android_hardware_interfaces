@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The Android Open Source Project
+ * Copyright 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,10 @@
 
 package android.hardware.identity;
 @VintfStability
-parcelable RequestNamespace {
-  @utf8InCpp String namespaceName;
-  android.hardware.identity.RequestDataItem[] items;
+interface IPresentationSession {
+  byte[] getEphemeralKeyPair();
+  long getAuthChallenge();
+  void setReaderEphemeralPublicKey(in byte[] publicKey);
+  void setSessionTranscript(in byte[] sessionTranscript);
+  android.hardware.identity.IIdentityCredential getCredential(in byte[] credentialData);
 }
