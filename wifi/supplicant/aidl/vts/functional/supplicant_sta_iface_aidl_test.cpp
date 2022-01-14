@@ -769,6 +769,7 @@ TEST_P(SupplicantStaIfaceAidlTest, StartDppConfiguratorInitiator) {
     EXPECT_TRUE(sta_iface_->removeDppUri(peer_id).isOk());
 }
 
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SupplicantStaIfaceAidlTest);
 INSTANTIATE_TEST_SUITE_P(Supplicant, SupplicantStaIfaceAidlTest,
                          testing::ValuesIn(android::getAidlHalInstanceNames(
                              ISupplicant::descriptor)),

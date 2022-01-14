@@ -19,7 +19,7 @@ package android.hardware.wifi.supplicant;
 /**
  * Possible mask of values for Proto param.
  * See /external/wpa_supplicant_8/src/common/defs.h for
- * all possible values (starting at WPA_PROTO_WPA).
+ * the historical values (starting at WPA_PROTO_WPA).
  */
 @VintfStability
 @Backing(type="int")
