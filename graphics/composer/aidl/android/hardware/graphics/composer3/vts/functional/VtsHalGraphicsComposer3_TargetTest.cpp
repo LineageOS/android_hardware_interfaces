@@ -716,6 +716,61 @@ TEST_P(GraphicsComposerAidlTest, setActiveConfigWithConstraints_BadConfig) {
     }
 }
 
+TEST_P(GraphicsComposerAidlTest, setBootDisplayConfig_BadDisplay) {
+    int32_t config = 0;
+    auto const error = mComposerClient->setBootDisplayConfig(mInvalidDisplayId, config);
+
+    EXPECT_FALSE(error.isOk());
+    EXPECT_EQ(IComposerClient::EX_BAD_DISPLAY, error.getServiceSpecificError());
+}
+
+TEST_P(GraphicsComposerAidlTest, setBootDisplayConfig_BadConfig) {
+    for (VtsDisplay& display : mDisplays) {
+        int32_t invalidConfigId = GetInvalidConfigId();
+        const auto error = mComposerClient->setBootDisplayConfig(display.get(), invalidConfigId);
+        EXPECT_FALSE(error.isOk());
+        EXPECT_EQ(IComposerClient::EX_BAD_CONFIG, error.getServiceSpecificError());
+    }
+}
+
+TEST_P(GraphicsComposerAidlTest, setBootDisplayConfig) {
+    std::vector<int32_t> configs;
+    EXPECT_TRUE(mComposerClient->getDisplayConfigs(mPrimaryDisplay, &configs).isOk());
+    for (auto config : configs) {
+        EXPECT_TRUE(mComposerClient->setBootDisplayConfig(mPrimaryDisplay, config).isOk());
+    }
+}
+
+TEST_P(GraphicsComposerAidlTest, clearBootDisplayConfig_BadDisplay) {
+    auto const error = mComposerClient->clearBootDisplayConfig(mInvalidDisplayId);
+
+    EXPECT_FALSE(error.isOk());
+    EXPECT_EQ(IComposerClient::EX_BAD_DISPLAY, error.getServiceSpecificError());
+}
+
+TEST_P(GraphicsComposerAidlTest, clearBootDisplayConfig) {
+    EXPECT_TRUE(mComposerClient->clearBootDisplayConfig(mPrimaryDisplay).isOk());
+}
+
+TEST_P(GraphicsComposerAidlTest, getPreferredBootDisplayConfig_BadDisplay) {
+    int32_t config;
+    auto const error = mComposerClient->getPreferredBootDisplayConfig(mInvalidDisplayId, &config);
+
+    EXPECT_FALSE(error.isOk());
+    EXPECT_EQ(IComposerClient::EX_BAD_DISPLAY, error.getServiceSpecificError());
+}
+
+TEST_P(GraphicsComposerAidlTest, getPreferredBootDisplayConfig) {
+    int32_t preferredDisplayConfig = 0;
+    auto const error = mComposerClient->getPreferredBootDisplayConfig(mPrimaryDisplay,
+                                                                      &preferredDisplayConfig);
+    EXPECT_TRUE(error.isOk());
+
+    std::vector<int32_t> configs;
+    EXPECT_TRUE(mComposerClient->getDisplayConfigs(mPrimaryDisplay, &configs).isOk());
+    EXPECT_NE(configs.end(), std::find(configs.begin(), configs.end(), preferredDisplayConfig));
+}
+
 TEST_P(GraphicsComposerAidlTest, setAutoLowLatencyModeBadDisplay) {
     EXPECT_EQ(IComposerClient::EX_BAD_DISPLAY,
               mComposerClient->setAutoLowLatencyMode(mInvalidDisplayId, true)
