@@ -12,7 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *////////////////////////////////////////////////////////////////////////////////
+ */
+///////////////////////////////////////////////////////////////////////////////
 // THIS FILE IS IMMUTABLE. DO NOT EDIT IN ANY CASE.                          //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -36,6 +37,7 @@ interface IIdentityCredentialStore {
   android.hardware.identity.HardwareInformation getHardwareInformation();
   android.hardware.identity.IWritableIdentityCredential createCredential(in @utf8InCpp String docType, in boolean testCredential);
   android.hardware.identity.IIdentityCredential getCredential(in android.hardware.identity.CipherSuite cipherSuite, in byte[] credentialData);
+  android.hardware.identity.IPresentationSession createPresentationSession(in android.hardware.identity.CipherSuite cipherSuite);
   const int STATUS_OK = 0;
   const int STATUS_FAILED = 1;
   const int STATUS_CIPHER_SUITE_NOT_SUPPORTED = 2;
