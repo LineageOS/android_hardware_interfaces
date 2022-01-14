@@ -227,7 +227,8 @@ interface IKeyMintOperation {
      * o PaddingMode::RSA_PSS.  For PSS-padded signature operations, the PSS salt length must match
      *   the size of the PSS digest selected.  The digest specified with Tag::DIGEST in params
      *   on begin() must be used as the PSS digest algorithm, MGF1 must be used as the mask
-     *   generation function and SHA1 must be used as the MGF1 digest algorithm.
+     *   generation function and the digest specified with Tag:DIGEST in params on begin() must also
+     *   be used as the MGF1 digest algorithm.
      *
      * -- ECDSA keys --
      *
