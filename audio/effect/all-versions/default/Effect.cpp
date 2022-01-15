@@ -42,9 +42,10 @@ namespace CPP_VERSION {
 namespace implementation {
 
 #if MAJOR_VERSION <= 6
-using ::android::hardware::audio::common::CPP_VERSION::implementation::AudioChannelBitfield;
+using ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::implementation::
+        AudioChannelBitfield;
 #endif
-using ::android::hardware::audio::common::CPP_VERSION::implementation::HidlUtils;
+using ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::implementation::HidlUtils;
 
 namespace {
 
