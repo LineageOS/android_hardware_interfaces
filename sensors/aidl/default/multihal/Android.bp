@@ -43,6 +43,7 @@ cc_library_static {
     export_include_dirs: ["include"],
     srcs: [
         "HalProxyAidl.cpp",
+        "ConvertUtils.cpp",
     ],
     visibility: [
         ":__subpackages__",

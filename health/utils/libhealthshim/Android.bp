@@ -24,9 +24,11 @@ package {
 cc_defaults {
     name: "libhealthshim_defaults",
     host_supported: true, // for testing
-    defaults: [
-        "libbinder_ndk_host_user",
-    ],
+    target: {
+        darwin: {
+            enabled: false,
+        },
+    },
     cflags: [
         "-Wall",
         "-Werror",

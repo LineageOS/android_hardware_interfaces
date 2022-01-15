@@ -978,7 +978,7 @@ void SensorsAidlTest::verifyRegisterDirectChannel(
         ASSERT_EQ(status.getExceptionCode(), error);
         ASSERT_EQ(channelHandle, -1);
     }
-    directChannelHandle = &channelHandle;
+    *directChannelHandle = channelHandle;
 }
 
 void SensorsAidlTest::verifyUnregisterDirectChannel(int32_t* channelHandle,

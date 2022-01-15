@@ -47,6 +47,9 @@ class IdentityCredentialStore : public BnIdentityCredentialStore {
     ndk::ScopedAStatus getCredential(CipherSuite cipherSuite, const vector<uint8_t>& credentialData,
                                      shared_ptr<IIdentityCredential>* outCredential) override;
 
+    ndk::ScopedAStatus createPresentationSession(
+            CipherSuite cipherSuite, shared_ptr<IPresentationSession>* outSession) override;
+
   private:
     sp<SecureHardwareProxyFactory> hwProxyFactory_;
 };

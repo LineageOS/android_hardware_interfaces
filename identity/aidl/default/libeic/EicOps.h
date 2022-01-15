@@ -141,6 +141,10 @@ void* eicMemCpy(void* dest, const void* src, size_t n);
 // String length, see strlen(3).
 size_t eicStrLen(const char* s);
 
+// Locate a substring, see memmem(3)
+void* eicMemMem(const uint8_t* haystack, size_t haystackLen, const uint8_t* needle,
+                size_t needleLen);
+
 // Memory compare, see CRYPTO_memcmp(3SSL)
 //
 // It takes an amount of time dependent on len, but independent of the contents of the
@@ -150,6 +154,12 @@ int eicCryptoMemCmp(const void* s1, const void* s2, size_t n);
 
 // Random number generation.
 bool eicOpsRandom(uint8_t* buf, size_t numBytes);
+
+// Creates a new non-zero identifier in |id|.
+//
+// Is guaranteed to be non-zero and different than what is already in |id|.
+//
+bool eicNextId(uint32_t* id);
 
 // If |testCredential| is true, returns the 128-bit AES Hardware-Bound Key (16 bytes).
 //
@@ -294,6 +304,8 @@ bool eicOpsValidateAuthToken(uint64_t challenge, uint64_t secureUserId, uint64_t
                              uint64_t verificationTokenTimeStamp,
                              int verificationTokenSecurityLevel,
                              const uint8_t* verificationTokenMac, size_t verificationTokenMacSize);
+
+// Also see eicOpsLookupActiveSessionFromId() defined in EicSession.h
 
 #ifdef __cplusplus
 }

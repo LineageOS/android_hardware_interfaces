@@ -38,6 +38,7 @@ using GnssSvInfo = aidl::android::hardware::gnss::IGnssCallback::GnssSvInfo;
 using GnssSvFlags = aidl::android::hardware::gnss::IGnssCallback::GnssSvFlags;
 
 using GnssSvFlagsV1_0 = V1_0::IGnssCallback::GnssSvFlags;
+using GnssAgc = aidl::android::hardware::gnss::GnssData::GnssAgc;
 using GnssMeasurementFlagsV1_0 = V1_0::IGnssMeasurementCallback::GnssMeasurementFlags;
 using GnssMeasurementFlagsV2_1 = V2_1::IGnssMeasurementCallback::GnssMeasurementFlags;
 using GnssMeasurementStateV2_0 = V2_0::IGnssMeasurementCallback::GnssMeasurementState;
@@ -231,8 +232,23 @@ GnssData Utils::getMockMeasurement(const bool enableCorrVecOutputs) {
         measurement.flags |= GnssMeasurement::HAS_CORRELATION_VECTOR;
     }
 
-    GnssData gnssData = {
-            .measurements = {measurement}, .clock = clock, .elapsedRealtime = timestamp};
+    GnssAgc gnssAgc1 = {
+            .agcLevelDb = 3.5,
+            .constellation = GnssConstellationType::GLONASS,
+            .carrierFrequencyHz = (int64_t)kGloG1FreqHz,
+    };
+
+    GnssAgc gnssAgc2 = {
+            .agcLevelDb = -5.1,
+            .constellation = GnssConstellationType::GPS,
+            .carrierFrequencyHz = (int64_t)kGpsL1FreqHz,
+    };
+
+    GnssData gnssData = {.measurements = {measurement},
+                         .clock = clock,
+                         .elapsedRealtime = timestamp,
+                         .gnssAgcs = std::make_optional(std::vector(
+                                 {std::make_optional(gnssAgc1), std::make_optional(gnssAgc2)}))};
     return gnssData;
 }
 
