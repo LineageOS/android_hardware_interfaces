@@ -131,6 +131,7 @@ class FakeVehicleHardware final : public IVehicleHardware {
     std::string dumpHelp();
     std::string dumpListProperties();
     std::string dumpSpecificProperty(const std::vector<std::string>& options);
+    std::string dumpSetProperties(const std::vector<std::string>& options);
 
     template <typename T>
     ::android::base::Result<T> safelyParseInt(int index, const std::string& s) {
@@ -141,6 +142,12 @@ class FakeVehicleHardware final : public IVehicleHardware {
         }
         return out;
     }
+    ::android::base::Result<float> safelyParseFloat(int index, const std::string& s);
+    std::vector<std::string> getOptionValues(const std::vector<std::string>& options,
+                                             size_t* index);
+    ::android::base::Result<::aidl::android::hardware::automotive::vehicle::VehiclePropValue>
+    parseSetPropOptions(const std::vector<std::string>& options);
+    ::android::base::Result<std::vector<uint8_t>> parseHexString(const std::string& s);
 
     ::android::base::Result<void> checkArgumentsSize(const std::vector<std::string>& options,
                                                      size_t minSize);

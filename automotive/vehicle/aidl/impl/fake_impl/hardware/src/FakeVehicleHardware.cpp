@@ -25,6 +25,7 @@
 #include <PropertyUtils.h>
 #include <VehicleHalTypes.h>
 #include <VehicleUtils.h>
+#include <android-base/parsedouble.h>
 #include <android-base/properties.h>
 #include <android-base/strings.h>
 #include <utils/Log.h>
@@ -62,11 +63,28 @@ using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 
 using ::android::base::EqualsIgnoreCase;
 using ::android::base::Error;
+using ::android::base::ParseFloat;
 using ::android::base::Result;
+using ::android::base::StartsWith;
 using ::android::base::StringPrintf;
 
 const char* VENDOR_OVERRIDE_DIR = "/vendor/etc/automotive/vhaloverride/";
 const char* OVERRIDE_PROPERTY = "persist.vendor.vhal_init_value_override";
+
+// A list of supported options for "--set" command.
+const std::unordered_set<std::string> SET_PROP_OPTIONS = {
+        // integer.
+        "-i",
+        // 64bit integer.
+        "-i64",
+        // float.
+        "-f",
+        // string.
+        "-s",
+        // bytes in hex format, e.g. 0xDEADBEEF.
+        "-b",
+        // Area id in integer.
+        "-a"};
 
 }  // namespace
 
@@ -505,7 +523,7 @@ DumpResult FakeVehicleHardware::dump(const std::vector<std::string>& options) {
     } else if (EqualsIgnoreCase(option, "--get")) {
         result.buffer = dumpSpecificProperty(options);
     } else if (EqualsIgnoreCase(option, "--set")) {
-        // TODO(b/214613918): Support debug set values.
+        result.buffer = dumpSetProperties(options);
     } else {
         result.buffer = StringPrintf("Invalid option: %s\n", option.c_str());
     }
@@ -627,6 +645,148 @@ std::string FakeVehicleHardware::dumpSpecificProperty(const std::vector<std::str
     return msg;
 }
 
+std::vector<std::string> FakeVehicleHardware::getOptionValues(
+        const std::vector<std::string>& options, size_t* index) {
+    std::vector<std::string> values;
+    while (*index < options.size()) {
+        std::string option = options[*index];
+        if (SET_PROP_OPTIONS.find(option) != SET_PROP_OPTIONS.end()) {
+            return std::move(values);
+        }
+        values.push_back(option);
+        (*index)++;
+    }
+    return std::move(values);
+}
+
+Result<VehiclePropValue> FakeVehicleHardware::parseSetPropOptions(
+        const std::vector<std::string>& options) {
+    // Options format:
+    // --set PROP [-f f1 f2...] [-i i1 i2...] [-i64 i1 i2...] [-s s1 s2...] [-b b1 b2...] [-a a]
+    size_t optionIndex = 1;
+    auto result = safelyParseInt<int32_t>(optionIndex, options[optionIndex]);
+    if (!result.ok()) {
+        return Error() << StringPrintf("Property value: \"%s\" is not a valid int: %s\n",
+                                       options[optionIndex].c_str(), getErrorMsg(result).c_str());
+    }
+    VehiclePropValue prop = {};
+    prop.prop = result.value();
+    prop.status = VehiclePropertyStatus::AVAILABLE;
+    optionIndex++;
+    std::unordered_set<std::string> parsedOptions;
+
+    while (optionIndex < options.size()) {
+        std::string type = options[optionIndex];
+        optionIndex++;
+        size_t currentIndex = optionIndex;
+        std::vector<std::string> values = getOptionValues(options, &optionIndex);
+        if (parsedOptions.find(type) != parsedOptions.end()) {
+            return Error() << StringPrintf("Duplicate \"%s\" options\n", type.c_str());
+        }
+        parsedOptions.insert(type);
+        if (EqualsIgnoreCase(type, "-i")) {
+            if (values.size() == 0) {
+                return Error() << "No values specified when using \"-i\"\n";
+            }
+            prop.value.int32Values.resize(values.size());
+            for (size_t i = 0; i < values.size(); i++) {
+                auto int32Result = safelyParseInt<int32_t>(currentIndex + i, values[i]);
+                if (!int32Result.ok()) {
+                    return Error()
+                           << StringPrintf("Value: \"%s\" is not a valid int: %s\n",
+                                           values[i].c_str(), getErrorMsg(int32Result).c_str());
+                }
+                prop.value.int32Values[i] = int32Result.value();
+            }
+        } else if (EqualsIgnoreCase(type, "-i64")) {
+            if (values.size() == 0) {
+                return Error() << "No values specified when using \"-i64\"\n";
+            }
+            prop.value.int64Values.resize(values.size());
+            for (size_t i = 0; i < values.size(); i++) {
+                auto int64Result = safelyParseInt<int64_t>(currentIndex + i, values[i]);
+                if (!int64Result.ok()) {
+                    return Error()
+                           << StringPrintf("Value: \"%s\" is not a valid int64: %s\n",
+                                           values[i].c_str(), getErrorMsg(int64Result).c_str());
+                }
+                prop.value.int64Values[i] = int64Result.value();
+            }
+        } else if (EqualsIgnoreCase(type, "-f")) {
+            if (values.size() == 0) {
+                return Error() << "No values specified when using \"-f\"\n";
+            }
+            prop.value.floatValues.resize(values.size());
+            for (size_t i = 0; i < values.size(); i++) {
+                auto floatResult = safelyParseFloat(currentIndex + i, values[i]);
+                if (!floatResult.ok()) {
+                    return Error()
+                           << StringPrintf("Value: \"%s\" is not a valid float: %s\n",
+                                           values[i].c_str(), getErrorMsg(floatResult).c_str());
+                }
+                prop.value.floatValues[i] = floatResult.value();
+            }
+        } else if (EqualsIgnoreCase(type, "-s")) {
+            if (values.size() != 1) {
+                return Error() << "Expect exact one value when using \"-s\"\n";
+            }
+            prop.value.stringValue = values[0];
+        } else if (EqualsIgnoreCase(type, "-b")) {
+            if (values.size() != 1) {
+                return Error() << "Expect exact one value when using \"-b\"\n";
+            }
+            auto bytesResult = parseHexString(values[0]);
+            if (!bytesResult.ok()) {
+                return Error() << StringPrintf("value: \"%s\" is not a valid hex string: %s\n",
+                                               values[0].c_str(), getErrorMsg(bytesResult).c_str());
+            }
+            prop.value.byteValues = std::move(bytesResult.value());
+        } else if (EqualsIgnoreCase(type, "-a")) {
+            if (values.size() != 1) {
+                return Error() << "Expect exact one value when using \"-a\"\n";
+            }
+            auto int32Result = safelyParseInt<int32_t>(currentIndex, values[0]);
+            if (!int32Result.ok()) {
+                return Error() << StringPrintf("Area ID: \"%s\" is not a valid int: %s\n",
+                                               values[0].c_str(), getErrorMsg(int32Result).c_str());
+            }
+            prop.areaId = int32Result.value();
+        } else {
+            return Error() << StringPrintf("Unknown option: %s\n", type.c_str());
+        }
+    }
+
+    return prop;
+}
+
+std::string FakeVehicleHardware::dumpSetProperties(const std::vector<std::string>& options) {
+    if (auto result = checkArgumentsSize(options, 3); !result.ok()) {
+        return getErrorMsg(result);
+    }
+
+    auto parseResult = parseSetPropOptions(options);
+    if (!parseResult.ok()) {
+        return getErrorMsg(parseResult);
+    }
+    VehiclePropValue prop = std::move(parseResult.value());
+    ALOGD("Dump: Setting property: %s", prop.toString().c_str());
+
+    bool isSpecialValue = false;
+    auto setResult = maybeSetSpecialValue(prop, &isSpecialValue);
+
+    if (!isSpecialValue) {
+        auto updatedValue = mValuePool->obtain(prop);
+        updatedValue->timestamp = elapsedRealtimeNano();
+        setResult = mServerSidePropStore->writeValue(std::move(updatedValue));
+    }
+
+    if (setResult.ok()) {
+        return StringPrintf("Set property: %s\n", prop.toString().c_str());
+    }
+    return StringPrintf("failed to set property: %s, error: %s\n", prop.toString().c_str(),
+                        getErrorMsg(setResult).c_str());
+}
+
 StatusCode FakeVehicleHardware::checkHealth() {
     // Always return OK for checkHealth.
     return StatusCode::OK;
@@ -687,6 +847,49 @@ void FakeVehicleHardware::overrideProperties(const char* overrideDir) {
         }
         closedir(dir);
     }
+}
+
+Result<float> FakeVehicleHardware::safelyParseFloat(int index, const std::string& s) {
+    float out;
+    if (!ParseFloat(s, &out)) {
+        return Error() << StringPrintf("non-float argument at index %d: %s\n", index, s.c_str());
+    }
+    return out;
+}
+
+Result<std::vector<uint8_t>> FakeVehicleHardware::parseHexString(const std::string& s) {
+    std::vector<uint8_t> bytes;
+    if (s.size() % 2 != 0) {
+        return Error() << StringPrintf("invalid hex string: %s, should have even size\n",
+                                       s.c_str());
+    }
+    if (!StartsWith(s, "0x")) {
+        return Error() << StringPrintf("hex string should start with \"0x\", got %s\n", s.c_str());
+    }
+    std::string subs = s.substr(2);
+    std::transform(subs.begin(), subs.end(), subs.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+
+    bool highDigit = true;
+    for (size_t i = 0; i < subs.size(); i++) {
+        char c = subs[i];
+        uint8_t v;
+        if (c >= '0' && c <= '9') {
+            v = c - '0';
+        } else if (c >= 'a' && c <= 'f') {
+            v = c - 'a' + 10;
+        } else {
+            return Error() << StringPrintf("invalid character %c in hex string %s\n", c,
+                                           subs.c_str());
+        }
+        if (highDigit) {
+            bytes.push_back(v * 16);
+        } else {
+            bytes[bytes.size() - 1] += v;
+        }
+        highDigit = !highDigit;
+    }
+    return bytes;
 }
 
 }  // namespace fake
