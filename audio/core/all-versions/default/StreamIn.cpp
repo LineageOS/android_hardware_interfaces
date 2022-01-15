@@ -37,7 +37,11 @@ namespace audio {
 namespace CPP_VERSION {
 namespace implementation {
 
-using ::android::hardware::audio::common::CPP_VERSION::implementation::HidlUtils;
+using ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::implementation::HidlUtils;
+using ::android::hardware::audio::CORE_TYPES_CPP_VERSION::implementation::CoreUtils;
+namespace util {
+using namespace ::android::hardware::audio::CORE_TYPES_CPP_VERSION::implementation::util;
+}
 
 namespace {
 
@@ -348,7 +352,7 @@ Return<void> StreamIn::getAudioSource(getAudioSource_cb _hidl_cb) {
 }
 
 Return<Result> StreamIn::setGain(float gain) {
-    if (!isGainNormalized(gain)) {
+    if (!util::isGainNormalized(gain)) {
         ALOGW("Can not set a stream input gain (%f) outside [0,1]", gain);
         return Result::INVALID_ARGUMENTS;
     }
