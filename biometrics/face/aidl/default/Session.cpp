@@ -151,4 +151,25 @@ ndk::ScopedAStatus Session::close() {
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus Session::authenticateWithContext(
+        int64_t operationId, const common::OperationContext& /*context*/,
+        std::shared_ptr<common::ICancellationSignal>* out) {
+    return authenticate(operationId, out);
+}
+
+ndk::ScopedAStatus Session::enrollWithContext(const keymaster::HardwareAuthToken& hat,
+                                              EnrollmentType enrollmentType,
+                                              const std::vector<Feature>& features,
+                                              const std::optional<NativeHandle>& previewSurface,
+                                              const common::OperationContext& /*context*/,
+                                              std::shared_ptr<common::ICancellationSignal>* out) {
+    return enroll(hat, enrollmentType, features, previewSurface, out);
+}
+
+ndk::ScopedAStatus Session::detectInteractionWithContext(
+        const common::OperationContext& /*context*/,
+        std::shared_ptr<common::ICancellationSignal>* out) {
+    return detectInteraction(out);
+}
+
 }  // namespace aidl::android::hardware::biometrics::face

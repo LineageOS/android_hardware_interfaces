@@ -79,6 +79,22 @@ class Session : public BnSession {
 
     ndk::ScopedAStatus onUiReady() override;
 
+    ndk::ScopedAStatus authenticateWithContext(
+            int64_t operationId, const common::OperationContext& context,
+            std::shared_ptr<common::ICancellationSignal>* out) override;
+
+    ndk::ScopedAStatus enrollWithContext(
+            const keymaster::HardwareAuthToken& hat, const common::OperationContext& context,
+            std::shared_ptr<common::ICancellationSignal>* out) override;
+
+    ndk::ScopedAStatus detectInteractionWithContext(
+            const common::OperationContext& context,
+            std::shared_ptr<common::ICancellationSignal>* out) override;
+
+    ndk::ScopedAStatus onPointerDownWithContext(const PointerContext& context) override;
+
+    ndk::ScopedAStatus onPointerUpWithContext(const PointerContext& context) override;
+
     bool isClosed();
 
   private:

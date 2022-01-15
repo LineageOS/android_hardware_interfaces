@@ -110,6 +110,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.biometrics.face</name>
+        <version>2</version>
         <interface>
             <name>IFace</name>
             <instance>default</instance>
@@ -328,7 +329,7 @@
     </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.identity</name>
-        <version>1-3</version>
+        <version>1-4</version>
         <interface>
             <name>IIdentityCredentialStore</name>
             <instance>default</instance>

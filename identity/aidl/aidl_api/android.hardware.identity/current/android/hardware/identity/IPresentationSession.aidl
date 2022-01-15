@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,12 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.biometrics.fingerprint;
+package android.hardware.identity;
 @VintfStability
-interface IFingerprint {
-  android.hardware.biometrics.fingerprint.SensorProps[] getSensorProps();
-  android.hardware.biometrics.fingerprint.ISession createSession(in int sensorId, in int userId, in android.hardware.biometrics.fingerprint.ISessionCallback cb);
+interface IPresentationSession {
+  byte[] getEphemeralKeyPair();
+  long getAuthChallenge();
+  void setReaderEphemeralPublicKey(in byte[] publicKey);
+  void setSessionTranscript(in byte[] sessionTranscript);
+  android.hardware.identity.IIdentityCredential getCredential(in byte[] credentialData);
 }

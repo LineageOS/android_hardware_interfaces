@@ -38,4 +38,5 @@ interface IRadioDataIndication {
   oneway void keepaliveStatus(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.data.KeepaliveStatus status);
   oneway void pcoData(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.data.PcoDataInfo pco);
   oneway void unthrottleApn(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.data.DataProfileInfo dataProfileInfo);
+  oneway void slicingConfigChanged(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.data.SlicingConfig slicingConfig);
 }

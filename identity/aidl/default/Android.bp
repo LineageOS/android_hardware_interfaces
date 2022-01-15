@@ -13,6 +13,7 @@ cc_library_static {
     srcs: [
         "common/IdentityCredential.cpp",
         "common/IdentityCredentialStore.cpp",
+        "common/PresentationSession.cpp",
         "common/WritableIdentityCredential.cpp",
     ],
     export_include_dirs: [
@@ -39,8 +40,8 @@ cc_library_static {
         "libsoft_attestation_cert",
         "libpuresoftkeymasterdevice",
         "android.hardware.identity-support-lib",
-        "android.hardware.identity-V3-ndk",
-        "android.hardware.keymaster-V3-ndk",
+        "android.hardware.identity-V4-ndk",
+        "android.hardware.keymaster-V4-ndk",
     ],
 }
 
@@ -49,6 +50,7 @@ cc_library_static {
     vendor_available: true,
     srcs: [
         "libeic/EicCbor.c",
+        "libeic/EicSession.c",
         "libeic/EicPresentation.c",
         "libeic/EicProvisioning.c",
         "EicOpsImpl.cc",
@@ -100,8 +102,8 @@ cc_binary {
         "libsoft_attestation_cert",
         "libpuresoftkeymasterdevice",
         "android.hardware.identity-support-lib",
-        "android.hardware.identity-V3-ndk",
-        "android.hardware.keymaster-V3-ndk",
+        "android.hardware.identity-V4-ndk",
+        "android.hardware.keymaster-V4-ndk",
         "android.hardware.identity-libeic-hal-common",
         "android.hardware.identity-libeic-library",
     ],

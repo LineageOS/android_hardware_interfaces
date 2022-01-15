@@ -16,10 +16,11 @@
 
 package android.hardware.identity;
 
-import android.hardware.identity.IIdentityCredential;
-import android.hardware.identity.IWritableIdentityCredential;
-import android.hardware.identity.HardwareInformation;
 import android.hardware.identity.CipherSuite;
+import android.hardware.identity.HardwareInformation;
+import android.hardware.identity.IIdentityCredential;
+import android.hardware.identity.IPresentationSession;
+import android.hardware.identity.IWritableIdentityCredential;
 
 /**
  * IIdentityCredentialStore provides an interface to a secure store for user identity documents.
@@ -105,7 +106,7 @@ import android.hardware.identity.CipherSuite;
  * STATUS_* integers defined in this interface. Each method states which status can be returned
  * and under which circumstances.
  *
- * The API described here is API version 3 which corresponds to feature version 202101
+ * The API described here is API version 4 which corresponds to feature version 202201
  * of the android.security.identity Framework API. An XML file declaring the feature
  * android.hardware.identity_credential (or android.hardware.identity_credential.direct_access
  * if implementing the Direct Access HAL) should be included declaring this feature version.
@@ -241,4 +242,25 @@ interface IIdentityCredentialStore {
      * @return an IIdentityCredential interface that provides operations on the Credential.
      */
     IIdentityCredential getCredential(in CipherSuite cipherSuite, in byte[] credentialData);
+
+    /**
+     * createPresentationSession creates IPresentationSession interface which can be used to
+     * present one or more credentials to a remote verifier device.
+     *
+     * The cipher suite used to communicate with the remote verifier must be specified. Currently
+     * only a single cipher-suite is supported. Support for other cipher suites may be added in a
+     * future version of this HAL. If the requested cipher suite is not support the call fails
+     * with STATUS_CIPHER_SUITE_NOT_SUPPORTED.
+     *
+     * In this version of the HAL, implementations are only required to support a single session
+     * being active. In a future version, implementations may be required to support multiple
+     * presentation sessions being active at the same time.
+     *
+     * This method was introduced in API version 4.
+     *
+     * @param cipherSuite The cipher suite to use.
+     *
+     * @return an IPresentationSession interface.
+     */
+    IPresentationSession createPresentationSession(in CipherSuite cipherSuite);
 }

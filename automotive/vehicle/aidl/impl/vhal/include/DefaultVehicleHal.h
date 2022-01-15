@@ -88,12 +88,17 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
             GetSetValuesClient<::aidl::android::hardware::automotive::vehicle::SetValueResult,
                                ::aidl::android::hardware::automotive::vehicle::SetValueResults>;
 
+    // The default timeout of get or set value requests is 30s.
+    // TODO(b/214605968): define TIMEOUT_IN_NANO in IVehicle and allow getValues/setValues/subscribe
+    // to specify custom timeouts.
+    static constexpr int64_t TIMEOUT_IN_NANO = 30'000'000'000;
     const std::unique_ptr<IVehicleHardware> mVehicleHardware;
 
     // mConfigsByPropId and mConfigFile are only modified during initialization, so no need to
     // lock guard them.
     std::unordered_map<int32_t, ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig>
             mConfigsByPropId;
+    // Only modified in constructor, so thread-safe.
     std::unique_ptr<::ndk::ScopedFileDescriptor> mConfigFile;
 
     std::mutex mLock;
