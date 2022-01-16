@@ -14,4 +14,4 @@ service vendor.atrace-hal-1-0 /vendor/bin/hw/android.hardware.atrace@1.0-service
     interface android.hardware.atrace@1.0::IAtraceDevice default
     class early_hal
     user system
-    group system
+    group system readtracefs
