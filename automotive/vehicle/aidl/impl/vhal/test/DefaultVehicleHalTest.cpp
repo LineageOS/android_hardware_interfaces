@@ -389,15 +389,14 @@ class DefaultVehicleHalTest : public ::testing::Test {
             });
         }
 
-        auto result = LargeParcelableBase::parcelableVectorToStableLargeParcelable(
-                expectedHardwareRequests);
+        requests.payloads = expectedHardwareRequests;
+        auto result = LargeParcelableBase::parcelableToStableLargeParcelable(requests);
         if (!result.ok()) {
             return result.error();
         }
-        if (result.value() == nullptr) {
-            requests.payloads = expectedHardwareRequests;
-        } else {
+        if (result.value() != nullptr) {
             requests.sharedMemoryFd = std::move(*result.value());
+            requests.payloads.clear();
         }
         return {};
     }
@@ -423,14 +422,13 @@ class DefaultVehicleHalTest : public ::testing::Test {
             });
         }
 
-        auto result = LargeParcelableBase::parcelableVectorToStableLargeParcelable(
-                expectedHardwareRequests);
+        requests.payloads = expectedHardwareRequests;
+        auto result = LargeParcelableBase::parcelableToStableLargeParcelable(requests);
         if (!result.ok()) {
             return result.error();
         }
-        if (result.value() == nullptr) {
-            requests.payloads = expectedHardwareRequests;
-        } else {
+        if (result.value() != nullptr) {
+            requests.payloads.clear();
             requests.sharedMemoryFd = std::move(*result.value());
         }
         return {};
@@ -490,13 +488,10 @@ TEST_F(DefaultVehicleHalTest, testGetAllPropConfigsLarge) {
 
     ASSERT_TRUE(status.isOk()) << "getAllPropConfigs failed: " << status.getMessage();
     ASSERT_TRUE(output.payloads.empty());
-    Result<std::optional<std::vector<VehiclePropConfig>>> result =
-            LargeParcelableBase::stableLargeParcelableToParcelableVector<VehiclePropConfig>(
-                    output.sharedMemoryFd);
+    auto result = LargeParcelableBase::stableLargeParcelableToParcelable(output);
     ASSERT_TRUE(result.ok()) << "failed to parse result shared memory file: "
                              << result.error().message();
-    ASSERT_TRUE(result.value().has_value()) << "empty parsed value";
-    ASSERT_EQ(result.value().value(), testConfigs);
+    ASSERT_EQ(result.value().getObject()->payloads, testConfigs);
 }
 
 TEST_F(DefaultVehicleHalTest, testGetValuesSmall) {
@@ -544,11 +539,9 @@ TEST_F(DefaultVehicleHalTest, testGetValuesLarge) {
     ASSERT_TRUE(getValueResults.payloads.empty())
             << "payload should be empty, shared memory file should be used";
 
-    auto result = LargeParcelableBase::stableLargeParcelableToParcelableVector<GetValueResult>(
-            getValueResults.sharedMemoryFd);
+    auto result = LargeParcelableBase::stableLargeParcelableToParcelable(getValueResults);
     ASSERT_TRUE(result.ok()) << "failed to parse shared memory file";
-    ASSERT_TRUE(result.value().has_value()) << "no parsed value";
-    ASSERT_EQ(result.value().value(), expectedResults) << "results mismatch";
+    ASSERT_EQ(result.value().getObject()->payloads, expectedResults) << "results mismatch";
     EXPECT_EQ(countClients(), static_cast<size_t>(1));
 }
 
@@ -621,11 +614,9 @@ TEST_F(DefaultVehicleHalTest, testSetValuesLarge) {
     ASSERT_TRUE(setValueResults.payloads.empty())
             << "payload should be empty, shared memory file should be used";
 
-    auto result = LargeParcelableBase::stableLargeParcelableToParcelableVector<SetValueResult>(
-            setValueResults.sharedMemoryFd);
+    auto result = LargeParcelableBase::stableLargeParcelableToParcelable(setValueResults);
     ASSERT_TRUE(result.ok()) << "failed to parse shared memory file";
-    ASSERT_TRUE(result.value().has_value()) << "no parsed value";
-    ASSERT_EQ(result.value().value(), expectedResults) << "results mismatch";
+    ASSERT_EQ(result.value().getObject()->payloads, expectedResults) << "results mismatch";
     EXPECT_EQ(countClients(), static_cast<size_t>(1));
 }
 
