@@ -35,6 +35,6 @@ package android.hardware.bluetooth.audio;
 @VintfStability
 parcelable AptxCapabilities {
   int[] sampleRateHz;
-  android.hardware.bluetooth.audio.ChannelMode channelMode;
+  android.hardware.bluetooth.audio.ChannelMode[] channelMode;
   byte[] bitsPerSample;
 }
