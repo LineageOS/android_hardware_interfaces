@@ -14,69 +14,69 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "android.hardware.automotive.evs@1.1-service"
-
 #include "EvsCamera.h"
+#include "ConfigManager.h"
 #include "EvsEnumerator.h"
 
 #include <ui/GraphicBufferAllocator.h>
 #include <ui/GraphicBufferMapper.h>
 #include <utils/SystemClock.h>
 
-namespace android {
-namespace hardware {
-namespace automotive {
-namespace evs {
-namespace V1_1 {
-namespace implementation {
-
-
-// Special camera names for which we'll initialize alternate test data
-const char EvsCamera::kCameraName_Backup[] = "backup";
-
+namespace {
 
 // Arbitrary limit on number of graphics buffers allowed to be allocated
 // Safeguards against unreasonable resource consumption and provides a testable limit
-const unsigned MAX_BUFFERS_IN_FLIGHT = 100;
+constexpr unsigned kMaxBuffersInFlight = 100;
 
+// Minimum number of buffers to run a video stream
+constexpr int kMinimumBuffersInFlight = 1;
 
-EvsCamera::EvsCamera(const char *id,
-                     unique_ptr<ConfigManager::CameraInfo> &camInfo) :
-        mFramesAllowed(0),
-        mFramesInUse(0),
-        mStreamState(STOPPED),
-        mCameraInfo(camInfo) {
+// Colors for the colorbar test pattern in ABGR format
+constexpr uint32_t kColors[] = {
+        0xFFFFFFFF,  // white
+        0xFF00FFFF,  // yellow
+        0xFFFFFF00,  // cyan
+        0xFF00FF00,  // green
+        0xFFFF00FF,  // fuchsia
+        0xFF0000FF,  // red
+        0xFFFF0000,  // blue
+        0xFF000000,  // black
+};
+constexpr uint32_t kNumColors = sizeof(kColors) / sizeof(kColors[0]);
 
-    ALOGD("EvsCamera instantiated");
+}  // namespace
+
+namespace android::hardware::automotive::evs::V1_1::implementation {
+
+using V1_0::EvsResult;
+
+EvsCamera::EvsCamera(const char* id, std::unique_ptr<ConfigManager::CameraInfo>& camInfo)
+    : mFramesAllowed(0), mFramesInUse(0), mStreamState(STOPPED), mCameraInfo(camInfo) {
+    ALOGD("%s", __FUNCTION__);
 
     /* set a camera id */
     mDescription.v1.cameraId = id;
 
     /* set camera metadata */
-    mDescription.metadata.setToExternal((uint8_t *)camInfo->characteristics,
+    mDescription.metadata.setToExternal((uint8_t*)camInfo->characteristics,
                                         get_camera_metadata_size(camInfo->characteristics));
 }
 
-
 EvsCamera::~EvsCamera() {
-    ALOGD("EvsCamera being destroyed");
+    ALOGD("%s", __FUNCTION__);
     forceShutdown();
 }
 
-
-//
 // This gets called if another caller "steals" ownership of the camera
-//
-void EvsCamera::forceShutdown()
-{
-    ALOGD("EvsCamera forceShutdown");
+void EvsCamera::forceShutdown() {
+    ALOGD("%s", __FUNCTION__);
 
     // Make sure our output stream is cleaned up
     // (It really should be already)
     stopVideoStream();
 
     // Claim the lock while we work on internal state
-    std::lock_guard <std::mutex> lock(mAccessLock);
+    std::lock_guard<std::mutex> lock(mAccessLock);
 
     // Drop all the graphics buffers we've been using
     if (mBuffers.size() > 0) {
@@ -96,19 +96,18 @@ void EvsCamera::forceShutdown()
     mStreamState = DEAD;
 }
 
-
 // Methods from ::android::hardware::automotive::evs::V1_0::IEvsCamera follow.
 Return<void> EvsCamera::getCameraInfo(getCameraInfo_cb _hidl_cb) {
-    ALOGD("getCameraInfo");
+    ALOGD("%s", __FUNCTION__);
 
     // Send back our self description
     _hidl_cb(mDescription.v1);
-    return Void();
+    return {};
 }
 
-
 Return<EvsResult> EvsCamera::setMaxFramesInFlight(uint32_t bufferCount) {
-    ALOGD("setMaxFramesInFlight");
+    ALOGD("%s, bufferCount = %u", __FUNCTION__, bufferCount);
+
     std::lock_guard<std::mutex> lock(mAccessLock);
 
     // If we've been displaced by another owner of the camera, then we can't do anything else
@@ -131,9 +130,9 @@ Return<EvsResult> EvsCamera::setMaxFramesInFlight(uint32_t bufferCount) {
     }
 }
 
+Return<EvsResult> EvsCamera::startVideoStream(const ::android::sp<V1_0::IEvsCameraStream>& stream) {
+    ALOGD("%s", __FUNCTION__);
 
-Return<EvsResult> EvsCamera::startVideoStream(const ::android::sp<IEvsCameraStream_1_0>& stream)  {
-    ALOGD("startVideoStream");
     std::lock_guard<std::mutex> lock(mAccessLock);
 
     // If we've been displaced by another owner of the camera, then we can't do anything else
@@ -141,82 +140,86 @@ Return<EvsResult> EvsCamera::startVideoStream(const ::android::sp<IEvsCameraStre
         ALOGE("ignoring startVideoStream call when camera has been lost.");
         return EvsResult::OWNERSHIP_LOST;
     }
+
     if (mStreamState != STOPPED) {
         ALOGE("ignoring startVideoStream call when a stream is already running.");
         return EvsResult::STREAM_ALREADY_RUNNING;
     }
 
     // If the client never indicated otherwise, configure ourselves for a single streaming buffer
-    if (mFramesAllowed < 1) {
-        if (!setAvailableFrames_Locked(1)) {
+    if (mFramesAllowed < kMinimumBuffersInFlight) {
+        if (!setAvailableFrames_Locked(kMinimumBuffersInFlight)) {
             ALOGE("Failed to start stream because we couldn't get a graphics buffer");
             return EvsResult::BUFFER_NOT_AVAILABLE;
         }
     }
 
     // Record the user's callback for use when we have a frame ready
-    mStream = IEvsCameraStream_1_1::castFrom(stream).withDefault(nullptr);
-    if (mStream == nullptr) {
+    mStream = IEvsCameraStream::castFrom(stream).withDefault(nullptr);
+    if (!mStream) {
         ALOGE("Default implementation does not support v1.0 IEvsCameraStream");
         return EvsResult::INVALID_ARG;
     }
 
     // Start the frame generation thread
     mStreamState = RUNNING;
-    mCaptureThread = std::thread([this](){ generateFrames(); });
+    mCaptureThread = std::thread([this]() { generateFrames(); });
 
     return EvsResult::OK;
 }
 
-
-Return<void> EvsCamera::doneWithFrame(const BufferDesc_1_0& buffer) {
-    std::lock_guard <std::mutex> lock(mAccessLock);
-    returnBuffer(buffer.bufferId, buffer.memHandle);
-
-    return Void();
-}
-
-
-Return<void> EvsCamera::stopVideoStream()  {
-    ALOGD("stopVideoStream");
-    std::unique_lock <std::mutex> lock(mAccessLock);
-
-    if (mStreamState == RUNNING) {
-        // Tell the GenerateFrames loop we want it to stop
-        mStreamState = STOPPING;
-
-        // Block outside the mutex until the "stop" flag has been acknowledged
-        // We won't send any more frames, but the client might still get some already in flight
-        ALOGD("Waiting for stream thread to end...");
-        lock.unlock();
-        mCaptureThread.join();
-        lock.lock();
-
-        mStreamState = STOPPED;
-        mStream = nullptr;
-        ALOGD("Stream marked STOPPED.");
-    }
-
-    return Void();
-}
-
-
-Return<int32_t> EvsCamera::getExtendedInfo(uint32_t opaqueIdentifier)  {
-    ALOGD("getExtendedInfo");
+Return<void> EvsCamera::doneWithFrame(const V1_0::BufferDesc& buffer) {
     std::lock_guard<std::mutex> lock(mAccessLock);
+    returnBufferLocked(buffer.bufferId, buffer.memHandle);
 
-    // For any single digit value, return the index itself as a test value
-    if (opaqueIdentifier <= 9) {
-        return opaqueIdentifier;
-    }
-
-    // Return zero by default as required by the spec
-    return 0;
+    return {};
 }
 
+Return<void> EvsCamera::stopVideoStream() {
+    ALOGD("%s", __FUNCTION__);
 
-Return<EvsResult> EvsCamera::setExtendedInfo(uint32_t /*opaqueIdentifier*/, int32_t /*opaqueValue*/)  {
-    ALOGD("setExtendedInfo");
+    std::unique_lock<std::mutex> lock(mAccessLock);
+
+    if (mStreamState != RUNNING) {
+        return {};
+    }
+
+    // Tell the GenerateFrames loop we want it to stop
+    mStreamState = STOPPING;
+
+    // Block outside the mutex until the "stop" flag has been acknowledged
+    // We won't send any more frames, but the client might still get some already in flight
+    ALOGD("Waiting for stream thread to end...");
+    lock.unlock();
+    if (mCaptureThread.joinable()) {
+        mCaptureThread.join();
+    }
+    lock.lock();
+
+    mStreamState = STOPPED;
+    mStream = nullptr;
+    ALOGD("Stream marked STOPPED.");
+
+    return {};
+}
+
+Return<int32_t> EvsCamera::getExtendedInfo(uint32_t opaqueIdentifier) {
+    ALOGD("%s", __FUNCTION__);
+
+    std::lock_guard<std::mutex> lock(mAccessLock);
+    const auto it = mExtInfo.find(opaqueIdentifier);
+    if (it == mExtInfo.end()) {
+        // Return zero by default as required by the spec
+        return 0;
+    } else {
+        return it->second[0];
+    }
+}
+
+Return<EvsResult> EvsCamera::setExtendedInfo([[maybe_unused]] uint32_t opaqueIdentifier,
+                                             [[maybe_unused]] int32_t opaqueValue) {
+    ALOGD("%s", __FUNCTION__);
+
     std::lock_guard<std::mutex> lock(mAccessLock);
 
     // If we've been displaced by another owner of the camera, then we can't do anything else
@@ -225,76 +228,73 @@ Return<EvsResult> EvsCamera::setExtendedInfo(uint32_t /*opaqueIdentifier*/, int3
         return EvsResult::OWNERSHIP_LOST;
     }
 
-    // We don't store any device specific information in this implementation
-    return EvsResult::INVALID_ARG;
+    mExtInfo.insert_or_assign(opaqueIdentifier, opaqueValue);
+    return EvsResult::OK;
 }
-
 
 // Methods from ::android::hardware::automotive::evs::V1_1::IEvsCamera follow.
 Return<void> EvsCamera::getCameraInfo_1_1(getCameraInfo_1_1_cb _hidl_cb) {
-    ALOGD("getCameraInfo_1_1");
+    ALOGD("%s", __FUNCTION__);
 
     // Send back our self description
     _hidl_cb(mDescription);
-    return Void();
+    return {};
 }
 
-
-Return<void> EvsCamera::getPhysicalCameraInfo(const hidl_string& id,
+Return<void> EvsCamera::getPhysicalCameraInfo([[maybe_unused]] const hidl_string& id,
                                               getCameraInfo_1_1_cb _hidl_cb) {
     ALOGD("%s", __FUNCTION__);
 
     // This works exactly same as getCameraInfo_1_1() in default implementation.
-    (void)id;
     _hidl_cb(mDescription);
-    return Void();
+    return {};
 }
 
+Return<EvsResult> EvsCamera::doneWithFrame_1_1(const hidl_vec<BufferDesc>& buffers) {
+    ALOGD("%s", __FUNCTION__);
 
-Return<EvsResult> EvsCamera::doneWithFrame_1_1(const hidl_vec<BufferDesc_1_1>& buffers)  {
-    std::lock_guard <std::mutex> lock(mAccessLock);
-
+    std::lock_guard<std::mutex> lock(mAccessLock);
     for (auto&& buffer : buffers) {
-        returnBuffer(buffer.bufferId, buffer.buffer.nativeHandle);
+        returnBufferLocked(buffer.bufferId, buffer.buffer.nativeHandle);
     }
-
     return EvsResult::OK;
 }
-
 
 Return<EvsResult> EvsCamera::pauseVideoStream() {
+    ALOGD("%s", __FUNCTION__);
     // Default implementation does not support this.
     return EvsResult::UNDERLYING_SERVICE_ERROR;
 }
-
 
 Return<EvsResult> EvsCamera::resumeVideoStream() {
+    ALOGD("%s", __FUNCTION__);
     // Default implementation does not support this.
     return EvsResult::UNDERLYING_SERVICE_ERROR;
 }
 
-
 Return<EvsResult> EvsCamera::setMaster() {
+    ALOGD("%s", __FUNCTION__);
     // Default implementation does not expect multiple subscribers and therefore
     // return a success code always.
     return EvsResult::OK;
 }
 
-Return<EvsResult> EvsCamera::forceMaster(const sp<IEvsDisplay_1_0>& ) {
+Return<EvsResult> EvsCamera::forceMaster(const sp<V1_0::IEvsDisplay>&) {
+    ALOGD("%s", __FUNCTION__);
     // Default implementation does not expect multiple subscribers and therefore
     // return a success code always.
     return EvsResult::OK;
 }
-
 
 Return<EvsResult> EvsCamera::unsetMaster() {
+    ALOGD("%s", __FUNCTION__);
     // Default implementation does not expect multiple subscribers and therefore
     // return a success code always.
     return EvsResult::OK;
 }
 
-
 Return<void> EvsCamera::getParameterList(getParameterList_cb _hidl_cb) {
+    ALOGD("%s", __FUNCTION__);
     hidl_vec<CameraParam> hidlCtrls;
     hidlCtrls.resize(mCameraInfo->controls.size());
     unsigned idx = 0;
@@ -303,72 +303,132 @@ Return<void> EvsCamera::getParameterList(getParameterList_cb _hidl_cb) {
     }
 
     _hidl_cb(hidlCtrls);
-    return Void();
-}
-
-
-Return<void> EvsCamera::getIntParameterRange(CameraParam id,
-                                             getIntParameterRange_cb _hidl_cb) {
-    auto range = mCameraInfo->controls[id];
-    _hidl_cb(get<0>(range), get<1>(range), get<2>(range));
-    return Void();
-}
-
-
-Return<void> EvsCamera::setIntParameter(CameraParam id, int32_t value,
-                                        setIntParameter_cb _hidl_cb) {
-    // Default implementation does not support this.
-    (void)id;
-    (void)value;
-    _hidl_cb(EvsResult::INVALID_ARG, 0);
-    return Void();
-}
-
-
-Return<void> EvsCamera::getIntParameter(CameraParam id,
-                                        getIntParameter_cb _hidl_cb) {
-    // Default implementation does not support this.
-    (void)id;
-    _hidl_cb(EvsResult::INVALID_ARG, 0);
-    return Void();
-}
-
-
-Return<EvsResult> EvsCamera::setExtendedInfo_1_1(uint32_t opaqueIdentifier,
-                                                 const hidl_vec<uint8_t>& opaqueValue) {
-    // Default implementation does not use an extended info.
-    (void)opaqueIdentifier;
-    (void)opaqueValue;
-    return EvsResult::INVALID_ARG;
-}
-
-
-Return<void> EvsCamera::getExtendedInfo_1_1(uint32_t opaqueIdentifier,
-                                            getExtendedInfo_1_1_cb _hidl_cb) {
-    // Default implementation does not use an extended info.
-    (void)opaqueIdentifier;
-
-    hidl_vec<uint8_t> value;
-    _hidl_cb(EvsResult::INVALID_ARG, value);
-    return Void();
-}
-
-
-Return<void>
-EvsCamera::importExternalBuffers(const hidl_vec<BufferDesc_1_1>& /* buffers */,
-                                 importExternalBuffers_cb _hidl_cb) {
-    ALOGW("%s is not implemented yet.", __FUNCTION__);
-    _hidl_cb(EvsResult::UNDERLYING_SERVICE_ERROR, 0);
     return {};
 }
 
+Return<void> EvsCamera::getIntParameterRange(CameraParam id, getIntParameterRange_cb _hidl_cb) {
+    ALOGD("%s", __FUNCTION__);
+    auto it = mCameraInfo->controls.find(id);
+    if (it == mCameraInfo->controls.end()) {
+        _hidl_cb(0, 0, 0);
+    } else {
+        _hidl_cb(std::get<0>(it->second), std::get<1>(it->second), std::get<2>(it->second));
+    }
+    return {};
+}
+
+Return<void> EvsCamera::setIntParameter(CameraParam id, int32_t value,
+                                        setIntParameter_cb _hidl_cb) {
+    ALOGD("%s", __FUNCTION__);
+    mParams.insert_or_assign(id, value);
+    _hidl_cb(EvsResult::OK, {value});
+    return {};
+}
+
+Return<void> EvsCamera::getIntParameter([[maybe_unused]] CameraParam id,
+                                        getIntParameter_cb _hidl_cb) {
+    ALOGD("%s", __FUNCTION__);
+    auto it = mParams.find(id);
+    std::vector<int32_t> values;
+    if (it == mParams.end()) {
+        _hidl_cb(EvsResult::INVALID_ARG, values);
+    } else {
+        values.push_back(it->second);
+        _hidl_cb(EvsResult::OK, values);
+    }
+    return {};
+}
+
+Return<EvsResult> EvsCamera::setExtendedInfo_1_1(uint32_t opaqueIdentifier,
+                                                 const hidl_vec<uint8_t>& opaqueValue) {
+    ALOGD("%s", __FUNCTION__);
+    mExtInfo.insert_or_assign(opaqueIdentifier, opaqueValue);
+    return EvsResult::OK;
+}
+
+Return<void> EvsCamera::getExtendedInfo_1_1(uint32_t opaqueIdentifier,
+                                            getExtendedInfo_1_1_cb _hidl_cb) {
+    ALOGD("%s", __FUNCTION__);
+    auto status = EvsResult::OK;
+    hidl_vec<uint8_t> value;
+    const auto it = mExtInfo.find(opaqueIdentifier);
+    if (it == mExtInfo.end()) {
+        status = EvsResult::INVALID_ARG;
+    } else {
+        value = it->second;
+    }
+    _hidl_cb(status, value);
+    return {};
+}
+
+Return<void> EvsCamera::importExternalBuffers([[maybe_unused]] const hidl_vec<BufferDesc>& buffers,
+                                              importExternalBuffers_cb _hidl_cb) {
+    auto numBuffersToAdd = buffers.size();
+    if (numBuffersToAdd < 1) {
+        ALOGD("No buffers to add");
+        _hidl_cb(EvsResult::OK, mFramesAllowed);
+        return {};
+    }
+
+    {
+        std::scoped_lock<std::mutex> lock(mAccessLock);
+
+        if (numBuffersToAdd > (kMaxBuffersInFlight - mFramesAllowed)) {
+            numBuffersToAdd -= (kMaxBuffersInFlight - mFramesAllowed);
+            ALOGW("Exceed the limit on number of buffers. %" PRIu64 " buffers will be added only.",
+                  numBuffersToAdd);
+        }
+
+        GraphicBufferMapper& mapper = GraphicBufferMapper::get();
+        const auto before = mFramesAllowed;
+        for (auto i = 0; i < numBuffersToAdd; ++i) {
+            // TODO: reject if external buffer is configured differently.
+            auto& b = buffers[i];
+            const AHardwareBuffer_Desc* pDesc =
+                    reinterpret_cast<const AHardwareBuffer_Desc*>(&b.buffer.description);
+
+            // Import a buffer to add
+            buffer_handle_t memHandle = nullptr;
+            status_t result =
+                    mapper.importBuffer(b.buffer.nativeHandle, pDesc->width, pDesc->height, 1,
+                                        pDesc->format, pDesc->usage, pDesc->stride, &memHandle);
+            if (result != android::NO_ERROR || !memHandle) {
+                ALOGW("Failed to import a buffer %d", b.bufferId);
+                continue;
+            }
+
+            auto stored = false;
+            for (auto&& rec : mBuffers) {
+                if (rec.handle == nullptr) {
+                    // Use this existing entry
+                    rec.handle = memHandle;
+                    rec.inUse = false;
+
+                    stored = true;
+                    break;
+                }
+            }
+
+            if (!stored) {
+                // Add a BufferRecord wrapping this handle to our set of available buffers
+                mBuffers.emplace_back(memHandle);
+            }
+
+            ++mFramesAllowed;
+        }
+
+        _hidl_cb(EvsResult::OK, mFramesAllowed - before);
+        return {};
+    }
+}
 
 bool EvsCamera::setAvailableFrames_Locked(unsigned bufferCount) {
-    if (bufferCount < 1) {
-        ALOGE("Ignoring request to set buffer count to zero");
+    if (bufferCount < kMinimumBuffersInFlight) {
+        ALOGE("Ignoring request to set buffer count below the minimum number of buffers to run a "
+              "video stream");
         return false;
     }
-    if (bufferCount > MAX_BUFFERS_IN_FLIGHT) {
+    if (bufferCount > kMaxBuffersInFlight) {
         ALOGE("Rejecting buffer request in excess of internal limit");
         return false;
     }
@@ -403,17 +463,16 @@ bool EvsCamera::setAvailableFrames_Locked(unsigned bufferCount) {
     return true;
 }
 
-
 unsigned EvsCamera::increaseAvailableFrames_Locked(unsigned numToAdd) {
     // Acquire the graphics buffer allocator
-    GraphicBufferAllocator &alloc(GraphicBufferAllocator::get());
+    GraphicBufferAllocator& alloc(GraphicBufferAllocator::get());
 
     unsigned added = 0;
 
     while (added < numToAdd) {
         buffer_handle_t memHandle = nullptr;
-        status_t result = alloc.allocate(mWidth, mHeight, mFormat, 1, mUsage,
-                                         &memHandle, &mStride, 0, "EvsCamera");
+        status_t result = alloc.allocate(mWidth, mHeight, mFormat, 1, mUsage, &memHandle, &mStride,
+                                         0, "EvsCamera");
         if (result != NO_ERROR) {
             ALOGE("Error %d allocating %d x %d graphics buffer", result, mWidth, mHeight);
             break;
@@ -436,7 +495,7 @@ unsigned EvsCamera::increaseAvailableFrames_Locked(unsigned numToAdd) {
         }
         if (!stored) {
             // Add a BufferRecord wrapping this handle to our set of available buffers
-            mBuffers.emplace_back(memHandle);
+            mBuffers.push_back(std::move(BufferRecord(memHandle)));
         }
 
         mFramesAllowed++;
@@ -446,10 +505,9 @@ unsigned EvsCamera::increaseAvailableFrames_Locked(unsigned numToAdd) {
     return added;
 }
 
-
 unsigned EvsCamera::decreaseAvailableFrames_Locked(unsigned numToRemove) {
     // Acquire the graphics buffer allocator
-    GraphicBufferAllocator &alloc(GraphicBufferAllocator::get());
+    GraphicBufferAllocator& alloc(GraphicBufferAllocator::get());
 
     unsigned removed = 0;
 
@@ -472,14 +530,12 @@ unsigned EvsCamera::decreaseAvailableFrames_Locked(unsigned numToRemove) {
     return removed;
 }
 
-
 // This is the asynchronous frame generation thread that runs in parallel with the
 // main serving thread.  There is one for each active camera instance.
 void EvsCamera::generateFrames() {
     ALOGD("Frame generation loop started");
 
     unsigned idx;
-
     while (true) {
         bool timeForFrame = false;
         nsecs_t startTime = systemTime(SYSTEM_TIME_MONOTONIC);
@@ -521,9 +577,9 @@ void EvsCamera::generateFrames() {
 
         if (timeForFrame) {
             // Assemble the buffer description we'll transmit below
-            BufferDesc_1_1 newBuffer = {};
+            BufferDesc newBuffer = {};
             AHardwareBuffer_Desc* pDesc =
-                reinterpret_cast<AHardwareBuffer_Desc *>(&newBuffer.buffer.description);
+                    reinterpret_cast<AHardwareBuffer_Desc*>(&newBuffer.buffer.description);
             pDesc->width = mWidth;
             pDesc->height = mHeight;
             pDesc->layers = 1;
@@ -534,19 +590,16 @@ void EvsCamera::generateFrames() {
             newBuffer.pixelSize = sizeof(uint32_t);
             newBuffer.bufferId = idx;
             newBuffer.deviceId = mDescription.v1.cameraId;
-            newBuffer.timestamp = elapsedRealtimeNano();
+            newBuffer.timestamp = elapsedRealtimeNano() * 1e+3;  // timestamps is in microseconds
 
             // Write test data into the image buffer
             fillTestFrame(newBuffer);
 
             // Issue the (asynchronous) callback to the client -- can't be holding the lock
-            hidl_vec<BufferDesc_1_1> frames;
-            frames.resize(1);
-            frames[0] = newBuffer;
-            auto result = mStream->deliverFrame_1_1(frames);
+            auto result = mStream->deliverFrame_1_1({newBuffer});
             if (result.isOk()) {
-                ALOGD("Delivered %p as id %d",
-                      newBuffer.buffer.nativeHandle.getNativeHandle(), newBuffer.bufferId);
+                ALOGD("Delivered %p as id %d", newBuffer.buffer.nativeHandle.getNativeHandle(),
+                      newBuffer.bufferId);
             } else {
                 // This can happen if the client dies and is likely unrecoverable.
                 // To avoid consuming resources generating failing calls, we stop sending
@@ -563,63 +616,50 @@ void EvsCamera::generateFrames() {
             }
         }
 
-        // We arbitrarily choose to generate frames at 12 fps to ensure we pass the 10fps test requirement
-        static const int kTargetFrameRate = 12;
-        static const nsecs_t kTargetFrameTimeUs = 1000*1000 / kTargetFrameRate;
+        // We arbitrarily choose to generate frames at 15 fps to ensure we pass the 10fps test
+        // requirement
+        static const int kTargetFrameRate = 15;
+        static const nsecs_t kTargetFrameIntervalUs = 1000 * 1000 / kTargetFrameRate;
         const nsecs_t now = systemTime(SYSTEM_TIME_MONOTONIC);
-        const nsecs_t workTimeUs = (now - startTime) / 1000;
-        const nsecs_t sleepDurationUs = kTargetFrameTimeUs - workTimeUs;
+        const nsecs_t elapsedTimeUs = (now - startTime) / 1000;
+        const nsecs_t sleepDurationUs = kTargetFrameIntervalUs - elapsedTimeUs;
         if (sleepDurationUs > 0) {
             usleep(sleepDurationUs);
         }
     }
 
     // If we've been asked to stop, send an event to signal the actual end of stream
-    EvsEventDesc event;
-    event.aType = EvsEventType::STREAM_STOPPED;
-    auto result = mStream->notify(event);
-    if (!result.isOk()) {
+    EvsEventDesc event = {
+            .aType = EvsEventType::STREAM_STOPPED,
+    };
+    if (!mStream->notify(event).isOk()) {
         ALOGE("Error delivering end of stream marker");
     }
 
     return;
 }
 
-
-void EvsCamera::fillTestFrame(const BufferDesc_1_1& buff) {
+void EvsCamera::fillTestFrame(const BufferDesc& buff) {
     // Lock our output buffer for writing
-    uint32_t *pixels = nullptr;
+    uint32_t* pixels = nullptr;
     const AHardwareBuffer_Desc* pDesc =
-        reinterpret_cast<const AHardwareBuffer_Desc *>(&buff.buffer.description);
-    GraphicBufferMapper &mapper = GraphicBufferMapper::get();
+            reinterpret_cast<const AHardwareBuffer_Desc*>(&buff.buffer.description);
+    GraphicBufferMapper& mapper = GraphicBufferMapper::get();
     mapper.lock(buff.buffer.nativeHandle,
                 GRALLOC_USAGE_SW_WRITE_OFTEN | GRALLOC_USAGE_SW_READ_NEVER,
-                android::Rect(pDesc->width, pDesc->height),
-                (void **) &pixels);
+                android::Rect(pDesc->width, pDesc->height), (void**)&pixels);
 
     // If we failed to lock the pixel buffer, we're about to crash, but log it first
     if (!pixels) {
         ALOGE("Camera failed to gain access to image buffer for writing");
+        return;
     }
 
-    // Fill in the test pixels
+    // Fill in the test pixels; the colorbar in ABGR format
     for (unsigned row = 0; row < pDesc->height; row++) {
         for (unsigned col = 0; col < pDesc->width; col++) {
-            // Index into the row to check the pixel at this column.
-            // We expect 0xFF in the LSB channel, a vertical gradient in the
-            // second channel, a horitzontal gradient in the third channel, and
-            // 0xFF in the MSB.
-            // The exception is the very first 32 bits which is used for the
-            // time varying frame signature to avoid getting fooled by a static image.
-            uint32_t expectedPixel = 0xFF0000FF           | // MSB and LSB
-                                     ((row & 0xFF) <<  8) | // vertical gradient
-                                     ((col & 0xFF) << 16);  // horizontal gradient
-            if ((row | col) == 0) {
-                static uint32_t sFrameTicker = 0;
-                expectedPixel = (sFrameTicker) & 0xFF;
-                sFrameTicker++;
-            }
-            pixels[col] = expectedPixel;
+            const uint32_t index = col * kNumColors / pDesc->width;
+            pixels[col] = kColors[index];
         }
         // Point to the next row
         // NOTE:  stride retrieved from gralloc is in units of pixels
@@ -630,39 +670,35 @@ void EvsCamera::fillTestFrame(const BufferDesc_1_1& buff) {
     mapper.unlock(buff.buffer.nativeHandle);
 }
 
-
-void EvsCamera::fillTestFrame(const BufferDesc_1_0& buff) {
-    BufferDesc_1_1 newBufDesc = {};
-    AHardwareBuffer_Desc desc = {
-        buff.width,   // width
-        buff.height,  // height
-        1,            // layers, always 1 for EVS
-        buff.format,  // One of AHardwareBuffer_Format
-        buff.usage,   // Combination of AHardwareBuffer_UsageFlags
-        buff.stride,  // Row stride in pixels
-        0,            // Reserved
-        0             // Reserved
+void EvsCamera::fillTestFrame(const V1_0::BufferDesc& buff) {
+    BufferDesc newBuffer = {
+            .buffer.nativeHandle = buff.memHandle,
+            .pixelSize = buff.pixelSize,
+            .bufferId = buff.bufferId,
     };
-    memcpy(&desc, &newBufDesc.buffer.description, sizeof(desc));
-    newBufDesc.buffer.nativeHandle = buff.memHandle;
-    newBufDesc.pixelSize = buff.pixelSize;
-    newBufDesc.bufferId = buff.bufferId;
-
-    return fillTestFrame(newBufDesc);
+    AHardwareBuffer_Desc* pDesc =
+            reinterpret_cast<AHardwareBuffer_Desc*>(&newBuffer.buffer.description);
+    *pDesc = {
+            buff.width,   // width
+            buff.height,  // height
+            1,            // layers, always 1 for EVS
+            buff.format,  // One of AHardwareBuffer_Format
+            buff.usage,   // Combination of AHardwareBuffer_UsageFlags
+            buff.stride,  // Row stride in pixels
+            0,            // Reserved
+            0             // Reserved
+    };
+    return fillTestFrame(newBuffer);
 }
 
-
-void EvsCamera::returnBuffer(const uint32_t bufferId, const buffer_handle_t memHandle) {
-    std::lock_guard <std::mutex> lock(mAccessLock);
-
+void EvsCamera::returnBufferLocked(const uint32_t bufferId, const buffer_handle_t memHandle) {
     if (memHandle == nullptr) {
         ALOGE("ignoring doneWithFrame called with null handle");
     } else if (bufferId >= mBuffers.size()) {
-        ALOGE("ignoring doneWithFrame called with invalid bufferId %d (max is %zu)",
-              bufferId, mBuffers.size()-1);
+        ALOGE("ignoring doneWithFrame called with invalid bufferId %d (max is %zu)", bufferId,
+              mBuffers.size() - 1);
     } else if (!mBuffers[bufferId].inUse) {
-        ALOGE("ignoring doneWithFrame called on frame %d which is already free",
-              bufferId);
+        ALOGE("ignoring doneWithFrame called on frame %d which is already free", bufferId);
     } else {
         // Mark the frame as available
         mBuffers[bufferId].inUse = false;
@@ -683,42 +719,33 @@ void EvsCamera::returnBuffer(const uint32_t bufferId, const buffer_handle_t memH
     }
 }
 
-
-sp<EvsCamera> EvsCamera::Create(const char *deviceName) {
-    unique_ptr<ConfigManager::CameraInfo> nullCamInfo = nullptr;
+sp<EvsCamera> EvsCamera::Create(const char* deviceName) {
+    std::unique_ptr<ConfigManager::CameraInfo> nullCamInfo = nullptr;
 
     return Create(deviceName, nullCamInfo);
 }
 
-
-sp<EvsCamera> EvsCamera::Create(const char *deviceName,
-                                unique_ptr<ConfigManager::CameraInfo> &camInfo,
-                                const Stream *streamCfg) {
+sp<EvsCamera> EvsCamera::Create(const char* deviceName,
+                                std::unique_ptr<ConfigManager::CameraInfo>& camInfo,
+                                [[maybe_unused]] const Stream* streamCfg) {
     sp<EvsCamera> evsCamera = new EvsCamera(deviceName, camInfo);
     if (evsCamera == nullptr) {
         return nullptr;
     }
 
-    /* default implementation does not use a given configuration */
-    (void)streamCfg;
-
-    /* Use the first resolution from the list for the testing */
+    // Use the first resolution from the list for the testing
+    // TODO(b/214835237): Uses a given Stream configuration to choose the best
+    // stream configuration.
     auto it = camInfo->streamConfigurations.begin();
     evsCamera->mWidth = it->second[1];
     evsCamera->mHeight = it->second[2];
-    evsCamera->mDescription.v1.vendorFlags = 0xFFFFFFFF; // Arbitrary test value
+    evsCamera->mDescription.v1.vendorFlags = 0xFFFFFFFF;  // Arbitrary test value
 
     evsCamera->mFormat = HAL_PIXEL_FORMAT_RGBA_8888;
-    evsCamera->mUsage  = GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_HW_CAMERA_WRITE |
-                         GRALLOC_USAGE_SW_READ_RARELY | GRALLOC_USAGE_SW_WRITE_RARELY;
+    evsCamera->mUsage = GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_HW_CAMERA_WRITE |
+                        GRALLOC_USAGE_SW_READ_RARELY | GRALLOC_USAGE_SW_WRITE_RARELY;
 
     return evsCamera;
 }
 
-
-} // namespace implementation
-} // namespace V1_0
-} // namespace evs
-} // namespace automotive
-} // namespace hardware
-} // namespace android
+}  // namespace android::hardware::automotive::evs::V1_1::implementation
