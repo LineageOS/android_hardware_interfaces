@@ -34,8 +34,8 @@
 package android.hardware.bluetooth.audio;
 @Backing(type="byte") @VintfStability
 enum LdacChannelMode {
-  UNKNOWN = 1,
-  STEREO = 2,
-  DUAL = 4,
-  MONO = 8,
+  UNKNOWN = 0,
+  STEREO = 1,
+  DUAL = 2,
+  MONO = 3,
 }
