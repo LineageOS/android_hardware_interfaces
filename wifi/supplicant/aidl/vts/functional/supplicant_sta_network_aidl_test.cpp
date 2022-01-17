@@ -784,6 +784,14 @@ TEST_P(SupplicantStaNetworkAidlTest, GetWpsNfcConfigurationToken) {
     EXPECT_NE(retrievedToken.size(), 0);
 }
 
+/*
+ * SetRoamingConsortiumSelection
+ */
+TEST_P(SupplicantStaNetworkAidlTest, SetRoamingConsortiumSelection) {
+    const std::vector<uint8_t> testSelection = std::vector<uint8_t>({0x11, 0x21, 0x33, 0x44});
+    EXPECT_TRUE(sta_network_->setRoamingConsortiumSelection(testSelection).isOk());
+}
+
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SupplicantStaNetworkAidlTest);
 INSTANTIATE_TEST_SUITE_P(Supplicant, SupplicantStaNetworkAidlTest,
                          testing::ValuesIn(android::getAidlHalInstanceNames(
