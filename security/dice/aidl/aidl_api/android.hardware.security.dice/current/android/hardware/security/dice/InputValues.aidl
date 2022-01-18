@@ -35,10 +35,10 @@ package android.hardware.security.dice;
 /* @hide */
 @RustDerive(Clone=true, Eq=true, Hash=true, Ord=true, PartialEq=true, PartialOrd=true) @VintfStability
 parcelable InputValues {
-  byte[] codeHash;
+  byte[64] codeHash;
   android.hardware.security.dice.Config config;
-  byte[] authorityHash;
+  byte[64] authorityHash;
   @nullable byte[] authorityDescriptor;
   android.hardware.security.dice.Mode mode = android.hardware.security.dice.Mode.NOT_INITIALIZED;
-  byte[] hidden;
+  byte[64] hidden;
 }
