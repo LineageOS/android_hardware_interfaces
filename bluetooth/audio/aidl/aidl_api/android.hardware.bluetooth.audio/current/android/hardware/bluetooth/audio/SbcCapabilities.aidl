@@ -35,10 +35,10 @@ package android.hardware.bluetooth.audio;
 @VintfStability
 parcelable SbcCapabilities {
   int[] sampleRateHz;
-  android.hardware.bluetooth.audio.SbcChannelMode channelMode;
+  android.hardware.bluetooth.audio.SbcChannelMode[] channelMode;
   byte[] blockLength;
   byte[] numSubbands;
-  android.hardware.bluetooth.audio.SbcAllocMethod allocMethod;
+  android.hardware.bluetooth.audio.SbcAllocMethod[] allocMethod;
   byte[] bitsPerSample;
   int minBitpool;
   int maxBitpool;
