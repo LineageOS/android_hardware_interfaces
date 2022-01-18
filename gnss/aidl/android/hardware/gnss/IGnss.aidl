@@ -18,6 +18,7 @@ package android.hardware.gnss;
 
 import android.hardware.gnss.GnssLocation;
 import android.hardware.gnss.IAGnss;
+import android.hardware.gnss.IGnssAntennaInfo;
 import android.hardware.gnss.IGnssBatching;
 import android.hardware.gnss.IGnssCallback;
 import android.hardware.gnss.IGnssConfiguration;
@@ -277,4 +278,11 @@ interface IGnss {
     void setPositionMode(in GnssPositionMode mode, in GnssPositionRecurrence recurrence,
             in int minIntervalMs, in int preferredAccuracyMeters, in int preferredTimeMs,
             in boolean lowPowerMode);
+
+    /*
+     * This method returns the IGnssAntennaInfo.
+     *
+     * @return Handle to the IGnssAntennaInfo.
+     */
+    IGnssAntennaInfo getExtensionGnssAntennaInfo();
 }

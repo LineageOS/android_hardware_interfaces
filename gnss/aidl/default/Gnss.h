@@ -18,6 +18,7 @@
 
 #include <aidl/android/hardware/gnss/BnAGnss.h>
 #include <aidl/android/hardware/gnss/BnGnss.h>
+#include <aidl/android/hardware/gnss/BnGnssAntennaInfo.h>
 #include <aidl/android/hardware/gnss/BnGnssBatching.h>
 #include <aidl/android/hardware/gnss/BnGnssConfiguration.h>
 #include <aidl/android/hardware/gnss/BnGnssDebug.h>
@@ -69,6 +70,8 @@ class Gnss : public BnGnss {
     ndk::ScopedAStatus getExtensionGnssVisibilityControl(
             std::shared_ptr<android::hardware::gnss::visibility_control::IGnssVisibilityControl>*
                     iGnssVisibilityControl) override;
+    ndk::ScopedAStatus getExtensionGnssAntennaInfo(
+            std::shared_ptr<IGnssAntennaInfo>* iGnssAntennaInfo) override;
 
     std::shared_ptr<GnssConfiguration> mGnssConfiguration;
     std::shared_ptr<GnssPowerIndication> mGnssPowerIndication;
