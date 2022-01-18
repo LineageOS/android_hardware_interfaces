@@ -35,7 +35,7 @@ package android.hardware.security.dice;
 /* @hide */
 @RustDerive(Clone=true, Eq=true, Hash=true, Ord=true, PartialEq=true, PartialOrd=true) @VintfStability
 parcelable BccHandover {
-  byte[] cdiAttest;
-  byte[] cdiSeal;
+  byte[32] cdiAttest;
+  byte[32] cdiSeal;
   android.hardware.security.dice.Bcc bcc;
 }

@@ -27,13 +27,13 @@ import android.hardware.security.dice.Bcc;
 @RustDerive(Clone=true, Eq=true, PartialEq=true, Ord=true, PartialOrd=true, Hash=true)
 parcelable BccHandover {
     /**
-     * CDI_attest. Must a exactly 32 bytes of data.
+     * CDI_attest. Must be exactly 32 bytes of data.
      */
-    byte[] cdiAttest;
+    byte[32] cdiAttest;
     /**
-     * CDI_seal. Must a exactly 32 bytes of data.
+     * CDI_seal. Must be exactly 32 bytes of data.
      */
-    byte[] cdiSeal;
+    byte[32] cdiSeal;
     /**
      * CBOR encoded BCC.
      *
