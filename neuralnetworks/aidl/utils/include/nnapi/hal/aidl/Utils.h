@@ -38,6 +38,8 @@ constexpr std::optional<nn::Version> aidlVersionToCanonicalVersion(int aidlVersi
             return nn::kVersionFeatureLevel6;
         case 3:
             return nn::kVersionFeatureLevel7;
+        case 4:
+            return nn::kVersionFeatureLevel8;
         default:
             return std::nullopt;
     }
