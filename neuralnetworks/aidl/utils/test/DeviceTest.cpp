@@ -17,6 +17,7 @@
 #include "MockBuffer.h"
 #include "MockDevice.h"
 #include "MockPreparedModel.h"
+#include "TestUtils.h"
 
 #include <aidl/android/hardware/neuralnetworks/BnDevice.h>
 #include <android/binder_auto_utils.h>
@@ -146,26 +147,7 @@ constexpr auto makeDeadObjectFailure = [] {
     return ndk::ScopedAStatus::fromStatus(STATUS_DEAD_OBJECT);
 };
 
-class DeviceTest : public ::testing::TestWithParam<nn::Version> {
-  protected:
-    const nn::Version kVersion = GetParam();
-};
-
-std::string printDeviceTest(const testing::TestParamInfo<nn::Version>& info) {
-    const nn::Version version = info.param;
-    CHECK(!version.runtimeOnlyFeatures);
-    switch (version.level) {
-        case nn::Version::Level::FEATURE_LEVEL_5:
-            return "v1";
-        case nn::Version::Level::FEATURE_LEVEL_6:
-            return "v2";
-        case nn::Version::Level::FEATURE_LEVEL_7:
-            return "v3";
-        default:
-            LOG(FATAL) << "Invalid AIDL version: " << version;
-            return "invalid";
-    }
-}
+class DeviceTest : public VersionedAidlUtilsTestBase {};
 
 }  // namespace
 
@@ -894,9 +876,6 @@ TEST_P(DeviceTest, allocateDeadObject) {
     EXPECT_EQ(result.error().code, nn::ErrorStatus::DEAD_OBJECT);
 }
 
-INSTANTIATE_TEST_SUITE_P(TestDevice, DeviceTest,
-                         ::testing::Values(nn::kVersionFeatureLevel5, nn::kVersionFeatureLevel6,
-                                           nn::kVersionFeatureLevel7),
-                         printDeviceTest);
+INSTANTIATE_VERSIONED_AIDL_UTILS_TEST(DeviceTest, kAllAidlVersions);
 
 }  // namespace aidl::android::hardware::neuralnetworks::utils
