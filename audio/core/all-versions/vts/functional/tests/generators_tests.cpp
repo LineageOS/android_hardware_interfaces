@@ -33,7 +33,7 @@
 #endif
 
 using namespace android;
-using namespace ::android::hardware::audio::common::CPP_VERSION;
+using namespace ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION;
 #if MAJOR_VERSION == 7
 namespace xsd {
 using namespace ::android::audio::policy::configuration::CPP_VERSION;

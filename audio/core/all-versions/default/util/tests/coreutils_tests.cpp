@@ -28,7 +28,7 @@
 #include <xsdc/XsdcSupport.h>
 
 using namespace android;
-using namespace ::android::hardware::audio::common::CPP_VERSION;
+using namespace ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION;
 using namespace ::android::hardware::audio::CPP_VERSION;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::audio::CPP_VERSION::implementation::CoreUtils;
