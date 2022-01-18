@@ -131,7 +131,7 @@ void convertToHidlEvent(const AidlEvent& aidlEvent, V2_1Event* hidlEvent) {
             break;
         case AidlSensorType::POSE_6DOF:
             std::copy(std::begin(aidlEvent.payload.get<AidlEvent::EventPayload::pose6DOF>().values),
-                      std::end(aidlEvent.payload.get<AidlEvent::EventPayload::data>().values),
+                      std::end(aidlEvent.payload.get<AidlEvent::EventPayload::pose6DOF>().values),
                       hidlEvent->u.pose6DOF.data());
             break;
         case AidlSensorType::DYNAMIC_SENSOR_META:
