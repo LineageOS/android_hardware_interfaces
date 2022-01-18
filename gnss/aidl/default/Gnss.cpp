@@ -21,6 +21,7 @@
 #include <log/log.h>
 #include "AGnss.h"
 #include "DeviceFileReader.h"
+#include "GnssAntennaInfo.h"
 #include "GnssBatching.h"
 #include "GnssConfiguration.h"
 #include "GnssDebug.h"
@@ -56,7 +57,8 @@ ScopedAStatus Gnss::setCallback(const std::shared_ptr<IGnssCallback>& callback) 
 
     int capabilities = (int)(IGnssCallback::CAPABILITY_SATELLITE_BLOCKLIST |
                              IGnssCallback::CAPABILITY_SATELLITE_PVT |
-                             IGnssCallback::CAPABILITY_CORRELATION_VECTOR);
+                             IGnssCallback::CAPABILITY_CORRELATION_VECTOR |
+                             IGnssCallback::CAPABILITY_ANTENNA_INFO);
 
     auto status = sGnssCallback->gnssSetCapabilitiesCb(capabilities);
     if (!status.isOk()) {
@@ -276,6 +278,14 @@ ndk::ScopedAStatus Gnss::getExtensionGnssVisibilityControl(
     ALOGD("Gnss::getExtensionGnssVisibilityControl");
 
     *iGnssVisibilityControl = SharedRefBase::make<visibility_control::GnssVisibilityControl>();
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Gnss::getExtensionGnssAntennaInfo(
+        std::shared_ptr<IGnssAntennaInfo>* iGnssAntennaInfo) {
+    ALOGD("Gnss::getExtensionGnssAntennaInfo");
+
+    *iGnssAntennaInfo = SharedRefBase::make<GnssAntennaInfo>();
     return ndk::ScopedAStatus::ok();
 }
 

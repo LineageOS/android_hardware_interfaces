@@ -67,7 +67,7 @@ interface IGnssCallback {
     /** Capability bit mask indicating that GNSS supports measurement corrections */
     const int CAPABILITY_MEASUREMENT_CORRECTIONS = 1 << 10;
 
-    /** Capability bit mask indicating that GNSS supports measurement corrections */
+    /** Capability bit mask indicating that GNSS supports antenna info */
     const int CAPABILITY_ANTENNA_INFO = 1 << 11;
 
     /** Capability bit mask indicating that GNSS supports correlation vector */
