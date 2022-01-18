@@ -34,7 +34,7 @@ parcelable InputValues {
     /**
      * The target code hash. Must be exactly 64 bytes.
      */
-    byte[] codeHash;
+    byte[64] codeHash;
     /**
      * The configuration data.
      */
@@ -42,7 +42,7 @@ parcelable InputValues {
     /**
      * The authority hash. Must be exactly 64 bytes. Must be all zero if unused.
      */
-    byte[] authorityHash;
+    byte[64] authorityHash;
     /**
      * Optional free form authorityDescriptor.
      */
@@ -54,5 +54,5 @@ parcelable InputValues {
     /**
      * Optional hidden values. Must be exactly 64 bytes. Must be all zero if unused.
      */
-    byte[] hidden;
+    byte[64] hidden;
 }
