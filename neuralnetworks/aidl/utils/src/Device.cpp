@@ -229,7 +229,7 @@ nn::GeneralResult<nn::SharedPreparedModel> Device::prepareModel(
     const auto aidlDataCache = NN_TRY(convert(dataCache));
     const auto aidlToken = NN_TRY(convert(token));
 
-    const auto cb = ndk::SharedRefBase::make<PreparedModelCallback>();
+    const auto cb = ndk::SharedRefBase::make<PreparedModelCallback>(kFeatureLevel);
     const auto scoped = kDeathHandler.protectCallback(cb.get());
 
     const auto ret = kDevice->prepareModel(aidlModel, aidlPreference, aidlPriority, aidlDeadline,
@@ -247,7 +247,7 @@ nn::GeneralResult<nn::SharedPreparedModel> Device::prepareModelFromCache(
     const auto aidlDataCache = NN_TRY(convert(dataCache));
     const auto aidlToken = NN_TRY(convert(token));
 
-    const auto cb = ndk::SharedRefBase::make<PreparedModelCallback>();
+    const auto cb = ndk::SharedRefBase::make<PreparedModelCallback>(kFeatureLevel);
     const auto scoped = kDeathHandler.protectCallback(cb.get());
 
     const auto ret = kDevice->prepareModelFromCache(aidlDeadline, aidlModelCache, aidlDataCache,

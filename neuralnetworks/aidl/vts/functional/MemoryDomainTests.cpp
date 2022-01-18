@@ -208,6 +208,11 @@ class InvalidPreparedModel : public BnPreparedModel {
         return ndk::ScopedAStatus::fromServiceSpecificError(
                 static_cast<int32_t>(ErrorStatus::GENERAL_FAILURE));
     }
+    ndk::ScopedAStatus createReusableExecution(const aidl_hal::Request&, bool, int64_t,
+                                               std::shared_ptr<aidl_hal::IExecution>*) override {
+        return ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(ErrorStatus::GENERAL_FAILURE));
+    }
 };
 
 template <typename... Args>
