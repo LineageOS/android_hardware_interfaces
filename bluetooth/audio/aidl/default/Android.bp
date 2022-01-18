@@ -19,6 +19,7 @@ cc_library_shared {
         "HearingAidAudioProvider.cpp",
         "LeAudioOffloadAudioProvider.cpp",
         "LeAudioSoftwareAudioProvider.cpp",
+        "service.cpp",
     ],
     export_include_dirs: ["."],
     header_libs: ["libhardware_headers"],
