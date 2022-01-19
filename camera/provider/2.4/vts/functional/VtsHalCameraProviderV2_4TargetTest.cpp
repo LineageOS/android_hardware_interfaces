@@ -939,7 +939,6 @@ public:
     void getPrivacyTestPatternModes(
             const camera_metadata_t* staticMetadata,
             std::unordered_set<int32_t>* privacyTestPatternModes/*out*/);
-    static bool isColorCamera(const camera_metadata_t *metadata);
 
     static V3_2::DataspaceFlags getDataspace(PixelFormat format);
 
@@ -6199,141 +6198,6 @@ TEST_P(CameraHidlTest, configureInjectionStreamsWithSessionParameters) {
     }
 }
 
-// Test the multi-camera API requirement for Google Requirement Freeze S
-// Note that this requirement can only be partially tested. If a vendor
-// device doesn't expose a physical camera in any shape or form, there is no way
-// the test can catch it.
-TEST_P(CameraHidlTest, grfSMultiCameraTest) {
-    const int socGrfApi = property_get_int32("ro.board.first_api_level", /*default*/ -1);
-    if (socGrfApi < 31 /*S*/) {
-        // Non-GRF devices, or version < 31 Skip
-        ALOGI("%s: socGrfApi level is %d. Skipping", __FUNCTION__, socGrfApi);
-        return;
-    }
-
-    // Test that if more than one rear-facing color camera is
-    // supported, there must be at least one rear-facing logical camera.
-    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
-    // Back facing non-logical color cameras
-    std::set<std::string> rearColorCameras;
-    // Back facing logical cameras' physical camera Id sets
-    std::set<std::set<std::string>> rearPhysicalIds;
-    for (const auto& name : cameraDeviceNames) {
-        std::string cameraId;
-        int deviceVersion = getCameraDeviceVersionAndId(name, mProviderType, &cameraId);
-        switch (deviceVersion) {
-            case CAMERA_DEVICE_API_VERSION_3_7:
-            case CAMERA_DEVICE_API_VERSION_3_6:
-            case CAMERA_DEVICE_API_VERSION_3_5:
-            case CAMERA_DEVICE_API_VERSION_3_4:
-            case CAMERA_DEVICE_API_VERSION_3_3:
-            case CAMERA_DEVICE_API_VERSION_3_2: {
-                ::android::sp<::android::hardware::camera::device::V3_2::ICameraDevice> device3_x;
-                ALOGI("getCameraCharacteristics: Testing camera device %s", name.c_str());
-                Return<void> ret;
-                ret = mProvider->getCameraDeviceInterface_V3_x(
-                        name, [&](auto status, const auto& device) {
-                            ALOGI("getCameraDeviceInterface_V3_x returns status:%d", (int)status);
-                            ASSERT_EQ(Status::OK, status);
-                            ASSERT_NE(device, nullptr);
-                            device3_x = device;
-                        });
-                ASSERT_TRUE(ret.isOk());
-
-                ret = device3_x->getCameraCharacteristics([&](auto status, const auto& chars) {
-                    ASSERT_EQ(Status::OK, status);
-                    const camera_metadata_t* metadata = (camera_metadata_t*)chars.data();
-
-                    // Skip if this is not a color camera.
-                    if (!CameraHidlTest::isColorCamera(metadata)) {
-                        return;
-                    }
-
-                    // Check camera facing. Skip if facing is not BACK.
-                    // If this is not a logical camera, only note down
-                    // the camera ID, and skip.
-                    camera_metadata_ro_entry entry;
-                    int retcode = find_camera_metadata_ro_entry(
-                            metadata, ANDROID_LENS_FACING, &entry);
-                    ASSERT_EQ(retcode, 0);
-                    ASSERT_GT(entry.count, 0);
-                    uint8_t facing = entry.data.u8[0];
-                    bool isLogicalCamera = (isLogicalMultiCamera(metadata) == Status::OK);
-                    if (facing != ANDROID_LENS_FACING_BACK) {
-                        // Not BACK facing. Skip.
-                        return;
-                    }
-                    if (!isLogicalCamera) {
-                        rearColorCameras.insert(cameraId);
-                        return;
-                    }
-
-                    // Check logical camera's physical camera IDs for color
-                    // cameras.
-                    std::unordered_set<std::string> physicalCameraIds;
-                    Status s = getPhysicalCameraIds(metadata, &physicalCameraIds);
-                    ASSERT_EQ(Status::OK, s);
-                    rearPhysicalIds.emplace(physicalCameraIds.begin(), physicalCameraIds.end());
-                    for (const auto& physicalId : physicalCameraIds) {
-                        // Skip if the physicalId is publicly available
-                        for (auto& deviceName : cameraDeviceNames) {
-                            std::string publicVersion, publicId;
-                            ASSERT_TRUE(::matchDeviceName(deviceName, mProviderType,
-                                                          &publicVersion, &publicId));
-                            if (physicalId == publicId) {
-                                // Skip because public Ids will be iterated in outer loop.
-                                return;
-                            }
-                        }
-
-                        auto castResult = device::V3_5::ICameraDevice::castFrom(device3_x);
-                        ASSERT_TRUE(castResult.isOk());
-                        ::android::sp<::android::hardware::camera::device::V3_5::ICameraDevice>
-                                device3_5 = castResult;
-                        ASSERT_NE(device3_5, nullptr);
-
-                        // Check camera characteristics for hidden camera id
-                        Return<void> ret = device3_5->getPhysicalCameraCharacteristics(
-                                physicalId, [&](auto status, const auto& chars) {
-                            ASSERT_EQ(Status::OK, status);
-                            const camera_metadata_t* physicalMetadata =
-                                    (camera_metadata_t*)chars.data();
-
-                            if (CameraHidlTest::isColorCamera(physicalMetadata)) {
-                                rearColorCameras.insert(physicalId);
-                            }
-                        });
-                        ASSERT_TRUE(ret.isOk());
-                    }
-                });
-                ASSERT_TRUE(ret.isOk());
-            } break;
-            case CAMERA_DEVICE_API_VERSION_1_0: {
-                // Not applicable
-            } break;
-            default: {
-                ALOGE("%s: Unsupported device version %d", __func__, deviceVersion);
-                ADD_FAILURE();
-            } break;
-        }
-    }
-
-    // If there are more than one rear-facing color camera, a logical
-    // multi-camera must be defined consisting of all rear-facing color
-    // cameras.
-    if (rearColorCameras.size() > 1) {
-        bool hasRearLogical = false;
-        for (const auto& physicalIds : rearPhysicalIds) {
-            if (std::includes(physicalIds.begin(), physicalIds.end(),
-                    rearColorCameras.begin(), rearColorCameras.end())) {
-                hasRearLogical = true;
-                break;
-            }
-        }
-        ASSERT_TRUE(hasRearLogical);
-    }
-}
-
 // Retrieve all valid output stream resolutions from the camera
 // static characteristics.
 Status CameraHidlTest::getAvailableOutputStreams(const camera_metadata_t* staticMeta,
@@ -6823,23 +6687,6 @@ Status CameraHidlTest::isMonochromeCamera(const camera_metadata_t *staticMeta) {
     }
 
     return ret;
-}
-
-bool CameraHidlTest::isColorCamera(const camera_metadata_t *metadata) {
-    camera_metadata_ro_entry entry;
-    int retcode = find_camera_metadata_ro_entry(
-            metadata, ANDROID_REQUEST_AVAILABLE_CAPABILITIES, &entry);
-    if ((0 == retcode) && (entry.count > 0)) {
-        bool isBackwardCompatible = (std::find(entry.data.u8, entry.data.u8 + entry.count,
-                ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE) !=
-                entry.data.u8 + entry.count);
-        bool isMonochrome = (std::find(entry.data.u8, entry.data.u8 + entry.count,
-                ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME) !=
-                entry.data.u8 + entry.count);
-        bool isColor = isBackwardCompatible && !isMonochrome;
-        return isColor;
-    }
-    return false;
 }
 
 // Retrieve the reprocess input-output format map from the static
