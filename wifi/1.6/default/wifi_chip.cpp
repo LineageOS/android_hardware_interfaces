@@ -707,6 +707,21 @@ Return<void> WifiChip::triggerSubsystemRestart(triggerSubsystemRestart_cb hidl_s
                            &WifiChip::triggerSubsystemRestartInternal, hidl_status_cb);
 }
 
+Return<void> WifiChip::createRttController_1_6(const sp<IWifiIface>& bound_iface,
+                                               createRttController_1_6_cb hidl_status_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                           &WifiChip::createRttControllerInternal_1_6, hidl_status_cb, bound_iface);
+}
+
+Return<void> WifiChip::getUsableChannels_1_6(
+        WifiBand band, hidl_bitfield<V1_5::WifiIfaceMode> ifaceModeMask,
+        hidl_bitfield<V1_5::IWifiChip::UsableChannelFilter> filterMask,
+        getUsableChannels_1_6_cb _hidl_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                           &WifiChip::getUsableChannelsInternal_1_6, _hidl_cb, band, ifaceModeMask,
+                           filterMask);
+}
+
 void WifiChip::invalidateAndRemoveAllIfaces() {
     invalidateAndClearBridgedApAll();
     invalidateAndClearAll(ap_ifaces_);
@@ -1114,7 +1129,7 @@ WifiStatus WifiChip::removeP2pIfaceInternal(const std::string& ifname) {
     return createWifiStatus(WifiStatusCode::SUCCESS);
 }
 
-std::pair<WifiStatus, sp<V1_5::IWifiStaIface>> WifiChip::createStaIfaceInternal() {
+std::pair<WifiStatus, sp<V1_6::IWifiStaIface>> WifiChip::createStaIfaceInternal() {
     if (!canCurrentModeSupportIfaceOfTypeWithCurrentIfaces(IfaceType::STA)) {
         return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
     }
@@ -1144,7 +1159,7 @@ std::pair<WifiStatus, std::vector<hidl_string>> WifiChip::getStaIfaceNamesIntern
     return {createWifiStatus(WifiStatusCode::SUCCESS), getNames(sta_ifaces_)};
 }
 
-std::pair<WifiStatus, sp<V1_5::IWifiStaIface>> WifiChip::getStaIfaceInternal(
+std::pair<WifiStatus, sp<V1_6::IWifiStaIface>> WifiChip::getStaIfaceInternal(
         const std::string& ifname) {
     const auto iface = findUsingName(sta_ifaces_, ifname);
     if (!iface.get()) {
@@ -1351,16 +1366,9 @@ std::pair<WifiStatus, uint32_t> WifiChip::getCapabilitiesInternal_1_5() {
 }
 
 std::pair<WifiStatus, sp<V1_4::IWifiRttController>> WifiChip::createRttControllerInternal_1_4(
-        const sp<IWifiIface>& bound_iface) {
-    if (sta_ifaces_.size() == 0 && !canCurrentModeSupportIfaceOfType(IfaceType::STA)) {
-        LOG(ERROR) << "createRttControllerInternal_1_4: Chip cannot support STAs "
-                      "(and RTT by extension)";
-        return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
-    }
-    sp<WifiRttController> rtt =
-            new WifiRttController(getFirstActiveWlanIfaceName(), bound_iface, legacy_hal_);
-    rtt_controllers_.emplace_back(rtt);
-    return {createWifiStatus(WifiStatusCode::SUCCESS), rtt};
+        const sp<IWifiIface>& /*bound_iface*/) {
+    LOG(ERROR) << "createRttController_1_4 is not supported on this HAL";
+    return {createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED), {}};
 }
 
 WifiStatus WifiChip::registerEventCallbackInternal_1_4(
@@ -1409,7 +1417,31 @@ WifiStatus WifiChip::setCountryCodeInternal(const std::array<int8_t, 2>& code) {
     return createWifiStatusFromLegacyError(legacy_status);
 }
 
-std::pair<WifiStatus, std::vector<WifiUsableChannel>> WifiChip::getUsableChannelsInternal(
+std::pair<WifiStatus, std::vector<V1_5::WifiUsableChannel>> WifiChip::getUsableChannelsInternal(
+        WifiBand /*band*/, uint32_t /*ifaceModeMask*/, uint32_t /*filterMask*/) {
+    LOG(ERROR) << "getUsableChannels is not supported on this HAL";
+    return {createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED), {}};
+}
+
+WifiStatus WifiChip::triggerSubsystemRestartInternal() {
+    auto legacy_status = legacy_hal_.lock()->triggerSubsystemRestart();
+    return createWifiStatusFromLegacyError(legacy_status);
+}
+
+std::pair<WifiStatus, sp<V1_6::IWifiRttController>> WifiChip::createRttControllerInternal_1_6(
+        const sp<IWifiIface>& bound_iface) {
+    if (sta_ifaces_.size() == 0 && !canCurrentModeSupportIfaceOfType(IfaceType::STA)) {
+        LOG(ERROR) << "createRttControllerInternal_1_6: Chip cannot support STAs "
+                      "(and RTT by extension)";
+        return {createWifiStatus(WifiStatusCode::ERROR_NOT_AVAILABLE), {}};
+    }
+    sp<WifiRttController> rtt =
+            new WifiRttController(getFirstActiveWlanIfaceName(), bound_iface, legacy_hal_);
+    rtt_controllers_.emplace_back(rtt);
+    return {createWifiStatus(WifiStatusCode::SUCCESS), rtt};
+}
+
+std::pair<WifiStatus, std::vector<V1_6::WifiUsableChannel>> WifiChip::getUsableChannelsInternal_1_6(
         WifiBand band, uint32_t ifaceModeMask, uint32_t filterMask) {
     legacy_hal::wifi_error legacy_status;
     std::vector<legacy_hal::wifi_usable_channel> legacy_usable_channels;
@@ -1421,17 +1453,12 @@ std::pair<WifiStatus, std::vector<WifiUsableChannel>> WifiChip::getUsableChannel
     if (legacy_status != legacy_hal::WIFI_SUCCESS) {
         return {createWifiStatusFromLegacyError(legacy_status), {}};
     }
-    std::vector<WifiUsableChannel> hidl_usable_channels;
+    std::vector<V1_6::WifiUsableChannel> hidl_usable_channels;
     if (!hidl_struct_util::convertLegacyWifiUsableChannelsToHidl(legacy_usable_channels,
                                                                  &hidl_usable_channels)) {
         return {createWifiStatus(WifiStatusCode::ERROR_UNKNOWN), {}};
     }
     return {createWifiStatus(WifiStatusCode::SUCCESS), hidl_usable_channels};
-}
-
-WifiStatus WifiChip::triggerSubsystemRestartInternal() {
-    auto legacy_status = legacy_hal_.lock()->triggerSubsystemRestart();
-    return createWifiStatusFromLegacyError(legacy_status);
 }
 
 WifiStatus WifiChip::handleChipConfiguration(

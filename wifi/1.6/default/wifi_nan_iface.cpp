@@ -378,15 +378,15 @@ WifiNanIface::WifiNanIface(const std::string& ifname, bool is_dedicated_iface,
                     LOG(ERROR) << "Callback invoked on an invalid object";
                     return;
                 }
-                V1_2::NanDataPathConfirmInd hidl_struct;
+                V1_6::NanDataPathConfirmInd hidl_struct;
                 if (!hidl_struct_util::convertLegacyNanDataPathConfirmIndToHidl(msg,
                                                                                 &hidl_struct)) {
                     LOG(ERROR) << "Failed to convert nan capabilities response";
                     return;
                 }
 
-                for (const auto& callback : shared_ptr_this->getEventCallbacks_1_2()) {
-                    if (!callback->eventDataPathConfirm_1_2(hidl_struct).isOk()) {
+                for (const auto& callback : shared_ptr_this->getEventCallbacks_1_6()) {
+                    if (!callback->eventDataPathConfirm_1_6(hidl_struct).isOk()) {
                         LOG(ERROR) << "Failed to invoke the callback";
                     }
                 }
@@ -430,15 +430,15 @@ WifiNanIface::WifiNanIface(const std::string& ifname, bool is_dedicated_iface,
                     LOG(ERROR) << "Callback invoked on an invalid object";
                     return;
                 }
-                V1_2::NanDataPathScheduleUpdateInd hidl_struct;
+                V1_6::NanDataPathScheduleUpdateInd hidl_struct;
                 if (!hidl_struct_util::convertLegacyNanDataPathScheduleUpdateIndToHidl(
                             msg, &hidl_struct)) {
                     LOG(ERROR) << "Failed to convert nan capabilities response";
                     return;
                 }
 
-                for (const auto& callback : shared_ptr_this->getEventCallbacks_1_2()) {
-                    if (!callback->eventDataPathScheduleUpdate(hidl_struct).isOk()) {
+                for (const auto& callback : shared_ptr_this->getEventCallbacks_1_6()) {
+                    if (!callback->eventDataPathScheduleUpdate_1_6(hidl_struct).isOk()) {
                         LOG(ERROR) << "Failed to invoke the callback";
                     }
                 }
@@ -508,6 +508,10 @@ std::set<sp<V1_2::IWifiNanIfaceEventCallback>> WifiNanIface::getEventCallbacks_1
 
 std::set<sp<V1_5::IWifiNanIfaceEventCallback>> WifiNanIface::getEventCallbacks_1_5() {
     return event_cb_handler_1_5_.getCallbacks();
+}
+
+std::set<sp<V1_6::IWifiNanIfaceEventCallback>> WifiNanIface::getEventCallbacks_1_6() {
+    return event_cb_handler_1_6_.getCallbacks();
 }
 
 Return<void> WifiNanIface::getName(getName_cb hidl_status_cb) {
@@ -701,6 +705,14 @@ std::pair<WifiStatus, std::string> WifiNanIface::getNameInternal() {
 
 std::pair<WifiStatus, IfaceType> WifiNanIface::getTypeInternal() {
     return {createWifiStatus(WifiStatusCode::SUCCESS), IfaceType::NAN};
+}
+
+Return<void> WifiNanIface::registerEventCallback_1_6(
+        const sp<V1_6::IWifiNanIfaceEventCallback>& callback,
+        registerEventCallback_1_6_cb hidl_status_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                           &WifiNanIface::registerEventCallback_1_6Internal, hidl_status_cb,
+                           callback);
 }
 
 WifiStatus WifiNanIface::registerEventCallbackInternal(
@@ -898,6 +910,25 @@ WifiStatus WifiNanIface::configRequest_1_5Internal(uint16_t cmd_id,
     return createWifiStatusFromLegacyError(legacy_status);
 }
 
+WifiStatus WifiNanIface::registerEventCallback_1_6Internal(
+        const sp<V1_6::IWifiNanIfaceEventCallback>& callback) {
+    sp<V1_0::IWifiNanIfaceEventCallback> callback_1_0 = callback;
+    if (!event_cb_handler_.addCallback(callback_1_0)) {
+        return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
+    }
+    sp<V1_2::IWifiNanIfaceEventCallback> callback_1_2 = callback;
+    if (!event_cb_handler_1_2_.addCallback(callback_1_2)) {
+        return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
+    }
+    sp<V1_5::IWifiNanIfaceEventCallback> callback_1_5 = callback;
+    if (!event_cb_handler_1_5_.addCallback(callback_1_5)) {
+        return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
+    }
+    if (!event_cb_handler_1_6_.addCallback(callback)) {
+        return createWifiStatus(WifiStatusCode::ERROR_UNKNOWN);
+    }
+    return createWifiStatus(WifiStatusCode::SUCCESS);
+}
 }  // namespace implementation
 }  // namespace V1_6
 }  // namespace wifi
