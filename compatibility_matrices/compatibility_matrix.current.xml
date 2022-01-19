@@ -77,14 +77,6 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.automotive.sv</name>
-        <version>1.0</version>
-        <interface>
-            <name>ISurroundViewService</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.automotive.vehicle</name>
         <interface>
