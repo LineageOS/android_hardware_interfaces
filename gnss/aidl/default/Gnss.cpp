@@ -58,8 +58,7 @@ ScopedAStatus Gnss::setCallback(const std::shared_ptr<IGnssCallback>& callback) 
 
     int capabilities = (int)(IGnssCallback::CAPABILITY_SATELLITE_BLOCKLIST |
                              IGnssCallback::CAPABILITY_SATELLITE_PVT |
-                             IGnssCallback::CAPABILITY_CORRELATION_VECTOR |
-                             IGnssCallback::CAPABILITY_ANTENNA_INFO);
+                             IGnssCallback::CAPABILITY_CORRELATION_VECTOR);
 
     auto status = sGnssCallback->gnssSetCapabilitiesCb(capabilities);
     if (!status.isOk()) {
