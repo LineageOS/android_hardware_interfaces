@@ -39,7 +39,7 @@ namespace automotive {
 namespace vehicle {
 namespace fake {
 
-class FakeVehicleHardware final : public IVehicleHardware {
+class FakeVehicleHardware : public IVehicleHardware {
   public:
     FakeVehicleHardware();
 
@@ -80,13 +80,15 @@ class FakeVehicleHardware final : public IVehicleHardware {
     void registerOnPropertySetErrorEvent(
             std::unique_ptr<const PropertySetErrorCallback> callback) override;
 
+  protected:
+    // mValuePool is also used in mServerSidePropStore.
+    const std::shared_ptr<VehiclePropValuePool> mValuePool;
+    const std::shared_ptr<VehiclePropertyStore> mServerSidePropStore;
+
   private:
     // Expose private methods to unit test.
     friend class FakeVehicleHardwareTestHelper;
 
-    // mValuePool is also used in mServerSidePropStore.
-    const std::shared_ptr<VehiclePropValuePool> mValuePool;
-    const std::shared_ptr<VehiclePropertyStore> mServerSidePropStore;
     const std::unique_ptr<obd2frame::FakeObd2Frame> mFakeObd2Frame;
     const std::unique_ptr<FakeUserHal> mFakeUserHal;
     std::mutex mCallbackLock;
