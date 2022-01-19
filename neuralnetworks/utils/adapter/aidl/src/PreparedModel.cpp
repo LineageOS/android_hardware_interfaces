@@ -17,6 +17,7 @@
 #include "PreparedModel.h"
 
 #include "Burst.h"
+#include "Execution.h"
 
 #include <aidl/android/hardware/neuralnetworks/BnFencedExecutionCallback.h>
 #include <aidl/android/hardware/neuralnetworks/BnPreparedModel.h>
@@ -26,6 +27,7 @@
 #include <aidl/android/hardware/neuralnetworks/Request.h>
 #include <android-base/logging.h>
 #include <android/binder_auto_utils.h>
+#include <nnapi/IExecution.h>
 #include <nnapi/IPreparedModel.h>
 #include <nnapi/Result.h>
 #include <nnapi/SharedMemory.h>
@@ -167,6 +169,56 @@ nn::GeneralResult<FencedExecutionResult> executeFenced(
                                  .syncFence = std::move(fileDescriptor)};
 }
 
+nn::GeneralResult<nn::SharedExecution> createReusableExecution(
+        const nn::IPreparedModel& preparedModel, const Request& request, bool measureTiming,
+        int64_t loopTimeoutDurationNs) {
+    const auto nnRequest = NN_TRY(convertInput(request));
+    const auto nnMeasureTiming = measureTiming ? nn::MeasureTiming::YES : nn::MeasureTiming::NO;
+    const auto nnLoopTimeoutDuration = NN_TRY(makeOptionalDuration(loopTimeoutDurationNs));
+    return preparedModel.createReusableExecution(nnRequest, nnMeasureTiming, nnLoopTimeoutDuration);
+}
+
+nn::ExecutionResult<ExecutionResult> executeSynchronously(const nn::IExecution& execution,
+                                                          int64_t deadlineNs) {
+    const auto nnDeadline = NN_TRY(makeOptionalTimePoint(deadlineNs));
+
+    const auto result = execution.compute(nnDeadline);
+
+    if (!result.ok() && result.error().code == nn::ErrorStatus::OUTPUT_INSUFFICIENT_SIZE) {
+        const auto& [message, code, outputShapes] = result.error();
+        LOG(ERROR) << "executeSynchronously failed with " << code << ": " << message;
+        return ExecutionResult{.outputSufficientSize = false,
+                               .outputShapes = utils::convert(outputShapes).value(),
+                               .timing = {.timeInDriverNs = -1, .timeOnDeviceNs = -1}};
+    }
+
+    const auto& [outputShapes, timing] = NN_TRY(result);
+    return ExecutionResult{.outputSufficientSize = true,
+                           .outputShapes = utils::convert(outputShapes).value(),
+                           .timing = utils::convert(timing).value()};
+}
+
+nn::GeneralResult<FencedExecutionResult> executeFenced(
+        const nn::IExecution& execution, const std::vector<ndk::ScopedFileDescriptor>& waitFor,
+        int64_t deadlineNs, int64_t durationNs) {
+    const auto nnWaitFor = NN_TRY(convertSyncFences(waitFor));
+    const auto nnDeadline = NN_TRY(makeOptionalTimePoint(deadlineNs));
+    const auto nnDuration = NN_TRY(makeOptionalDuration(durationNs));
+
+    auto [syncFence, executeFencedInfoCallback] =
+            NN_TRY(execution.computeFenced(nnWaitFor, nnDeadline, nnDuration));
+
+    ndk::ScopedFileDescriptor fileDescriptor;
+    if (syncFence.hasFd()) {
+        auto uniqueFd = NN_TRY(nn::dupFd(syncFence.getFd()));
+        fileDescriptor = ndk::ScopedFileDescriptor(uniqueFd.release());
+    }
+
+    return FencedExecutionResult{.callback = ndk::SharedRefBase::make<FencedExecutionCallback>(
+                                         std::move(executeFencedInfoCallback)),
+                                 .syncFence = std::move(fileDescriptor)};
+}
+
 }  // namespace
 
 PreparedModel::PreparedModel(nn::SharedPreparedModel preparedModel)
@@ -220,6 +272,53 @@ ndk::ScopedAStatus PreparedModel::configureExecutionBurst(std::shared_ptr<IBurst
 
 nn::SharedPreparedModel PreparedModel::getUnderlyingPreparedModel() const {
     return kPreparedModel;
+}
+
+ndk::ScopedAStatus PreparedModel::createReusableExecution(const Request& request,
+                                                          bool measureTiming,
+                                                          int64_t loopTimeoutDurationNs,
+                                                          std::shared_ptr<IExecution>* execution) {
+    auto result = adapter::createReusableExecution(*kPreparedModel, request, measureTiming,
+                                                   loopTimeoutDurationNs);
+    if (!result.has_value()) {
+        const auto& [message, code] = result.error();
+        const auto aidlCode = utils::convert(code).value_or(ErrorStatus::GENERAL_FAILURE);
+        return ndk::ScopedAStatus::fromServiceSpecificErrorWithMessage(
+                static_cast<int32_t>(aidlCode), message.c_str());
+    }
+    *execution = ndk::SharedRefBase::make<Execution>(std::move(result).value());
+    return ndk::ScopedAStatus::ok();
+}
+
+Execution::Execution(nn::SharedExecution execution) : kExecution(std::move(execution)) {
+    CHECK(kExecution != nullptr);
+}
+
+ndk::ScopedAStatus Execution::executeSynchronously(int64_t deadlineNs,
+                                                   ExecutionResult* executionResult) {
+    auto result = adapter::executeSynchronously(*kExecution, deadlineNs);
+    if (!result.has_value()) {
+        const auto& [message, code, _] = result.error();
+        const auto aidlCode = utils::convert(code).value_or(ErrorStatus::GENERAL_FAILURE);
+        return ndk::ScopedAStatus::fromServiceSpecificErrorWithMessage(
+                static_cast<int32_t>(aidlCode), message.c_str());
+    }
+    *executionResult = std::move(result).value();
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Execution::executeFenced(const std::vector<ndk::ScopedFileDescriptor>& waitFor,
+                                            int64_t deadlineNs, int64_t durationNs,
+                                            FencedExecutionResult* executionResult) {
+    auto result = adapter::executeFenced(*kExecution, waitFor, deadlineNs, durationNs);
+    if (!result.has_value()) {
+        const auto& [message, code] = result.error();
+        const auto aidlCode = utils::convert(code).value_or(ErrorStatus::GENERAL_FAILURE);
+        return ndk::ScopedAStatus::fromServiceSpecificErrorWithMessage(
+                static_cast<int32_t>(aidlCode), message.c_str());
+    }
+    *executionResult = std::move(result).value();
+    return ndk::ScopedAStatus::ok();
 }
 
 }  // namespace aidl::android::hardware::neuralnetworks::adapter
