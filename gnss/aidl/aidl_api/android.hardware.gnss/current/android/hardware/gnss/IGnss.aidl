@@ -54,6 +54,7 @@ interface IGnss {
   void deleteAidingData(in android.hardware.gnss.IGnss.GnssAidingData aidingDataFlags);
   void setPositionMode(in android.hardware.gnss.IGnss.GnssPositionMode mode, in android.hardware.gnss.IGnss.GnssPositionRecurrence recurrence, in int minIntervalMs, in int preferredAccuracyMeters, in int preferredTimeMs, in boolean lowPowerMode);
   android.hardware.gnss.IGnssAntennaInfo getExtensionGnssAntennaInfo();
+  @nullable android.hardware.gnss.measurement_corrections.IMeasurementCorrectionsInterface getExtensionMeasurementCorrections();
   const int ERROR_INVALID_ARGUMENT = 1;
   const int ERROR_ALREADY_INIT = 2;
   const int ERROR_GENERIC = 3;

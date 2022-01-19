@@ -28,6 +28,7 @@ aidl_interface {
     vendor_available: true,
     srcs: [
         "android/hardware/gnss/*.aidl",
+        "android/hardware/gnss/measurement_corrections/*.aidl",
         "android/hardware/gnss/visibility_control/*.aidl",
     ],
     stability: "vintf",

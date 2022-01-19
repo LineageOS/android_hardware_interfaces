@@ -28,6 +28,7 @@ import android.hardware.gnss.IGnssMeasurementInterface;
 import android.hardware.gnss.IGnssNavigationMessageInterface;
 import android.hardware.gnss.IGnssPowerIndication;
 import android.hardware.gnss.IGnssPsds;
+import android.hardware.gnss.measurement_corrections.IMeasurementCorrectionsInterface;
 import android.hardware.gnss.visibility_control.IGnssVisibilityControl;
 
 /**
@@ -285,4 +286,11 @@ interface IGnss {
      * @return Handle to the IGnssAntennaInfo.
      */
     IGnssAntennaInfo getExtensionGnssAntennaInfo();
+
+    /**
+     * This method returns the IMeasurementCorrectionsInterface.
+     *
+     * @return Handle to the IMeasurementCorrectionsInterface.
+     */
+    @nullable IMeasurementCorrectionsInterface getExtensionMeasurementCorrections();
 }
