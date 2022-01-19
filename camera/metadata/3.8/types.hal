@@ -53,6 +53,21 @@ enum CameraMetadataTag : @3.7::CameraMetadataTag {
 
     ANDROID_FLASH_INFO_END_3_8,
 
+    /** android.request.availableDynamicRangeProfilesMap [static, enum[], ndk_public]
+     *
+     * <p>A map of all available 10-bit dynamic range profiles along with their
+     * capture request constraints.</p>
+     */
+    ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP = android.hardware.camera.metadata@3.4::CameraMetadataTag:ANDROID_REQUEST_END_3_4,
+
+    /** android.request.recommendedTenBitDynamicRangeProfile [static, int32, java_public]
+     *
+     * <p>Recommended 10-bit dynamic range profile.</p>
+     */
+    ANDROID_REQUEST_RECOMMENDED_TEN_BIT_DYNAMIC_RANGE_PROFILE,
+
+    ANDROID_REQUEST_END_3_8,
+
 };
 
 /*
@@ -65,4 +80,52 @@ enum CameraMetadataTag : @3.7::CameraMetadataTag {
 enum CameraMetadataEnumAndroidControlVideoStabilizationMode :
         @3.2::CameraMetadataEnumAndroidControlVideoStabilizationMode {
     ANDROID_CONTROL_VIDEO_STABILIZATION_MODE_PREVIEW_STABILIZATION,
+};
+
+/** android.request.availableCapabilities enumeration values added since v3.6
+ * @see ANDROID_REQUEST_AVAILABLE_CAPABILITIES
+ */
+enum CameraMetadataEnumAndroidRequestAvailableCapabilities :
+        @3.6::CameraMetadataEnumAndroidRequestAvailableCapabilities {
+    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_TEN_BIT,
+};
+
+/** android.request.availableDynamicRangeProfilesMap enumeration values
+ * @see ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP
+ */
+enum CameraMetadataEnumAndroidRequestAvailableDynamicRangeProfilesMap : uint32_t {
+    ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD
+                                                                 = 0x1,
+    ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_HLG10  = 0x2,
+    ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_HDR10  = 0x4,
+    ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_HDR10_PLUS
+                                                                 = 0x8,
+    ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_10B_HDR_REF
+                                                                 = 0x10,
+    ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_10B_HDR_REF_PO
+                                                                 = 0x20,
+    ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_10B_HDR_OEM
+                                                                 = 0x40,
+    ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_10B_HDR_OEM_PO
+                                                                 = 0x80,
+    ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_8B_HDR_REF
+                                                                 = 0x100,
+    ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_8B_HDR_REF_PO
+                                                                 = 0x200,
+    ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_8B_HDR_OEM
+                                                                 = 0x400,
+    ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_8B_HDR_OEM_PO
+                                                                 = 0x800,
+    ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_MAX    = 0x1000,
+};
+
+/** android.scaler.availableRecommendedStreamConfigurations enumeration values added since v3.4
+ * @see ANDROID_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS
+ */
+enum CameraMetadataEnumAndroidScalerAvailableRecommendedStreamConfigurations :
+        @3.4::CameraMetadataEnumAndroidScalerAvailableRecommendedStreamConfigurations {
+    ANDROID_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_10BIT_OUTPUT
+                                                                 = 0x8,
+    ANDROID_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_PUBLIC_END_3_8
+                                                                 = 0x9,
 };
