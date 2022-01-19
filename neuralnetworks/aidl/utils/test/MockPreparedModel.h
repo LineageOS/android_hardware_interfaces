@@ -17,6 +17,7 @@
 #ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_TEST_MOCK_PREPARED_MODEL_H
 #define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_TEST_MOCK_PREPARED_MODEL_H
 
+#include <aidl/android/hardware/neuralnetworks/BnExecution.h>
 #include <aidl/android/hardware/neuralnetworks/BnPreparedModel.h>
 #include <android/binder_interface_utils.h>
 #include <gmock/gmock.h>
@@ -40,6 +41,10 @@ class MockPreparedModel final : public BnPreparedModel {
                  int64_t duration, FencedExecutionResult* fencedExecutionResult),
                 (override));
     MOCK_METHOD(ndk::ScopedAStatus, configureExecutionBurst, (std::shared_ptr<IBurst> * burst),
+                (override));
+    MOCK_METHOD(ndk::ScopedAStatus, createReusableExecution,
+                (const Request& request, bool measureTiming, int64_t loopTimeoutDuration,
+                 std::shared_ptr<IExecution>* execution),
                 (override));
 };
 

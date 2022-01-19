@@ -17,6 +17,8 @@
 #ifndef ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_EXECUTION_H
 #define ANDROID_HARDWARE_INTERFACES_NEURALNETWORKS_AIDL_UTILS_EXECUTION_H
 
+#include <aidl/android/hardware/neuralnetworks/IExecution.h>
+
 #include <nnapi/IExecution.h>
 #include <nnapi/Result.h>
 #include <nnapi/Types.h>
@@ -33,17 +35,22 @@
 
 namespace aidl::android::hardware::neuralnetworks::utils {
 
-class Execution final : public nn::IExecution, public std::enable_shared_from_this<Execution> {
+// A reusable execution implementation with a cached Request, internally it is still passing the
+// request to the driver in every computation.
+class ExecutionWithCachedRequest final
+    : public nn::IExecution,
+      public std::enable_shared_from_this<ExecutionWithCachedRequest> {
     struct PrivateConstructorTag {};
 
   public:
-    static nn::GeneralResult<std::shared_ptr<const Execution>> create(
+    static nn::GeneralResult<std::shared_ptr<const ExecutionWithCachedRequest>> create(
             std::shared_ptr<const PreparedModel> preparedModel, Request request,
             hal::utils::RequestRelocation relocation, bool measure, int64_t loopTimeoutDuration);
 
-    Execution(PrivateConstructorTag tag, std::shared_ptr<const PreparedModel> preparedModel,
-              Request request, hal::utils::RequestRelocation relocation, bool measure,
-              int64_t loopTimeoutDuration);
+    ExecutionWithCachedRequest(PrivateConstructorTag tag,
+                               std::shared_ptr<const PreparedModel> preparedModel, Request request,
+                               hal::utils::RequestRelocation relocation, bool measure,
+                               int64_t loopTimeoutDuration);
 
     nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> compute(
             const nn::OptionalTimePoint& deadline) const override;
@@ -58,6 +65,30 @@ class Execution final : public nn::IExecution, public std::enable_shared_from_th
     const hal::utils::RequestRelocation kRelocation;
     const bool kMeasure;
     const int64_t kLoopTimeoutDuration;
+};
+
+// A reusable execution implementation that is backed by an actual AIDL IExecution object.
+class Execution final : public nn::IExecution, public std::enable_shared_from_this<Execution> {
+    struct PrivateConstructorTag {};
+
+  public:
+    static nn::GeneralResult<std::shared_ptr<const Execution>> create(
+            std::shared_ptr<aidl_hal::IExecution> execution,
+            hal::utils::RequestRelocation relocation);
+
+    Execution(PrivateConstructorTag tag, std::shared_ptr<aidl_hal::IExecution> execution,
+              hal::utils::RequestRelocation relocation);
+
+    nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> compute(
+            const nn::OptionalTimePoint& deadline) const override;
+
+    nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>> computeFenced(
+            const std::vector<nn::SyncFence>& waitFor, const nn::OptionalTimePoint& deadline,
+            const nn::OptionalDuration& timeoutDurationAfterFence) const override;
+
+  private:
+    const std::shared_ptr<aidl_hal::IExecution> kExecution;
+    const hal::utils::RequestRelocation kRelocation;
 };
 
 }  // namespace aidl::android::hardware::neuralnetworks::utils
