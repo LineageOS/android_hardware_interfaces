@@ -26,8 +26,8 @@ import @3.7::ICameraDevice;
  * API at LIMITED or better hardware level.
  *
  * ICameraDevice.open() must return @3.2::ICameraDeviceSession,
- * @3.5::ICameraDeviceSession, @3.6::ICameraDeviceSession, or
- * @3.7::ICameraDeviceSession.
+ * @3.5::ICameraDeviceSession, @3.6::ICameraDeviceSession,
+ * @3.7::ICameraDeviceSession, or @3.8::ICameraDeviceSession.
  */
 interface ICameraDevice extends @3.7::ICameraDevice {
     /**
@@ -107,4 +107,15 @@ interface ICameraDevice extends @3.7::ICameraDevice {
      *
      */
     getTorchStrengthLevel() generates (Status status, int32_t torchStrength);
+
+     /**
+     * isStreamCombinationSupported_3_8:
+     *
+     * Identical to @3.7::ICameraDevice.isStreamCombinationSupported, except
+     * that it takes a @3.8::StreamConfiguration parameter, which could contain
+     * additional information about a specific 10-bit dynamic range profile.
+     *
+     */
+    isStreamCombinationSupported_3_8(StreamConfiguration streams)
+            generates (Status status, bool queryStatus);
 };
