@@ -111,6 +111,8 @@ class TestBlobAHWB : public TestMemoryBase {
 
 enum class MemoryType { ASHMEM, BLOB_AHWB, DEVICE };
 
+std::string toString(MemoryType type);
+
 // Manages the lifetime of memory resources used in an execution.
 class ExecutionContext {
     DISALLOW_COPY_AND_ASSIGN(ExecutionContext);
