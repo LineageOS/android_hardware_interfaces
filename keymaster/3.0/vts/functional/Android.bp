@@ -38,5 +38,11 @@ cc_test {
         "libcrypto_static",
         "libsoftkeymasterdevice",
     ],
-    test_suites: ["general-tests", "vts"],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+    sanitize: {
+        cfi: false,
+    },
 }
