@@ -21,9 +21,14 @@
 #include <android-base/logging.h>
 #include <android-base/stringprintf.h>
 
+#include "../aidl_session/HidlToAidlMiddleware_2_0.h"
+#include "../aidl_session/HidlToAidlMiddleware_2_1.h"
+
 namespace android {
 namespace bluetooth {
 namespace audio {
+using ::aidl::android::hardware::bluetooth::audio::HidlToAidlMiddleware_2_0;
+using ::aidl::android::hardware::bluetooth::audio::HidlToAidlMiddleware_2_1;
 using SessionType_2_1 =
     ::android::hardware::bluetooth::audio::V2_1::SessionType;
 using SessionType_2_0 =
@@ -72,6 +77,7 @@ BluetoothAudioSession_2_1::BluetoothAudioSession_2_1(
   } else {
     session_type_2_1_ = (session_type);
   }
+  raw_session_type_ = session_type;
 }
 
 std::shared_ptr<BluetoothAudioSession>
@@ -83,6 +89,8 @@ BluetoothAudioSession_2_1::GetAudioSession() {
 // AudioConfiguration
 const ::android::hardware::bluetooth::audio::V2_1::AudioConfiguration
 BluetoothAudioSession_2_1::GetAudioConfig() {
+  if (HidlToAidlMiddleware_2_0::IsAidlAvailable())
+    return HidlToAidlMiddleware_2_1::GetAudioConfig(raw_session_type_);
   std::lock_guard<std::recursive_mutex> guard(audio_session->mutex_);
   if (audio_session->IsSessionReady()) {
     // If session is unknown it means it should be 2.0 type
