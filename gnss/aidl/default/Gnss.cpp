@@ -30,6 +30,7 @@
 #include "GnssNavigationMessageInterface.h"
 #include "GnssPsds.h"
 #include "GnssVisibilityControl.h"
+#include "MeasurementCorrectionsInterface.h"
 #include "NmeaFixInfo.h"
 #include "Utils.h"
 
@@ -286,6 +287,16 @@ ndk::ScopedAStatus Gnss::getExtensionGnssAntennaInfo(
     ALOGD("Gnss::getExtensionGnssAntennaInfo");
 
     *iGnssAntennaInfo = SharedRefBase::make<GnssAntennaInfo>();
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Gnss::getExtensionMeasurementCorrections(
+        std::shared_ptr<measurement_corrections::IMeasurementCorrectionsInterface>*
+                iMeasurementCorrections) {
+    ALOGD("Gnss::getExtensionMeasurementCorrections");
+
+    *iMeasurementCorrections =
+            SharedRefBase::make<measurement_corrections::MeasurementCorrectionsInterface>();
     return ndk::ScopedAStatus::ok();
 }
 

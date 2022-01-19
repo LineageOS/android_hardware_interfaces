@@ -68,6 +68,7 @@ cc_binary {
         "GnssConfiguration.cpp",
         "GnssMeasurementInterface.cpp",
         "GnssVisibilityControl.cpp",
+        "MeasurementCorrectionsInterface.cpp",
         "service.cpp",
     ],
     static_libs: [

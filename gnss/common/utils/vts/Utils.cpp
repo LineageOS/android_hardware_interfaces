@@ -15,6 +15,7 @@
  */
 
 #include <Utils.h>
+#include <android/hardware/gnss/BnGnss.h>
 #include <android/hardware/gnss/IGnss.h>
 #include "gtest/gtest.h"
 
@@ -27,6 +28,12 @@ namespace common {
 
 using namespace measurement_corrections::V1_0;
 using V1_0::GnssLocationFlags;
+
+using MeasurementCorrectionsAidl =
+        android::hardware::gnss::measurement_corrections::MeasurementCorrections;
+using ReflectingPlaneAidl = android::hardware::gnss::measurement_corrections::ReflectingPlane;
+using SingleSatCorrectionAidl =
+        android::hardware::gnss::measurement_corrections::SingleSatCorrection;
 
 template <>
 int64_t Utils::getLocationTimestampMillis(const android::hardware::gnss::GnssLocation& location) {
@@ -63,6 +70,7 @@ const MeasurementCorrections Utils::getMockMeasurementCorrections() {
             .singleSatCorrectionFlags = GnssSingleSatCorrectionFlags::HAS_SAT_IS_LOS_PROBABILITY |
                                         GnssSingleSatCorrectionFlags::HAS_EXCESS_PATH_LENGTH |
                                         GnssSingleSatCorrectionFlags::HAS_EXCESS_PATH_LENGTH_UNC,
+
             .constellation = V1_0::GnssConstellationType::GPS,
             .svid = 9,
             .carrierFrequencyHz = 1.59975e+09,
@@ -112,6 +120,56 @@ Utils::getMockMeasurementCorrections_1_1() {
             .satCorrections = singleSatCorrections,
     };
     return mockCorrections_1_1;
+}
+
+const MeasurementCorrectionsAidl Utils::getMockMeasurementCorrections_aidl() {
+    ReflectingPlaneAidl reflectingPlane;
+    reflectingPlane.latitudeDegrees = 37.4220039;
+    reflectingPlane.longitudeDegrees = -122.0840991;
+    reflectingPlane.altitudeMeters = 250.35;
+    reflectingPlane.azimuthDegrees = 203.0;
+
+    SingleSatCorrectionAidl singleSatCorrection1;
+    singleSatCorrection1.singleSatCorrectionFlags =
+            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_SAT_IS_LOS_PROBABILITY |
+            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_EXCESS_PATH_LENGTH |
+            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_EXCESS_PATH_LENGTH_UNC |
+            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_REFLECTING_PLANE;
+    singleSatCorrection1.constellation = android::hardware::gnss::GnssConstellationType::GPS;
+    singleSatCorrection1.svid = 12;
+    singleSatCorrection1.carrierFrequencyHz = 1.59975e+09;
+    singleSatCorrection1.probSatIsLos = 0.50001;
+    singleSatCorrection1.excessPathLengthMeters = 137.4802;
+    singleSatCorrection1.excessPathLengthUncertaintyMeters = 25.5;
+    singleSatCorrection1.reflectingPlane = reflectingPlane;
+
+    SingleSatCorrectionAidl singleSatCorrection2;
+    singleSatCorrection2.singleSatCorrectionFlags =
+            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_SAT_IS_LOS_PROBABILITY |
+            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_EXCESS_PATH_LENGTH |
+            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_EXCESS_PATH_LENGTH_UNC;
+    singleSatCorrection2.constellation = GnssConstellationType::GPS;
+    singleSatCorrection2.svid = 9;
+    singleSatCorrection2.carrierFrequencyHz = 1.59975e+09;
+    singleSatCorrection2.probSatIsLos = 0.873;
+    singleSatCorrection2.excessPathLengthMeters = 26.294;
+    singleSatCorrection2.excessPathLengthUncertaintyMeters = 10.0;
+
+    std::vector<SingleSatCorrectionAidl> singleSatCorrections = {singleSatCorrection1,
+                                                                 singleSatCorrection2};
+    MeasurementCorrectionsAidl mockCorrections;
+    mockCorrections.latitudeDegrees = 37.4219999;
+    mockCorrections.longitudeDegrees = -122.0840575;
+    mockCorrections.altitudeMeters = 30.60062531;
+    mockCorrections.horizontalPositionUncertaintyMeters = 9.23542;
+    mockCorrections.verticalPositionUncertaintyMeters = 15.02341;
+    mockCorrections.toaGpsNanosecondsOfWeek = 2935633453L;
+    mockCorrections.hasEnvironmentBearing = true;
+    mockCorrections.environmentBearingDegrees = 45.0;
+    mockCorrections.environmentBearingUncertaintyDegrees = 4.0;
+    mockCorrections.satCorrections = singleSatCorrections;
+
+    return mockCorrections;
 }
 
 /*

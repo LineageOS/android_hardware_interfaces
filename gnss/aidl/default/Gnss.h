@@ -25,6 +25,7 @@
 #include <aidl/android/hardware/gnss/BnGnssMeasurementInterface.h>
 #include <aidl/android/hardware/gnss/BnGnssPowerIndication.h>
 #include <aidl/android/hardware/gnss/BnGnssPsds.h>
+#include <aidl/android/hardware/gnss/measurement_corrections/BnMeasurementCorrectionsInterface.h>
 #include <aidl/android/hardware/gnss/visibility_control/BnGnssVisibilityControl.h>
 #include <atomic>
 #include <mutex>
@@ -72,6 +73,10 @@ class Gnss : public BnGnss {
                     iGnssVisibilityControl) override;
     ndk::ScopedAStatus getExtensionGnssAntennaInfo(
             std::shared_ptr<IGnssAntennaInfo>* iGnssAntennaInfo) override;
+    ndk::ScopedAStatus getExtensionMeasurementCorrections(
+            std::shared_ptr<android::hardware::gnss::measurement_corrections::
+                                    IMeasurementCorrectionsInterface>* iMeasurementCorrections)
+            override;
 
     std::shared_ptr<GnssConfiguration> mGnssConfiguration;
     std::shared_ptr<GnssPowerIndication> mGnssPowerIndication;
