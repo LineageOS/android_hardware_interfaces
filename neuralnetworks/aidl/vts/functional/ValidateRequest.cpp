@@ -36,6 +36,51 @@ using ExecutionMutation = std::function<void(Request*)>;
 
 ///////////////////////// UTILITY FUNCTIONS /////////////////////////
 
+// Test request validation with reusable execution.
+static void validateReusableExecution(const std::shared_ptr<IPreparedModel>& preparedModel,
+                                      const std::string& message, const Request& request,
+                                      bool measure) {
+    // createReusableExecution
+    std::shared_ptr<IExecution> execution;
+    {
+        SCOPED_TRACE(message + " [createReusableExecution]");
+        const auto createStatus = preparedModel->createReusableExecution(
+                request, measure, kOmittedTimeoutDuration, &execution);
+        if (!createStatus.isOk()) {
+            ASSERT_EQ(createStatus.getExceptionCode(), EX_SERVICE_SPECIFIC);
+            ASSERT_EQ(static_cast<ErrorStatus>(createStatus.getServiceSpecificError()),
+                      ErrorStatus::INVALID_ARGUMENT);
+            ASSERT_EQ(nullptr, execution);
+            return;
+        } else {
+            ASSERT_NE(nullptr, execution);
+        }
+    }
+
+    // synchronous
+    {
+        SCOPED_TRACE(message + " [executeSynchronously]");
+        ExecutionResult executionResult;
+        const auto executeStatus = execution->executeSynchronously(kNoDeadline, &executionResult);
+        ASSERT_FALSE(executeStatus.isOk());
+        ASSERT_EQ(executeStatus.getExceptionCode(), EX_SERVICE_SPECIFIC);
+        ASSERT_EQ(static_cast<ErrorStatus>(executeStatus.getServiceSpecificError()),
+                  ErrorStatus::INVALID_ARGUMENT);
+    }
+
+    // fenced
+    {
+        SCOPED_TRACE(message + " [executeFenced]");
+        FencedExecutionResult executionResult;
+        const auto executeStatus =
+                execution->executeFenced({}, kNoDeadline, kNoDuration, &executionResult);
+        ASSERT_FALSE(executeStatus.isOk());
+        ASSERT_EQ(executeStatus.getExceptionCode(), EX_SERVICE_SPECIFIC);
+        ASSERT_EQ(static_cast<ErrorStatus>(executeStatus.getServiceSpecificError()),
+                  ErrorStatus::INVALID_ARGUMENT);
+    }
+}
+
 // Primary validation function. This function will take a valid request, apply a
 // mutation to it to invalidate the request, then pass it to interface calls
 // that use the request.
@@ -100,6 +145,14 @@ static void validate(const std::shared_ptr<IPreparedModel>& preparedModel,
         ASSERT_EQ(executeStatus.getExceptionCode(), EX_SERVICE_SPECIFIC);
         ASSERT_EQ(static_cast<ErrorStatus>(executeStatus.getServiceSpecificError()),
                   ErrorStatus::INVALID_ARGUMENT);
+    }
+
+    int32_t aidlVersion;
+    ASSERT_TRUE(preparedModel->getInterfaceVersion(&aidlVersion).isOk());
+
+    // validate reusable execution
+    if (aidlVersion >= kMinAidlLevelForFL8) {
+        validateReusableExecution(preparedModel, message, request, measure);
     }
 }
 
