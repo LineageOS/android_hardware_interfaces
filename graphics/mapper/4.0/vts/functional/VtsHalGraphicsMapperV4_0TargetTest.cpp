@@ -21,6 +21,7 @@
 #include <thread>
 #include <vector>
 
+#include <aidl/android/hardware/graphics/common/PixelFormat.h>
 #include <aidl/android/hardware/graphics/common/PlaneLayoutComponentType.h>
 
 #include <android-base/logging.h>
@@ -1202,6 +1203,40 @@ TEST_P(GraphicsMapperHidlTest, IsSupportedY16) {
     bool supported = false;
 
     ASSERT_NO_FATAL_FAILURE(supported = mGralloc->isSupported(info));
+}
+
+/**
+ * Test IMapper::isSupported with optional format R_8
+ */
+TEST_P(GraphicsMapperHidlTest, IsSupportedR8) {
+    auto info = mDummyDescriptorInfo;
+    info.format = static_cast<android::hardware::graphics::common::V1_2::PixelFormat>(
+            aidl::android::hardware::graphics::common::PixelFormat::R_8);
+    bool supported = false;
+
+    ASSERT_NO_FATAL_FAILURE(supported = mGralloc->isSupported(info));
+
+    if (!supported) {
+        GTEST_SUCCEED() << "R_8 is optional; unsupported so skipping allocation test";
+        return;
+    }
+
+    BufferDescriptor descriptor;
+    ASSERT_NO_FATAL_FAILURE(descriptor = mGralloc->createDescriptor(info));
+
+    constexpr uint32_t count = 1;
+    std::vector<const native_handle_t*> bufferHandles;
+    uint32_t stride;
+    ASSERT_NO_FATAL_FAILURE(bufferHandles =
+                                    mGralloc->allocate(descriptor, count, false,
+                                                       Tolerance::kToleranceStrict, &stride));
+
+    EXPECT_LE(info.width, stride) << "invalid buffer stride";
+    EXPECT_EQ(1u, bufferHandles.size());
+
+    for (auto bufferHandle : bufferHandles) {
+        mGralloc->freeBuffer(bufferHandle);
+    }
 }
 
 /**
