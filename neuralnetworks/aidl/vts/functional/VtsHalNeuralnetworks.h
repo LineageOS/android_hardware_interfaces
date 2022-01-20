@@ -30,6 +30,8 @@ namespace aidl::android::hardware::neuralnetworks::vts::functional {
 using NamedDevice = Named<std::shared_ptr<IDevice>>;
 using NeuralNetworksAidlTestParam = NamedDevice;
 
+constexpr int kMinAidlLevelForFL8 = 4;
+
 class NeuralNetworksAidlTest : public testing::TestWithParam<NeuralNetworksAidlTestParam> {
   protected:
     void SetUp() override;

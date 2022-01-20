@@ -58,24 +58,51 @@ struct TestConfig {
     bool measureTiming;
     OutputType outputType;
     MemoryType memoryType;
+    bool reusable;
     // `reportSkipping` indicates if a test should print an info message in case
     // it is skipped. The field is set to true by default and is set to false in
     // quantization coupling tests to suppress skipping a test
     bool reportSkipping;
-    TestConfig(Executor executor, bool measureTiming, OutputType outputType, MemoryType memoryType)
+    TestConfig(Executor executor, bool measureTiming, OutputType outputType, MemoryType memoryType,
+               bool reusable)
         : executor(executor),
           measureTiming(measureTiming),
           outputType(outputType),
           memoryType(memoryType),
+          reusable(reusable),
           reportSkipping(true) {}
     TestConfig(Executor executor, bool measureTiming, OutputType outputType, MemoryType memoryType,
-               bool reportSkipping)
+               bool reusable, bool reportSkipping)
         : executor(executor),
           measureTiming(measureTiming),
           outputType(outputType),
           memoryType(memoryType),
+          reusable(reusable),
           reportSkipping(reportSkipping) {}
 };
+
+std::string toString(OutputType type) {
+    switch (type) {
+        case OutputType::FULLY_SPECIFIED:
+            return "FULLY_SPECIFIED";
+        case OutputType::UNSPECIFIED:
+            return "UNSPECIFIED";
+        case OutputType::INSUFFICIENT:
+            return "INSUFFICIENT";
+        case OutputType::MISSED_DEADLINE:
+            return "MISSED_DEADLINE";
+    }
+}
+
+std::string toString(const TestConfig& config) {
+    std::stringstream ss;
+    ss << "TestConfig{.executor=" << toString(config.executor)
+       << ", .measureTiming=" << (config.measureTiming ? "true" : "false")
+       << ", .outputType=" << toString(config.outputType)
+       << ", .memoryType=" << toString(config.memoryType)
+       << ", .reusable=" << (config.reusable ? "true" : "false") << "}";
+    return ss.str();
+}
 
 enum class IOType { INPUT, OUTPUT };
 
@@ -558,209 +585,241 @@ void EvaluatePreparedModel(const std::shared_ptr<IDevice>& device,
         loopTimeoutDurationNs = 1 * kMillisecond;
     }
 
-    ErrorStatus executionStatus;
-    std::vector<OutputShape> outputShapes;
-    Timing timing = kNoTiming;
-    switch (testConfig.executor) {
-        case Executor::SYNC: {
-            SCOPED_TRACE("synchronous");
+    std::shared_ptr<IExecution> execution;
+    if (testConfig.reusable) {
+        const auto ret = preparedModel->createReusableExecution(request, testConfig.measureTiming,
+                                                                loopTimeoutDurationNs, &execution);
+        ASSERT_TRUE(ret.isOk()) << static_cast<nn::ErrorStatus>(ret.getServiceSpecificError());
+        ASSERT_NE(nullptr, execution.get());
+    }
 
-            ExecutionResult executionResult;
-            // execute
-            const auto ret = preparedModel->executeSynchronously(request, testConfig.measureTiming,
-                                                                 kNoDeadline, loopTimeoutDurationNs,
-                                                                 &executionResult);
-            ASSERT_TRUE(ret.isOk() || ret.getExceptionCode() == EX_SERVICE_SPECIFIC)
-                    << ret.getDescription();
-            if (ret.isOk()) {
-                executionStatus = executionResult.outputSufficientSize
-                                          ? ErrorStatus::NONE
-                                          : ErrorStatus::OUTPUT_INSUFFICIENT_SIZE;
-                outputShapes = std::move(executionResult.outputShapes);
-                timing = executionResult.timing;
-            } else {
-                executionStatus = static_cast<ErrorStatus>(ret.getServiceSpecificError());
-            }
-            break;
-        }
-        case Executor::BURST: {
-            SCOPED_TRACE("burst");
+    const auto executeAndCheckResults = [&preparedModel, &execution, &testConfig, &testModel,
+                                         &context, &request, loopTimeoutDurationNs, skipped]() {
+        ErrorStatus executionStatus;
+        std::vector<OutputShape> outputShapes;
+        Timing timing = kNoTiming;
+        switch (testConfig.executor) {
+            case Executor::SYNC: {
+                SCOPED_TRACE("synchronous");
 
-            // create burst
-            std::shared_ptr<IBurst> burst;
-            auto ret = preparedModel->configureExecutionBurst(&burst);
-            ASSERT_TRUE(ret.isOk()) << ret.getDescription();
-            ASSERT_NE(nullptr, burst.get());
-
-            // associate a unique slot with each memory pool
-            int64_t currentSlot = 0;
-            std::vector<int64_t> slots;
-            slots.reserve(request.pools.size());
-            for (const auto& pool : request.pools) {
-                if (pool.getTag() == RequestMemoryPool::Tag::pool) {
-                    slots.push_back(currentSlot++);
+                ExecutionResult executionResult;
+                // execute
+                ::ndk::ScopedAStatus ret;
+                if (testConfig.reusable) {
+                    ret = execution->executeSynchronously(kNoDeadline, &executionResult);
                 } else {
-                    EXPECT_EQ(pool.getTag(), RequestMemoryPool::Tag::token);
-                    slots.push_back(-1);
+                    ret = preparedModel->executeSynchronously(request, testConfig.measureTiming,
+                                                              kNoDeadline, loopTimeoutDurationNs,
+                                                              &executionResult);
                 }
+                ASSERT_TRUE(ret.isOk() || ret.getExceptionCode() == EX_SERVICE_SPECIFIC)
+                        << ret.getDescription();
+                if (ret.isOk()) {
+                    executionStatus = executionResult.outputSufficientSize
+                                              ? ErrorStatus::NONE
+                                              : ErrorStatus::OUTPUT_INSUFFICIENT_SIZE;
+                    outputShapes = std::move(executionResult.outputShapes);
+                    timing = executionResult.timing;
+                } else {
+                    executionStatus = static_cast<ErrorStatus>(ret.getServiceSpecificError());
+                }
+                break;
             }
+            case Executor::BURST: {
+                SCOPED_TRACE("burst");
 
-            ExecutionResult executionResult;
-            // execute
-            ret = burst->executeSynchronously(request, slots, testConfig.measureTiming, kNoDeadline,
-                                              loopTimeoutDurationNs, &executionResult);
-            ASSERT_TRUE(ret.isOk() || ret.getExceptionCode() == EX_SERVICE_SPECIFIC)
-                    << ret.getDescription();
-            if (ret.isOk()) {
-                executionStatus = executionResult.outputSufficientSize
-                                          ? ErrorStatus::NONE
-                                          : ErrorStatus::OUTPUT_INSUFFICIENT_SIZE;
-                outputShapes = std::move(executionResult.outputShapes);
-                timing = executionResult.timing;
-            } else {
-                executionStatus = static_cast<ErrorStatus>(ret.getServiceSpecificError());
-            }
-
-            // Mark each slot as unused after the execution. This is unnecessary because the burst
-            // is freed after this scope ends, but this is here to test the functionality.
-            for (int64_t slot : slots) {
-                ret = burst->releaseMemoryResource(slot);
+                // create burst
+                std::shared_ptr<IBurst> burst;
+                auto ret = preparedModel->configureExecutionBurst(&burst);
                 ASSERT_TRUE(ret.isOk()) << ret.getDescription();
-            }
+                ASSERT_NE(nullptr, burst.get());
 
-            break;
-        }
-        case Executor::FENCED: {
-            SCOPED_TRACE("fenced");
-            ErrorStatus result = ErrorStatus::NONE;
-            FencedExecutionResult executionResult;
-            auto ret = preparedModel->executeFenced(request, {}, testConfig.measureTiming,
-                                                    kNoDeadline, loopTimeoutDurationNs, kNoDuration,
-                                                    &executionResult);
-            ASSERT_TRUE(ret.isOk() || ret.getExceptionCode() == EX_SERVICE_SPECIFIC)
-                    << ret.getDescription();
-            if (!ret.isOk()) {
-                result = static_cast<ErrorStatus>(ret.getServiceSpecificError());
-                executionStatus = result;
-            } else if (executionResult.syncFence.get() != -1) {
-                std::vector<ndk::ScopedFileDescriptor> waitFor;
-                auto dupFd = dup(executionResult.syncFence.get());
-                ASSERT_NE(dupFd, -1);
-                waitFor.emplace_back(dupFd);
-                // If a sync fence is returned, try start another run waiting for the sync fence.
-                ret = preparedModel->executeFenced(request, waitFor, testConfig.measureTiming,
-                                                   kNoDeadline, loopTimeoutDurationNs, kNoDuration,
-                                                   &executionResult);
-                ASSERT_TRUE(ret.isOk());
-                waitForSyncFence(executionResult.syncFence.get());
-            }
-            if (result == ErrorStatus::NONE) {
-                ASSERT_NE(executionResult.callback, nullptr);
-                Timing timingFenced;
-                auto ret = executionResult.callback->getExecutionInfo(&timing, &timingFenced,
-                                                                      &executionStatus);
-                ASSERT_TRUE(ret.isOk());
-            }
-            break;
-        }
-        default: {
-            FAIL() << "Unsupported execution mode for AIDL interface.";
-        }
-    }
-
-    if (testConfig.outputType != OutputType::FULLY_SPECIFIED &&
-        executionStatus == ErrorStatus::GENERAL_FAILURE) {
-        if (skipped != nullptr) {
-            *skipped = true;
-        }
-        if (!testConfig.reportSkipping) {
-            return;
-        }
-        LOG(INFO) << "NN VTS: Early termination of test because vendor service cannot "
-                     "execute model that it does not support.";
-        std::cout << "[          ]   Early termination of test because vendor service cannot "
-                     "execute model that it does not support."
-                  << std::endl;
-        GTEST_SKIP();
-    }
-    if (!testConfig.measureTiming) {
-        EXPECT_EQ(timing, kNoTiming);
-    } else {
-        if (timing.timeOnDeviceNs != -1 && timing.timeInDriverNs != -1) {
-            EXPECT_LE(timing.timeOnDeviceNs, timing.timeInDriverNs);
-        }
-    }
-
-    switch (testConfig.outputType) {
-        case OutputType::FULLY_SPECIFIED:
-            if (testConfig.executor == Executor::FENCED && hasZeroSizedOutput(testModel)) {
-                // Executor::FENCED does not support zero-sized output.
-                ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, executionStatus);
-                return;
-            }
-            // If the model output operands are fully specified, outputShapes must be either
-            // either empty, or have the same number of elements as the number of outputs.
-            ASSERT_EQ(ErrorStatus::NONE, executionStatus);
-            ASSERT_TRUE(outputShapes.size() == 0 ||
-                        outputShapes.size() == testModel.main.outputIndexes.size());
-            break;
-        case OutputType::UNSPECIFIED:
-            if (testConfig.executor == Executor::FENCED) {
-                // For Executor::FENCED, the output shape must be fully specified.
-                ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, executionStatus);
-                return;
-            }
-            // If the model output operands are not fully specified, outputShapes must have
-            // the same number of elements as the number of outputs.
-            ASSERT_EQ(ErrorStatus::NONE, executionStatus);
-            ASSERT_EQ(outputShapes.size(), testModel.main.outputIndexes.size());
-            break;
-        case OutputType::INSUFFICIENT:
-            if (testConfig.executor == Executor::FENCED) {
-                // For Executor::FENCED, the output shape must be fully specified.
-                ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, executionStatus);
-                return;
-            }
-            ASSERT_EQ(ErrorStatus::OUTPUT_INSUFFICIENT_SIZE, executionStatus);
-            ASSERT_EQ(outputShapes.size(), testModel.main.outputIndexes.size());
-            // Check that all returned output dimensions are at least as fully specified as the
-            // union of the information about the corresponding operand in the model and in the
-            // request. In this test, all model outputs have known rank with all dimensions
-            // unspecified, and no dimensional information is provided in the request.
-            for (uint32_t i = 0; i < outputShapes.size(); i++) {
-                ASSERT_EQ(outputShapes[i].isSufficient, i != kInsufficientOutputIndex);
-                const auto& actual = outputShapes[i].dimensions;
-                const auto& golden =
-                        testModel.main.operands[testModel.main.outputIndexes[i]].dimensions;
-                ASSERT_EQ(actual.size(), golden.size());
-                for (uint32_t j = 0; j < actual.size(); j++) {
-                    if (actual[j] == 0) continue;
-                    EXPECT_EQ(actual[j], golden[j]) << "index: " << j;
+                // associate a unique slot with each memory pool
+                int64_t currentSlot = 0;
+                std::vector<int64_t> slots;
+                slots.reserve(request.pools.size());
+                for (const auto& pool : request.pools) {
+                    if (pool.getTag() == RequestMemoryPool::Tag::pool) {
+                        slots.push_back(currentSlot++);
+                    } else {
+                        EXPECT_EQ(pool.getTag(), RequestMemoryPool::Tag::token);
+                        slots.push_back(-1);
+                    }
                 }
+
+                ExecutionResult executionResult;
+                // execute
+                ret = burst->executeSynchronously(request, slots, testConfig.measureTiming,
+                                                  kNoDeadline, loopTimeoutDurationNs,
+                                                  &executionResult);
+                ASSERT_TRUE(ret.isOk() || ret.getExceptionCode() == EX_SERVICE_SPECIFIC)
+                        << ret.getDescription();
+                if (ret.isOk()) {
+                    executionStatus = executionResult.outputSufficientSize
+                                              ? ErrorStatus::NONE
+                                              : ErrorStatus::OUTPUT_INSUFFICIENT_SIZE;
+                    outputShapes = std::move(executionResult.outputShapes);
+                    timing = executionResult.timing;
+                } else {
+                    executionStatus = static_cast<ErrorStatus>(ret.getServiceSpecificError());
+                }
+
+                // Mark each slot as unused after the execution. This is unnecessary because the
+                // burst is freed after this scope ends, but this is here to test the functionality.
+                for (int64_t slot : slots) {
+                    ret = burst->releaseMemoryResource(slot);
+                    ASSERT_TRUE(ret.isOk()) << ret.getDescription();
+                }
+
+                break;
             }
-            return;
-        case OutputType::MISSED_DEADLINE:
-            ASSERT_TRUE(executionStatus == ErrorStatus::MISSED_DEADLINE_TRANSIENT ||
-                        executionStatus == ErrorStatus::MISSED_DEADLINE_PERSISTENT)
-                    << "executionStatus = " << executionStatus;
-            return;
+            case Executor::FENCED: {
+                SCOPED_TRACE("fenced");
+                ErrorStatus result = ErrorStatus::NONE;
+                FencedExecutionResult executionResult;
+                ::ndk::ScopedAStatus ret;
+                if (testConfig.reusable) {
+                    ret = execution->executeFenced({}, kNoDeadline, kNoDuration, &executionResult);
+                } else {
+                    ret = preparedModel->executeFenced(request, {}, testConfig.measureTiming,
+                                                       kNoDeadline, loopTimeoutDurationNs,
+                                                       kNoDuration, &executionResult);
+                }
+                ASSERT_TRUE(ret.isOk() || ret.getExceptionCode() == EX_SERVICE_SPECIFIC)
+                        << ret.getDescription();
+                if (!ret.isOk()) {
+                    result = static_cast<ErrorStatus>(ret.getServiceSpecificError());
+                    executionStatus = result;
+                } else if (executionResult.syncFence.get() != -1) {
+                    std::vector<ndk::ScopedFileDescriptor> waitFor;
+                    auto dupFd = dup(executionResult.syncFence.get());
+                    ASSERT_NE(dupFd, -1);
+                    waitFor.emplace_back(dupFd);
+                    // If a sync fence is returned, try start another run waiting for the sync
+                    // fence.
+                    ret = preparedModel->executeFenced(request, waitFor, testConfig.measureTiming,
+                                                       kNoDeadline, loopTimeoutDurationNs,
+                                                       kNoDuration, &executionResult);
+                    ASSERT_TRUE(ret.isOk());
+                    waitForSyncFence(executionResult.syncFence.get());
+                }
+                if (result == ErrorStatus::NONE) {
+                    ASSERT_NE(executionResult.callback, nullptr);
+                    Timing timingFenced;
+                    auto ret = executionResult.callback->getExecutionInfo(&timing, &timingFenced,
+                                                                          &executionStatus);
+                    ASSERT_TRUE(ret.isOk());
+                }
+                break;
+            }
+            default: {
+                FAIL() << "Unsupported execution mode for AIDL interface.";
+            }
+        }
+
+        if (testConfig.outputType != OutputType::FULLY_SPECIFIED &&
+            executionStatus == ErrorStatus::GENERAL_FAILURE) {
+            if (skipped != nullptr) {
+                *skipped = true;
+            }
+            if (!testConfig.reportSkipping) {
+                return;
+            }
+            LOG(INFO) << "NN VTS: Early termination of test because vendor service cannot "
+                         "execute model that it does not support.";
+            std::cout << "[          ]   Early termination of test because vendor service cannot "
+                         "execute model that it does not support."
+                      << std::endl;
+            GTEST_SKIP();
+        }
+        if (!testConfig.measureTiming) {
+            EXPECT_EQ(timing, kNoTiming);
+        } else {
+            if (timing.timeOnDeviceNs != -1 && timing.timeInDriverNs != -1) {
+                EXPECT_LE(timing.timeOnDeviceNs, timing.timeInDriverNs);
+            }
+        }
+
+        switch (testConfig.outputType) {
+            case OutputType::FULLY_SPECIFIED:
+                if (testConfig.executor == Executor::FENCED && hasZeroSizedOutput(testModel)) {
+                    // Executor::FENCED does not support zero-sized output.
+                    ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, executionStatus);
+                    return;
+                }
+                // If the model output operands are fully specified, outputShapes must be either
+                // either empty, or have the same number of elements as the number of outputs.
+                ASSERT_EQ(ErrorStatus::NONE, executionStatus);
+                ASSERT_TRUE(outputShapes.size() == 0 ||
+                            outputShapes.size() == testModel.main.outputIndexes.size());
+                break;
+            case OutputType::UNSPECIFIED:
+                if (testConfig.executor == Executor::FENCED) {
+                    // For Executor::FENCED, the output shape must be fully specified.
+                    ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, executionStatus);
+                    return;
+                }
+                // If the model output operands are not fully specified, outputShapes must have
+                // the same number of elements as the number of outputs.
+                ASSERT_EQ(ErrorStatus::NONE, executionStatus);
+                ASSERT_EQ(outputShapes.size(), testModel.main.outputIndexes.size());
+                break;
+            case OutputType::INSUFFICIENT:
+                if (testConfig.executor == Executor::FENCED) {
+                    // For Executor::FENCED, the output shape must be fully specified.
+                    ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, executionStatus);
+                    return;
+                }
+                ASSERT_EQ(ErrorStatus::OUTPUT_INSUFFICIENT_SIZE, executionStatus);
+                ASSERT_EQ(outputShapes.size(), testModel.main.outputIndexes.size());
+                // Check that all returned output dimensions are at least as fully specified as the
+                // union of the information about the corresponding operand in the model and in the
+                // request. In this test, all model outputs have known rank with all dimensions
+                // unspecified, and no dimensional information is provided in the request.
+                for (uint32_t i = 0; i < outputShapes.size(); i++) {
+                    ASSERT_EQ(outputShapes[i].isSufficient, i != kInsufficientOutputIndex);
+                    const auto& actual = outputShapes[i].dimensions;
+                    const auto& golden =
+                            testModel.main.operands[testModel.main.outputIndexes[i]].dimensions;
+                    ASSERT_EQ(actual.size(), golden.size());
+                    for (uint32_t j = 0; j < actual.size(); j++) {
+                        if (actual[j] == 0) continue;
+                        EXPECT_EQ(actual[j], golden[j]) << "index: " << j;
+                    }
+                }
+                return;
+            case OutputType::MISSED_DEADLINE:
+                ASSERT_TRUE(executionStatus == ErrorStatus::MISSED_DEADLINE_TRANSIENT ||
+                            executionStatus == ErrorStatus::MISSED_DEADLINE_PERSISTENT)
+                        << "executionStatus = " << executionStatus;
+                return;
+        }
+
+        // Go through all outputs, check returned output shapes.
+        for (uint32_t i = 0; i < outputShapes.size(); i++) {
+            EXPECT_TRUE(outputShapes[i].isSufficient);
+            const auto& expect =
+                    testModel.main.operands[testModel.main.outputIndexes[i]].dimensions;
+            const auto unsignedActual = nn::toUnsigned(outputShapes[i].dimensions);
+            ASSERT_TRUE(unsignedActual.has_value());
+            const std::vector<uint32_t>& actual = unsignedActual.value();
+            EXPECT_EQ(expect, actual);
+        }
+
+        // Retrieve execution results.
+        const std::vector<TestBuffer> outputs = context.getOutputBuffers(testModel, request);
+
+        // We want "close-enough" results.
+        checkResults(testModel, outputs);
+    };
+
+    executeAndCheckResults();
+
+    // For reusable execution tests, run the execution twice.
+    if (testConfig.reusable) {
+        SCOPED_TRACE("Second execution");
+        executeAndCheckResults();
     }
-
-    // Go through all outputs, check returned output shapes.
-    for (uint32_t i = 0; i < outputShapes.size(); i++) {
-        EXPECT_TRUE(outputShapes[i].isSufficient);
-        const auto& expect = testModel.main.operands[testModel.main.outputIndexes[i]].dimensions;
-        const auto unsignedActual = nn::toUnsigned(outputShapes[i].dimensions);
-        ASSERT_TRUE(unsignedActual.has_value());
-        const std::vector<uint32_t>& actual = unsignedActual.value();
-        EXPECT_EQ(expect, actual);
-    }
-
-    // Retrieve execution results.
-    const std::vector<TestBuffer> outputs = context.getOutputBuffers(testModel, request);
-
-    // We want "close-enough" results.
-    checkResults(testModel, outputs);
 }
 
 void EvaluatePreparedModel(const std::shared_ptr<IDevice>& device,
@@ -770,6 +829,13 @@ void EvaluatePreparedModel(const std::shared_ptr<IDevice>& device,
     std::vector<bool> measureTimingList;
     std::vector<Executor> executorList;
     std::vector<MemoryType> memoryTypeList;
+    std::vector<bool> reusableList = {false};
+
+    int deviceVersion;
+    ASSERT_TRUE(device->getInterfaceVersion(&deviceVersion).isOk());
+    if (deviceVersion >= kMinAidlLevelForFL8) {
+        reusableList.push_back(true);
+    }
 
     switch (testKind) {
         case TestKind::GENERAL: {
@@ -812,8 +878,13 @@ void EvaluatePreparedModel(const std::shared_ptr<IDevice>& device,
         for (const bool measureTiming : measureTimingList) {
             for (const Executor executor : executorList) {
                 for (const MemoryType memoryType : memoryTypeList) {
-                    const TestConfig testConfig(executor, measureTiming, outputType, memoryType);
-                    EvaluatePreparedModel(device, preparedModel, testModel, testConfig);
+                    for (const bool reusable : reusableList) {
+                        if (executor == Executor::BURST && reusable) continue;
+                        const TestConfig testConfig(executor, measureTiming, outputType, memoryType,
+                                                    reusable);
+                        SCOPED_TRACE(toString(testConfig));
+                        EvaluatePreparedModel(device, preparedModel, testModel, testConfig);
+                    }
                 }
             }
         }
@@ -833,7 +904,7 @@ void EvaluatePreparedCoupledModels(const std::shared_ptr<IDevice>& device,
         for (const bool measureTiming : measureTimingList) {
             for (const Executor executor : executorList) {
                 const TestConfig testConfig(executor, measureTiming, outputType, MemoryType::ASHMEM,
-                                            /*reportSkipping=*/false);
+                                            /*reusable=*/false, /*reportSkipping=*/false);
                 bool baseSkipped = false;
                 EvaluatePreparedModel(device, preparedModel, testModel, testConfig, &baseSkipped);
                 bool coupledSkipped = false;
