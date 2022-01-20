@@ -25,6 +25,9 @@
 #include <android-base/result.h>
 #include <utils/Log.h>
 
+#include <set>
+#include <unordered_set>
+
 namespace android {
 namespace hardware {
 namespace automotive {
@@ -52,7 +55,8 @@ using ::android::base::Result;
 using ::ndk::ScopedAStatus;
 
 DefaultVehicleHal::DefaultVehicleHal(std::unique_ptr<IVehicleHardware> hardware)
-    : mVehicleHardware(std::move(hardware)) {
+    : mVehicleHardware(std::move(hardware)),
+      mPendingRequestPool(std::make_shared<PendingRequestPool>(TIMEOUT_IN_NANO)) {
     auto configs = mVehicleHardware->getAllPropertyConfigs();
     for (auto& config : configs) {
         mConfigsByPropId[config.prop] = config;
@@ -69,6 +73,10 @@ DefaultVehicleHal::DefaultVehicleHal(std::unique_ptr<IVehicleHardware> hardware)
     if (result.value() != nullptr) {
         mConfigFile = std::move(result.value());
     }
+}
+
+void DefaultVehicleHal::setTimeout(int64_t timeoutInNano) {
+    mPendingRequestPool = std::make_unique<PendingRequestPool>(timeoutInNano);
 }
 
 ScopedAStatus DefaultVehicleHal::getAllPropConfigs(VehiclePropConfigs* output) {
@@ -90,7 +98,7 @@ std::shared_ptr<T> DefaultVehicleHal::getOrCreateClient(
         const CallbackType& callback) {
     if (clients->find(callback) == clients->end()) {
         // TODO(b/204943359): Remove client from clients when linkToDeath is implemented.
-        (*clients)[callback] = std::make_shared<T>(callback);
+        (*clients)[callback] = std::make_shared<T>(mPendingRequestPool, callback);
     }
     return (*clients)[callback];
 }
@@ -132,8 +140,6 @@ Result<void> DefaultVehicleHal::checkProperty(const VehiclePropValue& propValue)
 
 ScopedAStatus DefaultVehicleHal::getValues(const CallbackType& callback,
                                            const GetValueRequests& requests) {
-    // TODO(b/203713317): check for duplicate properties and duplicate request IDs.
-
     expected<LargeParcelableBase::BorrowedOwnedObject<GetValueRequests>, ScopedAStatus>
             deserializedResults = fromStableLargeParcelable(requests);
     if (!deserializedResults.ok()) {
@@ -143,26 +149,42 @@ ScopedAStatus DefaultVehicleHal::getValues(const CallbackType& callback,
     const std::vector<GetValueRequest>& getValueRequests =
             deserializedResults.value().getObject()->payloads;
 
+    auto maybeRequestIds = checkDuplicateRequests(getValueRequests);
+    if (!maybeRequestIds.ok()) {
+        ALOGE("duplicate request ID");
+        return toScopedAStatus(maybeRequestIds, StatusCode::INVALID_ARG);
+    }
+    // The set of request Ids that we would send to hardware.
+    std::unordered_set<int64_t> hardwareRequestIds(maybeRequestIds.value().begin(),
+                                                   maybeRequestIds.value().end());
+
     std::shared_ptr<GetValuesClient> client;
     {
         std::scoped_lock<std::mutex> lockGuard(mLock);
         client = getOrCreateClient(&mGetValuesClients, callback);
     }
+    // Register the pending hardware requests and also check for duplicate request Ids.
+    if (auto addRequestResult = client->addRequests(hardwareRequestIds); !addRequestResult.ok()) {
+        ALOGE("failed to add pending requests, error: %s",
+              addRequestResult.error().message().c_str());
+        return toScopedAStatus(addRequestResult);
+    }
 
     if (StatusCode status =
                 mVehicleHardware->getValues(client->getResultCallback(), getValueRequests);
         status != StatusCode::OK) {
+        // If the hardware returns error, finish all the pending requests for this request because
+        // we never expect hardware to call callback for these requests.
+        client->tryFinishRequests(hardwareRequestIds);
+        ALOGE("failed to get value from VehicleHardware, status: %d", toInt(status));
         return ScopedAStatus::fromServiceSpecificErrorWithMessage(
                 toInt(status), "failed to get value from VehicleHardware");
     }
-
     return ScopedAStatus::ok();
 }
 
 ScopedAStatus DefaultVehicleHal::setValues(const CallbackType& callback,
                                            const SetValueRequests& requests) {
-    // TODO(b/203713317): check for duplicate properties and duplicate request IDs.
-
     expected<LargeParcelableBase::BorrowedOwnedObject<SetValueRequests>, ScopedAStatus>
             deserializedResults = fromStableLargeParcelable(requests);
     if (!deserializedResults.ok()) {
@@ -177,6 +199,12 @@ ScopedAStatus DefaultVehicleHal::setValues(const CallbackType& callback,
     // The list of requests that we would send to hardware.
     std::vector<SetValueRequest> hardwareRequests;
 
+    auto maybeRequestIds = checkDuplicateRequests(setValueRequests);
+    if (!maybeRequestIds.ok()) {
+        ALOGE("duplicate request ID");
+        return toScopedAStatus(maybeRequestIds, StatusCode::INVALID_ARG);
+    }
+
     for (auto& request : setValueRequests) {
         int64_t requestId = request.requestId;
         if (auto result = checkProperty(request.value); !result.ok()) {
@@ -187,7 +215,14 @@ ScopedAStatus DefaultVehicleHal::setValues(const CallbackType& callback,
             });
             continue;
         }
+
         hardwareRequests.push_back(request);
+    }
+
+    // The set of request Ids that we would send to hardware.
+    std::unordered_set<int64_t> hardwareRequestIds;
+    for (const auto& request : hardwareRequests) {
+        hardwareRequestIds.insert(request.requestId);
     }
 
     std::shared_ptr<SetValuesClient> client;
@@ -196,19 +231,59 @@ ScopedAStatus DefaultVehicleHal::setValues(const CallbackType& callback,
         client = getOrCreateClient(&mSetValuesClients, callback);
     }
 
+    // Register the pending hardware requests and also check for duplicate request Ids.
+    if (auto addRequestResult = client->addRequests(hardwareRequestIds); !addRequestResult.ok()) {
+        ALOGE("failed to add pending requests, error: %s",
+              addRequestResult.error().message().c_str());
+        return toScopedAStatus(addRequestResult, StatusCode::INVALID_ARG);
+    }
+
     if (!failedResults.empty()) {
+        // First send the failed results we already know back to the client.
         client->sendResults(failedResults);
     }
 
     if (StatusCode status =
                 mVehicleHardware->setValues(client->getResultCallback(), hardwareRequests);
         status != StatusCode::OK) {
+        // If the hardware returns error, finish all the pending requests for this request because
+        // we never expect hardware to call callback for these requests.
+        client->tryFinishRequests(hardwareRequestIds);
+        ALOGE("failed to set value to VehicleHardware, status: %d", toInt(status));
         return ScopedAStatus::fromServiceSpecificErrorWithMessage(
                 toInt(status), "failed to set value to VehicleHardware");
     }
 
     return ScopedAStatus::ok();
 }
+
+#define CHECK_DUPLICATE_REQUESTS(PROP_NAME)                                                      \
+    do {                                                                                         \
+        std::vector<int64_t> requestIds;                                                         \
+        std::set<::aidl::android::hardware::automotive::vehicle::VehiclePropValue> requestProps; \
+        for (const auto& request : requests) {                                                   \
+            const auto& prop = request.PROP_NAME;                                                \
+            if (requestProps.count(prop) != 0) {                                                 \
+                return ::android::base::Error()                                                  \
+                       << "duplicate request for property: " << prop.toString();                 \
+            }                                                                                    \
+            requestProps.insert(prop);                                                           \
+            requestIds.push_back(request.requestId);                                             \
+        }                                                                                        \
+        return requestIds;                                                                       \
+    } while (0);
+
+::android::base::Result<std::vector<int64_t>> DefaultVehicleHal::checkDuplicateRequests(
+        const std::vector<GetValueRequest>& requests) {
+    CHECK_DUPLICATE_REQUESTS(prop);
+}
+
+::android::base::Result<std::vector<int64_t>> DefaultVehicleHal::checkDuplicateRequests(
+        const std::vector<SetValueRequest>& requests) {
+    CHECK_DUPLICATE_REQUESTS(value);
+}
+
+#undef CHECK_DUPLICATE_REQUESTS
 
 ScopedAStatus DefaultVehicleHal::getPropConfigs(const std::vector<int32_t>& props,
                                                 VehiclePropConfigs* output) {
