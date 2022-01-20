@@ -1541,7 +1541,7 @@ TEST_P(GraphicsComposerAidlCommandTest, SetLayerColorTransform) {
     execute();
 
     const auto errors = mReader.takeErrors();
-    if (errors.size() == 1 && errors[0].errorCode == EX_UNSUPPORTED_OPERATION) {
+    if (errors.size() == 1 && errors[0].errorCode == IComposerClient::EX_UNSUPPORTED) {
         GTEST_SUCCEED() << "setLayerColorTransform is not supported";
         return;
     }
@@ -1558,7 +1558,7 @@ TEST_P(GraphicsComposerAidlCommandTest, SetDisplayBrightness) {
         execute();
         const auto errors = mReader.takeErrors();
         EXPECT_EQ(1, errors.size());
-        EXPECT_EQ(EX_UNSUPPORTED_OPERATION, errors[0].errorCode);
+        EXPECT_EQ(IComposerClient::EX_UNSUPPORTED, errors[0].errorCode);
         GTEST_SUCCEED() << "SetDisplayBrightness is not supported";
         return;
     }
