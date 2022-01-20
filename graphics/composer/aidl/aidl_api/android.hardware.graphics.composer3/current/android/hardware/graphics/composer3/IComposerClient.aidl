@@ -51,6 +51,7 @@ interface IComposerClient {
   int getDisplayVsyncPeriod(long display);
   android.hardware.graphics.composer3.DisplayContentSample getDisplayedContentSample(long display, long maxFrames, long timestamp);
   android.hardware.graphics.composer3.DisplayContentSamplingAttributes getDisplayedContentSamplingAttributes(long display);
+  android.hardware.graphics.common.Transform getDisplayPhysicalOrientation(long display);
   android.hardware.graphics.composer3.HdrCapabilities getHdrCapabilities(long display);
   int getMaxVirtualDisplayCount();
   android.hardware.graphics.composer3.PerFrameMetadataKey[] getPerFrameMetadataKeys(long display);

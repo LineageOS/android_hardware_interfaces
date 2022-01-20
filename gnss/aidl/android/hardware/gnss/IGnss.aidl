@@ -18,6 +18,7 @@ package android.hardware.gnss;
 
 import android.hardware.gnss.GnssLocation;
 import android.hardware.gnss.IAGnss;
+import android.hardware.gnss.IGnssAntennaInfo;
 import android.hardware.gnss.IGnssBatching;
 import android.hardware.gnss.IGnssCallback;
 import android.hardware.gnss.IGnssConfiguration;
@@ -27,6 +28,7 @@ import android.hardware.gnss.IGnssMeasurementInterface;
 import android.hardware.gnss.IGnssNavigationMessageInterface;
 import android.hardware.gnss.IGnssPowerIndication;
 import android.hardware.gnss.IGnssPsds;
+import android.hardware.gnss.measurement_corrections.IMeasurementCorrectionsInterface;
 import android.hardware.gnss.visibility_control.IGnssVisibilityControl;
 
 /**
@@ -277,4 +279,18 @@ interface IGnss {
     void setPositionMode(in GnssPositionMode mode, in GnssPositionRecurrence recurrence,
             in int minIntervalMs, in int preferredAccuracyMeters, in int preferredTimeMs,
             in boolean lowPowerMode);
+
+    /*
+     * This method returns the IGnssAntennaInfo.
+     *
+     * @return Handle to the IGnssAntennaInfo.
+     */
+    IGnssAntennaInfo getExtensionGnssAntennaInfo();
+
+    /**
+     * This method returns the IMeasurementCorrectionsInterface.
+     *
+     * @return Handle to the IMeasurementCorrectionsInterface.
+     */
+    @nullable IMeasurementCorrectionsInterface getExtensionMeasurementCorrections();
 }
