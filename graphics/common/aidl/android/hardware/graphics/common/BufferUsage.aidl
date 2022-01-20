@@ -87,6 +87,12 @@ enum BufferUsage {
     /** buffer is used as a sensor direct report output */
     SENSOR_DIRECT_DATA                 = 1 << 23,
 
+    /**
+     * buffer is used as as an OpenGL shader storage or uniform
+     * buffer object
+     */
+    GPU_DATA_BUFFER                    = 1 << 24,
+
     /** buffer is used as a cube map texture */
     GPU_CUBE_MAP                       = 1 << 25,
 
@@ -98,17 +104,17 @@ enum BufferUsage {
      */
     HW_IMAGE_ENCODER                   = 1 << 27,
 
-    /**
-     * buffer is used as as an OpenGL shader storage or uniform
-     * buffer object
-     */
-    GPU_DATA_BUFFER                    = 1 << 24,
+    /* Bits 28-31 are reserved for vendor usage */
 
-    /** bits 25-27 must be zero and are reserved for future versions */
+    /**
+    * Buffer is used for front-buffer rendering
+    */
+    FRONT_BUFFER                       = 1L << 32,
+
     /** bits 28-31 are reserved for vendor extensions */
     VENDOR_MASK                        = 0xf << 28,
 
-    /** bits 32-47 must be zero and are reserved for future versions */
+    /** bits 33-47 must be zero and are reserved for future versions */
     /** bits 48-63 are reserved for vendor extensions */
     VENDOR_MASK_HI                     = (1L * 0xffff) << 48,
 }
