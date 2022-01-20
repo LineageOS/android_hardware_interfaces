@@ -18,6 +18,7 @@ package android.hardware.gnss;
 
 import android.hardware.gnss.GnssLocation;
 import android.hardware.gnss.IAGnss;
+import android.hardware.gnss.IAGnssRil;
 import android.hardware.gnss.IGnssAntennaInfo;
 import android.hardware.gnss.IGnssBatching;
 import android.hardware.gnss.IGnssCallback;
@@ -186,6 +187,13 @@ interface IGnss {
      * @return The IAGnss interface.
      */
     IAGnss getExtensionAGnss();
+
+    /**
+     * This method returns the IAGnssRil interface.
+     *
+     * @return The IAGnssRil interface.
+     */
+    IAGnssRil getExtensionAGnssRil();
 
     /**
      * This method returns the IGnssDebug interface.
