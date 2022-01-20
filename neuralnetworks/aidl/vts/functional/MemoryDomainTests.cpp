@@ -204,11 +204,23 @@ class InvalidPreparedModel : public BnPreparedModel {
         return ndk::ScopedAStatus::fromServiceSpecificError(
                 static_cast<int32_t>(ErrorStatus::GENERAL_FAILURE));
     }
+    ndk::ScopedAStatus executeSynchronouslyWithConfig(const Request&, const ExecutionConfig&,
+                                                      int64_t, ExecutionResult*) override {
+        return ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(ErrorStatus::GENERAL_FAILURE));
+    }
+    ndk::ScopedAStatus executeFencedWithConfig(const Request&,
+                                               const std::vector<ndk::ScopedFileDescriptor>&,
+                                               const ExecutionConfig&, int64_t, int64_t,
+                                               FencedExecutionResult*) override {
+        return ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(ErrorStatus::GENERAL_FAILURE));
+    }
     ndk::ScopedAStatus configureExecutionBurst(std::shared_ptr<IBurst>*) override {
         return ndk::ScopedAStatus::fromServiceSpecificError(
                 static_cast<int32_t>(ErrorStatus::GENERAL_FAILURE));
     }
-    ndk::ScopedAStatus createReusableExecution(const aidl_hal::Request&, bool, int64_t,
+    ndk::ScopedAStatus createReusableExecution(const aidl_hal::Request&, const ExecutionConfig&,
                                                std::shared_ptr<aidl_hal::IExecution>*) override {
         return ndk::ScopedAStatus::fromServiceSpecificError(
                 static_cast<int32_t>(ErrorStatus::GENERAL_FAILURE));

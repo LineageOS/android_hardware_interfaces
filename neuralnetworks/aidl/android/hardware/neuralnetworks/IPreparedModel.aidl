@@ -18,6 +18,7 @@ package android.hardware.neuralnetworks;
 
 import android.hardware.common.NativeHandle;
 import android.hardware.neuralnetworks.ErrorStatus;
+import android.hardware.neuralnetworks.ExecutionConfig;
 import android.hardware.neuralnetworks.ExecutionResult;
 import android.hardware.neuralnetworks.FencedExecutionResult;
 import android.hardware.neuralnetworks.IBurst;
@@ -67,6 +68,8 @@ interface IPreparedModel {
      *
      * Any number of calls to the execute* functions, in any combination, may be made concurrently,
      * even on the same IPreparedModel object.
+     *
+     * Also see {@link IPreparedModel::executeSynchronouslyWithConfig}.
      *
      * @param request The input and output information on which the prepared model is to be
      *                executed.
@@ -133,6 +136,8 @@ interface IPreparedModel {
      *
      * Any number of calls to the execute* functions, in any combination, may be made concurrently,
      * even on the same IPreparedModel object.
+     *
+     * Also see {@link IPreparedModel::executeFencedWithConfig}.
      *
      * @param request The input and output information on which the prepared model is to be
      *                executed. The outputs in the request must have fully specified dimensions.
@@ -201,15 +206,7 @@ interface IPreparedModel {
      *
      * @param request The input and output information on which the prepared model is to be
      *                executed.
-     * @param measure Specifies whether or not to measure duration of the execution.
-     * @param loopTimeoutDurationNs The maximum amount of time in nanoseconds that should be spent
-     *                              executing a {@link OperationType::WHILE} operation. If a loop
-     *                              condition model does not output false within this duration, the
-     *                              computation performed on the returned reusable execution object
-     *                              must be aborted. If -1 is provided, the maximum amount
-     *                              of time is {@link DEFAULT_LOOP_TIMEOUT_DURATION_NS}. Other
-     *                              negative values are invalid. When provided, the duration must
-     *                              not exceed {@link MAXIMUM_LOOP_TIMEOUT_DURATION_NS}.
+     * @param config Specifies the execution configuration parameters.
      * @return execution An IExecution object representing a reusable execution that has been
      *                   specialized for a fixed request.
      * @throws ServiceSpecificException with one of the following ErrorStatus values:
@@ -218,6 +215,64 @@ interface IPreparedModel {
      *     - INVALID_ARGUMENT if one of the input arguments is invalid
      *     - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
      */
-    IExecution createReusableExecution(
-            in Request request, in boolean measureTiming, in long loopTimeoutDurationNs);
+    IExecution createReusableExecution(in Request request, in ExecutionConfig config);
+
+    /**
+     * For detailed specification, please refer to {@link IPreparedModel::executeSynchronously}. The
+     * difference between the two methods is that executeSynchronouslyWithConfig takes {@link
+     * ExecutionConfig} instead of a list of configuration parameters, and ExecutionConfig contains
+     * more configuration parameters than are passed to executeSynchronously.
+     *
+     * @param request The input and output information on which the prepared model is to be
+     *                executed.
+     * @param config Specifies the execution configuration parameters.
+     * @param deadlineNs The time by which the execution is expected to complete. The time is
+     *                   measured in nanoseconds since boot (as from clock_gettime(CLOCK_BOOTTIME,
+     *                   &ts) or ::android::base::boot_clock). If the execution cannot be finished
+     *                   by the deadline, the execution may be aborted. Passing -1 means the
+     *                   deadline is omitted. Other negative valueggs are invalid.
+     * @return ExecutionResult parcelable, containing the status of the execution, output shapes and
+     *     timing information.
+     *     - MISSED_DEADLINE_* if the execution is aborted because it cannot be completed by the
+     *       deadline
+     *     - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
+     */
+    ExecutionResult executeSynchronouslyWithConfig(
+            in Request request, in ExecutionConfig config, in long deadlineNs);
+
+    /**
+     * For detailed specification, please refer to {@link IPreparedModel::executeFenced}. The
+     * difference between the two methods is that executeFencedWithConfig takes {@link
+     * ExecutionConfig} instead of a list of configuration parameters, and ExecutionConfig contains
+     * more configuration parameters than are passed to executeFenced.
+     *
+     * @param request The input and output information on which the prepared model is to be
+     *                executed. The outputs in the request must have fully specified dimensions.
+     * @param waitFor A vector of sync fence file descriptors. Execution must not start until all
+     *                sync fences have been signaled.
+     * @param config Specifies the execution configuration parameters.
+     * @param deadlineNs The time by which the execution is expected to complete. The time is
+     *                   measured in nanoseconds since boot (as from clock_gettime(CLOCK_BOOTTIME,
+     *                   &ts) or ::android::base::boot_clock). If the execution cannot be finished
+     *                   by the deadline, the execution may be aborted. Passing -1 means the
+     *                   deadline is omitted. Other negative values are invalid.
+     * @param durationNs The length of time in nanoseconds within which the execution is expected to
+     *                   complete after all sync fences in waitFor are signaled. If the execution
+     *                   cannot be finished within the duration, the execution may be aborted.
+     *                   Passing -1 means the duration is omitted. Other negative values are
+     *                   invalid.
+     * @return The FencedExecutionResult parcelable, containing IFencedExecutionCallback and the
+     *         sync fence.
+     * @throws ServiceSpecificException with one of the following ErrorStatus values:
+     *     - DEVICE_UNAVAILABLE if driver is offline or busy
+     *     - GENERAL_FAILURE if there is an unspecified error
+     *     - INVALID_ARGUMENT if one of the input arguments is invalid, including fences in error
+     *       states.
+     *     - MISSED_DEADLINE_* if the execution is aborted because it cannot be completed by the
+     *       deadline
+     *     - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
+     */
+    FencedExecutionResult executeFencedWithConfig(in Request request,
+            in ParcelFileDescriptor[] waitFor, in ExecutionConfig config, in long deadlineNs,
+            in long durationNs);
 }

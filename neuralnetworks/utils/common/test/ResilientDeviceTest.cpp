@@ -309,12 +309,12 @@ TEST(ResilientDeviceTest, prepareModel) {
     // setup call
     const auto [mockDevice, mockDeviceFactory, device] = setup();
     const auto mockPreparedModel = std::make_shared<const nn::MockPreparedModel>();
-    EXPECT_CALL(*mockDevice, prepareModel(_, _, _, _, _, _, _))
+    EXPECT_CALL(*mockDevice, prepareModel(_, _, _, _, _, _, _, _, _))
             .Times(1)
             .WillOnce(Return(mockPreparedModel));
 
     // run test
-    const auto result = device->prepareModel({}, {}, {}, {}, {}, {}, {});
+    const auto result = device->prepareModel({}, {}, {}, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_TRUE(result.has_value())
@@ -324,12 +324,12 @@ TEST(ResilientDeviceTest, prepareModel) {
 TEST(ResilientDeviceTest, prepareModelError) {
     // setup call
     const auto [mockDevice, mockDeviceFactory, device] = setup();
-    EXPECT_CALL(*mockDevice, prepareModel(_, _, _, _, _, _, _))
+    EXPECT_CALL(*mockDevice, prepareModel(_, _, _, _, _, _, _, _, _))
             .Times(1)
             .WillOnce(kReturnGeneralFailure);
 
     // run test
-    const auto result = device->prepareModel({}, {}, {}, {}, {}, {}, {});
+    const auto result = device->prepareModel({}, {}, {}, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -339,13 +339,13 @@ TEST(ResilientDeviceTest, prepareModelError) {
 TEST(ResilientDeviceTest, prepareModelDeadObjectFailedRecovery) {
     // setup call
     const auto [mockDevice, mockDeviceFactory, device] = setup();
-    EXPECT_CALL(*mockDevice, prepareModel(_, _, _, _, _, _, _))
+    EXPECT_CALL(*mockDevice, prepareModel(_, _, _, _, _, _, _, _, _))
             .Times(1)
             .WillOnce(kReturnDeadObject);
     EXPECT_CALL(*mockDeviceFactory, Call(false)).Times(1).WillOnce(kReturnGeneralFailure);
 
     // run test
-    const auto result = device->prepareModel({}, {}, {}, {}, {}, {}, {});
+    const auto result = device->prepareModel({}, {}, {}, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -355,18 +355,18 @@ TEST(ResilientDeviceTest, prepareModelDeadObjectFailedRecovery) {
 TEST(ResilientDeviceTest, prepareModelDeadObjectSuccessfulRecovery) {
     // setup call
     const auto [mockDevice, mockDeviceFactory, device] = setup();
-    EXPECT_CALL(*mockDevice, prepareModel(_, _, _, _, _, _, _))
+    EXPECT_CALL(*mockDevice, prepareModel(_, _, _, _, _, _, _, _, _))
             .Times(1)
             .WillOnce(kReturnDeadObject);
     const auto recoveredMockDevice = createConfiguredMockDevice();
     const auto mockPreparedModel = std::make_shared<const nn::MockPreparedModel>();
-    EXPECT_CALL(*recoveredMockDevice, prepareModel(_, _, _, _, _, _, _))
+    EXPECT_CALL(*recoveredMockDevice, prepareModel(_, _, _, _, _, _, _, _, _))
             .Times(1)
             .WillOnce(Return(mockPreparedModel));
     EXPECT_CALL(*mockDeviceFactory, Call(false)).Times(1).WillOnce(Return(recoveredMockDevice));
 
     // run test
-    const auto result = device->prepareModel({}, {}, {}, {}, {}, {}, {});
+    const auto result = device->prepareModel({}, {}, {}, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_TRUE(result.has_value())
@@ -679,7 +679,7 @@ TEST(ResilientDeviceTest, recoverCacheMismatchInvalidPrepareModel) {
     device->recover(mockDevice.get(), /*blocking=*/false);
 
     // run test
-    auto result = device->prepareModel({}, {}, {}, {}, {}, {}, {});
+    auto result = device->prepareModel({}, {}, {}, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_TRUE(result.has_value())

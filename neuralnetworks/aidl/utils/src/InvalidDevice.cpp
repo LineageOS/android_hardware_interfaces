@@ -167,6 +167,31 @@ ndk::ScopedAStatus InvalidDevice::prepareModel(
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus InvalidDevice::prepareModelWithConfig(
+        const Model& model, const PrepareModelConfig& config,
+        const std::shared_ptr<IPreparedModelCallback>& callback) {
+    if (!utils::valid(config.extensionNameToPrefix)) {
+        callback->notify(ErrorStatus::INVALID_ARGUMENT, nullptr);
+        return toAStatus(ErrorStatus::INVALID_ARGUMENT, "Invalid extensionNameToPrefix");
+    }
+    for (const auto& hint : config.compilationHints) {
+        auto result = std::find_if(config.extensionNameToPrefix.begin(),
+                                   config.extensionNameToPrefix.end(),
+                                   [&hint](const ExtensionNameAndPrefix& extension) {
+                                       uint16_t prefix = static_cast<uint32_t>(hint.token) >>
+                                                         IDevice::EXTENSION_TYPE_LOW_BITS_TYPE;
+                                       return prefix == extension.prefix;
+                                   });
+        if (result == config.extensionNameToPrefix.end()) {
+            callback->notify(ErrorStatus::INVALID_ARGUMENT, nullptr);
+            return toAStatus(ErrorStatus::INVALID_ARGUMENT,
+                             "Invalid token for compilation hints: " + std::to_string(hint.token));
+        }
+    }
+    return prepareModel(model, config.preference, config.priority, config.deadlineNs,
+                        config.modelCache, config.dataCache, config.cacheToken, callback);
+}
+
 ndk::ScopedAStatus InvalidDevice::prepareModelFromCache(
         int64_t /*deadline*/, const std::vector<ndk::ScopedFileDescriptor>& /*modelCache*/,
         const std::vector<ndk::ScopedFileDescriptor>& /*dataCache*/,

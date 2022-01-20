@@ -28,6 +28,7 @@ import android.hardware.neuralnetworks.IPreparedModelCallback;
 import android.hardware.neuralnetworks.IPreparedModelParcel;
 import android.hardware.neuralnetworks.Model;
 import android.hardware.neuralnetworks.NumberOfCacheFiles;
+import android.hardware.neuralnetworks.PrepareModelConfig;
 import android.hardware.neuralnetworks.Priority;
 
 /**
@@ -148,7 +149,7 @@ interface IDevice {
      *
      * If the device reports that caching is not supported, the user may avoid calling
      * IDevice::prepareModelFromCache or providing cache file descriptors to
-     * IDevice::prepareModel.
+     * IDevice::prepareModel or IDevice::prepareModelWithConfig.
      *
      * @return NumberOfCacheFiles structure indicating how many files for model and data cache the
      *     driver needs to cache a single prepared model. It must be less than or equal to
@@ -302,6 +303,8 @@ interface IDevice {
      *
      * Multiple threads may call prepareModel on the same model concurrently.
      *
+     * Also see {@link IDevice::prepareModelWithConfig}.
+     *
      * @param model The model to be prepared for execution.
      * @param preference Indicates the intended execution behavior of a prepared model.
      * @param priority The priority of the prepared model relative to other prepared models owned by
@@ -403,17 +406,17 @@ interface IDevice {
      * @param modelCache A vector of file descriptors for the security-sensitive cache. The length
      *                   of the vector must match the numModelCache returned from
      *                   getNumberOfCacheFilesNeeded. The cache file descriptors will be provided in
-     *                   the same order as with prepareModel.
+     *                   the same order as with prepareModel or prepareModelWithConfig.
      * @param dataCache A vector of file descriptors for the constants' cache. The length of the
      *                  vector must match the numDataCache returned from
      *                  getNumberOfCacheFilesNeeded. The cache file descriptors will be provided in
-     *                  the same order as with prepareModel.
+     *                  the same order as with prepareModel or prepareModelWithConfig.
      * @param token A caching token of length BYTE_SIZE_OF_CACHE_TOKEN identifying the prepared
      *              model. It is the same token provided when saving the cache files with
-     *              prepareModel. Tokens should be chosen to have a low rate of collision for a
-     *              particular application. The driver cannot detect a collision; a collision will
-     *              result in a failed execution or in a successful execution that produces
-     *              incorrect output values.
+     *              prepareModel or prepareModelWithConfig. Tokens should be chosen to have a low
+     *              rate of collision for a particular application. The driver cannot detect a
+     *              collision; a collision will result in a failed execution or in a successful
+     *              execution that produces incorrect output values.
      * @param callback A callback object used to return the error status of preparing the model for
      *                 execution and the prepared model if successful, nullptr otherwise. The
      *                 callback object's notify function must be called exactly once, even if the
@@ -429,4 +432,28 @@ interface IDevice {
     void prepareModelFromCache(in long deadlineNs, in ParcelFileDescriptor[] modelCache,
             in ParcelFileDescriptor[] dataCache, in byte[] token,
             in IPreparedModelCallback callback);
+
+    /**
+     * For detailed specification, please refer to {@link IDevice::prepareModel}. The only
+     * difference between the two methods is that prepareModelWithConfig takes {@link
+     * PrepareModelConfig} instead of standalone configuration parameters, which allows vendor
+     * specific compilation metadata to be passed.
+     *
+     * @param model The model to be prepared for execution.
+     * @param config Configuration parameters to prepare the model.
+     * @param callback A callback object used to return the error status of preparing the model for
+     *                 execution and the prepared model if successful, nullptr otherwise. The
+     *                 callback object's notify function must be called exactly once, even if the
+     *                 model could not be prepared.
+     * @throws ServiceSpecificException with one of the following ErrorStatus values:
+     *     - DEVICE_UNAVAILABLE if driver is offline or busy
+     *     - GENERAL_FAILURE if there is an unspecified error
+     *     - INVALID_ARGUMENT if one of the input arguments related to preparing the model is
+     *       invalid
+     *     - MISSED_DEADLINE_* if the preparation is aborted because the model cannot be prepared by
+     *       the deadline
+     *     - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
+     */
+    void prepareModelWithConfig(
+            in Model model, in PrepareModelConfig config, in IPreparedModelCallback callback);
 }

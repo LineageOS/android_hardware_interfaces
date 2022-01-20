@@ -70,6 +70,21 @@ auto makeFencedExecutionResult(const std::shared_ptr<MockFencedExecutionCallback
 
 class PreparedModelTest : public VersionedAidlUtilsTestBase {};
 
+const std::vector<nn::TokenValuePair> kHints = {nn::TokenValuePair{.token = 0, .value = {1}}};
+const std::vector<nn::ExtensionNameAndPrefix> kExtensionNameToPrefix = {
+        nn::ExtensionNameAndPrefix{.name = "com.android.nn_test", .prefix = 1}};
+auto makeFencedExecutionWithConfigResult(
+        const std::shared_ptr<MockFencedExecutionCallback>& callback) {
+    return [callback](const Request& /*request*/,
+                      const std::vector<ndk::ScopedFileDescriptor>& /*waitFor*/,
+                      const ExecutionConfig& /*config*/, int64_t /*deadline*/, int64_t /*duration*/,
+                      FencedExecutionResult* fencedExecutionResult) {
+        *fencedExecutionResult = FencedExecutionResult{.callback = callback,
+                                                       .syncFence = ndk::ScopedFileDescriptor(-1)};
+        return ndk::ScopedAStatus::ok();
+    };
+}
+
 }  // namespace
 
 TEST_P(PreparedModelTest, invalidPreparedModel) {
@@ -82,6 +97,8 @@ TEST_P(PreparedModelTest, invalidPreparedModel) {
 }
 
 TEST_P(PreparedModelTest, executeSync) {
+    if (kVersion.level >= nn::Version::Level::FEATURE_LEVEL_8) return;
+
     // setup call
     const auto mockPreparedModel = MockPreparedModel::create();
     const auto preparedModel = PreparedModel::create(mockPreparedModel, kVersion).value();
@@ -96,7 +113,7 @@ TEST_P(PreparedModelTest, executeSync) {
                     DoAll(SetArgPointee<4>(mockExecutionResult), InvokeWithoutArgs(makeStatusOk)));
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     EXPECT_TRUE(result.has_value())
@@ -104,6 +121,8 @@ TEST_P(PreparedModelTest, executeSync) {
 }
 
 TEST_P(PreparedModelTest, executeSyncError) {
+    if (kVersion.level >= nn::Version::Level::FEATURE_LEVEL_8) return;
+
     // setup test
     const auto mockPreparedModel = MockPreparedModel::create();
     const auto preparedModel = PreparedModel::create(mockPreparedModel, kVersion).value();
@@ -112,7 +131,7 @@ TEST_P(PreparedModelTest, executeSyncError) {
             .WillOnce(Invoke(makeGeneralFailure));
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -120,6 +139,8 @@ TEST_P(PreparedModelTest, executeSyncError) {
 }
 
 TEST_P(PreparedModelTest, executeSyncTransportFailure) {
+    if (kVersion.level >= nn::Version::Level::FEATURE_LEVEL_8) return;
+
     // setup test
     const auto mockPreparedModel = MockPreparedModel::create();
     const auto preparedModel = PreparedModel::create(mockPreparedModel, kVersion).value();
@@ -128,7 +149,7 @@ TEST_P(PreparedModelTest, executeSyncTransportFailure) {
             .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -136,6 +157,8 @@ TEST_P(PreparedModelTest, executeSyncTransportFailure) {
 }
 
 TEST_P(PreparedModelTest, executeSyncDeadObject) {
+    if (kVersion.level >= nn::Version::Level::FEATURE_LEVEL_8) return;
+
     // setup test
     const auto mockPreparedModel = MockPreparedModel::create();
     const auto preparedModel = PreparedModel::create(mockPreparedModel, kVersion).value();
@@ -144,7 +167,7 @@ TEST_P(PreparedModelTest, executeSyncDeadObject) {
             .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -152,6 +175,8 @@ TEST_P(PreparedModelTest, executeSyncDeadObject) {
 }
 
 TEST_P(PreparedModelTest, executeFenced) {
+    if (kVersion.level >= nn::Version::Level::FEATURE_LEVEL_8) return;
+
     // setup call
     const auto mockPreparedModel = MockPreparedModel::create();
     const auto preparedModel = PreparedModel::create(mockPreparedModel, kVersion).value();
@@ -165,7 +190,7 @@ TEST_P(PreparedModelTest, executeFenced) {
             .WillOnce(Invoke(makeFencedExecutionResult(mockCallback)));
 
     // run test
-    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {});
+    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_TRUE(result.has_value())
@@ -181,6 +206,8 @@ TEST_P(PreparedModelTest, executeFenced) {
 }
 
 TEST_P(PreparedModelTest, executeFencedCallbackError) {
+    if (kVersion.level >= nn::Version::Level::FEATURE_LEVEL_8) return;
+
     // setup call
     const auto mockPreparedModel = MockPreparedModel::create();
     const auto preparedModel = PreparedModel::create(mockPreparedModel, kVersion).value();
@@ -195,7 +222,7 @@ TEST_P(PreparedModelTest, executeFencedCallbackError) {
             .WillOnce(Invoke(makeFencedExecutionResult(mockCallback)));
 
     // run test
-    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {});
+    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_TRUE(result.has_value())
@@ -211,6 +238,8 @@ TEST_P(PreparedModelTest, executeFencedCallbackError) {
 }
 
 TEST_P(PreparedModelTest, executeFencedError) {
+    if (kVersion.level >= nn::Version::Level::FEATURE_LEVEL_8) return;
+
     // setup test
     const auto mockPreparedModel = MockPreparedModel::create();
     const auto preparedModel = PreparedModel::create(mockPreparedModel, kVersion).value();
@@ -219,7 +248,7 @@ TEST_P(PreparedModelTest, executeFencedError) {
             .WillOnce(InvokeWithoutArgs(makeGeneralFailure));
 
     // run test
-    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {});
+    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -227,6 +256,8 @@ TEST_P(PreparedModelTest, executeFencedError) {
 }
 
 TEST_P(PreparedModelTest, executeFencedTransportFailure) {
+    if (kVersion.level >= nn::Version::Level::FEATURE_LEVEL_8) return;
+
     // setup test
     const auto mockPreparedModel = MockPreparedModel::create();
     const auto preparedModel = PreparedModel::create(mockPreparedModel, kVersion).value();
@@ -235,7 +266,7 @@ TEST_P(PreparedModelTest, executeFencedTransportFailure) {
             .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
 
     // run test
-    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {});
+    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -243,6 +274,8 @@ TEST_P(PreparedModelTest, executeFencedTransportFailure) {
 }
 
 TEST_P(PreparedModelTest, executeFencedDeadObject) {
+    if (kVersion.level >= nn::Version::Level::FEATURE_LEVEL_8) return;
+
     // setup test
     const auto mockPreparedModel = MockPreparedModel::create();
     const auto preparedModel = PreparedModel::create(mockPreparedModel, kVersion).value();
@@ -251,7 +284,7 @@ TEST_P(PreparedModelTest, executeFencedDeadObject) {
             .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
 
     // run test
-    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {});
+    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -276,7 +309,7 @@ TEST_P(PreparedModelTest, reusableExecuteSync) {
                     DoAll(SetArgPointee<4>(mockExecutionResult), InvokeWithoutArgs(makeStatusOk)));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -300,7 +333,7 @@ TEST_P(PreparedModelTest, reusableExecuteSyncError) {
             .WillOnce(Invoke(makeGeneralFailure));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -322,7 +355,7 @@ TEST_P(PreparedModelTest, reusableExecuteSyncTransportFailure) {
             .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -344,7 +377,7 @@ TEST_P(PreparedModelTest, reusableExecuteSyncDeadObject) {
             .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -372,7 +405,7 @@ TEST_P(PreparedModelTest, reusableExecuteFenced) {
             .WillRepeatedly(Invoke(makeFencedExecutionResult(mockCallback)));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -410,7 +443,7 @@ TEST_P(PreparedModelTest, reusableExecuteFencedCallbackError) {
             .WillOnce(Invoke(makeFencedExecutionResult(mockCallback)));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -440,7 +473,7 @@ TEST_P(PreparedModelTest, reusableExecuteFencedError) {
             .WillOnce(InvokeWithoutArgs(makeGeneralFailure));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -462,7 +495,7 @@ TEST_P(PreparedModelTest, reusableExecuteFencedTransportFailure) {
             .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -484,7 +517,7 @@ TEST_P(PreparedModelTest, reusableExecuteFencedDeadObject) {
             .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -493,6 +526,206 @@ TEST_P(PreparedModelTest, reusableExecuteFencedDeadObject) {
     const auto computeResult = createResult.value()->computeFenced({}, {}, {});
     ASSERT_FALSE(computeResult.has_value());
     EXPECT_EQ(computeResult.error().code, nn::ErrorStatus::DEAD_OBJECT);
+}
+
+TEST_P(PreparedModelTest, executeSyncWithConfig) {
+    if (kVersion.level < nn::Version::Level::FEATURE_LEVEL_8) return;
+
+    // setup call
+    const auto mockPreparedModel = MockPreparedModel::create();
+    const auto preparedModel = PreparedModel::create(mockPreparedModel, kVersion).value();
+    const auto mockExecutionResult = ExecutionResult{
+            .outputSufficientSize = true,
+            .outputShapes = {},
+            .timing = kNoTiming,
+    };
+    EXPECT_CALL(*mockPreparedModel, executeSynchronouslyWithConfig(_, _, _, _))
+            .Times(1)
+            .WillOnce(
+                    DoAll(SetArgPointee<3>(mockExecutionResult), InvokeWithoutArgs(makeStatusOk)));
+
+    // run test
+    const auto result = preparedModel->execute({}, {}, {}, {}, kHints, kExtensionNameToPrefix);
+
+    // verify result
+    EXPECT_TRUE(result.has_value())
+            << "Failed with " << result.error().code << ": " << result.error().message;
+}
+
+TEST_P(PreparedModelTest, executeSyncWithConfigError) {
+    if (kVersion.level < nn::Version::Level::FEATURE_LEVEL_8) return;
+
+    // setup test
+    const auto mockPreparedModel = MockPreparedModel::create();
+    const auto preparedModel = PreparedModel::create(mockPreparedModel, kVersion).value();
+    EXPECT_CALL(*mockPreparedModel, executeSynchronouslyWithConfig(_, _, _, _))
+            .Times(1)
+            .WillOnce(Invoke(makeGeneralFailure));
+
+    // run test
+    const auto result = preparedModel->execute({}, {}, {}, {}, kHints, kExtensionNameToPrefix);
+
+    // verify result
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
+}
+
+TEST_P(PreparedModelTest, executeSyncWithConfigTransportFailure) {
+    if (kVersion.level < nn::Version::Level::FEATURE_LEVEL_8) return;
+
+    // setup test
+    const auto mockPreparedModel = MockPreparedModel::create();
+    const auto preparedModel = PreparedModel::create(mockPreparedModel, kVersion).value();
+    EXPECT_CALL(*mockPreparedModel, executeSynchronouslyWithConfig(_, _, _, _))
+            .Times(1)
+            .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
+
+    // run test
+    const auto result = preparedModel->execute({}, {}, {}, {}, kHints, kExtensionNameToPrefix);
+
+    // verify result
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
+}
+
+TEST_P(PreparedModelTest, executeSyncWithConfigDeadObject) {
+    if (kVersion.level < nn::Version::Level::FEATURE_LEVEL_8) return;
+
+    // setup test
+    const auto mockPreparedModel = MockPreparedModel::create();
+    const auto preparedModel = PreparedModel::create(mockPreparedModel, kVersion).value();
+    EXPECT_CALL(*mockPreparedModel, executeSynchronouslyWithConfig(_, _, _, _))
+            .Times(1)
+            .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
+
+    // run test
+    const auto result = preparedModel->execute({}, {}, {}, {}, kHints, kExtensionNameToPrefix);
+
+    // verify result
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, nn::ErrorStatus::DEAD_OBJECT);
+}
+
+TEST_P(PreparedModelTest, executeFencedWithConfig) {
+    if (kVersion.level < nn::Version::Level::FEATURE_LEVEL_8) return;
+
+    // setup call
+    const auto mockPreparedModel = MockPreparedModel::create();
+    const auto preparedModel = PreparedModel::create(mockPreparedModel, kVersion).value();
+    const auto mockCallback = MockFencedExecutionCallback::create();
+    EXPECT_CALL(*mockCallback, getExecutionInfo(_, _, _))
+            .Times(1)
+            .WillOnce(DoAll(SetArgPointee<0>(kNoTiming), SetArgPointee<1>(kNoTiming),
+                            SetArgPointee<2>(ErrorStatus::NONE), Invoke(makeStatusOk)));
+    EXPECT_CALL(*mockPreparedModel, executeFencedWithConfig(_, _, _, _, _, _))
+            .Times(1)
+            .WillOnce(Invoke(makeFencedExecutionWithConfigResult(mockCallback)));
+
+    // run test
+    const auto result =
+            preparedModel->executeFenced({}, {}, {}, {}, {}, {}, kHints, kExtensionNameToPrefix);
+
+    // verify result
+    ASSERT_TRUE(result.has_value())
+            << "Failed with " << result.error().code << ": " << result.error().message;
+    const auto& [syncFence, callback] = result.value();
+    EXPECT_EQ(syncFence.syncWait({}), nn::SyncFence::FenceState::SIGNALED);
+    ASSERT_NE(callback, nullptr);
+
+    // get results from callback
+    const auto callbackResult = callback();
+    ASSERT_TRUE(callbackResult.has_value()) << "Failed with " << callbackResult.error().code << ": "
+                                            << callbackResult.error().message;
+}
+
+TEST_P(PreparedModelTest, executeFencedWithConfigCallbackError) {
+    if (kVersion.level < nn::Version::Level::FEATURE_LEVEL_8) return;
+
+    // setup call
+    const auto mockPreparedModel = MockPreparedModel::create();
+    const auto preparedModel = PreparedModel::create(mockPreparedModel, kVersion).value();
+    const auto mockCallback = MockFencedExecutionCallback::create();
+    EXPECT_CALL(*mockCallback, getExecutionInfo(_, _, _))
+            .Times(1)
+            .WillOnce(Invoke(DoAll(SetArgPointee<0>(kNoTiming), SetArgPointee<1>(kNoTiming),
+                                   SetArgPointee<2>(ErrorStatus::GENERAL_FAILURE),
+                                   Invoke(makeStatusOk))));
+    EXPECT_CALL(*mockPreparedModel, executeFencedWithConfig(_, _, _, _, _, _))
+            .Times(1)
+            .WillOnce(Invoke(makeFencedExecutionWithConfigResult(mockCallback)));
+
+    // run test
+    const auto result =
+            preparedModel->executeFenced({}, {}, {}, {}, {}, {}, kHints, kExtensionNameToPrefix);
+
+    // verify result
+    ASSERT_TRUE(result.has_value())
+            << "Failed with " << result.error().code << ": " << result.error().message;
+    const auto& [syncFence, callback] = result.value();
+    EXPECT_NE(syncFence.syncWait({}), nn::SyncFence::FenceState::ACTIVE);
+    ASSERT_NE(callback, nullptr);
+
+    // verify callback failure
+    const auto callbackResult = callback();
+    ASSERT_FALSE(callbackResult.has_value());
+    EXPECT_EQ(callbackResult.error().code, nn::ErrorStatus::GENERAL_FAILURE);
+}
+
+TEST_P(PreparedModelTest, executeFencedWithConfigError) {
+    if (kVersion.level < nn::Version::Level::FEATURE_LEVEL_8) return;
+
+    // setup test
+    const auto mockPreparedModel = MockPreparedModel::create();
+    const auto preparedModel = PreparedModel::create(mockPreparedModel, kVersion).value();
+    EXPECT_CALL(*mockPreparedModel, executeFencedWithConfig(_, _, _, _, _, _))
+            .Times(1)
+            .WillOnce(InvokeWithoutArgs(makeGeneralFailure));
+
+    // run test
+    const auto result =
+            preparedModel->executeFenced({}, {}, {}, {}, {}, {}, kHints, kExtensionNameToPrefix);
+
+    // verify result
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
+}
+
+TEST_P(PreparedModelTest, executeFencedWithConfigTransportFailure) {
+    if (kVersion.level < nn::Version::Level::FEATURE_LEVEL_8) return;
+
+    // setup test
+    const auto mockPreparedModel = MockPreparedModel::create();
+    const auto preparedModel = PreparedModel::create(mockPreparedModel, kVersion).value();
+    EXPECT_CALL(*mockPreparedModel, executeFencedWithConfig(_, _, _, _, _, _))
+            .Times(1)
+            .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
+
+    // run test
+    const auto result =
+            preparedModel->executeFenced({}, {}, {}, {}, {}, {}, kHints, kExtensionNameToPrefix);
+
+    // verify result
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
+}
+
+TEST_P(PreparedModelTest, executeFencedWithConfigDeadObject) {
+    if (kVersion.level < nn::Version::Level::FEATURE_LEVEL_8) return;
+
+    // setup test
+    const auto mockPreparedModel = MockPreparedModel::create();
+    const auto preparedModel = PreparedModel::create(mockPreparedModel, kVersion).value();
+    EXPECT_CALL(*mockPreparedModel, executeFencedWithConfig(_, _, _, _, _, _))
+            .Times(1)
+            .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
+
+    // run test
+    const auto result =
+            preparedModel->executeFenced({}, {}, {}, {}, {}, {}, kHints, kExtensionNameToPrefix);
+
+    // verify result
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, nn::ErrorStatus::DEAD_OBJECT);
 }
 
 TEST_P(PreparedModelTest, configureExecutionBurst) {
@@ -567,13 +800,13 @@ TEST_P(PreparedModelTest, createReusableExecution) {
     // setup test
     const auto mockPreparedModel = MockPreparedModel::create();
     const auto mockExecution = ndk::SharedRefBase::make<MockExecution>();
-    EXPECT_CALL(*mockPreparedModel, createReusableExecution(_, _, _, _))
+    EXPECT_CALL(*mockPreparedModel, createReusableExecution(_, _, _))
             .Times(1)
-            .WillOnce(DoAll(SetArgPointee<3>(mockExecution), Invoke(makeStatusOk)));
+            .WillOnce(DoAll(SetArgPointee<2>(mockExecution), Invoke(makeStatusOk)));
     const auto preparedModel = PreparedModel::create(mockPreparedModel, kVersion).value();
 
     // run test
-    const auto result = preparedModel->createReusableExecution({}, {}, {});
+    const auto result = preparedModel->createReusableExecution({}, {}, {}, {}, {});
 
     // verify result
     ASSERT_TRUE(result.has_value())
@@ -586,13 +819,13 @@ TEST_P(PreparedModelTest, createReusableExecutionError) {
 
     // setup test
     const auto mockPreparedModel = MockPreparedModel::create();
-    EXPECT_CALL(*mockPreparedModel, createReusableExecution(_, _, _, _))
+    EXPECT_CALL(*mockPreparedModel, createReusableExecution(_, _, _))
             .Times(1)
             .WillOnce(InvokeWithoutArgs(makeGeneralFailure));
     const auto preparedModel = PreparedModel::create(mockPreparedModel, kVersion).value();
 
     // run test
-    const auto result = preparedModel->createReusableExecution({}, {}, {});
+    const auto result = preparedModel->createReusableExecution({}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -604,13 +837,13 @@ TEST_P(PreparedModelTest, createReusableExecutionTransportFailure) {
 
     // setup test
     const auto mockPreparedModel = MockPreparedModel::create();
-    EXPECT_CALL(*mockPreparedModel, createReusableExecution(_, _, _, _))
+    EXPECT_CALL(*mockPreparedModel, createReusableExecution(_, _, _))
             .Times(1)
             .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
     const auto preparedModel = PreparedModel::create(mockPreparedModel, kVersion).value();
 
     // run test
-    const auto result = preparedModel->createReusableExecution({}, {}, {});
+    const auto result = preparedModel->createReusableExecution({}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -622,13 +855,13 @@ TEST_P(PreparedModelTest, createReusableExecutionDeadObject) {
 
     // setup test
     const auto mockPreparedModel = MockPreparedModel::create();
-    EXPECT_CALL(*mockPreparedModel, createReusableExecution(_, _, _, _))
+    EXPECT_CALL(*mockPreparedModel, createReusableExecution(_, _, _))
             .Times(1)
             .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
     const auto preparedModel = PreparedModel::create(mockPreparedModel, kVersion).value();
 
     // run test
-    const auto result = preparedModel->createReusableExecution({}, {}, {});
+    const auto result = preparedModel->createReusableExecution({}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
