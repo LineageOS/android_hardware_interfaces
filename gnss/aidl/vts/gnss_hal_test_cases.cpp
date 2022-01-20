@@ -813,6 +813,10 @@ TEST_P(GnssHalTest, BlocklistConstellationLocationOn) {
  * TestAllExtensions.
  */
 TEST_P(GnssHalTest, TestAllExtensions) {
+    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+        return;
+    }
+
     sp<IGnssBatching> iGnssBatching;
     auto status = aidl_gnss_hal_->getExtensionGnssBatching(&iGnssBatching);
     if (status.isOk() && iGnssBatching != nullptr) {
