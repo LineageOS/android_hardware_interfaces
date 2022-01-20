@@ -328,8 +328,8 @@ TEST_P(GraphicsCompositionTest, SingleSolidColorLayer) {
         std::vector<Color> expectedColors(static_cast<size_t>(mDisplayWidth * mDisplayHeight));
         ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth, coloredSquare, BLUE);
 
-        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGraphicBuffer,
-                                      mDisplayWidth, mDisplayHeight, mPixelFormat, mDataspace);
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
 
         writeLayers(layers);
@@ -364,8 +364,8 @@ TEST_P(GraphicsCompositionTest, SetLayerBuffer) {
             return;
         }
 
-        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGraphicBuffer,
-                                      mDisplayWidth, mDisplayHeight, mPixelFormat, mDataspace);
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
         std::vector<Color> expectedColors(static_cast<size_t>(mDisplayWidth * mDisplayHeight));
         ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
@@ -441,8 +441,8 @@ TEST_P(GraphicsCompositionTest, SetLayerBufferNoEffect) {
         std::vector<Color> expectedColors(static_cast<size_t>(mDisplayWidth * mDisplayHeight));
         ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth, coloredSquare, BLUE);
 
-        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGraphicBuffer,
-                                      mDisplayWidth, mDisplayHeight, mPixelFormat, mDataspace);
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
 
         mWriter.validateDisplay(mPrimaryDisplay, ComposerClientWriter::kNoTimestamp);
@@ -467,8 +467,8 @@ TEST_P(GraphicsCompositionTest, SetReadbackBuffer) {
         return;
     }
 
-    ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGraphicBuffer, mDisplayWidth,
-                                  mDisplayHeight, mPixelFormat, mDataspace);
+    ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mDisplayWidth, mDisplayHeight,
+                                  mPixelFormat, mDataspace);
 
     ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
 }
@@ -497,8 +497,13 @@ TEST_P(GraphicsCompositionTest, SetReadbackBufferBadParameter) {
         return;
     }
 
-    aidl::android::hardware::common::NativeHandle bufferHandle =
-            ::android::dupToAidl(mGraphicBuffer->handle);
+    aidl::android::hardware::common::NativeHandle bufferHandle;
+    {
+        ::android::sp<::android::GraphicBuffer> buffer = allocate();
+        ASSERT_EQ(::android::OK, mGraphicBuffer->initCheck());
+        ::android::makeToAidl(mGraphicBuffer->handle);
+    }
+
     ndk::ScopedFileDescriptor releaseFence = ndk::ScopedFileDescriptor(-1);
     const auto error =
             mComposerClient->setReadbackBuffer(mPrimaryDisplay, bufferHandle, releaseFence);
@@ -552,8 +557,8 @@ TEST_P(GraphicsCompositionTest, ClientComposition) {
 
         std::vector<std::shared_ptr<TestLayer>> layers = {layer};
 
-        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGraphicBuffer,
-                                      mDisplayWidth, mDisplayHeight, mPixelFormat, mDataspace);
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
         writeLayers(layers);
         ASSERT_TRUE(mReader.takeErrors().empty());
@@ -631,8 +636,8 @@ TEST_P(GraphicsCompositionTest, DeviceAndClientComposition) {
         ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
                                        {0, mDisplayHeight / 2, mDisplayWidth, mDisplayHeight}, RED);
 
-        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGraphicBuffer,
-                                      mDisplayWidth, mDisplayHeight, mPixelFormat, mDataspace);
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
 
         auto deviceLayer = std::make_shared<TestBufferLayer>(
@@ -735,8 +740,8 @@ TEST_P(GraphicsCompositionTest, SetLayerDamage) {
 
         std::vector<std::shared_ptr<TestLayer>> layers = {layer};
 
-        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGraphicBuffer,
-                                      mDisplayWidth, mDisplayHeight, mPixelFormat, mDataspace);
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
 
         writeLayers(layers);
@@ -798,8 +803,8 @@ TEST_P(GraphicsCompositionTest, SetLayerPlaneAlpha) {
 
         std::vector<std::shared_ptr<TestLayer>> layers = {layer};
 
-        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGraphicBuffer,
-                                      mDisplayWidth, mDisplayHeight, mPixelFormat, mDataspace);
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
 
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
 
@@ -859,8 +864,8 @@ TEST_P(GraphicsCompositionTest, SetLayerSourceCrop) {
         // update expected colors to match crop
         ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth,
                                        {0, 0, mDisplayWidth, mDisplayHeight}, BLUE);
-        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGraphicBuffer,
-                                      mDisplayWidth, mDisplayHeight, mPixelFormat, mDataspace);
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
         writeLayers(layers);
         ASSERT_TRUE(mReader.takeErrors().empty());
@@ -912,8 +917,8 @@ TEST_P(GraphicsCompositionTest, SetLayerZOrder) {
         ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth, blueRect, BLUE);
         ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth, redRect, RED);
 
-        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGraphicBuffer,
-                                      mDisplayWidth, mDisplayHeight, mPixelFormat, mDataspace);
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
 
         writeLayers(layers);
@@ -1013,8 +1018,8 @@ TEST_P(GraphicsCompositionTest, SetLayerWhitePointDims) {
         ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth, redRect, RED);
         ReadbackHelper::fillColorsArea(expectedColors, mDisplayWidth, dimmerRedRect, DIM_RED);
 
-        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGraphicBuffer,
-                                      mDisplayWidth, mDisplayHeight, mPixelFormat, mDataspace);
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
 
         writeLayers(layers);
@@ -1135,8 +1140,8 @@ TEST_P(GraphicsBlendModeCompositionTest, None) {
         setUpLayers(BlendMode::NONE);
         setExpectedColors(expectedColors);
 
-        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGraphicBuffer,
-                                      mDisplayWidth, mDisplayHeight, mPixelFormat, mDataspace);
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
         writeLayers(mLayers);
         ASSERT_TRUE(mReader.takeErrors().empty());
@@ -1176,8 +1181,8 @@ TEST_P(GraphicsBlendModeCompositionTest, Coverage) {
         setUpLayers(BlendMode::COVERAGE);
         setExpectedColors(expectedColors);
 
-        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGraphicBuffer,
-                                      mDisplayWidth, mDisplayHeight, mPixelFormat, mDataspace);
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
         writeLayers(mLayers);
         ASSERT_TRUE(mReader.takeErrors().empty());
@@ -1212,8 +1217,8 @@ TEST_P(GraphicsBlendModeCompositionTest, Premultiplied) {
         setUpLayers(BlendMode::PREMULTIPLIED);
         setExpectedColors(expectedColors);
 
-        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGraphicBuffer,
-                                      mDisplayWidth, mDisplayHeight, mPixelFormat, mDataspace);
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
         writeLayers(mLayers);
         ASSERT_TRUE(mReader.takeErrors().empty());
@@ -1282,8 +1287,8 @@ TEST_P(GraphicsTransformCompositionTest, FLIP_H) {
             GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
             return;
         }
-        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGraphicBuffer,
-                                      mDisplayWidth, mDisplayHeight, mPixelFormat, mDataspace);
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
         mLayer->setTransform(Transform::FLIP_H);
         mLayer->setDataspace(ReadbackHelper::getDataspaceForColorMode(mode), mWriter);
@@ -1323,8 +1328,8 @@ TEST_P(GraphicsTransformCompositionTest, FLIP_V) {
             GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
             return;
         }
-        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGraphicBuffer,
-                                      mDisplayWidth, mDisplayHeight, mPixelFormat, mDataspace);
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
 
         mLayer->setTransform(Transform::FLIP_V);
@@ -1364,8 +1369,8 @@ TEST_P(GraphicsTransformCompositionTest, ROT_180) {
             GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
             return;
         }
-        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mGraphicBuffer,
-                                      mDisplayWidth, mDisplayHeight, mPixelFormat, mDataspace);
+        ReadbackBuffer readbackBuffer(mPrimaryDisplay, mComposerClient, mDisplayWidth,
+                                      mDisplayHeight, mPixelFormat, mDataspace);
         ASSERT_NO_FATAL_FAILURE(readbackBuffer.setReadbackBuffer());
 
         mLayer->setTransform(Transform::ROT_180);

@@ -196,8 +196,7 @@ class ReadbackHelper {
 
 class ReadbackBuffer {
   public:
-    ReadbackBuffer(int64_t display, const std::shared_ptr<IComposerClient>& client,
-                   const ::android::sp<::android::GraphicBuffer>& graphicBuffer, int32_t width,
+    ReadbackBuffer(int64_t display, const std::shared_ptr<IComposerClient>& client, int32_t width,
                    int32_t height, common::PixelFormat pixelFormat, common::Dataspace dataspace);
 
     void setReadbackBuffer();

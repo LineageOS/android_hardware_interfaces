@@ -187,7 +187,6 @@ void ReadbackHelper::compareColorBuffers(std::vector<Color>& expectedColors, voi
             int offset = (row * stride + col) * bytesPerPixel;
             uint8_t* pixelColor = (uint8_t*)bufferData + offset;
             const Color expectedColor = expectedColors[static_cast<size_t>(pixel)];
-
             ASSERT_EQ(std::round(255.0f * expectedColor.r), pixelColor[0]);
             ASSERT_EQ(std::round(255.0f * expectedColor.g), pixelColor[1]);
             ASSERT_EQ(std::round(255.0f * expectedColor.b), pixelColor[2]);
@@ -196,13 +195,11 @@ void ReadbackHelper::compareColorBuffers(std::vector<Color>& expectedColors, voi
 }
 
 ReadbackBuffer::ReadbackBuffer(int64_t display, const std::shared_ptr<IComposerClient>& client,
-                               const ::android::sp<::android::GraphicBuffer>& graphicBuffer,
                                int32_t width, int32_t height, common::PixelFormat pixelFormat,
                                common::Dataspace dataspace) {
     mDisplay = display;
 
     mComposerClient = client;
-    mGraphicBuffer = graphicBuffer;
 
     mPixelFormat = pixelFormat;
     mDataspace = dataspace;
@@ -236,6 +233,7 @@ void ReadbackBuffer::setReadbackBuffer() {
 }
 
 void ReadbackBuffer::checkReadbackBuffer(std::vector<Color> expectedColors) {
+    ASSERT_NE(nullptr, mGraphicBuffer);
     // lock buffer for reading
     ndk::ScopedFileDescriptor fenceHandle;
     EXPECT_TRUE(mComposerClient->getReadbackBufferFence(mDisplay, &fenceHandle).isOk());
@@ -243,7 +241,8 @@ void ReadbackBuffer::checkReadbackBuffer(std::vector<Color> expectedColors) {
     int outBytesPerPixel;
     int outBytesPerStride;
     void* bufData = nullptr;
-    auto status = mGraphicBuffer->lockAsync(mUsage, mAccessRegion, &bufData, fenceHandle.get(),
+
+    auto status = mGraphicBuffer->lockAsync(mUsage, mAccessRegion, &bufData, dup(fenceHandle.get()),
                                             &outBytesPerPixel, &outBytesPerStride);
     EXPECT_EQ(::android::OK, status);
     ASSERT_TRUE(mPixelFormat == PixelFormat::RGB_888 || mPixelFormat == PixelFormat::RGBA_8888);
