@@ -86,10 +86,12 @@ class Burst final : public nn::IBurst, public std::enable_shared_from_this<Burst
                 GUARDED_BY(mMutex);
     };
 
+    // featureLevel is for testing purposes.
     static nn::GeneralResult<std::shared_ptr<const Burst>> create(
-            std::shared_ptr<aidl_hal::IBurst> burst);
+            std::shared_ptr<aidl_hal::IBurst> burst, nn::Version featureLevel);
 
-    Burst(PrivateConstructorTag tag, std::shared_ptr<aidl_hal::IBurst> burst);
+    Burst(PrivateConstructorTag tag, std::shared_ptr<aidl_hal::IBurst> burst,
+          nn::Version featureLevel);
 
     // See IBurst::cacheMemory for information.
     OptionalCacheHold cacheMemory(const nn::SharedMemory& memory) const override;
@@ -97,23 +99,29 @@ class Burst final : public nn::IBurst, public std::enable_shared_from_this<Burst
     // See IBurst::execute for information.
     nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> execute(
             const nn::Request& request, nn::MeasureTiming measure,
-            const nn::OptionalTimePoint& deadline,
-            const nn::OptionalDuration& loopTimeoutDuration) const override;
+            const nn::OptionalTimePoint& deadline, const nn::OptionalDuration& loopTimeoutDuration,
+            const std::vector<nn::TokenValuePair>& hints,
+            const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const override;
 
     // See IBurst::createReusableExecution for information.
     nn::GeneralResult<nn::SharedExecution> createReusableExecution(
             const nn::Request& request, nn::MeasureTiming measure,
-            const nn::OptionalDuration& loopTimeoutDuration) const override;
+            const nn::OptionalDuration& loopTimeoutDuration,
+            const std::vector<nn::TokenValuePair>& hints,
+            const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const override;
 
     nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> executeInternal(
             const aidl_hal::Request& request, const std::vector<int64_t>& memoryIdentifierTokens,
             bool measure, int64_t deadline, int64_t loopTimeoutDuration,
+            const std::vector<nn::TokenValuePair>& hints,
+            const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix,
             const hal::utils::RequestRelocation& relocation) const;
 
   private:
     mutable std::atomic_flag mExecutionInFlight = ATOMIC_FLAG_INIT;
     const std::shared_ptr<aidl_hal::IBurst> kBurst;
     const std::shared_ptr<MemoryCache> kMemoryCache;
+    const nn::Version kFeatureLevel;
 };
 
 }  // namespace aidl::android::hardware::neuralnetworks::utils

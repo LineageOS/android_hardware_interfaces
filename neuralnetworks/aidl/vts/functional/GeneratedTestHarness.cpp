@@ -63,6 +63,8 @@ struct TestConfig {
     // it is skipped. The field is set to true by default and is set to false in
     // quantization coupling tests to suppress skipping a test
     bool reportSkipping;
+    // `useConfig` indicates if a test should use execute*WithConfig functions for the execution.
+    bool useConfig;
     TestConfig(Executor executor, bool measureTiming, OutputType outputType, MemoryType memoryType,
                bool reusable)
         : executor(executor),
@@ -70,7 +72,8 @@ struct TestConfig {
           outputType(outputType),
           memoryType(memoryType),
           reusable(reusable),
-          reportSkipping(true) {}
+          reportSkipping(true),
+          useConfig(false) {}
     TestConfig(Executor executor, bool measureTiming, OutputType outputType, MemoryType memoryType,
                bool reusable, bool reportSkipping)
         : executor(executor),
@@ -78,7 +81,17 @@ struct TestConfig {
           outputType(outputType),
           memoryType(memoryType),
           reusable(reusable),
-          reportSkipping(reportSkipping) {}
+          reportSkipping(reportSkipping),
+          useConfig(false) {}
+    TestConfig(Executor executor, bool measureTiming, OutputType outputType, MemoryType memoryType,
+               bool reusable, bool reportSkipping, bool useConfig)
+        : executor(executor),
+          measureTiming(measureTiming),
+          outputType(outputType),
+          memoryType(memoryType),
+          reusable(reusable),
+          reportSkipping(reportSkipping),
+          useConfig(useConfig) {}
 };
 
 std::string toString(OutputType type) {
@@ -100,7 +113,8 @@ std::string toString(const TestConfig& config) {
        << ", .measureTiming=" << (config.measureTiming ? "true" : "false")
        << ", .outputType=" << toString(config.outputType)
        << ", .memoryType=" << toString(config.memoryType)
-       << ", .reusable=" << (config.reusable ? "true" : "false") << "}";
+       << ", .reusable=" << (config.reusable ? "true" : "false")
+       << ", .useConfig=" << (config.useConfig ? "true" : "false") << "}";
     return ss.str();
 }
 
@@ -587,8 +601,8 @@ void EvaluatePreparedModel(const std::shared_ptr<IDevice>& device,
 
     std::shared_ptr<IExecution> execution;
     if (testConfig.reusable) {
-        const auto ret = preparedModel->createReusableExecution(request, testConfig.measureTiming,
-                                                                loopTimeoutDurationNs, &execution);
+        const auto ret = preparedModel->createReusableExecution(
+                request, {testConfig.measureTiming, loopTimeoutDurationNs, {}, {}}, &execution);
         ASSERT_TRUE(ret.isOk()) << static_cast<nn::ErrorStatus>(ret.getServiceSpecificError());
         ASSERT_NE(nullptr, execution.get());
     }
@@ -607,6 +621,10 @@ void EvaluatePreparedModel(const std::shared_ptr<IDevice>& device,
                 ::ndk::ScopedAStatus ret;
                 if (testConfig.reusable) {
                     ret = execution->executeSynchronously(kNoDeadline, &executionResult);
+                } else if (testConfig.useConfig) {
+                    ret = preparedModel->executeSynchronouslyWithConfig(
+                            request, {testConfig.measureTiming, loopTimeoutDurationNs, {}, {}},
+                            kNoDeadline, &executionResult);
                 } else {
                     ret = preparedModel->executeSynchronously(request, testConfig.measureTiming,
                                                               kNoDeadline, loopTimeoutDurationNs,
@@ -649,9 +667,16 @@ void EvaluatePreparedModel(const std::shared_ptr<IDevice>& device,
 
                 ExecutionResult executionResult;
                 // execute
-                ret = burst->executeSynchronously(request, slots, testConfig.measureTiming,
-                                                  kNoDeadline, loopTimeoutDurationNs,
-                                                  &executionResult);
+                if (testConfig.useConfig) {
+                    ret = burst->executeSynchronouslyWithConfig(
+                            request, slots,
+                            {testConfig.measureTiming, loopTimeoutDurationNs, {}, {}}, kNoDeadline,
+                            &executionResult);
+                } else {
+                    ret = burst->executeSynchronously(request, slots, testConfig.measureTiming,
+                                                      kNoDeadline, loopTimeoutDurationNs,
+                                                      &executionResult);
+                }
                 ASSERT_TRUE(ret.isOk() || ret.getExceptionCode() == EX_SERVICE_SPECIFIC)
                         << ret.getDescription();
                 if (ret.isOk()) {
@@ -680,6 +705,10 @@ void EvaluatePreparedModel(const std::shared_ptr<IDevice>& device,
                 ::ndk::ScopedAStatus ret;
                 if (testConfig.reusable) {
                     ret = execution->executeFenced({}, kNoDeadline, kNoDuration, &executionResult);
+                } else if (testConfig.useConfig) {
+                    ret = preparedModel->executeFencedWithConfig(
+                            request, {}, {testConfig.measureTiming, loopTimeoutDurationNs, {}, {}},
+                            kNoDeadline, kNoDuration, &executionResult);
                 } else {
                     ret = preparedModel->executeFenced(request, {}, testConfig.measureTiming,
                                                        kNoDeadline, loopTimeoutDurationNs,
@@ -697,9 +726,19 @@ void EvaluatePreparedModel(const std::shared_ptr<IDevice>& device,
                     waitFor.emplace_back(dupFd);
                     // If a sync fence is returned, try start another run waiting for the sync
                     // fence.
-                    ret = preparedModel->executeFenced(request, waitFor, testConfig.measureTiming,
-                                                       kNoDeadline, loopTimeoutDurationNs,
-                                                       kNoDuration, &executionResult);
+                    if (testConfig.reusable) {
+                        ret = execution->executeFenced(waitFor, kNoDeadline, kNoDuration,
+                                                       &executionResult);
+                    } else if (testConfig.useConfig) {
+                        ret = preparedModel->executeFencedWithConfig(
+                                request, waitFor,
+                                {testConfig.measureTiming, loopTimeoutDurationNs, {}, {}},
+                                kNoDeadline, kNoDuration, &executionResult);
+                    } else {
+                        ret = preparedModel->executeFenced(
+                                request, waitFor, testConfig.measureTiming, kNoDeadline,
+                                loopTimeoutDurationNs, kNoDuration, &executionResult);
+                    }
                     ASSERT_TRUE(ret.isOk());
                     waitForSyncFence(executionResult.syncFence.get());
                 }
@@ -830,11 +869,13 @@ void EvaluatePreparedModel(const std::shared_ptr<IDevice>& device,
     std::vector<Executor> executorList;
     std::vector<MemoryType> memoryTypeList;
     std::vector<bool> reusableList = {false};
+    std::vector<bool> useConfigList = {false};
 
     int deviceVersion;
     ASSERT_TRUE(device->getInterfaceVersion(&deviceVersion).isOk());
     if (deviceVersion >= kMinAidlLevelForFL8) {
         reusableList.push_back(true);
+        useConfigList.push_back(true);
     }
 
     switch (testKind) {
@@ -879,11 +920,14 @@ void EvaluatePreparedModel(const std::shared_ptr<IDevice>& device,
             for (const Executor executor : executorList) {
                 for (const MemoryType memoryType : memoryTypeList) {
                     for (const bool reusable : reusableList) {
-                        if (executor == Executor::BURST && reusable) continue;
-                        const TestConfig testConfig(executor, measureTiming, outputType, memoryType,
-                                                    reusable);
-                        SCOPED_TRACE(toString(testConfig));
-                        EvaluatePreparedModel(device, preparedModel, testModel, testConfig);
+                        for (const bool useConfig : useConfigList) {
+                            if ((useConfig || executor == Executor::BURST) && reusable) continue;
+                            const TestConfig testConfig(executor, measureTiming, outputType,
+                                                        memoryType, reusable,
+                                                        /*reportSkipping=*/true, useConfig);
+                            SCOPED_TRACE(toString(testConfig));
+                            EvaluatePreparedModel(device, preparedModel, testModel, testConfig);
+                        }
                     }
                 }
             }
@@ -942,6 +986,13 @@ void Execute(const std::shared_ptr<IDevice>& device, const TestModel& testModel,
             createPreparedModel(device, model, &preparedModel);
             if (preparedModel == nullptr) return;
             EvaluatePreparedModel(device, preparedModel, testModel, testKind);
+            int32_t deviceVersion;
+            ASSERT_TRUE(device->getInterfaceVersion(&deviceVersion).isOk());
+            if (deviceVersion >= kMinAidlLevelForFL8) {
+                createPreparedModel(device, model, &preparedModel, /*reportSkipping*/ true,
+                                    /*useConfig*/ true);
+                EvaluatePreparedModel(device, preparedModel, testModel, testKind);
+            }
         } break;
         case TestKind::QUANTIZATION_COUPLING: {
             ASSERT_TRUE(testModel.hasQuant8CoupledOperands());

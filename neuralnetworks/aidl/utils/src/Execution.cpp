@@ -63,7 +63,7 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>>
 ExecutionWithCachedRequest::compute(const nn::OptionalTimePoint& deadline) const {
     const auto aidlDeadline = NN_TRY(convert(deadline));
     return kPreparedModel->executeInternal(kRequest, kMeasure, aidlDeadline, kLoopTimeoutDuration,
-                                           kRelocation);
+                                           {}, {}, kRelocation);
 }
 
 nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>>
@@ -73,9 +73,9 @@ ExecutionWithCachedRequest::computeFenced(
     const auto aidlWaitFor = NN_TRY(convert(waitFor));
     const auto aidlDeadline = NN_TRY(convert(deadline));
     const auto aidlTimeoutDurationAfterFence = NN_TRY(convert(timeoutDurationAfterFence));
-    return kPreparedModel->executeFencedInternal(kRequest, aidlWaitFor, kMeasure, aidlDeadline,
-                                                 kLoopTimeoutDuration,
-                                                 aidlTimeoutDurationAfterFence, kRelocation);
+    return kPreparedModel->executeFencedInternal(
+            kRequest, aidlWaitFor, kMeasure, aidlDeadline, kLoopTimeoutDuration,
+            aidlTimeoutDurationAfterFence, {}, {}, kRelocation);
 }
 
 nn::GeneralResult<std::shared_ptr<const Execution>> Execution::create(

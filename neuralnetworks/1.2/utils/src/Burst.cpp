@@ -305,8 +305,9 @@ Burst::OptionalCacheHold Burst::cacheMemory(const nn::SharedMemory& memory) cons
 
 nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Burst::execute(
         const nn::Request& request, nn::MeasureTiming measure,
-        const nn::OptionalTimePoint& deadline,
-        const nn::OptionalDuration& loopTimeoutDuration) const {
+        const nn::OptionalTimePoint& deadline, const nn::OptionalDuration& loopTimeoutDuration,
+        const std::vector<nn::TokenValuePair>& /*hints*/,
+        const std::vector<nn::ExtensionNameAndPrefix>& /*extensionNameToPrefix*/) const {
     // This is the first point when we know an execution is occurring, so begin to collect
     // systraces. Note that the first point we can begin collecting systraces in
     // ExecutionBurstServer is when the RequestChannelReceiver realizes there is data in the FMQ, so
@@ -317,7 +318,7 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Burst::
     // fall back to another execution path
     if (!compliantVersion(request).ok()) {
         // fallback to another execution path if the packet could not be sent
-        return kPreparedModel->execute(request, measure, deadline, loopTimeoutDuration);
+        return kPreparedModel->execute(request, measure, deadline, loopTimeoutDuration, {}, {});
     }
 
     // ensure that request is ready for IPC
@@ -346,7 +347,7 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Burst::
     // send request packet
     const auto requestPacket = serialize(hidlRequest, hidlMeasure, slots);
     const auto fallback = [this, &request, measure, &deadline, &loopTimeoutDuration] {
-        return kPreparedModel->execute(request, measure, deadline, loopTimeoutDuration);
+        return kPreparedModel->execute(request, measure, deadline, loopTimeoutDuration, {}, {});
     };
     return executeInternal(requestPacket, relocation, fallback);
 }
@@ -354,14 +355,17 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Burst::
 // See IBurst::createReusableExecution for information on this method.
 nn::GeneralResult<nn::SharedExecution> Burst::createReusableExecution(
         const nn::Request& request, nn::MeasureTiming measure,
-        const nn::OptionalDuration& loopTimeoutDuration) const {
+        const nn::OptionalDuration& loopTimeoutDuration,
+        const std::vector<nn::TokenValuePair>& /*hints*/,
+        const std::vector<nn::ExtensionNameAndPrefix>& /*extensionNameToPrefix*/) const {
     NNTRACE_RT(NNTRACE_PHASE_EXECUTION, "Burst::createReusableExecution");
 
     // if the request is valid but of a higher version than what's supported in burst execution,
     // fall back to another execution path
     if (!compliantVersion(request).ok()) {
         // fallback to another execution path if the packet could not be sent
-        return kPreparedModel->createReusableExecution(request, measure, loopTimeoutDuration);
+        return kPreparedModel->createReusableExecution(request, measure, loopTimeoutDuration, {},
+                                                       {});
     }
 
     // ensure that request is ready for IPC
