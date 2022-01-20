@@ -31,9 +31,9 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.gnss.visibility_control;
+package android.hardware.gnss;
 @VintfStability
-interface IGnssVisibilityControl {
-  void enableNfwLocationAccess(in String[] proxyApps);
-  void setCallback(in android.hardware.gnss.visibility_control.IGnssVisibilityControlCallback callback);
+interface IGnssAntennaInfo {
+  void setCallback(in android.hardware.gnss.IGnssAntennaInfoCallback callback);
+  void close();
 }

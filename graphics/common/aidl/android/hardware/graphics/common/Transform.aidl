@@ -23,6 +23,11 @@ package android.hardware.graphics.common;
 @Backing(type="int")
 enum Transform {
     /**
+     * Identity transform (i.e. no rotation or flip).
+     */
+    NONE = 0,
+
+    /**
      * Horizontal flip. FLIP_H/FLIP_V is applied before ROT_90.
      */
     FLIP_H = 1 << 0,

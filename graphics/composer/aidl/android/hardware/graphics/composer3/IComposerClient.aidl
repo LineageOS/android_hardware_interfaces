@@ -16,6 +16,7 @@
 
 package android.hardware.graphics.composer3;
 
+import android.hardware.graphics.common.Transform;
 import android.hardware.graphics.composer3.ClientTargetProperty;
 import android.hardware.graphics.composer3.ColorMode;
 import android.hardware.graphics.composer3.CommandResultPayload;
@@ -352,6 +353,23 @@ interface IComposerClient {
      * @exception EX_UNSUPPORTED when there is no efficient way to sample.
      */
     DisplayContentSamplingAttributes getDisplayedContentSamplingAttributes(long display);
+
+    /**
+     * Queries the physical orientation of a display. Orientation 'Transform::NONE'
+     * represents a display that doesn't require any transformation on layers
+     * to be presented at their natural orientation.
+     *
+     * @param display is the display where the physical orientation is queried.
+     *
+     * @return is one of the below values:
+     *         Transform::NONE
+     *         Transform::ROT_90
+     *         Transform::ROT_180
+     *         Transform::ROT_270
+     *
+     * @exception EX_BAD_DISPLAY when an invalid display was passed in.
+     */
+    Transform getDisplayPhysicalOrientation(long display);
 
     /**
      * Returns the high dynamic range (HDR) capabilities of the given display,

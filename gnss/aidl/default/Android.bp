@@ -52,12 +52,12 @@ cc_binary {
         "android.hardware.gnss.measurement_corrections@1.1",
         "android.hardware.gnss.measurement_corrections@1.0",
         "android.hardware.gnss.visibility_control@1.0",
-        "android.hardware.gnss.visibility_control-V1-ndk",
         "android.hardware.gnss-V2-ndk",
     ],
     srcs: [
         "AGnss.cpp",
         "Gnss.cpp",
+        "GnssAntennaInfo.cpp",
         "GnssBatching.cpp",
         "GnssDebug.cpp",
         "GnssGeofence.cpp",
@@ -68,6 +68,7 @@ cc_binary {
         "GnssConfiguration.cpp",
         "GnssMeasurementInterface.cpp",
         "GnssVisibilityControl.cpp",
+        "MeasurementCorrectionsInterface.cpp",
         "service.cpp",
     ],
     static_libs: [

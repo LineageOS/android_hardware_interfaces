@@ -77,14 +77,6 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.automotive.sv</name>
-        <version>1.0</version>
-        <interface>
-            <name>ISurroundViewService</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.automotive.vehicle</name>
         <interface>
@@ -270,6 +262,14 @@
         <version>1</version>
         <interface>
             <name>IGnssVisibilityControl</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.gnss.measurement_corrections</name>
+        <version>1</version>
+        <interface>
+            <name>IMeasurementCorrectionsInterface</name>
             <instance>default</instance>
         </interface>
     </hal>
