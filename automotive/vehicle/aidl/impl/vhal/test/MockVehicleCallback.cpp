@@ -31,16 +31,6 @@ using ::ndk::ScopedAStatus;
 using ::ndk::ScopedFileDescriptor;
 
 template <class T>
-std::optional<T> pop(std::list<T>& items) {
-    if (items.size() > 0) {
-        auto item = std::move(items.front());
-        items.pop_front();
-        return item;
-    }
-    return std::nullopt;
-}
-
-template <class T>
 static ScopedAStatus storeResults(const T& results, std::list<T>* storedResults) {
     T resultsCopy{
             .payloads = results.payloads,
@@ -65,8 +55,12 @@ ScopedAStatus MockVehicleCallback::onSetValues(const SetValueResults& results) {
     return storeResults(results, &mSetValueResults);
 }
 
-ScopedAStatus MockVehicleCallback::onPropertyEvent(const VehiclePropValues&, int32_t) {
-    return ScopedAStatus::ok();
+ScopedAStatus MockVehicleCallback::onPropertyEvent(const VehiclePropValues& results,
+                                                   int32_t sharedMemoryFileCount) {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+
+    mSharedMemoryFileCount = sharedMemoryFileCount;
+    return storeResults(results, &mOnPropertyEventResults);
 }
 
 ScopedAStatus MockVehicleCallback::onPropertySetError(const VehiclePropErrors&) {
@@ -81,6 +75,11 @@ std::optional<GetValueResults> MockVehicleCallback::nextGetValueResults() {
 std::optional<SetValueResults> MockVehicleCallback::nextSetValueResults() {
     std::scoped_lock<std::mutex> lockGuard(mLock);
     return pop(mSetValueResults);
+}
+
+std::optional<VehiclePropValues> MockVehicleCallback::nextOnPropertyEventResults() {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    return pop(mOnPropertyEventResults);
 }
 
 }  // namespace vehicle
