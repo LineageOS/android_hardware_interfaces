@@ -19,6 +19,7 @@
 
 #include "ConnectedClient.h"
 #include "ParcelableUtils.h"
+#include "PendingRequestPool.h"
 
 #include <IVehicleHardware.h>
 #include <VehicleUtils.h>
@@ -28,6 +29,7 @@
 #include <android/binder_auto_utils.h>
 
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 #include <vector>
 
@@ -100,6 +102,8 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
             mConfigsByPropId;
     // Only modified in constructor, so thread-safe.
     std::unique_ptr<::ndk::ScopedFileDescriptor> mConfigFile;
+    // PendingRequestPool is thread-safe.
+    std::shared_ptr<PendingRequestPool> mPendingRequestPool;
 
     std::mutex mLock;
     std::unordered_map<CallbackType, std::shared_ptr<GetValuesClient>> mGetValuesClients
@@ -114,6 +118,18 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
 
     ::android::base::Result<void> checkProperty(
             const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue);
+
+    ::android::base::Result<std::vector<int64_t>> checkDuplicateRequests(
+            const std::vector<::aidl::android::hardware::automotive::vehicle::GetValueRequest>&
+                    requests);
+
+    ::android::base::Result<std::vector<int64_t>> checkDuplicateRequests(
+            const std::vector<::aidl::android::hardware::automotive::vehicle::SetValueRequest>&
+                    requests);
+
+    // Test-only
+    // Set the default timeout for pending requests.
+    void setTimeout(int64_t timeoutInNano);
 };
 
 }  // namespace vehicle
