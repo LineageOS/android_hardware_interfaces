@@ -1,0 +1,111 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_library_shared {
+    name: "android.hardware.camera.provider@2.7-external",
+    proprietary: true,
+    srcs: ["ExternalCameraProviderImpl_2_7.cpp"],
+    shared_libs: [
+        "android.hardware.camera.common@1.0",
+        "android.hardware.camera.device@1.0",
+        "android.hardware.camera.device@3.2",
+        "android.hardware.camera.device@3.3",
+        "android.hardware.camera.device@3.4",
+        "android.hardware.camera.device@3.5",
+        "android.hardware.camera.device@3.6",
+        "android.hardware.camera.provider@2.4",
+        "android.hardware.camera.provider@2.5",
+        "android.hardware.camera.provider@2.6",
+        "android.hardware.camera.provider@2.7",
+        "android.hardware.graphics.mapper@2.0",
+        "android.hardware.graphics.mapper@3.0",
+        "android.hardware.graphics.mapper@4.0",
+        "android.hidl.allocator@1.0",
+        "android.hidl.memory@1.0",
+        "camera.device@3.3-impl",
+        "camera.device@3.4-external-impl",
+        "camera.device@3.4-impl",
+        "camera.device@3.5-external-impl",
+        "camera.device@3.5-impl",
+        "camera.device@3.6-external-impl",
+        "libcamera_metadata",
+        "libcutils",
+        "libhardware",
+        "libhidlbase",
+        "liblog",
+        "libtinyxml2",
+        "libutils",
+    ],
+    static_libs: [
+        "android.hardware.camera.common@1.0-helper",
+    ],
+    header_libs: [
+        "camera.device@3.4-external-impl_headers",
+        "camera.device@3.5-external-impl_headers",
+        "camera.device@3.6-external-impl_headers",
+    ],
+    export_include_dirs: ["."],
+}
+
+cc_defaults {
+    name: "camera_external_service_2_7_defaults",
+    defaults: ["hidl_defaults"],
+    proprietary: true,
+    relative_install_path: "hw",
+    srcs: ["external-service.cpp"],
+    compile_multilib: "32",
+    shared_libs: [
+        "android.hardware.camera.common@1.0",
+        "android.hardware.camera.device@1.0",
+        "android.hardware.camera.device@3.2",
+        "android.hardware.camera.device@3.3",
+        "android.hardware.camera.device@3.4",
+        "android.hardware.camera.device@3.5",
+        "android.hardware.camera.provider@2.4",
+        "android.hardware.camera.provider@2.4-external",
+        "android.hardware.camera.provider@2.5",
+        "android.hardware.camera.provider@2.5-external",
+        "android.hardware.camera.provider@2.6",
+        "android.hardware.camera.provider@2.7",
+        "android.hardware.camera.provider@2.7-external",
+        "android.hardware.graphics.mapper@2.0",
+        "android.hardware.graphics.mapper@3.0",
+        "android.hardware.graphics.mapper@4.0",
+        "libbinder",
+        "libcamera_metadata",
+        "libhidlbase",
+        "liblog",
+        "libtinyxml2",
+        "libutils",
+    ],
+    static_libs: [
+        "android.hardware.camera.common@1.0-helper",
+    ],
+    header_libs: [
+        "camera.device@3.4-external-impl_headers",
+        "camera.device@3.4-impl_headers",
+        "camera.device@3.5-external-impl_headers",
+        "camera.device@3.5-impl_headers",
+        "camera.device@3.6-external-impl_headers",
+    ],
+}
+
+cc_binary {
+    name: "android.hardware.camera.provider@2.7-external-service",
+    defaults: ["camera_external_service_2_7_defaults"],
+    init_rc: ["android.hardware.camera.provider@2.7-external-service.rc"],
+}
+
+cc_binary {
+    name: "android.hardware.camera.provider@2.7-external-service-lazy",
+    overrides: ["android.hardware.camera.provider@2.7-external-service"],
+    defaults: ["camera_external_service_2_7_defaults"],
+    init_rc: ["android.hardware.camera.provider@2.7-external-service-lazy.rc"],
+    cflags: ["-DLAZY_SERVICE"],
+}
