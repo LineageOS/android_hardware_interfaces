@@ -60,6 +60,14 @@
             <regex-instance>.*</regex-instance>
         </interface>
     </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.automotive.evs</name>
+        <interface>
+            <name>IEvsEnumerator</name>
+            <instance>default</instance>
+            <regex-instance>[a-z]+/[0-9]+</regex-instance>
+        </interface>
+    </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.automotive.evs</name>
         <version>1.0-1</version>
