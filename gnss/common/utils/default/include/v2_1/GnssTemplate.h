@@ -31,6 +31,7 @@
 #include <cutils/properties.h>
 
 #include "DeviceFileReader.h"
+#include "FixLocationParser.h"
 #include "GnssAntennaInfo.h"
 #include "GnssConfiguration.h"
 #include "GnssDebug.h"
@@ -38,7 +39,6 @@
 #include "GnssMeasurementCorrections.h"
 #include "GnssReplayUtils.h"
 #include "MockLocation.h"
-#include "NmeaFixInfo.h"
 #include "Utils.h"
 
 namespace android::hardware::gnss::common::implementation {
@@ -162,9 +162,12 @@ GnssTemplate<T_IGnss>::~GnssTemplate() {
 template <class T_IGnss>
 std::unique_ptr<V2_0::GnssLocation> GnssTemplate<T_IGnss>::getLocationFromHW() {
     mHardwareModeChecked = true;
+    if (!ReplayUtils::hasFixedLocationDeviceFile()) {
+        return nullptr;
+    }
     std::string inputStr =
             ::android::hardware::gnss::common::DeviceFileReader::Instance().getLocationData();
-    return NmeaFixInfo::getLocationFromInputStr(inputStr);
+    return FixLocationParser::getLocationFromInputStr(inputStr);
 }
 
 template <class T_IGnss>
