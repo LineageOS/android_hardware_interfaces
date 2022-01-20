@@ -40,10 +40,19 @@ class MockPreparedModel final : public BnPreparedModel {
                  bool measureTiming, int64_t deadline, int64_t loopTimeoutDuration,
                  int64_t duration, FencedExecutionResult* fencedExecutionResult),
                 (override));
+    MOCK_METHOD(ndk::ScopedAStatus, executeSynchronouslyWithConfig,
+                (const Request& request, const ExecutionConfig& config, int64_t deadline,
+                 ExecutionResult* executionResult),
+                (override));
+    MOCK_METHOD(ndk::ScopedAStatus, executeFencedWithConfig,
+                (const Request& request, const std::vector<ndk::ScopedFileDescriptor>& waitFor,
+                 const ExecutionConfig& config, int64_t deadline, int64_t duration,
+                 FencedExecutionResult* fencedExecutionResult),
+                (override));
     MOCK_METHOD(ndk::ScopedAStatus, configureExecutionBurst, (std::shared_ptr<IBurst> * burst),
                 (override));
     MOCK_METHOD(ndk::ScopedAStatus, createReusableExecution,
-                (const Request& request, bool measureTiming, int64_t loopTimeoutDuration,
+                (const Request& request, const ExecutionConfig& config,
                  std::shared_ptr<IExecution>* execution),
                 (override));
 };

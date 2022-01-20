@@ -31,6 +31,7 @@
 #include <aidl/android/hardware/neuralnetworks/IPreparedModelParcel.h>
 #include <aidl/android/hardware/neuralnetworks/Model.h>
 #include <aidl/android/hardware/neuralnetworks/NumberOfCacheFiles.h>
+#include <aidl/android/hardware/neuralnetworks/PrepareModelConfig.h>
 #include <aidl/android/hardware/neuralnetworks/Priority.h>
 #include <android/binder_auto_utils.h>
 #include <nnapi/IDevice.h>
@@ -71,6 +72,9 @@ class Device : public BnDevice {
             int64_t deadlineNs, const std::vector<ndk::ScopedFileDescriptor>& modelCache,
             const std::vector<ndk::ScopedFileDescriptor>& dataCache,
             const std::vector<uint8_t>& token,
+            const std::shared_ptr<IPreparedModelCallback>& callback) override;
+    ndk::ScopedAStatus prepareModelWithConfig(
+            const Model& model, const PrepareModelConfig& config,
             const std::shared_ptr<IPreparedModelCallback>& callback) override;
 
   protected:
