@@ -667,6 +667,42 @@ enum SensorType {
     HEAD_TRACKER = 37,
 
     /**
+     * ACCELEROMETER_LIMITED_AXES
+     * reporting-mode: continuous
+     *
+     * Equivalent to ACCELEROMETER, but supporting cases where one or two axes
+     * are not supported.
+     */
+    ACCELEROMETER_LIMITED_AXES = 38,
+
+    /**
+     * GYROSCOPE_LIMITED_AXES
+     * reporting-mode: continuous
+     *
+     * Equivalent to GYROSCOPE, but supporting cases where one or two axes are
+     * not supported.
+     */
+    GYROSCOPE_LIMITED_AXES = 39,
+
+    /**
+     * ACCELEROMETER_LIMITED_AXES_UNCALIBRATED
+     * reporting-mode: continuous
+     *
+     * Equivalent to ACCELEROMETER_UNCALIBRATED, but supporting cases where one
+     * or two axes are not supported.
+     */
+    ACCELEROMETER_LIMITED_AXES_UNCALIBRATED = 40,
+
+    /**
+     * GYROSCOPE_LIMITED_AXES_UNCALIBRATED
+     * reporting-mode: continuous
+     *
+     * Equivalent to GYROSCOPE_UNCALIBRATED, but supporting cases where one or
+     * two axes are not supported.
+     */
+    GYROSCOPE_LIMITED_AXES_UNCALIBRATED = 41,
+
+    /**
      * Base for device manufacturers private sensor types.
      * These sensor types can't be exposed in the SDK.
      */

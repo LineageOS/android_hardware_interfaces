@@ -132,6 +132,18 @@ parcelable Event {
          */
         HeadTracker headTracker;
 
+        /**
+         * SensorType::ACCELEROMETER_LIMITED_AXES
+         * SensorType::GYROSCOPE_LIMITED_AXES
+         */
+        LimitedAxesImu limitedAxesImu;
+
+        /**
+         * SensorType::ACCELEROMETER_LIMITED_AXES_UNCALIBRATED
+         * SensorType::GYROSCOPE_LIMITED_AXES_UNCALIBRATED
+         */
+        LimitedAxesImuUncal limitedAxesImuUncal;
+
         @FixedSize
         @VintfStability
         parcelable Vec4 {
@@ -199,6 +211,70 @@ parcelable Event {
              * the orientation has had its state reset.
              */
             int discontinuityCount;
+        }
+
+        /**
+         * Payload of the ACCELEROMETER_LIMITED_AXES and GYROSCOPE_LIMITED_AXES
+         * sensor types.
+         */
+        @FixedSize
+        @VintfStability
+        parcelable LimitedAxesImu {
+            /**
+             * Acceleration or angular speed values.  If certain axes are not
+             * supported, the associated value must be set to 0.
+             */
+            float x;
+            float y;
+            float z;
+
+            /**
+             * Limited axes sensors must not be supported for all three axes.
+             * These values indicate which axes are supported with a 1.0 for
+             * supported, and a 0 for not supported. The supported axes should
+             * be determined at build time and these values must not change
+             * during runtime.
+             */
+            float xSupported;
+            float ySupported;
+            float zSupported;
+        }
+
+        /**
+         * Payload of the ACCELEROMETER_LIMITED_AXES_UNCALIBRATED and
+         * GYROSCOPE_LIMITED_AXES_UNCALIBRATED sensor types.
+         */
+        @FixedSize
+        @VintfStability
+        parcelable LimitedAxesImuUncal {
+            /**
+             * Acceleration (without bias compensation) or angular (speed
+             * (without drift compensation) values. If certain axes are not
+             * supported, the associated value must be set to 0.
+             */
+            float x;
+            float y;
+            float z;
+
+            /**
+             * Estimated bias values for uncalibrated accelerometer or
+             * estimated drift values for uncalibrated gyroscope. If certain
+             * axes are not supported, the associated value must be set to 0.
+             */
+            float xBias;
+            float yBias;
+            float zBias;
+
+            /**
+             * Limited axes sensors must not be supported for all three axes.
+             * These values indicate which axes are supported with a 1.0 for
+             * supported, and a 0 for not supported. The supported axes should
+             * be determined at build time and these values must not change
+             * during runtime.
+             */
+            float xSupported;
+            float ySupported;
+            float zSupported;
         }
 
         @FixedSize
