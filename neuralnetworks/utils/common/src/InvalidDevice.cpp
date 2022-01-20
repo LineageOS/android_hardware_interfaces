@@ -84,7 +84,9 @@ nn::GeneralResult<nn::SharedPreparedModel> InvalidDevice::prepareModel(
         const nn::Model& /*model*/, nn::ExecutionPreference /*preference*/,
         nn::Priority /*priority*/, nn::OptionalTimePoint /*deadline*/,
         const std::vector<nn::SharedHandle>& /*modelCache*/,
-        const std::vector<nn::SharedHandle>& /*dataCache*/, const nn::CacheToken& /*token*/) const {
+        const std::vector<nn::SharedHandle>& /*dataCache*/, const nn::CacheToken& /*token*/,
+        const std::vector<nn::TokenValuePair>& /*hints*/,
+        const std::vector<nn::ExtensionNameAndPrefix>& /*extensionNameToPrefix*/) const {
     return NN_ERROR() << "InvalidDevice";
 }
 

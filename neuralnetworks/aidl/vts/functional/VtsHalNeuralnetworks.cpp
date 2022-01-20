@@ -41,7 +41,8 @@ using implementation::PreparedModelCallback;
 
 // internal helper function
 void createPreparedModel(const std::shared_ptr<IDevice>& device, const Model& model,
-                         std::shared_ptr<IPreparedModel>* preparedModel, bool reportSkipping) {
+                         std::shared_ptr<IPreparedModel>* preparedModel, bool reportSkipping,
+                         bool useConfig) {
     ASSERT_NE(nullptr, preparedModel);
     *preparedModel = nullptr;
 
@@ -56,11 +57,25 @@ void createPreparedModel(const std::shared_ptr<IDevice>& device, const Model& mo
     // launch prepare model
     const std::shared_ptr<PreparedModelCallback> preparedModelCallback =
             ndk::SharedRefBase::make<PreparedModelCallback>();
-    const auto prepareLaunchStatus =
-            device->prepareModel(model, ExecutionPreference::FAST_SINGLE_ANSWER, kDefaultPriority,
-                                 kNoDeadline, {}, {}, kEmptyCacheToken, preparedModelCallback);
-    ASSERT_TRUE(prepareLaunchStatus.isOk()) << prepareLaunchStatus.getDescription();
-
+    if (useConfig) {
+        const auto prepareLaunchStatus =
+                device->prepareModelWithConfig(model,
+                                               {ExecutionPreference::FAST_SINGLE_ANSWER,
+                                                kDefaultPriority,
+                                                kNoDeadline,
+                                                {},
+                                                {},
+                                                kEmptyCacheToken,
+                                                {},
+                                                {}},
+                                               preparedModelCallback);
+        ASSERT_TRUE(prepareLaunchStatus.isOk()) << prepareLaunchStatus.getDescription();
+    } else {
+        const auto prepareLaunchStatus = device->prepareModel(
+                model, ExecutionPreference::FAST_SINGLE_ANSWER, kDefaultPriority, kNoDeadline, {},
+                {}, kEmptyCacheToken, preparedModelCallback);
+        ASSERT_TRUE(prepareLaunchStatus.isOk()) << prepareLaunchStatus.getDescription();
+    }
     // retrieve prepared model
     preparedModelCallback->wait();
     const ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
