@@ -177,6 +177,17 @@ std::string gtestCompliantName(std::string name) {
     return os << toString(errorStatus);
 }
 
+std::string toString(MemoryType type) {
+    switch (type) {
+        case MemoryType::ASHMEM:
+            return "ASHMEM";
+        case MemoryType::BLOB_AHWB:
+            return "BLOB_AHWB";
+        case MemoryType::DEVICE:
+            return "DEVICE";
+    }
+}
+
 Request ExecutionContext::createRequest(const TestModel& testModel, MemoryType memoryType) {
     CHECK(memoryType == MemoryType::ASHMEM || memoryType == MemoryType::BLOB_AHWB);
 
