@@ -1,0 +1,4 @@
+service vendor.inputprocessor-default /vendor/bin/hw/android.hardware.input.processor-service.example
+    class hal
+    user nobody
+    group nobody
