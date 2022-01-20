@@ -244,6 +244,93 @@ void GetSetValuesClient<ResultType, ResultsType>::sendResultsSeparately(
 template class GetSetValuesClient<GetValueResult, GetValueResults>;
 template class GetSetValuesClient<SetValueResult, SetValueResults>;
 
+SubscriptionClient::SubscriptionClient(std::shared_ptr<PendingRequestPool> requestPool,
+                                       std::shared_ptr<IVehicleCallback> callback)
+    : ConnectedClient(requestPool, callback) {
+    mTimeoutCallback = std::make_shared<const PendingRequestPool::TimeoutCallbackFunc>(
+            [](std::unordered_set<int64_t> timeoutIds) {
+                for (int64_t id : timeoutIds) {
+                    ALOGW("subscribe: requests with IDs: %" PRId64
+                          " has timed-out, not client informed, "
+                          "possibly one of recurrent requests for this subscription failed",
+                          id);
+                }
+            });
+    auto requestPoolCopy = mRequestPool;
+    const void* clientId = reinterpret_cast<const void*>(this);
+    mResultCallback = std::make_shared<const std::function<void(std::vector<GetValueResult>)>>(
+            [clientId, callback, requestPoolCopy](std::vector<GetValueResult> results) {
+                onGetValueResults(clientId, callback, requestPoolCopy, results);
+            });
+}
+
+std::shared_ptr<const std::function<void(std::vector<GetValueResult>)>>
+SubscriptionClient::getResultCallback() {
+    return mResultCallback;
+}
+
+std::shared_ptr<const PendingRequestPool::TimeoutCallbackFunc>
+SubscriptionClient::getTimeoutCallback() {
+    return mTimeoutCallback;
+}
+
+void SubscriptionClient::onGetValueResults(const void* clientId,
+                                           std::shared_ptr<IVehicleCallback> callback,
+                                           std::shared_ptr<PendingRequestPool> requestPool,
+                                           std::vector<GetValueResult> results) {
+    std::unordered_set<int64_t> requestIds;
+    for (const auto& result : results) {
+        requestIds.insert(result.requestId);
+    }
+
+    auto finishedRequests = requestPool->tryFinishRequests(clientId, requestIds);
+    std::vector<VehiclePropValue> propValues;
+    for (auto& result : results) {
+        int64_t requestId = result.requestId;
+        if (finishedRequests.find(requestId) == finishedRequests.end()) {
+            ALOGE("subscribe[%" PRId64
+                  "]: no pending request for the result from hardware, "
+                  "possibly already time-out",
+                  requestId);
+            continue;
+        }
+        if (result.status != StatusCode::OK) {
+            ALOGE("subscribe[%" PRId64
+                  "]: hardware returns non-ok status for getValues, status: "
+                  "%d",
+                  requestId, toInt(result.status));
+            continue;
+        }
+        if (!result.prop.has_value()) {
+            ALOGE("subscribe[%" PRId64 "]: no prop value in getValues result", requestId);
+            continue;
+        }
+        propValues.push_back(std::move(result.prop.value()));
+    }
+
+    if (propValues.empty()) {
+        return;
+    }
+    // TODO(b/205189110): Use memory pool here and fill in sharedMemoryId.
+    VehiclePropValues vehiclePropValues;
+    int32_t sharedMemoryFileCount = 0;
+    ScopedAStatus status = vectorToStableLargeParcelable(propValues, &vehiclePropValues);
+    if (!status.isOk()) {
+        int statusCode = status.getServiceSpecificError();
+        ALOGE("failed to marshal result into large parcelable, error: "
+              "%s, code: %d",
+              status.getMessage(), statusCode);
+        return;
+    }
+
+    if (ScopedAStatus callbackStatus =
+                callback->onPropertyEvent(vehiclePropValues, sharedMemoryFileCount);
+        !callbackStatus.isOk()) {
+        ALOGE("failed to call callback, error: %s, code: %d", status.getMessage(),
+              status.getServiceSpecificError());
+    }
+}
+
 }  // namespace vehicle
 }  // namespace automotive
 }  // namespace hardware

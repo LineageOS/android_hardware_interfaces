@@ -101,6 +101,38 @@ class GetSetValuesClient final : public ConnectedClient {
     std::shared_ptr<const std::function<void(std::vector<ResultType>)>> mResultCallback;
 };
 
+// A class to represent a client that calls {@code IVehicle.subscribe}.
+class SubscriptionClient final : public ConnectedClient {
+  public:
+    SubscriptionClient(
+            std::shared_ptr<PendingRequestPool> requestPool,
+            std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback>
+                    callback);
+
+    // Gets the callback to be called when the request for this client has finished.
+    std::shared_ptr<const std::function<
+            void(std::vector<::aidl::android::hardware::automotive::vehicle::GetValueResult>)>>
+    getResultCallback();
+
+  protected:
+    // Gets the callback to be called when the request for this client has timeout.
+    std::shared_ptr<const PendingRequestPool::TimeoutCallbackFunc> getTimeoutCallback() override;
+
+  private:
+    // The following members are only initialized during construction.
+    std::shared_ptr<const PendingRequestPool::TimeoutCallbackFunc> mTimeoutCallback;
+    std::shared_ptr<const std::function<void(
+            std::vector<::aidl::android::hardware::automotive::vehicle::GetValueResult>)>>
+            mResultCallback;
+
+    static void onGetValueResults(
+            const void* clientId,
+            std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback>
+                    callback,
+            std::shared_ptr<PendingRequestPool> requestPool,
+            std::vector<::aidl::android::hardware::automotive::vehicle::GetValueResult> results);
+};
+
 }  // namespace vehicle
 }  // namespace automotive
 }  // namespace hardware
