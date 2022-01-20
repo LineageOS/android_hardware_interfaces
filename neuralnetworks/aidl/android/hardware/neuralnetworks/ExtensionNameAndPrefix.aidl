@@ -17,7 +17,8 @@
 package android.hardware.neuralnetworks;
 
 /**
- * The mapping between extension names and prefixes of operand and operation type values.
+ * The mapping between extension names and prefixes of values like operand and operation type, and
+ * token in {@link TokenValuePair}.
  *
  * An operand or operation whose numeric type value is above {@link IDevice::OPERAND_TYPE_BASE_MAX}
  * or {@link IDevice::OPERATION_TYPE_BASE_MAX} respectively should be interpreted as an extension

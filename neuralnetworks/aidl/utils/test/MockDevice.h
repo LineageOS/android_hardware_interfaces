@@ -50,6 +50,10 @@ class MockDevice final : public BnDevice {
                  const std::vector<uint8_t>& token,
                  const std::shared_ptr<IPreparedModelCallback>& callback),
                 (override));
+    MOCK_METHOD(ndk::ScopedAStatus, prepareModelWithConfig,
+                (const Model& model, const PrepareModelConfig& config,
+                 const std::shared_ptr<IPreparedModelCallback>& callback),
+                (override));
     MOCK_METHOD(ndk::ScopedAStatus, prepareModelFromCache,
                 (int64_t deadline, const std::vector<ndk::ScopedFileDescriptor>& modelCache,
                  const std::vector<ndk::ScopedFileDescriptor>& dataCache,

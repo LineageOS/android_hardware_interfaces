@@ -33,8 +33,9 @@
 
 package android.hardware.neuralnetworks;
 @VintfStability
-interface IBurst {
-  android.hardware.neuralnetworks.ExecutionResult executeSynchronously(in android.hardware.neuralnetworks.Request request, in long[] memoryIdentifierTokens, in boolean measureTiming, in long deadlineNs, in long loopTimeoutDurationNs);
-  void releaseMemoryResource(in long memoryIdentifierToken);
-  android.hardware.neuralnetworks.ExecutionResult executeSynchronouslyWithConfig(in android.hardware.neuralnetworks.Request request, in long[] memoryIdentifierTokens, in android.hardware.neuralnetworks.ExecutionConfig config, in long deadlineNs);
+parcelable ExecutionConfig {
+  boolean measureTiming;
+  long loopTimeoutDurationNs;
+  android.hardware.neuralnetworks.TokenValuePair[] executionHints;
+  android.hardware.neuralnetworks.ExtensionNameAndPrefix[] extensionNameToPrefix;
 }

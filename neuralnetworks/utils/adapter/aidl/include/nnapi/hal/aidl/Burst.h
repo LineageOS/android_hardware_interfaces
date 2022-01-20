@@ -46,6 +46,11 @@ class Burst : public BnBurst {
                                             bool measureTiming, int64_t deadlineNs,
                                             int64_t loopTimeoutDurationNs,
                                             ExecutionResult* executionResult) override;
+    ndk::ScopedAStatus executeSynchronouslyWithConfig(
+            const Request& request, const std::vector<int64_t>& memoryIdentifierTokens,
+            const ExecutionConfig& config, int64_t deadlineNs,
+            ExecutionResult* executionResult) override;
+
     ndk::ScopedAStatus releaseMemoryResource(int64_t memoryIdentifierToken) override;
 
     class ThreadSafeMemoryCache {
