@@ -76,7 +76,10 @@ class GraphicsComposerAidlTest : public ::testing::TestWithParam<std::string> {
         ASSERT_NE(binder, nullptr);
         ASSERT_NO_FATAL_FAILURE(mComposer = IComposer::fromBinder(binder));
         ASSERT_NE(mComposer, nullptr);
-        ASSERT_NO_FATAL_FAILURE(mComposer->createClient(&mComposerClient));
+
+        ndk::ScopedAStatus status;
+        ASSERT_NO_FATAL_FAILURE(status = mComposer->createClient(&mComposerClient));
+        ASSERT_TRUE(status.isOk());
 
         mComposerCallback = ::ndk::SharedRefBase::make<GraphicsComposerCallback>();
         EXPECT_TRUE(mComposerClient->registerCallback(mComposerCallback).isOk());
@@ -1538,7 +1541,7 @@ TEST_P(GraphicsComposerAidlCommandTest, SetLayerColorTransform) {
     execute();
 
     const auto errors = mReader.takeErrors();
-    if (errors.size() == 1 && errors[0].errorCode == EX_UNSUPPORTED_OPERATION) {
+    if (errors.size() == 1 && errors[0].errorCode == IComposerClient::EX_UNSUPPORTED) {
         GTEST_SUCCEED() << "setLayerColorTransform is not supported";
         return;
     }
@@ -1555,7 +1558,7 @@ TEST_P(GraphicsComposerAidlCommandTest, SetDisplayBrightness) {
         execute();
         const auto errors = mReader.takeErrors();
         EXPECT_EQ(1, errors.size());
-        EXPECT_EQ(EX_UNSUPPORTED_OPERATION, errors[0].errorCode);
+        EXPECT_EQ(IComposerClient::EX_UNSUPPORTED, errors[0].errorCode);
         GTEST_SUCCEED() << "SetDisplayBrightness is not supported";
         return;
     }
