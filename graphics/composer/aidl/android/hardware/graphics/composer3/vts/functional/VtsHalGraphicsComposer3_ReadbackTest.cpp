@@ -521,8 +521,9 @@ TEST_P(GraphicsCompositionTest, GetReadbackBufferFenceInactive) {
     ndk::ScopedFileDescriptor releaseFence;
     const auto error = mComposerClient->getReadbackBufferFence(mPrimaryDisplay, &releaseFence);
 
-    EXPECT_TRUE(error.isOk());
+    ASSERT_FALSE(error.isOk());
     EXPECT_EQ(IComposerClient::EX_UNSUPPORTED, error.getServiceSpecificError());
+    EXPECT_EQ(-1, releaseFence.get());
 }
 
 TEST_P(GraphicsCompositionTest, ClientComposition) {
