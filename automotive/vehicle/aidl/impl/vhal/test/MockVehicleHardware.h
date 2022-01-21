@@ -66,6 +66,12 @@ class MockVehicleHardware final : public IVehicleHardware {
     void addSetValueResponses(
             const std::vector<::aidl::android::hardware::automotive::vehicle::SetValueResult>&
                     responses);
+    void setGetValueResponder(
+            std::function<::aidl::android::hardware::automotive::vehicle::StatusCode(
+                    std::shared_ptr<const GetValuesCallback>,
+                    const std::vector<
+                            ::aidl::android::hardware::automotive::vehicle::GetValueRequest>&)>&&
+                    responder);
     std::vector<::aidl::android::hardware::automotive::vehicle::GetValueRequest>
     nextGetValueRequests();
     std::vector<::aidl::android::hardware::automotive::vehicle::SetValueRequest>
@@ -92,6 +98,10 @@ class MockVehicleHardware final : public IVehicleHardware {
             mStatusByFunctions GUARDED_BY(mLock);
     int64_t mSleepTime GUARDED_BY(mLock) = 0;
     std::unique_ptr<const PropertyChangeCallback> mPropertyChangeCallback GUARDED_BY(mLock);
+    std::function<::aidl::android::hardware::automotive::vehicle::StatusCode(
+            std::shared_ptr<const GetValuesCallback>,
+            const std::vector<::aidl::android::hardware::automotive::vehicle::GetValueRequest>&)>
+            mGetValueResponder GUARDED_BY(mLock);
 
     template <class ResultType>
     ::aidl::android::hardware::automotive::vehicle::StatusCode returnResponse(
