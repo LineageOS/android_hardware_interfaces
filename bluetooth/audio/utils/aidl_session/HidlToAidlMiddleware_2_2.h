@@ -54,6 +54,10 @@ class HidlToAidlMiddleware_2_2 {
 
   static void StopStream(const SessionType_2_1& session_type);
 
+  static void UpdateTracksMetadata(
+      const SessionType_2_1& session_type,
+      const struct source_metadata* source_metadata);
+
   static void UpdateSinkMetadata(const SessionType_2_1& session_type,
                                  const struct sink_metadata* sink_metadata);
 };
