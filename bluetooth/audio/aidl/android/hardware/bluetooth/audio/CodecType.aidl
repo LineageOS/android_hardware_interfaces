@@ -26,4 +26,5 @@ enum CodecType {
     APTX_HD,
     LDAC,
     LC3,
+    VENDOR,
 }
