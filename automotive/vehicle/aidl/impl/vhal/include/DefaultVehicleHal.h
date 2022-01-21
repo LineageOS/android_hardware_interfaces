@@ -126,6 +126,8 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
     // TODO(b/214605968): define TIMEOUT_IN_NANO in IVehicle and allow getValues/setValues/subscribe
     // to specify custom timeouts.
     static constexpr int64_t TIMEOUT_IN_NANO = 30'000'000'000;
+    // heart beat event interval: 3s
+    static constexpr int64_t HEART_BEAT_INTERVAL_IN_NANO = 3'000'000'000;
     const std::shared_ptr<IVehicleHardware> mVehicleHardware;
 
     // mConfigsByPropId and mConfigFile are only modified during initialization, so no need to
@@ -146,6 +148,8 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
             GUARDED_BY(mLock);
     // SubscriptionClients is thread-safe.
     std::shared_ptr<SubscriptionClients> mSubscriptionClients;
+    // RecurrentTimer is thread-safe.
+    RecurrentTimer mRecurrentTimer;
 
     ::android::base::Result<void> checkProperty(
             const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue);
@@ -162,6 +166,16 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
             const std::vector<::aidl::android::hardware::automotive::vehicle::SubscribeOptions>&
                     options);
 
+    ::android::base::Result<void> checkReadPermission(
+            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
+
+    ::android::base::Result<void> checkWritePermission(
+            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
+
+    ::android::base::Result<
+            const ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig*>
+    getConfig(int32_t propId) const;
+
     template <class T>
     static std::shared_ptr<T> getOrCreateClient(
             std::unordered_map<CallbackType, std::shared_ptr<T>>* clients,
@@ -177,6 +191,9 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
             std::weak_ptr<SubscriptionManager> subscriptionManager,
             const std::vector<::aidl::android::hardware::automotive::vehicle::VehiclePropValue>&
                     updatedValues);
+
+    static void checkHealth(std::weak_ptr<IVehicleHardware> hardware,
+                            std::weak_ptr<SubscriptionManager> subscriptionManager);
 
     // Test-only
     // Set the default timeout for pending requests.

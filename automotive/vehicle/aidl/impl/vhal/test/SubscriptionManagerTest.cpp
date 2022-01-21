@@ -185,7 +185,7 @@ TEST_F(SubscriptionManagerTest, testOverrideSubscriptionContinuous) {
 
     // Theoretically trigger 10 times, but check for at least 9 times to be stable.
     EXPECT_GE(getEvents().size(), static_cast<size_t>(9));
-    EXPECT_LE(getEvents().size(), static_cast<size_t>(11));
+    EXPECT_LE(getEvents().size(), static_cast<size_t>(15));
 }
 
 TEST_F(SubscriptionManagerTest, testSubscribeMultipleAreasContinuous) {
