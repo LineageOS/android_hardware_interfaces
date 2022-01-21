@@ -31,9 +31,13 @@ namespace audio {
 
 using ::aidl::android::hardware::bluetooth::audio::HidlToAidlMiddleware_2_0;
 using ::aidl::android::hardware::bluetooth::audio::HidlToAidlMiddleware_2_2;
+using ::android::hardware::audio::common::V5_0::AudioContentType;
 using ::android::hardware::audio::common::V5_0::AudioSource;
+using ::android::hardware::audio::common::V5_0::AudioUsage;
+using ::android::hardware::audio::common::V5_0::PlaybackTrackMetadata;
 using ::android::hardware::audio::common::V5_0::RecordTrackMetadata;
 using ::android::hardware::audio::common::V5_0::SinkMetadata;
+using ::android::hardware::audio::common::V5_0::SourceMetadata;
 using ::android::hardware::bluetooth::audio::V2_0::BitsPerSample;
 using ::android::hardware::bluetooth::audio::V2_0::ChannelMode;
 using ::android::hardware::bluetooth::audio::V2_2::LeAudioConfiguration;
@@ -126,6 +130,53 @@ BluetoothAudioSession_2_2::GetAudioSession() {
 std::shared_ptr<BluetoothAudioSession_2_1>
 BluetoothAudioSession_2_2::GetAudioSession_2_1() {
   return audio_session_2_1;
+}
+
+void BluetoothAudioSession_2_2::UpdateTracksMetadata(
+    const struct source_metadata* source_metadata) {
+  if (HidlToAidlMiddleware_2_0::IsAidlAvailable())
+    return HidlToAidlMiddleware_2_2::UpdateTracksMetadata(raw_session_type_,
+                                                          source_metadata);
+  std::lock_guard<std::recursive_mutex> guard(audio_session->mutex_);
+  if (!IsSessionReady()) {
+    LOG(DEBUG) << __func__ << " - SessionType=" << toString(session_type_2_1_)
+               << " has NO session";
+    return;
+  }
+
+  ssize_t track_count = source_metadata->track_count;
+  LOG(INFO) << __func__ << " - SessionType=" << toString(session_type_2_1_)
+            << ", " << track_count << " track(s)";
+
+  if (session_type_2_1_ == SessionType_2_1::UNKNOWN) {
+    audio_session->UpdateTracksMetadata(source_metadata);
+    return;
+  }
+
+  struct playback_track_metadata* track = source_metadata->tracks;
+  SourceMetadata sourceMetadata;
+  PlaybackTrackMetadata* halMetadata;
+
+  sourceMetadata.tracks.resize(track_count);
+  halMetadata = sourceMetadata.tracks.data();
+  while (track_count && track) {
+    halMetadata->usage = static_cast<AudioUsage>(track->usage);
+    halMetadata->contentType =
+        static_cast<AudioContentType>(track->content_type);
+    halMetadata->gain = track->gain;
+    LOG(VERBOSE) << __func__ << " - SessionType=" << toString(session_type_2_1_)
+                 << ", usage=" << toString(halMetadata->usage)
+                 << ", content=" << toString(halMetadata->contentType)
+                 << ", gain=" << halMetadata->gain;
+    --track_count;
+    ++track;
+    ++halMetadata;
+  }
+  auto hal_retval = audio_session->stack_iface_->updateMetadata(sourceMetadata);
+  if (!hal_retval.isOk()) {
+    LOG(WARNING) << __func__ << " - IBluetoothAudioPort SessionType="
+                 << toString(session_type_2_1_) << " failed";
+  }
 }
 
 void BluetoothAudioSession_2_2::UpdateSinkMetadata(
