@@ -298,6 +298,13 @@ AssertionResult FrontendTests::linkCiCam(int32_t ciCamId) {
     return AssertionResult(status.isOk());
 }
 
+AssertionResult FrontendTests::removeOutputPid(int32_t removePid) {
+    ndk::ScopedAStatus status;
+    status = mFrontend->removeOutputPid(removePid);
+    return AssertionResult(status.isOk() || status.getServiceSpecificError() ==
+                                                    static_cast<int32_t>(Result::UNAVAILABLE));
+}
+
 AssertionResult FrontendTests::unlinkCiCam(int32_t ciCamId) {
     ndk::ScopedAStatus status = mFrontend->unlinkCiCam(ciCamId);
     return AssertionResult(status.isOk());
@@ -508,6 +515,7 @@ void FrontendTests::tuneTest(FrontendConfig frontendConf) {
     ASSERT_TRUE(setFrontendCallback());
     if (frontendConf.canConnectToCiCam) {
         ASSERT_TRUE(linkCiCam(frontendConf.ciCamId));
+        ASSERT_TRUE(removeOutputPid(frontendConf.removePid));
         ASSERT_TRUE(unlinkCiCam(frontendConf.ciCamId));
     }
     ASSERT_TRUE(tuneFrontend(frontendConf, false /*testWithDemux*/));

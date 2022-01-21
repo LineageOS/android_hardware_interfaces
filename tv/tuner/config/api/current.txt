@@ -317,6 +317,7 @@ package android.media.tuner.testing.configuration.V1_0 {
     method @Nullable public java.math.BigInteger getFrequency();
     method @Nullable public String getId();
     method @Nullable public boolean getIsSoftwareFrontend();
+    method @Nullable public java.math.BigInteger getRemoveOutputPid();
     method @Nullable public android.media.tuner.testing.configuration.V1_0.FrontendTypeEnum getType();
     method public void setConnectToCicamId(@Nullable java.math.BigInteger);
     method public void setDvbsFrontendSettings_optional(@Nullable android.media.tuner.testing.configuration.V1_0.DvbsFrontendSettings);
@@ -325,6 +326,7 @@ package android.media.tuner.testing.configuration.V1_0 {
     method public void setFrequency(@Nullable java.math.BigInteger);
     method public void setId(@Nullable String);
     method public void setIsSoftwareFrontend(@Nullable boolean);
+    method public void setRemoveOutputPid(@Nullable java.math.BigInteger);
     method public void setType(@Nullable android.media.tuner.testing.configuration.V1_0.FrontendTypeEnum);
   }
 
