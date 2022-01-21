@@ -773,6 +773,13 @@ binder_status_t Frontend::dump(int fd, const char** /* args */, uint32_t /* numA
     return ::ndk::ScopedAStatus::ok();
 }
 
+::ndk::ScopedAStatus Frontend::removeOutputPid(int32_t /* in_pid */) {
+    ALOGV("%s", __FUNCTION__);
+
+    return ::ndk::ScopedAStatus::fromServiceSpecificError(
+            static_cast<int32_t>(Result::UNAVAILABLE));
+}
+
 FrontendType Frontend::getFrontendType() {
     return mType;
 }
