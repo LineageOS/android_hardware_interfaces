@@ -708,6 +708,20 @@ void Frontend::scanThreadLoop() {
                 status.set<FrontendStatus::dvbtCellIds>(dvbtCellIds);
                 break;
             }
+            case FrontendStatusType::ATSC3_ALL_PLP_INFO: {
+                FrontendScanAtsc3PlpInfo info1;
+                info1.plpId = 1;
+                info1.bLlsFlag = false;
+                FrontendScanAtsc3PlpInfo info2;
+                info2.plpId = 2;
+                info2.bLlsFlag = true;
+                FrontendScanAtsc3PlpInfo info3;
+                info3.plpId = 3;
+                info3.bLlsFlag = false;
+                vector<FrontendScanAtsc3PlpInfo> infos = {info1, info2, info3};
+                status.set<FrontendStatus::allPlpInfo>(infos);
+                break;
+            }
             default: {
                 continue;
             }
