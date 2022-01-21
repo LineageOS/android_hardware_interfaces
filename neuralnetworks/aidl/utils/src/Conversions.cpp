@@ -302,9 +302,9 @@ GeneralResult<Model::Subgraph> unvalidatedConvert(const aidl_hal::Subgraph& subg
     };
 }
 
-GeneralResult<Model::ExtensionNameAndPrefix> unvalidatedConvert(
+GeneralResult<ExtensionNameAndPrefix> unvalidatedConvert(
         const aidl_hal::ExtensionNameAndPrefix& extensionNameAndPrefix) {
-    return Model::ExtensionNameAndPrefix{
+    return ExtensionNameAndPrefix{
             .name = extensionNameAndPrefix.name,
             .prefix = extensionNameAndPrefix.prefix,
     };
@@ -506,6 +506,12 @@ GeneralResult<SharedHandle> unvalidatedConvert(const ndk::ScopedFileDescriptor& 
     return std::make_shared<const Handle>(std::move(duplicatedFd));
 }
 
+#ifdef NN_AIDL_V4_OR_ABOVE
+GeneralResult<TokenValuePair> unvalidatedConvert(const aidl_hal::TokenValuePair& tokenValuePair) {
+    return TokenValuePair{.token = tokenValuePair.token, .value = tokenValuePair.value};
+}
+#endif  // NN_AIDL_V4_OR_ABOVE
+
 GeneralResult<Capabilities> convert(const aidl_hal::Capabilities& capabilities) {
     return validatedConvert(capabilities);
 }
@@ -562,6 +568,17 @@ GeneralResult<std::vector<Extension>> convert(const std::vector<aidl_hal::Extens
 GeneralResult<std::vector<SharedMemory>> convert(const std::vector<aidl_hal::Memory>& memories) {
     return validatedConvert(memories);
 }
+GeneralResult<std::vector<ExtensionNameAndPrefix>> convert(
+        const std::vector<aidl_hal::ExtensionNameAndPrefix>& extensionNameAndPrefix) {
+    return unvalidatedConvert(extensionNameAndPrefix);
+}
+
+#ifdef NN_AIDL_V4_OR_ABOVE
+GeneralResult<std::vector<TokenValuePair>> convert(
+        const std::vector<aidl_hal::TokenValuePair>& metaData) {
+    return validatedConvert(metaData);
+}
+#endif  // NN_AIDL_V4_OR_ABOVE
 
 GeneralResult<std::vector<OutputShape>> convert(
         const std::vector<aidl_hal::OutputShape>& outputShapes) {
@@ -942,7 +959,7 @@ nn::GeneralResult<std::vector<uint8_t>> unvalidatedConvert(
 }
 
 nn::GeneralResult<ExtensionNameAndPrefix> unvalidatedConvert(
-        const nn::Model::ExtensionNameAndPrefix& extensionNameToPrefix) {
+        const nn::ExtensionNameAndPrefix& extensionNameToPrefix) {
     return ExtensionNameAndPrefix{
             .name = extensionNameToPrefix.name,
             .prefix = extensionNameToPrefix.prefix,
@@ -1055,6 +1072,11 @@ nn::GeneralResult<Extension> unvalidatedConvert(const nn::Extension& extension) 
     return Extension{.name = extension.name,
                      .operandTypes = NN_TRY(unvalidatedConvert(extension.operandTypes))};
 }
+#ifdef NN_AIDL_V4_OR_ABOVE
+nn::GeneralResult<TokenValuePair> unvalidatedConvert(const nn::TokenValuePair& tokenValuePair) {
+    return TokenValuePair{.token = tokenValuePair.token, .value = tokenValuePair.value};
+}
+#endif  // NN_AIDL_V4_OR_ABOVE
 
 nn::GeneralResult<std::vector<uint8_t>> convert(const nn::CacheToken& cacheToken) {
     return validatedConvert(cacheToken);
@@ -1134,6 +1156,17 @@ nn::GeneralResult<std::vector<ndk::ScopedFileDescriptor>> convert(
         const std::vector<nn::SyncFence>& syncFences) {
     return validatedConvert(syncFences);
 }
+nn::GeneralResult<std::vector<ExtensionNameAndPrefix>> convert(
+        const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) {
+    return unvalidatedConvert(extensionNameToPrefix);
+}
+
+#ifdef NN_AIDL_V4_OR_ABOVE
+nn::GeneralResult<std::vector<TokenValuePair>> convert(
+        const std::vector<nn::TokenValuePair>& metaData) {
+    return validatedConvert(metaData);
+}
+#endif  // NN_AIDL_V4_OR_ABOVE
 
 nn::GeneralResult<std::vector<Extension>> convert(const std::vector<nn::Extension>& extensions) {
     return validatedConvert(extensions);

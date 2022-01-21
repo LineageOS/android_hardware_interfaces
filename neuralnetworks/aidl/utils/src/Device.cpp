@@ -215,7 +215,9 @@ nn::GeneralResult<std::vector<bool>> Device::getSupportedOperations(const nn::Mo
 nn::GeneralResult<nn::SharedPreparedModel> Device::prepareModel(
         const nn::Model& model, nn::ExecutionPreference preference, nn::Priority priority,
         nn::OptionalTimePoint deadline, const std::vector<nn::SharedHandle>& modelCache,
-        const std::vector<nn::SharedHandle>& dataCache, const nn::CacheToken& token) const {
+        const std::vector<nn::SharedHandle>& dataCache, const nn::CacheToken& token,
+        const std::vector<nn::TokenValuePair>& hints,
+        const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const {
     // Ensure that model is ready for IPC.
     std::optional<nn::Model> maybeModelInShared;
     const nn::Model& modelInShared =
@@ -225,17 +227,28 @@ nn::GeneralResult<nn::SharedPreparedModel> Device::prepareModel(
     const auto aidlPreference = NN_TRY(convert(preference));
     const auto aidlPriority = NN_TRY(convert(priority));
     const auto aidlDeadline = NN_TRY(convert(deadline));
-    const auto aidlModelCache = NN_TRY(convert(modelCache));
-    const auto aidlDataCache = NN_TRY(convert(dataCache));
+    auto aidlModelCache = NN_TRY(convert(modelCache));
+    auto aidlDataCache = NN_TRY(convert(dataCache));
     const auto aidlToken = NN_TRY(convert(token));
 
     const auto cb = ndk::SharedRefBase::make<PreparedModelCallback>(kFeatureLevel);
     const auto scoped = kDeathHandler.protectCallback(cb.get());
 
+    if (kFeatureLevel.level >= nn::Version::Level::FEATURE_LEVEL_8) {
+        auto aidlHints = NN_TRY(convert(hints));
+        auto aidlExtensionPrefix = NN_TRY(convert(extensionNameToPrefix));
+        const auto ret = kDevice->prepareModelWithConfig(
+                aidlModel,
+                {aidlPreference, aidlPriority, aidlDeadline, std::move(aidlModelCache),
+                 std::move(aidlDataCache), aidlToken, std::move(aidlHints),
+                 std::move(aidlExtensionPrefix)},
+                cb);
+        HANDLE_ASTATUS(ret) << "prepareModel failed";
+        return cb->get();
+    }
     const auto ret = kDevice->prepareModel(aidlModel, aidlPreference, aidlPriority, aidlDeadline,
                                            aidlModelCache, aidlDataCache, aidlToken, cb);
     HANDLE_ASTATUS(ret) << "prepareModel failed";
-
     return cb->get();
 }
 

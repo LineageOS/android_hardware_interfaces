@@ -135,7 +135,7 @@ nn::GeneralResult<void> prepareModel(const nn::SharedDevice& device, const Execu
 
     Task task = [device, nnModel = std::move(nnModel), executor, callback] {
         auto result = device->prepareModel(nnModel, nn::ExecutionPreference::DEFAULT,
-                                           nn::Priority::DEFAULT, {}, {}, {}, {});
+                                           nn::Priority::DEFAULT, {}, {}, {}, {}, {}, {});
         notify(callback.get(), std::move(result), executor);
     };
     executor(std::move(task), {});
@@ -155,8 +155,8 @@ nn::GeneralResult<void> prepareModel_1_1(const nn::SharedDevice& device, const E
     const auto nnPreference = NN_TRY(convertInput(preference));
 
     Task task = [device, nnModel = std::move(nnModel), nnPreference, executor, callback] {
-        auto result =
-                device->prepareModel(nnModel, nnPreference, nn::Priority::DEFAULT, {}, {}, {}, {});
+        auto result = device->prepareModel(nnModel, nnPreference, nn::Priority::DEFAULT, {}, {}, {},
+                                           {}, {}, {});
         notify(callback.get(), std::move(result), executor);
     };
     executor(std::move(task), {});
@@ -185,7 +185,7 @@ nn::GeneralResult<void> prepareModel_1_2(const nn::SharedDevice& device, const E
                  nnModelCache = std::move(nnModelCache), nnDataCache = std::move(nnDataCache),
                  nnToken, executor, callback] {
         auto result = device->prepareModel(nnModel, nnPreference, nn::Priority::DEFAULT, {},
-                                           nnModelCache, nnDataCache, nnToken);
+                                           nnModelCache, nnDataCache, nnToken, {}, {});
         notify(callback.get(), std::move(result), executor);
     };
     executor(std::move(task), {});
@@ -215,7 +215,7 @@ nn::GeneralResult<void> prepareModel_1_3(
                  nnModelCache = std::move(nnModelCache), nnDataCache = std::move(nnDataCache),
                  nnToken, executor, callback] {
         auto result = device->prepareModel(nnModel, nnPreference, nnPriority, nnDeadline,
-                                           nnModelCache, nnDataCache, nnToken);
+                                           nnModelCache, nnDataCache, nnToken, {}, {});
         notify(callback.get(), std::move(result), executor);
     };
     executor(std::move(task), nnDeadline);

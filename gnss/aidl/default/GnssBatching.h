@@ -28,7 +28,7 @@ struct GnssBatching : public BnGnssBatching {
     ~GnssBatching();
     ndk::ScopedAStatus init(const std::shared_ptr<IGnssBatchingCallback>& callback) override;
     ndk::ScopedAStatus getBatchSize(int* size) override;
-    ndk::ScopedAStatus start(int64_t periodNanos, int flags) override;
+    ndk::ScopedAStatus start(const Options& options) override;
     ndk::ScopedAStatus flush() override;
     ndk::ScopedAStatus stop() override;
     ndk::ScopedAStatus cleanup() override;
@@ -42,6 +42,7 @@ struct GnssBatching : public BnGnssBatching {
     std::thread mThread;
     std::atomic<bool> mIsActive;
     std::atomic<long> mMinIntervalMs;
+    std::atomic<float> mMinDistanceMeters;
     std::atomic<bool> mWakeUpOnFifoFull;
 
     // Synchronization lock for sCallback

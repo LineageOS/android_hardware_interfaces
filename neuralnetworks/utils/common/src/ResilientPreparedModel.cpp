@@ -104,43 +104,53 @@ nn::GeneralResult<nn::SharedPreparedModel> ResilientPreparedModel::recover(
 }
 
 nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>>
-ResilientPreparedModel::execute(const nn::Request& request, nn::MeasureTiming measure,
-                                const nn::OptionalTimePoint& deadline,
-                                const nn::OptionalDuration& loopTimeoutDuration) const {
-    const auto fn = [&request, measure, &deadline,
-                     &loopTimeoutDuration](const nn::IPreparedModel& preparedModel) {
-        return preparedModel.execute(request, measure, deadline, loopTimeoutDuration);
+ResilientPreparedModel::execute(
+        const nn::Request& request, nn::MeasureTiming measure,
+        const nn::OptionalTimePoint& deadline, const nn::OptionalDuration& loopTimeoutDuration,
+        const std::vector<nn::TokenValuePair>& hints,
+        const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const {
+    const auto fn = [&request, measure, &deadline, &loopTimeoutDuration, &hints,
+                     &extensionNameToPrefix](const nn::IPreparedModel& preparedModel) {
+        return preparedModel.execute(request, measure, deadline, loopTimeoutDuration, hints,
+                                     extensionNameToPrefix);
     };
     return protect(*this, fn);
 }
 
 nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>>
-ResilientPreparedModel::executeFenced(const nn::Request& request,
-                                      const std::vector<nn::SyncFence>& waitFor,
-                                      nn::MeasureTiming measure,
-                                      const nn::OptionalTimePoint& deadline,
-                                      const nn::OptionalDuration& loopTimeoutDuration,
-                                      const nn::OptionalDuration& timeoutDurationAfterFence) const {
+ResilientPreparedModel::executeFenced(
+        const nn::Request& request, const std::vector<nn::SyncFence>& waitFor,
+        nn::MeasureTiming measure, const nn::OptionalTimePoint& deadline,
+        const nn::OptionalDuration& loopTimeoutDuration,
+        const nn::OptionalDuration& timeoutDurationAfterFence,
+        const std::vector<nn::TokenValuePair>& hints,
+        const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const {
     const auto fn = [&request, &waitFor, measure, &deadline, &loopTimeoutDuration,
-                     &timeoutDurationAfterFence](const nn::IPreparedModel& preparedModel) {
+                     &timeoutDurationAfterFence, &hints,
+                     &extensionNameToPrefix](const nn::IPreparedModel& preparedModel) {
         return preparedModel.executeFenced(request, waitFor, measure, deadline, loopTimeoutDuration,
-                                           timeoutDurationAfterFence);
+                                           timeoutDurationAfterFence, hints, extensionNameToPrefix);
     };
     return protect(*this, fn);
 }
 
 nn::GeneralResult<nn::SharedExecution> ResilientPreparedModel::createReusableExecution(
         const nn::Request& request, nn::MeasureTiming measure,
-        const nn::OptionalDuration& loopTimeoutDuration) const {
+        const nn::OptionalDuration& loopTimeoutDuration,
+        const std::vector<nn::TokenValuePair>& hints,
+        const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const {
 #if 0
     auto self = shared_from_this();
-    ResilientExecution::Factory makeExecution =
-            [preparedModel = std::move(self), request, measure, loopTimeoutDuration] {
-        return preparedModel->createReusableExecutionInternal(request, measure, loopTimeoutDuration);
+    ResilientExecution::Factory makeExecution = [preparedModel = std::move(self), request, measure,
+                                                 loopTimeoutDuration, hints,
+                                                 extensionNameToPrefix] {
+        return preparedModel->createReusableExecutionInternal(request, measure, loopTimeoutDuration,
+                                                              hints, extensionNameToPrefix);
     };
     return ResilientExecution::create(std::move(makeExecution));
 #else
-    return createReusableExecutionInternal(request, measure, loopTimeoutDuration);
+    return createReusableExecutionInternal(request, measure, loopTimeoutDuration, hints,
+                                           extensionNameToPrefix);
 #endif
 }
 
@@ -159,13 +169,16 @@ nn::GeneralResult<nn::SharedBurst> ResilientPreparedModel::configureExecutionBur
 
 nn::GeneralResult<nn::SharedExecution> ResilientPreparedModel::createReusableExecutionInternal(
         const nn::Request& request, nn::MeasureTiming measure,
-        const nn::OptionalDuration& loopTimeoutDuration) const {
+        const nn::OptionalDuration& loopTimeoutDuration,
+        const std::vector<nn::TokenValuePair>& hints,
+        const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const {
     if (!isValidInternal()) {
         return std::make_shared<const InvalidExecution>();
     }
-    const auto fn = [&request, measure,
-                     &loopTimeoutDuration](const nn::IPreparedModel& preparedModel) {
-        return preparedModel.createReusableExecution(request, measure, loopTimeoutDuration);
+    const auto fn = [&request, measure, &loopTimeoutDuration, &hints,
+                     &extensionNameToPrefix](const nn::IPreparedModel& preparedModel) {
+        return preparedModel.createReusableExecution(request, measure, loopTimeoutDuration, hints,
+                                                     extensionNameToPrefix);
     };
     return protect(*this, fn);
 }

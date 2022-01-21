@@ -29,6 +29,7 @@
 #include <android/hardware/gnss/visibility_control/IGnssVisibilityControl.h>
 #include <cutils/properties.h>
 #include "AGnssCallbackAidl.h"
+#include "AGnssRilCallbackAidl.h"
 #include "GnssAntennaInfoCallbackAidl.h"
 #include "GnssBatchingCallback.h"
 #include "GnssGeofenceCallback.h"
@@ -48,6 +49,7 @@ using android::hardware::gnss::GnssData;
 using android::hardware::gnss::GnssMeasurement;
 using android::hardware::gnss::GnssPowerStats;
 using android::hardware::gnss::IAGnss;
+using android::hardware::gnss::IAGnssRil;
 using android::hardware::gnss::IGnss;
 using android::hardware::gnss::IGnssAntennaInfo;
 using android::hardware::gnss::IGnssAntennaInfoCallback;
@@ -811,6 +813,10 @@ TEST_P(GnssHalTest, BlocklistConstellationLocationOn) {
  * TestAllExtensions.
  */
 TEST_P(GnssHalTest, TestAllExtensions) {
+    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+        return;
+    }
+
     sp<IGnssBatching> iGnssBatching;
     auto status = aidl_gnss_hal_->getExtensionGnssBatching(&iGnssBatching);
     if (status.isOk() && iGnssBatching != nullptr) {
@@ -863,6 +869,42 @@ TEST_P(GnssHalTest, TestAGnssExtension) {
 
     // Set SUPL server host/port
     status = iAGnss->setServer(AGnssType::SUPL, std::string("supl.google.com"), 7275);
+    ASSERT_TRUE(status.isOk());
+}
+
+/*
+ * TestAGnssRilExtension:
+ * 1. Gets the IAGnssRil extension.
+ * 2. Sets AGnssRilCallback.
+ * 3. Sets reference location.
+ */
+TEST_P(GnssHalTest, TestAGnssRilExtension) {
+    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+        return;
+    }
+    sp<IAGnssRil> iAGnssRil;
+    auto status = aidl_gnss_hal_->getExtensionAGnssRil(&iAGnssRil);
+    ASSERT_TRUE(status.isOk());
+    ASSERT_TRUE(iAGnssRil != nullptr);
+
+    auto agnssRilCallback = sp<AGnssRilCallbackAidl>::make();
+    status = iAGnssRil->setCallback(agnssRilCallback);
+    ASSERT_TRUE(status.isOk());
+
+    // Set RefLocation
+    IAGnssRil::AGnssRefLocationCellID agnssReflocationCellId;
+    agnssReflocationCellId.type = IAGnssRil::AGnssRefLocationType::LTE_CELLID;
+    agnssReflocationCellId.mcc = 466;
+    agnssReflocationCellId.mnc = 97;
+    agnssReflocationCellId.lac = 46697;
+    agnssReflocationCellId.cid = 59168142;
+    agnssReflocationCellId.pcid = 420;
+    agnssReflocationCellId.tac = 11460;
+    IAGnssRil::AGnssRefLocation agnssReflocation;
+    agnssReflocation.type = IAGnssRil::AGnssRefLocationType::LTE_CELLID;
+    agnssReflocation.cellID = agnssReflocationCellId;
+
+    status = iAGnssRil->setRefLocation(agnssReflocation);
     ASSERT_TRUE(status.isOk());
 }
 

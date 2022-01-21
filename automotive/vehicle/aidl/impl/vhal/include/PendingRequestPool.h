@@ -51,7 +51,7 @@ class PendingRequestPool final {
     // seconds.
     android::base::Result<void> addRequests(const void* clientId,
                                             const std::unordered_set<int64_t>& requestIds,
-                                            std::shared_ptr<TimeoutCallbackFunc> callback);
+                                            std::shared_ptr<const TimeoutCallbackFunc> callback);
 
     // Checks whether the request is currently pending.
     bool isRequestPending(const void* clientId, int64_t requestId) const;
@@ -66,6 +66,8 @@ class PendingRequestPool final {
     // Returns how many pending requests in the pool, for testing purpose.
     size_t countPendingRequests(const void* clientId) const;
 
+    size_t countPendingRequests() const;
+
   private:
     // The maximum number of pending requests allowed per client. If exceeds this number, adding
     // more requests would fail. This is to prevent spamming from client.
@@ -74,7 +76,7 @@ class PendingRequestPool final {
     struct PendingRequest {
         std::unordered_set<int64_t> requestIds;
         int64_t timeoutTimestamp;
-        std::shared_ptr<TimeoutCallbackFunc> callback;
+        std::shared_ptr<const TimeoutCallbackFunc> callback;
     };
 
     int64_t mTimeoutInNano;
