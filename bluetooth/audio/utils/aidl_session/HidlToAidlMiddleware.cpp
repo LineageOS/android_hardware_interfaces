@@ -761,6 +761,13 @@ void HidlToAidlMiddleware_2_2::StopStream(const SessionType_2_1& session_type) {
       from_session_type_2_1(session_type));
 }
 
+void HidlToAidlMiddleware_2_2::UpdateTracksMetadata(
+    const SessionType_2_1& session_type,
+    const struct source_metadata* source_metadata) {
+  return BluetoothAudioSessionControl::UpdateSourceMetadata(
+      from_session_type_2_1(session_type), *source_metadata);
+}
+
 void HidlToAidlMiddleware_2_2::UpdateSinkMetadata(
     const SessionType_2_1& session_type,
     const struct sink_metadata* sink_metadata) {
