@@ -31,14 +31,9 @@ cc_library_static {
     export_include_dirs: ["include"],
     cflags: ["-Wthread-safety"],
     static_libs: [
+        "android.hardware.neuralnetworks@1.0",
         "libarect",
         "neuralnetworks_types",
-        "neuralnetworks_utils_hal_common",
-    ],
-    shared_libs: [
-        "android.hardware.neuralnetworks@1.0",
-    ],
-    export_static_lib_headers: [
         "neuralnetworks_utils_hal_common",
     ],
     target: {
@@ -55,19 +50,14 @@ cc_test {
     static_libs: [
         "android.hardware.neuralnetworks@1.0",
         "libgmock",
-        "libneuralnetworks_common",
         "neuralnetworks_types",
         "neuralnetworks_utils_hal_common",
         "neuralnetworks_utils_hal_1_0",
     ],
     shared_libs: [
-        "android.hidl.allocator@1.0",
-        "android.hidl.memory@1.0",
         "libbase",
         "libcutils",
-        "libfmq",
         "libhidlbase",
-        "libhidlmemory",
         "liblog",
         "libutils",
     ],
