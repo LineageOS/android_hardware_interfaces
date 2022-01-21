@@ -55,6 +55,8 @@ SubscriptionManager::~SubscriptionManager() {
     std::scoped_lock<std::mutex> lockGuard(mLock);
 
     mClientsByPropIdArea.clear();
+    // RecurrentSubscription has reference to mGetValue, so it must be destroyed before mGetValue is
+    // destroyed.
     mSubscriptionsByClient.clear();
 }
 
@@ -80,7 +82,6 @@ Result<void> SubscriptionManager::subscribe(const std::shared_ptr<IVehicleCallba
     std::scoped_lock<std::mutex> lockGuard(mLock);
 
     std::vector<int64_t> intervals;
-
     for (const auto& option : options) {
         float sampleRate = option.sampleRate;
 

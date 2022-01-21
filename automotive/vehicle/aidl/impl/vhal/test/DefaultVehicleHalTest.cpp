@@ -56,10 +56,12 @@ using ::aidl::android::hardware::automotive::vehicle::SetValueRequests;
 using ::aidl::android::hardware::automotive::vehicle::SetValueResult;
 using ::aidl::android::hardware::automotive::vehicle::SetValueResults;
 using ::aidl::android::hardware::automotive::vehicle::StatusCode;
+using ::aidl::android::hardware::automotive::vehicle::SubscribeOptions;
 using ::aidl::android::hardware::automotive::vehicle::VehicleAreaWindow;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfigs;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropErrors;
+using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyChangeMode;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValues;
 
@@ -70,12 +72,21 @@ using ::ndk::ScopedAStatus;
 using ::ndk::ScopedFileDescriptor;
 
 using ::testing::Eq;
+using ::testing::UnorderedElementsAre;
 using ::testing::UnorderedElementsAreArray;
 using ::testing::WhenSortedBy;
 
 constexpr int32_t INVALID_PROP_ID = 0;
 // VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:INT32
 constexpr int32_t INT32_WINDOW_PROP = 10001 + 0x10000000 + 0x03000000 + 0x00400000;
+// VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+constexpr int32_t GLOBAL_ON_CHANGE_PROP = 10002 + 0x10000000 + 0x01000000 + 0x00400000;
+// VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+constexpr int32_t GLOBAL_CONTINUOUS_PROP = 10003 + 0x10000000 + 0x01000000 + 0x00400000;
+// VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:INT32
+constexpr int32_t AREA_ON_CHANGE_PROP = 10004 + 0x10000000 + 0x03000000 + 0x00400000;
+// VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:INT32
+constexpr int32_t AREA_CONTINUOUS_PROP = 10005 + 0x10000000 + 0x03000000 + 0x00400000;
 
 int32_t testInt32VecProp(size_t i) {
     // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
@@ -137,6 +148,53 @@ std::vector<SetValuesInvalidRequestTestCase> getSetValuesInvalidRequestTestCases
             }};
 }
 
+struct SubscribeInvalidOptionsTestCase {
+    std::string name;
+    SubscribeOptions option;
+};
+
+std::vector<SubscribeInvalidOptionsTestCase> getSubscribeInvalidOptionsTestCases() {
+    return {{
+                    .name = "invalid_prop",
+                    .option =
+                            {
+                                    .propId = INVALID_PROP_ID,
+                            },
+            },
+            {
+                    .name = "invalid_area_ID",
+                    .option =
+                            {
+                                    .propId = AREA_ON_CHANGE_PROP,
+                                    .areaIds = {0},
+                            },
+            },
+            {
+                    .name = "invalid_sample_rate",
+                    .option =
+                            {
+                                    .propId = GLOBAL_CONTINUOUS_PROP,
+                                    .sampleRate = 0.0,
+                            },
+            },
+            {
+                    .name = "sample_rate_out_of_range",
+                    .option =
+                            {
+                                    .propId = GLOBAL_CONTINUOUS_PROP,
+                                    .sampleRate = 1000.0,
+                            },
+            },
+            {
+                    .name = "static_property",
+                    .option =
+                            {
+                                    // Default change mode is static.
+                                    .propId = testInt32VecProp(0),
+                            },
+            }};
+}
+
 }  // namespace
 
 class DefaultVehicleHalTest : public ::testing::Test {
@@ -157,6 +215,7 @@ class DefaultVehicleHalTest : public ::testing::Test {
                             },
             });
         }
+        // A property with area config.
         testConfigs.push_back(
                 VehiclePropConfig{.prop = INT32_WINDOW_PROP,
                                   .areaConfigs = {{
@@ -164,6 +223,58 @@ class DefaultVehicleHalTest : public ::testing::Test {
                                           .minInt32Value = 0,
                                           .maxInt32Value = 100,
                                   }}});
+        // A global on-change property.
+        testConfigs.push_back(VehiclePropConfig{
+                .prop = GLOBAL_ON_CHANGE_PROP,
+                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+        });
+        // A global continuous property.
+        testConfigs.push_back(VehiclePropConfig{
+                .prop = GLOBAL_CONTINUOUS_PROP,
+                .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
+                .minSampleRate = 0.0,
+                .maxSampleRate = 100.0,
+        });
+        // A per-area on-change property.
+        testConfigs.push_back(VehiclePropConfig{
+                .prop = AREA_ON_CHANGE_PROP,
+                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                .areaConfigs =
+                        {
+                                {
+
+                                        .areaId = toInt(VehicleAreaWindow::ROW_1_LEFT),
+                                        .minInt32Value = 0,
+                                        .maxInt32Value = 100,
+                                },
+                                {
+                                        .areaId = toInt(VehicleAreaWindow::ROW_1_RIGHT),
+                                        .minInt32Value = 0,
+                                        .maxInt32Value = 100,
+                                },
+                        },
+        });
+        // A per-area continuous property.
+        testConfigs.push_back(VehiclePropConfig{
+                .prop = AREA_CONTINUOUS_PROP,
+                .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
+                .minSampleRate = 0.0,
+                .maxSampleRate = 1000.0,
+                .areaConfigs =
+                        {
+                                {
+
+                                        .areaId = toInt(VehicleAreaWindow::ROW_1_LEFT),
+                                        .minInt32Value = 0,
+                                        .maxInt32Value = 100,
+                                },
+                                {
+                                        .areaId = toInt(VehicleAreaWindow::ROW_1_RIGHT),
+                                        .minInt32Value = 0,
+                                        .maxInt32Value = 100,
+                                },
+                        },
+        });
         hardware->setPropertyConfigs(testConfigs);
         mHardwarePtr = hardware.get();
         mVhal = ndk::SharedRefBase::make<DefaultVehicleHal>(std::move(hardware));
@@ -263,7 +374,8 @@ class DefaultVehicleHalTest : public ::testing::Test {
 
     size_t countClients() {
         std::scoped_lock<std::mutex> lockGuard(mVhal->mLock);
-        return mVhal->mGetValuesClients.size() + mVhal->mSetValuesClients.size();
+        return mVhal->mGetValuesClients.size() + mVhal->mSetValuesClients.size() +
+               mVhal->mSubscriptionClients->countClients();
     }
 
   private:
@@ -781,6 +893,446 @@ TEST_F(DefaultVehicleHalTest, testSetValuesDuplicateRequestProps) {
     auto status = getClient()->setValues(getCallbackClient(), requests);
 
     ASSERT_FALSE(status.isOk()) << "duplicate request properties in one request must fail";
+}
+
+TEST_F(DefaultVehicleHalTest, testSubscribeUnsubscribe) {
+    std::vector<SubscribeOptions> options = {
+            {
+                    .propId = GLOBAL_ON_CHANGE_PROP,
+            },
+    };
+
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+
+    ASSERT_TRUE(status.isOk()) << "subscribe failed: " << status.getMessage();
+
+    status = getClient()->unsubscribe(getCallbackClient(),
+                                      std::vector<int32_t>({GLOBAL_ON_CHANGE_PROP}));
+
+    ASSERT_TRUE(status.isOk()) << "unsubscribe failed: " << status.getMessage();
+}
+
+TEST_F(DefaultVehicleHalTest, testSubscribeGlobalOnChangeNormal) {
+    std::vector<SubscribeOptions> options = {
+            {
+                    .propId = GLOBAL_ON_CHANGE_PROP,
+            },
+    };
+
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+
+    ASSERT_TRUE(status.isOk()) << "subscribe failed: " << status.getMessage();
+
+    VehiclePropValue testValue{
+            .prop = GLOBAL_ON_CHANGE_PROP,
+            .value.int32Values = {0},
+    };
+    SetValueRequests setValueRequests = {
+            .payloads =
+                    {
+                            SetValueRequest{
+                                    .requestId = 0,
+                                    .value = testValue,
+                            },
+                    },
+    };
+    std::vector<SetValueResult> setValueResults = {{
+            .requestId = 0,
+            .status = StatusCode::OK,
+    }};
+
+    // Set the value to trigger a property change event.
+    getHardware()->addSetValueResponses(setValueResults);
+    status = getClient()->setValues(getCallbackClient(), setValueRequests);
+
+    ASSERT_TRUE(status.isOk()) << "setValues failed: " << status.getMessage();
+
+    auto maybeResults = getCallback()->nextOnPropertyEventResults();
+    ASSERT_TRUE(maybeResults.has_value()) << "no results in callback";
+    ASSERT_THAT(maybeResults.value().payloads, UnorderedElementsAre(testValue))
+            << "results mismatch, expect on change event for the updated value";
+    ASSERT_FALSE(getCallback()->nextOnPropertyEventResults().has_value())
+            << "more results than expected";
+    EXPECT_EQ(countClients(), static_cast<size_t>(1));
+}
+
+TEST_F(DefaultVehicleHalTest, testSubscribeGlobalOnchangeUnrelatedEventIgnored) {
+    std::vector<SubscribeOptions> options = {
+            {
+                    .propId = GLOBAL_ON_CHANGE_PROP,
+            },
+    };
+
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+
+    ASSERT_TRUE(status.isOk()) << "subscribe failed: " << status.getMessage();
+
+    VehiclePropValue testValue{
+            .prop = GLOBAL_CONTINUOUS_PROP,
+            .value.int32Values = {0},
+    };
+
+    // Set the value to trigger a property change event. This event should be ignored because we
+    // have not subscribed to it.
+    getHardware()->addSetValueResponses({{
+            .requestId = 0,
+            .status = StatusCode::OK,
+    }});
+    status = getClient()->setValues(getCallbackClient(),
+                                    {
+                                            .payloads =
+                                                    {
+                                                            SetValueRequest{
+                                                                    .requestId = 0,
+                                                                    .value = testValue,
+                                                            },
+                                                    },
+                                    });
+
+    ASSERT_TRUE(status.isOk()) << "setValues failed: " << status.getMessage();
+
+    ASSERT_FALSE(getCallback()->nextOnPropertyEventResults().has_value())
+            << "must receive no property update event if the property is not subscribed";
+}
+
+TEST_F(DefaultVehicleHalTest, testSubscribeAreaOnChange) {
+    int testAreaId = toInt(VehicleAreaWindow::ROW_1_LEFT);
+    std::vector<SubscribeOptions> options = {
+            {
+                    .propId = AREA_ON_CHANGE_PROP,
+                    .areaIds = {testAreaId},
+            },
+    };
+
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+
+    ASSERT_TRUE(status.isOk()) << "subscribe failed: " << status.getMessage();
+
+    VehiclePropValue testValue{
+            .prop = AREA_ON_CHANGE_PROP,
+            .areaId = testAreaId,
+            .value.int32Values = {0},
+    };
+
+    // Set the value to trigger a property change event.
+    getHardware()->addSetValueResponses({{
+            .requestId = 0,
+            .status = StatusCode::OK,
+    }});
+    status = getClient()->setValues(getCallbackClient(),
+                                    {
+                                            .payloads =
+                                                    {
+                                                            SetValueRequest{
+                                                                    .requestId = 0,
+                                                                    .value = testValue,
+                                                            },
+                                                    },
+                                    });
+
+    ASSERT_TRUE(status.isOk()) << "setValues failed: " << status.getMessage();
+
+    auto maybeResults = getCallback()->nextOnPropertyEventResults();
+    ASSERT_TRUE(maybeResults.has_value()) << "no results in callback";
+    ASSERT_THAT(maybeResults.value().payloads, UnorderedElementsAre(testValue))
+            << "results mismatch, expect on change event for the updated value";
+    ASSERT_FALSE(getCallback()->nextOnPropertyEventResults().has_value())
+            << "more results than expected";
+}
+
+TEST_F(DefaultVehicleHalTest, testSubscribeAreaOnChangeAllAreas) {
+    std::vector<SubscribeOptions> options = {
+            {
+                    .propId = AREA_ON_CHANGE_PROP,
+                    // No areaIds means subscribing to all area IDs.
+                    .areaIds = {},
+            },
+    };
+
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+
+    ASSERT_TRUE(status.isOk()) << "subscribe failed: " << status.getMessage();
+
+    VehiclePropValue testValue1{
+            .prop = AREA_ON_CHANGE_PROP,
+            .areaId = toInt(VehicleAreaWindow::ROW_1_LEFT),
+            .value.int32Values = {0},
+    };
+    VehiclePropValue testValue2{
+            .prop = AREA_ON_CHANGE_PROP,
+            .areaId = toInt(VehicleAreaWindow::ROW_1_RIGHT),
+            .value.int32Values = {0},
+    };
+
+    // Set the values to trigger property change events for two areas.
+    getHardware()->addSetValueResponses({{
+                                                 .requestId = 0,
+                                                 .status = StatusCode::OK,
+                                         },
+                                         {
+                                                 .requestId = 1,
+                                                 .status = StatusCode::OK,
+                                         }});
+    status = getClient()->setValues(getCallbackClient(),
+                                    {
+                                            .payloads =
+                                                    {
+                                                            SetValueRequest{
+                                                                    .requestId = 0,
+                                                                    .value = testValue1,
+                                                            },
+                                                            SetValueRequest{
+                                                                    .requestId = 1,
+                                                                    .value = testValue2,
+                                                            },
+                                                    },
+                                    });
+
+    ASSERT_TRUE(status.isOk()) << "setValues failed: " << status.getMessage();
+
+    auto maybeResults = getCallback()->nextOnPropertyEventResults();
+    ASSERT_TRUE(maybeResults.has_value()) << "no results in callback";
+    ASSERT_THAT(maybeResults.value().payloads, UnorderedElementsAre(testValue1, testValue2))
+            << "results mismatch, expect two on-change events for all updated areas";
+    ASSERT_FALSE(getCallback()->nextOnPropertyEventResults().has_value())
+            << "more results than expected";
+}
+
+TEST_F(DefaultVehicleHalTest, testSubscribeGlobalContinuous) {
+    VehiclePropValue testValue{
+            .prop = GLOBAL_CONTINUOUS_PROP,
+            .value.int32Values = {0},
+    };
+    // Set responses for all the hardware getValues requests.
+    getHardware()->setGetValueResponder(
+            [](std::shared_ptr<const IVehicleHardware::GetValuesCallback> callback,
+               const std::vector<GetValueRequest>& requests) {
+                std::vector<GetValueResult> results;
+                for (auto& request : requests) {
+                    VehiclePropValue prop = request.prop;
+                    prop.value.int32Values = {0};
+                    results.push_back({
+                            .requestId = request.requestId,
+                            .status = StatusCode::OK,
+                            .prop = prop,
+                    });
+                }
+                (*callback)(results);
+                return StatusCode::OK;
+            });
+
+    std::vector<SubscribeOptions> options = {
+            {
+                    .propId = GLOBAL_CONTINUOUS_PROP,
+                    .sampleRate = 20.0,
+            },
+    };
+
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+
+    ASSERT_TRUE(status.isOk()) << "subscribe failed: " << status.getMessage();
+
+    // Sleep for 1s, which should generate ~20 events.
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    // Should trigger about 20 times, check for at least 15 events to be safe.
+    for (size_t i = 0; i < 15; i++) {
+        auto maybeResults = getCallback()->nextOnPropertyEventResults();
+        ASSERT_TRUE(maybeResults.has_value()) << "no results in callback";
+        ASSERT_THAT(maybeResults.value().payloads, UnorderedElementsAre(testValue))
+                << "results mismatch, expect to get the updated value";
+    }
+    EXPECT_EQ(countClients(), static_cast<size_t>(1));
+}
+
+TEST_F(DefaultVehicleHalTest, testSubscribeAreaContinuous) {
+    // Set responses for all the hardware getValues requests.
+    getHardware()->setGetValueResponder(
+            [](std::shared_ptr<const IVehicleHardware::GetValuesCallback> callback,
+               const std::vector<GetValueRequest>& requests) {
+                std::vector<GetValueResult> results;
+                for (auto& request : requests) {
+                    VehiclePropValue prop = request.prop;
+                    prop.value.int32Values = {0};
+                    results.push_back({
+                            .requestId = request.requestId,
+                            .status = StatusCode::OK,
+                            .prop = prop,
+                    });
+                }
+                (*callback)(results);
+                return StatusCode::OK;
+            });
+
+    std::vector<SubscribeOptions> options = {
+            {
+                    .propId = AREA_CONTINUOUS_PROP,
+                    .sampleRate = 20.0,
+                    .areaIds = {toInt(VehicleAreaWindow::ROW_1_LEFT)},
+            },
+            {
+                    .propId = AREA_CONTINUOUS_PROP,
+                    .sampleRate = 10.0,
+                    .areaIds = {toInt(VehicleAreaWindow::ROW_1_RIGHT)},
+            },
+    };
+
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+
+    ASSERT_TRUE(status.isOk()) << "subscribe failed: " << status.getMessage();
+
+    // Sleep for 1s, which should generate ~20 events.
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    std::vector<VehiclePropValue> events;
+    while (true) {
+        auto maybeResults = getCallback()->nextOnPropertyEventResults();
+        if (!maybeResults.has_value()) {
+            break;
+        }
+        for (const auto& value : maybeResults.value().payloads) {
+            events.push_back(value);
+        }
+    }
+
+    size_t leftCount = 0;
+    size_t rightCount = 0;
+
+    for (const auto& event : events) {
+        ASSERT_EQ(event.prop, AREA_CONTINUOUS_PROP);
+        if (event.areaId == toInt(VehicleAreaWindow::ROW_1_LEFT)) {
+            leftCount++;
+            continue;
+        }
+        rightCount++;
+    }
+
+    // Should trigger about 20 times, check for at least 15 events to be safe.
+    ASSERT_GE(leftCount, static_cast<size_t>(15));
+    // Should trigger about 10 times, check for at least 5 events to be safe.
+    ASSERT_GE(rightCount, static_cast<size_t>(5));
+}
+
+TEST_F(DefaultVehicleHalTest, testUnsubscribeOnChange) {
+    std::vector<SubscribeOptions> options = {
+            {
+                    .propId = GLOBAL_ON_CHANGE_PROP,
+            },
+    };
+
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+
+    ASSERT_TRUE(status.isOk()) << "subscribe failed: " << status.getMessage();
+
+    status = getClient()->unsubscribe(getCallbackClient(),
+                                      std::vector<int32_t>({GLOBAL_ON_CHANGE_PROP}));
+
+    ASSERT_TRUE(status.isOk()) << "unsubscribe failed: " << status.getMessage();
+
+    VehiclePropValue testValue{
+            .prop = GLOBAL_ON_CHANGE_PROP,
+            .value.int32Values = {0},
+    };
+
+    // Set the value to trigger a property change event.
+    getHardware()->addSetValueResponses({{
+            .requestId = 0,
+            .status = StatusCode::OK,
+    }});
+    status = getClient()->setValues(getCallbackClient(),
+                                    {
+                                            .payloads =
+                                                    {
+                                                            SetValueRequest{
+                                                                    .requestId = 0,
+                                                                    .value = testValue,
+                                                            },
+                                                    },
+                                    });
+
+    ASSERT_TRUE(status.isOk()) << "setValues failed: " << status.getMessage();
+
+    ASSERT_FALSE(getCallback()->nextOnPropertyEventResults().has_value())
+            << "No property event should be generated after unsubscription";
+}
+
+TEST_F(DefaultVehicleHalTest, testUnsubscribeContinuous) {
+    VehiclePropValue testValue{
+            .prop = GLOBAL_CONTINUOUS_PROP,
+            .value.int32Values = {0},
+    };
+    // Set responses for all the hardware getValues requests.
+    getHardware()->setGetValueResponder(
+            [](std::shared_ptr<const IVehicleHardware::GetValuesCallback> callback,
+               const std::vector<GetValueRequest>& requests) {
+                std::vector<GetValueResult> results;
+                for (auto& request : requests) {
+                    VehiclePropValue prop = request.prop;
+                    prop.value.int32Values = {0};
+                    results.push_back({
+                            .requestId = request.requestId,
+                            .status = StatusCode::OK,
+                            .prop = prop,
+                    });
+                }
+                (*callback)(results);
+                return StatusCode::OK;
+            });
+
+    std::vector<SubscribeOptions> options = {
+            {
+                    .propId = GLOBAL_CONTINUOUS_PROP,
+                    .sampleRate = 20.0,
+            },
+    };
+
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+
+    ASSERT_TRUE(status.isOk()) << "subscribe failed: " << status.getMessage();
+
+    status = getClient()->unsubscribe(getCallbackClient(),
+                                      std::vector<int32_t>({GLOBAL_CONTINUOUS_PROP}));
+
+    ASSERT_TRUE(status.isOk()) << "unsubscribe failed: " << status.getMessage();
+
+    // Clear existing events.
+    while (getCallback()->nextOnPropertyEventResults().has_value()) {
+        // Do nothing.
+    }
+
+    // Wait for a while, make sure no new events are generated.
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    ASSERT_FALSE(getCallback()->nextOnPropertyEventResults().has_value())
+            << "No property event should be generated after unsubscription";
+}
+
+class SubscribeInvalidOptionsTest
+    : public DefaultVehicleHalTest,
+      public testing::WithParamInterface<SubscribeInvalidOptionsTestCase> {};
+
+INSTANTIATE_TEST_SUITE_P(
+        SubscribeInvalidOptionsTests, SubscribeInvalidOptionsTest,
+        ::testing::ValuesIn(getSubscribeInvalidOptionsTestCases()),
+        [](const testing::TestParamInfo<SubscribeInvalidOptionsTest::ParamType>& info) {
+            return info.param.name;
+        });
+
+TEST_P(SubscribeInvalidOptionsTest, testSubscribeInvalidRequest) {
+    std::vector<SubscribeOptions> options = {GetParam().option};
+
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+
+    ASSERT_FALSE(status.isOk()) << "invalid subscribe options must fail";
+    ASSERT_EQ(status.getServiceSpecificError(), toInt(StatusCode::INVALID_ARG));
+}
+
+TEST_F(DefaultVehicleHalTest, testUnsubscribeFailure) {
+    auto status = getClient()->unsubscribe(getCallbackClient(),
+                                           std::vector<int32_t>({GLOBAL_ON_CHANGE_PROP}));
+
+    ASSERT_FALSE(status.isOk()) << "unsubscribe to a not-subscribed property must fail";
+    ASSERT_EQ(status.getServiceSpecificError(), toInt(StatusCode::INVALID_ARG));
 }
 
 }  // namespace vehicle

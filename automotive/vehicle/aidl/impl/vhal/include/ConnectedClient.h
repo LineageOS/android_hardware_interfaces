@@ -19,6 +19,7 @@
 
 #include "PendingRequestPool.h"
 
+#include <IVehicleHardware.h>
 #include <VehicleHalTypes.h>
 
 #include <aidl/android/hardware/automotive/vehicle/IVehicleCallback.h>
@@ -51,14 +52,14 @@ class ConnectedClient {
     // Gets the unique ID for this client.
     const void* id();
 
-    // Add client requests. The requests would be registered as pending requests until
+    // Adds client requests. The requests would be registered as pending requests until
     // {@code tryFinishRequests} is called for them.
     // Returns {@code INVALID_ARG} error if any of the requestIds are duplicate with one of the
     // pending request IDs or {@code TRY_AGAIN} error if the pending request pool is full and could
     // no longer add requests.
     ::android::base::Result<void> addRequests(const std::unordered_set<int64_t>& requestIds);
 
-    // Mark the requests as finished. Returns a list of request IDs that was pending and has been
+    // Marks the requests as finished. Returns a list of request IDs that was pending and has been
     // finished. It must be a set of the requested request IDs.
     std::unordered_set<int64_t> tryFinishRequests(const std::unordered_set<int64_t>& requestIds);
 
@@ -110,9 +111,15 @@ class SubscriptionClient final : public ConnectedClient {
                     callback);
 
     // Gets the callback to be called when the request for this client has finished.
-    std::shared_ptr<const std::function<
-            void(std::vector<::aidl::android::hardware::automotive::vehicle::GetValueResult>)>>
-    getResultCallback();
+    std::shared_ptr<const IVehicleHardware::GetValuesCallback> getResultCallback();
+
+    // Marshals the updated values into largeParcelable and sents it through {@code onPropertyEvent}
+    // callback.
+    static void sendUpdatedValues(
+            std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback>
+                    callback,
+            std::vector<::aidl::android::hardware::automotive::vehicle::VehiclePropValue>&&
+                    updatedValues);
 
   protected:
     // Gets the callback to be called when the request for this client has timeout.
@@ -121,9 +128,8 @@ class SubscriptionClient final : public ConnectedClient {
   private:
     // The following members are only initialized during construction.
     std::shared_ptr<const PendingRequestPool::TimeoutCallbackFunc> mTimeoutCallback;
-    std::shared_ptr<const std::function<void(
-            std::vector<::aidl::android::hardware::automotive::vehicle::GetValueResult>)>>
-            mResultCallback;
+    std::shared_ptr<const IVehicleHardware::GetValuesCallback> mResultCallback;
+    std::shared_ptr<const IVehicleHardware::PropertyChangeCallback> mPropertyChangeCallback;
 
     static void onGetValueResults(
             const void* clientId,
