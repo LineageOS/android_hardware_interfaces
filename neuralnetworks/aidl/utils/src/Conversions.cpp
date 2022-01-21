@@ -614,7 +614,7 @@ struct overloaded : Ts... {
     using Ts::operator()...;
 };
 template <class... Ts>
-overloaded(Ts...)->overloaded<Ts...>;
+overloaded(Ts...) -> overloaded<Ts...>;
 
 #ifdef __ANDROID__
 nn::GeneralResult<common::NativeHandle> aidlHandleFromNativeHandle(
@@ -1188,6 +1188,10 @@ nn::GeneralResult<std::vector<int32_t>> toSigned(const std::vector<uint32_t>& ve
         return NN_ERROR() << "Vector contains a value that doesn't fit into int32_t.";
     }
     return std::vector<int32_t>(vec.begin(), vec.end());
+}
+
+std::vector<uint8_t> toVec(const std::array<uint8_t, IDevice::BYTE_SIZE_OF_CACHE_TOKEN>& token) {
+    return std::vector<uint8_t>(token.begin(), token.end());
 }
 
 }  // namespace aidl::android::hardware::neuralnetworks::utils
