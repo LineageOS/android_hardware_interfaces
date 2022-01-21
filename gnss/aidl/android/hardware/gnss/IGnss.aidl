@@ -320,4 +320,25 @@ interface IGnss {
      * @return Handle to the IMeasurementCorrectionsInterface.
      */
     @nullable IMeasurementCorrectionsInterface getExtensionMeasurementCorrections();
+
+    /**
+     * Starts a SvStatus output stream using the IGnssCallback gnssSvStatusCb().
+     */
+    void startSvStatus();
+
+    /**
+     * Stops the SvStatus output stream.
+     */
+    void stopSvStatus();
+
+    /**
+     * Starts an NMEA (National Marine Electronics Association) output stream using the
+     * IGnssCallback gnssNmeaCb().
+     */
+    void startNmea();
+
+    /**
+     * Stops the NMEA output stream.
+     */
+    void stopNmea();
 }
