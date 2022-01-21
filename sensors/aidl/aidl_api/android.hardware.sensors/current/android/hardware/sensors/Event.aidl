@@ -54,6 +54,7 @@ parcelable Event {
     android.hardware.sensors.Event.EventPayload.HeadTracker headTracker;
     android.hardware.sensors.Event.EventPayload.LimitedAxesImu limitedAxesImu;
     android.hardware.sensors.Event.EventPayload.LimitedAxesImuUncal limitedAxesImuUncal;
+    android.hardware.sensors.Event.EventPayload.Heading heading;
     @FixedSize @VintfStability
     parcelable Vec4 {
       float x;
@@ -112,6 +113,11 @@ parcelable Event {
     parcelable HeartRate {
       float bpm;
       android.hardware.sensors.SensorStatus status;
+    }
+    @FixedSize @VintfStability
+    parcelable Heading {
+      float heading;
+      float accuracy;
     }
     @FixedSize @VintfStability
     parcelable MetaData {
