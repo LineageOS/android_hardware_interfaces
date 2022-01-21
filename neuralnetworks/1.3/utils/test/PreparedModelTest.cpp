@@ -182,7 +182,7 @@ TEST(PreparedModelTest, executeSync) {
             .WillOnce(Invoke(makeExecuteSynchronously(V1_3::ErrorStatus::NONE, {}, kNoTiming)));
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     EXPECT_TRUE(result.has_value())
@@ -200,7 +200,7 @@ TEST(PreparedModelTest, executeSyncError) {
                     makeExecuteSynchronously(V1_3::ErrorStatus::GENERAL_FAILURE, {}, kNoTiming)));
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -217,7 +217,7 @@ TEST(PreparedModelTest, executeSyncTransportFailure) {
             .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -234,7 +234,7 @@ TEST(PreparedModelTest, executeSyncDeadObject) {
             .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -252,7 +252,7 @@ TEST(PreparedModelTest, executeAsync) {
                                                        V1_3::ErrorStatus::NONE, {}, kNoTiming)));
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     EXPECT_TRUE(result.has_value())
@@ -271,7 +271,7 @@ TEST(PreparedModelTest, executeAsyncLaunchError) {
                                                        kNoTiming)));
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -289,7 +289,7 @@ TEST(PreparedModelTest, executeAsyncReturnError) {
                     V1_3::ErrorStatus::NONE, V1_3::ErrorStatus::GENERAL_FAILURE, {}, kNoTiming)));
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -306,7 +306,7 @@ TEST(PreparedModelTest, executeAsyncTransportFailure) {
             .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -323,7 +323,7 @@ TEST(PreparedModelTest, executeAsyncDeadObject) {
             .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -344,7 +344,7 @@ TEST(PreparedModelTest, executeAsyncCrash) {
             .WillOnce(InvokeWithoutArgs(ret));
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -366,7 +366,7 @@ TEST(PreparedModelTest, executeFenced) {
             .WillOnce(Invoke(makeExecuteFencedReturn(V1_3::ErrorStatus::NONE, {}, mockCallback)));
 
     // run test
-    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {});
+    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_TRUE(result.has_value())
@@ -396,7 +396,7 @@ TEST(PreparedModelTest, executeFencedCallbackError) {
             .WillOnce(Invoke(makeExecuteFencedReturn(V1_3::ErrorStatus::NONE, {}, mockCallback)));
 
     // run test
-    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {});
+    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_TRUE(result.has_value())
@@ -422,7 +422,7 @@ TEST(PreparedModelTest, executeFencedError) {
                     makeExecuteFencedReturn(V1_3::ErrorStatus::GENERAL_FAILURE, {}, nullptr)));
 
     // run test
-    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {});
+    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -439,7 +439,7 @@ TEST(PreparedModelTest, executeFencedTransportFailure) {
             .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
 
     // run test
-    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {});
+    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -456,7 +456,7 @@ TEST(PreparedModelTest, executeFencedDeadObject) {
             .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
 
     // run test
-    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {});
+    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -475,7 +475,7 @@ TEST(PreparedModelTest, reusableExecuteSync) {
                     Invoke(makeExecuteSynchronously(V1_3::ErrorStatus::NONE, {}, kNoTiming)));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -499,7 +499,7 @@ TEST(PreparedModelTest, reusableExecuteSyncError) {
                     makeExecuteSynchronously(V1_3::ErrorStatus::GENERAL_FAILURE, {}, kNoTiming)));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -520,7 +520,7 @@ TEST(PreparedModelTest, reusableExecuteSyncTransportFailure) {
             .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -541,7 +541,7 @@ TEST(PreparedModelTest, reusableExecuteSyncDeadObject) {
             .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -564,7 +564,7 @@ TEST(PreparedModelTest, reusableExecuteAsync) {
                     V1_3::ErrorStatus::NONE, V1_3::ErrorStatus::NONE, {}, kNoTiming)));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -589,7 +589,7 @@ TEST(PreparedModelTest, reusableExecuteAsyncLaunchError) {
                                                        kNoTiming)));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -611,7 +611,7 @@ TEST(PreparedModelTest, reusableExecuteAsyncReturnError) {
                     V1_3::ErrorStatus::NONE, V1_3::ErrorStatus::GENERAL_FAILURE, {}, kNoTiming)));
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -628,7 +628,7 @@ TEST(PreparedModelTest, reusableExecuteAsyncTransportFailure) {
             .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -649,7 +649,7 @@ TEST(PreparedModelTest, reusableExecuteAsyncDeadObject) {
             .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -674,7 +674,7 @@ TEST(PreparedModelTest, reusableExecuteAsyncCrash) {
             .WillOnce(InvokeWithoutArgs(ret));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -702,7 +702,7 @@ TEST(PreparedModelTest, reusableExecuteFenced) {
                     Invoke(makeExecuteFencedReturn(V1_3::ErrorStatus::NONE, {}, mockCallback)));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -738,7 +738,7 @@ TEST(PreparedModelTest, reusableExecuteFencedCallbackError) {
             .WillOnce(Invoke(makeExecuteFencedReturn(V1_3::ErrorStatus::NONE, {}, mockCallback)));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -768,7 +768,7 @@ TEST(PreparedModelTest, reusableExecuteFencedError) {
                     makeExecuteFencedReturn(V1_3::ErrorStatus::GENERAL_FAILURE, {}, nullptr)));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -789,7 +789,7 @@ TEST(PreparedModelTest, reusableExecuteFencedTransportFailure) {
             .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -810,7 +810,7 @@ TEST(PreparedModelTest, reusableExecuteFencedDeadObject) {
             .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);

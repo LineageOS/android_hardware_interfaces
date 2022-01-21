@@ -46,6 +46,25 @@ interface IGnssBatching {
      */
     const int WAKEUP_ON_FIFO_FULL = 0x01;
 
+    /** Options specifying the batching request. */
+    @VintfStability
+    parcelable Options {
+        /** Time interval between samples in the location batch, in nanoseconds. */
+        long periodNanos;
+
+        /**
+         * The minimum distance in meters that the batching engine should
+         * accumulate before trying another GPS fix when in a challenging GPS environment.
+         *
+         * This is an optional field. If it is set as 0, the chipset can operate in an automatic
+         * mode.
+         */
+        float minDistanceMeters;
+
+        /** A bit field of Flags (WAKEUP_ON_FIFO_FULL) indicating the batching behavior. */
+        int flags;
+    }
+
     /**
      * Open the interface and provides the callback routines to the implementation of this
      * interface.
@@ -83,10 +102,9 @@ interface IGnssBatching {
      * for using flushBatchedLocation to explicitly ask for the location as needed, to avoid it
      * being dropped.
      *
-     * @param periodNanos  Time interval between samples in the location batch, in nanoseconds
-     * @param flags  A bitfield of flags (WAKEUP_ON_FIFO_FULL) indicating the batching behavior
+     * @param options  Options specifying the batching request.
      */
-    void start(in long periodNanos, in int flags);
+    void start(in Options options);
 
     /**
      * Retrieve all batched locations currently stored.

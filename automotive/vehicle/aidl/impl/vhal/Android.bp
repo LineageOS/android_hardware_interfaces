@@ -57,6 +57,8 @@ cc_library {
         "src/ConnectedClient.cpp",
         "src/DefaultVehicleHal.cpp",
         "src/PendingRequestPool.cpp",
+        "src/RecurrentTimer.cpp",
+        "src/SubscriptionManager.cpp",
     ],
     static_libs: [
         "VehicleHalUtils",

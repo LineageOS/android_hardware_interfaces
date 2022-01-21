@@ -25,10 +25,16 @@
 #include <android-base/result.h>
 #include <utils/Log.h>
 
+#include <inttypes.h>
+#include <set>
+#include <unordered_set>
+
 namespace android {
 namespace hardware {
 namespace automotive {
 namespace vehicle {
+
+namespace {
 
 using ::aidl::android::hardware::automotive::vehicle::GetValueRequest;
 using ::aidl::android::hardware::automotive::vehicle::GetValueRequests;
@@ -51,8 +57,22 @@ using ::android::base::expected;
 using ::android::base::Result;
 using ::ndk::ScopedAStatus;
 
+std::string toString(const std::unordered_set<int64_t>& values) {
+    std::string str = "";
+    for (auto it = values.begin(); it != values.end(); it++) {
+        str += std::to_string(*it);
+        if (std::next(it, 1) != values.end()) {
+            str += ", ";
+        }
+    }
+    return str;
+}
+
+}  // namespace
+
 DefaultVehicleHal::DefaultVehicleHal(std::unique_ptr<IVehicleHardware> hardware)
-    : mVehicleHardware(std::move(hardware)) {
+    : mVehicleHardware(std::move(hardware)),
+      mPendingRequestPool(std::make_shared<PendingRequestPool>(TIMEOUT_IN_NANO)) {
     auto configs = mVehicleHardware->getAllPropertyConfigs();
     for (auto& config : configs) {
         mConfigsByPropId[config.prop] = config;
@@ -69,6 +89,76 @@ DefaultVehicleHal::DefaultVehicleHal(std::unique_ptr<IVehicleHardware> hardware)
     if (result.value() != nullptr) {
         mConfigFile = std::move(result.value());
     }
+
+    mSubscriptionManager = std::make_unique<SubscriptionManager>(
+            [this](const CallbackType& callback, const VehiclePropValue& value) {
+                getValueFromHardwareCallCallback(callback, value);
+            });
+}
+
+DefaultVehicleHal::~DefaultVehicleHal() {
+    // mSubscriptionManager has reference to this, so must be destroyed before other members.
+    mSubscriptionManager.reset();
+}
+
+template <class T>
+std::shared_ptr<T> DefaultVehicleHal::getOrCreateClient(
+        std::unordered_map<CallbackType, std::shared_ptr<T>>* clients,
+        const CallbackType& callback) {
+    if (clients->find(callback) == clients->end()) {
+        // TODO(b/204943359): Remove client from clients when linkToDeath is implemented.
+        (*clients)[callback] = std::make_shared<T>(mPendingRequestPool, callback);
+    }
+    return (*clients)[callback];
+}
+
+template std::shared_ptr<DefaultVehicleHal::GetValuesClient>
+DefaultVehicleHal::getOrCreateClient<DefaultVehicleHal::GetValuesClient>(
+        std::unordered_map<CallbackType, std::shared_ptr<GetValuesClient>>* clients,
+        const CallbackType& callback);
+template std::shared_ptr<DefaultVehicleHal::SetValuesClient>
+DefaultVehicleHal::getOrCreateClient<DefaultVehicleHal::SetValuesClient>(
+        std::unordered_map<CallbackType, std::shared_ptr<SetValuesClient>>* clients,
+        const CallbackType& callback);
+template std::shared_ptr<SubscriptionClient>
+DefaultVehicleHal::getOrCreateClient<SubscriptionClient>(
+        std::unordered_map<CallbackType, std::shared_ptr<SubscriptionClient>>* clients,
+        const CallbackType& callback);
+
+void DefaultVehicleHal::getValueFromHardwareCallCallback(const CallbackType& callback,
+                                                         const VehiclePropValue& value) {
+    int64_t subscribeId;
+    std::shared_ptr<SubscriptionClient> client;
+    {
+        std::scoped_lock<std::mutex> lockGuard(mLock);
+        // This is initialized to 0 if callback does not exist in the map.
+        subscribeId = (mSubscribeIdByClient[callback])++;
+        client = getOrCreateClient(&mSubscriptionClients, callback);
+    }
+    if (auto addRequestResult = client->addRequests({subscribeId}); !addRequestResult.ok()) {
+        ALOGE("subscribe[%" PRId64 "]: too many pending requests, ignore the getValue request",
+              subscribeId);
+        return;
+    }
+
+    std::vector<GetValueRequest> hardwareRequests = {{
+            .requestId = subscribeId,
+            .prop = value,
+    }};
+
+    if (StatusCode status =
+                mVehicleHardware->getValues(client->getResultCallback(), hardwareRequests);
+        status != StatusCode::OK) {
+        // If the hardware returns error, finish all the pending requests for this request because
+        // we never expect hardware to call callback for these requests.
+        client->tryFinishRequests({subscribeId});
+        ALOGE("subscribe[%" PRId64 "]: failed to get value from VehicleHardware, code: %d",
+              subscribeId, toInt(status));
+    }
+}
+
+void DefaultVehicleHal::setTimeout(int64_t timeoutInNano) {
+    mPendingRequestPool = std::make_unique<PendingRequestPool>(timeoutInNano);
 }
 
 ScopedAStatus DefaultVehicleHal::getAllPropConfigs(VehiclePropConfigs* output) {
@@ -83,27 +173,6 @@ ScopedAStatus DefaultVehicleHal::getAllPropConfigs(VehiclePropConfigs* output) {
     }
     return ScopedAStatus::ok();
 }
-
-template <class T>
-std::shared_ptr<T> DefaultVehicleHal::getOrCreateClient(
-        std::unordered_map<CallbackType, std::shared_ptr<T>>* clients,
-        const CallbackType& callback) {
-    if (clients->find(callback) == clients->end()) {
-        // TODO(b/204943359): Remove client from clients when linkToDeath is implemented.
-        (*clients)[callback] = std::make_shared<T>(callback);
-    }
-    return (*clients)[callback];
-}
-
-template std::shared_ptr<DefaultVehicleHal::GetValuesClient>
-DefaultVehicleHal::getOrCreateClient<DefaultVehicleHal::GetValuesClient>(
-        std::unordered_map<CallbackType, std::shared_ptr<GetValuesClient>>* clients,
-        const CallbackType& callback);
-
-template std::shared_ptr<DefaultVehicleHal::SetValuesClient>
-DefaultVehicleHal::getOrCreateClient<DefaultVehicleHal::SetValuesClient>(
-        std::unordered_map<CallbackType, std::shared_ptr<SetValuesClient>>* clients,
-        const CallbackType& callback);
 
 Result<void> DefaultVehicleHal::checkProperty(const VehiclePropValue& propValue) {
     int32_t propId = propValue.prop;
@@ -132,8 +201,6 @@ Result<void> DefaultVehicleHal::checkProperty(const VehiclePropValue& propValue)
 
 ScopedAStatus DefaultVehicleHal::getValues(const CallbackType& callback,
                                            const GetValueRequests& requests) {
-    // TODO(b/203713317): check for duplicate properties and duplicate request IDs.
-
     expected<LargeParcelableBase::BorrowedOwnedObject<GetValueRequests>, ScopedAStatus>
             deserializedResults = fromStableLargeParcelable(requests);
     if (!deserializedResults.ok()) {
@@ -143,26 +210,43 @@ ScopedAStatus DefaultVehicleHal::getValues(const CallbackType& callback,
     const std::vector<GetValueRequest>& getValueRequests =
             deserializedResults.value().getObject()->payloads;
 
+    auto maybeRequestIds = checkDuplicateRequests(getValueRequests);
+    if (!maybeRequestIds.ok()) {
+        ALOGE("getValues: duplicate request ID");
+        return toScopedAStatus(maybeRequestIds, StatusCode::INVALID_ARG);
+    }
+    // The set of request Ids that we would send to hardware.
+    std::unordered_set<int64_t> hardwareRequestIds(maybeRequestIds.value().begin(),
+                                                   maybeRequestIds.value().end());
+
     std::shared_ptr<GetValuesClient> client;
     {
         std::scoped_lock<std::mutex> lockGuard(mLock);
         client = getOrCreateClient(&mGetValuesClients, callback);
     }
+    // Register the pending hardware requests and also check for duplicate request Ids.
+    if (auto addRequestResult = client->addRequests(hardwareRequestIds); !addRequestResult.ok()) {
+        ALOGE("getValues[%s]: failed to add pending requests, error: %s",
+              toString(hardwareRequestIds).c_str(), addRequestResult.error().message().c_str());
+        return toScopedAStatus(addRequestResult);
+    }
 
     if (StatusCode status =
                 mVehicleHardware->getValues(client->getResultCallback(), getValueRequests);
         status != StatusCode::OK) {
+        // If the hardware returns error, finish all the pending requests for this request because
+        // we never expect hardware to call callback for these requests.
+        client->tryFinishRequests(hardwareRequestIds);
+        ALOGE("getValues[%s]: failed to get value from VehicleHardware, status: %d",
+              toString(hardwareRequestIds).c_str(), toInt(status));
         return ScopedAStatus::fromServiceSpecificErrorWithMessage(
                 toInt(status), "failed to get value from VehicleHardware");
     }
-
     return ScopedAStatus::ok();
 }
 
 ScopedAStatus DefaultVehicleHal::setValues(const CallbackType& callback,
                                            const SetValueRequests& requests) {
-    // TODO(b/203713317): check for duplicate properties and duplicate request IDs.
-
     expected<LargeParcelableBase::BorrowedOwnedObject<SetValueRequests>, ScopedAStatus>
             deserializedResults = fromStableLargeParcelable(requests);
     if (!deserializedResults.ok()) {
@@ -177,17 +261,31 @@ ScopedAStatus DefaultVehicleHal::setValues(const CallbackType& callback,
     // The list of requests that we would send to hardware.
     std::vector<SetValueRequest> hardwareRequests;
 
+    auto maybeRequestIds = checkDuplicateRequests(setValueRequests);
+    if (!maybeRequestIds.ok()) {
+        ALOGE("setValues: duplicate request ID");
+        return toScopedAStatus(maybeRequestIds, StatusCode::INVALID_ARG);
+    }
+
     for (auto& request : setValueRequests) {
         int64_t requestId = request.requestId;
         if (auto result = checkProperty(request.value); !result.ok()) {
-            ALOGW("property not valid: %s", result.error().message().c_str());
+            ALOGW("setValues[%" PRId64 "]: property not valid: %s", requestId,
+                  result.error().message().c_str());
             failedResults.push_back(SetValueResult{
                     .requestId = requestId,
                     .status = StatusCode::INVALID_ARG,
             });
             continue;
         }
+
         hardwareRequests.push_back(request);
+    }
+
+    // The set of request Ids that we would send to hardware.
+    std::unordered_set<int64_t> hardwareRequestIds;
+    for (const auto& request : hardwareRequests) {
+        hardwareRequestIds.insert(request.requestId);
     }
 
     std::shared_ptr<SetValuesClient> client;
@@ -196,19 +294,60 @@ ScopedAStatus DefaultVehicleHal::setValues(const CallbackType& callback,
         client = getOrCreateClient(&mSetValuesClients, callback);
     }
 
+    // Register the pending hardware requests and also check for duplicate request Ids.
+    if (auto addRequestResult = client->addRequests(hardwareRequestIds); !addRequestResult.ok()) {
+        ALOGE("setValues[%s], failed to add pending requests, error: %s",
+              toString(hardwareRequestIds).c_str(), addRequestResult.error().message().c_str());
+        return toScopedAStatus(addRequestResult, StatusCode::INVALID_ARG);
+    }
+
     if (!failedResults.empty()) {
+        // First send the failed results we already know back to the client.
         client->sendResults(failedResults);
     }
 
     if (StatusCode status =
                 mVehicleHardware->setValues(client->getResultCallback(), hardwareRequests);
         status != StatusCode::OK) {
+        // If the hardware returns error, finish all the pending requests for this request because
+        // we never expect hardware to call callback for these requests.
+        client->tryFinishRequests(hardwareRequestIds);
+        ALOGE("setValues[%s], failed to set value to VehicleHardware, status: %d",
+              toString(hardwareRequestIds).c_str(), toInt(status));
         return ScopedAStatus::fromServiceSpecificErrorWithMessage(
                 toInt(status), "failed to set value to VehicleHardware");
     }
 
     return ScopedAStatus::ok();
 }
+
+#define CHECK_DUPLICATE_REQUESTS(PROP_NAME)                                                      \
+    do {                                                                                         \
+        std::vector<int64_t> requestIds;                                                         \
+        std::set<::aidl::android::hardware::automotive::vehicle::VehiclePropValue> requestProps; \
+        for (const auto& request : requests) {                                                   \
+            const auto& prop = request.PROP_NAME;                                                \
+            if (requestProps.count(prop) != 0) {                                                 \
+                return ::android::base::Error()                                                  \
+                       << "duplicate request for property: " << prop.toString();                 \
+            }                                                                                    \
+            requestProps.insert(prop);                                                           \
+            requestIds.push_back(request.requestId);                                             \
+        }                                                                                        \
+        return requestIds;                                                                       \
+    } while (0);
+
+::android::base::Result<std::vector<int64_t>> DefaultVehicleHal::checkDuplicateRequests(
+        const std::vector<GetValueRequest>& requests) {
+    CHECK_DUPLICATE_REQUESTS(prop);
+}
+
+::android::base::Result<std::vector<int64_t>> DefaultVehicleHal::checkDuplicateRequests(
+        const std::vector<SetValueRequest>& requests) {
+    CHECK_DUPLICATE_REQUESTS(value);
+}
+
+#undef CHECK_DUPLICATE_REQUESTS
 
 ScopedAStatus DefaultVehicleHal::getPropConfigs(const std::vector<int32_t>& props,
                                                 VehiclePropConfigs* output) {
@@ -223,12 +362,10 @@ ScopedAStatus DefaultVehicleHal::getPropConfigs(const std::vector<int32_t>& prop
 
 ScopedAStatus DefaultVehicleHal::subscribe(const CallbackType&,
                                            const std::vector<SubscribeOptions>&, int32_t) {
-    // TODO(b/200737967): implement this.
     return ScopedAStatus::ok();
 }
 
 ScopedAStatus DefaultVehicleHal::unsubscribe(const CallbackType&, const std::vector<int32_t>&) {
-    // TODO(b/200737967): implement this.
     return ScopedAStatus::ok();
 }
 

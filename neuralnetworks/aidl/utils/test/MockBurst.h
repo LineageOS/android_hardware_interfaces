@@ -32,6 +32,10 @@ class MockBurst final : public BnBurst {
                  bool measureTiming, int64_t deadline, int64_t loopTimeoutDuration,
                  ExecutionResult* executionResult),
                 (override));
+    MOCK_METHOD(ndk::ScopedAStatus, executeSynchronouslyWithConfig,
+                (const Request& request, const std::vector<int64_t>& memoryIdentifierTokens,
+                 const ExecutionConfig& config, int64_t deadline, ExecutionResult* executionResult),
+                (override));
     MOCK_METHOD(ndk::ScopedAStatus, releaseMemoryResource, (int64_t memoryIdentifierToken),
                 (override));
 };

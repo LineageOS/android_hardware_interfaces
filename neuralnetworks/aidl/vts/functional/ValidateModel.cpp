@@ -77,6 +77,28 @@ static void validatePrepareModel(const std::shared_ptr<IDevice>& device, const s
     ASSERT_EQ(nullptr, preparedModel.get());
 }
 
+static void validatePrepareModelWithConfig(const std::shared_ptr<IDevice>& device,
+                                           const std::string& message, const Model& model,
+                                           ExecutionPreference preference, Priority priority) {
+    SCOPED_TRACE(message + " [prepareModelWithConfig]");
+
+    std::shared_ptr<PreparedModelCallback> preparedModelCallback =
+            ndk::SharedRefBase::make<PreparedModelCallback>();
+    const auto prepareLaunchStatus = device->prepareModelWithConfig(
+            model, {preference, priority, kNoDeadline, {}, {}, kEmptyCacheToken, {}, {}},
+            preparedModelCallback);
+    ASSERT_FALSE(prepareLaunchStatus.isOk());
+    ASSERT_EQ(prepareLaunchStatus.getExceptionCode(), EX_SERVICE_SPECIFIC);
+    ASSERT_EQ(static_cast<ErrorStatus>(prepareLaunchStatus.getServiceSpecificError()),
+              ErrorStatus::INVALID_ARGUMENT);
+
+    preparedModelCallback->wait();
+    ErrorStatus prepareReturnStatus = preparedModelCallback->getStatus();
+    ASSERT_EQ(ErrorStatus::INVALID_ARGUMENT, prepareReturnStatus);
+    std::shared_ptr<IPreparedModel> preparedModel = preparedModelCallback->getPreparedModel();
+    ASSERT_EQ(nullptr, preparedModel.get());
+}
+
 static bool validExecutionPreference(ExecutionPreference preference) {
     return preference == ExecutionPreference::LOW_POWER ||
            preference == ExecutionPreference::FAST_SINGLE_ANSWER ||
@@ -103,6 +125,13 @@ static void validate(const std::shared_ptr<IDevice>& device, const std::string& 
     }
 
     validatePrepareModel(device, message, model, preference, priority);
+
+    int32_t aidlVersion;
+    ASSERT_TRUE(device->getInterfaceVersion(&aidlVersion).isOk());
+    if (aidlVersion >= kMinAidlLevelForFL8) {
+        // prepareModelWithConfig must satisfy all requirements enforced by prepareModel.
+        validatePrepareModelWithConfig(device, message, model, preference, priority);
+    }
 }
 
 static uint32_t addOperand(Model* model) {

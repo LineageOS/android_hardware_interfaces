@@ -19,6 +19,8 @@
 
 #include "ConnectedClient.h"
 #include "ParcelableUtils.h"
+#include "PendingRequestPool.h"
+#include "SubscriptionManager.h"
 
 #include <IVehicleHardware.h>
 #include <VehicleUtils.h>
@@ -28,6 +30,7 @@
 #include <android/binder_auto_utils.h>
 
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 #include <vector>
 
@@ -49,6 +52,8 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
             std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback>;
 
     explicit DefaultVehicleHal(std::unique_ptr<IVehicleHardware> hardware);
+
+    ~DefaultVehicleHal();
 
     ::ndk::ScopedAStatus getAllPropConfigs(
             ::aidl::android::hardware::automotive::vehicle::VehiclePropConfigs* returnConfigs)
@@ -100,12 +105,20 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
             mConfigsByPropId;
     // Only modified in constructor, so thread-safe.
     std::unique_ptr<::ndk::ScopedFileDescriptor> mConfigFile;
+    // PendingRequestPool is thread-safe.
+    std::shared_ptr<PendingRequestPool> mPendingRequestPool;
+    // SubscriptionManager is thread-safe.
+    std::unique_ptr<SubscriptionManager> mSubscriptionManager;
 
     std::mutex mLock;
     std::unordered_map<CallbackType, std::shared_ptr<GetValuesClient>> mGetValuesClients
             GUARDED_BY(mLock);
     std::unordered_map<CallbackType, std::shared_ptr<SetValuesClient>> mSetValuesClients
             GUARDED_BY(mLock);
+    std::unordered_map<CallbackType, std::shared_ptr<SubscriptionClient>> mSubscriptionClients
+            GUARDED_BY(mLock);
+    // An increasing request ID we keep for subscribe clients.
+    std::unordered_map<CallbackType, int64_t> mSubscribeIdByClient GUARDED_BY(mLock);
 
     template <class T>
     std::shared_ptr<T> getOrCreateClient(
@@ -114,6 +127,22 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
 
     ::android::base::Result<void> checkProperty(
             const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue);
+
+    ::android::base::Result<std::vector<int64_t>> checkDuplicateRequests(
+            const std::vector<::aidl::android::hardware::automotive::vehicle::GetValueRequest>&
+                    requests);
+
+    ::android::base::Result<std::vector<int64_t>> checkDuplicateRequests(
+            const std::vector<::aidl::android::hardware::automotive::vehicle::SetValueRequest>&
+                    requests);
+
+    void getValueFromHardwareCallCallback(
+            const CallbackType& callback,
+            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
+
+    // Test-only
+    // Set the default timeout for pending requests.
+    void setTimeout(int64_t timeoutInNano);
 };
 
 }  // namespace vehicle

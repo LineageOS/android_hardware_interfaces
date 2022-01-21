@@ -74,7 +74,7 @@ PendingRequestPool::~PendingRequestPool() {
 
 Result<void> PendingRequestPool::addRequests(const void* clientId,
                                              const std::unordered_set<int64_t>& requestIds,
-                                             std::shared_ptr<TimeoutCallbackFunc> callback) {
+                                             std::shared_ptr<const TimeoutCallbackFunc> callback) {
     std::scoped_lock<std::mutex> lockGuard(mLock);
     std::list<PendingRequest>* pendingRequests;
     size_t pendingRequestCount = 0;
@@ -115,6 +115,18 @@ bool PendingRequestPool::isRequestPending(const void* clientId, int64_t requestI
     std::scoped_lock<std::mutex> lockGuard(mLock);
 
     return isRequestPendingLocked(clientId, requestId);
+}
+
+size_t PendingRequestPool::countPendingRequests() const {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+
+    size_t count = 0;
+    for (const auto& [clientId, requests] : mPendingRequestsByClient) {
+        for (const auto& request : requests) {
+            count += request.requestIds.size();
+        }
+    }
+    return count;
 }
 
 size_t PendingRequestPool::countPendingRequests(const void* clientId) const {

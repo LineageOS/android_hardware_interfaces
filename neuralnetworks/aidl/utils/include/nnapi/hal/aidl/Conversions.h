@@ -46,6 +46,10 @@
 #include <aidl/android/hardware/neuralnetworks/SymmPerChannelQuantParams.h>
 #include <aidl/android/hardware/neuralnetworks/Timing.h>
 
+#ifdef NN_AIDL_V4_OR_ABOVE
+#include <aidl/android/hardware/neuralnetworks/TokenValuePair.h>
+#endif  // NN_AIDL_V4_OR_ABOVE
+
 #include <android/binder_auto_utils.h>
 #include <nnapi/Result.h>
 #include <nnapi/Types.h>
@@ -74,7 +78,7 @@ GeneralResult<Operand::SymmPerChannelQuantParams> unvalidatedConvert(
         const aidl_hal::SymmPerChannelQuantParams& symmPerChannelQuantParams);
 GeneralResult<Operation> unvalidatedConvert(const aidl_hal::Operation& operation);
 GeneralResult<Model> unvalidatedConvert(const aidl_hal::Model& model);
-GeneralResult<Model::ExtensionNameAndPrefix> unvalidatedConvert(
+GeneralResult<ExtensionNameAndPrefix> unvalidatedConvert(
         const aidl_hal::ExtensionNameAndPrefix& extensionNameAndPrefix);
 GeneralResult<Model::OperandValues> unvalidatedConvert(const std::vector<uint8_t>& operandValues);
 GeneralResult<Model::Subgraph> unvalidatedConvert(const aidl_hal::Subgraph& subgraph);
@@ -97,6 +101,10 @@ GeneralResult<Extension::OperandTypeInformation> unvalidatedConvert(
         const aidl_hal::ExtensionOperandTypeInformation& operandTypeInformation);
 GeneralResult<SharedHandle> unvalidatedConvert(const ndk::ScopedFileDescriptor& handle);
 
+#ifdef NN_AIDL_V4_OR_ABOVE
+GeneralResult<TokenValuePair> unvalidatedConvert(const aidl_hal::TokenValuePair& tokenValuePair);
+#endif  // NN_AIDL_V4_OR_ABOVE
+
 GeneralResult<std::vector<Operation>> unvalidatedConvert(
         const std::vector<aidl_hal::Operation>& operations);
 
@@ -116,6 +124,14 @@ GeneralResult<BufferDesc> convert(const aidl_hal::BufferDesc& bufferDesc);
 
 GeneralResult<std::vector<Extension>> convert(const std::vector<aidl_hal::Extension>& extension);
 GeneralResult<std::vector<SharedMemory>> convert(const std::vector<aidl_hal::Memory>& memories);
+GeneralResult<std::vector<ExtensionNameAndPrefix>> convert(
+        const std::vector<aidl_hal::ExtensionNameAndPrefix>& extensionNameAndPrefix);
+
+#ifdef NN_AIDL_V4_OR_ABOVE
+GeneralResult<std::vector<TokenValuePair>> convert(
+        const std::vector<aidl_hal::TokenValuePair>& metaData);
+#endif  // NN_AIDL_V4_OR_ABOVE
+
 GeneralResult<std::vector<OutputShape>> convert(
         const std::vector<aidl_hal::OutputShape>& outputShapes);
 GeneralResult<std::vector<SharedHandle>> convert(
@@ -152,7 +168,7 @@ nn::GeneralResult<Subgraph> unvalidatedConvert(const nn::Model::Subgraph& subgra
 nn::GeneralResult<std::vector<uint8_t>> unvalidatedConvert(
         const nn::Model::OperandValues& operandValues);
 nn::GeneralResult<ExtensionNameAndPrefix> unvalidatedConvert(
-        const nn::Model::ExtensionNameAndPrefix& extensionNameToPrefix);
+        const nn::ExtensionNameAndPrefix& extensionNameToPrefix);
 nn::GeneralResult<Model> unvalidatedConvert(const nn::Model& model);
 nn::GeneralResult<Priority> unvalidatedConvert(const nn::Priority& priority);
 nn::GeneralResult<Request> unvalidatedConvert(const nn::Request& request);
@@ -165,6 +181,10 @@ nn::GeneralResult<ndk::ScopedFileDescriptor> unvalidatedConvert(const nn::SyncFe
 nn::GeneralResult<ndk::ScopedFileDescriptor> unvalidatedConvert(const nn::SharedHandle& handle);
 nn::GeneralResult<Capabilities> unvalidatedConvert(const nn::Capabilities& capabilities);
 nn::GeneralResult<Extension> unvalidatedConvert(const nn::Extension& extension);
+
+#ifdef NN_AIDL_V4_OR_ABOVE
+nn::GeneralResult<TokenValuePair> unvalidatedConvert(const nn::TokenValuePair& tokenValuePair);
+#endif  // NN_AIDL_V4_OR_ABOVE
 
 nn::GeneralResult<std::vector<uint8_t>> convert(const nn::CacheToken& cacheToken);
 nn::GeneralResult<BufferDesc> convert(const nn::BufferDesc& bufferDesc);
@@ -190,6 +210,13 @@ nn::GeneralResult<std::vector<ndk::ScopedFileDescriptor>> convert(
 nn::GeneralResult<std::vector<ndk::ScopedFileDescriptor>> convert(
         const std::vector<nn::SyncFence>& syncFences);
 nn::GeneralResult<std::vector<Extension>> convert(const std::vector<nn::Extension>& extensions);
+nn::GeneralResult<std::vector<ExtensionNameAndPrefix>> convert(
+        const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix);
+
+#ifdef NN_AIDL_V4_OR_ABOVE
+nn::GeneralResult<std::vector<TokenValuePair>> convert(
+        const std::vector<nn::TokenValuePair>& metaData);
+#endif  // NN_AIDL_V4_OR_ABOVE
 
 nn::GeneralResult<std::vector<int32_t>> toSigned(const std::vector<uint32_t>& vec);
 

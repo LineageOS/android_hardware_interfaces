@@ -43,12 +43,16 @@ class BurstExecution final : public nn::IExecution,
     static nn::GeneralResult<std::shared_ptr<const BurstExecution>> create(
             std::shared_ptr<const Burst> burst, Request request,
             std::vector<int64_t> memoryIdentifierTokens, bool measure, int64_t loopTimeoutDuration,
+            const std::vector<nn::TokenValuePair>& hints,
+            const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix,
             hal::utils::RequestRelocation relocation,
             std::vector<Burst::OptionalCacheHold> cacheHolds);
 
     BurstExecution(PrivateConstructorTag tag, std::shared_ptr<const Burst> burst, Request request,
                    std::vector<int64_t> memoryIdentifierTokens, bool measure,
-                   int64_t loopTimeoutDuration, hal::utils::RequestRelocation relocation,
+                   int64_t loopTimeoutDuration, const std::vector<nn::TokenValuePair>& hints,
+                   const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix,
+                   hal::utils::RequestRelocation relocation,
                    std::vector<Burst::OptionalCacheHold> cacheHolds);
 
     nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> compute(
@@ -64,6 +68,8 @@ class BurstExecution final : public nn::IExecution,
     const std::vector<int64_t> kMemoryIdentifierTokens;
     const bool kMeasure;
     const int64_t kLoopTimeoutDuration;
+    const std::vector<nn::TokenValuePair> kHints;
+    const std::vector<nn::ExtensionNameAndPrefix> kExtensionNameToPrefix;
     const hal::utils::RequestRelocation kRelocation;
     const std::vector<Burst::OptionalCacheHold> kCacheHolds;
 };
@@ -149,17 +155,20 @@ void Burst::MemoryCache::tryFreeMemory(const nn::SharedMemory& memory, int64_t i
 }
 
 nn::GeneralResult<std::shared_ptr<const Burst>> Burst::create(
-        std::shared_ptr<aidl_hal::IBurst> burst) {
+        std::shared_ptr<aidl_hal::IBurst> burst, nn::Version featureLevel) {
     if (burst == nullptr) {
         return NN_ERROR(nn::ErrorStatus::GENERAL_FAILURE)
                << "aidl_hal::utils::Burst::create must have non-null burst";
     }
 
-    return std::make_shared<const Burst>(PrivateConstructorTag{}, std::move(burst));
+    return std::make_shared<const Burst>(PrivateConstructorTag{}, std::move(burst), featureLevel);
 }
 
-Burst::Burst(PrivateConstructorTag /*tag*/, std::shared_ptr<aidl_hal::IBurst> burst)
-    : kBurst(std::move(burst)), kMemoryCache(std::make_shared<MemoryCache>(kBurst)) {
+Burst::Burst(PrivateConstructorTag /*tag*/, std::shared_ptr<aidl_hal::IBurst> burst,
+             nn::Version featureLevel)
+    : kBurst(std::move(burst)),
+      kMemoryCache(std::make_shared<MemoryCache>(kBurst)),
+      kFeatureLevel(featureLevel) {
     CHECK(kBurst != nullptr);
 }
 
@@ -170,8 +179,9 @@ Burst::OptionalCacheHold Burst::cacheMemory(const nn::SharedMemory& memory) cons
 
 nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Burst::execute(
         const nn::Request& request, nn::MeasureTiming measure,
-        const nn::OptionalTimePoint& deadline,
-        const nn::OptionalDuration& loopTimeoutDuration) const {
+        const nn::OptionalTimePoint& deadline, const nn::OptionalDuration& loopTimeoutDuration,
+        const std::vector<nn::TokenValuePair>& hints,
+        const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const {
     // Ensure that request is ready for IPC.
     std::optional<nn::Request> maybeRequestInShared;
     hal::utils::RequestRelocation relocation;
@@ -200,14 +210,14 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Burst::
         memoryIdentifierTokens.push_back(-1);
     }
     CHECK_EQ(requestInShared.pools.size(), memoryIdentifierTokens.size());
-
     return executeInternal(aidlRequest, memoryIdentifierTokens, aidlMeasure, aidlDeadline,
-                           aidlLoopTimeoutDuration, relocation);
+                           aidlLoopTimeoutDuration, hints, extensionNameToPrefix, relocation);
 }
 
 nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Burst::executeInternal(
         const Request& request, const std::vector<int64_t>& memoryIdentifierTokens, bool measure,
-        int64_t deadline, int64_t loopTimeoutDuration,
+        int64_t deadline, int64_t loopTimeoutDuration, const std::vector<nn::TokenValuePair>& hints,
+        const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix,
         const hal::utils::RequestRelocation& relocation) const {
     // Ensure that at most one execution is in flight at any given time.
     const bool alreadyInFlight = mExecutionInFlight.test_and_set();
@@ -221,9 +231,21 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Burst::
     }
 
     ExecutionResult executionResult;
-    const auto ret = kBurst->executeSynchronously(request, memoryIdentifierTokens, measure,
-                                                  deadline, loopTimeoutDuration, &executionResult);
-    HANDLE_ASTATUS(ret) << "execute failed";
+    if (kFeatureLevel.level >= nn::Version::Level::FEATURE_LEVEL_8) {
+        auto aidlHints = NN_TRY(convert(hints));
+        auto aidlExtensionPrefix = NN_TRY(convert(extensionNameToPrefix));
+        const auto ret = kBurst->executeSynchronouslyWithConfig(
+                request, memoryIdentifierTokens,
+                {measure, loopTimeoutDuration, std::move(aidlHints),
+                 std::move(aidlExtensionPrefix)},
+                deadline, &executionResult);
+        HANDLE_ASTATUS(ret) << "execute failed";
+    } else {
+        const auto ret =
+                kBurst->executeSynchronously(request, memoryIdentifierTokens, measure, deadline,
+                                             loopTimeoutDuration, &executionResult);
+        HANDLE_ASTATUS(ret) << "execute failed";
+    }
     if (!executionResult.outputSufficientSize) {
         auto canonicalOutputShapes =
                 nn::convert(executionResult.outputShapes).value_or(std::vector<nn::OutputShape>{});
@@ -241,7 +263,9 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Burst::
 
 nn::GeneralResult<nn::SharedExecution> Burst::createReusableExecution(
         const nn::Request& request, nn::MeasureTiming measure,
-        const nn::OptionalDuration& loopTimeoutDuration) const {
+        const nn::OptionalDuration& loopTimeoutDuration,
+        const std::vector<nn::TokenValuePair>& hints,
+        const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const {
     // Ensure that request is ready for IPC.
     std::optional<nn::Request> maybeRequestInShared;
     hal::utils::RequestRelocation relocation;
@@ -272,12 +296,15 @@ nn::GeneralResult<nn::SharedExecution> Burst::createReusableExecution(
 
     return BurstExecution::create(shared_from_this(), std::move(aidlRequest),
                                   std::move(memoryIdentifierTokens), aidlMeasure,
-                                  aidlLoopTimeoutDuration, std::move(relocation), std::move(holds));
+                                  aidlLoopTimeoutDuration, hints, extensionNameToPrefix,
+                                  std::move(relocation), std::move(holds));
 }
 
 nn::GeneralResult<std::shared_ptr<const BurstExecution>> BurstExecution::create(
         std::shared_ptr<const Burst> burst, Request request,
         std::vector<int64_t> memoryIdentifierTokens, bool measure, int64_t loopTimeoutDuration,
+        const std::vector<nn::TokenValuePair>& hints,
+        const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix,
         hal::utils::RequestRelocation relocation,
         std::vector<Burst::OptionalCacheHold> cacheHolds) {
     if (burst == nullptr) {
@@ -286,13 +313,15 @@ nn::GeneralResult<std::shared_ptr<const BurstExecution>> BurstExecution::create(
 
     return std::make_shared<const BurstExecution>(
             PrivateConstructorTag{}, std::move(burst), std::move(request),
-            std::move(memoryIdentifierTokens), measure, loopTimeoutDuration, std::move(relocation),
-            std::move(cacheHolds));
+            std::move(memoryIdentifierTokens), measure, loopTimeoutDuration, hints,
+            extensionNameToPrefix, std::move(relocation), std::move(cacheHolds));
 }
 
 BurstExecution::BurstExecution(PrivateConstructorTag /*tag*/, std::shared_ptr<const Burst> burst,
                                Request request, std::vector<int64_t> memoryIdentifierTokens,
                                bool measure, int64_t loopTimeoutDuration,
+                               const std::vector<nn::TokenValuePair>& hints,
+                               const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix,
                                hal::utils::RequestRelocation relocation,
                                std::vector<Burst::OptionalCacheHold> cacheHolds)
     : kBurst(std::move(burst)),
@@ -300,6 +329,8 @@ BurstExecution::BurstExecution(PrivateConstructorTag /*tag*/, std::shared_ptr<co
       kMemoryIdentifierTokens(std::move(memoryIdentifierTokens)),
       kMeasure(measure),
       kLoopTimeoutDuration(loopTimeoutDuration),
+      kHints(hints),
+      kExtensionNameToPrefix(extensionNameToPrefix),
       kRelocation(std::move(relocation)),
       kCacheHolds(std::move(cacheHolds)) {}
 
@@ -307,7 +338,8 @@ nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> BurstEx
         const nn::OptionalTimePoint& deadline) const {
     const auto aidlDeadline = NN_TRY(convert(deadline));
     return kBurst->executeInternal(kRequest, kMemoryIdentifierTokens, kMeasure, aidlDeadline,
-                                   kLoopTimeoutDuration, kRelocation);
+                                   kLoopTimeoutDuration, kHints, kExtensionNameToPrefix,
+                                   kRelocation);
 }
 
 nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>>
