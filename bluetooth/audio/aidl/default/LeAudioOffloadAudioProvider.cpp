@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "BTAudioProviderLeAudioSW"
+#define LOG_TAG "BTAudioProviderLeAudioHW"
 
 #include "LeAudioOffloadAudioProvider.h"
 

@@ -114,11 +114,6 @@ void BluetoothAudioSession::OnSessionEnded() {
 const AudioConfiguration& BluetoothAudioSession::GetAudioConfig() {
   std::lock_guard<std::recursive_mutex> guard(mutex_);
   if (!IsSessionReady()) {
-    if (session_type_ == SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH) {
-      return invalidOffloadAudioConfiguration;
-    } else {
-      return invalidSoftwareAudioConfiguration;
-    }
     switch (session_type_) {
       case SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH:
         return invalidOffloadAudioConfiguration;
