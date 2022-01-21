@@ -42,10 +42,10 @@ namespace vehicle {
 // This class is thread-safe.
 class ConnectedClient {
   public:
-    ConnectedClient(
-            std::shared_ptr<PendingRequestPool> requestPool,
-            std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback>
-                    callback);
+    using CallbackType =
+            std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback>;
+
+    ConnectedClient(std::shared_ptr<PendingRequestPool> requestPool, CallbackType callback);
 
     virtual ~ConnectedClient() = default;
 
@@ -68,8 +68,7 @@ class ConnectedClient {
     virtual std::shared_ptr<const PendingRequestPool::TimeoutCallbackFunc> getTimeoutCallback() = 0;
 
     const std::shared_ptr<PendingRequestPool> mRequestPool;
-    const std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback>
-            mCallback;
+    const CallbackType mCallback;
 };
 
 // A class to represent a client that calls {@code IVehicle.setValues} or {@code
@@ -77,10 +76,7 @@ class ConnectedClient {
 template <class ResultType, class ResultsType>
 class GetSetValuesClient final : public ConnectedClient {
   public:
-    GetSetValuesClient(
-            std::shared_ptr<PendingRequestPool> requestPool,
-            std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback>
-                    callback);
+    GetSetValuesClient(std::shared_ptr<PendingRequestPool> requestPool, CallbackType callback);
 
     // Sends the results to this client.
     void sendResults(const std::vector<ResultType>& results);
@@ -105,10 +101,7 @@ class GetSetValuesClient final : public ConnectedClient {
 // A class to represent a client that calls {@code IVehicle.subscribe}.
 class SubscriptionClient final : public ConnectedClient {
   public:
-    SubscriptionClient(
-            std::shared_ptr<PendingRequestPool> requestPool,
-            std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback>
-                    callback);
+    SubscriptionClient(std::shared_ptr<PendingRequestPool> requestPool, CallbackType callback);
 
     // Gets the callback to be called when the request for this client has finished.
     std::shared_ptr<const IVehicleHardware::GetValuesCallback> getResultCallback();
@@ -116,8 +109,7 @@ class SubscriptionClient final : public ConnectedClient {
     // Marshals the updated values into largeParcelable and sents it through {@code onPropertyEvent}
     // callback.
     static void sendUpdatedValues(
-            std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback>
-                    callback,
+            CallbackType callback,
             std::vector<::aidl::android::hardware::automotive::vehicle::VehiclePropValue>&&
                     updatedValues);
 
@@ -132,9 +124,7 @@ class SubscriptionClient final : public ConnectedClient {
     std::shared_ptr<const IVehicleHardware::PropertyChangeCallback> mPropertyChangeCallback;
 
     static void onGetValueResults(
-            const void* clientId,
-            std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback>
-                    callback,
+            const void* clientId, CallbackType callback,
             std::shared_ptr<PendingRequestPool> requestPool,
             std::vector<::aidl::android::hardware::automotive::vehicle::GetValueResult> results);
 };
