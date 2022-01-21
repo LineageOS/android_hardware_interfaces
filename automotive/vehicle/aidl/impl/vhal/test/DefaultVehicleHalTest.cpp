@@ -73,6 +73,7 @@ using ::android::base::Result;
 
 using ::ndk::ScopedAStatus;
 using ::ndk::ScopedFileDescriptor;
+using ::ndk::SpAIBinder;
 
 using ::testing::Eq;
 using ::testing::UnorderedElementsAre;
@@ -324,7 +325,12 @@ class DefaultVehicleHalTest : public ::testing::Test {
         mVhal = ndk::SharedRefBase::make<DefaultVehicleHal>(std::move(hardware));
         mVhalClient = IVehicle::fromBinder(mVhal->asBinder());
         mCallback = ndk::SharedRefBase::make<MockVehicleCallback>();
-        mCallbackClient = IVehicleCallback::fromBinder(mCallback->asBinder());
+        // Keep the local binder alive.
+        mBinder = mCallback->asBinder();
+        mCallbackClient = IVehicleCallback::fromBinder(mBinder);
+
+        // Set the linkToDeath to a fake implementation that always returns OK.
+        setTestLinkToDeathImpl();
     }
 
     void TearDown() override {
@@ -342,9 +348,35 @@ class DefaultVehicleHalTest : public ::testing::Test {
 
     void setTimeout(int64_t timeoutInNano) { mVhal->setTimeout(timeoutInNano); }
 
+    void setTestLinkToDeathImpl() {
+        mVhal->setLinkToDeathImpl(std::make_unique<TestLinkToDeathImpl>());
+    }
+
     size_t countPendingRequests() { return mVhal->mPendingRequestPool->countPendingRequests(); }
 
+    size_t countClients() {
+        std::scoped_lock<std::mutex> lockGuard(mVhal->mLock);
+        return mVhal->mGetValuesClients.size() + mVhal->mSetValuesClients.size() +
+               mVhal->mSubscriptionClients->countClients();
+    }
+
     std::shared_ptr<PendingRequestPool> getPool() { return mVhal->mPendingRequestPool; }
+
+    void onBinderDied(void* cookie) { return mVhal->onBinderDied(cookie); }
+
+    void onBinderUnlinked(void* cookie) { return mVhal->onBinderUnlinked(cookie); }
+
+    void* getOnBinderDiedContexts(AIBinder* clientId) {
+        std::scoped_lock<std::mutex> lockGuard(mVhal->mLock);
+        return mVhal->mOnBinderDiedContexts[clientId].get();
+    }
+
+    bool countOnBinderDiedContexts() {
+        std::scoped_lock<std::mutex> lockGuard(mVhal->mLock);
+        return mVhal->mOnBinderDiedContexts.size();
+    }
+
+    bool hasNoSubscriptions() { return mVhal->mSubscriptionManager->isEmpty(); }
 
     static Result<void> getValuesTestCases(size_t size, GetValueRequests& requests,
                                            std::vector<GetValueResult>& expectedResults,
@@ -416,18 +448,20 @@ class DefaultVehicleHalTest : public ::testing::Test {
         return {};
     }
 
-    size_t countClients() {
-        std::scoped_lock<std::mutex> lockGuard(mVhal->mLock);
-        return mVhal->mGetValuesClients.size() + mVhal->mSetValuesClients.size() +
-               mVhal->mSubscriptionClients->countClients();
-    }
-
   private:
     std::shared_ptr<DefaultVehicleHal> mVhal;
     std::shared_ptr<IVehicle> mVhalClient;
     MockVehicleHardware* mHardwarePtr;
     std::shared_ptr<MockVehicleCallback> mCallback;
     std::shared_ptr<IVehicleCallback> mCallbackClient;
+    SpAIBinder mBinder;
+
+    class TestLinkToDeathImpl final : public DefaultVehicleHal::ILinkToDeath {
+      public:
+        binder_status_t linkToDeath(AIBinder*, AIBinder_DeathRecipient*, void*) override {
+            return STATUS_OK;
+        }
+    };
 };
 
 TEST_F(DefaultVehicleHalTest, testGetAllPropConfigsSmall) {
@@ -1443,6 +1477,71 @@ TEST_F(DefaultVehicleHalTest, testHeartbeatEvent) {
     ASSERT_EQ(gotValue.value.int64Values.size(), static_cast<size_t>(1));
     ASSERT_GE(gotValue.value.int64Values[0], currentTime)
             << "expect to get the latest timestamp with the heartbeat event";
+}
+
+TEST_F(DefaultVehicleHalTest, testOnBinderDiedUnlinked) {
+    // First subscribe to a continuous property so that we register a death recipient for our
+    // client.
+    VehiclePropValue testValue{
+            .prop = GLOBAL_CONTINUOUS_PROP,
+            .value.int32Values = {0},
+    };
+    // Set responses for all the hardware getValues requests.
+    getHardware()->setGetValueResponder(
+            [](std::shared_ptr<const IVehicleHardware::GetValuesCallback> callback,
+               const std::vector<GetValueRequest>& requests) {
+                std::vector<GetValueResult> results;
+                for (auto& request : requests) {
+                    VehiclePropValue prop = request.prop;
+                    prop.value.int32Values = {0};
+                    results.push_back({
+                            .requestId = request.requestId,
+                            .status = StatusCode::OK,
+                            .prop = prop,
+                    });
+                }
+                (*callback)(results);
+                return StatusCode::OK;
+            });
+    std::vector<SubscribeOptions> options = {
+            {
+                    .propId = GLOBAL_CONTINUOUS_PROP,
+                    .sampleRate = 20.0,
+            },
+    };
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+    ASSERT_TRUE(status.isOk()) << "subscribe failed: " << status.getMessage();
+    // Sleep for 100ms so that the subscriptionClient gets created because we would at least try to
+    // get value once.
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    // Issue another getValue request on the same client.
+    GetValueRequests requests;
+    std::vector<GetValueResult> expectedResults;
+    std::vector<GetValueRequest> expectedHardwareRequests;
+    ASSERT_TRUE(getValuesTestCases(1, requests, expectedResults, expectedHardwareRequests).ok());
+    getHardware()->addGetValueResponses(expectedResults);
+    status = getClient()->getValues(getCallbackClient(), requests);
+    ASSERT_TRUE(status.isOk()) << "getValues failed: " << status.getMessage();
+
+    ASSERT_EQ(countOnBinderDiedContexts(), static_cast<size_t>(1))
+            << "expect one OnBinderDied context when one client is registered";
+
+    // Get the death recipient cookie for our callback that would be used in onBinderDied and
+    // onBinderUnlinked.
+    AIBinder* clientId = getCallbackClient()->asBinder().get();
+    void* context = getOnBinderDiedContexts(clientId);
+
+    onBinderDied(context);
+
+    ASSERT_EQ(countClients(), static_cast<size_t>(0))
+            << "expect all clients to be removed when binder died";
+    ASSERT_TRUE(hasNoSubscriptions()) << "expect no subscriptions when binder died";
+
+    onBinderUnlinked(context);
+
+    ASSERT_EQ(countOnBinderDiedContexts(), static_cast<size_t>(0))
+            << "expect OnBinderDied context to be deleted when binder is unlinked";
 }
 
 }  // namespace vehicle

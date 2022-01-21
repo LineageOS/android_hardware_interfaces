@@ -42,7 +42,6 @@ using ::aidl::android::hardware::automotive::vehicle::GetValueRequest;
 using ::aidl::android::hardware::automotive::vehicle::GetValueRequests;
 using ::aidl::android::hardware::automotive::vehicle::GetValueResult;
 using ::aidl::android::hardware::automotive::vehicle::GetValueResults;
-using ::aidl::android::hardware::automotive::vehicle::IVehicleCallback;
 using ::aidl::android::hardware::automotive::vehicle::SetValueRequest;
 using ::aidl::android::hardware::automotive::vehicle::SetValueRequests;
 using ::aidl::android::hardware::automotive::vehicle::SetValueResult;
@@ -62,6 +61,8 @@ using ::android::base::Error;
 using ::android::base::expected;
 using ::android::base::Result;
 using ::android::base::StringPrintf;
+
+using ::ndk::ScopedAIBinder_DeathRecipient;
 using ::ndk::ScopedAStatus;
 
 std::string toString(const std::unordered_set<int64_t>& values) {
@@ -86,8 +87,13 @@ std::shared_ptr<SubscriptionClient> DefaultVehicleHal::SubscriptionClients::getC
 int64_t DefaultVehicleHal::SubscribeIdByClient::getId(const CallbackType& callback) {
     std::scoped_lock<std::mutex> lockGuard(mLock);
     // This would be initialized to 0 if callback does not exist in the map.
-    int64_t subscribeId = (mIds[callback])++;
+    int64_t subscribeId = (mIds[callback->asBinder().get()])++;
     return subscribeId;
+}
+
+void DefaultVehicleHal::SubscriptionClients::removeClient(const AIBinder* clientId) {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    mClients.erase(clientId);
 }
 
 size_t DefaultVehicleHal::SubscriptionClients::countClients() {
@@ -139,6 +145,17 @@ DefaultVehicleHal::DefaultVehicleHal(std::unique_ptr<IVehicleHardware> hardware)
             std::make_shared<std::function<void()>>([hardwareCopy, subscriptionManagerCopy]() {
                 checkHealth(hardwareCopy, subscriptionManagerCopy);
             }));
+
+    mLinkToDeathImpl = std::make_unique<AIBinderLinkToDeathImpl>();
+    mDeathRecipient = ScopedAIBinder_DeathRecipient(
+            AIBinder_DeathRecipient_new(&DefaultVehicleHal::onBinderDied));
+    AIBinder_DeathRecipient_setOnUnlinked(mDeathRecipient.get(),
+                                          &DefaultVehicleHal::onBinderUnlinked);
+}
+
+DefaultVehicleHal::~DefaultVehicleHal() {
+    // Delete the deathRecipient so that onBinderDied would not be called to reference 'this'.
+    mDeathRecipient = ScopedAIBinder_DeathRecipient();
 }
 
 void DefaultVehicleHal::onPropertyChangeEvent(
@@ -161,26 +178,73 @@ void DefaultVehicleHal::onPropertyChangeEvent(
 
 template <class T>
 std::shared_ptr<T> DefaultVehicleHal::getOrCreateClient(
-        std::unordered_map<CallbackType, std::shared_ptr<T>>* clients, const CallbackType& callback,
-        std::shared_ptr<PendingRequestPool> pendingRequestPool) {
-    if (clients->find(callback) == clients->end()) {
-        // TODO(b/204943359): Remove client from clients when linkToDeath is implemented.
-        (*clients)[callback] = std::make_shared<T>(pendingRequestPool, callback);
+        std::unordered_map<const AIBinder*, std::shared_ptr<T>>* clients,
+        const CallbackType& callback, std::shared_ptr<PendingRequestPool> pendingRequestPool) {
+    const AIBinder* clientId = callback->asBinder().get();
+    if (clients->find(clientId) == clients->end()) {
+        (*clients)[clientId] = std::make_shared<T>(pendingRequestPool, callback);
     }
-    return (*clients)[callback];
+    return (*clients)[clientId];
+}
+
+void DefaultVehicleHal::monitorBinderLifeCycle(const CallbackType& callback) {
+    AIBinder* clientId = callback->asBinder().get();
+    {
+        std::scoped_lock<std::mutex> lockGuard(mLock);
+        if (mOnBinderDiedContexts.find(clientId) != mOnBinderDiedContexts.end()) {
+            // Already registered.
+            return;
+        }
+    }
+
+    std::unique_ptr<OnBinderDiedContext> context = std::make_unique<OnBinderDiedContext>(
+            OnBinderDiedContext{.vhal = this, .clientId = clientId});
+    binder_status_t status = mLinkToDeathImpl->linkToDeath(clientId, mDeathRecipient.get(),
+                                                           static_cast<void*>(context.get()));
+    if (status == STATUS_OK) {
+        std::scoped_lock<std::mutex> lockGuard(mLock);
+        // Insert into a map to keep the context object alive.
+        mOnBinderDiedContexts[clientId] = std::move(context);
+    } else {
+        ALOGE("failed to call linkToDeath on client binder, status: %d", static_cast<int>(status));
+    }
+}
+
+void DefaultVehicleHal::onBinderDied(void* cookie) {
+    OnBinderDiedContext* context = reinterpret_cast<OnBinderDiedContext*>(cookie);
+    context->vhal->onBinderDiedWithContext(context->clientId);
+}
+
+void DefaultVehicleHal::onBinderDiedWithContext(const AIBinder* clientId) {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    mSetValuesClients.erase(clientId);
+    mGetValuesClients.erase(clientId);
+    mSubscriptionClients->removeClient(clientId);
+    mSubscriptionManager->unsubscribe(clientId);
+}
+
+void DefaultVehicleHal::onBinderUnlinked(void* cookie) {
+    // Delete the context associated with this cookie.
+    OnBinderDiedContext* context = reinterpret_cast<OnBinderDiedContext*>(cookie);
+    context->vhal->onBinderUnlinkedWithContext(context->clientId);
+}
+
+void DefaultVehicleHal::onBinderUnlinkedWithContext(const AIBinder* clientId) {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    mOnBinderDiedContexts.erase(clientId);
 }
 
 template std::shared_ptr<DefaultVehicleHal::GetValuesClient>
 DefaultVehicleHal::getOrCreateClient<DefaultVehicleHal::GetValuesClient>(
-        std::unordered_map<CallbackType, std::shared_ptr<GetValuesClient>>* clients,
+        std::unordered_map<const AIBinder*, std::shared_ptr<GetValuesClient>>* clients,
         const CallbackType& callback, std::shared_ptr<PendingRequestPool> pendingRequestPool);
 template std::shared_ptr<DefaultVehicleHal::SetValuesClient>
 DefaultVehicleHal::getOrCreateClient<DefaultVehicleHal::SetValuesClient>(
-        std::unordered_map<CallbackType, std::shared_ptr<SetValuesClient>>* clients,
+        std::unordered_map<const AIBinder*, std::shared_ptr<SetValuesClient>>* clients,
         const CallbackType& callback, std::shared_ptr<PendingRequestPool> pendingRequestPool);
 template std::shared_ptr<SubscriptionClient>
 DefaultVehicleHal::getOrCreateClient<SubscriptionClient>(
-        std::unordered_map<CallbackType, std::shared_ptr<SubscriptionClient>>* clients,
+        std::unordered_map<const AIBinder*, std::shared_ptr<SubscriptionClient>>* clients,
         const CallbackType& callback, std::shared_ptr<PendingRequestPool> pendingRequestPool);
 
 void DefaultVehicleHal::getValueFromHardwareCallCallback(
@@ -268,6 +332,8 @@ Result<void> DefaultVehicleHal::checkProperty(const VehiclePropValue& propValue)
 
 ScopedAStatus DefaultVehicleHal::getValues(const CallbackType& callback,
                                            const GetValueRequests& requests) {
+    monitorBinderLifeCycle(callback);
+
     expected<LargeParcelableBase::BorrowedOwnedObject<GetValueRequests>, ScopedAStatus>
             deserializedResults = fromStableLargeParcelable(requests);
     if (!deserializedResults.ok()) {
@@ -344,6 +410,8 @@ ScopedAStatus DefaultVehicleHal::getValues(const CallbackType& callback,
 
 ScopedAStatus DefaultVehicleHal::setValues(const CallbackType& callback,
                                            const SetValueRequests& requests) {
+    monitorBinderLifeCycle(callback);
+
     expected<LargeParcelableBase::BorrowedOwnedObject<SetValueRequests>, ScopedAStatus>
             deserializedResults = fromStableLargeParcelable(requests);
     if (!deserializedResults.ok()) {
@@ -526,6 +594,8 @@ Result<void> DefaultVehicleHal::checkSubscribeOptions(
 ScopedAStatus DefaultVehicleHal::subscribe(const CallbackType& callback,
                                            const std::vector<SubscribeOptions>& options,
                                            [[maybe_unused]] int32_t maxSharedMemoryFileCount) {
+    monitorBinderLifeCycle(callback);
+
     // TODO(b/205189110): Use shared memory file count.
     if (auto result = checkSubscribeOptions(options); !result.ok()) {
         ALOGE("subscribe: invalid subscribe options: %s", getErrorMsg(result).c_str());
@@ -571,7 +641,7 @@ ScopedAStatus DefaultVehicleHal::subscribe(const CallbackType& callback,
 
 ScopedAStatus DefaultVehicleHal::unsubscribe(const CallbackType& callback,
                                              const std::vector<int32_t>& propIds) {
-    return toScopedAStatus(mSubscriptionManager->unsubscribe(callback, propIds),
+    return toScopedAStatus(mSubscriptionManager->unsubscribe(callback->asBinder().get(), propIds),
                            StatusCode::INVALID_ARG);
 }
 
@@ -637,6 +707,15 @@ void DefaultVehicleHal::checkHealth(std::weak_ptr<IVehicleHardware> hardware,
     }};
     onPropertyChangeEvent(subscriptionManager, values);
     return;
+}
+
+binder_status_t DefaultVehicleHal::AIBinderLinkToDeathImpl::linkToDeath(
+        AIBinder* binder, AIBinder_DeathRecipient* recipient, void* cookie) {
+    return AIBinder_linkToDeath(binder, recipient, cookie);
+}
+
+void DefaultVehicleHal::setLinkToDeathImpl(std::unique_ptr<ILinkToDeath> impl) {
+    mLinkToDeathImpl = std::move(impl);
 }
 
 }  // namespace vehicle
