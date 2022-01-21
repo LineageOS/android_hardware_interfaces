@@ -58,6 +58,7 @@ AidlSensorInfo convertSensorInfo(const V2_1SensorInfo& sensorInfo) {
 }
 
 void convertToHidlEvent(const AidlEvent& aidlEvent, V2_1Event* hidlEvent) {
+    static_assert(decltype(hidlEvent->u.data)::elementCount() == 16);
     hidlEvent->timestamp = aidlEvent.timestamp;
     hidlEvent->sensorHandle = aidlEvent.sensorHandle;
     hidlEvent->sensorType = (V2_1SensorType)aidlEvent.sensorType;
@@ -177,16 +178,33 @@ void convertToHidlEvent(const AidlEvent& aidlEvent, V2_1Event* hidlEvent) {
             }
             break;
         }
-        default:
+        case AidlSensorType::HEAD_TRACKER: {
+            const auto& ht = aidlEvent.payload.get<Event::EventPayload::headTracker>();
+            hidlEvent->u.data[0] = ht.rx;
+            hidlEvent->u.data[1] = ht.ry;
+            hidlEvent->u.data[2] = ht.rz;
+            hidlEvent->u.data[3] = ht.vx;
+            hidlEvent->u.data[4] = ht.vy;
+            hidlEvent->u.data[5] = ht.vz;
+
+            // IMPORTANT: Because we want to preserve the data range of discontinuityCount,
+            // we assume the data can be interpreted as an int32_t directly (e.g. the underlying
+            // HIDL HAL must be using memcpy or equivalent to store this value).
+            *(reinterpret_cast<int32_t*>(&hidlEvent->u.data[6])) = ht.discontinuityCount;
+            break;
+        }
+        default: {
             CHECK_GE((int32_t)aidlEvent.sensorType, (int32_t)SensorType::DEVICE_PRIVATE_BASE);
             std::copy(std::begin(aidlEvent.payload.get<AidlEvent::EventPayload::data>().values),
                       std::end(aidlEvent.payload.get<AidlEvent::EventPayload::data>().values),
                       hidlEvent->u.data.data());
             break;
+        }
     }
 }
 
 void convertToAidlEvent(const V2_1Event& hidlEvent, AidlEvent* aidlEvent) {
+    static_assert(decltype(hidlEvent.u.data)::elementCount() == 16);
     aidlEvent->timestamp = hidlEvent.timestamp;
     aidlEvent->sensorHandle = hidlEvent.sensorHandle;
     aidlEvent->sensorType = (AidlSensorType)hidlEvent.sensorType;
@@ -304,11 +322,32 @@ void convertToAidlEvent(const V2_1Event& hidlEvent, AidlEvent* aidlEvent) {
             break;
         }
         default: {
-            CHECK_GE((int32_t)hidlEvent.sensorType, (int32_t)V2_1SensorType::DEVICE_PRIVATE_BASE);
-            AidlEvent::EventPayload::Data data;
-            std::copy(hidlEvent.u.data.data(), hidlEvent.u.data.data() + hidlEvent.u.data.size(),
-                      std::begin(data.values));
-            aidlEvent->payload.set<Event::EventPayload::data>(data);
+            if (static_cast<int32_t>(hidlEvent.sensorType) ==
+                static_cast<int32_t>(AidlSensorType::HEAD_TRACKER)) {
+                Event::EventPayload::HeadTracker headTracker;
+                headTracker.rx = hidlEvent.u.data[0];
+                headTracker.ry = hidlEvent.u.data[1];
+                headTracker.rz = hidlEvent.u.data[2];
+                headTracker.vx = hidlEvent.u.data[3];
+                headTracker.vy = hidlEvent.u.data[4];
+                headTracker.vz = hidlEvent.u.data[5];
+
+                // IMPORTANT: Because we want to preserve the data range of discontinuityCount,
+                // we assume the data can be interpreted as an int32_t directly (e.g. the underlying
+                // HIDL HAL must be using memcpy or equivalent to store this value).
+                headTracker.discontinuityCount =
+                        *(reinterpret_cast<const int32_t*>(&hidlEvent.u.data[6]));
+
+                aidlEvent->payload.set<Event::EventPayload::Tag::headTracker>(headTracker);
+            } else {
+                CHECK_GE((int32_t)hidlEvent.sensorType,
+                         (int32_t)V2_1SensorType::DEVICE_PRIVATE_BASE);
+                AidlEvent::EventPayload::Data data;
+                std::copy(hidlEvent.u.data.data(),
+                          hidlEvent.u.data.data() + hidlEvent.u.data.size(),
+                          std::begin(data.values));
+                aidlEvent->payload.set<Event::EventPayload::data>(data);
+            }
             break;
         }
     }
