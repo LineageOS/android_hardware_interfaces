@@ -88,8 +88,9 @@ ndk::ScopedAStatus A2dpSoftwareAudioProvider::onSessionReady(
     return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
   }
   *_aidl_return = data_mq_->dupeDesc();
+  auto desc = data_mq_->dupeDesc();
   BluetoothAudioSessionReport::OnSessionStarted(session_type_, stack_iface_,
-                                                _aidl_return, *audio_config_);
+                                                &desc, *audio_config_);
   return ndk::ScopedAStatus::ok();
 }
 
