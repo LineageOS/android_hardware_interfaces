@@ -152,6 +152,7 @@ class BluetoothAudioSession_2_2 {
   const ::android::hardware::bluetooth::audio::V2_2::AudioConfiguration
   GetAudioConfig();
 
+  void UpdateTracksMetadata(const struct source_metadata* source_metadata);
   void UpdateSinkMetadata(const struct sink_metadata* sink_metadata);
 
   static constexpr ::android::hardware::bluetooth::audio::V2_2::

@@ -152,7 +152,7 @@ class BluetoothAudioSessionControl_2_2 {
     std::shared_ptr<BluetoothAudioSession_2_2> session_ptr =
         BluetoothAudioSessionInstance_2_2::GetSessionInstance(session_type);
     if (session_ptr != nullptr) {
-      session_ptr->GetAudioSession()->UpdateTracksMetadata(source_metadata);
+      session_ptr->UpdateTracksMetadata(source_metadata);
     }
   }
 
