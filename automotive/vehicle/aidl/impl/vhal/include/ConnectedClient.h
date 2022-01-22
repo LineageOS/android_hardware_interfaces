@@ -79,7 +79,7 @@ class GetSetValuesClient final : public ConnectedClient {
     GetSetValuesClient(std::shared_ptr<PendingRequestPool> requestPool, CallbackType callback);
 
     // Sends the results to this client.
-    void sendResults(const std::vector<ResultType>& results);
+    void sendResults(std::vector<ResultType>&& results);
 
     // Sends each result separately to this client. Each result would be sent through one callback
     // invocation.

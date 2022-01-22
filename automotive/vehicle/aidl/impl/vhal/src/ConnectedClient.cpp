@@ -84,9 +84,9 @@ void sendGetOrSetValueResultsSeparately(std::shared_ptr<IVehicleCallback> callba
 // Send all the GetValue/SetValue results through callback in a single callback invocation.
 template <class ResultType, class ResultsType>
 void sendGetOrSetValueResults(std::shared_ptr<IVehicleCallback> callback,
-                              const std::vector<ResultType>& results) {
+                              std::vector<ResultType>&& results) {
     ResultsType parcelableResults;
-    ScopedAStatus status = vectorToStableLargeParcelable(results, &parcelableResults);
+    ScopedAStatus status = vectorToStableLargeParcelable(std::move(results), &parcelableResults);
     if (status.isOk()) {
         if (ScopedAStatus callbackStatus = callCallback(callback, parcelableResults);
             !callbackStatus.isOk()) {
@@ -99,7 +99,8 @@ void sendGetOrSetValueResults(std::shared_ptr<IVehicleCallback> callback,
     ALOGE("failed to marshal result into large parcelable, error: "
           "%s, code: %d",
           status.getMessage(), statusCode);
-    sendGetOrSetValueResultsSeparately<ResultType, ResultsType>(callback, results);
+    sendGetOrSetValueResultsSeparately<ResultType, ResultsType>(callback,
+                                                                parcelableResults.payloads);
 }
 
 // The timeout callback for GetValues/SetValues.
@@ -115,7 +116,7 @@ void onTimeout(
                 .status = StatusCode::TRY_AGAIN,
         });
     }
-    sendGetOrSetValueResults<ResultType, ResultsType>(callback, timeoutResults);
+    sendGetOrSetValueResults<ResultType, ResultsType>(callback, std::move(timeoutResults));
 }
 
 // The on-results callback for GetValues/SetValues.
@@ -123,7 +124,7 @@ template <class ResultType, class ResultsType>
 void getOrSetValuesCallback(
         const void* clientId,
         std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback> callback,
-        std::vector<ResultType> results, std::shared_ptr<PendingRequestPool> requestPool) {
+        std::vector<ResultType>&& results, std::shared_ptr<PendingRequestPool> requestPool) {
     std::unordered_set<int64_t> requestIds;
     for (const auto& result : results) {
         requestIds.insert(result.requestId);
@@ -145,7 +146,7 @@ void getOrSetValuesCallback(
     }
 
     if (!results.empty()) {
-        sendGetOrSetValueResults<ResultType, ResultsType>(callback, results);
+        sendGetOrSetValueResults<ResultType, ResultsType>(callback, std::move(results));
     }
 }
 
@@ -156,9 +157,9 @@ template void sendGetOrSetValueResult<SetValueResult, SetValueResults>(
         std::shared_ptr<IVehicleCallback> callback, const SetValueResult& result);
 
 template void sendGetOrSetValueResults<GetValueResult, GetValueResults>(
-        std::shared_ptr<IVehicleCallback> callback, const std::vector<GetValueResult>& results);
+        std::shared_ptr<IVehicleCallback> callback, std::vector<GetValueResult>&& results);
 template void sendGetOrSetValueResults<SetValueResult, SetValueResults>(
-        std::shared_ptr<IVehicleCallback> callback, const std::vector<SetValueResult>& results);
+        std::shared_ptr<IVehicleCallback> callback, std::vector<SetValueResult>&& results);
 
 template void sendGetOrSetValueResultsSeparately<GetValueResult, GetValueResults>(
         std::shared_ptr<IVehicleCallback> callback, const std::vector<GetValueResult>& results);
@@ -175,11 +176,11 @@ template void onTimeout<SetValueResult, SetValueResults>(
 template void getOrSetValuesCallback<GetValueResult, GetValueResults>(
         const void* clientId,
         std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback> callback,
-        std::vector<GetValueResult> results, std::shared_ptr<PendingRequestPool> requestPool);
+        std::vector<GetValueResult>&& results, std::shared_ptr<PendingRequestPool> requestPool);
 template void getOrSetValuesCallback<SetValueResult, SetValueResults>(
         const void* clientId,
         std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback> callback,
-        std::vector<SetValueResult> results, std::shared_ptr<PendingRequestPool> requestPool);
+        std::vector<SetValueResult>&& results, std::shared_ptr<PendingRequestPool> requestPool);
 
 }  // namespace
 
@@ -230,9 +231,8 @@ GetSetValuesClient<ResultType, ResultsType>::getTimeoutCallback() {
 }
 
 template <class ResultType, class ResultsType>
-void GetSetValuesClient<ResultType, ResultsType>::sendResults(
-        const std::vector<ResultType>& results) {
-    return sendGetOrSetValueResults<ResultType, ResultsType>(mCallback, results);
+void GetSetValuesClient<ResultType, ResultsType>::sendResults(std::vector<ResultType>&& results) {
+    return sendGetOrSetValueResults<ResultType, ResultsType>(mCallback, std::move(results));
 }
 
 template <class ResultType, class ResultsType>
@@ -283,7 +283,8 @@ void SubscriptionClient::sendUpdatedValues(std::shared_ptr<IVehicleCallback> cal
     // TODO(b/205189110): Use memory pool here and fill in sharedMemoryId.
     VehiclePropValues vehiclePropValues;
     int32_t sharedMemoryFileCount = 0;
-    ScopedAStatus status = vectorToStableLargeParcelable(updatedValues, &vehiclePropValues);
+    ScopedAStatus status =
+            vectorToStableLargeParcelable(std::move(updatedValues), &vehiclePropValues);
     if (!status.isOk()) {
         int statusCode = status.getServiceSpecificError();
         ALOGE("subscribe: failed to marshal result into large parcelable, error: "

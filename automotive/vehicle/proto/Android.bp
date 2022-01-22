@@ -25,8 +25,8 @@ package {
 cc_library_static {
     name: "android.hardware.automotive.vehicle@2.0-libproto-native",
     visibility: [
-        "//hardware/interfaces/automotive/vehicle/2.0/default:__subpackages__",
-        "//device/generic/car/emulator/vhal_v2_0:__subpackages__",
+        "//hardware/interfaces/automotive/vehicle:__subpackages__",
+        "//device/generic/car/emulator:__subpackages__",
     ],
     vendor: true,
     host_supported: true,
