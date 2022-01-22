@@ -46,4 +46,5 @@ interface IFrontend {
   int linkCiCam(in int ciCamId);
   void unlinkCiCam(in int ciCamId);
   String getHardwareInfo();
+  void removeOutputPid(int pid);
 }

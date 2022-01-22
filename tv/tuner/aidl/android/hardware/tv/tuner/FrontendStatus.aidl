@@ -27,6 +27,7 @@ import android.hardware.tv.tuner.FrontendModulation;
 import android.hardware.tv.tuner.FrontendModulationStatus;
 import android.hardware.tv.tuner.FrontendRollOff;
 import android.hardware.tv.tuner.FrontendSpectralInversion;
+import android.hardware.tv.tuner.FrontendScanAtsc3PlpInfo;
 import android.hardware.tv.tuner.FrontendStatusAtsc3PlpInfo;
 import android.hardware.tv.tuner.FrontendTransmissionMode;
 import android.hardware.tv.tuner.LnbVoltage;
@@ -241,5 +242,9 @@ union FrontendStatus {
      */
     int[] dvbtCellIds;
 
-
+    /**
+     * A list of all PLPs in the frequency band for ATSC3 frontend, which includes both tuned
+     * and not tuned PLPs for currently watching service.
+     */
+    FrontendScanAtsc3PlpInfo[] allPlpInfo;
 }

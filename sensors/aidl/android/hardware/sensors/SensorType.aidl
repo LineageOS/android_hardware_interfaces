@@ -667,6 +667,57 @@ enum SensorType {
     HEAD_TRACKER = 37,
 
     /**
+     * ACCELEROMETER_LIMITED_AXES
+     * reporting-mode: continuous
+     *
+     * Equivalent to ACCELEROMETER, but supporting cases where one or two axes
+     * are not supported.
+     */
+    ACCELEROMETER_LIMITED_AXES = 38,
+
+    /**
+     * GYROSCOPE_LIMITED_AXES
+     * reporting-mode: continuous
+     *
+     * Equivalent to GYROSCOPE, but supporting cases where one or two axes are
+     * not supported.
+     */
+    GYROSCOPE_LIMITED_AXES = 39,
+
+    /**
+     * ACCELEROMETER_LIMITED_AXES_UNCALIBRATED
+     * reporting-mode: continuous
+     *
+     * Equivalent to ACCELEROMETER_UNCALIBRATED, but supporting cases where one
+     * or two axes are not supported.
+     */
+    ACCELEROMETER_LIMITED_AXES_UNCALIBRATED = 40,
+
+    /**
+     * GYROSCOPE_LIMITED_AXES_UNCALIBRATED
+     * reporting-mode: continuous
+     *
+     * Equivalent to GYROSCOPE_UNCALIBRATED, but supporting cases where one or
+     * two axes are not supported.
+     */
+    GYROSCOPE_LIMITED_AXES_UNCALIBRATED = 41,
+
+    /**
+     * HEADING
+     * reporting-mode: continuous
+     *
+     * A sensor of this type measures the direction in which the device is
+     * pointing relative to true north in degrees.
+     *
+     * This sensor was added for automotive form factors. Other devices with a
+     * clear forward direction might find it useful as well. However, devices
+     * with a more ambiguous orientation such as phones or wearables might want
+     * to consider using other sensors such as Sensor.TYPE_ROTATION_VECTOR
+     * which might be more suitable.
+     */
+    HEADING = 42,
+
+    /**
      * Base for device manufacturers private sensor types.
      * These sensor types can't be exposed in the SDK.
      */

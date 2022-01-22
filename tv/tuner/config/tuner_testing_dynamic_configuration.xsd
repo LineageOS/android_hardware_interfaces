@@ -94,6 +94,8 @@
                     "connectToCicamId": if the device supports frontend connecting to cicam, the
                         target cicam id needs to be configured here. Supported in Tuner 1.1 or
                         higher.
+                    "removeOutputPid": the unnecessary PID will be filtered out from frontend
+                        output. Supported in Tuner 2.0 or higher.
                     "frequency": the frequency used to configure tune and scan.
                     "endFrequency": the end frequency of scan. Supported in Tuner 1.1 or higher.
 
@@ -125,6 +127,7 @@
         <xs:attribute name="isSoftwareFrontend" type="xs:boolean" use="required"/>
         <xs:attribute name="frequency" type="xs:nonNegativeInteger" use="required"/>
         <xs:attribute name="connectToCicamId" type="xs:nonNegativeInteger" use="optional"/>
+        <xs:attribute name="removeOutputPid" type="xs:nonNegativeInteger" use="optional"/>
         <xs:attribute name="endFrequency" type="xs:nonNegativeInteger" use="optional"/>
     </xs:complexType>
 

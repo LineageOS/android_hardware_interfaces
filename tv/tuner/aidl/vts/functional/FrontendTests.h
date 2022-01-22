@@ -95,6 +95,7 @@ class FrontendTests {
     AssertionResult linkCiCam(int32_t ciCamId);
     AssertionResult unlinkCiCam(int32_t ciCamId);
     AssertionResult verifyHardwareInfo();
+    AssertionResult removeOutputPid(int32_t removePid);
 
     void getFrontendIdByType(FrontendType feType, int32_t& feId);
     void tuneTest(FrontendConfig frontendConf);

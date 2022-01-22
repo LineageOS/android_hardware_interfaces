@@ -83,6 +83,7 @@ struct FrontendConfig {
     FrontendType type;
     bool canConnectToCiCam;
     int32_t ciCamId;
+    int32_t removePid;
     FrontendSettings settings;
     vector<FrontendStatusType> tuneStatusTypes;
     vector<FrontendStatus> expectTuneStatuses;
@@ -304,7 +305,8 @@ struct TunerTestingConfigAidlReader1_0 {
                 // TODO: b/182519645 complete the tune status config
                 frontendMap[id].tuneStatusTypes = types;
                 frontendMap[id].expectTuneStatuses = statuses;
-                getCiCamInfo(feConfig, frontendMap[id].canConnectToCiCam, frontendMap[id].ciCamId);
+                getCiCamInfo(feConfig, frontendMap[id].canConnectToCiCam, frontendMap[id].ciCamId,
+                             frontendMap[id].removePid);
             }
         }
     }
@@ -1004,13 +1006,16 @@ struct TunerTestingConfigAidlReader1_0 {
         return recordSettings;
     }
 
-    static void getCiCamInfo(Frontend feConfig, bool& canConnectToCiCam, int32_t& ciCamId) {
+    static void getCiCamInfo(Frontend feConfig, bool& canConnectToCiCam, int32_t& ciCamId,
+                             int32_t& removePid) {
         if (!feConfig.hasConnectToCicamId()) {
             canConnectToCiCam = false;
             ciCamId = -1;
+            removePid = -1;
             return;
         }
         canConnectToCiCam = true;
         ciCamId = static_cast<int32_t>(feConfig.getConnectToCicamId());
+        removePid = static_cast<int32_t>(feConfig.getRemoveOutputPid());
     }
 };

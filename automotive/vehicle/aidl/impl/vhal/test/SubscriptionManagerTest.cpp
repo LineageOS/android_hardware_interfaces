@@ -45,6 +45,7 @@ using ::aidl::android::hardware::automotive::vehicle::VehiclePropErrors;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValues;
 using ::ndk::ScopedAStatus;
+using ::ndk::SpAIBinder;
 using ::testing::ElementsAre;
 using ::testing::WhenSorted;
 
@@ -95,7 +96,9 @@ class SubscriptionManagerTest : public ::testing::Test {
                             0);
                 });
         mCallback = ::ndk::SharedRefBase::make<PropertyCallback>();
-        mCallbackClient = IVehicleCallback::fromBinder(mCallback->asBinder());
+        // Keep the local binder alive.
+        mBinder = mCallback->asBinder();
+        mCallbackClient = IVehicleCallback::fromBinder(mBinder);
     }
 
     SubscriptionManager* getManager() { return mManager.get(); }
@@ -112,6 +115,7 @@ class SubscriptionManagerTest : public ::testing::Test {
     std::unique_ptr<SubscriptionManager> mManager;
     std::shared_ptr<PropertyCallback> mCallback;
     std::shared_ptr<IVehicleCallback> mCallbackClient;
+    SpAIBinder mBinder;
 };
 
 TEST_F(SubscriptionManagerTest, testSubscribeGlobalContinuous) {
@@ -185,7 +189,7 @@ TEST_F(SubscriptionManagerTest, testOverrideSubscriptionContinuous) {
 
     // Theoretically trigger 10 times, but check for at least 9 times to be stable.
     EXPECT_GE(getEvents().size(), static_cast<size_t>(9));
-    EXPECT_LE(getEvents().size(), static_cast<size_t>(11));
+    EXPECT_LE(getEvents().size(), static_cast<size_t>(15));
 }
 
 TEST_F(SubscriptionManagerTest, testSubscribeMultipleAreasContinuous) {
@@ -229,7 +233,7 @@ TEST_F(SubscriptionManagerTest, testUnsubscribeGlobalContinuous) {
     auto result = getManager()->subscribe(getCallbackClient(), options, true);
     ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();
 
-    result = getManager()->unsubscribe(getCallbackClient());
+    result = getManager()->unsubscribe(getCallbackClient()->asBinder().get());
     ASSERT_TRUE(result.ok()) << "failed to unsubscribe: " << result.error().message();
 
     clearEvents();
@@ -257,7 +261,8 @@ TEST_F(SubscriptionManagerTest, testUnsubscribeMultipleAreas) {
     auto result = getManager()->subscribe(getCallbackClient(), options, true);
     ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();
 
-    result = getManager()->unsubscribe(getCallbackClient(), std::vector<int32_t>({0}));
+    result = getManager()->unsubscribe(getCallbackClient()->asBinder().get(),
+                                       std::vector<int32_t>({0}));
     ASSERT_TRUE(result.ok()) << "failed to unsubscribe: " << result.error().message();
 
     clearEvents();
@@ -289,7 +294,7 @@ TEST_F(SubscriptionManagerTest, testUnsubscribeByCallback) {
     auto result = getManager()->subscribe(getCallbackClient(), options, true);
     ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();
 
-    result = getManager()->unsubscribe(getCallbackClient());
+    result = getManager()->unsubscribe(getCallbackClient()->asBinder().get());
     ASSERT_TRUE(result.ok()) << "failed to unsubscribe: " << result.error().message();
 
     clearEvents();
@@ -315,12 +320,14 @@ TEST_F(SubscriptionManagerTest, testUnsubscribeFailure) {
     ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();
 
     // Property ID: 2 was not subscribed.
-    result = getManager()->unsubscribe(getCallbackClient(), std::vector<int32_t>({0, 1, 2}));
+    result = getManager()->unsubscribe(getCallbackClient()->asBinder().get(),
+                                       std::vector<int32_t>({0, 1, 2}));
     ASSERT_FALSE(result.ok()) << "unsubscribe an unsubscribed property must fail";
 
     // Since property 0 and property 1 was not unsubscribed successfully, we should be able to
     // unsubscribe them again.
-    result = getManager()->unsubscribe(getCallbackClient(), std::vector<int32_t>({0, 1}));
+    result = getManager()->unsubscribe(getCallbackClient()->asBinder().get(),
+                                       std::vector<int32_t>({0, 1}));
     ASSERT_TRUE(result.ok()) << "a failed unsubscription must not unsubscribe any properties"
                              << result.error().message();
 }
@@ -343,10 +350,10 @@ TEST_F(SubscriptionManagerTest, testSubscribeOnchange) {
             },
     };
 
-    std::shared_ptr<IVehicleCallback> client1 = IVehicleCallback::fromBinder(
-            ::ndk::SharedRefBase::make<PropertyCallback>()->asBinder());
-    std::shared_ptr<IVehicleCallback> client2 = IVehicleCallback::fromBinder(
-            ::ndk::SharedRefBase::make<PropertyCallback>()->asBinder());
+    SpAIBinder binder1 = ::ndk::SharedRefBase::make<PropertyCallback>()->asBinder();
+    std::shared_ptr<IVehicleCallback> client1 = IVehicleCallback::fromBinder(binder1);
+    SpAIBinder binder2 = ::ndk::SharedRefBase::make<PropertyCallback>()->asBinder();
+    std::shared_ptr<IVehicleCallback> client2 = IVehicleCallback::fromBinder(binder2);
     auto result = getManager()->subscribe(client1, options1, false);
     ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();
     result = getManager()->subscribe(client2, options2, false);
@@ -447,7 +454,8 @@ TEST_F(SubscriptionManagerTest, testUnsubscribeOnchange) {
     auto result = getManager()->subscribe(getCallbackClient(), options, false);
     ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();
 
-    result = getManager()->unsubscribe(getCallbackClient(), std::vector<int32_t>({0}));
+    result = getManager()->unsubscribe(getCallbackClient()->asBinder().get(),
+                                       std::vector<int32_t>({0}));
     ASSERT_TRUE(result.ok()) << "failed to unsubscribe: " << result.error().message();
 
     std::vector<VehiclePropValue> updatedValues = {

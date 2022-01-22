@@ -76,4 +76,5 @@ enum FrontendStatusType {
   ISDBT_PARTIAL_RECEPTION_FLAG = 38,
   STREAM_ID_LIST = 39,
   DVBT_CELL_IDS = 40,
+  ATSC3_ALL_PLP_INFO = 41,
 }
