@@ -132,6 +132,23 @@ parcelable Event {
          */
         HeadTracker headTracker;
 
+        /**
+         * SensorType::ACCELEROMETER_LIMITED_AXES
+         * SensorType::GYROSCOPE_LIMITED_AXES
+         */
+        LimitedAxesImu limitedAxesImu;
+
+        /**
+         * SensorType::ACCELEROMETER_LIMITED_AXES_UNCALIBRATED
+         * SensorType::GYROSCOPE_LIMITED_AXES_UNCALIBRATED
+         */
+        LimitedAxesImuUncal limitedAxesImuUncal;
+
+        /**
+         * SensorType::HEADING
+         */
+        Heading heading;
+
         @FixedSize
         @VintfStability
         parcelable Vec4 {
@@ -201,6 +218,70 @@ parcelable Event {
             int discontinuityCount;
         }
 
+        /**
+         * Payload of the ACCELEROMETER_LIMITED_AXES and GYROSCOPE_LIMITED_AXES
+         * sensor types.
+         */
+        @FixedSize
+        @VintfStability
+        parcelable LimitedAxesImu {
+            /**
+             * Acceleration or angular speed values.  If certain axes are not
+             * supported, the associated value must be set to 0.
+             */
+            float x;
+            float y;
+            float z;
+
+            /**
+             * Limited axes sensors must not be supported for all three axes.
+             * These values indicate which axes are supported with a 1.0 for
+             * supported, and a 0 for not supported. The supported axes should
+             * be determined at build time and these values must not change
+             * during runtime.
+             */
+            float xSupported;
+            float ySupported;
+            float zSupported;
+        }
+
+        /**
+         * Payload of the ACCELEROMETER_LIMITED_AXES_UNCALIBRATED and
+         * GYROSCOPE_LIMITED_AXES_UNCALIBRATED sensor types.
+         */
+        @FixedSize
+        @VintfStability
+        parcelable LimitedAxesImuUncal {
+            /**
+             * Acceleration (without bias compensation) or angular (speed
+             * (without drift compensation) values. If certain axes are not
+             * supported, the associated value must be set to 0.
+             */
+            float x;
+            float y;
+            float z;
+
+            /**
+             * Estimated bias values for uncalibrated accelerometer or
+             * estimated drift values for uncalibrated gyroscope. If certain
+             * axes are not supported, the associated value must be set to 0.
+             */
+            float xBias;
+            float yBias;
+            float zBias;
+
+            /**
+             * Limited axes sensors must not be supported for all three axes.
+             * These values indicate which axes are supported with a 1.0 for
+             * supported, and a 0 for not supported. The supported axes should
+             * be determined at build time and these values must not change
+             * during runtime.
+             */
+            float xSupported;
+            float ySupported;
+            float zSupported;
+        }
+
         @FixedSize
         @VintfStability
         parcelable HeartRate {
@@ -214,6 +295,27 @@ parcelable Event {
              * Status of the heart rate sensor for this reading.
              */
             SensorStatus status;
+        }
+
+        @FixedSize
+        @VintfStability
+        parcelable Heading {
+            /**
+             * The direction in which the device is pointing relative to true
+             * north in degrees. The value must be between 0.0 (inclusive) and
+             * 360.0 (exclusive), with 0 indicating north, 90 east, 180 south,
+             * and 270 west.
+             */
+            float heading;
+            /**
+             * Accuracy is defined at 68% confidence. In the case where the
+             * underlying distribution is assumed Gaussian normal, this would be
+             * considered one standard deviation. For example, if the heading
+             * returns 60 degrees, and accuracy returns 10 degrees, then there
+             * is a 68 percent probability of the true heading being between 50
+             * degrees and 70 degrees.
+             */
+            float accuracy;
         }
 
         @FixedSize

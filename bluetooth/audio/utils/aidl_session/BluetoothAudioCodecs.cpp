@@ -355,7 +355,7 @@ BluetoothAudioCodecs::GetA2dpOffloadCodecCapabilities(
                 kDefaultOffloadLc3Capability);
         break;
       case CodecType::UNKNOWN:
-        codec_capability = {};
+      case CodecType::VENDOR:
         break;
     }
   }
@@ -420,6 +420,7 @@ bool BluetoothAudioCodecs::IsOffloadCodecConfigurationValid(
       }
       break;
     case CodecType::UNKNOWN:
+    case CodecType::VENDOR:
       break;
   }
   return false;

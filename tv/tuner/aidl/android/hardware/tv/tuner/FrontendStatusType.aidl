@@ -130,7 +130,7 @@ enum FrontendStatusType {
     RF_LOCK,
 
     /**
-     * PLP information in a frequency band for ATSC3.0 frontend.
+     * Current tuned PLP information in a frequency band for ATSC3 frontend.
      */
     ATSC3_PLP_INFO,
 
@@ -222,10 +222,16 @@ enum FrontendStatusType {
     /**
      * Stream ID list included in a transponder.
      */
-   STREAM_ID_LIST,
+    STREAM_ID_LIST,
 
-   /**
-    * DVB-T Cell Id.
-    */
-   DVBT_CELL_IDS,
+    /**
+     * DVB-T Cell Id.
+     */
+    DVBT_CELL_IDS,
+
+    /**
+     * All PLP information in a frequency band for ATSC3 frontend, which includes both tuned
+     * and not tuned PLPs for currently watching service.
+     */
+    ATSC3_ALL_PLP_INFO,
 }

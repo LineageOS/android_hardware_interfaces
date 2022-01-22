@@ -21,8 +21,6 @@
 #include <android/binder_interface_utils.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <hidl/HidlSupport.h>
-#include <hidl/Status.h>
 
 namespace aidl::android::hardware::neuralnetworks::utils {
 

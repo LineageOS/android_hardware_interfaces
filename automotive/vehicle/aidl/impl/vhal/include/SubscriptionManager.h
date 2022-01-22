@@ -38,6 +38,7 @@ namespace vehicle {
 // A thread-safe subscription manager that manages all VHAL subscriptions.
 class SubscriptionManager final {
   public:
+    using ClientIdType = const AIBinder*;
     using CallbackType =
             std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback>;
     using GetValueFunc = std::function<void(
@@ -59,24 +60,24 @@ class SubscriptionManager final {
                     options,
             bool isContinuousProperty);
 
-    // Unsubscribes from the properties for the callback.
-    // Returns error if the callback was not subscribed before or one of the given property was not
+    // Unsubscribes from the properties for the client.
+    // Returns error if the client was not subscribed before or one of the given property was not
     // subscribed. If error is returned, no property would be unsubscribed.
-    // Returns ok if all the requested properties for the callback are unsubscribed.
-    ::android::base::Result<void> unsubscribe(const CallbackType& callback,
+    // Returns ok if all the requested properties for the client are unsubscribed.
+    ::android::base::Result<void> unsubscribe(ClientIdType client,
                                               const std::vector<int32_t>& propIds);
 
-    // Unsubscribes to all the properties for the callback.
-    // Returns error if the callback was not subscribed before. If error is returned, no property
+    // Unsubscribes from all the properties for the client.
+    // Returns error if the client was not subscribed before. If error is returned, no property
     // would be unsubscribed.
-    // Returns ok if all the properties for the callback are unsubscribed.
-    ::android::base::Result<void> unsubscribe(const CallbackType& callback);
+    // Returns ok if all the properties for the client are unsubscribed.
+    ::android::base::Result<void> unsubscribe(ClientIdType client);
 
     // For a list of updated properties, returns a map that maps clients subscribing to
     // the updated properties to a list of updated values. This would only return on-change property
     // clients that should be informed for the given updated values.
     std::unordered_map<
-            std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback>,
+            CallbackType,
             std::vector<const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue*>>
     getSubscribedClients(
             const std::vector<::aidl::android::hardware::automotive::vehicle::VehiclePropValue>&
@@ -86,6 +87,9 @@ class SubscriptionManager final {
     static bool checkSampleRate(float sampleRate);
 
   private:
+    // Friend class for testing.
+    friend class DefaultVehicleHalTest;
+
     struct PropIdAreaId {
         int32_t propId;
         int32_t areaId;
@@ -131,9 +135,10 @@ class SubscriptionManager final {
     };
 
     mutable std::mutex mLock;
-    std::unordered_map<PropIdAreaId, std::unordered_set<CallbackType>, PropIdAreaIdHash>
+    std::unordered_map<PropIdAreaId, std::unordered_map<ClientIdType, CallbackType>,
+                       PropIdAreaIdHash>
             mClientsByPropIdArea GUARDED_BY(mLock);
-    std::unordered_map<CallbackType, std::unordered_map<PropIdAreaId, std::unique_ptr<Subscription>,
+    std::unordered_map<ClientIdType, std::unordered_map<PropIdAreaId, std::unique_ptr<Subscription>,
                                                         PropIdAreaIdHash>>
             mSubscriptionsByClient GUARDED_BY(mLock);
     // RecurrentTimer is thread-safe.
@@ -141,6 +146,9 @@ class SubscriptionManager final {
     const GetValueFunc mGetValue;
 
     static ::android::base::Result<int64_t> getInterval(float sampleRate);
+
+    // Checks whether the manager is empty. For testing purpose.
+    bool isEmpty();
 };
 
 }  // namespace vehicle

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "BTAudioProviderLeAudioHW"
+#define LOG_TAG "BTAudioProviderLeAudioSW"
 
 #include "LeAudioSoftwareAudioProvider.h"
 
@@ -88,6 +88,16 @@ ndk::ScopedAStatus LeAudioSoftwareAudioProvider::startSession(
       channel_mode_to_channel_count(pcm_config.channelMode) *
       (pcm_config.bitsPerSample / 8) * (pcm_config.dataIntervalUs / 1000) *
       buffer_modifier;
+  if (data_mq_size <= 0) {
+    LOG(ERROR) << __func__ << "Unexpected audio buffer size: " << data_mq_size
+               << ", SampleRateHz: " << pcm_config.sampleRateHz
+               << ", ChannelMode: " << toString(pcm_config.channelMode)
+               << ", BitsPerSample: "
+               << static_cast<int>(pcm_config.bitsPerSample)
+               << ", DataIntervalUs: " << pcm_config.dataIntervalUs
+               << ", SessionType: " << toString(session_type_);
+    return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+  }
 
   LOG(INFO) << __func__ << " - size of audio buffer " << data_mq_size
             << " byte(s)";
@@ -113,8 +123,9 @@ ndk::ScopedAStatus LeAudioSoftwareAudioProvider::onSessionReady(
     return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
   }
   *_aidl_return = data_mq_->dupeDesc();
+  auto desc = data_mq_->dupeDesc();
   BluetoothAudioSessionReport::OnSessionStarted(session_type_, stack_iface_,
-                                                _aidl_return, *audio_config_);
+                                                &desc, *audio_config_);
   return ndk::ScopedAStatus::ok();
 }
 

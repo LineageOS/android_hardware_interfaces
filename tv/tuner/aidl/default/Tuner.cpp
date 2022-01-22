@@ -77,6 +77,7 @@ void Tuner::init() {
             FrontendStatusType::BERS,
             FrontendStatusType::INTERLEAVINGS,
             FrontendStatusType::BANDWIDTH,
+            FrontendStatusType::ATSC3_ALL_PLP_INFO,
     };
     mFrontendStatusCaps[1] = statusCaps;
     mMaxUsableFrontends[FrontendType::ATSC3] = 1;

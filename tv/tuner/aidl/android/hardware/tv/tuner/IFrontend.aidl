@@ -146,4 +146,13 @@ interface IFrontend {
      * @return the frontend hardware information.
      */
     String getHardwareInfo();
+
+    /**
+     * Filter out unnecessary PID from frontend output.
+     *
+     * @param pid specify the PID will be filtered out.
+     *
+     * @return UNAVAILABLE if the frontend doesn’t support PID filtering out.
+     */
+    void removeOutputPid(int pid);
 }

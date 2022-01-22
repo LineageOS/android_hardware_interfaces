@@ -258,7 +258,7 @@ SubscriptionClient::SubscriptionClient(std::shared_ptr<PendingRequestPool> reque
             });
     auto requestPoolCopy = mRequestPool;
     const void* clientId = reinterpret_cast<const void*>(this);
-    mResultCallback = std::make_shared<const std::function<void(std::vector<GetValueResult>)>>(
+    mResultCallback = std::make_shared<const IVehicleHardware::GetValuesCallback>(
             [clientId, callback, requestPoolCopy](std::vector<GetValueResult> results) {
                 onGetValueResults(clientId, callback, requestPoolCopy, results);
             });
@@ -272,6 +272,32 @@ SubscriptionClient::getResultCallback() {
 std::shared_ptr<const PendingRequestPool::TimeoutCallbackFunc>
 SubscriptionClient::getTimeoutCallback() {
     return mTimeoutCallback;
+}
+
+void SubscriptionClient::sendUpdatedValues(std::shared_ptr<IVehicleCallback> callback,
+                                           std::vector<VehiclePropValue>&& updatedValues) {
+    if (updatedValues.empty()) {
+        return;
+    }
+
+    // TODO(b/205189110): Use memory pool here and fill in sharedMemoryId.
+    VehiclePropValues vehiclePropValues;
+    int32_t sharedMemoryFileCount = 0;
+    ScopedAStatus status = vectorToStableLargeParcelable(updatedValues, &vehiclePropValues);
+    if (!status.isOk()) {
+        int statusCode = status.getServiceSpecificError();
+        ALOGE("subscribe: failed to marshal result into large parcelable, error: "
+              "%s, code: %d",
+              status.getMessage(), statusCode);
+        return;
+    }
+
+    if (ScopedAStatus callbackStatus =
+                callback->onPropertyEvent(vehiclePropValues, sharedMemoryFileCount);
+        !callbackStatus.isOk()) {
+        ALOGE("subscribe: failed to call callback, error: %s, code: %d", status.getMessage(),
+              status.getServiceSpecificError());
+    }
 }
 
 void SubscriptionClient::onGetValueResults(const void* clientId,
@@ -308,27 +334,7 @@ void SubscriptionClient::onGetValueResults(const void* clientId,
         propValues.push_back(std::move(result.prop.value()));
     }
 
-    if (propValues.empty()) {
-        return;
-    }
-    // TODO(b/205189110): Use memory pool here and fill in sharedMemoryId.
-    VehiclePropValues vehiclePropValues;
-    int32_t sharedMemoryFileCount = 0;
-    ScopedAStatus status = vectorToStableLargeParcelable(propValues, &vehiclePropValues);
-    if (!status.isOk()) {
-        int statusCode = status.getServiceSpecificError();
-        ALOGE("failed to marshal result into large parcelable, error: "
-              "%s, code: %d",
-              status.getMessage(), statusCode);
-        return;
-    }
-
-    if (ScopedAStatus callbackStatus =
-                callback->onPropertyEvent(vehiclePropValues, sharedMemoryFileCount);
-        !callbackStatus.isOk()) {
-        ALOGE("failed to call callback, error: %s, code: %d", status.getMessage(),
-              status.getServiceSpecificError());
-    }
+    sendUpdatedValues(callback, std::move(propValues));
 }
 
 }  // namespace vehicle

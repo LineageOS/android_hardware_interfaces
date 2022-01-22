@@ -26,7 +26,7 @@ namespace vehicle {
 
 namespace {
 
-constexpr float ONE_SECOND_IN_NANO = 1000000000.;
+constexpr float ONE_SECOND_IN_NANO = 1'000'000'000.;
 
 }  // namespace
 
@@ -55,6 +55,8 @@ SubscriptionManager::~SubscriptionManager() {
     std::scoped_lock<std::mutex> lockGuard(mLock);
 
     mClientsByPropIdArea.clear();
+    // RecurrentSubscription has reference to mGetValue, so it must be destroyed before mGetValue is
+    // destroyed.
     mSubscriptionsByClient.clear();
 }
 
@@ -80,7 +82,6 @@ Result<void> SubscriptionManager::subscribe(const std::shared_ptr<IVehicleCallba
     std::scoped_lock<std::mutex> lockGuard(mLock);
 
     std::vector<int64_t> intervals;
-
     for (const auto& option : options) {
         float sampleRate = option.sampleRate;
 
@@ -99,6 +100,7 @@ Result<void> SubscriptionManager::subscribe(const std::shared_ptr<IVehicleCallba
     }
 
     size_t intervalIndex = 0;
+    ClientIdType clientId = callback->asBinder().get();
     for (const auto& option : options) {
         int32_t propId = option.propId;
         const std::vector<int32_t>& areaIds = option.areaIds;
@@ -117,7 +119,7 @@ Result<void> SubscriptionManager::subscribe(const std::shared_ptr<IVehicleCallba
                         .prop = propId,
                         .areaId = areaId,
                 };
-                mSubscriptionsByClient[callback][propIdAreaId] =
+                mSubscriptionsByClient[clientId][propIdAreaId] =
                         std::make_unique<RecurrentSubscription>(
                                 mTimer,
                                 [this, callback, propValueRequest] {
@@ -125,24 +127,24 @@ Result<void> SubscriptionManager::subscribe(const std::shared_ptr<IVehicleCallba
                                 },
                                 interval);
             } else {
-                mSubscriptionsByClient[callback][propIdAreaId] =
+                mSubscriptionsByClient[clientId][propIdAreaId] =
                         std::make_unique<OnChangeSubscription>();
             }
-            mClientsByPropIdArea[propIdAreaId].insert(callback);
+            mClientsByPropIdArea[propIdAreaId][clientId] = callback;
         }
     }
     return {};
 }
 
-Result<void> SubscriptionManager::unsubscribe(const std::shared_ptr<IVehicleCallback>& callback,
+Result<void> SubscriptionManager::unsubscribe(SubscriptionManager::ClientIdType clientId,
                                               const std::vector<int32_t>& propIds) {
     std::scoped_lock<std::mutex> lockGuard(mLock);
 
-    if (mSubscriptionsByClient.find(callback) == mSubscriptionsByClient.end()) {
+    if (mSubscriptionsByClient.find(clientId) == mSubscriptionsByClient.end()) {
         return Error() << "No property was subscribed for the callback";
     }
     std::unordered_set<int32_t> subscribedPropIds;
-    for (auto const& [propIdAreaId, _] : mSubscriptionsByClient[callback]) {
+    for (auto const& [propIdAreaId, _] : mSubscriptionsByClient[clientId]) {
         subscribedPropIds.insert(propIdAreaId.propId);
     }
 
@@ -152,13 +154,13 @@ Result<void> SubscriptionManager::unsubscribe(const std::shared_ptr<IVehicleCall
         }
     }
 
-    auto& subscriptions = mSubscriptionsByClient[callback];
+    auto& subscriptions = mSubscriptionsByClient[clientId];
     auto it = subscriptions.begin();
     while (it != subscriptions.end()) {
         int32_t propId = it->first.propId;
         if (std::find(propIds.begin(), propIds.end(), propId) != propIds.end()) {
             auto& clients = mClientsByPropIdArea[it->first];
-            clients.erase(callback);
+            clients.erase(clientId);
             if (clients.empty()) {
                 mClientsByPropIdArea.erase(it->first);
             }
@@ -168,27 +170,27 @@ Result<void> SubscriptionManager::unsubscribe(const std::shared_ptr<IVehicleCall
         }
     }
     if (subscriptions.empty()) {
-        mSubscriptionsByClient.erase(callback);
+        mSubscriptionsByClient.erase(clientId);
     }
     return {};
 }
 
-Result<void> SubscriptionManager::unsubscribe(const std::shared_ptr<IVehicleCallback>& callback) {
+Result<void> SubscriptionManager::unsubscribe(SubscriptionManager::ClientIdType clientId) {
     std::scoped_lock<std::mutex> lockGuard(mLock);
 
-    if (mSubscriptionsByClient.find(callback) == mSubscriptionsByClient.end()) {
-        return Error() << "No property was subscribed for the callback";
+    if (mSubscriptionsByClient.find(clientId) == mSubscriptionsByClient.end()) {
+        return Error() << "No property was subscribed for this client";
     }
 
-    auto& subscriptions = mSubscriptionsByClient[callback];
+    auto& subscriptions = mSubscriptionsByClient[clientId];
     for (auto const& [propIdAreaId, _] : subscriptions) {
         auto& clients = mClientsByPropIdArea[propIdAreaId];
-        clients.erase(callback);
+        clients.erase(clientId);
         if (clients.empty()) {
             mClientsByPropIdArea.erase(propIdAreaId);
         }
     }
-    mSubscriptionsByClient.erase(callback);
+    mSubscriptionsByClient.erase(clientId);
     return {};
 }
 
@@ -206,14 +208,19 @@ SubscriptionManager::getSubscribedClients(const std::vector<VehiclePropValue>& u
         if (mClientsByPropIdArea.find(propIdAreaId) == mClientsByPropIdArea.end()) {
             continue;
         }
-        for (const auto& client : mClientsByPropIdArea[propIdAreaId]) {
-            if (!mSubscriptionsByClient[client][propIdAreaId]->isOnChange()) {
+        for (const auto& [clientId, client] : mClientsByPropIdArea[propIdAreaId]) {
+            if (!mSubscriptionsByClient[clientId][propIdAreaId]->isOnChange()) {
                 continue;
             }
             clients[client].push_back(&value);
         }
     }
     return clients;
+}
+
+bool SubscriptionManager::isEmpty() {
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    return mSubscriptionsByClient.empty() && mClientsByPropIdArea.empty();
 }
 
 SubscriptionManager::RecurrentSubscription::RecurrentSubscription(

@@ -81,10 +81,10 @@ ndk::ScopedAStatus HearingAidAudioProvider::onSessionReady(
     *_aidl_return = DataMQDesc();
     return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
   }
+  *_aidl_return = data_mq_->dupeDesc();
   auto desc = data_mq_->dupeDesc();
   BluetoothAudioSessionReport::OnSessionStarted(session_type_, stack_iface_,
                                                 &desc, *audio_config_);
-  *_aidl_return = data_mq_->dupeDesc();
   return ndk::ScopedAStatus::ok();
 }
 

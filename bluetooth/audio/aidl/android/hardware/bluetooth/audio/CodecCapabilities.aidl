@@ -30,12 +30,17 @@ import android.hardware.bluetooth.audio.SbcCapabilities;
 @VintfStability
 parcelable CodecCapabilities {
     @VintfStability
+    parcelable VendorCapabilities {
+        ParcelableHolder extension;
+    }
+    @VintfStability
     union Capabilities {
         SbcCapabilities sbcCapabilities;
         AacCapabilities aacCapabilities;
         LdacCapabilities ldacCapabilities;
         AptxCapabilities aptxCapabilities;
         Lc3Capabilities lc3Capabilities;
+        VendorCapabilities vendorCapabilities;
     }
     CodecType codecType;
     Capabilities capabilities;

@@ -300,6 +300,14 @@ TEST_P(ContextHubAidl, TestOnMicrophoneSettingChanged) {
     testSettingChanged(Setting::MICROPHONE);
 }
 
+TEST_P(ContextHubAidl, TestOnBtMainSettingChanged) {
+    testSettingChanged(Setting::BT_MAIN);
+}
+
+TEST_P(ContextHubAidl, TestOnBtScanningSettingChanged) {
+    testSettingChanged(Setting::BT_SCANNING);
+}
+
 std::vector<std::tuple<std::string, int32_t>> generateContextHubMapping() {
     std::vector<std::tuple<std::string, int32_t>> tuples;
     auto contextHubAidlNames = android::getAidlHalInstanceNames(IContextHub::descriptor);
