@@ -405,7 +405,6 @@ Result<void> FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValue& v
 
 StatusCode FakeVehicleHardware::setValues(std::shared_ptr<const SetValuesCallback> callback,
                                           const std::vector<SetValueRequest>& requests) {
-    std::vector<VehiclePropValue> updatedValues;
     std::vector<SetValueResult> results;
     for (auto& request : requests) {
         const VehiclePropValue& value = request.value;
@@ -417,34 +416,15 @@ StatusCode FakeVehicleHardware::setValues(std::shared_ptr<const SetValuesCallbac
 
         SetValueResult setValueResult;
         setValueResult.requestId = request.requestId;
-        setValueResult.status = StatusCode::OK;
 
-        bool isSpecialValue = false;
-        auto setSpecialValueResult = maybeSetSpecialValue(value, &isSpecialValue);
-
-        if (isSpecialValue) {
-            if (!setSpecialValueResult.ok()) {
-                ALOGE("failed to set special value for property ID: %d, error: %s, status: %d",
-                      propId, getErrorMsg(setSpecialValueResult).c_str(),
-                      getIntErrorCode(setSpecialValueResult));
-                setValueResult.status = getErrorCode(setSpecialValueResult);
-            }
-
-            // Special values are already handled.
-            results.push_back(std::move(setValueResult));
-            continue;
+        if (auto result = setValue(value); !result.ok()) {
+            ALOGE("failed to set value, error: %s, code: %d", getErrorMsg(result).c_str(),
+                  getIntErrorCode(result));
+            setValueResult.status = getErrorCode(result);
+        } else {
+            setValueResult.status = StatusCode::OK;
         }
 
-        auto updatedValue = mValuePool->obtain(value);
-        int64_t timestamp = elapsedRealtimeNano();
-        updatedValue->timestamp = timestamp;
-
-        auto writeResult = mServerSidePropStore->writeValue(std::move(updatedValue));
-        if (!writeResult.ok()) {
-            ALOGE("failed to write value into property store, error: %s, code: %d",
-                  getErrorMsg(writeResult).c_str(), getIntErrorCode(writeResult));
-            setValueResult.status = getErrorCode(writeResult);
-        }
         results.push_back(std::move(setValueResult));
     }
 
@@ -453,6 +433,33 @@ StatusCode FakeVehicleHardware::setValues(std::shared_ptr<const SetValuesCallbac
     (*callback)(std::move(results));
 
     return StatusCode::OK;
+}
+
+Result<void> FakeVehicleHardware::setValue(const VehiclePropValue& value) {
+    bool isSpecialValue = false;
+    auto setSpecialValueResult = maybeSetSpecialValue(value, &isSpecialValue);
+
+    if (isSpecialValue) {
+        if (!setSpecialValueResult.ok()) {
+            return Error(getIntErrorCode(setSpecialValueResult))
+                   << StringPrintf("failed to set special value for property ID: %d, error: %s",
+                                   value.prop, getErrorMsg(setSpecialValueResult).c_str());
+        }
+        return {};
+    }
+
+    auto updatedValue = mValuePool->obtain(value);
+    int64_t timestamp = elapsedRealtimeNano();
+    updatedValue->timestamp = timestamp;
+
+    auto writeResult = mServerSidePropStore->writeValue(std::move(updatedValue));
+    if (!writeResult.ok()) {
+        return Error(getIntErrorCode(writeResult))
+               << StringPrintf("failed to write value into property store, error: %s",
+                               getErrorMsg(writeResult).c_str());
+    }
+
+    return {};
 }
 
 StatusCode FakeVehicleHardware::getValues(std::shared_ptr<const GetValuesCallback> callback,
@@ -467,42 +474,53 @@ StatusCode FakeVehicleHardware::getValues(std::shared_ptr<const GetValuesCallbac
 
         GetValueResult getValueResult;
         getValueResult.requestId = request.requestId;
-        bool isSpecialValue = false;
 
-        auto result = maybeGetSpecialValue(value, &isSpecialValue);
-        if (isSpecialValue) {
-            if (!result.ok()) {
-                ALOGE("failed to get special value: %d, error: %s, code: %d", value.prop,
-                      getErrorMsg(result).c_str(), getIntErrorCode(result));
-                getValueResult.status = getErrorCode(result);
-            } else {
-                getValueResult.status = StatusCode::OK;
-                getValueResult.prop = *result.value();
-            }
-            results.push_back(std::move(getValueResult));
-            continue;
-        }
-
-        auto readResult = mServerSidePropStore->readValue(value);
-        if (!readResult.ok()) {
-            StatusCode errorCode = getErrorCode(readResult);
-            if (errorCode == StatusCode::NOT_AVAILABLE) {
-                ALOGW("%s", "value has not been set yet");
-            } else {
-                ALOGE("failed to get value, error: %s, code: %d", getErrorMsg(readResult).c_str(),
-                      toInt(errorCode));
-            }
-            getValueResult.status = errorCode;
+        auto result = getValue(value);
+        if (!result.ok()) {
+            ALOGE("failed to get value, error: %s, code: %d", getErrorMsg(result).c_str(),
+                  getIntErrorCode(result));
+            getValueResult.status = getErrorCode(result);
         } else {
             getValueResult.status = StatusCode::OK;
-            getValueResult.prop = *readResult.value();
+            getValueResult.prop = *result.value();
         }
         results.push_back(std::move(getValueResult));
     }
 
+    // In a real VHAL implementation, getValue would be async and we would call the callback after
+    // we actually received the values from vehicle bus. Here we are getting the result
+    // synchronously so we could call the callback here.
     (*callback)(std::move(results));
 
     return StatusCode::OK;
+}
+
+Result<VehiclePropValuePool::RecyclableType> FakeVehicleHardware::getValue(
+        const VehiclePropValue& value) const {
+    bool isSpecialValue = false;
+    auto result = maybeGetSpecialValue(value, &isSpecialValue);
+    if (isSpecialValue) {
+        if (!result.ok()) {
+            return Error(getIntErrorCode(result))
+                   << StringPrintf("failed to get special value: %d, error: %s", value.prop,
+                                   getErrorMsg(result).c_str());
+        } else {
+            return std::move(result);
+        }
+    }
+
+    auto readResult = mServerSidePropStore->readValue(value);
+    if (!readResult.ok()) {
+        StatusCode errorCode = getErrorCode(readResult);
+        if (errorCode == StatusCode::NOT_AVAILABLE) {
+            return Error(toInt(errorCode)) << "value has not been set yet";
+        } else {
+            return Error(toInt(errorCode))
+                   << "failed to get value, error: " << getErrorMsg(readResult);
+        }
+    }
+
+    return std::move(readResult);
 }
 
 DumpResult FakeVehicleHardware::dump(const std::vector<std::string>& options) {

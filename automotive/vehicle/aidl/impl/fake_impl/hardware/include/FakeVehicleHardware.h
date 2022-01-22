@@ -85,6 +85,12 @@ class FakeVehicleHardware : public IVehicleHardware {
     const std::shared_ptr<VehiclePropValuePool> mValuePool;
     const std::shared_ptr<VehiclePropertyStore> mServerSidePropStore;
 
+    ::android::base::Result<VehiclePropValuePool::RecyclableType> getValue(
+            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
+
+    ::android::base::Result<void> setValue(
+            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
+
   private:
     // Expose private methods to unit test.
     friend class FakeVehicleHardwareTestHelper;
