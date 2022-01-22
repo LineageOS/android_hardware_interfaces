@@ -30,12 +30,19 @@ import android.hardware.bluetooth.audio.SbcConfiguration;
 @VintfStability
 parcelable CodecConfiguration {
     @VintfStability
+    parcelable VendorConfiguration {
+        int vendorId;
+        char codecId;
+        ParcelableHolder codecConfig;
+    }
+    @VintfStability
     union CodecSpecific {
         SbcConfiguration sbcConfig;
         AacConfiguration aacConfig;
         LdacConfiguration ldacConfig;
         AptxConfiguration aptxConfig;
         Lc3Configuration lc3Config;
+        VendorConfiguration vendorConfig;
     }
     CodecType codecType;
     /**
