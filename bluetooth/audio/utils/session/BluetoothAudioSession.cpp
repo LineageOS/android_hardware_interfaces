@@ -437,6 +437,9 @@ size_t BluetoothAudioSession::OutWritePcmData(const void* buffer,
 
 // The control function reads stream from FMQ
 size_t BluetoothAudioSession::InReadPcmData(void* buffer, size_t bytes) {
+  if (HidlToAidlMiddleware_2_0::IsAidlAvailable())
+    return HidlToAidlMiddleware_2_0::InReadPcmData(session_type_, buffer,
+                                                   bytes);
   if (buffer == nullptr || !bytes) return 0;
   size_t totalRead = 0;
   int ms_timeout = kFmqReceiveTimeoutMs;

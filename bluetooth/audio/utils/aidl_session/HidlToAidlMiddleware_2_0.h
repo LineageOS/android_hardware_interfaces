@@ -64,6 +64,9 @@ class HidlToAidlMiddleware_2_0 {
 
   static size_t OutWritePcmData(const SessionType_2_0& session_type,
                                 const void* buffer, size_t bytes);
+
+  static size_t InReadPcmData(const SessionType_2_0& session_type, void* buffer,
+                              size_t bytes);
 };
 
 }  // namespace audio

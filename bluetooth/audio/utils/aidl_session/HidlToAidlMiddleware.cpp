@@ -641,6 +641,12 @@ size_t HidlToAidlMiddleware_2_0::OutWritePcmData(
       from_session_type_2_0(session_type), buffer, bytes);
 }
 
+size_t HidlToAidlMiddleware_2_0::InReadPcmData(
+    const SessionType_2_0& session_type, void* buffer, size_t bytes) {
+  return BluetoothAudioSessionControl::InReadPcmData(
+      from_session_type_2_0(session_type), buffer, bytes);
+}
+
 bool HidlToAidlMiddleware_2_0::IsAidlAvailable() {
   return BluetoothAudioSession::IsAidlAvailable();
 }
