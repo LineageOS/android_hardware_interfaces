@@ -129,6 +129,16 @@ class UsbAidlTest : public testing::TestWithParam<std::string> {
       parent_.notify();
       return ScopedAStatus::ok();
     }
+
+    // Callback method for the status of limitPowerTransfer operation
+    ScopedAStatus notifyLimitPowerTransferStatus(const string& /*portName*/, bool /*limit*/,
+                                                 Status /*retval*/, int64_t transactionId) override {
+      parent_.last_transactionId = transactionId;
+      parent_.usb_last_cookie = cookie;
+      parent_.limit_power_transfer_done = true;
+      parent_.notify();
+      return ScopedAStatus::ok();
+    }
   };
 
   virtual void SetUp() override {
@@ -195,6 +205,9 @@ class UsbAidlTest : public testing::TestWithParam<std::string> {
 
   // Flag to indicate the invocation of notifyEnableUsbDataStatus callback.
   bool enable_usb_data_done;
+
+  // Flag to indicate the invocation of notifyLimitPowerTransferStatus callback.
+  bool limit_power_transfer_done;
 
   // Stores the cookie of the last invoked usb callback object.
   int usb_last_cookie;
@@ -408,6 +421,42 @@ TEST_P(UsbAidlTest, enableUsbData) {
     EXPECT_EQ(transactionId, last_transactionId);
   }
   ALOGI("UsbAidlTest enableUsbData end");
+}
+
+/*
+ * Test enabling Usb data of the port.
+ * Test case queries the usb ports present in device.
+ * If there is at least one usb port, relaxing limit power transfer
+ * is attempted for the port.
+ * The callback parameters are checked to see if transaction id
+ * matches.
+ */
+TEST_P(UsbAidlTest, limitPowerTransfer) {
+  ALOGI("UsbAidlTest limitPowerTransfer start");
+  int64_t transactionId = rand() % 10000;
+  const auto& ret = usb->queryPortStatus(transactionId);
+  ASSERT_TRUE(ret.isOk());
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(2, usb_last_cookie);
+  EXPECT_EQ(transactionId, last_transactionId);
+
+  if (!usb_last_port_status.portName.empty()) {
+    ALOGI("portname:%s", usb_last_port_status.portName.c_str());
+    limit_power_transfer_done = false;
+    transactionId = rand() % 10000;
+    const auto& ret = usb->limitPowerTransfer(usb_last_port_status.portName, false, transactionId);
+    ASSERT_TRUE(ret.isOk());
+
+    std::cv_status waitStatus = wait();
+    while (waitStatus == std::cv_status::no_timeout &&
+           limit_power_transfer_done == false)
+      waitStatus = wait();
+
+    EXPECT_EQ(std::cv_status::no_timeout, waitStatus);
+    EXPECT_EQ(2, usb_last_cookie);
+    EXPECT_EQ(transactionId, last_transactionId);
+  }
+  ALOGI("UsbAidlTest limitPowerTransfer end");
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(UsbAidlTest);
