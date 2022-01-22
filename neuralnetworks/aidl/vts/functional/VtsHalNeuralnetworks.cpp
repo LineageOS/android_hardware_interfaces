@@ -15,6 +15,7 @@
  */
 
 #define LOG_TAG "neuralnetworks_aidl_hal_test"
+
 #include "VtsHalNeuralnetworks.h"
 
 #include <android-base/logging.h>
@@ -28,12 +29,18 @@
 #include <utility>
 
 #include <TestHarness.h>
-#include <aidl/Vintf.h>
 #include <nnapi/hal/aidl/Conversions.h>
 
 #include "Callbacks.h"
 #include "GeneratedTestHarness.h"
 #include "Utils.h"
+
+#ifdef __ANDROID__
+#include <aidl/Vintf.h>
+#else  // __ANDROID__
+#include <CanonicalDevice.h>
+#include <nnapi/hal/aidl/Adapter.h>
+#endif  // __ANDROID__
 
 namespace aidl::android::hardware::neuralnetworks::vts::functional {
 
@@ -111,6 +118,7 @@ void NeuralNetworksAidlTest::SetUp() {
     ASSERT_TRUE(deviceIsResponsive);
 }
 
+#ifdef __ANDROID__
 static NamedDevice makeNamedDevice(const std::string& name) {
     ndk::SpAIBinder binder(AServiceManager_waitForService(name.c_str()));
     return {name, IDevice::fromBinder(binder)};
@@ -127,6 +135,14 @@ static std::vector<NamedDevice> getNamedDevicesImpl() {
     std::transform(names.begin(), names.end(), std::back_inserter(namedDevices), makeNamedDevice);
     return namedDevices;
 }
+#else   // __ANDROID__
+static std::vector<NamedDevice> getNamedDevicesImpl() {
+    const std::string name = "nnapi-sample";
+    auto device = std::make_shared<const ::android::nn::sample::Device>(name);
+    auto aidlDevice = adapter::adapt(device);
+    return {{name, aidlDevice}};
+}
+#endif  // __ANDROID__
 
 const std::vector<NamedDevice>& getNamedDevices() {
     const static std::vector<NamedDevice> devices = getNamedDevicesImpl();

@@ -21,17 +21,19 @@
 #include <aidl/android/hardware/neuralnetworks/OperandType.h>
 #include <android-base/logging.h>
 #include <android/binder_status.h>
-#include <android/hardware_buffer.h>
 
 #include <sys/mman.h>
 #include <iostream>
 #include <limits>
 #include <numeric>
 
-#include <MemoryUtils.h>
 #include <nnapi/SharedMemory.h>
 #include <nnapi/hal/aidl/Conversions.h>
 #include <nnapi/hal/aidl/Utils.h>
+
+#ifdef __ANDROID__
+#include <android/hardware_buffer.h>
+#endif  // __ANDROID__
 
 namespace aidl::android::hardware::neuralnetworks {
 
@@ -140,7 +142,8 @@ std::unique_ptr<TestBlobAHWB> TestBlobAHWB::create(uint32_t size) {
     return ahwb->mIsValid ? std::move(ahwb) : nullptr;
 }
 
-void TestBlobAHWB::initialize(uint32_t size) {
+void TestBlobAHWB::initialize([[maybe_unused]] uint32_t size) {
+#ifdef __ANDROID__
     mIsValid = false;
     ASSERT_GT(size, 0);
     const auto usage = AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN | AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN;
@@ -164,6 +167,9 @@ void TestBlobAHWB::initialize(uint32_t size) {
     mAidlMemory = utils::convert(mMemory).value();
 
     mIsValid = true;
+#else   // __ANDROID__
+    LOG(FATAL) << "TestBlobAHWB::initialize not supported on host";
+#endif  // __ANDROID__
 }
 
 std::string gtestCompliantName(std::string name) {
