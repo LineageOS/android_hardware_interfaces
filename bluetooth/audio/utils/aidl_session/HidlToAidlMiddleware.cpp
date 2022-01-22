@@ -111,18 +111,6 @@ const static std::unordered_map<SessionType_2_1, SessionType>
          SessionType::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH},
     };
 
-const static std::unordered_map<int32_t, SampleRate_2_0>
-    sample_rate_to_hidl_2_0_map{
-        {44100, SampleRate_2_0::RATE_44100},
-        {48000, SampleRate_2_0::RATE_48000},
-        {88200, SampleRate_2_0::RATE_88200},
-        {96000, SampleRate_2_0::RATE_96000},
-        {176400, SampleRate_2_0::RATE_176400},
-        {192000, SampleRate_2_0::RATE_192000},
-        {16000, SampleRate_2_0::RATE_16000},
-        {24000, SampleRate_2_0::RATE_24000},
-    };
-
 const static std::unordered_map<int32_t, SampleRate_2_1>
     sample_rate_to_hidl_2_1_map{
         {44100, SampleRate_2_1::RATE_44100},
@@ -231,16 +219,17 @@ inline HidlStatus to_hidl_status(const BluetoothAudioStatus& status) {
   }
 }
 
-inline SampleRate_2_0 to_hidl_sample_rate_2_0(const int32_t sample_rate_hz) {
-  auto it = sample_rate_to_hidl_2_0_map.find(sample_rate_hz);
-  if (it != sample_rate_to_hidl_2_0_map.end()) return it->second;
-  return SampleRate_2_0::RATE_UNKNOWN;
-}
-
 inline SampleRate_2_1 to_hidl_sample_rate_2_1(const int32_t sample_rate_hz) {
   auto it = sample_rate_to_hidl_2_1_map.find(sample_rate_hz);
   if (it != sample_rate_to_hidl_2_1_map.end()) return it->second;
   return SampleRate_2_1::RATE_UNKNOWN;
+}
+
+inline SampleRate_2_0 to_hidl_sample_rate_2_0(const int32_t sample_rate_hz) {
+  auto it = sample_rate_to_hidl_2_1_map.find(sample_rate_hz);
+  if (it != sample_rate_to_hidl_2_1_map.end())
+    return static_cast<SampleRate_2_0>(it->second);
+  return SampleRate_2_0::RATE_UNKNOWN;
 }
 
 inline BitsPerSample_2_0 to_hidl_bits_per_sample(const int8_t bit_per_sample) {
