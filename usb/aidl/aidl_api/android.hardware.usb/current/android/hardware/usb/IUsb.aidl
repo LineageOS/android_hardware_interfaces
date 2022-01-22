@@ -39,4 +39,5 @@ interface IUsb {
   oneway void queryPortStatus(long transactionId);
   oneway void setCallback(in android.hardware.usb.IUsbCallback callback);
   oneway void switchRole(in String portName, in android.hardware.usb.PortRole role, long transactionId);
+  oneway void limitPowerTransfer(in String portName, boolean limit, long transactionId);
 }

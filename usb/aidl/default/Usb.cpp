@@ -289,6 +289,24 @@ ScopedAStatus Usb::switchRole(const string& in_portName,
     return ScopedAStatus::ok();
 }
 
+ScopedAStatus Usb::limitPowerTransfer(const string& in_portName, bool /*in_limit*/,
+        int64_t in_transactionId) {
+    std::vector<PortStatus> currentPortStatus;
+
+    pthread_mutex_lock(&mLock);
+    if (mCallback != NULL && in_transactionId >= 0) {
+        ScopedAStatus ret = mCallback->notifyLimitPowerTransferStatus(
+                in_portName, false, Status::NOT_SUPPORTED, in_transactionId);
+        if (!ret.isOk())
+            ALOGE("limitPowerTransfer error %s", ret.getDescription().c_str());
+    } else {
+        ALOGE("Not notifying the userspace. Callback is not set");
+    }
+    pthread_mutex_unlock(&mLock);
+
+    return ScopedAStatus::ok();
+}
+
 Status getAccessoryConnected(const string &portName, string *accessory) {
     string filename = kTypecPath + portName + "-partner/accessory_mode";
 

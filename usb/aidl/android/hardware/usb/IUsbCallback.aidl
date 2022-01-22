@@ -83,4 +83,16 @@ oneway interface IUsbCallback {
      * @param transactionId transactionId sent during queryPortStatus request
      */
     void notifyQueryPortStatus(in String portName, in Status retval, long transactionId);
+
+    /**
+     * Used to notify the result of requesting limitPowerTransfer.
+     *
+     * @param portName name of the port for which power transfer is being limited.
+     * @param limit true limit power transfer.
+     *              false relax limiting power transfer.
+     * @param retval SUCCESS if the request to enable/disable limitPowerTransfer succeeds.
+     *               FAILURE otherwise.
+     * @param transactionId ID sent during limitPowerTransfer request.
+     */
+    void notifyLimitPowerTransferStatus(in String portName, boolean limit, in Status retval, long transactionId);
 }

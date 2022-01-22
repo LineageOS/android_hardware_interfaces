@@ -104,4 +104,8 @@ parcelable PortStatus {
      * UsbData status of the port.
      */
     boolean usbDataEnabled;
+    /**
+     * Denoted whether power transfer is limited in the port.
+     */
+    boolean powerTransferLimited;
 }
