@@ -39,13 +39,6 @@ namespace hardware {
 namespace automotive {
 namespace vehicle {
 
-// private namespace
-namespace defaultvehiclehal_impl {
-
-constexpr int INVALID_MEMORY_FD = -1;
-
-}  // namespace defaultvehiclehal_impl
-
 class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::vehicle::BnVehicle {
   public:
     using CallbackType =
@@ -79,6 +72,7 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
                                      const std::vector<int32_t>& propIds) override;
     ::ndk::ScopedAStatus returnSharedMemory(const CallbackType& callback,
                                             int64_t sharedMemoryId) override;
+    binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
 
     IVehicleHardware* getHardware();
 
@@ -214,6 +208,8 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
     void onBinderUnlinkedWithContext(const AIBinder* clientId);
 
     void monitorBinderLifeCycle(const CallbackType& callback);
+
+    bool checkDumpPermission();
 
     template <class T>
     static std::shared_ptr<T> getOrCreateClient(
