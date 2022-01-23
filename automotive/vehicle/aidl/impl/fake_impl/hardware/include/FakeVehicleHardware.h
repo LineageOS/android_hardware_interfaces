@@ -23,7 +23,9 @@
 #include <IVehicleHardware.h>
 #include <VehicleHalTypes.h>
 #include <VehiclePropertyStore.h>
+#include <android-base/parseint.h>
 #include <android-base/result.h>
+#include <android-base/stringprintf.h>
 #include <android-base/thread_annotations.h>
 
 #include <map>
@@ -37,7 +39,7 @@ namespace automotive {
 namespace vehicle {
 namespace fake {
 
-class FakeVehicleHardware final : public IVehicleHardware {
+class FakeVehicleHardware : public IVehicleHardware {
   public:
     FakeVehicleHardware();
 
@@ -78,13 +80,21 @@ class FakeVehicleHardware final : public IVehicleHardware {
     void registerOnPropertySetErrorEvent(
             std::unique_ptr<const PropertySetErrorCallback> callback) override;
 
+  protected:
+    // mValuePool is also used in mServerSidePropStore.
+    const std::shared_ptr<VehiclePropValuePool> mValuePool;
+    const std::shared_ptr<VehiclePropertyStore> mServerSidePropStore;
+
+    ::android::base::Result<VehiclePropValuePool::RecyclableType> getValue(
+            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
+
+    ::android::base::Result<void> setValue(
+            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
+
   private:
     // Expose private methods to unit test.
     friend class FakeVehicleHardwareTestHelper;
 
-    // mValuePool is also used in mServerSidePropStore.
-    const std::shared_ptr<VehiclePropValuePool> mValuePool;
-    const std::shared_ptr<VehiclePropertyStore> mServerSidePropStore;
     const std::unique_ptr<obd2frame::FakeObd2Frame> mFakeObd2Frame;
     const std::unique_ptr<FakeUserHal> mFakeUserHal;
     std::mutex mCallbackLock;
@@ -120,6 +130,35 @@ class FakeVehicleHardware final : public IVehicleHardware {
     ::android::base::Result<VehiclePropValuePool::RecyclableType> getUserHalProp(
             const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
     bool isHvacPropAndHvacNotAvailable(int32_t propId);
+
+    std::string dumpAllProperties();
+    std::string dumpOnePropertyByConfig(
+            int rowNumber,
+            const ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig& config);
+    std::string dumpOnePropertyById(int32_t propId, int32_t areaId);
+    std::string dumpHelp();
+    std::string dumpListProperties();
+    std::string dumpSpecificProperty(const std::vector<std::string>& options);
+    std::string dumpSetProperties(const std::vector<std::string>& options);
+
+    template <typename T>
+    ::android::base::Result<T> safelyParseInt(int index, const std::string& s) {
+        T out;
+        if (!::android::base::ParseInt(s, &out)) {
+            return ::android::base::Error() << ::android::base::StringPrintf(
+                           "non-integer argument at index %d: %s\n", index, s.c_str());
+        }
+        return out;
+    }
+    ::android::base::Result<float> safelyParseFloat(int index, const std::string& s);
+    std::vector<std::string> getOptionValues(const std::vector<std::string>& options,
+                                             size_t* index);
+    ::android::base::Result<::aidl::android::hardware::automotive::vehicle::VehiclePropValue>
+    parseSetPropOptions(const std::vector<std::string>& options);
+    ::android::base::Result<std::vector<uint8_t>> parseHexString(const std::string& s);
+
+    ::android::base::Result<void> checkArgumentsSize(const std::vector<std::string>& options,
+                                                     size_t minSize);
 };
 
 }  // namespace fake

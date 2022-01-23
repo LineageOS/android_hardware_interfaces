@@ -93,16 +93,6 @@ std::unordered_map<
     std::unordered_map<uint16_t, std::shared_ptr<PortStatusCallbacks_2_2>>>
     legacy_callback_table;
 
-const static std::unordered_map<SessionType_2_0, SessionType>
-    session_type_2_0_to_aidl_map{
-        {SessionType_2_0::A2DP_SOFTWARE_ENCODING_DATAPATH,
-         SessionType::A2DP_SOFTWARE_ENCODING_DATAPATH},
-        {SessionType_2_0::A2DP_HARDWARE_OFFLOAD_DATAPATH,
-         SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH},
-        {SessionType_2_0::HEARING_AID_SOFTWARE_ENCODING_DATAPATH,
-         SessionType::HEARING_AID_SOFTWARE_ENCODING_DATAPATH},
-    };
-
 const static std::unordered_map<SessionType_2_1, SessionType>
     session_type_2_1_to_aidl_map{
         {SessionType_2_1::A2DP_SOFTWARE_ENCODING_DATAPATH,
@@ -218,18 +208,16 @@ const static std::unordered_map<LeAudioMode, LeAudioMode_2_2>
         {LeAudioMode::BROADCAST, LeAudioMode_2_2::BROADCAST},
     };
 
-inline SessionType from_session_type_2_0(
-    const SessionType_2_0& session_type_hidl) {
-  auto it = session_type_2_0_to_aidl_map.find(session_type_hidl);
-  if (it != session_type_2_0_to_aidl_map.end()) return it->second;
-  return SessionType::UNKNOWN;
-}
-
 inline SessionType from_session_type_2_1(
     const SessionType_2_1& session_type_hidl) {
   auto it = session_type_2_1_to_aidl_map.find(session_type_hidl);
   if (it != session_type_2_1_to_aidl_map.end()) return it->second;
   return SessionType::UNKNOWN;
+}
+
+inline SessionType from_session_type_2_0(
+    const SessionType_2_0& session_type_hidl) {
+  return from_session_type_2_1(static_cast<SessionType_2_1>(session_type_hidl));
 }
 
 inline HidlStatus to_hidl_status(const BluetoothAudioStatus& status) {

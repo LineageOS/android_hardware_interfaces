@@ -486,6 +486,13 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.nfc</name>
+        <interface>
+            <name>INfc</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.oemlock</name>
         <version>1.0</version>
@@ -747,6 +754,13 @@
     <hal format="hidl" optional="true">
         <name>android.hardware.usb</name>
         <version>1.0-3</version>
+        <interface>
+            <name>IUsb</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.usb</name>
         <interface>
             <name>IUsb</name>
             <instance>default</instance>

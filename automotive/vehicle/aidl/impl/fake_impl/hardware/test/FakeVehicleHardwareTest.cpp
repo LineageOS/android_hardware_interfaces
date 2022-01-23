@@ -24,6 +24,7 @@
 
 #include <android-base/expected.h>
 #include <android-base/file.h>
+#include <android-base/stringprintf.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <utils/Log.h>
@@ -52,13 +53,16 @@ using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyStatus;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 using ::android::base::expected;
+using ::android::base::StringPrintf;
 using ::android::base::unexpected;
 using ::testing::ContainerEq;
+using ::testing::ContainsRegex;
 using ::testing::Eq;
 using ::testing::IsSubsetOf;
 using ::testing::WhenSortedBy;
 
 constexpr int INVALID_PROP_ID = 0;
+constexpr char CAR_MAKE[] = "Default Car";
 
 }  // namespace
 
@@ -1201,6 +1205,261 @@ TEST_F(FakeVehicleHardwareTest, testInitialUserInfo) {
                                          },
                                  .value.stringValue = "||",
                          }));
+}
+
+TEST_F(FakeVehicleHardwareTest, testDumpAllProperties) {
+    std::vector<std::string> options;
+    DumpResult result = getHardware()->dump(options);
+    ASSERT_TRUE(result.callerShouldDumpState);
+    ASSERT_NE(result.buffer, "");
+    ASSERT_THAT(result.buffer, ContainsRegex("dumping .+ properties"));
+}
+
+TEST_F(FakeVehicleHardwareTest, testDumpHelp) {
+    std::vector<std::string> options;
+    options.push_back("--help");
+    DumpResult result = getHardware()->dump(options);
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_NE(result.buffer, "");
+    ASSERT_THAT(result.buffer, ContainsRegex("Usage: "));
+}
+
+TEST_F(FakeVehicleHardwareTest, testDumpListProperties) {
+    std::vector<std::string> options;
+    options.push_back("--list");
+    DumpResult result = getHardware()->dump(options);
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_NE(result.buffer, "");
+    ASSERT_THAT(result.buffer, ContainsRegex("listing .+ properties"));
+}
+
+TEST_F(FakeVehicleHardwareTest, testDumpSpecificProperties) {
+    std::vector<std::string> options;
+    options.push_back("--get");
+    std::string prop1 = std::to_string(toInt(VehicleProperty::INFO_FUEL_CAPACITY));
+    std::string prop2 = std::to_string(toInt(VehicleProperty::TIRE_PRESSURE));
+    options.push_back(prop1);
+    options.push_back(prop2);
+    DumpResult result = getHardware()->dump(options);
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_NE(result.buffer, "");
+    ASSERT_THAT(result.buffer,
+                ContainsRegex(StringPrintf("1:.*prop: %s.*\n2-0:.*prop: %s.*\n2-1:.*prop: %s.*\n",
+                                           prop1.c_str(), prop2.c_str(), prop2.c_str())));
+}
+
+TEST_F(FakeVehicleHardwareTest, testDumpSpecificPropertiesInvalidProp) {
+    std::vector<std::string> options;
+    options.push_back("--get");
+    std::string prop1 = std::to_string(toInt(VehicleProperty::INFO_FUEL_CAPACITY));
+    std::string prop2 = std::to_string(INVALID_PROP_ID);
+    options.push_back(prop1);
+    options.push_back(prop2);
+    DumpResult result = getHardware()->dump(options);
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_NE(result.buffer, "");
+    ASSERT_THAT(result.buffer, ContainsRegex(StringPrintf("1:.*prop: %s.*\nNo property %d\n",
+                                                          prop1.c_str(), INVALID_PROP_ID)));
+}
+
+TEST_F(FakeVehicleHardwareTest, testDumpSpecificPropertiesNoArg) {
+    std::vector<std::string> options;
+    options.push_back("--get");
+
+    // No arguments.
+    DumpResult result = getHardware()->dump(options);
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_NE(result.buffer, "");
+    ASSERT_THAT(result.buffer, ContainsRegex("Invalid number of arguments"));
+}
+
+TEST_F(FakeVehicleHardwareTest, testDumpInvalidOptions) {
+    std::vector<std::string> options;
+    options.push_back("--invalid");
+
+    DumpResult result = getHardware()->dump(options);
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_NE(result.buffer, "");
+    ASSERT_THAT(result.buffer, ContainsRegex("Invalid option: --invalid"));
+}
+
+struct SetPropTestCase {
+    std::string test_name;
+    std::vector<std::string> options;
+    bool success;
+    std::string errorMsg = "";
+};
+
+class FakeVehicleHardwareSetPropTest : public FakeVehicleHardwareTest,
+                                       public testing::WithParamInterface<SetPropTestCase> {};
+
+TEST_P(FakeVehicleHardwareSetPropTest, cmdSetOneProperty) {
+    const SetPropTestCase& tc = GetParam();
+
+    DumpResult result = getHardware()->dump(tc.options);
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_NE(result.buffer, "");
+    if (tc.success) {
+        ASSERT_THAT(result.buffer, ContainsRegex("Set property:"));
+    } else {
+        ASSERT_THAT(result.buffer, ContainsRegex(tc.errorMsg));
+    }
+}
+
+std::vector<SetPropTestCase> GenSetPropParams() {
+    std::string infoMakeProperty = std::to_string(toInt(VehicleProperty::INFO_MAKE));
+    return {
+            {"success_set_string", {"--set", infoMakeProperty, "-s", CAR_MAKE}, true},
+            {"success_set_bytes", {"--set", infoMakeProperty, "-b", "0xdeadbeef"}, true},
+            {"success_set_bytes_caps", {"--set", infoMakeProperty, "-b", "0xDEADBEEF"}, true},
+            {"success_set_int", {"--set", infoMakeProperty, "-i", "2147483647"}, true},
+            {"success_set_ints",
+             {"--set", infoMakeProperty, "-i", "2147483647", "0", "-2147483648"},
+             true},
+            {"success_set_int64",
+             {"--set", infoMakeProperty, "-i64", "-9223372036854775808"},
+             true},
+            {"success_set_int64s",
+             {"--set", infoMakeProperty, "-i64", "-9223372036854775808", "0",
+              "9223372036854775807"},
+             true},
+            {"success_set_float", {"--set", infoMakeProperty, "-f", "1.175494351E-38"}, true},
+            {"success_set_floats",
+             {"--set", infoMakeProperty, "-f", "-3.402823466E+38", "0", "3.402823466E+38"},
+             true},
+            {"success_set_area", {"--set", infoMakeProperty, "-a", "2147483647"}, true},
+            {"fail_no_options", {"--set", infoMakeProperty}, false, "Invalid number of arguments"},
+            {"fail_less_than_4_options",
+             {"--set", infoMakeProperty, "-i"},
+             false,
+             "No values specified"},
+            {"fail_unknown_options", {"--set", infoMakeProperty, "-abcd"}, false, "Unknown option"},
+            {"fail_invalid_property",
+             {"--set", "not valid", "-s", CAR_MAKE},
+             false,
+             "not a valid int"},
+            {"fail_duplicate_string",
+             {"--set", infoMakeProperty, "-s", CAR_MAKE, "-s", CAR_MAKE},
+             false,
+             "Duplicate \"-s\" options"},
+            {"fail_multiple_strings",
+             {"--set", infoMakeProperty, "-s", CAR_MAKE, CAR_MAKE},
+             false,
+             "Expect exact one value"},
+            {"fail_no_string_value",
+             {"--set", infoMakeProperty, "-s", "-a", "1234"},
+             false,
+             "Expect exact one value"},
+            {"fail_duplicate_bytes",
+             {"--set", infoMakeProperty, "-b", "0xdeadbeef", "-b", "0xdeadbeef"},
+             false,
+             "Duplicate \"-b\" options"},
+            {"fail_multiple_bytes",
+             {"--set", infoMakeProperty, "-b", "0xdeadbeef", "0xdeadbeef"},
+             false,
+             "Expect exact one value"},
+            {"fail_invalid_bytes",
+             {"--set", infoMakeProperty, "-b", "0xgood"},
+             false,
+             "not a valid hex string"},
+            {"fail_invalid_bytes_no_prefix",
+             {"--set", infoMakeProperty, "-b", "deadbeef"},
+             false,
+             "not a valid hex string"},
+            {"fail_invalid_int",
+             {"--set", infoMakeProperty, "-i", "abc"},
+             false,
+             "not a valid int"},
+            {"fail_int_out_of_range",
+             {"--set", infoMakeProperty, "-i", "2147483648"},
+             false,
+             "not a valid int"},
+            {"fail_no_int_value",
+             {"--set", infoMakeProperty, "-i", "-s", CAR_MAKE},
+             false,
+             "No values specified"},
+            {"fail_invalid_int64",
+             {"--set", infoMakeProperty, "-i64", "abc"},
+             false,
+             "not a valid int64"},
+            {"fail_int64_out_of_range",
+             {"--set", infoMakeProperty, "-i64", "-9223372036854775809"},
+             false,
+             "not a valid int64"},
+            {"fail_no_int64_value",
+             {"--set", infoMakeProperty, "-i64", "-s", CAR_MAKE},
+             false,
+             "No values specified"},
+            {"fail_invalid_float",
+             {"--set", infoMakeProperty, "-f", "abc"},
+             false,
+             "not a valid float"},
+            {"fail_float_out_of_range",
+             {"--set", infoMakeProperty, "-f", "-3.402823466E+39"},
+             false,
+             "not a valid float"},
+            {"fail_no_float_value",
+             {"--set", infoMakeProperty, "-f", "-s", CAR_MAKE},
+             false,
+             "No values specified"},
+            {"fail_multiple_areas",
+             {"--set", infoMakeProperty, "-a", "2147483648", "0"},
+             false,
+             "Expect exact one value"},
+            {"fail_invalid_area",
+             {"--set", infoMakeProperty, "-a", "abc"},
+             false,
+             "not a valid int"},
+            {"fail_area_out_of_range",
+             {"--set", infoMakeProperty, "-a", "2147483648"},
+             false,
+             "not a valid int"},
+            {"fail_no_area_value",
+             {"--set", infoMakeProperty, "-a", "-s", CAR_MAKE},
+             false,
+             "Expect exact one value"},
+    };
+}
+
+INSTANTIATE_TEST_SUITE_P(
+        FakeVehicleHardwareSetPropTests, FakeVehicleHardwareSetPropTest,
+        testing::ValuesIn(GenSetPropParams()),
+        [](const testing::TestParamInfo<FakeVehicleHardwareSetPropTest::ParamType>& info) {
+            return info.param.test_name;
+        });
+
+TEST_F(FakeVehicleHardwareTest, SetComplexPropTest) {
+    std::string infoMakeProperty = std::to_string(toInt(VehicleProperty::INFO_MAKE));
+    getHardware()->dump({"--set", infoMakeProperty,      "-s",   CAR_MAKE,
+                         "-b",    "0xdeadbeef",          "-i",   "2147483647",
+                         "0",     "-2147483648",         "-i64", "-9223372036854775808",
+                         "0",     "9223372036854775807", "-f",   "-3.402823466E+38",
+                         "0",     "3.402823466E+38",     "-a",   "123"});
+    VehiclePropValue requestProp;
+    requestProp.prop = toInt(VehicleProperty::INFO_MAKE);
+    requestProp.areaId = 123;
+    auto result = getValue(requestProp);
+    ASSERT_TRUE(result.ok());
+    VehiclePropValue value = result.value();
+    ASSERT_EQ(value.prop, toInt(VehicleProperty::INFO_MAKE));
+    ASSERT_EQ(value.areaId, 123);
+    ASSERT_STREQ(CAR_MAKE, value.value.stringValue.c_str());
+    uint8_t bytes[] = {0xde, 0xad, 0xbe, 0xef};
+    ASSERT_FALSE(memcmp(bytes, value.value.byteValues.data(), sizeof(bytes)));
+    ASSERT_EQ(3u, value.value.int32Values.size());
+    ASSERT_EQ(2147483647, value.value.int32Values[0]);
+    ASSERT_EQ(0, value.value.int32Values[1]);
+    ASSERT_EQ(-2147483648, value.value.int32Values[2]);
+    ASSERT_EQ(3u, value.value.int64Values.size());
+    // -9223372036854775808 is not a valid literal since '-' and '9223372036854775808' would be two
+    // tokens and the later does not fit in unsigned long long.
+    ASSERT_EQ(-9223372036854775807 - 1, value.value.int64Values[0]);
+    ASSERT_EQ(0, value.value.int64Values[1]);
+    ASSERT_EQ(9223372036854775807, value.value.int64Values[2]);
+    ASSERT_EQ(3u, value.value.floatValues.size());
+    ASSERT_EQ(-3.402823466E+38f, value.value.floatValues[0]);
+    ASSERT_EQ(0.0f, value.value.floatValues[1]);
+    ASSERT_EQ(3.402823466E+38f, value.value.floatValues[2]);
 }
 
 }  // namespace fake
