@@ -54,7 +54,7 @@ class TestRenderEngine {
         mDisplaySettings = displaySettings;
     };
     void drawLayers();
-    void checkColorBuffer(std::vector<Color>& expectedColors);
+    void checkColorBuffer(const std::vector<Color>& expectedColors);
 
     ::android::renderengine::RenderEngine& getInternalRenderEngine() { return *mRenderEngine; }
 
