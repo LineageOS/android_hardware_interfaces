@@ -78,7 +78,7 @@ static const AptxCapabilities kDefaultOffloadAptxHdCapability = {
     .bitsPerSample = {24},
 };
 
-static const Lc3Capabilities kDefaultOffloadLc3Capability = {
+static const Lc3Capabilities kDefaultA2dpOffloadLc3Capability = {
     .samplingFrequencyHz = {44100, 48000},
     .frameDurationUs = {7500, 10000},
     .channelMode = {ChannelMode::MONO, ChannelMode::STEREO},
@@ -285,11 +285,11 @@ bool BluetoothAudioCodecs::IsOffloadLc3ConfigurationValid(
   const Lc3Configuration lc3_data =
       codec_specific.get<CodecConfiguration::CodecSpecific::lc3Config>();
 
-  if (ContainedInVector(kDefaultOffloadLc3Capability.samplingFrequencyHz,
+  if (ContainedInVector(kDefaultA2dpOffloadLc3Capability.samplingFrequencyHz,
                         lc3_data.samplingFrequencyHz) &&
-      ContainedInVector(kDefaultOffloadLc3Capability.frameDurationUs,
+      ContainedInVector(kDefaultA2dpOffloadLc3Capability.frameDurationUs,
                         lc3_data.frameDurationUs) &&
-      ContainedInVector(kDefaultOffloadLc3Capability.channelMode,
+      ContainedInVector(kDefaultA2dpOffloadLc3Capability.channelMode,
                         lc3_data.channelMode)) {
     return true;
   }
@@ -352,7 +352,7 @@ BluetoothAudioCodecs::GetA2dpOffloadCodecCapabilities(
       case CodecType::LC3:
         codec_capability.capabilities
             .set<CodecCapabilities::Capabilities::lc3Capabilities>(
-                kDefaultOffloadLc3Capability);
+                kDefaultA2dpOffloadLc3Capability);
         break;
       case CodecType::UNKNOWN:
       case CodecType::VENDOR:
