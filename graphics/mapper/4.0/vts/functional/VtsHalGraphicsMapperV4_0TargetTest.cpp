@@ -93,7 +93,13 @@ class GraphicsMapperHidlTest
         ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(descriptorInfo, true));
 
         hidl_vec<uint8_t> vec;
-        ASSERT_EQ(Error::NONE, mGralloc->get(bufferHandle, metadataType, &vec));
+        const auto result = mGralloc->get(bufferHandle, metadataType, &vec);
+
+        if (metadataType == gralloc4::MetadataType_Smpte2094_10 && result == Error::UNSUPPORTED) {
+            GTEST_SKIP() << "getting metadata for Smpte2094-10 is unsupported";
+        }
+
+        ASSERT_EQ(Error::NONE, result);
 
         ASSERT_NO_FATAL_FAILURE(decode(descriptorInfo, vec));
     }
