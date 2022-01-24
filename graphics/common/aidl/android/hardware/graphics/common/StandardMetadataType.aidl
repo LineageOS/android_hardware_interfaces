@@ -22,8 +22,9 @@ package android.hardware.graphics.common;
  * This is an enum that defines the common types of gralloc 4 buffer metadata. The comments for
  * each enum include a description of the metadata that is associated with the type.
  *
- * IMapper@4.x must support getting the following standard buffer metadata types. IMapper@4.x may
- * support setting these standard buffer metadata types as well.
+ * IMapper@4.x must support getting the following standard buffer metadata types, with the exception
+ * of SMPTE 2094-10 metadata. IMapper@4.x may support setting these standard buffer metadata types
+ * as well.
  *
  * When encoding these StandardMetadataTypes into a byte stream, the associated MetadataType is
  * is first encoded followed by the StandardMetadataType value. The MetadataType is encoded by
