@@ -79,11 +79,15 @@ class BluetoothAudioSessionControl {
         BluetoothAudioSessionInstance::GetSessionInstance(session_type);
     if (session_ptr != nullptr) {
       return session_ptr->GetAudioConfig();
-    } else if (session_type ==
-               SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH) {
-      return BluetoothAudioSession::invalidOffloadAudioConfiguration;
-    } else {
-      return BluetoothAudioSession::invalidSoftwareAudioConfiguration;
+    }
+    switch (session_type) {
+      case SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH:
+        return AudioConfiguration(CodecConfiguration{});
+      case SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH:
+      case SessionType::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH:
+        return AudioConfiguration(LeAudioConfiguration{});
+      default:
+        return AudioConfiguration(PcmConfiguration{});
     }
   }
 
