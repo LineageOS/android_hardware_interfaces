@@ -45,11 +45,7 @@ class BluetoothAudioCodecs {
       const SessionType& session_type, const CodecConfiguration& codec_config);
 
   static bool IsOffloadLeAudioConfigurationValid(
-      const SessionType& session_type, const Lc3Configuration& codec_config);
-
-  static bool IsOffloadLeAudioConfigurationValid(
-      const SessionType& session_type,
-      const LeAudioConfiguration& codec_config);
+      const SessionType& session_type, const LeAudioConfiguration&);
 
   static std::vector<LeAudioCodecCapabilitiesSetting>
   GetLeAudioOffloadCodecCapabilities(const SessionType& session_type);
@@ -77,8 +73,6 @@ class BluetoothAudioCodecs {
       const CodecConfiguration::CodecSpecific& codec_specific);
   static bool IsOffloadLc3ConfigurationValid(
       const CodecConfiguration::CodecSpecific& codec_specific);
-  static bool IsOffloadLeAudioConfigurationValid(
-      const SessionType& session_type, const LeAudioCodecConfiguration&);
 };
 
 }  // namespace audio

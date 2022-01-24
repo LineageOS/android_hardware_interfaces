@@ -144,7 +144,7 @@ class BluetoothAudioSession {
    * The control function is for the bluetooth_audio module to get the current
    * AudioConfiguration
    ***/
-  const AudioConfiguration& GetAudioConfig();
+  const AudioConfiguration GetAudioConfig();
 
   /***
    * The report function is used to report that the Bluetooth stack has notified
@@ -172,14 +172,6 @@ class BluetoothAudioSession {
 
   // Return if IBluetoothAudioProviderFactory implementation existed
   static bool IsAidlAvailable();
-
-  static constexpr PcmConfiguration kInvalidPcmConfiguration = {};
-  // can't be constexpr because of non-literal type
-  static const CodecConfiguration kInvalidCodecConfiguration;
-
-  static AudioConfiguration invalidSoftwareAudioConfiguration;
-  static AudioConfiguration invalidOffloadAudioConfiguration;
-  static AudioConfiguration invalidLeOffloadAudioConfig;
 
  private:
   // using recursive_mutex to allow hwbinder to re-enter again.
