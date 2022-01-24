@@ -191,6 +191,14 @@ class GraphicsComposerAidlTest : public ::testing::TestWithParam<std::string> {
         resourceIt->second.layers.erase(layer);
     }
 
+    bool hasCapability(Capability capability) {
+        std::vector<Capability> capabilities;
+        EXPECT_TRUE(mComposer->getCapabilities(&capabilities).isOk());
+        return std::any_of(
+                capabilities.begin(), capabilities.end(),
+                [&](const Capability& activeCapability) { return activeCapability == capability; });
+    }
+
     // returns an invalid display id (one that has not been registered to a
     // display.  Currently assuming that a device will never have close to
     // std::numeric_limit<uint64_t>::max() displays registered while running tests
@@ -1477,6 +1485,11 @@ class GraphicsComposerAidlCommandTest : public GraphicsComposerAidlTest {
     }
 
     void Test_expectedPresentTime(std::optional<int> framesDelay) {
+        if (hasCapability(Capability::PRESENT_FENCE_IS_NOT_RELIABLE)) {
+            GTEST_SUCCEED() << "Device has unreliable present fences capability, skipping";
+            return;
+        }
+
         ASSERT_TRUE(mComposerClient->setPowerMode(mPrimaryDisplay, PowerMode::ON).isOk());
 
         const auto vsyncPeriod = getVsyncPeriod();
@@ -1653,10 +1666,7 @@ TEST_P(GraphicsComposerAidlCommandTest, PRESENT_DISPLAY) {
  */
 // TODO(b/208441745) fix the test failure
 TEST_P(GraphicsComposerAidlCommandTest, PRESENT_DISPLAY_NO_LAYER_STATE_CHANGES) {
-    std::vector<Capability> capabilities;
-    EXPECT_TRUE(mComposer->getCapabilities(&capabilities).isOk());
-    if (none_of(capabilities.begin(), capabilities.end(),
-                [&](auto item) { return item == Capability::SKIP_VALIDATE; })) {
+    if (!hasCapability(Capability::SKIP_VALIDATE)) {
         GTEST_SUCCEED() << "Device does not have skip validate capability, skipping";
         return;
     }
@@ -1884,10 +1894,7 @@ TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_PLANE_ALPHA) {
 }
 
 TEST_P(GraphicsComposerAidlCommandTest, SET_LAYER_SIDEBAND_STREAM) {
-    std::vector<Capability> capabilities;
-    EXPECT_TRUE(mComposer->getCapabilities(&capabilities).isOk());
-    if (none_of(capabilities.begin(), capabilities.end(),
-                [&](auto& item) { return item == Capability::SIDEBAND_STREAM; })) {
+    if (!hasCapability(Capability::SIDEBAND_STREAM)) {
         GTEST_SUCCEED() << "no sideband stream support";
         return;
     }
