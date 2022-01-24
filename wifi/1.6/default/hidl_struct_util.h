@@ -25,8 +25,8 @@
 #include <android/hardware/wifi/1.3/types.h>
 #include <android/hardware/wifi/1.4/IWifiChipEventCallback.h>
 #include <android/hardware/wifi/1.4/types.h>
-#include <android/hardware/wifi/1.5/IWifiChip.h>
-#include <android/hardware/wifi/1.5/types.h>
+#include <android/hardware/wifi/1.6/IWifiChip.h>
+#include <android/hardware/wifi/1.6/types.h>
 
 #include "wifi_legacy_hal.h"
 
@@ -95,7 +95,7 @@ bool convertLegacyVectorOfCachedGscanResultsToHidl(
         const std::vector<legacy_hal::wifi_cached_scan_results>& legacy_cached_scan_results,
         std::vector<StaScanData>* hidl_scan_datas);
 bool convertLegacyLinkLayerStatsToHidl(const legacy_hal::LinkLayerStats& legacy_stats,
-                                       V1_5::StaLinkLayerStats* hidl_stats);
+                                       V1_6::StaLinkLayerStats* hidl_stats);
 bool convertLegacyRoamingCapabilitiesToHidl(
         const legacy_hal::wifi_roaming_capabilities& legacy_caps,
         StaRoamingCapabilities* hidl_caps);
@@ -156,40 +156,40 @@ bool convertLegacyNanFollowupIndToHidl(const legacy_hal::NanFollowupInd& legacy_
 bool convertLegacyNanDataPathRequestIndToHidl(const legacy_hal::NanDataPathRequestInd& legacy_ind,
                                               NanDataPathRequestInd* hidl_ind);
 bool convertLegacyNanDataPathConfirmIndToHidl(const legacy_hal::NanDataPathConfirmInd& legacy_ind,
-                                              V1_2::NanDataPathConfirmInd* hidl_ind);
+                                              V1_6::NanDataPathConfirmInd* hidl_ind);
 bool convertLegacyNanDataPathScheduleUpdateIndToHidl(
         const legacy_hal::NanDataPathScheduleUpdateInd& legacy_ind,
-        V1_2::NanDataPathScheduleUpdateInd* hidl_ind);
+        V1_6::NanDataPathScheduleUpdateInd* hidl_ind);
 
 // RTT controller conversion methods.
-bool convertHidlVectorOfRttConfigToLegacy(const std::vector<V1_4::RttConfig>& hidl_configs,
+bool convertHidlVectorOfRttConfigToLegacy(const std::vector<V1_6::RttConfig>& hidl_configs,
                                           std::vector<legacy_hal::wifi_rtt_config>* legacy_configs);
 bool convertHidlRttLciInformationToLegacy(const RttLciInformation& hidl_info,
                                           legacy_hal::wifi_lci_information* legacy_info);
 bool convertHidlRttLcrInformationToLegacy(const RttLcrInformation& hidl_info,
                                           legacy_hal::wifi_lcr_information* legacy_info);
-bool convertHidlRttResponderToLegacy(const V1_4::RttResponder& hidl_responder,
+bool convertHidlRttResponderToLegacy(const V1_6::RttResponder& hidl_responder,
                                      legacy_hal::wifi_rtt_responder* legacy_responder);
-bool convertHidlWifiChannelInfoToLegacy(const WifiChannelInfo& hidl_info,
+bool convertHidlWifiChannelInfoToLegacy(const V1_6::WifiChannelInfo& hidl_info,
                                         legacy_hal::wifi_channel_info* legacy_info);
 bool convertLegacyRttResponderToHidl(const legacy_hal::wifi_rtt_responder& legacy_responder,
-                                     V1_4::RttResponder* hidl_responder);
+                                     V1_6::RttResponder* hidl_responder);
 bool convertLegacyRttCapabilitiesToHidl(
         const legacy_hal::wifi_rtt_capabilities& legacy_capabilities,
-        V1_4::RttCapabilities* hidl_capabilities);
+        V1_6::RttCapabilities* hidl_capabilities);
 bool convertLegacyVectorOfRttResultToHidl(
         const std::vector<const legacy_hal::wifi_rtt_result*>& legacy_results,
-        std::vector<V1_4::RttResult>* hidl_results);
+        std::vector<V1_6::RttResult>* hidl_results);
 uint32_t convertHidlWifiBandToLegacyMacBand(V1_5::WifiBand band);
 uint32_t convertHidlWifiIfaceModeToLegacy(uint32_t hidl_iface_mask);
 uint32_t convertHidlUsableChannelFilterToLegacy(uint32_t hidl_filter_mask);
 bool convertLegacyWifiUsableChannelsToHidl(
         const std::vector<legacy_hal::wifi_usable_channel>& legacy_usable_channels,
-        std::vector<V1_5::WifiUsableChannel>* hidl_usable_channels);
+        std::vector<V1_6::WifiUsableChannel>* hidl_usable_channels);
 bool convertLegacyPeerInfoStatsToHidl(const legacy_hal::WifiPeerInfo& legacy_peer_info_stats,
-                                      V1_5::StaPeerInfo* hidl_peer_info_stats);
+                                      V1_6::StaPeerInfo* hidl_peer_info_stats);
 bool convertLegacyWifiRateInfoToHidl(const legacy_hal::wifi_rate& legacy_rate,
-                                     V1_4::WifiRateInfo* hidl_rate);
+                                     V1_6::WifiRateInfo* hidl_rate);
 }  // namespace hidl_struct_util
 }  // namespace implementation
 }  // namespace V1_6

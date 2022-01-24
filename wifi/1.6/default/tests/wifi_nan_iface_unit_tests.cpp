@@ -85,8 +85,13 @@ class MockNanIfaceEventCallback : public V1_5::IWifiNanIfaceEventCallback {
     MOCK_METHOD1(eventDataPathConfirm,
                  Return<void>(const android::hardware::wifi::V1_0::NanDataPathConfirmInd&));
     MOCK_METHOD1(eventDataPathTerminated, Return<void>(uint32_t));
-    MOCK_METHOD1(eventDataPathConfirm_1_2, Return<void>(const NanDataPathConfirmInd&));
-    MOCK_METHOD1(eventDataPathScheduleUpdate, Return<void>(const NanDataPathScheduleUpdateInd&));
+    MOCK_METHOD1(eventDataPathConfirm_1_2,
+                 Return<void>(const android::hardware::wifi::V1_2::NanDataPathConfirmInd&));
+    MOCK_METHOD1(eventDataPathConfirm_1_6, Return<void>(const NanDataPathConfirmInd&));
+    MOCK_METHOD1(eventDataPathScheduleUpdate,
+                 Return<void>(const android::hardware::wifi::V1_2::NanDataPathScheduleUpdateInd&));
+    MOCK_METHOD1(eventDataPathScheduleUpdate_1_6,
+                 Return<void>(const NanDataPathScheduleUpdateInd&));
     MOCK_METHOD3(notifyCapabilitiesResponse_1_5,
                  Return<void>(uint16_t, const WifiNanStatus&, const V1_5::NanCapabilities&));
 };
