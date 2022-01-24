@@ -473,4 +473,10 @@ interface ISession {
 
     /** See ISession#onPointerUp(int) */
     void onPointerUpWithContext(in PointerContext context);
+
+    /**
+     * This may be called while an authenticate, detect interaction, or enrollment operation is
+     * running when the context changes.
+     */
+    void onContextChanged(in OperationContext context);
 }

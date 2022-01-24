@@ -270,4 +270,8 @@ ndk::ScopedAStatus Session::onPointerUpWithContext(const PointerContext& context
     return onPointerUp(context.pointerId);
 }
 
+ndk::ScopedAStatus Session::onContextChanged(const common::OperationContext& /*context*/) {
+    return ndk::ScopedAStatus::ok();
+}
+
 }  // namespace aidl::android::hardware::biometrics::fingerprint
