@@ -433,6 +433,9 @@ uint32_t convertHidlUsableChannelFilterToLegacy(uint32_t hidl_filter_mask) {
     if (hidl_filter_mask & V1_5::IWifiChip::UsableChannelFilter::CONCURRENCY) {
         legacy_filter_mask |= legacy_hal::WIFI_USABLE_CHANNEL_FILTER_CONCURRENCY;
     }
+    if (hidl_filter_mask & V1_6::IWifiChip::UsableChannelFilter::NAN_INSTANT_MODE) {
+        legacy_filter_mask |= WIFI_USABLE_CHANNEL_FILTER_NAN_INSTANT_MODE;
+    }
     return legacy_filter_mask;
 }
 

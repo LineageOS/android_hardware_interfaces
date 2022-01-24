@@ -764,7 +764,7 @@ struct NanDataPathSecurityConfig {
     /**
      * Security Context Identifier attribute contains PMKID shall be included in NDP setup and
      * response messages. Security Context Identifier, Identifies the Security Context. When
-     * security is enabled This field contains the 16 octet PMKID identifying the PMK used for
+     * security is enabled this field contains the 16 octet PMKID identifying the PMK used for
      * setting up the Secure Data Path.
      */
     uint8_t[16] scid;
