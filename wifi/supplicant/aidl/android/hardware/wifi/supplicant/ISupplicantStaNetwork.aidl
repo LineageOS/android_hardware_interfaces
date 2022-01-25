@@ -1092,4 +1092,17 @@ interface ISupplicantStaNetwork {
      *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
      */
     void setWepTxKeyIdx(in int keyIdx);
+
+    /**
+     * Set the roaming consortium selection.
+     *
+     * @param selectedRcoi Indicates the roaming consortium selection. This is a
+     *            3 or 5-octet long byte array that indicates the selected RCOI
+     *            used for a Passpoint connection.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    void setRoamingConsortiumSelection(in byte[] selectedRcoi);
 }
