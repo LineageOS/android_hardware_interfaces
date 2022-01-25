@@ -42,24 +42,21 @@ void OnDeath(void* cookie) {
         LOG(INFO) << "Nfc::open null callback";
         return ndk::ScopedAStatus::fromServiceSpecificError(
                 static_cast<int32_t>(NfcStatus::FAILED));
-    } else {
-        Nfc::mCallback = clientCallback;
-
-        clientDeathRecipient = AIBinder_DeathRecipient_new(OnDeath);
-        auto linkRet = AIBinder_linkToDeath(clientCallback->asBinder().get(), clientDeathRecipient,
-                                            this /* cookie */);
-        if (linkRet != STATUS_OK) {
-            LOG(ERROR) << __func__ << ": linkToDeath failed: " << linkRet;
-            // Just ignore the error.
-        }
-
-        int ret = Vendor_hal_open(eventCallback, dataCallback);
-        return ret == 0 ? ndk::ScopedAStatus::ok()
-                        : ndk::ScopedAStatus::fromServiceSpecificError(
-                                  static_cast<int32_t>(NfcStatus::FAILED));
-        return ndk::ScopedAStatus::ok();
     }
-    return ndk::ScopedAStatus::ok();
+    Nfc::mCallback = clientCallback;
+
+    clientDeathRecipient = AIBinder_DeathRecipient_new(OnDeath);
+    auto linkRet = AIBinder_linkToDeath(clientCallback->asBinder().get(), clientDeathRecipient,
+                                        this /* cookie */);
+    if (linkRet != STATUS_OK) {
+        LOG(ERROR) << __func__ << ": linkToDeath failed: " << linkRet;
+        // Just ignore the error.
+    }
+
+    int ret = Vendor_hal_open(eventCallback, dataCallback);
+    return ret == 0 ? ndk::ScopedAStatus::ok()
+                    : ndk::ScopedAStatus::fromServiceSpecificError(
+                              static_cast<int32_t>(NfcStatus::FAILED));
 }
 
 ::ndk::ScopedAStatus Nfc::close(NfcCloseType type) {
