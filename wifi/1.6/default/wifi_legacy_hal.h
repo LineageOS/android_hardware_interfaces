@@ -658,6 +658,8 @@ class WifiLegacyHal {
 
     wifi_error triggerSubsystemRestart();
 
+    wifi_error setIndoorState(bool isIndoor);
+
   private:
     // Retrieve interface handles for all the available interfaces.
     wifi_error retrieveIfaceHandles();
