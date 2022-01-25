@@ -133,10 +133,7 @@ bool eicProvisioningGetId(EicProvisioning* ctx, uint32_t* outId) {
 
 bool eicProvisioningCreateCredentialKey(EicProvisioning* ctx, const uint8_t* challenge,
                                         size_t challengeSize, const uint8_t* applicationId,
-                                        size_t applicationIdSize, const uint8_t* attestationKeyBlob,
-                                        size_t attestationKeyBlobSize,
-                                        const uint8_t* attestationKeyCert,
-                                        size_t attestationKeyCertSize, uint8_t* publicKeyCert,
+                                        size_t applicationIdSize, uint8_t* publicKeyCert,
                                         size_t* publicKeyCertSize) {
     if (ctx->isUpdate) {
         eicDebug("Cannot create CredentialKey on update");
@@ -145,9 +142,7 @@ bool eicProvisioningCreateCredentialKey(EicProvisioning* ctx, const uint8_t* cha
 
     if (!eicOpsCreateCredentialKey(ctx->credentialPrivateKey, challenge, challengeSize,
                                    applicationId, applicationIdSize, ctx->testCredential,
-                                   attestationKeyBlob, attestationKeyBlobSize, attestationKeyCert,
-                                   attestationKeyCertSize, publicKeyCert, publicKeyCertSize)) {
-        eicDebug("Error creating credential key");
+                                   publicKeyCert, publicKeyCertSize)) {
         return false;
     }
     return true;

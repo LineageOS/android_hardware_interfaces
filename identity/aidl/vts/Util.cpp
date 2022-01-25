@@ -20,16 +20,12 @@
 
 #include <android-base/logging.h>
 
-#include <KeyMintAidlTestBase.h>
 #include <aidl/Gtest.h>
-#include <aidl/android/hardware/security/keymint/MacedPublicKey.h>
 #include <android-base/stringprintf.h>
 #include <keymaster/km_openssl/openssl_utils.h>
 #include <keymasterV4_1/attestation_record.h>
-#include <keymint_support/openssl_utils.h>
-#include <openssl/evp.h>
-
 #include <charconv>
+
 #include <map>
 
 namespace android::hardware::identity::test_utils {
@@ -40,13 +36,10 @@ using std::optional;
 using std::string;
 using std::vector;
 
-using ::aidl::android::hardware::security::keymint::test::check_maced_pubkey;
-using ::aidl::android::hardware::security::keymint::test::p256_pub_key;
 using ::android::sp;
 using ::android::String16;
 using ::android::base::StringPrintf;
 using ::android::binder::Status;
-using ::android::hardware::security::keymint::MacedPublicKey;
 using ::keymaster::X509_Ptr;
 
 bool setupWritableCredential(sp<IWritableIdentityCredential>& writableCredential,
@@ -63,77 +56,6 @@ bool setupWritableCredential(sp<IWritableIdentityCredential>& writableCredential
     } else {
         return false;
     }
-}
-
-optional<vector<vector<uint8_t>>> createFakeRemotelyProvisionedCertificateChain(
-        const MacedPublicKey& macedPublicKey) {
-    // The helper library uses the NDK symbols, so play a little trickery here to convert
-    // the data into the proper type so we can reuse the helper function to get the pubkey.
-    ::aidl::android::hardware::security::keymint::MacedPublicKey ndkMacedPublicKey;
-    ndkMacedPublicKey.macedKey = macedPublicKey.macedKey;
-
-    vector<uint8_t> publicKeyBits;
-    check_maced_pubkey(ndkMacedPublicKey, /*testMode=*/true, &publicKeyBits);
-
-    ::aidl::android::hardware::security::keymint::EVP_PKEY_Ptr publicKey;
-    p256_pub_key(publicKeyBits, &publicKey);
-
-    // Generate an arbitrary root key for our chain
-    bssl::UniquePtr<EC_KEY> ecRootKey(EC_KEY_new());
-    bssl::UniquePtr<EVP_PKEY> rootKey(EVP_PKEY_new());
-    if (ecRootKey.get() == nullptr || rootKey.get() == nullptr) {
-        LOG(ERROR) << "Memory allocation failed";
-        return {};
-    }
-
-    bssl::UniquePtr<EC_GROUP> group(EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1));
-    if (group.get() == nullptr) {
-        LOG(ERROR) << "Error creating EC group by curve name";
-        return {};
-    }
-
-    if (EC_KEY_set_group(ecRootKey.get(), group.get()) != 1 ||
-        EC_KEY_generate_key(ecRootKey.get()) != 1 || EC_KEY_check_key(ecRootKey.get()) < 0) {
-        LOG(ERROR) << "Error generating key";
-        return {};
-    }
-
-    if (EVP_PKEY_set1_EC_KEY(rootKey.get(), ecRootKey.get()) != 1) {
-        LOG(ERROR) << "Error getting private key";
-        return {};
-    }
-
-    // The VTS test does not fully validate the chain, so we're ok without the proper CA extensions.
-    map<string, vector<uint8_t>> extensions;
-
-    // Now make a self-signed cert
-    optional<vector<uint8_t>> root = support::ecPublicKeyGenerateCertificate(
-            rootKey.get(), rootKey.get(),
-            /*serialDecimal=*/"31415",
-            /*subject=*/"Android IdentityCredential VTS Test Root Certificate",
-            /*subject=*/"Android IdentityCredential VTS Test Root Certificate",
-            /*validityNotBefore=*/time(nullptr),
-            /*validityNotAfter=*/time(nullptr) + 365 * 24 * 3600, extensions);
-    if (!root) {
-        LOG(ERROR) << "Error generating root cert";
-        return std::nullopt;
-    }
-
-    // Now sign a CA cert so that we have a chain that's good enough to satisfy
-    // the VTS tests.
-    optional<vector<uint8_t>> intermediate = support::ecPublicKeyGenerateCertificate(
-            publicKey.get(), rootKey.get(),
-            /*serialDecimal=*/"42",
-            /*subject=*/"Android IdentityCredential VTS Test Root Certificate",
-            /*subject=*/"Android IdentityCredential VTS Test Attestation Certificate",
-            /*validityNotBefore=*/time(nullptr),
-            /*validityNotAfter=*/time(nullptr) + 365 * 24 * 3600, extensions);
-    if (!intermediate) {
-        LOG(ERROR) << "Error generating intermediate cert";
-        return std::nullopt;
-    }
-
-    return vector<vector<uint8_t>>{std::move(*intermediate), std::move(*root)};
 }
 
 optional<vector<uint8_t>> generateReaderCertificate(string serialDecimal) {
