@@ -61,7 +61,7 @@ void HalHealthLoop::OnHealthInfoChanged(const HealthInfo& health_info) {
 
 void HalHealthLoop::set_charger_online(const HealthInfo& health_info) {
     charger_online_ = health_info.chargerAcOnline || health_info.chargerUsbOnline ||
-                      health_info.chargerWirelessOnline;
+                      health_info.chargerWirelessOnline || health_info.chargerDockOnline;
 }
 
 }  // namespace aidl::android::hardware::health
