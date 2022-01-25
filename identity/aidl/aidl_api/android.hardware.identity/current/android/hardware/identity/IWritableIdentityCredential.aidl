@@ -41,4 +41,5 @@ interface IWritableIdentityCredential {
   byte[] addEntryValue(in byte[] content);
   @SuppressWarnings(value={"out-array"}) void finishAddingEntries(out byte[] credentialData, out byte[] proofOfProvisioningSignature);
   void setExpectedProofOfProvisioningSize(in int expectedProofOfProvisioningSize);
+  void setRemotelyProvisionedAttestationKey(in byte[] attestationKeyBlob, in byte[] attestationCertificate);
 }
