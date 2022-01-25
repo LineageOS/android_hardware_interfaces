@@ -215,16 +215,16 @@ interface IIdentityCredentialStore {
      * @return an IWritableIdentityCredential interface that provides operations to
      *     provision a credential.
      */
-    IWritableIdentityCredential createCredential(in @utf8InCpp String docType,
-                                                 in boolean testCredential);
+    IWritableIdentityCredential createCredential(
+            in @utf8InCpp String docType, in boolean testCredential);
 
     /**
      * getCredential retrieves an IIdentityCredential interface which allows use of a stored
      * Credential.
      *
-     * The cipher suite used to communicate with the remote verifier must also be specified. Currently
-     * only a single cipher-suite is supported. Support for other cipher suites may be added in a
-     * future version of this HAL.
+     * The cipher suite used to communicate with the remote verifier must also be specified.
+     * Currently only a single cipher-suite is supported. Support for other cipher suites may be
+     * added in a future version of this HAL.
      *
      * This method fails with STATUS_INVALID_DATA if the passed in credentialData cannot be
      * decoded or decrypted.

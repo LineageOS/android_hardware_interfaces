@@ -131,7 +131,8 @@ interface IWritableIdentityCredential {
      *
      * @return the X.509 certificate chain for the credentialKey
      */
-    Certificate[] getAttestationCertificate(in byte[] attestationApplicationId, in byte[] attestationChallenge);
+    Certificate[] getAttestationCertificate(
+            in byte[] attestationApplicationId, in byte[] attestationChallenge);
 
     /**
      * Start the personalization process.
@@ -183,11 +184,11 @@ interface IWritableIdentityCredential {
      *     in the secure environment. If this requirement is not met the call fails with
      *     STATUS_INVALID_DATA.
      *
-     * @return a structure with the passed-in data and MAC created with storageKey for authenticating
-     *     the data at a later point in time.
+     * @return a structure with the passed-in data and MAC created with storageKey for
+     *     authenticating the data at a later point in time.
      */
     SecureAccessControlProfile addAccessControlProfile(in int id, in Certificate readerCertificate,
-        in boolean userAuthenticationRequired, in long timeoutMillis, in long secureUserId);
+            in boolean userAuthenticationRequired, in long timeoutMillis, in long secureUserId);
 
     /**
      * Begins the process of adding an entry to the credential.  All access control profiles must be
@@ -209,7 +210,7 @@ interface IWritableIdentityCredential {
      *     is not met this method fails with STATUS_INVALID_DATA.
      */
     void beginAddEntry(in int[] accessControlProfileIds, in @utf8InCpp String nameSpace,
-        in @utf8InCpp String name, in int entrySize);
+            in @utf8InCpp String name, in int entrySize);
 
     /**
      * Continues the process of adding an entry, providing a value or part of a value.
@@ -221,8 +222,8 @@ interface IWritableIdentityCredential {
      * chunk sizes must equal the value of the beginAddEntry() entrySize argument. If this
      * requirement is not met the call fails with STATUS_INVALID_DATA.
      *
-     * @param content is the entry value, encoded as CBOR. In the case the content exceeds gcmChunkSize,
-     *     this may be partial content up to gcmChunkSize bytes long.
+     * @param content is the entry value, encoded as CBOR. In the case the content exceeds
+     *     gcmChunkSize, this may be partial content up to gcmChunkSize bytes long.
      *
      * @return the encrypted and MACed content.  For directly-available credentials the contents are
      *     implementation-defined. For other credentials, the result contains
@@ -321,8 +322,7 @@ interface IWritableIdentityCredential {
      *          }
      */
     @SuppressWarnings(value={"out-array"})
-    void finishAddingEntries(out byte[] credentialData,
-        out byte[] proofOfProvisioningSignature);
+    void finishAddingEntries(out byte[] credentialData, out byte[] proofOfProvisioningSignature);
 
     /**
      * Sets the expected size of the ProofOfProvisioning returned by finishAddingEntries(). This
@@ -335,5 +335,4 @@ interface IWritableIdentityCredential {
      * @param expectedProofOfProvisioningSize the expected size of ProofOfProvisioning.
      */
     void setExpectedProofOfProvisioningSize(in int expectedProofOfProvisioningSize);
-
 }
