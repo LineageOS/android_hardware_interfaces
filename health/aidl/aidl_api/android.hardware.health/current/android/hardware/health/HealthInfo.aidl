@@ -37,6 +37,7 @@ parcelable HealthInfo {
   boolean chargerAcOnline;
   boolean chargerUsbOnline;
   boolean chargerWirelessOnline;
+  boolean chargerDockOnline;
   int maxChargingCurrentMicroamps;
   int maxChargingVoltageMicrovolts;
   android.hardware.health.BatteryStatus batteryStatus;
