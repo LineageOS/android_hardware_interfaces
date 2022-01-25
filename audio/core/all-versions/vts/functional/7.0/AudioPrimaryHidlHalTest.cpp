@@ -53,9 +53,9 @@ static const DeviceAddress& getInvalidDeviceAddress() {
 
 TEST_P(AudioHidlDeviceTest, SetConnectedStateInvalidDeviceAddress) {
     doc::test("Check that invalid device address is rejected by IDevice::setConnectedState");
-    EXPECT_RESULT(Result::INVALID_ARGUMENTS,
+    EXPECT_RESULT(invalidArgsOrNotSupported,
                   getDevice()->setConnectedState(getInvalidDeviceAddress(), true));
-    EXPECT_RESULT(Result::INVALID_ARGUMENTS,
+    EXPECT_RESULT(invalidArgsOrNotSupported,
                   getDevice()->setConnectedState(getInvalidDeviceAddress(), false));
 }
 
