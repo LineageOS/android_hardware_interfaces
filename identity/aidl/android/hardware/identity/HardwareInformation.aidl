@@ -51,19 +51,4 @@ parcelable HardwareInformation {
      *
      */
     @utf8InCpp String[] supportedDocTypes;
-
-    /**
-     * isRemoteKeyProvisioningSupported indicates whether or not the underlying implementation
-     * supports a remotely provisioned key for attestation or not. If this field is false, then
-     * the implementation only uses a factory-installed, fixed attestation key. If this field is
-     * true, then an IRemotelyProvisionedComponent is associated with the IIdentityCredentialStore,
-     * and a remotely provisioned key blob may be provided for credential key attestation.
-     *
-     * Note that remote provisioning is not required, even when it is supported. Implementations
-     * MUST use a factory-installed attestation key as a fallback for when there are no
-     * remotely provisioned keys available. This behavior mirrors keystore key attestation.
-     *
-     * This field was added in API version 4.
-     */
-    boolean isRemoteKeyProvisioningSupported = false;
 }
