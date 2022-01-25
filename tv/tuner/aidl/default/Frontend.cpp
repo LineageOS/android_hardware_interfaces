@@ -34,6 +34,140 @@ Frontend::Frontend(FrontendType type, int32_t id, std::shared_ptr<Tuner> tuner) 
     mTuner = tuner;
     // Init callback to nullptr
     mCallback = nullptr;
+
+    switch (mType) {
+        case FrontendType::ISDBS: {
+            mFrontendCaps.set<FrontendCapabilities::Tag::isdbsCaps>(FrontendIsdbsCapabilities());
+            mFrontendStatusCaps = {
+                    FrontendStatusType::DEMOD_LOCK,
+                    FrontendStatusType::SNR,
+                    FrontendStatusType::FEC,
+                    FrontendStatusType::MODULATION,
+                    FrontendStatusType::MODULATIONS,
+                    FrontendStatusType::ROLL_OFF,
+                    FrontendStatusType::STREAM_ID_LIST,
+            };
+            break;
+        }
+        case FrontendType::ATSC3: {
+            mFrontendCaps.set<FrontendCapabilities::Tag::atsc3Caps>(FrontendAtsc3Capabilities());
+            mFrontendStatusCaps = {
+                    FrontendStatusType::BER,
+                    FrontendStatusType::PER,
+                    FrontendStatusType::ATSC3_PLP_INFO,
+                    FrontendStatusType::MODULATIONS,
+                    FrontendStatusType::BERS,
+                    FrontendStatusType::INTERLEAVINGS,
+                    FrontendStatusType::BANDWIDTH,
+                    FrontendStatusType::ATSC3_ALL_PLP_INFO,
+            };
+            break;
+        }
+        case FrontendType::DVBC: {
+            mFrontendCaps.set<FrontendCapabilities::Tag::dvbcCaps>(FrontendDvbcCapabilities());
+            mFrontendStatusCaps = {
+                    FrontendStatusType::PRE_BER,       FrontendStatusType::SIGNAL_QUALITY,
+                    FrontendStatusType::MODULATION,    FrontendStatusType::SPECTRAL,
+                    FrontendStatusType::MODULATIONS,   FrontendStatusType::CODERATES,
+                    FrontendStatusType::INTERLEAVINGS, FrontendStatusType::BANDWIDTH,
+            };
+            break;
+        }
+        case FrontendType::DVBS: {
+            mFrontendCaps.set<FrontendCapabilities::Tag::dvbsCaps>(FrontendDvbsCapabilities());
+            mFrontendStatusCaps = {
+                    FrontendStatusType::SIGNAL_STRENGTH, FrontendStatusType::SYMBOL_RATE,
+                    FrontendStatusType::MODULATION,      FrontendStatusType::MODULATIONS,
+                    FrontendStatusType::ROLL_OFF,        FrontendStatusType::IS_MISO,
+            };
+            break;
+        }
+        case FrontendType::DVBT: {
+            mFrontendCaps.set<FrontendCapabilities::Tag::dvbtCaps>(FrontendDvbtCapabilities());
+            mFrontendStatusCaps = {
+                    FrontendStatusType::EWBS,
+                    FrontendStatusType::PLP_ID,
+                    FrontendStatusType::HIERARCHY,
+                    FrontendStatusType::MODULATIONS,
+                    FrontendStatusType::BANDWIDTH,
+                    FrontendStatusType::GUARD_INTERVAL,
+                    FrontendStatusType::TRANSMISSION_MODE,
+                    FrontendStatusType::T2_SYSTEM_ID,
+                    FrontendStatusType::DVBT_CELL_IDS,
+            };
+            break;
+        }
+        case FrontendType::ISDBT: {
+            FrontendIsdbtCapabilities isdbtCaps{
+                    .modeCap = (int)FrontendIsdbtMode::MODE_1 | (int)FrontendIsdbtMode::MODE_2,
+                    .bandwidthCap = (int)FrontendIsdbtBandwidth::BANDWIDTH_6MHZ,
+                    .modulationCap = (int)FrontendIsdbtModulation::MOD_16QAM,
+                    .coderateCap = (int)FrontendIsdbtCoderate::CODERATE_4_5 |
+                                   (int)FrontendIsdbtCoderate::CODERATE_6_7,
+                    .guardIntervalCap = (int)FrontendIsdbtGuardInterval::INTERVAL_1_128,
+                    .timeInterleaveCap = (int)FrontendIsdbtTimeInterleaveMode::AUTO |
+                                         (int)FrontendIsdbtTimeInterleaveMode::INTERLEAVE_1_0,
+                    .isSegmentAuto = true,
+                    .isFullSegment = true,
+            };
+            mFrontendCaps.set<FrontendCapabilities::Tag::isdbtCaps>(isdbtCaps);
+            mFrontendStatusCaps = {
+                    FrontendStatusType::AGC,
+                    FrontendStatusType::LNA,
+                    FrontendStatusType::MODULATION,
+                    FrontendStatusType::MODULATIONS,
+                    FrontendStatusType::BANDWIDTH,
+                    FrontendStatusType::GUARD_INTERVAL,
+                    FrontendStatusType::TRANSMISSION_MODE,
+                    FrontendStatusType::ISDBT_SEGMENTS,
+                    FrontendStatusType::ISDBT_MODE,
+                    FrontendStatusType::ISDBT_PARTIAL_RECEPTION_FLAG,
+                    FrontendStatusType::INTERLEAVINGS,
+            };
+            break;
+        }
+        case FrontendType::ANALOG: {
+            mFrontendCaps.set<FrontendCapabilities::Tag::analogCaps>(FrontendAnalogCapabilities());
+            mFrontendStatusCaps = {
+                    FrontendStatusType::LAYER_ERROR,
+                    FrontendStatusType::MER,
+                    FrontendStatusType::UEC,
+                    FrontendStatusType::TS_DATA_RATES,
+            };
+            break;
+        }
+        case FrontendType::ATSC: {
+            mFrontendCaps.set<FrontendCapabilities::Tag::atscCaps>(FrontendAtscCapabilities());
+            mFrontendStatusCaps = {
+                    FrontendStatusType::FREQ_OFFSET,
+                    FrontendStatusType::RF_LOCK,
+                    FrontendStatusType::MODULATIONS,
+                    FrontendStatusType::IS_LINEAR,
+            };
+            break;
+        }
+        case FrontendType::ISDBS3: {
+            mFrontendCaps.set<FrontendCapabilities::Tag::isdbs3Caps>(FrontendIsdbs3Capabilities());
+            mFrontendStatusCaps = {
+                    FrontendStatusType::DEMOD_LOCK,      FrontendStatusType::MODULATION,
+                    FrontendStatusType::MODULATIONS,     FrontendStatusType::ROLL_OFF,
+                    FrontendStatusType::IS_SHORT_FRAMES, FrontendStatusType::STREAM_ID_LIST,
+            };
+            break;
+        }
+        case FrontendType::DTMB: {
+            mFrontendCaps.set<FrontendCapabilities::Tag::dtmbCaps>(FrontendDtmbCapabilities());
+            mFrontendStatusCaps = {
+                    FrontendStatusType::MODULATIONS,       FrontendStatusType::INTERLEAVINGS,
+                    FrontendStatusType::BANDWIDTH,         FrontendStatusType::GUARD_INTERVAL,
+                    FrontendStatusType::TRANSMISSION_MODE,
+            };
+            break;
+        }
+        default: {
+            break;
+        }
+    }
 }
 
 Frontend::~Frontend() {}
@@ -763,6 +897,10 @@ binder_status_t Frontend::dump(int fd, const char** /* args */, uint32_t /* numA
     dprintf(fd, "    mType: %d\n", mType);
     dprintf(fd, "    mIsLocked: %d\n", mIsLocked);
     dprintf(fd, "    mCiCamId: %d\n", mCiCamId);
+    dprintf(fd, "    mFrontendStatusCaps:");
+    for (int i = 0; i < mFrontendStatusCaps.size(); i++) {
+        dprintf(fd, "        %d\n", mFrontendStatusCaps[i]);
+    }
     return STATUS_OK;
 }
 
@@ -780,6 +918,29 @@ binder_status_t Frontend::dump(int fd, const char** /* args */, uint32_t /* numA
             static_cast<int32_t>(Result::UNAVAILABLE));
 }
 
+::ndk::ScopedAStatus Frontend::getFrontendStatusReadiness(
+        const std::vector<FrontendStatusType>& in_statusTypes,
+        std::vector<FrontendStatusReadiness>* _aidl_return) {
+    ALOGV("%s", __FUNCTION__);
+
+    _aidl_return->resize(in_statusTypes.size());
+    for (int i = 0; i < in_statusTypes.size(); i++) {
+        int j = 0;
+        while (j < mFrontendStatusCaps.size()) {
+            if (in_statusTypes[i] == mFrontendStatusCaps[j]) {
+                (*_aidl_return)[i] = FrontendStatusReadiness::STABLE;
+                break;
+            }
+            j++;
+        }
+        if (j >= mFrontendStatusCaps.size()) {
+            (*_aidl_return)[i] = FrontendStatusReadiness::UNSUPPORTED;
+        }
+    }
+
+    return ::ndk::ScopedAStatus::ok();
+}
+
 FrontendType Frontend::getFrontendType() {
     return mType;
 }
@@ -795,6 +956,21 @@ bool Frontend::supportsSatellite() {
 
 bool Frontend::isLocked() {
     return mIsLocked;
+}
+
+void Frontend::getFrontendInfo(FrontendInfo* _aidl_return) {
+    // assign randomly selected values for testing.
+    *_aidl_return = {
+            .type = mType,
+            .minFrequency = 139000000,
+            .maxFrequency = 1139000000,
+            .minSymbolRate = 45,
+            .maxSymbolRate = 1145,
+            .acquireRange = 30,
+            .exclusiveGroupId = 57,
+            .statusCaps = mFrontendStatusCaps,
+            .frontendCaps = mFrontendCaps,
+    };
 }
 
 }  // namespace tuner

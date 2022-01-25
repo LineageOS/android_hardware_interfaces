@@ -907,6 +907,14 @@ TEST_P(TunerFrontendAidlTest, maxNumberOfFrontends) {
     mFrontendTests.maxNumberOfFrontendsTest();
 }
 
+TEST_P(TunerFrontendAidlTest, statusReadinessTest) {
+    description("Test Max Frontend status readiness");
+    if (!live.hasFrontendConnection) {
+        return;
+    }
+    mFrontendTests.statusReadinessTest(frontendMap[live.frontendId]);
+}
+
 TEST_P(TunerBroadcastAidlTest, BroadcastDataFlowVideoFilterTest) {
     description("Test Video Filter functionality in Broadcast use case.");
     if (!live.hasFrontendConnection) {
