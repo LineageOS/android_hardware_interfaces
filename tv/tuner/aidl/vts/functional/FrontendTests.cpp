@@ -581,3 +581,47 @@ void FrontendTests::scanTest(FrontendConfig frontendConf, FrontendScanType scanT
     ASSERT_TRUE(stopScanFrontend());
     ASSERT_TRUE(closeFrontend());
 }
+
+void FrontendTests::statusReadinessTest(FrontendConfig frontendConf) {
+    int32_t feId;
+    vector<FrontendStatusType> allTypes;
+    vector<FrontendStatusReadiness> readiness;
+    getFrontendIdByType(frontendConf.type, feId);
+    ASSERT_TRUE(feId != INVALID_ID);
+    ASSERT_TRUE(openFrontendById(feId));
+    ASSERT_TRUE(setFrontendCallback());
+    if (frontendConf.canConnectToCiCam) {
+        ASSERT_TRUE(linkCiCam(frontendConf.ciCamId));
+        ASSERT_TRUE(removeOutputPid(frontendConf.removePid));
+        ASSERT_TRUE(unlinkCiCam(frontendConf.ciCamId));
+    }
+    ASSERT_TRUE(getFrontendInfo(feId));
+    ASSERT_TRUE(tuneFrontend(frontendConf, false /*testWithDemux*/));
+
+    // TODO: find a better way to push all frontend status types
+    for (int32_t i = 0; i < static_cast<int32_t>(FrontendStatusType::ATSC3_ALL_PLP_INFO); i++) {
+        allTypes.push_back(static_cast<FrontendStatusType>(i));
+    }
+    ndk::ScopedAStatus status = mFrontend->getFrontendStatusReadiness(allTypes, &readiness);
+    ASSERT_TRUE(status.isOk());
+    ASSERT_TRUE(readiness.size() == allTypes.size());
+    for (int32_t i = 0; i < readiness.size(); i++) {
+        int32_t j = 0;
+        while (j < mFrontendInfo.statusCaps.size()) {
+            if (allTypes[i] == mFrontendInfo.statusCaps[j]) {
+                ASSERT_TRUE(readiness[i] == FrontendStatusReadiness::UNAVAILABLE ||
+                            readiness[i] == FrontendStatusReadiness::UNSTABLE ||
+                            readiness[i] == FrontendStatusReadiness::STABLE);
+                break;
+            }
+            j++;
+        }
+
+        if (j >= mFrontendInfo.statusCaps.size()) {
+            ASSERT_TRUE(readiness[i] == FrontendStatusReadiness::UNSUPPORTED);
+        }
+    }
+
+    ASSERT_TRUE(stopTuneFrontend(false /*testWithDemux*/));
+    ASSERT_TRUE(closeFrontend());
+}
