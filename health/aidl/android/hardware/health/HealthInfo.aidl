@@ -40,6 +40,10 @@ parcelable HealthInfo {
      */
     boolean chargerWirelessOnline;
     /**
+     * Dock charger state - 'true' if online
+     */
+    boolean chargerDockOnline;
+    /**
      * Maximum charging current supported by charger in µA
      */
     int maxChargingCurrentMicroamps;
