@@ -1012,8 +1012,8 @@ ndk::ScopedAStatus IdentityCredential::updateCredential(
                 IIdentityCredentialStore::STATUS_FAILED, "Error creating provisioning proxy"));
     }
     shared_ptr<WritableIdentityCredential> wc =
-            ndk::SharedRefBase::make<WritableIdentityCredential>(provisioningHwProxy, docType_,
-                                                                 testCredential_);
+            ndk::SharedRefBase::make<WritableIdentityCredential>(
+                    provisioningHwProxy, docType_, testCredential_, hardwareInformation_);
     if (!wc->initializeForUpdate(encryptedCredentialKeys_)) {
         return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(
                 IIdentityCredentialStore::STATUS_FAILED,

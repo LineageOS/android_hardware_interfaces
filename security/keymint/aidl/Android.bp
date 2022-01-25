@@ -56,6 +56,13 @@ cc_defaults {
     ],
 }
 
+cc_defaults {
+    name: "keymint_use_latest_hal_aidl_cpp_static",
+    static_libs: [
+        "android.hardware.security.keymint-V2-cpp",
+    ],
+}
+
 // A rust_defaults that includes the latest KeyMint AIDL library.
 // Modules that depend on KeyMint directly can include this cc_defaults to avoid
 // managing dependency versions explicitly.

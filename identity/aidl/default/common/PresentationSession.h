@@ -38,8 +38,11 @@ using ::std::vector;
 class PresentationSession : public BnPresentationSession {
   public:
     PresentationSession(sp<SecureHardwareProxyFactory> hwProxyFactory,
-                        sp<SecureHardwareSessionProxy> hwProxy)
-        : hwProxyFactory_(std::move(hwProxyFactory)), hwProxy_(std::move(hwProxy)) {}
+                        sp<SecureHardwareSessionProxy> hwProxy,
+                        HardwareInformation hardwareInformation)
+        : hwProxyFactory_(std::move(hwProxyFactory)),
+          hwProxy_(std::move(hwProxy)),
+          hardwareInformation_(std::move(hardwareInformation)) {}
 
     virtual ~PresentationSession();
 
@@ -65,6 +68,7 @@ class PresentationSession : public BnPresentationSession {
     // Set by constructor
     sp<SecureHardwareProxyFactory> hwProxyFactory_;
     sp<SecureHardwareSessionProxy> hwProxy_;
+    HardwareInformation hardwareInformation_;
 
     // Set by initialize()
     uint64_t id_;
