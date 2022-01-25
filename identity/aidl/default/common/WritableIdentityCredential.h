@@ -30,7 +30,6 @@ namespace aidl::android::hardware::identity {
 
 using ::android::sp;
 using ::android::hardware::identity::SecureHardwareProvisioningProxy;
-using ::std::optional;
 using ::std::set;
 using ::std::string;
 using ::std::vector;
@@ -42,11 +41,8 @@ class WritableIdentityCredential : public BnWritableIdentityCredential {
     // For an updated credential, call initializeForUpdate() right after construction.
     //
     WritableIdentityCredential(sp<SecureHardwareProvisioningProxy> hwProxy, const string& docType,
-                               bool testCredential, HardwareInformation hardwareInformation)
-        : hwProxy_(hwProxy),
-          docType_(docType),
-          testCredential_(testCredential),
-          hardwareInformation_(std::move(hardwareInformation)) {}
+                               bool testCredential)
+        : hwProxy_(hwProxy), docType_(docType), testCredential_(testCredential) {}
 
     ~WritableIdentityCredential();
 
@@ -82,16 +78,11 @@ class WritableIdentityCredential : public BnWritableIdentityCredential {
             vector<uint8_t>* outCredentialData,
             vector<uint8_t>* outProofOfProvisioningSignature) override;
 
-    ndk::ScopedAStatus setRemotelyProvisionedAttestationKey(
-            const vector<uint8_t>& attestationKeyBlob,
-            const vector<uint8_t>& attestationCertificateChain) override;
-
   private:
     // Set by constructor.
     sp<SecureHardwareProvisioningProxy> hwProxy_;
     string docType_;
     bool testCredential_;
-    HardwareInformation hardwareInformation_;
 
     // This is set in initialize().
     bool startPersonalizationCalled_;
@@ -118,10 +109,6 @@ class WritableIdentityCredential : public BnWritableIdentityCredential {
     vector<int32_t> entryAccessControlProfileIds_;
     vector<uint8_t> entryBytes_;
     set<string> allNameSpaces_;
-
-    // Remotely provisioned attestation data, set via setRemotelyProvisionedAttestationKey
-    optional<vector<uint8_t>> attestationKeyBlob_;
-    optional<vector<vector<uint8_t>>> attestationCertificateChain_;
 };
 
 }  // namespace aidl::android::hardware::identity

@@ -48,13 +48,11 @@ class IdentityCredential : public BnIdentityCredential {
   public:
     IdentityCredential(sp<SecureHardwareProxyFactory> hwProxyFactory,
                        const vector<uint8_t>& credentialData,
-                       std::shared_ptr<PresentationSession> session,
-                       HardwareInformation hardwareInformation)
+                       std::shared_ptr<PresentationSession> session)
         : hwProxyFactory_(hwProxyFactory),
           credentialData_(credentialData),
           session_(std::move(session)),
           numStartRetrievalCalls_(0),
-          hardwareInformation_(std::move(hardwareInformation)),
           expectedDeviceNameSpacesSize_(0) {}
 
     // Parses and decrypts credentialData_, return a status code from
@@ -105,7 +103,6 @@ class IdentityCredential : public BnIdentityCredential {
     vector<uint8_t> credentialData_;
     shared_ptr<PresentationSession> session_;
     int numStartRetrievalCalls_;
-    HardwareInformation hardwareInformation_;
 
     // Set by initialize()
     string docType_;
