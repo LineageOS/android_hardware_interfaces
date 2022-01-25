@@ -1,0 +1,90 @@
+/*
+ * Copyright 2022 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi@1.6;
+
+import @1.0::IWifiIface;
+import @1.0::WifiStatus;
+import @1.5::WifiBand;
+import @1.5::IWifiChip;
+import @1.5::WifiIfaceMode;
+import IWifiRttController;
+
+/**
+ * Interface that represents a chip that must be configured as a single unit.
+ */
+interface IWifiChip extends @1.5::IWifiChip {
+
+    /**
+     * Create a RTTController instance.
+     *
+     * RTT controller can be either:
+     * a) Bound to a specific iface by passing in the corresponding |IWifiIface|
+     * object in |iface| param, OR
+     * b) Let the implementation decide the iface to use for RTT operations by
+     * passing null in |iface| param.
+     *
+     * @param boundIface HIDL interface object representing the iface if
+     *        the responder must be bound to a specific iface, null otherwise.
+     * @return status WifiStatus of the operation.
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|
+     */
+    createRttController_1_6(IWifiIface boundIface)
+        generates (WifiStatus status, IWifiRttController rtt);
+
+    /**
+     * Retrieve list of usable Wifi channels for the specified band &
+     * operational modes.
+     *
+     * The list of usable Wifi channels in a given band depends on factors
+     * like current country code, operational mode (e.g. STA, SAP, WFD-CLI,
+     * WFD-GO, TDLS, NAN) and other restrictons due to DFS, cellular coexistence
+     * and conncurency state of the device.
+     *
+     * @param band |WifiBand| for which list of usable channels is requested.
+     * @param ifaceModeMask Bitmask of the modes represented by |WifiIfaceMode|
+     *        Bitmask respresents all the modes that the caller is interested
+     *        in (e.g. STA, SAP, CLI, GO, TDLS, NAN). E.g. If the caller is
+     *        interested in knowing usable channels for P2P CLI, P2P GO & NAN,
+     *        ifaceModeMask would be set to
+     *        IFACE_MODE_P2P_CLIENT|IFACE_MODE_P2P_GO|IFACE_MODE_NAN.
+     * @param filterMask Bitmask of filters represented by
+     *        |UsableChannelFilter|. Specifies whether driver should filter
+     *        channels based on additional criteria. If no filter is specified
+     *        driver should return usable channels purely based on regulatory
+     *        constraints.
+     * @return status WifiStatus of the operation.
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.ERROR_NOT_SUPPORTED|,
+     *         |WifiStatusCode.ERROR_INVALID_ARGS|,
+     *         |WifiStatusCode.FAILURE_UNKNOWN|
+     * @return channels List of channels represented by |WifiUsableChannel|
+     *         Each entry represents a channel frequency, bandwidth and
+     *         bitmask of modes (e.g. STA, SAP, CLI, GO, TDLS, NAN) that are
+     *         allowed on that channel. E.g. If only STA mode can be supported
+     *         on an indoor channel, only the IFACE_MODE_STA bit would be set
+     *         for that channel. If 5GHz SAP cannot be supported, then none of
+     *         the 5GHz channels will have IFACE_MODE_SOFTAP bit set.
+     *         Note: Bits do not represent concurrency state. Each bit only
+     *         represents whether particular mode is allowed on that channel.
+     */
+    getUsableChannels_1_6(WifiBand band, bitfield<WifiIfaceMode> ifaceModeMask,
+            bitfield<UsableChannelFilter> filterMask)
+        generates (WifiStatus status, vec<WifiUsableChannel> channels);
+};

@@ -1,0 +1,43 @@
+/*
+ * Copyright 2022 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.wifi@1.6;
+
+import @1.0::WifiStatus;
+import @1.5::IWifiNanIface;
+import IWifiNanIfaceEventCallback;
+
+/**
+ * Interface used to represent a single NAN (Neighbour Aware Network) iface.
+ *
+ * References to "NAN Spec" are to the Wi-Fi Alliance "Wi-Fi Neighbor Awareness
+ * Networking (NAN) Technical Specification".
+ */
+interface IWifiNanIface extends @1.5::IWifiNanIface {
+    /**
+     * Requests notifications of significant events on this iface. Multiple calls
+     * to this must register multiple callbacks each of which must receive all
+     * events.
+     *
+     * @param callback An instance of the |IWifiNanIfaceEventCallback| HIDL interface
+     *        object.
+     * @return status WifiStatus of the operation.
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.ERROR_WIFI_IFACE_INVALID|
+     */
+    registerEventCallback_1_6(IWifiNanIfaceEventCallback callback) generates (WifiStatus status);
+};

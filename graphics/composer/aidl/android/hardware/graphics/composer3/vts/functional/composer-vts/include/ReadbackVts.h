@@ -161,7 +161,6 @@ class TestBufferLayer : public TestLayer {
     uint32_t mLayerCount;
     PixelFormat mPixelFormat;
     uint32_t mUsage;
-    uint32_t mStride;
     ::android::Rect mAccessRegion;
 };
 
@@ -189,8 +188,8 @@ class ReadbackHelper {
     static const std::vector<ColorMode> colorModes;
     static const std::vector<Dataspace> dataspaces;
 
-    static void compareColorBuffers(std::vector<Color>& expectedColors, void* bufferData,
-                                    const int32_t stride, const uint32_t width,
+    static void compareColorBuffers(const std::vector<Color>& expectedColors, void* bufferData,
+                                    const uint32_t stride, const uint32_t width,
                                     const uint32_t height, PixelFormat pixelFormat);
 };
 
@@ -210,7 +209,6 @@ class ReadbackBuffer {
     uint32_t mHeight;
     uint32_t mLayerCount;
     uint32_t mUsage;
-    uint32_t mStride;
     PixelFormat mPixelFormat;
     Dataspace mDataspace;
     int64_t mDisplay;

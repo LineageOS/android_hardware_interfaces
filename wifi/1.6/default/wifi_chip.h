@@ -22,8 +22,9 @@
 #include <mutex>
 
 #include <android-base/macros.h>
-#include <android/hardware/wifi/1.4/IWifiRttController.h>
-#include <android/hardware/wifi/1.5/IWifiChip.h>
+#include <android/hardware/wifi/1.6/IWifiChip.h>
+#include <android/hardware/wifi/1.6/IWifiRttController.h>
+#include <android/hardware/wifi/1.6/IWifiStaIface.h>
 
 #include "hidl_callback_util.h"
 #include "ringbuffer.h"
@@ -43,14 +44,13 @@ namespace V1_6 {
 namespace implementation {
 using namespace android::hardware::wifi::V1_0;
 using V1_5::WifiBand;
-using V1_5::WifiUsableChannel;
 
 /**
  * HIDL interface object used to control a Wifi HAL chip instance.
  * Since there is only a single chip instance used today, there is no
  * identifying handle information stored here.
  */
-class WifiChip : public V1_5::IWifiChip {
+class WifiChip : public V1_6::IWifiChip {
   public:
     WifiChip(ChipId chip_id, bool is_primary,
              const std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal,
@@ -154,6 +154,12 @@ class WifiChip : public V1_5::IWifiChip {
                                    hidl_bitfield<UsableChannelFilter> filterMask,
                                    getUsableChannels_cb _hidl_cb) override;
     Return<void> triggerSubsystemRestart(triggerSubsystemRestart_cb hidl_status_cb) override;
+    Return<void> createRttController_1_6(const sp<IWifiIface>& bound_iface,
+                                         createRttController_1_6_cb hidl_status_cb) override;
+    Return<void> getUsableChannels_1_6(WifiBand band,
+                                       hidl_bitfield<V1_5::WifiIfaceMode> ifaceModeMask,
+                                       hidl_bitfield<UsableChannelFilter> filterMask,
+                                       getUsableChannels_1_6_cb _hidl_cb) override;
 
   private:
     void invalidateAndRemoveAllIfaces();
@@ -191,9 +197,9 @@ class WifiChip : public V1_5::IWifiChip {
     std::pair<WifiStatus, std::vector<hidl_string>> getP2pIfaceNamesInternal();
     std::pair<WifiStatus, sp<IWifiP2pIface>> getP2pIfaceInternal(const std::string& ifname);
     WifiStatus removeP2pIfaceInternal(const std::string& ifname);
-    std::pair<WifiStatus, sp<V1_5::IWifiStaIface>> createStaIfaceInternal();
+    std::pair<WifiStatus, sp<V1_6::IWifiStaIface>> createStaIfaceInternal();
     std::pair<WifiStatus, std::vector<hidl_string>> getStaIfaceNamesInternal();
-    std::pair<WifiStatus, sp<V1_5::IWifiStaIface>> getStaIfaceInternal(const std::string& ifname);
+    std::pair<WifiStatus, sp<V1_6::IWifiStaIface>> getStaIfaceInternal(const std::string& ifname);
     WifiStatus removeStaIfaceInternal(const std::string& ifname);
     std::pair<WifiStatus, sp<V1_0::IWifiRttController>> createRttControllerInternal(
             const sp<IWifiIface>& bound_iface);
@@ -225,13 +231,12 @@ class WifiChip : public V1_5::IWifiChip {
     WifiStatus setCoexUnsafeChannelsInternal(std::vector<CoexUnsafeChannel> unsafe_channels,
                                              uint32_t restrictions);
     WifiStatus setCountryCodeInternal(const std::array<int8_t, 2>& code);
-    std::pair<WifiStatus, std::vector<WifiUsableChannel>> getUsableChannelsInternal(
+    std::pair<WifiStatus, std::vector<V1_5::WifiUsableChannel>> getUsableChannelsInternal(
             WifiBand band, uint32_t ifaceModeMask, uint32_t filterMask);
     WifiStatus handleChipConfiguration(std::unique_lock<std::recursive_mutex>* lock,
                                        ChipModeId mode_id);
     WifiStatus registerDebugRingBufferCallback();
     WifiStatus registerRadioModeChangeCallback();
-
     std::vector<V1_4::IWifiChip::ChipIfaceCombination> getCurrentModeIfaceCombinations();
     std::map<IfaceType, size_t> getCurrentIfaceCombination();
     std::vector<std::map<IfaceType, size_t>> expandIfaceCombinations(
@@ -258,6 +263,10 @@ class WifiChip : public V1_5::IWifiChip {
     void invalidateAndClearBridgedAp(const std::string& br_name);
     bool findUsingNameFromBridgedApInstances(const std::string& name);
     WifiStatus triggerSubsystemRestartInternal();
+    std::pair<WifiStatus, sp<V1_6::IWifiRttController>> createRttControllerInternal_1_6(
+            const sp<IWifiIface>& bound_iface);
+    std::pair<WifiStatus, std::vector<V1_6::WifiUsableChannel>> getUsableChannelsInternal_1_6(
+            WifiBand band, uint32_t ifaceModeMask, uint32_t filterMask);
 
     ChipId chip_id_;
     std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;

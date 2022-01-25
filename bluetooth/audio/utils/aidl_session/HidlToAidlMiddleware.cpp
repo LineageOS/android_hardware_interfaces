@@ -111,18 +111,6 @@ const static std::unordered_map<SessionType_2_1, SessionType>
          SessionType::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH},
     };
 
-const static std::unordered_map<int32_t, SampleRate_2_0>
-    sample_rate_to_hidl_2_0_map{
-        {44100, SampleRate_2_0::RATE_44100},
-        {48000, SampleRate_2_0::RATE_48000},
-        {88200, SampleRate_2_0::RATE_88200},
-        {96000, SampleRate_2_0::RATE_96000},
-        {176400, SampleRate_2_0::RATE_176400},
-        {192000, SampleRate_2_0::RATE_192000},
-        {16000, SampleRate_2_0::RATE_16000},
-        {24000, SampleRate_2_0::RATE_24000},
-    };
-
 const static std::unordered_map<int32_t, SampleRate_2_1>
     sample_rate_to_hidl_2_1_map{
         {44100, SampleRate_2_1::RATE_44100},
@@ -201,13 +189,6 @@ const static std::unordered_map<LdacQualityIndex, LdacQualityIndex_2_0>
         {LdacQualityIndex::ABR, LdacQualityIndex_2_0::QUALITY_ABR},
     };
 
-const static std::unordered_map<LeAudioMode, LeAudioMode_2_2>
-    leaudio_mode_to_hidl_map{
-        {LeAudioMode::UNKNOWN, LeAudioMode_2_2::UNKNOWN},
-        {LeAudioMode::UNICAST, LeAudioMode_2_2::UNICAST},
-        {LeAudioMode::BROADCAST, LeAudioMode_2_2::BROADCAST},
-    };
-
 inline SessionType from_session_type_2_1(
     const SessionType_2_1& session_type_hidl) {
   auto it = session_type_2_1_to_aidl_map.find(session_type_hidl);
@@ -231,16 +212,17 @@ inline HidlStatus to_hidl_status(const BluetoothAudioStatus& status) {
   }
 }
 
-inline SampleRate_2_0 to_hidl_sample_rate_2_0(const int32_t sample_rate_hz) {
-  auto it = sample_rate_to_hidl_2_0_map.find(sample_rate_hz);
-  if (it != sample_rate_to_hidl_2_0_map.end()) return it->second;
-  return SampleRate_2_0::RATE_UNKNOWN;
-}
-
 inline SampleRate_2_1 to_hidl_sample_rate_2_1(const int32_t sample_rate_hz) {
   auto it = sample_rate_to_hidl_2_1_map.find(sample_rate_hz);
   if (it != sample_rate_to_hidl_2_1_map.end()) return it->second;
   return SampleRate_2_1::RATE_UNKNOWN;
+}
+
+inline SampleRate_2_0 to_hidl_sample_rate_2_0(const int32_t sample_rate_hz) {
+  auto it = sample_rate_to_hidl_2_1_map.find(sample_rate_hz);
+  if (it != sample_rate_to_hidl_2_1_map.end())
+    return static_cast<SampleRate_2_0>(it->second);
+  return SampleRate_2_0::RATE_UNKNOWN;
 }
 
 inline BitsPerSample_2_0 to_hidl_bits_per_sample(const int8_t bit_per_sample) {
@@ -437,18 +419,49 @@ inline Lc3Config_2_1 to_hidl_lc3_config_2_1(
 
 inline Lc3CodecConfig_2_1 to_hidl_leaudio_config_2_1(
     const LeAudioConfiguration& leaudio_config) {
-  auto& unicast_config =
-      leaudio_config.modeConfig
-          .get<LeAudioConfiguration::LeAudioModeConfig::unicastConfig>();
+  Lc3CodecConfig_2_1 hidl_lc3_codec_config = {
+      .audioChannelAllocation = 0,
+  };
+  if (leaudio_config.modeConfig.getTag() ==
+      LeAudioConfiguration::LeAudioModeConfig::unicastConfig) {
+    auto& unicast_config =
+        leaudio_config.modeConfig
+            .get<LeAudioConfiguration::LeAudioModeConfig::unicastConfig>();
+    if (unicast_config.leAudioCodecConfig.getTag() ==
+        LeAudioCodecConfiguration::lc3Config) {
+      LOG(FATAL) << __func__ << ": unexpected codec type(vendor?)";
+    }
+    auto& le_codec_config = unicast_config.leAudioCodecConfig
+                                .get<LeAudioCodecConfiguration::lc3Config>();
 
-  auto& le_codec_config = unicast_config.leAudioCodecConfig
-                              .get<LeAudioCodecConfiguration::lc3Config>();
+    hidl_lc3_codec_config.lc3Config = to_hidl_lc3_config_2_1(le_codec_config);
 
-  Lc3CodecConfig_2_1 hidl_lc3_codec_config;
-  hidl_lc3_codec_config.lc3Config = to_hidl_lc3_config_2_1(le_codec_config);
+    for (const auto& map : unicast_config.streamMap) {
+      hidl_lc3_codec_config.audioChannelAllocation |=
+          map.audioChannelAllocation;
+    }
+  } else {
+    // NOTE: Broadcast is not officially supported in HIDL
+    auto& bcast_config =
+        leaudio_config.modeConfig
+            .get<LeAudioConfiguration::LeAudioModeConfig::broadcastConfig>();
+    if (bcast_config.streamMap.empty()) {
+      return hidl_lc3_codec_config;
+    }
+    if (bcast_config.streamMap[0].leAudioCodecConfig.getTag() !=
+        LeAudioCodecConfiguration::lc3Config) {
+      LOG(FATAL) << __func__ << ": unexpected codec type(vendor?)";
+    }
+    auto& le_codec_config =
+        bcast_config.streamMap[0]
+            .leAudioCodecConfig.get<LeAudioCodecConfiguration::lc3Config>();
+    hidl_lc3_codec_config.lc3Config = to_hidl_lc3_config_2_1(le_codec_config);
 
-  hidl_lc3_codec_config.audioChannelAllocation =
-      unicast_config.streamMap.size();
+    for (const auto& map : bcast_config.streamMap) {
+      hidl_lc3_codec_config.audioChannelAllocation |=
+          map.audioChannelAllocation;
+    }
+  }
 
   return hidl_lc3_codec_config;
 }
@@ -456,13 +469,10 @@ inline Lc3CodecConfig_2_1 to_hidl_leaudio_config_2_1(
 inline LeAudioConfig_2_2 to_hidl_leaudio_config_2_2(
     const LeAudioConfiguration& leaudio_config) {
   LeAudioConfig_2_2 hidl_leaudio_config;
-  if (leaudio_mode_to_hidl_map.find(leaudio_config.mode) !=
-      leaudio_mode_to_hidl_map.end()) {
-    hidl_leaudio_config.mode = leaudio_mode_to_hidl_map.at(leaudio_config.mode);
-  }
 
   if (leaudio_config.modeConfig.getTag() ==
       LeAudioConfiguration::LeAudioModeConfig::unicastConfig) {
+    hidl_leaudio_config.mode = LeAudioMode_2_2::UNICAST;
     auto& unicast_config =
         leaudio_config.modeConfig
             .get<LeAudioConfiguration::LeAudioModeConfig::unicastConfig>();
@@ -485,6 +495,7 @@ inline LeAudioConfig_2_2 to_hidl_leaudio_config_2_2(
     }
   } else if (leaudio_config.modeConfig.getTag() ==
              LeAudioConfiguration::LeAudioModeConfig::broadcastConfig) {
+    hidl_leaudio_config.mode = LeAudioMode_2_2::BROADCAST;
     auto bcast_config =
         leaudio_config.modeConfig
             .get<LeAudioConfiguration::LeAudioModeConfig::broadcastConfig>();
@@ -626,6 +637,12 @@ void HidlToAidlMiddleware_2_0::UpdateTracksMetadata(
 size_t HidlToAidlMiddleware_2_0::OutWritePcmData(
     const SessionType_2_0& session_type, const void* buffer, size_t bytes) {
   return BluetoothAudioSessionControl::OutWritePcmData(
+      from_session_type_2_0(session_type), buffer, bytes);
+}
+
+size_t HidlToAidlMiddleware_2_0::InReadPcmData(
+    const SessionType_2_0& session_type, void* buffer, size_t bytes) {
+  return BluetoothAudioSessionControl::InReadPcmData(
       from_session_type_2_0(session_type), buffer, bytes);
 }
 

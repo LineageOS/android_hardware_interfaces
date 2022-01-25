@@ -438,7 +438,7 @@ uint32_t convertHidlUsableChannelFilterToLegacy(uint32_t hidl_filter_mask) {
 
 bool convertLegacyWifiUsableChannelToHidl(
         const legacy_hal::wifi_usable_channel& legacy_usable_channel,
-        V1_5::WifiUsableChannel* hidl_usable_channel) {
+        V1_6::WifiUsableChannel* hidl_usable_channel) {
     if (!hidl_usable_channel) {
         return false;
     }
@@ -454,13 +454,13 @@ bool convertLegacyWifiUsableChannelToHidl(
 
 bool convertLegacyWifiUsableChannelsToHidl(
         const std::vector<legacy_hal::wifi_usable_channel>& legacy_usable_channels,
-        std::vector<V1_5::WifiUsableChannel>* hidl_usable_channels) {
+        std::vector<V1_6::WifiUsableChannel>* hidl_usable_channels) {
     if (!hidl_usable_channels) {
         return false;
     }
     *hidl_usable_channels = {};
     for (const auto& legacy_usable_channel : legacy_usable_channels) {
-        V1_5::WifiUsableChannel hidl_usable_channel;
+        V1_6::WifiUsableChannel hidl_usable_channel;
         if (!convertLegacyWifiUsableChannelToHidl(legacy_usable_channel, &hidl_usable_channel)) {
             return false;
         }
@@ -894,28 +894,28 @@ bool convertLegacyVectorOfDebugRxPacketFateToHidl(
 
 bool convertLegacyLinkLayerRadioStatsToHidl(
         const legacy_hal::LinkLayerRadioStats& legacy_radio_stat,
-        V1_5::StaLinkLayerRadioStats* hidl_radio_stat) {
+        V1_6::StaLinkLayerRadioStats* hidl_radio_stat) {
     if (!hidl_radio_stat) {
         return false;
     }
     *hidl_radio_stat = {};
 
     hidl_radio_stat->radioId = legacy_radio_stat.stats.radio;
-    hidl_radio_stat->V1_3.V1_0.onTimeInMs = legacy_radio_stat.stats.on_time;
-    hidl_radio_stat->V1_3.V1_0.txTimeInMs = legacy_radio_stat.stats.tx_time;
-    hidl_radio_stat->V1_3.V1_0.rxTimeInMs = legacy_radio_stat.stats.rx_time;
-    hidl_radio_stat->V1_3.V1_0.onTimeInMsForScan = legacy_radio_stat.stats.on_time_scan;
-    hidl_radio_stat->V1_3.V1_0.txTimeInMsPerLevel = legacy_radio_stat.tx_time_per_levels;
-    hidl_radio_stat->V1_3.onTimeInMsForNanScan = legacy_radio_stat.stats.on_time_nbd;
-    hidl_radio_stat->V1_3.onTimeInMsForBgScan = legacy_radio_stat.stats.on_time_gscan;
-    hidl_radio_stat->V1_3.onTimeInMsForRoamScan = legacy_radio_stat.stats.on_time_roam_scan;
-    hidl_radio_stat->V1_3.onTimeInMsForPnoScan = legacy_radio_stat.stats.on_time_pno_scan;
-    hidl_radio_stat->V1_3.onTimeInMsForHs20Scan = legacy_radio_stat.stats.on_time_hs20;
+    hidl_radio_stat->V1_0.onTimeInMs = legacy_radio_stat.stats.on_time;
+    hidl_radio_stat->V1_0.txTimeInMs = legacy_radio_stat.stats.tx_time;
+    hidl_radio_stat->V1_0.rxTimeInMs = legacy_radio_stat.stats.rx_time;
+    hidl_radio_stat->V1_0.onTimeInMsForScan = legacy_radio_stat.stats.on_time_scan;
+    hidl_radio_stat->V1_0.txTimeInMsPerLevel = legacy_radio_stat.tx_time_per_levels;
+    hidl_radio_stat->onTimeInMsForNanScan = legacy_radio_stat.stats.on_time_nbd;
+    hidl_radio_stat->onTimeInMsForBgScan = legacy_radio_stat.stats.on_time_gscan;
+    hidl_radio_stat->onTimeInMsForRoamScan = legacy_radio_stat.stats.on_time_roam_scan;
+    hidl_radio_stat->onTimeInMsForPnoScan = legacy_radio_stat.stats.on_time_pno_scan;
+    hidl_radio_stat->onTimeInMsForHs20Scan = legacy_radio_stat.stats.on_time_hs20;
 
-    std::vector<V1_3::WifiChannelStats> hidl_channel_stats;
+    std::vector<V1_6::WifiChannelStats> hidl_channel_stats;
 
     for (const auto& channel_stat : legacy_radio_stat.channel_stats) {
-        V1_3::WifiChannelStats hidl_channel_stat;
+        V1_6::WifiChannelStats hidl_channel_stat;
         hidl_channel_stat.onTimeInMs = channel_stat.on_time;
         hidl_channel_stat.ccaBusyTimeInMs = channel_stat.cca_busy_time;
         /*
@@ -929,13 +929,13 @@ bool convertLegacyLinkLayerRadioStatsToHidl(
         hidl_channel_stats.push_back(hidl_channel_stat);
     }
 
-    hidl_radio_stat->V1_3.channelStats = hidl_channel_stats;
+    hidl_radio_stat->channelStats = hidl_channel_stats;
 
     return true;
 }
 
 bool convertLegacyLinkLayerStatsToHidl(const legacy_hal::LinkLayerStats& legacy_stats,
-                                       V1_5::StaLinkLayerStats* hidl_stats) {
+                                       V1_6::StaLinkLayerStats* hidl_stats) {
     if (!hidl_stats) {
         return false;
     }
@@ -1010,9 +1010,9 @@ bool convertLegacyLinkLayerStatsToHidl(const legacy_hal::LinkLayerStats& legacy_
     hidl_stats->iface.timeSliceDutyCycleInPercent =
             legacy_stats.iface.info.time_slicing_duty_cycle_percent;
     // peer info legacy_stats conversion.
-    std::vector<V1_5::StaPeerInfo> hidl_peers_info_stats;
+    std::vector<V1_6::StaPeerInfo> hidl_peers_info_stats;
     for (const auto& legacy_peer_info_stats : legacy_stats.peers) {
-        V1_5::StaPeerInfo hidl_peer_info_stats;
+        V1_6::StaPeerInfo hidl_peer_info_stats;
         if (!convertLegacyPeerInfoStatsToHidl(legacy_peer_info_stats, &hidl_peer_info_stats)) {
             return false;
         }
@@ -1020,9 +1020,9 @@ bool convertLegacyLinkLayerStatsToHidl(const legacy_hal::LinkLayerStats& legacy_
     }
     hidl_stats->iface.peers = hidl_peers_info_stats;
     // radio legacy_stats conversion.
-    std::vector<V1_5::StaLinkLayerRadioStats> hidl_radios_stats;
+    std::vector<V1_6::StaLinkLayerRadioStats> hidl_radios_stats;
     for (const auto& legacy_radio_stats : legacy_stats.radios) {
-        V1_5::StaLinkLayerRadioStats hidl_radio_stats;
+        V1_6::StaLinkLayerRadioStats hidl_radio_stats;
         if (!convertLegacyLinkLayerRadioStatsToHidl(legacy_radio_stats, &hidl_radio_stats)) {
             return false;
         }
@@ -1036,7 +1036,7 @@ bool convertLegacyLinkLayerStatsToHidl(const legacy_hal::LinkLayerStats& legacy_
 }
 
 bool convertLegacyPeerInfoStatsToHidl(const legacy_hal::WifiPeerInfo& legacy_peer_info_stats,
-                                      V1_5::StaPeerInfo* hidl_peer_info_stats) {
+                                      V1_6::StaPeerInfo* hidl_peer_info_stats) {
     if (!hidl_peer_info_stats) {
         return false;
     }
@@ -1044,9 +1044,9 @@ bool convertLegacyPeerInfoStatsToHidl(const legacy_hal::WifiPeerInfo& legacy_pee
     hidl_peer_info_stats->staCount = legacy_peer_info_stats.peer_info.bssload.sta_count;
     hidl_peer_info_stats->chanUtil = legacy_peer_info_stats.peer_info.bssload.chan_util;
 
-    std::vector<V1_5::StaRateStat> hidlRateStats;
+    std::vector<V1_6::StaRateStat> hidlRateStats;
     for (const auto& legacy_rate_stats : legacy_peer_info_stats.rate_stats) {
-        V1_5::StaRateStat rateStat;
+        V1_6::StaRateStat rateStat;
         if (!convertLegacyWifiRateInfoToHidl(legacy_rate_stats.rate, &rateStat.rateInfo)) {
             return false;
         }
@@ -2134,7 +2134,7 @@ bool convertLegacyNanDataPathRequestIndToHidl(const legacy_hal::NanDataPathReque
 }
 
 bool convertLegacyNdpChannelInfoToHidl(const legacy_hal::NanChannelInfo& legacy_struct,
-                                       V1_2::NanDataPathChannelInfo* hidl_struct) {
+                                       V1_6::NanDataPathChannelInfo* hidl_struct) {
     if (!hidl_struct) {
         LOG(ERROR) << "convertLegacyNdpChannelInfoToHidl: hidl_struct is null";
         return false;
@@ -2150,7 +2150,7 @@ bool convertLegacyNdpChannelInfoToHidl(const legacy_hal::NanChannelInfo& legacy_
 }
 
 bool convertLegacyNanDataPathConfirmIndToHidl(const legacy_hal::NanDataPathConfirmInd& legacy_ind,
-                                              V1_2::NanDataPathConfirmInd* hidl_ind) {
+                                              V1_6::NanDataPathConfirmInd* hidl_ind) {
     if (!hidl_ind) {
         LOG(ERROR) << "convertLegacyNanDataPathConfirmIndToHidl: hidl_ind is null";
         return false;
@@ -2166,9 +2166,9 @@ bool convertLegacyNanDataPathConfirmIndToHidl(const legacy_hal::NanDataPathConfi
     hidl_ind->V1_0.status.status = convertLegacyNanStatusTypeToHidl(legacy_ind.reason_code);
     hidl_ind->V1_0.status.description = "";  // TODO: b/34059183
 
-    std::vector<V1_2::NanDataPathChannelInfo> channelInfo;
+    std::vector<V1_6::NanDataPathChannelInfo> channelInfo;
     for (unsigned int i = 0; i < legacy_ind.num_channels; ++i) {
-        V1_2::NanDataPathChannelInfo hidl_struct;
+        V1_6::NanDataPathChannelInfo hidl_struct;
         if (!convertLegacyNdpChannelInfoToHidl(legacy_ind.channel_info[i], &hidl_struct)) {
             return false;
         }
@@ -2181,7 +2181,7 @@ bool convertLegacyNanDataPathConfirmIndToHidl(const legacy_hal::NanDataPathConfi
 
 bool convertLegacyNanDataPathScheduleUpdateIndToHidl(
         const legacy_hal::NanDataPathScheduleUpdateInd& legacy_ind,
-        V1_2::NanDataPathScheduleUpdateInd* hidl_ind) {
+        V1_6::NanDataPathScheduleUpdateInd* hidl_ind) {
     if (!hidl_ind) {
         LOG(ERROR) << "convertLegacyNanDataPathScheduleUpdateIndToHidl: "
                       "hidl_ind is null";
@@ -2190,9 +2190,9 @@ bool convertLegacyNanDataPathScheduleUpdateIndToHidl(
     *hidl_ind = {};
 
     hidl_ind->peerDiscoveryAddress = hidl_array<uint8_t, 6>(legacy_ind.peer_mac_addr);
-    std::vector<V1_2::NanDataPathChannelInfo> channelInfo;
+    std::vector<V1_6::NanDataPathChannelInfo> channelInfo;
     for (unsigned int i = 0; i < legacy_ind.num_channels; ++i) {
-        V1_2::NanDataPathChannelInfo hidl_struct;
+        V1_6::NanDataPathChannelInfo hidl_struct;
         if (!convertLegacyNdpChannelInfoToHidl(legacy_ind.channel_info[i], &hidl_struct)) {
             return false;
         }
@@ -2260,13 +2260,16 @@ legacy_hal::wifi_channel_width convertHidlWifiChannelWidthToLegacy(WifiChannelWi
             return legacy_hal::WIFI_CHAN_WIDTH_5;
         case WifiChannelWidthInMhz::WIDTH_10:
             return legacy_hal::WIFI_CHAN_WIDTH_10;
+        case V1_6::WifiChannelWidthInMhz::WIDTH_320:
+            return legacy_hal::WIFI_CHAN_WIDTH_320;
         case WifiChannelWidthInMhz::WIDTH_INVALID:
             return legacy_hal::WIFI_CHAN_WIDTH_INVALID;
     };
     CHECK(false);
 }
 
-WifiChannelWidthInMhz convertLegacyWifiChannelWidthToHidl(legacy_hal::wifi_channel_width type) {
+V1_6::WifiChannelWidthInMhz convertLegacyWifiChannelWidthToHidl(
+        legacy_hal::wifi_channel_width type) {
     switch (type) {
         case legacy_hal::WIFI_CHAN_WIDTH_20:
             return WifiChannelWidthInMhz::WIDTH_20;
@@ -2282,35 +2285,41 @@ WifiChannelWidthInMhz convertLegacyWifiChannelWidthToHidl(legacy_hal::wifi_chann
             return WifiChannelWidthInMhz::WIDTH_5;
         case legacy_hal::WIFI_CHAN_WIDTH_10:
             return WifiChannelWidthInMhz::WIDTH_10;
+        case legacy_hal::WIFI_CHAN_WIDTH_320:
+            return V1_6::WifiChannelWidthInMhz::WIDTH_320;
         default:
             return WifiChannelWidthInMhz::WIDTH_INVALID;
     };
 }
 
-legacy_hal::wifi_rtt_preamble convertHidlRttPreambleToLegacy(V1_4::RttPreamble type) {
+legacy_hal::wifi_rtt_preamble convertHidlRttPreambleToLegacy(V1_6::RttPreamble type) {
     switch (type) {
-        case V1_4::RttPreamble::LEGACY:
+        case V1_6::RttPreamble::LEGACY:
             return legacy_hal::WIFI_RTT_PREAMBLE_LEGACY;
-        case V1_4::RttPreamble::HT:
+        case V1_6::RttPreamble::HT:
             return legacy_hal::WIFI_RTT_PREAMBLE_HT;
-        case V1_4::RttPreamble::VHT:
+        case V1_6::RttPreamble::VHT:
             return legacy_hal::WIFI_RTT_PREAMBLE_VHT;
-        case V1_4::RttPreamble::HE:
+        case V1_6::RttPreamble::HE:
             return legacy_hal::WIFI_RTT_PREAMBLE_HE;
+        case V1_6::RttPreamble::EHT:
+            return legacy_hal::WIFI_RTT_PREAMBLE_EHT;
     };
     CHECK(false);
 }
 
-V1_4::RttPreamble convertLegacyRttPreambleToHidl(legacy_hal::wifi_rtt_preamble type) {
+V1_6::RttPreamble convertLegacyRttPreambleToHidl(legacy_hal::wifi_rtt_preamble type) {
     switch (type) {
         case legacy_hal::WIFI_RTT_PREAMBLE_LEGACY:
-            return V1_4::RttPreamble::LEGACY;
+            return V1_6::RttPreamble::LEGACY;
         case legacy_hal::WIFI_RTT_PREAMBLE_HT:
-            return V1_4::RttPreamble::HT;
+            return V1_6::RttPreamble::HT;
         case legacy_hal::WIFI_RTT_PREAMBLE_VHT:
-            return V1_4::RttPreamble::VHT;
+            return V1_6::RttPreamble::VHT;
         case legacy_hal::WIFI_RTT_PREAMBLE_HE:
-            return V1_4::RttPreamble::HE;
+            return V1_6::RttPreamble::HE;
+        case legacy_hal::WIFI_RTT_PREAMBLE_EHT:
+            return V1_6::RttPreamble::EHT;
     };
     CHECK(false) << "Unknown legacy type: " << type;
 }
@@ -2329,6 +2338,8 @@ legacy_hal::wifi_rtt_bw convertHidlRttBwToLegacy(RttBw type) {
             return legacy_hal::WIFI_RTT_BW_80;
         case RttBw::BW_160MHZ:
             return legacy_hal::WIFI_RTT_BW_160;
+        case RttBw::BW_320MHZ:
+            return legacy_hal::WIFI_RTT_BW_320;
     };
     CHECK(false);
 }
@@ -2347,6 +2358,8 @@ RttBw convertLegacyRttBwToHidl(legacy_hal::wifi_rtt_bw type) {
             return RttBw::BW_80MHZ;
         case legacy_hal::WIFI_RTT_BW_160:
             return RttBw::BW_160MHZ;
+        case legacy_hal::WIFI_RTT_BW_320:
+            return RttBw::BW_320MHZ;
     };
     CHECK(false) << "Unknown legacy type: " << type;
 }
@@ -2363,20 +2376,22 @@ legacy_hal::wifi_motion_pattern convertHidlRttMotionPatternToLegacy(RttMotionPat
     CHECK(false);
 }
 
-V1_4::WifiRatePreamble convertLegacyWifiRatePreambleToHidl(uint8_t preamble) {
+V1_6::WifiRatePreamble convertLegacyWifiRatePreambleToHidl(uint8_t preamble) {
     switch (preamble) {
         case 0:
-            return V1_4::WifiRatePreamble::OFDM;
+            return V1_6::WifiRatePreamble::OFDM;
         case 1:
-            return V1_4::WifiRatePreamble::CCK;
+            return V1_6::WifiRatePreamble::CCK;
         case 2:
-            return V1_4::WifiRatePreamble::HT;
+            return V1_6::WifiRatePreamble::HT;
         case 3:
-            return V1_4::WifiRatePreamble::VHT;
+            return V1_6::WifiRatePreamble::VHT;
         case 4:
-            return V1_4::WifiRatePreamble::HE;
+            return V1_6::WifiRatePreamble::HE;
+        case 5:
+            return V1_6::WifiRatePreamble::EHT;
         default:
-            return V1_4::WifiRatePreamble::RESERVED;
+            return V1_6::WifiRatePreamble::RESERVED;
     };
     CHECK(false) << "Unknown legacy preamble: " << preamble;
 }
@@ -2464,7 +2479,7 @@ bool convertLegacyWifiChannelInfoToHidl(const legacy_hal::wifi_channel_info& leg
     return true;
 }
 
-bool convertHidlRttConfigToLegacy(const V1_4::RttConfig& hidl_config,
+bool convertHidlRttConfigToLegacy(const V1_6::RttConfig& hidl_config,
                                   legacy_hal::wifi_rtt_config* legacy_config) {
     if (!legacy_config) {
         return false;
@@ -2491,7 +2506,7 @@ bool convertHidlRttConfigToLegacy(const V1_4::RttConfig& hidl_config,
 }
 
 bool convertHidlVectorOfRttConfigToLegacy(
-        const std::vector<V1_4::RttConfig>& hidl_configs,
+        const std::vector<V1_6::RttConfig>& hidl_configs,
         std::vector<legacy_hal::wifi_rtt_config>* legacy_configs) {
     if (!legacy_configs) {
         return false;
@@ -2542,7 +2557,7 @@ bool convertHidlRttLcrInformationToLegacy(const RttLcrInformation& hidl_info,
     return true;
 }
 
-bool convertHidlRttResponderToLegacy(const V1_4::RttResponder& hidl_responder,
+bool convertHidlRttResponderToLegacy(const V1_6::RttResponder& hidl_responder,
                                      legacy_hal::wifi_rtt_responder* legacy_responder) {
     if (!legacy_responder) {
         return false;
@@ -2556,7 +2571,7 @@ bool convertHidlRttResponderToLegacy(const V1_4::RttResponder& hidl_responder,
 }
 
 bool convertLegacyRttResponderToHidl(const legacy_hal::wifi_rtt_responder& legacy_responder,
-                                     V1_4::RttResponder* hidl_responder) {
+                                     V1_6::RttResponder* hidl_responder) {
     if (!hidl_responder) {
         return false;
     }
@@ -2570,7 +2585,7 @@ bool convertLegacyRttResponderToHidl(const legacy_hal::wifi_rtt_responder& legac
 
 bool convertLegacyRttCapabilitiesToHidl(
         const legacy_hal::wifi_rtt_capabilities& legacy_capabilities,
-        V1_4::RttCapabilities* hidl_capabilities) {
+        V1_6::RttCapabilities* hidl_capabilities) {
     if (!hidl_capabilities) {
         return false;
     }
@@ -2582,17 +2597,19 @@ bool convertLegacyRttCapabilitiesToHidl(
     hidl_capabilities->responderSupported = legacy_capabilities.responder_supported;
     hidl_capabilities->preambleSupport = 0;
     for (const auto flag : {legacy_hal::WIFI_RTT_PREAMBLE_LEGACY, legacy_hal::WIFI_RTT_PREAMBLE_HT,
-                            legacy_hal::WIFI_RTT_PREAMBLE_VHT, legacy_hal::WIFI_RTT_PREAMBLE_HE}) {
+                            legacy_hal::WIFI_RTT_PREAMBLE_VHT, legacy_hal::WIFI_RTT_PREAMBLE_HE,
+                            legacy_hal::WIFI_RTT_PREAMBLE_EHT}) {
         if (legacy_capabilities.preamble_support & flag) {
             hidl_capabilities->preambleSupport |=
-                    static_cast<std::underlying_type<V1_4::RttPreamble>::type>(
+                    static_cast<std::underlying_type<V1_6::RttPreamble>::type>(
                             convertLegacyRttPreambleToHidl(flag));
         }
     }
     hidl_capabilities->bwSupport = 0;
     for (const auto flag :
          {legacy_hal::WIFI_RTT_BW_5, legacy_hal::WIFI_RTT_BW_10, legacy_hal::WIFI_RTT_BW_20,
-          legacy_hal::WIFI_RTT_BW_40, legacy_hal::WIFI_RTT_BW_80, legacy_hal::WIFI_RTT_BW_160}) {
+          legacy_hal::WIFI_RTT_BW_40, legacy_hal::WIFI_RTT_BW_80, legacy_hal::WIFI_RTT_BW_160,
+          legacy_hal::WIFI_RTT_BW_320}) {
         if (legacy_capabilities.bw_support & flag) {
             hidl_capabilities->bwSupport |=
                     static_cast<std::underlying_type<RttBw>::type>(convertLegacyRttBwToHidl(flag));
@@ -2603,7 +2620,7 @@ bool convertLegacyRttCapabilitiesToHidl(
 }
 
 bool convertLegacyWifiRateInfoToHidl(const legacy_hal::wifi_rate& legacy_rate,
-                                     V1_4::WifiRateInfo* hidl_rate) {
+                                     V1_6::WifiRateInfo* hidl_rate) {
     if (!hidl_rate) {
         return false;
     }
@@ -2618,7 +2635,7 @@ bool convertLegacyWifiRateInfoToHidl(const legacy_hal::wifi_rate& legacy_rate,
 }
 
 bool convertLegacyRttResultToHidl(const legacy_hal::wifi_rtt_result& legacy_result,
-                                  V1_4::RttResult* hidl_result) {
+                                  V1_6::RttResult* hidl_result) {
     if (!hidl_result) {
         return false;
     }
@@ -2660,13 +2677,13 @@ bool convertLegacyRttResultToHidl(const legacy_hal::wifi_rtt_result& legacy_resu
 
 bool convertLegacyVectorOfRttResultToHidl(
         const std::vector<const legacy_hal::wifi_rtt_result*>& legacy_results,
-        std::vector<V1_4::RttResult>* hidl_results) {
+        std::vector<V1_6::RttResult>* hidl_results) {
     if (!hidl_results) {
         return false;
     }
     *hidl_results = {};
     for (const auto legacy_result : legacy_results) {
-        V1_4::RttResult hidl_result;
+        V1_6::RttResult hidl_result;
         if (!convertLegacyRttResultToHidl(*legacy_result, &hidl_result)) {
             return false;
         }
