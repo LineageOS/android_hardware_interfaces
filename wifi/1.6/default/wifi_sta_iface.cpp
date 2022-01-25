@@ -150,6 +150,11 @@ Return<void> WifiStaIface::getLinkLayerStats_1_5(getLinkLayerStats_1_5_cb hidl_s
                            &WifiStaIface::getLinkLayerStatsInternal_1_5, hidl_status_cb);
 }
 
+Return<void> WifiStaIface::getLinkLayerStats_1_6(getLinkLayerStats_1_6_cb hidl_status_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
+                           &WifiStaIface::getLinkLayerStatsInternal_1_6, hidl_status_cb);
+}
+
 Return<void> WifiStaIface::startRssiMonitoring(uint32_t cmd_id, int32_t max_rssi, int32_t min_rssi,
                                                startRssiMonitoring_cb hidl_status_cb) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_IFACE_INVALID,
@@ -422,13 +427,17 @@ std::pair<WifiStatus, V1_3::StaLinkLayerStats> WifiStaIface::getLinkLayerStatsIn
 }
 
 std::pair<WifiStatus, V1_5::StaLinkLayerStats> WifiStaIface::getLinkLayerStatsInternal_1_5() {
+    return {createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED), {}};
+}
+
+std::pair<WifiStatus, V1_6::StaLinkLayerStats> WifiStaIface::getLinkLayerStatsInternal_1_6() {
     legacy_hal::wifi_error legacy_status;
     legacy_hal::LinkLayerStats legacy_stats;
     std::tie(legacy_status, legacy_stats) = legacy_hal_.lock()->getLinkLayerStats(ifname_);
     if (legacy_status != legacy_hal::WIFI_SUCCESS) {
         return {createWifiStatusFromLegacyError(legacy_status), {}};
     }
-    V1_5::StaLinkLayerStats hidl_stats;
+    V1_6::StaLinkLayerStats hidl_stats;
     if (!hidl_struct_util::convertLegacyLinkLayerStatsToHidl(legacy_stats, &hidl_stats)) {
         return {createWifiStatus(WifiStatusCode::ERROR_UNKNOWN), {}};
     }

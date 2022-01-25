@@ -112,6 +112,17 @@ class UsbAidlTest : public testing::TestWithParam<std::string> {
       return ScopedAStatus::ok();
     }
 
+    // Callback method for the status of enableUsbData operation
+    ScopedAStatus notifyEnableUsbDataWhileDockedStatus(const string& /*portName*/,
+                                                       Status /*retval*/,
+                                                       int64_t transactionId) override {
+      parent_.last_transactionId = transactionId;
+      parent_.usb_last_cookie = cookie;
+      parent_.enable_usb_data_while_docked_done = true;
+      parent_.notify();
+      return ScopedAStatus::ok();
+    }
+
     // Callback method for the status of enableContaminantPresenceDetection
     ScopedAStatus notifyContaminantEnabledStatus(const string& /*portName*/, bool /*enable*/,
                                                  Status /*retval*/, int64_t transactionId) override {
@@ -205,6 +216,9 @@ class UsbAidlTest : public testing::TestWithParam<std::string> {
 
   // Flag to indicate the invocation of notifyEnableUsbDataStatus callback.
   bool enable_usb_data_done;
+
+  // Flag to indicate the invocation of notifyEnableUsbDataWhileDockedStatus callback.
+  bool enable_usb_data_while_docked_done;
 
   // Flag to indicate the invocation of notifyLimitPowerTransferStatus callback.
   bool limit_power_transfer_done;
@@ -421,6 +435,42 @@ TEST_P(UsbAidlTest, enableUsbData) {
     EXPECT_EQ(transactionId, last_transactionId);
   }
   ALOGI("UsbAidlTest enableUsbData end");
+}
+
+/*
+ * Test enabling Usb data while being docked.
+ * Test case queries the usb ports present in device.
+ * If there is at least one usb port, enabling Usb data while docked
+ * is attempted for the port.
+ * The callback parameters are checked to see if transaction id
+ * matches.
+ */
+TEST_P(UsbAidlTest, enableUsbDataWhileDocked) {
+  ALOGI("UsbAidlTest enableUsbDataWhileDocked start");
+  int64_t transactionId = rand() % 10000;
+  const auto& ret = usb->queryPortStatus(transactionId);
+  ASSERT_TRUE(ret.isOk());
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(2, usb_last_cookie);
+  EXPECT_EQ(transactionId, last_transactionId);
+
+  if (!usb_last_port_status.portName.empty()) {
+    ALOGI("portname:%s", usb_last_port_status.portName.c_str());
+    enable_usb_data_while_docked_done = false;
+    transactionId = rand() % 10000;
+    const auto& ret = usb->enableUsbDataWhileDocked(usb_last_port_status.portName, transactionId);
+    ASSERT_TRUE(ret.isOk());
+
+    std::cv_status waitStatus = wait();
+    while (waitStatus == std::cv_status::no_timeout &&
+           enable_usb_data_while_docked_done == false)
+      waitStatus = wait();
+
+    EXPECT_EQ(std::cv_status::no_timeout, waitStatus);
+    EXPECT_EQ(2, usb_last_cookie);
+    EXPECT_EQ(transactionId, last_transactionId);
+  }
+  ALOGI("UsbAidlTest enableUsbDataWhileDocked end");
 }
 
 /*

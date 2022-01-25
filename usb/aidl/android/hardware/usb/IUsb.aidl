@@ -49,6 +49,15 @@ oneway interface IUsb {
     void enableUsbData(in String portName, boolean enable, long transactionId);
 
     /**
+     * This function is used to enable USB controller if and when the controller
+     * disabled due to docking event.
+     *
+     * @param portName Name of the port.
+     * @param transactionId ID to be used when invoking the callback.
+     */
+    void enableUsbDataWhileDocked(in String portName, long transactionId);
+
+    /**
      * This functions is used to request the hal for the current status
      * status of the Type-C ports. The result of the query would be sent
      * through the IUsbCallback object's notifyRoleSwitchStatus
