@@ -16,7 +16,6 @@
 
 #define LOG_TAG "android.hardware.identity-service"
 
-#include <aidl/android/hardware/security/keymint/IRemotelyProvisionedComponent.h>
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
@@ -33,7 +32,6 @@ using ::android::base::LogSeverity;
 using ::android::base::StderrLogger;
 
 using ::aidl::android::hardware::identity::IdentityCredentialStore;
-using ::aidl::android::hardware::security::keymint::IRemotelyProvisionedComponent;
 using ::android::hardware::identity::FakeSecureHardwareProxyFactory;
 using ::android::hardware::identity::SecureHardwareProxyFactory;
 
@@ -49,13 +47,10 @@ int main(int /*argc*/, char* argv[]) {
     InitLogging(argv, ComboLogger);
 
     sp<SecureHardwareProxyFactory> hwProxyFactory = new FakeSecureHardwareProxyFactory();
-    const std::string remotelyProvisionedComponentName =
-            std::string(IRemotelyProvisionedComponent::descriptor) + "/default";
 
     ABinderProcess_setThreadPoolMaxThreadCount(0);
     std::shared_ptr<IdentityCredentialStore> store =
-            ndk::SharedRefBase::make<IdentityCredentialStore>(hwProxyFactory,
-                                                              remotelyProvisionedComponentName);
+            ndk::SharedRefBase::make<IdentityCredentialStore>(hwProxyFactory);
 
     const std::string instance = std::string() + IdentityCredentialStore::descriptor + "/default";
     binder_status_t status = AServiceManager_addService(store->asBinder().get(), instance.c_str());

@@ -155,33 +155,12 @@ optional<vector<uint8_t>> FakeSecureHardwareProvisioningProxy::createCredentialK
     size_t publicKeyCertSize = sizeof publicKeyCert;
     if (!eicProvisioningCreateCredentialKey(&ctx_, challenge.data(), challenge.size(),
                                             applicationId.data(), applicationId.size(),
-                                            /*attestationKeyBlob=*/nullptr,
-                                            /*attestationKeyBlobSize=*/0,
-                                            /*attestationKeyCert=*/nullptr,
-                                            /*attestationKeyCertSize=*/0, publicKeyCert,
-                                            &publicKeyCertSize)) {
+                                            publicKeyCert, &publicKeyCertSize)) {
         return std::nullopt;
     }
     vector<uint8_t> pubKeyCert(publicKeyCertSize);
     memcpy(pubKeyCert.data(), publicKeyCert, publicKeyCertSize);
     return pubKeyCert;
-}
-
-optional<vector<uint8_t>> FakeSecureHardwareProvisioningProxy::createCredentialKeyUsingRkp(
-        const vector<uint8_t>& challenge, const vector<uint8_t>& applicationId,
-        const vector<uint8_t>& attestationKeyBlob, const vector<uint8_t>& attstationKeyCert) {
-    size_t publicKeyCertSize = 4096;
-    vector<uint8_t> publicKeyCert(publicKeyCertSize);
-    if (!eicProvisioningCreateCredentialKey(&ctx_, challenge.data(), challenge.size(),
-                                            applicationId.data(), applicationId.size(),
-                                            attestationKeyBlob.data(), attestationKeyBlob.size(),
-                                            attstationKeyCert.data(), attstationKeyCert.size(),
-                                            publicKeyCert.data(), &publicKeyCertSize)) {
-        LOG(ERROR) << "error creating credential key";
-        return std::nullopt;
-    }
-    publicKeyCert.resize(publicKeyCertSize);
-    return publicKeyCert;
 }
 
 bool FakeSecureHardwareProvisioningProxy::startPersonalization(
