@@ -1533,6 +1533,10 @@ wifi_error WifiLegacyHal::triggerSubsystemRestart() {
     return global_func_table_.wifi_trigger_subsystem_restart(global_handle_);
 }
 
+wifi_error WifiLegacyHal::setIndoorState(bool isIndoor) {
+    return global_func_table_.wifi_set_indoor_state(global_handle_, isIndoor);
+}
+
 void WifiLegacyHal::invalidate() {
     global_handle_ = nullptr;
     iface_name_to_handle_.clear();
