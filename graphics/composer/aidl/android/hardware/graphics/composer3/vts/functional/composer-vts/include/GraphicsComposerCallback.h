@@ -45,6 +45,10 @@ class GraphicsComposerCallback : public BnComposerCallback {
 
     int32_t getInvalidSeamlessPossibleCount() const;
 
+    int32_t getVsyncIdleCount() const;
+
+    int64_t getVsyncIdleTime() const;
+
     std::optional<VsyncPeriodChangeTimeline> takeLastVsyncPeriodChangeTimeline();
 
   private:
@@ -57,6 +61,7 @@ class GraphicsComposerCallback : public BnComposerCallback {
             int64_t in_display,
             const ::aidl::android::hardware::graphics::composer3::VsyncPeriodChangeTimeline&
                     in_updatedTimeline) override;
+    virtual ::ndk::ScopedAStatus onVsyncIdle(int64_t in_display) override;
 
     mutable std::mutex mMutex;
     // the set of all currently connected displays
@@ -65,6 +70,9 @@ class GraphicsComposerCallback : public BnComposerCallback {
     bool mVsyncAllowed GUARDED_BY(mMutex) = true;
 
     std::optional<VsyncPeriodChangeTimeline> mTimeline GUARDED_BY(mMutex);
+
+    int32_t mVsyncIdleCount GUARDED_BY(mMutex) = 0;
+    int64_t mVsyncIdleTime GUARDED_BY(mMutex) = 0;
 
     // track invalid callbacks
     int32_t mInvalidHotplugCount GUARDED_BY(mMutex) = 0;
