@@ -17,7 +17,10 @@
 #ifndef ANDROID_HARDWARE_AUDIO_PARAMETERS_UTIL_H_
 #define ANDROID_HARDWARE_AUDIO_PARAMETERS_UTIL_H_
 
-#include PATH(android/hardware/audio/FILE_VERSION/types.h)
+// clang-format off
+#include PATH(android/hardware/audio/common/COMMON_TYPES_FILE_VERSION/types.h)
+#include PATH(android/hardware/audio/CORE_TYPES_FILE_VERSION/types.h)
+// clang-format on
 
 #include <functional>
 #include <memory>
@@ -28,13 +31,13 @@
 namespace android {
 namespace hardware {
 namespace audio {
-namespace CPP_VERSION {
+namespace CORE_TYPES_CPP_VERSION {
 namespace implementation {
 
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
-using namespace ::android::hardware::audio::common::CPP_VERSION;
-using namespace ::android::hardware::audio::CPP_VERSION;
+using namespace ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION;
+using namespace ::android::hardware::audio::CORE_TYPES_CPP_VERSION;
 
 class ParametersUtil {
    public:
@@ -62,7 +65,7 @@ class ParametersUtil {
 };
 
 }  // namespace implementation
-}  // namespace CPP_VERSION
+}  // namespace CORE_TYPES_CPP_VERSION
 }  // namespace audio
 }  // namespace hardware
 }  // namespace android
