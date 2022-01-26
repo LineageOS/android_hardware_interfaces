@@ -125,6 +125,7 @@ interface ISupplicantStaNetwork {
   void setWapiCertSuite(in String suite);
   void setWepKey(in int keyIdx, in byte[] wepKey);
   void setWepTxKeyIdx(in int keyIdx);
+  void setRoamingConsortiumSelection(in byte[] selectedRcoi);
   const int SSID_MAX_LEN_IN_BYTES = 32;
   const int PSK_PASSPHRASE_MIN_LEN_IN_BYTES = 8;
   const int PSK_PASSPHRASE_MAX_LEN_IN_BYTES = 63;

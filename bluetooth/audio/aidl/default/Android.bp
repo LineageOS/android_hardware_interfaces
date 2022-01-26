@@ -8,7 +8,7 @@ package {
 }
 
 cc_library_shared {
-    name: "android.hardware.bluetooth.audio-V1-impl",
+    name: "android.hardware.bluetooth.audio-impl",
     vendor: true,
     vintf_fragments: ["bluetooth_audio.xml"],
     srcs: [
