@@ -21,7 +21,7 @@
 #define LOG_TAG "HidlUtils"
 #include <log/log.h>
 
-#include <android_audio_policy_configuration_V7_0-enums.h>
+#include PATH(APM_XSD_ENUMS_H_FILENAME)
 #include <common/all-versions/HidlSupport.h>
 #include <common/all-versions/VersionUtils.h>
 
@@ -31,11 +31,11 @@ namespace android {
 namespace hardware {
 namespace audio {
 namespace common {
-namespace CPP_VERSION {
+namespace COMMON_TYPES_CPP_VERSION {
 namespace implementation {
 
 namespace xsd {
-using namespace ::android::audio::policy::configuration::V7_0;
+using namespace ::android::audio::policy::configuration::CPP_VERSION;
 }
 
 #define CONVERT_CHECKED(expr, result)                   \
@@ -1151,7 +1151,7 @@ status_t HidlUtils::deviceAddressToHal(const DeviceAddress& device, audio_device
 }
 
 }  // namespace implementation
-}  // namespace CPP_VERSION
+}  // namespace COMMON_TYPES_CPP_VERSION
 }  // namespace common
 }  // namespace audio
 }  // namespace hardware

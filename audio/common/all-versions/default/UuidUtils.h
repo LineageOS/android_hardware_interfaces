@@ -20,7 +20,7 @@
 #include <string>
 
 // clang-format off
-#include PATH(android/hardware/audio/common/FILE_VERSION/types.h)
+#include PATH(android/hardware/audio/common/COMMON_TYPES_FILE_VERSION/types.h)
 // clang-format on
 
 #include <system/audio.h>
@@ -32,7 +32,7 @@ namespace common {
 namespace CPP_VERSION {
 namespace implementation {
 
-using namespace ::android::hardware::audio::common::CPP_VERSION;
+using namespace ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION;
 
 class UuidUtils {
   public:
