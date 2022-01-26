@@ -26,25 +26,14 @@
 
 using ::android::sp;
 using ::android::base::InitLogging;
-using ::android::base::LogdLogger;
-using ::android::base::LogId;
-using ::android::base::LogSeverity;
 using ::android::base::StderrLogger;
 
 using ::aidl::android::hardware::identity::IdentityCredentialStore;
 using ::android::hardware::identity::FakeSecureHardwareProxyFactory;
 using ::android::hardware::identity::SecureHardwareProxyFactory;
 
-void ComboLogger(LogId id, LogSeverity severity, const char* tag, const char* file,
-                 unsigned int line, const char* message) {
-    StderrLogger(id, severity, tag, file, line, message);
-
-    static LogdLogger logdLogger;
-    logdLogger(id, severity, tag, file, line, message);
-}
-
 int main(int /*argc*/, char* argv[]) {
-    InitLogging(argv, ComboLogger);
+    InitLogging(argv, StderrLogger);
 
     sp<SecureHardwareProxyFactory> hwProxyFactory = new FakeSecureHardwareProxyFactory();
 
