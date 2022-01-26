@@ -38,7 +38,6 @@ interface IIdentityCredentialStore {
   android.hardware.identity.IWritableIdentityCredential createCredential(in @utf8InCpp String docType, in boolean testCredential);
   android.hardware.identity.IIdentityCredential getCredential(in android.hardware.identity.CipherSuite cipherSuite, in byte[] credentialData);
   android.hardware.identity.IPresentationSession createPresentationSession(in android.hardware.identity.CipherSuite cipherSuite);
-  android.hardware.security.keymint.IRemotelyProvisionedComponent getRemotelyProvisionedComponent();
   const int STATUS_OK = 0;
   const int STATUS_FAILED = 1;
   const int STATUS_CIPHER_SUITE_NOT_SUPPORTED = 2;

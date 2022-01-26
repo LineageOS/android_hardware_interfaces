@@ -11,8 +11,6 @@ cc_test {
     name: "VtsHalIdentityTargetTest",
     defaults: [
         "VtsHalTargetTestDefaults",
-        "keymint_use_latest_hal_aidl_cpp_static",
-        "keymint_use_latest_hal_aidl_ndk_static",
         "use_libaidlvintf_gtest_helper_static",
     ],
     cflags: [
@@ -34,15 +32,12 @@ cc_test {
     ],
     shared_libs: [
         "libbinder",
-        "libbinder_ndk",
         "libcrypto",
     ],
     static_libs: [
-        "android.hardware.security.secureclock-V1-ndk",
         "libcppbor_external",
         "libcppcose_rkp",
         "libkeymaster_portable",
-        "libkeymint_vts_test_utils",
         "libpuresoftkeymasterdevice",
         "android.hardware.keymaster@4.0",
         "android.hardware.identity-support-lib",
@@ -51,7 +46,6 @@ cc_test {
         "android.hardware.keymaster-V4-ndk",
         "libkeymaster4support",
         "libkeymaster4_1support",
-        "libkeymint_remote_prov_support",
     ],
     test_suites: [
         "general-tests",

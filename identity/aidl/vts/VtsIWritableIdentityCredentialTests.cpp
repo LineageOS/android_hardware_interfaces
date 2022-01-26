@@ -18,8 +18,6 @@
 
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
-#include <aidl/android/hardware/security/keymint/IRemotelyProvisionedComponent.h>
-#include <aidl/android/hardware/security/keymint/MacedPublicKey.h>
 #include <android-base/logging.h>
 #include <android/hardware/identity/IIdentityCredentialStore.h>
 #include <android/hardware/identity/support/IdentityCredentialSupport.h>
@@ -44,8 +42,6 @@ using std::vector;
 using ::android::sp;
 using ::android::String16;
 using ::android::binder::Status;
-using ::android::hardware::security::keymint::IRemotelyProvisionedComponent;
-using ::android::hardware::security::keymint::MacedPublicKey;
 
 class IdentityCredentialTests : public testing::TestWithParam<string> {
   public:
@@ -103,103 +99,6 @@ TEST_P(IdentityCredentialTests, verifyAttestationSuccessWithChallenge) {
 
     test_utils::validateAttestationCertificate(attestationCertificate, attestationChallenge,
                                                attestationApplicationId, false);
-}
-
-TEST_P(IdentityCredentialTests, verifyAttestationSuccessWithRemoteProvisioning) {
-    HardwareInformation hwInfo;
-    ASSERT_TRUE(credentialStore_->getHardwareInformation(&hwInfo).isOk());
-
-    if (!hwInfo.isRemoteKeyProvisioningSupported) {
-        GTEST_SKIP() << "Remote provisioning is not supported";
-    }
-
-    Status result;
-
-    sp<IWritableIdentityCredential> writableCredential;
-    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_,
-                                                    false /* testCredential */));
-
-    sp<IRemotelyProvisionedComponent> rpc;
-    result = credentialStore_->getRemotelyProvisionedComponent(&rpc);
-    ASSERT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage();
-
-    MacedPublicKey macedPublicKey;
-    std::vector<uint8_t> attestationKey;
-    result = rpc->generateEcdsaP256KeyPair(/*testMode=*/true, &macedPublicKey, &attestationKey);
-    ASSERT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage();
-
-    optional<vector<vector<uint8_t>>> remotelyProvisionedCertChain =
-            test_utils::createFakeRemotelyProvisionedCertificateChain(macedPublicKey);
-    ASSERT_TRUE(remotelyProvisionedCertChain);
-
-    vector<uint8_t> concatenatedCerts;
-    for (const vector<uint8_t>& cert : *remotelyProvisionedCertChain) {
-        concatenatedCerts.insert(concatenatedCerts.end(), cert.begin(), cert.end());
-    }
-    result = writableCredential->setRemotelyProvisionedAttestationKey(attestationKey,
-                                                                      concatenatedCerts);
-    ASSERT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage();
-
-    string challenge = "NotSoRandomChallenge1NotSoRandomChallenge1NotSoRandomChallenge1";
-    vector<uint8_t> attestationChallenge(challenge.begin(), challenge.end());
-    vector<Certificate> attestationCertificate;
-    vector<uint8_t> attestationApplicationId = {1};
-
-    result = writableCredential->getAttestationCertificate(
-            attestationApplicationId, attestationChallenge, &attestationCertificate);
-
-    ASSERT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage();
-
-    test_utils::validateAttestationCertificate(attestationCertificate, attestationChallenge,
-                                               attestationApplicationId, false);
-
-    ASSERT_EQ(remotelyProvisionedCertChain->size() + 1, attestationCertificate.size());
-    for (size_t i = 0; i < remotelyProvisionedCertChain->size(); ++i) {
-        ASSERT_EQ(remotelyProvisionedCertChain->at(i),
-                  attestationCertificate[i + 1].encodedCertificate)
-                << "Certificate mismatch (cert index " << i + 1 << " out of "
-                << attestationCertificate.size() << " total certs)";
-    }
-}
-
-TEST_P(IdentityCredentialTests, verifyRemotelyProvisionedKeyMayOnlyBeSetOnce) {
-    HardwareInformation hwInfo;
-    ASSERT_TRUE(credentialStore_->getHardwareInformation(&hwInfo).isOk());
-
-    if (!hwInfo.isRemoteKeyProvisioningSupported) {
-        GTEST_SKIP() << "Remote provisioning is not supported";
-    }
-
-    sp<IRemotelyProvisionedComponent> rpc;
-    Status result = credentialStore_->getRemotelyProvisionedComponent(&rpc);
-    ASSERT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage();
-
-    MacedPublicKey macedPublicKey;
-    std::vector<uint8_t> attestationKey;
-    result = rpc->generateEcdsaP256KeyPair(/*testMode=*/true, &macedPublicKey, &attestationKey);
-    ASSERT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage();
-
-    optional<vector<vector<uint8_t>>> remotelyProvisionedCertChain =
-            test_utils::createFakeRemotelyProvisionedCertificateChain(macedPublicKey);
-    ASSERT_TRUE(remotelyProvisionedCertChain);
-
-    vector<uint8_t> concatenatedCerts;
-    for (const vector<uint8_t>& cert : *remotelyProvisionedCertChain) {
-        concatenatedCerts.insert(concatenatedCerts.end(), cert.begin(), cert.end());
-    }
-
-    sp<IWritableIdentityCredential> writableCredential;
-    ASSERT_TRUE(test_utils::setupWritableCredential(writableCredential, credentialStore_,
-                                                    /*testCredential=*/false));
-
-    result = writableCredential->setRemotelyProvisionedAttestationKey(attestationKey,
-                                                                      concatenatedCerts);
-    ASSERT_TRUE(result.isOk()) << result.exceptionCode() << "; " << result.exceptionMessage();
-
-    // Now try again, and verify that the implementation rejects it.
-    result = writableCredential->setRemotelyProvisionedAttestationKey(attestationKey,
-                                                                      concatenatedCerts);
-    EXPECT_FALSE(result.isOk());
 }
 
 TEST_P(IdentityCredentialTests, verifyAttestationDoubleCallFails) {

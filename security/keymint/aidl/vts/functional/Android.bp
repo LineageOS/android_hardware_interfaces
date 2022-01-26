@@ -75,9 +75,6 @@ cc_test_library {
     export_include_dirs: [
         ".",
     ],
-    export_static_lib_headers: [
-        "libkeymint_support",
-    ],
     static_libs: [
         "libgmock_ndk",
     ],
