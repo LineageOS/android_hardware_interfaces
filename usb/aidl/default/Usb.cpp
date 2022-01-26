@@ -90,6 +90,22 @@ ScopedAStatus Usb::enableUsbDataWhileDocked(const string& in_portName, int64_t i
     return ScopedAStatus::ok();
 }
 
+ScopedAStatus Usb::resetUsbPort(const string& in_portName, int64_t in_transactionId) {
+
+    pthread_mutex_lock(&mLock);
+    if (mCallback != NULL) {
+        ScopedAStatus ret = mCallback->notifyResetUsbPortStatus(
+            in_portName, Status::NOT_SUPPORTED, in_transactionId);
+        if (!ret.isOk())
+            ALOGE("notifyResetUsbPortStatus error %s", ret.getDescription().c_str());
+    } else {
+        ALOGE("Not notifying the userspace. Callback is not set");
+    }
+    pthread_mutex_unlock(&mLock);
+
+    return ScopedAStatus::ok();
+}
+
 Status queryMoistureDetectionStatus(std::vector<PortStatus> *currentPortStatus) {
     string enabled, status, path, DetectedPath;
 

@@ -104,4 +104,13 @@ oneway interface IUsb {
      * @param transactionId ID to be used when invoking the callback.
      */
     void limitPowerTransfer(in String portName, boolean limit, long transactionId);
+
+    /**
+     * This function is used to reset the port role of a specific port.
+     * For instance, when data transfer through the port fails.
+     *
+     * @param portName name of the port that is being reset
+     * @param transactionId ID to be used when invoking the callback.
+     */
+    void resetUsbPort(in String portName, long transactionId);
 }
