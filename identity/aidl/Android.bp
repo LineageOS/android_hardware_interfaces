@@ -15,7 +15,6 @@ aidl_interface {
     ],
     imports: [
         "android.hardware.keymaster",
-        "android.hardware.security.keymint",
     ],
     stability: "vintf",
     backend: {
@@ -26,7 +25,6 @@ aidl_interface {
             vndk: {
                 enabled: true,
             },
-            apps_enabled: false,
         },
     },
     versions: [

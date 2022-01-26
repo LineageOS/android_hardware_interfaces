@@ -39,5 +39,4 @@ parcelable HardwareInformation {
   int dataChunkSize;
   boolean isDirectAccess;
   @utf8InCpp String[] supportedDocTypes;
-  boolean isRemoteKeyProvisioningSupported = false;
 }

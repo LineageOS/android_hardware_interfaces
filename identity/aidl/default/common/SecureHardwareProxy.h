@@ -82,18 +82,6 @@ class SecureHardwareProvisioningProxy : public RefBase {
     virtual optional<vector<uint8_t>> createCredentialKey(const vector<uint8_t>& challenge,
                                                           const vector<uint8_t>& applicationId) = 0;
 
-    // Returns public key certificate with a remotely provisioned attestation key.
-    //
-    // This returns a single certificate that is signed by the given |attestationKeyBlob|.
-    // The implementation of eicOpsCreateCredentialKey() on the TA side must coordinate
-    // with its corresponding keymint implementation to sign using the attestation key. The
-    // |attestationKeyCert| parameter is the certificates for |attestationKeyBlob|,
-    // formatted as concatenated, DER-encoded, X.509 certificates.
-    virtual optional<vector<uint8_t>> createCredentialKeyUsingRkp(
-            const vector<uint8_t>& challenge, const vector<uint8_t>& applicationId,
-            const vector<uint8_t>& attestationKeyBlob,
-            const vector<uint8_t>& attestationKeyCert) = 0;
-
     virtual bool startPersonalization(int accessControlProfileCount, const vector<int>& entryCounts,
                                       const string& docType,
                                       size_t expectedProofOfProvisioningSize) = 0;
