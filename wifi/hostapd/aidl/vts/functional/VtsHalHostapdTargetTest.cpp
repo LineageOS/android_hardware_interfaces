@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <android/hardware/wifi/1.0/IWifi.h>
+#include <android/hardware/wifi/hostapd/1.3/IHostapd.h>
+
 #include <VtsCoreUtil.h>
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
@@ -21,6 +24,11 @@
 #include <android/binder_manager.h>
 #include <binder/IServiceManager.h>
 #include <binder/ProcessState.h>
+#include <hidl/ServiceManagement.h>
+#include <hostapd_hidl_call_util.h>
+#include <hostapd_hidl_test_utils.h>
+#include <wifi_hidl_test_utils.h>
+#include <wifi_hidl_test_utils_1_5.h>
 
 using aidl::android::hardware::wifi::hostapd::BandMask;
 using aidl::android::hardware::wifi::hostapd::BnHostapdCallback;
@@ -69,18 +77,41 @@ class HostapdAidl : public testing::TestWithParam<std::string> {
         isBridgedSupport = testing::checkSubstringInCommandOutput(
             "/system/bin/cmd wifi get-softap-supported-features",
             "wifi_softap_bridged_ap_supported");
+        const std::vector<std::string> instances = android::hardware::getAllHalInstanceNames(
+                ::android::hardware::wifi::V1_0::IWifi::descriptor);
+        EXPECT_NE(0, instances.size());
+        wifiInstanceName = instances[0];
     }
 
     virtual void TearDown() override {
+        if (getWifi(wifiInstanceName) != nullptr) {
+            stopWifi(wifiInstanceName);
+        }
         hostapd->terminate();
         //  Wait 3 seconds to allow terminate to complete
         sleep(3);
     }
 
     std::shared_ptr<IHostapd> hostapd;
+    std::string wifiInstanceName;
     bool isAcsSupport;
     bool isWpa3SaeSupport;
     bool isBridgedSupport;
+
+    std::string setupApIfaceAndGetName(bool isBridged) {
+        android::sp<::android::hardware::wifi::V1_0::IWifiApIface> wifi_ap_iface;
+        if (isBridged) {
+            wifi_ap_iface = getBridgedWifiApIface_1_5(wifiInstanceName);
+        } else {
+            wifi_ap_iface = getWifiApIface_1_5(wifiInstanceName);
+        }
+        EXPECT_NE(nullptr, wifi_ap_iface.get());
+
+        const auto& status_and_name = HIDL_INVOKE(wifi_ap_iface, getName);
+        EXPECT_EQ(android::hardware::wifi::V1_0::WifiStatusCode::SUCCESS,
+                  status_and_name.first.code);
+        return status_and_name.second;
+    }
 
     IfaceParams getIfaceParamsWithoutAcs(std::string iface_name) {
         IfaceParams iface_params;
@@ -426,8 +457,9 @@ TEST_P(HostapdAidl, DisconnectClientWhenIfacAvailable) {
  */
 TEST_P(HostapdAidl, AddAccessPointWithDualBandConfig) {
     if (!isBridgedSupport) GTEST_SKIP() << "Missing Bridged AP support";
-    auto status = hostapd->addAccessPoint(
-        getIfaceParamsWithBridgedModeACS(kIfaceName), getOpenNwParams());
+    std::string ifname = setupApIfaceAndGetName(true);
+    auto status =
+            hostapd->addAccessPoint(getIfaceParamsWithBridgedModeACS(ifname), getOpenNwParams());
     EXPECT_TRUE(status.isOk());
 }
 
