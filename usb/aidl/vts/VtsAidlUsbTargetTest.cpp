@@ -150,6 +150,17 @@ class UsbAidlTest : public testing::TestWithParam<std::string> {
       parent_.notify();
       return ScopedAStatus::ok();
     }
+
+    // Callback method for the status of resetUsbPortStatus operation
+    ScopedAStatus notifyResetUsbPortStatus(const string& /*portName*/, Status /*retval*/,
+                                        int64_t transactionId) override {
+      ALOGI("enter notifyResetUsbPortStatus");
+      parent_.last_transactionId = transactionId;
+      parent_.usb_last_cookie = cookie;
+      parent_.reset_usb_port_done = true;
+      parent_.notify();
+      return ScopedAStatus::ok();
+    }
   };
 
   virtual void SetUp() override {
@@ -222,6 +233,9 @@ class UsbAidlTest : public testing::TestWithParam<std::string> {
 
   // Flag to indicate the invocation of notifyLimitPowerTransferStatus callback.
   bool limit_power_transfer_done;
+
+  // Flag to indicate the invocation of notifyResetUsbPort callback.
+  bool reset_usb_port_done;
 
   // Stores the cookie of the last invoked usb callback object.
   int usb_last_cookie;
@@ -507,6 +521,43 @@ TEST_P(UsbAidlTest, limitPowerTransfer) {
     EXPECT_EQ(transactionId, last_transactionId);
   }
   ALOGI("UsbAidlTest limitPowerTransfer end");
+}
+
+/*
+ * Test reset Usb data of the port.
+ * Test case queries the usb ports present in device.
+ * If there is at least one usb port, reset Usb data for the port.
+ * The callback parameters are checked to see if transaction id
+ * matches.
+ */
+TEST_P(UsbAidlTest, DISABLED_resetUsbPort) {
+  ALOGI("UsbAidlTest resetUsbPort start");
+  int64_t transactionId = rand() % 10000;
+  const auto& ret = usb->queryPortStatus(transactionId);
+  ASSERT_TRUE(ret.isOk());
+  EXPECT_EQ(std::cv_status::no_timeout, wait());
+  EXPECT_EQ(2, usb_last_cookie);
+  EXPECT_EQ(transactionId, last_transactionId);
+
+  if (!usb_last_port_status.portName.empty()) {
+    ALOGI("portname:%s", usb_last_port_status.portName.c_str());
+    reset_usb_port_done = false;
+    transactionId = rand() % 10000;
+    const auto& ret = usb->resetUsbPort(usb_last_port_status.portName, transactionId);
+    ASSERT_TRUE(ret.isOk());
+    ALOGI("UsbAidlTest resetUsbPort ret.isOk");
+
+    std::cv_status waitStatus = wait();
+    while (waitStatus == std::cv_status::no_timeout &&
+           reset_usb_port_done == false)
+      waitStatus = wait();
+
+    ALOGI("UsbAidlTest resetUsbPort wait()");
+    EXPECT_EQ(std::cv_status::no_timeout, waitStatus);
+    EXPECT_EQ(2, usb_last_cookie);
+    EXPECT_EQ(transactionId, last_transactionId);
+  }
+  ALOGI("UsbAidlTest resetUsbPort end");
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(UsbAidlTest);
