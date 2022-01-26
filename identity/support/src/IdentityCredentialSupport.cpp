@@ -54,7 +54,6 @@
 #include <keymaster/contexts/pure_soft_keymaster_context.h>
 #include <keymaster/contexts/soft_attestation_cert.h>
 #include <keymaster/keymaster_tags.h>
-#include <keymaster/km_openssl/asymmetric_key.h>
 #include <keymaster/km_openssl/attestation_utils.h>
 #include <keymaster/km_openssl/certificate_utils.h>
 
@@ -168,286 +167,6 @@ using ASN1_OCTET_STRING_Ptr = bssl::UniquePtr<ASN1_OCTET_STRING>;
 using ASN1_OBJECT_Ptr = bssl::UniquePtr<ASN1_OBJECT>;
 using X509_NAME_Ptr = bssl::UniquePtr<X509_NAME>;
 using X509_EXTENSION_Ptr = bssl::UniquePtr<X509_EXTENSION>;
-
-namespace {
-
-EVP_PKEY_Ptr generateP256Key() {
-    EC_KEY_Ptr ec_key(EC_KEY_new());
-    EVP_PKEY_Ptr pkey(EVP_PKEY_new());
-    EC_GROUP_Ptr group(EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1));
-
-    if (ec_key.get() == nullptr || pkey.get() == nullptr) {
-        LOG(ERROR) << "Memory allocation failed";
-        return {};
-    }
-
-    if (EC_KEY_set_group(ec_key.get(), group.get()) != 1 ||
-        EC_KEY_generate_key(ec_key.get()) != 1 || EC_KEY_check_key(ec_key.get()) < 0) {
-        LOG(ERROR) << "Error generating key";
-        return {};
-    }
-
-    if (EVP_PKEY_set1_EC_KEY(pkey.get(), ec_key.get()) != 1) {
-        LOG(ERROR) << "Error getting private key";
-        return {};
-    }
-
-    return pkey;
-}
-
-optional<vector<uint8_t>> derEncodeKeyPair(const EVP_PKEY& pkey) {
-    int size = i2d_PrivateKey(&pkey, nullptr);
-    if (size == 0) {
-        LOG(ERROR) << "Error generating public key encoding";
-        return std::nullopt;
-    }
-
-    vector<uint8_t> keyPair(size);
-    unsigned char* p = keyPair.data();
-    i2d_PrivateKey(&pkey, &p);
-
-    return keyPair;
-}
-
-// Extract the issuer subject name from the leaf cert in the given chain,
-// returning it as DER-encoded bytes.
-optional<vector<uint8_t>> extractDerSubjectFromCertificate(const vector<uint8_t>& certificate) {
-    const uint8_t* input = certificate.data();
-    X509_Ptr cert(d2i_X509(/*cert=*/nullptr, &input, certificate.size()));
-    if (!cert) {
-        LOG(ERROR) << "Failed to parse certificate";
-        return std::nullopt;
-    }
-
-    X509_NAME* subject = X509_get_subject_name(cert.get());
-    if (!subject) {
-        LOG(ERROR) << "Failed to retrieve subject name";
-        return std::nullopt;
-    }
-
-    int encodedSubjectLength = i2d_X509_NAME(subject, /*out=*/nullptr);
-    if (encodedSubjectLength < 0) {
-        LOG(ERROR) << "Error obtaining encoded subject name length";
-        return std::nullopt;
-    }
-
-    vector<uint8_t> encodedSubject(encodedSubjectLength);
-    uint8_t* out = encodedSubject.data();
-    if (encodedSubjectLength != i2d_X509_NAME(subject, &out)) {
-        LOG(ERROR) << "Error encoding subject name";
-        return std::nullopt;
-    }
-
-    return encodedSubject;
-}
-
-// Generates the attestation certificate with the parameters passed in.  Note
-// that the passed in |activeTimeMilliSeconds| |expireTimeMilliSeconds| are in
-// milli seconds since epoch.  We are setting them to milliseconds due to
-// requirement in AuthorizationSet KM_DATE fields.  The certificate created is
-// actually in seconds.
-//
-optional<vector<vector<uint8_t>>> signAttestationCertificate(
-        const ::keymaster::PureSoftKeymasterContext& context, const EVP_PKEY* key,
-        const vector<uint8_t>& applicationId, const vector<uint8_t>& challenge,
-        const vector<uint8_t>& attestationKeyBlob,
-        const vector<uint8_t>& derAttestationCertSubjectName, uint64_t activeTimeMilliSeconds,
-        uint64_t expireTimeMilliSeconds, bool isTestCredential) {
-    ::keymaster::X509_NAME_Ptr subjectName;
-    if (KM_ERROR_OK !=
-        ::keymaster::make_name_from_str("Android Identity Credential Key", &subjectName)) {
-        LOG(ERROR) << "Cannot create attestation subject";
-        return {};
-    }
-
-    vector<uint8_t> subject(i2d_X509_NAME(subjectName.get(), NULL));
-    unsigned char* subjectPtr = subject.data();
-
-    i2d_X509_NAME(subjectName.get(), &subjectPtr);
-
-    ::keymaster::AuthorizationSet auth_set(
-            ::keymaster::AuthorizationSetBuilder()
-                    .Authorization(::keymaster::TAG_CERTIFICATE_NOT_BEFORE, activeTimeMilliSeconds)
-                    .Authorization(::keymaster::TAG_CERTIFICATE_NOT_AFTER, expireTimeMilliSeconds)
-                    .Authorization(::keymaster::TAG_ATTESTATION_CHALLENGE, challenge.data(),
-                                   challenge.size())
-                    .Authorization(::keymaster::TAG_ACTIVE_DATETIME, activeTimeMilliSeconds)
-                    // Even though identity attestation hal said the application
-                    // id should be in software enforced authentication set,
-                    // keymaster portable lib expect the input in this
-                    // parameter because the software enforced in input to keymaster
-                    // refers to the key software enforced properties. And this
-                    // parameter refers to properties of the attestation which
-                    // includes app id.
-                    .Authorization(::keymaster::TAG_ATTESTATION_APPLICATION_ID,
-                                   applicationId.data(), applicationId.size())
-                    .Authorization(::keymaster::TAG_CERTIFICATE_SUBJECT, subject.data(),
-                                   subject.size())
-                    .Authorization(::keymaster::TAG_USAGE_EXPIRE_DATETIME, expireTimeMilliSeconds));
-
-    // Unique id and device id is not applicable for identity credential attestation,
-    // so we don't need to set those or application id.
-    ::keymaster::AuthorizationSet swEnforced(::keymaster::AuthorizationSetBuilder().Authorization(
-            ::keymaster::TAG_CREATION_DATETIME, activeTimeMilliSeconds));
-
-    ::keymaster::AuthorizationSetBuilder hwEnforcedBuilder =
-            ::keymaster::AuthorizationSetBuilder()
-                    .Authorization(::keymaster::TAG_PURPOSE, KM_PURPOSE_SIGN)
-                    .Authorization(::keymaster::TAG_KEY_SIZE, 256)
-                    .Authorization(::keymaster::TAG_ALGORITHM, KM_ALGORITHM_EC)
-                    .Authorization(::keymaster::TAG_NO_AUTH_REQUIRED)
-                    .Authorization(::keymaster::TAG_DIGEST, KM_DIGEST_SHA_2_256)
-                    .Authorization(::keymaster::TAG_EC_CURVE, KM_EC_CURVE_P_256)
-                    .Authorization(::keymaster::TAG_OS_VERSION, 42)
-                    .Authorization(::keymaster::TAG_OS_PATCHLEVEL, 43);
-
-    // Only include TAG_IDENTITY_CREDENTIAL_KEY if it's not a test credential
-    if (!isTestCredential) {
-        hwEnforcedBuilder.Authorization(::keymaster::TAG_IDENTITY_CREDENTIAL_KEY);
-    }
-    ::keymaster::AuthorizationSet hwEnforced(hwEnforcedBuilder);
-
-    keymaster_error_t error;
-    ::keymaster::AttestKeyInfo attestKeyInfo;
-    ::keymaster::KeymasterBlob issuerSubjectNameBlob;
-    if (!attestationKeyBlob.empty()) {
-        ::keymaster::KeymasterKeyBlob blob(attestationKeyBlob.data(), attestationKeyBlob.size());
-        ::keymaster::UniquePtr<::keymaster::Key> parsedKey;
-        error = context.ParseKeyBlob(blob, /*additional_params=*/{}, &parsedKey);
-        if (error != KM_ERROR_OK) {
-            LOG(ERROR) << "Error loading attestation key: " << error;
-            return std::nullopt;
-        }
-
-        attestKeyInfo.signing_key =
-                static_cast<::keymaster::AsymmetricKey&>(*parsedKey).InternalToEvp();
-        issuerSubjectNameBlob = ::keymaster::KeymasterBlob(derAttestationCertSubjectName.data(),
-                                                           derAttestationCertSubjectName.size());
-        attestKeyInfo.issuer_subject = &issuerSubjectNameBlob;
-    }
-
-    ::keymaster::CertificateChain certChain = generate_attestation(
-            key, swEnforced, hwEnforced, auth_set, std::move(attestKeyInfo), context, &error);
-
-    if (KM_ERROR_OK != error) {
-        LOG(ERROR) << "Error generating attestation from EVP key: " << error;
-        return std::nullopt;
-    }
-
-    vector<vector<uint8_t>> vectors(certChain.entry_count);
-    for (std::size_t i = 0; i < certChain.entry_count; i++) {
-        vectors[i] = {certChain.entries[i].data,
-                      certChain.entries[i].data + certChain.entries[i].data_length};
-    }
-    return vectors;
-}
-
-int parseDigits(const char** s, int numDigits) {
-    int result;
-    auto [_, ec] = std::from_chars(*s, *s + numDigits, result);
-    if (ec != std::errc()) {
-        LOG(ERROR) << "Error parsing " << numDigits << " digits "
-                   << " from " << s;
-        return 0;
-    }
-    *s += numDigits;
-    return result;
-}
-
-bool parseAsn1Time(const ASN1_TIME* asn1Time, time_t* outTime) {
-    struct tm tm;
-
-    memset(&tm, '\0', sizeof(tm));
-    const char* timeStr = (const char*)asn1Time->data;
-    const char* s = timeStr;
-    if (asn1Time->type == V_ASN1_UTCTIME) {
-        tm.tm_year = parseDigits(&s, 2);
-        if (tm.tm_year < 70) {
-            tm.tm_year += 100;
-        }
-    } else if (asn1Time->type == V_ASN1_GENERALIZEDTIME) {
-        tm.tm_year = parseDigits(&s, 4) - 1900;
-        tm.tm_year -= 1900;
-    } else {
-        LOG(ERROR) << "Unsupported ASN1_TIME type " << asn1Time->type;
-        return false;
-    }
-    tm.tm_mon = parseDigits(&s, 2) - 1;
-    tm.tm_mday = parseDigits(&s, 2);
-    tm.tm_hour = parseDigits(&s, 2);
-    tm.tm_min = parseDigits(&s, 2);
-    tm.tm_sec = parseDigits(&s, 2);
-    // This may need to be updated if someone create certificates using +/- instead of Z.
-    //
-    if (*s != 'Z') {
-        LOG(ERROR) << "Expected Z in string '" << timeStr << "' at offset " << (s - timeStr);
-        return false;
-    }
-
-    time_t t = timegm(&tm);
-    if (t == -1) {
-        LOG(ERROR) << "Error converting broken-down time to time_t";
-        return false;
-    }
-    *outTime = t;
-    return true;
-}
-
-optional<uint64_t> getCertificateExpiryAsMillis(const uint8_t* derCert, size_t derCertSize) {
-    X509_Ptr x509Cert(d2i_X509(nullptr, &derCert, derCertSize));
-    if (!x509Cert) {
-        LOG(ERROR) << "Error parsing certificate";
-        return std::nullopt;
-    }
-
-    time_t notAfter;
-    if (!parseAsn1Time(X509_get0_notAfter(x509Cert.get()), &notAfter)) {
-        LOG(ERROR) << "Error getting notAfter from batch certificate";
-        return std::nullopt;
-    }
-
-    return notAfter * 1000;
-}
-
-optional<vector<vector<uint8_t>>> createAttestation(EVP_PKEY* pkey,
-                                                    const vector<uint8_t>& challenge,
-                                                    const vector<uint8_t>& applicationId,
-                                                    bool isTestCredential) {
-    // Pretend to be implemented in a trusted environment just so we can pass
-    // the VTS tests. Of course, this is a pretend-only game since hopefully no
-    // relying party is ever going to trust our batch key and those keys above
-    // it.
-    ::keymaster::PureSoftKeymasterContext context(::keymaster::KmVersion::KEYMINT_1,
-                                                  KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT);
-
-    keymaster_error_t error;
-    ::keymaster::CertificateChain attestation_chain =
-            context.GetAttestationChain(KM_ALGORITHM_EC, &error);
-    if (KM_ERROR_OK != error) {
-        LOG(ERROR) << "Error getting attestation chain " << error;
-        return std::nullopt;
-    }
-
-    if (attestation_chain.entry_count < 1) {
-        LOG(ERROR) << "Expected at least one entry in attestation chain";
-        return std::nullopt;
-    }
-
-    uint64_t activeTimeMs = time(nullptr) * 1000;
-    optional<uint64_t> expireTimeMs = getCertificateExpiryAsMillis(
-            attestation_chain.entries[0].data, attestation_chain.entries[0].data_length);
-    if (!expireTimeMs) {
-        LOG(ERROR) << "Error getting expiration time for batch cert";
-        return std::nullopt;
-    }
-
-    return signAttestationCertificate(context, pkey, applicationId, challenge,
-                                      /*attestationKeyBlob=*/{},
-                                      /*derAttestationCertSubjectName=*/{}, activeTimeMs,
-                                      *expireTimeMs, isTestCredential);
-}
-
-}  // namespace
 
 // bool getRandom(size_t numBytes, vector<uint8_t>& output) {
 optional<vector<uint8_t>> getRandom(size_t numBytes) {
@@ -858,30 +577,69 @@ optional<vector<uint8_t>> hmacSha256(const vector<uint8_t>& key, const vector<ui
     return hmac;
 }
 
-optional<std::pair<vector<uint8_t>, vector<vector<uint8_t>>>> createEcKeyPairAndAttestation(
-        const vector<uint8_t>& challenge, const vector<uint8_t>& applicationId,
-        bool isTestCredential) {
-    EVP_PKEY_Ptr pkey = generateP256Key();
-
-    optional<vector<vector<uint8_t>>> attestationCertChain =
-            createAttestation(pkey.get(), challenge, applicationId, isTestCredential);
-    if (!attestationCertChain) {
-        LOG(ERROR) << "Error create attestation from key and challenge";
-        return {};
+int parseDigits(const char** s, int numDigits) {
+    int result;
+    auto [_, ec] = std::from_chars(*s, *s + numDigits, result);
+    if (ec != std::errc()) {
+        LOG(ERROR) << "Error parsing " << numDigits << " digits "
+                   << " from " << s;
+        return 0;
     }
-
-    optional<vector<uint8_t>> keyPair = derEncodeKeyPair(*pkey);
-    if (!keyPair) {
-        return std::nullopt;
-    }
-
-    return make_pair(*keyPair, *attestationCertChain);
+    *s += numDigits;
+    return result;
 }
 
-optional<std::pair<vector<uint8_t>, vector<uint8_t>>> createEcKeyPairWithAttestationKey(
-        const vector<uint8_t>& challenge, const vector<uint8_t>& applicationId,
-        const vector<uint8_t>& attestationKeyBlob, const vector<uint8_t>& attestationKeyCert,
-        bool isTestCredential) {
+bool parseAsn1Time(const ASN1_TIME* asn1Time, time_t* outTime) {
+    struct tm tm;
+
+    memset(&tm, '\0', sizeof(tm));
+    const char* timeStr = (const char*)asn1Time->data;
+    const char* s = timeStr;
+    if (asn1Time->type == V_ASN1_UTCTIME) {
+        tm.tm_year = parseDigits(&s, 2);
+        if (tm.tm_year < 70) {
+            tm.tm_year += 100;
+        }
+    } else if (asn1Time->type == V_ASN1_GENERALIZEDTIME) {
+        tm.tm_year = parseDigits(&s, 4) - 1900;
+        tm.tm_year -= 1900;
+    } else {
+        LOG(ERROR) << "Unsupported ASN1_TIME type " << asn1Time->type;
+        return false;
+    }
+    tm.tm_mon = parseDigits(&s, 2) - 1;
+    tm.tm_mday = parseDigits(&s, 2);
+    tm.tm_hour = parseDigits(&s, 2);
+    tm.tm_min = parseDigits(&s, 2);
+    tm.tm_sec = parseDigits(&s, 2);
+    // This may need to be updated if someone create certificates using +/- instead of Z.
+    //
+    if (*s != 'Z') {
+        LOG(ERROR) << "Expected Z in string '" << timeStr << "' at offset " << (s - timeStr);
+        return false;
+    }
+
+    time_t t = timegm(&tm);
+    if (t == -1) {
+        LOG(ERROR) << "Error converting broken-down time to time_t";
+        return false;
+    }
+    *outTime = t;
+    return true;
+}
+
+// Generates the attestation certificate with the parameters passed in.  Note
+// that the passed in |activeTimeMilliSeconds| |expireTimeMilliSeconds| are in
+// milli seconds since epoch.  We are setting them to milliseconds due to
+// requirement in AuthorizationSet KM_DATE fields.  The certificate created is
+// actually in seconds.
+//
+// If 0 is passed for expiration time, the expiration time from batch
+// certificate will be used.
+//
+optional<vector<vector<uint8_t>>> createAttestation(
+        const EVP_PKEY* key, const vector<uint8_t>& applicationId, const vector<uint8_t>& challenge,
+        uint64_t activeTimeMilliSeconds, uint64_t expireTimeMilliSeconds, bool isTestCredential) {
     // Pretend to be implemented in a trusted environment just so we can pass
     // the VTS tests. Of course, this is a pretend-only game since hopefully no
     // relying party is ever going to trust our batch key and those keys above
@@ -889,45 +647,148 @@ optional<std::pair<vector<uint8_t>, vector<uint8_t>>> createEcKeyPairWithAttesta
     ::keymaster::PureSoftKeymasterContext context(::keymaster::KmVersion::KEYMINT_1,
                                                   KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT);
 
-    EVP_PKEY_Ptr pkey = generateP256Key();
-
-    uint64_t validFromMs = time(nullptr) * 1000;
-    optional<uint64_t> notAfterMs =
-            getCertificateExpiryAsMillis(attestationKeyCert.data(), attestationKeyCert.size());
-    if (!notAfterMs) {
-        LOG(ERROR) << "Error getting expiration time for attestation cert";
-        return std::nullopt;
+    keymaster_error_t error;
+    ::keymaster::CertificateChain attestation_chain =
+            context.GetAttestationChain(KM_ALGORITHM_EC, &error);
+    if (KM_ERROR_OK != error) {
+        LOG(ERROR) << "Error getting attestation chain " << error;
+        return {};
+    }
+    if (expireTimeMilliSeconds == 0) {
+        if (attestation_chain.entry_count < 1) {
+            LOG(ERROR) << "Expected at least one entry in attestation chain";
+            return {};
+        }
+        keymaster_blob_t* bcBlob = &(attestation_chain.entries[0]);
+        const uint8_t* bcData = bcBlob->data;
+        auto bc = X509_Ptr(d2i_X509(nullptr, &bcData, bcBlob->data_length));
+        time_t bcNotAfter;
+        if (!parseAsn1Time(X509_get0_notAfter(bc.get()), &bcNotAfter)) {
+            LOG(ERROR) << "Error getting notAfter from batch certificate";
+            return {};
+        }
+        expireTimeMilliSeconds = bcNotAfter * 1000;
     }
 
-    optional<vector<uint8_t>> derIssuerSubject =
-            extractDerSubjectFromCertificate(attestationKeyCert);
-    if (!derIssuerSubject) {
-        LOG(ERROR) << "Error error extracting issuer name from the given certificate chain";
-        return std::nullopt;
+    ::keymaster::X509_NAME_Ptr subjectName;
+    if (KM_ERROR_OK !=
+        ::keymaster::make_name_from_str("Android Identity Credential Key", &subjectName)) {
+        LOG(ERROR) << "Cannot create attestation subject";
+        return {};
     }
 
-    optional<vector<vector<uint8_t>>> attestationCertChain = signAttestationCertificate(
-            context, pkey.get(), applicationId, challenge, attestationKeyBlob, *derIssuerSubject,
-            validFromMs, *notAfterMs, isTestCredential);
-    if (!attestationCertChain) {
-        LOG(ERROR) << "Error signing attestation certificate";
-        return std::nullopt;
+    vector<uint8_t> subject(i2d_X509_NAME(subjectName.get(), NULL));
+    unsigned char* subjectPtr = subject.data();
+
+    i2d_X509_NAME(subjectName.get(), &subjectPtr);
+
+    ::keymaster::AuthorizationSet auth_set(
+            ::keymaster::AuthorizationSetBuilder()
+                    .Authorization(::keymaster::TAG_CERTIFICATE_NOT_BEFORE, activeTimeMilliSeconds)
+                    .Authorization(::keymaster::TAG_CERTIFICATE_NOT_AFTER, expireTimeMilliSeconds)
+                    .Authorization(::keymaster::TAG_ATTESTATION_CHALLENGE, challenge.data(),
+                                   challenge.size())
+                    .Authorization(::keymaster::TAG_ACTIVE_DATETIME, activeTimeMilliSeconds)
+                    // Even though identity attestation hal said the application
+                    // id should be in software enforced authentication set,
+                    // keymaster portable lib expect the input in this
+                    // parameter because the software enforced in input to keymaster
+                    // refers to the key software enforced properties. And this
+                    // parameter refers to properties of the attestation which
+                    // includes app id.
+                    .Authorization(::keymaster::TAG_ATTESTATION_APPLICATION_ID,
+                                   applicationId.data(), applicationId.size())
+                    .Authorization(::keymaster::TAG_CERTIFICATE_SUBJECT, subject.data(),
+                                   subject.size())
+                    .Authorization(::keymaster::TAG_USAGE_EXPIRE_DATETIME, expireTimeMilliSeconds));
+
+    // Unique id and device id is not applicable for identity credential attestation,
+    // so we don't need to set those or application id.
+    ::keymaster::AuthorizationSet swEnforced(::keymaster::AuthorizationSetBuilder().Authorization(
+            ::keymaster::TAG_CREATION_DATETIME, activeTimeMilliSeconds));
+
+    ::keymaster::AuthorizationSetBuilder hwEnforcedBuilder =
+            ::keymaster::AuthorizationSetBuilder()
+                    .Authorization(::keymaster::TAG_PURPOSE, KM_PURPOSE_SIGN)
+                    .Authorization(::keymaster::TAG_KEY_SIZE, 256)
+                    .Authorization(::keymaster::TAG_ALGORITHM, KM_ALGORITHM_EC)
+                    .Authorization(::keymaster::TAG_NO_AUTH_REQUIRED)
+                    .Authorization(::keymaster::TAG_DIGEST, KM_DIGEST_SHA_2_256)
+                    .Authorization(::keymaster::TAG_EC_CURVE, KM_EC_CURVE_P_256)
+                    .Authorization(::keymaster::TAG_OS_VERSION, 42)
+                    .Authorization(::keymaster::TAG_OS_PATCHLEVEL, 43);
+
+    // Only include TAG_IDENTITY_CREDENTIAL_KEY if it's not a test credential
+    if (!isTestCredential) {
+        hwEnforcedBuilder.Authorization(::keymaster::TAG_IDENTITY_CREDENTIAL_KEY);
     }
-    if (!attestationCertChain) {
+    ::keymaster::AuthorizationSet hwEnforced(hwEnforcedBuilder);
+
+    ::keymaster::CertificateChain cert_chain_out = generate_attestation(
+            key, swEnforced, hwEnforced, auth_set, {} /* attest_key */, context, &error);
+
+    if (KM_ERROR_OK != error) {
+        LOG(ERROR) << "Error generating attestation from EVP key: " << error;
+        return {};
+    }
+
+    // translate certificate format from keymaster_cert_chain_t to vector<vector<uint8_t>>.
+    vector<vector<uint8_t>> attestationCertificate;
+    for (std::size_t i = 0; i < cert_chain_out.entry_count; i++) {
+        attestationCertificate.insert(
+                attestationCertificate.end(),
+                vector<uint8_t>(
+                        cert_chain_out.entries[i].data,
+                        cert_chain_out.entries[i].data + cert_chain_out.entries[i].data_length));
+    }
+
+    return attestationCertificate;
+}
+
+optional<std::pair<vector<uint8_t>, vector<vector<uint8_t>>>> createEcKeyPairAndAttestation(
+        const vector<uint8_t>& challenge, const vector<uint8_t>& applicationId,
+        bool isTestCredential) {
+    auto ec_key = ::keymaster::EC_KEY_Ptr(EC_KEY_new());
+    auto pkey = ::keymaster::EVP_PKEY_Ptr(EVP_PKEY_new());
+    auto group = ::keymaster::EC_GROUP_Ptr(EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1));
+
+    if (ec_key.get() == nullptr || pkey.get() == nullptr) {
+        LOG(ERROR) << "Memory allocation failed";
+        return {};
+    }
+
+    if (EC_KEY_set_group(ec_key.get(), group.get()) != 1 ||
+        EC_KEY_generate_key(ec_key.get()) != 1 || EC_KEY_check_key(ec_key.get()) < 0) {
+        LOG(ERROR) << "Error generating key";
+        return {};
+    }
+
+    if (EVP_PKEY_set1_EC_KEY(pkey.get(), ec_key.get()) != 1) {
+        LOG(ERROR) << "Error getting private key";
+        return {};
+    }
+
+    uint64_t nowMs = time(nullptr) * 1000;
+    uint64_t expireTimeMs = 0;  // Set to same as batch certificate
+
+    optional<vector<vector<uint8_t>>> attestationCert = createAttestation(
+            pkey.get(), applicationId, challenge, nowMs, expireTimeMs, isTestCredential);
+    if (!attestationCert) {
         LOG(ERROR) << "Error create attestation from key and challenge";
-        return std::nullopt;
-    }
-    if (attestationCertChain->size() != 1) {
-        LOG(ERROR) << "Expected exactly one attestation cert, got " << attestationCertChain->size();
-        return std::nullopt;
+        return {};
     }
 
-    optional<vector<uint8_t>> keyPair = derEncodeKeyPair(*pkey);
-    if (!keyPair) {
-        return std::nullopt;
+    int size = i2d_PrivateKey(pkey.get(), nullptr);
+    if (size == 0) {
+        LOG(ERROR) << "Error generating public key encoding";
+        return {};
     }
 
-    return make_pair(*keyPair, attestationCertChain->at(0));
+    vector<uint8_t> keyPair(size);
+    unsigned char* p = keyPair.data();
+    i2d_PrivateKey(pkey.get(), &p);
+
+    return make_pair(keyPair, attestationCert.value());
 }
 
 optional<vector<vector<uint8_t>>> createAttestationForEcPublicKey(
@@ -959,8 +820,12 @@ optional<vector<vector<uint8_t>>> createAttestationForEcPublicKey(
         return {};
     }
 
+    uint64_t nowMs = time(nullptr) * 1000;
+    uint64_t expireTimeMs = 0;  // Set to same as batch certificate
+
     optional<vector<vector<uint8_t>>> attestationCert =
-            createAttestation(pkey.get(), applicationId, challenge, false /* isTestCredential */);
+            createAttestation(pkey.get(), applicationId, challenge, nowMs, expireTimeMs,
+                              false /* isTestCredential */);
     if (!attestationCert) {
         LOG(ERROR) << "Error create attestation from key and challenge";
         return {};
@@ -1269,14 +1134,6 @@ optional<vector<uint8_t>> ecPublicKeyGenerateCertificate(
         return {};
     }
 
-    return ecPublicKeyGenerateCertificate(pkey.get(), privPkey.get(), serialDecimal, issuer,
-                                          subject, validityNotBefore, validityNotAfter, extensions);
-}
-
-optional<vector<uint8_t>> ecPublicKeyGenerateCertificate(
-        EVP_PKEY* publicKey, EVP_PKEY* signingKey, const string& serialDecimal,
-        const string& issuer, const string& subject, time_t validityNotBefore,
-        time_t validityNotAfter, const map<string, vector<uint8_t>>& extensions) {
     auto x509 = X509_Ptr(X509_new());
     if (!x509.get()) {
         LOG(ERROR) << "Error creating X509 certificate";
@@ -1288,7 +1145,7 @@ optional<vector<uint8_t>> ecPublicKeyGenerateCertificate(
         return {};
     }
 
-    if (X509_set_pubkey(x509.get(), publicKey) != 1) {
+    if (X509_set_pubkey(x509.get(), pkey.get()) != 1) {
         LOG(ERROR) << "Error setting public key";
         return {};
     }
@@ -1363,7 +1220,7 @@ optional<vector<uint8_t>> ecPublicKeyGenerateCertificate(
         }
     }
 
-    if (X509_sign(x509.get(), signingKey, EVP_sha256()) == 0) {
+    if (X509_sign(x509.get(), privPkey.get(), EVP_sha256()) == 0) {
         LOG(ERROR) << "Error signing X509 certificate";
         return {};
     }
