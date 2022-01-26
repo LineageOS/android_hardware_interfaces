@@ -77,7 +77,8 @@ class MockNanIfaceEventCallback : public V1_5::IWifiNanIfaceEventCallback {
     MOCK_METHOD1(eventDisabled, Return<void>(const WifiNanStatus&));
     MOCK_METHOD2(eventPublishTerminated, Return<void>(uint8_t, const WifiNanStatus&));
     MOCK_METHOD2(eventSubscribeTerminated, Return<void>(uint8_t, const WifiNanStatus&));
-    MOCK_METHOD1(eventMatch, Return<void>(const NanMatchInd&));
+    MOCK_METHOD1(eventMatch, Return<void>(const V1_0::NanMatchInd&));
+    MOCK_METHOD1(eventMatch_1_6, Return<void>(const NanMatchInd&));
     MOCK_METHOD2(eventMatchExpired, Return<void>(uint8_t, uint32_t));
     MOCK_METHOD1(eventFollowupReceived, Return<void>(const NanFollowupReceivedInd&));
     MOCK_METHOD2(eventTransmitFollowup, Return<void>(uint16_t, const WifiNanStatus&));

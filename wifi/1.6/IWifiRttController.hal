@@ -20,6 +20,7 @@ import @1.0::CommandId;
 import @1.0::WifiStatus;
 import @1.4::IWifiRttController;
 import IWifiRttControllerEventCallback;
+
 /**
  * Interface used to perform RTT(Round trip time) operations.
  */

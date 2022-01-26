@@ -27,6 +27,18 @@ import IWifiRttController;
  * Interface that represents a chip that must be configured as a single unit.
  */
 interface IWifiChip extends @1.5::IWifiChip {
+    /**
+     * Usable Wifi channels filter masks.
+     */
+    enum UsableChannelFilter : @1.5::IWifiChip.UsableChannelFilter {
+        /**
+         * Filter Wifi channels that are supported for NAN3.1 Instant communication mode. This
+         * filter should only be applied to NAN interface.
+         * - If 5G is supported default discovery channel 149/44 is considered,
+         * - If 5G is not supported then channel 6 has to be considered.
+         */
+        NAN_INSTANT_MODE = 1 << 2,
+    };
 
     /**
      * Create a RTTController instance.
@@ -85,6 +97,6 @@ interface IWifiChip extends @1.5::IWifiChip {
      *         represents whether particular mode is allowed on that channel.
      */
     getUsableChannels_1_6(WifiBand band, bitfield<WifiIfaceMode> ifaceModeMask,
-            bitfield<UsableChannelFilter> filterMask)
+        bitfield<UsableChannelFilter> filterMask)
         generates (WifiStatus status, vec<WifiUsableChannel> channels);
 };

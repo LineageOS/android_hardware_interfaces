@@ -151,7 +151,7 @@ class WifiChip : public V1_6::IWifiChip {
     Return<void> setCountryCode(const hidl_array<int8_t, 2>& code,
                                 setCountryCode_cb _hidl_cb) override;
     Return<void> getUsableChannels(WifiBand band, hidl_bitfield<V1_5::WifiIfaceMode> ifaceModeMask,
-                                   hidl_bitfield<UsableChannelFilter> filterMask,
+                                   hidl_bitfield<V1_5::IWifiChip::UsableChannelFilter> filterMask,
                                    getUsableChannels_cb _hidl_cb) override;
     Return<void> triggerSubsystemRestart(triggerSubsystemRestart_cb hidl_status_cb) override;
     Return<void> createRttController_1_6(const sp<IWifiIface>& bound_iface,
