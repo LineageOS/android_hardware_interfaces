@@ -82,6 +82,8 @@ class Session : public BnSession {
             const common::OperationContext& context,
             std::shared_ptr<common::ICancellationSignal>* out) override;
 
+    ndk::ScopedAStatus onContextChanged(const common::OperationContext& context) override;
+
   private:
     std::shared_ptr<ISessionCallback> cb_;
     std::mt19937 mRandom;
