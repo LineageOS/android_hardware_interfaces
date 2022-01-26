@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 The Android Open Source Project
+ * Copyright 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,19 +33,11 @@
 
 package android.hardware.tv.tuner;
 /* @hide */
-@VintfStability
-interface IFrontend {
-  void setCallback(in android.hardware.tv.tuner.IFrontendCallback callback);
-  void tune(in android.hardware.tv.tuner.FrontendSettings settings);
-  void stopTune();
-  void close();
-  void scan(in android.hardware.tv.tuner.FrontendSettings settings, in android.hardware.tv.tuner.FrontendScanType type);
-  void stopScan();
-  android.hardware.tv.tuner.FrontendStatus[] getStatus(in android.hardware.tv.tuner.FrontendStatusType[] statusTypes);
-  void setLnb(in int lnbId);
-  int linkCiCam(in int ciCamId);
-  void unlinkCiCam(in int ciCamId);
-  String getHardwareInfo();
-  void removeOutputPid(int pid);
-  android.hardware.tv.tuner.FrontendStatusReadiness[] getFrontendStatusReadiness(in android.hardware.tv.tuner.FrontendStatusType[] statusTypes);
+@Backing(type="int") @VintfStability
+enum FrontendStatusReadiness {
+  UNDEFINED = 0,
+  UNAVAILABLE = 1,
+  UNSTABLE = 2,
+  STABLE = 3,
+  UNSUPPORTED = 4,
 }

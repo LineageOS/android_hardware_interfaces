@@ -75,8 +75,6 @@ class Tuner : public BnTuner {
   private:
     // Static mFrontends array to maintain local frontends information
     map<int32_t, std::shared_ptr<Frontend>> mFrontends;
-    map<int32_t, FrontendCapabilities> mFrontendCaps;
-    map<int32_t, vector<FrontendStatusType>> mFrontendStatusCaps;
     map<int32_t, int32_t> mFrontendToDemux;
     map<int32_t, std::shared_ptr<Demux>> mDemuxes;
     // To maintain how many Frontends we have

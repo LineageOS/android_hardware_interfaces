@@ -102,6 +102,7 @@ class FrontendTests {
     void scanTest(FrontendConfig frontend, FrontendScanType type);
     void debugInfoTest(FrontendConfig frontendConf);
     void maxNumberOfFrontendsTest();
+    void statusReadinessTest(FrontendConfig frontendConf);
 
     void setDvrTests(DvrTests* dvrTests) { mExternalDvrTests = dvrTests; }
     void setDemux(std::shared_ptr<IDemux> demux) { getDvrTests()->setDemux(demux); }
