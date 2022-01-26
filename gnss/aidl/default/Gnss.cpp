@@ -22,6 +22,7 @@
 #include "AGnss.h"
 #include "AGnssRil.h"
 #include "DeviceFileReader.h"
+#include "FixLocationParser.h"
 #include "GnssAntennaInfo.h"
 #include "GnssBatching.h"
 #include "GnssConfiguration.h"
@@ -32,11 +33,9 @@
 #include "GnssPsds.h"
 #include "GnssVisibilityControl.h"
 #include "MeasurementCorrectionsInterface.h"
-#include "NmeaFixInfo.h"
 #include "Utils.h"
 
 namespace aidl::android::hardware::gnss {
-using ::android::hardware::gnss::common::NmeaFixInfo;
 using ::android::hardware::gnss::common::Utils;
 
 using ndk::ScopedAStatus;
@@ -70,9 +69,12 @@ ScopedAStatus Gnss::setCallback(const std::shared_ptr<IGnssCallback>& callback) 
 }
 
 std::unique_ptr<GnssLocation> Gnss::getLocationFromHW() {
+    if (!::android::hardware::gnss::common::ReplayUtils::hasFixedLocationDeviceFile()) {
+        return nullptr;
+    }
     std::string inputStr =
             ::android::hardware::gnss::common::DeviceFileReader::Instance().getLocationData();
-    return ::android::hardware::gnss::common::NmeaFixInfo::getAidlLocationFromInputStr(inputStr);
+    return ::android::hardware::gnss::common::FixLocationParser::getLocationFromInputStr(inputStr);
 }
 
 ScopedAStatus Gnss::start() {
