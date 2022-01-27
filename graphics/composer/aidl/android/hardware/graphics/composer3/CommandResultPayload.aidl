@@ -16,6 +16,7 @@
 
 package android.hardware.graphics.composer3;
 
+import android.hardware.graphics.composer3.BufferAheadResult;
 import android.hardware.graphics.composer3.ChangedCompositionTypes;
 import android.hardware.graphics.composer3.ClientTargetPropertyWithNits;
 import android.hardware.graphics.composer3.CommandError;
@@ -76,6 +77,13 @@ union CommandResultPayload {
      *
      */
     ReleaseFences releaseFences;
+
+    /**
+     * Represents the result of the LayerCommand.bufferAhead that was
+     * sent in the last presentDisplay call. That is, the presentDisplay
+     * call prior to this presentDisplay.
+     */
+    BufferAheadResult bufferAheadResult;
 
     /**
      * Sets the state of PRESENT_OR_VALIDATE_DISPLAY command.
