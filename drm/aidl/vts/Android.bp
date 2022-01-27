@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2021 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-
 package {
     // See: http://go/android-license-faq
     // A large-scale-change added 'default_applicable_licenses' to import
@@ -23,74 +22,35 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
-cc_library_static {
-    name: "libvtsclearkey",
+cc_test {
+    name: "VtsAidlHalDrmTargetTest",
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
     srcs: [
-        "drm_hal_clearkey_module.cpp",
+        "drm_hal_common.cpp",
+        "drm_hal_test.cpp",
+        "drm_hal_test_main.cpp",
     ],
-    static_libs: [
-        "libgtest",
-    ],
-    header_libs: ["drm_hal_vendor_module_headers"],
-    export_header_lib_headers: ["drm_hal_vendor_module_headers"],
-    export_include_dirs: ["."],
-}
-
-cc_library_static {
-    name: "android.hardware.drm@1.2-vts",
-    defaults: ["VtsHalTargetTestDefaults"],
     local_include_dirs: [
         "include",
     ],
-    srcs: [
-        "drm_hal_clearkey_module.cpp",
-        "drm_hal_common.cpp",
-        "drm_hal_test.cpp",
+    header_libs: [
+        "drm_hal_vendor_module_headers",
     ],
     shared_libs: [
-        "android.hardware.drm@1.0",
-        "android.hardware.drm@1.1",
-        "android.hardware.drm@1.2",
-        "android.hidl.allocator@1.0",
-        "android.hidl.memory@1.0",
+        "libandroid",
+        "libbinder_ndk",
         "libcrypto",
-        "libhidlmemory",
         "libnativehelper",
     ],
     static_libs: [
         "android.hardware.drm@1.0-helper",
+        "android.hardware.drm-V1-ndk",
+        "android.hardware.common-V2-ndk",
         "libdrmvtshelper",
-    ],
-    export_shared_lib_headers: [
-        "android.hardware.drm@1.2",
-    ],
-    export_static_lib_headers: [
-        "android.hardware.drm@1.0-helper",
-    ],
-    export_include_dirs: [
-        "include",
-    ],
-}
-
-cc_test {
-    name: "VtsHalDrmV1_2TargetTest",
-    defaults: ["VtsHalTargetTestDefaults"],
-    srcs: [
-        "drm_hal_test_main.cpp",
-    ],
-    whole_static_libs: [
-        "android.hardware.drm@1.2-vts",
-    ],
-    shared_libs: [
-        "android.hardware.drm@1.0",
-        "android.hardware.drm@1.2",
-        "android.hidl.allocator@1.0",
-        "libcrypto",
-        "libhidlmemory",
-    ],
-    static_libs: [
-        "android.hardware.drm@1.0-helper",
-        "libdrmvtshelper",
+        "libvtsclearkey",
     ],
     arch: {
         arm: {
