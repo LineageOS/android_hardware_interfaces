@@ -34,6 +34,8 @@
 package android.hardware.uwb.fira_android;
 @Backing(type="int") @VintfStability
 enum UwbVendorSessionSetAppConfigCmdParams {
+  CCC_HOP_MODE_KEY = 160,
+  CCC_UWB_TIME0 = 161,
   CCC_RANGING_PROTOCOL_VER = 163,
   CCC_UWB_CONFIG_ID = 164,
   CCC_PULSESHAPE_COMBO = 165,
