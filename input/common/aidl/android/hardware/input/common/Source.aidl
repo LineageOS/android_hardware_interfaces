@@ -38,6 +38,11 @@ enum Source {
     TOUCH_NAVIGATION = (1 << 21) | SourceClass.NONE,
     ROTARY_ENCODER = (1 << 22) | SourceClass.NONE,
     JOYSTICK = (1 << 24) | SourceClass.JOYSTICK,
+    /**
+     * The input source is a device connected through HDMI-based bus.
+     * The keys come in through HDMI-CEC or MHL signal line.
+     */
+    HDMI = (1 << 25) | SourceClass.BUTTON,
     SENSOR = (1 << 26) | SourceClass.NONE,
     ANY = 0xFFFFFF00,
 }
