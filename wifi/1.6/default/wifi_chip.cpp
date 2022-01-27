@@ -715,7 +715,7 @@ Return<void> WifiChip::createRttController_1_6(const sp<IWifiIface>& bound_iface
 
 Return<void> WifiChip::getUsableChannels_1_6(
         WifiBand band, hidl_bitfield<V1_5::WifiIfaceMode> ifaceModeMask,
-        hidl_bitfield<V1_5::IWifiChip::UsableChannelFilter> filterMask,
+        hidl_bitfield<V1_6::IWifiChip::UsableChannelFilter> filterMask,
         getUsableChannels_1_6_cb _hidl_cb) {
     return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
                            &WifiChip::getUsableChannelsInternal_1_6, _hidl_cb, band, ifaceModeMask,

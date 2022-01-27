@@ -779,4 +779,25 @@ interface IComposerClient {
      * @exception EX_BAD_PARAMETER when enabled was an invalid value.
      */
     void setVsyncEnabled(long display, boolean enabled);
+
+    /**
+     * Enables or disables the idle timer on this display.
+     *
+     * Idle timer is used to allow the display to go into a panel idle mode after some
+     * idle period.
+     *
+     * This function should only be called if the display reports support for
+     * DisplayCapability.DISPLAY_IDLE from getDisplayCapabilities.
+     *
+     * @param display is the display to which the idle timer is set.
+     * @param timeoutMs is the minimum requirements of idle period in milliseconds. Panel
+     *                should not go into the idle state within the minimum requirement after
+     *                idle for a while. 0 means disabled, panel should not go into idle state.
+     *
+     * @exception EX_BAD_DISPLAY when an invalid display handle was passed in.
+     * @exception EX_BAD_PARAMETER when timeout is a negative number.
+     * @exception EX_UNSUPPORTED when idle is not supported on this display.
+     *
+     */
+    void setIdleTimerEnabled(long display, int timeoutMs);
 }

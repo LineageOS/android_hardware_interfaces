@@ -58,6 +58,8 @@ struct Usb : public BnUsb {
             int64_t in_transactionId) override;
     ScopedAStatus limitPowerTransfer(const std::string& in_portName, bool in_limit,
             int64_t in_transactionId)override;
+    ScopedAStatus resetUsbPort(const std::string& in_portName,
+            int64_t in_transactionId)override;
 
     shared_ptr<IUsbCallback> mCallback;
     // Protects mCallback variable
