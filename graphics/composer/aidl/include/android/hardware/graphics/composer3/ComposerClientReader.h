@@ -77,6 +77,10 @@ class ComposerClientReader {
                     parseSetClientTargetProperty(std::move(
                             result.get<CommandResultPayload::Tag::clientTargetProperty>()));
                     break;
+                case CommandResultPayload::Tag::bufferAheadResult:
+                    parseSetBufferAheadResultLayers(
+                            result.get<CommandResultPayload::Tag::bufferAheadResult>());
+                    break;
             }
         }
     }
@@ -168,6 +172,16 @@ class ComposerClientReader {
         return std::move(data.clientTargetProperty);
     }
 
+    std::vector<BufferAheadResult::Layer> takeBufferAheadResultLayers(int64_t display) {
+        const auto found = mReturnData.find(display);
+
+        if (found == mReturnData.end()) {
+            return {};
+        }
+
+        return std::move(found->second.bufferAheadResultLayers);
+    }
+
   private:
     void resetData() {
         mErrors.clear();
@@ -206,12 +220,18 @@ class ComposerClientReader {
         data.clientTargetProperty = std::move(clientTargetProperty);
     }
 
+    void parseSetBufferAheadResultLayers(const BufferAheadResult& bufferAheadResult) {
+        auto& data = mReturnData[bufferAheadResult.display];
+        data.bufferAheadResultLayers = std::move(bufferAheadResult.layers);
+    }
+
     struct ReturnData {
         DisplayRequest displayRequests;
         std::vector<ChangedCompositionLayer> changedLayers;
         ndk::ScopedFileDescriptor presentFence;
         std::vector<ReleaseFences::Layer> releasedLayers;
         PresentOrValidate::Result presentOrValidateState;
+        std::vector<BufferAheadResult::Layer> bufferAheadResultLayers;
 
         ClientTargetPropertyWithNits clientTargetProperty = {
                 .clientTargetProperty = {common::PixelFormat::RGBA_8888, Dataspace::UNKNOWN},

@@ -131,6 +131,11 @@ class ComposerClientWriter {
         getLayerCommand(display, layer).buffer = getBuffer(slot, buffer, acquireFence);
     }
 
+    void setLayerBufferAhead(int64_t display, int64_t layer, uint32_t slot,
+                             const native_handle_t* buffer, int acquireFence) {
+        getLayerCommand(display, layer).bufferAhead = getBuffer(slot, buffer, acquireFence);
+    }
+
     void setLayerSurfaceDamage(int64_t display, int64_t layer, const std::vector<Rect>& damage) {
         getLayerCommand(display, layer).damage.emplace(damage.begin(), damage.end());
     }
