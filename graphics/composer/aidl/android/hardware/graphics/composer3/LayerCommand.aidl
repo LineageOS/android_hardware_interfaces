@@ -41,20 +41,11 @@ parcelable LayerCommand {
     long layer;
 
     /**
-     * Asynchronously sets the position of a cursor layer.
+     * Sets the position of a cursor layer.
      *
-     * Prior to validateDisplay, a layer may be marked as Composition.CURSOR.
-     * If validation succeeds (i.e., the device does not request a composition
-     * change for that layer), then once a buffer has been set for the layer
-     * and it has been presented, its position may be set by this function at
-     * any time between presentDisplay and any subsequent validateDisplay
-     * calls for this display.
-     *
-     * Once validateDisplay is called, this function must not be called again
-     * until the validate/present sequence is completed.
-     *
-     * May be called from any thread so long as it is not interleaved with the
-     * validate/present sequence as described above.
+     * The position of a cursor layer can be updated without a validate/present display
+     * sequence if that layer was marked as Composition.CURSOR and validation previously succeeded
+     * (i.e., the device didn't request a composition).
      */
     @nullable Point cursorPosition;
 
