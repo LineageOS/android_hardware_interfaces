@@ -17,6 +17,8 @@
 #ifndef IDENTITY_SUPPORT_INCLUDE_IDENTITY_CREDENTIAL_UTILS_H_
 #define IDENTITY_SUPPORT_INCLUDE_IDENTITY_CREDENTIAL_UTILS_H_
 
+#include <openssl/evp.h>
+
 #include <cstdint>
 #include <map>
 #include <optional>
@@ -126,6 +128,15 @@ optional<vector<uint8_t>> encryptAes128Gcm(const vector<uint8_t>& key, const vec
 //
 optional<std::pair<vector<uint8_t>, vector<vector<uint8_t>>>> createEcKeyPairAndAttestation(
         const vector<uint8_t>& challenge, const vector<uint8_t>& applicationId,
+        bool isTestCredential);
+
+// Alternate version of createEcKeyPairAndAttestation that accepts an attestation key
+// blob to sign the generated key. Only a single certificate is returned, rather than
+// a full chain.
+//
+optional<std::pair<vector<uint8_t>, vector<uint8_t>>> createEcKeyPairWithAttestationKey(
+        const vector<uint8_t>& challenge, const vector<uint8_t>& applicationId,
+        const vector<uint8_t>& attestationKeyBlob, const vector<uint8_t>& attestationKeyCert,
         bool isTestCredential);
 
 // (TODO: remove when no longer used by 3rd party.)
@@ -239,6 +250,13 @@ optional<vector<uint8_t>> ecPublicKeyGenerateCertificate(
         const string& serialDecimal, const string& issuer, const string& subject,
         time_t validityNotBefore, time_t validityNotAfter,
         const map<string, vector<uint8_t>>& extensions);
+
+// Identical behavior to the above version of ecPublicKeyGenerateCertificate, except this
+// overload takes OpenSSL key parameters instead of key bitstrings as inputs.
+optional<vector<uint8_t>> ecPublicKeyGenerateCertificate(
+        EVP_PKEY* publicKey, EVP_PKEY* signingKey, const string& serialDecimal,
+        const string& issuer, const string& subject, time_t validityNotBefore,
+        time_t validityNotAfter, const map<string, vector<uint8_t>>& extensions);
 
 // Performs Elliptic-curve Diffie-Helman using |publicKey| (which must be in the
 // format returned by ecKeyPairGetPublicKey()) and |privateKey| (which must be
