@@ -180,6 +180,7 @@
             <xs:enumeration value="AUDIO_OUTPUT_FLAG_INCALL_MUSIC" />
             <xs:enumeration value="AUDIO_OUTPUT_FLAG_GAPLESS_OFFLOAD" />
             <xs:enumeration value="AUDIO_OUTPUT_FLAG_SPATIALIZER" />
+            <xs:enumeration value="AUDIO_OUTPUT_FLAG_ULTRASOUND" />
             <xs:enumeration value="AUDIO_INPUT_FLAG_FAST" />
             <xs:enumeration value="AUDIO_INPUT_FLAG_HW_HOTWORD" />
             <xs:enumeration value="AUDIO_INPUT_FLAG_RAW" />
@@ -188,6 +189,7 @@
             <xs:enumeration value="AUDIO_INPUT_FLAG_VOIP_TX" />
             <xs:enumeration value="AUDIO_INPUT_FLAG_HW_AV_SYNC" />
             <xs:enumeration value="AUDIO_INPUT_FLAG_DIRECT" />
+            <xs:enumeration value="AUDIO_INPUT_FLAG_ULTRASOUND" />
         </xs:restriction>
     </xs:simpleType>
     <xs:simpleType name="audioInOutFlags">
@@ -471,6 +473,7 @@
             <xs:enumeration value="AUDIO_CONTENT_TYPE_MUSIC"/>
             <xs:enumeration value="AUDIO_CONTENT_TYPE_MOVIE"/>
             <xs:enumeration value="AUDIO_CONTENT_TYPE_SONIFICATION"/>
+            <xs:enumeration value="AUDIO_CONTENT_TYPE_ULTRASOUND"/>
         </xs:restriction>
     </xs:simpleType>
     <xs:simpleType name="samplingRates">
@@ -742,6 +745,7 @@
             <xs:enumeration value="AUDIO_SOURCE_ECHO_REFERENCE"/>
             <xs:enumeration value="AUDIO_SOURCE_FM_TUNER"/>
             <xs:enumeration value="AUDIO_SOURCE_HOTWORD"/>
+            <xs:enumeration value="AUDIO_SOURCE_ULTRASOUND"/>
         </xs:restriction>
     </xs:simpleType>
     <!-- Enum values of device_category from Volume.h. -->
