@@ -41,4 +41,5 @@ interface IUsbCallback {
   oneway void notifyContaminantEnabledStatus(in String portName, boolean enable, in android.hardware.usb.Status retval, long transactionId);
   oneway void notifyQueryPortStatus(in String portName, in android.hardware.usb.Status retval, long transactionId);
   oneway void notifyLimitPowerTransferStatus(in String portName, boolean limit, in android.hardware.usb.Status retval, long transactionId);
+  oneway void notifyResetUsbPortStatus(in String portName, in android.hardware.usb.Status retval, long transactionId);
 }

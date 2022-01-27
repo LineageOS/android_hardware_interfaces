@@ -32,6 +32,8 @@ namespace V1_6 {
 namespace implementation {
 using namespace android::hardware::wifi::V1_0;
 using namespace android::hardware::wifi::V1_2;
+using namespace android::hardware::wifi::V1_4;
+using namespace android::hardware::wifi::V1_6;
 
 /**
  * HIDL interface object used to control a NAN Iface instance.
@@ -58,11 +60,11 @@ class WifiNanIface : public V1_6::IWifiNanIface {
     Return<void> configRequest(uint16_t cmd_id, const V1_0::NanConfigRequest& msg,
                                configRequest_cb hidl_status_cb) override;
     Return<void> disableRequest(uint16_t cmd_id, disableRequest_cb hidl_status_cb) override;
-    Return<void> startPublishRequest(uint16_t cmd_id, const NanPublishRequest& msg,
+    Return<void> startPublishRequest(uint16_t cmd_id, const V1_0::NanPublishRequest& msg,
                                      startPublishRequest_cb hidl_status_cb) override;
     Return<void> stopPublishRequest(uint16_t cmd_id, uint8_t sessionId,
                                     stopPublishRequest_cb hidl_status_cb) override;
-    Return<void> startSubscribeRequest(uint16_t cmd_id, const NanSubscribeRequest& msg,
+    Return<void> startSubscribeRequest(uint16_t cmd_id, const V1_0::NanSubscribeRequest& msg,
                                        startSubscribeRequest_cb hidl_status_cb) override;
     Return<void> stopSubscribeRequest(uint16_t cmd_id, uint8_t sessionId,
                                       stopSubscribeRequest_cb hidl_status_cb) override;
@@ -72,10 +74,11 @@ class WifiNanIface : public V1_6::IWifiNanIface {
                                             createDataInterfaceRequest_cb hidl_status_cb) override;
     Return<void> deleteDataInterfaceRequest(uint16_t cmd_id, const hidl_string& iface_name,
                                             deleteDataInterfaceRequest_cb hidl_status_cb) override;
-    Return<void> initiateDataPathRequest(uint16_t cmd_id, const NanInitiateDataPathRequest& msg,
+    Return<void> initiateDataPathRequest(uint16_t cmd_id,
+                                         const V1_0::NanInitiateDataPathRequest& msg,
                                          initiateDataPathRequest_cb hidl_status_cb) override;
     Return<void> respondToDataPathIndicationRequest(
-            uint16_t cmd_id, const NanRespondToDataPathIndicationRequest& msg,
+            uint16_t cmd_id, const V1_0::NanRespondToDataPathIndicationRequest& msg,
             respondToDataPathIndicationRequest_cb hidl_status_cb) override;
     Return<void> terminateDataPathRequest(uint16_t cmd_id, uint32_t ndpInstanceId,
                                           terminateDataPathRequest_cb hidl_status_cb) override;
@@ -98,14 +101,28 @@ class WifiNanIface : public V1_6::IWifiNanIface {
                                            registerEventCallback_1_5_cb hidl_status_cb) override;
     Return<void> enableRequest_1_5(uint16_t cmd_id, const V1_4::NanEnableRequest& msg1,
                                    const V1_5::NanConfigRequestSupplemental& msg2,
-                                   enableRequest_1_4_cb hidl_status_cb) override;
+                                   enableRequest_1_5_cb hidl_status_cb) override;
     Return<void> configRequest_1_5(uint16_t cmd_id, const V1_4::NanConfigRequest& msg1,
                                    const V1_5::NanConfigRequestSupplemental& msg2,
-                                   configRequest_1_4_cb hidl_status_cb) override;
+                                   configRequest_1_5_cb hidl_status_cb) override;
     Return<void> getCapabilitiesRequest_1_5(uint16_t cmd_id,
                                             getCapabilitiesRequest_cb hidl_status_cb) override;
     Return<void> registerEventCallback_1_6(const sp<V1_6::IWifiNanIfaceEventCallback>& callback,
                                            registerEventCallback_1_6_cb hidl_status_cb) override;
+    Return<void> initiateDataPathRequest_1_6(
+            uint16_t cmd_id, const V1_6::NanInitiateDataPathRequest& msg,
+            initiateDataPathRequest_1_6_cb hidl_status_cb) override;
+    Return<void> respondToDataPathIndicationRequest_1_6(
+            uint16_t cmd_id, const V1_6::NanRespondToDataPathIndicationRequest& msg,
+            respondToDataPathIndicationRequest_1_6_cb hidl_status_cb) override;
+    Return<void> enableRequest_1_6(uint16_t cmd_id, const V1_4::NanEnableRequest& msg1,
+                                   const V1_6::NanConfigRequestSupplemental& msg2,
+                                   enableRequest_1_6_cb hidl_status_cb) override;
+    Return<void> configRequest_1_6(uint16_t cmd_id, const V1_4::NanConfigRequest& msg1,
+                                   const V1_6::NanConfigRequestSupplemental& msg2,
+                                   configRequest_1_6_cb hidl_status_cb) override;
+    Return<void> startPublishRequest_1_6(uint16_t cmd_id, const V1_6::NanPublishRequest& msg,
+                                         startPublishRequest_cb hidl_status_cb) override;
 
   private:
     // Corresponding worker functions for the HIDL methods.
@@ -116,18 +133,18 @@ class WifiNanIface : public V1_6::IWifiNanIface {
     WifiStatus enableRequestInternal(uint16_t cmd_id, const V1_0::NanEnableRequest& msg);
     WifiStatus configRequestInternal(uint16_t cmd_id, const V1_0::NanConfigRequest& msg);
     WifiStatus disableRequestInternal(uint16_t cmd_id);
-    WifiStatus startPublishRequestInternal(uint16_t cmd_id, const NanPublishRequest& msg);
+    WifiStatus startPublishRequestInternal(uint16_t cmd_id, const V1_0::NanPublishRequest& msg);
     WifiStatus stopPublishRequestInternal(uint16_t cmd_id, uint8_t sessionId);
-    WifiStatus startSubscribeRequestInternal(uint16_t cmd_id, const NanSubscribeRequest& msg);
+    WifiStatus startSubscribeRequestInternal(uint16_t cmd_id, const V1_0::NanSubscribeRequest& msg);
     WifiStatus stopSubscribeRequestInternal(uint16_t cmd_id, uint8_t sessionId);
     WifiStatus transmitFollowupRequestInternal(uint16_t cmd_id,
                                                const NanTransmitFollowupRequest& msg);
     WifiStatus createDataInterfaceRequestInternal(uint16_t cmd_id, const std::string& iface_name);
     WifiStatus deleteDataInterfaceRequestInternal(uint16_t cmd_id, const std::string& iface_name);
     WifiStatus initiateDataPathRequestInternal(uint16_t cmd_id,
-                                               const NanInitiateDataPathRequest& msg);
+                                               const V1_0::NanInitiateDataPathRequest& msg);
     WifiStatus respondToDataPathIndicationRequestInternal(
-            uint16_t cmd_id, const NanRespondToDataPathIndicationRequest& msg);
+            uint16_t cmd_id, const V1_0::NanRespondToDataPathIndicationRequest& msg);
     WifiStatus terminateDataPathRequestInternal(uint16_t cmd_id, uint32_t ndpInstanceId);
 
     WifiStatus registerEventCallback_1_2Internal(
@@ -149,6 +166,16 @@ class WifiNanIface : public V1_6::IWifiNanIface {
     WifiStatus getCapabilitiesRequest_1_5Internal(uint16_t cmd_id);
     WifiStatus registerEventCallback_1_6Internal(
             const sp<V1_6::IWifiNanIfaceEventCallback>& callback);
+
+    WifiStatus enableRequest_1_6Internal(uint16_t cmd_id, const V1_4::NanEnableRequest& msg1,
+                                         const V1_6::NanConfigRequestSupplemental& msg2);
+    WifiStatus configRequest_1_6Internal(uint16_t cmd_id, const V1_4::NanConfigRequest& msg,
+                                         const V1_6::NanConfigRequestSupplemental& msg2);
+    WifiStatus startPublishRequest_1_6Internal(uint16_t cmd_id, const V1_6::NanPublishRequest& msg);
+    WifiStatus initiateDataPathRequest_1_6Internal(uint16_t cmd_id,
+                                                   const V1_6::NanInitiateDataPathRequest& msg);
+    WifiStatus respondToDataPathIndicationRequest_1_6Internal(
+            uint16_t cmd_id, const V1_6::NanRespondToDataPathIndicationRequest& msg);
 
     // all 1_0 and descendant callbacks
     std::set<sp<V1_0::IWifiNanIfaceEventCallback>> getEventCallbacks();
