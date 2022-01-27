@@ -127,7 +127,8 @@ interface IWritableIdentityCredential {
      *     https://developer.android.com/training/articles/security-key-attestation#certificate_schema_attestationid
      *
      * @param attestationChallenge a challenge set by the issuer to ensure freshness. If
-     *    this is empty, the call fails with STATUS_INVALID_DATA.
+     *    this is empty, the call fails with STATUS_INVALID_DATA. Implementations must
+     *    support challenges of at least 32 bytes.
      *
      * @return the X.509 certificate chain for the credentialKey
      */
