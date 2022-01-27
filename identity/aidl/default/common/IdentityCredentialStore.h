@@ -18,6 +18,7 @@
 #define ANDROID_HARDWARE_IDENTITY_IDENTITYCREDENTIALSTORE_H
 
 #include <aidl/android/hardware/identity/BnIdentityCredentialStore.h>
+#include <aidl/android/hardware/security/keymint/IRemotelyProvisionedComponent.h>
 
 #include "SecureHardwareProxy.h"
 
@@ -25,14 +26,18 @@ namespace aidl::android::hardware::identity {
 
 using ::android::sp;
 using ::android::hardware::identity::SecureHardwareProxyFactory;
+using ::std::optional;
 using ::std::shared_ptr;
 using ::std::string;
 using ::std::vector;
 
 class IdentityCredentialStore : public BnIdentityCredentialStore {
   public:
-    IdentityCredentialStore(sp<SecureHardwareProxyFactory> hwProxyFactory)
-        : hwProxyFactory_(hwProxyFactory) {}
+    // If remote key provisioning is supported, pass the service name for the correct
+    // IRemotelyProvisionedComponent to the remotelyProvisionedComponent parameter. Else
+    // pass std::nullopt to indicate remote key provisioning is not supported.
+    IdentityCredentialStore(sp<SecureHardwareProxyFactory> hwProxyFactory,
+                            optional<string> remotelyProvisionedComponent);
 
     // The GCM chunk size used by this implementation is 64 KiB.
     static constexpr size_t kGcmChunkSize = 64 * 1024;
@@ -50,8 +55,14 @@ class IdentityCredentialStore : public BnIdentityCredentialStore {
     ndk::ScopedAStatus createPresentationSession(
             CipherSuite cipherSuite, shared_ptr<IPresentationSession>* outSession) override;
 
+    ndk::ScopedAStatus getRemotelyProvisionedComponent(
+            shared_ptr<::aidl::android::hardware::security::keymint::IRemotelyProvisionedComponent>*
+                    outRemotelyProvisionedComponent) override;
+
   private:
     sp<SecureHardwareProxyFactory> hwProxyFactory_;
+    optional<string> remotelyProvisionedComponentName_;
+    HardwareInformation hardwareInformation_;
 };
 
 }  // namespace aidl::android::hardware::identity
