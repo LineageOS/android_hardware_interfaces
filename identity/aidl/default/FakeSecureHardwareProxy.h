@@ -43,6 +43,11 @@ class FakeSecureHardwareProvisioningProxy : public SecureHardwareProvisioningPro
     optional<vector<uint8_t>> createCredentialKey(const vector<uint8_t>& challenge,
                                                   const vector<uint8_t>& applicationId) override;
 
+    optional<vector<uint8_t>> createCredentialKeyUsingRkp(
+            const vector<uint8_t>& challenge, const vector<uint8_t>& applicationId,
+            const vector<uint8_t>& attestationKeyBlob,
+            const vector<uint8_t>& attestationKeyCert) override;
+
     bool startPersonalization(int accessControlProfileCount, const vector<int>& entryCounts,
                               const string& docType,
                               size_t expectedProofOfProvisioningSize) override;

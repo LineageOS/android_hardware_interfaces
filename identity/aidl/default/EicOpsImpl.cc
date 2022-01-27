@@ -267,25 +267,42 @@ bool eicOpsCreateEcKey(uint8_t privateKey[EIC_P256_PRIV_KEY_SIZE],
 
 bool eicOpsCreateCredentialKey(uint8_t privateKey[EIC_P256_PRIV_KEY_SIZE], const uint8_t* challenge,
                                size_t challengeSize, const uint8_t* applicationId,
-                               size_t applicationIdSize, bool testCredential, uint8_t* cert,
-                               size_t* certSize) {
-    vector<uint8_t> challengeVec(challengeSize);
-    memcpy(challengeVec.data(), challenge, challengeSize);
-
-    vector<uint8_t> applicationIdVec(applicationIdSize);
-    memcpy(applicationIdVec.data(), applicationId, applicationIdSize);
-
-    optional<std::pair<vector<uint8_t>, vector<vector<uint8_t>>>> ret =
-            android::hardware::identity::support::createEcKeyPairAndAttestation(
-                    challengeVec, applicationIdVec, testCredential);
-    if (!ret) {
-        eicDebug("Error generating CredentialKey and attestation");
-        return false;
+                               size_t applicationIdSize, bool testCredential,
+                               const uint8_t* attestationKeyBlob, size_t attestationKeyBlobSize,
+                               const uint8_t* attestationKeyCert, size_t attestationKeyCertSize,
+                               uint8_t* cert, size_t* certSize) {
+    vector<uint8_t> flatChain;
+    vector<uint8_t> keyPair;
+    vector<uint8_t> challengeVec(challenge, challenge + challengeSize);
+    vector<uint8_t> applicationIdVec(applicationId, applicationId + applicationIdSize);
+    if (attestationKeyBlob && attestationKeyBlobSize > 0 && attestationKeyCert &&
+        attestationKeyCertSize > 0) {
+        vector<uint8_t> attestationKeyBlobVec(attestationKeyBlob,
+                                              attestationKeyBlob + attestationKeyBlobSize);
+        vector<uint8_t> attestationKeyCertVec(attestationKeyCert,
+                                              attestationKeyCert + attestationKeyCertSize);
+        optional<std::pair<vector<uint8_t>, vector<uint8_t>>> keyAndCert =
+                android::hardware::identity::support::createEcKeyPairWithAttestationKey(
+                        challengeVec, applicationIdVec, attestationKeyBlobVec,
+                        attestationKeyCertVec, testCredential);
+        if (!keyAndCert) {
+            eicDebug("Error generating CredentialKey and attestation");
+            return false;
+        }
+        keyPair = std::move(keyAndCert->first);
+        flatChain = std::move(keyAndCert->second);
+    } else {
+        optional<std::pair<vector<uint8_t>, vector<vector<uint8_t>>>> ret =
+                android::hardware::identity::support::createEcKeyPairAndAttestation(
+                        challengeVec, applicationIdVec, testCredential);
+        if (!ret) {
+            eicDebug("Error generating CredentialKey and attestation");
+            return false;
+        }
+        keyPair = std::move(ret->first);
+        flatChain = android::hardware::identity::support::certificateChainJoin(ret->second);
     }
 
-    // Extract certificate chain.
-    vector<uint8_t> flatChain =
-            android::hardware::identity::support::certificateChainJoin(ret.value().second);
     if (*certSize < flatChain.size()) {
         eicDebug("Buffer for certificate is only %zd bytes long, need %zd bytes", *certSize,
                  flatChain.size());
@@ -296,7 +313,7 @@ bool eicOpsCreateCredentialKey(uint8_t privateKey[EIC_P256_PRIV_KEY_SIZE], const
 
     // Extract private key.
     optional<vector<uint8_t>> privKey =
-            android::hardware::identity::support::ecKeyPairGetPrivateKey(ret.value().first);
+            android::hardware::identity::support::ecKeyPairGetPrivateKey(keyPair);
     if (!privKey) {
         eicDebug("Error extracting private key");
         return false;
@@ -520,10 +537,12 @@ bool eicOpsHkdf(const uint8_t* sharedSecret, size_t sharedSecretSize, const uint
 #ifdef EIC_DEBUG
 
 void eicPrint(const char* format, ...) {
+    char buf[1024];
     va_list args;
     va_start(args, format);
-    vfprintf(stderr, format, args);
+    vsnprintf(buf, sizeof(buf), format, args);
     va_end(args);
+    LOG(INFO) << buf;
 }
 
 void eicHexdump(const char* message, const uint8_t* data, size_t dataSize) {
