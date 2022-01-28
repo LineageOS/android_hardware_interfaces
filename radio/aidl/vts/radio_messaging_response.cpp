@@ -20,17 +20,23 @@ RadioMessagingResponse::RadioMessagingResponse(RadioServiceTest& parent)
     : parent_messaging(parent) {}
 
 ndk::ScopedAStatus RadioMessagingResponse::acknowledgeIncomingGsmSmsWithPduResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_messaging.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioMessagingResponse::acknowledgeLastIncomingCdmaSmsResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_messaging.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioMessagingResponse::acknowledgeLastIncomingGsmSmsResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_messaging.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
@@ -39,39 +45,49 @@ ndk::ScopedAStatus RadioMessagingResponse::acknowledgeRequest(int32_t /*serial*/
 }
 
 ndk::ScopedAStatus RadioMessagingResponse::cancelPendingUssdResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_messaging.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioMessagingResponse::deleteSmsOnRuimResponse(
-        const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioMessagingResponse::deleteSmsOnRuimResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_messaging.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioMessagingResponse::deleteSmsOnSimResponse(
-        const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioMessagingResponse::deleteSmsOnSimResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_messaging.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioMessagingResponse::getCdmaBroadcastConfigResponse(
-        const RadioResponseInfo& /*info*/,
-        const std::vector<CdmaBroadcastSmsConfigInfo>& /*configs*/) {
+        const RadioResponseInfo& info, const std::vector<CdmaBroadcastSmsConfigInfo>& /*configs*/) {
+    rspInfo = info;
+    parent_messaging.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioMessagingResponse::getGsmBroadcastConfigResponse(
-        const RadioResponseInfo& /*info*/,
-        const std::vector<GsmBroadcastSmsConfigInfo>& /*configs*/) {
+        const RadioResponseInfo& info, const std::vector<GsmBroadcastSmsConfigInfo>& /*configs*/) {
+    rspInfo = info;
+    parent_messaging.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioMessagingResponse::getSmscAddressResponse(const RadioResponseInfo& /*info*/,
+ndk::ScopedAStatus RadioMessagingResponse::getSmscAddressResponse(const RadioResponseInfo& info,
                                                                   const std::string& /*smsc*/) {
+    rspInfo = info;
+    parent_messaging.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioMessagingResponse::reportSmsMemoryStatusResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_messaging.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
@@ -91,8 +107,10 @@ ndk::ScopedAStatus RadioMessagingResponse::sendCdmaSmsResponse(const RadioRespon
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioMessagingResponse::sendImsSmsResponse(const RadioResponseInfo& /*info*/,
+ndk::ScopedAStatus RadioMessagingResponse::sendImsSmsResponse(const RadioResponseInfo& info,
                                                               const SendSmsResult& /*sms*/) {
+    rspInfo = info;
+    parent_messaging.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
@@ -112,41 +130,56 @@ ndk::ScopedAStatus RadioMessagingResponse::sendSmsResponse(const RadioResponseIn
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioMessagingResponse::sendUssdResponse(const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioMessagingResponse::sendUssdResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_messaging.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioMessagingResponse::setCdmaBroadcastActivationResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_messaging.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioMessagingResponse::setCdmaBroadcastConfigResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_messaging.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioMessagingResponse::setGsmBroadcastActivationResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_messaging.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioMessagingResponse::setGsmBroadcastConfigResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_messaging.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioMessagingResponse::setSmscAddressResponse(
-        const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioMessagingResponse::setSmscAddressResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_messaging.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioMessagingResponse::writeSmsToRuimResponse(const RadioResponseInfo& /*info*/,
+ndk::ScopedAStatus RadioMessagingResponse::writeSmsToRuimResponse(const RadioResponseInfo& info,
                                                                   int32_t /*index*/) {
+    rspInfo = info;
+    parent_messaging.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioMessagingResponse::writeSmsToSimResponse(const RadioResponseInfo& /*info*/,
+ndk::ScopedAStatus RadioMessagingResponse::writeSmsToSimResponse(const RadioResponseInfo& info,
                                                                  int32_t /*index*/) {
+    rspInfo = info;
+    parent_messaging.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }

@@ -54,3 +54,102 @@ TEST_P(RadioConfigTest, getHalDeviceCapabilities) {
     ALOGI("getHalDeviceCapabilities, rspInfo.error = %s\n",
           toString(radioRsp_config->rspInfo.error).c_str());
 }
+
+/*
+ * Test IRadioConfig.getSimSlotsStatus() for the response returned.
+ */
+TEST_P(RadioConfigTest, getSimSlotsStatus) {
+    serial = GetRandomSerialNumber();
+    ndk::ScopedAStatus res = radio_config->getSimSlotsStatus(serial);
+    ASSERT_OK(res);
+    ALOGI("getSimSlotsStatus, rspInfo.error = %s\n",
+          toString(radioRsp_config->rspInfo.error).c_str());
+}
+
+/*
+ * Test IRadioConfig.getPhoneCapability() for the response returned.
+ */
+TEST_P(RadioConfigTest, getPhoneCapability) {
+    serial = GetRandomSerialNumber();
+    ndk::ScopedAStatus res = radio_config->getPhoneCapability(serial);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_config->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_config->rspInfo.serial);
+    ALOGI("getPhoneCapability, rspInfo.error = %s\n",
+          toString(radioRsp_config->rspInfo.error).c_str());
+
+    ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_config->rspInfo.error,
+            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::INTERNAL_ERR}));
+
+    if (radioRsp_config->rspInfo.error == RadioError ::NONE) {
+        // maxActiveData should be greater than or equal to maxActiveInternetData.
+        EXPECT_GE(radioRsp_config->phoneCap.maxActiveData,
+                  radioRsp_config->phoneCap.maxActiveInternetData);
+        // maxActiveData and maxActiveInternetData should be 0 or positive numbers.
+        EXPECT_GE(radioRsp_config->phoneCap.maxActiveInternetData, 0);
+    }
+}
+
+/*
+ * Test IRadioConfig.setPreferredDataModem() for the response returned.
+ */
+TEST_P(RadioConfigTest, setPreferredDataModem) {
+    serial = GetRandomSerialNumber();
+    ndk::ScopedAStatus res = radio_config->getPhoneCapability(serial);
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_config->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_config->rspInfo.serial);
+    ALOGI("getPhoneCapability, rspInfo.error = %s\n",
+          toString(radioRsp_config->rspInfo.error).c_str());
+
+    ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_config->rspInfo.error,
+            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::INTERNAL_ERR}));
+
+    if (radioRsp_config->rspInfo.error != RadioError ::NONE) {
+        return;
+    }
+
+    if (radioRsp_config->phoneCap.logicalModemIds.size() == 0) {
+        return;
+    }
+
+    // We get phoneCapability. Send setPreferredDataModem command
+    serial = GetRandomSerialNumber();
+    uint8_t modemId = radioRsp_config->phoneCap.logicalModemIds[0];
+    res = radio_config->setPreferredDataModem(serial, modemId);
+
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_config->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_config->rspInfo.serial);
+    ALOGI("setPreferredDataModem, rspInfo.error = %s\n",
+          toString(radioRsp_config->rspInfo.error).c_str());
+
+    ASSERT_TRUE(CheckAnyOfErrors(
+            radioRsp_config->rspInfo.error,
+            {RadioError::NONE, RadioError::RADIO_NOT_AVAILABLE, RadioError::INTERNAL_ERR}));
+}
+
+/*
+ * Test IRadioConfig.setPreferredDataModem() with invalid arguments.
+ */
+TEST_P(RadioConfigTest, setPreferredDataModem_invalidArgument) {
+    serial = GetRandomSerialNumber();
+    uint8_t modemId = -1;
+    ndk::ScopedAStatus res = radio_config->setPreferredDataModem(serial, modemId);
+
+    ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_config->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_config->rspInfo.serial);
+    ALOGI("setPreferredDataModem, rspInfo.error = %s\n",
+          toString(radioRsp_config->rspInfo.error).c_str());
+
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_config->rspInfo.error,
+                                 {RadioError::INVALID_ARGUMENTS, RadioError::RADIO_NOT_AVAILABLE,
+                                  RadioError::INTERNAL_ERR}));
+}
