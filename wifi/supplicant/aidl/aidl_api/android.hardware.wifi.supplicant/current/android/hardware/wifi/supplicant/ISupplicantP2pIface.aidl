@@ -93,4 +93,6 @@ interface ISupplicantP2pIface {
   String startWpsPinDisplay(in String groupIfName, in byte[] bssid);
   void startWpsPinKeypad(in String groupIfName, in String pin);
   void stopFind();
+  void findOnSocialChannels(in int timeoutInSec);
+  void findOnSpecificFrequency(in int freqInHz, in int timeoutInSec);
 }
