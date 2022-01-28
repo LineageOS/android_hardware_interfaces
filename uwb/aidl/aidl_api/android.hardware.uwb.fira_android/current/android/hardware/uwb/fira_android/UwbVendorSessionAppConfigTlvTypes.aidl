@@ -33,7 +33,7 @@
 
 package android.hardware.uwb.fira_android;
 @Backing(type="int") @VintfStability
-enum UwbVendorSessionSetAppConfigCmdParams {
+enum UwbVendorSessionAppConfigTlvTypes {
   CCC_HOP_MODE_KEY = 160,
   CCC_UWB_TIME0 = 161,
   CCC_RANGING_PROTOCOL_VER = 163,
