@@ -1529,6 +1529,7 @@ TEST_P(RadioNetworkTest, getOperator) {
     }
     LOG(DEBUG) << "getOperator finished";
 }
+
 /*
  * Test IRadioNetwork.getNetworkSelectionMode() for the response returned.
  */
@@ -1608,29 +1609,6 @@ TEST_P(RadioNetworkTest, setBandMode) {
                                      CHECK_GENERAL_ERROR));
     }
     LOG(DEBUG) << "setBandMode finished";
-}
-
-/*
- * Test IRadioNetwork.getNeighboringCids() for the response returned.
- */
-TEST_P(RadioNetworkTest, getNeighboringCids) {
-    // TODO: add API for getNeighboringCids
-    /**
-    LOG(DEBUG) << "getNeighboringCids";
-    serial = GetRandomSerialNumber();
-
-    radio_network->getNeighboringCids(serial);
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);
-    EXPECT_EQ(serial, radioRsp_network->rspInfo.serial);
-
-    if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_network->rspInfo.error,
-                                     {RadioError::NONE, RadioError::SIM_ABSENT},
-                                     CHECK_GENERAL_ERROR));
-    }
-    LOG(DEBUG) << "getNeighboringCids finished";
-    **/
 }
 
 /*
@@ -1718,7 +1696,6 @@ TEST_P(RadioNetworkTest, setCellInfoListRate) {
     LOG(DEBUG) << "setCellInfoListRate";
     serial = GetRandomSerialNumber();
 
-    // TODO(sanketpadawe): RIL crashes with value of rate = 10
     radio_network->setCellInfoListRate(serial, 10);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_network->rspInfo.type);

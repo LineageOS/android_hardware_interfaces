@@ -65,6 +65,12 @@ ndk::ScopedAStatus RadioVoiceIndication::onSupplementaryServiceIndication(
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus RadioVoiceIndication::onUssd(RadioIndicationType /*type*/,
+                                                UssdModeType /*modeType*/,
+                                                const std::string& /*msg*/) {
+    return ndk::ScopedAStatus::ok();
+}
+
 ndk::ScopedAStatus RadioVoiceIndication::resendIncallMute(RadioIndicationType /*type*/) {
     return ndk::ScopedAStatus::ok();
 }

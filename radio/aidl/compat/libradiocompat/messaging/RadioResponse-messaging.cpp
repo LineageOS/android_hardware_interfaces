@@ -57,12 +57,6 @@ Return<void> RadioResponse::acknowledgeLastIncomingGsmSmsResponse(
     return {};
 }
 
-Return<void> RadioResponse::cancelPendingUssdResponse(const V1_0::RadioResponseInfo& info) {
-    LOG_CALL << info.serial;
-    messagingCb()->cancelPendingUssdResponse(toAidl(info));
-    return {};
-}
-
 Return<void> RadioResponse::deleteSmsOnRuimResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
     messagingCb()->deleteSmsOnRuimResponse(toAidl(info));
@@ -163,12 +157,6 @@ Return<void> RadioResponse::sendSmsResponse_1_6(const V1_6::RadioResponseInfo& i
                                                 const V1_0::SendSmsResult& sms) {
     LOG_CALL << info.serial;
     messagingCb()->sendSmsResponse(toAidl(info), toAidl(sms));
-    return {};
-}
-
-Return<void> RadioResponse::sendUssdResponse(const V1_0::RadioResponseInfo& info) {
-    LOG_CALL << info.serial;
-    messagingCb()->sendUssdResponse(toAidl(info));
     return {};
 }
 

@@ -37,7 +37,6 @@ interface IRadioMessaging {
   oneway void acknowledgeIncomingGsmSmsWithPdu(in int serial, in boolean success, in String ackPdu);
   oneway void acknowledgeLastIncomingCdmaSms(in int serial, in android.hardware.radio.messaging.CdmaSmsAck smsAck);
   oneway void acknowledgeLastIncomingGsmSms(in int serial, in boolean success, in android.hardware.radio.messaging.SmsAcknowledgeFailCause cause);
-  oneway void cancelPendingUssd(in int serial);
   oneway void deleteSmsOnRuim(in int serial, in int index);
   oneway void deleteSmsOnSim(in int serial, in int index);
   oneway void getCdmaBroadcastConfig(in int serial);
@@ -50,7 +49,6 @@ interface IRadioMessaging {
   oneway void sendImsSms(in int serial, in android.hardware.radio.messaging.ImsSmsMessage message);
   oneway void sendSms(in int serial, in android.hardware.radio.messaging.GsmSmsMessage message);
   oneway void sendSmsExpectMore(in int serial, in android.hardware.radio.messaging.GsmSmsMessage message);
-  oneway void sendUssd(in int serial, in String ussd);
   oneway void setCdmaBroadcastActivation(in int serial, in boolean activate);
   oneway void setCdmaBroadcastConfig(in int serial, in android.hardware.radio.messaging.CdmaBroadcastSmsConfigInfo[] configInfo);
   oneway void setGsmBroadcastActivation(in int serial, in boolean activate);
