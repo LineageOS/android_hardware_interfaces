@@ -86,7 +86,7 @@ interface ISupplicantStaIface {
      *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
      *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
      */
-    ISupplicantStaNetwork addNetwork();
+    @PropagateAllowBlocking ISupplicantStaNetwork addNetwork();
 
     /**
      * Send driver command to add the specified RX filter.
@@ -231,7 +231,7 @@ interface ISupplicantStaIface {
      *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
      *         |SupplicantStatusCode.FAILURE_NETWORK_UNKNOWN|
      */
-    ISupplicantStaNetwork getNetwork(in int id);
+    @PropagateAllowBlocking ISupplicantStaNetwork getNetwork(in int id);
 
     /**
      * Retrieves the type of the network interface.
