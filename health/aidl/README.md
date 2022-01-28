@@ -60,7 +60,11 @@ service in
 [android.hardware.health-service.example.rc](default/android.hardware.health-service.example.rc).
 Specifically:
 
-* You may ignore the `service` line. The name of the service does not matter.
+* For the `service` line, if the name of the service is **NOT**
+  `vendor.charger`, and there are actions
+  in the rc file triggered by `on property:init.svc.<name>=running` where
+  `<name>` is the name of your charger service, then you need a custom health
+  AIDL service.
 * If your service belongs to additional classes beside `charger`, you need a
   custom health AIDL service.
 * Modify the `seclabel` line. Replace `charger` with `charger_vendor`.
@@ -232,13 +236,19 @@ PRODUCT_PACKAGES += charger_res_images_vendor
 It is recommended that you move the existing `service` entry with
 `class charger` to the `init.rc` file in your custom health service.
 
+If there are existing actions in the rc file triggered by
+`on property:init.svc.<name>=running`, where `<name>` is the name of your
+existing charger service (usually `vendor.charger`), then the name of the
+service must be kept as-is. If you modify the name of the service, the actions
+are not triggered properly.
+
 Modify the entry to invoke the health service binary with `--charger` argument.
 See
 [android.hardware.health-service.example.rc](default/android.hardware.health-service.example.rc)
 for an example:
 
 ```text
-service vendor.charger-tuna /vendor/bin/hw/android.hardware.health-service-tuna --charger
+service vendor.charger /vendor/bin/hw/android.hardware.health-service-tuna --charger
     class charger
     seclabel u:r:charger_vendor:s0
     # ...
