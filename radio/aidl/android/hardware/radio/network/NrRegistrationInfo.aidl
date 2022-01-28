@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,25 @@
 
 package android.hardware.radio.network;
 
-import android.hardware.radio.network.Cdma2000RegistrationInfo;
-import android.hardware.radio.network.EutranRegistrationInfo;
-import android.hardware.radio.network.NrRegistrationInfo;
 import android.hardware.radio.network.NrVopsInfo;
 
 @VintfStability
-union AccessTechnologySpecificInfo {
-    boolean noinit;
-    Cdma2000RegistrationInfo cdmaInfo;
-    EutranRegistrationInfo eutranInfo;
+parcelable NrRegistrationInfo {
+    /** 5GS registration result value - TS 24.501 9.11.3.6 */
+    const byte REGISTERED_OVER_3GPP = 1;
+    const byte REGISTERED_OVER_NON_3GPP = 2;
+    const byte REGISTERED_OVER_3GPP_AND_NON_3GPP = 3;
+
     /**
      * Network capabilities for voice over PS services. This info is valid only on NR network and
      * must be present when the device is camped on NR. NrVopsInfo must be empty when the device is
      * not camped on NR.
      */
     NrVopsInfo ngranNrVopsInfo;
-    /**
-     * True if the dual transfer mode is supported. Refer to 3GPP TS 44.108 section 3.4.25.3
-     */
-    boolean geranDtmSupported;
-
-    @nullable NrRegistrationInfo ngranInfo;
+    /** 5GS registration result value - TS 24.501 9.11.3.6 */
+    byte resultValue;
+    /** 5GS registration result SMS over NAS - TS 24.501 9.11.3.6 */
+    boolean isSmsOverNasAllowed;
+    /** True if emergency registered */
+    boolean isEmergencyRegistered;
 }

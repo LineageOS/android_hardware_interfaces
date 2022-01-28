@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +33,12 @@
 
 package android.hardware.radio.network;
 @VintfStability
-union AccessTechnologySpecificInfo {
-  boolean noinit;
-  android.hardware.radio.network.Cdma2000RegistrationInfo cdmaInfo;
-  android.hardware.radio.network.EutranRegistrationInfo eutranInfo;
+parcelable NrRegistrationInfo {
   android.hardware.radio.network.NrVopsInfo ngranNrVopsInfo;
-  boolean geranDtmSupported;
-  @nullable android.hardware.radio.network.NrRegistrationInfo ngranInfo;
+  byte resultValue;
+  boolean isSmsOverNasAllowed;
+  boolean isEmergencyRegistered;
+  const byte REGISTERED_OVER_3GPP = 1;
+  const byte REGISTERED_OVER_NON_3GPP = 2;
+  const byte REGISTERED_OVER_3GPP_AND_NON_3GPP = 3;
 }
