@@ -237,7 +237,7 @@ interface ISupplicantP2pIface {
      * Initiate a P2P service discovery with an optional timeout.
      *
      * @param timeoutInSec Max time to be spent is performing discovery.
-     *        Set to 0 to indefinely continue discovery until an explicit
+     *        Set to 0 to indefinitely continue discovery until an explicit
      *        |stopFind| is sent.
      * @throws ServiceSpecificException with one of the following values:
      *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
@@ -778,4 +778,36 @@ interface ISupplicantP2pIface {
      *         |SupplicantStatusCode.FAILURE_IFACE_DISABLED|
      */
     void stopFind();
+
+    /**
+     * Initiate a P2P device discovery only on social channels.
+     *
+     * Full P2P discovery is performed through |ISupplicantP2pIface.find| method.
+     *
+     * @param timeoutInSec The maximum amount of time that should be spent in performing device
+     *         discovery.
+     *        Set to 0 to indefinitely continue discovery until an explicit
+     *        |stopFind| is sent.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     *         |SupplicantStatusCode.FAILURE_IFACE_DISABLED|
+     */
+    void findOnSocialChannels(in int timeoutInSec);
+
+    /**
+     * Initiate a P2P device discovery on a specific frequency.
+     *
+     * Full P2P discovery is performed through |ISupplicantP2pIface.find| method.
+     *
+     * @param freqInHz the frequency to be scanned.
+     * @param timeoutInSec Max time to be spent is performing discovery.
+     *        Set to 0 to indefinitely continue discovery until an explicit
+     *        |stopFind| is sent.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     *         |SupplicantStatusCode.FAILURE_IFACE_DISABLED|
+     */
+    void findOnSpecificFrequency(in int freqInHz, in int timeoutInSec);
 }
