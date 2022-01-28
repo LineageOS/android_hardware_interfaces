@@ -53,4 +53,5 @@ interface ISession {
   android.hardware.biometrics.common.ICancellationSignal detectInteractionWithContext(in android.hardware.biometrics.common.OperationContext context);
   void onPointerDownWithContext(in android.hardware.biometrics.fingerprint.PointerContext context);
   void onPointerUpWithContext(in android.hardware.biometrics.fingerprint.PointerContext context);
+  void onContextChanged(in android.hardware.biometrics.common.OperationContext context);
 }

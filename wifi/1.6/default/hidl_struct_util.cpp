@@ -1420,8 +1420,6 @@ bool convertHidlNanConfigRequest_1_6ToLegacy(const V1_4::NanConfigRequest& hidl_
     legacy_request->config_enable_ranging = 1;
     legacy_request->enable_ranging = hidl_request2.V1_5.V1_2.enableRanging;
 
-    return true;
-
     legacy_request->config_enable_instant_mode = 1;
     legacy_request->enable_instant_mode = hidl_request2.V1_5.enableInstantCommunicationMode;
     legacy_request->config_instant_mode_channel = 1;

@@ -21,6 +21,7 @@ package {
 cc_defaults {
     name: "VehicleHalDefaults",
     static_libs: [
+        "android-automotive-large-parcelable-vendor-lib",
         "android.hardware.automotive.vehicle-V1-ndk",
         "libmath",
     ],
@@ -34,5 +35,8 @@ cc_defaults {
         "-Wextra",
         "-Werror",
         "-Wthread-safety",
+    ],
+    defaults: [
+        "android-automotive-large-parcelable-defaults",
     ],
 }
