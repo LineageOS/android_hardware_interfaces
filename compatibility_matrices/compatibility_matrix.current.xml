@@ -382,6 +382,14 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.input.processor</name>
+        <version>1</version>
+        <interface>
+            <name>IInputProcessor</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.keymaster</name>
         <version>3.0</version>
