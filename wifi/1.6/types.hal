@@ -46,6 +46,7 @@ import @1.0::WifiRateNss;
 import @1.4::RttPreamble;
 import @1.4::WifiRatePreamble;
 import @1.5::NanConfigRequestSupplemental;
+import @1.5::WifiBand;
 import @1.5::StaLinkLayerIfaceContentionTimeStats;
 import @1.5::WifiIfaceMode;
 
@@ -84,6 +85,17 @@ enum WifiRatePreamble : @1.4::WifiRatePreamble {
      * Preamble type for 11be
      */
     EHT = 6,
+};
+
+/**
+ * Antenna configuration
+ */
+enum WifiAntennaMode : uint32_t {
+  WIFI_ANTENNA_MODE_UNSPECIFIED    = 0,
+  WIFI_ANTENNA_MODE_1X1        = 1,
+  WIFI_ANTENNA_MODE_2X2        = 2,
+  WIFI_ANTENNA_MODE_3X3        = 3,
+  WIFI_ANTENNA_MODE_4X4        = 4,
 };
 
 /**
@@ -1261,4 +1273,42 @@ struct NanCapabilities {
      * Flag to indicate id instant communication mode is supported.
      */
     bool instantCommunicationModeSupportFlag;
+};
+
+/**
+ * Wifi radio configuration
+ */
+struct WifiRadioConfiguration {
+    /**
+     * Band on which this radio chain is operating.
+     * Valid values of bandInfo are: BAND_24GHZ, BAND_5GHZ, BAND_6GHZ and
+     * BAND_60GHZ.
+     *
+     */
+    WifiBand bandInfo;
+
+    /**
+     * Wifi Antenna configuration.
+     */
+    WifiAntennaMode antennaMode;
+};
+
+/**
+ * Wifi radio combination
+ */
+struct WifiRadioCombination {
+    /**
+     * A list of radio configurations in this combination.
+     */
+    vec<WifiRadioConfiguration> radioConfigurations;
+};
+
+/**
+ * Wifi radio combinations matrix retrieved via |getSupportedRadioCombinationsMatrix|.
+ */
+struct WifiRadioCombinationMatrix {
+    /**
+     * A list of all the possible radio combinations that the chip can operate.
+     */
+    vec<WifiRadioCombination> radioCombinations;
 };

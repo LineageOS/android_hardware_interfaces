@@ -722,6 +722,12 @@ Return<void> WifiChip::getUsableChannels_1_6(
                            filterMask);
 }
 
+Return<void> WifiChip::getSupportedRadioCombinationsMatrix(
+        getSupportedRadioCombinationsMatrix_cb hidl_status_cb) {
+    return validateAndCall(this, WifiStatusCode::ERROR_WIFI_CHIP_INVALID,
+                           &WifiChip::getSupportedRadioCombinationsMatrixInternal, hidl_status_cb);
+}
+
 void WifiChip::invalidateAndRemoveAllIfaces() {
     invalidateAndClearBridgedApAll();
     invalidateAndClearAll(ap_ifaces_);
@@ -1459,6 +1465,28 @@ std::pair<WifiStatus, std::vector<V1_6::WifiUsableChannel>> WifiChip::getUsableC
         return {createWifiStatus(WifiStatusCode::ERROR_UNKNOWN), {}};
     }
     return {createWifiStatus(WifiStatusCode::SUCCESS), hidl_usable_channels};
+}
+
+std::pair<WifiStatus, V1_6::WifiRadioCombinationMatrix>
+WifiChip::getSupportedRadioCombinationsMatrixInternal() {
+    legacy_hal::wifi_error legacy_status;
+    legacy_hal::wifi_radio_combination_matrix* legacy_matrix;
+
+    std::tie(legacy_status, legacy_matrix) =
+            legacy_hal_.lock()->getSupportedRadioCombinationsMatrix();
+    if (legacy_status != legacy_hal::WIFI_SUCCESS) {
+        LOG(ERROR) << "Failed to get SupportedRadioCombinations matrix from legacy HAL: "
+                   << legacyErrorToString(legacy_status);
+        return {createWifiStatusFromLegacyError(legacy_status), {}};
+    }
+
+    V1_6::WifiRadioCombinationMatrix hidl_matrix;
+    if (!hidl_struct_util::convertLegacyRadioCombinationsMatrixToHidl(legacy_matrix,
+                                                                      &hidl_matrix)) {
+        LOG(ERROR) << "Failed convertLegacyRadioCombinationsMatrixToHidl() ";
+        return {createWifiStatus(WifiStatusCode::ERROR_INVALID_ARGS), {}};
+    }
+    return {createWifiStatus(WifiStatusCode::SUCCESS), hidl_matrix};
 }
 
 WifiStatus WifiChip::handleChipConfiguration(

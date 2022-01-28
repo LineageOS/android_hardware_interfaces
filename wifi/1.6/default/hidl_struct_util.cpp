@@ -367,6 +367,21 @@ uint32_t convertHidlWifiBandToLegacyMacBand(V1_5::WifiBand hidl_band) {
     }
 }
 
+V1_5::WifiBand convertLegacyMacBandToHidlWifiBand(uint32_t band) {
+    switch (band) {
+        case legacy_hal::WLAN_MAC_2_4_BAND:
+            return V1_5::WifiBand::BAND_24GHZ;
+        case legacy_hal::WLAN_MAC_5_0_BAND:
+            return V1_5::WifiBand::BAND_5GHZ;
+        case legacy_hal::WLAN_MAC_6_0_BAND:
+            return V1_5::WifiBand::BAND_6GHZ;
+        case legacy_hal::WLAN_MAC_60_0_BAND:
+            return V1_5::WifiBand::BAND_60GHZ;
+        default:
+            return V1_5::WifiBand::BAND_UNSPECIFIED;
+    }
+}
+
 uint32_t convertHidlWifiIfaceModeToLegacy(uint32_t hidl_iface_mask) {
     uint32_t legacy_iface_mask = 0;
     if (hidl_iface_mask & V1_5::WifiIfaceMode::IFACE_MODE_STA) {
@@ -2902,6 +2917,85 @@ bool convertHidlVectorOfCoexUnsafeChannelToLegacy(
         }
         legacy_unsafe_channels->push_back(legacy_unsafe_channel);
     }
+    return true;
+}
+
+V1_6::WifiAntennaMode convertLegacyAntennaConfigurationToHidl(uint32_t antenna_cfg) {
+    switch (antenna_cfg) {
+        case legacy_hal::WIFI_ANTENNA_1X1:
+            return V1_6::WifiAntennaMode::WIFI_ANTENNA_MODE_1X1;
+        case legacy_hal::WIFI_ANTENNA_2X2:
+            return V1_6::WifiAntennaMode::WIFI_ANTENNA_MODE_2X2;
+        case legacy_hal::WIFI_ANTENNA_3X3:
+            return V1_6::WifiAntennaMode::WIFI_ANTENNA_MODE_3X3;
+        case legacy_hal::WIFI_ANTENNA_4X4:
+            return V1_6::WifiAntennaMode::WIFI_ANTENNA_MODE_4X4;
+        default:
+            return V1_6::WifiAntennaMode::WIFI_ANTENNA_MODE_UNSPECIFIED;
+    }
+}
+
+bool convertLegacyWifiRadioConfigurationToHidl(
+        legacy_hal::wifi_radio_configuration* radio_configuration,
+        V1_6::WifiRadioConfiguration* hidl_radio_configuration) {
+    if (!hidl_radio_configuration) {
+        return false;
+    }
+    *hidl_radio_configuration = {};
+    hidl_radio_configuration->bandInfo =
+            hidl_struct_util::convertLegacyMacBandToHidlWifiBand(radio_configuration->band);
+    if (hidl_radio_configuration->bandInfo == V1_5::WifiBand::BAND_UNSPECIFIED) {
+        LOG(ERROR) << "Unspecified band";
+        return false;
+    }
+    hidl_radio_configuration->antennaMode =
+            hidl_struct_util::convertLegacyAntennaConfigurationToHidl(
+                    radio_configuration->antenna_cfg);
+    return true;
+}
+
+bool convertLegacyRadioCombinationsMatrixToHidl(
+        legacy_hal::wifi_radio_combination_matrix* legacy_matrix,
+        WifiRadioCombinationMatrix* hidl_matrix) {
+    if (!hidl_matrix || !legacy_matrix) {
+        return false;
+    }
+    *hidl_matrix = {};
+
+    int num_combinations = legacy_matrix->num_radio_combinations;
+    std::vector<V1_6::WifiRadioCombination> radio_combinations_vec;
+    if (!num_combinations) {
+        LOG(ERROR) << "zero radio combinations";
+        return false;
+    }
+    wifi_radio_combination* l_radio_combinations_ptr = legacy_matrix->radio_combinations;
+    for (int i = 0; i < num_combinations; i++) {
+        int num_configurations = l_radio_combinations_ptr->num_radio_configurations;
+        WifiRadioCombination radioCombination;
+        std::vector<V1_6::WifiRadioConfiguration> radio_configurations_vec;
+        if (!num_configurations) {
+            LOG(ERROR) << "zero radio configurations";
+            return false;
+        }
+        for (int j = 0; j < num_configurations; j++) {
+            WifiRadioConfiguration radioConfiguration;
+            wifi_radio_configuration* l_radio_configurations_ptr =
+                    &l_radio_combinations_ptr->radio_configurations[j];
+            if (!hidl_struct_util::convertLegacyWifiRadioConfigurationToHidl(
+                        l_radio_configurations_ptr, &radioConfiguration)) {
+                LOG(ERROR) << "Error converting wifi radio configuration";
+                return false;
+            }
+            radio_configurations_vec.push_back(radioConfiguration);
+        }
+        radioCombination.radioConfigurations = radio_configurations_vec;
+        radio_combinations_vec.push_back(radioCombination);
+        l_radio_combinations_ptr =
+                (wifi_radio_combination*)((u8*)l_radio_combinations_ptr +
+                                          sizeof(wifi_radio_combination) +
+                                          (sizeof(wifi_radio_configuration) * num_configurations));
+    }
+    hidl_matrix->radioCombinations = radio_combinations_vec;
     return true;
 }
 

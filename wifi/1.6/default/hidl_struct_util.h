@@ -74,6 +74,11 @@ bool convertHidlCoexUnsafeChannelToLegacy(
 bool convertHidlVectorOfCoexUnsafeChannelToLegacy(
         const std::vector<V1_5::IWifiChip::CoexUnsafeChannel>& hidl_unsafe_channels,
         std::vector<legacy_hal::wifi_coex_unsafe_channel>* legacy_unsafe_channels);
+bool convertLegacyRadioCombinationsMatrixToHidl(
+        legacy_hal::wifi_radio_combination_matrix* legacy_matrix,
+        V1_6::WifiRadioCombinationMatrix* hidl_matrix);
+V1_5::WifiBand convertLegacyMacBandToHidlWifiBand(uint32_t band);
+V1_6::WifiAntennaMode convertLegacyAntennaConfigurationToHidl(uint32_t antenna_cfg);
 
 // STA iface conversion methods.
 bool convertLegacyFeaturesToHidlStaCapabilities(uint64_t legacy_feature_set,
