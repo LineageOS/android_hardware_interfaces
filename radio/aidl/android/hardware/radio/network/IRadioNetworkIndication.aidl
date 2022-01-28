@@ -21,7 +21,6 @@ import android.hardware.radio.RadioTechnology;
 import android.hardware.radio.network.BarringInfo;
 import android.hardware.radio.network.CellIdentity;
 import android.hardware.radio.network.CellInfo;
-import android.hardware.radio.network.Domain;
 import android.hardware.radio.network.LinkCapacityEstimate;
 import android.hardware.radio.network.NetworkScanResult;
 import android.hardware.radio.network.PhoneRestrictedState;
