@@ -162,6 +162,7 @@ bool initHalFuncTableWithStubs(wifi_hal_fn* hal_fn) {
     populateStubFor(&hal_fn->wifi_get_usable_channels);
     populateStubFor(&hal_fn->wifi_trigger_subsystem_restart);
     populateStubFor(&hal_fn->wifi_set_indoor_state);
+    populateStubFor(&hal_fn->wifi_get_supported_radio_combinations_matrix);
     return true;
 }
 }  // namespace legacy_hal
