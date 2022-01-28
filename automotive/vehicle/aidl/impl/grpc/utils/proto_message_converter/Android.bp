@@ -34,10 +34,10 @@ cc_library {
     shared_libs: ["libprotobuf-cpp-full"],
     static_libs: [
         "VehicleHalProtos",
-        "VehicleHalUtils",
+        "VehicleHalUtilsVendor",
     ],
     defaults: ["VehicleHalDefaults"],
-    export_static_lib_headers: ["VehicleHalUtils"],
+    export_static_lib_headers: ["VehicleHalUtilsVendor"],
 }
 
 cc_test {
@@ -51,7 +51,7 @@ cc_test {
     static_libs: [
         "VehicleHalProtoMessageConverter",
         "VehicleHalProtos",
-        "VehicleHalUtils",
+        "VehicleHalUtilsVendor",
         "libgtest",
     ],
     header_libs: ["VehicleHalDefaultConfig"],

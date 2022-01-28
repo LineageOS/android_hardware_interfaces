@@ -24,7 +24,7 @@ cc_test {
     srcs: ["*.cpp"],
     defaults: ["VehicleHalDefaults"],
     static_libs: [
-        "VehicleHalUtils",
+        "VehicleHalUtilsVendor",
         "FakeVehicleHalValueGenerators",
         "FakeObd2Frame",
     ],
