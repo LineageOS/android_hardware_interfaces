@@ -29,4 +29,5 @@ aidl_interface {
             min_sdk_version: "current",
         },
     },
+    double_loadable: true,
 }
