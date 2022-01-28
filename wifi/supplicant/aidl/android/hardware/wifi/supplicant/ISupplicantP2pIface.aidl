@@ -643,6 +643,17 @@ interface ISupplicantP2pIface {
     void setWfdR2DeviceInfo(in byte[] info);
 
     /**
+     * Remove the client with the MAC address from the group.
+     *
+     * @param peerAddress Mac address of the client.
+     * @param isLegacyClient Indicate if client is a legacy client or not.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
+     */
+    void removeClient(in byte[/*6*/] peerAddress, in boolean isLegacyClient);
+
+    /**
      * Set the list of supported config methods for WPS operations.
      *
      * @param configMethods Mask of WPS configuration methods supported by the
