@@ -247,8 +247,7 @@ GnssData Utils::getMockMeasurement(const bool enableCorrVecOutputs) {
     GnssData gnssData = {.measurements = {measurement},
                          .clock = clock,
                          .elapsedRealtime = timestamp,
-                         .gnssAgcs = std::make_optional(std::vector(
-                                 {std::make_optional(gnssAgc1), std::make_optional(gnssAgc2)}))};
+                         .gnssAgcs = std::vector({gnssAgc1, gnssAgc2})};
     return gnssData;
 }
 

@@ -53,7 +53,7 @@ interface IGnss {
   void injectLocation(in android.hardware.gnss.GnssLocation location);
   void injectBestLocation(in android.hardware.gnss.GnssLocation location);
   void deleteAidingData(in android.hardware.gnss.IGnss.GnssAidingData aidingDataFlags);
-  void setPositionMode(in android.hardware.gnss.IGnss.GnssPositionMode mode, in android.hardware.gnss.IGnss.GnssPositionRecurrence recurrence, in int minIntervalMs, in int preferredAccuracyMeters, in int preferredTimeMs, in boolean lowPowerMode);
+  void setPositionMode(in android.hardware.gnss.IGnss.PositionModeOptions options);
   android.hardware.gnss.IGnssAntennaInfo getExtensionGnssAntennaInfo();
   @nullable android.hardware.gnss.measurement_corrections.IMeasurementCorrectionsInterface getExtensionMeasurementCorrections();
   const int ERROR_INVALID_ARGUMENT = 1;
@@ -72,18 +72,27 @@ interface IGnss {
   }
   @Backing(type="int") @VintfStability
   enum GnssAidingData {
-    DELETE_EPHEMERIS = 1,
-    DELETE_ALMANAC = 2,
-    DELETE_POSITION = 4,
-    DELETE_TIME = 8,
-    DELETE_IONO = 16,
-    DELETE_UTC = 32,
-    DELETE_HEALTH = 64,
-    DELETE_SVDIR = 128,
-    DELETE_SVSTEER = 256,
-    DELETE_SADATA = 512,
-    DELETE_RTI = 1024,
-    DELETE_CELLDB_INFO = 32768,
-    DELETE_ALL = 65535,
+    EPHEMERIS = 1,
+    ALMANAC = 2,
+    POSITION = 4,
+    TIME = 8,
+    IONO = 16,
+    UTC = 32,
+    HEALTH = 64,
+    SVDIR = 128,
+    SVSTEER = 256,
+    SADATA = 512,
+    RTI = 1024,
+    CELLDB_INFO = 32768,
+    ALL = 65535,
+  }
+  @VintfStability
+  parcelable PositionModeOptions {
+    android.hardware.gnss.IGnss.GnssPositionMode mode;
+    android.hardware.gnss.IGnss.GnssPositionRecurrence recurrence;
+    int minIntervalMs;
+    int preferredAccuracyMeters;
+    int preferredTimeMs;
+    boolean lowPowerMode;
   }
 }

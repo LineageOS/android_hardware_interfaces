@@ -41,7 +41,7 @@ ndk::ScopedAStatus AGnssRil::setRefLocation(const AGnssRefLocation& agnssRefloca
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus AGnssRil::setSetId(SetIDType type, const std::string& setid) {
+ndk::ScopedAStatus AGnssRil::setSetId(SetIdType type, const std::string& setid) {
     ALOGD("AGnssRil::setSetId: type:%s, setid: %s", toString(type).c_str(), setid.c_str());
     return ndk::ScopedAStatus::ok();
 }

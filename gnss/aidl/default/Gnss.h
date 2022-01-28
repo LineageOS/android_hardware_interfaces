@@ -50,9 +50,7 @@ class Gnss : public BnGnss {
     ndk::ScopedAStatus injectLocation(const GnssLocation& location) override;
     ndk::ScopedAStatus injectBestLocation(const GnssLocation& location) override;
     ndk::ScopedAStatus deleteAidingData(GnssAidingData aidingDataFlags) override;
-    ndk::ScopedAStatus setPositionMode(GnssPositionMode mode, GnssPositionRecurrence recurrence,
-                                       int minIntervalMs, int preferredAccuracyMeters,
-                                       int preferredTimeMs, bool lowPowerMode) override;
+    ndk::ScopedAStatus setPositionMode(const PositionModeOptions& options) override;
 
     ndk::ScopedAStatus getExtensionPsds(std::shared_ptr<IGnssPsds>* iGnssPsds) override;
     ndk::ScopedAStatus getExtensionGnssConfiguration(
