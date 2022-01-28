@@ -44,7 +44,7 @@ interface IEvsEnumerator {
   android.hardware.automotive.evs.UltrasonicsArrayDesc[] getUltrasonicsArrayList();
   boolean isHardware();
   android.hardware.automotive.evs.IEvsCamera openCamera(in String cameraId, in android.hardware.automotive.evs.Stream streamCfg);
-  android.hardware.automotive.evs.IEvsDisplay openDisplay(in byte id);
+  android.hardware.automotive.evs.IEvsDisplay openDisplay(in int id);
   android.hardware.automotive.evs.IEvsUltrasonicsArray openUltrasonicsArray(in String ultrasonicsArrayId);
   void registerStatusCallback(in android.hardware.automotive.evs.IEvsEnumeratorStatusCallback callback);
 }
