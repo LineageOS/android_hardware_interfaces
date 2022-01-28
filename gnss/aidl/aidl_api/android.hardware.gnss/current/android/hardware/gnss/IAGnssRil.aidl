@@ -36,7 +36,7 @@ package android.hardware.gnss;
 interface IAGnssRil {
   void setCallback(in android.hardware.gnss.IAGnssRilCallback callback);
   void setRefLocation(in android.hardware.gnss.IAGnssRil.AGnssRefLocation agnssReflocation);
-  void setSetId(in android.hardware.gnss.IAGnssRil.SetIDType type, in @utf8InCpp String setid);
+  void setSetId(in android.hardware.gnss.IAGnssRil.SetIdType type, in @utf8InCpp String setid);
   void updateNetworkState(in android.hardware.gnss.IAGnssRil.NetworkAttributes attributes);
   const int NETWORK_CAPABILITY_NOT_METERED = 1;
   const int NETWORK_CAPABILITY_NOT_ROAMING = 2;
@@ -48,7 +48,7 @@ interface IAGnssRil {
     NR_CELLID = 8,
   }
   @Backing(type="int") @VintfStability
-  enum SetIDType {
+  enum SetIdType {
     NONE = 0,
     IMSI = 1,
     MSISDM = 2,

@@ -81,19 +81,19 @@ interface IGnss {
     @VintfStability
     @Backing(type="int")
     enum GnssAidingData {
-        DELETE_EPHEMERIS = 0x0001,
-        DELETE_ALMANAC = 0x0002,
-        DELETE_POSITION = 0x0004,
-        DELETE_TIME = 0x0008,
-        DELETE_IONO = 0x0010,
-        DELETE_UTC = 0x0020,
-        DELETE_HEALTH = 0x0040,
-        DELETE_SVDIR = 0x0080,
-        DELETE_SVSTEER = 0x0100,
-        DELETE_SADATA = 0x0200,
-        DELETE_RTI = 0x0400,
-        DELETE_CELLDB_INFO = 0x8000,
-        DELETE_ALL = 0xFFFF
+        EPHEMERIS = 0x0001,
+        ALMANAC = 0x0002,
+        POSITION = 0x0004,
+        TIME = 0x0008,
+        IONO = 0x0010,
+        UTC = 0x0020,
+        HEALTH = 0x0040,
+        SVDIR = 0x0080,
+        SVSTEER = 0x0100,
+        SADATA = 0x0200,
+        RTI = 0x0400,
+        CELLDB_INFO = 0x8000,
+        ALL = 0xFFFF
     }
 
     /**
@@ -256,37 +256,56 @@ interface IGnss {
 
     /**
      * Specifies that the next call to start will not use the information defined in the flags.
-     * GnssAidingData value of DELETE_ALL is passed for a cold start.
+     * GnssAidingData value of GnssAidingData::ALL is passed for a cold start.
      *
      * @param aidingDataFlags Flags specifying the aiding data to be deleted.
      */
     void deleteAidingData(in GnssAidingData aidingDataFlags);
 
     /**
+     * Options used in the setPositionMode() call for specifying the GNSS engine behavior.
+     */
+    @VintfStability
+    parcelable PositionModeOptions {
+        /**
+         * Must be one of MS_BASED or STANDALONE. It is allowed by the platform (and it is
+         * recommended) to fallback to MS_BASED if MS_ASSISTED is passed in, and MS_BASED is
+         * supported.
+         */
+        GnssPositionMode mode;
+
+        /* Recurrence GNSS position recurrence value, either periodic or single. */
+        GnssPositionRecurrence recurrence;
+
+        /* Represents the time between fixes in milliseconds. */
+        int minIntervalMs;
+
+        /* Represents the requested fix accuracy in meters. */
+        int preferredAccuracyMeters;
+
+        /* Represents the requested time to first fix in milliseconds. */
+        int preferredTimeMs;
+
+        /**
+         * When true, and IGnss is the only client to the GNSS hardware, the GNSS hardware must make
+         * strong tradeoffs to substantially restrict power use. Specifically, in the case of a
+         * several second long minIntervalMs, the GNSS hardware must not, on average, run power
+         * hungry operations like RF and signal searches for more than one second per interval, and
+         * must make exactly one call to gnssSvStatusCb(), and either zero or one call to
+         * GnssLocationCb() at each interval. When false, HAL must operate in the nominal mode and
+         * is expected to make power and performance tradoffs such as duty-cycling when signal
+         * conditions are good and more active searches to reacquire GNSS signals when no signals
+         * are present. When there are additional clients using the GNSS hardware other than IGnss,
+         * the GNSS hardware may operate in a higher power mode, on behalf of those clients.
+         */
+        boolean lowPowerMode;
+    }
+
+    /**
      * Sets the GnssPositionMode parameter, its associated recurrence value, the time between fixes,
      * requested fix accuracy, time to first fix.
-     *
-     * @param mode Parameter must be one of MS_BASED or STANDALONE. It is allowed by the platform
-     *     (and it is recommended) to fallback to MS_BASED if MS_ASSISTED is passed in, and MS_BASED
-     *     is supported.
-     * @param recurrence GNSS position recurrence value, either periodic or single.
-     * @param minIntervalMs Represents the time between fixes in milliseconds.
-     * @param preferredAccuracyMeters Represents the requested fix accuracy in meters.
-     * @param preferredTimeMs Represents the requested time to first fix in milliseconds.
-     * @param lowPowerMode When true, and IGnss is the only client to the GNSS hardware, the GNSS
-     *     hardware must make strong tradeoffs to substantially restrict power use. Specifically, in
-     *     the case of a several second long minIntervalMs, the GNSS hardware must not, on average,
-     *     run power hungry operations like RF and signal searches for more than one second per
-     *     interval, and must make exactly one call to gnssSvStatusCb(), and either zero or one call
-     *     to GnssLocationCb() at each interval. When false, HAL must operate in the nominal mode
-     *     and is expected to make power and performance tradoffs such as duty-cycling when signal
-     *     conditions are good and more active searches to reacquire GNSS signals when no signals
-     *     are present. When there are additional clients using the GNSS hardware other than IGnss,
-     *     the GNSS hardware may operate in a higher power mode, on behalf of those clients.
      */
-    void setPositionMode(in GnssPositionMode mode, in GnssPositionRecurrence recurrence,
-            in int minIntervalMs, in int preferredAccuracyMeters, in int preferredTimeMs,
-            in boolean lowPowerMode);
+    void setPositionMode(in PositionModeOptions options);
 
     /*
      * This method returns the IGnssAntennaInfo.

@@ -25,7 +25,7 @@ interface IAGnssRilCallback {
     /**
      * The Hal uses this API to request a SET ID.
      *
-     * @param setIdflag A bitfield of IAGnssRil.SetIDType that is required by
+     * @param setIdflag A bitfield of IAGnssRil.SetIdType that is required by
      * the HAL. The framework will inject an empty SET ID if the flag is NONE.
      *
      */

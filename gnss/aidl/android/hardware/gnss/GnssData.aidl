@@ -76,6 +76,10 @@ parcelable GnssData {
          * is the primary common use central frequency, e.g. L1 = 1575.45 MHz
          * for GPS.
          *
+         * If all the GLO frequencies have a common AGC, the FC0 (frequency
+         * channel number 0) of the individual GLO bands is used to represent
+         * all the GLO frequencies.
+         *
          * For an L1, L5 receiver tracking a satellite on L1 and L5 at the same
          * time, two raw measurement structs must be reported for this same
          * satellite, in one of the measurement structs, all the values related
@@ -92,5 +96,5 @@ parcelable GnssData {
      * GnssMeasurement or GnssClock fields are not reported yet. E.g., when a GNSS signal is too
      * weak to be acquired, the AGC value must still be reported.
      */
-    @nullable GnssAgc[] gnssAgcs;
+    GnssAgc[] gnssAgcs = {};
 }
