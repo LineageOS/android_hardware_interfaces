@@ -37,7 +37,7 @@ class PendingRequestPool final {
   public:
     using TimeoutCallbackFunc = std::function<void(const std::unordered_set<int64_t>&)>;
 
-    explicit PendingRequestPool(int64_t timeoutInSec);
+    explicit PendingRequestPool(int64_t timeoutInNano);
 
     ~PendingRequestPool();
 

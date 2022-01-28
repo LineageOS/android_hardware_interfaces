@@ -20,7 +20,6 @@ aidl_interface {
     backend: {
         java: {
             platform_apis: true,
-            srcs_available: true,
         },
         ndk: {
             vndk: {
