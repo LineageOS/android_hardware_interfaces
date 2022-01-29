@@ -357,6 +357,15 @@ void onAsyncTwtEventDeviceNotify(TwtDeviceNotify* event) {
     }
 }
 
+// Callback to report current CHRE NAN state
+std::function<void(chre_nan_rtt_state)> on_chre_nan_rtt_internal_callback;
+void onAsyncChreNanRttState(chre_nan_rtt_state state) {
+    const auto lock = hidl_sync_util::acquireGlobalLock();
+    if (on_chre_nan_rtt_internal_callback) {
+        on_chre_nan_rtt_internal_callback(state);
+    }
+}
+
 // End of the free-standing "C" style callbacks.
 
 WifiLegacyHal::WifiLegacyHal(const std::weak_ptr<wifi_system::InterfaceTool> iface_tool,
@@ -1551,6 +1560,30 @@ WifiLegacyHal::getSupportedRadioCombinationsMatrix() {
     return {status, radio_combination_matrix_ptr};
 }
 
+wifi_error WifiLegacyHal::chreNanRttRequest(const std::string& iface_name, bool enable) {
+    if (enable)
+        return global_func_table_.wifi_nan_rtt_chre_enable_request(0, getIfaceHandle(iface_name),
+                                                                   NULL);
+    else
+        return global_func_table_.wifi_nan_rtt_chre_disable_request(0, getIfaceHandle(iface_name));
+}
+
+wifi_error WifiLegacyHal::chreRegisterHandler(const std::string& iface_name,
+                                              const ChreCallbackHandlers& handler) {
+    if (on_chre_nan_rtt_internal_callback) {
+        return WIFI_ERROR_NOT_AVAILABLE;
+    }
+
+    on_chre_nan_rtt_internal_callback = handler.on_wifi_chre_nan_rtt_state;
+
+    wifi_error status = global_func_table_.wifi_chre_register_handler(getIfaceHandle(iface_name),
+                                                                      {onAsyncChreNanRttState});
+    if (status != WIFI_SUCCESS) {
+        on_chre_nan_rtt_internal_callback = nullptr;
+    }
+    return status;
+}
+
 void WifiLegacyHal::invalidate() {
     global_handle_ = nullptr;
     iface_name_to_handle_.clear();
@@ -1586,6 +1619,7 @@ void WifiLegacyHal::invalidate() {
     on_twt_event_teardown_completion_callback = nullptr;
     on_twt_event_info_frame_received_callback = nullptr;
     on_twt_event_device_notify_callback = nullptr;
+    on_chre_nan_rtt_internal_callback = nullptr;
 }
 
 }  // namespace legacy_hal
