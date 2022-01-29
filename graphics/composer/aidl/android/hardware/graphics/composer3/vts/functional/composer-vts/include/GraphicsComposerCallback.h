@@ -15,10 +15,17 @@
  */
 #pragma once
 
+// TODO(b/129481165): remove the #pragma below and fix conversion issues
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+
 #include <aidl/android/hardware/graphics/composer3/BnComposerCallback.h>
 #include <android-base/thread_annotations.h>
 #include <mutex>
 #include <unordered_set>
+
+// TODO(b/129481165): remove the #pragma below and fix conversion issues
+#pragma clang diagnostic pop  // ignored "-Wconversion
 
 namespace aidl::android::hardware::graphics::composer3::vts {
 

@@ -15,6 +15,11 @@
  */
 #pragma once
 
+// TODO(b/129481165): remove the #pragma below and fix conversion issues
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+
+#include <ReadbackVts.h>
 #include <mapper-vts/2.1/MapperVts.h>
 #include <math/half.h>
 #include <math/vec3.h>
@@ -25,7 +30,9 @@
 #include <ui/PixelFormat.h>
 #include <ui/Rect.h>
 #include <ui/Region.h>
-#include "ReadbackVts.h"
+
+// TODO(b/129481165): remove the #pragma below and fix conversion issues
+#pragma clang diagnostic pop  // ignored "-Wconversion
 
 namespace aidl::android::hardware::graphics::composer3::vts {
 
