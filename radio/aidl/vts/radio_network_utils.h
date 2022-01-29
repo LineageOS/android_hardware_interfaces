@@ -43,6 +43,7 @@ class RadioNetworkResponse : public BnRadioNetworkResponse {
     RegStateResult voiceRegResp;
     CellIdentity barringCellIdentity;
     std::vector<BarringInfo> barringInfos;
+    UsageSetting usageSetting;
 
     virtual ndk::ScopedAStatus acknowledgeRequest(int32_t serial) override;
 
@@ -211,4 +212,10 @@ class RadioNetworkTest : public ::testing::TestWithParam<std::string>, public Ra
     std::shared_ptr<RadioNetworkResponse> radioRsp_network;
     /* radio network indication handle */
     std::shared_ptr<RadioNetworkIndication> radioInd_network;
+
+    void invokeAndExpectResponse(std::function<ndk::ScopedAStatus(int32_t serial)> request,
+                                 std::vector<RadioError> errors_to_check);
+
+    // Helper function to reduce copy+paste
+    void testSetUsageSetting_InvalidValues(std::vector<RadioError> errors);
 };

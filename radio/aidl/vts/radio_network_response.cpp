@@ -96,8 +96,11 @@ ndk::ScopedAStatus RadioNetworkResponse::getSystemSelectionChannelsResponse(
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioNetworkResponse::getUsageSettingResponse(
-        const RadioResponseInfo& /*info*/, const UsageSetting /*usageSetting*/) {
+ndk::ScopedAStatus RadioNetworkResponse::getUsageSettingResponse(const RadioResponseInfo& info,
+                                                                 const UsageSetting usageSetting) {
+    rspInfo = info;
+    this->usageSetting = usageSetting;
+    parent_network.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
@@ -195,8 +198,9 @@ ndk::ScopedAStatus RadioNetworkResponse::setSystemSelectionChannelsResponse(
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioNetworkResponse::setUsageSettingResponse(
-        const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioNetworkResponse::setUsageSettingResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_network.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
