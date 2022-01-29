@@ -23,9 +23,13 @@ interface IAGnssCallback {
     @VintfStability
     @Backing(type="int")
     enum AGnssType {
+        // Secure User Plane Location
         SUPL = 1,
+        // CDMA2000
         C2K = 2,
+        // SUPL, Emergency call over IP Multimedia Subsystem
         SUPL_EIMS = 3,
+        // SUPL, IP Multimedia Subsystem
         SUPL_IMS = 4,
     }
 

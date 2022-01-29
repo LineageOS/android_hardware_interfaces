@@ -39,6 +39,7 @@ union CommandResultPayload {
   android.hardware.graphics.composer3.DisplayRequest displayRequest;
   android.hardware.graphics.composer3.PresentFence presentFence;
   android.hardware.graphics.composer3.ReleaseFences releaseFences;
+  android.hardware.graphics.composer3.BufferAheadResult bufferAheadResult;
   android.hardware.graphics.composer3.PresentOrValidate presentOrValidateResult;
   android.hardware.graphics.composer3.ClientTargetPropertyWithNits clientTargetProperty;
 }

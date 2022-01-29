@@ -44,7 +44,7 @@ interface IRadioData {
   oneway void setDataAllowed(in int serial, in boolean allow);
   oneway void setDataProfile(in int serial, in android.hardware.radio.data.DataProfileInfo[] profiles);
   oneway void setDataThrottling(in int serial, in android.hardware.radio.data.DataThrottlingAction dataThrottlingAction, in long completionDurationMillis);
-  oneway void setInitialAttachApn(in int serial, in android.hardware.radio.data.DataProfileInfo dataProfileInfo);
+  oneway void setInitialAttachApn(in int serial, in @nullable android.hardware.radio.data.DataProfileInfo dataProfileInfo);
   oneway void setResponseFunctions(in android.hardware.radio.data.IRadioDataResponse radioDataResponse, in android.hardware.radio.data.IRadioDataIndication radioDataIndication);
   oneway void setupDataCall(in int serial, in android.hardware.radio.AccessNetwork accessNetwork, in android.hardware.radio.data.DataProfileInfo dataProfileInfo, in boolean roamingAllowed, in android.hardware.radio.data.DataRequestReason reason, in android.hardware.radio.data.LinkAddress[] addresses, in String[] dnses, in int pduSessionId, in @nullable android.hardware.radio.data.SliceInfo sliceInfo, in boolean matchAllRuleAllowed);
   oneway void startHandover(in int serial, in int callId);

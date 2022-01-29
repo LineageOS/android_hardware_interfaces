@@ -37,6 +37,7 @@ parcelable LayerCommand {
   long layer;
   @nullable android.hardware.graphics.common.Point cursorPosition;
   @nullable android.hardware.graphics.composer3.Buffer buffer;
+  @nullable android.hardware.graphics.composer3.Buffer bufferAhead;
   @nullable android.hardware.graphics.common.Rect[] damage;
   @nullable android.hardware.graphics.composer3.ParcelableBlendMode blendMode;
   @nullable android.hardware.graphics.composer3.Color color;

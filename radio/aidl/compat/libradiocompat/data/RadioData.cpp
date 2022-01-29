@@ -122,9 +122,10 @@ ScopedAStatus RadioData::setDataThrottling(int32_t serial, aidl::DataThrottlingA
     return ok();
 }
 
-ScopedAStatus RadioData::setInitialAttachApn(int32_t serial, const aidl::DataProfileInfo& info) {
+ScopedAStatus RadioData::setInitialAttachApn(int32_t serial,
+                                             const std::optional<aidl::DataProfileInfo>& info) {
     LOG_CALL << serial;
-    mHal1_5->setInitialAttachApn_1_5(serial, toHidl(info));
+    mHal1_5->setInitialAttachApn_1_5(serial, toHidl(info.value()));
     return ok();
 }
 
@@ -136,14 +137,15 @@ ScopedAStatus RadioData::setResponseFunctions(
     return ok();
 }
 
-ScopedAStatus RadioData::setupDataCall(  //
-        int32_t serial, aidlCommon::AccessNetwork accessNetwork,
-        const aidl::DataProfileInfo& dataProfileInfo, bool roamingAllowed,
-        aidl::DataRequestReason reason, const std::vector<aidl::LinkAddress>& addresses,
-        const std::vector<std::string>& dnses, int32_t pduSessId,
-        const std::optional<aidl::SliceInfo>& sliceInfo, bool matchAllRuleAllowed) {
+ScopedAStatus RadioData::setupDataCall(int32_t serial, aidlCommon::AccessNetwork accessNetwork,
+                                       const aidl::DataProfileInfo& dataProfileInfo,
+                                       bool roamingAllowed, aidl::DataRequestReason reason,
+                                       const std::vector<aidl::LinkAddress>& addresses,
+                                       const std::vector<std::string>& dnses, int32_t pduSessId,
+                                       const std::optional<aidl::SliceInfo>& sliceInfo,
+                                       bool matchAllRuleAllowed) {
     if (mHal1_6) {
-        mHal1_6->setupDataCall_1_6(  //
+        mHal1_6->setupDataCall_1_6(
                 serial, V1_5::AccessNetwork(accessNetwork), toHidl(dataProfileInfo), roamingAllowed,
                 V1_2::DataRequestReason(reason), toHidl(addresses), toHidl(dnses), pduSessId,
                 toHidl<V1_6::OptionalSliceInfo>(sliceInfo),
@@ -151,7 +153,7 @@ ScopedAStatus RadioData::setupDataCall(  //
                 matchAllRuleAllowed);
         mContext->addDataProfile(dataProfileInfo);
     } else {
-        mHal1_5->setupDataCall_1_5(  //
+        mHal1_5->setupDataCall_1_5(
                 serial, V1_5::AccessNetwork(accessNetwork), toHidl(dataProfileInfo), roamingAllowed,
                 V1_2::DataRequestReason(reason), toHidl(addresses), toHidl(dnses));
     }

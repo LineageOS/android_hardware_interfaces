@@ -24,7 +24,7 @@ struct AGnssRil : public BnAGnssRil {
   public:
     ndk::ScopedAStatus setCallback(const std::shared_ptr<IAGnssRilCallback>& callback) override;
     ndk::ScopedAStatus setRefLocation(const AGnssRefLocation& agnssReflocation) override;
-    ndk::ScopedAStatus setSetId(SetIDType type, const std::string& setid) override;
+    ndk::ScopedAStatus setSetId(SetIdType type, const std::string& setid) override;
     ndk::ScopedAStatus updateNetworkState(const NetworkAttributes& attributes) override;
 
   private:

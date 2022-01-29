@@ -44,7 +44,8 @@ class RadioData : public RadioCompatBase, public aidl::android::hardware::radio:
             int64_t completionDurationMillis) override;
     ::ndk::ScopedAStatus setInitialAttachApn(
             int32_t serial,
-            const ::aidl::android::hardware::radio::data::DataProfileInfo& dpInfo) override;
+            const std::optional<::aidl::android::hardware::radio::data::DataProfileInfo>& dpInfo)
+            override;
     ::ndk::ScopedAStatus setResponseFunctions(
             const std::shared_ptr<::aidl::android::hardware::radio::data::IRadioDataResponse>&
                     radioDataResponse,

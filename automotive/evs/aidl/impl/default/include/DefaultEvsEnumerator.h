@@ -37,7 +37,7 @@ class DefaultEvsEnumerator final
             const ::aidl::android::hardware::automotive::evs::CameraDesc& desc,
             std::vector<::aidl::android::hardware::automotive::evs::Stream>* _aidl_return) override;
     ::ndk::ScopedAStatus openDisplay(
-            int8_t displayId,
+            int32_t displayId,
             std::shared_ptr<::aidl::android::hardware::automotive::evs::IEvsDisplay>* obj) override;
     ::ndk::ScopedAStatus closeDisplay(
             const std::shared_ptr<::aidl::android::hardware::automotive::evs::IEvsDisplay>& obj)

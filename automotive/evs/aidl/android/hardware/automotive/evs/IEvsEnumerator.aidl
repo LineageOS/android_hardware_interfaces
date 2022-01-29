@@ -146,7 +146,7 @@ interface IEvsEnumerator {
      * @return EvsDisplay object to be used.
      * @throws EvsResult::INVALID_ARG if no display with a given id exists
      */
-    IEvsDisplay openDisplay(in byte id);
+    IEvsDisplay openDisplay(in int id);
 
     /**
      * Gets the IEvsUltrasonicsArray associated with a ultrasonicsArrayId from a

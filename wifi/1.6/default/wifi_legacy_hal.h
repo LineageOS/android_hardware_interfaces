@@ -204,6 +204,11 @@ using ::WIFI_AC_BE;
 using ::WIFI_AC_BK;
 using ::WIFI_AC_VI;
 using ::WIFI_AC_VO;
+using ::WIFI_ANTENNA_1X1;
+using ::WIFI_ANTENNA_2X2;
+using ::WIFI_ANTENNA_3X3;
+using ::WIFI_ANTENNA_4X4;
+using ::WIFI_ANTENNA_UNSPECIFIED;
 using ::wifi_band;
 using ::WIFI_BAND_A;
 using ::WIFI_BAND_A_DFS;
@@ -281,6 +286,9 @@ using ::WIFI_POWER_SCENARIO_ON_BODY_CELL_ON;
 using ::WIFI_POWER_SCENARIO_ON_HEAD_CELL_OFF;
 using ::WIFI_POWER_SCENARIO_ON_HEAD_CELL_ON;
 using ::WIFI_POWER_SCENARIO_VOICE_CALL;
+using ::wifi_radio_combination;
+using ::wifi_radio_combination_matrix;
+using ::wifi_radio_configuration;
 using ::wifi_rate;
 using ::wifi_request_id;
 using ::wifi_ring_buffer_status;
@@ -659,6 +667,8 @@ class WifiLegacyHal {
     wifi_error triggerSubsystemRestart();
 
     wifi_error setIndoorState(bool isIndoor);
+
+    std::pair<wifi_error, wifi_radio_combination_matrix*> getSupportedRadioCombinationsMatrix();
 
   private:
     // Retrieve interface handles for all the available interfaces.

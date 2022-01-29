@@ -18,7 +18,9 @@
 
 RadioVoiceResponse::RadioVoiceResponse(RadioServiceTest& parent) : parent_voice(parent) {}
 
-ndk::ScopedAStatus RadioVoiceResponse::acceptCallResponse(const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioVoiceResponse::acceptCallResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
@@ -26,11 +28,15 @@ ndk::ScopedAStatus RadioVoiceResponse::acknowledgeRequest(int32_t /*serial*/) {
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioVoiceResponse::conferenceResponse(const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioVoiceResponse::conferenceResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioVoiceResponse::dialResponse(const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioVoiceResponse::dialResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
@@ -41,34 +47,44 @@ ndk::ScopedAStatus RadioVoiceResponse::emergencyDialResponse(const RadioResponse
 }
 
 ndk::ScopedAStatus RadioVoiceResponse::exitEmergencyCallbackModeResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioVoiceResponse::explicitCallTransferResponse(
-        const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioVoiceResponse::explicitCallTransferResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioVoiceResponse::getCallForwardStatusResponse(
-        const RadioResponseInfo& /*info*/,
-        const std::vector<CallForwardInfo>& /*callForwardInfos*/) {
+        const RadioResponseInfo& info, const std::vector<CallForwardInfo>& /*callForwardInfos*/) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioVoiceResponse::getCallWaitingResponse(const RadioResponseInfo& /*info*/,
+ndk::ScopedAStatus RadioVoiceResponse::getCallWaitingResponse(const RadioResponseInfo& info,
                                                               bool /*enable*/,
                                                               int32_t /*serviceClass*/) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioVoiceResponse::getClipResponse(const RadioResponseInfo& /*info*/,
+ndk::ScopedAStatus RadioVoiceResponse::getClipResponse(const RadioResponseInfo& info,
                                                        ClipStatus /*status*/) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioVoiceResponse::getClirResponse(const RadioResponseInfo& /*info*/,
-                                                       int32_t /*n*/, int32_t /*m*/) {
+ndk::ScopedAStatus RadioVoiceResponse::getClirResponse(const RadioResponseInfo& info, int32_t /*n*/,
+                                                       int32_t /*m*/) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
@@ -81,27 +97,37 @@ ndk::ScopedAStatus RadioVoiceResponse::getCurrentCallsResponse(const RadioRespon
 }
 
 ndk::ScopedAStatus RadioVoiceResponse::getLastCallFailCauseResponse(
-        const RadioResponseInfo& /*info*/, const LastCallFailCauseInfo& /*failCauseInfo*/) {
+        const RadioResponseInfo& info, const LastCallFailCauseInfo& /*failCauseInfo*/) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioVoiceResponse::getMuteResponse(const RadioResponseInfo& /*info*/,
+ndk::ScopedAStatus RadioVoiceResponse::getMuteResponse(const RadioResponseInfo& info,
                                                        bool /*enable*/) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioVoiceResponse::getPreferredVoicePrivacyResponse(
-        const RadioResponseInfo& /*info*/, bool /*enable*/) {
+        const RadioResponseInfo& info, bool /*enable*/) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioVoiceResponse::getTtyModeResponse(const RadioResponseInfo& /*info*/,
+ndk::ScopedAStatus RadioVoiceResponse::getTtyModeResponse(const RadioResponseInfo& info,
                                                           TtyMode /*mode*/) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioVoiceResponse::handleStkCallSetupRequestFromSimResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
@@ -112,80 +138,114 @@ ndk::ScopedAStatus RadioVoiceResponse::hangupConnectionResponse(const RadioRespo
 }
 
 ndk::ScopedAStatus RadioVoiceResponse::hangupForegroundResumeBackgroundResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioVoiceResponse::hangupWaitingOrBackgroundResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioVoiceResponse::isVoNrEnabledResponse(const RadioResponseInfo& /*info*/,
+ndk::ScopedAStatus RadioVoiceResponse::isVoNrEnabledResponse(const RadioResponseInfo& info,
                                                              bool /*enabled*/) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioVoiceResponse::rejectCallResponse(const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioVoiceResponse::rejectCallResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioVoiceResponse::sendBurstDtmfResponse(const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioVoiceResponse::sendBurstDtmfResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioVoiceResponse::sendCdmaFeatureCodeResponse(
-        const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioVoiceResponse::sendCdmaFeatureCodeResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioVoiceResponse::sendDtmfResponse(const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioVoiceResponse::sendDtmfResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioVoiceResponse::separateConnectionResponse(
-        const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioVoiceResponse::separateConnectionResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioVoiceResponse::setCallForwardResponse(const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioVoiceResponse::setCallForwardResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioVoiceResponse::setCallWaitingResponse(const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioVoiceResponse::setCallWaitingResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioVoiceResponse::setClirResponse(const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioVoiceResponse::setClirResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioVoiceResponse::setMuteResponse(const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioVoiceResponse::setMuteResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioVoiceResponse::setPreferredVoicePrivacyResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioVoiceResponse::setTtyModeResponse(const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioVoiceResponse::setTtyModeResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioVoiceResponse::setVoNrEnabledResponse(const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioVoiceResponse::setVoNrEnabledResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioVoiceResponse::startDtmfResponse(const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioVoiceResponse::startDtmfResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioVoiceResponse::stopDtmfResponse(const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioVoiceResponse::stopDtmfResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioVoiceResponse::switchWaitingOrHoldingAndActiveResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }

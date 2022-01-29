@@ -51,7 +51,7 @@ ScopedAStatus DefaultEvsEnumerator::getStreamList(const CameraDesc& desc,
     return ScopedAStatus::ok();
 }
 
-ScopedAStatus DefaultEvsEnumerator::openDisplay(int8_t displayId,
+ScopedAStatus DefaultEvsEnumerator::openDisplay(int32_t displayId,
                                                 std::shared_ptr<IEvsDisplay>* obj) {
     return ScopedAStatus::ok();
 }

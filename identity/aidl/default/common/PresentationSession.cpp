@@ -122,8 +122,8 @@ ndk::ScopedAStatus PresentationSession::setSessionTranscript(
 ndk::ScopedAStatus PresentationSession::getCredential(
         const vector<uint8_t>& credentialData, shared_ptr<IIdentityCredential>* outCredential) {
     shared_ptr<PresentationSession> p = ref<PresentationSession>();
-    shared_ptr<IdentityCredential> credential =
-            ndk::SharedRefBase::make<IdentityCredential>(hwProxyFactory_, credentialData, p);
+    shared_ptr<IdentityCredential> credential = ndk::SharedRefBase::make<IdentityCredential>(
+            hwProxyFactory_, credentialData, p, hardwareInformation_);
     int ret = credential->initialize();
     if (ret != IIdentityCredentialStore::STATUS_OK) {
         return ndk::ScopedAStatus(AStatus_fromServiceSpecificErrorWithMessage(

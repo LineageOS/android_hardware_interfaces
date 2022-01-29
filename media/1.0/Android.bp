@@ -22,4 +22,8 @@ hidl_interface {
         "android.hardware.graphics.common@1.0",
     ],
     gen_java: true,
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.media.swcodec",
+    ],
 }

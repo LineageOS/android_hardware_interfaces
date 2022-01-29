@@ -481,6 +481,20 @@ TEST_P(SupplicantP2pIfaceAidlTest, Find) {
 }
 
 /*
+ * FindSocialChannelsOnly
+ */
+TEST_P(SupplicantP2pIfaceAidlTest, FindSocialChannelsOnly) {
+    EXPECT_TRUE(p2p_iface_->findOnSocialChannels(kTestFindTimeout).isOk());
+}
+
+/*
+ * FindSpecificFrequency
+ */
+TEST_P(SupplicantP2pIfaceAidlTest, FindSpecificFrequency) {
+    EXPECT_TRUE(p2p_iface_->findOnSpecificFrequency(2412, kTestFindTimeout).isOk());
+}
+
+/*
  * StopFind
  */
 TEST_P(SupplicantP2pIfaceAidlTest, StopFind) {
