@@ -163,6 +163,9 @@ bool initHalFuncTableWithStubs(wifi_hal_fn* hal_fn) {
     populateStubFor(&hal_fn->wifi_trigger_subsystem_restart);
     populateStubFor(&hal_fn->wifi_set_indoor_state);
     populateStubFor(&hal_fn->wifi_get_supported_radio_combinations_matrix);
+    populateStubFor(&hal_fn->wifi_nan_rtt_chre_enable_request);
+    populateStubFor(&hal_fn->wifi_nan_rtt_chre_disable_request);
+    populateStubFor(&hal_fn->wifi_chre_register_handler);
     return true;
 }
 }  // namespace legacy_hal
