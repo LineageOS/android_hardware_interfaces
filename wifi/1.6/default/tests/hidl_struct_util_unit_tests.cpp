@@ -377,6 +377,108 @@ TEST_F(HidlStructUtilTest, CanConvertLegacyFeaturesToHidl) {
                       HidlChipCaps::SET_LATENCY_MODE | HidlChipCaps::DEBUG_MEMORY_DRIVER_DUMP,
               hidle_caps);
 }
+
+void insertRadioCombination(legacy_hal::wifi_radio_combination* dst_radio_combination_ptr,
+                            int num_radio_configurations,
+                            legacy_hal::wifi_radio_configuration* radio_configuration) {
+    dst_radio_combination_ptr->num_radio_configurations = num_radio_configurations;
+    memcpy(dst_radio_combination_ptr->radio_configurations, radio_configuration,
+           num_radio_configurations * sizeof(legacy_hal::wifi_radio_configuration));
+}
+
+void verifyRadioCombination(WifiRadioCombination* radioCombination, size_t num_radio_configurations,
+                            legacy_hal::wifi_radio_configuration* radio_configuration) {
+    EXPECT_EQ(num_radio_configurations, radioCombination->radioConfigurations.size());
+    for (size_t i = 0; i < num_radio_configurations; i++) {
+        EXPECT_EQ(hidl_struct_util::convertLegacyMacBandToHidlWifiBand(radio_configuration->band),
+                  radioCombination->radioConfigurations[i].bandInfo);
+        EXPECT_EQ(hidl_struct_util::convertLegacyAntennaConfigurationToHidl(
+                          radio_configuration->antenna_cfg),
+                  radioCombination->radioConfigurations[i].antennaMode);
+        radio_configuration++;
+    }
+}
+
+TEST_F(HidlStructUtilTest, canConvertLegacyRadioCombinationsMatrixToHidl) {
+    legacy_hal::wifi_radio_configuration radio_configurations_array1[] = {
+            {.band = legacy_hal::WLAN_MAC_2_4_BAND, .antenna_cfg = legacy_hal::WIFI_ANTENNA_1X1},
+    };
+    legacy_hal::wifi_radio_configuration radio_configurations_array2[] = {
+            {.band = legacy_hal::WLAN_MAC_2_4_BAND, .antenna_cfg = legacy_hal::WIFI_ANTENNA_2X2},
+            {.band = legacy_hal::WLAN_MAC_5_0_BAND, .antenna_cfg = legacy_hal::WIFI_ANTENNA_3X3},
+    };
+    legacy_hal::wifi_radio_configuration radio_configurations_array3[] = {
+            {.band = legacy_hal::WLAN_MAC_2_4_BAND, .antenna_cfg = legacy_hal::WIFI_ANTENNA_2X2},
+            {.band = legacy_hal::WLAN_MAC_6_0_BAND, .antenna_cfg = legacy_hal::WIFI_ANTENNA_1X1},
+            {.band = legacy_hal::WLAN_MAC_5_0_BAND, .antenna_cfg = legacy_hal::WIFI_ANTENNA_4X4},
+    };
+
+    int num_radio_configs = 0;
+    int num_combinations = 0;
+    std::array<char, 256> buffer;
+    buffer.fill(0);
+    legacy_hal::wifi_radio_combination_matrix* legacy_matrix =
+            reinterpret_cast<wifi_radio_combination_matrix*>(buffer.data());
+    legacy_hal::wifi_radio_combination* radio_combinations;
+
+    // Prepare a legacy wifi_radio_combination_matrix
+    legacy_matrix->num_radio_combinations = 3;
+    // Insert first combination
+    radio_combinations =
+            (legacy_hal::wifi_radio_combination*)((char*)legacy_matrix->radio_combinations);
+    insertRadioCombination(
+            radio_combinations,
+            sizeof(radio_configurations_array1) / sizeof(radio_configurations_array1[0]),
+            radio_configurations_array1);
+    num_combinations++;
+    num_radio_configs +=
+            sizeof(radio_configurations_array1) / sizeof(radio_configurations_array1[0]);
+
+    // Insert second combination
+    radio_combinations =
+            (legacy_hal::wifi_radio_combination*)((char*)legacy_matrix->radio_combinations +
+                                                  (num_combinations *
+                                                   sizeof(legacy_hal::wifi_radio_combination)) +
+                                                  (num_radio_configs *
+                                                   sizeof(wifi_radio_configuration)));
+    insertRadioCombination(
+            radio_combinations,
+            sizeof(radio_configurations_array2) / sizeof(radio_configurations_array2[0]),
+            radio_configurations_array2);
+    num_combinations++;
+    num_radio_configs +=
+            sizeof(radio_configurations_array2) / sizeof(radio_configurations_array2[0]);
+
+    // Insert third combination
+    radio_combinations =
+            (legacy_hal::wifi_radio_combination*)((char*)legacy_matrix->radio_combinations +
+                                                  (num_combinations *
+                                                   sizeof(legacy_hal::wifi_radio_combination)) +
+                                                  (num_radio_configs *
+                                                   sizeof(wifi_radio_configuration)));
+    insertRadioCombination(
+            radio_combinations,
+            sizeof(radio_configurations_array3) / sizeof(radio_configurations_array3[0]),
+            radio_configurations_array3);
+
+    V1_6::WifiRadioCombinationMatrix converted_matrix{};
+    hidl_struct_util::convertLegacyRadioCombinationsMatrixToHidl(legacy_matrix, &converted_matrix);
+
+    // Verify the conversion
+    EXPECT_EQ(legacy_matrix->num_radio_combinations, converted_matrix.radioCombinations.size());
+    verifyRadioCombination(
+            &converted_matrix.radioCombinations[0],
+            sizeof(radio_configurations_array1) / sizeof(radio_configurations_array1[0]),
+            radio_configurations_array1);
+    verifyRadioCombination(
+            &converted_matrix.radioCombinations[1],
+            sizeof(radio_configurations_array2) / sizeof(radio_configurations_array2[0]),
+            radio_configurations_array2);
+    verifyRadioCombination(
+            &converted_matrix.radioCombinations[2],
+            sizeof(radio_configurations_array3) / sizeof(radio_configurations_array3[0]),
+            radio_configurations_array3);
+}
 }  // namespace implementation
 }  // namespace V1_6
 }  // namespace wifi

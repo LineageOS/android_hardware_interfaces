@@ -17,25 +17,34 @@
 package android.hardware.uwb.fira_android;
 
 /**
- * Android specific vendor app params set in UCI command:
+ * Android specific vendor app params set/expected in UCI command:
  * GID: 0001b (UWB Session config Group)
  * OID: 000011b (SESSION_SET_APP_CONFIG_CMD)
+ * OID: 000100b (SESSION_GET_APP_CONFIG_CMD)
  *
  * Note: Refer to Table 34 of the UCI specification for the other params
  * expected in this command.
  */
 @VintfStability
 @Backing(type="int")
-enum UwbVendorSessionSetAppConfigCmdParams {
+enum UwbVendorSessionAppConfigTlvTypes {
     /** CCC params for ranging start */
 
     /**
      * Added in vendor version 0.
      * Range 0xA0 - 0xDF reserved for CCC use.
      */
+    /** 16 byte data */
+    CCC_HOP_MODE_KEY = 0xA0,
+    /** 8 byte data */
+    CCC_UWB_TIME0 = 0xA1,
+    /** 2 byte data */
     CCC_RANGING_PROTOCOL_VER = 0xA3,
+    /** 2 byte data */
     CCC_UWB_CONFIG_ID = 0xA4,
+    /** 1 byte data */
     CCC_PULSESHAPE_COMBO = 0xA5,
+    /** 2 byte data */
     CCC_URSK_TTL = 0xA6,
 
     /**
@@ -51,7 +60,10 @@ enum UwbVendorSessionSetAppConfigCmdParams {
      * Supported only if the value returned by getSupportedAndroidCapabilities()
      * has the bit of UwbAndroidCapabilities.ANTENNAE_INTERLEAVING set to 1.
      */
+    /** 2 byte data */
     NB_OF_RANGE_MEASUREMENTS = 0xE3,
+    /** 2 byte data */
     NB_OF_AZIMUTH_MEASUREMENTS = 0xE4,
+    /** 2 byte data */
     NB_OF_ELEVATION_MEASUREMENTS = 0xE5,
 }

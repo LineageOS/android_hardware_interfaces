@@ -60,6 +60,8 @@ static void assertTypeMatchStringType(SensorType type, const std::string& string
         ASSERT_STREQ(SENSOR_STRING_TYPE_##type, stringType.c_str()); \
         break;
         CHECK_TYPE_STRING_FOR_SENSOR_TYPE(ACCELEROMETER);
+        CHECK_TYPE_STRING_FOR_SENSOR_TYPE(ACCELEROMETER_LIMITED_AXES);
+        CHECK_TYPE_STRING_FOR_SENSOR_TYPE(ACCELEROMETER_LIMITED_AXES_UNCALIBRATED);
         CHECK_TYPE_STRING_FOR_SENSOR_TYPE(ACCELEROMETER_UNCALIBRATED);
         CHECK_TYPE_STRING_FOR_SENSOR_TYPE(ADDITIONAL_INFO);
         CHECK_TYPE_STRING_FOR_SENSOR_TYPE(AMBIENT_TEMPERATURE);
@@ -70,6 +72,8 @@ static void assertTypeMatchStringType(SensorType type, const std::string& string
         CHECK_TYPE_STRING_FOR_SENSOR_TYPE(GLANCE_GESTURE);
         CHECK_TYPE_STRING_FOR_SENSOR_TYPE(GRAVITY);
         CHECK_TYPE_STRING_FOR_SENSOR_TYPE(GYROSCOPE);
+        CHECK_TYPE_STRING_FOR_SENSOR_TYPE(GYROSCOPE_LIMITED_AXES);
+        CHECK_TYPE_STRING_FOR_SENSOR_TYPE(GYROSCOPE_LIMITED_AXES_UNCALIBRATED);
         CHECK_TYPE_STRING_FOR_SENSOR_TYPE(GYROSCOPE_UNCALIBRATED);
         CHECK_TYPE_STRING_FOR_SENSOR_TYPE(HEART_BEAT);
         CHECK_TYPE_STRING_FOR_SENSOR_TYPE(HEART_RATE);
@@ -122,8 +126,11 @@ bool isDirectReportRateSupported(SensorInfo sensor, ISensors::RateLevel rate) {
 int expectedReportModeForType(SensorType type) {
     switch (type) {
         case SensorType::ACCELEROMETER:
+        case SensorType::ACCELEROMETER_LIMITED_AXES:
         case SensorType::ACCELEROMETER_UNCALIBRATED:
+        case SensorType::ACCELEROMETER_LIMITED_AXES_UNCALIBRATED:
         case SensorType::GYROSCOPE:
+        case SensorType::GYROSCOPE_LIMITED_AXES:
         case SensorType::MAGNETIC_FIELD:
         case SensorType::ORIENTATION:
         case SensorType::PRESSURE:
@@ -133,6 +140,7 @@ int expectedReportModeForType(SensorType type) {
         case SensorType::MAGNETIC_FIELD_UNCALIBRATED:
         case SensorType::GAME_ROTATION_VECTOR:
         case SensorType::GYROSCOPE_UNCALIBRATED:
+        case SensorType::GYROSCOPE_LIMITED_AXES_UNCALIBRATED:
         case SensorType::GEOMAGNETIC_ROTATION_VECTOR:
         case SensorType::POSE_6DOF:
         case SensorType::HEART_BEAT:

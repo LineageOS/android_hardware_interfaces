@@ -37,6 +37,7 @@ static constexpr uint32_t kLinkLayerStatsDataMpduSizeThreshold = 128;
 static constexpr uint32_t kMaxWakeReasonStatsArraySize = 32;
 static constexpr uint32_t kMaxRingBuffers = 10;
 static constexpr uint32_t kMaxWifiUsableChannels = 256;
+static constexpr uint32_t kMaxSupportedRadioCombinationsMatrixLength = 256;
 // need a long timeout (1000ms) for chips that unload their driver.
 static constexpr uint32_t kMaxStopCompleteWaitMs = 1000;
 static constexpr char kDriverPropName[] = "wlan.driver.status";
@@ -1535,6 +1536,19 @@ wifi_error WifiLegacyHal::triggerSubsystemRestart() {
 
 wifi_error WifiLegacyHal::setIndoorState(bool isIndoor) {
     return global_func_table_.wifi_set_indoor_state(global_handle_, isIndoor);
+}
+
+std::pair<wifi_error, wifi_radio_combination_matrix*>
+WifiLegacyHal::getSupportedRadioCombinationsMatrix() {
+    std::array<char, kMaxSupportedRadioCombinationsMatrixLength> buffer;
+    buffer.fill(0);
+    uint32_t size = 0;
+    wifi_radio_combination_matrix* radio_combination_matrix_ptr =
+            reinterpret_cast<wifi_radio_combination_matrix*>(buffer.data());
+    wifi_error status = global_func_table_.wifi_get_supported_radio_combinations_matrix(
+            global_handle_, buffer.size(), &size, radio_combination_matrix_ptr);
+    CHECK(size >= 0 && size <= kMaxSupportedRadioCombinationsMatrixLength);
+    return {status, radio_combination_matrix_ptr};
 }
 
 void WifiLegacyHal::invalidate() {

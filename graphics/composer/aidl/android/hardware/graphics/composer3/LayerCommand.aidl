@@ -41,20 +41,11 @@ parcelable LayerCommand {
     long layer;
 
     /**
-     * Asynchronously sets the position of a cursor layer.
+     * Sets the position of a cursor layer.
      *
-     * Prior to validateDisplay, a layer may be marked as Composition.CURSOR.
-     * If validation succeeds (i.e., the device does not request a composition
-     * change for that layer), then once a buffer has been set for the layer
-     * and it has been presented, its position may be set by this function at
-     * any time between presentDisplay and any subsequent validateDisplay
-     * calls for this display.
-     *
-     * Once validateDisplay is called, this function must not be called again
-     * until the validate/present sequence is completed.
-     *
-     * May be called from any thread so long as it is not interleaved with the
-     * validate/present sequence as described above.
+     * The position of a cursor layer can be updated without a validate/present display
+     * sequence if that layer was marked as Composition.CURSOR and validation previously succeeded
+     * (i.e., the device didn't request a composition).
      */
     @nullable Point cursorPosition;
 
@@ -77,6 +68,30 @@ parcelable LayerCommand {
      * elsewhere).
      */
     @nullable Buffer buffer;
+
+    /**
+     * Sets a buffer handle to be displayed for this layer and a file descriptor
+     * referring to an acquire sync fence object, which must be signaled when it is
+     * safe to read from the given buffer.
+     *
+     * When bufferAhead is provided, the implementation should try to
+     * present it on the next scanout as long as its acquire sync fence
+     * is signaled by that time. Otherwise the bufferAhead should be dropped.
+     * This allows the client to set an
+     * unsignaled buffer on the layer without causing the entire display to miss
+     * an update if the buffer is not ready by the next scanout time.
+     *
+     * In case bufferAhead is dropped and LayerCommand.buffer is provided, LayerCommand.buffer
+     * should be used as the next layer buffer.
+     *
+     * The implementation is expected to populate the CommandResultPayload.bufferAheadResult
+     * with information about whether bufferAhead was presented or dropped.
+     * Since this information is not known at the current presentDisplay call
+     * of frame N (as the scanout happens after the call returns),
+     * the implementation should populate it when presentDisplay is
+     * called for frame N+1.
+     */
+    @nullable Buffer bufferAhead;
 
     /**
      * Provides the region of the source buffer which has been modified since

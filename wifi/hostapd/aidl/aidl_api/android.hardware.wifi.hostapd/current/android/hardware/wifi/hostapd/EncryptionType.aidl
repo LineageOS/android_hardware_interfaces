@@ -39,4 +39,5 @@ enum EncryptionType {
   WPA2 = 2,
   WPA3_SAE_TRANSITION = 3,
   WPA3_SAE = 4,
+  OWE_TRANSITION = 5,
 }
