@@ -194,7 +194,7 @@ class ComposerClientWriter {
 
     void setLayerZOrder(int64_t display, int64_t layer, uint32_t z) {
         ZOrder zorder;
-        zorder.z = z;
+        zorder.z = static_cast<int32_t>(z);
         getLayerCommand(display, layer).z.emplace(std::move(zorder));
     }
 
@@ -233,9 +233,9 @@ class ComposerClientWriter {
     std::optional<LayerCommand> mLayerCommand;
     std::vector<DisplayCommand> mCommands;
 
-    Buffer getBuffer(int slot, const native_handle_t* bufferHandle, int fence) {
+    Buffer getBuffer(uint32_t slot, const native_handle_t* bufferHandle, int fence) {
         Buffer bufferCommand;
-        bufferCommand.slot = slot;
+        bufferCommand.slot = static_cast<int32_t>(slot);
         if (bufferHandle) bufferCommand.handle.emplace(::android::dupToAidl(bufferHandle));
         if (fence > 0) bufferCommand.fence = ::ndk::ScopedFileDescriptor(fence);
         return bufferCommand;
