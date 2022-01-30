@@ -17,13 +17,11 @@
 package android.hardware.uwb.fira_android;
 
 /**
- * Android specific capability params expected in UCI command:
+ * Android specific capability TLV types in UCI command:
  * GID: 0000b (UWB Core Group)
  * OID: 000011b (CORE_GET_CAPS_INFO_CMD)
- * Values expected for each type should correspond to values used in the FIRA UCI specification.
- *
- * For ex, If the device supports responder and initiator device roles. Use this TLV to
- * indicate that: * {SUPPORTED_DEVICE_ROLES, 2, [0x0 // responder, 0x1 // initiator]}}
+ * Values expected for each type are mentioned in the docs below and the constants
+ * used are defined in UwbVendorCapabilityTlvValues enum.
  */
 @VintfStability
 @Backing(type="int")

@@ -20,6 +20,7 @@
 #include <set>
 
 #include <hidl/HidlSupport.h>
+#include <hidl/HidlTransportSupport.h>
 
 namespace {
 // Type of callback invoked by the death handler.
@@ -68,9 +69,11 @@ class HidlCallbackHandler {
         // (callback proxy's raw pointer) to track the death of individual
         // clients.
         uint64_t cookie = reinterpret_cast<uint64_t>(cb.get());
-        if (cb_set_.find(cb) != cb_set_.end()) {
-            LOG(WARNING) << "Duplicate death notification registration";
-            return true;
+        for (const auto& s : cb_set_) {
+            if (interfacesEqual(cb, s)) {
+                LOG(ERROR) << "Duplicate death notification registration";
+                return true;
+            }
         }
         if (!cb->linkToDeath(death_handler_, cookie)) {
             LOG(ERROR) << "Failed to register death notification";

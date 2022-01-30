@@ -36,6 +36,7 @@ namespace implementation {
 namespace legacy_hal {
 // Import all the types defined inside the legacy HAL header files into this
 // namespace.
+using ::chre_nan_rtt_state;
 using ::frame_info;
 using ::frame_type;
 using ::FRAME_TYPE_80211_MGMT;
@@ -458,6 +459,12 @@ struct TwtCallbackHandlers {
     std::function<void(const TwtDeviceNotify&)> on_device_notify;
 };
 
+// CHRE response and event callbacks struct.
+struct ChreCallbackHandlers {
+    // Callback for CHRE NAN RTT
+    std::function<void(chre_nan_rtt_state)> on_wifi_chre_nan_rtt_state;
+};
+
 /**
  * Class that encapsulates all legacy HAL interactions.
  * This class manages the lifetime of the event loop thread used by legacy HAL.
@@ -669,6 +676,12 @@ class WifiLegacyHal {
     wifi_error setIndoorState(bool isIndoor);
 
     std::pair<wifi_error, wifi_radio_combination_matrix*> getSupportedRadioCombinationsMatrix();
+
+    // CHRE NAN RTT function
+    wifi_error chreNanRttRequest(const std::string& iface_name, bool enable);
+
+    wifi_error chreRegisterHandler(const std::string& iface_name,
+                                   const ChreCallbackHandlers& handler);
 
   private:
     // Retrieve interface handles for all the available interfaces.
