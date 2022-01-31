@@ -376,7 +376,7 @@ Return<void> EvsCamera::importExternalBuffers([[maybe_unused]] const hidl_vec<Bu
         if (numBuffersToAdd > (kMaxBuffersInFlight - mFramesAllowed)) {
             numBuffersToAdd -= (kMaxBuffersInFlight - mFramesAllowed);
             ALOGW("Exceed the limit on number of buffers. %" PRIu64 " buffers will be added only.",
-                  numBuffersToAdd);
+                  static_cast<uint64_t>(numBuffersToAdd));
         }
 
         GraphicBufferMapper& mapper = GraphicBufferMapper::get();
