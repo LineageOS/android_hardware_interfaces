@@ -458,6 +458,7 @@ package android.audio.policy.configuration.V7_1 {
     method @Nullable public String getName();
     method @Nullable public java.util.List<android.audio.policy.configuration.V7_1.AudioUsage> getPreferredUsage();
     method @Nullable public java.util.List<android.audio.policy.configuration.V7_1.Profile> getProfile();
+    method @Nullable public long getRecommendedMuteDurationMs();
     method @Nullable public android.audio.policy.configuration.V7_1.Role getRole();
     method public void setFlags(@Nullable java.util.List<android.audio.policy.configuration.V7_1.AudioInOutFlag>);
     method public void setGains(@Nullable android.audio.policy.configuration.V7_1.Gains);
@@ -465,6 +466,7 @@ package android.audio.policy.configuration.V7_1 {
     method public void setMaxOpenCount(@Nullable long);
     method public void setName(@Nullable String);
     method public void setPreferredUsage(@Nullable java.util.List<android.audio.policy.configuration.V7_1.AudioUsage>);
+    method public void setRecommendedMuteDurationMs(@Nullable long);
     method public void setRole(@Nullable android.audio.policy.configuration.V7_1.Role);
   }
 
