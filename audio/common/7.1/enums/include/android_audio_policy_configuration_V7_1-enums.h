@@ -97,10 +97,12 @@ static inline size_t getChannelCount(AudioChannelMask mask) {
         case AudioChannelMask::AUDIO_CHANNEL_OUT_13POINT_360RA:
         case AudioChannelMask::AUDIO_CHANNEL_INDEX_MASK_13:
             return 13;
+        case AudioChannelMask::AUDIO_CHANNEL_OUT_9POINT1POINT4:
         case AudioChannelMask::AUDIO_CHANNEL_INDEX_MASK_14:
             return 14;
         case AudioChannelMask::AUDIO_CHANNEL_INDEX_MASK_15:
             return 15;
+        case AudioChannelMask::AUDIO_CHANNEL_OUT_9POINT1POINT6:
         case AudioChannelMask::AUDIO_CHANNEL_INDEX_MASK_16:
             return 16;
         case AudioChannelMask::AUDIO_CHANNEL_INDEX_MASK_17:
@@ -170,6 +172,7 @@ static inline bool isOutputDevice(AudioDevice device) {
         case AudioDevice::AUDIO_DEVICE_OUT_ECHO_CANCELLER:
         case AudioDevice::AUDIO_DEVICE_OUT_BLE_HEADSET:
         case AudioDevice::AUDIO_DEVICE_OUT_BLE_SPEAKER:
+        case AudioDevice::AUDIO_DEVICE_OUT_BLE_BROADCAST:
         case AudioDevice::AUDIO_DEVICE_OUT_DEFAULT:
         case AudioDevice::AUDIO_DEVICE_OUT_STUB:
             return true;
