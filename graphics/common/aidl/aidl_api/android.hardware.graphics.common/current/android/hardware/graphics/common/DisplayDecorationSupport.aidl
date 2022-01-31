@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021, The Android Open Source Project
+ * Copyright (c) 2022, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,15 +31,10 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.graphics.composer3;
-@Backing(type="int") @VintfStability
-enum DisplayCapability {
-  INVALID = 0,
-  SKIP_CLIENT_COLOR_TRANSFORM = 1,
-  DOZE = 2,
-  BRIGHTNESS = 3,
-  PROTECTED_CONTENTS = 4,
-  AUTO_LOW_LATENCY_MODE = 5,
-  SUSPEND = 6,
-  DISPLAY_IDLE_TIMER = 7,
+package android.hardware.graphics.common;
+/* @hide */
+@VintfStability
+parcelable DisplayDecorationSupport {
+  android.hardware.graphics.common.PixelFormat format;
+  android.hardware.graphics.common.AlphaInterpretation alphaInterpretation;
 }

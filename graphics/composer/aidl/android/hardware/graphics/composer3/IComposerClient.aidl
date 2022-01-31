@@ -16,6 +16,7 @@
 
 package android.hardware.graphics.composer3;
 
+import android.hardware.graphics.common.DisplayDecorationSupport;
 import android.hardware.graphics.common.Transform;
 import android.hardware.graphics.composer3.ClientTargetProperty;
 import android.hardware.graphics.composer3.ColorMode;
@@ -514,6 +515,16 @@ interface IComposerClient {
      * @exception EX_BAD_DISPLAY when an invalid display handle was passed in.
      */
     ContentType[] getSupportedContentTypes(long display);
+
+    /**
+     * Report whether and how this display supports Composition.DISPLAY_DECORATION.
+     *
+     * @return A description of how the display supports DISPLAY_DECORATION, or null
+     * if it is unsupported.
+     *
+     * @exception EX_BAD_DISPLAY when an invalid display handle was passed in.
+     */
+    @nullable DisplayDecorationSupport getDisplayDecorationSupport(long display);
 
     /**
      * Provides a IComposerCallback object for the device to call.

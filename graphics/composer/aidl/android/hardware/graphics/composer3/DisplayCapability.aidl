@@ -76,12 +76,8 @@ enum DisplayCapability {
      */
     SUSPEND = 6,
     /**
-     * Indicates that the display supports Composition.DISPLAY_DECORATION.
-     */
-    DISPLAY_DECORATION = 7,
-    /**
      * Indicates that the display supports IComposerClient.setIdleTimerEnabled and
      * IComposerCallback.onVsyncIdle.
      */
-    DISPLAY_IDLE_TIMER = 8,
+    DISPLAY_IDLE_TIMER = 7,
 }
