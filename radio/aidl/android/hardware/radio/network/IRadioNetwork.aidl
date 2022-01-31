@@ -17,7 +17,6 @@
 package android.hardware.radio.network;
 
 import android.hardware.radio.AccessNetwork;
-import android.hardware.radio.RadioAccessFamily;
 import android.hardware.radio.network.CdmaRoamingType;
 import android.hardware.radio.network.IRadioNetworkIndication;
 import android.hardware.radio.network.IRadioNetworkResponse;

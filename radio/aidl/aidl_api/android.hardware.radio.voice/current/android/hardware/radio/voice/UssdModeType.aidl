@@ -31,9 +31,13 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.radio.network;
-@VintfStability
-parcelable NeighboringCell {
-  String cid;
-  int rssi;
+package android.hardware.radio.voice;
+@Backing(type="int") @VintfStability
+enum UssdModeType {
+  NOTIFY = 0,
+  REQUEST = 1,
+  NW_RELEASE = 2,
+  LOCAL_CLIENT = 3,
+  NOT_SUPPORTED = 4,
+  NW_TIMEOUT = 5,
 }

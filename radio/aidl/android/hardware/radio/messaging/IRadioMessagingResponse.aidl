@@ -92,27 +92,6 @@ oneway interface IRadioMessagingResponse {
      * Valid errors returned:
      *   RadioError:NONE
      *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:SIM_BUSY
-     *   RadioError:OPERATION_NOT_ALLOWED
-     *   RadioError:MODEM_ERR
-     *   RadioError:INTERNAL_ERR
-     *   RadioError:NO_MEMORY
-     *   RadioError:INVALID_STATE
-     *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:SYSTEM_ERR
-     *   RadioError:REQUEST_NOT_SUPPORTED
-     *   RadioError:INVALID_MODEM_STATE
-     *   RadioError:NO_RESOURCES
-     *   RadioError:CANCELLED
-     */
-    void cancelPendingUssdResponse(in RadioResponseInfo info);
-
-    /**
-     * @param info Response info struct containing response type, serial no. and error
-     *
-     * Valid errors returned:
-     *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE
      *   RadioError:INVALID_ARGUMENTS
      *   RadioError:NO_MEMORY
      *   RadioError:SYSTEM_ERR
@@ -400,32 +379,6 @@ oneway interface IRadioMessagingResponse {
      *   RadioError:BLOCKED_DUE_TO_CALL
      */
     void sendSmsResponse(in RadioResponseInfo info, in SendSmsResult sms);
-
-    /**
-     * @param info Response info struct containing response type, serial no. and error
-     *
-     * Valid errors returned:
-     *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE
-     *   RadioError:FDN_CHECK_FAILURE
-     *   RadioError:USSD_MODIFIED_TO_DIAL
-     *   RadioError:USSD_MODIFIED_TO_SS
-     *   RadioError:USSD_MODIFIED_TO_USSD
-     *   RadioError:SIM_BUSY
-     *   RadioError:OPERATION_NOT_ALLOWED
-     *   RadioError:INVALID_ARGUMENTS
-     *   RadioError:NO_MEMORY
-     *   RadioError:MODEM_ERR
-     *   RadioError:INTERNAL_ERR
-     *   RadioError:ABORTED
-     *   RadioError:SYSTEM_ERR
-     *   RadioError:INVALID_STATE
-     *   RadioError:REQUEST_NOT_SUPPORTED
-     *   RadioError:INVALID_MODEM_STATE
-     *   RadioError:NO_RESOURCES
-     *   RadioError:CANCELLED
-     */
-    void sendUssdResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error

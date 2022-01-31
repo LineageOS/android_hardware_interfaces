@@ -28,6 +28,12 @@ ndk::ScopedAStatus RadioVoiceResponse::acknowledgeRequest(int32_t /*serial*/) {
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus RadioVoiceResponse::cancelPendingUssdResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
+    return ndk::ScopedAStatus::ok();
+}
+
 ndk::ScopedAStatus RadioVoiceResponse::conferenceResponse(const RadioResponseInfo& info) {
     rspInfo = info;
     parent_voice.notify(info.serial);
@@ -177,6 +183,12 @@ ndk::ScopedAStatus RadioVoiceResponse::sendCdmaFeatureCodeResponse(const RadioRe
 }
 
 ndk::ScopedAStatus RadioVoiceResponse::sendDtmfResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_voice.notify(info.serial);
+    return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus RadioVoiceResponse::sendUssdResponse(const RadioResponseInfo& info) {
     rspInfo = info;
     parent_voice.notify(info.serial);
     return ndk::ScopedAStatus::ok();

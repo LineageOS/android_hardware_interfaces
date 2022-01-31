@@ -387,7 +387,6 @@ TEST_P(RadioSimTest, setAllowedCarriers) {
     carrierRestrictions.allowedCarriers[0].mnc = std::string("456");
     carrierRestrictions.allowedCarriers[0].matchType = Carrier::MATCH_TYPE_ALL;
     carrierRestrictions.allowedCarriers[0].matchData = std::string();
-    carrierRestrictions.priority = true;
     carrierRestrictions.allowedCarriersPrioritized = true;
     SimLockMultiSimPolicy multisimPolicy = SimLockMultiSimPolicy::NO_MULTISIM_POLICY;
 
@@ -650,12 +649,10 @@ TEST_P(RadioSimTest, changeIccPin2ForApp) {
 }
 
 /*
- * The following test is disabled due to b/109889468
- *
  * Test IRadioSim.getImsiForApp() for the response returned.
  */
-TEST_P(RadioSimTest, DISABLED_getImsiForApp) {
-    LOG(DEBUG) << "DISABLED_getImsiForApp";
+TEST_P(RadioSimTest, getImsiForApp) {
+    LOG(DEBUG) << "getImsiForApp";
     serial = GetRandomSerialNumber();
 
     // Check success returned while getting imsi for 3GPP and 3GPP2 apps only
@@ -679,7 +676,7 @@ TEST_P(RadioSimTest, DISABLED_getImsiForApp) {
             }
         }
     }
-    LOG(DEBUG) << "DISABLED_getImsiForApp finished";
+    LOG(DEBUG) << "getImsiForApp finished";
 }
 
 /*
@@ -723,8 +720,6 @@ TEST_P(RadioSimTest, iccTransmitApduBasicChannel) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_sim->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_sim->rspInfo.serial);
-
-    // TODO(sanketpadawe): Add test for error code
     LOG(DEBUG) << "iccTransmitApduBasicChannel finished";
 }
 
@@ -775,8 +770,6 @@ TEST_P(RadioSimTest, iccTransmitApduLogicalChannel) {
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_sim->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_sim->rspInfo.serial);
-
-    // TODO(sanketpadawe): Add test for error code
     LOG(DEBUG) << "iccTransmitApduLogicalChannel finished";
 }
 

@@ -42,6 +42,12 @@ Return<void> RadioResponse::acceptCallResponse(const V1_0::RadioResponseInfo& in
     return {};
 }
 
+Return<void> RadioResponse::cancelPendingUssdResponse(const V1_0::RadioResponseInfo& info) {
+    LOG_CALL << info.serial;
+    voiceCb()->cancelPendingUssdResponse(toAidl(info));
+    return {};
+}
+
 Return<void> RadioResponse::conferenceResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
     voiceCb()->conferenceResponse(toAidl(info));
@@ -195,6 +201,12 @@ Return<void> RadioResponse::sendCDMAFeatureCodeResponse(const V1_0::RadioRespons
 Return<void> RadioResponse::sendDtmfResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
     voiceCb()->sendDtmfResponse(toAidl(info));
+    return {};
+}
+
+Return<void> RadioResponse::sendUssdResponse(const V1_0::RadioResponseInfo& info) {
+    LOG_CALL << info.serial;
+    voiceCb()->sendUssdResponse(toAidl(info));
     return {};
 }
 
