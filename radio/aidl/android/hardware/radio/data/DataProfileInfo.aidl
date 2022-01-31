@@ -16,9 +16,7 @@
 
 package android.hardware.radio.data;
 
-import android.hardware.radio.RadioAccessFamily;
 import android.hardware.radio.data.ApnAuthType;
-import android.hardware.radio.data.ApnTypes;
 import android.hardware.radio.data.PdpProtocolType;
 import android.hardware.radio.data.TrafficDescriptor;
 
@@ -36,8 +34,8 @@ parcelable DataProfileInfo {
     const int ID_INVALID = 0xFFFFFFFF;
 
     const int TYPE_COMMON = 0;
-    const int TYPE_THREE_GPP = 1;
-    const int TYPE_THREE_GPP2 = 2;
+    const int TYPE_3GPP = 1;
+    const int TYPE_3GPP2 = 2;
 
     /**
      * ID of the data profile.

@@ -43,6 +43,8 @@ class RadioVoiceResponse : public BnRadioVoiceResponse {
 
     virtual ndk::ScopedAStatus acknowledgeRequest(int32_t serial) override;
 
+    virtual ndk::ScopedAStatus cancelPendingUssdResponse(const RadioResponseInfo& info) override;
+
     virtual ndk::ScopedAStatus conferenceResponse(const RadioResponseInfo& info) override;
 
     virtual ndk::ScopedAStatus dialResponse(const RadioResponseInfo& info) override;
@@ -102,6 +104,8 @@ class RadioVoiceResponse : public BnRadioVoiceResponse {
     virtual ndk::ScopedAStatus sendCdmaFeatureCodeResponse(const RadioResponseInfo& info) override;
 
     virtual ndk::ScopedAStatus sendDtmfResponse(const RadioResponseInfo& info) override;
+
+    virtual ndk::ScopedAStatus sendUssdResponse(const RadioResponseInfo& info) override;
 
     virtual ndk::ScopedAStatus separateConnectionResponse(const RadioResponseInfo& info) override;
 
@@ -163,6 +167,9 @@ class RadioVoiceIndication : public BnRadioVoiceIndication {
 
     virtual ndk::ScopedAStatus onSupplementaryServiceIndication(
             RadioIndicationType type, const StkCcUnsolSsResult& ss) override;
+
+    virtual ndk::ScopedAStatus onUssd(RadioIndicationType type, UssdModeType modeType,
+                                      const std::string& msg) override;
 
     virtual ndk::ScopedAStatus resendIncallMute(RadioIndicationType type) override;
 

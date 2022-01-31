@@ -102,6 +102,13 @@ Return<void> RadioIndication::onSupplementaryServiceIndication(V1_0::RadioIndica
     return {};
 }
 
+Return<void> RadioIndication::onUssd(V1_0::RadioIndicationType type, V1_0::UssdModeType modeType,
+                                     const hidl_string& msg) {
+    LOG_CALL << type;
+    voiceCb()->onUssd(toAidl(type), aidl::UssdModeType(modeType), msg);
+    return {};
+}
+
 Return<void> RadioIndication::resendIncallMute(V1_0::RadioIndicationType type) {
     LOG_CALL << type;
     voiceCb()->resendIncallMute(toAidl(type));
