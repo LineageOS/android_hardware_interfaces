@@ -130,5 +130,5 @@ parcelable DataProfileInfo {
      * it does not specify the end point to be used for the data call. The end point is specified by
      * apn; apn must be used as the end point if one is not specified through URSP rules.
      */
-    @nullable TrafficDescriptor trafficDescriptor;
+    TrafficDescriptor trafficDescriptor;
 }
