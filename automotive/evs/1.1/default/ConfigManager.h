@@ -13,28 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef CONFIG_MANAGER_H
-#define CONFIG_MANAGER_H
-
-#include <vector>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
-
-#include <tinyxml2.h>
-
-#include <system/camera_metadata.h>
-#include <log/log.h>
-#include <android/hardware/automotive/evs/1.1/types.h>
+#ifndef ANDROID_HARDWARE_AUTOMOTIVE_EVS_V1_1_CONFIGMANAGER_H
+#define ANDROID_HARDWARE_AUTOMOTIVE_EVS_V1_1_CONFIGMANAGER_H
 
 #include "ConfigManagerUtil.h"
 
-using namespace std;
-using namespace tinyxml2;
+#include <android/hardware/automotive/evs/1.1/types.h>
+#include <log/log.h>
+#include <system/camera_metadata.h>
+#include <tinyxml2.h>
 
-using ::android::hardware::hidl_vec;
-using ::android::hardware::camera::device::V3_2::Stream;
-using ::android::hardware::automotive::evs::V1_1::CameraParam;
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
+namespace android::hardware::automotive::evs::V1_1::implementation {
+
+using hardware::hidl_vec;
+using hardware::automotive::evs::V1_1::CameraParam;
+using hardware::camera::device::V3_2::Stream;
 
 /*
  * Plese note that this is different from what is defined in
@@ -45,8 +43,8 @@ const size_t kStreamCfgSz = 6;
 typedef std::array<int32_t, kStreamCfgSz> RawStreamConfiguration;
 
 class ConfigManager {
-public:
-    static std::unique_ptr<ConfigManager> Create(const char *path = "");
+  public:
+    static std::unique_ptr<ConfigManager> Create(const char* path = "");
     ConfigManager(const ConfigManager&) = delete;
     ConfigManager& operator=(const ConfigManager&) = delete;
 
@@ -54,15 +52,11 @@ public:
 
     /* Camera device's capabilities and metadata */
     class CameraInfo {
-    public:
-        CameraInfo() :
-            characteristics(nullptr) {
-            /* Nothing to do */
+      public:
+        CameraInfo() : characteristics(nullptr) { /* Nothing to do */
         }
 
-        virtual ~CameraInfo() {
-            free_camera_metadata(characteristics);
-        }
+        virtual ~CameraInfo() { free_camera_metadata(characteristics); }
 
         /* Allocate memory for camera_metadata_t */
         bool allocate(size_t entry_cap, size_t data_cap) {
@@ -79,50 +73,49 @@ public:
          * List of supported controls that the primary client can program.
          * Paraemters are stored with its valid range
          */
-        unordered_map<CameraParam,
-                      tuple<int32_t, int32_t, int32_t>> controls;
+        std::unordered_map<CameraParam, std::tuple<int32_t, int32_t, int32_t>> controls;
 
         /*
          * List of supported output stream configurations; each array stores
          * format, width, height, and direction values in the order.
          */
-        unordered_map<int32_t, RawStreamConfiguration> streamConfigurations;
+        std::unordered_map<int32_t, RawStreamConfiguration> streamConfigurations;
 
         /*
          * Internal storage for camera metadata.  Each entry holds a pointer to
          * data and number of elements
          */
-        unordered_map<camera_metadata_tag_t,
-                      pair<unique_ptr<void *>, size_t>> cameraMetadata;
+        std::unordered_map<camera_metadata_tag_t, std::pair<std::unique_ptr<void*>, size_t>>
+                cameraMetadata;
 
         /* Camera module characteristics */
-        camera_metadata_t *characteristics;
+        camera_metadata_t* characteristics;
     };
 
     class CameraGroupInfo : public CameraInfo {
-    public:
+      public:
         CameraGroupInfo() {}
 
         /* ID of member camera devices */
-        unordered_set<string> devices;
+        std::unordered_set<std::string> devices;
 
         /* The capture operation of member camera devices are synchronized */
         bool synchronized = false;
     };
 
     class SystemInfo {
-    public:
+      public:
         /* number of available cameras */
         int32_t numCameras = 0;
     };
 
     class DisplayInfo {
-    public:
+      public:
         /*
          * List of supported input stream configurations; each array stores
          * format, width, height, and direction values in the order.
          */
-        unordered_map<int32_t, RawStreamConfiguration> streamConfigurations;
+        std::unordered_map<int32_t, RawStreamConfiguration> streamConfigurations;
     };
 
     /*
@@ -131,27 +124,24 @@ public:
      * @return SystemInfo
      *         Constant reference of SystemInfo.
      */
-    const SystemInfo &getSystemInfo() {
-        return mSystemInfo;
-    }
+    const SystemInfo& getSystemInfo() { return mSystemInfo; }
 
     /*
      * Return a list of cameras
      *
      * This function assumes that it is not being called frequently.
      *
-     * @return vector<string>
+     * @return std::vector<std::string>
      *         A vector that contains unique camera device identifiers.
      */
-    vector<string> getCameraList() {
-        vector<string> aList;
-        for (auto &v : mCameraInfo) {
-            aList.emplace_back(v.first);
+    std::vector<std::string> getCameraList() {
+        std::vector<std::string> aList;
+        for (auto& v : mCameraInfo) {
+            aList.push_back(v.first);
         }
 
         return aList;
     }
-
 
     /*
      * Return a list of cameras
@@ -159,52 +149,49 @@ public:
      * @return CameraGroupInfo
      *         A pointer to a camera group identified by a given id.
      */
-    unique_ptr<CameraGroupInfo>& getCameraGroupInfo(const string& gid) {
+    std::unique_ptr<CameraGroupInfo>& getCameraGroupInfo(const std::string& gid) {
         return mCameraGroupInfos[gid];
     }
-
 
     /*
      * Return a camera metadata
      *
      * @param  cameraId
-     *         Unique camera node identifier in string
+     *         Unique camera node identifier in std::string
      *
-     * @return unique_ptr<CameraInfo>
+     * @return std::unique_ptr<CameraInfo>
      *         A pointer to CameraInfo that is associated with a given camera
      *         ID.  This returns a null pointer if this does not recognize a
      *         given camera identifier.
      */
-    unique_ptr<CameraInfo>& getCameraInfo(const string cameraId) noexcept {
+    std::unique_ptr<CameraInfo>& getCameraInfo(const std::string cameraId) noexcept {
         return mCameraInfo[cameraId];
     }
 
-private:
+  private:
     /* Constructors */
-    ConfigManager(const char *xmlPath) :
-        mConfigFilePath(xmlPath) {
-    }
+    ConfigManager(const char* xmlPath) : mConfigFilePath(xmlPath) {}
 
     /* System configuration */
     SystemInfo mSystemInfo;
 
     /* Internal data structure for camera device information */
-    unordered_map<string, unique_ptr<CameraInfo>> mCameraInfo;
+    std::unordered_map<std::string, std::unique_ptr<CameraInfo>> mCameraInfo;
 
     /* Internal data structure for camera device information */
-    unordered_map<string, unique_ptr<DisplayInfo>> mDisplayInfo;
+    std::unordered_map<std::string, std::unique_ptr<DisplayInfo>> mDisplayInfo;
 
     /* Camera groups are stored in <groud id, CameraGroupInfo> hash map */
-    unordered_map<string, unique_ptr<CameraGroupInfo>> mCameraGroupInfos;
+    std::unordered_map<std::string, std::unique_ptr<CameraGroupInfo>> mCameraGroupInfos;
 
     /*
      * Camera positions are stored in <position, camera id set> hash map.
      * The position must be one of front, rear, left, and right.
      */
-    unordered_map<string, unordered_set<string>>  mCameraPosition;
+    std::unordered_map<std::string, std::unordered_set<std::string>> mCameraPosition;
 
     /* A path to XML configuration file */
-    const char *mConfigFilePath;
+    const char* mConfigFilePath;
 
     /*
      * Parse a given EVS configuration file and store the information
@@ -221,7 +208,7 @@ private:
      * @param  aSysElem
      *         A pointer to "system" XML element.
      */
-    void readSystemInfo(const XMLElement * const aSysElem);
+    void readSystemInfo(const tinyxml2::XMLElement* const aSysElem);
 
     /*
      * read the information of camera devices
@@ -230,7 +217,7 @@ private:
      *         A pointer to "camera" XML element that may contain multiple
      *         "device" elements.
      */
-    void readCameraInfo(const XMLElement * const aCameraElem);
+    void readCameraInfo(const tinyxml2::XMLElement* const aCameraElem);
 
     /*
      * read display device information
@@ -239,7 +226,7 @@ private:
      *         A pointer to "display" XML element that may contain multiple
      *         "device" elements.
      */
-    void readDisplayInfo(const XMLElement * const aDisplayElem);
+    void readDisplayInfo(const tinyxml2::XMLElement* const aDisplayElem);
 
     /*
      * read camera device information
@@ -255,8 +242,7 @@ private:
      *         Return false upon any failure in reading and processing camera
      *         device information.
      */
-    bool readCameraDeviceInfo(CameraInfo *aCamera,
-                              const XMLElement *aDeviceElem);
+    bool readCameraDeviceInfo(CameraInfo* aCamera, const tinyxml2::XMLElement* aDeviceElem);
 
     /*
      * read camera metadata
@@ -273,9 +259,8 @@ private:
      * @return size_t
      *         Number of camera metadata entries
      */
-    size_t readCameraCapabilities(const XMLElement * const aCapElem,
-                                  CameraInfo *aCamera,
-                                  size_t &dataSize);
+    size_t readCameraCapabilities(const tinyxml2::XMLElement* const aCapElem, CameraInfo* aCamera,
+                                  size_t& dataSize);
 
     /*
      * read camera metadata
@@ -291,9 +276,8 @@ private:
      * @return size_t
      *         Number of camera metadata entries
      */
-    size_t readCameraMetadata(const XMLElement * const aParamElem,
-                              CameraInfo *aCamera,
-                              size_t &dataSize);
+    size_t readCameraMetadata(const tinyxml2::XMLElement* const aParamElem, CameraInfo* aCamera,
+                              size_t& dataSize);
 
     /*
      * construct camera_metadata_t from camera capabilities and metadata
@@ -310,9 +294,9 @@ private:
      *         or its size is not large enough to add all found camera metadata
      *         entries.
      */
-    bool constructCameraMetadata(CameraInfo *aCamera,
-                                 const size_t totalEntries,
+    bool constructCameraMetadata(CameraInfo* aCamera, const size_t totalEntries,
                                  const size_t totalDataSize);
 };
-#endif // CONFIG_MANAGER_H
 
+}  // namespace android::hardware::automotive::evs::V1_1::implementation
+#endif  // ANDROID_HARDWARE_AUTOMOTIVE_EVS_V1_1_CONFIGMANAGER_H
