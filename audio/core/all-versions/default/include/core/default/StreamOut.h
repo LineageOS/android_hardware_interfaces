@@ -153,6 +153,12 @@ struct StreamOut : public IStreamOut {
     Result doUpdateSourceMetadata(const SourceMetadata& sourceMetadata);
 #if MAJOR_VERSION >= 7
     Result doUpdateSourceMetadataV7(const SourceMetadata& sourceMetadata);
+#if MAJOR_VERSION == 7 && MINOR_VERSION == 1
+    Return<Result> setLatencyMode(LatencyMode mode) override;
+    Return<void> getRecommendedLatencyModes(getRecommendedLatencyModes_cb _hidl_cb) override;
+    Return<Result> setLatencyModeCallback(
+            const sp<IStreamOutLatencyModeCallback>& callback) override;
+#endif
 #endif
 #endif  // MAJOR_VERSION >= 4
 
@@ -163,6 +169,9 @@ struct StreamOut : public IStreamOut {
     mediautils::atomic_sp<IStreamOutCallback> mCallback;  // for non-blocking write and drain
 #if MAJOR_VERSION >= 6
     mediautils::atomic_sp<IStreamOutEventCallback> mEventCallback;
+#if MAJOR_VERSION == 7 && MINOR_VERSION == 1
+    mediautils::atomic_sp<IStreamOutLatencyModeCallback> mLatencyModeCallback;
+#endif
 #endif
     std::unique_ptr<CommandMQ> mCommandMQ;
     std::unique_ptr<DataMQ> mDataMQ;
@@ -177,6 +186,9 @@ struct StreamOut : public IStreamOut {
 
 #if MAJOR_VERSION >= 6
     static int asyncEventCallback(stream_event_callback_type_t event, void* param, void* cookie);
+#if MAJOR_VERSION == 7 && MINOR_VERSION == 1
+    static void latencyModeCallback(audio_latency_mode_t* modes, size_t num_modes, void* cookie);
+#endif
 #endif
 };
 
