@@ -42,6 +42,7 @@ class RadioSimResponse : public BnRadioSimResponse {
     bool areUiccApplicationsEnabled;
     PhonebookCapacity capacity;
     int32_t updatedRecordIndex;
+    std::string imsi;
 
     virtual ndk::ScopedAStatus acknowledgeRequest(int32_t serial) override;
 
