@@ -23,44 +23,62 @@ ndk::ScopedAStatus RadioSimResponse::acknowledgeRequest(int32_t /*serial*/) {
 }
 
 ndk::ScopedAStatus RadioSimResponse::areUiccApplicationsEnabledResponse(
-        const RadioResponseInfo& /*info*/, bool /*enabled*/) {
+        const RadioResponseInfo& info, bool enabled) {
+    rspInfo = info;
+    areUiccApplicationsEnabled = enabled;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioSimResponse::changeIccPin2ForAppResponse(const RadioResponseInfo& /*info*/,
+ndk::ScopedAStatus RadioSimResponse::changeIccPin2ForAppResponse(const RadioResponseInfo& info,
                                                                  int32_t /*remainingRetries*/) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioSimResponse::changeIccPinForAppResponse(const RadioResponseInfo& /*info*/,
+ndk::ScopedAStatus RadioSimResponse::changeIccPinForAppResponse(const RadioResponseInfo& info,
                                                                 int32_t /*remainingRetries*/) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioSimResponse::enableUiccApplicationsResponse(
-        const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioSimResponse::enableUiccApplicationsResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioSimResponse::getAllowedCarriersResponse(
-        const RadioResponseInfo& /*info*/, const CarrierRestrictions& /*carriers*/,
-        SimLockMultiSimPolicy /*multiSimPolicy*/) {
+        const RadioResponseInfo& info, const CarrierRestrictions& carriers,
+        SimLockMultiSimPolicy multiSimPolicy) {
+    rspInfo = info;
+    carrierRestrictionsResp = carriers;
+    multiSimPolicyResp = multiSimPolicy;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioSimResponse::getCdmaSubscriptionResponse(
-        const RadioResponseInfo& /*info*/, const std::string& /*mdn*/, const std::string& /*hSid*/,
+        const RadioResponseInfo& info, const std::string& /*mdn*/, const std::string& /*hSid*/,
         const std::string& /*hNid*/, const std::string& /*min*/, const std::string& /*prl*/) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioSimResponse::getCdmaSubscriptionSourceResponse(
-        const RadioResponseInfo& /*info*/, CdmaSubscriptionSource /*source*/) {
+        const RadioResponseInfo& info, CdmaSubscriptionSource /*source*/) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioSimResponse::getFacilityLockForAppResponse(
-        const RadioResponseInfo& /*info*/, int32_t /*response*/) {
+ndk::ScopedAStatus RadioSimResponse::getFacilityLockForAppResponse(const RadioResponseInfo& info,
+                                                                   int32_t /*response*/) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
@@ -72,8 +90,11 @@ ndk::ScopedAStatus RadioSimResponse::getIccCardStatusResponse(const RadioRespons
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioSimResponse::getImsiForAppResponse(const RadioResponseInfo& /*info*/,
-                                                           const std::string& /*imsi*/) {
+ndk::ScopedAStatus RadioSimResponse::getImsiForAppResponse(const RadioResponseInfo& info,
+                                                           const std::string& imsi_str) {
+    rspInfo = info;
+    imsi = imsi_str;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
@@ -91,58 +112,79 @@ ndk::ScopedAStatus RadioSimResponse::getSimPhonebookRecordsResponse(const RadioR
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioSimResponse::iccCloseLogicalChannelResponse(
-        const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioSimResponse::iccCloseLogicalChannelResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioSimResponse::iccIoForAppResponse(const RadioResponseInfo& /*info*/,
+ndk::ScopedAStatus RadioSimResponse::iccIoForAppResponse(const RadioResponseInfo& info,
                                                          const IccIoResult& /*iccIo*/) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioSimResponse::iccOpenLogicalChannelResponse(
-        const RadioResponseInfo& /*info*/, int32_t /*channelId*/,
+        const RadioResponseInfo& info, int32_t /*channelId*/,
         const std::vector<uint8_t>& /*selectResponse*/) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioSimResponse::iccTransmitApduBasicChannelResponse(
-        const RadioResponseInfo& /*info*/, const IccIoResult& /*result*/) {
+        const RadioResponseInfo& info, const IccIoResult& /*result*/) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioSimResponse::iccTransmitApduLogicalChannelResponse(
-        const RadioResponseInfo& /*info*/, const IccIoResult& /*result*/) {
+        const RadioResponseInfo& info, const IccIoResult& /*result*/) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioSimResponse::reportStkServiceIsRunningResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioSimResponse::requestIccSimAuthenticationResponse(
-        const RadioResponseInfo& /*info*/, const IccIoResult& /*result*/) {
+        const RadioResponseInfo& info, const IccIoResult& /*result*/) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioSimResponse::sendEnvelopeResponse(const RadioResponseInfo& /*info*/,
+ndk::ScopedAStatus RadioSimResponse::sendEnvelopeResponse(const RadioResponseInfo& info,
                                                           const std::string& /*commandResponse*/) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioSimResponse::sendEnvelopeWithStatusResponse(
-        const RadioResponseInfo& /*info*/, const IccIoResult& /*iccIo*/) {
+ndk::ScopedAStatus RadioSimResponse::sendEnvelopeWithStatusResponse(const RadioResponseInfo& info,
+                                                                    const IccIoResult& /*iccIo*/) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioSimResponse::sendTerminalResponseToSimResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioSimResponse::setAllowedCarriersResponse(const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioSimResponse::setAllowedCarriersResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
@@ -154,12 +196,16 @@ ndk::ScopedAStatus RadioSimResponse::setCarrierInfoForImsiEncryptionResponse(
 }
 
 ndk::ScopedAStatus RadioSimResponse::setCdmaSubscriptionSourceResponse(
-        const RadioResponseInfo& /*info*/) {
+        const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioSimResponse::setFacilityLockForAppResponse(
-        const RadioResponseInfo& /*info*/, int32_t /*retry*/) {
+ndk::ScopedAStatus RadioSimResponse::setFacilityLockForAppResponse(const RadioResponseInfo& info,
+                                                                   int32_t /*retry*/) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
@@ -169,34 +215,44 @@ ndk::ScopedAStatus RadioSimResponse::setSimCardPowerResponse(const RadioResponse
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioSimResponse::setUiccSubscriptionResponse(
-        const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioSimResponse::setUiccSubscriptionResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioSimResponse::supplyIccPin2ForAppResponse(const RadioResponseInfo& /*info*/,
+ndk::ScopedAStatus RadioSimResponse::supplyIccPin2ForAppResponse(const RadioResponseInfo& info,
                                                                  int32_t /*remainingRetries*/) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioSimResponse::supplyIccPinForAppResponse(const RadioResponseInfo& /*info*/,
+ndk::ScopedAStatus RadioSimResponse::supplyIccPinForAppResponse(const RadioResponseInfo& info,
                                                                 int32_t /*remainingRetries*/) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioSimResponse::supplyIccPuk2ForAppResponse(const RadioResponseInfo& /*info*/,
+ndk::ScopedAStatus RadioSimResponse::supplyIccPuk2ForAppResponse(const RadioResponseInfo& info,
                                                                  int32_t /*remainingRetries*/) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioSimResponse::supplyIccPukForAppResponse(const RadioResponseInfo& /*info*/,
+ndk::ScopedAStatus RadioSimResponse::supplyIccPukForAppResponse(const RadioResponseInfo& info,
                                                                 int32_t /*remainingRetries*/) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioSimResponse::supplySimDepersonalizationResponse(
-        const RadioResponseInfo& /*info*/, PersoSubstate /*persoType*/,
-        int32_t /*remainingRetries*/) {
+        const RadioResponseInfo& info, PersoSubstate /*persoType*/, int32_t /*remainingRetries*/) {
+    rspInfo = info;
+    parent_sim.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
