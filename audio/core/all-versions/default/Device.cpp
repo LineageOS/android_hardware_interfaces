@@ -616,6 +616,21 @@ Return<void> Device::updateAudioPatch(int32_t previousPatch,
 
 #endif
 
+#if MAJOR_VERSION == 7 && MINOR_VERSION == 1
+Return<Result> Device::setConnectedState_7_1(const AudioPort& devicePort, bool connected) {
+    if (version() >= AUDIO_DEVICE_API_VERSION_3_2 &&
+        mDevice->set_device_connected_state_v7 != nullptr) {
+        audio_port_v7 halPort;
+        if (status_t status = HidlUtils::audioPortToHal(devicePort, &halPort); status != NO_ERROR) {
+            return analyzeStatus("audioPortToHal", status);
+        }
+        return analyzeStatus("set_device_connected_state_v7",
+                             mDevice->set_device_connected_state_v7(mDevice, &halPort, connected));
+    }
+    return Result::NOT_SUPPORTED;
+}
+#endif
+
 }  // namespace implementation
 }  // namespace CPP_VERSION
 }  // namespace audio
