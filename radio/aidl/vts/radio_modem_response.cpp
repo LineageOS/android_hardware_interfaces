@@ -22,70 +22,99 @@ ndk::ScopedAStatus RadioModemResponse::acknowledgeRequest(int32_t /*serial*/) {
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioModemResponse::enableModemResponse(const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioModemResponse::enableModemResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_modem.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioModemResponse::getBasebandVersionResponse(const RadioResponseInfo& /*info*/,
+ndk::ScopedAStatus RadioModemResponse::getBasebandVersionResponse(const RadioResponseInfo& info,
                                                                   const std::string& /*version*/) {
+    rspInfo = info;
+    parent_modem.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioModemResponse::getDeviceIdentityResponse(const RadioResponseInfo& /*info*/,
+ndk::ScopedAStatus RadioModemResponse::getDeviceIdentityResponse(const RadioResponseInfo& info,
                                                                  const std::string& /*imei*/,
                                                                  const std::string& /*imeisv*/,
                                                                  const std::string& /*esn*/,
                                                                  const std::string& /*meid*/) {
+    rspInfo = info;
+    parent_modem.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioModemResponse::getHardwareConfigResponse(
-        const RadioResponseInfo& /*info*/, const std::vector<HardwareConfig>& /*config*/) {
+        const RadioResponseInfo& info, const std::vector<HardwareConfig>& /*config*/) {
+    rspInfo = info;
+    parent_modem.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus RadioModemResponse::getModemActivityInfoResponse(
-        const RadioResponseInfo& /*info*/, const ActivityStatsInfo& /*activityInfo*/) {
+        const RadioResponseInfo& info, const ActivityStatsInfo& /*activityInfo*/) {
+    rspInfo = info;
+    parent_modem.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioModemResponse::getModemStackStatusResponse(
-        const RadioResponseInfo& /*info*/, const bool /*enabled*/) {
+ndk::ScopedAStatus RadioModemResponse::getModemStackStatusResponse(const RadioResponseInfo& info,
+                                                                   const bool enabled) {
+    rspInfo = info;
+    isModemEnabled = enabled;
+    parent_modem.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioModemResponse::getRadioCapabilityResponse(const RadioResponseInfo& /*info*/,
+ndk::ScopedAStatus RadioModemResponse::getRadioCapabilityResponse(const RadioResponseInfo& info,
                                                                   const RadioCapability& /*rc*/) {
+    rspInfo = info;
+    parent_modem.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioModemResponse::nvReadItemResponse(const RadioResponseInfo& /*info*/,
+ndk::ScopedAStatus RadioModemResponse::nvReadItemResponse(const RadioResponseInfo& info,
                                                           const std::string& /*result*/) {
+    rspInfo = info;
+    parent_modem.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioModemResponse::nvResetConfigResponse(const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioModemResponse::nvResetConfigResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_modem.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioModemResponse::nvWriteCdmaPrlResponse(const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioModemResponse::nvWriteCdmaPrlResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_modem.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioModemResponse::nvWriteItemResponse(const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioModemResponse::nvWriteItemResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_modem.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioModemResponse::requestShutdownResponse(const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioModemResponse::requestShutdownResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_modem.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioModemResponse::sendDeviceStateResponse(const RadioResponseInfo& /*info*/) {
+ndk::ScopedAStatus RadioModemResponse::sendDeviceStateResponse(const RadioResponseInfo& info) {
+    rspInfo = info;
+    parent_modem.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioModemResponse::setRadioCapabilityResponse(const RadioResponseInfo& /*info*/,
+ndk::ScopedAStatus RadioModemResponse::setRadioCapabilityResponse(const RadioResponseInfo& info,
                                                                   const RadioCapability& /*rc*/) {
+    rspInfo = info;
+    parent_modem.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
