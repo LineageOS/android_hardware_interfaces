@@ -73,13 +73,6 @@ Return<void> RadioIndication::newSmsStatusReport(V1_0::RadioIndicationType type,
     return {};
 }
 
-Return<void> RadioIndication::onUssd(V1_0::RadioIndicationType type, V1_0::UssdModeType modeType,
-                                     const hidl_string& msg) {
-    LOG_CALL << type;
-    messagingCb()->onUssd(toAidl(type), aidl::UssdModeType(modeType), msg);
-    return {};
-}
-
 Return<void> RadioIndication::simSmsStorageFull(V1_0::RadioIndicationType type) {
     LOG_CALL << type;
     messagingCb()->simSmsStorageFull(toAidl(type));

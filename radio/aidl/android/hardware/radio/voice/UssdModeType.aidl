@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.hardware.radio.messaging;
+package android.hardware.radio.voice;
 
 @VintfStability
 @Backing(type="int")

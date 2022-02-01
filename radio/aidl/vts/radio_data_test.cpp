@@ -83,7 +83,7 @@ TEST_P(RadioDataTest, setupDataCall) {
     dataProfileInfo.authType = ApnAuthType::NO_PAP_NO_CHAP;
     dataProfileInfo.user = std::string("username");
     dataProfileInfo.password = std::string("password");
-    dataProfileInfo.type = DataProfileInfo::TYPE_THREE_GPP;
+    dataProfileInfo.type = DataProfileInfo::TYPE_3GPP;
     dataProfileInfo.maxConnsTime = 300;
     dataProfileInfo.maxConns = 20;
     dataProfileInfo.waitTime = 0;
@@ -157,7 +157,7 @@ TEST_P(RadioDataTest, setupDataCall_osAppId) {
     dataProfileInfo.authType = ApnAuthType::NO_PAP_NO_CHAP;
     dataProfileInfo.user = std::string("username");
     dataProfileInfo.password = std::string("password");
-    dataProfileInfo.type = DataProfileInfo::TYPE_THREE_GPP;
+    dataProfileInfo.type = DataProfileInfo::TYPE_3GPP;
     dataProfileInfo.maxConnsTime = 300;
     dataProfileInfo.maxConns = 20;
     dataProfileInfo.waitTime = 0;
@@ -326,7 +326,7 @@ TEST_P(RadioDataTest, setInitialAttachApn) {
     dataProfileInfo.authType = ApnAuthType::NO_PAP_NO_CHAP;
     dataProfileInfo.user = std::string("username");
     dataProfileInfo.password = std::string("password");
-    dataProfileInfo.type = DataProfileInfo::TYPE_THREE_GPP;
+    dataProfileInfo.type = DataProfileInfo::TYPE_3GPP;
     dataProfileInfo.maxConnsTime = 300;
     dataProfileInfo.maxConns = 20;
     dataProfileInfo.waitTime = 0;
@@ -369,7 +369,7 @@ TEST_P(RadioDataTest, setDataProfile) {
     dataProfileInfo.authType = ApnAuthType::NO_PAP_NO_CHAP;
     dataProfileInfo.user = std::string("username");
     dataProfileInfo.password = std::string("password");
-    dataProfileInfo.type = DataProfileInfo::TYPE_THREE_GPP;
+    dataProfileInfo.type = DataProfileInfo::TYPE_3GPP;
     dataProfileInfo.maxConnsTime = 300;
     dataProfileInfo.maxConns = 20;
     dataProfileInfo.waitTime = 0;

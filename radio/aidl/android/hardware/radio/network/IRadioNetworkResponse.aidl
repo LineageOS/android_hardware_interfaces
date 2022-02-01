@@ -16,7 +16,6 @@
 
 package android.hardware.radio.network;
 
-import android.hardware.radio.RadioAccessFamily;
 import android.hardware.radio.RadioResponseInfo;
 import android.hardware.radio.RadioTechnology;
 import android.hardware.radio.RadioTechnologyFamily;
@@ -24,8 +23,6 @@ import android.hardware.radio.network.BarringInfo;
 import android.hardware.radio.network.CdmaRoamingType;
 import android.hardware.radio.network.CellIdentity;
 import android.hardware.radio.network.CellInfo;
-import android.hardware.radio.network.LceDataInfo;
-import android.hardware.radio.network.NeighboringCell;
 import android.hardware.radio.network.OperatorInfo;
 import android.hardware.radio.network.RadioAccessSpecifier;
 import android.hardware.radio.network.RadioBandMode;

@@ -35,6 +35,7 @@ package android.hardware.radio.voice;
 @VintfStability
 interface IRadioVoice {
   oneway void acceptCall(in int serial);
+  oneway void cancelPendingUssd(in int serial);
   oneway void conference(in int serial);
   oneway void dial(in int serial, in android.hardware.radio.voice.Dial dialInfo);
   oneway void emergencyDial(in int serial, in android.hardware.radio.voice.Dial dialInfo, in int categories, in String[] urns, in android.hardware.radio.voice.EmergencyCallRouting routing, in boolean hasKnownUserIntentEmergency, in boolean isTesting);
@@ -59,6 +60,7 @@ interface IRadioVoice {
   oneway void sendBurstDtmf(in int serial, in String dtmf, in int on, in int off);
   oneway void sendCdmaFeatureCode(in int serial, in String featureCode);
   oneway void sendDtmf(in int serial, in String s);
+  oneway void sendUssd(in int serial, in String ussd);
   oneway void separateConnection(in int serial, in int gsmIndex);
   oneway void setCallForward(in int serial, in android.hardware.radio.voice.CallForwardInfo callInfo);
   oneway void setCallWaiting(in int serial, in boolean enable, in int serviceClass);

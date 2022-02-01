@@ -418,7 +418,9 @@ TEST_P(RadioMessagingTest, acknowledgeIncomingGsmSmsWithPdu) {
     EXPECT_EQ(serial, radioRsp_messaging->rspInfo.serial);
 
     if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
-        // TODO(shuoq): Will add error check when we know the expected error from QC
+        ASSERT_TRUE(CheckAnyOfErrors(radioRsp_messaging->rspInfo.error,
+                                     {RadioError::INVALID_ARGUMENTS, RadioError::NO_SMS_TO_ACK},
+                                     CHECK_GENERAL_ERROR));
     }
     LOG(DEBUG) << "acknowledgeIncomingGsmSmsWithPdu finished";
 }
@@ -726,45 +728,4 @@ TEST_P(RadioMessagingTest, reportSmsMemoryStatus) {
                                      CHECK_GENERAL_ERROR));
     }
     LOG(DEBUG) << "reportSmsMemoryStatus finished";
-}
-
-/*
- * Test IRadioMessaging.sendUssd() for the response returned.
- */
-TEST_P(RadioMessagingTest, sendUssd) {
-    LOG(DEBUG) << "sendUssd";
-    serial = GetRandomSerialNumber();
-    radio_messaging->sendUssd(serial, std::string("test"));
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_messaging->rspInfo.type);
-    EXPECT_EQ(serial, radioRsp_messaging->rspInfo.serial);
-
-    if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-                radioRsp_messaging->rspInfo.error,
-                {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::MODEM_ERR},
-                CHECK_GENERAL_ERROR));
-    }
-    LOG(DEBUG) << "sendUssd finished";
-}
-
-/*
- * Test IRadioMessaging.cancelPendingUssd() for the response returned.
- */
-TEST_P(RadioMessagingTest, cancelPendingUssd) {
-    LOG(DEBUG) << "cancelPendingUssd";
-    serial = GetRandomSerialNumber();
-
-    radio_messaging->cancelPendingUssd(serial);
-    EXPECT_EQ(std::cv_status::no_timeout, wait());
-    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_messaging->rspInfo.type);
-    EXPECT_EQ(serial, radioRsp_messaging->rspInfo.serial);
-
-    if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
-        ASSERT_TRUE(CheckAnyOfErrors(
-                radioRsp_messaging->rspInfo.error,
-                {RadioError::NONE, RadioError::INVALID_STATE, RadioError::MODEM_ERR},
-                CHECK_GENERAL_ERROR));
-    }
-    LOG(DEBUG) << "cancelPendingUssd finished";
 }

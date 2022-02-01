@@ -40,6 +40,12 @@ ScopedAStatus RadioVoice::acceptCall(int32_t serial) {
     return ok();
 }
 
+ScopedAStatus RadioVoice::cancelPendingUssd(int32_t serial) {
+    LOG_CALL << serial;
+    mHal1_5->cancelPendingUssd(serial);
+    return ok();
+}
+
 ScopedAStatus RadioVoice::conference(int32_t serial) {
     LOG_CALL << serial;
     mHal1_5->conference(serial);
@@ -198,6 +204,12 @@ ScopedAStatus RadioVoice::sendCdmaFeatureCode(int32_t serial, const std::string&
 ScopedAStatus RadioVoice::sendDtmf(int32_t serial, const std::string& s) {
     LOG_CALL << serial;
     mHal1_5->sendDtmf(serial, s);
+    return ok();
+}
+
+ScopedAStatus RadioVoice::sendUssd(int32_t serial, const std::string& ussd) {
+    LOG_CALL << serial << ' ' << ussd;
+    mHal1_5->sendUssd(serial, ussd);
     return ok();
 }
 

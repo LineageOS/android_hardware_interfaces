@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package android.hardware.radio.network;
 
-@VintfStability
-parcelable NeighboringCell {
+package android.hardware.audio@7.1;
+
+/**
+ * Callback interface for output stream variable latency mode feature.
+ */
+interface IStreamOutLatencyModeCallback {
     /**
-     * Combination of LAC and cell ID in 32 bits in GSM. Upper 16 bits is LAC and lower 16 bits is
-     * CID (as described in TS 27.005).
+     * Called with the new list of supported latency modes when a change occurs.
      */
-    String cid;
-    /**
-     * Received RSSI in GSM, level index of CPICH Received Signal Code Power in UMTS
-     */
-    int rssi;
-}
+    oneway onRecommendedLatencyModeChanged(vec<LatencyMode> modes);
+};
