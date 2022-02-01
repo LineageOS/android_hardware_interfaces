@@ -18,6 +18,7 @@ package android.hardware.graphics.common;
 
 /**
  * Buffer usage definitions.
+ * @hide
  */
 @VintfStability
 @Backing(type="long")

@@ -23,6 +23,7 @@ import android.hardware.graphics.common.PixelFormat;
  * Stable AIDL counterpart of AHardwareBuffer_Desc.
  *
  * @sa +ndk libnativewindow#AHardwareBuffer_Desc
+ * @hide
  */
 @VintfStability
 parcelable HardwareBufferDescription {
