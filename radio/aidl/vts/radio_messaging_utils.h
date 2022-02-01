@@ -49,8 +49,6 @@ class RadioMessagingResponse : public BnRadioMessagingResponse {
 
     virtual ndk::ScopedAStatus acknowledgeRequest(int32_t serial) override;
 
-    virtual ndk::ScopedAStatus cancelPendingUssdResponse(const RadioResponseInfo& info) override;
-
     virtual ndk::ScopedAStatus deleteSmsOnRuimResponse(const RadioResponseInfo& info) override;
 
     virtual ndk::ScopedAStatus deleteSmsOnSimResponse(const RadioResponseInfo& info) override;
@@ -83,8 +81,6 @@ class RadioMessagingResponse : public BnRadioMessagingResponse {
 
     virtual ndk::ScopedAStatus sendSmsResponse(const RadioResponseInfo& info,
                                                const SendSmsResult& sms) override;
-
-    virtual ndk::ScopedAStatus sendUssdResponse(const RadioResponseInfo& info) override;
 
     virtual ndk::ScopedAStatus setCdmaBroadcastActivationResponse(
             const RadioResponseInfo& info) override;
@@ -131,9 +127,6 @@ class RadioMessagingIndication : public BnRadioMessagingIndication {
 
     virtual ndk::ScopedAStatus newSmsStatusReport(RadioIndicationType type,
                                                   const std::vector<uint8_t>& pdu) override;
-
-    virtual ndk::ScopedAStatus onUssd(RadioIndicationType type, UssdModeType modeType,
-                                      const std::string& msg) override;
 
     virtual ndk::ScopedAStatus simSmsStorageFull(RadioIndicationType type) override;
 };

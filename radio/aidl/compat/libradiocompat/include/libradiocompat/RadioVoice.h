@@ -26,6 +26,7 @@ class RadioVoice : public RadioCompatBase,
     std::shared_ptr<::aidl::android::hardware::radio::voice::IRadioVoiceResponse> respond();
 
     ::ndk::ScopedAStatus acceptCall(int32_t serial) override;
+    ::ndk::ScopedAStatus cancelPendingUssd(int32_t serial) override;
     ::ndk::ScopedAStatus conference(int32_t serial) override;
     ::ndk::ScopedAStatus dial(
             int32_t serial, const ::aidl::android::hardware::radio::voice::Dial& dialInfo) override;
@@ -58,6 +59,7 @@ class RadioVoice : public RadioCompatBase,
                                        int32_t off) override;
     ::ndk::ScopedAStatus sendCdmaFeatureCode(int32_t serial, const std::string& fcode) override;
     ::ndk::ScopedAStatus sendDtmf(int32_t serial, const std::string& s) override;
+    ::ndk::ScopedAStatus sendUssd(int32_t serial, const std::string& ussd) override;
     ::ndk::ScopedAStatus separateConnection(int32_t serial, int32_t gsmIndex) override;
     ::ndk::ScopedAStatus setCallForward(
             int32_t serial,

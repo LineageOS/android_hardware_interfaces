@@ -13,11 +13,13 @@ hidl_interface {
     name: "android.hardware.audio@7.1",
     root: "android.hardware",
     srcs: [
+        "types.hal",
         "IDevice.hal",
         "IDevicesFactory.hal",
         "IPrimaryDevice.hal",
         "IStreamIn.hal",
         "IStreamOut.hal",
+        "IStreamOutLatencyModeCallback.hal",
     ],
     interfaces: [
         "android.hardware.audio@7.0",
