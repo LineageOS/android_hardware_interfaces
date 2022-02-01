@@ -102,7 +102,7 @@ TEST_P(GnssHalTest, TestPsdsExtension) {
     }
 }
 
-void CheckSatellitePvt(const SatellitePvt& satellitePvt) {
+void CheckSatellitePvt(const SatellitePvt& satellitePvt, const int interfaceVersion) {
     const double kMaxOrbitRadiusMeters = 43000000.0;
     const double kMaxVelocityMps = 4000.0;
     // The below values are determined using GPS ICD Table 20-1
@@ -146,6 +146,14 @@ void CheckSatellitePvt(const SatellitePvt& satellitePvt) {
     if (satellitePvt.flags & SatellitePvt::HAS_TROPO) {
         ALOGD("Found HAS_TROPO");
         ASSERT_TRUE(satellitePvt.tropoDelayMeters > 0 && satellitePvt.tropoDelayMeters < 100);
+    }
+    if (interfaceVersion >= 2) {
+        ASSERT_TRUE(satellitePvt.TOC >= 0 && satellitePvt.TOC <= 604784);
+        ASSERT_TRUE(satellitePvt.TOE >= 0 && satellitePvt.TOE <= 604784);
+        // IODC has 10 bits
+        ASSERT_TRUE(satellitePvt.IODC >= 0 && satellitePvt.IODC <= 1023);
+        // IODE has 8 bits
+        ASSERT_TRUE(satellitePvt.IODE >= 0 && satellitePvt.IODE <= 255);
     }
 }
 
@@ -226,7 +234,7 @@ TEST_P(GnssHalTest, TestGnssMeasurementExtensionAndSatellitePvt) {
                 kIsSatellitePvtSupported == true) {
                 ALOGD("Found a measurement with SatellitePvt");
                 satellitePvtFound = true;
-                CheckSatellitePvt(measurement.satellitePvt);
+                CheckSatellitePvt(measurement.satellitePvt, aidl_gnss_hal_->getInterfaceVersion());
             }
         }
     }
