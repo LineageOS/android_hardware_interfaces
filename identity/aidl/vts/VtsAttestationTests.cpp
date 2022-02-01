@@ -66,7 +66,8 @@ TEST_P(VtsAttestationTests, verifyAttestationWithNonemptyChallengeNonemptyId) {
     ASSERT_TRUE(setupWritableCredential(writableCredential, credentialStore_,
                                         false /* testCredential */));
 
-    string challenge = "NotSoRandomChallenge1NotSoRandomChallenge1NotSoRandomChallenge1";
+    // Must support at least 32 bytes.
+    string challenge = "0123456789abcdef0123456789abcdef";
     vector<uint8_t> attestationChallenge(challenge.begin(), challenge.end());
     vector<Certificate> attestationCertificate;
     string applicationId = "Attestation Verification";
