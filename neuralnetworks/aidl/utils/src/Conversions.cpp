@@ -967,6 +967,11 @@ nn::GeneralResult<ExtensionNameAndPrefix> unvalidatedConvert(
 }
 
 nn::GeneralResult<Model> unvalidatedConvert(const nn::Model& model) {
+    if (!hal::utils::hasNoPointerData(model)) {
+        return NN_ERROR(nn::ErrorStatus::INVALID_ARGUMENT)
+               << "Model cannot be unvalidatedConverted because it contains pointer-based memory";
+    }
+
     return Model{
             .main = NN_TRY(unvalidatedConvert(model.main)),
             .referenced = NN_TRY(unvalidatedConvert(model.referenced)),
@@ -982,6 +987,11 @@ nn::GeneralResult<Priority> unvalidatedConvert(const nn::Priority& priority) {
 }
 
 nn::GeneralResult<Request> unvalidatedConvert(const nn::Request& request) {
+    if (!hal::utils::hasNoPointerData(request)) {
+        return NN_ERROR(nn::ErrorStatus::INVALID_ARGUMENT)
+               << "Request cannot be unvalidatedConverted because it contains pointer-based memory";
+    }
+
     return Request{
             .inputs = NN_TRY(unvalidatedConvert(request.inputs)),
             .outputs = NN_TRY(unvalidatedConvert(request.outputs)),
