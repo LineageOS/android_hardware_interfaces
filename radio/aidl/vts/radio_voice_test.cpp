@@ -324,7 +324,7 @@ TEST_P(RadioVoiceTest, getClip) {
  * Test IRadioVoice.getTtyMode() for the response returned.
  */
 TEST_P(RadioVoiceTest, getTtyMode) {
-    LOG(DEBUG) << "getTTYMode";
+    LOG(DEBUG) << "getTtyMode";
     serial = GetRandomSerialNumber();
 
     radio_voice->getTtyMode(serial);
@@ -335,7 +335,7 @@ TEST_P(RadioVoiceTest, getTtyMode) {
     if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
         EXPECT_EQ(RadioError::NONE, radioRsp_voice->rspInfo.error);
     }
-    LOG(DEBUG) << "getTTYMode finished";
+    LOG(DEBUG) << "getTtyMode finished";
 }
 
 /*
@@ -901,4 +901,45 @@ TEST_P(RadioVoiceTest, sendBurstDtmf) {
                                      CHECK_GENERAL_ERROR));
     }
     LOG(DEBUG) << "sendBurstDtmf finished";
+}
+
+/*
+ * Test IRadioVoice.sendUssd() for the response returned.
+ */
+TEST_P(RadioVoiceTest, sendUssd) {
+    LOG(DEBUG) << "sendUssd";
+    serial = GetRandomSerialNumber();
+    radio_voice->sendUssd(serial, std::string("test"));
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_voice->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_voice->rspInfo.serial);
+
+    if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_voice->rspInfo.error,
+                {RadioError::INVALID_ARGUMENTS, RadioError::INVALID_STATE, RadioError::MODEM_ERR},
+                CHECK_GENERAL_ERROR));
+    }
+    LOG(DEBUG) << "sendUssd finished";
+}
+
+/*
+ * Test IRadioVoice.cancelPendingUssd() for the response returned.
+ */
+TEST_P(RadioVoiceTest, cancelPendingUssd) {
+    LOG(DEBUG) << "cancelPendingUssd";
+    serial = GetRandomSerialNumber();
+
+    radio_voice->cancelPendingUssd(serial);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_voice->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_voice->rspInfo.serial);
+
+    if (cardStatus.cardState == CardStatus::STATE_ABSENT) {
+        ASSERT_TRUE(CheckAnyOfErrors(
+                radioRsp_voice->rspInfo.error,
+                {RadioError::NONE, RadioError::INVALID_STATE, RadioError::MODEM_ERR},
+                CHECK_GENERAL_ERROR));
+    }
+    LOG(DEBUG) << "cancelPendingUssd finished";
 }
