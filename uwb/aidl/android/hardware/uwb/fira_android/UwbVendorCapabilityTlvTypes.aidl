@@ -20,127 +20,15 @@ package android.hardware.uwb.fira_android;
  * Android specific capability TLV types in UCI command:
  * GID: 0000b (UWB Core Group)
  * OID: 000011b (CORE_GET_CAPS_INFO_CMD)
+ *
+ * For FIRA params, please refer to params mentioned in CR 287.
+ *
  * Values expected for each type are mentioned in the docs below and the constants
  * used are defined in UwbVendorCapabilityTlvValues enum.
  */
 @VintfStability
 @Backing(type="int")
 enum UwbVendorCapabilityTlvTypes {
-    /** byte array with list of supported channels */
-    SUPPORTED_CHANNELS = 0x0,
-    /**
-     * int bitmask of supported AOA modes
-     * Values:
-     *  HAS_AZIMUTH_SUPPORT = 1,
-     *  HAS_ELEVATION_SUPPORT = (1 << 1)
-     *  HAS_FOM_SUPPORT = (1 << 2)
-     *  HAS_FULL_AZIMUTH_SUPPORT = (1 << 3)
-     */
-    SUPPORTED_AOA_MODES = 0x1,
-    /**
-     * int bitmask of supported device roles
-     * Values:
-     *   HAS_CONTROLEE_INITIATOR_SUPPORT = 1
-     *   HAS_CONTROLEE_RESPONDER_SUPPORT = (1 << 1)
-     *   HAS_CONTROLLER_INITIATOR_SUPPORT = (1 << 2)
-     *   HAS_CONTROLLER_RESPONDER_SUPPORT= (1 << 3)
-     */
-    SUPPORTED_DEVICE_ROLES = 0x2,
-    /** byte value of 1 to indicate support for block striding */
-    SUPPORTS_BLOCK_STRIDING = 0x3,
-    /** byte value of 1 to indicate support for non deferred mode */
-    SUPPORTS_NON_DEFERRED_MODE = 0x4,
-    /** byte value of 1 to indicate support for adaptive payload power */
-    SUPPORTS_ADAPTIVE_PAYLOAD_POWER = 0x5,
-    /** Int value for indicating initiation time */
-    INITIATION_TIME_MS = 0x6,
-    /**
-     * int bitmask of supported mac fcs crc types
-     * Values:
-     *  HAS_CRC_16_SUPPORT = 1
-     *  HAS_CRC_32_SUPPORT = (1 << 1)
-     */
-    SUPPORTED_MAC_FCS_CRC_TYPES = 0x7,
-    /**
-     * int bitmask of supported multi node modes
-     * Values:
-     *  HAS_UNICAST_SUPPORT = 1
-     *  HAS_ONE_TO_MANY_SUPPORT = (1 << 1)
-     *  HAS_MANY_TO_MANY_SUPPORT = (1 << 2)
-     */
-    SUPPORTED_MULTI_NODE_MODES = 0x8,
-    /**
-     * int bitmask of supported preamble modes
-     * Values:
-     *  HAS_32_SYMBOLS_SUPPORT = 1
-     *  HAS_64_SYMBOLS_SUPPORT = (1 << 1)
-     */
-    SUPPORTED_PREAMBLE_MODES = 0x9,
-    /**
-     * int bitmask of supported prf modes
-     * Values:
-     *  HAS_BPRF_SUPPORT = 1
-     *  HAS_HPRF_SUPPORT = (1 << 1)
-     */
-    SUPPORTED_PRF_MODES = 0xA,
-    /**
-     * int bitmask of supported ranging round usage modes
-     * Values:
-     *  HAS_DS_TWR_SUPPORT = 1
-     *  HAS_SS_TWR_SUPPORT = (1 << 1)
-     */
-    SUPPORTED_RANGING_ROUND_USAGE_MODES = 0xB,
-    /**
-     * int bitmask of supported rframe modes
-     * Values:
-     *  HAS_SP0_RFRAME_SUPPORT = 1
-     *  HAS_SP1_RFRAME_SUPPORT = (1 << 1),
-     *  HAS_SP3_RFRAME_SUPPORT = (1 << 3)
-     */
-    SUPPORTED_RFRAME_MODES = 0xC,
-    /**
-     * int bitmask of supported sfd ids
-     * Values:
-     *  HAS_SFD0_SUPPORT = 1
-     *  HAS_SFD1_SUPPORT = (1 << 1)
-     *  HAS_SFD2_SUPPORT = (1 << 2)
-     *  HAS_SFD3_SUPPORT = (1 << 3)
-     *  HAS_SFD4_SUPPORT = (1 << 4)
-     */
-    SUPPORTED_SFD_IDS = 0xD,
-    /**
-     * int bitmask of supported sts modes
-     * Values:
-     *  HAS_STATIC_STS_SUPPORT = 1
-     *  HAS_DYNAMIC_STS_SUPPORT = (1 << 1)
-     *  HAS_DYNAMIC_STS_INDIVIDUAL_CONTROLEE_KEY_SUPPORT = (1 << 2)
-     */
-    SUPPORTED_STS_MODES = 0xE,
-    /**
-     * int bitmask of supported sts segments
-     * Values:
-     *  HAS_0_SEGMENT_SUPPORT = 1
-     *  HAS_1_SEGMENT_SUPPORT = (1 << 1)
-     *  HAS_2_SEGMENT_SUPPORT = (1 << 2)
-     */
-    SUPPORTED_STS_SEGEMENTS = 0xF,
-    /**
-     * int bitmask of supported bprf phr data rates
-     * Values:
-     *  HAS_6M81_SUPPORT = 1
-     *  HAS_850K_SUPPORT = (1 << 1)
-     */
-    SUPPORTED_BPRF_PHR_DATA_RATES = 0x10,
-    /**
-     * int bitmask of supported psdu data rates
-     * Values:
-     *  HAS_6M81_SUPPORT = 1
-     *  HAS_7M80_SUPPORT = (1 << 1)
-     *  HAS_27M2_SUPPORT = (1 << 2)
-     *  HAS_31M2_SUPPORT = (1 << 3)
-     */
-    SUPPORTED_PSDU_DATA_RATES = 0x11,
-
     /*********************************************
      * CCC specific
      ********************************************/
