@@ -19,12 +19,39 @@ package {
 }
 
 cc_library {
-    name: "VehicleHalUtils",
+    name: "VehicleHalUtilsVendor",
     srcs: ["src/*.cpp"],
     vendor: true,
     local_include_dirs: ["include"],
     export_include_dirs: ["include"],
     defaults: ["VehicleHalDefaults"],
+}
+
+// This is a non-vendor version for VehicleHalUtilsVendor.
+cc_library {
+    name: "VehicleHalUtils",
+    srcs: ["src/*.cpp"],
+    local_include_dirs: ["include"],
+    export_include_dirs: ["include"],
+    static_libs: [
+        "android-automotive-large-parcelable-lib",
+        "android.hardware.automotive.vehicle-V1-ndk",
+        "libmath",
+    ],
+    shared_libs: [
+        "libbase",
+        "liblog",
+        "libutils",
+    ],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-Wthread-safety",
+    ],
+    defaults: [
+        "android-automotive-large-parcelable-defaults",
+    ],
 }
 
 cc_library_headers {

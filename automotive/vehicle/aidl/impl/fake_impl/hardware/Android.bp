@@ -39,7 +39,7 @@ cc_defaults {
     ],
     export_header_lib_headers: ["IVehicleHardware"],
     static_libs: [
-        "VehicleHalUtils",
+        "VehicleHalUtilsVendor",
         "FakeVehicleHalValueGenerators",
         "FakeObd2Frame",
         "FakeUserHal",
@@ -47,5 +47,5 @@ cc_defaults {
     shared_libs: [
         "libjsoncpp",
     ],
-    export_static_lib_headers: ["VehicleHalUtils"],
+    export_static_lib_headers: ["VehicleHalUtilsVendor"],
 }

@@ -26,7 +26,7 @@ cc_test {
         "libhidlbase",
     ],
     static_libs: [
-        "VehicleHalUtils",
+        "VehicleHalUtilsVendor",
         "android.hardware.automotive.vehicle@2.0",
         "libgtest",
         "libgmock",

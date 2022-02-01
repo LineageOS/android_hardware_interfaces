@@ -25,7 +25,7 @@ cc_test {
     defaults: ["VehicleHalDefaults"],
     static_libs: [
         "FakeObd2Frame",
-        "VehicleHalUtils",
+        "VehicleHalUtilsVendor",
     ],
     test_suites: ["device-tests"],
 }

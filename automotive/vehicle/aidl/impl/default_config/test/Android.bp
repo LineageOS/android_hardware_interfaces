@@ -24,7 +24,7 @@ cc_test {
     defaults: ["VehicleHalDefaults"],
     srcs: ["*.cpp"],
     static_libs: [
-        "VehicleHalUtils",
+        "VehicleHalUtilsVendor",
         "libgtest",
     ],
     header_libs: [
