@@ -54,12 +54,6 @@ ScopedAStatus RadioMessaging::acknowledgeLastIncomingGsmSms(  //
     return ok();
 }
 
-ScopedAStatus RadioMessaging::cancelPendingUssd(int32_t serial) {
-    LOG_CALL << serial;
-    mHal1_5->cancelPendingUssd(serial);
-    return ok();
-}
-
 ScopedAStatus RadioMessaging::deleteSmsOnRuim(int32_t serial, int32_t index) {
     LOG_CALL << serial << ' ' << index;
     mHal1_5->deleteSmsOnRuim(serial, index);
@@ -145,12 +139,6 @@ ScopedAStatus RadioMessaging::sendSmsExpectMore(int32_t serial, const aidl::GsmS
     } else {
         mHal1_5->sendSMSExpectMore(serial, toHidl(msg));
     }
-    return ok();
-}
-
-ScopedAStatus RadioMessaging::sendUssd(int32_t serial, const std::string& ussd) {
-    LOG_CALL << serial << ' ' << ussd;
-    mHal1_5->sendUssd(serial, ussd);
     return ok();
 }
 

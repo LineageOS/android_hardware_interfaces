@@ -650,13 +650,6 @@ aidl::RegStateResult toAidl(const V1_6::RegStateResult& res) {
     };
 }
 
-aidl::NeighboringCell toAidl(const V1_0::NeighboringCell& cell) {
-    return {
-            .cid = cell.cid,
-            .rssi = cell.rssi,
-    };
-}
-
 aidl::LceDataInfo toAidl(const V1_0::LceDataInfo& info) {
     return {
             .lastHopCapacityKbps = static_cast<int32_t>(info.lastHopCapacityKbps),
