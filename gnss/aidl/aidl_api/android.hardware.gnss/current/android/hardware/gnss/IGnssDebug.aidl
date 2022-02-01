@@ -42,13 +42,6 @@ interface IGnssDebug {
     NOT_AVAILABLE = 2,
   }
   @Backing(type="int") @VintfStability
-  enum SatelliteEphemerisSource {
-    DEMODULATED = 0,
-    SUPL_PROVIDED = 1,
-    OTHER_SERVER_PROVIDED = 2,
-    OTHER = 3,
-  }
-  @Backing(type="int") @VintfStability
   enum SatelliteEphemerisHealth {
     GOOD = 0,
     BAD = 1,
@@ -79,7 +72,7 @@ interface IGnssDebug {
     int svid;
     android.hardware.gnss.GnssConstellationType constellation;
     android.hardware.gnss.IGnssDebug.SatelliteEphemerisType ephemerisType;
-    android.hardware.gnss.IGnssDebug.SatelliteEphemerisSource ephemerisSource;
+    android.hardware.gnss.SatellitePvt.SatelliteEphemerisSource ephemerisSource;
     android.hardware.gnss.IGnssDebug.SatelliteEphemerisHealth ephemerisHealth;
     float ephemerisAgeSeconds;
     boolean serverPredictionIsAvailable;
