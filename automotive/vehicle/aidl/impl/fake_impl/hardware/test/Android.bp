@@ -29,7 +29,7 @@ cc_test {
         "VehicleHalTestUtilHeaders",
     ],
     static_libs: [
-        "VehicleHalUtils",
+        "VehicleHalUtilsVendor",
         "FakeVehicleHardware",
         "FakeVehicleHalValueGenerators",
         "FakeObd2Frame",
