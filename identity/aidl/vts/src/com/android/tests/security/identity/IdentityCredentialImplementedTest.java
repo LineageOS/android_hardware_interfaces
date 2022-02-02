@@ -42,14 +42,14 @@ public class IdentityCredentialImplementedTest extends BaseHostJUnit4Test {
         return Integer.parseInt(vendorApiLevelString);
     }
 
-    // As of Android 13 (API level 31), Identity Credential is required at feature version 202201
+    // As of Android 13 (API level 32), Identity Credential is required at feature version 202201
     // or newer.
     //
     @RequiresDevice
     @Test
     public void testIdentityCredentialIsImplemented() throws Exception {
         int vendorApiLevel = getVendorApiLevel();
-        assumeTrue(vendorApiLevel >= 31);
+        assumeTrue(vendorApiLevel >= 32);
 
         final String minimumFeatureVersionNeeded = "202201";
 
