@@ -61,6 +61,9 @@ interface ISupplicantStaIface {
   void reassociate();
   void reconnect();
   void registerCallback(in android.hardware.wifi.supplicant.ISupplicantStaIfaceCallback callback);
+  void setQosPolicyFeatureEnabled(in boolean enable);
+  void sendQosPolicyResponse(in boolean morePolicies, in android.hardware.wifi.supplicant.QosPolicyStatus[] qosPolicyStatusList);
+  void removeAllQosPolicies();
   void removeDppUri(in int id);
   void removeExtRadioWork(in int id);
   void removeNetwork(in int id);
