@@ -60,4 +60,6 @@ interface ISupplicantStaIfaceCallback {
   oneway void onWpsEventFail(in byte[] bssid, in android.hardware.wifi.supplicant.WpsConfigError configError, in android.hardware.wifi.supplicant.WpsErrorIndication errorInd);
   oneway void onWpsEventPbcOverlap();
   oneway void onWpsEventSuccess();
+  oneway void onQosPolicyReset();
+  oneway void onQosPolicyRequest(in android.hardware.wifi.supplicant.QosPolicyData[] qosPolicyData);
 }
