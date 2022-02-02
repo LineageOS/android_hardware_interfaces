@@ -87,15 +87,13 @@ ScopedAStatus Gnss::start() {
     mIsActive = true;
     this->reportGnssStatusValue(IGnssCallback::GnssStatusValue::SESSION_BEGIN);
     mThread = std::thread([this]() {
-        auto svStatus = filterBlocklistedSatellites(Utils::getMockSvInfoList());
-        this->reportSvStatus(svStatus);
+        this->reportSvStatus();
         if (!mFirstFixReceived) {
             std::this_thread::sleep_for(std::chrono::milliseconds(TTFF_MILLIS));
             mFirstFixReceived = true;
         }
         while (mIsActive == true) {
-            auto svStatus = filterBlocklistedSatellites(Utils::getMockSvInfoList());
-            this->reportSvStatus(svStatus);
+            this->reportSvStatus();
 
             auto currentLocation = getLocationFromHW();
             mGnssPowerIndication->notePowerConsumption();
@@ -124,6 +122,13 @@ void Gnss::reportLocation(const GnssLocation& location) const {
     return;
 }
 
+void Gnss::reportSvStatus() const {
+    if (mIsSvStatusActive) {
+        auto svStatus = filterBlocklistedSatellites(Utils::getMockSvInfoList());
+        reportSvStatus(svStatus);
+    }
+}
+
 void Gnss::reportSvStatus(const std::vector<GnssSvInfo>& svInfoList) const {
     std::unique_lock<std::mutex> lock(mMutex);
     if (sGnssCallback == nullptr) {
@@ -136,7 +141,8 @@ void Gnss::reportSvStatus(const std::vector<GnssSvInfo>& svInfoList) const {
     }
 }
 
-std::vector<GnssSvInfo> Gnss::filterBlocklistedSatellites(std::vector<GnssSvInfo> gnssSvInfoList) {
+std::vector<GnssSvInfo> Gnss::filterBlocklistedSatellites(
+        std::vector<GnssSvInfo> gnssSvInfoList) const {
     ALOGD("filterBlocklistedSatellites");
     for (uint32_t i = 0; i < gnssSvInfoList.size(); i++) {
         if (mGnssConfiguration->isBlocklisted(gnssSvInfoList[i])) {
@@ -165,6 +171,26 @@ ScopedAStatus Gnss::stop() {
     if (mThread.joinable()) {
         mThread.join();
     }
+    return ScopedAStatus::ok();
+}
+
+ScopedAStatus Gnss::startSvStatus() {
+    ALOGD("startSvStatus");
+    mIsSvStatusActive = true;
+    return ScopedAStatus::ok();
+}
+
+ScopedAStatus Gnss::stopSvStatus() {
+    ALOGD("stopSvStatus");
+    mIsSvStatusActive = false;
+    return ScopedAStatus::ok();
+}
+ScopedAStatus Gnss::startNmea() {
+    ALOGD("startNmea");
+    return ScopedAStatus::ok();
+}
+ScopedAStatus Gnss::stopNmea() {
+    ALOGD("stopNmea");
     return ScopedAStatus::ok();
 }
 
