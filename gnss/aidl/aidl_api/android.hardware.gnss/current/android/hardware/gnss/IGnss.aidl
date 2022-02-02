@@ -56,6 +56,10 @@ interface IGnss {
   void setPositionMode(in android.hardware.gnss.IGnss.PositionModeOptions options);
   android.hardware.gnss.IGnssAntennaInfo getExtensionGnssAntennaInfo();
   @nullable android.hardware.gnss.measurement_corrections.IMeasurementCorrectionsInterface getExtensionMeasurementCorrections();
+  void startSvStatus();
+  void stopSvStatus();
+  void startNmea();
+  void stopNmea();
   const int ERROR_INVALID_ARGUMENT = 1;
   const int ERROR_ALREADY_INIT = 2;
   const int ERROR_GENERIC = 3;
