@@ -26,7 +26,7 @@ cc_library {
     export_include_dirs: ["include"],
     defaults: ["VehicleHalDefaults"],
     static_libs: [
-        "VehicleHalUtils",
+        "VehicleHalUtilsVendor",
     ],
-    export_static_lib_headers: ["VehicleHalUtils"],
+    export_static_lib_headers: ["VehicleHalUtilsVendor"],
 }

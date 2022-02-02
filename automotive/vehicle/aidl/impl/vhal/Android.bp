@@ -33,7 +33,7 @@ cc_binary {
     static_libs: [
         "DefaultVehicleHal",
         "FakeVehicleHardware",
-        "VehicleHalUtils",
+        "VehicleHalUtilsVendor",
     ],
     header_libs: [
         "IVehicleHardware",
@@ -58,7 +58,7 @@ cc_library {
         "src/SubscriptionManager.cpp",
     ],
     static_libs: [
-        "VehicleHalUtils",
+        "VehicleHalUtilsVendor",
     ],
     header_libs: [
         "IVehicleHardware",
