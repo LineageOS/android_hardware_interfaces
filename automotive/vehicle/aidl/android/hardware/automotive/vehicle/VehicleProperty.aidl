@@ -2724,4 +2724,83 @@ enum VehicleProperty {
      */
     REAR_FOG_LIGHTS_SWITCH = 0x0F3E + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+
+    /**
+     * Indicates the maximum current draw threshold for charging set by the user
+     *
+     * configArray[0] is used to specify the max current draw allowed by
+     * the vehicle in Amperes.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     * @unit VehicleUnit:AMPERE
+     */
+    EV_CHARGE_CURRENT_DRAW_LIMIT = 0x0F3F + 0x10000000 + 0x01000000
+            + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
+
+    /**
+     * Indicates the maximum charge percent threshold set by the user
+     *
+     * Returns a float value from 0 to 100.
+     *
+     * configArray is used to specify the valid values.
+     *   For example, if the vehicle supports the following charge percent limit values:
+     *     [20, 40, 60, 80, 100]
+     *   then the configArray should be {20, 40, 60, 80, 100}
+     * If the configArray is empty then all values from 0 to 100 must be valid.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    EV_CHARGE_PERCENT_LIMIT = 0x0F40 + 0x10000000 + 0x01000000
+            + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
+
+    /**
+     * Charging state of the car
+     *
+     * Returns the current charging state of the car.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     * @data_enum EvChargeState
+     */
+    EV_CHARGE_STATE = 0x0F41 + 0x10000000 + 0x01000000
+            + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+
+    /**
+     * Start or stop charging the EV battery
+     *
+     * The setting that the user wants. Setting this property to true starts the battery charging
+     * and setting to false stops charging.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    EV_CHARGE_SWITCH = 0x0F42 + 0x10000000 + 0x01000000
+            + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
+
+    /**
+     * Estimated charge time remaining in seconds
+     *
+     * Returns 0 if the vehicle is not charging.
+     *
+     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
+     * @access VehiclePropertyAccess:READ
+     * @unit VehicleUnit:SECS
+     */
+    EV_CHARGE_TIME_REMAINING = 0x0F43 + 0x10000000 + 0x01000000
+            + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+
+    /**
+     * Regenerative braking or one-pedal drive state of the car
+     *
+     * Returns the current state associated with the regenerative braking
+     * setting in the car
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     * @data_enum EvRegenerativeBrakingState
+     */
+    EV_REGENERATIVE_BRAKING_STATE = 0x0F44 + 0x10000000 + 0x01000000
+            + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
 }
