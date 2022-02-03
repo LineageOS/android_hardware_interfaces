@@ -16,8 +16,37 @@
 
 #include <sap_hidl_hal_utils.h>
 
+bool isServiceValidForDeviceConfiguration(hidl_string& serviceName) {
+    if (isSsSsEnabled()) {
+        // Device is configured as SSSS.
+        if (serviceName != SAP_SERVICE_SLOT1_NAME) {
+            LOG(DEBUG) << "Not valid for SSSS device.";
+            return false;
+        }
+    } else if (isDsDsEnabled()) {
+        // Device is configured as DSDS.
+        if (serviceName != SAP_SERVICE_SLOT1_NAME && serviceName != SAP_SERVICE_SLOT2_NAME) {
+            LOG(DEBUG) << "Not valid for DSDS device.";
+            return false;
+        }
+    } else if (isTsTsEnabled()) {
+        // Device is configured as TSTS.
+        if (serviceName != SAP_SERVICE_SLOT1_NAME && serviceName != SAP_SERVICE_SLOT2_NAME &&
+            serviceName != SAP_SERVICE_SLOT3_NAME) {
+            LOG(DEBUG) << "Not valid for TSTS device.";
+            return false;
+        }
+    }
+    return true;
+}
+
 void SapHidlTest::SetUp() {
-    sap = ISap::getService(GetParam());
+    hidl_string serviceName = GetParam();
+    if (!isServiceValidForDeviceConfiguration(serviceName)) {
+        LOG(DEBUG) << "Skipped the test due to device configuration.";
+        GTEST_SKIP();
+    }
+    sap = ISap::getService(serviceName);
     ASSERT_NE(sap, nullptr);
 
     sapCb = new SapCallback(*this);
