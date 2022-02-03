@@ -42,6 +42,11 @@ void startSupplicantAndWaitForHidlService(
     const std::string& wifi_instance_name,
     const std::string& supplicant_instance_name);
 
+// Used to initialize/deinitialize the driver and firmware at the
+// beginning and end of each test.
+void initializeDriverAndFirmware(const std::string& wifi_instance_name);
+void deInitializeDriverAndFirmware(const std::string& wifi_instance_name);
+
 // Helper functions to obtain references to the various HIDL interface objects.
 // Note: We only have a single instance of each of these objects currently.
 // These helper functions should be modified to return vectors if we support
