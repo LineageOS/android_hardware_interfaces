@@ -14,18 +14,11 @@
  * limitations under the License.
  */
 
-// TODO(b/129481165): remove the #pragma below and fix conversion issues
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-
 #include "include/ReadbackVts.h"
 #include <aidl/android/hardware/graphics/common/BufferUsage.h>
 #include "include/RenderEngineVts.h"
 #include "renderengine/ExternalTexture.h"
 #include "renderengine/impl/ExternalTexture.h"
-
-// TODO(b/129481165): remove the #pragma below and fix conversion issues
-#pragma clang diagnostic pop  // ignored "-Wconversion
 
 namespace aidl::android::hardware::graphics::composer3::vts {
 
@@ -195,12 +188,11 @@ void ReadbackHelper::compareColorBuffers(const std::vector<Color>& expectedColor
     }
 }
 
-ReadbackBuffer::ReadbackBuffer(int64_t display, const std::shared_ptr<IComposerClient>& client,
+ReadbackBuffer::ReadbackBuffer(int64_t display, const std::shared_ptr<VtsComposerClient>& client,
                                int32_t width, int32_t height, common::PixelFormat pixelFormat,
-                               common::Dataspace dataspace) {
+                               common::Dataspace dataspace)
+    : mComposerClient(client) {
     mDisplay = display;
-
-    mComposerClient = client;
 
     mPixelFormat = pixelFormat;
     mDataspace = dataspace;
@@ -227,23 +219,22 @@ void ReadbackBuffer::setReadbackBuffer() {
     mGraphicBuffer = allocate();
     ASSERT_NE(nullptr, mGraphicBuffer);
     ASSERT_EQ(::android::OK, mGraphicBuffer->initCheck());
-    aidl::android::hardware::common::NativeHandle bufferHandle =
-            ::android::dupToAidl(mGraphicBuffer->handle);
+    const auto& bufferHandle = mGraphicBuffer->handle;
     ::ndk::ScopedFileDescriptor fence = ::ndk::ScopedFileDescriptor(-1);
     EXPECT_TRUE(mComposerClient->setReadbackBuffer(mDisplay, bufferHandle, fence).isOk());
 }
 
-void ReadbackBuffer::checkReadbackBuffer(std::vector<Color> expectedColors) {
+void ReadbackBuffer::checkReadbackBuffer(const std::vector<Color>& expectedColors) {
     ASSERT_NE(nullptr, mGraphicBuffer);
     // lock buffer for reading
-    ndk::ScopedFileDescriptor fenceHandle;
-    EXPECT_TRUE(mComposerClient->getReadbackBufferFence(mDisplay, &fenceHandle).isOk());
+    const auto& [fenceStatus, bufferFence] = mComposerClient->getReadbackBufferFence(mDisplay);
+    EXPECT_TRUE(fenceStatus.isOk());
 
     int bytesPerPixel = -1;
     int bytesPerStride = -1;
     void* bufData = nullptr;
 
-    auto status = mGraphicBuffer->lockAsync(mUsage, mAccessRegion, &bufData, dup(fenceHandle.get()),
+    auto status = mGraphicBuffer->lockAsync(mUsage, mAccessRegion, &bufData, dup(bufferFence.get()),
                                             &bytesPerPixel, &bytesPerStride);
     EXPECT_EQ(::android::OK, status);
     ASSERT_TRUE(mPixelFormat == PixelFormat::RGB_888 || mPixelFormat == PixelFormat::RGBA_8888);
@@ -270,7 +261,7 @@ LayerSettings TestColorLayer::toRenderEngineLayerSettings() {
     return layerSettings;
 }
 
-TestBufferLayer::TestBufferLayer(const std::shared_ptr<IComposerClient>& client,
+TestBufferLayer::TestBufferLayer(const std::shared_ptr<VtsComposerClient>& client,
                                  const ::android::sp<::android::GraphicBuffer>& graphicBuffer,
                                  TestRenderEngine& renderEngine, int64_t display, uint32_t width,
                                  uint32_t height, common::PixelFormat format,
@@ -318,8 +309,8 @@ LayerSettings TestBufferLayer::toRenderEngineLayerSettings() {
     const float translateY = mSourceCrop.top / (static_cast<float>(mHeight));
 
     layerSettings.source.buffer.textureTransform =
-            ::android::mat4::translate(::android::vec4(translateX, translateY, 0, 1.0)) *
-            ::android::mat4::scale(::android::vec4(scaleX, scaleY, 1.0, 1.0));
+            ::android::mat4::translate(::android::vec4(translateX, translateY, 0.0f, 1.0f)) *
+            ::android::mat4::scale(::android::vec4(scaleX, scaleY, 1.0f, 1.0f));
 
     return layerSettings;
 }
