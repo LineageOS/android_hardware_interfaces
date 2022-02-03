@@ -438,8 +438,9 @@ interface IIdentityCredential {
      * If the method is called on an instance obtained via IPresentationSession.getCredential(),
      * STATUS_FAILED must be returned.
      *
-     * @param challenge a challenge set by the issuer to ensure freshness. Maximum size is 32 bytes
-     *     and it may be empty. Fails with STATUS_INVALID_DATA if bigger than 32 bytes.
+     * @param challenge a challenge set by the issuer to ensure freshness. Implementations must
+     *   support challenges that are at least 32 bytes. Fails with STATUS_INVALID_DATA if bigger
+     *   than 32 bytes.
      * @return a COSE_Sign1 signature described above.
      */
     byte[] deleteCredentialWithChallenge(in byte[] challenge);
@@ -463,8 +464,9 @@ interface IIdentityCredential {
      * If the method is called on an instance obtained via IPresentationSession.getCredential(),
      * STATUS_FAILED must be returned.
      *
-     * @param challenge a challenge set by the issuer to ensure freshness. Maximum size is 32 bytes
-     *     and it may be empty. Fails with STATUS_INVALID_DATA if bigger than 32 bytes.
+     * @param challenge a challenge set by the issuer to ensure freshness. Implementations must
+     *   support challenges that are at least 32 bytes. Fails with STATUS_INVALID_DATA if bigger
+     *   than 32 bytes.
      * @return a COSE_Sign1 signature described above.
      */
     byte[] proveOwnership(in byte[] challenge);

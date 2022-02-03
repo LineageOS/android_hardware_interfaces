@@ -189,9 +189,8 @@ interface IContextHub {
      * called, the HAL is expected to clean up any resources attached to the messaging channel
      * associated with this host endpoint ID.
      *
-     * @param hostEndPointId The ID of the host that has disconnected.
-     *
-     * @throws EX_ILLEGAL_ARGUMENT if hostEndpointId is not associated with a connected host.
+     * @param hostEndPointId The ID of the host that has disconnected. Any invalid values for this
+     *                       parameter should be ignored (no-op).
      */
     void onHostEndpointDisconnected(char hostEndpointId);
 

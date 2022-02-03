@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,28 +31,9 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.gnss;
+package android.hardware.wifi.supplicant;
 @VintfStability
-parcelable SatellitePvt {
-  int flags;
-  android.hardware.gnss.SatellitePositionEcef satPosEcef;
-  android.hardware.gnss.SatelliteVelocityEcef satVelEcef;
-  android.hardware.gnss.SatelliteClockInfo satClockInfo;
-  double ionoDelayMeters;
-  double tropoDelayMeters;
-  int TOC;
-  int IODC;
-  int TOE;
-  int IODE;
-  android.hardware.gnss.SatellitePvt.SatelliteEphemerisSource ephemerisSource = android.hardware.gnss.SatellitePvt.SatelliteEphemerisSource.OTHER;
-  const int HAS_POSITION_VELOCITY_CLOCK_INFO = 1;
-  const int HAS_IONO = 2;
-  const int HAS_TROPO = 4;
-  @Backing(type="int") @VintfStability
-  enum SatelliteEphemerisSource {
-    DEMODULATED = 0,
-    SERVER_NORMAL = 1,
-    SERVER_LONG_TERM = 2,
-    OTHER = 3,
-  }
+parcelable PortRange {
+  int startPort;
+  int endPort;
 }

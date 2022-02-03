@@ -100,9 +100,11 @@ bool GnssHalTest::StartAndCheckFirstLocation(const int min_interval_msec,
     }
 
     SetPositionMode(min_interval_msec, low_power_mode);
-    auto result = aidl_gnss_hal_->start();
+    auto status = aidl_gnss_hal_->start();
+    EXPECT_TRUE(status.isOk());
 
-    EXPECT_TRUE(result.isOk());
+    status = aidl_gnss_hal_->startSvStatus();
+    EXPECT_TRUE(status.isOk());
 
     /*
      * GnssLocationProvider support of AGPS SUPL & XtraDownloader is not available in VTS,
@@ -129,8 +131,10 @@ void GnssHalTest::StopAndClearLocations() {
         // Invoke the super method.
         return GnssHalTestTemplate<IGnss_V2_1>::StopAndClearLocations();
     }
+    auto status = aidl_gnss_hal_->stopSvStatus();
+    EXPECT_TRUE(status.isOk());
 
-    auto status = aidl_gnss_hal_->stop();
+    status = aidl_gnss_hal_->stop();
     EXPECT_TRUE(status.isOk());
 
     /*
