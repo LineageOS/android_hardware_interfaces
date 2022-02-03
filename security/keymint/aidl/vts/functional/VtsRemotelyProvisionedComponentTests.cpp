@@ -57,6 +57,22 @@ using testing::MatchesRegex;
 using namespace remote_prov;
 using namespace keymaster;
 
+std::set<std::string> getAllowedVbStates() {
+    return {"green", "yellow", "orange"};
+}
+
+std::set<std::string> getAllowedBootloaderStates() {
+    return {"locked", "unlocked"};
+}
+
+std::set<std::string> getAllowedSecurityLevels() {
+    return {"tee", "strongbox"};
+}
+
+std::set<std::string> getAllowedAttIdStates() {
+    return {"locked", "open"};
+}
+
 bytevec string_to_bytevec(const char* s) {
     const uint8_t* p = reinterpret_cast<const uint8_t*>(s);
     return bytevec(p, p + strlen(s));
@@ -406,6 +422,8 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
         ASSERT_TRUE(deviceInfoMap) << "Failed to parse deviceInfo: " << deviceInfoErrMsg;
         ASSERT_TRUE(deviceInfoMap->asMap());
 
+        checkDeviceInfo(deviceInfoMap->asMap());
+
         auto& signingKey = bccContents->back().pubKey;
         auto macKey = verifyAndParseCoseSign1(signedMac->asArray(), signingKey,
                                               cppbor::Array()  // SignedMacAad
@@ -429,6 +447,76 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
 
         if (bccOutput) {
             *bccOutput = std::move(*bccContents);
+        }
+    }
+
+    void checkType(const cppbor::Map* devInfo, uint8_t majorType, std::string entryName) {
+        const auto& val = devInfo->get(entryName);
+        ASSERT_TRUE(val) << entryName << " does not exist";
+        ASSERT_EQ(val->type(), majorType) << entryName << " has the wrong type.";
+        switch (majorType) {
+            case cppbor::TSTR:
+                ASSERT_GT(val->asTstr()->value().size(), 0);
+                break;
+            case cppbor::BSTR:
+                ASSERT_GT(val->asBstr()->value().size(), 0);
+                break;
+            default:
+                break;
+        }
+    }
+
+    void checkDeviceInfo(const cppbor::Map* deviceInfo) {
+        const auto& version = deviceInfo->get("version");
+        ASSERT_TRUE(version);
+        ASSERT_TRUE(version->asUint());
+        RpcHardwareInfo info;
+        provisionable_->getHardwareInfo(&info);
+        ASSERT_EQ(version->asUint()->value(), info.versionNumber);
+        std::set<std::string> allowList;
+        switch (version->asUint()->value()) {
+            // These fields became mandated in version 2.
+            case 2:
+                checkType(deviceInfo, cppbor::TSTR, "brand");
+                checkType(deviceInfo, cppbor::TSTR, "manufacturer");
+                checkType(deviceInfo, cppbor::TSTR, "product");
+                checkType(deviceInfo, cppbor::TSTR, "model");
+                checkType(deviceInfo, cppbor::TSTR, "device");
+                // TODO: Refactor the KeyMint code that validates these fields and include it here.
+                checkType(deviceInfo, cppbor::TSTR, "vb_state");
+                allowList = getAllowedVbStates();
+                ASSERT_NE(allowList.find(deviceInfo->get("vb_state")->asTstr()->value()),
+                          allowList.end());
+                checkType(deviceInfo, cppbor::TSTR, "bootloader_state");
+                allowList = getAllowedBootloaderStates();
+                ASSERT_NE(allowList.find(deviceInfo->get("bootloader_state")->asTstr()->value()),
+                          allowList.end());
+                checkType(deviceInfo, cppbor::BSTR, "vbmeta_digest");
+                checkType(deviceInfo, cppbor::TSTR, "os_version");
+                checkType(deviceInfo, cppbor::UINT, "system_patch_level");
+                checkType(deviceInfo, cppbor::UINT, "boot_patch_level");
+                checkType(deviceInfo, cppbor::UINT, "vendor_patch_level");
+                checkType(deviceInfo, cppbor::UINT, "fused");
+                ASSERT_LT(deviceInfo->get("fused")->asUint()->value(), 2);  // Must be 0 or 1.
+                checkType(deviceInfo, cppbor::TSTR, "security_level");
+                allowList = getAllowedSecurityLevels();
+                ASSERT_NE(allowList.find(deviceInfo->get("security_level")->asTstr()->value()),
+                          allowList.end());
+                break;
+            case 1:
+                checkType(deviceInfo, cppbor::TSTR, "security_level");
+                allowList = getAllowedSecurityLevels();
+                ASSERT_NE(allowList.find(deviceInfo->get("security_level")->asTstr()->value()),
+                          allowList.end());
+                if (version->asUint()->value() == 1) {
+                    checkType(deviceInfo, cppbor::TSTR, "att_id_state");
+                    allowList = getAllowedAttIdStates();
+                    ASSERT_NE(allowList.find(deviceInfo->get("att_id_state")->asTstr()->value()),
+                              allowList.end());
+                }
+                break;
+            default:
+                FAIL() << "Unrecognized version: " << version->asUint()->value();
         }
     }
 
