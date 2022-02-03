@@ -51,6 +51,7 @@ enum VehicleUnit {
     MILLIWATTS = 0x63,
     AMPERE_HOURS = 0x64,
     KILOWATT_HOUR = 0x65,
+    AMPERE = 0x66,
     KILOPASCAL = 0x70,
     PSI = 0x71,
     BAR = 0x72,
