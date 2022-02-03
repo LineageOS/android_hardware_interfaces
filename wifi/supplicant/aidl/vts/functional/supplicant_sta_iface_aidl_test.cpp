@@ -194,6 +194,7 @@ class SupplicantStaIfaceCallback : public BnSupplicantStaIfaceCallback {
     }
     ::ndk::ScopedAStatus onQosPolicyReset() override { return ndk::ScopedAStatus::ok(); }
     ::ndk::ScopedAStatus onQosPolicyRequest(
+            int32_t /* qosPolicyRequestId */,
             const std::vector<::aidl::android::hardware::wifi::supplicant ::
                                       QosPolicyData /* qosPolicyData */>&) override {
         return ndk::ScopedAStatus::ok();

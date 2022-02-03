@@ -287,7 +287,8 @@ oneway interface ISupplicantStaIfaceCallback {
     /**
      * Used to indicate a DSCP request was received from the AP.
      *
+     * @param qosPolicyRequestId Dialog token to identify the request.
      * @param qosPolicyData QoS policies info requested by the AP.
      */
-    void onQosPolicyRequest(in QosPolicyData[] qosPolicyData);
+    void onQosPolicyRequest(in int qosPolicyRequestId, in QosPolicyData[] qosPolicyData);
 }
