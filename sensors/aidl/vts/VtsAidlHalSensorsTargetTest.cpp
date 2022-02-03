@@ -75,6 +75,7 @@ static void assertTypeMatchStringType(SensorType type, const std::string& string
         CHECK_TYPE_STRING_FOR_SENSOR_TYPE(GYROSCOPE_LIMITED_AXES);
         CHECK_TYPE_STRING_FOR_SENSOR_TYPE(GYROSCOPE_LIMITED_AXES_UNCALIBRATED);
         CHECK_TYPE_STRING_FOR_SENSOR_TYPE(GYROSCOPE_UNCALIBRATED);
+        CHECK_TYPE_STRING_FOR_SENSOR_TYPE(HEADING);
         CHECK_TYPE_STRING_FOR_SENSOR_TYPE(HEART_BEAT);
         CHECK_TYPE_STRING_FOR_SENSOR_TYPE(HEART_RATE);
         CHECK_TYPE_STRING_FOR_SENSOR_TYPE(LIGHT);
@@ -144,6 +145,7 @@ int expectedReportModeForType(SensorType type) {
         case SensorType::GEOMAGNETIC_ROTATION_VECTOR:
         case SensorType::POSE_6DOF:
         case SensorType::HEART_BEAT:
+        case SensorType::HEADING:
             return SensorInfo::SENSOR_FLAG_BITS_CONTINUOUS_MODE;
 
         case SensorType::LIGHT:

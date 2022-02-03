@@ -338,8 +338,7 @@ TEST_P(ContextHubAidl, TestHostConnection) {
 TEST_P(ContextHubAidl, TestInvalidHostConnection) {
     constexpr char16_t kHostEndpointId = 1;
 
-    Status status = contextHub->onHostEndpointDisconnected(kHostEndpointId);
-    ASSERT_EQ(status.exceptionCode(), android::binder::Status::EX_ILLEGAL_ARGUMENT);
+    ASSERT_TRUE(contextHub->onHostEndpointDisconnected(kHostEndpointId).isOk());
 }
 
 std::string PrintGeneratedTest(const testing::TestParamInfo<ContextHubAidl::ParamType>& info) {

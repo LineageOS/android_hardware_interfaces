@@ -26,6 +26,11 @@
 
 namespace aidl::android::hardware::security::keymint::remote_prov {
 
+constexpr uint32_t kBccPayloadIssuer = 1;
+constexpr uint32_t kBccPayloadSubject = 2;
+constexpr int32_t kBccPayloadSubjPubKey = -4670552;
+constexpr int32_t kBccPayloadKeyUsage = -4670553;
+
 bytevec kTestMacKey(32 /* count */, 0 /* byte value */);
 
 bytevec randomBytes(size_t numBytes) {
@@ -98,6 +103,18 @@ bytevec getProdEekChain() {
     return prodEek;
 }
 
+ErrMsgOr<bytevec> validatePayloadAndFetchPubKey(const cppbor::Map* payload) {
+    const auto& issuer = payload->get(kBccPayloadIssuer);
+    if (!issuer || !issuer->asTstr()) return "Issuer is not present or not a tstr.";
+    const auto& subject = payload->get(kBccPayloadSubject);
+    if (!subject || !subject->asTstr()) return "Subject is not present or not a tstr.";
+    const auto& keyUsage = payload->get(kBccPayloadKeyUsage);
+    if (!keyUsage || !keyUsage->asBstr()) return "Key usage is not present or not a bstr.";
+    const auto& serializedKey = payload->get(kBccPayloadSubjPubKey);
+    if (!serializedKey || !serializedKey->asBstr()) return "Key is not present or not a bstr.";
+    return serializedKey->asBstr()->value();
+}
+
 ErrMsgOr<bytevec> verifyAndParseCoseSign1Cwt(const cppbor::Array* coseSign1,
                                              const bytevec& signingCoseKey, const bytevec& aad) {
     if (!coseSign1 || coseSign1->size() != kCoseSign1EntryCount) {
@@ -126,18 +143,16 @@ ErrMsgOr<bytevec> verifyAndParseCoseSign1Cwt(const cppbor::Array* coseSign1,
         return "Unsupported signature algorithm";
     }
 
-    // TODO(jbires): Handle CWTs as the CoseSign1 payload in a less hacky way. Since the CWT payload
-    //               is extremely remote provisioning specific, probably just make a separate
-    //               function there.
     auto [parsedPayload, __, payloadErrMsg] = cppbor::parse(payload);
     if (!parsedPayload) return payloadErrMsg + " when parsing key";
     if (!parsedPayload->asMap()) return "CWT must be a map";
-    auto serializedKey = parsedPayload->asMap()->get(-4670552)->clone();
-    if (!serializedKey || !serializedKey->asBstr()) return "Could not find key entry";
+    auto serializedKey = validatePayloadAndFetchPubKey(parsedPayload->asMap());
+    if (!serializedKey) {
+        return "CWT validation failed: " + serializedKey.moveMessage();
+    }
 
     bool selfSigned = signingCoseKey.empty();
-    auto key =
-            CoseKey::parseEd25519(selfSigned ? serializedKey->asBstr()->value() : signingCoseKey);
+    auto key = CoseKey::parseEd25519(selfSigned ? *serializedKey : signingCoseKey);
     if (!key) return "Bad signing key: " + key.moveMessage();
 
     bytevec signatureInput =
@@ -148,7 +163,7 @@ ErrMsgOr<bytevec> verifyAndParseCoseSign1Cwt(const cppbor::Array* coseSign1,
         return "Signature verification failed";
     }
 
-    return serializedKey->asBstr()->value();
+    return serializedKey.moveValue();
 }
 
 ErrMsgOr<std::vector<BccEntryData>> validateBcc(const cppbor::Array* bcc) {
@@ -156,8 +171,11 @@ ErrMsgOr<std::vector<BccEntryData>> validateBcc(const cppbor::Array* bcc) {
 
     std::vector<BccEntryData> result;
 
+    const auto& devicePubKey = bcc->get(0);
+    if (!devicePubKey->asMap()) return "Invalid device public key at the 1st entry in the BCC";
+
     bytevec prevKey;
-    // TODO(jbires): Actually process the pubKey at the start of the new bcc entry
+
     for (size_t i = 1; i < bcc->size(); ++i) {
         const cppbor::Array* entry = bcc->get(i)->asArray();
         if (!entry || entry->size() != kCoseSign1EntryCount) {
@@ -177,6 +195,13 @@ ErrMsgOr<std::vector<BccEntryData>> validateBcc(const cppbor::Array* bcc) {
 
         // This entry's public key is the signing key for the next entry.
         prevKey = payload.moveValue();
+        if (i == 1) {
+            auto [parsedRootKey, _, errMsg] = cppbor::parse(prevKey);
+            if (!parsedRootKey || !parsedRootKey->asMap()) return "Invalid payload entry in BCC.";
+            if (*parsedRootKey != *devicePubKey) {
+                return "Device public key doesn't match BCC root.";
+            }
+        }
     }
 
     return result;

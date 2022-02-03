@@ -26,6 +26,7 @@ import android.hardware.wifi.supplicant.DppFailureCode;
 import android.hardware.wifi.supplicant.DppProgressCode;
 import android.hardware.wifi.supplicant.Hs20AnqpData;
 import android.hardware.wifi.supplicant.OsuMethod;
+import android.hardware.wifi.supplicant.QosPolicyData;
 import android.hardware.wifi.supplicant.StaIfaceCallbackState;
 import android.hardware.wifi.supplicant.StaIfaceReasonCode;
 import android.hardware.wifi.supplicant.WpsConfigError;
@@ -275,4 +276,17 @@ interface ISupplicantStaIfaceCallback {
      * Used to indicate the success of a WPS connection attempt.
      */
     oneway void onWpsEventSuccess();
+
+    /**
+     * Used to indicate that the AP has cleared all DSCP requests
+     * associated with this device.
+     */
+    oneway void onQosPolicyReset();
+
+    /**
+     * Used to indicate a DSCP request was received from the AP.
+     *
+     * @param qosPolicyData QoS policies info requested by the AP.
+     */
+    oneway void onQosPolicyRequest(in QosPolicyData[] qosPolicyData);
 }

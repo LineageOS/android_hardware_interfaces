@@ -20,6 +20,7 @@
 #include <nnapi/Result.h>
 #include <nnapi/SharedMemory.h>
 #include <nnapi/Types.h>
+
 #include <functional>
 #include <vector>
 
@@ -47,81 +48,10 @@ nn::Capabilities::OperandPerformanceTable makeQuantized8PerformanceConsistentWit
         const nn::Capabilities::PerformanceInfo& float32Performance,
         const nn::Capabilities::PerformanceInfo& quantized8Performance);
 
-// Indicates if the object contains no pointer-based data that could be relocated to shared memory.
-bool hasNoPointerData(const nn::Model& model);
-bool hasNoPointerData(const nn::Request& request);
-
-// Relocate pointer-based data to shared memory. If `model` has no Operand::LifeTime::POINTER data,
-// the function returns with a reference to `model`. If `model` has Operand::LifeTime::POINTER data,
-// the model is copied to `maybeModelInSharedOut` with the POINTER data relocated to a memory pool,
-// and the function returns with a reference to `*maybeModelInSharedOut`.
-nn::GeneralResult<std::reference_wrapper<const nn::Model>> flushDataFromPointerToShared(
-        const nn::Model* model, std::optional<nn::Model>* maybeModelInSharedOut);
-
-// Record a relocation mapping between pointer-based data and shared memory.
-// Only two specializations of this template may exist:
-// - RelocationInfo<const void*> for request inputs
-// - RelocationInfo<void*> for request outputs
-template <typename PointerType>
-struct RelocationInfo {
-    PointerType data;
-    size_t length;
-    size_t offset;
-};
-using InputRelocationInfo = RelocationInfo<const void*>;
-using OutputRelocationInfo = RelocationInfo<void*>;
-
-// Keep track of the relocation mapping between pointer-based data and shared memory pool,
-// and provide method to copy the data between pointers and the shared memory pool.
-// Only two specializations of this template may exist:
-// - RelocationTracker<InputRelocationInfo> for request inputs
-// - RelocationTracker<OutputRelocationInfo> for request outputs
-template <typename RelocationInfoType>
-class RelocationTracker {
-  public:
-    static nn::GeneralResult<std::unique_ptr<RelocationTracker>> create(
-            std::vector<RelocationInfoType> relocationInfos, nn::SharedMemory memory) {
-        auto mapping = NN_TRY(map(memory));
-        return std::make_unique<RelocationTracker<RelocationInfoType>>(
-                std::move(relocationInfos), std::move(memory), std::move(mapping));
-    }
-
-    RelocationTracker(std::vector<RelocationInfoType> relocationInfos, nn::SharedMemory memory,
-                      nn::Mapping mapping)
-        : kRelocationInfos(std::move(relocationInfos)),
-          kMemory(std::move(memory)),
-          kMapping(std::move(mapping)) {}
-
-    // Specializations defined in CommonUtils.cpp.
-    // For InputRelocationTracker, this method will copy pointer data to the shared memory pool.
-    // For OutputRelocationTracker, this method will copy shared memory data to the pointers.
-    void flush() const;
-
-  private:
-    const std::vector<RelocationInfoType> kRelocationInfos;
-    const nn::SharedMemory kMemory;
-    const nn::Mapping kMapping;
-};
-using InputRelocationTracker = RelocationTracker<InputRelocationInfo>;
-using OutputRelocationTracker = RelocationTracker<OutputRelocationInfo>;
-
-struct RequestRelocation {
-    std::unique_ptr<InputRelocationTracker> input;
-    std::unique_ptr<OutputRelocationTracker> output;
-};
-
-// Relocate pointer-based data to shared memory. If `request` has no
-// Request::Argument::LifeTime::POINTER data, the function returns with a reference to `request`. If
-// `request` has Request::Argument::LifeTime::POINTER data, the request is copied to
-// `maybeRequestInSharedOut` with the POINTER data relocated to a memory pool, and the function
-// returns with a reference to `*maybeRequestInSharedOut`. The `relocationOut` will be set to track
-// the input and output relocations.
-//
-// Unlike `flushDataFromPointerToShared`, this method will not copy the input pointer data to the
-// shared memory pool. Use `relocationOut` to flush the input or output data after the call.
-nn::GeneralResult<std::reference_wrapper<const nn::Request>> convertRequestFromPointerToShared(
-        const nn::Request* request, uint32_t alignment, uint32_t padding,
-        std::optional<nn::Request>* maybeRequestInSharedOut, RequestRelocation* relocationOut);
+using nn::convertRequestFromPointerToShared;
+using nn::flushDataFromPointerToShared;
+using nn::hasNoPointerData;
+using nn::RequestRelocation;
 
 }  // namespace android::hardware::neuralnetworks::utils
 
