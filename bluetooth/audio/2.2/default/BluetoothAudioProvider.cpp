@@ -209,6 +209,18 @@ Return<void> BluetoothAudioProvider::updateAudioConfiguration(
   return Void();
 }
 
+Return<void> BluetoothAudioProvider::setLowLatencyModeAllowed(bool allowed) {
+  LOG(INFO) << __func__ << " - SessionType=" << toString(session_type_);
+
+  if (stack_iface_ == nullptr) {
+    LOG(INFO) << __func__ << " - SessionType=" << toString(session_type_)
+              << " has NO session";
+    return Void();
+  }
+  LOG(INFO) << __func__ << " allowed: " << allowed;
+  return Void();
+}
+
 }  // namespace implementation
 }  // namespace V2_2
 }  // namespace audio
