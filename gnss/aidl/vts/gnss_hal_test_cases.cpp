@@ -345,7 +345,7 @@ TEST_P(GnssHalTest, TestGnssPowerIndication) {
     auto powerStats1 = gnssPowerIndicationCallback->last_gnss_power_stats_;
 
     // Get a location and request another GnssPowerStats
-    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         gnss_cb_->location_cbq_.reset();
     } else {
         aidl_gnss_cb_->location_cbq_.reset();
@@ -424,18 +424,18 @@ TEST_P(GnssHalTest, BlocklistIndividualSatellites) {
     const int kLocationsToAwait = 3;
     const int kRetriesToUnBlocklist = 10;
 
-    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         gnss_cb_->location_cbq_.reset();
     } else {
         aidl_gnss_cb_->location_cbq_.reset();
     }
     StartAndCheckLocations(kLocationsToAwait);
-    int location_called_count = (aidl_gnss_hal_->getInterfaceVersion() == 1)
+    int location_called_count = (aidl_gnss_hal_->getInterfaceVersion() <= 1)
                                         ? gnss_cb_->location_cbq_.calledCount()
                                         : aidl_gnss_cb_->location_cbq_.calledCount();
 
     // Tolerate 1 less sv status to handle edge cases in reporting.
-    int sv_info_list_cbq_size = (aidl_gnss_hal_->getInterfaceVersion() == 1)
+    int sv_info_list_cbq_size = (aidl_gnss_hal_->getInterfaceVersion() <= 1)
                                         ? gnss_cb_->sv_info_list_cbq_.size()
                                         : aidl_gnss_cb_->sv_info_list_cbq_.size();
     EXPECT_GE(sv_info_list_cbq_size + 1, kLocationsToAwait);
@@ -450,7 +450,7 @@ TEST_P(GnssHalTest, BlocklistIndividualSatellites) {
 
     const int kGnssSvInfoListTimeout = 2;
     BlocklistedSource source_to_blocklist;
-    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         std::list<hidl_vec<IGnssCallback_2_1::GnssSvInfo>> sv_info_vec_list;
         int count = gnss_cb_->sv_info_list_cbq_.retrieve(sv_info_vec_list, sv_info_list_cbq_size,
                                                          kGnssSvInfoListTimeout);
@@ -488,7 +488,7 @@ TEST_P(GnssHalTest, BlocklistIndividualSatellites) {
     ASSERT_TRUE(status.isOk());
 
     // retry and ensure satellite not used
-    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         gnss_cb_->sv_info_list_cbq_.reset();
         gnss_cb_->location_cbq_.reset();
     } else {
@@ -499,7 +499,7 @@ TEST_P(GnssHalTest, BlocklistIndividualSatellites) {
     StartAndCheckLocations(kLocationsToAwait);
 
     // early exit if test is being run with insufficient signal
-    location_called_count = (aidl_gnss_hal_->getInterfaceVersion() == 1)
+    location_called_count = (aidl_gnss_hal_->getInterfaceVersion() <= 1)
                                     ? gnss_cb_->location_cbq_.calledCount()
                                     : aidl_gnss_cb_->location_cbq_.calledCount();
     if (location_called_count == 0) {
@@ -508,14 +508,14 @@ TEST_P(GnssHalTest, BlocklistIndividualSatellites) {
     ASSERT_TRUE(location_called_count > 0);
 
     // Tolerate 1 less sv status to handle edge cases in reporting.
-    sv_info_list_cbq_size = (aidl_gnss_hal_->getInterfaceVersion() == 1)
+    sv_info_list_cbq_size = (aidl_gnss_hal_->getInterfaceVersion() <= 1)
                                     ? gnss_cb_->sv_info_list_cbq_.size()
                                     : aidl_gnss_cb_->sv_info_list_cbq_.size();
     EXPECT_GE(sv_info_list_cbq_size + 1, kLocationsToAwait);
     ALOGD("Observed %d GnssSvInfo, while awaiting %d Locations (%d received)",
           sv_info_list_cbq_size, kLocationsToAwait, location_called_count);
     for (int i = 0; i < sv_info_list_cbq_size; ++i) {
-        if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+        if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
             hidl_vec<IGnssCallback_2_1::GnssSvInfo> sv_info_vec;
             gnss_cb_->sv_info_list_cbq_.retrieve(sv_info_vec, kGnssSvInfoListTimeout);
             for (uint32_t iSv = 0; iSv < sv_info_vec.size(); iSv++) {
@@ -550,7 +550,7 @@ TEST_P(GnssHalTest, BlocklistIndividualSatellites) {
     while (!strongest_sv_is_reobserved && (unblocklist_loops_remaining-- > 0)) {
         StopAndClearLocations();
 
-        if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+        if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
             gnss_cb_->sv_info_list_cbq_.reset();
             gnss_cb_->location_cbq_.reset();
         } else {
@@ -560,7 +560,7 @@ TEST_P(GnssHalTest, BlocklistIndividualSatellites) {
         StartAndCheckLocations(kLocationsToAwait);
 
         // early exit loop if test is being run with insufficient signal
-        location_called_count = (aidl_gnss_hal_->getInterfaceVersion() == 1)
+        location_called_count = (aidl_gnss_hal_->getInterfaceVersion() <= 1)
                                         ? gnss_cb_->location_cbq_.calledCount()
                                         : aidl_gnss_cb_->location_cbq_.calledCount();
         if (location_called_count == 0) {
@@ -569,7 +569,7 @@ TEST_P(GnssHalTest, BlocklistIndividualSatellites) {
         ASSERT_TRUE(location_called_count > 0);
 
         // Tolerate 1 less sv status to handle edge cases in reporting.
-        sv_info_list_cbq_size = (aidl_gnss_hal_->getInterfaceVersion() == 1)
+        sv_info_list_cbq_size = (aidl_gnss_hal_->getInterfaceVersion() <= 1)
                                         ? gnss_cb_->sv_info_list_cbq_.size()
                                         : aidl_gnss_cb_->sv_info_list_cbq_.size();
         EXPECT_GE(sv_info_list_cbq_size + 1, kLocationsToAwait);
@@ -578,7 +578,7 @@ TEST_P(GnssHalTest, BlocklistIndividualSatellites) {
               sv_info_list_cbq_size, kLocationsToAwait, unblocklist_loops_remaining);
 
         for (int i = 0; i < sv_info_list_cbq_size; ++i) {
-            if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+            if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
                 hidl_vec<IGnssCallback_2_1::GnssSvInfo> sv_info_vec;
                 gnss_cb_->sv_info_list_cbq_.retrieve(sv_info_vec, kGnssSvInfoListTimeout);
                 for (uint32_t iSv = 0; iSv < sv_info_vec.size(); iSv++) {
@@ -663,7 +663,7 @@ TEST_P(GnssHalTest, BlocklistConstellationLocationOff) {
     ASSERT_TRUE(status.isOk());
 
     // retry and ensure constellation not used
-    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         gnss_cb_->sv_info_list_cbq_.reset();
         gnss_cb_->location_cbq_.reset();
     } else {
@@ -673,14 +673,14 @@ TEST_P(GnssHalTest, BlocklistConstellationLocationOff) {
     StartAndCheckLocations(kLocationsToAwait);
 
     // Tolerate 1 less sv status to handle edge cases in reporting.
-    int sv_info_list_cbq_size = (aidl_gnss_hal_->getInterfaceVersion() == 1)
+    int sv_info_list_cbq_size = (aidl_gnss_hal_->getInterfaceVersion() <= 1)
                                         ? gnss_cb_->sv_info_list_cbq_.size()
                                         : aidl_gnss_cb_->sv_info_list_cbq_.size();
     EXPECT_GE(sv_info_list_cbq_size + 1, kLocationsToAwait);
     ALOGD("Observed %d GnssSvInfo, while awaiting %d Locations", sv_info_list_cbq_size,
           kLocationsToAwait);
     for (int i = 0; i < sv_info_list_cbq_size; ++i) {
-        if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+        if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
             hidl_vec<IGnssCallback_2_1::GnssSvInfo> sv_info_vec;
             gnss_cb_->sv_info_list_cbq_.retrieve(sv_info_vec, kGnssSvInfoListTimeout);
             for (uint32_t iSv = 0; iSv < sv_info_vec.size(); iSv++) {
@@ -766,7 +766,7 @@ TEST_P(GnssHalTest, BlocklistConstellationLocationOn) {
     StopAndClearLocations();
 
     // retry and ensure constellation not used
-    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         gnss_cb_->sv_info_list_cbq_.reset();
         gnss_cb_->location_cbq_.reset();
     } else {
@@ -776,14 +776,14 @@ TEST_P(GnssHalTest, BlocklistConstellationLocationOn) {
     StartAndCheckLocations(kLocationsToAwait);
 
     // Tolerate 1 less sv status to handle edge cases in reporting.
-    int sv_info_list_cbq_size = (aidl_gnss_hal_->getInterfaceVersion() == 1)
+    int sv_info_list_cbq_size = (aidl_gnss_hal_->getInterfaceVersion() <= 1)
                                         ? gnss_cb_->sv_info_list_cbq_.size()
                                         : aidl_gnss_cb_->sv_info_list_cbq_.size();
     EXPECT_GE(sv_info_list_cbq_size + 1, kLocationsToAwait);
     ALOGD("Observed %d GnssSvInfo, while awaiting %d Locations", sv_info_list_cbq_size,
           kLocationsToAwait);
     for (int i = 0; i < sv_info_list_cbq_size; ++i) {
-        if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+        if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
             hidl_vec<IGnssCallback_2_1::GnssSvInfo> sv_info_vec;
             gnss_cb_->sv_info_list_cbq_.retrieve(sv_info_vec, kGnssSvInfoListTimeout);
             for (uint32_t iSv = 0; iSv < sv_info_vec.size(); iSv++) {
@@ -821,7 +821,7 @@ TEST_P(GnssHalTest, BlocklistConstellationLocationOn) {
  * TestAllExtensions.
  */
 TEST_P(GnssHalTest, TestAllExtensions) {
-    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         return;
     }
 
@@ -863,7 +863,7 @@ TEST_P(GnssHalTest, TestAllExtensions) {
  * 3. Sets SUPL server host/port.
  */
 TEST_P(GnssHalTest, TestAGnssExtension) {
-    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         return;
     }
     sp<IAGnss> iAGnss;
@@ -887,7 +887,7 @@ TEST_P(GnssHalTest, TestAGnssExtension) {
  * 3. Sets reference location.
  */
 TEST_P(GnssHalTest, TestAGnssRilExtension) {
-    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         return;
     }
     sp<IAGnssRil> iAGnssRil;
@@ -921,7 +921,7 @@ TEST_P(GnssHalTest, TestAGnssRilExtension) {
  * Ensures that GnssDebug values make sense.
  */
 TEST_P(GnssHalTest, GnssDebugValuesSanityTest) {
-    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         return;
     }
     sp<IGnssDebug> iGnssDebug;
@@ -970,7 +970,7 @@ TEST_P(GnssHalTest, GnssDebugValuesSanityTest) {
  * 3. Sets proxy apps
  */
 TEST_P(GnssHalTest, TestGnssVisibilityControlExtension) {
-    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         return;
     }
     sp<IGnssVisibilityControl> iGnssVisibilityControl;
@@ -994,7 +994,7 @@ TEST_P(GnssHalTest, TestGnssVisibilityControlExtension) {
  *    and verifies mandatory fields are valid.
  */
 TEST_P(GnssHalTest, TestGnssMeasurementSetCallbackWithOptions) {
-    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         return;
     }
     const int kFirstGnssMeasurementTimeoutSeconds = 10;
@@ -1032,7 +1032,7 @@ TEST_P(GnssHalTest, TestGnssMeasurementSetCallbackWithOptions) {
  * 2. Sets a GnssMeasurementCallback, waits for a measurement.
  */
 TEST_P(GnssHalTest, TestGnssAgcInGnssMeasurement) {
-    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         return;
     }
     const int kFirstGnssMeasurementTimeoutSeconds = 10;
@@ -1078,7 +1078,7 @@ TEST_P(GnssHalTest, TestGnssAgcInGnssMeasurement) {
 TEST_P(GnssHalTest, TestGnssAntennaInfo) {
     const int kAntennaInfoTimeoutSeconds = 2;
 
-    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         return;
     }
 
@@ -1156,7 +1156,7 @@ TEST_P(GnssHalTest, TestGnssAntennaInfo) {
  * capability flag is set.
  */
 TEST_P(GnssHalTest, TestGnssMeasurementCorrections) {
-    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         return;
     }
     if (!(aidl_gnss_cb_->last_capabilities_ &
