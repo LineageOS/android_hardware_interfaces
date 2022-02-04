@@ -27,5 +27,5 @@ package android.hardware.uwb.fira_android;
 @Backing(type="long")
 enum UwbAndroidCapabilities {
     POWER_STATS_QUERY = 0x1,
-    ANTENNAE_INTERLEAVING = 0x2,
+    ANTENNA_INTERLEAVING = 0x2,
 }

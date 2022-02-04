@@ -91,4 +91,16 @@ enum UwbVendorCapabilityTlvTypes {
      *  HOPPING_CONFIG_MODE_ADAPTIVE = 2
      */
     CCC_SUPPORTED_HOPPING_CONFIG_MODES = 0xA8,
+
+    /*********************************************
+     * FIRA specific
+     ********************************************/
+    /**
+     * 1 byte value to indicate support for antennare interleaving
+     * feature.
+     * Values:
+     *  1 - Feature supported.
+     *  0 - Feature not supported.
+     */
+    SUPPORTED_AOA_RESULT_REQ_ANTENNA_INTERLEAVING = 0xE3,
 }

@@ -32,8 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.uwb.fira_android;
-@Backing(type="long") @VintfStability
-enum UwbAndroidCapabilities {
-  POWER_STATS_QUERY = 1,
-  ANTENNA_INTERLEAVING = 2,
+@Backing(type="int") @VintfStability
+enum UwbVendorSessionAppConfigTlvValues {
+  AOA_RESULT_REQ_ANTENNA_INTERLEAVING = 240,
 }
