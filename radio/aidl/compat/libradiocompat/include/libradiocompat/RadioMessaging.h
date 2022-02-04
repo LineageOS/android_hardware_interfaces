@@ -23,8 +23,6 @@ namespace android::hardware::radio::compat {
 
 class RadioMessaging : public RadioCompatBase,
                        public aidl::android::hardware::radio::messaging::BnRadioMessaging {
-    std::shared_ptr<::aidl::android::hardware::radio::messaging::IRadioMessagingResponse> respond();
-
     ::ndk::ScopedAStatus acknowledgeIncomingGsmSmsWithPdu(int32_t serial, bool success,
                                                           const std::string& ackPdu) override;
     ::ndk::ScopedAStatus acknowledgeLastIncomingCdmaSms(
@@ -81,6 +79,9 @@ class RadioMessaging : public RadioCompatBase,
     ::ndk::ScopedAStatus writeSmsToSim(
             int32_t serial,
             const ::aidl::android::hardware::radio::messaging::SmsWriteArgs& smsWriteArgs) override;
+
+  protected:
+    std::shared_ptr<::aidl::android::hardware::radio::messaging::IRadioMessagingResponse> respond();
 
   public:
     using RadioCompatBase::RadioCompatBase;
