@@ -374,14 +374,6 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.input.classifier</name>
-        <version>1.0</version>
-        <interface>
-            <name>IInputClassifier</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
     <hal format="aidl" optional="true">
         <name>android.hardware.input.processor</name>
         <version>1</version>
