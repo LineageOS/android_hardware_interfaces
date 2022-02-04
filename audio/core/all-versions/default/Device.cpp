@@ -348,16 +348,6 @@ Return<void> Device::openOutputStream_7_1(int32_t ioHandle, const DeviceAddress&
     _hidl_cb(result, streamOut, suggestedConfig);
     return Void();
 }
-
-Return<void> Device::openInputStream_7_1(int32_t ioHandle, const DeviceAddress& device,
-                                         const AudioConfig& config, const AudioInputFlags& flags,
-                                         const SinkMetadata& sinkMetadata,
-                                         openInputStream_7_1_cb _hidl_cb) {
-    auto [result, streamIn, suggestedConfig] =
-            openInputStreamImpl(ioHandle, device, config, flags, sinkMetadata);
-    _hidl_cb(result, streamIn, suggestedConfig);
-    return Void();
-}
 #endif  // V7.1
 
 Return<bool> Device::supportsAudioPatches() {
