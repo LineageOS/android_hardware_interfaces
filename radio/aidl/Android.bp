@@ -198,3 +198,24 @@ aidl_interface {
     },
 }
 
+aidl_interface {
+    name: "android.hardware.radio.ims",
+    vendor_available: true,
+    srcs: ["android/hardware/radio/ims/*.aidl"],
+    stability: "vintf",
+    imports: ["android.hardware.radio"],
+    backend: {
+        cpp: {
+            enabled: false,
+        },
+        java: {
+            sdk_version: "module_current",
+        },
+        ndk: {
+            vndk: {
+                enabled: true,
+            },
+        },
+    },
+}
+
