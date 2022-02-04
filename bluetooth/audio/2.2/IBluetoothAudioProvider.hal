@@ -69,4 +69,12 @@ interface IBluetoothAudioProvider extends @2.1::IBluetoothAudioProvider {
      *    encoding.
      */
     updateAudioConfiguration(AudioConfiguration audioConfig);
+
+    /**
+     * Called when the supported latency mode is updated.
+     *
+     * @param allowed If the peripheral devices can't keep up with low latency
+     * mode, the API will be called with supported is false.
+     */
+    setLowLatencyModeAllowed(bool allowed);
 };
