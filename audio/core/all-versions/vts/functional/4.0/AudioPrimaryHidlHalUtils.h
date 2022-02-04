@@ -15,9 +15,9 @@
  */
 
 // clang-format off
-#include PATH(android/hardware/audio/FILE_VERSION/IStreamIn.h)
-#include PATH(android/hardware/audio/FILE_VERSION/IStreamOut.h)
+#include PATH(android/hardware/audio/CORE_TYPES_FILE_VERSION/IStreamIn.h)
 #include PATH(android/hardware/audio/CORE_TYPES_FILE_VERSION/types.h)
+#include PATH(android/hardware/audio/FILE_VERSION/IStreamOut.h)
 #include PATH(android/hardware/audio/common/COMMON_TYPES_FILE_VERSION/types.h)
 // clang-format on
 #include <hidl/HidlSupport.h>
