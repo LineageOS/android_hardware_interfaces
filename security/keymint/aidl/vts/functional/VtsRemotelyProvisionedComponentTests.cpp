@@ -492,7 +492,6 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
                 ASSERT_NE(allowList.find(deviceInfo->get("bootloader_state")->asTstr()->value()),
                           allowList.end());
                 checkType(deviceInfo, cppbor::BSTR, "vbmeta_digest");
-                checkType(deviceInfo, cppbor::TSTR, "os_version");
                 checkType(deviceInfo, cppbor::UINT, "system_patch_level");
                 checkType(deviceInfo, cppbor::UINT, "boot_patch_level");
                 checkType(deviceInfo, cppbor::UINT, "vendor_patch_level");
@@ -502,6 +501,9 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
                 allowList = getAllowedSecurityLevels();
                 ASSERT_NE(allowList.find(deviceInfo->get("security_level")->asTstr()->value()),
                           allowList.end());
+                if (deviceInfo->get("security_level")->asTstr()->value() == "tee") {
+                    checkType(deviceInfo, cppbor::TSTR, "os_version");
+                }
                 break;
             case 1:
                 checkType(deviceInfo, cppbor::TSTR, "security_level");
