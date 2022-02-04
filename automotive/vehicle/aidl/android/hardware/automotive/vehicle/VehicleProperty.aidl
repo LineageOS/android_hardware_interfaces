@@ -2803,4 +2803,16 @@ enum VehicleProperty {
      */
     EV_REGENERATIVE_BRAKING_STATE = 0x0F44 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+
+    /**
+     * Indicates if there is a trailer present or not.
+     *
+     * Returns the trailer state of the car.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     * @data_enum TrailerState
+     */
+    TRAILER_PRESENT = 0x0F45 + 0x10000000 + 0x01000000
+            + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
 }
