@@ -16,6 +16,8 @@
 
 package android.hardware.wifi.hostapd;
 
+import android.hardware.wifi.hostapd.ChannelBandwidth;
+
 /**
  * Parameters to control the HW mode for the interface.
  */
@@ -74,4 +76,9 @@ parcelable HwModeParams {
      * used with Extreme High Throughput.
      */
     boolean enable80211BE;
+    /**
+     * Limit on maximum channel bandwidth for the softAp.
+     * For automatic selection with no limit use BANDWIDTH_AUTO
+     */
+    ChannelBandwidth maximumChannelBandwidth;
 }
