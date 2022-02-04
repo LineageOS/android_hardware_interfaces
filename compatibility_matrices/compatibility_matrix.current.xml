@@ -300,7 +300,10 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="false">
+    <!-- Either the AIDL or the HIDL composer HAL must exist on the device.
+         If the HIDL composer HAL exists, it must be at least version 2.1.
+         See DeviceManifestTest.ComposerHal -->
+    <hal format="hidl" optional="true">
         <name>android.hardware.graphics.composer</name>
         <version>2.1-4</version>
         <interface>
