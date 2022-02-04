@@ -40,44 +40,44 @@ class MockVehicleHardware final : public IVehicleHardware {
   public:
     ~MockVehicleHardware();
 
-    std::vector<::aidl::android::hardware::automotive::vehicle::VehiclePropConfig>
+    std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropConfig>
     getAllPropertyConfigs() const override;
-    ::aidl::android::hardware::automotive::vehicle::StatusCode setValues(
+    aidl::android::hardware::automotive::vehicle::StatusCode setValues(
             std::shared_ptr<const SetValuesCallback> callback,
-            const std::vector<::aidl::android::hardware::automotive::vehicle::SetValueRequest>&
+            const std::vector<aidl::android::hardware::automotive::vehicle::SetValueRequest>&
                     requests) override;
-    ::aidl::android::hardware::automotive::vehicle::StatusCode getValues(
+    aidl::android::hardware::automotive::vehicle::StatusCode getValues(
             std::shared_ptr<const GetValuesCallback> callback,
-            const std::vector<::aidl::android::hardware::automotive::vehicle::GetValueRequest>&
+            const std::vector<aidl::android::hardware::automotive::vehicle::GetValueRequest>&
                     requests) const override;
     DumpResult dump(const std::vector<std::string>&) override;
-    ::aidl::android::hardware::automotive::vehicle::StatusCode checkHealth() override;
+    aidl::android::hardware::automotive::vehicle::StatusCode checkHealth() override;
     void registerOnPropertyChangeEvent(
             std::unique_ptr<const PropertyChangeCallback> callback) override;
     void registerOnPropertySetErrorEvent(std::unique_ptr<const PropertySetErrorCallback>) override;
 
     // Test functions.
     void setPropertyConfigs(
-            const std::vector<::aidl::android::hardware::automotive::vehicle::VehiclePropConfig>&
+            const std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropConfig>&
                     configs);
     void addGetValueResponses(
-            const std::vector<::aidl::android::hardware::automotive::vehicle::GetValueResult>&
+            const std::vector<aidl::android::hardware::automotive::vehicle::GetValueResult>&
                     responses);
     void addSetValueResponses(
-            const std::vector<::aidl::android::hardware::automotive::vehicle::SetValueResult>&
+            const std::vector<aidl::android::hardware::automotive::vehicle::SetValueResult>&
                     responses);
     void setGetValueResponder(
-            std::function<::aidl::android::hardware::automotive::vehicle::StatusCode(
+            std::function<aidl::android::hardware::automotive::vehicle::StatusCode(
                     std::shared_ptr<const GetValuesCallback>,
                     const std::vector<
-                            ::aidl::android::hardware::automotive::vehicle::GetValueRequest>&)>&&
+                            aidl::android::hardware::automotive::vehicle::GetValueRequest>&)>&&
                     responder);
-    std::vector<::aidl::android::hardware::automotive::vehicle::GetValueRequest>
+    std::vector<aidl::android::hardware::automotive::vehicle::GetValueRequest>
     nextGetValueRequests();
-    std::vector<::aidl::android::hardware::automotive::vehicle::SetValueRequest>
+    std::vector<aidl::android::hardware::automotive::vehicle::SetValueRequest>
     nextSetValueRequests();
     void setStatus(const char* functionName,
-                   ::aidl::android::hardware::automotive::vehicle::StatusCode status);
+                   aidl::android::hardware::automotive::vehicle::StatusCode status);
     void setSleepTime(int64_t timeInNano);
     void setDumpResult(DumpResult result);
 
@@ -85,31 +85,31 @@ class MockVehicleHardware final : public IVehicleHardware {
     mutable std::mutex mLock;
     mutable std::condition_variable mCv;
     mutable std::atomic<int> mThreadCount;
-    std::vector<::aidl::android::hardware::automotive::vehicle::VehiclePropConfig> mPropertyConfigs
+    std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropConfig> mPropertyConfigs
             GUARDED_BY(mLock);
-    mutable std::list<std::vector<::aidl::android::hardware::automotive::vehicle::GetValueRequest>>
+    mutable std::list<std::vector<aidl::android::hardware::automotive::vehicle::GetValueRequest>>
             mGetValueRequests GUARDED_BY(mLock);
-    mutable std::list<std::vector<::aidl::android::hardware::automotive::vehicle::GetValueResult>>
+    mutable std::list<std::vector<aidl::android::hardware::automotive::vehicle::GetValueResult>>
             mGetValueResponses GUARDED_BY(mLock);
-    mutable std::list<std::vector<::aidl::android::hardware::automotive::vehicle::SetValueRequest>>
+    mutable std::list<std::vector<aidl::android::hardware::automotive::vehicle::SetValueRequest>>
             mSetValueRequests GUARDED_BY(mLock);
-    mutable std::list<std::vector<::aidl::android::hardware::automotive::vehicle::SetValueResult>>
+    mutable std::list<std::vector<aidl::android::hardware::automotive::vehicle::SetValueResult>>
             mSetValueResponses GUARDED_BY(mLock);
-    std::unordered_map<const char*, ::aidl::android::hardware::automotive::vehicle::StatusCode>
+    std::unordered_map<const char*, aidl::android::hardware::automotive::vehicle::StatusCode>
             mStatusByFunctions GUARDED_BY(mLock);
     int64_t mSleepTime GUARDED_BY(mLock) = 0;
     std::unique_ptr<const PropertyChangeCallback> mPropertyChangeCallback GUARDED_BY(mLock);
-    std::function<::aidl::android::hardware::automotive::vehicle::StatusCode(
+    std::function<aidl::android::hardware::automotive::vehicle::StatusCode(
             std::shared_ptr<const GetValuesCallback>,
-            const std::vector<::aidl::android::hardware::automotive::vehicle::GetValueRequest>&)>
+            const std::vector<aidl::android::hardware::automotive::vehicle::GetValueRequest>&)>
             mGetValueResponder GUARDED_BY(mLock);
 
     template <class ResultType>
-    ::aidl::android::hardware::automotive::vehicle::StatusCode returnResponse(
+    aidl::android::hardware::automotive::vehicle::StatusCode returnResponse(
             std::shared_ptr<const std::function<void(std::vector<ResultType>)>> callback,
             std::list<std::vector<ResultType>>* storedResponses) const;
     template <class RequestType, class ResultType>
-    ::aidl::android::hardware::automotive::vehicle::StatusCode handleRequestsLocked(
+    aidl::android::hardware::automotive::vehicle::StatusCode handleRequestsLocked(
             const char* functionName,
             std::shared_ptr<const std::function<void(std::vector<ResultType>)>> callback,
             const std::vector<RequestType>& requests,

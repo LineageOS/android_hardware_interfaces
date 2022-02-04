@@ -39,39 +39,39 @@ namespace hardware {
 namespace automotive {
 namespace vehicle {
 
-class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::vehicle::BnVehicle {
+class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehicle::BnVehicle {
   public:
     using CallbackType =
-            std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback>;
+            std::shared_ptr<aidl::android::hardware::automotive::vehicle::IVehicleCallback>;
 
     explicit DefaultVehicleHal(std::unique_ptr<IVehicleHardware> hardware);
 
     ~DefaultVehicleHal();
 
-    ::ndk::ScopedAStatus getAllPropConfigs(
-            ::aidl::android::hardware::automotive::vehicle::VehiclePropConfigs* returnConfigs)
+    ndk::ScopedAStatus getAllPropConfigs(
+            aidl::android::hardware::automotive::vehicle::VehiclePropConfigs* returnConfigs)
             override;
-    ::ndk::ScopedAStatus getValues(
+    ndk::ScopedAStatus getValues(
             const CallbackType& callback,
-            const ::aidl::android::hardware::automotive::vehicle::GetValueRequests& requests)
+            const aidl::android::hardware::automotive::vehicle::GetValueRequests& requests)
             override;
-    ::ndk::ScopedAStatus setValues(
+    ndk::ScopedAStatus setValues(
             const CallbackType& callback,
-            const ::aidl::android::hardware::automotive::vehicle::SetValueRequests& requests)
+            const aidl::android::hardware::automotive::vehicle::SetValueRequests& requests)
             override;
-    ::ndk::ScopedAStatus getPropConfigs(
+    ndk::ScopedAStatus getPropConfigs(
             const std::vector<int32_t>& props,
-            ::aidl::android::hardware::automotive::vehicle::VehiclePropConfigs* returnConfigs)
+            aidl::android::hardware::automotive::vehicle::VehiclePropConfigs* returnConfigs)
             override;
-    ::ndk::ScopedAStatus subscribe(
+    ndk::ScopedAStatus subscribe(
             const CallbackType& callback,
-            const std::vector<::aidl::android::hardware::automotive::vehicle::SubscribeOptions>&
+            const std::vector<aidl::android::hardware::automotive::vehicle::SubscribeOptions>&
                     options,
             int32_t maxSharedMemoryFileCount) override;
-    ::ndk::ScopedAStatus unsubscribe(const CallbackType& callback,
-                                     const std::vector<int32_t>& propIds) override;
-    ::ndk::ScopedAStatus returnSharedMemory(const CallbackType& callback,
-                                            int64_t sharedMemoryId) override;
+    ndk::ScopedAStatus unsubscribe(const CallbackType& callback,
+                                   const std::vector<int32_t>& propIds) override;
+    ndk::ScopedAStatus returnSharedMemory(const CallbackType& callback,
+                                          int64_t sharedMemoryId) override;
     binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
 
     IVehicleHardware* getHardware();
@@ -81,11 +81,11 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
     friend class DefaultVehicleHalTest;
 
     using GetValuesClient =
-            GetSetValuesClient<::aidl::android::hardware::automotive::vehicle::GetValueResult,
-                               ::aidl::android::hardware::automotive::vehicle::GetValueResults>;
+            GetSetValuesClient<aidl::android::hardware::automotive::vehicle::GetValueResult,
+                               aidl::android::hardware::automotive::vehicle::GetValueResults>;
     using SetValuesClient =
-            GetSetValuesClient<::aidl::android::hardware::automotive::vehicle::SetValueResult,
-                               ::aidl::android::hardware::automotive::vehicle::SetValueResults>;
+            GetSetValuesClient<aidl::android::hardware::automotive::vehicle::SetValueResult,
+                               aidl::android::hardware::automotive::vehicle::SetValueResults>;
 
     // A thread safe class to maintain an increasing request ID for each subscribe client. This
     // class is safe to pass to async callbacks.
@@ -152,10 +152,10 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
 
     // mConfigsByPropId and mConfigFile are only modified during initialization, so no need to
     // lock guard them.
-    std::unordered_map<int32_t, ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig>
+    std::unordered_map<int32_t, aidl::android::hardware::automotive::vehicle::VehiclePropConfig>
             mConfigsByPropId;
     // Only modified in constructor, so thread-safe.
-    std::unique_ptr<::ndk::ScopedFileDescriptor> mConfigFile;
+    std::unique_ptr<ndk::ScopedFileDescriptor> mConfigFile;
     // PendingRequestPool is thread-safe.
     std::shared_ptr<PendingRequestPool> mPendingRequestPool;
     // SubscriptionManager is thread-safe.
@@ -176,31 +176,30 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
     // RecurrentTimer is thread-safe.
     RecurrentTimer mRecurrentTimer;
 
-    ::ndk::ScopedAIBinder_DeathRecipient mDeathRecipient;
+    ndk::ScopedAIBinder_DeathRecipient mDeathRecipient;
 
-    ::android::base::Result<void> checkProperty(
-            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue);
+    android::base::Result<void> checkProperty(
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue);
 
-    ::android::base::Result<std::vector<int64_t>> checkDuplicateRequests(
-            const std::vector<::aidl::android::hardware::automotive::vehicle::GetValueRequest>&
+    android::base::Result<std::vector<int64_t>> checkDuplicateRequests(
+            const std::vector<aidl::android::hardware::automotive::vehicle::GetValueRequest>&
                     requests);
 
-    ::android::base::Result<std::vector<int64_t>> checkDuplicateRequests(
-            const std::vector<::aidl::android::hardware::automotive::vehicle::SetValueRequest>&
+    android::base::Result<std::vector<int64_t>> checkDuplicateRequests(
+            const std::vector<aidl::android::hardware::automotive::vehicle::SetValueRequest>&
                     requests);
 
-    ::android::base::Result<void> checkSubscribeOptions(
-            const std::vector<::aidl::android::hardware::automotive::vehicle::SubscribeOptions>&
+    android::base::Result<void> checkSubscribeOptions(
+            const std::vector<aidl::android::hardware::automotive::vehicle::SubscribeOptions>&
                     options);
 
-    ::android::base::Result<void> checkReadPermission(
-            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
+    android::base::Result<void> checkReadPermission(
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
 
-    ::android::base::Result<void> checkWritePermission(
-            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
+    android::base::Result<void> checkWritePermission(
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
 
-    ::android::base::Result<
-            const ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig*>
+    android::base::Result<const aidl::android::hardware::automotive::vehicle::VehiclePropConfig*>
     getConfig(int32_t propId) const;
 
     void onBinderDiedWithContext(const AIBinder* clientId);
@@ -220,11 +219,11 @@ class DefaultVehicleHal final : public ::aidl::android::hardware::automotive::ve
             std::weak_ptr<IVehicleHardware> vehicleHardware,
             std::shared_ptr<SubscribeIdByClient> subscribeIdByClient,
             std::shared_ptr<SubscriptionClients> subscriptionClients, const CallbackType& callback,
-            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
 
     static void onPropertyChangeEvent(
             std::weak_ptr<SubscriptionManager> subscriptionManager,
-            const std::vector<::aidl::android::hardware::automotive::vehicle::VehiclePropValue>&
+            const std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&
                     updatedValues);
 
     static void checkHealth(std::weak_ptr<IVehicleHardware> hardware,

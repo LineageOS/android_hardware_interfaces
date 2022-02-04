@@ -34,7 +34,7 @@ using ::aidl::android::hardware::automotive::vehicle::SetValueResults;
 using ::aidl::android::hardware::automotive::vehicle::StatusCode;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 
-class ConnectedClientTest : public ::testing::Test {
+class ConnectedClientTest : public testing::Test {
   public:
     void SetUp() override {
         mCallback = ndk::SharedRefBase::make<MockVehicleCallback>();

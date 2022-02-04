@@ -33,7 +33,7 @@ class FakeValueGenerator {
     virtual ~FakeValueGenerator() = default;
 
     // Returns the next event if there is one or {@code std::nullopt} if there is none.
-    virtual std::optional<::aidl::android::hardware::automotive::vehicle::VehiclePropValue>
+    virtual std::optional<aidl::android::hardware::automotive::vehicle::VehiclePropValue>
     nextEvent() = 0;
 };
 

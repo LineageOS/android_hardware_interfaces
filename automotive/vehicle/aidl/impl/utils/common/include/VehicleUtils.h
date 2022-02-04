@@ -37,38 +37,36 @@ inline constexpr U toInt(ENUM const value) {
     return static_cast<U>(value);
 }
 
-inline constexpr ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType getPropType(
+inline constexpr aidl::android::hardware::automotive::vehicle::VehiclePropertyType getPropType(
         int32_t prop) {
-    return static_cast<::aidl::android::hardware::automotive::vehicle::VehiclePropertyType>(
-            prop &
-            toInt(::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::MASK));
+    return static_cast<aidl::android::hardware::automotive::vehicle::VehiclePropertyType>(
+            prop & toInt(aidl::android::hardware::automotive::vehicle::VehiclePropertyType::MASK));
 }
 
-inline constexpr ::aidl::android::hardware::automotive::vehicle::VehiclePropertyGroup getPropGroup(
+inline constexpr aidl::android::hardware::automotive::vehicle::VehiclePropertyGroup getPropGroup(
         int32_t prop) {
-    return static_cast<::aidl::android::hardware::automotive::vehicle::VehiclePropertyGroup>(
-            prop &
-            toInt(::aidl::android::hardware::automotive::vehicle::VehiclePropertyGroup::MASK));
+    return static_cast<aidl::android::hardware::automotive::vehicle::VehiclePropertyGroup>(
+            prop & toInt(aidl::android::hardware::automotive::vehicle::VehiclePropertyGroup::MASK));
 }
 
-inline constexpr ::aidl::android::hardware::automotive::vehicle::VehicleArea getPropArea(
+inline constexpr aidl::android::hardware::automotive::vehicle::VehicleArea getPropArea(
         int32_t prop) {
-    return static_cast<::aidl::android::hardware::automotive::vehicle::VehicleArea>(
-            prop & toInt(::aidl::android::hardware::automotive::vehicle::VehicleArea::MASK));
+    return static_cast<aidl::android::hardware::automotive::vehicle::VehicleArea>(
+            prop & toInt(aidl::android::hardware::automotive::vehicle::VehicleArea::MASK));
 }
 
 inline constexpr bool isGlobalProp(int32_t prop) {
-    return getPropArea(prop) == ::aidl::android::hardware::automotive::vehicle::VehicleArea::GLOBAL;
+    return getPropArea(prop) == aidl::android::hardware::automotive::vehicle::VehicleArea::GLOBAL;
 }
 
 inline constexpr bool isSystemProp(int32_t prop) {
-    return ::aidl::android::hardware::automotive::vehicle::VehiclePropertyGroup::SYSTEM ==
+    return aidl::android::hardware::automotive::vehicle::VehiclePropertyGroup::SYSTEM ==
            getPropGroup(prop);
 }
 
-inline const ::aidl::android::hardware::automotive::vehicle::VehicleAreaConfig* getAreaConfig(
+inline const aidl::android::hardware::automotive::vehicle::VehicleAreaConfig* getAreaConfig(
         int32_t propId, int32_t areaId,
-        const ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig& config) {
+        const aidl::android::hardware::automotive::vehicle::VehiclePropConfig& config) {
     if (config.areaConfigs.size() == 0) {
         return nullptr;
     }
@@ -85,43 +83,43 @@ inline const ::aidl::android::hardware::automotive::vehicle::VehicleAreaConfig* 
     return nullptr;
 }
 
-inline const ::aidl::android::hardware::automotive::vehicle::VehicleAreaConfig* getAreaConfig(
-        const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue,
-        const ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig& config) {
+inline const aidl::android::hardware::automotive::vehicle::VehicleAreaConfig* getAreaConfig(
+        const aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue,
+        const aidl::android::hardware::automotive::vehicle::VehiclePropConfig& config) {
     return getAreaConfig(propValue.prop, propValue.areaId, config);
 }
 
-inline std::unique_ptr<::aidl::android::hardware::automotive::vehicle::VehiclePropValue>
-createVehiclePropValueVec(::aidl::android::hardware::automotive::vehicle::VehiclePropertyType type,
+inline std::unique_ptr<aidl::android::hardware::automotive::vehicle::VehiclePropValue>
+createVehiclePropValueVec(aidl::android::hardware::automotive::vehicle::VehiclePropertyType type,
                           size_t vecSize) {
-    auto val = std::unique_ptr<::aidl::android::hardware::automotive::vehicle::VehiclePropValue>(
-            new ::aidl::android::hardware::automotive::vehicle::VehiclePropValue);
+    auto val = std::unique_ptr<aidl::android::hardware::automotive::vehicle::VehiclePropValue>(
+            new aidl::android::hardware::automotive::vehicle::VehiclePropValue);
     switch (type) {
-        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::INT32:
+        case aidl::android::hardware::automotive::vehicle::VehiclePropertyType::INT32:
             [[fallthrough]];
-        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::BOOLEAN:
+        case aidl::android::hardware::automotive::vehicle::VehiclePropertyType::BOOLEAN:
             vecSize = 1;
             [[fallthrough]];
-        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::INT32_VEC:
+        case aidl::android::hardware::automotive::vehicle::VehiclePropertyType::INT32_VEC:
             val->value.int32Values.resize(vecSize);
             break;
-        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::FLOAT:
+        case aidl::android::hardware::automotive::vehicle::VehiclePropertyType::FLOAT:
             vecSize = 1;
             [[fallthrough]];
-        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::FLOAT_VEC:
+        case aidl::android::hardware::automotive::vehicle::VehiclePropertyType::FLOAT_VEC:
             val->value.floatValues.resize(vecSize);
             break;
-        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::INT64:
+        case aidl::android::hardware::automotive::vehicle::VehiclePropertyType::INT64:
             vecSize = 1;
             [[fallthrough]];
-        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::INT64_VEC:
+        case aidl::android::hardware::automotive::vehicle::VehiclePropertyType::INT64_VEC:
             val->value.int64Values.resize(vecSize);
             break;
-        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::BYTES:
+        case aidl::android::hardware::automotive::vehicle::VehiclePropertyType::BYTES:
             val->value.byteValues.resize(vecSize);
             break;
-        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::STRING:
-        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::MIXED:
+        case aidl::android::hardware::automotive::vehicle::VehiclePropertyType::STRING:
+        case aidl::android::hardware::automotive::vehicle::VehiclePropertyType::MIXED:
             break;  // Valid, but nothing to do.
         default:
             ALOGE("createVehiclePropValue: unknown type: %d", toInt(type));
@@ -130,34 +128,34 @@ createVehiclePropValueVec(::aidl::android::hardware::automotive::vehicle::Vehicl
     return val;
 }
 
-inline std::unique_ptr<::aidl::android::hardware::automotive::vehicle::VehiclePropValue>
-createVehiclePropValue(::aidl::android::hardware::automotive::vehicle::VehiclePropertyType type) {
+inline std::unique_ptr<aidl::android::hardware::automotive::vehicle::VehiclePropValue>
+createVehiclePropValue(aidl::android::hardware::automotive::vehicle::VehiclePropertyType type) {
     return createVehiclePropValueVec(type, 1);
 }
 
 inline size_t getVehicleRawValueVectorSize(
-        const ::aidl::android::hardware::automotive::vehicle::RawPropValues& value,
-        ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType type) {
+        const aidl::android::hardware::automotive::vehicle::RawPropValues& value,
+        aidl::android::hardware::automotive::vehicle::VehiclePropertyType type) {
     switch (type) {
-        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::INT32:
+        case aidl::android::hardware::automotive::vehicle::VehiclePropertyType::INT32:
             [[fallthrough]];
-        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::BOOLEAN:
+        case aidl::android::hardware::automotive::vehicle::VehiclePropertyType::BOOLEAN:
             return std::min(value.int32Values.size(), static_cast<size_t>(1));
-        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::FLOAT:
+        case aidl::android::hardware::automotive::vehicle::VehiclePropertyType::FLOAT:
             return std::min(value.floatValues.size(), static_cast<size_t>(1));
-        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::INT64:
+        case aidl::android::hardware::automotive::vehicle::VehiclePropertyType::INT64:
             return std::min(value.int64Values.size(), static_cast<size_t>(1));
-        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::INT32_VEC:
+        case aidl::android::hardware::automotive::vehicle::VehiclePropertyType::INT32_VEC:
             return value.int32Values.size();
-        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::FLOAT_VEC:
+        case aidl::android::hardware::automotive::vehicle::VehiclePropertyType::FLOAT_VEC:
             return value.floatValues.size();
-        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::INT64_VEC:
+        case aidl::android::hardware::automotive::vehicle::VehiclePropertyType::INT64_VEC:
             return value.int64Values.size();
-        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::BYTES:
+        case aidl::android::hardware::automotive::vehicle::VehiclePropertyType::BYTES:
             return value.byteValues.size();
-        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::STRING:
+        case aidl::android::hardware::automotive::vehicle::VehiclePropertyType::STRING:
             [[fallthrough]];
-        case ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::MIXED:
+        case aidl::android::hardware::automotive::vehicle::VehiclePropertyType::MIXED:
             return 0;
         default:
             ALOGE("getVehicleRawValueVectorSize: unknown type: %d", toInt(type));
@@ -166,8 +164,8 @@ inline size_t getVehicleRawValueVectorSize(
 }
 
 inline void copyVehicleRawValue(
-        ::aidl::android::hardware::automotive::vehicle::RawPropValues* dest,
-        const ::aidl::android::hardware::automotive::vehicle::RawPropValues& src) {
+        aidl::android::hardware::automotive::vehicle::RawPropValues* dest,
+        const aidl::android::hardware::automotive::vehicle::RawPropValues& src) {
     dest->int32Values = src.int32Values;
     dest->floatValues = src.floatValues;
     dest->int64Values = src.int64Values;
@@ -178,7 +176,7 @@ inline void copyVehicleRawValue(
 // getVehiclePropValueSize returns approximately how much memory 'value' would take. This should
 // only be used in a limited-size memory pool to set an upper bound for memory consumption.
 inline size_t getVehiclePropValueSize(
-        const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& prop) {
+        const aidl::android::hardware::automotive::vehicle::VehiclePropValue& prop) {
     size_t size = 0;
     size += sizeof(prop.timestamp);
     size += sizeof(prop.areaId);
@@ -193,22 +191,22 @@ inline size_t getVehiclePropValueSize(
 }
 
 template <class T>
-::aidl::android::hardware::automotive::vehicle::StatusCode getErrorCode(
-        const ::android::base::Result<T>& result) {
+aidl::android::hardware::automotive::vehicle::StatusCode getErrorCode(
+        const android::base::Result<T>& result) {
     if (result.ok()) {
-        return ::aidl::android::hardware::automotive::vehicle::StatusCode::OK;
+        return aidl::android::hardware::automotive::vehicle::StatusCode::OK;
     }
-    return static_cast<::aidl::android::hardware::automotive::vehicle::StatusCode>(
+    return static_cast<aidl::android::hardware::automotive::vehicle::StatusCode>(
             result.error().code());
 }
 
 template <class T>
-int getIntErrorCode(const ::android::base::Result<T>& result) {
+int getIntErrorCode(const android::base::Result<T>& result) {
     return toInt(getErrorCode(result));
 }
 
 template <class T>
-std::string getErrorMsg(const ::android::base::Result<T>& result) {
+std::string getErrorMsg(const android::base::Result<T>& result) {
     if (result.ok()) {
         return "";
     }
@@ -216,33 +214,32 @@ std::string getErrorMsg(const ::android::base::Result<T>& result) {
 }
 
 template <class T>
-::ndk::ScopedAStatus toScopedAStatus(
-        const ::android::base::Result<T>& result,
-        ::aidl::android::hardware::automotive::vehicle::StatusCode status,
-        const std::string& additionalErrorMsg) {
+ndk::ScopedAStatus toScopedAStatus(const android::base::Result<T>& result,
+                                   aidl::android::hardware::automotive::vehicle::StatusCode status,
+                                   const std::string& additionalErrorMsg) {
     if (result.ok()) {
-        return ::ndk::ScopedAStatus::ok();
+        return ndk::ScopedAStatus::ok();
     }
-    return ::ndk::ScopedAStatus::fromServiceSpecificErrorWithMessage(
+    return ndk::ScopedAStatus::fromServiceSpecificErrorWithMessage(
             toInt(status),
             fmt::format("{}, error: {}", additionalErrorMsg, getErrorMsg(result)).c_str());
 }
 
 template <class T>
-::ndk::ScopedAStatus toScopedAStatus(
-        const ::android::base::Result<T>& result,
-        ::aidl::android::hardware::automotive::vehicle::StatusCode status) {
+ndk::ScopedAStatus toScopedAStatus(
+        const android::base::Result<T>& result,
+        aidl::android::hardware::automotive::vehicle::StatusCode status) {
     return toScopedAStatus(result, status, "");
 }
 
 template <class T>
-::ndk::ScopedAStatus toScopedAStatus(const ::android::base::Result<T>& result) {
+ndk::ScopedAStatus toScopedAStatus(const android::base::Result<T>& result) {
     return toScopedAStatus(result, getErrorCode(result));
 }
 
 template <class T>
-::ndk::ScopedAStatus toScopedAStatus(const ::android::base::Result<T>& result,
-                                     const std::string& additionalErrorMsg) {
+ndk::ScopedAStatus toScopedAStatus(const android::base::Result<T>& result,
+                                   const std::string& additionalErrorMsg) {
     return toScopedAStatus(result, getErrorCode(result), additionalErrorMsg);
 }
 
@@ -255,9 +252,9 @@ template <class T>
 // *  If the type is FLOAT, {@code value.floatValues} must contain one element.
 // *  If the type is FLOAT_VEC, {@code value.floatValues} must contain at least one element.
 // *  If the type is MIXED, see checkVendorMixedPropValue.
-::android::base::Result<void> checkPropValue(
-        const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
-        const ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig* config);
+android::base::Result<void> checkPropValue(
+        const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
+        const aidl::android::hardware::automotive::vehicle::VehiclePropConfig* config);
 
 // Check whether the Mixed type value is valid according to config.
 // We check for the following:
@@ -268,9 +265,9 @@ template <class T>
 // *  configArray[6] + configArray[7] must be equal to the number of {@code value.floatValues}
 //    elements.
 // *  configArray[8] must be equal to the number of {@code value.byteValues} elements.
-::android::base::Result<void> checkVendorMixedPropValue(
-        const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
-        const ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig* config);
+android::base::Result<void> checkVendorMixedPropValue(
+        const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
+        const aidl::android::hardware::automotive::vehicle::VehiclePropConfig* config);
 
 // Check whether the value is within the configured range.
 // We check for the following types:
@@ -282,9 +279,9 @@ template <class T>
 //    {@code minFloatValues} and {@code maxFloatValues} if either of them is not 0.
 // We don't check other types. If more checks are required, they should be added in VehicleHardware
 // implementation.
-::android::base::Result<void> checkValueRange(
-        const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
-        const ::aidl::android::hardware::automotive::vehicle::VehicleAreaConfig* config);
+android::base::Result<void> checkValueRange(
+        const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
+        const aidl::android::hardware::automotive::vehicle::VehicleAreaConfig* config);
 
 }  // namespace vehicle
 }  // namespace automotive

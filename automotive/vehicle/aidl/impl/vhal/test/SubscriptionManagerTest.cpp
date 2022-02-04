@@ -83,7 +83,7 @@ class PropertyCallback final : public BnVehicleCallback {
     std::list<VehiclePropValue> mEvents GUARDED_BY(mLock);
 };
 
-class SubscriptionManagerTest : public ::testing::Test {
+class SubscriptionManagerTest : public testing::Test {
   public:
     void SetUp() override {
         mManager = std::make_unique<SubscriptionManager>(
@@ -95,7 +95,7 @@ class SubscriptionManagerTest : public ::testing::Test {
                             },
                             0);
                 });
-        mCallback = ::ndk::SharedRefBase::make<PropertyCallback>();
+        mCallback = ndk::SharedRefBase::make<PropertyCallback>();
         // Keep the local binder alive.
         mBinder = mCallback->asBinder();
         mCallbackClient = IVehicleCallback::fromBinder(mBinder);
@@ -350,9 +350,9 @@ TEST_F(SubscriptionManagerTest, testSubscribeOnchange) {
             },
     };
 
-    SpAIBinder binder1 = ::ndk::SharedRefBase::make<PropertyCallback>()->asBinder();
+    SpAIBinder binder1 = ndk::SharedRefBase::make<PropertyCallback>()->asBinder();
     std::shared_ptr<IVehicleCallback> client1 = IVehicleCallback::fromBinder(binder1);
-    SpAIBinder binder2 = ::ndk::SharedRefBase::make<PropertyCallback>()->asBinder();
+    SpAIBinder binder2 = ndk::SharedRefBase::make<PropertyCallback>()->asBinder();
     std::shared_ptr<IVehicleCallback> client2 = IVehicleCallback::fromBinder(binder2);
     auto result = getManager()->subscribe(client1, options1, false);
     ASSERT_TRUE(result.ok()) << "failed to subscribe: " << result.error().message();

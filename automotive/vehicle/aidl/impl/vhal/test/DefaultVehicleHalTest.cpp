@@ -216,7 +216,7 @@ std::vector<SubscribeInvalidOptionsTestCase> getSubscribeInvalidOptionsTestCases
 
 }  // namespace
 
-class DefaultVehicleHalTest : public ::testing::Test {
+class DefaultVehicleHalTest : public testing::Test {
   public:
     void SetUp() override {
         auto hardware = std::make_unique<MockVehicleHardware>();
@@ -479,7 +479,7 @@ TEST_F(DefaultVehicleHalTest, testGetAllPropConfigsSmall) {
 
     auto hardware = std::make_unique<MockVehicleHardware>();
     hardware->setPropertyConfigs(testConfigs);
-    auto vhal = ::ndk::SharedRefBase::make<DefaultVehicleHal>(std::move(hardware));
+    auto vhal = ndk::SharedRefBase::make<DefaultVehicleHal>(std::move(hardware));
     std::shared_ptr<IVehicle> client = IVehicle::fromBinder(vhal->asBinder());
 
     VehiclePropConfigs output;
@@ -500,7 +500,7 @@ TEST_F(DefaultVehicleHalTest, testGetAllPropConfigsLarge) {
 
     auto hardware = std::make_unique<MockVehicleHardware>();
     hardware->setPropertyConfigs(testConfigs);
-    auto vhal = ::ndk::SharedRefBase::make<DefaultVehicleHal>(std::move(hardware));
+    auto vhal = ndk::SharedRefBase::make<DefaultVehicleHal>(std::move(hardware));
     std::shared_ptr<IVehicle> client = IVehicle::fromBinder(vhal->asBinder());
 
     VehiclePropConfigs output;
@@ -818,7 +818,7 @@ class SetValuesInvalidRequestTest
 
 INSTANTIATE_TEST_SUITE_P(
         SetValuesInvalidRequestTests, SetValuesInvalidRequestTest,
-        ::testing::ValuesIn(getSetValuesInvalidRequestTestCases()),
+        testing::ValuesIn(getSetValuesInvalidRequestTestCases()),
         [](const testing::TestParamInfo<SetValuesInvalidRequestTest::ParamType>& info) {
             return info.param.name;
         });
@@ -1427,7 +1427,7 @@ class SubscribeInvalidOptionsTest
 
 INSTANTIATE_TEST_SUITE_P(
         SubscribeInvalidOptionsTests, SubscribeInvalidOptionsTest,
-        ::testing::ValuesIn(getSubscribeInvalidOptionsTestCases()),
+        testing::ValuesIn(getSubscribeInvalidOptionsTestCases()),
         [](const testing::TestParamInfo<SubscribeInvalidOptionsTest::ParamType>& info) {
             return info.param.name;
         });

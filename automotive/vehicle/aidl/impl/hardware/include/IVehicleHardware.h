@@ -39,7 +39,7 @@ struct DumpResult {
 
 // A structure to represent a set value error event reported from vehicle.
 struct SetValueErrorEvent {
-    ::aidl::android::hardware::automotive::vehicle::StatusCode errorCode;
+    aidl::android::hardware::automotive::vehicle::StatusCode errorCode;
     int32_t propId;
     int32_t areaId;
 };
@@ -51,40 +51,40 @@ struct SetValueErrorEvent {
 class IVehicleHardware {
   public:
     using SetValuesCallback = std::function<void(
-            std::vector<::aidl::android::hardware::automotive::vehicle::SetValueResult>)>;
+            std::vector<aidl::android::hardware::automotive::vehicle::SetValueResult>)>;
     using GetValuesCallback = std::function<void(
-            std::vector<::aidl::android::hardware::automotive::vehicle::GetValueResult>)>;
+            std::vector<aidl::android::hardware::automotive::vehicle::GetValueResult>)>;
     using PropertyChangeCallback = std::function<void(
-            std::vector<::aidl::android::hardware::automotive::vehicle::VehiclePropValue>)>;
+            std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>)>;
     using PropertySetErrorCallback = std::function<void(std::vector<SetValueErrorEvent>)>;
 
     virtual ~IVehicleHardware() = default;
 
     // Get all the property configs.
-    virtual std::vector<::aidl::android::hardware::automotive::vehicle::VehiclePropConfig>
+    virtual std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropConfig>
     getAllPropertyConfigs() const = 0;
 
     // Set property values asynchronously. Server could return before the property set requests
     // are sent to vehicle bus or before property set confirmation is received. The callback is
     // safe to be called after the function returns and is safe to be called in a different thread.
-    virtual ::aidl::android::hardware::automotive::vehicle::StatusCode setValues(
+    virtual aidl::android::hardware::automotive::vehicle::StatusCode setValues(
             std::shared_ptr<const SetValuesCallback> callback,
-            const std::vector<::aidl::android::hardware::automotive::vehicle::SetValueRequest>&
+            const std::vector<aidl::android::hardware::automotive::vehicle::SetValueRequest>&
                     requests) = 0;
 
     // Get property values asynchronously. Server could return before the property values are ready.
     // The callback is safe to be called after the function returns and is safe to be called in a
     // different thread.
-    virtual ::aidl::android::hardware::automotive::vehicle::StatusCode getValues(
+    virtual aidl::android::hardware::automotive::vehicle::StatusCode getValues(
             std::shared_ptr<const GetValuesCallback> callback,
-            const std::vector<::aidl::android::hardware::automotive::vehicle::GetValueRequest>&
+            const std::vector<aidl::android::hardware::automotive::vehicle::GetValueRequest>&
                     requests) const = 0;
 
     // Dump debug information in the server.
     virtual DumpResult dump(const std::vector<std::string>& options) = 0;
 
     // Check whether the system is healthy, return {@code StatusCode::OK} for healthy.
-    virtual ::aidl::android::hardware::automotive::vehicle::StatusCode checkHealth() = 0;
+    virtual aidl::android::hardware::automotive::vehicle::StatusCode checkHealth() = 0;
 
     // Register a callback that would be called when there is a property change event from vehicle.
     virtual void registerOnPropertyChangeEvent(

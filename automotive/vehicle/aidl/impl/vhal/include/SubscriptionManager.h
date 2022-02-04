@@ -40,10 +40,10 @@ class SubscriptionManager final {
   public:
     using ClientIdType = const AIBinder*;
     using CallbackType =
-            std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback>;
+            std::shared_ptr<aidl::android::hardware::automotive::vehicle::IVehicleCallback>;
     using GetValueFunc = std::function<void(
             const CallbackType& callback,
-            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value)>;
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value)>;
 
     explicit SubscriptionManager(GetValueFunc&& action);
     ~SubscriptionManager();
@@ -54,9 +54,9 @@ class SubscriptionManager final {
     // Returns error if any of the subscribe options is not valid. If error is returned, no
     // properties would be subscribed.
     // Returns ok if all the options are parsed correctly and all the properties are subscribed.
-    ::android::base::Result<void> subscribe(
+    android::base::Result<void> subscribe(
             const CallbackType& callback,
-            const std::vector<::aidl::android::hardware::automotive::vehicle::SubscribeOptions>&
+            const std::vector<aidl::android::hardware::automotive::vehicle::SubscribeOptions>&
                     options,
             bool isContinuousProperty);
 
@@ -64,23 +64,23 @@ class SubscriptionManager final {
     // Returns error if the client was not subscribed before or one of the given property was not
     // subscribed. If error is returned, no property would be unsubscribed.
     // Returns ok if all the requested properties for the client are unsubscribed.
-    ::android::base::Result<void> unsubscribe(ClientIdType client,
-                                              const std::vector<int32_t>& propIds);
+    android::base::Result<void> unsubscribe(ClientIdType client,
+                                            const std::vector<int32_t>& propIds);
 
     // Unsubscribes from all the properties for the client.
     // Returns error if the client was not subscribed before. If error is returned, no property
     // would be unsubscribed.
     // Returns ok if all the properties for the client are unsubscribed.
-    ::android::base::Result<void> unsubscribe(ClientIdType client);
+    android::base::Result<void> unsubscribe(ClientIdType client);
 
     // For a list of updated properties, returns a map that maps clients subscribing to
     // the updated properties to a list of updated values. This would only return on-change property
     // clients that should be informed for the given updated values.
     std::unordered_map<
             CallbackType,
-            std::vector<const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue*>>
+            std::vector<const aidl::android::hardware::automotive::vehicle::VehiclePropValue*>>
     getSubscribedClients(
-            const std::vector<::aidl::android::hardware::automotive::vehicle::VehiclePropValue>&
+            const std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&
                     updatedValues);
 
     // Checks whether the sample rate is valid.
@@ -145,7 +145,7 @@ class SubscriptionManager final {
     std::shared_ptr<RecurrentTimer> mTimer;
     const GetValueFunc mGetValue;
 
-    static ::android::base::Result<int64_t> getInterval(float sampleRate);
+    static android::base::Result<int64_t> getInterval(float sampleRate);
 
     // Checks whether the manager is empty. For testing purpose.
     bool isEmpty();

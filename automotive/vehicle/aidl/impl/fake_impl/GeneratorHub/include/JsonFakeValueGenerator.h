@@ -37,7 +37,7 @@ class JsonFakeValueGenerator : public FakeValueGenerator {
     // {@code int32Values} has less than 2 elements, number of iterations would be set to -1, which
     // means iterate indefinitely.
     explicit JsonFakeValueGenerator(
-            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& request);
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& request);
     // Create a new JSON fake value generator using the specified JSON file path. All the events
     // in the JSON file would be generated for number of {@code iteration}. If iteration is 0, no
     // value would be generated. If iteration is less than 0, it would iterate indefinitely.
@@ -48,14 +48,14 @@ class JsonFakeValueGenerator : public FakeValueGenerator {
 
     ~JsonFakeValueGenerator() = default;
 
-    std::optional<::aidl::android::hardware::automotive::vehicle::VehiclePropValue> nextEvent()
+    std::optional<aidl::android::hardware::automotive::vehicle::VehiclePropValue> nextEvent()
             override;
-    const std::vector<::aidl::android::hardware::automotive::vehicle::VehiclePropValue>&
+    const std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&
     getAllEvents();
 
   private:
     size_t mEventIndex = 0;
-    std::vector<::aidl::android::hardware::automotive::vehicle::VehiclePropValue> mEvents;
+    std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue> mEvents;
     long mLastEventTimestamp = 0;
     int32_t mNumOfIterations = 0;
 
