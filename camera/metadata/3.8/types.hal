@@ -68,6 +68,14 @@ enum CameraMetadataTag : @3.7::CameraMetadataTag {
 
     ANDROID_REQUEST_END_3_8,
 
+    /** android.scaler.availableStreamUseCases [static, enum[], public]
+     *
+     * <p>The stream use cases supported by this camera device.</p>
+     */
+    ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES = android.hardware.camera.metadata@3.6::CameraMetadataTag:ANDROID_SCALER_END_3_6,
+
+    ANDROID_SCALER_END_3_8,
+
 };
 
 /*
@@ -88,6 +96,7 @@ enum CameraMetadataEnumAndroidControlVideoStabilizationMode :
 enum CameraMetadataEnumAndroidRequestAvailableCapabilities :
         @3.6::CameraMetadataEnumAndroidRequestAvailableCapabilities {
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_TEN_BIT,
+    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_STREAM_USE_CASE,
 };
 
 /** android.request.availableDynamicRangeProfilesMap enumeration values
@@ -128,4 +137,18 @@ enum CameraMetadataEnumAndroidScalerAvailableRecommendedStreamConfigurations :
                                                                  = 0x8,
     ANDROID_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_PUBLIC_END_3_8
                                                                  = 0x9,
+};
+
+/** android.scaler.availableStreamUseCases enumeration values
+ * @see ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES
+ */
+enum CameraMetadataEnumAndroidScalerAvailableStreamUseCases : uint32_t {
+    ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT           = 0x0,
+    ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_PREVIEW           = 0x1,
+    ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_STILL_CAPTURE     = 0x2,
+    ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_VIDEO_RECORD      = 0x3,
+    ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_PREVIEW_VIDEO_STILL
+                                                                 = 0x4,
+    ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_VIDEO_CALL        = 0x5,
+    ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_VENDOR_START      = 0x10000,
 };
