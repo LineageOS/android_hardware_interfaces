@@ -1225,6 +1225,12 @@ enum CameraMetadataTag {
      */
     ANDROID_SCALER_MULTI_RESOLUTION_STREAM_SUPPORTED,
     /**
+     * android.scaler.availableStreamUseCases [static, enum[], public]
+     *
+     * <p>The stream use cases supported by this camera device.</p>
+     */
+    ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES,
+    /**
      * android.sensor.exposureTime [dynamic, int64, public]
      *
      * <p>Duration each pixel is exposed to
