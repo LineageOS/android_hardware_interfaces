@@ -47,3 +47,51 @@ TEST_P(AudioHidlDeviceTest, SetConnectedState_7_1) {
     // initial state. To workaround this, destroy the HAL at the end of this test.
     ASSERT_TRUE(resetDevice());
 }
+class LatencyModeOutputStreamTest : public OutputStreamTest {
+  protected:
+    void SetUp() override {
+        OutputStreamTest::SetUp();
+
+        Result res;
+        EXPECT_OK(stream->getRecommendedLatencyModes(returnIn(res, mSupportedLatencyModes)));
+        EXPECT_RESULT(okOrNotSupported, res);
+        if (res == Result::NOT_SUPPORTED) {
+            GTEST_SKIP() << "latency mode is not supported";  // returns
+        }
+    }
+    hidl_vec<LatencyMode> mSupportedLatencyModes;
+};
+
+TEST_P(LatencyModeOutputStreamTest, GetRecommendedLatencyModes) {
+    doc::test("Verify that reported latency modes are valid when supported");
+    for (auto mode : mSupportedLatencyModes) {
+        ASSERT_TRUE(mode >= LatencyMode::FREE && mode <= LatencyMode::LOW);
+    }
+}
+
+TEST_P(LatencyModeOutputStreamTest, SetValidLatencyMode) {
+    doc::test("Verify that setting valid latency modes works when supported");
+    for (auto mode : mSupportedLatencyModes) {
+        EXPECT_OK(stream->setLatencyMode(mode));
+    }
+}
+
+TEST_P(LatencyModeOutputStreamTest, SetInValidLatencyMode) {
+    doc::test("Verify that setting invalid latency modes fails");
+    EXPECT_RESULT(invalidArgsOrNotSupported,
+            stream->setLatencyMode(static_cast<LatencyMode>(1977)));
+}
+
+/** Stub implementation of IStreamOutEventCallback **/
+class MockOutLatencyModeCallback : public IStreamOutLatencyModeCallback {
+    Return<void> onRecommendedLatencyModeChanged(
+            const hidl_vec<LatencyMode>& hidlModes __unused) override {
+        return {};
+    }
+};
+
+TEST_P(LatencyModeOutputStreamTest, SetLatencyModeCallback) {
+    doc::test("Verify that setting a latency mode callback works when supported");
+    EXPECT_OK(stream->setLatencyModeCallback(new MockOutLatencyModeCallback));
+    EXPECT_OK(stream->setLatencyModeCallback(nullptr));
+}
