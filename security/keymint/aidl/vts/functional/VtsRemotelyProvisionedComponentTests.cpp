@@ -422,7 +422,7 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
         ASSERT_TRUE(deviceInfoMap) << "Failed to parse deviceInfo: " << deviceInfoErrMsg;
         ASSERT_TRUE(deviceInfoMap->asMap());
 
-        checkDeviceInfo(deviceInfoMap->asMap());
+        checkDeviceInfo(deviceInfoMap->asMap(), deviceInfo.deviceInfo);
 
         auto& signingKey = bccContents->back().pubKey;
         auto macKey = verifyAndParseCoseSign1(signedMac->asArray(), signingKey,
@@ -466,7 +466,7 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
         }
     }
 
-    void checkDeviceInfo(const cppbor::Map* deviceInfo) {
+    void checkDeviceInfo(const cppbor::Map* deviceInfo, bytevec deviceInfoBytes) {
         const auto& version = deviceInfo->get("version");
         ASSERT_TRUE(version);
         ASSERT_TRUE(version->asUint());
@@ -518,6 +518,8 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
             default:
                 FAIL() << "Unrecognized version: " << version->asUint()->value();
         }
+        ASSERT_EQ(deviceInfo->clone()->asMap()->canonicalize().encode(), deviceInfoBytes)
+                << "DeviceInfo ordering is non-canonical.";
     }
 
     bytevec eekId_;

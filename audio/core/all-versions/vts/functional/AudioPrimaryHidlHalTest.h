@@ -91,8 +91,9 @@ using ::android::hardware::details::toHexString;
 using namespace ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION;
 using namespace ::android::hardware::audio::common::test::utility;
 using namespace ::android::hardware::audio::CPP_VERSION;
-using ReadParameters = ::android::hardware::audio::CPP_VERSION::IStreamIn::ReadParameters;
-using ReadStatus = ::android::hardware::audio::CPP_VERSION::IStreamIn::ReadStatus;
+using ReadParameters =
+        ::android::hardware::audio::CORE_TYPES_CPP_VERSION::IStreamIn::ReadParameters;
+using ReadStatus = ::android::hardware::audio::CORE_TYPES_CPP_VERSION::IStreamIn::ReadStatus;
 using WriteCommand = ::android::hardware::audio::CPP_VERSION::IStreamOut::WriteCommand;
 using WriteStatus = ::android::hardware::audio::CPP_VERSION::IStreamOut::WriteStatus;
 #if MAJOR_VERSION >= 7
@@ -1010,6 +1011,7 @@ class StreamWriter : public StreamWorker<StreamWriter> {
 
 class OutputStreamTest
     : public OpenStreamTest<::android::hardware::audio::CPP_VERSION::IStreamOut> {
+  protected:
     void SetUp() override {
         ASSERT_NO_FATAL_FAILURE(OpenStreamTest::SetUp());  // setup base
 #if MAJOR_VERSION <= 6
@@ -1035,7 +1037,6 @@ class OutputStreamTest
     }
 #if MAJOR_VERSION >= 4 && MAJOR_VERSION <= 6
 
-  protected:
     const SourceMetadata initMetadata = {
         { { AudioUsage::MEDIA,
             AudioContentType::MUSIC,
@@ -1089,7 +1090,7 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(OutputStreamTest);
 
 class StreamReader : public StreamWorker<StreamReader> {
   public:
-    using IStreamIn = ::android::hardware::audio::CPP_VERSION::IStreamIn;
+    using IStreamIn = ::android::hardware::audio::CORE_TYPES_CPP_VERSION::IStreamIn;
 
     StreamReader(IStreamIn* stream, size_t bufferSize)
         : mStream(stream), mBufferSize(bufferSize), mData(mBufferSize) {}
@@ -1204,7 +1205,8 @@ class StreamReader : public StreamWorker<StreamReader> {
     EventFlag* mEfGroup = nullptr;
 };
 
-class InputStreamTest : public OpenStreamTest<::android::hardware::audio::CPP_VERSION::IStreamIn> {
+class InputStreamTest
+    : public OpenStreamTest<::android::hardware::audio::CORE_TYPES_CPP_VERSION::IStreamIn> {
     void SetUp() override {
         ASSERT_NO_FATAL_FAILURE(OpenStreamTest::SetUp());  // setup base
 #if MAJOR_VERSION <= 6
@@ -1226,13 +1228,8 @@ class InputStreamTest : public OpenStreamTest<::android::hardware::audio::CPP_VE
         auto flags = getInputFlags();
         testOpen(
                 [&](AudioIoHandle handle, AudioConfig config, auto cb) {
-#if MAJOR_VERSION < 7 || (MAJOR_VERSION == 7 && MINOR_VERSION == 0)
                     return getDevice()->openInputStream(handle, address, config, flags,
                                                         initMetadata, cb);
-#elif MAJOR_VERSION == 7 && MINOR_VERSION == 1
-                    return getDevice()->openInputStream_7_1(handle, address, config, flags,
-                                                            initMetadata, cb);
-#endif
                 },
                 config);
     }
@@ -1605,8 +1602,9 @@ TEST_P(InputStreamTest, SetGain) {
                             "InputStream::setGain");
 }
 
-static void testPrepareForReading(::android::hardware::audio::CPP_VERSION::IStreamIn* stream,
-                                  uint32_t frameSize, uint32_t framesCount) {
+static void testPrepareForReading(
+        ::android::hardware::audio::CORE_TYPES_CPP_VERSION::IStreamIn* stream, uint32_t frameSize,
+        uint32_t framesCount) {
     Result res;
     // Ignore output parameters as the call should fail
     ASSERT_OK(stream->prepareForReading(frameSize, framesCount,
