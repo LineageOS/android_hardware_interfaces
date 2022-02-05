@@ -35,6 +35,8 @@ interface ICameraDeviceSession extends @3.7::ICameraDeviceSession {
      *
      * - The requestedConfiguration allows the camera framework to configure
      *   10-bit dynamic range profile.
+     * - The requestedConfiguration allows the camera framework to configure
+     *   stream use cases.
      *
      * @return status Status code for the operation, one of:
      *     OK:
@@ -61,6 +63,7 @@ interface ICameraDeviceSession extends @3.7::ICameraDeviceSession {
      *             input stream.
      *           - Invalid combination between a 10-bit dynamic range profile
      *             and none impl. defined 8-bit format for a particular stream.
+     *           - Unsupported stream use case
      *         The camera service cannot filter out all possible illegal stream
      *         configurations, since some devices may support more simultaneous
      *         streams or larger stream resolutions than the minimum required
