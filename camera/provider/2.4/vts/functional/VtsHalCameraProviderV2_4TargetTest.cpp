@@ -44,6 +44,7 @@
 #include <android/hardware/camera/device/3.7/ICameraDevice.h>
 #include <android/hardware/camera/device/3.8/ICameraDevice.h>
 #include <android/hardware/camera/device/3.7/ICameraDeviceSession.h>
+#include <android/hardware/camera/device/3.8/ICameraDeviceSession.h>
 #include <android/hardware/camera/device/3.7/ICameraInjectionSession.h>
 #include <android/hardware/camera/device/3.8/ICameraDeviceCallback.h>
 #include <android/hardware/camera/device/3.8/ICameraDeviceSession.h>
@@ -135,6 +136,8 @@ using ::android::hardware::camera::metadata::V3_4::CameraMetadataTag;
 using ::android::hardware::camera::metadata::V3_6::CameraMetadataEnumAndroidSensorPixelMode;
 using ::android::hardware::camera::metadata::V3_8::
         CameraMetadataEnumAndroidRequestAvailableDynamicRangeProfilesMap;
+using ::android::hardware::camera::metadata::V3_8::
+        CameraMetadataEnumAndroidScalerAvailableStreamUseCases;
 using ::android::hardware::camera::provider::V2_4::ICameraProvider;
 using ::android::hardware::camera::provider::V2_4::ICameraProviderCallback;
 using ::android::hardware::camera::provider::V2_6::CameraIdAndStreamCombination;
@@ -196,6 +199,15 @@ enum SystemCameraKind {
      * on a hwbinder thread).
      */
     HIDDEN_SECURE_CAMERA
+};
+
+const static std::vector<int32_t> kMandatoryUseCases = {
+        ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT,
+        ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_PREVIEW,
+        ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_STILL_CAPTURE,
+        ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_VIDEO_RECORD,
+        ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_PREVIEW_VIDEO_STILL,
+        ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_VIDEO_CALL
 };
 
 namespace {
@@ -879,6 +891,7 @@ public:
     void verifyCameraCharacteristics(Status status, const CameraMetadata& chars);
     void verifyExtendedSceneModeCharacteristics(const camera_metadata_t* metadata);
     void verifyZoomCharacteristics(const camera_metadata_t* metadata);
+    void verifyStreamUseCaseCharacteristics(const camera_metadata_t* metadata);
     void verifyRecommendedConfigs(const CameraMetadata& metadata);
     void verifyMonochromeCharacteristics(const CameraMetadata& chars, int deviceVersion);
     void verifyMonochromeCameraResult(
@@ -6879,6 +6892,134 @@ TEST_P(CameraHidlTest, configureInjectionStreamsWithSessionParameters) {
     }
 }
 
+// Verify that  valid stream use cases can be configured successfully, and invalid use cases
+// fail stream configuration.
+TEST_P(CameraHidlTest, configureStreamsUseCases) {
+    hidl_vec<hidl_string> cameraDeviceNames = getCameraDeviceNames(mProvider);
+
+    for (const auto& name : cameraDeviceNames) {
+        int deviceVersion = getCameraDeviceVersion(name, mProviderType);
+        if (deviceVersion < CAMERA_DEVICE_API_VERSION_3_8) {
+            continue;
+        }
+
+        camera_metadata_t* staticMeta;
+        Return<void> ret;
+        sp<ICameraDeviceSession> session;
+        sp<device::V3_3::ICameraDeviceSession> session3_3;
+        sp<device::V3_4::ICameraDeviceSession> session3_4;
+        sp<device::V3_5::ICameraDeviceSession> session3_5;
+        sp<device::V3_6::ICameraDeviceSession> session3_6;
+        sp<device::V3_7::ICameraDeviceSession> session3_7;
+        sp<device::V3_8::ICameraDeviceSession> session3_8;
+        sp<device::V3_2::ICameraDevice> cameraDevice;
+        sp<device::V3_5::ICameraDevice> cameraDevice3_5;
+        sp<device::V3_7::ICameraDevice> cameraDevice3_7;
+        sp<device::V3_8::ICameraDevice> cameraDevice3_8;
+        openEmptyDeviceSession(name, mProvider, &session /*out*/, &staticMeta /*out*/,
+                &cameraDevice /*out*/);
+        castSession(session, deviceVersion, &session3_3, &session3_4, &session3_5,
+                &session3_6, &session3_7, &session3_8);
+        ASSERT_NE(nullptr, session3_8);
+        castDevice(cameraDevice, deviceVersion, &cameraDevice3_5, &cameraDevice3_7,
+                   &cameraDevice3_8);
+        ASSERT_NE(nullptr, cameraDevice3_8);
+
+        // Check if camera support depth only
+        if (isDepthOnly(staticMeta)) {
+            free_camera_metadata(staticMeta);
+            ret = session->close();
+            ASSERT_TRUE(ret.isOk());
+            continue;
+        }
+
+        std::vector<AvailableStream> outputPreviewStreams;
+        AvailableStream previewThreshold = {kMaxPreviewWidth, kMaxPreviewHeight,
+                static_cast<int32_t>(PixelFormat::YCBCR_420_888)};
+        ASSERT_EQ(Status::OK, getAvailableOutputStreams(staticMeta, outputPreviewStreams,
+                &previewThreshold));
+        ASSERT_NE(0u, outputPreviewStreams.size());
+
+        // Combine valid and invalid stream use cases
+        std::vector<int32_t> useCases(kMandatoryUseCases);
+        useCases.push_back(ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_VIDEO_CALL + 1);
+
+        std::vector<int32_t> supportedUseCases;
+        camera_metadata_ro_entry entry;
+        auto retcode = find_camera_metadata_ro_entry(staticMeta,
+                ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES, &entry);
+        if ((0 == retcode) && (entry.count > 0)) {
+            supportedUseCases.insert(supportedUseCases.end(), entry.data.i32,
+                    entry.data.i32 + entry.count);
+        } else {
+            supportedUseCases.push_back(ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT);
+        }
+        free_camera_metadata(staticMeta);
+
+        ::android::hardware::hidl_vec<V3_8::Stream> streams3_8(1);
+        streams3_8[0].v3_7.groupId = -1;
+        streams3_8[0].v3_7.sensorPixelModesUsed = {
+                CameraMetadataEnumAndroidSensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT};
+        streams3_8[0].v3_7.v3_4.bufferSize = 0;
+        streams3_8[0].v3_7.v3_4.v3_2.id = 0;
+        streams3_8[0].v3_7.v3_4.v3_2.streamType = StreamType::OUTPUT;
+        streams3_8[0].v3_7.v3_4.v3_2.width = static_cast<uint32_t>(outputPreviewStreams[0].width);
+        streams3_8[0].v3_7.v3_4.v3_2.height = static_cast<uint32_t>(outputPreviewStreams[0].height);
+        streams3_8[0].v3_7.v3_4.v3_2.format =
+                static_cast<PixelFormat>(outputPreviewStreams[0].format);
+        streams3_8[0].v3_7.v3_4.v3_2.usage = GRALLOC1_CONSUMER_USAGE_CPU_READ;
+        streams3_8[0].v3_7.v3_4.v3_2.dataSpace = 0;
+        streams3_8[0].v3_7.v3_4.v3_2.rotation = StreamRotation::ROTATION_0;
+        streams3_8[0].dynamicRangeProfile =
+                static_cast<CameraMetadataEnumAndroidRequestAvailableDynamicRangeProfilesMap>(
+                        ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD);
+
+        uint32_t streamConfigCounter = 0;
+        ::android::hardware::camera::device::V3_8::StreamConfiguration config3_8;
+        RequestTemplate reqTemplate = RequestTemplate::STILL_CAPTURE;
+        ret = session3_8->constructDefaultRequestSettings(reqTemplate,
+                                        [&config3_8](auto status, const auto& req) {
+                                                    ASSERT_EQ(Status::OK, status);
+                                                    config3_8.sessionParams = req;
+                                                });
+        ASSERT_TRUE(ret.isOk());
+
+        for (int32_t useCase : useCases) {
+            bool useCaseSupported = std::find(supportedUseCases.begin(),
+                    supportedUseCases.end(), useCase) != supportedUseCases.end();
+
+            streams3_8[0].useCase =
+                    static_cast<CameraMetadataEnumAndroidScalerAvailableStreamUseCases>(useCase);
+            config3_8.streams = streams3_8;
+            config3_8.operationMode = StreamConfigurationMode::NORMAL_MODE;
+            config3_8.streamConfigCounter = streamConfigCounter;
+            config3_8.multiResolutionInputImage = false;
+            ret = cameraDevice3_8->isStreamCombinationSupported_3_8(
+                    config3_8, [&useCaseSupported](Status s, bool combStatus) {
+                        ASSERT_TRUE((Status::OK == s) || (Status::METHOD_NOT_SUPPORTED == s));
+                        if (Status::OK == s) {
+                            ASSERT_EQ(combStatus, useCaseSupported);
+                        }
+                    });
+            ASSERT_TRUE(ret.isOk());
+
+            ret = session3_8->configureStreams_3_8(
+                              config3_8,
+                              [&](Status s, device::V3_6::HalStreamConfiguration halConfig) {
+                                  if (useCaseSupported) {
+                                      ASSERT_EQ(Status::OK, s);
+                                      ASSERT_EQ(1u, halConfig.streams.size());
+                                  } else {
+                                      ASSERT_EQ(Status::ILLEGAL_ARGUMENT, s);
+                                  }
+                              });
+            ASSERT_TRUE(ret.isOk());
+        }
+        ret = session3_8->close();
+        ASSERT_TRUE(ret.isOk());
+    }
+}
+
 // Retrieve all valid output stream resolutions from the camera
 // static characteristics.
 Status CameraHidlTest::getAvailableOutputStreams(const camera_metadata_t* staticMeta,
@@ -9042,6 +9183,7 @@ void CameraHidlTest::verifyCameraCharacteristics(Status status, const CameraMeta
 
     verifyExtendedSceneModeCharacteristics(metadata);
     verifyZoomCharacteristics(metadata);
+    verifyStreamUseCaseCharacteristics(metadata);
 }
 
 void CameraHidlTest::verifyExtendedSceneModeCharacteristics(const camera_metadata_t* metadata) {
@@ -9270,6 +9412,46 @@ void CameraHidlTest::verifyZoomCharacteristics(const camera_metadata_t* metadata
     } else {
         ADD_FAILURE() << "Get camera scalerCroppingType failed!";
     }
+}
+
+void CameraHidlTest::verifyStreamUseCaseCharacteristics(const camera_metadata_t* metadata) {
+    camera_metadata_ro_entry entry;
+    // Check capabilities
+    int retcode = find_camera_metadata_ro_entry(metadata,
+                ANDROID_REQUEST_AVAILABLE_CAPABILITIES, &entry);
+    bool hasStreamUseCaseCap = false;
+    if ((0 == retcode) && (entry.count > 0)) {
+        if (std::find(entry.data.u8, entry.data.u8 + entry.count,
+                ANDROID_REQUEST_AVAILABLE_CAPABILITIES_STREAM_USE_CASE) !=
+                entry.data.u8 + entry.count) {
+            hasStreamUseCaseCap = true;
+        }
+    }
+
+    bool supportMandatoryUseCases = false;
+    retcode = find_camera_metadata_ro_entry(metadata,
+        ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES, &entry);
+    if ((0 == retcode) && (entry.count > 0)) {
+        supportMandatoryUseCases = true;
+        for (size_t i = 0; i < kMandatoryUseCases.size(); i++) {
+            if (std::find(entry.data.i32, entry.data.i32 + entry.count, kMandatoryUseCases[i])
+                    == entry.data.i32 + entry.count) {
+                supportMandatoryUseCases = false;
+                break;
+            }
+        }
+        bool supportDefaultUseCase = false;
+        for (size_t i = 0; i < entry.count; i++) {
+            if (entry.data.i32[i] == ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT) {
+                supportDefaultUseCase = true;
+            }
+            ASSERT_TRUE(entry.data.i32[i] <= ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_VIDEO_CALL ||
+                    entry.data.i32[i] >= ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_VENDOR_START);
+        }
+        ASSERT_TRUE(supportDefaultUseCase);
+    }
+
+    ASSERT_EQ(hasStreamUseCaseCap, supportMandatoryUseCases);
 }
 
 void CameraHidlTest::verifyMonochromeCharacteristics(const CameraMetadata& chars,
