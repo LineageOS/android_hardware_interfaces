@@ -113,7 +113,8 @@ interface ICameraDevice extends @3.7::ICameraDevice {
      *
      * Identical to @3.7::ICameraDevice.isStreamCombinationSupported, except
      * that it takes a @3.8::StreamConfiguration parameter, which could contain
-     * additional information about a specific 10-bit dynamic range profile.
+     * additional information about a specific 10-bit dynamic range profile or
+     * stream use case.
      *
      */
     isStreamCombinationSupported_3_8(StreamConfiguration streams)
