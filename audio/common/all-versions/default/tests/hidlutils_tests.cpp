@@ -29,8 +29,8 @@
 
 using namespace android;
 using ::android::hardware::hidl_vec;
-using namespace ::android::hardware::audio::common::CPP_VERSION;
-using ::android::hardware::audio::common::CPP_VERSION::implementation::HidlUtils;
+using namespace ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION;
+using ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::implementation::HidlUtils;
 namespace xsd {
 using namespace ::android::audio::policy::configuration::V7_0;
 }
