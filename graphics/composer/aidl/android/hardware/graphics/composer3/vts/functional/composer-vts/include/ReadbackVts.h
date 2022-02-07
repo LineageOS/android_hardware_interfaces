@@ -67,6 +67,7 @@ class TestLayer {
     void setSourceCrop(FRect crop) { mSourceCrop = crop; }
     void setZOrder(uint32_t z) { mZOrder = z; }
     void setWhitePointNits(float whitePointNits) { mWhitePointNits = whitePointNits; }
+    void setBrightness(float brightness) { mBrightness = brightness; }
 
     void setSurfaceDamage(std::vector<Rect> surfaceDamage) {
         mSurfaceDamage = std::move(surfaceDamage);
@@ -84,12 +85,13 @@ class TestLayer {
 
     int64_t getLayer() const { return mLayer; }
 
-    float getWhitePointNits() const { return mWhitePointNits; }
+    float getBrightness() const { return mBrightness; }
 
   protected:
     int64_t mDisplay;
     int64_t mLayer;
     Rect mDisplayFrame = {0, 0, 0, 0};
+    float mBrightness = 1.f;
     float mWhitePointNits = -1.f;
     std::vector<Rect> mSurfaceDamage;
     Transform mTransform = static_cast<Transform>(0);

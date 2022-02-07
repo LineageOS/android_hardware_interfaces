@@ -965,7 +965,7 @@ TEST_P(GraphicsCompositionTest, SetLayerZOrder) {
     }
 }
 
-TEST_P(GraphicsCompositionTest, SetLayerWhitePointDims) {
+TEST_P(GraphicsCompositionTest, SetLayerBrightnessDims) {
     const auto& [status, capabilities] =
             mComposerClient->getDisplayCapabilities(getPrimaryDisplayId());
     ASSERT_TRUE(status.isOk());
@@ -1013,6 +1013,7 @@ TEST_P(GraphicsCompositionTest, SetLayerWhitePointDims) {
         redLayer->setColor(RED);
         redLayer->setDisplayFrame(redRect);
         redLayer->setWhitePointNits(maxBrightnessNits);
+        redLayer->setBrightness(1.f);
 
         const auto dimmerRedLayer =
                 std::make_shared<TestColorLayer>(mComposerClient, getPrimaryDisplayId());
@@ -1022,6 +1023,7 @@ TEST_P(GraphicsCompositionTest, SetLayerWhitePointDims) {
         // kick into GPU composition to apply dithering when the dimming ratio is high.
         static constexpr float kDimmingRatio = 0.9f;
         dimmerRedLayer->setWhitePointNits(maxBrightnessNits * kDimmingRatio);
+        dimmerRedLayer->setBrightness(kDimmingRatio);
 
         const std::vector<std::shared_ptr<TestLayer>> layers = {redLayer, dimmerRedLayer};
         std::vector<Color> expectedColors(
