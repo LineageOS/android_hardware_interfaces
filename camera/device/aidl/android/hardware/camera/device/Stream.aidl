@@ -203,4 +203,23 @@ parcelable Stream {
      *
      */
     android.hardware.camera.metadata.RequestAvailableDynamicRangeProfilesMap dynamicRangeProfile;
+
+    /**
+     * The stream use case describing the stream's purpose
+     *
+     * This flag provides the camera device a hint on what user scenario this
+     * stream is intended for. With this flag, the camera device can optimize
+     * camera pipeline parameters, such as tuning, sensor mode, and ISP settings,
+     * for the intended use case.
+     *
+     * When this field is set to DEFAULT, the camera device should behave in
+     * the same way as in previous HAL versions, and optimize the camera pipeline
+     * based on stream format, data space, usage flag, and other stream properties.
+     *
+     * The HAL reports supported stream use cases in
+     * ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES. If the HAL doesn't support
+     * setting stream use cases, the camera framework leaves this field as
+     * DEFAULT.
+     */
+    android.hardware.camera.metadata.ScalerAvailableStreamUseCases useCase;
 }
