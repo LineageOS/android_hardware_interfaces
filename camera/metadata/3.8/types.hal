@@ -29,7 +29,34 @@ import android.hardware.camera.metadata@3.5;
 import android.hardware.camera.metadata@3.6;
 import android.hardware.camera.metadata@3.7;
 
-// No new metadata sections added in this revision
+/**
+ * Top level hierarchy definitions for camera metadata. *_INFO sections are for
+ * the static metadata that can be retrieved without opening the camera device.
+ */
+enum CameraMetadataSection : @3.4::CameraMetadataSection {
+    ANDROID_AUTOMOTIVE =
+        android.hardware.camera.metadata@3.4::CameraMetadataSection:ANDROID_SECTION_COUNT,
+
+    ANDROID_AUTOMOTIVE_LENS,
+
+    ANDROID_SECTION_COUNT_3_8,
+
+    VENDOR_SECTION_3_8 = 0x8000,
+
+};
+
+/**
+ * Hierarchy positions in enum space. All vendor extension sections must be
+ * defined with tag >= VENDOR_SECTION_START
+ */
+enum CameraMetadataSectionStart : android.hardware.camera.metadata@3.4::CameraMetadataSectionStart {
+    ANDROID_AUTOMOTIVE_START = CameraMetadataSection:ANDROID_AUTOMOTIVE << 16,
+
+    ANDROID_AUTOMOTIVE_LENS_START = CameraMetadataSection:ANDROID_AUTOMOTIVE_LENS << 16,
+
+    VENDOR_SECTION_START_3_8 = CameraMetadataSection:VENDOR_SECTION_3_8 << 16,
+
+};
 
 /**
  * Main enumeration for defining camera metadata tags added in this revision
@@ -76,6 +103,23 @@ enum CameraMetadataTag : @3.7::CameraMetadataTag {
 
     ANDROID_SCALER_END_3_8,
 
+    /** android.automotive.location [static, enum, public]
+     *
+     * <p>Location of the cameras on the automotive devices.</p>
+     */
+    ANDROID_AUTOMOTIVE_LOCATION = CameraMetadataSectionStart:ANDROID_AUTOMOTIVE_START,
+
+    ANDROID_AUTOMOTIVE_END_3_8,
+
+    /** android.automotive.lens.facing [static, enum[], public]
+     *
+     * <p>The direction of the camera faces relative to the vehicle body frame and the
+     * passenger seats.</p>
+     */
+    ANDROID_AUTOMOTIVE_LENS_FACING = CameraMetadataSectionStart:ANDROID_AUTOMOTIVE_LENS_START,
+
+    ANDROID_AUTOMOTIVE_LENS_END_3_8,
+
 };
 
 /*
@@ -88,6 +132,14 @@ enum CameraMetadataTag : @3.7::CameraMetadataTag {
 enum CameraMetadataEnumAndroidControlVideoStabilizationMode :
         @3.2::CameraMetadataEnumAndroidControlVideoStabilizationMode {
     ANDROID_CONTROL_VIDEO_STABILIZATION_MODE_PREVIEW_STABILIZATION,
+};
+
+/** android.lens.poseReference enumeration values added since v3.5
+ * @see ANDROID_LENS_POSE_REFERENCE
+ */
+enum CameraMetadataEnumAndroidLensPoseReference :
+        @3.5::CameraMetadataEnumAndroidLensPoseReference {
+    ANDROID_LENS_POSE_REFERENCE_AUTOMOTIVE,
 };
 
 /** android.request.availableCapabilities enumeration values added since v3.6
@@ -151,4 +203,42 @@ enum CameraMetadataEnumAndroidScalerAvailableStreamUseCases : uint32_t {
                                                                  = 0x4,
     ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_VIDEO_CALL        = 0x5,
     ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_VENDOR_START      = 0x10000,
+};
+
+/** android.automotive.location enumeration values
+ * @see ANDROID_AUTOMOTIVE_LOCATION
+ */
+enum CameraMetadataEnumAndroidAutomotiveLocation : uint32_t {
+    ANDROID_AUTOMOTIVE_LOCATION_INTERIOR,
+    ANDROID_AUTOMOTIVE_LOCATION_EXTERIOR_OTHER,
+    ANDROID_AUTOMOTIVE_LOCATION_EXTERIOR_FRONT,
+    ANDROID_AUTOMOTIVE_LOCATION_EXTERIOR_REAR,
+    ANDROID_AUTOMOTIVE_LOCATION_EXTERIOR_LEFT,
+    ANDROID_AUTOMOTIVE_LOCATION_EXTERIOR_RIGHT,
+    ANDROID_AUTOMOTIVE_LOCATION_EXTRA_OTHER,
+    ANDROID_AUTOMOTIVE_LOCATION_EXTRA_FRONT,
+    ANDROID_AUTOMOTIVE_LOCATION_EXTRA_REAR,
+    ANDROID_AUTOMOTIVE_LOCATION_EXTRA_LEFT,
+    ANDROID_AUTOMOTIVE_LOCATION_EXTRA_RIGHT,
+};
+
+/** android.automotive.lens.facing enumeration values
+ * @see ANDROID_AUTOMOTIVE_LENS_FACING
+ */
+enum CameraMetadataEnumAndroidAutomotiveLensFacing : uint32_t {
+    ANDROID_AUTOMOTIVE_LENS_FACING_EXTERIOR_OTHER,
+    ANDROID_AUTOMOTIVE_LENS_FACING_EXTERIOR_FRONT,
+    ANDROID_AUTOMOTIVE_LENS_FACING_EXTERIOR_REAR,
+    ANDROID_AUTOMOTIVE_LENS_FACING_EXTERIOR_LEFT,
+    ANDROID_AUTOMOTIVE_LENS_FACING_EXTERIOR_RIGHT,
+    ANDROID_AUTOMOTIVE_LENS_FACING_INTERIOR_OTHER,
+    ANDROID_AUTOMOTIVE_LENS_FACING_INTERIOR_SEAT_ROW_1_LEFT,
+    ANDROID_AUTOMOTIVE_LENS_FACING_INTERIOR_SEAT_ROW_1_CENTER,
+    ANDROID_AUTOMOTIVE_LENS_FACING_INTERIOR_SEAT_ROW_1_RIGHT,
+    ANDROID_AUTOMOTIVE_LENS_FACING_INTERIOR_SEAT_ROW_2_LEFT,
+    ANDROID_AUTOMOTIVE_LENS_FACING_INTERIOR_SEAT_ROW_2_CENTER,
+    ANDROID_AUTOMOTIVE_LENS_FACING_INTERIOR_SEAT_ROW_2_RIGHT,
+    ANDROID_AUTOMOTIVE_LENS_FACING_INTERIOR_SEAT_ROW_3_LEFT,
+    ANDROID_AUTOMOTIVE_LENS_FACING_INTERIOR_SEAT_ROW_3_CENTER,
+    ANDROID_AUTOMOTIVE_LENS_FACING_INTERIOR_SEAT_ROW_3_RIGHT,
 };
