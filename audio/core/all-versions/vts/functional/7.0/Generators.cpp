@@ -20,20 +20,20 @@
 #include "7.0/PolicyConfig.h"
 
 // clang-format off
-#include PATH(android/hardware/audio/FILE_VERSION/types.h)
-#include PATH(android/hardware/audio/common/FILE_VERSION/types.h)
+#include PATH(android/hardware/audio/CORE_TYPES_FILE_VERSION/types.h)
+#include PATH(android/hardware/audio/common/COMMON_TYPES_FILE_VERSION/types.h)
 // clang-format on
 
-#include <android_audio_policy_configuration_V7_0-enums.h>
-#include <android_audio_policy_configuration_V7_0.h>
+#include PATH(APM_XSD_ENUMS_H_FILENAME)
+#include PATH(APM_XSD_H_FILENAME)
 
 // Forward declaration for functions that are substituted
 // in generator unit tests.
 const PolicyConfig& getCachedPolicyConfig();
 const std::vector<DeviceParameter>& getDeviceParameters();
 
-using namespace ::android::hardware::audio::common::CPP_VERSION;
-using namespace ::android::hardware::audio::CPP_VERSION;
+using namespace ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION;
+using namespace ::android::hardware::audio::CORE_TYPES_CPP_VERSION;
 namespace xsd {
 using namespace ::android::audio::policy::configuration::CPP_VERSION;
 }
