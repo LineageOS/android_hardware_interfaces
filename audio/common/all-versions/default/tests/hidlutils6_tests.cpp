@@ -23,14 +23,14 @@
 #include <system/audio.h>
 
 using namespace android;
-using namespace ::android::hardware::audio::common::CPP_VERSION;
-using ::android::hardware::audio::common::CPP_VERSION::implementation::HidlUtils;
+using namespace ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION;
+using ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::implementation::HidlUtils;
 
 // Not generated automatically because DeviceAddress contains
 // an union.
 //
 // operator== must be defined in the same namespace as the data type.
-namespace android::hardware::audio::common::CPP_VERSION {
+namespace android::hardware::audio::common::COMMON_TYPES_CPP_VERSION {
 
 inline bool operator==(const DeviceAddress& lhs, const DeviceAddress& rhs) {
     if (lhs.device != rhs.device) return false;
@@ -49,7 +49,7 @@ inline bool operator==(const DeviceAddress& lhs, const DeviceAddress& rhs) {
     return lhs.busAddress == rhs.busAddress;
 }
 
-}  // namespace android::hardware::audio::common::CPP_VERSION
+}  // namespace android::hardware::audio::common::COMMON_TYPES_CPP_VERSION
 
 static void ConvertDeviceAddress(const DeviceAddress& device) {
     audio_devices_t halDeviceType;

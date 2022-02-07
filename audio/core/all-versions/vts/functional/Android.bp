@@ -179,6 +179,39 @@ cc_test {
     test_config: "VtsHalAudioV7_0TargetTest.xml",
 }
 
+cc_test {
+    name: "VtsHalAudioV7_1TargetTest",
+    defaults: ["VtsHalAudioTargetTest_defaults"],
+    srcs: [
+        "7.1/AudioPrimaryHidlHalTest.cpp",
+        "7.0/Generators.cpp",
+        "7.0/PolicyConfig.cpp",
+    ],
+    generated_headers: ["audio_policy_configuration_V7_1_parser"],
+    generated_sources: ["audio_policy_configuration_V7_1_parser"],
+    static_libs: [
+        "android.hardware.audio@7.0",
+        "android.hardware.audio@7.1",
+        "android.hardware.audio.common@7.0",
+        "android.hardware.audio.common@7.0-enums",
+        "android.hardware.audio.common@7.1-enums",
+        "android.hardware.audio.common@7.0-util",
+    ],
+    cflags: [
+        "-DMAJOR_VERSION=7",
+        "-DMINOR_VERSION=1",
+        "-DCOMMON_TYPES_MINOR_VERSION=0",
+        "-DCORE_TYPES_MINOR_VERSION=0",
+        "-include common/all-versions/VersionMacro.h",
+    ],
+    data: [
+        ":audio_policy_configuration_V7_1",
+    ],
+    // Use test_config for vts suite.
+    // TODO(b/146104851): Add auto-gen rules and remove it.
+    test_config: "VtsHalAudioV7_1TargetTest.xml",
+}
+
 // Note: the following aren't VTS tests, but rather unit tests
 // to verify correctness of test utilities.
 cc_test {
