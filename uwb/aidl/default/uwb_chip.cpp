@@ -18,7 +18,6 @@
 
 namespace {
 constexpr static int32_t kAndroidUciVersion = 1;
-constexpr static int64_t kAndroidCapabilities = 0;
 }
 
 namespace android {
@@ -57,11 +56,6 @@ UwbChip::~UwbChip() {}
 
 ::ndk::ScopedAStatus UwbChip::getSupportedAndroidUciVersion(int32_t* version) {
     *version = kAndroidUciVersion;
-    return ndk::ScopedAStatus::ok();
-}
-
-::ndk::ScopedAStatus UwbChip::getSupportedAndroidCapabilities(int64_t* capabilities) {
-    *capabilities = kAndroidCapabilities;
     return ndk::ScopedAStatus::ok();
 }
 

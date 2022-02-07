@@ -57,8 +57,8 @@ enum UwbVendorSessionAppConfigTlvTypes {
     /**
      * Added in vendor version 0.
      * Interleaving ratio if AOA_RESULT_REQ is set to 0xF0.
-     * Supported only if the value returned by getSupportedAndroidCapabilities()
-     * has the bit of UwbAndroidCapabilities.ANTENNAE_INTERLEAVING set to 1.
+     * Supported only if the UwbVendorCapabilityTlvTypes
+     * .SUPPORTED_AOA_RESULT_REQ_ANTENNA_INTERLEAVING set to 1.
      */
     /** 2 byte data */
     NB_OF_RANGE_MEASUREMENTS = 0xE3,
