@@ -125,6 +125,14 @@ enum BufferUsage {
     * presents from SF (such as for panel self-refresh), but for any given
     * present the buffer must be composited from even if it otherwise appears
     * to be the same as a previous composition.
+    *
+    * If the GPU & HWC supports EGL_SINGLE_BUFFER, then it is recommended that
+    * FRONT_BUFFER usage is supported for the same formats as supported by
+    * EGL_SINGLE_BUFFER. In particular, it is recommended that the following
+    * combination is supported when possible:
+    *    Format = RGBA_8888
+    *    Usage = FRONT_BUFFER | GPU_RENDER_TARGET | COMPOSER_OVERLAY
+    *
     */
     FRONT_BUFFER                       = 1L << 32,
 
