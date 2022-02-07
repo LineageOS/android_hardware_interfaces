@@ -264,11 +264,16 @@ TEST_P(RadioNetworkTest, setUsageSetting) {
             [&](int serial) { return radio_network->setUsageSetting(serial, originalSetting); },
             {RadioError::NONE});
 
+    // After resetting the value to its original value, update the local cache, which must
+    // always succeed.
+    invokeAndExpectResponse([&](int serial) { return radio_network->getUsageSetting(serial); },
+                            {RadioError::NONE});
+
     // Check that indeed the updated setting was set. We do this after resetting to original
     // conditions to avoid early-exiting the test and leaving the device in a modified state.
-    ASSERT_TRUE(expectedSetting == updatedSetting);
+    EXPECT_EQ(expectedSetting, updatedSetting);
     // Check that indeed the original setting was reset.
-    ASSERT_TRUE(originalSetting == radioRsp_network->usageSetting);
+    EXPECT_EQ(originalSetting, radioRsp_network->usageSetting);
 }
 
 /*
