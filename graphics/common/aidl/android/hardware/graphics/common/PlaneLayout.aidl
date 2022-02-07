@@ -32,6 +32,7 @@ import android.hardware.graphics.common.Rect;
  * - Pixel - a pixel is comprised of all the (non-metadata/raw) components in buffer across
  *      all planes. For example, a buffer with a plane of Y and a plane of CbCr has a pixel
  *      of YCbCr.
+ * @hide
  */
 
 @VintfStability

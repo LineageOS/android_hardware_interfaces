@@ -21,6 +21,7 @@ import android.hardware.graphics.common.XyColor;
  * Mastering display metadata as specified by SMPTE ST 2086.
  *
  * This is an AIDL counterpart of the NDK struct `AHdrMetadata_smpte2086`.
+ * @hide
  */
 @VintfStability
 parcelable Smpte2086 {

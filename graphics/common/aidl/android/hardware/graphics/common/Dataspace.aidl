@@ -16,6 +16,7 @@
 
 package android.hardware.graphics.common;
 
+/** @hide */
 @VintfStability
 @Backing(type="int")
 enum Dataspace {

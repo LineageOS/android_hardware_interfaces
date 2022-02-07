@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.graphics.common;
+/* @hide */
 @VintfStability
 parcelable Smpte2086 {
   android.hardware.graphics.common.XyColor primaryRed;
