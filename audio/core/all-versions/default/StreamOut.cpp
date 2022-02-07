@@ -39,7 +39,11 @@ namespace audio {
 namespace CPP_VERSION {
 namespace implementation {
 
-using ::android::hardware::audio::common::CPP_VERSION::implementation::HidlUtils;
+using ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::implementation::HidlUtils;
+using ::android::hardware::audio::CORE_TYPES_CPP_VERSION::implementation::CoreUtils;
+namespace util {
+using namespace ::android::hardware::audio::CORE_TYPES_CPP_VERSION::implementation::util;
+}
 
 namespace {
 
@@ -334,7 +338,7 @@ Return<Result> StreamOut::setVolume(float left, float right) {
     if (mStream->set_volume == NULL) {
         return Result::NOT_SUPPORTED;
     }
-    if (!isGainNormalized(left)) {
+    if (!util::isGainNormalized(left)) {
         ALOGW("Can not set a stream output volume {%f, %f} outside [0,1]", left, right);
         return Result::INVALID_ARGUMENTS;
     }
