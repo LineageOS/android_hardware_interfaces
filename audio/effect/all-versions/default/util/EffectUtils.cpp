@@ -25,8 +25,8 @@
 
 #include "util/EffectUtils.h"
 
-using ::android::hardware::audio::common::CPP_VERSION::implementation::HidlUtils;
-using ::android::hardware::audio::common::CPP_VERSION::implementation::UuidUtils;
+using ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::implementation::HidlUtils;
+using ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::implementation::UuidUtils;
 using ::android::hardware::audio::common::utils::EnumBitfield;
 
 namespace android {
@@ -36,7 +36,7 @@ namespace effect {
 namespace CPP_VERSION {
 namespace implementation {
 
-using namespace ::android::hardware::audio::common::CPP_VERSION;
+using namespace ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION;
 
 #define CONVERT_CHECKED(expr, result)                   \
     if (status_t status = (expr); status != NO_ERROR) { \
