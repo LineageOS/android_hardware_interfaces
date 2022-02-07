@@ -18,6 +18,7 @@ package android.hardware.graphics.common;
 
 /**
  * Supported HDR formats. Must be kept in sync with equivalents in Display.java.
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

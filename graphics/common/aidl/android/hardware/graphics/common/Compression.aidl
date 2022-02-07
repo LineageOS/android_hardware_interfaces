@@ -18,6 +18,7 @@ package android.hardware.graphics.common;
 
 /**
  * Used by IAllocator/IMapper (gralloc) to describe standard compression strategies
+ * @hide
  */
 @VintfStability
 @Backing(type="long")

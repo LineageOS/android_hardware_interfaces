@@ -18,6 +18,7 @@ package android.hardware.graphics.common;
 
 /**
  * Transformation definitions
+ * @hide
  */
 @VintfStability
 @Backing(type="int")
