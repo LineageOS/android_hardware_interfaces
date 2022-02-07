@@ -30,8 +30,8 @@ package android.hardware.uwb.fira_android;
 enum UwbVendorSessionAppConfigTlvValues {
     /**
      * Added in vendor version 0.
-     * Supported only if the value returned by getSupportedAndroidCapabilities()
-     * has the bit of UwbAndroidCapabilities.ANTENNA_INTERLEAVING set to 1.
+     * Supported only if the UwbVendorCapabilityTlvTypes
+     * .SUPPORTED_AOA_RESULT_REQ_ANTENNA_INTERLEAVING set to 1.
      * Set AOA_RESULT_REQ (Config ID - 0x0D) to this value to turn on antenna
      * interleaving feature.
      */
