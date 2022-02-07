@@ -43,7 +43,7 @@ namespace vehicle {
 class ConnectedClient {
   public:
     using CallbackType =
-            std::shared_ptr<::aidl::android::hardware::automotive::vehicle::IVehicleCallback>;
+            std::shared_ptr<aidl::android::hardware::automotive::vehicle::IVehicleCallback>;
 
     ConnectedClient(std::shared_ptr<PendingRequestPool> requestPool, CallbackType callback);
 
@@ -57,7 +57,7 @@ class ConnectedClient {
     // Returns {@code INVALID_ARG} error if any of the requestIds are duplicate with one of the
     // pending request IDs or {@code TRY_AGAIN} error if the pending request pool is full and could
     // no longer add requests.
-    ::android::base::Result<void> addRequests(const std::unordered_set<int64_t>& requestIds);
+    android::base::Result<void> addRequests(const std::unordered_set<int64_t>& requestIds);
 
     // Marks the requests as finished. Returns a list of request IDs that was pending and has been
     // finished. It must be a set of the requested request IDs.
@@ -110,7 +110,7 @@ class SubscriptionClient final : public ConnectedClient {
     // callback.
     static void sendUpdatedValues(
             CallbackType callback,
-            std::vector<::aidl::android::hardware::automotive::vehicle::VehiclePropValue>&&
+            std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&&
                     updatedValues);
 
   protected:
@@ -126,7 +126,7 @@ class SubscriptionClient final : public ConnectedClient {
     static void onGetValueResults(
             const void* clientId, CallbackType callback,
             std::shared_ptr<PendingRequestPool> requestPool,
-            std::vector<::aidl::android::hardware::automotive::vehicle::GetValueResult> results);
+            std::vector<aidl::android::hardware::automotive::vehicle::GetValueResult> results);
 };
 
 }  // namespace vehicle

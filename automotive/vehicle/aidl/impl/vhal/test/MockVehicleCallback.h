@@ -43,35 +43,33 @@ std::optional<T> pop(std::list<T>& items) {
 
 // MockVehicleCallback is a mock VehicleCallback implementation that simply stores the results.
 class MockVehicleCallback final
-    : public ::aidl::android::hardware::automotive::vehicle::BnVehicleCallback {
+    : public aidl::android::hardware::automotive::vehicle::BnVehicleCallback {
   public:
-    ::ndk::ScopedAStatus onGetValues(
-            const ::aidl::android::hardware::automotive::vehicle::GetValueResults& results)
-            override;
-    ::ndk::ScopedAStatus onSetValues(
-            const ::aidl::android::hardware::automotive::vehicle::SetValueResults& results)
-            override;
-    ::ndk::ScopedAStatus onPropertyEvent(
-            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValues&,
+    ndk::ScopedAStatus onGetValues(
+            const aidl::android::hardware::automotive::vehicle::GetValueResults& results) override;
+    ndk::ScopedAStatus onSetValues(
+            const aidl::android::hardware::automotive::vehicle::SetValueResults& results) override;
+    ndk::ScopedAStatus onPropertyEvent(
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValues&,
             int32_t) override;
-    ::ndk::ScopedAStatus onPropertySetError(
-            const ::aidl::android::hardware::automotive::vehicle::VehiclePropErrors&) override;
+    ndk::ScopedAStatus onPropertySetError(
+            const aidl::android::hardware::automotive::vehicle::VehiclePropErrors&) override;
 
     // Test functions
-    std::optional<::aidl::android::hardware::automotive::vehicle::GetValueResults>
+    std::optional<aidl::android::hardware::automotive::vehicle::GetValueResults>
     nextGetValueResults();
-    std::optional<::aidl::android::hardware::automotive::vehicle::SetValueResults>
+    std::optional<aidl::android::hardware::automotive::vehicle::SetValueResults>
     nextSetValueResults();
-    std::optional<::aidl::android::hardware::automotive::vehicle::VehiclePropValues>
+    std::optional<aidl::android::hardware::automotive::vehicle::VehiclePropValues>
     nextOnPropertyEventResults();
 
   private:
     std::mutex mLock;
-    std::list<::aidl::android::hardware::automotive::vehicle::GetValueResults> mGetValueResults
+    std::list<aidl::android::hardware::automotive::vehicle::GetValueResults> mGetValueResults
             GUARDED_BY(mLock);
-    std::list<::aidl::android::hardware::automotive::vehicle::SetValueResults> mSetValueResults
+    std::list<aidl::android::hardware::automotive::vehicle::SetValueResults> mSetValueResults
             GUARDED_BY(mLock);
-    std::list<::aidl::android::hardware::automotive::vehicle::VehiclePropValues>
+    std::list<aidl::android::hardware::automotive::vehicle::VehiclePropValues>
             mOnPropertyEventResults GUARDED_BY(mLock);
     int32_t mSharedMemoryFileCount GUARDED_BY(mLock);
 };

@@ -39,7 +39,7 @@ using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType;
 // Converts the system property to the vendor property.
 // WARNING: This is only for the end-to-end testing, Should NOT include in the user build.
 inline constexpr int32_t toVendor(
-        const ::aidl::android::hardware::automotive::vehicle::VehicleProperty& prop) {
+        const aidl::android::hardware::automotive::vehicle::VehicleProperty& prop) {
     return (toInt(prop) & ~toInt(testpropertyutils_impl::VehiclePropertyGroup::MASK)) |
            toInt(testpropertyutils_impl::VehiclePropertyGroup::VENDOR);
 }
