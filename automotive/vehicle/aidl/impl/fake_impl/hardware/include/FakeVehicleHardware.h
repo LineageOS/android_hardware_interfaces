@@ -46,30 +46,30 @@ class FakeVehicleHardware : public IVehicleHardware {
     explicit FakeVehicleHardware(std::unique_ptr<VehiclePropValuePool> valuePool);
 
     // Get all the property configs.
-    std::vector<::aidl::android::hardware::automotive::vehicle::VehiclePropConfig>
+    std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropConfig>
     getAllPropertyConfigs() const override;
 
     // Set property values asynchronously. Server could return before the property set requests
     // are sent to vehicle bus or before property set confirmation is received. The callback is
     // safe to be called after the function returns and is safe to be called in a different thread.
-    ::aidl::android::hardware::automotive::vehicle::StatusCode setValues(
+    aidl::android::hardware::automotive::vehicle::StatusCode setValues(
             std::shared_ptr<const SetValuesCallback> callback,
-            const std::vector<::aidl::android::hardware::automotive::vehicle::SetValueRequest>&
+            const std::vector<aidl::android::hardware::automotive::vehicle::SetValueRequest>&
                     requests) override;
 
     // Get property values asynchronously. Server could return before the property values are ready.
     // The callback is safe to be called after the function returns and is safe to be called in a
     // different thread.
-    ::aidl::android::hardware::automotive::vehicle::StatusCode getValues(
+    aidl::android::hardware::automotive::vehicle::StatusCode getValues(
             std::shared_ptr<const GetValuesCallback> callback,
-            const std::vector<::aidl::android::hardware::automotive::vehicle::GetValueRequest>&
+            const std::vector<aidl::android::hardware::automotive::vehicle::GetValueRequest>&
                     requests) const override;
 
     // Dump debug information in the server.
     DumpResult dump(const std::vector<std::string>& options) override;
 
     // Check whether the system is healthy, return {@code StatusCode::OK} for healthy.
-    ::aidl::android::hardware::automotive::vehicle::StatusCode checkHealth() override;
+    aidl::android::hardware::automotive::vehicle::StatusCode checkHealth() override;
 
     // Register a callback that would be called when there is a property change event from vehicle.
     void registerOnPropertyChangeEvent(
@@ -85,11 +85,11 @@ class FakeVehicleHardware : public IVehicleHardware {
     const std::shared_ptr<VehiclePropValuePool> mValuePool;
     const std::shared_ptr<VehiclePropertyStore> mServerSidePropStore;
 
-    ::android::base::Result<VehiclePropValuePool::RecyclableType> getValue(
-            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
+    android::base::Result<VehiclePropValuePool::RecyclableType> getValue(
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
 
-    ::android::base::Result<void> setValue(
-            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
+    android::base::Result<void> setValue(
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
 
   private:
     // Expose private methods to unit test.
@@ -108,33 +108,33 @@ class FakeVehicleHardware : public IVehicleHardware {
     void storePropInitialValue(const defaultconfig::ConfigDeclaration& config);
     // The callback that would be called when a vehicle property value change happens.
     void onValueChangeCallback(
-            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
     // If property "persist.vendor.vhal_init_value_override" is set to true, override the properties
     // using config files in 'overrideDir'.
     void maybeOverrideProperties(const char* overrideDir);
     // Override the properties using config files in 'overrideDir'.
     void overrideProperties(const char* overrideDir);
 
-    ::android::base::Result<void> maybeSetSpecialValue(
-            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
+    android::base::Result<void> maybeSetSpecialValue(
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
             bool* isSpecialValue);
-    ::android::base::Result<VehiclePropValuePool::RecyclableType> maybeGetSpecialValue(
-            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
+    android::base::Result<VehiclePropValuePool::RecyclableType> maybeGetSpecialValue(
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
             bool* isSpecialValue) const;
-    ::android::base::Result<void> setApPowerStateReport(
-            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
+    android::base::Result<void> setApPowerStateReport(
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
     VehiclePropValuePool::RecyclableType createApPowerStateReq(
-            ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq state);
-    ::android::base::Result<void> setUserHalProp(
-            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
-    ::android::base::Result<VehiclePropValuePool::RecyclableType> getUserHalProp(
-            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
+            aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq state);
+    android::base::Result<void> setUserHalProp(
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
+    android::base::Result<VehiclePropValuePool::RecyclableType> getUserHalProp(
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
     bool isHvacPropAndHvacNotAvailable(int32_t propId);
 
     std::string dumpAllProperties();
     std::string dumpOnePropertyByConfig(
             int rowNumber,
-            const ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig& config);
+            const aidl::android::hardware::automotive::vehicle::VehiclePropConfig& config);
     std::string dumpOnePropertyById(int32_t propId, int32_t areaId);
     std::string dumpHelp();
     std::string dumpListProperties();
@@ -142,23 +142,23 @@ class FakeVehicleHardware : public IVehicleHardware {
     std::string dumpSetProperties(const std::vector<std::string>& options);
 
     template <typename T>
-    ::android::base::Result<T> safelyParseInt(int index, const std::string& s) {
+    android::base::Result<T> safelyParseInt(int index, const std::string& s) {
         T out;
         if (!::android::base::ParseInt(s, &out)) {
-            return ::android::base::Error() << ::android::base::StringPrintf(
+            return android::base::Error() << android::base::StringPrintf(
                            "non-integer argument at index %d: %s\n", index, s.c_str());
         }
         return out;
     }
-    ::android::base::Result<float> safelyParseFloat(int index, const std::string& s);
+    android::base::Result<float> safelyParseFloat(int index, const std::string& s);
     std::vector<std::string> getOptionValues(const std::vector<std::string>& options,
                                              size_t* index);
-    ::android::base::Result<::aidl::android::hardware::automotive::vehicle::VehiclePropValue>
+    android::base::Result<aidl::android::hardware::automotive::vehicle::VehiclePropValue>
     parseSetPropOptions(const std::vector<std::string>& options);
-    ::android::base::Result<std::vector<uint8_t>> parseHexString(const std::string& s);
+    android::base::Result<std::vector<uint8_t>> parseHexString(const std::string& s);
 
-    ::android::base::Result<void> checkArgumentsSize(const std::vector<std::string>& options,
-                                                     size_t minSize);
+    android::base::Result<void> checkArgumentsSize(const std::vector<std::string>& options,
+                                                   size_t minSize);
 };
 
 }  // namespace fake
