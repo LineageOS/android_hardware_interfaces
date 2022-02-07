@@ -14,33 +14,36 @@
  * limitations under the License.
  */
 
-#include PATH(android/hardware/audio/FILE_VERSION/IStream.h)
-#include PATH(android/hardware/audio/FILE_VERSION/types.h)
-#include PATH(android/hardware/audio/common/FILE_VERSION/types.h)
+// clang-format off
+#include PATH(android/hardware/audio/FILE_VERSION/IStreamIn.h)
+#include PATH(android/hardware/audio/FILE_VERSION/IStreamOut.h)
+#include PATH(android/hardware/audio/CORE_TYPES_FILE_VERSION/types.h)
+#include PATH(android/hardware/audio/common/COMMON_TYPES_FILE_VERSION/types.h)
+// clang-format on
 #include <hidl/HidlSupport.h>
 
 using ::android::hardware::hidl_bitfield;
 using ::android::hardware::hidl_handle;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
-using ::android::hardware::audio::common::CPP_VERSION::AudioChannelMask;
-using ::android::hardware::audio::common::CPP_VERSION::AudioFormat;
-using ::android::hardware::audio::CPP_VERSION::IStream;
-using ::android::hardware::audio::CPP_VERSION::ParameterValue;
-using ::android::hardware::audio::CPP_VERSION::Result;
+using ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::AudioChannelMask;
+using ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::AudioFormat;
+using ::android::hardware::audio::CORE_TYPES_CPP_VERSION::IStream;
+using ::android::hardware::audio::CORE_TYPES_CPP_VERSION::ParameterValue;
+using ::android::hardware::audio::CORE_TYPES_CPP_VERSION::Result;
 
 using namespace ::android::hardware::audio::common::test::utility;
 
-using Rotation = ::android::hardware::audio::CPP_VERSION::IPrimaryDevice::Rotation;
-using ::android::hardware::audio::common::CPP_VERSION::AudioContentType;
-using ::android::hardware::audio::common::CPP_VERSION::AudioUsage;
-using ::android::hardware::audio::CPP_VERSION::MicrophoneInfo;
+using Rotation = ::android::hardware::audio::CORE_TYPES_CPP_VERSION::IPrimaryDevice::Rotation;
+using ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::AudioContentType;
+using ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::AudioUsage;
+using ::android::hardware::audio::CORE_TYPES_CPP_VERSION::MicrophoneInfo;
 #if MAJOR_VERSION < 5
 using ::android::hardware::audio::CPP_VERSION::SinkMetadata;
 using ::android::hardware::audio::CPP_VERSION::SourceMetadata;
 #else
-using ::android::hardware::audio::common::CPP_VERSION::SinkMetadata;
-using ::android::hardware::audio::common::CPP_VERSION::SourceMetadata;
+using ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::SinkMetadata;
+using ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::SourceMetadata;
 #endif
 
 struct Parameters {

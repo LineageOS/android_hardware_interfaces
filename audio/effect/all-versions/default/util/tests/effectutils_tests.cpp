@@ -27,7 +27,7 @@
 #include <xsdc/XsdcSupport.h>
 
 using namespace android;
-using namespace ::android::hardware::audio::common::CPP_VERSION;
+using namespace ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION;
 using namespace ::android::hardware::audio::effect::CPP_VERSION;
 using ::android::hardware::audio::effect::CPP_VERSION::implementation::EffectUtils;
 namespace xsd {

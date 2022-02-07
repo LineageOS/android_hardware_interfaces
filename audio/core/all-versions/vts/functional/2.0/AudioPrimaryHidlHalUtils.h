@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
+// clang-format off
 #include PATH(android/hardware/audio/FILE_VERSION/IStream.h)
-#include PATH(android/hardware/audio/FILE_VERSION/types.h)
-#include PATH(android/hardware/audio/common/FILE_VERSION/types.h)
+#include PATH(android/hardware/audio/CORE_TYPES_FILE_VERSION/types.h)
+#include PATH(android/hardware/audio/common/COMMON_TYPES_FILE_VERSION/types.h)
+// clang-format on
 #include <hidl/HidlSupport.h>
 
 using ::android::hardware::hidl_handle;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
-using ::android::hardware::audio::common::CPP_VERSION::AudioChannelMask;
-using ::android::hardware::audio::common::CPP_VERSION::AudioFormat;
+using ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::AudioChannelMask;
+using ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::AudioFormat;
 using ::android::hardware::audio::CPP_VERSION::IStream;
 using ::android::hardware::audio::CPP_VERSION::ParameterValue;
 using ::android::hardware::audio::CPP_VERSION::Result;
