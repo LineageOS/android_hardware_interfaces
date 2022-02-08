@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 The Android Open Source Project
+ * Copyright 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,14 +32,9 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.bluetooth.audio;
-@VintfStability
-interface IBluetoothAudioPort {
-  android.hardware.bluetooth.audio.PresentationPosition getPresentationPosition();
-  void startStream();
-  void stopStream();
-  void suspendStream();
-  void updateSourceMetadata(in android.hardware.audio.common.SourceMetadata sourceMetadata);
-  void updateSinkMetadata(in android.hardware.audio.common.SinkMetadata sinkMetadata);
-  void setLatencyMode(in android.hardware.bluetooth.audio.LatencyMode latencyMode);
-  void setCodecType(in android.hardware.bluetooth.audio.CodecType codecType);
+@Backing(type="int") @VintfStability
+enum LatencyMode {
+  UNKNOWN = 0,
+  LOW_LATENCY = 1,
+  FREE = 2,
 }
