@@ -2815,4 +2815,29 @@ enum VehicleProperty {
      */
     TRAILER_PRESENT = 0x0F45 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+
+    /**
+     * Vehicle’s curb weight
+     *
+     * Returns the vehicle's curb weight in kilograms. Curb weight is
+     * the total weight of the vehicle with standard equipment and all
+     * necessary operating consumables such as motor oil,transmission oil,
+     * brake fluid, coolant, air conditioning refrigerant, and weight of
+     * fuel at nominal tank capacity, while not loaded with either passengers
+     * or cargo.
+     *
+     * configArray[0] is used to specify the vehicle’s gross weight in kilograms.
+     * The vehicle’s gross weight is the maximum operating weight of the vehicle
+     * as specified by the manufacturer including the vehicle's chassis, body, engine,
+     * engine fluids, fuel, accessories, driver, passengers and cargo but excluding
+     * that of any trailers.
+     *
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
+     * @unit VehicleUnit:KILOGRAM
+     */
+
+    VEHICLE_CURB_WEIGHT = 0x0F46 + 0x10000000 + 0x01000000
+            + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+
 }
