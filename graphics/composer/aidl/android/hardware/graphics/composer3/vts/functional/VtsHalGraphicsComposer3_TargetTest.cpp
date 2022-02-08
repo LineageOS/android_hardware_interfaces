@@ -457,53 +457,6 @@ TEST_P(GraphicsComposerAidlTest, CheckConfigsAreValid) {
     }
 }
 
-TEST_P(GraphicsComposerAidlTest, GetDisplayAttributeConfigsInAGroupDifferOnlyByVsyncPeriod) {
-    struct Resolution {
-        int32_t width;
-        int32_t height;
-    };
-    struct Dpi {
-        int32_t x;
-        int32_t y;
-    };
-    for (VtsDisplay display : mDisplays) {
-        const auto& [status, configs] = mComposerClient->getDisplayConfigs(display.getDisplayId());
-        EXPECT_TRUE(status.isOk());
-        std::unordered_map<int32_t, Resolution> configGroupToResolutionMap;
-        std::unordered_map<int32_t, Dpi> configGroupToDpiMap;
-        for (const auto& config : configs) {
-            const auto displayConfigGroup = display.getDisplayConfig(config);
-
-            int32_t configGroup = displayConfigGroup.configGroup;
-            int32_t width = display.getDisplayWidth();
-            int32_t height = display.getDisplayHeight();
-
-            if (configGroupToResolutionMap.find(configGroup) == configGroupToResolutionMap.end()) {
-                configGroupToResolutionMap[configGroup] = {width, height};
-            }
-            EXPECT_EQ(configGroupToResolutionMap[configGroup].width, width);
-            EXPECT_EQ(configGroupToResolutionMap[configGroup].height, height);
-
-            const auto& [dpiXStatus, dpiX] = mComposerClient->getDisplayAttribute(
-                    display.getDisplayId(), config, DisplayAttribute::DPI_X);
-            EXPECT_TRUE(dpiXStatus.isOk());
-
-            const auto& [dpiYStatus, dpiY] = mComposerClient->getDisplayAttribute(
-                    display.getDisplayId(), config, DisplayAttribute::DPI_Y);
-            EXPECT_TRUE(dpiYStatus.isOk());
-            if (dpiX == -1 && dpiY == -1) {
-                continue;
-            }
-
-            if (configGroupToDpiMap.find(configGroup) == configGroupToDpiMap.end()) {
-                configGroupToDpiMap[configGroup] = {dpiX, dpiY};
-            }
-            EXPECT_EQ(configGroupToDpiMap[configGroup].x, dpiX);
-            EXPECT_EQ(configGroupToDpiMap[configGroup].y, dpiY);
-        }
-    }
-}
-
 TEST_P(GraphicsComposerAidlTest, GetDisplayVsyncPeriod_BadDisplay) {
     const auto& [status, vsyncPeriodNanos] =
             mComposerClient->getDisplayVsyncPeriod(getInvalidDisplayId());
