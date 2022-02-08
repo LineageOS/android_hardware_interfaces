@@ -17,15 +17,23 @@
 package android.hardware.uwb.fira_android;
 
 /**
- * Android specific capabilities should be defined here.
+ * Android specific vendor app config values set/expected in UCI command:
+ * GID: 0001b (UWB Session config Group)
+ * OID: 000011b (SESSION_SET_APP_CONFIG_CMD)
+ * OID: 000100b (SESSION_GET_APP_CONFIG_CMD)
  *
- * For any features enabled via the FIRA vendor commands for Android, use this bitmask
- * to allow devices to expose the features supported by the HAL implementation.
- *
+ * Note: Refer to Table 34 of the UCI specification for the other values
+ * expected in this command.
  */
 @VintfStability
-@Backing(type="long")
-enum UwbAndroidCapabilities {
-    POWER_STATS_QUERY = 0x1,
-    ANTENNAE_INTERLEAVING = 0x2,
+@Backing(type="int")
+enum UwbVendorSessionAppConfigTlvValues {
+    /**
+     * Added in vendor version 0.
+     * Supported only if the UwbVendorCapabilityTlvTypes
+     * .SUPPORTED_AOA_RESULT_REQ_ANTENNA_INTERLEAVING set to 1.
+     * Set AOA_RESULT_REQ (Config ID - 0x0D) to this value to turn on antenna
+     * interleaving feature.
+     */
+    AOA_RESULT_REQ_ANTENNA_INTERLEAVING = 0xF0,
 }

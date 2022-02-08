@@ -18,6 +18,7 @@ package android.hardware.graphics.common;
 
 /**
  * Pixel formats for graphics buffers.
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

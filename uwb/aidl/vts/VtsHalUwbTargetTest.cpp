@@ -180,14 +180,6 @@ TEST_P(UwbAidl, ChipGetSupportedAndroidUciVersion) {
     EXPECT_GT(version, 0);
 }
 
-TEST_P(UwbAidl, ChipGetSupportedAndroidCapabilities) {
-    const auto iuwb_chip = getAnyChipAndOpen();
-    EXPECT_TRUE(iuwb_chip->coreInit().isOk());
-
-    int64_t capabilities;
-    EXPECT_TRUE(iuwb_chip->getSupportedAndroidCapabilities(&capabilities).isOk());
-}
-
 TEST_P(UwbAidl, ChipGetName) {
     std::string chip_name = getAnyChipName();
     std::shared_ptr<IUwbChip> iuwb_chip;

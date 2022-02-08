@@ -168,7 +168,7 @@ class ObjectPool {
 class VehiclePropValuePool {
   public:
     using RecyclableType =
-            recyclable_ptr<::aidl::android::hardware::automotive::vehicle::VehiclePropValue>;
+            recyclable_ptr<aidl::android::hardware::automotive::vehicle::VehiclePropValue>;
 
     // Creates VehiclePropValuePool
     //
@@ -188,20 +188,20 @@ class VehiclePropValuePool {
     // given type is not MIXED or STRING, the internal value vector size would be set to 1.
     // If the given type is MIXED or STRING, all the internal vector sizes would be initialized to
     // 0.
-    RecyclableType obtain(::aidl::android::hardware::automotive::vehicle::VehiclePropertyType type);
+    RecyclableType obtain(aidl::android::hardware::automotive::vehicle::VehiclePropertyType type);
 
     // Obtain a recyclable VehiclePropertyValue object from the pool for the given type. If the
     // given type is *_VEC or BYTES, the internal value vector size would be set to vectorSize. If
     // the given type is BOOLEAN, INT32, FLOAT, or INT64, the internal value vector size would be
     // set to 1. If the given type is MIXED or STRING, all the internal value vector sizes would be
     // set to 0. vectorSize must be larger than 0.
-    RecyclableType obtain(::aidl::android::hardware::automotive::vehicle::VehiclePropertyType type,
+    RecyclableType obtain(aidl::android::hardware::automotive::vehicle::VehiclePropertyType type,
                           size_t vectorSize);
     // Obtain a recyclable VehicePropertyValue object that is a copy of src. If src does not contain
     // any value or the src property type is not valid, this function would return an empty
     // VehiclePropValue.
     RecyclableType obtain(
-            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& src);
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& src);
     // Obtain a recyclable boolean object.
     RecyclableType obtainBoolean(bool value);
     // Obtain a recyclable int32 object.
@@ -220,36 +220,35 @@ class VehiclePropValuePool {
 
   private:
     static inline bool isSingleValueType(
-            ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType type) {
-        return type == ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::
-                               BOOLEAN ||
-               type == ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::INT32 ||
-               type == ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::INT64 ||
-               type == ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::FLOAT;
+            aidl::android::hardware::automotive::vehicle::VehiclePropertyType type) {
+        return type == aidl::android::hardware::automotive::vehicle::VehiclePropertyType::BOOLEAN ||
+               type == aidl::android::hardware::automotive::vehicle::VehiclePropertyType::INT32 ||
+               type == aidl::android::hardware::automotive::vehicle::VehiclePropertyType::INT64 ||
+               type == aidl::android::hardware::automotive::vehicle::VehiclePropertyType::FLOAT;
     }
 
     static inline bool isComplexType(
-            ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType type) {
-        return type == ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::MIXED ||
-               type == ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType::STRING;
+            aidl::android::hardware::automotive::vehicle::VehiclePropertyType type) {
+        return type == aidl::android::hardware::automotive::vehicle::VehiclePropertyType::MIXED ||
+               type == aidl::android::hardware::automotive::vehicle::VehiclePropertyType::STRING;
     }
 
-    bool isDisposable(::aidl::android::hardware::automotive::vehicle::VehiclePropertyType type,
+    bool isDisposable(aidl::android::hardware::automotive::vehicle::VehiclePropertyType type,
                       size_t vectorSize) const {
         return vectorSize > mMaxRecyclableVectorSize || isComplexType(type);
     }
 
     RecyclableType obtainDisposable(
-            ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType valueType,
+            aidl::android::hardware::automotive::vehicle::VehiclePropertyType valueType,
             size_t vectorSize) const;
     RecyclableType obtainRecyclable(
-            ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType type,
+            aidl::android::hardware::automotive::vehicle::VehiclePropertyType type,
             size_t vectorSize);
 
     class InternalPool
-        : public ObjectPool<::aidl::android::hardware::automotive::vehicle::VehiclePropValue> {
+        : public ObjectPool<aidl::android::hardware::automotive::vehicle::VehiclePropValue> {
       public:
-        InternalPool(::aidl::android::hardware::automotive::vehicle::VehiclePropertyType type,
+        InternalPool(aidl::android::hardware::automotive::vehicle::VehiclePropertyType type,
                      size_t vectorSize, size_t maxPoolObjectsSize,
                      ObjectPool::GetSizeFunc getSizeFunc)
             : ObjectPool(maxPoolObjectsSize, getSizeFunc),
@@ -257,11 +256,11 @@ class VehiclePropValuePool {
               mVectorSize(vectorSize) {}
 
       protected:
-        ::aidl::android::hardware::automotive::vehicle::VehiclePropValue* createObject() override;
-        void recycle(::aidl::android::hardware::automotive::vehicle::VehiclePropValue* o) override;
+        aidl::android::hardware::automotive::vehicle::VehiclePropValue* createObject() override;
+        void recycle(aidl::android::hardware::automotive::vehicle::VehiclePropValue* o) override;
 
       private:
-        bool check(::aidl::android::hardware::automotive::vehicle::RawPropValues* v);
+        bool check(aidl::android::hardware::automotive::vehicle::RawPropValues* v);
 
         template <typename VecType>
         bool check(std::vector<VecType>* vec, bool isVectorType) {
@@ -269,12 +268,12 @@ class VehiclePropValuePool {
         }
 
       private:
-        ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType mPropType;
+        aidl::android::hardware::automotive::vehicle::VehiclePropertyType mPropType;
         size_t mVectorSize;
     };
-    const Deleter<::aidl::android::hardware::automotive::vehicle::VehiclePropValue>
+    const Deleter<aidl::android::hardware::automotive::vehicle::VehiclePropValue>
             mDisposableDeleter{
-                    [](::aidl::android::hardware::automotive::vehicle::VehiclePropValue* v) {
+                    [](aidl::android::hardware::automotive::vehicle::VehiclePropValue* v) {
                         delete v;
                     }};
 

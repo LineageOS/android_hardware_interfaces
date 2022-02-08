@@ -45,7 +45,7 @@ class Obd2SensorStore final {
 
     template <class T>
     static int getLastIndex() {
-        auto range = ::ndk::enum_range<T>();
+        auto range = ndk::enum_range<T>();
         auto it = range.begin();
         while (std::next(it) != range.end()) {
             it++;
@@ -54,19 +54,19 @@ class Obd2SensorStore final {
     }
 
     // Stores an integer-valued sensor.
-    ::aidl::android::hardware::automotive::vehicle::StatusCode setIntegerSensor(
-            ::aidl::android::hardware::automotive::vehicle::DiagnosticIntegerSensorIndex index,
+    aidl::android::hardware::automotive::vehicle::StatusCode setIntegerSensor(
+            aidl::android::hardware::automotive::vehicle::DiagnosticIntegerSensorIndex index,
             int32_t value);
     // Stores an integer-valued sensor.
-    ::aidl::android::hardware::automotive::vehicle::StatusCode setIntegerSensor(size_t index,
-                                                                                int32_t value);
+    aidl::android::hardware::automotive::vehicle::StatusCode setIntegerSensor(size_t index,
+                                                                              int32_t value);
     // Stores a float-valued sensor.
-    ::aidl::android::hardware::automotive::vehicle::StatusCode setFloatSensor(
-            ::aidl::android::hardware::automotive::vehicle::DiagnosticFloatSensorIndex index,
+    aidl::android::hardware::automotive::vehicle::StatusCode setFloatSensor(
+            aidl::android::hardware::automotive::vehicle::DiagnosticFloatSensorIndex index,
             float value);
     // Stores a float-valued sensor.
-    ::aidl::android::hardware::automotive::vehicle::StatusCode setFloatSensor(size_t index,
-                                                                              float value);
+    aidl::android::hardware::automotive::vehicle::StatusCode setFloatSensor(size_t index,
+                                                                            float value);
 
     // Returns a sensor property value using the given DTC.
     VehiclePropValuePool::RecyclableType getSensorProperty(const std::string& dtc) const;
@@ -76,8 +76,8 @@ class Obd2SensorStore final {
       public:
         explicit BitmaskInVector(size_t numBits = 0);
         void resize(size_t numBits);
-        ::android::base::Result<bool> get(size_t index) const;
-        ::android::base::Result<void> set(size_t index, bool value);
+        android::base::Result<bool> get(size_t index) const;
+        android::base::Result<void> set(size_t index, bool value);
 
         const std::vector<uint8_t>& getBitmask() const;
 

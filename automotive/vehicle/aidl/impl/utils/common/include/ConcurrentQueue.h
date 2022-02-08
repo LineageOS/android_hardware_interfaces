@@ -35,7 +35,7 @@ class ConcurrentQueue {
   public:
     void waitForItems() {
         std::unique_lock<std::mutex> lockGuard(mLock);
-        ::android::base::ScopedLockAssertion lockAssertion(mLock);
+        android::base::ScopedLockAssertion lockAssertion(mLock);
         while (mQueue.empty() && mIsActive) {
             mCond.wait(lockGuard);
         }

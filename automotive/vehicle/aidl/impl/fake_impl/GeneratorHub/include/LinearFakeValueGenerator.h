@@ -35,7 +35,7 @@ class LinearFakeValueGenerator : public FakeValueGenerator {
     // int64Values[0]: interval
     // {@code propId} must be INT32 or INT64 or FLOAT type.
     explicit LinearFakeValueGenerator(
-            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& request);
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& request);
     // A linear value generator in range [middleValue - dispersion, middleValue + dispersion),
     // starts at 'currentValue' and at each 'interval', increase by 'increment' and loop back if
     // exceeds middleValue + dispersion. {@code propId} must be INT32 or INT64 or FLOAT type.
@@ -43,7 +43,7 @@ class LinearFakeValueGenerator : public FakeValueGenerator {
                                       float dispersion, float increment, int64_t interval);
     ~LinearFakeValueGenerator() = default;
 
-    std::optional<::aidl::android::hardware::automotive::vehicle::VehiclePropValue> nextEvent()
+    std::optional<aidl::android::hardware::automotive::vehicle::VehiclePropValue> nextEvent()
             override;
 
   private:

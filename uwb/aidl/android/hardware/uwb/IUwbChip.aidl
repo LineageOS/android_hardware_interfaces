@@ -67,16 +67,6 @@ interface IUwbChip {
     int getSupportedAndroidUciVersion();
 
     /**
-     * Mechanism to allow HAL implementation to optionally expose features that are defined
-     * in the "android.hardware.uwb.fira_android" types-only package.
-     *
-     * @return Returns the bitmask of capabilities
-     * (android.hardware.uwb.fira_android.UwbAndroidCapabilities) that is supported by the
-     * HAL implementation.
-     */
-    long getSupportedAndroidCapabilities();
-
-    /**
      * Write the UCI message to the UWB Subsystem.
      * The UCI message format is as per UCI  protocol and it is
      * defined in "FiRa Consortium - UCI Generic Specification_v1.0" specification at FiRa

@@ -34,6 +34,7 @@ package android.hardware.graphics.common;
  *
  * The StandardMetadataType encode/decode support library can be found in:
  * frameworks/native/libs/gralloc/types/include/gralloctypes/Gralloc4.h.
+ * @hide
  */
 @VintfStability
 @Backing(type="long")

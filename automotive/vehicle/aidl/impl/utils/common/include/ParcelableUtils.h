@@ -33,13 +33,13 @@ namespace vehicle {
 // If values is small enough, it would be put into output.payloads, otherwise a shared memory file
 // would be created and output.sharedMemoryFd would be filled in.
 template <class T1, class T2>
-::ndk::ScopedAStatus vectorToStableLargeParcelable(std::vector<T1>&& values, T2* output) {
+ndk::ScopedAStatus vectorToStableLargeParcelable(std::vector<T1>&& values, T2* output) {
     output->payloads = std::move(values);
-    auto result = ::android::automotive::car_binder_lib::LargeParcelableBase::
+    auto result = android::automotive::car_binder_lib::LargeParcelableBase::
             parcelableToStableLargeParcelable(*output);
     if (!result.ok()) {
         return toScopedAStatus(
-                result, ::aidl::android::hardware::automotive::vehicle::StatusCode::INTERNAL_ERROR);
+                result, aidl::android::hardware::automotive::vehicle::StatusCode::INTERNAL_ERROR);
     }
     auto& fd = result.value();
     if (fd != nullptr) {
@@ -48,14 +48,14 @@ template <class T1, class T2>
         output->payloads.clear();
         output->sharedMemoryFd = std::move(*fd);
     } else {
-        output->sharedMemoryFd = ::ndk::ScopedFileDescriptor();
+        output->sharedMemoryFd = ndk::ScopedFileDescriptor();
         // Do not modify payloads.
     }
-    return ::ndk::ScopedAStatus::ok();
+    return ndk::ScopedAStatus::ok();
 }
 
 template <class T1, class T2>
-::ndk::ScopedAStatus vectorToStableLargeParcelable(const std::vector<T1>& values, T2* output) {
+ndk::ScopedAStatus vectorToStableLargeParcelable(const std::vector<T1>& values, T2* output) {
     // Because 'values' is passed in as const reference, we have to do a copy here.
     std::vector<T1> valuesCopy = values;
 
@@ -63,16 +63,16 @@ template <class T1, class T2>
 }
 
 template <class T>
-::android::base::expected<
-        ::android::automotive::car_binder_lib::LargeParcelableBase::BorrowedOwnedObject<T>,
-        ::ndk::ScopedAStatus>
+android::base::expected<
+        android::automotive::car_binder_lib::LargeParcelableBase::BorrowedOwnedObject<T>,
+        ndk::ScopedAStatus>
 fromStableLargeParcelable(const T& largeParcelable) {
-    auto result = ::android::automotive::car_binder_lib::LargeParcelableBase::
+    auto result = android::automotive::car_binder_lib::LargeParcelableBase::
             stableLargeParcelableToParcelable(largeParcelable);
 
     if (!result.ok()) {
-        return ::android::base::unexpected(toScopedAStatus(
-                result, ::aidl::android::hardware::automotive::vehicle::StatusCode::INVALID_ARG,
+        return android::base::unexpected(toScopedAStatus(
+                result, aidl::android::hardware::automotive::vehicle::StatusCode::INVALID_ARG,
                 "failed to parse large parcelable"));
     }
 

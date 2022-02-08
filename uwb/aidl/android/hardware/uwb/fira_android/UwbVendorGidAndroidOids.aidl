@@ -24,8 +24,8 @@ package android.hardware.uwb.fira_android;
 @Backing(type="byte")
 enum UwbVendorGidAndroidOids {
     // Used by the command and response to get UWB power related stats.
-    // Supported only if the value returned by getSupportedAndroidCapabilities()
-    // has the bit of UwbAndroidCapabilities.POWER_STATS_QUERY set to 1.
+    // Supported only if the UwbVendorCapabilityTlvTypes.SUPPORTED_POWER_STATS_QUERY
+    // set to 1.
     ANDROID_GET_POWER_STATS = 0x0,
     // Used to set the current regulatory country code (determined usinag
     // SIM or hardcoded by OEM).

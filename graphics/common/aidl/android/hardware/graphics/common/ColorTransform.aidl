@@ -19,6 +19,7 @@ package android.hardware.graphics.common;
 /**
  * Color transforms that may be applied by hardware composer to the whole
  * display.
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

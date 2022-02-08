@@ -18,6 +18,7 @@ package android.hardware.graphics.common;
 
 /**
  * General purpose definition of a rectangle.
+ * @hide
  */
 
 @VintfStability

@@ -35,48 +35,46 @@ namespace user_hal_helper {
 // Verify whether the |value| can be casted to the type |T| and return the casted value on success.
 // Otherwise, return the error.
 template <typename T>
-::android::base::Result<T> verifyAndCast(int32_t value);
+android::base::Result<T> verifyAndCast(int32_t value);
 
 // Below functions parse VehiclePropValues to the respective User HAL request structs. On success,
 // these functions return the User HAL struct. Otherwise, they return the error.
-::android::base::Result<::aidl::android::hardware::automotive::vehicle::InitialUserInfoRequest>
+android::base::Result<aidl::android::hardware::automotive::vehicle::InitialUserInfoRequest>
 toInitialUserInfoRequest(
-        const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue);
-::android::base::Result<::aidl::android::hardware::automotive::vehicle::SwitchUserRequest>
+        const aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue);
+android::base::Result<aidl::android::hardware::automotive::vehicle::SwitchUserRequest>
 toSwitchUserRequest(
-        const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue);
-::android::base::Result<::aidl::android::hardware::automotive::vehicle::CreateUserRequest>
+        const aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue);
+android::base::Result<aidl::android::hardware::automotive::vehicle::CreateUserRequest>
 toCreateUserRequest(
-        const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue);
-::android::base::Result<::aidl::android::hardware::automotive::vehicle::RemoveUserRequest>
+        const aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue);
+android::base::Result<aidl::android::hardware::automotive::vehicle::RemoveUserRequest>
 toRemoveUserRequest(
-        const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue);
-::android::base::Result<
-        ::aidl::android::hardware::automotive::vehicle::UserIdentificationGetRequest>
+        const aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue);
+android::base::Result<aidl::android::hardware::automotive::vehicle::UserIdentificationGetRequest>
 toUserIdentificationGetRequest(
-        const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue);
-::android::base::Result<
-        ::aidl::android::hardware::automotive::vehicle::UserIdentificationSetRequest>
+        const aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue);
+android::base::Result<aidl::android::hardware::automotive::vehicle::UserIdentificationSetRequest>
 toUserIdentificationSetRequest(
-        const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue);
+        const aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue);
 
 // Below functions convert the User HAL structs to VehiclePropValues. On success, these functions
 // return the pointer to VehiclePropValue. Otherwise, they return the error.
-::android::base::Result<VehiclePropValuePool::RecyclableType> toVehiclePropValue(
+android::base::Result<VehiclePropValuePool::RecyclableType> toVehiclePropValue(
         VehiclePropValuePool& pool,
-        const ::aidl::android::hardware::automotive::vehicle::SwitchUserRequest& request);
+        const aidl::android::hardware::automotive::vehicle::SwitchUserRequest& request);
 VehiclePropValuePool::RecyclableType toVehiclePropValue(
         VehiclePropValuePool& pool,
-        const ::aidl::android::hardware::automotive::vehicle::InitialUserInfoResponse& response);
+        const aidl::android::hardware::automotive::vehicle::InitialUserInfoResponse& response);
 VehiclePropValuePool::RecyclableType toVehiclePropValue(
         VehiclePropValuePool& pool,
-        const ::aidl::android::hardware::automotive::vehicle::SwitchUserResponse& response);
+        const aidl::android::hardware::automotive::vehicle::SwitchUserResponse& response);
 VehiclePropValuePool::RecyclableType toVehiclePropValue(
         VehiclePropValuePool& pool,
-        const ::aidl::android::hardware::automotive::vehicle::CreateUserResponse& response);
+        const aidl::android::hardware::automotive::vehicle::CreateUserResponse& response);
 VehiclePropValuePool::RecyclableType toVehiclePropValue(
         VehiclePropValuePool& pool,
-        const ::aidl::android::hardware::automotive::vehicle::UserIdentificationResponse& response);
+        const aidl::android::hardware::automotive::vehicle::UserIdentificationResponse& response);
 
 }  // namespace user_hal_helper
 }  // namespace fake

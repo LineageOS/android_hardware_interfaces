@@ -29,8 +29,8 @@ interface IAllocator {
      * @param descriptor Properties of the buffers to allocate. This must be
      *     obtained from IMapper::createDescriptor().
      * @param count The number of buffers to allocate.
-     * @return An AllocationResult containing the result of an error, or
-     *         an AllocationError status
+     * @return An AllocationResult containing the result of the allocation
+     * @throws AllocationError on failure
      */
     AllocationResult allocate(in byte[] descriptor, in int count);
 }
