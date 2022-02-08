@@ -29,6 +29,18 @@ package android.hardware.uwb.fira_android;
 @VintfStability
 @Backing(type="int")
 enum UwbVendorCapabilityTlvTypes {
+
+    /*********************************************
+     * Protocol agnostic
+     ********************************************/
+    /**
+     * 1 byte value to indicate support for power stats query
+     * Values:
+     *  1 - Feature supported.
+     *  0 - Feature not supported.
+     */
+    SUPPORTED_POWER_STATS_QUERY = 0xC0,
+
     /*********************************************
      * CCC specific
      ********************************************/
@@ -91,4 +103,16 @@ enum UwbVendorCapabilityTlvTypes {
      *  HOPPING_CONFIG_MODE_ADAPTIVE = 2
      */
     CCC_SUPPORTED_HOPPING_CONFIG_MODES = 0xA8,
+
+    /*********************************************
+     * FIRA specific
+     ********************************************/
+    /**
+     * 1 byte value to indicate support for antenna interleaving
+     * feature.
+     * Values:
+     *  1 - Feature supported.
+     *  0 - Feature not supported.
+     */
+    SUPPORTED_AOA_RESULT_REQ_ANTENNA_INTERLEAVING = 0xE3,
 }

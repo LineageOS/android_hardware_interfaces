@@ -28,7 +28,7 @@ namespace hardware {
 namespace automotive {
 namespace vehicle {
 
-class RecurrentTimerTest : public ::testing::Test {
+class RecurrentTimerTest : public testing::Test {
   public:
     std::shared_ptr<RecurrentTimer::Callback> getCallback(size_t token) {
         return std::make_shared<RecurrentTimer::Callback>([this, token] {

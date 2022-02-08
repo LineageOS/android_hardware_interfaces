@@ -17,6 +17,7 @@
 package android.hardware.graphics.common;
 /**
  * General purpose definition of a rectangle with floating point corners.
+ * @hide
  */
 
 @VintfStability

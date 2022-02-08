@@ -44,7 +44,7 @@ namespace fake {
 class GeneratorHub {
   public:
     using OnHalEvent = std::function<void(
-            const ::aidl::android::hardware::automotive::vehicle::VehiclePropValue& event)>;
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& event)>;
 
     explicit GeneratorHub(OnHalEvent&& onHalEvent);
     ~GeneratorHub();
@@ -60,7 +60,7 @@ class GeneratorHub {
   private:
     struct VhalEvent {
         int32_t generatorId;
-        ::aidl::android::hardware::automotive::vehicle::VehiclePropValue val;
+        aidl::android::hardware::automotive::vehicle::VehiclePropValue val;
     };
 
     // Comparator used by priority queue to keep track of soonest event.

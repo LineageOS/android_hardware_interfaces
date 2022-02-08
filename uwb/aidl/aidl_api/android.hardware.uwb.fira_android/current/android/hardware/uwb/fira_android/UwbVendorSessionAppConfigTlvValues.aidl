@@ -1,11 +1,11 @@
-/**
- * Copyright (c) 2019,libgralloctypes_helper The Android Open Source Project
+/*
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * You may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,31 +31,8 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.graphics.common;
-/* @hide */
-@Backing(type="long") @VintfStability
-enum StandardMetadataType {
-  INVALID = 0,
-  BUFFER_ID = 1,
-  NAME = 2,
-  WIDTH = 3,
-  HEIGHT = 4,
-  LAYER_COUNT = 5,
-  PIXEL_FORMAT_REQUESTED = 6,
-  PIXEL_FORMAT_FOURCC = 7,
-  PIXEL_FORMAT_MODIFIER = 8,
-  USAGE = 9,
-  ALLOCATION_SIZE = 10,
-  PROTECTED_CONTENT = 11,
-  COMPRESSION = 12,
-  INTERLACED = 13,
-  CHROMA_SITING = 14,
-  PLANE_LAYOUTS = 15,
-  CROP = 16,
-  DATASPACE = 17,
-  BLEND_MODE = 18,
-  SMPTE2086 = 19,
-  CTA861_3 = 20,
-  SMPTE2094_40 = 21,
-  SMPTE2094_10 = 22,
+package android.hardware.uwb.fira_android;
+@Backing(type="int") @VintfStability
+enum UwbVendorSessionAppConfigTlvValues {
+  AOA_RESULT_REQ_ANTENNA_INTERLEAVING = 240,
 }

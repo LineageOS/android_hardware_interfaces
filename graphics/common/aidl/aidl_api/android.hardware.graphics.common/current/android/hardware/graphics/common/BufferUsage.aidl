@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.graphics.common;
+/* @hide */
 @Backing(type="long") @VintfStability
 enum BufferUsage {
   CPU_READ_MASK = 15,
