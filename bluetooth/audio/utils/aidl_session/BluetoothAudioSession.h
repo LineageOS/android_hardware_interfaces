@@ -20,6 +20,7 @@
 #include <aidl/android/hardware/audio/common/SourceMetadata.h>
 #include <aidl/android/hardware/bluetooth/audio/IBluetoothAudioProvider.h>
 #include <aidl/android/hardware/bluetooth/audio/IBluetoothAudioProviderFactory.h>
+#include <aidl/android/hardware/bluetooth/audio/LatencyMode.h>
 #include <aidl/android/hardware/bluetooth/audio/SessionType.h>
 #include <fmq/AidlMessageQueue.h>
 #include <hardware/audio.h>
@@ -164,6 +165,8 @@ class BluetoothAudioSession {
   bool GetPresentationPosition(PresentationPosition& presentation_position);
   void UpdateSourceMetadata(const struct source_metadata& source_metadata);
   void UpdateSinkMetadata(const struct sink_metadata& sink_metadata);
+  void SetLatencyMode(LatencyMode latency_mode);
+  void SetCodecType(CodecType codec_type);
 
   // The control function writes stream to FMQ
   size_t OutWritePcmData(const void* buffer, size_t bytes);
