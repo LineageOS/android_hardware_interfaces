@@ -179,6 +179,7 @@
             <xs:enumeration value="AUDIO_OUTPUT_FLAG_VOIP_RX" />
             <xs:enumeration value="AUDIO_OUTPUT_FLAG_INCALL_MUSIC" />
             <xs:enumeration value="AUDIO_OUTPUT_FLAG_GAPLESS_OFFLOAD" />
+            <xs:enumeration value="AUDIO_OUTPUT_FLAG_SPATIALIZER" />
             <xs:enumeration value="AUDIO_INPUT_FLAG_FAST" />
             <xs:enumeration value="AUDIO_INPUT_FLAG_HW_HOTWORD" />
             <xs:enumeration value="AUDIO_INPUT_FLAG_RAW" />
@@ -276,6 +277,7 @@
             <xs:enumeration value="AUDIO_DEVICE_OUT_ECHO_CANCELLER"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_BLE_HEADSET"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_BLE_SPEAKER"/>
+            <xs:enumeration value="AUDIO_DEVICE_OUT_BLE_BROADCAST"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_DEFAULT"/>
             <xs:enumeration value="AUDIO_DEVICE_OUT_STUB"/>
 
@@ -510,6 +512,8 @@
             <xs:enumeration value="AUDIO_CHANNEL_OUT_7POINT1"/>
             <xs:enumeration value="AUDIO_CHANNEL_OUT_7POINT1POINT2"/>
             <xs:enumeration value="AUDIO_CHANNEL_OUT_7POINT1POINT4"/>
+            <xs:enumeration value="AUDIO_CHANNEL_OUT_9POINT1POINT4"/>
+            <xs:enumeration value="AUDIO_CHANNEL_OUT_9POINT1POINT6"/>
             <xs:enumeration value="AUDIO_CHANNEL_OUT_13POINT_360RA"/>
             <xs:enumeration value="AUDIO_CHANNEL_OUT_22POINT2"/>
             <xs:enumeration value="AUDIO_CHANNEL_OUT_MONO_HAPTIC_A"/>

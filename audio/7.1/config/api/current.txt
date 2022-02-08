@@ -62,6 +62,8 @@ package android.audio.policy.configuration.V7_1 {
     enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_7POINT1;
     enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_7POINT1POINT2;
     enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_7POINT1POINT4;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_9POINT1POINT4;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_9POINT1POINT6;
     enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_HAPTIC_AB;
     enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_MONO;
     enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_MONO_HAPTIC_A;
@@ -125,6 +127,7 @@ package android.audio.policy.configuration.V7_1 {
     enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_ANLG_DOCK_HEADSET;
     enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_AUX_DIGITAL;
     enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_AUX_LINE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_BLE_BROADCAST;
     enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_BLE_HEADSET;
     enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_BLE_SPEAKER;
     enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_BLUETOOTH_A2DP;
@@ -284,6 +287,7 @@ package android.audio.policy.configuration.V7_1 {
     enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_NON_BLOCKING;
     enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_PRIMARY;
     enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_RAW;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_SPATIALIZER;
     enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_SYNC;
     enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_TTS;
     enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_VOIP_RX;
