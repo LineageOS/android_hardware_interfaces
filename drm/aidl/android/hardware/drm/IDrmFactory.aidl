@@ -16,6 +16,7 @@
 
 package android.hardware.drm;
 
+import android.hardware.drm.CryptoSchemes;
 import android.hardware.drm.SecurityLevel;
 import android.hardware.drm.Uuid;
 
@@ -40,8 +41,22 @@ interface IDrmFactory {
      *     Implicit error codes:
      *       + ERROR_DRM_CANNOT_HANDLE if the plugin cannot be created.
      */
-    @nullable android.hardware.drm.IDrmPlugin createPlugin(
+    @nullable android.hardware.drm.IDrmPlugin createDrmPlugin(
             in Uuid uuid, in String appPackageName);
+
+    /**
+     * Create a crypto plugin for the specified uuid and scheme-specific
+     * initialization data.
+     *
+     * @param uuid uniquely identifies the drm scheme. See
+     *     http://dashif.org/identifiers/protection for uuid assignments
+     *
+     * @param initData scheme-specific init data.
+     *
+     * @return A crypto plugin instance if successful, or null if not created.
+     */
+    @nullable android.hardware.drm.ICryptoPlugin createCryptoPlugin(
+            in Uuid uuid, in byte[] initData);
 
     /**
      * Return vector of uuids identifying crypto schemes supported by
@@ -50,27 +65,6 @@ interface IDrmFactory {
      * @return List of uuids for which isCryptoSchemeSupported is true;
      *      each uuid can be used as input to createPlugin.
      */
-    List<Uuid> getSupportedCryptoSchemes();
+    CryptoSchemes getSupportedCryptoSchemes();
 
-    /**
-     * Determine if the HAL factory is able to construct plugins that
-     * support a given media container format specified by mimeType
-     *
-     * @param mimeType identifies the mime type in question
-     *
-     * @return must be true only if the scheme is supported
-     */
-    boolean isContentTypeSupported(in String mimeType);
-
-    /**
-     * Determine if a specific security level is supported by the device.
-     *
-     * @param uuid identifies the crypto scheme in question
-     * @param mimeType identifies the mime type in question
-     * @param securityLevel specifies the security level required
-     *
-     * @return must be true only if the scheme is supported
-     */
-    boolean isCryptoSchemeSupported(
-            in Uuid uuid, in String mimeType, in SecurityLevel securityLevel);
 }

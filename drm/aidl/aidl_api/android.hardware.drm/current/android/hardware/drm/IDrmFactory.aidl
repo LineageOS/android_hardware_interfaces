@@ -34,8 +34,7 @@
 package android.hardware.drm;
 @VintfStability
 interface IDrmFactory {
-  @nullable android.hardware.drm.IDrmPlugin createPlugin(in android.hardware.drm.Uuid uuid, in String appPackageName);
-  List<android.hardware.drm.Uuid> getSupportedCryptoSchemes();
-  boolean isContentTypeSupported(in String mimeType);
-  boolean isCryptoSchemeSupported(in android.hardware.drm.Uuid uuid, in String mimeType, in android.hardware.drm.SecurityLevel securityLevel);
+  @nullable android.hardware.drm.IDrmPlugin createDrmPlugin(in android.hardware.drm.Uuid uuid, in String appPackageName);
+  @nullable android.hardware.drm.ICryptoPlugin createCryptoPlugin(in android.hardware.drm.Uuid uuid, in byte[] initData);
+  android.hardware.drm.CryptoSchemes getSupportedCryptoSchemes();
 }
