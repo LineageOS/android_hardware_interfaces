@@ -761,6 +761,73 @@ int StreamOut::asyncEventCallback(stream_event_callback_type_t event, void* para
     ALOGW_IF(!result.isOk(), "Client callback failed: %s", result.description().c_str());
     return 0;
 }
+
+#if MAJOR_VERSION == 7 && MINOR_VERSION == 1
+Return<Result> StreamOut::setLatencyMode(LatencyMode mode) {
+    return mStream->set_latency_mode != nullptr
+                   ? Stream::analyzeStatus(
+                             "set_latency_mode",
+                             mStream->set_latency_mode(mStream,
+                                                       static_cast<audio_latency_mode_t>(mode)))
+                   : Result::NOT_SUPPORTED;
+};
+
+Return<void> StreamOut::getRecommendedLatencyModes(getRecommendedLatencyModes_cb _hidl_cb) {
+    Result retval = Result::NOT_SUPPORTED;
+    hidl_vec<LatencyMode> hidlModes;
+    size_t num_modes = AUDIO_LATENCY_MODE_CNT;
+    audio_latency_mode_t modes[AUDIO_LATENCY_MODE_CNT];
+
+    if (mStream->get_recommended_latency_modes != nullptr &&
+        mStream->get_recommended_latency_modes(mStream, &modes[0], &num_modes) == 0) {
+        if (num_modes == 0 || num_modes > AUDIO_LATENCY_MODE_CNT) {
+            ALOGW("%s invalid number of modes returned: %zu", __func__, num_modes);
+            retval = Result::INVALID_STATE;
+        } else {
+            hidlModes.resize(num_modes);
+            for (size_t i = 0; i < num_modes; ++i) {
+                hidlModes[i] = static_cast<LatencyMode>(modes[i]);
+            }
+            retval = Result::OK;
+        }
+    }
+    _hidl_cb(retval, hidlModes);
+    return Void();
+};
+
+// static
+void StreamOut::latencyModeCallback(audio_latency_mode_t* modes, size_t num_modes, void* cookie) {
+    StreamOut* self = reinterpret_cast<StreamOut*>(cookie);
+    sp<IStreamOutLatencyModeCallback> callback = self->mLatencyModeCallback.load();
+    if (callback.get() == nullptr) return;
+
+    ALOGV("%s", __func__);
+
+    if (num_modes == 0 || num_modes > AUDIO_LATENCY_MODE_CNT) {
+        ALOGW("%s invalid number of modes returned: %zu", __func__, num_modes);
+        return;
+    }
+
+    hidl_vec<LatencyMode> hidlModes(num_modes);
+    for (size_t i = 0; i < num_modes; ++i) {
+        hidlModes[i] = static_cast<LatencyMode>(modes[i]);
+    }
+    Return<void> result = callback->onRecommendedLatencyModeChanged(hidlModes);
+    ALOGW_IF(!result.isOk(), "Client callback failed: %s", result.description().c_str());
+}
+
+Return<Result> StreamOut::setLatencyModeCallback(
+        const sp<IStreamOutLatencyModeCallback>& callback) {
+    if (mStream->set_latency_mode_callback == nullptr) return Result::NOT_SUPPORTED;
+    int result = mStream->set_latency_mode_callback(mStream, StreamOut::latencyModeCallback, this);
+    if (result == 0) {
+        mLatencyModeCallback = callback;
+    }
+    return Stream::analyzeStatus("set_latency_mode_callback", result, {ENOSYS} /*ignore*/);
+};
+
+#endif
+
 #endif
 
 }  // namespace implementation

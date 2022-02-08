@@ -16,7 +16,54 @@
 
 package android.hardware.audio@7.1;
 
+import @7.0::Result;
 import @7.0::IStreamOut;
 
+import IStreamOutLatencyModeCallback;
+
 interface IStreamOut extends @7.0::IStreamOut {
+    /**
+     * Indicates the requested latency mode for this output stream.
+     *
+     * The requested mode can be one of the modes returned by
+     * getRecommendedLatencyModes() API.
+     *
+     * Optional method.
+     * Mandated only on specific spatial audio streams indicated by
+     * AUDIO_OUTPUT_FLAG_SPATIALIZER flag if they can be routed to a BT classic sink.
+     *
+     * @return retval operation completion status.
+     */
+    setLatencyMode(LatencyMode mode) generates (Result retval);
+
+    /**
+     * Indicates which latency modes are currently supported on this output stream.
+     * If the transport protocol (e.g Bluetooth A2DP) used by this output stream to reach
+     * the output device supports variable latency modes, the HAL indicates which
+     * modes are currently supported.
+     * The framework can then call setLatencyMode() with one of the supported modes to select
+     * the desired operation mode.
+     *
+     * Optional method.
+     * Mandated only on specific spatial audio streams indicated by
+     * AUDIO_OUTPUT_FLAG_SPATIALIZER flag if they can be routed to a BT classic sink.
+     *
+     * @return retval operation completion status.
+     * @return modes currrently supported latency modes.
+     */
+    getRecommendedLatencyModes() generates (Result retval, vec<LatencyMode> modes);
+
+    /**
+     * Set the callback interface for notifying changes in supported latency modes.
+     *
+     * Calling this method with a null pointer will result in releasing
+     * the callback.
+     *
+     * Optional method.
+     * Mandated only on specific spatial audio streams indicated by
+     * AUDIO_OUTPUT_FLAG_SPATIALIZER flag if they can be routed to a BT classic sink.
+     *
+     * @return retval operation completion status.
+     */
+    setLatencyModeCallback(IStreamOutLatencyModeCallback callback) generates (Result retval);
 };
