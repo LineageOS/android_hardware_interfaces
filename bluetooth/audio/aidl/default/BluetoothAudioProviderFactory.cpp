@@ -64,6 +64,12 @@ ndk::ScopedAStatus BluetoothAudioProviderFactory::openProvider(
     case SessionType::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH:
       provider = ndk::SharedRefBase::make<LeAudioOffloadInputAudioProvider>();
       break;
+    case SessionType::LE_AUDIO_BROADCAST_SOFTWARE_ENCODING_DATAPATH:
+      provider = ndk::SharedRefBase::make<LeAudioSoftwareOutputAudioProvider>();
+      break;
+    case SessionType::LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH:
+      provider = ndk::SharedRefBase::make<LeAudioOffloadOutputAudioProvider>();
+      break;
     default:
       provider = nullptr;
       break;

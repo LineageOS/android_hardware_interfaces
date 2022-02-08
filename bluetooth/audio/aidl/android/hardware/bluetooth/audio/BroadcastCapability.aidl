@@ -19,7 +19,6 @@ package android.hardware.bluetooth.audio;
 import android.hardware.bluetooth.audio.AudioLocation;
 import android.hardware.bluetooth.audio.CodecType;
 import android.hardware.bluetooth.audio.Lc3Capabilities;
-import android.hardware.bluetooth.audio.LeAudioMode;
 
 /**
  * Used to specify the le audio broadcast codec capabilities for hardware offload.

@@ -418,100 +418,89 @@ inline Lc3Config_2_1 to_hidl_lc3_config_2_1(
 }
 
 inline Lc3CodecConfig_2_1 to_hidl_leaudio_config_2_1(
-    const LeAudioConfiguration& leaudio_config) {
+    const LeAudioConfiguration& unicast_config) {
   Lc3CodecConfig_2_1 hidl_lc3_codec_config = {
       .audioChannelAllocation = 0,
   };
-  if (leaudio_config.modeConfig.getTag() ==
-      LeAudioConfiguration::LeAudioModeConfig::unicastConfig) {
-    auto& unicast_config =
-        leaudio_config.modeConfig
-            .get<LeAudioConfiguration::LeAudioModeConfig::unicastConfig>();
-    if (unicast_config.leAudioCodecConfig.getTag() ==
-        LeAudioCodecConfiguration::lc3Config) {
-      LOG(FATAL) << __func__ << ": unexpected codec type(vendor?)";
-    }
-    auto& le_codec_config = unicast_config.leAudioCodecConfig
-                                .get<LeAudioCodecConfiguration::lc3Config>();
-
-    hidl_lc3_codec_config.lc3Config = to_hidl_lc3_config_2_1(le_codec_config);
-
-    for (const auto& map : unicast_config.streamMap) {
-      hidl_lc3_codec_config.audioChannelAllocation |=
-          map.audioChannelAllocation;
-    }
-  } else {
-    // NOTE: Broadcast is not officially supported in HIDL
-    auto& bcast_config =
-        leaudio_config.modeConfig
-            .get<LeAudioConfiguration::LeAudioModeConfig::broadcastConfig>();
-    if (bcast_config.streamMap.empty()) {
-      return hidl_lc3_codec_config;
-    }
-    if (bcast_config.streamMap[0].leAudioCodecConfig.getTag() !=
-        LeAudioCodecConfiguration::lc3Config) {
-      LOG(FATAL) << __func__ << ": unexpected codec type(vendor?)";
-    }
-    auto& le_codec_config =
-        bcast_config.streamMap[0]
-            .leAudioCodecConfig.get<LeAudioCodecConfiguration::lc3Config>();
-    hidl_lc3_codec_config.lc3Config = to_hidl_lc3_config_2_1(le_codec_config);
-
-    for (const auto& map : bcast_config.streamMap) {
-      hidl_lc3_codec_config.audioChannelAllocation |=
-          map.audioChannelAllocation;
-    }
+  if (unicast_config.leAudioCodecConfig.getTag() ==
+      LeAudioCodecConfiguration::lc3Config) {
+    LOG(FATAL) << __func__ << ": unexpected codec type(vendor?)";
   }
+  auto& le_codec_config = unicast_config.leAudioCodecConfig
+                              .get<LeAudioCodecConfiguration::lc3Config>();
 
+  hidl_lc3_codec_config.lc3Config = to_hidl_lc3_config_2_1(le_codec_config);
+
+  for (const auto& map : unicast_config.streamMap) {
+    hidl_lc3_codec_config.audioChannelAllocation |= map.audioChannelAllocation;
+  }
+  return hidl_lc3_codec_config;
+}
+
+inline Lc3CodecConfig_2_1 to_hidl_leaudio_broadcast_config_2_1(
+    const LeAudioBroadcastConfiguration& broadcast_config) {
+  Lc3CodecConfig_2_1 hidl_lc3_codec_config = {
+      .audioChannelAllocation = 0,
+  };
+  // NOTE: Broadcast is not officially supported in HIDL
+  if (broadcast_config.streamMap.empty()) {
+    return hidl_lc3_codec_config;
+  }
+  if (broadcast_config.streamMap[0].leAudioCodecConfig.getTag() !=
+      LeAudioCodecConfiguration::lc3Config) {
+    LOG(FATAL) << __func__ << ": unexpected codec type(vendor?)";
+  }
+  auto& le_codec_config =
+      broadcast_config.streamMap[0]
+          .leAudioCodecConfig.get<LeAudioCodecConfiguration::lc3Config>();
+  hidl_lc3_codec_config.lc3Config = to_hidl_lc3_config_2_1(le_codec_config);
+
+  for (const auto& map : broadcast_config.streamMap) {
+    hidl_lc3_codec_config.audioChannelAllocation |= map.audioChannelAllocation;
+  }
   return hidl_lc3_codec_config;
 }
 
 inline LeAudioConfig_2_2 to_hidl_leaudio_config_2_2(
-    const LeAudioConfiguration& leaudio_config) {
+    const LeAudioConfiguration& unicast_config) {
   LeAudioConfig_2_2 hidl_leaudio_config;
+  hidl_leaudio_config.mode = LeAudioMode_2_2::UNICAST;
+  ::android::hardware::bluetooth::audio::V2_2::UnicastConfig
+      hidl_unicast_config;
+  hidl_unicast_config.peerDelay =
+      static_cast<uint32_t>(unicast_config.peerDelayUs / 1000);
 
-  if (leaudio_config.modeConfig.getTag() ==
-      LeAudioConfiguration::LeAudioModeConfig::unicastConfig) {
-    hidl_leaudio_config.mode = LeAudioMode_2_2::UNICAST;
-    auto& unicast_config =
-        leaudio_config.modeConfig
-            .get<LeAudioConfiguration::LeAudioModeConfig::unicastConfig>();
-    ::android::hardware::bluetooth::audio::V2_2::UnicastConfig
-        hidl_unicast_config;
-    hidl_unicast_config.peerDelay =
-        static_cast<uint32_t>(unicast_config.peerDelay);
+  auto& lc3_config = unicast_config.leAudioCodecConfig
+                         .get<LeAudioCodecConfiguration::lc3Config>();
+  hidl_unicast_config.lc3Config = to_hidl_lc3_config_2_1(lc3_config);
 
-    auto& lc3_config = unicast_config.leAudioCodecConfig
-                           .get<LeAudioCodecConfiguration::lc3Config>();
-    hidl_unicast_config.lc3Config = to_hidl_lc3_config_2_1(lc3_config);
+  hidl_unicast_config.streamMap.resize(unicast_config.streamMap.size());
+  for (int i = 0; i < unicast_config.streamMap.size(); i++) {
+    hidl_unicast_config.streamMap[i].audioChannelAllocation =
+        static_cast<uint32_t>(
+            unicast_config.streamMap[i].audioChannelAllocation);
+    hidl_unicast_config.streamMap[i].streamHandle =
+        static_cast<uint16_t>(unicast_config.streamMap[i].streamHandle);
+  }
+  return hidl_leaudio_config;
+}
 
-    hidl_unicast_config.streamMap.resize(unicast_config.streamMap.size());
-    for (int i = 0; i < unicast_config.streamMap.size(); i++) {
-      hidl_unicast_config.streamMap[i].audioChannelAllocation =
-          static_cast<uint32_t>(
-              unicast_config.streamMap[i].audioChannelAllocation);
-      hidl_unicast_config.streamMap[i].streamHandle =
-          static_cast<uint16_t>(unicast_config.streamMap[i].streamHandle);
-    }
-  } else if (leaudio_config.modeConfig.getTag() ==
-             LeAudioConfiguration::LeAudioModeConfig::broadcastConfig) {
-    hidl_leaudio_config.mode = LeAudioMode_2_2::BROADCAST;
-    auto bcast_config =
-        leaudio_config.modeConfig
-            .get<LeAudioConfiguration::LeAudioModeConfig::broadcastConfig>();
-    ::android::hardware::bluetooth::audio::V2_2::BroadcastConfig
-        hidl_bcast_config;
-    hidl_bcast_config.streamMap.resize(bcast_config.streamMap.size());
-    for (int i = 0; i < bcast_config.streamMap.size(); i++) {
-      hidl_bcast_config.streamMap[i].audioChannelAllocation =
-          static_cast<uint32_t>(
-              bcast_config.streamMap[i].audioChannelAllocation);
-      hidl_bcast_config.streamMap[i].streamHandle =
-          static_cast<uint16_t>(bcast_config.streamMap[i].streamHandle);
-      hidl_bcast_config.streamMap[i].lc3Config = to_hidl_lc3_config_2_1(
-          bcast_config.streamMap[i]
-              .leAudioCodecConfig.get<LeAudioCodecConfiguration::lc3Config>());
-    }
+inline LeAudioConfig_2_2 to_hidl_leaudio_broadcast_config_2_2(
+    const LeAudioBroadcastConfiguration& broadcast_config) {
+  LeAudioConfig_2_2 hidl_leaudio_config;
+  hidl_leaudio_config.mode = LeAudioMode_2_2::BROADCAST;
+  ::android::hardware::bluetooth::audio::V2_2::BroadcastConfig
+      hidl_bcast_config;
+  hidl_bcast_config.streamMap.resize(broadcast_config.streamMap.size());
+  for (int i = 0; i < broadcast_config.streamMap.size(); i++) {
+    hidl_bcast_config.streamMap[i].audioChannelAllocation =
+        static_cast<uint32_t>(
+            broadcast_config.streamMap[i].audioChannelAllocation);
+    hidl_bcast_config.streamMap[i].streamHandle =
+        static_cast<uint16_t>(broadcast_config.streamMap[i].streamHandle);
+    hidl_bcast_config.streamMap[i].lc3Config = to_hidl_lc3_config_2_1(
+        broadcast_config.streamMap[i]
+            .leAudioCodecConfig.get<LeAudioCodecConfiguration::lc3Config>());
   }
   return hidl_leaudio_config;
 }
@@ -532,6 +521,10 @@ inline AudioConfig_2_1 to_hidl_audio_config_2_1(
       hidl_audio_config.leAudioCodecConfig(to_hidl_leaudio_config_2_1(
           audio_config.get<AudioConfiguration::leAudioConfig>()));
       break;
+    case AudioConfiguration::leAudioBroadcastConfig:
+      hidl_audio_config.leAudioCodecConfig(to_hidl_leaudio_broadcast_config_2_1(
+          audio_config.get<AudioConfiguration::leAudioBroadcastConfig>()));
+      break;
   }
   return hidl_audio_config;
 }
@@ -551,6 +544,10 @@ inline AudioConfig_2_2 to_hidl_audio_config_2_2(
     case AudioConfiguration::leAudioConfig:
       hidl_audio_config.leAudioConfig(to_hidl_leaudio_config_2_2(
           audio_config.get<AudioConfiguration::leAudioConfig>()));
+      break;
+    case AudioConfiguration::leAudioBroadcastConfig:
+      hidl_audio_config.leAudioConfig(to_hidl_leaudio_broadcast_config_2_2(
+          audio_config.get<AudioConfiguration::leAudioBroadcastConfig>()));
       break;
   }
   return hidl_audio_config;
