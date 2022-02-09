@@ -204,6 +204,12 @@ interface IPreparedModel {
      * appropriate ErrorStatus value. If the inputs to the function are valid and there is no error,
      * createReusableExecution must construct a reusable execution.
      *
+     * This method will be called when a client requests a reusable execution with consistent
+     * request and execution config. For single-time execution,
+     * {@link IPreparedModel::executeSynchronouslyWithConfig} or
+     * {@link IPreparedModel::executeFencedWithConfig} is preferred, because the overhead of
+     * setting up a reusable execution can be avoided.
+     *
      * @param request The input and output information on which the prepared model is to be
      *                executed.
      * @param config Specifies the execution configuration parameters.
@@ -222,6 +228,10 @@ interface IPreparedModel {
      * difference between the two methods is that executeSynchronouslyWithConfig takes {@link
      * ExecutionConfig} instead of a list of configuration parameters, and ExecutionConfig contains
      * more configuration parameters than are passed to executeSynchronously.
+     *
+     * This method is preferred when a client requests a single-time synchronous execution.
+     * For reusable execution with consistent request and execution config,
+     * {@link IPreparedModel::createReusableExecution} must be called.
      *
      * @param request The input and output information on which the prepared model is to be
      *                executed.
@@ -245,6 +255,10 @@ interface IPreparedModel {
      * difference between the two methods is that executeFencedWithConfig takes {@link
      * ExecutionConfig} instead of a list of configuration parameters, and ExecutionConfig contains
      * more configuration parameters than are passed to executeFenced.
+     *
+     * This method is preferred when a client requests a single-time fenced execution.
+     * For reusable execution with consistent request and execution config,
+     * {@link IPreparedModel::createReusableExecution} must be called.
      *
      * @param request The input and output information on which the prepared model is to be
      *                executed. The outputs in the request must have fully specified dimensions.
