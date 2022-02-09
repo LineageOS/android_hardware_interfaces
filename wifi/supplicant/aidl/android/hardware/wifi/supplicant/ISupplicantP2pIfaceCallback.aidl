@@ -213,4 +213,35 @@ interface ISupplicantP2pIfaceCallback {
      * @param frequency New operating frequency in MHz.
      */
     oneway void onGroupFrequencyChanged(in String groupIfname, in int frequency);
+
+    /**
+     * Used to indicate that a P2P device has been found.
+     *
+     * @param srcAddress MAC address of the device found. This must either
+     *        be the P2P device address for a peer which is not in a group,
+     *        or the P2P interface address for a peer which is a Group Owner.
+     * @param p2pDeviceAddress P2P device address.
+     * @param primaryDeviceType Type of device. Refer to section B.1 of Wifi P2P
+     *        Technical specification v1.2.
+     * @param deviceName Name of the device.
+     * @param configMethods Mask of WPS configuration methods supported by the
+     *        device.
+     * @param deviceCapabilities Refer to section 4.1.4 of Wifi P2P Technical
+     *        specification v1.2.
+     * @param groupCapabilites Refer to section 4.1.4 of Wifi P2P Technical
+     *        specification v1.2.
+     * @param wfdDeviceInfo WFD device info as described in section 5.1.2 of WFD
+     *        technical specification v1.0.0.
+     * @param wfdR2DeviceInfo WFD R2 device info as described in section 5.1.12 of WFD
+     *        technical specification v2.1.
+     * @param vendorElemBytes Vendor-specific information element bytes. The format of an
+     *         information element is EID (1 byte) + Length (1 Byte) + Payload which is
+     *         defined in Section 9.4.4 TLV encodings of 802.11-2016 IEEE Standard for
+     *         Information technology. The length indicates the size of the payload.
+     *         Multiple information elements may be appended within the byte array.
+     */
+    oneway void onDeviceFoundWithVendorElements(in byte[] srcAddress, in byte[] p2pDeviceAddress,
+            in byte[] primaryDeviceType, in String deviceName, in WpsConfigMethods configMethods,
+            in byte deviceCapabilities, in P2pGroupCapabilityMask groupCapabilities,
+            in byte[] wfdDeviceInfo, in byte[] wfdR2DeviceInfo, in byte[] vendorElemBytes);
 }
