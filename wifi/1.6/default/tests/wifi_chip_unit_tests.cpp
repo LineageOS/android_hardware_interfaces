@@ -48,13 +48,13 @@ class WifiChipTest : public Test {
   protected:
     void setupV1IfaceCombination() {
         // clang-format off
-        const hidl_vec<V1_0::IWifiChip::ChipIfaceCombination> combinationsSta = {
-            {{{{IfaceType::STA}, 1}, {{IfaceType::P2P}, 1}}}
+        const hidl_vec<IWifiChip::ChipConcurrencyCombination> combinationsSta = {
+            {{{{IfaceConcurrencyType::STA}, 1}, {{IfaceConcurrencyType::P2P}, 1}}}
         };
-        const hidl_vec<V1_0::IWifiChip::ChipIfaceCombination> combinationsAp = {
-            {{{{IfaceType::AP}, 1}}}
+        const hidl_vec<IWifiChip::ChipConcurrencyCombination> combinationsAp = {
+            {{{{IfaceConcurrencyType::AP}, 1}}}
         };
-        const std::vector<V1_0::IWifiChip::ChipMode> modes = {
+        const std::vector<V1_6::IWifiChip::ChipMode> modes = {
             {feature_flags::chip_mode_ids::kV1Sta, combinationsSta},
             {feature_flags::chip_mode_ids::kV1Ap, combinationsAp}
         };
@@ -64,13 +64,14 @@ class WifiChipTest : public Test {
 
     void setupV1_AwareIfaceCombination() {
         // clang-format off
-        const hidl_vec<V1_0::IWifiChip::ChipIfaceCombination> combinationsSta = {
-            {{{{IfaceType::STA}, 1}, {{IfaceType::P2P, IfaceType::NAN}, 1}}}
+        const hidl_vec<IWifiChip::ChipConcurrencyCombination> combinationsSta = {
+            {{{{IfaceConcurrencyType::STA}, 1},
+              {{IfaceConcurrencyType::P2P, IfaceConcurrencyType::NAN}, 1}}}
         };
-        const hidl_vec<V1_0::IWifiChip::ChipIfaceCombination> combinationsAp = {
-            {{{{IfaceType::AP}, 1}}}
+        const hidl_vec<IWifiChip::ChipConcurrencyCombination> combinationsAp = {
+            {{{{IfaceConcurrencyType::AP}, 1}}}
         };
-        const std::vector<V1_0::IWifiChip::ChipMode> modes = {
+        const std::vector<V1_6::IWifiChip::ChipMode> modes = {
             {feature_flags::chip_mode_ids::kV1Sta, combinationsSta},
             {feature_flags::chip_mode_ids::kV1Ap, combinationsAp}
         };
@@ -80,10 +81,11 @@ class WifiChipTest : public Test {
 
     void setupV1_AwareDisabledApIfaceCombination() {
         // clang-format off
-        const hidl_vec<V1_0::IWifiChip::ChipIfaceCombination> combinationsSta = {
-            {{{{IfaceType::STA}, 1}, {{IfaceType::P2P, IfaceType::NAN}, 1}}}
+        const hidl_vec<IWifiChip::ChipConcurrencyCombination> combinationsSta = {
+            {{{{IfaceConcurrencyType::STA}, 1},
+              {{IfaceConcurrencyType::P2P, IfaceConcurrencyType::NAN}, 1}}}
         };
-        const std::vector<V1_0::IWifiChip::ChipMode> modes = {
+        const std::vector<V1_6::IWifiChip::ChipMode> modes = {
             {feature_flags::chip_mode_ids::kV1Sta, combinationsSta}
         };
         // clang-format on
@@ -92,11 +94,12 @@ class WifiChipTest : public Test {
 
     void setupV2_AwareIfaceCombination() {
         // clang-format off
-        const hidl_vec<V1_0::IWifiChip::ChipIfaceCombination> combinations = {
-            {{{{IfaceType::STA}, 1}, {{IfaceType::AP}, 1}}},
-            {{{{IfaceType::STA}, 1}, {{IfaceType::P2P, IfaceType::NAN}, 1}}}
+        const hidl_vec<IWifiChip::ChipConcurrencyCombination> combinations = {
+            {{{{IfaceConcurrencyType::STA}, 1}, {{IfaceConcurrencyType::AP}, 1}}},
+            {{{{IfaceConcurrencyType::STA}, 1},
+              {{IfaceConcurrencyType::P2P, IfaceConcurrencyType::NAN}, 1}}}
         };
-        const std::vector<V1_0::IWifiChip::ChipMode> modes = {
+        const std::vector<V1_6::IWifiChip::ChipMode> modes = {
             {feature_flags::chip_mode_ids::kV3, combinations}
         };
         // clang-format on
@@ -105,10 +108,11 @@ class WifiChipTest : public Test {
 
     void setupV2_AwareDisabledApIfaceCombination() {
         // clang-format off
-        const hidl_vec<V1_0::IWifiChip::ChipIfaceCombination> combinations = {
-            {{{{IfaceType::STA}, 1}, {{IfaceType::P2P, IfaceType::NAN}, 1}}}
+        const hidl_vec<IWifiChip::ChipConcurrencyCombination> combinations = {
+            {{{{IfaceConcurrencyType::STA}, 1},
+              {{IfaceConcurrencyType::P2P, IfaceConcurrencyType::NAN}, 1}}}
         };
-        const std::vector<V1_0::IWifiChip::ChipMode> modes = {
+        const std::vector<V1_6::IWifiChip::ChipMode> modes = {
             {feature_flags::chip_mode_ids::kV3, combinations}
         };
         // clang-format on
@@ -117,10 +121,10 @@ class WifiChipTest : public Test {
 
     void setup_MultiIfaceCombination() {
         // clang-format off
-        const hidl_vec<V1_0::IWifiChip::ChipIfaceCombination> combinations = {
-            {{{{IfaceType::STA}, 3}, {{IfaceType::AP}, 1}}}
+        const hidl_vec<IWifiChip::ChipConcurrencyCombination> combinations = {
+            {{{{IfaceConcurrencyType::STA}, 3}, {{IfaceConcurrencyType::AP}, 1}}}
         };
-        const std::vector<V1_0::IWifiChip::ChipMode> modes = {
+        const std::vector<V1_6::IWifiChip::ChipMode> modes = {
             {feature_flags::chip_mode_ids::kV3, combinations}
         };
         // clang-format on
@@ -128,19 +132,20 @@ class WifiChipTest : public Test {
     }
 
     void assertNumberOfModes(uint32_t num_modes) {
-        chip_->getAvailableModes([num_modes](const WifiStatus& status,
-                                             const std::vector<WifiChip::ChipMode>& modes) {
+        chip_->getAvailableModes_1_6([num_modes](const WifiStatus& status,
+                                                 const std::vector<WifiChip::ChipMode>& modes) {
             ASSERT_EQ(WifiStatusCode::SUCCESS, status.code);
             // V2_Aware has 1 mode of operation.
             ASSERT_EQ(num_modes, modes.size());
         });
     }
 
-    void findModeAndConfigureForIfaceType(const IfaceType& type) {
+    void findModeAndConfigureForIfaceType(const IfaceConcurrencyType& type) {
         // This should be aligned with kInvalidModeId in wifi_chip.cpp.
         ChipModeId mode_id = UINT32_MAX;
-        chip_->getAvailableModes([&mode_id, &type](const WifiStatus& status,
-                                                   const std::vector<WifiChip::ChipMode>& modes) {
+        chip_->getAvailableModes_1_6([&mode_id, &type](
+                                             const WifiStatus& status,
+                                             const std::vector<WifiChip::ChipMode>& modes) {
             ASSERT_EQ(WifiStatusCode::SUCCESS, status.code);
             for (const auto& mode : modes) {
                 for (const auto& combination : mode.availableCombinations) {
@@ -298,48 +303,48 @@ class WifiChipV1IfaceCombinationTest : public WifiChipTest {
 };
 
 TEST_F(WifiChipV1IfaceCombinationTest, StaMode_CreateSta_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
 }
 
 TEST_F(WifiChipV1IfaceCombinationTest, StaMode_CreateP2p_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_FALSE(createIface(IfaceType::P2P).empty());
 }
 
 TEST_F(WifiChipV1IfaceCombinationTest, StaMode_CreateNan_ShouldFail) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_TRUE(createIface(IfaceType::NAN).empty());
 }
 
 TEST_F(WifiChipV1IfaceCombinationTest, StaMode_CreateAp_ShouldFail) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_TRUE(createIface(IfaceType::AP).empty());
 }
 
 TEST_F(WifiChipV1IfaceCombinationTest, StaMode_CreateStaP2p_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     ASSERT_FALSE(createIface(IfaceType::P2P).empty());
 }
 
 TEST_F(WifiChipV1IfaceCombinationTest, ApMode_CreateAp_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::AP);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::AP);
     ASSERT_EQ(createIface(IfaceType::AP), "wlan0");
 }
 
 TEST_F(WifiChipV1IfaceCombinationTest, ApMode_CreateSta_ShouldFail) {
-    findModeAndConfigureForIfaceType(IfaceType::AP);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::AP);
     ASSERT_TRUE(createIface(IfaceType::STA).empty());
 }
 
 TEST_F(WifiChipV1IfaceCombinationTest, ApMode_CreateP2p_ShouldFail) {
-    findModeAndConfigureForIfaceType(IfaceType::AP);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::AP);
     ASSERT_TRUE(createIface(IfaceType::STA).empty());
 }
 
 TEST_F(WifiChipV1IfaceCombinationTest, ApMode_CreateNan_ShouldFail) {
-    findModeAndConfigureForIfaceType(IfaceType::AP);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::AP);
     ASSERT_TRUE(createIface(IfaceType::NAN).empty());
 }
 
@@ -357,46 +362,46 @@ class WifiChipV1_AwareIfaceCombinationTest : public WifiChipTest {
 };
 
 TEST_F(WifiChipV1_AwareIfaceCombinationTest, StaMode_CreateSta_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
 }
 
 TEST_F(WifiChipV1_AwareIfaceCombinationTest, StaMode_CreateP2p_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_FALSE(createIface(IfaceType::P2P).empty());
 }
 
 TEST_F(WifiChipV1_AwareIfaceCombinationTest, StaMode_CreateNan_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_FALSE(createIface(IfaceType::NAN).empty());
 }
 
 TEST_F(WifiChipV1_AwareIfaceCombinationTest, StaMode_CreateAp_ShouldFail) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_TRUE(createIface(IfaceType::AP).empty());
 }
 
 TEST_F(WifiChipV1_AwareIfaceCombinationTest, StaMode_CreateStaP2p_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     ASSERT_FALSE(createIface(IfaceType::P2P).empty());
 }
 
 TEST_F(WifiChipV1_AwareIfaceCombinationTest, StaMode_CreateStaNan_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     ASSERT_FALSE(createIface(IfaceType::NAN).empty());
 }
 
 TEST_F(WifiChipV1_AwareIfaceCombinationTest, StaMode_CreateStaP2PNan_ShouldFail) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     ASSERT_FALSE(createIface(IfaceType::P2P).empty());
     ASSERT_TRUE(createIface(IfaceType::NAN).empty());
 }
 
 TEST_F(WifiChipV1_AwareIfaceCombinationTest, StaMode_CreateStaNan_AfterP2pRemove_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     const auto p2p_iface_name = createIface(IfaceType::P2P);
     ASSERT_FALSE(p2p_iface_name.empty());
@@ -408,7 +413,7 @@ TEST_F(WifiChipV1_AwareIfaceCombinationTest, StaMode_CreateStaNan_AfterP2pRemove
 }
 
 TEST_F(WifiChipV1_AwareIfaceCombinationTest, StaMode_CreateStaP2p_AfterNanRemove_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     const auto nan_iface_name = createIface(IfaceType::NAN);
     ASSERT_FALSE(nan_iface_name.empty());
@@ -420,50 +425,50 @@ TEST_F(WifiChipV1_AwareIfaceCombinationTest, StaMode_CreateStaP2p_AfterNanRemove
 }
 
 TEST_F(WifiChipV1_AwareIfaceCombinationTest, ApMode_CreateAp_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::AP);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::AP);
     ASSERT_EQ(createIface(IfaceType::AP), "wlan0");
 }
 
 TEST_F(WifiChipV1_AwareIfaceCombinationTest, ApMode_CreateSta_ShouldFail) {
-    findModeAndConfigureForIfaceType(IfaceType::AP);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::AP);
     ASSERT_TRUE(createIface(IfaceType::STA).empty());
 }
 
 TEST_F(WifiChipV1_AwareIfaceCombinationTest, ApMode_CreateP2p_ShouldFail) {
-    findModeAndConfigureForIfaceType(IfaceType::AP);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::AP);
     ASSERT_TRUE(createIface(IfaceType::STA).empty());
 }
 
 TEST_F(WifiChipV1_AwareIfaceCombinationTest, ApMode_CreateNan_ShouldFail) {
-    findModeAndConfigureForIfaceType(IfaceType::AP);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::AP);
     ASSERT_TRUE(createIface(IfaceType::NAN).empty());
 }
 
 TEST_F(WifiChipV1_AwareIfaceCombinationTest, RttControllerFlowStaModeNoSta) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_TRUE(createRttController());
 }
 
 TEST_F(WifiChipV1_AwareIfaceCombinationTest, RttControllerFlowStaModeWithSta) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     ASSERT_TRUE(createRttController());
 }
 
 TEST_F(WifiChipV1_AwareIfaceCombinationTest, RttControllerFlowApToSta) {
-    findModeAndConfigureForIfaceType(IfaceType::AP);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::AP);
     const auto ap_iface_name = createIface(IfaceType::AP);
     ASSERT_FALSE(ap_iface_name.empty());
     ASSERT_FALSE(createRttController());
 
     removeIface(IfaceType::AP, ap_iface_name);
 
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_TRUE(createRttController());
 }
 
 TEST_F(WifiChipV1_AwareIfaceCombinationTest, SelectTxScenarioWithOnlySta) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
     EXPECT_CALL(*legacy_hal_, selectTxPowerScenario("wlan0", testing::_))
             .WillOnce(testing::Return(legacy_hal::WIFI_SUCCESS));
@@ -473,7 +478,7 @@ TEST_F(WifiChipV1_AwareIfaceCombinationTest, SelectTxScenarioWithOnlySta) {
 }
 
 TEST_F(WifiChipV1_AwareIfaceCombinationTest, SelectTxScenarioWithOnlyAp) {
-    findModeAndConfigureForIfaceType(IfaceType::AP);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::AP);
     ASSERT_EQ(createIface(IfaceType::AP), "wlan0");
     EXPECT_CALL(*legacy_hal_, selectTxPowerScenario("wlan0", testing::_))
             .WillOnce(testing::Return(legacy_hal::WIFI_SUCCESS));
@@ -496,45 +501,45 @@ class WifiChipV2_AwareIfaceCombinationTest : public WifiChipTest {
 };
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateSta_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateP2p_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_FALSE(createIface(IfaceType::P2P).empty());
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateNan_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_FALSE(createIface(IfaceType::NAN).empty());
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateAp_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_EQ(createIface(IfaceType::AP), "wlan1");
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateStaSta_ShouldFail) {
-    findModeAndConfigureForIfaceType(IfaceType::AP);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::AP);
     ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
     ASSERT_TRUE(createIface(IfaceType::STA).empty());
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateStaAp_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::AP);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::AP);
     ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
     ASSERT_EQ(createIface(IfaceType::AP), "wlan1");
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateApSta_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::AP);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::AP);
     ASSERT_EQ(createIface(IfaceType::AP), "wlan1");
     ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateSta_AfterStaApRemove_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     const auto sta_iface_name = createIface(IfaceType::STA);
     ASSERT_FALSE(sta_iface_name.empty());
     const auto ap_iface_name = createIface(IfaceType::AP);
@@ -549,26 +554,26 @@ TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateSta_AfterStaApRemove_ShouldSu
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateStaP2p_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     ASSERT_FALSE(createIface(IfaceType::P2P).empty());
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateStaNan_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     ASSERT_FALSE(createIface(IfaceType::NAN).empty());
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateStaP2PNan_ShouldFail) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     ASSERT_FALSE(createIface(IfaceType::P2P).empty());
     ASSERT_TRUE(createIface(IfaceType::NAN).empty());
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateStaNan_AfterP2pRemove_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     const auto p2p_iface_name = createIface(IfaceType::P2P);
     ASSERT_FALSE(p2p_iface_name.empty());
@@ -580,7 +585,7 @@ TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateStaNan_AfterP2pRemove_ShouldS
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateStaP2p_AfterNanRemove_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     const auto nan_iface_name = createIface(IfaceType::NAN);
     ASSERT_FALSE(nan_iface_name.empty());
@@ -592,19 +597,19 @@ TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateStaP2p_AfterNanRemove_ShouldS
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateApNan_ShouldFail) {
-    findModeAndConfigureForIfaceType(IfaceType::AP);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::AP);
     ASSERT_FALSE(createIface(IfaceType::AP).empty());
     ASSERT_TRUE(createIface(IfaceType::NAN).empty());
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateApP2p_ShouldFail) {
-    findModeAndConfigureForIfaceType(IfaceType::AP);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::AP);
     ASSERT_FALSE(createIface(IfaceType::AP).empty());
     ASSERT_TRUE(createIface(IfaceType::P2P).empty());
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, StaMode_CreateStaNan_AfterP2pRemove_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     const auto p2p_iface_name = createIface(IfaceType::P2P);
     ASSERT_FALSE(p2p_iface_name.empty());
@@ -616,7 +621,7 @@ TEST_F(WifiChipV2_AwareIfaceCombinationTest, StaMode_CreateStaNan_AfterP2pRemove
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, StaMode_CreateStaP2p_AfterNanRemove_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     const auto nan_iface_name = createIface(IfaceType::NAN);
     ASSERT_FALSE(nan_iface_name.empty());
@@ -628,7 +633,7 @@ TEST_F(WifiChipV2_AwareIfaceCombinationTest, StaMode_CreateStaP2p_AfterNanRemove
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateStaAp_EnsureDifferentIfaceNames) {
-    findModeAndConfigureForIfaceType(IfaceType::AP);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::AP);
     const auto sta_iface_name = createIface(IfaceType::STA);
     const auto ap_iface_name = createIface(IfaceType::AP);
     ASSERT_FALSE(sta_iface_name.empty());
@@ -637,25 +642,25 @@ TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateStaAp_EnsureDifferentIfaceNam
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, RttControllerFlowStaModeNoSta) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_TRUE(createRttController());
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, RttControllerFlowStaModeWithSta) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     ASSERT_TRUE(createRttController());
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, RttControllerFlow) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     ASSERT_FALSE(createIface(IfaceType::AP).empty());
     ASSERT_TRUE(createRttController());
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, SelectTxScenarioWithOnlySta) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
     EXPECT_CALL(*legacy_hal_, selectTxPowerScenario("wlan0", testing::_))
             .WillOnce(testing::Return(legacy_hal::WIFI_SUCCESS));
@@ -665,7 +670,7 @@ TEST_F(WifiChipV2_AwareIfaceCombinationTest, SelectTxScenarioWithOnlySta) {
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, SelectTxScenarioWithOnlyAp) {
-    findModeAndConfigureForIfaceType(IfaceType::AP);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::AP);
     ASSERT_EQ(createIface(IfaceType::AP), "wlan1");
     EXPECT_CALL(*legacy_hal_, selectTxPowerScenario("wlan1", testing::_))
             .WillOnce(testing::Return(legacy_hal::WIFI_SUCCESS));
@@ -675,7 +680,7 @@ TEST_F(WifiChipV2_AwareIfaceCombinationTest, SelectTxScenarioWithOnlyAp) {
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, InvalidateAndRemoveNanOnStaRemove) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
 
     // Create NAN iface
@@ -711,7 +716,7 @@ TEST_F(WifiChipV2_AwareIfaceCombinationTest, InvalidateAndRemoveNanOnStaRemove) 
 }
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, InvalidateAndRemoveRttControllerOnStaRemove) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
 
     // Create RTT controller
@@ -735,7 +740,7 @@ TEST_F(WifiChipV2_AwareIfaceCombinationTest, InvalidateAndRemoveRttControllerOnS
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateNanWithSharedNanIface) {
     property_set("wifi.aware.interface", nullptr);
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
     ASSERT_EQ(createIface(IfaceType::NAN), "wlan0");
     removeIface(IfaceType::NAN, "wlan0");
@@ -744,7 +749,7 @@ TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateNanWithSharedNanIface) {
 
 TEST_F(WifiChipV2_AwareIfaceCombinationTest, CreateNanWithDedicatedNanIface) {
     property_set("wifi.aware.interface", "aware0");
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
     EXPECT_CALL(*iface_util_, ifNameToIndex("aware0")).WillOnce(testing::Return(4));
     EXPECT_CALL(*iface_util_, setUpState("aware0", true)).WillOnce(testing::Return(true));
@@ -764,7 +769,7 @@ class WifiChipV1_AwareDisabledApIfaceCombinationTest : public WifiChipTest {
 };
 
 TEST_F(WifiChipV1_AwareDisabledApIfaceCombinationTest, StaMode_CreateSta_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     ASSERT_TRUE(createIface(IfaceType::AP).empty());
 }
@@ -779,7 +784,7 @@ class WifiChipV2_AwareDisabledApIfaceCombinationTest : public WifiChipTest {
 };
 
 TEST_F(WifiChipV2_AwareDisabledApIfaceCombinationTest, CreateSta_ShouldSucceed) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     ASSERT_TRUE(createIface(IfaceType::AP).empty());
 }
@@ -794,7 +799,7 @@ class WifiChip_MultiIfaceTest : public WifiChipTest {
 };
 
 TEST_F(WifiChip_MultiIfaceTest, Create3Sta) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
     ASSERT_FALSE(createIface(IfaceType::STA).empty());
@@ -807,7 +812,7 @@ TEST_F(WifiChip_MultiIfaceTest, CreateStaWithDefaultNames) {
     property_set("wifi.interface.2", "");
     property_set("wifi.interface", "");
     property_set("wifi.concurrent.interface", "");
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_EQ(createIface(IfaceType::STA), "wlan0");
     ASSERT_EQ(createIface(IfaceType::STA), "wlan1");
     ASSERT_EQ(createIface(IfaceType::STA), "wlan2");
@@ -819,7 +824,7 @@ TEST_F(WifiChip_MultiIfaceTest, CreateStaWithCustomNames) {
     property_set("wifi.interface.2", "test2");
     property_set("wifi.interface", "bad0");
     property_set("wifi.concurrent.interface", "bad1");
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_EQ(createIface(IfaceType::STA), "bad0");
     ASSERT_EQ(createIface(IfaceType::STA), "bad1");
     ASSERT_EQ(createIface(IfaceType::STA), "test2");
@@ -831,14 +836,14 @@ TEST_F(WifiChip_MultiIfaceTest, CreateStaWithCustomAltNames) {
     property_set("wifi.interface.2", "");
     property_set("wifi.interface", "testA0");
     property_set("wifi.concurrent.interface", "testA1");
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     ASSERT_EQ(createIface(IfaceType::STA), "testA0");
     ASSERT_EQ(createIface(IfaceType::STA), "testA1");
     ASSERT_EQ(createIface(IfaceType::STA), "wlan2");
 }
 
 TEST_F(WifiChip_MultiIfaceTest, CreateApStartsWithIdx1) {
-    findModeAndConfigureForIfaceType(IfaceType::STA);
+    findModeAndConfigureForIfaceType(IfaceConcurrencyType::STA);
     // First AP will be slotted to wlan1.
     ASSERT_EQ(createIface(IfaceType::AP), "wlan1");
     // First STA will be slotted to wlan0.
