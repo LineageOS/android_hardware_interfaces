@@ -53,17 +53,26 @@ ScopedAStatus Gnss::setCallback(const std::shared_ptr<IGnssCallback>& callback) 
         ALOGE("%s: Null callback ignored", __func__);
         return ScopedAStatus::fromExceptionCode(STATUS_INVALID_OPERATION);
     }
-
     sGnssCallback = callback;
 
-    int capabilities = (int)(IGnssCallback::CAPABILITY_SATELLITE_BLOCKLIST |
-                             IGnssCallback::CAPABILITY_SATELLITE_PVT |
-                             IGnssCallback::CAPABILITY_CORRELATION_VECTOR |
-                             IGnssCallback::CAPABILITY_ANTENNA_INFO);
-
+    int capabilities =
+            (int)(IGnssCallback::CAPABILITY_MEASUREMENTS | IGnssCallback::CAPABILITY_SCHEDULING |
+                  IGnssCallback::CAPABILITY_SATELLITE_BLOCKLIST |
+                  IGnssCallback::CAPABILITY_SATELLITE_PVT |
+                  IGnssCallback::CAPABILITY_CORRELATION_VECTOR |
+                  IGnssCallback::CAPABILITY_ANTENNA_INFO);
     auto status = sGnssCallback->gnssSetCapabilitiesCb(capabilities);
     if (!status.isOk()) {
-        ALOGE("%s: Unable to invoke callback.gnssSetCapabilities", __func__);
+        ALOGE("%s: Unable to invoke callback.gnssSetCapabilitiesCb", __func__);
+    }
+
+    IGnssCallback::GnssSystemInfo systemInfo = {
+            .yearOfHw = 2022,
+            .name = "Google Mock GNSS Implementation AIDL v2",
+    };
+    status = sGnssCallback->gnssSetSystemInfoCb(systemInfo);
+    if (!status.isOk()) {
+        ALOGE("%s: Unable to invoke callback.gnssSetSystemInfoCb", __func__);
     }
 
     return ScopedAStatus::ok();
