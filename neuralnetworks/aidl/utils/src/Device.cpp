@@ -229,7 +229,6 @@ nn::GeneralResult<nn::SharedPreparedModel> Device::prepareModel(
     const auto aidlDeadline = NN_TRY(convert(deadline));
     auto aidlModelCache = NN_TRY(convert(modelCache));
     auto aidlDataCache = NN_TRY(convert(dataCache));
-    const auto aidlToken = NN_TRY(convert(token));
 
     const auto cb = ndk::SharedRefBase::make<PreparedModelCallback>(kFeatureLevel);
     const auto scoped = kDeathHandler.protectCallback(cb.get());
@@ -240,12 +239,13 @@ nn::GeneralResult<nn::SharedPreparedModel> Device::prepareModel(
         const auto ret = kDevice->prepareModelWithConfig(
                 aidlModel,
                 {aidlPreference, aidlPriority, aidlDeadline, std::move(aidlModelCache),
-                 std::move(aidlDataCache), aidlToken, std::move(aidlHints),
+                 std::move(aidlDataCache), token, std::move(aidlHints),
                  std::move(aidlExtensionPrefix)},
                 cb);
         HANDLE_ASTATUS(ret) << "prepareModel failed";
         return cb->get();
     }
+    const auto aidlToken = NN_TRY(convert(token));
     const auto ret = kDevice->prepareModel(aidlModel, aidlPreference, aidlPriority, aidlDeadline,
                                            aidlModelCache, aidlDataCache, aidlToken, cb);
     HANDLE_ASTATUS(ret) << "prepareModel failed";

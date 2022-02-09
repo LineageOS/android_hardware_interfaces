@@ -27,6 +27,7 @@
 #include <aidl/android/hardware/neuralnetworks/Extension.h>
 #include <aidl/android/hardware/neuralnetworks/ExtensionNameAndPrefix.h>
 #include <aidl/android/hardware/neuralnetworks/ExtensionOperandTypeInformation.h>
+#include <aidl/android/hardware/neuralnetworks/IDevice.h>
 #include <aidl/android/hardware/neuralnetworks/Memory.h>
 #include <aidl/android/hardware/neuralnetworks/Model.h>
 #include <aidl/android/hardware/neuralnetworks/Operand.h>
@@ -219,6 +220,7 @@ nn::GeneralResult<std::vector<TokenValuePair>> convert(
 #endif  // NN_AIDL_V4_OR_ABOVE
 
 nn::GeneralResult<std::vector<int32_t>> toSigned(const std::vector<uint32_t>& vec);
+std::vector<uint8_t> toVec(const std::array<uint8_t, IDevice::BYTE_SIZE_OF_CACHE_TOKEN>& token);
 
 }  // namespace aidl::android::hardware::neuralnetworks::utils
 
