@@ -38,6 +38,10 @@ aidl_interface {
                 enabled: true,
             },
             apps_enabled: false,
+            apex_available: [
+                "//apex_available:platform",
+                "com.android.compos",
+            ],
         },
         rust: {
             enabled: true,
