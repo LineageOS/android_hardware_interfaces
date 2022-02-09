@@ -57,9 +57,4 @@ enum Capability {
      * validateDisplay step is needed.
      */
     SKIP_VALIDATE = 4,
-    /**
-     * Specifies that a device is able to use the LayerCommand.bufferAhead
-     * when provided.
-     */
-    BUFFER_AHEAD = 5
 }
