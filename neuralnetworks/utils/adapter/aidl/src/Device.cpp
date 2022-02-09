@@ -312,8 +312,8 @@ ndk::ScopedAStatus Device::prepareModelWithConfig(
         const std::shared_ptr<IPreparedModelCallback>& callback) {
     const auto result = adapter::prepareModel(
             kDevice, kExecutor, model, config.preference, config.priority, config.deadlineNs,
-            config.modelCache, config.dataCache, config.cacheToken, config.compilationHints,
-            config.extensionNameToPrefix, callback);
+            config.modelCache, config.dataCache, utils::toVec(config.cacheToken),
+            config.compilationHints, config.extensionNameToPrefix, callback);
     if (!result.has_value()) {
         const auto& [message, code] = result.error();
         const auto aidlCode = utils::convert(code).value_or(ErrorStatus::GENERAL_FAILURE);

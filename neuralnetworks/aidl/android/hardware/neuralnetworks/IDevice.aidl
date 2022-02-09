@@ -39,7 +39,7 @@ interface IDevice {
     /**
      * The byte size of the cache token.
      */
-    const int BYTE_SIZE_OF_CACHE_TOKEN = 32;
+    const int BYTE_SIZE_OF_CACHE_TOKEN = PrepareModelConfig.BYTE_SIZE_OF_CACHE_TOKEN;
     /**
      * The maximum number of files for each type of cache in compilation caching.
      */
