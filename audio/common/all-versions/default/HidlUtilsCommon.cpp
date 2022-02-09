@@ -20,7 +20,7 @@ namespace android {
 namespace hardware {
 namespace audio {
 namespace common {
-namespace CPP_VERSION {
+namespace COMMON_TYPES_CPP_VERSION {
 namespace implementation {
 
 status_t HidlUtils::audioPortConfigsFromHal(unsigned int numHalConfigs,
@@ -51,7 +51,7 @@ status_t HidlUtils::audioPortConfigsToHal(const hidl_vec<AudioPortConfig>& confi
 }
 
 }  // namespace implementation
-}  // namespace CPP_VERSION
+}  // namespace COMMON_TYPES_CPP_VERSION
 }  // namespace common
 }  // namespace audio
 }  // namespace hardware
