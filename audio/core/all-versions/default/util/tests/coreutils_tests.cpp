@@ -22,18 +22,18 @@
 #define LOG_TAG "CoreUtils_Test"
 #include <log/log.h>
 
-#include <android_audio_policy_configuration_V7_0-enums.h>
+#include PATH(APM_XSD_ENUMS_H_FILENAME)
 #include <system/audio.h>
 #include <util/CoreUtils.h>
 #include <xsdc/XsdcSupport.h>
 
 using namespace android;
 using namespace ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION;
-using namespace ::android::hardware::audio::CPP_VERSION;
+using namespace ::android::hardware::audio::CORE_TYPES_CPP_VERSION;
 using ::android::hardware::hidl_vec;
-using ::android::hardware::audio::CPP_VERSION::implementation::CoreUtils;
+using ::android::hardware::audio::CORE_TYPES_CPP_VERSION::implementation::CoreUtils;
 namespace xsd {
-using namespace ::android::audio::policy::configuration::V7_0;
+using namespace ::android::audio::policy::configuration::CPP_VERSION;
 }
 
 static constexpr audio_channel_mask_t kInvalidHalChannelMask = AUDIO_CHANNEL_INVALID;
