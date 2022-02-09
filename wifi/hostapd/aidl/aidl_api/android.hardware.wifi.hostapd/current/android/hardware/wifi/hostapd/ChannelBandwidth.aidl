@@ -33,17 +33,18 @@
 
 package android.hardware.wifi.hostapd;
 @Backing(type="int") @VintfStability
-enum Bandwidth {
+enum ChannelBandwidth {
   BANDWIDTH_INVALID = 0,
-  BANDWIDTH_20_NOHT = 1,
-  BANDWIDTH_20 = 2,
-  BANDWIDTH_40 = 3,
-  BANDWIDTH_80 = 4,
-  BANDWIDTH_80P80 = 5,
-  BANDWIDTH_160 = 6,
-  BANDWIDTH_320 = 7,
-  BANDWIDTH_2160 = 8,
-  BANDWIDTH_4320 = 9,
-  BANDWIDTH_6480 = 10,
-  BANDWIDTH_8640 = 11,
+  BANDWIDTH_AUTO = 1,
+  BANDWIDTH_20_NOHT = 2,
+  BANDWIDTH_20 = 3,
+  BANDWIDTH_40 = 4,
+  BANDWIDTH_80 = 5,
+  BANDWIDTH_80P80 = 6,
+  BANDWIDTH_160 = 7,
+  BANDWIDTH_320 = 8,
+  BANDWIDTH_2160 = 9,
+  BANDWIDTH_4320 = 10,
+  BANDWIDTH_6480 = 11,
+  BANDWIDTH_8640 = 12,
 }
