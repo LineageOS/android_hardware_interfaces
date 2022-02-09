@@ -85,7 +85,7 @@ static void validatePrepareModelWithConfig(const std::shared_ptr<IDevice>& devic
     std::shared_ptr<PreparedModelCallback> preparedModelCallback =
             ndk::SharedRefBase::make<PreparedModelCallback>();
     const auto prepareLaunchStatus = device->prepareModelWithConfig(
-            model, {preference, priority, kNoDeadline, {}, {}, kEmptyCacheToken, {}, {}},
+            model, {preference, priority, kNoDeadline, {}, {}, kEmptyCacheTokenArray, {}, {}},
             preparedModelCallback);
     ASSERT_FALSE(prepareLaunchStatus.isOk());
     ASSERT_EQ(prepareLaunchStatus.getExceptionCode(), EX_SERVICE_SPECIFIC);
