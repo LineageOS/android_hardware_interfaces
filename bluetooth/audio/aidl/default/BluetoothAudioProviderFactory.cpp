@@ -65,10 +65,12 @@ ndk::ScopedAStatus BluetoothAudioProviderFactory::openProvider(
       provider = ndk::SharedRefBase::make<LeAudioOffloadInputAudioProvider>();
       break;
     case SessionType::LE_AUDIO_BROADCAST_SOFTWARE_ENCODING_DATAPATH:
-      provider = ndk::SharedRefBase::make<LeAudioSoftwareOutputAudioProvider>();
+      provider =
+          ndk::SharedRefBase::make<LeAudioSoftwareBroadcastAudioProvider>();
       break;
     case SessionType::LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH:
-      provider = ndk::SharedRefBase::make<LeAudioOffloadOutputAudioProvider>();
+      provider =
+          ndk::SharedRefBase::make<LeAudioOffloadBroadcastAudioProvider>();
       break;
     default:
       provider = nullptr;
@@ -99,7 +101,10 @@ ndk::ScopedAStatus BluetoothAudioProviderFactory::getProviderCapabilities(
   } else if (session_type ==
                  SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH ||
              session_type ==
-                 SessionType::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH) {
+                 SessionType::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH ||
+             session_type ==
+                 SessionType::
+                     LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH) {
     std::vector<LeAudioCodecCapabilitiesSetting> db_codec_capabilities =
         BluetoothAudioCodecs::GetLeAudioOffloadCodecCapabilities(session_type);
     if (db_codec_capabilities.size()) {
