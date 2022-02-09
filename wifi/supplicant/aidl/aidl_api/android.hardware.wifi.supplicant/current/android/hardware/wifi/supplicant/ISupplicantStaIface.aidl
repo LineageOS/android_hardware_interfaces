@@ -45,6 +45,7 @@ interface ISupplicantStaIface {
   void filsHlpFlushRequest();
   android.hardware.wifi.supplicant.DppResponderBootstrapInfo generateDppBootstrapInfoForResponder(in byte[] macAddress, in String deviceInfo, in android.hardware.wifi.supplicant.DppCurve curve);
   android.hardware.wifi.supplicant.ConnectionCapabilities getConnectionCapabilities();
+  android.hardware.wifi.supplicant.MloLinksInfo getConnectionMloLinksInfo();
   android.hardware.wifi.supplicant.KeyMgmtMask getKeyMgmtCapabilities();
   byte[] getMacAddress();
   String getName();
