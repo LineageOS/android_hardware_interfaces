@@ -200,7 +200,7 @@ cc_test {
         "android.hardware.audio.common@7.0",
         "android.hardware.audio.common@7.0-enums",
         "android.hardware.audio.common@7.1-enums",
-        "android.hardware.audio.common@7.0-util",
+        "android.hardware.audio.common@7.1-util",
     ],
     cflags: [
         "-DMAJOR_VERSION=7",
