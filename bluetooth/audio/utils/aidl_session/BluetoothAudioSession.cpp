@@ -410,6 +410,22 @@ void BluetoothAudioSession::ReportControlStatus(bool start_resp,
   }
 }
 
+void BluetoothAudioSession::ReportLowLatencyModeAllowedChanged(bool allowed) {
+  std::lock_guard<std::recursive_mutex> guard(mutex_);
+  if (observers_.empty()) {
+    LOG(WARNING) << __func__ << " - SessionType=" << toString(session_type_)
+                 << " has NO port state observer";
+    return;
+  }
+  for (auto& observer : observers_) {
+    uint16_t cookie = observer.first;
+    std::shared_ptr<PortStatusCallbacks> callback = observer.second;
+    LOG(INFO) << __func__ << " - allowed="
+              << allowed ? " allowed" : " disallowed";
+    callback->low_latency_mode_allowed_cb_(cookie, allowed);
+  }
+}
+
 bool BluetoothAudioSession::GetPresentationPosition(
     PresentationPosition& presentation_position) {
   std::lock_guard<std::recursive_mutex> guard(mutex_);
