@@ -17,6 +17,11 @@
 #ifndef WIFI_CHIP_H_
 #define WIFI_CHIP_H_
 
+// HACK: NAN is a macro defined in math.h, which can be included in various
+// headers. This wifi HAL uses an enum called NAN, which does not compile when
+// the macro is defined. Undefine NAN to work around it.
+#undef NAN
+
 #include <list>
 #include <map>
 #include <mutex>
@@ -162,6 +167,7 @@ class WifiChip : public V1_6::IWifiChip {
                                        getUsableChannels_1_6_cb _hidl_cb) override;
     Return<void> getSupportedRadioCombinationsMatrix(
             getSupportedRadioCombinationsMatrix_cb hidl_status_cb) override;
+    Return<void> getAvailableModes_1_6(getAvailableModes_1_6_cb hidl_status_cb) override;
 
   private:
     void invalidateAndRemoveAllIfaces();
@@ -175,7 +181,7 @@ class WifiChip : public V1_6::IWifiChip {
     WifiStatus registerEventCallbackInternal(
             const sp<V1_0::IWifiChipEventCallback>& event_callback);
     std::pair<WifiStatus, uint32_t> getCapabilitiesInternal();
-    std::pair<WifiStatus, std::vector<ChipMode>> getAvailableModesInternal();
+    std::pair<WifiStatus, std::vector<V1_0::IWifiChip::ChipMode>> getAvailableModesInternal();
     WifiStatus configureChipInternal(std::unique_lock<std::recursive_mutex>* lock,
                                      ChipModeId mode_id);
     std::pair<WifiStatus, uint32_t> getModeInternal();
@@ -239,17 +245,21 @@ class WifiChip : public V1_6::IWifiChip {
                                        ChipModeId mode_id);
     WifiStatus registerDebugRingBufferCallback();
     WifiStatus registerRadioModeChangeCallback();
-    std::vector<V1_4::IWifiChip::ChipIfaceCombination> getCurrentModeIfaceCombinations();
-    std::map<IfaceType, size_t> getCurrentIfaceCombination();
-    std::vector<std::map<IfaceType, size_t>> expandIfaceCombinations(
-            const V1_4::IWifiChip::ChipIfaceCombination& combination);
-    bool canExpandedIfaceComboSupportIfaceOfTypeWithCurrentIfaces(
-            const std::map<IfaceType, size_t>& expanded_combo, IfaceType requested_type);
-    bool canCurrentModeSupportIfaceOfTypeWithCurrentIfaces(IfaceType requested_type);
-    bool canExpandedIfaceComboSupportIfaceCombo(const std::map<IfaceType, size_t>& expanded_combo,
-                                                const std::map<IfaceType, size_t>& req_combo);
-    bool canCurrentModeSupportIfaceCombo(const std::map<IfaceType, size_t>& req_combo);
-    bool canCurrentModeSupportIfaceOfType(IfaceType requested_type);
+    std::vector<V1_6::IWifiChip::ChipConcurrencyCombination>
+    getCurrentModeConcurrencyCombinations();
+    std::map<IfaceConcurrencyType, size_t> getCurrentConcurrencyCombination();
+    std::vector<std::map<IfaceConcurrencyType, size_t>> expandConcurrencyCombinations(
+            const V1_6::IWifiChip::ChipConcurrencyCombination& combination);
+    bool canExpandedConcurrencyComboSupportConcurrencyTypeWithCurrentTypes(
+            const std::map<IfaceConcurrencyType, size_t>& expanded_combo,
+            IfaceConcurrencyType requested_type);
+    bool canCurrentModeSupportConcurrencyTypeWithCurrentTypes(IfaceConcurrencyType requested_type);
+    bool canExpandedConcurrencyComboSupportConcurrencyCombo(
+            const std::map<IfaceConcurrencyType, size_t>& expanded_combo,
+            const std::map<IfaceConcurrencyType, size_t>& req_combo);
+    bool canCurrentModeSupportConcurrencyCombo(
+            const std::map<IfaceConcurrencyType, size_t>& req_combo);
+    bool canCurrentModeSupportConcurrencyType(IfaceConcurrencyType requested_type);
     bool isValidModeId(ChipModeId mode_id);
     bool isStaApConcurrencyAllowedInCurrentMode();
     bool isDualStaConcurrencyAllowedInCurrentMode();
@@ -270,6 +280,7 @@ class WifiChip : public V1_6::IWifiChip {
     std::pair<WifiStatus, std::vector<V1_6::WifiUsableChannel>> getUsableChannelsInternal_1_6(
             WifiBand band, uint32_t ifaceModeMask, uint32_t filterMask);
     std::pair<WifiStatus, WifiRadioCombinationMatrix> getSupportedRadioCombinationsMatrixInternal();
+    std::pair<WifiStatus, std::vector<V1_6::IWifiChip::ChipMode>> getAvailableModesInternal_1_6();
 
     ChipId chip_id_;
     std::weak_ptr<legacy_hal::WifiLegacyHal> legacy_hal_;
@@ -285,7 +296,7 @@ class WifiChip : public V1_6::IWifiChip {
     // Members pertaining to chip configuration.
     uint32_t current_mode_id_;
     std::mutex lock_t;
-    std::vector<V1_4::IWifiChip::ChipMode> modes_;
+    std::vector<V1_6::IWifiChip::ChipMode> modes_;
     // The legacy ring buffer callback API has only a global callback
     // registration mechanism. Use this to check if we have already
     // registered a callback.

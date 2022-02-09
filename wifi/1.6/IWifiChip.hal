@@ -16,6 +16,7 @@
 
 package android.hardware.wifi@1.6;
 
+import @1.0::ChipModeId;
 import @1.0::IWifiIface;
 import @1.0::WifiStatus;
 import @1.5::WifiBand;
@@ -99,6 +100,107 @@ interface IWifiChip extends @1.5::IWifiChip {
     getUsableChannels_1_6(WifiBand band, bitfield<WifiIfaceMode> ifaceModeMask,
         bitfield<UsableChannelFilter> filterMask)
         generates (WifiStatus status, vec<WifiUsableChannel> channels);
+
+    /**
+     * Set of interface concurrency types with the maximum number of interfaces that can have
+     * one of the specified concurrency types for a given ChipConcurrencyCombination. See
+     * ChipConcurrencyCombination for examples.
+     */
+    struct ChipConcurrencyCombinationLimit {
+        // Each IfaceConcurrencyType must occur at most once.
+        vec<IfaceConcurrencyType> types;
+        uint32_t maxIfaces;
+    };
+
+    /**
+     * Set of interfaces that can operate concurrently when in a given mode. See
+     * ChipMode below.
+     *
+     * For example:
+     *   [{STA} <= 2]
+     *       At most two STA interfaces are supported
+     *       [], [STA], [STA+STA]
+     *
+     *   [{STA} <= 1, {NAN} <= 1, {AP_BRIDGED} <= 1]
+     *       Any combination of STA, NAN, AP_BRIDGED
+     *       [], [STA], [NAN], [AP_BRIDGED], [STA+NAN], [STA+AP_BRIDGED], [NAN+AP_BRIDGED],
+     *       [STA+NAN+AP_BRIDGED]
+     *
+     *   [{STA} <= 1, {NAN,P2P} <= 1]
+     *       Optionally a STA and either NAN or P2P
+     *       [], [STA], [STA+NAN], [STA+P2P], [NAN], [P2P]
+     *       Not included [NAN+P2P], [STA+NAN+P2P]
+     *
+     *   [{STA} <= 1, {STA,NAN} <= 1]
+     *       Optionally a STA and either a second STA or a NAN
+     *       [], [STA], [STA+NAN], [STA+STA], [NAN]
+     *       Not included [STA+STA+NAN]
+     */
+    struct ChipConcurrencyCombination {
+        vec<ChipConcurrencyCombinationLimit> limits;
+    };
+
+    /**
+     * A mode that the chip can be put in. A mode defines a set of constraints on
+     * the interfaces that can exist while in that mode. Modes define a unit of
+     * configuration where all interfaces must be torn down to switch to a
+     * different mode. Some HALs may only have a single mode, but an example where
+     * multiple modes would be required is if a chip has different firmwares with
+     * different capabilities.
+     *
+     * When in a mode, it must be possible to perform any combination of creating
+     * and removing interfaces as long as at least one of the
+     * ChipConcurrencyCombinations is satisfied. This means that if a chip has two
+     * available combinations, [{STA} <= 1] and [{AP_BRIDGED} <= 1] then it is expected
+     * that exactly one STA type or one AP_BRIDGED type can be created, but it
+     * is not expected that both a STA and AP_BRIDGED type  could be created. If it
+     * was then there would be a single available combination
+     * [{STA} <=1, {AP_BRIDGED} <= 1].
+     *
+     * When switching between two available combinations it is expected that
+     * interfaces only supported by the initial combination must be removed until
+     * the target combination is also satisfied. At that point new interfaces
+     * satisfying only the target combination can be added (meaning the initial
+     * combination limits will no longer satisfied). The addition of these new
+     * interfaces must not impact the existence of interfaces that satisfy both
+     * combinations.
+     *
+     * For example, a chip with available combinations:
+     *     [{STA} <= 2, {NAN} <=1] and [{STA} <=1, {NAN} <= 1, {AP_BRIDGED} <= 1}]
+     * If the chip currently has 3 interfaces STA, STA and NAN and wants to add an
+     * AP_BRIDGED interface in place of one of the STAs then first one of the STA
+     * interfaces must be removed and then the AP interface can be created after
+     * the STA had been torn down. During this process the remaining STA and NAN
+     * interfaces must not be removed/recreated.
+     *
+     * If a chip does not support this kind of reconfiguration in this mode then
+     * the combinations must be separated into two separate modes. Before
+     * switching modes all interfaces must be torn down, the mode switch must be
+     * enacted and when it completes the new interfaces must be brought up.
+     */
+    struct ChipMode {
+        /**
+         * Id that can be used to put the chip in this mode.
+         */
+        ChipModeId id;
+
+        /**
+         * A list of the possible interface concurrency type combinations that the chip can have
+         * while in this mode.
+         */
+        vec<ChipConcurrencyCombination> availableCombinations;
+    };
+
+    /**
+     * Get the set of operation modes that the chip supports.
+     *
+     * @return status WifiStatus of the operation.
+     *         Possible status codes:
+     *         |WifiStatusCode.SUCCESS|,
+     *         |WifiStatusCode.ERROR_WIFI_CHIP_INVALID|
+     * @return modes List of modes supported by the device.
+     */
+    getAvailableModes_1_6() generates (WifiStatus status, vec<ChipMode> modes);
 
     /**
      * Retrieve the list of all the possible radio combinations supported by this
