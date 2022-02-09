@@ -28,6 +28,11 @@ import android.hardware.neuralnetworks.TokenValuePair;
 @VintfStability
 parcelable PrepareModelConfig {
     /**
+     * The byte size of the cache token.
+     */
+    const int BYTE_SIZE_OF_CACHE_TOKEN = 32;
+
+    /**
      * Indicates the intended execution behavior of a prepared model.
      */
     ExecutionPreference preference;
@@ -66,7 +71,7 @@ parcelable PrepareModelConfig {
      */
     ParcelFileDescriptor[] dataCache;
     /**
-     * A caching token of length IDevice::BYTE_SIZE_OF_CACHE_TOKEN identifying
+     * A caching token of length BYTE_SIZE_OF_CACHE_TOKEN identifying
      * the prepared model. The same token will be provided when
      * retrieving the prepared model from the cache files with
      * IDevice::prepareModelFromCache.  Tokens should be chosen to have a low
@@ -77,7 +82,7 @@ parcelable PrepareModelConfig {
      * indicating that caching information is not provided, this
      * token must be ignored.
      */
-    byte[] cacheToken;
+    byte[BYTE_SIZE_OF_CACHE_TOKEN] cacheToken;
     /**
      * A vector of token / value pairs represent vendor specific
      * compilation hints or metadata. The provided TokenValuePairs must not
