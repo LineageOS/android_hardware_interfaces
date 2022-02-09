@@ -39,4 +39,5 @@ interface IBluetoothAudioProvider {
   void streamStarted(in android.hardware.bluetooth.audio.BluetoothAudioStatus status);
   void streamSuspended(in android.hardware.bluetooth.audio.BluetoothAudioStatus status);
   void updateAudioConfiguration(in android.hardware.bluetooth.audio.AudioConfiguration audioConfig);
+  void setLowLatencyModeAllowed(in boolean allowed);
 }
