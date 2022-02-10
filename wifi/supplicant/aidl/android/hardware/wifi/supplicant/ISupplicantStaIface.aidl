@@ -28,6 +28,7 @@ import android.hardware.wifi.supplicant.ISupplicantStaIfaceCallback;
 import android.hardware.wifi.supplicant.ISupplicantStaNetwork;
 import android.hardware.wifi.supplicant.IfaceType;
 import android.hardware.wifi.supplicant.KeyMgmtMask;
+import android.hardware.wifi.supplicant.MloLinksInfo;
 import android.hardware.wifi.supplicant.QosPolicyStatus;
 import android.hardware.wifi.supplicant.RxFilterType;
 import android.hardware.wifi.supplicant.WpaDriverCapabilitiesMask;
@@ -186,6 +187,15 @@ interface ISupplicantStaIface {
      *         |SupplicantStatusCode.FAILURE_UNKNOWN|
      */
     ConnectionCapabilities getConnectionCapabilities();
+
+    /**
+     * Get Connection MLO links Info
+     *
+     * @return Connection MLO Links Info.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|
+     */
+    MloLinksInfo getConnectionMloLinksInfo();
 
     /**
      * Get Key management capabilities of the device
