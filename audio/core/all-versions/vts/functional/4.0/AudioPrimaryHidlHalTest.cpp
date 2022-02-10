@@ -28,8 +28,7 @@ TEST_P(AudioHidlTest, OpenPrimaryDeviceUsingGetDevice) {
     if (getDeviceName() != DeviceManager::kPrimaryDevice) {
         GTEST_SKIP() << "No primary device on this factory";  // returns
     }
-    EXPECT_TRUE(
-            DeviceManager::getInstance().reset(getFactoryName(), DeviceManager::kPrimaryDevice));
+    EXPECT_TRUE(DeviceManager::getInstance().resetPrimary(getFactoryName()));
 
     // Must use IDevicesFactory directly because DeviceManager always uses
     // the latest interfaces version and corresponding methods for opening
