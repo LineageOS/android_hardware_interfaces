@@ -52,10 +52,10 @@ const SensorInfo& Sensor::getSensorInfo() const {
 }
 
 void Sensor::batch(int64_t samplingPeriodNs) {
-    if (samplingPeriodNs < mSensorInfo.minDelayUs * 1000ll) {
-        samplingPeriodNs = mSensorInfo.minDelayUs * 1000ll;
-    } else if (samplingPeriodNs > mSensorInfo.maxDelayUs * 1000ll) {
-        samplingPeriodNs = mSensorInfo.maxDelayUs * 1000ll;
+    if (samplingPeriodNs < mSensorInfo.minDelayUs * 1000LL) {
+        samplingPeriodNs = mSensorInfo.minDelayUs * 1000LL;
+    } else if (samplingPeriodNs > mSensorInfo.maxDelayUs * 1000LL) {
+        samplingPeriodNs = mSensorInfo.maxDelayUs * 1000LL;
     }
 
     if (mSamplingPeriodNs != samplingPeriodNs) {
