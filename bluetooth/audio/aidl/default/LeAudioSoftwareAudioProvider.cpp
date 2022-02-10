@@ -55,6 +55,11 @@ LeAudioSoftwareInputAudioProvider::LeAudioSoftwareInputAudioProvider()
   session_type_ = SessionType::LE_AUDIO_SOFTWARE_DECODING_DATAPATH;
 }
 
+LeAudioSoftwareBroadcastAudioProvider::LeAudioSoftwareBroadcastAudioProvider()
+    : LeAudioSoftwareAudioProvider() {
+  session_type_ = SessionType::LE_AUDIO_BROADCAST_SOFTWARE_ENCODING_DATAPATH;
+}
+
 LeAudioSoftwareAudioProvider::LeAudioSoftwareAudioProvider()
     : BluetoothAudioProvider(), data_mq_(nullptr) {}
 
@@ -78,7 +83,9 @@ ndk::ScopedAStatus LeAudioSoftwareAudioProvider::startSession(
   }
 
   uint32_t buffer_modifier = 0;
-  if (session_type_ == SessionType::LE_AUDIO_SOFTWARE_ENCODING_DATAPATH)
+  if (session_type_ == SessionType::LE_AUDIO_SOFTWARE_ENCODING_DATAPATH ||
+      session_type_ ==
+          SessionType::LE_AUDIO_BROADCAST_SOFTWARE_ENCODING_DATAPATH)
     buffer_modifier = kBufferOutCount;
   else if (session_type_ == SessionType::LE_AUDIO_SOFTWARE_DECODING_DATAPATH)
     buffer_modifier = kBufferInCount;
