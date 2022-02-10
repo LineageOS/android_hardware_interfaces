@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
- package android.hardware.automotive.audiocontrol;
+package android.hardware.automotive.audiocontrol;
+
+import android.hardware.audio.common.PlaybackTrackMetadata;
 
  /**
   * The current ducking information for a single audio zone.
@@ -48,7 +50,15 @@
      /**
       * List of usages currently holding focus for this audio zone.
       *
+      * This field was deprecated in version 2.
+      * Use playbackMetaDataHoldingFocus instead.
+      *
       * <p> See {@code audioUsage} in audio_policy_configuration.xsd for the list of allowed values.
       */
      String[] usagesHoldingFocus;
- }
+
+     /**
+      *  List of output stream metadata associated with the current focus holder for this audio zone
+      */
+     @nullable PlaybackTrackMetadata[] playbackMetaDataHoldingFocus;
+}
