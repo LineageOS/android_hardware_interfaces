@@ -48,6 +48,12 @@ class LeAudioOffloadInputAudioProvider : public LeAudioOffloadAudioProvider {
   LeAudioOffloadInputAudioProvider();
 };
 
+class LeAudioOffloadBroadcastAudioProvider
+    : public LeAudioOffloadAudioProvider {
+ public:
+  LeAudioOffloadBroadcastAudioProvider();
+};
+
 }  // namespace audio
 }  // namespace bluetooth
 }  // namespace hardware
