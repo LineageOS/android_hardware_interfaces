@@ -37,7 +37,7 @@ parcelable ApInfo {
   String ifaceName;
   String apIfaceInstance;
   int freqMhz;
-  android.hardware.wifi.hostapd.Bandwidth bandwidth;
+  android.hardware.wifi.hostapd.ChannelBandwidth channelBandwidth;
   android.hardware.wifi.hostapd.Generation generation;
   byte[] apIfaceInstanceMacAddress;
 }

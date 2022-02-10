@@ -1312,3 +1312,29 @@ struct WifiRadioCombinationMatrix {
      */
     vec<WifiRadioCombination> radioCombinations;
 };
+
+/**
+ * List of interface concurrency types, used in reporting device concurrency capabilities.
+ */
+enum IfaceConcurrencyType : uint32_t {
+    /**
+     * Concurrency type for station mode.
+     */
+    STA,
+    /**
+     * Concurrency type of single-port AP mode.
+     */
+    AP,
+    /**
+     * Concurrency type of two-port bridged AP mode.
+     */
+    AP_BRIDGED,
+    /**
+     * Concurrency type of peer-to-peer mode.
+     */
+    P2P,
+    /**
+     * Concurrency type of neighborhood area network mode.
+     */
+    NAN,
+};

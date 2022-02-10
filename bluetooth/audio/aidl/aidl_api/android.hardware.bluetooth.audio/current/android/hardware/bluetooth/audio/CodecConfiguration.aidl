@@ -51,6 +51,7 @@ parcelable CodecConfiguration {
     android.hardware.bluetooth.audio.AacConfiguration aacConfig;
     android.hardware.bluetooth.audio.LdacConfiguration ldacConfig;
     android.hardware.bluetooth.audio.AptxConfiguration aptxConfig;
+    android.hardware.bluetooth.audio.AptxAdaptiveConfiguration aptxAdaptiveConfig;
     android.hardware.bluetooth.audio.Lc3Configuration lc3Config;
     android.hardware.bluetooth.audio.CodecConfiguration.VendorConfiguration vendorConfig;
   }
