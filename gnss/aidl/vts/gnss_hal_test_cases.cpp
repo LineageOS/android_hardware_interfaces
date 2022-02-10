@@ -28,6 +28,7 @@
 #include <android/hardware/gnss/measurement_corrections/IMeasurementCorrectionsInterface.h>
 #include <android/hardware/gnss/visibility_control/IGnssVisibilityControl.h>
 #include <cutils/properties.h>
+#include <cmath>
 #include "AGnssCallbackAidl.h"
 #include "AGnssRilCallbackAidl.h"
 #include "GnssAntennaInfoCallbackAidl.h"
@@ -45,7 +46,9 @@ using android::sp;
 using android::hardware::gnss::BlocklistedSource;
 using android::hardware::gnss::ElapsedRealtime;
 using android::hardware::gnss::GnssClock;
+using android::hardware::gnss::GnssConstellationType;
 using android::hardware::gnss::GnssData;
+using android::hardware::gnss::GnssLocation;
 using android::hardware::gnss::GnssMeasurement;
 using android::hardware::gnss::GnssPowerStats;
 using android::hardware::gnss::IAGnss;
@@ -72,7 +75,6 @@ using android::hardware::gnss::measurement_corrections::IMeasurementCorrectionsI
 using android::hardware::gnss::visibility_control::IGnssVisibilityControl;
 
 using GnssConstellationTypeV2_0 = android::hardware::gnss::V2_0::GnssConstellationType;
-using GnssConstellationTypeAidl = android::hardware::gnss::GnssConstellationType;
 
 static bool IsAutomotiveDevice() {
     char buffer[PROPERTY_VALUE_MAX] = {0};
@@ -87,6 +89,222 @@ static bool IsAutomotiveDevice() {
  * Empty test fixture to verify basic Setup & Teardown
  */
 TEST_P(GnssHalTest, SetupTeardownCreateCleanup) {}
+
+/*
+ * GetLocation:
+ * Turns on location, waits 75 second for at least 5 locations,
+ * and checks them for reasonable validity.
+ */
+TEST_P(GnssHalTest, GetLocations) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
+        return;
+    }
+    const int kMinIntervalMsec = 500;
+    const int kLocationsToCheck = 5;
+
+    SetPositionMode(kMinIntervalMsec, /* low_power_mode= */ false);
+    StartAndCheckLocations(kLocationsToCheck);
+    StopAndClearLocations();
+}
+
+/*
+ * InjectDelete:
+ * Ensures that calls to inject and/or delete information state are handled.
+ */
+TEST_P(GnssHalTest, InjectDelete) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
+        return;
+    }
+    // Confidently, well north of Alaska
+    auto status = aidl_gnss_hal_->injectLocation(Utils::getMockLocation(80.0, -170.0, 150.0));
+    ASSERT_TRUE(status.isOk());
+
+    // Fake time, but generally reasonable values (time in Aug. 2018)
+    status =
+            aidl_gnss_hal_->injectTime(/* timeMs= */ 1534567890123L,
+                                       /* timeReferenceMs= */ 123456L, /* uncertaintyMs= */ 10000L);
+    ASSERT_TRUE(status.isOk());
+
+    status = aidl_gnss_hal_->deleteAidingData(IGnss::GnssAidingData::POSITION);
+    ASSERT_TRUE(status.isOk());
+
+    status = aidl_gnss_hal_->deleteAidingData(IGnss::GnssAidingData::TIME);
+    ASSERT_TRUE(status.isOk());
+
+    // Ensure we can get a good location after a bad injection has been deleted
+    StartAndCheckFirstLocation(/* min_interval_msec= */ 1000, /* low_power_mode= */ false);
+    StopAndClearLocations();
+}
+
+/*
+ * InjectSeedLocation:
+ * Injects a seed location and ensures the injected seed location is not fused in the resulting
+ * GNSS location.
+ */
+TEST_P(GnssHalTest, InjectSeedLocation) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
+        return;
+    }
+    // An arbitrary position in North Pacific Ocean (where no VTS labs will ever likely be located).
+    const double seedLatDegrees = 32.312894;
+    const double seedLngDegrees = -172.954117;
+    const float seedAccuracyMeters = 150.0;
+
+    auto status = aidl_gnss_hal_->injectLocation(
+            Utils::getMockLocation(seedLatDegrees, seedLngDegrees, seedAccuracyMeters));
+    ASSERT_TRUE(status.isOk());
+
+    StartAndCheckFirstLocation(/* min_interval_msec= */ 1000, /* low_power_mode= */ false);
+
+    // Ensure we don't get a location anywhere within 111km (1 degree of lat or lng) of the seed
+    // location.
+    EXPECT_TRUE(std::abs(aidl_gnss_cb_->last_location_.latitudeDegrees - seedLatDegrees) > 1.0 ||
+                std::abs(aidl_gnss_cb_->last_location_.longitudeDegrees - seedLngDegrees) > 1.0);
+
+    StopAndClearLocations();
+
+    status = aidl_gnss_hal_->deleteAidingData(IGnss::GnssAidingData::POSITION);
+    ASSERT_TRUE(status.isOk());
+}
+
+/*
+ * GnssCapabilities:
+ * 1. Verifies that GNSS hardware supports measurement capabilities.
+ * 2. Verifies that GNSS hardware supports Scheduling capabilities.
+ */
+TEST_P(GnssHalTest, GnssCapabilites) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
+        return;
+    }
+    if (!IsAutomotiveDevice()) {
+        EXPECT_TRUE(aidl_gnss_cb_->last_capabilities_ & IGnssCallback::CAPABILITY_MEASUREMENTS);
+    }
+    EXPECT_TRUE(aidl_gnss_cb_->last_capabilities_ & IGnssCallback::CAPABILITY_SCHEDULING);
+}
+
+/*
+ * GetLocationLowPower:
+ * Turns on location, waits for at least 5 locations allowing max of LOCATION_TIMEOUT_SUBSEQUENT_SEC
+ * between one location and the next. Also ensure that MIN_INTERVAL_MSEC is respected by waiting
+ * NO_LOCATION_PERIOD_SEC and verfiy that no location is received. Also perform validity checks on
+ * each received location.
+ */
+TEST_P(GnssHalTest, GetLocationLowPower) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
+        return;
+    }
+
+    const int kMinIntervalMsec = 5000;
+    const int kLocationTimeoutSubsequentSec = (kMinIntervalMsec / 1000) * 2;
+    const int kNoLocationPeriodSec = (kMinIntervalMsec / 1000) / 2;
+    const int kLocationsToCheck = 5;
+    const bool kLowPowerMode = true;
+
+    // Warmup period - VTS doesn't have AGPS access via GnssLocationProvider
+    aidl_gnss_cb_->location_cbq_.reset();
+    StartAndCheckLocations(kLocationsToCheck);
+    StopAndClearLocations();
+    aidl_gnss_cb_->location_cbq_.reset();
+
+    // Start of Low Power Mode test
+    // Don't expect true - as without AGPS access
+    if (!StartAndCheckFirstLocation(kMinIntervalMsec, kLowPowerMode)) {
+        ALOGW("GetLocationLowPower test - no first low power location received.");
+    }
+
+    for (int i = 1; i < kLocationsToCheck; i++) {
+        // Verify that kMinIntervalMsec is respected by waiting kNoLocationPeriodSec and
+        // ensure that no location is received yet
+
+        aidl_gnss_cb_->location_cbq_.retrieve(aidl_gnss_cb_->last_location_, kNoLocationPeriodSec);
+        const int location_called_count = aidl_gnss_cb_->location_cbq_.calledCount();
+        // Tolerate (ignore) one extra location right after the first one
+        // to handle startup edge case scheduling limitations in some implementations
+        if ((i == 1) && (location_called_count == 2)) {
+            CheckLocation(aidl_gnss_cb_->last_location_, true);
+            continue;  // restart the quiet wait period after this too-fast location
+        }
+        EXPECT_LE(location_called_count, i);
+        if (location_called_count != i) {
+            ALOGW("GetLocationLowPower test - not enough locations received. %d vs. %d expected ",
+                  location_called_count, i);
+        }
+
+        if (!aidl_gnss_cb_->location_cbq_.retrieve(
+                    aidl_gnss_cb_->last_location_,
+                    kLocationTimeoutSubsequentSec - kNoLocationPeriodSec)) {
+            ALOGW("GetLocationLowPower test - timeout awaiting location %d", i);
+        } else {
+            CheckLocation(aidl_gnss_cb_->last_location_, true);
+        }
+    }
+
+    StopAndClearLocations();
+}
+
+/*
+ * InjectBestLocation
+ *
+ * Ensure successfully injecting a location.
+ */
+TEST_P(GnssHalTest, InjectBestLocation) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
+        return;
+    }
+    StartAndCheckLocations(1);
+    GnssLocation gnssLocation = aidl_gnss_cb_->last_location_;
+    CheckLocation(gnssLocation, true);
+
+    auto status = aidl_gnss_hal_->injectBestLocation(gnssLocation);
+
+    ASSERT_TRUE(status.isOk());
+
+    status = aidl_gnss_hal_->deleteAidingData(IGnss::GnssAidingData::POSITION);
+
+    ASSERT_TRUE(status.isOk());
+}
+
+/*
+ * TestGnssSvInfoFields:
+ * Gets 1 location and a (non-empty) GnssSvInfo, and verifies basebandCN0DbHz is valid.
+ */
+TEST_P(GnssHalTest, TestGnssSvInfoFields) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
+        return;
+    }
+    aidl_gnss_cb_->location_cbq_.reset();
+    aidl_gnss_cb_->sv_info_list_cbq_.reset();
+    StartAndCheckFirstLocation(/* min_interval_msec= */ 1000, /* low_power_mode= */ false);
+    int location_called_count = aidl_gnss_cb_->location_cbq_.calledCount();
+    ALOGD("Observed %d GnssSvStatus, while awaiting one location (%d received)",
+          aidl_gnss_cb_->sv_info_list_cbq_.size(), location_called_count);
+
+    // Wait for up to kNumSvInfoLists events for kTimeoutSeconds for each event.
+    int kTimeoutSeconds = 2;
+    int kNumSvInfoLists = 4;
+    std::list<std::vector<IGnssCallback::GnssSvInfo>> sv_info_lists;
+    std::vector<IGnssCallback::GnssSvInfo> last_sv_info_list;
+
+    do {
+        EXPECT_GT(aidl_gnss_cb_->sv_info_list_cbq_.retrieve(sv_info_lists, kNumSvInfoLists,
+                                                            kTimeoutSeconds),
+                  0);
+        last_sv_info_list = sv_info_lists.back();
+    } while (last_sv_info_list.size() == 0);
+
+    ALOGD("last_sv_info size = %d", (int)last_sv_info_list.size());
+    bool nonZeroCn0Found = false;
+    for (auto sv_info : last_sv_info_list) {
+        EXPECT_TRUE(sv_info.basebandCN0DbHz >= 0.0 && sv_info.basebandCN0DbHz <= 65.0);
+        if (sv_info.basebandCN0DbHz > 0.0) {
+            nonZeroCn0Found = true;
+        }
+    }
+    // Assert at least one value is non-zero. Zero is ok in status as it's possibly
+    // reporting a searched but not found satellite.
+    EXPECT_TRUE(nonZeroCn0Found);
+    StopAndClearLocations();
+}
 
 /*
  * TestPsdsExtension:
@@ -158,15 +376,7 @@ void CheckSatellitePvt(const SatellitePvt& satellitePvt, const int interfaceVers
 }
 
 void CheckGnssMeasurementClockFields(const GnssData& measurement) {
-    ASSERT_TRUE(measurement.elapsedRealtime.flags >= 0 &&
-                measurement.elapsedRealtime.flags <= (ElapsedRealtime::HAS_TIMESTAMP_NS |
-                                                      ElapsedRealtime::HAS_TIME_UNCERTAINTY_NS));
-    if (measurement.elapsedRealtime.flags & ElapsedRealtime::HAS_TIMESTAMP_NS) {
-        ASSERT_TRUE(measurement.elapsedRealtime.timestampNs > 0);
-    }
-    if (measurement.elapsedRealtime.flags & ElapsedRealtime::HAS_TIME_UNCERTAINTY_NS) {
-        ASSERT_TRUE(measurement.elapsedRealtime.timeUncertaintyNs > 0);
-    }
+    Utils::checkElapsedRealtime(measurement.elapsedRealtime);
     ASSERT_TRUE(measurement.clock.gnssClockFlags >= 0 &&
                 measurement.clock.gnssClockFlags <=
                         (GnssClock::HAS_LEAP_SECOND | GnssClock::HAS_TIME_UNCERTAINTY |
@@ -187,6 +397,34 @@ void CheckGnssMeasurementFlags(const GnssMeasurement& measurement) {
                          GnssMeasurement::HAS_SATELLITE_ISB_UNCERTAINTY |
                          GnssMeasurement::HAS_SATELLITE_PVT |
                          GnssMeasurement::HAS_CORRELATION_VECTOR));
+}
+
+void CheckGnssMeasurementFields(const GnssMeasurement& measurement, const GnssData& data) {
+    CheckGnssMeasurementFlags(measurement);
+    // Verify CodeType is valid.
+    ASSERT_NE(measurement.signalType.codeType, "");
+    // Verify basebandCn0DbHz is valid.
+    ASSERT_TRUE(measurement.basebandCN0DbHz > 0.0 && measurement.basebandCN0DbHz <= 65.0);
+
+    if (((measurement.flags & GnssMeasurement::HAS_FULL_ISB) > 0) &&
+        ((measurement.flags & GnssMeasurement::HAS_FULL_ISB_UNCERTAINTY) > 0) &&
+        ((measurement.flags & GnssMeasurement::HAS_SATELLITE_ISB) > 0) &&
+        ((measurement.flags & GnssMeasurement::HAS_SATELLITE_ISB_UNCERTAINTY) > 0)) {
+        GnssConstellationType referenceConstellation =
+                data.clock.referenceSignalTypeForIsb.constellation;
+        double carrierFrequencyHz = data.clock.referenceSignalTypeForIsb.carrierFrequencyHz;
+        std::string codeType = data.clock.referenceSignalTypeForIsb.codeType;
+
+        ASSERT_TRUE(referenceConstellation >= GnssConstellationType::UNKNOWN &&
+                    referenceConstellation <= GnssConstellationType::IRNSS);
+        ASSERT_TRUE(carrierFrequencyHz > 0);
+        ASSERT_NE(codeType, "");
+
+        ASSERT_TRUE(std::abs(measurement.fullInterSignalBiasNs) < 1.0e6);
+        ASSERT_TRUE(measurement.fullInterSignalBiasUncertaintyNs >= 0);
+        ASSERT_TRUE(std::abs(measurement.satelliteInterSignalBiasNs) < 1.0e6);
+        ASSERT_TRUE(measurement.satelliteInterSignalBiasUncertaintyNs >= 0);
+    }
 }
 
 /*
@@ -229,7 +467,7 @@ TEST_P(GnssHalTest, TestGnssMeasurementExtensionAndSatellitePvt) {
         CheckGnssMeasurementClockFields(lastMeasurement);
 
         for (const auto& measurement : lastMeasurement.measurements) {
-            CheckGnssMeasurementFlags(measurement);
+            CheckGnssMeasurementFields(measurement, lastMeasurement);
             if (measurement.flags & GnssMeasurement::HAS_SATELLITE_PVT &&
                 kIsSatellitePvtSupported == true) {
                 ALOGD("Found a measurement with SatellitePvt");
@@ -289,7 +527,7 @@ TEST_P(GnssHalTest, TestCorrelationVector) {
         CheckGnssMeasurementClockFields(lastMeasurement);
 
         for (const auto& measurement : lastMeasurement.measurements) {
-            CheckGnssMeasurementFlags(measurement);
+            CheckGnssMeasurementFields(measurement, lastMeasurement);
             if (measurement.flags & GnssMeasurement::HAS_CORRELATION_VECTOR) {
                 correlationVectorFound = true;
                 ASSERT_TRUE(measurement.correlationVectors.size() > 0);
@@ -466,7 +704,7 @@ TEST_P(GnssHalTest, BlocklistIndividualSatellites) {
                 FindStrongFrequentNonGpsSource(sv_info_vec_list, kLocationsToAwait - 1);
     }
 
-    if (source_to_blocklist.constellation == GnssConstellationTypeAidl::UNKNOWN) {
+    if (source_to_blocklist.constellation == GnssConstellationType::UNKNOWN) {
         // Cannot find a non-GPS satellite. Let the test pass.
         ALOGD("Cannot find a non-GPS satellite. Letting the test pass.");
         return;
@@ -522,7 +760,7 @@ TEST_P(GnssHalTest, BlocklistIndividualSatellites) {
                 auto& gnss_sv = sv_info_vec[iSv];
                 EXPECT_FALSE(
                         (gnss_sv.v2_0.v1_0.svid == source_to_blocklist.svid) &&
-                        (static_cast<GnssConstellationTypeAidl>(gnss_sv.v2_0.constellation) ==
+                        (static_cast<GnssConstellationType>(gnss_sv.v2_0.constellation) ==
                          source_to_blocklist.constellation) &&
                         (gnss_sv.v2_0.v1_0.svFlag & IGnssCallback_1_0::GnssSvFlags::USED_IN_FIX));
             }
@@ -584,7 +822,7 @@ TEST_P(GnssHalTest, BlocklistIndividualSatellites) {
                 for (uint32_t iSv = 0; iSv < sv_info_vec.size(); iSv++) {
                     auto& gnss_sv = sv_info_vec[iSv];
                     if ((gnss_sv.v2_0.v1_0.svid == source_to_blocklist.svid) &&
-                        (static_cast<GnssConstellationTypeAidl>(gnss_sv.v2_0.constellation) ==
+                        (static_cast<GnssConstellationType>(gnss_sv.v2_0.constellation) ==
                          source_to_blocklist.constellation) &&
                         (gnss_sv.v2_0.v1_0.svFlag & IGnssCallback_1_0::GnssSvFlags::USED_IN_FIX)) {
                         strongest_sv_is_reobserved = true;
@@ -633,7 +871,7 @@ TEST_P(GnssHalTest, BlocklistConstellationLocationOff) {
     const int kGnssSvInfoListTimeout = 2;
 
     // Find first non-GPS constellation to blocklist
-    GnssConstellationTypeAidl constellation_to_blocklist = static_cast<GnssConstellationTypeAidl>(
+    GnssConstellationType constellation_to_blocklist = static_cast<GnssConstellationType>(
             startLocationAndGetNonGpsConstellation(kLocationsToAwait, kGnssSvInfoListTimeout));
 
     // Turns off location
@@ -646,7 +884,7 @@ TEST_P(GnssHalTest, BlocklistConstellationLocationOff) {
     // IRNSS was added in 2.0. Always attempt to blocklist IRNSS to verify that the new enum is
     // supported.
     BlocklistedSource source_to_blocklist_2;
-    source_to_blocklist_2.constellation = GnssConstellationTypeAidl::IRNSS;
+    source_to_blocklist_2.constellation = GnssConstellationType::IRNSS;
     source_to_blocklist_2.svid = 0;  // documented wildcard for all satellites in this constellation
 
     sp<IGnssConfiguration> gnss_configuration_hal;
@@ -686,11 +924,11 @@ TEST_P(GnssHalTest, BlocklistConstellationLocationOff) {
             for (uint32_t iSv = 0; iSv < sv_info_vec.size(); iSv++) {
                 const auto& gnss_sv = sv_info_vec[iSv];
                 EXPECT_FALSE(
-                        (static_cast<GnssConstellationTypeAidl>(gnss_sv.v2_0.constellation) ==
+                        (static_cast<GnssConstellationType>(gnss_sv.v2_0.constellation) ==
                          source_to_blocklist_1.constellation) &&
                         (gnss_sv.v2_0.v1_0.svFlag & IGnssCallback_1_0::GnssSvFlags::USED_IN_FIX));
                 EXPECT_FALSE(
-                        (static_cast<GnssConstellationTypeAidl>(gnss_sv.v2_0.constellation) ==
+                        (static_cast<GnssConstellationType>(gnss_sv.v2_0.constellation) ==
                          source_to_blocklist_2.constellation) &&
                         (gnss_sv.v2_0.v1_0.svFlag & IGnssCallback_1_0::GnssSvFlags::USED_IN_FIX));
             }
@@ -736,7 +974,7 @@ TEST_P(GnssHalTest, BlocklistConstellationLocationOn) {
     const int kGnssSvInfoListTimeout = 2;
 
     // Find first non-GPS constellation to blocklist
-    GnssConstellationTypeAidl constellation_to_blocklist = static_cast<GnssConstellationTypeAidl>(
+    GnssConstellationType constellation_to_blocklist = static_cast<GnssConstellationType>(
             startLocationAndGetNonGpsConstellation(kLocationsToAwait, kGnssSvInfoListTimeout));
 
     BlocklistedSource source_to_blocklist_1;
@@ -746,7 +984,7 @@ TEST_P(GnssHalTest, BlocklistConstellationLocationOn) {
     // IRNSS was added in 2.0. Always attempt to blocklist IRNSS to verify that the new enum is
     // supported.
     BlocklistedSource source_to_blocklist_2;
-    source_to_blocklist_2.constellation = GnssConstellationTypeAidl::IRNSS;
+    source_to_blocklist_2.constellation = GnssConstellationType::IRNSS;
     source_to_blocklist_2.svid = 0;  // documented wildcard for all satellites in this constellation
 
     sp<IGnssConfiguration> gnss_configuration_hal;
@@ -789,11 +1027,11 @@ TEST_P(GnssHalTest, BlocklistConstellationLocationOn) {
             for (uint32_t iSv = 0; iSv < sv_info_vec.size(); iSv++) {
                 const auto& gnss_sv = sv_info_vec[iSv];
                 EXPECT_FALSE(
-                        (static_cast<GnssConstellationTypeAidl>(gnss_sv.v2_0.constellation) ==
+                        (static_cast<GnssConstellationType>(gnss_sv.v2_0.constellation) ==
                          source_to_blocklist_1.constellation) &&
                         (gnss_sv.v2_0.v1_0.svFlag & IGnssCallback_1_0::GnssSvFlags::USED_IN_FIX));
                 EXPECT_FALSE(
-                        (static_cast<GnssConstellationTypeAidl>(gnss_sv.v2_0.constellation) ==
+                        (static_cast<GnssConstellationType>(gnss_sv.v2_0.constellation) ==
                          source_to_blocklist_2.constellation) &&
                         (gnss_sv.v2_0.v1_0.svFlag & IGnssCallback_1_0::GnssSvFlags::USED_IN_FIX));
             }
@@ -884,7 +1122,8 @@ TEST_P(GnssHalTest, TestAGnssExtension) {
  * TestAGnssRilExtension:
  * 1. Gets the IAGnssRil extension.
  * 2. Sets AGnssRilCallback.
- * 3. Sets reference location.
+ * 3. Update network state to connected and then disconnected.
+ * 4. Sets reference location.
  */
 TEST_P(GnssHalTest, TestAGnssRilExtension) {
     if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
@@ -897,6 +1136,20 @@ TEST_P(GnssHalTest, TestAGnssRilExtension) {
 
     auto agnssRilCallback = sp<AGnssRilCallbackAidl>::make();
     status = iAGnssRil->setCallback(agnssRilCallback);
+    ASSERT_TRUE(status.isOk());
+
+    // Update GNSS HAL that a network has connected.
+    IAGnssRil::NetworkAttributes networkAttributes;
+    networkAttributes.networkHandle = 7700664333L;
+    networkAttributes.isConnected = true;
+    networkAttributes.capabilities = IAGnssRil::NETWORK_CAPABILITY_NOT_ROAMING;
+    networkAttributes.apn = "placeholder-apn";
+    status = iAGnssRil->updateNetworkState(networkAttributes);
+    ASSERT_TRUE(status.isOk());
+
+    // Update GNSS HAL that network has disconnected.
+    networkAttributes.isConnected = false;
+    status = iAGnssRil->updateNetworkState(networkAttributes);
     ASSERT_TRUE(status.isOk());
 
     // Set RefLocation
@@ -1020,6 +1273,9 @@ TEST_P(GnssHalTest, TestGnssMeasurementSetCallbackWithOptions) {
 
         // Validity check GnssData fields
         CheckGnssMeasurementClockFields(lastMeasurement);
+        for (const auto& measurement : lastMeasurement.measurements) {
+            CheckGnssMeasurementFields(measurement, lastMeasurement);
+        }
     }
 
     status = iGnssMeasurement->close();
@@ -1076,12 +1332,11 @@ TEST_P(GnssHalTest, TestGnssAgcInGnssMeasurement) {
  * PhaseCenterVariationCorrections and SignalGainCorrections are optional.
  */
 TEST_P(GnssHalTest, TestGnssAntennaInfo) {
-    const int kAntennaInfoTimeoutSeconds = 2;
-
     if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         return;
     }
 
+    const int kAntennaInfoTimeoutSeconds = 2;
     sp<IGnssAntennaInfo> iGnssAntennaInfo;
     auto status = aidl_gnss_hal_->getExtensionGnssAntennaInfo(&iGnssAntennaInfo);
     ASSERT_TRUE(status.isOk());

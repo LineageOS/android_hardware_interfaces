@@ -20,11 +20,15 @@
 #include "gtest/gtest.h"
 
 #include <cutils/properties.h>
+#include <utils/SystemClock.h>
 
 namespace android {
 namespace hardware {
 namespace gnss {
 namespace common {
+
+using android::hardware::gnss::ElapsedRealtime;
+using android::hardware::gnss::GnssLocation;
 
 using namespace measurement_corrections::V1_0;
 using V1_0::GnssLocationFlags;
@@ -43,6 +47,50 @@ int64_t Utils::getLocationTimestampMillis(const android::hardware::gnss::GnssLoc
 template <>
 int64_t Utils::getLocationTimestampMillis(const V1_0::GnssLocation& location) {
     return location.timestamp;
+}
+
+template <>
+void Utils::checkLocationElapsedRealtime(const V1_0::GnssLocation&) {}
+
+template <>
+void Utils::checkLocationElapsedRealtime(const android::hardware::gnss::GnssLocation& location) {
+    checkElapsedRealtime(location.elapsedRealtime);
+}
+
+void Utils::checkElapsedRealtime(const ElapsedRealtime& elapsedRealtime) {
+    ASSERT_TRUE(elapsedRealtime.flags >= 0 &&
+                elapsedRealtime.flags <= (ElapsedRealtime::HAS_TIMESTAMP_NS |
+                                          ElapsedRealtime::HAS_TIME_UNCERTAINTY_NS));
+    if (elapsedRealtime.flags & ElapsedRealtime::HAS_TIMESTAMP_NS) {
+        ASSERT_TRUE(elapsedRealtime.timestampNs > 0);
+    }
+    if (elapsedRealtime.flags & ElapsedRealtime::HAS_TIME_UNCERTAINTY_NS) {
+        ASSERT_TRUE(elapsedRealtime.timeUncertaintyNs > 0);
+    }
+}
+
+const GnssLocation Utils::getMockLocation(double latitudeDegrees, double longitudeDegrees,
+                                          double horizontalAccuracyMeters) {
+    ElapsedRealtime elapsedRealtime;
+    elapsedRealtime.flags =
+            ElapsedRealtime::HAS_TIMESTAMP_NS | ElapsedRealtime::HAS_TIME_UNCERTAINTY_NS;
+    elapsedRealtime.timestampNs = ::android::elapsedRealtimeNano();
+    elapsedRealtime.timeUncertaintyNs = 1000;
+    GnssLocation location;
+    location.gnssLocationFlags = 0xFF;
+    location.latitudeDegrees = latitudeDegrees;
+    location.longitudeDegrees = longitudeDegrees;
+    location.altitudeMeters = 500.0;
+    location.speedMetersPerSec = 0.0;
+    location.bearingDegrees = 0.0;
+    location.horizontalAccuracyMeters = horizontalAccuracyMeters;
+    location.verticalAccuracyMeters = 1000.0;
+    location.speedAccuracyMetersPerSecond = 1000.0;
+    location.bearingAccuracyDegrees = 90.0;
+    location.timestampMillis =
+            static_cast<int64_t>(kMockTimestamp + ::android::elapsedRealtimeNano() * 1e-6);
+    location.elapsedRealtime = elapsedRealtime;
+    return location;
 }
 
 const MeasurementCorrections Utils::getMockMeasurementCorrections() {

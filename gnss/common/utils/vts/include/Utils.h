@@ -19,11 +19,13 @@
 
 #include <android/hardware/gnss/1.0/IGnss.h>
 #include <android/hardware/gnss/2.0/IGnss.h>
+#include <android/hardware/gnss/IGnss.h>
 #include <android/hardware/gnss/measurement_corrections/1.0/IMeasurementCorrections.h>
 #include <android/hardware/gnss/measurement_corrections/1.1/IMeasurementCorrections.h>
 #include <android/hardware/gnss/measurement_corrections/BnMeasurementCorrectionsInterface.h>
 
 #include <gtest/gtest.h>
+#include <type_traits>
 
 namespace android {
 namespace hardware {
@@ -32,8 +34,18 @@ namespace common {
 
 struct Utils {
   public:
+    static const int64_t kMockTimestamp = 1519930775453L;
+
     template <class T>
     static void checkLocation(const T& location, bool check_speed, bool check_more_accuracies);
+    template <class T>
+    static void checkLocationElapsedRealtime(const T& location);
+
+    static void checkElapsedRealtime(
+            const android::hardware::gnss::ElapsedRealtime& elapsedRealtime);
+
+    static const android::hardware::gnss::GnssLocation getMockLocation(
+            double latitudeDegrees, double longitudeDegrees, double horizontalAccuracyMeters);
     static const measurement_corrections::V1_0::MeasurementCorrections
     getMockMeasurementCorrections();
     static const measurement_corrections::V1_1::MeasurementCorrections
@@ -117,6 +129,8 @@ void Utils::checkLocation(const T& location, bool check_speed, bool check_more_a
 
     // Check timestamp > 1.48e12 (47 years in msec - 1970->2017+)
     EXPECT_GT(getLocationTimestampMillis(location), 1.48e12);
+
+    checkLocationElapsedRealtime(location);
 }
 
 }  // namespace common
