@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,19 +31,12 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.wifi.hostapd;
+package android.hardware.bluetooth.audio;
 @Backing(type="int") @VintfStability
-enum Bandwidth {
-  BANDWIDTH_INVALID = 0,
-  BANDWIDTH_20_NOHT = 1,
-  BANDWIDTH_20 = 2,
-  BANDWIDTH_40 = 3,
-  BANDWIDTH_80 = 4,
-  BANDWIDTH_80P80 = 5,
-  BANDWIDTH_160 = 6,
-  BANDWIDTH_320 = 7,
-  BANDWIDTH_2160 = 8,
-  BANDWIDTH_4320 = 9,
-  BANDWIDTH_6480 = 10,
-  BANDWIDTH_8640 = 11,
+enum AptxAdaptiveChannelMode {
+  JOINT_STEREO = 0,
+  MONO = 1,
+  DUAL_MONO = 2,
+  TWS_STEREO = 4,
+  UNKNOWN = 255,
 }

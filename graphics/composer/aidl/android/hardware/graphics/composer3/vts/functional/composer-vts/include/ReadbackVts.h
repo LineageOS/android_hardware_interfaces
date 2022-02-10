@@ -16,11 +16,6 @@
 
 #pragma once
 
-// TODO(b/129481165): remove the #pragma below and fix conversion issues
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-
-#include <GraphicsComposerCallback.h>
 #include <aidl/android/hardware/graphics/composer3/IComposerClient.h>
 #include <android-base/unique_fd.h>
 #include <android/hardware/graphics/composer3/ComposerClientReader.h>
@@ -28,11 +23,9 @@
 #include <mapper-vts/2.1/MapperVts.h>
 #include <renderengine/RenderEngine.h>
 #include <ui/GraphicBuffer.h>
-
 #include <memory>
-
-// TODO(b/129481165): remove the #pragma below and fix conversion issues
-#pragma clang diagnostic pop  // ignored "-Wconversion
+#include "GraphicsComposerCallback.h"
+#include "VtsComposerClient.h"
 
 namespace aidl::android::hardware::graphics::composer3::vts {
 
@@ -56,9 +49,11 @@ class TestRenderEngine;
 
 class TestLayer {
   public:
-    TestLayer(const std::shared_ptr<IComposerClient>& client, int64_t display)
-        : mDisplay(display), mComposerClient(client) {
-        client->createLayer(display, kBufferSlotCount, &mLayer);
+    TestLayer(const std::shared_ptr<VtsComposerClient>& client, int64_t display)
+        : mDisplay(display) {
+        const auto& [status, layer] = client->createLayer(display, kBufferSlotCount);
+        EXPECT_TRUE(status.isOk());
+        mLayer = layer;
     }
 
     // ComposerClient will take care of destroying layers, no need to explicitly
@@ -103,14 +98,11 @@ class TestLayer {
     float mAlpha = 1.0;
     BlendMode mBlendMode = BlendMode::NONE;
     uint32_t mZOrder = 0;
-
-  private:
-    std::shared_ptr<IComposerClient> const mComposerClient;
 };
 
 class TestColorLayer : public TestLayer {
   public:
-    TestColorLayer(const std::shared_ptr<IComposerClient>& client, int64_t display)
+    TestColorLayer(const std::shared_ptr<VtsComposerClient>& client, int64_t display)
         : TestLayer{client, display} {}
 
     void write(ComposerClientWriter& writer) override;
@@ -125,7 +117,7 @@ class TestColorLayer : public TestLayer {
 
 class TestBufferLayer : public TestLayer {
   public:
-    TestBufferLayer(const std::shared_ptr<IComposerClient>& client,
+    TestBufferLayer(const std::shared_ptr<VtsComposerClient>& client,
                     const ::android::sp<::android::GraphicBuffer>& graphicBuffer,
                     TestRenderEngine& renderEngine, int64_t display, uint32_t width,
                     uint32_t height, common::PixelFormat format,
@@ -195,12 +187,12 @@ class ReadbackHelper {
 
 class ReadbackBuffer {
   public:
-    ReadbackBuffer(int64_t display, const std::shared_ptr<IComposerClient>& client, int32_t width,
+    ReadbackBuffer(int64_t display, const std::shared_ptr<VtsComposerClient>& client, int32_t width,
                    int32_t height, common::PixelFormat pixelFormat, common::Dataspace dataspace);
 
     void setReadbackBuffer();
 
-    void checkReadbackBuffer(std::vector<Color> expectedColors);
+    void checkReadbackBuffer(const std::vector<Color>& expectedColors);
 
     ::android::sp<::android::GraphicBuffer> allocate();
 
@@ -213,7 +205,7 @@ class ReadbackBuffer {
     Dataspace mDataspace;
     int64_t mDisplay;
     ::android::sp<::android::GraphicBuffer> mGraphicBuffer;
-    std::shared_ptr<IComposerClient> mComposerClient;
+    std::shared_ptr<VtsComposerClient> mComposerClient;
     ::android::Rect mAccessRegion;
     native_handle_t mBufferHandle;
 };

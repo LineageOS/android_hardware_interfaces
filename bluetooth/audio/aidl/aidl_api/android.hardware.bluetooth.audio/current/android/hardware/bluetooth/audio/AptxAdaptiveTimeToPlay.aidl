@@ -1,11 +1,11 @@
-/**
- * Copyright (c) 2022, The Android Open Source Project
+/*
+ * Copyright 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,14 +31,13 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.graphics.composer3;
+package android.hardware.bluetooth.audio;
 @VintfStability
-parcelable BufferAheadResult {
-  long display;
-  android.hardware.graphics.composer3.BufferAheadResult.Layer[] layers;
-  @VintfStability
-  parcelable Layer {
-    long layer;
-    boolean presented;
-  }
+parcelable AptxAdaptiveTimeToPlay {
+  byte lowLowLatency;
+  byte highLowLatency;
+  byte lowHighQuality;
+  byte highHighQuality;
+  byte lowTws;
+  byte highTws;
 }

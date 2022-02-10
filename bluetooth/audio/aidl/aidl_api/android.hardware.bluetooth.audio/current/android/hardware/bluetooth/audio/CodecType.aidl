@@ -42,4 +42,5 @@ enum CodecType {
   LDAC = 5,
   LC3 = 6,
   VENDOR = 7,
+  APTX_ADAPTIVE = 8,
 }
