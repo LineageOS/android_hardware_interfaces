@@ -41,8 +41,8 @@ parcelable OperationContext {
      */
     OperationReason reason = OperationReason.UNKNOWN;
 
-    /* Flag indicating that the display is in AoD mode. */
-    boolean isAoD = false;
+    /* Flag indicating that the display is in AOD mode. */
+    boolean isAod = false;
 
     /** Flag indicating that crypto was requested. */
     boolean isCrypto = false;
