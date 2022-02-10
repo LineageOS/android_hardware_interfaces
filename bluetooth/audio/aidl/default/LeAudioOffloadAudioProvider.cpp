@@ -38,6 +38,12 @@ LeAudioOffloadInputAudioProvider::LeAudioOffloadInputAudioProvider()
   session_type_ = SessionType::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH;
 }
 
+LeAudioOffloadBroadcastAudioProvider::LeAudioOffloadBroadcastAudioProvider()
+    : LeAudioOffloadAudioProvider() {
+  session_type_ =
+      SessionType::LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH;
+}
+
 LeAudioOffloadAudioProvider::LeAudioOffloadAudioProvider()
     : BluetoothAudioProvider() {}
 
