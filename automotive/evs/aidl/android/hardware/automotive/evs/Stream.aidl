@@ -55,7 +55,7 @@ parcelable Stream {
     int height;
     /**
      * The frame rate of this stream in frames-per-second
-     /
+     */
     int framerate;
     /**
      * The pixel format form the buffers in this stream.
