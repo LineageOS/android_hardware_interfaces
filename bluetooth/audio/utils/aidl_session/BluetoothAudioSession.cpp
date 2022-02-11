@@ -426,8 +426,8 @@ void BluetoothAudioSession::ReportLowLatencyModeAllowedChanged(bool allowed) {
   for (auto& observer : observers_) {
     uint16_t cookie = observer.first;
     std::shared_ptr<PortStatusCallbacks> callback = observer.second;
-    LOG(INFO) << __func__ << " - allowed="
-              << allowed ? " allowed" : " disallowed";
+    LOG(INFO) << __func__
+              << " - allowed=" << (allowed ? " allowed" : " disallowed");
     callback->low_latency_mode_allowed_cb_(cookie, allowed);
   }
 }
