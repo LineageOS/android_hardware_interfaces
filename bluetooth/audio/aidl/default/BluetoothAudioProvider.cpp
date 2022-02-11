@@ -131,6 +131,8 @@ ndk::ScopedAStatus BluetoothAudioProvider::setLowLatencyModeAllowed(
     return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
   }
   LOG(INFO) << __func__ << " - allowed " << allowed;
+  BluetoothAudioSessionReport::ReportLowLatencyModeAllowedChanged(
+    session_type_, allowed);
   return ndk::ScopedAStatus::ok();
 }
 
