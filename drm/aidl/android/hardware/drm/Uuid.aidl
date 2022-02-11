@@ -18,5 +18,5 @@ package android.hardware.drm;
 
 @VintfStability
 parcelable Uuid {
-    byte[] uuid;
+    byte[16] uuid;
 }

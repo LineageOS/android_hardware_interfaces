@@ -222,10 +222,6 @@
         <name>android.hardware.drm</name>
         <version>1</version>
         <interface>
-            <name>ICryptoFactory</name>
-            <regex-instance>.*</regex-instance>
-        </interface>
-        <interface>
             <name>IDrmFactory</name>
             <regex-instance>.*</regex-instance>
         </interface>
