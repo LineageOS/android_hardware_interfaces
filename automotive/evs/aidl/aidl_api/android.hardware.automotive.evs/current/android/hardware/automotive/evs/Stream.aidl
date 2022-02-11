@@ -38,6 +38,7 @@ parcelable Stream {
   android.hardware.automotive.evs.StreamType streamType;
   int width;
   int height;
+  int framerate;
   android.hardware.graphics.common.PixelFormat format;
   android.hardware.graphics.common.BufferUsage usage;
   android.hardware.automotive.evs.Rotation rotation;
