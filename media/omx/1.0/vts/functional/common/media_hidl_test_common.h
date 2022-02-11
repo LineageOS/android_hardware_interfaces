@@ -203,9 +203,8 @@ struct CodecObserver : public IOmxObserver {
             }
             int64_t delayUs = finishBy - android::ALooper::GetNowUs();
             if (delayUs < 0) return toStatus(android::TIMED_OUT);
-            (timeoutUs < 0)
-                ? msgCondition.wait(msgLock)
-                : msgCondition.waitRelative(msgLock, delayUs * 1000ll);
+            (timeoutUs < 0) ? msgCondition.wait(msgLock)
+                            : msgCondition.waitRelative(msgLock, delayUs * 1000LL);
         }
     }
 

@@ -36,6 +36,6 @@ package android.hardware.biometrics.common;
 parcelable OperationContext {
   int id = 0;
   android.hardware.biometrics.common.OperationReason reason = android.hardware.biometrics.common.OperationReason.UNKNOWN;
-  boolean isAoD = false;
+  boolean isAod = false;
   boolean isCrypto = false;
 }

@@ -34,10 +34,13 @@
 package android.hardware.biometrics.fingerprint;
 @VintfStability
 parcelable PointerContext {
-  int pointerId = 0;
-  int x = 0;
-  int y = 0;
+  int pointerId = -1;
+  float x = 0.000000f;
+  float y = 0.000000f;
   float minor = 0.000000f;
   float major = 0.000000f;
-  boolean isAoD = false;
+  float orientation = 0.000000f;
+  boolean isAod = false;
+  long time = 0;
+  long gestureStart = 0;
 }

@@ -24,4 +24,9 @@ hidl_interface {
     ],
     gen_java: true,
     gen_java_constants: true,
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.media.swcodec",
+        "test_com.android.media.swcodec",
+    ],
 }
