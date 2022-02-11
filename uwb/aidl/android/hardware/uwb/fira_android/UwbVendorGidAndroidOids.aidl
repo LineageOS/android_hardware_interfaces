@@ -19,6 +19,7 @@ package android.hardware.uwb.fira_android;
 /**
  * Android specific vendor command OIDs should be defined here.
  *
+ * For use with Android GID - 0xC.
  */
 @VintfStability
 @Backing(type="byte")
