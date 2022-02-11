@@ -123,10 +123,6 @@ struct Device : public IDevice, public ParametersUtil {
                                       const AudioConfig& config, const AudioOutputFlags& flags,
                                       const SourceMetadata& sourceMetadata,
                                       openOutputStream_7_1_cb _hidl_cb) override;
-    Return<void> openInputStream_7_1(int32_t ioHandle, const DeviceAddress& device,
-                                     const AudioConfig& config, const AudioInputFlags& flags,
-                                     const SinkMetadata& sinkMetadata,
-                                     openInputStream_7_1_cb _hidl_cb) override;
 #endif
 
     Return<bool> supportsAudioPatches() override;
