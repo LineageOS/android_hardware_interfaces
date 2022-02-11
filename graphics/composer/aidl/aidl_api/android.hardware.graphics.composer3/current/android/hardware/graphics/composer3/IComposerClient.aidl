@@ -59,6 +59,7 @@ interface IComposerClient {
   @nullable ParcelFileDescriptor getReadbackBufferFence(long display);
   android.hardware.graphics.composer3.RenderIntent[] getRenderIntents(long display, android.hardware.graphics.composer3.ColorMode mode);
   android.hardware.graphics.composer3.ContentType[] getSupportedContentTypes(long display);
+  @nullable android.hardware.graphics.common.DisplayDecorationSupport getDisplayDecorationSupport(long display);
   void registerCallback(in android.hardware.graphics.composer3.IComposerCallback callback);
   void setActiveConfig(long display, int config);
   android.hardware.graphics.composer3.VsyncPeriodChangeTimeline setActiveConfigWithConstraints(long display, int config, in android.hardware.graphics.composer3.VsyncPeriodChangeConstraints vsyncPeriodChangeConstraints);

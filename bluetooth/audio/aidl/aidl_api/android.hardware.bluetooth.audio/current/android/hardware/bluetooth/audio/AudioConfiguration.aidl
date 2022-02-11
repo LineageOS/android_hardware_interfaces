@@ -37,4 +37,5 @@ union AudioConfiguration {
   android.hardware.bluetooth.audio.PcmConfiguration pcmConfig;
   android.hardware.bluetooth.audio.CodecConfiguration a2dpConfig;
   android.hardware.bluetooth.audio.LeAudioConfiguration leAudioConfig;
+  android.hardware.bluetooth.audio.LeAudioBroadcastConfiguration leAudioBroadcastConfig;
 }

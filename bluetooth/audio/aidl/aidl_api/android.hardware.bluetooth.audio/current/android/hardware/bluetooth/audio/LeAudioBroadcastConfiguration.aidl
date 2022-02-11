@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,12 +31,15 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.automotive.audiocontrol;
+package android.hardware.bluetooth.audio;
 @VintfStability
-parcelable DuckingInfo {
-  int zoneId;
-  String[] deviceAddressesToDuck;
-  String[] deviceAddressesToUnduck;
-  String[] usagesHoldingFocus;
-  @nullable android.hardware.audio.common.PlaybackTrackMetadata[] playbackMetaDataHoldingFocus;
+parcelable LeAudioBroadcastConfiguration {
+  android.hardware.bluetooth.audio.CodecType codecType;
+  android.hardware.bluetooth.audio.LeAudioBroadcastConfiguration.BroadcastStreamMap[] streamMap;
+  @VintfStability
+  parcelable BroadcastStreamMap {
+    char streamHandle;
+    int audioChannelAllocation;
+    android.hardware.bluetooth.audio.LeAudioCodecConfiguration leAudioCodecConfig;
+  }
 }

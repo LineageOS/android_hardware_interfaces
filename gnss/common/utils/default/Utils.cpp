@@ -217,7 +217,8 @@ GnssData Utils::getMockMeasurement(const bool enableCorrVecOutputs) {
                        .biasUncertaintyNs = 47514.989972114563,
                        .driftNsps = -51.757811607455452,
                        .driftUncertaintyNsps = 310.64968328491528,
-                       .hwClockDiscontinuityCount = 1};
+                       .hwClockDiscontinuityCount = 1,
+                       .referenceSignalTypeForIsb = signalType};
 
     ElapsedRealtime timestamp = {
             .flags = ElapsedRealtime::HAS_TIMESTAMP_NS | ElapsedRealtime::HAS_TIME_UNCERTAINTY_NS,

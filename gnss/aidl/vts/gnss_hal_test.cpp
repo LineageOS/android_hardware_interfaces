@@ -33,7 +33,7 @@ void GnssHalTest::SetUp() {
     ASSERT_NE(aidl_gnss_hal_, nullptr);
     ALOGD("AIDL Interface Version = %d", aidl_gnss_hal_->getInterfaceVersion());
 
-    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         const auto& hidlInstanceNames = android::hardware::getAllHalInstanceNames(
                 android::hardware::gnss::V2_1::IGnss::descriptor);
         gnss_hal_ = IGnss_V2_1::getService(hidlInstanceNames[0]);
@@ -60,9 +60,15 @@ void GnssHalTest::SetUpGnssCallback() {
                                                           TIMEOUT_SEC));
     EXPECT_EQ(aidl_gnss_cb_->capabilities_cbq_.calledCount(), 1);
 
-    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         // Invoke the super method.
         GnssHalTestTemplate<IGnss_V2_1>::SetUpGnssCallback();
+    } else {
+        /*
+         * SystemInfo callback should trigger
+         */
+        EXPECT_TRUE(aidl_gnss_cb_->info_cbq_.retrieve(aidl_gnss_cb_->last_info_, TIMEOUT_SEC));
+        EXPECT_EQ(aidl_gnss_cb_->info_cbq_.calledCount(), 1);
     }
 }
 
@@ -71,7 +77,7 @@ void GnssHalTest::CheckLocation(const GnssLocation& location, bool check_speed) 
 }
 
 void GnssHalTest::SetPositionMode(const int min_interval_msec, const bool low_power_mode) {
-    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         // Invoke the super method.
         return GnssHalTestTemplate<IGnss_V2_1>::SetPositionMode(min_interval_msec, low_power_mode);
     }
@@ -93,7 +99,7 @@ void GnssHalTest::SetPositionMode(const int min_interval_msec, const bool low_po
 
 bool GnssHalTest::StartAndCheckFirstLocation(const int min_interval_msec,
                                              const bool low_power_mode) {
-    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         // Invoke the super method.
         return GnssHalTestTemplate<IGnss_V2_1>::StartAndCheckFirstLocation(min_interval_msec,
                                                                            low_power_mode);
@@ -127,7 +133,7 @@ bool GnssHalTest::StartAndCheckFirstLocation(const int min_interval_msec,
 
 void GnssHalTest::StopAndClearLocations() {
     ALOGD("StopAndClearLocations");
-    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         // Invoke the super method.
         return GnssHalTestTemplate<IGnss_V2_1>::StopAndClearLocations();
     }
@@ -148,7 +154,7 @@ void GnssHalTest::StopAndClearLocations() {
 }
 
 void GnssHalTest::StartAndCheckLocations(int count) {
-    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         // Invoke the super method.
         return GnssHalTestTemplate<IGnss_V2_1>::StartAndCheckLocations(count);
     }
@@ -264,7 +270,7 @@ BlocklistedSource GnssHalTest::FindStrongFrequentNonGpsSource(
 
 GnssConstellationType GnssHalTest::startLocationAndGetNonGpsConstellation(
         const int locations_to_await, const int gnss_sv_info_list_timeout) {
-    if (aidl_gnss_hal_->getInterfaceVersion() == 1) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         return static_cast<GnssConstellationType>(
                 GnssHalTestTemplate<IGnss_V2_1>::startLocationAndGetNonGpsConstellation(
                         locations_to_await, gnss_sv_info_list_timeout));

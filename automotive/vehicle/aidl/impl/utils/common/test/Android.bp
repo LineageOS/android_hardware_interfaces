@@ -23,7 +23,7 @@ cc_test {
     srcs: ["*.cpp"],
     vendor: true,
     static_libs: [
-        "VehicleHalUtilsVendor",
+        "VehicleHalUtils",
         "libgtest",
         "libgmock",
     ],

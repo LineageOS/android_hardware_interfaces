@@ -274,7 +274,7 @@ class Nint : public Int {
     virtual std::unique_ptr<Item> clone() const override { return std::make_unique<Nint>(mValue); }
 
   private:
-    uint64_t addlInfo() const { return -1ll - mValue; }
+    uint64_t addlInfo() const { return -1LL - mValue; }
 
     int64_t mValue;
 };

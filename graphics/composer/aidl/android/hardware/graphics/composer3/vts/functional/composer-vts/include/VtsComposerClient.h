@@ -199,7 +199,7 @@ class VtsComposerClient {
 
 class VtsDisplay {
   public:
-    VtsDisplay(int64_t displayId) : mDisplayId(displayId) {}
+    VtsDisplay(int64_t displayId) : mDisplayId(displayId), mDisplayWidth(0), mDisplayHeight(0) {}
 
     int64_t getDisplayId() const { return mDisplayId; }
 

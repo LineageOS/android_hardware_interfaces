@@ -75,13 +75,12 @@ enum Composition {
     SIDEBAND = 5,
     /**
      * A display decoration layer contains a buffer which is used to provide
-     * anti-aliasing on the cutout region/rounded corners on the top and
+     * anti-aliasing on the cutout region and rounded corners on the top and
      * bottom of a display.
      *
-     * Pixels in the buffer with an alpha of 0 (transparent) will show the
-     * content underneath, and pixels with a max alpha value will be rendered in
-     * black. An alpha in between will show the underlying content blended with
-     * black.
+     * Only supported if the device returns a valid struct from
+     * getDisplayDecorationSupport. Pixels in the buffer are interpreted
+     * according to the DisplayDecorationSupport.alphInterpretation.
      *
      * Upon validateDisplay, the device may request a change from this type
      * to either DEVICE or CLIENT.
