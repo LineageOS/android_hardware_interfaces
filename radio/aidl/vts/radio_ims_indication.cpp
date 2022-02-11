@@ -27,3 +27,8 @@ ndk::ScopedAStatus RadioImsIndication::onAccessAllowed(RadioIndicationType /*typ
         int /*token*/) {
     return ndk::ScopedAStatus::ok();
 }
+
+ndk::ScopedAStatus RadioImsIndication::notifyAnbr(RadioIndicationType /*type*/,
+        int /*qosSessionId*/, int /*bitsPerSecond*/) {
+    return ndk::ScopedAStatus::ok();
+}

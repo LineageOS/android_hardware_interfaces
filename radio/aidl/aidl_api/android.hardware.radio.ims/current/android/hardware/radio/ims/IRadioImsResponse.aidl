@@ -38,4 +38,6 @@ interface IRadioImsResponse {
   oneway void updateImsRegistrationInfoResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void notifyImsTrafficResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void performAcbCheckResponse(in android.hardware.radio.RadioResponseInfo info);
+  oneway void setAnbrEnabledResponse(in android.hardware.radio.RadioResponseInfo info);
+  oneway void sendAnbrQueryResponse(in android.hardware.radio.RadioResponseInfo info);
 }

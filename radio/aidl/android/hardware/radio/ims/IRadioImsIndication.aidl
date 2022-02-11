@@ -18,6 +18,7 @@ package android.hardware.radio.ims;
 
 import android.hardware.radio.RadioIndicationType;
 import android.hardware.radio.ims.ConnectionFailureInfo;
+import android.hardware.radio.ims.ImsStreamDirection;
 
 /**
  * Interface declaring unsolicited radio indications for ims APIs.
@@ -43,4 +44,17 @@ oneway interface IRadioImsIndication {
      * @param type Type of radio indication
      */
     void onAccessAllowed(in RadioIndicationType type, int token);
+
+    /**
+     * Access Network Bitrate Recommendation (ANBR), see 3GPP TS 26.114.
+     * Notifies the bit rate received from the network via ANBR message
+     *
+     * @param type Type of radio indication
+     * @param qosSessionId QoS session ID is used to identify media stream such as audio or video
+     * @param direction Direction of this packet stream (e.g. uplink or downlink)
+     * @param bitsPerSecond The recommended bit rate for the UE
+     * for a specific logical channel and a specific direction by NW
+     */
+     void notifyAnbr(in RadioIndicationType type, int qosSessionId, ImsStreamDirection direction,
+            int bitsPerSecond);
 }

@@ -21,6 +21,7 @@ import android.hardware.radio.ims.ImsTrafficType;
 import android.hardware.radio.ims.IRadioImsIndication;
 import android.hardware.radio.ims.IRadioImsResponse;
 import android.hardware.radio.ims.SrvccCall;
+import android.hardware.radio.ims.ImsStreamDirection;
 
 /**
  * This interface is used by IMS telephony layer to talk to cellular radio.
@@ -105,4 +106,34 @@ oneway interface IRadioIms {
      */
     void setResponseFunctions(in IRadioImsResponse radioImsResponse,
             in IRadioImsIndication radioImsIndication);
+
+    /**
+     * Access Network Bitrate Recommendation (ANBR), see 3GPP TS 26.114.
+     * This API is used to enable or disable the ANBR feature
+     * for the bearer corresponding to the qosSessionId
+     * This will be invoked when both parties in a call support the ANBR feature
+     * In case of video call, the modem shall use qosSessionId to identify
+     * appropriate media stream
+     *
+     * @param serial Serial number of request
+     * @param qosSessionId QoS session ID is used to identify media stream such as audio or video
+     * @param isEnabled True if Anbr feature is enabled, false otherwise
+     *
+     * Response function is IRadioImsResponse.setAnbrEnabledResponse()
+     */
+    void setAnbrEnabled(int serial, int qosSessionId, boolean isEnabled);
+
+    /**
+     * Access Network Bitrate Recommendation Query (ANBRQ), see 3GPP TS 26.114.
+     * This API triggers radio to send ANBRQ message
+     * to the access network to query the desired bitrate.
+     *
+     * @param serial Serial number of request
+     * @param qosSessionId QoS session ID is used to identify media stream such as audio or video
+     * @param direction Direction of this packet stream (e.g. uplink or downlink)
+     * @param bitsPerSecond The bit rate requested by the opponent UE
+     *
+     * Response function is IRadioImsResponse.sendAnbrQueryResponse()
+     */
+    void sendAnbrQuery(int serial, int qosSessionId, ImsStreamDirection direction, int bitsPerSecond);
 }
