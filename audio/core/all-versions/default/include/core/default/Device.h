@@ -163,6 +163,9 @@ struct Device : public IDevice, public ParametersUtil {
                                   const hidl_vec<AudioPortConfig>& sinks,
                                   createAudioPatch_cb _hidl_cb) override;
 #endif
+#if MAJOR_VERSION == 7 && MINOR_VERSION == 1
+    Return<Result> setConnectedState_7_1(const AudioPort& devicePort, bool connected) override;
+#endif
     Return<void> debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) override;
 
     // Utility methods for extending interfaces.

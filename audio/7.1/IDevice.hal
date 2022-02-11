@@ -85,4 +85,16 @@ interface IDevice extends @7.0::IDevice {
                     Result retval,
                     IStreamIn inStream,
                     AudioConfig suggestedConfig);
+
+    /**
+     * Notifies the device module about the connection state of an input/output
+     * device attached to it. The devicePort identifies the device and may also
+     * provide extra information such as raw audio descriptors.
+     *
+     * @param devicePort audio device port.
+     * @param connected whether the device is connected.
+     * @return retval operation completion status.
+     */
+    setConnectedState_7_1(AudioPort devicePort, bool connected)
+            generates (Result retval);
 };
