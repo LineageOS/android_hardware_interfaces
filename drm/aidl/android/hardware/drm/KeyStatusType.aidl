@@ -32,20 +32,20 @@ enum KeyStatusType {
      * The key is not currently usable to decrypt media data because its output
      * requirements cannot currently be met.
      */
-    OUTPUTNOTALLOWED,
+    OUTPUT_NOT_ALLOWED,
     /**
      * The status of the key is not yet known and is being determined.
      */
-    STATUSPENDING,
+    STATUS_PENDING,
     /**
      * The key is not currently usable to decrypt media data because of an
      * internal error in processing unrelated to input parameters.
      */
-    INTERNALERROR,
+    INTERNAL_ERROR,
     /**
      * The key is not yet usable to decrypt media because the start
      * time is in the future. The key must become usable when
      * its start time is reached.
      */
-    USABLEINFUTURE,
+    USABLE_IN_FUTURE,
 }

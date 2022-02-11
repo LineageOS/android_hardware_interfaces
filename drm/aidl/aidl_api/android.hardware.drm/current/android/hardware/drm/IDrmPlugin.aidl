@@ -63,7 +63,6 @@ interface IDrmPlugin {
   void removeOfflineLicense(in android.hardware.drm.KeySetId keySetId);
   void removeSecureStop(in android.hardware.drm.SecureStopId secureStopId);
   boolean requiresSecureDecoder(in String mime, in android.hardware.drm.SecurityLevel level);
-  boolean requiresSecureDecoderDefault(in String mime);
   void restoreKeys(in byte[] sessionId, in android.hardware.drm.KeySetId keySetId);
   void setCipherAlgorithm(in byte[] sessionId, in String algorithm);
   void setListener(in android.hardware.drm.IDrmPluginListener listener);

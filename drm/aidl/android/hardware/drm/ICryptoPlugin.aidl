@@ -17,7 +17,7 @@
 package android.hardware.drm;
 
 import android.hardware.common.Ashmem;
-import android.hardware.drm.DecryptResult;
+import android.hardware.drm.DecryptArgs;
 import android.hardware.drm.DestinationBuffer;
 import android.hardware.drm.LogMessage;
 import android.hardware.drm.Mode;
@@ -38,23 +38,7 @@ interface ICryptoPlugin {
      * Decrypt an array of subsamples from the source memory buffer to the
      * destination memory buffer.
      *
-     * @param secure a flag to indicate if a secure decoder is being used.
-     *     This enables the plugin to configure buffer modes to work
-     *     consistently with a secure decoder.
-     * @param the keyId for the key that is used to do the decryption. The
-     *     keyId refers to a key in the associated MediaDrm instance.
-     * @param iv the initialization vector to use
-     * @param mode the crypto mode to use
-     * @param pattern the crypto pattern to use
-     * @param subSamples a vector of subsamples indicating the number
-     *     of clear and encrypted bytes to process. This allows the decrypt
-     *     call to operate on a range of subsamples in a single call
-     * @param source the input buffer for the decryption
-     * @param offset the offset of the first byte of encrypted data from
-     *     the base of the source buffer
-     * @param destination the output buffer for the decryption
-     *
-     * @return DecryptResult parcelable
+     * @return number of decrypted bytes
      *     Implicit error codes:
      *       + ERROR_DRM_CANNOT_HANDLE in other failure cases
      *       + ERROR_DRM_DECRYPT if the decrypt operation fails
@@ -74,9 +58,7 @@ interface ICryptoPlugin {
      *       + ERROR_DRM_SESSION_NOT_OPENED if the decrypt session is not
      *             opened
      */
-    DecryptResult decrypt(in boolean secure, in byte[] keyId, in byte[] iv, in Mode mode,
-            in Pattern pattern, in SubSample[] subSamples, in SharedBuffer source, in long offset,
-            in DestinationBuffer destination);
+    int decrypt(in DecryptArgs args);
 
     /**
      * Get OEMCrypto or plugin error messages.
@@ -129,10 +111,8 @@ interface ICryptoPlugin {
      * There can be multiple shared buffers per crypto plugin. The buffers
      * are distinguished by the bufferId.
      *
-     * @param base the base of the memory buffer identified by
-     *     bufferId
-     * @param bufferId identifies the specific shared buffer for which
-     *     the base is being set.
+     * @param base the base of the memory buffer abstracted by
+     *     SharedBuffer parcelable (bufferId, size, handle)
      */
-    void setSharedBufferBase(in Ashmem base, in int bufferId);
+    void setSharedBufferBase(in SharedBuffer base);
 }

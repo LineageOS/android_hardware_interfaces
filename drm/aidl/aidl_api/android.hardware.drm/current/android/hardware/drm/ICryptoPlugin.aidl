@@ -34,10 +34,10 @@
 package android.hardware.drm;
 @VintfStability
 interface ICryptoPlugin {
-  android.hardware.drm.DecryptResult decrypt(in boolean secure, in byte[] keyId, in byte[] iv, in android.hardware.drm.Mode mode, in android.hardware.drm.Pattern pattern, in android.hardware.drm.SubSample[] subSamples, in android.hardware.drm.SharedBuffer source, in long offset, in android.hardware.drm.DestinationBuffer destination);
+  int decrypt(in android.hardware.drm.DecryptArgs args);
   List<android.hardware.drm.LogMessage> getLogMessages();
   void notifyResolution(in int width, in int height);
   boolean requiresSecureDecoderComponent(in String mime);
   void setMediaDrmSession(in byte[] sessionId);
-  void setSharedBufferBase(in android.hardware.common.Ashmem base, in int bufferId);
+  void setSharedBufferBase(in android.hardware.drm.SharedBuffer base);
 }

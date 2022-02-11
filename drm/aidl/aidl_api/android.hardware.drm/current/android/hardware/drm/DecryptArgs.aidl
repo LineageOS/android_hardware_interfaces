@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,14 @@
 
 package android.hardware.drm;
 @VintfStability
-interface ICryptoFactory {
-  @nullable android.hardware.drm.ICryptoPlugin createPlugin(in android.hardware.drm.Uuid uuid, in byte[] initData);
-  boolean isCryptoSchemeSupported(in android.hardware.drm.Uuid uuid);
+parcelable DecryptArgs {
+  boolean secure;
+  byte[] keyId;
+  byte[] iv;
+  android.hardware.drm.Mode mode;
+  android.hardware.drm.Pattern pattern;
+  android.hardware.drm.SubSample[] subSamples;
+  android.hardware.drm.SharedBuffer source;
+  long offset;
+  android.hardware.drm.DestinationBuffer destination;
 }
