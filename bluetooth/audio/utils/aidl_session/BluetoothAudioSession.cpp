@@ -523,21 +523,6 @@ void BluetoothAudioSession::SetLatencyMode(LatencyMode latency_mode) {
   }
 }
 
-void BluetoothAudioSession::SetCodecType(CodecType codec_type) {
-  std::lock_guard<std::recursive_mutex> guard(mutex_);
-  if (!IsSessionReady()) {
-    LOG(DEBUG) << __func__ << " - SessionType=" << toString(session_type_)
-               << " has NO session";
-    return;
-  }
-
-  auto hal_retval = stack_iface_->setCodecType(codec_type);
-  if (!hal_retval.isOk()) {
-    LOG(WARNING) << __func__ << " - IBluetoothAudioPort SessionType="
-                 << toString(session_type_) << " failed";
-  }
-}
-
 bool BluetoothAudioSession::IsAidlAvailable() {
   if (is_aidl_checked) return is_aidl_available;
   is_aidl_available =
