@@ -78,6 +78,18 @@ class BluetoothAudioSessionReport {
       session_ptr->ReportAudioConfigChanged(audio_config);
     }
   }
+  /***
+   * The API reports the Bluetooth stack has replied the changed of the low
+   * latency audio allowed, and will inform registered bluetooth_audio outputs
+   ***/
+  static void ReportLowLatencyModeAllowedChanged(
+    const SessionType& session_type, bool allowed) {
+    std::shared_ptr<BluetoothAudioSession> session_ptr =
+        BluetoothAudioSessionInstance::GetSessionInstance(session_type);
+    if (session_ptr != nullptr) {
+      session_ptr->ReportLowLatencyModeAllowedChanged(allowed);
+    }
+  }
 };
 
 }  // namespace audio
