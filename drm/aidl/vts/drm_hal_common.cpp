@@ -22,9 +22,11 @@
 #include <sys/mman.h>
 #include <random>
 
+#include <aidlcommonsupport/NativeHandle.h>
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 #include <android/sharedmem.h>
+#include <cutils/native_handle.h>
 
 #include "drm_hal_clearkey_module.h"
 #include "drm_hal_common.h"
@@ -39,8 +41,7 @@ namespace clearkeydrm = ::android::hardware::drm::V1_2::vts;
 
 using std::vector;
 using ::aidl::android::hardware::common::Ashmem;
-using ::aidl::android::hardware::drm::BufferType;
-using ::aidl::android::hardware::drm::DecryptResult;
+using ::aidl::android::hardware::drm::DecryptArgs;
 using ::aidl::android::hardware::drm::DestinationBuffer;
 using ::aidl::android::hardware::drm::EventType;
 using ::aidl::android::hardware::drm::ICryptoPlugin;
@@ -72,7 +73,6 @@ std::string HalBaseName(const std::string& fullname) {
 }
 
 const char* kDrmIface = "android.hardware.drm.IDrmFactory";
-const char* kCryptoIface = "android.hardware.drm.ICryptoFactory";
 
 std::string HalFullName(const std::string& iface, const std::string& basename) {
     return iface + '/' + basename;
@@ -184,7 +184,6 @@ void DrmHalTest::SetUp() {
           test_info->name(), GetParamService().c_str());
 
     auto svc = GetParamService();
-    const string cryptoInstance = HalFullName(kCryptoIface, svc);
     const string drmInstance = HalFullName(kDrmIface, svc);
 
     if (drmInstance.find("IDrmFactory") != std::string::npos) {
@@ -192,12 +191,6 @@ void DrmHalTest::SetUp() {
                 ::ndk::SpAIBinder(AServiceManager_waitForService(drmInstance.c_str())));
         ASSERT_NE(drmFactory, nullptr);
         drmPlugin = createDrmPlugin();
-    }
-
-    if (cryptoInstance.find("ICryptoFactory") != std::string::npos) {
-        cryptoFactory = ICryptoFactory::fromBinder(
-                ::ndk::SpAIBinder(AServiceManager_waitForService(cryptoInstance.c_str())));
-        ASSERT_NE(cryptoFactory, nullptr);
         cryptoPlugin = createCryptoPlugin();
     }
 
@@ -211,14 +204,12 @@ void DrmHalTest::SetUp() {
     contentConfigurations = vendorModule->getContentConfigurations();
 
     // If drm scheme not installed skip subsequent tests
-    bool result = false;
-    drmFactory->isCryptoSchemeSupported({getUUID()}, "cenc", SecurityLevel::SW_SECURE_CRYPTO,
-                                        &result);
+    bool result = isCryptoSchemeSupported(getAidlUUID(), SecurityLevel::SW_SECURE_CRYPTO, "cenc");
     if (!result) {
         if (GetParamUUID() == std::array<uint8_t, 16>()) {
             GTEST_SKIP() << "vendor module drm scheme not supported";
         } else {
-            FAIL() << "param scheme must not supported";
+            FAIL() << "param scheme must be supported";
         }
     }
 
@@ -234,18 +225,18 @@ std::shared_ptr<::aidl::android::hardware::drm::IDrmPlugin> DrmHalTest::createDr
     }
     std::string packageName("aidl.android.hardware.drm.test");
     std::shared_ptr<::aidl::android::hardware::drm::IDrmPlugin> result;
-    auto ret = drmFactory->createPlugin({getUUID()}, packageName, &result);
+    auto ret = drmFactory->createDrmPlugin(getAidlUUID(), packageName, &result);
     EXPECT_OK(ret) << "createDrmPlugin remote call failed";
     return result;
 }
 
 std::shared_ptr<::aidl::android::hardware::drm::ICryptoPlugin> DrmHalTest::createCryptoPlugin() {
-    if (cryptoFactory == nullptr) {
+    if (drmFactory == nullptr) {
         return nullptr;
     }
     vector<uint8_t> initVec;
     std::shared_ptr<::aidl::android::hardware::drm::ICryptoPlugin> result;
-    auto ret = cryptoFactory->createPlugin({getUUID()}, initVec, &result);
+    auto ret = drmFactory->createCryptoPlugin(getAidlUUID(), initVec, &result);
     EXPECT_OK(ret) << "createCryptoPlugin remote call failed";
     return result;
 }
@@ -268,6 +259,26 @@ std::vector<uint8_t> DrmHalTest::getVendorUUID() {
         return {};
     }
     return vendorModule->getUUID();
+}
+
+bool DrmHalTest::isCryptoSchemeSupported(Uuid uuid, SecurityLevel level, std::string mime) {
+    CryptoSchemes schemes{};
+    auto ret = drmFactory->getSupportedCryptoSchemes(&schemes);
+    EXPECT_OK(ret);
+    if (!ret.isOk() || !std::count(schemes.uuids.begin(), schemes.uuids.end(), uuid)) {
+        return false;
+    }
+    if (level > schemes.maxLevel || level < schemes.minLevel) {
+        if (level != SecurityLevel::DEFAULT && level != SecurityLevel::UNKNOWN) {
+            return false;
+        }
+    }
+    if (!mime.empty()) {
+        if (!std::count(schemes.mimeTypes.begin(), schemes.mimeTypes.end(), mime)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 void DrmHalTest::provision() {
@@ -410,38 +421,43 @@ KeyedVector DrmHalTest::toAidlKeyedVector(const map<string, string>& params) {
 
 /**
  * getDecryptMemory allocates memory for decryption, then sets it
- * as a shared buffer base in the crypto hal.  A parcelable Ashmem
- * is returned.
+ * as a shared buffer base in the crypto hal. An output SharedBuffer
+ * is updated via reference.
  *
  * @param size the size of the memory segment to allocate
  * @param the index of the memory segment which will be used
  * to refer to it for decryption.
  */
-Ashmem DrmHalTest::getDecryptMemory(size_t size, size_t index) {
+void DrmHalTest::getDecryptMemory(size_t size, size_t index, SharedBuffer& out) {
+    out.bufferId = static_cast<int32_t>(index);
+    out.offset = 0;
+    out.size = static_cast<int64_t>(size);
+
     int fd = ASharedMemory_create("drmVtsSharedMemory", size);
     EXPECT_GE(fd, 0);
     EXPECT_EQ(size, ASharedMemory_getSize(fd));
+    auto handle = native_handle_create(1, 0);
+    handle->data[0] = fd;
+    out.handle = ::android::makeToAidl(handle);
 
-    Ashmem ashmem;
-    ashmem.fd = ::ndk::ScopedFileDescriptor(fd);
-    ashmem.size = size;
-    EXPECT_OK(cryptoPlugin->setSharedBufferBase(ashmem, index));
-    return ashmem;
+    EXPECT_OK(cryptoPlugin->setSharedBufferBase(out));
+    native_handle_delete(handle);
 }
 
-void DrmHalTest::fillRandom(const Ashmem& ashmem) {
+uint8_t* DrmHalTest::fillRandom(const ::aidl::android::hardware::drm::SharedBuffer& buf) {
     std::random_device rd;
     std::mt19937 rand(rd());
 
-    ::ndk::ScopedFileDescriptor fd = ashmem.fd.dup();
-    size_t size = ashmem.size;
+    auto fd = buf.handle.fds[0].get();
+    size_t size = buf.size;
     uint8_t* base = static_cast<uint8_t*>(
-            mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd.get(), 0));
+            mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
     EXPECT_NE(MAP_FAILED, base);
     for (size_t i = 0; i < size / sizeof(uint32_t); i++) {
         auto p = static_cast<uint32_t*>(static_cast<void*>(base));
         p[i] = rand();
     }
+    return base;
 }
 
 uint32_t DrmHalTest::decrypt(Mode mode, bool isSecure, const std::array<uint8_t, 16>& keyId,
@@ -453,6 +469,7 @@ uint32_t DrmHalTest::decrypt(Mode mode, bool isSecure, const std::array<uint8_t,
     uint8_t localIv[AES_BLOCK_SIZE];
     memcpy(localIv, iv, AES_BLOCK_SIZE);
     vector<uint8_t> ivVec(localIv, localIv + AES_BLOCK_SIZE);
+    vector<uint8_t> keyIdVec(keyId.begin(), keyId.end());
 
     int64_t totalSize = 0;
     for (size_t i = 0; i < subSamples.size(); i++) {
@@ -463,32 +480,39 @@ uint32_t DrmHalTest::decrypt(Mode mode, bool isSecure, const std::array<uint8_t,
     // The first totalSize bytes of shared memory is the encrypted
     // input, the second totalSize bytes (if exists) is the decrypted output.
     size_t factor = expectedStatus == Status::ERROR_DRM_FRAME_TOO_LARGE ? 1 : 2;
-    Ashmem sharedMemory = getDecryptMemory(totalSize * factor, kSegmentIndex);
+    SharedBuffer sourceBuffer;
+    getDecryptMemory(totalSize * factor, kSegmentIndex, sourceBuffer);
+    auto base = fillRandom(sourceBuffer);
 
-    const SharedBuffer sourceBuffer = {.bufferId = kSegmentIndex, .offset = 0, .size = totalSize};
-    fillRandom(sharedMemory);
+    SharedBuffer sourceRange;
+    sourceRange.bufferId = kSegmentIndex;
+    sourceRange.offset = 0;
+    sourceRange.size = totalSize;
 
-    const DestinationBuffer destBuffer = {
-            .type = BufferType::SHARED_MEMORY,
-            .nonsecureMemory = {.bufferId = kSegmentIndex, .offset = totalSize, .size = totalSize},
-            .secureMemory = {.fds = {}, .ints = {}}};
-    const uint64_t offset = 0;
-    uint32_t bytesWritten = 0;
-    vector<uint8_t> keyIdVec(keyId.begin(), keyId.end());
-    DecryptResult result;
-    auto ret = cryptoPlugin->decrypt(isSecure, keyIdVec, ivVec, mode, pattern, subSamples,
-                                     sourceBuffer, offset, destBuffer, &result);
+    SharedBuffer destRange;
+    destRange.bufferId = kSegmentIndex;
+    destRange.offset = totalSize;
+    destRange.size = totalSize;
+
+    DecryptArgs args;
+    args.secure = isSecure;
+    args.keyId = keyIdVec;
+    args.iv = ivVec;
+    args.mode = mode;
+    args.pattern = pattern;
+    args.subSamples = subSamples;
+    args.source = std::move(sourceRange);
+    args.offset = 0;
+    args.destination = std::move(destRange);
+
+    int32_t bytesWritten = 0;
+    auto ret = cryptoPlugin->decrypt(args, &bytesWritten);
     EXPECT_TXN(ret);
-    EXPECT_EQ(expectedStatus, DrmErr(ret)) << "Unexpected decrypt status " << result.detailedError;
-    bytesWritten = result.bytesWritten;
+    EXPECT_EQ(expectedStatus, DrmErr(ret)) << "Unexpected decrypt status " << ret.getMessage();
 
     if (bytesWritten != totalSize) {
         return bytesWritten;
     }
-    ::ndk::ScopedFileDescriptor fd = sharedMemory.fd.dup();
-    uint8_t* base = static_cast<uint8_t*>(
-            mmap(nullptr, totalSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd.get(), 0));
-    EXPECT_NE(MAP_FAILED, base);
 
     // generate reference vector
     vector<uint8_t> reference(totalSize);
@@ -513,6 +537,7 @@ uint32_t DrmHalTest::decrypt(Mode mode, bool isSecure, const std::array<uint8_t,
     EXPECT_EQ(0, memcmp(static_cast<void*>(&reference[0]), static_cast<void*>(base + totalSize),
                         totalSize))
             << "decrypt data mismatch";
+    munmap(base, totalSize * factor);
     return totalSize;
 }
 

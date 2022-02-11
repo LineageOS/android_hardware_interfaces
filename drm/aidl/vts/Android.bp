@@ -49,6 +49,8 @@ cc_test {
         "android.hardware.drm@1.0-helper",
         "android.hardware.drm-V1-ndk",
         "android.hardware.common-V2-ndk",
+        "libaidlcommonsupport",
+        "libgmock_ndk",
         "libdrmvtshelper",
         "libvtsclearkey",
     ],
