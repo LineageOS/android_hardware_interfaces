@@ -20,7 +20,6 @@ import android.hardware.audio.common@7.0;
 import @7.0::AudioInOutFlag;
 import @7.0::IDevice;
 import @7.0::Result;
-import IStreamIn;
 import IStreamOut;
 
 interface IDevice extends @7.0::IDevice {
@@ -56,33 +55,14 @@ interface IDevice extends @7.0::IDevice {
                     AudioConfig suggestedConfig);
 
     /**
-     * This method creates and opens the audio hardware input stream.
-     * If the stream can not be opened with the proposed audio config,
-     * HAL must provide suggested values for the audio config.
+     * Notifies the device module about the connection state of an input/output
+     * device attached to it. The devicePort identifies the device and may also
+     * provide extra information such as raw audio descriptors.
      *
-     * Note: INVALID_ARGUMENTS is returned both in the case when the
-     * HAL can not use the provided config and in the case when
-     * the value of any argument is invalid. In the latter case the
-     * HAL must provide a default initialized suggested config.
-     *
-     * @param ioHandle handle assigned by AudioFlinger.
-     * @param device device type and (if needed) address.
-     * @param config stream configuration.
-     * @param flags additional flags.
-     * @param sinkMetadata Description of the audio that is suggested by the client.
-     *                     May be used by implementations to configure processing effects.
+     * @param devicePort audio device port.
+     * @param connected whether the device is connected.
      * @return retval operation completion status.
-     * @return inStream in case of success, created input stream.
-     * @return suggestedConfig in the case of rejection of the proposed config,
-     *                         a config suggested by the HAL.
      */
-    openInputStream_7_1(
-            AudioIoHandle ioHandle,
-            DeviceAddress device,
-            AudioConfig config,
-            vec<AudioInOutFlag> flags,
-            SinkMetadata sinkMetadata) generates (
-                    Result retval,
-                    IStreamIn inStream,
-                    AudioConfig suggestedConfig);
+    setConnectedState_7_1(AudioPort devicePort, bool connected)
+            generates (Result retval);
 };

@@ -123,10 +123,6 @@ struct Device : public IDevice, public ParametersUtil {
                                       const AudioConfig& config, const AudioOutputFlags& flags,
                                       const SourceMetadata& sourceMetadata,
                                       openOutputStream_7_1_cb _hidl_cb) override;
-    Return<void> openInputStream_7_1(int32_t ioHandle, const DeviceAddress& device,
-                                     const AudioConfig& config, const AudioInputFlags& flags,
-                                     const SinkMetadata& sinkMetadata,
-                                     openInputStream_7_1_cb _hidl_cb) override;
 #endif
 
     Return<bool> supportsAudioPatches() override;
@@ -162,6 +158,9 @@ struct Device : public IDevice, public ParametersUtil {
     Return<void> updateAudioPatch(int32_t previousPatch, const hidl_vec<AudioPortConfig>& sources,
                                   const hidl_vec<AudioPortConfig>& sinks,
                                   createAudioPatch_cb _hidl_cb) override;
+#endif
+#if MAJOR_VERSION == 7 && MINOR_VERSION == 1
+    Return<Result> setConnectedState_7_1(const AudioPort& devicePort, bool connected) override;
 #endif
     Return<void> debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) override;
 
