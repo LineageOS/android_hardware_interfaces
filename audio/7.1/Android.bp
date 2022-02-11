@@ -17,7 +17,6 @@ hidl_interface {
         "IDevice.hal",
         "IDevicesFactory.hal",
         "IPrimaryDevice.hal",
-        "IStreamIn.hal",
         "IStreamOut.hal",
         "IStreamOutLatencyModeCallback.hal",
     ],
