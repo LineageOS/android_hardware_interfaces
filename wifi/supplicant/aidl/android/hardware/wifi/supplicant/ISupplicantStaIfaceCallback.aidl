@@ -21,6 +21,7 @@ import android.hardware.wifi.supplicant.AssociationRejectionData;
 import android.hardware.wifi.supplicant.BssTmData;
 import android.hardware.wifi.supplicant.BssidChangeReason;
 import android.hardware.wifi.supplicant.DppAkm;
+import android.hardware.wifi.supplicant.DppConnectionKeys;
 import android.hardware.wifi.supplicant.DppEventType;
 import android.hardware.wifi.supplicant.DppFailureCode;
 import android.hardware.wifi.supplicant.DppProgressCode;
@@ -128,10 +129,12 @@ interface ISupplicantStaIfaceCallback {
     oneway void onDppSuccess(in DppEventType event);
 
     /**
-     * Indicates DPP configuration received success event (Enrolee mode).
+     * Indicates DPP configuration received success event in Enrolee mode.
+     * This is also triggered when Configurator generates credentials for itself
+     * using generateSelfDppConfiguration() API
      */
-    oneway void onDppSuccessConfigReceived(
-            in byte[] ssid, in String password, in byte[] psk, in DppAkm securityAkm);
+    oneway void onDppSuccessConfigReceived(in byte[] ssid, in String password, in byte[] psk,
+            in DppAkm securityAkm, in DppConnectionKeys dppConnectionKeys);
 
     /**
      * Indicates DPP configuration sent success event (Configurator mode).

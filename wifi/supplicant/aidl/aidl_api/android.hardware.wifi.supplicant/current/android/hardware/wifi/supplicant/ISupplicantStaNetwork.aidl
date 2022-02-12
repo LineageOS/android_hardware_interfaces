@@ -87,6 +87,7 @@ interface ISupplicantStaNetwork {
   void sendNetworkEapSimUmtsAutsResponse(in byte[] auts);
   void setAuthAlg(in android.hardware.wifi.supplicant.AuthAlgMask authAlgMask);
   void setBssid(in byte[] bssid);
+  void setDppKeys(in android.hardware.wifi.supplicant.DppConnectionKeys keys);
   void setEapAltSubjectMatch(in String match);
   void setEapAnonymousIdentity(in byte[] identity);
   void setEapCACert(in String path);
