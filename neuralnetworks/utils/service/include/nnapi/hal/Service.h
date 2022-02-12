@@ -29,7 +29,18 @@ struct SharedDeviceAndUpdatability {
     bool isDeviceUpdatable = false;
 };
 
-std::vector<SharedDeviceAndUpdatability> getDevices(bool includeUpdatableDrivers);
+/**
+ * @brief Get the NNAPI sAIDL and HIDL services declared in the VINTF.
+ *
+ * @pre maxFeatureLevelAllowed >= Version::Level::FEATURE_LEVEL_5
+ *
+ * @param includeUpdatableDrivers Allow updatable drivers to be used.
+ * @param maxFeatureLevelAllowed Maximum version of driver allowed to be used. Any driver version
+ *     exceeding this must be clamped to `maxFeatureLevelAllowed`.
+ * @return A list of devices and whether each device is updatable or not.
+ */
+std::vector<SharedDeviceAndUpdatability> getDevices(bool includeUpdatableDrivers,
+                                                    nn::Version::Level maxFeatureLevelAllowed);
 
 }  // namespace android::hardware::neuralnetworks::service
 
