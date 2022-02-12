@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,30 @@
 
 package android.hardware.drm;
 
+import android.hardware.drm.SecurityLevel;
+import android.hardware.drm.Uuid;
+
 @VintfStability
-@Backing(type="int")
-enum BufferType {
-    SHARED_MEMORY = 0,
-    NATIVE_HANDLE = 1,
+parcelable CryptoSchemes {
+
+    /**
+     * Supported crypto schemes
+     */
+    List<Uuid> uuids;
+
+    /**
+     * Minimum supported security level (inclusive)
+     */
+    SecurityLevel minLevel;
+
+    /**
+     * Maximum supported security level (inclusive)
+     */
+    SecurityLevel maxLevel;
+
+    /**
+     * Supported mime types
+     */
+    List<String> mimeTypes;
+
 }

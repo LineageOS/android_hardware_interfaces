@@ -577,17 +577,6 @@ interface IDrmPlugin {
     boolean requiresSecureDecoder(in String mime, in SecurityLevel level);
 
     /**
-     * Check if the specified mime-type requires a secure decoder component
-     * at the highest security level supported on the device.
-     *
-     * @param mime The content mime-type
-     *
-     * @return must be true if and only if a secure decoder is required
-     *     for the specified mime-type
-     */
-    boolean requiresSecureDecoderDefault(in String mime);
-
-    /**
      * Restore persisted offline keys into a new session
      *
      * @param sessionId the session id the call applies to

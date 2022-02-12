@@ -36,8 +36,8 @@ package android.hardware.drm;
 enum KeyStatusType {
   USABLE = 0,
   EXPIRED = 1,
-  OUTPUTNOTALLOWED = 2,
-  STATUSPENDING = 3,
-  INTERNALERROR = 4,
-  USABLEINFUTURE = 5,
+  OUTPUT_NOT_ALLOWED = 2,
+  STATUS_PENDING = 3,
+  INTERNAL_ERROR = 4,
+  USABLE_IN_FUTURE = 5,
 }

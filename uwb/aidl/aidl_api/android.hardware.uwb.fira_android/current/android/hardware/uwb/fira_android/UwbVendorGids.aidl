@@ -34,5 +34,5 @@
 package android.hardware.uwb.fira_android;
 @Backing(type="byte") @VintfStability
 enum UwbVendorGids {
-  ANDROID = 14,
+  ANDROID = 12,
 }

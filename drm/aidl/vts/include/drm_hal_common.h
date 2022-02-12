@@ -18,14 +18,17 @@
 
 #include <aidl/android/hardware/common/Ashmem.h>
 #include <aidl/android/hardware/drm/BnDrmPluginListener.h>
-#include <aidl/android/hardware/drm/ICryptoFactory.h>
 #include <aidl/android/hardware/drm/ICryptoPlugin.h>
 #include <aidl/android/hardware/drm/IDrmFactory.h>
 #include <aidl/android/hardware/drm/IDrmPlugin.h>
 #include <aidl/android/hardware/drm/IDrmPluginListener.h>
 #include <aidl/android/hardware/drm/Status.h>
+#include <android/binder_auto_utils.h>
+
+#include <gmock/gmock.h>
 
 #include <array>
+#include <algorithm>
 #include <chrono>
 #include <future>
 #include <iostream>
@@ -34,8 +37,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
-#include <android/binder_auto_utils.h>
 
 #include "VtsHalHidlTargetCallbackBase.h"
 #include "drm_hal_vendor_module_api.h"
@@ -80,11 +81,14 @@ class DrmHalTest : public ::testing::TestWithParam<DrmHalTestParam> {
     std::array<uint8_t, 16> GetParamUUID() { return GetParam().scheme_; }
     std::string GetParamService() { return GetParam().instance_; }
     ::aidl::android::hardware::drm::Uuid toAidlUuid(const std::vector<uint8_t>& in_uuid) {
-        ::aidl::android::hardware::drm::Uuid uuid;
-        uuid.uuid = in_uuid;
-        return uuid;
+        std::array<uint8_t, 16> a;
+        std::copy_n(in_uuid.begin(), a.size(), a.begin());
+        return {a};
     }
 
+    bool isCryptoSchemeSupported(::aidl::android::hardware::drm::Uuid uuid,
+                                 ::aidl::android::hardware::drm::SecurityLevel level,
+                                 std::string mime);
     void provision();
     SessionId openSession(::aidl::android::hardware::drm::SecurityLevel level,
                           ::aidl::android::hardware::drm::Status* err);
@@ -106,8 +110,8 @@ class DrmHalTest : public ::testing::TestWithParam<DrmHalTestParam> {
 
     KeyedVector toAidlKeyedVector(const std::map<std::string, std::string>& params);
     std::array<uint8_t, 16> toStdArray(const std::vector<uint8_t>& vec);
-    void fillRandom(const ::aidl::android::hardware::common::Ashmem& ashmem);
-    ::aidl::android::hardware::common::Ashmem getDecryptMemory(size_t size, size_t index);
+    uint8_t* fillRandom(const ::aidl::android::hardware::drm::SharedBuffer& buf);
+    void getDecryptMemory(size_t size, size_t index, SharedBuffer& buf);
 
     uint32_t decrypt(::aidl::android::hardware::drm::Mode mode, bool isSecure,
                      const std::array<uint8_t, 16>& keyId, uint8_t* iv,
@@ -123,7 +127,6 @@ class DrmHalTest : public ::testing::TestWithParam<DrmHalTestParam> {
                          const std::vector<uint8_t>& key);
 
     std::shared_ptr<::aidl::android::hardware::drm::IDrmFactory> drmFactory;
-    std::shared_ptr<::aidl::android::hardware::drm::ICryptoFactory> cryptoFactory;
     std::shared_ptr<::aidl::android::hardware::drm::IDrmPlugin> drmPlugin;
     std::shared_ptr<::aidl::android::hardware::drm::ICryptoPlugin> cryptoPlugin;
 
@@ -139,16 +142,13 @@ class DrmHalClearkeyTest : public DrmHalTest {
   public:
     virtual void SetUp() override {
         DrmHalTest::SetUp();
-        const std::vector<uint8_t> kClearKeyUUID = {0xE2, 0x71, 0x9D, 0x58, 0xA9, 0x85, 0xB3, 0xC9,
-                                                    0x78, 0x1A, 0xB0, 0x30, 0xAF, 0x78, 0xD3, 0x0E};
+        auto kClearKeyUUID = toAidlUuid({0xE2, 0x71, 0x9D, 0x58, 0xA9, 0x85, 0xB3, 0xC9,
+                                         0x78, 0x1A, 0xB0, 0x30, 0xAF, 0x78, 0xD3, 0x0E});
         static const std::string kMimeType = "video/mp4";
         static constexpr ::aidl::android::hardware::drm::SecurityLevel kSecurityLevel =
                 ::aidl::android::hardware::drm::SecurityLevel::SW_SECURE_CRYPTO;
 
-        bool drmClearkey = false;
-        auto ret = drmFactory->isCryptoSchemeSupported(toAidlUuid(kClearKeyUUID), kMimeType,
-                                                       kSecurityLevel, &drmClearkey);
-        if (!drmClearkey) {
+        if (!isCryptoSchemeSupported(kClearKeyUUID, kSecurityLevel, kMimeType)) {
             GTEST_SKIP() << "ClearKey not supported by " << GetParamService();
         }
     }
