@@ -42,19 +42,13 @@ using drm_vts::DrmHalTestParam;
 using drm_vts::PrintParamInstanceToString;
 
 static const std::vector<DrmHalTestParam> getAllInstances() {
-    using ::aidl::android::hardware::drm::ICryptoFactory;
     using ::aidl::android::hardware::drm::IDrmFactory;
 
     std::vector<std::string> drmInstances =
             android::getAidlHalInstanceNames(IDrmFactory::descriptor);
-    std::vector<std::string> cryptoInstances =
-            android::getAidlHalInstanceNames(ICryptoFactory::descriptor);
 
     std::set<std::string> allInstances;
     for (auto svc : drmInstances) {
-        allInstances.insert(HalBaseName(svc));
-    }
-    for (auto svc : cryptoInstances) {
         allInstances.insert(HalBaseName(svc));
     }
 

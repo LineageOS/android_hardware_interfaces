@@ -66,11 +66,8 @@ static constexpr SecurityLevel kHwSecureAll = SecurityLevel::HW_SECURE_ALL;
  * Ensure drm factory supports module UUID Scheme
  */
 TEST_P(DrmHalTest, VendorUuidSupported) {
-    bool result = false;
-    auto ret =
-            drmFactory->isCryptoSchemeSupported(getAidlUUID(), kVideoMp4, kSwSecureCrypto, &result);
-    ALOGI("kVideoMp4 = %s res %d", kVideoMp4, static_cast<bool>(result));
-    EXPECT_OK(ret);
+    bool result = isCryptoSchemeSupported(getAidlUUID(), kSwSecureCrypto, kVideoMp4);
+    ALOGI("kVideoMp4 = %s res %d", kVideoMp4, result);
     EXPECT_TRUE(result);
 }
 
@@ -80,10 +77,7 @@ TEST_P(DrmHalTest, VendorUuidSupported) {
 TEST_P(DrmHalTest, InvalidPluginNotSupported) {
     const vector<uint8_t> kInvalidUUID = {0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80,
                                           0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80};
-    bool result = false;
-    auto ret = drmFactory->isCryptoSchemeSupported(toAidlUuid(kInvalidUUID), kVideoMp4,
-                                                   kSwSecureCrypto, &result);
-    EXPECT_OK(ret);
+    auto result = isCryptoSchemeSupported(toAidlUuid(kInvalidUUID), kSwSecureCrypto, kVideoMp4);
     EXPECT_FALSE(result);
 }
 
@@ -93,10 +87,7 @@ TEST_P(DrmHalTest, InvalidPluginNotSupported) {
 TEST_P(DrmHalTest, EmptyPluginUUIDNotSupported) {
     vector<uint8_t> emptyUUID(16);
     memset(emptyUUID.data(), 0, 16);
-    bool result = false;
-    auto ret = drmFactory->isCryptoSchemeSupported(toAidlUuid(emptyUUID), kVideoMp4,
-                                                   kSwSecureCrypto, &result);
-    EXPECT_OK(ret);
+    auto result = isCryptoSchemeSupported(toAidlUuid(emptyUUID), kSwSecureCrypto, kVideoMp4);
     EXPECT_FALSE(result);
 }
 
@@ -104,10 +95,7 @@ TEST_P(DrmHalTest, EmptyPluginUUIDNotSupported) {
  * Ensure drm factory doesn't support an invalid mime type
  */
 TEST_P(DrmHalTest, BadMimeNotSupported) {
-    bool result = false;
-    auto ret =
-            drmFactory->isCryptoSchemeSupported(getAidlUUID(), kBadMime, kSwSecureCrypto, &result);
-    EXPECT_OK(ret);
+    auto result = isCryptoSchemeSupported(getAidlUUID(), kSwSecureCrypto, kBadMime);
     EXPECT_FALSE(result);
 }
 
@@ -380,9 +368,7 @@ TEST_P(DrmHalTest, EncryptedAesCtrSegmentTestNoKeys) {
  * Ensure clearkey drm factory doesn't support security level higher than supported
  */
 TEST_P(DrmHalClearkeyTest, BadLevelNotSupported) {
-    bool result = false;
-    auto ret = drmFactory->isCryptoSchemeSupported(getAidlUUID(), kVideoMp4, kHwSecureAll, &result);
-    EXPECT_OK(ret);
+    auto result = isCryptoSchemeSupported(getAidlUUID(), kHwSecureAll, kVideoMp4);
     EXPECT_FALSE(result);
 }
 
@@ -461,7 +447,7 @@ TEST_P(DrmHalClearkeyTest, ListenerCallbacks) {
     const vector<KeyStatus> keyStatusList = {
             {{0xa, 0xb, 0xc}, KeyStatusType::USABLE},
             {{0xd, 0xe, 0xf}, KeyStatusType::EXPIRED},
-            {{0x0, 0x1, 0x2}, KeyStatusType::USABLEINFUTURE},
+            {{0x0, 0x1, 0x2}, KeyStatusType::USABLE_IN_FUTURE},
     };
     EXPECT_EQ(sessionId, args.sessionId);
     EXPECT_EQ(keyStatusList, args.keyStatusList);

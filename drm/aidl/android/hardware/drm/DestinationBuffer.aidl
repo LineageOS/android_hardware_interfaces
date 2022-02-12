@@ -17,29 +17,24 @@
 package android.hardware.drm;
 
 import android.hardware.common.NativeHandle;
-import android.hardware.drm.BufferType;
 import android.hardware.drm.SharedBuffer;
 
 /**
  * A decrypt destination buffer can be either normal user-space shared
  * memory for the non-secure decrypt case, or it can be a secure buffer
- * which is referenced by a native-handle. The native handle is allocated
- * by the vendor's buffer allocator.
+ * which is referenced by a native-handle.
+ *
+ * The native handle is allocated by the vendor's buffer allocator.
  */
 @VintfStability
-parcelable DestinationBuffer {
+union DestinationBuffer {
     /**
-     * The type of the buffer
-     */
-    BufferType type;
-    /**
-     * If type == SHARED_MEMORY, the decrypted data must be written
-     * to user-space non-secure shared memory.
+     * decrypted data written to user-space non-secure shared memory.
      */
     SharedBuffer nonsecureMemory;
     /**
-     * If type == NATIVE_HANDLE, the decrypted data must be written
-     * to secure memory referenced by the vendor's buffer allocator.
+     * decrypted data written to secure memory referenced by the vendor's
+     * buffer allocator.
      */
     NativeHandle secureMemory;
 }
