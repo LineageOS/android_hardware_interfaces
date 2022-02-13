@@ -33,6 +33,7 @@ using aidl::android::hardware::wifi::supplicant::BtCoexistenceMode;
 using aidl::android::hardware::wifi::supplicant::ConnectionCapabilities;
 using aidl::android::hardware::wifi::supplicant::DebugLevel;
 using aidl::android::hardware::wifi::supplicant::DppAkm;
+using aidl::android::hardware::wifi::supplicant::DppConnectionKeys;
 using aidl::android::hardware::wifi::supplicant::DppCurve;
 using aidl::android::hardware::wifi::supplicant::DppNetRole;
 using aidl::android::hardware::wifi::supplicant::DppResponderBootstrapInfo;
@@ -112,11 +113,11 @@ class SupplicantStaIfaceCallback : public BnSupplicantStaIfaceCallback {
         return ndk::ScopedAStatus::ok();
     }
     ::ndk::ScopedAStatus onDppSuccessConfigReceived(
-        const std::vector<uint8_t>& /* ssid */,
-        const std::string& /* password */,
-        const std::vector<uint8_t>& /* psk */,
-        ::aidl::android::hardware::wifi::supplicant::DppAkm /* securityAkm */)
-        override {
+            const std::vector<uint8_t>& /* ssid */, const std::string& /* password */,
+            const std::vector<uint8_t>& /* psk */,
+            ::aidl::android::hardware::wifi::supplicant::DppAkm /* securityAkm */,
+            const ::aidl::android::hardware::wifi::supplicant::
+                    DppConnectionKeys& /* DppConnectionKeys */) override {
         return ndk::ScopedAStatus::ok();
     }
     ::ndk::ScopedAStatus onDppSuccessConfigSent() override {
@@ -755,14 +756,16 @@ TEST_P(SupplicantStaIfaceAidlTest, StartDppConfiguratorInitiator) {
         "6D795F746573745F73736964";  // 'my_test_ssid' encoded in hex
     const std::string password =
         "746F70736563726574";  // 'topsecret' encoded in hex
+    const std::vector<uint8_t> eckey_in = {0x2, 0x3, 0x4};
+    std::vector<uint8_t> eckey_out = {};
 
     // Start DPP as Configurator-Initiator. Since this operation requires two
     // devices, we start the operation and expect a timeout.
     EXPECT_TRUE(sta_iface_
-                    ->startDppConfiguratorInitiator(peer_id, 0, ssid, password,
-                                                    "", DppNetRole::STA,
-                                                    DppAkm::PSK)
-                    .isOk());
+                        ->startDppConfiguratorInitiator(peer_id, 0, ssid, password, "",
+                                                        DppNetRole::STA, DppAkm::PSK, eckey_in,
+                                                        &eckey_out)
+                        .isOk());
 
     // Wait for the timeout callback
     ASSERT_EQ(std::cv_status::no_timeout,

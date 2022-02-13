@@ -17,6 +17,7 @@
 package android.hardware.wifi.supplicant;
 
 import android.hardware.wifi.supplicant.AuthAlgMask;
+import android.hardware.wifi.supplicant.DppConnectionKeys;
 import android.hardware.wifi.supplicant.EapMethod;
 import android.hardware.wifi.supplicant.EapPhase2Method;
 import android.hardware.wifi.supplicant.GroupCipherMask;
@@ -637,6 +638,18 @@ interface ISupplicantStaNetwork {
      *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
      */
     void setBssid(in byte[] bssid);
+
+    /**
+     * Set DPP keys for network which supports DPP AKM.
+     *
+     * @param keys connection keys needed to make DPP
+     * AKM based network connection.
+     * @throws ServiceSpecificException with one of the following values:
+     *         |SupplicantStatusCode.FAILURE_ARGS_INVALID|,
+     *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
+     *         |SupplicantStatusCode.FAILURE_NETWORK_INVALID|
+     */
+    void setDppKeys(in DppConnectionKeys keys);
 
     /**
      * Set EAP Alt subject match for this network.
