@@ -443,6 +443,7 @@
             <xs:enumeration value="AUDIO_USAGE_ALARM" />
             <xs:enumeration value="AUDIO_USAGE_NOTIFICATION" />
             <xs:enumeration value="AUDIO_USAGE_NOTIFICATION_TELEPHONY_RINGTONE" />
+            <xs:enumeration value="AUDIO_USAGE_NOTIFICATION_EVENT" />
             <xs:enumeration value="AUDIO_USAGE_ASSISTANCE_ACCESSIBILITY" />
             <xs:enumeration value="AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE" />
             <xs:enumeration value="AUDIO_USAGE_ASSISTANCE_SONIFICATION" />
