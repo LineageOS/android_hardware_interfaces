@@ -359,6 +359,7 @@ package android.audio.policy.configuration.V7_1 {
     enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_GAME;
     enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_MEDIA;
     enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_NOTIFICATION;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_NOTIFICATION_EVENT;
     enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_NOTIFICATION_TELEPHONY_RINGTONE;
     enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_SAFETY;
     enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_UNKNOWN;
