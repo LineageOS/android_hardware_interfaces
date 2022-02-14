@@ -23,7 +23,7 @@
 #include <log/log.h>
 
 #include <HidlUtils.h>
-#include <android_audio_policy_configuration_V7_0-enums.h>
+#include PATH(APM_XSD_ENUMS_H_FILENAME)
 #include <system/audio.h>
 #include <xsdc/XsdcSupport.h>
 
@@ -32,7 +32,7 @@ using ::android::hardware::hidl_vec;
 using namespace ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION;
 using ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::implementation::HidlUtils;
 namespace xsd {
-using namespace ::android::audio::policy::configuration::V7_0;
+using namespace ::android::audio::policy::configuration::CPP_VERSION;
 }
 
 static constexpr audio_channel_mask_t kInvalidHalChannelMask = AUDIO_CHANNEL_INVALID;
