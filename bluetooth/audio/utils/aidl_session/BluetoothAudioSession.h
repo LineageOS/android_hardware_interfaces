@@ -182,7 +182,6 @@ class BluetoothAudioSession {
   void UpdateSourceMetadata(const struct source_metadata& source_metadata);
   void UpdateSinkMetadata(const struct sink_metadata& sink_metadata);
   void SetLatencyMode(LatencyMode latency_mode);
-  void SetCodecType(CodecType codec_type);
 
   // The control function writes stream to FMQ
   size_t OutWritePcmData(const void* buffer, size_t bytes);
