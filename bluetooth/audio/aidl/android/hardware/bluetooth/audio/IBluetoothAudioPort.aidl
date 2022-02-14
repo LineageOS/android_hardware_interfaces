@@ -87,11 +87,4 @@ interface IBluetoothAudioPort {
      * @param latencyMode latency mode from audio
      */
     void setLatencyMode(in LatencyMode latencyMode);
-
-    /**
-     * Called when codec type is changed.
-     *
-     * @param codecType codec type from audio
-     */
-    void setCodecType(in CodecType codecType);
 }
