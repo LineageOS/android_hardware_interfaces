@@ -5,6 +5,9 @@
     },
     {
       "name": "android.hardware.audio.common@7.0-util_tests"
+    },
+    {
+      "name": "android.hardware.audio.common@7.1-util_tests"
     }
   ]
 }
