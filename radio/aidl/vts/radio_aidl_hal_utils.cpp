@@ -24,6 +24,7 @@
 #define WAIT_TIMEOUT_PERIOD 75
 
 sim::CardStatus cardStatus = {};
+config::SimSlotStatus slotStatus = {};
 int serial = 0;
 int count_ = 0;
 
@@ -203,4 +204,23 @@ void RadioServiceTest::updateSimCardStatus() {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioSimRsp->rspInfo.type);
     EXPECT_EQ(serial, radioSimRsp->rspInfo.serial);
     EXPECT_EQ(RadioError::NONE, radioSimRsp->rspInfo.error);
+}
+
+void RadioServiceTest::updateSimSlotStatus() {
+    // Update SimSlotStatus from RadioConfig
+    std::shared_ptr<RadioConfigResponse> radioConfigRsp =
+            ndk::SharedRefBase::make<RadioConfigResponse>(*this);
+    std::shared_ptr<RadioConfigIndication> radioConfigInd =
+            ndk::SharedRefBase::make<RadioConfigIndication>(*this);
+    radio_config->setResponseFunctions(radioConfigRsp, radioConfigInd);
+    serial = GetRandomSerialNumber();
+    radio_config->getSimSlotsStatus(serial);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioConfigRsp->rspInfo.type);
+    EXPECT_EQ(serial, radioConfigRsp->rspInfo.serial);
+    EXPECT_EQ(RadioError::NONE, radioConfigRsp->rspInfo.error);
+    // assuming only 1 slot
+    for (const SimSlotStatus& slotStatusResponse : radioConfigRsp->simSlotStatus) {
+        slotStatus = slotStatusResponse;
+    }
 }
