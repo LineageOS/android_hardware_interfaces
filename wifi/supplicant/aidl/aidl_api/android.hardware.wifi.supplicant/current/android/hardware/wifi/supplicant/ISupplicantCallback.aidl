@@ -36,5 +36,4 @@ package android.hardware.wifi.supplicant;
 interface ISupplicantCallback {
   oneway void onInterfaceCreated(in String ifaceName);
   oneway void onInterfaceRemoved(in String ifaceName);
-  oneway void onTerminating();
 }
