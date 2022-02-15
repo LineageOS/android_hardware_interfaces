@@ -485,8 +485,12 @@ status_t HidlUtils::audioGainToHal(const AudioGain& gain, struct audio_gain* hal
 status_t HidlUtils::audioUsageFromHal(audio_usage_t halUsage, AudioUsage* usage) {
     if (halUsage == AUDIO_USAGE_NOTIFICATION_COMMUNICATION_REQUEST ||
         halUsage == AUDIO_USAGE_NOTIFICATION_COMMUNICATION_INSTANT ||
+#if MAJOR_VERSION == 7 && MINOR_VERSION == 1
+        halUsage == AUDIO_USAGE_NOTIFICATION_COMMUNICATION_DELAYED) {
+#else
         halUsage == AUDIO_USAGE_NOTIFICATION_COMMUNICATION_DELAYED ||
         halUsage == AUDIO_USAGE_NOTIFICATION_EVENT) {
+#endif
         halUsage = AUDIO_USAGE_NOTIFICATION;
     }
     *usage = audio_usage_to_string(halUsage);
