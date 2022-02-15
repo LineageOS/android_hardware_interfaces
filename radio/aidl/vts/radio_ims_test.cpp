@@ -202,7 +202,7 @@ TEST_P(RadioImsTest, sendAnbrQuery) {
     serial = GetRandomSerialNumber();
 
     ndk::ScopedAStatus res =
-            radio_ims->sendAnbrQuery(serial, 1, 0, 13200);
+            radio_ims->sendAnbrQuery(serial, 1, ImsStreamDirection::UPLINK, 13200);
     ASSERT_OK(res);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_ims->rspInfo.type);
