@@ -86,7 +86,7 @@ static constexpr CodecType a2dp_codec_types[] = {
     CodecType::UNKNOWN, CodecType::SBC,          CodecType::AAC,
     CodecType::APTX,    CodecType::APTX_HD,      CodecType::LDAC,
     CodecType::LC3,     CodecType::APTX_ADAPTIVE};
-
+static std::vector<LatencyMode> latency_modes = {LatencyMode::FREE};
 // Helpers
 
 template <typename T>
@@ -379,7 +379,8 @@ TEST_P(BluetoothAudioProviderA2dpSoftwareAidl,
         bool is_codec_config_valid = IsPcmConfigSupported(pcm_config);
         DataMQDesc mq_desc;
         auto aidl_retval = audio_provider_->startSession(
-            audio_port_, AudioConfiguration(pcm_config), &mq_desc);
+            audio_port_, AudioConfiguration(pcm_config), latency_modes,
+            &mq_desc);
         DataMQ data_mq(mq_desc);
 
         EXPECT_EQ(aidl_retval.isOk(), is_codec_config_valid);
@@ -671,7 +672,7 @@ TEST_P(BluetoothAudioProviderA2dpHardwareAidl,
     copy_codec_specific(codec_config.config, codec_specific);
     DataMQDesc mq_desc;
     auto aidl_retval = audio_provider_->startSession(
-        audio_port_, AudioConfiguration(codec_config), &mq_desc);
+        audio_port_, AudioConfiguration(codec_config), latency_modes, &mq_desc);
 
     ASSERT_TRUE(aidl_retval.isOk());
     EXPECT_TRUE(audio_provider_->endSession().isOk());
@@ -701,7 +702,7 @@ TEST_P(BluetoothAudioProviderA2dpHardwareAidl,
     copy_codec_specific(codec_config.config, codec_specific);
     DataMQDesc mq_desc;
     auto aidl_retval = audio_provider_->startSession(
-        audio_port_, AudioConfiguration(codec_config), &mq_desc);
+        audio_port_, AudioConfiguration(codec_config), latency_modes, &mq_desc);
 
     ASSERT_TRUE(aidl_retval.isOk());
     EXPECT_TRUE(audio_provider_->endSession().isOk());
@@ -731,7 +732,7 @@ TEST_P(BluetoothAudioProviderA2dpHardwareAidl,
     copy_codec_specific(codec_config.config, codec_specific);
     DataMQDesc mq_desc;
     auto aidl_retval = audio_provider_->startSession(
-        audio_port_, AudioConfiguration(codec_config), &mq_desc);
+        audio_port_, AudioConfiguration(codec_config), latency_modes, &mq_desc);
 
     ASSERT_TRUE(aidl_retval.isOk());
     EXPECT_TRUE(audio_provider_->endSession().isOk());
@@ -761,7 +762,7 @@ TEST_P(BluetoothAudioProviderA2dpHardwareAidl,
     copy_codec_specific(codec_config.config, codec_specific);
     DataMQDesc mq_desc;
     auto aidl_retval = audio_provider_->startSession(
-        audio_port_, AudioConfiguration(codec_config), &mq_desc);
+        audio_port_, AudioConfiguration(codec_config), latency_modes, &mq_desc);
 
     ASSERT_TRUE(aidl_retval.isOk());
     EXPECT_TRUE(audio_provider_->endSession().isOk());
@@ -795,7 +796,8 @@ TEST_P(BluetoothAudioProviderA2dpHardwareAidl,
       copy_codec_specific(codec_config.config, codec_specific);
       DataMQDesc mq_desc;
       auto aidl_retval = audio_provider_->startSession(
-          audio_port_, AudioConfiguration(codec_config), &mq_desc);
+          audio_port_, AudioConfiguration(codec_config), latency_modes,
+          &mq_desc);
 
       ASSERT_TRUE(aidl_retval.isOk());
       EXPECT_TRUE(audio_provider_->endSession().isOk());
@@ -856,7 +858,8 @@ TEST_P(BluetoothAudioProviderA2dpHardwareAidl,
       copy_codec_specific(codec_config.config, codec_specific);
       DataMQDesc mq_desc;
       auto aidl_retval = audio_provider_->startSession(
-          audio_port_, AudioConfiguration(codec_config), &mq_desc);
+          audio_port_, AudioConfiguration(codec_config), latency_modes,
+          &mq_desc);
 
       // AIDL call should fail on invalid codec
       ASSERT_FALSE(aidl_retval.isOk());
@@ -915,7 +918,8 @@ TEST_P(BluetoothAudioProviderHearingAidSoftwareAidl,
         bool is_codec_config_valid = IsPcmConfigSupported(pcm_config);
         DataMQDesc mq_desc;
         auto aidl_retval = audio_provider_->startSession(
-            audio_port_, AudioConfiguration(pcm_config), &mq_desc);
+            audio_port_, AudioConfiguration(pcm_config), latency_modes,
+            &mq_desc);
         DataMQ data_mq(mq_desc);
 
         EXPECT_EQ(aidl_retval.isOk(), is_codec_config_valid);
@@ -986,7 +990,8 @@ TEST_P(BluetoothAudioProviderLeAudioOutputSoftwareAidl,
           bool is_codec_config_valid = IsPcmConfigSupported(pcm_config);
           DataMQDesc mq_desc;
           auto aidl_retval = audio_provider_->startSession(
-              audio_port_, AudioConfiguration(pcm_config), &mq_desc);
+              audio_port_, AudioConfiguration(pcm_config), latency_modes,
+              &mq_desc);
           DataMQ data_mq(mq_desc);
 
           EXPECT_EQ(aidl_retval.isOk(), is_codec_config_valid);
@@ -1057,7 +1062,8 @@ TEST_P(BluetoothAudioProviderLeAudioInputSoftwareAidl,
           bool is_codec_config_valid = IsPcmConfigSupported(pcm_config);
           DataMQDesc mq_desc;
           auto aidl_retval = audio_provider_->startSession(
-              audio_port_, AudioConfiguration(pcm_config), &mq_desc);
+              audio_port_, AudioConfiguration(pcm_config), latency_modes,
+              &mq_desc);
           DataMQ data_mq(mq_desc);
 
           EXPECT_EQ(aidl_retval.isOk(), is_codec_config_valid);
@@ -1190,7 +1196,8 @@ TEST_P(BluetoothAudioProviderLeAudioOutputHardwareAidl,
         .set<LeAudioCodecConfiguration::lc3Config>(lc3_config);
     DataMQDesc mq_desc;
     auto aidl_retval = audio_provider_->startSession(
-        audio_port_, AudioConfiguration(le_audio_config), &mq_desc);
+        audio_port_, AudioConfiguration(le_audio_config), latency_modes,
+        &mq_desc);
 
     ASSERT_TRUE(aidl_retval.isOk());
     EXPECT_TRUE(audio_provider_->endSession().isOk());
@@ -1222,7 +1229,8 @@ TEST_P(BluetoothAudioProviderLeAudioOutputHardwareAidl,
         .set<LeAudioCodecConfiguration::lc3Config>(lc3_config);
     DataMQDesc mq_desc;
     auto aidl_retval = audio_provider_->startSession(
-        audio_port_, AudioConfiguration(le_audio_config), &mq_desc);
+        audio_port_, AudioConfiguration(le_audio_config), latency_modes,
+        &mq_desc);
 
     // AIDL call should fail on invalid codec
     ASSERT_FALSE(aidl_retval.isOk());
@@ -1298,7 +1306,8 @@ TEST_P(BluetoothAudioProviderLeAudioInputHardwareAidl,
         .set<LeAudioCodecConfiguration::lc3Config>(lc3_config);
     DataMQDesc mq_desc;
     auto aidl_retval = audio_provider_->startSession(
-        audio_port_, AudioConfiguration(le_audio_config), &mq_desc);
+        audio_port_, AudioConfiguration(le_audio_config), latency_modes,
+        &mq_desc);
 
     ASSERT_TRUE(aidl_retval.isOk());
     EXPECT_TRUE(audio_provider_->endSession().isOk());
@@ -1331,7 +1340,8 @@ TEST_P(BluetoothAudioProviderLeAudioInputHardwareAidl,
 
     DataMQDesc mq_desc;
     auto aidl_retval = audio_provider_->startSession(
-        audio_port_, AudioConfiguration(le_audio_config), &mq_desc);
+        audio_port_, AudioConfiguration(le_audio_config), latency_modes,
+        &mq_desc);
 
     // AIDL call should fail on invalid codec
     ASSERT_FALSE(aidl_retval.isOk());
@@ -1398,7 +1408,8 @@ TEST_P(BluetoothAudioProviderLeAudioBroadcastSoftwareAidl,
           bool is_codec_config_valid = IsPcmConfigSupported(pcm_config);
           DataMQDesc mq_desc;
           auto aidl_retval = audio_provider_->startSession(
-              audio_port_, AudioConfiguration(pcm_config), &mq_desc);
+              audio_port_, AudioConfiguration(pcm_config), latency_modes,
+              &mq_desc);
           DataMQ data_mq(mq_desc);
 
           EXPECT_EQ(aidl_retval.isOk(), is_codec_config_valid);
