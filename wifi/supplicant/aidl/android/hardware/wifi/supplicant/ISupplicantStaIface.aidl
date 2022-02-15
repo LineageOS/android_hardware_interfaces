@@ -452,12 +452,12 @@ interface ISupplicantStaIface {
      * This allows other radio works to be performed. If this method is not
      * invoked (e.g., due to the external program terminating), supplicant
      * must time out the radio work item on the iface and send
-     * |ISupplicantCallback.onExtRadioWorkTimeout| event to indicate
+     * |ISupplicantStaIfaceCallback.onExtRadioWorkTimeout| event to indicate
      * that this has happened.
      *
      * This method may also be used to cancel items that have been scheduled
      * via |addExtRadioWork|, but have not yet been started (notified via
-     * |ISupplicantCallback.onExtRadioWorkStart|).
+     * |ISupplicantStaIfaceCallback.onExtRadioWorkStart|).
      *
      * @param id Identifier generated for the radio work addition
      *         (using |addExtRadioWork|).
