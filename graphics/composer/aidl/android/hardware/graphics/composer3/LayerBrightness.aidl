@@ -17,10 +17,10 @@
 package android.hardware.graphics.composer3;
 
 @VintfStability
-parcelable Luminance {
+parcelable LayerBrightness {
     /**
-     * Photometric measure of luminous intensity per unit area of light.
-     * Units are nits, or cd/m^2.
+     * Brightness of the current layer, ranging from 0 to 1, where 0 is the minimum brightness of
+     * the display, and 1 is the current brightness of the display.
      */
-    float nits;
+    float brightness;
 }

@@ -77,15 +77,7 @@ parcelable DisplayCommand {
      * the display brightness, for example when internally switching the display between multiple
      * power modes to achieve higher luminance. In those cases, the underlying display panel's real
      * brightness may not be applied atomically; however, layer dimming when mixing HDR and SDR
-     * content must be synchronized.
-     *
-     * As an illustrative example: suppose two layers have white
-     * points of 200 nits and 1000 nits respectively, the old display luminance is 200 nits, and the
-     * new display luminance is 1000 nits. If the new display luminance takes two frames to apply,
-     * then: In the first frame, there must not be any relative dimming of layers (treat both layers
-     * as 200 nits as the maximum luminance of the display is 200 nits). In the second frame, there
-     * dimming should be applied to ensure that the first layer does not become perceptually
-     * brighter during the transition.
+     * content must be synchronized to ensure that there is no user-perceptable flicker.
      *
      * The display luminance must be updated by this command even if there is not pending validate
      * or present command.
