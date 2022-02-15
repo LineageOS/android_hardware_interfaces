@@ -30,7 +30,7 @@
 #include <aidl/android/hardware/graphics/composer3/Color.h>
 #include <aidl/android/hardware/graphics/composer3/Composition.h>
 #include <aidl/android/hardware/graphics/composer3/DisplayBrightness.h>
-#include <aidl/android/hardware/graphics/composer3/Luminance.h>
+#include <aidl/android/hardware/graphics/composer3/LayerBrightness.h>
 #include <aidl/android/hardware/graphics/composer3/PerFrameMetadata.h>
 #include <aidl/android/hardware/graphics/composer3/PerFrameMetadataBlob.h>
 
@@ -209,8 +209,9 @@ class ComposerClientWriter {
                 .perFrameMetadataBlob.emplace(metadata.begin(), metadata.end());
     }
 
-    void setLayerWhitePointNits(int64_t display, int64_t layer, float whitePointNits) {
-        getLayerCommand(display, layer).whitePointNits.emplace(Luminance{.nits = whitePointNits});
+    void setLayerBrightness(int64_t display, int64_t layer, float brightness) {
+        getLayerCommand(display, layer)
+                .brightness.emplace(LayerBrightness{.brightness = brightness});
     }
 
     void setLayerBlockingRegion(int64_t display, int64_t layer, const std::vector<Rect>& blocking) {

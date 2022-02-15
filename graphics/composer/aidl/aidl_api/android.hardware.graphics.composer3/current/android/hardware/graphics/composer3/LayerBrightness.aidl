@@ -33,6 +33,6 @@
 
 package android.hardware.graphics.composer3;
 @VintfStability
-parcelable Luminance {
-  float nits;
+parcelable LayerBrightness {
+  float brightness;
 }
