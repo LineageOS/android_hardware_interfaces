@@ -74,7 +74,7 @@ void getHidlDevicesForVersion(const std::string& descriptor, getDeviceFn getDevi
 
 void getAidlDevices(std::vector<SharedDeviceAndUpdatability>* devices,
                     std::unordered_set<std::string>* registeredDevices,
-                    bool includeUpdatableDrivers) {
+                    bool includeUpdatableDrivers, nn::Version::Level maxFeatureLevelAllowed) {
     CHECK(devices != nullptr);
     CHECK(registeredDevices != nullptr);
 
@@ -100,7 +100,7 @@ void getAidlDevices(std::vector<SharedDeviceAndUpdatability>* devices,
             continue;
         }
         if (const auto [it, unregistered] = registeredDevices->insert(name); unregistered) {
-            auto maybeDevice = aidl_hal::utils::getDevice(name);
+            auto maybeDevice = aidl_hal::utils::getDevice(name, maxFeatureLevelAllowed);
             if (maybeDevice.has_value()) {
                 auto device = std::move(maybeDevice).value();
                 CHECK(device != nullptr);
@@ -116,11 +116,14 @@ void getAidlDevices(std::vector<SharedDeviceAndUpdatability>* devices,
 
 }  // namespace
 
-std::vector<SharedDeviceAndUpdatability> getDevices(bool includeUpdatableDrivers) {
+std::vector<SharedDeviceAndUpdatability> getDevices(bool includeUpdatableDrivers,
+                                                    nn::Version::Level maxFeatureLevelAllowed) {
     std::vector<SharedDeviceAndUpdatability> devices;
     std::unordered_set<std::string> registeredDevices;
 
-    getAidlDevices(&devices, &registeredDevices, includeUpdatableDrivers);
+    CHECK_GE(maxFeatureLevelAllowed, nn::Version::Level::FEATURE_LEVEL_5);
+
+    getAidlDevices(&devices, &registeredDevices, includeUpdatableDrivers, maxFeatureLevelAllowed);
 
     getHidlDevicesForVersion(V1_3::IDevice::descriptor, &V1_3::utils::getDevice, &devices,
                              &registeredDevices);
