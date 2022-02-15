@@ -562,16 +562,18 @@ TEST_P(GraphicsCompositionTest, ClientComposition) {
             ASSERT_NO_FATAL_FAILURE(
                     ReadbackHelper::fillBuffer(layer->getWidth(), layer->getHeight(), stride,
                                                clientBufData, clientFormat, expectedColors));
-            EXPECT_EQ(::android::OK, graphicBuffer->unlock());
+            int32_t clientFence;
+            const auto unlockStatus = graphicBuffer->unlockAsync(&clientFence);
+            ASSERT_EQ(::android::OK, unlockStatus);
+            if (clientFence >= 0) {
+                sync_wait(clientFence, -1);
+                close(clientFence);
+            }
 
-            const auto& [status, bufferFence] =
-                    mComposerClient->getReadbackBufferFence(getPrimaryDisplayId());
-            EXPECT_TRUE(status.isOk());
-
-            layer->setToClientComposition(mWriter);
-            mWriter.acceptDisplayChanges(getPrimaryDisplayId());
-            mWriter.setClientTarget(getPrimaryDisplayId(), /*slot*/ 0, buffer, bufferFence.get(),
+            mWriter.setClientTarget(getPrimaryDisplayId(), /*slot*/ 0, buffer, clientFence,
                                     clientDataspace, std::vector<common::Rect>(1, damage));
+            layer->setToClientComposition(mWriter);
+            mWriter.validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
             execute();
             changedCompositionTypes = mReader.takeChangedCompositionTypes(getPrimaryDisplayId());
             ASSERT_TRUE(changedCompositionTypes.empty());
@@ -671,16 +673,18 @@ TEST_P(GraphicsCompositionTest, DeviceAndClientComposition) {
         ASSERT_NO_FATAL_FAILURE(ReadbackHelper::fillBuffer(
                 static_cast<uint32_t>(getDisplayWidth()), static_cast<uint32_t>(getDisplayHeight()),
                 graphicBuffer->getStride(), clientBufData, clientFormat, clientColors));
-        EXPECT_EQ(::android::OK, graphicBuffer->unlock());
+        int32_t clientFence;
+        const auto unlockStatus = graphicBuffer->unlockAsync(&clientFence);
+        ASSERT_EQ(::android::OK, unlockStatus);
+        if (clientFence >= 0) {
+            sync_wait(clientFence, -1);
+            close(clientFence);
+        }
 
-        const auto& [status, bufferFence] =
-                mComposerClient->getReadbackBufferFence(getPrimaryDisplayId());
-        EXPECT_TRUE(status.isOk());
-
-        clientLayer->setToClientComposition(mWriter);
-        mWriter.acceptDisplayChanges(getPrimaryDisplayId());
-        mWriter.setClientTarget(getPrimaryDisplayId(), /*slot*/ 0, buffer, bufferFence.get(),
+        mWriter.setClientTarget(getPrimaryDisplayId(), /*slot*/ 0, buffer, clientFence,
                                 clientDataspace, std::vector<common::Rect>(1, clientFrame));
+        clientLayer->setToClientComposition(mWriter);
+        mWriter.validateDisplay(getPrimaryDisplayId(), ComposerClientWriter::kNoTimestamp);
         execute();
         changedCompositionTypes = mReader.takeChangedCompositionTypes(getPrimaryDisplayId());
         ASSERT_TRUE(changedCompositionTypes.empty());
