@@ -1181,8 +1181,7 @@ TEST_P(GraphicsBlendModeCompositionTest, DISABLED_None) {
     }
 }
 
-// TODO(b/219737571) Enable test for HWC3.0 after we matched with 2.4
-TEST_P(GraphicsBlendModeCompositionTest, DISABLED_Coverage) {
+TEST_P(GraphicsBlendModeCompositionTest, Coverage) {
     for (ColorMode mode : mTestColorModes) {
         EXPECT_TRUE(mComposerClient
                             ->setColorMode(getPrimaryDisplayId(), mode, RenderIntent::COLORIMETRIC)
