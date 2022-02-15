@@ -209,14 +209,14 @@ ReadbackBuffer::ReadbackBuffer(int64_t display, const std::shared_ptr<VtsCompose
     mAccessRegion.bottom = static_cast<int32_t>(height);
 }
 
-::android::sp<::android::GraphicBuffer> ReadbackBuffer::allocate() {
+::android::sp<::android::GraphicBuffer> ReadbackBuffer::allocateBuffer() {
     return ::android::sp<::android::GraphicBuffer>::make(
             mWidth, mHeight, static_cast<::android::PixelFormat>(mPixelFormat), mLayerCount, mUsage,
-            "ReadbackVts");
+            "ReadbackBuffer");
 }
 
 void ReadbackBuffer::setReadbackBuffer() {
-    mGraphicBuffer = allocate();
+    mGraphicBuffer = allocateBuffer();
     ASSERT_NE(nullptr, mGraphicBuffer);
     ASSERT_EQ(::android::OK, mGraphicBuffer->initCheck());
     const auto& bufferHandle = mGraphicBuffer->handle;
@@ -262,12 +262,10 @@ LayerSettings TestColorLayer::toRenderEngineLayerSettings() {
 }
 
 TestBufferLayer::TestBufferLayer(const std::shared_ptr<VtsComposerClient>& client,
-                                 const ::android::sp<::android::GraphicBuffer>& graphicBuffer,
                                  TestRenderEngine& renderEngine, int64_t display, uint32_t width,
                                  uint32_t height, common::PixelFormat format,
                                  Composition composition)
     : TestLayer{client, display}, mRenderEngine(renderEngine) {
-    mGraphicBuffer = graphicBuffer;
     mComposition = composition;
     mWidth = width;
     mHeight = height;
@@ -290,8 +288,9 @@ void TestBufferLayer::write(ComposerClientWriter& writer) {
     TestLayer::write(writer);
     writer.setLayerCompositionType(mDisplay, mLayer, mComposition);
     writer.setLayerVisibleRegion(mDisplay, mLayer, std::vector<Rect>(1, mDisplayFrame));
-    if (mGraphicBuffer->handle != nullptr)
-        writer.setLayerBuffer(mDisplay, mLayer, 0, mGraphicBuffer->handle, mFillFence);
+    if (mGraphicBuffer) {
+        writer.setLayerBuffer(mDisplay, mLayer, /*slot*/ 0, mGraphicBuffer->handle, mFillFence);
+    }
 }
 
 LayerSettings TestBufferLayer::toRenderEngineLayerSettings() {
@@ -326,16 +325,26 @@ void TestBufferLayer::fillBuffer(std::vector<Color>& expectedColors) {
     EXPECT_EQ(::android::OK, status);
     ASSERT_NO_FATAL_FAILURE(ReadbackHelper::fillBuffer(mWidth, mHeight, stride, bufData,
                                                        mPixelFormat, expectedColors));
-    EXPECT_EQ(::android::OK, mGraphicBuffer->unlock());
+
+    const auto unlockStatus = mGraphicBuffer->unlockAsync(&mFillFence);
+    ASSERT_EQ(::android::OK, unlockStatus);
+    if (mFillFence >= 0) {
+        sync_wait(mFillFence, -1);
+        close(mFillFence);
+    }
 }
 
 void TestBufferLayer::setBuffer(std::vector<Color> colors) {
-    mGraphicBuffer->reallocate(mWidth, mHeight, static_cast<::android::PixelFormat>(mPixelFormat),
-                               mLayerCount, mUsage);
+    mGraphicBuffer = allocateBuffer();
     ASSERT_NE(nullptr, mGraphicBuffer);
-    ASSERT_NE(nullptr, mGraphicBuffer->handle);
-    ASSERT_NO_FATAL_FAILURE(fillBuffer(colors));
     ASSERT_EQ(::android::OK, mGraphicBuffer->initCheck());
+    ASSERT_NO_FATAL_FAILURE(fillBuffer(colors));
+}
+
+::android::sp<::android::GraphicBuffer> TestBufferLayer::allocateBuffer() {
+    return ::android::sp<::android::GraphicBuffer>::make(
+            mWidth, mHeight, static_cast<::android::PixelFormat>(mPixelFormat), mLayerCount, mUsage,
+            "TestBufferLayer");
 }
 
 void TestBufferLayer::setDataspace(common::Dataspace dataspace, ComposerClientWriter& writer) {
