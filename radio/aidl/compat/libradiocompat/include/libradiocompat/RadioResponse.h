@@ -15,6 +15,9 @@
  */
 #pragma once
 
+#include "DriverContext.h"
+#include "GuaranteedCallback.h"
+
 #include <aidl/android/hardware/radio/data/IRadioDataResponse.h>
 #include <aidl/android/hardware/radio/messaging/IRadioMessagingResponse.h>
 #include <aidl/android/hardware/radio/modem/IRadioModemResponse.h>
@@ -26,13 +29,26 @@
 namespace android::hardware::radio::compat {
 
 class RadioResponse : public V1_6::IRadioResponse {
-    std::shared_ptr<::aidl::android::hardware::radio::data::IRadioDataResponse> mDataCb;
-    std::shared_ptr<::aidl::android::hardware::radio::messaging::IRadioMessagingResponse>
+    std::shared_ptr<DriverContext> mContext;
+
+    GuaranteedCallback<::aidl::android::hardware::radio::data::IRadioDataResponse,
+                       ::aidl::android::hardware::radio::data::IRadioDataResponseDefault>
+            mDataCb;
+    GuaranteedCallback<::aidl::android::hardware::radio::messaging::IRadioMessagingResponse,
+                       ::aidl::android::hardware::radio::messaging::IRadioMessagingResponseDefault>
             mMessagingCb;
-    std::shared_ptr<::aidl::android::hardware::radio::modem::IRadioModemResponse> mModemCb;
-    std::shared_ptr<::aidl::android::hardware::radio::network::IRadioNetworkResponse> mNetworkCb;
-    std::shared_ptr<::aidl::android::hardware::radio::sim::IRadioSimResponse> mSimCb;
-    std::shared_ptr<::aidl::android::hardware::radio::voice::IRadioVoiceResponse> mVoiceCb;
+    GuaranteedCallback<::aidl::android::hardware::radio::modem::IRadioModemResponse,
+                       ::aidl::android::hardware::radio::modem::IRadioModemResponseDefault>
+            mModemCb;
+    GuaranteedCallback<::aidl::android::hardware::radio::network::IRadioNetworkResponse,
+                       ::aidl::android::hardware::radio::network::IRadioNetworkResponseDefault>
+            mNetworkCb;
+    GuaranteedCallback<::aidl::android::hardware::radio::sim::IRadioSimResponse,
+                       ::aidl::android::hardware::radio::sim::IRadioSimResponseDefault>
+            mSimCb;
+    GuaranteedCallback<::aidl::android::hardware::radio::voice::IRadioVoiceResponse,
+                       ::aidl::android::hardware::radio::voice::IRadioVoiceResponseDefault>
+            mVoiceCb;
 
     // IRadioResponse @ 1.0
     Return<void> getIccCardStatusResponse(const V1_0::RadioResponseInfo& info,
@@ -409,6 +425,8 @@ class RadioResponse : public V1_6::IRadioResponse {
                                                    int32_t updatedRecordIndex) override;
 
   public:
+    RadioResponse(std::shared_ptr<DriverContext> context);
+
     void setResponseFunction(
             std::shared_ptr<::aidl::android::hardware::radio::data::IRadioDataResponse> dataCb);
     void setResponseFunction(
@@ -422,6 +440,14 @@ class RadioResponse : public V1_6::IRadioResponse {
             std::shared_ptr<::aidl::android::hardware::radio::sim::IRadioSimResponse> simCb);
     void setResponseFunction(
             std::shared_ptr<::aidl::android::hardware::radio::voice::IRadioVoiceResponse> voiceCb);
+
+    std::shared_ptr<::aidl::android::hardware::radio::data::IRadioDataResponse> dataCb();
+    std::shared_ptr<::aidl::android::hardware::radio::messaging::IRadioMessagingResponse>
+    messagingCb();
+    std::shared_ptr<::aidl::android::hardware::radio::modem::IRadioModemResponse> modemCb();
+    std::shared_ptr<::aidl::android::hardware::radio::network::IRadioNetworkResponse> networkCb();
+    std::shared_ptr<::aidl::android::hardware::radio::sim::IRadioSimResponse> simCb();
+    std::shared_ptr<::aidl::android::hardware::radio::voice::IRadioVoiceResponse> voiceCb();
 };
 
 }  // namespace android::hardware::radio::compat

@@ -17,9 +17,11 @@
 package android.hardware.radio.data;
 
 import android.hardware.radio.RadioIndicationType;
+import android.hardware.radio.data.DataProfileInfo;
 import android.hardware.radio.data.KeepaliveStatus;
 import android.hardware.radio.data.PcoDataInfo;
 import android.hardware.radio.data.SetupDataCallResult;
+import android.hardware.radio.data.SlicingConfig;
 
 /**
  * Interface declaring unsolicited radio indications for data APIs.
@@ -68,7 +70,20 @@ oneway interface IRadioDataIndication {
      * is sent, AOSP will no longer throttle calls to IRadioData.SetupDataCall for the given APN.
      *
      * @param type Type of radio indication
-     * @param apn Apn to unthrottle
+     * @param dataProfileInfo Data profile info.
      */
-    void unthrottleApn(in RadioIndicationType type, in String apn);
+    void unthrottleApn(in RadioIndicationType type, in DataProfileInfo dataProfileInfo);
+
+    /**
+     * Indicates the current slicing configuration including URSP rules and NSSAIs
+     * (configured, allowed and rejected). URSP stands for UE route selection policy and is defined
+     * in 3GPP TS 24.526 Section 4.2. An NSSAI is a collection of network slices. Each network slice
+     * is identified by an S-NSSAI and is represented by the struct SliceInfo. NSSAI and S-NSSAI
+     * are defined in 3GPP TS 24.501.
+     *
+     * @param type Type of radio indication
+     * @param slicingConfig Current slicing configuration
+     *
+     */
+    void slicingConfigChanged(in RadioIndicationType type, in SlicingConfig slicingConfig);
 }

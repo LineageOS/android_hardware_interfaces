@@ -37,8 +37,8 @@ interface IAGnss {
   void setCallback(in android.hardware.gnss.IAGnssCallback callback);
   void dataConnClosed();
   void dataConnFailed();
-  void setServer(in android.hardware.gnss.IAGnssCallback.AGnssType type, in String hostname, in int port);
-  void dataConnOpen(in long networkHandle, in String apn, in android.hardware.gnss.IAGnss.ApnIpType apnIpType);
+  void setServer(in android.hardware.gnss.IAGnssCallback.AGnssType type, in @utf8InCpp String hostname, in int port);
+  void dataConnOpen(in long networkHandle, in @utf8InCpp String apn, in android.hardware.gnss.IAGnss.ApnIpType apnIpType);
   @Backing(type="int") @VintfStability
   enum ApnIpType {
     INVALID = 0,

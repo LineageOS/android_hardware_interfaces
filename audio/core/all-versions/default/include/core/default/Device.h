@@ -44,7 +44,10 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
-using namespace ::android::hardware::audio::common::CPP_VERSION;
+using ::android::hardware::audio::CORE_TYPES_CPP_VERSION::implementation::CoreUtils;
+using ::android::hardware::audio::CORE_TYPES_CPP_VERSION::implementation::ParametersUtil;
+using namespace ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION;
+using namespace ::android::hardware::audio::CORE_TYPES_CPP_VERSION;
 using namespace ::android::hardware::audio::CPP_VERSION;
 using AudioInputFlags = CoreUtils::AudioInputFlags;
 using AudioOutputFlags = CoreUtils::AudioOutputFlags;
@@ -63,14 +66,32 @@ struct Device : public IDevice, public ParametersUtil {
     Return<void> getInputBufferSize(const AudioConfig& config,
                                     getInputBufferSize_cb _hidl_cb) override;
 
-    std::tuple<Result, sp<IStreamOut>> openOutputStreamImpl(int32_t ioHandle,
+    std::tuple<Result, sp<IStreamOut>> openOutputStreamCore(int32_t ioHandle,
                                                             const DeviceAddress& device,
                                                             const AudioConfig& config,
                                                             const AudioOutputFlags& flags,
                                                             AudioConfig* suggestedConfig);
-    std::tuple<Result, sp<IStreamIn>> openInputStreamImpl(
+    std::tuple<Result, sp<IStreamIn>> openInputStreamCore(
             int32_t ioHandle, const DeviceAddress& device, const AudioConfig& config,
             const AudioInputFlags& flags, AudioSource source, AudioConfig* suggestedConfig);
+#if MAJOR_VERSION >= 4
+    std::tuple<Result, sp<IStreamOut>, AudioConfig> openOutputStreamImpl(
+            int32_t ioHandle, const DeviceAddress& device, const AudioConfig& config,
+            const SourceMetadata& sourceMetadata,
+#if MAJOR_VERSION <= 6
+            AudioOutputFlags flags);
+#else
+            const AudioOutputFlags& flags);
+#endif
+    std::tuple<Result, sp<IStreamIn>, AudioConfig> openInputStreamImpl(
+            int32_t ioHandle, const DeviceAddress& device, const AudioConfig& config,
+#if MAJOR_VERSION <= 6
+            AudioInputFlags flags,
+#else
+            const AudioInputFlags& flags,
+#endif
+            const SinkMetadata& sinkMetadata);
+#endif  // MAJOR_VERSION >= 4
 
     Return<void> openOutputStream(int32_t ioHandle, const DeviceAddress& device,
                                   const AudioConfig& config,
@@ -96,6 +117,13 @@ struct Device : public IDevice, public ParametersUtil {
                                  const SinkMetadata& sinkMetadata,
 #endif
                                  openInputStream_cb _hidl_cb) override;
+
+#if MAJOR_VERSION == 7 && MINOR_VERSION == 1
+    Return<void> openOutputStream_7_1(int32_t ioHandle, const DeviceAddress& device,
+                                      const AudioConfig& config, const AudioOutputFlags& flags,
+                                      const SourceMetadata& sourceMetadata,
+                                      openOutputStream_7_1_cb _hidl_cb) override;
+#endif
 
     Return<bool> supportsAudioPatches() override;
     Return<void> createAudioPatch(const hidl_vec<AudioPortConfig>& sources,
@@ -130,6 +158,9 @@ struct Device : public IDevice, public ParametersUtil {
     Return<void> updateAudioPatch(int32_t previousPatch, const hidl_vec<AudioPortConfig>& sources,
                                   const hidl_vec<AudioPortConfig>& sinks,
                                   createAudioPatch_cb _hidl_cb) override;
+#endif
+#if MAJOR_VERSION == 7 && MINOR_VERSION == 1
+    Return<Result> setConnectedState_7_1(const AudioPort& devicePort, bool connected) override;
 #endif
     Return<void> debug(const hidl_handle& fd, const hidl_vec<hidl_string>& options) override;
 

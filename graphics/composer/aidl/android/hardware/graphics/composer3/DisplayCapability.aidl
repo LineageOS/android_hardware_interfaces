@@ -75,4 +75,9 @@ enum DisplayCapability {
      * PowerMode.ON_SUSPEND and PowerMode.DOZE_SUSPEND must be supported.
      */
     SUSPEND = 6,
+    /**
+     * Indicates that the display supports IComposerClient.setIdleTimerEnabled and
+     * IComposerCallback.onVsyncIdle.
+     */
+    DISPLAY_IDLE_TIMER = 7,
 }

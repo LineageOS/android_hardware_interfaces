@@ -24,7 +24,8 @@ package android.hardware.tv.tuner;
 @Backing(type="byte")
 enum DemuxFilterStatus {
     /**
-     * The data in the filter buffer is ready to be read.
+     * The data in the filter buffer is ready to be read. It can also be used to know the STC
+     * (System Time Clock) ready status if it's PCR filter.
      */
     DATA_READY = 1 << 0,
 

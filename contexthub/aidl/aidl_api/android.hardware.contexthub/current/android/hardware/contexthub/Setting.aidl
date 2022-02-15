@@ -39,4 +39,6 @@ enum Setting {
   WIFI_SCANNING = 3,
   AIRPLANE_MODE = 4,
   MICROPHONE = 5,
+  BT_MAIN = 6,
+  BT_SCANNING = 7,
 }

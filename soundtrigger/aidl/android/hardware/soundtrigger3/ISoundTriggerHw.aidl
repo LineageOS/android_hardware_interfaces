@@ -18,15 +18,12 @@ package android.hardware.soundtrigger3;
 
 import android.hardware.soundtrigger3.ISoundTriggerHwCallback;
 import android.hardware.soundtrigger3.ISoundTriggerHwGlobalCallback;
-
+import android.media.soundtrigger.ModelParameter;
+import android.media.soundtrigger.ModelParameterRange;
 import android.media.soundtrigger.PhraseSoundModel;
 import android.media.soundtrigger.Properties;
 import android.media.soundtrigger.RecognitionConfig;
 import android.media.soundtrigger.SoundModel;
-import android.media.soundtrigger.ModelParameter;
-import android.media.soundtrigger.ModelParameterRange;
-import android.media.soundtrigger.Properties;
-import android.media.soundtrigger.RecognitionConfig;
 
 /**
  * SoundTrigger HAL interface. Used for hardware recognition of hotwords
@@ -196,12 +193,12 @@ interface ISoundTriggerHw {
      *     an audio stream associated with this recognition session.
      * @param config A RecognitionConfig structure containing attributes of the recognition to
      *     perform.
-      * @throws ServiceSpecificException(RESOURCE_CONTENTION) if the model cannot be started due
+     * @throws ServiceSpecificException(RESOURCE_CONTENTION) if the model cannot be started due
      *     to resource constraints. This is typically a temporary condition and the client may
      *     retry after the onResourcesAvailable() global callback is invoked.
-    */
-    void startRecognition(in int modelHandle, in int deviceHandle,
-                          in int ioHandle, in RecognitionConfig config);
+     */
+    void startRecognition(
+            in int modelHandle, in int deviceHandle, in int ioHandle, in RecognitionConfig config);
 
     /**
      * Stop recognition on a given model.
@@ -235,7 +232,8 @@ interface ISoundTriggerHw {
      * @return This structure indicates supported attributes of the parameter for the given model
      *      handle. If the parameter is not supported, null is returned.
      */
-    @nullable ModelParameterRange queryParameter(in int modelHandle, in ModelParameter modelParam);
+    @nullable ModelParameterRange queryParameter(
+            in int modelHandle, in ModelParameter modelParam);
 
     /**
      * Get a model specific parameter.

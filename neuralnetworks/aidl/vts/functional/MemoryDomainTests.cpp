@@ -17,6 +17,7 @@
 #define LOG_TAG "neuralnetworks_aidl_hal_test"
 
 #include <aidl/android/hardware/graphics/common/PixelFormat.h>
+#include <aidl/android/hardware/neuralnetworks/IPreparedModel.h>
 #include <android-base/logging.h>
 #include <android/binder_auto_utils.h>
 #include <android/binder_interface_utils.h>
@@ -33,7 +34,6 @@
 
 #include "Callbacks.h"
 #include "GeneratedTestHarness.h"
-#include "MemoryUtils.h"
 #include "Utils.h"
 #include "VtsHalNeuralnetworks.h"
 
@@ -191,7 +191,7 @@ TestModel createSingleAddModel(const TestOperand& operand) {
 }
 
 // A placeholder invalid IPreparedModel class for MemoryDomainAllocateTest.InvalidPreparedModel
-class InvalidPreparedModel : public BnPreparedModel {
+class InvalidPreparedModel final : public IPreparedModel {
   public:
     ndk::ScopedAStatus executeSynchronously(const Request&, bool, int64_t, int64_t,
                                             ExecutionResult*) override {
@@ -204,10 +204,37 @@ class InvalidPreparedModel : public BnPreparedModel {
         return ndk::ScopedAStatus::fromServiceSpecificError(
                 static_cast<int32_t>(ErrorStatus::GENERAL_FAILURE));
     }
+    ndk::ScopedAStatus executeSynchronouslyWithConfig(const Request&, const ExecutionConfig&,
+                                                      int64_t, ExecutionResult*) override {
+        return ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(ErrorStatus::GENERAL_FAILURE));
+    }
+    ndk::ScopedAStatus executeFencedWithConfig(const Request&,
+                                               const std::vector<ndk::ScopedFileDescriptor>&,
+                                               const ExecutionConfig&, int64_t, int64_t,
+                                               FencedExecutionResult*) override {
+        return ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(ErrorStatus::GENERAL_FAILURE));
+    }
     ndk::ScopedAStatus configureExecutionBurst(std::shared_ptr<IBurst>*) override {
         return ndk::ScopedAStatus::fromServiceSpecificError(
                 static_cast<int32_t>(ErrorStatus::GENERAL_FAILURE));
     }
+    ndk::ScopedAStatus createReusableExecution(const aidl_hal::Request&, const ExecutionConfig&,
+                                               std::shared_ptr<aidl_hal::IExecution>*) override {
+        return ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(ErrorStatus::GENERAL_FAILURE));
+    }
+    ndk::ScopedAStatus getInterfaceVersion(int32_t* /*interfaceVersion*/) {
+        return ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(ErrorStatus::GENERAL_FAILURE));
+    }
+    ndk::ScopedAStatus getInterfaceHash(std::string* /*interfaceHash*/) {
+        return ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(ErrorStatus::GENERAL_FAILURE));
+    }
+    ndk::SpAIBinder asBinder() override { return ::ndk::SpAIBinder{}; }
+    bool isRemote() override { return true; }
 };
 
 template <typename... Args>

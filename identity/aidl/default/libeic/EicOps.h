@@ -141,6 +141,10 @@ void* eicMemCpy(void* dest, const void* src, size_t n);
 // String length, see strlen(3).
 size_t eicStrLen(const char* s);
 
+// Locate a substring, see memmem(3)
+void* eicMemMem(const uint8_t* haystack, size_t haystackLen, const uint8_t* needle,
+                size_t needleLen);
+
 // Memory compare, see CRYPTO_memcmp(3SSL)
 //
 // It takes an amount of time dependent on len, but independent of the contents of the
@@ -150,6 +154,12 @@ int eicCryptoMemCmp(const void* s1, const void* s2, size_t n);
 
 // Random number generation.
 bool eicOpsRandom(uint8_t* buf, size_t numBytes);
+
+// Creates a new non-zero identifier in |id|.
+//
+// Is guaranteed to be non-zero and different than what is already in |id|.
+//
+bool eicNextId(uint32_t* id);
 
 // If |testCredential| is true, returns the 128-bit AES Hardware-Bound Key (16 bytes).
 //
@@ -186,13 +196,19 @@ bool eicOpsCreateEcKey(uint8_t privateKey[EIC_P256_PRIV_KEY_SIZE],
 
 // Generates CredentialKey plus an attestation certificate.
 //
-// The attestation certificate will be signed by the attestation keys the secure
-// area has been provisioned with. The given |challenge| and |applicationId|
-// will be used as will |testCredential|.
+// If |attestationKeyBlob| is non-NULL, the certificate must be signed by the
+// the provided attestation key. Else, the certificate must be signed by the
+// attestation key that the secure area has been factory provisioned with. The
+// given |challenge|, |applicationId|, and |testCredential| must be signed
+// into the attestation.
 //
-// The generated certificate will be in X.509 format and returned in |cert|
-// and |certSize| must be set to the size of this array and this function will
-// set it to the size of the certification chain on successfully return.
+// When |attestationKeyBlob| is non-NULL, then |attestationKeyCert| must
+// also be passed so that the underlying implementation can properly chain up
+// the newly-generated certificate to the existing chain.
+//
+// The generated certificate must be in X.509 format and returned in |cert|
+// and |certSize| must be set to the size of this array. This function must
+// set |certSize| to the size of the certification chain on successfully return.
 //
 // This may return either a single certificate or an entire certificate
 // chain. If it returns only a single certificate, the implementation of
@@ -201,8 +217,10 @@ bool eicOpsCreateEcKey(uint8_t privateKey[EIC_P256_PRIV_KEY_SIZE],
 //
 bool eicOpsCreateCredentialKey(uint8_t privateKey[EIC_P256_PRIV_KEY_SIZE], const uint8_t* challenge,
                                size_t challengeSize, const uint8_t* applicationId,
-                               size_t applicationIdSize, bool testCredential, uint8_t* cert,
-                               size_t* certSize);  // inout
+                               size_t applicationIdSize, bool testCredential,
+                               const uint8_t* attestationKeyBlob, size_t attestationKeyBlobSize,
+                               const uint8_t* attestationKeyCert, size_t attestationKeyCertSize,
+                               uint8_t* /*out*/ cert, size_t* /*inout*/ certSize);
 
 // Generate an X.509 certificate for the key identified by |publicKey| which
 // must be of the form returned by eicOpsCreateEcKey().
@@ -294,6 +312,8 @@ bool eicOpsValidateAuthToken(uint64_t challenge, uint64_t secureUserId, uint64_t
                              uint64_t verificationTokenTimeStamp,
                              int verificationTokenSecurityLevel,
                              const uint8_t* verificationTokenMac, size_t verificationTokenMacSize);
+
+// Also see eicOpsLookupActiveSessionFromId() defined in EicSession.h
 
 #ifdef __cplusplus
 }

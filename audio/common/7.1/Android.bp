@@ -1,0 +1,23 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_library {
+    name: "android.hardware.audio.common@7.1-enums",
+    vendor_available: true,
+    generated_headers: ["audio_policy_configuration_V7_1_enums"],
+    generated_sources: ["audio_policy_configuration_V7_1_enums"],
+    header_libs: ["libxsdc-utils"],
+    export_generated_headers: ["audio_policy_configuration_V7_1_enums"],
+    export_header_lib_headers: ["libxsdc-utils"],
+    export_include_dirs: ["enums/include"],
+    shared_libs: [
+        "libbase",
+        "liblog",
+    ],
+}

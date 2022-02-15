@@ -43,6 +43,7 @@ cc_test {
         "libhealthtest_headers",
     ],
     test_suites: [
+        "general-tests",
         "vts",
     ],
 }

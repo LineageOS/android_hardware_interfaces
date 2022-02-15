@@ -37,12 +37,12 @@ parcelable HostEndpointInfo {
     @Backing(type="int")
     enum Type {
         /**
-           This endpoint is from the Android framework, where packageName and attributionTag may be
-           empty.
+         * This endpoint is from the Android framework, where packageName and attributionTag may be
+         * empty.
          */
-        TYPE_FRAMEWORK = 1,
+        FRAMEWORK = 1,
 
         /** This endpoint is an Android app. */
-        TYPE_APP = 2,
+        APP = 2,
     }
 }

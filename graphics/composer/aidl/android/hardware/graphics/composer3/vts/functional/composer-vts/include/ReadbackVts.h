@@ -16,22 +16,16 @@
 
 #pragma once
 
-// TODO(b/129481165): remove the #pragma below and fix conversion issues
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-
-#include <GraphicsComposerCallback.h>
 #include <aidl/android/hardware/graphics/composer3/IComposerClient.h>
 #include <android-base/unique_fd.h>
-#include <android/hardware/graphics/composer3/command-buffer.h>
+#include <android/hardware/graphics/composer3/ComposerClientReader.h>
+#include <android/hardware/graphics/composer3/ComposerClientWriter.h>
 #include <mapper-vts/2.1/MapperVts.h>
 #include <renderengine/RenderEngine.h>
 #include <ui/GraphicBuffer.h>
-
 #include <memory>
-
-// TODO(b/129481165): remove the #pragma below and fix conversion issues
-#pragma clang diagnostic pop  // ignored "-Wconversion
+#include "GraphicsComposerCallback.h"
+#include "VtsComposerClient.h"
 
 namespace aidl::android::hardware::graphics::composer3::vts {
 
@@ -40,33 +34,39 @@ using common::Dataspace;
 using common::PixelFormat;
 using IMapper2_1 = ::android::hardware::graphics::mapper::V2_1::IMapper;
 
-static const Color BLACK = {0, 0, 0, static_cast<int8_t>(0xff)};
-static const Color RED = {static_cast<int8_t>(0xff), 0, 0, static_cast<int8_t>(0xff)};
-static const Color TRANSLUCENT_RED = {static_cast<int8_t>(0xff), 0, 0, 0x33};
-static const Color GREEN = {0, static_cast<int8_t>(0xff), 0, static_cast<int8_t>(0xff)};
-static const Color BLUE = {0, 0, static_cast<int8_t>(0xff), static_cast<int8_t>(0xff)};
-static const Color WHITE = {static_cast<int8_t>(0xff), static_cast<int8_t>(0xff),
-                            static_cast<int8_t>(0xff), static_cast<int8_t>(0xff)};
+static const Color BLACK = {0.0f, 0.0f, 0.0f, 1.0f};
+static const Color RED = {1.0f, 0.0f, 0.0f, 1.0f};
+// DIM_RED is 90% dimmed from RED in linear space
+// hard-code as value 243 in 8-bit space here, as calculating it requires
+// oetf(eotf(value) * .9), which is a complex non-linear transformation
+static const Color DIM_RED = {243.f / 255.f, 0.0f, 0.0f, 1.0f};
+static const Color TRANSLUCENT_RED = {1.0f, 0.0f, 0.0f, 0.3f};
+static const Color GREEN = {0.0f, 1.0f, 0.0f, 1.0f};
+static const Color BLUE = {0.0f, 0.0f, 1.0f, 1.0f};
+static const Color WHITE = {1.0f, 1.0f, 1.0f, 1.0f};
 
 class TestRenderEngine;
 
 class TestLayer {
   public:
-    TestLayer(const std::shared_ptr<IComposerClient>& client, int64_t display)
-        : mDisplay(display), mComposerClient(client) {
-        client->createLayer(display, kBufferSlotCount, &mLayer);
+    TestLayer(const std::shared_ptr<VtsComposerClient>& client, int64_t display)
+        : mDisplay(display) {
+        const auto& [status, layer] = client->createLayer(display, kBufferSlotCount);
+        EXPECT_TRUE(status.isOk());
+        mLayer = layer;
     }
 
     // ComposerClient will take care of destroying layers, no need to explicitly
     // call destroyLayers here
     virtual ~TestLayer(){};
 
-    virtual void write(CommandWriterBase& writer);
+    virtual void write(ComposerClientWriter& writer);
     virtual LayerSettings toRenderEngineLayerSettings();
 
     void setDisplayFrame(Rect frame) { mDisplayFrame = frame; }
     void setSourceCrop(FRect crop) { mSourceCrop = crop; }
     void setZOrder(uint32_t z) { mZOrder = z; }
+    void setWhitePointNits(float whitePointNits) { mWhitePointNits = whitePointNits; }
 
     void setSurfaceDamage(std::vector<Rect> surfaceDamage) {
         mSurfaceDamage = std::move(surfaceDamage);
@@ -84,10 +84,13 @@ class TestLayer {
 
     int64_t getLayer() const { return mLayer; }
 
+    float getWhitePointNits() const { return mWhitePointNits; }
+
   protected:
     int64_t mDisplay;
     int64_t mLayer;
     Rect mDisplayFrame = {0, 0, 0, 0};
+    float mWhitePointNits = -1.f;
     std::vector<Rect> mSurfaceDamage;
     Transform mTransform = static_cast<Transform>(0);
     FRect mSourceCrop = {0, 0, 0, 0};
@@ -95,17 +98,14 @@ class TestLayer {
     float mAlpha = 1.0;
     BlendMode mBlendMode = BlendMode::NONE;
     uint32_t mZOrder = 0;
-
-  private:
-    std::shared_ptr<IComposerClient> const mComposerClient;
 };
 
 class TestColorLayer : public TestLayer {
   public:
-    TestColorLayer(const std::shared_ptr<IComposerClient>& client, int64_t display)
+    TestColorLayer(const std::shared_ptr<VtsComposerClient>& client, int64_t display)
         : TestLayer{client, display} {}
 
-    void write(CommandWriterBase& writer) override;
+    void write(ComposerClientWriter& writer) override;
 
     LayerSettings toRenderEngineLayerSettings() override;
 
@@ -117,13 +117,13 @@ class TestColorLayer : public TestLayer {
 
 class TestBufferLayer : public TestLayer {
   public:
-    TestBufferLayer(const std::shared_ptr<IComposerClient>& client,
+    TestBufferLayer(const std::shared_ptr<VtsComposerClient>& client,
                     const ::android::sp<::android::GraphicBuffer>& graphicBuffer,
                     TestRenderEngine& renderEngine, int64_t display, uint32_t width,
                     uint32_t height, common::PixelFormat format,
                     Composition composition = Composition::DEVICE);
 
-    void write(CommandWriterBase& writer) override;
+    void write(ComposerClientWriter& writer) override;
 
     LayerSettings toRenderEngineLayerSettings() override;
 
@@ -131,9 +131,9 @@ class TestBufferLayer : public TestLayer {
 
     void setBuffer(std::vector<Color> colors);
 
-    void setDataspace(Dataspace dataspace, CommandWriterBase& writer);
+    void setDataspace(Dataspace dataspace, ComposerClientWriter& writer);
 
-    void setToClientComposition(CommandWriterBase& writer);
+    void setToClientComposition(ComposerClientWriter& writer);
 
     uint32_t getWidth() const { return mWidth; }
 
@@ -153,7 +153,6 @@ class TestBufferLayer : public TestLayer {
     uint32_t mLayerCount;
     PixelFormat mPixelFormat;
     uint32_t mUsage;
-    uint32_t mStride;
     ::android::Rect mAccessRegion;
 };
 
@@ -181,20 +180,19 @@ class ReadbackHelper {
     static const std::vector<ColorMode> colorModes;
     static const std::vector<Dataspace> dataspaces;
 
-    static void compareColorBuffers(std::vector<Color>& expectedColors, void* bufferData,
-                                    const int32_t stride, const uint32_t width,
+    static void compareColorBuffers(const std::vector<Color>& expectedColors, void* bufferData,
+                                    const uint32_t stride, const uint32_t width,
                                     const uint32_t height, PixelFormat pixelFormat);
 };
 
 class ReadbackBuffer {
   public:
-    ReadbackBuffer(int64_t display, const std::shared_ptr<IComposerClient>& client,
-                   const ::android::sp<::android::GraphicBuffer>& graphicBuffer, int32_t width,
+    ReadbackBuffer(int64_t display, const std::shared_ptr<VtsComposerClient>& client, int32_t width,
                    int32_t height, common::PixelFormat pixelFormat, common::Dataspace dataspace);
 
     void setReadbackBuffer();
 
-    void checkReadbackBuffer(std::vector<Color> expectedColors);
+    void checkReadbackBuffer(const std::vector<Color>& expectedColors);
 
     ::android::sp<::android::GraphicBuffer> allocate();
 
@@ -203,12 +201,11 @@ class ReadbackBuffer {
     uint32_t mHeight;
     uint32_t mLayerCount;
     uint32_t mUsage;
-    uint32_t mStride;
     PixelFormat mPixelFormat;
     Dataspace mDataspace;
     int64_t mDisplay;
     ::android::sp<::android::GraphicBuffer> mGraphicBuffer;
-    std::shared_ptr<IComposerClient> mComposerClient;
+    std::shared_ptr<VtsComposerClient> mComposerClient;
     ::android::Rect mAccessRegion;
     native_handle_t mBufferHandle;
 };

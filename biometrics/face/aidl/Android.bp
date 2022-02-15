@@ -16,13 +16,12 @@ aidl_interface {
     imports: [
         "android.hardware.biometrics.common",
         "android.hardware.common-V2",
-        "android.hardware.keymaster",
+        "android.hardware.keymaster-V3",
     ],
     stability: "vintf",
     backend: {
         java: {
             platform_apis: true,
-            srcs_available: true,
         },
         cpp: {
             enabled: false,

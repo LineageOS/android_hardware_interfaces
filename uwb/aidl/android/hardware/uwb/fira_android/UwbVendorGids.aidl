@@ -32,5 +32,5 @@ enum UwbVendorGids {
      */
 
     /** All Android specific commands/response/notification should use this GID */
-    ANDROID = 0xE,
+    ANDROID = 0xC,
 }

@@ -1,5 +1,8 @@
 service vendor.evs-hal-mock /vendor/bin/hw/android.hardware.automotive.evs@1.1-service
     class hal
-    user automotive_evs
-    group automotive_evs
-    disabled
+    priority -20
+    user graphics
+    group automotive_evs camera
+    onrestart restart automotive_display
+    onrestart restart evs_manager
+    disabled # will not automatically start with its class; must be explicitly started.

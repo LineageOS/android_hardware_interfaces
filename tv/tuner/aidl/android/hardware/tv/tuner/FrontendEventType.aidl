@@ -24,7 +24,9 @@ package android.hardware.tv.tuner;
 @Backing(type="int")
 enum FrontendEventType {
     /**
-     * The frontend has locked to the signal specified by the tune method.
+     * The frontend has locked to the signal specified by the tune method. It can also be notified
+     * after signal is locked if the signal attributes transmission parameter of the signal is
+     * changed (e.g., Modulation).
      */
     LOCKED,
 

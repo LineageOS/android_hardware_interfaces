@@ -53,6 +53,10 @@ class BluetoothAudioProvidersFactory : public IBluetoothAudioProvidersFactory {
       const V2_1::SessionType sessionType,
       getProviderCapabilities_2_1_cb _hidl_cb) override;
 
+  Return<void> getProviderCapabilities_2_2(
+      const V2_1::SessionType sessionType,
+      getProviderCapabilities_2_2_cb _hidl_cb) override;
+
  private:
   static A2dpSoftwareAudioProvider a2dp_software_provider_instance_;
   static A2dpOffloadAudioProvider a2dp_offload_provider_instance_;

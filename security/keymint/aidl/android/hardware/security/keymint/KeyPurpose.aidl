@@ -44,6 +44,10 @@ enum KeyPurpose {
     AGREE_KEY = 6,
 
     /* Usable as an attestation signing key.  Keys with this purpose must not have any other
-     * purpose. */
+     * purpose; if they do, key generation/import must be rejected with
+     * ErrorCode::INCOMPATIBLE_PURPOSE. (Rationale: If key also included KeyPurpose::SIGN, then
+     * it could be used to sign arbitrary data, including any tbsCertificate, and so an
+     * attestation produced by the key would have no security properties.)
+     */
     ATTEST_KEY = 7,
 }

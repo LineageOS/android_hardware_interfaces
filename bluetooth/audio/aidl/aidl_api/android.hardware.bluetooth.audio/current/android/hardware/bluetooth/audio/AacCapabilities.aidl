@@ -34,9 +34,9 @@
 package android.hardware.bluetooth.audio;
 @VintfStability
 parcelable AacCapabilities {
-  android.hardware.bluetooth.audio.AacObjectType objectType;
+  android.hardware.bluetooth.audio.AacObjectType[] objectType;
   int[] sampleRateHz;
-  android.hardware.bluetooth.audio.ChannelMode channelMode;
+  android.hardware.bluetooth.audio.ChannelMode[] channelMode;
   boolean variableBitRateSupported;
   byte[] bitsPerSample;
 }

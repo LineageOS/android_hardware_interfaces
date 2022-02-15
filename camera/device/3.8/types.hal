@@ -17,8 +17,15 @@
 package android.hardware.camera.device@3.8;
 
 import @3.2::ErrorMsg;
+import @3.2::CameraMetadata;
 import @3.2::MsgType;
 import @3.2::ShutterMsg;
+import @3.2::CameraMetadata;
+import @3.2::StreamConfigurationMode;
+import @3.7::Stream;
+
+import android.hardware.camera.metadata@3.8::CameraMetadataEnumAndroidRequestAvailableDynamicRangeProfilesMap;
+import android.hardware.camera.metadata@3.8::CameraMetadataEnumAndroidScalerAvailableStreamUseCases;
 
 /**
  * ShutterMsg:
@@ -66,4 +73,85 @@ struct NotifyMsg {
          */
         ShutterMsg shutter;
     } msg;
+};
+
+/**
+ * Stream:
+ *
+ * A descriptor for a single camera input or output stream. A stream is defined
+ * by the framework by its buffer resolution and format, and additionally by the
+ * HAL with the gralloc usage flags and the maximum in-flight buffer count.
+ *
+ * This version extends the @3.7 Stream with the dynamic range profile and the
+ * stream use case field.
+ */
+struct Stream {
+    /**
+     * The definition of Stream from the prior version.
+     */
+    @3.7::Stream v3_7;
+
+    /**
+     * The dynamic range profile for this stream.
+     *
+     * This field is valid and must only be considered for streams with format
+     * android.hardware.graphics.common.PixelFormat.YCBCR_P010 or
+     * android.hardware.graphics.common.PixelFormat.IMPLEMENTATION_DEFINED on devices supporting the
+     * ANDROID_REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_10_BIT capability.
+     *
+     */
+    CameraMetadataEnumAndroidRequestAvailableDynamicRangeProfilesMap dynamicRangeProfile;
+
+    /**
+     * The stream use case describing the stream's purpose
+     *
+     * This flag provides the camera device a hint on what user scenario this
+     * stream is intended for. With this flag, the camera device can optimize
+     * camera pipeline parameters, such as tuning, sensor mode, and ISP settings,
+     * for the intended use case.
+     *
+     * When this field is set to DEFAULT, the camera device should behave in
+     * the same way as in previous HAL versions, and optimize the camera pipeline
+     * based on stream format, data space, usage flag, and other stream properties.
+     *
+     * The HAL reports supported stream use cases in
+     * ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES. If the HAL doesn't support
+     * setting stream use cases, the camera framework leaves this field as
+     * DEFAULT.
+     */
+    CameraMetadataEnumAndroidScalerAvailableStreamUseCases useCase;
+};
+
+/**
+ * StreamConfiguration:
+ *
+ * Identical to @3.7::StreamConfiguration, except that the streams
+ * vector contains @3.8::Stream.
+ */
+struct StreamConfiguration {
+    /**
+     * An array of camera stream pointers, defining the input/output
+     * configuration for the camera HAL device.
+     */
+    vec<Stream> streams;
+
+    /**
+     * The definition of operation mode from prior version.
+     */
+    @3.2::StreamConfigurationMode operationMode;
+
+    /**
+     * The definition of session parameters from prior version.
+     */
+    @3.2::CameraMetadata sessionParams;
+
+    /**
+     * The definition of stream configuration counter from prior version.
+     */
+    uint32_t streamConfigCounter;
+
+    /**
+     * The definition of multi-resolution input image flag from prior version.
+     */
+    bool multiResolutionInputImage;
 };

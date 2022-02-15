@@ -42,7 +42,13 @@ parcelable SimSlotStatus {
      */
     String eid;
     /**
-     * PortInfo contains the ICCID, logical slot ID, and port state
+     * PortInfo contains the ICCID, logical slot ID, and port state.
+     * Cardstate has no relationship with whether the slot is active or inactive. Should always
+     * report up at least 1 port otherwise the logicalSlotIndex and portActive info will be lost.
+     * For example, the pSIM can be removed, but the slot can still be active. In that case, the
+     * SIM_STATUS reported for the corresponding logical stack will show CARDSTATE_ABSENT.
+     * Similarly, even if there is no profile enabled on the eSIM, that port can still be the
+     * active port in the slot mapping.
      */
     SimPortInfo[] portInfo;
 }

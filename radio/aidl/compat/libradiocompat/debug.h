@@ -26,12 +26,6 @@ static constexpr bool kSuperVerbose = true;
 #define LOG_CALL \
     if constexpr (debug::kSuperVerbose) LOG(VERBOSE) << (RADIO_MODULE ".") << __func__ << ' '
 
-#define CHECK_CB(field)                     \
-    if (!field) {                           \
-        LOG(WARNING) << "Callback not set"; \
-        return {};                          \
-    }
-
 }  // namespace debug
 
 inline std::ostream& operator<<(std::ostream& os, const V1_0::RadioIndicationType& type) {

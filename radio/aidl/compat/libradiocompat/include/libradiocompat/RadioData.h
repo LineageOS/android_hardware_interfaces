@@ -42,7 +42,8 @@ class RadioData : public RadioCompatBase, public aidl::android::hardware::radio:
             int64_t completionDurationMillis) override;
     ::ndk::ScopedAStatus setInitialAttachApn(
             int32_t serial,
-            const ::aidl::android::hardware::radio::data::DataProfileInfo& dpInfo) override;
+            const std::optional<::aidl::android::hardware::radio::data::DataProfileInfo>& dpInfo)
+            override;
     ::ndk::ScopedAStatus setResponseFunctions(
             const std::shared_ptr<::aidl::android::hardware::radio::data::IRadioDataResponse>&
                     radioDataResponse,
@@ -55,13 +56,15 @@ class RadioData : public RadioCompatBase, public aidl::android::hardware::radio:
             const std::vector<::aidl::android::hardware::radio::data::LinkAddress>& addresses,
             const std::vector<std::string>& dnses, int32_t pduSessionId,
             const std::optional<::aidl::android::hardware::radio::data::SliceInfo>& sliceInfo,
-            const std::optional<::aidl::android::hardware::radio::data::TrafficDescriptor>& trDescr,
             bool matchAllRuleAllowed) override;
     ::ndk::ScopedAStatus startHandover(int32_t serial, int32_t callId) override;
     ::ndk::ScopedAStatus startKeepalive(
             int32_t serial,
             const ::aidl::android::hardware::radio::data::KeepaliveRequest& keepalive) override;
     ::ndk::ScopedAStatus stopKeepalive(int32_t serial, int32_t sessionHandle) override;
+
+  protected:
+    std::shared_ptr<::aidl::android::hardware::radio::data::IRadioDataResponse> respond();
 
   public:
     using RadioCompatBase::RadioCompatBase;

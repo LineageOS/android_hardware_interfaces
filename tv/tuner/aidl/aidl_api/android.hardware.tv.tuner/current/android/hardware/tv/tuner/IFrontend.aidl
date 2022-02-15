@@ -43,7 +43,9 @@ interface IFrontend {
   void stopScan();
   android.hardware.tv.tuner.FrontendStatus[] getStatus(in android.hardware.tv.tuner.FrontendStatusType[] statusTypes);
   void setLnb(in int lnbId);
-  void setLna(in boolean bEnable);
   int linkCiCam(in int ciCamId);
   void unlinkCiCam(in int ciCamId);
+  String getHardwareInfo();
+  void removeOutputPid(int pid);
+  android.hardware.tv.tuner.FrontendStatusReadiness[] getFrontendStatusReadiness(in android.hardware.tv.tuner.FrontendStatusType[] statusTypes);
 }

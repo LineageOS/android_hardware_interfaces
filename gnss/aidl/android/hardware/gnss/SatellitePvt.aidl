@@ -74,4 +74,62 @@ parcelable SatellitePvt {
 
     /** Tropospheric delay in meters. */
     double tropoDelayMeters;
+
+    /**
+     * Time of Clock.
+     *
+     * This is defined in GPS ICD200 documentation
+     * (e.g., https://www.gps.gov/technical/icwg/IS-GPS-200H.pdf).
+     */
+    int TOC;
+
+    /**
+     * Issue of Data, Clock.
+     *
+     * This is defined in GPS ICD200 documentation
+     * (e.g., https://www.gps.gov/technical/icwg/IS-GPS-200H.pdf).
+     *
+     * The field must be set to 0 if it is not supported.
+     */
+    int IODC;
+
+    /**
+     * Time of Ephemeris.
+     *
+     * This is defined in GPS ICD200 documentation
+     * (e.g., https://www.gps.gov/technical/icwg/IS-GPS-200H.pdf).
+     */
+    int TOE;
+
+    /**
+     * Issue of Data, Ephemeris.
+     *
+     * This is defined in GPS ICD200 documentation
+     * (e.g., https://www.gps.gov/technical/icwg/IS-GPS-200H.pdf).
+     *
+     * The field must be set to 0 if it is not supported.
+     */
+    int IODE;
+
+    /** Satellite's ephemeris source */
+    @VintfStability
+    @Backing(type="int")
+    enum SatelliteEphemerisSource {
+        // Demodulated from broadcast signals
+        DEMODULATED = 0,
+        // Server provided Normal type ephemeris data, which is similar to broadcast ephemeris in
+        // longevity (e.g. SUPL) - lasting for few hours and providing satellite orbit and clock
+        // with accuracy of 1 - 2 meters.
+        SERVER_NORMAL = 1,
+        // Server provided Long-Term type ephemeris data, which lasts for many hours to several days
+        // and often provides satellite orbit and clock accuracy of 2 - 20 meters.
+        SERVER_LONG_TERM = 2,
+        // Other source
+        OTHER = 3,
+    }
+
+    /**
+     * Source of the ephemeris.
+     */
+    SatelliteEphemerisSource ephemerisSource = SatelliteEphemerisSource.OTHER;
 }

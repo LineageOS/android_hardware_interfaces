@@ -170,13 +170,16 @@ class Burst final : public nn::IBurst, public std::enable_shared_from_this<Burst
     // See IBurst::execute for information on this method.
     nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> execute(
             const nn::Request& request, nn::MeasureTiming measure,
-            const nn::OptionalTimePoint& deadline,
-            const nn::OptionalDuration& loopTimeoutDuration) const override;
+            const nn::OptionalTimePoint& deadline, const nn::OptionalDuration& loopTimeoutDuration,
+            const std::vector<nn::TokenValuePair>& hints,
+            const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const override;
 
     // See IBurst::createReusableExecution for information on this method.
     nn::GeneralResult<nn::SharedExecution> createReusableExecution(
             const nn::Request& request, nn::MeasureTiming measure,
-            const nn::OptionalDuration& loopTimeoutDuration) const override;
+            const nn::OptionalDuration& loopTimeoutDuration,
+            const std::vector<nn::TokenValuePair>& hints,
+            const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const override;
 
     // If fallback is not nullptr, this method will invoke the fallback function to try another
     // execution path if the packet could not be sent. Otherwise, failing to send the packet will

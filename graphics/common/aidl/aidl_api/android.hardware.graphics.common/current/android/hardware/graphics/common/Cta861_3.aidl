@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.graphics.common;
+/* @hide */
 @VintfStability
 parcelable Cta861_3 {
   float maxContentLightLevel;

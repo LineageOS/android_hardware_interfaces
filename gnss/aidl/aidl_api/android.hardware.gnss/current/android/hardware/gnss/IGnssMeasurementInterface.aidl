@@ -36,4 +36,11 @@ package android.hardware.gnss;
 interface IGnssMeasurementInterface {
   void setCallback(in android.hardware.gnss.IGnssMeasurementCallback callback, in boolean enableFullTracking, in boolean enableCorrVecOutputs);
   void close();
+  void setCallbackWithOptions(in android.hardware.gnss.IGnssMeasurementCallback callback, in android.hardware.gnss.IGnssMeasurementInterface.Options options);
+  @VintfStability
+  parcelable Options {
+    boolean enableFullTracking;
+    boolean enableCorrVecOutputs;
+    int intervalMs;
+  }
 }

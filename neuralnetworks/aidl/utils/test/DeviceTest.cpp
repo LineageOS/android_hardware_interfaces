@@ -17,6 +17,7 @@
 #include "MockBuffer.h"
 #include "MockDevice.h"
 #include "MockPreparedModel.h"
+#include "TestUtils.h"
 
 #include <aidl/android/hardware/neuralnetworks/BnDevice.h>
 #include <android/binder_auto_utils.h>
@@ -60,7 +61,6 @@ constexpr PerformanceInfo kNoPerformanceInfo = {.execTime = std::numeric_limits<
                                                 .powerUsage = std::numeric_limits<float>::max()};
 constexpr NumberOfCacheFiles kNumberOfCacheFiles = {.numModelCache = nn::kMaxNumberOfCacheFiles - 1,
                                                     .numDataCache = nn::kMaxNumberOfCacheFiles};
-
 constexpr auto makeStatusOk = [] { return ndk::ScopedAStatus::ok(); };
 
 std::shared_ptr<MockDevice> createMockDevice() {
@@ -123,6 +123,18 @@ auto makePreparedModelReturn(ErrorStatus launchStatus, ErrorStatus returnStatus,
     };
 }
 
+const std::vector<nn::TokenValuePair> kHints = {nn::TokenValuePair{.token = 0, .value = {1}}};
+const std::vector<nn::ExtensionNameAndPrefix> kExtensionNameToPrefix = {
+        nn::ExtensionNameAndPrefix{.name = "com.android.nn_test", .prefix = 1}};
+auto makePreparedModelWithConfigReturn(ErrorStatus launchStatus, ErrorStatus returnStatus,
+                                       const std::shared_ptr<MockPreparedModel>& preparedModel) {
+    return [launchStatus, returnStatus, preparedModel](
+                   const Model& /*model*/, const PrepareModelConfig& /*config*/,
+                   const std::shared_ptr<IPreparedModelCallback>& cb) -> ndk::ScopedAStatus {
+        return makePreparedModelReturnImpl(launchStatus, returnStatus, preparedModel, cb);
+    };
+}
+
 auto makePreparedModelFromCacheReturn(ErrorStatus launchStatus, ErrorStatus returnStatus,
                                       const std::shared_ptr<MockPreparedModel>& preparedModel) {
     return [launchStatus, returnStatus, preparedModel](
@@ -146,26 +158,7 @@ constexpr auto makeDeadObjectFailure = [] {
     return ndk::ScopedAStatus::fromStatus(STATUS_DEAD_OBJECT);
 };
 
-class DeviceTest : public ::testing::TestWithParam<nn::Version> {
-  protected:
-    const nn::Version kVersion = GetParam();
-};
-
-std::string printDeviceTest(const testing::TestParamInfo<nn::Version>& info) {
-    const nn::Version version = info.param;
-    CHECK(!version.runtimeOnlyFeatures);
-    switch (version.level) {
-        case nn::Version::Level::FEATURE_LEVEL_5:
-            return "v1";
-        case nn::Version::Level::FEATURE_LEVEL_6:
-            return "v2";
-        case nn::Version::Level::FEATURE_LEVEL_7:
-            return "v3";
-        default:
-            LOG(FATAL) << "Invalid AIDL version: " << version;
-            return "invalid";
-    }
-}
+class DeviceTest : public VersionedAidlUtilsTestBase {};
 
 }  // namespace
 
@@ -578,6 +571,8 @@ TEST_P(DeviceTest, getSupportedOperationsDeadObject) {
 }
 
 TEST_P(DeviceTest, prepareModel) {
+    if (kVersion.level > nn::Version::Level::FEATURE_LEVEL_7) return;
+
     // setup call
     const auto mockDevice = createMockDevice();
     const auto device = Device::create(kName, mockDevice, kVersion).value();
@@ -589,7 +584,7 @@ TEST_P(DeviceTest, prepareModel) {
 
     // run test
     const auto result = device->prepareModel(kSimpleModel, nn::ExecutionPreference::DEFAULT,
-                                             nn::Priority::DEFAULT, {}, {}, {}, {});
+                                             nn::Priority::DEFAULT, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_TRUE(result.has_value())
@@ -598,6 +593,8 @@ TEST_P(DeviceTest, prepareModel) {
 }
 
 TEST_P(DeviceTest, prepareModelLaunchError) {
+    if (kVersion.level > nn::Version::Level::FEATURE_LEVEL_7) return;
+
     // setup call
     const auto mockDevice = createMockDevice();
     const auto device = Device::create(kName, mockDevice, kVersion).value();
@@ -608,7 +605,7 @@ TEST_P(DeviceTest, prepareModelLaunchError) {
 
     // run test
     const auto result = device->prepareModel(kSimpleModel, nn::ExecutionPreference::DEFAULT,
-                                             nn::Priority::DEFAULT, {}, {}, {}, {});
+                                             nn::Priority::DEFAULT, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -616,6 +613,8 @@ TEST_P(DeviceTest, prepareModelLaunchError) {
 }
 
 TEST_P(DeviceTest, prepareModelReturnError) {
+    if (kVersion.level > nn::Version::Level::FEATURE_LEVEL_7) return;
+
     // setup call
     const auto mockDevice = createMockDevice();
     const auto device = Device::create(kName, mockDevice, kVersion).value();
@@ -626,7 +625,7 @@ TEST_P(DeviceTest, prepareModelReturnError) {
 
     // run test
     const auto result = device->prepareModel(kSimpleModel, nn::ExecutionPreference::DEFAULT,
-                                             nn::Priority::DEFAULT, {}, {}, {}, {});
+                                             nn::Priority::DEFAULT, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -634,6 +633,8 @@ TEST_P(DeviceTest, prepareModelReturnError) {
 }
 
 TEST_P(DeviceTest, prepareModelNullptrError) {
+    if (kVersion.level > nn::Version::Level::FEATURE_LEVEL_7) return;
+
     // setup call
     const auto mockDevice = createMockDevice();
     const auto device = Device::create(kName, mockDevice, kVersion).value();
@@ -644,7 +645,7 @@ TEST_P(DeviceTest, prepareModelNullptrError) {
 
     // run test
     const auto result = device->prepareModel(kSimpleModel, nn::ExecutionPreference::DEFAULT,
-                                             nn::Priority::DEFAULT, {}, {}, {}, {});
+                                             nn::Priority::DEFAULT, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -652,6 +653,8 @@ TEST_P(DeviceTest, prepareModelNullptrError) {
 }
 
 TEST_P(DeviceTest, prepareModelTransportFailure) {
+    if (kVersion.level > nn::Version::Level::FEATURE_LEVEL_7) return;
+
     // setup call
     const auto mockDevice = createMockDevice();
     const auto device = Device::create(kName, mockDevice, kVersion).value();
@@ -661,7 +664,7 @@ TEST_P(DeviceTest, prepareModelTransportFailure) {
 
     // run test
     const auto result = device->prepareModel(kSimpleModel, nn::ExecutionPreference::DEFAULT,
-                                             nn::Priority::DEFAULT, {}, {}, {}, {});
+                                             nn::Priority::DEFAULT, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -669,6 +672,8 @@ TEST_P(DeviceTest, prepareModelTransportFailure) {
 }
 
 TEST_P(DeviceTest, prepareModelDeadObject) {
+    if (kVersion.level > nn::Version::Level::FEATURE_LEVEL_7) return;
+
     // setup call
     const auto mockDevice = createMockDevice();
     const auto device = Device::create(kName, mockDevice, kVersion).value();
@@ -678,7 +683,7 @@ TEST_P(DeviceTest, prepareModelDeadObject) {
 
     // run test
     const auto result = device->prepareModel(kSimpleModel, nn::ExecutionPreference::DEFAULT,
-                                             nn::Priority::DEFAULT, {}, {}, {}, {});
+                                             nn::Priority::DEFAULT, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -686,6 +691,8 @@ TEST_P(DeviceTest, prepareModelDeadObject) {
 }
 
 TEST_P(DeviceTest, prepareModelAsyncCrash) {
+    if (kVersion.level > nn::Version::Level::FEATURE_LEVEL_7) return;
+
     // setup test
     const auto mockDevice = createMockDevice();
     const auto device = Device::create(kName, mockDevice, kVersion).value();
@@ -699,7 +706,157 @@ TEST_P(DeviceTest, prepareModelAsyncCrash) {
 
     // run test
     const auto result = device->prepareModel(kSimpleModel, nn::ExecutionPreference::DEFAULT,
-                                             nn::Priority::DEFAULT, {}, {}, {}, {});
+                                             nn::Priority::DEFAULT, {}, {}, {}, {}, {}, {});
+
+    // verify result
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, nn::ErrorStatus::DEAD_OBJECT);
+}
+
+TEST_P(DeviceTest, prepareModelWithConfig) {
+    if (kVersion.level < nn::Version::Level::FEATURE_LEVEL_8) return;
+
+    // setup call
+    const auto mockDevice = createMockDevice();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
+    const auto mockPreparedModel = MockPreparedModel::create();
+    EXPECT_CALL(*mockDevice, prepareModelWithConfig(_, _, _))
+            .Times(1)
+            .WillOnce(Invoke(makePreparedModelWithConfigReturn(ErrorStatus::NONE, ErrorStatus::NONE,
+                                                               mockPreparedModel)));
+
+    // run test
+    const auto result = device->prepareModel(kSimpleModel, nn::ExecutionPreference::DEFAULT,
+                                             nn::Priority::DEFAULT, {}, {}, {}, {}, kHints,
+                                             kExtensionNameToPrefix);
+
+    // verify result
+    ASSERT_TRUE(result.has_value())
+            << "Failed with " << result.error().code << ": " << result.error().message;
+    EXPECT_NE(result.value(), nullptr);
+}
+
+TEST_P(DeviceTest, prepareModelWithConfigLaunchError) {
+    if (kVersion.level < nn::Version::Level::FEATURE_LEVEL_8) return;
+
+    // setup call
+    const auto mockDevice = createMockDevice();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
+    EXPECT_CALL(*mockDevice, prepareModelWithConfig(_, _, _))
+            .Times(1)
+            .WillOnce(Invoke(makePreparedModelWithConfigReturn(
+                    ErrorStatus::GENERAL_FAILURE, ErrorStatus::GENERAL_FAILURE, nullptr)));
+
+    // run test
+    const auto result = device->prepareModel(kSimpleModel, nn::ExecutionPreference::DEFAULT,
+                                             nn::Priority::DEFAULT, {}, {}, {}, {}, kHints,
+                                             kExtensionNameToPrefix);
+
+    // verify result
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
+}
+
+TEST_P(DeviceTest, prepareModelWithConfigReturnError) {
+    if (kVersion.level < nn::Version::Level::FEATURE_LEVEL_8) return;
+
+    // setup call
+    const auto mockDevice = createMockDevice();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
+    EXPECT_CALL(*mockDevice, prepareModelWithConfig(_, _, _))
+            .Times(1)
+            .WillOnce(Invoke(makePreparedModelWithConfigReturn(
+                    ErrorStatus::NONE, ErrorStatus::GENERAL_FAILURE, nullptr)));
+
+    // run test
+    const auto result = device->prepareModel(kSimpleModel, nn::ExecutionPreference::DEFAULT,
+                                             nn::Priority::DEFAULT, {}, {}, {}, {}, kHints,
+                                             kExtensionNameToPrefix);
+
+    // verify result
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
+}
+
+TEST_P(DeviceTest, prepareModelWithConfigNullptrError) {
+    if (kVersion.level < nn::Version::Level::FEATURE_LEVEL_8) return;
+
+    // setup call
+    const auto mockDevice = createMockDevice();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
+    EXPECT_CALL(*mockDevice, prepareModelWithConfig(_, _, _))
+            .Times(1)
+            .WillOnce(Invoke(makePreparedModelWithConfigReturn(ErrorStatus::NONE, ErrorStatus::NONE,
+                                                               nullptr)));
+
+    // run test
+    const auto result = device->prepareModel(kSimpleModel, nn::ExecutionPreference::DEFAULT,
+                                             nn::Priority::DEFAULT, {}, {}, {}, {}, kHints,
+                                             kExtensionNameToPrefix);
+
+    // verify result
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
+}
+
+TEST_P(DeviceTest, prepareModelWithConfigTransportFailure) {
+    if (kVersion.level < nn::Version::Level::FEATURE_LEVEL_8) return;
+
+    // setup call
+    const auto mockDevice = createMockDevice();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
+    EXPECT_CALL(*mockDevice, prepareModelWithConfig(_, _, _))
+            .Times(1)
+            .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
+
+    // run test
+    const auto result = device->prepareModel(kSimpleModel, nn::ExecutionPreference::DEFAULT,
+                                             nn::Priority::DEFAULT, {}, {}, {}, {}, kHints,
+                                             kExtensionNameToPrefix);
+
+    // verify result
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, nn::ErrorStatus::GENERAL_FAILURE);
+}
+
+TEST_P(DeviceTest, prepareModelWithConfigDeadObject) {
+    if (kVersion.level < nn::Version::Level::FEATURE_LEVEL_8) return;
+
+    // setup call
+    const auto mockDevice = createMockDevice();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
+    EXPECT_CALL(*mockDevice, prepareModelWithConfig(_, _, _))
+            .Times(1)
+            .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
+
+    // run test
+    const auto result = device->prepareModel(kSimpleModel, nn::ExecutionPreference::DEFAULT,
+                                             nn::Priority::DEFAULT, {}, {}, {}, {}, kHints,
+                                             kExtensionNameToPrefix);
+
+    // verify result
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, nn::ErrorStatus::DEAD_OBJECT);
+}
+
+TEST_P(DeviceTest, prepareModelWithConfigAsyncCrash) {
+    if (kVersion.level < nn::Version::Level::FEATURE_LEVEL_8) return;
+
+    // setup test
+    const auto mockDevice = createMockDevice();
+    const auto device = Device::create(kName, mockDevice, kVersion).value();
+    const auto ret = [&device]() {
+        DeathMonitor::serviceDied(device->getDeathMonitor());
+        return ndk::ScopedAStatus::ok();
+    };
+    EXPECT_CALL(*mockDevice, prepareModelWithConfig(_, _, _))
+            .Times(1)
+            .WillOnce(InvokeWithoutArgs(ret));
+
+    // run test
+    const auto result = device->prepareModel(kSimpleModel, nn::ExecutionPreference::DEFAULT,
+                                             nn::Priority::DEFAULT, {}, {}, {}, {}, kHints,
+                                             kExtensionNameToPrefix);
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -894,9 +1051,6 @@ TEST_P(DeviceTest, allocateDeadObject) {
     EXPECT_EQ(result.error().code, nn::ErrorStatus::DEAD_OBJECT);
 }
 
-INSTANTIATE_TEST_SUITE_P(TestDevice, DeviceTest,
-                         ::testing::Values(nn::kVersionFeatureLevel5, nn::kVersionFeatureLevel6,
-                                           nn::kVersionFeatureLevel7),
-                         printDeviceTest);
+INSTANTIATE_VERSIONED_AIDL_UTILS_TEST(DeviceTest, kAllAidlVersions);
 
 }  // namespace aidl::android::hardware::neuralnetworks::utils

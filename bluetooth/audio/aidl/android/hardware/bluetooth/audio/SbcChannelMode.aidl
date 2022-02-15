@@ -19,9 +19,9 @@ package android.hardware.bluetooth.audio;
 @VintfStability
 @Backing(type="byte")
 enum SbcChannelMode {
-    UNKNOWN = 1,
-    JOINT_STEREO = 1 << 1,
-    STEREO = 1 << 2,
-    DUAL = 1 << 3,
-    MONO = 1 << 4,
+    UNKNOWN,
+    JOINT_STEREO,
+    STEREO,
+    DUAL,
+    MONO,
 }

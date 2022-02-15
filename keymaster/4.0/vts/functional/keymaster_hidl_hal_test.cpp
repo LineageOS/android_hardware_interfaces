@@ -1712,6 +1712,7 @@ TEST_P(VerificationOperationsTest, RsaAllPaddingsAndDigests) {
                     case PaddingMode::RSA_PSS:
                         EXPECT_GT(EVP_PKEY_CTX_set_rsa_padding(pkey_ctx, RSA_PKCS1_PSS_PADDING), 0);
                         EXPECT_GT(EVP_PKEY_CTX_set_rsa_pss_saltlen(pkey_ctx, EVP_MD_size(md)), 0);
+                        EXPECT_GT(EVP_PKEY_CTX_set_rsa_mgf1_md(pkey_ctx, md), 0);
                         break;
                     case PaddingMode::RSA_PKCS1_1_5_SIGN:
                         // PKCS1 is the default; don't need to set anything.

@@ -25,12 +25,10 @@ import android.hardware.bluetooth.audio.SbcChannelMode;
 @VintfStability
 parcelable SbcCapabilities {
     int[] sampleRateHz;
-    /* bitfield */
-    SbcChannelMode channelMode;
+    SbcChannelMode[] channelMode;
     byte[] blockLength;
     byte[] numSubbands;
-    /* bitfield */
-    SbcAllocMethod allocMethod;
+    SbcAllocMethod[] allocMethod;
     byte[] bitsPerSample;
     /*
      * range from 2 to 250.

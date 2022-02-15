@@ -44,6 +44,7 @@ class Lnb : public BnLnb {
   private:
     int mId;
     virtual ~Lnb();
+    std::shared_ptr<ILnbCallback> mCallback;
 };
 
 }  // namespace tuner

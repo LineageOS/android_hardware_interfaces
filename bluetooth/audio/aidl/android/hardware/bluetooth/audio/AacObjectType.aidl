@@ -22,17 +22,17 @@ enum AacObjectType {
     /**
      * MPEG-2 Low Complexity. Support is Mandatory.
      */
-    MPEG2_LC = 1,
+    MPEG2_LC,
     /**
      * MPEG-4 Low Complexity. Support is Optional.
      */
-    MPEG4_LC = 1 << 1,
+    MPEG4_LC,
     /**
      * MPEG-4 Long Term Prediction. Support is Optional.
      */
-    MPEG4_LTP = 1 << 2,
+    MPEG4_LTP,
     /**
      * MPEG-4 Scalable. Support is Optional.
      */
-    MPEG4_SCALABLE = 1 << 3,
+    MPEG4_SCALABLE,
 }

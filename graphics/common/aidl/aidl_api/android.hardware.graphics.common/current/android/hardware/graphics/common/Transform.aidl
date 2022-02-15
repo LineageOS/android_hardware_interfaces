@@ -32,8 +32,10 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.graphics.common;
+/* @hide */
 @Backing(type="int") @VintfStability
 enum Transform {
+  NONE = 0,
   FLIP_H = 1,
   FLIP_V = 2,
   ROT_90 = 4,

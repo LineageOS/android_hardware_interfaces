@@ -25,7 +25,7 @@ cc_binary {
         "libbase",
         "libbinder_ndk",
         "android.hardware.biometrics.fingerprint-V2-ndk",
-        "android.hardware.biometrics.common-V1-ndk",
+        "android.hardware.biometrics.common-V2-ndk",
     ],
 }
 

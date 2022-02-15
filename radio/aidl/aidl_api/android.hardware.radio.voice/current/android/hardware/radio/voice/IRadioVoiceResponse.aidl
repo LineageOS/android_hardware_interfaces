@@ -36,6 +36,7 @@ package android.hardware.radio.voice;
 interface IRadioVoiceResponse {
   oneway void acceptCallResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void acknowledgeRequest(in int serial);
+  oneway void cancelPendingUssdResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void conferenceResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void dialResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void emergencyDialResponse(in android.hardware.radio.RadioResponseInfo info);
@@ -59,6 +60,7 @@ interface IRadioVoiceResponse {
   oneway void sendBurstDtmfResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void sendCdmaFeatureCodeResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void sendDtmfResponse(in android.hardware.radio.RadioResponseInfo info);
+  oneway void sendUssdResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void separateConnectionResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void setCallForwardResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void setCallWaitingResponse(in android.hardware.radio.RadioResponseInfo info);

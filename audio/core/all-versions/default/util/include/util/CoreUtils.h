@@ -17,7 +17,7 @@
 #pragma once
 
 // clang-format off
-#include PATH(android/hardware/audio/FILE_VERSION/types.h)
+#include PATH(android/hardware/audio/CORE_TYPES_FILE_VERSION/types.h)
 // clang-format off
 
 #include <vector>
@@ -30,13 +30,13 @@
 namespace android {
 namespace hardware {
 namespace audio {
-namespace CPP_VERSION {
+namespace CORE_TYPES_CPP_VERSION {
 namespace implementation {
 
 using ::android::hardware::audio::common::utils::EnumBitfield;
 using ::android::hardware::hidl_vec;
-using namespace ::android::hardware::audio::common::CPP_VERSION;
-using namespace ::android::hardware::audio::CPP_VERSION;
+using namespace ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION;
+using namespace ::android::hardware::audio::CORE_TYPES_CPP_VERSION;
 
 struct CoreUtils {
     // Note: the converters for DeviceAddress have to be in CoreUtils for HAL V4
@@ -93,8 +93,8 @@ struct CoreUtils {
         return NO_ERROR;
     }
 #else
-    using AudioInputFlags = hidl_vec<::android::hardware::audio::CPP_VERSION::AudioInOutFlag>;
-    using AudioOutputFlags = hidl_vec<::android::hardware::audio::CPP_VERSION::AudioInOutFlag>;
+    using AudioInputFlags = hidl_vec<::android::hardware::audio::CORE_TYPES_CPP_VERSION::AudioInOutFlag>;
+    using AudioOutputFlags = hidl_vec<::android::hardware::audio::CORE_TYPES_CPP_VERSION::AudioInOutFlag>;
     static status_t audioInputFlagsFromHal(audio_input_flags_t halFlagMask, AudioInputFlags* flags);
     static status_t audioInputFlagsToHal(const AudioInputFlags& flags, audio_input_flags_t* halFlagMask);
     static status_t audioOutputFlagsFromHal(audio_output_flags_t halFlagMask, AudioOutputFlags* flags);

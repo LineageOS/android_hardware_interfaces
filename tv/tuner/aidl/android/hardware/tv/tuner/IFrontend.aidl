@@ -19,6 +19,7 @@ package android.hardware.tv.tuner;
 import android.hardware.tv.tuner.FrontendScanType;
 import android.hardware.tv.tuner.FrontendSettings;
 import android.hardware.tv.tuner.FrontendStatus;
+import android.hardware.tv.tuner.FrontendStatusReadiness;
 import android.hardware.tv.tuner.FrontendStatusType;
 import android.hardware.tv.tuner.IFrontendCallback;
 
@@ -117,13 +118,6 @@ interface IFrontend {
     void setLnb(in int lnbId);
 
     /**
-     * Enable or Disable Low Noise Amplifier (LNA).
-     *
-     * @param bEnable true if activate LNA module; false if deactivate LNA
-     */
-    void setLna(in boolean bEnable);
-
-    /**
      * Link Conditional Access Modules (CAM) to Frontend support Common
      * Interface (CI) bypass mode.
      *
@@ -143,4 +137,35 @@ interface IFrontend {
      * @param ciCamId specify CI-CAM Id to unlink.
      */
     void unlinkCiCam(in int ciCamId);
+
+    /**
+     * Request Hardware information about the frontend.
+     *
+     * The client may use this to collect vendor specific hardware information, e.g. RF
+     * chip version, Demod chip version, detailed status of dvbs blind scan, etc. The
+     * client shouldn’t parse things or rely on any format or change their behavior
+     * based on results.
+     *
+     * @return the frontend hardware information.
+     */
+    String getHardwareInfo();
+
+    /**
+     * Filter out unnecessary PID from frontend output.
+     *
+     * @param pid specify the PID will be filtered out.
+     *
+     * @return UNAVAILABLE if the frontend doesn’t support PID filtering out.
+     */
+    void removeOutputPid(int pid);
+
+    /**
+     * Gets FrontendStatus’ readiness statuses for given status types.
+     *
+     * @param statusTypes an array of status types.
+     *
+     * @return an array of current readiness statuses. The ith readiness status in
+     *         the array presents fronted type statusTypes[i]’s readiness status.
+     */
+    FrontendStatusReadiness[] getFrontendStatusReadiness(in FrontendStatusType[] statusTypes);
 }

@@ -34,8 +34,8 @@
 package android.hardware.bluetooth.audio;
 @Backing(type="byte") @VintfStability
 enum LdacQualityIndex {
-  QUALITY_HIGH = 1,
-  QUALITY_MID = 2,
-  QUALITY_LOW = 4,
-  QUALITY_ABR = 8,
+  HIGH = 0,
+  MID = 1,
+  LOW = 2,
+  ABR = 3,
 }

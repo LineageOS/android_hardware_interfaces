@@ -24,6 +24,7 @@ import android.hardware.radio.voice.CdmaSignalInfoRecord;
 import android.hardware.radio.voice.EmergencyNumber;
 import android.hardware.radio.voice.SrvccState;
 import android.hardware.radio.voice.StkCcUnsolSsResult;
+import android.hardware.radio.voice.UssdModeType;
 
 /**
  * Interface declaring unsolicited radio indications for voice APIs.
@@ -136,6 +137,16 @@ oneway interface IRadioVoiceIndication {
      * @param type Type of radio indication
      */
     void onSupplementaryServiceIndication(in RadioIndicationType type, in StkCcUnsolSsResult ss);
+
+    /**
+     * Indicates when a new USSD message is received. The USSD session is assumed to persist if the
+     * type code is REQUEST, otherwise the current session (if any) is assumed to have terminated.
+     *
+     * @param type Type of radio indication
+     * @param modeType USSD type code
+     * @param msg Message string in UTF-8, if applicable
+     */
+    void onUssd(in RadioIndicationType type, in UssdModeType modeType, in String msg);
 
     /**
      * Indicates that framework/application must reset the uplink mute state.

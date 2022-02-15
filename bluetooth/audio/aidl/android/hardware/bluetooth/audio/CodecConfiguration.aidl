@@ -18,7 +18,9 @@ package android.hardware.bluetooth.audio;
 
 import android.hardware.bluetooth.audio.AacConfiguration;
 import android.hardware.bluetooth.audio.AptxConfiguration;
+import android.hardware.bluetooth.audio.AptxAdaptiveConfiguration;
 import android.hardware.bluetooth.audio.CodecType;
+import android.hardware.bluetooth.audio.Lc3Configuration;
 import android.hardware.bluetooth.audio.LdacConfiguration;
 import android.hardware.bluetooth.audio.SbcConfiguration;
 
@@ -29,11 +31,20 @@ import android.hardware.bluetooth.audio.SbcConfiguration;
 @VintfStability
 parcelable CodecConfiguration {
     @VintfStability
+    parcelable VendorConfiguration {
+        int vendorId;
+        char codecId;
+        ParcelableHolder codecConfig;
+    }
+    @VintfStability
     union CodecSpecific {
         SbcConfiguration sbcConfig;
         AacConfiguration aacConfig;
         LdacConfiguration ldacConfig;
         AptxConfiguration aptxConfig;
+        AptxAdaptiveConfiguration aptxAdaptiveConfig;
+        Lc3Configuration lc3Config;
+        VendorConfiguration vendorConfig;
     }
     CodecType codecType;
     /**

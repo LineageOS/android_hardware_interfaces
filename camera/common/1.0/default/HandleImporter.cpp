@@ -30,6 +30,7 @@ namespace helper {
 using aidl::android::hardware::graphics::common::PlaneLayout;
 using aidl::android::hardware::graphics::common::PlaneLayoutComponent;
 using aidl::android::hardware::graphics::common::PlaneLayoutComponentType;
+using MetadataType = android::hardware::graphics::mapper::V4_0::IMapper::MetadataType;
 using MapperErrorV2 = android::hardware::graphics::mapper::V2_0::Error;
 using MapperErrorV3 = android::hardware::graphics::mapper::V3_0::Error;
 using MapperErrorV4 = android::hardware::graphics::mapper::V4_0::Error;
@@ -121,6 +122,21 @@ YCbCrLayout HandleImporter::lockYCbCrInternal(const sp<M> mapper, buffer_handle_
                 }
            });
     return layout;
+}
+
+bool isMetadataPesent(const sp<IMapperV4> mapper, const buffer_handle_t& buf,
+        MetadataType metadataType) {
+    auto buffer = const_cast<native_handle_t*>(buf);
+    mapper->get(buffer, metadataType, [] (const auto& tmpError,
+                const auto& tmpMetadata) {
+                    if (tmpError == MapperErrorV4::NONE) {
+                        return tmpMetadata.size() > 0;
+                    } else {
+                        ALOGE("%s: failed to get metadata %d!", __FUNCTION__, tmpError);
+                        return false;
+                    }});
+
+    return false;
 }
 
 std::vector<PlaneLayout> getPlaneLayouts(const sp<IMapperV4> mapper, buffer_handle_t& buf) {
@@ -448,6 +464,55 @@ int HandleImporter::unlock(buffer_handle_t& buf) {
     ALOGE("%s: mMapperV4, mMapperV3 and mMapperV2 are all null!", __FUNCTION__);
     return -1;
 }
+
+bool HandleImporter::isSmpte2086Present(const buffer_handle_t& buf) {
+    Mutex::Autolock lock(mLock);
+
+    if (!mInitialized) {
+        initializeLocked();
+    }
+
+    if (mMapperV4 != nullptr) {
+        return isMetadataPesent(mMapperV4, buf, gralloc4::MetadataType_Smpte2086);
+    } else {
+        ALOGE("%s: mMapperV4 is null! Query not supported!", __FUNCTION__);
+    }
+
+    return false;
+}
+
+bool HandleImporter::isSmpte2094_10Present(const buffer_handle_t& buf) {
+    Mutex::Autolock lock(mLock);
+
+    if (!mInitialized) {
+        initializeLocked();
+    }
+
+    if (mMapperV4 != nullptr) {
+        return isMetadataPesent(mMapperV4, buf, gralloc4::MetadataType_Smpte2094_10);
+    } else {
+        ALOGE("%s: mMapperV4 is null! Query not supported!", __FUNCTION__);
+    }
+
+    return false;
+}
+
+bool HandleImporter::isSmpte2094_40Present(const buffer_handle_t& buf) {
+    Mutex::Autolock lock(mLock);
+
+    if (!mInitialized) {
+        initializeLocked();
+    }
+
+    if (mMapperV4 != nullptr) {
+        return isMetadataPesent(mMapperV4, buf, gralloc4::MetadataType_Smpte2094_40);
+    } else {
+        ALOGE("%s: mMapperV4 is null! Query not supported!", __FUNCTION__);
+    }
+
+    return false;
+}
+
 
 } // namespace helper
 } // namespace V1_0

@@ -50,7 +50,7 @@ using ::android::hardware::Void;
 using ::android::hardware::audio::common::utils::mkEnumBitfield;
 using ::android::hidl::allocator::V1_0::IAllocator;
 using ::android::hidl::memory::V1_0::IMemory;
-using namespace ::android::hardware::audio::common::CPP_VERSION;
+using namespace ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION;
 using namespace ::android::hardware::audio::effect::CPP_VERSION;
 #if MAJOR_VERSION >= 7
 // Make an alias for enumerations generated from the APM config XSD.

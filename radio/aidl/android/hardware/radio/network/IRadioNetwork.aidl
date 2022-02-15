@@ -17,7 +17,6 @@
 package android.hardware.radio.network;
 
 import android.hardware.radio.AccessNetwork;
-import android.hardware.radio.RadioAccessFamily;
 import android.hardware.radio.network.CdmaRoamingType;
 import android.hardware.radio.network.IRadioNetworkIndication;
 import android.hardware.radio.network.IRadioNetworkResponse;
@@ -195,7 +194,7 @@ oneway interface IRadioNetwork {
      *
      * Response function is IRadioNetworkResponse.setAllowedNetworkTypesBitmapResponse()
      */
-    void setAllowedNetworkTypesBitmap(in int serial, in RadioAccessFamily networkTypeBitmap);
+    void setAllowedNetworkTypesBitmap(in int serial, in int networkTypeBitmap);
 
     /**
      * Assign a specified band for RF configuration.
@@ -253,7 +252,7 @@ oneway interface IRadioNetwork {
      *
      * Response function is IRadioNetworkResponse.setIndicationFilterResponse()
      */
-    void setIndicationFilter(in int serial, in IndicationFilter indicationFilter);
+    void setIndicationFilter(in int serial, in int indicationFilter);
 
     /**
      * Sets the link capacity reporting criteria. The resulting reporting criteria are the AND of

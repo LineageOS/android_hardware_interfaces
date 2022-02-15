@@ -25,7 +25,8 @@ aidl_interface {
     ],
     backend: {
         java: {
-            enabled: false,
+            enabled: true,
+            platform_apis: true,
         },
         cpp: {
             enabled: false,

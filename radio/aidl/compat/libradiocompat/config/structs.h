@@ -23,8 +23,7 @@
 
 namespace android::hardware::radio::compat {
 
-hidl_vec<uint32_t>  //
-toHidl(const std::vector<aidl::android::hardware::radio::config::SlotPortMapping>& slotMap);
+uint32_t toHidl(const aidl::android::hardware::radio::config::SlotPortMapping& slotPortMapping);
 
 aidl::android::hardware::radio::config::SimSlotStatus  //
 toAidl(const config::V1_0::SimSlotStatus& sst);

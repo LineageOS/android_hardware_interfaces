@@ -22,8 +22,8 @@
 #include <vector>
 
 // clang-format off
-#include PATH(android/hardware/audio/FILE_VERSION/types.h)
-#include PATH(android/hardware/audio/common/FILE_VERSION/types.h)
+#include PATH(android/hardware/audio/CORE_TYPES_FILE_VERSION/types.h)
+#include PATH(android/hardware/audio/common/COMMON_TYPES_FILE_VERSION/types.h)
 // clang-format on
 
 enum { PARAM_FACTORY_NAME, PARAM_DEVICE_NAME };
@@ -34,14 +34,14 @@ using DeviceParameter = std::tuple<std::string, std::string>;
 #if MAJOR_VERSION <= 6
 enum { PARAM_DEVICE, PARAM_CONFIG, PARAM_FLAGS };
 enum { INDEX_INPUT, INDEX_OUTPUT };
-using DeviceConfigParameter =
-        std::tuple<DeviceParameter, android::hardware::audio::common::CPP_VERSION::AudioConfig,
-                   std::variant<android::hardware::audio::common::CPP_VERSION::AudioInputFlag,
-                                android::hardware::audio::common::CPP_VERSION::AudioOutputFlag>>;
+using DeviceConfigParameter = std::tuple<
+        DeviceParameter, android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::AudioConfig,
+        std::variant<android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::AudioInputFlag,
+                     android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::AudioOutputFlag>>;
 #elif MAJOR_VERSION >= 7
 enum { PARAM_DEVICE, PARAM_PORT_NAME, PARAM_CONFIG, PARAM_FLAGS };
 using DeviceConfigParameter =
         std::tuple<DeviceParameter, std::string,
-                   android::hardware::audio::common::CPP_VERSION::AudioConfig,
-                   std::vector<android::hardware::audio::CPP_VERSION::AudioInOutFlag>>;
+                   android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::AudioConfig,
+                   std::vector<android::hardware::audio::CORE_TYPES_CPP_VERSION::AudioInOutFlag>>;
 #endif

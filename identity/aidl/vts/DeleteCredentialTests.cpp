@@ -146,7 +146,9 @@ TEST_P(DeleteCredentialTests, DeleteWithChallenge) {
                                 credentialData_, &credential)
                         .isOk());
 
-    vector<uint8_t> challenge = {65, 66, 67};
+    // Implementations must support at least 32 bytes.
+    string challengeString = "0123456789abcdef0123456789abcdef";
+    vector<uint8_t> challenge(challengeString.begin(), challengeString.end());
     vector<uint8_t> proofOfDeletionSignature;
     ASSERT_TRUE(
             credential->deleteCredentialWithChallenge(challenge, &proofOfDeletionSignature).isOk());
@@ -154,8 +156,13 @@ TEST_P(DeleteCredentialTests, DeleteWithChallenge) {
             support::coseSignGetPayload(proofOfDeletionSignature);
     ASSERT_TRUE(proofOfDeletion);
     string cborPretty = cppbor::prettyPrint(proofOfDeletion.value(), 32, {});
-    EXPECT_EQ("['ProofOfDeletion', 'org.iso.18013-5.2019.mdl', {0x41, 0x42, 0x43}, true, ]",
-              cborPretty);
+    EXPECT_EQ(
+            "['ProofOfDeletion', 'org.iso.18013-5.2019.mdl', {"
+            "0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, "
+            "0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, "
+            "0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, "
+            "0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66}, true, ]",
+            cborPretty);
     EXPECT_TRUE(support::coseCheckEcDsaSignature(proofOfDeletionSignature, {},  // Additional data
                                                  credentialPubKey_));
 }

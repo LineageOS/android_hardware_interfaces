@@ -38,4 +38,5 @@ parcelable NanoappInfo {
   int nanoappVersion;
   boolean enabled;
   String[] permissions;
+  android.hardware.contexthub.NanoappRpcService[] rpcServices;
 }

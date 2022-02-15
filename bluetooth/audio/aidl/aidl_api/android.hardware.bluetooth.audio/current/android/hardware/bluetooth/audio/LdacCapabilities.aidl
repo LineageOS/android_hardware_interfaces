@@ -35,7 +35,7 @@ package android.hardware.bluetooth.audio;
 @VintfStability
 parcelable LdacCapabilities {
   int[] sampleRateHz;
-  android.hardware.bluetooth.audio.LdacChannelMode channelMode;
-  android.hardware.bluetooth.audio.LdacQualityIndex qualityIndex;
+  android.hardware.bluetooth.audio.LdacChannelMode[] channelMode;
+  android.hardware.bluetooth.audio.LdacQualityIndex[] qualityIndex;
   byte[] bitsPerSample;
 }

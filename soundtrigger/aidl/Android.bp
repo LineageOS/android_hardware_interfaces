@@ -10,6 +10,7 @@ package {
 aidl_interface {
     name: "android.hardware.soundtrigger3",
     vendor_available: true,
+    host_supported: true,
     flags: ["-Werror", "-Weverything", ],
     srcs: [
         "android/hardware/soundtrigger3/ISoundTriggerHw.aidl",

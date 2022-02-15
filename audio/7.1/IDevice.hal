@@ -1,0 +1,68 @@
+/*
+ * Copyright (C) 2022 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.audio@7.1;
+
+import android.hardware.audio.common@7.0;
+import @7.0::AudioInOutFlag;
+import @7.0::IDevice;
+import @7.0::Result;
+import IStreamOut;
+
+interface IDevice extends @7.0::IDevice {
+    /**
+     * This method creates and opens the audio hardware output stream.
+     * If the stream can not be opened with the proposed audio config,
+     * HAL must provide suggested values for the audio config.
+     *
+     * Note: INVALID_ARGUMENTS is returned both in the case when the
+     * HAL can not use the provided config and in the case when
+     * the value of any argument is invalid. In the latter case the
+     * HAL must provide a default initialized suggested config.
+     *
+     * @param ioHandle handle assigned by AudioFlinger.
+     * @param device device type and (if needed) address.
+     * @param config stream configuration.
+     * @param flags additional flags.
+     * @param sourceMetadata Description of the audio that will be played.
+                             May be used by implementations to configure hardware effects.
+     * @return retval operation completion status.
+     * @return outStream created output stream.
+     * @return suggestedConfig in the case of rejection of the proposed config,
+     *                         a config suggested by the HAL.
+     */
+    openOutputStream_7_1(
+            AudioIoHandle ioHandle,
+            DeviceAddress device,
+            AudioConfig config,
+            vec<AudioInOutFlag> flags,
+            SourceMetadata sourceMetadata) generates (
+                    Result retval,
+                    IStreamOut outStream,
+                    AudioConfig suggestedConfig);
+
+    /**
+     * Notifies the device module about the connection state of an input/output
+     * device attached to it. The devicePort identifies the device and may also
+     * provide extra information such as raw audio descriptors.
+     *
+     * @param devicePort audio device port.
+     * @param connected whether the device is connected.
+     * @return retval operation completion status.
+     */
+    setConnectedState_7_1(AudioPort devicePort, bool connected)
+            generates (Result retval);
+};

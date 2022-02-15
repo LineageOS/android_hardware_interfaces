@@ -30,6 +30,7 @@ aidl_interface {
         ndk: {
             apex_available: [
                 "//apex_available:platform",
+                "com.android.bluetooth",
                 "com.android.media.swcodec",
                 "com.android.neuralnetworks",
             ],

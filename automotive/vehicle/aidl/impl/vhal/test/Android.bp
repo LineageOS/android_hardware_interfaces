@@ -25,7 +25,6 @@ cc_test {
     static_libs: [
         "DefaultVehicleHal",
         "VehicleHalUtils",
-        "android-automotive-large-parcelable-vendor-lib",
         "libgtest",
         "libgmock",
     ],
@@ -40,7 +39,6 @@ cc_test {
     ],
     defaults: [
         "VehicleHalDefaults",
-        "android-automotive-large-parcelable-defaults",
     ],
     test_suites: ["device-tests"],
 }

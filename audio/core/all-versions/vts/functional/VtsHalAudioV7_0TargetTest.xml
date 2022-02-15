@@ -34,5 +34,6 @@
     <test class="com.android.tradefed.testtype.GTest" >
         <option name="native-test-device-path" value="/data/local/tmp" />
         <option name="module-name" value="VtsHalAudioV7_0TargetTest" />
+        <option name="native-test-timeout" value="5m" />
     </test>
 </configuration>

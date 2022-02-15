@@ -60,7 +60,7 @@ interface IAGnss {
      * @param hostname Hostname of the AGNSS server.
      * @param port Port number associated with the server.
      */
-    void setServer(in AGnssType type, in String hostname, in int port);
+    void setServer(in AGnssType type, in @utf8InCpp String hostname, in int port);
 
     /**
      * Notifies GNSS that a data connection is available and sets the network handle,
@@ -75,5 +75,6 @@ interface IAGnss {
      * @param apn Access Point Name (follows regular APN naming convention).
      * @param apnIpType Specifies IP type of APN.
      */
-    void dataConnOpen(in long networkHandle, in String apn, in ApnIpType apnIpType);
+    void dataConnOpen(
+            in long networkHandle, in @utf8InCpp String apn, in ApnIpType apnIpType);
 }

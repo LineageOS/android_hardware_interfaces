@@ -30,6 +30,8 @@ namespace aidl::android::hardware::neuralnetworks::vts::functional {
 using NamedDevice = Named<std::shared_ptr<IDevice>>;
 using NeuralNetworksAidlTestParam = NamedDevice;
 
+constexpr int kMinAidlLevelForFL8 = 4;
+
 class NeuralNetworksAidlTest : public testing::TestWithParam<NeuralNetworksAidlTestParam> {
   protected:
     void SetUp() override;
@@ -49,8 +51,8 @@ std::string printNeuralNetworksAidlTest(
 // Create an IPreparedModel object. If the model cannot be prepared,
 // "preparedModel" will be nullptr instead.
 void createPreparedModel(const std::shared_ptr<IDevice>& device, const Model& model,
-                         std::shared_ptr<IPreparedModel>* preparedModel,
-                         bool reportSkipping = true);
+                         std::shared_ptr<IPreparedModel>* preparedModel, bool reportSkipping = true,
+                         bool useConfig = false);
 
 enum class Executor { SYNC, BURST, FENCED };
 

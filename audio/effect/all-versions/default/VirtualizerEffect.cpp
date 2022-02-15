@@ -34,7 +34,7 @@ namespace effect {
 namespace CPP_VERSION {
 namespace implementation {
 
-using ::android::hardware::audio::common::CPP_VERSION::implementation::HidlUtils;
+using ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::implementation::HidlUtils;
 
 VirtualizerEffect::VirtualizerEffect(effect_handle_t handle)
     : mEffect(new Effect(false /*isInput*/, handle)) {}

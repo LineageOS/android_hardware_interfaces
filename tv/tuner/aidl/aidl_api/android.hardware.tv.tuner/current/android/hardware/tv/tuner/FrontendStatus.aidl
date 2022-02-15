@@ -75,4 +75,6 @@ union FrontendStatus {
   android.hardware.tv.tuner.FrontendIsdbtMode isdbtMode;
   android.hardware.tv.tuner.FrontendIsdbtPartialReceptionFlag partialReceptionFlag;
   int[] streamIdList;
+  int[] dvbtCellIds;
+  android.hardware.tv.tuner.FrontendScanAtsc3PlpInfo[] allPlpInfo;
 }

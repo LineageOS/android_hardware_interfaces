@@ -20,6 +20,10 @@ import android.hardware.neuralnetworks.ExtensionOperandTypeInformation;
 
 /**
  * Information about an extension.
+ *
+ * The extension can provide zero or more operation types (which are not enumerated), zero or more
+ * operand types (which are enumerated in {@link Extension::operandTypes}, and compilation and
+ * execution hints (which are not enumerated).
  */
 @VintfStability
 parcelable Extension {

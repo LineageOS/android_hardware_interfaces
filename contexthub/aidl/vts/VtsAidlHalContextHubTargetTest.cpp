@@ -41,6 +41,7 @@ using ::android::hardware::contexthub::IContextHub;
 using ::android::hardware::contexthub::IContextHubCallbackDefault;
 using ::android::hardware::contexthub::NanoappBinary;
 using ::android::hardware::contexthub::NanoappInfo;
+using ::android::hardware::contexthub::NanoappRpcService;
 using ::android::hardware::contexthub::Setting;
 using ::android::hardware::contexthub::vts_utils::kNonExistentAppId;
 using ::android::hardware::contexthub::vts_utils::waitForCallback;
@@ -102,15 +103,12 @@ class EmptyContextHubCallback : public android::hardware::contexthub::BnContextH
 };
 
 TEST_P(ContextHubAidl, TestRegisterCallback) {
-    bool success;
     sp<EmptyContextHubCallback> cb = sp<EmptyContextHubCallback>::make();
-    ASSERT_TRUE(contextHub->registerCallback(getHubId(), cb, &success).isOk());
-    ASSERT_TRUE(success);
+    ASSERT_TRUE(contextHub->registerCallback(getHubId(), cb).isOk());
 }
 
 TEST_P(ContextHubAidl, TestRegisterNullCallback) {
-    bool success;
-    ASSERT_TRUE(contextHub->registerCallback(getHubId(), nullptr, &success).isOk());
+    ASSERT_TRUE(contextHub->registerCallback(getHubId(), nullptr).isOk());
 }
 
 // Helper callback that puts the async appInfo callback data into a promise
@@ -139,18 +137,22 @@ class QueryAppsCallback : public android::hardware::contexthub::BnContextHubCall
 // Calls queryApps() and checks the returned metadata
 TEST_P(ContextHubAidl, TestQueryApps) {
     sp<QueryAppsCallback> cb = sp<QueryAppsCallback>::make();
-    bool success;
-    ASSERT_TRUE(contextHub->registerCallback(getHubId(), cb, &success).isOk());
-    ASSERT_TRUE(success);
-
-    ASSERT_TRUE(contextHub->queryNanoapps(getHubId(), &success).isOk());
-    ASSERT_TRUE(success);
+    ASSERT_TRUE(contextHub->registerCallback(getHubId(), cb).isOk());
+    ASSERT_TRUE(contextHub->queryNanoapps(getHubId()).isOk());
 
     std::vector<NanoappInfo> appInfoList;
     ASSERT_TRUE(waitForCallback(cb->promise.get_future(), &appInfoList));
     for (const NanoappInfo& appInfo : appInfoList) {
         EXPECT_NE(appInfo.nanoappId, UINT64_C(0));
         EXPECT_NE(appInfo.nanoappId, kNonExistentAppId);
+
+        // Verify services are unique.
+        std::set<uint64_t> existingServiceIds;
+        for (const NanoappRpcService& rpcService : appInfo.rpcServices) {
+            EXPECT_NE(rpcService.id, UINT64_C(0));
+            EXPECT_EQ(existingServiceIds.count(rpcService.id), 0);
+            existingServiceIds.insert(rpcService.id);
+        }
     }
 }
 
@@ -188,9 +190,7 @@ class ContextHubTransactionTest : public ContextHubAidl {
   public:
     virtual void SetUp() override {
         ContextHubAidl::SetUp();
-        bool success;
-        ASSERT_TRUE(contextHub->registerCallback(getHubId(), cb, &success).isOk());
-        ASSERT_TRUE(success);
+        ASSERT_TRUE(contextHub->registerCallback(getHubId(), cb).isOk());
     }
 
     sp<TransactionResultCallback> cb = sp<TransactionResultCallback>::make();
@@ -204,9 +204,7 @@ TEST_P(ContextHubTransactionTest, TestSendMessageToNonExistentNanoapp) {
     std::fill(message.messageBody.begin(), message.messageBody.end(), 0);
 
     ALOGD("Sending message to non-existent nanoapp");
-    bool success;
-    ASSERT_TRUE(contextHub->sendMessageToHub(getHubId(), message, &success).isOk());
-    ASSERT_TRUE(success);
+    ASSERT_TRUE(contextHub->sendMessageToHub(getHubId(), message).isOk());
 }
 
 TEST_P(ContextHubTransactionTest, TestLoadEmptyNanoapp) {
@@ -220,9 +218,7 @@ TEST_P(ContextHubTransactionTest, TestLoadEmptyNanoapp) {
     emptyApp.targetChreApiMinorVersion = 0;
 
     ALOGD("Loading empty nanoapp");
-    bool success;
-    ASSERT_TRUE(contextHub->loadNanoapp(getHubId(), emptyApp, cb->expectedTransactionId, &success)
-                        .isOk());
+    bool success = contextHub->loadNanoapp(getHubId(), emptyApp, cb->expectedTransactionId).isOk();
     if (success) {
         bool transactionSuccess;
         ASSERT_TRUE(waitForCallback(cb->promise.get_future(), &transactionSuccess));
@@ -234,11 +230,9 @@ TEST_P(ContextHubTransactionTest, TestUnloadNonexistentNanoapp) {
     cb->expectedTransactionId = 1234;
 
     ALOGD("Unloading nonexistent nanoapp");
-    bool success;
-    ASSERT_TRUE(contextHub
-                        ->unloadNanoapp(getHubId(), kNonExistentAppId, cb->expectedTransactionId,
-                                        &success)
-                        .isOk());
+    bool success =
+            contextHub->unloadNanoapp(getHubId(), kNonExistentAppId, cb->expectedTransactionId)
+                    .isOk();
     if (success) {
         bool transactionSuccess;
         ASSERT_TRUE(waitForCallback(cb->promise.get_future(), &transactionSuccess));
@@ -250,11 +244,9 @@ TEST_P(ContextHubTransactionTest, TestEnableNonexistentNanoapp) {
     cb->expectedTransactionId = 2345;
 
     ALOGD("Enabling nonexistent nanoapp");
-    bool success;
-    ASSERT_TRUE(contextHub
-                        ->enableNanoapp(getHubId(), kNonExistentAppId, cb->expectedTransactionId,
-                                        &success)
-                        .isOk());
+    bool success =
+            contextHub->enableNanoapp(getHubId(), kNonExistentAppId, cb->expectedTransactionId)
+                    .isOk();
     if (success) {
         bool transactionSuccess;
         ASSERT_TRUE(waitForCallback(cb->promise.get_future(), &transactionSuccess));
@@ -266,11 +258,9 @@ TEST_P(ContextHubTransactionTest, TestDisableNonexistentNanoapp) {
     cb->expectedTransactionId = 3456;
 
     ALOGD("Disabling nonexistent nanoapp");
-    bool success;
-    ASSERT_TRUE(contextHub
-                        ->disableNanoapp(getHubId(), kNonExistentAppId, cb->expectedTransactionId,
-                                         &success)
-                        .isOk());
+    bool success =
+            contextHub->disableNanoapp(getHubId(), kNonExistentAppId, cb->expectedTransactionId)
+                    .isOk();
     if (success) {
         bool transactionSuccess;
         ASSERT_TRUE(waitForCallback(cb->promise.get_future(), &transactionSuccess));
@@ -281,16 +271,13 @@ TEST_P(ContextHubTransactionTest, TestDisableNonexistentNanoapp) {
 void ContextHubAidl::testSettingChanged(Setting setting) {
     // In VTS, we only test that sending the values doesn't cause things to blow up - GTS tests
     // verify the expected E2E behavior in CHRE
-    bool success;
     sp<EmptyContextHubCallback> cb = sp<EmptyContextHubCallback>::make();
-    ASSERT_TRUE(contextHub->registerCallback(getHubId(), cb, &success).isOk());
-    ASSERT_TRUE(success);
+    ASSERT_TRUE(contextHub->registerCallback(getHubId(), cb).isOk());
 
     ASSERT_TRUE(contextHub->onSettingChanged(setting, true /* enabled */).isOk());
     ASSERT_TRUE(contextHub->onSettingChanged(setting, false /* enabled */).isOk());
 
-    ASSERT_TRUE(contextHub->registerCallback(getHubId(), nullptr, &success).isOk());
-    ASSERT_TRUE(success);
+    ASSERT_TRUE(contextHub->registerCallback(getHubId(), nullptr).isOk());
 }
 
 TEST_P(ContextHubAidl, TestOnLocationSettingChanged) {
@@ -311,6 +298,14 @@ TEST_P(ContextHubAidl, TestOnAirplaneModeSettingChanged) {
 
 TEST_P(ContextHubAidl, TestOnMicrophoneSettingChanged) {
     testSettingChanged(Setting::MICROPHONE);
+}
+
+TEST_P(ContextHubAidl, TestOnBtMainSettingChanged) {
+    testSettingChanged(Setting::BT_MAIN);
+}
+
+TEST_P(ContextHubAidl, TestOnBtScanningSettingChanged) {
+    testSettingChanged(Setting::BT_SCANNING);
 }
 
 std::vector<std::tuple<std::string, int32_t>> generateContextHubMapping() {
@@ -343,8 +338,7 @@ TEST_P(ContextHubAidl, TestHostConnection) {
 TEST_P(ContextHubAidl, TestInvalidHostConnection) {
     constexpr char16_t kHostEndpointId = 1;
 
-    Status status = contextHub->onHostEndpointDisconnected(kHostEndpointId);
-    ASSERT_EQ(status.exceptionCode(), android::binder::Status::EX_ILLEGAL_ARGUMENT);
+    ASSERT_TRUE(contextHub->onHostEndpointDisconnected(kHostEndpointId).isOk());
 }
 
 std::string PrintGeneratedTest(const testing::TestParamInfo<ContextHubAidl::ParamType>& info) {

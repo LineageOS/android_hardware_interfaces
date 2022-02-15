@@ -27,17 +27,23 @@ class MockPreparedModel final : public IPreparedModel {
   public:
     MOCK_METHOD((ExecutionResult<std::pair<std::vector<OutputShape>, Timing>>), execute,
                 (const Request& request, MeasureTiming measure, const OptionalTimePoint& deadline,
-                 const OptionalDuration& loopTimeoutDuration),
+                 const OptionalDuration& loopTimeoutDuration,
+                 const std::vector<TokenValuePair>& hints,
+                 const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix),
                 (const, override));
     MOCK_METHOD((GeneralResult<std::pair<SyncFence, ExecuteFencedInfoCallback>>), executeFenced,
                 (const Request& request, const std::vector<SyncFence>& waitFor,
                  MeasureTiming measure, const OptionalTimePoint& deadline,
                  const OptionalDuration& loopTimeoutDuration,
-                 const OptionalDuration& timeoutDurationAfterFence),
+                 const OptionalDuration& timeoutDurationAfterFence,
+                 const std::vector<TokenValuePair>& hints,
+                 const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix),
                 (const, override));
     MOCK_METHOD((GeneralResult<SharedExecution>), createReusableExecution,
-                (const nn::Request& request, nn::MeasureTiming measure,
-                 const nn::OptionalDuration& loopTimeoutDuration),
+                (const Request& request, MeasureTiming measure,
+                 const OptionalDuration& loopTimeoutDuration,
+                 const std::vector<TokenValuePair>& hints,
+                 const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix),
                 (const, override));
     MOCK_METHOD(GeneralResult<SharedBurst>, configureExecutionBurst, (), (const, override));
     MOCK_METHOD(std::any, getUnderlyingResource, (), (const, override));

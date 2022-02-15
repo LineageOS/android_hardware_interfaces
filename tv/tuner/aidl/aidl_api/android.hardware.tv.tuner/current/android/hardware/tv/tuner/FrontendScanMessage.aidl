@@ -50,4 +50,5 @@ union FrontendScanMessage {
   android.hardware.tv.tuner.FrontendModulation modulation;
   android.hardware.tv.tuner.FrontendDvbcAnnex annex;
   boolean isHighPriority;
+  int[] dvbtCellIds;
 }

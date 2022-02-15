@@ -173,7 +173,6 @@ aidl::CardStatus toAidl(const V1_5::CardStatus& status) {
             .atr = status.base.base.atr,
             .iccid = status.base.base.iccid,
             .eid = status.base.eid,
-            // TODO(b/203699028): we don't know portId here (but we can get it from RadioConfig)
             .slotMap = {static_cast<int32_t>(status.base.base.physicalSlotId), 0},
     };
 }

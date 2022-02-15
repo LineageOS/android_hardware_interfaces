@@ -17,9 +17,10 @@
 package android.hardware.bluetooth.audio;
 
 import android.hardware.bluetooth.audio.AudioConfiguration;
+import android.hardware.bluetooth.audio.BluetoothAudioStatus;
 import android.hardware.bluetooth.audio.IBluetoothAudioPort;
 import android.hardware.common.fmq.MQDescriptor;
-import android.hardware.common.fmq.UnsynchronizedWrite;
+import android.hardware.common.fmq.SynchronizedReadWrite;
 
 /**
  * HAL interface from the Bluetooth stack to the Audio HAL
@@ -55,7 +56,7 @@ interface IBluetoothAudioProvider {
      *    audioConfig.pcmConfig parameter. Invalid if streaming is offloaded
      *    from/to hardware or on failure
      */
-    MQDescriptor<int, UnsynchronizedWrite> startSession(
+    MQDescriptor<byte, SynchronizedReadWrite> startSession(
             in IBluetoothAudioPort hostIf, in AudioConfiguration audioConfig);
 
     /**
@@ -63,12 +64,30 @@ interface IBluetoothAudioProvider {
      *
      * @param status true for SUCCESS or false for FAILURE
      */
-    void streamStarted(in boolean status);
+    void streamStarted(in BluetoothAudioStatus status);
 
     /**
      * Callback for IBluetoothAudioPort.suspendStream()
      *
      * @param status true for SUCCESS or false for FAILURE
      */
-    void streamSuspended(in boolean status);
+    void streamSuspended(in BluetoothAudioStatus status);
+
+    /**
+     * Called when the audio configuration of the stream has been changed.
+     *
+     * @param audioConfig The audio configuration negotiated with the remote
+     *    device. The PCM parameters are set if software based encoding,
+     *    otherwise the correct codec configuration is used for hardware
+     *    encoding.
+     */
+    void updateAudioConfiguration(in AudioConfiguration audioConfig);
+
+    /**
+     * Called when the supported latency mode is updated.
+     *
+     * @param allowed If the peripheral devices can't keep up with low latency
+     * mode, the API will be called with supported is false.
+     */
+    void setLowLatencyModeAllowed(in boolean allowed);
 }

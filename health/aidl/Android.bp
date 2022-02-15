@@ -37,7 +37,6 @@ aidl_interface {
             sdk_version: "module_current",
         },
         ndk: {
-            separate_platform_variant: false,
             vndk: {
                 enabled: true,
             },
@@ -63,9 +62,11 @@ cc_library {
         "android.hardware.health@2.0",
         "android.hardware.health@2.1",
     ],
-    defaults: [
-        "libbinder_ndk_host_user",
-    ],
+    target: {
+        darwin: {
+            enabled: false,
+        },
+    },
 }
 
 java_library {

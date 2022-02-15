@@ -16,6 +16,7 @@
 
 #include "include/GraphicsComposerCallback.h"
 #include <log/log_main.h>
+#include <utils/Timers.h>
 
 #pragma push_macro("LOG_TAG")
 #undef LOG_TAG
@@ -56,6 +57,16 @@ int32_t GraphicsComposerCallback::getInvalidVsyncPeriodChangeCount() const {
 int32_t GraphicsComposerCallback::getInvalidSeamlessPossibleCount() const {
     std::scoped_lock lock(mMutex);
     return mInvalidSeamlessPossibleCount;
+}
+
+int32_t GraphicsComposerCallback::getVsyncIdleCount() const {
+    std::scoped_lock lock(mMutex);
+    return mVsyncIdleCount;
+}
+
+int64_t GraphicsComposerCallback::getVsyncIdleTime() const {
+    std::scoped_lock lock(mMutex);
+    return mVsyncIdleTime;
 }
 
 std::optional<VsyncPeriodChangeTimeline>
@@ -121,6 +132,15 @@ GraphicsComposerCallback::takeLastVsyncPeriodChangeTimeline() {
     std::scoped_lock lock(mMutex);
     if (mDisplays.count(in_display)) {
         mInvalidSeamlessPossibleCount++;
+    }
+    return ::ndk::ScopedAStatus::ok();
+}
+
+::ndk::ScopedAStatus GraphicsComposerCallback::onVsyncIdle(int64_t in_display) {
+    std::scoped_lock lock(mMutex);
+    if (mDisplays.count(in_display)) {
+        mVsyncIdleCount++;
+        mVsyncIdleTime = systemTime();
     }
     return ::ndk::ScopedAStatus::ok();
 }

@@ -37,8 +37,12 @@ namespace audio {
 namespace CPP_VERSION {
 namespace implementation {
 
-using ::android::hardware::audio::common::CPP_VERSION::implementation::HidlUtils;
+using ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::implementation::HidlUtils;
 using ::android::hardware::audio::common::utils::splitString;
+using ::android::hardware::audio::CORE_TYPES_CPP_VERSION::implementation::CoreUtils;
+namespace util {
+using namespace ::android::hardware::audio::CORE_TYPES_CPP_VERSION::implementation::util;
+}
 
 Stream::Stream(bool isInput, audio_stream_t* stream) : mIsInput(isInput), mStream(stream) {
     (void)mIsInput;  // prevent 'unused field' warnings in pre-V7 versions.

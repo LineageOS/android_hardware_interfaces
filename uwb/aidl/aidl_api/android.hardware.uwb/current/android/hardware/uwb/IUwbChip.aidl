@@ -42,6 +42,5 @@ interface IUwbChip {
   void coreInit();
   void sessionInit(int sessionId);
   int getSupportedAndroidUciVersion();
-  long getSupportedAndroidCapabilities();
   int sendUciMessage(in byte[] data);
 }

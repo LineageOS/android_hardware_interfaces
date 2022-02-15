@@ -27,25 +27,39 @@ enum SessionType {
     /**
      * The encoding of AVDTP media is done by HW and there is control only
      */
-    A2DP_HARDWARE_OFFLOAD_DATAPATH,
+    A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH,
     /**
      * Used when encoded by Bluetooth Stack and streaming to Hearing Aid
      */
     HEARING_AID_SOFTWARE_ENCODING_DATAPATH,
     /**
-     * Used when encoded by Bluetooth Stack and streaming to LE Audio device
+     * Used when audio is encoded by the Bluetooth Stack and is streamed to LE
+     * Audio unicast device.
      */
     LE_AUDIO_SOFTWARE_ENCODING_DATAPATH,
     /**
-     * Used when decoded by Bluetooth Stack and streaming to audio framework
+     * Used when audio is decoded by the Bluetooth Stack and is streamed to LE
+     * Audio unicast device.
      */
     LE_AUDIO_SOFTWARE_DECODING_DATAPATH,
     /**
-     * Encoding is done by HW an there is control only
+     * Used when audio is encoded by hardware offload and is streamed to LE
+     * Audio unicast device. This is a control path only.
      */
     LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH,
     /**
-     * Decoding is done by HW an there is control only
+     * Used when audio is decoded by hardware offload and is streamed to LE
+     * Audio unicast device. This is a control path only.
      */
     LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH,
+    /**
+     * Used when audio is encoded by the Bluetooth stack and is streamed to LE
+     * Audio broadcast channels.
+     */
+    LE_AUDIO_BROADCAST_SOFTWARE_ENCODING_DATAPATH,
+    /**
+     * Used when audio is encoded by hardware offload and is streamed to LE
+     * Audio broadcast channels. This is a control path only.
+     */
+    LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH,
 }

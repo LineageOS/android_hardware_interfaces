@@ -20,7 +20,6 @@ aidl_interface {
     backend: {
         java: {
             platform_apis: true,
-            srcs_available: true,
         },
         ndk: {
             vndk: {
@@ -53,6 +52,13 @@ cc_defaults {
     name: "keymint_use_latest_hal_aidl_ndk_shared",
     shared_libs: [
         "android.hardware.security.keymint-V2-ndk",
+    ],
+}
+
+cc_defaults {
+    name: "keymint_use_latest_hal_aidl_cpp_static",
+    static_libs: [
+        "android.hardware.security.keymint-V2-cpp",
     ],
 }
 

@@ -22,8 +22,7 @@ import android.hardware.graphics.common.Point;
 import android.hardware.graphics.common.Rect;
 import android.hardware.graphics.composer3.Buffer;
 import android.hardware.graphics.composer3.Color;
-import android.hardware.graphics.composer3.FloatColor;
-import android.hardware.graphics.composer3.GenericMetadata;
+import android.hardware.graphics.composer3.Luminance;
 import android.hardware.graphics.composer3.ParcelableBlendMode;
 import android.hardware.graphics.composer3.ParcelableComposition;
 import android.hardware.graphics.composer3.ParcelableDataspace;
@@ -31,7 +30,6 @@ import android.hardware.graphics.composer3.ParcelableTransform;
 import android.hardware.graphics.composer3.PerFrameMetadata;
 import android.hardware.graphics.composer3.PerFrameMetadataBlob;
 import android.hardware.graphics.composer3.PlaneAlpha;
-import android.hardware.graphics.composer3.WhitePointNits;
 import android.hardware.graphics.composer3.ZOrder;
 
 @VintfStability
@@ -43,20 +41,11 @@ parcelable LayerCommand {
     long layer;
 
     /**
-     * Asynchronously sets the position of a cursor layer.
+     * Sets the position of a cursor layer.
      *
-     * Prior to validateDisplay, a layer may be marked as Composition.CURSOR.
-     * If validation succeeds (i.e., the device does not request a composition
-     * change for that layer), then once a buffer has been set for the layer
-     * and it has been presented, its position may be set by this function at
-     * any time between presentDisplay and any subsequent validateDisplay
-     * calls for this display.
-     *
-     * Once validateDisplay is called, this function must not be called again
-     * until the validate/present sequence is completed.
-     *
-     * May be called from any thread so long as it is not interleaved with the
-     * validate/present sequence as described above.
+     * The position of a cursor layer can be updated without a validate/present display
+     * sequence if that layer was marked as Composition.CURSOR and validation previously succeeded
+     * (i.e., the device didn't request a composition).
      */
     @nullable Point cursorPosition;
 
@@ -113,13 +102,6 @@ parcelable LayerCommand {
      * other effect.
      */
     @nullable Color color;
-
-    /**
-     * Sets the color of the given layer. If the composition type of the layer
-     * is not Composition.SOLID_COLOR, this call must succeed and have no
-     * other effect.
-     */
-    @nullable FloatColor floatColor;
 
     /**
      * Sets the desired composition type of the given layer. During
@@ -244,34 +226,7 @@ parcelable LayerCommand {
      * brightness in nits, and accordingly SDR content shall be dimmed to the desired white point
      * provided.
      */
-    @nullable WhitePointNits whitePointNits;
-
-    /**
-     * Sets a piece of generic metadata for the given layer. If this
-     * function is called twice with the same key but different values, the
-     * newer value must override the older one. Calling this function with a
-     * 0-length value must reset that key's metadata as if it had not been
-     * set.
-     *
-     * A given piece of metadata may either be mandatory or a hint
-     * (non-mandatory) as indicated by the second parameter. Mandatory
-     * metadata may affect the composition result, which is to say that it
-     * may cause a visible change in the final image. By contrast, hints may
-     * only affect the composition strategy, such as which layers are
-     * composited by the client, but must not cause a visible change in the
-     * final image. The value of the mandatory flag shall match the value
-     * returned from getLayerGenericMetadataKeys for the given key.
-     *
-     * Only keys which have been returned from getLayerGenericMetadataKeys()
-     * shall be accepted. Any other keys must result in an UNSUPPORTED error.
-     *
-     * The value passed into this function shall be the binary
-     * representation of a stable AIDL type corresponding to the given key. For
-     * example, a key of 'com.example.Foo-V2' shall be paired with a
-     * value of type com.exampleFoo-V2, which would be defined in a
-     * vendor HAL extension.
-     */
-    @nullable GenericMetadata genericMetadata;
+    @nullable Luminance whitePointNits;
 
     /**
      * Sets the PerFrameMetadata for the display. This metadata must be used
@@ -292,4 +247,15 @@ parcelable LayerCommand {
      * This command may be called every frame.
      */
     @nullable PerFrameMetadataBlob[] perFrameMetadataBlob;
+
+    /**
+     * Specifies a region of the layer that is transparent and may be skipped
+     * by the DPU, e.g. using a blocking region, in order to save power. This
+     * is only a hint, so the composition of the layer must look the same
+     * whether or not this region is skipped.
+     *
+     * The region is in screen space and must not exceed the dimensions of
+     * the screen.
+     */
+    @nullable Rect[] blockingRegion;
 }

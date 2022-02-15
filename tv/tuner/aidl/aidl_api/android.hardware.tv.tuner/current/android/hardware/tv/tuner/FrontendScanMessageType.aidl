@@ -50,4 +50,5 @@ enum FrontendScanMessageType {
   MODULATION = 12,
   DVBC_ANNEX = 13,
   HIGH_PRIORITY = 14,
+  DVBT_CELL_IDS = 15,
 }

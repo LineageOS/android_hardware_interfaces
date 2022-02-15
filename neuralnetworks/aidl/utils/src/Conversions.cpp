@@ -302,9 +302,9 @@ GeneralResult<Model::Subgraph> unvalidatedConvert(const aidl_hal::Subgraph& subg
     };
 }
 
-GeneralResult<Model::ExtensionNameAndPrefix> unvalidatedConvert(
+GeneralResult<ExtensionNameAndPrefix> unvalidatedConvert(
         const aidl_hal::ExtensionNameAndPrefix& extensionNameAndPrefix) {
-    return Model::ExtensionNameAndPrefix{
+    return ExtensionNameAndPrefix{
             .name = extensionNameAndPrefix.name,
             .prefix = extensionNameAndPrefix.prefix,
     };
@@ -506,6 +506,12 @@ GeneralResult<SharedHandle> unvalidatedConvert(const ndk::ScopedFileDescriptor& 
     return std::make_shared<const Handle>(std::move(duplicatedFd));
 }
 
+#ifdef NN_AIDL_V4_OR_ABOVE
+GeneralResult<TokenValuePair> unvalidatedConvert(const aidl_hal::TokenValuePair& tokenValuePair) {
+    return TokenValuePair{.token = tokenValuePair.token, .value = tokenValuePair.value};
+}
+#endif  // NN_AIDL_V4_OR_ABOVE
+
 GeneralResult<Capabilities> convert(const aidl_hal::Capabilities& capabilities) {
     return validatedConvert(capabilities);
 }
@@ -551,6 +557,10 @@ GeneralResult<SharedHandle> convert(const ndk::ScopedFileDescriptor& handle) {
     return validatedConvert(handle);
 }
 
+GeneralResult<BufferDesc> convert(const aidl_hal::BufferDesc& bufferDesc) {
+    return validatedConvert(bufferDesc);
+}
+
 GeneralResult<std::vector<Extension>> convert(const std::vector<aidl_hal::Extension>& extension) {
     return validatedConvert(extension);
 }
@@ -558,10 +568,30 @@ GeneralResult<std::vector<Extension>> convert(const std::vector<aidl_hal::Extens
 GeneralResult<std::vector<SharedMemory>> convert(const std::vector<aidl_hal::Memory>& memories) {
     return validatedConvert(memories);
 }
+GeneralResult<std::vector<ExtensionNameAndPrefix>> convert(
+        const std::vector<aidl_hal::ExtensionNameAndPrefix>& extensionNameAndPrefix) {
+    return unvalidatedConvert(extensionNameAndPrefix);
+}
+
+#ifdef NN_AIDL_V4_OR_ABOVE
+GeneralResult<std::vector<TokenValuePair>> convert(
+        const std::vector<aidl_hal::TokenValuePair>& metaData) {
+    return validatedConvert(metaData);
+}
+#endif  // NN_AIDL_V4_OR_ABOVE
 
 GeneralResult<std::vector<OutputShape>> convert(
         const std::vector<aidl_hal::OutputShape>& outputShapes) {
     return validatedConvert(outputShapes);
+}
+
+GeneralResult<std::vector<SharedHandle>> convert(
+        const std::vector<ndk::ScopedFileDescriptor>& handles) {
+    return validatedConvert(handles);
+}
+
+GeneralResult<std::vector<BufferRole>> convert(const std::vector<aidl_hal::BufferRole>& roles) {
+    return validatedConvert(roles);
 }
 
 GeneralResult<std::vector<uint32_t>> toUnsigned(const std::vector<int32_t>& vec) {
@@ -576,42 +606,7 @@ GeneralResult<std::vector<uint32_t>> toUnsigned(const std::vector<int32_t>& vec)
 namespace aidl::android::hardware::neuralnetworks::utils {
 namespace {
 
-template <typename Input>
-using UnvalidatedConvertOutput =
-        std::decay_t<decltype(unvalidatedConvert(std::declval<Input>()).value())>;
-
-template <typename Type>
-nn::GeneralResult<std::vector<UnvalidatedConvertOutput<Type>>> unvalidatedConvertVec(
-        const std::vector<Type>& arguments) {
-    std::vector<UnvalidatedConvertOutput<Type>> halObject;
-    halObject.reserve(arguments.size());
-    for (const auto& argument : arguments) {
-        halObject.push_back(NN_TRY(unvalidatedConvert(argument)));
-    }
-    return halObject;
-}
-
-template <typename Type>
-nn::GeneralResult<std::vector<UnvalidatedConvertOutput<Type>>> unvalidatedConvert(
-        const std::vector<Type>& arguments) {
-    return unvalidatedConvertVec(arguments);
-}
-
-template <typename Type>
-nn::GeneralResult<UnvalidatedConvertOutput<Type>> validatedConvert(const Type& canonical) {
-    NN_TRY(compliantVersion(canonical));
-    return utils::unvalidatedConvert(canonical);
-}
-
-template <typename Type>
-nn::GeneralResult<std::vector<UnvalidatedConvertOutput<Type>>> validatedConvert(
-        const std::vector<Type>& arguments) {
-    std::vector<UnvalidatedConvertOutput<Type>> halObject(arguments.size());
-    for (size_t i = 0; i < arguments.size(); ++i) {
-        halObject[i] = NN_TRY(validatedConvert(arguments[i]));
-    }
-    return halObject;
-}
+using utils::unvalidatedConvert;
 
 // Helper template for std::visit
 template <class... Ts>
@@ -619,7 +614,7 @@ struct overloaded : Ts... {
     using Ts::operator()...;
 };
 template <class... Ts>
-overloaded(Ts...)->overloaded<Ts...>;
+overloaded(Ts...) -> overloaded<Ts...>;
 
 #ifdef __ANDROID__
 nn::GeneralResult<common::NativeHandle> aidlHandleFromNativeHandle(
@@ -721,6 +716,74 @@ nn::GeneralResult<Memory> unvalidatedConvert(const nn::Memory::Unknown& /*memory
             operator nn::GeneralResult<Memory>();
 }
 
+nn::GeneralResult<PerformanceInfo> unvalidatedConvert(
+        const nn::Capabilities::PerformanceInfo& info) {
+    return PerformanceInfo{.execTime = info.execTime, .powerUsage = info.powerUsage};
+}
+
+nn::GeneralResult<OperandPerformance> unvalidatedConvert(
+        const nn::Capabilities::OperandPerformance& operandPerformance) {
+    return OperandPerformance{.type = NN_TRY(unvalidatedConvert(operandPerformance.type)),
+                              .info = NN_TRY(unvalidatedConvert(operandPerformance.info))};
+}
+
+nn::GeneralResult<std::vector<OperandPerformance>> unvalidatedConvert(
+        const nn::Capabilities::OperandPerformanceTable& table) {
+    std::vector<OperandPerformance> operandPerformances;
+    operandPerformances.reserve(table.asVector().size());
+    for (const auto& operandPerformance : table.asVector()) {
+        operandPerformances.push_back(NN_TRY(unvalidatedConvert(operandPerformance)));
+    }
+    return operandPerformances;
+}
+
+nn::GeneralResult<ExtensionOperandTypeInformation> unvalidatedConvert(
+        const nn::Extension::OperandTypeInformation& info) {
+    return ExtensionOperandTypeInformation{.type = info.type,
+                                           .isTensor = info.isTensor,
+                                           .byteSize = static_cast<int32_t>(info.byteSize)};
+}
+
+nn::GeneralResult<int64_t> unvalidatedConvert(const nn::Duration& duration) {
+    if (duration < nn::Duration::zero()) {
+        return NN_ERROR() << "Unable to convert invalid (negative) duration";
+    }
+    constexpr std::chrono::nanoseconds::rep kIntMax = std::numeric_limits<int64_t>::max();
+    const auto count = duration.count();
+    return static_cast<int64_t>(std::min(count, kIntMax));
+}
+
+template <typename Input>
+using UnvalidatedConvertOutput =
+        std::decay_t<decltype(unvalidatedConvert(std::declval<Input>()).value())>;
+
+template <typename Type>
+nn::GeneralResult<std::vector<UnvalidatedConvertOutput<Type>>> unvalidatedConvert(
+        const std::vector<Type>& arguments) {
+    std::vector<UnvalidatedConvertOutput<Type>> halObject;
+    halObject.reserve(arguments.size());
+    for (const auto& argument : arguments) {
+        halObject.push_back(NN_TRY(unvalidatedConvert(argument)));
+    }
+    return halObject;
+}
+
+template <typename Type>
+nn::GeneralResult<UnvalidatedConvertOutput<Type>> validatedConvert(const Type& canonical) {
+    NN_TRY(compliantVersion(canonical));
+    return utils::unvalidatedConvert(canonical);
+}
+
+template <typename Type>
+nn::GeneralResult<std::vector<UnvalidatedConvertOutput<Type>>> validatedConvert(
+        const std::vector<Type>& arguments) {
+    std::vector<UnvalidatedConvertOutput<Type>> halObject(arguments.size());
+    for (size_t i = 0; i < arguments.size(); ++i) {
+        halObject[i] = NN_TRY(validatedConvert(arguments[i]));
+    }
+    return halObject;
+}
+
 }  // namespace
 
 nn::GeneralResult<std::vector<uint8_t>> unvalidatedConvert(const nn::CacheToken& cacheToken) {
@@ -741,6 +804,19 @@ nn::GeneralResult<BufferRole> unvalidatedConvert(const nn::BufferRole& bufferRol
             .ioIndex = static_cast<int32_t>(bufferRole.ioIndex),
             .probability = bufferRole.probability,
     };
+}
+
+nn::GeneralResult<DeviceType> unvalidatedConvert(const nn::DeviceType& deviceType) {
+    switch (deviceType) {
+        case nn::DeviceType::UNKNOWN:
+            break;
+        case nn::DeviceType::OTHER:
+        case nn::DeviceType::CPU:
+        case nn::DeviceType::GPU:
+        case nn::DeviceType::ACCELERATOR:
+            return static_cast<DeviceType>(deviceType);
+    }
+    return NN_ERROR() << "Invalid DeviceType " << deviceType;
 }
 
 nn::GeneralResult<bool> unvalidatedConvert(const nn::MeasureTiming& measureTiming) {
@@ -883,7 +959,7 @@ nn::GeneralResult<std::vector<uint8_t>> unvalidatedConvert(
 }
 
 nn::GeneralResult<ExtensionNameAndPrefix> unvalidatedConvert(
-        const nn::Model::ExtensionNameAndPrefix& extensionNameToPrefix) {
+        const nn::ExtensionNameAndPrefix& extensionNameToPrefix) {
     return ExtensionNameAndPrefix{
             .name = extensionNameToPrefix.name,
             .prefix = extensionNameToPrefix.prefix,
@@ -891,6 +967,11 @@ nn::GeneralResult<ExtensionNameAndPrefix> unvalidatedConvert(
 }
 
 nn::GeneralResult<Model> unvalidatedConvert(const nn::Model& model) {
+    if (!hal::utils::hasNoPointerData(model)) {
+        return NN_ERROR(nn::ErrorStatus::INVALID_ARGUMENT)
+               << "Model cannot be unvalidatedConverted because it contains pointer-based memory";
+    }
+
     return Model{
             .main = NN_TRY(unvalidatedConvert(model.main)),
             .referenced = NN_TRY(unvalidatedConvert(model.referenced)),
@@ -906,6 +987,11 @@ nn::GeneralResult<Priority> unvalidatedConvert(const nn::Priority& priority) {
 }
 
 nn::GeneralResult<Request> unvalidatedConvert(const nn::Request& request) {
+    if (!hal::utils::hasNoPointerData(request)) {
+        return NN_ERROR(nn::ErrorStatus::INVALID_ARGUMENT)
+               << "Request cannot be unvalidatedConverted because it contains pointer-based memory";
+    }
+
     return Request{
             .inputs = NN_TRY(unvalidatedConvert(request.inputs)),
             .outputs = NN_TRY(unvalidatedConvert(request.outputs)),
@@ -956,15 +1042,6 @@ nn::GeneralResult<Timing> unvalidatedConvert(const nn::Timing& timing) {
     };
 }
 
-nn::GeneralResult<int64_t> unvalidatedConvert(const nn::Duration& duration) {
-    if (duration < nn::Duration::zero()) {
-        return NN_ERROR() << "Unable to convert invalid (negative) duration";
-    }
-    constexpr std::chrono::nanoseconds::rep kIntMax = std::numeric_limits<int64_t>::max();
-    const auto count = duration.count();
-    return static_cast<int64_t>(std::min(count, kIntMax));
-}
-
 nn::GeneralResult<int64_t> unvalidatedConvert(const nn::OptionalDuration& optionalDuration) {
     if (!optionalDuration.has_value()) {
         return kNoTiming;
@@ -989,12 +1066,38 @@ nn::GeneralResult<ndk::ScopedFileDescriptor> unvalidatedConvert(const nn::Shared
     return ndk::ScopedFileDescriptor(duplicatedFd.release());
 }
 
+nn::GeneralResult<Capabilities> unvalidatedConvert(const nn::Capabilities& capabilities) {
+    return Capabilities{
+            .relaxedFloat32toFloat16PerformanceTensor = NN_TRY(
+                    unvalidatedConvert(capabilities.relaxedFloat32toFloat16PerformanceTensor)),
+            .relaxedFloat32toFloat16PerformanceScalar = NN_TRY(
+                    unvalidatedConvert(capabilities.relaxedFloat32toFloat16PerformanceScalar)),
+            .operandPerformance = NN_TRY(unvalidatedConvert(capabilities.operandPerformance)),
+            .ifPerformance = NN_TRY(unvalidatedConvert(capabilities.ifPerformance)),
+            .whilePerformance = NN_TRY(unvalidatedConvert(capabilities.whilePerformance)),
+    };
+}
+
+nn::GeneralResult<Extension> unvalidatedConvert(const nn::Extension& extension) {
+    return Extension{.name = extension.name,
+                     .operandTypes = NN_TRY(unvalidatedConvert(extension.operandTypes))};
+}
+#ifdef NN_AIDL_V4_OR_ABOVE
+nn::GeneralResult<TokenValuePair> unvalidatedConvert(const nn::TokenValuePair& tokenValuePair) {
+    return TokenValuePair{.token = tokenValuePair.token, .value = tokenValuePair.value};
+}
+#endif  // NN_AIDL_V4_OR_ABOVE
+
 nn::GeneralResult<std::vector<uint8_t>> convert(const nn::CacheToken& cacheToken) {
     return validatedConvert(cacheToken);
 }
 
 nn::GeneralResult<BufferDesc> convert(const nn::BufferDesc& bufferDesc) {
     return validatedConvert(bufferDesc);
+}
+
+nn::GeneralResult<DeviceType> convert(const nn::DeviceType& deviceType) {
+    return validatedConvert(deviceType);
 }
 
 nn::GeneralResult<bool> convert(const nn::MeasureTiming& measureTiming) {
@@ -1037,6 +1140,14 @@ nn::GeneralResult<int64_t> convert(const nn::OptionalTimePoint& outputShapes) {
     return validatedConvert(outputShapes);
 }
 
+nn::GeneralResult<Capabilities> convert(const nn::Capabilities& capabilities) {
+    return validatedConvert(capabilities);
+}
+
+nn::GeneralResult<Extension> convert(const nn::Extension& extension) {
+    return validatedConvert(extension);
+}
+
 nn::GeneralResult<std::vector<BufferRole>> convert(const std::vector<nn::BufferRole>& bufferRoles) {
     return validatedConvert(bufferRoles);
 }
@@ -1055,6 +1166,21 @@ nn::GeneralResult<std::vector<ndk::ScopedFileDescriptor>> convert(
         const std::vector<nn::SyncFence>& syncFences) {
     return validatedConvert(syncFences);
 }
+nn::GeneralResult<std::vector<ExtensionNameAndPrefix>> convert(
+        const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) {
+    return unvalidatedConvert(extensionNameToPrefix);
+}
+
+#ifdef NN_AIDL_V4_OR_ABOVE
+nn::GeneralResult<std::vector<TokenValuePair>> convert(
+        const std::vector<nn::TokenValuePair>& metaData) {
+    return validatedConvert(metaData);
+}
+#endif  // NN_AIDL_V4_OR_ABOVE
+
+nn::GeneralResult<std::vector<Extension>> convert(const std::vector<nn::Extension>& extensions) {
+    return validatedConvert(extensions);
+}
 
 nn::GeneralResult<std::vector<int32_t>> toSigned(const std::vector<uint32_t>& vec) {
     if (!std::all_of(vec.begin(), vec.end(),
@@ -1062,6 +1188,10 @@ nn::GeneralResult<std::vector<int32_t>> toSigned(const std::vector<uint32_t>& ve
         return NN_ERROR() << "Vector contains a value that doesn't fit into int32_t.";
     }
     return std::vector<int32_t>(vec.begin(), vec.end());
+}
+
+std::vector<uint8_t> toVec(const std::array<uint8_t, IDevice::BYTE_SIZE_OF_CACHE_TOKEN>& token) {
+    return std::vector<uint8_t>(token.begin(), token.end());
 }
 
 }  // namespace aidl::android::hardware::neuralnetworks::utils

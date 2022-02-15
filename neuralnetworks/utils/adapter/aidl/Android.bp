@@ -1,0 +1,42 @@
+//
+// Copyright (C) 2021 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_library_static {
+    name: "neuralnetworks_utils_hal_adapter_aidl",
+    defaults: [
+        "neuralnetworks_use_latest_utils_hal_aidl",
+        "neuralnetworks_utils_defaults",
+    ],
+    srcs: ["src/*"],
+    local_include_dirs: ["include/nnapi/hal/aidl/"],
+    export_include_dirs: ["include"],
+    static_libs: [
+        "neuralnetworks_types",
+        "neuralnetworks_utils_hal_common",
+    ],
+    shared_libs: [
+        "libbinder_ndk",
+    ],
+}

@@ -52,6 +52,9 @@ class RadioModem : public RadioCompatBase,
             const std::shared_ptr<::aidl::android::hardware::radio::modem::IRadioModemIndication>&
                     radioModemIndication) override;
 
+  protected:
+    std::shared_ptr<::aidl::android::hardware::radio::modem::IRadioModemResponse> respond();
+
   public:
     using RadioCompatBase::RadioCompatBase;
 };

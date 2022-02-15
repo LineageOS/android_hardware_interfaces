@@ -34,8 +34,8 @@
 package android.hardware.bluetooth.audio;
 @Backing(type="byte") @VintfStability
 enum AacObjectType {
-  MPEG2_LC = 1,
-  MPEG4_LC = 2,
-  MPEG4_LTP = 4,
-  MPEG4_SCALABLE = 8,
+  MPEG2_LC = 0,
+  MPEG4_LC = 1,
+  MPEG4_LTP = 2,
+  MPEG4_SCALABLE = 3,
 }

@@ -104,12 +104,12 @@ TEST(ResilientPreparedModelTest, getPreparedModel) {
 TEST(ResilientPreparedModelTest, execute) {
     // setup call
     const auto [mockPreparedModel, mockPreparedModelFactory, preparedModel] = setup();
-    EXPECT_CALL(*mockPreparedModel, execute(_, _, _, _))
+    EXPECT_CALL(*mockPreparedModel, execute(_, _, _, _, _, _))
             .Times(1)
             .WillOnce(Return(kNoExecutionError));
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_TRUE(result.has_value())
@@ -119,10 +119,12 @@ TEST(ResilientPreparedModelTest, execute) {
 TEST(ResilientPreparedModelTest, executeError) {
     // setup call
     const auto [mockPreparedModel, mockPreparedModelFactory, preparedModel] = setup();
-    EXPECT_CALL(*mockPreparedModel, execute(_, _, _, _)).Times(1).WillOnce(kReturnGeneralFailure);
+    EXPECT_CALL(*mockPreparedModel, execute(_, _, _, _, _, _))
+            .Times(1)
+            .WillOnce(kReturnGeneralFailure);
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -132,12 +134,12 @@ TEST(ResilientPreparedModelTest, executeError) {
 TEST(ResilientPreparedModelTest, executeDeadObjectFailedRecovery) {
     // setup call
     const auto [mockPreparedModel, mockPreparedModelFactory, preparedModel] = setup();
-    EXPECT_CALL(*mockPreparedModel, execute(_, _, _, _)).Times(1).WillOnce(kReturnDeadObject);
+    EXPECT_CALL(*mockPreparedModel, execute(_, _, _, _, _, _)).Times(1).WillOnce(kReturnDeadObject);
     constexpr auto ret = [] { return nn::error(nn::ErrorStatus::GENERAL_FAILURE); };
     EXPECT_CALL(*mockPreparedModelFactory, Call()).Times(1).WillOnce(ret);
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -147,9 +149,9 @@ TEST(ResilientPreparedModelTest, executeDeadObjectFailedRecovery) {
 TEST(ResilientPreparedModelTest, executeDeadObjectSuccessfulRecovery) {
     // setup call
     const auto [mockPreparedModel, mockPreparedModelFactory, preparedModel] = setup();
-    EXPECT_CALL(*mockPreparedModel, execute(_, _, _, _)).Times(1).WillOnce(kReturnDeadObject);
+    EXPECT_CALL(*mockPreparedModel, execute(_, _, _, _, _, _)).Times(1).WillOnce(kReturnDeadObject);
     const auto recoveredMockPreparedModel = createConfiguredMockPreparedModel();
-    EXPECT_CALL(*recoveredMockPreparedModel, execute(_, _, _, _))
+    EXPECT_CALL(*recoveredMockPreparedModel, execute(_, _, _, _, _, _))
             .Times(1)
             .WillOnce(Return(kNoExecutionError));
     EXPECT_CALL(*mockPreparedModelFactory, Call())
@@ -157,7 +159,7 @@ TEST(ResilientPreparedModelTest, executeDeadObjectSuccessfulRecovery) {
             .WillOnce(Return(recoveredMockPreparedModel));
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_TRUE(result.has_value())
@@ -167,12 +169,12 @@ TEST(ResilientPreparedModelTest, executeDeadObjectSuccessfulRecovery) {
 TEST(ResilientPreparedModelTest, executeFenced) {
     // setup call
     const auto [mockPreparedModel, mockPreparedModelFactory, preparedModel] = setup();
-    EXPECT_CALL(*mockPreparedModel, executeFenced(_, _, _, _, _, _))
+    EXPECT_CALL(*mockPreparedModel, executeFenced(_, _, _, _, _, _, _, _))
             .Times(1)
             .WillOnce(Return(kNoFencedExecutionError));
 
     // run test
-    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {});
+    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_TRUE(result.has_value())
@@ -182,12 +184,12 @@ TEST(ResilientPreparedModelTest, executeFenced) {
 TEST(ResilientPreparedModelTest, executeFencedError) {
     // setup call
     const auto [mockPreparedModel, mockPreparedModelFactory, preparedModel] = setup();
-    EXPECT_CALL(*mockPreparedModel, executeFenced(_, _, _, _, _, _))
+    EXPECT_CALL(*mockPreparedModel, executeFenced(_, _, _, _, _, _, _, _))
             .Times(1)
             .WillOnce(kReturnGeneralFailure);
 
     // run test
-    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {});
+    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -197,13 +199,13 @@ TEST(ResilientPreparedModelTest, executeFencedError) {
 TEST(ResilientPreparedModelTest, executeFencedDeadObjectFailedRecovery) {
     // setup call
     const auto [mockPreparedModel, mockPreparedModelFactory, preparedModel] = setup();
-    EXPECT_CALL(*mockPreparedModel, executeFenced(_, _, _, _, _, _))
+    EXPECT_CALL(*mockPreparedModel, executeFenced(_, _, _, _, _, _, _, _))
             .Times(1)
             .WillOnce(kReturnDeadObject);
     EXPECT_CALL(*mockPreparedModelFactory, Call()).Times(1).WillOnce(kReturnGeneralFailure);
 
     // run test
-    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {});
+    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -213,11 +215,11 @@ TEST(ResilientPreparedModelTest, executeFencedDeadObjectFailedRecovery) {
 TEST(ResilientPreparedModelTest, executeFencedDeadObjectSuccessfulRecovery) {
     // setup call
     const auto [mockPreparedModel, mockPreparedModelFactory, preparedModel] = setup();
-    EXPECT_CALL(*mockPreparedModel, executeFenced(_, _, _, _, _, _))
+    EXPECT_CALL(*mockPreparedModel, executeFenced(_, _, _, _, _, _, _, _))
             .Times(1)
             .WillOnce(kReturnDeadObject);
     const auto recoveredMockPreparedModel = createConfiguredMockPreparedModel();
-    EXPECT_CALL(*recoveredMockPreparedModel, executeFenced(_, _, _, _, _, _))
+    EXPECT_CALL(*recoveredMockPreparedModel, executeFenced(_, _, _, _, _, _, _, _))
             .Times(1)
             .WillOnce(Return(kNoFencedExecutionError));
     EXPECT_CALL(*mockPreparedModelFactory, Call())
@@ -225,7 +227,7 @@ TEST(ResilientPreparedModelTest, executeFencedDeadObjectSuccessfulRecovery) {
             .WillOnce(Return(recoveredMockPreparedModel));
 
     // run test
-    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {});
+    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_TRUE(result.has_value())
@@ -235,12 +237,12 @@ TEST(ResilientPreparedModelTest, executeFencedDeadObjectSuccessfulRecovery) {
 TEST(ResilientPreparedModelTest, createReusableExecution) {
     // setup call
     const auto [mockPreparedModel, mockPreparedModelFactory, preparedModel] = setup();
-    EXPECT_CALL(*mockPreparedModel, createReusableExecution(_, _, _))
+    EXPECT_CALL(*mockPreparedModel, createReusableExecution(_, _, _, _, _))
             .Times(1)
             .WillOnce(Return(kNoCreateReusableExecutionError));
 
     // run test
-    const auto result = preparedModel->createReusableExecution({}, {}, {});
+    const auto result = preparedModel->createReusableExecution({}, {}, {}, {}, {});
 
     // verify result
     ASSERT_TRUE(result.has_value())
@@ -250,12 +252,12 @@ TEST(ResilientPreparedModelTest, createReusableExecution) {
 TEST(ResilientPreparedModelTest, createReusableExecutionError) {
     // setup call
     const auto [mockPreparedModel, mockPreparedModelFactory, preparedModel] = setup();
-    EXPECT_CALL(*mockPreparedModel, createReusableExecution(_, _, _))
+    EXPECT_CALL(*mockPreparedModel, createReusableExecution(_, _, _, _, _))
             .Times(1)
             .WillOnce(kReturnGeneralFailure);
 
     // run test
-    const auto result = preparedModel->createReusableExecution({}, {}, {});
+    const auto result = preparedModel->createReusableExecution({}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());

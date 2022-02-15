@@ -96,7 +96,9 @@ import android.hardware.security.secureclock.TimeStampToken;
  *      - TRUSTED_ENVRIONMENT IKeyMintDevices must support curve 25519 for Purpose::SIGN (Ed25519,
  *        as specified in RFC 8032), Purpose::ATTEST_KEY (Ed25519) or for KeyPurpose::AGREE_KEY
  *        (X25519, as specified in RFC 7748).  However, a key must have exactly one of these
- *        purpose values; the same key cannot be used for multiple purposes.
+ *        purpose values; the same key cannot be used for multiple purposes. Signing operations
+ *        (Purpose::SIGN) have a message size limit of 16 KiB; operations on messages longer than
+ *        this limit must fail with ErrorCode::INVALID_INPUT_LENGTH.
  *        STRONGBOX IKeyMintDevices do not support curve 25519.
  *
  * o   AES

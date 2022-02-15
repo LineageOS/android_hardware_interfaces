@@ -18,9 +18,11 @@ package android.hardware.neuralnetworks;
 
 import android.hardware.common.NativeHandle;
 import android.hardware.neuralnetworks.ErrorStatus;
+import android.hardware.neuralnetworks.ExecutionConfig;
 import android.hardware.neuralnetworks.ExecutionResult;
 import android.hardware.neuralnetworks.FencedExecutionResult;
 import android.hardware.neuralnetworks.IBurst;
+import android.hardware.neuralnetworks.IExecution;
 import android.hardware.neuralnetworks.Request;
 
 /**
@@ -67,6 +69,8 @@ interface IPreparedModel {
      * Any number of calls to the execute* functions, in any combination, may be made concurrently,
      * even on the same IPreparedModel object.
      *
+     * Also see {@link IPreparedModel::executeSynchronouslyWithConfig}.
+     *
      * @param request The input and output information on which the prepared model is to be
      *                executed.
      * @param measure Specifies whether or not to measure duration of the execution. The duration
@@ -105,11 +109,12 @@ interface IPreparedModel {
      * IDevice::allocate are valid. If there is an error, executeFenced must immediately return a
      * service specific exception with the corresponding ErrorStatus. If the inputs to the function
      * are valid and there is no error, executeFenced must dispatch an asynchronous task to perform
-     * the execution in the background, assign a sync fence that will be signaled once the execution
-     * is completed and immediately return a callback that can be used by the client to query the
-     * duration and runtime error status. If the task has finished before the call returns,
-     * syncFence file descriptor may be set to -1. The execution must wait for all the sync fences
-     * (if any) in waitFor to be signaled before starting the actual execution.
+     * the execution in the background, and immediately return a {@link FencedExecutionResult}
+     * containing two fields: a callback (which can be used by the client to query the duration and
+     * runtime error status) and a sync fence (which will be signaled once the execution is
+     * completed). If the task has finished before the call returns, syncFence file descriptor may
+     * be set to -1. The execution must wait for all the sync fences (if any) in waitFor to be
+     * signaled before starting the actual execution.
      *
      * When the asynchronous task has finished its execution, it must immediately signal the
      * syncFence returned from the executeFenced call. After the syncFence is signaled, the task
@@ -131,6 +136,8 @@ interface IPreparedModel {
      *
      * Any number of calls to the execute* functions, in any combination, may be made concurrently,
      * even on the same IPreparedModel object.
+     *
+     * Also see {@link IPreparedModel::executeFencedWithConfig}.
      *
      * @param request The input and output information on which the prepared model is to be
      *                executed. The outputs in the request must have fully specified dimensions.
@@ -186,4 +193,100 @@ interface IPreparedModel {
      *     - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
      */
     IBurst configureExecutionBurst();
+
+    /**
+     * Create a reusable execution object to launch multiple executions with the same request and
+     * properties.
+     *
+     * createReusableExecution must verify the inputs to the function are correct, and the usages of
+     * memory pools allocated by IDevice::allocate are valid. If there is an error,
+     * createReusableExecution must immediately return a service specific exception with the
+     * appropriate ErrorStatus value. If the inputs to the function are valid and there is no error,
+     * createReusableExecution must construct a reusable execution.
+     *
+     * This method will be called when a client requests a reusable execution with consistent
+     * request and execution config. For single-time execution,
+     * {@link IPreparedModel::executeSynchronouslyWithConfig} or
+     * {@link IPreparedModel::executeFencedWithConfig} is preferred, because the overhead of
+     * setting up a reusable execution can be avoided.
+     *
+     * @param request The input and output information on which the prepared model is to be
+     *                executed.
+     * @param config Specifies the execution configuration parameters.
+     * @return execution An IExecution object representing a reusable execution that has been
+     *                   specialized for a fixed request.
+     * @throws ServiceSpecificException with one of the following ErrorStatus values:
+     *     - DEVICE_UNAVAILABLE if driver is offline or busy
+     *     - GENERAL_FAILURE if there is an unspecified error
+     *     - INVALID_ARGUMENT if one of the input arguments is invalid
+     *     - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
+     */
+    IExecution createReusableExecution(in Request request, in ExecutionConfig config);
+
+    /**
+     * For detailed specification, please refer to {@link IPreparedModel::executeSynchronously}. The
+     * difference between the two methods is that executeSynchronouslyWithConfig takes {@link
+     * ExecutionConfig} instead of a list of configuration parameters, and ExecutionConfig contains
+     * more configuration parameters than are passed to executeSynchronously.
+     *
+     * This method is preferred when a client requests a single-time synchronous execution.
+     * For reusable execution with consistent request and execution config,
+     * {@link IPreparedModel::createReusableExecution} must be called.
+     *
+     * @param request The input and output information on which the prepared model is to be
+     *                executed.
+     * @param config Specifies the execution configuration parameters.
+     * @param deadlineNs The time by which the execution is expected to complete. The time is
+     *                   measured in nanoseconds since boot (as from clock_gettime(CLOCK_BOOTTIME,
+     *                   &ts) or ::android::base::boot_clock). If the execution cannot be finished
+     *                   by the deadline, the execution may be aborted. Passing -1 means the
+     *                   deadline is omitted. Other negative valueggs are invalid.
+     * @return ExecutionResult parcelable, containing the status of the execution, output shapes and
+     *     timing information.
+     *     - MISSED_DEADLINE_* if the execution is aborted because it cannot be completed by the
+     *       deadline
+     *     - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
+     */
+    ExecutionResult executeSynchronouslyWithConfig(
+            in Request request, in ExecutionConfig config, in long deadlineNs);
+
+    /**
+     * For detailed specification, please refer to {@link IPreparedModel::executeFenced}. The
+     * difference between the two methods is that executeFencedWithConfig takes {@link
+     * ExecutionConfig} instead of a list of configuration parameters, and ExecutionConfig contains
+     * more configuration parameters than are passed to executeFenced.
+     *
+     * This method is preferred when a client requests a single-time fenced execution.
+     * For reusable execution with consistent request and execution config,
+     * {@link IPreparedModel::createReusableExecution} must be called.
+     *
+     * @param request The input and output information on which the prepared model is to be
+     *                executed. The outputs in the request must have fully specified dimensions.
+     * @param waitFor A vector of sync fence file descriptors. Execution must not start until all
+     *                sync fences have been signaled.
+     * @param config Specifies the execution configuration parameters.
+     * @param deadlineNs The time by which the execution is expected to complete. The time is
+     *                   measured in nanoseconds since boot (as from clock_gettime(CLOCK_BOOTTIME,
+     *                   &ts) or ::android::base::boot_clock). If the execution cannot be finished
+     *                   by the deadline, the execution may be aborted. Passing -1 means the
+     *                   deadline is omitted. Other negative values are invalid.
+     * @param durationNs The length of time in nanoseconds within which the execution is expected to
+     *                   complete after all sync fences in waitFor are signaled. If the execution
+     *                   cannot be finished within the duration, the execution may be aborted.
+     *                   Passing -1 means the duration is omitted. Other negative values are
+     *                   invalid.
+     * @return The FencedExecutionResult parcelable, containing IFencedExecutionCallback and the
+     *         sync fence.
+     * @throws ServiceSpecificException with one of the following ErrorStatus values:
+     *     - DEVICE_UNAVAILABLE if driver is offline or busy
+     *     - GENERAL_FAILURE if there is an unspecified error
+     *     - INVALID_ARGUMENT if one of the input arguments is invalid, including fences in error
+     *       states.
+     *     - MISSED_DEADLINE_* if the execution is aborted because it cannot be completed by the
+     *       deadline
+     *     - RESOURCE_EXHAUSTED_* if the task was aborted by the driver
+     */
+    FencedExecutionResult executeFencedWithConfig(in Request request,
+            in ParcelFileDescriptor[] waitFor, in ExecutionConfig config, in long deadlineNs,
+            in long durationNs);
 }

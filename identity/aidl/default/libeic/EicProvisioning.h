@@ -31,6 +31,9 @@ extern "C" {
 #define EIC_MAX_NUM_ACCESS_CONTROL_PROFILE_IDS 32
 
 typedef struct {
+    // A non-zero number unique for this EicProvisioning instance
+    uint32_t id;
+
     // Set by eicCreateCredentialKey() OR eicProvisioningInitForUpdate()
     uint8_t credentialPrivateKey[EIC_P256_PRIV_KEY_SIZE];
 
@@ -68,9 +71,16 @@ bool eicProvisioningInitForUpdate(EicProvisioning* ctx, bool testCredential, con
                                   size_t docTypeLength, const uint8_t* encryptedCredentialKeys,
                                   size_t encryptedCredentialKeysSize);
 
+bool eicProvisioningShutdown(EicProvisioning* ctx);
+
+bool eicProvisioningGetId(EicProvisioning* ctx, uint32_t* outId);
+
 bool eicProvisioningCreateCredentialKey(EicProvisioning* ctx, const uint8_t* challenge,
                                         size_t challengeSize, const uint8_t* applicationId,
-                                        size_t applicationIdSize, uint8_t* publicKeyCert,
+                                        size_t applicationIdSize, const uint8_t* attestationKeyBlob,
+                                        size_t attestationKeyBlobSize,
+                                        const uint8_t* attestationKeyCert,
+                                        size_t attestationKeyCertSize, uint8_t* publicKeyCert,
                                         size_t* publicKeyCertSize);
 
 bool eicProvisioningStartPersonalization(EicProvisioning* ctx, int accessControlProfileCount,

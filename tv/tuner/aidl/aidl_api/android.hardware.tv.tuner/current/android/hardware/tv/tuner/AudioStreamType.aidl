@@ -51,4 +51,8 @@ enum AudioStreamType {
   OPUS = 13,
   VORBIS = 14,
   DRA = 15,
+  AAC_ADTS = 16,
+  AAC_LATM = 17,
+  AAC_HE_ADTS = 18,
+  AAC_HE_LATM = 19,
 }

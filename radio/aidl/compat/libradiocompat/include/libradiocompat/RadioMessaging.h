@@ -31,7 +31,6 @@ class RadioMessaging : public RadioCompatBase,
     ::ndk::ScopedAStatus acknowledgeLastIncomingGsmSms(
             int32_t serial, bool success,
             ::aidl::android::hardware::radio::messaging::SmsAcknowledgeFailCause cause) override;
-    ::ndk::ScopedAStatus cancelPendingUssd(int32_t serial) override;
     ::ndk::ScopedAStatus deleteSmsOnRuim(int32_t serial, int32_t index) override;
     ::ndk::ScopedAStatus deleteSmsOnSim(int32_t serial, int32_t index) override;
     ::ndk::ScopedAStatus getCdmaBroadcastConfig(int32_t serial) override;
@@ -54,7 +53,6 @@ class RadioMessaging : public RadioCompatBase,
     ::ndk::ScopedAStatus sendSmsExpectMore(
             int32_t serial,
             const ::aidl::android::hardware::radio::messaging::GsmSmsMessage& message) override;
-    ::ndk::ScopedAStatus sendUssd(int32_t serial, const std::string& ussd) override;
     ::ndk::ScopedAStatus setCdmaBroadcastActivation(int32_t serial, bool activate) override;
     ::ndk::ScopedAStatus setCdmaBroadcastConfig(
             int32_t serial,
@@ -81,6 +79,9 @@ class RadioMessaging : public RadioCompatBase,
     ::ndk::ScopedAStatus writeSmsToSim(
             int32_t serial,
             const ::aidl::android::hardware::radio::messaging::SmsWriteArgs& smsWriteArgs) override;
+
+  protected:
+    std::shared_ptr<::aidl::android::hardware::radio::messaging::IRadioMessagingResponse> respond();
 
   public:
     using RadioCompatBase::RadioCompatBase;

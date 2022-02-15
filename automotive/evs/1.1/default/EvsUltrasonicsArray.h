@@ -119,7 +119,7 @@ class EvsUltrasonicsArray : public IEvsUltrasonicsArray {
     std::mutex mAccessLock;
     std::vector<DataFrameRecord> mDataFrames GUARDED_BY(mAccessLock);  // Shared memory buffers.
     unsigned mFramesAllowed GUARDED_BY(mAccessLock);  // How many buffers are we currently using.
-    unsigned mFramesInUse GUARDED_BY(mAccessLock);  // How many buffers are currently outstanding.
+    unsigned mFramesInUse GUARDED_BY(mAccessLock);    // How many buffers are currently outstanding.
 
     StreamStateValues mStreamState GUARDED_BY(mAccessLock);
 };

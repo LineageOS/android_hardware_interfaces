@@ -49,4 +49,14 @@ bool GnssConfiguration::isBlocklistedV2_1(const GnssSvInfoV2_1& gnssSvInfo) cons
     return (mBlocklistedSourceSet.find(source) != mBlocklistedSourceSet.end());
 }
 
+bool GnssConfiguration::isBlocklisted(const IGnssCallback::GnssSvInfo& gnssSvInfo) const {
+    std::unique_lock<std::recursive_mutex> lock(mMutex);
+    if (mBlocklistedConstellationSet.find(gnssSvInfo.constellation) !=
+        mBlocklistedConstellationSet.end()) {
+        return true;
+    }
+    BlocklistedSource source = {.constellation = gnssSvInfo.constellation, .svid = gnssSvInfo.svid};
+    return (mBlocklistedSourceSet.find(source) != mBlocklistedSourceSet.end());
+}
+
 }  // namespace aidl::android::hardware::gnss

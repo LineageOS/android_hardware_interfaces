@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "RadioConfigResponse.h"
+#include <libradiocompat/RadioConfigResponse.h>
 
 #include "commonStructs.h"
 #include "debug.h"
@@ -28,14 +28,20 @@ namespace android::hardware::radio::compat {
 
 namespace aidl = ::aidl::android::hardware::radio::config;
 
-RadioConfigResponse::RadioConfigResponse(std::shared_ptr<aidl::IRadioConfigResponse> callback)
-    : mCallback(callback) {}
+void RadioConfigResponse::setResponseFunction(
+        std::shared_ptr<aidl::IRadioConfigResponse> callback) {
+    mCallback = callback;
+}
+
+std::shared_ptr<aidl::IRadioConfigResponse> RadioConfigResponse::respond() {
+    return mCallback.get();
+}
 
 Return<void> RadioConfigResponse::getSimSlotsStatusResponse(
         const V1_0::RadioResponseInfo& info,
         const hidl_vec<config::V1_0::SimSlotStatus>& slotStatus) {
     LOG_CALL << info.serial;
-    mCallback->getSimSlotsStatusResponse(toAidl(info), toAidl(slotStatus));
+    respond()->getSimSlotsStatusResponse(toAidl(info), toAidl(slotStatus));
     return {};
 };
 
@@ -43,47 +49,47 @@ Return<void> RadioConfigResponse::getSimSlotsStatusResponse_1_2(
         const V1_0::RadioResponseInfo& info,
         const hidl_vec<config::V1_2::SimSlotStatus>& slotStatus) {
     LOG_CALL << info.serial;
-    mCallback->getSimSlotsStatusResponse(toAidl(info), toAidl(slotStatus));
+    respond()->getSimSlotsStatusResponse(toAidl(info), toAidl(slotStatus));
     return {};
 };
 
 Return<void> RadioConfigResponse::setSimSlotsMappingResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    mCallback->setSimSlotsMappingResponse(toAidl(info));
+    respond()->setSimSlotsMappingResponse(toAidl(info));
     return {};
 };
 
 Return<void> RadioConfigResponse::getPhoneCapabilityResponse(
         const V1_0::RadioResponseInfo& info, const config::V1_1::PhoneCapability& phoneCapability) {
     LOG_CALL << info.serial;
-    mCallback->getPhoneCapabilityResponse(toAidl(info), toAidl(phoneCapability));
+    respond()->getPhoneCapabilityResponse(toAidl(info), toAidl(phoneCapability));
     return {};
 };
 
 Return<void> RadioConfigResponse::setPreferredDataModemResponse(
         const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    mCallback->setPreferredDataModemResponse(toAidl(info));
+    respond()->setPreferredDataModemResponse(toAidl(info));
     return {};
 };
 
 Return<void> RadioConfigResponse::setModemsConfigResponse(const V1_0::RadioResponseInfo& info) {
     LOG_CALL << info.serial;
-    mCallback->setNumOfLiveModemsResponse(toAidl(info));
+    respond()->setNumOfLiveModemsResponse(toAidl(info));
     return {};
 };
 
 Return<void> RadioConfigResponse::getModemsConfigResponse(
         const V1_0::RadioResponseInfo& info, const config::V1_1::ModemsConfig& modemsConfig) {
     LOG_CALL << info.serial;
-    mCallback->getNumOfLiveModemsResponse(toAidl(info), modemsConfig.numOfLiveModems);
+    respond()->getNumOfLiveModemsResponse(toAidl(info), modemsConfig.numOfLiveModems);
     return {};
 };
 
 Return<void> RadioConfigResponse::getHalDeviceCapabilitiesResponse(
         const V1_6::RadioResponseInfo& info, bool modemReducedFeatureSet1) {
     LOG_CALL << info.serial;
-    mCallback->getHalDeviceCapabilitiesResponse(toAidl(info), modemReducedFeatureSet1);
+    respond()->getHalDeviceCapabilitiesResponse(toAidl(info), modemReducedFeatureSet1);
     return {};
 };
 

@@ -50,15 +50,20 @@ Burst::OptionalCacheHold Burst::cacheMemory(const nn::SharedMemory& /*memory*/) 
 
 nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Burst::execute(
         const nn::Request& request, nn::MeasureTiming measure,
-        const nn::OptionalTimePoint& deadline,
-        const nn::OptionalDuration& loopTimeoutDuration) const {
-    return kPreparedModel->execute(request, measure, deadline, loopTimeoutDuration);
+        const nn::OptionalTimePoint& deadline, const nn::OptionalDuration& loopTimeoutDuration,
+        const std::vector<nn::TokenValuePair>& hints,
+        const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const {
+    return kPreparedModel->execute(request, measure, deadline, loopTimeoutDuration, hints,
+                                   extensionNameToPrefix);
 }
 
 nn::GeneralResult<nn::SharedExecution> Burst::createReusableExecution(
         const nn::Request& request, nn::MeasureTiming measure,
-        const nn::OptionalDuration& loopTimeoutDuration) const {
-    return kPreparedModel->createReusableExecution(request, measure, loopTimeoutDuration);
+        const nn::OptionalDuration& loopTimeoutDuration,
+        const std::vector<nn::TokenValuePair>& hints,
+        const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const {
+    return kPreparedModel->createReusableExecution(request, measure, loopTimeoutDuration, hints,
+                                                   extensionNameToPrefix);
 }
 
 }  // namespace android::hardware::neuralnetworks::V1_0::utils

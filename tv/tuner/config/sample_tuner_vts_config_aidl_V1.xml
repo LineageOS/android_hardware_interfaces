@@ -42,6 +42,8 @@
                 "softwareFeInputPath": used as the source of the software frontend.
                 "connectToCicamId": if the device supports frontend connecting to cicam, the target
                     cicam id needs to be configured here. Supported in Tuner 1.1 or higher.
+                "removeOutputPid": the unnecessary PID will be filtered out from frontend
+                    output. Supported in Tuner 2.0 or higher.
                 "frequency": the frequency used to configure tune and scan.
                 "endFrequency": the end frequency of scan. Supported in Tuner 1.1 or higher.
 
@@ -53,11 +55,13 @@
         -->
         <frontends>
             <frontend id="FE_DEFAULT" type="DVBT" isSoftwareFrontend="true"
-                      connectToCicamId="0" frequency="578000000" endFrequency="800000000">
+                      connectToCicamId="0" removeOutputPid="10" frequency="578000000"
+                      endFrequency="800000000">
                 <dvbtFrontendSettings bandwidth="8" transmissionMode="128" isHighPriority="1"/>
             </frontend>
             <frontend id="FE_DVBS_0" type="DVBS" isSoftwareFrontend="true"
-                      connectToCicamId="0" frequency="578000000" endFrequency="800000000">
+                      connectToCicamId="0" removeOutputPid="10" frequency="578000000"
+                      endFrequency="800000000">
             </frontend>
         </frontends>
         <!-- Filter section:

@@ -25,10 +25,16 @@ aidl_interface {
     backend: {
         java: {
             sdk_version: "module_current",
-            srcs_available: true,
         },
         cpp: {
             enabled: false,
+        },
+        ndk: {
+            apex_available: [
+                "//apex_available:platform",
+                "com.android.bluetooth",
+            ],
+            min_sdk_version: "29",
         },
     },
     versions: ["1"],

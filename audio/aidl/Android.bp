@@ -41,12 +41,22 @@ aidl_interface {
             enabled: true,
         },
         java: {
-            platform_apis: true,
+            sdk_version: "module_current",
+            min_sdk_version: "31",
+            apex_available: [
+                "//apex_available:platform",
+                "com.android.car.framework",
+            ],
         },
         ndk: {
             vndk: {
                 enabled: true,
             },
+            apex_available: [
+                "//apex_available:platform",
+                "com.android.bluetooth",
+            ],
+            min_sdk_version: "31",
         },
     },
     versions: [

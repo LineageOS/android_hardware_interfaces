@@ -44,6 +44,7 @@ interface IRadioVoiceIndication {
   oneway void exitEmergencyCallbackMode(in android.hardware.radio.RadioIndicationType type);
   oneway void indicateRingbackTone(in android.hardware.radio.RadioIndicationType type, in boolean start);
   oneway void onSupplementaryServiceIndication(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.voice.StkCcUnsolSsResult ss);
+  oneway void onUssd(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.voice.UssdModeType modeType, in String msg);
   oneway void resendIncallMute(in android.hardware.radio.RadioIndicationType type);
   oneway void srvccStateNotify(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.voice.SrvccState state);
   oneway void stkCallControlAlphaNotify(in android.hardware.radio.RadioIndicationType type, in String alpha);

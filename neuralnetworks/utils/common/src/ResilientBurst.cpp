@@ -105,37 +105,49 @@ ResilientBurst::OptionalCacheHold ResilientBurst::cacheMemory(
 
 nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> ResilientBurst::execute(
         const nn::Request& request, nn::MeasureTiming measure,
-        const nn::OptionalTimePoint& deadline,
-        const nn::OptionalDuration& loopTimeoutDuration) const {
-    const auto fn = [&request, measure, deadline, loopTimeoutDuration](const nn::IBurst& burst) {
-        return burst.execute(request, measure, deadline, loopTimeoutDuration);
+        const nn::OptionalTimePoint& deadline, const nn::OptionalDuration& loopTimeoutDuration,
+        const std::vector<nn::TokenValuePair>& hints,
+        const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const {
+    const auto fn = [&request, measure, deadline, loopTimeoutDuration, &hints,
+                     &extensionNameToPrefix](const nn::IBurst& burst) {
+        return burst.execute(request, measure, deadline, loopTimeoutDuration, hints,
+                             extensionNameToPrefix);
     };
     return protect(*this, fn);
 }
 
 nn::GeneralResult<nn::SharedExecution> ResilientBurst::createReusableExecution(
         const nn::Request& request, nn::MeasureTiming measure,
-        const nn::OptionalDuration& loopTimeoutDuration) const {
+        const nn::OptionalDuration& loopTimeoutDuration,
+        const std::vector<nn::TokenValuePair>& hints,
+        const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const {
 #if 0
     auto self = shared_from_this();
-    ResilientExecution::Factory makeExecution =
-            [burst = std::move(self), request, measure, loopTimeoutDuration] {
-        return burst->createReusableExecutionInternal(request, measure, loopTimeoutDuration);
+    ResilientExecution::Factory makeExecution = [burst = std::move(self), request, measure,
+                                                 loopTimeoutDuration, &hints,
+                                                 &extensionNameToPrefix] {
+        return burst->createReusableExecutionInternal(request, measure, loopTimeoutDuration, hints,
+                                                      extensionNameToPrefix);
     };
     return ResilientExecution::create(std::move(makeExecution));
 #else
-    return createReusableExecutionInternal(request, measure, loopTimeoutDuration);
+    return createReusableExecutionInternal(request, measure, loopTimeoutDuration, hints,
+                                           extensionNameToPrefix);
 #endif
 }
 
 nn::GeneralResult<nn::SharedExecution> ResilientBurst::createReusableExecutionInternal(
         const nn::Request& request, nn::MeasureTiming measure,
-        const nn::OptionalDuration& loopTimeoutDuration) const {
+        const nn::OptionalDuration& loopTimeoutDuration,
+        const std::vector<nn::TokenValuePair>& hints,
+        const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const {
     if (!isValidInternal()) {
         return std::make_shared<const InvalidExecution>();
     }
-    const auto fn = [&request, measure, &loopTimeoutDuration](const nn::IBurst& burst) {
-        return burst.createReusableExecution(request, measure, loopTimeoutDuration);
+    const auto fn = [&request, measure, &loopTimeoutDuration, &hints,
+                     &extensionNameToPrefix](const nn::IBurst& burst) {
+        return burst.createReusableExecution(request, measure, loopTimeoutDuration, hints,
+                                             extensionNameToPrefix);
     };
     return protect(*this, fn);
 }

@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.graphics.common;
+/* @hide */
 @Backing(type="long") @VintfStability
 enum BufferUsage {
   CPU_READ_MASK = 15,
@@ -54,10 +55,11 @@ enum BufferUsage {
   RENDERSCRIPT = 1048576,
   VIDEO_DECODER = 4194304,
   SENSOR_DIRECT_DATA = 8388608,
+  GPU_DATA_BUFFER = 16777216,
   GPU_CUBE_MAP = 33554432,
   GPU_MIPMAP_COMPLETE = 67108864,
   HW_IMAGE_ENCODER = 134217728,
-  GPU_DATA_BUFFER = 16777216,
+  FRONT_BUFFER = 4294967296,
   VENDOR_MASK = -268435456,
   VENDOR_MASK_HI = -281474976710656,
 }

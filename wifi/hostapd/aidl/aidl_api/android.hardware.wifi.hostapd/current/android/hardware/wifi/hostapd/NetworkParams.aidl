@@ -39,4 +39,5 @@ parcelable NetworkParams {
   android.hardware.wifi.hostapd.EncryptionType encryptionType;
   String passphrase;
   boolean isMetered;
+  byte[] vendorElements;
 }

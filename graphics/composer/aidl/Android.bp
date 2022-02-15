@@ -55,20 +55,6 @@ aidl_interface {
     },
 }
 
-cc_library {
-    name: "android.hardware.graphics.composer3-translate-ndk",
-    vendor_available: true,
-    srcs: ["android/hardware/graphics/composer3/translate-ndk.cpp"],
-    shared_libs: [
-        "libbinder_ndk",
-        "libhidlbase",
-        "android.hardware.graphics.composer3-V1-ndk",
-        "android.hardware.graphics.composer@2.1",
-        "android.hardware.graphics.composer@2.4",
-    ],
-    export_include_dirs: ["include"],
-}
-
 cc_library_headers {
     name: "android.hardware.graphics.composer3-command-buffer",
     vendor_available: true,
@@ -87,4 +73,17 @@ cc_library_headers {
         "libsync",
     ],
     export_include_dirs: ["include"],
+}
+
+cc_test {
+    name: "android.hardware.graphics.composer3-hidl2aidl-asserts",
+    vendor_available: true,
+    srcs: ["android/hardware/graphics/composer3/Hidl2AidlAsserts.cpp"],
+    shared_libs: [
+        "libbinder_ndk",
+        "libhidlbase",
+        "android.hardware.graphics.composer3-V1-ndk",
+        "android.hardware.graphics.composer@2.1",
+        "android.hardware.graphics.composer@2.4",
+    ],
 }

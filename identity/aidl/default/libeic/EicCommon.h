@@ -21,6 +21,9 @@
 #ifndef ANDROID_HARDWARE_IDENTITY_EIC_COMMON_H
 #define ANDROID_HARDWARE_IDENTITY_EIC_COMMON_H
 
+// KeyMint auth-challenges are 64-bit numbers and 0 typically means unset.
+#define EIC_KM_AUTH_CHALLENGE_UNSET 0
+
 // Feature version 202009:
 //
 //         CredentialKeys = [

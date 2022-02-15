@@ -16,10 +16,13 @@
 
 package android.hardware.graphics.composer3;
 
+/**
+ * Color representation as a floating point number in the range [0.0 - 1.0]
+ */
 @VintfStability
 parcelable Color {
-    byte r;
-    byte g;
-    byte b;
-    byte a;
+    float r;
+    float g;
+    float b;
+    float a;
 }

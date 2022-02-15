@@ -103,8 +103,9 @@ interface IDumpstateDevice {
      * @param timeoutMillis An approximate "budget" for how much time this call has been allotted.
      *     If execution runs longer than this, the IDumpstateDevice service may be killed and only
      *     partial information will be included in the report.
-     * @return If error, return service specific error with code
-     *           ERROR_UNSUPPORTED_MODE or ERROR_DEVICE_LOGGING_NOT_ENABLED
+     * @throws ServiceSpecificException with one of the following values:
+     *         |ERROR_UNSUPPORTED_MODE|,
+     *         |ERROR_DEVICE_LOGGING_NOT_ENABLED|
      */
     void dumpstateBoard(in ParcelFileDescriptor[] fd, in DumpstateMode mode, in long timeoutMillis);
 

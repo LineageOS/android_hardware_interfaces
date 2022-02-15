@@ -38,7 +38,6 @@ interface IRadioMessagingResponse {
   oneway void acknowledgeLastIncomingCdmaSmsResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void acknowledgeLastIncomingGsmSmsResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void acknowledgeRequest(in int serial);
-  oneway void cancelPendingUssdResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void deleteSmsOnRuimResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void deleteSmsOnSimResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void getCdmaBroadcastConfigResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.messaging.CdmaBroadcastSmsConfigInfo[] configs);
@@ -50,7 +49,6 @@ interface IRadioMessagingResponse {
   oneway void sendImsSmsResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.messaging.SendSmsResult sms);
   oneway void sendSmsExpectMoreResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.messaging.SendSmsResult sms);
   oneway void sendSmsResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.messaging.SendSmsResult sms);
-  oneway void sendUssdResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void setCdmaBroadcastActivationResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void setCdmaBroadcastConfigResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void setGsmBroadcastActivationResponse(in android.hardware.radio.RadioResponseInfo info);

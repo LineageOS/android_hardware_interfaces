@@ -40,26 +40,33 @@ class PreparedModel final : public nn::IPreparedModel,
     struct PrivateConstructorTag {};
 
   public:
+    // featureLevel is for testing purposes.
     static nn::GeneralResult<std::shared_ptr<const PreparedModel>> create(
-            std::shared_ptr<aidl_hal::IPreparedModel> preparedModel);
+            std::shared_ptr<aidl_hal::IPreparedModel> preparedModel, nn::Version featureLevel);
 
     PreparedModel(PrivateConstructorTag tag,
-                  std::shared_ptr<aidl_hal::IPreparedModel> preparedModel);
+                  std::shared_ptr<aidl_hal::IPreparedModel> preparedModel,
+                  nn::Version featureLevel);
 
     nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> execute(
             const nn::Request& request, nn::MeasureTiming measure,
-            const nn::OptionalTimePoint& deadline,
-            const nn::OptionalDuration& loopTimeoutDuration) const override;
+            const nn::OptionalTimePoint& deadline, const nn::OptionalDuration& loopTimeoutDuration,
+            const std::vector<nn::TokenValuePair>& hints,
+            const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const override;
 
     nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>> executeFenced(
             const nn::Request& request, const std::vector<nn::SyncFence>& waitFor,
             nn::MeasureTiming measure, const nn::OptionalTimePoint& deadline,
             const nn::OptionalDuration& loopTimeoutDuration,
-            const nn::OptionalDuration& timeoutDurationAfterFence) const override;
+            const nn::OptionalDuration& timeoutDurationAfterFence,
+            const std::vector<nn::TokenValuePair>& hints,
+            const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const override;
 
     nn::GeneralResult<nn::SharedExecution> createReusableExecution(
             const nn::Request& request, nn::MeasureTiming measure,
-            const nn::OptionalDuration& loopTimeoutDuration) const override;
+            const nn::OptionalDuration& loopTimeoutDuration,
+            const std::vector<nn::TokenValuePair>& hints,
+            const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const override;
 
     nn::GeneralResult<nn::SharedBurst> configureExecutionBurst() const override;
 
@@ -67,6 +74,8 @@ class PreparedModel final : public nn::IPreparedModel,
 
     nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> executeInternal(
             const Request& request, bool measure, int64_t deadline, int64_t loopTimeoutDuration,
+            const std::vector<nn::TokenValuePair>& hints,
+            const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix,
             const hal::utils::RequestRelocation& relocation) const;
 
     nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>>
@@ -74,10 +83,13 @@ class PreparedModel final : public nn::IPreparedModel,
                           const std::vector<ndk::ScopedFileDescriptor>& waitFor, bool measure,
                           int64_t deadline, int64_t loopTimeoutDuration,
                           int64_t timeoutDurationAfterFence,
+                          const std::vector<nn::TokenValuePair>& hints,
+                          const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix,
                           const hal::utils::RequestRelocation& relocation) const;
 
   private:
     const std::shared_ptr<aidl_hal::IPreparedModel> kPreparedModel;
+    const nn::Version kFeatureLevel;
 };
 
 }  // namespace aidl::android::hardware::neuralnetworks::utils

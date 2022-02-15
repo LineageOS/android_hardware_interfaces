@@ -17,7 +17,9 @@
 #ifndef ANDROID_HARDWARE_AUDIO_STREAMIN_H
 #define ANDROID_HARDWARE_AUDIO_STREAMIN_H
 
-#include PATH(android/hardware/audio/FILE_VERSION/IStreamIn.h)
+// clang-format off
+#include PATH(android/hardware/audio/CORE_TYPES_FILE_VERSION/IStreamIn.h)
+// clang-format on
 
 #include "Device.h"
 #include "Stream.h"
@@ -42,7 +44,8 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
-using namespace ::android::hardware::audio::common::CPP_VERSION;
+using namespace ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION;
+using namespace ::android::hardware::audio::CORE_TYPES_CPP_VERSION;
 using namespace ::android::hardware::audio::CPP_VERSION;
 
 struct StreamIn : public IStreamIn {

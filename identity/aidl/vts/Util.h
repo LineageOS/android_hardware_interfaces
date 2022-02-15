@@ -19,6 +19,7 @@
 
 #include <android/hardware/identity/IIdentityCredentialStore.h>
 #include <android/hardware/identity/support/IdentityCredentialSupport.h>
+#include <android/hardware/security/keymint/MacedPublicKey.h>
 #include <cppbor.h>
 #include <cppbor_parse.h>
 #include <gtest/gtest.h>
@@ -96,6 +97,9 @@ struct TestProfile {
 
 bool setupWritableCredential(sp<IWritableIdentityCredential>& writableCredential,
                              sp<IIdentityCredentialStore>& credentialStore, bool testCredential);
+
+optional<vector<vector<uint8_t>>> createFakeRemotelyProvisionedCertificateChain(
+        const ::android::hardware::security::keymint::MacedPublicKey& macedPublicKey);
 
 optional<vector<uint8_t>> generateReaderCertificate(string serialDecimal);
 

@@ -53,9 +53,9 @@ static const DeviceAddress& getInvalidDeviceAddress() {
 
 TEST_P(AudioHidlDeviceTest, SetConnectedStateInvalidDeviceAddress) {
     doc::test("Check that invalid device address is rejected by IDevice::setConnectedState");
-    EXPECT_RESULT(Result::INVALID_ARGUMENTS,
+    EXPECT_RESULT(invalidArgsOrNotSupported,
                   getDevice()->setConnectedState(getInvalidDeviceAddress(), true));
-    EXPECT_RESULT(Result::INVALID_ARGUMENTS,
+    EXPECT_RESULT(invalidArgsOrNotSupported,
                   getDevice()->setConnectedState(getInvalidDeviceAddress(), false));
 }
 
@@ -381,13 +381,13 @@ TEST_P(StreamOpenTest, OpenInputOrOutputStreamTest) {
             "IDevice::open{Input|Output}Stream method.");
     AudioConfig suggestedConfig{};
     if (isParamForInputStream()) {
-        sp<IStreamIn> stream;
+        sp<::android::hardware::audio::CORE_TYPES_CPP_VERSION::IStreamIn> stream;
         ASSERT_OK(getDevice()->openInputStream(AudioIoHandle{}, getDeviceAddress(), getConfig(),
                                                getFlags(), getSinkMetadata(),
                                                returnIn(res, stream, suggestedConfig)));
         ASSERT_TRUE(stream == nullptr);
     } else {
-        sp<IStreamOut> stream;
+        sp<::android::hardware::audio::CORE_TYPES_CPP_VERSION::IStreamOut> stream;
         ASSERT_OK(getDevice()->openOutputStream(AudioIoHandle{}, getDeviceAddress(), getConfig(),
                                                 getFlags(), getSourceMetadata(),
                                                 returnIn(res, stream, suggestedConfig)));
@@ -551,13 +551,15 @@ class PcmOnlyConfigOutputStreamTest : public OutputStreamTest {
     }
 
     void releasePatchIfNeeded() {
-        if (areAudioPatchesSupported()) {
-            if (mHasPatch) {
+        if (getDevice()) {
+            if (areAudioPatchesSupported() && mHasPatch) {
                 EXPECT_OK(getDevice()->releaseAudioPatch(mPatchHandle));
                 mHasPatch = false;
             }
         } else {
-            EXPECT_OK(stream->setDevices({address}));
+            if (stream) {
+                EXPECT_OK(stream->setDevices({address}));
+            }
         }
     }
 
@@ -724,13 +726,15 @@ class PcmOnlyConfigInputStreamTest : public InputStreamTest {
     }
 
     void releasePatchIfNeeded() {
-        if (areAudioPatchesSupported()) {
-            if (mHasPatch) {
+        if (getDevice()) {
+            if (areAudioPatchesSupported() && mHasPatch) {
                 EXPECT_OK(getDevice()->releaseAudioPatch(mPatchHandle));
                 mHasPatch = false;
             }
         } else {
-            EXPECT_OK(stream->setDevices({address}));
+            if (stream) {
+                EXPECT_OK(stream->setDevices({address}));
+            }
         }
     }
 

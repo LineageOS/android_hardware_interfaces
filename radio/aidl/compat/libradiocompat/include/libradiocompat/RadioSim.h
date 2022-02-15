@@ -100,6 +100,9 @@ class RadioSim : public RadioCompatBase, public aidl::android::hardware::radio::
             int32_t serial,
             const ::aidl::android::hardware::radio::sim::PhonebookRecordInfo& recordInfo) override;
 
+  protected:
+    std::shared_ptr<::aidl::android::hardware::radio::sim::IRadioSimResponse> respond();
+
   public:
     using RadioCompatBase::RadioCompatBase;
 };

@@ -21,7 +21,7 @@ package {
 cc_library {
     name: "VehicleHalUtils",
     srcs: ["src/*.cpp"],
-    vendor: true,
+    vendor_available: true,
     local_include_dirs: ["include"],
     export_include_dirs: ["include"],
     defaults: ["VehicleHalDefaults"],

@@ -11,6 +11,8 @@ cc_test {
     name: "VtsHalIdentityTargetTest",
     defaults: [
         "VtsHalTargetTestDefaults",
+        "keymint_use_latest_hal_aidl_cpp_static",
+        "keymint_use_latest_hal_aidl_ndk_static",
         "use_libaidlvintf_gtest_helper_static",
     ],
     cflags: [
@@ -28,26 +30,44 @@ cc_test {
         "EndToEndTests.cpp",
         "TestCredentialTests.cpp",
         "AuthenticationKeyTests.cpp",
+        "PresentationSessionTests.cpp",
     ],
     shared_libs: [
         "libbinder",
+        "libbinder_ndk",
         "libcrypto",
     ],
     static_libs: [
+        "android.hardware.security.secureclock-V1-ndk",
         "libcppbor_external",
         "libcppcose_rkp",
         "libkeymaster_portable",
+        "libkeymint_vts_test_utils",
         "libpuresoftkeymasterdevice",
         "android.hardware.keymaster@4.0",
         "android.hardware.identity-support-lib",
-        "android.hardware.identity-V3-cpp",
-        "android.hardware.keymaster-V3-cpp",
-        "android.hardware.keymaster-V3-ndk",
+        "android.hardware.identity-V4-cpp",
+        "android.hardware.keymaster-V4-cpp",
+        "android.hardware.keymaster-V4-ndk",
         "libkeymaster4support",
         "libkeymaster4_1support",
+        "libkeymint_remote_prov_support",
     ],
     test_suites: [
         "general-tests",
         "vts",
     ],
+}
+
+java_test_host {
+    name: "IdentityCredentialImplementedTest",
+    libs: [
+        "tradefed",
+        "vts-core-tradefed-harness",
+    ],
+    srcs: ["src/**/*.java"],
+    test_suites: [
+        "vts",
+    ],
+    test_config: "IdentityCredentialImplementedTest.xml",
 }

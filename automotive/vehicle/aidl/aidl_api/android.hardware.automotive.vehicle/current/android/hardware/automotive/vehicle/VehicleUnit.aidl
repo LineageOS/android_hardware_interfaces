@@ -60,6 +60,7 @@ enum VehicleUnit {
   MILLIWATTS = 99,
   AMPERE_HOURS = 100,
   KILOWATT_HOUR = 101,
+  AMPERE = 102,
   KILOPASCAL = 112,
   PSI = 113,
   BAR = 114,

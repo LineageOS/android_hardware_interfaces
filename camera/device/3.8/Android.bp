@@ -9,7 +9,6 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
-
 hidl_interface {
     name: "android.hardware.camera.device@3.8",
     root: "android.hardware",
@@ -17,6 +16,7 @@ hidl_interface {
         "types.hal",
         "ICameraDevice.hal",
         "ICameraDeviceCallback.hal",
+        "ICameraDeviceSession.hal",
     ],
     interfaces: [
         "android.hardware.camera.common@1.0",
@@ -31,6 +31,7 @@ hidl_interface {
         "android.hardware.camera.metadata@3.4",
         "android.hardware.camera.metadata@3.5",
         "android.hardware.camera.metadata@3.6",
+        "android.hardware.camera.metadata@3.8",
         "android.hardware.graphics.common@1.0",
         "android.hidl.base@1.0",
     ],

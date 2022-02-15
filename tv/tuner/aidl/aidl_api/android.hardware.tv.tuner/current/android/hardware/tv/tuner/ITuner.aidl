@@ -44,4 +44,7 @@ interface ITuner {
   int[] getLnbIds();
   android.hardware.tv.tuner.ILnb openLnbById(in int lnbId);
   android.hardware.tv.tuner.ILnb openLnbByName(in String lnbName, out int[] lnbId);
+  void setLna(in boolean bEnable);
+  void setMaxNumberOfFrontends(in android.hardware.tv.tuner.FrontendType frontendType, in int maxNumber);
+  int getMaxNumberOfFrontends(in android.hardware.tv.tuner.FrontendType frontendType);
 }

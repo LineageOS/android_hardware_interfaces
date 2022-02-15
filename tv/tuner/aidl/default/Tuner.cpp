@@ -49,143 +49,16 @@ void Tuner::init() {
     mFrontends[8] = ndk::SharedRefBase::make<Frontend>(FrontendType::ISDBS3, 8, this->ref<Tuner>());
     mFrontends[9] = ndk::SharedRefBase::make<Frontend>(FrontendType::DTMB, 9, this->ref<Tuner>());
 
-    vector<FrontendStatusType> statusCaps;
-
-    FrontendCapabilities capsIsdbs;
-    capsIsdbs.set<FrontendCapabilities::Tag::isdbsCaps>(FrontendIsdbsCapabilities());
-    mFrontendCaps[0] = capsIsdbs;
-    statusCaps = {
-            FrontendStatusType::DEMOD_LOCK,
-            FrontendStatusType::SNR,
-            FrontendStatusType::FEC,
-            FrontendStatusType::MODULATION,
-            FrontendStatusType::MODULATIONS,
-            FrontendStatusType::ROLL_OFF,
-            FrontendStatusType::STREAM_ID_LIST,
-    };
-    mFrontendStatusCaps[0] = statusCaps;
-
-    FrontendCapabilities capsAtsc3;
-    capsAtsc3.set<FrontendCapabilities::Tag::atsc3Caps>(FrontendAtsc3Capabilities());
-    mFrontendCaps[1] = capsAtsc3;
-    statusCaps = {
-            FrontendStatusType::BER,
-            FrontendStatusType::PER,
-            FrontendStatusType::ATSC3_PLP_INFO,
-            FrontendStatusType::MODULATIONS,
-            FrontendStatusType::BERS,
-            FrontendStatusType::INTERLEAVINGS,
-            FrontendStatusType::BANDWIDTH,
-    };
-    mFrontendStatusCaps[1] = statusCaps;
-
-    FrontendCapabilities capsDvbc;
-    capsDvbc.set<FrontendCapabilities::Tag::dvbcCaps>(FrontendDvbcCapabilities());
-    mFrontendCaps[2] = capsDvbc;
-    statusCaps = {
-            FrontendStatusType::PRE_BER,       FrontendStatusType::SIGNAL_QUALITY,
-            FrontendStatusType::MODULATION,    FrontendStatusType::SPECTRAL,
-            FrontendStatusType::MODULATIONS,   FrontendStatusType::CODERATES,
-            FrontendStatusType::INTERLEAVINGS, FrontendStatusType::BANDWIDTH,
-    };
-    mFrontendStatusCaps[2] = statusCaps;
-
-    FrontendCapabilities capsDvbs;
-    capsDvbs.set<FrontendCapabilities::Tag::dvbsCaps>(FrontendDvbsCapabilities());
-    mFrontendCaps[3] = capsDvbs;
-    statusCaps = {
-            FrontendStatusType::SIGNAL_STRENGTH, FrontendStatusType::SYMBOL_RATE,
-            FrontendStatusType::MODULATION,      FrontendStatusType::MODULATIONS,
-            FrontendStatusType::ROLL_OFF,        FrontendStatusType::IS_MISO,
-    };
-    mFrontendStatusCaps[3] = statusCaps;
-
-    FrontendCapabilities capsDvbt;
-    capsDvbt.set<FrontendCapabilities::Tag::dvbtCaps>(FrontendDvbtCapabilities());
-    mFrontendCaps[4] = capsDvbt;
-    statusCaps = {
-            FrontendStatusType::EWBS,
-            FrontendStatusType::PLP_ID,
-            FrontendStatusType::HIERARCHY,
-            FrontendStatusType::MODULATIONS,
-            FrontendStatusType::BANDWIDTH,
-            FrontendStatusType::GUARD_INTERVAL,
-            FrontendStatusType::TRANSMISSION_MODE,
-            FrontendStatusType::T2_SYSTEM_ID,
-    };
-    mFrontendStatusCaps[4] = statusCaps;
-
-    FrontendCapabilities capsIsdbt;
-    FrontendIsdbtCapabilities isdbtCaps{
-            .modeCap = (int)FrontendIsdbtMode::MODE_1 | (int)FrontendIsdbtMode::MODE_2,
-            .bandwidthCap = (int)FrontendIsdbtBandwidth::BANDWIDTH_6MHZ,
-            .modulationCap = (int)FrontendIsdbtModulation::MOD_16QAM,
-            .coderateCap = (int)FrontendIsdbtCoderate::CODERATE_4_5 |
-                           (int)FrontendIsdbtCoderate::CODERATE_6_7,
-            .guardIntervalCap = (int)FrontendIsdbtGuardInterval::INTERVAL_1_128,
-            .timeInterleaveCap = (int)FrontendIsdbtTimeInterleaveMode::AUTO |
-                                 (int)FrontendIsdbtTimeInterleaveMode::INTERLEAVE_1_0,
-            .isSegmentAuto = true,
-            .isFullSegment = true,
-    };
-    capsIsdbt.set<FrontendCapabilities::Tag::isdbtCaps>(isdbtCaps);
-    mFrontendCaps[5] = capsIsdbt;
-    statusCaps = {
-            FrontendStatusType::AGC,
-            FrontendStatusType::LNA,
-            FrontendStatusType::MODULATION,
-            FrontendStatusType::MODULATIONS,
-            FrontendStatusType::BANDWIDTH,
-            FrontendStatusType::GUARD_INTERVAL,
-            FrontendStatusType::TRANSMISSION_MODE,
-            FrontendStatusType::ISDBT_SEGMENTS,
-            FrontendStatusType::ISDBT_MODE,
-            FrontendStatusType::ISDBT_PARTIAL_RECEPTION_FLAG,
-            FrontendStatusType::INTERLEAVINGS,
-    };
-    mFrontendStatusCaps[5] = statusCaps;
-
-    FrontendCapabilities capsAnalog;
-    capsAnalog.set<FrontendCapabilities::Tag::analogCaps>(FrontendAnalogCapabilities());
-    mFrontendCaps[6] = capsAnalog;
-    statusCaps = {
-            FrontendStatusType::LAYER_ERROR,
-            FrontendStatusType::MER,
-            FrontendStatusType::UEC,
-            FrontendStatusType::TS_DATA_RATES,
-    };
-    mFrontendStatusCaps[6] = statusCaps;
-
-    FrontendCapabilities capsAtsc;
-    capsAtsc.set<FrontendCapabilities::Tag::atscCaps>(FrontendAtscCapabilities());
-    mFrontendCaps[7] = capsAtsc;
-    statusCaps = {
-            FrontendStatusType::FREQ_OFFSET,
-            FrontendStatusType::RF_LOCK,
-            FrontendStatusType::MODULATIONS,
-            FrontendStatusType::IS_LINEAR,
-    };
-    mFrontendStatusCaps[7] = statusCaps;
-
-    FrontendCapabilities capsIsdbs3;
-    capsIsdbs3.set<FrontendCapabilities::Tag::isdbs3Caps>(FrontendIsdbs3Capabilities());
-    mFrontendCaps[8] = capsIsdbs3;
-    statusCaps = {
-            FrontendStatusType::DEMOD_LOCK,      FrontendStatusType::MODULATION,
-            FrontendStatusType::MODULATIONS,     FrontendStatusType::ROLL_OFF,
-            FrontendStatusType::IS_SHORT_FRAMES, FrontendStatusType::STREAM_ID_LIST,
-    };
-    mFrontendStatusCaps[8] = statusCaps;
-
-    FrontendCapabilities capsDtmb;
-    capsDtmb.set<FrontendCapabilities::Tag::dtmbCaps>(FrontendDtmbCapabilities());
-    mFrontendCaps[9] = capsDtmb;
-    statusCaps = {
-            FrontendStatusType::MODULATIONS,       FrontendStatusType::INTERLEAVINGS,
-            FrontendStatusType::BANDWIDTH,         FrontendStatusType::GUARD_INTERVAL,
-            FrontendStatusType::TRANSMISSION_MODE,
-    };
-    mFrontendStatusCaps[9] = statusCaps;
+    mMaxUsableFrontends[FrontendType::ISDBS] = 1;
+    mMaxUsableFrontends[FrontendType::ATSC3] = 1;
+    mMaxUsableFrontends[FrontendType::DVBC] = 1;
+    mMaxUsableFrontends[FrontendType::DVBS] = 1;
+    mMaxUsableFrontends[FrontendType::DVBT] = 1;
+    mMaxUsableFrontends[FrontendType::ISDBT] = 1;
+    mMaxUsableFrontends[FrontendType::ANALOG] = 1;
+    mMaxUsableFrontends[FrontendType::ATSC] = 1;
+    mMaxUsableFrontends[FrontendType::ISDBS3] = 1;
+    mMaxUsableFrontends[FrontendType::DTMB] = 1;
 
     mLnbs.resize(2);
     mLnbs[0] = ndk::SharedRefBase::make<Lnb>(0);
@@ -255,24 +128,12 @@ Tuner::~Tuner() {}
 ::ndk::ScopedAStatus Tuner::getFrontendInfo(int32_t in_frontendId, FrontendInfo* _aidl_return) {
     ALOGV("%s", __FUNCTION__);
 
-    if (in_frontendId >= mFrontendSize) {
+    if (in_frontendId < 0 || in_frontendId >= mFrontendSize) {
         return ::ndk::ScopedAStatus::fromServiceSpecificError(
                 static_cast<int32_t>(Result::INVALID_ARGUMENT));
     }
 
-    // assign randomly selected values for testing.
-    *_aidl_return = {
-            .type = mFrontends[in_frontendId]->getFrontendType(),
-            .minFrequency = 139000000,
-            .maxFrequency = 1139000000,
-            .minSymbolRate = 45,
-            .maxSymbolRate = 1145,
-            .acquireRange = 30,
-            .exclusiveGroupId = 57,
-            .statusCaps = mFrontendStatusCaps[in_frontendId],
-            .frontendCaps = mFrontendCaps[in_frontendId],
-    };
-
+    mFrontends[in_frontendId]->getFrontendInfo(_aidl_return);
     return ::ndk::ScopedAStatus::ok();
 }
 
@@ -317,15 +178,37 @@ std::shared_ptr<Frontend> Tuner::getFrontendById(int32_t frontendId) {
     return ::ndk::ScopedAStatus::ok();
 }
 
+::ndk::ScopedAStatus Tuner::setLna(bool /* in_bEnable */) {
+    ALOGV("%s", __FUNCTION__);
+
+    return ::ndk::ScopedAStatus::ok();
+}
+
+::ndk::ScopedAStatus Tuner::setMaxNumberOfFrontends(FrontendType in_frontendType,
+                                                    int32_t in_maxNumber) {
+    ALOGV("%s", __FUNCTION__);
+
+    // In the default implementation, every type only has one frontend.
+    if (in_maxNumber < 0 || in_maxNumber > 1) {
+        return ::ndk::ScopedAStatus::fromServiceSpecificError(
+                static_cast<int32_t>(Result::INVALID_ARGUMENT));
+    }
+    mMaxUsableFrontends[in_frontendType] = in_maxNumber;
+    return ::ndk::ScopedAStatus::ok();
+}
+
+::ndk::ScopedAStatus Tuner::getMaxNumberOfFrontends(FrontendType in_frontendType,
+                                                    int32_t* _aidl_return) {
+    *_aidl_return = mMaxUsableFrontends[in_frontendType];
+    return ::ndk::ScopedAStatus::ok();
+}
+
 binder_status_t Tuner::dump(int fd, const char** args, uint32_t numArgs) {
     ALOGV("%s", __FUNCTION__);
     {
         dprintf(fd, "Frontends:\n");
         for (int i = 0; i < mFrontendSize; i++) {
             mFrontends[i]->dump(fd, args, numArgs);
-            for (int j = 0; j < mFrontendStatusCaps[i].size(); j++) {
-                dprintf(fd, "    statusCap: %d\n", mFrontendStatusCaps[i][j]);
-            }
         }
     }
     {

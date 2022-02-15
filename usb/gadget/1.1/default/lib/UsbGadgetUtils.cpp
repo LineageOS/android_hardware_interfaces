@@ -178,6 +178,9 @@ Status addGenericAndroidFunctions(MonitorFfs* monitorFfs, uint64_t functions, bo
 
 Status addAdb(MonitorFfs* monitorFfs, int* functionCount) {
     ALOGI("setCurrentUsbFunctions Adb");
+    if (!WriteStringToFile("1", DESC_USE_PATH))
+        return Status::ERROR;
+
     if (!monitorFfs->addInotifyFd("/dev/usb-ffs/adb/")) return Status::ERROR;
 
     if (linkFunction("ffs.adb", (*functionCount)++)) return Status::ERROR;

@@ -39,7 +39,6 @@ class UwbChip : public BnUwbChip {
     ::ndk::ScopedAStatus coreInit() override;
     ::ndk::ScopedAStatus sessionInit(int sesionId) override;
     ::ndk::ScopedAStatus getSupportedAndroidUciVersion(int32_t* version) override;
-    ::ndk::ScopedAStatus getSupportedAndroidCapabilities(int64_t* capabilities) override;
     ::ndk::ScopedAStatus sendUciMessage(const std::vector<uint8_t>& data,
                                         int32_t* bytes_written) override;
 

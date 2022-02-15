@@ -39,7 +39,7 @@ using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
-using namespace ::android::hardware::audio::common::CPP_VERSION;
+using namespace ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION;
 using namespace ::android::hardware::audio::effect::CPP_VERSION;
 
 struct LoudnessEnhancerEffect : public ILoudnessEnhancerEffect {

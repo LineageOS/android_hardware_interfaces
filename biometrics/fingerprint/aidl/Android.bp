@@ -15,7 +15,7 @@ aidl_interface {
     ],
     imports: [
         "android.hardware.biometrics.common",
-        "android.hardware.keymaster",
+        "android.hardware.keymaster-V3",
     ],
     stability: "vintf",
     backend: {
@@ -26,8 +26,5 @@ aidl_interface {
             enabled: false,
         },
     },
-    versions: [
-        "1",
-        "2",
-    ],
+    versions: ["1"],
 }

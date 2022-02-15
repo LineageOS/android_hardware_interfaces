@@ -19,6 +19,7 @@ package android.hardware.tv.tuner;
 import android.hardware.common.NativeHandle;
 
 import android.hardware.tv.tuner.DemuxFilterMediaEventExtraMetaData;
+import android.hardware.tv.tuner.DemuxFilterScIndexMask;
 
 /**
  * Filter Event for Audio or Video Filter.
@@ -84,4 +85,10 @@ parcelable DemuxFilterMediaEvent {
     boolean isPesPrivateData;
 
     DemuxFilterMediaEventExtraMetaData extraMetaData;
+
+    /**
+     * DemuxFilterScIndexMask for the key frame info. It's optional to hardware which can only
+     * access unit framing at decode stage.
+     */
+    DemuxFilterScIndexMask scIndexMask;
 }

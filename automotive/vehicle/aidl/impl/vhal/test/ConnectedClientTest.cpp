@@ -34,16 +34,21 @@ using ::aidl::android::hardware::automotive::vehicle::SetValueResults;
 using ::aidl::android::hardware::automotive::vehicle::StatusCode;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 
-class ConnectedClientTest : public ::testing::Test {
+class ConnectedClientTest : public testing::Test {
   public:
     void SetUp() override {
         mCallback = ndk::SharedRefBase::make<MockVehicleCallback>();
         mCallbackClient = IVehicleCallback::fromBinder(mCallback->asBinder());
+        // timeout: 1s.
+        int64_t timeout = 1000000000;
+        mPool = std::make_shared<PendingRequestPool>(timeout);
     }
 
     std::shared_ptr<IVehicleCallback> getCallbackClient() { return mCallbackClient; }
 
     MockVehicleCallback* getCallback() { return mCallback.get(); }
+
+    std::shared_ptr<PendingRequestPool> getPool() { return mPool; }
 
   protected:
     using GetValuesClient = GetSetValuesClient<GetValueResult, GetValueResults>;
@@ -52,6 +57,7 @@ class ConnectedClientTest : public ::testing::Test {
   private:
     std::shared_ptr<MockVehicleCallback> mCallback;
     std::shared_ptr<IVehicleCallback> mCallbackClient;
+    std::shared_ptr<PendingRequestPool> mPool;
 };
 
 TEST_F(ConnectedClientTest, testSendGetValueResults) {
@@ -72,9 +78,10 @@ TEST_F(ConnectedClientTest, testSendGetValueResults) {
                                                            },
                                            }};
 
-    GetValuesClient client(getCallbackClient());
+    GetValuesClient client(getPool(), getCallbackClient());
 
-    client.sendResults(results);
+    auto resultsCopy = results;
+    client.sendResults(std::move(resultsCopy));
 
     auto maybeGetValueResults = getCallback()->nextGetValueResults();
     ASSERT_TRUE(maybeGetValueResults.has_value());
@@ -99,7 +106,7 @@ TEST_F(ConnectedClientTest, testSendGetValueResultsSeparately) {
                                                            },
                                            }};
 
-    GetValuesClient client(getCallbackClient());
+    GetValuesClient client(getPool(), getCallbackClient());
 
     client.sendResultsSeparately(results);
 
@@ -131,7 +138,9 @@ TEST_F(ConnectedClientTest, testGetValuesGnResultCallback) {
                                                            },
                                            }};
 
-    GetValuesClient client(getCallbackClient());
+    GetValuesClient client(getPool(), getCallbackClient());
+
+    client.addRequests({0, 1});
 
     (*(client.getResultCallback()))(results);
 
@@ -150,9 +159,10 @@ TEST_F(ConnectedClientTest, testSendSetValueResults) {
                                                    .status = StatusCode::OK,
                                            }};
 
-    SetValuesClient client(getCallbackClient());
+    SetValuesClient client(getPool(), getCallbackClient());
 
-    client.sendResults(results);
+    auto resultsCopy = results;
+    client.sendResults(std::move(resultsCopy));
 
     auto maybeSetValueResults = getCallback()->nextSetValueResults();
     ASSERT_TRUE(maybeSetValueResults.has_value());
@@ -169,7 +179,7 @@ TEST_F(ConnectedClientTest, testSendSetValueResultsSeparately) {
                                                    .status = StatusCode::OK,
                                            }};
 
-    SetValuesClient client(getCallbackClient());
+    SetValuesClient client(getPool(), getCallbackClient());
 
     client.sendResultsSeparately(results);
 
@@ -193,7 +203,9 @@ TEST_F(ConnectedClientTest, testSetValuesGetResultCallback) {
                                                    .status = StatusCode::OK,
                                            }};
 
-    SetValuesClient client(getCallbackClient());
+    SetValuesClient client(getPool(), getCallbackClient());
+
+    client.addRequests({0, 1});
 
     (*(client.getResultCallback()))(results);
 

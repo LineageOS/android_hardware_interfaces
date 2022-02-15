@@ -39,20 +39,12 @@ cc_test {
     srcs: ["test/*.cpp"],
     static_libs: [
         "libgmock",
-        "libneuralnetworks_common",
         "neuralnetworks_types",
         "neuralnetworks_utils_hal_common",
     ],
     shared_libs: [
-        "android.hidl.allocator@1.0",
-        "android.hidl.memory@1.0",
         "libbase",
         "libcutils",
-        "libfmq",
-        "libhidlbase",
-        "libhidlmemory",
-        "liblog",
-        "libutils",
     ],
     target: {
         android: {

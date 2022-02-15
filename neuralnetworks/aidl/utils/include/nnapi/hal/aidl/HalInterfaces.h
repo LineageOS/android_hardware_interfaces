@@ -61,6 +61,13 @@
 #include <aidl/android/hardware/neuralnetworks/SymmPerChannelQuantParams.h>
 #include <aidl/android/hardware/neuralnetworks/Timing.h>
 
+#ifdef NN_AIDL_V4_OR_ABOVE
+#include <aidl/android/hardware/neuralnetworks/BnExecution.h>
+#include <aidl/android/hardware/neuralnetworks/ExecutionConfig.h>
+#include <aidl/android/hardware/neuralnetworks/IExecution.h>
+#include <aidl/android/hardware/neuralnetworks/PrepareModelConfig.h>
+#endif  // NN_AIDL_V4_OR_ABOVE
+
 namespace android::nn {
 
 namespace aidl_hal = ::aidl::android::hardware::neuralnetworks;

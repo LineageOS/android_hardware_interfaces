@@ -65,8 +65,9 @@ class Device final : public nn::IDevice {
     nn::GeneralResult<nn::SharedPreparedModel> prepareModel(
             const nn::Model& model, nn::ExecutionPreference preference, nn::Priority priority,
             nn::OptionalTimePoint deadline, const std::vector<nn::SharedHandle>& modelCache,
-            const std::vector<nn::SharedHandle>& dataCache,
-            const nn::CacheToken& token) const override;
+            const std::vector<nn::SharedHandle>& dataCache, const nn::CacheToken& token,
+            const std::vector<nn::TokenValuePair>& hints,
+            const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const override;
 
     nn::GeneralResult<nn::SharedPreparedModel> prepareModelFromCache(
             nn::OptionalTimePoint deadline, const std::vector<nn::SharedHandle>& modelCache,

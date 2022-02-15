@@ -20,7 +20,7 @@
 
 #include <android-base/logging.h>
 
-#include "BluetoothAudioSupportedCodecsDB_2_1.h"
+#include "BluetoothAudioSupportedCodecsDB_2_2.h"
 
 namespace android {
 namespace hardware {
@@ -98,14 +98,8 @@ Return<void> BluetoothAudioProvidersFactory::openProvider_2_1(
     case V2_1::SessionType::LE_AUDIO_SOFTWARE_ENCODING_DATAPATH:
       provider = &leaudio_output_provider_instance_;
       break;
-    case V2_1::SessionType::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH:
-      provider = &leaudio_offload_output_provider_instance_;
-      break;
     case V2_1::SessionType::LE_AUDIO_SOFTWARE_DECODED_DATAPATH:
       provider = &leaudio_input_provider_instance_;
-      break;
-    case V2_1::SessionType::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH:
-      provider = &leaudio_offload_input_provider_instance_;
       break;
     default:
       status = BluetoothAudioStatus::FAILURE;
@@ -205,6 +199,47 @@ Return<void> BluetoothAudioProvidersFactory::getProviderCapabilities_2_1(
       audio_capabilities.resize(db_codec_capabilities.size());
       for (int i = 0; i < db_codec_capabilities.size(); ++i) {
         audio_capabilities[i].codecCapabilities(db_codec_capabilities[i]);
+      }
+    }
+  } else if (sessionType != V2_1::SessionType::UNKNOWN) {
+    std::vector<V2_1::PcmParameters> db_pcm_capabilities =
+        android::bluetooth::audio::GetSoftwarePcmCapabilities_2_1();
+    if (db_pcm_capabilities.size() == 1) {
+      audio_capabilities.resize(1);
+      audio_capabilities[0].pcmCapabilities(db_pcm_capabilities[0]);
+    }
+  }
+  LOG(INFO) << __func__ << " - SessionType=" << toString(sessionType)
+            << " supports " << audio_capabilities.size() << " codecs";
+  _hidl_cb(audio_capabilities);
+  return Void();
+}
+
+Return<void> BluetoothAudioProvidersFactory::getProviderCapabilities_2_2(
+    const V2_1::SessionType sessionType,
+    getProviderCapabilities_2_2_cb _hidl_cb) {
+  hidl_vec<V2_2::AudioCapabilities> audio_capabilities =
+      hidl_vec<V2_2::AudioCapabilities>(0);
+  if (sessionType == V2_1::SessionType::A2DP_HARDWARE_OFFLOAD_DATAPATH) {
+    std::vector<CodecCapabilities> db_codec_capabilities =
+        android::bluetooth::audio::GetOffloadCodecCapabilities(sessionType);
+    if (db_codec_capabilities.size()) {
+      audio_capabilities.resize(db_codec_capabilities.size());
+      for (int i = 0; i < db_codec_capabilities.size(); ++i) {
+        audio_capabilities[i].codecCapabilities(db_codec_capabilities[i]);
+      }
+    }
+  } else if (sessionType == V2_1::SessionType::
+                                LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH ||
+             sessionType == V2_1::SessionType::
+                                LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH) {
+    std::vector<LeAudioCodecCapabilitiesSetting> db_codec_capabilities =
+        android::bluetooth::audio::GetLeAudioOffloadCodecCapabilities(
+            sessionType);
+    if (db_codec_capabilities.size()) {
+      audio_capabilities.resize(db_codec_capabilities.size());
+      for (int i = 0; i < db_codec_capabilities.size(); ++i) {
+        audio_capabilities[i].leAudioCapabilities(db_codec_capabilities[i]);
       }
     }
   } else if (sessionType != V2_1::SessionType::UNKNOWN) {

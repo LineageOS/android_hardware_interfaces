@@ -27,6 +27,6 @@ parcelable PresentOrValidate {
     /**
      * Whether PresentOrValidate presented or validated the display.
      */
-    @VintfStability enum Result { Presented, Validated }
+    @VintfStability enum Result { Validated, Presented }
     Result result;
 }

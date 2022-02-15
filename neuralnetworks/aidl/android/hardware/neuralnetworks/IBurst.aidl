@@ -17,6 +17,7 @@
 package android.hardware.neuralnetworks;
 
 import android.hardware.neuralnetworks.ErrorStatus;
+import android.hardware.neuralnetworks.ExecutionConfig;
 import android.hardware.neuralnetworks.ExecutionResult;
 import android.hardware.neuralnetworks.Request;
 
@@ -68,6 +69,8 @@ interface IBurst {
      *
      * Only a single execution on a given burst object may be active at any time.
      *
+     * Also see {@link IBurst::executeSynchronouslyWithConfig}.
+     *
      * @param request The input and output information on which the prepared model is to be
      *                executed.
      * @param memoryIdentifierTokens A list of tokens where each token is a non-negative number
@@ -78,10 +81,10 @@ interface IBurst {
      *                runs from the time the driver sees the call to the executeSynchronously
      *                function to the time the driver returns from the function.
      * @param deadlineNs The time by which the execution is expected to complete. The time is
-     *                   measured in nanoseconds since epoch of the steady clock (as from
-     *                   std::chrono::steady_clock). If the execution cannot be finished by the
-     *                   deadline, the execution may be aborted. Passing -1 means the deadline is
-     *                   omitted. Other negative values are invalid.
+     *                   measured in nanoseconds since boot (as from clock_gettime(CLOCK_BOOTTIME,
+     *                   &ts) or ::android::base::boot_clock). If the execution cannot be finished
+     *                   by the deadline, the execution may be aborted. Passing -1 means the
+     *                   deadline is omitted. Other negative values are invalid.
      * @param loopTimeoutDurationNs The maximum amount of time in nanoseconds that should be spent
      *                              executing a {@link OperationType::WHILE} operation. If a loop
      *                              condition model does not output false within this duration, the
@@ -117,4 +120,13 @@ interface IBurst {
      *     - INVALID_ARGUMENT if one of the input arguments is invalid
      */
     void releaseMemoryResource(in long memoryIdentifierToken);
+
+    /**
+     * For detailed specification, please refer to {@link IBurst::executeSynchronously}. The
+     * difference between the two methods is that executeSynchronouslyWithConfig takes {@link
+     * ExecutionConfig} instead of a list of configuration parameters, and ExecutionConfig contains
+     * more configuration parameters than are passed to executeSynchronously.
+     */
+    ExecutionResult executeSynchronouslyWithConfig(in Request request,
+            in long[] memoryIdentifierTokens, in ExecutionConfig config, in long deadlineNs);
 }

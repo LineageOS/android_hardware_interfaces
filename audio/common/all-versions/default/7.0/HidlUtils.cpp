@@ -21,7 +21,7 @@
 #define LOG_TAG "HidlUtils"
 #include <log/log.h>
 
-#include <android_audio_policy_configuration_V7_0-enums.h>
+#include PATH(APM_XSD_ENUMS_H_FILENAME)
 #include <common/all-versions/HidlSupport.h>
 #include <common/all-versions/VersionUtils.h>
 
@@ -31,11 +31,11 @@ namespace android {
 namespace hardware {
 namespace audio {
 namespace common {
-namespace CPP_VERSION {
+namespace COMMON_TYPES_CPP_VERSION {
 namespace implementation {
 
 namespace xsd {
-using namespace ::android::audio::policy::configuration::V7_0;
+using namespace ::android::audio::policy::configuration::CPP_VERSION;
 }
 
 #define CONVERT_CHECKED(expr, result)                   \
@@ -485,8 +485,12 @@ status_t HidlUtils::audioGainToHal(const AudioGain& gain, struct audio_gain* hal
 status_t HidlUtils::audioUsageFromHal(audio_usage_t halUsage, AudioUsage* usage) {
     if (halUsage == AUDIO_USAGE_NOTIFICATION_COMMUNICATION_REQUEST ||
         halUsage == AUDIO_USAGE_NOTIFICATION_COMMUNICATION_INSTANT ||
+#if MAJOR_VERSION == 7 && MINOR_VERSION == 1
+        halUsage == AUDIO_USAGE_NOTIFICATION_COMMUNICATION_DELAYED) {
+#else
         halUsage == AUDIO_USAGE_NOTIFICATION_COMMUNICATION_DELAYED ||
         halUsage == AUDIO_USAGE_NOTIFICATION_EVENT) {
+#endif
         halUsage = AUDIO_USAGE_NOTIFICATION;
     }
     *usage = audio_usage_to_string(halUsage);
@@ -1151,7 +1155,7 @@ status_t HidlUtils::deviceAddressToHal(const DeviceAddress& device, audio_device
 }
 
 }  // namespace implementation
-}  // namespace CPP_VERSION
+}  // namespace COMMON_TYPES_CPP_VERSION
 }  // namespace common
 }  // namespace audio
 }  // namespace hardware

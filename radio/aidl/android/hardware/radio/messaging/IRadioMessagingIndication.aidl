@@ -18,7 +18,6 @@ package android.hardware.radio.messaging;
 
 import android.hardware.radio.RadioIndicationType;
 import android.hardware.radio.messaging.CdmaSmsMessage;
-import android.hardware.radio.messaging.UssdModeType;
 
 /**
  * Interface declaring unsolicited radio indications for messaging APIs.
@@ -84,16 +83,6 @@ oneway interface IRadioMessagingIndication {
      *        The PDU starts with the SMSC address per TS 27.005 (+CMT:)
      */
     void newSmsStatusReport(in RadioIndicationType type, in byte[] pdu);
-
-    /**
-     * Indicates when a new USSD message is received. The USSD session is assumed to persist if the
-     * type code is REQUEST, otherwise the current session (if any) is assumed to have terminated.
-     *
-     * @param type Type of radio indication
-     * @param modeType USSD type code
-     * @param msg Message string in UTF-8, if applicable
-     */
-    void onUssd(in RadioIndicationType type, in UssdModeType modeType, in String msg);
 
     /**
      * Indicates that SMS storage on the SIM is full. Sent when the network attempts to deliver a

@@ -121,7 +121,7 @@ TEST(PreparedModelTest, execute) {
             .WillOnce(Invoke(makeExecute(V1_0::ErrorStatus::NONE, V1_0::ErrorStatus::NONE)));
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     EXPECT_TRUE(result.has_value())
@@ -138,7 +138,7 @@ TEST(PreparedModelTest, executeLaunchError) {
                                          V1_0::ErrorStatus::GENERAL_FAILURE)));
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -155,7 +155,7 @@ TEST(PreparedModelTest, executeReturnError) {
                     makeExecute(V1_0::ErrorStatus::NONE, V1_0::ErrorStatus::GENERAL_FAILURE)));
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -171,7 +171,7 @@ TEST(PreparedModelTest, executeTransportFailure) {
             .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -187,7 +187,7 @@ TEST(PreparedModelTest, executeDeadObject) {
             .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -205,7 +205,7 @@ TEST(PreparedModelTest, executeCrash) {
     EXPECT_CALL(*mockPreparedModel, execute(_, _)).Times(1).WillOnce(InvokeWithoutArgs(ret));
 
     // run test
-    const auto result = preparedModel->execute({}, {}, {}, {});
+    const auto result = preparedModel->execute({}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -218,7 +218,7 @@ TEST(PreparedModelTest, executeFencedNotSupported) {
     const auto preparedModel = PreparedModel::create(mockPreparedModel).value();
 
     // run test
-    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {});
+    const auto result = preparedModel->executeFenced({}, {}, {}, {}, {}, {}, {}, {});
 
     // verify result
     ASSERT_FALSE(result.has_value());
@@ -235,7 +235,7 @@ TEST(PreparedModelTest, reusableExecute) {
             .WillRepeatedly(Invoke(makeExecute(V1_0::ErrorStatus::NONE, V1_0::ErrorStatus::NONE)));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -258,7 +258,7 @@ TEST(PreparedModelTest, reusableExecuteLaunchError) {
                                          V1_0::ErrorStatus::GENERAL_FAILURE)));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -279,7 +279,7 @@ TEST(PreparedModelTest, reusableExecuteReturnError) {
                     makeExecute(V1_0::ErrorStatus::NONE, V1_0::ErrorStatus::GENERAL_FAILURE)));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -299,7 +299,7 @@ TEST(PreparedModelTest, reusableExecuteTransportFailure) {
             .WillOnce(InvokeWithoutArgs(makeGeneralTransportFailure));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -319,7 +319,7 @@ TEST(PreparedModelTest, reusableExecuteDeadObject) {
             .WillOnce(InvokeWithoutArgs(makeDeadObjectFailure));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -341,7 +341,7 @@ TEST(PreparedModelTest, reusableExecuteCrash) {
     EXPECT_CALL(*mockPreparedModel, execute(_, _)).Times(1).WillOnce(InvokeWithoutArgs(ret));
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);
@@ -358,7 +358,7 @@ TEST(PreparedModelTest, reusableExecuteFencedNotSupported) {
     const auto preparedModel = PreparedModel::create(mockPreparedModel).value();
 
     // create execution
-    const auto createResult = preparedModel->createReusableExecution({}, {}, {});
+    const auto createResult = preparedModel->createReusableExecution({}, {}, {}, {}, {});
     ASSERT_TRUE(createResult.has_value())
             << "Failed with " << createResult.error().code << ": " << createResult.error().message;
     ASSERT_NE(createResult.value(), nullptr);

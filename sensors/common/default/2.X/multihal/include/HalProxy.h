@@ -23,6 +23,7 @@
 #include "V2_0/ScopedWakelock.h"
 #include "V2_0/SubHal.h"
 #include "V2_1/SubHal.h"
+#include "WakeLockMessageQueueWrapper.h"
 #include "convertV2_1.h"
 
 #include <android/hardware/sensors/2.1/ISensors.h>
@@ -98,10 +99,9 @@ class HalProxy : public V2_0::implementation::IScopedWakelockRefCounter,
             const ::android::hardware::MQDescriptorSync<uint32_t>& wakeLockDescriptor,
             const sp<V2_0::ISensorsCallback>& sensorsCallback);
 
-    Return<Result> initializeCommon(
-            std::unique_ptr<EventMessageQueueWrapperBase>& eventQueue,
-            const ::android::hardware::MQDescriptorSync<uint32_t>& wakeLockDescriptor,
-            const sp<ISensorsCallbackWrapperBase>& sensorsCallback);
+    Return<Result> initializeCommon(std::unique_ptr<EventMessageQueueWrapperBase>& eventQueue,
+                                    std::unique_ptr<WakeLockMessageQueueWrapperBase>& wakeLockQueue,
+                                    const sp<ISensorsCallbackWrapperBase>& sensorsCallback);
 
     Return<Result> batch(int32_t sensorHandle, int64_t samplingPeriodNs,
                          int64_t maxReportLatencyNs);
@@ -141,6 +141,8 @@ class HalProxy : public V2_0::implementation::IScopedWakelockRefCounter,
 
     void decrementRefCountAndMaybeReleaseWakelock(size_t delta, int64_t timeoutStart = -1) override;
 
+    const std::map<int32_t, SensorInfo>& getSensors() { return mSensors; }
+
   private:
     using EventMessageQueueV2_1 = MessageQueue<V2_1::Event, kSynchronizedReadWrite>;
     using EventMessageQueueV2_0 = MessageQueue<V1_0::Event, kSynchronizedReadWrite>;
@@ -154,7 +156,7 @@ class HalProxy : public V2_0::implementation::IScopedWakelockRefCounter,
     /**
      * The Wake Lock FMQ that is read to determine when the framework has handled WAKE_UP events
      */
-    std::unique_ptr<WakeLockMessageQueue> mWakeLockQueue;
+    std::unique_ptr<WakeLockMessageQueueWrapperBase> mWakeLockQueue;
 
     /**
      * Event Flag to signal to the framework when sensor events are available to be read and to

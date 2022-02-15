@@ -37,10 +37,17 @@ parcelable CodecCapabilities {
   android.hardware.bluetooth.audio.CodecType codecType;
   android.hardware.bluetooth.audio.CodecCapabilities.Capabilities capabilities;
   @VintfStability
+  parcelable VendorCapabilities {
+    ParcelableHolder extension;
+  }
+  @VintfStability
   union Capabilities {
     android.hardware.bluetooth.audio.SbcCapabilities sbcCapabilities;
     android.hardware.bluetooth.audio.AacCapabilities aacCapabilities;
     android.hardware.bluetooth.audio.LdacCapabilities ldacCapabilities;
     android.hardware.bluetooth.audio.AptxCapabilities aptxCapabilities;
+    android.hardware.bluetooth.audio.AptxAdaptiveCapabilities aptxAdaptiveCapabilities;
+    android.hardware.bluetooth.audio.Lc3Capabilities lc3Capabilities;
+    android.hardware.bluetooth.audio.CodecCapabilities.VendorCapabilities vendorCapabilities;
   }
 }

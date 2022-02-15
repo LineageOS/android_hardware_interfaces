@@ -20,9 +20,13 @@
 #include <tuple>
 #include <vector>
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#include <string.h>
+
 #include <android-base/logging.h>
 #include <android-base/stringprintf.h>
-#include <string.h>
 
 #include <android/hardware/identity/support/IdentityCredentialSupport.h>
 
@@ -61,6 +65,11 @@ void* eicMemCpy(void* dest, const void* src, size_t n) {
 
 size_t eicStrLen(const char* s) {
     return strlen(s);
+}
+
+void* eicMemMem(const uint8_t* haystack, size_t haystackLen, const uint8_t* needle,
+                size_t needleLen) {
+    return memmem(haystack, haystackLen, needle, needleLen);
 }
 
 int eicCryptoMemCmp(const void* s1, const void* s2, size_t n) {
@@ -114,6 +123,25 @@ bool eicOpsRandom(uint8_t* buf, size_t numBytes) {
         return false;
     }
     memcpy(buf, bytes.value().data(), numBytes);
+    return true;
+}
+
+bool eicNextId(uint32_t* id) {
+    uint32_t oldId = *id;
+    uint32_t newId = 0;
+
+    do {
+        union {
+            uint8_t value8;
+            uint32_t value32;
+        } value;
+        if (!eicOpsRandom(&value.value8, sizeof(value))) {
+            return false;
+        }
+        newId = value.value32;
+    } while (newId == oldId && newId == 0);
+
+    *id = newId;
     return true;
 }
 
@@ -239,25 +267,42 @@ bool eicOpsCreateEcKey(uint8_t privateKey[EIC_P256_PRIV_KEY_SIZE],
 
 bool eicOpsCreateCredentialKey(uint8_t privateKey[EIC_P256_PRIV_KEY_SIZE], const uint8_t* challenge,
                                size_t challengeSize, const uint8_t* applicationId,
-                               size_t applicationIdSize, bool testCredential, uint8_t* cert,
-                               size_t* certSize) {
-    vector<uint8_t> challengeVec(challengeSize);
-    memcpy(challengeVec.data(), challenge, challengeSize);
-
-    vector<uint8_t> applicationIdVec(applicationIdSize);
-    memcpy(applicationIdVec.data(), applicationId, applicationIdSize);
-
-    optional<std::pair<vector<uint8_t>, vector<vector<uint8_t>>>> ret =
-            android::hardware::identity::support::createEcKeyPairAndAttestation(
-                    challengeVec, applicationIdVec, testCredential);
-    if (!ret) {
-        eicDebug("Error generating CredentialKey and attestation");
-        return false;
+                               size_t applicationIdSize, bool testCredential,
+                               const uint8_t* attestationKeyBlob, size_t attestationKeyBlobSize,
+                               const uint8_t* attestationKeyCert, size_t attestationKeyCertSize,
+                               uint8_t* cert, size_t* certSize) {
+    vector<uint8_t> flatChain;
+    vector<uint8_t> keyPair;
+    vector<uint8_t> challengeVec(challenge, challenge + challengeSize);
+    vector<uint8_t> applicationIdVec(applicationId, applicationId + applicationIdSize);
+    if (attestationKeyBlob && attestationKeyBlobSize > 0 && attestationKeyCert &&
+        attestationKeyCertSize > 0) {
+        vector<uint8_t> attestationKeyBlobVec(attestationKeyBlob,
+                                              attestationKeyBlob + attestationKeyBlobSize);
+        vector<uint8_t> attestationKeyCertVec(attestationKeyCert,
+                                              attestationKeyCert + attestationKeyCertSize);
+        optional<std::pair<vector<uint8_t>, vector<uint8_t>>> keyAndCert =
+                android::hardware::identity::support::createEcKeyPairWithAttestationKey(
+                        challengeVec, applicationIdVec, attestationKeyBlobVec,
+                        attestationKeyCertVec, testCredential);
+        if (!keyAndCert) {
+            eicDebug("Error generating CredentialKey and attestation");
+            return false;
+        }
+        keyPair = std::move(keyAndCert->first);
+        flatChain = std::move(keyAndCert->second);
+    } else {
+        optional<std::pair<vector<uint8_t>, vector<vector<uint8_t>>>> ret =
+                android::hardware::identity::support::createEcKeyPairAndAttestation(
+                        challengeVec, applicationIdVec, testCredential);
+        if (!ret) {
+            eicDebug("Error generating CredentialKey and attestation");
+            return false;
+        }
+        keyPair = std::move(ret->first);
+        flatChain = android::hardware::identity::support::certificateChainJoin(ret->second);
     }
 
-    // Extract certificate chain.
-    vector<uint8_t> flatChain =
-            android::hardware::identity::support::certificateChainJoin(ret.value().second);
     if (*certSize < flatChain.size()) {
         eicDebug("Buffer for certificate is only %zd bytes long, need %zd bytes", *certSize,
                  flatChain.size());
@@ -268,7 +313,7 @@ bool eicOpsCreateCredentialKey(uint8_t privateKey[EIC_P256_PRIV_KEY_SIZE], const
 
     // Extract private key.
     optional<vector<uint8_t>> privKey =
-            android::hardware::identity::support::ecKeyPairGetPrivateKey(ret.value().first);
+            android::hardware::identity::support::ecKeyPairGetPrivateKey(keyPair);
     if (!privKey) {
         eicDebug("Error extracting private key");
         return false;
@@ -492,10 +537,12 @@ bool eicOpsHkdf(const uint8_t* sharedSecret, size_t sharedSecretSize, const uint
 #ifdef EIC_DEBUG
 
 void eicPrint(const char* format, ...) {
+    char buf[1024];
     va_list args;
     va_start(args, format);
-    vfprintf(stderr, format, args);
+    vsnprintf(buf, sizeof(buf), format, args);
     va_end(args);
+    LOG(INFO) << buf;
 }
 
 void eicHexdump(const char* message, const uint8_t* data, size_t dataSize) {

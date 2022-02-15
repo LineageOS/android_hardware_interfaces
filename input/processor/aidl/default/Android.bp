@@ -1,0 +1,54 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+cc_library_static {
+    name: "libinputprocessorexampleimpl",
+    vendor: true,
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "liblog",
+        "libutils",
+        "android.hardware.input.common-V1-ndk",
+        "android.hardware.input.processor-V1-ndk",
+    ],
+    export_include_dirs: ["include"],
+    srcs: [
+        "InputProcessor.cpp",
+    ],
+    visibility: [
+        ":__subpackages__",
+        "//hardware/interfaces/tests/extension/input/processor:__subpackages__",
+    ],
+}
+
+filegroup {
+    name: "android.hardware.input.processor.xml",
+    srcs: ["android.hardware.input.processor.xml"],
+}
+
+cc_binary {
+    name: "android.hardware.input.processor-service.example",
+    relative_install_path: "hw",
+    init_rc: ["inputprocessor-default.rc"],
+    vintf_fragments: [":android.hardware.input.processor.xml"],
+    vendor: true,
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "liblog",
+        "libutils",
+        "android.hardware.input.common-V1-ndk",
+        "android.hardware.input.processor-V1-ndk",
+    ],
+    static_libs: [
+        "libinputprocessorexampleimpl",
+    ],
+    srcs: ["main.cpp"],
+}

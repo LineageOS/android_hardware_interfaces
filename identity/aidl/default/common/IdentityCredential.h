@@ -30,6 +30,7 @@
 #include <cppbor.h>
 
 #include "IdentityCredentialStore.h"
+#include "PresentationSession.h"
 #include "SecureHardwareProxy.h"
 
 namespace aidl::android::hardware::identity {
@@ -46,12 +47,14 @@ using ::std::vector;
 class IdentityCredential : public BnIdentityCredential {
   public:
     IdentityCredential(sp<SecureHardwareProxyFactory> hwProxyFactory,
-                       sp<SecureHardwarePresentationProxy> hwProxy,
-                       const vector<uint8_t>& credentialData)
+                       const vector<uint8_t>& credentialData,
+                       std::shared_ptr<PresentationSession> session,
+                       HardwareInformation hardwareInformation)
         : hwProxyFactory_(hwProxyFactory),
-          hwProxy_(hwProxy),
           credentialData_(credentialData),
+          session_(std::move(session)),
           numStartRetrievalCalls_(0),
+          hardwareInformation_(std::move(hardwareInformation)),
           expectedDeviceNameSpacesSize_(0) {}
 
     // Parses and decrypts credentialData_, return a status code from
@@ -94,16 +97,23 @@ class IdentityCredential : public BnIdentityCredential {
                                               bool includeChallenge,
                                               vector<uint8_t>* outProofOfDeletionSignature);
 
+    // Creates and initializes hwProxy_.
+    ndk::ScopedAStatus ensureHwProxy();
+
     // Set by constructor
     sp<SecureHardwareProxyFactory> hwProxyFactory_;
-    sp<SecureHardwarePresentationProxy> hwProxy_;
     vector<uint8_t> credentialData_;
+    shared_ptr<PresentationSession> session_;
     int numStartRetrievalCalls_;
+    HardwareInformation hardwareInformation_;
 
     // Set by initialize()
     string docType_;
     bool testCredential_;
     vector<uint8_t> encryptedCredentialKeys_;
+
+    // Set by ensureHwProxy()
+    sp<SecureHardwarePresentationProxy> hwProxy_;
 
     // Set by createEphemeralKeyPair()
     vector<uint8_t> ephemeralPublicKey_;

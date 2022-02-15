@@ -28,7 +28,6 @@ using android::hardware::Void;
 using android::hardware::gnss::common::GnssCallbackEventQueue;
 using android::hardware::gnss::measurement_corrections::V1_0::IMeasurementCorrectionsCallback;
 using android::hardware::gnss::V1_0::GnssLocationFlags;
-using android::hardware::gnss::V2_0::GnssConstellationType;
 
 using GnssLocation_1_0 = android::hardware::gnss::V1_0::GnssLocation;
 using GnssLocation_2_0 = android::hardware::gnss::V2_0::GnssLocation;

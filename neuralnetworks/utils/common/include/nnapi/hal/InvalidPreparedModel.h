@@ -31,18 +31,23 @@ class InvalidPreparedModel final : public nn::IPreparedModel {
   public:
     nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> execute(
             const nn::Request& request, nn::MeasureTiming measure,
-            const nn::OptionalTimePoint& deadline,
-            const nn::OptionalDuration& loopTimeoutDuration) const override;
+            const nn::OptionalTimePoint& deadline, const nn::OptionalDuration& loopTimeoutDuration,
+            const std::vector<nn::TokenValuePair>& hints,
+            const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const override;
 
     nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>> executeFenced(
             const nn::Request& request, const std::vector<nn::SyncFence>& waitFor,
             nn::MeasureTiming measure, const nn::OptionalTimePoint& deadline,
             const nn::OptionalDuration& loopTimeoutDuration,
-            const nn::OptionalDuration& timeoutDurationAfterFence) const override;
+            const nn::OptionalDuration& timeoutDurationAfterFence,
+            const std::vector<nn::TokenValuePair>& hints,
+            const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const override;
 
     nn::GeneralResult<nn::SharedExecution> createReusableExecution(
             const nn::Request& request, nn::MeasureTiming measure,
-            const nn::OptionalDuration& loopTimeoutDuration) const override;
+            const nn::OptionalDuration& loopTimeoutDuration,
+            const std::vector<nn::TokenValuePair>& hints,
+            const std::vector<nn::ExtensionNameAndPrefix>& extensionNameToPrefix) const override;
 
     nn::GeneralResult<nn::SharedBurst> configureExecutionBurst() const override;
 

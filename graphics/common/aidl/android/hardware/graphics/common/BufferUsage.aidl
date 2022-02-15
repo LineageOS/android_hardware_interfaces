@@ -18,6 +18,7 @@ package android.hardware.graphics.common;
 
 /**
  * Buffer usage definitions.
+ * @hide
  */
 @VintfStability
 @Backing(type="long")
@@ -87,6 +88,12 @@ enum BufferUsage {
     /** buffer is used as a sensor direct report output */
     SENSOR_DIRECT_DATA                 = 1 << 23,
 
+    /**
+     * buffer is used as as an OpenGL shader storage or uniform
+     * buffer object
+     */
+    GPU_DATA_BUFFER                    = 1 << 24,
+
     /** buffer is used as a cube map texture */
     GPU_CUBE_MAP                       = 1 << 25,
 
@@ -98,17 +105,42 @@ enum BufferUsage {
      */
     HW_IMAGE_ENCODER                   = 1 << 27,
 
-    /**
-     * buffer is used as as an OpenGL shader storage or uniform
-     * buffer object
-     */
-    GPU_DATA_BUFFER                    = 1 << 24,
+    /* Bits 28-31 are reserved for vendor usage */
 
-    /** bits 25-27 must be zero and are reserved for future versions */
+    /**
+    * Buffer is used for front-buffer rendering.
+    *
+    * To satisfy an allocation with this usage, the resulting buffer
+    * must operate as equivalent to shared memory for all targets.
+    *
+    * For CPU_USAGE_* other than NEVER, this means the buffer must
+    * "lock in place". The buffers must be directly accessible via mapping.
+    *
+    * For GPU_RENDER_TARGET the buffer must behave equivalent to a
+    * single-buffered EGL surface. For example glFlush must perform
+    * a flush, same as if the default framebuffer was single-buffered.
+    *
+    * For COMPOSER_* the HWC must not perform any caching for this buffer
+    * when submitted for composition. HWCs do not need to do any form
+    * of auto-refresh, and they are allowed to cache composition results between
+    * presents from SF (such as for panel self-refresh), but for any given
+    * present the buffer must be composited from even if it otherwise appears
+    * to be the same as a previous composition.
+    *
+    * If the GPU & HWC supports EGL_SINGLE_BUFFER, then it is recommended that
+    * FRONT_BUFFER usage is supported for the same formats as supported by
+    * EGL_SINGLE_BUFFER. In particular, it is recommended that the following
+    * combination is supported when possible:
+    *    Format = RGBA_8888
+    *    Usage = FRONT_BUFFER | GPU_RENDER_TARGET | COMPOSER_OVERLAY
+    *
+    */
+    FRONT_BUFFER                       = 1L << 32,
+
     /** bits 28-31 are reserved for vendor extensions */
     VENDOR_MASK                        = 0xf << 28,
 
-    /** bits 32-47 must be zero and are reserved for future versions */
+    /** bits 33-47 must be zero and are reserved for future versions */
     /** bits 48-63 are reserved for vendor extensions */
     VENDOR_MASK_HI                     = (1L * 0xffff) << 48,
 }

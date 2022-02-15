@@ -79,15 +79,6 @@ oneway interface IRadioMessaging {
             in int serial, in boolean success, in SmsAcknowledgeFailCause cause);
 
     /**
-     * Cancel the current USSD session if one exists.
-     *
-     * @param serial Serial number of request.
-     *
-     * Response function is IRadioMessagingResponse.cancelPendingUssdResponse()
-     */
-    void cancelPendingUssd(in int serial);
-
-    /**
      * Deletes a CDMA SMS message from RUIM memory.
      *
      * @param serial Serial number of request.
@@ -210,23 +201,6 @@ oneway interface IRadioMessaging {
      * Response function is IRadioMessagingResponse.sendSmsExpectMoreResponse()
      */
     void sendSmsExpectMore(in int serial, in GsmSmsMessage message);
-
-    /**
-     * Send a USSD message. If a USSD session already exists, the message must be sent in the
-     * context of that session. Otherwise, a new session must be created. The network reply must be
-     * reported via unsolOnUssd.
-     *
-     * Only one USSD session must exist at a time, and the session is assumed to exist until:
-     * a) The android system invokes cancelUssd()
-     * b) The implementation sends a unsolOnUssd() with a type code of
-     *    "0" (USSD-Notify/no further action) or "2" (session terminated)
-     *
-     * @param serial Serial number of request.
-     * @param ussd string containing the USSD request in UTF-8 format
-     *
-     * Response function is IRadioMessagingResponse.sendUssdResponse()
-     */
-    void sendUssd(in int serial, in String ussd);
 
     /**
      * Enable or disable the reception of CDMA Cell Broadcast SMS

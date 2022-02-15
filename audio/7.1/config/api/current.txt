@@ -1,0 +1,603 @@
+// Signature format: 2.0
+package android.audio.policy.configuration.V7_1 {
+
+  public class AttachedDevices {
+    ctor public AttachedDevices();
+    method @Nullable public java.util.List<java.lang.String> getItem();
+  }
+
+  public enum AudioChannelMask {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_1;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_10;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_11;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_12;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_13;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_14;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_15;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_16;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_17;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_18;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_19;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_2;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_20;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_21;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_22;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_23;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_24;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_3;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_4;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_5;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_6;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_7;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_8;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_INDEX_MASK_9;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_IN_2POINT0POINT2;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_IN_2POINT1POINT2;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_IN_3POINT0POINT2;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_IN_3POINT1POINT2;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_IN_5POINT1;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_IN_6;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_IN_FRONT_BACK;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_IN_MONO;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_IN_STEREO;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_IN_VOICE_CALL_MONO;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_IN_VOICE_DNLINK_MONO;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_IN_VOICE_UPLINK_MONO;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_NONE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_13POINT_360RA;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_22POINT2;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_2POINT0POINT2;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_2POINT1;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_2POINT1POINT2;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_3POINT0POINT2;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_3POINT1;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_3POINT1POINT2;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_5POINT1;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_5POINT1POINT2;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_5POINT1POINT4;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_5POINT1_BACK;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_5POINT1_SIDE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_6POINT1;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_7POINT1;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_7POINT1POINT2;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_7POINT1POINT4;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_9POINT1POINT4;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_9POINT1POINT6;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_HAPTIC_AB;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_MONO;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_MONO_HAPTIC_A;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_MONO_HAPTIC_AB;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_PENTA;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_QUAD;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_QUAD_BACK;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_QUAD_SIDE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_STEREO;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_STEREO_HAPTIC_A;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_STEREO_HAPTIC_AB;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_SURROUND;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_TRI;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioChannelMask AUDIO_CHANNEL_OUT_TRI_BACK;
+  }
+
+  public enum AudioContentType {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioContentType AUDIO_CONTENT_TYPE_MOVIE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioContentType AUDIO_CONTENT_TYPE_MUSIC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioContentType AUDIO_CONTENT_TYPE_SONIFICATION;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioContentType AUDIO_CONTENT_TYPE_SPEECH;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioContentType AUDIO_CONTENT_TYPE_ULTRASOUND;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioContentType AUDIO_CONTENT_TYPE_UNKNOWN;
+  }
+
+  public enum AudioDevice {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_AMBIENT;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_ANLG_DOCK_HEADSET;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_AUX_DIGITAL;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_BACK_MIC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_BLE_HEADSET;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_BLUETOOTH_A2DP;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_BLUETOOTH_BLE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_BUILTIN_MIC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_BUS;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_COMMUNICATION;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_DEFAULT;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_DGTL_DOCK_HEADSET;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_ECHO_REFERENCE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_FM_TUNER;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_HDMI;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_HDMI_ARC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_HDMI_EARC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_IP;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_LINE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_LOOPBACK;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_PROXY;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_REMOTE_SUBMIX;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_SPDIF;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_STUB;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_TELEPHONY_RX;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_TV_TUNER;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_USB_ACCESSORY;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_USB_DEVICE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_USB_HEADSET;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_VOICE_CALL;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_IN_WIRED_HEADSET;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_NONE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_ANLG_DOCK_HEADSET;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_AUX_DIGITAL;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_AUX_LINE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_BLE_BROADCAST;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_BLE_HEADSET;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_BLE_SPEAKER;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_BLUETOOTH_A2DP;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_HEADPHONES;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_SPEAKER;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_BLUETOOTH_SCO;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_BLUETOOTH_SCO_CARKIT;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_BLUETOOTH_SCO_HEADSET;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_BUS;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_DEFAULT;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_DGTL_DOCK_HEADSET;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_EARPIECE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_ECHO_CANCELLER;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_FM;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_HDMI;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_HDMI_ARC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_HDMI_EARC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_HEARING_AID;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_IP;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_LINE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_PROXY;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_REMOTE_SUBMIX;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_SPDIF;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_SPEAKER;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_SPEAKER_SAFE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_STUB;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_TELEPHONY_TX;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_USB_ACCESSORY;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_USB_DEVICE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_USB_HEADSET;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_WIRED_HEADPHONE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioDevice AUDIO_DEVICE_OUT_WIRED_HEADSET;
+  }
+
+  public enum AudioEncapsulationType {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioEncapsulationType AUDIO_ENCAPSULATION_TYPE_IEC61937;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioEncapsulationType AUDIO_ENCAPSULATION_TYPE_NONE;
+  }
+
+  public enum AudioFormat {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_ADIF;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_ADTS;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_ADTS_ELD;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_ADTS_ERLC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_ADTS_HE_V1;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_ADTS_HE_V2;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_ADTS_LC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_ADTS_LD;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_ADTS_LTP;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_ADTS_MAIN;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_ADTS_SCALABLE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_ADTS_SSR;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_ADTS_XHE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_ELD;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_ERLC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_HE_V1;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_HE_V2;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_LATM;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_LATM_HE_V1;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_LATM_HE_V2;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_LATM_LC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_LC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_LD;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_LTP;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_MAIN;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_SCALABLE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_SSR;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AAC_XHE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AC3;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AC4;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_ALAC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AMR_NB;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AMR_WB;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_AMR_WB_PLUS;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_APE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_APTX;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_APTX_ADAPTIVE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_APTX_HD;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_APTX_TWSP;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_CELT;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_DEFAULT;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_DOLBY_TRUEHD;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_DRA;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_DSD;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_DTS;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_DTS_HD;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_DTS_UHD;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_EVRC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_EVRCB;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_EVRCNW;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_EVRCWB;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_E_AC3;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_E_AC3_JOC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_FLAC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_HE_AAC_V1;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_HE_AAC_V2;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_IEC60958;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_IEC61937;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_LC3;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_LDAC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_LHDC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_LHDC_LL;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_MAT;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_MAT_1_0;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_MAT_2_0;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_MAT_2_1;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_MP2;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_MP3;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_MPEGH_BL_L3;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_MPEGH_BL_L4;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_MPEGH_LC_L3;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_MPEGH_LC_L4;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_OPUS;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_PCM_16_BIT;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_PCM_24_BIT_PACKED;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_PCM_32_BIT;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_PCM_8_24_BIT;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_PCM_8_BIT;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_PCM_FLOAT;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_QCELP;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_SBC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_VORBIS;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_WMA;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioFormat AUDIO_FORMAT_WMA_PRO;
+  }
+
+  public enum AudioGainMode {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioGainMode AUDIO_GAIN_MODE_CHANNELS;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioGainMode AUDIO_GAIN_MODE_JOINT;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioGainMode AUDIO_GAIN_MODE_RAMP;
+  }
+
+  public enum AudioInOutFlag {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_INPUT_FLAG_DIRECT;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_INPUT_FLAG_FAST;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_INPUT_FLAG_HW_AV_SYNC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_INPUT_FLAG_HW_HOTWORD;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_INPUT_FLAG_MMAP_NOIRQ;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_INPUT_FLAG_RAW;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_INPUT_FLAG_SYNC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_INPUT_FLAG_ULTRASOUND;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_INPUT_FLAG_VOIP_TX;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_DEEP_BUFFER;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_DIRECT;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_DIRECT_PCM;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_FAST;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_GAPLESS_OFFLOAD;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_HW_AV_SYNC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_IEC958_NONAUDIO;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_INCALL_MUSIC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_MMAP_NOIRQ;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_NON_BLOCKING;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_PRIMARY;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_RAW;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_SPATIALIZER;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_SYNC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_TTS;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_ULTRASOUND;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioInOutFlag AUDIO_OUTPUT_FLAG_VOIP_RX;
+  }
+
+  public class AudioPolicyConfiguration {
+    ctor public AudioPolicyConfiguration();
+    method @Nullable public android.audio.policy.configuration.V7_1.GlobalConfiguration getGlobalConfiguration();
+    method @Nullable public java.util.List<android.audio.policy.configuration.V7_1.Modules> getModules();
+    method @Nullable public android.audio.policy.configuration.V7_1.SurroundSound getSurroundSound();
+    method @Nullable public android.audio.policy.configuration.V7_1.Version getVersion();
+    method @Nullable public java.util.List<android.audio.policy.configuration.V7_1.Volumes> getVolumes();
+    method public void setGlobalConfiguration(@Nullable android.audio.policy.configuration.V7_1.GlobalConfiguration);
+    method public void setSurroundSound(@Nullable android.audio.policy.configuration.V7_1.SurroundSound);
+    method public void setVersion(@Nullable android.audio.policy.configuration.V7_1.Version);
+  }
+
+  public enum AudioSource {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioSource AUDIO_SOURCE_CAMCORDER;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioSource AUDIO_SOURCE_DEFAULT;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioSource AUDIO_SOURCE_ECHO_REFERENCE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioSource AUDIO_SOURCE_FM_TUNER;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioSource AUDIO_SOURCE_HOTWORD;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioSource AUDIO_SOURCE_MIC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioSource AUDIO_SOURCE_REMOTE_SUBMIX;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioSource AUDIO_SOURCE_ULTRASOUND;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioSource AUDIO_SOURCE_UNPROCESSED;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioSource AUDIO_SOURCE_VOICE_CALL;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioSource AUDIO_SOURCE_VOICE_COMMUNICATION;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioSource AUDIO_SOURCE_VOICE_DOWNLINK;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioSource AUDIO_SOURCE_VOICE_PERFORMANCE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioSource AUDIO_SOURCE_VOICE_RECOGNITION;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioSource AUDIO_SOURCE_VOICE_UPLINK;
+  }
+
+  public enum AudioStreamType {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioStreamType AUDIO_STREAM_ACCESSIBILITY;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioStreamType AUDIO_STREAM_ALARM;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioStreamType AUDIO_STREAM_ASSISTANT;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioStreamType AUDIO_STREAM_BLUETOOTH_SCO;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioStreamType AUDIO_STREAM_CALL_ASSISTANT;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioStreamType AUDIO_STREAM_DTMF;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioStreamType AUDIO_STREAM_ENFORCED_AUDIBLE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioStreamType AUDIO_STREAM_MUSIC;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioStreamType AUDIO_STREAM_NOTIFICATION;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioStreamType AUDIO_STREAM_PATCH;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioStreamType AUDIO_STREAM_REROUTING;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioStreamType AUDIO_STREAM_RING;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioStreamType AUDIO_STREAM_SYSTEM;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioStreamType AUDIO_STREAM_TTS;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioStreamType AUDIO_STREAM_VOICE_CALL;
+  }
+
+  public enum AudioUsage {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_ALARM;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_ANNOUNCEMENT;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_ASSISTANCE_ACCESSIBILITY;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_ASSISTANCE_NAVIGATION_GUIDANCE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_ASSISTANCE_SONIFICATION;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_ASSISTANT;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_CALL_ASSISTANT;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_EMERGENCY;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_GAME;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_MEDIA;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_NOTIFICATION;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_NOTIFICATION_EVENT;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_NOTIFICATION_TELEPHONY_RINGTONE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_SAFETY;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_UNKNOWN;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_VEHICLE_STATUS;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_VIRTUAL_SOURCE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_VOICE_COMMUNICATION;
+    enum_constant public static final android.audio.policy.configuration.V7_1.AudioUsage AUDIO_USAGE_VOICE_COMMUNICATION_SIGNALLING;
+  }
+
+  public enum DeviceCategory {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.audio.policy.configuration.V7_1.DeviceCategory DEVICE_CATEGORY_EARPIECE;
+    enum_constant public static final android.audio.policy.configuration.V7_1.DeviceCategory DEVICE_CATEGORY_EXT_MEDIA;
+    enum_constant public static final android.audio.policy.configuration.V7_1.DeviceCategory DEVICE_CATEGORY_HEADSET;
+    enum_constant public static final android.audio.policy.configuration.V7_1.DeviceCategory DEVICE_CATEGORY_HEARING_AID;
+    enum_constant public static final android.audio.policy.configuration.V7_1.DeviceCategory DEVICE_CATEGORY_SPEAKER;
+  }
+
+  public class DevicePorts {
+    ctor public DevicePorts();
+    method @Nullable public java.util.List<android.audio.policy.configuration.V7_1.DevicePorts.DevicePort> getDevicePort();
+  }
+
+  public static class DevicePorts.DevicePort {
+    ctor public DevicePorts.DevicePort();
+    method @Nullable public String getAddress();
+    method @Nullable public java.util.List<java.lang.String> getEncodedFormats();
+    method @Nullable public android.audio.policy.configuration.V7_1.Gains getGains();
+    method @Nullable public java.util.List<android.audio.policy.configuration.V7_1.Profile> getProfile();
+    method @Nullable public android.audio.policy.configuration.V7_1.Role getRole();
+    method @Nullable public String getTagName();
+    method @Nullable public String getType();
+    method @Nullable public boolean get_default();
+    method public void setAddress(@Nullable String);
+    method public void setEncodedFormats(@Nullable java.util.List<java.lang.String>);
+    method public void setGains(@Nullable android.audio.policy.configuration.V7_1.Gains);
+    method public void setRole(@Nullable android.audio.policy.configuration.V7_1.Role);
+    method public void setTagName(@Nullable String);
+    method public void setType(@Nullable String);
+    method public void set_default(@Nullable boolean);
+  }
+
+  public enum EngineSuffix {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.audio.policy.configuration.V7_1.EngineSuffix _default;
+    enum_constant public static final android.audio.policy.configuration.V7_1.EngineSuffix configurable;
+  }
+
+  public class Gains {
+    ctor public Gains();
+    method @Nullable public java.util.List<android.audio.policy.configuration.V7_1.Gains.Gain> getGain();
+  }
+
+  public static class Gains.Gain {
+    ctor public Gains.Gain();
+    method @Nullable public android.audio.policy.configuration.V7_1.AudioChannelMask getChannel_mask();
+    method @Nullable public int getDefaultValueMB();
+    method @Nullable public int getMaxRampMs();
+    method @Nullable public int getMaxValueMB();
+    method @Nullable public int getMinRampMs();
+    method @Nullable public int getMinValueMB();
+    method @Nullable public java.util.List<android.audio.policy.configuration.V7_1.AudioGainMode> getMode();
+    method @Nullable public String getName();
+    method @Nullable public int getStepValueMB();
+    method @Nullable public boolean getUseForVolume();
+    method public void setChannel_mask(@Nullable android.audio.policy.configuration.V7_1.AudioChannelMask);
+    method public void setDefaultValueMB(@Nullable int);
+    method public void setMaxRampMs(@Nullable int);
+    method public void setMaxValueMB(@Nullable int);
+    method public void setMinRampMs(@Nullable int);
+    method public void setMinValueMB(@Nullable int);
+    method public void setMode(@Nullable java.util.List<android.audio.policy.configuration.V7_1.AudioGainMode>);
+    method public void setName(@Nullable String);
+    method public void setStepValueMB(@Nullable int);
+    method public void setUseForVolume(@Nullable boolean);
+  }
+
+  public class GlobalConfiguration {
+    ctor public GlobalConfiguration();
+    method @Nullable public boolean getCall_screen_mode_supported();
+    method @Nullable public android.audio.policy.configuration.V7_1.EngineSuffix getEngine_library();
+    method @Nullable public boolean getSpeaker_drc_enabled();
+    method public void setCall_screen_mode_supported(@Nullable boolean);
+    method public void setEngine_library(@Nullable android.audio.policy.configuration.V7_1.EngineSuffix);
+    method public void setSpeaker_drc_enabled(@Nullable boolean);
+  }
+
+  public enum HalVersion {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.audio.policy.configuration.V7_1.HalVersion _2_0;
+    enum_constant public static final android.audio.policy.configuration.V7_1.HalVersion _3_0;
+  }
+
+  public class MixPorts {
+    ctor public MixPorts();
+    method @Nullable public java.util.List<android.audio.policy.configuration.V7_1.MixPorts.MixPort> getMixPort();
+  }
+
+  public static class MixPorts.MixPort {
+    ctor public MixPorts.MixPort();
+    method @Nullable public java.util.List<android.audio.policy.configuration.V7_1.AudioInOutFlag> getFlags();
+    method @Nullable public android.audio.policy.configuration.V7_1.Gains getGains();
+    method @Nullable public long getMaxActiveCount();
+    method @Nullable public long getMaxOpenCount();
+    method @Nullable public String getName();
+    method @Nullable public java.util.List<android.audio.policy.configuration.V7_1.AudioUsage> getPreferredUsage();
+    method @Nullable public java.util.List<android.audio.policy.configuration.V7_1.Profile> getProfile();
+    method @Nullable public long getRecommendedMuteDurationMs();
+    method @Nullable public android.audio.policy.configuration.V7_1.Role getRole();
+    method public void setFlags(@Nullable java.util.List<android.audio.policy.configuration.V7_1.AudioInOutFlag>);
+    method public void setGains(@Nullable android.audio.policy.configuration.V7_1.Gains);
+    method public void setMaxActiveCount(@Nullable long);
+    method public void setMaxOpenCount(@Nullable long);
+    method public void setName(@Nullable String);
+    method public void setPreferredUsage(@Nullable java.util.List<android.audio.policy.configuration.V7_1.AudioUsage>);
+    method public void setRecommendedMuteDurationMs(@Nullable long);
+    method public void setRole(@Nullable android.audio.policy.configuration.V7_1.Role);
+  }
+
+  public enum MixType {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.audio.policy.configuration.V7_1.MixType mix;
+    enum_constant public static final android.audio.policy.configuration.V7_1.MixType mux;
+  }
+
+  public class Modules {
+    ctor public Modules();
+    method @Nullable public java.util.List<android.audio.policy.configuration.V7_1.Modules.Module> getModule();
+  }
+
+  public static class Modules.Module {
+    ctor public Modules.Module();
+    method @Nullable public android.audio.policy.configuration.V7_1.AttachedDevices getAttachedDevices();
+    method @Nullable public String getDefaultOutputDevice();
+    method @Nullable public android.audio.policy.configuration.V7_1.DevicePorts getDevicePorts();
+    method @Nullable public android.audio.policy.configuration.V7_1.HalVersion getHalVersion();
+    method @Nullable public android.audio.policy.configuration.V7_1.MixPorts getMixPorts();
+    method @Nullable public String getName();
+    method @Nullable public android.audio.policy.configuration.V7_1.Routes getRoutes();
+    method public void setAttachedDevices(@Nullable android.audio.policy.configuration.V7_1.AttachedDevices);
+    method public void setDefaultOutputDevice(@Nullable String);
+    method public void setDevicePorts(@Nullable android.audio.policy.configuration.V7_1.DevicePorts);
+    method public void setHalVersion(@Nullable android.audio.policy.configuration.V7_1.HalVersion);
+    method public void setMixPorts(@Nullable android.audio.policy.configuration.V7_1.MixPorts);
+    method public void setName(@Nullable String);
+    method public void setRoutes(@Nullable android.audio.policy.configuration.V7_1.Routes);
+  }
+
+  public class Profile {
+    ctor public Profile();
+    method @Nullable public java.util.List<android.audio.policy.configuration.V7_1.AudioChannelMask> getChannelMasks();
+    method @Nullable public android.audio.policy.configuration.V7_1.AudioEncapsulationType getEncapsulationType();
+    method @Nullable public String getFormat();
+    method @Nullable public String getName();
+    method @Nullable public java.util.List<java.math.BigInteger> getSamplingRates();
+    method public void setChannelMasks(@Nullable java.util.List<android.audio.policy.configuration.V7_1.AudioChannelMask>);
+    method public void setEncapsulationType(@Nullable android.audio.policy.configuration.V7_1.AudioEncapsulationType);
+    method public void setFormat(@Nullable String);
+    method public void setName(@Nullable String);
+    method public void setSamplingRates(@Nullable java.util.List<java.math.BigInteger>);
+  }
+
+  public class Reference {
+    ctor public Reference();
+    method @Nullable public String getName();
+    method @Nullable public java.util.List<java.lang.String> getPoint();
+    method public void setName(@Nullable String);
+  }
+
+  public enum Role {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.audio.policy.configuration.V7_1.Role sink;
+    enum_constant public static final android.audio.policy.configuration.V7_1.Role source;
+  }
+
+  public class Routes {
+    ctor public Routes();
+    method @Nullable public java.util.List<android.audio.policy.configuration.V7_1.Routes.Route> getRoute();
+  }
+
+  public static class Routes.Route {
+    ctor public Routes.Route();
+    method @Nullable public String getSink();
+    method @Nullable public String getSources();
+    method @Nullable public android.audio.policy.configuration.V7_1.MixType getType();
+    method public void setSink(@Nullable String);
+    method public void setSources(@Nullable String);
+    method public void setType(@Nullable android.audio.policy.configuration.V7_1.MixType);
+  }
+
+  public class SurroundFormats {
+    ctor public SurroundFormats();
+    method @Nullable public java.util.List<android.audio.policy.configuration.V7_1.SurroundFormats.Format> getFormat();
+  }
+
+  public static class SurroundFormats.Format {
+    ctor public SurroundFormats.Format();
+    method @Nullable public String getName();
+    method @Nullable public java.util.List<java.lang.String> getSubformats();
+    method public void setName(@Nullable String);
+    method public void setSubformats(@Nullable java.util.List<java.lang.String>);
+  }
+
+  public class SurroundSound {
+    ctor public SurroundSound();
+    method @Nullable public android.audio.policy.configuration.V7_1.SurroundFormats getFormats();
+    method public void setFormats(@Nullable android.audio.policy.configuration.V7_1.SurroundFormats);
+  }
+
+  public enum Version {
+    method @NonNull public String getRawName();
+    enum_constant public static final android.audio.policy.configuration.V7_1.Version _7_0;
+    enum_constant public static final android.audio.policy.configuration.V7_1.Version _7_1;
+  }
+
+  public class Volume {
+    ctor public Volume();
+    method @Nullable public android.audio.policy.configuration.V7_1.DeviceCategory getDeviceCategory();
+    method @Nullable public java.util.List<java.lang.String> getPoint();
+    method @Nullable public String getRef();
+    method @Nullable public android.audio.policy.configuration.V7_1.AudioStreamType getStream();
+    method public void setDeviceCategory(@Nullable android.audio.policy.configuration.V7_1.DeviceCategory);
+    method public void setRef(@Nullable String);
+    method public void setStream(@Nullable android.audio.policy.configuration.V7_1.AudioStreamType);
+  }
+
+  public class Volumes {
+    ctor public Volumes();
+    method @Nullable public java.util.List<android.audio.policy.configuration.V7_1.Reference> getReference();
+    method @Nullable public java.util.List<android.audio.policy.configuration.V7_1.Volume> getVolume();
+  }
+
+  public class XmlParser {
+    ctor public XmlParser();
+    method @Nullable public static android.audio.policy.configuration.V7_1.AudioPolicyConfiguration read(@NonNull java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method @Nullable public static String readText(@NonNull org.xmlpull.v1.XmlPullParser) throws java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static void skip(@NonNull org.xmlpull.v1.XmlPullParser) throws java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+  }
+
+}
+

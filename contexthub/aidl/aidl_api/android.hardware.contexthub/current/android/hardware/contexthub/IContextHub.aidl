@@ -35,14 +35,15 @@ package android.hardware.contexthub;
 @VintfStability
 interface IContextHub {
   List<android.hardware.contexthub.ContextHubInfo> getContextHubs();
-  boolean loadNanoapp(in int contextHubId, in android.hardware.contexthub.NanoappBinary appBinary, in int transactionId);
-  boolean unloadNanoapp(in int contextHubId, in long appId, in int transactionId);
-  boolean disableNanoapp(in int contextHubId, in long appId, in int transactionId);
-  boolean enableNanoapp(in int contextHubId, in long appId, in int transactionId);
+  void loadNanoapp(in int contextHubId, in android.hardware.contexthub.NanoappBinary appBinary, in int transactionId);
+  void unloadNanoapp(in int contextHubId, in long appId, in int transactionId);
+  void disableNanoapp(in int contextHubId, in long appId, in int transactionId);
+  void enableNanoapp(in int contextHubId, in long appId, in int transactionId);
   void onSettingChanged(in android.hardware.contexthub.Setting setting, in boolean enabled);
-  boolean queryNanoapps(in int contextHubId);
-  boolean registerCallback(in int contextHubId, in android.hardware.contexthub.IContextHubCallback cb);
-  boolean sendMessageToHub(in int contextHubId, in android.hardware.contexthub.ContextHubMessage message);
+  void queryNanoapps(in int contextHubId);
+  void registerCallback(in int contextHubId, in android.hardware.contexthub.IContextHubCallback cb);
+  void sendMessageToHub(in int contextHubId, in android.hardware.contexthub.ContextHubMessage message);
   void onHostEndpointConnected(in android.hardware.contexthub.HostEndpointInfo hostEndpointInfo);
   void onHostEndpointDisconnected(char hostEndpointId);
+  const int EX_CONTEXT_HUB_UNSPECIFIED = -1;
 }

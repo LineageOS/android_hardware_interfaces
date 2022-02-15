@@ -30,9 +30,9 @@
 using ::android::NO_ERROR;
 using ::android::OK;
 
-using namespace ::android::hardware::audio::common::CPP_VERSION;
-using namespace ::android::hardware::audio::CPP_VERSION;
-using ::android::hardware::audio::common::CPP_VERSION::implementation::HidlUtils;
+using namespace ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION;
+using namespace ::android::hardware::audio::CORE_TYPES_CPP_VERSION;
+using ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::implementation::HidlUtils;
 using ::android::hardware::audio::common::utils::splitString;
 namespace xsd {
 using namespace ::android::audio::policy::configuration::CPP_VERSION;

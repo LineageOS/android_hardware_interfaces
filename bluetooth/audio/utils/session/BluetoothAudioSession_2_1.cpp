@@ -21,9 +21,14 @@
 #include <android-base/logging.h>
 #include <android-base/stringprintf.h>
 
+#include "../aidl_session/HidlToAidlMiddleware_2_0.h"
+#include "../aidl_session/HidlToAidlMiddleware_2_1.h"
+
 namespace android {
 namespace bluetooth {
 namespace audio {
+using ::aidl::android::hardware::bluetooth::audio::HidlToAidlMiddleware_2_0;
+using ::aidl::android::hardware::bluetooth::audio::HidlToAidlMiddleware_2_1;
 using SessionType_2_1 =
     ::android::hardware::bluetooth::audio::V2_1::SessionType;
 using SessionType_2_0 =
@@ -46,6 +51,19 @@ bool is_2_0_session_type(
     return false;
   }
 }
+
+bool is_unsupported_2_1_session_type(
+    const ::android::hardware::bluetooth::audio::V2_1::SessionType&
+        session_type) {
+  if (session_type ==
+          SessionType_2_1::LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH ||
+      session_type ==
+          SessionType_2_1::LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH) {
+    return true;
+  } else {
+    return false;
+  }
+}
 }  // namespace
 
 BluetoothAudioSession_2_1::BluetoothAudioSession_2_1(
@@ -53,11 +71,13 @@ BluetoothAudioSession_2_1::BluetoothAudioSession_2_1(
         session_type)
     : audio_session(BluetoothAudioSessionInstance::GetSessionInstance(
           static_cast<SessionType_2_0>(session_type))) {
-  if (is_2_0_session_type(session_type)) {
+  if (is_2_0_session_type(session_type) ||
+      is_unsupported_2_1_session_type(session_type)) {
     session_type_2_1_ = (SessionType_2_1::UNKNOWN);
   } else {
     session_type_2_1_ = (session_type);
   }
+  raw_session_type_ = session_type;
 }
 
 std::shared_ptr<BluetoothAudioSession>
@@ -69,6 +89,8 @@ BluetoothAudioSession_2_1::GetAudioSession() {
 // AudioConfiguration
 const ::android::hardware::bluetooth::audio::V2_1::AudioConfiguration
 BluetoothAudioSession_2_1::GetAudioConfig() {
+  if (HidlToAidlMiddleware_2_0::IsAidlAvailable())
+    return HidlToAidlMiddleware_2_1::GetAudioConfig(raw_session_type_);
   std::lock_guard<std::recursive_mutex> guard(audio_session->mutex_);
   if (audio_session->IsSessionReady()) {
     // If session is unknown it means it should be 2.0 type
@@ -80,7 +102,7 @@ BluetoothAudioSession_2_1::GetAudioConfig() {
     // pcmConfig only differs between 2.0 and 2.1 in AudioConfiguration
     if (fromConf.getDiscriminator() ==
         AudioConfiguration::hidl_discriminator::codecConfig) {
-      toConf.codecConfig() = fromConf.codecConfig();
+      toConf.codecConfig(fromConf.codecConfig());
     } else {
       toConf.pcmConfig() = {
           .sampleRate = static_cast<

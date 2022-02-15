@@ -18,7 +18,8 @@ package android.hardware.graphics.composer3;
 
 import android.hardware.graphics.composer3.Buffer;
 import android.hardware.graphics.composer3.ClientTarget;
-import android.hardware.graphics.composer3.ColorTransformPayload;
+import android.hardware.graphics.composer3.ClockMonotonicTimestamp;
+import android.hardware.graphics.composer3.DisplayBrightness;
 import android.hardware.graphics.composer3.LayerCommand;
 
 @VintfStability
@@ -38,11 +39,7 @@ parcelable DisplayCommand {
     /**
      * Sets a color transform which will be applied after composition.
      *
-     * If hint is not ColorTransform.ARBITRARY, then the device may use the
-     * hint to apply the desired color transform instead of using the color
-     * matrix directly.
-     *
-     * If the device is not capable of either using the hint or the matrix to
+     * If the device is not capable of either using the matrix to
      * apply the desired color transform, it must force all layers to client
      * composition during VALIDATE_DISPLAY.
      *
@@ -70,7 +67,30 @@ parcelable DisplayCommand {
      * B_out = R_in * r.b + G_in * g.b + B_in * b.b + Tb
      *
      */
-    @nullable ColorTransformPayload colorTransform;
+    @nullable float[] colorTransformMatrix;
+
+    /**
+     * Sets the desired brightness of the display.
+     *
+     * Ideally, the brightness of the display will take effect within this frame so that it can be
+     * aligned with color transforms. Some display architectures may take multiple frames to apply
+     * the display brightness, for example when internally switching the display between multiple
+     * power modes to achieve higher luminance. In those cases, the underlying display panel's real
+     * brightness may not be applied atomically; however, layer dimming when mixing HDR and SDR
+     * content must be synchronized.
+     *
+     * As an illustrative example: suppose two layers have white
+     * points of 200 nits and 1000 nits respectively, the old display luminance is 200 nits, and the
+     * new display luminance is 1000 nits. If the new display luminance takes two frames to apply,
+     * then: In the first frame, there must not be any relative dimming of layers (treat both layers
+     * as 200 nits as the maximum luminance of the display is 200 nits). In the second frame, there
+     * dimming should be applied to ensure that the first layer does not become perceptually
+     * brighter during the transition.
+     *
+     * The display luminance must be updated by this command even if there is not pending validate
+     * or present command.
+     */
+    @nullable DisplayBrightness brightness;
 
     /**
      * Sets the buffer handle which will receive the output of client
@@ -113,6 +133,14 @@ parcelable DisplayCommand {
      * any interaction with layer state or display validation.
      */
     @nullable Buffer virtualDisplayOutputBuffer;
+
+    /**
+     * Sets the expected present time to present the current content on screen.
+     * The implementation should try to present the display as close as possible
+     * to the given expectedPresentTime. If expectedPresentTime is 0, the
+     * implementation should present the display as soon as possible.
+     */
+    @nullable ClockMonotonicTimestamp expectedPresentTime;
 
     /**
      * Instructs the device to inspect all of the layer state and determine if

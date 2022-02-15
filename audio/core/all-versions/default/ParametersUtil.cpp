@@ -24,7 +24,7 @@
 namespace android {
 namespace hardware {
 namespace audio {
-namespace CPP_VERSION {
+namespace CORE_TYPES_CPP_VERSION {
 namespace implementation {
 
 /** Converts a status_t in Result according to the rules of AudioParameter::get*
@@ -168,7 +168,7 @@ Result ParametersUtil::setParams(const AudioParameter& param) {
 }
 
 }  // namespace implementation
-}  // namespace CPP_VERSION
+}  // namespace CORE_TYPES_CPP_VERSION
 }  // namespace audio
 }  // namespace hardware
 }  // namespace android

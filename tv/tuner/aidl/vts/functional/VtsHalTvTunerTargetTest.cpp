@@ -704,6 +704,9 @@ void TunerFilterAidlTest::testDelayHint(const FilterConfig& filterConf) {
     bool mediaFilter = isMediaFilter(filterConf);
     auto filter = mFilterTests.getFilterById(filterId);
 
+    // startTime needs to be set before calling setDelayHint.
+    auto startTime = std::chrono::steady_clock::now();
+
     auto timeDelayInMs = std::chrono::milliseconds(filterConf.timeDelayInMs);
     if (timeDelayInMs.count() > 0) {
         FilterDelayHint delayHint;
@@ -724,15 +727,22 @@ void TunerFilterAidlTest::testDelayHint(const FilterConfig& filterConf) {
         ASSERT_EQ(filter->setDelayHint(delayHint).isOk(), !mediaFilter);
     }
 
-    // start and stop filter in order to circumvent callback scheduler race
-    // conditions after adjusting filter delays.
+    // start and stop filter (and wait for first callback) in order to
+    // circumvent callback scheduler race conditions after adjusting filter
+    // delays.
+    auto cb = mFilterTests.getFilterCallbacks().at(filterId);
+    auto future =
+            cb->verifyFilterCallback([](const std::vector<DemuxFilterEvent>&) { return true; });
     mFilterTests.startFilter(filterId);
+
+    auto timeout = std::chrono::seconds(30);
+    ASSERT_EQ(future.wait_for(timeout), std::future_status::ready);
+
     mFilterTests.stopFilter(filterId);
 
     if (!mediaFilter) {
-        auto cb = mFilterTests.getFilterCallbacks().at(filterId);
         int callbackSize = 0;
-        auto future = cb->verifyFilterCallback(
+        future = cb->verifyFilterCallback(
                 [&callbackSize](const std::vector<DemuxFilterEvent>& events) {
                     for (const auto& event : events) {
                         callbackSize += getDemuxFilterEventDataLength(event);
@@ -744,11 +754,9 @@ void TunerFilterAidlTest::testDelayHint(const FilterConfig& filterConf) {
         // hint beforehand.
         ASSERT_TRUE(mFilterTests.configFilter(filterConf.settings, filterId));
 
-        auto startTime = std::chrono::steady_clock::now();
         ASSERT_TRUE(mFilterTests.startFilter(filterId));
 
         // block and wait for callback to be received.
-        auto timeout = std::chrono::seconds(30);
         ASSERT_EQ(future.wait_for(timeout), std::future_status::ready);
         auto duration = std::chrono::steady_clock::now() - startTime;
 
@@ -881,6 +889,30 @@ TEST_P(TunerFrontendAidlTest, LinkToCiCam) {
         return;
     }
     mFrontendTests.tuneTest(frontendMap[live.frontendId]);
+}
+
+TEST_P(TunerFrontendAidlTest, getHardwareInfo) {
+    description("Test Frontend get hardware info");
+    if (!live.hasFrontendConnection) {
+        return;
+    }
+    mFrontendTests.debugInfoTest(frontendMap[live.frontendId]);
+}
+
+TEST_P(TunerFrontendAidlTest, maxNumberOfFrontends) {
+    description("Test Max Frontend number");
+    if (!live.hasFrontendConnection) {
+        return;
+    }
+    mFrontendTests.maxNumberOfFrontendsTest();
+}
+
+TEST_P(TunerFrontendAidlTest, statusReadinessTest) {
+    description("Test Max Frontend status readiness");
+    if (!live.hasFrontendConnection) {
+        return;
+    }
+    mFrontendTests.statusReadinessTest(frontendMap[live.frontendId]);
 }
 
 TEST_P(TunerBroadcastAidlTest, BroadcastDataFlowVideoFilterTest) {

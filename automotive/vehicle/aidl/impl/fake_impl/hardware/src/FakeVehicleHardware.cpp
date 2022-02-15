@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#define LOG_TAG "FakeVehicleHardware"
+#define FAKE_VEHICLEHARDWARE_DEBUG false  // STOPSHIP if true.
+
 #include "FakeVehicleHardware.h"
 
 #include <DefaultConfig.h>
@@ -22,7 +25,9 @@
 #include <PropertyUtils.h>
 #include <VehicleHalTypes.h>
 #include <VehicleUtils.h>
+#include <android-base/parsedouble.h>
 #include <android-base/properties.h>
+#include <android-base/strings.h>
 #include <utils/Log.h>
 #include <utils/SystemClock.h>
 
@@ -56,11 +61,30 @@ using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyStatus;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 
+using ::android::base::EqualsIgnoreCase;
 using ::android::base::Error;
+using ::android::base::ParseFloat;
 using ::android::base::Result;
+using ::android::base::StartsWith;
+using ::android::base::StringPrintf;
 
 const char* VENDOR_OVERRIDE_DIR = "/vendor/etc/automotive/vhaloverride/";
 const char* OVERRIDE_PROPERTY = "persist.vendor.vhal_init_value_override";
+
+// A list of supported options for "--set" command.
+const std::unordered_set<std::string> SET_PROP_OPTIONS = {
+        // integer.
+        "-i",
+        // 64bit integer.
+        "-i64",
+        // float.
+        "-f",
+        // string.
+        "-s",
+        // bytes in hex format, e.g. 0xDEADBEEF.
+        "-b",
+        // Area id in integer.
+        "-a"};
 
 }  // namespace
 
@@ -381,44 +405,26 @@ Result<void> FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValue& v
 
 StatusCode FakeVehicleHardware::setValues(std::shared_ptr<const SetValuesCallback> callback,
                                           const std::vector<SetValueRequest>& requests) {
-    std::vector<VehiclePropValue> updatedValues;
     std::vector<SetValueResult> results;
     for (auto& request : requests) {
         const VehiclePropValue& value = request.value;
         int propId = value.prop;
 
-        ALOGD("Set value for property ID: %d", propId);
+        if (FAKE_VEHICLEHARDWARE_DEBUG) {
+            ALOGD("Set value for property ID: %d", propId);
+        }
 
         SetValueResult setValueResult;
         setValueResult.requestId = request.requestId;
-        setValueResult.status = StatusCode::OK;
 
-        bool isSpecialValue = false;
-        auto setSpecialValueResult = maybeSetSpecialValue(value, &isSpecialValue);
-
-        if (isSpecialValue) {
-            if (!setSpecialValueResult.ok()) {
-                ALOGE("failed to set special value for property ID: %d, error: %s, status: %d",
-                      propId, getErrorMsg(setSpecialValueResult).c_str(),
-                      getIntErrorCode(setSpecialValueResult));
-                setValueResult.status = getErrorCode(setSpecialValueResult);
-            }
-
-            // Special values are already handled.
-            results.push_back(std::move(setValueResult));
-            continue;
+        if (auto result = setValue(value); !result.ok()) {
+            ALOGE("failed to set value, error: %s, code: %d", getErrorMsg(result).c_str(),
+                  getIntErrorCode(result));
+            setValueResult.status = getErrorCode(result);
+        } else {
+            setValueResult.status = StatusCode::OK;
         }
 
-        auto updatedValue = mValuePool->obtain(value);
-        int64_t timestamp = elapsedRealtimeNano();
-        updatedValue->timestamp = timestamp;
-
-        auto writeResult = mServerSidePropStore->writeValue(std::move(updatedValue));
-        if (!writeResult.ok()) {
-            ALOGE("failed to write value into property store, error: %s, code: %d",
-                  getErrorMsg(writeResult).c_str(), getIntErrorCode(writeResult));
-            setValueResult.status = getErrorCode(writeResult);
-        }
         results.push_back(std::move(setValueResult));
     }
 
@@ -429,61 +435,378 @@ StatusCode FakeVehicleHardware::setValues(std::shared_ptr<const SetValuesCallbac
     return StatusCode::OK;
 }
 
+Result<void> FakeVehicleHardware::setValue(const VehiclePropValue& value) {
+    bool isSpecialValue = false;
+    auto setSpecialValueResult = maybeSetSpecialValue(value, &isSpecialValue);
+
+    if (isSpecialValue) {
+        if (!setSpecialValueResult.ok()) {
+            return Error(getIntErrorCode(setSpecialValueResult))
+                   << StringPrintf("failed to set special value for property ID: %d, error: %s",
+                                   value.prop, getErrorMsg(setSpecialValueResult).c_str());
+        }
+        return {};
+    }
+
+    auto updatedValue = mValuePool->obtain(value);
+    int64_t timestamp = elapsedRealtimeNano();
+    updatedValue->timestamp = timestamp;
+
+    auto writeResult = mServerSidePropStore->writeValue(std::move(updatedValue));
+    if (!writeResult.ok()) {
+        return Error(getIntErrorCode(writeResult))
+               << StringPrintf("failed to write value into property store, error: %s",
+                               getErrorMsg(writeResult).c_str());
+    }
+
+    return {};
+}
+
 StatusCode FakeVehicleHardware::getValues(std::shared_ptr<const GetValuesCallback> callback,
                                           const std::vector<GetValueRequest>& requests) const {
     std::vector<GetValueResult> results;
     for (auto& request : requests) {
         const VehiclePropValue& value = request.prop;
-        ALOGD("getValues(%d)", value.prop);
+
+        if (FAKE_VEHICLEHARDWARE_DEBUG) {
+            ALOGD("getValues(%d)", value.prop);
+        }
 
         GetValueResult getValueResult;
         getValueResult.requestId = request.requestId;
-        bool isSpecialValue = false;
 
-        auto result = maybeGetSpecialValue(value, &isSpecialValue);
-        if (isSpecialValue) {
-            if (!result.ok()) {
-                ALOGE("failed to get special value: %d, error: %s, code: %d", value.prop,
-                      getErrorMsg(result).c_str(), getIntErrorCode(result));
-                getValueResult.status = getErrorCode(result);
-            } else {
-                getValueResult.status = StatusCode::OK;
-                getValueResult.prop = *result.value();
-            }
-            results.push_back(std::move(getValueResult));
-            continue;
-        }
-
-        auto readResult = mServerSidePropStore->readValue(value);
-        if (!readResult.ok()) {
-            StatusCode errorCode = getErrorCode(readResult);
-            if (errorCode == StatusCode::NOT_AVAILABLE) {
-                ALOGW("%s", "value has not been set yet");
-            } else {
-                ALOGE("failed to get value, error: %s, code: %d", getErrorMsg(readResult).c_str(),
-                      toInt(errorCode));
-            }
-            getValueResult.status = errorCode;
+        auto result = getValue(value);
+        if (!result.ok()) {
+            ALOGE("failed to get value, error: %s, code: %d", getErrorMsg(result).c_str(),
+                  getIntErrorCode(result));
+            getValueResult.status = getErrorCode(result);
         } else {
             getValueResult.status = StatusCode::OK;
-            getValueResult.prop = *readResult.value();
+            getValueResult.prop = *result.value();
         }
         results.push_back(std::move(getValueResult));
     }
 
+    // In a real VHAL implementation, getValue would be async and we would call the callback after
+    // we actually received the values from vehicle bus. Here we are getting the result
+    // synchronously so we could call the callback here.
     (*callback)(std::move(results));
 
     return StatusCode::OK;
 }
 
-DumpResult FakeVehicleHardware::dump(const std::vector<std::string>&) {
+Result<VehiclePropValuePool::RecyclableType> FakeVehicleHardware::getValue(
+        const VehiclePropValue& value) const {
+    bool isSpecialValue = false;
+    auto result = maybeGetSpecialValue(value, &isSpecialValue);
+    if (isSpecialValue) {
+        if (!result.ok()) {
+            return Error(getIntErrorCode(result))
+                   << StringPrintf("failed to get special value: %d, error: %s", value.prop,
+                                   getErrorMsg(result).c_str());
+        } else {
+            return std::move(result);
+        }
+    }
+
+    auto readResult = mServerSidePropStore->readValue(value);
+    if (!readResult.ok()) {
+        StatusCode errorCode = getErrorCode(readResult);
+        if (errorCode == StatusCode::NOT_AVAILABLE) {
+            return Error(toInt(errorCode)) << "value has not been set yet";
+        } else {
+            return Error(toInt(errorCode))
+                   << "failed to get value, error: " << getErrorMsg(readResult);
+        }
+    }
+
+    return std::move(readResult);
+}
+
+DumpResult FakeVehicleHardware::dump(const std::vector<std::string>& options) {
     DumpResult result;
-    // TODO(b/201830716): Implement this.
+    result.callerShouldDumpState = false;
+    if (options.size() == 0) {
+        // We only want caller to dump default state when there is no options.
+        result.callerShouldDumpState = true;
+        result.buffer = dumpAllProperties();
+        return result;
+    }
+    std::string option = options[0];
+    if (EqualsIgnoreCase(option, "--help")) {
+        result.buffer = dumpHelp();
+        return result;
+    } else if (EqualsIgnoreCase(option, "--list")) {
+        result.buffer = dumpListProperties();
+    } else if (EqualsIgnoreCase(option, "--get")) {
+        result.buffer = dumpSpecificProperty(options);
+    } else if (EqualsIgnoreCase(option, "--set")) {
+        result.buffer = dumpSetProperties(options);
+    } else {
+        result.buffer = StringPrintf("Invalid option: %s\n", option.c_str());
+    }
     return result;
 }
 
+std::string FakeVehicleHardware::dumpHelp() {
+    return "Usage: \n\n"
+           "[no args]: dumps (id and value) all supported properties \n"
+           "--help: shows this help\n"
+           "--list: lists the ids of all supported properties\n"
+           "--get <PROP1> [PROP2] [PROPN]: dumps the value of specific properties \n"
+           "--set <PROP> [-i INT_VALUE [INT_VALUE ...]] [-i64 INT64_VALUE [INT64_VALUE ...]] "
+           "[-f FLOAT_VALUE [FLOAT_VALUE ...]] [-s STR_VALUE] "
+           "[-b BYTES_VALUE] [-a AREA_ID] : sets the value of property PROP. "
+           "Notice that the string, bytes and area value can be set just once, while the other can"
+           " have multiple values (so they're used in the respective array), "
+           "BYTES_VALUE is in the form of 0xXXXX, e.g. 0xdeadbeef.\n";
+}
+
+std::string FakeVehicleHardware::dumpAllProperties() {
+    auto configs = mServerSidePropStore->getAllConfigs();
+    if (configs.size() == 0) {
+        return "no properties to dump\n";
+    }
+    std::string msg = StringPrintf("dumping %zu properties\n", configs.size());
+    int rowNumber = 1;
+    for (const VehiclePropConfig& config : configs) {
+        msg += dumpOnePropertyByConfig(rowNumber++, config);
+    }
+    return msg;
+}
+
+std::string FakeVehicleHardware::dumpOnePropertyByConfig(int rowNumber,
+                                                         const VehiclePropConfig& config) {
+    size_t numberAreas = config.areaConfigs.size();
+    std::string msg = "";
+    if (numberAreas == 0) {
+        msg += StringPrintf("%d: ", rowNumber);
+        msg += dumpOnePropertyById(config.prop, /* areaId= */ 0);
+        return msg;
+    }
+    for (size_t j = 0; j < numberAreas; ++j) {
+        if (numberAreas > 1) {
+            msg += StringPrintf("%d-%zu: ", rowNumber, j);
+        } else {
+            msg += StringPrintf("%d: ", rowNumber);
+        }
+        msg += dumpOnePropertyById(config.prop, config.areaConfigs[j].areaId);
+    }
+    return msg;
+}
+
+std::string FakeVehicleHardware::dumpOnePropertyById(int32_t propId, int32_t areaId) {
+    VehiclePropValue value = {
+            .prop = propId,
+            .areaId = areaId,
+    };
+    bool isSpecialValue = false;
+    auto result = maybeGetSpecialValue(value, &isSpecialValue);
+    if (!isSpecialValue) {
+        result = mServerSidePropStore->readValue(value);
+    }
+    if (!result.ok()) {
+        return StringPrintf("failed to read property value: %d, error: %s, code: %d\n", propId,
+                            getErrorMsg(result).c_str(), getIntErrorCode(result));
+
+    } else {
+        return result.value()->toString() + "\n";
+    }
+}
+
+std::string FakeVehicleHardware::dumpListProperties() {
+    auto configs = mServerSidePropStore->getAllConfigs();
+    if (configs.size() == 0) {
+        return "no properties to list\n";
+    }
+    int rowNumber = 1;
+    std::string msg = StringPrintf("listing %zu properties\n", configs.size());
+    for (const auto& config : configs) {
+        msg += StringPrintf("%d: %d\n", rowNumber++, config.prop);
+    }
+    return msg;
+}
+
+Result<void> FakeVehicleHardware::checkArgumentsSize(const std::vector<std::string>& options,
+                                                     size_t minSize) {
+    size_t size = options.size();
+    if (size >= minSize) {
+        return {};
+    }
+    return Error() << StringPrintf("Invalid number of arguments: required at least %zu, got %zu\n",
+                                   minSize, size);
+}
+
+std::string FakeVehicleHardware::dumpSpecificProperty(const std::vector<std::string>& options) {
+    if (auto result = checkArgumentsSize(options, /*minSize=*/2); !result.ok()) {
+        return getErrorMsg(result);
+    }
+
+    // options[0] is the command itself...
+    int rowNumber = 1;
+    size_t size = options.size();
+    std::string msg = "";
+    for (size_t i = 1; i < size; ++i) {
+        auto propResult = safelyParseInt<int32_t>(i, options[i]);
+        if (!propResult.ok()) {
+            msg += getErrorMsg(propResult);
+            continue;
+        }
+        int32_t prop = propResult.value();
+        auto result = mServerSidePropStore->getConfig(prop);
+        if (!result.ok()) {
+            msg += StringPrintf("No property %d\n", prop);
+            continue;
+        }
+        msg += dumpOnePropertyByConfig(rowNumber++, *result.value());
+    }
+    return msg;
+}
+
+std::vector<std::string> FakeVehicleHardware::getOptionValues(
+        const std::vector<std::string>& options, size_t* index) {
+    std::vector<std::string> values;
+    while (*index < options.size()) {
+        std::string option = options[*index];
+        if (SET_PROP_OPTIONS.find(option) != SET_PROP_OPTIONS.end()) {
+            return std::move(values);
+        }
+        values.push_back(option);
+        (*index)++;
+    }
+    return std::move(values);
+}
+
+Result<VehiclePropValue> FakeVehicleHardware::parseSetPropOptions(
+        const std::vector<std::string>& options) {
+    // Options format:
+    // --set PROP [-f f1 f2...] [-i i1 i2...] [-i64 i1 i2...] [-s s1 s2...] [-b b1 b2...] [-a a]
+    size_t optionIndex = 1;
+    auto result = safelyParseInt<int32_t>(optionIndex, options[optionIndex]);
+    if (!result.ok()) {
+        return Error() << StringPrintf("Property value: \"%s\" is not a valid int: %s\n",
+                                       options[optionIndex].c_str(), getErrorMsg(result).c_str());
+    }
+    VehiclePropValue prop = {};
+    prop.prop = result.value();
+    prop.status = VehiclePropertyStatus::AVAILABLE;
+    optionIndex++;
+    std::unordered_set<std::string> parsedOptions;
+
+    while (optionIndex < options.size()) {
+        std::string type = options[optionIndex];
+        optionIndex++;
+        size_t currentIndex = optionIndex;
+        std::vector<std::string> values = getOptionValues(options, &optionIndex);
+        if (parsedOptions.find(type) != parsedOptions.end()) {
+            return Error() << StringPrintf("Duplicate \"%s\" options\n", type.c_str());
+        }
+        parsedOptions.insert(type);
+        if (EqualsIgnoreCase(type, "-i")) {
+            if (values.size() == 0) {
+                return Error() << "No values specified when using \"-i\"\n";
+            }
+            prop.value.int32Values.resize(values.size());
+            for (size_t i = 0; i < values.size(); i++) {
+                auto int32Result = safelyParseInt<int32_t>(currentIndex + i, values[i]);
+                if (!int32Result.ok()) {
+                    return Error()
+                           << StringPrintf("Value: \"%s\" is not a valid int: %s\n",
+                                           values[i].c_str(), getErrorMsg(int32Result).c_str());
+                }
+                prop.value.int32Values[i] = int32Result.value();
+            }
+        } else if (EqualsIgnoreCase(type, "-i64")) {
+            if (values.size() == 0) {
+                return Error() << "No values specified when using \"-i64\"\n";
+            }
+            prop.value.int64Values.resize(values.size());
+            for (size_t i = 0; i < values.size(); i++) {
+                auto int64Result = safelyParseInt<int64_t>(currentIndex + i, values[i]);
+                if (!int64Result.ok()) {
+                    return Error()
+                           << StringPrintf("Value: \"%s\" is not a valid int64: %s\n",
+                                           values[i].c_str(), getErrorMsg(int64Result).c_str());
+                }
+                prop.value.int64Values[i] = int64Result.value();
+            }
+        } else if (EqualsIgnoreCase(type, "-f")) {
+            if (values.size() == 0) {
+                return Error() << "No values specified when using \"-f\"\n";
+            }
+            prop.value.floatValues.resize(values.size());
+            for (size_t i = 0; i < values.size(); i++) {
+                auto floatResult = safelyParseFloat(currentIndex + i, values[i]);
+                if (!floatResult.ok()) {
+                    return Error()
+                           << StringPrintf("Value: \"%s\" is not a valid float: %s\n",
+                                           values[i].c_str(), getErrorMsg(floatResult).c_str());
+                }
+                prop.value.floatValues[i] = floatResult.value();
+            }
+        } else if (EqualsIgnoreCase(type, "-s")) {
+            if (values.size() != 1) {
+                return Error() << "Expect exact one value when using \"-s\"\n";
+            }
+            prop.value.stringValue = values[0];
+        } else if (EqualsIgnoreCase(type, "-b")) {
+            if (values.size() != 1) {
+                return Error() << "Expect exact one value when using \"-b\"\n";
+            }
+            auto bytesResult = parseHexString(values[0]);
+            if (!bytesResult.ok()) {
+                return Error() << StringPrintf("value: \"%s\" is not a valid hex string: %s\n",
+                                               values[0].c_str(), getErrorMsg(bytesResult).c_str());
+            }
+            prop.value.byteValues = std::move(bytesResult.value());
+        } else if (EqualsIgnoreCase(type, "-a")) {
+            if (values.size() != 1) {
+                return Error() << "Expect exact one value when using \"-a\"\n";
+            }
+            auto int32Result = safelyParseInt<int32_t>(currentIndex, values[0]);
+            if (!int32Result.ok()) {
+                return Error() << StringPrintf("Area ID: \"%s\" is not a valid int: %s\n",
+                                               values[0].c_str(), getErrorMsg(int32Result).c_str());
+            }
+            prop.areaId = int32Result.value();
+        } else {
+            return Error() << StringPrintf("Unknown option: %s\n", type.c_str());
+        }
+    }
+
+    return prop;
+}
+
+std::string FakeVehicleHardware::dumpSetProperties(const std::vector<std::string>& options) {
+    if (auto result = checkArgumentsSize(options, 3); !result.ok()) {
+        return getErrorMsg(result);
+    }
+
+    auto parseResult = parseSetPropOptions(options);
+    if (!parseResult.ok()) {
+        return getErrorMsg(parseResult);
+    }
+    VehiclePropValue prop = std::move(parseResult.value());
+    ALOGD("Dump: Setting property: %s", prop.toString().c_str());
+
+    bool isSpecialValue = false;
+    auto setResult = maybeSetSpecialValue(prop, &isSpecialValue);
+
+    if (!isSpecialValue) {
+        auto updatedValue = mValuePool->obtain(prop);
+        updatedValue->timestamp = elapsedRealtimeNano();
+        setResult = mServerSidePropStore->writeValue(std::move(updatedValue));
+    }
+
+    if (setResult.ok()) {
+        return StringPrintf("Set property: %s\n", prop.toString().c_str());
+    }
+    return StringPrintf("failed to set property: %s, error: %s\n", prop.toString().c_str(),
+                        getErrorMsg(setResult).c_str());
+}
+
 StatusCode FakeVehicleHardware::checkHealth() {
-    // TODO(b/201830716): Implement this.
+    // Always return OK for checkHealth.
     return StatusCode::OK;
 }
 
@@ -542,6 +865,49 @@ void FakeVehicleHardware::overrideProperties(const char* overrideDir) {
         }
         closedir(dir);
     }
+}
+
+Result<float> FakeVehicleHardware::safelyParseFloat(int index, const std::string& s) {
+    float out;
+    if (!ParseFloat(s, &out)) {
+        return Error() << StringPrintf("non-float argument at index %d: %s\n", index, s.c_str());
+    }
+    return out;
+}
+
+Result<std::vector<uint8_t>> FakeVehicleHardware::parseHexString(const std::string& s) {
+    std::vector<uint8_t> bytes;
+    if (s.size() % 2 != 0) {
+        return Error() << StringPrintf("invalid hex string: %s, should have even size\n",
+                                       s.c_str());
+    }
+    if (!StartsWith(s, "0x")) {
+        return Error() << StringPrintf("hex string should start with \"0x\", got %s\n", s.c_str());
+    }
+    std::string subs = s.substr(2);
+    std::transform(subs.begin(), subs.end(), subs.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+
+    bool highDigit = true;
+    for (size_t i = 0; i < subs.size(); i++) {
+        char c = subs[i];
+        uint8_t v;
+        if (c >= '0' && c <= '9') {
+            v = c - '0';
+        } else if (c >= 'a' && c <= 'f') {
+            v = c - 'a' + 10;
+        } else {
+            return Error() << StringPrintf("invalid character %c in hex string %s\n", c,
+                                           subs.c_str());
+        }
+        if (highDigit) {
+            bytes.push_back(v * 16);
+        } else {
+            bytes[bytes.size() - 1] += v;
+        }
+        highDigit = !highDigit;
+    }
+    return bytes;
 }
 
 }  // namespace fake

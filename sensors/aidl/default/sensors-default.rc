@@ -1,0 +1,5 @@
+service vendor.sensors-default /vendor/bin/hw/android.hardware.sensors-service.example
+    class hal
+    user system
+    group system
+    rlimit rtprio 10 10

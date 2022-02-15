@@ -1888,6 +1888,22 @@ enum VehicleProperty {
      *
      * Return the current state of fog lights.
      *
+     * If the car has both front and rear fog lights:
+     *   If front and rear fog lights can only be controlled together: FOG_LIGHTS_STATE must be
+     *   implemented. FRONT_FOG_LIGHTS_STATE and REAR_FOG_LIGHTS_STATE must not be implemented.
+     *
+     *   If the front and rear fog lights can only be controlled independently: FOG_LIGHTS_STATE
+     *   must not be implemented. FRONT_FOG_LIGHTS_STATE and REAR_FOG_LIGHTS_STATE must be
+     *   implemented.
+     *
+     * If the car has only front fog lights:
+     * Only one of FOG_LIGHTS_STATE or FRONT_FOG_LIGHTS_STATE must be implemented and not both.
+     * REAR_FOG_LIGHTS_STATE must not be implemented.
+     *
+     * If the car has only rear fog lights:
+     * Only one of FOG_LIGHTS_STATE or REAR_FOG_LIGHTS_STATE must be implemented and not both.
+     * FRONT_FOG_LIGHTS_STATE must not be implemented.
+     *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ
      * @data_enum VehicleLightState
@@ -1931,6 +1947,22 @@ enum VehicleProperty {
      * Fog light switch
      *
      * The setting that the user wants.
+     *
+     * If the car has both front and rear fog lights:
+     *   If front and rear fog lights can only be controlled together: FOG_LIGHTS_SWITCH must be
+     *   implemented. FRONT_FOG_LIGHTS_SWITCH and REAR_FOG_LIGHTS_SWITCH must not be implemented.
+     *
+     *   If the front and rear fog lights can only be controlled independently: FOG_LIGHTS_SWITCH
+     *   must not be implemented. FRONT_FOG_LIGHTS_SWITCH and REAR_FOG_LIGHTS_SWITCH must be
+     *   implemented.
+     *
+     * If the car has only front fog lights:
+     * Only one of FOG_LIGHTS_SWITCH or FRONT_FOG_LIGHTS_SWITCH must be implemented and not both.
+     * REAR_FOG_LIGHTS_SWITCH must not be implemented.
+     *
+     * If the car has only rear fog lights:
+     * Only one of FOG_LIGHTS_SWITCH or REAR_FOG_LIGHTS_SWITCH must be implemented and not both.
+     * FRONT_FOG_LIGHTS_SWITCH must not be implemented.
      *
      * @change_mode VehiclePropertyChangeMode:ON_CHANGE
      * @access VehiclePropertyAccess:READ_WRITE
@@ -2637,4 +2669,175 @@ enum VehicleProperty {
      */
     ELECTRONIC_TOLL_COLLECTION_CARD_STATUS = 0x0F3A + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+    /**
+     * Front fog lights state
+     *
+     * Return the current state of the front fog lights.
+     * Only one of FOG_LIGHTS_STATE or FRONT_FOG_LIGHTS_STATE must be implemented. Please refer to
+     * the documentation on FOG_LIGHTS_STATE for more information.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     * @data_enum VehicleLightState
+     */
+    FRONT_FOG_LIGHTS_STATE = 0x0F3B + 0x10000000 + 0x01000000
+            + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+
+    /**
+     * Front fog lights switch
+     *
+     * The setting that the user wants.
+     * Only one of FOG_LIGHTS_SWITCH or FRONT_FOG_LIGHTS_SWITCH must be implemented. Please refer to
+     * the documentation on FOG_LIGHTS_SWITCH for more information.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     * @data_enum VehicleLightSwitch
+     */
+    FRONT_FOG_LIGHTS_SWITCH = 0x0F3C + 0x10000000 + 0x01000000
+            + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+
+    /**
+     * Rear fog lights state
+     *
+     * Return the current state of the rear fog lights.
+     * Only one of FOG_LIGHTS_STATE or REAR_FOG_LIGHTS_STATE must be implemented. Please refer to
+     * the documentation on FOG_LIGHTS_STATE for more information.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     * @data_enum VehicleLightState
+     */
+    REAR_FOG_LIGHTS_STATE = 0x0F3D + 0x10000000 + 0x01000000
+            + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+
+    /**
+     * Rear fog lights switch
+     *
+     * The setting that the user wants.
+     * Only one of FOG_LIGHTS_SWITCH or REAR_FOG_LIGHTS_SWITCH must be implemented. Please refer to
+     * the documentation on FOG_LIGHTS_SWITCH for more information.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     * @data_enum VehicleLightSwitch
+     */
+    REAR_FOG_LIGHTS_SWITCH = 0x0F3E + 0x10000000 + 0x01000000
+            + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+
+    /**
+     * Indicates the maximum current draw threshold for charging set by the user
+     *
+     * configArray[0] is used to specify the max current draw allowed by
+     * the vehicle in Amperes.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     * @unit VehicleUnit:AMPERE
+     */
+    EV_CHARGE_CURRENT_DRAW_LIMIT = 0x0F3F + 0x10000000 + 0x01000000
+            + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
+
+    /**
+     * Indicates the maximum charge percent threshold set by the user
+     *
+     * Returns a float value from 0 to 100.
+     *
+     * configArray is used to specify the valid values.
+     *   For example, if the vehicle supports the following charge percent limit values:
+     *     [20, 40, 60, 80, 100]
+     *   then the configArray should be {20, 40, 60, 80, 100}
+     * If the configArray is empty then all values from 0 to 100 must be valid.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    EV_CHARGE_PERCENT_LIMIT = 0x0F40 + 0x10000000 + 0x01000000
+            + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
+
+    /**
+     * Charging state of the car
+     *
+     * Returns the current charging state of the car.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     * @data_enum EvChargeState
+     */
+    EV_CHARGE_STATE = 0x0F41 + 0x10000000 + 0x01000000
+            + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+
+    /**
+     * Start or stop charging the EV battery
+     *
+     * The setting that the user wants. Setting this property to true starts the battery charging
+     * and setting to false stops charging.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ_WRITE
+     */
+    EV_CHARGE_SWITCH = 0x0F42 + 0x10000000 + 0x01000000
+            + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
+
+    /**
+     * Estimated charge time remaining in seconds
+     *
+     * Returns 0 if the vehicle is not charging.
+     *
+     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
+     * @access VehiclePropertyAccess:READ
+     * @unit VehicleUnit:SECS
+     */
+    EV_CHARGE_TIME_REMAINING = 0x0F43 + 0x10000000 + 0x01000000
+            + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+
+    /**
+     * Regenerative braking or one-pedal drive state of the car
+     *
+     * Returns the current state associated with the regenerative braking
+     * setting in the car
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     * @data_enum EvRegenerativeBrakingState
+     */
+    EV_REGENERATIVE_BRAKING_STATE = 0x0F44 + 0x10000000 + 0x01000000
+            + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+
+    /**
+     * Indicates if there is a trailer present or not.
+     *
+     * Returns the trailer state of the car.
+     *
+     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @access VehiclePropertyAccess:READ
+     * @data_enum TrailerState
+     */
+    TRAILER_PRESENT = 0x0F45 + 0x10000000 + 0x01000000
+            + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+
+    /**
+     * Vehicle’s curb weight
+     *
+     * Returns the vehicle's curb weight in kilograms. Curb weight is
+     * the total weight of the vehicle with standard equipment and all
+     * necessary operating consumables such as motor oil,transmission oil,
+     * brake fluid, coolant, air conditioning refrigerant, and weight of
+     * fuel at nominal tank capacity, while not loaded with either passengers
+     * or cargo.
+     *
+     * configArray[0] is used to specify the vehicle’s gross weight in kilograms.
+     * The vehicle’s gross weight is the maximum operating weight of the vehicle
+     * as specified by the manufacturer including the vehicle's chassis, body, engine,
+     * engine fluids, fuel, accessories, driver, passengers and cargo but excluding
+     * that of any trailers.
+     *
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
+     * @unit VehicleUnit:KILOGRAM
+     */
+
+    VEHICLE_CURB_WEIGHT = 0x0F46 + 0x10000000 + 0x01000000
+            + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+
 }

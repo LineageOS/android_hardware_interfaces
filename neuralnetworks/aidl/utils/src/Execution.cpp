@@ -35,44 +35,61 @@
 
 namespace aidl::android::hardware::neuralnetworks::utils {
 
-nn::GeneralResult<std::shared_ptr<const Execution>> Execution::create(
-        std::shared_ptr<const PreparedModel> preparedModel, Request request,
-        hal::utils::RequestRelocation relocation, bool measure, int64_t loopTimeoutDuration) {
+nn::GeneralResult<std::shared_ptr<const ExecutionWithCachedRequest>>
+ExecutionWithCachedRequest::create(std::shared_ptr<const PreparedModel> preparedModel,
+                                   Request request, hal::utils::RequestRelocation relocation,
+                                   bool measure, int64_t loopTimeoutDuration) {
     if (preparedModel == nullptr) {
-        return NN_ERROR() << "aidl::utils::Execution::create must have non-null preparedModel";
+        return NN_ERROR() << "aidl::utils::ExecutionWithCachedRequest::create must have non-null "
+                             "preparedModel";
     }
 
-    return std::make_shared<const Execution>(PrivateConstructorTag{}, std::move(preparedModel),
-                                             std::move(request), std::move(relocation), measure,
-                                             loopTimeoutDuration);
+    return std::make_shared<const ExecutionWithCachedRequest>(
+            PrivateConstructorTag{}, std::move(preparedModel), std::move(request),
+            std::move(relocation), measure, loopTimeoutDuration);
 }
 
-Execution::Execution(PrivateConstructorTag /*tag*/,
-                     std::shared_ptr<const PreparedModel> preparedModel, Request request,
-                     hal::utils::RequestRelocation relocation, bool measure,
-                     int64_t loopTimeoutDuration)
+ExecutionWithCachedRequest::ExecutionWithCachedRequest(
+        PrivateConstructorTag /*tag*/, std::shared_ptr<const PreparedModel> preparedModel,
+        Request request, hal::utils::RequestRelocation relocation, bool measure,
+        int64_t loopTimeoutDuration)
     : kPreparedModel(std::move(preparedModel)),
       kRequest(std::move(request)),
       kRelocation(std::move(relocation)),
       kMeasure(measure),
       kLoopTimeoutDuration(loopTimeoutDuration) {}
 
-nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>> Execution::compute(
-        const nn::OptionalTimePoint& deadline) const {
+nn::ExecutionResult<std::pair<std::vector<nn::OutputShape>, nn::Timing>>
+ExecutionWithCachedRequest::compute(const nn::OptionalTimePoint& deadline) const {
     const auto aidlDeadline = NN_TRY(convert(deadline));
     return kPreparedModel->executeInternal(kRequest, kMeasure, aidlDeadline, kLoopTimeoutDuration,
-                                           kRelocation);
+                                           {}, {}, kRelocation);
 }
 
-nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>> Execution::computeFenced(
+nn::GeneralResult<std::pair<nn::SyncFence, nn::ExecuteFencedInfoCallback>>
+ExecutionWithCachedRequest::computeFenced(
         const std::vector<nn::SyncFence>& waitFor, const nn::OptionalTimePoint& deadline,
         const nn::OptionalDuration& timeoutDurationAfterFence) const {
     const auto aidlWaitFor = NN_TRY(convert(waitFor));
     const auto aidlDeadline = NN_TRY(convert(deadline));
     const auto aidlTimeoutDurationAfterFence = NN_TRY(convert(timeoutDurationAfterFence));
-    return kPreparedModel->executeFencedInternal(kRequest, aidlWaitFor, kMeasure, aidlDeadline,
-                                                 kLoopTimeoutDuration,
-                                                 aidlTimeoutDurationAfterFence, kRelocation);
+    return kPreparedModel->executeFencedInternal(
+            kRequest, aidlWaitFor, kMeasure, aidlDeadline, kLoopTimeoutDuration,
+            aidlTimeoutDurationAfterFence, {}, {}, kRelocation);
 }
+
+nn::GeneralResult<std::shared_ptr<const Execution>> Execution::create(
+        std::shared_ptr<aidl_hal::IExecution> execution, hal::utils::RequestRelocation relocation) {
+    if (execution == nullptr) {
+        return NN_ERROR() << "aidl::utils::Execution::create must have non-null execution";
+    }
+
+    return std::make_shared<const Execution>(PrivateConstructorTag{}, std::move(execution),
+                                             std::move(relocation));
+}
+
+Execution::Execution(PrivateConstructorTag /*tag*/, std::shared_ptr<aidl_hal::IExecution> execution,
+                     hal::utils::RequestRelocation relocation)
+    : kExecution(std::move(execution)), kRelocation(std::move(relocation)) {}
 
 }  // namespace aidl::android::hardware::neuralnetworks::utils

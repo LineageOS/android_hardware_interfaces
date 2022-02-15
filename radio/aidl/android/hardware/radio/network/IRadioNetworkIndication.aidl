@@ -21,7 +21,6 @@ import android.hardware.radio.RadioTechnology;
 import android.hardware.radio.network.BarringInfo;
 import android.hardware.radio.network.CellIdentity;
 import android.hardware.radio.network.CellInfo;
-import android.hardware.radio.network.Domain;
 import android.hardware.radio.network.LinkCapacityEstimate;
 import android.hardware.radio.network.NetworkScanResult;
 import android.hardware.radio.network.PhoneRestrictedState;
@@ -136,8 +135,8 @@ oneway interface IRadioNetworkIndication {
      *        include the time spend in sleep / low power states. If it can not be guaranteed,
      *        there must not be any caching done at the modem and should fill in 0 for ageMs
      */
-    void nitzTimeReceived(in RadioIndicationType type, in String nitzTime,
-            in long receivedTimeMs, in long ageMs);
+    void nitzTimeReceived(
+            in RadioIndicationType type, in String nitzTime, in long receivedTimeMs, in long ageMs);
 
     /**
      * Report that Registration or a Location/Routing/Tracking Area update has failed.
@@ -165,7 +164,7 @@ oneway interface IRadioNetworkIndication {
      *        MAX_INT if this value is unused.
      */
     void registrationFailed(in RadioIndicationType type, in CellIdentity cellIdentity,
-            in String chosenPlmn, in Domain domain, in int causeCode, in int additionalCauseCode);
+            in String chosenPlmn, in int domain, in int causeCode, in int additionalCauseCode);
 
     /**
      * Indicates a restricted state change (eg, for Domain Specific Access Control).

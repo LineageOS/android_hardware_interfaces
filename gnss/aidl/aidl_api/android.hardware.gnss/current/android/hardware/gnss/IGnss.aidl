@@ -44,7 +44,59 @@ interface IGnss {
   @nullable android.hardware.gnss.IGnssGeofence getExtensionGnssGeofence();
   @nullable android.hardware.gnss.IGnssNavigationMessageInterface getExtensionGnssNavigationMessage();
   android.hardware.gnss.IAGnss getExtensionAGnss();
+  android.hardware.gnss.IAGnssRil getExtensionAGnssRil();
+  android.hardware.gnss.IGnssDebug getExtensionGnssDebug();
+  android.hardware.gnss.visibility_control.IGnssVisibilityControl getExtensionGnssVisibilityControl();
+  void start();
+  void stop();
+  void injectTime(in long timeMs, in long timeReferenceMs, in int uncertaintyMs);
+  void injectLocation(in android.hardware.gnss.GnssLocation location);
+  void injectBestLocation(in android.hardware.gnss.GnssLocation location);
+  void deleteAidingData(in android.hardware.gnss.IGnss.GnssAidingData aidingDataFlags);
+  void setPositionMode(in android.hardware.gnss.IGnss.PositionModeOptions options);
+  android.hardware.gnss.IGnssAntennaInfo getExtensionGnssAntennaInfo();
+  @nullable android.hardware.gnss.measurement_corrections.IMeasurementCorrectionsInterface getExtensionMeasurementCorrections();
+  void startSvStatus();
+  void stopSvStatus();
+  void startNmea();
+  void stopNmea();
   const int ERROR_INVALID_ARGUMENT = 1;
   const int ERROR_ALREADY_INIT = 2;
   const int ERROR_GENERIC = 3;
+  @Backing(type="int") @VintfStability
+  enum GnssPositionMode {
+    STANDALONE = 0,
+    MS_BASED = 1,
+    MS_ASSISTED = 2,
+  }
+  @Backing(type="int") @VintfStability
+  enum GnssPositionRecurrence {
+    RECURRENCE_PERIODIC = 0,
+    RECURRENCE_SINGLE = 1,
+  }
+  @Backing(type="int") @VintfStability
+  enum GnssAidingData {
+    EPHEMERIS = 1,
+    ALMANAC = 2,
+    POSITION = 4,
+    TIME = 8,
+    IONO = 16,
+    UTC = 32,
+    HEALTH = 64,
+    SVDIR = 128,
+    SVSTEER = 256,
+    SADATA = 512,
+    RTI = 1024,
+    CELLDB_INFO = 32768,
+    ALL = 65535,
+  }
+  @VintfStability
+  parcelable PositionModeOptions {
+    android.hardware.gnss.IGnss.GnssPositionMode mode;
+    android.hardware.gnss.IGnss.GnssPositionRecurrence recurrence;
+    int minIntervalMs;
+    int preferredAccuracyMeters;
+    int preferredTimeMs;
+    boolean lowPowerMode;
+  }
 }

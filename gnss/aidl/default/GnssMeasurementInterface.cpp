@@ -56,11 +56,29 @@ ndk::ScopedAStatus GnssMeasurementInterface::setCallback(
     return ndk::ScopedAStatus::ok();
 }
 
+ndk::ScopedAStatus GnssMeasurementInterface::setCallbackWithOptions(
+        const std::shared_ptr<IGnssMeasurementCallback>& callback, const Options& options) {
+    ALOGD("setCallbackWithOptions: fullTracking:%d, corrVec:%d, intervalMs:%d",
+          (int)options.enableFullTracking, (int)options.enableCorrVecOutputs, options.intervalMs);
+    std::unique_lock<std::mutex> lock(mMutex);
+    sCallback = callback;
+
+    if (mIsActive) {
+        ALOGW("GnssMeasurement callback already set. Resetting the callback...");
+        stop();
+    }
+    mMinIntervalMillis = options.intervalMs;
+    start(options.enableCorrVecOutputs);
+
+    return ndk::ScopedAStatus::ok();
+}
+
 ndk::ScopedAStatus GnssMeasurementInterface::close() {
     ALOGD("close");
     stop();
     std::unique_lock<std::mutex> lock(mMutex);
     sCallback = nullptr;
+    mMinIntervalMillis = 1000;
     return ndk::ScopedAStatus::ok();
 }
 

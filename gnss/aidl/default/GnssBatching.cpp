@@ -52,17 +52,19 @@ ndk::ScopedAStatus GnssBatching::getBatchSize(int* size) {
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus GnssBatching::start(int64_t periodNanos, int flags) {
-    ALOGD("start: periodNanos=%" PRId64 ", flags=%d", periodNanos, flags);
+ndk::ScopedAStatus GnssBatching::start(const Options& options) {
+    ALOGD("start: periodNanos=%" PRId64 ", minDistanceMeters=%f, flags=%d", options.periodNanos,
+          options.minDistanceMeters, options.flags);
     if (mIsActive) {
         ALOGW("Gnss has started. Restarting...");
         stop();
     }
 
-    mWakeUpOnFifoFull = (flags & IGnssBatching::WAKEUP_ON_FIFO_FULL) ? true : false;
     // mMinIntervalMs is not smaller than 1 sec
-    periodNanos = (periodNanos < 1e9) ? 1e9 : periodNanos;
+    long periodNanos = (options.periodNanos < 1e9) ? 1e9 : options.periodNanos;
     mMinIntervalMs = periodNanos / 1e6;
+    mWakeUpOnFifoFull = (options.flags & IGnssBatching::WAKEUP_ON_FIFO_FULL) ? true : false;
+    mMinDistanceMeters = options.minDistanceMeters;
 
     mIsActive = true;
     mThread = std::thread([this]() {

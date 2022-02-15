@@ -40,9 +40,10 @@ using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 #if MAJOR_VERSION <= 6
-using ::android::hardware::audio::common::CPP_VERSION::implementation::AudioChannelBitfield;
+using ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::implementation::
+        AudioChannelBitfield;
 #endif
-using namespace ::android::hardware::audio::common::CPP_VERSION;
+using namespace ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION;
 using namespace ::android::hardware::audio::effect::CPP_VERSION;
 
 struct VirtualizerEffect : public IVirtualizerEffect {

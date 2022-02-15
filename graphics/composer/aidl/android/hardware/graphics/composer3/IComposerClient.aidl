@@ -16,6 +16,8 @@
 
 package android.hardware.graphics.composer3;
 
+import android.hardware.graphics.common.DisplayDecorationSupport;
+import android.hardware.graphics.common.Transform;
 import android.hardware.graphics.composer3.ClientTargetProperty;
 import android.hardware.graphics.composer3.ColorMode;
 import android.hardware.graphics.composer3.CommandResultPayload;
@@ -30,7 +32,6 @@ import android.hardware.graphics.composer3.DisplayIdentification;
 import android.hardware.graphics.composer3.FormatColorComponent;
 import android.hardware.graphics.composer3.HdrCapabilities;
 import android.hardware.graphics.composer3.IComposerCallback;
-import android.hardware.graphics.composer3.LayerGenericMetadataKey;
 import android.hardware.graphics.composer3.PerFrameMetadataKey;
 import android.hardware.graphics.composer3.PowerMode;
 import android.hardware.graphics.composer3.ReadbackBufferAttributes;
@@ -355,6 +356,23 @@ interface IComposerClient {
     DisplayContentSamplingAttributes getDisplayedContentSamplingAttributes(long display);
 
     /**
+     * Queries the physical orientation of a display. Orientation 'Transform::NONE'
+     * represents a display that doesn't require any transformation on layers
+     * to be presented at their natural orientation.
+     *
+     * @param display is the display where the physical orientation is queried.
+     *
+     * @return is one of the below values:
+     *         Transform::NONE
+     *         Transform::ROT_90
+     *         Transform::ROT_180
+     *         Transform::ROT_270
+     *
+     * @exception EX_BAD_DISPLAY when an invalid display was passed in.
+     */
+    Transform getDisplayPhysicalOrientation(long display);
+
+    /**
      * Returns the high dynamic range (HDR) capabilities of the given display,
      * which are invariant with regard to the active configuration.
      *
@@ -367,20 +385,6 @@ interface IComposerClient {
      * @exception EX_BAD_DISPLAY when an invalid display handle was passed in.
      */
     HdrCapabilities getHdrCapabilities(long display);
-
-    /**
-     * Retrieves the set of keys that may be passed into setLayerGenericMetadata
-     *
-     * Key names must meet the following requirements:
-     * - Must be specified in reverse domain name notation
-     * - Must not start with 'com.android' or 'android'
-     * - Must be unique within the returned vector
-     * - Must correspond to a matching HIDL struct type, which defines the
-     *   structure of its values. For example, the key 'com.example.V1-3.Foo'
-     *   should correspond to a value of type com.example@1.3::Foo, which is
-     *   defined in a vendor HAL extension
-     */
-    LayerGenericMetadataKey[] getLayerGenericMetadataKeys();
 
     /**
      * Returns the maximum number of virtual displays supported by this device
@@ -479,7 +483,7 @@ interface IComposerClient {
      *   getReadbackBufferAttributes
      *   setReadbackBuffer
      */
-    ParcelFileDescriptor getReadbackBufferFence(long display);
+    @nullable ParcelFileDescriptor getReadbackBufferFence(long display);
 
     /**
      * Returns the render intents supported by the specified display and color
@@ -511,6 +515,16 @@ interface IComposerClient {
      * @exception EX_BAD_DISPLAY when an invalid display handle was passed in.
      */
     ContentType[] getSupportedContentTypes(long display);
+
+    /**
+     * Report whether and how this display supports Composition.DISPLAY_DECORATION.
+     *
+     * @return A description of how the display supports DISPLAY_DECORATION, or null
+     * if it is unsupported.
+     *
+     * @exception EX_BAD_DISPLAY when an invalid display handle was passed in.
+     */
+    @nullable DisplayDecorationSupport getDisplayDecorationSupport(long display);
 
     /**
      * Provides a IComposerCallback object for the device to call.
@@ -562,6 +576,58 @@ interface IComposerClient {
      */
     VsyncPeriodChangeTimeline setActiveConfigWithConstraints(
             long display, int config, in VsyncPeriodChangeConstraints vsyncPeriodChangeConstraints);
+
+    /**
+     * Sets the display config in which the device boots.
+     *
+     * If the device is unable to boot in this config for any reason (example HDMI display changed),
+     * the implementation should try to find a config which matches the resolution and refresh-rate
+     * of this config. If no such config exists, the implementation's preferred display config
+     * should be used.
+     *
+     * @param display is the display for which the boot config is set.
+     * @param config is the new boot config for the display.
+     *
+     * @exception EX_BAD_DISPLAY when an invalid display handle was passed in.
+     * @exception EX_BAD_CONFIG when an invalid config id was passed in.
+     *
+     * @see getDisplayConfigs
+     * @see clearBootDisplayConfig
+     * @see getPreferredBootDisplayConfig
+     */
+    void setBootDisplayConfig(long display, int config);
+
+    /**
+     * Clears the boot display config.
+     *
+     * The device should boot in the implementation's preferred display config.
+     *
+     * @param display is the display for which the cached boot config is cleared.
+     *
+     * @exception EX_BAD_DISPLAY when an invalid display handle was passed in.
+     *
+     * @see getDisplayConfigs
+     * @see setBootDisplayConfig
+     * @see getPreferredBootDisplayConfig
+     */
+    void clearBootDisplayConfig(long display);
+
+    /**
+     * Returns the implementation's preferred display config.
+     *
+     * This is the display config used by the implementation at boot time, if the boot display
+     * config has not been requested yet, or if it has been previously cleared.
+     *
+     * @param display is the display to which the preferred config is queried.
+     * @return the implementation's preferred display config.
+     *
+     * @exception EX_BAD_DISPLAY when an invalid display handle was passed in.
+     *
+     * @see getDisplayConfigs
+     * @see setBootDisplayConfig
+     * @see clearBootDisplayConfig
+     */
+    int getPreferredBootDisplayConfig(long display);
 
     /**
      * Requests the display to enable/disable its low latency mode.
@@ -631,25 +697,6 @@ interface IComposerClient {
     void setContentType(long display, ContentType type);
 
     /**
-     * Sets the brightness of a display.
-     *
-     * Ideally, the brightness change should take effect in the next frame post (so that it can be
-     * aligned with color transforms).
-     *
-     * @param display
-     *      The display whose brightness is set.
-     * @param brightness
-     *      A number between 0.0f (minimum brightness) and 1.0f (maximum brightness), or -1.0 to
-     *      turn the backlight off.
-     *
-     * @exception EX_BAD_DISPLAY   when the display is invalid, or
-     * @exception EX_UNSUPPORTED   when brightness operations are not supported, or
-     * @exception EX_BAD_PARAMETER when the brightness is invalid, or
-     * @exception EX_NO_RESOURCES  when the brightness cannot be applied.
-     */
-    void setDisplayBrightness(long display, float brightness);
-
-    /**
      * Enables or disables the collection of color content statistics
      * on this display.
      *
@@ -702,13 +749,15 @@ interface IComposerClient {
      * This buffer must have been allocated as described in
      * getReadbackBufferAttributes and is in the dataspace provided by the same.
      *
+     * Also provides a file descriptor referring to a release sync fence
+     * object, which must be signaled when it is safe to write to the readback
+     * buffer. If it is already safe to write to the readback buffer, null may be passed instead.
+     *
      * If there is hardware protected content on the display at the time of the next
      * composition, the area of the readback buffer covered by such content must be
      * completely black. Any areas of the buffer not covered by such content may
      * optionally be black as well.
      *
-     * The release fence file descriptor provided works identically to the one
-     * described for setOutputBuffer.
      *
      * This function must not be called between any call to validateDisplay and a
      * subsequent call to presentDisplay.
@@ -716,7 +765,8 @@ interface IComposerClient {
      * Parameters:
      * @param display - the display on which to create the layer.
      * @param buffer - the new readback buffer
-     * @param releaseFence - a sync fence file descriptor as described in setOutputBuffer
+     * @param releaseFence - a sync fence file descriptor as described above or null if it is
+     *                       already safe to write to the readback buffer.
      *
      * @exception EX_BAD_DISPLAY - an invalid display handle was passed in
      * @exception EX_BAD_PARAMETER - the new readback buffer handle was invalid
@@ -726,7 +776,7 @@ interface IComposerClient {
      *   getReadbackBufferFence
      */
     void setReadbackBuffer(long display, in android.hardware.common.NativeHandle buffer,
-            in ParcelFileDescriptor releaseFence);
+            in @nullable ParcelFileDescriptor releaseFence);
 
     /**
      * Enables or disables the vsync signal for the given display. Virtual
@@ -740,4 +790,25 @@ interface IComposerClient {
      * @exception EX_BAD_PARAMETER when enabled was an invalid value.
      */
     void setVsyncEnabled(long display, boolean enabled);
+
+    /**
+     * Enables or disables the idle timer on this display.
+     *
+     * Idle timer is used to allow the display to go into a panel idle mode after some
+     * idle period.
+     *
+     * This function should only be called if the display reports support for
+     * DisplayCapability.DISPLAY_IDLE from getDisplayCapabilities.
+     *
+     * @param display is the display to which the idle timer is set.
+     * @param timeoutMs is the minimum requirements of idle period in milliseconds. Panel
+     *                should not go into the idle state within the minimum requirement after
+     *                idle for a while. 0 means disabled, panel should not go into idle state.
+     *
+     * @exception EX_BAD_DISPLAY when an invalid display handle was passed in.
+     * @exception EX_BAD_PARAMETER when timeout is a negative number.
+     * @exception EX_UNSUPPORTED when idle is not supported on this display.
+     *
+     */
+    void setIdleTimerEnabled(long display, int timeoutMs);
 }

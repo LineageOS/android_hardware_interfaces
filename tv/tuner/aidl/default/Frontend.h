@@ -19,6 +19,7 @@
 #include <aidl/android/hardware/tv/tuner/BnFrontend.h>
 #include <fstream>
 #include <iostream>
+#include <thread>
 #include "Tuner.h"
 
 using namespace std;
@@ -46,9 +47,13 @@ class Frontend : public BnFrontend {
     ::ndk::ScopedAStatus getStatus(const std::vector<FrontendStatusType>& in_statusTypes,
                                    std::vector<FrontendStatus>* _aidl_return) override;
     ::ndk::ScopedAStatus setLnb(int32_t in_lnbId) override;
-    ::ndk::ScopedAStatus setLna(bool in_bEnable) override;
     ::ndk::ScopedAStatus linkCiCam(int32_t in_ciCamId, int32_t* _aidl_return) override;
     ::ndk::ScopedAStatus unlinkCiCam(int32_t in_ciCamId) override;
+    ::ndk::ScopedAStatus getHardwareInfo(std::string* _aidl_return) override;
+    ::ndk::ScopedAStatus removeOutputPid(int32_t in_pid) override;
+    ::ndk::ScopedAStatus getFrontendStatusReadiness(
+            const std::vector<FrontendStatusType>& in_statusTypes,
+            std::vector<FrontendStatusReadiness>* _aidl_return) override;
 
     binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
 
@@ -56,18 +61,25 @@ class Frontend : public BnFrontend {
     int32_t getFrontendId();
     string getSourceFile();
     bool isLocked();
+    void getFrontendInfo(FrontendInfo* _aidl_return);
 
   private:
     virtual ~Frontend();
     bool supportsSatellite();
+    void scanThreadLoop();
+
     std::shared_ptr<IFrontendCallback> mCallback;
     std::shared_ptr<Tuner> mTuner;
     FrontendType mType = FrontendType::UNDEFINED;
     int32_t mId = 0;
     bool mIsLocked = false;
     int32_t mCiCamId;
-
+    std::thread mScanThread;
+    FrontendSettings mFrontendSettings;
+    FrontendScanType mFrontendScanType;
     std::ifstream mFrontendData;
+    FrontendCapabilities mFrontendCaps;
+    vector<FrontendStatusType> mFrontendStatusCaps;
 };
 
 }  // namespace tuner
