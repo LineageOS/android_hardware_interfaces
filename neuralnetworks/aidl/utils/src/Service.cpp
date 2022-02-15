@@ -55,11 +55,12 @@ nn::GeneralResult<nn::Version> getAidlServiceFeatureLevel(IDevice* service) {
 
 }  // namespace
 
-nn::GeneralResult<nn::SharedDevice> getDevice(const std::string& instanceName) {
+nn::GeneralResult<nn::SharedDevice> getDevice(
+        const std::string& instanceName, ::android::nn::Version::Level maxFeatureLevelAllowed) {
     auto fullName = std::string(IDevice::descriptor) + "/" + instanceName;
     hal::utils::ResilientDevice::Factory makeDevice =
-            [instanceName,
-             name = std::move(fullName)](bool blocking) -> nn::GeneralResult<nn::SharedDevice> {
+            [instanceName, name = std::move(fullName),
+             maxFeatureLevelAllowed](bool blocking) -> nn::GeneralResult<nn::SharedDevice> {
         std::add_pointer_t<AIBinder*(const char*)> getService;
         if (blocking) {
             if (__builtin_available(android __NNAPI_AIDL_MIN_ANDROID_API__, *)) {
@@ -79,7 +80,8 @@ nn::GeneralResult<nn::SharedDevice> getDevice(const std::string& instanceName) {
                    << " returned nullptr";
         }
         ABinderProcess_startThreadPool();
-        const auto featureLevel = NN_TRY(getAidlServiceFeatureLevel(service.get()));
+        auto featureLevel = NN_TRY(getAidlServiceFeatureLevel(service.get()));
+        featureLevel.level = std::min(featureLevel.level, maxFeatureLevelAllowed);
         return Device::create(instanceName, std::move(service), featureLevel);
     };
 
