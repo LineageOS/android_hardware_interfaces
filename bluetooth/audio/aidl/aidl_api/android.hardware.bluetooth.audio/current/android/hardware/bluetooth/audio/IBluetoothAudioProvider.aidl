@@ -35,7 +35,7 @@ package android.hardware.bluetooth.audio;
 @VintfStability
 interface IBluetoothAudioProvider {
   void endSession();
-  android.hardware.common.fmq.MQDescriptor<byte,android.hardware.common.fmq.SynchronizedReadWrite> startSession(in android.hardware.bluetooth.audio.IBluetoothAudioPort hostIf, in android.hardware.bluetooth.audio.AudioConfiguration audioConfig);
+  android.hardware.common.fmq.MQDescriptor<byte,android.hardware.common.fmq.SynchronizedReadWrite> startSession(in android.hardware.bluetooth.audio.IBluetoothAudioPort hostIf, in android.hardware.bluetooth.audio.AudioConfiguration audioConfig, in android.hardware.bluetooth.audio.LatencyMode[] supportedLatencyModes);
   void streamStarted(in android.hardware.bluetooth.audio.BluetoothAudioStatus status);
   void streamSuspended(in android.hardware.bluetooth.audio.BluetoothAudioStatus status);
   void updateAudioConfiguration(in android.hardware.bluetooth.audio.AudioConfiguration audioConfig);
