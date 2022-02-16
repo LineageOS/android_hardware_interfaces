@@ -983,7 +983,8 @@ TEST_P(BluetoothAudioProviderLeAudioOutputSoftwareAidl,
               .channelMode = channel_mode,
               .dataIntervalUs = data_interval_us,
           };
-          bool is_codec_config_valid = IsPcmConfigSupported(pcm_config);
+          bool is_codec_config_valid =
+              IsPcmConfigSupported(pcm_config) && pcm_config.dataIntervalUs > 0;
           DataMQDesc mq_desc;
           auto aidl_retval = audio_provider_->startSession(
               audio_port_, AudioConfiguration(pcm_config), &mq_desc);
@@ -1054,7 +1055,8 @@ TEST_P(BluetoothAudioProviderLeAudioInputSoftwareAidl,
               .channelMode = channel_mode,
               .dataIntervalUs = data_interval_us,
           };
-          bool is_codec_config_valid = IsPcmConfigSupported(pcm_config);
+          bool is_codec_config_valid =
+              IsPcmConfigSupported(pcm_config) && pcm_config.dataIntervalUs > 0;
           DataMQDesc mq_desc;
           auto aidl_retval = audio_provider_->startSession(
               audio_port_, AudioConfiguration(pcm_config), &mq_desc);
@@ -1395,7 +1397,8 @@ TEST_P(BluetoothAudioProviderLeAudioBroadcastSoftwareAidl,
               .channelMode = channel_mode,
               .dataIntervalUs = data_interval_us,
           };
-          bool is_codec_config_valid = IsPcmConfigSupported(pcm_config);
+          bool is_codec_config_valid =
+              IsPcmConfigSupported(pcm_config) && pcm_config.dataIntervalUs > 0;
           DataMQDesc mq_desc;
           auto aidl_retval = audio_provider_->startSession(
               audio_port_, AudioConfiguration(pcm_config), &mq_desc);
