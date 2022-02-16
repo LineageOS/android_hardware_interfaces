@@ -67,6 +67,7 @@ class TestLayer {
     void setSourceCrop(FRect crop) { mSourceCrop = crop; }
     void setZOrder(uint32_t z) { mZOrder = z; }
     void setWhitePointNits(float whitePointNits) { mWhitePointNits = whitePointNits; }
+    void setBrightness(float brightness) { mBrightness = brightness; }
 
     void setSurfaceDamage(std::vector<Rect> surfaceDamage) {
         mSurfaceDamage = std::move(surfaceDamage);
@@ -84,12 +85,13 @@ class TestLayer {
 
     int64_t getLayer() const { return mLayer; }
 
-    float getWhitePointNits() const { return mWhitePointNits; }
+    float getBrightness() const { return mBrightness; }
 
   protected:
     int64_t mDisplay;
     int64_t mLayer;
     Rect mDisplayFrame = {0, 0, 0, 0};
+    float mBrightness = 1.f;
     float mWhitePointNits = -1.f;
     std::vector<Rect> mSurfaceDamage;
     Transform mTransform = static_cast<Transform>(0);
@@ -118,7 +120,6 @@ class TestColorLayer : public TestLayer {
 class TestBufferLayer : public TestLayer {
   public:
     TestBufferLayer(const std::shared_ptr<VtsComposerClient>& client,
-                    const ::android::sp<::android::GraphicBuffer>& graphicBuffer,
                     TestRenderEngine& renderEngine, int64_t display, uint32_t width,
                     uint32_t height, common::PixelFormat format,
                     Composition composition = Composition::DEVICE);
@@ -154,6 +155,9 @@ class TestBufferLayer : public TestLayer {
     PixelFormat mPixelFormat;
     uint32_t mUsage;
     ::android::Rect mAccessRegion;
+
+  private:
+    ::android::sp<::android::GraphicBuffer> allocateBuffer();
 };
 
 class ReadbackHelper {
@@ -194,8 +198,6 @@ class ReadbackBuffer {
 
     void checkReadbackBuffer(const std::vector<Color>& expectedColors);
 
-    ::android::sp<::android::GraphicBuffer> allocate();
-
   protected:
     uint32_t mWidth;
     uint32_t mHeight;
@@ -208,6 +210,9 @@ class ReadbackBuffer {
     std::shared_ptr<VtsComposerClient> mComposerClient;
     ::android::Rect mAccessRegion;
     native_handle_t mBufferHandle;
+
+  private:
+    ::android::sp<::android::GraphicBuffer> allocateBuffer();
 };
 
 }  // namespace aidl::android::hardware::graphics::composer3::vts

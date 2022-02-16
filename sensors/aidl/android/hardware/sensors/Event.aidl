@@ -204,6 +204,8 @@ parcelable Event {
              * velocity of the head (relative to itself), in radians per second.
              * The direction of this vector indicates the axis of rotation, and
              * the magnitude indicates the rate of rotation.
+             * If this head tracker sensor instance does not support detecting
+             * velocity, then these fields must be set to 0.
              */
             float vx;
             float vy;
