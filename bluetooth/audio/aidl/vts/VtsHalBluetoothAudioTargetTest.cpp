@@ -39,6 +39,7 @@ using aidl::android::hardware::bluetooth::audio::AptxConfiguration;
 using aidl::android::hardware::bluetooth::audio::AudioCapabilities;
 using aidl::android::hardware::bluetooth::audio::AudioConfiguration;
 using aidl::android::hardware::bluetooth::audio::BnBluetoothAudioPort;
+using aidl::android::hardware::bluetooth::audio::BroadcastCapability;
 using aidl::android::hardware::bluetooth::audio::ChannelMode;
 using aidl::android::hardware::bluetooth::audio::CodecCapabilities;
 using aidl::android::hardware::bluetooth::audio::CodecConfiguration;
@@ -51,6 +52,7 @@ using aidl::android::hardware::bluetooth::audio::Lc3Capabilities;
 using aidl::android::hardware::bluetooth::audio::Lc3Configuration;
 using aidl::android::hardware::bluetooth::audio::LdacCapabilities;
 using aidl::android::hardware::bluetooth::audio::LdacConfiguration;
+using aidl::android::hardware::bluetooth::audio::LeAudioBroadcastConfiguration;
 using aidl::android::hardware::bluetooth::audio::
     LeAudioCodecCapabilitiesSetting;
 using aidl::android::hardware::bluetooth::audio::LeAudioCodecConfiguration;
@@ -1412,6 +1414,164 @@ TEST_P(BluetoothAudioProviderLeAudioBroadcastSoftwareAidl,
   }
 }
 
+/**
+ * openProvider LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH
+ */
+class BluetoothAudioProviderLeAudioBroadcastHardwareAidl
+    : public BluetoothAudioProviderFactoryAidl {
+ public:
+  virtual void SetUp() override {
+    BluetoothAudioProviderFactoryAidl::SetUp();
+    GetProviderCapabilitiesHelper(
+        SessionType::LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH);
+    OpenProviderHelper(
+        SessionType::LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH);
+    ASSERT_TRUE(temp_provider_capabilities_.empty() ||
+                audio_provider_ != nullptr);
+  }
+
+  virtual void TearDown() override {
+    audio_port_ = nullptr;
+    audio_provider_ = nullptr;
+    BluetoothAudioProviderFactoryAidl::TearDown();
+  }
+
+  bool IsBroadcastOffloadSupported() {
+    for (auto& capability : temp_provider_capabilities_) {
+      if (capability.getTag() != AudioCapabilities::leAudioCapabilities) {
+        continue;
+      }
+      auto& le_audio_capability =
+          capability.get<AudioCapabilities::leAudioCapabilities>();
+      if (le_audio_capability.broadcastCapability.codecType !=
+          CodecType::UNKNOWN)
+        return true;
+    }
+    return false;
+  }
+
+  std::vector<Lc3Configuration> GetBroadcastLc3SupportedList(bool supported) {
+    std::vector<Lc3Configuration> le_audio_codec_configs;
+    if (!supported) {
+      Lc3Configuration lc3_config{.samplingFrequencyHz = 0, .pcmBitDepth = 0};
+      le_audio_codec_configs.push_back(lc3_config);
+      return le_audio_codec_configs;
+    }
+
+    // There might be more than one LeAudioCodecCapabilitiesSetting
+    std::vector<Lc3Capabilities> lc3_capabilities;
+    for (auto& capability : temp_provider_capabilities_) {
+      if (capability.getTag() != AudioCapabilities::leAudioCapabilities) {
+        continue;
+      }
+      auto& le_audio_capability =
+          capability.get<AudioCapabilities::leAudioCapabilities>();
+      auto& broadcast_capability = le_audio_capability.broadcastCapability;
+      if (broadcast_capability.codecType != CodecType::LC3) {
+        continue;
+      }
+      auto& lc3_capability = broadcast_capability.leAudioCodecCapabilities.get<
+          BroadcastCapability::LeAudioCodecCapabilities::lc3Capabilities>();
+      for (int idx = 0; idx < lc3_capability->size(); idx++)
+        lc3_capabilities.push_back(*lc3_capability->at(idx));
+    }
+
+    // Combine those parameters into one list of LeAudioCodecConfiguration
+    // This seems horrible, but usually each Lc3Capability only contains a
+    // single Lc3Configuration, which means every array has a length of 1.
+    for (auto& lc3_capability : lc3_capabilities) {
+      for (int32_t samplingFrequencyHz : lc3_capability.samplingFrequencyHz) {
+        for (int32_t frameDurationUs : lc3_capability.frameDurationUs) {
+          for (int32_t octetsPerFrame : lc3_capability.octetsPerFrame) {
+            Lc3Configuration lc3_config = {
+                .samplingFrequencyHz = samplingFrequencyHz,
+                .frameDurationUs = frameDurationUs,
+                .octetsPerFrame = octetsPerFrame,
+            };
+            le_audio_codec_configs.push_back(lc3_config);
+          }
+        }
+      }
+    }
+
+    return le_audio_codec_configs;
+  }
+
+  LeAudioCodecCapabilitiesSetting temp_le_audio_capabilities_;
+};
+
+/**
+ * Test whether each provider of type
+ * SessionType::LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH can be
+ * started and stopped
+ */
+TEST_P(BluetoothAudioProviderLeAudioBroadcastHardwareAidl,
+       OpenLeAudioOutputHardwareProvider) {}
+
+/**
+ * Test whether each provider of type
+ * SessionType::LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH can be
+ * started and stopped with broadcast hardware encoding config
+ */
+TEST_P(BluetoothAudioProviderLeAudioBroadcastHardwareAidl,
+       StartAndEndLeAudioBroadcastSessionWithPossibleBroadcastConfig) {
+  if (!IsBroadcastOffloadSupported()) {
+    return;
+  }
+
+  auto lc3_codec_configs = GetBroadcastLc3SupportedList(true /* supported */);
+  LeAudioBroadcastConfiguration le_audio_broadcast_config = {
+      .codecType = CodecType::LC3,
+      .streamMap = {},
+  };
+
+  for (auto& lc3_config : lc3_codec_configs) {
+    le_audio_broadcast_config.streamMap[0]
+        .leAudioCodecConfig.set<LeAudioCodecConfiguration::lc3Config>(
+            lc3_config);
+    DataMQDesc mq_desc;
+    auto aidl_retval = audio_provider_->startSession(
+        audio_port_, AudioConfiguration(le_audio_broadcast_config), &mq_desc);
+
+    ASSERT_TRUE(aidl_retval.isOk());
+    EXPECT_TRUE(audio_provider_->endSession().isOk());
+  }
+}
+
+/**
+ * Test whether each provider of type
+ * SessionType::LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH can be
+ * started and stopped with Broadcast hardware encoding config
+ *
+ * Disabled since offload codec checking is not ready
+ */
+TEST_P(
+    BluetoothAudioProviderLeAudioBroadcastHardwareAidl,
+    DISABLED_StartAndEndLeAudioBroadcastSessionWithInvalidAudioConfiguration) {
+  if (!IsBroadcastOffloadSupported()) {
+    return;
+  }
+
+  auto lc3_codec_configs = GetBroadcastLc3SupportedList(false /* supported */);
+  LeAudioBroadcastConfiguration le_audio_broadcast_config = {
+      .codecType = CodecType::LC3,
+      .streamMap = {},
+  };
+
+  for (auto& lc3_config : lc3_codec_configs) {
+    le_audio_broadcast_config.streamMap[0]
+        .leAudioCodecConfig.set<LeAudioCodecConfiguration::lc3Config>(
+            lc3_config);
+    DataMQDesc mq_desc;
+    auto aidl_retval = audio_provider_->startSession(
+        audio_port_, AudioConfiguration(le_audio_broadcast_config), &mq_desc);
+
+    // AIDL call should fail on invalid codec
+    ASSERT_FALSE(aidl_retval.isOk());
+    EXPECT_TRUE(audio_provider_->endSession().isOk());
+  }
+}
+
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(
     BluetoothAudioProviderFactoryAidl);
 INSTANTIATE_TEST_SUITE_P(PerInstance, BluetoothAudioProviderFactoryAidl,
@@ -1481,14 +1641,13 @@ INSTANTIATE_TEST_SUITE_P(PerInstance,
                              IBluetoothAudioProviderFactory::descriptor)),
                          android::PrintInstanceNameToString);
 
-// TODO(219668925): Add LE Audio Broadcast VTS
-// GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(
-//     BluetoothAudioProviderLeAudioBroadcastHardwareAidl);
-// INSTANTIATE_TEST_SUITE_P(PerInstance,
-//                          BluetoothAudioProviderLeAudioBroadcastHardwareAidl,
-//                          testing::ValuesIn(android::getAidlHalInstanceNames(
-//                              IBluetoothAudioProviderFactory::descriptor)),
-//                          android::PrintInstanceNameToString);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(
+    BluetoothAudioProviderLeAudioBroadcastHardwareAidl);
+INSTANTIATE_TEST_SUITE_P(PerInstance,
+                         BluetoothAudioProviderLeAudioBroadcastHardwareAidl,
+                         testing::ValuesIn(android::getAidlHalInstanceNames(
+                             IBluetoothAudioProviderFactory::descriptor)),
+                         android::PrintInstanceNameToString);
 
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
