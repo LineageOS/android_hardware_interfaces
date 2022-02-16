@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include <android/binder_process.h>
 #include <binder/ProcessState.h>
 #include <cutils/properties.h>
 #include <hidl/HidlTransportSupport.h>
@@ -51,6 +52,9 @@ int main(int /* argc */, char* /* argv */ []) {
     ::android::ProcessState::initWithDriver("/dev/vndbinder");
     // start a threadpool for vndbinder interactions
     ::android::ProcessState::self()->startThreadPool();
+
+    ABinderProcess_setThreadPoolMaxThreadCount(1);
+    ABinderProcess_startThreadPool();
 
     const int32_t defaultValue = -1;
     int32_t value =
