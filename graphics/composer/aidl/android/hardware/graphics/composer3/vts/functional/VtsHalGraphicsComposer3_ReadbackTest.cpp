@@ -565,11 +565,6 @@ TEST_P(GraphicsCompositionTest, ClientComposition) {
             int32_t clientFence;
             const auto unlockStatus = graphicBuffer->unlockAsync(&clientFence);
             ASSERT_EQ(::android::OK, unlockStatus);
-            if (clientFence >= 0) {
-                sync_wait(clientFence, -1);
-                close(clientFence);
-            }
-
             mWriter.setClientTarget(getPrimaryDisplayId(), /*slot*/ 0, buffer, clientFence,
                                     clientDataspace, std::vector<common::Rect>(1, damage));
             layer->setToClientComposition(mWriter);
@@ -676,11 +671,6 @@ TEST_P(GraphicsCompositionTest, DeviceAndClientComposition) {
         int32_t clientFence;
         const auto unlockStatus = graphicBuffer->unlockAsync(&clientFence);
         ASSERT_EQ(::android::OK, unlockStatus);
-        if (clientFence >= 0) {
-            sync_wait(clientFence, -1);
-            close(clientFence);
-        }
-
         mWriter.setClientTarget(getPrimaryDisplayId(), /*slot*/ 0, buffer, clientFence,
                                 clientDataspace, std::vector<common::Rect>(1, clientFrame));
         clientLayer->setToClientComposition(mWriter);
