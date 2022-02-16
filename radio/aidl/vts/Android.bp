@@ -70,9 +70,8 @@ cc_test {
         "android.hardware.radio.sim-V1-ndk",
         "android.hardware.radio.voice-V1-ndk",
     ],
-    // TODO(b/210712359): enable after b/207695009 is resolved.
-    //test_suites: [
-    //    "general-tests",
-    //    "vts",
-    //],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
 }
