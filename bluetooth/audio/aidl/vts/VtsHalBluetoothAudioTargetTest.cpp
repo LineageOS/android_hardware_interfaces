@@ -419,7 +419,7 @@ class BluetoothAudioProviderA2dpHardwareAidl
 
   void GetA2dpOffloadCapabilityHelper(const CodecType& codec_type) {
     temp_codec_capabilities_ = nullptr;
-    for (auto codec_capability : temp_provider_capabilities_) {
+    for (auto& codec_capability : temp_provider_capabilities_) {
       auto& a2dp_capabilities =
           codec_capability.get<AudioCapabilities::a2dpCapabilities>();
       if (a2dp_capabilities.codecType != codec_type) {
