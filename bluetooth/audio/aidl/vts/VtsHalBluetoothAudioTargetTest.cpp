@@ -1003,7 +1003,7 @@ TEST_P(BluetoothAudioProviderLeAudioOutputSoftwareAidl,
 }
 
 /**
- * openProvider LE_AUDIO_SOFTWARE_DECODED_DATAPATH
+ * openProvider LE_AUDIO_SOFTWARE_DECODING_DATAPATH
  */
 class BluetoothAudioProviderLeAudioInputSoftwareAidl
     : public BluetoothAudioProviderFactoryAidl {
@@ -1033,7 +1033,7 @@ class BluetoothAudioProviderLeAudioInputSoftwareAidl
 
 /**
  * Test whether each provider of type
- * SessionType::LE_AUDIO_SOFTWARE_DECODED_DATAPATH can be started and
+ * SessionType::LE_AUDIO_SOFTWARE_DECODING_DATAPATH can be started and
  * stopped
  */
 TEST_P(BluetoothAudioProviderLeAudioInputSoftwareAidl,
@@ -1041,7 +1041,7 @@ TEST_P(BluetoothAudioProviderLeAudioInputSoftwareAidl,
 
 /**
  * Test whether each provider of type
- * SessionType::LE_AUDIO_SOFTWARE_DECODED_DATAPATH can be started and
+ * SessionType::LE_AUDIO_SOFTWARE_DECODING_DATAPATH can be started and
  * stopped with different PCM config
  */
 TEST_P(BluetoothAudioProviderLeAudioInputSoftwareAidl,
@@ -1074,7 +1074,7 @@ TEST_P(BluetoothAudioProviderLeAudioInputSoftwareAidl,
 }
 
 /**
- * openProvider LE_AUDIO_HARDWARE_OFFLOAD_DECODED_DATAPATH
+ * openProvider LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH
  */
 class BluetoothAudioProviderLeAudioOutputHardwareAidl
     : public BluetoothAudioProviderFactoryAidl {
