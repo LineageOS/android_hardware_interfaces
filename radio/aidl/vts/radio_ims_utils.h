@@ -45,6 +45,10 @@ class RadioImsResponse : public BnRadioImsResponse {
     virtual ndk::ScopedAStatus notifyImsTrafficResponse(const RadioResponseInfo& info) override;
 
     virtual ndk::ScopedAStatus performAcbCheckResponse(const RadioResponseInfo& info) override;
+
+    virtual ndk::ScopedAStatus setAnbrEnabledResponse(const RadioResponseInfo& info) override;
+
+    virtual ndk::ScopedAStatus sendAnbrQueryResponse(const RadioResponseInfo& info) override;
 };
 
 /* Callback class for radio ims indication */
@@ -60,6 +64,9 @@ class RadioImsIndication : public BnRadioImsIndication {
             const ConnectionFailureInfo& info) override;
 
     virtual ndk::ScopedAStatus onAccessAllowed(RadioIndicationType type, int token) override;
+
+    virtual ndk::ScopedAStatus notifyAnbr(RadioIndicationType type, int qosSessionId,
+            ImsStreamDirection direction, int bitsPerSecond) override;
 };
 
 // The main test class for Radio AIDL Ims.

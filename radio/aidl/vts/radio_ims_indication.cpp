@@ -29,6 +29,6 @@ ndk::ScopedAStatus RadioImsIndication::onAccessAllowed(RadioIndicationType /*typ
 }
 
 ndk::ScopedAStatus RadioImsIndication::notifyAnbr(RadioIndicationType /*type*/,
-        int /*qosSessionId*/, int /*bitsPerSecond*/) {
+        int /*qosSessionId*/, ImsStreamDirection /*direction*/, int /*bitsPerSecond*/) {
     return ndk::ScopedAStatus::ok();
 }
