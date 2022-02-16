@@ -45,8 +45,11 @@ hidl-gen $options \
          -o $ANDROID_BUILD_TOP/system/media/audio/include/system/audio_common-base.h \
          android.hardware.audio.common@7.0
 hidl-gen $options \
-         -o $ANDROID_BUILD_TOP/system/media/audio/include/system/audio-base.h \
+         -o $ANDROID_BUILD_TOP/system/media/audio/include/system/audio-base-v7.0.h \
          android.hardware.audio@7.0
+hidl-gen $options \
+         -o $ANDROID_BUILD_TOP/system/media/audio/include/system/audio-base-v7.1.h \
+         android.hardware.audio@7.1
 hidl-gen $options \
          -o $ANDROID_BUILD_TOP/system/media/audio/include/system/audio_effect-base.h \
          android.hardware.audio.effect@7.0

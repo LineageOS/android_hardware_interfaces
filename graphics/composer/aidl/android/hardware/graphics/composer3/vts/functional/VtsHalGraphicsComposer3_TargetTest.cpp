@@ -1798,26 +1798,37 @@ TEST_P(GraphicsComposerAidlCommandTest, SetLayerPerFrameMetadata) {
     EXPECT_TRUE(mComposerClient->destroyLayer(getPrimaryDisplayId(), layer).isOk());
 }
 
-TEST_P(GraphicsComposerAidlCommandTest, SetLayerWhitePointNits) {
+TEST_P(GraphicsComposerAidlCommandTest, setLayerBrightness) {
     const auto& [layerStatus, layer] =
             mComposerClient->createLayer(getPrimaryDisplayId(), kBufferSlotCount);
-    EXPECT_TRUE(layerStatus.isOk());
 
-    mWriter.setLayerWhitePointNits(getPrimaryDisplayId(), layer, /*whitePointNits*/ 200.f);
+    mWriter.setLayerBrightness(getPrimaryDisplayId(), layer, 0.2f);
     execute();
     ASSERT_TRUE(mReader.takeErrors().empty());
 
-    mWriter.setLayerWhitePointNits(getPrimaryDisplayId(), layer, /*whitePointNits*/ 1000.f);
+    mWriter.setLayerBrightness(getPrimaryDisplayId(), layer, 1.f);
     execute();
     ASSERT_TRUE(mReader.takeErrors().empty());
 
-    mWriter.setLayerWhitePointNits(getPrimaryDisplayId(), layer, /*whitePointNits*/ 0.f);
+    mWriter.setLayerBrightness(getPrimaryDisplayId(), layer, 0.f);
     execute();
     ASSERT_TRUE(mReader.takeErrors().empty());
 
-    mWriter.setLayerWhitePointNits(getPrimaryDisplayId(), layer, /*whitePointNits*/ -1.f);
+    mWriter.setLayerBrightness(getPrimaryDisplayId(), layer, -1.f);
     execute();
-    ASSERT_TRUE(mReader.takeErrors().empty());
+    {
+        const auto errors = mReader.takeErrors();
+        ASSERT_EQ(1, errors.size());
+        EXPECT_EQ(IComposerClient::EX_BAD_PARAMETER, errors[0].errorCode);
+    }
+
+    mWriter.setLayerBrightness(getPrimaryDisplayId(), layer, std::nanf(""));
+    execute();
+    {
+        const auto errors = mReader.takeErrors();
+        ASSERT_EQ(1, errors.size());
+        EXPECT_EQ(IComposerClient::EX_BAD_PARAMETER, errors[0].errorCode);
+    }
 }
 
 TEST_P(GraphicsComposerAidlCommandTest, SetActiveConfigWithConstraints) {

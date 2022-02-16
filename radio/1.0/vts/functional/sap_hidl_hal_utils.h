@@ -36,7 +36,15 @@ using ::android::hardware::Void;
 using ::android::sp;
 
 #define TIMEOUT_PERIOD 40
-#define SAP_SERVICE_NAME "slot1"
+
+// HAL instance name for SIM slot 1 or single SIM device
+#define SAP_SERVICE_SLOT1_NAME "slot1"
+
+// HAL instance name for SIM slot 2 on dual SIM device
+#define SAP_SERVICE_SLOT2_NAME "slot2"
+
+// HAL instance name for SIM slot 3 on triple SIM device
+#define SAP_SERVICE_SLOT3_NAME "slot3"
 
 class SapHidlTest;
 
