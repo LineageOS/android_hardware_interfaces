@@ -33,7 +33,8 @@
 
 package android.hardware.drm;
 @VintfStability
-parcelable CryptoSchemes {
-  List<android.hardware.drm.Uuid> uuids;
-  List<android.hardware.drm.SupportedContentType> mimeTypes;
+parcelable SupportedContentType {
+  String mime;
+  android.hardware.drm.SecurityLevel minLevel;
+  android.hardware.drm.SecurityLevel maxLevel;
 }
