@@ -171,6 +171,27 @@ struct AvailableStream {
     int32_t format;
 };
 
+struct RecordingRateSizePair {
+    int32_t recordingRate;
+    int32_t width;
+    int32_t height;
+
+    bool operator==(const RecordingRateSizePair &p) const{
+        return p.recordingRate == recordingRate &&
+                p.width == width &&
+                p.height == height;
+    }
+};
+
+struct RecordingRateSizePairHasher {
+    size_t operator()(const RecordingRateSizePair& p) const {
+        std::size_t p1 = std::hash<int32_t>()(p.recordingRate);
+        std::size_t p2 = std::hash<int32_t>()(p.width);
+        std::size_t p3 = std::hash<int32_t>()(p.height);
+        return p1 ^ p2 ^ p3;
+    }
+};
+
 struct AvailableZSLInputOutput {
     int32_t inputFormat;
     int32_t outputFormat;
@@ -4539,6 +4560,39 @@ TEST_P(CameraHidlTest, configureStreamsConstrainedOutputs) {
         AvailableStream hfrStream;
         rc = pickConstrainedModeSize(staticMeta, hfrStream);
         ASSERT_EQ(Status::OK, rc);
+
+        // Check that HAL does not advertise multiple preview rates
+        // for the same recording rate and size.
+        camera_metadata_ro_entry entry;
+
+        std::unordered_map<RecordingRateSizePair, int32_t, RecordingRateSizePairHasher> fpsRangeMap;
+
+        auto retCode = find_camera_metadata_ro_entry(staticMeta,
+                ANDROID_CONTROL_AVAILABLE_HIGH_SPEED_VIDEO_CONFIGURATIONS, &entry);
+        ASSERT_EQ(retCode, 0);
+        ASSERT_GT(entry.count, 0);
+
+        for (size_t i = 0; i < entry.count; i+=5) {
+            RecordingRateSizePair recordingRateSizePair;
+            recordingRateSizePair.width = entry.data.i32[i];
+            recordingRateSizePair.height = entry.data.i32[i+1];
+
+            int32_t previewFps = entry.data.i32[i+2];
+            int32_t recordingFps = entry.data.i32[i+3];
+            recordingRateSizePair.recordingRate = recordingFps;
+
+            if (recordingFps != previewFps) {
+                auto it = fpsRangeMap.find(recordingRateSizePair);
+                if (it == fpsRangeMap.end()) {
+                    fpsRangeMap.insert(std::make_pair(recordingRateSizePair,previewFps));
+                    ALOGV("Added RecordingRateSizePair:%d , %d, %d PreviewRate: %d",
+                            recordingFps, recordingRateSizePair.width, recordingRateSizePair.height,
+                            previewFps);
+                } else {
+                    ASSERT_EQ(previewFps, it->second);
+                }
+            }
+        }
 
         int32_t streamId = 0;
         uint32_t streamConfigCounter = 0;
