@@ -448,6 +448,14 @@
         </interface>
     </hal>
     <hal format="aidl" optional="true">
+        <name>android.hardware.radio.config</name>
+        <version>1</version>
+        <interface>
+            <name>IRadioConfig</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="aidl" optional="true">
         <name>android.hardware.radio.data</name>
         <version>1</version>
         <interface>
@@ -509,47 +517,10 @@
     </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.radio</name>
-        <version>1.6</version>
-        <interface>
-            <name>IRadio</name>
-            <instance>slot1</instance>
-            <instance>slot2</instance>
-            <instance>slot3</instance>
-        </interface>
-    </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.radio</name>
         <version>1.2</version>
         <interface>
             <name>ISap</name>
             <instance>slot1</instance>
-        </interface>
-    </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.radio.config</name>
-        <!--
-        See compatibility_matrix.4.xml on versioning of radio config HAL.
-        -->
-        <version>1.1</version>
-        <interface>
-            <name>IRadioConfig</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="aidl" optional="true">
-        <name>android.hardware.radio.config</name>
-        <version>1</version>
-        <interface>
-            <name>IRadioConfig</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.radio.config</name>
-        <version>1.3</version>
-        <interface>
-            <name>IRadioConfig</name>
-            <instance>default</instance>
         </interface>
     </hal>
     <hal format="hidl" optional="true">
