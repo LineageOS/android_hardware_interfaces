@@ -943,3 +943,37 @@ TEST_P(RadioVoiceTest, cancelPendingUssd) {
     }
     LOG(DEBUG) << "cancelPendingUssd finished";
 }
+
+/*
+ * Test IRadioVoice.isVoNrEnabled() for the response returned.
+ */
+TEST_P(RadioVoiceTest, isVoNrEnabled) {
+    LOG(DEBUG) << "isVoNrEnabled";
+    serial = GetRandomSerialNumber();
+
+    radio_voice->isVoNrEnabled(serial);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_voice->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_voice->rspInfo.serial);
+
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_voice->rspInfo.error,
+                                 {RadioError::REQUEST_NOT_SUPPORTED, RadioError::NONE}));
+    LOG(DEBUG) << "isVoNrEnabled finished";
+}
+
+/*
+ * Test IRadioVoice.setVoNrEnabled() for the response returned.
+ */
+TEST_P(RadioVoiceTest, setVoNrEnabled) {
+    LOG(DEBUG) << "setVoNrEnabled";
+    serial = GetRandomSerialNumber();
+
+    radio_voice->setVoNrEnabled(serial, true);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
+    EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_voice->rspInfo.type);
+    EXPECT_EQ(serial, radioRsp_voice->rspInfo.serial);
+
+    ASSERT_TRUE(CheckAnyOfErrors(radioRsp_voice->rspInfo.error,
+                                 {RadioError::REQUEST_NOT_SUPPORTED, RadioError::NONE}));
+    LOG(DEBUG) << "setVoNrEnabled finished";
+}

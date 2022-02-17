@@ -24,5 +24,10 @@
     {
       "name": "DefaultVehicleHalTest"
     }
+  ],
+  "auto-postsubmit": [
+    {
+      "name": "AndroidCarApiTest"
+    }
   ]
 }
