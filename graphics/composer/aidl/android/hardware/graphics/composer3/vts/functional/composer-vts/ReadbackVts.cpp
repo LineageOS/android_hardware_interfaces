@@ -328,10 +328,6 @@ void TestBufferLayer::fillBuffer(std::vector<Color>& expectedColors) {
 
     const auto unlockStatus = mGraphicBuffer->unlockAsync(&mFillFence);
     ASSERT_EQ(::android::OK, unlockStatus);
-    if (mFillFence >= 0) {
-        sync_wait(mFillFence, -1);
-        close(mFillFence);
-    }
 }
 
 void TestBufferLayer::setBuffer(std::vector<Color> colors) {
