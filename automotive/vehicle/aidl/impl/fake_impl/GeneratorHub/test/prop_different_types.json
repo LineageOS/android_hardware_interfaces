@@ -1,0 +1,58 @@
+[
+  {
+    "timestamp": 1000000,
+    "areaId": 0,
+    "value": 1,
+    "prop": 287310600
+  },
+  {
+    "timestamp": 1000000,
+    "areaId": 0,
+    "value": 2,
+    "prop": 289408000
+  },
+  {
+    "timestamp": 1000000,
+    "areaId": 0,
+    "value": 3.3,
+    "prop": 291504905
+  },
+  {
+    "timestamp": 1000000,
+    "areaId": 0,
+    "value": 4,
+    "prop": 290457096
+  },
+  {
+    "timestamp": 1000000,
+    "areaId": 0,
+    "value": "test",
+    "prop": 286265094
+  },
+  {
+    "timestamp": 1000000,
+    "areaId": 0,
+    "value": [1, 2],
+    "prop": 289476368
+  },
+  {
+    "timestamp": 1000000,
+    "areaId": 0,
+    "value": {
+      "int32Values": [1, 2],
+      "int64Values": [3, 4],
+      "floatValues": [5.5, 6.6],
+      "stringValue": "test"
+    },
+    "prop": 299896626
+  },
+  {
+    "timestamp": 1000000,
+    "areaId": 0,
+    "value": {
+      "int32Values": [1],
+      "floatValues": [1]
+    },
+    "prop": 299896064
+  }
+]
