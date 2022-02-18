@@ -36,6 +36,7 @@ cc_library_static {
 cc_test {
     name: "neuralnetworks_utils_hal_common_test",
     host_supported: true,
+    tidy_timeout_srcs: ["test/ResilientDeviceTest.cpp"],
     srcs: ["test/*.cpp"],
     static_libs: [
         "libgmock",

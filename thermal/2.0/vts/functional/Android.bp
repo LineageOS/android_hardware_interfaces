@@ -26,6 +26,7 @@ package {
 cc_test {
     name: "VtsHalThermalV2_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
+    tidy_timeout_srcs: ["VtsHalThermalV2_0TargetTest.cpp"],
     srcs: ["VtsHalThermalV2_0TargetTest.cpp"],
     static_libs: [
         "android.hardware.thermal@1.0",

@@ -50,6 +50,9 @@ cc_test {
     defaults: [
         "keymint_vts_defaults",
     ],
+    tidy_timeout_srcs: [
+        "KeyMintTest.cpp",
+    ],
     srcs: [
         "AttestKeyTest.cpp",
         "DeviceUniqueAttestationTest.cpp",
@@ -68,6 +71,9 @@ cc_test_library {
     name: "libkeymint_vts_test_utils",
     defaults: [
         "keymint_vts_defaults",
+    ],
+    tidy_timeout_srcs: [
+        "KeyMintAidlTestBase.cpp",
     ],
     srcs: [
         "KeyMintAidlTestBase.cpp",
