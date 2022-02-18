@@ -16,6 +16,7 @@
 #pragma once
 
 #include <aidl/android/hardware/bluetooth/audio/BnBluetoothAudioProvider.h>
+#include <aidl/android/hardware/bluetooth/audio/LatencyMode.h>
 #include <aidl/android/hardware/bluetooth/audio/SessionType.h>
 #include <fmq/AidlMessageQueue.h>
 
@@ -37,10 +38,11 @@ namespace audio {
 class BluetoothAudioProvider : public BnBluetoothAudioProvider {
  public:
   BluetoothAudioProvider();
-
   ndk::ScopedAStatus startSession(
       const std::shared_ptr<IBluetoothAudioPort>& host_if,
-      const AudioConfiguration& audio_config, DataMQDesc* _aidl_return);
+      const AudioConfiguration& audio_config,
+      const std::vector<LatencyMode>& latency_modes,
+      DataMQDesc* _aidl_return);
   ndk::ScopedAStatus endSession();
   ndk::ScopedAStatus streamStarted(BluetoothAudioStatus status);
   ndk::ScopedAStatus streamSuspended(BluetoothAudioStatus status);
@@ -59,6 +61,7 @@ class BluetoothAudioProvider : public BnBluetoothAudioProvider {
   std::shared_ptr<IBluetoothAudioPort> stack_iface_;
   std::unique_ptr<AudioConfiguration> audio_config_ = nullptr;
   SessionType session_type_;
+  std::vector<LatencyMode> latency_modes_;
 };
 
 }  // namespace audio
