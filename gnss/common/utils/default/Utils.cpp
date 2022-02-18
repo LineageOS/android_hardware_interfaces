@@ -201,10 +201,10 @@ GnssData Utils::getMockMeasurement(const bool enableCorrVecOutputs) {
                             .tropoDelayMeters = 3.882265204404031,
                             .ephemerisSource =
                                     SatellitePvt::SatelliteEphemerisSource::SERVER_LONG_TERM,
-                            .TOC = 12345,
-                            .IODC = 143,
-                            .TOE = 9876,
-                            .IODE = 48,
+                            .timeOfClockSeconds = 12345,
+                            .issueOfDataClock = 143,
+                            .timeOfEphemerisSeconds = 9876,
+                            .issueOfDataEphemeris = 48,
                     },
             .correlationVectors = {}};
 
