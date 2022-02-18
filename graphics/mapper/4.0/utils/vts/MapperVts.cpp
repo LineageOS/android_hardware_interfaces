@@ -303,6 +303,14 @@ bool Gralloc::isSupported(const IMapper::BufferDescriptorInfo& descriptorInfo) {
     return supported;
 }
 
+bool Gralloc::isSupportedNoFailure(const IMapper::BufferDescriptorInfo& descriptorInfo) {
+    bool supported = false;
+    mMapper->isSupported(descriptorInfo, [&](const auto& tmpError, const auto& tmpSupported) {
+        supported = tmpSupported && tmpError == Error::NONE;
+    });
+    return supported;
+}
+
 Error Gralloc::get(const native_handle_t* bufferHandle, const IMapper::MetadataType& metadataType,
                    hidl_vec<uint8_t>* outVec) {
     Error err;
