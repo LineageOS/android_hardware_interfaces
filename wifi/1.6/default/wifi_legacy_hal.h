@@ -496,7 +496,7 @@ class WifiLegacyHal {
             const std::string& iface_name);
     std::pair<wifi_error, std::vector<uint8_t>> requestFirmwareMemoryDump(
             const std::string& iface_name);
-    std::pair<wifi_error, uint64_t> getSupportedFeatureSet(const std::string& iface_name);
+    virtual std::pair<wifi_error, uint64_t> getSupportedFeatureSet(const std::string& iface_name);
     // APF functions.
     std::pair<wifi_error, PacketFilterCapabilities> getPacketFilterCapabilities(
             const std::string& iface_name);
@@ -564,7 +564,7 @@ class WifiLegacyHal {
     wifi_error registerRingBufferCallbackHandler(
             const std::string& iface_name, const on_ring_buffer_data_callback& on_data_callback);
     wifi_error deregisterRingBufferCallbackHandler(const std::string& iface_name);
-    wifi_error registerSubsystemRestartCallbackHandler(
+    virtual wifi_error registerSubsystemRestartCallbackHandler(
             const on_subsystem_restart_callback& on_restart_callback);
     std::pair<wifi_error, std::vector<wifi_ring_buffer_status>> getRingBuffersStatus(
             const std::string& iface_name);
@@ -637,7 +637,7 @@ class WifiLegacyHal {
     virtual wifi_error createVirtualInterface(const std::string& ifname,
                                               wifi_interface_type iftype);
     virtual wifi_error deleteVirtualInterface(const std::string& ifname);
-    wifi_error getSupportedIfaceName(uint32_t iface_type, std::string& ifname);
+    virtual wifi_error getSupportedIfaceName(uint32_t iface_type, std::string& ifname);
 
     // STA + STA functions
     virtual wifi_error multiStaSetPrimaryConnection(const std::string& ifname);
