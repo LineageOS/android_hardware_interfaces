@@ -38,6 +38,7 @@
 #include "GraphicsComposerCallback.h"
 
 using aidl::android::hardware::graphics::common::Dataspace;
+using aidl::android::hardware::graphics::common::DisplayDecorationSupport;
 using aidl::android::hardware::graphics::common::FRect;
 using aidl::android::hardware::graphics::common::PixelFormat;
 using aidl::android::hardware::graphics::common::Rect;
@@ -141,6 +142,9 @@ class VtsComposerClient {
     ScopedAStatus setAutoLowLatencyMode(int64_t display, bool isEnabled);
 
     std::pair<ScopedAStatus, std::vector<ContentType>> getSupportedContentTypes(int64_t display);
+
+    std::pair<ScopedAStatus, std::optional<DisplayDecorationSupport>> getDisplayDecorationSupport(
+            int64_t display);
 
     std::pair<ScopedAStatus, int32_t> getMaxVirtualDisplayCount();
 

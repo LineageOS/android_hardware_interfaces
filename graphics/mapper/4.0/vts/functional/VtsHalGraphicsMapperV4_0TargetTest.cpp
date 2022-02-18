@@ -1220,7 +1220,7 @@ TEST_P(GraphicsMapperHidlTest, IsSupportedR8) {
             aidl::android::hardware::graphics::common::PixelFormat::R_8);
     bool supported = false;
 
-    ASSERT_NO_FATAL_FAILURE(supported = mGralloc->isSupported(info));
+    supported = mGralloc->isSupportedNoFailure(info);
 
     if (!supported) {
         GTEST_SUCCEED() << "R_8 is optional; unsupported so skipping allocation test";

@@ -283,6 +283,12 @@ std::pair<ScopedAStatus, std::vector<ContentType>> VtsComposerClient::getSupport
     return {mComposerClient->getSupportedContentTypes(display, &outContentTypes), outContentTypes};
 }
 
+std::pair<ScopedAStatus, std::optional<DisplayDecorationSupport>>
+VtsComposerClient::getDisplayDecorationSupport(int64_t display) {
+    std::optional<DisplayDecorationSupport> outSupport;
+    return {mComposerClient->getDisplayDecorationSupport(display, &outSupport), outSupport};
+}
+
 std::pair<ScopedAStatus, int32_t> VtsComposerClient::getMaxVirtualDisplayCount() {
     int32_t outMaxVirtualDisplayCount;
     return {mComposerClient->getMaxVirtualDisplayCount(&outMaxVirtualDisplayCount),

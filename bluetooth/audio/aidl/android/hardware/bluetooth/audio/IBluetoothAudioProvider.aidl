@@ -19,6 +19,7 @@ package android.hardware.bluetooth.audio;
 import android.hardware.bluetooth.audio.AudioConfiguration;
 import android.hardware.bluetooth.audio.BluetoothAudioStatus;
 import android.hardware.bluetooth.audio.IBluetoothAudioPort;
+import android.hardware.bluetooth.audio.LatencyMode;
 import android.hardware.common.fmq.MQDescriptor;
 import android.hardware.common.fmq.SynchronizedReadWrite;
 
@@ -50,6 +51,8 @@ interface IBluetoothAudioProvider {
      *    device. The PCM parameters are set if software based encoding,
      *    otherwise the correct codec configuration is used for hardware
      *    encoding.
+     * @param supportedLatencyModes latency modes supported by the active
+     * remote device
      *
      * @return The fast message queue for audio data from/to this
      *    provider. Audio data will be in PCM format as specified by the
@@ -57,8 +60,8 @@ interface IBluetoothAudioProvider {
      *    from/to hardware or on failure
      */
     MQDescriptor<byte, SynchronizedReadWrite> startSession(
-            in IBluetoothAudioPort hostIf, in AudioConfiguration audioConfig);
-
+            in IBluetoothAudioPort hostIf, in AudioConfiguration audioConfig,
+            in LatencyMode[] supportedLatencyModes);
     /**
      * Callback for IBluetoothAudioPort.startStream()
      *
