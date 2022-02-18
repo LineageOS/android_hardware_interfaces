@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,11 @@
 #undef NAN  // NAN is defined in bionic/libc/include/math.h:38
 
 #include <VtsCoreUtil.h>
-#include <android/hardware/wifi/1.3/IWifiStaIface.h>
-#include <android/hardware/wifi/1.4/IWifi.h>
-#include <android/hardware/wifi/1.4/IWifiChip.h>
-#include <android/hardware/wifi/1.4/IWifiRttController.h>
-#include <android/hardware/wifi/1.4/IWifiRttControllerEventCallback.h>
+#include <android/hardware/wifi/1.6/IWifi.h>
+#include <android/hardware/wifi/1.6/IWifiChip.h>
+#include <android/hardware/wifi/1.6/IWifiRttController.h>
+#include <android/hardware/wifi/1.6/IWifiRttControllerEventCallback.h>
+#include <android/hardware/wifi/1.6/IWifiStaIface.h>
 #include <gtest/gtest.h>
 #include <hidl/GtestPrinter.h>
 #include <hidl/ServiceManagement.h>
@@ -37,28 +37,28 @@ using ::android::hardware::hidl_vec;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::wifi::V1_0::CommandId;
-using ::android::hardware::wifi::V1_0::RttBw;
 using ::android::hardware::wifi::V1_0::RttPeerType;
 using ::android::hardware::wifi::V1_0::RttType;
-using ::android::hardware::wifi::V1_0::WifiChannelInfo;
-using ::android::hardware::wifi::V1_0::WifiChannelWidthInMhz;
 using ::android::hardware::wifi::V1_0::WifiStatus;
 using ::android::hardware::wifi::V1_0::WifiStatusCode;
-using ::android::hardware::wifi::V1_3::IWifiStaIface;
-using ::android::hardware::wifi::V1_4::IWifiChip;
-using ::android::hardware::wifi::V1_4::IWifiRttController;
-using ::android::hardware::wifi::V1_4::IWifiRttControllerEventCallback;
-using ::android::hardware::wifi::V1_4::RttCapabilities;
-using ::android::hardware::wifi::V1_4::RttConfig;
-using ::android::hardware::wifi::V1_4::RttPreamble;
-using ::android::hardware::wifi::V1_4::RttResponder;
-using ::android::hardware::wifi::V1_4::RttResult;
+using ::android::hardware::wifi::V1_6::IWifiChip;
+using ::android::hardware::wifi::V1_6::IWifiRttController;
+using ::android::hardware::wifi::V1_6::IWifiRttControllerEventCallback;
+using ::android::hardware::wifi::V1_6::IWifiStaIface;
+using ::android::hardware::wifi::V1_6::RttBw;
+using ::android::hardware::wifi::V1_6::RttCapabilities;
+using ::android::hardware::wifi::V1_6::RttConfig;
+using ::android::hardware::wifi::V1_6::RttPreamble;
+using ::android::hardware::wifi::V1_6::RttResponder;
+using ::android::hardware::wifi::V1_6::RttResult;
+using ::android::hardware::wifi::V1_6::WifiChannelInfo;
+using ::android::hardware::wifi::V1_6::WifiChannelWidthInMhz;
 
 /**
  * Fixture to use for all RTT controller HIDL interface tests.
  */
 class WifiRttControllerHidlTest : public ::testing::TestWithParam<std::string> {
-   public:
+  public:
     virtual void SetUp() override {
         if (!::testing::deviceSupportsFeature("android.hardware.wifi.rtt"))
             GTEST_SKIP() << "Skipping this test since RTT is not supported.";
@@ -66,14 +66,11 @@ class WifiRttControllerHidlTest : public ::testing::TestWithParam<std::string> {
         stopWifi(GetInstanceName());
 
         wifi_rtt_controller_ = getWifiRttController();
-        if (wifi_rtt_controller_.get() == nullptr) {
-            GTEST_SKIP() << "Skipping this test since API is deprecated.";
-        }
+        ASSERT_NE(nullptr, wifi_rtt_controller_.get());
 
         // Check RTT support before we run the test.
         std::pair<WifiStatus, RttCapabilities> status_and_caps;
-        status_and_caps =
-            HIDL_INVOKE(wifi_rtt_controller_, getCapabilities_1_4);
+        status_and_caps = HIDL_INVOKE(wifi_rtt_controller_, getCapabilities_1_6);
         if (status_and_caps.first.code == WifiStatusCode::ERROR_NOT_SUPPORTED) {
             GTEST_SKIP() << "Skipping this test since RTT is not supported.";
         }
@@ -83,52 +80,48 @@ class WifiRttControllerHidlTest : public ::testing::TestWithParam<std::string> {
 
     // A simple test implementation of WifiRttControllerEventCallback.
     class WifiRttControllerEventCallback
-        : public ::testing::VtsHalHidlTargetCallbackBase<
-              WifiRttControllerHidlTest>,
+        : public ::testing::VtsHalHidlTargetCallbackBase<WifiRttControllerHidlTest>,
           public IWifiRttControllerEventCallback {
-       public:
+      public:
         WifiRttControllerEventCallback(){};
 
         virtual ~WifiRttControllerEventCallback() = default;
 
-        Return<void> onResults(
-            CommandId cmdId __unused,
-            const hidl_vec<::android::hardware::wifi::V1_0::RttResult>& results
-                __unused) {
+        Return<void> onResults(CommandId cmdId __unused,
+                               const hidl_vec<::android::hardware::wifi::V1_0::RttResult>& results
+                                       __unused) {
             return Void();
         };
 
-        Return<void> onResults_1_4(CommandId cmdId __unused,
-                                   const hidl_vec<RttResult>& results
-                                       __unused) {
+        Return<void> onResults_1_4(
+                CommandId cmdId __unused,
+                const hidl_vec<::android::hardware::wifi::V1_4::RttResult>& results __unused) {
+            return Void();
+        };
+
+        Return<void> onResults_1_6(CommandId cmdId __unused,
+                                   const hidl_vec<RttResult>& results __unused) {
             return Void();
         };
     };
 
-   protected:
+  protected:
     sp<IWifiRttController> wifi_rtt_controller_;
 
-   private:
+  private:
     std::string GetInstanceName() { return GetParam(); }
 
     sp<IWifiRttController> getWifiRttController() {
         const std::string& instance_name = GetInstanceName();
 
-        sp<IWifiChip> wifi_chip =
-            IWifiChip::castFrom(getWifiChip(instance_name));
+        sp<IWifiChip> wifi_chip = IWifiChip::castFrom(getWifiChip(instance_name));
         EXPECT_NE(nullptr, wifi_chip.get());
 
-        sp<IWifiStaIface> wifi_sta_iface =
-            IWifiStaIface::castFrom(getWifiStaIface(instance_name));
+        sp<IWifiStaIface> wifi_sta_iface = IWifiStaIface::castFrom(getWifiStaIface(instance_name));
         EXPECT_NE(nullptr, wifi_sta_iface.get());
 
         const auto& status_and_controller =
-            HIDL_INVOKE(wifi_chip, createRttController_1_4, wifi_sta_iface);
-
-        if (status_and_controller.first.code == WifiStatusCode::ERROR_NOT_SUPPORTED) {
-            return nullptr;
-        }
-
+                HIDL_INVOKE(wifi_chip, createRttController_1_6, wifi_sta_iface);
         EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_controller.first.code);
         EXPECT_NE(nullptr, status_and_controller.second.get());
 
@@ -137,20 +130,19 @@ class WifiRttControllerHidlTest : public ::testing::TestWithParam<std::string> {
 };
 
 /*
- * registerEventCallback_1_4
- * This test case tests the registerEventCallback_1_4() API which registers
+ * registerEventCallback_1_6
+ * This test case tests the registerEventCallback_1_6() API which registers
  * a call back function with the hal implementation
  *
  * Note: it is not feasible to test the invocation of the call back function
  * since event is triggered internally in the HAL implementation, and can not be
  * triggered from the test case
  */
-TEST_P(WifiRttControllerHidlTest, RegisterEventCallback_1_4) {
+TEST_P(WifiRttControllerHidlTest, RegisterEventCallback_1_6) {
     sp<WifiRttControllerEventCallback> wifiRttControllerEventCallback =
-        new WifiRttControllerEventCallback();
-    const auto& status =
-        HIDL_INVOKE(wifi_rtt_controller_, registerEventCallback_1_4,
-                    wifiRttControllerEventCallback);
+            new WifiRttControllerEventCallback();
+    const auto& status = HIDL_INVOKE(wifi_rtt_controller_, registerEventCallback_1_6,
+                                     wifiRttControllerEventCallback);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status.code);
 }
 
@@ -162,11 +154,10 @@ TEST_P(WifiRttControllerHidlTest, Request2SidedRangeMeasurement) {
     std::pair<WifiStatus, RttCapabilities> status_and_caps;
 
     // Get the Capabilities
-    status_and_caps = HIDL_INVOKE(wifi_rtt_controller_, getCapabilities_1_4);
+    status_and_caps = HIDL_INVOKE(wifi_rtt_controller_, getCapabilities_1_6);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_caps.first.code);
     if (!status_and_caps.second.rttFtmSupported) {
-        GTEST_SKIP()
-            << "Skipping two sided RTT since driver/fw doesn't support";
+        GTEST_SKIP() << "Skipping two sided RTT since driver/fw doesn't support";
     }
     std::vector<RttConfig> configs;
     RttConfig config;
@@ -195,24 +186,23 @@ TEST_P(WifiRttControllerHidlTest, Request2SidedRangeMeasurement) {
     configs.push_back(config);
 
     // Invoke the call
-    const auto& status =
-        HIDL_INVOKE(wifi_rtt_controller_, rangeRequest_1_4, cmdId, configs);
+    const auto& status = HIDL_INVOKE(wifi_rtt_controller_, rangeRequest_1_6, cmdId, configs);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status.code);
     // sleep for 2 seconds to wait for driver/firmware to complete RTT
     sleep(2);
 }
+
 /*
- * rangeRequest_1_4
+ * rangeRequest_1_6
  */
-TEST_P(WifiRttControllerHidlTest, RangeRequest_1_4) {
+TEST_P(WifiRttControllerHidlTest, RangeRequest_1_6) {
     std::pair<WifiStatus, RttCapabilities> status_and_caps;
 
     // Get the Capabilities
-    status_and_caps = HIDL_INVOKE(wifi_rtt_controller_, getCapabilities_1_4);
+    status_and_caps = HIDL_INVOKE(wifi_rtt_controller_, getCapabilities_1_6);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_caps.first.code);
     if (!status_and_caps.second.rttOneSidedSupported) {
-        GTEST_SKIP()
-            << "Skipping one sided RTT since driver/fw doesn't support";
+        GTEST_SKIP() << "Skipping one sided RTT since driver/fw doesn't support";
     }
     // Get the highest support preamble
     int preamble = 1;
@@ -248,39 +238,38 @@ TEST_P(WifiRttControllerHidlTest, RangeRequest_1_4) {
     configs.push_back(config);
 
     // Invoke the call
-    const auto& status =
-        HIDL_INVOKE(wifi_rtt_controller_, rangeRequest_1_4, cmdId, configs);
+    const auto& status = HIDL_INVOKE(wifi_rtt_controller_, rangeRequest_1_6, cmdId, configs);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status.code);
     // sleep for 2 seconds to wait for driver/firmware to complete RTT
     sleep(2);
 }
 
 /*
- * getCapabilities_1_4
+ * getCapabilities_1_6
  */
-TEST_P(WifiRttControllerHidlTest, GetCapabilities_1_4) {
+TEST_P(WifiRttControllerHidlTest, GetCapabilities_1_6) {
     std::pair<WifiStatus, RttCapabilities> status_and_caps;
 
     // Invoke the call
-    status_and_caps = HIDL_INVOKE(wifi_rtt_controller_, getCapabilities_1_4);
+    status_and_caps = HIDL_INVOKE(wifi_rtt_controller_, getCapabilities_1_6);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_caps.first.code);
 }
 
 /*
- * getResponderInfo_1_4
+ * getResponderInfo_1_6
  */
-TEST_P(WifiRttControllerHidlTest, GetResponderInfo_1_4) {
+TEST_P(WifiRttControllerHidlTest, GetResponderInfo_1_6) {
     std::pair<WifiStatus, RttResponder> status_and_info;
 
     // Invoke the call
-    status_and_info = HIDL_INVOKE(wifi_rtt_controller_, getResponderInfo_1_4);
+    status_and_info = HIDL_INVOKE(wifi_rtt_controller_, getResponderInfo_1_6);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_info.first.code);
 }
 
 /*
- * enableResponder_1_4
+ * enableResponder_1_6
  */
-TEST_P(WifiRttControllerHidlTest, EnableResponder_1_4) {
+TEST_P(WifiRttControllerHidlTest, EnableResponder_1_6) {
     std::pair<WifiStatus, RttResponder> status_and_info;
     int cmdId = 55;
     WifiChannelInfo channelInfo;
@@ -290,19 +279,17 @@ TEST_P(WifiRttControllerHidlTest, EnableResponder_1_4) {
     channelInfo.centerFreq1 = 0;
 
     // Get the responder first
-    status_and_info = HIDL_INVOKE(wifi_rtt_controller_, getResponderInfo_1_4);
+    status_and_info = HIDL_INVOKE(wifi_rtt_controller_, getResponderInfo_1_6);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_info.first.code);
 
     // Invoke the call
-    const auto& status =
-        HIDL_INVOKE(wifi_rtt_controller_, enableResponder_1_4, cmdId,
-                    channelInfo, 10, status_and_info.second);
+    const auto& status = HIDL_INVOKE(wifi_rtt_controller_, enableResponder_1_6, cmdId, channelInfo,
+                                     10, status_and_info.second);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status.code);
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiRttControllerHidlTest);
-INSTANTIATE_TEST_SUITE_P(
-    PerInstance, WifiRttControllerHidlTest,
-    testing::ValuesIn(android::hardware::getAllHalInstanceNames(
-        ::android::hardware::wifi::V1_4::IWifi::descriptor)),
-    android::hardware::PrintInstanceNameToString);
+INSTANTIATE_TEST_SUITE_P(PerInstance, WifiRttControllerHidlTest,
+                         testing::ValuesIn(android::hardware::getAllHalInstanceNames(
+                                 ::android::hardware::wifi::V1_6::IWifi::descriptor)),
+                         android::hardware::PrintInstanceNameToString);
