@@ -1,5 +1,6 @@
 service broadcastradio-hal2 /vendor/bin/hw/android.hardware.broadcastradio@2.0-service
-    interface android.hardware.broadcastradio@2.0::IBroadcastRadio default
+    interface android.hardware.broadcastradio@2.0::IBroadcastRadio amfm
+    interface android.hardware.broadcastradio@2.0::IBroadcastRadio dab
     class hal
     user audioserver
     group audio
