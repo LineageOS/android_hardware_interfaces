@@ -23,10 +23,11 @@ package android.hardware.automotive.vehicle;
 @Backing(type="int")
 enum CustomInputType {
     /**
-     * Ten functions representing the custom input code to be defined and implemented by OEM
-     * partners.
+     * Ten optional functions to be used in case OEM don't need more than 10 input code values.
      *
-     * OEMs need to formally contact Android team if more than 10 functions are required.
+     * OEMs are free to use any signed 32 bits number to represent the input code value.
+     * The following function keys are only for convenience and any other integer values are
+     * also allowed.
      */
     CUSTOM_EVENT_F1 = 1001,
     CUSTOM_EVENT_F2 = 1002,
