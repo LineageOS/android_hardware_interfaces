@@ -37,6 +37,7 @@ interface ISupplicantStaIfaceCallback {
   oneway void onAnqpQueryDone(in byte[] bssid, in android.hardware.wifi.supplicant.AnqpData data, in android.hardware.wifi.supplicant.Hs20AnqpData hs20Data);
   oneway void onAssociationRejected(in android.hardware.wifi.supplicant.AssociationRejectionData assocRejectData);
   oneway void onAuthenticationTimeout(in byte[] bssid);
+  oneway void onAuxiliarySupplicantEvent(in android.hardware.wifi.supplicant.AuxiliarySupplicantEventCode eventCode, in byte[] bssid, in String reasonString);
   oneway void onBssTmHandlingDone(in android.hardware.wifi.supplicant.BssTmData tmData);
   oneway void onBssidChanged(in android.hardware.wifi.supplicant.BssidChangeReason reason, in byte[] bssid);
   oneway void onDisconnected(in byte[] bssid, in boolean locallyGenerated, in android.hardware.wifi.supplicant.StaIfaceReasonCode reasonCode);

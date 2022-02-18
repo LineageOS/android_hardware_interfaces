@@ -79,6 +79,13 @@ class SupplicantStaIfaceCallback : public BnSupplicantStaIfaceCallback {
         const std::vector<uint8_t>& /* bssid */) override {
         return ndk::ScopedAStatus::ok();
     }
+    ::ndk::ScopedAStatus onAuxiliarySupplicantEvent(
+            ::aidl::android::hardware::wifi::supplicant ::
+                    AuxiliarySupplicantEventCode /* eventCode */,
+            const std::vector<uint8_t>& /* bssid */,
+            const std::string& /* reasonString */) override {
+        return ndk::ScopedAStatus::ok();
+    }
     ::ndk::ScopedAStatus onBssTmHandlingDone(
         const ::aidl::android::hardware::wifi::supplicant::
             BssTmData& /* tmData */) override {
