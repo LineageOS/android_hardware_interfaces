@@ -1390,7 +1390,7 @@ class BluetoothAudioProviderLeAudioBroadcastSoftwareAidl
  * stopped
  */
 TEST_P(BluetoothAudioProviderLeAudioBroadcastSoftwareAidl,
-       DISABLED_OpenLeAudioOutputSoftwareProvider) {}
+       OpenLeAudioOutputSoftwareProvider) {}
 
 /**
  * Test whether each provider of type
@@ -1398,7 +1398,7 @@ TEST_P(BluetoothAudioProviderLeAudioBroadcastSoftwareAidl,
  * stopped with different PCM config
  */
 TEST_P(BluetoothAudioProviderLeAudioBroadcastSoftwareAidl,
-       DISABLED_StartAndEndLeAudioOutputSessionWithPossiblePcmConfig) {
+       StartAndEndLeAudioOutputSessionWithPossiblePcmConfig) {
   for (auto sample_rate : le_audio_output_sample_rates_) {
     for (auto bits_per_sample : le_audio_output_bits_per_samples_) {
       for (auto channel_mode : le_audio_output_channel_modes_) {
