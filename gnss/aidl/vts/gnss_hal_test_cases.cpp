@@ -366,12 +366,13 @@ void CheckSatellitePvt(const SatellitePvt& satellitePvt, const int interfaceVers
         ASSERT_TRUE(satellitePvt.tropoDelayMeters > 0 && satellitePvt.tropoDelayMeters < 100);
     }
     if (interfaceVersion >= 2) {
-        ASSERT_TRUE(satellitePvt.TOC >= 0 && satellitePvt.TOC <= 604784);
-        ASSERT_TRUE(satellitePvt.TOE >= 0 && satellitePvt.TOE <= 604784);
+        ASSERT_TRUE(satellitePvt.timeOfClockSeconds >= 0);
+        ASSERT_TRUE(satellitePvt.timeOfEphemerisSeconds >= 0);
         // IODC has 10 bits
-        ASSERT_TRUE(satellitePvt.IODC >= 0 && satellitePvt.IODC <= 1023);
+        ASSERT_TRUE(satellitePvt.issueOfDataClock >= 0 && satellitePvt.issueOfDataClock <= 1023);
         // IODE has 8 bits
-        ASSERT_TRUE(satellitePvt.IODE >= 0 && satellitePvt.IODE <= 255);
+        ASSERT_TRUE(satellitePvt.issueOfDataEphemeris >= 0 &&
+                    satellitePvt.issueOfDataEphemeris <= 255);
     }
 }
 
