@@ -45,16 +45,6 @@ cc_library_static {
             cflags: ["-DNN_DEBUGGABLE"],
         },
     },
-    target: {
-        host: {
-            cflags: [
-                "-D__INTRODUCED_IN(x)=",
-                "-D__assert(a,b,c)=",
-                // We want all the APIs to be available on the host.
-                "-D__ANDROID_API__=10000",
-            ],
-        },
-    },
 }
 
 cc_test {
