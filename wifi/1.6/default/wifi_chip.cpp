@@ -791,8 +791,57 @@ std::pair<WifiStatus, uint32_t> WifiChip::getCapabilitiesInternal() {
 
 std::pair<WifiStatus, std::vector<V1_0::IWifiChip::ChipMode>>
 WifiChip::getAvailableModesInternal() {
-    // Deprecated support -- use getAvailableModes_1_6.
-    return {createWifiStatus(WifiStatusCode::ERROR_NOT_SUPPORTED), {}};
+    // Deprecated support -- use getAvailableModes_1_6 for more granular concurrency combinations.
+    std::vector<V1_0::IWifiChip::ChipMode> modes_1_0 = {};
+    for (const auto& mode_1_6 : modes_) {
+        std::vector<V1_0::IWifiChip::ChipIfaceCombination> combos_1_0;
+        for (const auto& combo_1_6 : mode_1_6.availableCombinations) {
+            std::vector<V1_0::IWifiChip::ChipIfaceCombinationLimit> limits_1_0;
+            for (const auto& limit_1_6 : combo_1_6.limits) {
+                std::vector<IfaceType> types_1_0;
+                for (IfaceConcurrencyType type_1_6 : limit_1_6.types) {
+                    switch (type_1_6) {
+                        case IfaceConcurrencyType::STA:
+                            types_1_0.push_back(IfaceType::STA);
+                            break;
+                        case IfaceConcurrencyType::AP:
+                            types_1_0.push_back(IfaceType::AP);
+                            break;
+                        case IfaceConcurrencyType::AP_BRIDGED:
+                            // Ignore AP_BRIDGED
+                            break;
+                        case IfaceConcurrencyType::P2P:
+                            types_1_0.push_back(IfaceType::P2P);
+                            break;
+                        case IfaceConcurrencyType::NAN:
+                            types_1_0.push_back(IfaceType::NAN);
+                            break;
+                    }
+                }
+                if (types_1_0.empty()) {
+                    continue;
+                }
+                V1_0::IWifiChip::ChipIfaceCombinationLimit limit_1_0;
+                limit_1_0.types = hidl_vec(types_1_0);
+                limit_1_0.maxIfaces = limit_1_6.maxIfaces;
+                limits_1_0.push_back(limit_1_0);
+            }
+            if (limits_1_0.empty()) {
+                continue;
+            }
+            V1_0::IWifiChip::ChipIfaceCombination combo_1_0;
+            combo_1_0.limits = hidl_vec(limits_1_0);
+            combos_1_0.push_back(combo_1_0);
+        }
+        if (combos_1_0.empty()) {
+            continue;
+        }
+        V1_0::IWifiChip::ChipMode mode_1_0;
+        mode_1_0.id = mode_1_6.id;
+        mode_1_0.availableCombinations = hidl_vec(combos_1_0);
+        modes_1_0.push_back(mode_1_0);
+    }
+    return {createWifiStatus(WifiStatusCode::SUCCESS), modes_1_0};
 }
 
 WifiStatus WifiChip::configureChipInternal(

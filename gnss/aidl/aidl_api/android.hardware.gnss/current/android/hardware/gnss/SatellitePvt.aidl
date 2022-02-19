@@ -40,10 +40,10 @@ parcelable SatellitePvt {
   android.hardware.gnss.SatelliteClockInfo satClockInfo;
   double ionoDelayMeters;
   double tropoDelayMeters;
-  int TOC;
-  int IODC;
-  int TOE;
-  int IODE;
+  long timeOfClockSeconds;
+  int issueOfDataClock;
+  long timeOfEphemerisSeconds;
+  int issueOfDataEphemeris;
   android.hardware.gnss.SatellitePvt.SatelliteEphemerisSource ephemerisSource = android.hardware.gnss.SatellitePvt.SatelliteEphemerisSource.OTHER;
   const int HAS_POSITION_VELOCITY_CLOCK_INFO = 1;
   const int HAS_IONO = 2;
