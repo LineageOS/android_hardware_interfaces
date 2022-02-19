@@ -41,6 +41,7 @@ filegroup {
     name: "FakeVehicleHalValueGeneratorsTestFiles",
     srcs: [
         "prop.json",
+        "prop_different_types.json",
         "prop_invalid.json",
     ],
 }

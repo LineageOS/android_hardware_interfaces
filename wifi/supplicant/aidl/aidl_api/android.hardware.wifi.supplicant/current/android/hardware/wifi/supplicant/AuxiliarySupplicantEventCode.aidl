@@ -31,9 +31,10 @@
 // with such a backward incompatible change, it has a high risk of breaking
 // later when a module using the interface is updated, e.g., Mainline modules.
 
-package android.hardware.drm;
-@VintfStability
-parcelable CryptoSchemes {
-  List<android.hardware.drm.Uuid> uuids;
-  List<android.hardware.drm.SupportedContentType> mimeTypes;
+package android.hardware.wifi.supplicant;
+@Backing(type="int") @VintfStability
+enum AuxiliarySupplicantEventCode {
+  EAP_METHOD_SELECTED = 0,
+  SSID_TEMP_DISABLED = 1,
+  OPEN_SSL_FAILURE = 2,
 }
