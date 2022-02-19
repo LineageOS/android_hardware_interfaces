@@ -76,12 +76,13 @@ parcelable SatellitePvt {
     double tropoDelayMeters;
 
     /**
-     * Time of Clock.
+     * Time of Clock in seconds.
      *
-     * This is defined in GPS ICD200 documentation
-     * (e.g., https://www.gps.gov/technical/icwg/IS-GPS-200H.pdf).
+     * This value is defined in seconds since GPS epoch, regardless of the constellation.
+     *
+     * The value must not be encoded as in GPS ICD200 documentation.
      */
-    int TOC;
+    long timeOfClockSeconds;
 
     /**
      * Issue of Data, Clock.
@@ -91,15 +92,16 @@ parcelable SatellitePvt {
      *
      * The field must be set to 0 if it is not supported.
      */
-    int IODC;
+    int issueOfDataClock;
 
     /**
-     * Time of Ephemeris.
+     * Time of Ephemeris in seconds.
      *
-     * This is defined in GPS ICD200 documentation
-     * (e.g., https://www.gps.gov/technical/icwg/IS-GPS-200H.pdf).
+     * This value is defined in seconds since GPS epoch, regardless of the constellation.
+     *
+     * The value must not be encoded as in GPS ICD200 documentation.
      */
-    int TOE;
+    long timeOfEphemerisSeconds;
 
     /**
      * Issue of Data, Ephemeris.
@@ -109,7 +111,7 @@ parcelable SatellitePvt {
      *
      * The field must be set to 0 if it is not supported.
      */
-    int IODE;
+    int issueOfDataEphemeris;
 
     /** Satellite's ephemeris source */
     @VintfStability
