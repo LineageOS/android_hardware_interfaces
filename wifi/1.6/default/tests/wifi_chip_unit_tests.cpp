@@ -278,6 +278,9 @@ class WifiChipTest : public Test {
                 .WillRepeatedly(testing::Return(true));
         EXPECT_CALL(*legacy_hal_, start())
                 .WillRepeatedly(testing::Return(legacy_hal::WIFI_SUCCESS));
+        // Vendor HAL does not override the name by default.
+        EXPECT_CALL(*legacy_hal_, getSupportedIfaceName(testing::_, testing::_))
+                .WillRepeatedly(testing::Return(legacy_hal::WIFI_ERROR_UNKNOWN));
     }
 
     void TearDown() override {
