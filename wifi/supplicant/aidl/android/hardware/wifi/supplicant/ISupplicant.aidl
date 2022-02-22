@@ -46,8 +46,8 @@ interface ISupplicant {
      *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
      *         |SupplicantStatusCode.FAILURE_IFACE_EXISTS|
      */
-    ISupplicantP2pIface addP2pInterface(in String ifName);
-    ISupplicantStaIface addStaInterface(in String ifName);
+    @PropagateAllowBlocking ISupplicantP2pIface addP2pInterface(in String ifName);
+    @PropagateAllowBlocking ISupplicantStaIface addStaInterface(in String ifName);
 
     /**
      * Get the debug level set.
@@ -68,8 +68,8 @@ interface ISupplicant {
      *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
      *         |SupplicantStatusCode.FAILURE_IFACE_UNKNOWN|
      */
-    ISupplicantP2pIface getP2pInterface(in String ifName);
-    ISupplicantStaIface getStaInterface(in String ifName);
+    @PropagateAllowBlocking ISupplicantP2pIface getP2pInterface(in String ifName);
+    @PropagateAllowBlocking ISupplicantStaIface getStaInterface(in String ifName);
 
     /**
      * Get whether the keys are shown in the debug logs or not.
