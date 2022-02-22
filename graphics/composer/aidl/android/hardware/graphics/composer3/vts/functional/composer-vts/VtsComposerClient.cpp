@@ -173,8 +173,15 @@ std::pair<ScopedAStatus, std::vector<DisplayCapability>> VtsComposerClient::getD
 }
 
 ScopedAStatus VtsComposerClient::dumpDebugInfo() {
-    std::string debugInfo;
-    return mComposer->dumpDebugInfo(&debugInfo);
+    int pipefds[2];
+    if (pipe(pipefds) < 0) {
+        return ScopedAStatus::fromServiceSpecificError(IComposer::EX_NO_RESOURCES);
+    }
+
+    const auto status = mComposer->dump(pipefds[1], /*args*/ nullptr, /*numArgs*/ 0);
+    close(pipefds[0]);
+    close(pipefds[1]);
+    return ScopedAStatus::fromStatus(status);
 }
 
 std::pair<ScopedAStatus, DisplayIdentification> VtsComposerClient::getDisplayIdentificationData(
