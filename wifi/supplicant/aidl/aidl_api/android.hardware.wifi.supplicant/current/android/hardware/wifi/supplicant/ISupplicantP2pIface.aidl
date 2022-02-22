@@ -37,7 +37,7 @@ interface ISupplicantP2pIface {
   void addBonjourService(in byte[] query, in byte[] response);
   void addGroup(in boolean persistent, in int persistentNetworkId);
   void addGroupWithConfig(in byte[] ssid, in String pskPassphrase, in boolean persistent, in int freq, in byte[] peerAddress, in boolean joinExistingGroup);
-  android.hardware.wifi.supplicant.ISupplicantP2pNetwork addNetwork();
+  @PropagateAllowBlocking android.hardware.wifi.supplicant.ISupplicantP2pNetwork addNetwork();
   void addUpnpService(in int version, in String serviceName);
   void cancelConnect();
   void cancelServiceDiscovery(in long identifier);
@@ -54,7 +54,7 @@ interface ISupplicantP2pIface {
   boolean getEdmg();
   android.hardware.wifi.supplicant.P2pGroupCapabilityMask getGroupCapability(in byte[] peerAddress);
   String getName();
-  android.hardware.wifi.supplicant.ISupplicantP2pNetwork getNetwork(in int id);
+  @PropagateAllowBlocking android.hardware.wifi.supplicant.ISupplicantP2pNetwork getNetwork(in int id);
   byte[] getSsid(in byte[] peerAddress);
   android.hardware.wifi.supplicant.IfaceType getType();
   void invite(in String groupIfName, in byte[] goDeviceAddress, in byte[] peerAddress);
