@@ -36,14 +36,6 @@ interface IComposer {
     IComposerClient createClient();
 
     /**
-     * Retrieves implementation-defined debug information, which will be
-     * displayed during, for example, `dumpsys SurfaceFlinger`.
-     *
-     * @return is a string of debug information.
-     */
-    String dumpDebugInfo();
-
-    /**
      * Provides a list of supported capabilities (as described in the
      * definition of Capability above). This list must not change after
      * initialization.
