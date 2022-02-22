@@ -418,6 +418,7 @@ interface ISupplicantStaIface {
      * sends a solicited (uses the ongoing DSCP request as dialog token) DSCP
      * response. Otherwise, sends an unsolicited DSCP response.
      *
+     * @param qosPolicyRequestId Dialog token to identify the request.
      * @param morePolicies Flag to indicate more QoS policies can be accommodated.
      * @param qosPolicyStatusList QoS policy status info for each QoS policy id.
      * @throws ServiceSpecificException with one of the following values:
@@ -425,7 +426,8 @@ interface ISupplicantStaIface {
      *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
      *         |SupplicantStatusCode.FAILURE_UNSUPPORTED|
      */
-    void sendQosPolicyResponse(in boolean morePolicies, in QosPolicyStatus[] qosPolicyStatusList);
+    void sendQosPolicyResponse(in int qosPolicyRequestId, in boolean morePolicies,
+            in QosPolicyStatus[] qosPolicyStatusList);
 
     /**
      * Indicate removal of all active QoS policies configured by the AP.
