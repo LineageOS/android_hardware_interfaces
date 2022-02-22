@@ -37,9 +37,13 @@ namespace common {
 struct ReplayUtils {
     static std::string getGnssPath();
 
+    static std::string getFixedLocationPath();
+
     static std::string getDataFromDeviceFile(const std::string& command, int mMinIntervalMs);
 
     static bool hasGnssDeviceFile();
+
+    static bool hasFixedLocationDeviceFile();
 
     static bool isGnssRawMeasurement(const std::string& inputStr);
 

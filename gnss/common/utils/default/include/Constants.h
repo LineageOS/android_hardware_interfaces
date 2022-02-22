@@ -36,6 +36,7 @@ const float kIrnssL5FreqHz = 1176.45 * 1e6;
 
 // Location replay constants
 constexpr char GNSS_PATH[] = "/dev/gnss0";
+constexpr char FIXED_LOCATION_PATH[] = "/dev/gnss1";
 constexpr int INPUT_BUFFER_SIZE = 256;
 constexpr char CMD_GET_LOCATION[] = "CMD_GET_LOCATION";
 constexpr char CMD_GET_RAWMEASUREMENT[] = "CMD_GET_RAWMEASUREMENT";
