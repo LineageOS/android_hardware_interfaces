@@ -104,7 +104,7 @@ interface ISupplicantP2pIface {
      *         |SupplicantStatusCode.FAILURE_UNKNOWN|,
      *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|
      */
-    ISupplicantP2pNetwork addNetwork();
+    @PropagateAllowBlocking ISupplicantP2pNetwork addNetwork();
 
     /**
      * This command can be used to add a UPNP service.
@@ -321,7 +321,7 @@ interface ISupplicantP2pIface {
      *         |SupplicantStatusCode.FAILURE_IFACE_INVALID|,
      *         |SupplicantStatusCode.FAILURE_NETWORK_UNKNOWN|
      */
-    ISupplicantP2pNetwork getNetwork(in int id);
+    @PropagateAllowBlocking ISupplicantP2pNetwork getNetwork(in int id);
 
     /**
      * Gets the operational SSID of the device.
