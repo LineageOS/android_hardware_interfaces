@@ -62,5 +62,5 @@ interface ISupplicantStaIfaceCallback {
   oneway void onWpsEventPbcOverlap();
   oneway void onWpsEventSuccess();
   oneway void onQosPolicyReset();
-  oneway void onQosPolicyRequest(in android.hardware.wifi.supplicant.QosPolicyData[] qosPolicyData);
+  oneway void onQosPolicyRequest(in int qosPolicyRequestId, in android.hardware.wifi.supplicant.QosPolicyData[] qosPolicyData);
 }
