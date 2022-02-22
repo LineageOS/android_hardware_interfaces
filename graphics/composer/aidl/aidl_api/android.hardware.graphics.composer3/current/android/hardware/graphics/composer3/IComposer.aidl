@@ -35,7 +35,6 @@ package android.hardware.graphics.composer3;
 @VintfStability
 interface IComposer {
   android.hardware.graphics.composer3.IComposerClient createClient();
-  String dumpDebugInfo();
   android.hardware.graphics.composer3.Capability[] getCapabilities();
   const int EX_NO_RESOURCES = 6;
 }
