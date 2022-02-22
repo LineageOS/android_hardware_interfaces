@@ -60,10 +60,10 @@ enum UwbVendorSessionAppConfigTlvTypes {
      * Supported only if the UwbVendorCapabilityTlvTypes
      * .SUPPORTED_AOA_RESULT_REQ_ANTENNA_INTERLEAVING set to 1.
      */
-    /** 2 byte data */
+    /** 1 byte data */
     NB_OF_RANGE_MEASUREMENTS = 0xE3,
-    /** 2 byte data */
+    /** 1 byte data */
     NB_OF_AZIMUTH_MEASUREMENTS = 0xE4,
-    /** 2 byte data */
+    /** 1 byte data */
     NB_OF_ELEVATION_MEASUREMENTS = 0xE5,
 }
