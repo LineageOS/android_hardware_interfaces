@@ -34,10 +34,10 @@ cc_test {
     srcs: [
         "VtsHalGraphicsComposer3_TargetTest.cpp",
         "VtsHalGraphicsComposer3_ReadbackTest.cpp",
-        "composer-vts/GraphicsComposerCallback.cpp",
-        "composer-vts/ReadbackVts.cpp",
-        "composer-vts/RenderEngineVts.cpp",
-        "composer-vts/VtsComposerClient.cpp",
+        "GraphicsComposerCallback.cpp",
+        "ReadbackVts.cpp",
+        "RenderEngineVts.cpp",
+        "VtsComposerClient.cpp",
     ],
 
     shared_libs: [

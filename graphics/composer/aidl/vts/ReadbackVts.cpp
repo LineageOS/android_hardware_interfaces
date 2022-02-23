@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "include/ReadbackVts.h"
+#include "ReadbackVts.h"
 #include <aidl/android/hardware/graphics/common/BufferUsage.h>
-#include "include/RenderEngineVts.h"
+#include "RenderEngineVts.h"
 #include "renderengine/ExternalTexture.h"
 #include "renderengine/impl/ExternalTexture.h"
 
