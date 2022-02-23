@@ -54,6 +54,7 @@ cc_test {
         "AttestKeyTest.cpp",
         "DeviceUniqueAttestationTest.cpp",
         "KeyMintTest.cpp",
+        "SecureElementProvisioningTest.cpp",
     ],
     static_libs: [
         "libkeymint_vts_test_utils",
