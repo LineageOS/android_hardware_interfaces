@@ -36,7 +36,7 @@ package android.hardware.wifi.supplicant;
 interface ISupplicantStaIface {
   int addDppPeerUri(in String uri);
   int addExtRadioWork(in String name, in int freqInMhz, in int timeoutInSec);
-  android.hardware.wifi.supplicant.ISupplicantStaNetwork addNetwork();
+  @PropagateAllowBlocking android.hardware.wifi.supplicant.ISupplicantStaNetwork addNetwork();
   void addRxFilter(in android.hardware.wifi.supplicant.RxFilterType type);
   void cancelWps();
   void disconnect();
@@ -50,7 +50,7 @@ interface ISupplicantStaIface {
   android.hardware.wifi.supplicant.KeyMgmtMask getKeyMgmtCapabilities();
   byte[] getMacAddress();
   String getName();
-  android.hardware.wifi.supplicant.ISupplicantStaNetwork getNetwork(in int id);
+  @PropagateAllowBlocking android.hardware.wifi.supplicant.ISupplicantStaNetwork getNetwork(in int id);
   android.hardware.wifi.supplicant.IfaceType getType();
   android.hardware.wifi.supplicant.WpaDriverCapabilitiesMask getWpaDriverCapabilities();
   void initiateAnqpQuery(in byte[] macAddress, in android.hardware.wifi.supplicant.AnqpInfoId[] infoElements, in android.hardware.wifi.supplicant.Hs20AnqpSubtypes[] subTypes);
@@ -64,7 +64,7 @@ interface ISupplicantStaIface {
   void reconnect();
   void registerCallback(in android.hardware.wifi.supplicant.ISupplicantStaIfaceCallback callback);
   void setQosPolicyFeatureEnabled(in boolean enable);
-  void sendQosPolicyResponse(in boolean morePolicies, in android.hardware.wifi.supplicant.QosPolicyStatus[] qosPolicyStatusList);
+  void sendQosPolicyResponse(in int qosPolicyRequestId, in boolean morePolicies, in android.hardware.wifi.supplicant.QosPolicyStatus[] qosPolicyStatusList);
   void removeAllQosPolicies();
   void removeDppUri(in int id);
   void removeExtRadioWork(in int id);
