@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2016 The Android Open Source Project
+// Copyright (C) 2022 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,50 +24,52 @@ package {
 }
 
 cc_test {
-    name: "VtsHalCameraProviderV2_4TargetTest",
-    defaults: ["VtsHalTargetTestDefaults"],
-    srcs: ["VtsHalCameraProviderV2_4TargetTest.cpp"],
+    name: "VtsAidlHalCameraProvider_TargetTest",
+    defaults: [
+        "VtsHalTargetTestDefaults",
+        "use_libaidlvintf_gtest_helper_static",
+    ],
+    srcs: [
+        "camera_aidl_test.cpp",
+        "device_cb.cpp",
+        "empty_device_cb.cpp",
+        "simple_device_cb.cpp",
+        "torch_provider_cb.cpp",
+        "VtsAidlHalCameraProvider_TargetTest.cpp",
+    ],
 
     // TODO(b/64437680): Assume these are always available on the device.
     shared_libs: [
-        "libbinder",
+        "libbinder_ndk",
         "libcamera_metadata",
         "libcutils",
         "libfmq",
         "libgui",
         "libui",
+        "libbase",
+        "android.hardware.common-V2-ndk",
+        "android.hardware.common.fmq-V1-ndk",
+        "android.hardware.graphics.mapper@2.0",
+        "android.hardware.graphics.mapper@3.0",
+        "android.hardware.graphics.mapper@4.0",
     ],
 
     // Statically link to libs not guaranteed to be present on the device.
     static_libs: [
-        "android.hardware.camera.common@1.0",
         "android.hardware.camera.common@1.0-helper",
-        "android.hardware.camera.device@1.0",
-        "android.hardware.camera.device@3.2",
-        "android.hardware.camera.device@3.3",
-        "android.hardware.camera.device@3.4",
-        "android.hardware.camera.device@3.5",
-        "android.hardware.camera.device@3.6",
-        "android.hardware.camera.device@3.7",
-        "android.hardware.camera.device@3.8",
-        "android.hardware.camera.metadata@3.4",
-        "android.hardware.camera.metadata@3.8",
-        "android.hardware.camera.provider@2.4",
-        "android.hardware.camera.provider@2.5",
-        "android.hardware.camera.provider@2.6",
-        "android.hardware.camera.provider@2.7",
-        "android.hardware.graphics.common@1.0",
-        "android.hardware.graphics.mapper@2.0",
-        "android.hardware.graphics.mapper@3.0",
-        "android.hardware.graphics.mapper@4.0",
+        "android.hardware.camera.common-V1-ndk",
+        "android.hardware.camera.device-V1-ndk",
+        "android.hardware.camera.metadata-V1-ndk",
+        "android.hardware.camera.provider-V1-ndk",
+        "android.hardware.graphics.common-V3-ndk",
         "android.hidl.allocator@1.0",
         "libgrallocusage",
         "libhidlmemory",
         "libgralloctypes",
+        "libaidlcommonsupport",
     ],
     test_suites: [
         "general-tests",
         "vts",
     ],
-
 }
