@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "include/GraphicsComposerCallback.h"
+#include "GraphicsComposerCallback.h"
 #include <log/log_main.h>
 #include <utils/Timers.h>
 
