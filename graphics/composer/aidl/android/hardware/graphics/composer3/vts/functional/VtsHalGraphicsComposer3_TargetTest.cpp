@@ -1627,10 +1627,8 @@ TEST_P(GraphicsComposerAidlCommandTest, DisplayDecoration) {
 
         const auto [error, support] =
                 mComposerClient->getDisplayDecorationSupport(display.getDisplayId());
-        EXPECT_TRUE(error.isOk());
 
-        const auto format =
-                support ? support->format
+        const auto format = (error.isOk() && support) ? support->format
                         : aidl::android::hardware::graphics::common::PixelFormat::RGBA_8888;
         const auto decorBuffer = allocate(static_cast<::android::PixelFormat>(format));
         ASSERT_NE(nullptr, decorBuffer);
