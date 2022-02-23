@@ -49,5 +49,8 @@ interface IKeyMintDevice {
   void earlyBootEnded();
   byte[] convertStorageKeyToEphemeral(in byte[] storageKeyBlob);
   android.hardware.security.keymint.KeyCharacteristics[] getKeyCharacteristics(in byte[] keyBlob, in byte[] appId, in byte[] appData);
+  byte[16] getRootOfTrustChallenge();
+  byte[] getRootOfTrust(in byte[16] challenge);
+  void sendRootOfTrust(in byte[] rootOfTrust);
   const int AUTH_TOKEN_MAC_LENGTH = 32;
 }
