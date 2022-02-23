@@ -66,7 +66,7 @@ class FakeVehicleHalValueGeneratorsTest : public ::testing::Test {
         std::unique_lock<std::mutex> uniqueLock(mEventsLock);
         bool result = mCv.wait_for(uniqueLock, 10s, [this, count] {
             ScopedLockAssertion lockAssertion(mEventsLock);
-            return mEvents.size() == count;
+            return mEvents.size() >= count;
         });
 
         ASSERT_TRUE(result) << "didn't receive enough events";
@@ -126,7 +126,8 @@ TEST_F(FakeVehicleHalValueGeneratorsTest, testRegisterTestFakeValueGenerator) {
     for (size_t i = 0; i < eventCount; i++) {
         events.push_back(VehiclePropValue{
                 .prop = static_cast<int32_t>(i),
-                .timestamp = timestamp + static_cast<int64_t>(50 * i),
+                // Generate 1 event every 1ms.
+                .timestamp = timestamp + static_cast<int64_t>(1000000 * i),
         });
     }
     generator->setEvents(events);
@@ -148,7 +149,8 @@ TEST_F(FakeVehicleHalValueGeneratorsTest, testUnregisterGeneratorStopGeneration)
     for (size_t i = 0; i < eventCount; i++) {
         events.push_back(VehiclePropValue{
                 .prop = static_cast<int32_t>(i),
-                .timestamp = timestamp + static_cast<int64_t>(50 * i),
+                // Generate 1 event every 1ms.
+                .timestamp = timestamp + static_cast<int64_t>(1000000 * i),
         });
     }
     generator->setEvents(events);
@@ -158,8 +160,12 @@ TEST_F(FakeVehicleHalValueGeneratorsTest, testUnregisterGeneratorStopGeneration)
     waitForEvents(1);
 
     getHub()->unregisterGenerator(0);
+    clearEvents();
 
-    ASSERT_LE(getEvents().size(), 2u)
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    // It is possible that one last event would be generated after unregistering.
+    ASSERT_LE(getEvents().size(), 1u)
             << "Must stop generating event after generator is unregistered";
 }
 
@@ -176,7 +182,6 @@ TEST_F(FakeVehicleHalValueGeneratorsTest, testLinerFakeValueGeneratorFloat) {
     waitForEvents(10);
     auto events = getEvents();
 
-    ASSERT_EQ(events.size(), 10u);
     int value = 30;
     for (size_t i = 0; i < 10; i++) {
         EXPECT_EQ(std::vector<float>({static_cast<float>(value)}), events[i].value.floatValues);
@@ -196,7 +201,7 @@ TEST_F(FakeVehicleHalValueGeneratorsTest, testLinerFakeValueGeneratorInt32) {
 
     waitForEvents(10);
     auto events = getEvents();
-    ASSERT_EQ(events.size(), 10u);
+
     int value = 30;
     for (size_t i = 0; i < 10; i++) {
         EXPECT_EQ(std::vector<int32_t>({value}), events[i].value.int32Values);
@@ -216,8 +221,7 @@ TEST_F(FakeVehicleHalValueGeneratorsTest, testLinerFakeValueGeneratorInt64) {
 
     waitForEvents(10);
     auto events = getEvents();
-    // We should get 10 events ideally, but let's be safe here.
-    ASSERT_EQ(events.size(), 10u);
+
     int value = 30;
     for (size_t i = 0; i < 10; i++) {
         EXPECT_EQ(std::vector<int64_t>({value}), events[i].value.int64Values);
@@ -237,7 +241,7 @@ TEST_F(FakeVehicleHalValueGeneratorsTest, testLinerFakeValueGeneratorUsingReques
 
     waitForEvents(10);
     auto events = getEvents();
-    ASSERT_EQ(events.size(), 10u);
+
     int value = 50;
     for (size_t i = 0; i < 10; i++) {
         EXPECT_EQ(std::vector<float>({static_cast<float>(value)}), events[i].value.floatValues);
@@ -258,7 +262,6 @@ TEST_F(FakeVehicleHalValueGeneratorsTest, testLinerFakeValueGeneratorInvalidInit
 
     waitForEvents(10);
     auto events = getEvents();
-    ASSERT_EQ(events.size(), 10u);
 
     // Init value would be set to middleValue if given initValue is not valid.
     int value = 50;
@@ -269,7 +272,7 @@ TEST_F(FakeVehicleHalValueGeneratorsTest, testLinerFakeValueGeneratorInvalidInit
 }
 
 TEST_F(FakeVehicleHalValueGeneratorsTest, testJsonFakeValueGenerator) {
-    long currentTime = elapsedRealtimeNano();
+    int64_t currentTime = elapsedRealtimeNano();
 
     std::unique_ptr<JsonFakeValueGenerator> generator =
             std::make_unique<JsonFakeValueGenerator>(getTestFilePath("prop.json"), 2);
@@ -306,7 +309,7 @@ TEST_F(FakeVehicleHalValueGeneratorsTest, testJsonFakeValueGenerator) {
     waitForEvents(expectedValues.size());
     auto events = getEvents();
 
-    long lastEventTime = currentTime;
+    int64_t lastEventTime = currentTime;
     for (auto& event : events) {
         EXPECT_GT(event.timestamp, lastEventTime);
         lastEventTime = event.timestamp;
@@ -325,7 +328,7 @@ TEST_F(FakeVehicleHalValueGeneratorsTest, testJsonFakeValueGeneratorIterateIndef
 }
 
 TEST_F(FakeVehicleHalValueGeneratorsTest, testJsonFakeValueGeneratorUsingRequest) {
-    long currentTime = elapsedRealtimeNano();
+    int64_t currentTime = elapsedRealtimeNano();
 
     VehiclePropValue request = {.value = {
                                         .stringValue = getTestFilePath("prop.json"),
@@ -367,7 +370,7 @@ TEST_F(FakeVehicleHalValueGeneratorsTest, testJsonFakeValueGeneratorUsingRequest
     waitForEvents(expectedValues.size());
     auto events = getEvents();
 
-    long lastEventTime = currentTime;
+    int64_t lastEventTime = currentTime;
     for (auto& event : events) {
         EXPECT_GT(event.timestamp, lastEventTime);
         lastEventTime = event.timestamp;
