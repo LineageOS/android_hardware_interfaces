@@ -130,8 +130,7 @@ class SupplicantStaIfaceCallback : public BnSupplicantStaIfaceCallback {
     ::ndk::ScopedAStatus onDppSuccessConfigSent() override {
         return ndk::ScopedAStatus::ok();
     }
-    ::ndk::ScopedAStatus onEapFailure(const std::vector<uint8_t>& /* bssid */,
-                                      int32_t /* errorCode */) override {
+    ::ndk::ScopedAStatus onEapFailure(int32_t /* errorCode */) override {
         return ndk::ScopedAStatus::ok();
     }
     ::ndk::ScopedAStatus onExtRadioWorkStart(int32_t /* id */) override {
