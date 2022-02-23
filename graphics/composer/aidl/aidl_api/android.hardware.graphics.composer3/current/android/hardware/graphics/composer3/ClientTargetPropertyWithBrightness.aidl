@@ -33,8 +33,8 @@
 
 package android.hardware.graphics.composer3;
 @VintfStability
-parcelable ClientTargetPropertyWithNits {
+parcelable ClientTargetPropertyWithBrightness {
   long display;
   android.hardware.graphics.composer3.ClientTargetProperty clientTargetProperty;
-  float whitePointNits;
+  float brightness;
 }
