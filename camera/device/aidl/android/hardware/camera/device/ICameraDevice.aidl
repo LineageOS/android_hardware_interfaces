@@ -22,7 +22,6 @@ import android.hardware.camera.device.ICameraDeviceCallback;
 import android.hardware.camera.device.ICameraDeviceSession;
 import android.hardware.camera.device.ICameraInjectionSession;
 import android.hardware.camera.device.StreamConfiguration;
-
 import android.os.ParcelFileDescriptor;
 
 /**
@@ -34,31 +33,6 @@ import android.os.ParcelFileDescriptor;
  */
 @VintfStability
 interface ICameraDevice {
-    /**
-     * dumpState:
-     *
-     * Print out debugging state for the camera device. This may be called by
-     * the framework when the camera service is asked for a debug dump, which
-     * happens when using the dumpsys tool, or when capturing a bugreport.
-     *
-     * The passed-in file descriptor can be used to write debugging text using
-     * dprintf() or write().
-     *
-     * In case this camera device has been disconnected, the dump must not fail,
-     * but may simply print out 'Device disconnected' or equivalent.
-     *
-     * Performance requirements:
-     *
-     * This must be a non-blocking call. The HAL should return from this call
-     * in 1ms, must return from this call in 10ms. This call must avoid
-     * deadlocks, as it may be called at any point during camera operation.
-     * Any synchronization primitives used (such as mutex locks or semaphores)
-     * must be acquired with a timeout.
-     *
-     * @param fd The file descriptor to which the camera HAL must write any dumpState information.
-     */
-    void dumpState(in ParcelFileDescriptor fd);
-
     /**
      * getCameraCharacteristics:
      *
@@ -225,6 +199,8 @@ interface ICameraDevice {
      *     INTERNAL_ERROR:
      *         The camera device cannot be opened due to an internal
      *         error.
+     *     OPERATION_NOT_SUPPORTED:
+     *         This camera device does not support opening an injection session.
      *     ILLEGAL_ARGUMENT:
      *         The callbacks handle is invalid (for example, it is null).
      *     CAMERA_IN_USE:
@@ -237,8 +213,7 @@ interface ICameraDevice {
      *         longer available. This interface is now stale, and a new instance
      *         must be acquired if the device is reconnected. All subsequent
      *         calls on this interface must return CAMERA_DISCONNECTED.
-     * @return The interface to the newly-opened camera session,
-     *     or null if status is not OK.
+     * @return The interface to the newly-opened camera session, or null if status is not OK.
      */
     ICameraInjectionSession openInjectionSession(in ICameraDeviceCallback callback);
 
