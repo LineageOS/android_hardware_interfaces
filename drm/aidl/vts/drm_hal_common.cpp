@@ -256,7 +256,7 @@ std::vector<uint8_t> DrmHalTest::getUUID() {
 std::vector<uint8_t> DrmHalTest::getVendorUUID() {
     if (vendorModule == nullptr) {
         ALOGW("vendor module for %s not found", GetParamService().c_str());
-        return {};
+        return std::vector<uint8_t>(16);
     }
     return vendorModule->getUUID();
 }
@@ -268,17 +268,22 @@ bool DrmHalTest::isCryptoSchemeSupported(Uuid uuid, SecurityLevel level, std::st
     if (!ret.isOk() || !std::count(schemes.uuids.begin(), schemes.uuids.end(), uuid)) {
         return false;
     }
-    if (level > schemes.maxLevel || level < schemes.minLevel) {
-        if (level != SecurityLevel::DEFAULT && level != SecurityLevel::UNKNOWN) {
-            return false;
+    if (mime.empty()) {
+        EXPECT_THAT(level, AnyOf(Eq(SecurityLevel::DEFAULT), Eq(SecurityLevel::UNKNOWN)));
+        return true;
+    }
+    for (auto ct : schemes.mimeTypes) {
+        if (ct.mime != mime) {
+            continue;
+        }
+        if (level == SecurityLevel::DEFAULT || level == SecurityLevel::UNKNOWN) {
+            return true;
+        }
+        if (level <= ct.maxLevel && level >= ct.minLevel) {
+            return true;
         }
     }
-    if (!mime.empty()) {
-        if (!std::count(schemes.mimeTypes.begin(), schemes.mimeTypes.end(), mime)) {
-            return false;
-        }
-    }
-    return true;
+    return false;
 }
 
 void DrmHalTest::provision() {
