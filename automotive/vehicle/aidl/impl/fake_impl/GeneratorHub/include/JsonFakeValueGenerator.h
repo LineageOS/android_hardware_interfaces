@@ -56,7 +56,7 @@ class JsonFakeValueGenerator : public FakeValueGenerator {
   private:
     size_t mEventIndex = 0;
     std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue> mEvents;
-    long mLastEventTimestamp = 0;
+    int64_t mLastEventTimestamp = 0;
     int32_t mNumOfIterations = 0;
 
     void setBit(std::vector<uint8_t>& bytes, size_t idx);
