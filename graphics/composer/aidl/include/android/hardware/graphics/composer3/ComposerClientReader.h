@@ -153,14 +153,14 @@ class ComposerClientReader {
     }
 
     // Get the client target properties requested by hardware composer.
-    ClientTargetPropertyWithNits takeClientTargetProperty(int64_t display) {
+    ClientTargetPropertyWithBrightness takeClientTargetProperty(int64_t display) {
         auto found = mReturnData.find(display);
 
         // If not found, return the default values.
         if (found == mReturnData.end()) {
-            return ClientTargetPropertyWithNits{
+            return ClientTargetPropertyWithBrightness{
                     .clientTargetProperty = {common::PixelFormat::RGBA_8888, Dataspace::UNKNOWN},
-                    .whitePointNits = -1.f,
+                    .brightness = 1.f,
             };
         }
 
@@ -201,7 +201,8 @@ class ComposerClientReader {
         data.presentOrValidateState = std::move(presentOrValidate.result);
     }
 
-    void parseSetClientTargetProperty(const ClientTargetPropertyWithNits&& clientTargetProperty) {
+    void parseSetClientTargetProperty(
+            const ClientTargetPropertyWithBrightness&& clientTargetProperty) {
         auto& data = mReturnData[clientTargetProperty.display];
         data.clientTargetProperty = std::move(clientTargetProperty);
     }
@@ -213,9 +214,9 @@ class ComposerClientReader {
         std::vector<ReleaseFences::Layer> releasedLayers;
         PresentOrValidate::Result presentOrValidateState;
 
-        ClientTargetPropertyWithNits clientTargetProperty = {
+        ClientTargetPropertyWithBrightness clientTargetProperty = {
                 .clientTargetProperty = {common::PixelFormat::RGBA_8888, Dataspace::UNKNOWN},
-                .whitePointNits = -1.f,
+                .brightness = 1.f,
         };
     };
 
