@@ -34,7 +34,6 @@
 package android.hardware.camera.device;
 @VintfStability
 interface ICameraDevice {
-  void dumpState(in ParcelFileDescriptor fd);
   android.hardware.camera.device.CameraMetadata getCameraCharacteristics();
   android.hardware.camera.device.CameraMetadata getPhysicalCameraCharacteristics(in String physicalCameraId);
   android.hardware.camera.common.CameraResourceCost getResourceCost();
