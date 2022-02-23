@@ -129,9 +129,9 @@ enum UwbVendorCapabilityTlvTypes {
      * 1 byte tuple {initiator_tx (4 bits), responder_tx (4 bits)} array with list of supported
      * pulse shape combos
      * Values:
-     *  PULSE_SHAPE_SYMMETRICAL_ROOT_RAISED_COSINE = 1
-     *  PULSE_SHAPE_PRECURSOR_FREE = 2
-     *  PULSE_SHAPE_PRECURSOR_FREE_SPECIAL = 3
+     *  PULSE_SHAPE_SYMMETRICAL_ROOT_RAISED_COSINE = 0
+     *  PULSE_SHAPE_PRECURSOR_FREE = 1
+     *  PULSE_SHAPE_PRECURSOR_FREE_SPECIAL = 2
      */
     /**  */
     CCC_SUPPORTED_PULSE_SHAPE_COMBOS = 0xA6,
