@@ -80,7 +80,7 @@ enum Composition {
      *
      * Only supported if the device returns a valid struct from
      * getDisplayDecorationSupport. Pixels in the buffer are interpreted
-     * according to the DisplayDecorationSupport.alphInterpretation.
+     * according to the DisplayDecorationSupport.alphaInterpretation.
      *
      * Upon validateDisplay, the device may request a change from this type
      * to either DEVICE or CLIENT.
