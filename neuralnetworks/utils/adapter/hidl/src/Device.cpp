@@ -62,11 +62,11 @@ auto convertInput(const Type& object) -> decltype(nn::convert(std::declval<Type>
 
 using PrepareModelResult = nn::GeneralResult<nn::SharedPreparedModel>;
 
-sp<PreparedModel> adaptPreparedModel(nn::SharedPreparedModel preparedModel, Executor executor) {
+sp<PreparedModel> adaptPreparedModel(nn::SharedPreparedModel preparedModel) {
     if (preparedModel == nullptr) {
         return nullptr;
     }
-    return sp<PreparedModel>::make(std::move(preparedModel), std::move(executor));
+    return sp<PreparedModel>::make(std::move(preparedModel));
 }
 
 void notify(V1_0::IPreparedModelCallback* callback, nn::ErrorStatus status,
@@ -105,14 +105,14 @@ void notify(V1_3::IPreparedModelCallback* callback, nn::ErrorStatus status,
 }
 
 template <typename CallbackType>
-void notify(CallbackType* callback, PrepareModelResult result, Executor executor) {
+void notify(CallbackType* callback, PrepareModelResult result) {
     if (!result.has_value()) {
         const auto [message, status] = std::move(result).error();
         LOG(ERROR) << message;
         notify(callback, status, nullptr);
     } else {
         auto preparedModel = std::move(result).value();
-        auto hidlPreparedModel = adaptPreparedModel(std::move(preparedModel), std::move(executor));
+        auto hidlPreparedModel = adaptPreparedModel(std::move(preparedModel));
         notify(callback, nn::ErrorStatus::NONE, std::move(hidlPreparedModel));
     }
 }
@@ -133,10 +133,10 @@ nn::GeneralResult<void> prepareModel(const nn::SharedDevice& device, const Execu
 
     auto nnModel = NN_TRY(convertInput(model));
 
-    Task task = [device, nnModel = std::move(nnModel), executor, callback] {
+    Task task = [device, nnModel = std::move(nnModel), callback] {
         auto result = device->prepareModel(nnModel, nn::ExecutionPreference::DEFAULT,
                                            nn::Priority::DEFAULT, {}, {}, {}, {}, {}, {});
-        notify(callback.get(), std::move(result), executor);
+        notify(callback.get(), std::move(result));
     };
     executor(std::move(task), {});
 
@@ -154,10 +154,10 @@ nn::GeneralResult<void> prepareModel_1_1(const nn::SharedDevice& device, const E
     auto nnModel = NN_TRY(convertInput(model));
     const auto nnPreference = NN_TRY(convertInput(preference));
 
-    Task task = [device, nnModel = std::move(nnModel), nnPreference, executor, callback] {
+    Task task = [device, nnModel = std::move(nnModel), nnPreference, callback] {
         auto result = device->prepareModel(nnModel, nnPreference, nn::Priority::DEFAULT, {}, {}, {},
                                            {}, {}, {});
-        notify(callback.get(), std::move(result), executor);
+        notify(callback.get(), std::move(result));
     };
     executor(std::move(task), {});
 
@@ -183,10 +183,10 @@ nn::GeneralResult<void> prepareModel_1_2(const nn::SharedDevice& device, const E
 
     Task task = [device, nnModel = std::move(nnModel), nnPreference,
                  nnModelCache = std::move(nnModelCache), nnDataCache = std::move(nnDataCache),
-                 nnToken, executor, callback] {
+                 nnToken, callback] {
         auto result = device->prepareModel(nnModel, nnPreference, nn::Priority::DEFAULT, {},
                                            nnModelCache, nnDataCache, nnToken, {}, {});
-        notify(callback.get(), std::move(result), executor);
+        notify(callback.get(), std::move(result));
     };
     executor(std::move(task), {});
 
@@ -213,10 +213,10 @@ nn::GeneralResult<void> prepareModel_1_3(
 
     Task task = [device, nnModel = std::move(nnModel), nnPreference, nnPriority, nnDeadline,
                  nnModelCache = std::move(nnModelCache), nnDataCache = std::move(nnDataCache),
-                 nnToken, executor, callback] {
+                 nnToken, callback] {
         auto result = device->prepareModel(nnModel, nnPreference, nnPriority, nnDeadline,
                                            nnModelCache, nnDataCache, nnToken, {}, {});
-        notify(callback.get(), std::move(result), executor);
+        notify(callback.get(), std::move(result));
     };
     executor(std::move(task), nnDeadline);
 
@@ -238,9 +238,9 @@ nn::GeneralResult<void> prepareModelFromCache(const nn::SharedDevice& device,
     const auto nnToken = nn::CacheToken(token);
 
     Task task = [device, nnModelCache = std::move(nnModelCache),
-                 nnDataCache = std::move(nnDataCache), nnToken, executor, callback] {
+                 nnDataCache = std::move(nnDataCache), nnToken, callback] {
         auto result = device->prepareModelFromCache({}, nnModelCache, nnDataCache, nnToken);
-        notify(callback.get(), std::move(result), executor);
+        notify(callback.get(), std::move(result));
     };
     executor(std::move(task), {});
 
@@ -262,9 +262,9 @@ nn::GeneralResult<void> prepareModelFromCache_1_3(
     const auto nnToken = nn::CacheToken(token);
 
     auto task = [device, nnDeadline, nnModelCache = std::move(nnModelCache),
-                 nnDataCache = std::move(nnDataCache), nnToken, executor, callback] {
+                 nnDataCache = std::move(nnDataCache), nnToken, callback] {
         auto result = device->prepareModelFromCache(nnDeadline, nnModelCache, nnDataCache, nnToken);
-        notify(callback.get(), std::move(result), executor);
+        notify(callback.get(), std::move(result));
     };
     executor(std::move(task), nnDeadline);
 

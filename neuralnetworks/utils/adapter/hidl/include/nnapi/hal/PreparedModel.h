@@ -39,7 +39,7 @@ namespace android::hardware::neuralnetworks::adapter {
 // Class that adapts nn::IPreparedModel to V1_3::IPreparedModel.
 class PreparedModel final : public V1_3::IPreparedModel {
   public:
-    PreparedModel(nn::SharedPreparedModel preparedModel, Executor executor);
+    explicit PreparedModel(nn::SharedPreparedModel preparedModel);
 
     Return<V1_0::ErrorStatus> execute(const V1_0::Request& request,
                                       const sp<V1_0::IExecutionCallback>& callback) override;
@@ -70,7 +70,6 @@ class PreparedModel final : public V1_3::IPreparedModel {
 
   private:
     const nn::SharedPreparedModel kPreparedModel;
-    const Executor kExecutor;
 };
 
 }  // namespace android::hardware::neuralnetworks::adapter
