@@ -19,8 +19,9 @@
 RadioConfigResponse::RadioConfigResponse(RadioServiceTest& parent) : parent_config(parent) {}
 
 ndk::ScopedAStatus RadioConfigResponse::getSimSlotsStatusResponse(
-        const RadioResponseInfo& info, const std::vector<SimSlotStatus>& /* slotStatus */) {
+        const RadioResponseInfo& info, const std::vector<SimSlotStatus>& slotStatus) {
     rspInfo = info;
+    simSlotStatus = slotStatus;
     parent_config.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
