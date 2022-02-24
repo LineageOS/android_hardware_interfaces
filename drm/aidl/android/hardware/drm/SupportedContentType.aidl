@@ -16,20 +16,16 @@
 
 package android.hardware.drm;
 
-import android.hardware.drm.SupportedContentType;
-import android.hardware.drm.Uuid;
+import android.hardware.drm.SecurityLevel;
 
 @VintfStability
-parcelable CryptoSchemes {
+parcelable SupportedContentType {
+    /** Supported mime type. E.g. cenc, video/mp4, etc */
+    String mime;
 
-    /**
-     * Supported crypto schemes
-     */
-    List<Uuid> uuids;
+    /** Minimum supported security level (inclusive) */
+    SecurityLevel minLevel;
 
-    /**
-     * Supported mime types, and supported SecurityLevels for each mime
-     */
-    List<SupportedContentType> mimeTypes;
-
+    /** Maximum supported security level (inclusive) */
+    SecurityLevel maxLevel;
 }

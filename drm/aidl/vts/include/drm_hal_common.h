@@ -59,6 +59,9 @@ namespace hardware {
 namespace drm {
 namespace vts {
 
+using ::testing::AnyOf;
+using ::testing::Eq;
+
 ::aidl::android::hardware::drm::Status DrmErr(const ::ndk::ScopedAStatus& ret);
 std::string HalBaseName(const std::string& fullname);
 std::string HalFullName(const std::string& iface, const std::string& basename);

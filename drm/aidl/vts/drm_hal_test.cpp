@@ -100,6 +100,19 @@ TEST_P(DrmHalTest, BadMimeNotSupported) {
 }
 
 /**
+ * getSupportedCryptoSchemes confidence check
+ */
+TEST_P(DrmHalTest, SupportedCryptoSchemes) {
+    aidl::android::hardware::drm::CryptoSchemes schemes{};
+    auto result = drmFactory->getSupportedCryptoSchemes(&schemes);
+    EXPECT_FALSE(schemes.uuids.empty());
+    for(auto ct : schemes.mimeTypes) {
+        EXPECT_LE(ct.minLevel, ct.maxLevel);
+    }
+    EXPECT_OK(result);
+}
+
+/**
  *  DrmPlugin tests
  */
 
