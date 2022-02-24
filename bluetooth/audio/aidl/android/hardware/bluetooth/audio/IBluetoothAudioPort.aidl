@@ -47,8 +47,11 @@ interface IBluetoothAudioPort {
      * This indicates that the caller of this method has opened the data path
      * and wants to start an audio stream. The caller must wait for a
      * IBluetoothAudioProvider.streamStarted(Status) call.
+     *
+     * @param isLowLatency true if the stream being started with the latency
+     * control mechanism.
      */
-    void startStream();
+    void startStream(boolean isLowLatency);
 
     /**
      * This indicates that the caller of this method wants to stop the audio
