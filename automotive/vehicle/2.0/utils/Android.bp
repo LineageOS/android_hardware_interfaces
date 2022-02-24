@@ -39,6 +39,9 @@ cc_test {
     name: "android.hardware.automotive.vehicle@2.0-utils-unit-tests",
     defaults: ["vhal_v2_0_defaults"],
     vendor: true,
+    tidy_timeout_srcs: [
+        "tests/UserHalHelper_test.cpp",
+    ],
     srcs: [
         "tests/UserHalHelper_test.cpp",
     ],

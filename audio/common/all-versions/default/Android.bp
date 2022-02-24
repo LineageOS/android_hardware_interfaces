@@ -211,6 +211,8 @@ cc_test {
     name: "android.hardware.audio.common@7.0-util_tests",
     defaults: ["android.hardware.audio.common-util_default"],
 
+    tidy_timeout_srcs: ["tests/hidlutils_tests.cpp"],
+
     srcs: ["tests/hidlutils_tests.cpp"],
 
     // Use static linking to allow running in presubmit on
@@ -240,6 +242,8 @@ cc_test {
 cc_test {
     name: "android.hardware.audio.common@7.1-util_tests",
     defaults: ["android.hardware.audio.common-util_default"],
+
+    tidy_timeout_srcs: ["tests/hidlutils_tests.cpp"],
 
     srcs: ["tests/hidlutils_tests.cpp"],
 

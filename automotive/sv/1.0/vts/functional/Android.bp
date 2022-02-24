@@ -25,6 +25,9 @@ package {
 
 cc_test {
     name: "VtsHalSurroundViewV1_0TargetTest",
+    tidy_timeout_srcs: [
+        "VtsHalSurroundViewV1_0TargetTest.cpp",
+    ],
     srcs: [
         "VtsHalSurroundViewV1_0TargetTest.cpp",
         "SurroundViewStreamHandler.cpp",

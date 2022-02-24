@@ -26,6 +26,9 @@ package {
 cc_test {
     name: "VtsHalKeymasterV4_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
+    tidy_timeout_srcs: [
+        "keymaster_hidl_hal_test.cpp",
+    ],
     srcs: [
         "HmacKeySharingTest.cpp",
         "VerificationTokenTest.cpp",
@@ -50,6 +53,9 @@ cc_test {
 cc_test_library {
     name: "libkeymaster4vtstest",
     defaults: ["VtsHalTargetTestDefaults"],
+    tidy_timeout_srcs: [
+        "KeymasterHidlTest.cpp",
+    ],
     srcs: [
         "KeymasterHidlTest.cpp",
     ],

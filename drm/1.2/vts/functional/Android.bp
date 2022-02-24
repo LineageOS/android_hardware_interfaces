@@ -42,6 +42,9 @@ cc_library_static {
     local_include_dirs: [
         "include",
     ],
+    tidy_timeout_srcs: [
+        "drm_hal_test.cpp",
+    ],
     srcs: [
         "drm_hal_clearkey_module.cpp",
         "drm_hal_common.cpp",
