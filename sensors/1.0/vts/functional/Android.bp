@@ -27,6 +27,9 @@ cc_test {
     name: "VtsHalSensorsV1_0TargetTest",
     cflags: ["-DLOG_TAG=\"sensors_hidl_hal_test\""],
     defaults: ["VtsHalTargetTestDefaults"],
+    tidy_timeout_srcs: [
+        "VtsHalSensorsV1_0TargetTest.cpp",
+    ],
     srcs: [
         "SensorsHidlEnvironmentV1_0.cpp",
         "VtsHalSensorsV1_0TargetTest.cpp",

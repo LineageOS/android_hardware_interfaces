@@ -105,6 +105,10 @@ cc_test {
         "neuralnetworks_use_latest_utils_hal_aidl",
         "neuralnetworks_utils_defaults",
     ],
+    tidy_timeout_srcs: [
+        "test/DeviceTest.cpp",
+        "test/PreparedModelTest.cpp",
+    ],
     srcs: [
         "test/*.cpp",
     ],

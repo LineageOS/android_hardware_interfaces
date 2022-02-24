@@ -26,6 +26,9 @@ package {
 cc_test {
     name: "VtsHalWifiHostapdV1_3TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
+    tidy_timeout_srcs: [
+        "hostapd_hidl_test.cpp",
+    ],
     srcs: [
         "hostapd_hidl_test.cpp",
     ],
