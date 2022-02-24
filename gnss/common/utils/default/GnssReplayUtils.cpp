@@ -29,9 +29,22 @@ std::string ReplayUtils::getGnssPath() {
     return GNSS_PATH;
 }
 
+std::string ReplayUtils::getFixedLocationPath() {
+    char devname_value[PROPERTY_VALUE_MAX] = "";
+    if (property_get("debug.location.fixedlocation.devname", devname_value, NULL) > 0) {
+        return devname_value;
+    }
+    return FIXED_LOCATION_PATH;
+}
+
 bool ReplayUtils::hasGnssDeviceFile() {
     struct stat sb;
     return stat(getGnssPath().c_str(), &sb) != -1;
+}
+
+bool ReplayUtils::hasFixedLocationDeviceFile() {
+    struct stat sb;
+    return stat(getFixedLocationPath().c_str(), &sb) != -1;
 }
 
 bool ReplayUtils::isGnssRawMeasurement(const std::string& inputStr) {
