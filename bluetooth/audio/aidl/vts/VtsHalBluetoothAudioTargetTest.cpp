@@ -138,7 +138,7 @@ class BluetoothAudioPort : public BnBluetoothAudioPort {
  public:
   BluetoothAudioPort() {}
 
-  ndk::ScopedAStatus startStream() { return ScopedAStatus::ok(); }
+  ndk::ScopedAStatus startStream(bool) { return ScopedAStatus::ok(); }
 
   ndk::ScopedAStatus suspendStream() { return ScopedAStatus::ok(); }
 
