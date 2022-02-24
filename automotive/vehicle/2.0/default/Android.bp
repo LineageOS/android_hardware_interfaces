@@ -162,6 +162,9 @@ cc_test {
     vendor: true,
     defaults: ["vhal_v2_0_target_defaults"],
     whole_static_libs: ["android.hardware.automotive.vehicle@2.0-manager-lib"],
+    tidy_timeout_srcs: [
+        "tests/VmsUtils_test.cpp",
+    ],
     srcs: [
         "tests/RecurrentTimer_test.cpp",
         "tests/SubscriptionManager_test.cpp",

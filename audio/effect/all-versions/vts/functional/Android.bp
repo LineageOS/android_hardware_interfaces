@@ -26,6 +26,9 @@ package {
 cc_defaults {
     name: "VtsHalAudioEffectTargetTest_default",
     defaults: ["VtsHalTargetTestDefaults"],
+    tidy_timeout_srcs: [
+        "VtsHalAudioEffectTargetTest.cpp",
+    ],
     srcs: [
         "VtsHalAudioEffectTargetTest.cpp",
         "ValidateAudioEffectsConfiguration.cpp",

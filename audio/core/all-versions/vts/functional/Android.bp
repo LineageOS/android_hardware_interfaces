@@ -49,6 +49,9 @@ cc_defaults {
 cc_test {
     name: "VtsHalAudioV2_0TargetTest",
     defaults: ["VtsHalAudioTargetTest_defaults"],
+    tidy_timeout_srcs: [
+        "2.0/AudioPrimaryHidlHalTest.cpp",
+    ],
     srcs: [
         "2.0/AudioPrimaryHidlHalTest.cpp",
     ],
@@ -76,6 +79,9 @@ cc_test {
 cc_test {
     name: "VtsHalAudioV4_0TargetTest",
     defaults: ["VtsHalAudioTargetTest_defaults"],
+    tidy_timeout_srcs: [
+        "4.0/AudioPrimaryHidlHalTest.cpp",
+    ],
     srcs: [
         "4.0/AudioPrimaryHidlHalTest.cpp",
     ],
@@ -130,6 +136,9 @@ cc_test {
 cc_test {
     name: "VtsHalAudioV6_0TargetTest",
     defaults: ["VtsHalAudioTargetTest_defaults"],
+    tidy_timeout_srcs: [
+        "6.0/AudioPrimaryHidlHalTest.cpp",
+    ],
     srcs: [
         "6.0/AudioPrimaryHidlHalTest.cpp",
         "6.0/Generators.cpp",
@@ -158,6 +167,9 @@ cc_test {
 cc_test {
     name: "VtsHalAudioV7_0TargetTest",
     defaults: ["VtsHalAudioTargetTest_defaults"],
+    tidy_timeout_srcs: [
+        "7.0/AudioPrimaryHidlHalTest.cpp",
+    ],
     srcs: [
         "7.0/AudioPrimaryHidlHalTest.cpp",
         "7.0/Generators.cpp",
