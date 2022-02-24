@@ -26,6 +26,7 @@ package {
 cc_test {
     name: "VtsHalGraphicsComposerV2_3TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
+    tidy_timeout_srcs: ["VtsHalGraphicsComposerV2_3TargetTest.cpp"],
     srcs: ["VtsHalGraphicsComposerV2_3TargetTest.cpp"],
 
     // TODO(b/64437680): Assume these libs are always available on the device.

@@ -70,6 +70,9 @@ cc_test {
         "libhealthshim",
         "libgmock",
     ],
+    tidy_timeout_srcs: [
+        "test.cpp",
+    ],
     srcs: [
         "test.cpp",
     ],
