@@ -35,8 +35,8 @@
 #include <numeric>
 #include <string>
 #include <thread>
-#include "composer-vts/include/GraphicsComposerCallback.h"
-#include "composer-vts/include/VtsComposerClient.h"
+#include "GraphicsComposerCallback.h"
+#include "VtsComposerClient.h"
 
 #undef LOG_TAG
 #define LOG_TAG "VtsHalGraphicsComposer3_TargetTest"

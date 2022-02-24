@@ -20,22 +20,22 @@
 #include <aidl/Vintf.h>
 #include <aidl/android/hardware/graphics/common/BufferUsage.h>
 #include <aidl/android/hardware/graphics/composer3/IComposer.h>
-#include <composer-vts/include/ReadbackVts.h>
-#include <composer-vts/include/RenderEngineVts.h>
 #include <gtest/gtest.h>
 #include <ui/DisplayId.h>
 #include <ui/DisplayIdentification.h>
 #include <ui/GraphicBuffer.h>
 #include <ui/PixelFormat.h>
 #include <ui/Rect.h>
+#include "GraphicsComposerCallback.h"
+#include "ReadbackVts.h"
+#include "RenderEngineVts.h"
+#include "VtsComposerClient.h"
 
 // tinyxml2 does implicit conversions >:(
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wconversion"
 #include <tinyxml2.h>
 #pragma clang diagnostic pop
-#include "composer-vts/include/GraphicsComposerCallback.h"
-#include "composer-vts/include/VtsComposerClient.h"
 
 namespace aidl::android::hardware::graphics::composer3::vts {
 namespace {

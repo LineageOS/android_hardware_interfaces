@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "include/RenderEngineVts.h"
+#include "RenderEngineVts.h"
 #include "renderengine/impl/ExternalTexture.h"
 
 namespace aidl::android::hardware::graphics::composer3::vts {
