@@ -149,7 +149,7 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
                                       PixelFormat format, buffer_handle_t* buffer_handle /*out*/);
 
     static void openEmptyDeviceSession(const std::string& name,
-                                       std::shared_ptr<ICameraProvider> provider,
+                                       const std::shared_ptr<ICameraProvider>& provider,
                                        std::shared_ptr<ICameraDeviceSession>* session /*out*/,
                                        CameraMetadata* staticMeta /*out*/,
                                        std::shared_ptr<ICameraDevice>* device /*out*/);
@@ -240,7 +240,8 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
                                       uint32_t streamConfigCounter = 0);
 
     void verifyBuffersReturned(const std::shared_ptr<ICameraDeviceSession>& session,
-                               const std::vector<int32_t>& streamIds, std::shared_ptr<DeviceCb> cb,
+                               const std::vector<int32_t>& streamIds,
+                               const std::shared_ptr<DeviceCb>& cb,
                                uint32_t streamConfigCounter = 0);
 
     static void verifySessionReconfigurationQuery(
