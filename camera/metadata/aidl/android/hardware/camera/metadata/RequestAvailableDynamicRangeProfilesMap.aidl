@@ -27,7 +27,7 @@ package android.hardware.camera.metadata;
  * @see ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP
  */
 @VintfStability
-@Backing(type="int")
+@Backing(type="long")
 enum RequestAvailableDynamicRangeProfilesMap {
     ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD = 0x1,
     ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_HLG10 = 0x2,
