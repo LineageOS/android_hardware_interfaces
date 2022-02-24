@@ -1024,7 +1024,7 @@ enum CameraMetadataTag {
      */
     ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP,
     /**
-     * android.request.recommendedTenBitDynamicRangeProfile [static, int32, java_public]
+     * android.request.recommendedTenBitDynamicRangeProfile [static, int64, java_public]
      *
      * <p>Recommended 10-bit dynamic range profile.</p>
      */
