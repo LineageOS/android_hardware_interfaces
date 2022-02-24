@@ -16,6 +16,8 @@
 
 #include "camera_aidl_test.h"
 
+#include <inttypes.h>
+
 #include <CameraParameters.h>
 #include <HandleImporter.h>
 #include <aidl/android/hardware/camera/device/ICameraDevice.h>
@@ -39,14 +41,12 @@ using ::aidl::android::hardware::camera::common::CameraDeviceStatus;
 using ::aidl::android::hardware::camera::common::TorchModeStatus;
 using ::aidl::android::hardware::camera::device::CameraMetadata;
 using ::aidl::android::hardware::camera::device::ICameraDevice;
-using ::aidl::android::hardware::camera::device::ICameraDeviceSessionDefault;
 using ::aidl::android::hardware::camera::metadata::CameraMetadataTag;
 using ::aidl::android::hardware::camera::metadata::SensorInfoColorFilterArrangement;
 using ::aidl::android::hardware::camera::metadata::SensorPixelMode;
 using ::aidl::android::hardware::camera::provider::BnCameraProviderCallback;
 using ::aidl::android::hardware::camera::provider::ConcurrentCameraIdCombination;
 using ::aidl::android::hardware::camera::provider::ICameraProvider;
-using ::aidl::android::hardware::camera::provider::ICameraProviderCallback;
 using ::aidl::android::hardware::common::NativeHandle;
 using ::android::hardware::camera::common::V1_0::helper::Size;
 using ::ndk::ScopedAStatus;
@@ -97,7 +97,7 @@ bool parseProviderName(const std::string& serviceDescriptor, std::string* type /
 
     char* endPtr;
     errno = 0;
-    long idVal = strtol(serviceDescriptor.c_str() + slashIdx2 + 1, &endPtr, 10);
+    int64_t idVal = strtol(serviceDescriptor.c_str() + slashIdx2 + 1, &endPtr, 10);
     if (errno != 0) {
         ADD_FAILURE() << "cannot parse provider id as an integer:" << serviceDescriptor.c_str()
                       << strerror(errno) << errno;
@@ -1538,7 +1538,7 @@ void CameraAidlTest::verifyRequestTemplate(const camera_metadata_t* metadata,
 }
 
 void CameraAidlTest::openEmptyDeviceSession(const std::string& name,
-                                            std::shared_ptr<ICameraProvider> provider,
+                                            const std::shared_ptr<ICameraProvider>& provider,
                                             std::shared_ptr<ICameraDeviceSession>* session,
                                             CameraMetadata* staticMeta,
                                             std::shared_ptr<ICameraDevice>* device) {
@@ -2572,7 +2572,7 @@ void CameraAidlTest::configurePreviewStreams(
 
 void CameraAidlTest::verifyBuffersReturned(const std::shared_ptr<ICameraDeviceSession>& session,
                                            const std::vector<int32_t>& streamIds,
-                                           std::shared_ptr<DeviceCb> cb,
+                                           const std::shared_ptr<DeviceCb>& cb,
                                            uint32_t streamConfigCounter) {
     ndk::ScopedAStatus ret =
             session->signalStreamFlush(streamIds, /*streamConfigCounter*/ streamConfigCounter);
@@ -2712,20 +2712,20 @@ void CameraAidlTest::get10BitDynamicRangeProfiles(
     ASSERT_NE(nullptr, staticMeta);
     ASSERT_NE(nullptr, profiles);
     camera_metadata_ro_entry entry;
-    std::unordered_set<int32_t> entries;
+    std::unordered_set<int64_t> entries;
     int rc = find_camera_metadata_ro_entry(
             staticMeta, ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP, &entry);
     ASSERT_EQ(rc, 0);
     ASSERT_TRUE(entry.count > 0);
-    ASSERT_EQ(entry.count % 2, 0);
+    ASSERT_EQ(entry.count % 3, 0);
 
-    for (uint32_t i = 0; i < entry.count; i += 2) {
-        ASSERT_NE(entry.data.i32[i], ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD);
-        ASSERT_EQ(entries.find(entry.data.i32[i]), entries.end());
-        entries.insert(static_cast<int32_t>(entry.data.i32[i]));
+    for (uint32_t i = 0; i < entry.count; i += 3) {
+        ASSERT_NE(entry.data.i64[i], ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD);
+        ASSERT_EQ(entries.find(entry.data.i64[i]), entries.end());
+        entries.insert(static_cast<int64_t>(entry.data.i64[i]));
         profiles->emplace_back(
                 static_cast<aidl::android::hardware::camera::metadata::
-                                    RequestAvailableDynamicRangeProfilesMap>(entry.data.i32[i]));
+                                    RequestAvailableDynamicRangeProfilesMap>(entry.data.i64[i]));
     }
 
     if (!entries.empty()) {
@@ -2743,7 +2743,7 @@ void CameraAidlTest::verify10BitMetadata(
         bool smpte2094_10Present = importer.isSmpte2094_10Present(b.buffer.buffer);
         bool smpte2094_40Present = importer.isSmpte2094_40Present(b.buffer.buffer);
 
-        switch (static_cast<uint32_t>(profile)) {
+        switch (static_cast<int64_t>(profile)) {
             case ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_HLG10:
                 ASSERT_FALSE(smpte2086Present);
                 ASSERT_FALSE(smpte2094_10Present);
@@ -2772,7 +2772,8 @@ void CameraAidlTest::verify10BitMetadata(
                 ASSERT_FALSE(smpte2094_40Present);
                 break;
             default:
-                ALOGE("%s: Unexpected 10-bit dynamic range profile: %d", __FUNCTION__, profile);
+                ALOGE("%s: Unexpected 10-bit dynamic range profile: %" PRId64, __FUNCTION__,
+                      profile);
                 ADD_FAILURE();
         }
     }
