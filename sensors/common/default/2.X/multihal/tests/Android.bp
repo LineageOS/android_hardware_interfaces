@@ -99,6 +99,9 @@ cc_test_library {
 
 cc_test {
     name: "android.hardware.sensors@2.X-halproxy-unit-tests",
+    tidy_timeout_srcs: [
+        "HalProxy_test.cpp",
+    ],
     srcs: [
         "HalProxy_test.cpp",
         "ScopedWakelock_test.cpp",

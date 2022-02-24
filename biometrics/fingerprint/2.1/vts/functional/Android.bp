@@ -26,6 +26,7 @@ package {
 cc_test {
     name: "VtsHalBiometricsFingerprintV2_1TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
+    tidy_timeout_srcs: ["VtsHalBiometricsFingerprintV2_1TargetTest.cpp"],
     srcs: ["VtsHalBiometricsFingerprintV2_1TargetTest.cpp"],
     static_libs: ["android.hardware.biometrics.fingerprint@2.1"],
     test_suites: ["general-tests", "vts"],

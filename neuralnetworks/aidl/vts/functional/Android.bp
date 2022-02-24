@@ -31,6 +31,10 @@ cc_test {
         "use_libaidlvintf_gtest_helper_static",
     ],
     host_supported: true,
+    tidy_timeout_srcs: [
+        "CompilationCachingTests.cpp",
+        "MemoryDomainTests.cpp",
+    ],
     srcs: [
         "BasicTests.cpp",
         "Callbacks.cpp",

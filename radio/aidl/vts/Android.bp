@@ -27,6 +27,12 @@ cc_test {
         "VtsHalTargetTestDefaults",
         "use_libaidlvintf_gtest_helper_static",
     ],
+    tidy_timeout_srcs: [
+        "radio_messaging_test.cpp",
+        "radio_network_test.cpp",
+        "radio_sim_test.cpp",
+        "radio_voice_test.cpp",
+    ],
     srcs: [
         "radio_aidl_hal_utils.cpp",
         "radio_config_indication.cpp",

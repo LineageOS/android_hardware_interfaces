@@ -26,6 +26,7 @@ package {
 cc_test {
     name: "VtsHalMediaOmxV1_0TargetComponentTest",
     defaults: ["VtsHalMediaOmxV1_0Defaults"],
+    tidy_timeout_srcs: ["VtsHalMediaOmxV1_0TargetComponentTest.cpp"],
     srcs: ["VtsHalMediaOmxV1_0TargetComponentTest.cpp"],
     test_suites: [
         "vts",

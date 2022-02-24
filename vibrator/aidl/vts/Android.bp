@@ -13,6 +13,7 @@ cc_test {
         "VtsHalTargetTestDefaults",
         "use_libaidlvintf_gtest_helper_static",
     ],
+    tidy_timeout_srcs: ["VtsHalVibratorTargetTest.cpp"],
     srcs: ["VtsHalVibratorTargetTest.cpp"],
     shared_libs: [
         "libbinder",

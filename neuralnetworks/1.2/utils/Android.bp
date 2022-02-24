@@ -60,6 +60,10 @@ cc_library_static {
 cc_test {
     name: "neuralnetworks_utils_hal_1_2_test",
     host_supported: true,
+    tidy_timeout_srcs: [
+        "test/DeviceTest.cpp",
+        "test/PreparedModelTest.cpp",
+    ],
     srcs: ["test/*.cpp"],
     static_libs: [
         "android.hardware.neuralnetworks@1.0",
