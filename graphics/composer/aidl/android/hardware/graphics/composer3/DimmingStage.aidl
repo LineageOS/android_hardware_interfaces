@@ -1,5 +1,5 @@
 /**
- * Copyright 2021, The Android Open Source Project
+ * Copyright (c) 2022, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,19 @@
 package android.hardware.graphics.composer3;
 
 @VintfStability
-parcelable DisplayBrightness {
+@Backing(type="int")
+enum DimmingStage {
     /**
-     * A number between 0.0f (minimum brightness) and 1.0f (maximum brightness), a negative value to
-     * turn the backlight off
+     * Corresponds to if the dimming stage is not meaningful for a scene, such as
+     * if client composition is not requesting dimming.
      */
-    float brightness;
-
+    NONE = 0,
     /**
-     * The absolute brightness in nits of the backlight, if it is available. This will be a negative
-     * value if it is not known.
-     *
-     * An implementation may choose to use this value to assist with tone-mapping, as a mapping
-     * between the brightness float and the nits may not otherwise be known.
+     * Dimming operations must be applied in linear optical space
      */
-    float brightnessNits;
+    LINEAR = 1,
+    /**
+     * Dimming operations must be applied in gamma space, after OETF has been applied
+     */
+    GAMMA_OETF = 2,
 }
