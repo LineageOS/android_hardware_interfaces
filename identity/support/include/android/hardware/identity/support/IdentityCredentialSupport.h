@@ -407,6 +407,10 @@ const vector<uint8_t>& getTestHardwareBoundKey();
 // may be smaller than |maxChunkSize|.
 vector<vector<uint8_t>> chunkVector(const vector<uint8_t>& content, size_t maxChunkSize);
 
+// Extract the issuer subject name from the leaf cert in the given chain,
+// returning it as DER-encoded bytes.
+optional<vector<uint8_t>> extractDerSubjectFromCertificate(const vector<uint8_t>& certificate);
+
 }  // namespace support
 }  // namespace identity
 }  // namespace hardware
