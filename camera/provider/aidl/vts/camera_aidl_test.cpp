@@ -22,6 +22,7 @@
 #include <HandleImporter.h>
 #include <aidl/android/hardware/camera/device/ICameraDevice.h>
 #include <aidl/android/hardware/camera/metadata/CameraMetadataTag.h>
+#include <aidl/android/hardware/camera/metadata/RequestAvailableDynamicRangeProfilesMap.h>
 #include <aidl/android/hardware/camera/metadata/SensorInfoColorFilterArrangement.h>
 #include <aidl/android/hardware/camera/metadata/SensorPixelMode.h>
 #include <aidl/android/hardware/camera/provider/BnCameraProviderCallback.h>
@@ -42,6 +43,7 @@ using ::aidl::android::hardware::camera::common::TorchModeStatus;
 using ::aidl::android::hardware::camera::device::CameraMetadata;
 using ::aidl::android::hardware::camera::device::ICameraDevice;
 using ::aidl::android::hardware::camera::metadata::CameraMetadataTag;
+using ::aidl::android::hardware::camera::metadata::RequestAvailableDynamicRangeProfilesMap;
 using ::aidl::android::hardware::camera::metadata::SensorInfoColorFilterArrangement;
 using ::aidl::android::hardware::camera::metadata::SensorPixelMode;
 using ::aidl::android::hardware::camera::provider::BnCameraProviderCallback;
@@ -356,6 +358,7 @@ Status CameraAidlTest::isMonochromeCamera(const camera_metadata_t* staticMeta) {
     camera_metadata_ro_entry entry;
     int rc = find_camera_metadata_ro_entry(staticMeta, ANDROID_REQUEST_AVAILABLE_CAPABILITIES,
                                            &entry);
+
     if (0 != rc) {
         return Status::ILLEGAL_ARGUMENT;
     }
@@ -2141,6 +2144,10 @@ void CameraAidlTest::configureSingleStream(
             reinterpret_cast<const camera_metadata_t*>(chars.metadata.data()));
     ASSERT_NE(nullptr, staticMeta);
 
+    size_t expectedSize = chars.metadata.size();
+    ALOGE("validate_camera_metadata_structure: %d",
+          validate_camera_metadata_structure(staticMeta, &expectedSize));
+
     camera_metadata_ro_entry entry;
     auto status =
             find_camera_metadata_ro_entry(staticMeta, ANDROID_REQUEST_PARTIAL_RESULT_COUNT, &entry);
@@ -2172,7 +2179,6 @@ void CameraAidlTest::configureSingleStream(
     ASSERT_EQ(Status::OK, getJpegBufferSize(staticMeta, &jpegBufferSize));
     ASSERT_NE(0u, jpegBufferSize);
 
-    free_camera_metadata(staticMeta);
     ASSERT_EQ(Status::OK, rc);
     ASSERT_FALSE(outputPreviewStreams.empty());
 
@@ -2197,7 +2203,9 @@ void CameraAidlTest::configureSingleStream(
                   "",
                   0,
                   /*groupId*/ -1,
-                  {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+                  {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                  RequestAvailableDynamicRangeProfilesMap::
+                          ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
 
     StreamConfiguration config;
     config.streams = streams;
@@ -2519,26 +2527,29 @@ void CameraAidlTest::configurePreviewStreams(
 
     outputPreviewStreams.clear();
     Status rc = getAvailableOutputStreams(staticMeta, outputPreviewStreams, previewThreshold);
-    free_camera_metadata(staticMeta);
+
     ASSERT_EQ(Status::OK, rc);
     ASSERT_FALSE(outputPreviewStreams.empty());
 
     std::vector<Stream> streams(physicalIds.size());
     int32_t streamId = 0;
     for (auto const& physicalId : physicalIds) {
-        streams[streamId++] = {streamId,
-                               StreamType::OUTPUT,
-                               outputPreviewStreams[0].width,
-                               outputPreviewStreams[0].height,
-                               static_cast<PixelFormat>(outputPreviewStreams[0].format),
-                               static_cast<aidl::android::hardware::graphics::common::BufferUsage>(
-                                       GRALLOC1_CONSUMER_USAGE_HWCOMPOSER),
-                               Dataspace::UNKNOWN,
-                               StreamRotation::ROTATION_0,
-                               physicalId,
-                               0,
-                               0,
-                               {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+        streams[streamId] = {streamId,
+                             StreamType::OUTPUT,
+                             outputPreviewStreams[0].width,
+                             outputPreviewStreams[0].height,
+                             static_cast<PixelFormat>(outputPreviewStreams[0].format),
+                             static_cast<aidl::android::hardware::graphics::common::BufferUsage>(
+                                     GRALLOC1_CONSUMER_USAGE_HWCOMPOSER),
+                             Dataspace::UNKNOWN,
+                             StreamRotation::ROTATION_0,
+                             physicalId,
+                             0,
+                             -1,
+                             {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                             RequestAvailableDynamicRangeProfilesMap::
+                                     ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
+        streamId++;
     }
 
     StreamConfiguration config = {streams, StreamConfigurationMode::NORMAL_MODE, CameraMetadata()};
@@ -2580,13 +2591,15 @@ void CameraAidlTest::verifyBuffersReturned(const std::shared_ptr<ICameraDeviceSe
     cb->waitForBuffersReturned();
 }
 
-void CameraAidlTest::configureStreams(
-        const std::string& name, const std::shared_ptr<ICameraProvider>& provider,
-        PixelFormat format, std::shared_ptr<ICameraDeviceSession>* session, Stream* previewStream,
-        std::vector<HalStream>* halStreams, bool* supportsPartialResults,
-        int32_t* partialResultCount, bool* useHalBufManager, std::shared_ptr<DeviceCb>* outCb,
-        uint32_t streamConfigCounter, bool maxResolution,
-        aidl::android::hardware::camera::metadata::RequestAvailableDynamicRangeProfilesMap prof) {
+void CameraAidlTest::configureStreams(const std::string& name,
+                                      const std::shared_ptr<ICameraProvider>& provider,
+                                      PixelFormat format,
+                                      std::shared_ptr<ICameraDeviceSession>* session,
+                                      Stream* previewStream, std::vector<HalStream>* halStreams,
+                                      bool* supportsPartialResults, int32_t* partialResultCount,
+                                      bool* useHalBufManager, std::shared_ptr<DeviceCb>* outCb,
+                                      uint32_t streamConfigCounter, bool maxResolution,
+                                      RequestAvailableDynamicRangeProfilesMap prof) {
     ASSERT_NE(nullptr, session);
     ASSERT_NE(nullptr, halStreams);
     ASSERT_NE(nullptr, previewStream);
@@ -2612,6 +2625,7 @@ void CameraAidlTest::configureStreams(
     ASSERT_TRUE(ret.isOk());
     staticMeta = clone_camera_metadata(
             reinterpret_cast<const camera_metadata_t*>(metadata.metadata.data()));
+    ASSERT_NE(staticMeta, nullptr);
 
     camera_metadata_ro_entry entry;
     auto status =
@@ -2640,7 +2654,6 @@ void CameraAidlTest::configureStreams(
     Size maxSize;
     auto rc = getMaxOutputSizeForFormat(staticMeta, format, &maxSize, maxResolution);
     ASSERT_EQ(Status::OK, rc);
-    free_camera_metadata(staticMeta);
 
     std::vector<Stream> streams(1);
     streams[0] = {0,
@@ -2655,7 +2668,8 @@ void CameraAidlTest::configureStreams(
                   "",
                   0,
                   -1,
-                  {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_MAXIMUM_RESOLUTION},
+                  {maxResolution ? SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_MAXIMUM_RESOLUTION
+                                 : SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
                   prof};
 
     StreamConfiguration config;
@@ -2706,9 +2720,7 @@ bool CameraAidlTest::is10BitDynamicRangeCapable(const camera_metadata_t* staticM
 
 void CameraAidlTest::get10BitDynamicRangeProfiles(
         const camera_metadata_t* staticMeta,
-        std::vector<
-                aidl::android::hardware::camera::metadata::RequestAvailableDynamicRangeProfilesMap>*
-                profiles) {
+        std::vector<RequestAvailableDynamicRangeProfilesMap>* profiles) {
     ASSERT_NE(nullptr, staticMeta);
     ASSERT_NE(nullptr, profiles);
     camera_metadata_ro_entry entry;
@@ -2724,8 +2736,7 @@ void CameraAidlTest::get10BitDynamicRangeProfiles(
         ASSERT_EQ(entries.find(entry.data.i64[i]), entries.end());
         entries.insert(static_cast<int64_t>(entry.data.i64[i]));
         profiles->emplace_back(
-                static_cast<aidl::android::hardware::camera::metadata::
-                                    RequestAvailableDynamicRangeProfilesMap>(entry.data.i64[i]));
+                static_cast<RequestAvailableDynamicRangeProfilesMap>(entry.data.i64[i]));
     }
 
     if (!entries.empty()) {
@@ -2883,7 +2894,7 @@ void CameraAidlTest::configureOfflineStillStream(
             currLargest = area;
         }
     }
-    free_camera_metadata(staticMeta);
+
     ASSERT_EQ(Status::OK, rc);
     ASSERT_FALSE(outputStreams.empty());
 
@@ -2902,7 +2913,9 @@ void CameraAidlTest::configureOfflineStillStream(
                   /*physicalId*/ std::string(),
                   *jpegBufferSize,
                   /*groupId*/ 0,
-                  {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+                  {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                  RequestAvailableDynamicRangeProfilesMap::
+                          ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
 
     StreamConfiguration config = {streams, StreamConfigurationMode::NORMAL_MODE, CameraMetadata()};
 
