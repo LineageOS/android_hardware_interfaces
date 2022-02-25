@@ -604,6 +604,92 @@ TEST_P(WifiNanIfaceHidlTest, configRequest_1_6ShimInvalidArgs) {
     }
 }
 
+/*
+ * notifyCapabilitiesResponse_1_6: validate that returns capabilities.
+ */
+TEST_P(WifiNanIfaceHidlTest, notifyCapabilitiesResponse_1_6) {
+    uint16_t inputCmdId = 10;
+    callbackType = INVALID;
+    const auto& halStatus = HIDL_INVOKE(iwifiNanIface, getCapabilitiesRequest_1_5, inputCmdId).code;
+    ASSERT_EQ(WifiStatusCode::SUCCESS, halStatus);
+    // wait for a callback
+    ASSERT_EQ(std::cv_status::no_timeout, wait(NOTIFY_CAPABILITIES_RESPONSE_1_6));
+    ASSERT_EQ(NOTIFY_CAPABILITIES_RESPONSE_1_6, callbackType);
+    ASSERT_EQ(id, inputCmdId);
+
+    // check for reasonable capability values
+    EXPECT_GT(capabilities_1_6.maxConcurrentClusters, (unsigned int)0);
+    EXPECT_GT(capabilities_1_6.maxPublishes, (unsigned int)0);
+    EXPECT_GT(capabilities_1_6.maxSubscribes, (unsigned int)0);
+    EXPECT_EQ(capabilities_1_6.maxServiceNameLen, (unsigned int)255);
+    EXPECT_EQ(capabilities_1_6.maxMatchFilterLen, (unsigned int)255);
+    EXPECT_GT(capabilities_1_6.maxTotalMatchFilterLen, (unsigned int)255);
+    EXPECT_EQ(capabilities_1_6.maxServiceSpecificInfoLen, (unsigned int)255);
+    EXPECT_GE(capabilities_1_6.maxExtendedServiceSpecificInfoLen, (unsigned int)255);
+    EXPECT_GT(capabilities_1_6.maxNdiInterfaces, (unsigned int)0);
+    EXPECT_GT(capabilities_1_6.maxNdpSessions, (unsigned int)0);
+    EXPECT_GT(capabilities_1_6.maxAppInfoLen, (unsigned int)0);
+    EXPECT_GT(capabilities_1_6.maxQueuedTransmitFollowupMsgs, (unsigned int)0);
+    EXPECT_GT(capabilities_1_6.maxSubscribeInterfaceAddresses, (unsigned int)0);
+    EXPECT_NE(capabilities_1_6.supportedCipherSuites, (unsigned int)0);
+    EXPECT_TRUE(capabilities_1_6.instantCommunicationModeSupportFlag ||
+                !capabilities_1_6.instantCommunicationModeSupportFlag);
+}
+
+/*
+ * startPublishRequest_1_6InvalidArgs: validate that fails with invalid arguments
+ */
+TEST_P(WifiNanIfaceHidlTest, startPublishRequest_1_6InvalidArgs) {
+    uint16_t inputCmdId = 10;
+    callbackType = INVALID;
+    ::android::hardware::wifi::V1_6::NanPublishRequest nanPublishRequest = {};
+    const auto& halStatus =
+            HIDL_INVOKE(iwifiNanIface, startPublishRequest_1_6, inputCmdId, nanPublishRequest);
+
+    if (halStatus.code != WifiStatusCode::ERROR_NOT_SUPPORTED) {
+        ASSERT_EQ(WifiStatusCode::SUCCESS, halStatus.code);
+
+        // wait for a callback
+        ASSERT_EQ(std::cv_status::no_timeout, wait(NOTIFY_START_PUBLISH_RESPONSE));
+        ASSERT_EQ(NOTIFY_START_PUBLISH_RESPONSE, callbackType);
+        ASSERT_EQ(id, inputCmdId);
+        ASSERT_EQ(status.status, NanStatusType::INTERNAL_FAILURE);
+    }
+}
+
+/*
+ * respondToDataPathIndicationRequest_1_6InvalidArgs: validate that fails with invalid arguments
+ */
+TEST_P(WifiNanIfaceHidlTest, respondToDataPathIndicationRequest_1_6ShimInvalidArgs) {
+    uint16_t inputCmdId = 10;
+    callbackType = INVALID;
+    ::android::hardware::wifi::V1_6::NanRespondToDataPathIndicationRequest
+            nanRespondToDataPathIndicationRequest = {};
+    nanRespondToDataPathIndicationRequest.ifaceName = "AwareinterfaceNameTooLong";
+    const auto& halStatus = HIDL_INVOKE(iwifiNanIface, respondToDataPathIndicationRequest_1_6,
+                                        inputCmdId, nanRespondToDataPathIndicationRequest);
+
+    if (halStatus.code != WifiStatusCode::ERROR_NOT_SUPPORTED) {
+        ASSERT_EQ(WifiStatusCode::ERROR_INVALID_ARGS, halStatus.code);
+    }
+}
+
+/*
+ * initiateDataPathRequest_1_6InvalidArgs: validate that fails with invalid arguments
+ */
+TEST_P(WifiNanIfaceHidlTest, initiateDataPathRequest_1_6ShimInvalidArgs) {
+    uint16_t inputCmdId = 10;
+    callbackType = INVALID;
+    ::android::hardware::wifi::V1_6::NanInitiateDataPathRequest nanInitiateDataPathRequest = {};
+    nanInitiateDataPathRequest.ifaceName = "AwareinterfaceNameTooLong";
+    const auto& halStatus = HIDL_INVOKE(iwifiNanIface, initiateDataPathRequest_1_6, inputCmdId,
+                                        nanInitiateDataPathRequest);
+
+    if (halStatus.code != WifiStatusCode::ERROR_NOT_SUPPORTED) {
+        ASSERT_EQ(WifiStatusCode::ERROR_INVALID_ARGS, halStatus.code);
+    }
+}
+
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiNanIfaceHidlTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, WifiNanIfaceHidlTest,
                          testing::ValuesIn(android::hardware::getAllHalInstanceNames(
