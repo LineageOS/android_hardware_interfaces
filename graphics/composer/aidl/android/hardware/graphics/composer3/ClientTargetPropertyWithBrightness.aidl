@@ -17,6 +17,7 @@
 package android.hardware.graphics.composer3;
 
 import android.hardware.graphics.composer3.ClientTargetProperty;
+import android.hardware.graphics.composer3.DimmingStage;
 
 @VintfStability
 parcelable ClientTargetPropertyWithBrightness {
@@ -35,4 +36,18 @@ parcelable ClientTargetPropertyWithBrightness {
      * The brightness as described in CommandResultPayload.clientTargetProperty
      */
     float brightness;
+
+    /**
+     * The stage in which dimming operations should be performed when compositing
+     * the client target.
+     * Note that with a COLORIMETRIC RenderIntent, DimmingSpace must be LINEAR. That is, dimming
+     * is defined to occur in linear space.
+     * However, some composer implementations may, with other vendor-defined RenderIntents,
+     * configure their hardware such as image quality adjustments is intended to occur after
+     * composition. In this scenario, if the dimming operation were applied in linear space,
+     * then the resulting dimming operation may comepl those image quality adjustments to
+     * incorrectly alter the gamma curve. To avoid this issue, those implementations must opt to
+     * dim in gamma space.
+     */
+    DimmingStage dimmingStage;
 }

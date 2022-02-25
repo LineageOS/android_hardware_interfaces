@@ -37,4 +37,5 @@ parcelable ClientTargetPropertyWithBrightness {
   long display;
   android.hardware.graphics.composer3.ClientTargetProperty clientTargetProperty;
   float brightness;
+  android.hardware.graphics.composer3.DimmingStage dimmingStage;
 }
