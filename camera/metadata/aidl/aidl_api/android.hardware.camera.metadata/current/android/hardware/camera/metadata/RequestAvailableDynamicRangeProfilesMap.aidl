@@ -36,7 +36,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.camera.metadata;
-@Backing(type="int") @VintfStability
+@Backing(type="long") @VintfStability
 enum RequestAvailableDynamicRangeProfilesMap {
   ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD = 1,
   ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_HLG10 = 2,

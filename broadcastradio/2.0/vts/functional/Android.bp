@@ -26,6 +26,7 @@ package {
 cc_test {
     name: "VtsHalBroadcastradioV2_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
+    tidy_timeout_srcs: ["VtsHalBroadcastradioV2_0TargetTest.cpp"],
     srcs: ["VtsHalBroadcastradioV2_0TargetTest.cpp"],
     static_libs: [
         "android.hardware.broadcastradio@2.0",

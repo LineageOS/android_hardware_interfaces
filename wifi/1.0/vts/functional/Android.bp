@@ -48,6 +48,9 @@ cc_library_static {
 cc_test {
     name: "VtsHalWifiV1_0TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
+    tidy_timeout_srcs: [
+        "wifi_chip_hidl_test.cpp",
+    ],
     srcs: [
         "wifi_chip_hidl_test.cpp",
         "wifi_p2p_iface_hidl_test.cpp",

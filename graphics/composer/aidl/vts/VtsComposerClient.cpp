@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "include/VtsComposerClient.h"
+#include "VtsComposerClient.h"
 #include <aidlcommonsupport/NativeHandle.h>
 #include <android-base/logging.h>
 #include <log/log_main.h>

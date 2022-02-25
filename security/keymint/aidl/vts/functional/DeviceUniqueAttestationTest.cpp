@@ -80,6 +80,7 @@ TEST_P(DeviceUniqueAttestationTest, RsaNonStrongBoxUnimplemented) {
                                       .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN)
                                       .Authorization(TAG_INCLUDE_UNIQUE_ID)
                                       .Authorization(TAG_CREATION_DATETIME, 1619621648000)
+                                      .SetDefaultValidity()
                                       .AttestationChallenge("challenge")
                                       .AttestationApplicationId("foo")
                                       .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION),
@@ -109,6 +110,7 @@ TEST_P(DeviceUniqueAttestationTest, EcdsaNonStrongBoxUnimplemented) {
                                       .Digest(Digest::SHA_2_256)
                                       .Authorization(TAG_INCLUDE_UNIQUE_ID)
                                       .Authorization(TAG_CREATION_DATETIME, 1619621648000)
+                                      .SetDefaultValidity()
                                       .AttestationChallenge("challenge")
                                       .AttestationApplicationId("foo")
                                       .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION),
@@ -139,6 +141,7 @@ TEST_P(DeviceUniqueAttestationTest, RsaDeviceUniqueAttestation) {
                                       .Padding(PaddingMode::RSA_PKCS1_1_5_SIGN)
                                       .Authorization(TAG_INCLUDE_UNIQUE_ID)
                                       .Authorization(TAG_CREATION_DATETIME, 1619621648000)
+                                      .SetDefaultValidity()
                                       .AttestationChallenge("challenge")
                                       .AttestationApplicationId("foo")
                                       .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION),
@@ -197,6 +200,7 @@ TEST_P(DeviceUniqueAttestationTest, EcdsaDeviceUniqueAttestation) {
                                       .Digest(Digest::SHA_2_256)
                                       .Authorization(TAG_INCLUDE_UNIQUE_ID)
                                       .Authorization(TAG_CREATION_DATETIME, 1619621648000)
+                                      .SetDefaultValidity()
                                       .AttestationChallenge("challenge")
                                       .AttestationApplicationId("foo")
                                       .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION),
@@ -264,6 +268,7 @@ TEST_P(DeviceUniqueAttestationTest, EcdsaDeviceUniqueAttestationID) {
                         .Digest(Digest::SHA_2_256)
                         .Authorization(TAG_INCLUDE_UNIQUE_ID)
                         .Authorization(TAG_CREATION_DATETIME, 1619621648000)
+                        .SetDefaultValidity()
                         .AttestationChallenge("challenge")
                         .AttestationApplicationId("foo")
                         .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION);
@@ -336,6 +341,7 @@ TEST_P(DeviceUniqueAttestationTest, EcdsaDeviceUniqueAttestationMismatchID) {
                         .Digest(Digest::SHA_2_256)
                         .Authorization(TAG_INCLUDE_UNIQUE_ID)
                         .Authorization(TAG_CREATION_DATETIME, 1619621648000)
+                        .SetDefaultValidity()
                         .AttestationChallenge("challenge")
                         .AttestationApplicationId("foo")
                         .Authorization(TAG_DEVICE_UNIQUE_ATTESTATION);

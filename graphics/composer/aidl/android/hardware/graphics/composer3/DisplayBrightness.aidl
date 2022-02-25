@@ -20,7 +20,16 @@ package android.hardware.graphics.composer3;
 parcelable DisplayBrightness {
     /**
      * A number between 0.0f (minimum brightness) and 1.0f (maximum brightness), a negative value to
-     * turn the backlight off.
+     * turn the backlight off
      */
     float brightness;
+
+    /**
+     * The absolute brightness in nits of the backlight, if it is available. This will be a negative
+     * value if it is not known.
+     *
+     * An implementation may choose to use this value to assist with tone-mapping, as a mapping
+     * between the brightness float and the nits may not otherwise be known.
+     */
+    float brightnessNits;
 }
