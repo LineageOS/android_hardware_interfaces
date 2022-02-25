@@ -380,7 +380,7 @@ bool DeviceCb::processCaptureResultLocked(
         request->collectedResult.sort();
 
         // Verify final result metadata
-        auto staticMetadataBuffer = mStaticMetadata;
+        camera_metadata_t* staticMetadataBuffer = mStaticMetadata;
         bool isMonochrome = Status::OK == CameraAidlTest::isMonochromeCamera(staticMetadataBuffer);
         if (isMonochrome) {
             CameraAidlTest::verifyMonochromeCameraResult(request->collectedResult);
