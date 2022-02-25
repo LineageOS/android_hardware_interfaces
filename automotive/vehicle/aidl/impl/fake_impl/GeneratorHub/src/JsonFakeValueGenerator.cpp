@@ -213,7 +213,7 @@ std::optional<VehiclePropValue> JsonFakeValueGenerator::nextEvent() {
     if (mLastEventTimestamp == 0) {
         mLastEventTimestamp = elapsedRealtimeNano();
     } else {
-        long nextEventTime = 0;
+        int64_t nextEventTime = 0;
         if (mEventIndex > 0) {
             // All events (start from 2nd one) are supposed to happen in the future with a delay
             // equals to the duration between previous and current event.
