@@ -42,21 +42,15 @@ cc_library_static {
         "neuralnetworks_utils_hal_1_1",
         "neuralnetworks_utils_hal_1_2",
     ],
-    target: {
-        host: {
-            cflags: [
-                "-D__INTRODUCED_IN(x)=",
-                "-D__assert(a,b,c)=",
-                // We want all the APIs to be available on the host.
-                "-D__ANDROID_API__=10000",
-            ],
-        },
-    },
 }
 
 cc_test {
     name: "neuralnetworks_utils_hal_1_3_test",
     host_supported: true,
+    tidy_timeout_srcs: [
+        "test/DeviceTest.cpp",
+        "test/PreparedModelTest.cpp",
+    ],
     srcs: ["test/*.cpp"],
     static_libs: [
         "android.hardware.neuralnetworks@1.0",

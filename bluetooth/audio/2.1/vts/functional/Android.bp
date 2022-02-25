@@ -10,6 +10,7 @@ package {
 cc_test {
     name: "VtsHalBluetoothAudioV2_1TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
+    tidy_timeout_srcs: ["VtsHalBluetoothAudioV2_1TargetTest.cpp"],
     srcs: ["VtsHalBluetoothAudioV2_1TargetTest.cpp"],
     static_libs: [
         "android.hardware.audio.common@5.0",

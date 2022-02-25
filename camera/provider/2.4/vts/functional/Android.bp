@@ -26,6 +26,7 @@ package {
 cc_test {
     name: "VtsHalCameraProviderV2_4TargetTest",
     defaults: ["VtsHalTargetTestDefaults"],
+    tidy_timeout_srcs: ["VtsHalCameraProviderV2_4TargetTest.cpp"],
     srcs: ["VtsHalCameraProviderV2_4TargetTest.cpp"],
 
     // TODO(b/64437680): Assume these are always available on the device.
@@ -65,5 +66,9 @@ cc_test {
         "libhidlmemory",
         "libgralloctypes",
     ],
-    test_suites: ["general-tests", "vts"],
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+
 }

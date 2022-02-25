@@ -30,6 +30,10 @@ cc_test {
         // Needed for librenderengine
         "skia_deps",
     ],
+    tidy_timeout_srcs: [
+        "VtsHalGraphicsComposerV2_2ReadbackTest.cpp",
+        "VtsHalGraphicsComposerV2_2TargetTest.cpp",
+    ],
     srcs: [
         "VtsHalGraphicsComposerV2_2ReadbackTest.cpp",
         "VtsHalGraphicsComposerV2_2TargetTest.cpp",
