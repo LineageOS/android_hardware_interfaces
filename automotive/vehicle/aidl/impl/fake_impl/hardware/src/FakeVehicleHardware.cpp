@@ -211,10 +211,16 @@ Result<void> FakeVehicleHardware::setApPowerStateReport(const VehiclePropValue& 
         case toInt(VehicleApPowerStateReport::SHUTDOWN_CANCELLED):
             [[fallthrough]];
         case toInt(VehicleApPowerStateReport::WAIT_FOR_VHAL):
-            // CPMS is in WAIT_FOR_VHAL state, simply move to ON
-            // Send back to HAL
-            // ALWAYS update status for generated property value
+            // CPMS is in WAIT_FOR_VHAL state, simply move to ON and send back to HAL.
+            // Must erase existing state because in the case when Car Service crashes, the power
+            // state would already be ON when we receive WAIT_FOR_VHAL and thus new property change
+            // event would be generated. However, Car Service always expect a property change event
+            // even though there is not actual state change.
+            mServerSidePropStore->removeValuesForProperty(
+                    toInt(VehicleProperty::AP_POWER_STATE_REQ));
             prop = createApPowerStateReq(VehicleApPowerStateReq::ON);
+
+            // ALWAYS update status for generated property value
             if (auto writeResult =
                         mServerSidePropStore->writeValue(std::move(prop), /*updateStatus=*/true);
                 !writeResult.ok()) {
