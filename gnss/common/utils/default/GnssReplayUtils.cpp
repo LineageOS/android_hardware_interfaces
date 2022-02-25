@@ -16,24 +16,42 @@
 
 #include "GnssReplayUtils.h"
 
+#include <array>
+
 namespace android {
 namespace hardware {
 namespace gnss {
 namespace common {
 
 std::string ReplayUtils::getGnssPath() {
-    char devname_value[PROPERTY_VALUE_MAX] = "";
-    if (property_get("debug.location.gnss.devname", devname_value, NULL) > 0) {
-        return devname_value;
+    std::array<char, PROPERTY_VALUE_MAX> devname_value;
+
+    devname_value.fill(0);
+    if (property_get("debug.location.gnss.devname", devname_value.begin(), NULL) > 0) {
+        return devname_value.begin();
     }
+
+    devname_value.fill(0);
+    if (property_get("vendor.ser.gnss-uart", devname_value.begin(), NULL) > 0) {
+        return devname_value.begin();
+    }
+
     return GNSS_PATH;
 }
 
 std::string ReplayUtils::getFixedLocationPath() {
-    char devname_value[PROPERTY_VALUE_MAX] = "";
-    if (property_get("debug.location.fixedlocation.devname", devname_value, NULL) > 0) {
-        return devname_value;
+    std::array<char, PROPERTY_VALUE_MAX> devname_value;
+
+    devname_value.fill(0);
+    if (property_get("debug.location.fixedlocation.devname", devname_value.begin(), NULL) > 0) {
+        return devname_value.begin();
     }
+
+    devname_value.fill(0);
+    if (property_get("vendor.ser.gnss-uart", devname_value.begin(), NULL) > 0) {
+        return devname_value.begin();
+    }
+
     return FIXED_LOCATION_PATH;
 }
 

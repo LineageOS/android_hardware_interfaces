@@ -19,7 +19,7 @@ package android.hardware.graphics.composer3;
 import android.hardware.graphics.composer3.ClientTargetProperty;
 
 @VintfStability
-parcelable ClientTargetPropertyWithNits {
+parcelable ClientTargetPropertyWithBrightness {
     /**
      * The display which this commands refers to.
      * @see IComposer.createDisplay
@@ -32,7 +32,7 @@ parcelable ClientTargetPropertyWithNits {
     ClientTargetProperty clientTargetProperty;
 
     /**
-     * The white points nits as described in CommandResultPayload.clientTargetProperty
+     * The brightness as described in CommandResultPayload.clientTargetProperty
      */
-    float whitePointNits;
+    float brightness;
 }
