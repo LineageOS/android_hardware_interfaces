@@ -1655,7 +1655,7 @@ TEST_P(GraphicsComposerAidlCommandTest, DisplayDecoration) {
         } else {
             const auto errors = mReader.takeErrors();
             ASSERT_EQ(1, errors.size());
-            EXPECT_EQ(EX_UNSUPPORTED_OPERATION, errors[0].errorCode);
+            EXPECT_EQ(IComposerClient::EX_UNSUPPORTED, errors[0].errorCode);
 
             const auto changedTypes = mReader.takeChangedCompositionTypes(display.getDisplayId());
             ASSERT_EQ(1u, changedTypes.size());
