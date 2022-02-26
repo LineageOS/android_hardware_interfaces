@@ -95,6 +95,15 @@ TEST_P(WifiChipHidlTest, getUsableChannels_1_6) {
     EXPECT_EQ(WifiStatusCode::SUCCESS, statusNonEmpty.first.code);
 }
 
+/* getAvailableModes_1_6:
+ * Ensures that a call to getAvailableModes_1_6 will return with a success status code.
+ */
+TEST_P(WifiChipHidlTest, getAvailableModes_1_6) {
+    const auto& status_and_modes = HIDL_INVOKE(wifi_chip_, getAvailableModes_1_6);
+    EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_modes.first.code);
+    EXPECT_LT(0u, status_and_modes.second.size());
+}
+
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiChipHidlTest);
 INSTANTIATE_TEST_SUITE_P(PerInstance, WifiChipHidlTest,
                          testing::ValuesIn(android::hardware::getAllHalInstanceNames(

@@ -514,6 +514,50 @@ TEST_F(DefaultVehicleHalTest, testGetAllPropConfigsLarge) {
     ASSERT_EQ(result.value().getObject()->payloads, testConfigs);
 }
 
+TEST_F(DefaultVehicleHalTest, testGetPropConfigs) {
+    auto testConfigs = std::vector<VehiclePropConfig>({
+            VehiclePropConfig{
+                    .prop = 1,
+            },
+            VehiclePropConfig{
+                    .prop = 2,
+            },
+    });
+
+    auto hardware = std::make_unique<MockVehicleHardware>();
+    hardware->setPropertyConfigs(testConfigs);
+    auto vhal = ndk::SharedRefBase::make<DefaultVehicleHal>(std::move(hardware));
+    std::shared_ptr<IVehicle> client = IVehicle::fromBinder(vhal->asBinder());
+
+    VehiclePropConfigs output;
+    auto status = client->getPropConfigs(std::vector<int32_t>({1, 2}), &output);
+
+    ASSERT_TRUE(status.isOk()) << "getPropConfigs failed: " << status.getMessage();
+    ASSERT_EQ(output.payloads, testConfigs);
+}
+
+TEST_F(DefaultVehicleHalTest, testGetPropConfigsInvalidArg) {
+    auto testConfigs = std::vector<VehiclePropConfig>({
+            VehiclePropConfig{
+                    .prop = 1,
+            },
+            VehiclePropConfig{
+                    .prop = 2,
+            },
+    });
+
+    auto hardware = std::make_unique<MockVehicleHardware>();
+    hardware->setPropertyConfigs(testConfigs);
+    auto vhal = ndk::SharedRefBase::make<DefaultVehicleHal>(std::move(hardware));
+    std::shared_ptr<IVehicle> client = IVehicle::fromBinder(vhal->asBinder());
+
+    VehiclePropConfigs output;
+    auto status = client->getPropConfigs(std::vector<int32_t>({1, 2, 3}), &output);
+
+    ASSERT_FALSE(status.isOk()) << "getPropConfigs must fail with invalid prop ID";
+    ASSERT_EQ(status.getServiceSpecificError(), toInt(StatusCode::INVALID_ARG));
+}
+
 TEST_F(DefaultVehicleHalTest, testGetValuesSmall) {
     GetValueRequests requests;
     std::vector<GetValueResult> expectedResults;
