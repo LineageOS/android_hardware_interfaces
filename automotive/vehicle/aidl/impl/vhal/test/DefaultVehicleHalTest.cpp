@@ -332,7 +332,9 @@ class DefaultVehicleHalTest : public testing::Test {
         mCallbackClient = IVehicleCallback::fromBinder(mBinder);
 
         // Set the linkToDeath to a fake implementation that always returns OK.
-        setTestLinkToDeathImpl();
+        auto binderImpl = std::make_unique<TestBinderImpl>();
+        mBinderImpl = binderImpl.get();
+        mVhal->setBinderImpl(std::move(binderImpl));
     }
 
     void TearDown() override {
@@ -349,10 +351,6 @@ class DefaultVehicleHalTest : public testing::Test {
     MockVehicleCallback* getCallback() { return mCallback.get(); }
 
     void setTimeout(int64_t timeoutInNano) { mVhal->setTimeout(timeoutInNano); }
-
-    void setTestLinkToDeathImpl() {
-        mVhal->setLinkToDeathImpl(std::make_unique<TestLinkToDeathImpl>());
-    }
 
     size_t countPendingRequests() { return mVhal->mPendingRequestPool->countPendingRequests(); }
 
@@ -379,6 +377,8 @@ class DefaultVehicleHalTest : public testing::Test {
     }
 
     bool hasNoSubscriptions() { return mVhal->mSubscriptionManager->isEmpty(); }
+
+    void setBinderAlive(bool isAlive) { mBinderImpl->setAlive(isAlive); };
 
     static Result<void> getValuesTestCases(size_t size, GetValueRequests& requests,
                                            std::vector<GetValueResult>& expectedResults,
@@ -452,19 +452,31 @@ class DefaultVehicleHalTest : public testing::Test {
     }
 
   private:
+    class TestBinderImpl final : public DefaultVehicleHal::IBinder {
+      public:
+        binder_status_t linkToDeath(AIBinder*, AIBinder_DeathRecipient*, void*) override {
+            if (mIsAlive) {
+                return STATUS_OK;
+            } else {
+                return STATUS_FAILED_TRANSACTION;
+            }
+        }
+
+        bool isAlive(const AIBinder*) override { return mIsAlive; }
+
+        void setAlive(bool isAlive) { mIsAlive = isAlive; }
+
+      private:
+        bool mIsAlive = true;
+    };
+
     std::shared_ptr<DefaultVehicleHal> mVhal;
     std::shared_ptr<IVehicle> mVhalClient;
     MockVehicleHardware* mHardwarePtr;
     std::shared_ptr<MockVehicleCallback> mCallback;
     std::shared_ptr<IVehicleCallback> mCallbackClient;
     SpAIBinder mBinder;
-
-    class TestLinkToDeathImpl final : public DefaultVehicleHal::ILinkToDeath {
-      public:
-        binder_status_t linkToDeath(AIBinder*, AIBinder_DeathRecipient*, void*) override {
-            return STATUS_OK;
-        }
-    };
+    TestBinderImpl* mBinderImpl;
 };
 
 TEST_F(DefaultVehicleHalTest, testGetAllPropConfigsSmall) {
@@ -587,7 +599,6 @@ TEST_F(DefaultVehicleHalTest, testGetValuesLarge) {
 
     ASSERT_TRUE(getValuesTestCases(5000, requests, expectedResults, expectedHardwareRequests).ok())
             << "requests to hardware mismatch";
-    ;
 
     getHardware()->addGetValueResponses(expectedResults);
 
@@ -804,6 +815,51 @@ TEST_F(DefaultVehicleHalTest, testGetValuesDuplicateRequestProps) {
     auto status = getClient()->getValues(getCallbackClient(), requests);
 
     ASSERT_FALSE(status.isOk()) << "duplicate request properties in one request must fail";
+}
+
+TEST_F(DefaultVehicleHalTest, testGetValuesNewClientDied) {
+    GetValueRequests requests;
+    std::vector<GetValueResult> expectedResults;
+    std::vector<GetValueRequest> expectedHardwareRequests;
+
+    ASSERT_TRUE(getValuesTestCases(10, requests, expectedResults, expectedHardwareRequests).ok());
+
+    getHardware()->addGetValueResponses(expectedResults);
+
+    setBinderAlive(false);
+
+    auto status = getClient()->getValues(getCallbackClient(), requests);
+
+    ASSERT_FALSE(status.isOk()) << "getValues must fail if client died";
+    ASSERT_EQ(status.getExceptionCode(), EX_TRANSACTION_FAILED);
+    EXPECT_EQ(countClients(), static_cast<size_t>(0))
+            << "No client should be created if the client binder died";
+}
+
+TEST_F(DefaultVehicleHalTest, testGetValuesExistingClientDied) {
+    GetValueRequests requests;
+    std::vector<GetValueResult> expectedResults;
+    std::vector<GetValueRequest> expectedHardwareRequests;
+
+    ASSERT_TRUE(getValuesTestCases(10, requests, expectedResults, expectedHardwareRequests).ok());
+
+    getHardware()->addGetValueResponses(expectedResults);
+
+    // Try a normal getValue request to cache a GetValueClient first.
+    auto status = getClient()->getValues(getCallbackClient(), requests);
+
+    ASSERT_TRUE(status.isOk()) << "getValues failed: " << status.getMessage();
+    EXPECT_EQ(countClients(), static_cast<size_t>(1));
+
+    // The client binder died before onBinderUnlinked clean up the GetValueClient.
+    setBinderAlive(false);
+
+    status = getClient()->getValues(getCallbackClient(), requests);
+
+    ASSERT_FALSE(status.isOk()) << "getValues must fail if client died";
+    ASSERT_EQ(status.getExceptionCode(), EX_TRANSACTION_FAILED);
+    // The client count should still be 1 but onBinderUnlinked will remove this later.
+    EXPECT_EQ(countClients(), static_cast<size_t>(1));
 }
 
 TEST_F(DefaultVehicleHalTest, testSetValuesSmall) {
@@ -1111,7 +1167,8 @@ TEST_F(DefaultVehicleHalTest, testSubscribeGlobalOnChangeNormal) {
             << "results mismatch, expect on change event for the updated value";
     ASSERT_FALSE(getCallback()->nextOnPropertyEventResults().has_value())
             << "more results than expected";
-    EXPECT_EQ(countClients(), static_cast<size_t>(1));
+    EXPECT_EQ(countClients(), static_cast<size_t>(2))
+            << "expect 2 clients, 1 subscribe client and 1 setvalue client";
 }
 
 TEST_F(DefaultVehicleHalTest, testSubscribeGlobalOnchangeUnrelatedEventIgnored) {
@@ -1581,11 +1638,27 @@ TEST_F(DefaultVehicleHalTest, testOnBinderDiedUnlinked) {
 
     onBinderDied(context);
 
+    // Sleep for 100ms between checks.
+    int64_t sleep = 100;
+    // Timeout: 10s.
+    int64_t timeout = 10'000'000'000;
+    int64_t stopTime = elapsedRealtimeNano() + timeout;
+    // Wait until the onBinderDied event is handled.
+    while (countClients() != 0u && elapsedRealtimeNano() <= stopTime) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleep));
+    }
+
     ASSERT_EQ(countClients(), static_cast<size_t>(0))
             << "expect all clients to be removed when binder died";
     ASSERT_TRUE(hasNoSubscriptions()) << "expect no subscriptions when binder died";
 
     onBinderUnlinked(context);
+
+    stopTime = elapsedRealtimeNano() + timeout;
+    // Wait until the onBinderUnlinked event is handled.
+    while (countOnBinderDiedContexts() != 0u && elapsedRealtimeNano() <= stopTime) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleep));
+    }
 
     ASSERT_EQ(countOnBinderDiedContexts(), static_cast<size_t>(0))
             << "expect OnBinderDied context to be deleted when binder is unlinked";
