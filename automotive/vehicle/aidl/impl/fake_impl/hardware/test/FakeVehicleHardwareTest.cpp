@@ -924,6 +924,32 @@ INSTANTIATE_TEST_SUITE_P(
             return info.param.name;
         });
 
+TEST_F(FakeVehicleHardwareTest, testSetWaitForVhalAfterCarServiceCrash) {
+    int32_t propId = toInt(VehicleProperty::AP_POWER_STATE_REPORT);
+    VehiclePropValue request = VehiclePropValue{
+            .prop = propId,
+            .value.int32Values = {toInt(VehicleApPowerStateReport::WAIT_FOR_VHAL)},
+    };
+    ASSERT_EQ(setValue(request), StatusCode::OK) << "failed to set property " << propId;
+
+    // Clear existing events.
+    clearChangedProperties();
+
+    // Simulate a Car Service crash, Car Service would restart and send the message again.
+    ASSERT_EQ(setValue(request), StatusCode::OK) << "failed to set property " << propId;
+
+    std::vector<VehiclePropValue> events = getChangedProperties();
+    // Even though the state is already ON, we should receive another ON event.
+    ASSERT_EQ(events.size(), 1u);
+    // Erase the timestamp for comparison.
+    events[0].timestamp = 0;
+    ASSERT_EQ(events[0], (VehiclePropValue{
+                                 .prop = toInt(VehicleProperty::AP_POWER_STATE_REQ),
+                                 .status = VehiclePropertyStatus::AVAILABLE,
+                                 .value.int32Values = {toInt(VehicleApPowerStateReq::ON), 0},
+                         }));
+}
+
 TEST_F(FakeVehicleHardwareTest, testGetObd2FreezeFrame) {
     int64_t timestamp = elapsedRealtimeNano();
 

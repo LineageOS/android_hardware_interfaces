@@ -209,38 +209,6 @@ optional<vector<uint8_t>> derEncodeKeyPair(const EVP_PKEY& pkey) {
     return keyPair;
 }
 
-// Extract the issuer subject name from the leaf cert in the given chain,
-// returning it as DER-encoded bytes.
-optional<vector<uint8_t>> extractDerSubjectFromCertificate(const vector<uint8_t>& certificate) {
-    const uint8_t* input = certificate.data();
-    X509_Ptr cert(d2i_X509(/*cert=*/nullptr, &input, certificate.size()));
-    if (!cert) {
-        LOG(ERROR) << "Failed to parse certificate";
-        return std::nullopt;
-    }
-
-    X509_NAME* subject = X509_get_subject_name(cert.get());
-    if (!subject) {
-        LOG(ERROR) << "Failed to retrieve subject name";
-        return std::nullopt;
-    }
-
-    int encodedSubjectLength = i2d_X509_NAME(subject, /*out=*/nullptr);
-    if (encodedSubjectLength < 0) {
-        LOG(ERROR) << "Error obtaining encoded subject name length";
-        return std::nullopt;
-    }
-
-    vector<uint8_t> encodedSubject(encodedSubjectLength);
-    uint8_t* out = encodedSubject.data();
-    if (encodedSubjectLength != i2d_X509_NAME(subject, &out)) {
-        LOG(ERROR) << "Error encoding subject name";
-        return std::nullopt;
-    }
-
-    return encodedSubject;
-}
-
 // Generates the attestation certificate with the parameters passed in.  Note
 // that the passed in |activeTimeMilliSeconds| |expireTimeMilliSeconds| are in
 // milli seconds since epoch.  We are setting them to milliseconds due to
@@ -900,7 +868,7 @@ optional<std::pair<vector<uint8_t>, vector<uint8_t>>> createEcKeyPairWithAttesta
     }
 
     optional<vector<uint8_t>> derIssuerSubject =
-            extractDerSubjectFromCertificate(attestationKeyCert);
+            support::extractDerSubjectFromCertificate(attestationKeyCert);
     if (!derIssuerSubject) {
         LOG(ERROR) << "Error error extracting issuer name from the given certificate chain";
         return std::nullopt;
@@ -2323,6 +2291,36 @@ vector<uint8_t> testHardwareBoundKey = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 const vector<uint8_t>& getTestHardwareBoundKey() {
     return testHardwareBoundKey;
+}
+
+optional<vector<uint8_t>> extractDerSubjectFromCertificate(const vector<uint8_t>& certificate) {
+    const uint8_t* input = certificate.data();
+    X509_Ptr cert(d2i_X509(/*cert=*/nullptr, &input, certificate.size()));
+    if (!cert) {
+        LOG(ERROR) << "Failed to parse certificate";
+        return std::nullopt;
+    }
+
+    X509_NAME* subject = X509_get_subject_name(cert.get());
+    if (!subject) {
+        LOG(ERROR) << "Failed to retrieve subject name";
+        return std::nullopt;
+    }
+
+    int encodedSubjectLength = i2d_X509_NAME(subject, /*out=*/nullptr);
+    if (encodedSubjectLength < 0) {
+        LOG(ERROR) << "Error obtaining encoded subject name length";
+        return std::nullopt;
+    }
+
+    vector<uint8_t> encodedSubject(encodedSubjectLength);
+    uint8_t* out = encodedSubject.data();
+    if (encodedSubjectLength != i2d_X509_NAME(subject, &out)) {
+        LOG(ERROR) << "Error encoding subject name";
+        return std::nullopt;
+    }
+
+    return encodedSubject;
 }
 
 }  // namespace support

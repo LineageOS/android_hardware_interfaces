@@ -36,6 +36,7 @@ using ::aidl::android::hardware::camera::common::CameraResourceCost;
 using ::aidl::android::hardware::camera::common::TorchModeStatus;
 using ::aidl::android::hardware::camera::common::VendorTagSection;
 using ::aidl::android::hardware::camera::device::ICameraDevice;
+using ::aidl::android::hardware::camera::metadata::RequestAvailableDynamicRangeProfilesMap;
 using ::aidl::android::hardware::camera::metadata::SensorPixelMode;
 using ::aidl::android::hardware::camera::provider::CameraIdAndStreamCombination;
 using ::aidl::android::hardware::camera::provider::ICameraProviderCallbackDefault;
@@ -488,7 +489,7 @@ TEST_P(CameraAidlTest, constructDefaultRequestSettings) {
             ret = mSession->constructDefaultRequestSettings(reqTemplate, &rawMetadata);
             ALOGI("constructDefaultRequestSettings returns status:%d:%d", ret.getExceptionCode(),
                   ret.getServiceSpecificError());
-            ASSERT_TRUE(ret.isOk());
+
             if (reqTemplate == RequestTemplate::ZERO_SHUTTER_LAG ||
                 reqTemplate == RequestTemplate::MANUAL) {
                 // optional templates
@@ -549,6 +550,8 @@ TEST_P(CameraAidlTest, configureStreamsAvailableOutputs) {
             stream.usage = static_cast<aidl::android::hardware::graphics::common::BufferUsage>(
                     GRALLOC1_CONSUMER_USAGE_HWCOMPOSER);
             stream.rotation = StreamRotation::ROTATION_0;
+            stream.dynamicRangeProfile = RequestAvailableDynamicRangeProfilesMap::
+                    ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD;
 
             std::vector<Stream> streams = {stream};
             StreamConfiguration config;
@@ -626,6 +629,8 @@ TEST_P(CameraAidlTest, configureConcurrentStreamsAvailableOutputs) {
                 stream.dataSpace = dataspace;
                 stream.rotation = StreamRotation::ROTATION_0;
                 stream.sensorPixelModesUsed = {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT};
+                stream.dynamicRangeProfile = RequestAvailableDynamicRangeProfilesMap::
+                        ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD;
                 streams[j] = stream;
                 j++;
             }
@@ -708,7 +713,9 @@ TEST_P(CameraAidlTest, configureStreamsInvalidOutputs) {
                          std::string(),
                          jpegBufferSize,
                          -1,
-                         {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+                         {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                         RequestAvailableDynamicRangeProfilesMap::
+                                 ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
         int32_t streamConfigCounter = 0;
         std::vector<Stream> streams = {stream};
         StreamConfiguration config;
@@ -737,7 +744,9 @@ TEST_P(CameraAidlTest, configureStreamsInvalidOutputs) {
                   std::string(),
                   jpegBufferSize,
                   -1,
-                  {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+                  {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                  RequestAvailableDynamicRangeProfilesMap::
+                          ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
 
         streams[0] = stream;
         createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE, &config,
@@ -761,7 +770,9 @@ TEST_P(CameraAidlTest, configureStreamsInvalidOutputs) {
                       std::string(),
                       jpegBufferSize,
                       -1,
-                      {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+                      {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                      RequestAvailableDynamicRangeProfilesMap::
+                              ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
 
             streams[0] = stream;
             createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE, &config,
@@ -784,7 +795,9 @@ TEST_P(CameraAidlTest, configureStreamsInvalidOutputs) {
                       std::string(),
                       jpegBufferSize,
                       -1,
-                      {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+                      {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                      RequestAvailableDynamicRangeProfilesMap::
+                              ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
 
             streams[0] = stream;
             createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE, &config,
@@ -888,7 +901,9 @@ TEST_P(CameraAidlTest, configureStreamsZSLInputOutputs) {
                         std::string(),
                         jpegBufferSize,
                         -1,
-                        {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+                        {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                        RequestAvailableDynamicRangeProfilesMap::
+                                ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
                 Stream inputStream = {
                         streamId++,
                         StreamType::INPUT,
@@ -901,7 +916,9 @@ TEST_P(CameraAidlTest, configureStreamsZSLInputOutputs) {
                         std::string(),
                         jpegBufferSize,
                         -1,
-                        {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+                        {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                        RequestAvailableDynamicRangeProfilesMap::
+                                ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
                 Stream outputStream = {
                         streamId++,
                         StreamType::OUTPUT,
@@ -915,7 +932,9 @@ TEST_P(CameraAidlTest, configureStreamsZSLInputOutputs) {
                         std::string(),
                         jpegBufferSize,
                         -1,
-                        {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+                        {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                        RequestAvailableDynamicRangeProfilesMap::
+                                ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
 
                 std::vector<Stream> streams = {inputStream, zslStream, outputStream};
 
@@ -996,19 +1015,22 @@ TEST_P(CameraAidlTest, configureStreamsWithSessionParameters) {
                                                         &previewThreshold));
         ASSERT_NE(0u, outputPreviewStreams.size());
 
-        Stream previewStream = {0,
-                                StreamType::OUTPUT,
-                                outputPreviewStreams[0].width,
-                                outputPreviewStreams[0].height,
-                                static_cast<PixelFormat>(outputPreviewStreams[0].format),
-                                static_cast<aidl::android::hardware::graphics::common::BufferUsage>(
-                                        GRALLOC1_CONSUMER_USAGE_HWCOMPOSER),
-                                Dataspace::UNKNOWN,
-                                StreamRotation::ROTATION_0,
-                                std::string(),
-                                /*bufferSize*/ 0,
-                                /*groupId*/ -1,
-                                {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+        Stream previewStream = {
+                0,
+                StreamType::OUTPUT,
+                outputPreviewStreams[0].width,
+                outputPreviewStreams[0].height,
+                static_cast<PixelFormat>(outputPreviewStreams[0].format),
+                static_cast<aidl::android::hardware::graphics::common::BufferUsage>(
+                        GRALLOC1_CONSUMER_USAGE_HWCOMPOSER),
+                Dataspace::UNKNOWN,
+                StreamRotation::ROTATION_0,
+                std::string(),
+                /*bufferSize*/ 0,
+                /*groupId*/ -1,
+                {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                RequestAvailableDynamicRangeProfilesMap::
+                        ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
 
         std::vector<Stream> streams = {previewStream};
         StreamConfiguration config;
@@ -1114,7 +1136,9 @@ TEST_P(CameraAidlTest, configureStreamsPreviewStillOutputs) {
                         std::string(),
                         /*bufferSize*/ 0,
                         /*groupId*/ -1,
-                        {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+                        {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                        RequestAvailableDynamicRangeProfilesMap::
+                                ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
                 Stream blobStream = {
                         streamId++,
                         StreamType::OUTPUT,
@@ -1128,7 +1152,9 @@ TEST_P(CameraAidlTest, configureStreamsPreviewStillOutputs) {
                         std::string(),
                         /*bufferSize*/ 0,
                         /*groupId*/ -1,
-                        {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+                        {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                        RequestAvailableDynamicRangeProfilesMap::
+                                ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
                 std::vector<Stream> streams = {previewStream, blobStream};
                 StreamConfiguration config;
 
@@ -1192,7 +1218,9 @@ TEST_P(CameraAidlTest, configureStreamsConstrainedOutputs) {
                          std::string(),
                          /*bufferSize*/ 0,
                          /*groupId*/ -1,
-                         {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+                         {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                         RequestAvailableDynamicRangeProfilesMap::
+                                 ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
         std::vector<Stream> streams = {stream};
         StreamConfiguration config;
         createStreamConfiguration(streams, StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE,
@@ -1220,7 +1248,9 @@ TEST_P(CameraAidlTest, configureStreamsConstrainedOutputs) {
                   std::string(),
                   /*bufferSize*/ 0,
                   /*groupId*/ -1,
-                  {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+                  {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                  RequestAvailableDynamicRangeProfilesMap::
+                          ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
         streams[0] = stream;
         createStreamConfiguration(streams, StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE,
                                   &config);
@@ -1244,7 +1274,9 @@ TEST_P(CameraAidlTest, configureStreamsConstrainedOutputs) {
                   std::string(),
                   /*bufferSize*/ 0,
                   /*groupId*/ -1,
-                  {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+                  {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                  RequestAvailableDynamicRangeProfilesMap::
+                          ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
         streams[0] = stream;
         createStreamConfiguration(streams, StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE,
                                   &config);
@@ -1266,7 +1298,9 @@ TEST_P(CameraAidlTest, configureStreamsConstrainedOutputs) {
                   std::string(),
                   /*bufferSize*/ 0,
                   /*groupId*/ -1,
-                  {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+                  {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                  RequestAvailableDynamicRangeProfilesMap::
+                          ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
         streams[0] = stream;
         createStreamConfiguration(streams, StreamConfigurationMode::CONSTRAINED_HIGH_SPEED_MODE,
                                   &config);
@@ -1341,7 +1375,9 @@ TEST_P(CameraAidlTest, configureStreamsVideoStillOutputs) {
                         std::string(),
                         jpegBufferSize,
                         /*groupId*/ -1,
-                        {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+                        {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                        RequestAvailableDynamicRangeProfilesMap::
+                                ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
                 Stream blobStream = {
                         streamId++,
                         StreamType::OUTPUT,
@@ -1355,7 +1391,9 @@ TEST_P(CameraAidlTest, configureStreamsVideoStillOutputs) {
                         std::string(),
                         jpegBufferSize,
                         /*groupId*/ -1,
-                        {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+                        {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                        RequestAvailableDynamicRangeProfilesMap::
+                                ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
                 std::vector<Stream> streams = {videoStream, blobStream};
                 StreamConfiguration config;
 
@@ -1817,9 +1855,7 @@ TEST_P(CameraAidlTest, process10BitDynamicRangeRequest) {
             ASSERT_TRUE(ret.isOk());
             continue;
         }
-        std::vector<
-                aidl::android::hardware::camera::metadata::RequestAvailableDynamicRangeProfilesMap>
-                profileList;
+        std::vector<RequestAvailableDynamicRangeProfilesMap> profileList;
         get10BitDynamicRangeProfiles(staticMeta, &profileList);
         ASSERT_FALSE(profileList.empty());
 
@@ -2652,7 +2688,9 @@ TEST_P(CameraAidlTest, configureInjectionStreamsAvailableOutputs) {
                              std::string(),
                              jpegBufferSize,
                              0,
-                             {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+                             {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                             RequestAvailableDynamicRangeProfilesMap::
+                                     ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
 
             std::vector<Stream> streams = {stream};
             StreamConfiguration config;
@@ -2720,7 +2758,9 @@ TEST_P(CameraAidlTest, configureInjectionStreamsInvalidOutputs) {
                          std::string(),
                          jpegBufferSize,
                          0,
-                         {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+                         {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                         RequestAvailableDynamicRangeProfilesMap::
+                                 ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
 
         int32_t streamConfigCounter = 0;
         std::vector<Stream> streams = {stream};
@@ -2746,7 +2786,10 @@ TEST_P(CameraAidlTest, configureInjectionStreamsInvalidOutputs) {
                   std::string(),
                   jpegBufferSize,
                   0,
-                  {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+                  {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                  RequestAvailableDynamicRangeProfilesMap::
+                          ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
+
         streams[0] = stream;
         createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE, &config,
                                   jpegBufferSize);
@@ -2767,7 +2810,9 @@ TEST_P(CameraAidlTest, configureInjectionStreamsInvalidOutputs) {
                       std::string(),
                       jpegBufferSize,
                       0,
-                      {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+                      {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                      RequestAvailableDynamicRangeProfilesMap::
+                              ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
             streams[0] = stream;
             createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE, &config,
                                       jpegBufferSize);
@@ -2787,7 +2832,9 @@ TEST_P(CameraAidlTest, configureInjectionStreamsInvalidOutputs) {
                       std::string(),
                       jpegBufferSize,
                       0,
-                      {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+                      {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                      RequestAvailableDynamicRangeProfilesMap::
+                              ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
             streams[0] = stream;
             createStreamConfiguration(streams, StreamConfigurationMode::NORMAL_MODE, &config,
                                       jpegBufferSize);
@@ -2869,7 +2916,9 @@ TEST_P(CameraAidlTest, configureInjectionStreamsWithSessionParameters) {
                 std::string(),
                 0,
                 -1,
-                {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT}};
+                {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                RequestAvailableDynamicRangeProfilesMap::
+                        ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
         std::vector<Stream> streams = {previewStream};
         StreamConfiguration config;
         config.streams = streams;
@@ -2940,22 +2989,21 @@ TEST_P(CameraAidlTest, configureStreamsUseCases) {
         }
 
         std::vector<Stream> streams(1);
-        streams[0] = {
-                0,
-                StreamType::OUTPUT,
-                outputPreviewStreams[0].width,
-                outputPreviewStreams[0].height,
-                static_cast<PixelFormat>(outputPreviewStreams[0].format),
-                static_cast<::aidl::android::hardware::graphics::common::BufferUsage>(
-                        GRALLOC1_CONSUMER_USAGE_CPU_READ),
-                Dataspace::UNKNOWN,
-                StreamRotation::ROTATION_0,
-                std::string(),
-                0,
-                -1,
-                {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
-                aidl::android::hardware::camera::metadata::RequestAvailableDynamicRangeProfilesMap::
-                        ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
+        streams[0] = {0,
+                      StreamType::OUTPUT,
+                      outputPreviewStreams[0].width,
+                      outputPreviewStreams[0].height,
+                      static_cast<PixelFormat>(outputPreviewStreams[0].format),
+                      static_cast<::aidl::android::hardware::graphics::common::BufferUsage>(
+                              GRALLOC1_CONSUMER_USAGE_CPU_READ),
+                      Dataspace::UNKNOWN,
+                      StreamRotation::ROTATION_0,
+                      std::string(),
+                      0,
+                      -1,
+                      {SensorPixelMode::ANDROID_SENSOR_PIXEL_MODE_DEFAULT},
+                      RequestAvailableDynamicRangeProfilesMap::
+                              ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD};
 
         int32_t streamConfigCounter = 0;
         CameraMetadata req;
