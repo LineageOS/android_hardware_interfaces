@@ -180,7 +180,8 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
             uint32_t streamConfigCounter, bool maxResolution,
             aidl::android::hardware::camera::metadata::RequestAvailableDynamicRangeProfilesMap
                     prof = ::aidl::android::hardware::camera::metadata::
-                            RequestAvailableDynamicRangeProfilesMap(0));
+                            RequestAvailableDynamicRangeProfilesMap::
+                                    ANDROID_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD);
 
     void configurePreviewStreams(
             const std::string& name, const std::shared_ptr<ICameraProvider>& provider,
