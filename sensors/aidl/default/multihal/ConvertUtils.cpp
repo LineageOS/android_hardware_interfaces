@@ -173,7 +173,7 @@ void convertToHidlEvent(const AidlEvent& aidlEvent, V2_1Event* hidlEvent) {
                 }
                 default:
                     ALOGE("Invalid sensor additioanl info tag: %d",
-                          additionalInfo.payload.getTag());
+                          static_cast<int32_t>(additionalInfo.payload.getTag()));
                     break;
             }
             break;
