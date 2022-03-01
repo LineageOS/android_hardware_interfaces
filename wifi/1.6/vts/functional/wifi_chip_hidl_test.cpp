@@ -91,6 +91,9 @@ TEST_P(WifiChipHidlTest, getUsableChannels_1_6) {
     WifiBand band = WifiBand::BAND_24GHZ_5GHZ_6GHZ;
     const auto& statusNonEmpty =
             HIDL_INVOKE(wifi_chip_, getUsableChannels_1_6, band, ifaceModeMask, filterMask);
+    if (statusNonEmpty.first.code == WifiStatusCode::ERROR_NOT_SUPPORTED) {
+        GTEST_SKIP() << "Skipping this test since getUsableChannels() is not supported by vendor.";
+    }
 
     EXPECT_EQ(WifiStatusCode::SUCCESS, statusNonEmpty.first.code);
 }
@@ -102,6 +105,22 @@ TEST_P(WifiChipHidlTest, getAvailableModes_1_6) {
     const auto& status_and_modes = HIDL_INVOKE(wifi_chip_, getAvailableModes_1_6);
     EXPECT_EQ(WifiStatusCode::SUCCESS, status_and_modes.first.code);
     EXPECT_LT(0u, status_and_modes.second.size());
+}
+
+/*
+ * getSupportedRadioCombinationsMatrix:
+ * Ensure that a call to getSupportedRadioCombinationsMatrix will return
+ * with a success status code.
+ */
+TEST_P(WifiChipHidlTest, getSupportedRadioCombinationsMatrix) {
+    configureChipForIfaceType(IfaceType::STA, true);
+    const auto& statusNonEmpty = HIDL_INVOKE(wifi_chip_, getSupportedRadioCombinationsMatrix);
+    if (statusNonEmpty.first.code == WifiStatusCode::ERROR_NOT_SUPPORTED) {
+        GTEST_SKIP() << "Skipping this test since getSupportedRadioCombinationsMatrix() is not "
+                        "supported by vendor.";
+    }
+
+    EXPECT_EQ(WifiStatusCode::SUCCESS, statusNonEmpty.first.code);
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(WifiChipHidlTest);
