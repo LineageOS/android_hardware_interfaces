@@ -38,7 +38,7 @@ using std::vector;
 
 class SecureElementProvisioningTest : public testing::Test {
   protected:
-    static void SetupTestSuite() {
+    static void SetUpTestSuite() {
         auto params = ::android::getAidlHalInstanceNames(IKeyMintDevice::descriptor);
         for (auto& param : params) {
             ASSERT_TRUE(AServiceManager_isDeclared(param.c_str()))
