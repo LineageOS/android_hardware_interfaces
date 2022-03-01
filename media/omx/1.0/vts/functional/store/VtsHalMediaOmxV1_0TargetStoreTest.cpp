@@ -20,7 +20,9 @@
 #endif
 
 #include <android-base/logging.h>
+#include <android-base/properties.h>
 #include <android-base/strings.h>
+#include <android/api-level.h>
 
 #include <android/hardware/media/omx/1.0/IOmx.h>
 #include <android/hardware/media/omx/1.0/IOmxNode.h>
@@ -367,6 +369,31 @@ TEST_P(StoreHidlTest, ListRoles) {
             EXPECT_NE(node.first.rfind(prefix, 0), std::string::npos)
                     << "Node \"" << node.first << "\" does not start with prefix \"" << prefix
                     << "\".";
+        }
+    }
+}
+
+static int getFirstApiLevel() {
+    return android::base::GetIntProperty("ro.product.first_api_level", __ANDROID_API_T__);
+}
+
+// list components and roles.
+TEST_P(StoreHidlTest, OmxCodecAllowedTest) {
+    hidl_vec<IOmx::ComponentInfo> componentInfos = getComponentInfoList(omx);
+    for (IOmx::ComponentInfo info : componentInfos) {
+        for (std::string role : info.mRoles) {
+            if (role.find("video_decoder") != std::string::npos ||
+                role.find("video_encoder") != std::string::npos) {
+                ASSERT_LT(getFirstApiLevel(), __ANDROID_API_S__)
+                        << " Component: " << info.mName.c_str() << " Role: " << role.c_str()
+                        << " not allowed for devices launching with Android S and above";
+            }
+            if (role.find("audio_decoder") != std::string::npos ||
+                role.find("audio_encoder") != std::string::npos) {
+                ASSERT_LT(getFirstApiLevel(), __ANDROID_API_T__)
+                        << " Component: " << info.mName.c_str() << " Role: " << role.c_str()
+                        << " not allowed for devices launching with Android T and above";
+            }
         }
     }
 }
