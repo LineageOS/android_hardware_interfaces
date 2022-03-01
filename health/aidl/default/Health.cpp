@@ -130,12 +130,7 @@ ndk::ScopedAStatus Health::getStorageInfo(std::vector<StorageInfo>*) {
 ndk::ScopedAStatus Health::getHealthInfo(HealthInfo* out) {
     battery_monitor_.updateValues();
 
-    // TODO(b/177269435): BatteryMonitor should store AIDL HealthInfo instead.
-    auto health_info_2_1 = battery_monitor_.getHealthInfo_2_1();
-    if (!::android::h2a::translate(health_info_2_1, out)) {
-        return ndk::ScopedAStatus::fromServiceSpecificErrorWithMessage(
-                IHealth::STATUS_UNKNOWN, "Cannot translate HIDL HealthInfo to AIDL");
-    }
+    *out = battery_monitor_.getHealthInfo();
 
     // Fill in storage infos; these aren't retrieved by BatteryMonitor.
     if (auto res = getStorageInfo(&out->storageInfos); !res.isOk()) {
