@@ -17,6 +17,7 @@
 #ifndef android_hardware_automotive_vehicle_aidl_impl_vhal_include_PendingRequestPool_H_
 #define android_hardware_automotive_vehicle_aidl_impl_vhal_include_PendingRequestPool_H_
 
+#include <VehicleUtils.h>
 #include <android-base/result.h>
 #include <android-base/thread_annotations.h>
 
@@ -49,9 +50,9 @@ class PendingRequestPool final {
     // added. Otherwise, they would be added to the request pool.
     // The callback would be called if requests are not finished within {@code mTimeoutInNano}
     // seconds.
-    android::base::Result<void> addRequests(const void* clientId,
-                                            const std::unordered_set<int64_t>& requestIds,
-                                            std::shared_ptr<const TimeoutCallbackFunc> callback);
+    android::base::Result<void, VhalError> addRequests(
+            const void* clientId, const std::unordered_set<int64_t>& requestIds,
+            std::shared_ptr<const TimeoutCallbackFunc> callback);
 
     // Checks whether the request is currently pending.
     bool isRequestPending(const void* clientId, int64_t requestId) const;

@@ -38,11 +38,11 @@ class FakeObd2Frame final {
             const aidl::android::hardware::automotive::vehicle::VehiclePropConfig& propConfig);
     void initObd2FreezeFrame(
             const aidl::android::hardware::automotive::vehicle::VehiclePropConfig& propConfig);
-    android::base::Result<VehiclePropValuePool::RecyclableType> getObd2FreezeFrame(
+    android::base::Result<VehiclePropValuePool::RecyclableType, VhalError> getObd2FreezeFrame(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue&
                     requestedPropValue) const;
-    android::base::Result<VehiclePropValuePool::RecyclableType> getObd2DtcInfo() const;
-    android::base::Result<void> clearObd2FreezeFrames(
+    android::base::Result<VehiclePropValuePool::RecyclableType, VhalError> getObd2DtcInfo() const;
+    android::base::Result<void, VhalError> clearObd2FreezeFrames(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue);
     static bool isDiagnosticProperty(
             const aidl::android::hardware::automotive::vehicle::VehiclePropConfig& propConfig);

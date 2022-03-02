@@ -263,7 +263,7 @@ TEST_F(PendingRequestPoolTest, testPendingRequestCountLimit) {
     auto result = getPool()->addRequests(reinterpret_cast<const void*>(0),
                                          {static_cast<int64_t>(10000)}, callback);
     ASSERT_FALSE(result.ok()) << "adding more pending requests than limit must fail";
-    ASSERT_EQ(result.error().code(), toInt(StatusCode::TRY_AGAIN));
+    ASSERT_EQ(result.error().code(), StatusCode::TRY_AGAIN);
 
     getPool()->tryFinishRequests(reinterpret_cast<const void*>(0), requests);
 }
