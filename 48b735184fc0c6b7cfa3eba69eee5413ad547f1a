@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f83fb5ba_0f9233cd",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 28232
+      },
+      "writtenOn": "2022-03-02T11:47:41Z",
+      "side": 1,
+      "message": "Fixes VTS issue: run vts -m VtsHalWifiApV1_0TargetTest -t PerInstance/WifiApIfaceHidlTest#GetValidFrequenciesForBand/0_default",
+      "revId": "48b735184fc0c6b7cfa3eba69eee5413ad547f1a",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
