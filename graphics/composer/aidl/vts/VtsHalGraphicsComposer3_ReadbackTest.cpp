@@ -1051,7 +1051,10 @@ class GraphicsBlendModeCompositionTest
         SetUpBase(std::get<0>(GetParam()));
         // TODO(b/219590743) we should remove the below SRGB color mode
         // once we have the BlendMode test fix for all the versions of the ColorMode
-        mTestColorModes = {ColorMode::SRGB};
+        mTestColorModes.erase(
+                std::remove_if(mTestColorModes.begin(), mTestColorModes.end(),
+                               [](ColorMode mode) { return mode != ColorMode::SRGB; }),
+                mTestColorModes.end());
         mBackgroundColor = BLACK;
         mTopLayerColor = RED;
     }
