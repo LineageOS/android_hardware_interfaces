@@ -88,7 +88,7 @@ nn::GeneralResult<Memory> clone(const Memory& memory) {
             return Memory::make<Memory::Tag::hardwareBuffer>(std::move(handle));
         }
     }
-    return (NN_ERROR() << "Unrecognized Memory::Tag: " << memory.getTag())
+    return (NN_ERROR() << "Unrecognized Memory::Tag: " << underlyingType(memory.getTag()))
             .
             operator nn::GeneralResult<Memory>();
 }
@@ -103,7 +103,7 @@ nn::GeneralResult<RequestMemoryPool> clone(const RequestMemoryPool& requestPool)
     }
     // Using explicit type conversion because std::variant inside the RequestMemoryPool confuses the
     // compiler.
-    return (NN_ERROR() << "Unrecognized request pool tag: " << requestPool.getTag())
+    return (NN_ERROR() << "Unrecognized request pool tag: " << underlyingType(requestPool.getTag()))
             .
             operator nn::GeneralResult<RequestMemoryPool>();
 }
