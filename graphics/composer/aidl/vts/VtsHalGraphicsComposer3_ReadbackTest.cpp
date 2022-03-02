@@ -214,15 +214,16 @@ class GraphicsCompositionTestBase : public ::testing::Test {
         mWriter.reset();
     }
 
-    std::pair<ScopedAStatus, bool> getHasReadbackBuffer() {
+    bool getHasReadbackBuffer() {
         auto [status, readBackBufferAttributes] =
                 mComposerClient->getReadbackBufferAttributes(getPrimaryDisplayId());
         if (status.isOk()) {
             mPixelFormat = readBackBufferAttributes.format;
             mDataspace = readBackBufferAttributes.dataspace;
-            return {std::move(status), ReadbackHelper::readbackSupported(mPixelFormat, mDataspace)};
+            return ReadbackHelper::readbackSupported(mPixelFormat, mDataspace);
         }
-        return {std::move(status), false};
+        EXPECT_EQ(IComposerClient::EX_UNSUPPORTED, status.getServiceSpecificError());
+        return false;
     }
 
     std::shared_ptr<VtsComposerClient> mComposerClient;
@@ -264,8 +265,8 @@ TEST_P(GraphicsCompositionTest, SingleSolidColorLayer) {
                             ->setColorMode(getPrimaryDisplayId(), mode, RenderIntent::COLORIMETRIC)
                             .isOk());
 
-        const auto& [readbackStatus, isSupported] = getHasReadbackBuffer();
-        EXPECT_TRUE(readbackStatus.isOk());
+        bool isSupported;
+        ASSERT_NO_FATAL_FAILURE(isSupported = getHasReadbackBuffer());
         if (!isSupported) {
             GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
             return;
@@ -316,8 +317,8 @@ TEST_P(GraphicsCompositionTest, SetLayerBuffer) {
                             ->setColorMode(getPrimaryDisplayId(), mode, RenderIntent::COLORIMETRIC)
                             .isOk());
 
-        const auto& [readbackStatus, isSupported] = getHasReadbackBuffer();
-        EXPECT_TRUE(readbackStatus.isOk());
+        bool isSupported;
+        ASSERT_NO_FATAL_FAILURE(isSupported = getHasReadbackBuffer());
         if (!isSupported) {
             GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
             return;
@@ -376,8 +377,8 @@ TEST_P(GraphicsCompositionTest, SetLayerBufferNoEffect) {
                             ->setColorMode(getPrimaryDisplayId(), mode, RenderIntent::COLORIMETRIC)
                             .isOk());
 
-        const auto& [readbackStatus, isSupported] = getHasReadbackBuffer();
-        EXPECT_TRUE(readbackStatus.isOk());
+        bool isSupported;
+        ASSERT_NO_FATAL_FAILURE(isSupported = getHasReadbackBuffer());
         if (!isSupported) {
             GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
             return;
@@ -425,8 +426,8 @@ TEST_P(GraphicsCompositionTest, SetLayerBufferNoEffect) {
 }
 
 TEST_P(GraphicsCompositionTest, SetReadbackBuffer) {
-    const auto& [readbackStatus, isSupported] = getHasReadbackBuffer();
-    EXPECT_TRUE(readbackStatus.isOk());
+    bool isSupported;
+    ASSERT_NO_FATAL_FAILURE(isSupported = getHasReadbackBuffer());
     if (!isSupported) {
         GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
         return;
@@ -439,8 +440,8 @@ TEST_P(GraphicsCompositionTest, SetReadbackBuffer) {
 }
 
 TEST_P(GraphicsCompositionTest, SetReadbackBuffer_BadDisplay) {
-    const auto& [readbackStatus, isSupported] = getHasReadbackBuffer();
-    EXPECT_TRUE(readbackStatus.isOk());
+    bool isSupported;
+    ASSERT_NO_FATAL_FAILURE(isSupported = getHasReadbackBuffer());
     if (!isSupported) {
         GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
         return;
@@ -461,8 +462,8 @@ TEST_P(GraphicsCompositionTest, SetReadbackBuffer_BadDisplay) {
 }
 
 TEST_P(GraphicsCompositionTest, SetReadbackBuffer_BadParameter) {
-    const auto& [readbackStatus, isSupported] = getHasReadbackBuffer();
-    EXPECT_TRUE(readbackStatus.isOk());
+    bool isSupported;
+    ASSERT_NO_FATAL_FAILURE(isSupported = getHasReadbackBuffer());
     if (!isSupported) {
         GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
         return;
@@ -478,8 +479,8 @@ TEST_P(GraphicsCompositionTest, SetReadbackBuffer_BadParameter) {
 }
 
 TEST_P(GraphicsCompositionTest, GetReadbackBufferFenceInactive) {
-    const auto& [readbackStatus, isSupported] = getHasReadbackBuffer();
-    EXPECT_TRUE(readbackStatus.isOk());
+    bool isSupported;
+    ASSERT_NO_FATAL_FAILURE(isSupported = getHasReadbackBuffer());
     if (!isSupported) {
         GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
         return;
@@ -503,8 +504,8 @@ TEST_P(GraphicsCompositionTest, ClientComposition) {
                             ->setColorMode(getPrimaryDisplayId(), mode, RenderIntent::COLORIMETRIC)
                             .isOk());
 
-        const auto& [readbackStatus, isSupported] = getHasReadbackBuffer();
-        EXPECT_TRUE(readbackStatus.isOk());
+        bool isSupported;
+        ASSERT_NO_FATAL_FAILURE(isSupported = getHasReadbackBuffer());
         if (!isSupported) {
             GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
             return;
@@ -594,8 +595,8 @@ TEST_P(GraphicsCompositionTest, DeviceAndClientComposition) {
                             ->setColorMode(getPrimaryDisplayId(), mode, RenderIntent::COLORIMETRIC)
                             .isOk());
 
-        const auto& [readbackStatus, isSupported] = getHasReadbackBuffer();
-        EXPECT_TRUE(readbackStatus.isOk());
+        bool isSupported;
+        ASSERT_NO_FATAL_FAILURE(isSupported = getHasReadbackBuffer());
         if (!isSupported) {
             GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
             return;
@@ -693,8 +694,8 @@ TEST_P(GraphicsCompositionTest, SetLayerDamage) {
                             ->setColorMode(getPrimaryDisplayId(), mode, RenderIntent::COLORIMETRIC)
                             .isOk());
 
-        const auto& [readbackStatus, isSupported] = getHasReadbackBuffer();
-        EXPECT_TRUE(readbackStatus.isOk());
+        bool isSupported;
+        ASSERT_NO_FATAL_FAILURE(isSupported = getHasReadbackBuffer());
         if (!isSupported) {
             GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
             return;
@@ -768,8 +769,8 @@ TEST_P(GraphicsCompositionTest, SetLayerPlaneAlpha) {
                             ->setColorMode(getPrimaryDisplayId(), mode, RenderIntent::COLORIMETRIC)
                             .isOk());
 
-        const auto& [readbackStatus, isSupported] = getHasReadbackBuffer();
-        EXPECT_TRUE(readbackStatus.isOk());
+        bool isSupported;
+        ASSERT_NO_FATAL_FAILURE(isSupported = getHasReadbackBuffer());
         if (!isSupported) {
             GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
             return;
@@ -819,8 +820,8 @@ TEST_P(GraphicsCompositionTest, SetLayerSourceCrop) {
                             ->setColorMode(getPrimaryDisplayId(), mode, RenderIntent::COLORIMETRIC)
                             .isOk());
 
-        const auto& [readbackStatus, isSupported] = getHasReadbackBuffer();
-        EXPECT_TRUE(readbackStatus.isOk());
+        bool isSupported;
+        ASSERT_NO_FATAL_FAILURE(isSupported = getHasReadbackBuffer());
         if (!isSupported) {
             GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
             return;
@@ -878,8 +879,8 @@ TEST_P(GraphicsCompositionTest, SetLayerZOrder) {
                             ->setColorMode(getPrimaryDisplayId(), mode, RenderIntent::COLORIMETRIC)
                             .isOk());
 
-        const auto& [readbackStatus, isSupported] = getHasReadbackBuffer();
-        EXPECT_TRUE(readbackStatus.isOk());
+        bool isSupported;
+        ASSERT_NO_FATAL_FAILURE(isSupported = getHasReadbackBuffer());
         if (!isSupported) {
             GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
             return;
@@ -982,8 +983,8 @@ TEST_P(GraphicsCompositionTest, SetLayerBrightnessDims) {
                             ->setColorMode(getPrimaryDisplayId(), mode, RenderIntent::COLORIMETRIC)
                             .isOk());
 
-        const auto& [readbackStatus, isSupported] = getHasReadbackBuffer();
-        EXPECT_TRUE(readbackStatus.isOk());
+        bool isSupported;
+        ASSERT_NO_FATAL_FAILURE(isSupported = getHasReadbackBuffer());
         if (!isSupported) {
             GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace for "
                                "color mode: "
@@ -1135,8 +1136,8 @@ TEST_P(GraphicsBlendModeCompositionTest, DISABLED_None) {
                             ->setColorMode(getPrimaryDisplayId(), mode, RenderIntent::COLORIMETRIC)
                             .isOk());
 
-        const auto& [readbackStatus, isSupported] = getHasReadbackBuffer();
-        EXPECT_TRUE(readbackStatus.isOk());
+        bool isSupported;
+        ASSERT_NO_FATAL_FAILURE(isSupported = getHasReadbackBuffer());
         if (!isSupported) {
             GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
             return;
@@ -1179,8 +1180,8 @@ TEST_P(GraphicsBlendModeCompositionTest, Coverage) {
                             ->setColorMode(getPrimaryDisplayId(), mode, RenderIntent::COLORIMETRIC)
                             .isOk());
 
-        const auto& [readbackStatus, isSupported] = getHasReadbackBuffer();
-        EXPECT_TRUE(readbackStatus.isOk());
+        bool isSupported;
+        ASSERT_NO_FATAL_FAILURE(isSupported = getHasReadbackBuffer());
         if (!isSupported) {
             GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
             return;
@@ -1220,8 +1221,8 @@ TEST_P(GraphicsBlendModeCompositionTest, Premultiplied) {
                             ->setColorMode(getPrimaryDisplayId(), mode, RenderIntent::COLORIMETRIC)
                             .isOk());
 
-        const auto& [readbackStatus, isSupported] = getHasReadbackBuffer();
-        EXPECT_TRUE(readbackStatus.isOk());
+        bool isSupported;
+        ASSERT_NO_FATAL_FAILURE(isSupported = getHasReadbackBuffer());
         if (!isSupported) {
             GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
             return;
@@ -1303,8 +1304,8 @@ TEST_P(GraphicsTransformCompositionTest, FLIP_H) {
             return;
         }
 
-        const auto& [readbackStatus, isSupported] = getHasReadbackBuffer();
-        EXPECT_TRUE(readbackStatus.isOk());
+        bool isSupported;
+        ASSERT_NO_FATAL_FAILURE(isSupported = getHasReadbackBuffer());
         if (!isSupported) {
             GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
             return;
@@ -1348,8 +1349,8 @@ TEST_P(GraphicsTransformCompositionTest, FLIP_V) {
                             ->setColorMode(getPrimaryDisplayId(), mode, RenderIntent::COLORIMETRIC)
                             .isOk());
 
-        const auto& [readbackStatus, isSupported] = getHasReadbackBuffer();
-        EXPECT_TRUE(readbackStatus.isOk());
+        bool isSupported;
+        ASSERT_NO_FATAL_FAILURE(isSupported = getHasReadbackBuffer());
         if (!isSupported) {
             GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
             return;
@@ -1393,8 +1394,8 @@ TEST_P(GraphicsTransformCompositionTest, ROT_180) {
                             ->setColorMode(getPrimaryDisplayId(), mode, RenderIntent::COLORIMETRIC)
                             .isOk());
 
-        const auto& [readbackStatus, isSupported] = getHasReadbackBuffer();
-        EXPECT_TRUE(readbackStatus.isOk());
+        bool isSupported;
+        ASSERT_NO_FATAL_FAILURE(isSupported = getHasReadbackBuffer());
         if (!isSupported) {
             GTEST_SUCCEED() << "Readback not supported or unsupported pixelFormat/dataspace";
             return;
