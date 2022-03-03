@@ -115,7 +115,7 @@ DefaultVehicleHal::DefaultVehicleHal(std::unique_ptr<IVehicleHardware> hardware)
     auto result = LargeParcelableBase::parcelableToStableLargeParcelable(vehiclePropConfigs);
     if (!result.ok()) {
         ALOGE("failed to convert configs to shared memory file, error: %s, code: %d",
-              getErrorMsg(result).c_str(), getIntErrorCode(result));
+              result.error().message().c_str(), static_cast<int>(result.error().code()));
         return;
     }
 
@@ -475,7 +475,7 @@ ScopedAStatus DefaultVehicleHal::setValues(const CallbackType& callback,
     if (auto addRequestResult = client->addRequests(hardwareRequestIds); !addRequestResult.ok()) {
         ALOGE("setValues[%s], failed to add pending requests, error: %s",
               toString(hardwareRequestIds).c_str(), getErrorMsg(addRequestResult).c_str());
-        return toScopedAStatus(addRequestResult, StatusCode::INVALID_ARG);
+        return toScopedAStatus(addRequestResult);
     }
 
     if (!failedResults.empty()) {
@@ -545,25 +545,25 @@ ScopedAStatus DefaultVehicleHal::getPropConfigs(const std::vector<int32_t>& prop
     return vectorToStableLargeParcelable(std::move(configs), output);
 }
 
-Result<void> DefaultVehicleHal::checkSubscribeOptions(
+Result<void, VhalError> DefaultVehicleHal::checkSubscribeOptions(
         const std::vector<SubscribeOptions>& options) {
     for (const auto& option : options) {
         int32_t propId = option.propId;
         if (mConfigsByPropId.find(propId) == mConfigsByPropId.end()) {
-            return Error(toInt(StatusCode::INVALID_ARG))
+            return StatusError(StatusCode::INVALID_ARG)
                    << StringPrintf("no config for property, ID: %" PRId32, propId);
         }
         const VehiclePropConfig& config = mConfigsByPropId[propId];
 
         if (config.changeMode != VehiclePropertyChangeMode::ON_CHANGE &&
             config.changeMode != VehiclePropertyChangeMode::CONTINUOUS) {
-            return Error(toInt(StatusCode::INVALID_ARG))
+            return StatusError(StatusCode::INVALID_ARG)
                    << "only support subscribing to ON_CHANGE or CONTINUOUS property";
         }
 
         if (config.access != VehiclePropertyAccess::READ &&
             config.access != VehiclePropertyAccess::READ_WRITE) {
-            return Error(toInt(StatusCode::ACCESS_DENIED))
+            return StatusError(StatusCode::ACCESS_DENIED)
                    << StringPrintf("Property %" PRId32 " has no read access", propId);
         }
 
@@ -572,12 +572,12 @@ Result<void> DefaultVehicleHal::checkSubscribeOptions(
             float minSampleRate = config.minSampleRate;
             float maxSampleRate = config.maxSampleRate;
             if (sampleRate < minSampleRate || sampleRate > maxSampleRate) {
-                return Error(toInt(StatusCode::INVALID_ARG))
+                return StatusError(StatusCode::INVALID_ARG)
                        << StringPrintf("sample rate: %f out of range, must be within %f and %f",
                                        sampleRate, minSampleRate, maxSampleRate);
             }
             if (!SubscriptionManager::checkSampleRate(sampleRate)) {
-                return Error(toInt(StatusCode::INVALID_ARG))
+                return StatusError(StatusCode::INVALID_ARG)
                        << "invalid sample rate: " << sampleRate;
             }
         }
@@ -589,7 +589,7 @@ Result<void> DefaultVehicleHal::checkSubscribeOptions(
         // Non-global property.
         for (int32_t areaId : option.areaIds) {
             if (auto areaConfig = getAreaConfig(propId, areaId, config); areaConfig == nullptr) {
-                return Error(toInt(StatusCode::INVALID_ARG))
+                return StatusError(StatusCode::INVALID_ARG)
                        << StringPrintf("invalid area ID: %" PRId32 " for prop ID: %" PRId32
                                        ", not listed in config",
                                        areaId, propId);
@@ -662,33 +662,35 @@ IVehicleHardware* DefaultVehicleHal::getHardware() {
     return mVehicleHardware.get();
 }
 
-Result<void> DefaultVehicleHal::checkWritePermission(const VehiclePropValue& value) const {
+Result<void, VhalError> DefaultVehicleHal::checkWritePermission(
+        const VehiclePropValue& value) const {
     int32_t propId = value.prop;
     auto result = getConfig(propId);
     if (!result.ok()) {
-        return Error(toInt(StatusCode::INVALID_ARG)) << getErrorMsg(result);
+        return StatusError(StatusCode::INVALID_ARG) << getErrorMsg(result);
     }
     const VehiclePropConfig* config = result.value();
 
     if (config->access != VehiclePropertyAccess::WRITE &&
         config->access != VehiclePropertyAccess::READ_WRITE) {
-        return Error(toInt(StatusCode::ACCESS_DENIED))
+        return StatusError(StatusCode::ACCESS_DENIED)
                << StringPrintf("Property %" PRId32 " has no write access", propId);
     }
     return {};
 }
 
-Result<void> DefaultVehicleHal::checkReadPermission(const VehiclePropValue& value) const {
+Result<void, VhalError> DefaultVehicleHal::checkReadPermission(
+        const VehiclePropValue& value) const {
     int32_t propId = value.prop;
     auto result = getConfig(propId);
     if (!result.ok()) {
-        return Error(toInt(StatusCode::INVALID_ARG)) << getErrorMsg(result);
+        return StatusError(StatusCode::INVALID_ARG) << getErrorMsg(result);
     }
     const VehiclePropConfig* config = result.value();
 
     if (config->access != VehiclePropertyAccess::READ &&
         config->access != VehiclePropertyAccess::READ_WRITE) {
-        return Error(toInt(StatusCode::ACCESS_DENIED))
+        return StatusError(StatusCode::ACCESS_DENIED)
                << StringPrintf("Property %" PRId32 " has no read access", propId);
     }
     return {};

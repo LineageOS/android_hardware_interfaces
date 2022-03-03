@@ -32,6 +32,7 @@ namespace vehicle {
 
 namespace {
 
+using ::aidl::android::hardware::automotive::vehicle::StatusCode;
 using ::aidl::android::hardware::automotive::vehicle::VehicleArea;
 using ::aidl::android::hardware::automotive::vehicle::VehicleAreaConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
@@ -39,6 +40,8 @@ using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyGroup;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
+using ::android::base::Error;
+using ::android::base::Result;
 
 struct InvalidPropValueTestCase {
     std::string name;
@@ -757,6 +760,12 @@ TEST(VehicleUtilsTest, testConcurrentQueueDeactivateNotifyWaitingThread) {
     queue.deactivate();
 
     t.join();
+}
+
+TEST(VehicleUtilsTest, testVhalError) {
+    Result<void, VhalError> result = Error<VhalError>(StatusCode::INVALID_ARG) << "error message";
+
+    ASSERT_EQ(result.error().message(), "error message: INVALID_ARG");
 }
 
 class InvalidPropValueTest : public testing::TestWithParam<InvalidPropValueTestCase> {};
