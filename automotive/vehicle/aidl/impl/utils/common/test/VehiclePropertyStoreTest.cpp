@@ -37,7 +37,6 @@ using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyChangeMode;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyStatus;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
-using ::android::base::Result;
 using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::WhenSortedBy;
@@ -103,7 +102,7 @@ TEST_F(VehiclePropertyStoreTest, testGetAllConfigs) {
 }
 
 TEST_F(VehiclePropertyStoreTest, testGetConfig) {
-    Result<const VehiclePropConfig*, VhalError> result =
+    VhalResult<const VehiclePropConfig*> result =
             mStore->getConfig(toInt(VehicleProperty::INFO_FUEL_CAPACITY));
 
     ASSERT_RESULT_OK(result);
@@ -111,7 +110,7 @@ TEST_F(VehiclePropertyStoreTest, testGetConfig) {
 }
 
 TEST_F(VehiclePropertyStoreTest, testGetConfigWithInvalidPropId) {
-    Result<const VehiclePropConfig*, VhalError> result = mStore->getConfig(INVALID_PROP_ID);
+    VhalResult<const VehiclePropConfig*> result = mStore->getConfig(INVALID_PROP_ID);
 
     EXPECT_FALSE(result.ok()) << "expect error when getting a config for an invalid property ID";
     EXPECT_EQ(result.error().code(), StatusCode::INVALID_ARG);

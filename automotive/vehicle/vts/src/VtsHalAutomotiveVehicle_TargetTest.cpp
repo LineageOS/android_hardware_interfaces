@@ -276,7 +276,7 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, setNotWritableProp) {
     auto setValueResult = mVhalClient->setValueSync(*getValueResult.value());
 
     ASSERT_FALSE(setValueResult.ok()) << "Expect set a read-only value to fail";
-    ASSERT_EQ(setValueResult.error().code(), toInt(StatusCode::ACCESS_DENIED));
+    ASSERT_EQ(setValueResult.error().code(), StatusCode::ACCESS_DENIED);
 }
 
 // Test subscribe() and unsubscribe().
