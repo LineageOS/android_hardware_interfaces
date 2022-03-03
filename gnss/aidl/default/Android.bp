@@ -31,7 +31,6 @@ cc_binary {
     ],
     vintf_fragments: [
         "gnss-default.xml",
-        "gnss@2.1-service.xml",
     ],
     vendor: true,
     cflags: [
@@ -47,7 +46,6 @@ cc_binary {
         "liblog",
         "android.hardware.gnss@2.1",
         "android.hardware.gnss@2.0",
-        "android.hardware.gnss@1.1",
         "android.hardware.gnss@1.0",
         "android.hardware.gnss.measurement_corrections@1.1",
         "android.hardware.gnss.measurement_corrections@1.0",
@@ -62,7 +60,6 @@ cc_binary {
         "GnssBatching.cpp",
         "GnssDebug.cpp",
         "GnssGeofence.cpp",
-        "GnssHidlHal.cpp",
         "GnssNavigationMessageInterface.cpp",
         "GnssPowerIndication.cpp",
         "GnssPsds.cpp",
