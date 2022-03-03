@@ -194,7 +194,8 @@ const void* ConnectedClient::id() {
     return reinterpret_cast<const void*>(this);
 }
 
-Result<void> ConnectedClient::addRequests(const std::unordered_set<int64_t>& requestIds) {
+Result<void, VhalError> ConnectedClient::addRequests(
+        const std::unordered_set<int64_t>& requestIds) {
     return mRequestPool->addRequests(id(), requestIds, getTimeoutCallback());
 }
 

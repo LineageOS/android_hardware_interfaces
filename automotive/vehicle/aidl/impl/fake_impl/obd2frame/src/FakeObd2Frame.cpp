@@ -44,8 +44,9 @@ using ::aidl::android::hardware::automotive::vehicle::StatusCode;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
-using ::android::base::Error;
 using ::android::base::Result;
+
+using StatusError = android::base::Error<VhalError>;
 
 std::unique_ptr<Obd2SensorStore> FakeObd2Frame::fillDefaultObd2Frame(size_t numVendorIntegerSensors,
                                                                      size_t numVendorFloatSensors) {
@@ -126,37 +127,37 @@ void FakeObd2Frame::initObd2FreezeFrame(const VehiclePropConfig& propConfig) {
     }
 }
 
-Result<VehiclePropValuePool::RecyclableType> FakeObd2Frame::getObd2FreezeFrame(
+Result<VehiclePropValuePool::RecyclableType, VhalError> FakeObd2Frame::getObd2FreezeFrame(
         const VehiclePropValue& requestedPropValue) const {
     if (requestedPropValue.value.int64Values.size() != 1) {
-        return Error(toInt(StatusCode::INVALID_ARG))
+        return StatusError(StatusCode::INVALID_ARG)
                << "asked for OBD2_FREEZE_FRAME without valid timestamp";
     }
     auto readValuesResult = mPropStore->readValuesForProperty(OBD2_FREEZE_FRAME);
     if (!readValuesResult.ok()) {
-        return Error(toInt(StatusCode::INTERNAL_ERROR))
+        return StatusError(StatusCode::INTERNAL_ERROR)
                << "failed to read OBD2_FREEZE_FRAME property: "
                << readValuesResult.error().message();
     }
     if (readValuesResult.value().size() == 0) {
         // Should no freeze frame be available at the given timestamp, a response of NOT_AVAILABLE
         // must be returned by the implementation
-        return Error(toInt(StatusCode::NOT_AVAILABLE));
+        return StatusError(StatusCode::NOT_AVAILABLE);
     }
     auto timestamp = requestedPropValue.value.int64Values[0];
     auto readValueResult = mPropStore->readValue(OBD2_FREEZE_FRAME, /*area=*/0, timestamp);
     if (!readValueResult.ok()) {
-        return Error(toInt(StatusCode::INVALID_ARG))
+        return StatusError(StatusCode::INVALID_ARG)
                << "asked for OBD2_FREEZE_FRAME at invalid timestamp";
     }
     return readValueResult;
 }
 
-Result<VehiclePropValuePool::RecyclableType> FakeObd2Frame::getObd2DtcInfo() const {
+Result<VehiclePropValuePool::RecyclableType, VhalError> FakeObd2Frame::getObd2DtcInfo() const {
     std::vector<int64_t> timestamps;
     auto result = mPropStore->readValuesForProperty(OBD2_FREEZE_FRAME);
     if (!result.ok()) {
-        return Error(toInt(StatusCode::INTERNAL_ERROR))
+        return StatusError(StatusCode::INTERNAL_ERROR)
                << "failed to read OBD2_FREEZE_FRAME property: " << result.error().message();
     }
     for (const auto& freezeFrame : result.value()) {
@@ -169,7 +170,7 @@ Result<VehiclePropValuePool::RecyclableType> FakeObd2Frame::getObd2DtcInfo() con
     return outValue;
 }
 
-Result<void> FakeObd2Frame::clearObd2FreezeFrames(const VehiclePropValue& propValue) {
+Result<void, VhalError> FakeObd2Frame::clearObd2FreezeFrames(const VehiclePropValue& propValue) {
     if (propValue.value.int64Values.size() == 0) {
         mPropStore->removeValuesForProperty(OBD2_FREEZE_FRAME);
         return {};
@@ -177,7 +178,7 @@ Result<void> FakeObd2Frame::clearObd2FreezeFrames(const VehiclePropValue& propVa
     for (int64_t timestamp : propValue.value.int64Values) {
         auto result = mPropStore->readValue(OBD2_FREEZE_FRAME, 0, timestamp);
         if (!result.ok()) {
-            return Error(toInt(StatusCode::INVALID_ARG))
+            return StatusError(StatusCode::INVALID_ARG)
                    << "asked for OBD2_FREEZE_FRAME at invalid timestamp, error: %s"
                    << result.error().message();
         }

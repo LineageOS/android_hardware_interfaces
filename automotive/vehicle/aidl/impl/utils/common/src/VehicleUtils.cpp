@@ -21,6 +21,7 @@ namespace hardware {
 namespace automotive {
 namespace vehicle {
 
+using ::aidl::android::hardware::automotive::vehicle::StatusCode;
 using ::aidl::android::hardware::automotive::vehicle::VehicleAreaConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyGroup;
@@ -202,6 +203,14 @@ Result<void> checkValueRange(const VehiclePropValue& value, const VehicleAreaCon
             break;
     }
     return {};
+}
+
+StatusCode VhalError::value() const {
+    return mCode;
+}
+
+std::string VhalError::print() const {
+    return aidl::android::hardware::automotive::vehicle::toString(mCode);
 }
 
 }  // namespace vehicle

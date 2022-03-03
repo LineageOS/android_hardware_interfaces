@@ -41,6 +41,8 @@ namespace fake {
 
 class FakeVehicleHardware : public IVehicleHardware {
   public:
+    using ValueResultType = android::base::Result<VehiclePropValuePool::RecyclableType, VhalError>;
+
     FakeVehicleHardware();
 
     explicit FakeVehicleHardware(std::unique_ptr<VehiclePropValuePool> valuePool);
@@ -85,10 +87,10 @@ class FakeVehicleHardware : public IVehicleHardware {
     const std::shared_ptr<VehiclePropValuePool> mValuePool;
     const std::shared_ptr<VehiclePropertyStore> mServerSidePropStore;
 
-    android::base::Result<VehiclePropValuePool::RecyclableType> getValue(
+    ValueResultType getValue(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
 
-    android::base::Result<void> setValue(
+    android::base::Result<void, VhalError> setValue(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
 
   private:
@@ -115,19 +117,19 @@ class FakeVehicleHardware : public IVehicleHardware {
     // Override the properties using config files in 'overrideDir'.
     void overrideProperties(const char* overrideDir);
 
-    android::base::Result<void> maybeSetSpecialValue(
+    android::base::Result<void, VhalError> maybeSetSpecialValue(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
             bool* isSpecialValue);
-    android::base::Result<VehiclePropValuePool::RecyclableType> maybeGetSpecialValue(
+    ValueResultType maybeGetSpecialValue(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
             bool* isSpecialValue) const;
-    android::base::Result<void> setApPowerStateReport(
+    android::base::Result<void, VhalError> setApPowerStateReport(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
     VehiclePropValuePool::RecyclableType createApPowerStateReq(
             aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq state);
-    android::base::Result<void> setUserHalProp(
+    android::base::Result<void, VhalError> setUserHalProp(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
-    android::base::Result<VehiclePropValuePool::RecyclableType> getUserHalProp(
+    ValueResultType getUserHalProp(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
     bool isHvacPropAndHvacNotAvailable(int32_t propId);
 
