@@ -190,59 +190,6 @@ inline size_t getVehiclePropValueSize(
     return size;
 }
 
-template <class T>
-aidl::android::hardware::automotive::vehicle::StatusCode getErrorCode(
-        const android::base::Result<T>& result) {
-    if (result.ok()) {
-        return aidl::android::hardware::automotive::vehicle::StatusCode::OK;
-    }
-    return static_cast<aidl::android::hardware::automotive::vehicle::StatusCode>(
-            result.error().code());
-}
-
-template <class T>
-int getIntErrorCode(const android::base::Result<T>& result) {
-    return toInt(getErrorCode(result));
-}
-
-template <class T>
-std::string getErrorMsg(const android::base::Result<T>& result) {
-    if (result.ok()) {
-        return "";
-    }
-    return result.error().message();
-}
-
-template <class T>
-ndk::ScopedAStatus toScopedAStatus(const android::base::Result<T>& result,
-                                   aidl::android::hardware::automotive::vehicle::StatusCode status,
-                                   const std::string& additionalErrorMsg) {
-    if (result.ok()) {
-        return ndk::ScopedAStatus::ok();
-    }
-    return ndk::ScopedAStatus::fromServiceSpecificErrorWithMessage(
-            toInt(status),
-            fmt::format("{}, error: {}", additionalErrorMsg, getErrorMsg(result)).c_str());
-}
-
-template <class T>
-ndk::ScopedAStatus toScopedAStatus(
-        const android::base::Result<T>& result,
-        aidl::android::hardware::automotive::vehicle::StatusCode status) {
-    return toScopedAStatus(result, status, "");
-}
-
-template <class T>
-ndk::ScopedAStatus toScopedAStatus(const android::base::Result<T>& result) {
-    return toScopedAStatus(result, getErrorCode(result));
-}
-
-template <class T>
-ndk::ScopedAStatus toScopedAStatus(const android::base::Result<T>& result,
-                                   const std::string& additionalErrorMsg) {
-    return toScopedAStatus(result, getErrorCode(result), additionalErrorMsg);
-}
-
 // Check whether the value is valid according to config.
 // We check for the following:
 // *  If the type is INT32, {@code value.int32Values} must contain one element.
@@ -282,6 +229,79 @@ android::base::Result<void> checkVendorMixedPropValue(
 android::base::Result<void> checkValueRange(
         const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
         const aidl::android::hardware::automotive::vehicle::VehicleAreaConfig* config);
+
+// VhalError is a wrapper class for {@code StatusCode} that could act as E in {@code Result<T,E>}.
+class VhalError final {
+  public:
+    VhalError() : mCode(aidl::android::hardware::automotive::vehicle::StatusCode::OK) {}
+
+    VhalError(aidl::android::hardware::automotive::vehicle::StatusCode&& code) : mCode(code) {}
+
+    VhalError(const aidl::android::hardware::automotive::vehicle::StatusCode& code) : mCode(code) {}
+
+    aidl::android::hardware::automotive::vehicle::StatusCode value() const;
+
+    inline operator aidl::android::hardware::automotive::vehicle::StatusCode() const {
+        return value();
+    }
+
+    std::string print() const;
+
+  private:
+    aidl::android::hardware::automotive::vehicle::StatusCode mCode;
+};
+
+template <class T>
+aidl::android::hardware::automotive::vehicle::StatusCode getErrorCode(
+        const android::base::Result<T, VhalError>& result) {
+    if (result.ok()) {
+        return aidl::android::hardware::automotive::vehicle::StatusCode::OK;
+    }
+    return result.error().code();
+}
+
+template <class T>
+int getIntErrorCode(const android::base::Result<T, VhalError>& result) {
+    return toInt(getErrorCode(result));
+}
+
+template <class T, class E>
+std::string getErrorMsg(const android::base::Result<T, E>& result) {
+    if (result.ok()) {
+        return "";
+    }
+    return result.error().message();
+}
+
+template <class T, class E>
+ndk::ScopedAStatus toScopedAStatus(const android::base::Result<T, E>& result,
+                                   aidl::android::hardware::automotive::vehicle::StatusCode status,
+                                   const std::string& additionalErrorMsg) {
+    if (result.ok()) {
+        return ndk::ScopedAStatus::ok();
+    }
+    return ndk::ScopedAStatus::fromServiceSpecificErrorWithMessage(
+            toInt(status),
+            fmt::format("{}, error: {}", additionalErrorMsg, getErrorMsg(result)).c_str());
+}
+
+template <class T, class E>
+ndk::ScopedAStatus toScopedAStatus(
+        const android::base::Result<T, E>& result,
+        aidl::android::hardware::automotive::vehicle::StatusCode status) {
+    return toScopedAStatus(result, status, "");
+}
+
+template <class T>
+ndk::ScopedAStatus toScopedAStatus(const android::base::Result<T, VhalError>& result) {
+    return toScopedAStatus(result, getErrorCode(result));
+}
+
+template <class T>
+ndk::ScopedAStatus toScopedAStatus(const android::base::Result<T, VhalError>& result,
+                                   const std::string& additionalErrorMsg) {
+    return toScopedAStatus(result, getErrorCode(result), additionalErrorMsg);
+}
 
 }  // namespace vehicle
 }  // namespace automotive
