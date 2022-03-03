@@ -25,6 +25,7 @@
 
 #include <VehicleHalTypes.h>
 #include <VehicleObjectPool.h>
+#include <VehicleUtils.h>
 #include <android-base/result.h>
 #include <android-base/thread_annotations.h>
 
@@ -42,6 +43,10 @@ namespace vehicle {
 // This class is thread-safe, however it uses blocking synchronization across all methods.
 class VehiclePropertyStore final {
   public:
+    using ValueResultType = android::base::Result<VehiclePropValuePool::RecyclableType, VhalError>;
+    using ValuesResultType =
+            android::base::Result<std::vector<VehiclePropValuePool::RecyclableType>, VhalError>;
+
     explicit VehiclePropertyStore(std::shared_ptr<VehiclePropValuePool> valuePool)
         : mValuePool(valuePool) {}
 
@@ -68,8 +73,8 @@ class VehiclePropertyStore final {
     // 'status' would be initialized to {@code VehiclePropertyStatus::AVAILABLE}, if this is to
     // override an existing value, the status for the existing value would be used for the
     // overridden value.
-    android::base::Result<void> writeValue(VehiclePropValuePool::RecyclableType propValue,
-                                           bool updateStatus = false);
+    android::base::Result<void, VhalError> writeValue(
+            VehiclePropValuePool::RecyclableType propValue, bool updateStatus = false);
 
     // Remove a given property value from the property store. The 'propValue' would be used to
     // generate the key for the value to remove.
@@ -83,28 +88,26 @@ class VehiclePropertyStore final {
     std::vector<VehiclePropValuePool::RecyclableType> readAllValues() const;
 
     // Read all the values for the property.
-    android::base::Result<std::vector<VehiclePropValuePool::RecyclableType>> readValuesForProperty(
-            int32_t propId) const;
+    ValuesResultType readValuesForProperty(int32_t propId) const;
 
     // Read the value for the requested property. Returns {@code StatusCode::NOT_AVAILABLE} if the
     // value has not been set yet. Returns {@code StatusCode::INVALID_ARG} if the property is
     // not configured.
-    android::base::Result<VehiclePropValuePool::RecyclableType> readValue(
+    ValueResultType readValue(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& request) const;
 
     // Read the value for the requested property. Returns {@code StatusCode::NOT_AVAILABLE} if the
     // value has not been set yet. Returns {@code StatusCode::INVALID_ARG} if the property is
     // not configured.
-    android::base::Result<VehiclePropValuePool::RecyclableType> readValue(int32_t prop,
-                                                                          int32_t area = 0,
-                                                                          int64_t token = 0) const;
+    ValueResultType readValue(int32_t prop, int32_t area = 0, int64_t token = 0) const;
 
     // Get all property configs.
     std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropConfig> getAllConfigs()
             const;
 
     // Get the property config for the requested property.
-    android::base::Result<const aidl::android::hardware::automotive::vehicle::VehiclePropConfig*>
+    android::base::Result<const aidl::android::hardware::automotive::vehicle::VehiclePropConfig*,
+                          VhalError>
     getConfig(int32_t propId) const;
 
     // Set a callback that would be called when a property value has been updated.
@@ -146,8 +149,7 @@ class VehiclePropertyStore final {
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& propValue,
             const Record& record) const;
 
-    android::base::Result<VehiclePropValuePool::RecyclableType> readValueLocked(
-            const RecordId& recId, const Record& record) const;
+    ValueResultType readValueLocked(const RecordId& recId, const Record& record) const;
 };
 
 }  // namespace vehicle
