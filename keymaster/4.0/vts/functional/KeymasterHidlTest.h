@@ -166,6 +166,8 @@ class KeymasterHidlTest : public ::testing::TestWithParam<std::string> {
 
     string MacMessage(const string& message, Digest digest, size_t mac_length);
 
+    void CheckAesIncrementalEncryptOperation(BlockMode block_mode, int message_size);
+
     void CheckHmacTestVector(const string& key, const string& message, Digest digest,
                              const string& expected_mac);
 
