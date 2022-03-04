@@ -38,6 +38,7 @@ using MeasurementCorrectionsAidl =
 using ReflectingPlaneAidl = android::hardware::gnss::measurement_corrections::ReflectingPlane;
 using SingleSatCorrectionAidl =
         android::hardware::gnss::measurement_corrections::SingleSatCorrection;
+using ExcessPathInfo = SingleSatCorrectionAidl::ExcessPathInfo;
 
 template <>
 int64_t Utils::getLocationTimestampMillis(const android::hardware::gnss::GnssLocation& location) {
@@ -170,38 +171,68 @@ Utils::getMockMeasurementCorrections_1_1() {
     return mockCorrections_1_1;
 }
 
+namespace {
+const ExcessPathInfo createExcessPathInfo(float excessPathLengthMeters,
+                                          float excessPathLengthUncertaintyMeters,
+                                          const ReflectingPlaneAidl* reflectingPlane,
+                                          float attenuationDb) {
+    ExcessPathInfo excessPathInfo;
+    excessPathInfo.excessPathInfoFlags =
+            ExcessPathInfo::EXCESS_PATH_INFO_HAS_EXCESS_PATH_LENGTH |
+            ExcessPathInfo::EXCESS_PATH_INFO_HAS_EXCESS_PATH_LENGTH_UNC |
+            ExcessPathInfo::EXCESS_PATH_INFO_HAS_ATTENUATION |
+            (reflectingPlane == nullptr ? 0
+                                        : ExcessPathInfo::EXCESS_PATH_INFO_HAS_REFLECTING_PLANE);
+    excessPathInfo.excessPathLengthMeters = excessPathLengthMeters;
+    excessPathInfo.excessPathLengthUncertaintyMeters = excessPathLengthUncertaintyMeters;
+    if (reflectingPlane != nullptr) {
+        excessPathInfo.reflectingPlane = *reflectingPlane;
+    }
+    excessPathInfo.attenuationDb = attenuationDb;
+    return excessPathInfo;
+}
+}  // anonymous namespace
+
 const MeasurementCorrectionsAidl Utils::getMockMeasurementCorrections_aidl() {
     ReflectingPlaneAidl reflectingPlane;
     reflectingPlane.latitudeDegrees = 37.4220039;
     reflectingPlane.longitudeDegrees = -122.0840991;
     reflectingPlane.altitudeMeters = 250.35;
-    reflectingPlane.azimuthDegrees = 203.0;
+    reflectingPlane.reflectingPlaneAzimuthDegrees = 203.0;
 
     SingleSatCorrectionAidl singleSatCorrection1;
     singleSatCorrection1.singleSatCorrectionFlags =
             SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_SAT_IS_LOS_PROBABILITY |
-            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_EXCESS_PATH_LENGTH |
-            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_EXCESS_PATH_LENGTH_UNC |
-            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_REFLECTING_PLANE;
+            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_COMBINED_EXCESS_PATH_LENGTH |
+            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_COMBINED_EXCESS_PATH_LENGTH_UNC |
+            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_COMBINED_ATTENUATION;
     singleSatCorrection1.constellation = android::hardware::gnss::GnssConstellationType::GPS;
     singleSatCorrection1.svid = 12;
     singleSatCorrection1.carrierFrequencyHz = 1.59975e+09;
     singleSatCorrection1.probSatIsLos = 0.50001;
-    singleSatCorrection1.excessPathLengthMeters = 137.4802;
-    singleSatCorrection1.excessPathLengthUncertaintyMeters = 25.5;
-    singleSatCorrection1.reflectingPlane = reflectingPlane;
+    singleSatCorrection1.combinedExcessPathLengthMeters = 203.5;
+    singleSatCorrection1.combinedExcessPathLengthUncertaintyMeters = 59.1;
+    singleSatCorrection1.combinedAttenuationDb = -4.3;
+    singleSatCorrection1.excessPathInfos.push_back(
+            createExcessPathInfo(137.4, 25.5, &reflectingPlane, -3.5));
+    singleSatCorrection1.excessPathInfos.push_back(
+            createExcessPathInfo(296.3, 87.2, &reflectingPlane, -5.1));
 
     SingleSatCorrectionAidl singleSatCorrection2;
     singleSatCorrection2.singleSatCorrectionFlags =
             SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_SAT_IS_LOS_PROBABILITY |
-            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_EXCESS_PATH_LENGTH |
-            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_EXCESS_PATH_LENGTH_UNC;
+            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_COMBINED_EXCESS_PATH_LENGTH |
+            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_COMBINED_EXCESS_PATH_LENGTH_UNC |
+            SingleSatCorrectionAidl::SINGLE_SAT_CORRECTION_HAS_COMBINED_ATTENUATION;
     singleSatCorrection2.constellation = GnssConstellationType::GPS;
     singleSatCorrection2.svid = 9;
     singleSatCorrection2.carrierFrequencyHz = 1.59975e+09;
     singleSatCorrection2.probSatIsLos = 0.873;
-    singleSatCorrection2.excessPathLengthMeters = 26.294;
-    singleSatCorrection2.excessPathLengthUncertaintyMeters = 10.0;
+    singleSatCorrection2.combinedExcessPathLengthMeters = 26.294;
+    singleSatCorrection2.combinedExcessPathLengthUncertaintyMeters = 10.0;
+    singleSatCorrection2.combinedAttenuationDb = -0.5;
+    singleSatCorrection2.excessPathInfos.push_back(
+            createExcessPathInfo(26.294, 10.0, nullptr, -0.5));
 
     std::vector<SingleSatCorrectionAidl> singleSatCorrections = {singleSatCorrection1,
                                                                  singleSatCorrection2};
