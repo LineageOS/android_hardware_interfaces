@@ -32,11 +32,12 @@ namespace vehicle {
 namespace {
 
 using ::aidl::android::hardware::automotive::vehicle::StatusCode;
-using ::android::base::Error;
 using ::android::base::Result;
 
 // At least check every 1s.
-constexpr int64_t CHECK_TIME_IN_NANO = 1000000000;
+constexpr int64_t CHECK_TIME_IN_NANO = 1'000'000'000;
+
+using StatusError = android::base::Error<VhalError>;
 
 }  // namespace
 
@@ -72,9 +73,9 @@ PendingRequestPool::~PendingRequestPool() {
     }
 }
 
-Result<void> PendingRequestPool::addRequests(const void* clientId,
-                                             const std::unordered_set<int64_t>& requestIds,
-                                             std::shared_ptr<const TimeoutCallbackFunc> callback) {
+Result<void, VhalError> PendingRequestPool::addRequests(
+        const void* clientId, const std::unordered_set<int64_t>& requestIds,
+        std::shared_ptr<const TimeoutCallbackFunc> callback) {
     std::scoped_lock<std::mutex> lockGuard(mLock);
     std::list<PendingRequest>* pendingRequests;
     size_t pendingRequestCount = 0;
@@ -84,7 +85,7 @@ Result<void> PendingRequestPool::addRequests(const void* clientId,
             const auto& pendingRequestIds = pendingRequest.requestIds;
             for (int64_t requestId : requestIds) {
                 if (pendingRequestIds.find(requestId) != pendingRequestIds.end()) {
-                    return Error(toInt(StatusCode::INVALID_ARG))
+                    return StatusError(StatusCode::INVALID_ARG)
                            << "duplicate request ID: " << requestId;
                 }
             }
@@ -96,7 +97,7 @@ Result<void> PendingRequestPool::addRequests(const void* clientId,
     }
 
     if (requestIds.size() > MAX_PENDING_REQUEST_PER_CLIENT - pendingRequestCount) {
-        return Error(toInt(StatusCode::TRY_AGAIN)) << "too many pending requests";
+        return StatusError(StatusCode::TRY_AGAIN) << "too many pending requests";
     }
 
     int64_t currentTime = elapsedRealtimeNano();
