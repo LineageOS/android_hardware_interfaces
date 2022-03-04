@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.gnss;
+/* @hide */
 @VintfStability
 interface IGnssPsds {
   void injectPsdsData(in android.hardware.gnss.PsdsType psdsType, in byte[] psdsData);

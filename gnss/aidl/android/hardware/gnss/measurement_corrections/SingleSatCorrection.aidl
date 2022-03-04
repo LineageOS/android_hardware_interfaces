@@ -23,6 +23,8 @@ import android.hardware.gnss.measurement_corrections.ReflectingPlane;
  * A struct with measurement corrections for a single visible satellites
  *
  * The bit mask singleSatCorrectionFlags indicates which correction values are valid in the struct
+ *
+ * @hide
  */
 @VintfStability
 parcelable SingleSatCorrection {

@@ -16,7 +16,11 @@
 
 package android.hardware.gnss;
 
-/** Callback structure for the AGNSS interface. */
+/**
+ * Callback structure for the AGNSS interface.
+ *
+ * @hide
+ */
 @VintfStability
 interface IAGnssCallback {
     /** AGNSS service type */
