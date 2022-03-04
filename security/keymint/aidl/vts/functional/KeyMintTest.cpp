@@ -5441,89 +5441,39 @@ TEST_P(EncryptionOperationsTest, AesCtrRoundTripSuccess) {
 }
 
 /*
- * EncryptionOperationsTest.AesIncremental
+ * EncryptionOperationsTest.AesEcbIncremental
  *
- * Verifies that AES works, all modes, when provided data in various size increments.
+ * Verifies that AES works for ECB block mode, when provided data in various size increments.
  */
-TEST_P(EncryptionOperationsTest, AesIncremental) {
-    auto block_modes = {
-            BlockMode::ECB,
-            BlockMode::CBC,
-            BlockMode::CTR,
-            BlockMode::GCM,
-    };
+TEST_P(EncryptionOperationsTest, AesEcbIncremental) {
+    CheckAesIncrementalEncryptOperation(BlockMode::ECB, 240);
+}
 
-    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
-                                                 .AesEncryptionKey(128)
-                                                 .BlockMode(block_modes)
-                                                 .Padding(PaddingMode::NONE)
-                                                 .Authorization(TAG_MIN_MAC_LENGTH, 128)));
+/*
+ * EncryptionOperationsTest.AesCbcIncremental
+ *
+ * Verifies that AES works for CBC block mode, when provided data in various size increments.
+ */
+TEST_P(EncryptionOperationsTest, AesCbcIncremental) {
+    CheckAesIncrementalEncryptOperation(BlockMode::CBC, 240);
+}
 
-    for (int increment = 1; increment <= 240; ++increment) {
-        for (auto block_mode : block_modes) {
-            string message(240, 'a');
-            auto params =
-                    AuthorizationSetBuilder().BlockMode(block_mode).Padding(PaddingMode::NONE);
-            if (block_mode == BlockMode::GCM) {
-                params.Authorization(TAG_MAC_LENGTH, 128) /* for GCM */;
-            }
+/*
+ * EncryptionOperationsTest.AesCtrIncremental
+ *
+ * Verifies that AES works for CTR block mode, when provided data in various size increments.
+ */
+TEST_P(EncryptionOperationsTest, AesCtrIncremental) {
+    CheckAesIncrementalEncryptOperation(BlockMode::CTR, 240);
+}
 
-            AuthorizationSet output_params;
-            EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, params, &output_params));
-
-            string ciphertext;
-            string to_send;
-            for (size_t i = 0; i < message.size(); i += increment) {
-                EXPECT_EQ(ErrorCode::OK, Update(message.substr(i, increment), &ciphertext));
-            }
-            EXPECT_EQ(ErrorCode::OK, Finish(to_send, &ciphertext))
-                    << "Error sending " << to_send << " with block mode " << block_mode;
-
-            switch (block_mode) {
-                case BlockMode::GCM:
-                    EXPECT_EQ(message.size() + 16, ciphertext.size());
-                    break;
-                case BlockMode::CTR:
-                    EXPECT_EQ(message.size(), ciphertext.size());
-                    break;
-                case BlockMode::CBC:
-                case BlockMode::ECB:
-                    EXPECT_EQ(message.size() + message.size() % 16, ciphertext.size());
-                    break;
-            }
-
-            auto iv = output_params.GetTagValue(TAG_NONCE);
-            switch (block_mode) {
-                case BlockMode::CBC:
-                case BlockMode::GCM:
-                case BlockMode::CTR:
-                    ASSERT_TRUE(iv) << "No IV for block mode " << block_mode;
-                    EXPECT_EQ(block_mode == BlockMode::GCM ? 12U : 16U, iv->get().size());
-                    params.push_back(TAG_NONCE, iv->get());
-                    break;
-
-                case BlockMode::ECB:
-                    EXPECT_FALSE(iv) << "ECB mode should not generate IV";
-                    break;
-            }
-
-            EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, params))
-                    << "Decrypt begin() failed for block mode " << block_mode;
-
-            string plaintext;
-            for (size_t i = 0; i < ciphertext.size(); i += increment) {
-                EXPECT_EQ(ErrorCode::OK, Update(ciphertext.substr(i, increment), &plaintext));
-            }
-            ErrorCode error = Finish(to_send, &plaintext);
-            ASSERT_EQ(ErrorCode::OK, error) << "Decryption failed for block mode " << block_mode
-                                            << " and increment " << increment;
-            if (error == ErrorCode::OK) {
-                ASSERT_EQ(message, plaintext) << "Decryption didn't match for block mode "
-                                              << block_mode << " and increment " << increment;
-            }
-        }
-    }
+/*
+ * EncryptionOperationsTest.AesGcmIncremental
+ *
+ * Verifies that AES works for GCM block mode, when provided data in various size increments.
+ */
+TEST_P(EncryptionOperationsTest, AesGcmIncremental) {
+    CheckAesIncrementalEncryptOperation(BlockMode::GCM, 240);
 }
 
 struct AesCtrSp80038aTestVector {
