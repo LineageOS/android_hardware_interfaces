@@ -23,6 +23,7 @@
 
 #include <VehicleHalTypes.h>
 #include <VehicleObjectPool.h>
+#include <VehicleUtils.h>
 
 #include <memory>
 #include <mutex>
@@ -38,6 +39,8 @@ constexpr char kUserHalDumpOption[] = "--user-hal";
 // Class used to emulate a real User HAL behavior through lshal debug requests.
 class FakeUserHal final {
   public:
+    using ValueResultType = android::base::Result<VehiclePropValuePool::RecyclableType, VhalError>;
+
     explicit FakeUserHal(std::shared_ptr<VehiclePropValuePool> valuePool) : mValuePool(valuePool) {}
 
     ~FakeUserHal() = default;
@@ -48,13 +51,13 @@ class FakeUserHal final {
     // Lets the emulator set the property.
     //
     // @return updated property and StatusCode
-    android::base::Result<VehiclePropValuePool::RecyclableType> onSetProperty(
+    ValueResultType onSetProperty(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
 
     // Gets the property value from the emulator.
     //
     // @return property value and StatusCode
-    android::base::Result<VehiclePropValuePool::RecyclableType> onGetProperty(
+    ValueResultType onGetProperty(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
 
     // Shows the User HAL emulation help.
@@ -93,34 +96,33 @@ class FakeUserHal final {
     // - if it's 2, reply with mInitialUserResponseFromCmd but a wrong request id (so Android can
     // test this error scenario)
     // - if it's 3, then don't send a property change (so Android can emulate a timeout)
-    android::base::Result<VehiclePropValuePool::RecyclableType> onSetInitialUserInfoResponse(
+    ValueResultType onSetInitialUserInfoResponse(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
 
     // Used to emulate SWITCH_USER - see onSetInitialUserInfoResponse() for usage.
-    android::base::Result<VehiclePropValuePool::RecyclableType> onSetSwitchUserResponse(
+    ValueResultType onSetSwitchUserResponse(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
 
     // Used to emulate CREATE_USER - see onSetInitialUserInfoResponse() for usage.
-    android::base::Result<VehiclePropValuePool::RecyclableType> onSetCreateUserResponse(
+    ValueResultType onSetCreateUserResponse(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
 
     // Used to emulate set USER_IDENTIFICATION_ASSOCIATION - see onSetInitialUserInfoResponse() for
     // usage.
-    android::base::Result<VehiclePropValuePool::RecyclableType> onSetUserIdentificationAssociation(
+    ValueResultType onSetUserIdentificationAssociation(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
 
     // Used to emulate get USER_IDENTIFICATION_ASSOCIATION - see onSetInitialUserInfoResponse() for
     // usage.
-    android::base::Result<VehiclePropValuePool::RecyclableType> onGetUserIdentificationAssociation(
+    ValueResultType onGetUserIdentificationAssociation(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
 
     // Creates a default USER_IDENTIFICATION_ASSOCIATION when it was not set by lshal.
-    static android::base::Result<VehiclePropValuePool::RecyclableType>
-    defaultUserIdentificationAssociation(
+    static ValueResultType defaultUserIdentificationAssociation(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& request);
 
-    android::base::Result<VehiclePropValuePool::RecyclableType> sendUserHalResponse(
-            VehiclePropValuePool::RecyclableType response, int32_t requestId);
+    ValueResultType sendUserHalResponse(VehiclePropValuePool::RecyclableType response,
+                                        int32_t requestId);
 };
 
 }  // namespace fake

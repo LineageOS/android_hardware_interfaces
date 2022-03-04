@@ -103,7 +103,7 @@ TEST_F(VehiclePropertyStoreTest, testGetAllConfigs) {
 }
 
 TEST_F(VehiclePropertyStoreTest, testGetConfig) {
-    Result<const VehiclePropConfig*> result =
+    Result<const VehiclePropConfig*, VhalError> result =
             mStore->getConfig(toInt(VehicleProperty::INFO_FUEL_CAPACITY));
 
     ASSERT_RESULT_OK(result);
@@ -111,10 +111,10 @@ TEST_F(VehiclePropertyStoreTest, testGetConfig) {
 }
 
 TEST_F(VehiclePropertyStoreTest, testGetConfigWithInvalidPropId) {
-    Result<const VehiclePropConfig*> result = mStore->getConfig(INVALID_PROP_ID);
+    Result<const VehiclePropConfig*, VhalError> result = mStore->getConfig(INVALID_PROP_ID);
 
     EXPECT_FALSE(result.ok()) << "expect error when getting a config for an invalid property ID";
-    EXPECT_EQ(result.error().code(), toInt(StatusCode::INVALID_ARG));
+    EXPECT_EQ(result.error().code(), StatusCode::INVALID_ARG);
 }
 
 std::vector<VehiclePropValue> getTestPropValues() {
@@ -184,7 +184,7 @@ TEST_F(VehiclePropertyStoreTest, testReadValuesForPropertyError) {
     auto result = mStore->readValuesForProperty(INVALID_PROP_ID);
 
     EXPECT_FALSE(result.ok()) << "expect error when reading values for an invalid property";
-    EXPECT_EQ(result.error().code(), toInt(StatusCode::INVALID_ARG));
+    EXPECT_EQ(result.error().code(), StatusCode::INVALID_ARG);
 }
 
 TEST_F(VehiclePropertyStoreTest, testReadValueOk) {
@@ -224,7 +224,7 @@ TEST_F(VehiclePropertyStoreTest, testReadValueError) {
     auto result = mStore->readValue(toInt(VehicleProperty::TIRE_PRESSURE), WHEEL_REAR_LEFT);
 
     EXPECT_FALSE(result.ok()) << "expect error when reading a value that has not been written";
-    EXPECT_EQ(result.error().code(), toInt(StatusCode::NOT_AVAILABLE));
+    EXPECT_EQ(result.error().code(), StatusCode::NOT_AVAILABLE);
 }
 
 TEST_F(VehiclePropertyStoreTest, testWriteValueError) {
@@ -235,7 +235,7 @@ TEST_F(VehiclePropertyStoreTest, testWriteValueError) {
     auto result = mStore->writeValue(std::move(v));
 
     EXPECT_FALSE(result.ok()) << "expect error when writing value for an invalid property ID";
-    EXPECT_EQ(result.error().code(), toInt(StatusCode::INVALID_ARG));
+    EXPECT_EQ(result.error().code(), StatusCode::INVALID_ARG);
 }
 
 TEST_F(VehiclePropertyStoreTest, testWriteValueNoAreaConfig) {
@@ -248,7 +248,7 @@ TEST_F(VehiclePropertyStoreTest, testWriteValueNoAreaConfig) {
     auto result = mStore->writeValue(std::move(v));
 
     EXPECT_FALSE(result.ok()) << "expect error when writing value for an area without config";
-    EXPECT_EQ(result.error().code(), toInt(StatusCode::INVALID_ARG));
+    EXPECT_EQ(result.error().code(), StatusCode::INVALID_ARG);
 }
 
 TEST_F(VehiclePropertyStoreTest, testWriteOutdatedValue) {
@@ -269,7 +269,7 @@ TEST_F(VehiclePropertyStoreTest, testWriteOutdatedValue) {
     auto result = mStore->writeValue(std::move(v2));
 
     EXPECT_FALSE(result.ok()) << "expect error when writing an outdated value";
-    EXPECT_EQ(result.error().code(), toInt(StatusCode::INVALID_ARG));
+    EXPECT_EQ(result.error().code(), StatusCode::INVALID_ARG);
 }
 
 TEST_F(VehiclePropertyStoreTest, testToken) {
@@ -317,7 +317,7 @@ TEST_F(VehiclePropertyStoreTest, testRemoveValue) {
     auto result = mStore->readValue(values[0]);
 
     EXPECT_FALSE(result.ok()) << "expect error when reading a removed value";
-    EXPECT_EQ(result.error().code(), toInt(StatusCode::NOT_AVAILABLE));
+    EXPECT_EQ(result.error().code(), StatusCode::NOT_AVAILABLE);
 
     auto leftTirePressureResult = mStore->readValue(values[1]);
 

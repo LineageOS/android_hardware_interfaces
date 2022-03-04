@@ -21,6 +21,7 @@
 
 #include <IVehicleHardware.h>
 #include <VehicleHalTypes.h>
+#include <VehicleUtils.h>
 
 #include <aidl/android/hardware/automotive/vehicle/IVehicleCallback.h>
 #include <android-base/result.h>
@@ -57,7 +58,8 @@ class ConnectedClient {
     // Returns {@code INVALID_ARG} error if any of the requestIds are duplicate with one of the
     // pending request IDs or {@code TRY_AGAIN} error if the pending request pool is full and could
     // no longer add requests.
-    android::base::Result<void> addRequests(const std::unordered_set<int64_t>& requestIds);
+    android::base::Result<void, VhalError> addRequests(
+            const std::unordered_set<int64_t>& requestIds);
 
     // Marks the requests as finished. Returns a list of request IDs that was pending and has been
     // finished. It must be a set of the requested request IDs.
