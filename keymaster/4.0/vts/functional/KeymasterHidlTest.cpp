@@ -443,6 +443,98 @@ string KeymasterHidlTest::MacMessage(const string& message, Digest digest, size_
         AuthorizationSetBuilder().Digest(digest).Authorization(TAG_MAC_LENGTH, mac_length));
 }
 
+void KeymasterHidlTest::CheckAesIncrementalEncryptOperation(BlockMode block_mode,
+                                                            int message_size) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                 .AesEncryptionKey(128)
+                                                 .BlockMode(block_mode)
+                                                 .Padding(PaddingMode::NONE)
+                                                 .Authorization(TAG_MIN_MAC_LENGTH, 128)));
+
+    for (int increment = 1; increment <= message_size; ++increment) {
+        string message(message_size, 'a');
+        auto params = AuthorizationSetBuilder()
+                              .BlockMode(block_mode)
+                              .Padding(PaddingMode::NONE)
+                              .Authorization(TAG_MAC_LENGTH, 128) /* for GCM */;
+
+        AuthorizationSet output_params;
+        EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, params, &output_params));
+
+        string ciphertext;
+        size_t input_consumed;
+        string to_send;
+        for (size_t i = 0; i < message.size(); i += increment) {
+            to_send.append(message.substr(i, increment));
+            EXPECT_EQ(ErrorCode::OK, Update(to_send, &ciphertext, &input_consumed));
+            EXPECT_EQ(to_send.length(), input_consumed);
+            to_send = to_send.substr(input_consumed);
+            EXPECT_EQ(0U, to_send.length());
+
+            switch (block_mode) {
+                case BlockMode::ECB:
+                case BlockMode::CBC:
+                    // Implementations must take as many blocks as possible, leaving less than
+                    // a block.
+                    EXPECT_LE(to_send.length(), 16U);
+                    break;
+                case BlockMode::GCM:
+                case BlockMode::CTR:
+                    // Implementations must always take all the data.
+                    EXPECT_EQ(0U, to_send.length());
+                    break;
+            }
+        }
+        EXPECT_EQ(ErrorCode::OK, Finish(to_send, &ciphertext)) << "Error sending " << to_send;
+
+        switch (block_mode) {
+            case BlockMode::GCM:
+                EXPECT_EQ(message.size() + 16, ciphertext.size());
+                break;
+            case BlockMode::CTR:
+                EXPECT_EQ(message.size(), ciphertext.size());
+                break;
+            case BlockMode::CBC:
+            case BlockMode::ECB:
+                EXPECT_EQ(message.size() + message.size() % 16, ciphertext.size());
+                break;
+        }
+
+        auto iv = output_params.GetTagValue(TAG_NONCE);
+        switch (block_mode) {
+            case BlockMode::CBC:
+            case BlockMode::GCM:
+            case BlockMode::CTR:
+                ASSERT_TRUE(iv.isOk()) << "No IV for block mode " << block_mode;
+                EXPECT_EQ(block_mode == BlockMode::GCM ? 12U : 16U, iv.value().size());
+                params.push_back(TAG_NONCE, iv.value());
+                break;
+
+            case BlockMode::ECB:
+                EXPECT_FALSE(iv.isOk()) << "ECB mode should not generate IV";
+                break;
+        }
+
+        EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, params))
+                << "Decrypt begin() failed for block mode " << block_mode;
+
+        string plaintext;
+        for (size_t i = 0; i < ciphertext.size(); i += increment) {
+            to_send.append(ciphertext.substr(i, increment));
+            EXPECT_EQ(ErrorCode::OK, Update(to_send, &plaintext, &input_consumed));
+            to_send = to_send.substr(input_consumed);
+        }
+        ErrorCode error = Finish(to_send, &plaintext);
+        ASSERT_EQ(ErrorCode::OK, error) << "Decryption failed for block mode " << block_mode
+                                        << " and increment " << increment;
+        if (error == ErrorCode::OK) {
+            ASSERT_EQ(message, plaintext) << "Decryption didn't match for block mode " << block_mode
+                                          << " and increment " << increment;
+        }
+    }
+}
+
 void KeymasterHidlTest::CheckHmacTestVector(const string& key, const string& message, Digest digest,
                                             const string& expected_mac) {
     SCOPED_TRACE("CheckHmacTestVector");
