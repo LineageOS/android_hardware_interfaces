@@ -46,9 +46,6 @@ using Executor = std::function<void(Task, ::android::nn::OptionalTimePoint)>;
 /**
  * Adapt an NNAPI canonical interface object to a AIDL NN HAL interface object.
  *
- * The IPreparedModel object created from IDevice::prepareModel or IDevice::preparedModelFromCache
- * must return "const nn::Model*" from IPreparedModel::getUnderlyingResource().
- *
  * @param device NNAPI canonical IDevice interface object to be adapted.
  * @param executor Type-erased executor to handle executing tasks asynchronously.
  * @return AIDL NN HAL IDevice interface object.
@@ -57,9 +54,6 @@ std::shared_ptr<BnDevice> adapt(::android::nn::SharedDevice device, Executor exe
 
 /**
  * Adapt an NNAPI canonical interface object to a AIDL NN HAL interface object.
- *
- * The IPreparedModel object created from IDevice::prepareModel or IDevice::preparedModelFromCache
- * must return "const nn::Model*" from IPreparedModel::getUnderlyingResource().
  *
  * This function uses a default executor, which will execute tasks from a detached thread.
  *
