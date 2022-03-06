@@ -665,6 +665,78 @@ string KeyMintAidlTestBase::MacMessage(const string& message, Digest digest, siz
             AuthorizationSetBuilder().Digest(digest).Authorization(TAG_MAC_LENGTH, mac_length));
 }
 
+void KeyMintAidlTestBase::CheckAesIncrementalEncryptOperation(BlockMode block_mode,
+                                                              int message_size) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                 .AesEncryptionKey(128)
+                                                 .BlockMode(block_mode)
+                                                 .Padding(PaddingMode::NONE)
+                                                 .Authorization(TAG_MIN_MAC_LENGTH, 128)));
+
+    for (int increment = 1; increment <= message_size; ++increment) {
+        string message(message_size, 'a');
+        auto params = AuthorizationSetBuilder().BlockMode(block_mode).Padding(PaddingMode::NONE);
+        if (block_mode == BlockMode::GCM) {
+            params.Authorization(TAG_MAC_LENGTH, 128) /* for GCM */;
+        }
+
+        AuthorizationSet output_params;
+        EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, params, &output_params));
+
+        string ciphertext;
+        string to_send;
+        for (size_t i = 0; i < message.size(); i += increment) {
+            EXPECT_EQ(ErrorCode::OK, Update(message.substr(i, increment), &ciphertext));
+        }
+        EXPECT_EQ(ErrorCode::OK, Finish(to_send, &ciphertext))
+                << "Error sending " << to_send << " with block mode " << block_mode;
+
+        switch (block_mode) {
+            case BlockMode::GCM:
+                EXPECT_EQ(message.size() + 16, ciphertext.size());
+                break;
+            case BlockMode::CTR:
+                EXPECT_EQ(message.size(), ciphertext.size());
+                break;
+            case BlockMode::CBC:
+            case BlockMode::ECB:
+                EXPECT_EQ(message.size() + message.size() % 16, ciphertext.size());
+                break;
+        }
+
+        auto iv = output_params.GetTagValue(TAG_NONCE);
+        switch (block_mode) {
+            case BlockMode::CBC:
+            case BlockMode::GCM:
+            case BlockMode::CTR:
+                ASSERT_TRUE(iv) << "No IV for block mode " << block_mode;
+                EXPECT_EQ(block_mode == BlockMode::GCM ? 12U : 16U, iv->get().size());
+                params.push_back(TAG_NONCE, iv->get());
+                break;
+
+            case BlockMode::ECB:
+                EXPECT_FALSE(iv) << "ECB mode should not generate IV";
+                break;
+        }
+
+        EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, params))
+                << "Decrypt begin() failed for block mode " << block_mode;
+
+        string plaintext;
+        for (size_t i = 0; i < ciphertext.size(); i += increment) {
+            EXPECT_EQ(ErrorCode::OK, Update(ciphertext.substr(i, increment), &plaintext));
+        }
+        ErrorCode error = Finish(to_send, &plaintext);
+        ASSERT_EQ(ErrorCode::OK, error) << "Decryption failed for block mode " << block_mode
+                                        << " and increment " << increment;
+        if (error == ErrorCode::OK) {
+            ASSERT_EQ(message, plaintext) << "Decryption didn't match for block mode " << block_mode
+                                          << " and increment " << increment;
+        }
+    }
+}
+
 void KeyMintAidlTestBase::CheckHmacTestVector(const string& key, const string& message,
                                               Digest digest, const string& expected_mac) {
     SCOPED_TRACE("CheckHmacTestVector");
