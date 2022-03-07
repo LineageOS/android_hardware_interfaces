@@ -34,13 +34,13 @@ cc_test {
         "interceptor_aidl_test.cpp",
     ],
     shared_libs: [
-        "android.hardware.net.nlinterceptor-V1-ndk",
         "libbase",
         "libbinder_ndk",
     ],
     static_libs: [
-        "libgmock",
+        "android.hardware.net.nlinterceptor-V1-ndk",
         "android.hardware.automotive.can@libnetdevice",
+        "libgmock",
         "libnl++",
     ],
     test_suites: [
