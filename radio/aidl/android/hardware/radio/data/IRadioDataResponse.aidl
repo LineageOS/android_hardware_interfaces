@@ -68,7 +68,7 @@ oneway interface IRadioDataResponse {
      * Valid errors returned:
      *   RadioError:REQUEST_NOT_SUPPORTED may be returned when HAL 1.2 or higher is supported.
      *   RadioError:NONE
-     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:RADIO_NOT_AVAILABLE will remove the network from the list.
      *   RadioError:INVALID_CALL_ID
      *   RadioError:INVALID_STATE
      *   RadioError:INVALID_ARGUMENTS
