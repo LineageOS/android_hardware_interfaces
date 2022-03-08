@@ -65,7 +65,7 @@ oneway interface IRadioData {
     /**
      * Deactivate packet data connection and remove from the data call list. An
      * unsolDataCallListChanged() must be sent when data connection is deactivated.
-     * A return value of RadioError::RADIO_NOT_AVAILABLE will remove the network from the list.
+     * Any return value other than RadioError::NONE will remove the network from the list.
      *
      * @param serial Serial number of request.
      * @param cid Data call id.
