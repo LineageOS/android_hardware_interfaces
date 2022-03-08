@@ -1544,7 +1544,7 @@ bool verify_attestation_record(int32_t aidl_version,                   //
         EXPECT_EQ(verified_boot_state, VerifiedBoot::FAILED);
     } else {
         EXPECT_EQ(verified_boot_state, VerifiedBoot::UNVERIFIED);
-        EXPECT_NE(0, memcmp(verified_boot_key.data(), empty_boot_key.data(),
+        EXPECT_EQ(0, memcmp(verified_boot_key.data(), empty_boot_key.data(),
                             verified_boot_key.size()));
     }
 
