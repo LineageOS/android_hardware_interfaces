@@ -28,6 +28,8 @@
 #include "wifi_chip.h"
 #include "wifi_status_util.h"
 
+#define P2P_MGMT_DEVICE_PREFIX "p2p-dev-"
+
 namespace {
 using android::sp;
 using android::base::unique_fd;
@@ -126,8 +128,37 @@ std::vector<std::string> getPredefinedApIfaceNames(bool is_bridged) {
 }
 
 std::string getPredefinedP2pIfaceName() {
+    std::array<char, PROPERTY_VALUE_MAX> primaryIfaceName;
+    char p2pParentIfname[100];
+    std::string p2pDevIfName = "";
     std::array<char, PROPERTY_VALUE_MAX> buffer;
     property_get("wifi.direct.interface", buffer.data(), "p2p0");
+    if (strncmp(buffer.data(), P2P_MGMT_DEVICE_PREFIX,
+                strlen(P2P_MGMT_DEVICE_PREFIX)) == 0) {
+        /* Get the p2p parent interface name from p2p device interface name set
+         * in property */
+        strncpy(p2pParentIfname, buffer.data() + strlen(P2P_MGMT_DEVICE_PREFIX),
+                strlen(buffer.data()) - strlen(P2P_MGMT_DEVICE_PREFIX));
+        if (property_get(kActiveWlanIfaceNameProperty, primaryIfaceName.data(),
+                         nullptr) == 0) {
+            return buffer.data();
+        }
+        /* Check if the parent interface derived from p2p device interface name
+         * is active */
+        if (strncmp(p2pParentIfname, primaryIfaceName.data(),
+                    strlen(buffer.data()) - strlen(P2P_MGMT_DEVICE_PREFIX)) !=
+            0) {
+            /*
+             * Update the predefined p2p device interface parent interface name
+             * with current active wlan interface
+             */
+            p2pDevIfName += P2P_MGMT_DEVICE_PREFIX;
+            p2pDevIfName += primaryIfaceName.data();
+            LOG(INFO) << "update the p2p device interface name to "
+                      << p2pDevIfName.c_str();
+            return p2pDevIfName;
+        }
+    }
     return buffer.data();
 }
 

@@ -18,6 +18,7 @@
 #include <iostream>
 
 #include <android-base/macros.h>
+#include <cutils/native_handle.h>
 #include <utils/SystemClock.h>
 
 #include <gtest/gtest.h>
@@ -31,6 +32,18 @@ namespace hardware {
 namespace automotive {
 namespace vehicle {
 namespace V2_0 {
+
+// A simple helper class to expose 'cmdSetOneProperty' to the unit tests.
+class VehicleHalManagerTestHelper {
+  public:
+    VehicleHalManagerTestHelper(VehicleHalManager* manager) { mManager = manager; }
+    bool cmdSetOneProperty(int fd, const hidl_vec<hidl_string>& options) {
+        return mManager->cmdSetOneProperty(fd, options);
+    }
+
+  public:
+    VehicleHalManager* mManager;
+};
 
 namespace {
 
@@ -57,33 +70,21 @@ public:
         auto property = static_cast<VehicleProperty>(requestedPropValue.prop);
         int32_t areaId = requestedPropValue.areaId;
 
-        switch (property) {
-            case VehicleProperty::INFO_MAKE:
-                pValue = getValuePool()->obtainString(kCarMake);
-                break;
-            case VehicleProperty::INFO_FUEL_CAPACITY:
-                if (fuelCapacityAttemptsLeft-- > 0) {
-                    // Emulate property not ready yet.
-                    *outStatus = StatusCode::TRY_AGAIN;
-                } else {
-                    pValue = getValuePool()->obtainFloat(42.42);
-                }
-                break;
-            default:
-                if (requestedPropValue.prop == kCustomComplexProperty) {
-                    pValue = getValuePool()->obtainComplex();
-                    pValue->value.int32Values = hidl_vec<int32_t> { 10, 20 };
-                    pValue->value.int64Values = hidl_vec<int64_t> { 30, 40 };
-                    pValue->value.floatValues = hidl_vec<float_t> { 1.1, 2.2 };
-                    pValue->value.bytes = hidl_vec<uint8_t> { 1, 2, 3 };
-                    pValue->value.stringValue = kCarMake;
-                    break;
-                }
-                auto key = makeKey(toInt(property), areaId);
-                if (mValues.count(key) == 0) {
-                    ALOGW("");
-                }
-                pValue = getValuePool()->obtain(mValues[key]);
+        if (property == VehicleProperty::INFO_FUEL_CAPACITY) {
+            if (fuelCapacityAttemptsLeft-- > 0) {
+                // Emulate property not ready yet.
+                *outStatus = StatusCode::TRY_AGAIN;
+            } else {
+                pValue = getValuePool()->obtainFloat(42.42);
+            }
+        } else {
+            auto key = makeKey(requestedPropValue);
+            if (mValues.count(key) == 0) {
+                ALOGW("key not found\n");
+                *outStatus = StatusCode::INVALID_ARG;
+                return pValue;
+            }
+            pValue = getValuePool()->obtain(mValues[key]);
         }
 
         if (*outStatus == StatusCode::OK && pValue.get() != nullptr) {
@@ -100,7 +101,6 @@ public:
                 && mirrorFoldAttemptsLeft-- > 0) {
             return StatusCode::TRY_AGAIN;
         }
-
         mValues[makeKey(propValue)] = propValue;
         return StatusCode::OK;
     }
@@ -179,6 +179,18 @@ public:
 
         actualValue = refValue;
         actualStatusCode = refStatus;
+    }
+
+    MockedVehicleHal::VehiclePropValuePtr getComplexProperty() {
+        auto pValue = objectPool->obtainComplex();
+        pValue->prop = kCustomComplexProperty;
+        pValue->areaId = 0;
+        pValue->value.int32Values = hidl_vec<int32_t>{10, 20};
+        pValue->value.int64Values = hidl_vec<int64_t>{30, 40};
+        pValue->value.floatValues = hidl_vec<float_t>{1.1, 2.2};
+        pValue->value.bytes = hidl_vec<uint8_t>{1, 2, 3};
+        pValue->value.stringValue = kCarMake;
+        return pValue;
     }
 
 public:
@@ -308,6 +320,8 @@ TEST_F(VehicleHalManagerTest, subscribe_WriteOnly) {
 }
 
 TEST_F(VehicleHalManagerTest, get_Complex) {
+    ASSERT_EQ(StatusCode::OK, hal->set(*getComplexProperty().get()));
+
     invokeGet(kCustomComplexProperty, 0);
 
     ASSERT_EQ(StatusCode::OK, actualStatusCode);
@@ -334,6 +348,11 @@ TEST_F(VehicleHalManagerTest, get_Complex) {
 }
 
 TEST_F(VehicleHalManagerTest, get_StaticString) {
+    auto pValue = objectPool->obtainString(kCarMake);
+    pValue->prop = toInt(VehicleProperty::INFO_MAKE);
+    pValue->areaId = 0;
+    ASSERT_EQ(StatusCode::OK, hal->set(*pValue.get()));
+
     invokeGet(toInt(VehicleProperty::INFO_MAKE), 0);
 
     ASSERT_EQ(StatusCode::OK, actualStatusCode);
@@ -456,6 +475,138 @@ TEST(HalClientVectorTest, basic) {
     ASSERT_LE(0, clients.remove(c2));
 
     ASSERT_TRUE(clients.isEmpty());
+}
+
+TEST_F(VehicleHalManagerTest, debug) {
+    hidl_handle fd = {};
+    fd.setTo(native_handle_create(/*numFds=*/1, /*numInts=*/0), /*shouldOwn=*/true);
+
+    // Because debug function returns void, so no way to check return value.
+    manager->debug(fd, {});
+    manager->debug(fd, {"--help"});
+    manager->debug(fd, {"--list"});
+    manager->debug(fd, {"--get"});
+    manager->debug(fd, {"--set"});
+    manager->debug(fd, {"invalid"});
+}
+
+struct SetPropTestCase {
+    std::string test_name;
+    const hidl_vec<hidl_string> configs;
+    bool success;
+};
+
+class VehicleHalManagerSetPropTest : public VehicleHalManagerTest,
+                                     public testing::WithParamInterface<SetPropTestCase> {};
+
+TEST_P(VehicleHalManagerSetPropTest, cmdSetOneProperty) {
+    const SetPropTestCase& tc = GetParam();
+    VehicleHalManagerTestHelper helper(manager.get());
+    ASSERT_EQ(tc.success, helper.cmdSetOneProperty(STDERR_FILENO, tc.configs));
+}
+
+std::vector<SetPropTestCase> GenSetPropParams() {
+    char infoMakeProperty[100] = {};
+    snprintf(infoMakeProperty, sizeof(infoMakeProperty), "%d", toInt(VehicleProperty::INFO_MAKE));
+    return {
+            {"success_set_string", {"--set", infoMakeProperty, "-s", kCarMake}, true},
+            {"success_set_bytes", {"--set", infoMakeProperty, "-b", "0xdeadbeef"}, true},
+            {"success_set_bytes_caps", {"--set", infoMakeProperty, "-b", "0xDEADBEEF"}, true},
+            {"success_set_int", {"--set", infoMakeProperty, "-i", "2147483647"}, true},
+            {"success_set_ints",
+             {"--set", infoMakeProperty, "-i", "2147483647", "0", "-2147483648"},
+             true},
+            {"success_set_int64",
+             {"--set", infoMakeProperty, "-i64", "-9223372036854775808"},
+             true},
+            {"success_set_int64s",
+             {"--set", infoMakeProperty, "-i64", "-9223372036854775808", "0",
+              "9223372036854775807"},
+             true},
+            {"success_set_float", {"--set", infoMakeProperty, "-f", "1.175494351E-38"}, true},
+            {"success_set_floats",
+             {"--set", infoMakeProperty, "-f", "-3.402823466E+38", "0", "3.402823466E+38"},
+             true},
+            {"success_set_area", {"--set", infoMakeProperty, "-a", "2147483647"}, true},
+            {"fail_no_options", {}, false},
+            {"fail_less_than_4_options", {"--set", infoMakeProperty, "-i"}, false},
+            {"fail_unknown_options", {"--set", infoMakeProperty, "-s", kCarMake, "-abcd"}, false},
+            {"fail_invalid_property", {"--set", "not valid", "-s", kCarMake}, false},
+            {"fail_duplicate_string",
+             {"--set", infoMakeProperty, "-s", kCarMake, "-s", kCarMake},
+             false},
+            {"fail_multiple_strings", {"--set", infoMakeProperty, "-s", kCarMake, kCarMake}, false},
+            {"fail_no_string_value", {"--set", infoMakeProperty, "-s", "-a", "1234"}, false},
+            {"fail_duplicate_bytes",
+             {"--set", infoMakeProperty, "-b", "0xdeadbeef", "-b", "0xdeadbeef"},
+             false},
+            {"fail_multiple_bytes",
+             {"--set", infoMakeProperty, "-b", "0xdeadbeef", "0xdeadbeef"},
+             false},
+            {"fail_invalid_bytes", {"--set", infoMakeProperty, "-b", "0xgood"}, false},
+            {"fail_invalid_bytes_no_prefix", {"--set", infoMakeProperty, "-b", "deadbeef"}, false},
+            {"fail_invalid_int", {"--set", infoMakeProperty, "-i", "abc"}, false},
+            {"fail_int_out_of_range", {"--set", infoMakeProperty, "-i", "2147483648"}, false},
+            {"fail_no_int_value", {"--set", infoMakeProperty, "-i", "-s", kCarMake}, false},
+            {"fail_invalid_int64", {"--set", infoMakeProperty, "-i64", "abc"}, false},
+            {"fail_int64_out_of_range",
+             {"--set", infoMakeProperty, "-i64", "-9223372036854775809"},
+             false},
+            {"fail_no_int64_value", {"--set", infoMakeProperty, "-i64", "-s", kCarMake}, false},
+            {"fail_invalid_float", {"--set", infoMakeProperty, "-f", "abc"}, false},
+            {"fail_float_out_of_range",
+             {"--set", infoMakeProperty, "-f", "-3.402823466E+39"},
+             false},
+            {"fail_no_float_value", {"--set", infoMakeProperty, "-f", "-s", kCarMake}, false},
+            {"fail_multiple_areas", {"--set", infoMakeProperty, "-a", "2147483648", "0"}, false},
+            {"fail_invalid_area", {"--set", infoMakeProperty, "-a", "abc"}, false},
+            {"fail_area_out_of_range", {"--set", infoMakeProperty, "-a", "2147483648"}, false},
+            {"fail_no_area_value", {"--set", infoMakeProperty, "-a", "-s", kCarMake}, false},
+    };
+}
+
+INSTANTIATE_TEST_SUITE_P(
+        VehicleHalManagerSetPropTests, VehicleHalManagerSetPropTest,
+        testing::ValuesIn(GenSetPropParams()),
+        [](const testing::TestParamInfo<VehicleHalManagerSetPropTest::ParamType>& info) {
+            return info.param.test_name;
+        });
+
+TEST_F(VehicleHalManagerTest, SetComplexPropTest) {
+    char infoMakeProperty[100] = {};
+    snprintf(infoMakeProperty, sizeof(infoMakeProperty), "%d", toInt(VehicleProperty::INFO_MAKE));
+    VehicleHalManagerTestHelper helper(manager.get());
+    ASSERT_TRUE(helper.cmdSetOneProperty(
+            STDERR_FILENO, {"--set", infoMakeProperty,      "-s",   kCarMake,
+                            "-b",    "0xdeadbeef",          "-i",   "2147483647",
+                            "0",     "-2147483648",         "-i64", "-9223372036854775808",
+                            "0",     "9223372036854775807", "-f",   "-3.402823466E+38",
+                            "0",     "3.402823466E+38",     "-a",   "123"}));
+    StatusCode status = StatusCode::OK;
+    VehiclePropValue requestProp;
+    requestProp.prop = toInt(VehicleProperty::INFO_MAKE);
+    requestProp.areaId = 123;
+    auto value = hal->get(requestProp, &status);
+    ASSERT_EQ(StatusCode::OK, status);
+    ASSERT_EQ(value->prop, toInt(VehicleProperty::INFO_MAKE));
+    ASSERT_EQ(value->areaId, 123);
+    ASSERT_STREQ(kCarMake, value->value.stringValue.c_str());
+    uint8_t bytes[] = {0xde, 0xad, 0xbe, 0xef};
+    ASSERT_FALSE(memcmp(bytes, value->value.bytes.data(), sizeof(bytes)));
+    ASSERT_EQ(3u, value->value.int32Values.size());
+    ASSERT_EQ(2147483647, value->value.int32Values[0]);
+    ASSERT_EQ(0, value->value.int32Values[1]);
+    ASSERT_EQ(-2147483648, value->value.int32Values[2]);
+    ASSERT_EQ(3u, value->value.int64Values.size());
+    // -9223372036854775808 is not a valid literal since '-' and '9223372036854775808' would be two
+    // tokens and the later does not fit in unsigned long long.
+    ASSERT_EQ(-9223372036854775807 - 1, value->value.int64Values[0]);
+    ASSERT_EQ(0, value->value.int64Values[1]);
+    ASSERT_EQ(9223372036854775807, value->value.int64Values[2]);
+    ASSERT_EQ(3u, value->value.floatValues.size());
+    ASSERT_EQ(-3.402823466E+38f, value->value.floatValues[0]);
+    ASSERT_EQ(0.0f, value->value.floatValues[1]);
+    ASSERT_EQ(3.402823466E+38f, value->value.floatValues[2]);
 }
 
 }  // namespace anonymous
