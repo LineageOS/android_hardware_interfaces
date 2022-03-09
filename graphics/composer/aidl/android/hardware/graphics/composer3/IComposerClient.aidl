@@ -798,7 +798,7 @@ interface IComposerClient {
      * idle period.
      *
      * This function should only be called if the display reports support for
-     * DisplayCapability.DISPLAY_IDLE from getDisplayCapabilities.
+     * DisplayCapability.DISPLAY_IDLE_TIMER from getDisplayCapabilities.
      *
      * @param display is the display to which the idle timer is set.
      * @param timeoutMs is the minimum requirements of idle period in milliseconds. Panel
