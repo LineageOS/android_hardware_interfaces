@@ -47,4 +47,7 @@ enum ApnTypes {
   EMERGENCY = 512,
   MCX = 1024,
   XCAP = 2048,
+  VSIM = 4096,
+  BIP = 8192,
+  ENTERPRISE = 16384,
 }
