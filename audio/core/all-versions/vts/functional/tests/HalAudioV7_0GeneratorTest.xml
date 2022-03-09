@@ -24,6 +24,8 @@
         <option name="cleanup" value="true" />
         <option name="push" value="apm_config_no_vx_7_0.xml->/data/local/tmp/apm_config_no_vx.xml" />
         <option name="push" value="apm_config_with_vx_7_0.xml->/data/local/tmp/apm_config_with_vx.xml" />
+        <option name="push" value="apm_config_b_204314749_7_0.xml->/data/local/tmp/apm_config_b_204314749_7_0.xml" />
+        <option name="push" value="apm_config_b_205808571_7_0.xml->/data/local/tmp/apm_config_b_205808571_7_0.xml" />
         <option name="push" value="HalAudioV7_0GeneratorTest->/data/local/tmp/HalAudioV7_0GeneratorTest" />
     </target_preparer>
 

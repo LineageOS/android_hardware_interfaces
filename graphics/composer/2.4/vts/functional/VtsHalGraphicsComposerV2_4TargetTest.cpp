@@ -19,8 +19,6 @@
 #include <algorithm>
 #include <regex>
 #include <thread>
-#include <unordered_map>
-#include <utility>
 
 #include <android-base/logging.h>
 #include <android-base/properties.h>
@@ -313,59 +311,6 @@ TEST_P(GraphicsComposerHidlTest, GetDisplayAttribute_2_4) {
                             EXPECT_TRUE(tmpError == Error::NONE || tmpError == Error::UNSUPPORTED);
                         });
             }
-        }
-    }
-}
-
-TEST_P(GraphicsComposerHidlTest, GetDisplayAttribute_2_4_ConfigsInAGroupDifferOnlyByVsyncPeriod) {
-    struct Resolution {
-        int32_t width, height;
-    };
-    struct Dpi {
-        int32_t x, y;
-    };
-    for (const auto& display : mDisplays) {
-        std::vector<Config> configs = mComposerClient->getDisplayConfigs(display.get());
-        std::unordered_map<int32_t, Resolution> configGroupToResolutionMap;
-        std::unordered_map<int32_t, Dpi> configGroupToDpiMap;
-        for (auto config : configs) {
-            const auto configGroup = mComposerClient->getDisplayAttribute_2_4(
-                    display.get(), config, IComposerClient::Attribute::CONFIG_GROUP);
-            const auto width = mComposerClient->getDisplayAttribute_2_4(
-                    display.get(), config, IComposerClient::Attribute::WIDTH);
-            const auto height = mComposerClient->getDisplayAttribute_2_4(
-                    display.get(), config, IComposerClient::Attribute::HEIGHT);
-            if (configGroupToResolutionMap.find(configGroup) == configGroupToResolutionMap.end()) {
-                configGroupToResolutionMap[configGroup] = {width, height};
-            }
-            EXPECT_EQ(configGroupToResolutionMap[configGroup].width, width);
-            EXPECT_EQ(configGroupToResolutionMap[configGroup].height, height);
-
-            int32_t dpiX = -1;
-            mComposerClient->getRaw()->getDisplayAttribute_2_4(
-                    display.get(), config, IComposerClient::Attribute::DPI_X,
-                    [&](const auto& tmpError, const auto& value) {
-                        if (tmpError == Error::NONE) {
-                            dpiX = value;
-                        }
-                    });
-            int32_t dpiY = -1;
-            mComposerClient->getRaw()->getDisplayAttribute_2_4(
-                    display.get(), config, IComposerClient::Attribute::DPI_Y,
-                    [&](const auto& tmpError, const auto& value) {
-                        if (tmpError == Error::NONE) {
-                            dpiY = value;
-                        }
-                    });
-            if (dpiX == -1 && dpiY == -1) {
-                continue;
-            }
-
-            if (configGroupToDpiMap.find(configGroup) == configGroupToDpiMap.end()) {
-                configGroupToDpiMap[configGroup] = {dpiX, dpiY};
-            }
-            EXPECT_EQ(configGroupToDpiMap[configGroup].x, dpiX);
-            EXPECT_EQ(configGroupToDpiMap[configGroup].y, dpiY);
         }
     }
 }

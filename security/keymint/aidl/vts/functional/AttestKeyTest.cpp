@@ -50,7 +50,7 @@ TEST_P(AttestKeyTest, AllRsaSizes) {
         vector<KeyCharacteristics> attest_key_characteristics;
         vector<Certificate> attest_key_cert_chain;
         ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                     .RsaSigningKey(size, 65537)
+                                                     .RsaKey(size, 65537)
                                                      .AttestKey()
                                                      .SetDefaultValidity(),
                                              {} /* attestation signing key */, &attest_key.keyBlob,
@@ -200,7 +200,7 @@ TEST_P(AttestKeyTest, RsaAttestedAttestKeys) {
     vector<Certificate> attest_key_cert_chain;
     ASSERT_EQ(ErrorCode::OK,
               GenerateKey(AuthorizationSetBuilder()
-                                  .RsaSigningKey(2048, 65537)
+                                  .RsaKey(2048, 65537)
                                   .AttestKey()
                                   .AttestationChallenge(challenge)
                                   .AttestationApplicationId(app_id)
@@ -299,7 +299,7 @@ TEST_P(AttestKeyTest, RsaAttestKeyChaining) {
 
         EXPECT_EQ(ErrorCode::OK,
                   GenerateKey(AuthorizationSetBuilder()
-                                      .RsaSigningKey(2048, 65537)
+                                      .RsaKey(2048, 65537)
                                       .AttestKey()
                                       .AttestationChallenge("foo")
                                       .AttestationApplicationId("bar")
@@ -371,7 +371,7 @@ TEST_P(AttestKeyTest, EcAttestKeyChaining) {
 
         EXPECT_EQ(ErrorCode::OK,
                   GenerateKey(AuthorizationSetBuilder()
-                                      .EcdsaSigningKey(EcCurve::P_256)
+                                      .EcdsaKey(EcCurve::P_256)
                                       .AttestKey()
                                       .AttestationChallenge("foo")
                                       .AttestationApplicationId("bar")
@@ -446,7 +446,7 @@ TEST_P(AttestKeyTest, AlternateAttestKeyChaining) {
         if ((i & 0x1) == 1) {
             EXPECT_EQ(ErrorCode::OK,
                       GenerateKey(AuthorizationSetBuilder()
-                                          .EcdsaSigningKey(EcCurve::P_256)
+                                          .EcdsaKey(EcCurve::P_256)
                                           .AttestKey()
                                           .AttestationChallenge("foo")
                                           .AttestationApplicationId("bar")
@@ -459,7 +459,7 @@ TEST_P(AttestKeyTest, AlternateAttestKeyChaining) {
         } else {
             EXPECT_EQ(ErrorCode::OK,
                       GenerateKey(AuthorizationSetBuilder()
-                                          .RsaSigningKey(2048, 65537)
+                                          .RsaKey(2048, 65537)
                                           .AttestKey()
                                           .AttestationChallenge("foo")
                                           .AttestationApplicationId("bar")
@@ -509,7 +509,7 @@ TEST_P(AttestKeyTest, MissingChallenge) {
         vector<KeyCharacteristics> attest_key_characteristics;
         vector<Certificate> attest_key_cert_chain;
         ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                     .RsaSigningKey(size, 65537)
+                                                     .RsaKey(size, 65537)
                                                      .AttestKey()
                                                      .SetDefaultValidity(),
                                              {} /* attestation signing key */, &attest_key.keyBlob,
@@ -555,12 +555,12 @@ TEST_P(AttestKeyTest, AllEcCurves) {
         AttestationKey attest_key;
         vector<KeyCharacteristics> attest_key_characteristics;
         vector<Certificate> attest_key_cert_chain;
-        ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                     .EcdsaSigningKey(curve)
-                                                     .AttestKey()
-                                                     .SetDefaultValidity(),
-                                             {} /* attestation signing key */, &attest_key.keyBlob,
-                                             &attest_key_characteristics, &attest_key_cert_chain));
+        ASSERT_EQ(
+                ErrorCode::OK,
+                GenerateKey(
+                        AuthorizationSetBuilder().EcdsaKey(curve).AttestKey().SetDefaultValidity(),
+                        {} /* attestation signing key */, &attest_key.keyBlob,
+                        &attest_key_characteristics, &attest_key_cert_chain));
 
         ASSERT_GT(attest_key_cert_chain.size(), 0);
         EXPECT_EQ(attest_key_cert_chain.size(), 1);
@@ -671,7 +671,7 @@ TEST_P(AttestKeyTest, EcdsaAttestationID) {
     vector<KeyCharacteristics> attest_key_characteristics;
     vector<Certificate> attest_key_cert_chain;
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                 .EcdsaSigningKey(EcCurve::P_256)
+                                                 .EcdsaKey(EcCurve::P_256)
                                                  .AttestKey()
                                                  .SetDefaultValidity(),
                                          {} /* attestation signing key */, &attest_key.keyBlob,
@@ -735,7 +735,7 @@ TEST_P(AttestKeyTest, EcdsaAttestationMismatchID) {
     vector<KeyCharacteristics> attest_key_characteristics;
     vector<Certificate> attest_key_cert_chain;
     ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                 .EcdsaSigningKey(EcCurve::P_256)
+                                                 .EcdsaKey(EcCurve::P_256)
                                                  .AttestKey()
                                                  .SetDefaultValidity(),
                                          {} /* attestation signing key */, &attest_key.keyBlob,

@@ -128,5 +128,46 @@ TEST_P(GeneratorsTest, ValidateConfigs) {
 }
 
 // Target file names are the same for all versions, see 'HalAudioVx_0GeneratorTest.xml' test configs
+// clang-format off
 INSTANTIATE_TEST_SUITE_P(Generators, GeneratorsTest,
-                         ::testing::Values("apm_config_no_vx.xml", "apm_config_with_vx.xml"));
+                         ::testing::Values("apm_config_no_vx.xml", "apm_config_with_vx.xml"
+#if MAJOR_VERSION == 6
+                                         , "apm_config_b_205808571_6_0.xml"
+#elif MAJOR_VERSION == 7
+                                         , "apm_config_b_204314749_7_0.xml"
+                                         , "apm_config_b_205808571_7_0.xml"
+#endif
+                                           ));
+// clang-format on
+
+TEST(GeneratorsDeviceTest, AttachedDevicesOnly) {
+    static const std::string kTestFile =
+            "apm_config_b_205808571_" STRINGIFY(MAJOR_VERSION) "_0.xml";
+    ASSERT_TRUE(PolicyConfigManager::getInstance().init(kDataDir, kTestFile));
+    EXPECT_NE(nullptr, getCachedPolicyConfig().getPrimaryModule());
+    const auto allInConfigs = generateInputDeviceConfigParameters(false /*oneProfilePerDevice*/);
+    EXPECT_FALSE(allInConfigs.empty());
+    for (const auto& configParam : allInConfigs) {
+        const AudioConfig& config = std::get<PARAM_CONFIG>(configParam);
+        // The config contains multichannel masks for mixPort connected to
+        // input devicePorts that are not attached. These multichannel masks must
+        // not appear among generated masks.
+        const uint32_t channelCount =
+#if MAJOR_VERSION == 6
+                audio_channel_count_from_in_mask(
+                        static_cast<audio_channel_mask_t>(config.channelMask));
+#elif MAJOR_VERSION == 7
+                xsd::getChannelCount(config.base.channelMask);
+#endif
+        EXPECT_TRUE(channelCount <= 4) << "Unexpected channel count: " << channelCount << " " <<
+#if MAJOR_VERSION == 6
+                ::testing::PrintToString(config.format) << ", "
+                                       << ::testing::PrintToString(config.sampleRateHz) << ", "
+                                       << ::testing::PrintToString(config.channelMask);
+#elif MAJOR_VERSION == 7
+                ::testing::PrintToString(config.base.format) << ", "
+                                       << ::testing::PrintToString(config.base.sampleRateHz) << ", "
+                                       << ::testing::PrintToString(config.base.channelMask);
+#endif
+    }
+}

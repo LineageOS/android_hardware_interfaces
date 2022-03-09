@@ -499,18 +499,10 @@ static const std::vector<DeviceConfigParameter>& getOutputDevicePcmOnlyConfigPar
             return xsd::isLinearPcm(std::get<PARAM_CONFIG>(cfg).base.format)
                    // MMAP NOIRQ and HW A/V Sync profiles use special writing protocols.
                    &&
-                   std::find_if(flags.begin(), flags.end(),
-                                [](const auto& flag) {
-                                    return flag == toString(xsd::AudioInOutFlag::
-                                                                    AUDIO_OUTPUT_FLAG_MMAP_NOIRQ) ||
-                                           flag == toString(xsd::AudioInOutFlag::
-                                                                    AUDIO_OUTPUT_FLAG_HW_AV_SYNC);
-                                }) == flags.end() &&
-                   !getCachedPolicyConfig()
-                            .getAttachedSinkDeviceForMixPort(
-                                    std::get<PARAM_DEVICE_NAME>(std::get<PARAM_DEVICE>(cfg)),
-                                    std::get<PARAM_PORT_NAME>(cfg))
-                            .empty();
+                   std::find_if(flags.begin(), flags.end(), [](const auto& flag) {
+                       return flag == toString(xsd::AudioInOutFlag::AUDIO_OUTPUT_FLAG_MMAP_NOIRQ) ||
+                              flag == toString(xsd::AudioInOutFlag::AUDIO_OUTPUT_FLAG_HW_AV_SYNC);
+                   }) == flags.end();
         });
         return pcmParams;
     }();
@@ -677,20 +669,13 @@ static const std::vector<DeviceConfigParameter>& getInputDevicePcmOnlyConfigPara
                            // reading h/w hotword might require Soundtrigger to be active.
                            &&
                            std::find_if(
-                                   flags.begin(), flags.end(),
-                                   [](const auto& flag) {
+                                   flags.begin(), flags.end(), [](const auto& flag) {
                                        return flag == toString(
                                                               xsd::AudioInOutFlag::
                                                                       AUDIO_INPUT_FLAG_MMAP_NOIRQ) ||
                                               flag == toString(xsd::AudioInOutFlag::
                                                                        AUDIO_INPUT_FLAG_HW_HOTWORD);
-                                   }) == flags.end() &&
-                           !getCachedPolicyConfig()
-                                    .getAttachedSourceDeviceForMixPort(
-                                            std::get<PARAM_DEVICE_NAME>(
-                                                    std::get<PARAM_DEVICE>(cfg)),
-                                            std::get<PARAM_PORT_NAME>(cfg))
-                                    .empty();
+                                   }) == flags.end();
                 });
         return pcmParams;
     }();

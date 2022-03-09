@@ -25,7 +25,7 @@ void GraphicsComposerCallback::setVsyncAllowed(bool allowed) {
 
 std::vector<Display> GraphicsComposerCallback::getDisplays() const {
     std::lock_guard<std::mutex> lock(mMutex);
-    return std::vector<Display>(mDisplays.begin(), mDisplays.end());
+    return mDisplays;
 }
 
 int32_t GraphicsComposerCallback::getInvalidHotplugCount() const {
@@ -71,12 +71,17 @@ GraphicsComposerCallback::takeLastVsyncPeriodChangeTimeline() {
 Return<void> GraphicsComposerCallback::onHotplug(Display display, Connection connection) {
     std::lock_guard<std::mutex> lock(mMutex);
 
+    auto it = std::find(mDisplays.begin(), mDisplays.end(), display);
     if (connection == Connection::CONNECTED) {
-        if (!mDisplays.insert(display).second) {
+        if (it == mDisplays.end()) {
+            mDisplays.push_back(display);
+        } else {
             mInvalidHotplugCount++;
         }
     } else if (connection == Connection::DISCONNECTED) {
-        if (!mDisplays.erase(display)) {
+        if (it != mDisplays.end()) {
+            mDisplays.erase(it);
+        } else {
             mInvalidHotplugCount++;
         }
     }
@@ -87,7 +92,8 @@ Return<void> GraphicsComposerCallback::onHotplug(Display display, Connection con
 Return<void> GraphicsComposerCallback::onRefresh(Display display) {
     std::lock_guard<std::mutex> lock(mMutex);
 
-    if (mDisplays.count(display) == 0) {
+    auto it = std::find(mDisplays.begin(), mDisplays.end(), display);
+    if (it == mDisplays.end()) {
         mInvalidRefreshCount++;
     }
 
@@ -106,7 +112,8 @@ Return<void> GraphicsComposerCallback::onVsync(Display, int64_t) {
 Return<void> GraphicsComposerCallback::onVsync_2_4(Display display, int64_t, VsyncPeriodNanos) {
     std::lock_guard<std::mutex> lock(mMutex);
 
-    if (!mVsyncAllowed || mDisplays.count(display) == 0) {
+    auto it = std::find(mDisplays.begin(), mDisplays.end(), display);
+    if (!mVsyncAllowed || it == mDisplays.end()) {
         mInvalidVsync_2_4Count++;
     }
 
@@ -117,7 +124,8 @@ Return<void> GraphicsComposerCallback::onVsyncPeriodTimingChanged(
         Display display, const VsyncPeriodChangeTimeline& updatedTimeline) {
     std::lock_guard<std::mutex> lock(mMutex);
 
-    if (mDisplays.count(display) == 0) {
+    auto it = std::find(mDisplays.begin(), mDisplays.end(), display);
+    if (it == mDisplays.end()) {
         mInvalidVsyncPeriodChangeCount++;
     }
 

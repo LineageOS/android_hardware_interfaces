@@ -1298,7 +1298,8 @@ bool verify_attestation_record(const string& challenge,                //
                                AuthorizationSet expected_sw_enforced,  //
                                AuthorizationSet expected_hw_enforced,  //
                                SecurityLevel security_level,
-                               const vector<uint8_t>& attestation_cert) {
+                               const vector<uint8_t>& attestation_cert,
+                               vector<uint8_t>* unique_id) {
     X509_Ptr cert(parse_cert_blob(attestation_cert));
     EXPECT_TRUE(!!cert.get());
     if (!cert.get()) return false;
@@ -1457,6 +1458,10 @@ bool verify_attestation_record(const string& challenge,                //
     att_hw_enforced.Sort();
     expected_hw_enforced.Sort();
     EXPECT_EQ(filtered_tags(expected_hw_enforced), filtered_tags(att_hw_enforced));
+
+    if (unique_id != nullptr) {
+        *unique_id = att_unique_id;
+    }
 
     return true;
 }

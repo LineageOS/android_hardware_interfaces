@@ -76,6 +76,16 @@ class PolicyConfig : private PolicyConfigData, public android::AudioPolicyConfig
     const std::set<std::string>& getModulesWithDevicesNames() const {
         return mModulesWithDevicesNames;
     }
+    std::string getAttachedSinkDeviceForMixPort(const std::string& moduleName,
+                                                const std::string& mixPortName) const {
+        return findAttachedDevice(getAttachedDevices(moduleName),
+                                  getSinkDevicesForMixPort(moduleName, mixPortName));
+    }
+    std::string getAttachedSourceDeviceForMixPort(const std::string& moduleName,
+                                                  const std::string& mixPortName) const {
+        return findAttachedDevice(getAttachedDevices(moduleName),
+                                  getSourceDevicesForMixPort(moduleName, mixPortName));
+    }
     bool haveInputProfilesInModule(const std::string& name) const {
         auto module = getModuleFromName(name);
         return module && !module->getInputProfiles().empty();
@@ -92,6 +102,8 @@ class PolicyConfig : private PolicyConfigData, public android::AudioPolicyConfig
                 for (const auto& module : hwModules) {
                     if (module->getDeclaredDevices().indexOf(device) >= 0) {
                         mModulesWithDevicesNames.insert(module->getName());
+                        mAttachedDevicesPerModule[module->getName()].push_back(
+                                device->getTagName());
                         break;
                     }
                 }
@@ -100,11 +112,58 @@ class PolicyConfig : private PolicyConfigData, public android::AudioPolicyConfig
                 for (const auto& module : hwModules) {
                     if (module->getDeclaredDevices().indexOf(device) >= 0) {
                         mModulesWithDevicesNames.insert(module->getName());
+                        mAttachedDevicesPerModule[module->getName()].push_back(
+                                device->getTagName());
                         break;
                     }
                 }
             }
         }
+    }
+    std::string findAttachedDevice(const std::vector<std::string>& attachedDevices,
+                                   const std::set<std::string>& possibleDevices) const {
+        for (const auto& device : attachedDevices) {
+            if (possibleDevices.count(device)) return device;
+        }
+        return {};
+    }
+    std::vector<std::string> getAttachedDevices(const std::string& moduleName) const {
+        if (auto iter = mAttachedDevicesPerModule.find(moduleName);
+            iter != mAttachedDevicesPerModule.end()) {
+            return iter->second;
+        }
+        return {};
+    }
+    std::set<std::string> getSinkDevicesForMixPort(const std::string& moduleName,
+                                                   const std::string& mixPortName) const {
+        std::set<std::string> result;
+        auto module = getModuleFromName(moduleName);
+        if (module != nullptr) {
+            for (const auto& route : module->getRoutes()) {
+                for (const auto& source : route->getSources()) {
+                    if (source->getTagName() == mixPortName) {
+                        result.insert(route->getSink()->getTagName());
+                    }
+                }
+            }
+        }
+        return result;
+    }
+    std::set<std::string> getSourceDevicesForMixPort(const std::string& moduleName,
+                                                     const std::string& mixPortName) const {
+        std::set<std::string> result;
+        auto module = getModuleFromName(moduleName);
+        if (module != nullptr) {
+            for (const auto& route : module->getRoutes()) {
+                if (route->getSink()->getTagName() == mixPortName) {
+                    const auto& sources = route->getSources();
+                    std::transform(sources.begin(), sources.end(),
+                                   std::inserter(result, result.end()),
+                                   [](const auto& source) { return source->getTagName(); });
+                }
+            }
+        }
+        return result;
     }
 
     const std::string mConfigFileName;
@@ -112,4 +171,5 @@ class PolicyConfig : private PolicyConfigData, public android::AudioPolicyConfig
     std::string mFilePath;
     sp<const android::HwModule> mPrimaryModule = nullptr;
     std::set<std::string> mModulesWithDevicesNames;
+    std::map<std::string, std::vector<std::string>> mAttachedDevicesPerModule;
 };
