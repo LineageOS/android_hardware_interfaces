@@ -1564,6 +1564,7 @@ void CameraAidlTest::openEmptyDeviceSession(const std::string& name,
     ASSERT_NE(*session, nullptr);
 
     ret = (*device)->getCameraCharacteristics(staticMeta);
+    ASSERT_TRUE(ret.isOk());
 }
 
 void CameraAidlTest::openEmptyInjectionSession(const std::string& name,
@@ -2474,7 +2475,7 @@ void CameraAidlTest::configurePreviewStreams(
         std::shared_ptr<ICameraDeviceSession>* session, Stream* previewStream,
         std::vector<HalStream>* halStreams, bool* supportsPartialResults,
         int32_t* partialResultCount, bool* useHalBufManager, std::shared_ptr<DeviceCb>* cb,
-        int32_t streamConfigCounter) {
+        int32_t streamConfigCounter, bool allowUnsupport) {
     ASSERT_NE(nullptr, session);
     ASSERT_NE(nullptr, halStreams);
     ASSERT_NE(nullptr, previewStream);
@@ -2561,6 +2562,14 @@ void CameraAidlTest::configurePreviewStreams(
     bool supported = false;
     ret = device->isStreamCombinationSupported(config, &supported);
     ASSERT_TRUE(ret.isOk());
+    if (allowUnsupport && !supported) {
+        // stream combination not supported. return null session
+        ret = (*session)->close();
+        ASSERT_TRUE(ret.isOk());
+        *session = nullptr;
+        return;
+    }
+    ASSERT_TRUE(supported) << "Stream combination must be supported.";
 
     config.streamConfigCounter = streamConfigCounter;
     std::vector<HalStream> halConfigs;
