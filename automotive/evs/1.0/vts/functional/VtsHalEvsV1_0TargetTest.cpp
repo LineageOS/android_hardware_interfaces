@@ -18,7 +18,7 @@
 
 
 // These values are called out in the EVS design doc (as of Mar 8, 2017)
-static const int kMaxStreamStartMilliseconds = 500;
+static const int kMaxStreamStartMilliseconds = 1000;
 static const int kMinimumFramesPerSecond = 10;
 
 static const int kSecondsToMilliseconds = 1000;
@@ -332,11 +332,6 @@ TEST_P(EvsHidlTest, CameraStreamPerformance) {
         printf("Measured time to first frame %0.2f ms\n", timeToFirstFrame * kNanoToMilliseconds);
         ALOGI("Measured time to first frame %0.2f ms", timeToFirstFrame * kNanoToMilliseconds);
 
-        // Check aspect ratio
-        unsigned width = 0, height = 0;
-        frameHandler->getFrameDimension(&width, &height);
-        EXPECT_GE(width, height);
-
         // Wait a bit, then ensure we get at least the required minimum number of frames
         sleep(5);
         nsecs_t end = systemTime(SYSTEM_TIME_MONOTONIC);
@@ -370,7 +365,7 @@ TEST_P(EvsHidlTest, CameraStreamBuffering) {
     ALOGI("Starting CameraStreamBuffering test");
 
     // Arbitrary constant (should be > 1 and not too big)
-    static const unsigned int kBuffersToHold = 6;
+    static const unsigned int kBuffersToHold = 2;
 
     // Get the camera list
     loadCameraList();
