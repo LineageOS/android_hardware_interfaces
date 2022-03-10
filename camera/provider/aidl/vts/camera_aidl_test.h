@@ -190,7 +190,8 @@ class CameraAidlTest : public ::testing::TestWithParam<std::string> {
             std::shared_ptr<ICameraDeviceSession>* session /*out*/, Stream* previewStream /*out*/,
             std::vector<HalStream>* halStreams /*out*/, bool* supportsPartialResults /*out*/,
             int32_t* partialResultCount /*out*/, bool* useHalBufManager /*out*/,
-            std::shared_ptr<DeviceCb>* cb /*out*/, int32_t streamConfigCounter = 0);
+            std::shared_ptr<DeviceCb>* cb /*out*/, int32_t streamConfigCounter = 0,
+            bool allowUnsupport = false);
 
     void configurePreviewStream(
             const std::string& name, const std::shared_ptr<ICameraProvider>& provider,
