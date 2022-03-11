@@ -18,6 +18,8 @@ package android.hardware.gnss.visibility_control;
 
 /**
  * GNSS location reporting permissions and notification callback interface.
+ *
+ * @hide
  */
 @VintfStability
 interface IGnssVisibilityControlCallback {

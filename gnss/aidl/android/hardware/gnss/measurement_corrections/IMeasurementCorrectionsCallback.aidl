@@ -18,6 +18,8 @@ package android.hardware.gnss.measurement_corrections;
 
 /**
  * GNSS measurement corrections callback interface.
+ *
+ * @hide
  */
 @VintfStability
 interface IMeasurementCorrectionsCallback {

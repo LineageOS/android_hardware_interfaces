@@ -18,7 +18,11 @@ package android.hardware.gnss;
 
 import android.hardware.gnss.IGnssGeofenceCallback;
 
-/** Extended interface for GNSS Geofence support. */
+/**
+ * Extended interface for GNSS Geofence support.
+ *
+ * @hide
+ */
 @VintfStability
 interface IGnssGeofence {
     /**

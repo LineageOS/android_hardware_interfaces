@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.gnss.visibility_control;
+/* @hide */
 @VintfStability
 interface IGnssVisibilityControlCallback {
   void nfwNotifyCb(in android.hardware.gnss.visibility_control.IGnssVisibilityControlCallback.NfwNotification notification);

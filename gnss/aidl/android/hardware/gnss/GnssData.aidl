@@ -28,6 +28,8 @@ import android.hardware.gnss.GnssMeasurement;
  *
  * - Reporting of GNSS constellation measurements is mandatory.
  * - Reporting of all tracked constellations are encouraged.
+ *
+ * @hide
  */
 @VintfStability
 parcelable GnssData {
