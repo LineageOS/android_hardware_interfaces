@@ -23,6 +23,8 @@ import android.hardware.gnss.SatelliteVelocityEcef;
 /**
  * Contains estimates of the satellite position, velocity and time in the
  * ECEF coordinate frame.
+ *
+ * @hide
  */
 @VintfStability
 parcelable SatellitePvt {

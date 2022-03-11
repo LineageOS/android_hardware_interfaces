@@ -22,6 +22,8 @@ import android.hardware.gnss.measurement_corrections.SingleSatCorrection;
  * A struct containing a set of measurement corrections for all used GNSS satellites at the location
  * specified by latitudeDegrees, longitudeDegrees, altitudeMeters and at the time of week specified
  * toaGpsNanosecondsOfWeek
+ *
+ * @hide
  */
 @VintfStability
 parcelable MeasurementCorrections {

@@ -16,7 +16,11 @@
 
 package android.hardware.gnss;
 
-/** Represents a GNSS navigation message (or a fragment of it). */
+/**
+ * Represents a GNSS navigation message (or a fragment of it).
+ *
+ * @hide
+ */
 @VintfStability
 interface IGnssNavigationMessageCallback {
     /**
