@@ -19,6 +19,8 @@ package android.hardware.gnss;
 /**
  * Contains info about the correlation output of incoming GNSS signal and a local copy of
  * its corresponding spreading code at a given frequency offset.
+ *
+ * @hide
  */
 @VintfStability
 parcelable CorrelationVector {

@@ -23,6 +23,8 @@ import android.hardware.gnss.IAGnssRilCallback;
  * Layer interface allows the GNSS chipset to request radio interface layer
  * information from Android platform. Examples of such information are reference
  * location, unique subscriber ID, phone number string and network availability changes.
+ *
+ * @hide
  */
 @VintfStability
 interface IAGnssRil {

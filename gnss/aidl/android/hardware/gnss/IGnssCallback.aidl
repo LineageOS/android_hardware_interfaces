@@ -25,6 +25,8 @@ import android.hardware.gnss.IGnssPsds;
  * This interface is required for the HAL to communicate certain information
  * like status and location info back to the framework, the framework implements
  * the interfaces and passes a handle to the HAL.
+ *
+ * @hide
  */
 @VintfStability
 interface IGnssCallback {

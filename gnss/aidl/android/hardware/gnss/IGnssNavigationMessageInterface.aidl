@@ -20,6 +20,8 @@ import android.hardware.gnss.IGnssNavigationMessageCallback;
 
 /**
  * Extended interface for GNSS navigation message reporting support.
+ *
+ * @hide
  */
 @VintfStability
 interface IGnssNavigationMessageInterface {
