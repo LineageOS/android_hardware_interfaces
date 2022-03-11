@@ -20,6 +20,8 @@ import android.hardware.gnss.GnssData;
 
 /**
  * The callback interface to report GNSS Measurement from the HAL.
+ *
+ * @hide
  */
 @VintfStability
 interface IGnssMeasurementCallback {

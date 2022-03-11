@@ -21,6 +21,8 @@ package android.hardware.gnss;
  *
  * This is to specify the navigation satellite system, for example, as listed in Section 3.5 in
  * RINEX Version 3.04.
+ *
+ * @hide
  */
 @VintfStability
 @Backing(type="int")

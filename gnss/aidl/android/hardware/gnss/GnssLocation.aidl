@@ -18,7 +18,7 @@ package android.hardware.gnss;
 
 import android.hardware.gnss.ElapsedRealtime;
 
-/** Represents a location. */
+/** Represents a location. @hide */
 @VintfStability
 parcelable GnssLocation {
     /** Bit mask to indicate GnssLocation has valid latitude and longitude. */

@@ -19,7 +19,11 @@ package android.hardware.gnss;
 import android.hardware.gnss.IAGnssCallback;
 import android.hardware.gnss.IAGnssCallback.AGnssType;
 
-/** Extended interface for Assisted GNSS support. */
+/**
+ * Extended interface for Assisted GNSS support.
+ *
+ * @hide
+ */
 @VintfStability
 interface IAGnss {
     /** Access point name IP type */

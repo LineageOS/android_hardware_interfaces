@@ -19,6 +19,8 @@ package android.hardware.gnss;
 /**
  * Callback for IAGnssRil interface. Used to request SET ID and
  * Reference Location.
+ *
+ * @hide
  */
 @VintfStability
 interface IAGnssRilCallback {

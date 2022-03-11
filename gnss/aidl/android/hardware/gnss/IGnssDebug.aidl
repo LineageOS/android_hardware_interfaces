@@ -24,6 +24,8 @@ import android.hardware.gnss.SatellitePvt.SatelliteEphemerisSource;
  *
  * This information is used for debugging purpose, e.g., shown in a bugreport to
  * describe the chipset states including time, position, and satellite data.
+ *
+ * @hide
  */
 @VintfStability
 interface IGnssDebug {

@@ -20,6 +20,8 @@ import android.hardware.gnss.IGnssMeasurementCallback;
 
 /**
  * Extended interface for GNSS Measurement support.
+ *
+ * @hide
  */
 @VintfStability
 interface IGnssMeasurementInterface {

@@ -47,6 +47,8 @@ import android.hardware.gnss.visibility_control.IGnssVisibilityControlCallback;
  * status, or other information that can be used to derive user location to any entity when not
  * expressly authorized by this HAL. This includes all endpoints for location information
  * off the device, including carriers, vendors, OEM and others directly or indirectly.
+ *
+ * @hide
  */
 @VintfStability
 interface IGnssVisibilityControl {
