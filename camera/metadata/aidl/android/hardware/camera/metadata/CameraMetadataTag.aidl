@@ -2232,4 +2232,15 @@ enum CameraMetadataTag {
      * <p>The maximum number of Jpeg APP segments supported by the camera HAL device.</p>
      */
     ANDROID_HEIC_INFO_MAX_JPEG_APP_SEGMENTS_COUNT,
+    /** android.automotive.location [static, enum, public]
+     *
+     * <p>Location of the cameras on the automotive devices.</p>
+     */
+    ANDROID_AUTOMOTIVE_LOCATION = CameraMetadataSectionStart.ANDROID_AUTOMOTIVE_START,
+    /** android.automotive.lens.facing [static, enum[], public]
+     *
+     * <p>The direction of the camera faces relative to the vehicle body frame and the
+     * passenger seats.</p>
+     */
+    ANDROID_AUTOMOTIVE_LENS_FACING = CameraMetadataSectionStart.ANDROID_AUTOMOTIVE_LENS_START,
 }
