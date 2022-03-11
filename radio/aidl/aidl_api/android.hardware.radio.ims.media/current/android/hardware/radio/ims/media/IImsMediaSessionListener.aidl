@@ -34,12 +34,12 @@
 package android.hardware.radio.ims.media;
 @VintfStability
 interface IImsMediaSessionListener {
-  oneway void onSessionChanged(in android.hardware.radio.ims.media.RtpSession session);
+  oneway void onSessionChanged(android.hardware.radio.ims.media.RtpSessionState state);
   oneway void onModifySessionResponse(in android.hardware.radio.ims.media.RtpConfig config, android.hardware.radio.ims.media.RtpError error);
   oneway void onAddConfigResponse(in android.hardware.radio.ims.media.RtpConfig config, android.hardware.radio.ims.media.RtpError error);
   oneway void onConfirmConfigResponse(in android.hardware.radio.ims.media.RtpConfig config, android.hardware.radio.ims.media.RtpError error);
   oneway void onFirstMediaPacketReceived(in android.hardware.radio.ims.media.RtpConfig config);
-  oneway void onHeaderExtensionReceived(in android.hardware.radio.ims.media.RtpHeaderExtension[] data);
+  oneway void onHeaderExtensionReceived(in List<android.hardware.radio.ims.media.RtpHeaderExtension> extensions);
   oneway void notifyMediaInactivity(android.hardware.radio.ims.media.MediaProtocolType packetType, int duration);
   oneway void notifyPacketLoss(int packetLossPercentage);
   oneway void notifyJitter(int jitter);

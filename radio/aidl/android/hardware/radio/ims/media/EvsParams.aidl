@@ -17,9 +17,13 @@
 package android.hardware.radio.ims.media;
 
 import android.hardware.radio.ims.media.EvsMode;
+import android.hardware.radio.ims.media.EvsBandwidth;
 
 @VintfStability
 parcelable EvsParams {
+    /** EVS codec bandwidth */
+    EvsBandwidth bandwidth;
+
     /** mode-set: EVS codec mode to represent the bit rate */
     EvsMode evsMode;
     /**

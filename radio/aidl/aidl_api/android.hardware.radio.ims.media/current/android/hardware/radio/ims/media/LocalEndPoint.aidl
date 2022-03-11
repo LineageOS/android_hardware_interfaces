@@ -34,6 +34,7 @@
 package android.hardware.radio.ims.media;
 @VintfStability
 parcelable LocalEndPoint {
-  android.hardware.radio.ims.media.RtpAddress localAddress;
+  ParcelFileDescriptor rtpFd;
+  ParcelFileDescriptor rtcpFd;
   int modemId;
 }

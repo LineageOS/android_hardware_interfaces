@@ -93,9 +93,9 @@ oneway interface IImsMediaSession {
     /**
      * Send RTP header extension to the other party in the next RTP packet.
      *
-     * @param data data to be transmitted via RTP header extension
+     * @param extensions data to be transmitted via RTP header extension
      */
-    void sendHeaderExtension(in RtpHeaderExtension[] data);
+    void sendHeaderExtension(in List<RtpHeaderExtension> extensions);
 
     /**
      * Sets the media quality threshold parameters of the session to get

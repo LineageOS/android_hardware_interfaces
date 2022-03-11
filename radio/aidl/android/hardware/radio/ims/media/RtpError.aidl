@@ -32,5 +32,5 @@ enum RtpError {
     /** The requested port number is not available */
     PORT_UNAVAILABLE = 5,
     /** The request is not supported by the implementation */
-    REQUEST_NOT_SUPPORTED = 6,
+    NOT_SUPPORTED = 6,
 }

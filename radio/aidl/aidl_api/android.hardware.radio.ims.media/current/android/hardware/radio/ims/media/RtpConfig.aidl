@@ -34,11 +34,9 @@
 package android.hardware.radio.ims.media;
 @VintfStability
 parcelable RtpConfig {
-  int configId;
   android.hardware.radio.ims.media.MediaDirection direction;
+  android.hardware.radio.AccessNetwork accessNetwork;
   android.hardware.radio.ims.media.RtpAddress remoteAddress;
   android.hardware.radio.ims.media.RtpSessionParams sessionParams;
   android.hardware.radio.ims.media.RtcpConfig rtcpConfig;
-  android.hardware.radio.data.QosBandwidth downlink;
-  android.hardware.radio.data.QosBandwidth uplink;
 }

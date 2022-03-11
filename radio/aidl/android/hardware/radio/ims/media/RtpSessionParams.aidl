@@ -30,11 +30,11 @@ parcelable RtpSessionParams {
      * maxptime: Maximum amount of media that can be encapsulated in each packet
      * represented in milliseconds, see RFC 4566
      */
-    byte maxPtimeMillis;
+    int maxPtimeMillis;
     /** Maximum Rtp transfer unit in bytes */
     int maxMtuBytes;
     /** dscp: Differentiated Services Field Code Point value, see RFC 2474 */
-    int dscp;
+    byte dscp;
     /** DTMF payload and clock rate */
     DtmfParams dtmfParams;
     /** Negotiated codec parameters */

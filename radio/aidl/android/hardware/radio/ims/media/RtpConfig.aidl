@@ -16,7 +16,7 @@
 
 package android.hardware.radio.ims.media;
 
-import android.hardware.radio.data.QosBandwidth;
+import android.hardware.radio.AccessNetwork;
 import android.hardware.radio.ims.media.MediaDirection;
 import android.hardware.radio.ims.media.RtcpConfig;
 import android.hardware.radio.ims.media.RtpAddress;
@@ -24,18 +24,14 @@ import android.hardware.radio.ims.media.RtpSessionParams;
 
 @VintfStability
 parcelable RtpConfig {
-    /** Unique identifier of the RTP config within a session */
-    int configId;
     /** Media flow direction */
     MediaDirection direction;
-    /** IP address and port number of the other party */
+    /** Radio Access Network */
+    AccessNetwork accessNetwork;
+    /** IP address and port number of the other party for RTP media */
     RtpAddress remoteAddress;
     /** Negotiated session parameters */
     RtpSessionParams sessionParams;
     /** RTCP configuration */
     RtcpConfig rtcpConfig;
-    /** Downlink bandwidth allocated by network in the dedicated bearer */
-    QosBandwidth downlink;
-    /** Uplink bandwidth allocated by network in the dedicated bearer */
-    QosBandwidth uplink;
 }

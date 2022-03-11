@@ -182,7 +182,8 @@ aidl_interface {
     vendor_available: true,
     srcs: ["android/hardware/radio/ims/media/*.aidl"],
     stability: "vintf",
-    imports: ["android.hardware.radio.data"],
+    imports: ["android.hardware.radio",
+              "android.hardware.radio.data"],
     backend: {
         cpp: {
             enabled: false,

@@ -17,24 +17,24 @@
 package android.hardware.radio.ims.media;
 
 import android.hardware.radio.ims.media.CodecSpecificParams;
-import android.hardware.radio.ims.media.SpeechCodec;
+import android.hardware.radio.ims.media.CodecType;
 
 @VintfStability
 parcelable CodecParams {
-    /** Negotiated codec and bandwidth */
-    SpeechCodec codec;
+    /** Negotiated codec type */
+    CodecType codecType;
     /**
      * Static or dynamic payload type number negotiated through the SDP for
      * the incoming RTP packets. This value shall be matched with the PT value
      * of the incoming RTP header. Values 0 to 127, see RFC 3551 section 6
      */
-    int rxPayloadTypeNumber;
+    byte rxPayloadTypeNumber;
     /**
      * Static or dynamic payload type number negotiated through the SDP for
      * the outgoing RTP packets. This value shall be set to the PT value
      * of the outgoing RTP header. Values 0 to 127, see RFC 3551 section 6
      */
-    int txPayloadTypeNumber;
+    byte txPayloadTypeNumber;
     /** Sampling rate in kHz*/
     byte samplingRateKHz;
     /**
