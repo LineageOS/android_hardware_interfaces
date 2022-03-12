@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.gnss;
+/* @hide */
 @VintfStability
 interface IGnssDebug {
   android.hardware.gnss.IGnssDebug.DebugData getDebugData();

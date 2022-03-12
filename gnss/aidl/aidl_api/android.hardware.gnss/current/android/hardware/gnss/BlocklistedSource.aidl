@@ -32,6 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.gnss;
+/* @hide */
 @VintfStability
 parcelable BlocklistedSource {
   android.hardware.gnss.GnssConstellationType constellation = android.hardware.gnss.GnssConstellationType.UNKNOWN;

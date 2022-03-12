@@ -185,13 +185,13 @@ TEST(RemoteProvUtilsTest, JsonEncodeCsr) {
     cppbor::Array array;
     array.add(1);
 
-    auto [json, error] = jsonEncodeCsrWithBuild(array);
+    auto [json, error] = jsonEncodeCsrWithBuild(std::string("test"), array);
 
     ASSERT_TRUE(error.empty()) << error;
 
     std::string expected = R"({"build_fingerprint":")" +
                            ::android::base::GetProperty("ro.build.fingerprint", /*default=*/"") +
-                           R"(","csr":"gQE="})";
+                           R"(","csr":"gQE=","name":"test"})";
 
     ASSERT_EQ(json, expected);
 }

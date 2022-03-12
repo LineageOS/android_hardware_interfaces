@@ -21,6 +21,8 @@ import android.hardware.gnss.measurement_corrections.MeasurementCorrections;
 
 /**
  * Interface for measurement corrections support.
+ *
+ * @hide
  */
 @VintfStability
 interface IMeasurementCorrectionsInterface {

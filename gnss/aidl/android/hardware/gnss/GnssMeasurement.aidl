@@ -28,6 +28,8 @@ import android.hardware.gnss.SatellitePvt;
  * this struct must be based on GNSS signal measurements only. You must not synthesize measurements
  * by calculating or reporting expected measurements based on known or estimated position, velocity,
  * or time.
+ *
+ * @hide
  */
 @VintfStability
 parcelable GnssMeasurement {
