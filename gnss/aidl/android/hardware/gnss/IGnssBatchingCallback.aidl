@@ -18,7 +18,11 @@ package android.hardware.gnss;
 
 import android.hardware.gnss.GnssLocation;
 
-/** The callback interface to report batched GNSS locations from the HAL. */
+/**
+ * The callback interface to report batched GNSS locations from the HAL.
+ *
+ * @hide
+ */
 @VintfStability
 interface IGnssBatchingCallback {
     /**
