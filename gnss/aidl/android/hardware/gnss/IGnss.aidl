@@ -34,6 +34,8 @@ import android.hardware.gnss.visibility_control.IGnssVisibilityControl;
 
 /**
  * Represents the standard GNSS (Global Navigation Satellite System) interface.
+ *
+ * @hide
  */
 @VintfStability
 interface IGnss {
