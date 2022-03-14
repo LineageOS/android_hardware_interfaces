@@ -46,6 +46,10 @@ interface IFace {
      * vold_prepare_subdirs.cpp). Implementations may store additional user-specific data, such as
      * embeddings or templates, in StrongBox.
      *
+     * During create session it is expected that the HAL will call linkToDeath with the callee's
+     * binder token. The recommended implementation is to close this session if the callee dies,
+     * to prevent subsequent createSession calls from failing.
+     *
      * @param sensorId The sensorId for which this session is being created.
      * @param userId The userId for which this session is being created.
      * @param cb A callback to notify the framework about the session's events.
