@@ -225,7 +225,7 @@ ErrMsgOr<EekChain> generateEekChain(int32_t supportedEekCurve, size_t length,
     bytevec prev_priv_key;
     for (size_t i = 0; i < length - 1; ++i) {
         auto keyPair = generateKeyPair(supportedEekCurve, false);
-        if (!keyPair) keyPair.moveMessage();
+        if (!keyPair) return keyPair.moveMessage();
         auto [pub_key, priv_key] = keyPair.moveValue();
 
         // The first signing key is self-signed.
@@ -242,7 +242,7 @@ ErrMsgOr<EekChain> generateEekChain(int32_t supportedEekCurve, size_t length,
         prev_priv_key = priv_key;
     }
     auto keyPair = generateKeyPair(supportedEekCurve, true);
-    if (!keyPair) keyPair.moveMessage();
+    if (!keyPair) return keyPair.moveMessage();
     auto [pub_key, priv_key] = keyPair.moveValue();
 
     auto coseKey = constructCoseKey(supportedEekCurve, eekId, pub_key);
