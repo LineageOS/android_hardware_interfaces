@@ -71,8 +71,8 @@ interface IUwbChip {
      * The UCI message format is as per UCI  protocol and it is
      * defined in "FiRa Consortium - UCI Generic Specification_v1.0" specification at FiRa
      * consortium.
-     * WIP doc link: https://groups.firaconsortium.org/wg/Technical/document/folder/127.
-     * TODO(b/196004116): Link to the published specification.
+     *
+     * UCI 1.1 specification: https://groups.firaconsortium.org/wg/members/document/1949.
      *
      * This method may queue writes and return immediately, or it may block until data is written.
      * Implementation must guarantee that writes are executed in order.
