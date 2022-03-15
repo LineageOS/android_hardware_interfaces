@@ -667,12 +667,15 @@ string KeyMintAidlTestBase::MacMessage(const string& message, Digest digest, siz
 
 void KeyMintAidlTestBase::CheckAesIncrementalEncryptOperation(BlockMode block_mode,
                                                               int message_size) {
-    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
-                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
-                                                 .AesEncryptionKey(128)
-                                                 .BlockMode(block_mode)
-                                                 .Padding(PaddingMode::NONE)
-                                                 .Authorization(TAG_MIN_MAC_LENGTH, 128)));
+    auto builder = AuthorizationSetBuilder()
+                           .Authorization(TAG_NO_AUTH_REQUIRED)
+                           .AesEncryptionKey(128)
+                           .BlockMode(block_mode)
+                           .Padding(PaddingMode::NONE);
+    if (block_mode == BlockMode::GCM) {
+        builder.Authorization(TAG_MIN_MAC_LENGTH, 128);
+    }
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(builder));
 
     for (int increment = 1; increment <= message_size; ++increment) {
         string message(message_size, 'a');
