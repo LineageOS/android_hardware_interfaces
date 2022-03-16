@@ -1,0 +1,30 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+rust_binary {
+    name: "android.hardware.security.dice-service.non-secure-software",
+    srcs: ["service.rs"],
+    relative_install_path: "hw",
+    vendor: true,
+    rustlibs: [
+        "android.hardware.security.dice-V1-rust",
+        "libdiced_open_dice_cbor",
+        "libdiced_sample_inputs",
+        "libdiced_vendor",
+        "libandroid_logger",
+        "libanyhow",
+        "libbinder_rs",
+        "liblog_rust",
+        "libserde",
+    ],
+    init_rc: ["android.hardware.security.dice-service.non-secure-software.rc"],
+    vintf_fragments: [
+        "android.hardware.security.dice-service.non-secure-software.xml",
+    ],
+}
