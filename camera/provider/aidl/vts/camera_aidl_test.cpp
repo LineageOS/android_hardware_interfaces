@@ -120,7 +120,7 @@ bool parseProviderName(const std::string& serviceDescriptor, std::string* type /
     return true;
 }
 
-const std::vector<int32_t> kMandatoryUseCases = {
+const std::vector<int64_t> kMandatoryUseCases = {
         ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT,
         ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_PREVIEW,
         ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_STILL_CAPTURE,
@@ -328,19 +328,19 @@ void CameraAidlTest::verifyStreamUseCaseCharacteristics(const camera_metadata_t*
     if ((0 == retcode) && (entry.count > 0)) {
         supportMandatoryUseCases = true;
         for (size_t i = 0; i < kMandatoryUseCases.size(); i++) {
-            if (std::find(entry.data.i32, entry.data.i32 + entry.count, kMandatoryUseCases[i]) ==
-                entry.data.i32 + entry.count) {
+            if (std::find(entry.data.i64, entry.data.i64 + entry.count, kMandatoryUseCases[i]) ==
+                entry.data.i64 + entry.count) {
                 supportMandatoryUseCases = false;
                 break;
             }
         }
         bool supportDefaultUseCase = false;
         for (size_t i = 0; i < entry.count; i++) {
-            if (entry.data.i32[i] == ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT) {
+            if (entry.data.i64[i] == ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT) {
                 supportDefaultUseCase = true;
             }
-            ASSERT_TRUE(entry.data.i32[i] <= ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_VIDEO_CALL ||
-                        entry.data.i32[i] >=
+            ASSERT_TRUE(entry.data.i64[i] <= ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_VIDEO_CALL ||
+                        entry.data.i64[i] >=
                                 ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_VENDOR_START);
         }
         ASSERT_TRUE(supportDefaultUseCase);

@@ -194,7 +194,7 @@ enum CameraMetadataEnumAndroidScalerAvailableRecommendedStreamConfigurations :
 /** android.scaler.availableStreamUseCases enumeration values
  * @see ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES
  */
-enum CameraMetadataEnumAndroidScalerAvailableStreamUseCases : uint32_t {
+enum CameraMetadataEnumAndroidScalerAvailableStreamUseCases : int64_t {
     ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT           = 0x0,
     ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_PREVIEW           = 0x1,
     ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_STILL_CAPTURE     = 0x2,
