@@ -117,14 +117,13 @@ bool android_nlinterceptor_createSocket(
     int clientSocketFd, const char* clientName,
     struct android_nlinterceptor_InterceptedSocket* interceptedSocket);
 
-void android_nlinterceptor_closeSocket(
-    const struct android_nlinterceptor_InterceptedSocket* sock);
+void android_nlinterceptor_closeSocket(struct android_nlinterceptor_InterceptedSocket sock);
 
-bool android_nlinterceptor_subscribe(
-    const struct android_nlinterceptor_InterceptedSocket* sock, uint32_t group);
+bool android_nlinterceptor_subscribe(struct android_nlinterceptor_InterceptedSocket sock,
+                                     uint32_t group);
 
-bool android_nlinterceptor_unsubscribe(
-    const struct android_nlinterceptor_InterceptedSocket* sock, uint32_t group);
+bool android_nlinterceptor_unsubscribe(struct android_nlinterceptor_InterceptedSocket sock,
+                                       uint32_t group);
 
 #ifdef __cplusplus
 }
