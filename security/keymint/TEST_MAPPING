@@ -1,0 +1,18 @@
+{
+  "presubmit": [
+    {
+      "name": "VtsAidlKeyMintTargetTest"
+    },
+    {
+      "name": "VtsHalRemotelyProvisionedComponentTargetTest"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "VtsAidlKeyMintTargetTest"
+    },
+    {
+      "name": "VtsHalRemotelyProvisionedComponentTargetTest"
+    }
+  ]
+}
