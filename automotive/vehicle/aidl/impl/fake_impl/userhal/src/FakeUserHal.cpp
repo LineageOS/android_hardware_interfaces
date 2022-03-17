@@ -44,8 +44,6 @@ using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 using ::android::base::Error;
 using ::android::base::Result;
 
-using StatusError = android::base::Error<VhalError>;
-
 constexpr int32_t INITIAL_USER_INFO = toInt(VehicleProperty::INITIAL_USER_INFO);
 constexpr int32_t SWITCH_USER = toInt(VehicleProperty::SWITCH_USER);
 constexpr int32_t CREATE_USER = toInt(VehicleProperty::CREATE_USER);
@@ -53,7 +51,7 @@ constexpr int32_t REMOVE_USER = toInt(VehicleProperty::REMOVE_USER);
 constexpr int32_t USER_IDENTIFICATION_ASSOCIATION =
         toInt(VehicleProperty::USER_IDENTIFICATION_ASSOCIATION);
 
-Result<int32_t, VhalError> getRequestId(const VehiclePropValue& value) {
+VhalResult<int32_t> getRequestId(const VehiclePropValue& value) {
     if (value.value.int32Values.size() < 1) {
         return StatusError(StatusCode::INVALID_ARG)
                << "no int32Values on property: " << value.toString();
@@ -61,7 +59,7 @@ Result<int32_t, VhalError> getRequestId(const VehiclePropValue& value) {
     return value.value.int32Values[0];
 }
 
-Result<SwitchUserMessageType, VhalError> getSwitchUserMessageType(const VehiclePropValue& value) {
+VhalResult<SwitchUserMessageType> getSwitchUserMessageType(const VehiclePropValue& value) {
     if (value.value.int32Values.size() < 2) {
         return StatusError(StatusCode::INVALID_ARG)
                << "missing switch user message type on property: " << value.toString();

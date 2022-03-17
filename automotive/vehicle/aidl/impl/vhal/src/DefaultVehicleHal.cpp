@@ -600,7 +600,7 @@ ScopedAStatus DefaultVehicleHal::getPropConfigs(const std::vector<int32_t>& prop
     return vectorToStableLargeParcelable(std::move(configs), output);
 }
 
-Result<void, VhalError> DefaultVehicleHal::checkSubscribeOptions(
+VhalResult<void> DefaultVehicleHal::checkSubscribeOptions(
         const std::vector<SubscribeOptions>& options) {
     for (const auto& option : options) {
         int32_t propId = option.propId;
@@ -731,8 +731,7 @@ IVehicleHardware* DefaultVehicleHal::getHardware() {
     return mVehicleHardware.get();
 }
 
-Result<void, VhalError> DefaultVehicleHal::checkWritePermission(
-        const VehiclePropValue& value) const {
+VhalResult<void> DefaultVehicleHal::checkWritePermission(const VehiclePropValue& value) const {
     int32_t propId = value.prop;
     auto result = getConfig(propId);
     if (!result.ok()) {
@@ -748,8 +747,7 @@ Result<void, VhalError> DefaultVehicleHal::checkWritePermission(
     return {};
 }
 
-Result<void, VhalError> DefaultVehicleHal::checkReadPermission(
-        const VehiclePropValue& value) const {
+VhalResult<void> DefaultVehicleHal::checkReadPermission(const VehiclePropValue& value) const {
     int32_t propId = value.prop;
     auto result = getConfig(propId);
     if (!result.ok()) {
