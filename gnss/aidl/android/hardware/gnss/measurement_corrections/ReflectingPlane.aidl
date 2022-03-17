@@ -41,5 +41,5 @@ parcelable ReflectingPlane {
     double altitudeMeters;
 
     /** Represents azimuth clockwise from north of the reflecting plane in degrees. */
-    double azimuthDegrees;
+    double reflectingPlaneAzimuthDegrees;
 }
