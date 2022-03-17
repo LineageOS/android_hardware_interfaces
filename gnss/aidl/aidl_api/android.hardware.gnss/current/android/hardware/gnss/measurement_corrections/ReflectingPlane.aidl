@@ -38,5 +38,5 @@ parcelable ReflectingPlane {
   double latitudeDegrees;
   double longitudeDegrees;
   double altitudeMeters;
-  double azimuthDegrees;
+  double reflectingPlaneAzimuthDegrees;
 }

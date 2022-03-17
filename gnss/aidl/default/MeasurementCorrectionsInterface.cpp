@@ -37,16 +37,26 @@ ndk::ScopedAStatus MeasurementCorrectionsInterface::setCorrections(
           static_cast<int>(corrections.satCorrections.size()));
     for (auto singleSatCorrection : corrections.satCorrections) {
         ALOGD("singleSatCorrection = flags: %d, constellation: %d, svid: %d"
-              ", cfHz: %" PRId64 ", probLos: %f, epl: %f, eplUnc: %f",
+              ", cfHz: %" PRId64
+              ", probLos: %f, combinedEpl: %f, combinedEplUnc: %f, combinedAttenuation: %f"
+              ", excessPathInfos.size: %d",
               singleSatCorrection.singleSatCorrectionFlags, singleSatCorrection.constellation,
               singleSatCorrection.svid, singleSatCorrection.carrierFrequencyHz,
-              singleSatCorrection.probSatIsLos, singleSatCorrection.excessPathLengthMeters,
-              singleSatCorrection.excessPathLengthUncertaintyMeters);
-        ALOGD("reflecting plane = lat: %f, lng: %f, alt: %f, azm: %f",
-              singleSatCorrection.reflectingPlane.latitudeDegrees,
-              singleSatCorrection.reflectingPlane.longitudeDegrees,
-              singleSatCorrection.reflectingPlane.altitudeMeters,
-              singleSatCorrection.reflectingPlane.azimuthDegrees);
+              singleSatCorrection.probSatIsLos, singleSatCorrection.combinedExcessPathLengthMeters,
+              singleSatCorrection.combinedExcessPathLengthUncertaintyMeters,
+              singleSatCorrection.combinedAttenuationDb,
+              static_cast<int>(singleSatCorrection.excessPathInfos.size()));
+
+        for (auto excessPathInfo : singleSatCorrection.excessPathInfos) {
+            ALOGD("excessPathInfo = epl: %f, eplUnc: %f, attenuation: %f",
+                  excessPathInfo.excessPathLengthMeters,
+                  excessPathInfo.excessPathLengthUncertaintyMeters, excessPathInfo.attenuationDb);
+            ALOGD("reflecting plane = lat: %f, lng: %f, alt: %f, azm: %f",
+                  excessPathInfo.reflectingPlane.latitudeDegrees,
+                  excessPathInfo.reflectingPlane.longitudeDegrees,
+                  excessPathInfo.reflectingPlane.altitudeMeters,
+                  excessPathInfo.reflectingPlane.reflectingPlaneAzimuthDegrees);
+        }
     }
     return ndk::ScopedAStatus::ok();
 }
