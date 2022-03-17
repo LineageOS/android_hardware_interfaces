@@ -39,8 +39,6 @@ using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 using ::android::base::Result;
 using ::android::base::StringPrintf;
 
-using StatusError = android::base::Error<VhalError>;
-
 bool VehiclePropertyStore::RecordId::operator==(const VehiclePropertyStore::RecordId& other) const {
     return area == other.area && token == other.token;
 }
@@ -88,7 +86,7 @@ VehiclePropertyStore::RecordId VehiclePropertyStore::getRecordIdLocked(
     return recId;
 }
 
-Result<VehiclePropValuePool::RecyclableType, VhalError> VehiclePropertyStore::readValueLocked(
+VhalResult<VehiclePropValuePool::RecyclableType> VehiclePropertyStore::readValueLocked(
         const RecordId& recId, const Record& record) const REQUIRES(mLock) {
     if (auto it = record.values.find(recId); it != record.values.end()) {
         return mValuePool->obtain(*(it->second));
@@ -107,8 +105,8 @@ void VehiclePropertyStore::registerProperty(const VehiclePropConfig& config,
     };
 }
 
-Result<void, VhalError> VehiclePropertyStore::writeValue(
-        VehiclePropValuePool::RecyclableType propValue, bool updateStatus) {
+VhalResult<void> VehiclePropertyStore::writeValue(VehiclePropValuePool::RecyclableType propValue,
+                                                  bool updateStatus) {
     std::scoped_lock<std::mutex> g(mLock);
 
     int32_t propId = propValue->prop;
@@ -248,7 +246,7 @@ std::vector<VehiclePropConfig> VehiclePropertyStore::getAllConfigs() const {
     return configs;
 }
 
-Result<const VehiclePropConfig*, VhalError> VehiclePropertyStore::getConfig(int32_t propId) const {
+VhalResult<const VehiclePropConfig*> VehiclePropertyStore::getConfig(int32_t propId) const {
     std::scoped_lock<std::mutex> g(mLock);
 
     const VehiclePropertyStore::Record* record = getRecordLocked(propId);

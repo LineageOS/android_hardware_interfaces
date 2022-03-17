@@ -41,7 +41,7 @@ namespace fake {
 
 class FakeVehicleHardware : public IVehicleHardware {
   public:
-    using ValueResultType = android::base::Result<VehiclePropValuePool::RecyclableType, VhalError>;
+    using ValueResultType = VhalResult<VehiclePropValuePool::RecyclableType>;
 
     FakeVehicleHardware();
 
@@ -90,7 +90,7 @@ class FakeVehicleHardware : public IVehicleHardware {
     ValueResultType getValue(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
 
-    android::base::Result<void, VhalError> setValue(
+    VhalResult<void> setValue(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
 
   private:
@@ -117,17 +117,17 @@ class FakeVehicleHardware : public IVehicleHardware {
     // Override the properties using config files in 'overrideDir'.
     void overrideProperties(const char* overrideDir);
 
-    android::base::Result<void, VhalError> maybeSetSpecialValue(
+    VhalResult<void> maybeSetSpecialValue(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
             bool* isSpecialValue);
     ValueResultType maybeGetSpecialValue(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
             bool* isSpecialValue) const;
-    android::base::Result<void, VhalError> setApPowerStateReport(
+    VhalResult<void> setApPowerStateReport(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
     VehiclePropValuePool::RecyclableType createApPowerStateReq(
             aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq state);
-    android::base::Result<void, VhalError> setUserHalProp(
+    VhalResult<void> setUserHalProp(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
     ValueResultType getUserHalProp(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
