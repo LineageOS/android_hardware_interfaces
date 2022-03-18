@@ -98,17 +98,56 @@ static V1_5::RadioAccessSpecifier::Bands toHidl(const aidl::RadioAccessSpecifier
     return hidl;
 }
 
+AccessNetwork fromRadioAccessNetwork(V1_5::RadioAccessNetworks ran) {
+    switch (ran) {
+        case V1_5::RadioAccessNetworks::UNKNOWN:
+            return AccessNetwork::UNKNOWN;
+        case V1_5::RadioAccessNetworks::GERAN:
+            return AccessNetwork::GERAN;
+        case V1_5::RadioAccessNetworks::UTRAN:
+            return AccessNetwork::UTRAN;
+        case V1_5::RadioAccessNetworks::EUTRAN:
+            return AccessNetwork::EUTRAN;
+        case V1_5::RadioAccessNetworks::CDMA2000:
+            return AccessNetwork::CDMA2000;
+        case V1_5::RadioAccessNetworks::NGRAN:
+            return AccessNetwork::NGRAN;
+        default:
+            return AccessNetwork::UNKNOWN;
+    }
+}
+
 aidl::RadioAccessSpecifier toAidl(const V1_5::RadioAccessSpecifier& spec) {
     return {
-            .accessNetwork = AccessNetwork(spec.radioAccessNetwork),
+            .accessNetwork = fromRadioAccessNetwork(spec.radioAccessNetwork),
             .bands = toAidl(spec.bands),
             .channels = spec.channels,
     };
 }
 
+V1_5::RadioAccessNetworks toRadioAccessNetworks(AccessNetwork val) {
+    switch (val) {
+        case AccessNetwork::UNKNOWN:
+            return V1_5::RadioAccessNetworks::UNKNOWN;
+        case AccessNetwork::GERAN:
+            return V1_5::RadioAccessNetworks::GERAN;
+        case AccessNetwork::UTRAN:
+            return V1_5::RadioAccessNetworks::UTRAN;
+        case AccessNetwork::EUTRAN:
+            return V1_5::RadioAccessNetworks::EUTRAN;
+        case AccessNetwork::CDMA2000:
+            return V1_5::RadioAccessNetworks::CDMA2000;
+        case AccessNetwork::NGRAN:
+            return V1_5::RadioAccessNetworks::NGRAN;
+        case AccessNetwork::IWLAN:
+        default:
+            return V1_5::RadioAccessNetworks::UNKNOWN;
+    }
+}
+
 V1_5::RadioAccessSpecifier toHidl(const aidl::RadioAccessSpecifier& spec) {
     return {
-            .radioAccessNetwork = V1_5::RadioAccessNetworks{spec.accessNetwork},
+            .radioAccessNetwork = toRadioAccessNetworks(spec.accessNetwork),
             .bands = toHidl(spec.bands),
             .channels = spec.channels,
     };

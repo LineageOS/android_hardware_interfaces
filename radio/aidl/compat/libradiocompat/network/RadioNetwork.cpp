@@ -228,7 +228,7 @@ ScopedAStatus RadioNetwork::setNetworkSelectionModeAutomatic(int32_t serial) {
 ScopedAStatus RadioNetwork::setNetworkSelectionModeManual(  //
         int32_t serial, const std::string& opNumeric, AccessNetwork ran) {
     LOG_CALL << serial;
-    mHal1_5->setNetworkSelectionModeManual_1_5(serial, opNumeric, V1_5::RadioAccessNetworks(ran));
+    mHal1_5->setNetworkSelectionModeManual_1_5(serial, opNumeric, toRadioAccessNetworks(ran));
     return ok();
 }
 
