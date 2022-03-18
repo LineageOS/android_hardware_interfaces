@@ -20,6 +20,7 @@ package android.hardware.radio.voice;
  * T53 Audio Control Information Record
  */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable CdmaT53AudioControlInfoRecord {
     byte upLink;
     byte downLink;

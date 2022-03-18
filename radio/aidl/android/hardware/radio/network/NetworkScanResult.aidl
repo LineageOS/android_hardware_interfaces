@@ -20,6 +20,7 @@ import android.hardware.radio.RadioError;
 import android.hardware.radio.network.CellInfo;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable NetworkScanResult {
     /**
      * The result contains a part of the scan results.

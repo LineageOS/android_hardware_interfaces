@@ -17,6 +17,7 @@
 package android.hardware.radio.voice;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable SsInfoData {
     const int SS_INFO_MAX = 4;
     /**

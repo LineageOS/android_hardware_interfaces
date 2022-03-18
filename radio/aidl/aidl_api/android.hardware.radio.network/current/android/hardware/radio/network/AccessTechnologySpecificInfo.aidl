@@ -32,7 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.network;
-@VintfStability
+@JavaDerive(toString=true) @VintfStability
 union AccessTechnologySpecificInfo {
   boolean noinit;
   android.hardware.radio.network.Cdma2000RegistrationInfo cdmaInfo;

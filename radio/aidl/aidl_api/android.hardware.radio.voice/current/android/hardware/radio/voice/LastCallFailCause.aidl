@@ -32,7 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.voice;
-@Backing(type="int") @VintfStability
+@Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum LastCallFailCause {
   UNOBTAINABLE_NUMBER = 1,
   NO_ROUTE_TO_DESTINATION = 3,

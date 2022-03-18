@@ -17,6 +17,7 @@
 package android.hardware.radio.network;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable GsmSignalStrength {
     /**
      * Valid values are (0-61, 99) as defined in TS 27.007 8.69; INT_MAX means invalid/unreported.

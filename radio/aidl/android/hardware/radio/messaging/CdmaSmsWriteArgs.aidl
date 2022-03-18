@@ -19,6 +19,7 @@ package android.hardware.radio.messaging;
 import android.hardware.radio.messaging.CdmaSmsMessage;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable CdmaSmsWriteArgs {
     const int STATUS_REC_UNREAD = 0;
     const int STATUS_REC_READ = 1;
