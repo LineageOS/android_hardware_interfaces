@@ -197,14 +197,6 @@ std::vector<SubscribeInvalidOptionsTestCase> getSubscribeInvalidOptionsTestCases
                             },
             },
             {
-                    .name = "sample_rate_out_of_range",
-                    .option =
-                            {
-                                    .propId = GLOBAL_CONTINUOUS_PROP,
-                                    .sampleRate = 1000.0,
-                            },
-            },
-            {
                     .name = "static_property",
                     .option =
                             {
@@ -1357,6 +1349,51 @@ TEST_F(DefaultVehicleHalTest, testSubscribeGlobalContinuous) {
         ASSERT_THAT(maybeResults.value().payloads, UnorderedElementsAre(testValue))
                 << "results mismatch, expect to get the updated value";
     }
+    EXPECT_EQ(countClients(), static_cast<size_t>(1));
+}
+
+TEST_F(DefaultVehicleHalTest, testSubscribeGlobalContinuousRateOutOfRange) {
+    VehiclePropValue testValue{
+            .prop = GLOBAL_CONTINUOUS_PROP,
+            .value.int32Values = {0},
+    };
+    // Set responses for all the hardware getValues requests.
+    getHardware()->setGetValueResponder(
+            [](std::shared_ptr<const IVehicleHardware::GetValuesCallback> callback,
+               const std::vector<GetValueRequest>& requests) {
+                std::vector<GetValueResult> results;
+                for (auto& request : requests) {
+                    VehiclePropValue prop = request.prop;
+                    prop.value.int32Values = {0};
+                    results.push_back({
+                            .requestId = request.requestId,
+                            .status = StatusCode::OK,
+                            .prop = prop,
+                    });
+                }
+                (*callback)(results);
+                return StatusCode::OK;
+            });
+
+    // The maxSampleRate is 100, so the sample rate should be the default max 100.
+    std::vector<SubscribeOptions> options = {
+            {
+                    .propId = GLOBAL_CONTINUOUS_PROP,
+                    .sampleRate = 1000.0,
+            },
+    };
+
+    auto status = getClient()->subscribe(getCallbackClient(), options, 0);
+
+    ASSERT_TRUE(status.isOk()) << "subscribe failed: " << status.getMessage();
+
+    // Sleep for 1s, which should generate ~100 events.
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    size_t eventCount = getCallback()->countOnPropertyEventResults();
+    ASSERT_GE(eventCount, 50u) << "expect at least 50 events to be generated";
+    ASSERT_LE(eventCount, 150u) << "expect no more than 150 events to be generated";
+
     EXPECT_EQ(countClients(), static_cast<size_t>(1));
 }
 
