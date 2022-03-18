@@ -22,10 +22,7 @@
 
 package android.hardware.camera.metadata;
 
-/*
- * Enumeration definitions for the various entries that need them
- *
- *
+/**
  * android.control.mode enumeration values
  * @see ANDROID_CONTROL_MODE
  */
