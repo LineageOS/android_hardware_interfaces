@@ -20,6 +20,7 @@ package android.hardware.radio.voice;
  * T53 CLIR Information Record
  */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable CdmaT53ClirInfoRecord {
     byte cause;
 }

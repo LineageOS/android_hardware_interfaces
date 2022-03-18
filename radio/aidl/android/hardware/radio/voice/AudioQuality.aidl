@@ -22,6 +22,7 @@ package android.hardware.radio.voice;
  */
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum AudioQuality {
     /**
      * Unspecified audio codec

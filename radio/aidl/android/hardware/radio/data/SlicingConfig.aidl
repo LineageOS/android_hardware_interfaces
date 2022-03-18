@@ -23,6 +23,7 @@ import android.hardware.radio.data.UrspRule;
  * This struct represents the current slicing configuration.
  */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable SlicingConfig {
     /**
      * This vector contains the current URSP rules. Empty vector indicates no rules are configured.

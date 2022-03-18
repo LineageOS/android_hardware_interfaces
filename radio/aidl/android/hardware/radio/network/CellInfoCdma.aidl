@@ -21,6 +21,7 @@ import android.hardware.radio.network.CellIdentityCdma;
 import android.hardware.radio.network.EvdoSignalStrength;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable CellInfoCdma {
     CellIdentityCdma cellIdentityCdma;
     CdmaSignalStrength signalStrengthCdma;

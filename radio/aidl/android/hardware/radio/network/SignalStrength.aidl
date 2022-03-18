@@ -25,6 +25,7 @@ import android.hardware.radio.network.TdscdmaSignalStrength;
 import android.hardware.radio.network.WcdmaSignalStrength;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable SignalStrength {
     /**
      * If GSM measurements are provided, this structure must contain valid measurements; otherwise
