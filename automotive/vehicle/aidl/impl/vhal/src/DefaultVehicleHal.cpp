@@ -78,6 +78,16 @@ std::string toString(const std::unordered_set<int64_t>& values) {
     return str;
 }
 
+float getDefaultSampleRate(float sampleRate, float minSampleRate, float maxSampleRate) {
+    if (sampleRate < minSampleRate) {
+        return minSampleRate;
+    }
+    if (sampleRate > maxSampleRate) {
+        return maxSampleRate;
+    }
+    return sampleRate;
+}
+
 }  // namespace
 
 std::shared_ptr<SubscriptionClient> DefaultVehicleHal::SubscriptionClients::maybeAddClient(
@@ -590,7 +600,7 @@ ScopedAStatus DefaultVehicleHal::getPropConfigs(const std::vector<int32_t>& prop
     return vectorToStableLargeParcelable(std::move(configs), output);
 }
 
-Result<void, VhalError> DefaultVehicleHal::checkSubscribeOptions(
+VhalResult<void> DefaultVehicleHal::checkSubscribeOptions(
         const std::vector<SubscribeOptions>& options) {
     for (const auto& option : options) {
         int32_t propId = option.propId;
@@ -617,9 +627,10 @@ Result<void, VhalError> DefaultVehicleHal::checkSubscribeOptions(
             float minSampleRate = config.minSampleRate;
             float maxSampleRate = config.maxSampleRate;
             if (sampleRate < minSampleRate || sampleRate > maxSampleRate) {
-                return StatusError(StatusCode::INVALID_ARG)
-                       << StringPrintf("sample rate: %f out of range, must be within %f and %f",
-                                       sampleRate, minSampleRate, maxSampleRate);
+                float defaultRate = getDefaultSampleRate(sampleRate, minSampleRate, maxSampleRate);
+                ALOGW("sample rate: %f out of range, must be within %f and %f, set to %f",
+                      sampleRate, minSampleRate, maxSampleRate, defaultRate);
+                sampleRate = defaultRate;
             }
             if (!SubscriptionManager::checkSampleRate(sampleRate)) {
                 return StatusError(StatusCode::INVALID_ARG)
@@ -673,6 +684,8 @@ ScopedAStatus DefaultVehicleHal::subscribe(const CallbackType& callback,
         }
 
         if (config.changeMode == VehiclePropertyChangeMode::CONTINUOUS) {
+            optionCopy.sampleRate = getDefaultSampleRate(
+                    optionCopy.sampleRate, config.minSampleRate, config.maxSampleRate);
             continuousSubscriptions.push_back(std::move(optionCopy));
         } else {
             onChangeSubscriptions.push_back(std::move(optionCopy));
@@ -718,8 +731,7 @@ IVehicleHardware* DefaultVehicleHal::getHardware() {
     return mVehicleHardware.get();
 }
 
-Result<void, VhalError> DefaultVehicleHal::checkWritePermission(
-        const VehiclePropValue& value) const {
+VhalResult<void> DefaultVehicleHal::checkWritePermission(const VehiclePropValue& value) const {
     int32_t propId = value.prop;
     auto result = getConfig(propId);
     if (!result.ok()) {
@@ -735,8 +747,7 @@ Result<void, VhalError> DefaultVehicleHal::checkWritePermission(
     return {};
 }
 
-Result<void, VhalError> DefaultVehicleHal::checkReadPermission(
-        const VehiclePropValue& value) const {
+VhalResult<void> DefaultVehicleHal::checkReadPermission(const VehiclePropValue& value) const {
     int32_t propId = value.prop;
     auto result = getConfig(propId);
     if (!result.ok()) {

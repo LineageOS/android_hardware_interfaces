@@ -165,6 +165,11 @@ interface IVehicle {
      *    a property set failure message sent from the vehicle bus.
      * @param options List of options to subscribe. SubscribeOption contains
      *    information such as property Id, area Id, sample rate, etc.
+     *    For continuous properties, sample rate must be provided. If sample
+     *    rate is less than {@link VehiclePropConfig#minSampleRate}, the sample
+     *    rate would be minSampleRate. If sample rate is larger than
+     *    {@link VehiclePropValue#maxSampleRate}, the sample rate would be
+     *    maxSampleRate.
      * @param maxSharedMemoryFileCount The maximum number of shared memory files
      *    allocated for in VHAL for this subscription. When a memory file is
      *    handled back to the client, it cannot be used by VHAL to deliver

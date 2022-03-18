@@ -45,7 +45,6 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
   public:
     using CallbackType =
             std::shared_ptr<aidl::android::hardware::automotive::vehicle::IVehicleCallback>;
-    using StatusError = android::base::Error<VhalError>;
 
     explicit DefaultVehicleHal(std::unique_ptr<IVehicleHardware> hardware);
 
@@ -211,14 +210,14 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
             const std::vector<aidl::android::hardware::automotive::vehicle::SetValueRequest>&
                     requests);
 
-    android::base::Result<void, VhalError> checkSubscribeOptions(
+    VhalResult<void> checkSubscribeOptions(
             const std::vector<aidl::android::hardware::automotive::vehicle::SubscribeOptions>&
                     options);
 
-    android::base::Result<void, VhalError> checkReadPermission(
+    VhalResult<void> checkReadPermission(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
 
-    android::base::Result<void, VhalError> checkWritePermission(
+    VhalResult<void> checkWritePermission(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
 
     android::base::Result<const aidl::android::hardware::automotive::vehicle::VehiclePropConfig*>

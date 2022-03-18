@@ -40,11 +40,24 @@ parcelable SingleSatCorrection {
   int svid;
   long carrierFrequencyHz;
   float probSatIsLos;
-  float excessPathLengthMeters;
-  float excessPathLengthUncertaintyMeters;
-  android.hardware.gnss.measurement_corrections.ReflectingPlane reflectingPlane;
+  float combinedExcessPathLengthMeters;
+  float combinedExcessPathLengthUncertaintyMeters;
+  float combinedAttenuationDb;
+  android.hardware.gnss.measurement_corrections.SingleSatCorrection.ExcessPathInfo[] excessPathInfos;
   const int SINGLE_SAT_CORRECTION_HAS_SAT_IS_LOS_PROBABILITY = 1;
-  const int SINGLE_SAT_CORRECTION_HAS_EXCESS_PATH_LENGTH = 2;
-  const int SINGLE_SAT_CORRECTION_HAS_EXCESS_PATH_LENGTH_UNC = 4;
-  const int SINGLE_SAT_CORRECTION_HAS_REFLECTING_PLANE = 8;
+  const int SINGLE_SAT_CORRECTION_HAS_COMBINED_EXCESS_PATH_LENGTH = 2;
+  const int SINGLE_SAT_CORRECTION_HAS_COMBINED_EXCESS_PATH_LENGTH_UNC = 4;
+  const int SINGLE_SAT_CORRECTION_HAS_COMBINED_ATTENUATION = 16;
+  @VintfStability
+  parcelable ExcessPathInfo {
+    int excessPathInfoFlags;
+    float excessPathLengthMeters;
+    float excessPathLengthUncertaintyMeters;
+    android.hardware.gnss.measurement_corrections.ReflectingPlane reflectingPlane;
+    float attenuationDb;
+    const int EXCESS_PATH_INFO_HAS_EXCESS_PATH_LENGTH = 1;
+    const int EXCESS_PATH_INFO_HAS_EXCESS_PATH_LENGTH_UNC = 2;
+    const int EXCESS_PATH_INFO_HAS_REFLECTING_PLANE = 4;
+    const int EXCESS_PATH_INFO_HAS_ATTENUATION = 8;
+  }
 }

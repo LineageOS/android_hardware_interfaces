@@ -28,8 +28,7 @@ oneway interface IUwbClientCallback {
      * can use to pass incoming data to the stack.  These include UCI
      * responses and notifications from the UWB subsystem.
      *
-     * WIP doc link: https://groups.firaconsortium.org/wg/Technical/document/folder/127.
-     * TODO(b/196004116): Link to the published specification.
+     * UCI 1.1 specification: https://groups.firaconsortium.org/wg/members/document/1949.
      *
      * @param data UCI packet sent.
      */
