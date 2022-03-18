@@ -26,6 +26,7 @@
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
+#include <vector>
 
 #include "wifi_hidl_call_util.h"
 #include "wifi_hidl_test_utils.h"
@@ -616,6 +617,7 @@ TEST_P(WifiNanIfaceHidlTest, notifyCapabilitiesResponse_1_6) {
     ASSERT_EQ(std::cv_status::no_timeout, wait(NOTIFY_CAPABILITIES_RESPONSE_1_6));
     ASSERT_EQ(NOTIFY_CAPABILITIES_RESPONSE_1_6, callbackType);
     ASSERT_EQ(id, inputCmdId);
+    ASSERT_EQ(status.status, NanStatusType::SUCCESS);
 
     // check for reasonable capability values
     EXPECT_GT(capabilities_1_6.maxConcurrentClusters, (unsigned int)0);
@@ -637,23 +639,119 @@ TEST_P(WifiNanIfaceHidlTest, notifyCapabilitiesResponse_1_6) {
 }
 
 /*
- * startPublishRequest_1_6InvalidArgs: validate that fails with invalid arguments
+ * startPublishRequest_1_6: validate that success with valid arguments
  */
-TEST_P(WifiNanIfaceHidlTest, startPublishRequest_1_6InvalidArgs) {
+TEST_P(WifiNanIfaceHidlTest, startPublishRequest_1_6) {
     uint16_t inputCmdId = 10;
-    callbackType = INVALID;
-    ::android::hardware::wifi::V1_6::NanPublishRequest nanPublishRequest = {};
-    const auto& halStatus =
-            HIDL_INVOKE(iwifiNanIface, startPublishRequest_1_6, inputCmdId, nanPublishRequest);
+    ::android::hardware::wifi::V1_0::NanBandSpecificConfig config24 = {};
+    config24.rssiClose = 60;
+    config24.rssiMiddle = 70;
+    config24.rssiCloseProximity = 60;
+    config24.dwellTimeMs = 200;
+    config24.scanPeriodSec = 20;
+    config24.validDiscoveryWindowIntervalVal = false;
+    config24.discoveryWindowIntervalVal = 0;
 
+    ::android::hardware::wifi::V1_0::NanBandSpecificConfig config5 = {};
+    config5.rssiClose = 60;
+    config5.rssiMiddle = 75;
+    config5.rssiCloseProximity = 60;
+    config5.dwellTimeMs = 200;
+    config5.scanPeriodSec = 20;
+    config5.validDiscoveryWindowIntervalVal = false;
+    config5.discoveryWindowIntervalVal = 0;
+    ::android::hardware::wifi::V1_4::NanEnableRequest req = {};
+    req.operateInBand[(size_t)::android::hardware::wifi::V1_4::NanBandIndex::NAN_BAND_24GHZ] = true;
+    req.operateInBand[(size_t)::android::hardware::wifi::V1_4::NanBandIndex::NAN_BAND_5GHZ] = false;
+    req.hopCountMax = 2;
+    req.configParams.masterPref = 0;
+    req.configParams.disableDiscoveryAddressChangeIndication = true;
+    req.configParams.disableStartedClusterIndication = true;
+    req.configParams.disableJoinedClusterIndication = true;
+    req.configParams.includePublishServiceIdsInBeacon = true;
+    req.configParams.numberOfPublishServiceIdsInBeacon = 0;
+    req.configParams.includeSubscribeServiceIdsInBeacon = true;
+    req.configParams.numberOfSubscribeServiceIdsInBeacon = 0;
+    req.configParams.rssiWindowSize = 8;
+    req.configParams.macAddressRandomizationIntervalSec = 1800;
+    req.configParams.bandSpecificConfig[(
+            size_t)::android::hardware::wifi::V1_4::NanBandIndex::NAN_BAND_24GHZ] = config24;
+    req.configParams.bandSpecificConfig[(
+            size_t)::android::hardware::wifi::V1_4::NanBandIndex::NAN_BAND_5GHZ] = config5;
+
+    req.debugConfigs.validClusterIdVals = true;
+    req.debugConfigs.clusterIdTopRangeVal = 65535;
+    req.debugConfigs.clusterIdBottomRangeVal = 0;
+    req.debugConfigs.validIntfAddrVal = false;
+    req.debugConfigs.validOuiVal = false;
+    req.debugConfigs.ouiVal = 0;
+    req.debugConfigs.validRandomFactorForceVal = false;
+    req.debugConfigs.randomFactorForceVal = 0;
+    req.debugConfigs.validHopCountForceVal = false;
+    req.debugConfigs.hopCountForceVal = 0;
+    req.debugConfigs.validDiscoveryChannelVal = false;
+    req.debugConfigs.discoveryChannelMhzVal[(
+            size_t)::android::hardware::wifi::V1_4::NanBandIndex::NAN_BAND_24GHZ] = 0;
+    req.debugConfigs.discoveryChannelMhzVal[(
+            size_t)::android::hardware::wifi::V1_4::NanBandIndex::NAN_BAND_5GHZ] = 0;
+    req.debugConfigs.validUseBeaconsInBandVal = false;
+    req.debugConfigs.useBeaconsInBandVal[(
+            size_t)::android::hardware::wifi::V1_4::NanBandIndex::NAN_BAND_24GHZ] = true;
+    req.debugConfigs.useBeaconsInBandVal[(
+            size_t)::android::hardware::wifi::V1_4::NanBandIndex::NAN_BAND_5GHZ] = true;
+    req.debugConfigs.validUseSdfInBandVal = false;
+    req.debugConfigs.useSdfInBandVal[(
+            size_t)::android::hardware::wifi::V1_4::NanBandIndex::NAN_BAND_24GHZ] = true;
+    req.debugConfigs
+            .useSdfInBandVal[(size_t)::android::hardware::wifi::V1_4::NanBandIndex::NAN_BAND_5GHZ] =
+            true;
+
+    ::android::hardware::wifi::V1_6::NanConfigRequestSupplemental nanConfigRequestSupp = {};
+    nanConfigRequestSupp.V1_5.V1_2.discoveryBeaconIntervalMs = 20;
+    nanConfigRequestSupp.V1_5.V1_2.numberOfSpatialStreamsInDiscovery = 0;
+    nanConfigRequestSupp.V1_5.V1_2.enableDiscoveryWindowEarlyTermination = false;
+
+    callbackType = INVALID;
+
+    const auto& halStatus =
+            HIDL_INVOKE(iwifiNanIface, enableRequest_1_6, inputCmdId, req, nanConfigRequestSupp);
     if (halStatus.code != WifiStatusCode::ERROR_NOT_SUPPORTED) {
         ASSERT_EQ(WifiStatusCode::SUCCESS, halStatus.code);
 
         // wait for a callback
+        ASSERT_EQ(std::cv_status::no_timeout, wait(NOTIFY_ENABLE_RESPONSE));
+        ASSERT_EQ(NOTIFY_ENABLE_RESPONSE, callbackType);
+        ASSERT_EQ(id, inputCmdId);
+        ASSERT_EQ(status.status, NanStatusType::SUCCESS);
+    }
+    ::android::hardware::wifi::V1_6::NanPublishRequest nanPublishRequest = {};
+    nanPublishRequest.baseConfigs.sessionId = 0;
+    nanPublishRequest.baseConfigs.ttlSec = 0;
+    nanPublishRequest.baseConfigs.discoveryWindowPeriod = 1;
+    nanPublishRequest.baseConfigs.discoveryCount = 0;
+    nanPublishRequest.baseConfigs.serviceName = {97};
+
+    nanPublishRequest.baseConfigs.discoveryMatchIndicator = NanMatchAlg::MATCH_NEVER;
+    nanPublishRequest.baseConfigs.useRssiThreshold = false;
+    nanPublishRequest.baseConfigs.disableDiscoveryTerminationIndication = false;
+    nanPublishRequest.baseConfigs.disableMatchExpirationIndication = true;
+    nanPublishRequest.baseConfigs.disableFollowupReceivedIndication = false;
+    nanPublishRequest.baseConfigs.securityConfig.securityType = NanDataPathSecurityType::OPEN;
+    nanPublishRequest.autoAcceptDataPathRequests = false;
+    nanPublishRequest.publishType = NanPublishType::UNSOLICITED;
+    nanPublishRequest.txType = NanTxType::BROADCAST;
+
+    const auto& halStatus1 =
+            HIDL_INVOKE(iwifiNanIface, startPublishRequest_1_6, inputCmdId + 1, nanPublishRequest);
+
+    if (halStatus1.code != WifiStatusCode::ERROR_NOT_SUPPORTED) {
+        ASSERT_EQ(WifiStatusCode::SUCCESS, halStatus1.code);
+
+        // wait for a callback
         ASSERT_EQ(std::cv_status::no_timeout, wait(NOTIFY_START_PUBLISH_RESPONSE));
         ASSERT_EQ(NOTIFY_START_PUBLISH_RESPONSE, callbackType);
-        ASSERT_EQ(id, inputCmdId);
-        ASSERT_EQ(status.status, NanStatusType::INTERNAL_FAILURE);
+        ASSERT_EQ(id, inputCmdId + 1);
+        ASSERT_EQ(status.status, NanStatusType::SUCCESS);
     }
 }
 
