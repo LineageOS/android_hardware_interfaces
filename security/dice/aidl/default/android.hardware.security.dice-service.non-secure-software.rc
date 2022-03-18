@@ -1,0 +1,9 @@
+service vendor.dice /vendor/bin/hw/android.hardware.security.dice-service.non-secure-software
+    class early_hal
+    user nobody
+    # The diced HAL cannot be allowed to restart. When it crashes for any reason.
+    # it loses security critical state. The only remedy is to restart the device.
+    # This may be implementation depended. It is safe to restart the HAL if the
+    # state change during a call to "demote" is is preserved.
+    # see android/hardware/security/dice/IDiceDevice.aidl for details on "demote".
+    oneshot

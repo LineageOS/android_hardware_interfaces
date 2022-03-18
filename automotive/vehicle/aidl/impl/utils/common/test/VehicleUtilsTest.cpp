@@ -763,7 +763,7 @@ TEST(VehicleUtilsTest, testConcurrentQueueDeactivateNotifyWaitingThread) {
 }
 
 TEST(VehicleUtilsTest, testVhalError) {
-    Result<void, VhalError> result = Error<VhalError>(StatusCode::INVALID_ARG) << "error message";
+    VhalResult<void> result = Error<VhalError>(StatusCode::INVALID_ARG) << "error message";
 
     ASSERT_EQ(result.error().message(), "error message: INVALID_ARG");
 }

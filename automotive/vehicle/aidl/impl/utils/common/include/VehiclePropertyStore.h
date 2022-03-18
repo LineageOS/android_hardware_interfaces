@@ -43,9 +43,8 @@ namespace vehicle {
 // This class is thread-safe, however it uses blocking synchronization across all methods.
 class VehiclePropertyStore final {
   public:
-    using ValueResultType = android::base::Result<VehiclePropValuePool::RecyclableType, VhalError>;
-    using ValuesResultType =
-            android::base::Result<std::vector<VehiclePropValuePool::RecyclableType>, VhalError>;
+    using ValueResultType = VhalResult<VehiclePropValuePool::RecyclableType>;
+    using ValuesResultType = VhalResult<std::vector<VehiclePropValuePool::RecyclableType>>;
 
     explicit VehiclePropertyStore(std::shared_ptr<VehiclePropValuePool> valuePool)
         : mValuePool(valuePool) {}
@@ -73,8 +72,8 @@ class VehiclePropertyStore final {
     // 'status' would be initialized to {@code VehiclePropertyStatus::AVAILABLE}, if this is to
     // override an existing value, the status for the existing value would be used for the
     // overridden value.
-    android::base::Result<void, VhalError> writeValue(
-            VehiclePropValuePool::RecyclableType propValue, bool updateStatus = false);
+    VhalResult<void> writeValue(VehiclePropValuePool::RecyclableType propValue,
+                                bool updateStatus = false);
 
     // Remove a given property value from the property store. The 'propValue' would be used to
     // generate the key for the value to remove.
