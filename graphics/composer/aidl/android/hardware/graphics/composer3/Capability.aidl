@@ -57,4 +57,13 @@ enum Capability {
      * validateDisplay step is needed.
      */
     SKIP_VALIDATE = 4,
+
+    /**
+     * Specifies that the device supports setting a display configuration that
+     * the device should boot at.
+     * @see IComposerClient.setBootDisplayConfig
+     * @see IComposerClient.clearBootDisplayConfig
+     * @see IComposerClient.getPreferredBootDisplayConfig
+     */
+    BOOT_DISPLAY_CONFIG = 5,
 }
