@@ -17,29 +17,13 @@
 package android.hardware.radio.ims.media;
 
 import android.hardware.radio.ims.media.IImsMediaSession;
-import android.hardware.radio.ims.media.MediaStackState;
 import android.hardware.radio.ims.media.RtpError;
-import android.hardware.radio.ims.media.SpeechCodec;
 
 /**
  * Interface declaring listener functions for unsolicited IMS media notifications.
  */
 @VintfStability
 oneway interface IImsMediaListener {
-    /**
-     * Notifies the media stack bring up status and capabilities.
-     *
-     * @param status bring up status
-     * @param supportedCodecs array of supported speech codecs by the implementation
-     */
-    void onBringupResponse(RtpError status, in SpeechCodec[] supportedCodecs);
-
-    /**
-     * Notifies the state of the media stack whenever there is a change.
-     *
-     * @param state current state of the media stack
-     */
-    void onMediaStackStateChanged(MediaStackState state);
 
     /**
      * Fired when a IImsMedia#openSession() API is successful.

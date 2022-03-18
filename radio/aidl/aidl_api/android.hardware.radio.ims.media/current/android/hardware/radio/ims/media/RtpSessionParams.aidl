@@ -35,9 +35,9 @@ package android.hardware.radio.ims.media;
 @VintfStability
 parcelable RtpSessionParams {
   byte pTimeMillis;
-  byte maxPtimeMillis;
+  int maxPtimeMillis;
   int maxMtuBytes;
-  int dscp;
+  byte dscp;
   android.hardware.radio.ims.media.DtmfParams dtmfParams;
   android.hardware.radio.ims.media.CodecParams codecParams;
 }

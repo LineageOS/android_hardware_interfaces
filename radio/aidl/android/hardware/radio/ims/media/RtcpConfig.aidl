@@ -22,8 +22,6 @@ parcelable RtcpConfig {
     String canonicalName;
     /** Port for sending outgoing RTCP packets */
     int transmitPort;
-    /** Port where incoming RTCP packets are received */
-    int receivePort;
     /** Transmit interval in seconds. Value 0 indicates that RTCP reports should not be reported */
     int transmitIntervalSec;
     /** Bitmask of RTCP-XR blocks to enable as in RtcpXrReportBlockType */

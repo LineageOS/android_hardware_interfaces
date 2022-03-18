@@ -36,7 +36,6 @@ package android.hardware.radio.ims.media;
 parcelable RtcpConfig {
   String canonicalName;
   int transmitPort;
-  int receivePort;
   int transmitIntervalSec;
   int rtcpXrBlocks;
 }

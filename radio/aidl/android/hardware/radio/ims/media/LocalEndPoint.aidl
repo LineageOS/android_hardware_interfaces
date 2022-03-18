@@ -16,12 +16,14 @@
 
 package android.hardware.radio.ims.media;
 
-import android.hardware.radio.ims.media.RtpAddress;
+import android.os.ParcelFileDescriptor;
 
 @VintfStability
 parcelable LocalEndPoint {
-    /** IP address/port on the IMS network where the socket needs to be open */
-    RtpAddress localAddress;
+    /** Socket file descriptor for RTP traffic */
+    ParcelFileDescriptor rtpFd;
+    /** Socket file descriptor for RTCP traffic */
+    ParcelFileDescriptor rtcpFd;
     /** The logical modem ID, returned by IRadioConfig.getPhoneCapability() */
     int modemId;
 }

@@ -34,9 +34,9 @@
 package android.hardware.radio.ims.media;
 @VintfStability
 parcelable CodecParams {
-  android.hardware.radio.ims.media.SpeechCodec codec;
-  int rxPayloadTypeNumber;
-  int txPayloadTypeNumber;
+  android.hardware.radio.ims.media.CodecType codecType;
+  byte rxPayloadTypeNumber;
+  byte txPayloadTypeNumber;
   byte samplingRateKHz;
   byte txCodecModeRequest;
   boolean dtxEnabled;

@@ -34,8 +34,6 @@
 package android.hardware.radio.ims.media;
 @VintfStability
 interface IImsMediaListener {
-  oneway void onBringupResponse(android.hardware.radio.ims.media.RtpError status, in android.hardware.radio.ims.media.SpeechCodec[] supportedCodecs);
-  oneway void onMediaStackStateChanged(android.hardware.radio.ims.media.MediaStackState state);
   oneway void onOpenSessionSuccess(int sessionId, android.hardware.radio.ims.media.IImsMediaSession session);
   oneway void onOpenSessionFailure(int sessionId, android.hardware.radio.ims.media.RtpError error);
 }
