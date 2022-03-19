@@ -1161,6 +1161,13 @@ enum CameraMetadataTag {
      */
     ANDROID_SCALER_AVAILABLE_ROTATE_AND_CROP_MODES,
     /**
+     * android.scaler.rotateAndCrop [dynamic, enum, public]
+     *
+     * <p>Whether a rotation-and-crop operation is applied to processed
+     * outputs from the camera.</p>
+     */
+    ANDROID_SCALER_ROTATE_AND_CROP,
+    /**
      * android.scaler.defaultSecureImageSize [static, int32[], public]
      *
      * <p>Default YUV/PRIVATE size to use for requesting secure image buffers.</p>
@@ -1229,7 +1236,7 @@ enum CameraMetadataTag {
      *
      * <p>The stream use cases supported by this camera device.</p>
      */
-    ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES,
+    ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES = 851994,
     /**
      * android.sensor.exposureTime [dynamic, int64, public]
      *
@@ -2232,12 +2239,14 @@ enum CameraMetadataTag {
      * <p>The maximum number of Jpeg APP segments supported by the camera HAL device.</p>
      */
     ANDROID_HEIC_INFO_MAX_JPEG_APP_SEGMENTS_COUNT,
-    /** android.automotive.location [static, enum, public]
+    /**
+     * android.automotive.location [static, enum, public]
      *
      * <p>Location of the cameras on the automotive devices.</p>
      */
     ANDROID_AUTOMOTIVE_LOCATION = CameraMetadataSectionStart.ANDROID_AUTOMOTIVE_START,
-    /** android.automotive.lens.facing [static, enum[], public]
+    /**
+     * android.automotive.lens.facing [static, enum[], public]
      *
      * <p>The direction of the camera faces relative to the vehicle body frame and the
      * passenger seats.</p>
