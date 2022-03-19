@@ -22,11 +22,8 @@
 
 package android.hardware.camera.metadata;
 
-/*
- * Enumeration definitions for the various entries that need them
- *
- *
- * android.control.aeMode enumeration values added
+/**
+ * android.control.aeMode enumeration values
  * @see ANDROID_CONTROL_AE_MODE
  */
 @VintfStability
