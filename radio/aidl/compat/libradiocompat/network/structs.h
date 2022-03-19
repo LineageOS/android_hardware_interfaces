@@ -49,6 +49,8 @@ toHidl(const ::aidl::android::hardware::radio::network::SignalThresholdInfo& inf
 
 ::aidl::android::hardware::radio::network::RadioAccessSpecifier  //
 toAidl(const V1_5::RadioAccessSpecifier& spec);
+V1_5::RadioAccessNetworks  //
+toRadioAccessNetworks(::aidl::android::hardware::radio::AccessNetwork val);
 V1_5::RadioAccessSpecifier  //
 toHidl(const ::aidl::android::hardware::radio::network::RadioAccessSpecifier& spec);
 
