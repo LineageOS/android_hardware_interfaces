@@ -20,5 +20,5 @@ package android.hardware.camera.common;
 @Backing(type="long")
 enum TagBoundaryId {
     AOSP = 0x0,
-    VENDOR = 0x80000000,
+    VENDOR = 0x80000000L,
 }

@@ -495,6 +495,10 @@ TEST_P(GraphicsComposerAidlTest, SetActiveConfigWithConstraints_BadConfig) {
 }
 
 TEST_P(GraphicsComposerAidlTest, SetBootDisplayConfig_BadDisplay) {
+    if (!hasCapability(Capability::BOOT_DISPLAY_CONFIG)) {
+        GTEST_SUCCEED() << "Boot Display Config not supported";
+        return;
+    }
     const auto& status = mComposerClient->setBootDisplayConfig(getInvalidDisplayId(), /*config*/ 0);
 
     EXPECT_FALSE(status.isOk());
@@ -502,6 +506,10 @@ TEST_P(GraphicsComposerAidlTest, SetBootDisplayConfig_BadDisplay) {
 }
 
 TEST_P(GraphicsComposerAidlTest, SetBootDisplayConfig_BadConfig) {
+    if (!hasCapability(Capability::BOOT_DISPLAY_CONFIG)) {
+        GTEST_SUCCEED() << "Boot Display Config not supported";
+        return;
+    }
     for (VtsDisplay& display : mDisplays) {
         int32_t constexpr kInvalidConfigId = IComposerClient::INVALID_CONFIGURATION;
         const auto& status =
@@ -513,6 +521,10 @@ TEST_P(GraphicsComposerAidlTest, SetBootDisplayConfig_BadConfig) {
 }
 
 TEST_P(GraphicsComposerAidlTest, SetBootDisplayConfig) {
+    if (!hasCapability(Capability::BOOT_DISPLAY_CONFIG)) {
+        GTEST_SUCCEED() << "Boot Display Config not supported";
+        return;
+    }
     const auto& [status, configs] = mComposerClient->getDisplayConfigs(getPrimaryDisplayId());
     EXPECT_TRUE(status.isOk());
     for (const auto& config : configs) {
@@ -521,6 +533,10 @@ TEST_P(GraphicsComposerAidlTest, SetBootDisplayConfig) {
 }
 
 TEST_P(GraphicsComposerAidlTest, ClearBootDisplayConfig_BadDisplay) {
+    if (!hasCapability(Capability::BOOT_DISPLAY_CONFIG)) {
+        GTEST_SUCCEED() << "Boot Display Config not supported";
+        return;
+    }
     const auto& status = mComposerClient->clearBootDisplayConfig(getInvalidDisplayId());
 
     EXPECT_FALSE(status.isOk());
@@ -528,10 +544,18 @@ TEST_P(GraphicsComposerAidlTest, ClearBootDisplayConfig_BadDisplay) {
 }
 
 TEST_P(GraphicsComposerAidlTest, ClearBootDisplayConfig) {
+    if (!hasCapability(Capability::BOOT_DISPLAY_CONFIG)) {
+        GTEST_SUCCEED() << "Boot Display Config not supported";
+        return;
+    }
     EXPECT_TRUE(mComposerClient->clearBootDisplayConfig(getPrimaryDisplayId()).isOk());
 }
 
 TEST_P(GraphicsComposerAidlTest, GetPreferredBootDisplayConfig_BadDisplay) {
+    if (!hasCapability(Capability::BOOT_DISPLAY_CONFIG)) {
+        GTEST_SUCCEED() << "Boot Display Config not supported";
+        return;
+    }
     const auto& [status, _] = mComposerClient->getPreferredBootDisplayConfig(getInvalidDisplayId());
 
     EXPECT_FALSE(status.isOk());
@@ -539,6 +563,10 @@ TEST_P(GraphicsComposerAidlTest, GetPreferredBootDisplayConfig_BadDisplay) {
 }
 
 TEST_P(GraphicsComposerAidlTest, GetPreferredBootDisplayConfig) {
+    if (!hasCapability(Capability::BOOT_DISPLAY_CONFIG)) {
+        GTEST_SUCCEED() << "Boot Display Config not supported";
+        return;
+    }
     const auto& [status, preferredDisplayConfig] =
             mComposerClient->getPreferredBootDisplayConfig(getPrimaryDisplayId());
     EXPECT_TRUE(status.isOk());
@@ -547,6 +575,26 @@ TEST_P(GraphicsComposerAidlTest, GetPreferredBootDisplayConfig) {
 
     EXPECT_TRUE(configStatus.isOk());
     EXPECT_NE(configs.end(), std::find(configs.begin(), configs.end(), preferredDisplayConfig));
+}
+
+TEST_P(GraphicsComposerAidlTest, BootDisplayConfig_Unsupported) {
+    if (!hasCapability(Capability::BOOT_DISPLAY_CONFIG)) {
+        const auto& [configStatus, config] =
+                mComposerClient->getActiveConfig(getPrimaryDisplayId());
+        EXPECT_TRUE(configStatus.isOk());
+
+        auto status = mComposerClient->setBootDisplayConfig(getPrimaryDisplayId(), config);
+        EXPECT_FALSE(status.isOk());
+        EXPECT_EQ(IComposerClient::EX_UNSUPPORTED, status.getServiceSpecificError());
+
+        status = mComposerClient->getPreferredBootDisplayConfig(getPrimaryDisplayId()).first;
+        EXPECT_FALSE(status.isOk());
+        EXPECT_EQ(IComposerClient::EX_UNSUPPORTED, status.getServiceSpecificError());
+
+        status = mComposerClient->clearBootDisplayConfig(getPrimaryDisplayId());
+        EXPECT_FALSE(status.isOk());
+        EXPECT_EQ(IComposerClient::EX_UNSUPPORTED, status.getServiceSpecificError());
+    }
 }
 
 TEST_P(GraphicsComposerAidlTest, SetAutoLowLatencyMode_BadDisplay) {
