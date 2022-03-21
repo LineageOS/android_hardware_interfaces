@@ -107,7 +107,7 @@ bool isVoiceEmergencyOnly(RegState state) {
 
 bool stringEndsWith(std::string const& string, std::string const& end) {
     if (string.size() >= end.size()) {
-        return (0 == string.compare(string.size() - end.size() - 1, end.size(), end));
+        return std::equal(end.rbegin(), end.rend(), string.rbegin());
     } else {
         return false;
     }
@@ -116,7 +116,7 @@ bool stringEndsWith(std::string const& string, std::string const& end) {
 bool isServiceValidForDeviceConfiguration(std::string& serviceName) {
     if (isSsSsEnabled()) {
         // Device is configured as SSSS.
-        if (stringEndsWith(serviceName, RADIO_SERVICE_SLOT1_NAME)) {
+        if (!stringEndsWith(serviceName, RADIO_SERVICE_SLOT1_NAME)) {
             ALOGI("%s instance is not valid for SSSS device.", serviceName.c_str());
             return false;
         }
