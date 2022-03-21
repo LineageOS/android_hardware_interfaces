@@ -432,10 +432,9 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
         auto [deviceInfoMap, __2, deviceInfoErrMsg] = cppbor::parse(deviceInfo.deviceInfo);
         ASSERT_TRUE(deviceInfoMap) << "Failed to parse deviceInfo: " << deviceInfoErrMsg;
         ASSERT_TRUE(deviceInfoMap->asMap());
-
         checkDeviceInfo(deviceInfoMap->asMap(), deviceInfo.deviceInfo);
-
         auto& signingKey = bccContents->back().pubKey;
+        deviceInfoMap->asMap()->canonicalize();
         auto macKey = verifyAndParseCoseSign1(signedMac->asArray(), signingKey,
                                               cppbor::Array()  // SignedMacAad
                                                       .add(challenge_)
@@ -467,10 +466,10 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
         ASSERT_EQ(val->type(), majorType) << entryName << " has the wrong type.";
         switch (majorType) {
             case cppbor::TSTR:
-                ASSERT_GT(val->asTstr()->value().size(), 0);
+                EXPECT_GT(val->asTstr()->value().size(), 0);
                 break;
             case cppbor::BSTR:
-                ASSERT_GT(val->asBstr()->value().size(), 0);
+                EXPECT_GT(val->asBstr()->value().size(), 0);
                 break;
             default:
                 break;
@@ -478,6 +477,8 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
     }
 
     void checkDeviceInfo(const cppbor::Map* deviceInfo, bytevec deviceInfoBytes) {
+        EXPECT_EQ(deviceInfo->clone()->asMap()->canonicalize().encode(), deviceInfoBytes)
+                << "DeviceInfo ordering is non-canonical.";
         const auto& version = deviceInfo->get("version");
         ASSERT_TRUE(version);
         ASSERT_TRUE(version->asUint());
@@ -496,21 +497,21 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
                 // TODO: Refactor the KeyMint code that validates these fields and include it here.
                 checkType(deviceInfo, cppbor::TSTR, "vb_state");
                 allowList = getAllowedVbStates();
-                ASSERT_NE(allowList.find(deviceInfo->get("vb_state")->asTstr()->value()),
+                EXPECT_NE(allowList.find(deviceInfo->get("vb_state")->asTstr()->value()),
                           allowList.end());
                 checkType(deviceInfo, cppbor::TSTR, "bootloader_state");
                 allowList = getAllowedBootloaderStates();
-                ASSERT_NE(allowList.find(deviceInfo->get("bootloader_state")->asTstr()->value()),
+                EXPECT_NE(allowList.find(deviceInfo->get("bootloader_state")->asTstr()->value()),
                           allowList.end());
                 checkType(deviceInfo, cppbor::BSTR, "vbmeta_digest");
                 checkType(deviceInfo, cppbor::UINT, "system_patch_level");
                 checkType(deviceInfo, cppbor::UINT, "boot_patch_level");
                 checkType(deviceInfo, cppbor::UINT, "vendor_patch_level");
                 checkType(deviceInfo, cppbor::UINT, "fused");
-                ASSERT_LT(deviceInfo->get("fused")->asUint()->value(), 2);  // Must be 0 or 1.
+                EXPECT_LT(deviceInfo->get("fused")->asUint()->value(), 2);  // Must be 0 or 1.
                 checkType(deviceInfo, cppbor::TSTR, "security_level");
                 allowList = getAllowedSecurityLevels();
-                ASSERT_NE(allowList.find(deviceInfo->get("security_level")->asTstr()->value()),
+                EXPECT_NE(allowList.find(deviceInfo->get("security_level")->asTstr()->value()),
                           allowList.end());
                 if (deviceInfo->get("security_level")->asTstr()->value() == "tee") {
                     checkType(deviceInfo, cppbor::TSTR, "os_version");
@@ -519,20 +520,18 @@ class CertificateRequestTest : public VtsRemotelyProvisionedComponentTests {
             case 1:
                 checkType(deviceInfo, cppbor::TSTR, "security_level");
                 allowList = getAllowedSecurityLevels();
-                ASSERT_NE(allowList.find(deviceInfo->get("security_level")->asTstr()->value()),
+                EXPECT_NE(allowList.find(deviceInfo->get("security_level")->asTstr()->value()),
                           allowList.end());
                 if (version->asUint()->value() == 1) {
                     checkType(deviceInfo, cppbor::TSTR, "att_id_state");
                     allowList = getAllowedAttIdStates();
-                    ASSERT_NE(allowList.find(deviceInfo->get("att_id_state")->asTstr()->value()),
+                    EXPECT_NE(allowList.find(deviceInfo->get("att_id_state")->asTstr()->value()),
                               allowList.end());
                 }
                 break;
             default:
                 FAIL() << "Unrecognized version: " << version->asUint()->value();
         }
-        ASSERT_EQ(deviceInfo->clone()->asMap()->canonicalize().encode(), deviceInfoBytes)
-                << "DeviceInfo ordering is non-canonical.";
     }
 
     bytevec eekId_;
