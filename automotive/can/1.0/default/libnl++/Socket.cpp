@@ -55,7 +55,7 @@ void Socket::clearPollErr() {
     if (errno != EINVAL) {
         PLOG(WARNING) << "clearPollError() caught unexpected error: ";
     }
-    CHECK_EQ(bytesReceived, 0) << "clearPollError() recvd " << bytesReceived << " instead of zero!";
+    CHECK_LE(bytesReceived, 0) << "clearPollError() didn't find an error!";
 }
 
 bool Socket::send(const Buffer<nlmsghdr>& msg, const sockaddr_nl& sa) {
