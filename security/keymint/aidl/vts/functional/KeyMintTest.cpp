@@ -3821,6 +3821,13 @@ TEST_P(ImportKeyTest, RsaPublicExponentMismatch) {
  * Verifies that importing an RSA key pair with purpose ATTEST_KEY+SIGN fails.
  */
 TEST_P(ImportKeyTest, RsaAttestMultiPurposeFail) {
+    if (AidlVersion() < 2) {
+        // The KeyMint v1 spec required that KeyPurpose::ATTEST_KEY not be combined
+        // with other key purposes.  However, this was not checked at the time
+        // so we can only be strict about checking this for implementations of KeyMint
+        // version 2 and above.
+        GTEST_SKIP() << "Single-purpose for KeyPurpose::ATTEST_KEY only strict since KeyMint v2";
+    }
     uint32_t key_size = 2048;
     string key = rsa_2048_key;
 
@@ -3959,6 +3966,13 @@ TEST_P(ImportKeyTest, EcdsaCurveMismatch) {
  * Verifies that importing and using an ECDSA P-256 key pair with purpose ATTEST_KEY+SIGN fails.
  */
 TEST_P(ImportKeyTest, EcdsaAttestMultiPurposeFail) {
+    if (AidlVersion() < 2) {
+        // The KeyMint v1 spec required that KeyPurpose::ATTEST_KEY not be combined
+        // with other key purposes.  However, this was not checked at the time
+        // so we can only be strict about checking this for implementations of KeyMint
+        // version 2 and above.
+        GTEST_SKIP() << "Single-purpose for KeyPurpose::ATTEST_KEY only strict since KeyMint v2";
+    }
     ASSERT_EQ(ErrorCode::INCOMPATIBLE_PURPOSE,
               ImportKey(AuthorizationSetBuilder()
                                 .Authorization(TAG_NO_AUTH_REQUIRED)
