@@ -39,5 +39,5 @@ union AccessTechnologySpecificInfo {
   android.hardware.radio.network.EutranRegistrationInfo eutranInfo;
   android.hardware.radio.network.NrVopsInfo ngranNrVopsInfo;
   boolean geranDtmSupported;
-  @nullable android.hardware.radio.network.NrRegistrationInfo ngranInfo;
+  android.hardware.radio.network.NrRegistrationInfo ngranInfo;
 }

@@ -1404,7 +1404,8 @@ TEST_P(RadioNetworkTest, getDataRegistrationState) {
     if (rat == RadioTechnology::LTE || rat == RadioTechnology::LTE_CA) {
         ASSERT_EQ(info.getTag(), AccessTechnologySpecificInfo::eutranInfo);
     } else if (rat == RadioTechnology::NR) {
-        ASSERT_EQ(info.getTag(), AccessTechnologySpecificInfo::ngranNrVopsInfo);
+        ASSERT_TRUE(info.getTag() == AccessTechnologySpecificInfo::ngranNrVopsInfo
+            || info.getTag() == AccessTechnologySpecificInfo::ngranInfo);
     }
 }
 
