@@ -78,15 +78,16 @@ parcelable KeyCreationResult {
      *     provided, otherwise ATTESTATION_APPLICATION_ID_MISSING will be returned.
      *
      * 3.  Asymmetric key non-attestation with signing key.  If Tag::ATTESTATION_CHALLENGE is not
-     *     provided and the generated/imported key has KeyPurpose::SIGN, then the returned
-     *     certificate chain must contain only a single self-signed certificate with no attestation
-     *     extension.  Tag::ATTESTATION_APPLICATION_ID will be ignored if provided.
+     *     provided and the generated/imported key has KeyPurpose::SIGN or KeyPurpose::ATTEST_KEY,
+     *     then the returned certificate chain must contain only a single self-signed certificate
+     *     with no attestation extension.  Tag::ATTESTATION_APPLICATION_ID will be ignored if
+     *     provided.
      *
      * 4.  Asymmetric key non-attestation with non-signing key.  If TAG::ATTESTATION_CHALLENGE is
-     *     not provided and the generated/imported key does not have KeyPurpose::SIGN, then the
-     *     returned certificate chain must contain only a single certificate with an empty signature
-     *     and no attestation extension.  Tag::ATTESTATION_APPLICATION_ID will be ignored if
-     *     provided.
+     *     not provided and the generated/imported key does not have KeyPurpose::SIGN nor
+     *     KeyPurpose::ATTEST_KEY, then the returned certificate chain must contain only a single
+     *     certificate with an empty signature and no attestation extension.
+     *     Tag::ATTESTATION_APPLICATION_ID will be ignored if provided.
      *
      * 5.  Symmetric key.  If the generated/imported key is symmetric, the certificate chain must
      *     return empty, any Tag::ATTESTATION_CHALLENGE or Tag::ATTESTATION_APPLICATION_ID inputs,
