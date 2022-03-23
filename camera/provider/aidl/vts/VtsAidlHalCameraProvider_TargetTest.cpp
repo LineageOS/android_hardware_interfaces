@@ -2989,8 +2989,8 @@ TEST_P(CameraAidlTest, configureStreamsUseCases) {
         auto retcode = find_camera_metadata_ro_entry(
                 staticMeta, ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES, &entry);
         if ((0 == retcode) && (entry.count > 0)) {
-            supportedUseCases.insert(supportedUseCases.end(), entry.data.i32,
-                                     entry.data.i32 + entry.count);
+            supportedUseCases.insert(supportedUseCases.end(), entry.data.i64,
+                                     entry.data.i64 + entry.count);
         } else {
             supportedUseCases.push_back(ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT);
         }
@@ -3034,12 +3034,13 @@ TEST_P(CameraAidlTest, configureStreamsUseCases) {
 
             bool combSupported;
             ret = cameraDevice->isStreamCombinationSupported(config, &combSupported);
-            ASSERT_TRUE((ret.isOk()) || (static_cast<int32_t>(Status::OPERATION_NOT_SUPPORTED) ==
-                                         ret.getServiceSpecificError()));
-            if (ret.isOk()) {
-                ASSERT_EQ(combSupported, useCaseSupported);
+            if (static_cast<int32_t>(Status::OPERATION_NOT_SUPPORTED) ==
+                ret.getServiceSpecificError()) {
+                continue;
             }
+
             ASSERT_TRUE(ret.isOk());
+            ASSERT_EQ(combSupported, useCaseSupported);
 
             std::vector<HalStream> halStreams;
             ret = mSession->configureStreams(config, &halStreams);
