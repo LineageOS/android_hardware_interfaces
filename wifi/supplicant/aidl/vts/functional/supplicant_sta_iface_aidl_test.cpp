@@ -43,7 +43,6 @@ using aidl::android::hardware::wifi::supplicant::ISupplicant;
 using aidl::android::hardware::wifi::supplicant::ISupplicantStaIface;
 using aidl::android::hardware::wifi::supplicant::ISupplicantStaNetwork;
 using aidl::android::hardware::wifi::supplicant::KeyMgmtMask;
-using aidl::android::hardware::wifi::supplicant::RxFilterType;
 using aidl::android::hardware::wifi::supplicant::WpaDriverCapabilitiesMask;
 using aidl::android::hardware::wifi::supplicant::WpsConfigMethods;
 using android::ProcessState;
@@ -541,36 +540,6 @@ TEST_P(SupplicantStaIfaceAidlTest, Disconnect) {
 TEST_P(SupplicantStaIfaceAidlTest, SetPowerSave) {
     EXPECT_TRUE(sta_iface_->setPowerSave(true).isOk());
     EXPECT_TRUE(sta_iface_->setPowerSave(false).isOk());
-}
-
-/*
- * StartRxFilter
- */
-TEST_P(SupplicantStaIfaceAidlTest, StartRxFilter) {
-    EXPECT_TRUE(sta_iface_->startRxFilter().isOk());
-}
-
-/*
- * StopRxFilter
- */
-TEST_P(SupplicantStaIfaceAidlTest, StopRxFilter) {
-    EXPECT_TRUE(sta_iface_->stopRxFilter().isOk());
-}
-
-/*
- * AddRxFilter
- */
-TEST_P(SupplicantStaIfaceAidlTest, AddRxFilter) {
-    EXPECT_TRUE(sta_iface_->addRxFilter(RxFilterType::V4_MULTICAST).isOk());
-    EXPECT_TRUE(sta_iface_->addRxFilter(RxFilterType::V6_MULTICAST).isOk());
-}
-
-/*
- * RemoveRxFilter
- */
-TEST_P(SupplicantStaIfaceAidlTest, RemoveRxFilter) {
-    EXPECT_TRUE(sta_iface_->removeRxFilter(RxFilterType::V4_MULTICAST).isOk());
-    EXPECT_TRUE(sta_iface_->removeRxFilter(RxFilterType::V6_MULTICAST).isOk());
 }
 
 /*
