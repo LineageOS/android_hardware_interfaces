@@ -92,8 +92,8 @@ parcelable ProtectedData {
      *         },
      *         {},                   // Unprotected params
      *         bstr .size 32,                  // MAC key
-     *         bstr PureEd25519(KM_priv, .cbor SignedMac_structure) /
-     *              ECDSA(KM_priv, bstr .cbor SignedMac_structure)
+     *         bstr // PureEd25519(KM_priv, bstr .cbor SignedMac_structure) /
+     *              // ECDSA(KM_priv, bstr .cbor SignedMac_structure)
      *     ]
      *
      *     SignedMac_structure = [
@@ -144,8 +144,8 @@ parcelable ProtectedData {
      *         },
      *         unprotected: {},
      *         payload: bstr .cbor BccPayload,
-     *         signature: bstr .cbor PureEd25519(SigningKey, bstr .cbor BccEntryInput) /
-     *                    bstr .cbor ECDSA(SigningKey, bstr .cbor BccEntryInput)
+     *         signature: bstr // PureEd25519(SigningKey, bstr .cbor BccEntryInput) /
+     *                         // ECDSA(SigningKey, bstr .cbor BccEntryInput)
      *         // See RFC 8032 for details of how to encode the signature value for Ed25519.
      *     ]
      *
