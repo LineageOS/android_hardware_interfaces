@@ -18,6 +18,7 @@ package android.hardware.radio.modem;
 
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum DeviceStateType {
     /**
      * Device power save mode (provided by PowerManager). True indicates the device is in

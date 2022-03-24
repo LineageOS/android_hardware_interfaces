@@ -18,6 +18,7 @@ package android.hardware.radio.modem;
 
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum NvItem {
     /**
      * CDMA radio and account information (items 1-10)

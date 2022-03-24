@@ -32,7 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.network;
-@Backing(type="int") @VintfStability
+@Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum GeranBands {
   BAND_T380 = 1,
   BAND_T410 = 2,

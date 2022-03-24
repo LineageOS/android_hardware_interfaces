@@ -17,6 +17,7 @@
 package android.hardware.radio.network;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable WcdmaSignalStrength {
     /**
      * Valid values are (0-31, 99) as defined in TS 27.007 8.5; INT_MAX means unreported.

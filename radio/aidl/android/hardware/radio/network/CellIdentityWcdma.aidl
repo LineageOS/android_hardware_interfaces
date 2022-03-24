@@ -20,6 +20,7 @@ import android.hardware.radio.network.ClosedSubscriberGroupInfo;
 import android.hardware.radio.network.OperatorInfo;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable CellIdentityWcdma {
     /**
      * 3-digit Mobile Country Code, 0..999, empty string if unknown.

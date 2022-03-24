@@ -18,6 +18,7 @@ package android.hardware.radio.voice;
 
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum CdmaOtaProvisionStatus {
     SPL_UNLOCKED,
     SPC_RETRIES_EXCEEDED,
