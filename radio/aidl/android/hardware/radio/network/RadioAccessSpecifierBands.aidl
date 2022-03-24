@@ -22,6 +22,7 @@ import android.hardware.radio.network.NgranBands;
 import android.hardware.radio.network.UtranBands;
 
 @VintfStability
+@JavaDerive(toString=true)
 union RadioAccessSpecifierBands {
     boolean noinit;
     /**

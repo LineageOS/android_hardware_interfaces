@@ -32,7 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.voice;
-@Backing(type="int") @VintfStability
+@Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum CdmaOtaProvisionStatus {
   SPL_UNLOCKED = 0,
   SPC_RETRIES_EXCEEDED = 1,

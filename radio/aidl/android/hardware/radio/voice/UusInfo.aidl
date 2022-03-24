@@ -20,6 +20,7 @@ package android.hardware.radio.voice;
  * User-to-User Signaling Information defined in 3GPP 23.087 v8.0
  */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable UusInfo {
     /**
      * User specified protocol

@@ -21,6 +21,7 @@ package android.hardware.radio.network;
  */
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum EutranBands {
     BAND_1 = 1,
     BAND_2 = 2,

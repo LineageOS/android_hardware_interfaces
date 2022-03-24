@@ -32,7 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.modem;
-@VintfStability
+@JavaDerive(toString=true) @VintfStability
 parcelable ActivityStatsInfo {
   int sleepModeTimeMs;
   int idleModeTimeMs;

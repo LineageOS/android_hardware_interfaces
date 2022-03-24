@@ -23,6 +23,7 @@ import android.hardware.radio.data.SliceInfo;
  * This struct represents a single route selection descriptor as defined in 3GPP TS 24.526.
  */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable RouteSelectionDescriptor {
     const byte SSC_MODE_UNKNOWN = -1;
     const byte SSC_MODE_1 = 1;

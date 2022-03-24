@@ -18,6 +18,7 @@ package android.hardware.radio.voice;
 
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum LastCallFailCause {
     UNOBTAINABLE_NUMBER = 1,
     NO_ROUTE_TO_DESTINATION = 3,

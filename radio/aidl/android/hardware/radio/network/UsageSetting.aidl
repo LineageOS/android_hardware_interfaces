@@ -24,6 +24,7 @@ package android.hardware.radio.network;
  */
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum UsageSetting {
     /**
      * UE operates in voice-centric mode. Generally speaking, in this mode of operation, the UE

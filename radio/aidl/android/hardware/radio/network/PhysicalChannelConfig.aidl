@@ -21,6 +21,7 @@ import android.hardware.radio.network.CellConnectionStatus;
 import android.hardware.radio.network.PhysicalChannelConfigBand;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable PhysicalChannelConfig {
     /**
      * Connection status for cell. Valid values are PRIMARY_SERVING and SECONDARY_SERVING

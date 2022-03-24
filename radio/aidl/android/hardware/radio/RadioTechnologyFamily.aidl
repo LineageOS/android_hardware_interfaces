@@ -18,6 +18,7 @@ package android.hardware.radio;
 
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum RadioTechnologyFamily {
     /**
      * 3GPP Technologies - GSM, WCDMA

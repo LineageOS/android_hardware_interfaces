@@ -17,6 +17,7 @@
 package android.hardware.radio.config;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable SlotPortMapping {
     /**
      * Physical slot id is the index of the slots
