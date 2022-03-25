@@ -23,6 +23,7 @@ import android.hardware.radio.data.TrafficDescriptor;
  * This struct represents a single URSP rule as defined in 3GPP TS 24.526.
  */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable UrspRule {
     /**
      * Precedence value in the range of 0 to 255. Higher value has lower precedence.

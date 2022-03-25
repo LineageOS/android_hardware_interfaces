@@ -18,6 +18,7 @@ package android.hardware.radio.modem;
 
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum RadioState {
     /**
      * Radio explicitly powered off (eg CFUN=0)

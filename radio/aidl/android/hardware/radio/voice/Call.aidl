@@ -20,6 +20,7 @@ import android.hardware.radio.voice.AudioQuality;
 import android.hardware.radio.voice.UusInfo;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable Call {
     const int PRESENTATION_ALLOWED = 0;
     const int PRESENTATION_RESTRICTED = 1;

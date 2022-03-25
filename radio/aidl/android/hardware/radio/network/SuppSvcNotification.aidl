@@ -17,6 +17,7 @@
 package android.hardware.radio.network;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable SuppSvcNotification {
     /**
      * Notification type

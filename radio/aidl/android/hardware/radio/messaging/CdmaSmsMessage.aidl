@@ -20,6 +20,7 @@ import android.hardware.radio.messaging.CdmaSmsAddress;
 import android.hardware.radio.messaging.CdmaSmsSubaddress;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable CdmaSmsMessage {
     int teleserviceId;
     boolean isServicePresent;

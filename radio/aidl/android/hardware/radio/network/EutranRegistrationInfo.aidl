@@ -20,6 +20,7 @@ import android.hardware.radio.network.LteVopsInfo;
 import android.hardware.radio.network.NrIndicators;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable EutranRegistrationInfo {
     /** LTE is attached with eps only. */
     const byte EPS_ONLY = 1;

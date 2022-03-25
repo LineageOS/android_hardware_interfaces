@@ -25,6 +25,7 @@ import android.hardware.radio.data.SliceInfo;
 import android.hardware.radio.data.TrafficDescriptor;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable SetupDataCallResult {
     /**
      * Indicates the data connection is inactive.
