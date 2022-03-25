@@ -22,6 +22,7 @@ package android.hardware.radio.config;
  * SIM device to multi-SIM device.
  */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable PhoneCapability {
     /**
      * maxActiveData defines how many logical modems can have

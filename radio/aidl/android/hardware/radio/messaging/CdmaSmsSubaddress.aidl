@@ -17,6 +17,7 @@
 package android.hardware.radio.messaging;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable CdmaSmsSubaddress {
     /**
      * CCITT X.213 or ISO 8348 AD2

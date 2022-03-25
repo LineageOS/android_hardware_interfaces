@@ -20,6 +20,7 @@ package android.hardware.radio.data;
  * This struct represents the OsId + OsAppId as defined in TS 24.526 Section 5.2
  */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable OsAppId {
     /**
      * Byte array representing OsId + OsAppId. The minimum length of the array is 18 and maximum

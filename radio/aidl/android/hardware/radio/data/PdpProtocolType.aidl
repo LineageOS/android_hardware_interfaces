@@ -21,6 +21,7 @@ package android.hardware.radio.data;
  */
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum PdpProtocolType {
     /**
      * Unknown protocol

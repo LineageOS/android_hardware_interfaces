@@ -18,6 +18,7 @@ package android.hardware.radio.data;
 
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum DataCallFailCause {
     /**
      * An integer cause code defined in TS 24.008 section 6.1.3.1.3 or TS 24.301 Release 8+ Annex B.

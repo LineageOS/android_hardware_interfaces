@@ -20,6 +20,7 @@ import android.hardware.radio.RadioError;
 import android.hardware.radio.RadioResponseType;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable RadioResponseInfo {
     /**
      * Response type

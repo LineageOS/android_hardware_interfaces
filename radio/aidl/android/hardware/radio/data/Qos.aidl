@@ -23,6 +23,7 @@ import android.hardware.radio.data.NrQos;
  * EPS or NR QOS parameters
  */
 @VintfStability
+@JavaDerive(toString=true)
 union Qos {
     boolean noinit;
     EpsQos eps;

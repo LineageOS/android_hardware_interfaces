@@ -18,6 +18,7 @@ package android.hardware.radio.data;
 
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum DataRequestReason {
     /**
      * The reason of the data request is normal
