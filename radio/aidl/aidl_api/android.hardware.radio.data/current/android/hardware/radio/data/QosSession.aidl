@@ -32,7 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.data;
-@VintfStability
+@JavaDerive(toString=true) @VintfStability
 parcelable QosSession {
   int qosSessionId;
   android.hardware.radio.data.Qos qos;

@@ -17,6 +17,7 @@
 package android.hardware.radio.data;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable QosBandwidth {
     /**
      * Maximum bit rate possible on the bearer

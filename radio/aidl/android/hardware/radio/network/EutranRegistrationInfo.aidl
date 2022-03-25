@@ -20,6 +20,7 @@ import android.hardware.radio.network.LteVopsInfo;
 import android.hardware.radio.network.NrIndicators;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable EutranRegistrationInfo {
     /**
      * Network capabilities for voice over PS services. This info is valid only on LTE network and

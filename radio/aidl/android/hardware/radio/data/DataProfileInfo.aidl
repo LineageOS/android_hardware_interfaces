@@ -21,6 +21,7 @@ import android.hardware.radio.data.PdpProtocolType;
 import android.hardware.radio.data.TrafficDescriptor;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable DataProfileInfo {
     const int ID_DEFAULT = 0;
     const int ID_TETHERED = 1;
