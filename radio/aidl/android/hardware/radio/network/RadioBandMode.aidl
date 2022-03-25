@@ -18,6 +18,7 @@ package android.hardware.radio.network;
 
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum RadioBandMode {
     /**
      * "Unspecified" (selected by baseband automatically)

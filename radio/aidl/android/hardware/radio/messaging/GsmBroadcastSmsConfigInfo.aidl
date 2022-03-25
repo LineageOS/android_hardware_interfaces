@@ -20,6 +20,7 @@ package android.hardware.radio.messaging;
  * Which types of Cell Broadcast Message (CBM) are to be received by the ME
  */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable GsmBroadcastSmsConfigInfo {
     /**
      * Beginning of the range of CBM message identifiers whose value is 0x0000 - 0xFFFF as defined

@@ -20,6 +20,7 @@ package android.hardware.radio.data;
  * This struct represents a S-NSSAI as defined in 3GPP TS 24.501.
  */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable SliceInfo {
     /*
      * Not specified

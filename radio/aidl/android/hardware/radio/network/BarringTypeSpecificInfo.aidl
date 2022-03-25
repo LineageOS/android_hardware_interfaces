@@ -17,6 +17,7 @@
 package android.hardware.radio.network;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable BarringTypeSpecificInfo {
     /**
      * The barring factor as a percentage 0-100

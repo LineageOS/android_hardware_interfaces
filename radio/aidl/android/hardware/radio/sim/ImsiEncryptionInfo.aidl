@@ -20,6 +20,7 @@ package android.hardware.radio.sim;
  * Carrier specific Information sent by the carrier, which will be used to encrypt IMSI and IMPI.
  */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable ImsiEncryptionInfo {
     /**
      * Key type to be used for ePDG

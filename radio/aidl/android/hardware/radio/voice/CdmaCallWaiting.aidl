@@ -19,6 +19,7 @@ package android.hardware.radio.voice;
 import android.hardware.radio.voice.CdmaSignalInfoRecord;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable CdmaCallWaiting {
     const int NUMBER_PLAN_UNKNOWN = 0;
     const int NUMBER_PLAN_ISDN = 1;

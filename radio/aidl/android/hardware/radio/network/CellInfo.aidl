@@ -20,6 +20,7 @@ import android.hardware.radio.network.CellConnectionStatus;
 import android.hardware.radio.network.CellInfoRatSpecificInfo;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable CellInfo {
     /**
      * True if this cell is registered false if not registered.
