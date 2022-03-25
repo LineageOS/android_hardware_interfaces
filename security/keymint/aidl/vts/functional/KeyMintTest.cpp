@@ -1067,22 +1067,30 @@ TEST_P(NewKeyGenerationTest, RsaWithAttestation) {
     for (auto key_size : ValidKeySizes(Algorithm::RSA)) {
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
-        auto result = GenerateKey(AuthorizationSetBuilder()
-                                          .RsaSigningKey(key_size, 65537)
-                                          .Digest(Digest::NONE)
-                                          .Padding(PaddingMode::NONE)
-                                          .AttestationChallenge(challenge)
-                                          .AttestationApplicationId(app_id)
-                                          .Authorization(TAG_NO_AUTH_REQUIRED)
-                                          .Authorization(TAG_CERTIFICATE_SERIAL, serial_blob)
-                                          .Authorization(TAG_CERTIFICATE_SUBJECT, subject_der)
-                                          .SetDefaultValidity(),
-                                  &key_blob, &key_characteristics);
+        auto builder = AuthorizationSetBuilder()
+                               .RsaSigningKey(key_size, 65537)
+                               .Digest(Digest::NONE)
+                               .Padding(PaddingMode::NONE)
+                               .AttestationChallenge(challenge)
+                               .AttestationApplicationId(app_id)
+                               .Authorization(TAG_NO_AUTH_REQUIRED)
+                               .Authorization(TAG_CERTIFICATE_SERIAL, serial_blob)
+                               .Authorization(TAG_CERTIFICATE_SUBJECT, subject_der)
+                               .SetDefaultValidity();
+
+        auto result = GenerateKey(builder, &key_blob, &key_characteristics);
         // Strongbox may not support factory provisioned attestation key.
         if (SecLevel() == SecurityLevel::STRONGBOX) {
-            if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) return;
+            if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) {
+                result = GenerateKeyWithSelfSignedAttestKey(
+                        AuthorizationSetBuilder()
+                                .RsaKey(key_size, 65537)
+                                .AttestKey()
+                                .SetDefaultValidity(), /* attest key params */
+                        builder, &key_blob, &key_characteristics);
+            }
         }
-
+        ASSERT_EQ(ErrorCode::OK, result);
         ASSERT_GT(key_blob.size(), 0U);
         CheckBaseParams(key_characteristics);
         CheckCharacteristics(key_blob, key_characteristics);
@@ -1203,19 +1211,27 @@ TEST_P(NewKeyGenerationTest, RsaEncryptionWithAttestation) {
 
     vector<uint8_t> key_blob;
     vector<KeyCharacteristics> key_characteristics;
-    auto result = GenerateKey(AuthorizationSetBuilder()
-                                      .RsaEncryptionKey(key_size, 65537)
-                                      .Padding(PaddingMode::NONE)
-                                      .AttestationChallenge(challenge)
-                                      .AttestationApplicationId(app_id)
-                                      .Authorization(TAG_NO_AUTH_REQUIRED)
-                                      .Authorization(TAG_CERTIFICATE_SERIAL, serial_blob)
-                                      .Authorization(TAG_CERTIFICATE_SUBJECT, subject_der)
-                                      .SetDefaultValidity(),
-                              &key_blob, &key_characteristics);
+    auto builder = AuthorizationSetBuilder()
+                           .RsaEncryptionKey(key_size, 65537)
+                           .Padding(PaddingMode::NONE)
+                           .AttestationChallenge(challenge)
+                           .AttestationApplicationId(app_id)
+                           .Authorization(TAG_NO_AUTH_REQUIRED)
+                           .Authorization(TAG_CERTIFICATE_SERIAL, serial_blob)
+                           .Authorization(TAG_CERTIFICATE_SUBJECT, subject_der)
+                           .SetDefaultValidity();
+
+    auto result = GenerateKey(builder, &key_blob, &key_characteristics);
     // Strongbox may not support factory provisioned attestation key.
     if (SecLevel() == SecurityLevel::STRONGBOX) {
-        if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) return;
+        if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) {
+            result = GenerateKeyWithSelfSignedAttestKey(
+                    AuthorizationSetBuilder()
+                            .RsaKey(key_size, 65537)
+                            .AttestKey()
+                            .SetDefaultValidity(), /* attest key params */
+                    builder, &key_blob, &key_characteristics);
+        }
     }
     ASSERT_EQ(ErrorCode::OK, result);
 
@@ -1319,17 +1335,25 @@ TEST_P(NewKeyGenerationTest, RsaWithAttestationMissAppId) {
     vector<uint8_t> key_blob;
     vector<KeyCharacteristics> key_characteristics;
 
-    auto result = GenerateKey(AuthorizationSetBuilder()
-                                      .RsaSigningKey(2048, 65537)
-                                      .Digest(Digest::NONE)
-                                      .Padding(PaddingMode::NONE)
-                                      .AttestationChallenge(challenge)
-                                      .Authorization(TAG_NO_AUTH_REQUIRED)
-                                      .SetDefaultValidity(),
-                              &key_blob, &key_characteristics);
+    auto builder = AuthorizationSetBuilder()
+                           .RsaSigningKey(2048, 65537)
+                           .Digest(Digest::NONE)
+                           .Padding(PaddingMode::NONE)
+                           .AttestationChallenge(challenge)
+                           .Authorization(TAG_NO_AUTH_REQUIRED)
+                           .SetDefaultValidity();
+
+    auto result = GenerateKey(builder, &key_blob, &key_characteristics);
     // Strongbox may not support factory provisioned attestation key.
     if (SecLevel() == SecurityLevel::STRONGBOX) {
-        if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) return;
+        if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) {
+            result = GenerateKeyWithSelfSignedAttestKey(
+                    AuthorizationSetBuilder()
+                            .RsaKey(2048, 65537)
+                            .AttestKey()
+                            .SetDefaultValidity(), /* attest key params */
+                    builder, &key_blob, &key_characteristics);
+        }
     }
     ASSERT_EQ(ErrorCode::ATTESTATION_APPLICATION_ID_MISSING, result);
 }
@@ -1441,21 +1465,29 @@ TEST_P(NewKeyGenerationTest, LimitedUsageRsaWithAttestation) {
     for (auto key_size : ValidKeySizes(Algorithm::RSA)) {
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
-        auto result = GenerateKey(AuthorizationSetBuilder()
-                                          .RsaSigningKey(key_size, 65537)
-                                          .Digest(Digest::NONE)
-                                          .Padding(PaddingMode::NONE)
-                                          .AttestationChallenge(challenge)
-                                          .AttestationApplicationId(app_id)
-                                          .Authorization(TAG_NO_AUTH_REQUIRED)
-                                          .Authorization(TAG_USAGE_COUNT_LIMIT, 1)
-                                          .Authorization(TAG_CERTIFICATE_SERIAL, serial_blob)
-                                          .Authorization(TAG_CERTIFICATE_SUBJECT, subject_der)
-                                          .SetDefaultValidity(),
-                                  &key_blob, &key_characteristics);
+        auto builder = AuthorizationSetBuilder()
+                               .RsaSigningKey(key_size, 65537)
+                               .Digest(Digest::NONE)
+                               .Padding(PaddingMode::NONE)
+                               .AttestationChallenge(challenge)
+                               .AttestationApplicationId(app_id)
+                               .Authorization(TAG_NO_AUTH_REQUIRED)
+                               .Authorization(TAG_USAGE_COUNT_LIMIT, 1)
+                               .Authorization(TAG_CERTIFICATE_SERIAL, serial_blob)
+                               .Authorization(TAG_CERTIFICATE_SUBJECT, subject_der)
+                               .SetDefaultValidity();
+
+        auto result = GenerateKey(builder, &key_blob, &key_characteristics);
         // Strongbox may not support factory provisioned attestation key.
         if (SecLevel() == SecurityLevel::STRONGBOX) {
-            if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) return;
+            if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) {
+                result = GenerateKeyWithSelfSignedAttestKey(
+                        AuthorizationSetBuilder()
+                                .RsaKey(key_size, 65537)
+                                .AttestKey()
+                                .SetDefaultValidity(), /* attest key params */
+                        builder, &key_blob, &key_characteristics);
+            }
         }
         ASSERT_EQ(ErrorCode::OK, result);
 
@@ -1676,19 +1708,27 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestation) {
     for (auto curve : ValidCurves()) {
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
-        auto result = GenerateKey(AuthorizationSetBuilder()
-                                          .Authorization(TAG_NO_AUTH_REQUIRED)
-                                          .EcdsaSigningKey(curve)
-                                          .Digest(Digest::NONE)
-                                          .AttestationChallenge(challenge)
-                                          .AttestationApplicationId(app_id)
-                                          .Authorization(TAG_CERTIFICATE_SERIAL, serial_blob)
-                                          .Authorization(TAG_CERTIFICATE_SUBJECT, subject_der)
-                                          .SetDefaultValidity(),
-                                  &key_blob, &key_characteristics);
+        auto builder = AuthorizationSetBuilder()
+                               .Authorization(TAG_NO_AUTH_REQUIRED)
+                               .EcdsaSigningKey(curve)
+                               .Digest(Digest::NONE)
+                               .AttestationChallenge(challenge)
+                               .AttestationApplicationId(app_id)
+                               .Authorization(TAG_CERTIFICATE_SERIAL, serial_blob)
+                               .Authorization(TAG_CERTIFICATE_SUBJECT, subject_der)
+                               .SetDefaultValidity();
+
+        auto result = GenerateKey(builder, &key_blob, &key_characteristics);
         // Strongbox may not support factory provisioned attestation key.
         if (SecLevel() == SecurityLevel::STRONGBOX) {
-            if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) return;
+            if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) {
+                result = GenerateKeyWithSelfSignedAttestKey(
+                        AuthorizationSetBuilder()
+                                .EcdsaKey(curve)
+                                .AttestKey()
+                                .SetDefaultValidity(), /* attest key params */
+                        builder, &key_blob, &key_characteristics);
+            }
         }
         ASSERT_EQ(ErrorCode::OK, result);
         ASSERT_GT(key_blob.size(), 0U);
@@ -1826,7 +1866,14 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationTags) {
         }
         // Strongbox may not support factory provisioned attestation key.
         if (SecLevel() == SecurityLevel::STRONGBOX) {
-            if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) return;
+            if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) {
+                result = GenerateKeyWithSelfSignedAttestKey(
+                        AuthorizationSetBuilder()
+                                .EcdsaKey(EcCurve::P_256)
+                                .AttestKey()
+                                .SetDefaultValidity(), /* attest key params */
+                        builder, &key_blob, &key_characteristics);
+            }
         }
         ASSERT_EQ(result, ErrorCode::OK);
         ASSERT_GT(key_blob.size(), 0U);
@@ -1878,8 +1925,20 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationTags) {
                         .Authorization(TAG_CERTIFICATE_SUBJECT, subject_der)
                         .SetDefaultValidity();
         builder.push_back(tag);
-        ASSERT_EQ(ErrorCode::CANNOT_ATTEST_IDS,
-                  GenerateKey(builder, &key_blob, &key_characteristics));
+
+        auto error = GenerateKey(builder, &key_blob, &key_characteristics);
+        // Strongbox may not support factory provisioned attestation key.
+        if (SecLevel() == SecurityLevel::STRONGBOX) {
+            if (error == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) {
+                error = GenerateKeyWithSelfSignedAttestKey(
+                        AuthorizationSetBuilder()
+                                .EcdsaKey(EcCurve::P_256)
+                                .AttestKey()
+                                .SetDefaultValidity(), /* attest key params */
+                        builder, &key_blob, &key_characteristics);
+            }
+        }
+        ASSERT_EQ(error, ErrorCode::CANNOT_ATTEST_IDS);
     }
 }
 
@@ -1984,8 +2043,18 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationUniqueId) {
         if (reset) {
             builder.Authorization(TAG_RESET_SINCE_ID_ROTATION);
         }
-
-        ASSERT_EQ(ErrorCode::OK, GenerateKey(builder));
+        auto result = GenerateKey(builder);
+        if (SecLevel() == SecurityLevel::STRONGBOX) {
+            if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) {
+                result = GenerateKeyWithSelfSignedAttestKey(
+                        AuthorizationSetBuilder()
+                                .EcdsaKey(EcCurve::P_256)
+                                .AttestKey()
+                                .SetDefaultValidity(), /* attest key params */
+                        builder, &key_blob_, &key_characteristics_, &cert_chain_);
+            }
+        }
+        ASSERT_EQ(ErrorCode::OK, result);
         ASSERT_GT(key_blob_.size(), 0U);
 
         EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
@@ -2072,21 +2141,29 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationTagNoApplicationId) {
     // to confirm that this field never makes it into the attestation extension.
     vector<uint8_t> key_blob;
     vector<KeyCharacteristics> key_characteristics;
-    auto result = GenerateKey(AuthorizationSetBuilder()
-                                      .Authorization(TAG_NO_AUTH_REQUIRED)
-                                      .EcdsaSigningKey(EcCurve::P_256)
-                                      .Digest(Digest::NONE)
-                                      .AttestationChallenge(challenge)
-                                      .AttestationApplicationId(attest_app_id)
-                                      .Authorization(TAG_APPLICATION_ID, "client_id")
-                                      .Authorization(TAG_APPLICATION_DATA, "appdata")
-                                      .Authorization(TAG_CERTIFICATE_SERIAL, serial_blob)
-                                      .Authorization(TAG_CERTIFICATE_SUBJECT, subject_der)
-                                      .SetDefaultValidity(),
-                              &key_blob, &key_characteristics);
+    auto builder = AuthorizationSetBuilder()
+                           .Authorization(TAG_NO_AUTH_REQUIRED)
+                           .EcdsaSigningKey(EcCurve::P_256)
+                           .Digest(Digest::NONE)
+                           .AttestationChallenge(challenge)
+                           .AttestationApplicationId(attest_app_id)
+                           .Authorization(TAG_APPLICATION_ID, "client_id")
+                           .Authorization(TAG_APPLICATION_DATA, "appdata")
+                           .Authorization(TAG_CERTIFICATE_SERIAL, serial_blob)
+                           .Authorization(TAG_CERTIFICATE_SUBJECT, subject_der)
+                           .SetDefaultValidity();
+
+    auto result = GenerateKey(builder, &key_blob, &key_characteristics);
     // Strongbox may not support factory provisioned attestation key.
     if (SecLevel() == SecurityLevel::STRONGBOX) {
-        if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) return;
+        if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) {
+            result = GenerateKeyWithSelfSignedAttestKey(
+                    AuthorizationSetBuilder()
+                            .EcdsaKey(EcCurve::P_256)
+                            .AttestKey()
+                            .SetDefaultValidity(), /* attest key params */
+                    builder, &key_blob, &key_characteristics);
+        }
     }
     ASSERT_EQ(result, ErrorCode::OK);
     ASSERT_GT(key_blob.size(), 0U);
@@ -2166,16 +2243,23 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationRequireAppId) {
     auto challenge = "hello";
     vector<uint8_t> key_blob;
     vector<KeyCharacteristics> key_characteristics;
+    auto builder = AuthorizationSetBuilder()
+                           .EcdsaSigningKey(EcCurve::P_256)
+                           .Digest(Digest::NONE)
+                           .AttestationChallenge(challenge)
+                           .SetDefaultValidity();
 
-    auto result = GenerateKey(AuthorizationSetBuilder()
-                                      .EcdsaSigningKey(EcCurve::P_256)
-                                      .Digest(Digest::NONE)
-                                      .AttestationChallenge(challenge)
-                                      .SetDefaultValidity(),
-                              &key_blob, &key_characteristics);
+    auto result = GenerateKey(builder, &key_blob, &key_characteristics);
     // Strongbox may not support factory provisioned attestation key.
     if (SecLevel() == SecurityLevel::STRONGBOX) {
-        if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) return;
+        if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) {
+            result = GenerateKeyWithSelfSignedAttestKey(
+                    AuthorizationSetBuilder()
+                            .EcdsaKey(EcCurve::P_256)
+                            .AttestKey()
+                            .SetDefaultValidity(), /* attest key params */
+                    builder, &key_blob, &key_characteristics);
+        }
     }
     ASSERT_EQ(ErrorCode::ATTESTATION_APPLICATION_ID_MISSING, result);
 }
@@ -2234,17 +2318,25 @@ TEST_P(NewKeyGenerationTest, AttestationApplicationIDLengthProperlyEncoded) {
         const string app_id(length, 'a');
         vector<uint8_t> key_blob;
         vector<KeyCharacteristics> key_characteristics;
-        auto result = GenerateKey(AuthorizationSetBuilder()
-                                          .Authorization(TAG_NO_AUTH_REQUIRED)
-                                          .EcdsaSigningKey(EcCurve::P_256)
-                                          .Digest(Digest::NONE)
-                                          .AttestationChallenge(challenge)
-                                          .AttestationApplicationId(app_id)
-                                          .SetDefaultValidity(),
-                                  &key_blob, &key_characteristics);
+        auto builder = AuthorizationSetBuilder()
+                               .Authorization(TAG_NO_AUTH_REQUIRED)
+                               .EcdsaSigningKey(EcCurve::P_256)
+                               .Digest(Digest::NONE)
+                               .AttestationChallenge(challenge)
+                               .AttestationApplicationId(app_id)
+                               .SetDefaultValidity();
+
+        auto result = GenerateKey(builder, &key_blob, &key_characteristics);
         // Strongbox may not support factory provisioned attestation key.
         if (SecLevel() == SecurityLevel::STRONGBOX) {
-            if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) return;
+            if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) {
+                result = GenerateKeyWithSelfSignedAttestKey(
+                        AuthorizationSetBuilder()
+                                .EcdsaKey(EcCurve::P_256)
+                                .AttestKey()
+                                .SetDefaultValidity(), /* attest key params */
+                        builder, &key_blob, &key_characteristics);
+            }
         }
         ASSERT_EQ(ErrorCode::OK, result);
         ASSERT_GT(key_blob.size(), 0U);
@@ -7427,15 +7519,26 @@ class KeyAgreementTest : public KeyMintAidlTestBase {
 
     void GenerateKeyMintEcKey(EcCurve curve, EVP_PKEY_Ptr* kmPubKey) {
         vector<uint8_t> challenge = {0x41, 0x42};
-        ErrorCode result =
-                GenerateKey(AuthorizationSetBuilder()
-                                    .Authorization(TAG_NO_AUTH_REQUIRED)
-                                    .Authorization(TAG_EC_CURVE, curve)
-                                    .Authorization(TAG_PURPOSE, KeyPurpose::AGREE_KEY)
-                                    .Authorization(TAG_ALGORITHM, Algorithm::EC)
-                                    .Authorization(TAG_ATTESTATION_APPLICATION_ID, {0x61, 0x62})
-                                    .Authorization(TAG_ATTESTATION_CHALLENGE, challenge)
-                                    .SetDefaultValidity());
+        auto builder = AuthorizationSetBuilder()
+                               .Authorization(TAG_NO_AUTH_REQUIRED)
+                               .Authorization(TAG_EC_CURVE, curve)
+                               .Authorization(TAG_PURPOSE, KeyPurpose::AGREE_KEY)
+                               .Authorization(TAG_ALGORITHM, Algorithm::EC)
+                               .Authorization(TAG_ATTESTATION_APPLICATION_ID, {0x61, 0x62})
+                               .Authorization(TAG_ATTESTATION_CHALLENGE, challenge)
+                               .SetDefaultValidity();
+        ErrorCode result = GenerateKey(builder);
+
+        if (SecLevel() == SecurityLevel::STRONGBOX) {
+            if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) {
+                result = GenerateKeyWithSelfSignedAttestKey(
+                        AuthorizationSetBuilder()
+                                .EcdsaKey(EcCurve::P_256)
+                                .AttestKey()
+                                .SetDefaultValidity(), /* attest key params */
+                        builder, &key_blob_, &key_characteristics_, &cert_chain_);
+            }
+        }
         ASSERT_EQ(ErrorCode::OK, result) << "Failed to generate key";
         ASSERT_GT(cert_chain_.size(), 0);
         X509_Ptr kmKeyCert(parse_cert_blob(cert_chain_[0].encodedCertificate));
