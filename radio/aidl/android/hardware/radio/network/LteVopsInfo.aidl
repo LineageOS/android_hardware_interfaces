@@ -21,6 +21,7 @@ package android.hardware.radio.network;
  * normal voice calls.
  */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable LteVopsInfo {
     /**
      * This indicates if camped network support VoLTE services. This information is received from

@@ -22,6 +22,7 @@ import android.hardware.radio.data.QosBandwidth;
  * LTE/EPS Quality of Service parameters as per 3gpp spec 24.301 sec 9.9.4.3.
  */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable EpsQos {
     /**
      * Quality of Service Class Identifier (QCI), see 3GPP TS 23.203 and 29.212.

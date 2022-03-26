@@ -24,6 +24,7 @@ package android.hardware.radio.voice;
  * a byte buffer. The display_tag, display_len and chari fields are all 1 byte.
  */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable CdmaDisplayInfoRecord {
     const int CDMA_ALPHA_INFO_BUFFER_LENGTH = 64;
     /**

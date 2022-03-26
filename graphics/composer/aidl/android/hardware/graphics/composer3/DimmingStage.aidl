@@ -29,7 +29,12 @@ enum DimmingStage {
      */
     LINEAR = 1,
     /**
-     * Dimming operations must be applied in gamma space, after OETF has been applied
+     * Dimming operations must be applied in gamma space, after OETF has been applied.
+     * Note that for this dimming operation to be perceptually correct it must also be gamma
+     * corrected. The framework will assume that it is able to use the gamma 2.2
+     * power function for gamma correcting the dimming matrix, for simplicity of
+     * implementation and the fact that gamma 2.2 is close enough to typical SDR
+     * transfer functions that would be used for the client target.
      */
     GAMMA_OETF = 2,
 }
