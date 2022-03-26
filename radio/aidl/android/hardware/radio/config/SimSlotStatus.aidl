@@ -19,6 +19,7 @@ package android.hardware.radio.config;
 import android.hardware.radio.config.SimPortInfo;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable SimSlotStatus {
     /**
      * Card state in the physical slot. Values are CardStatus.[STATE_ABSENT, STATE_PRESENT,

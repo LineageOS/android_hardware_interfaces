@@ -24,6 +24,7 @@ import android.hardware.radio.network.CellInfoTdscdma;
 import android.hardware.radio.network.CellInfoWcdma;
 
 @VintfStability
+@JavaDerive(toString=true)
 union CellInfoRatSpecificInfo {
     /**
      * 3gpp CellInfo types.

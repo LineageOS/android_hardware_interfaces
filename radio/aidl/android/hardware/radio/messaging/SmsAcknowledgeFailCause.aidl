@@ -18,6 +18,7 @@ package android.hardware.radio.messaging;
 
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum SmsAcknowledgeFailCause {
     MEMORY_CAPACITY_EXCEEDED = 0xD3,
     UNSPECIFIED_ERROR = 0XFF,

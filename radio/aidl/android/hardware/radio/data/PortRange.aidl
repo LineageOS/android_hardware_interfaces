@@ -22,6 +22,7 @@ package android.hardware.radio.data;
  * be represented by the same start and end value.
  */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable PortRange {
     const int PORT_RANGE_MIN = 20;
     const int PORT_RANGE_MAX = 65535;

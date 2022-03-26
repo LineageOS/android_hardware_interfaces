@@ -19,6 +19,7 @@ package android.hardware.radio.voice;
 import android.hardware.radio.voice.UusInfo;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable Dial {
     /**
      * Use subscription default value

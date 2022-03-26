@@ -34,6 +34,7 @@ package android.hardware.radio.voice;
  */
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum EmergencyServiceCategory {
     /**
      * General emergency call, all categories

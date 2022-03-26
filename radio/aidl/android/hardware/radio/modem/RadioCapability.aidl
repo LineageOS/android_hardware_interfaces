@@ -17,6 +17,7 @@
 package android.hardware.radio.modem;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable RadioCapability {
     /**
      * Logical Modem's (LM) initial value and value after PHASE_FINISH completes.
