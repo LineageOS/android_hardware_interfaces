@@ -20,6 +20,7 @@ package android.hardware.radio.voice;
  * Line Control Information Record as defined in C.S0005 section 3.7.5.15
  */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable CdmaLineControlInfoRecord {
     byte lineCtrlPolarityIncluded;
     byte lineCtrlToggle;

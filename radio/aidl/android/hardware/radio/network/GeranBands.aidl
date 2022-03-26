@@ -18,6 +18,7 @@ package android.hardware.radio.network;
 
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum GeranBands {
     BAND_T380 = 1,
     BAND_T410 = 2,

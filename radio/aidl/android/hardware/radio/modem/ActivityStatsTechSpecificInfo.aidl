@@ -19,6 +19,7 @@ package android.hardware.radio.modem;
 import android.hardware.radio.AccessNetwork;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable ActivityStatsTechSpecificInfo {
     /** Indicates the frequency range is unknown. */
     const int FREQUENCY_RANGE_UNKNOWN = 0;

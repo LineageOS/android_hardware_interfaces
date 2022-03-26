@@ -17,6 +17,7 @@
 package android.hardware.radio.data;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable KeepaliveRequest {
     /**
      * Keepalive specified by RFC 3948 Sec. 2.3 using IPv4

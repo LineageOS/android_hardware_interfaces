@@ -18,6 +18,7 @@ package android.hardware.radio;
 
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum AccessNetwork {
     /**
      * Unknown access network

@@ -23,6 +23,7 @@ import android.hardware.radio.network.RegState;
 import android.hardware.radio.network.RegistrationFailCause;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable RegStateResult {
     /**
      * Registration state. If the RAT is indicated as a GERAN, UTRAN, or CDMA2000 technology, this

@@ -27,6 +27,7 @@ import android.hardware.radio.network.CellIdentityWcdma;
  * A union representing the CellIdentity of a single cell.
  */
 @VintfStability
+@JavaDerive(toString=true)
 union CellIdentity {
     boolean noinit;
     CellIdentityGsm gsm;
