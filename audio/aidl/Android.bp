@@ -62,3 +62,33 @@ aidl_interface {
     versions: [
     ],
 }
+
+aidl_interface {
+    name: "android.hardware.audio.core",
+    vendor_available: true,
+    srcs: [
+        "android/hardware/audio/core/AudioPatch.aidl",
+        "android/hardware/audio/core/AudioRoute.aidl",
+        "android/hardware/audio/core/IConfig.aidl",
+        "android/hardware/audio/core/IModule.aidl",
+        "android/hardware/audio/core/IStreamIn.aidl",
+        "android/hardware/audio/core/IStreamOut.aidl",
+    ],
+    imports: [
+        "android.hardware.audio.common",
+        "android.media.audio.common.types",
+    ],
+    stability: "vintf",
+    backend: {
+        java: {
+            platform_apis: true,
+        },
+        ndk: {
+            vndk: {
+                enabled: true,
+            },
+        },
+    },
+    versions: [
+    ],
+}
