@@ -40,6 +40,16 @@ class A2dpOffloadAudioProvider : public BluetoothAudioProvider {
   ndk::ScopedAStatus onSessionReady(DataMQDesc* _aidl_return) override;
 };
 
+class A2dpOffloadEncodingAudioProvider : public A2dpOffloadAudioProvider {
+ public:
+  A2dpOffloadEncodingAudioProvider();
+};
+
+class A2dpOffloadDecodingAudioProvider : public A2dpOffloadAudioProvider {
+ public:
+  A2dpOffloadDecodingAudioProvider();
+};
+
 }  // namespace audio
 }  // namespace bluetooth
 }  // namespace hardware
