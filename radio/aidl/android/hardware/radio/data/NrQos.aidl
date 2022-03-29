@@ -22,6 +22,7 @@ import android.hardware.radio.data.QosBandwidth;
  * 5G Quality of Service parameters as per 3gpp spec 24.501 sec 9.11.4.12
  */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable NrQos {
     const byte FLOW_ID_RANGE_MIN = 1;
     const byte FLOW_ID_RANGE_MAX = 63;

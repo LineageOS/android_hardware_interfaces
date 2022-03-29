@@ -32,7 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.network;
-@VintfStability
+@JavaDerive(toString=true) @VintfStability
 parcelable EutranRegistrationInfo {
   android.hardware.radio.network.LteVopsInfo lteVopsInfo;
   android.hardware.radio.network.NrIndicators nrIndicators;

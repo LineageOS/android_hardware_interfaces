@@ -20,6 +20,7 @@ import android.hardware.radio.RadioTechnology;
 
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum RadioAccessFamily {
     UNKNOWN = 1 << RadioTechnology.UNKNOWN,
     GPRS = 1 << RadioTechnology.GPRS,

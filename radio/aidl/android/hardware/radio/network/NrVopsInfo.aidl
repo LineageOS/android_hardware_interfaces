@@ -21,6 +21,7 @@ package android.hardware.radio.network;
  * normal voice calls.
  */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable NrVopsInfo {
     /**
      * Emergency services not supported

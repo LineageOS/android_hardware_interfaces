@@ -20,6 +20,7 @@ package android.hardware.radio.voice;
  * CDMA Signal Information Record as defined in C.S0005 section 3.7.5.5
  */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable CdmaSignalInfoRecord {
     /**
      * True if signal information record is present

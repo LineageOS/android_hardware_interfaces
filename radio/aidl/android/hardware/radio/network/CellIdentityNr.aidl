@@ -24,6 +24,7 @@ import android.hardware.radio.network.OperatorInfo;
  * broadcast in SIB1 CellAccessRelatedInfo as per 3GPP TS 38.331 Section 6.3.2.
  */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable CellIdentityNr {
     /**
      * 3-digit Mobile Country Code, in range[0, 999]; This value must be valid for registered or

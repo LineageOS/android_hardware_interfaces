@@ -18,6 +18,7 @@ package android.hardware.radio.sim;
 
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum SimLockMultiSimPolicy {
     /**
      * Indicates that configuration applies to each slot independently.

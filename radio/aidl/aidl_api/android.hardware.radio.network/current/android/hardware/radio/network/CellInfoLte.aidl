@@ -32,7 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.network;
-@VintfStability
+@JavaDerive(toString=true) @VintfStability
 parcelable CellInfoLte {
   android.hardware.radio.network.CellIdentityLte cellIdentityLte;
   android.hardware.radio.network.LteSignalStrength signalStrengthLte;
