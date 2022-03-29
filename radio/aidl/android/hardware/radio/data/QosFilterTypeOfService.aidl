@@ -17,6 +17,7 @@
 package android.hardware.radio.data;
 
 @VintfStability
+@JavaDerive(toString=true)
 union QosFilterTypeOfService {
     boolean noinit;
     byte value;

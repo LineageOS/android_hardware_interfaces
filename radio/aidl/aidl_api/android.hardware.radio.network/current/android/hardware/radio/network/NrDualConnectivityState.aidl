@@ -32,7 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.network;
-@Backing(type="byte") @VintfStability
+@Backing(type="byte") @JavaDerive(toString=true) @VintfStability
 enum NrDualConnectivityState {
   ENABLE = 1,
   DISABLE = 2,

@@ -19,6 +19,7 @@ package android.hardware.radio.voice;
 import android.hardware.radio.voice.CallForwardInfo;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable CfData {
     const int NUM_SERVICE_CLASSES = 7;
     /**

@@ -32,7 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio;
-@VintfStability
+@JavaDerive(toString=true) @VintfStability
 parcelable RadioResponseInfoModem {
   android.hardware.radio.RadioResponseType type;
   int serial;

@@ -20,6 +20,7 @@ import android.hardware.radio.network.CellIdentityNr;
 import android.hardware.radio.network.NrSignalStrength;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable CellInfoNr {
     CellIdentityNr cellIdentityNr;
     NrSignalStrength signalStrengthNr;

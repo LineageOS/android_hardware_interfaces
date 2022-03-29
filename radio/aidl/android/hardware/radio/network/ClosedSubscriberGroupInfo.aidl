@@ -17,6 +17,7 @@
 package android.hardware.radio.network;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable ClosedSubscriberGroupInfo {
     /**
      * Indicates whether the cell is restricted to only CSG members. A cell not broadcasting the
