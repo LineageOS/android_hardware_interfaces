@@ -27,23 +27,15 @@ import android.hardware.radio.ims.ImsStreamDirection;
 oneway interface IRadioImsIndication {
     /**
      * Fired by radio when any IMS traffic is not sent to network due to any failure
-     * on cellular networks.
+     * on cellular networks. IMS service shall call stopImsTraffic when receiving
+     * this indication.
      *
-     * @param token The token number of the notifyImsTraffic() or performACBcheck() APIs
+     * @param token The token of startImsTraffic() associated with this indication
      * @param type Type of radio indication
      * @param info Connection failure information
      */
-    void onConnectionSetupFailure(in RadioIndicationType type, int token,
+    void onConnectionSetupFailure(in RadioIndicationType type, in String token,
             in ConnectionFailureInfo info);
-
-    /**
-     * Fired by radio in response to performAcbCheck(token, trafficType)
-     * if the access class check is allowed for the requested traffic type.
-     *
-     * @param token The token of the operation of performAcbCheck() API
-     * @param type Type of radio indication
-     */
-    void onAccessAllowed(in RadioIndicationType type, int token);
 
     /**
      * Access Network Bitrate Recommendation (ANBR), see 3GPP TS 26.114.

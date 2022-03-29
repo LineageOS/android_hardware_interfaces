@@ -19,12 +19,7 @@
 RadioImsIndication::RadioImsIndication(RadioServiceTest& parent) : parent_ims(parent) {}
 
 ndk::ScopedAStatus RadioImsIndication::onConnectionSetupFailure(RadioIndicationType /*type*/,
-        int /*token*/, const ConnectionFailureInfo& /*info*/) {
-    return ndk::ScopedAStatus::ok();
-}
-
-ndk::ScopedAStatus RadioImsIndication::onAccessAllowed(RadioIndicationType /*type*/,
-        int /*token*/) {
+        const std::string& /*token*/, const ConnectionFailureInfo& /*info*/) {
     return ndk::ScopedAStatus::ok();
 }
 

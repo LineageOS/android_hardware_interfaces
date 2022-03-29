@@ -36,15 +36,17 @@ class RadioImsResponse : public BnRadioImsResponse {
     virtual ~RadioImsResponse() = default;
 
     RadioResponseInfo rspInfo;
+    std::optional<ConnectionFailureInfo> startImsTrafficResp;
 
     virtual ndk::ScopedAStatus setSrvccCallInfoResponse(const RadioResponseInfo& info) override;
 
     virtual ndk::ScopedAStatus updateImsRegistrationInfoResponse(
             const RadioResponseInfo& info) override;
 
-    virtual ndk::ScopedAStatus notifyImsTrafficResponse(const RadioResponseInfo& info) override;
+    virtual ndk::ScopedAStatus startImsTrafficResponse(const RadioResponseInfo& info,
+            const std::optional<ConnectionFailureInfo>& response) override;
 
-    virtual ndk::ScopedAStatus performAcbCheckResponse(const RadioResponseInfo& info) override;
+    virtual ndk::ScopedAStatus stopImsTrafficResponse(const RadioResponseInfo& info) override;
 
     virtual ndk::ScopedAStatus setAnbrEnabledResponse(const RadioResponseInfo& info) override;
 
@@ -60,10 +62,8 @@ class RadioImsIndication : public BnRadioImsIndication {
     RadioImsIndication(RadioServiceTest& parent_ims);
     virtual ~RadioImsIndication() = default;
 
-    virtual ndk::ScopedAStatus onConnectionSetupFailure(RadioIndicationType type, int token,
-            const ConnectionFailureInfo& info) override;
-
-    virtual ndk::ScopedAStatus onAccessAllowed(RadioIndicationType type, int token) override;
+    virtual ndk::ScopedAStatus onConnectionSetupFailure(RadioIndicationType type,
+            const std::string& token, const ConnectionFailureInfo& info) override;
 
     virtual ndk::ScopedAStatus notifyAnbr(RadioIndicationType type, int qosSessionId,
             ImsStreamDirection direction, int bitsPerSecond) override;
