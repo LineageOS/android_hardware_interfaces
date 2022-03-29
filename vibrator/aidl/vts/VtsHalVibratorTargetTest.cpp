@@ -167,9 +167,9 @@ static float getFrequencyMaximumHz(sp<IVibrator> vibrator, int32_t capabilities)
         EXPECT_TRUE(isUnknownOrUnsupported(status)) << status;
     }
 
-    float freqMaximumHz =
-        (bandwidthAmplitudeMap.size() * getFrequencyResolutionHz(vibrator, capabilities)) +
-        getFrequencyMinimumHz(vibrator, capabilities);
+    float freqMaximumHz = ((bandwidthAmplitudeMap.size() - 1) *
+                           getFrequencyResolutionHz(vibrator, capabilities)) +
+                          getFrequencyMinimumHz(vibrator, capabilities);
     return freqMaximumHz;
 }
 
