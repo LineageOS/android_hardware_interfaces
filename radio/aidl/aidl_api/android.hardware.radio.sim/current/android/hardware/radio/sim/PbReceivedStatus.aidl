@@ -32,7 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.sim;
-@Backing(type="byte") @VintfStability
+@Backing(type="byte") @JavaDerive(toString=true) @VintfStability
 enum PbReceivedStatus {
   PB_RECEIVED_OK = 1,
   PB_RECEIVED_ERROR = 2,

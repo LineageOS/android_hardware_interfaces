@@ -17,6 +17,7 @@
 package android.hardware.radio.sim;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable SimRefreshResult {
     /**
      * A file on SIM has been updated.

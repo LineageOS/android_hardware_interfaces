@@ -20,6 +20,7 @@ import android.hardware.radio.AccessNetwork;
 import android.hardware.radio.network.RadioAccessSpecifierBands;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable RadioAccessSpecifier {
     /**
      * The type of network to scan.

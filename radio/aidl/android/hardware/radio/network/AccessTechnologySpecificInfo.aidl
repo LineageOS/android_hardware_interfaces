@@ -21,6 +21,7 @@ import android.hardware.radio.network.EutranRegistrationInfo;
 import android.hardware.radio.network.NrVopsInfo;
 
 @VintfStability
+@JavaDerive(toString=true)
 union AccessTechnologySpecificInfo {
     boolean noinit;
     Cdma2000RegistrationInfo cdmaInfo;

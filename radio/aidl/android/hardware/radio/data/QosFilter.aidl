@@ -25,6 +25,7 @@ import android.hardware.radio.data.QosFilterTypeOfService;
  * See 3gpp 24.008 10.5.6.12 and 3gpp 24.501 9.11.4.13
  */
 @VintfStability
+@JavaDerive(toString=true)
 parcelable QosFilter {
     const byte DIRECTION_DOWNLINK = 0;
     const byte DIRECTION_UPLINK = 1;
