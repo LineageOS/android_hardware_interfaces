@@ -430,8 +430,8 @@ TEST_P(EvsAidlTest, CameraStreamPerformance) {
         mActiveCameras.push_back(pCam);
 
         // Set up a frame receiver object which will fire up its own thread
-        std::shared_ptr<FrameHandler> frameHandler =
-                std::make_shared<FrameHandler>(pCam, cam, nullptr, FrameHandler::eAutoReturn);
+        std::shared_ptr<FrameHandler> frameHandler = ndk::SharedRefBase::make<FrameHandler>(
+                pCam, cam, nullptr, FrameHandler::eAutoReturn);
         EXPECT_NE(frameHandler, nullptr);
 
         // Start the camera's video stream
@@ -529,8 +529,8 @@ TEST_P(EvsAidlTest, CameraStreamBuffering) {
         ASSERT_TRUE(pCam->setMaxFramesInFlight(kBuffersToHold).isOk());
 
         // Set up a frame receiver object which will fire up its own thread.
-        std::shared_ptr<FrameHandler> frameHandler =
-                std::make_shared<FrameHandler>(pCam, cam, nullptr, FrameHandler::eNoAutoReturn);
+        std::shared_ptr<FrameHandler> frameHandler = ndk::SharedRefBase::make<FrameHandler>(
+                pCam, cam, nullptr, FrameHandler::eNoAutoReturn);
         EXPECT_NE(frameHandler, nullptr);
 
         // Start the camera's video stream
@@ -619,8 +619,8 @@ TEST_P(EvsAidlTest, CameraToDisplayRoundTrip) {
         mActiveCameras.push_back(pCam);
 
         // Set up a frame receiver object which will fire up its own thread.
-        std::shared_ptr<FrameHandler> frameHandler =
-                std::make_shared<FrameHandler>(pCam, cam, pDisplay, FrameHandler::eAutoReturn);
+        std::shared_ptr<FrameHandler> frameHandler = ndk::SharedRefBase::make<FrameHandler>(
+                pCam, cam, pDisplay, FrameHandler::eAutoReturn);
         EXPECT_NE(frameHandler, nullptr);
 
         // Activate the display
@@ -697,10 +697,10 @@ TEST_P(EvsAidlTest, MultiCameraStream) {
         mActiveCameras.push_back(pCam1);
 
         // Set up per-client frame receiver objects which will fire up its own thread
-        std::shared_ptr<FrameHandler> frameHandler0 =
-                std::make_shared<FrameHandler>(pCam0, cam, nullptr, FrameHandler::eAutoReturn);
-        std::shared_ptr<FrameHandler> frameHandler1 =
-                std::make_shared<FrameHandler>(pCam1, cam, nullptr, FrameHandler::eAutoReturn);
+        std::shared_ptr<FrameHandler> frameHandler0 = ndk::SharedRefBase::make<FrameHandler>(
+                pCam0, cam, nullptr, FrameHandler::eAutoReturn);
+        std::shared_ptr<FrameHandler> frameHandler1 = ndk::SharedRefBase::make<FrameHandler>(
+                pCam1, cam, nullptr, FrameHandler::eAutoReturn);
         EXPECT_NE(frameHandler0, nullptr);
         EXPECT_NE(frameHandler1, nullptr);
 
@@ -803,8 +803,8 @@ TEST_P(EvsAidlTest, CameraParameter) {
         }
 
         // Set up per-client frame receiver objects which will fire up its own thread
-        std::shared_ptr<FrameHandler> frameHandler =
-                std::make_shared<FrameHandler>(pCam, cam, nullptr, FrameHandler::eAutoReturn);
+        std::shared_ptr<FrameHandler> frameHandler = ndk::SharedRefBase::make<FrameHandler>(
+                pCam, cam, nullptr, FrameHandler::eAutoReturn);
         EXPECT_NE(frameHandler, nullptr);
 
         // Start the camera's video stream
@@ -903,10 +903,11 @@ TEST_P(EvsAidlTest, CameraPrimaryClientRelease) {
         mActiveCameras.push_back(pSecondaryCam);
 
         // Set up per-client frame receiver objects which will fire up its own thread
-        std::shared_ptr<FrameHandler> frameHandlerPrimary = std::make_shared<FrameHandler>(
+        std::shared_ptr<FrameHandler> frameHandlerPrimary = ndk::SharedRefBase::make<FrameHandler>(
                 pPrimaryCam, cam, nullptr, FrameHandler::eAutoReturn);
-        std::shared_ptr<FrameHandler> frameHandlerSecondary = std::make_shared<FrameHandler>(
-                pSecondaryCam, cam, nullptr, FrameHandler::eAutoReturn);
+        std::shared_ptr<FrameHandler> frameHandlerSecondary =
+                ndk::SharedRefBase::make<FrameHandler>(pSecondaryCam, cam, nullptr,
+                                                       FrameHandler::eAutoReturn);
         EXPECT_NE(frameHandlerPrimary, nullptr);
         EXPECT_NE(frameHandlerSecondary, nullptr);
 
@@ -1075,10 +1076,11 @@ TEST_P(EvsAidlTest, MultiCameraParameter) {
         }
 
         // Set up per-client frame receiver objects which will fire up its own thread
-        std::shared_ptr<FrameHandler> frameHandlerPrimary = std::make_shared<FrameHandler>(
+        std::shared_ptr<FrameHandler> frameHandlerPrimary = ndk::SharedRefBase::make<FrameHandler>(
                 pPrimaryCam, cam, nullptr, FrameHandler::eAutoReturn);
-        std::shared_ptr<FrameHandler> frameHandlerSecondary = std::make_shared<FrameHandler>(
-                pSecondaryCam, cam, nullptr, FrameHandler::eAutoReturn);
+        std::shared_ptr<FrameHandler> frameHandlerSecondary =
+                ndk::SharedRefBase::make<FrameHandler>(pSecondaryCam, cam, nullptr,
+                                                       FrameHandler::eAutoReturn);
         EXPECT_NE(frameHandlerPrimary, nullptr);
         EXPECT_NE(frameHandlerSecondary, nullptr);
 
@@ -1418,10 +1420,10 @@ TEST_P(EvsAidlTest, HighPriorityCameraClient) {
         }
 
         // Set up a frame receiver object which will fire up its own thread.
-        std::shared_ptr<FrameHandler> frameHandler0 =
-                std::make_shared<FrameHandler>(pCam0, cam, nullptr, FrameHandler::eAutoReturn);
-        std::shared_ptr<FrameHandler> frameHandler1 =
-                std::make_shared<FrameHandler>(pCam1, cam, nullptr, FrameHandler::eAutoReturn);
+        std::shared_ptr<FrameHandler> frameHandler0 = ndk::SharedRefBase::make<FrameHandler>(
+                pCam0, cam, nullptr, FrameHandler::eAutoReturn);
+        std::shared_ptr<FrameHandler> frameHandler1 = ndk::SharedRefBase::make<FrameHandler>(
+                pCam1, cam, nullptr, FrameHandler::eAutoReturn);
         EXPECT_NE(frameHandler0, nullptr);
         EXPECT_NE(frameHandler1, nullptr);
 
@@ -1733,8 +1735,8 @@ TEST_P(EvsAidlTest, CameraUseStreamConfigToDisplay) {
         mActiveCameras.push_back(pCam);
 
         // Set up a frame receiver object which will fire up its own thread.
-        std::shared_ptr<FrameHandler> frameHandler =
-                std::make_shared<FrameHandler>(pCam, cam, pDisplay, FrameHandler::eAutoReturn);
+        std::shared_ptr<FrameHandler> frameHandler = ndk::SharedRefBase::make<FrameHandler>(
+                pCam, cam, pDisplay, FrameHandler::eAutoReturn);
         EXPECT_NE(frameHandler, nullptr);
 
         // Activate the display
@@ -1843,10 +1845,10 @@ TEST_P(EvsAidlTest, MultiCameraStreamUseConfig) {
         EXPECT_NE(pCam1, nullptr);
 
         // Set up per-client frame receiver objects which will fire up its own thread
-        std::shared_ptr<FrameHandler> frameHandler0 =
-                std::make_shared<FrameHandler>(pCam0, cam, nullptr, FrameHandler::eAutoReturn);
-        std::shared_ptr<FrameHandler> frameHandler1 =
-                std::make_shared<FrameHandler>(pCam1, cam, nullptr, FrameHandler::eAutoReturn);
+        std::shared_ptr<FrameHandler> frameHandler0 = ndk::SharedRefBase::make<FrameHandler>(
+                pCam0, cam, nullptr, FrameHandler::eAutoReturn);
+        std::shared_ptr<FrameHandler> frameHandler1 = ndk::SharedRefBase::make<FrameHandler>(
+                pCam1, cam, nullptr, FrameHandler::eAutoReturn);
         EXPECT_NE(frameHandler0, nullptr);
         EXPECT_NE(frameHandler1, nullptr);
 
@@ -2008,8 +2010,8 @@ TEST_P(EvsAidlTest, CameraStreamExternalBuffering) {
         EXPECT_GE(delta, kBuffersToHold);
 
         // Set up a frame receiver object which will fire up its own thread.
-        std::shared_ptr<FrameHandler> frameHandler =
-                std::make_shared<FrameHandler>(pCam, cam, nullptr, FrameHandler::eNoAutoReturn);
+        std::shared_ptr<FrameHandler> frameHandler = ndk::SharedRefBase::make<FrameHandler>(
+                pCam, cam, nullptr, FrameHandler::eNoAutoReturn);
         EXPECT_NE(frameHandler, nullptr);
 
         // Start the camera's video stream
@@ -2101,7 +2103,7 @@ TEST_P(EvsAidlTest, UltrasonicsVerifyStreamData) {
         EXPECT_NE(pUltrasonicsArray, nullptr);
 
         std::shared_ptr<FrameHandlerUltrasonics> frameHandler =
-                std::make_shared<FrameHandlerUltrasonics>(pUltrasonicsArray);
+                ndk::SharedRefBase::make<FrameHandlerUltrasonics>(pUltrasonicsArray);
         EXPECT_NE(frameHandler, nullptr);
 
         // Start stream.
@@ -2141,7 +2143,7 @@ TEST_P(EvsAidlTest, UltrasonicsSetFramesInFlight) {
         ASSERT_TRUE(pUltrasonicsArray->setMaxFramesInFlight(10).isOk());
 
         std::shared_ptr<FrameHandlerUltrasonics> frameHandler =
-                std::make_shared<FrameHandlerUltrasonics>(pUltrasonicsArray);
+                ndk::SharedRefBase::make<FrameHandlerUltrasonics>(pUltrasonicsArray);
         EXPECT_NE(frameHandler, nullptr);
 
         // Start stream.
