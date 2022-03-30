@@ -23,6 +23,7 @@
 #include <FakeObd2Frame.h>
 #include <JsonFakeValueGenerator.h>
 #include <PropertyUtils.h>
+#include <TestPropertyUtils.h>
 #include <VehicleHalTypes.h>
 #include <VehicleUtils.h>
 #include <android-base/parsedouble.h>
@@ -335,12 +336,31 @@ FakeVehicleHardware::ValueResultType FakeVehicleHardware::maybeGetSpecialValue(
                 result.value()->timestamp = elapsedRealtimeNano();
             }
             return result;
+        case ECHO_REVERSE_BYTES:
+            *isSpecialValue = true;
+            return getEchoReverseBytes(value);
         default:
             // Do nothing.
             break;
     }
 
     return nullptr;
+}
+
+FakeVehicleHardware::ValueResultType FakeVehicleHardware::getEchoReverseBytes(
+        const VehiclePropValue& value) const {
+    auto readResult = mServerSidePropStore->readValue(value);
+    if (!readResult.ok()) {
+        return readResult;
+    }
+    auto& gotValue = readResult.value();
+    gotValue->timestamp = elapsedRealtimeNano();
+    std::vector<uint8_t> byteValues = gotValue->value.byteValues;
+    size_t byteSize = byteValues.size();
+    for (size_t i = 0; i < byteSize; i++) {
+        gotValue->value.byteValues[i] = byteValues[byteSize - 1 - i];
+    }
+    return std::move(gotValue);
 }
 
 VhalResult<void> FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValue& value,
