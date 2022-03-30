@@ -131,6 +131,8 @@ class FakeVehicleHardware : public IVehicleHardware {
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
     ValueResultType getUserHalProp(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
+    ValueResultType getEchoReverseBytes(
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value) const;
     bool isHvacPropAndHvacNotAvailable(int32_t propId);
 
     std::string dumpAllProperties();

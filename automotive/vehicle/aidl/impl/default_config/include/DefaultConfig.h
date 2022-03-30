@@ -1124,6 +1124,14 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
                         },
                 .initialValue = {.stringValue = {"Test"}},
         },
+        {
+                .config =
+                        {
+                                .prop = ECHO_REVERSE_BYTES,
+                                .access = VehiclePropertyAccess::READ_WRITE,
+                                .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                        },
+        },
 #ifdef ENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING
         // Vendor propetry for E2E ClusterHomeService testing.
         {
