@@ -276,6 +276,11 @@ TEST_F(FakeVehicleHardwareTest, testGetDefaultValues) {
             continue;
         }
 
+        if (config.config.prop == ECHO_REVERSE_BYTES) {
+            // Ignore ECHO_REVERSE_BYTES, it has special logic.
+            continue;
+        }
+
         int propId = config.config.prop;
         if (isGlobalProp(propId)) {
             if (config.initialValue == RawPropValues{}) {
@@ -1485,6 +1490,24 @@ TEST_F(FakeVehicleHardwareTest, SetComplexPropTest) {
     ASSERT_EQ(-3.402823466E+38f, value.value.floatValues[0]);
     ASSERT_EQ(0.0f, value.value.floatValues[1]);
     ASSERT_EQ(3.402823466E+38f, value.value.floatValues[2]);
+}
+
+TEST_F(FakeVehicleHardwareTest, testGetEchoReverseBytes) {
+    ASSERT_EQ(setValue(VehiclePropValue{
+                      .prop = ECHO_REVERSE_BYTES,
+                      .value =
+                              {
+                                      .byteValues = {0x01, 0x02, 0x03, 0x04},
+                              },
+              }),
+              StatusCode::OK);
+
+    auto result = getValue(VehiclePropValue{
+            .prop = ECHO_REVERSE_BYTES,
+    });
+
+    ASSERT_TRUE(result.ok()) << "failed to get ECHO_REVERSE_BYTES value: " << getStatus(result);
+    ASSERT_EQ(result.value().value.byteValues, std::vector<uint8_t>({0x04, 0x03, 0x02, 0x01}));
 }
 
 }  // namespace fake

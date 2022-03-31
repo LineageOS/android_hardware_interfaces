@@ -40,6 +40,16 @@ static constexpr uint32_t kBufferSize = kRtpFrameSize * kRtpFrameCount;
 static constexpr uint32_t kBufferCount = 2;  // double buffer
 static constexpr uint32_t kDataMqSize = kBufferSize * kBufferCount;
 
+A2dpSoftwareEncodingAudioProvider::A2dpSoftwareEncodingAudioProvider()
+    : A2dpSoftwareAudioProvider() {
+  session_type_ = SessionType::A2DP_SOFTWARE_ENCODING_DATAPATH;
+}
+
+A2dpSoftwareDecodingAudioProvider::A2dpSoftwareDecodingAudioProvider()
+    : A2dpSoftwareAudioProvider() {
+  session_type_ = SessionType::A2DP_SOFTWARE_DECODING_DATAPATH;
+}
+
 A2dpSoftwareAudioProvider::A2dpSoftwareAudioProvider()
     : BluetoothAudioProvider(), data_mq_(nullptr) {
   LOG(INFO) << __func__ << " - size of audio buffer " << kDataMqSize
@@ -48,7 +58,6 @@ A2dpSoftwareAudioProvider::A2dpSoftwareAudioProvider()
       new DataMQ(kDataMqSize, /* EventFlag */ true));
   if (data_mq && data_mq->isValid()) {
     data_mq_ = std::move(data_mq);
-    session_type_ = SessionType::A2DP_SOFTWARE_ENCODING_DATAPATH;
   } else {
     ALOGE_IF(!data_mq, "failed to allocate data MQ");
     ALOGE_IF(data_mq && !data_mq->isValid(), "data MQ is invalid");

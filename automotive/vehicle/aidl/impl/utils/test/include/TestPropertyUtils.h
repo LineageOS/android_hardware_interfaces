@@ -76,6 +76,16 @@ constexpr int32_t PLACEHOLDER_PROPERTY_STRING =
         toInt(testpropertyutils_impl::VehicleArea::GLOBAL) |
         toInt(testpropertyutils_impl::VehiclePropertyType::STRING);
 
+// This property is used for testing LargeParcelable marshalling/unmarhsalling end to end.
+// It acts as an regular property that stores the property value when setting and return the value
+// when getting, except that all the byteValues used in the setValue response would be filled in
+// the reverse order.
+// 0x21702a12
+constexpr int32_t ECHO_REVERSE_BYTES = 0x2a12 |
+                                       toInt(testpropertyutils_impl::VehiclePropertyGroup::VENDOR) |
+                                       toInt(testpropertyutils_impl::VehicleArea::GLOBAL) |
+                                       toInt(testpropertyutils_impl::VehiclePropertyType::BYTES);
+
 // This property is used for test purpose. End to end tests use this property to test set and get
 // method for MIXED type properties.
 constexpr int32_t kMixedTypePropertyForTest =
