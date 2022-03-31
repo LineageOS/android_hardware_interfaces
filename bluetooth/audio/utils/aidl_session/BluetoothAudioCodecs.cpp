@@ -323,7 +323,8 @@ BluetoothAudioCodecs::GetSoftwarePcmCapabilities() {
 std::vector<CodecCapabilities>
 BluetoothAudioCodecs::GetA2dpOffloadCodecCapabilities(
     const SessionType& session_type) {
-  if (session_type != SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH) {
+  if (session_type != SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH &&
+      session_type != SessionType::A2DP_HARDWARE_OFFLOAD_DECODING_DATAPATH) {
     return {};
   }
   std::vector<CodecCapabilities> offload_a2dp_codec_capabilities =
@@ -389,7 +390,8 @@ bool BluetoothAudioCodecs::IsSoftwarePcmConfigurationValid(
 
 bool BluetoothAudioCodecs::IsOffloadCodecConfigurationValid(
     const SessionType& session_type, const CodecConfiguration& codec_config) {
-  if (session_type != SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH) {
+  if (session_type != SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH &&
+      session_type != SessionType::A2DP_HARDWARE_OFFLOAD_DECODING_DATAPATH) {
     LOG(ERROR) << __func__
                << ": Invalid SessionType=" << toString(session_type);
     return false;
