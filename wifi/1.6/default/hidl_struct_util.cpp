@@ -1881,7 +1881,7 @@ bool convertHidlNanDataPathInitiatorRequestToLegacy(
                       "ifaceName too long";
         return false;
     }
-    strncpy(legacy_request->ndp_iface, hidl_request.ifaceName.c_str(), IFNAMSIZ + 1);
+    strlcpy(legacy_request->ndp_iface, hidl_request.ifaceName.c_str(), IFNAMSIZ + 1);
     legacy_request->ndp_cfg.security_cfg =
             (hidl_request.securityConfig.securityType != NanDataPathSecurityType::OPEN)
                     ? legacy_hal::NAN_DP_CONFIG_SECURITY
@@ -1958,7 +1958,7 @@ bool convertHidlNanDataPathInitiatorRequest_1_6ToLegacy(
                       "ifaceName too long";
         return false;
     }
-    strncpy(legacy_request->ndp_iface, hidl_request.ifaceName.c_str(), IFNAMSIZ + 1);
+    strlcpy(legacy_request->ndp_iface, hidl_request.ifaceName.c_str(), IFNAMSIZ + 1);
     legacy_request->ndp_cfg.security_cfg =
             (hidl_request.securityConfig.securityType != NanDataPathSecurityType::OPEN)
                     ? legacy_hal::NAN_DP_CONFIG_SECURITY
@@ -2039,7 +2039,7 @@ bool convertHidlNanDataPathIndicationResponseToLegacy(
                       "ifaceName too long";
         return false;
     }
-    strncpy(legacy_request->ndp_iface, hidl_request.ifaceName.c_str(), IFNAMSIZ + 1);
+    strlcpy(legacy_request->ndp_iface, hidl_request.ifaceName.c_str(), IFNAMSIZ + 1);
     legacy_request->ndp_cfg.security_cfg =
             (hidl_request.securityConfig.securityType != NanDataPathSecurityType::OPEN)
                     ? legacy_hal::NAN_DP_CONFIG_SECURITY
@@ -2114,7 +2114,7 @@ bool convertHidlNanDataPathIndicationResponse_1_6ToLegacy(
                       "ifaceName too long";
         return false;
     }
-    strncpy(legacy_request->ndp_iface, hidl_request.ifaceName.c_str(), IFNAMSIZ + 1);
+    strlcpy(legacy_request->ndp_iface, hidl_request.ifaceName.c_str(), IFNAMSIZ + 1);
     legacy_request->ndp_cfg.security_cfg =
             (hidl_request.securityConfig.securityType != NanDataPathSecurityType::OPEN)
                     ? legacy_hal::NAN_DP_CONFIG_SECURITY
