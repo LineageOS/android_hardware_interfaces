@@ -207,6 +207,14 @@ uint32_t KeyMintAidlTestBase::boot_patch_level() {
     return boot_patch_level(key_characteristics_);
 }
 
+/**
+ * An API to determine device IDs attestation is required or not,
+ * which is mandatory for KeyMint version 2 or first_api_level 33 or greater.
+ */
+bool KeyMintAidlTestBase::isDeviceIdAttestationRequired() {
+    return AidlVersion() >= 2 || property_get_int32("ro.vendor.api_level", 0) >= 33;
+}
+
 bool KeyMintAidlTestBase::Curve25519Supported() {
     // Strongbox never supports curve 25519.
     if (SecLevel() == SecurityLevel::STRONGBOX) {
