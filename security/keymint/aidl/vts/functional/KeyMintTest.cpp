@@ -1986,8 +1986,8 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationIdTags) {
         if (SecLevel() == SecurityLevel::STRONGBOX) {
             if (result == ErrorCode::ATTESTATION_KEYS_NOT_PROVISIONED) return;
         }
-        if (result == ErrorCode::CANNOT_ATTEST_IDS) {
-            // Device ID attestation is optional; KeyMint may not support it at all.
+        if (result == ErrorCode::CANNOT_ATTEST_IDS && !isDeviceIdAttestationRequired()) {
+            // ID attestation was optional till api level 32, from api level 33 it is mandatory.
             continue;
         }
         ASSERT_EQ(result, ErrorCode::OK);
