@@ -374,6 +374,15 @@ const ConfigDeclaration kVehicleProperties[]{
 
         {.config =
                  {
+                         .prop = toInt(VehicleProperty::FUEL_VOLUME_DISPLAY_UNITS),
+                         .access = VehiclePropertyAccess::READ_WRITE,
+                         .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                         .configArray = {(int)VehicleUnit::LITER, (int)VehicleUnit::US_GALLON},
+                 },
+         .initialValue = {.int32Values = {(int)VehicleUnit::LITER}}},
+
+        {.config =
+                 {
                          .prop = toInt(VehicleProperty::HW_KEY_INPUT),
                          .access = VehiclePropertyAccess::READ,
                          .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
