@@ -62,4 +62,12 @@ enum SessionType {
      * Audio broadcast channels. This is a control path only.
      */
     LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH,
+    /**
+     * A2DP legacy that AVDTP media is decoded by Bluetooth Stack
+     */
+    A2DP_SOFTWARE_DECODING_DATAPATH,
+    /**
+     * The decoding of AVDTP media is done by HW and there is control only
+     */
+    A2DP_HARDWARE_OFFLOAD_DECODING_DATAPATH,
 }
