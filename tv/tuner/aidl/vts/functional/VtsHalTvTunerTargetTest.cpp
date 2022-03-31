@@ -640,6 +640,48 @@ TEST_P(TunerFilterAidlTest, testTimeFilter) {
     testTimeFilter(timeFilterMap[timeFilter.timeFilterId]);
 }
 
+static bool isEventProducingFilter(const FilterConfig& filterConfig) {
+    switch (filterConfig.type.mainType) {
+        case DemuxFilterMainType::TS: {
+            auto tsFilterType =
+                    filterConfig.type.subType.get<DemuxFilterSubType::Tag::tsFilterType>();
+            return (tsFilterType == DemuxTsFilterType::SECTION ||
+                    tsFilterType == DemuxTsFilterType::PES ||
+                    tsFilterType == DemuxTsFilterType::AUDIO ||
+                    tsFilterType == DemuxTsFilterType::VIDEO ||
+                    tsFilterType == DemuxTsFilterType::RECORD ||
+                    tsFilterType == DemuxTsFilterType::TEMI);
+        }
+        case DemuxFilterMainType::MMTP: {
+            auto mmtpFilterType =
+                    filterConfig.type.subType.get<DemuxFilterSubType::Tag::mmtpFilterType>();
+            return (mmtpFilterType == DemuxMmtpFilterType::SECTION ||
+                    mmtpFilterType == DemuxMmtpFilterType::PES ||
+                    mmtpFilterType == DemuxMmtpFilterType::AUDIO ||
+                    mmtpFilterType == DemuxMmtpFilterType::VIDEO ||
+                    mmtpFilterType == DemuxMmtpFilterType::RECORD ||
+                    mmtpFilterType == DemuxMmtpFilterType::DOWNLOAD);
+        }
+        case DemuxFilterMainType::IP: {
+            auto ipFilterType =
+                    filterConfig.type.subType.get<DemuxFilterSubType::Tag::ipFilterType>();
+            return (ipFilterType == DemuxIpFilterType::SECTION);
+        }
+        case DemuxFilterMainType::TLV: {
+            auto tlvFilterType =
+                    filterConfig.type.subType.get<DemuxFilterSubType::Tag::tlvFilterType>();
+            return (tlvFilterType == DemuxTlvFilterType::SECTION);
+        }
+        case DemuxFilterMainType::ALP: {
+            auto alpFilterType =
+                    filterConfig.type.subType.get<DemuxFilterSubType::Tag::alpFilterType>();
+            return (alpFilterType == DemuxAlpFilterType::SECTION);
+        }
+        default:
+            return false;
+    }
+}
+
 static bool isMediaFilter(const FilterConfig& filterConfig) {
     switch (filterConfig.type.mainType) {
         case DemuxFilterMainType::TS: {
@@ -685,6 +727,12 @@ static int getDemuxFilterEventDataLength(const DemuxFilterEvent& event) {
 
 // TODO: move boilerplate into text fixture
 void TunerFilterAidlTest::testDelayHint(const FilterConfig& filterConf) {
+    if (!filterConf.timeDelayInMs && !filterConf.dataDelayInBytes) {
+        return;
+    }
+    if (!isEventProducingFilter(filterConf)) {
+        return;
+    }
     int32_t feId;
     int32_t demuxId;
     std::shared_ptr<IDemux> demux;
@@ -707,11 +755,11 @@ void TunerFilterAidlTest::testDelayHint(const FilterConfig& filterConf) {
     // startTime needs to be set before calling setDelayHint.
     auto startTime = std::chrono::steady_clock::now();
 
-    auto timeDelayInMs = std::chrono::milliseconds(filterConf.timeDelayInMs);
-    if (timeDelayInMs.count() > 0) {
+    int timeDelayInMs = filterConf.timeDelayInMs;
+    if (timeDelayInMs > 0) {
         FilterDelayHint delayHint;
         delayHint.hintType = FilterDelayHintType::TIME_DELAY_IN_MS;
-        delayHint.hintValue = timeDelayInMs.count();
+        delayHint.hintValue = timeDelayInMs;
 
         // setDelayHint should fail for media filters.
         ASSERT_EQ(filter->setDelayHint(delayHint).isOk(), !mediaFilter);
@@ -733,6 +781,10 @@ void TunerFilterAidlTest::testDelayHint(const FilterConfig& filterConf) {
     auto cb = mFilterTests.getFilterCallbacks().at(filterId);
     auto future =
             cb->verifyFilterCallback([](const std::vector<DemuxFilterEvent>&) { return true; });
+
+    // The configure stage can also produce events, so we should set the delay
+    // hint beforehand.
+    ASSERT_TRUE(mFilterTests.configFilter(filterConf.settings, filterId));
     mFilterTests.startFilter(filterId);
 
     auto timeout = std::chrono::seconds(30);
@@ -750,20 +802,16 @@ void TunerFilterAidlTest::testDelayHint(const FilterConfig& filterConf) {
                     return true;
                 });
 
-        // The configure stage can also produce events, so we should set the delay
-        // hint beforehand.
-        ASSERT_TRUE(mFilterTests.configFilter(filterConf.settings, filterId));
-
         ASSERT_TRUE(mFilterTests.startFilter(filterId));
 
         // block and wait for callback to be received.
         ASSERT_EQ(future.wait_for(timeout), std::future_status::ready);
-        auto duration = std::chrono::steady_clock::now() - startTime;
 
-        bool delayHintTest = duration >= timeDelayInMs;
+        auto duration = std::chrono::steady_clock::now() - startTime;
+        bool delayHintTest = duration >= std::chrono::milliseconds(timeDelayInMs);
         bool dataSizeTest = callbackSize >= dataDelayInBytes;
 
-        if (timeDelayInMs.count() > 0 && dataDelayInBytes > 0) {
+        if (timeDelayInMs > 0 && dataDelayInBytes > 0) {
             ASSERT_TRUE(delayHintTest || dataSizeTest);
         } else {
             // if only one of time delay / data delay is configured, one of them
@@ -781,7 +829,9 @@ void TunerFilterAidlTest::testDelayHint(const FilterConfig& filterConf) {
 
 TEST_P(TunerFilterAidlTest, FilterDelayHintTest) {
     description("Test filter time delay hint.");
-
+    if (!live.hasFrontendConnection) {
+        return;
+    }
     for (const auto& obj : filterMap) {
         testDelayHint(obj.second);
     }
