@@ -171,6 +171,15 @@ TEST_P(RadioConfigTest, setSimSlotsMapping) {
     slotPortMapping.physicalSlotId = 0;
     slotPortMapping.portId = 0;
     std::vector<SlotPortMapping> slotPortMappingList = {slotPortMapping};
+    if (isDsDsEnabled()) {
+        slotPortMapping.physicalSlotId = 1;
+        slotPortMappingList.push_back(slotPortMapping);
+    } else if (isTsTsEnabled()) {
+        slotPortMapping.physicalSlotId = 1;
+        slotPortMappingList.push_back(slotPortMapping);
+        slotPortMapping.physicalSlotId = 2;
+        slotPortMappingList.push_back(slotPortMapping);
+    }
     ndk::ScopedAStatus res = radio_config->setSimSlotsMapping(serial, slotPortMappingList);
     ASSERT_OK(res);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
@@ -179,6 +188,9 @@ TEST_P(RadioConfigTest, setSimSlotsMapping) {
     ALOGI("setSimSlotsMapping, rspInfo.error = %s\n",
           toString(radioRsp_config->rspInfo.error).c_str());
     ASSERT_TRUE(CheckAnyOfErrors(radioRsp_config->rspInfo.error, {RadioError::NONE}));
+
+    // Give some time for modem to fully switch SIM configuration
+    sleep(MODEM_SET_SIM_SLOT_MAPPING_DELAY_IN_SECONDS);
 }
 
 /*
