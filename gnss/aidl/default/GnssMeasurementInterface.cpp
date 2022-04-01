@@ -19,11 +19,17 @@
 #include "GnssMeasurementInterface.h"
 #include <aidl/android/hardware/gnss/BnGnss.h>
 #include <log/log.h>
+#include "DeviceFileReader.h"
+#include "GnssRawMeasurementParser.h"
+#include "GnssReplayUtils.h"
 #include "Utils.h"
 
 namespace aidl::android::hardware::gnss {
 
 using Utils = ::android::hardware::gnss::common::Utils;
+using ReplayUtils = ::android::hardware::gnss::common::ReplayUtils;
+using GnssRawMeasurementParser = ::android::hardware::gnss::common::GnssRawMeasurementParser;
+using DeviceFileReader = ::android::hardware::gnss::common::DeviceFileReader;
 
 std::shared_ptr<IGnssMeasurementCallback> GnssMeasurementInterface::sCallback = nullptr;
 
@@ -63,9 +69,22 @@ void GnssMeasurementInterface::start(const bool enableCorrVecOutputs) {
     mIsActive = true;
     mThread = std::thread([this, enableCorrVecOutputs]() {
         while (mIsActive == true) {
-            auto measurement = Utils::getMockMeasurement(enableCorrVecOutputs);
-            this->reportMeasurement(measurement);
-
+            std::string rawMeasurementStr = "";
+            if (ReplayUtils::hasGnssDeviceFile() &&
+                ReplayUtils::isGnssRawMeasurement(
+                        rawMeasurementStr =
+                                DeviceFileReader::Instance().getGnssRawMeasurementData())) {
+                ALOGD("rawMeasurementStr(size: %zu) from device file: %s", rawMeasurementStr.size(),
+                      rawMeasurementStr.c_str());
+                auto measurement =
+                        GnssRawMeasurementParser::getMeasurementFromStrs(rawMeasurementStr);
+                if (measurement != nullptr) {
+                    this->reportMeasurement(*measurement);
+                }
+            } else {
+                auto measurement = Utils::getMockMeasurement(enableCorrVecOutputs);
+                this->reportMeasurement(measurement);
+            }
             std::this_thread::sleep_for(std::chrono::milliseconds(mMinIntervalMillis));
         }
     });
