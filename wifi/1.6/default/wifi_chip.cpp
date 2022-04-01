@@ -131,7 +131,7 @@ std::string getPredefinedP2pIfaceName() {
     if (strncmp(buffer.data(), P2P_MGMT_DEVICE_PREFIX, strlen(P2P_MGMT_DEVICE_PREFIX)) == 0) {
         /* Get the p2p parent interface name from p2p device interface name set
          * in property */
-        strncpy(p2pParentIfname, buffer.data() + strlen(P2P_MGMT_DEVICE_PREFIX),
+        strlcpy(p2pParentIfname, buffer.data() + strlen(P2P_MGMT_DEVICE_PREFIX),
                 strlen(buffer.data()) - strlen(P2P_MGMT_DEVICE_PREFIX));
         if (property_get(kActiveWlanIfaceNameProperty, primaryIfaceName.data(), nullptr) == 0) {
             return buffer.data();
@@ -217,14 +217,15 @@ bool removeOldFilesInternal() {
 
 // Helper function for |cpioArchiveFilesInDir|
 bool cpioWriteHeader(int out_fd, struct stat& st, const char* file_name, size_t file_name_len) {
-    std::array<char, 32 * 1024> read_buf;
-    ssize_t llen =
-            sprintf(read_buf.data(), "%s%08X%08X%08X%08X%08X%08X%08X%08X%08X%08X%08X%08X%08X",
-                    kCpioMagic, static_cast<int>(st.st_ino), st.st_mode, st.st_uid, st.st_gid,
-                    static_cast<int>(st.st_nlink), static_cast<int>(st.st_mtime),
-                    static_cast<int>(st.st_size), major(st.st_dev), minor(st.st_dev),
-                    major(st.st_rdev), minor(st.st_rdev), static_cast<uint32_t>(file_name_len), 0);
-    if (write(out_fd, read_buf.data(), llen) == -1) {
+    const int buf_size = 32 * 1024;
+    std::array<char, buf_size> read_buf;
+    ssize_t llen = snprintf(
+            read_buf.data(), buf_size, "%s%08X%08X%08X%08X%08X%08X%08X%08X%08X%08X%08X%08X%08X",
+            kCpioMagic, static_cast<int>(st.st_ino), st.st_mode, st.st_uid, st.st_gid,
+            static_cast<int>(st.st_nlink), static_cast<int>(st.st_mtime),
+            static_cast<int>(st.st_size), major(st.st_dev), minor(st.st_dev), major(st.st_rdev),
+            minor(st.st_rdev), static_cast<uint32_t>(file_name_len), 0);
+    if (write(out_fd, read_buf.data(), llen < buf_size ? llen : buf_size - 1) == -1) {
         PLOG(ERROR) << "Error writing cpio header to file " << file_name;
         return false;
     }
@@ -282,10 +283,11 @@ size_t cpioWriteFileContent(int fd_read, int out_fd, struct stat& st) {
 
 // Helper function for |cpioArchiveFilesInDir|
 bool cpioWriteFileTrailer(int out_fd) {
-    std::array<char, 4096> read_buf;
+    const int buf_size = 4096;
+    std::array<char, buf_size> read_buf;
     read_buf.fill(0);
-    if (write(out_fd, read_buf.data(),
-              sprintf(read_buf.data(), "070701%040X%056X%08XTRAILER!!!", 1, 0x0b, 0) + 4) == -1) {
+    ssize_t llen = snprintf(read_buf.data(), 4096, "070701%040X%056X%08XTRAILER!!!", 1, 0x0b, 0);
+    if (write(out_fd, read_buf.data(), (llen < buf_size ? llen : buf_size - 1) + 4) == -1) {
         PLOG(ERROR) << "Error writing trailing bytes";
         return false;
     }

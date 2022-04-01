@@ -32,6 +32,7 @@
 
 using aidl::android::hardware::wifi::hostapd::BandMask;
 using aidl::android::hardware::wifi::hostapd::BnHostapdCallback;
+using aidl::android::hardware::wifi::hostapd::ChannelBandwidth;
 using aidl::android::hardware::wifi::hostapd::ChannelParams;
 using aidl::android::hardware::wifi::hostapd::DebugLevel;
 using aidl::android::hardware::wifi::hostapd::EncryptionType;
@@ -44,7 +45,6 @@ using android::ProcessState;
 
 namespace {
 const unsigned char kNwSsid[] = {'t', 'e', 's', 't', '1', '2', '3', '4', '5'};
-const std::string kIfaceName = "wlan0";
 const std::string kPassphrase = "test12345";
 const std::string kInvalidMinPassphrase = "test";
 const std::string kInvalidMaxPassphrase =
@@ -123,6 +123,7 @@ class HostapdAidl : public testing::TestWithParam<std::string> {
         iface_params.hwModeParams.enable80211AC = false;
         iface_params.hwModeParams.enable80211AX = false;
         iface_params.hwModeParams.enable6GhzBand = false;
+        iface_params.hwModeParams.maximumChannelBandwidth = ChannelBandwidth::BANDWIDTH_20;
 
         channelParams.enableAcs = false;
         channelParams.acsShouldExcludeDfs = false;
@@ -284,8 +285,8 @@ TEST_P(HostapdAidl, RegisterCallback) {
  */
 TEST_P(HostapdAidl, AddPskAccessPointWithAcs) {
     if (!isAcsSupport) GTEST_SKIP() << "Missing ACS support";
-    auto status = hostapd->addAccessPoint(getIfaceParamsWithAcs(kIfaceName),
-                                          getPskNwParams());
+    std::string ifname = setupApIfaceAndGetName(false);
+    auto status = hostapd->addAccessPoint(getIfaceParamsWithAcs(ifname), getPskNwParams());
     EXPECT_TRUE(status.isOk());
 }
 
@@ -295,8 +296,9 @@ TEST_P(HostapdAidl, AddPskAccessPointWithAcs) {
  */
 TEST_P(HostapdAidl, AddPskAccessPointWithAcsAndFreqRange) {
     if (!isAcsSupport) GTEST_SKIP() << "Missing ACS support";
-    auto status = hostapd->addAccessPoint(
-        getIfaceParamsWithAcsAndFreqRange(kIfaceName), getPskNwParams());
+    std::string ifname = setupApIfaceAndGetName(false);
+    auto status =
+            hostapd->addAccessPoint(getIfaceParamsWithAcsAndFreqRange(ifname), getPskNwParams());
     EXPECT_TRUE(status.isOk());
 }
 
@@ -306,8 +308,9 @@ TEST_P(HostapdAidl, AddPskAccessPointWithAcsAndFreqRange) {
  */
 TEST_P(HostapdAidl, AddPskAccessPointWithAcsAndInvalidFreqRange) {
     if (!isAcsSupport) GTEST_SKIP() << "Missing ACS support";
-    auto status = hostapd->addAccessPoint(
-        getIfaceParamsWithAcsAndInvalidFreqRange(kIfaceName), getPskNwParams());
+    std::string ifname = setupApIfaceAndGetName(false);
+    auto status = hostapd->addAccessPoint(getIfaceParamsWithAcsAndInvalidFreqRange(ifname),
+                                          getPskNwParams());
     EXPECT_FALSE(status.isOk());
 }
 
@@ -317,8 +320,8 @@ TEST_P(HostapdAidl, AddPskAccessPointWithAcsAndInvalidFreqRange) {
  */
 TEST_P(HostapdAidl, AddOpenAccessPointWithAcs) {
     if (!isAcsSupport) GTEST_SKIP() << "Missing ACS support";
-    auto status = hostapd->addAccessPoint(getIfaceParamsWithAcs(kIfaceName),
-                                          getOpenNwParams());
+    std::string ifname = setupApIfaceAndGetName(false);
+    auto status = hostapd->addAccessPoint(getIfaceParamsWithAcs(ifname), getOpenNwParams());
     EXPECT_TRUE(status.isOk());
 }
 
@@ -327,8 +330,8 @@ TEST_P(HostapdAidl, AddOpenAccessPointWithAcs) {
  * Access point creation should pass.
  */
 TEST_P(HostapdAidl, AddPskAccessPointWithoutAcs) {
-    auto status = hostapd->addAccessPoint(getIfaceParamsWithoutAcs(kIfaceName),
-                                          getPskNwParams());
+    std::string ifname = setupApIfaceAndGetName(false);
+    auto status = hostapd->addAccessPoint(getIfaceParamsWithoutAcs(ifname), getPskNwParams());
     EXPECT_TRUE(status.isOk());
 }
 
@@ -337,7 +340,8 @@ TEST_P(HostapdAidl, AddPskAccessPointWithoutAcs) {
  * Access point creation should pass.
  */
 TEST_P(HostapdAidl, AddPskAccessPointWithoutAcsAndNonMetered) {
-    auto status = hostapd->addAccessPoint(getIfaceParamsWithoutAcs(kIfaceName),
+    std::string ifname = setupApIfaceAndGetName(false);
+    auto status = hostapd->addAccessPoint(getIfaceParamsWithoutAcs(ifname),
                                           getPskNwParamsWithNonMetered());
     EXPECT_TRUE(status.isOk());
 }
@@ -347,8 +351,8 @@ TEST_P(HostapdAidl, AddPskAccessPointWithoutAcsAndNonMetered) {
  * Access point creation should pass.
  */
 TEST_P(HostapdAidl, AddOpenAccessPointWithoutAcs) {
-    auto status = hostapd->addAccessPoint(getIfaceParamsWithoutAcs(kIfaceName),
-                                          getOpenNwParams());
+    std::string ifname = setupApIfaceAndGetName(false);
+    auto status = hostapd->addAccessPoint(getIfaceParamsWithoutAcs(ifname), getOpenNwParams());
     EXPECT_TRUE(status.isOk());
 }
 
@@ -358,8 +362,9 @@ TEST_P(HostapdAidl, AddOpenAccessPointWithoutAcs) {
  */
 TEST_P(HostapdAidl, AddSaeTransitionAccessPointWithoutAcs) {
     if (!isWpa3SaeSupport) GTEST_SKIP() << "Missing SAE support";
-    auto status = hostapd->addAccessPoint(getIfaceParamsWithoutAcs(kIfaceName),
-                                          getSaeTransitionNwParams());
+    std::string ifname = setupApIfaceAndGetName(false);
+    auto status =
+            hostapd->addAccessPoint(getIfaceParamsWithoutAcs(ifname), getSaeTransitionNwParams());
     EXPECT_TRUE(status.isOk());
 }
 
@@ -369,8 +374,8 @@ TEST_P(HostapdAidl, AddSaeTransitionAccessPointWithoutAcs) {
  */
 TEST_P(HostapdAidl, AddSAEAccessPointWithoutAcs) {
     if (!isWpa3SaeSupport) GTEST_SKIP() << "Missing SAE support";
-    auto status = hostapd->addAccessPoint(getIfaceParamsWithoutAcs(kIfaceName),
-                                          getSaeNwParams());
+    std::string ifname = setupApIfaceAndGetName(false);
+    auto status = hostapd->addAccessPoint(getIfaceParamsWithoutAcs(ifname), getSaeNwParams());
     EXPECT_TRUE(status.isOk());
 }
 
@@ -380,10 +385,10 @@ TEST_P(HostapdAidl, AddSAEAccessPointWithoutAcs) {
  */
 TEST_P(HostapdAidl, RemoveAccessPointWithAcs) {
     if (!isAcsSupport) GTEST_SKIP() << "Missing ACS support";
-    auto status = hostapd->addAccessPoint(getIfaceParamsWithAcs(kIfaceName),
-                                          getPskNwParams());
+    std::string ifname = setupApIfaceAndGetName(false);
+    auto status = hostapd->addAccessPoint(getIfaceParamsWithAcs(ifname), getPskNwParams());
     EXPECT_TRUE(status.isOk());
-    EXPECT_TRUE(hostapd->removeAccessPoint(kIfaceName).isOk());
+    EXPECT_TRUE(hostapd->removeAccessPoint(ifname).isOk());
 }
 
 /**
@@ -391,10 +396,10 @@ TEST_P(HostapdAidl, RemoveAccessPointWithAcs) {
  * Access point creation & removal should pass.
  */
 TEST_P(HostapdAidl, RemoveAccessPointWithoutAcs) {
-    auto status = hostapd->addAccessPoint(getIfaceParamsWithoutAcs(kIfaceName),
-                                          getPskNwParams());
+    std::string ifname = setupApIfaceAndGetName(false);
+    auto status = hostapd->addAccessPoint(getIfaceParamsWithoutAcs(ifname), getPskNwParams());
     EXPECT_TRUE(status.isOk());
-    EXPECT_TRUE(hostapd->removeAccessPoint(kIfaceName).isOk());
+    EXPECT_TRUE(hostapd->removeAccessPoint(ifname).isOk());
 }
 
 /**
@@ -402,8 +407,9 @@ TEST_P(HostapdAidl, RemoveAccessPointWithoutAcs) {
  * Access point creation should fail.
  */
 TEST_P(HostapdAidl, AddPskAccessPointWithInvalidChannel) {
-    auto status = hostapd->addAccessPoint(
-        getIfaceParamsWithInvalidChannel(kIfaceName), getPskNwParams());
+    std::string ifname = setupApIfaceAndGetName(false);
+    auto status =
+            hostapd->addAccessPoint(getIfaceParamsWithInvalidChannel(ifname), getPskNwParams());
     EXPECT_FALSE(status.isOk());
 }
 
@@ -412,8 +418,9 @@ TEST_P(HostapdAidl, AddPskAccessPointWithInvalidChannel) {
  * Access point creation should fail.
  */
 TEST_P(HostapdAidl, AddInvalidPskAccessPointWithoutAcs) {
-    auto status = hostapd->addAccessPoint(getIfaceParamsWithoutAcs(kIfaceName),
-                                          getInvalidPskNwParams());
+    std::string ifname = setupApIfaceAndGetName(false);
+    auto status =
+            hostapd->addAccessPoint(getIfaceParamsWithoutAcs(ifname), getInvalidPskNwParams());
     EXPECT_FALSE(status.isOk());
 }
 
@@ -422,8 +429,9 @@ TEST_P(HostapdAidl, AddInvalidPskAccessPointWithoutAcs) {
  * Access point creation should fail.
  */
 TEST_P(HostapdAidl, AddInvalidSaeTransitionAccessPointWithoutAcs) {
+    std::string ifname = setupApIfaceAndGetName(false);
     if (!isWpa3SaeSupport) GTEST_SKIP() << "Missing SAE support";
-    auto status = hostapd->addAccessPoint(getIfaceParamsWithoutAcs(kIfaceName),
+    auto status = hostapd->addAccessPoint(getIfaceParamsWithoutAcs(ifname),
                                           getInvalidSaeTransitionNwParams());
     EXPECT_FALSE(status.isOk());
 }
@@ -433,9 +441,10 @@ TEST_P(HostapdAidl, AddInvalidSaeTransitionAccessPointWithoutAcs) {
  * Access point creation should fail.
  */
 TEST_P(HostapdAidl, AddInvalidSaeAccessPointWithoutAcs) {
+    std::string ifname = setupApIfaceAndGetName(false);
     if (!isWpa3SaeSupport) GTEST_SKIP() << "Missing SAE support";
-    auto status = hostapd->addAccessPoint(getIfaceParamsWithoutAcs(kIfaceName),
-                                          getInvalidSaeNwParams());
+    auto status =
+            hostapd->addAccessPoint(getIfaceParamsWithoutAcs(ifname), getInvalidSaeNwParams());
     EXPECT_FALSE(status.isOk());
 }
 
@@ -443,12 +452,11 @@ TEST_P(HostapdAidl, AddInvalidSaeAccessPointWithoutAcs) {
  * forceClientDisconnect should fail when hotspot interface available.
  */
 TEST_P(HostapdAidl, DisconnectClientWhenIfacAvailable) {
-    auto status = hostapd->addAccessPoint(getIfaceParamsWithoutAcs(kIfaceName),
-                                          getOpenNwParams());
+    std::string ifname = setupApIfaceAndGetName(false);
+    auto status = hostapd->addAccessPoint(getIfaceParamsWithoutAcs(ifname), getOpenNwParams());
     EXPECT_TRUE(status.isOk());
 
-    status = hostapd->forceClientDisconnect(kIfaceName, kTestZeroMacAddr,
-                                            kTestDisconnectReasonCode);
+    status = hostapd->forceClientDisconnect(ifname, kTestZeroMacAddr, kTestDisconnectReasonCode);
     EXPECT_FALSE(status.isOk());
 }
 
