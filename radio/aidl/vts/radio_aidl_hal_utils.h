@@ -72,6 +72,7 @@ static constexpr const char* FEATURE_TELEPHONY_IMS = "android.hardware.telephony
 #define MODEM_EMERGENCY_CALL_ESTABLISH_TIME 3
 #define MODEM_EMERGENCY_CALL_DISCONNECT_TIME 3
 #define MODEM_SET_SIM_POWER_DELAY_IN_SECONDS 2
+#define MODEM_SET_SIM_SLOT_MAPPING_DELAY_IN_SECONDS 6
 
 #define RADIO_SERVICE_SLOT1_NAME "slot1"  // HAL instance name for SIM slot 1 or single SIM device
 #define RADIO_SERVICE_SLOT2_NAME "slot2"  // HAL instance name for SIM slot 2 on dual SIM device
@@ -148,5 +149,5 @@ class RadioServiceTest {
     void updateSimCardStatus();
 
     /* Update SIM slot status */
-    void updateSimSlotStatus();
+    void updateSimSlotStatus(int physicalSlotId);
 };
