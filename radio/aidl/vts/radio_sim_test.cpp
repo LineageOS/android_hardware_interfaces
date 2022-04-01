@@ -108,7 +108,13 @@ TEST_P(RadioSimTest, setSimCardPower) {
     // have CardStatus::STATE_PRESENT after turning the power back on
     if (radioRsp_sim->rspInfo.error == RadioError::NONE) {
         updateSimCardStatus();
+        updateSimSlotStatus();
         EXPECT_EQ(CardStatus::STATE_PRESENT, cardStatus.cardState);
+        EXPECT_EQ(CardStatus::STATE_PRESENT, slotStatus.cardState);
+        if (CardStatus::STATE_PRESENT == slotStatus.cardState) {
+            ASSERT_TRUE(slotStatus.portInfo[0].portActive);
+            EXPECT_EQ(0, cardStatus.slotMap.portId);
+        }
     }
 }
 
