@@ -38,6 +38,7 @@ class RadioConfigResponse : public BnRadioConfigResponse {
     RadioResponseInfo rspInfo;
     PhoneCapability phoneCap;
     bool modemReducedFeatureSet1;
+    std::vector<SimSlotStatus> simSlotStatus;
 
     virtual ndk::ScopedAStatus getSimSlotsStatusResponse(
             const RadioResponseInfo& info, const std::vector<SimSlotStatus>& slotStatus) override;
@@ -77,6 +78,8 @@ class RadioConfigTest : public ::testing::TestWithParam<std::string>, public Rad
   public:
     virtual void SetUp() override;
     ndk::ScopedAStatus updateSimCardStatus();
+    /* Override updateSimSlotStatus in RadioServiceTest to not call setResponseFunctions */
+    void updateSimSlotStatus();
 
     /* radio config service handle in RadioServiceTest */
     /* radio config response handle */
