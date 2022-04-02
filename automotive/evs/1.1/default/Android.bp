@@ -13,6 +13,7 @@ cc_binary {
     proprietary: true,
     relative_install_path: "hw",
     srcs: [
+        ":libgui_frame_event_aidl",
         "*.cpp",
     ],
     init_rc: ["android.hardware.automotive.evs@1.1-service.rc"],
