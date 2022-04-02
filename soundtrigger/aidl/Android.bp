@@ -11,7 +11,11 @@ aidl_interface {
     name: "android.hardware.soundtrigger3",
     vendor_available: true,
     host_supported: true,
-    flags: ["-Werror", "-Weverything", ],
+    flags: [
+        "-Werror",
+        "-Weverything",
+        "-Wno-missing-permission-annotation",
+    ],
     srcs: [
         "android/hardware/soundtrigger3/ISoundTriggerHw.aidl",
         "android/hardware/soundtrigger3/ISoundTriggerHwCallback.aidl",
@@ -19,7 +23,7 @@ aidl_interface {
     ],
     stability: "vintf",
     imports: [
-        "android.media.soundtrigger.types",
+        "android.media.soundtrigger.types-V1",
     ],
     backend: {
         cpp: {
@@ -35,4 +39,11 @@ aidl_interface {
             },
         },
     },
+    versions_with_info: [
+        {
+            version: "1",
+            imports: ["android.media.soundtrigger.types-V1"],
+        },
+    ],
+
 }

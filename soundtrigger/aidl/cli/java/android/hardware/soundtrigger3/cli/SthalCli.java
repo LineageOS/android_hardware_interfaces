@@ -357,5 +357,15 @@ public class SthalCli {
             config.base.sampleRate = 16000;
             return config;
         }
+
+        @Override
+        public int getInterfaceVersion() {
+            return ISoundTriggerHw.VERSION;
+        }
+
+        @Override
+        public String getInterfaceHash() {
+            return ISoundTriggerHw.HASH;
+        }
     }
 }
