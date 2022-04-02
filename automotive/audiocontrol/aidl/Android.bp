@@ -28,7 +28,22 @@ aidl_interface {
             ],
         },
     },
-    versions: [
-        "1",
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [
+                "android.hardware.audio.common-V1",
+                "android.media.audio.common.types-V1",
+            ],
+        },
+        {
+            version: "2",
+            imports: [
+                "android.hardware.audio.common-V1",
+                "android.media.audio.common.types-V1",
+            ],
+        },
+
     ],
+
 }
