@@ -25,7 +25,7 @@ aidl_interface {
     name: "android.hardware.automotive.evs",
     vendor_available: true,
     srcs: [
-        "android/hardware/automotive/evs/*.aidl"
+        "android/hardware/automotive/evs/*.aidl",
     ],
     stability: "vintf",
     imports: [
@@ -45,7 +45,17 @@ aidl_interface {
             vndk: {
                 enabled: false,
             },
-            min_sdk_version: "29"
+            min_sdk_version: "29",
         },
     },
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [
+                "android.hardware.common-V2",
+                "android.hardware.graphics.common-V3",
+            ],
+        },
+    ],
+
 }

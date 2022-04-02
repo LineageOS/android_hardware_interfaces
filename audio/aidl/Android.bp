@@ -59,6 +59,11 @@ aidl_interface {
             min_sdk_version: "31",
         },
     },
-    versions: [
+    versions_with_info: [
+        {
+            version: "1",
+            imports: ["android.media.audio.common.types-V1"],
+        },
     ],
+
 }
