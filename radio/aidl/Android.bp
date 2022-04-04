@@ -228,7 +228,7 @@ aidl_interface {
     srcs: ["android/hardware/radio/ims/media/*.aidl"],
     stability: "vintf",
     imports: ["android.hardware.radio",
-              "android.hardware.radio.data"],
+              "android.hardware.radio.data-V1"],
     backend: {
         cpp: {
             enabled: false,
