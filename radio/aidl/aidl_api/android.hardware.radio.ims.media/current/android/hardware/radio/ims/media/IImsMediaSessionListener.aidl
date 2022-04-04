@@ -40,7 +40,7 @@ interface IImsMediaSessionListener {
   oneway void onConfirmConfigResponse(in android.hardware.radio.ims.media.RtpConfig config, android.hardware.radio.ims.media.RtpError error);
   oneway void onFirstMediaPacketReceived(in android.hardware.radio.ims.media.RtpConfig config);
   oneway void onHeaderExtensionReceived(in List<android.hardware.radio.ims.media.RtpHeaderExtension> extensions);
-  oneway void notifyMediaInactivity(android.hardware.radio.ims.media.MediaProtocolType packetType, int duration);
+  oneway void notifyMediaInactivity(android.hardware.radio.ims.media.MediaProtocolType packetType);
   oneway void notifyPacketLoss(int packetLossPercentage);
   oneway void notifyJitter(int jitter);
 }

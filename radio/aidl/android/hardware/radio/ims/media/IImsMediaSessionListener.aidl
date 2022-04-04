@@ -94,9 +94,8 @@ oneway interface IImsMediaSessionListener {
      * setMediaQualityThreshold() API
      *
      * @param packetType either RTP or RTCP
-     * @param duration Inactivity duration
      */
-     void notifyMediaInactivity(MediaProtocolType packetType, int duration);
+     void notifyMediaInactivity(MediaProtocolType packetType);
 
     /**
      * Notifies RTP packet loss observed as per thresholds set by
