@@ -35,8 +35,6 @@ package android.hardware.radio.ims.media;
 @VintfStability
 interface IImsMedia {
   oneway void setListener(in android.hardware.radio.ims.media.IImsMediaListener mediaListener);
-  oneway void bringUp();
-  oneway void bringDown();
   oneway void openSession(int sessionId, in android.hardware.radio.ims.media.LocalEndPoint localEndPoint, in android.hardware.radio.ims.media.RtpConfig config);
   oneway void closeSession(int sessionId);
 }

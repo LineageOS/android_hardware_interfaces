@@ -35,19 +35,6 @@ oneway interface IImsMedia {
     void setListener(in IImsMediaListener mediaListener);
 
     /**
-     * Brings up and initializes the RTP stack in the offloaded processor. The bring up status
-     * notified via IImsMediaListener#onBringupResponse() API. The implementation shall notify
-     * the state of media stack using IImsMediaListener#onMediaStackStateChanged().
-     */
-    void bringUp();
-
-    /**
-     * Brings down the RTP stack in the offloaded processor. This shall release any reserved
-     * resources and shall notify the status via IImsMediaListener#onMediaStackStateChanged().
-     */
-    void bringDown();
-
-    /**
      * Opens a RTP session for the local end point with the associated initial remote configuration
      * if there is a valid RtpConfig passed. It starts the media flow if the media direction in the
      * RtpConfig is set to any value other than NO_MEDIA_FLOW. If the open session is successful
@@ -68,5 +55,5 @@ oneway interface IImsMedia {
      *
      * @param sessionId identifier for the rtp session that needs to be closed
      */
-     void closeSession(int sessionId);
+    void closeSession(int sessionId);
 }
