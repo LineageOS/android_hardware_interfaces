@@ -867,6 +867,8 @@ struct TunerTestingConfigAidlReader1_0 {
                         settings.set<DemuxFilterSettings::Tag::ip>(ip);
                         break;
                     case FilterSubTypeEnum::IP: {
+                        type.subType.set<DemuxFilterSubType::Tag::ipFilterType>(
+                                DemuxIpFilterType::IP);
                         ip.ipAddr = readIpAddress(filterConfig),
                         ip.filterSettings
                                 .set<DemuxIpFilterSettingsFilterSettings::Tag::bPassthrough>(
