@@ -14,7 +14,7 @@ aidl_interface {
     stability: "vintf",
     backend: {
         cpp: {
-            enabled: false,
+            enabled: true,
         },
         java: {
             sdk_version: "module_current",
@@ -35,7 +35,7 @@ aidl_interface {
     imports: ["android.hardware.radio"],
     backend: {
         cpp: {
-            enabled: false,
+            enabled: true,
         },
         java: {
             sdk_version: "module_current",
@@ -63,7 +63,7 @@ aidl_interface {
     imports: ["android.hardware.radio"],
     backend: {
         cpp: {
-            enabled: false,
+            enabled: true,
         },
         java: {
             sdk_version: "module_current",
@@ -91,7 +91,7 @@ aidl_interface {
     imports: ["android.hardware.radio"],
     backend: {
         cpp: {
-            enabled: false,
+            enabled: true,
         },
         java: {
             sdk_version: "module_current",
@@ -112,7 +112,7 @@ aidl_interface {
     imports: ["android.hardware.radio"],
     backend: {
         cpp: {
-            enabled: false,
+            enabled: true,
         },
         java: {
             sdk_version: "module_current",
@@ -140,7 +140,7 @@ aidl_interface {
     imports: ["android.hardware.radio"],
     backend: {
         cpp: {
-            enabled: false,
+            enabled: true,
         },
         java: {
             sdk_version: "module_current",
@@ -171,7 +171,7 @@ aidl_interface {
     ],
     backend: {
         cpp: {
-            enabled: false,
+            enabled: true,
         },
         java: {
             sdk_version: "module_current",
@@ -202,7 +202,7 @@ aidl_interface {
     imports: ["android.hardware.radio"],
     backend: {
         cpp: {
-            enabled: false,
+            enabled: true,
         },
         java: {
             sdk_version: "module_current",
