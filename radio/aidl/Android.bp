@@ -10,6 +10,7 @@ package {
 aidl_interface {
     name: "android.hardware.radio",
     vendor_available: true,
+    host_supported: true,
     srcs: ["android/hardware/radio/*.aidl"],
     stability: "vintf",
     backend: {
@@ -30,6 +31,7 @@ aidl_interface {
 aidl_interface {
     name: "android.hardware.radio.config",
     vendor_available: true,
+    host_supported: true,
     srcs: ["android/hardware/radio/config/*.aidl"],
     stability: "vintf",
     imports: ["android.hardware.radio"],
@@ -58,6 +60,7 @@ aidl_interface {
 aidl_interface {
     name: "android.hardware.radio.data",
     vendor_available: true,
+    host_supported: true,
     srcs: ["android/hardware/radio/data/*.aidl"],
     stability: "vintf",
     imports: ["android.hardware.radio"],
@@ -86,6 +89,7 @@ aidl_interface {
 aidl_interface {
     name: "android.hardware.radio.messaging",
     vendor_available: true,
+    host_supported: true,
     srcs: ["android/hardware/radio/messaging/*.aidl"],
     stability: "vintf",
     imports: ["android.hardware.radio"],
@@ -107,6 +111,7 @@ aidl_interface {
 aidl_interface {
     name: "android.hardware.radio.modem",
     vendor_available: true,
+    host_supported: true,
     srcs: ["android/hardware/radio/modem/*.aidl"],
     stability: "vintf",
     imports: ["android.hardware.radio"],
@@ -135,6 +140,7 @@ aidl_interface {
 aidl_interface {
     name: "android.hardware.radio.network",
     vendor_available: true,
+    host_supported: true,
     srcs: ["android/hardware/radio/network/*.aidl"],
     stability: "vintf",
     imports: ["android.hardware.radio"],
@@ -163,6 +169,7 @@ aidl_interface {
 aidl_interface {
     name: "android.hardware.radio.sim",
     vendor_available: true,
+    host_supported: true,
     srcs: ["android/hardware/radio/sim/*.aidl"],
     stability: "vintf",
     imports: [
@@ -197,6 +204,7 @@ aidl_interface {
 aidl_interface {
     name: "android.hardware.radio.voice",
     vendor_available: true,
+    host_supported: true,
     srcs: ["android/hardware/radio/voice/*.aidl"],
     stability: "vintf",
     imports: ["android.hardware.radio"],
