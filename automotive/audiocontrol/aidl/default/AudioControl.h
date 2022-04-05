@@ -17,11 +17,19 @@
 #define ANDROID_HARDWARE_AUTOMOTIVE_AUDIOCONTROL_AUDIOCONTROL_H
 
 #include <aidl/android/hardware/automotive/audiocontrol/AudioFocusChange.h>
+#include <aidl/android/hardware/automotive/audiocontrol/AudioGainConfigInfo.h>
 #include <aidl/android/hardware/automotive/audiocontrol/BnAudioControl.h>
 #include <aidl/android/hardware/automotive/audiocontrol/DuckingInfo.h>
+#include <aidl/android/hardware/automotive/audiocontrol/IAudioGainCallback.h>
 #include <aidl/android/hardware/automotive/audiocontrol/MutingInfo.h>
+#include <aidl/android/hardware/automotive/audiocontrol/Reasons.h>
+
+#include <aidl/android/hardware/audio/common/PlaybackTrackMetadata.h>
 
 namespace aidl::android::hardware::automotive::audiocontrol {
+
+namespace audiohalcommon = ::aidl::android::hardware::audio::common;
+namespace audiomediacommon = ::aidl::android::media::audio::common;
 
 class AudioControl : public BnAudioControl {
   public:
@@ -35,6 +43,15 @@ class AudioControl : public BnAudioControl {
             const std::shared_ptr<IFocusListener>& in_listener) override;
     ndk::ScopedAStatus setBalanceTowardRight(float in_value) override;
     ndk::ScopedAStatus setFadeTowardFront(float in_value) override;
+    ndk::ScopedAStatus onAudioFocusChangeWithMetaData(
+            const audiohalcommon::PlaybackTrackMetadata& in_playbackMetaData, int32_t in_zoneId,
+            AudioFocusChange in_focusChange) override;
+    ndk::ScopedAStatus setAudioDeviceGainsChanged(
+            const std::vector<Reasons>& in_reasons,
+            const std::vector<AudioGainConfigInfo>& in_gains) override;
+    ndk::ScopedAStatus registerGainCallback(
+            const std::shared_ptr<IAudioGainCallback>& in_callback) override;
+
     binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
 
   private:
@@ -44,9 +61,22 @@ class AudioControl : public BnAudioControl {
     // listener, then it should also include mutexes or make the listener atomic.
     std::shared_ptr<IFocusListener> mFocusListener;
 
+    /**
+     * @brief mAudioGainCallback will be used by this HAL instance to communicate e.g. with a single
+     * instance of CarAudioService to report unexpected gain changed.
+     */
+    std::shared_ptr<IAudioGainCallback> mAudioGainCallback = nullptr;
+
     binder_status_t cmdHelp(int fd) const;
     binder_status_t cmdRequestFocus(int fd, const char** args, uint32_t numArgs);
     binder_status_t cmdAbandonFocus(int fd, const char** args, uint32_t numArgs);
+    binder_status_t cmdRequestFocusWithMetaData(int fd, const char** args, uint32_t numArgs);
+    binder_status_t cmdAbandonFocusWithMetaData(int fd, const char** args, uint32_t numArgs);
+    binder_status_t cmdOnAudioDeviceGainsChanged(int fd, const char** args, uint32_t numArgs);
+
+    binder_status_t parseMetaData(int fd, const std::string& metadataLiteral,
+                                  audiohalcommon::PlaybackTrackMetadata& trackMetadata);
+
     binder_status_t dumpsys(int fd);
 };
 
