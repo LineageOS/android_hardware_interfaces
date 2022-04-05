@@ -27,6 +27,7 @@ import android.hardware.radio.network.PhoneRestrictedState;
 import android.hardware.radio.network.PhysicalChannelConfig;
 import android.hardware.radio.network.SignalStrength;
 import android.hardware.radio.network.SuppSvcNotification;
+import android.hardware.radio.network.EmergencyRegResult;
 
 /**
  * Interface declaring unsolicited radio indications for network APIs.
@@ -190,4 +191,12 @@ oneway interface IRadioNetworkIndication {
      * @param rat Current new voice rat
      */
     void voiceRadioTechChanged(in RadioIndicationType type, in RadioTechnology rat);
+
+    /**
+     * Emergency Scan Results.
+     *
+     * @param type Type of radio indication
+     * @param result the result of the Emergency Network Scan
+     */
+    void emergencyNetworkScanResult(in RadioIndicationType type, in EmergencyRegResult result);
 }

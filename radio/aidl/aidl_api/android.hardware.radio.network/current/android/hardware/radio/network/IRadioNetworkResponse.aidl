@@ -69,4 +69,8 @@ interface IRadioNetworkResponse {
   oneway void supplyNetworkDepersonalizationResponse(in android.hardware.radio.RadioResponseInfo info, in int remainingRetries);
   oneway void setUsageSettingResponse(in android.hardware.radio.RadioResponseInfo info);
   oneway void getUsageSettingResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.UsageSetting usageSetting);
+  oneway void setEmergencyModeResponse(in android.hardware.radio.RadioResponseInfo info, in android.hardware.radio.network.EmergencyRegResult regState);
+  oneway void triggerEmergencyNetworkScanResponse(in android.hardware.radio.RadioResponseInfo info);
+  oneway void exitEmergencyModeResponse(in android.hardware.radio.RadioResponseInfo info);
+  oneway void cancelEmergencyNetworkScanResponse(in android.hardware.radio.RadioResponseInfo info);
 }
