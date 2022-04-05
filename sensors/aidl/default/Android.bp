@@ -23,6 +23,16 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
+filegroup {
+    name: "sensors-default.rc",
+    srcs: ["sensors-default.rc"],
+}
+
+filegroup {
+    name: "sensors-default.xml",
+    srcs: ["sensors-default.xml"],
+}
+
 cc_library_static {
     name: "libsensorsexampleimpl",
     vendor: true,
@@ -47,8 +57,8 @@ cc_library_static {
 cc_binary {
     name: "android.hardware.sensors-service.example",
     relative_install_path: "hw",
-    init_rc: ["sensors-default.rc"],
-    vintf_fragments: ["sensors-default.xml"],
+    init_rc: [":sensors-default.rc"],
+    vintf_fragments: [":sensors-default.xml"],
     vendor: true,
     shared_libs: [
         "libbase",
