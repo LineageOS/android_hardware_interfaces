@@ -34,6 +34,8 @@
 #include <inttypes.h>
 #include <chrono>
 #include <condition_variable>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace android {
@@ -99,11 +101,51 @@ class FakeVehicleHardwareTest : public ::testing::Test {
     FakeVehicleHardware* getHardware() { return &mHardware; }
 
     StatusCode setValues(const std::vector<SetValueRequest>& requests) {
-        return getHardware()->setValues(mSetValuesCallback, requests);
+        {
+            std::scoped_lock<std::mutex> lockGuard(mLock);
+            for (const auto& request : requests) {
+                mPendingSetValueRequests.insert(request.requestId);
+            }
+        }
+        if (StatusCode status = getHardware()->setValues(mSetValuesCallback, requests);
+            status != StatusCode::OK) {
+            return status;
+        }
+        std::unique_lock<std::mutex> lk(mLock);
+        // Wait for the onSetValueResults.
+        bool result = mCv.wait_for(lk, milliseconds(1000), [this] {
+            ScopedLockAssertion lockAssertion(mLock);
+            return mPendingSetValueRequests.size() == 0;
+        });
+        if (!result) {
+            ALOGE("wait for callbacks for setValues timed-out");
+            return StatusCode::INTERNAL_ERROR;
+        }
+        return StatusCode::OK;
     }
 
     StatusCode getValues(const std::vector<GetValueRequest>& requests) {
-        return getHardware()->getValues(mGetValuesCallback, requests);
+        {
+            std::scoped_lock<std::mutex> lockGuard(mLock);
+            for (const auto& request : requests) {
+                mPendingGetValueRequests.insert(request.requestId);
+            }
+        }
+        if (StatusCode status = getHardware()->getValues(mGetValuesCallback, requests);
+            status != StatusCode::OK) {
+            return status;
+        }
+        std::unique_lock<std::mutex> lk(mLock);
+        // Wait for the onGetValueResults.
+        bool result = mCv.wait_for(lk, milliseconds(1000), [this] {
+            ScopedLockAssertion lockAssertion(mLock);
+            return mPendingGetValueRequests.size() == 0;
+        });
+        if (!result) {
+            ALOGE("wait for callbacks for getValues timed-out");
+            return StatusCode::INTERNAL_ERROR;
+        }
+        return StatusCode::OK;
     }
 
     StatusCode setValue(const VehiclePropValue& value) {
@@ -167,7 +209,9 @@ class FakeVehicleHardwareTest : public ::testing::Test {
         std::scoped_lock<std::mutex> lockGuard(mLock);
         for (auto& result : results) {
             mSetValueResults.push_back(result);
+            mPendingSetValueRequests.erase(result.requestId);
         }
+        mCv.notify_all();
     }
 
     const std::vector<SetValueResult>& getSetValueResults() {
@@ -179,7 +223,9 @@ class FakeVehicleHardwareTest : public ::testing::Test {
         std::scoped_lock<std::mutex> lockGuard(mLock);
         for (auto& result : results) {
             mGetValueResults.push_back(result);
+            mPendingGetValueRequests.erase(result.requestId);
         }
+        mCv.notify_all();
     }
 
     const std::vector<GetValueResult>& getGetValueResults() {
@@ -197,7 +243,7 @@ class FakeVehicleHardwareTest : public ::testing::Test {
             };
             mEventCount[propIdAreaId]++;
         }
-        mCv.notify_one();
+        mCv.notify_all();
     }
 
     const std::vector<VehiclePropValue>& getChangedProperties() {
@@ -295,6 +341,8 @@ class FakeVehicleHardwareTest : public ::testing::Test {
     std::vector<SetValueResult> mSetValueResults GUARDED_BY(mLock);
     std::vector<GetValueResult> mGetValueResults GUARDED_BY(mLock);
     std::vector<VehiclePropValue> mChangedProperties GUARDED_BY(mLock);
+    std::unordered_set<int64_t> mPendingSetValueRequests GUARDED_BY(mLock);
+    std::unordered_set<int64_t> mPendingGetValueRequests GUARDED_BY(mLock);
 };
 
 TEST_F(FakeVehicleHardwareTest, testGetAllPropertyConfigs) {

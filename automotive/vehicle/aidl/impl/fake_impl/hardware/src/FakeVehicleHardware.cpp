@@ -139,8 +139,15 @@ FakeVehicleHardware::FakeVehicleHardware(std::unique_ptr<VehiclePropValuePool> v
       mServerSidePropStore(new VehiclePropertyStore(mValuePool)),
       mFakeObd2Frame(new obd2frame::FakeObd2Frame(mServerSidePropStore)),
       mFakeUserHal(new FakeUserHal(mValuePool)),
-      mRecurrentTimer(new RecurrentTimer()) {
+      mRecurrentTimer(new RecurrentTimer()),
+      mPendingGetValueRequests(this),
+      mPendingSetValueRequests(this) {
     init();
+}
+
+FakeVehicleHardware::~FakeVehicleHardware() {
+    mPendingGetValueRequests.stop();
+    mPendingSetValueRequests.stop();
 }
 
 void FakeVehicleHardware::init() {
@@ -427,37 +434,25 @@ VhalResult<void> FakeVehicleHardware::maybeSetSpecialValue(const VehiclePropValu
 
 StatusCode FakeVehicleHardware::setValues(std::shared_ptr<const SetValuesCallback> callback,
                                           const std::vector<SetValueRequest>& requests) {
-    std::vector<SetValueResult> results;
     for (auto& request : requests) {
-        const VehiclePropValue& value = request.value;
-        int propId = value.prop;
-
         if (FAKE_VEHICLEHARDWARE_DEBUG) {
-            ALOGD("Set value for property ID: %d", propId);
+            ALOGD("Set value for property ID: %d", request.value.prop);
         }
 
-        SetValueResult setValueResult;
-        setValueResult.requestId = request.requestId;
-
-        if (auto result = setValue(value); !result.ok()) {
-            ALOGE("failed to set value, error: %s, code: %d", getErrorMsg(result).c_str(),
-                  getIntErrorCode(result));
-            setValueResult.status = getErrorCode(result);
-        } else {
-            setValueResult.status = StatusCode::OK;
-        }
-
-        results.push_back(std::move(setValueResult));
+        // In a real VHAL implementation, you could either send the setValue request to vehicle bus
+        // here in the binder thread, or you could send the request in setValue which runs in
+        // the handler thread. If you decide to send the setValue request here, you should not
+        // wait for the response here and the handler thread should handle the setValue response.
+        mPendingSetValueRequests.addRequest(request, callback);
     }
-
-    // In the real vhal, the values will be sent to Car ECU. We just pretend it is done here and
-    // send back the updated property values to client.
-    (*callback)(std::move(results));
 
     return StatusCode::OK;
 }
 
 VhalResult<void> FakeVehicleHardware::setValue(const VehiclePropValue& value) {
+    // In a real VHAL implementation, this will send the request to vehicle bus if not already
+    // sent in setValues, and wait for the response from vehicle bus.
+    // Here we are just updating mValuePool.
     bool isSpecialValue = false;
     auto setSpecialValueResult = maybeSetSpecialValue(value, &isSpecialValue);
 
@@ -484,41 +479,59 @@ VhalResult<void> FakeVehicleHardware::setValue(const VehiclePropValue& value) {
     return {};
 }
 
-StatusCode FakeVehicleHardware::getValues(std::shared_ptr<const GetValuesCallback> callback,
-                                          const std::vector<GetValueRequest>& requests) const {
-    std::vector<GetValueResult> results;
-    for (auto& request : requests) {
-        const VehiclePropValue& value = request.prop;
+SetValueResult FakeVehicleHardware::handleSetValueRequest(const SetValueRequest& request) {
+    SetValueResult setValueResult;
+    setValueResult.requestId = request.requestId;
 
-        if (FAKE_VEHICLEHARDWARE_DEBUG) {
-            ALOGD("getValues(%d)", value.prop);
-        }
-
-        GetValueResult getValueResult;
-        getValueResult.requestId = request.requestId;
-
-        auto result = getValue(value);
-        if (!result.ok()) {
-            ALOGE("failed to get value, error: %s, code: %d", getErrorMsg(result).c_str(),
-                  getIntErrorCode(result));
-            getValueResult.status = getErrorCode(result);
-        } else {
-            getValueResult.status = StatusCode::OK;
-            getValueResult.prop = *result.value();
-        }
-        results.push_back(std::move(getValueResult));
+    if (auto result = setValue(request.value); !result.ok()) {
+        ALOGE("failed to set value, error: %s, code: %d", getErrorMsg(result).c_str(),
+              getIntErrorCode(result));
+        setValueResult.status = getErrorCode(result);
+    } else {
+        setValueResult.status = StatusCode::OK;
     }
 
-    // In a real VHAL implementation, getValue would be async and we would call the callback after
-    // we actually received the values from vehicle bus. Here we are getting the result
-    // synchronously so we could call the callback here.
-    (*callback)(std::move(results));
+    return setValueResult;
+}
+
+StatusCode FakeVehicleHardware::getValues(std::shared_ptr<const GetValuesCallback> callback,
+                                          const std::vector<GetValueRequest>& requests) const {
+    for (auto& request : requests) {
+        if (FAKE_VEHICLEHARDWARE_DEBUG) {
+            ALOGD("getValues(%d)", request.prop.prop);
+        }
+
+        // In a real VHAL implementation, you could either send the getValue request to vehicle bus
+        // here in the binder thread, or you could send the request in getValue which runs in
+        // the handler thread. If you decide to send the getValue request here, you should not
+        // wait for the response here and the handler thread should handle the getValue response.
+        mPendingGetValueRequests.addRequest(request, callback);
+    }
 
     return StatusCode::OK;
 }
 
+GetValueResult FakeVehicleHardware::handleGetValueRequest(const GetValueRequest& request) {
+    GetValueResult getValueResult;
+    getValueResult.requestId = request.requestId;
+
+    auto result = getValue(request.prop);
+    if (!result.ok()) {
+        ALOGE("failed to get value, error: %s, code: %d", getErrorMsg(result).c_str(),
+              getIntErrorCode(result));
+        getValueResult.status = getErrorCode(result);
+    } else {
+        getValueResult.status = StatusCode::OK;
+        getValueResult.prop = *result.value();
+    }
+    return getValueResult;
+}
+
 FakeVehicleHardware::ValueResultType FakeVehicleHardware::getValue(
         const VehiclePropValue& value) const {
+    // In a real VHAL implementation, this will send the request to vehicle bus if not already
+    // sent in getValues, and wait for the response from vehicle bus.
+    // Here we are just reading value from mValuePool.
     bool isSpecialValue = false;
     auto result = maybeGetSpecialValue(value, &isSpecialValue);
     if (isSpecialValue) {
@@ -969,6 +982,60 @@ Result<std::vector<uint8_t>> FakeVehicleHardware::parseHexString(const std::stri
         highDigit = !highDigit;
     }
     return bytes;
+}
+
+template <class CallbackType, class RequestType>
+FakeVehicleHardware::PendingRequestHandler<CallbackType, RequestType>::PendingRequestHandler(
+        FakeVehicleHardware* hardware)
+    : mHardware(hardware), mThread([this] {
+          while (mRequests.waitForItems()) {
+              handleRequestsOnce();
+          }
+      }) {}
+
+template <class CallbackType, class RequestType>
+void FakeVehicleHardware::PendingRequestHandler<CallbackType, RequestType>::addRequest(
+        RequestType request, std::shared_ptr<const CallbackType> callback) {
+    mRequests.push({
+            request,
+            callback,
+    });
+}
+
+template <class CallbackType, class RequestType>
+void FakeVehicleHardware::PendingRequestHandler<CallbackType, RequestType>::stop() {
+    mRequests.deactivate();
+    if (mThread.joinable()) {
+        mThread.join();
+    }
+}
+
+template <>
+void FakeVehicleHardware::PendingRequestHandler<FakeVehicleHardware::GetValuesCallback,
+                                                GetValueRequest>::handleRequestsOnce() {
+    std::unordered_map<std::shared_ptr<const GetValuesCallback>, std::vector<GetValueResult>>
+            callbackToResults;
+    for (const auto& rwc : mRequests.flush()) {
+        auto result = mHardware->handleGetValueRequest(rwc.request);
+        callbackToResults[rwc.callback].push_back(std::move(result));
+    }
+    for (const auto& [callback, results] : callbackToResults) {
+        (*callback)(std::move(results));
+    }
+}
+
+template <>
+void FakeVehicleHardware::PendingRequestHandler<FakeVehicleHardware::SetValuesCallback,
+                                                SetValueRequest>::handleRequestsOnce() {
+    std::unordered_map<std::shared_ptr<const SetValuesCallback>, std::vector<SetValueResult>>
+            callbackToResults;
+    for (const auto& rwc : mRequests.flush()) {
+        auto result = mHardware->handleSetValueRequest(rwc.request);
+        callbackToResults[rwc.callback].push_back(std::move(result));
+    }
+    for (const auto& [callback, results] : callbackToResults) {
+        (*callback)(std::move(results));
+    }
 }
 
 }  // namespace fake
