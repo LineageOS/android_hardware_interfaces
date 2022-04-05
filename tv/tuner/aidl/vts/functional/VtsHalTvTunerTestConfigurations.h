@@ -175,9 +175,14 @@ inline bool validateConnections() {
         ALOGW("[vts config] Record must support either a DVR source or a Frontend source.");
         return false;
     }
-    bool feIsValid = frontendMap.find(live.frontendId) != frontendMap.end() &&
-                     frontendMap.find(scan.frontendId) != frontendMap.end();
-    feIsValid &= record.support ? frontendMap.find(record.frontendId) != frontendMap.end() : true;
+    bool feIsValid = live.hasFrontendConnection
+                             ? frontendMap.find(live.frontendId) != frontendMap.end()
+                             : true;
+    feIsValid &= scan.hasFrontendConnection ? frontendMap.find(scan.frontendId) != frontendMap.end()
+                                            : true;
+    feIsValid &= record.support && record.hasFrontendConnection
+                         ? frontendMap.find(record.frontendId) != frontendMap.end()
+                         : true;
 
     if (!feIsValid) {
         ALOGW("[vts config] dynamic config fe connection is invalid.");
@@ -204,8 +209,10 @@ inline bool validateConnections() {
         return false;
     }
 
-    bool filterIsValid = filterMap.find(live.audioFilterId) != filterMap.end() &&
-                         filterMap.find(live.videoFilterId) != filterMap.end();
+    bool filterIsValid = (live.hasFrontendConnection)
+                             ? filterMap.find(live.audioFilterId) != filterMap.end() &&
+                               filterMap.find(live.videoFilterId) != filterMap.end()
+                             : true;
     filterIsValid &=
             record.support ? filterMap.find(record.recordFilterId) != filterMap.end() : true;
 
