@@ -21,6 +21,7 @@
 #include <FakeObd2Frame.h>
 #include <FakeUserHal.h>
 #include <IVehicleHardware.h>
+#include <RecurrentTimer.h>
 #include <VehicleHalTypes.h>
 #include <VehiclePropertyStore.h>
 #include <android-base/parseint.h>
@@ -82,6 +83,10 @@ class FakeVehicleHardware : public IVehicleHardware {
     void registerOnPropertySetErrorEvent(
             std::unique_ptr<const PropertySetErrorCallback> callback) override;
 
+    // Update the sample rate for the [propId, areaId] pair.
+    aidl::android::hardware::automotive::vehicle::StatusCode updateSampleRate(
+            int32_t propId, int32_t areaId, float sampleRate) override;
+
   protected:
     // mValuePool is also used in mServerSidePropStore.
     const std::shared_ptr<VehiclePropValuePool> mValuePool;
@@ -99,11 +104,13 @@ class FakeVehicleHardware : public IVehicleHardware {
 
     const std::unique_ptr<obd2frame::FakeObd2Frame> mFakeObd2Frame;
     const std::unique_ptr<FakeUserHal> mFakeUserHal;
-    std::mutex mCallbackLock;
-    std::unique_ptr<const PropertyChangeCallback> mOnPropertyChangeCallback
-            GUARDED_BY(mCallbackLock);
-    std::unique_ptr<const PropertySetErrorCallback> mOnPropertySetErrorCallback
-            GUARDED_BY(mCallbackLock);
+    // RecurrentTimer is thread-safe.
+    std::unique_ptr<RecurrentTimer> mRecurrentTimer;
+    std::mutex mLock;
+    std::unique_ptr<const PropertyChangeCallback> mOnPropertyChangeCallback GUARDED_BY(mLock);
+    std::unique_ptr<const PropertySetErrorCallback> mOnPropertySetErrorCallback GUARDED_BY(mLock);
+    std::unordered_map<PropIdAreaId, std::shared_ptr<RecurrentTimer::Callback>, PropIdAreaIdHash>
+            mRecurrentActions GUARDED_BY(mLock);
 
     void init();
     // Stores the initial value to property store.
