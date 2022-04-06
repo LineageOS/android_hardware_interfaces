@@ -124,17 +124,19 @@ struct JsonOutput {
 };
 
 /**
- * Take a given certificate request and output a JSON blob containing both the
- * build fingerprint and certificate request. This data may be serialized, then
- * later uploaded to the remote provisioning service. The input csr is not
- * validated, only encoded.
+ * Take a given instance name and certificate request, then output a JSON blob
+ * containing the name, build fingerprint and certificate request. This data may
+ * be serialized, then later uploaded to the remote provisioning service. The
+ * input csr is not validated, only encoded.
  *
  * Output format:
  *   {
  *     "build_fingerprint": <string>
  *     "csr": <base64 CBOR CSR>
+ *     "name": <string>
  *   }
  */
-JsonOutput jsonEncodeCsrWithBuild(const cppbor::Array& csr);
+JsonOutput jsonEncodeCsrWithBuild(const std::string instance_name,
+                                  const cppbor::Array& csr);
 
 }  // namespace aidl::android::hardware::security::keymint::remote_prov

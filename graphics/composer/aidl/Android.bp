@@ -53,6 +53,16 @@ aidl_interface {
             },
         },
     },
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [
+                "android.hardware.graphics.common-V3",
+                "android.hardware.common-V2",
+            ],
+        },
+    ],
+
 }
 
 cc_library_headers {

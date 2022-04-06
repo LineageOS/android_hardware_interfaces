@@ -90,6 +90,8 @@ import android.hardware.gnss.GnssLocation;
  * hopefully provide a definitive state transition to the third party
  * application. GNSS Geofence will just be a signal indicating what the GNSS
  * subsystem knows about the Geofence.
+ *
+ * @hide
  */
 @VintfStability
 interface IGnssGeofenceCallback {

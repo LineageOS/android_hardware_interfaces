@@ -79,6 +79,7 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
     uint32_t vendor_patch_level() { return vendor_patch_level_; }
     uint32_t boot_patch_level(const vector<KeyCharacteristics>& key_characteristics);
     uint32_t boot_patch_level();
+    bool isDeviceIdAttestationRequired();
 
     bool Curve25519Supported();
 
@@ -95,6 +96,21 @@ class KeyMintAidlTestBase : public ::testing::TestWithParam<string> {
                           vector<Certificate>* cert_chain);
     ErrorCode GenerateKey(const AuthorizationSet& key_desc,
                           const optional<AttestationKey>& attest_key = std::nullopt);
+
+    // Generate key for implementations which do not support factory attestation.
+    ErrorCode GenerateKeyWithSelfSignedAttestKey(const AuthorizationSet& attest_key_desc,
+                                                 const AuthorizationSet& key_desc,
+                                                 vector<uint8_t>* key_blob,
+                                                 vector<KeyCharacteristics>* key_characteristics,
+                                                 vector<Certificate>* cert_chain);
+
+    ErrorCode GenerateKeyWithSelfSignedAttestKey(const AuthorizationSet& attest_key_desc,
+                                                 const AuthorizationSet& key_desc,
+                                                 vector<uint8_t>* key_blob,
+                                                 vector<KeyCharacteristics>* key_characteristics) {
+        return GenerateKeyWithSelfSignedAttestKey(attest_key_desc, key_desc, key_blob,
+                                                  key_characteristics, &cert_chain_);
+    }
 
     ErrorCode ImportKey(const AuthorizationSet& key_desc, KeyFormat format,
                         const string& key_material, vector<uint8_t>* key_blob,

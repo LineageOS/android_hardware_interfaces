@@ -21,6 +21,7 @@ import android.hardware.radio.network.EutranBands;
 import android.hardware.radio.network.OperatorInfo;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable CellIdentityLte {
     /**
      * 3-digit Mobile Country Code, 0..999, empty string if unknown

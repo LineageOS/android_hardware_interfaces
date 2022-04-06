@@ -20,6 +20,8 @@ import android.hardware.gnss.IGnssAntennaInfoCallback;
 
 /**
  * Extended interface for GNSS antenna information support.
+ *
+ * @hide
  */
 @VintfStability
 interface IGnssAntennaInfo {

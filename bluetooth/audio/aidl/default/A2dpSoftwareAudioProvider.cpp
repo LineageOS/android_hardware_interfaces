@@ -40,6 +40,16 @@ static constexpr uint32_t kBufferSize = kRtpFrameSize * kRtpFrameCount;
 static constexpr uint32_t kBufferCount = 2;  // double buffer
 static constexpr uint32_t kDataMqSize = kBufferSize * kBufferCount;
 
+A2dpSoftwareEncodingAudioProvider::A2dpSoftwareEncodingAudioProvider()
+    : A2dpSoftwareAudioProvider() {
+  session_type_ = SessionType::A2DP_SOFTWARE_ENCODING_DATAPATH;
+}
+
+A2dpSoftwareDecodingAudioProvider::A2dpSoftwareDecodingAudioProvider()
+    : A2dpSoftwareAudioProvider() {
+  session_type_ = SessionType::A2DP_SOFTWARE_DECODING_DATAPATH;
+}
+
 A2dpSoftwareAudioProvider::A2dpSoftwareAudioProvider()
     : BluetoothAudioProvider(), data_mq_(nullptr) {
   LOG(INFO) << __func__ << " - size of audio buffer " << kDataMqSize
@@ -48,7 +58,6 @@ A2dpSoftwareAudioProvider::A2dpSoftwareAudioProvider()
       new DataMQ(kDataMqSize, /* EventFlag */ true));
   if (data_mq && data_mq->isValid()) {
     data_mq_ = std::move(data_mq);
-    session_type_ = SessionType::A2DP_SOFTWARE_ENCODING_DATAPATH;
   } else {
     ALOGE_IF(!data_mq, "failed to allocate data MQ");
     ALOGE_IF(data_mq && !data_mq->isValid(), "data MQ is invalid");
@@ -62,9 +71,7 @@ bool A2dpSoftwareAudioProvider::isValid(const SessionType& sessionType) {
 ndk::ScopedAStatus A2dpSoftwareAudioProvider::startSession(
     const std::shared_ptr<IBluetoothAudioPort>& host_if,
     const AudioConfiguration& audio_config,
-    const std::vector<LatencyMode>& latency_modes,
-    DataMQDesc* _aidl_return) {
-  latency_modes_ = latency_modes;
+    const std::vector<LatencyMode>& latency_modes, DataMQDesc* _aidl_return) {
   if (audio_config.getTag() != AudioConfiguration::pcmConfig) {
     LOG(WARNING) << __func__ << " - Invalid Audio Configuration="
                  << audio_config.toString();
@@ -92,8 +99,8 @@ ndk::ScopedAStatus A2dpSoftwareAudioProvider::onSessionReady(
   }
   *_aidl_return = data_mq_->dupeDesc();
   auto desc = data_mq_->dupeDesc();
-  BluetoothAudioSessionReport::OnSessionStarted(session_type_, stack_iface_,
-                                                &desc, *audio_config_);
+  BluetoothAudioSessionReport::OnSessionStarted(
+      session_type_, stack_iface_, &desc, *audio_config_, latency_modes_);
   return ndk::ScopedAStatus::ok();
 }
 

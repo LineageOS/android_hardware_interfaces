@@ -120,7 +120,7 @@ bool parseProviderName(const std::string& serviceDescriptor, std::string* type /
     return true;
 }
 
-const std::vector<int32_t> kMandatoryUseCases = {
+const std::vector<int64_t> kMandatoryUseCases = {
         ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT,
         ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_PREVIEW,
         ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_STILL_CAPTURE,
@@ -328,19 +328,19 @@ void CameraAidlTest::verifyStreamUseCaseCharacteristics(const camera_metadata_t*
     if ((0 == retcode) && (entry.count > 0)) {
         supportMandatoryUseCases = true;
         for (size_t i = 0; i < kMandatoryUseCases.size(); i++) {
-            if (std::find(entry.data.i32, entry.data.i32 + entry.count, kMandatoryUseCases[i]) ==
-                entry.data.i32 + entry.count) {
+            if (std::find(entry.data.i64, entry.data.i64 + entry.count, kMandatoryUseCases[i]) ==
+                entry.data.i64 + entry.count) {
                 supportMandatoryUseCases = false;
                 break;
             }
         }
         bool supportDefaultUseCase = false;
         for (size_t i = 0; i < entry.count; i++) {
-            if (entry.data.i32[i] == ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT) {
+            if (entry.data.i64[i] == ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT) {
                 supportDefaultUseCase = true;
             }
-            ASSERT_TRUE(entry.data.i32[i] <= ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_VIDEO_CALL ||
-                        entry.data.i32[i] >=
+            ASSERT_TRUE(entry.data.i64[i] <= ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_VIDEO_CALL ||
+                        entry.data.i64[i] >=
                                 ANDROID_SCALER_AVAILABLE_STREAM_USE_CASES_VENDOR_START);
         }
         ASSERT_TRUE(supportDefaultUseCase);
@@ -1564,6 +1564,7 @@ void CameraAidlTest::openEmptyDeviceSession(const std::string& name,
     ASSERT_NE(*session, nullptr);
 
     ret = (*device)->getCameraCharacteristics(staticMeta);
+    ASSERT_TRUE(ret.isOk());
 }
 
 void CameraAidlTest::openEmptyInjectionSession(const std::string& name,
@@ -2474,7 +2475,7 @@ void CameraAidlTest::configurePreviewStreams(
         std::shared_ptr<ICameraDeviceSession>* session, Stream* previewStream,
         std::vector<HalStream>* halStreams, bool* supportsPartialResults,
         int32_t* partialResultCount, bool* useHalBufManager, std::shared_ptr<DeviceCb>* cb,
-        int32_t streamConfigCounter) {
+        int32_t streamConfigCounter, bool allowUnsupport) {
     ASSERT_NE(nullptr, session);
     ASSERT_NE(nullptr, halStreams);
     ASSERT_NE(nullptr, previewStream);
@@ -2561,6 +2562,14 @@ void CameraAidlTest::configurePreviewStreams(
     bool supported = false;
     ret = device->isStreamCombinationSupported(config, &supported);
     ASSERT_TRUE(ret.isOk());
+    if (allowUnsupport && !supported) {
+        // stream combination not supported. return null session
+        ret = (*session)->close();
+        ASSERT_TRUE(ret.isOk());
+        *session = nullptr;
+        return;
+    }
+    ASSERT_TRUE(supported) << "Stream combination must be supported.";
 
     config.streamConfigCounter = streamConfigCounter;
     std::vector<HalStream> halConfigs;

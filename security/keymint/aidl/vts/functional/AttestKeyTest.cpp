@@ -183,6 +183,14 @@ TEST_P(AttestKeyTest, AllRsaSizes) {
  * This test attempts to create an RSA attestation key that also allows signing.
  */
 TEST_P(AttestKeyTest, RsaAttestKeyMultiPurposeFail) {
+    if (AidlVersion() < 2) {
+        // The KeyMint v1 spec required that KeyPurpose::ATTEST_KEY not be combined
+        // with other key purposes.  However, this was not checked at the time
+        // so we can only be strict about checking this for implementations of KeyMint
+        // version 2 and above.
+        GTEST_SKIP() << "Single-purpose for KeyPurpose::ATTEST_KEY only strict since KeyMint v2";
+    }
+
     vector<uint8_t> attest_key_blob;
     vector<KeyCharacteristics> attest_key_characteristics;
     vector<Certificate> attest_key_cert_chain;
@@ -453,6 +461,13 @@ TEST_P(AttestKeyTest, EcAttestKeyChaining) {
  * This test attempts to create an EC attestation key that also allows signing.
  */
 TEST_P(AttestKeyTest, EcAttestKeyMultiPurposeFail) {
+    if (AidlVersion() < 2) {
+        // The KeyMint v1 spec required that KeyPurpose::ATTEST_KEY not be combined
+        // with other key purposes.  However, this was not checked at the time
+        // so we can only be strict about checking this for implementations of KeyMint
+        // version 2 and above.
+        GTEST_SKIP() << "Single-purpose for KeyPurpose::ATTEST_KEY only strict since KeyMint v2";
+    }
     vector<uint8_t> attest_key_blob;
     vector<KeyCharacteristics> attest_key_characteristics;
     vector<Certificate> attest_key_cert_chain;
@@ -768,7 +783,7 @@ TEST_P(AttestKeyTest, EcdsaAttestationID) {
         vector<Certificate> attested_key_cert_chain;
         auto result = GenerateKey(builder, attest_key, &attested_key_blob,
                                   &attested_key_characteristics, &attested_key_cert_chain);
-        if (result == ErrorCode::CANNOT_ATTEST_IDS) {
+        if (result == ErrorCode::CANNOT_ATTEST_IDS && !isDeviceIdAttestationRequired()) {
             continue;
         }
 

@@ -225,7 +225,7 @@ ErrMsgOr<EekChain> generateEekChain(int32_t supportedEekCurve, size_t length,
     bytevec prev_priv_key;
     for (size_t i = 0; i < length - 1; ++i) {
         auto keyPair = generateKeyPair(supportedEekCurve, false);
-        if (!keyPair) keyPair.moveMessage();
+        if (!keyPair) return keyPair.moveMessage();
         auto [pub_key, priv_key] = keyPair.moveValue();
 
         // The first signing key is self-signed.
@@ -242,7 +242,7 @@ ErrMsgOr<EekChain> generateEekChain(int32_t supportedEekCurve, size_t length,
         prev_priv_key = priv_key;
     }
     auto keyPair = generateKeyPair(supportedEekCurve, true);
-    if (!keyPair) keyPair.moveMessage();
+    if (!keyPair) return keyPair.moveMessage();
     auto [pub_key, priv_key] = keyPair.moveValue();
 
     auto coseKey = constructCoseKey(supportedEekCurve, eekId, pub_key);
@@ -408,7 +408,7 @@ ErrMsgOr<std::vector<BccEntryData>> validateBcc(const cppbor::Array* bcc) {
     return result;
 }
 
-JsonOutput jsonEncodeCsrWithBuild(const cppbor::Array& csr) {
+JsonOutput jsonEncodeCsrWithBuild(const std::string instance_name, const cppbor::Array& csr) {
     const std::string kFingerprintProp = "ro.build.fingerprint";
 
     if (!::android::base::WaitForPropertyCreation(kFingerprintProp)) {
@@ -432,6 +432,7 @@ JsonOutput jsonEncodeCsrWithBuild(const cppbor::Array& csr) {
     }
 
     Json::Value json(Json::objectValue);
+    json["name"] = instance_name;
     json["build_fingerprint"] = ::android::base::GetProperty(kFingerprintProp, /*default=*/"");
     json["csr"] = base64.data();  // Boring writes a NUL-terminated c-string
 

@@ -108,7 +108,7 @@ bool isVoiceEmergencyOnly(RegState state) {
 
 bool stringEndsWith(std::string const& string, std::string const& end) {
     if (string.size() >= end.size()) {
-        return (0 == string.compare(string.size() - end.size() - 1, end.size(), end));
+        return std::equal(end.rbegin(), end.rend(), string.rbegin());
     } else {
         return false;
     }
@@ -117,7 +117,7 @@ bool stringEndsWith(std::string const& string, std::string const& end) {
 bool isServiceValidForDeviceConfiguration(std::string& serviceName) {
     if (isSsSsEnabled()) {
         // Device is configured as SSSS.
-        if (stringEndsWith(serviceName, RADIO_SERVICE_SLOT1_NAME)) {
+        if (!stringEndsWith(serviceName, RADIO_SERVICE_SLOT1_NAME)) {
             ALOGI("%s instance is not valid for SSSS device.", serviceName.c_str());
             return false;
         }
@@ -206,7 +206,7 @@ void RadioServiceTest::updateSimCardStatus() {
     EXPECT_EQ(RadioError::NONE, radioSimRsp->rspInfo.error);
 }
 
-void RadioServiceTest::updateSimSlotStatus() {
+void RadioServiceTest::updateSimSlotStatus(int physicalSlotId) {
     // Update SimSlotStatus from RadioConfig
     std::shared_ptr<RadioConfigResponse> radioConfigRsp =
             ndk::SharedRefBase::make<RadioConfigResponse>(*this);
@@ -219,8 +219,7 @@ void RadioServiceTest::updateSimSlotStatus() {
     EXPECT_EQ(RadioResponseType::SOLICITED, radioConfigRsp->rspInfo.type);
     EXPECT_EQ(serial, radioConfigRsp->rspInfo.serial);
     EXPECT_EQ(RadioError::NONE, radioConfigRsp->rspInfo.error);
-    // assuming only 1 slot
-    for (const SimSlotStatus& slotStatusResponse : radioConfigRsp->simSlotStatus) {
-        slotStatus = slotStatusResponse;
+    if (radioConfigRsp->simSlotStatus.size() > physicalSlotId) {
+        slotStatus = radioConfigRsp->simSlotStatus[physicalSlotId];
     }
 }

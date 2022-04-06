@@ -32,6 +32,8 @@ import android.hardware.gnss.IGnssBatchingCallback;
  * As with GNSS Location outputs, source of location must be GNSS satellite measurements, optionally
  * using interial and baro sensors to improve relative motion filtering. No additional absolute
  * positioning information, such as WiFi derived location, may be mixed with the GNSS information.
+ *
+ * @hide
  */
 @VintfStability
 interface IGnssBatching {

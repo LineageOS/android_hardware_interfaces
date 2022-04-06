@@ -590,6 +590,7 @@ interface IComposerClient {
      *
      * @exception EX_BAD_DISPLAY when an invalid display handle was passed in.
      * @exception EX_BAD_CONFIG when an invalid config id was passed in.
+     * @exception EX_UNSUPPORTED when not supported by the underlying HAL
      *
      * @see getDisplayConfigs
      * @see clearBootDisplayConfig
@@ -605,6 +606,7 @@ interface IComposerClient {
      * @param display is the display for which the cached boot config is cleared.
      *
      * @exception EX_BAD_DISPLAY when an invalid display handle was passed in.
+     * @exception EX_UNSUPPORTED when not supported by the underlying HAL
      *
      * @see getDisplayConfigs
      * @see setBootDisplayConfig
@@ -622,6 +624,7 @@ interface IComposerClient {
      * @return the implementation's preferred display config.
      *
      * @exception EX_BAD_DISPLAY when an invalid display handle was passed in.
+     * @exception EX_UNSUPPORTED when not supported by the underlying HAL
      *
      * @see getDisplayConfigs
      * @see setBootDisplayConfig
@@ -798,7 +801,7 @@ interface IComposerClient {
      * idle period.
      *
      * This function should only be called if the display reports support for
-     * DisplayCapability.DISPLAY_IDLE from getDisplayCapabilities.
+     * DisplayCapability.DISPLAY_IDLE_TIMER from getDisplayCapabilities.
      *
      * @param display is the display to which the idle timer is set.
      * @param timeoutMs is the minimum requirements of idle period in milliseconds. Panel

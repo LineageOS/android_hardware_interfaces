@@ -18,6 +18,8 @@ package android.hardware.gnss;
 
 /**
  * The callback interface to report GNSS antenna information from the HAL.
+ *
+ * @hide
  */
 @VintfStability
 interface IGnssAntennaInfoCallback {

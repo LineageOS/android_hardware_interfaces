@@ -23,6 +23,8 @@ package android.hardware.gnss.measurement_corrections;
  * The value is only valid if HAS_REFLECTING_PLANE flag is set. An invalid reflecting plane
  * means either reflection planes serving is not supported or the satellite signal has gone
  * through multiple reflections.
+ *
+ * @hide
  */
 @VintfStability
 parcelable ReflectingPlane {
@@ -39,5 +41,5 @@ parcelable ReflectingPlane {
     double altitudeMeters;
 
     /** Represents azimuth clockwise from north of the reflecting plane in degrees. */
-    double azimuthDegrees;
+    double reflectingPlaneAzimuthDegrees;
 }

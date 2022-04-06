@@ -167,9 +167,9 @@ static float getFrequencyMaximumHz(sp<IVibrator> vibrator, int32_t capabilities)
         EXPECT_TRUE(isUnknownOrUnsupported(status)) << status;
     }
 
-    float freqMaximumHz =
-        (bandwidthAmplitudeMap.size() * getFrequencyResolutionHz(vibrator, capabilities)) +
-        getFrequencyMinimumHz(vibrator, capabilities);
+    float freqMaximumHz = ((bandwidthAmplitudeMap.size() - 1) *
+                           getFrequencyResolutionHz(vibrator, capabilities)) +
+                          getFrequencyMinimumHz(vibrator, capabilities);
     return freqMaximumHz;
 }
 
@@ -196,7 +196,7 @@ static ActivePwle composeValidActivePwle(sp<IVibrator> vibrator, int32_t capabil
     active.startFrequency = frequencyHz;
     active.endAmplitude = (getAmplitudeMin() + getAmplitudeMax()) / 2;
     active.endFrequency = frequencyHz;
-    active.duration = 1000;
+    vibrator->getPwlePrimitiveDurationMax(&(active.duration));
 
     return active;
 }
@@ -759,7 +759,9 @@ TEST_P(VibratorAidl, ComposeValidPwleWithCallback) {
     std::future<void> completionFuture{completionPromise.get_future()};
     sp<CompletionCallback> callback =
         new CompletionCallback([&completionPromise] { completionPromise.set_value(); });
-    uint32_t durationMs = 2100;  // Sum of 2 active and 1 braking below
+    int32_t segmentDurationMaxMs;
+    vibrator->getPwlePrimitiveDurationMax(&segmentDurationMaxMs);
+    uint32_t durationMs = segmentDurationMaxMs * 2 + 100;  // Sum of 2 active and 1 braking below
     //TODO(b/187207798): revert back to conservative timeout values once
     //latencies have been fixed
     std::chrono::milliseconds timeout{durationMs * 4};
@@ -863,7 +865,7 @@ TEST_P(VibratorAidl, ComposePwleSegmentDurationBoundary) {
     if (capabilities & IVibrator::CAP_COMPOSE_PWLE_EFFECTS) {
         ActivePwle active = composeValidActivePwle(vibrator, capabilities);
 
-        int segmentDurationMaxMs;
+        int32_t segmentDurationMaxMs;
         vibrator->getPwlePrimitiveDurationMax(&segmentDurationMaxMs);
         active.duration = segmentDurationMaxMs + 10;  // Segment duration greater than allowed
 

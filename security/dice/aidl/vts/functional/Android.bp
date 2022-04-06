@@ -1,0 +1,54 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "hardware_interfaces_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["hardware_interfaces_license"],
+}
+
+rust_test {
+    name: "VtsAidlDiceTargetTest",
+    srcs: [
+        "dice_test.rs",
+    ],
+    require_root: true,
+    auto_gen_config: true,
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+
+    rustlibs: [
+        "android.hardware.security.dice-V1-rust",
+        "libanyhow",
+        "libbinder_rs",
+        "libdiced_open_dice_cbor",
+        "libdiced_sample_inputs",
+        "libdiced_utils",
+        "libkeystore2_vintf_rust",
+    ],
+}
+
+rust_test {
+    name: "VtsAidlDiceDemoteTargetTest",
+    srcs: [
+        "dice_demote_test.rs",
+    ],
+
+    test_config: "VtsAidlDiceDemoteTargetTest.xml",
+    test_suites: [
+        "general-tests",
+        "vts",
+    ],
+
+    rustlibs: [
+        "android.hardware.security.dice-V1-rust",
+        "libanyhow",
+        "libbinder_rs",
+        "libdiced_open_dice_cbor",
+        "libdiced_sample_inputs",
+        "libdiced_utils",
+        "libkeystore2_vintf_rust",
+    ],
+}

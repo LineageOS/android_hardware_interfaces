@@ -21,6 +21,7 @@ package android.hardware.radio.network;
  */
 @VintfStability
 @Backing(type="int")
+@JavaDerive(toString=true)
 enum NgranBands {
     /**
      * 3GPP TS 38.101-1, Table 5.2-1: FR1 bands

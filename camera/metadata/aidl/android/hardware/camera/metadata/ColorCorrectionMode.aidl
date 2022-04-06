@@ -22,10 +22,7 @@
 
 package android.hardware.camera.metadata;
 
-/*
- * Enumeration definitions for the various entries that need them
- *
- *
+/**
  * android.colorCorrection.mode enumeration values
  * @see ANDROID_COLOR_CORRECTION_MODE
  */

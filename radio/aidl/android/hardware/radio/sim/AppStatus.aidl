@@ -20,6 +20,7 @@ import android.hardware.radio.sim.PersoSubstate;
 import android.hardware.radio.sim.PinState;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable AppStatus {
     const int APP_STATE_UNKNOWN = 0;
     const int APP_STATE_DETECTED = 1;

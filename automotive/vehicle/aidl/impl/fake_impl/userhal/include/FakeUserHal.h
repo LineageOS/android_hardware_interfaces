@@ -39,7 +39,7 @@ constexpr char kUserHalDumpOption[] = "--user-hal";
 // Class used to emulate a real User HAL behavior through lshal debug requests.
 class FakeUserHal final {
   public:
-    using ValueResultType = android::base::Result<VehiclePropValuePool::RecyclableType, VhalError>;
+    using ValueResultType = VhalResult<VehiclePropValuePool::RecyclableType>;
 
     explicit FakeUserHal(std::shared_ptr<VehiclePropValuePool> valuePool) : mValuePool(valuePool) {}
 
