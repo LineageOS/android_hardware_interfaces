@@ -19,6 +19,7 @@
 #include <aidl/Vintf.h>
 #include <gmock/gmock.h>
 
+#include <android/hardware/automotive/audiocontrol/BnAudioGainCallback.h>
 #include <android/hardware/automotive/audiocontrol/BnFocusListener.h>
 #include <android/hardware/automotive/audiocontrol/IAudioControl.h>
 #include <android/log.h>
@@ -30,16 +31,22 @@ using android::sp;
 using android::String16;
 using android::binder::Status;
 using android::hardware::automotive::audiocontrol::AudioFocusChange;
+using android::hardware::automotive::audiocontrol::AudioGainConfigInfo;
+using android::hardware::automotive::audiocontrol::BnAudioGainCallback;
 using android::hardware::automotive::audiocontrol::BnFocusListener;
 using android::hardware::automotive::audiocontrol::DuckingInfo;
 using android::hardware::automotive::audiocontrol::IAudioControl;
 using android::hardware::automotive::audiocontrol::MutingInfo;
+using android::hardware::automotive::audiocontrol::Reasons;
 
 #include "android_audio_policy_configuration_V7_0.h"
 
 namespace xsd {
 using namespace android::audio::policy::configuration::V7_0;
 }
+
+namespace audiohalcommon = android::hardware::audio::common;
+namespace audiomediacommon = android::media::audio::common;
 
 class AudioControlAidl : public testing::TestWithParam<std::string> {
   public:
@@ -103,6 +110,11 @@ struct FocusListenerMock : BnFocusListener {
     MOCK_METHOD(Status, requestAudioFocus,
                 (const String16& usage, int32_t zoneId, AudioFocusChange focusGain));
     MOCK_METHOD(Status, abandonAudioFocus, (const String16& usage, int32_t zoneId));
+    MOCK_METHOD(Status, requestAudioFocusWithMetaData,
+                (const audiohalcommon::PlaybackTrackMetadata& metaData, int32_t zoneId,
+                 AudioFocusChange focusGain));
+    MOCK_METHOD(Status, abandonAudioFocusWithMetaData,
+                (const audiohalcommon::PlaybackTrackMetadata& metaData, int32_t zoneId));
 };
 
 /*
@@ -157,6 +169,61 @@ TEST_P(AudioControlAidl, DuckChangeExercise) {
     std::vector<DuckingInfo> duckingInfos = {duckingInfo};
     ALOGI("Duck change test start");
     ASSERT_TRUE(audioControl->onDevicesToDuckChange(duckingInfos).isOk());
+}
+
+TEST_P(AudioControlAidl, FocusChangeWithMetaDataExercise) {
+    ALOGI("Focus Change test");
+
+    audiohalcommon::PlaybackTrackMetadata metadata;
+    metadata.usage = audiomediacommon::AudioUsage::MEDIA;
+    metadata.contentType = audiomediacommon::AudioContentType::MUSIC;
+    metadata.tags = {"com.google.android=VR"};
+    ASSERT_TRUE(
+            audioControl
+                    ->onAudioFocusChangeWithMetaData(metadata, 0, AudioFocusChange::GAIN_TRANSIENT)
+                    .isOk());
+};
+
+TEST_P(AudioControlAidl, SetAudioDeviceGainsChangedExercise) {
+    ALOGI("Set Audio Gains Changed test");
+
+    const std::vector<Reasons> reasons{Reasons::FORCED_MASTER_MUTE, Reasons::NAV_DUCKING};
+    AudioGainConfigInfo agci1;
+    agci1.zoneId = 0;
+    agci1.devicePortAddress = String16("address 1");
+    agci1.volumeIndex = 8;
+
+    AudioGainConfigInfo agci2;
+    agci1.zoneId = 0;
+    agci1.devicePortAddress = String16("address 2");
+    agci1.volumeIndex = 1;
+
+    std::vector<AudioGainConfigInfo> gains{agci1, agci2};
+    ASSERT_TRUE(audioControl->setAudioDeviceGainsChanged(reasons, gains).isOk());
+}
+
+/*
+ * Test Audio Gain Callback registration.
+ *
+ * Verifies that:
+ * - registerGainCallback succeeds;
+ * - registering a second callback succeeds in replacing the first;
+ * - closing handle does not crash;
+ */
+struct AudioGainCallbackMock : BnAudioGainCallback {
+    MOCK_METHOD(Status, onAudioDeviceGainsChanged,
+                (const std::vector<Reasons>& reasons,
+                 const std::vector<AudioGainConfigInfo>& gains));
+};
+
+TEST_P(AudioControlAidl, AudioGainCallbackRegistration) {
+    ALOGI("Focus listener test");
+
+    sp<AudioGainCallbackMock> gainCallback = new AudioGainCallbackMock();
+    ASSERT_TRUE(audioControl->registerGainCallback(gainCallback).isOk());
+
+    sp<AudioGainCallbackMock> gainCallback2 = new AudioGainCallbackMock();
+    ASSERT_TRUE(audioControl->registerGainCallback(gainCallback2).isOk());
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioControlAidl);
