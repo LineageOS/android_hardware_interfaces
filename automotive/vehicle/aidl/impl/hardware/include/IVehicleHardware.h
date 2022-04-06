@@ -80,6 +80,35 @@ class IVehicleHardware {
             const std::vector<aidl::android::hardware::automotive::vehicle::GetValueRequest>&
                     requests) const = 0;
 
+    // Update the sampling rate for the specified property and the specified areaId (0 for global
+    // property) if server supports it. The property must be a continuous property.
+    // {@code sampleRate} means that for this specific property, the server must generate at least
+    // this many OnPropertyChange events per seconds.
+    // A sampleRate of 0 means the property is no longer subscribed and server does not need to
+    // generate any onPropertyEvent for this property.
+    // This would be called if sample rate is updated for a subscriber, a new subscriber is added
+    // or an existing subscriber is removed. For example:
+    // 1. We have no subscriber for speed.
+    // 2. A new subscriber is subscribing speed for 10 times/s, updsateSampleRate would be called
+    //    with sampleRate as 10. The impl is now polling vehicle speed from bus 10 times/s.
+    // 3. A new subscriber is subscribing speed for 5 times/s, because it is less than 10
+    //    times/sec, updateSampleRate would not be called.
+    // 4. The initial subscriber is removed, updateSampleRate would be called with sampleRate as
+    //    5, because now it only needs to report event 5times/sec. The impl can now poll vehicle
+    //    speed 5 times/s. If the impl is still polling at 10 times/s, that is okay as long as
+    //    the polling rate is larger than 5times/s. DefaultVehicleHal would ignore the additional
+    //    events.
+    // 5. The second subscriber is removed, updateSampleRate would be called with sampleRate as 0.
+    //    The impl can optionally disable the polling for vehicle speed.
+    //
+    // If the impl is always polling at {@code maxSampleRate} as specified in config, then this
+    // function can be a no-op.
+    virtual aidl::android::hardware::automotive::vehicle::StatusCode updateSampleRate(
+            [[maybe_unused]] int32_t propId, [[maybe_unused]] int32_t areaId,
+            [[maybe_unused]] float sampleRate) {
+        return aidl::android::hardware::automotive::vehicle::StatusCode::OK;
+    }
+
     // Dump debug information in the server.
     virtual DumpResult dump(const std::vector<std::string>& options) = 0;
 

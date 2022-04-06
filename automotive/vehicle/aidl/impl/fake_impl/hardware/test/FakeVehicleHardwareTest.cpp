@@ -25,12 +25,15 @@
 #include <android-base/expected.h>
 #include <android-base/file.h>
 #include <android-base/stringprintf.h>
+#include <android-base/thread_annotations.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <utils/Log.h>
 #include <utils/SystemClock.h>
 
 #include <inttypes.h>
+#include <chrono>
+#include <condition_variable>
 #include <vector>
 
 namespace android {
@@ -53,12 +56,15 @@ using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyStatus;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 using ::android::base::expected;
+using ::android::base::ScopedLockAssertion;
 using ::android::base::StringPrintf;
 using ::android::base::unexpected;
 using ::testing::ContainerEq;
 using ::testing::ContainsRegex;
 using ::testing::Eq;
 using ::testing::WhenSortedBy;
+
+using std::chrono::milliseconds;
 
 constexpr int INVALID_PROP_ID = 0;
 constexpr char CAR_MAKE[] = "Default Car";
@@ -158,30 +164,65 @@ class FakeVehicleHardwareTest : public ::testing::Test {
     }
 
     void onSetValues(std::vector<SetValueResult> results) {
+        std::scoped_lock<std::mutex> lockGuard(mLock);
         for (auto& result : results) {
             mSetValueResults.push_back(result);
         }
     }
 
-    const std::vector<SetValueResult>& getSetValueResults() { return mSetValueResults; }
+    const std::vector<SetValueResult>& getSetValueResults() {
+        std::scoped_lock<std::mutex> lockGuard(mLock);
+        return mSetValueResults;
+    }
 
     void onGetValues(std::vector<GetValueResult> results) {
+        std::scoped_lock<std::mutex> lockGuard(mLock);
         for (auto& result : results) {
             mGetValueResults.push_back(result);
         }
     }
 
-    const std::vector<GetValueResult>& getGetValueResults() { return mGetValueResults; }
-
-    void onPropertyChangeEvent(std::vector<VehiclePropValue> values) {
-        for (auto& value : values) {
-            mChangedProperties.push_back(value);
-        }
+    const std::vector<GetValueResult>& getGetValueResults() {
+        std::scoped_lock<std::mutex> lockGuard(mLock);
+        return mGetValueResults;
     }
 
-    const std::vector<VehiclePropValue>& getChangedProperties() { return mChangedProperties; }
+    void onPropertyChangeEvent(std::vector<VehiclePropValue> values) {
+        std::scoped_lock<std::mutex> lockGuard(mLock);
+        for (auto& value : values) {
+            mChangedProperties.push_back(value);
+            PropIdAreaId propIdAreaId{
+                    .propId = value.prop,
+                    .areaId = value.areaId,
+            };
+            mEventCount[propIdAreaId]++;
+        }
+        mCv.notify_one();
+    }
 
-    void clearChangedProperties() { mChangedProperties.clear(); }
+    const std::vector<VehiclePropValue>& getChangedProperties() {
+        std::scoped_lock<std::mutex> lockGuard(mLock);
+        return mChangedProperties;
+    }
+
+    bool waitForChangedProperties(int32_t propId, int32_t areaId, size_t count,
+                                  milliseconds timeout) {
+        PropIdAreaId propIdAreaId{
+                .propId = propId,
+                .areaId = areaId,
+        };
+        std::unique_lock<std::mutex> lk(mLock);
+        return mCv.wait_for(lk, timeout, [this, propIdAreaId, count] {
+            ScopedLockAssertion lockAssertion(mLock);
+            return mEventCount[propIdAreaId] >= count;
+        });
+    }
+
+    void clearChangedProperties() {
+        std::scoped_lock<std::mutex> lockGuard(mLock);
+        mEventCount.clear();
+        mChangedProperties.clear();
+    }
 
     static void addSetValueRequest(std::vector<SetValueRequest>& requests,
                                    std::vector<SetValueResult>& expectedResults, int64_t requestId,
@@ -246,11 +287,14 @@ class FakeVehicleHardwareTest : public ::testing::Test {
 
   private:
     FakeVehicleHardware mHardware;
-    std::vector<SetValueResult> mSetValueResults;
-    std::vector<GetValueResult> mGetValueResults;
-    std::vector<VehiclePropValue> mChangedProperties;
     std::shared_ptr<IVehicleHardware::SetValuesCallback> mSetValuesCallback;
     std::shared_ptr<IVehicleHardware::GetValuesCallback> mGetValuesCallback;
+    std::condition_variable mCv;
+    std::mutex mLock;
+    std::unordered_map<PropIdAreaId, size_t, PropIdAreaIdHash> mEventCount GUARDED_BY(mLock);
+    std::vector<SetValueResult> mSetValueResults GUARDED_BY(mLock);
+    std::vector<GetValueResult> mGetValueResults GUARDED_BY(mLock);
+    std::vector<VehiclePropValue> mChangedProperties GUARDED_BY(mLock);
 };
 
 TEST_F(FakeVehicleHardwareTest, testGetAllPropertyConfigs) {
@@ -1508,6 +1552,35 @@ TEST_F(FakeVehicleHardwareTest, testGetEchoReverseBytes) {
 
     ASSERT_TRUE(result.ok()) << "failed to get ECHO_REVERSE_BYTES value: " << getStatus(result);
     ASSERT_EQ(result.value().value.byteValues, std::vector<uint8_t>({0x04, 0x03, 0x02, 0x01}));
+}
+
+TEST_F(FakeVehicleHardwareTest, testUpdateSampleRate) {
+    int32_t propSpeed = toInt(VehicleProperty::PERF_VEHICLE_SPEED);
+    int32_t propSteering = toInt(VehicleProperty::PERF_STEERING_ANGLE);
+    int32_t areaId = 0;
+    getHardware()->updateSampleRate(propSpeed, areaId, 5);
+
+    ASSERT_TRUE(waitForChangedProperties(propSpeed, areaId, /*count=*/5, milliseconds(1500)))
+            << "not enough events generated for speed";
+
+    getHardware()->updateSampleRate(propSteering, areaId, 10);
+
+    ASSERT_TRUE(waitForChangedProperties(propSteering, areaId, /*count=*/10, milliseconds(1500)))
+            << "not enough events generated for steering";
+
+    int64_t timestamp = elapsedRealtimeNano();
+    // Disable refreshing for propSpeed.
+    getHardware()->updateSampleRate(propSpeed, areaId, 0);
+    clearChangedProperties();
+
+    ASSERT_TRUE(waitForChangedProperties(propSteering, areaId, /*count=*/5, milliseconds(1500)))
+            << "should still receive steering events after disable polling for speed";
+    auto updatedValues = getChangedProperties();
+    for (auto& value : updatedValues) {
+        ASSERT_GE(value.timestamp, timestamp);
+        ASSERT_EQ(value.prop, propSteering);
+        ASSERT_EQ(value.areaId, areaId);
+    }
 }
 
 }  // namespace fake
