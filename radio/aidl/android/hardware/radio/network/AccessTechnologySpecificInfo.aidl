@@ -31,7 +31,7 @@ union AccessTechnologySpecificInfo {
      * Network capabilities for voice over PS services. This info is valid only on NR network and
      * must be present when the device is camped on NR. NrVopsInfo must be empty when the device is
      * not camped on NR.
-     * @deprecated use NrRegistrationInfo instead.
+     * This field is deprecated. Use ngranInfo instead.
      */
     NrVopsInfo ngranNrVopsInfo;
     /**
