@@ -38,5 +38,5 @@ union AccessTechnologySpecificInfo {
      */
     boolean geranDtmSupported;
 
-    NrRegistrationInfo ngranInfo;
+    @nullable NrRegistrationInfo ngranInfo;
 }
