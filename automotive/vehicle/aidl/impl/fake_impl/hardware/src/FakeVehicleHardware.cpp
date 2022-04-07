@@ -577,6 +577,12 @@ DumpResult FakeVehicleHardware::dump(const std::vector<std::string>& options) {
         result.buffer = dumpSpecificProperty(options);
     } else if (EqualsIgnoreCase(option, "--set")) {
         result.buffer = dumpSetProperties(options);
+    } else if (EqualsIgnoreCase(option, kUserHalDumpOption)) {
+        if (options.size() == 1) {
+            result.buffer = mFakeUserHal->showDumpHelp();
+        } else {
+            result.buffer = mFakeUserHal->dump(options[1]);
+        }
     } else {
         result.buffer = StringPrintf("Invalid option: %s\n", option.c_str());
     }
@@ -594,7 +600,9 @@ std::string FakeVehicleHardware::dumpHelp() {
            "[-b BYTES_VALUE] [-a AREA_ID] : sets the value of property PROP. "
            "Notice that the string, bytes and area value can be set just once, while the other can"
            " have multiple values (so they're used in the respective array), "
-           "BYTES_VALUE is in the form of 0xXXXX, e.g. 0xdeadbeef.\n";
+           "BYTES_VALUE is in the form of 0xXXXX, e.g. 0xdeadbeef.\n\n"
+           "Fake user HAL usage: \n" +
+           mFakeUserHal->showDumpHelp();
 }
 
 std::string FakeVehicleHardware::dumpAllProperties() {
