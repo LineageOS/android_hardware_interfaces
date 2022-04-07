@@ -337,6 +337,10 @@ TEST_P(GraphicsMapperHidlTest, LockYCbCrP010) {
     uint32_t stride;
     ASSERT_NO_FATAL_FAILURE(bufferHandle = mGralloc->allocate(info, true, &stride));
 
+    if (::testing::Test::IsSkipped()) {
+        GTEST_SKIP();
+    }
+
     ASSERT_NE(nullptr, bufferHandle);
 
     const IMapper::Rect region{0, 0, static_cast<int32_t>(info.width),
