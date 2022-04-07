@@ -35,7 +35,10 @@ package android.hardware.radio.network;
 @VintfStability
 parcelable NrRegistrationInfo {
   android.hardware.radio.network.NrVopsInfo ngranNrVopsInfo;
-  int extraInfo;
-  const int EXTRA_SMS_OVER_NAS_ALLOWED = 1;
-  const int EXTRA_REGISTERED_FOR_EMERGENCY = 2;
+  byte resultValue;
+  boolean isSmsOverNasAllowed;
+  boolean isEmergencyRegistered;
+  const byte REGISTERED_OVER_3GPP = 1;
+  const byte REGISTERED_OVER_NON_3GPP = 2;
+  const byte REGISTERED_OVER_3GPP_AND_NON_3GPP = 3;
 }
