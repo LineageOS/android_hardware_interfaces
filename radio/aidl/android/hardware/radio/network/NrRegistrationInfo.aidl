@@ -27,11 +27,7 @@ parcelable NrRegistrationInfo {
     /** Registered for emergency services - TS 24.501 9.11.3.6. */
     const int EXTRA_REGISTERED_FOR_EMERGENCY = 1 << 1;
 
-    /**
-     * Network capabilities for voice over PS services. This info is valid only on NR network and
-     * must be present when the device is camped on NR. NrVopsInfo must be empty when the device is
-     * not camped on NR.
-     */
+    /** Network capabilities for voice over PS services. */
     NrVopsInfo ngranNrVopsInfo;
 
     /** Values are bitwise ORs of EXTRA_ */
