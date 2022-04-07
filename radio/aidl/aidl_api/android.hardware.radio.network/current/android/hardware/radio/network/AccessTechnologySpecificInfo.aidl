@@ -37,6 +37,9 @@ union AccessTechnologySpecificInfo {
   boolean noinit;
   android.hardware.radio.network.Cdma2000RegistrationInfo cdmaInfo;
   android.hardware.radio.network.EutranRegistrationInfo eutranInfo;
+  /**
+   * @deprecated use NrRegistrationInfo instead.
+   */
   android.hardware.radio.network.NrVopsInfo ngranNrVopsInfo;
   boolean geranDtmSupported;
   @nullable android.hardware.radio.network.NrRegistrationInfo ngranInfo;
