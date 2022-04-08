@@ -32,9 +32,14 @@ using ::aidl::android::hardware::automotive::vehicle::StatusCode;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 
+MockVehicleHardware::MockVehicleHardware() {
+    mRecurrentTimer = std::make_unique<RecurrentTimer>();
+}
+
 MockVehicleHardware::~MockVehicleHardware() {
     std::unique_lock<std::mutex> lk(mLock);
     mCv.wait(lk, [this] { return mThreadCount == 0; });
+    mRecurrentTimer.reset();
 }
 
 std::vector<VehiclePropConfig> MockVehicleHardware::getAllPropertyConfigs() const {
@@ -80,6 +85,42 @@ DumpResult MockVehicleHardware::dump(const std::vector<std::string>&) {
 }
 
 StatusCode MockVehicleHardware::checkHealth() {
+    return StatusCode::OK;
+}
+
+StatusCode MockVehicleHardware::updateSampleRate(int32_t propId, int32_t areaId, float sampleRate) {
+    std::shared_ptr<std::function<void()>> action;
+
+    {
+        std::scoped_lock<std::mutex> lockGuard(mLock);
+        if (mRecurrentActions[propId][areaId] != nullptr) {
+            // Remove the previous action register for this [propId, areaId].
+            mRecurrentTimer->unregisterTimerCallback(mRecurrentActions[propId][areaId]);
+        }
+        if (sampleRate == 0) {
+            return StatusCode::OK;
+        }
+
+        // We are sure 'propertyChangeCallback' would be alive because we would unregister timer
+        // before destroying 'this' which owns mPropertyChangeCallback.
+        const PropertyChangeCallback* propertyChangeCallback = mPropertyChangeCallback.get();
+        action = std::make_shared<std::function<void()>>([propertyChangeCallback, propId, areaId] {
+            std::vector<VehiclePropValue> values = {
+                    {
+                            .prop = propId,
+                            .areaId = areaId,
+                    },
+            };
+            (*propertyChangeCallback)(values);
+        });
+        // Store the action in a map so that we could remove the action later.
+        mRecurrentActions[propId][areaId] = action;
+    }
+
+    // In mock implementation, we generate a new property change event for this property at sample
+    // rate.
+    int64_t interval = static_cast<int64_t>(1'000'000'000. / sampleRate);
+    mRecurrentTimer->registerTimerCallback(interval, action);
     return StatusCode::OK;
 }
 
