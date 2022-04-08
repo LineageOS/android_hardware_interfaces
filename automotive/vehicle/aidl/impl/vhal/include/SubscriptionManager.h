@@ -17,15 +17,16 @@
 #ifndef android_hardware_automotive_vehicle_aidl_impl_vhal_include_SubscriptionManager_H_
 #define android_hardware_automotive_vehicle_aidl_impl_vhal_include_SubscriptionManager_H_
 
-#include "RecurrentTimer.h"
-
+#include <IVehicleHardware.h>
 #include <VehicleHalTypes.h>
+#include <VehicleUtils.h>
 
 #include <aidl/android/hardware/automotive/vehicle/IVehicleCallback.h>
 #include <android-base/result.h>
 #include <android-base/thread_annotations.h>
 
 #include <mutex>
+#include <optional>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -35,43 +36,58 @@ namespace hardware {
 namespace automotive {
 namespace vehicle {
 
+// A class to represent all the subscription configs for a continuous [propId, areaId].
+class ContSubConfigs final {
+  public:
+    using ClientIdType = const AIBinder*;
+
+    void addClient(const ClientIdType& clientId, float sampleRate);
+    void removeClient(const ClientIdType& clientId);
+    float getMaxSampleRate();
+
+  private:
+    float mMaxSampleRate = 0.;
+    std::unordered_map<ClientIdType, float> mSampleRates;
+
+    void refreshMaxSampleRate();
+};
+
 // A thread-safe subscription manager that manages all VHAL subscriptions.
 class SubscriptionManager final {
   public:
     using ClientIdType = const AIBinder*;
     using CallbackType =
             std::shared_ptr<aidl::android::hardware::automotive::vehicle::IVehicleCallback>;
-    using GetValueFunc = std::function<void(
-            const CallbackType& callback,
-            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value)>;
 
-    explicit SubscriptionManager(GetValueFunc&& action);
+    explicit SubscriptionManager(IVehicleHardware* hardware);
     ~SubscriptionManager();
 
     // Subscribes to properties according to {@code SubscribeOptions}. Note that all option must
     // contain non-empty areaIds field, which contains all area IDs to subscribe. As a result,
     // the options here is different from the options passed from VHAL client.
-    // Returns error if any of the subscribe options is not valid. If error is returned, no
-    // properties would be subscribed.
+    // Returns error if any of the subscribe options is not valid or one of the properties failed
+    // to subscribe. Part of the properties maybe be subscribed successfully if this function
+    // returns error. Caller is safe to retry since subscribing to an already subscribed property
+    // is okay.
     // Returns ok if all the options are parsed correctly and all the properties are subscribed.
-    android::base::Result<void> subscribe(
+    VhalResult<void> subscribe(
             const CallbackType& callback,
             const std::vector<aidl::android::hardware::automotive::vehicle::SubscribeOptions>&
                     options,
             bool isContinuousProperty);
 
     // Unsubscribes from the properties for the client.
-    // Returns error if the client was not subscribed before or one of the given property was not
-    // subscribed. If error is returned, no property would be unsubscribed.
+    // Returns error if the client was not subscribed before, or one of the given property was not
+    // subscribed, or one of the property failed to unsubscribe. Caller is safe to retry since
+    // unsubscribing to an already unsubscribed property is okay (it would be ignored).
     // Returns ok if all the requested properties for the client are unsubscribed.
-    android::base::Result<void> unsubscribe(ClientIdType client,
-                                            const std::vector<int32_t>& propIds);
+    VhalResult<void> unsubscribe(ClientIdType client, const std::vector<int32_t>& propIds);
 
     // Unsubscribes from all the properties for the client.
-    // Returns error if the client was not subscribed before. If error is returned, no property
-    // would be unsubscribed.
+    // Returns error if the client was not subscribed before or one of the subscribed properties
+    // for the client failed to unsubscribe. Caller is safe to retry.
     // Returns ok if all the properties for the client are unsubscribed.
-    android::base::Result<void> unsubscribe(ClientIdType client);
+    VhalResult<void> unsubscribe(ClientIdType client);
 
     // For a list of updated properties, returns a map that maps clients subscribing to
     // the updated properties to a list of updated values. This would only return on-change property
@@ -83,6 +99,11 @@ class SubscriptionManager final {
             const std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&
                     updatedValues);
 
+    // Gets the sample rate for the continuous property. Returns {@code std::nullopt} if the
+    // property has not been subscribed before or is not a continuous property.
+    std::optional<float> getSampleRate(const ClientIdType& clientId, int32_t propId,
+                                       int32_t areaId);
+
     // Checks whether the sample rate is valid.
     static bool checkSampleRate(float sampleRate);
 
@@ -90,65 +111,28 @@ class SubscriptionManager final {
     // Friend class for testing.
     friend class DefaultVehicleHalTest;
 
-    struct PropIdAreaId {
-        int32_t propId;
-        int32_t areaId;
-
-        bool operator==(const PropIdAreaId& other) const;
-    };
-
-    struct PropIdAreaIdHash {
-        size_t operator()(const PropIdAreaId& propIdAreaId) const;
-    };
-
-    // A class to represent a registered subscription.
-    class Subscription {
-      public:
-        Subscription() = default;
-
-        Subscription(const Subscription&) = delete;
-
-        virtual ~Subscription() = default;
-
-        virtual bool isOnChange();
-    };
-
-    // A subscription for OnContinuous property. The registered action would be called recurrently
-    // until this class is destructed.
-    class RecurrentSubscription final : public Subscription {
-      public:
-        explicit RecurrentSubscription(std::shared_ptr<RecurrentTimer> timer,
-                                       std::function<void()>&& action, int64_t interval);
-        ~RecurrentSubscription();
-
-        bool isOnChange() override;
-
-      private:
-        std::shared_ptr<std::function<void()>> mAction;
-        std::shared_ptr<RecurrentTimer> mTimer;
-    };
-
-    // A subscription for OnChange property.
-    class OnChangeSubscription final : public Subscription {
-      public:
-        bool isOnChange() override;
-    };
+    IVehicleHardware* mVehicleHardware;
 
     mutable std::mutex mLock;
     std::unordered_map<PropIdAreaId, std::unordered_map<ClientIdType, CallbackType>,
                        PropIdAreaIdHash>
             mClientsByPropIdArea GUARDED_BY(mLock);
-    std::unordered_map<ClientIdType, std::unordered_map<PropIdAreaId, std::unique_ptr<Subscription>,
-                                                        PropIdAreaIdHash>>
-            mSubscriptionsByClient GUARDED_BY(mLock);
-    // RecurrentTimer is thread-safe.
-    std::shared_ptr<RecurrentTimer> mTimer;
-    const GetValueFunc mGetValue;
+    std::unordered_map<ClientIdType, std::unordered_set<PropIdAreaId, PropIdAreaIdHash>>
+            mSubscribedPropsByClient GUARDED_BY(mLock);
+    std::unordered_map<PropIdAreaId, ContSubConfigs, PropIdAreaIdHash> mContSubConfigsByPropIdArea
+            GUARDED_BY(mLock);
 
-    static android::base::Result<int64_t> getInterval(float sampleRate);
+    VhalResult<void> updateSampleRateLocked(const ClientIdType& clientId,
+                                            const PropIdAreaId& propIdAreaId, float sampleRate)
+            REQUIRES(mLock);
+    VhalResult<void> removeSampleRateLocked(const ClientIdType& clientId,
+                                            const PropIdAreaId& propIdAreaId) REQUIRES(mLock);
 
     // Checks whether the manager is empty. For testing purpose.
     bool isEmpty();
+
+    // Get the interval in nanoseconds accroding to sample rate.
+    static android::base::Result<int64_t> getInterval(float sampleRate);
 };
 
 }  // namespace vehicle
