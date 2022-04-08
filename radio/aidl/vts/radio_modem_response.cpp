@@ -24,6 +24,7 @@ ndk::ScopedAStatus RadioModemResponse::acknowledgeRequest(int32_t /*serial*/) {
 
 ndk::ScopedAStatus RadioModemResponse::enableModemResponse(const RadioResponseInfo& info) {
     rspInfo = info;
+    enableModemResponseToggle = !enableModemResponseToggle;
     parent_modem.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
