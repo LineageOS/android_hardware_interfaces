@@ -54,7 +54,6 @@ cc_library {
     srcs: [
         "src/ConnectedClient.cpp",
         "src/DefaultVehicleHal.cpp",
-        "src/RecurrentTimer.cpp",
         "src/SubscriptionManager.cpp",
     ],
     static_libs: [
