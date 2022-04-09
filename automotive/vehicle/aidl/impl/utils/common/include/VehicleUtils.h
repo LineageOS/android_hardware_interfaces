@@ -21,6 +21,7 @@
 
 #include <android-base/format.h>
 #include <android-base/result.h>
+#include <math/HashCombine.h>
 #include <utils/Log.h>
 
 namespace android {
@@ -309,6 +310,24 @@ ndk::ScopedAStatus toScopedAStatus(const VhalResult<T>& result,
                                    const std::string& additionalErrorMsg) {
     return toScopedAStatus(result, getErrorCode(result), additionalErrorMsg);
 }
+
+struct PropIdAreaId {
+    int32_t propId;
+    int32_t areaId;
+
+    inline bool operator==(const PropIdAreaId& other) const {
+        return areaId == other.areaId && propId == other.propId;
+    }
+};
+
+struct PropIdAreaIdHash {
+    inline size_t operator()(const PropIdAreaId& propIdAreaId) const {
+        size_t res = 0;
+        hashCombine(res, propIdAreaId.propId);
+        hashCombine(res, propIdAreaId.areaId);
+        return res;
+    }
+};
 
 }  // namespace vehicle
 }  // namespace automotive
