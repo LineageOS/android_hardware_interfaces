@@ -144,15 +144,11 @@ DefaultVehicleHal::DefaultVehicleHal(std::unique_ptr<IVehicleHardware> hardware)
     }
 
     mSubscriptionClients = std::make_shared<SubscriptionClients>(mPendingRequestPool);
+    mSubscriptionClients = std::make_shared<SubscriptionClients>(mPendingRequestPool);
 
     auto subscribeIdByClient = std::make_shared<SubscribeIdByClient>();
-    // Make a weak copy of IVehicleHardware because subscriptionManager uses IVehicleHardware and
-    // IVehicleHardware uses subscriptionManager. We want to avoid cyclic reference.
-    std::weak_ptr<IVehicleHardware> hardwareCopy = mVehicleHardware;
-    SubscriptionManager::GetValueFunc getValueFunc = std::bind(
-            &DefaultVehicleHal::getValueFromHardwareCallCallback, hardwareCopy, subscribeIdByClient,
-            mSubscriptionClients, std::placeholders::_1, std::placeholders::_2);
-    mSubscriptionManager = std::make_shared<SubscriptionManager>(std::move(getValueFunc));
+    IVehicleHardware* hardwarePtr = mVehicleHardware.get();
+    mSubscriptionManager = std::make_shared<SubscriptionManager>(hardwarePtr);
 
     std::weak_ptr<SubscriptionManager> subscriptionManagerCopy = mSubscriptionManager;
     mVehicleHardware->registerOnPropertyChangeEvent(
@@ -162,11 +158,11 @@ DefaultVehicleHal::DefaultVehicleHal(std::unique_ptr<IVehicleHardware> hardware)
                     }));
 
     // Register heartbeat event.
-    mRecurrentTimer.registerTimerCallback(
-            HEART_BEAT_INTERVAL_IN_NANO,
-            std::make_shared<std::function<void()>>([hardwareCopy, subscriptionManagerCopy]() {
-                checkHealth(hardwareCopy, subscriptionManagerCopy);
-            }));
+    mRecurrentAction =
+            std::make_shared<std::function<void()>>([hardwarePtr, subscriptionManagerCopy]() {
+                checkHealth(hardwarePtr, subscriptionManagerCopy);
+            });
+    mRecurrentTimer.registerTimerCallback(HEART_BEAT_INTERVAL_IN_NANO, mRecurrentAction);
 
     mBinderImpl = std::make_unique<AIBinderImpl>();
     mOnBinderDiedUnlinkedHandlerThread = std::thread([this] { onBinderDiedUnlinkedHandler(); });
@@ -183,6 +179,13 @@ DefaultVehicleHal::~DefaultVehicleHal() {
     if (mOnBinderDiedUnlinkedHandlerThread.joinable()) {
         mOnBinderDiedUnlinkedHandlerThread.join();
     }
+    // mRecurrentAction uses pointer to mVehicleHardware, so it has to be unregistered before
+    // mVehicleHardware.
+    mRecurrentTimer.unregisterTimerCallback(mRecurrentAction);
+    // mSubscriptionManager uses pointer to mVehicleHardware, so it has to be destroyed before
+    // mVehicleHardware.
+    mSubscriptionManager.reset();
+    mVehicleHardware.reset();
 }
 
 void DefaultVehicleHal::onPropertyChangeEvent(
@@ -293,43 +296,6 @@ template std::shared_ptr<SubscriptionClient>
 DefaultVehicleHal::getOrCreateClient<SubscriptionClient>(
         std::unordered_map<const AIBinder*, std::shared_ptr<SubscriptionClient>>* clients,
         const CallbackType& callback, std::shared_ptr<PendingRequestPool> pendingRequestPool);
-
-void DefaultVehicleHal::getValueFromHardwareCallCallback(
-        std::weak_ptr<IVehicleHardware> vehicleHardware,
-        std::shared_ptr<SubscribeIdByClient> subscribeIdByClient,
-        std::shared_ptr<SubscriptionClients> subscriptionClients, const CallbackType& callback,
-        const VehiclePropValue& value) {
-    int64_t subscribeId = subscribeIdByClient->getId(callback);
-    auto client = subscriptionClients->getClient(callback);
-    if (client == nullptr) {
-        ALOGW("subscribe[%" PRId64 "]: the client has died", subscribeId);
-        return;
-    }
-    if (auto addRequestResult = client->addRequests({subscribeId}); !addRequestResult.ok()) {
-        ALOGE("subscribe[%" PRId64 "]: too many pending requests, ignore the getValue request",
-              subscribeId);
-        return;
-    }
-
-    std::vector<GetValueRequest> hardwareRequests = {{
-            .requestId = subscribeId,
-            .prop = value,
-    }};
-
-    std::shared_ptr<IVehicleHardware> hardware = vehicleHardware.lock();
-    if (hardware == nullptr) {
-        ALOGW("the IVehicleHardware is destroyed, DefaultVehicleHal is ending");
-        return;
-    }
-    if (StatusCode status = hardware->getValues(client->getResultCallback(), hardwareRequests);
-        status != StatusCode::OK) {
-        // If the hardware returns error, finish all the pending requests for this request because
-        // we never expect hardware to call callback for these requests.
-        client->tryFinishRequests({subscribeId});
-        ALOGE("subscribe[%" PRId64 "]: failed to get value from VehicleHardware, code: %d",
-              subscribeId, toInt(status));
-    }
-}
 
 void DefaultVehicleHal::setTimeout(int64_t timeoutInNano) {
     mPendingRequestPool = std::make_unique<PendingRequestPool>(timeoutInNano);
@@ -705,12 +671,13 @@ ScopedAStatus DefaultVehicleHal::subscribe(const CallbackType& callback,
 
         // Since we have already check the sample rates, the following functions must succeed.
         if (!onChangeSubscriptions.empty()) {
-            mSubscriptionManager->subscribe(callback, onChangeSubscriptions,
-                                            /*isContinuousProperty=*/false);
+            return toScopedAStatus(mSubscriptionManager->subscribe(callback, onChangeSubscriptions,
+                                                                   /*isContinuousProperty=*/false));
         }
         if (!continuousSubscriptions.empty()) {
-            mSubscriptionManager->subscribe(callback, continuousSubscriptions,
-                                            /*isContinuousProperty=*/true);
+            return toScopedAStatus(mSubscriptionManager->subscribe(callback,
+                                                                   continuousSubscriptions,
+                                                                   /*isContinuousProperty=*/true));
         }
     }
     return ScopedAStatus::ok();
@@ -718,8 +685,7 @@ ScopedAStatus DefaultVehicleHal::subscribe(const CallbackType& callback,
 
 ScopedAStatus DefaultVehicleHal::unsubscribe(const CallbackType& callback,
                                              const std::vector<int32_t>& propIds) {
-    return toScopedAStatus(mSubscriptionManager->unsubscribe(callback->asBinder().get(), propIds),
-                           StatusCode::INVALID_ARG);
+    return toScopedAStatus(mSubscriptionManager->unsubscribe(callback->asBinder().get(), propIds));
 }
 
 ScopedAStatus DefaultVehicleHal::returnSharedMemory(const CallbackType&, int64_t) {
@@ -763,15 +729,9 @@ VhalResult<void> DefaultVehicleHal::checkReadPermission(const VehiclePropValue& 
     return {};
 }
 
-void DefaultVehicleHal::checkHealth(std::weak_ptr<IVehicleHardware> hardware,
+void DefaultVehicleHal::checkHealth(IVehicleHardware* hardware,
                                     std::weak_ptr<SubscriptionManager> subscriptionManager) {
-    auto hardwarePtr = hardware.lock();
-    if (hardwarePtr == nullptr) {
-        ALOGW("the VehicleHardware is destroyed, DefaultVehicleHal is ending");
-        return;
-    }
-
-    StatusCode status = hardwarePtr->checkHealth();
+    StatusCode status = hardware->checkHealth();
     if (status != StatusCode::OK) {
         ALOGE("VHAL check health returns non-okay status");
         return;
