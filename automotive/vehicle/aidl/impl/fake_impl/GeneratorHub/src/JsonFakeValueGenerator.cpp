@@ -241,6 +241,10 @@ std::optional<VehiclePropValue> JsonFakeValueGenerator::nextEvent() {
     return generatedValue;
 }
 
+bool JsonFakeValueGenerator::hasNext() {
+    return mNumOfIterations != 0 && mEvents.size() > 0;
+}
+
 }  // namespace fake
 }  // namespace vehicle
 }  // namespace automotive

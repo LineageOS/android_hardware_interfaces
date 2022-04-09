@@ -21,10 +21,12 @@
 #include <DefaultConfig.h>
 #include <FakeObd2Frame.h>
 #include <FakeUserHal.h>
+#include <GeneratorHub.h>
 #include <IVehicleHardware.h>
 #include <RecurrentTimer.h>
 #include <VehicleHalTypes.h>
 #include <VehiclePropertyStore.h>
+#include <aidl/android/hardware/automotive/vehicle/VehicleHwKeyInputAction.h>
 #include <android-base/parseint.h>
 #include <android-base/result.h>
 #include <android-base/stringprintf.h>
@@ -132,6 +134,8 @@ class FakeVehicleHardware : public IVehicleHardware {
     const std::unique_ptr<FakeUserHal> mFakeUserHal;
     // RecurrentTimer is thread-safe.
     std::unique_ptr<RecurrentTimer> mRecurrentTimer;
+    // GeneratorHub is thread-safe.
+    std::unique_ptr<GeneratorHub> mGeneratorHub;
     std::mutex mLock;
     std::unique_ptr<const PropertyChangeCallback> mOnPropertyChangeCallback GUARDED_BY(mLock);
     std::unique_ptr<const PropertySetErrorCallback> mOnPropertySetErrorCallback GUARDED_BY(mLock);
@@ -207,6 +211,14 @@ class FakeVehicleHardware : public IVehicleHardware {
             const aidl::android::hardware::automotive::vehicle::GetValueRequest& request);
     aidl::android::hardware::automotive::vehicle::SetValueResult handleSetValueRequest(
             const aidl::android::hardware::automotive::vehicle::SetValueRequest& request);
+
+    std::string genFakeDataCommand(const std::vector<std::string>& options);
+
+    static aidl::android::hardware::automotive::vehicle::VehiclePropValue createHwInputKeyProp(
+            aidl::android::hardware::automotive::vehicle::VehicleHwKeyInputAction action,
+            int32_t keyCode, int32_t targetDisplay);
+    static std::string genFakeDataHelp();
+    static std::string parseErrMsg(std::string fieldName, std::string value, std::string type);
 };
 
 }  // namespace fake

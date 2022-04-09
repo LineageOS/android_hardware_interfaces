@@ -53,6 +53,9 @@ class JsonFakeValueGenerator : public FakeValueGenerator {
     const std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&
     getAllEvents();
 
+    // Whether there are events left to replay for this generator.
+    bool hasNext();
+
   private:
     size_t mEventIndex = 0;
     std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue> mEvents;
