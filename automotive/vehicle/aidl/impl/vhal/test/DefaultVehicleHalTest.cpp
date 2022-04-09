@@ -1308,25 +1308,7 @@ TEST_F(DefaultVehicleHalTest, testSubscribeAreaOnChangeAllAreas) {
 TEST_F(DefaultVehicleHalTest, testSubscribeGlobalContinuous) {
     VehiclePropValue testValue{
             .prop = GLOBAL_CONTINUOUS_PROP,
-            .value.int32Values = {0},
     };
-    // Set responses for all the hardware getValues requests.
-    getHardware()->setGetValueResponder(
-            [](std::shared_ptr<const IVehicleHardware::GetValuesCallback> callback,
-               const std::vector<GetValueRequest>& requests) {
-                std::vector<GetValueResult> results;
-                for (auto& request : requests) {
-                    VehiclePropValue prop = request.prop;
-                    prop.value.int32Values = {0};
-                    results.push_back({
-                            .requestId = request.requestId,
-                            .status = StatusCode::OK,
-                            .prop = prop,
-                    });
-                }
-                (*callback)(results);
-                return StatusCode::OK;
-            });
 
     std::vector<SubscribeOptions> options = {
             {
@@ -1353,28 +1335,6 @@ TEST_F(DefaultVehicleHalTest, testSubscribeGlobalContinuous) {
 }
 
 TEST_F(DefaultVehicleHalTest, testSubscribeGlobalContinuousRateOutOfRange) {
-    VehiclePropValue testValue{
-            .prop = GLOBAL_CONTINUOUS_PROP,
-            .value.int32Values = {0},
-    };
-    // Set responses for all the hardware getValues requests.
-    getHardware()->setGetValueResponder(
-            [](std::shared_ptr<const IVehicleHardware::GetValuesCallback> callback,
-               const std::vector<GetValueRequest>& requests) {
-                std::vector<GetValueResult> results;
-                for (auto& request : requests) {
-                    VehiclePropValue prop = request.prop;
-                    prop.value.int32Values = {0};
-                    results.push_back({
-                            .requestId = request.requestId,
-                            .status = StatusCode::OK,
-                            .prop = prop,
-                    });
-                }
-                (*callback)(results);
-                return StatusCode::OK;
-            });
-
     // The maxSampleRate is 100, so the sample rate should be the default max 100.
     std::vector<SubscribeOptions> options = {
             {
@@ -1398,24 +1358,6 @@ TEST_F(DefaultVehicleHalTest, testSubscribeGlobalContinuousRateOutOfRange) {
 }
 
 TEST_F(DefaultVehicleHalTest, testSubscribeAreaContinuous) {
-    // Set responses for all the hardware getValues requests.
-    getHardware()->setGetValueResponder(
-            [](std::shared_ptr<const IVehicleHardware::GetValuesCallback> callback,
-               const std::vector<GetValueRequest>& requests) {
-                std::vector<GetValueResult> results;
-                for (auto& request : requests) {
-                    VehiclePropValue prop = request.prop;
-                    prop.value.int32Values = {0};
-                    results.push_back({
-                            .requestId = request.requestId,
-                            .status = StatusCode::OK,
-                            .prop = prop,
-                    });
-                }
-                (*callback)(results);
-                return StatusCode::OK;
-            });
-
     std::vector<SubscribeOptions> options = {
             {
                     .propId = AREA_CONTINUOUS_PROP,
@@ -1435,6 +1377,8 @@ TEST_F(DefaultVehicleHalTest, testSubscribeAreaContinuous) {
 
     // Sleep for 1s, which should generate ~20 events.
     std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    getClient()->unsubscribe(getCallbackClient(), std::vector<int32_t>({AREA_CONTINUOUS_PROP}));
 
     std::vector<VehiclePropValue> events;
     while (true) {
@@ -1509,28 +1453,6 @@ TEST_F(DefaultVehicleHalTest, testUnsubscribeOnChange) {
 }
 
 TEST_F(DefaultVehicleHalTest, testUnsubscribeContinuous) {
-    VehiclePropValue testValue{
-            .prop = GLOBAL_CONTINUOUS_PROP,
-            .value.int32Values = {0},
-    };
-    // Set responses for all the hardware getValues requests.
-    getHardware()->setGetValueResponder(
-            [](std::shared_ptr<const IVehicleHardware::GetValuesCallback> callback,
-               const std::vector<GetValueRequest>& requests) {
-                std::vector<GetValueResult> results;
-                for (auto& request : requests) {
-                    VehiclePropValue prop = request.prop;
-                    prop.value.int32Values = {0};
-                    results.push_back({
-                            .requestId = request.requestId,
-                            .status = StatusCode::OK,
-                            .prop = prop,
-                    });
-                }
-                (*callback)(results);
-                return StatusCode::OK;
-            });
-
     std::vector<SubscribeOptions> options = {
             {
                     .propId = GLOBAL_CONTINUOUS_PROP,
@@ -1621,12 +1543,6 @@ TEST_F(DefaultVehicleHalTest, testHeartbeatEvent) {
 }
 
 TEST_F(DefaultVehicleHalTest, testOnBinderDiedUnlinked) {
-    // First subscribe to a continuous property so that we register a death recipient for our
-    // client.
-    VehiclePropValue testValue{
-            .prop = GLOBAL_CONTINUOUS_PROP,
-            .value.int32Values = {0},
-    };
     // Set responses for all the hardware getValues requests.
     getHardware()->setGetValueResponder(
             [](std::shared_ptr<const IVehicleHardware::GetValuesCallback> callback,

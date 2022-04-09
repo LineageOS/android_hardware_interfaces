@@ -17,10 +17,11 @@
 #ifndef android_hardware_automotive_vehicle_aidl_impl_vhal_include_DefaultVehicleHal_H_
 #define android_hardware_automotive_vehicle_aidl_impl_vhal_include_DefaultVehicleHal_H_
 
-#include "ConnectedClient.h"
-#include "ParcelableUtils.h"
-#include "PendingRequestPool.h"
-#include "SubscriptionManager.h"
+#include <ConnectedClient.h>
+#include <ParcelableUtils.h>
+#include <PendingRequestPool.h>
+#include <RecurrentTimer.h>
+#include <SubscriptionManager.h>
 
 #include <ConcurrentQueue.h>
 #include <IVehicleHardware.h>
@@ -163,7 +164,7 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
     static constexpr int64_t TIMEOUT_IN_NANO = 30'000'000'000;
     // heart beat event interval: 3s
     static constexpr int64_t HEART_BEAT_INTERVAL_IN_NANO = 3'000'000'000;
-    const std::shared_ptr<IVehicleHardware> mVehicleHardware;
+    std::unique_ptr<IVehicleHardware> mVehicleHardware;
 
     // mConfigsByPropId and mConfigFile are only modified during initialization, so no need to
     // lock guard them.
@@ -188,6 +189,8 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
     // mBinderImpl is only going to be changed in test.
     std::unique_ptr<IBinder> mBinderImpl;
 
+    // Only initialized once.
+    std::shared_ptr<std::function<void()>> mRecurrentAction;
     // RecurrentTimer is thread-safe.
     RecurrentTimer mRecurrentTimer;
 
@@ -243,18 +246,12 @@ class DefaultVehicleHal final : public aidl::android::hardware::automotive::vehi
             std::unordered_map<const AIBinder*, std::shared_ptr<T>>* clients,
             const CallbackType& callback, std::shared_ptr<PendingRequestPool> pendingRequestPool);
 
-    static void getValueFromHardwareCallCallback(
-            std::weak_ptr<IVehicleHardware> vehicleHardware,
-            std::shared_ptr<SubscribeIdByClient> subscribeIdByClient,
-            std::shared_ptr<SubscriptionClients> subscriptionClients, const CallbackType& callback,
-            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
-
     static void onPropertyChangeEvent(
             std::weak_ptr<SubscriptionManager> subscriptionManager,
             const std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropValue>&
                     updatedValues);
 
-    static void checkHealth(std::weak_ptr<IVehicleHardware> hardware,
+    static void checkHealth(IVehicleHardware* hardware,
                             std::weak_ptr<SubscriptionManager> subscriptionManager);
 
     static void onBinderDied(void* cookie);
