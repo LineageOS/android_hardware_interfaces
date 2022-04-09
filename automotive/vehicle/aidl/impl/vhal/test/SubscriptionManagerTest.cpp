@@ -16,6 +16,7 @@
 
 #include "SubscriptionManager.h"
 
+#include <MockVehicleHardware.h>
 #include <VehicleHalTypes.h>
 
 #include <aidl/android/hardware/automotive/vehicle/BnVehicleCallback.h>
@@ -86,19 +87,21 @@ class PropertyCallback final : public BnVehicleCallback {
 class SubscriptionManagerTest : public testing::Test {
   public:
     void SetUp() override {
-        mManager = std::make_unique<SubscriptionManager>(
-                [](const std::shared_ptr<IVehicleCallback>& callback,
-                   const VehiclePropValue& value) {
-                    callback->onPropertyEvent(
-                            VehiclePropValues{
-                                    .payloads = {value},
-                            },
-                            0);
-                });
+        mHardware = std::make_shared<MockVehicleHardware>();
+        mManager = std::make_unique<SubscriptionManager>(mHardware.get());
         mCallback = ndk::SharedRefBase::make<PropertyCallback>();
         // Keep the local binder alive.
         mBinder = mCallback->asBinder();
         mCallbackClient = IVehicleCallback::fromBinder(mBinder);
+        std::shared_ptr<IVehicleCallback> callbackClient = mCallbackClient;
+        mHardware->registerOnPropertyChangeEvent(
+                std::make_unique<IVehicleHardware::PropertyChangeCallback>(
+                        [callbackClient](std::vector<VehiclePropValue> updatedValues) {
+                            VehiclePropValues values = {
+                                    .payloads = std::move(updatedValues),
+                            };
+                            callbackClient->onPropertyEvent(values, 0);
+                        }));
     }
 
     SubscriptionManager* getManager() { return mManager.get(); }
@@ -115,6 +118,7 @@ class SubscriptionManagerTest : public testing::Test {
     std::unique_ptr<SubscriptionManager> mManager;
     std::shared_ptr<PropertyCallback> mCallback;
     std::shared_ptr<IVehicleCallback> mCallbackClient;
+    std::shared_ptr<MockVehicleHardware> mHardware;
     SpAIBinder mBinder;
 };
 

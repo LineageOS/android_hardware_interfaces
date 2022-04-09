@@ -62,6 +62,7 @@ class BluetoothAudioProvider : public BnBluetoothAudioProvider {
   std::unique_ptr<AudioConfiguration> audio_config_ = nullptr;
   SessionType session_type_;
   std::vector<LatencyMode> latency_modes_;
+  bool is_binder_died = false;
 };
 
 }  // namespace audio

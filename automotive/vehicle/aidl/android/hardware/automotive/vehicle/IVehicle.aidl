@@ -90,6 +90,14 @@ interface IVehicle {
      * area ID) are not allowed in a single call. This function must return
      * {@link StatusCode#INVALID_ARG} for duplicate properties.
      *
+     * The {@link VehiclePropValue#timestamp} field in request is ignored. The
+     * {@link VehiclePropValue#timestamp} field in {@link GetValueResult} must
+     * be the system uptime since boot when the value changes for
+     * ON_CHANGE property or when the value is checked according to polling rate
+     * for CONTINUOUS property. Note that for CONTINUOUS property, VHAL client
+     * reading the property multiple times between the polling interval will get
+     * the same timestamp.
+     *
      * @param callback A callback interface, whose 'onGetValues' would be called
      *    after the value is fetched. Caller should use
      *    {@code android-automotive-large-parcelable} library to parse the
@@ -104,7 +112,7 @@ interface IVehicle {
      * Set vehicle property values.
      *
      * The {@link IVehicleCallback#onSetValues} function would be called after
-     * the values set request are sent through vehicle bus or are failed to set.
+     * the values set request are sent through vehicle bus or failed to set.
      * If the bus protocol supports confirmation, the callback would be called
      * after getting the confirmation.
      *
@@ -152,10 +160,35 @@ interface IVehicle {
      * Clients must be able to subscribe to multiple properties at a time
      * depending on data provided in options argument.
      *
-     * For one callback, the is only one subscription for one property.
+     * For one callback, there is only one subscription for one property.
      * A new subscription with a different sample rate would override the old
      * subscription. One property could be subscribed multiple times for
      * different callbacks.
+     *
+     * If error is returned, some of the properties failed to subscribe.
+     * Caller is safe to try again, since subscribing to an already subscribed
+     * property is okay.
+     *
+     * The specified sample rate is just a guidance. It is not guaranteed that
+     * the sample rate is achievable depending on how the polling refresh rate
+     * is. The actual property event rate might be higher/lower than the
+     * specified sampleRate, for example, if the polling rate can be 5 times/s
+     * or 10 times/s, subscribing to a sample rate of 7 might use the 5 times/s
+     * polling rate, thus generating 5 events/s. We only require that on
+     * average, the {@code minSampleRate} and {@code maxSampleRate} can be
+     * achieved, all the sampleRate within min and max would on average
+     * generates events with rate >= {@code minSampleRate} and <=
+     * {@code maxSampleRate}.
+     *
+     * The {@link VehiclePropValue#timestamp} field for each property event must
+     * be the system uptime since boot when the value changes for
+     * ON_CHANGE property or when the value is checked according to polling rate
+     * for CONTINUOUS property. Note that for CONTINUOUS property, VHAL client
+     * reading the property multiple times between the polling interval will get
+     * the same timestamp.
+     * For example, if the polling rate for a property is 10 times/s, no matter
+     * what the sampleRate specified in {@code options}, the timestamp for
+     * the timestamp is updated 10 times/s.
      *
      * @param callback The subscription callbacks.
      *    {@link IVehicleCallback#onPropertyEvent} would be called when a new
@@ -189,8 +222,13 @@ interface IVehicle {
     /**
      * Unsubscribes from property events.
      *
-     * If 'callback' is not valid or 'propIds' were not subscribed for this
-     * 'callback', this method must return {@link StatusCode#INVALID_ARG}.
+     * If 'callback' is not valid this method must return
+     * {@link StatusCode#INVALID_ARG}. If a specified propId was not subscribed
+     * before, this method must ignore that propId.
+     *
+     * If error is returned, some of the properties failed to unsubscribe.
+     * Caller is safe to try again, since unsubscribing an already unsubscribed
+     * property is okay.
      *
      * @param callback The callback used in the previous subscription.
      * @param propIds The IDs for the properties to unsubscribe.

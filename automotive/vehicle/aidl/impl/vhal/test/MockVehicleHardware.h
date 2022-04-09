@@ -18,6 +18,7 @@
 #define android_hardware_automotive_vehicle_aidl_impl_vhal_test_MockVehicleHardware_H_
 
 #include <IVehicleHardware.h>
+#include <RecurrentTimer.h>
 #include <VehicleHalTypes.h>
 
 #include <android-base/thread_annotations.h>
@@ -38,6 +39,8 @@ namespace vehicle {
 
 class MockVehicleHardware final : public IVehicleHardware {
   public:
+    MockVehicleHardware();
+
     ~MockVehicleHardware();
 
     std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropConfig>
@@ -55,6 +58,8 @@ class MockVehicleHardware final : public IVehicleHardware {
     void registerOnPropertyChangeEvent(
             std::unique_ptr<const PropertyChangeCallback> callback) override;
     void registerOnPropertySetErrorEvent(std::unique_ptr<const PropertySetErrorCallback>) override;
+    aidl::android::hardware::automotive::vehicle::StatusCode updateSampleRate(
+            int32_t propId, int32_t areaId, float sampleRate) override;
 
     // Test functions.
     void setPropertyConfigs(
@@ -117,6 +122,11 @@ class MockVehicleHardware final : public IVehicleHardware {
             std::list<std::vector<ResultType>>* storedResponses) const REQUIRES(mLock);
 
     DumpResult mDumpResult;
+
+    // RecurrentTimer is thread-safe.
+    std::shared_ptr<RecurrentTimer> mRecurrentTimer;
+    std::unordered_map<int32_t, std::unordered_map<int32_t, std::shared_ptr<std::function<void()>>>>
+            mRecurrentActions GUARDED_BY(mLock);
 };
 
 }  // namespace vehicle
