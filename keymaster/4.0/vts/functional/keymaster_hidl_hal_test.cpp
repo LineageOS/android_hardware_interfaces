@@ -2866,8 +2866,8 @@ TEST_P(EncryptionOperationsTest, AesEcbPkcs7PaddingCorrupted) {
 
         EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, params));
         string plaintext;
-        ErrorCode error = Finish(message, &plaintext);
-        if (error == ErrorCode::INVALID_INPUT_LENGTH) {
+        ErrorCode error = Finish(ciphertext, &plaintext);
+        if (error == ErrorCode::INVALID_ARGUMENT) {
             // This is the expected error, we can exit the test now.
             return;
         } else {
