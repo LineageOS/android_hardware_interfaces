@@ -37,7 +37,7 @@ class RadioModemResponse : public BnRadioModemResponse {
 
     RadioResponseInfo rspInfo;
     bool isModemEnabled;
-    bool enableModemResponseToggle;
+    bool enableModemResponseToggle = false;
 
     virtual ndk::ScopedAStatus acknowledgeRequest(int32_t serial) override;
 
