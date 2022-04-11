@@ -5481,16 +5481,43 @@ TEST_P(EncryptionOperationsTest, AesEcbPkcs7PaddingCorrupted) {
 
         EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, params));
         string plaintext;
-        ErrorCode error = Finish(message, &plaintext);
-        if (error == ErrorCode::INVALID_INPUT_LENGTH) {
+        ErrorCode error = Finish(ciphertext, &plaintext);
+        if (error == ErrorCode::INVALID_ARGUMENT) {
             // This is the expected error, we can exit the test now.
             return;
         } else {
             // Very small chance we got valid decryption, so try again.
-            ASSERT_EQ(error, ErrorCode::OK);
+            ASSERT_EQ(error, ErrorCode::OK)
+                    << "Expected INVALID_ARGUMENT or (rarely) OK, got " << error;
         }
     }
     FAIL() << "Corrupt ciphertext should have failed to decrypt by now.";
+}
+
+/*
+ * EncryptionOperationsTest.AesEcbPkcs7CiphertextTooShort
+ *
+ * Verifies that AES decryption fails in the correct way when the padding is corrupted.
+ */
+TEST_P(EncryptionOperationsTest, AesEcbPkcs7CiphertextTooShort) {
+    ASSERT_EQ(ErrorCode::OK, GenerateKey(AuthorizationSetBuilder()
+                                                 .Authorization(TAG_NO_AUTH_REQUIRED)
+                                                 .AesEncryptionKey(128)
+                                                 .Authorization(TAG_BLOCK_MODE, BlockMode::ECB)
+                                                 .Padding(PaddingMode::PKCS7)));
+
+    auto params = AuthorizationSetBuilder().BlockMode(BlockMode::ECB).Padding(PaddingMode::PKCS7);
+
+    string message = "a";
+    string ciphertext = EncryptMessage(message, params);
+    EXPECT_EQ(16U, ciphertext.size());
+    EXPECT_NE(ciphertext, message);
+
+    // Shorten the ciphertext.
+    ciphertext.resize(ciphertext.size() - 1);
+    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, params));
+    string plaintext;
+    EXPECT_EQ(ErrorCode::INVALID_INPUT_LENGTH, Finish(ciphertext, &plaintext));
 }
 
 vector<uint8_t> CopyIv(const AuthorizationSet& set) {
