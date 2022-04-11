@@ -206,6 +206,18 @@ static ::android::hardware::sensors::V1_0::SharedMemInfo convertSharedMemInfo(
             resultToBinderStatus(HalProxy::unregisterDirectChannel(in_channelHandle)));
 }
 
+binder_status_t HalProxyAidl::dump(int fd, const char ** /* args */,
+                                   uint32_t /* numArgs */) {
+  native_handle_t *nativeHandle =
+      native_handle_create(1 /* numFds */, 0 /* numInts */);
+  nativeHandle->data[0] = fd;
+
+  HalProxy::debug(nativeHandle, {} /* args */);
+
+  native_handle_delete(nativeHandle);
+  return STATUS_OK;
+}
+
 }  // namespace implementation
 }  // namespace sensors
 }  // namespace hardware
