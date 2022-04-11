@@ -39,8 +39,7 @@ interface IImsMediaSession {
   oneway void addConfig(in android.hardware.radio.ims.media.RtpConfig config);
   oneway void deleteConfig(in android.hardware.radio.ims.media.RtpConfig config);
   oneway void confirmConfig(in android.hardware.radio.ims.media.RtpConfig config);
-  oneway void startDtmf(char dtmfDigit, int volume, int duration);
-  oneway void stopDtmf();
+  oneway void sendDtmf(char dtmfDigit, int duration);
   oneway void sendHeaderExtension(in List<android.hardware.radio.ims.media.RtpHeaderExtension> extensions);
   oneway void setMediaQualityThreshold(in android.hardware.radio.ims.media.MediaQualityThreshold threshold);
 }
