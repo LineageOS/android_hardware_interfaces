@@ -59,6 +59,7 @@ TEST_P(RadioConfigTest, getHalDeviceCapabilities) {
     serial = GetRandomSerialNumber();
     ndk::ScopedAStatus res = radio_config->getHalDeviceCapabilities(serial);
     ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
     ALOGI("getHalDeviceCapabilities, rspInfo.error = %s\n",
           toString(radioRsp_config->rspInfo.error).c_str());
 }
@@ -70,6 +71,7 @@ TEST_P(RadioConfigTest, getSimSlotsStatus) {
     serial = GetRandomSerialNumber();
     ndk::ScopedAStatus res = radio_config->getSimSlotsStatus(serial);
     ASSERT_OK(res);
+    EXPECT_EQ(std::cv_status::no_timeout, wait());
     ALOGI("getSimSlotsStatus, rspInfo.error = %s\n",
           toString(radioRsp_config->rspInfo.error).c_str());
 }
