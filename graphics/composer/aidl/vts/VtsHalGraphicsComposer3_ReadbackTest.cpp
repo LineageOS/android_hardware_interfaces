@@ -974,7 +974,7 @@ TEST_P(GraphicsCompositionTest, SetLayerBrightnessDims) {
     // Preconditions to successfully run are knowing the max brightness and successfully applying
     // the max brightness
     ASSERT_GT(maxBrightnessNits, 0.f);
-    mWriter.setDisplayBrightness(getPrimaryDisplayId(), /*brightness*/ 1.f);
+    mWriter.setDisplayBrightness(getPrimaryDisplayId(), /*brightness*/ 1.f, maxBrightnessNits);
     execute();
     ASSERT_TRUE(mReader.takeErrors().empty());
 

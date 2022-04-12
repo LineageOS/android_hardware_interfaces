@@ -80,8 +80,9 @@ class ComposerClientWriter {
         getDisplayCommand(display).colorTransformMatrix.emplace(std::move(matVec));
     }
 
-    void setDisplayBrightness(int64_t display, float brightness) {
-        getDisplayCommand(display).brightness.emplace(DisplayBrightness{.brightness = brightness});
+    void setDisplayBrightness(int64_t display, float brightness, float brightnessNits) {
+        getDisplayCommand(display).brightness.emplace(
+                DisplayBrightness{.brightness = brightness, .brightnessNits = brightnessNits});
     }
 
     void setClientTarget(int64_t display, uint32_t slot, const native_handle_t* target,

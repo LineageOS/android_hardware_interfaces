@@ -1374,7 +1374,7 @@ TEST_P(GraphicsComposerAidlCommandTest, SetDisplayBrightness) {
     bool brightnessSupport = std::find(capabilities.begin(), capabilities.end(),
                                        DisplayCapability::BRIGHTNESS) != capabilities.end();
     if (!brightnessSupport) {
-        mWriter.setDisplayBrightness(getPrimaryDisplayId(), /*brightness*/ 0.5f);
+        mWriter.setDisplayBrightness(getPrimaryDisplayId(), /*brightness*/ 0.5f, -1.f);
         execute();
         const auto errors = mReader.takeErrors();
         EXPECT_EQ(1, errors.size());
@@ -1383,23 +1383,23 @@ TEST_P(GraphicsComposerAidlCommandTest, SetDisplayBrightness) {
         return;
     }
 
-    mWriter.setDisplayBrightness(getPrimaryDisplayId(), /*brightness*/ 0.0f);
+    mWriter.setDisplayBrightness(getPrimaryDisplayId(), /*brightness*/ 0.0f, -1.f);
     execute();
     EXPECT_TRUE(mReader.takeErrors().empty());
 
-    mWriter.setDisplayBrightness(getPrimaryDisplayId(), /*brightness*/ 0.5f);
+    mWriter.setDisplayBrightness(getPrimaryDisplayId(), /*brightness*/ 0.5f, -1.f);
     execute();
     EXPECT_TRUE(mReader.takeErrors().empty());
 
-    mWriter.setDisplayBrightness(getPrimaryDisplayId(), /*brightness*/ 1.0f);
+    mWriter.setDisplayBrightness(getPrimaryDisplayId(), /*brightness*/ 1.0f, -1.f);
     execute();
     EXPECT_TRUE(mReader.takeErrors().empty());
 
-    mWriter.setDisplayBrightness(getPrimaryDisplayId(), /*brightness*/ -1.0f);
+    mWriter.setDisplayBrightness(getPrimaryDisplayId(), /*brightness*/ -1.0f, -1.f);
     execute();
     EXPECT_TRUE(mReader.takeErrors().empty());
 
-    mWriter.setDisplayBrightness(getPrimaryDisplayId(), /*brightness*/ 2.0f);
+    mWriter.setDisplayBrightness(getPrimaryDisplayId(), /*brightness*/ 2.0f, -1.f);
     execute();
     {
         const auto errors = mReader.takeErrors();
@@ -1407,7 +1407,7 @@ TEST_P(GraphicsComposerAidlCommandTest, SetDisplayBrightness) {
         EXPECT_EQ(IComposerClient::EX_BAD_PARAMETER, errors[0].errorCode);
     }
 
-    mWriter.setDisplayBrightness(getPrimaryDisplayId(), /*brightness*/ -2.0f);
+    mWriter.setDisplayBrightness(getPrimaryDisplayId(), /*brightness*/ -2.0f, -1.f);
     execute();
     {
         const auto errors = mReader.takeErrors();
