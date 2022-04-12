@@ -242,7 +242,8 @@ interface IKeyMintOperation {
      *   not a multiple of the AES block size, finish() must return
      *   ErrorCode::INVALID_INPUT_LENGTH.  If padding is PaddingMode::PKCS7, pad the data per the
      *   PKCS#7 specification, including adding an additional padding block if the data is a
-     *   multiple of the block length.
+     *   multiple of the block length.  If padding is PaddingMode::PKCS7 and decryption does not
+     *   result in valid padding, return ErrorCode::INVALID_ARGUMENT.
      *
      * o BlockMode::GCM.  During encryption, after processing all plaintext, compute the tag
      *   (Tag::MAC_LENGTH bytes) and append it to the returned ciphertext.  During decryption,
