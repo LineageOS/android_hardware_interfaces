@@ -29,6 +29,7 @@ using ::aidl::android::hardware::common::fmq::SynchronizedReadWrite;
 using ::aidl::android::hardware::sensors::ISensors;
 using ::aidl::android::hardware::sensors::ISensorsCallback;
 using ::android::hardware::sensors::V2_1::implementation::convertToOldEvent;
+using ::ndk::ScopedAStatus;
 
 namespace aidl {
 namespace android {
@@ -36,19 +37,22 @@ namespace hardware {
 namespace sensors {
 namespace implementation {
 
-static binder_status_t resultToBinderStatus(::android::hardware::sensors::V1_0::Result result) {
-    switch (result) {
-        case ::android::hardware::sensors::V1_0::Result::OK:
-            return STATUS_OK;
-        case ::android::hardware::sensors::V1_0::Result::PERMISSION_DENIED:
-            return STATUS_PERMISSION_DENIED;
-        case ::android::hardware::sensors::V1_0::Result::NO_MEMORY:
-            return STATUS_NO_MEMORY;
-        case ::android::hardware::sensors::V1_0::Result::BAD_VALUE:
-            return STATUS_BAD_VALUE;
-        case ::android::hardware::sensors::V1_0::Result::INVALID_OPERATION:
-            return STATUS_INVALID_OPERATION;
-    }
+static ScopedAStatus
+resultToAStatus(::android::hardware::sensors::V1_0::Result result) {
+  switch (result) {
+  case ::android::hardware::sensors::V1_0::Result::OK:
+    return ScopedAStatus::ok();
+  case ::android::hardware::sensors::V1_0::Result::PERMISSION_DENIED:
+    return ScopedAStatus::fromExceptionCode(EX_SECURITY);
+  case ::android::hardware::sensors::V1_0::Result::NO_MEMORY:
+    return ScopedAStatus::fromServiceSpecificError(ISensors::ERROR_NO_MEMORY);
+  case ::android::hardware::sensors::V1_0::Result::BAD_VALUE:
+    return ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+  case ::android::hardware::sensors::V1_0::Result::INVALID_OPERATION:
+    return ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+  default:
+    return ScopedAStatus::fromExceptionCode(EX_TRANSACTION_FAILED);
+  }
 }
 
 static ::android::hardware::sensors::V1_0::RateLevel convertRateLevel(
@@ -62,6 +66,8 @@ static ::android::hardware::sensors::V1_0::RateLevel convertRateLevel(
             return ::android::hardware::sensors::V1_0::RateLevel::FAST;
         case ISensors::RateLevel::VERY_FAST:
             return ::android::hardware::sensors::V1_0::RateLevel::VERY_FAST;
+        default:
+          assert(false);
     }
 }
 
@@ -72,6 +78,8 @@ static ::android::hardware::sensors::V1_0::OperationMode convertOperationMode(
             return ::android::hardware::sensors::V1_0::OperationMode::NORMAL;
         case ISensors::OperationMode::DATA_INJECTION:
             return ::android::hardware::sensors::V1_0::OperationMode::DATA_INJECTION;
+        default:
+          assert(false);
     }
 }
 
@@ -82,6 +90,8 @@ static ::android::hardware::sensors::V1_0::SharedMemType convertSharedMemType(
             return ::android::hardware::sensors::V1_0::SharedMemType::ASHMEM;
         case ISensors::SharedMemInfo::SharedMemType::GRALLOC:
             return ::android::hardware::sensors::V1_0::SharedMemType::GRALLOC;
+        default:
+          assert(false);
     }
 }
 
@@ -90,6 +100,8 @@ static ::android::hardware::sensors::V1_0::SharedMemFormat convertSharedMemForma
     switch (sharedMemFormat) {
         case ISensors::SharedMemInfo::SharedMemFormat::SENSORS_EVENT:
             return ::android::hardware::sensors::V1_0::SharedMemFormat::SENSORS_EVENT;
+        default:
+          assert(false);
     }
 }
 
@@ -104,106 +116,133 @@ static ::android::hardware::sensors::V1_0::SharedMemInfo convertSharedMemInfo(
     return v1SharedMemInfo;
 }
 
-::ndk::ScopedAStatus HalProxyAidl::activate(int32_t in_sensorHandle, bool in_enabled) {
-    return ndk::ScopedAStatus::fromStatus(
-            resultToBinderStatus(HalProxy::activate(in_sensorHandle, in_enabled)));
+ScopedAStatus HalProxyAidl::activate(int32_t in_sensorHandle, bool in_enabled) {
+  return resultToAStatus(HalProxy::activate(in_sensorHandle, in_enabled));
 }
 
-::ndk::ScopedAStatus HalProxyAidl::batch(int32_t in_sensorHandle, int64_t in_samplingPeriodNs,
-                                         int64_t in_maxReportLatencyNs) {
-    return ndk::ScopedAStatus::fromStatus(resultToBinderStatus(
-            HalProxy::batch(in_sensorHandle, in_samplingPeriodNs, in_maxReportLatencyNs)));
+ScopedAStatus HalProxyAidl::batch(int32_t in_sensorHandle,
+                                  int64_t in_samplingPeriodNs,
+                                  int64_t in_maxReportLatencyNs) {
+  return resultToAStatus(HalProxy::batch(in_sensorHandle, in_samplingPeriodNs,
+                                         in_maxReportLatencyNs));
 }
 
-::ndk::ScopedAStatus HalProxyAidl::configDirectReport(int32_t in_sensorHandle,
-                                                      int32_t in_channelHandle,
-                                                      ISensors::RateLevel in_rate,
-                                                      int32_t* _aidl_return) {
-    binder_status_t binderStatus;
-    HalProxy::configDirectReport(
-            in_sensorHandle, in_channelHandle, convertRateLevel(in_rate),
-            [&binderStatus, _aidl_return](::android::hardware::sensors::V1_0::Result result,
-                                          int32_t reportToken) {
-                binderStatus = resultToBinderStatus(result);
-                *_aidl_return = reportToken;
-            });
-    return ndk::ScopedAStatus::fromStatus(binderStatus);
+ScopedAStatus HalProxyAidl::configDirectReport(int32_t in_sensorHandle,
+                                               int32_t in_channelHandle,
+                                               ISensors::RateLevel in_rate,
+                                               int32_t *_aidl_return) {
+  ScopedAStatus status =
+      ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+  HalProxy::configDirectReport(
+      in_sensorHandle, in_channelHandle, convertRateLevel(in_rate),
+      [&status, _aidl_return](::android::hardware::sensors::V1_0::Result result,
+                              int32_t reportToken) {
+        status = resultToAStatus(result);
+        *_aidl_return = reportToken;
+      });
+
+  if (!status.isOk()) {
+    *_aidl_return = -1;
+  }
+
+  return status;
 }
 
-::ndk::ScopedAStatus HalProxyAidl::flush(int32_t in_sensorHandle) {
-    return ndk::ScopedAStatus::fromStatus(resultToBinderStatus(HalProxy::flush(in_sensorHandle)));
+ScopedAStatus HalProxyAidl::flush(int32_t in_sensorHandle) {
+  return resultToAStatus(HalProxy::flush(in_sensorHandle));
 }
 
-::ndk::ScopedAStatus HalProxyAidl::getSensorsList(
-        std::vector<::aidl::android::hardware::sensors::SensorInfo>* _aidl_return) {
-    for (const auto& sensor : HalProxy::getSensors()) {
-        _aidl_return->push_back(convertSensorInfo(sensor.second));
-    }
-    return ndk::ScopedAStatus::ok();
+ScopedAStatus HalProxyAidl::getSensorsList(
+    std::vector<::aidl::android::hardware::sensors::SensorInfo> *_aidl_return) {
+  for (const auto &sensor : HalProxy::getSensors()) {
+    _aidl_return->push_back(convertSensorInfo(sensor.second));
+  }
+  return ScopedAStatus::ok();
 }
 
-::ndk::ScopedAStatus HalProxyAidl::initialize(
-        const MQDescriptor<::aidl::android::hardware::sensors::Event, SynchronizedReadWrite>&
-                in_eventQueueDescriptor,
-        const MQDescriptor<int32_t, SynchronizedReadWrite>& in_wakeLockDescriptor,
-        const std::shared_ptr<ISensorsCallback>& in_sensorsCallback) {
-    ::android::sp<::android::hardware::sensors::V2_1::implementation::ISensorsCallbackWrapperBase>
-            dynamicCallback = new ISensorsCallbackWrapperAidl(in_sensorsCallback);
+ScopedAStatus HalProxyAidl::initialize(
+    const MQDescriptor<::aidl::android::hardware::sensors::Event,
+                       SynchronizedReadWrite> &in_eventQueueDescriptor,
+    const MQDescriptor<int32_t, SynchronizedReadWrite> &in_wakeLockDescriptor,
+    const std::shared_ptr<ISensorsCallback> &in_sensorsCallback) {
+  ::android::sp<::android::hardware::sensors::V2_1::implementation::
+                    ISensorsCallbackWrapperBase>
+      dynamicCallback = new ISensorsCallbackWrapperAidl(in_sensorsCallback);
 
-    auto aidlEventQueue =
-            std::make_unique<::android::AidlMessageQueue<::aidl::android::hardware::sensors::Event,
-                                                         SynchronizedReadWrite>>(
-                    in_eventQueueDescriptor, true /* resetPointers */);
-    std::unique_ptr<
-            ::android::hardware::sensors::V2_1::implementation::EventMessageQueueWrapperBase>
-            eventQueue = std::make_unique<EventMessageQueueWrapperAidl>(aidlEventQueue);
+  auto aidlEventQueue = std::make_unique<::android::AidlMessageQueue<
+      ::aidl::android::hardware::sensors::Event, SynchronizedReadWrite>>(
+      in_eventQueueDescriptor, true /* resetPointers */);
+  std::unique_ptr<::android::hardware::sensors::V2_1::implementation::
+                      EventMessageQueueWrapperBase>
+      eventQueue =
+          std::make_unique<EventMessageQueueWrapperAidl>(aidlEventQueue);
 
-    auto aidlWakeLockQueue =
-            std::make_unique<::android::AidlMessageQueue<int32_t, SynchronizedReadWrite>>(
-                    in_wakeLockDescriptor, true /* resetPointers */);
-    std::unique_ptr<
-            ::android::hardware::sensors::V2_1::implementation::WakeLockMessageQueueWrapperBase>
-            wakeLockQueue = std::make_unique<WakeLockMessageQueueWrapperAidl>(aidlWakeLockQueue);
+  auto aidlWakeLockQueue = std::make_unique<
+      ::android::AidlMessageQueue<int32_t, SynchronizedReadWrite>>(
+      in_wakeLockDescriptor, true /* resetPointers */);
+  std::unique_ptr<::android::hardware::sensors::V2_1::implementation::
+                      WakeLockMessageQueueWrapperBase>
+      wakeLockQueue =
+          std::make_unique<WakeLockMessageQueueWrapperAidl>(aidlWakeLockQueue);
 
-    return ndk::ScopedAStatus::fromStatus(
-            resultToBinderStatus(initializeCommon(eventQueue, wakeLockQueue, dynamicCallback)));
+  return resultToAStatus(
+      initializeCommon(eventQueue, wakeLockQueue, dynamicCallback));
 }
 
-::ndk::ScopedAStatus HalProxyAidl::injectSensorData(
-        const ::aidl::android::hardware::sensors::Event& in_event) {
-    ::android::hardware::sensors::V2_1::Event hidlEvent;
-    convertToHidlEvent(in_event, &hidlEvent);
-    return ndk::ScopedAStatus::fromStatus(
-            resultToBinderStatus(HalProxy::injectSensorData(convertToOldEvent(hidlEvent))));
+ScopedAStatus HalProxyAidl::injectSensorData(
+    const ::aidl::android::hardware::sensors::Event &in_event) {
+  ::android::hardware::sensors::V2_1::Event hidlEvent;
+  convertToHidlEvent(in_event, &hidlEvent);
+  return resultToAStatus(
+      HalProxy::injectSensorData(convertToOldEvent(hidlEvent)));
 }
 
-::ndk::ScopedAStatus HalProxyAidl::registerDirectChannel(const ISensors::SharedMemInfo& in_mem,
-                                                         int32_t* _aidl_return) {
-    binder_status_t binderStatus;
-    ::android::hardware::sensors::V1_0::SharedMemInfo sharedMemInfo = convertSharedMemInfo(in_mem);
+ScopedAStatus
+HalProxyAidl::registerDirectChannel(const ISensors::SharedMemInfo &in_mem,
+                                    int32_t *_aidl_return) {
+  ScopedAStatus status =
+      ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+  ::android::hardware::sensors::V1_0::SharedMemInfo sharedMemInfo =
+      convertSharedMemInfo(in_mem);
 
-    HalProxy::registerDirectChannel(
-            sharedMemInfo,
-            [&binderStatus, _aidl_return](::android::hardware::sensors::V1_0::Result result,
-                                          int32_t reportToken) {
-                binderStatus = resultToBinderStatus(result);
-                *_aidl_return = reportToken;
-            });
+  HalProxy::registerDirectChannel(
+      sharedMemInfo,
+      [&status, _aidl_return](::android::hardware::sensors::V1_0::Result result,
+                              int32_t reportToken) {
+        status = resultToAStatus(result);
+        *_aidl_return = reportToken;
+      });
 
-    native_handle_delete(
-            const_cast<native_handle_t*>(sharedMemInfo.memoryHandle.getNativeHandle()));
-    return ndk::ScopedAStatus::fromStatus(binderStatus);
+  native_handle_delete(const_cast<native_handle_t *>(
+      sharedMemInfo.memoryHandle.getNativeHandle()));
+
+  if (!status.isOk()) {
+    *_aidl_return = -1;
+  }
+
+  return status;
 }
 
-::ndk::ScopedAStatus HalProxyAidl::setOperationMode(
-        ::aidl::android::hardware::sensors::ISensors::OperationMode in_mode) {
-    return ndk::ScopedAStatus::fromStatus(
-            resultToBinderStatus(HalProxy::setOperationMode(convertOperationMode(in_mode))));
+ScopedAStatus HalProxyAidl::setOperationMode(
+    ::aidl::android::hardware::sensors::ISensors::OperationMode in_mode) {
+  return resultToAStatus(
+      HalProxy::setOperationMode(convertOperationMode(in_mode)));
 }
 
-::ndk::ScopedAStatus HalProxyAidl::unregisterDirectChannel(int32_t in_channelHandle) {
-    return ndk::ScopedAStatus::fromStatus(
-            resultToBinderStatus(HalProxy::unregisterDirectChannel(in_channelHandle)));
+ScopedAStatus HalProxyAidl::unregisterDirectChannel(int32_t in_channelHandle) {
+  return resultToAStatus(HalProxy::unregisterDirectChannel(in_channelHandle));
+}
+
+binder_status_t HalProxyAidl::dump(int fd, const char ** /* args */,
+                                   uint32_t /* numArgs */) {
+  native_handle_t *nativeHandle =
+      native_handle_create(1 /* numFds */, 0 /* numInts */);
+  nativeHandle->data[0] = fd;
+
+  HalProxy::debug(nativeHandle, {} /* args */);
+
+  native_handle_delete(nativeHandle);
+  return STATUS_OK;
 }
 
 }  // namespace implementation

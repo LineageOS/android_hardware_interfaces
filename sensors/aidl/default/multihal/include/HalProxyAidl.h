@@ -55,6 +55,8 @@ class HalProxyAidl : public ::android::hardware::sensors::V2_1::implementation::
     ::ndk::ScopedAStatus setOperationMode(
             ::aidl::android::hardware::sensors::ISensors::OperationMode in_mode) override;
     ::ndk::ScopedAStatus unregisterDirectChannel(int32_t in_channelHandle) override;
+
+    binder_status_t dump(int fd, const char **args, uint32_t numArgs) override;
 };
 
 }  // namespace implementation
