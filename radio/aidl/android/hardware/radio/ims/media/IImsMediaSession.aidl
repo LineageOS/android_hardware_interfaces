@@ -28,7 +28,6 @@ import android.hardware.radio.ims.media.RtpHeaderExtension;
  */
 @VintfStability
 oneway interface IImsMediaSession {
-
     /**
      * Set the listener functions to receive IMS media session specific notifications.
      *
@@ -76,19 +75,12 @@ oneway interface IImsMediaSession {
     void confirmConfig(in RtpConfig config);
 
     /**
-     * Start sending DTMF digit until the duration expires or a stopDtmf() API
-     * is received. If the implementation is currently playing a DTMF tone, that
-     * tone must be stopped first using stopDtmf().
+     * Send DTMF digit until the duration expires.
      *
      * @param dtmfDigit single char having one of 12 values: 0-9, *, #
-     * @param volume of the DTMF digit between 0 and -63 dBm dropping the sign.
-     * @param duration of the key press in milliseconds. -1 means no duration
-     *        is passed and the caller will invoke stopDtmf().
+     * @param duration of the key press in milliseconds.
      */
-    void startDtmf(char dtmfDigit, int volume, int duration);
-
-    /** Stop sending the last DTMF digit started by startDtmf. */
-    void stopDtmf();
+    void sendDtmf(char dtmfDigit, int duration);
 
     /**
      * Send RTP header extension to the other party in the next RTP packet.
