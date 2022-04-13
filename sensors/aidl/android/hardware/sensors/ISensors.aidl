@@ -229,8 +229,7 @@ interface ISensors {
      *
      * @param mem shared memory info data structure.
      * @param out channelHandle The registered channel handle.
-     * @return The direct channel handle, which is positive if successfully registered, and -1
-     *         otherwise.
+     * @return The direct channel handle, which is positive if successfully registered.
      * @return Status::ok on success
      *         EX_ILLEGAL_ARGUMENT if the shared memory information is not consistent.
      *         EX_UNSUPPORTED_OPERATION if this functionality is unsupported.
@@ -245,7 +244,7 @@ interface ISensors {
      * @see OperationMode
      * @param mode The operation mode.
      * @return Status::ok on success
-     *         EX_UNSUPPORTED_OPERATION if requested mode is not supported.
+     *         EX_UNSUPPORTED_OPERATION or EX_ILLEGAL_ARGUMENT if requested mode is not supported.
      *         EX_SECURITY if the operation is not allowed.
      */
     void setOperationMode(in OperationMode mode);
