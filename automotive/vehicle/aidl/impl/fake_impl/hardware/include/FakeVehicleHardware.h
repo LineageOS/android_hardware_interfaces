@@ -17,6 +17,7 @@
 #ifndef android_hardware_automotive_vehicle_aidl_impl_fake_impl_hardware_include_FakeVehicleHardware_H_
 #define android_hardware_automotive_vehicle_aidl_impl_fake_impl_hardware_include_FakeVehicleHardware_H_
 
+#include <ConcurrentQueue.h>
 #include <DefaultConfig.h>
 #include <FakeObd2Frame.h>
 #include <FakeUserHal.h>
@@ -47,6 +48,8 @@ class FakeVehicleHardware : public IVehicleHardware {
     FakeVehicleHardware();
 
     explicit FakeVehicleHardware(std::unique_ptr<VehiclePropValuePool> valuePool);
+
+    ~FakeVehicleHardware();
 
     // Get all the property configs.
     std::vector<aidl::android::hardware::automotive::vehicle::VehiclePropConfig>
@@ -102,6 +105,29 @@ class FakeVehicleHardware : public IVehicleHardware {
     // Expose private methods to unit test.
     friend class FakeVehicleHardwareTestHelper;
 
+    template <class CallbackType, class RequestType>
+    struct RequestWithCallback {
+        RequestType request;
+        std::shared_ptr<const CallbackType> callback;
+    };
+
+    template <class CallbackType, class RequestType>
+    class PendingRequestHandler {
+      public:
+        PendingRequestHandler(FakeVehicleHardware* hardware);
+
+        void addRequest(RequestType request, std::shared_ptr<const CallbackType> callback);
+
+        void stop();
+
+      private:
+        FakeVehicleHardware* mHardware;
+        std::thread mThread;
+        ConcurrentQueue<RequestWithCallback<CallbackType, RequestType>> mRequests;
+
+        void handleRequestsOnce();
+    };
+
     const std::unique_ptr<obd2frame::FakeObd2Frame> mFakeObd2Frame;
     const std::unique_ptr<FakeUserHal> mFakeUserHal;
     // RecurrentTimer is thread-safe.
@@ -111,6 +137,13 @@ class FakeVehicleHardware : public IVehicleHardware {
     std::unique_ptr<const PropertySetErrorCallback> mOnPropertySetErrorCallback GUARDED_BY(mLock);
     std::unordered_map<PropIdAreaId, std::shared_ptr<RecurrentTimer::Callback>, PropIdAreaIdHash>
             mRecurrentActions GUARDED_BY(mLock);
+    // PendingRequestHandler is thread-safe.
+    mutable PendingRequestHandler<GetValuesCallback,
+                                  aidl::android::hardware::automotive::vehicle::GetValueRequest>
+            mPendingGetValueRequests;
+    mutable PendingRequestHandler<SetValuesCallback,
+                                  aidl::android::hardware::automotive::vehicle::SetValueRequest>
+            mPendingSetValueRequests;
 
     void init();
     // Stores the initial value to property store.
@@ -170,6 +203,10 @@ class FakeVehicleHardware : public IVehicleHardware {
 
     android::base::Result<void> checkArgumentsSize(const std::vector<std::string>& options,
                                                    size_t minSize);
+    aidl::android::hardware::automotive::vehicle::GetValueResult handleGetValueRequest(
+            const aidl::android::hardware::automotive::vehicle::GetValueRequest& request);
+    aidl::android::hardware::automotive::vehicle::SetValueResult handleSetValueRequest(
+            const aidl::android::hardware::automotive::vehicle::SetValueRequest& request);
 };
 
 }  // namespace fake
