@@ -101,7 +101,7 @@ ndk::ScopedAStatus Session::enroll(const keymaster::HardwareAuthToken& hat,
         if (shouldCancel(cancFuture)) {
             mCb->onError(Error::CANCELED, 0 /* vendorCode */);
         } else {
-            mEngine->enrollImpl(mCb.get(), hat);
+            mEngine->enrollImpl(mCb.get(), hat, cancFuture);
         }
         enterIdling();
     }));
@@ -123,7 +123,7 @@ ndk::ScopedAStatus Session::authenticate(int64_t operationId,
         if (shouldCancel(cancFuture)) {
             mCb->onError(Error::CANCELED, 0 /* vendorCode */);
         } else {
-            mEngine->authenticateImpl(mCb.get(), operationId);
+            mEngine->authenticateImpl(mCb.get(), operationId, cancFuture);
         }
         enterIdling();
     }));
@@ -144,7 +144,7 @@ ndk::ScopedAStatus Session::detectInteraction(std::shared_ptr<common::ICancellat
         if (shouldCancel(cancFuture)) {
             mCb->onError(Error::CANCELED, 0 /* vendorCode */);
         } else {
-            mEngine->detectInteractionImpl(mCb.get());
+            mEngine->detectInteractionImpl(mCb.get(), cancFuture);
         }
         enterIdling();
     }));
