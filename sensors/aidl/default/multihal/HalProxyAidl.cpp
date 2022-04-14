@@ -141,10 +141,6 @@ ScopedAStatus HalProxyAidl::configDirectReport(int32_t in_sensorHandle,
         *_aidl_return = reportToken;
       });
 
-  if (!status.isOk()) {
-    *_aidl_return = -1;
-  }
-
   return status;
 }
 
@@ -215,10 +211,6 @@ HalProxyAidl::registerDirectChannel(const ISensors::SharedMemInfo &in_mem,
 
   native_handle_delete(const_cast<native_handle_t *>(
       sharedMemInfo.memoryHandle.getNativeHandle()));
-
-  if (!status.isOk()) {
-    *_aidl_return = -1;
-  }
 
   return status;
 }
