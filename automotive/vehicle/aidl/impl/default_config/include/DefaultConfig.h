@@ -292,8 +292,9 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
                          .prop = toInt(VehicleProperty::EV_CHARGE_CURRENT_DRAW_LIMIT),
                          .access = VehiclePropertyAccess::READ_WRITE,
                          .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
+                         .configArray = {/*max current draw allowed by vehicle in amperes=*/20},
                  },
-         .initialValue = {.floatValues = {(float)VehicleUnit::AMPERE}}},
+         .initialValue = {.floatValues = {(float)12.5}}},
 
         {.config =
                  {
