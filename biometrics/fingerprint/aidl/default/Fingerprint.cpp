@@ -16,7 +16,12 @@
 
 #include "Fingerprint.h"
 
+#include <fingerprint.sysprop.h>
 #include "Session.h"
+
+#include <android-base/logging.h>
+
+using namespace ::android::fingerprint::virt;
 
 namespace aidl::android::hardware::biometrics::fingerprint {
 namespace {
@@ -24,7 +29,6 @@ constexpr size_t MAX_WORKER_QUEUE_SIZE = 5;
 constexpr int SENSOR_ID = 1;
 constexpr common::SensorStrength SENSOR_STRENGTH = common::SensorStrength::STRONG;
 constexpr int MAX_ENROLLMENTS_PER_USER = 5;
-constexpr FingerprintSensorType SENSOR_TYPE = FingerprintSensorType::REAR;
 constexpr bool SUPPORTS_NAVIGATION_GESTURES = true;
 constexpr char HW_COMPONENT_ID[] = "fingerprintSensor";
 constexpr char HW_VERSION[] = "vendor/model/revision";
@@ -51,8 +55,18 @@ ndk::ScopedAStatus Fingerprint::getSensorProps(std::vector<SensorProps>* out) {
                                      0 /* sensorLocationY */, 0 /* sensorRadius */,
                                      "" /* display */};
 
+    FingerprintSensorType sensorType = FingerprintSensorType::UNKNOWN;
+    std::string sensorTypeProp = FingerprintHalProperties::type().value_or("");
+    if (sensorTypeProp == "" || sensorTypeProp == "default" || sensorTypeProp == "rear") {
+        sensorType = FingerprintSensorType::REAR;
+    }
+    if (sensorType == FingerprintSensorType::UNKNOWN) {
+        UNIMPLEMENTED(FATAL) << "unrecognized or unimplemented fingerprint behavior: "
+                             << sensorTypeProp;
+    }
+
     *out = {{commonProps,
-             SENSOR_TYPE,
+             sensorType,
              {sensorLocation},
              SUPPORTS_NAVIGATION_GESTURES,
              false /* supportsDetectInteraction */}};

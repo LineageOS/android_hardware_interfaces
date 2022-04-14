@@ -16,71 +16,33 @@
 
 #pragma once
 
-#include <android-base/logging.h>
+#include <aidl/android/hardware/biometrics/fingerprint/ISessionCallback.h>
+
 #include <random>
+
+#include "CancellationSignal.h"
+
+using namespace ::aidl::android::hardware::biometrics::common;
 
 namespace aidl::android::hardware::biometrics::fingerprint {
 
+// A fake engine that is backed by system properties instead of hardware.
 class FakeFingerprintEngine {
   public:
     FakeFingerprintEngine() : mRandom(std::mt19937::default_seed) {}
 
-    void generateChallengeImpl(ISessionCallback* cb) {
-        LOG(INFO) << "generateChallengeImpl";
-        std::uniform_int_distribution<int64_t> dist;
-        auto challenge = dist(mRandom);
-        cb->onChallengeGenerated(challenge);
-    }
-
-    void revokeChallengeImpl(ISessionCallback* cb, int64_t challenge) {
-        LOG(INFO) << "revokeChallengeImpl";
-        cb->onChallengeRevoked(challenge);
-    }
-
-    void enrollImpl(ISessionCallback* cb, const keymaster::HardwareAuthToken& hat) {
-        LOG(INFO) << "enrollImpl";
-        // Do proper HAT verification in the real implementation.
-        if (hat.mac.empty()) {
-            cb->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
-            return;
-        }
-        cb->onEnrollmentProgress(0 /* enrollmentId */, 0 /* remaining */);
-    }
-
-    void authenticateImpl(ISessionCallback* cb, int64_t /* operationId */) {
-        LOG(INFO) << "authenticateImpl";
-        cb->onAuthenticationSucceeded(0 /* enrollmentId */, {} /* hat */);
-    }
-
-    void detectInteractionImpl(ISessionCallback* cb) {
-        LOG(INFO) << "detectInteractionImpl";
-        cb->onInteractionDetected();
-    }
-
-    void enumerateEnrollmentsImpl(ISessionCallback* cb) {
-        LOG(INFO) << "enumerateEnrollmentsImpl";
-        cb->onEnrollmentsEnumerated({} /* enrollmentIds */);
-    }
-
-    void removeEnrollmentsImpl(ISessionCallback* cb, const std::vector<int32_t>& enrollmentIds) {
-        LOG(INFO) << "removeEnrollmentsImpl";
-        cb->onEnrollmentsRemoved(enrollmentIds);
-    }
-
-    void getAuthenticatorIdImpl(ISessionCallback* cb) {
-        LOG(INFO) << "getAuthenticatorIdImpl";
-        cb->onAuthenticatorIdRetrieved(0 /* authenticatorId */);
-    }
-
-    void invalidateAuthenticatorIdImpl(ISessionCallback* cb) {
-        LOG(INFO) << "invalidateAuthenticatorIdImpl";
-        cb->onAuthenticatorIdInvalidated(0 /* newAuthenticatorId */);
-    }
-
-    void resetLockoutImpl(ISessionCallback* cb, const keymaster::HardwareAuthToken& /*hat*/) {
-        LOG(INFO) << "resetLockoutImpl";
-        cb->onLockoutCleared();
-    }
+    void generateChallengeImpl(ISessionCallback* cb);
+    void revokeChallengeImpl(ISessionCallback* cb, int64_t challenge);
+    void enrollImpl(ISessionCallback* cb, const keymaster::HardwareAuthToken& hat,
+                    const std::future<void>& cancel);
+    void authenticateImpl(ISessionCallback* cb, int64_t operationId,
+                          const std::future<void>& cancel);
+    void detectInteractionImpl(ISessionCallback* cb, const std::future<void>& cancel);
+    void enumerateEnrollmentsImpl(ISessionCallback* cb);
+    void removeEnrollmentsImpl(ISessionCallback* cb, const std::vector<int32_t>& enrollmentIds);
+    void getAuthenticatorIdImpl(ISessionCallback* cb);
+    void invalidateAuthenticatorIdImpl(ISessionCallback* cb);
+    void resetLockoutImpl(ISessionCallback* cb, const keymaster::HardwareAuthToken& /*hat*/);
 
     std::mt19937 mRandom;
 };

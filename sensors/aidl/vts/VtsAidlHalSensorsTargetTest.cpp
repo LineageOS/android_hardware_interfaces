@@ -599,10 +599,12 @@ TEST_P(SensorsAidlTest, SetOperationMode) {
         ASSERT_TRUE(getSensors()->setOperationMode(ISensors::OperationMode::DATA_INJECTION).isOk());
         ASSERT_TRUE(getSensors()->setOperationMode(ISensors::OperationMode::NORMAL).isOk());
     } else {
-        ASSERT_EQ(getSensors()
-                          ->setOperationMode(ISensors::OperationMode::DATA_INJECTION)
-                          .getExceptionCode(),
-                  EX_UNSUPPORTED_OPERATION);
+      int errorCode =
+          getSensors()
+              ->setOperationMode(ISensors::OperationMode::DATA_INJECTION)
+              .getExceptionCode();
+      ASSERT_TRUE((errorCode == EX_UNSUPPORTED_OPERATION) ||
+                  (errorCode == EX_ILLEGAL_ARGUMENT));
     }
 }
 
@@ -938,10 +940,10 @@ void SensorsAidlTest::checkRateLevel(const SensorInfo& sensor, int32_t directCha
     if (isDirectReportRateSupported(sensor, rateLevel)) {
         ASSERT_TRUE(status.isOk());
         if (rateLevel != ISensors::RateLevel::STOP) {
-            ASSERT_GT(*reportToken, 0);
-        } else {
-            ASSERT_EQ(status.getExceptionCode(), EX_ILLEGAL_ARGUMENT);
+          ASSERT_GT(*reportToken, 0);
         }
+    } else {
+      ASSERT_EQ(status.getExceptionCode(), EX_ILLEGAL_ARGUMENT);
     }
 }
 
@@ -982,11 +984,15 @@ void SensorsAidlTest::verifyRegisterDirectChannel(
     ::ndk::ScopedAStatus status = registerDirectChannel(mem->getSharedMemInfo(), &channelHandle);
     if (supportsSharedMemType) {
         ASSERT_TRUE(status.isOk());
-        ASSERT_EQ(channelHandle, 0);
+        ASSERT_GT(channelHandle, 0);
+
+        // Verify that the memory has been zeroed
+        for (size_t i = 0; i < mem->getSize(); i++) {
+          ASSERT_EQ(buffer[i], 0x00);
+        }
     } else {
         int32_t error = supportsAnyDirectChannel ? EX_ILLEGAL_ARGUMENT : EX_UNSUPPORTED_OPERATION;
         ASSERT_EQ(status.getExceptionCode(), error);
-        ASSERT_EQ(channelHandle, -1);
     }
     *directChannelHandle = channelHandle;
 }
@@ -1038,7 +1044,7 @@ void SensorsAidlTest::verifyConfigure(const SensorInfo& sensor,
         // Verify that a sensor handle of -1 is only acceptable when using RateLevel::STOP
         ndk::ScopedAStatus status = configDirectReport(-1 /* sensorHandle */, directChannelHandle,
                                                        ISensors::RateLevel::NORMAL, &reportToken);
-        ASSERT_EQ(status.getServiceSpecificError(), android::BAD_VALUE);
+        ASSERT_EQ(status.getExceptionCode(), EX_ILLEGAL_ARGUMENT);
 
         status = configDirectReport(-1 /* sensorHandle */, directChannelHandle,
                                     ISensors::RateLevel::STOP, &reportToken);
