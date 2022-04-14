@@ -15,8 +15,8 @@ cc_test {
     ],
     srcs: ["VtsHalBiometricsFingerprintTargetTest.cpp"],
     static_libs: [
-        "android.hardware.biometrics.common-V1-ndk",
-        "android.hardware.biometrics.fingerprint-V1-ndk",
+        "android.hardware.biometrics.common-V2-ndk",
+        "android.hardware.biometrics.fingerprint-V2-ndk",
         "android.hardware.keymaster-V3-ndk",
     ],
     shared_libs: [
