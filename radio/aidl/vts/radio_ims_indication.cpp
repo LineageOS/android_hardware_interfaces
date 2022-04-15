@@ -32,3 +32,7 @@ ndk::ScopedAStatus RadioImsIndication::notifyAnbr(RadioIndicationType /*type*/,
         int /*qosSessionId*/, ImsStreamDirection /*direction*/, int /*bitsPerSecond*/) {
     return ndk::ScopedAStatus::ok();
 }
+
+ndk::ScopedAStatus RadioImsIndication::triggerImsDeregistration(RadioIndicationType /*type*/) {
+    return ndk::ScopedAStatus::ok();
+}

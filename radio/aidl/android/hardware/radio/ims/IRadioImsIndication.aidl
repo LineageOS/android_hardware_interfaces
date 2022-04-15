@@ -57,4 +57,16 @@ oneway interface IRadioImsIndication {
      */
      void notifyAnbr(in RadioIndicationType type, int qosSessionId, ImsStreamDirection direction,
             int bitsPerSecond);
+
+    /**
+     * Fired by radio when a graceful IMS deregistration needs to be performed by telephony
+     * prior to radio performing network detach. Example scenarios are SIM refresh or user
+     * mode preference change which would cause network detach. The radio waits for the
+     * IMS deregistration, which will be notified by telephony via
+     * {@link IRadioIms#updateImsRegistrationInfo()}, or a certain timeout interval to start
+     * the network detach procedure.
+     *
+     * @param type Type of radio indication
+     */
+     void triggerImsDeregistration(in RadioIndicationType type);
 }

@@ -37,4 +37,5 @@ interface IRadioImsIndication {
   oneway void onConnectionSetupFailure(in android.hardware.radio.RadioIndicationType type, int token, in android.hardware.radio.ims.ConnectionFailureInfo info);
   oneway void onAccessAllowed(in android.hardware.radio.RadioIndicationType type, int token);
   oneway void notifyAnbr(in android.hardware.radio.RadioIndicationType type, int qosSessionId, android.hardware.radio.ims.ImsStreamDirection direction, int bitsPerSecond);
+  oneway void triggerImsDeregistration(in android.hardware.radio.RadioIndicationType type);
 }
