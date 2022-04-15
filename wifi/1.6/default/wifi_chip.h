@@ -272,7 +272,7 @@ class WifiChip : public V1_6::IWifiChip {
     bool writeRingbufferFilesInternal();
     std::string getWlanIfaceNameWithType(IfaceType type, unsigned idx);
     void invalidateAndClearBridgedApAll();
-    void invalidateAndClearBridgedAp(const std::string& br_name);
+    void deleteApIface(const std::string& if_name);
     bool findUsingNameFromBridgedApInstances(const std::string& name);
     WifiStatus triggerSubsystemRestartInternal();
     std::pair<WifiStatus, sp<V1_6::IWifiRttController>> createRttControllerInternal_1_6(
