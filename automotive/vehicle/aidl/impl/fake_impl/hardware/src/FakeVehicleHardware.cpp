@@ -34,6 +34,7 @@
 #include <utils/SystemClock.h>
 
 #include <dirent.h>
+#include <inttypes.h>
 #include <sys/types.h>
 #include <fstream>
 #include <regex>
@@ -88,7 +89,9 @@ const std::unordered_set<std::string> SET_PROP_OPTIONS = {
         // bytes in hex format, e.g. 0xDEADBEEF.
         "-b",
         // Area id in integer.
-        "-a"};
+        "-a",
+        // Timestamp in int64.
+        "-t"};
 
 }  // namespace
 
@@ -143,7 +146,7 @@ FakeVehicleHardware::FakeVehicleHardware(std::unique_ptr<VehiclePropValuePool> v
       mFakeUserHal(new FakeUserHal(mValuePool)),
       mRecurrentTimer(new RecurrentTimer()),
       mGeneratorHub(new GeneratorHub(
-              [this](const VehiclePropValue& value) { onValueChangeCallback(value); })),
+              [this](const VehiclePropValue& value) { eventFromVehicleBus(value); })),
       mPendingGetValueRequests(this),
       mPendingSetValueRequests(this) {
     init();
@@ -580,8 +583,16 @@ DumpResult FakeVehicleHardware::dump(const std::vector<std::string>& options) {
         result.buffer = dumpListProperties();
     } else if (EqualsIgnoreCase(option, "--get")) {
         result.buffer = dumpSpecificProperty(options);
+    } else if (EqualsIgnoreCase(option, "--getWithArg")) {
+        result.buffer = dumpGetPropertyWithArg(options);
     } else if (EqualsIgnoreCase(option, "--set")) {
         result.buffer = dumpSetProperties(options);
+    } else if (EqualsIgnoreCase(option, "--save-prop")) {
+        result.buffer = dumpSaveProperty(options);
+    } else if (EqualsIgnoreCase(option, "--restore-prop")) {
+        result.buffer = dumpRestoreProperty(options);
+    } else if (EqualsIgnoreCase(option, "--inject-event")) {
+        result.buffer = dumpInjectEvent(options);
     } else if (EqualsIgnoreCase(option, kUserHalDumpOption)) {
         if (options.size() == 1) {
             result.buffer = mFakeUserHal->showDumpHelp();
@@ -612,8 +623,8 @@ interval(int64): The interval in nanoseconds the event would generate by.
 
 --genfakedata --stoplinear [propID(int32)]: Stop a linear generator
 
---genfakedata --startjson [jsonFilePath] [repetition]:
-Start a json generator that would generate events according to a JSON file.
+--genfakedata --startjson --path [jsonFilePath] [repetition]:
+Start a JSON generator that would generate events according to a JSON file.
 jsonFilePath(string): The path to a JSON file. The JSON content must be in the format of
 [{
     "timestamp": 1000000,
@@ -626,9 +637,11 @@ the first event's timestamp.
 repetition(int32, optional): how many iterations the events would be generated. If it is not
 provided, it would iterate indefinitely.
 
---genfakedata --stopjson [jsonFilePath(string)]: Stop a json generator
+--genfakedata --startjson --content [jsonContent]: Start a JSON generator using the content.
 
---genfakedata --keypress [keyCode(int32)] [display[int32]]: Generate key press
+--genfakedata --stopjson [generatorID(string)]: Stop a JSON generator.
+
+--genfakedata --keypress [keyCode(int32)] [display[int32]]: Generate key press.
 
 )";
 }
@@ -695,37 +708,51 @@ std::string FakeVehicleHardware::genFakeDataCommand(const std::vector<std::strin
         }
         return StringPrintf("No linear event generator found for property: %d", propId);
     } else if (command == "--startjson") {
-        //  --genfakedata --startjson [jsonFilePath(string)] [repetition(int32)(optional)]
-        if (options.size() != 3 && options.size() != 4) {
-            return "incorrect argument count, need 3 or 4 arguments for --genfakedata "
+        // --genfakedata --startjson --path path repetition
+        // or
+        // --genfakedata --startjson --content content repetition.
+        if (options.size() != 4 && options.size() != 5) {
+            return "incorrect argument count, need 4 or 5 arguments for --genfakedata "
                    "--startjson\n";
         }
-        std::string fileName = options[2];
-        int32_t cookie = std::hash<std::string>()(fileName);
         // Iterate infinitely if repetition number is not provided
         int32_t repetition = -1;
-        if (options.size() == 4) {
-            if (!android::base::ParseInt(options[3], &repetition)) {
-                return parseErrMsg("repetition", options[3], "int");
+        if (options.size() == 5) {
+            if (!android::base::ParseInt(options[4], &repetition)) {
+                return parseErrMsg("repetition", options[4], "int");
             }
         }
-        auto generator = std::make_unique<JsonFakeValueGenerator>(fileName, repetition);
-        if (!generator->hasNext()) {
-            return "invalid JSON file, no events";
+        std::unique_ptr<JsonFakeValueGenerator> generator;
+        if (options[2] == "--path") {
+            const std::string& fileName = options[3];
+            generator = std::make_unique<JsonFakeValueGenerator>(fileName, repetition);
+            if (!generator->hasNext()) {
+                return "invalid JSON file, no events";
+            }
+        } else if (options[2] == "--content") {
+            const std::string& content = options[3];
+            generator =
+                    std::make_unique<JsonFakeValueGenerator>(/*unused=*/true, content, repetition);
+            if (!generator->hasNext()) {
+                return "invalid JSON content, no events";
+            }
         }
+        int32_t cookie = std::hash<std::string>()(options[3]);
         mGeneratorHub->registerGenerator(cookie, std::move(generator));
-        return "JSON event generator started successfully";
+        return StringPrintf("JSON event generator started successfully, ID: %" PRId32, cookie);
     } else if (command == "--stopjson") {
-        // --genfakedata --stopjson [jsonFilePath(string)]
+        // --genfakedata --stopjson [generatorID(string)]
         if (options.size() != 3) {
             return "incorrect argument count, need 3 arguments for --genfakedata --stopjson\n";
         }
-        std::string fileName = options[2];
-        int32_t cookie = std::hash<std::string>()(fileName);
+        int32_t cookie;
+        if (!android::base::ParseInt(options[2], &cookie)) {
+            return parseErrMsg("cookie", options[2], "int");
+        }
         if (mGeneratorHub->unregisterGenerator(cookie)) {
             return "JSON event generator stopped successfully";
         } else {
-            return StringPrintf("No JSON event generator found for file: %s", fileName.c_str());
+            return StringPrintf("No JSON event generator found for ID: %s", options[2].c_str());
         }
     } else if (command == "--keypress") {
         int32_t keyCode;
@@ -763,18 +790,29 @@ VehiclePropValue FakeVehicleHardware::createHwInputKeyProp(VehicleHwKeyInputActi
     return value;
 }
 
+void FakeVehicleHardware::eventFromVehicleBus(const VehiclePropValue& value) {
+    mServerSidePropStore->writeValue(mValuePool->obtain(value));
+}
+
 std::string FakeVehicleHardware::dumpHelp() {
     return "Usage: \n\n"
            "[no args]: dumps (id and value) all supported properties \n"
            "--help: shows this help\n"
            "--list: lists the ids of all supported properties\n"
-           "--get <PROP1> [PROP2] [PROPN]: dumps the value of specific properties \n"
-           "--set <PROP> [-i INT_VALUE [INT_VALUE ...]] [-i64 INT64_VALUE [INT64_VALUE ...]] "
-           "[-f FLOAT_VALUE [FLOAT_VALUE ...]] [-s STR_VALUE] "
-           "[-b BYTES_VALUE] [-a AREA_ID] : sets the value of property PROP. "
+           "--get <PROP1> [PROP2] [PROPN]: dumps the value of specific properties. \n"
+           "--getWithArg <PROP> [ValueArguments]: gets the value for a specific property with "
+           "arguments. \n"
+           "--set <PROP> [ValueArguments]: sets the value of property PROP. \n"
+           "--save-prop <prop> [-a AREA_ID]: saves the current value for PROP, integration test"
+           " that modifies prop value must call this before test and restore-prop after test. \n"
+           "--restore-prop <prop> [-a AREA_ID]: restores a previously saved property value. \n"
+           "--inject-event <PROP> [ValueArguments]: inject a property update event from car\n\n"
+           "ValueArguments are in the format of [-i INT_VALUE [INT_VALUE ...]] "
+           "[-i64 INT64_VALUE [INT64_VALUE ...]] [-f FLOAT_VALUE [FLOAT_VALUE ...]] [-s STR_VALUE] "
+           "[-b BYTES_VALUE] [-a AREA_ID].\n"
            "Notice that the string, bytes and area value can be set just once, while the other can"
            " have multiple values (so they're used in the respective array), "
-           "BYTES_VALUE is in the form of 0xXXXX, e.g. 0xdeadbeef.\n\n" +
+           "BYTES_VALUE is in the form of 0xXXXX, e.g. 0xdeadbeef.\n" +
            genFakeDataHelp() + "Fake user HAL usage: \n" + mFakeUserHal->showDumpHelp();
 }
 
@@ -893,10 +931,11 @@ std::vector<std::string> FakeVehicleHardware::getOptionValues(
     return std::move(values);
 }
 
-Result<VehiclePropValue> FakeVehicleHardware::parseSetPropOptions(
+Result<VehiclePropValue> FakeVehicleHardware::parsePropOptions(
         const std::vector<std::string>& options) {
     // Options format:
-    // --set PROP [-f f1 f2...] [-i i1 i2...] [-i64 i1 i2...] [-s s1 s2...] [-b b1 b2...] [-a a]
+    // --set/get/inject-event PROP [-f f1 f2...] [-i i1 i2...] [-i64 i1 i2...] [-s s1 s2...]
+    // [-b b1 b2...] [-a a] [-t timestamp]
     size_t optionIndex = 1;
     auto result = safelyParseInt<int32_t>(optionIndex, options[optionIndex]);
     if (!result.ok()) {
@@ -910,83 +949,98 @@ Result<VehiclePropValue> FakeVehicleHardware::parseSetPropOptions(
     std::unordered_set<std::string> parsedOptions;
 
     while (optionIndex < options.size()) {
-        std::string type = options[optionIndex];
+        std::string argType = options[optionIndex];
         optionIndex++;
+
         size_t currentIndex = optionIndex;
-        std::vector<std::string> values = getOptionValues(options, &optionIndex);
-        if (parsedOptions.find(type) != parsedOptions.end()) {
-            return Error() << StringPrintf("Duplicate \"%s\" options\n", type.c_str());
+        std::vector<std::string> argValues = getOptionValues(options, &optionIndex);
+        if (parsedOptions.find(argType) != parsedOptions.end()) {
+            return Error() << StringPrintf("Duplicate \"%s\" options\n", argType.c_str());
         }
-        parsedOptions.insert(type);
-        if (EqualsIgnoreCase(type, "-i")) {
-            if (values.size() == 0) {
+        parsedOptions.insert(argType);
+        size_t argValuesSize = argValues.size();
+        if (EqualsIgnoreCase(argType, "-i")) {
+            if (argValuesSize == 0) {
                 return Error() << "No values specified when using \"-i\"\n";
             }
-            prop.value.int32Values.resize(values.size());
-            for (size_t i = 0; i < values.size(); i++) {
-                auto int32Result = safelyParseInt<int32_t>(currentIndex + i, values[i]);
+            prop.value.int32Values.resize(argValuesSize);
+            for (size_t i = 0; i < argValuesSize; i++) {
+                auto int32Result = safelyParseInt<int32_t>(currentIndex + i, argValues[i]);
                 if (!int32Result.ok()) {
                     return Error()
                            << StringPrintf("Value: \"%s\" is not a valid int: %s\n",
-                                           values[i].c_str(), getErrorMsg(int32Result).c_str());
+                                           argValues[i].c_str(), getErrorMsg(int32Result).c_str());
                 }
                 prop.value.int32Values[i] = int32Result.value();
             }
-        } else if (EqualsIgnoreCase(type, "-i64")) {
-            if (values.size() == 0) {
+        } else if (EqualsIgnoreCase(argType, "-i64")) {
+            if (argValuesSize == 0) {
                 return Error() << "No values specified when using \"-i64\"\n";
             }
-            prop.value.int64Values.resize(values.size());
-            for (size_t i = 0; i < values.size(); i++) {
-                auto int64Result = safelyParseInt<int64_t>(currentIndex + i, values[i]);
+            prop.value.int64Values.resize(argValuesSize);
+            for (size_t i = 0; i < argValuesSize; i++) {
+                auto int64Result = safelyParseInt<int64_t>(currentIndex + i, argValues[i]);
                 if (!int64Result.ok()) {
                     return Error()
                            << StringPrintf("Value: \"%s\" is not a valid int64: %s\n",
-                                           values[i].c_str(), getErrorMsg(int64Result).c_str());
+                                           argValues[i].c_str(), getErrorMsg(int64Result).c_str());
                 }
                 prop.value.int64Values[i] = int64Result.value();
             }
-        } else if (EqualsIgnoreCase(type, "-f")) {
-            if (values.size() == 0) {
+        } else if (EqualsIgnoreCase(argType, "-f")) {
+            if (argValuesSize == 0) {
                 return Error() << "No values specified when using \"-f\"\n";
             }
-            prop.value.floatValues.resize(values.size());
-            for (size_t i = 0; i < values.size(); i++) {
-                auto floatResult = safelyParseFloat(currentIndex + i, values[i]);
+            prop.value.floatValues.resize(argValuesSize);
+            for (size_t i = 0; i < argValuesSize; i++) {
+                auto floatResult = safelyParseFloat(currentIndex + i, argValues[i]);
                 if (!floatResult.ok()) {
                     return Error()
                            << StringPrintf("Value: \"%s\" is not a valid float: %s\n",
-                                           values[i].c_str(), getErrorMsg(floatResult).c_str());
+                                           argValues[i].c_str(), getErrorMsg(floatResult).c_str());
                 }
                 prop.value.floatValues[i] = floatResult.value();
             }
-        } else if (EqualsIgnoreCase(type, "-s")) {
-            if (values.size() != 1) {
+        } else if (EqualsIgnoreCase(argType, "-s")) {
+            if (argValuesSize != 1) {
                 return Error() << "Expect exact one value when using \"-s\"\n";
             }
-            prop.value.stringValue = values[0];
-        } else if (EqualsIgnoreCase(type, "-b")) {
-            if (values.size() != 1) {
+            prop.value.stringValue = argValues[0];
+        } else if (EqualsIgnoreCase(argType, "-b")) {
+            if (argValuesSize != 1) {
                 return Error() << "Expect exact one value when using \"-b\"\n";
             }
-            auto bytesResult = parseHexString(values[0]);
+            auto bytesResult = parseHexString(argValues[0]);
             if (!bytesResult.ok()) {
                 return Error() << StringPrintf("value: \"%s\" is not a valid hex string: %s\n",
-                                               values[0].c_str(), getErrorMsg(bytesResult).c_str());
+                                               argValues[0].c_str(),
+                                               getErrorMsg(bytesResult).c_str());
             }
             prop.value.byteValues = std::move(bytesResult.value());
-        } else if (EqualsIgnoreCase(type, "-a")) {
-            if (values.size() != 1) {
+        } else if (EqualsIgnoreCase(argType, "-a")) {
+            if (argValuesSize != 1) {
                 return Error() << "Expect exact one value when using \"-a\"\n";
             }
-            auto int32Result = safelyParseInt<int32_t>(currentIndex, values[0]);
+            auto int32Result = safelyParseInt<int32_t>(currentIndex, argValues[0]);
             if (!int32Result.ok()) {
                 return Error() << StringPrintf("Area ID: \"%s\" is not a valid int: %s\n",
-                                               values[0].c_str(), getErrorMsg(int32Result).c_str());
+                                               argValues[0].c_str(),
+                                               getErrorMsg(int32Result).c_str());
             }
             prop.areaId = int32Result.value();
+        } else if (EqualsIgnoreCase(argType, "-t")) {
+            if (argValuesSize != 1) {
+                return Error() << "Expect exact one value when using \"-t\"\n";
+            }
+            auto int64Result = safelyParseInt<int64_t>(currentIndex, argValues[0]);
+            if (!int64Result.ok()) {
+                return Error() << StringPrintf("Timestamp: \"%s\" is not a valid int64: %s\n",
+                                               argValues[0].c_str(),
+                                               getErrorMsg(int64Result).c_str());
+            }
+            prop.timestamp = int64Result.value();
         } else {
-            return Error() << StringPrintf("Unknown option: %s\n", type.c_str());
+            return Error() << StringPrintf("Unknown option: %s\n", argType.c_str());
         }
     }
 
@@ -998,7 +1052,7 @@ std::string FakeVehicleHardware::dumpSetProperties(const std::vector<std::string
         return getErrorMsg(result);
     }
 
-    auto parseResult = parseSetPropOptions(options);
+    auto parseResult = parsePropOptions(options);
     if (!parseResult.ok()) {
         return getErrorMsg(parseResult);
     }
@@ -1019,6 +1073,123 @@ std::string FakeVehicleHardware::dumpSetProperties(const std::vector<std::string
     }
     return StringPrintf("failed to set property: %s, error: %s\n", prop.toString().c_str(),
                         getErrorMsg(setResult).c_str());
+}
+
+std::string FakeVehicleHardware::dumpGetPropertyWithArg(const std::vector<std::string>& options) {
+    if (auto result = checkArgumentsSize(options, 3); !result.ok()) {
+        return getErrorMsg(result);
+    }
+
+    auto parseResult = parsePropOptions(options);
+    if (!parseResult.ok()) {
+        return getErrorMsg(parseResult);
+    }
+    VehiclePropValue prop = std::move(parseResult.value());
+    ALOGD("Dump: Getting property: %s", prop.toString().c_str());
+
+    bool isSpecialValue = false;
+    auto result = maybeGetSpecialValue(prop, &isSpecialValue);
+
+    if (!isSpecialValue) {
+        result = mServerSidePropStore->readValue(prop);
+    }
+
+    if (!result.ok()) {
+        return StringPrintf("failed to read property value: %d, error: %s, code: %d\n", prop.prop,
+                            getErrorMsg(result).c_str(), getIntErrorCode(result));
+    }
+    return StringPrintf("Get property result: %s\n", result.value()->toString().c_str());
+}
+
+std::string FakeVehicleHardware::dumpSaveProperty(const std::vector<std::string>& options) {
+    // Format: --save-prop PROP [-a areaID]
+    if (auto result = checkArgumentsSize(options, 2); !result.ok()) {
+        return getErrorMsg(result);
+    }
+
+    auto parseResult = parsePropOptions(options);
+    if (!parseResult.ok()) {
+        return getErrorMsg(parseResult);
+    }
+    // We are only using the prop and areaId option.
+    VehiclePropValue value = std::move(parseResult.value());
+    int32_t propId = value.prop;
+    int32_t areaId = value.areaId;
+
+    auto readResult = mServerSidePropStore->readValue(value);
+    if (!readResult.ok()) {
+        return StringPrintf("Failed to save current property value, error: %s",
+                            getErrorMsg(readResult).c_str());
+    }
+
+    std::scoped_lock<std::mutex> lockGuard(mLock);
+    mSavedProps[PropIdAreaId{
+            .propId = propId,
+            .areaId = areaId,
+    }] = std::move(readResult.value());
+
+    return StringPrintf("Property: %" PRId32 ", areaID: %" PRId32 " saved", propId, areaId);
+}
+
+std::string FakeVehicleHardware::dumpRestoreProperty(const std::vector<std::string>& options) {
+    // Format: --restore-prop PROP [-a areaID]
+    if (auto result = checkArgumentsSize(options, 2); !result.ok()) {
+        return getErrorMsg(result);
+    }
+
+    auto parseResult = parsePropOptions(options);
+    if (!parseResult.ok()) {
+        return getErrorMsg(parseResult);
+    }
+    // We are only using the prop and areaId option.
+    VehiclePropValue value = std::move(parseResult.value());
+    int32_t propId = value.prop;
+    int32_t areaId = value.areaId;
+    VehiclePropValuePool::RecyclableType savedValue;
+
+    {
+        std::scoped_lock<std::mutex> lockGuard(mLock);
+        auto it = mSavedProps.find(PropIdAreaId{
+                .propId = propId,
+                .areaId = areaId,
+        });
+        if (it == mSavedProps.end()) {
+            return StringPrintf("No saved property for property: %" PRId32 ", areaID: %" PRId32,
+                                propId, areaId);
+        }
+
+        savedValue = std::move(it->second);
+        // Remove the saved property after restoring it.
+        mSavedProps.erase(it);
+    }
+
+    // Update timestamp.
+    savedValue->timestamp = elapsedRealtimeNano();
+
+    auto writeResult = mServerSidePropStore->writeValue(std::move(savedValue));
+    if (!writeResult.ok()) {
+        return StringPrintf("Failed to restore property value, error: %s",
+                            getErrorMsg(writeResult).c_str());
+    }
+
+    return StringPrintf("Property: %" PRId32 ", areaID: %" PRId32 " restored", propId, areaId);
+}
+
+std::string FakeVehicleHardware::dumpInjectEvent(const std::vector<std::string>& options) {
+    if (auto result = checkArgumentsSize(options, 3); !result.ok()) {
+        return getErrorMsg(result);
+    }
+
+    auto parseResult = parsePropOptions(options);
+    if (!parseResult.ok()) {
+        return getErrorMsg(parseResult);
+    }
+    VehiclePropValue prop = std::move(parseResult.value());
+    ALOGD("Dump: Injecting event from vehicle bus: %s", prop.toString().c_str());
+
+    eventFromVehicleBus(prop);
+
+    return StringPrintf("Event for property: %d injected", prop.prop);
 }
 
 StatusCode FakeVehicleHardware::checkHealth() {

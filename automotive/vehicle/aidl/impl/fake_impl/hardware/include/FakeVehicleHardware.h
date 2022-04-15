@@ -141,6 +141,8 @@ class FakeVehicleHardware : public IVehicleHardware {
     std::unique_ptr<const PropertySetErrorCallback> mOnPropertySetErrorCallback GUARDED_BY(mLock);
     std::unordered_map<PropIdAreaId, std::shared_ptr<RecurrentTimer::Callback>, PropIdAreaIdHash>
             mRecurrentActions GUARDED_BY(mLock);
+    std::unordered_map<PropIdAreaId, VehiclePropValuePool::RecyclableType, PropIdAreaIdHash>
+            mSavedProps GUARDED_BY(mLock);
     // PendingRequestHandler is thread-safe.
     mutable PendingRequestHandler<GetValuesCallback,
                                   aidl::android::hardware::automotive::vehicle::GetValueRequest>
@@ -160,6 +162,10 @@ class FakeVehicleHardware : public IVehicleHardware {
     void maybeOverrideProperties(const char* overrideDir);
     // Override the properties using config files in 'overrideDir'.
     void overrideProperties(const char* overrideDir);
+    // Function to be called when a value change event comes from vehicle bus. In our fake
+    // implementation, this function is only called during "--inject-event" dump command.
+    void eventFromVehicleBus(
+            const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value);
 
     VhalResult<void> maybeSetSpecialValue(
             const aidl::android::hardware::automotive::vehicle::VehiclePropValue& value,
@@ -188,6 +194,10 @@ class FakeVehicleHardware : public IVehicleHardware {
     std::string dumpListProperties();
     std::string dumpSpecificProperty(const std::vector<std::string>& options);
     std::string dumpSetProperties(const std::vector<std::string>& options);
+    std::string dumpGetPropertyWithArg(const std::vector<std::string>& options);
+    std::string dumpSaveProperty(const std::vector<std::string>& options);
+    std::string dumpRestoreProperty(const std::vector<std::string>& options);
+    std::string dumpInjectEvent(const std::vector<std::string>& options);
 
     template <typename T>
     android::base::Result<T> safelyParseInt(int index, const std::string& s) {
@@ -202,7 +212,7 @@ class FakeVehicleHardware : public IVehicleHardware {
     std::vector<std::string> getOptionValues(const std::vector<std::string>& options,
                                              size_t* index);
     android::base::Result<aidl::android::hardware::automotive::vehicle::VehiclePropValue>
-    parseSetPropOptions(const std::vector<std::string>& options);
+    parsePropOptions(const std::vector<std::string>& options);
     android::base::Result<std::vector<uint8_t>> parseHexString(const std::string& s);
 
     android::base::Result<void> checkArgumentsSize(const std::vector<std::string>& options,

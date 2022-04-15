@@ -1421,6 +1421,85 @@ TEST_F(FakeVehicleHardwareTest, testDumpSpecificPropertiesNoArg) {
     ASSERT_THAT(result.buffer, ContainsRegex("Invalid number of arguments"));
 }
 
+TEST_F(FakeVehicleHardwareTest, testDumpSpecificPropertyWithArg) {
+    auto getValueResult = getValue(VehiclePropValue{.prop = OBD2_FREEZE_FRAME_INFO});
+    ASSERT_TRUE(getValueResult.ok());
+    auto propValue = getValueResult.value();
+    ASSERT_EQ(propValue.value.int64Values.size(), static_cast<size_t>(3))
+            << "expect 3 obd2 freeze frames stored";
+
+    std::string propIdStr = StringPrintf("%d", OBD2_FREEZE_FRAME);
+    DumpResult result;
+    for (int64_t timestamp : propValue.value.int64Values) {
+        result = getHardware()->dump(
+                {"--getWithArg", propIdStr, "-i64", StringPrintf("%" PRId64, timestamp)});
+
+        ASSERT_FALSE(result.callerShouldDumpState);
+        ASSERT_NE(result.buffer, "");
+        ASSERT_THAT(result.buffer, ContainsRegex("Get property result:"));
+    }
+
+    // Set the timestamp argument to 0.
+    result = getHardware()->dump({"--getWithArg", propIdStr, "-i64", "0"});
+
+    ASSERT_FALSE(result.callerShouldDumpState);
+    // There is no freeze obd2 frame at timestamp 0.
+    ASSERT_THAT(result.buffer, ContainsRegex("failed to read property value"));
+}
+
+TEST_F(FakeVehicleHardwareTest, testSaveRestoreProp) {
+    int32_t prop = toInt(VehicleProperty::TIRE_PRESSURE);
+    std::string propIdStr = std::to_string(prop);
+    std::string areaIdStr = std::to_string(WHEEL_FRONT_LEFT);
+
+    DumpResult result = getHardware()->dump({"--save-prop", propIdStr, "-a", areaIdStr});
+
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_THAT(result.buffer, ContainsRegex("saved"));
+
+    ASSERT_EQ(setValue(VehiclePropValue{
+                      .prop = prop,
+                      .areaId = WHEEL_FRONT_LEFT,
+                      .value =
+                              {
+                                      .floatValues = {210.0},
+                              },
+              }),
+              StatusCode::OK);
+
+    result = getHardware()->dump({"--restore-prop", propIdStr, "-a", areaIdStr});
+
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_THAT(result.buffer, ContainsRegex("restored"));
+
+    auto getResult = getValue(VehiclePropValue{.prop = prop, .areaId = WHEEL_FRONT_LEFT});
+
+    ASSERT_TRUE(getResult.ok());
+    // The default value is 200.0.
+    ASSERT_EQ(getResult.value().value.floatValues, std::vector<float>{200.0});
+}
+
+TEST_F(FakeVehicleHardwareTest, testDumpInjectEvent) {
+    int32_t prop = toInt(VehicleProperty::PERF_VEHICLE_SPEED);
+    std::string propIdStr = std::to_string(prop);
+
+    int64_t timestamp = elapsedRealtimeNano();
+    // Inject an event with float value 123.4 and timestamp.
+    DumpResult result = getHardware()->dump(
+            {"--inject-event", propIdStr, "-f", "123.4", "-t", std::to_string(timestamp)});
+
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_THAT(result.buffer,
+                ContainsRegex(StringPrintf("Event for property: %d injected", prop)));
+    ASSERT_TRUE(waitForChangedProperties(prop, 0, /*count=*/1, milliseconds(1000)))
+            << "No changed event received for injected event from vehicle bus";
+    auto events = getChangedProperties();
+    ASSERT_EQ(events.size(), 1u);
+    auto event = events[0];
+    ASSERT_EQ(event.timestamp, timestamp);
+    ASSERT_EQ(event.value.floatValues, std::vector<float>({123.4}));
+}
+
 TEST_F(FakeVehicleHardwareTest, testDumpInvalidOptions) {
     std::vector<std::string> options;
     options.push_back("--invalid");
@@ -1681,10 +1760,10 @@ std::vector<OptionsTestCase> GenInvalidOptions() {
              {"--genfakedata", "--startjson"},
              "incorrect argument count"},
             {"genfakedata_startjson_invalid_repetition",
-             {"--genfakedata", "--startjson", "file", "0.1"},
+             {"--genfakedata", "--startjson", "--path", "file", "0.1"},
              "failed to parse repetition as int: \"0.1\""},
             {"genfakedata_startjson_invalid_json_file",
-             {"--genfakedata", "--startjson", "file", "1"},
+             {"--genfakedata", "--startjson", "--path", "file", "1"},
              "invalid JSON file"},
             {"genfakedata_stopjson_no_args",
              {"--genfakedata", "--stopjson"},
@@ -1765,7 +1844,7 @@ std::string getTestFilePath(const char* filename) {
 }
 
 TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataJson) {
-    std::vector<std::string> options = {"--genfakedata", "--startjson",
+    std::vector<std::string> options = {"--genfakedata", "--startjson", "--path",
                                         getTestFilePath("prop.json"), "2"};
 
     DumpResult result = getHardware()->dump(options);
@@ -1790,8 +1869,36 @@ TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataJson) {
     EXPECT_EQ(10, events[7].value.int32Values[0]);
 }
 
+TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataJsonByContent) {
+    std::vector<std::string> options = {
+            "--genfakedata", "--startjson", "--content",
+            "[{\"timestamp\":1000000,\"areaId\":0,\"value\":8,\"prop\":289408000}]", "1"};
+
+    DumpResult result = getHardware()->dump(options);
+
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_THAT(result.buffer, HasSubstr("successfully"));
+
+    ASSERT_TRUE(waitForChangedProperties(/*count=*/1, milliseconds(1000)))
+            << "not enough events generated for JSON data generator";
+
+    auto events = getChangedProperties();
+    ASSERT_EQ(1u, events.size());
+    EXPECT_EQ(1u, events[0].value.int32Values.size());
+    EXPECT_EQ(8, events[0].value.int32Values[0]);
+}
+
+TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataJsonInvalidContent) {
+    std::vector<std::string> options = {"--genfakedata", "--startjson", "--content", "[{", "2"};
+
+    DumpResult result = getHardware()->dump(options);
+
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_THAT(result.buffer, HasSubstr("invalid JSON content"));
+}
+
 TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataJsonInvalidFile) {
-    std::vector<std::string> options = {"--genfakedata", "--startjson",
+    std::vector<std::string> options = {"--genfakedata", "--startjson", "--path",
                                         getTestFilePath("blahblah.json"), "2"};
 
     DumpResult result = getHardware()->dump(options);
@@ -1802,7 +1909,7 @@ TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataJsonInvalidFile) {
 
 TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataJsonStop) {
     // No iteration number provided, would loop indefinitely.
-    std::vector<std::string> options = {"--genfakedata", "--startjson",
+    std::vector<std::string> options = {"--genfakedata", "--startjson", "--path",
                                         getTestFilePath("prop.json")};
 
     DumpResult result = getHardware()->dump(options);
@@ -1810,7 +1917,9 @@ TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataJsonStop) {
     ASSERT_FALSE(result.callerShouldDumpState);
     ASSERT_THAT(result.buffer, HasSubstr("successfully"));
 
-    result = getHardware()->dump({"--genfakedata", "--stopjson", getTestFilePath("prop.json")});
+    std::string id = result.buffer.substr(result.buffer.find("ID: ") + 4);
+
+    result = getHardware()->dump({"--genfakedata", "--stopjson", id});
 
     ASSERT_FALSE(result.callerShouldDumpState);
     ASSERT_THAT(result.buffer, HasSubstr("successfully"));
@@ -1818,7 +1927,7 @@ TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataJsonStop) {
 
 TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataJsonStopInvalidFile) {
     // No iteration number provided, would loop indefinitely.
-    std::vector<std::string> options = {"--genfakedata", "--startjson",
+    std::vector<std::string> options = {"--genfakedata", "--startjson", "--path",
                                         getTestFilePath("prop.json")};
 
     DumpResult result = getHardware()->dump(options);
@@ -1826,7 +1935,7 @@ TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataJsonStopInvalidFile) {
     ASSERT_FALSE(result.callerShouldDumpState);
     ASSERT_THAT(result.buffer, HasSubstr("successfully"));
 
-    result = getHardware()->dump({"--genfakedata", "--stopjson", getTestFilePath("prop1.json")});
+    result = getHardware()->dump({"--genfakedata", "--stopjson", "1234"});
 
     ASSERT_FALSE(result.callerShouldDumpState);
     ASSERT_THAT(result.buffer, HasSubstr("No JSON event generator found"));

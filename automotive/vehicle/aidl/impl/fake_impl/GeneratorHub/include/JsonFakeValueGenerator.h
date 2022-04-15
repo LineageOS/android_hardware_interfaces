@@ -45,6 +45,9 @@ class JsonFakeValueGenerator : public FakeValueGenerator {
     // Create a new JSON fake value generator using the specified JSON file path. All the events
     // in the JSON file would be generated once.
     explicit JsonFakeValueGenerator(const std::string& path);
+    // Create a new JSON fake value generator using the JSON content. The first argument is just
+    // used to differentiate this function with the one that takes path as input.
+    explicit JsonFakeValueGenerator(bool unused, const std::string& content, int32_t iteration);
 
     ~JsonFakeValueGenerator() = default;
 
@@ -63,7 +66,8 @@ class JsonFakeValueGenerator : public FakeValueGenerator {
     int32_t mNumOfIterations = 0;
 
     void setBit(std::vector<uint8_t>& bytes, size_t idx);
-    void init(const std::string& path, int32_t iteration);
+    void initWithPath(const std::string& path, int32_t iteration);
+    void initWithStream(std::istream& is, int32_t iteration);
 };
 
 }  // namespace fake
