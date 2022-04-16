@@ -29,6 +29,7 @@ import android.hardware.radio.network.RadioBandMode;
 import android.hardware.radio.network.RegStateResult;
 import android.hardware.radio.network.SignalStrength;
 import android.hardware.radio.network.UsageSetting;
+import android.hardware.radio.network.EmergencyRegResult;
 
 /**
  * Interface declaring response functions to solicited radio requests for network APIs.
@@ -572,4 +573,51 @@ oneway interface IRadioNetworkResponse {
      *   RadioError:SIM_ABSENT
      */
     oneway void getUsageSettingResponse(in RadioResponseInfo info, in UsageSetting usageSetting);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error.
+     * @param regState the current registration state of the modem.
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:MODEM_ERR
+     *   RadioError:INVALID_ARGUMENTS
+     */
+    void setEmergencyModeResponse(in RadioResponseInfo info, in EmergencyRegResult regState);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:MODEM_ERR
+     *   RadioError:INVALID_ARGUMENTS
+     */
+    void triggerEmergencyNetworkScanResponse(in RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:MODEM_ERR
+     */
+    void exitEmergencyModeResponse(in RadioResponseInfo info);
+
+    /**
+     * @param info Response info struct containing response type, serial no. and error
+     *
+     * Valid errors returned:
+     *   RadioError:NONE
+     *   RadioError:REQUEST_NOT_SUPPORTED
+     *   RadioError:RADIO_NOT_AVAILABLE
+     *   RadioError:MODEM_ERR
+     */
+    void cancelEmergencyNetworkScanResponse(in RadioResponseInfo info);
 }

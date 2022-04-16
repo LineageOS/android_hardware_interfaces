@@ -27,6 +27,8 @@ import android.hardware.radio.network.RadioAccessSpecifier;
 import android.hardware.radio.network.RadioBandMode;
 import android.hardware.radio.network.SignalThresholdInfo;
 import android.hardware.radio.network.UsageSetting;
+import android.hardware.radio.network.EmergencyNetworkScanTrigger;
+import android.hardware.radio.network.EmergencyMode;
 
 /**
  * This interface is used by telephony and telecom to talk to cellular radio for network APIs.
@@ -437,4 +439,44 @@ oneway interface IRadioNetwork {
      * @param serial Serial number of request.
      */
     oneway void getUsageSetting(in int serial);
+
+    /**
+     * Set the Emergency Mode
+     *
+     * @param serial Serial number of the request.
+     * @param emcModeType Defines the radio emergency mode type/radio network required/
+     * type of service to be scanned.
+     *
+     * Response function is IRadioEmergencyResponse.setEmergencyModeResponse()
+     */
+    void setEmergencyMode(int serial, in EmergencyMode emcModeType );
+
+    /**
+     * Triggers an Emergency network scan.
+     *
+     * @param serial Serial number of the request.
+     * @param request Defines the radio target networks/preferred network/
+     * Max Scan Time and type of service to be scanned.
+     *
+     * Response function is IRadioEmergencyResponse.triggerEmergencyNetworkScanResponse()
+     */
+    void triggerEmergencyNetworkScan( int serial, in EmergencyNetworkScanTrigger request);
+
+    /**
+     * Cancels ongoing Emergency network scan
+     *
+     * @param serial Serial number of the request.
+     *
+     * Response function is IRadioEmergencyResponse.cancelEmergencyNetworkScan()
+     */
+    void cancelEmergencyNetworkScan(in int serial);
+
+    /**
+     * Exits ongoing Emergency Mode
+     *
+     * @param serial Serial number of the request.
+     *
+     * Response function is IRadioEmergencyResponse.exitEmergencyModeResponse()
+     */
+    void exitEmergencyMode(in int serial);
 }

@@ -70,4 +70,8 @@ interface IRadioNetwork {
   oneway void supplyNetworkDepersonalization(in int serial, in String netPin);
   oneway void setUsageSetting(in int serial, in android.hardware.radio.network.UsageSetting usageSetting);
   oneway void getUsageSetting(in int serial);
+  oneway void setEmergencyMode(int serial, in android.hardware.radio.network.EmergencyMode emcModeType);
+  oneway void triggerEmergencyNetworkScan(int serial, in android.hardware.radio.network.EmergencyNetworkScanTrigger request);
+  oneway void cancelEmergencyNetworkScan(in int serial);
+  oneway void exitEmergencyMode(in int serial);
 }
