@@ -289,9 +289,9 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="false">
+    <hal format="hidl" optional="true">
         <name>android.hardware.graphics.allocator</name>
-        <!-- New, non-Go devices should use 4.0, tested in vts_treble_vintf_vendor_test -->
+        <!-- New, non-Go devices should use 4.0 or the AIDL hal. -->
         <version>2.0</version>
         <version>3.0</version>
         <version>4.0</version>
