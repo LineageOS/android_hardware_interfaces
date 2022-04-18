@@ -33,18 +33,45 @@ using hardware::hidl_vec;
 using InterfaceType = ICanController::InterfaceType;
 using IfId = ICanController::BusConfig::InterfaceId;
 
+struct Bus {
+    DISALLOW_COPY_AND_ASSIGN(Bus);
+
+    Bus(sp<ICanController> controller, const ICanController::BusConfig& config)
+        : mIfname(config.name), mController(controller) {
+        // Don't bring up the bus, we just need a wrapper for the ICanBus object
+        /* Not using ICanBus::getService here, since it ignores interfaces not in the manifest
+         * file -- this is a test, so we don't want to add fake services to a device manifest. */
+        auto manager = hidl::manager::V1_2::IServiceManager::getService();
+        auto service = manager->get(ICanBus::descriptor, config.name);
+        mBus = ICanBus::castFrom(service);
+    }
+
+    ICanBus* operator->() const { return mBus.get(); }
+    sp<ICanBus> get() { return mBus; }
+
+    Return<Result> send(const CanMessage& msg) { return mBus->send(msg); }
+
+  private:
+    const std::string mIfname;
+    sp<ICanController> mController;
+    sp<ICanBus> mBus;
+};
+
 class CanControllerHalTest : public ::testing::TestWithParam<std::string> {
   protected:
     virtual void SetUp() override;
     virtual void TearDown() override;
     static void SetUpTestCase();
 
+    Bus makeBus(const std::string ifaceName);
+
     hidl_vec<InterfaceType> getSupportedInterfaceTypes();
     bool isSupported(InterfaceType iftype);
 
     bool up(InterfaceType iftype, const std::string srvname, std::string ifname,
             ICanController::Result expected);
-    void assertRegistered(const std::string srvname, bool expectRegistered);
+    void assertRegistered(const std::string srvname, const std::string ifaceName,
+                          bool expectRegistered);
 
     sp<ICanController> mCanController;
     static hidl_vec<hidl_string> mBusNames;
@@ -117,14 +144,31 @@ bool CanControllerHalTest::up(InterfaceType iftype, std::string srvname, std::st
     return true;
 }
 
-void CanControllerHalTest::assertRegistered(std::string srvname, bool expectRegistered) {
+void CanControllerHalTest::assertRegistered(const std::string srvname, const std::string ifaceName,
+                                            bool expectRegistered) {
     /* Not using ICanBus::tryGetService here, since it ignores interfaces not in the manifest
      * file -- this is a test, so we don't want to add fake services to a device manifest. */
     auto manager = hidl::manager::V1_2::IServiceManager::getService();
     auto busService = manager->get(ICanBus::descriptor, srvname);
+    if (!expectRegistered) {
+        /* We can't unregister a HIDL interface defined in the manifest, so we'll just check to make
+         * sure that the interface behind it is down */
+        auto bus = makeBus(ifaceName);
+        const auto result = bus->send({});
+        ASSERT_EQ(Result::INTERFACE_DOWN, result);
+        return;
+    }
     ASSERT_EQ(expectRegistered, busService.withDefault(nullptr) != nullptr)
             << "ICanBus/" << srvname << (expectRegistered ? " is not " : " is ") << "registered"
             << " (should be otherwise)";
+}
+
+Bus CanControllerHalTest::makeBus(const std::string ifaceName) {
+    ICanController::BusConfig config = {};
+    config.name = mBusNames[0];
+    config.interfaceId.virtualif({ifaceName});
+
+    return Bus(mCanController, config);
 }
 
 TEST_P(CanControllerHalTest, SupportsSomething) {
@@ -134,15 +178,17 @@ TEST_P(CanControllerHalTest, SupportsSomething) {
 
 TEST_P(CanControllerHalTest, BringUpDown) {
     const std::string name = mBusNames[0];
+    const std::string iface = "vcan57";
+    mCanController->downInterface(name);
 
-    assertRegistered(name, false);
-    if (!up(InterfaceType::VIRTUAL, name, "vcan57", ICanController::Result::OK)) GTEST_SKIP();
-    assertRegistered(name, true);
+    assertRegistered(name, iface, false);
+
+    if (!up(InterfaceType::VIRTUAL, name, iface, ICanController::Result::OK)) GTEST_SKIP();
+    assertRegistered(name, iface, true);
 
     const auto dnresult = mCanController->downInterface(name);
     ASSERT_TRUE(dnresult);
-
-    assertRegistered(name, false);
+    assertRegistered(name, iface, false);
 }
 
 TEST_P(CanControllerHalTest, DownFake) {
@@ -152,18 +198,19 @@ TEST_P(CanControllerHalTest, DownFake) {
 
 TEST_P(CanControllerHalTest, UpTwice) {
     const std::string name = mBusNames[0];
+    const std::string iface = "vcan72";
 
-    assertRegistered(name, false);
-    if (!up(InterfaceType::VIRTUAL, name, "vcan72", ICanController::Result::OK)) GTEST_SKIP();
-    assertRegistered(name, true);
+    assertRegistered(name, iface, false);
+    if (!up(InterfaceType::VIRTUAL, name, iface, ICanController::Result::OK)) GTEST_SKIP();
+    assertRegistered(name, iface, true);
     if (!up(InterfaceType::VIRTUAL, name, "vcan73", ICanController::Result::INVALID_STATE)) {
         GTEST_SKIP();
     }
-    assertRegistered(name, true);
+    assertRegistered(name, iface, true);
 
     const auto result = mCanController->downInterface(name);
     ASSERT_TRUE(result);
-    assertRegistered(name, false);
+    assertRegistered(name, iface, false);
 }
 
 TEST_P(CanControllerHalTest, ConfigCompatibility) {
@@ -230,63 +277,67 @@ TEST_P(CanControllerHalTest, ConfigCompatibility) {
 
 TEST_P(CanControllerHalTest, FailEmptyName) {
     const std::string name = "";
+    const std::string iface = "vcan57";
 
-    assertRegistered(name, false);
-    if (!up(InterfaceType::VIRTUAL, name, "vcan57", ICanController::Result::BAD_SERVICE_NAME)) {
+    assertRegistered(name, iface, false);
+    if (!up(InterfaceType::VIRTUAL, name, iface, ICanController::Result::BAD_SERVICE_NAME)) {
         GTEST_SKIP();
     }
-    assertRegistered(name, false);
+    assertRegistered(name, iface, false);
 }
 
 TEST_P(CanControllerHalTest, FailBadName) {
     // 33 characters (name can be at most 32 characters long)
     const std::string name = "ab012345678901234567890123456789c";
+    const std::string iface = "vcan57";
 
-    assertRegistered(name, false);
-    if (!up(InterfaceType::VIRTUAL, name, "vcan57", ICanController::Result::BAD_SERVICE_NAME)) {
+    assertRegistered(name, iface, false);
+    if (!up(InterfaceType::VIRTUAL, name, iface, ICanController::Result::BAD_SERVICE_NAME)) {
         GTEST_SKIP();
     }
-    assertRegistered(name, false);
+    assertRegistered(name, iface, false);
 }
 
 TEST_P(CanControllerHalTest, FailBadVirtualAddress) {
     const std::string name = mBusNames[0];
+    const std::string iface = "";
 
-    assertRegistered(name, false);
-    if (!up(InterfaceType::VIRTUAL, name, "", ICanController::Result::BAD_INTERFACE_ID)) {
+    assertRegistered(name, iface, false);
+    if (!up(InterfaceType::VIRTUAL, name, iface, ICanController::Result::BAD_INTERFACE_ID)) {
         GTEST_SKIP();
     }
-    assertRegistered(name, false);
+    assertRegistered(name, iface, false);
 }
 
 TEST_P(CanControllerHalTest, FailBadSocketcanAddress) {
     const std::string name = mBusNames[0];
+    const std::string iface = "can87";
 
-    assertRegistered(name, false);
-    if (!up(InterfaceType::SOCKETCAN, name, "can87", ICanController::Result::BAD_INTERFACE_ID)) {
+    assertRegistered(name, iface, false);
+    if (!up(InterfaceType::SOCKETCAN, name, iface, ICanController::Result::BAD_INTERFACE_ID)) {
         GTEST_SKIP();
     }
-    assertRegistered(name, false);
+    assertRegistered(name, iface, false);
 
     auto supported =
             up(InterfaceType::SOCKETCAN, name, "", ICanController::Result::BAD_INTERFACE_ID);
     ASSERT_TRUE(supported);
-    assertRegistered(name, false);
+    assertRegistered(name, iface, false);
 }
 
 TEST_P(CanControllerHalTest, FailBadSlcanAddress) {
     const std::string name = mBusNames[0];
+    const std::string iface = "/dev/shouldnotexist123";
 
-    assertRegistered(name, false);
-    if (!up(InterfaceType::SLCAN, name, "/dev/shouldnotexist123",
-            ICanController::Result::BAD_INTERFACE_ID)) {
+    assertRegistered(name, iface, false);
+    if (!up(InterfaceType::SLCAN, name, iface, ICanController::Result::BAD_INTERFACE_ID)) {
         GTEST_SKIP();
     }
-    assertRegistered(name, false);
+    assertRegistered(name, iface, false);
 
     auto supported = up(InterfaceType::SLCAN, name, "", ICanController::Result::BAD_INTERFACE_ID);
     ASSERT_TRUE(supported);
-    assertRegistered(name, false);
+    assertRegistered(name, iface, false);
 }
 
 /**
