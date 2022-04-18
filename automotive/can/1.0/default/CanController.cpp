@@ -292,14 +292,6 @@ Return<ICanController::Result> CanController::upInterface(const ICanController::
     return ICanController::Result::OK;
 }
 
-static bool unregisterCanBusService(const hidl_string& name, sp<CanBus> busService) {
-    auto manager = hidl::manager::V1_2::IServiceManager::getService();
-    if (!manager) return false;
-    const auto res = manager->tryUnregister(ICanBus::descriptor, name, busService);
-    if (!res.isOk()) return false;
-    return res;
-}
-
 Return<bool> CanController::downInterface(const hidl_string& name) {
     LOG(VERBOSE) << "Attempting to bring interface down: " << name;
 
@@ -312,12 +304,6 @@ Return<bool> CanController::downInterface(const hidl_string& name) {
     }
 
     auto success = true;
-
-    if (!unregisterCanBusService(name, busEntry.mapped())) {
-        LOG(ERROR) << "Couldn't unregister " << name;
-        // don't return yet, let's try to do best-effort cleanup
-        success = false;
-    }
 
     if (!busEntry.mapped()->down()) {
         LOG(ERROR) << "Couldn't bring " << name << " down";
