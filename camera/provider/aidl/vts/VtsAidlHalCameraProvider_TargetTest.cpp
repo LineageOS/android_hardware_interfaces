@@ -1554,7 +1554,7 @@ TEST_P(CameraAidlTest, processMultiCaptureRequestPreview) {
         CaptureRequest& request = requests[0];
         request.frameNumber = frameNumber;
         request.fmqSettingsSize = 0;
-        request.settings.metadata = settings;
+        request.settings = settingsMetadata;
 
         std::vector<StreamBuffer>& outputBuffers = request.outputBuffers;
 
