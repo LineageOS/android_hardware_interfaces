@@ -57,6 +57,7 @@ cc_test {
         "general-tests",
         "vts",
     ],
+    require_root: true,
 }
 
 java_test_host {
