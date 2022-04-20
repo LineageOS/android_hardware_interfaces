@@ -39,4 +39,5 @@ parcelable EvsParams {
   byte channelAwareMode;
   boolean useHeaderFullOnlyOnTx;
   boolean useHeaderFullOnlyOnRx;
+  boolean useEvsModeSwitch;
 }

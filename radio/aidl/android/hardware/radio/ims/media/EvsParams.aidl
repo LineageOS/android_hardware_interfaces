@@ -16,8 +16,8 @@
 
 package android.hardware.radio.ims.media;
 
-import android.hardware.radio.ims.media.EvsMode;
 import android.hardware.radio.ims.media.EvsBandwidth;
+import android.hardware.radio.ims.media.EvsMode;
 
 @VintfStability
 parcelable EvsParams {
@@ -48,4 +48,9 @@ parcelable EvsParams {
      * both header full format and compact format.
      */
     boolean useHeaderFullOnlyOnRx;
+    /**
+     * evs-mode-switch: Used for switching between EVS Primary mode and EVS AMR-WB IO mode,
+     * If this value is true, the codec operates in AMR-WB IO mode
+     */
+    boolean useEvsModeSwitch;
 }

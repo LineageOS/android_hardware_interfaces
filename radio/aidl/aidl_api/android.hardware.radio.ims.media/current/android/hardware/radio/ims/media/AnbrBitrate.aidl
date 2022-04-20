@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,16 +33,8 @@
 
 package android.hardware.radio.ims.media;
 @VintfStability
-interface IImsMediaSessionListener {
-  oneway void onSessionChanged(android.hardware.radio.ims.media.RtpSessionState state);
-  oneway void onModifySessionResponse(in android.hardware.radio.ims.media.RtpConfig config, android.hardware.radio.ims.media.RtpError error);
-  oneway void onAddConfigResponse(in android.hardware.radio.ims.media.RtpConfig config, android.hardware.radio.ims.media.RtpError error);
-  oneway void onConfirmConfigResponse(in android.hardware.radio.ims.media.RtpConfig config, android.hardware.radio.ims.media.RtpError error);
-  oneway void onFirstMediaPacketReceived(in android.hardware.radio.ims.media.RtpConfig config);
-  oneway void onHeaderExtensionReceived(in List<android.hardware.radio.ims.media.RtpHeaderExtension> extensions);
-  oneway void notifyMediaInactivity(android.hardware.radio.ims.media.MediaProtocolType packetType);
-  oneway void notifyPacketLoss(int packetLossPercentage);
-  oneway void notifyJitter(int jitter);
-  oneway void triggerAnbrQuery(in android.hardware.radio.ims.media.RtpConfig config);
-  oneway void onDtmfReceived(char dtmfDigit);
+parcelable AnbrBitrate {
+    const int INVALID_ANBR_BITRATE = -1;
+    int uplinkBps;
+    int downlinkBps;
 }
