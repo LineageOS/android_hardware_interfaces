@@ -71,7 +71,7 @@ TEST(WorkerThreadTest, ScheduleReturnsFalseWhenQueueIsFull) {
 
 TEST(WorkerThreadTest, TasksExecuteInOrder) {
     constexpr int NUM_TASKS = 10000;
-    WorkerThread worker(NUM_TASKS);
+    WorkerThread worker(NUM_TASKS + 1);
 
     std::mutex mut;
     std::condition_variable cv;
