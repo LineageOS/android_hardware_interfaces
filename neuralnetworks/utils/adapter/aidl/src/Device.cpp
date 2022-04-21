@@ -135,16 +135,26 @@ std::shared_ptr<PreparedModel> adaptPreparedModel(nn::SharedPreparedModel prepar
     return ndk::SharedRefBase::make<PreparedModel>(std::move(preparedModel));
 }
 
+void notify(IPreparedModelCallback* callback, ErrorStatus status,
+            const std::shared_ptr<IPreparedModel>& preparedModel) {
+    if (callback != nullptr) {
+        const auto ret = callback->notify(status, preparedModel);
+        if (!ret.isOk()) {
+            LOG(ERROR) << "IPreparedModelCallback::notify failed with " << ret.getDescription();
+        }
+    }
+}
+
 void notify(IPreparedModelCallback* callback, PrepareModelResult result) {
     if (!result.has_value()) {
         const auto& [message, status] = result.error();
         LOG(ERROR) << message;
         const auto aidlCode = utils::convert(status).value_or(ErrorStatus::GENERAL_FAILURE);
-        callback->notify(aidlCode, nullptr);
+        notify(callback, aidlCode, nullptr);
     } else {
         auto preparedModel = std::move(result).value();
         auto aidlPreparedModel = adaptPreparedModel(std::move(preparedModel));
-        callback->notify(ErrorStatus::NONE, std::move(aidlPreparedModel));
+        notify(callback, ErrorStatus::NONE, std::move(aidlPreparedModel));
     }
 }
 
@@ -284,7 +294,7 @@ ndk::ScopedAStatus Device::prepareModel(const Model& model, ExecutionPreference 
     if (!result.has_value()) {
         const auto& [message, code] = result.error();
         const auto aidlCode = utils::convert(code).value_or(ErrorStatus::GENERAL_FAILURE);
-        callback->notify(aidlCode, nullptr);
+        notify(callback.get(), aidlCode, nullptr);
         return ndk::ScopedAStatus::fromServiceSpecificErrorWithMessage(
                 static_cast<int32_t>(aidlCode), message.c_str());
     }
@@ -300,7 +310,7 @@ ndk::ScopedAStatus Device::prepareModelFromCache(
     if (!result.has_value()) {
         const auto& [message, code] = result.error();
         const auto aidlCode = utils::convert(code).value_or(ErrorStatus::GENERAL_FAILURE);
-        callback->notify(aidlCode, nullptr);
+        notify(callback.get(), aidlCode, nullptr);
         return ndk::ScopedAStatus::fromServiceSpecificErrorWithMessage(
                 static_cast<int32_t>(aidlCode), message.c_str());
     }
@@ -317,7 +327,7 @@ ndk::ScopedAStatus Device::prepareModelWithConfig(
     if (!result.has_value()) {
         const auto& [message, code] = result.error();
         const auto aidlCode = utils::convert(code).value_or(ErrorStatus::GENERAL_FAILURE);
-        callback->notify(aidlCode, nullptr);
+        notify(callback.get(), aidlCode, nullptr);
         return ndk::ScopedAStatus::fromServiceSpecificErrorWithMessage(
                 static_cast<int32_t>(aidlCode), message.c_str());
     }
