@@ -139,7 +139,12 @@ class EvsAidlTest : public ::testing::TestWithParam<std::string> {
         ASSERT_NE(mEnumerator, nullptr);
 
         // Get the ultrasonics array list
-        ASSERT_TRUE(mEnumerator->getUltrasonicsArrayList(&mUltrasonicsArraysInfo).isOk())
+        auto result = mEnumerator->getUltrasonicsArrayList(&mUltrasonicsArraysInfo);
+        ASSERT_TRUE(result.isOk() ||
+                // TODO(b/149874793): Remove below conditions when
+                // getUltrasonicsArrayList() is implemented.
+                (!result.isOk() && result.getServiceSpecificError() ==
+                        static_cast<int32_t>(EvsResult::NOT_IMPLEMENTED)))
                 << "Failed to get a list of available ultrasonics arrays";
         LOG(INFO) << "We have " << mCameraInfo.size() << " ultrasonics arrays.";
     }
@@ -523,7 +528,7 @@ TEST_P(EvsAidlTest, CameraStreamBuffering) {
         // Ask for a very large number of buffers in flight to ensure it errors correctly
         auto badResult = pCam->setMaxFramesInFlight(0xFFFFFFFF);
         EXPECT_TRUE(!badResult.isOk() && badResult.getServiceSpecificError() ==
-                                                 static_cast<int>(EvsResult::BUFFER_NOT_AVAILABLE));
+                                                 static_cast<int>(EvsResult::INVALID_ARG));
 
         // Now ask for exactly two buffers in flight as we'll test behavior in that case
         ASSERT_TRUE(pCam->setMaxFramesInFlight(kBuffersToHold).isOk());
@@ -587,7 +592,7 @@ TEST_P(EvsAidlTest, CameraToDisplayRoundTrip) {
     std::shared_ptr<IEvsDisplay> pDisplay;
     ASSERT_TRUE(mEnumerator->openDisplay(targetDisplayId, &pDisplay).isOk());
     EXPECT_NE(pDisplay, nullptr);
-    LOG(INFO) << "Display " << targetDisplayId << " is in use.";
+    LOG(INFO) << "Display " << static_cast<int>(targetDisplayId) << " is in use.";
 
     // Get the display descriptor
     DisplayDesc displayDesc;
@@ -1137,8 +1142,8 @@ TEST_P(EvsAidlTest, MultiCameraParameter) {
 
                 EvsEventDesc aTargetEvent;
                 aTargetEvent.aType = EvsEventType::PARAMETER_CHANGED;
-                aTargetEvent.payload[0] = static_cast<uint32_t>(cmd);
-                aTargetEvent.payload[1] = val0;
+                aTargetEvent.payload.push_back(static_cast<int32_t>(cmd));
+                aTargetEvent.payload.push_back(val0);
                 if (!frameHandlerPrimary->waitForEvent(aTargetEvent, aNotification0)) {
                     LOG(WARNING) << "A timer is expired before a target event is fired.";
                 }
@@ -1152,8 +1157,8 @@ TEST_P(EvsAidlTest, MultiCameraParameter) {
 
                 EvsEventDesc aTargetEvent;
                 aTargetEvent.aType = EvsEventType::PARAMETER_CHANGED;
-                aTargetEvent.payload[0] = static_cast<uint32_t>(cmd);
-                aTargetEvent.payload[1] = val0;
+                aTargetEvent.payload.push_back(static_cast<int32_t>(cmd));
+                aTargetEvent.payload.push_back(val0);
                 if (!frameHandlerSecondary->waitForEvent(aTargetEvent, aNotification1)) {
                     LOG(WARNING) << "A timer is expired before a target event is fired.";
                 }
@@ -1188,11 +1193,13 @@ TEST_P(EvsAidlTest, MultiCameraParameter) {
                       static_cast<EvsEventType>(aNotification0.aType));
             ASSERT_EQ(EvsEventType::PARAMETER_CHANGED,
                       static_cast<EvsEventType>(aNotification1.aType));
+            ASSERT_GE(aNotification0.payload.size(), 2);
+            ASSERT_GE(aNotification1.payload.size(), 2);
             ASSERT_EQ(cmd, static_cast<CameraParam>(aNotification0.payload[0]));
             ASSERT_EQ(cmd, static_cast<CameraParam>(aNotification1.payload[0]));
             for (auto&& v : values) {
-                ASSERT_EQ(v, static_cast<int32_t>(aNotification0.payload[1]));
-                ASSERT_EQ(v, static_cast<int32_t>(aNotification1.payload[1]));
+                ASSERT_EQ(v, aNotification0.payload[1]);
+                ASSERT_EQ(v, aNotification1.payload[1]);
             }
 
             // Clients expects to receive a parameter change notification
@@ -1281,8 +1288,8 @@ TEST_P(EvsAidlTest, MultiCameraParameter) {
 
                 EvsEventDesc aTargetEvent;
                 aTargetEvent.aType = EvsEventType::PARAMETER_CHANGED;
-                aTargetEvent.payload[0] = static_cast<uint32_t>(cmd);
-                aTargetEvent.payload[1] = val0;
+                aTargetEvent.payload.push_back(static_cast<int32_t>(cmd));
+                aTargetEvent.payload.push_back(val0);
                 if (!frameHandlerPrimary->waitForEvent(aTargetEvent, aNotification0)) {
                     LOG(WARNING) << "A timer is expired before a target event is fired.";
                 }
@@ -1295,8 +1302,8 @@ TEST_P(EvsAidlTest, MultiCameraParameter) {
 
                 EvsEventDesc aTargetEvent;
                 aTargetEvent.aType = EvsEventType::PARAMETER_CHANGED;
-                aTargetEvent.payload[0] = static_cast<uint32_t>(cmd);
-                aTargetEvent.payload[1] = val0;
+                aTargetEvent.payload.push_back(static_cast<int32_t>(cmd));
+                aTargetEvent.payload.push_back(val0);
                 if (!frameHandlerSecondary->waitForEvent(aTargetEvent, aNotification1)) {
                     LOG(WARNING) << "A timer is expired before a target event is fired.";
                 }
@@ -1336,11 +1343,13 @@ TEST_P(EvsAidlTest, MultiCameraParameter) {
                       static_cast<EvsEventType>(aNotification0.aType));
             ASSERT_EQ(EvsEventType::PARAMETER_CHANGED,
                       static_cast<EvsEventType>(aNotification1.aType));
+            ASSERT_GE(aNotification0.payload.size(), 2);
+            ASSERT_GE(aNotification1.payload.size(), 2);
             ASSERT_EQ(cmd, static_cast<CameraParam>(aNotification0.payload[0]));
             ASSERT_EQ(cmd, static_cast<CameraParam>(aNotification1.payload[0]));
             for (auto&& v : values) {
-                ASSERT_EQ(v, static_cast<int32_t>(aNotification0.payload[1]));
-                ASSERT_EQ(v, static_cast<int32_t>(aNotification1.payload[1]));
+                ASSERT_EQ(v, aNotification0.payload[1]);
+                ASSERT_EQ(v, aNotification1.payload[1]);
             }
         }
 
@@ -1461,8 +1470,9 @@ TEST_P(EvsAidlTest, HighPriorityCameraClient) {
 
                         EvsEventDesc aTargetEvent;
                         aTargetEvent.aType = EvsEventType::PARAMETER_CHANGED;
-                        aTargetEvent.payload[0] = static_cast<uint32_t>(CameraParam::AUTO_FOCUS);
-                        aTargetEvent.payload[1] = 0;
+                        aTargetEvent.payload.push_back(
+                                static_cast<int32_t>(CameraParam::AUTO_FOCUS));
+                        aTargetEvent.payload.push_back(0);
                         if (!frameHandler0->waitForEvent(aTargetEvent, aNotification)) {
                             LOG(WARNING) << "A timer is expired before a target event is fired.";
                         }
@@ -1504,8 +1514,8 @@ TEST_P(EvsAidlTest, HighPriorityCameraClient) {
 
                     EvsEventDesc aTargetEvent;
                     aTargetEvent.aType = EvsEventType::PARAMETER_CHANGED;
-                    aTargetEvent.payload[0] = static_cast<uint32_t>(cam1Cmds[0]);
-                    aTargetEvent.payload[1] = val0;
+                    aTargetEvent.payload.push_back(static_cast<int32_t>(cam1Cmds[0]));
+                    aTargetEvent.payload.push_back(val0);
                     if (!frameHandler1->waitForEvent(aTargetEvent, aNotification)) {
                         LOG(WARNING) << "A timer is expired before a target event is fired.";
                     }
@@ -1533,9 +1543,10 @@ TEST_P(EvsAidlTest, HighPriorityCameraClient) {
 
         // Verify a change notification
         ASSERT_EQ(static_cast<EvsEventType>(aNotification.aType), EvsEventType::PARAMETER_CHANGED);
+        ASSERT_GE(aNotification.payload.size(), 2);
         ASSERT_EQ(static_cast<CameraParam>(aNotification.payload[0]), cam1Cmds[0]);
         for (auto&& v : values) {
-            ASSERT_EQ(v, static_cast<int32_t>(aNotification.payload[1]));
+            ASSERT_EQ(v, aNotification.payload[1]);
         }
 
         listener = std::thread([&frameHandler1, &aNotification, &listening, &eventCond] {
@@ -1582,8 +1593,9 @@ TEST_P(EvsAidlTest, HighPriorityCameraClient) {
 
                         EvsEventDesc aTargetEvent;
                         aTargetEvent.aType = EvsEventType::PARAMETER_CHANGED;
-                        aTargetEvent.payload[0] = static_cast<uint32_t>(CameraParam::AUTO_FOCUS);
-                        aTargetEvent.payload[1] = 0;
+                        aTargetEvent.payload.push_back(
+                                static_cast<int32_t>(CameraParam::AUTO_FOCUS));
+                        aTargetEvent.payload.push_back(0);
                         if (!frameHandler1->waitForEvent(aTargetEvent, aNotification)) {
                             LOG(WARNING) << "A timer is expired before a target event is fired.";
                         }
@@ -1621,8 +1633,8 @@ TEST_P(EvsAidlTest, HighPriorityCameraClient) {
 
                     EvsEventDesc aTargetEvent;
                     aTargetEvent.aType = EvsEventType::PARAMETER_CHANGED;
-                    aTargetEvent.payload[0] = static_cast<uint32_t>(cam0Cmds[0]);
-                    aTargetEvent.payload[1] = val0;
+                    aTargetEvent.payload.push_back(static_cast<int32_t>(cam0Cmds[0]));
+                    aTargetEvent.payload.push_back(val0);
                     if (!frameHandler0->waitForEvent(aTargetEvent, aNotification)) {
                         LOG(WARNING) << "A timer is expired before a target event is fired.";
                     }
@@ -1646,9 +1658,10 @@ TEST_P(EvsAidlTest, HighPriorityCameraClient) {
         }
         // Verify a change notification
         ASSERT_EQ(static_cast<EvsEventType>(aNotification.aType), EvsEventType::PARAMETER_CHANGED);
+        ASSERT_GE(aNotification.payload.size(), 2);
         ASSERT_EQ(static_cast<CameraParam>(aNotification.payload[0]), cam0Cmds[0]);
         for (auto&& v : values) {
-            ASSERT_EQ(v, static_cast<int32_t>(aNotification.payload[1]));
+            ASSERT_EQ(v, aNotification.payload[1]);
         }
 
         // Turn off the display (yes, before the stream stops -- it should be handled)
