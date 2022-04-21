@@ -30,4 +30,11 @@ aidl_interface {
         },
     },
     double_loadable: true,
+    versions_with_info: [
+        {
+            version: "1",
+            imports: ["android.hardware.common-V2"],
+        },
+    ],
+
 }
