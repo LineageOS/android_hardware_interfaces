@@ -19,11 +19,14 @@
 #include "FrameHandler.h"
 #include "FormatConvert.h"
 
+#include <aidl/android/hardware/graphics/common/HardwareBuffer.h>
 #include <aidl/android/hardware/graphics/common/HardwareBufferDescription.h>
 #include <aidlcommonsupport/NativeHandle.h>
 #include <android-base/logging.h>
 #include <ui/GraphicBuffer.h>
 #include <ui/GraphicBufferAllocator.h>
+
+namespace {
 
 using ::aidl::android::hardware::automotive::evs::BufferDesc;
 using ::aidl::android::hardware::automotive::evs::CameraDesc;
@@ -31,9 +34,57 @@ using ::aidl::android::hardware::automotive::evs::EvsEventDesc;
 using ::aidl::android::hardware::automotive::evs::EvsEventType;
 using ::aidl::android::hardware::automotive::evs::IEvsCamera;
 using ::aidl::android::hardware::automotive::evs::IEvsDisplay;
+using ::aidl::android::hardware::common::NativeHandle;
+using ::aidl::android::hardware::graphics::common::HardwareBuffer;
 using ::aidl::android::hardware::graphics::common::HardwareBufferDescription;
 using ::ndk::ScopedAStatus;
 using std::chrono_literals::operator""s;
+
+NativeHandle dupNativeHandle(const NativeHandle& handle, bool doDup) {
+    NativeHandle dup;
+
+    dup.fds = std::vector<::ndk::ScopedFileDescriptor>(handle.fds.size());
+    if (!doDup) {
+        for (auto i = 0; i < handle.fds.size(); ++i) {
+            dup.fds.at(i).set(handle.fds[i].get());
+        }
+    } else {
+        for (auto i = 0; i < handle.fds.size(); ++i) {
+            dup.fds[i] = std::move(handle.fds[i].dup());
+        }
+    }
+    dup.ints = handle.ints;
+
+    return std::move(dup);
+}
+
+HardwareBuffer dupHardwareBuffer(const HardwareBuffer& buffer, bool doDup) {
+    HardwareBuffer dup = {
+            .description = buffer.description,
+            .handle = dupNativeHandle(buffer.handle, doDup),
+    };
+
+    return std::move(dup);
+}
+
+BufferDesc dupBufferDesc(const BufferDesc& src, bool doDup) {
+    BufferDesc dup = {
+            .buffer = dupHardwareBuffer(src.buffer, doDup),
+            .pixelSizeBytes = src.pixelSizeBytes,
+            .bufferId = src.bufferId,
+            .deviceId = src.deviceId,
+            .timestamp = src.timestamp,
+            .metadata = src.metadata,
+    };
+
+    return std::move(dup);
+}
+
+bool comparePayload(const EvsEventDesc& l, const EvsEventDesc& r) {
+    return std::equal(l.payload.begin(), l.payload.end(), r.payload.begin());
+}
+
+} // namespace
 
 FrameHandler::FrameHandler(const std::shared_ptr<IEvsCamera>& pCamera, const CameraDesc& cameraInfo,
                            const std::shared_ptr<IEvsDisplay>& pDisplay, BufferControlFlag mode)
@@ -169,15 +220,24 @@ ScopedAStatus FrameHandler::deliverFrame(const std::vector<BufferDesc>& buffers)
     mFrameSignal.notify_all();
 
     switch (mReturnMode) {
-        case eAutoReturn:
+        case eAutoReturn: {
             // Send the camera buffer back now that the client has seen it
             LOG(DEBUG) << "Calling doneWithFrame";
-            mCamera->doneWithFrame(buffers);
+            if (!mCamera->doneWithFrame(buffers).isOk()) {
+                LOG(WARNING) << "Failed to return buffers";
+            }
             break;
-        case eNoAutoReturn:
+        }
+
+        case eNoAutoReturn: {
             // Hang onto the buffer handles for now -- the client will return it explicitly later
-            // mHeldBuffers.push(buffers);
+            std::vector<BufferDesc> buffersToHold;
+            for (const auto& buffer : buffers) {
+                buffersToHold.push_back(dupBufferDesc(buffer, /* doDup = */ true));
+            }
+            mHeldBuffers.push(std::move(buffersToHold));
             break;
+        }
     }
 
     LOG(DEBUG) << "Frame handling complete";
@@ -188,8 +248,7 @@ ScopedAStatus FrameHandler::notify(const EvsEventDesc& event) {
     // Local flag we use to keep track of when the stream is stopping
     std::unique_lock<std::mutex> lock(mEventLock);
     mLatestEventDesc.aType = event.aType;
-    mLatestEventDesc.payload[0] = event.payload[0];
-    mLatestEventDesc.payload[1] = event.payload[1];
+    mLatestEventDesc.payload = event.payload;
     if (mLatestEventDesc.aType == EvsEventType::STREAM_STOPPED) {
         // Signal that the last frame has been received and the stream is stopped
         mRunning = false;
@@ -319,13 +378,9 @@ bool FrameHandler::waitForEvent(const EvsEventDesc& aTargetEvent, EvsEventDesc& 
         bool result = mEventSignal.wait_until(
                 lock, now + 5s, [this, aTargetEvent, ignorePayload, &aReceivedEvent, &found]() {
                     found = (mLatestEventDesc.aType == aTargetEvent.aType) &&
-                            (ignorePayload ||
-                             (mLatestEventDesc.payload[0] == aTargetEvent.payload[0] &&
-                              mLatestEventDesc.payload[1] == aTargetEvent.payload[1]));
-
+                            (ignorePayload || comparePayload(mLatestEventDesc, aTargetEvent));
                     aReceivedEvent.aType = mLatestEventDesc.aType;
-                    aReceivedEvent.payload[0] = mLatestEventDesc.payload[0];
-                    aReceivedEvent.payload[1] = mLatestEventDesc.payload[1];
+                    aReceivedEvent.payload = mLatestEventDesc.payload;
                     return found;
                 });
 
