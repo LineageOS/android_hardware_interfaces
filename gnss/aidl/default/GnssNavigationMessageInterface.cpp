@@ -69,14 +69,12 @@ void GnssNavigationMessageInterface::start() {
             std::this_thread::sleep_for(std::chrono::milliseconds(mMinIntervalMillis));
         }
     });
+    mThread.detach();
 }
 
 void GnssNavigationMessageInterface::stop() {
     ALOGD("stop");
     mIsActive = false;
-    if (mThread.joinable()) {
-        mThread.join();
-    }
 }
 
 void GnssNavigationMessageInterface::reportMessage(const GnssNavigationMessage& message) {
