@@ -153,7 +153,6 @@ void Gnss::reportSvStatus(const std::vector<GnssSvInfo>& svInfoList) const {
 
 std::vector<GnssSvInfo> Gnss::filterBlocklistedSatellites(
         std::vector<GnssSvInfo> gnssSvInfoList) const {
-    ALOGD("filterBlocklistedSatellites");
     for (uint32_t i = 0; i < gnssSvInfoList.size(); i++) {
         if (mGnssConfiguration->isBlocklisted(gnssSvInfoList[i])) {
             gnssSvInfoList[i].svFlag &= ~(uint32_t)IGnssCallback::GnssSvFlags::USED_IN_FIX;
