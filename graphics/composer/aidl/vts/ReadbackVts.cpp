@@ -76,6 +76,7 @@ LayerSettings TestLayer::toRenderEngineLayerSettings() {
 
     layerSettings.alpha = ::android::half(mAlpha);
     layerSettings.disableBlending = mBlendMode == BlendMode::NONE;
+    layerSettings.source.buffer.isOpaque = mBlendMode == BlendMode::NONE;
     layerSettings.geometry.boundaries = ::android::FloatRect(
             static_cast<float>(mDisplayFrame.left), static_cast<float>(mDisplayFrame.top),
             static_cast<float>(mDisplayFrame.right), static_cast<float>(mDisplayFrame.bottom));
