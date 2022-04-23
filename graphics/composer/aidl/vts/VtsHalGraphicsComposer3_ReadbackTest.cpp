@@ -1132,8 +1132,8 @@ class GraphicsBlendModeCompositionTest
     Color mBackgroundColor;
     Color mTopLayerColor;
 };
-// TODO(b/219576457) Enable tests once we have fixed the bug on composer.
-TEST_P(GraphicsBlendModeCompositionTest, DISABLED_None) {
+
+TEST_P(GraphicsBlendModeCompositionTest, None) {
     for (ColorMode mode : mTestColorModes) {
         EXPECT_TRUE(mComposerClient
                             ->setColorMode(getPrimaryDisplayId(), mode, RenderIntent::COLORIMETRIC)
