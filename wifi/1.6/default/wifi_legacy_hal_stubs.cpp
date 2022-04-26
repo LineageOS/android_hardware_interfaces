@@ -166,6 +166,7 @@ bool initHalFuncTableWithStubs(wifi_hal_fn* hal_fn) {
     populateStubFor(&hal_fn->wifi_nan_rtt_chre_enable_request);
     populateStubFor(&hal_fn->wifi_nan_rtt_chre_disable_request);
     populateStubFor(&hal_fn->wifi_chre_register_handler);
+    populateStubFor(&hal_fn->wifi_enable_tx_power_limits);
     return true;
 }
 }  // namespace legacy_hal

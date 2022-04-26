@@ -683,6 +683,8 @@ class WifiLegacyHal {
     wifi_error chreRegisterHandler(const std::string& iface_name,
                                    const ChreCallbackHandlers& handler);
 
+    wifi_error enableWifiTxPowerLimits(const std::string& iface_name, bool enable);
+
   private:
     // Retrieve interface handles for all the available interfaces.
     wifi_error retrieveIfaceHandles();
