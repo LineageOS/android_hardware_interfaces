@@ -16,90 +16,37 @@
 
 package android.hardware.radio.ims;
 
+import android.hardware.radio.AccessNetwork;
+import android.hardware.radio.ims.ImsFailureReason;
+import android.hardware.radio.ims.ImsRegistrationState;
+
 @VintfStability
 parcelable ImsRegistration {
-
-    @VintfStability
-    @Backing(type="int")
-    enum State {
-        /** IMS is not registered */
-        NOT_REGISTERED,
-        /**
-         * IMS registration procedure just started.
-         * It could be used by radio to start IMS establishment timer based on carrier requirements.
-         */
-        REGISTERING,
-        /** IMS is successfully registered */
-        REGISTERED,
-    }
-
-    @VintfStability
-    @Backing(type="int")
-    enum ImsAccessNetwork {
-        /**
-         * Indicates the access network where IMS is registered. If IMS is registered on
-         * cellular then the radio shall wait for IMS PDN disconnection for 4 seconds
-         * before performing NAS detach procedure. This requirement is not applicable for
-         * if access network IWLAN and CROSS_SIM.
-         */
-        NONE,
-        EUTRAN,
-        NGRAN,
-        UTRAN,
-        /** The IMS registration is done over WiFi network. */
-        IWLAN,
-        /**
-         * The radio shall not consider the registration information with this type
-         * while voice domain selection is performed.
-         * The IMS registration is done over internet of the default data  subscription.
-         */
-        CROSS_SIM,
-    }
-
-    @VintfStability
-    @Backing(type="int")
-    enum FailureReason {
-        /** Default value */
-        NONE,
-        /**
-         * Indicates that the IMS registration is failed with fatal error 403 or 404
-         * on all P-CSCF addresses. The radio shall block the current PLMN or disable
-         * the RAT as per the carrier requirements.
-         */
-        FATAL_ERROR,
-        /**
-         * Indicates that the IMS registration on current PLMN failed multiple times.
-         * The radio shall block the current PLMN or disable the RAT as per the
-         * carrier requirements.
-         */
-        REPEATED_ERROR,
-        /*
-         * Indicates that IMS registration has failed temporarily.
-         */
-        TEMPORARY_ERROR,
-    }
-
     /** Default value */
-    const int FEATURE_NONE = 0;
-    /** IMS voice feature */
-    const int FEATURE_VOICE = 1 << 0;
-    /** IMS video feature */
-    const int FEATURE_VIDEO = 1 << 1;
-    /** IMS SMS feature */
-    const int FEATURE_SMS = 1 << 2;
+    const int IMS_MMTEL_CAPABILITY_NONE = 0;
+    /** IMS voice */
+    const int IMS_MMTEL_CAPABILITY_VOICE = 1 << 0;
+    /** IMS video */
+    const int IMS_MMTEL_CAPABILITY_VIDEO = 1 << 1;
+    /** IMS SMS */
+    const int IMS_MMTEL_CAPABILITY_SMS = 1 << 2;
+    /** IMS RCS */
+    const int IMS_RCS_CAPABILITIES = 1 << 3;
 
     /** Indicates the current IMS registration state. */
-    State state;
-
-    /** Indicates the IP connectivity access network where IMS features are registered. */
-    ImsAccessNetwork ipcan;
-
-    /** Indicates a failure reason for IMS registration. */
-    FailureReason reason;
+    ImsRegistrationState regState;
 
     /**
-     * Values are bitwise ORs of FEATURE_.
-     * IMS features such as VOICE, VIDEO and SMS.
+     * Indicates the type of the radio access network where IMS is registered.
      */
-    int features;
+    AccessNetwork accessNetworkType;
+
+    /** Indicates a failure reason for IMS registration. */
+    ImsFailureReason reason;
+
+    /**
+     * Values are bitwise ORs of IMS_MMTEL_CAPABILITY_* constants and IMS_RCS_CAPABILITIES.
+     * IMS capability such as VOICE, VIDEO, SMS and RCS.
+     */
+    int capabilities;
 }

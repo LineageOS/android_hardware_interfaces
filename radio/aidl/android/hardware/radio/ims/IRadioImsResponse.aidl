@@ -17,6 +17,7 @@
 package android.hardware.radio.ims;
 
 import android.hardware.radio.RadioResponseInfo;
+import android.hardware.radio.ims.ConnectionFailureInfo;
 
 /**
  * Interface declaring response functions to solicited radio requests for ims APIs.
@@ -60,6 +61,7 @@ oneway interface IRadioImsResponse {
 
     /**
      * @param info Response info struct containing response type, serial no. and error
+     * @param failureInfo Information about failure in detail
      *
      * Valid errors returned:
      *   RadioError:NONE
@@ -73,7 +75,8 @@ oneway interface IRadioImsResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      */
-    void notifyImsTrafficResponse(in RadioResponseInfo info);
+    void startImsTrafficResponse(in RadioResponseInfo info,
+            in @nullable ConnectionFailureInfo failureInfo);
 
     /**
      * @param info Response info struct containing response type, serial no. and error
@@ -90,7 +93,7 @@ oneway interface IRadioImsResponse {
      *   RadioError:REQUEST_NOT_SUPPORTED
      *   RadioError:NO_RESOURCES
      */
-    void performAcbCheckResponse(in RadioResponseInfo info);
+    void stopImsTrafficResponse(in RadioResponseInfo info);
 
     /**
      * @param info Response info struct containing response type, serial no. and error

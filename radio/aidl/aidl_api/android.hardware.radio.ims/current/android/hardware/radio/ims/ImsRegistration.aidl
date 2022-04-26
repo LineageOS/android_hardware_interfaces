@@ -34,34 +34,13 @@
 package android.hardware.radio.ims;
 @VintfStability
 parcelable ImsRegistration {
-  android.hardware.radio.ims.ImsRegistration.State state;
-  android.hardware.radio.ims.ImsRegistration.ImsAccessNetwork ipcan;
-  android.hardware.radio.ims.ImsRegistration.FailureReason reason;
-  int features;
-  const int FEATURE_NONE = 0;
-  const int FEATURE_VOICE = 1;
-  const int FEATURE_VIDEO = 2;
-  const int FEATURE_SMS = 4;
-  @Backing(type="int") @VintfStability
-  enum State {
-    NOT_REGISTERED = 0,
-    REGISTERING = 1,
-    REGISTERED = 2,
-  }
-  @Backing(type="int") @VintfStability
-  enum ImsAccessNetwork {
-    NONE = 0,
-    EUTRAN = 1,
-    NGRAN = 2,
-    UTRAN = 3,
-    IWLAN = 4,
-    CROSS_SIM = 5,
-  }
-  @Backing(type="int") @VintfStability
-  enum FailureReason {
-    NONE = 0,
-    FATAL_ERROR = 1,
-    REPEATED_ERROR = 2,
-    TEMPORARY_ERROR = 3,
-  }
+  android.hardware.radio.ims.ImsRegistrationState regState;
+  android.hardware.radio.AccessNetwork accessNetworkType;
+  android.hardware.radio.ims.ImsFailureReason reason;
+  int capabilities;
+  const int IMS_MMTEL_CAPABILITY_NONE = 0;
+  const int IMS_MMTEL_CAPABILITY_VOICE = 1;
+  const int IMS_MMTEL_CAPABILITY_VIDEO = 2;
+  const int IMS_MMTEL_CAPABILITY_SMS = 4;
+  const int IMS_RCS_CAPABILITIES = 8;
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2022 The Android Open Source Project
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License"),
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -33,7 +33,9 @@
 
 package android.hardware.radio.ims;
 @Backing(type="int") @VintfStability
-enum ImsStreamDirection {
-  UPLINK = 1,
-  DOWNLINK = 2,
+enum ImsFailureReason {
+  NONE = 0,
+  FATAL_ERROR = 1,
+  REPEATED_ERROR = 2,
+  TEMPORARY_ERROR = 3,
 }

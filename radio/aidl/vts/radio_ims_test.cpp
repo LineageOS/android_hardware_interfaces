@@ -92,10 +92,10 @@ TEST_P(RadioImsTest, updateImsRegistrationInfo) {
     serial = GetRandomSerialNumber();
 
     ImsRegistration regInfo;
-    regInfo.state = ImsRegistration::State::NOT_REGISTERED;
-    regInfo.ipcan = ImsRegistration::ImsAccessNetwork::NONE;
-    regInfo.reason = ImsRegistration::FailureReason::NONE;
-    regInfo.features = ImsRegistration::FEATURE_NONE;
+    regInfo.regState = ImsRegistrationState::NOT_REGISTERED;
+    regInfo.accessNetworkType = AccessNetwork::EUTRAN;
+    regInfo.reason = ImsFailureReason::NONE;
+    regInfo.capabilities = ImsRegistration::IMS_MMTEL_CAPABILITY_NONE;
 
     ndk::ScopedAStatus res =
             radio_ims->updateImsRegistrationInfo(serial, regInfo);
@@ -111,52 +111,53 @@ TEST_P(RadioImsTest, updateImsRegistrationInfo) {
 }
 
 /*
- * Test IRadioIms.notifyImsTraffic() for the response returned.
+ * Test IRadioIms.startImsTraffic() for the response returned.
  */
-TEST_P(RadioImsTest, notifyImsTraffic) {
+TEST_P(RadioImsTest, startImsTraffic) {
     if (!deviceSupportsFeature(FEATURE_TELEPHONY_IMS)) {
-        ALOGI("Skipping notifyImsTraffic because ims is not supported in device");
+        ALOGI("Skipping startImsTraffic because ims is not supported in device");
         return;
     } else {
-        ALOGI("Running notifyImsTraffic because ims is supported in device");
+        ALOGI("Running startImsTraffic because ims is supported in device");
     }
 
     serial = GetRandomSerialNumber();
 
     ndk::ScopedAStatus res =
-            radio_ims->notifyImsTraffic(serial, 1, ImsTrafficType::REGISTRATION, false);
+            radio_ims->startImsTraffic(serial, std::string("1"),
+            ImsTrafficType::REGISTRATION, AccessNetwork::EUTRAN);
     ASSERT_OK(res);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_ims->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_ims->rspInfo.serial);
 
-    ALOGI("notifyImsTraffic, rspInfo.error = %s\n",
+    ALOGI("startImsTraffic, rspInfo.error = %s\n",
               toString(radioRsp_ims->rspInfo.error).c_str());
 
     verifyError(radioRsp_ims->rspInfo.error);
 }
 
 /*
- * Test IRadioIms.performAcbCheck() for the response returned.
+ * Test IRadioIms.stopImsTraffic() for the response returned.
  */
-TEST_P(RadioImsTest, performAcbCheck) {
+TEST_P(RadioImsTest, stopImsTraffic) {
     if (!deviceSupportsFeature(FEATURE_TELEPHONY_IMS)) {
-        ALOGI("Skipping performAcbCheck because ims is not supported in device");
+        ALOGI("Skipping stopImsTraffic because ims is not supported in device");
         return;
     } else {
-        ALOGI("Running performAcbCheck because ims is supported in device");
+        ALOGI("Running stopImsTraffic because ims is supported in device");
     }
 
     serial = GetRandomSerialNumber();
 
     ndk::ScopedAStatus res =
-            radio_ims->performAcbCheck(serial, 1, ImsTrafficType::REGISTRATION);
+            radio_ims->stopImsTraffic(serial, std::string("2"));
     ASSERT_OK(res);
     EXPECT_EQ(std::cv_status::no_timeout, wait());
     EXPECT_EQ(RadioResponseType::SOLICITED, radioRsp_ims->rspInfo.type);
     EXPECT_EQ(serial, radioRsp_ims->rspInfo.serial);
 
-    ALOGI("performAcbCheck, rspInfo.error = %s\n",
+    ALOGI("stopImsTraffic, rspInfo.error = %s\n",
               toString(radioRsp_ims->rspInfo.error).c_str());
 
     verifyError(radioRsp_ims->rspInfo.error);

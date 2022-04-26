@@ -40,4 +40,5 @@ enum ImsTrafficType {
   VIDEO = 3,
   SMS = 4,
   REGISTRATION = 5,
+  UT_XCAP = 6,
 }

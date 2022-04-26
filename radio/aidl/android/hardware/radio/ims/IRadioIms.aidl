@@ -16,12 +16,13 @@
 
 package android.hardware.radio.ims;
 
+import android.hardware.radio.AccessNetwork;
 import android.hardware.radio.ims.ImsRegistration;
+import android.hardware.radio.ims.ImsStreamDirection;
 import android.hardware.radio.ims.ImsTrafficType;
 import android.hardware.radio.ims.IRadioImsIndication;
 import android.hardware.radio.ims.IRadioImsResponse;
 import android.hardware.radio.ims.SrvccCall;
-import android.hardware.radio.ims.ImsStreamDirection;
 
 /**
  * This interface is used by IMS telephony layer to talk to cellular radio.
@@ -66,37 +67,30 @@ oneway interface IRadioIms {
      * This API shall be used by modem
      *  1. To set the appropriate establishment cause in RRC connection request.
      *  2. To prioritize RF resources in case of DSDS. The service priority is
-     * EMERGENCY > EMERGENCY SMS > VOICE > VIDEO > SMS > REGISTRATION > BACKGROUND
-     * DATA. The RF shall be prioritized to the subscription which handles higher
-     * priority service. When both subscriptions are handling the same type of
-     * service then RF shall be prioritized to the voice preferred sub.
+     * EMERGENCY > EMERGENCY SMS > VOICE > VIDEO > SMS > REGISTRATION > Ut/XCAP. The RF
+     * shall be prioritized to the subscription which handles higher priority service.
+     * When both subscriptions are handling the same type of service then RF shall be
+     * prioritized to the voice preferred sub.
      *
-     * @param token Token number of the request
+     * @param token A nonce to identify the request
      * @param imsTrafficType IMS traffic type like registration, voice, and video
-     * @param isStart true when the traffic flow starts, false when traffic flow stops.
-     *        false will not be notified for SMS as it's a short traffic.
+     * @param accessNetworkType The type of the radio access network used
      *
-     * Response function is IRadioImsResponse.notifyImsTrafficResponse()
+     * Response function is IRadioImsResponse.startImsTrafficResponse()
      */
-    void notifyImsTraffic(int serial, int token,
-            ImsTrafficType imsTrafficType, boolean isStart);
+    void startImsTraffic(int serial, in String token,
+            ImsTrafficType imsTrafficType, AccessNetwork accessNetworkType);
 
     /**
-     * This API shall check access class barring checks based on ImsTrafficType.
-     * In case of access class is allowed then
-     * IRadioImsIndication#onAccessAllowed(token) shall be invoked by radio
-     * so the IMS stack can transmit the data.
-     * In case of access is denied
-     * IRadioImsIndication#onConnectionSetupFailure(token, REASON_ACCESS_DENIED)
-     * shall be invoked.
+     * Indicates IMS traffic has been stopped.
+     * For all IMS traffic, notified with startImsTraffic, IMS service shall notify
+     * stopImsTraffic when it completes the traffic specified by the token.
      *
-     * @param token Token number of the request
-     * @param imsTrafficType IMS traffic type like registration, voice
-     *        video, SMS, emergency etc
+     * @param token The token assigned by startImsTraffic()
      *
-     * Response function is IRadioImsResponse.performAcbCheckResponse()
+     * Response function is IRadioImsResponse.stopImsTrafficResponse()
      */
-    void performAcbCheck(int serial, int token, ImsTrafficType imsTrafficType);
+    void stopImsTraffic(int serial, in String token);
 
     /**
      * Set response functions for IMS radio requests and indications.

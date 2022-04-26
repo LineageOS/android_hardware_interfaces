@@ -31,13 +31,15 @@ ndk::ScopedAStatus RadioImsResponse::updateImsRegistrationInfoResponse(
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioImsResponse::notifyImsTrafficResponse(const RadioResponseInfo& info) {
+ndk::ScopedAStatus RadioImsResponse::startImsTrafficResponse(const RadioResponseInfo& info,
+        const std::optional<ConnectionFailureInfo>& response) {
     rspInfo = info;
+    startImsTrafficResp = response;
     parent_ims.notify(info.serial);
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioImsResponse::performAcbCheckResponse(const RadioResponseInfo& info) {
+ndk::ScopedAStatus RadioImsResponse::stopImsTrafficResponse(const RadioResponseInfo& info) {
     rspInfo = info;
     parent_ims.notify(info.serial);
     return ndk::ScopedAStatus::ok();

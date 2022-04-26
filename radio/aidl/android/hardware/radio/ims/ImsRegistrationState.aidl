@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2022 The Android Open Source Project
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License"),
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -18,25 +18,10 @@ package android.hardware.radio.ims;
 
 @VintfStability
 @Backing(type="int")
-enum ImsTrafficType {
-    /** Emergency call */
-    EMERGENCY,
+enum ImsRegistrationState {
+    /** IMS is not registered */
+    NOT_REGISTERED,
 
-    /** Emergency SMS */
-    EMERGENCY_SMS,
-
-    /** Voice call */
-    VOICE,
-
-    /** Video call */
-    VIDEO,
-
-    /** SMS over IMS */
-    SMS,
-
-    /** IMS registration and subscription for reg event package (signaling) */
-    REGISTRATION,
-
-    /** Ut/XCAP (XML Configuration Access Protocol) */
-    UT_XCAP
+    /** IMS is successfully registered */
+    REGISTERED,
 }
