@@ -32,11 +32,8 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.ims;
-@VintfStability
-interface IRadioImsResponse {
-  oneway void setSrvccCallInfoResponse(in android.hardware.radio.RadioResponseInfo info);
-  oneway void updateImsRegistrationInfoResponse(in android.hardware.radio.RadioResponseInfo info);
-  oneway void startImsTrafficResponse(in android.hardware.radio.RadioResponseInfo info, in @nullable android.hardware.radio.ims.ConnectionFailureInfo failureInfo);
-  oneway void stopImsTrafficResponse(in android.hardware.radio.RadioResponseInfo info);
-  oneway void sendAnbrQueryResponse(in android.hardware.radio.RadioResponseInfo info);
+@Backing(type="int") @VintfStability
+enum ImsStreamType {
+  AUDIO = 1,
+  VIDEO = 2,
 }

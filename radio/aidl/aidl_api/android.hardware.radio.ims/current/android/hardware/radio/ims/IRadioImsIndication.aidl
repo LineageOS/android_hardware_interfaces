@@ -35,6 +35,6 @@ package android.hardware.radio.ims;
 @VintfStability
 interface IRadioImsIndication {
   oneway void onConnectionSetupFailure(in android.hardware.radio.RadioIndicationType type, in String token, in android.hardware.radio.ims.ConnectionFailureInfo info);
-  oneway void notifyAnbr(in android.hardware.radio.RadioIndicationType type, int qosSessionId, android.hardware.radio.ims.ImsStreamDirection direction, int bitsPerSecond);
+  oneway void notifyAnbr(in android.hardware.radio.RadioIndicationType type, in android.hardware.radio.ims.ImsStreamType mediaType, in android.hardware.radio.ims.ImsStreamDirection direction, int bitsPerSecond);
   oneway void triggerImsDeregistration(in android.hardware.radio.RadioIndicationType type);
 }

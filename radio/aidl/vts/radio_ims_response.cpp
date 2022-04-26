@@ -45,12 +45,6 @@ ndk::ScopedAStatus RadioImsResponse::stopImsTrafficResponse(const RadioResponseI
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus RadioImsResponse::setAnbrEnabledResponse(const RadioResponseInfo& info) {
-    rspInfo = info;
-    parent_ims.notify(info.serial);
-    return ndk::ScopedAStatus::ok();
-}
-
 ndk::ScopedAStatus RadioImsResponse::sendAnbrQueryResponse(const RadioResponseInfo& info) {
     rspInfo = info;
     parent_ims.notify(info.serial);
