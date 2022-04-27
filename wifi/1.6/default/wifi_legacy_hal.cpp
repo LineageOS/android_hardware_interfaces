@@ -1585,6 +1585,10 @@ wifi_error WifiLegacyHal::chreRegisterHandler(const std::string& iface_name,
     return status;
 }
 
+wifi_error WifiLegacyHal::enableWifiTxPowerLimits(const std::string& iface_name, bool enable) {
+    return global_func_table_.wifi_enable_tx_power_limits(getIfaceHandle(iface_name), enable);
+}
+
 void WifiLegacyHal::invalidate() {
     global_handle_ = nullptr;
     iface_name_to_handle_.clear();
