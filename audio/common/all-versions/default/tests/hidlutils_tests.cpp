@@ -17,6 +17,7 @@
 #include <array>
 #include <string>
 
+#include <android-base/test_utils.h>
 #include <gtest/gtest.h>
 
 #define LOG_TAG "HidlUtils_Test"
@@ -1100,6 +1101,7 @@ using FilterTestTypeParams = ::testing::Types<hidl_vec<AudioTag>, std::vector<st
 TYPED_TEST_SUITE(FilterTest, FilterTestTypeParams);
 
 TYPED_TEST(FilterTest, FilterOutNonVendorTags) {
+    SKIP_WITH_HWASAN; // b/230535046
     TypeParam emptyTags;
     EXPECT_EQ(emptyTags, HidlUtils::filterOutNonVendorTags(emptyTags));
 
