@@ -1,4 +1,4 @@
-<compatibility-matrix version="1.0" type="framework" level="8">
+<compatibility-matrix version="1.0" type="framework" level="7">
     <hal format="hidl" optional="true">
         <name>android.hardware.atrace</name>
         <version>1.0</version>
@@ -22,18 +22,6 @@
         <version>7.0</version>
         <interface>
             <name>IEffectsFactory</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="aidl" optional="true">
-        <name>android.hardware.audio.core</name>
-        <version>1</version>
-        <interface>
-            <name>IModule</name>
-            <instance>default</instance>
-        </interface>
-        <interface>
-            <name>IConfig</name>
             <instance>default</instance>
         </interface>
     </hal>
@@ -595,30 +583,12 @@
             <instance>slot3</instance>
         </interface>
     </hal>
-    <hal format="aidl" optional="true">
-        <name>android.hardware.radio.ims</name>
-        <version>1</version>
-        <interface>
-            <name>IRadioIms</name>
-            <instance>slot1</instance>
-            <instance>slot2</instance>
-            <instance>slot3</instance>
-        </interface>
-    </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.radio</name>
         <version>1.2</version>
         <interface>
             <name>ISap</name>
             <instance>slot1</instance>
-        </interface>
-    </hal>
-    <hal format="aidl" optional="true">
-        <name>android.hardware.radio.ims.media</name>
-        <version>1</version>
-        <interface>
-            <name>IImsMedia</name>
-            <instance>default</instance>
         </interface>
     </hal>
     <hal format="hidl" optional="true">
