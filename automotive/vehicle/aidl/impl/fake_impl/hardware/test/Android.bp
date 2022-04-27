@@ -42,6 +42,7 @@ cc_test {
     ],
     data: [
         ":FakeVehicleHardwareTestOverrideJson",
+        ":FakeVehicleHardwareTestPropJson",
     ],
     defaults: ["VehicleHalDefaults"],
     test_suites: ["device-tests"],
@@ -50,4 +51,9 @@ cc_test {
 filegroup {
     name: "FakeVehicleHardwareTestOverrideJson",
     srcs: ["override/*"],
+}
+
+filegroup {
+    name: "FakeVehicleHardwareTestPropJson",
+    srcs: ["prop.json"],
 }

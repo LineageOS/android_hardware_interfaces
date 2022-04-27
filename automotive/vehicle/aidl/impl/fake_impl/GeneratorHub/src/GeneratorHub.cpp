@@ -58,13 +58,15 @@ void GeneratorHub::registerGenerator(int32_t id, std::unique_ptr<FakeValueGenera
     mCond.notify_one();
 }
 
-void GeneratorHub::unregisterGenerator(int32_t id) {
+bool GeneratorHub::unregisterGenerator(int32_t id) {
+    bool removed;
     {
         std::scoped_lock<std::mutex> lockGuard(mGeneratorsLock);
-        mGenerators.erase(id);
+        removed = mGenerators.erase(id);
     }
     mCond.notify_one();
     ALOGI("%s: Unregistered generator, id: %d", __func__, id);
+    return removed;
 }
 
 void GeneratorHub::run() {

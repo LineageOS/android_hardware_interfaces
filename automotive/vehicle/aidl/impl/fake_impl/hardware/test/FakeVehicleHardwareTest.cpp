@@ -53,6 +53,7 @@ using ::aidl::android::hardware::automotive::vehicle::SetValueResult;
 using ::aidl::android::hardware::automotive::vehicle::StatusCode;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReport;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq;
+using ::aidl::android::hardware::automotive::vehicle::VehicleHwKeyInputAction;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropConfig;
 using ::aidl::android::hardware::automotive::vehicle::VehicleProperty;
 using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyStatus;
@@ -64,6 +65,7 @@ using ::android::base::unexpected;
 using ::testing::ContainerEq;
 using ::testing::ContainsRegex;
 using ::testing::Eq;
+using ::testing::HasSubstr;
 using ::testing::WhenSortedBy;
 
 using std::chrono::milliseconds;
@@ -87,6 +89,7 @@ class FakeVehicleHardwareTestHelper {
 class FakeVehicleHardwareTest : public ::testing::Test {
   protected:
     void SetUp() override {
+        mHardware = std::make_unique<FakeVehicleHardware>();
         auto callback = std::make_unique<IVehicleHardware::PropertyChangeCallback>(
                 [this](const std::vector<VehiclePropValue>& values) {
                     onPropertyChangeEvent(values);
@@ -98,7 +101,13 @@ class FakeVehicleHardwareTest : public ::testing::Test {
                 [this](std::vector<GetValueResult> results) { onGetValues(results); });
     }
 
-    FakeVehicleHardware* getHardware() { return &mHardware; }
+    void TearDown() override {
+        // mHardware uses callback which contains reference to 'this', so it has to be destroyed
+        // before 'this'.
+        mHardware.reset();
+    }
+
+    FakeVehicleHardware* getHardware() { return mHardware.get(); }
 
     StatusCode setValues(const std::vector<SetValueRequest>& requests) {
         {
@@ -251,6 +260,14 @@ class FakeVehicleHardwareTest : public ::testing::Test {
         return mChangedProperties;
     }
 
+    bool waitForChangedProperties(size_t count, milliseconds timeout) {
+        std::unique_lock<std::mutex> lk(mLock);
+        return mCv.wait_for(lk, timeout, [this, count] {
+            ScopedLockAssertion lockAssertion(mLock);
+            return mChangedProperties.size() >= count;
+        });
+    }
+
     bool waitForChangedProperties(int32_t propId, int32_t areaId, size_t count,
                                   milliseconds timeout) {
         PropIdAreaId propIdAreaId{
@@ -268,6 +285,15 @@ class FakeVehicleHardwareTest : public ::testing::Test {
         std::scoped_lock<std::mutex> lockGuard(mLock);
         mEventCount.clear();
         mChangedProperties.clear();
+    }
+
+    size_t getEventCount(int32_t propId, int32_t areaId) {
+        PropIdAreaId propIdAreaId{
+                .propId = propId,
+                .areaId = areaId,
+        };
+        std::scoped_lock<std::mutex> lockGuard(mLock);
+        return mEventCount[propIdAreaId];
     }
 
     static void addSetValueRequest(std::vector<SetValueRequest>& requests,
@@ -332,7 +358,7 @@ class FakeVehicleHardwareTest : public ::testing::Test {
     } mPropValueCmp;
 
   private:
-    FakeVehicleHardware mHardware;
+    std::unique_ptr<FakeVehicleHardware> mHardware;
     std::shared_ptr<IVehicleHardware::SetValuesCallback> mSetValuesCallback;
     std::shared_ptr<IVehicleHardware::GetValuesCallback> mGetValuesCallback;
     std::condition_variable mCv;
@@ -1395,6 +1421,85 @@ TEST_F(FakeVehicleHardwareTest, testDumpSpecificPropertiesNoArg) {
     ASSERT_THAT(result.buffer, ContainsRegex("Invalid number of arguments"));
 }
 
+TEST_F(FakeVehicleHardwareTest, testDumpSpecificPropertyWithArg) {
+    auto getValueResult = getValue(VehiclePropValue{.prop = OBD2_FREEZE_FRAME_INFO});
+    ASSERT_TRUE(getValueResult.ok());
+    auto propValue = getValueResult.value();
+    ASSERT_EQ(propValue.value.int64Values.size(), static_cast<size_t>(3))
+            << "expect 3 obd2 freeze frames stored";
+
+    std::string propIdStr = StringPrintf("%d", OBD2_FREEZE_FRAME);
+    DumpResult result;
+    for (int64_t timestamp : propValue.value.int64Values) {
+        result = getHardware()->dump(
+                {"--getWithArg", propIdStr, "-i64", StringPrintf("%" PRId64, timestamp)});
+
+        ASSERT_FALSE(result.callerShouldDumpState);
+        ASSERT_NE(result.buffer, "");
+        ASSERT_THAT(result.buffer, ContainsRegex("Get property result:"));
+    }
+
+    // Set the timestamp argument to 0.
+    result = getHardware()->dump({"--getWithArg", propIdStr, "-i64", "0"});
+
+    ASSERT_FALSE(result.callerShouldDumpState);
+    // There is no freeze obd2 frame at timestamp 0.
+    ASSERT_THAT(result.buffer, ContainsRegex("failed to read property value"));
+}
+
+TEST_F(FakeVehicleHardwareTest, testSaveRestoreProp) {
+    int32_t prop = toInt(VehicleProperty::TIRE_PRESSURE);
+    std::string propIdStr = std::to_string(prop);
+    std::string areaIdStr = std::to_string(WHEEL_FRONT_LEFT);
+
+    DumpResult result = getHardware()->dump({"--save-prop", propIdStr, "-a", areaIdStr});
+
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_THAT(result.buffer, ContainsRegex("saved"));
+
+    ASSERT_EQ(setValue(VehiclePropValue{
+                      .prop = prop,
+                      .areaId = WHEEL_FRONT_LEFT,
+                      .value =
+                              {
+                                      .floatValues = {210.0},
+                              },
+              }),
+              StatusCode::OK);
+
+    result = getHardware()->dump({"--restore-prop", propIdStr, "-a", areaIdStr});
+
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_THAT(result.buffer, ContainsRegex("restored"));
+
+    auto getResult = getValue(VehiclePropValue{.prop = prop, .areaId = WHEEL_FRONT_LEFT});
+
+    ASSERT_TRUE(getResult.ok());
+    // The default value is 200.0.
+    ASSERT_EQ(getResult.value().value.floatValues, std::vector<float>{200.0});
+}
+
+TEST_F(FakeVehicleHardwareTest, testDumpInjectEvent) {
+    int32_t prop = toInt(VehicleProperty::PERF_VEHICLE_SPEED);
+    std::string propIdStr = std::to_string(prop);
+
+    int64_t timestamp = elapsedRealtimeNano();
+    // Inject an event with float value 123.4 and timestamp.
+    DumpResult result = getHardware()->dump(
+            {"--inject-event", propIdStr, "-f", "123.4", "-t", std::to_string(timestamp)});
+
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_THAT(result.buffer,
+                ContainsRegex(StringPrintf("Event for property: %d injected", prop)));
+    ASSERT_TRUE(waitForChangedProperties(prop, 0, /*count=*/1, milliseconds(1000)))
+            << "No changed event received for injected event from vehicle bus";
+    auto events = getChangedProperties();
+    ASSERT_EQ(events.size(), 1u);
+    auto event = events[0];
+    ASSERT_EQ(event.timestamp, timestamp);
+    ASSERT_EQ(event.value.floatValues, std::vector<float>({123.4}));
+}
+
 TEST_F(FakeVehicleHardwareTest, testDumpInvalidOptions) {
     std::vector<std::string> options;
     options.push_back("--invalid");
@@ -1604,6 +1709,260 @@ TEST_F(FakeVehicleHardwareTest, SetComplexPropTest) {
     ASSERT_EQ(-3.402823466E+38f, value.value.floatValues[0]);
     ASSERT_EQ(0.0f, value.value.floatValues[1]);
     ASSERT_EQ(3.402823466E+38f, value.value.floatValues[2]);
+}
+
+struct OptionsTestCase {
+    std::string name;
+    std::vector<std::string> options;
+    std::string expectMsg;
+};
+
+class FakeVehicleHardwareOptionsTest : public FakeVehicleHardwareTest,
+                                       public testing::WithParamInterface<OptionsTestCase> {};
+
+std::vector<OptionsTestCase> GenInvalidOptions() {
+    return {{"unknown_command", {"--unknown"}, "Invalid option: --unknown"},
+            {"help", {"--help"}, "Usage:"},
+            {"genfakedata_no_subcommand",
+             {"--genfakedata"},
+             "No subcommand specified for genfakedata"},
+            {"genfakedata_unknown_subcommand",
+             {"--genfakedata", "--unknown"},
+             "Unknown command: \"--unknown\""},
+            {"genfakedata_start_linear_no_args",
+             {"--genfakedata", "--startlinear"},
+             "incorrect argument count"},
+            {"genfakedata_start_linear_invalid_propId",
+             {"--genfakedata", "--startlinear", "abcd", "0.1", "0.1", "0.1", "0.1", "100000000"},
+             "failed to parse propId as int: \"abcd\""},
+            {"genfakedata_start_linear_invalid_middleValue",
+             {"--genfakedata", "--startlinear", "1", "abcd", "0.1", "0.1", "0.1", "100000000"},
+             "failed to parse middleValue as float: \"abcd\""},
+            {"genfakedata_start_linear_invalid_currentValue",
+             {"--genfakedata", "--startlinear", "1", "0.1", "abcd", "0.1", "0.1", "100000000"},
+             "failed to parse currentValue as float: \"abcd\""},
+            {"genfakedata_start_linear_invalid_dispersion",
+             {"--genfakedata", "--startlinear", "1", "0.1", "0.1", "abcd", "0.1", "100000000"},
+             "failed to parse dispersion as float: \"abcd\""},
+            {"genfakedata_start_linear_invalid_increment",
+             {"--genfakedata", "--startlinear", "1", "0.1", "0.1", "0.1", "abcd", "100000000"},
+             "failed to parse increment as float: \"abcd\""},
+            {"genfakedata_start_linear_invalid_interval",
+             {"--genfakedata", "--startlinear", "1", "0.1", "0.1", "0.1", "0.1", "0.1"},
+             "failed to parse interval as int: \"0.1\""},
+            {"genfakedata_stop_linear_no_args",
+             {"--genfakedata", "--stoplinear"},
+             "incorrect argument count"},
+            {"genfakedata_stop_linear_invalid_propId",
+             {"--genfakedata", "--stoplinear", "abcd"},
+             "failed to parse propId as int: \"abcd\""},
+            {"genfakedata_startjson_no_args",
+             {"--genfakedata", "--startjson"},
+             "incorrect argument count"},
+            {"genfakedata_startjson_invalid_repetition",
+             {"--genfakedata", "--startjson", "--path", "file", "0.1"},
+             "failed to parse repetition as int: \"0.1\""},
+            {"genfakedata_startjson_invalid_json_file",
+             {"--genfakedata", "--startjson", "--path", "file", "1"},
+             "invalid JSON file"},
+            {"genfakedata_stopjson_no_args",
+             {"--genfakedata", "--stopjson"},
+             "incorrect argument count"},
+            {"genfakedata_keypress_no_args",
+             {"--genfakedata", "--keypress"},
+             "incorrect argument count"},
+            {"genfakedata_keypress_invalid_keyCode",
+             {"--genfakedata", "--keypress", "0.1", "1"},
+             "failed to parse keyCode as int: \"0.1\""},
+            {"genfakedata_keypress_invalid_display",
+             {"--genfakedata", "--keypress", "1", "0.1"},
+             "failed to parse display as int: \"0.1\""}};
+}
+
+TEST_P(FakeVehicleHardwareOptionsTest, testInvalidOptions) {
+    auto tc = GetParam();
+
+    DumpResult result = getHardware()->dump(tc.options);
+
+    EXPECT_FALSE(result.callerShouldDumpState);
+    EXPECT_THAT(result.buffer, HasSubstr(tc.expectMsg));
+}
+
+INSTANTIATE_TEST_SUITE_P(
+        FakeVehicleHardwareOptionsTests, FakeVehicleHardwareOptionsTest,
+        testing::ValuesIn(GenInvalidOptions()),
+        [](const testing::TestParamInfo<FakeVehicleHardwareOptionsTest::ParamType>& info) {
+            return info.param.name;
+        });
+
+TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataLinear) {
+    // Start a fake linear data generator for vehicle speed at 0.1s interval.
+    // range: 0 - 100, current value: 30, step: 20.
+    std::string propIdString = StringPrintf("%d", toInt(VehicleProperty::PERF_VEHICLE_SPEED));
+    std::vector<std::string> options = {"--genfakedata",         "--startlinear", propIdString,
+                                        /*middleValue=*/"50",
+                                        /*currentValue=*/"30",
+                                        /*dispersion=*/"50",
+                                        /*increment=*/"20",
+                                        /*interval=*/"100000000"};
+
+    DumpResult result = getHardware()->dump(options);
+
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_THAT(result.buffer, HasSubstr("successfully"));
+
+    ASSERT_TRUE(waitForChangedProperties(toInt(VehicleProperty::PERF_VEHICLE_SPEED), 0, /*count=*/5,
+                                         milliseconds(1000)))
+            << "not enough events generated for linear data generator";
+
+    int32_t value = 30;
+    auto events = getChangedProperties();
+    for (size_t i = 0; i < 5; i++) {
+        ASSERT_EQ(1u, events[i].value.floatValues.size());
+        EXPECT_EQ(static_cast<float>(value), events[i].value.floatValues[0]);
+        value = (value + 20) % 100;
+    }
+
+    // Stop the linear generator.
+    options = {"--genfakedata", "--stoplinear", propIdString};
+
+    result = getHardware()->dump(options);
+
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_THAT(result.buffer, HasSubstr("successfully"));
+
+    clearChangedProperties();
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+    // There should be no new events generated.
+    EXPECT_EQ(0u, getEventCount(toInt(VehicleProperty::PERF_VEHICLE_SPEED), 0));
+}
+
+std::string getTestFilePath(const char* filename) {
+    static std::string baseDir = android::base::GetExecutableDirectory();
+    return baseDir + "/" + filename;
+}
+
+TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataJson) {
+    std::vector<std::string> options = {"--genfakedata", "--startjson", "--path",
+                                        getTestFilePath("prop.json"), "2"};
+
+    DumpResult result = getHardware()->dump(options);
+
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_THAT(result.buffer, HasSubstr("successfully"));
+
+    ASSERT_TRUE(waitForChangedProperties(/*count=*/8, milliseconds(1000)))
+            << "not enough events generated for JSON data generator";
+
+    auto events = getChangedProperties();
+    ASSERT_EQ(8u, events.size());
+    // First set of events, we test 1st and the last.
+    EXPECT_EQ(1u, events[0].value.int32Values.size());
+    EXPECT_EQ(8, events[0].value.int32Values[0]);
+    EXPECT_EQ(1u, events[3].value.int32Values.size());
+    EXPECT_EQ(10, events[3].value.int32Values[0]);
+    // Second set of the same events.
+    EXPECT_EQ(1u, events[4].value.int32Values.size());
+    EXPECT_EQ(8, events[4].value.int32Values[0]);
+    EXPECT_EQ(1u, events[7].value.int32Values.size());
+    EXPECT_EQ(10, events[7].value.int32Values[0]);
+}
+
+TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataJsonByContent) {
+    std::vector<std::string> options = {
+            "--genfakedata", "--startjson", "--content",
+            "[{\"timestamp\":1000000,\"areaId\":0,\"value\":8,\"prop\":289408000}]", "1"};
+
+    DumpResult result = getHardware()->dump(options);
+
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_THAT(result.buffer, HasSubstr("successfully"));
+
+    ASSERT_TRUE(waitForChangedProperties(/*count=*/1, milliseconds(1000)))
+            << "not enough events generated for JSON data generator";
+
+    auto events = getChangedProperties();
+    ASSERT_EQ(1u, events.size());
+    EXPECT_EQ(1u, events[0].value.int32Values.size());
+    EXPECT_EQ(8, events[0].value.int32Values[0]);
+}
+
+TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataJsonInvalidContent) {
+    std::vector<std::string> options = {"--genfakedata", "--startjson", "--content", "[{", "2"};
+
+    DumpResult result = getHardware()->dump(options);
+
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_THAT(result.buffer, HasSubstr("invalid JSON content"));
+}
+
+TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataJsonInvalidFile) {
+    std::vector<std::string> options = {"--genfakedata", "--startjson", "--path",
+                                        getTestFilePath("blahblah.json"), "2"};
+
+    DumpResult result = getHardware()->dump(options);
+
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_THAT(result.buffer, HasSubstr("invalid JSON file"));
+}
+
+TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataJsonStop) {
+    // No iteration number provided, would loop indefinitely.
+    std::vector<std::string> options = {"--genfakedata", "--startjson", "--path",
+                                        getTestFilePath("prop.json")};
+
+    DumpResult result = getHardware()->dump(options);
+
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_THAT(result.buffer, HasSubstr("successfully"));
+
+    std::string id = result.buffer.substr(result.buffer.find("ID: ") + 4);
+
+    result = getHardware()->dump({"--genfakedata", "--stopjson", id});
+
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_THAT(result.buffer, HasSubstr("successfully"));
+}
+
+TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataJsonStopInvalidFile) {
+    // No iteration number provided, would loop indefinitely.
+    std::vector<std::string> options = {"--genfakedata", "--startjson", "--path",
+                                        getTestFilePath("prop.json")};
+
+    DumpResult result = getHardware()->dump(options);
+
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_THAT(result.buffer, HasSubstr("successfully"));
+
+    result = getHardware()->dump({"--genfakedata", "--stopjson", "1234"});
+
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_THAT(result.buffer, HasSubstr("No JSON event generator found"));
+
+    // TearDown function should destroy the generator which stops the iteration.
+}
+
+TEST_F(FakeVehicleHardwareTest, testDebugGenFakeDataKeyPress) {
+    std::vector<std::string> options = {"--genfakedata", "--keypress", "1", "2"};
+
+    DumpResult result = getHardware()->dump(options);
+
+    ASSERT_FALSE(result.callerShouldDumpState);
+    ASSERT_THAT(result.buffer, HasSubstr("successfully"));
+
+    auto events = getChangedProperties();
+    ASSERT_EQ(2u, events.size());
+    EXPECT_EQ(toInt(VehicleProperty::HW_KEY_INPUT), events[0].prop);
+    EXPECT_EQ(toInt(VehicleProperty::HW_KEY_INPUT), events[1].prop);
+    ASSERT_EQ(3u, events[0].value.int32Values.size());
+    ASSERT_EQ(3u, events[1].value.int32Values.size());
+    EXPECT_EQ(toInt(VehicleHwKeyInputAction::ACTION_DOWN), events[0].value.int32Values[0]);
+    EXPECT_EQ(1, events[0].value.int32Values[1]);
+    EXPECT_EQ(2, events[0].value.int32Values[2]);
+    EXPECT_EQ(toInt(VehicleHwKeyInputAction::ACTION_UP), events[1].value.int32Values[0]);
+    EXPECT_EQ(1, events[1].value.int32Values[1]);
+    EXPECT_EQ(2, events[1].value.int32Values[2]);
 }
 
 TEST_F(FakeVehicleHardwareTest, testGetEchoReverseBytes) {
