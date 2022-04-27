@@ -173,12 +173,11 @@ std::vector<VehiclePropValue> parseFakeValueJson(std::istream& is) {
 
 }  // namespace
 
-JsonFakeValueGenerator::JsonFakeValueGenerator(const std::string& path) {
-    init(path, 1);
-}
+JsonFakeValueGenerator::JsonFakeValueGenerator(const std::string& path)
+    : JsonFakeValueGenerator(path, /*iteration=*/1) {}
 
 JsonFakeValueGenerator::JsonFakeValueGenerator(const std::string& path, int32_t iteration) {
-    init(path, iteration);
+    initWithPath(path, iteration);
 }
 
 JsonFakeValueGenerator::JsonFakeValueGenerator(const VehiclePropValue& request) {
@@ -186,16 +185,26 @@ JsonFakeValueGenerator::JsonFakeValueGenerator(const VehiclePropValue& request) 
     // Iterate infinitely if iteration number is not provided
     int32_t numOfIterations = v.int32Values.size() < 2 ? -1 : v.int32Values[1];
 
-    init(v.stringValue, numOfIterations);
+    initWithPath(v.stringValue, numOfIterations);
 }
 
-void JsonFakeValueGenerator::init(const std::string& path, int32_t iteration) {
+JsonFakeValueGenerator::JsonFakeValueGenerator([[maybe_unused]] bool unused,
+                                               const std::string& content, int32_t iteration) {
+    std::istringstream iss(content);
+    initWithStream(iss, iteration);
+}
+
+void JsonFakeValueGenerator::initWithPath(const std::string& path, int32_t iteration) {
     std::ifstream ifs(path);
     if (!ifs) {
         ALOGE("%s: couldn't open %s for parsing.", __func__, path.c_str());
         return;
     }
-    mEvents = parseFakeValueJson(ifs);
+    initWithStream(ifs, iteration);
+}
+
+void JsonFakeValueGenerator::initWithStream(std::istream& is, int32_t iteration) {
+    mEvents = parseFakeValueJson(is);
     mNumOfIterations = iteration;
 }
 
@@ -235,10 +244,13 @@ std::optional<VehiclePropValue> JsonFakeValueGenerator::nextEvent() {
             mNumOfIterations--;
         }
     }
-
     generatedValue.timestamp = mLastEventTimestamp;
 
     return generatedValue;
+}
+
+bool JsonFakeValueGenerator::hasNext() {
+    return mNumOfIterations != 0 && mEvents.size() > 0;
 }
 
 }  // namespace fake
