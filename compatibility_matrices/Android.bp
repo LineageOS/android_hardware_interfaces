@@ -74,6 +74,18 @@ vintf_compatibility_matrix {
 }
 
 vintf_compatibility_matrix {
+    name: "framework_compatibility_matrix.7.xml",
+    stem: "compatibility_matrix.7.xml",
+    srcs: [
+        "compatibility_matrix.7.xml",
+    ],
+    kernel_configs: [
+        "kernel_config_current_5.10",
+        "kernel_config_current_5.15",
+    ],
+}
+
+vintf_compatibility_matrix {
     name: "framework_compatibility_matrix.current.xml",
     stem: "compatibility_matrix.current.xml",
     srcs: [
