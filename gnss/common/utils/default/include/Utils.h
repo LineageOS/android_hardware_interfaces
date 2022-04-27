@@ -56,6 +56,31 @@ struct Utils {
     static hidl_vec<V2_1::IGnssAntennaInfoCallback::GnssAntennaInfo> getMockAntennaInfos();
 };
 
+struct ThreadBlocker {
+    // returns false if unblocked:
+    template <class R, class P>
+    bool wait_for(std::chrono::duration<R, P> const& time) {
+        std::unique_lock<std::mutex> lock(m);
+        return !cv.wait_for(lock, time, [&] { return terminate; });
+    }
+
+    void notify() {
+        std::unique_lock<std::mutex> lock(m);
+        terminate = true;
+        cv.notify_all();
+    }
+
+    void reset() {
+        std::unique_lock<std::mutex> lock(m);
+        terminate = false;
+    }
+
+  private:
+    std::condition_variable cv;
+    std::mutex m;
+    bool terminate = false;
+};
+
 }  // namespace common
 }  // namespace gnss
 }  // namespace hardware
