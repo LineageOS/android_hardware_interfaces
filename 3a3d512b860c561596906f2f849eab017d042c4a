@@ -16,6 +16,23 @@
       "message": "The tegra audio hal, which declares hal version 6.0 and device hal version 3.0, does not implement the audio port functions.",
       "revId": "3a3d512b860c561596906f2f849eab017d042c4a",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "74163354_3423e0fc",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14048
+      },
+      "writtenOn": "2022-04-27T19:39:36Z",
+      "side": 1,
+      "message": "Verified on darcy",
+      "revId": "3a3d512b860c561596906f2f849eab017d042c4a",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
