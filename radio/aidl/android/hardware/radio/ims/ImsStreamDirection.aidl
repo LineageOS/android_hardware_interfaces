@@ -17,6 +17,7 @@
 package android.hardware.radio.ims;
 
 @VintfStability
+@JavaDerive(toString=true)
 @Backing(type="int")
 enum ImsStreamDirection {
     /** DIRECTION_UPLINK - From UE to Network **/

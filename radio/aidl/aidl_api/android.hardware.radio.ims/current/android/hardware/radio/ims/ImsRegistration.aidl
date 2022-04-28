@@ -32,7 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.ims;
-@VintfStability
+@JavaDerive(toString=true) @VintfStability
 parcelable ImsRegistration {
   android.hardware.radio.ims.ImsRegistrationState regState;
   android.hardware.radio.AccessNetwork accessNetworkType;

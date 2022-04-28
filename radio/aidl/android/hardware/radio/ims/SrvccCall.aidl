@@ -17,6 +17,7 @@
 package android.hardware.radio.ims;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable SrvccCall {
 
     @VintfStability

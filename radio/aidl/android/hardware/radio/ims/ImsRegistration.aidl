@@ -21,6 +21,7 @@ import android.hardware.radio.ims.ImsFailureReason;
 import android.hardware.radio.ims.ImsRegistrationState;
 
 @VintfStability
+@JavaDerive(toString=true)
 parcelable ImsRegistration {
     /** Default value */
     const int IMS_MMTEL_CAPABILITY_NONE = 0;
