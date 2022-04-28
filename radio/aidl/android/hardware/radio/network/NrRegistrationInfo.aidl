@@ -30,6 +30,6 @@ parcelable NrRegistrationInfo {
     /** Network capabilities for voice over PS services. */
     NrVopsInfo ngranNrVopsInfo;
 
-    /** Values are bitwise ORs of EXTRA_ */
+    /** Values are bitwise ORs of EXTRA_* constants */
     int extraInfo;
 }

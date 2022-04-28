@@ -51,7 +51,7 @@ parcelable SrvccCall {
     /** The type of the call */
     CallType callType;
 
-    /** Values are android.hardware.radio.voice.Call.STATE_ */
+    /** Values are android.hardware.radio.voice.Call.STATE_* constants */
     int callState;
 
     /** The substate of the call */
@@ -69,12 +69,12 @@ parcelable SrvccCall {
     /** Remote party nummber */
     String number;
 
-    /** Values are android.hardware.radio.voice.Call.PRESENTATION_ */
+    /** Values are android.hardware.radio.voice.Call.PRESENTATION_* constants */
     int numPresentation;
 
     /** Remote party name */
     String name;
 
-    /** Values are android.hardware.radio.voice.Call.PRESENTATION_ */
+    /** Values are android.hardware.radio.voice.Call.PRESENTATION_* constants */
     int namePresentation;
 }

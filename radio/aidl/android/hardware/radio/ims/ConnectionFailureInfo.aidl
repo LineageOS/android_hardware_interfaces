@@ -44,7 +44,7 @@ parcelable ConnectionFailureInfo {
     }
 
     /**
-     * Values are REASON_
+     * Values are REASON_* constants
      */
     ConnectionFailureReason failureReason;
 
