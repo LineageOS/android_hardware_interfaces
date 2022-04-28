@@ -17,6 +17,7 @@
 package android.hardware.radio.ims;
 
 @VintfStability
+@JavaDerive(toString=true)
 @Backing(type="int")
 enum ImsRegistrationState {
     /** IMS is not registered */

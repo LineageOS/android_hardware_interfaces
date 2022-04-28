@@ -32,7 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.ims;
-@VintfStability
+@JavaDerive(toString=true) @VintfStability
 parcelable SrvccCall {
   int index;
   android.hardware.radio.ims.SrvccCall.CallType callType;
