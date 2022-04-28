@@ -37,6 +37,7 @@ oneway interface IRadioIms {
     /**
      * Provides a list of SRVCC call information to radio.
      *
+     * @param serial Serial number of request
      * @param srvccCalls the list of calls
      *
      * Response function is IRadioImsResponse.setSrvccCallInfoResponse()
@@ -71,7 +72,14 @@ oneway interface IRadioIms {
      * shall be prioritized to the subscription which handles higher priority service.
      * When both subscriptions are handling the same type of service then RF shall be
      * prioritized to the voice preferred sub.
+     *  3. To evaluate the overall access barring in the case of ACB, ACB-Skp/SCM,
+     * SSAC and UAC. If the specific failure including network access, modem
+     * internal and RF resource prioritization from the modem happen,
+     * IRadioImsResponse.startImsTrafficResponse() or
+     * IRadioImsIndication#onConnectionSetupFailure shall be invoked with the
+     * failure reason.
      *
+     * @param serial Serial number of request
      * @param token A nonce to identify the request
      * @param imsTrafficType IMS traffic type like registration, voice, and video
      * @param accessNetworkType The type of the radio access network used
@@ -86,6 +94,7 @@ oneway interface IRadioIms {
      * For all IMS traffic, notified with startImsTraffic, IMS service shall notify
      * stopImsTraffic when it completes the traffic specified by the token.
      *
+     * @param serial Serial number of request
      * @param token The token assigned by startImsTraffic()
      *
      * Response function is IRadioImsResponse.stopImsTrafficResponse()
