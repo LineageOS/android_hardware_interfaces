@@ -53,8 +53,13 @@ interface IGnssMeasurementInterface {
         /**
          * Time interval between the reported measurements in milliseconds.
          *
-         * The GNSS chipset must not report measurements with a rate slower than requested. All the
-         * available measurements must be reported to the framework.
+         * When there is no concurrent location and measurement requests, the GNSS chipset must
+         * report measurements at as close as possible to the requested rate, as is supported by the
+         * implementation.
+         *
+         * When there are concurrent location and measurement requests, the GNSS chipset must report
+         * measurements at the same or a faster rate than the requested. In the concurrency cases,
+         * all the available measurements must be reported to the framework.
          *
          * For cases where concurrently serving the location and the measurement requests would not
          * consume more power than only the measurement request, the faster rate of the 2 requests
