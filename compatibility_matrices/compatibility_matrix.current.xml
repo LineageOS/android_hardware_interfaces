@@ -142,6 +142,7 @@
         <interface>
             <name>IFingerprint</name>
             <instance>default</instance>
+            <instance>virtual</instance>
         </interface>
     </hal>
     <hal format="hidl" optional="true">
