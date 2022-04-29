@@ -131,15 +131,18 @@ GeneralResult<Capabilities> unvalidatedConvert(const hal::V1_2::Capabilities& ca
 
 GeneralResult<Capabilities::OperandPerformance> unvalidatedConvert(
         const hal::V1_2::Capabilities::OperandPerformance& operandPerformance) {
+    const auto type = NN_TRY(unvalidatedConvert(operandPerformance.type));
+    const auto info = NN_TRY(unvalidatedConvert(operandPerformance.info));
     return Capabilities::OperandPerformance{
-            .type = NN_TRY(unvalidatedConvert(operandPerformance.type)),
-            .info = NN_TRY(unvalidatedConvert(operandPerformance.info)),
+            .type = type,
+            .info = info,
     };
 }
 
 GeneralResult<Operation> unvalidatedConvert(const hal::V1_2::Operation& operation) {
+    const auto type = NN_TRY(unvalidatedConvert(operation.type));
     return Operation{
-            .type = NN_TRY(unvalidatedConvert(operation.type)),
+            .type = type,
             .inputs = operation.inputs,
             .outputs = operation.outputs,
     };
@@ -154,14 +157,18 @@ GeneralResult<Operand::SymmPerChannelQuantParams> unvalidatedConvert(
 }
 
 GeneralResult<Operand> unvalidatedConvert(const hal::V1_2::Operand& operand) {
+    const auto type = NN_TRY(unvalidatedConvert(operand.type));
+    const auto lifetime = NN_TRY(unvalidatedConvert(operand.lifetime));
+    const auto location = NN_TRY(unvalidatedConvert(operand.location));
+    auto extraParams = NN_TRY(unvalidatedConvert(operand.extraParams));
     return Operand{
-            .type = NN_TRY(unvalidatedConvert(operand.type)),
+            .type = type,
             .dimensions = operand.dimensions,
             .scale = operand.scale,
             .zeroPoint = operand.zeroPoint,
-            .lifetime = NN_TRY(unvalidatedConvert(operand.lifetime)),
-            .location = NN_TRY(unvalidatedConvert(operand.location)),
-            .extraParams = NN_TRY(unvalidatedConvert(operand.extraParams)),
+            .lifetime = lifetime,
+            .location = location,
+            .extraParams = std::move(extraParams),
     };
 }
 
@@ -196,19 +203,23 @@ GeneralResult<Model> unvalidatedConvert(const hal::V1_2::Model& model) {
         }
     }
 
+    auto operands = NN_TRY(unvalidatedConvert(model.operands));
     auto main = Model::Subgraph{
-            .operands = NN_TRY(unvalidatedConvert(model.operands)),
+            .operands = std::move(operands),
             .operations = std::move(operations),
             .inputIndexes = model.inputIndexes,
             .outputIndexes = model.outputIndexes,
     };
 
+    auto operandValues = NN_TRY(unvalidatedConvert(model.operandValues));
+    auto pools = NN_TRY(unvalidatedConvert(model.pools));
+    auto extensionNameToPrefix = NN_TRY(unvalidatedConvert(model.extensionNameToPrefix));
     return Model{
             .main = std::move(main),
-            .operandValues = NN_TRY(unvalidatedConvert(model.operandValues)),
-            .pools = NN_TRY(unvalidatedConvert(model.pools)),
+            .operandValues = std::move(operandValues),
+            .pools = std::move(pools),
             .relaxComputationFloat32toFloat16 = model.relaxComputationFloat32toFloat16,
-            .extensionNameToPrefix = NN_TRY(unvalidatedConvert(model.extensionNameToPrefix)),
+            .extensionNameToPrefix = std::move(extensionNameToPrefix),
     };
 }
 
@@ -248,9 +259,10 @@ GeneralResult<Timing> unvalidatedConvert(const hal::V1_2::Timing& timing) {
 }
 
 GeneralResult<Extension> unvalidatedConvert(const hal::V1_2::Extension& extension) {
+    auto operandTypes = NN_TRY(unvalidatedConvert(extension.operandTypes));
     return Extension{
             .name = extension.name,
-            .operandTypes = NN_TRY(unvalidatedConvert(extension.operandTypes)),
+            .operandTypes = std::move(operandTypes),
     };
 }
 
@@ -406,35 +418,41 @@ nn::GeneralResult<DeviceType> unvalidatedConvert(const nn::DeviceType& deviceTyp
 }
 
 nn::GeneralResult<Capabilities> unvalidatedConvert(const nn::Capabilities& capabilities) {
-    std::vector<nn::Capabilities::OperandPerformance> operandPerformance;
-    operandPerformance.reserve(capabilities.operandPerformance.asVector().size());
+    std::vector<nn::Capabilities::OperandPerformance> filteredOperandPerformances;
+    filteredOperandPerformances.reserve(capabilities.operandPerformance.asVector().size());
     std::copy_if(capabilities.operandPerformance.asVector().begin(),
                  capabilities.operandPerformance.asVector().end(),
-                 std::back_inserter(operandPerformance),
+                 std::back_inserter(filteredOperandPerformances),
                  [](const nn::Capabilities::OperandPerformance& operandPerformance) {
                      return compliantVersion(operandPerformance.type).has_value();
                  });
 
+    const auto relaxedFloat32toFloat16PerformanceScalar =
+            NN_TRY(unvalidatedConvert(capabilities.relaxedFloat32toFloat16PerformanceScalar));
+    const auto relaxedFloat32toFloat16PerformanceTensor =
+            NN_TRY(unvalidatedConvert(capabilities.relaxedFloat32toFloat16PerformanceTensor));
+    auto operandPerformance = NN_TRY(unvalidatedConvert(filteredOperandPerformances));
     return Capabilities{
-            .relaxedFloat32toFloat16PerformanceScalar = NN_TRY(
-                    unvalidatedConvert(capabilities.relaxedFloat32toFloat16PerformanceScalar)),
-            .relaxedFloat32toFloat16PerformanceTensor = NN_TRY(
-                    unvalidatedConvert(capabilities.relaxedFloat32toFloat16PerformanceTensor)),
-            .operandPerformance = NN_TRY(unvalidatedConvert(operandPerformance)),
+            .relaxedFloat32toFloat16PerformanceScalar = relaxedFloat32toFloat16PerformanceScalar,
+            .relaxedFloat32toFloat16PerformanceTensor = relaxedFloat32toFloat16PerformanceTensor,
+            .operandPerformance = std::move(operandPerformance),
     };
 }
 
 nn::GeneralResult<Capabilities::OperandPerformance> unvalidatedConvert(
         const nn::Capabilities::OperandPerformance& operandPerformance) {
+    const auto type = NN_TRY(unvalidatedConvert(operandPerformance.type));
+    const auto info = NN_TRY(unvalidatedConvert(operandPerformance.info));
     return Capabilities::OperandPerformance{
-            .type = NN_TRY(unvalidatedConvert(operandPerformance.type)),
-            .info = NN_TRY(unvalidatedConvert(operandPerformance.info)),
+            .type = type,
+            .info = info,
     };
 }
 
 nn::GeneralResult<Operation> unvalidatedConvert(const nn::Operation& operation) {
+    const auto type = NN_TRY(unvalidatedConvert(operation.type));
     return Operation{
-            .type = NN_TRY(unvalidatedConvert(operation.type)),
+            .type = type,
             .inputs = operation.inputs,
             .outputs = operation.outputs,
     };
@@ -449,15 +467,19 @@ nn::GeneralResult<SymmPerChannelQuantParams> unvalidatedConvert(
 }
 
 nn::GeneralResult<Operand> unvalidatedConvert(const nn::Operand& operand) {
+    const auto type = NN_TRY(unvalidatedConvert(operand.type));
+    const auto lifetime = NN_TRY(unvalidatedConvert(operand.lifetime));
+    const auto location = NN_TRY(unvalidatedConvert(operand.location));
+    auto extraParams = NN_TRY(unvalidatedConvert(operand.extraParams));
     return Operand{
-            .type = NN_TRY(unvalidatedConvert(operand.type)),
+            .type = type,
             .dimensions = operand.dimensions,
             .numberOfConsumers = 0,
             .scale = operand.scale,
             .zeroPoint = operand.zeroPoint,
-            .lifetime = NN_TRY(unvalidatedConvert(operand.lifetime)),
-            .location = NN_TRY(unvalidatedConvert(operand.location)),
-            .extraParams = NN_TRY(unvalidatedConvert(operand.extraParams)),
+            .lifetime = lifetime,
+            .location = location,
+            .extraParams = std::move(extraParams),
     };
 }
 
@@ -482,15 +504,19 @@ nn::GeneralResult<Model> unvalidatedConvert(const nn::Model& model) {
         operands[i].numberOfConsumers = numberOfConsumers[i];
     }
 
+    auto operations = NN_TRY(unvalidatedConvert(model.main.operations));
+    auto operandValues = NN_TRY(unvalidatedConvert(model.operandValues));
+    auto pools = NN_TRY(unvalidatedConvert(model.pools));
+    auto extensionNameToPrefix = NN_TRY(unvalidatedConvert(model.extensionNameToPrefix));
     return Model{
             .operands = std::move(operands),
-            .operations = NN_TRY(unvalidatedConvert(model.main.operations)),
+            .operations = std::move(operations),
             .inputIndexes = model.main.inputIndexes,
             .outputIndexes = model.main.outputIndexes,
-            .operandValues = NN_TRY(unvalidatedConvert(model.operandValues)),
-            .pools = NN_TRY(unvalidatedConvert(model.pools)),
+            .operandValues = std::move(operandValues),
+            .pools = std::move(pools),
             .relaxComputationFloat32toFloat16 = model.relaxComputationFloat32toFloat16,
-            .extensionNameToPrefix = NN_TRY(unvalidatedConvert(model.extensionNameToPrefix)),
+            .extensionNameToPrefix = std::move(extensionNameToPrefix),
     };
 }
 
@@ -524,9 +550,10 @@ nn::GeneralResult<Timing> unvalidatedConvert(const nn::Timing& timing) {
 }
 
 nn::GeneralResult<Extension> unvalidatedConvert(const nn::Extension& extension) {
+    auto operandTypes = NN_TRY(unvalidatedConvert(extension.operandTypes));
     return Extension{
             .name = extension.name,
-            .operandTypes = NN_TRY(unvalidatedConvert(extension.operandTypes)),
+            .operandTypes = std::move(operandTypes),
     };
 }
 
