@@ -110,8 +110,9 @@ nn::GeneralResult<nn::SharedMemory> createSharedMemoryFromHidlMemory(const hidl_
             return NN_ERROR() << "Unable to convert invalid ashmem memory object with "
                               << memory.handle()->numInts << " numInts, but expected 0";
         }
+        auto fd = NN_TRY(nn::dupFd(memory.handle()->data[0]));
         auto handle = nn::Memory::Ashmem{
-                .fd = NN_TRY(nn::dupFd(memory.handle()->data[0])),
+                .fd = std::move(fd),
                 .size = static_cast<size_t>(memory.size()),
         };
         return std::make_shared<const nn::Memory>(nn::Memory{.handle = std::move(handle)});
@@ -137,12 +138,13 @@ nn::GeneralResult<nn::SharedMemory> createSharedMemoryFromHidlMemory(const hidl_
     }
 
     if (memory.name() != "hardware_buffer_blob") {
-        auto handle = nn::Memory::Unknown{
-                .handle = NN_TRY(unknownHandleFromNativeHandle(memory.handle())),
+        auto handle = NN_TRY(unknownHandleFromNativeHandle(memory.handle()));
+        auto unknown = nn::Memory::Unknown{
+                .handle = std::move(handle),
                 .size = static_cast<size_t>(memory.size()),
                 .name = memory.name(),
         };
-        return std::make_shared<const nn::Memory>(nn::Memory{.handle = std::move(handle)});
+        return std::make_shared<const nn::Memory>(nn::Memory{.handle = std::move(unknown)});
     }
 
 #ifdef __ANDROID__
@@ -245,19 +247,23 @@ GeneralResult<DataLocation> unvalidatedConvert(const hal::V1_0::DataLocation& lo
 }
 
 GeneralResult<Operand> unvalidatedConvert(const hal::V1_0::Operand& operand) {
+    const auto type = NN_TRY(unvalidatedConvert(operand.type));
+    const auto lifetime = NN_TRY(unvalidatedConvert(operand.lifetime));
+    const auto location = NN_TRY(unvalidatedConvert(operand.location));
     return Operand{
-            .type = NN_TRY(unvalidatedConvert(operand.type)),
+            .type = type,
             .dimensions = operand.dimensions,
             .scale = operand.scale,
             .zeroPoint = operand.zeroPoint,
-            .lifetime = NN_TRY(unvalidatedConvert(operand.lifetime)),
-            .location = NN_TRY(unvalidatedConvert(operand.location)),
+            .lifetime = lifetime,
+            .location = location,
     };
 }
 
 GeneralResult<Operation> unvalidatedConvert(const hal::V1_0::Operation& operation) {
+    const auto type = NN_TRY(unvalidatedConvert(operation.type));
     return Operation{
-            .type = NN_TRY(unvalidatedConvert(operation.type)),
+            .type = type,
             .inputs = operation.inputs,
             .outputs = operation.outputs,
     };
@@ -298,26 +304,30 @@ GeneralResult<Model> unvalidatedConvert(const hal::V1_0::Model& model) {
         }
     }
 
+    auto operands = NN_TRY(unvalidatedConvert(model.operands));
     auto main = Model::Subgraph{
-            .operands = NN_TRY(unvalidatedConvert(model.operands)),
+            .operands = std::move(operands),
             .operations = std::move(operations),
             .inputIndexes = model.inputIndexes,
             .outputIndexes = model.outputIndexes,
     };
 
+    auto operandValues = NN_TRY(unvalidatedConvert(model.operandValues));
+    auto pools = NN_TRY(unvalidatedConvert(model.pools));
     return Model{
             .main = std::move(main),
-            .operandValues = NN_TRY(unvalidatedConvert(model.operandValues)),
-            .pools = NN_TRY(unvalidatedConvert(model.pools)),
+            .operandValues = std::move(operandValues),
+            .pools = std::move(pools),
     };
 }
 
 GeneralResult<Request::Argument> unvalidatedConvert(const hal::V1_0::RequestArgument& argument) {
     const auto lifetime = argument.hasNoValue ? Request::Argument::LifeTime::NO_VALUE
                                               : Request::Argument::LifeTime::POOL;
+    const auto location = NN_TRY(unvalidatedConvert(argument.location));
     return Request::Argument{
             .lifetime = lifetime,
-            .location = NN_TRY(unvalidatedConvert(argument.location)),
+            .location = location,
             .dimensions = argument.dimensions,
     };
 }
@@ -328,9 +338,11 @@ GeneralResult<Request> unvalidatedConvert(const hal::V1_0::Request& request) {
     pools.reserve(memories.size());
     std::move(memories.begin(), memories.end(), std::back_inserter(pools));
 
+    auto inputs = NN_TRY(unvalidatedConvert(request.inputs));
+    auto outputs = NN_TRY(unvalidatedConvert(request.outputs));
     return Request{
-            .inputs = NN_TRY(unvalidatedConvert(request.inputs)),
-            .outputs = NN_TRY(unvalidatedConvert(request.outputs)),
+            .inputs = std::move(inputs),
+            .outputs = std::move(outputs),
             .pools = std::move(pools),
     };
 }
@@ -500,11 +512,13 @@ nn::GeneralResult<PerformanceInfo> unvalidatedConvert(
 }
 
 nn::GeneralResult<Capabilities> unvalidatedConvert(const nn::Capabilities& capabilities) {
+    const auto float32Performance = NN_TRY(unvalidatedConvert(
+            capabilities.operandPerformance.lookup(nn::OperandType::TENSOR_FLOAT32)));
+    const auto quantized8Performance = NN_TRY(unvalidatedConvert(
+            capabilities.operandPerformance.lookup(nn::OperandType::TENSOR_QUANT8_ASYMM)));
     return Capabilities{
-            .float32Performance = NN_TRY(unvalidatedConvert(
-                    capabilities.operandPerformance.lookup(nn::OperandType::TENSOR_FLOAT32))),
-            .quantized8Performance = NN_TRY(unvalidatedConvert(
-                    capabilities.operandPerformance.lookup(nn::OperandType::TENSOR_QUANT8_ASYMM))),
+            .float32Performance = float32Performance,
+            .quantized8Performance = quantized8Performance,
     };
 }
 
@@ -517,20 +531,24 @@ nn::GeneralResult<DataLocation> unvalidatedConvert(const nn::DataLocation& locat
 }
 
 nn::GeneralResult<Operand> unvalidatedConvert(const nn::Operand& operand) {
+    const auto type = NN_TRY(unvalidatedConvert(operand.type));
+    const auto lifetime = NN_TRY(unvalidatedConvert(operand.lifetime));
+    const auto location = NN_TRY(unvalidatedConvert(operand.location));
     return Operand{
-            .type = NN_TRY(unvalidatedConvert(operand.type)),
+            .type = type,
             .dimensions = operand.dimensions,
             .numberOfConsumers = 0,
             .scale = operand.scale,
             .zeroPoint = operand.zeroPoint,
-            .lifetime = NN_TRY(unvalidatedConvert(operand.lifetime)),
-            .location = NN_TRY(unvalidatedConvert(operand.location)),
+            .lifetime = lifetime,
+            .location = location,
     };
 }
 
 nn::GeneralResult<Operation> unvalidatedConvert(const nn::Operation& operation) {
+    const auto type = NN_TRY(unvalidatedConvert(operation.type));
     return Operation{
-            .type = NN_TRY(unvalidatedConvert(operation.type)),
+            .type = type,
             .inputs = operation.inputs,
             .outputs = operation.outputs,
     };
@@ -572,13 +590,16 @@ nn::GeneralResult<Model> unvalidatedConvert(const nn::Model& model) {
         operands[i].numberOfConsumers = numberOfConsumers[i];
     }
 
+    auto operations = NN_TRY(unvalidatedConvert(model.main.operations));
+    auto operandValues = NN_TRY(unvalidatedConvert(model.operandValues));
+    auto pools = NN_TRY(unvalidatedConvert(model.pools));
     return Model{
             .operands = std::move(operands),
-            .operations = NN_TRY(unvalidatedConvert(model.main.operations)),
+            .operations = std::move(operations),
             .inputIndexes = model.main.inputIndexes,
             .outputIndexes = model.main.outputIndexes,
-            .operandValues = NN_TRY(unvalidatedConvert(model.operandValues)),
-            .pools = NN_TRY(unvalidatedConvert(model.pools)),
+            .operandValues = std::move(operandValues),
+            .pools = std::move(pools),
     };
 }
 
@@ -589,9 +610,10 @@ nn::GeneralResult<RequestArgument> unvalidatedConvert(
                << "Request cannot be unvalidatedConverted because it contains pointer-based memory";
     }
     const bool hasNoValue = requestArgument.lifetime == nn::Request::Argument::LifeTime::NO_VALUE;
+    const auto location = NN_TRY(unvalidatedConvert(requestArgument.location));
     return RequestArgument{
             .hasNoValue = hasNoValue,
-            .location = NN_TRY(unvalidatedConvert(requestArgument.location)),
+            .location = location,
             .dimensions = requestArgument.dimensions,
     };
 }
@@ -606,10 +628,13 @@ nn::GeneralResult<Request> unvalidatedConvert(const nn::Request& request) {
                << "Request cannot be unvalidatedConverted because it contains pointer-based memory";
     }
 
+    auto inputs = NN_TRY(unvalidatedConvert(request.inputs));
+    auto outputs = NN_TRY(unvalidatedConvert(request.outputs));
+    auto pools = NN_TRY(unvalidatedConvert(request.pools));
     return Request{
-            .inputs = NN_TRY(unvalidatedConvert(request.inputs)),
-            .outputs = NN_TRY(unvalidatedConvert(request.outputs)),
-            .pools = NN_TRY(unvalidatedConvert(request.pools)),
+            .inputs = std::move(inputs),
+            .outputs = std::move(outputs),
+            .pools = std::move(pools),
     };
 }
 
