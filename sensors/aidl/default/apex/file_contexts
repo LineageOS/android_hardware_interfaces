@@ -2,4 +2,4 @@
 # Permission XMLs
 /etc/permissions(/.*)?					u:object_r:vendor_configs_file:s0
 # Service binary
-/bin/hw/android\.hardware\.sensors@2\.1-service\.mock	u:object_r:hal_sensors_default_exec:s0
+/bin/hw/android\.hardware\.sensors-service\.example	u:object_r:hal_sensors_default_exec:s0
