@@ -51,7 +51,6 @@ oneway interface IRadioIms {
      * 1) Graceful IMS PDN disconnection on cellular when NAS is about to perform detach
      * eg. SIM removal or SIM refresh
      * 2) Block PLMN or RAT based on the IMS registration failure reason
-     * 3) Start IMS establishment timers when on IMS registration is started
      *
      * @param serial Serial number of request
      * @param imsRegistration IMS registration information
@@ -75,8 +74,8 @@ oneway interface IRadioIms {
      *  3. To evaluate the overall access barring in the case of ACB, ACB-Skp/SCM,
      * SSAC and UAC. If the specific failure including network access, modem
      * internal and RF resource prioritization from the modem happen,
-     * IRadioImsResponse.startImsTrafficResponse() or
-     * IRadioImsIndication#onConnectionSetupFailure shall be invoked with the
+     * {@link IRadioImsResponse#startImsTrafficResponse()} or
+     * {@link IRadioImsIndication#onConnectionSetupFailure()} shall be invoked with the
      * failure reason.
      *
      * @param serial Serial number of request
