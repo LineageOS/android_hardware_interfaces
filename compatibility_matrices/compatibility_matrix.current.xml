@@ -152,17 +152,8 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl" optional="true">
+    <hal format="aidl" optional="true">
         <name>android.hardware.broadcastradio</name>
-        <version>1.0-1</version>
-        <interface>
-            <name>IBroadcastRadioFactory</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="hidl" optional="true">
-        <name>android.hardware.broadcastradio</name>
-        <version>2.0</version>
         <interface>
             <name>IBroadcastRadio</name>
             <regex-instance>.*</regex-instance>

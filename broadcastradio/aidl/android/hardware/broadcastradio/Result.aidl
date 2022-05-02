@@ -1,0 +1,61 @@
+/*
+ * Copyright (C) 2022 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.broadcastradio;
+
+/**
+ * Result for methods of BroadcastRadio AIDL HAL interfaces.
+ */
+@VintfStability
+@Backing(type="int")
+enum Result {
+    /**
+     * Methods run without error.
+     */
+    OK,
+
+    /**
+     * Internal error in HAL.
+     */
+    INTERNAL_ERROR,
+
+    /**
+     * Error used when the input argument for the method is invalid.
+     */
+    INVALID_ARGUMENTS,
+
+    /**
+     * Error used when the service is of invalid state (i.e. callback
+     * is not registered for IBroadcastRadio).
+     */
+    INVALID_STATE,
+
+    /**
+     * Error used when an operation is not supported.
+     */
+    NOT_SUPPORTED,
+
+    /**
+     * Error used when a tune, seek, step or operation is not completed
+     * within {@link IBroadcastRadio#LIST_COMPLETE_TIMEOUT_MS}.
+     */
+    TIMEOUT,
+
+    /**
+     * Error that does not follow into the error categories above.
+     */
+    UNKNOWN_ERROR,
+}
