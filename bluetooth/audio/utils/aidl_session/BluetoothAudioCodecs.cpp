@@ -115,6 +115,20 @@ static const Lc3Capabilities kLc3Capability_16_2 = {
     .octetsPerFrame = {40}};
 
 // Default Supported Codecs
+// LC3 24_2: sample rate: 24 kHz, frame duration: 10 ms, octets per frame: 60
+static const Lc3Capabilities kLc3Capability_24_2 = {
+    .samplingFrequencyHz = {24000},
+    .frameDurationUs = {10000},
+    .octetsPerFrame = {60}};
+
+// Default Supported Codecs
+// LC3 32_2: sample rate: 32 kHz, frame duration: 10 ms, octets per frame: 80
+static const Lc3Capabilities kLc3Capability_32_2 = {
+    .samplingFrequencyHz = {32000},
+    .frameDurationUs = {10000},
+    .octetsPerFrame = {80}};
+
+// Default Supported Codecs
 // LC3 48_4: sample rate: 48 kHz, frame duration: 10 ms, octets per frame: 120
 static const Lc3Capabilities kLc3Capability_48_4 = {
     .samplingFrequencyHz = {48000},
@@ -122,7 +136,8 @@ static const Lc3Capabilities kLc3Capability_48_4 = {
     .octetsPerFrame = {120}};
 
 static const std::vector<Lc3Capabilities> supportedLc3CapabilityList = {
-    kLc3Capability_48_4, kLc3Capability_16_2, kLc3Capability_16_1};
+    kLc3Capability_48_4, kLc3Capability_32_2, kLc3Capability_24_2,
+    kLc3Capability_16_2, kLc3Capability_16_1};
 
 static AudioLocation stereoAudio = static_cast<AudioLocation>(
     static_cast<uint8_t>(AudioLocation::FRONT_LEFT) |
