@@ -715,7 +715,7 @@ class PcmOnlyConfigInputStreamTest : public InputStreamTest {
             sink.base.channelMask.value(getConfig().base.channelMask);
             sink.ext.mix({});
             sink.ext.mix().ioHandle = helper.getIoHandle();
-            sink.ext.mix().useCase.source(toString(xsd::AudioSource::AUDIO_SOURCE_MIC));
+            sink.ext.mix().useCase.source(initMetadata.tracks[0].source);
             EXPECT_OK(getDevice()->createAudioPatch(hidl_vec<AudioPortConfig>{source},
                                                     hidl_vec<AudioPortConfig>{sink},
                                                     returnIn(res, mPatchHandle)));
