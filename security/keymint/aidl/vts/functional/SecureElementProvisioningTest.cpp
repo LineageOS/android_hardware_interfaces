@@ -57,6 +57,15 @@ class SecureElementProvisioningTest : public testing::Test {
         }
     }
 
+    int32_t AidlVersion(shared_ptr<IKeyMintDevice> keymint) {
+        int32_t version = 0;
+        auto status = keymint->getInterfaceVersion(&version);
+        if (!status.isOk()) {
+            ADD_FAILURE() << "Failed to determine interface version";
+        }
+        return version;
+    }
+
     static map<SecurityLevel, shared_ptr<IKeyMintDevice>> keymints_;
 };
 
@@ -73,12 +82,14 @@ TEST_F(SecureElementProvisioningTest, ValidConfigurations) {
 }
 
 TEST_F(SecureElementProvisioningTest, TeeOnly) {
-    if (keymints_.empty()) {
-        GTEST_SKIP() << "Test not applicable to device with no KeyMint devices";
+    if (keymints_.count(SecurityLevel::TRUSTED_ENVIRONMENT) == 0) {
+        GTEST_SKIP() << "Test not applicable to device with no TEE KeyMint device";
     }
-    ASSERT_EQ(keymints_.count(SecurityLevel::TRUSTED_ENVIRONMENT), 1);
     auto tee = keymints_.find(SecurityLevel::TRUSTED_ENVIRONMENT)->second;
-    ASSERT_NE(tee, nullptr);
+    // Execute the test only for KeyMint version >= 2.
+    if (AidlVersion(tee) < 2) {
+        GTEST_SKIP() << "Test not applicable to TEE KeyMint device before v2";
+    }
 
     array<uint8_t, 16> challenge1 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     array<uint8_t, 16> challenge2 = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -111,12 +122,14 @@ TEST_F(SecureElementProvisioningTest, TeeOnly) {
 }
 
 TEST_F(SecureElementProvisioningTest, TeeDoesNotImplementStrongBoxMethods) {
-    if (keymints_.empty()) {
-        GTEST_SKIP() << "Test not applicable to device with no KeyMint devices";
+    if (keymints_.count(SecurityLevel::TRUSTED_ENVIRONMENT) == 0) {
+        GTEST_SKIP() << "Test not applicable to device with no TEE KeyMint device";
     }
-    ASSERT_EQ(keymints_.count(SecurityLevel::TRUSTED_ENVIRONMENT), 1);
     auto tee = keymints_.find(SecurityLevel::TRUSTED_ENVIRONMENT)->second;
-    ASSERT_NE(tee, nullptr);
+    // Execute the test only for KeyMint version >= 2.
+    if (AidlVersion(tee) < 2) {
+        GTEST_SKIP() << "Test not applicable to TEE KeyMint device before v2";
+    }
 
     array<uint8_t, 16> challenge;
     Status result = tee->getRootOfTrustChallenge(&challenge);
@@ -135,9 +148,11 @@ TEST_F(SecureElementProvisioningTest, StrongBoxDoesNotImplementTeeMethods) {
         // Need a StrongBox to provision.
         GTEST_SKIP() << "Test not applicable to device with no StrongBox KeyMint device";
     }
-
+    // Execute the test only for KeyMint version >= 2.
     auto sb = keymints_.find(SecurityLevel::STRONGBOX)->second;
-    ASSERT_NE(sb, nullptr);
+    if (AidlVersion(sb) < 2) {
+        GTEST_SKIP() << "Test not applicable to StrongBox KeyMint device before v2";
+    }
 
     vector<uint8_t> rootOfTrust;
     Status result = sb->getRootOfTrust({}, &rootOfTrust);
@@ -151,14 +166,19 @@ TEST_F(SecureElementProvisioningTest, UnimplementedTest) {
         // Need a StrongBox to provision.
         GTEST_SKIP() << "Test not applicable to device with no StrongBox KeyMint device";
     }
-
-    ASSERT_EQ(keymints_.count(SecurityLevel::TRUSTED_ENVIRONMENT), 1);
-    auto tee = keymints_.find(SecurityLevel::TRUSTED_ENVIRONMENT)->second;
-    ASSERT_NE(tee, nullptr);
-
-    ASSERT_EQ(keymints_.count(SecurityLevel::STRONGBOX), 1);
+    // Execute the test only for KeyMint version >= 2.
     auto sb = keymints_.find(SecurityLevel::STRONGBOX)->second;
-    ASSERT_NE(sb, nullptr);
+    if (AidlVersion(sb) < 2) {
+        GTEST_SKIP() << "Test not applicable to StrongBox KeyMint device before v2";
+    }
+
+    if (keymints_.count(SecurityLevel::TRUSTED_ENVIRONMENT) == 0) {
+        GTEST_SKIP() << "Test not applicable to device with no TEE KeyMint device";
+    }
+    auto tee = keymints_.find(SecurityLevel::TRUSTED_ENVIRONMENT)->second;
+    if (AidlVersion(tee) < 2) {
+        GTEST_SKIP() << "Test not applicable to TEE KeyMint device before v2";
+    }
 
     array<uint8_t, 16> challenge;
     Status result = sb->getRootOfTrustChallenge(&challenge);
@@ -185,10 +205,11 @@ TEST_F(SecureElementProvisioningTest, ChallengeQualityTest) {
         // Need a StrongBox to provision.
         GTEST_SKIP() << "Test not applicable to device with no StrongBox KeyMint device";
     }
-
-    ASSERT_EQ(keymints_.count(SecurityLevel::STRONGBOX), 1);
+    // Execute the test only for KeyMint version >= 2.
     auto sb = keymints_.find(SecurityLevel::STRONGBOX)->second;
-    ASSERT_NE(sb, nullptr);
+    if (AidlVersion(sb) < 2) {
+        GTEST_SKIP() << "Test not applicable to StrongBox KeyMint device before v2";
+    }
 
     array<uint8_t, 16> challenge1;
     Status result = sb->getRootOfTrustChallenge(&challenge1);
@@ -208,14 +229,20 @@ TEST_F(SecureElementProvisioningTest, ProvisioningTest) {
         // Need a StrongBox to provision.
         GTEST_SKIP() << "Test not applicable to device with no StrongBox KeyMint device";
     }
-
-    ASSERT_EQ(keymints_.count(SecurityLevel::TRUSTED_ENVIRONMENT), 1);
-    auto tee = keymints_.find(SecurityLevel::TRUSTED_ENVIRONMENT)->second;
-    ASSERT_NE(tee, nullptr);
-
-    ASSERT_EQ(keymints_.count(SecurityLevel::STRONGBOX), 1);
+    // Execute the test only for KeyMint version >= 2.
     auto sb = keymints_.find(SecurityLevel::STRONGBOX)->second;
-    ASSERT_NE(sb, nullptr);
+    if (AidlVersion(sb) < 2) {
+        GTEST_SKIP() << "Test not applicable to StrongBox KeyMint device before v2";
+    }
+
+    if (keymints_.count(SecurityLevel::TRUSTED_ENVIRONMENT) == 0) {
+        GTEST_SKIP() << "Test not applicable to device with no TEE KeyMint device";
+    }
+    // Execute the test only for KeyMint version >= 2.
+    auto tee = keymints_.find(SecurityLevel::TRUSTED_ENVIRONMENT)->second;
+    if (AidlVersion(tee) < 2) {
+        GTEST_SKIP() << "Test not applicable to TEE KeyMint device before v2";
+    }
 
     array<uint8_t, 16> challenge;
     Status result = sb->getRootOfTrustChallenge(&challenge);
@@ -240,14 +267,20 @@ TEST_F(SecureElementProvisioningTest, InvalidProvisioningTest) {
         // Need a StrongBox to provision.
         GTEST_SKIP() << "Test not applicable to device with no StrongBox KeyMint device";
     }
-
-    ASSERT_EQ(keymints_.count(SecurityLevel::TRUSTED_ENVIRONMENT), 1);
-    auto tee = keymints_.find(SecurityLevel::TRUSTED_ENVIRONMENT)->second;
-    ASSERT_NE(tee, nullptr);
-
-    ASSERT_EQ(keymints_.count(SecurityLevel::STRONGBOX), 1);
+    // Execute the test only for KeyMint version >= 2.
     auto sb = keymints_.find(SecurityLevel::STRONGBOX)->second;
-    ASSERT_NE(sb, nullptr);
+    if (AidlVersion(sb) < 2) {
+        GTEST_SKIP() << "Test not applicable to StrongBox KeyMint device before v2";
+    }
+
+    if (keymints_.count(SecurityLevel::TRUSTED_ENVIRONMENT) == 0) {
+        GTEST_SKIP() << "Test not applicable to device with no TEE KeyMint device";
+    }
+    // Execute the test only for KeyMint version >= 2.
+    auto tee = keymints_.find(SecurityLevel::TRUSTED_ENVIRONMENT)->second;
+    if (AidlVersion(tee) < 2) {
+        GTEST_SKIP() << "Test not applicable to TEE KeyMint device before v2";
+    }
 
     array<uint8_t, 16> challenge;
     Status result = sb->getRootOfTrustChallenge(&challenge);
