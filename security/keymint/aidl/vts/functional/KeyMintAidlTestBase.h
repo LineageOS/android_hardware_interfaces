@@ -354,6 +354,9 @@ void add_tag_from_prop(AuthorizationSetBuilder* tags, TypedTag<TagType::BYTES, t
     }
 }
 
+// Indicate whether the test is running on a GSI image.
+bool is_gsi_image();
+
 vector<uint8_t> build_serial_blob(const uint64_t serial_int);
 void verify_subject(const X509* cert, const string& subject, bool self_signed);
 void verify_serial(X509* cert, const uint64_t expected_serial);
