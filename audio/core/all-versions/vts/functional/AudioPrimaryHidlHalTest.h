@@ -1239,23 +1239,30 @@ class InputStreamTest
     : public OpenStreamTest<::android::hardware::audio::CORE_TYPES_CPP_VERSION::IStreamIn> {
     void SetUp() override {
         ASSERT_NO_FATAL_FAILURE(OpenStreamTest::SetUp());  // setup base
+        auto flags = getInputFlags();
 #if MAJOR_VERSION <= 6
         address.device = AudioDevice::IN_DEFAULT;
 #elif MAJOR_VERSION >= 7
         auto maybeSourceAddress = getCachedPolicyConfig().getSourceDeviceForMixPort(
                 getDeviceName(), getMixPortName());
+        auto& metadata = initMetadata.tracks[0];
         if (maybeSourceAddress.has_value() &&
             !xsd::isTelephonyDevice(maybeSourceAddress.value().deviceType)) {
             address = maybeSourceAddress.value();
-            auto& metadata = initMetadata.tracks[0];
             metadata.source = toString(xsd::AudioSource::AUDIO_SOURCE_UNPROCESSED);
             metadata.channelMask = getConfig().base.channelMask;
         } else {
             address.deviceType = toString(xsd::AudioDevice::AUDIO_DEVICE_IN_DEFAULT);
         }
-#endif
+#if MAJOR_VERSION == 7 && MINOR_VERSION >= 1
+        auto flagsIt = std::find(flags.begin(), flags.end(),
+                                 toString(xsd::AudioInOutFlag::AUDIO_INPUT_FLAG_ULTRASOUND));
+        if (flagsIt != flags.end()) {
+            metadata.source = toString(xsd::AudioSource::AUDIO_SOURCE_ULTRASOUND);
+        }
+#endif  // 7.1
+#endif  // MAJOR_VERSION >= 7
         const AudioConfig& config = getConfig();
-        auto flags = getInputFlags();
         testOpen(
                 [&](AudioIoHandle handle, AudioConfig config, auto cb) {
                     return getDevice()->openInputStream(handle, address, config, flags,
