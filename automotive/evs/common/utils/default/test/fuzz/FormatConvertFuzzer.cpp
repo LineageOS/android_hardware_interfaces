@@ -32,9 +32,10 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, std::size_t size) {
 
     // API have a requirement that width must be divied by 16 except yuyvtorgb
     int min_height = 2;
-    int max_height = (image_pixel_size / 16) & ~(1);  // must be even number
+    int max_height = (image_pixel_size / 16);
     int height = fdp.ConsumeIntegralInRange<uint32_t>(min_height, max_height);
-    int width = (image_pixel_size / height) & ~(16);  // must be divisible by 16
+    height &= ~(1);  // must be even number
+    int width = (image_pixel_size / height) & ~(0xF);  // must be divisible by 16
 
     uint8_t* src = (uint8_t*)(data + 4);
     uint32_t* tgt = (uint32_t*)malloc(sizeof(uint32_t) * image_pixel_size);
