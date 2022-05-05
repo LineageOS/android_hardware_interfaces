@@ -504,7 +504,9 @@ enum Tag {
      * that is necessary during all uses of the key.  In particular, calls to exportKey() and
      * getKeyCharacteristics() must provide the same value to the clientId parameter, and calls to
      * begin() must provide this tag and the same associated data as part of the inParams set.  If
-     * the correct data is not provided, the method must return ErrorCode::INVALID_KEY_BLOB.
+     * the correct data is not provided, the method must return ErrorCode::INVALID_KEY_BLOB.  Note
+     * that a key with a zero-length APPLICATION_ID cannot have its key characteristics retrieved
+     * using getKeyCharacteristics() due to a historical limitation of the API.
      *
      * The content of this tag must be bound to the key cryptographically, meaning it must not be
      * possible for an adversary who has access to all of the secure world secrets but does not have
@@ -525,7 +527,9 @@ enum Tag {
      * that is necessary during all uses of the key.  In particular, calls to begin() and
      * exportKey() must provide the same value to the appData parameter, and calls to begin must
      * provide this tag and the same associated data as part of the inParams set.  If the correct
-     * data is not provided, the method must return ErrorCode::INVALID_KEY_BLOB.
+     * data is not provided, the method must return ErrorCode::INVALID_KEY_BLOB.  Note that a key
+     * with a zero-length APPLICATION_DATA cannot have its key characteristics retrieved using
+     * getKeyCharacteristics() due to a historical limitation of the API.
      *
      * The content of this tag must be bound to the key cryptographically, meaning it must not be
      * possible for an adversary who has access to all of the secure world secrets but does not have
