@@ -70,6 +70,7 @@ vintf_compatibility_matrix {
         "kernel_config_s_4.19",
         "kernel_config_s_5.4",
         "kernel_config_s_5.10",
+        "kernel_config_s_5.18",
     ],
 }
 
