@@ -29,11 +29,18 @@ namespace fake {
 
 using ::android::base::ScopedLockAssertion;
 
-GeneratorHub::GeneratorHub(OnHalEvent&& onHalEvent)
-    : mOnHalEvent(onHalEvent), mThread(&GeneratorHub::run, this) {}
+GeneratorHub::GeneratorHub(OnHalEvent&& onHalEvent) : mOnHalEvent(onHalEvent) {
+    mThread = std::thread(&GeneratorHub::run, this);
+}
 
 GeneratorHub::~GeneratorHub() {
-    mShuttingDownFlag.store(true);
+    {
+        // Even if the shared variable is atomic, it must be modified under the
+        // mutex in order to correctly publish the modification to the waiting
+        // thread.
+        std::unique_lock<std::mutex> lock(mGeneratorsLock);
+        mShuttingDownFlag.store(true);
+    }
     mCond.notify_all();
     if (mThread.joinable()) {
         mThread.join();
