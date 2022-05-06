@@ -22,13 +22,11 @@
 #include "Effect.h"
 #include "common/all-versions/default/EffectMap.h"
 
-#include <memory.h>
-
 #define ATRACE_TAG ATRACE_TAG_AUDIO
-
 #include <HidlUtils.h>
 #include <android/log.h>
 #include <media/EffectsFactoryApi.h>
+#include <mediautils/ScopedStatistics.h>
 #include <util/EffectUtils.h>
 #include <utils/Trace.h>
 
@@ -49,21 +47,27 @@ using ::android::hardware::audio::common::COMMON_TYPES_CPP_VERSION::implementati
 
 namespace {
 
+#define SCOPED_STATS()                                                       \
+    ::android::mediautils::ScopedStatistics scopedStatistics {               \
+        std::string("EffectHal::").append(__func__), mEffectHal->mStatistics \
+    }
+
 class ProcessThread : public Thread {
    public:
     // ProcessThread's lifespan never exceeds Effect's lifespan.
-    ProcessThread(std::atomic<bool>* stop, effect_handle_t effect,
-                  std::atomic<audio_buffer_t*>* inBuffer, std::atomic<audio_buffer_t*>* outBuffer,
-                  Effect::StatusMQ* statusMQ, EventFlag* efGroup)
-        : Thread(false /*canCallJava*/),
-          mStop(stop),
-          mEffect(effect),
-          mHasProcessReverse((*mEffect)->process_reverse != NULL),
-          mInBuffer(inBuffer),
-          mOutBuffer(outBuffer),
-          mStatusMQ(statusMQ),
-          mEfGroup(efGroup) {}
-    virtual ~ProcessThread() {}
+     ProcessThread(std::atomic<bool>* stop, effect_handle_t effect,
+                   std::atomic<audio_buffer_t*>* inBuffer, std::atomic<audio_buffer_t*>* outBuffer,
+                   Effect::StatusMQ* statusMQ, EventFlag* efGroup, Effect* effectHal)
+         : Thread(false /*canCallJava*/),
+           mStop(stop),
+           mEffect(effect),
+           mHasProcessReverse((*mEffect)->process_reverse != NULL),
+           mInBuffer(inBuffer),
+           mOutBuffer(outBuffer),
+           mStatusMQ(statusMQ),
+           mEfGroup(efGroup),
+           mEffectHal(effectHal) {}
+     virtual ~ProcessThread() {}
 
    private:
     std::atomic<bool>* mStop;
@@ -73,6 +77,7 @@ class ProcessThread : public Thread {
     std::atomic<audio_buffer_t*>* mOutBuffer;
     Effect::StatusMQ* mStatusMQ;
     EventFlag* mEfGroup;
+    Effect* const mEffectHal;
 
     bool threadLoop() override;
 };
@@ -102,6 +107,9 @@ bool ProcessThread::threadLoop() {
             audio_buffer_t* outBuffer =
                 std::atomic_load_explicit(mOutBuffer, std::memory_order_relaxed);
             if (inBuffer != nullptr && outBuffer != nullptr) {
+                // Time this effect process
+                SCOPED_STATS();
+
                 if (efState & static_cast<uint32_t>(MessageQueueFlagBits::REQUEST_PROCESS)) {
                     processResult = (*mEffect)->process(mEffect, inBuffer, outBuffer);
                 } else {
@@ -359,7 +367,7 @@ Return<void> Effect::prepareForProcessing(prepareForProcessing_cb _hidl_cb) {
 
     // Create and launch the thread.
     mProcessThread = new ProcessThread(&mStopProcessThread, mHandle, &mHalInBufferPtr,
-                                       &mHalOutBufferPtr, tempStatusMQ.get(), mEfGroup);
+                                       &mHalOutBufferPtr, tempStatusMQ.get(), mEfGroup, this);
     status = mProcessThread->run("effect", PRIORITY_URGENT_AUDIO);
     if (status != OK) {
         ALOGW("failed to start effect processing thread: %s", strerror(-status));
@@ -749,6 +757,8 @@ Return<void> Effect::debug(const hidl_handle& fd, const hidl_vec<hidl_string>& /
     if (fd.getNativeHandle() != nullptr && fd->numFds == 1) {
         uint32_t cmdData = fd->data[0];
         (void)sendCommand(EFFECT_CMD_DUMP, "DUMP", sizeof(cmdData), &cmdData);
+        const std::string s = mStatistics->dump();
+        if (s.size() != 0) write(cmdData, s.c_str(), s.size());
     }
     return Void();
 }
