@@ -39,3 +39,28 @@ cc_binary {
         "android.hardware.automotive.occupant_awareness-V1-ndk",
     ],
 }
+
+cc_fuzz {
+    name: "android.hardware.automotive.occupant_awareness-service.fuzzer",
+    static_libs: [
+        "android.hardware.automotive.occupant_awareness-V1-ndk",
+        "libbase",
+        "libbinder_random_parcel",
+        "libcutils",
+        "liblog",
+    ],
+    shared_libs: [
+        "libbinder_ndk",
+        "libbinder",
+        "libutils",
+    ],
+    srcs: [
+        "fuzzer.cpp",
+        "OccupantAwareness.cpp",
+    ],
+    fuzz_config: {
+        cc: [
+            "keithmok@google.com",
+        ],
+    },
+}

@@ -1949,6 +1949,11 @@ TEST_P(NewKeyGenerationTest, EcdsaAttestationTags) {
  * attestation extension.
  */
 TEST_P(NewKeyGenerationTest, EcdsaAttestationIdTags) {
+    if (is_gsi_image()) {
+        // GSI sets up a standard set of device identifiers that may not match
+        // the device identifiers held by the device.
+        GTEST_SKIP() << "Test not applicable under GSI";
+    }
     auto challenge = "hello";
     auto app_id = "foo";
     auto subject = "cert subj 2";
