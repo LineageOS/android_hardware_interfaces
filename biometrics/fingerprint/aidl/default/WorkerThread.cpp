@@ -31,7 +31,10 @@ WorkerThread::WorkerThread(size_t maxQueueSize)
 WorkerThread::~WorkerThread() {
     // This is a signal for threadFunc to terminate as soon as possible, and a hint for schedule
     // that it doesn't need to do any work.
-    mIsDestructing = true;
+    {
+        std::unique_lock<std::mutex> lock(mQueueMutex);
+        mIsDestructing = true;
+    }
     mQueueCond.notify_all();
     mThread.join();
 }
