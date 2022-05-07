@@ -18,13 +18,20 @@ package android.hardware.security.keymint;
 
 /**
  * ProtectedData contains the encrypted BCC and the ephemeral MAC key used to
- * authenticate the keysToSign (see keysToSignMac output argument).
+ * authenticate the keysToSign (see keysToSignMac output argument of
+ * IRemotelyProvisionedComponent.generateCertificateRequest).
  * @hide
  */
 @VintfStability
 parcelable ProtectedData {
     /**
-     * ProtectedData is a COSE_Encrypt structure, specified by the following CDDL
+     * ProtectedData is a COSE_Encrypt structure, encrypted with an AES key that is agreed upon
+     * using Elliptic-curve Diffie-Hellman. The contents of the structure are specified by the
+     * following CDDL [RFC8610].
+     *
+     * Notes:
+     *   - None of the CBOR in ProtectedData uses CBOR tags. If an implementation includes
+     *     tags, parsers may reject the data.
      *
      *     ProtectedData = [               // COSE_Encrypt
      *         protected: bstr .cbor {
@@ -34,13 +41,18 @@ parcelable ProtectedData {
      *             5 : bstr .size 12       // IV
      *         },
      *         ciphertext: bstr,           // AES-GCM-256(K, .cbor ProtectedDataPayload)
+     *                                     // Where the encryption key 'K' is derived as follows:
+     *                                     // ikm = ECDH(EEK_pub, Ephemeral_priv)
+     *                                     // salt = null
+     *                                     // info = .cbor Context (see below)
+     *                                     // K = HKDF-SHA-256(ikm, salt, info)
      *         recipients : [
      *             [                       // COSE_Recipient
      *                 protected : bstr .cbor {
      *                     1 : -25         // Algorithm : ECDH-ES + HKDF-256
      *                 },
      *                 unprotected : {
-     *                     -1 : PubKeyX25519 / PubKeyEcdhP256  // Of the sender
+     *                     -1 : PubKeyX25519 / PubKeyEcdhP256  // Ephemeral_pub
      *                     4 : bstr,       // KID : EEK ID
      *                 },
      *                 ciphertext : nil
@@ -48,14 +60,14 @@ parcelable ProtectedData {
      *         ]
      *     ]
      *
-     *     K = HKDF-256(ECDH(EEK_pub, Ephemeral_priv), Context)
-     *
-     *     Context = [                     // COSE_KDF_Context
+     *     // The COSE_KDF_Context that is used to derive the ProtectedData encryption key with
+     *     // HKDF. See details on use in ProtectedData comments above.
+     *     Context = [
      *         AlgorithmID : 3             // AES-GCM 256
      *         PartyUInfo : [
      *             identity : bstr "client"
      *             nonce : bstr .size 0,
-     *             other : bstr            // Ephemeral pubkey
+     *             other : bstr            // Ephemeral_pub
      *         ],
      *         PartyVInfo : [
      *             identity : bstr "server",
@@ -68,41 +80,53 @@ parcelable ProtectedData {
      *         ]
      *     ]
      *
+     *     // The data that is encrypted and included in ProtectedData ciphertext (see above).
      *     ProtectedDataPayload [
      *         SignedMac,
      *         Bcc,
      *         ? AdditionalDKSignatures,
      *     ]
+     *
+     *     // AdditionalDKSignatures allows the platform to provide additional certifications
+     *     // for the DK_pub. For example, this could be provided by the hardware vendor, who
+     *     // certifies all of their devices. The SignerName is a free-form string describing
+     *     // who generated the signature.
      *     AdditionalDKSignatures = {
      *         + SignerName => DKCertChain
      *     }
      *
+     *     // SignerName is a string identifier that indicates both the signing authority as
+     *     // well as the format of the DKCertChain
      *     SignerName = tstr
      *
      *     DKCertChain = [
-     *         2* Certificate                      // Root -> Leaf.  Root is the vendor
-     *                                             // self-signed cert, leaf contains DK_pub
+     *         2* X509Certificate       // Root -> ... -> Leaf. "Root" is the vendor self-signed
+     *                                  // cert, "Leaf" contains DK_pub. There may also be
+     *                                  // intermediate certificates between Root and Leaf.
      *     ]
      *
-     *     Certificate = COSE_Sign1 of a public key
+     *     // A bstr containing a DER-encoded X.509 certificate (RSA, NIST P-curve, or edDSA)
+     *     X509Certificate = bstr
      *
-     *     SignedMac = [                                  // COSE_Sign1
-     *         bstr .cbor {                               // Protected params
-     *             1 : AlgorithmEdDSA / AlgorithmES256,   // Algorithm
+     *     // The SignedMac, which authenticates the MAC key that is used to authenticate the
+     *     // keysToSign.
+     *     SignedMac = [                                // COSE_Sign1
+     *         bstr .cbor {                             // Protected params
+     *             1 : AlgorithmEdDSA / AlgorithmES256, // Algorithm
      *         },
-     *         {},                   // Unprotected params
-     *         bstr .size 32,                  // MAC key
+     *         {},                                      // Unprotected params
+     *         bstr .size 32,                           // Payload: MAC key
      *         bstr // PureEd25519(KM_priv, bstr .cbor SignedMac_structure) /
      *              // ECDSA(KM_priv, bstr .cbor SignedMac_structure)
      *     ]
      *
-     *     SignedMac_structure = [
+     *     SignedMac_structure = [                      //  COSE Sig_structure
      *         "Signature1",
-     *         bstr .cbor {                               // Protected params
-     *             1 : AlgorithmEdDSA / AlgorithmES256,   // Algorithm
+     *         bstr .cbor {                             // Protected params
+     *             1 : AlgorithmEdDSA / AlgorithmES256, // Algorithm
      *         },
-     *         bstr .cbor SignedMacAad
-     *         bstr .size 32                              // MAC key
+     *         bstr .cbor SignedMacAad,
+     *         bstr .size 32                            // MAC key
      *     ]
      *
      *     SignedMacAad = [
@@ -114,31 +138,48 @@ parcelable ProtectedData {
      *                                   // the signature.
      *     ]
      *
+     *     VerifiedDeviceInfo = DeviceInfo  // See DeviceInfo.aidl
+     *
+     *     // The BCC is the boot certificate chain, containing measurements about the device
+     *     // boot chain. The BCC generally follows the Open Profile for DICE specification at
+     *     // https://pigweed.googlesource.com/open-dice/+/HEAD/docs/specification.md.
+     *     //
+     *     // The first entry in the Bcc is the DK_pub, encoded as a COSE_key. All entries after
+     *     // the first describe a link in the boot chain (e.g. bootloaders: BL1, BL2, ... BLN).
+     *     // Note that there is no BccEntry for DK_pub, only a "bare" COSE_key.
      *     Bcc = [
      *         PubKeyEd25519 / PubKeyECDSA256, // DK_pub
      *         + BccEntry,                     // Root -> leaf (KM_pub)
      *     ]
      *
-     *     BccPayload = {                     // CWT
-     *         1 : tstr,                      // Issuer
-     *         2 : tstr,                      // Subject
-     *         // See the Open Profile for DICE for details on these fields.
-     *         ? -4670545 : bstr,             // Code Hash
-     *         ? -4670546 : bstr,             // Code Descriptor
-     *         ? -4670547 : bstr,             // Configuration Hash
-     *         ? -4670548 : bstr .cbor {      // Configuration Descriptor
-     *             ? -70002 : tstr,           // Component name
-     *             ? -70003 : int,            // Firmware version
-     *             ? -70004 : null,           // Resettable
-     *         },
-     *         ? -4670549 : bstr,             // Authority Hash
-     *         ? -4670550 : bstr,             // Authority Descriptor
-     *         ? -4670551 : bstr,             // Mode
+     *     // This is the signed payload for each entry in the Bcc. Note that the "Configuration
+     *     // Input Values" described by the Open Profile are not used here. Instead, the Bcc
+     *     // defines its own configuration values for the Configuration Descriptor field. See
+     *     // the Open Profile for DICE for more details on the fields. All hashes are SHA256.
+     *     BccPayload = {                               // CWT [RFC8392]
+     *         1 : tstr,                                // Issuer
+     *         2 : tstr,                                // Subject
      *         -4670552 : bstr .cbor PubKeyEd25519 /
-     *                    bstr .cbor PubKeyECDSA256   // Subject Public Key
-     *         -4670553 : bstr                // Key Usage
+     *                    bstr .cbor PubKeyECDSA256,    // Subject Public Key
+     *         -4670553 : bstr                          // Key Usage
+     *
+     *         // NOTE: All of the following fields may be omitted for a "Degenerate BCC", as
+     *         //       described by IRemotelyProvisionedComponent.aidl.
+     *         -4670545 : bstr,                         // Code Hash
+     *         ? -4670546 : bstr,                       // Code Descriptor
+     *         ? -4670547 : bstr,                       // Configuration Hash
+     *         -4670548 : bstr .cbor {                  // Configuration Descriptor
+     *             ? -70002 : tstr,                         // Component name
+     *             ? -70003 : int,                          // Firmware version
+     *             ? -70004 : null,                         // Resettable
+     *         },
+     *         -4670549 : bstr,                         // Authority Hash
+     *         ? -4670550 : bstr,                       // Authority Descriptor
+     *         -4670551 : bstr,                         // Mode
      *     }
      *
+     *     // Each entry in the Bcc is a BccPayload signed by the key from the previous entry
+     *     // in the Bcc array.
      *     BccEntry = [                                  // COSE_Sign1 (untagged)
      *         protected : bstr .cbor {
      *             1 : AlgorithmEdDSA / AlgorithmES256,  // Algorithm
@@ -159,8 +200,8 @@ parcelable ProtectedData {
      *         payload: bstr .cbor BccPayload
      *     ]
      *
-     *     VerifiedDeviceInfo = DeviceInfo  // See DeviceInfo.aidl
-     *
+     *     // The following section defines some types that are reused throughout the above
+     *     // data structures.
      *     PubKeyX25519 = {                 // COSE_Key
      *          1 : 1,                      // Key type : Octet Key Pair
      *         -1 : 4,                      // Curve : X25519
@@ -168,25 +209,25 @@ parcelable ProtectedData {
      *     }
      *
      *     PubKeyEd25519 = {                // COSE_Key
-     *         1 : 1,                         // Key type : octet key pair
-     *         3 : AlgorithmEdDSA,            // Algorithm : EdDSA
-     *         -1 : 6,                        // Curve : Ed25519
-     *         -2 : bstr                      // X coordinate, little-endian
+     *         1 : 1,                       // Key type : octet key pair
+     *         3 : AlgorithmEdDSA,          // Algorithm : EdDSA
+     *         -1 : 6,                      // Curve : Ed25519
+     *         -2 : bstr                    // X coordinate, little-endian
      *     }
      *
-     *     PubKeyEcdhP256 = {              // COSE_Key
-     *          1 : 2,      // Key type : EC2
-     *          -1 : 1,     // Curve : P256
-     *          -2 : bstr   // Sender X coordinate
-     *          -3 : bstr   // Sender Y coordinate
+     *     PubKeyEcdhP256 = {               // COSE_Key
+     *          1 : 2,                      // Key type : EC2
+     *          -1 : 1,                     // Curve : P256
+     *          -2 : bstr                   // Sender X coordinate
+     *          -3 : bstr                   // Sender Y coordinate
      *     }
      *
-     *     PubKeyECDSA256 = {                 // COSE_Key
-     *         1 : 2,                         // Key type : EC2
-     *         3 : AlgorithmES256,            // Algorithm : ECDSA w/ SHA-256
-     *         -1 : 1,                        // Curve: P256
-     *         -2 : bstr,                     // X coordinate
-     *         -3 : bstr                      // Y coordinate
+     *     PubKeyECDSA256 = {               // COSE_Key
+     *         1 : 2,                       // Key type : EC2
+     *         3 : AlgorithmES256,          // Algorithm : ECDSA w/ SHA-256
+     *         -1 : 1,                      // Curve: P256
+     *         -2 : bstr,                   // X coordinate
+     *         -3 : bstr                    // Y coordinate
      *     }
      *
      *     AlgorithmES256 = -7
