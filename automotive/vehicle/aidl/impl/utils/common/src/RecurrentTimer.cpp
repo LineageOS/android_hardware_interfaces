@@ -29,7 +29,9 @@ namespace vehicle {
 
 using ::android::base::ScopedLockAssertion;
 
-RecurrentTimer::RecurrentTimer() : mThread(&RecurrentTimer::loop, this) {}
+RecurrentTimer::RecurrentTimer() {
+    mThread = std::thread(&RecurrentTimer::loop, this);
+}
 
 RecurrentTimer::~RecurrentTimer() {
     {
