@@ -31,7 +31,11 @@ bool operator<(const WorkerThread::Task& lhs, const WorkerThread::Task& rhs) {
     return lhs.when > rhs.when;
 }
 
-WorkerThread::WorkerThread() : mIsTerminating(false), mThread(&WorkerThread::threadLoop, this) {}
+WorkerThread::WorkerThread() : mIsTerminating(false) {
+    // putting mThread in constructor instead of initializer list
+    // to ensure all class members are init before mThread starts
+    mThread = std::thread(&WorkerThread::threadLoop, this);
+}
 
 WorkerThread::~WorkerThread() {
     {
