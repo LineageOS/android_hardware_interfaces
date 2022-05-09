@@ -355,6 +355,9 @@ ScopedAStatus DefaultVehicleHal::getValues(const CallbackType& callback,
         ALOGE("getValues: failed to parse getValues requests");
         return std::move(deserializedResults.error());
     }
+    if (callback == nullptr) {
+        return ScopedAStatus::fromExceptionCode(EX_NULL_POINTER);
+    }
     const std::vector<GetValueRequest>& getValueRequests =
             deserializedResults.value().getObject()->payloads;
 
@@ -437,6 +440,9 @@ ScopedAStatus DefaultVehicleHal::setValues(const CallbackType& callback,
     if (!deserializedResults.ok()) {
         ALOGE("setValues: failed to parse setValues requests");
         return std::move(deserializedResults.error());
+    }
+    if (callback == nullptr) {
+        return ScopedAStatus::fromExceptionCode(EX_NULL_POINTER);
     }
     const std::vector<SetValueRequest>& setValueRequests =
             deserializedResults.value().getObject()->payloads;
@@ -629,7 +635,9 @@ ScopedAStatus DefaultVehicleHal::subscribe(const CallbackType& callback,
         ALOGE("subscribe: invalid subscribe options: %s", getErrorMsg(result).c_str());
         return toScopedAStatus(result);
     }
-
+    if (callback == nullptr) {
+        return ScopedAStatus::fromExceptionCode(EX_NULL_POINTER);
+    }
     std::vector<SubscribeOptions> onChangeSubscriptions;
     std::vector<SubscribeOptions> continuousSubscriptions;
     for (const auto& option : options) {
@@ -685,6 +693,9 @@ ScopedAStatus DefaultVehicleHal::subscribe(const CallbackType& callback,
 
 ScopedAStatus DefaultVehicleHal::unsubscribe(const CallbackType& callback,
                                              const std::vector<int32_t>& propIds) {
+    if (callback == nullptr) {
+        return ScopedAStatus::fromExceptionCode(EX_NULL_POINTER);
+    }
     return toScopedAStatus(mSubscriptionManager->unsubscribe(callback->asBinder().get(), propIds));
 }
 
