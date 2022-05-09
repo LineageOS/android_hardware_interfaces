@@ -24,7 +24,7 @@ ndk::ScopedAStatus RadioImsIndication::onConnectionSetupFailure(RadioIndicationT
 }
 
 ndk::ScopedAStatus RadioImsIndication::notifyAnbr(RadioIndicationType /*type*/,
-        int /*qosSessionId*/, ImsStreamDirection /*direction*/, int /*bitsPerSecond*/) {
+        ImsStreamType /*mediaType*/, ImsStreamDirection /*direction*/, int /*bitsPerSecond*/) {
     return ndk::ScopedAStatus::ok();
 }
 

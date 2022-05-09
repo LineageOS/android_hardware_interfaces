@@ -48,8 +48,6 @@ class RadioImsResponse : public BnRadioImsResponse {
 
     virtual ndk::ScopedAStatus stopImsTrafficResponse(const RadioResponseInfo& info) override;
 
-    virtual ndk::ScopedAStatus setAnbrEnabledResponse(const RadioResponseInfo& info) override;
-
     virtual ndk::ScopedAStatus sendAnbrQueryResponse(const RadioResponseInfo& info) override;
 };
 
@@ -65,7 +63,7 @@ class RadioImsIndication : public BnRadioImsIndication {
     virtual ndk::ScopedAStatus onConnectionSetupFailure(RadioIndicationType type,
             const std::string& token, const ConnectionFailureInfo& info) override;
 
-    virtual ndk::ScopedAStatus notifyAnbr(RadioIndicationType type, int qosSessionId,
+    virtual ndk::ScopedAStatus notifyAnbr(RadioIndicationType type, ImsStreamType mediaType,
             ImsStreamDirection direction, int bitsPerSecond) override;
 
     virtual ndk::ScopedAStatus triggerImsDeregistration(RadioIndicationType type) override;
