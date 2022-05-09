@@ -743,6 +743,11 @@ TEST_P(AttestKeyTest, AttestWithNonAttestKey) {
 }
 
 TEST_P(AttestKeyTest, EcdsaAttestationID) {
+    if (is_gsi_image()) {
+        // GSI sets up a standard set of device identifiers that may not match
+        // the device identifiers held by the device.
+        GTEST_SKIP() << "Test not applicable under GSI";
+    }
     // Create attestation key.
     AttestationKey attest_key;
     vector<KeyCharacteristics> attest_key_characteristics;
