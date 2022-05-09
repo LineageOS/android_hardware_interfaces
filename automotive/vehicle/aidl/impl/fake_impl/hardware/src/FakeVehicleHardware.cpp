@@ -995,11 +995,15 @@ Result<std::vector<uint8_t>> FakeVehicleHardware::parseHexString(const std::stri
 template <class CallbackType, class RequestType>
 FakeVehicleHardware::PendingRequestHandler<CallbackType, RequestType>::PendingRequestHandler(
         FakeVehicleHardware* hardware)
-    : mHardware(hardware), mThread([this] {
-          while (mRequests.waitForItems()) {
-              handleRequestsOnce();
-          }
-      }) {}
+    : mHardware(hardware) {
+    // Don't initialize mThread in initialization list because mThread depends on mRequests and we
+    // want mRequests to be initialized first.
+    mThread = std::thread([this] {
+        while (mRequests.waitForItems()) {
+            handleRequestsOnce();
+        }
+    });
+}
 
 template <class CallbackType, class RequestType>
 void FakeVehicleHardware::PendingRequestHandler<CallbackType, RequestType>::addRequest(
