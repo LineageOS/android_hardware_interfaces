@@ -88,11 +88,18 @@ class BluetoothFuzzer {
     }
     mBtHci->close();
     mBtHci.clear();
+    for (size_t i = 0; i < mFdCount; ++i) {
+      if (mFdList[i]) {
+        close(mFdList[i]);
+      }
+    }
   }
   bool init(const uint8_t* data, size_t size);
   void process();
 
  private:
+  size_t mFdCount = 1;
+  int32_t mFdList[CH_MAX] = {0};
   sp<BluetoothHci> mBtHci = nullptr;
   FuzzedDataProvider* mFdp = nullptr;
 };
@@ -143,17 +150,15 @@ void BluetoothFuzzer::process() {
   bool shouldSetH4Protocol = mFdp->ConsumeBool();
   BtVendor* btVendor = BtVendor::getInstance();
 
-  size_t fdcount = 1;
-  int32_t fdList[CH_MAX] = {0};
   if (!shouldSetH4Protocol) {
-    fdcount = mFdp->ConsumeIntegralInRange<size_t>(kMinFdcount, CH_MAX - 1);
+    mFdCount = mFdp->ConsumeIntegralInRange<size_t>(kMinFdcount, CH_MAX - 1);
   }
 
-  for (size_t i = 0; i < fdcount; ++i) {
-    fdList[i] = open("/dev/null", O_RDWR | O_CREAT);
+  for (size_t i = 0; i < mFdCount; ++i) {
+    mFdList[i] = open("/dev/null", O_RDWR | O_CREAT);
   }
 
-  btVendor->populateFdList(fdList, fdcount);
+  btVendor->populateFdList(mFdList, mFdCount);
   mBtHci->initialize(bluetoothCallback);
 
   if (!bluetoothCallback->isInitialized) {
@@ -181,12 +186,6 @@ void BluetoothFuzzer::process() {
   }
 
   btVendor->callRemainingCbacks();
-
-  for (size_t i = 0; i < fdcount; ++i) {
-    if (fdList[i]) {
-      close(fdList[i]);
-    }
-  }
 }
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
