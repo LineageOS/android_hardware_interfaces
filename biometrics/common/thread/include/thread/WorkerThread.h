@@ -23,7 +23,7 @@
 
 #include "Callable.h"
 
-namespace aidl::android::hardware::biometrics::fingerprint {
+namespace aidl::android::hardware::biometrics {
 
 // A class that encapsulates a worker thread and a task queue, and provides a convenient interface
 // for a Session to schedule its tasks for asynchronous execution.
@@ -76,4 +76,4 @@ class WorkerThread final {
     std::thread mThread;
 };
 
-}  // namespace aidl::android::hardware::biometrics::fingerprint
+}  // namespace aidl::android::hardware::biometrics
