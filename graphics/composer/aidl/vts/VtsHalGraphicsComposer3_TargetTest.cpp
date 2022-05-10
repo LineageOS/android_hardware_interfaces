@@ -2122,6 +2122,41 @@ TEST_P(GraphicsComposerAidlCommandTest, SetIdleTimerEnabled_Timeout_2) {
     EXPECT_TRUE(mComposerClient->setPowerMode(getPrimaryDisplayId(), PowerMode::OFF).isOk());
 }
 
+/*
+ * Test that no two display configs are exactly the same.
+ */
+TEST_P(GraphicsComposerAidlTest, GetDisplayConfigNoRepetitions) {
+    for (const auto& display : mDisplays) {
+        const auto& [status, configs] = mComposerClient->getDisplayConfigs(display.getDisplayId());
+        for (std::vector<int>::size_type i = 0; i < configs.size(); i++) {
+            for (std::vector<int>::size_type j = i + 1; j < configs.size(); j++) {
+                const auto& [widthStatus1, width1] = mComposerClient->getDisplayAttribute(
+                        display.getDisplayId(), configs[i], DisplayAttribute::WIDTH);
+                const auto& [heightStatus1, height1] = mComposerClient->getDisplayAttribute(
+                        display.getDisplayId(), configs[i], DisplayAttribute::HEIGHT);
+                const auto& [vsyncPeriodStatus1, vsyncPeriod1] =
+                        mComposerClient->getDisplayAttribute(display.getDisplayId(), configs[i],
+                                                             DisplayAttribute::VSYNC_PERIOD);
+                const auto& [groupStatus1, group1] = mComposerClient->getDisplayAttribute(
+                        display.getDisplayId(), configs[i], DisplayAttribute::CONFIG_GROUP);
+
+                const auto& [widthStatus2, width2] = mComposerClient->getDisplayAttribute(
+                        display.getDisplayId(), configs[j], DisplayAttribute::WIDTH);
+                const auto& [heightStatus2, height2] = mComposerClient->getDisplayAttribute(
+                        display.getDisplayId(), configs[j], DisplayAttribute::HEIGHT);
+                const auto& [vsyncPeriodStatus2, vsyncPeriod2] =
+                        mComposerClient->getDisplayAttribute(display.getDisplayId(), configs[j],
+                                                             DisplayAttribute::VSYNC_PERIOD);
+                const auto& [groupStatus2, group2] = mComposerClient->getDisplayAttribute(
+                        display.getDisplayId(), configs[j], DisplayAttribute::CONFIG_GROUP);
+
+                ASSERT_FALSE(width1 == width2 && height1 == height2 &&
+                             vsyncPeriod1 == vsyncPeriod2 && group1 == group2);
+            }
+        }
+    }
+}
+
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GraphicsComposerAidlCommandTest);
 INSTANTIATE_TEST_SUITE_P(
         PerInstance, GraphicsComposerAidlCommandTest,
