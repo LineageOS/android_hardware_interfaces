@@ -1,0 +1,98 @@
+props {
+  owner: Vendor
+  module: "android.face.virt.FaceHalProperties"
+  prop {
+    api_name: "authenticator_id"
+    type: Long
+    access: ReadWrite
+    prop_name: "vendor.face.virtual.authenticator_id"
+  }
+  prop {
+    api_name: "challenge"
+    type: Long
+    access: ReadWrite
+    prop_name: "vendor.face.virtual.challenge"
+  }
+  prop {
+    api_name: "enrollment_hit"
+    type: Integer
+    access: ReadWrite
+    prop_name: "vendor.face.virtual.enrollment_hit"
+  }
+  prop {
+    api_name: "enrollments"
+    type: IntegerList
+    access: ReadWrite
+    prop_name: "persist.vendor.face.virtual.enrollments"
+  }
+  prop {
+    api_name: "features"
+    type: IntegerList
+    access: ReadWrite
+    prop_name: "persist.vendor.face.virtual.features"
+  }
+  prop {
+    api_name: "lockout"
+    access: ReadWrite
+    prop_name: "vendor.face.virtual.lockout"
+  }
+  prop {
+    api_name: "next_enrollment"
+    type: String
+    access: ReadWrite
+    prop_name: "vendor.face.virtual.next_enrollment"
+  }
+  prop {
+    api_name: "operation_authenticate_duration"
+    type: Integer
+    access: ReadWrite
+    prop_name: "vendor.face.virtual.operation_authenticate_duration"
+  }
+  prop {
+    api_name: "operation_authenticate_fails"
+    access: ReadWrite
+    prop_name: "vendor.face.virtual.operation_authenticate_fails"
+  }
+  prop {
+    api_name: "operation_authenticate_latency"
+    type: Integer
+    access: ReadWrite
+    prop_name: "vendor.face.virtual.operation_authenticate_latency"
+  }
+  prop {
+    api_name: "operation_detect_interaction_fails"
+    access: ReadWrite
+    prop_name: "vendor.face.virtual.operation_detect_interaction_fails"
+  }
+  prop {
+    api_name: "operation_detect_interaction_latency"
+    type: Integer
+    access: ReadWrite
+    prop_name: "vendor.face.virtual.operation_detect_interaction_latency"
+  }
+  prop {
+    api_name: "operation_enroll_fails"
+    access: ReadWrite
+    prop_name: "vendor.face.virtual.operation_enroll_fails"
+  }
+  prop {
+    api_name: "operation_start_enroll_latency"
+    type: Integer
+    access: ReadWrite
+    prop_name: "vendor.face.virtual.operation_start_enroll_latency"
+  }
+  prop {
+    api_name: "strength"
+    type: String
+    access: ReadWrite
+    prop_name: "persist.vendor.face.virtual.strength"
+    enum_values: "convenience|weak|strong"
+  }
+  prop {
+    api_name: "type"
+    type: String
+    access: ReadWrite
+    prop_name: "persist.vendor.face.virtual.type"
+    enum_values: "IR|RGB"
+  }
+}
