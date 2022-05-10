@@ -25,7 +25,6 @@ cc_library_shared {
     name: "libhwc2onfbadapter",
     vendor: true,
 
-    clang: true,
     cflags: [
         "-Wall",
         "-Wextra",
@@ -37,6 +36,9 @@ cc_library_shared {
     ],
 
     header_libs: ["libhardware_headers"],
-    shared_libs: ["liblog", "libsync"],
+    shared_libs: [
+        "liblog",
+        "libsync",
+    ],
     export_include_dirs: ["include"],
 }
