@@ -36,7 +36,7 @@ cc_library {
     ],
     export_include_dirs: [
         "include",
-    ]
+    ],
 }
 
 cc_test {
@@ -56,6 +56,5 @@ cc_test {
         "libhidlbase",
     ],
     test_suites: ["general-tests"],
-    clang: true,
-    cflags: [ "-O0" ],
+    cflags: ["-O0"],
 }
