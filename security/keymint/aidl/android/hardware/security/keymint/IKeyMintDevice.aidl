@@ -196,12 +196,12 @@ import android.hardware.security.secureclock.TimeStampToken;
  * derive a key that is used to encrypt the private/secret key material.
  *
  * The root of trust consists of a bitstring that must be derived from the public key used by
- * Verified Boot to verify the signature on the boot image and from the lock state of the
- * device.  If the public key is changed to allow a different system image to be used or if the
- * lock state is changed, then all of the IKeyMintDevice-protected keys created by the previous
- * system state must be unusable, unless the previous state is restored.  The goal is to increase
- * the value of the software-enforced key access controls by making it impossible for an attacker-
- * installed operating system to use IKeyMintDevice keys.
+ * Verified Boot to verify the signature on the boot image, from the lock state and from the
+ * Verified Boot state of the device.  If the public key is changed to allow a different system
+ * image to be used or if the lock state is changed, then all of the IKeyMintDevice-protected keys
+ * created by the previous system state must be unusable, unless the previous state is restored.
+ * The goal is to increase the value of the software-enforced key access controls by making it
+ * impossible for an attacker-installed operating system to use IKeyMintDevice keys.
  *
  * == Version Binding ==
  *
