@@ -19,9 +19,11 @@
 
 #include <aidl/Gtest.h>
 #include <aidl/Vintf.h>
+#include <aidl/android/hardware/automotive/evs/BnEvsEnumeratorStatusCallback.h>
 #include <aidl/android/hardware/automotive/evs/BufferDesc.h>
 #include <aidl/android/hardware/automotive/evs/CameraDesc.h>
 #include <aidl/android/hardware/automotive/evs/CameraParam.h>
+#include <aidl/android/hardware/automotive/evs/DeviceStatus.h>
 #include <aidl/android/hardware/automotive/evs/DisplayDesc.h>
 #include <aidl/android/hardware/automotive/evs/DisplayState.h>
 #include <aidl/android/hardware/automotive/evs/EvsEventDesc.h>
@@ -30,6 +32,7 @@
 #include <aidl/android/hardware/automotive/evs/IEvsCamera.h>
 #include <aidl/android/hardware/automotive/evs/IEvsDisplay.h>
 #include <aidl/android/hardware/automotive/evs/IEvsEnumerator.h>
+#include <aidl/android/hardware/automotive/evs/IEvsEnumeratorStatusCallback.h>
 #include <aidl/android/hardware/automotive/evs/IEvsUltrasonicsArray.h>
 #include <aidl/android/hardware/automotive/evs/ParameterRange.h>
 #include <aidl/android/hardware/automotive/evs/Stream.h>
@@ -77,11 +80,11 @@ typedef struct {
 } RawStreamConfig;
 constexpr size_t kStreamCfgSz = sizeof(RawStreamConfig) / sizeof(int32_t);
 
-}  // namespace
-
+using ::aidl::android::hardware::automotive::evs::BnEvsEnumeratorStatusCallback;
 using ::aidl::android::hardware::automotive::evs::BufferDesc;
 using ::aidl::android::hardware::automotive::evs::CameraDesc;
 using ::aidl::android::hardware::automotive::evs::CameraParam;
+using ::aidl::android::hardware::automotive::evs::DeviceStatus;
 using ::aidl::android::hardware::automotive::evs::DisplayDesc;
 using ::aidl::android::hardware::automotive::evs::DisplayState;
 using ::aidl::android::hardware::automotive::evs::EvsEventDesc;
@@ -90,6 +93,7 @@ using ::aidl::android::hardware::automotive::evs::EvsResult;
 using ::aidl::android::hardware::automotive::evs::IEvsCamera;
 using ::aidl::android::hardware::automotive::evs::IEvsDisplay;
 using ::aidl::android::hardware::automotive::evs::IEvsEnumerator;
+using ::aidl::android::hardware::automotive::evs::IEvsEnumeratorStatusCallback;
 using ::aidl::android::hardware::automotive::evs::IEvsUltrasonicsArray;
 using ::aidl::android::hardware::automotive::evs::ParameterRange;
 using ::aidl::android::hardware::automotive::evs::Stream;
@@ -98,6 +102,8 @@ using ::aidl::android::hardware::graphics::common::BufferUsage;
 using ::aidl::android::hardware::graphics::common::HardwareBufferDescription;
 using ::aidl::android::hardware::graphics::common::PixelFormat;
 using std::chrono_literals::operator""s;
+
+}  // namespace
 
 // The main test class for EVS
 class EvsAidlTest : public ::testing::TestWithParam<std::string> {
@@ -238,6 +244,13 @@ class EvsAidlTest : public ::testing::TestWithParam<std::string> {
 
         return targetCfg;
     }
+
+    class DeviceStatusCallback : public BnEvsEnumeratorStatusCallback {
+        ndk::ScopedAStatus deviceStatusChanged(const std::vector<DeviceStatus>&) override {
+            // This empty implementation returns always ok().
+            return ndk::ScopedAStatus::ok();
+        }
+    };
 
     // Every test needs access to the service
     std::shared_ptr<IEvsEnumerator> mEnumerator;
@@ -2061,6 +2074,20 @@ TEST_P(EvsAidlTest, CameraStreamExternalBuffering) {
             alloc.free(::android::dupFromAidl(b.buffer.handle));
         }
         buffers.resize(0);
+    }
+}
+
+TEST_P(EvsAidlTest, DeviceStatusCallbackRegistration) {
+    std::shared_ptr<IEvsEnumeratorStatusCallback> cb =
+            ndk::SharedRefBase::make<DeviceStatusCallback>();
+    ndk::ScopedAStatus status = mEnumerator->registerStatusCallback(cb);
+    if (mIsHwModule) {
+        ASSERT_TRUE(status.isOk());
+    } else {
+        // A callback registration may fail if a HIDL EVS HAL implementation is
+        // running.
+        ASSERT_TRUE(status.isOk() ||
+                    status.getServiceSpecificError() == static_cast<int>(EvsResult::NOT_SUPPORTED));
     }
 }
 
