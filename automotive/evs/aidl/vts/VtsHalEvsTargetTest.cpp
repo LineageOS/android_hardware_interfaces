@@ -528,7 +528,7 @@ TEST_P(EvsAidlTest, CameraStreamBuffering) {
         // Ask for a very large number of buffers in flight to ensure it errors correctly
         auto badResult = pCam->setMaxFramesInFlight(std::numeric_limits<int32_t>::max());
         EXPECT_TRUE(!badResult.isOk() && badResult.getServiceSpecificError() ==
-                                                 static_cast<int>(EvsResult::INVALID_ARG));
+                                                 static_cast<int>(EvsResult::BUFFER_NOT_AVAILABLE));
 
         // Now ask for exactly two buffers in flight as we'll test behavior in that case
         ASSERT_TRUE(pCam->setMaxFramesInFlight(kBuffersToHold).isOk());
