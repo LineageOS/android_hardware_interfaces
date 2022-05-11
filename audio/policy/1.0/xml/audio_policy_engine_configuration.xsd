@@ -189,8 +189,19 @@
     </xs:complexType>
     <xs:complexType name="valueType">
         <xs:attribute name="literal" type="xs:string" use="required"/>
-        <xs:attribute name="numerical" type="xs:int" use="required"/>
+        <xs:attribute name="numerical" type="xs:long" use="required"/>
+        <xs:attribute name="android_type" type="longDecimalOrHexType" use="optional"/>
     </xs:complexType>
+
+    <xs:simpleType name="longDecimalOrHexType">
+      <xs:union memberTypes="xs:long longHexType" />
+    </xs:simpleType>
+
+    <xs:simpleType name="longHexType">
+      <xs:restriction base="xs:string">
+        <xs:pattern value="0x[0-9A-Fa-f]{1,16}"/>
+      </xs:restriction>
+    </xs:simpleType>
 
     <xs:complexType name="attributesRefType">
         <xs:sequence>
