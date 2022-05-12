@@ -142,6 +142,25 @@ class KeyMintBenchmarkTest {
         return Digest::NONE;
     }
 
+    optional<EcCurve> getCurveFromLength(int keySize) {
+        switch (keySize) {
+            case 224:
+                return EcCurve::P_224;
+                break;
+            case 256:
+                return EcCurve::P_256;
+                break;
+            case 384:
+                return EcCurve::P_384;
+                break;
+            case 521:
+                return EcCurve::P_521;
+                break;
+            default:
+                return {};
+        }
+    }
+
     bool GenerateKey(string transform, int keySize, bool sign = false) {
         if (transform == key_transform_) {
             return true;
@@ -184,6 +203,12 @@ class KeyMintBenchmarkTest {
         }
         if (algorithm == Algorithm::EC) {
             authSet.SetDefaultValidity();
+            std::optional<EcCurve> curve = getCurveFromLength(keySize);
+            if (!curve) {
+                std::cerr << "Error: invalid EC-Curve from size " << keySize << std::endl;
+                return false;
+            }
+            authSet.Authorization(TAG_EC_CURVE, curve.value());
         }
         error_ = GenerateKey(authSet);
         return error_ == ErrorCode::OK;
