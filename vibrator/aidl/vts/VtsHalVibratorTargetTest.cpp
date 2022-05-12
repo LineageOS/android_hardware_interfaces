@@ -332,6 +332,7 @@ TEST_P(VibratorAidl, ChangeVibrationAmplitude) {
         sleep(1);
         EXPECT_EQ(Status::EX_NONE, vibrator->setAmplitude(1.0f).exceptionCode());
         sleep(1);
+        EXPECT_TRUE(vibrator->off().isOk());
     }
 }
 
