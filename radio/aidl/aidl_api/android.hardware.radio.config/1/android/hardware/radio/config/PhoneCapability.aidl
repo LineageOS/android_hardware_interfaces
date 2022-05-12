@@ -32,7 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.config;
-@VintfStability
+@JavaDerive(toString=true) @VintfStability
 parcelable PhoneCapability {
   byte maxActiveData;
   byte maxActiveInternetData;
