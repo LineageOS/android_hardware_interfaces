@@ -91,17 +91,21 @@ ndk::ScopedAStatus LeAudioSoftwareAudioProvider::startSession(
   else if (session_type_ == SessionType::LE_AUDIO_SOFTWARE_DECODING_DATAPATH)
     buffer_modifier = kBufferInCount;
 
+  // 24 bit audio stream is sent as unpacked
+  int bytes_per_sample =
+      (pcm_config.bitsPerSample == 24) ? 4 : (pcm_config.bitsPerSample / 8);
+
   uint32_t data_mq_size =
       (ceil(pcm_config.sampleRateHz) / 1000) *
-      channel_mode_to_channel_count(pcm_config.channelMode) *
-      (pcm_config.bitsPerSample / 8) * (pcm_config.dataIntervalUs / 1000) *
-      buffer_modifier;
+      channel_mode_to_channel_count(pcm_config.channelMode) * bytes_per_sample *
+      (pcm_config.dataIntervalUs / 1000) * buffer_modifier;
   if (data_mq_size <= 0) {
     LOG(ERROR) << __func__ << "Unexpected audio buffer size: " << data_mq_size
                << ", SampleRateHz: " << pcm_config.sampleRateHz
                << ", ChannelMode: " << toString(pcm_config.channelMode)
                << ", BitsPerSample: "
                << static_cast<int>(pcm_config.bitsPerSample)
+               << ", BytesPerSample: " << bytes_per_sample
                << ", DataIntervalUs: " << pcm_config.dataIntervalUs
                << ", SessionType: " << toString(session_type_);
     return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
