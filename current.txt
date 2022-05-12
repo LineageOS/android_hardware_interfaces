@@ -5,6 +5,7 @@
 
 717c17cd380bb48710dff601d1a03351d4ebc28028353d5d60489248f506523c android.hardware.tests.lazy@1.0::ILazy
 67222a2ed4071b6c232e671ce0f4be4f85c1c6fb017ec2355396adaae1fe26be android.hardware.tests.lazy@1.1::ILazy
+c1c5fbd3a81c0d190c89348eed39539c77e97fe1d8d1b9874eba56393e70c6f0 android.hardware.tests.lazy_cb@1.0::ILazyCb
 
 # HALs released in Android O
 
@@ -919,5 +920,13 @@ fa76bced6b1b71c40fc706c508a9011284c57f57831cd0cf5f45653ed4ea463e android.hardwar
 ec11690878547a55eb1d6a286f83e227d8328c2cf1d069316b55b4e4084fd9a2 android.hardware.audio@7.1::IStreamOut
 786b8619580d7cfae70f02136307e141481714fcc76c6b700e655568f1bf0733 android.hardware.audio@7.1::IStreamOutLatencyModeCallback
 bfbf383768881eb06f99db76ce79135e37b2b105a90d67bf7468f8df05180bf4 android.hardware.audio@7.1::types
+1de444305084b815a1cf45b41d8bd7fa8dc960da89c2d548f38feaa662d8f310 android.hardware.wifi@1.6::IWifi
+e8cf2570d2f3d8cf7a7251e85a87cbf633d0bff3c28e1c9bbf339dea04b254fa android.hardware.wifi@1.6::IWifiChip
+e05c047de0a7f2cc8f166a1c808b78e8565ff866fb69991fc3bbfa9141871d5b android.hardware.wifi@1.6::IWifiNanIface
+b7ce2d87841585551b082fca6d099622e63b7099e0d8013f687ea1a1dc35c4dc android.hardware.wifi@1.6::IWifiNanIfaceEventCallback
+8c51742b2540b005edb16d2003b87f8e8220e113b234ddbb133f95e86837e9aa android.hardware.wifi@1.6::IWifiRttController
+537f0bcfaf9d91b3136984f5e85d6ea559771726d6624a1d17c151b9c9f4b2f9 android.hardware.wifi@1.6::IWifiRttControllerEventCallback
+1bac6a7c8136dfb0414fe5639eec115aa2d12927e64a0642a43fb53225f099b2 android.hardware.wifi@1.6::IWifiStaIface
+0a800e010e8eb6eecdfdc96f04fd2ae2f417a79a74a7c0eec3a9f539199bccd4 android.hardware.wifi@1.6::types
 
 # There will be no more HIDL HALs. Use AIDL instead.
