@@ -159,3 +159,70 @@ cc_binary {
     init_rc: ["android.hardware.health-service.example_recovery.rc"],
     overrides: ["charger.recovery"],
 }
+
+// AIDL Fuzz version of libhealth2impl.
+cc_library_static {
+    name: "fuzz_libhealth_aidl_impl",
+    defaults: [
+        "libhealth_aidl_common_defaults",
+        "libhealth_aidl_charger_defaults",
+    ],
+    recovery_available: true,
+    export_include_dirs: ["include"],
+    export_static_lib_headers: [
+        "libbatterymonitor",
+    ],
+    srcs: [
+        "ChargerUtils.cpp",
+        "health-convert.cpp",
+        "HalHealthLoop.cpp",
+        "Health.cpp",
+        "LinkedCallback.cpp",
+    ],
+    target: {
+        recovery: {
+            exclude_srcs: [
+                "ChargerUtils.cpp",
+            ],
+        },
+    },
+}
+
+cc_fuzz {
+    name: "android.hardware.health-service.aidl_fuzzer",
+    defaults: [
+        "libhealth_aidl_impl_user",
+    ],
+    static_libs: [
+        "android.hardware.health-V1-ndk",
+        "libbase",
+        "libbinder_random_parcel",
+        "libcutils",
+        "liblog",
+        "libutils",
+        "fuzz_libhealth_aidl_impl",
+    ],
+    target: {
+        android: {
+            shared_libs: [
+                "libbinder_ndk",
+                "libbinder",
+            ],
+        },
+        host: {
+            static_libs: [
+                "libbinder_ndk",
+                "libbinder",
+            ],
+        },
+        darwin: {
+            enabled: false,
+        },
+    },
+    srcs: ["fuzzer.cpp"],
+    fuzz_config: {
+        cc: [
+            "hamzeh@google.com",
+        ],
+    },
+}
