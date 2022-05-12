@@ -32,7 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.messaging;
-@VintfStability
+@JavaDerive(toString=true) @VintfStability
 parcelable CdmaBroadcastSmsConfigInfo {
   int serviceCategory;
   int language;

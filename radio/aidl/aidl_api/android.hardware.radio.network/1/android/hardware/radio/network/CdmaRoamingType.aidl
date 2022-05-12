@@ -32,7 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.network;
-@Backing(type="int") @VintfStability
+@Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum CdmaRoamingType {
   HOME_NETWORK = 0,
   AFFILIATED_ROAM = 1,

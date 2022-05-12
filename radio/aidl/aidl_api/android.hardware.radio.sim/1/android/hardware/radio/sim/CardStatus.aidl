@@ -32,7 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.sim;
-@VintfStability
+@JavaDerive(toString=true) @VintfStability
 parcelable CardStatus {
   int cardState;
   android.hardware.radio.sim.PinState universalPinState;
