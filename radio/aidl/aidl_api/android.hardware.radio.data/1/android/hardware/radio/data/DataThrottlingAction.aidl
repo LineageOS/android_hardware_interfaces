@@ -32,7 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.data;
-@Backing(type="byte") @VintfStability
+@Backing(type="byte") @JavaDerive(toString=true) @VintfStability
 enum DataThrottlingAction {
   NO_DATA_THROTTLING = 0,
   THROTTLE_SECONDARY_CARRIER = 1,
