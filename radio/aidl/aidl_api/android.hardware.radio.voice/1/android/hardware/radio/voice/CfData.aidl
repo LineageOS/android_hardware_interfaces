@@ -32,7 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.voice;
-@VintfStability
+@JavaDerive(toString=true) @VintfStability
 parcelable CfData {
   android.hardware.radio.voice.CallForwardInfo[] cfInfo;
   const int NUM_SERVICE_CLASSES = 7;
