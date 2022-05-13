@@ -32,28 +32,18 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.bluetooth.audio;
-@VintfStability
-parcelable CodecConfiguration {
-  android.hardware.bluetooth.audio.CodecType codecType;
-  int encodedAudioBitrate;
-  int peerMtu;
-  boolean isScmstEnabled;
-  android.hardware.bluetooth.audio.CodecConfiguration.CodecSpecific config;
-  @VintfStability
-  parcelable VendorConfiguration {
-    int vendorId;
-    char codecId;
-    ParcelableHolder codecConfig;
-  }
-  @VintfStability
-  union CodecSpecific {
-    android.hardware.bluetooth.audio.SbcConfiguration sbcConfig;
-    android.hardware.bluetooth.audio.AacConfiguration aacConfig;
-    android.hardware.bluetooth.audio.LdacConfiguration ldacConfig;
-    android.hardware.bluetooth.audio.AptxConfiguration aptxConfig;
-    android.hardware.bluetooth.audio.AptxAdaptiveConfiguration aptxAdaptiveConfig;
-    android.hardware.bluetooth.audio.Lc3Configuration lc3Config;
-    android.hardware.bluetooth.audio.CodecConfiguration.VendorConfiguration vendorConfig;
-    @nullable android.hardware.bluetooth.audio.OpusConfiguration opusConfig;
-  }
+@Backing(type="byte") @VintfStability
+enum SessionType {
+  UNKNOWN = 0,
+  A2DP_SOFTWARE_ENCODING_DATAPATH = 1,
+  A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH = 2,
+  HEARING_AID_SOFTWARE_ENCODING_DATAPATH = 3,
+  LE_AUDIO_SOFTWARE_ENCODING_DATAPATH = 4,
+  LE_AUDIO_SOFTWARE_DECODING_DATAPATH = 5,
+  LE_AUDIO_HARDWARE_OFFLOAD_ENCODING_DATAPATH = 6,
+  LE_AUDIO_HARDWARE_OFFLOAD_DECODING_DATAPATH = 7,
+  LE_AUDIO_BROADCAST_SOFTWARE_ENCODING_DATAPATH = 8,
+  LE_AUDIO_BROADCAST_HARDWARE_OFFLOAD_ENCODING_DATAPATH = 9,
+  A2DP_SOFTWARE_DECODING_DATAPATH = 10,
+  A2DP_HARDWARE_OFFLOAD_DECODING_DATAPATH = 11,
 }
