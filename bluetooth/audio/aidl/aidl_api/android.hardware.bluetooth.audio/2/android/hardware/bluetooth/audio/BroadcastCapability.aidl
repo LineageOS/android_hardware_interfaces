@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 The Android Open Source Project
+ * Copyright 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,27 +33,18 @@
 
 package android.hardware.bluetooth.audio;
 @VintfStability
-parcelable CodecConfiguration {
+parcelable BroadcastCapability {
   android.hardware.bluetooth.audio.CodecType codecType;
-  int encodedAudioBitrate;
-  int peerMtu;
-  boolean isScmstEnabled;
-  android.hardware.bluetooth.audio.CodecConfiguration.CodecSpecific config;
+  android.hardware.bluetooth.audio.AudioLocation supportedChannel;
+  int channelCountPerStream;
+  android.hardware.bluetooth.audio.BroadcastCapability.LeAudioCodecCapabilities leAudioCodecCapabilities;
   @VintfStability
-  parcelable VendorConfiguration {
-    int vendorId;
-    char codecId;
-    ParcelableHolder codecConfig;
+  parcelable VendorCapabilities {
+    ParcelableHolder extension;
   }
   @VintfStability
-  union CodecSpecific {
-    android.hardware.bluetooth.audio.SbcConfiguration sbcConfig;
-    android.hardware.bluetooth.audio.AacConfiguration aacConfig;
-    android.hardware.bluetooth.audio.LdacConfiguration ldacConfig;
-    android.hardware.bluetooth.audio.AptxConfiguration aptxConfig;
-    android.hardware.bluetooth.audio.AptxAdaptiveConfiguration aptxAdaptiveConfig;
-    android.hardware.bluetooth.audio.Lc3Configuration lc3Config;
-    android.hardware.bluetooth.audio.CodecConfiguration.VendorConfiguration vendorConfig;
-    @nullable android.hardware.bluetooth.audio.OpusConfiguration opusConfig;
+  union LeAudioCodecCapabilities {
+    @nullable android.hardware.bluetooth.audio.Lc3Capabilities[] lc3Capabilities;
+    @nullable android.hardware.bluetooth.audio.BroadcastCapability.VendorCapabilities[] vendorCapabillities;
   }
 }
