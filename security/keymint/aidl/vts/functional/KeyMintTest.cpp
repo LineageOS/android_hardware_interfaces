@@ -2448,6 +2448,29 @@ TEST_P(NewKeyGenerationTest, EcdsaInvalidCurve) {
 }
 
 /*
+ * NewKeyGenerationTest.EcdsaMissingCurve
+ *
+ * Verifies that EC key generation fails if EC_CURVE not specified after KeyMint V2.
+ */
+TEST_P(NewKeyGenerationTest, EcdsaMissingCurve) {
+    if (AidlVersion() < 2) {
+        /*
+         * The KeyMint V1 spec required that EC_CURVE be specified for EC keys.
+         * However, this was not checked at the time so we can only be strict about checking this
+         * for implementations of KeyMint version 2 and above.
+         */
+        GTEST_SKIP() << "Requiring EC_CURVE only strict since KeyMint v2";
+    }
+    /* If EC_CURVE not provided, generateKey
+     * must return ErrorCode::UNSUPPORTED_KEY_SIZE or ErrorCode::UNSUPPORTED_EC_CURVE.
+     */
+    auto result = GenerateKey(
+            AuthorizationSetBuilder().EcdsaKey(256).Digest(Digest::NONE).SetDefaultValidity());
+    ASSERT_TRUE(result == ErrorCode::UNSUPPORTED_KEY_SIZE ||
+                result == ErrorCode::UNSUPPORTED_EC_CURVE);
+}
+
+/*
  * NewKeyGenerationTest.EcdsaMismatchKeySize
  *
  * Verifies that specifying mismatched key size and curve for EC key generation returns
