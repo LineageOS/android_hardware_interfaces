@@ -32,7 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.data;
-@VintfStability
+@JavaDerive(toString=true) @VintfStability
 parcelable TrafficDescriptor {
   @nullable String dnn;
   @nullable android.hardware.radio.data.OsAppId osAppId;
