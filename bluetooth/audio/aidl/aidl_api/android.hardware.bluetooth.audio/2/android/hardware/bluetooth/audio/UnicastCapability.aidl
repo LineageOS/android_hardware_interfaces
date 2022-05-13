@@ -33,27 +33,19 @@
 
 package android.hardware.bluetooth.audio;
 @VintfStability
-parcelable CodecConfiguration {
+parcelable UnicastCapability {
   android.hardware.bluetooth.audio.CodecType codecType;
-  int encodedAudioBitrate;
-  int peerMtu;
-  boolean isScmstEnabled;
-  android.hardware.bluetooth.audio.CodecConfiguration.CodecSpecific config;
+  android.hardware.bluetooth.audio.AudioLocation supportedChannel;
+  int deviceCount;
+  int channelCountPerDevice;
+  android.hardware.bluetooth.audio.UnicastCapability.LeAudioCodecCapabilities leAudioCodecCapabilities;
   @VintfStability
-  parcelable VendorConfiguration {
-    int vendorId;
-    char codecId;
-    ParcelableHolder codecConfig;
+  parcelable VendorCapabilities {
+    ParcelableHolder extension;
   }
   @VintfStability
-  union CodecSpecific {
-    android.hardware.bluetooth.audio.SbcConfiguration sbcConfig;
-    android.hardware.bluetooth.audio.AacConfiguration aacConfig;
-    android.hardware.bluetooth.audio.LdacConfiguration ldacConfig;
-    android.hardware.bluetooth.audio.AptxConfiguration aptxConfig;
-    android.hardware.bluetooth.audio.AptxAdaptiveConfiguration aptxAdaptiveConfig;
-    android.hardware.bluetooth.audio.Lc3Configuration lc3Config;
-    android.hardware.bluetooth.audio.CodecConfiguration.VendorConfiguration vendorConfig;
-    @nullable android.hardware.bluetooth.audio.OpusConfiguration opusConfig;
+  union LeAudioCodecCapabilities {
+    android.hardware.bluetooth.audio.Lc3Capabilities lc3Capabilities;
+    android.hardware.bluetooth.audio.UnicastCapability.VendorCapabilities vendorCapabillities;
   }
 }
