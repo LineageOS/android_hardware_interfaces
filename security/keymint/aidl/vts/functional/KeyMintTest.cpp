@@ -6143,7 +6143,7 @@ TEST_P(EncryptionOperationsTest, AesGcmAadNoData) {
 
     // Encrypt
     AuthorizationSet begin_out_params;
-    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, params, &begin_out_params));
+    ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, params, &begin_out_params));
     string ciphertext;
     AuthorizationSet finish_out_params;
     ASSERT_EQ(ErrorCode::OK, UpdateAad(aad));
@@ -6186,7 +6186,7 @@ TEST_P(EncryptionOperationsTest, AesGcmMultiPartAad) {
                                 .Authorization(TAG_MAC_LENGTH, tag_bits);
     AuthorizationSet begin_out_params;
 
-    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, begin_params, &begin_out_params));
+    ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, begin_params, &begin_out_params));
 
     // No data, AAD only.
     EXPECT_EQ(ErrorCode::OK, UpdateAad("foo"));
@@ -6202,7 +6202,7 @@ TEST_P(EncryptionOperationsTest, AesGcmMultiPartAad) {
     begin_params.push_back(begin_out_params);
 
     // Decrypt
-    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, begin_params));
+    ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, begin_params));
     EXPECT_EQ(ErrorCode::OK, UpdateAad("foofoo"));
     string plaintext;
     EXPECT_EQ(ErrorCode::OK, Finish(ciphertext, &plaintext));
@@ -6229,7 +6229,7 @@ TEST_P(EncryptionOperationsTest, AesGcmAadOutOfOrder) {
                                 .Authorization(TAG_MAC_LENGTH, 128);
     AuthorizationSet begin_out_params;
 
-    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, begin_params, &begin_out_params));
+    ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, begin_params, &begin_out_params));
 
     EXPECT_EQ(ErrorCode::OK, UpdateAad("foo"));
     string ciphertext;
@@ -6263,7 +6263,7 @@ TEST_P(EncryptionOperationsTest, AesGcmBadAad) {
 
     // Encrypt
     AuthorizationSet begin_out_params;
-    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, begin_params, &begin_out_params));
+    ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, begin_params, &begin_out_params));
     EXPECT_EQ(ErrorCode::OK, UpdateAad("foobar"));
     string ciphertext;
     EXPECT_EQ(ErrorCode::OK, Finish(message, &ciphertext));
@@ -6272,7 +6272,7 @@ TEST_P(EncryptionOperationsTest, AesGcmBadAad) {
     begin_params.push_back(begin_out_params);
 
     // Decrypt.
-    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, begin_params, &begin_out_params));
+    ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, begin_params, &begin_out_params));
     EXPECT_EQ(ErrorCode::OK, UpdateAad("barfoo"));
     string plaintext;
     EXPECT_EQ(ErrorCode::VERIFICATION_FAILED, Finish(ciphertext, &plaintext));
@@ -6299,7 +6299,7 @@ TEST_P(EncryptionOperationsTest, AesGcmWrongNonce) {
 
     // Encrypt
     AuthorizationSet begin_out_params;
-    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, begin_params, &begin_out_params));
+    ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, begin_params, &begin_out_params));
     EXPECT_EQ(ErrorCode::OK, UpdateAad("foobar"));
     string ciphertext;
     AuthorizationSet finish_out_params;
@@ -6309,7 +6309,7 @@ TEST_P(EncryptionOperationsTest, AesGcmWrongNonce) {
     begin_params.push_back(TAG_NONCE, AidlBuf("123456789012"));
 
     // Decrypt.
-    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, begin_params, &begin_out_params));
+    ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, begin_params, &begin_out_params));
     EXPECT_EQ(ErrorCode::OK, UpdateAad("foobar"));
     string plaintext;
     EXPECT_EQ(ErrorCode::VERIFICATION_FAILED, Finish(ciphertext, &plaintext));
@@ -6341,7 +6341,7 @@ TEST_P(EncryptionOperationsTest, AesGcmCorruptTag) {
 
     // Encrypt
     AuthorizationSet begin_out_params;
-    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, params, &begin_out_params));
+    ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, params, &begin_out_params));
     EXPECT_EQ(ErrorCode::OK, UpdateAad(aad));
     string ciphertext;
     EXPECT_EQ(ErrorCode::OK, Finish(message, &ciphertext));
@@ -6353,7 +6353,7 @@ TEST_P(EncryptionOperationsTest, AesGcmCorruptTag) {
     params.push_back(begin_out_params);
 
     // Decrypt.
-    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, params));
+    ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, params));
     EXPECT_EQ(ErrorCode::OK, UpdateAad(aad));
     string plaintext;
     EXPECT_EQ(ErrorCode::VERIFICATION_FAILED, Finish(ciphertext, &plaintext));
@@ -6466,7 +6466,7 @@ TEST_P(EncryptionOperationsTest, TripleDesEcbPkcs7PaddingCorrupted) {
     for (size_t i = 0; i < kMaxPaddingCorruptionRetries; ++i) {
         ++ciphertext[ciphertext.size() / 2];
 
-        EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, begin_params));
+        ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, begin_params));
         string plaintext;
         EXPECT_EQ(ErrorCode::OK, Update(ciphertext, &plaintext));
         ErrorCode error = Finish(&plaintext);
@@ -6738,7 +6738,7 @@ TEST_P(EncryptionOperationsTest, TripleDesEcbCbcNoPaddingWrongInputSize) {
         auto begin_params =
                 AuthorizationSetBuilder().BlockMode(blockMode).Padding(PaddingMode::NONE);
         AuthorizationSet output_params;
-        EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, begin_params, &output_params));
+        ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, begin_params, &output_params));
         string ciphertext;
         EXPECT_EQ(ErrorCode::INVALID_INPUT_LENGTH, Finish(message, "", &ciphertext));
 
@@ -6817,7 +6817,7 @@ TEST_P(EncryptionOperationsTest, TripleDesCbcPkcs7PaddingCorrupted) {
     for (size_t i = 0; i < kMaxPaddingCorruptionRetries; ++i) {
         SCOPED_TRACE(testing::Message() << "i = " << i);
         ++ciphertext[ciphertext.size() / 2];
-        EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, begin_params));
+        ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, begin_params));
         string plaintext;
         EXPECT_EQ(ErrorCode::OK, Update(ciphertext, &plaintext));
         ErrorCode error = Finish(&plaintext);
@@ -6849,7 +6849,7 @@ TEST_P(EncryptionOperationsTest, TripleDesCbcIncrementalNoPadding) {
     AuthorizationSet input_params =
             AuthorizationSetBuilder().BlockMode(BlockMode::CBC).Padding(PaddingMode::NONE);
     AuthorizationSet output_params;
-    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, input_params, &output_params));
+    ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, input_params, &output_params));
 
     string ciphertext;
     for (size_t i = 0; i < message.size(); i += increment)
@@ -6863,7 +6863,7 @@ TEST_P(EncryptionOperationsTest, TripleDesCbcIncrementalNoPadding) {
     input_params.push_back(TAG_PADDING, PaddingMode::NONE);
     output_params.Clear();
 
-    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, input_params, &output_params));
+    ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, input_params, &output_params));
     string plaintext;
     for (size_t i = 0; i < ciphertext.size(); i += increment)
         EXPECT_EQ(ErrorCode::OK, Update(ciphertext.substr(i, increment), &plaintext));
@@ -6980,7 +6980,7 @@ TEST_P(UsageCountLimitTest, TestSingleUseAes) {
     } else {
         // Usage count limit tag is enforced by keystore, keymint does nothing.
         EXPECT_TRUE(keystore_auths.Contains(TAG_USAGE_COUNT_LIMIT, 1U));
-        EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, params));
+        ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, params));
     }
 }
 
@@ -7027,7 +7027,7 @@ TEST_P(UsageCountLimitTest, TestLimitedUseAes) {
     } else {
         // Usage count limit tag is enforced by keystore, keymint does nothing.
         EXPECT_TRUE(keystore_auths.Contains(TAG_USAGE_COUNT_LIMIT, 3U));
-        EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, params));
+        ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, params));
     }
 }
 
@@ -7073,7 +7073,7 @@ TEST_P(UsageCountLimitTest, TestSingleUseRsa) {
     } else {
         // Usage count limit tag is enforced by keystore, keymint does nothing.
         EXPECT_TRUE(keystore_auths.Contains(TAG_USAGE_COUNT_LIMIT, 1U));
-        EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::SIGN, params));
+        ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::SIGN, params));
     }
 }
 
@@ -7120,7 +7120,7 @@ TEST_P(UsageCountLimitTest, TestLimitUseRsa) {
     } else {
         // Usage count limit tag is enforced by keystore, keymint does nothing.
         EXPECT_TRUE(keystore_auths.Contains(TAG_USAGE_COUNT_LIMIT, 3U));
-        EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::SIGN, params));
+        ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::SIGN, params));
     }
 }
 
@@ -7433,7 +7433,7 @@ TEST_P(ClearOperationsTest, TooManyOperations) {
         EXPECT_EQ(ErrorCode::OK, Abort(op_handles[j]))
                 << "Aboort failed for i = " << j << std::endl;
     }
-    EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, key_blob_, params, &out_params));
+    ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, key_blob_, params, &out_params));
     AbortIfNeeded();
 }
 
@@ -7458,7 +7458,7 @@ TEST_P(TransportLimitTest, LargeFinishInput) {
                 AuthorizationSetBuilder().BlockMode(BlockMode::ECB).Padding(PaddingMode::NONE);
 
         AuthorizationSet out_params;
-        EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, cipher_params, &out_params));
+        ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::ENCRYPT, cipher_params, &out_params));
 
         string plain_message = std::string(1 << msg_size, 'x');
         string encrypted_message;
@@ -7469,7 +7469,7 @@ TEST_P(TransportLimitTest, LargeFinishInput) {
                 << "Encrypt finish returned OK, but did not consume all of the given input";
         cipher_params.push_back(out_params);
 
-        EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, cipher_params));
+        ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::DECRYPT, cipher_params));
 
         string decrypted_message;
         rc = Finish(encrypted_message, &decrypted_message);
@@ -7635,7 +7635,7 @@ TEST_P(KeyAgreementTest, Ecdh) {
             if (curve != localCurve) {
                 // If the keys are using different curves KeyMint should fail with
                 // ErrorCode:INVALID_ARGUMENT. Check that.
-                EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::AGREE_KEY, AuthorizationSetBuilder()));
+                ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::AGREE_KEY, AuthorizationSetBuilder()));
                 string ZabFromKeyMintStr;
                 EXPECT_EQ(ErrorCode::INVALID_ARGUMENT,
                           Finish(string(localPublicKey.begin(), localPublicKey.end()),
@@ -7775,7 +7775,7 @@ TEST_P(KeyAgreementTest, EcdhCurve25519Mismatch) {
         vector<uint8_t> encodedPublicKey;
         GenerateLocalEcKey(localCurve, &privKey, &encodedPublicKey);
 
-        EXPECT_EQ(ErrorCode::OK, Begin(KeyPurpose::AGREE_KEY, AuthorizationSetBuilder()));
+        ASSERT_EQ(ErrorCode::OK, Begin(KeyPurpose::AGREE_KEY, AuthorizationSetBuilder()));
         string ZabFromKeyMintStr;
         EXPECT_EQ(ErrorCode::INVALID_ARGUMENT,
                   Finish(string(encodedPublicKey.begin(), encodedPublicKey.end()),
