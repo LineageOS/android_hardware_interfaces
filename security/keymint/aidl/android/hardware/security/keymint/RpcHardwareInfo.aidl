@@ -59,12 +59,16 @@ parcelable RpcHardwareInfo {
      * client should NOT interpret the content of the identifier in any way. The client can only
      * compare identifiers to determine if two IRemotelyProvisionedComponents share the same
      * implementation. Each IRemotelyProvisionedComponent implementation must have a distinct
-     * identifier from all other implementations on the same device.
+     * identifier from all other implementations, and it must be consistent across all devices.
+     * It's critical that this identifier not be usable to uniquely identify a specific device.
      *
      * This identifier must be consistent across reboots, as it is used to store and track
      * provisioned keys in a persistent, on-device database.
      *
      * uniqueId may not be empty, and must not be any longer than 32 characters.
+     *
+     * A recommended construction for this value is "[Vendor] [Component Name] [Major Version]",
+     * e.g. "Google Trusty KeyMint 1".
      *
      * This field was added in API version 2.
      *

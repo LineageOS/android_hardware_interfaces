@@ -32,7 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.sim;
-@Backing(type="int") @VintfStability
+@Backing(type="int") @JavaDerive(toString=true) @VintfStability
 enum SimLockMultiSimPolicy {
   NO_MULTISIM_POLICY = 0,
   ONE_VALID_SIM_MUST_BE_PRESENT = 1,

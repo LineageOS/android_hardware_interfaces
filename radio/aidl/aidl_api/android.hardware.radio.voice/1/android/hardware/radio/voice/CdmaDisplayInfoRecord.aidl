@@ -32,7 +32,7 @@
 // later when a module using the interface is updated, e.g., Mainline modules.
 
 package android.hardware.radio.voice;
-@VintfStability
+@JavaDerive(toString=true) @VintfStability
 parcelable CdmaDisplayInfoRecord {
   String alphaBuf;
   const int CDMA_ALPHA_INFO_BUFFER_LENGTH = 64;
