@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+#include <aidlcommonsupport/NativeHandle.h>
 #include <android-base/properties.h>
+#include <android/binder_manager.h>
 #include <gralloctypes/Gralloc4.h>
 #include <mapper-vts/4.0/MapperVts.h>
 
@@ -35,8 +37,14 @@ Gralloc::Gralloc(const std::string& allocatorServiceName, const std::string& map
 }
 
 void Gralloc::init(const std::string& allocatorServiceName, const std::string& mapperServiceName) {
-    mAllocator = IAllocator::getService(allocatorServiceName);
-    ASSERT_NE(nullptr, mAllocator.get()) << "failed to get allocator service";
+    mAidlAllocator = aidl::android::hardware::graphics::allocator::IAllocator::fromBinder(
+            ndk::SpAIBinder(AServiceManager_checkService(allocatorServiceName.c_str())));
+
+    if (mAidlAllocator == nullptr) {
+        mHidlAllocator = IAllocator::getService(allocatorServiceName);
+    }
+    ASSERT_TRUE(nullptr != mAidlAllocator || mHidlAllocator != nullptr)
+            << "failed to get allocator service";
 
     mMapper = IMapper::getService(mapperServiceName);
     ASSERT_NE(nullptr, mMapper.get()) << "failed to get mapper service";
@@ -45,7 +53,12 @@ void Gralloc::init(const std::string& allocatorServiceName, const std::string& m
 
 void Gralloc::initNoErr(const std::string& allocatorServiceName,
                         const std::string& mapperServiceName) {
-    mAllocator = IAllocator::getService(allocatorServiceName);
+    mAidlAllocator = aidl::android::hardware::graphics::allocator::IAllocator::fromBinder(
+            ndk::SpAIBinder(AServiceManager_checkService(allocatorServiceName.c_str())));
+
+    if (mAidlAllocator == nullptr) {
+        mHidlAllocator = IAllocator::getService(allocatorServiceName);
+    }
 
     mMapper = IMapper::getService(mapperServiceName);
     if (mMapper.get()) {
@@ -68,10 +81,6 @@ Gralloc::~Gralloc() {
     mImportedBuffers.clear();
 }
 
-sp<IAllocator> Gralloc::getAllocator() const {
-    return mAllocator;
-}
-
 const native_handle_t* Gralloc::cloneBuffer(const hidl_handle& rawHandle,
                                             enum Tolerance /*tolerance*/) {
     const native_handle_t* bufferHandle = native_handle_clone(rawHandle.getNativeHandle());
@@ -90,40 +99,40 @@ std::vector<const native_handle_t*> Gralloc::allocate(const BufferDescriptor& de
                                                       uint32_t* outStride) {
     std::vector<const native_handle_t*> bufferHandles;
     bufferHandles.reserve(count);
-    mAllocator->allocate(descriptor, count,
-                         [&](const auto& tmpError, const auto& tmpStride, const auto& tmpBuffers) {
-                             if (canTolerate(tolerance, tmpError)) {
-                                 return;
-                             }
 
-                             if (tmpError != Error::NONE) {
-                                 if (base::GetIntProperty("ro.vendor.build.version.sdk", 0, 0,
-                                                          INT_MAX) < 33) {
-                                     GTEST_SKIP() << "Old vendor grallocs may not support P010";
-                                 } else {
-                                     GTEST_FAIL() << "failed to allocate buffers";
-                                 }
-                             }
-                             ASSERT_EQ(count, tmpBuffers.size()) << "invalid buffer array";
+    auto callback = [&](Error error, uint32_t stride,
+                        const hidl_vec<hidl_handle>& buffers) -> void {
+        if (canTolerate(tolerance, error)) {
+            return;
+        }
 
-                             for (uint32_t i = 0; i < count; i++) {
-                                 const native_handle_t* bufferHandle = nullptr;
-                                 if (import) {
-                                     ASSERT_NO_FATAL_FAILURE(
-                                             bufferHandle = importBuffer(tmpBuffers[i], tolerance));
-                                 } else {
-                                     ASSERT_NO_FATAL_FAILURE(
-                                             bufferHandle = cloneBuffer(tmpBuffers[i], tolerance));
-                                 }
-                                 if (bufferHandle) {
-                                     bufferHandles.push_back(bufferHandle);
-                                 }
-                             }
+        if (error != Error::NONE) {
+            if (base::GetIntProperty("ro.vendor.build.version.sdk", 0, 0, INT_MAX) < 33) {
+                GTEST_SKIP() << "Old vendor grallocs may not support P010";
+            } else {
+                GTEST_FAIL() << "failed to allocate buffers";
+            }
+        }
+        ASSERT_EQ(count, buffers.size()) << "invalid buffer array";
 
-                             if (outStride) {
-                                 *outStride = tmpStride;
-                             }
-                         });
+        for (uint32_t i = 0; i < count; i++) {
+            const native_handle_t* bufferHandle = nullptr;
+            if (import) {
+                ASSERT_NO_FATAL_FAILURE(bufferHandle = importBuffer(buffers[i], tolerance));
+            } else {
+                ASSERT_NO_FATAL_FAILURE(bufferHandle = cloneBuffer(buffers[i], tolerance));
+            }
+            if (bufferHandle) {
+                bufferHandles.push_back(bufferHandle);
+            }
+        }
+
+        if (outStride) {
+            *outStride = stride;
+        }
+    };
+
+    rawAllocate(descriptor, count, callback);
 
     if (::testing::Test::HasFatalFailure()) {
         bufferHandles.clear();
@@ -145,6 +154,23 @@ const native_handle_t* Gralloc::allocate(const IMapper::BufferDescriptorInfo& de
         return nullptr;
     }
     return buffers[0];
+}
+
+void Gralloc::rawAllocate(
+        const BufferDescriptor& descriptor, uint32_t count,
+        std::function<void(Error, uint32_t, const hidl_vec<hidl_handle>&)> callback) {
+    if (mAidlAllocator) {
+        aidl::android::hardware::graphics::allocator::AllocationResult result;
+        auto status = mAidlAllocator->allocate(descriptor, count, &result);
+        const Error error = toHidlError(status);
+        std::vector<hidl_handle> handles;
+        for (const auto& aidlHandle : result.buffers) {
+            handles.push_back(hidl_handle(makeFromAidl(aidlHandle)));
+        }
+        callback(error, result.stride, handles);
+    } else {
+        mHidlAllocator->allocate(descriptor, count, callback);
+    }
 }
 
 sp<IMapper> Gralloc::getMapper() const {
