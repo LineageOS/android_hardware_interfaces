@@ -18,7 +18,7 @@
 
 #include <android-base/logging.h>
 
-#include "CancellationSignal.h"
+#include "util/CancellationSignal.h"
 
 namespace aidl::android::hardware::biometrics::fingerprint {
 

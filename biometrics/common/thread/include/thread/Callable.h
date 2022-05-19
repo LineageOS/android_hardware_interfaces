@@ -16,7 +16,7 @@
 
 #pragma once
 
-namespace aidl::android::hardware::biometrics::fingerprint {
+namespace aidl::android::hardware::biometrics {
 
 // Interface for representing parameterless functions. Unlike std::function<void()>, this can also
 // represent move-only lambdas.
@@ -51,4 +51,4 @@ std::unique_ptr<Callable> Callable::from(T func) {
     return std::make_unique<AnyFuncWrapper<T>>(std::move(func));
 }
 
-}  // namespace aidl::android::hardware::biometrics::fingerprint
+}  // namespace aidl::android::hardware::biometrics

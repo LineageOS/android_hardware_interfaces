@@ -20,7 +20,7 @@
 
 #include "FakeFingerprintEngine.h"
 #include "Session.h"
-#include "WorkerThread.h"
+#include "thread/WorkerThread.h"
 
 namespace aidl::android::hardware::biometrics::fingerprint {
 

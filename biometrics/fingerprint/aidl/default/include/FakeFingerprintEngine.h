@@ -15,12 +15,13 @@
  */
 
 #pragma once
-
+#include <aidl/android/hardware/biometrics/common/SensorStrength.h>
 #include <aidl/android/hardware/biometrics/fingerprint/ISessionCallback.h>
 
 #include <random>
 
-#include "CancellationSignal.h"
+#include <future>
+#include <vector>
 
 using namespace ::aidl::android::hardware::biometrics::common;
 

@@ -16,13 +16,14 @@
 
 #include "FakeFingerprintEngine.h"
 
-#include <fingerprint.sysprop.h>
-#include "CancellationSignal.h"
-
 #include <android-base/logging.h>
+
+#include <fingerprint.sysprop.h>
 #include <chrono>
 #include <regex>
 #include <thread>
+
+#include "util/CancellationSignal.h"
 
 #define SLEEP_MS(x) \
     if (x > 0) std::this_thread::sleep_for(std::chrono::milliseconds(x))

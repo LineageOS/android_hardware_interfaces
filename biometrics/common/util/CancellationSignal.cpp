@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "CancellationSignal.h"
+#include "util/CancellationSignal.h"
 
 #include <android-base/logging.h>
 #include <chrono>
 
-namespace aidl::android::hardware::biometrics::fingerprint {
+namespace aidl::android::hardware::biometrics {
 
 CancellationSignal::CancellationSignal(std::promise<void>&& cancellationPromise)
     : mCancellationPromise(std::move(cancellationPromise)) {}
@@ -34,4 +34,4 @@ bool shouldCancel(const std::future<void>& f) {
     return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
 }
 
-}  // namespace aidl::android::hardware::biometrics::fingerprint
+}  // namespace aidl::android::hardware::biometrics
