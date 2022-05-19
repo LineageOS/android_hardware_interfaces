@@ -16,53 +16,14 @@
 
 #include "FakeFingerprintEngine.h"
 
-#include <fingerprint.sysprop.h>
-#include "CancellationSignal.h"
-
 #include <android-base/logging.h>
-#include <chrono>
-#include <regex>
-#include <thread>
 
-#define SLEEP_MS(x) \
-    if (x > 0) std::this_thread::sleep_for(std::chrono::milliseconds(x))
-#define BEGIN_OP(x)            \
-    do {                       \
-        LOG(INFO) << __func__; \
-        SLEEP_MS(x);           \
-    } while (0)
-#define IS_TRUE(x) ((x == "1") || (x == "true"))
+#include <fingerprint.sysprop.h>
 
-// This is for non-test situations, such as casual cuttlefish users, that don't
-// set an explicit value.
-// Some operations (i.e. enroll, authenticate) will be executed in tight loops
-// by parts of the UI or fail if there is no latency. For example, the
-// fingerprint settings page constantly runs auth and the enrollment UI uses a
-// cancel/restart cycle that requires some latency while the activities change.
-#define DEFAULT_LATENCY 2000
+#include "util/CancellationSignal.h"
+#include "util/Util.h"
 
 using namespace ::android::fingerprint::virt;
-using namespace ::aidl::android::hardware::biometrics::fingerprint;
-
-int64_t getSystemNanoTime() {
-    timespec now;
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    return now.tv_sec * 1000000000LL + now.tv_nsec;
-}
-
-bool hasElapsed(int64_t start, int64_t durationMillis) {
-    auto now = getSystemNanoTime();
-    if (now < start) return true;
-    if (durationMillis <= 0) return true;
-    return ((now - start) / 1000000LL) > durationMillis;
-}
-
-std::vector<std::string> split(const std::string& str, const std::string& sep) {
-    std::regex regex(sep);
-    std::vector<std::string> parts(std::sregex_token_iterator(str.begin(), str.end(), regex, -1),
-                                   std::sregex_token_iterator());
-    return parts;
-}
 
 namespace aidl::android::hardware::biometrics::fingerprint {
 
@@ -100,14 +61,14 @@ void FakeFingerprintEngine::enrollImpl(ISessionCallback* cb,
 
     // format is "<id>:<progress_ms>,<progress_ms>,...:<result>
     auto nextEnroll = FingerprintHalProperties::next_enrollment().value_or("");
-    auto parts = split(nextEnroll, ":");
+    auto parts = Util::split(nextEnroll, ":");
     if (parts.size() != 3) {
         LOG(ERROR) << "Fail: invalid next_enrollment";
         cb->onError(Error::VENDOR, 0 /* vendorError */);
         return;
     }
     auto enrollmentId = std::stoi(parts[0]);
-    auto progress = split(parts[1], ",");
+    auto progress = Util::split(parts[1], ",");
     for (size_t i = 0; i < progress.size(); i++) {
         auto left = progress.size() - i - 1;
         SLEEP_MS(std::stoi(progress[i]));
@@ -140,7 +101,7 @@ void FakeFingerprintEngine::authenticateImpl(ISessionCallback* cb, int64_t /* op
                                              const std::future<void>& cancel) {
     BEGIN_OP(FingerprintHalProperties::operation_authenticate_latency().value_or(DEFAULT_LATENCY));
 
-    auto now = getSystemNanoTime();
+    auto now = Util::getSystemNanoTime();
     int64_t duration = FingerprintHalProperties::operation_authenticate_duration().value_or(0);
     do {
         if (FingerprintHalProperties::operation_authenticate_fails().value_or(false)) {
@@ -171,7 +132,7 @@ void FakeFingerprintEngine::authenticateImpl(ISessionCallback* cb, int64_t /* op
         }
 
         SLEEP_MS(100);
-    } while (!hasElapsed(now, duration));
+    } while (!Util::hasElapsed(now, duration));
 
     LOG(ERROR) << "Fail: not enrolled";
     cb->onAuthenticationFailed();

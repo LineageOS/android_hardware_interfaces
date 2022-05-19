@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "WorkerThread.h"
+#include "thread/WorkerThread.h"
 
-namespace aidl::android::hardware::biometrics::fingerprint {
+namespace aidl::android::hardware::biometrics {
 
 // It's important that mThread is initialized after everything else because it runs a member
 // function that may use any member of this class.
@@ -68,4 +68,4 @@ void WorkerThread::threadFunc() {
     }
 }
 
-}  // namespace aidl::android::hardware::biometrics::fingerprint
+}  // namespace aidl::android::hardware::biometrics
