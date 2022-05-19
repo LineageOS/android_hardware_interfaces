@@ -14,139 +14,135 @@
  * limitations under the License.
  */
 
-#include <aidl/android/hardware/biometrics/common/BnCancellationSignal.h>
 #include <android-base/logging.h>
 
 #include "Session.h"
 
 namespace aidl::android::hardware::biometrics::face {
 
-class CancellationSignal : public common::BnCancellationSignal {
-  private:
-    std::shared_ptr<ISessionCallback> cb_;
+constexpr size_t MAX_WORKER_QUEUE_SIZE = 5;
 
-  public:
-    explicit CancellationSignal(std::shared_ptr<ISessionCallback> cb) : cb_(std::move(cb)) {}
-
-    ndk::ScopedAStatus cancel() override {
-        cb_->onError(Error::CANCELED, 0 /* vendorCode */);
-        return ndk::ScopedAStatus::ok();
-    }
-};
-
-Session::Session(std::shared_ptr<ISessionCallback> cb)
-    : cb_(std::move(cb)), mRandom(std::mt19937::default_seed) {}
+Session::Session(std::unique_ptr<FakeFaceEngine> engine, std::shared_ptr<ISessionCallback> cb)
+    : mEngine(std::move(engine)), mCb(std::move(cb)), mRandom(std::mt19937::default_seed) {
+    mThread = std::make_unique<WorkerThread>(MAX_WORKER_QUEUE_SIZE);
+}
 
 ndk::ScopedAStatus Session::generateChallenge() {
     LOG(INFO) << "generateChallenge";
-    if (cb_) {
-        std::uniform_int_distribution<int64_t> dist;
-        auto challenge = dist(mRandom);
-        cb_->onChallengeGenerated(challenge);
-    }
+    mThread->schedule(Callable::from([this] { mEngine->generateChallengeImpl(mCb.get()); }));
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::revokeChallenge(int64_t challenge) {
     LOG(INFO) << "revokeChallenge";
-    if (cb_) {
-        cb_->onChallengeRevoked(challenge);
-    }
+    mThread->schedule(Callable::from(
+            [this, challenge] { mEngine->revokeChallengeImpl(mCb.get(), challenge); }));
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Session::getEnrollmentConfig(EnrollmentType /*enrollmentType*/,
-                                                std::vector<EnrollmentStageConfig>* return_val) {
-    *return_val = {};
+ndk::ScopedAStatus Session::getEnrollmentConfig(
+        EnrollmentType /*enrollmentType*/, std::vector<EnrollmentStageConfig>* cancellationSignal) {
+    *cancellationSignal = {};
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::enroll(
-        const keymaster::HardwareAuthToken& /*hat*/, EnrollmentType /*enrollmentType*/,
-        const std::vector<Feature>& /*features*/,
-        const std::optional<NativeHandle>& /*previewSurface*/,
-        std::shared_ptr<biometrics::common::ICancellationSignal>* /*return_val*/) {
+        const keymaster::HardwareAuthToken& hat, EnrollmentType enrollmentType,
+        const std::vector<Feature>& features, const std::optional<NativeHandle>& /*previewSurface*/,
+        std::shared_ptr<biometrics::common::ICancellationSignal>* cancellationSignal) {
     LOG(INFO) << "enroll";
-    if (cb_) {
-        cb_->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorError */);
-    }
+    std::promise<void> cancellationPromise;
+    auto cancFuture = cancellationPromise.get_future();
+
+    mThread->schedule(Callable::from(
+            [this, hat, enrollmentType, features, cancFuture = std::move(cancFuture)] {
+                mEngine->enrollImpl(mCb.get(), hat, enrollmentType, features, cancFuture);
+            }));
+
+    *cancellationSignal = SharedRefBase::make<CancellationSignal>(std::move(cancellationPromise));
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Session::authenticate(int64_t /*keystoreOperationId*/,
-                                         std::shared_ptr<common::ICancellationSignal>* return_val) {
+ndk::ScopedAStatus Session::authenticate(
+        int64_t keystoreOperationId,
+        std::shared_ptr<common::ICancellationSignal>* cancellationSignal) {
     LOG(INFO) << "authenticate";
-    if (cb_) {
-        cb_->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorCode */);
-    }
-    *return_val = SharedRefBase::make<CancellationSignal>(cb_);
+    std::promise<void> cancellationPromise;
+    auto cancFuture = cancellationPromise.get_future();
+
+    mThread->schedule(
+            Callable::from([this, keystoreOperationId, cancFuture = std::move(cancFuture)] {
+                mEngine->authenticateImpl(mCb.get(), keystoreOperationId, cancFuture);
+            }));
+
+    *cancellationSignal = SharedRefBase::make<CancellationSignal>(std::move(cancellationPromise));
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::detectInteraction(
-        std::shared_ptr<common::ICancellationSignal>* /*return_val*/) {
+        std::shared_ptr<common::ICancellationSignal>* cancellationSignal) {
     LOG(INFO) << "detectInteraction";
+    std::promise<void> cancellationPromise;
+    auto cancFuture = cancellationPromise.get_future();
+
+    mThread->schedule(Callable::from([this, cancFuture = std::move(cancFuture)] {
+        mEngine->detectInteractionImpl(mCb.get(), cancFuture);
+    }));
+
+    *cancellationSignal = SharedRefBase::make<CancellationSignal>(std::move(cancellationPromise));
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::enumerateEnrollments() {
     LOG(INFO) << "enumerateEnrollments";
-    if (cb_) {
-        cb_->onEnrollmentsEnumerated(std::vector<int32_t>());
-    }
+    mThread->schedule(Callable::from([this] { mEngine->enumerateEnrollmentsImpl(mCb.get()); }));
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Session::removeEnrollments(const std::vector<int32_t>& /*enrollmentIds*/) {
+ndk::ScopedAStatus Session::removeEnrollments(const std::vector<int32_t>& enrollmentIds) {
     LOG(INFO) << "removeEnrollments";
-    if (cb_) {
-        cb_->onEnrollmentsRemoved(std::vector<int32_t>());
-    }
+    mThread->schedule(Callable::from(
+            [this, enrollmentIds] { mEngine->removeEnrollmentsImpl(mCb.get(), enrollmentIds); }));
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::getFeatures() {
     LOG(INFO) << "getFeatures";
-    if (cb_) {
-        // Must error out with UNABLE_TO_PROCESS when no faces are enrolled.
-        cb_->onError(Error::UNABLE_TO_PROCESS, 0 /* vendorCode */);
-    }
+    mThread->schedule(Callable::from([this] { mEngine->getFeaturesImpl(mCb.get()); }));
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Session::setFeature(const keymaster::HardwareAuthToken& /*hat*/,
-                                       Feature /*feature*/, bool /*enabled*/) {
+ndk::ScopedAStatus Session::setFeature(const keymaster::HardwareAuthToken& hat, Feature feature,
+                                       bool enabled) {
     LOG(INFO) << "setFeature";
+    mThread->schedule(Callable::from([this, hat, feature, enabled] {
+        mEngine->setFeatureImpl(mCb.get(), hat, feature, enabled);
+    }));
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::getAuthenticatorId() {
     LOG(INFO) << "getAuthenticatorId";
-    if (cb_) {
-        cb_->onAuthenticatorIdRetrieved(0 /* authenticatorId */);
-    }
+    mThread->schedule(Callable::from([this] { mEngine->getAuthenticatorIdImpl(mCb.get()); }));
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::invalidateAuthenticatorId() {
     LOG(INFO) << "invalidateAuthenticatorId";
-    if (cb_) {
-        cb_->onAuthenticatorIdInvalidated(0);
-    }
+    mThread->schedule(
+            Callable::from([this] { mEngine->invalidateAuthenticatorIdImpl(mCb.get()); }));
     return ndk::ScopedAStatus::ok();
 }
 
-ndk::ScopedAStatus Session::resetLockout(const keymaster::HardwareAuthToken& /*hat*/) {
+ndk::ScopedAStatus Session::resetLockout(const keymaster::HardwareAuthToken& hat) {
     LOG(INFO) << "resetLockout";
-    if (cb_) {
-        cb_->onLockoutCleared();
-    }
+    mThread->schedule(Callable::from([this, hat] { mEngine->resetLockoutImpl(mCb.get(), hat); }));
     return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus Session::close() {
-    if (cb_) {
-        cb_->onSessionClosed();
+    if (mCb) {
+        mCb->onSessionClosed();
     }
     return ndk::ScopedAStatus::ok();
 }

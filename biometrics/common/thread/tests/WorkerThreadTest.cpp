@@ -21,12 +21,11 @@
 
 #include <gtest/gtest.h>
 
-#include "WorkerThread.h"
+#include "thread/WorkerThread.h"
 
 namespace {
 
-using aidl::android::hardware::biometrics::fingerprint::Callable;
-using aidl::android::hardware::biometrics::fingerprint::WorkerThread;
+using namespace aidl::android::hardware::biometrics;
 using namespace std::chrono_literals;
 
 TEST(WorkerThreadTest, ScheduleReturnsTrueWhenQueueHasSpace) {

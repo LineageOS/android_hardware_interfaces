@@ -17,13 +17,10 @@
 #pragma once
 
 #include <aidl/android/hardware/biometrics/common/BnCancellationSignal.h>
-#include <aidl/android/hardware/biometrics/fingerprint/ISessionCallback.h>
 #include <functional>
 #include <future>
 
-#include "WorkerThread.h"
-
-namespace aidl::android::hardware::biometrics::fingerprint {
+namespace aidl::android::hardware::biometrics {
 
 class CancellationSignal : public common::BnCancellationSignal {
   public:
@@ -39,4 +36,4 @@ class CancellationSignal : public common::BnCancellationSignal {
 // to this future should be cancelled.
 bool shouldCancel(const std::future<void>& cancellationFuture);
 
-}  // namespace aidl::android::hardware::biometrics::fingerprint
+}  // namespace aidl::android::hardware::biometrics
