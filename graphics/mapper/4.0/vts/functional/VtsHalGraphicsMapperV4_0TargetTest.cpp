@@ -21,8 +21,12 @@
 #include <thread>
 #include <vector>
 
+#include <aidl/Vintf.h>
+#include <aidl/android/hardware/graphics/allocator/AllocationError.h>
+#include <aidl/android/hardware/graphics/allocator/AllocationResult.h>
 #include <aidl/android/hardware/graphics/common/PixelFormat.h>
 #include <aidl/android/hardware/graphics/common/PlaneLayoutComponentType.h>
+#include <aidlcommonsupport/NativeHandle.h>
 
 #include <android-base/logging.h>
 #include <android-base/unique_fd.h>
@@ -72,7 +76,7 @@ class GraphicsMapperHidlTest
     void SetUp() override {
         ASSERT_NO_FATAL_FAILURE(mGralloc = std::make_unique<Gralloc>(std::get<0>(GetParam()),
                                                                      std::get<1>(GetParam())));
-        ASSERT_NE(nullptr, mGralloc->getAllocator().get());
+        ASSERT_TRUE(mGralloc->hasAllocator());
         ASSERT_NE(nullptr, mGralloc->getMapper().get());
 
         mDummyDescriptorInfo.name = "dummy";
@@ -504,10 +508,10 @@ TEST_P(GraphicsMapperHidlTest, AllocatorAllocate) {
 TEST_P(GraphicsMapperHidlTest, AllocatorAllocateNegative) {
     // this assumes any valid descriptor is non-empty
     BufferDescriptor descriptor;
-    mGralloc->getAllocator()->allocate(descriptor, 1,
-                                       [&](const auto& tmpError, const auto&, const auto&) {
-                                           EXPECT_EQ(Error::BAD_DESCRIPTOR, tmpError);
-                                       });
+
+    mGralloc->rawAllocate(descriptor, 1, [&](const auto& tmpError, const auto&, const auto&) {
+        EXPECT_EQ(Error::BAD_DESCRIPTOR, tmpError);
+    });
 }
 
 /**
@@ -535,9 +539,9 @@ TEST_P(GraphicsMapperHidlTest, AllocatorAllocateThreaded) {
     std::atomic<uint64_t> allocationCount(0);
     auto threadLoop = [&]() {
         while (!timeUp) {
-            mGralloc->getAllocator()->allocate(
-                    descriptor, 1,
-                    [&](const auto&, const auto&, const auto&) { allocationCount++; });
+            mGralloc->rawAllocate(descriptor, 1, [&](const auto&, const auto&, const auto&) {
+                allocationCount++;
+            });
         }
     };
 
@@ -2755,8 +2759,9 @@ TEST_P(GraphicsMapperHidlTest, GetLargeReservedRegion) {
         BufferDescriptor descriptor;
         ASSERT_NO_FATAL_FAILURE(descriptor = mGralloc->createDescriptor(info));
 
-        Error err;
-        mGralloc->getAllocator()->allocate(
+        Error err = Error::NONE;
+
+        mGralloc->rawAllocate(
                 descriptor, 1, [&](const auto& tmpError, const auto&, const auto& tmpBuffers) {
                     err = tmpError;
                     if (err == Error::NONE) {
@@ -2827,11 +2832,27 @@ TEST_P(GraphicsMapperHidlTest, GetReservedRegionBadBuffer) {
 }
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GraphicsMapperHidlTest);
+
+namespace {
+std::vector<std::string> getAllocatorInstances() {
+    std::vector<std::string> instances;
+    for (auto halInstance : android::hardware::getAllHalInstanceNames(IAllocator::descriptor)) {
+        instances.emplace_back(std::move(halInstance));
+    }
+
+    for (auto aidlInstance : getAidlHalInstanceNames(
+                 aidl::android::hardware::graphics::allocator::IAllocator::descriptor)) {
+        instances.emplace_back(std::move(aidlInstance));
+    }
+
+    return instances;
+}
+}  // namespace
+
 INSTANTIATE_TEST_CASE_P(
         PerInstance, GraphicsMapperHidlTest,
         testing::Combine(
-                testing::ValuesIn(
-                        android::hardware::getAllHalInstanceNames(IAllocator::descriptor)),
+                testing::ValuesIn(getAllocatorInstances()),
                 testing::ValuesIn(android::hardware::getAllHalInstanceNames(IMapper::descriptor))),
         android::hardware::PrintInstanceTupleNameToString<>);
 
