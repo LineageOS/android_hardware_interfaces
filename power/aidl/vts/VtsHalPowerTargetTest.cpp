@@ -211,19 +211,6 @@ TEST_P(PowerAidl, hasFixedPerformance) {
     }
 }
 
-// GAME_LOADING mode is required for all devices which ship on Android T
-// or later
-TEST_P(PowerAidl, hasGameLoading) {
-    auto apiLevel = GetUintProperty<uint64_t>("ro.vendor.api_level", 0);
-    ASSERT_NE(apiLevel, 0);
-
-    if (apiLevel >= 33) {
-        bool supported;
-        ASSERT_TRUE(power->isModeSupported(Mode::GAME_LOADING, &supported).isOk());
-        ASSERT_TRUE(supported);
-    }
-}
-
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(PowerAidl);
 INSTANTIATE_TEST_SUITE_P(Power, PowerAidl,
                          testing::ValuesIn(::android::getAidlHalInstanceNames(IPower::descriptor)),
