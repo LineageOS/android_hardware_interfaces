@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <map>
 #include <vector>
 
 #include <aidl/android/hardware/audio/core/AudioPatch.h>
@@ -29,6 +30,9 @@ struct Configuration {
     std::vector<::aidl::android::media::audio::common::AudioPort> ports;
     std::vector<::aidl::android::media::audio::common::AudioPortConfig> portConfigs;
     std::vector<::aidl::android::media::audio::common::AudioPortConfig> initialConfigs;
+    // Port id -> List of profiles to use when the device port state is set to 'connected'.
+    std::map<int32_t, std::vector<::aidl::android::media::audio::common::AudioProfile>>
+            connectedProfiles;
     std::vector<AudioRoute> routes;
     std::vector<AudioPatch> patches;
     int32_t nextPortId = 1;
