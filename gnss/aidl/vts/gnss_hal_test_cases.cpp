@@ -28,7 +28,9 @@
 #include <android/hardware/gnss/measurement_corrections/IMeasurementCorrectionsInterface.h>
 #include <android/hardware/gnss/visibility_control/IGnssVisibilityControl.h>
 #include <cutils/properties.h>
+#include <utils/SystemClock.h>
 #include <cmath>
+#include <utility>
 #include "AGnssCallbackAidl.h"
 #include "AGnssRilCallbackAidl.h"
 #include "GnssAntennaInfoCallbackAidl.h"
@@ -376,58 +378,6 @@ void CheckSatellitePvt(const SatellitePvt& satellitePvt, const int interfaceVers
     }
 }
 
-void CheckGnssMeasurementClockFields(const GnssData& measurement) {
-    Utils::checkElapsedRealtime(measurement.elapsedRealtime);
-    ASSERT_TRUE(measurement.clock.gnssClockFlags >= 0 &&
-                measurement.clock.gnssClockFlags <=
-                        (GnssClock::HAS_LEAP_SECOND | GnssClock::HAS_TIME_UNCERTAINTY |
-                         GnssClock::HAS_FULL_BIAS | GnssClock::HAS_BIAS |
-                         GnssClock::HAS_BIAS_UNCERTAINTY | GnssClock::HAS_DRIFT |
-                         GnssClock::HAS_DRIFT_UNCERTAINTY));
-}
-
-void CheckGnssMeasurementFlags(const GnssMeasurement& measurement) {
-    ASSERT_TRUE(measurement.flags >= 0 &&
-                measurement.flags <=
-                        (GnssMeasurement::HAS_SNR | GnssMeasurement::HAS_CARRIER_FREQUENCY |
-                         GnssMeasurement::HAS_CARRIER_CYCLES | GnssMeasurement::HAS_CARRIER_PHASE |
-                         GnssMeasurement::HAS_CARRIER_PHASE_UNCERTAINTY |
-                         GnssMeasurement::HAS_AUTOMATIC_GAIN_CONTROL |
-                         GnssMeasurement::HAS_FULL_ISB | GnssMeasurement::HAS_FULL_ISB_UNCERTAINTY |
-                         GnssMeasurement::HAS_SATELLITE_ISB |
-                         GnssMeasurement::HAS_SATELLITE_ISB_UNCERTAINTY |
-                         GnssMeasurement::HAS_SATELLITE_PVT |
-                         GnssMeasurement::HAS_CORRELATION_VECTOR));
-}
-
-void CheckGnssMeasurementFields(const GnssMeasurement& measurement, const GnssData& data) {
-    CheckGnssMeasurementFlags(measurement);
-    // Verify CodeType is valid.
-    ASSERT_NE(measurement.signalType.codeType, "");
-    // Verify basebandCn0DbHz is valid.
-    ASSERT_TRUE(measurement.basebandCN0DbHz > 0.0 && measurement.basebandCN0DbHz <= 65.0);
-
-    if (((measurement.flags & GnssMeasurement::HAS_FULL_ISB) > 0) &&
-        ((measurement.flags & GnssMeasurement::HAS_FULL_ISB_UNCERTAINTY) > 0) &&
-        ((measurement.flags & GnssMeasurement::HAS_SATELLITE_ISB) > 0) &&
-        ((measurement.flags & GnssMeasurement::HAS_SATELLITE_ISB_UNCERTAINTY) > 0)) {
-        GnssConstellationType referenceConstellation =
-                data.clock.referenceSignalTypeForIsb.constellation;
-        double carrierFrequencyHz = data.clock.referenceSignalTypeForIsb.carrierFrequencyHz;
-        std::string codeType = data.clock.referenceSignalTypeForIsb.codeType;
-
-        ASSERT_TRUE(referenceConstellation >= GnssConstellationType::UNKNOWN &&
-                    referenceConstellation <= GnssConstellationType::IRNSS);
-        ASSERT_TRUE(carrierFrequencyHz > 0);
-        ASSERT_NE(codeType, "");
-
-        ASSERT_TRUE(std::abs(measurement.fullInterSignalBiasNs) < 1.0e6);
-        ASSERT_TRUE(measurement.fullInterSignalBiasUncertaintyNs >= 0);
-        ASSERT_TRUE(std::abs(measurement.satelliteInterSignalBiasNs) < 1.0e6);
-        ASSERT_TRUE(measurement.satelliteInterSignalBiasUncertaintyNs >= 0);
-    }
-}
-
 /*
  * TestGnssMeasurementExtensionAndSatellitePvt:
  * 1. Gets the GnssMeasurementExtension and verifies that it returns a non-null extension.
@@ -465,10 +415,10 @@ TEST_P(GnssHalTest, TestGnssMeasurementExtensionAndSatellitePvt) {
         ASSERT_TRUE(lastMeasurement.measurements.size() > 0);
 
         // Validity check GnssData fields
-        CheckGnssMeasurementClockFields(lastMeasurement);
+        checkGnssMeasurementClockFields(lastMeasurement);
 
         for (const auto& measurement : lastMeasurement.measurements) {
-            CheckGnssMeasurementFields(measurement, lastMeasurement);
+            checkGnssMeasurementFields(measurement, lastMeasurement);
             if (measurement.flags & GnssMeasurement::HAS_SATELLITE_PVT &&
                 kIsSatellitePvtSupported == true) {
                 ALOGD("Found a measurement with SatellitePvt");
@@ -525,10 +475,10 @@ TEST_P(GnssHalTest, TestCorrelationVector) {
         ASSERT_TRUE(lastMeasurement.measurements.size() > 0);
 
         // Validity check GnssData fields
-        CheckGnssMeasurementClockFields(lastMeasurement);
+        checkGnssMeasurementClockFields(lastMeasurement);
 
         for (const auto& measurement : lastMeasurement.measurements) {
-            CheckGnssMeasurementFields(measurement, lastMeasurement);
+            checkGnssMeasurementFields(measurement, lastMeasurement);
             if (measurement.flags & GnssMeasurement::HAS_CORRELATION_VECTOR) {
                 correlationVectorFound = true;
                 ASSERT_TRUE(measurement.correlationVectors.size() > 0);
@@ -1242,48 +1192,6 @@ TEST_P(GnssHalTest, TestGnssVisibilityControlExtension) {
 }
 
 /*
- * TestGnssMeasurementSetCallbackWithOptions:
- * 1. Gets the GnssMeasurementExtension and verifies that it returns a non-null extension.
- * 2. Sets a GnssMeasurementCallback with intervalMillis option, waits for measurements reported,
- *    and verifies mandatory fields are valid.
- */
-TEST_P(GnssHalTest, TestGnssMeasurementSetCallbackWithOptions) {
-    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
-        return;
-    }
-    const int kFirstGnssMeasurementTimeoutSeconds = 10;
-    const int kNumMeasurementEvents = 5;
-
-    sp<IGnssMeasurementInterface> iGnssMeasurement;
-    auto status = aidl_gnss_hal_->getExtensionGnssMeasurement(&iGnssMeasurement);
-    ASSERT_TRUE(status.isOk());
-    ASSERT_TRUE(iGnssMeasurement != nullptr);
-
-    auto callback = sp<GnssMeasurementCallbackAidl>::make();
-    IGnssMeasurementInterface::Options options;
-    options.intervalMs = 2000;
-    status = iGnssMeasurement->setCallbackWithOptions(callback, options);
-    ASSERT_TRUE(status.isOk());
-
-    for (int i = 0; i < kNumMeasurementEvents; i++) {
-        GnssData lastMeasurement;
-        ASSERT_TRUE(callback->gnss_data_cbq_.retrieve(lastMeasurement,
-                                                      kFirstGnssMeasurementTimeoutSeconds));
-        EXPECT_EQ(callback->gnss_data_cbq_.calledCount(), i + 1);
-        ASSERT_TRUE(lastMeasurement.measurements.size() > 0);
-
-        // Validity check GnssData fields
-        CheckGnssMeasurementClockFields(lastMeasurement);
-        for (const auto& measurement : lastMeasurement.measurements) {
-            CheckGnssMeasurementFields(measurement, lastMeasurement);
-        }
-    }
-
-    status = iGnssMeasurement->close();
-    ASSERT_TRUE(status.isOk());
-}
-
-/*
  * TestGnssAgcInGnssMeasurement:
  * 1. Gets the GnssMeasurementExtension and verifies that it returns a non-null extension.
  * 2. Sets a GnssMeasurementCallback, waits for a measurement.
@@ -1293,7 +1201,7 @@ TEST_P(GnssHalTest, TestGnssAgcInGnssMeasurement) {
         return;
     }
     const int kFirstGnssMeasurementTimeoutSeconds = 10;
-    const int kNumMeasurementEvents = 15;
+    const int kNumMeasurementEvents = 5;
 
     sp<IGnssMeasurementInterface> iGnssMeasurement;
     auto status = aidl_gnss_hal_->getExtensionGnssMeasurement(&iGnssMeasurement);
@@ -1313,7 +1221,7 @@ TEST_P(GnssHalTest, TestGnssAgcInGnssMeasurement) {
         ASSERT_TRUE(lastMeasurement.measurements.size() > 0);
 
         // Validity check GnssData fields
-        CheckGnssMeasurementClockFields(lastMeasurement);
+        checkGnssMeasurementClockFields(lastMeasurement);
 
         ASSERT_TRUE(lastMeasurement.gnssAgcs.size() > 0);
         for (const auto& gnssAgc : lastMeasurement.gnssAgcs) {
@@ -1443,4 +1351,144 @@ TEST_P(GnssHalTest, TestGnssMeasurementCorrections) {
     status = iMeasurementCorrectionsAidl->setCorrections(
             Utils::getMockMeasurementCorrections_aidl());
     ASSERT_TRUE(status.isOk());
+}
+
+/*
+ * TestStopSvStatusAndNmea:
+ * 1. Call stopSvStatus and stopNmea.
+ * 2. Start location and verify that
+ *    - no SvStatus is received.
+ *    - no Nmea is received.
+ */
+TEST_P(GnssHalTest, TestStopSvStatusAndNmea) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
+        return;
+    }
+    auto status = aidl_gnss_hal_->stopSvStatus();
+    EXPECT_TRUE(status.isOk());
+    status = aidl_gnss_hal_->stopNmea();
+    EXPECT_TRUE(status.isOk());
+
+    int kLocationsToAwait = 5;
+    aidl_gnss_cb_->location_cbq_.reset();
+    aidl_gnss_cb_->sv_info_list_cbq_.reset();
+    aidl_gnss_cb_->nmea_cbq_.reset();
+    StartAndCheckLocations(/* count= */ kLocationsToAwait,
+                           /* start_sv_status= */ false, /* start_nmea= */ false);
+    int location_called_count = aidl_gnss_cb_->location_cbq_.calledCount();
+    ALOGD("Observed %d GnssSvStatus, and %d Nmea while awaiting %d locations (%d received)",
+          aidl_gnss_cb_->sv_info_list_cbq_.size(), aidl_gnss_cb_->nmea_cbq_.size(),
+          kLocationsToAwait, location_called_count);
+
+    // Ensure that no SvStatus & no Nmea is received.
+    EXPECT_EQ(aidl_gnss_cb_->sv_info_list_cbq_.size(), 0);
+    EXPECT_EQ(aidl_gnss_cb_->nmea_cbq_.size(), 0);
+
+    StopAndClearLocations();
+}
+
+/*
+ * TestGnssMeasurementIntervals_WithoutLocation:
+ * 1. start measurement with interval
+ * 2. verify that the received measurement intervals have expected mean and stdev
+ */
+TEST_P(GnssHalTest, TestGnssMeasurementIntervals_WithoutLocation) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
+        return;
+    }
+
+    std::vector<int> intervals({2000, 4000});
+    std::vector<int> numEvents({10, 5});
+
+    sp<IGnssMeasurementInterface> iGnssMeasurement;
+    auto status = aidl_gnss_hal_->getExtensionGnssMeasurement(&iGnssMeasurement);
+    ASSERT_TRUE(status.isOk());
+    ASSERT_TRUE(iGnssMeasurement != nullptr);
+
+    ALOGD("TestGnssMeasurementIntervals_WithoutLocation");
+    for (int i = 0; i < intervals.size(); i++) {
+        auto callback = sp<GnssMeasurementCallbackAidl>::make();
+        startMeasurementWithInterval(intervals[i], iGnssMeasurement, callback);
+
+        std::vector<int> deltas;
+        collectMeasurementIntervals(callback, numEvents[i], /* timeoutSeconds= */ 10, deltas);
+
+        status = iGnssMeasurement->close();
+        ASSERT_TRUE(status.isOk());
+
+        assertMeanAndStdev(intervals[i], deltas);
+    }
+}
+
+/*
+ * TestGnssMeasurementIntervals_LocationOnBeforeMeasurement:
+ * 1. start measurement with interval
+ * 2. verify that the received measurement intervals have expected mean and stdev
+ */
+TEST_P(GnssHalTest, TestGnssMeasurementIntervals_LocationOnBeforeMeasurement) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
+        return;
+    }
+
+    std::vector<int> intervals({2000});
+
+    sp<IGnssMeasurementInterface> iGnssMeasurement;
+    auto status = aidl_gnss_hal_->getExtensionGnssMeasurement(&iGnssMeasurement);
+    ASSERT_TRUE(status.isOk());
+    ASSERT_TRUE(iGnssMeasurement != nullptr);
+
+    int locationIntervalMs = 1000;
+
+    // Start location first and then start measurement
+    ALOGD("TestGnssMeasurementIntervals_LocationOnBeforeMeasurement");
+    StartAndCheckFirstLocation(locationIntervalMs, /* lowPowerMode= */ false);
+    for (auto& intervalMs : intervals) {
+        auto callback = sp<GnssMeasurementCallbackAidl>::make();
+        startMeasurementWithInterval(intervalMs, iGnssMeasurement, callback);
+
+        std::vector<int> deltas;
+        collectMeasurementIntervals(callback, /*numEvents=*/10, /*timeoutSeconds=*/10, deltas);
+
+        status = iGnssMeasurement->close();
+        ASSERT_TRUE(status.isOk());
+
+        assertMeanAndStdev(locationIntervalMs, deltas);
+    }
+    StopAndClearLocations();
+}
+
+/*
+ * TestGnssMeasurementIntervals:
+ * 1. start measurement with interval
+ * 2. verify that the received measurement intervals have expected mean and stdev
+ */
+TEST_P(GnssHalTest, TestGnssMeasurementIntervals_LocationOnAfterMeasurement) {
+    if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
+        return;
+    }
+
+    std::vector<int> intervals({2000});
+
+    sp<IGnssMeasurementInterface> iGnssMeasurement;
+    auto status = aidl_gnss_hal_->getExtensionGnssMeasurement(&iGnssMeasurement);
+    ASSERT_TRUE(status.isOk());
+    ASSERT_TRUE(iGnssMeasurement != nullptr);
+
+    int locationIntervalMs = 1000;
+    // Start location first and then start measurement
+    ALOGD("TestGnssMeasurementIntervals_LocationOnAfterMeasurement");
+    for (auto& intervalMs : intervals) {
+        auto callback = sp<GnssMeasurementCallbackAidl>::make();
+        startMeasurementWithInterval(intervalMs, iGnssMeasurement, callback);
+
+        StartAndCheckFirstLocation(locationIntervalMs, /* lowPowerMode= */ false);
+        std::vector<int> deltas;
+        collectMeasurementIntervals(callback, /*numEvents=*/10, /*timeoutSeconds=*/10, deltas);
+
+        StopAndClearLocations();
+        status = iGnssMeasurement->close();
+        ASSERT_TRUE(status.isOk());
+
+        assertMeanAndStdev(locationIntervalMs, deltas);
+    }
 }

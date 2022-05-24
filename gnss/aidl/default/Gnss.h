@@ -32,7 +32,9 @@
 #include <mutex>
 #include <thread>
 #include "GnssConfiguration.h"
+#include "GnssMeasurementInterface.h"
 #include "GnssPowerIndication.h"
+#include "Utils.h"
 
 namespace aidl::android::hardware::gnss {
 
@@ -84,6 +86,7 @@ class Gnss : public BnGnss {
 
     std::shared_ptr<GnssConfiguration> mGnssConfiguration;
     std::shared_ptr<GnssPowerIndication> mGnssPowerIndication;
+    std::shared_ptr<GnssMeasurementInterface> mGnssMeasurementInterface;
 
   private:
     void reportLocation(const GnssLocation&) const;
@@ -93,14 +96,17 @@ class Gnss : public BnGnss {
             std::vector<IGnssCallback::GnssSvInfo> gnssSvInfoList) const;
     void reportGnssStatusValue(const IGnssCallback::GnssStatusValue gnssStatusValue) const;
     std::unique_ptr<GnssLocation> getLocationFromHW();
+    void reportNmea() const;
 
     static std::shared_ptr<IGnssCallback> sGnssCallback;
 
     std::atomic<long> mMinIntervalMs;
     std::atomic<bool> mIsActive;
     std::atomic<bool> mIsSvStatusActive;
+    std::atomic<bool> mIsNmeaActive;
     std::atomic<bool> mFirstFixReceived;
     std::thread mThread;
+    ::android::hardware::gnss::common::ThreadBlocker mThreadBlocker;
 
     mutable std::mutex mMutex;
 };
