@@ -318,7 +318,7 @@ Gralloc::Gralloc() {
     [this] {
         ASSERT_NO_FATAL_FAILURE(mGralloc4 = std::make_shared<Gralloc4>("default", "default",
                                                                        /*errOnFailure=*/false));
-        if (mGralloc4->getAllocator() == nullptr || mGralloc4->getMapper() == nullptr) {
+        if (!mGralloc4->hasAllocator() || mGralloc4->getMapper() == nullptr) {
             mGralloc4 = nullptr;
             ASSERT_NO_FATAL_FAILURE(mGralloc3 = std::make_shared<Gralloc3>("default", "default",
                                                                            /*errOnFailure=*/false));
