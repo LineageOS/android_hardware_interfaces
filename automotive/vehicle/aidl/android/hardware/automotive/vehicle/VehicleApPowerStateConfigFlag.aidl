@@ -37,5 +37,5 @@ enum VehicleApPowerStateConfigFlag {
      * (via VehicleApPowerStateShutdownParam#CAN_HIBERNATE or
      *  VehicleApPowerStateShutdownParam#HIBERNATE_IMMEDIATELY flags)
      */
-    ENABLE_HIBERNATION_FLAG = 0x3,
+    ENABLE_HIBERNATION_FLAG = 0x4,
 }
