@@ -31,11 +31,19 @@ namespace implementation {
  */
 class Ringbuffer {
   public:
+    // Error codes for the append ring buffer operation
+    enum AppendStatus {
+        SUCCESS,
+        FAIL_GENERIC,
+        FAIL_IP_BUFFER_ZERO,
+        FAIL_IP_BUFFER_EXCEEDED_MAXSIZE,
+        FAIL_RING_BUFFER_CORRUPTED
+    };
     explicit Ringbuffer(size_t maxSize);
 
     // Appends the data buffer and deletes from the front until buffer is
     // within |maxSize_|.
-    void append(const std::vector<uint8_t>& input);
+    enum AppendStatus append(const std::vector<uint8_t>& input);
     const std::list<std::vector<uint8_t>>& getData() const;
     void clear();
 
