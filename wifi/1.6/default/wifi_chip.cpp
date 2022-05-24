@@ -1613,6 +1613,7 @@ WifiStatus WifiChip::registerDebugRingBufferCallback() {
                     return;
                 }
                 WifiDebugRingBufferStatus hidl_status;
+                Ringbuffer::AppendStatus appendstatus;
                 if (!hidl_struct_util::convertLegacyDebugRingBufferStatusToHidl(status,
                                                                                 &hidl_status)) {
                     LOG(ERROR) << "Error converting ring buffer status";
@@ -1623,13 +1624,19 @@ WifiStatus WifiChip::registerDebugRingBufferCallback() {
                     const auto& target = shared_ptr_this->ringbuffer_map_.find(name);
                     if (target != shared_ptr_this->ringbuffer_map_.end()) {
                         Ringbuffer& cur_buffer = target->second;
-                        cur_buffer.append(data);
+                        appendstatus = cur_buffer.append(data);
                     } else {
                         LOG(ERROR) << "Ringname " << name << " not found";
                         return;
                     }
                     // unique_lock unlocked here
                 }
+                if (appendstatus == Ringbuffer::AppendStatus::FAIL_RING_BUFFER_CORRUPTED) {
+                    LOG(ERROR) << "Ringname " << name << " is corrupted. Clear the ring buffer";
+                    shared_ptr_this->writeRingbufferFilesInternal();
+                    return;
+                }
+
             };
     legacy_hal::wifi_error legacy_status = legacy_hal_.lock()->registerRingBufferCallbackHandler(
             getFirstActiveWlanIfaceName(), on_ring_buffer_data_callback);
@@ -1971,6 +1978,11 @@ bool WifiChip::writeRingbufferFilesInternal() {
             }
             unique_fd file_auto_closer(dump_fd);
             for (const auto& cur_block : cur_buffer.getData()) {
+                if (cur_block.size() <= 0 || cur_block.size() > kMaxBufferSizeBytes) {
+                    PLOG(ERROR) << "Ring buffer: " << item.first
+                                << " is corrupted. Invalid block size: " << cur_block.size();
+                    break;
+                }
                 if (write(dump_fd, cur_block.data(), sizeof(cur_block[0]) * cur_block.size()) ==
                     -1) {
                     PLOG(ERROR) << "Error writing to file";
