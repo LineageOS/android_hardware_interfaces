@@ -31,7 +31,7 @@ Status GnssCallbackAidl::gnssSetCapabilitiesCb(const int capabilities) {
 }
 
 Status GnssCallbackAidl::gnssStatusCb(const GnssStatusValue /* status */) {
-    ALOGI("gnssSvStatusCb");
+    ALOGI("gnssStatusCb");
     return Status::ok();
 }
 
@@ -47,7 +47,8 @@ Status GnssCallbackAidl::gnssLocationCb(const GnssLocation& location) {
     return Status::ok();
 }
 
-Status GnssCallbackAidl::gnssNmeaCb(const int64_t /* timestamp */, const std::string& /* nmea */) {
+Status GnssCallbackAidl::gnssNmeaCb(const int64_t timestamp, const std::string& nmea) {
+    nmea_cbq_.store(std::make_pair(timestamp, nmea));
     return Status::ok();
 }
 
