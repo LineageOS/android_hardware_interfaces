@@ -18,7 +18,9 @@
 
 #include <aidl/android/hardware/gnss/BnGnssNavigationMessageInterface.h>
 #include <atomic>
+#include <future>
 #include <thread>
+#include "Utils.h"
 
 namespace aidl::android::hardware::gnss {
 
@@ -34,10 +36,13 @@ struct GnssNavigationMessageInterface : public BnGnssNavigationMessageInterface 
     void start();
     void stop();
     void reportMessage(const IGnssNavigationMessageCallback::GnssNavigationMessage& message);
+    void waitForStoppingThreads();
 
     std::atomic<long> mMinIntervalMillis;
     std::atomic<bool> mIsActive;
     std::thread mThread;
+    std::vector<std::future<void>> mFutures;
+    ::android::hardware::gnss::common::ThreadBlocker mThreadBlocker;
 
     // Guarded by mMutex
     static std::shared_ptr<IGnssNavigationMessageCallback> sCallback;
