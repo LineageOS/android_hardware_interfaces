@@ -18,14 +18,49 @@
 
 #include "gnss_hal_test.h"
 #include <hidl/ServiceManagement.h>
+#include <algorithm>
+#include <cmath>
 #include "Utils.h"
 
+using android::hardware::gnss::GnssClock;
 using android::hardware::gnss::GnssConstellationType;
+using android::hardware::gnss::GnssData;
 using android::hardware::gnss::GnssLocation;
+using android::hardware::gnss::GnssMeasurement;
 using android::hardware::gnss::IGnss;
 using android::hardware::gnss::IGnssCallback;
+using android::hardware::gnss::IGnssMeasurementInterface;
 using android::hardware::gnss::common::Utils;
 using GnssConstellationTypeV2_0 = android::hardware::gnss::V2_0::GnssConstellationType;
+
+namespace {
+// The difference between the mean of the received intervals and the requested interval should not
+// be larger mInterval * ALLOWED_MEAN_ERROR_RATIO
+constexpr double ALLOWED_MEAN_ERROR_RATIO = 0.25;
+
+// The standard deviation computed for the deltas should not be bigger
+// than mInterval * ALLOWED_STDEV_ERROR_RATIO or MIN_STDEV_MS, whichever is higher.
+constexpr double ALLOWED_STDEV_ERROR_RATIO = 0.50;
+constexpr double MIN_STDEV_MS = 1000;
+
+double computeMean(std::vector<int>& deltas) {
+    long accumulator = 0;
+    for (auto& d : deltas) {
+        accumulator += d;
+    }
+    return accumulator / deltas.size();
+}
+
+double computeStdev(double mean, std::vector<int>& deltas) {
+    double accumulator = 0;
+    for (auto& d : deltas) {
+        double diff = d - mean;
+        accumulator += diff * diff;
+    }
+    return std::sqrt(accumulator / (deltas.size() - 1));
+}
+
+}  // anonymous namespace
 
 void GnssHalTest::SetUp() {
     // Get AIDL handle
@@ -97,20 +132,26 @@ void GnssHalTest::SetPositionMode(const int min_interval_msec, const bool low_po
     ASSERT_TRUE(status.isOk());
 }
 
-bool GnssHalTest::StartAndCheckFirstLocation(const int min_interval_msec,
-                                             const bool low_power_mode) {
+bool GnssHalTest::StartAndCheckFirstLocation(const int min_interval_msec, const bool low_power_mode,
+                                             const bool start_sv_status, const bool start_nmea) {
     if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         // Invoke the super method.
         return GnssHalTestTemplate<IGnss_V2_1>::StartAndCheckFirstLocation(min_interval_msec,
                                                                            low_power_mode);
     }
-
     SetPositionMode(min_interval_msec, low_power_mode);
+
     auto status = aidl_gnss_hal_->start();
     EXPECT_TRUE(status.isOk());
 
-    status = aidl_gnss_hal_->startSvStatus();
-    EXPECT_TRUE(status.isOk());
+    if (start_sv_status) {
+        status = aidl_gnss_hal_->startSvStatus();
+        EXPECT_TRUE(status.isOk());
+    }
+    if (start_nmea) {
+        status = aidl_gnss_hal_->startNmea();
+        EXPECT_TRUE(status.isOk());
+    }
 
     /*
      * GnssLocationProvider support of AGPS SUPL & XtraDownloader is not available in VTS,
@@ -131,6 +172,12 @@ bool GnssHalTest::StartAndCheckFirstLocation(const int min_interval_msec,
     return false;
 }
 
+bool GnssHalTest::StartAndCheckFirstLocation(const int min_interval_msec,
+                                             const bool low_power_mode) {
+    return StartAndCheckFirstLocation(min_interval_msec, low_power_mode,
+                                      /* start_sv_status= */ true, /* start_nmea= */ true);
+}
+
 void GnssHalTest::StopAndClearLocations() {
     ALOGD("StopAndClearLocations");
     if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
@@ -138,6 +185,8 @@ void GnssHalTest::StopAndClearLocations() {
         return GnssHalTestTemplate<IGnss_V2_1>::StopAndClearLocations();
     }
     auto status = aidl_gnss_hal_->stopSvStatus();
+    EXPECT_TRUE(status.isOk());
+    status = aidl_gnss_hal_->stopNmea();
     EXPECT_TRUE(status.isOk());
 
     status = aidl_gnss_hal_->stop();
@@ -153,7 +202,8 @@ void GnssHalTest::StopAndClearLocations() {
     aidl_gnss_cb_->location_cbq_.reset();
 }
 
-void GnssHalTest::StartAndCheckLocations(int count) {
+void GnssHalTest::StartAndCheckLocations(const int count, const bool start_sv_status,
+                                         const bool start_nmea) {
     if (aidl_gnss_hal_->getInterfaceVersion() <= 1) {
         // Invoke the super method.
         return GnssHalTestTemplate<IGnss_V2_1>::StartAndCheckLocations(count);
@@ -162,7 +212,8 @@ void GnssHalTest::StartAndCheckLocations(int count) {
     const int kLocationTimeoutSubsequentSec = 2;
     const bool kLowPowerMode = false;
 
-    EXPECT_TRUE(StartAndCheckFirstLocation(kMinIntervalMsec, kLowPowerMode));
+    EXPECT_TRUE(StartAndCheckFirstLocation(kMinIntervalMsec, kLowPowerMode, start_sv_status,
+                                           start_nmea));
 
     for (int i = 1; i < count; i++) {
         EXPECT_TRUE(aidl_gnss_cb_->location_cbq_.retrieve(aidl_gnss_cb_->last_location_,
@@ -175,6 +226,10 @@ void GnssHalTest::StartAndCheckLocations(int count) {
             CheckLocation(aidl_gnss_cb_->last_location_, locationCalledCount > 1);
         }
     }
+}
+
+void GnssHalTest::StartAndCheckLocations(const int count) {
+    StartAndCheckLocations(count, /* start_sv_status= */ true, /* start_nmea= */ true);
 }
 
 std::list<std::vector<IGnssCallback::GnssSvInfo>> GnssHalTest::convertToAidl(
@@ -312,4 +367,110 @@ GnssConstellationType GnssHalTest::startLocationAndGetNonGpsConstellation(
     }
 
     return constellation_to_blocklist;
+}
+
+void GnssHalTest::checkGnssMeasurementClockFields(const GnssData& measurement) {
+    Utils::checkElapsedRealtime(measurement.elapsedRealtime);
+    ASSERT_TRUE(measurement.clock.gnssClockFlags >= 0 &&
+                measurement.clock.gnssClockFlags <=
+                        (GnssClock::HAS_LEAP_SECOND | GnssClock::HAS_TIME_UNCERTAINTY |
+                         GnssClock::HAS_FULL_BIAS | GnssClock::HAS_BIAS |
+                         GnssClock::HAS_BIAS_UNCERTAINTY | GnssClock::HAS_DRIFT |
+                         GnssClock::HAS_DRIFT_UNCERTAINTY));
+}
+
+void GnssHalTest::checkGnssMeasurementFlags(const GnssMeasurement& measurement) {
+    ASSERT_TRUE(measurement.flags >= 0 &&
+                measurement.flags <=
+                        (GnssMeasurement::HAS_SNR | GnssMeasurement::HAS_CARRIER_FREQUENCY |
+                         GnssMeasurement::HAS_CARRIER_CYCLES | GnssMeasurement::HAS_CARRIER_PHASE |
+                         GnssMeasurement::HAS_CARRIER_PHASE_UNCERTAINTY |
+                         GnssMeasurement::HAS_AUTOMATIC_GAIN_CONTROL |
+                         GnssMeasurement::HAS_FULL_ISB | GnssMeasurement::HAS_FULL_ISB_UNCERTAINTY |
+                         GnssMeasurement::HAS_SATELLITE_ISB |
+                         GnssMeasurement::HAS_SATELLITE_ISB_UNCERTAINTY |
+                         GnssMeasurement::HAS_SATELLITE_PVT |
+                         GnssMeasurement::HAS_CORRELATION_VECTOR));
+}
+
+void GnssHalTest::checkGnssMeasurementFields(const GnssMeasurement& measurement,
+                                             const GnssData& data) {
+    checkGnssMeasurementFlags(measurement);
+    // Verify CodeType is valid.
+    ASSERT_NE(measurement.signalType.codeType, "");
+    // Verify basebandCn0DbHz is valid.
+    ASSERT_TRUE(measurement.basebandCN0DbHz > 0.0 && measurement.basebandCN0DbHz <= 65.0);
+
+    if (((measurement.flags & GnssMeasurement::HAS_FULL_ISB) > 0) &&
+        ((measurement.flags & GnssMeasurement::HAS_FULL_ISB_UNCERTAINTY) > 0) &&
+        ((measurement.flags & GnssMeasurement::HAS_SATELLITE_ISB) > 0) &&
+        ((measurement.flags & GnssMeasurement::HAS_SATELLITE_ISB_UNCERTAINTY) > 0)) {
+        GnssConstellationType referenceConstellation =
+                data.clock.referenceSignalTypeForIsb.constellation;
+        double carrierFrequencyHz = data.clock.referenceSignalTypeForIsb.carrierFrequencyHz;
+        std::string codeType = data.clock.referenceSignalTypeForIsb.codeType;
+
+        ASSERT_TRUE(referenceConstellation >= GnssConstellationType::UNKNOWN &&
+                    referenceConstellation <= GnssConstellationType::IRNSS);
+        ASSERT_TRUE(carrierFrequencyHz > 0);
+        ASSERT_NE(codeType, "");
+
+        ASSERT_TRUE(std::abs(measurement.fullInterSignalBiasNs) < 1.0e6);
+        ASSERT_TRUE(measurement.fullInterSignalBiasUncertaintyNs >= 0);
+        ASSERT_TRUE(std::abs(measurement.satelliteInterSignalBiasNs) < 1.0e6);
+        ASSERT_TRUE(measurement.satelliteInterSignalBiasUncertaintyNs >= 0);
+    }
+}
+
+void GnssHalTest::startMeasurementWithInterval(
+        int intervalMs, const sp<IGnssMeasurementInterface>& iGnssMeasurement,
+        sp<GnssMeasurementCallbackAidl>& callback) {
+    ALOGD("Start requesting measurement at interval of %d millis.", intervalMs);
+    IGnssMeasurementInterface::Options options;
+    options.intervalMs = intervalMs;
+    auto status = iGnssMeasurement->setCallbackWithOptions(callback, options);
+    ASSERT_TRUE(status.isOk());
+}
+
+void GnssHalTest::collectMeasurementIntervals(const sp<GnssMeasurementCallbackAidl>& callback,
+                                              const int numMeasurementEvents,
+                                              const int timeoutSeconds,
+                                              std::vector<int>& deltasMs) {
+    int64_t lastElapsedRealtimeMillis = 0;
+    for (int i = 0; i < numMeasurementEvents; i++) {
+        GnssData lastGnssData;
+        ASSERT_TRUE(callback->gnss_data_cbq_.retrieve(lastGnssData, timeoutSeconds));
+        EXPECT_EQ(callback->gnss_data_cbq_.calledCount(), i + 1);
+        ASSERT_TRUE(lastGnssData.measurements.size() > 0);
+
+        // Validity check GnssData fields
+        checkGnssMeasurementClockFields(lastGnssData);
+        for (const auto& measurement : lastGnssData.measurements) {
+            checkGnssMeasurementFields(measurement, lastGnssData);
+        }
+
+        long currentElapsedRealtimeMillis = lastGnssData.elapsedRealtime.timestampNs * 1e-6;
+        if (lastElapsedRealtimeMillis != 0) {
+            deltasMs.push_back(currentElapsedRealtimeMillis - lastElapsedRealtimeMillis);
+        }
+        lastElapsedRealtimeMillis = currentElapsedRealtimeMillis;
+    }
+}
+
+void GnssHalTest::assertMeanAndStdev(int intervalMs, std::vector<int>& deltasMs) {
+    double mean = computeMean(deltasMs);
+    double stdev = computeStdev(mean, deltasMs);
+    EXPECT_TRUE(std::abs(mean - intervalMs) <= intervalMs * ALLOWED_MEAN_ERROR_RATIO)
+            << "Test failed, because the mean of intervals is " << mean
+            << " millis. The test requires that abs(" << mean << " - " << intervalMs
+            << ") <= " << intervalMs * ALLOWED_MEAN_ERROR_RATIO
+            << " millis, when the requested interval is " << intervalMs << " millis.";
+
+    double maxStdev = std::max(MIN_STDEV_MS, intervalMs * ALLOWED_STDEV_ERROR_RATIO);
+    EXPECT_TRUE(stdev <= maxStdev)
+            << "Test failed, because the stdev of intervals is " << stdev
+            << " millis, which must be <= " << maxStdev
+            << " millis, when the requested interval is " << intervalMs << " millis.";
+    ALOGD("Mean of interval deltas in millis: %.1lf", mean);
+    ALOGD("Stdev of interval deltas in millis: %.1lf", stdev);
 }
