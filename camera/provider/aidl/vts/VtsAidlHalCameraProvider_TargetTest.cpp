@@ -39,7 +39,7 @@ using ::aidl::android::hardware::camera::device::ICameraDevice;
 using ::aidl::android::hardware::camera::metadata::RequestAvailableDynamicRangeProfilesMap;
 using ::aidl::android::hardware::camera::metadata::SensorPixelMode;
 using ::aidl::android::hardware::camera::provider::CameraIdAndStreamCombination;
-using ::aidl::android::hardware::camera::provider::ICameraProviderCallbackDefault;
+using ::aidl::android::hardware::camera::provider::BnCameraProviderCallback;
 
 using ::ndk::ScopedAStatus;
 
@@ -86,7 +86,7 @@ TEST_P(CameraAidlTest, getVendorTags) {
 
 // Test if ICameraProvider::setCallback returns Status::OK
 TEST_P(CameraAidlTest, setCallback) {
-    struct ProviderCb : public ICameraProviderCallbackDefault {
+    struct ProviderCb : public BnCameraProviderCallback {
         ScopedAStatus cameraDeviceStatusChange(const std::string& cameraDeviceName,
                                                CameraDeviceStatus newStatus) override {
             ALOGI("camera device status callback name %s, status %d", cameraDeviceName.c_str(),
@@ -109,11 +109,11 @@ TEST_P(CameraAidlTest, setCallback) {
         }
     };
 
-    std::shared_ptr<ProviderCb> cb = ProviderCb::make<ProviderCb>();
+    std::shared_ptr<ProviderCb> cb = ndk::SharedRefBase::make<ProviderCb>();
     ScopedAStatus ret = mProvider->setCallback(cb);
     ASSERT_TRUE(ret.isOk());
     ret = mProvider->setCallback(nullptr);
-    ASSERT_TRUE(ret.isOk());
+    ASSERT_EQ(static_cast<int32_t>(Status::ILLEGAL_ARGUMENT), ret.getServiceSpecificError());
 }
 
 // Test if ICameraProvider::getCameraDeviceInterface returns Status::OK and non-null device
@@ -399,9 +399,6 @@ TEST_P(CameraAidlTest, setTorchMode) {
             }
         }
     }
-
-    ret = mProvider->setCallback(nullptr);
-    ASSERT_TRUE(ret.isOk());
 }
 
 // Check dump functionality.
