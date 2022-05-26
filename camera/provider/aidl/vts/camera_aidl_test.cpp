@@ -55,26 +55,6 @@ using ::ndk::ScopedAStatus;
 using ::ndk::SpAIBinder;
 
 namespace {
-bool matchDeviceName(const std::string& deviceName, const std::string& providerType,
-                     std::string* deviceVersion, std::string* cameraId) {
-    // expected format: device@<major>.<minor>/<type>/<id>
-    std::stringstream pattern;
-    pattern << "device@[0-9]+\\.[0-9]+/" << providerType << "/(.+)";
-    std::regex e(pattern.str());
-
-    std::smatch sm;
-    if (std::regex_match(deviceName, sm, e)) {
-        if (deviceVersion != nullptr) {
-            *deviceVersion = sm[1];
-        }
-        if (cameraId != nullptr) {
-            *cameraId = sm[2];
-        }
-        return true;
-    }
-    return false;
-}
-
 bool parseProviderName(const std::string& serviceDescriptor, std::string* type /*out*/,
                        uint32_t* id /*out*/) {
     if (!type || !id) {
@@ -498,13 +478,11 @@ void CameraAidlTest::allocateGraphicBuffer(uint32_t width, uint32_t height, uint
 
 bool CameraAidlTest::matchDeviceName(const std::string& deviceName, const std::string& providerType,
                                      std::string* deviceVersion, std::string* cameraId) {
-    // "device@<version>/legacy/<id>"
-    std::string pattern;
-    pattern.append("device@([0-9]+\\.[0-9]+)/");
-    pattern.append(providerType);
-    pattern.append("/(.+)");
+    // expected format: device@<major>.<minor>/<type>/<id>
+    std::stringstream pattern;
+    pattern << "device@([0-9]+\\.[0-9]+)/" << providerType << "/(.+)";
+    std::regex e(pattern.str());
 
-    std::regex e(pattern);
     std::smatch sm;
     if (std::regex_match(deviceName, sm, e)) {
         if (deviceVersion != nullptr) {
@@ -1160,7 +1138,7 @@ void CameraAidlTest::verifyLogicalOrUltraHighResCameraMetadata(
     }
 
     std::string version, cameraId;
-    ASSERT_TRUE(::matchDeviceName(cameraName, mProviderType, &version, &cameraId));
+    ASSERT_TRUE(matchDeviceName(cameraName, mProviderType, &version, &cameraId));
     std::unordered_set<std::string> physicalIds;
     rc = getPhysicalCameraIds(metadata, &physicalIds);
     ASSERT_TRUE(isUltraHighResCamera || Status::OK == rc);
@@ -1192,7 +1170,7 @@ void CameraAidlTest::verifyLogicalOrUltraHighResCameraMetadata(
         SystemCameraKind physSystemCameraKind = SystemCameraKind::PUBLIC;
         for (auto& deviceName : deviceNames) {
             std::string publicVersion, publicId;
-            ASSERT_TRUE(::matchDeviceName(deviceName, mProviderType, &publicVersion, &publicId));
+            ASSERT_TRUE(matchDeviceName(deviceName, mProviderType, &publicVersion, &publicId));
             if (physicalId == publicId) {
                 isPublicId = true;
                 fullPublicId = deviceName;
