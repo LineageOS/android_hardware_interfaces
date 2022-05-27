@@ -153,7 +153,6 @@ class GraphicsTestsBase {
             if (error == EX_SERVICE_SPECIFIC) {
                 error = status.getServiceSpecificError();
                 EXPECT_NE(OK, error) << "Failed to set error properly";
-                EXPECT_EQ(OK, error) << "Failed to allocate";
             } else {
                 EXPECT_EQ(OK, error) << "Allocation transport failure";
             }
