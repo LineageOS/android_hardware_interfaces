@@ -402,7 +402,7 @@ TEST_F(DefaultVhalImplTest, testDump) {
     gotValue->timestamp = 0;
 
     std::string infoMake = toString(*gotValue);
-    EXPECT_THAT(std::string(buf), HasSubstr(infoMake));
+    EXPECT_THAT(std::string(buf, sizeof(buf)), HasSubstr(infoMake));
 }
 
 TEST_F(DefaultVhalImplTest, testSetPropInvalidAreaId) {
