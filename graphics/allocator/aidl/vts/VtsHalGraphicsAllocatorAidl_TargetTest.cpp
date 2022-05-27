@@ -277,6 +277,7 @@ TEST_P(GraphicsFrontBufferTests, FrontBufferGpuToCpu) {
     if (!supported) {
         ASSERT_EQ(nullptr, buffer.get())
                 << "Allocation succeeded, but IMapper::isSupported was false";
+        GTEST_SKIP();
     } else {
         ASSERT_NE(nullptr, buffer.get()) << "Allocation failed, but IMapper::isSupported was true";
     }
@@ -318,6 +319,7 @@ TEST_P(GraphicsFrontBufferTests, FrontBufferGpuToGpu) {
     if (!supported) {
         ASSERT_EQ(nullptr, buffer.get())
                 << "Allocation succeeded, but IMapper::isSupported was false";
+        GTEST_SKIP();
     } else {
         ASSERT_NE(nullptr, buffer.get()) << "Allocation failed, but IMapper::isSupported was true";
     }
