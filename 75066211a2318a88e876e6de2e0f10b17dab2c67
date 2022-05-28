@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "29a512e9_fa271efb",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 28232
+      },
+      "writtenOn": "2022-05-28T17:19:00Z",
+      "side": 1,
+      "message": "Alternative to https://source.codeaurora.org/quic/la/platform/hardware/interfaces/commit/?id\u003d30f48cb5a6dd4c574a6432014040530e87bd1a57 which removes AOSP service.",
+      "revId": "75066211a2318a88e876e6de2e0f10b17dab2c67",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
