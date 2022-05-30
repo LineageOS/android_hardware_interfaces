@@ -44,9 +44,6 @@ aidl_interface {
             platform_apis: true,
         },
         ndk: {
-            vndk: {
-                enabled: true,
-            },
             apex_available: [
                 "//apex_available:platform",
                 "com.android.bluetooth",

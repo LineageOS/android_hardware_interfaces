@@ -16,11 +16,6 @@ aidl_interface {
         java: {
             platform_apis: true,
         },
-        ndk: {
-            vndk: {
-                enabled: true,
-            },
-        },
     },
     versions: ["1"],
 }
