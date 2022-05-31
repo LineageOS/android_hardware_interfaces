@@ -1262,7 +1262,7 @@ class CompilationCachingSecurityTest
         FILE* pFile = fopen(filename.c_str(), "a");
         uint32_t appendLength = getRandomInt(1, 256);
         for (uint32_t i = 0; i < appendLength; i++) {
-            ASSERT_NE(fputc(getRandomInt<uint8_t>(0, 255), pFile), EOF);
+            ASSERT_NE(fputc(getRandomInt<uint16_t>(0, 255), pFile), EOF);
         }
         fclose(pFile);
         *skip = false;
