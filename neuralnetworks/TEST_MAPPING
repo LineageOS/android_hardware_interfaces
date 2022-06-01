@@ -17,53 +17,9 @@
     },
     {
       "name": "neuralnetworks_utils_hal_aidl_test"
-    },
-    {
-      "name": "VtsHalNeuralnetworksV1_0TargetTest",
-      "options": [
-        {
-          // Do not use any sample driver except sample-all in order to reduce
-          // testing time. The other sample drivers (fast-float, quant, etc.)
-          // are subsets of sample-all.
-          "include-filter": "-*sample_float_fast*:*sample_float_slow*:*sample_minimal*:*sample_quant*"
-        }
-      ]
-    },
-    {
-      "name": "VtsHalNeuralnetworksV1_1TargetTest",
-      "options": [
-        {
-          // Do not use any sample driver except sample-all in order to reduce
-          // testing time. The other sample drivers (fast-float, quant, etc.)
-          // are subsets of sample-all.
-          "include-filter": "-*sample_float_fast*:*sample_float_slow*:*sample_minimal*:*sample_quant*"
-        }
-      ]
     }
   ],
   "presubmit-large": [
-    {
-      "name": "VtsHalNeuralnetworksV1_2TargetTest",
-      "options": [
-        {
-          // Do not use any sample driver except sample-all in order to reduce
-          // testing time. The other sample drivers (fast-float, quant, etc.)
-          // are subsets of sample-all.
-          "include-filter": "-*sample_float_fast*:*sample_float_slow*:*sample_minimal*:*sample_quant*"
-        }
-      ]
-    },
-    {
-      "name": "VtsHalNeuralnetworksV1_3TargetTest",
-      "options": [
-        {
-          // Do not use any sample driver except sample-all in order to reduce
-          // testing time. The other sample drivers (fast-float, quant, etc.)
-          // are subsets of sample-all.
-          "include-filter": "-*sample_float_fast*:*sample_float_slow*:*sample_minimal*:*sample_quant*"
-        }
-      ]
-    },
     {
       "name": "VtsHalNeuralnetworksTargetTest",
       "options": [
