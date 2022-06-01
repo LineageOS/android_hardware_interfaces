@@ -31,6 +31,7 @@
 #include <aidl/android/hardware/security/keymint/IKeyMintDevice.h>
 #include <aidl/android/hardware/security/keymint/MacedPublicKey.h>
 
+#include <keymint_support/attestation_record.h>
 #include <keymint_support/authorization_set.h>
 #include <keymint_support/openssl_utils.h>
 
@@ -363,7 +364,10 @@ void verify_serial(X509* cert, const uint64_t expected_serial);
 void verify_subject_and_serial(const Certificate& certificate,  //
                                const uint64_t expected_serial,  //
                                const string& subject, bool self_signed);
-
+void verify_root_of_trust(const vector<uint8_t>& verified_boot_key,  //
+                          bool device_locked,                        //
+                          VerifiedBoot verified_boot_state,          //
+                          const vector<uint8_t>& verified_boot_hash);
 bool verify_attestation_record(int aidl_version,                       //
                                const string& challenge,                //
                                const string& app_id,                   //
