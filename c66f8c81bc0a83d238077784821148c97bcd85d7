@@ -52,6 +52,24 @@
       "parentUuid": "7a246942_27af95f0",
       "revId": "c66f8c81bc0a83d238077784821148c97bcd85d7",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "38d884d4_e15bc2b8",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 25732
+      },
+      "writtenOn": "2022-06-01T04:57:19Z",
+      "side": 1,
+      "message": "Also wouldn\u0027t VTS tests fail on non-qcom devices with this commit?",
+      "parentUuid": "e6f08ed2_35b9e6c8",
+      "revId": "c66f8c81bc0a83d238077784821148c97bcd85d7",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
