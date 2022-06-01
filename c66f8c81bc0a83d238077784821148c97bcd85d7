@@ -16,6 +16,24 @@
       "message": "This interface has nothing to do with AOSP service, override the service in your device init script instead",
       "revId": "c66f8c81bc0a83d238077784821148c97bcd85d7",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7a246942_27af95f0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 28232
+      },
+      "writtenOn": "2022-06-01T04:08:18Z",
+      "side": 1,
+      "message": "This would fail for all qcom devices. Are you suggesting to override this in device init scripts for all devices?\n\nI am fine if you want to take the CAF change instead as well.",
+      "parentUuid": "8aed9a3d_4ee65bed",
+      "revId": "c66f8c81bc0a83d238077784821148c97bcd85d7",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
