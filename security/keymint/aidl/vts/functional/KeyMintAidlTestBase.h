@@ -354,6 +354,9 @@ void add_tag_from_prop(AuthorizationSetBuilder* tags, TypedTag<TagType::BYTES, t
     }
 }
 
+// Return the VSR API level for this device.
+int get_vsr_api_level();
+
 // Indicate whether the test is running on a GSI image.
 bool is_gsi_image();
 

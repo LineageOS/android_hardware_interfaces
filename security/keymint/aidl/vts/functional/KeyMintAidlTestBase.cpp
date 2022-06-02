@@ -1461,6 +1461,28 @@ void verify_subject(const X509* cert,       //
     OPENSSL_free(cert_issuer);
 }
 
+int get_vsr_api_level() {
+    int api_level = ::android::base::GetIntProperty("ro.board.api_level", -1);
+    if (api_level == -1) {
+        api_level = ::android::base::GetIntProperty("ro.board.first_api_level", -1);
+    }
+    if (api_level == -1) {
+        api_level = ::android::base::GetIntProperty("ro.vndk.version", -1);
+    }
+    // We really should have a VSR API level by now.  But on cuttlefish, and perhaps other weird
+    // devices, we may not.  So, we use the SDK first or current API level if needed.  If this goes
+    // wrong, it should go wrong in the direction of being too strict rather than too lenient, which
+    // should provoke someone to examine why we don't have proper VSR API level properties.
+    if (api_level == -1) {
+        api_level = ::android::base::GetIntProperty("ro.product.first_api_level", -1);
+    }
+    if (api_level == -1) {
+        api_level = ::android::base::GetIntProperty("ro.build.version.sdk", -1);
+    }
+    EXPECT_NE(api_level, -1) << "Could not find a VSR level, or equivalent.";
+    return api_level;
+}
+
 bool is_gsi_image() {
     std::ifstream ifs("/system/system_ext/etc/init/init.gsi.rc");
     return ifs.good();
