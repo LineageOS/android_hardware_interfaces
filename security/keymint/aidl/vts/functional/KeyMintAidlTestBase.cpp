@@ -31,7 +31,6 @@
 #include <remote_prov/remote_prov_utils.h>
 
 #include <keymaster/cppcose/cppcose.h>
-#include <keymint_support/attestation_record.h>
 #include <keymint_support/key_param_output.h>
 #include <keymint_support/keymint_utils.h>
 #include <keymint_support/openssl_utils.h>
@@ -1497,6 +1496,60 @@ void verify_subject_and_serial(const Certificate& certificate,  //
     verify_subject(cert.get(), subject, self_signed);
 }
 
+void verify_root_of_trust(const vector<uint8_t>& verified_boot_key, bool device_locked,
+                          VerifiedBoot verified_boot_state,
+                          const vector<uint8_t>& verified_boot_hash) {
+    char property_value[PROPERTY_VALUE_MAX] = {};
+
+    if (avb_verification_enabled()) {
+        EXPECT_NE(property_get("ro.boot.vbmeta.digest", property_value, ""), 0);
+        string prop_string(property_value);
+        EXPECT_EQ(prop_string.size(), 64);
+        EXPECT_EQ(prop_string, bin2hex(verified_boot_hash));
+
+        EXPECT_NE(property_get("ro.boot.vbmeta.device_state", property_value, ""), 0);
+        if (!strcmp(property_value, "unlocked")) {
+            EXPECT_FALSE(device_locked);
+        } else {
+            EXPECT_TRUE(device_locked);
+        }
+
+        // Check that the device is locked if not debuggable, e.g., user build
+        // images in CTS. For VTS, debuggable images are used to allow adb root
+        // and the device is unlocked.
+        if (!property_get_bool("ro.debuggable", false)) {
+            EXPECT_TRUE(device_locked);
+        } else {
+            EXPECT_FALSE(device_locked);
+        }
+    }
+
+    // Verified boot key should be all 0's if the boot state is not verified or self signed
+    std::string empty_boot_key(32, '\0');
+    std::string verified_boot_key_str((const char*)verified_boot_key.data(),
+                                      verified_boot_key.size());
+    EXPECT_NE(property_get("ro.boot.verifiedbootstate", property_value, ""), 0);
+    if (!strcmp(property_value, "green")) {
+        EXPECT_EQ(verified_boot_state, VerifiedBoot::VERIFIED);
+        EXPECT_NE(0, memcmp(verified_boot_key.data(), empty_boot_key.data(),
+                            verified_boot_key.size()));
+    } else if (!strcmp(property_value, "yellow")) {
+        EXPECT_EQ(verified_boot_state, VerifiedBoot::SELF_SIGNED);
+        EXPECT_NE(0, memcmp(verified_boot_key.data(), empty_boot_key.data(),
+                            verified_boot_key.size()));
+    } else if (!strcmp(property_value, "orange")) {
+        EXPECT_EQ(verified_boot_state, VerifiedBoot::UNVERIFIED);
+        EXPECT_EQ(0, memcmp(verified_boot_key.data(), empty_boot_key.data(),
+                            verified_boot_key.size()));
+    } else if (!strcmp(property_value, "red")) {
+        EXPECT_EQ(verified_boot_state, VerifiedBoot::FAILED);
+    } else {
+        EXPECT_EQ(verified_boot_state, VerifiedBoot::UNVERIFIED);
+        EXPECT_EQ(0, memcmp(verified_boot_key.data(), empty_boot_key.data(),
+                            verified_boot_key.size()));
+    }
+}
+
 bool verify_attestation_record(int32_t aidl_version,                   //
                                const string& challenge,                //
                                const string& app_id,                   //
@@ -1551,8 +1604,6 @@ bool verify_attestation_record(int32_t aidl_version,                   //
     EXPECT_EQ(security_level, att_keymint_security_level);
     EXPECT_EQ(security_level, att_attestation_security_level);
 
-
-    char property_value[PROPERTY_VALUE_MAX] = {};
     // TODO(b/136282179): When running under VTS-on-GSI the TEE-backed
     // keymint implementation will report YYYYMM dates instead of YYYYMMDD
     // for the BOOT_PATCH_LEVEL.
@@ -1612,54 +1663,7 @@ bool verify_attestation_record(int32_t aidl_version,                   //
     error = parse_root_of_trust(attest_rec->data, attest_rec->length, &verified_boot_key,
                                 &verified_boot_state, &device_locked, &verified_boot_hash);
     EXPECT_EQ(ErrorCode::OK, error);
-
-    if (avb_verification_enabled()) {
-        EXPECT_NE(property_get("ro.boot.vbmeta.digest", property_value, ""), 0);
-        string prop_string(property_value);
-        EXPECT_EQ(prop_string.size(), 64);
-        EXPECT_EQ(prop_string, bin2hex(verified_boot_hash));
-
-        EXPECT_NE(property_get("ro.boot.vbmeta.device_state", property_value, ""), 0);
-        if (!strcmp(property_value, "unlocked")) {
-            EXPECT_FALSE(device_locked);
-        } else {
-            EXPECT_TRUE(device_locked);
-        }
-
-        // Check that the device is locked if not debuggable, e.g., user build
-        // images in CTS. For VTS, debuggable images are used to allow adb root
-        // and the device is unlocked.
-        if (!property_get_bool("ro.debuggable", false)) {
-            EXPECT_TRUE(device_locked);
-        } else {
-            EXPECT_FALSE(device_locked);
-        }
-    }
-
-    // Verified boot key should be all 0's if the boot state is not verified or self signed
-    std::string empty_boot_key(32, '\0');
-    std::string verified_boot_key_str((const char*)verified_boot_key.data(),
-                                      verified_boot_key.size());
-    EXPECT_NE(property_get("ro.boot.verifiedbootstate", property_value, ""), 0);
-    if (!strcmp(property_value, "green")) {
-        EXPECT_EQ(verified_boot_state, VerifiedBoot::VERIFIED);
-        EXPECT_NE(0, memcmp(verified_boot_key.data(), empty_boot_key.data(),
-                            verified_boot_key.size()));
-    } else if (!strcmp(property_value, "yellow")) {
-        EXPECT_EQ(verified_boot_state, VerifiedBoot::SELF_SIGNED);
-        EXPECT_NE(0, memcmp(verified_boot_key.data(), empty_boot_key.data(),
-                            verified_boot_key.size()));
-    } else if (!strcmp(property_value, "orange")) {
-        EXPECT_EQ(verified_boot_state, VerifiedBoot::UNVERIFIED);
-        EXPECT_EQ(0, memcmp(verified_boot_key.data(), empty_boot_key.data(),
-                            verified_boot_key.size()));
-    } else if (!strcmp(property_value, "red")) {
-        EXPECT_EQ(verified_boot_state, VerifiedBoot::FAILED);
-    } else {
-        EXPECT_EQ(verified_boot_state, VerifiedBoot::UNVERIFIED);
-        EXPECT_EQ(0, memcmp(verified_boot_key.data(), empty_boot_key.data(),
-                            verified_boot_key.size()));
-    }
+    verify_root_of_trust(verified_boot_key, device_locked, verified_boot_state, verified_boot_hash);
 
     att_sw_enforced.Sort();
     expected_sw_enforced.Sort();
