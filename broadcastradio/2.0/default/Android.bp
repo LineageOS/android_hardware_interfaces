@@ -25,6 +25,9 @@ package {
 
 cc_binary {
     name: "android.hardware.broadcastradio@2.0-service",
+    vintf_fragments: [
+        "android.hardware.broadcastradio@2.0-service.xml",
+    ],
     init_rc: ["android.hardware.broadcastradio@2.0-service.rc"],
     vendor: true,
     relative_install_path: "hw",
@@ -41,7 +44,7 @@ cc_binary {
         "TunerSession.cpp",
         "VirtualProgram.cpp",
         "VirtualRadio.cpp",
-        "service.cpp"
+        "service.cpp",
     ],
     static_libs: [
         "android.hardware.broadcastradio@common-utils-2x-lib",
