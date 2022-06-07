@@ -8014,6 +8014,18 @@ TEST_P(UnlockedDeviceRequiredTest, DISABLED_KeysBecomeUnusable) {
 
 INSTANTIATE_KEYMINT_AIDL_TEST(UnlockedDeviceRequiredTest);
 
+using VsrRequirementTest = KeyMintAidlTestBase;
+
+TEST_P(VsrRequirementTest, Vsr13Test) {
+    int vsr_api_level = get_vsr_api_level();
+    if (vsr_api_level < 33) {
+        GTEST_SKIP() << "Applies only to VSR API level 33, this device is: " << vsr_api_level;
+    }
+    EXPECT_GE(AidlVersion(), 2) << "VSR 13+ requires KeyMint version 2";
+}
+
+INSTANTIATE_KEYMINT_AIDL_TEST(VsrRequirementTest);
+
 }  // namespace aidl::android::hardware::security::keymint::test
 
 int main(int argc, char** argv) {
