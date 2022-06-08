@@ -49,7 +49,9 @@ class Gralloc {
         kToleranceAllErrors = ~0x0U,
     };
 
-    Gralloc(const std::string& allocatorServiceName = "default",
+    Gralloc(const std::string& aidlAllocatorServiceName =
+                    "android.hardware.graphics.allocator.IAllocator/default",
+            const std::string& hidlAllocatorServiceName = "default",
             const std::string& mapperServiceName = "default", bool errOnFailure = true);
     ~Gralloc();
 
@@ -164,10 +166,13 @@ class Gralloc {
                 0x1U << std::underlying_type_t<Error>(error)) != 0;
     }
 
-    void init(const std::string& allocatorServiceName, const std::string& mapperServiceName);
+    void init(const std::string& aidlAllocatorServiceName,
+              const std::string& hidlAllocatorServiceName, const std::string& mapperServiceName);
 
     // initialize without checking for failure to get service
-    void initNoErr(const std::string& allocatorServiceName, const std::string& mapperServiceName);
+    void initNoErr(const std::string& aidlAllocatorServiceName,
+                   const std::string& hidlAllocatorServiceName,
+                   const std::string& mapperServiceName);
     const native_handle_t* cloneBuffer(const hidl_handle& rawHandle, enum Tolerance tolerance);
     const native_handle_t* cloneBuffer(const hidl_handle& rawHandle) {
         return cloneBuffer(rawHandle, Tolerance::kToleranceStrict);
