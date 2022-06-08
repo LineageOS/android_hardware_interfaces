@@ -67,6 +67,7 @@ using ::aidl::android::hardware::automotive::vehicle::VehiclePropValue;
 
 using ::android::base::EqualsIgnoreCase;
 using ::android::base::Error;
+using ::android::base::GetIntProperty;
 using ::android::base::ParseFloat;
 using ::android::base::Result;
 using ::android::base::ScopedLockAssertion;
@@ -75,6 +76,7 @@ using ::android::base::StringPrintf;
 
 const char* VENDOR_OVERRIDE_DIR = "/vendor/etc/automotive/vhaloverride/";
 const char* OVERRIDE_PROPERTY = "persist.vendor.vhal_init_value_override";
+const char* POWER_STATE_REQ_CONFIG_PROPERTY = "ro.vendor.fake_vhal.ap_power_state_req.config";
 
 // A list of supported options for "--set" command.
 const std::unordered_set<std::string> SET_PROP_OPTIONS = {
@@ -163,7 +165,10 @@ void FakeVehicleHardware::init() {
         VehiclePropConfig cfg = it.config;
         VehiclePropertyStore::TokenFunction tokenFunction = nullptr;
 
-        if (cfg.prop == OBD2_FREEZE_FRAME) {
+        if (cfg.prop == toInt(VehicleProperty::AP_POWER_STATE_REQ)) {
+            int config = GetIntProperty(POWER_STATE_REQ_CONFIG_PROPERTY, /*default_value=*/0);
+            cfg.configArray[0] = config;
+        } else if (cfg.prop == OBD2_FREEZE_FRAME) {
             tokenFunction = [](const VehiclePropValue& propValue) { return propValue.timestamp; };
         }
 
