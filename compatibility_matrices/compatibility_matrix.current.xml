@@ -169,6 +169,13 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <hal format="aidl" optional="true">
+        <name>android.hardware.boot</name>
+        <interface>
+            <name>IBootControl</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
     <hal format="hidl" optional="true">
         <name>android.hardware.broadcastradio</name>
         <version>1.0-1</version>
