@@ -2840,4 +2840,17 @@ enum VehicleProperty {
     VEHICLE_CURB_WEIGHT = 0x0F46 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
 
+    /**
+     * EU's General security regulation compliance requirement.
+     *
+     * Returns whether general security regulation compliance is required, if
+     * so, what type of requirement.
+     *
+     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @access VehiclePropertyAccess:READ
+     * @data_enum GsrComplianceRequirementType
+     */
+    GENERAL_SAFETY_REGULATION_COMPLIANCE_REQUIREMENT = 0x0F47 + 0x10000000 + 0x01000000
+            + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
+
 }
