@@ -27,21 +27,24 @@ namespace mapper {
 namespace V4_0 {
 namespace vts {
 
-Gralloc::Gralloc(const std::string& allocatorServiceName, const std::string& mapperServiceName,
+Gralloc::Gralloc(const std::string& aidlAllocatorServiceName,
+                 const std::string& hidlAllocatorServiceName, const std::string& mapperServiceName,
                  bool errOnFailure) {
     if (errOnFailure) {
-        init(allocatorServiceName, mapperServiceName);
+        init(aidlAllocatorServiceName, hidlAllocatorServiceName, mapperServiceName);
     } else {
-        initNoErr(allocatorServiceName, mapperServiceName);
+        initNoErr(aidlAllocatorServiceName, hidlAllocatorServiceName, mapperServiceName);
     }
 }
 
-void Gralloc::init(const std::string& allocatorServiceName, const std::string& mapperServiceName) {
+void Gralloc::init(const std::string& aidlAllocatorServiceName,
+                   const std::string& hidlAllocatorServiceName,
+                   const std::string& mapperServiceName) {
     mAidlAllocator = aidl::android::hardware::graphics::allocator::IAllocator::fromBinder(
-            ndk::SpAIBinder(AServiceManager_checkService(allocatorServiceName.c_str())));
+            ndk::SpAIBinder(AServiceManager_checkService(aidlAllocatorServiceName.c_str())));
 
     if (mAidlAllocator == nullptr) {
-        mHidlAllocator = IAllocator::getService(allocatorServiceName);
+        mHidlAllocator = IAllocator::getService(hidlAllocatorServiceName);
     }
     ASSERT_TRUE(nullptr != mAidlAllocator || mHidlAllocator != nullptr)
             << "failed to get allocator service";
@@ -51,13 +54,14 @@ void Gralloc::init(const std::string& allocatorServiceName, const std::string& m
     ASSERT_FALSE(mMapper->isRemote()) << "mapper is not in passthrough mode";
 }
 
-void Gralloc::initNoErr(const std::string& allocatorServiceName,
+void Gralloc::initNoErr(const std::string& aidlAllocatorServiceName,
+                        const std::string& hidlAllocatorServiceName,
                         const std::string& mapperServiceName) {
     mAidlAllocator = aidl::android::hardware::graphics::allocator::IAllocator::fromBinder(
-            ndk::SpAIBinder(AServiceManager_checkService(allocatorServiceName.c_str())));
+            ndk::SpAIBinder(AServiceManager_checkService(aidlAllocatorServiceName.c_str())));
 
     if (mAidlAllocator == nullptr) {
-        mHidlAllocator = IAllocator::getService(allocatorServiceName);
+        mHidlAllocator = IAllocator::getService(hidlAllocatorServiceName);
     }
 
     mMapper = IMapper::getService(mapperServiceName);
