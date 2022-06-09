@@ -150,4 +150,9 @@ enum UwbVendorCapabilityTlvTypes {
      *  0 - Feature not supported.
      */
     SUPPORTED_AOA_RESULT_REQ_ANTENNA_INTERLEAVING = 0xE3,
+
+    /**
+     * 4 byte value to indicate supported min ranging interval in ms.
+     */
+    SUPPORTED_MIN_RANGING_INTERVAL_MS = 0xE4,
 }
