@@ -19,10 +19,16 @@ package {
 }
 
 cc_defaults {
+    name: "VehicleHalInterfaceDefaults",
+    static_libs: [
+        "android.hardware.automotive.vehicle-V1-ndk",
+    ],
+}
+
+cc_defaults {
     name: "VehicleHalDefaults",
     static_libs: [
         "android-automotive-large-parcelable-lib",
-        "android.hardware.automotive.vehicle-V1-ndk",
         "libmath",
     ],
     shared_libs: [
@@ -37,6 +43,7 @@ cc_defaults {
         "-Wthread-safety",
     ],
     defaults: [
+        "VehicleHalInterfaceDefaults",
         "android-automotive-large-parcelable-defaults",
     ],
 }
