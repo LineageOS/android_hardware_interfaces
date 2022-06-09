@@ -66,7 +66,7 @@ ndk::ScopedAStatus VibratorManager::prepareSynced(const std::vector<int32_t>& vi
 ndk::ScopedAStatus VibratorManager::triggerSynced(
         const std::shared_ptr<IVibratorCallback>& callback) {
     LOG(INFO) << "Vibrator Manager trigger synced";
-    std::thread([=] {
+    std::thread([callback] {
         if (callback != nullptr) {
             LOG(INFO) << "Notifying perform complete";
             callback->onComplete();
