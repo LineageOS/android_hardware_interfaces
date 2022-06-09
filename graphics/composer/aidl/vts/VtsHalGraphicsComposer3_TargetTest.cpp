@@ -1719,10 +1719,10 @@ TEST_P(GraphicsComposerAidlCommandTest, DisplayDecoration) {
             }
         }
 
+        configureLayer(display, layer, Composition::DISPLAY_DECORATION, display.getFrameRect(),
+                          display.getCrop());
         mWriter.setLayerBuffer(display.getDisplayId(), layer, /*slot*/ 0, decorBuffer->handle,
                                /*acquireFence*/ -1);
-        mWriter.setLayerCompositionType(display.getDisplayId(), layer,
-                                        Composition::DISPLAY_DECORATION);
         mWriter.validateDisplay(display.getDisplayId(), ComposerClientWriter::kNoTimestamp);
         execute();
         if (support) {
