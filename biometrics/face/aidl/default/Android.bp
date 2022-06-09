@@ -27,7 +27,7 @@ cc_binary {
         "FakeFaceEngine.cpp",
         "Session.cpp",
     ],
-    static_libs: ["android.hardware.biometrics.face.VirtualProps"],
+    static_libs: ["libandroid.hardware.biometrics.face.VirtualProps"],
 }
 
 sysprop_library {
@@ -48,7 +48,7 @@ cc_test {
         "libbinder_ndk",
     ],
     static_libs: [
-        "android.hardware.biometrics.face.VirtualProps",
+        "libandroid.hardware.biometrics.face.VirtualProps",
         "android.hardware.biometrics.face-V2-ndk",
         "android.hardware.biometrics.common-V2-ndk",
         "android.hardware.keymaster-V3-ndk",
