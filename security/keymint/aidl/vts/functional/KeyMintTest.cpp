@@ -1102,9 +1102,9 @@ TEST_P(NewKeyGenerationTest, RsaWithAttestation) {
                 << "Key size " << key_size << "missing";
         EXPECT_TRUE(crypto_params.Contains(TAG_RSA_PUBLIC_EXPONENT, 65537U));
 
+        ASSERT_GT(cert_chain_.size(), 0);
         verify_subject_and_serial(cert_chain_[0], serial_int, subject, false);
         EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
-        ASSERT_GT(cert_chain_.size(), 0);
 
         AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
         AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
@@ -1178,6 +1178,7 @@ TEST_P(NewKeyGenerationTest, DISABLED_RsaWithRpkAttestation) {
         EXPECT_FALSE(ChainSignaturesAreValid(cert_chain_));
 
         // The signature over the attested key should correspond to the P256 public key.
+        ASSERT_GT(cert_chain_.size(), 0);
         X509_Ptr key_cert(parse_cert_blob(cert_chain_[0].encodedCertificate));
         ASSERT_TRUE(key_cert.get());
         EVP_PKEY_Ptr signing_pubkey;
@@ -1265,9 +1266,9 @@ TEST_P(NewKeyGenerationTest, RsaEncryptionWithAttestation) {
             << "Key size " << key_size << "missing";
     EXPECT_TRUE(crypto_params.Contains(TAG_RSA_PUBLIC_EXPONENT, 65537U));
 
+    ASSERT_GT(cert_chain_.size(), 0);
     verify_subject_and_serial(cert_chain_[0], serial_int, subject, false);
     EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
-    ASSERT_GT(cert_chain_.size(), 0);
 
     AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
     AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
@@ -1317,9 +1318,9 @@ TEST_P(NewKeyGenerationTest, RsaWithSelfSign) {
                 << "Key size " << key_size << "missing";
         EXPECT_TRUE(crypto_params.Contains(TAG_RSA_PUBLIC_EXPONENT, 65537U));
 
+        ASSERT_EQ(cert_chain_.size(), 1);
         verify_subject_and_serial(cert_chain_[0], serial_int, subject, false);
         EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
-        ASSERT_EQ(cert_chain_.size(), 1);
 
         CheckedDeleteKey(&key_blob);
     }
@@ -1398,6 +1399,7 @@ TEST_P(NewKeyGenerationTest, RsaWithAttestationAppIdIgnored) {
             << "Key size " << key_size << "missing";
     EXPECT_TRUE(crypto_params.Contains(TAG_RSA_PUBLIC_EXPONENT, 65537U));
 
+    ASSERT_GT(cert_chain_.size(), 0);
     verify_subject_and_serial(cert_chain_[0], serial_int, subject, false);
     EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
     ASSERT_EQ(cert_chain_.size(), 1);
@@ -2228,8 +2230,8 @@ TEST_P(NewKeyGenerationTest, EcdsaSelfSignAttestation) {
         EXPECT_TRUE(crypto_params.Contains(TAG_EC_CURVE, curve)) << "Curve " << curve << "missing";
 
         EXPECT_TRUE(ChainSignaturesAreValid(cert_chain_));
-        verify_subject_and_serial(cert_chain_[0], serial_int, subject, false);
         ASSERT_EQ(cert_chain_.size(), 1);
+        verify_subject_and_serial(cert_chain_[0], serial_int, subject, false);
 
         AuthorizationSet hw_enforced = HwEnforcedAuthorizations(key_characteristics);
         AuthorizationSet sw_enforced = SwEnforcedAuthorizations(key_characteristics);
