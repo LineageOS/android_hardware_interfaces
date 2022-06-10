@@ -488,10 +488,13 @@ bool VtsComposerClient::verifyComposerCallbackParams() {
 }
 
 bool VtsComposerClient::destroyAllLayers() {
-    for (const auto& it : mDisplayResources) {
-        const auto& [display, resource] = it;
+    std::unordered_map<int64_t, DisplayResource> physicalDisplays;
+    while (!mDisplayResources.empty()) {
+        const auto& it = mDisplayResources.begin();
+        const auto& [display, resource] = *it;
 
-        for (auto layer : resource.layers) {
+        while (!resource.layers.empty()) {
+            auto layer = *resource.layers.begin();
             const auto status = destroyLayer(display, layer);
             if (!status.isOk()) {
                 ALOGE("Unable to destroy all the layers, failed at layer %" PRId64 " with error %s",
@@ -507,8 +510,12 @@ bool VtsComposerClient::destroyAllLayers() {
                       status.getDescription().c_str());
                 return false;
             }
+        } else {
+            auto extractIter = mDisplayResources.extract(it);
+            physicalDisplays.insert(std::move(extractIter));
         }
     }
+    mDisplayResources.swap(physicalDisplays);
     mDisplayResources.clear();
     return true;
 }
