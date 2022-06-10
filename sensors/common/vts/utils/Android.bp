@@ -23,6 +23,23 @@ package {
     default_applicable_licenses: ["hardware_interfaces_license"],
 }
 
+// Prefer to use these defaults to pull in VtsHalSensorsTargetTestUtils + its
+// dependencies
+cc_defaults {
+    name: "VtsHalSensorsDefaults",
+    shared_libs: [
+        "android.hardware.graphics.allocator-V1-ndk",
+        "android.hardware.graphics.common-V3-ndk",
+        "libbinder_ndk",
+        "libutils",
+        "libvndksupport",
+    ],
+    static_libs: [
+        "libaidlcommonsupport",
+        "VtsHalSensorsTargetTestUtils",
+    ],
+}
+
 cc_library_static {
     name: "VtsHalSensorsTargetTestUtils",
     defaults: ["VtsHalTargetTestDefaults"],
@@ -36,13 +53,19 @@ cc_library_static {
     local_include_dirs: [
         "include/sensors-vts-utils",
     ],
+    // Targets that depend on us need to also include these
     shared_libs: [
+        "android.hardware.graphics.allocator-V1-ndk",
+        "android.hardware.graphics.common-V3-ndk",
+        "libbinder_ndk",
         "libutils",
+        "libvndksupport",
     ],
     static_libs: [
         "android.hardware.sensors@1.0",
         "android.hardware.sensors@2.0",
         "android.hardware.sensors@2.1",
+        "libaidlcommonsupport",
     ],
     whole_static_libs: [
         "android.hardware.graphics.allocator@2.0",
