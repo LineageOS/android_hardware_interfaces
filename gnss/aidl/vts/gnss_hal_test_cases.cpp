@@ -291,10 +291,12 @@ TEST_P(GnssHalTest, TestGnssSvInfoFields) {
         EXPECT_GT(aidl_gnss_cb_->sv_info_list_cbq_.retrieve(sv_info_lists, kNumSvInfoLists,
                                                             kTimeoutSeconds),
                   0);
-        last_sv_info_list = sv_info_lists.back();
-    } while (last_sv_info_list.size() == 0);
+        if (!sv_info_lists.empty()) {
+            last_sv_info_list = sv_info_lists.back();
+            ALOGD("last_sv_info size = %d", (int)last_sv_info_list.size());
+        }
+    } while (!sv_info_lists.empty() && last_sv_info_list.size() == 0);
 
-    ALOGD("last_sv_info size = %d", (int)last_sv_info_list.size());
     bool nonZeroCn0Found = false;
     for (auto sv_info : last_sv_info_list) {
         EXPECT_TRUE(sv_info.basebandCN0DbHz >= 0.0 && sv_info.basebandCN0DbHz <= 65.0);
