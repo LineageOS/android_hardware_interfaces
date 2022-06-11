@@ -24,8 +24,9 @@ package {
 cc_test {
     name: "VtsAidlHalSensorsTargetTest",
     defaults: [
-        "VtsHalTargetTestDefaults",
         "use_libaidlvintf_gtest_helper_static",
+        "VtsHalSensorsDefaults",
+        "VtsHalTargetTestDefaults",
     ],
     srcs: [
         "VtsAidlHalSensorsTargetTest.cpp",
