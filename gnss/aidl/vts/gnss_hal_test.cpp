@@ -141,17 +141,17 @@ bool GnssHalTest::StartAndCheckFirstLocation(const int min_interval_msec, const 
     }
     SetPositionMode(min_interval_msec, low_power_mode);
 
-    auto status = aidl_gnss_hal_->start();
-    EXPECT_TRUE(status.isOk());
-
     if (start_sv_status) {
-        status = aidl_gnss_hal_->startSvStatus();
+        auto status = aidl_gnss_hal_->startSvStatus();
         EXPECT_TRUE(status.isOk());
     }
     if (start_nmea) {
-        status = aidl_gnss_hal_->startNmea();
+        auto status = aidl_gnss_hal_->startNmea();
         EXPECT_TRUE(status.isOk());
     }
+
+    auto status = aidl_gnss_hal_->start();
+    EXPECT_TRUE(status.isOk());
 
     /*
      * GnssLocationProvider support of AGPS SUPL & XtraDownloader is not available in VTS,
