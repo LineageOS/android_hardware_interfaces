@@ -68,6 +68,11 @@ class UwbAidl : public testing::TestWithParam<std::string> {
         iuwb_ = IUwb::fromBinder(SpAIBinder(AServiceManager_waitForService(GetParam().c_str())));
         ASSERT_NE(iuwb_, nullptr);
     }
+    virtual void TearDown() override {
+        // Trigger HAL close at end of each test.
+        const auto iuwb_chip = getAnyChip();
+        iuwb_chip->close();
+    }
     std::shared_ptr<IUwb> iuwb_;
 
     // TODO (b/197638976): We pick the first chip here. Need to fix this
