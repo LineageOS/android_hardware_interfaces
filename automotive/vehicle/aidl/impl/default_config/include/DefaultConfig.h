@@ -724,6 +724,16 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
 
         {.config =
                  {
+                         .prop = toInt(VehicleProperty::ENGINE_COOLANT_TEMP),
+                         .access = VehiclePropertyAccess::READ,
+                         .changeMode = VehiclePropertyChangeMode::CONTINUOUS,
+                         .minSampleRate = 1.0f,
+                         .maxSampleRate = 10.0f,
+                 },
+         .initialValue = {.floatValues = {75.0f}}},
+
+        {.config =
+                 {
                          .prop = toInt(VehicleProperty::ENGINE_OIL_LEVEL),
                          .access = VehiclePropertyAccess::READ,
                          .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
