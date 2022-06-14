@@ -77,6 +77,8 @@ void convertToHidlEvent(const AidlEvent& aidlEvent, V2_1Event* hidlEvent) {
             hidlEvent->u.vec3.x = aidlEvent.payload.get<Event::EventPayload::vec3>().x;
             hidlEvent->u.vec3.y = aidlEvent.payload.get<Event::EventPayload::vec3>().y;
             hidlEvent->u.vec3.z = aidlEvent.payload.get<Event::EventPayload::vec3>().z;
+            hidlEvent->u.vec3.status =
+                    (V1_0SensorStatus)aidlEvent.payload.get<Event::EventPayload::vec3>().status;
             break;
         case AidlSensorType::GAME_ROTATION_VECTOR:
             hidlEvent->u.vec4.x = aidlEvent.payload.get<Event::EventPayload::vec4>().x;
@@ -225,6 +227,7 @@ void convertToAidlEvent(const V2_1Event& hidlEvent, AidlEvent* aidlEvent) {
             vec3.x = hidlEvent.u.vec3.x;
             vec3.y = hidlEvent.u.vec3.y;
             vec3.z = hidlEvent.u.vec3.z;
+            vec3.status = (SensorStatus)hidlEvent.u.vec3.status;
             aidlEvent->payload.set<Event::EventPayload::vec3>(vec3);
             break;
         }
