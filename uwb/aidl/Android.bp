@@ -21,9 +21,6 @@ aidl_interface {
             enabled: false,
         },
         ndk: {
-            vndk: {
-                enabled: true,
-            },
             apex_available: [
                 "//apex_available:platform",
                 "com.android.uwb",
