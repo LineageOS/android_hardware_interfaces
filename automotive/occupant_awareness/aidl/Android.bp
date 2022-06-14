@@ -23,11 +23,6 @@ aidl_interface {
                 "com.android.car.framework",
             ],
         },
-        ndk: {
-            vndk: {
-                enabled: true,
-            },
-        },
     },
     versions: ["1"],
 }
