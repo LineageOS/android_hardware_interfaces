@@ -20,11 +20,6 @@ aidl_interface {
         java: {
             sdk_version: "module_current",
         },
-        ndk: {
-            vndk: {
-                enabled: true,
-            },
-        },
     },
     versions_with_info: [
         {
@@ -48,11 +43,6 @@ aidl_interface {
         },
         java: {
             sdk_version: "module_current",
-        },
-        ndk: {
-            vndk: {
-                enabled: true,
-            },
         },
     },
     versions_with_info: [
@@ -78,11 +68,6 @@ aidl_interface {
         java: {
             sdk_version: "module_current",
         },
-        ndk: {
-            vndk: {
-                enabled: true,
-            },
-        },
     },
     versions_with_info: [
         {
@@ -106,11 +91,6 @@ aidl_interface {
         },
         java: {
             sdk_version: "module_current",
-        },
-        ndk: {
-            vndk: {
-                enabled: true,
-            },
         },
     },
     versions_with_info: [
@@ -136,11 +116,6 @@ aidl_interface {
         java: {
             sdk_version: "module_current",
         },
-        ndk: {
-            vndk: {
-                enabled: true,
-            },
-        },
     },
     versions_with_info: [
         {
@@ -164,11 +139,6 @@ aidl_interface {
         },
         java: {
             sdk_version: "module_current",
-        },
-        ndk: {
-            vndk: {
-                enabled: true,
-            },
         },
     },
     versions_with_info: [
@@ -197,11 +167,6 @@ aidl_interface {
         java: {
             sdk_version: "module_current",
         },
-        ndk: {
-            vndk: {
-                enabled: true,
-            },
-        },
     },
     versions_with_info: [
         {
@@ -228,11 +193,6 @@ aidl_interface {
         },
         java: {
             sdk_version: "module_current",
-        },
-        ndk: {
-            vndk: {
-                enabled: true,
-            },
         },
     },
     versions_with_info: [
