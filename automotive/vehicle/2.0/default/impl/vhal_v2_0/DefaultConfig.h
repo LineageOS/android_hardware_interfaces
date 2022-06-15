@@ -1109,6 +1109,19 @@ const ConfigDeclaration kVehicleProperties[]{
                         },
                 .initialValue = {.stringValue = {"Test"}},
         },
+        // This property is later defined in the AIDL VHAL interface. However, HIDL VHAL might
+        // require support for this property to meet EU regulation.
+        {
+                .config =
+                        {
+                                // GENERAL_SAFETY_REGULATION_COMPLIANCE_REQUIREMENT
+                                .prop = 0x11400F47,
+                                .access = VehiclePropertyAccess::READ,
+                                .changeMode = VehiclePropertyChangeMode::STATIC,
+                        },
+                // GsrComplianceRequirementType::GSR_COMPLIANCE_REQUIRED_V1
+                .initialValue = {.int32Values = {1}},
+        },
 #ifdef ENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING
         // Vendor propetry for E2E ClusterHomeService testing.
         {
