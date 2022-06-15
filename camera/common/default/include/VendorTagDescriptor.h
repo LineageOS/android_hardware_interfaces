@@ -17,11 +17,11 @@
 #ifndef CAMERA_COMMON_1_0_VENDORTAGDESCRIPTOR_H
 #define CAMERA_COMMON_1_0_VENDORTAGDESCRIPTOR_H
 
-#include <utils/Vector.h>
-#include <utils/KeyedVector.h>
-#include <utils/String8.h>
-#include <utils/RefBase.h>
 #include <system/camera_vendor_tags.h>
+#include <utils/KeyedVector.h>
+#include <utils/RefBase.h>
+#include <utils/String8.h>
+#include <utils/Vector.h>
 
 #include <stdint.h>
 #include <unordered_map>
@@ -37,78 +37,77 @@ namespace params {
  * information enumerated by the HAL to clients of the camera service.
  */
 class VendorTagDescriptor {
-    public:
-        virtual ~VendorTagDescriptor();
+  public:
+    virtual ~VendorTagDescriptor();
 
-        VendorTagDescriptor();
-        VendorTagDescriptor(const VendorTagDescriptor& src);
-        VendorTagDescriptor& operator=(const VendorTagDescriptor& rhs);
+    VendorTagDescriptor();
+    VendorTagDescriptor(const VendorTagDescriptor& src);
+    VendorTagDescriptor& operator=(const VendorTagDescriptor& rhs);
 
-        void copyFrom(const VendorTagDescriptor& src);
+    void copyFrom(const VendorTagDescriptor& src);
 
-        /**
-         * The following 'get*' methods implement the corresponding
-         * functions defined in
-         * system/media/camera/include/system/camera_vendor_tags.h
-         */
+    /**
+     * The following 'get*' methods implement the corresponding
+     * functions defined in
+     * system/media/camera/include/system/camera_vendor_tags.h
+     */
 
-        // Returns the number of vendor tags defined.
-        int getTagCount() const;
+    // Returns the number of vendor tags defined.
+    int getTagCount() const;
 
-        // Returns an array containing the id's of vendor tags defined.
-        void getTagArray(uint32_t* tagArray) const;
+    // Returns an array containing the id's of vendor tags defined.
+    void getTagArray(uint32_t* tagArray) const;
 
-        // Returns the section name string for a given vendor tag id.
-        const char* getSectionName(uint32_t tag) const;
+    // Returns the section name string for a given vendor tag id.
+    const char* getSectionName(uint32_t tag) const;
 
-        // Returns the index in section vectors returned in getAllSectionNames()
-        // for a given vendor tag id. -1 if input tag does not exist.
-        ssize_t getSectionIndex(uint32_t tag) const;
+    // Returns the index in section vectors returned in getAllSectionNames()
+    // for a given vendor tag id. -1 if input tag does not exist.
+    ssize_t getSectionIndex(uint32_t tag) const;
 
-        // Returns the tag name string for a given vendor tag id.
-        const char* getTagName(uint32_t tag) const;
+    // Returns the tag name string for a given vendor tag id.
+    const char* getTagName(uint32_t tag) const;
 
-        // Returns the tag type for a given vendor tag id.
-        int getTagType(uint32_t tag) const;
+    // Returns the tag type for a given vendor tag id.
+    int getTagType(uint32_t tag) const;
 
-        /**
-         * Convenience method to get a vector containing all vendor tag
-         * sections, or an empty vector if none are defined.
-         * The pointer is valid for the lifetime of the VendorTagDescriptor,
-         * or until copyFrom is invoked.
-         */
-        const SortedVector<String8>* getAllSectionNames() const;
+    /**
+     * Convenience method to get a vector containing all vendor tag
+     * sections, or an empty vector if none are defined.
+     * The pointer is valid for the lifetime of the VendorTagDescriptor,
+     * or until copyFrom is invoked.
+     */
+    const SortedVector<String8>* getAllSectionNames() const;
 
-        /**
-         * Lookup the tag id for a given tag name and section.
-         *
-         * Returns OK on success, or a negative error code.
-         */
-        status_t lookupTag(const String8& name, const String8& section, /*out*/uint32_t* tag) const;
+    /**
+     * Lookup the tag id for a given tag name and section.
+     *
+     * Returns OK on success, or a negative error code.
+     */
+    status_t lookupTag(const String8& name, const String8& section, /*out*/ uint32_t* tag) const;
 
-        /**
-         * Dump the currently configured vendor tags to a file descriptor.
-         */
-        void dump(int fd, int verbosity, int indentation) const;
+    /**
+     * Dump the currently configured vendor tags to a file descriptor.
+     */
+    void dump(int fd, int verbosity, int indentation) const;
 
-    protected:
-        KeyedVector<String8, KeyedVector<String8, uint32_t>*> mReverseMapping;
-        KeyedVector<uint32_t, String8> mTagToNameMap;
-        KeyedVector<uint32_t, uint32_t> mTagToSectionMap; // Value is offset in mSections
+  protected:
+    KeyedVector<String8, KeyedVector<String8, uint32_t>*> mReverseMapping;
+    KeyedVector<uint32_t, String8> mTagToNameMap;
+    KeyedVector<uint32_t, uint32_t> mTagToSectionMap;  // Value is offset in mSections
 
-        std::unordered_map<uint32_t, int32_t> mTagToTypeMap;
-        SortedVector<String8> mSections;
-        // must be int32_t to be compatible with Parcel::writeInt32
-        int32_t mTagCount;
+    std::unordered_map<uint32_t, int32_t> mTagToTypeMap;
+    SortedVector<String8> mSections;
+    // must be int32_t to be compatible with Parcel::writeInt32
+    int32_t mTagCount;
 
-        vendor_tag_ops mVendorOps;
+    vendor_tag_ops mVendorOps;
 };
 } /* namespace params */
 } /* namespace camera2 */
 
 namespace camera {
 namespace common {
-namespace V1_0 {
 namespace helper {
 
 /**
@@ -119,12 +118,9 @@ namespace helper {
  * Parcelable objects cannot require being kept in an sp<> and still work with auto-generated AIDL
  * interface implementations.
  */
-class VendorTagDescriptor :
-            public ::android::hardware::camera2::params::VendorTagDescriptor,
-            public LightRefBase<VendorTagDescriptor> {
-
+class VendorTagDescriptor : public ::android::hardware::camera2::params::VendorTagDescriptor,
+                            public LightRefBase<VendorTagDescriptor> {
   public:
-
     /**
      * Create a VendorTagDescriptor object from the given vendor_tag_ops_t
      * struct.
@@ -132,8 +128,8 @@ class VendorTagDescriptor :
      * Returns OK on success, or a negative error code.
      */
     static status_t createDescriptorFromOps(const vendor_tag_ops_t* vOps,
-            /*out*/
-            sp<VendorTagDescriptor>& descriptor);
+                                            /*out*/
+                                            sp<VendorTagDescriptor>& descriptor);
 
     /**
      * Sets the global vendor tag descriptor to use for this process.
@@ -154,11 +150,9 @@ class VendorTagDescriptor :
      * Clears the global vendor tag descriptor used by this process.
      */
     static void clearGlobalVendorTagDescriptor();
-
 };
 
 } /* namespace helper */
-} /* namespace V1_0 */
 } /* namespace common */
 } /* namespace camera */
 
@@ -166,9 +160,8 @@ namespace camera2 {
 namespace params {
 
 class VendorTagDescriptorCache {
-   public:
-    typedef android::hardware::camera::common::V1_0::helper::VendorTagDescriptor
-        VendorTagDescriptor;
+  public:
+    typedef android::hardware::camera::common::helper::VendorTagDescriptor VendorTagDescriptor;
     VendorTagDescriptorCache(){};
     int32_t addVendorDescriptor(metadata_vendor_id_t id, sp<VendorTagDescriptor> desc);
 
@@ -194,7 +187,7 @@ class VendorTagDescriptorCache {
      */
     void dump(int fd, int verbosity, int indentation) const;
 
-   protected:
+  protected:
     std::unordered_map<metadata_vendor_id_t, sp<VendorTagDescriptor>> mVendorMap;
     struct vendor_tag_cache_ops mVendorCacheOps;
 };
@@ -204,13 +197,12 @@ class VendorTagDescriptorCache {
 
 namespace camera {
 namespace common {
-namespace V1_0 {
 namespace helper {
 
 class VendorTagDescriptorCache
     : public ::android::hardware::camera2::params::VendorTagDescriptorCache,
       public LightRefBase<VendorTagDescriptorCache> {
-   public:
+  public:
     /**
      * Sets the global vendor tag descriptor cache to use for this process.
      * Camera metadata operations that access vendor tags will use the
@@ -232,11 +224,19 @@ class VendorTagDescriptorCache
     static void clearGlobalVendorTagCache();
 };
 
-} // namespace helper
-} // namespace V1_0
-} // namespace common
-} // namespace camera
-} // namespace hardware
-} // namespace android
+}  // namespace helper
+
+// NOTE: Deprecated namespace. This namespace should no longer be used for the following symbols
+namespace V1_0::helper {
+// Export symbols to the old namespace to preserve compatibility
+typedef android::hardware::camera::common::helper::VendorTagDescriptor VendorTagDescriptor;
+typedef android::hardware::camera::common::helper::VendorTagDescriptorCache
+        VendorTagDescriptorCache;
+}  // namespace V1_0::helper
+
+}  // namespace common
+}  // namespace camera
+}  // namespace hardware
+}  // namespace android
 
 #endif /* CAMERA_COMMON_1_0_VENDORTAGDESCRIPTOR_H */

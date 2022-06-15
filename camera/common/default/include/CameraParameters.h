@@ -24,7 +24,6 @@ namespace android {
 namespace hardware {
 namespace camera {
 namespace common {
-namespace V1_0 {
 namespace helper {
 
 struct Size {
@@ -42,28 +41,27 @@ struct Size {
     }
 };
 
-class CameraParameters
-{
-public:
+class CameraParameters {
+  public:
     CameraParameters();
-    CameraParameters(const String8 &params) { unflatten(params); }
+    CameraParameters(const String8& params) { unflatten(params); }
     ~CameraParameters();
 
     String8 flatten() const;
-    void unflatten(const String8 &params);
+    void unflatten(const String8& params);
 
-    void set(const char *key, const char *value);
-    void set(const char *key, int value);
-    void setFloat(const char *key, float value);
-    const char *get(const char *key) const;
-    int getInt(const char *key) const;
-    float getFloat(const char *key) const;
+    void set(const char* key, const char* value);
+    void set(const char* key, int value);
+    void setFloat(const char* key, float value);
+    const char* get(const char* key) const;
+    int getInt(const char* key) const;
+    float getFloat(const char* key) const;
 
-    void remove(const char *key);
+    void remove(const char* key);
 
     void setPreviewSize(int width, int height);
-    void getPreviewSize(int *width, int *height) const;
-    void getSupportedPreviewSizes(Vector<Size> &sizes) const;
+    void getPreviewSize(int* width, int* height) const;
+    void getSupportedPreviewSizes(Vector<Size>& sizes) const;
 
     // Set the dimensions in pixels to the given width and height
     // for video frames. The given width and height must be one
@@ -76,14 +74,14 @@ public:
     // supported dimensions returned from getSupportedVideoSizes().
     // Must not be called if getSupportedVideoSizes() returns an
     // empty Vector of Size.
-    void getVideoSize(int *width, int *height) const;
+    void getVideoSize(int* width, int* height) const;
     // Retrieve a Vector of supported dimensions (width and height)
     // in pixels for video frames. If sizes returned from the method
     // is empty, the camera does not support calls to setVideoSize()
     // or getVideoSize(). In adddition, it also indicates that
     // the camera only has a single output, and does not have
     // separate output for video frames and preview frame.
-    void getSupportedVideoSizes(Vector<Size> &sizes) const;
+    void getSupportedVideoSizes(Vector<Size>& sizes) const;
     // Retrieve the preferred preview size (width and height) in pixels
     // for video recording. The given width and height must be one of
     // supported preview sizes returned from getSupportedPreviewSizes().
@@ -91,18 +89,18 @@ public:
     // Vector of Size. If getSupportedVideoSizes() returns an empty
     // Vector of Size, the width and height returned from this method
     // is invalid, and is "-1x-1".
-    void getPreferredPreviewSizeForVideo(int *width, int *height) const;
+    void getPreferredPreviewSizeForVideo(int* width, int* height) const;
 
     void setPreviewFrameRate(int fps);
     int getPreviewFrameRate() const;
-    void getPreviewFpsRange(int *min_fps, int *max_fps) const;
-    void setPreviewFormat(const char *format);
-    const char *getPreviewFormat() const;
+    void getPreviewFpsRange(int* min_fps, int* max_fps) const;
+    void setPreviewFormat(const char* format);
+    const char* getPreviewFormat() const;
     void setPictureSize(int width, int height);
-    void getPictureSize(int *width, int *height) const;
-    void getSupportedPictureSizes(Vector<Size> &sizes) const;
-    void setPictureFormat(const char *format);
-    const char *getPictureFormat() const;
+    void getPictureSize(int* width, int* height) const;
+    void getSupportedPictureSizes(Vector<Size>& sizes) const;
+    void setPictureFormat(const char* format);
+    const char* getPictureFormat() const;
 
     void dump() const;
     status_t dump(int fd, const Vector<String16>& args) const;
@@ -619,9 +617,9 @@ public:
     // Pixel color formats for KEY_PREVIEW_FORMAT, KEY_PICTURE_FORMAT,
     // and KEY_VIDEO_FRAME_FORMAT
     static const char PIXEL_FORMAT_YUV422SP[];
-    static const char PIXEL_FORMAT_YUV420SP[]; // NV21
-    static const char PIXEL_FORMAT_YUV422I[]; // YUY2
-    static const char PIXEL_FORMAT_YUV420P[]; // YV12
+    static const char PIXEL_FORMAT_YUV420SP[];  // NV21
+    static const char PIXEL_FORMAT_YUV422I[];   // YUY2
+    static const char PIXEL_FORMAT_YUV420P[];   // YV12
     static const char PIXEL_FORMAT_RGB565[];
     static const char PIXEL_FORMAT_RGBA8888[];
     static const char PIXEL_FORMAT_JPEG[];
@@ -695,15 +693,22 @@ public:
      */
     static int previewFormatToEnum(const char* format);
 
-private:
-    DefaultKeyedVector<String8,String8>    mMap;
+  private:
+    DefaultKeyedVector<String8, String8> mMap;
 };
 
-};
-};
-};
-};
-};
-}; // namespace
+};  // namespace helper
+
+// NOTE: Deprecated namespace. This namespace should no longer be used for the following symbols
+namespace V1_0::helper {
+// Export symbols to the old namespace to preserve compatibility
+typedef android::hardware::camera::common::helper::CameraParameters CameraParameters;
+typedef android::hardware::camera::common::helper::Size Size;
+}  // namespace V1_0::helper
+
+};  // namespace common
+};  // namespace camera
+};  // namespace hardware
+};  // namespace android
 
 #endif

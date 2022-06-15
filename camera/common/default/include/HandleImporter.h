@@ -30,12 +30,11 @@ namespace android {
 namespace hardware {
 namespace camera {
 namespace common {
-namespace V1_0 {
 namespace helper {
 
 // Borrowed from graphics HAL. Use this until gralloc mapper HAL is working
 class HandleImporter {
-public:
+  public:
     HandleImporter();
 
     // In IComposer, any buffer_handle_t is owned by the caller and we need to
@@ -59,23 +58,23 @@ public:
     // Query the stride of the first plane in bytes.
     status_t getMonoPlanarStrideBytes(buffer_handle_t& buf, uint32_t* stride /*out*/);
 
-    int unlock(buffer_handle_t& buf); // returns release fence
+    int unlock(buffer_handle_t& buf);  // returns release fence
 
     // Query Gralloc4 metadata
     bool isSmpte2086Present(const buffer_handle_t& buf);
     bool isSmpte2094_10Present(const buffer_handle_t& buf);
     bool isSmpte2094_40Present(const buffer_handle_t& buf);
 
-private:
+  private:
     void initializeLocked();
     void cleanup();
 
-    template<class M, class E>
+    template <class M, class E>
     bool importBufferInternal(const sp<M> mapper, buffer_handle_t& handle);
-    template<class M, class E>
+    template <class M, class E>
     YCbCrLayout lockYCbCrInternal(const sp<M> mapper, buffer_handle_t& buf, uint64_t cpuUsage,
-            const IMapper::Rect& accessRegion);
-    template<class M, class E>
+                                  const IMapper::Rect& accessRegion);
+    template <class M, class E>
     int unlockInternal(const sp<M> mapper, buffer_handle_t& buf);
 
     Mutex mLock;
@@ -85,11 +84,17 @@ private:
     sp<graphics::mapper::V4_0::IMapper> mMapperV4;
 };
 
-} // namespace helper
-} // namespace V1_0
-} // namespace common
-} // namespace camera
-} // namespace hardware
-} // namespace android
+}  // namespace helper
 
-#endif // CAMERA_COMMON_1_0_HANDLEIMPORTED_H
+// NOTE: Deprecated namespace. This namespace should no longer be used for the following symbols
+namespace V1_0::helper {
+// Export symbols to the old namespace to preserve compatibility
+typedef android::hardware::camera::common::helper::HandleImporter HandleImporter;
+}  // namespace V1_0::helper
+
+}  // namespace common
+}  // namespace camera
+}  // namespace hardware
+}  // namespace android
+
+#endif  // CAMERA_COMMON_1_0_HANDLEIMPORTED_H

@@ -16,9 +16,9 @@
 
 #define LOG_TAG "CamComm1.0-VTDesc"
 
+#include <camera_metadata_hidden.h>
 #include <log/log.h>
 #include <system/camera_metadata.h>
-#include <camera_metadata_hidden.h>
 #include <utils/Errors.h>
 #include <utils/Mutex.h>
 #include <utils/SortedVector.h>
@@ -36,15 +36,12 @@ namespace params {
 
 VendorTagDescriptor::~VendorTagDescriptor() {
     size_t len = mReverseMapping.size();
-    for (size_t i = 0; i < len; ++i)  {
+    for (size_t i = 0; i < len; ++i) {
         delete mReverseMapping[i];
     }
 }
 
-VendorTagDescriptor::VendorTagDescriptor() :
-        mTagCount(0),
-        mVendorOps() {
-}
+VendorTagDescriptor::VendorTagDescriptor() : mTagCount(0), mVendorOps() {}
 
 VendorTagDescriptor::VendorTagDescriptor(const VendorTagDescriptor& src) {
     copyFrom(src);
@@ -127,7 +124,8 @@ const SortedVector<String8>* VendorTagDescriptor::getAllSectionNames() const {
     return &mSections;
 }
 
-status_t VendorTagDescriptor::lookupTag(const String8& name, const String8& section, /*out*/uint32_t* tag) const {
+status_t VendorTagDescriptor::lookupTag(const String8& name, const String8& section,
+                                        /*out*/ uint32_t* tag) const {
     ssize_t index = mReverseMapping.indexOfKey(section);
     if (index < 0) {
         ALOGE("%s: Section '%s' does not exist.", __FUNCTION__, section.string());
@@ -147,18 +145,16 @@ status_t VendorTagDescriptor::lookupTag(const String8& name, const String8& sect
 }
 
 void VendorTagDescriptor::dump(int fd, int verbosity, int indentation) const {
-
     size_t size = mTagToNameMap.size();
     if (size == 0) {
-        dprintf(fd, "%*sDumping configured vendor tag descriptors: None set\n",
-                indentation, "");
+        dprintf(fd, "%*sDumping configured vendor tag descriptors: None set\n", indentation, "");
         return;
     }
 
-    dprintf(fd, "%*sDumping configured vendor tag descriptors: %zu entries\n",
-            indentation, "", size);
+    dprintf(fd, "%*sDumping configured vendor tag descriptors: %zu entries\n", indentation, "",
+            size);
     for (size_t i = 0; i < size; ++i) {
-        uint32_t tag =  mTagToNameMap.keyAt(i);
+        uint32_t tag = mTagToNameMap.keyAt(i);
 
         if (verbosity < 1) {
             dprintf(fd, "%*s0x%x\n", indentation + 2, "", tag);
@@ -168,12 +164,11 @@ void VendorTagDescriptor::dump(int fd, int verbosity, int indentation) const {
         uint32_t sectionId = mTagToSectionMap.valueFor(tag);
         String8 sectionName = mSections[sectionId];
         int type = mTagToTypeMap.at(tag);
-        const char* typeName = (type >= 0 && type < NUM_TYPES) ?
-                camera_metadata_type_names[type] : "UNKNOWN";
-        dprintf(fd, "%*s0x%x (%s) with type %d (%s) defined in section %s\n", indentation + 2,
-            "", tag, name.string(), type, typeName, sectionName.string());
+        const char* typeName =
+                (type >= 0 && type < NUM_TYPES) ? camera_metadata_type_names[type] : "UNKNOWN";
+        dprintf(fd, "%*s0x%x (%s) with type %d (%s) defined in section %s\n", indentation + 2, "",
+                tag, name.string(), type, typeName, sectionName.string());
     }
-
 }
 
 int VendorTagDescriptorCache::getTagCount(metadata_vendor_id_t id) const {
@@ -240,7 +235,7 @@ void VendorTagDescriptorCache::dump(int fd, int verbosity, int indentation) cons
 }
 
 int32_t VendorTagDescriptorCache::addVendorDescriptor(
-    metadata_vendor_id_t id, sp<hardware::camera::common::V1_0::helper::VendorTagDescriptor> desc) {
+        metadata_vendor_id_t id, sp<hardware::camera::common::helper::VendorTagDescriptor> desc) {
     auto entry = mVendorMap.find(id);
     if (entry != mVendorMap.end()) {
         ALOGE("%s: Vendor descriptor with same id already present!", __func__);
@@ -252,8 +247,8 @@ int32_t VendorTagDescriptorCache::addVendorDescriptor(
 }
 
 int32_t VendorTagDescriptorCache::getVendorTagDescriptor(
-    metadata_vendor_id_t id,
-    sp<hardware::camera::common::V1_0::helper::VendorTagDescriptor>* desc /*out*/) {
+        metadata_vendor_id_t id,
+        sp<hardware::camera::common::helper::VendorTagDescriptor>* desc /*out*/) {
     auto entry = mVendorMap.find(id);
     if (entry == mVendorMap.end()) {
         return NAME_NOT_FOUND;
@@ -263,12 +258,11 @@ int32_t VendorTagDescriptorCache::getVendorTagDescriptor(
 
     return NO_ERROR;
 }
-} // namespace params
-} // namespace camera2
+}  // namespace params
+}  // namespace camera2
 
 namespace camera {
 namespace common {
-namespace V1_0 {
 namespace helper {
 
 extern "C" {
@@ -292,8 +286,8 @@ static sp<VendorTagDescriptor> sGlobalVendorTagDescriptor;
 static sp<VendorTagDescriptorCache> sGlobalVendorTagDescriptorCache;
 
 status_t VendorTagDescriptor::createDescriptorFromOps(const vendor_tag_ops_t* vOps,
-            /*out*/
-            sp<VendorTagDescriptor>& descriptor) {
+                                                      /*out*/
+                                                      sp<VendorTagDescriptor>& descriptor) {
     if (vOps == NULL) {
         ALOGE("%s: vendor_tag_ops argument was NULL.", __FUNCTION__);
         return BAD_VALUE;
@@ -307,9 +301,9 @@ status_t VendorTagDescriptor::createDescriptorFromOps(const vendor_tag_ops_t* vO
 
     Vector<uint32_t> tagArray;
     LOG_ALWAYS_FATAL_IF(tagArray.resize(tagCount) != tagCount,
-            "%s: too many (%u) vendor tags defined.", __FUNCTION__, tagCount);
+                        "%s: too many (%u) vendor tags defined.", __FUNCTION__, tagCount);
 
-    vOps->get_all_tags(vOps, /*out*/tagArray.editArray());
+    vOps->get_all_tags(vOps, /*out*/ tagArray.editArray());
 
     sp<VendorTagDescriptor> desc = new VendorTagDescriptor();
     desc->mTagCount = tagCount;
@@ -323,13 +317,13 @@ status_t VendorTagDescriptor::createDescriptorFromOps(const vendor_tag_ops_t* vO
             ALOGE("%s: vendor tag %d not in vendor tag section.", __FUNCTION__, tag);
             return BAD_VALUE;
         }
-        const char *tagName = vOps->get_tag_name(vOps, tag);
+        const char* tagName = vOps->get_tag_name(vOps, tag);
         if (tagName == NULL) {
             ALOGE("%s: no tag name defined for vendor tag %d.", __FUNCTION__, tag);
             return BAD_VALUE;
         }
         desc->mTagToNameMap.add(tag, String8(tagName));
-        const char *sectionName = vOps->get_section_name(vOps, tag);
+        const char* sectionName = vOps->get_section_name(vOps, tag);
         if (sectionName == NULL) {
             ALOGE("%s: no section name defined for vendor tag %d.", __FUNCTION__, tag);
             return BAD_VALUE;
@@ -386,9 +380,9 @@ status_t VendorTagDescriptor::setAsGlobalVendorTagDescriptor(const sp<VendorTagD
         opsPtr->get_tag_name = vendor_tag_descriptor_get_tag_name;
         opsPtr->get_tag_type = vendor_tag_descriptor_get_tag_type;
     }
-    if((res = set_camera_metadata_vendor_ops(opsPtr)) != OK) {
-        ALOGE("%s: Could not set vendor tag descriptor, received error %s (%d)."
-                , __FUNCTION__, strerror(-res), res);
+    if ((res = set_camera_metadata_vendor_ops(opsPtr)) != OK) {
+        ALOGE("%s: Could not set vendor tag descriptor, received error %s (%d).", __FUNCTION__,
+              strerror(-res), res);
     }
     return res;
 }
@@ -405,7 +399,7 @@ sp<VendorTagDescriptor> VendorTagDescriptor::getGlobalVendorTagDescriptor() {
 }
 
 status_t VendorTagDescriptorCache::setAsGlobalVendorTagCache(
-    const sp<VendorTagDescriptorCache>& cache) {
+        const sp<VendorTagDescriptorCache>& cache) {
     status_t res = OK;
     Mutex::Autolock al(sLock);
     sGlobalVendorTagDescriptorCache = cache;
@@ -530,9 +524,8 @@ int vendor_tag_descriptor_cache_get_tag_type(uint32_t tag, metadata_vendor_id_t 
 
 } /* extern "C" */
 
-} // namespace helper
-} // namespace V1_0
-} // namespace common
-} // namespace camera
-} // namespace hardware
-} // namespace android
+}  // namespace helper
+}  // namespace common
+}  // namespace camera
+}  // namespace hardware
+}  // namespace android

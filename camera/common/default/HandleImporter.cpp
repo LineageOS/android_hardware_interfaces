@@ -18,14 +18,13 @@
 #include "HandleImporter.h"
 
 #include <gralloctypes/Gralloc4.h>
-#include "aidl/android/hardware/graphics/common/Smpte2086.h"
 #include <log/log.h>
+#include "aidl/android/hardware/graphics/common/Smpte2086.h"
 
 namespace android {
 namespace hardware {
 namespace camera {
 namespace common {
-namespace V1_0 {
 namespace helper {
 
 using aidl::android::hardware::graphics::common::PlaneLayout;
@@ -75,20 +74,18 @@ void HandleImporter::cleanup() {
     mInitialized = false;
 }
 
-template<class M, class E>
+template <class M, class E>
 bool HandleImporter::importBufferInternal(const sp<M> mapper, buffer_handle_t& handle) {
     E error;
     buffer_handle_t importedHandle;
     auto ret = mapper->importBuffer(
-        hidl_handle(handle),
-        [&](const auto& tmpError, const auto& tmpBufferHandle) {
-            error = tmpError;
-            importedHandle = static_cast<buffer_handle_t>(tmpBufferHandle);
-        });
+            hidl_handle(handle), [&](const auto& tmpError, const auto& tmpBufferHandle) {
+                error = tmpError;
+                importedHandle = static_cast<buffer_handle_t>(tmpBufferHandle);
+            });
 
     if (!ret.isOk()) {
-        ALOGE("%s: mapper importBuffer failed: %s",
-                __FUNCTION__, ret.description().c_str());
+        ALOGE("%s: mapper importBuffer failed: %s", __FUNCTION__, ret.description().c_str());
         return false;
     }
 
@@ -100,61 +97,62 @@ bool HandleImporter::importBufferInternal(const sp<M> mapper, buffer_handle_t& h
     return true;
 }
 
-template<class M, class E>
+template <class M, class E>
 YCbCrLayout HandleImporter::lockYCbCrInternal(const sp<M> mapper, buffer_handle_t& buf,
-        uint64_t cpuUsage, const IMapper::Rect& accessRegion) {
+                                              uint64_t cpuUsage,
+                                              const IMapper::Rect& accessRegion) {
     hidl_handle acquireFenceHandle;
     auto buffer = const_cast<native_handle_t*>(buf);
     YCbCrLayout layout = {};
 
-    typename M::Rect accessRegionCopy = {accessRegion.left, accessRegion.top,
-            accessRegion.width, accessRegion.height};
+    typename M::Rect accessRegionCopy = {accessRegion.left, accessRegion.top, accessRegion.width,
+                                         accessRegion.height};
     mapper->lockYCbCr(buffer, cpuUsage, accessRegionCopy, acquireFenceHandle,
-            [&](const auto& tmpError, const auto& tmpLayout) {
-                if (tmpError == E::NONE) {
-                    // Member by member copy from different versions of YCbCrLayout.
-                    layout.y = tmpLayout.y;
-                    layout.cb = tmpLayout.cb;
-                    layout.cr = tmpLayout.cr;
-                    layout.yStride = tmpLayout.yStride;
-                    layout.cStride = tmpLayout.cStride;
-                    layout.chromaStep = tmpLayout.chromaStep;
-                } else {
-                    ALOGE("%s: failed to lockYCbCr error %d!", __FUNCTION__, tmpError);
-                }
-           });
+                      [&](const auto& tmpError, const auto& tmpLayout) {
+                          if (tmpError == E::NONE) {
+                              // Member by member copy from different versions of YCbCrLayout.
+                              layout.y = tmpLayout.y;
+                              layout.cb = tmpLayout.cb;
+                              layout.cr = tmpLayout.cr;
+                              layout.yStride = tmpLayout.yStride;
+                              layout.cStride = tmpLayout.cStride;
+                              layout.chromaStep = tmpLayout.chromaStep;
+                          } else {
+                              ALOGE("%s: failed to lockYCbCr error %d!", __FUNCTION__, tmpError);
+                          }
+                      });
     return layout;
 }
 
 bool isMetadataPesent(const sp<IMapperV4> mapper, const buffer_handle_t& buf,
-        MetadataType metadataType) {
+                      MetadataType metadataType) {
     auto buffer = const_cast<native_handle_t*>(buf);
     bool ret = false;
     hidl_vec<uint8_t> vec;
-    mapper->get(buffer, metadataType, [&] (const auto& tmpError,
-                const auto& tmpMetadata) {
-                    if (tmpError == MapperErrorV4::NONE) {
-                        vec = tmpMetadata;
-                    } else {
-                        ALOGE("%s: failed to get metadata %d!", __FUNCTION__, tmpError);
-                    }});
+    mapper->get(buffer, metadataType, [&](const auto& tmpError, const auto& tmpMetadata) {
+        if (tmpError == MapperErrorV4::NONE) {
+            vec = tmpMetadata;
+        } else {
+            ALOGE("%s: failed to get metadata %d!", __FUNCTION__, tmpError);
+        }
+    });
 
     if (vec.size() > 0) {
-            if (metadataType == gralloc4::MetadataType_Smpte2086){
-                std::optional<Smpte2086> realSmpte2086;
-                gralloc4::decodeSmpte2086(vec, &realSmpte2086);
-                ret = realSmpte2086.has_value();
-            } else if (metadataType == gralloc4::MetadataType_Smpte2094_10) {
-                std::optional<std::vector<uint8_t>> realSmpte2094_10;
-                gralloc4::decodeSmpte2094_10(vec, &realSmpte2094_10);
-                ret = realSmpte2094_10.has_value();
-            } else if (metadataType == gralloc4::MetadataType_Smpte2094_40) {
-                std::optional<std::vector<uint8_t>> realSmpte2094_40;
-                gralloc4::decodeSmpte2094_40(vec, &realSmpte2094_40);
-                ret = realSmpte2094_40.has_value();
-            } else {
-                ALOGE("%s: Unknown metadata type!", __FUNCTION__);
-            }
+        if (metadataType == gralloc4::MetadataType_Smpte2086) {
+            std::optional<Smpte2086> realSmpte2086;
+            gralloc4::decodeSmpte2086(vec, &realSmpte2086);
+            ret = realSmpte2086.has_value();
+        } else if (metadataType == gralloc4::MetadataType_Smpte2094_10) {
+            std::optional<std::vector<uint8_t>> realSmpte2094_10;
+            gralloc4::decodeSmpte2094_10(vec, &realSmpte2094_10);
+            ret = realSmpte2094_10.has_value();
+        } else if (metadataType == gralloc4::MetadataType_Smpte2094_40) {
+            std::optional<std::vector<uint8_t>> realSmpte2094_40;
+            gralloc4::decodeSmpte2094_40(vec, &realSmpte2094_40);
+            ret = realSmpte2094_40.has_value();
+        } else {
+            ALOGE("%s: Unknown metadata type!", __FUNCTION__);
+        }
     }
 
     return ret;
@@ -239,31 +237,29 @@ YCbCrLayout HandleImporter::lockYCbCrInternal<IMapperV4, MapperErrorV4>(
     return layout;
 }
 
-template<class M, class E>
+template <class M, class E>
 int HandleImporter::unlockInternal(const sp<M> mapper, buffer_handle_t& buf) {
     int releaseFence = -1;
     auto buffer = const_cast<native_handle_t*>(buf);
 
-    mapper->unlock(
-        buffer, [&](const auto& tmpError, const auto& tmpReleaseFence) {
-            if (tmpError == E::NONE) {
-                auto fenceHandle = tmpReleaseFence.getNativeHandle();
-                if (fenceHandle) {
-                    if (fenceHandle->numInts != 0 || fenceHandle->numFds != 1) {
-                        ALOGE("%s: bad release fence numInts %d numFds %d",
-                                __FUNCTION__, fenceHandle->numInts, fenceHandle->numFds);
-                        return;
-                    }
-                    releaseFence = dup(fenceHandle->data[0]);
-                    if (releaseFence < 0) {
-                        ALOGE("%s: bad release fence FD %d",
-                                __FUNCTION__, releaseFence);
-                    }
+    mapper->unlock(buffer, [&](const auto& tmpError, const auto& tmpReleaseFence) {
+        if (tmpError == E::NONE) {
+            auto fenceHandle = tmpReleaseFence.getNativeHandle();
+            if (fenceHandle) {
+                if (fenceHandle->numInts != 0 || fenceHandle->numFds != 1) {
+                    ALOGE("%s: bad release fence numInts %d numFds %d", __FUNCTION__,
+                          fenceHandle->numInts, fenceHandle->numFds);
+                    return;
                 }
-            } else {
-                ALOGE("%s: failed to unlock error %d!", __FUNCTION__, tmpError);
+                releaseFence = dup(fenceHandle->data[0]);
+                if (releaseFence < 0) {
+                    ALOGE("%s: bad release fence FD %d", __FUNCTION__, releaseFence);
+                }
             }
-        });
+        } else {
+            ALOGE("%s: failed to unlock error %d!", __FUNCTION__, tmpError);
+        }
+    });
     return releaseFence;
 }
 
@@ -315,14 +311,12 @@ void HandleImporter::freeBuffer(buffer_handle_t handle) {
     } else if (mMapperV3 != nullptr) {
         auto ret = mMapperV3->freeBuffer(const_cast<native_handle_t*>(handle));
         if (!ret.isOk()) {
-            ALOGE("%s: mapper freeBuffer failed: %s",
-                    __FUNCTION__, ret.description().c_str());
+            ALOGE("%s: mapper freeBuffer failed: %s", __FUNCTION__, ret.description().c_str());
         }
     } else {
         auto ret = mMapperV2->freeBuffer(const_cast<native_handle_t*>(handle));
         if (!ret.isOk()) {
-            ALOGE("%s: mapper freeBuffer failed: %s",
-                    __FUNCTION__, ret.description().c_str());
+            ALOGE("%s: mapper freeBuffer failed: %s", __FUNCTION__, ret.description().c_str());
         }
     }
 }
@@ -337,8 +331,7 @@ bool HandleImporter::importFence(const native_handle_t* handle, int& fd) const {
             return false;
         }
     } else {
-        ALOGE("invalid fence handle with %d file descriptors",
-                handle->numFds);
+        ALOGE("invalid fence handle with %d file descriptors", handle->numFds);
         return false;
     }
 
@@ -351,8 +344,7 @@ void HandleImporter::closeFence(int fd) const {
     }
 }
 
-void* HandleImporter::lock(
-        buffer_handle_t& buf, uint64_t cpuUsage, size_t size) {
+void* HandleImporter::lock(buffer_handle_t& buf, uint64_t cpuUsage, size_t size) {
     IMapper::Rect accessRegion{0, 0, static_cast<int>(size), 1};
     return lock(buf, cpuUsage, accessRegion);
 }
@@ -401,13 +393,13 @@ void* HandleImporter::lock(buffer_handle_t& buf, uint64_t cpuUsage,
                         });
     } else {
         mMapperV2->lock(buffer, cpuUsage, accessRegion, acquireFenceHandle,
-                [&](const auto& tmpError, const auto& tmpPtr) {
-                    if (tmpError == MapperErrorV2::NONE) {
-                        ret = tmpPtr;
-                    } else {
-                        ALOGE("%s: failed to lock error %d!", __FUNCTION__, tmpError);
-                    }
-               });
+                        [&](const auto& tmpError, const auto& tmpPtr) {
+                            if (tmpError == MapperErrorV2::NONE) {
+                                ret = tmpPtr;
+                            } else {
+                                ALOGE("%s: failed to lock error %d!", __FUNCTION__, tmpError);
+                            }
+                        });
     }
 
     ALOGV("%s: ptr %p accessRegion.top: %d accessRegion.left: %d accessRegion.width: %d "
@@ -417,9 +409,8 @@ void* HandleImporter::lock(buffer_handle_t& buf, uint64_t cpuUsage,
     return ret;
 }
 
-YCbCrLayout HandleImporter::lockYCbCr(
-        buffer_handle_t& buf, uint64_t cpuUsage,
-        const IMapper::Rect& accessRegion) {
+YCbCrLayout HandleImporter::lockYCbCr(buffer_handle_t& buf, uint64_t cpuUsage,
+                                      const IMapper::Rect& accessRegion) {
     Mutex::Autolock lock(mLock);
 
     if (!mInitialized) {
@@ -431,20 +422,18 @@ YCbCrLayout HandleImporter::lockYCbCr(
     }
 
     if (mMapperV3 != nullptr) {
-        return lockYCbCrInternal<IMapperV3, MapperErrorV3>(
-                mMapperV3, buf, cpuUsage, accessRegion);
+        return lockYCbCrInternal<IMapperV3, MapperErrorV3>(mMapperV3, buf, cpuUsage, accessRegion);
     }
 
     if (mMapperV2 != nullptr) {
-        return lockYCbCrInternal<IMapper, MapperErrorV2>(
-                mMapperV2, buf, cpuUsage, accessRegion);
+        return lockYCbCrInternal<IMapper, MapperErrorV2>(mMapperV2, buf, cpuUsage, accessRegion);
     }
 
     ALOGE("%s: mMapperV4, mMapperV3 and mMapperV2 are all null!", __FUNCTION__);
     return {};
 }
 
-status_t HandleImporter::getMonoPlanarStrideBytes(buffer_handle_t &buf, uint32_t *stride /*out*/) {
+status_t HandleImporter::getMonoPlanarStrideBytes(buffer_handle_t& buf, uint32_t* stride /*out*/) {
     if (stride == nullptr) {
         return BAD_VALUE;
     }
@@ -458,7 +447,7 @@ status_t HandleImporter::getMonoPlanarStrideBytes(buffer_handle_t &buf, uint32_t
     if (mMapperV4 != nullptr) {
         std::vector<PlaneLayout> planeLayouts = getPlaneLayouts(mMapperV4, buf);
         if (planeLayouts.size() != 1) {
-            ALOGE("%s: Unexpected number of planes %zu!",  __FUNCTION__, planeLayouts.size());
+            ALOGE("%s: Unexpected number of planes %zu!", __FUNCTION__, planeLayouts.size());
             return BAD_VALUE;
         }
 
@@ -534,10 +523,8 @@ bool HandleImporter::isSmpte2094_40Present(const buffer_handle_t& buf) {
     return false;
 }
 
-
-} // namespace helper
-} // namespace V1_0
-} // namespace common
-} // namespace camera
-} // namespace hardware
-} // namespace android
+}  // namespace helper
+}  // namespace common
+}  // namespace camera
+}  // namespace hardware
+}  // namespace android
