@@ -33,10 +33,9 @@
 
 package android.hardware.audio.core;
 @JavaDerive(equals=true, toString=true) @VintfStability
-parcelable AudioPatch {
-  int id;
-  int[] sourcePortConfigIds;
-  int[] sinkPortConfigIds;
-  int minimumStreamBufferSizeFrames;
-  int[] latenciesMs;
+parcelable MmapBufferDescriptor {
+  android.hardware.common.Ashmem sharedMemory;
+  long burstSizeFrames;
+  int flags;
+  const int FLAG_INDEX_APPLICATION_SHAREABLE = 0;
 }
