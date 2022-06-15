@@ -23,6 +23,7 @@ import android.hardware.audio.core.AudioRoute;
 import android.hardware.audio.core.IStreamIn;
 import android.hardware.audio.core.IStreamOut;
 import android.hardware.audio.core.ModuleDebug;
+import android.hardware.audio.core.StreamDescriptor;
 import android.media.audio.common.AudioOffloadInfo;
 import android.media.audio.common.AudioPort;
 import android.media.audio.common.AudioPortConfig;
@@ -241,22 +242,49 @@ interface IModule {
      * 'setAudioPortConfig' method. Existence of an audio patch involving this
      * port configuration is not required for successful opening of a stream.
      *
+     * The requested buffer size is expressed in frames, thus the actual size
+     * in bytes depends on the audio port configuration. Also, the HAL module
+     * may end up providing a larger buffer, thus the requested size is treated
+     * as the minimum size that the client needs. The minimum buffer size
+     * suggested by the HAL is in the 'AudioPatch.minimumStreamBufferSizeFrames'
+     * field, returned as a result of calling the 'setAudioPatch' method.
+     *
      * Only one stream is allowed per audio port configuration. HAL module can
      * also set a limit on how many output streams can be opened for a particular
      * mix port by using its 'AudioPortMixExt.maxOpenStreamCount' field.
      *
-     * @return An opened input stream.
-     * @param portConfigId The ID of the audio mix port config.
-     * @param sinkMetadata Description of the audio that will be recorded.
+     * Note that although it's not prohibited to open a stream on a mix port
+     * configuration which is not connected (using a patch) to any device port,
+     * and set up a patch afterwards, this is not the recommended sequence of
+     * calls, because setting up of a patch might fail due to an insufficient
+     * stream buffer size.
+     *
+     * @return An opened input stream and the associated descriptor.
+     * @param args Input arguments, see 'OpenInputStreamArguments' parcelable.
      * @throws EX_ILLEGAL_ARGUMENT In the following cases:
      *                             - If the port config can not be found by the ID.
      *                             - If the port config is not of an input mix port.
+     *                             - If a buffer of the requested size can not be provided.
      * @throws EX_ILLEGAL_STATE In the following cases:
      *                          - If the port config already has a stream opened on it.
      *                          - If the limit on the open stream count for the port has
      *                            been reached.
      */
-    IStreamIn openInputStream(int portConfigId, in SinkMetadata sinkMetadata);
+    @VintfStability
+    parcelable OpenInputStreamArguments {
+        /** The ID of the audio mix port config. */
+        int portConfigId;
+        /** Description of the audio that will be recorded. */
+        SinkMetadata sinkMetadata;
+        /** Requested audio I/O buffer minimum size, in frames. */
+        long bufferSizeFrames;
+    }
+    @VintfStability
+    parcelable OpenInputStreamReturn {
+        IStreamIn stream;
+        StreamDescriptor desc;
+    }
+    OpenInputStreamReturn openInputStream(in OpenInputStreamArguments args);
 
     /**
      * Open an output stream using an existing audio mix port configuration.
@@ -269,21 +297,33 @@ interface IModule {
      * the framework must provide additional information about the encoded
      * audio stream in 'offloadInfo' argument.
      *
+     * The requested buffer size is expressed in frames, thus the actual size
+     * in bytes depends on the audio port configuration. Also, the HAL module
+     * may end up providing a larger buffer, thus the requested size is treated
+     * as the minimum size that the client needs. The minimum buffer size
+     * suggested by the HAL is in the 'AudioPatch.minimumStreamBufferSizeFrames'
+     * field, returned as a result of calling the 'setAudioPatch' method.
+     *
      * Only one stream is allowed per audio port configuration. HAL module can
      * also set a limit on how many output streams can be opened for a particular
      * mix port by using its 'AudioPortMixExt.maxOpenStreamCount' field.
      * Only one stream can be opened on the audio port with 'PRIMARY' output
      * flag. This rule can not be overridden with 'maxOpenStreamCount' field.
      *
-     * @return An opened output stream.
-     * @param portConfigId The ID of the audio mix port config.
-     * @param sourceMetadata Description of the audio that will be played.
-     * @param offloadInfo Additional information for offloaded playback.
+     * Note that although it's not prohibited to open a stream on a mix port
+     * configuration which is not connected (using a patch) to any device port,
+     * and set up a patch afterwards, this is not the recommended sequence of
+     * calls, because setting up of a patch might fail due to an insufficient
+     * stream buffer size.
+     *
+     * @return An opened output stream and the associated descriptor.
+     * @param args Input arguments, see 'OpenOutputStreamArguments' parcelable.
      * @throws EX_ILLEGAL_ARGUMENT In the following cases:
      *                             - If the port config can not be found by the ID.
      *                             - If the port config is not of an output mix port.
      *                             - If the offload info is not provided for an offload
      *                               port configuration.
+     *                             - If a buffer of the requested size can not be provided.
      * @throws EX_ILLEGAL_STATE In the following cases:
      *                          - If the port config already has a stream opened on it.
      *                          - If the limit on the open stream count for the port has
@@ -291,8 +331,23 @@ interface IModule {
      *                          - If another opened stream already exists for the 'PRIMARY'
      *                            output port.
      */
-    IStreamOut openOutputStream(int portConfigId, in SourceMetadata sourceMetadata,
-            in @nullable AudioOffloadInfo offloadInfo);
+    @VintfStability
+    parcelable OpenOutputStreamArguments {
+        /** The ID of the audio mix port config. */
+        int portConfigId;
+        /** Description of the audio that will be played. */
+        SourceMetadata sourceMetadata;
+        /** Additional information used for offloaded playback only. */
+        @nullable AudioOffloadInfo offloadInfo;
+        /** Requested audio I/O buffer minimum size, in frames. */
+        long bufferSizeFrames;
+    }
+    @VintfStability
+    parcelable OpenOutputStreamReturn {
+        IStreamOut stream;
+        StreamDescriptor desc;
+    }
+    OpenOutputStreamReturn openOutputStream(in OpenOutputStreamArguments args);
 
     /**
      * Set an audio patch.
@@ -300,19 +355,27 @@ interface IModule {
      * This method creates new or updates an existing audio patch. If the
      * requested audio patch does not have a specified id, then a new patch is
      * created and an ID is allocated for it by the HAL module. Otherwise an
-     * attempt to update an existing patch is made. It is recommended that
-     * updating of an existing audio patch should be performed by the HAL module
-     * in a way that does not interrupt active audio streams involving audio
-     * port configurations of the patch. If the HAL module is unable to avoid
-     * interruption when updating a certain patch, it is permitted to allocate a
-     * new patch ID for the result. The returned audio patch contains all the
-     * information about the new or updated audio patch.
+     * attempt to update an existing patch is made.
+     *
+     * The operation of updating an existing audio patch must not change
+     * playback state of audio streams opened on the audio port configurations
+     * of the patch. That is, the HAL module must still be able to consume or
+     * to provide data from / to streams continuously during the patch
+     * switching. Natural intermittent audible loss of some audio frames due to
+     * switching between device ports which does not affect stream playback is
+     * allowed. If the HAL module is unable to avoid playback or recording
+     * state change when updating a certain patch, it must return an error. In
+     * that case, the client must take care of changing port configurations,
+     * patches, and recreating streams in a way which provides an acceptable
+     * user experience.
      *
      * Audio port configurations specified in the patch must be obtained by
      * calling 'setAudioPortConfig' method. There must be an audio route which
      * allows connection between the audio ports whose configurations are used.
-     * An audio patch may be created before or after an audio steam is created
-     * for this configuration.
+     *
+     * When updating an existing audio patch, nominal latency values may change
+     * and must be provided by the HAL module in the returned 'AudioPatch'
+     * structure.
      *
      * @return Resulting audio patch.
      * @param requested Requested audio patch.
@@ -324,6 +387,9 @@ interface IModule {
      * @throws EX_ILLEGAL_STATE In the following cases:
      *                          - If application of the patch can only use a route with an
      *                            exclusive use the sink port, and it is already patched.
+     *                          - If updating an existing patch will cause interruption
+     *                            of audio, or requires re-opening of streams due to
+     *                            change of minimum audio I/O buffer size.
      * @throws EX_UNSUPPORTED_OPERATION If the patch can not be established because
      *                                  the HAL module does not support this otherwise valid
      *                                  patch configuration. For example, if it's a patch
