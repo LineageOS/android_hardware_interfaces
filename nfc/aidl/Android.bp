@@ -34,11 +34,6 @@ aidl_interface {
             sdk_version: "module_current",
             enabled: false,
         },
-        ndk: {
-            vndk: {
-                enabled: true,
-            },
-        },
     },
     versions_with_info: [
         {
