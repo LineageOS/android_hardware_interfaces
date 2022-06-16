@@ -33,7 +33,7 @@
 bool startWifiFramework();
 
 // Used to stop the android wifi framework before every test.
-bool stopWifiFramework();
+bool stopWifiFramework(const std::string& wifi_instance_name);
 
 void stopSupplicant(const std::string& wifi_instance_name);
 // Used to configure the chip, driver and start wpa_supplicant before every
@@ -77,12 +77,13 @@ class SupplicantHidlTestBase
     : public ::testing::TestWithParam<std::tuple<std::string, std::string>> {
    public:
     virtual void SetUp() override {
-        // Stop Wi-Fi
-        ASSERT_TRUE(stopWifiFramework());  // stop & wait for wifi to shutdown.
-
-        // should always be v1.0 wifi
-        wifi_v1_0_instance_name_ = std::get<0>(GetParam());
+        wifi_v1_0_instance_name_ =
+            std::get<0>(GetParam());  // should always be v1.0 wifi
         supplicant_instance_name_ = std::get<1>(GetParam());
+
+        // Stop & wait for wifi to shutdown.
+        ASSERT_TRUE(stopWifiFramework(wifi_v1_0_instance_name_));
+
         std::system("/system/bin/start");
         ASSERT_TRUE(waitForFrameworkReady());
         isP2pOn_ =
