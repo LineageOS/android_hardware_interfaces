@@ -50,6 +50,7 @@ aidl_interface {
 
 aidl_interface {
     name: "android.hardware.uwb.fira_android",
+    owner: "google",
     vendor_available: true,
     srcs: ["android/hardware/uwb/fira_android/*.aidl"],
     stability: "vintf",
