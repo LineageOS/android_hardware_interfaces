@@ -1,3 +1,6 @@
+# Please assign all bugs related to /hardware/interfaces/security to the team alias,
+# android-hardware-security@google.com.  This will get them auto-assigned to the on-call triage
+# engineer, ensuring quickest response.
 drysdale@google.com
 jbires@google.com
 jdanis@google.com
