@@ -25,11 +25,6 @@ aidl_interface {
         cpp: {
             enabled: false,
         },
-        ndk: {
-            vndk: {
-                enabled: true,
-            },
-        },
     },
     versions_with_info: [
         {
