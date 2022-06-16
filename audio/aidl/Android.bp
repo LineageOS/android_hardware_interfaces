@@ -83,6 +83,10 @@ aidl_interface {
     ],
     stability: "vintf",
     backend: {
+        // The C++ backend is disabled transitively due to use of FMQ.
+        cpp: {
+            enabled: false,
+        },
         java: {
             platform_apis: true,
         },
