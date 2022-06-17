@@ -403,21 +403,23 @@ class WithStream {
     std::shared_ptr<Stream> mStream;
 };
 
-template <>
-ScopedAStatus WithStream<IStreamIn>::SetUpNoChecks(IModule* module,
-                                                   const AudioPortConfig& portConfig) {
+SinkMetadata GenerateSinkMetadata(const AudioPortConfig& portConfig) {
     RecordTrackMetadata trackMeta;
     trackMeta.source = AudioSource::MIC;
     trackMeta.gain = 1.0;
     trackMeta.channelMask = portConfig.channelMask.value();
     SinkMetadata metadata;
     metadata.tracks.push_back(trackMeta);
-    return module->openInputStream(portConfig.id, metadata, &mStream);
+    return metadata;
 }
 
 template <>
-ScopedAStatus WithStream<IStreamOut>::SetUpNoChecks(IModule* module,
-                                                    const AudioPortConfig& portConfig) {
+ScopedAStatus WithStream<IStreamIn>::SetUpNoChecks(IModule* module,
+                                                   const AudioPortConfig& portConfig) {
+    return module->openInputStream(portConfig.id, GenerateSinkMetadata(portConfig), &mStream);
+}
+
+SourceMetadata GenerateSourceMetadata(const AudioPortConfig& portConfig) {
     PlaybackTrackMetadata trackMeta;
     trackMeta.usage = AudioUsage::MEDIA;
     trackMeta.contentType = AudioContentType::MUSIC;
@@ -425,7 +427,15 @@ ScopedAStatus WithStream<IStreamOut>::SetUpNoChecks(IModule* module,
     trackMeta.channelMask = portConfig.channelMask.value();
     SourceMetadata metadata;
     metadata.tracks.push_back(trackMeta);
-    return module->openOutputStream(portConfig.id, metadata, {}, &mStream);
+    return metadata;
+}
+
+template <>
+ScopedAStatus WithStream<IStreamOut>::SetUpNoChecks(IModule* module,
+                                                    const AudioPortConfig& portConfig) {
+    return module->openOutputStream(portConfig.id, GenerateSourceMetadata(portConfig),
+                                    ModuleConfig::generateOffloadInfoIfNeeded(portConfig),
+                                    &mStream);
 }
 
 class WithAudioPatch {
@@ -1238,7 +1248,7 @@ TEST_P(AudioStreamOut, OpenTwicePrimary) {
     auto primaryPortIt = std::find_if(mixPorts.begin(), mixPorts.end(), [](const AudioPort& port) {
         constexpr int primaryOutputFlag = 1 << static_cast<int>(AudioOutputFlags::PRIMARY);
         return port.flags.getTag() == AudioIoFlags::Tag::output &&
-               ((port.flags.get<AudioIoFlags::Tag::output>() & primaryOutputFlag) != 0);
+               (port.flags.get<AudioIoFlags::Tag::output>() & primaryOutputFlag) != 0;
     });
     if (primaryPortIt == mixPorts.end()) {
         GTEST_SKIP() << "No primary mix port";
@@ -1249,6 +1259,31 @@ TEST_P(AudioStreamOut, OpenTwicePrimary) {
     const auto portConfig = moduleConfig->getSingleConfigForMixPort(false, *primaryPortIt);
     ASSERT_TRUE(portConfig.has_value()) << "No profiles specified for the primary mix port";
     EXPECT_NO_FATAL_FAILURE(OpenTwiceSamePortConfigImpl(portConfig.value()));
+}
+
+TEST_P(AudioStreamOut, RequireOffloadInfo) {
+    const auto mixPorts = moduleConfig->getMixPorts(false);
+    auto offloadPortIt = std::find_if(mixPorts.begin(), mixPorts.end(), [&](const AudioPort& port) {
+        constexpr int compressOffloadFlag = 1
+                                            << static_cast<int>(AudioOutputFlags::COMPRESS_OFFLOAD);
+        return port.flags.getTag() == AudioIoFlags::Tag::output &&
+               (port.flags.get<AudioIoFlags::Tag::output>() & compressOffloadFlag) != 0 &&
+               !moduleConfig->getAttachedSinkDevicesPortsForMixPort(port).empty();
+    });
+    if (offloadPortIt == mixPorts.end()) {
+        GTEST_SKIP()
+                << "No mix port for compressed offload that could be routed to attached devices";
+    }
+    const auto portConfig = moduleConfig->getSingleConfigForMixPort(false, *offloadPortIt);
+    ASSERT_TRUE(portConfig.has_value())
+            << "No profiles specified for the compressed offload mix port";
+    std::shared_ptr<IStreamOut> ignored;
+    ScopedAStatus status = module->openOutputStream(portConfig.value().id,
+                                                    GenerateSourceMetadata(portConfig.value()),
+                                                    {} /* offloadInfo */, &ignored);
+    EXPECT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode())
+            << status
+            << " returned when no offload info is provided for a compressed offload mix port";
 }
 
 // Tests specific to audio patches. The fixure class is named 'AudioModulePatch'
