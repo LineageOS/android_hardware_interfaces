@@ -251,15 +251,15 @@ std::string ModuleConfig::toString() const {
     std::string result;
     result.append("Ports: ");
     result.append(android::internal::ToString(mPorts));
-    result.append("Initial configs: ");
+    result.append("\nInitial configs: ");
     result.append(android::internal::ToString(mInitialConfigs));
-    result.append("Attached sink device ports: ");
+    result.append("\nAttached sink device ports: ");
     result.append(android::internal::ToString(mAttachedSinkDevicePorts));
-    result.append("Attached source device ports: ");
+    result.append("\nAttached source device ports: ");
     result.append(android::internal::ToString(mAttachedSourceDevicePorts));
-    result.append("External device ports: ");
+    result.append("\nExternal device ports: ");
     result.append(android::internal::ToString(mExternalDevicePorts));
-    result.append("Routes: ");
+    result.append("\nRoutes: ");
     result.append(android::internal::ToString(mRoutes));
     return result;
 }
