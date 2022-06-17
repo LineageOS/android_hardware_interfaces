@@ -25,20 +25,22 @@ using aidl::android::hardware::audio::core::Config;
 using aidl::android::hardware::audio::core::Module;
 
 int main() {
+    // This is a debug implementation, always enable debug logging.
+    android::base::SetMinimumLogSeverity(::android::base::DEBUG);
     ABinderProcess_setThreadPoolMaxThreadCount(16);
 
-    // make the default config service
+    // Make the default config service
     auto config = ndk::SharedRefBase::make<Config>();
     const std::string configName = std::string() + Config::descriptor + "/default";
     binder_status_t status =
             AServiceManager_addService(config->asBinder().get(), configName.c_str());
-    CHECK(status == STATUS_OK);
+    CHECK_EQ(STATUS_OK, status);
 
-    // make the default module
+    // Make the default module
     auto moduleDefault = ndk::SharedRefBase::make<Module>();
     const std::string moduleDefaultName = std::string() + Module::descriptor + "/default";
     status = AServiceManager_addService(moduleDefault->asBinder().get(), moduleDefaultName.c_str());
-    CHECK(status == STATUS_OK);
+    CHECK_EQ(STATUS_OK, status);
 
     ABinderProcess_joinThreadPool();
     return EXIT_FAILURE;  // should not reach
