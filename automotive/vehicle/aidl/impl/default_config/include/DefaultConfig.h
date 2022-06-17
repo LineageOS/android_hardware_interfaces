@@ -36,6 +36,7 @@ using ::aidl::android::hardware::automotive::vehicle::EvConnectorType;
 using ::aidl::android::hardware::automotive::vehicle::EvsServiceState;
 using ::aidl::android::hardware::automotive::vehicle::EvsServiceType;
 using ::aidl::android::hardware::automotive::vehicle::FuelType;
+using ::aidl::android::hardware::automotive::vehicle::GsrComplianceRequirementType;
 using ::aidl::android::hardware::automotive::vehicle::RawPropValues;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReport;
 using ::aidl::android::hardware::automotive::vehicle::VehicleApPowerStateReq;
@@ -1254,6 +1255,19 @@ const std::vector<ConfigDeclaration> kVehicleProperties = {
                                 .access = VehiclePropertyAccess::READ_WRITE,
                                 .changeMode = VehiclePropertyChangeMode::ON_CHANGE,
                         },
+        },
+        {
+                .config =
+                        {
+                                .prop = toInt(
+                                        VehicleProperty::
+                                                GENERAL_SAFETY_REGULATION_COMPLIANCE_REQUIREMENT),
+                                .access = VehiclePropertyAccess::READ,
+                                .changeMode = VehiclePropertyChangeMode::STATIC,
+                        },
+                .initialValue = {.int32Values = {toInt(
+                                         GsrComplianceRequirementType::
+                                                 GSR_COMPLIANCE_REQUIRED_THROUGH_SYSTEM_IMAGE)}},
         },
 #ifdef ENABLE_VENDOR_CLUSTER_PROPERTY_FOR_TESTING
         // Vendor propetry for E2E ClusterHomeService testing.
