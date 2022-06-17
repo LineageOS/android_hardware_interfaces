@@ -23,6 +23,7 @@
 
 #include <aidl/android/hardware/audio/core/AudioRoute.h>
 #include <aidl/android/hardware/audio/core/IModule.h>
+#include <aidl/android/media/audio/common/AudioOffloadInfo.h>
 #include <aidl/android/media/audio/common/AudioPort.h>
 
 class ModuleConfig {
@@ -31,6 +32,10 @@ class ModuleConfig {
                                   aidl::android::media::audio::common::AudioPortConfig>;
     using SrcSinkGroup =
             std::pair<aidl::android::hardware::audio::core::AudioRoute, std::vector<SrcSinkPair>>;
+
+    static std::optional<aidl::android::media::audio::common::AudioOffloadInfo>
+    generateOffloadInfoIfNeeded(
+            const aidl::android::media::audio::common::AudioPortConfig& portConfig);
 
     explicit ModuleConfig(aidl::android::hardware::audio::core::IModule* module);
     const ndk::ScopedAStatus& getStatus() const { return mStatus; }
@@ -68,42 +73,34 @@ class ModuleConfig {
     }
     std::vector<aidl::android::media::audio::common::AudioPortConfig> getPortConfigsForMixPorts()
             const {
-        auto inputs = generateInputAudioMixPortConfigs(getInputMixPorts(), false);
-        auto outputs = generateOutputAudioMixPortConfigs(getOutputMixPorts(), false);
+        auto inputs = generateAudioMixPortConfigs(getInputMixPorts(), true, false);
+        auto outputs = generateAudioMixPortConfigs(getOutputMixPorts(), false, false);
         inputs.insert(inputs.end(), outputs.begin(), outputs.end());
         return inputs;
     }
     std::vector<aidl::android::media::audio::common::AudioPortConfig> getPortConfigsForMixPorts(
             bool isInput) const {
-        return isInput ? generateInputAudioMixPortConfigs(getInputMixPorts(), false)
-                       : generateOutputAudioMixPortConfigs(getOutputMixPorts(), false);
+        return generateAudioMixPortConfigs(getMixPorts(isInput), isInput, false);
     }
     std::vector<aidl::android::media::audio::common::AudioPortConfig> getPortConfigsForMixPorts(
             bool isInput, const aidl::android::media::audio::common::AudioPort& port) const {
-        return isInput ? generateInputAudioMixPortConfigs({port}, false)
-                       : generateOutputAudioMixPortConfigs({port}, false);
+        return generateAudioMixPortConfigs({port}, isInput, false);
     }
     std::optional<aidl::android::media::audio::common::AudioPortConfig> getSingleConfigForMixPort(
             bool isInput) const {
-        const auto config = isInput ? generateInputAudioMixPortConfigs(getInputMixPorts(), true)
-                                    : generateOutputAudioMixPortConfigs(getOutputMixPorts(), true);
-        // TODO: Avoid returning configs for offload since they require an extra
-        //       argument to openOutputStream.
+        const auto config = generateAudioMixPortConfigs(getMixPorts(isInput), isInput, true);
         if (!config.empty()) {
             return *config.begin();
-        } else {
-            return {};
         }
+        return {};
     }
     std::optional<aidl::android::media::audio::common::AudioPortConfig> getSingleConfigForMixPort(
             bool isInput, const aidl::android::media::audio::common::AudioPort& port) const {
-        const auto config = isInput ? generateInputAudioMixPortConfigs({port}, true)
-                                    : generateOutputAudioMixPortConfigs({port}, true);
+        const auto config = generateAudioMixPortConfigs({port}, isInput, true);
         if (!config.empty()) {
             return *config.begin();
-        } else {
-            return {};
         }
+        return {};
     }
 
     std::vector<aidl::android::media::audio::common::AudioPortConfig> getPortConfigsForDevicePort(
@@ -119,13 +116,8 @@ class ModuleConfig {
     std::string toString() const;
 
   private:
-    std::vector<aidl::android::media::audio::common::AudioPortConfig>
-    generateInputAudioMixPortConfigs(
-            const std::vector<aidl::android::media::audio::common::AudioPort>& ports,
-            bool singleProfile) const;
-    std::vector<aidl::android::media::audio::common::AudioPortConfig>
-    generateOutputAudioMixPortConfigs(
-            const std::vector<aidl::android::media::audio::common::AudioPort>& ports,
+    std::vector<aidl::android::media::audio::common::AudioPortConfig> generateAudioMixPortConfigs(
+            const std::vector<aidl::android::media::audio::common::AudioPort>& ports, bool isInput,
             bool singleProfile) const;
 
     // Unlike MixPorts, the generator for DevicePorts always returns a non-empty
