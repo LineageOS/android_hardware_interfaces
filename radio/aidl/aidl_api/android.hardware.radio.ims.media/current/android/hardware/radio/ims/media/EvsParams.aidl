@@ -37,7 +37,6 @@ parcelable EvsParams {
   android.hardware.radio.ims.media.EvsBandwidth bandwidth;
   android.hardware.radio.ims.media.EvsMode evsMode;
   byte channelAwareMode;
-  boolean useHeaderFullOnlyOnTx;
-  boolean useHeaderFullOnlyOnRx;
+  boolean useHeaderFullOnly;
   boolean useEvsModeSwitch;
 }
