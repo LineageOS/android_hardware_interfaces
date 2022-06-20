@@ -37,10 +37,5 @@ aidl_interface {
             ],
             min_sdk_version: "30",
         },
-        ndk: {
-            vndk: {
-                enabled: true,
-            },
-        },
     },
 }
