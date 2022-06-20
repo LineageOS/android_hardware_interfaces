@@ -23,9 +23,6 @@ aidl_interface {
             platform_apis: true,
         },
         ndk: {
-            vndk: {
-                enabled: true,
-            },
             apps_enabled: false,
         },
     },

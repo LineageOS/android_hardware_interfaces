@@ -20,11 +20,6 @@ aidl_interface {
         java: {
             sdk_version: "module_current",
         },
-        ndk: {
-            vndk: {
-                enabled: true,
-            },
-        },
     },
 }
 
@@ -41,11 +36,6 @@ aidl_interface {
         },
         java: {
             sdk_version: "module_current",
-        },
-        ndk: {
-            vndk: {
-                enabled: true,
-            },
         },
     },
 }
@@ -64,11 +54,6 @@ aidl_interface {
         java: {
             sdk_version: "module_current",
         },
-        ndk: {
-            vndk: {
-                enabled: true,
-            },
-        },
     },
 }
 
@@ -85,11 +70,6 @@ aidl_interface {
         },
         java: {
             sdk_version: "module_current",
-        },
-        ndk: {
-            vndk: {
-                enabled: true,
-            },
         },
     },
 }
@@ -108,11 +88,6 @@ aidl_interface {
         java: {
             sdk_version: "module_current",
         },
-        ndk: {
-            vndk: {
-                enabled: true,
-            },
-        },
     },
 }
 
@@ -129,11 +104,6 @@ aidl_interface {
         },
         java: {
             sdk_version: "module_current",
-        },
-        ndk: {
-            vndk: {
-                enabled: true,
-            },
         },
     },
 }
@@ -155,11 +125,6 @@ aidl_interface {
         java: {
             sdk_version: "module_current",
         },
-        ndk: {
-            vndk: {
-                enabled: true,
-            },
-        },
     },
 }
 
@@ -176,11 +141,6 @@ aidl_interface {
         },
         java: {
             sdk_version: "module_current",
-        },
-        ndk: {
-            vndk: {
-                enabled: true,
-            },
         },
     },
 }
