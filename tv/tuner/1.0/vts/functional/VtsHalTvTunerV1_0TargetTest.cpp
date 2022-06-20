@@ -144,9 +144,9 @@ void TunerPlaybackHidlTest::playbackSingleFilterTest(FilterConfig filterConf, Dv
     ASSERT_TRUE(mFilterTests.getNewlyOpenedFilterId(filterId));
     ASSERT_TRUE(mFilterTests.configFilter(filterConf.settings, filterId));
     ASSERT_TRUE(mFilterTests.getFilterMQDescriptor(filterId, filterConf.getMqDesc));
-    mDvrTests.startPlaybackInputThread(dvrConf.playbackInputFile, dvrConf.settings.playback());
     ASSERT_TRUE(mDvrTests.startDvrPlayback());
     ASSERT_TRUE(mFilterTests.startFilter(filterId));
+    mDvrTests.startPlaybackInputThread(dvrConf.playbackInputFile, dvrConf.settings.playback());
     ASSERT_TRUE(filterDataOutputTest());
     mDvrTests.stopPlaybackThread();
     ASSERT_TRUE(mFilterTests.stopFilter(filterId));
