@@ -405,6 +405,14 @@ ndk::ScopedAStatus Module::openOutputStream(int32_t in_portConfigId,
                    << " does not correspond to an output mix port";
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
     }
+    if (portConfigIt->flags.has_value() &&
+        ((portConfigIt->flags.value().get<AudioIoFlags::Tag::output>() &
+          1 << static_cast<int32_t>(AudioOutputFlags::COMPRESS_OFFLOAD)) != 0) &&
+        !in_offloadInfo.has_value()) {
+        LOG(ERROR) << __func__ << ": port config id " << in_portConfigId
+                   << " has COMPRESS_OFFLOAD flag set, requires offload info";
+        return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);
+    }
     if (mStreams.count(in_portConfigId) != 0) {
         LOG(ERROR) << __func__ << ": port config id " << in_portConfigId
                    << " already has a stream opened on it";
@@ -424,6 +432,7 @@ ndk::ScopedAStatus Module::openOutputStream(int32_t in_portConfigId,
 }
 
 ndk::ScopedAStatus Module::setAudioPatch(const AudioPatch& in_requested, AudioPatch* _aidl_return) {
+    LOG(DEBUG) << __func__ << ": requested patch " << in_requested.toString();
     if (in_requested.sourcePortConfigIds.empty()) {
         LOG(ERROR) << __func__ << ": requested patch has empty sources list";
         return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_ARGUMENT);

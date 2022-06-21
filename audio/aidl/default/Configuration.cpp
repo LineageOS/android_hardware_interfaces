@@ -20,6 +20,7 @@
 #include <aidl/android/media/audio/common/AudioFormatType.h>
 #include <aidl/android/media/audio/common/AudioIoFlags.h>
 #include <aidl/android/media/audio/common/AudioOutputFlags.h>
+#include <media/stagefright/foundation/MediaDefs.h>
 
 #include "core-impl/Configuration.h"
 
@@ -42,16 +43,30 @@ using aidl::android::media::audio::common::PcmType;
 
 namespace aidl::android::hardware::audio::core::internal {
 
+static void fillProfile(AudioProfile* profile, const std::vector<int32_t>& channelLayouts,
+                        const std::vector<int32_t>& sampleRates) {
+    for (auto layout : channelLayouts) {
+        profile->channelMasks.push_back(
+                AudioChannelLayout::make<AudioChannelLayout::layoutMask>(layout));
+    }
+    profile->sampleRates.insert(profile->sampleRates.end(), sampleRates.begin(), sampleRates.end());
+}
+
 static AudioProfile createProfile(PcmType pcmType, const std::vector<int32_t>& channelLayouts,
                                   const std::vector<int32_t>& sampleRates) {
     AudioProfile profile;
     profile.format.type = AudioFormatType::PCM;
     profile.format.pcm = pcmType;
-    for (auto layout : channelLayouts) {
-        profile.channelMasks.push_back(
-                AudioChannelLayout::make<AudioChannelLayout::layoutMask>(layout));
-    }
-    profile.sampleRates.insert(profile.sampleRates.end(), sampleRates.begin(), sampleRates.end());
+    fillProfile(&profile, channelLayouts, sampleRates);
+    return profile;
+}
+
+static AudioProfile createProfile(const std::string& encodingType,
+                                  const std::vector<int32_t>& channelLayouts,
+                                  const std::vector<int32_t>& sampleRates) {
+    AudioProfile profile;
+    profile.format.encoding = encodingType;
+    fillProfile(&profile, channelLayouts, sampleRates);
     return profile;
 }
 
@@ -125,6 +140,8 @@ static AudioRoute createRoute(const std::vector<int32_t>& sources, int32_t sink)
 //  * "primary output", PRIMARY, 1 max open, 1 max active stream
 //    - profile PCM 16-bit; MONO, STEREO; 44100, 48000
 //    - profile PCM 24-bit; MONO, STEREO; 44100, 48000
+//  * "compressed offload", DIRECT|COMPRESS_OFFLOAD|NON_BLOCKING, 1 max open, 1 max active stream
+//    - profile MP3; MONO, STEREO; 44100, 48000
 //  * "loopback output", stream count unlimited
 //    - profile PCM 24-bit; STEREO; 48000
 //  * "primary input", 2 max open, 2 max active streams
@@ -136,8 +153,8 @@ static AudioRoute createRoute(const std::vector<int32_t>& sources, int32_t sink)
 //    - profile PCM 24-bit; STEREO; 48000
 //
 // Routes:
-//  "primary out" -> "Null"
-//  "primary out" -> "USB Out"
+//  "primary out", "compressed offload" -> "Null"
+//  "primary out", "compressed offload" -> "USB Out"
 //  "loopback out" -> "Loopback Out"
 //  "Zero", "USB In" -> "primary input"
 //  "Loopback In" -> "loopback input"
@@ -182,6 +199,18 @@ Configuration& getNullPrimaryConfiguration() {
                                       standardPcmAudioProfiles.begin(),
                                       standardPcmAudioProfiles.end());
         c.ports.push_back(primaryOutMix);
+
+        AudioPort compressedOffloadOutMix =
+                createPort(c.nextPortId++, "compressed offload",
+                           1 << static_cast<int32_t>(AudioOutputFlags::DIRECT) |
+                                   1 << static_cast<int32_t>(AudioOutputFlags::COMPRESS_OFFLOAD) |
+                                   1 << static_cast<int32_t>(AudioOutputFlags::NON_BLOCKING),
+                           false, createPortMixExt(1, 1));
+        compressedOffloadOutMix.profiles.push_back(
+                createProfile(::android::MEDIA_MIMETYPE_AUDIO_MPEG,
+                              {AudioChannelLayout::LAYOUT_MONO, AudioChannelLayout::LAYOUT_STEREO},
+                              {44100, 48000}));
+        c.ports.push_back(compressedOffloadOutMix);
 
         AudioPort loopOutDevice = createPort(c.nextPortId++, "Loopback Out", 0, false,
                                              createDeviceExt(AudioDeviceType::OUT_SUBMIX, 0));
@@ -244,8 +273,10 @@ Configuration& getNullPrimaryConfiguration() {
         c.ports.push_back(usbInDevice);
         c.connectedProfiles[usbInDevice.id] = standardPcmAudioProfiles;
 
-        c.routes.push_back(createRoute({primaryOutMix.id}, nullOutDevice.id));
-        c.routes.push_back(createRoute({primaryOutMix.id}, usbOutDevice.id));
+        c.routes.push_back(
+                createRoute({primaryOutMix.id, compressedOffloadOutMix.id}, nullOutDevice.id));
+        c.routes.push_back(
+                createRoute({primaryOutMix.id, compressedOffloadOutMix.id}, usbOutDevice.id));
         c.routes.push_back(createRoute({loopOutMix.id}, loopOutDevice.id));
         c.routes.push_back(createRoute({zeroInDevice.id, usbInDevice.id}, primaryInMix.id));
         c.routes.push_back(createRoute({loopInDevice.id}, loopInMix.id));

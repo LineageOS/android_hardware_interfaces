@@ -282,6 +282,8 @@ interface IModule {
      * @throws EX_ILLEGAL_ARGUMENT In the following cases:
      *                             - If the port config can not be found by the ID.
      *                             - If the port config is not of an output mix port.
+     *                             - If the offload info is not provided for an offload
+     *                               port configuration.
      * @throws EX_ILLEGAL_STATE In the following cases:
      *                          - If the port config already has a stream opened on it.
      *                          - If the limit on the open stream count for the port has
