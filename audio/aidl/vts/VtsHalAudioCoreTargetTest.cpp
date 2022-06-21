@@ -138,12 +138,18 @@ constexpr IsInput<IStreamOut>::operator bool() const {
     return false;
 }
 
+// All 'With*' classes are move-only because they are associated with some
+// resource or state of a HAL module.
 class WithDebugFlags {
   public:
+    static WithDebugFlags createNested(const WithDebugFlags& parent) {
+        return WithDebugFlags(parent.mFlags);
+    }
+
     WithDebugFlags() {}
     explicit WithDebugFlags(const ModuleDebug& initial) : mInitial(initial), mFlags(initial) {}
-    explicit WithDebugFlags(const WithDebugFlags& initial)
-        : mInitial(initial.mFlags), mFlags(initial.mFlags) {}
+    WithDebugFlags(const WithDebugFlags&) = delete;
+    WithDebugFlags& operator=(const WithDebugFlags&) = delete;
     ~WithDebugFlags() {
         if (mModule != nullptr) {
             ScopedAStatus status = mModule->setModuleDebug(mInitial);
@@ -170,6 +176,8 @@ class WithAudioPortConfig {
   public:
     WithAudioPortConfig() {}
     explicit WithAudioPortConfig(const AudioPortConfig& config) : mInitialConfig(config) {}
+    WithAudioPortConfig(const WithAudioPortConfig&) = delete;
+    WithAudioPortConfig& operator=(const WithAudioPortConfig&) = delete;
     ~WithAudioPortConfig() {
         if (mModule != nullptr) {
             ScopedAStatus status = mModule->resetAudioPortConfig(getId());
@@ -326,6 +334,8 @@ class WithDevicePortConnectedState {
     explicit WithDevicePortConnectedState(const AudioPort& idAndData) : mIdAndData(idAndData) {}
     WithDevicePortConnectedState(const AudioPort& id, const AudioDeviceAddress& address)
         : mIdAndData(setAudioPortAddress(id, address)) {}
+    WithDevicePortConnectedState(const WithDevicePortConnectedState&) = delete;
+    WithDevicePortConnectedState& operator=(const WithDevicePortConnectedState&) = delete;
     ~WithDevicePortConnectedState() {
         if (mModule != nullptr) {
             ScopedAStatus status = mModule->disconnectExternalDevice(getId());
@@ -362,6 +372,8 @@ class WithStream {
   public:
     WithStream() {}
     explicit WithStream(const AudioPortConfig& portConfig) : mPortConfig(portConfig) {}
+    WithStream(const WithStream&) = delete;
+    WithStream& operator=(const WithStream&) = delete;
     ~WithStream() {
         if (mStream != nullptr) {
             ScopedAStatus status = mStream->close();
@@ -391,21 +403,23 @@ class WithStream {
     std::shared_ptr<Stream> mStream;
 };
 
-template <>
-ScopedAStatus WithStream<IStreamIn>::SetUpNoChecks(IModule* module,
-                                                   const AudioPortConfig& portConfig) {
+SinkMetadata GenerateSinkMetadata(const AudioPortConfig& portConfig) {
     RecordTrackMetadata trackMeta;
     trackMeta.source = AudioSource::MIC;
     trackMeta.gain = 1.0;
     trackMeta.channelMask = portConfig.channelMask.value();
     SinkMetadata metadata;
     metadata.tracks.push_back(trackMeta);
-    return module->openInputStream(portConfig.id, metadata, &mStream);
+    return metadata;
 }
 
 template <>
-ScopedAStatus WithStream<IStreamOut>::SetUpNoChecks(IModule* module,
-                                                    const AudioPortConfig& portConfig) {
+ScopedAStatus WithStream<IStreamIn>::SetUpNoChecks(IModule* module,
+                                                   const AudioPortConfig& portConfig) {
+    return module->openInputStream(portConfig.id, GenerateSinkMetadata(portConfig), &mStream);
+}
+
+SourceMetadata GenerateSourceMetadata(const AudioPortConfig& portConfig) {
     PlaybackTrackMetadata trackMeta;
     trackMeta.usage = AudioUsage::MEDIA;
     trackMeta.contentType = AudioContentType::MUSIC;
@@ -413,7 +427,15 @@ ScopedAStatus WithStream<IStreamOut>::SetUpNoChecks(IModule* module,
     trackMeta.channelMask = portConfig.channelMask.value();
     SourceMetadata metadata;
     metadata.tracks.push_back(trackMeta);
-    return module->openOutputStream(portConfig.id, metadata, {}, &mStream);
+    return metadata;
+}
+
+template <>
+ScopedAStatus WithStream<IStreamOut>::SetUpNoChecks(IModule* module,
+                                                    const AudioPortConfig& portConfig) {
+    return module->openOutputStream(portConfig.id, GenerateSourceMetadata(portConfig),
+                                    ModuleConfig::generateOffloadInfoIfNeeded(portConfig),
+                                    &mStream);
 }
 
 class WithAudioPatch {
@@ -421,6 +443,8 @@ class WithAudioPatch {
     WithAudioPatch() {}
     WithAudioPatch(const AudioPortConfig& srcPortConfig, const AudioPortConfig& sinkPortConfig)
         : mSrcPortConfig(srcPortConfig), mSinkPortConfig(sinkPortConfig) {}
+    WithAudioPatch(const WithAudioPatch&) = delete;
+    WithAudioPatch& operator=(const WithAudioPatch&) = delete;
     ~WithAudioPatch() {
         if (mModule != nullptr && mPatch.id != 0) {
             ScopedAStatus status = mModule->resetAudioPatch(mPatch.id);
@@ -655,6 +679,12 @@ TEST_P(AudioCoreModule, GetAudioPort) {
     }
 }
 
+TEST_P(AudioCoreModule, SetUpModuleConfig) {
+    ASSERT_NO_FATAL_FAILURE(SetUpModuleConfig());
+    // Send the module config to logcat to facilitate failures investigation.
+    LOG(INFO) << "SetUpModuleConfig: " << moduleConfig->toString();
+}
+
 // Verify that HAL module reports for a connected device port at least one non-dynamic profile,
 // that is, a profile with actual supported configuration.
 // Note: This test relies on simulation of external device connections by the HAL module.
@@ -882,7 +912,7 @@ TEST_P(AudioCoreModule, TryConnectMissingDevice) {
         GTEST_SKIP() << "No external devices in the module.";
     }
     AudioPort ignored;
-    WithDebugFlags doNotSimulateConnections(debug);
+    WithDebugFlags doNotSimulateConnections = WithDebugFlags::createNested(debug);
     doNotSimulateConnections.flags().simulateDeviceConnections = false;
     ASSERT_NO_FATAL_FAILURE(doNotSimulateConnections.SetUp(module.get()));
     for (const auto& port : ports) {
@@ -1134,9 +1164,8 @@ class AudioStream : public AudioCoreModule {
                     ScopedAStatus status = stream.SetUpNoChecks(module.get());
                     EXPECT_EQ(EX_ILLEGAL_STATE, status.getExceptionCode())
                             << status << " open" << direction(true)
-                            << "Stream"
-                               " returned for port config ID "
-                            << stream.getPortId() << ", maxOpenStreamCount is " << maxStreamCount;
+                            << "Stream returned for port config ID " << stream.getPortId()
+                            << ", maxOpenStreamCount is " << maxStreamCount;
                 }
             }
         }
@@ -1219,7 +1248,7 @@ TEST_P(AudioStreamOut, OpenTwicePrimary) {
     auto primaryPortIt = std::find_if(mixPorts.begin(), mixPorts.end(), [](const AudioPort& port) {
         constexpr int primaryOutputFlag = 1 << static_cast<int>(AudioOutputFlags::PRIMARY);
         return port.flags.getTag() == AudioIoFlags::Tag::output &&
-               ((port.flags.get<AudioIoFlags::Tag::output>() & primaryOutputFlag) != 0);
+               (port.flags.get<AudioIoFlags::Tag::output>() & primaryOutputFlag) != 0;
     });
     if (primaryPortIt == mixPorts.end()) {
         GTEST_SKIP() << "No primary mix port";
@@ -1230,6 +1259,31 @@ TEST_P(AudioStreamOut, OpenTwicePrimary) {
     const auto portConfig = moduleConfig->getSingleConfigForMixPort(false, *primaryPortIt);
     ASSERT_TRUE(portConfig.has_value()) << "No profiles specified for the primary mix port";
     EXPECT_NO_FATAL_FAILURE(OpenTwiceSamePortConfigImpl(portConfig.value()));
+}
+
+TEST_P(AudioStreamOut, RequireOffloadInfo) {
+    const auto mixPorts = moduleConfig->getMixPorts(false);
+    auto offloadPortIt = std::find_if(mixPorts.begin(), mixPorts.end(), [&](const AudioPort& port) {
+        constexpr int compressOffloadFlag = 1
+                                            << static_cast<int>(AudioOutputFlags::COMPRESS_OFFLOAD);
+        return port.flags.getTag() == AudioIoFlags::Tag::output &&
+               (port.flags.get<AudioIoFlags::Tag::output>() & compressOffloadFlag) != 0 &&
+               !moduleConfig->getAttachedSinkDevicesPortsForMixPort(port).empty();
+    });
+    if (offloadPortIt == mixPorts.end()) {
+        GTEST_SKIP()
+                << "No mix port for compressed offload that could be routed to attached devices";
+    }
+    const auto portConfig = moduleConfig->getSingleConfigForMixPort(false, *offloadPortIt);
+    ASSERT_TRUE(portConfig.has_value())
+            << "No profiles specified for the compressed offload mix port";
+    std::shared_ptr<IStreamOut> ignored;
+    ScopedAStatus status = module->openOutputStream(portConfig.value().id,
+                                                    GenerateSourceMetadata(portConfig.value()),
+                                                    {} /* offloadInfo */, &ignored);
+    EXPECT_EQ(EX_ILLEGAL_ARGUMENT, status.getExceptionCode())
+            << status
+            << " returned when no offload info is provided for a compressed offload mix port";
 }
 
 // Tests specific to audio patches. The fixure class is named 'AudioModulePatch'
@@ -1331,11 +1385,12 @@ class AudioModulePatch : public AudioCoreModule {
         }
         for (const auto& srcSinkGroup : srcSinkGroups) {
             const auto& route = srcSinkGroup.first;
-            std::vector<WithAudioPatch> patches;
+            std::vector<std::unique_ptr<WithAudioPatch>> patches;
             for (const auto& srcSink : srcSinkGroup.second) {
                 if (!route.isExclusive) {
-                    patches.emplace_back(srcSink.first, srcSink.second);
-                    EXPECT_NO_FATAL_FAILURE(patches[patches.size() - 1].SetUp(module.get()));
+                    patches.push_back(
+                            std::make_unique<WithAudioPatch>(srcSink.first, srcSink.second));
+                    EXPECT_NO_FATAL_FAILURE(patches[patches.size() - 1]->SetUp(module.get()));
                 } else {
                     WithAudioPatch patch(srcSink.first, srcSink.second);
                     EXPECT_NO_FATAL_FAILURE(patch.SetUp(module.get()));
@@ -1423,8 +1478,25 @@ INSTANTIATE_TEST_SUITE_P(AudioPatchTest, AudioModulePatch,
                          android::PrintInstanceNameToString);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(AudioModulePatch);
 
+class TestExecutionTracer : public ::testing::EmptyTestEventListener {
+  public:
+    void OnTestStart(const ::testing::TestInfo& test_info) override {
+        TraceTestState("Started", test_info);
+    }
+
+    void OnTestEnd(const ::testing::TestInfo& test_info) override {
+        TraceTestState("Completed", test_info);
+    }
+
+  private:
+    static void TraceTestState(const std::string& state, const ::testing::TestInfo& test_info) {
+        LOG(INFO) << state << " " << test_info.test_suite_name() << "::" << test_info.name();
+    }
+};
+
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
+    ::testing::UnitTest::GetInstance()->listeners().Append(new TestExecutionTracer());
     ABinderProcess_setThreadPoolMaxThreadCount(1);
     ABinderProcess_startThreadPool();
     return RUN_ALL_TESTS();
