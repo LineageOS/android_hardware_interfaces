@@ -1,4 +1,5 @@
 /*
+
  * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +20,7 @@
 #include <vector>
 
 #include <android-base/logging.h>
+#include <android-base/properties.h>
 #include <android/hardware/boot/1.1/IBootControl.h>
 #include <android/hardware/boot/1.1/types.h>
 #include <gmock/gmock.h>
@@ -37,9 +39,21 @@ using ::android::hardware::boot::V1_1::IBootControl;
 using ::android::hardware::boot::V1_1::MergeStatus;
 using ::testing::Contains;
 
+bool IsVirtualAbEnabled();
+
+#define SKIP_IF_NON_VIRTUAL_AB()                                                        \
+    do {                                                                                \
+        if (!IsVirtualAbEnabled()) GTEST_SKIP() << "Test for Virtual A/B devices only"; \
+    } while (0)
+
+bool IsVirtualAbEnabled() {
+    return android::base::GetBoolProperty("ro.virtual_ab.enabled", false);
+}
+
 class BootHidlTest : public testing::TestWithParam<std::string> {
   public:
     virtual void SetUp() override {
+        SKIP_IF_NON_VIRTUAL_AB();
         boot = IBootControl::getService(GetParam());
         ASSERT_NE(boot, nullptr);
 
