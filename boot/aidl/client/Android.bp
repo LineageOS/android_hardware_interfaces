@@ -1,0 +1,22 @@
+
+
+cc_library {
+    name: "libboot_control_client",
+    srcs: [
+        "BootControlClient.cpp"
+    ],
+    export_include_dirs: ["include"],
+    export_shared_lib_headers: ["android.hardware.boot-V1-ndk"],
+    recovery_available: true,
+    shared_libs: [
+        "android.hardware.boot-V1-ndk",
+        "android.hardware.boot@1.0",
+        "android.hardware.boot@1.1",
+        "android.hardware.boot@1.2",
+        "libhidlbase",
+        "libbinder_ndk",
+        "libbase",
+        "libcutils",
+        "libutils",
+    ],
+}
