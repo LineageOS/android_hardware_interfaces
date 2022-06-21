@@ -388,25 +388,28 @@ bool avb_verification_enabled() {
 }
 
 int get_vsr_api_level() {
-    int api_level = ::android::base::GetIntProperty("ro.board.api_level", -1);
-    if (api_level == -1) {
-        api_level = ::android::base::GetIntProperty("ro.board.first_api_level", -1);
+    int vendor_api_level = ::android::base::GetIntProperty("ro.vendor.api_level", -1);
+    if (vendor_api_level != -1) {
+        return vendor_api_level;
     }
-    if (api_level == -1) {
-        api_level = ::android::base::GetIntProperty("ro.vndk.version", -1);
+
+    // Android S and older devices do not define ro.vendor.api_level
+    vendor_api_level = ::android::base::GetIntProperty("ro.board.api_level", -1);
+    if (vendor_api_level == -1) {
+        vendor_api_level = ::android::base::GetIntProperty("ro.board.first_api_level", -1);
     }
-    // We really should have a VSR API level by now.  But on cuttlefish, and perhaps other weird
-    // devices, we may not.  So, we use the SDK first or current API level if needed.  If this goes
-    // wrong, it should go wrong in the direction of being too strict rather than too lenient, which
-    // should provoke someone to examine why we don't have proper VSR API level properties.
-    if (api_level == -1) {
-        api_level = ::android::base::GetIntProperty("ro.product.first_api_level", -1);
+
+    int product_api_level = ::android::base::GetIntProperty("ro.product.first_api_level", -1);
+    if (product_api_level == -1) {
+        product_api_level = ::android::base::GetIntProperty("ro.build.version.sdk", -1);
+        EXPECT_NE(product_api_level, -1) << "Could not find ro.build.version.sdk";
     }
-    if (api_level == -1) {
-        api_level = ::android::base::GetIntProperty("ro.build.version.sdk", -1);
+
+    // VSR API level is the minimum of vendor_api_level and product_api_level.
+    if (vendor_api_level == -1 || vendor_api_level > product_api_level) {
+        return product_api_level;
     }
-    EXPECT_NE(api_level, -1) << "Could not find a VSR level, or equivalent.";
-    return api_level;
+    return vendor_api_level;
 }
 
 bool is_gsi() {
