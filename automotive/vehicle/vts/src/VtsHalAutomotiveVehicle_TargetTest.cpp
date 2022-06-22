@@ -48,7 +48,6 @@ using ::aidl::android::hardware::automotive::vehicle::VehiclePropertyType;
 using ::android::getAidlHalInstanceNames;
 using ::android::base::ScopedLockAssertion;
 using ::android::base::StringPrintf;
-using ::android::frameworks::automotive::vhal::ErrorCode;
 using ::android::frameworks::automotive::vhal::HalPropError;
 using ::android::frameworks::automotive::vhal::IHalPropConfig;
 using ::android::frameworks::automotive::vhal::IHalPropValue;
@@ -288,7 +287,7 @@ TEST_P(VtsHalAutomotiveVehicleTargetTest, setNotWritableProp) {
     auto setValueResult = mVhalClient->setValueSync(*getValueResult.value());
 
     ASSERT_FALSE(setValueResult.ok()) << "Expect set a read-only value to fail";
-    ASSERT_EQ(setValueResult.error().code(), ErrorCode::ACCESS_DENIED_FROM_VHAL);
+    ASSERT_EQ(setValueResult.error().code(), StatusCode::ACCESS_DENIED);
 }
 
 // Test subscribe() and unsubscribe().
