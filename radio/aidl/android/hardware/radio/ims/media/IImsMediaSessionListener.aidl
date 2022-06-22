@@ -17,9 +17,9 @@
 package android.hardware.radio.ims.media;
 
 import android.hardware.radio.ims.media.MediaProtocolType;
-import android.hardware.radio.ims.media.RtpHeaderExtension;
 import android.hardware.radio.ims.media.RtpConfig;
 import android.hardware.radio.ims.media.RtpError;
+import android.hardware.radio.ims.media.RtpHeaderExtension;
 import android.hardware.radio.ims.media.RtpSessionState;
 
 /**
@@ -32,7 +32,7 @@ oneway interface IImsMediaSessionListener {
      *
      * @param state RTP session state
      */
-     void onSessionChanged(RtpSessionState state);
+    void onSessionChanged(RtpSessionState state);
 
     /**
      * Notifies the result of IImsMediaSession#modifySession() API.
@@ -87,7 +87,7 @@ oneway interface IImsMediaSessionListener {
      *
      * @param extensions content of the received RTP header extension
      */
-     void onHeaderExtensionReceived(in List<RtpHeaderExtension> extensions);
+    void onHeaderExtensionReceived(in List<RtpHeaderExtension> extensions);
 
     /**
      * Notifies media inactivity observed as per thresholds set by
@@ -95,7 +95,7 @@ oneway interface IImsMediaSessionListener {
      *
      * @param packetType either RTP or RTCP
      */
-     void notifyMediaInactivity(MediaProtocolType packetType);
+    void notifyMediaInactivity(MediaProtocolType packetType);
 
     /**
      * Notifies RTP packet loss observed as per thresholds set by
@@ -103,7 +103,7 @@ oneway interface IImsMediaSessionListener {
      *
      * @param packetLossPercentage percentage of packet loss calculated over the duration
      */
-     void notifyPacketLoss(int packetLossPercentage);
+    void notifyPacketLoss(int packetLossPercentage);
 
     /**
      * Notifies RTP jitter observed as per thresholds set by
@@ -111,5 +111,21 @@ oneway interface IImsMediaSessionListener {
      *
      * @param jitter jitter of the RTP packets in milliseconds calculated over the duration
      */
-     void notifyJitter(int jitter);
+    void notifyJitter(int jitter);
+
+    /**
+     * The modem RTP stack fires this API to query whether the desired bitrate mentioned
+     * in the RtpConfig is currently available on the NW or not using ANBRQ message.
+     * See 3GPP TS 26.114.
+     *
+     * @param config containing desired bitrate and direction
+     */
+    void triggerAnbrQuery(in RtpConfig config);
+
+    /**
+     * Notifies the received DTMF digit from the other party
+     *
+     * @param dtmfDigit single char having one of 12 values: 0-9, *, #
+     */
+    void onDtmfReceived(char dtmfDigit);
 }

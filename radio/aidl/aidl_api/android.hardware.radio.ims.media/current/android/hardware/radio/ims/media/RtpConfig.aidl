@@ -39,4 +39,5 @@ parcelable RtpConfig {
   android.hardware.radio.ims.media.RtpAddress remoteAddress;
   android.hardware.radio.ims.media.RtpSessionParams sessionParams;
   android.hardware.radio.ims.media.RtcpConfig rtcpConfig;
+  android.hardware.radio.ims.media.AnbrBitrate anbrBitrateParams;
 }
