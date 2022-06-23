@@ -62,6 +62,7 @@ class BroadcastRadio final : public BnBroadcastRadio {
             const std::shared_ptr<IAnnouncementListener>& listener,
             const std::vector<AnnouncementType>& enabled,
             std::shared_ptr<ICloseHandle>* returnCloseHandle) override;
+    binder_status_t dump(int fd, const char** args, uint32_t numArgs) override;
 
   private:
     const VirtualRadio& mVirtualRadio;
@@ -77,6 +78,16 @@ class BroadcastRadio final : public BnBroadcastRadio {
     std::optional<AmFmBandRange> getAmFmRangeLocked() const;
     void cancelLocked();
     ProgramInfo tuneInternalLocked(const ProgramSelector& sel);
+
+    binder_status_t cmdHelp(int fd) const;
+    binder_status_t cmdTune(int fd, const char** args, uint32_t numArgs);
+    binder_status_t cmdSeek(int fd, const char** args, uint32_t numArgs);
+    binder_status_t cmdStep(int fd, const char** args, uint32_t numArgs);
+    binder_status_t cmdCancel(int fd, uint32_t numArgs);
+    binder_status_t cmdStartProgramListUpdates(int fd, const char** args, uint32_t numArgs);
+    binder_status_t cmdStopProgramListUpdates(int fd, uint32_t numArgs);
+
+    binder_status_t dumpsys(int fd);
 };
 
 }  // namespace aidl::android::hardware::broadcastradio
