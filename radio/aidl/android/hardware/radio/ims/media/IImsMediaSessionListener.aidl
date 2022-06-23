@@ -16,6 +16,7 @@
 
 package android.hardware.radio.ims.media;
 
+import android.hardware.radio.ims.media.CallQuality;
 import android.hardware.radio.ims.media.MediaProtocolType;
 import android.hardware.radio.ims.media.RtpConfig;
 import android.hardware.radio.ims.media.RtpError;
@@ -128,4 +129,11 @@ oneway interface IImsMediaSessionListener {
      * @param dtmfDigit single char having one of 12 values: 0-9, *, #
      */
     void onDtmfReceived(char dtmfDigit);
+
+    /**
+     * Notifies when a change to call quality has occurred
+     *
+     * @param CallQuality The call quality statistics of ongoing call since last report
+     */
+    void onCallQualityChanged(in CallQuality callQuality);
 }
