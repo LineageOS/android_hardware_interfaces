@@ -36,7 +36,6 @@ package android.hardware.radio.ims.media;
 parcelable RtpSessionParams {
   byte pTimeMillis;
   int maxPtimeMillis;
-  int maxMtuBytes;
   byte dscp;
   android.hardware.radio.ims.media.DtmfParams dtmfParams;
   android.hardware.radio.ims.media.CodecParams codecParams;

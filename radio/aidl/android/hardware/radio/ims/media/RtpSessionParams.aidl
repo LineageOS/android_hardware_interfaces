@@ -31,8 +31,6 @@ parcelable RtpSessionParams {
      * represented in milliseconds, see RFC 4566
      */
     int maxPtimeMillis;
-    /** Maximum Rtp transfer unit in bytes */
-    int maxMtuBytes;
     /** dscp: Differentiated Services Field Code Point value, see RFC 2474 */
     byte dscp;
     /** DTMF payload and clock rate */
