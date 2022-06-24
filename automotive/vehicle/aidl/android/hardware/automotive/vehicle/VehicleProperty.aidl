@@ -46,32 +46,32 @@ enum VehicleProperty {
     /**
      * VIN of vehicle
      *
-     * @change_mode VehiclePropertyChangeMode:STATIC
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
      */
     INFO_VIN = 0x0100 + 0x10000000 + 0x01000000
             + 0x00100000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:STRING
     /**
      * Manufacturer of vehicle
      *
-     * @change_mode VehiclePropertyChangeMode:STATIC
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
      */
     INFO_MAKE = 0x0101 + 0x10000000 + 0x01000000
             + 0x00100000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:STRING
     /**
      * Model of vehicle
      *
-     * @change_mode VehiclePropertyChangeMode:STATIC
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
      */
     INFO_MODEL = 0x0102 + 0x10000000 + 0x01000000
             + 0x00100000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:STRING
     /**
      * Model year of vehicle.
      *
-     * @change_mode VehiclePropertyChangeMode:STATIC
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:YEAR
      */
     INFO_MODEL_YEAR = 0x0103 + 0x10000000 + 0x01000000
@@ -79,8 +79,8 @@ enum VehicleProperty {
     /**
      * Fuel capacity of the vehicle in milliliters
      *
-     * @change_mode VehiclePropertyChangeMode:STATIC
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:MILLILITER
      */
     INFO_FUEL_CAPACITY = 0x0104 + 0x10000000 + 0x01000000
@@ -88,8 +88,8 @@ enum VehicleProperty {
     /**
      * List of fuels the vehicle may use
      *
-     * @change_mode VehiclePropertyChangeMode:STATIC
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
      * @data_enum FuelType
      */
     INFO_FUEL_TYPE = 0x0105 + 0x10000000 + 0x01000000
@@ -98,8 +98,8 @@ enum VehicleProperty {
      * Battery capacity of the vehicle, if EV or hybrid.  This is the nominal
      * battery capacity when the vehicle is new.
      *
-     * @change_mode VehiclePropertyChangeMode:STATIC
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:WH
      */
     INFO_EV_BATTERY_CAPACITY = 0x0106 + 0x10000000 + 0x01000000
@@ -107,26 +107,26 @@ enum VehicleProperty {
     /**
      * List of connectors this EV may use
      *
-     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @change_mode VehiclePropertyChangeMode.STATIC
      * @data_enum EvConnectorType
-     * @access VehiclePropertyAccess:READ
+     * @access VehiclePropertyAccess.READ
      */
     INFO_EV_CONNECTOR_TYPE = 0x0107 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
     /**
      * Fuel door location
      *
-     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @change_mode VehiclePropertyChangeMode.STATIC
      * @data_enum PortLocationType
-     * @access VehiclePropertyAccess:READ
+     * @access VehiclePropertyAccess.READ
      */
     INFO_FUEL_DOOR_LOCATION = 0x0108 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
     /**
      * EV port location
      *
-     * @change_mode VehiclePropertyChangeMode:STATIC
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
      * @data_enum PortLocationType
      */
     INFO_EV_PORT_LOCATION = 0x0109 + 0x10000000 + 0x01000000
@@ -135,9 +135,9 @@ enum VehicleProperty {
      * Driver's seat location
      * VHAL implementations must ignore the areaId. Use VehicleArea:GLOBAL.
      *
-     * @change_mode VehiclePropertyChangeMode:STATIC
+     * @change_mode VehiclePropertyChangeMode.STATIC
      * @data_enum VehicleAreaSeat
-     * @access VehiclePropertyAccess:READ
+     * @access VehiclePropertyAccess.READ
      */
     INFO_DRIVER_SEAT = 0x010A + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -153,8 +153,8 @@ enum VehicleProperty {
      *  int32Values[6] = track width rear
      *  int32Values[7] = curb to curb turning radius
      *
-     * @change_mode VehiclePropertyChangeMode:STATIC
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:MILLIMETER
      */
     INFO_EXTERIOR_DIMENSIONS = 0x010B + 0x10000000 + 0x01000000
@@ -168,8 +168,8 @@ enum VehicleProperty {
      *   int32Values[0] = PortLocationType::FRONT_LEFT
      *   int32Values[0] = PortLocationType::REAR_LEFT
      *
-     * @change_mode VehiclePropertyChangeMode:STATIC
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
      * @data_enum PortLocationType
      */
     INFO_MULTI_EV_PORT_LOCATIONS = 0x010C + 0x10000000 + 0x01000000
@@ -177,8 +177,8 @@ enum VehicleProperty {
     /**
      * Current odometer value of the vehicle
      *
-     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.CONTINUOUS
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:KILOMETER
      */
     PERF_ODOMETER = 0x0204 + 0x10000000 + 0x01000000
@@ -192,8 +192,8 @@ enum VehicleProperty {
      * PERF_VEHICLE_SPEED is positive when the vehicle is moving forward, negative when moving
      * backward, and zero when not moving.
      *
-     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.CONTINUOUS
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:METER_PER_SEC
      */
     PERF_VEHICLE_SPEED = 0x0207 + 0x10000000 + 0x01000000
@@ -204,8 +204,8 @@ enum VehicleProperty {
      * Some cars display a slightly slower speed than the actual speed.  This is
      * usually displayed on the speedometer.
      *
-     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.CONTINUOUS
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:METER_PER_SEC
      */
     PERF_VEHICLE_SPEED_DISPLAY = 0x0208 + 0x10000000 + 0x01000000
@@ -215,8 +215,8 @@ enum VehicleProperty {
      *
      * Angle is in degrees.  Left is negative.
      *
-     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.CONTINUOUS
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:DEGREES
      */
     PERF_STEERING_ANGLE = 0x0209 + 0x10000000 + 0x01000000
@@ -226,8 +226,8 @@ enum VehicleProperty {
      *
      * Angle is in degrees.  Left is negative.
      *
-     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.CONTINUOUS
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:DEGREES
      */
     PERF_REAR_STEERING_ANGLE = 0x0210 + 0x10000000 + 0x01000000
@@ -235,8 +235,8 @@ enum VehicleProperty {
     /**
      * Temperature of engine coolant
      *
-     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.CONTINUOUS
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:CELSIUS
      */
     ENGINE_COOLANT_TEMP = 0x0301 + 0x10000000 + 0x01000000
@@ -244,8 +244,8 @@ enum VehicleProperty {
     /**
      * Engine oil level
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleOilLevel
      */
     ENGINE_OIL_LEVEL = 0x0303 + 0x10000000 + 0x01000000
@@ -253,8 +253,8 @@ enum VehicleProperty {
     /**
      * Temperature of engine oil
      *
-     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.CONTINUOUS
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:CELSIUS
      */
     ENGINE_OIL_TEMP = 0x0304 + 0x10000000 + 0x01000000
@@ -262,8 +262,8 @@ enum VehicleProperty {
     /**
      * Engine rpm
      *
-     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.CONTINUOUS
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:RPM
      */
     ENGINE_RPM = 0x0305 + 0x10000000 + 0x01000000
@@ -300,8 +300,8 @@ enum VehicleProperty {
      *
      * VehiclePropValue.timestamp must be correctly filled in.
      *
-     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.CONTINUOUS
+     * @access VehiclePropertyAccess.READ
      */
     WHEEL_TICK = 0x0306 + 0x10000000 + 0x01000000
             + 0x00510000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT64_VEC
@@ -310,8 +310,8 @@ enum VehicleProperty {
      *
      * Value may not exceed INFO_FUEL_CAPACITY
      *
-     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.CONTINUOUS
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:MILLILITER
      */
     FUEL_LEVEL = 0x0307 + 0x10000000 + 0x01000000
@@ -319,8 +319,8 @@ enum VehicleProperty {
     /**
      * Fuel door open
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     FUEL_DOOR_OPEN = 0x0308 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -329,8 +329,8 @@ enum VehicleProperty {
      *
      * Value may not exceed INFO_EV_BATTERY_CAPACITY
      *
-     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.CONTINUOUS
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:WH
      */
     EV_BATTERY_LEVEL = 0x0309 + 0x10000000 + 0x01000000
@@ -338,16 +338,16 @@ enum VehicleProperty {
     /**
      * EV charge port open
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     EV_CHARGE_PORT_OPEN = 0x030A + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
     /**
      * EV charge port connected
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      */
     EV_CHARGE_PORT_CONNECTED = 0x030B + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -357,8 +357,8 @@ enum VehicleProperty {
      * Positive value indicates battery is being charged.
      * Negative value indicates battery being discharged.
      *
-     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.CONTINUOUS
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:MW
      */
     EV_BATTERY_INSTANTANEOUS_CHARGE_RATE = 0x030C + 0x10000000 + 0x01000000
@@ -370,8 +370,8 @@ enum VehicleProperty {
      * all energy sources in a vehicle.  For example, a hybrid car's range will
      * be the sum of the ranges based on fuel and battery.
      *
-     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.CONTINUOUS
+     * @access VehiclePropertyAccess.READ_WRITE
      * @unit VehicleUnit:METER
      */
     RANGE_REMAINING = 0x0308 + 0x10000000 + 0x01000000
@@ -397,8 +397,8 @@ enum VehicleProperty {
      *      }
      * },
      *
-     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.CONTINUOUS
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:KILOPASCAL
      */
     TIRE_PRESSURE = 0x0309 + 0x10000000 + 0x07000000
@@ -412,8 +412,8 @@ enum VehicleProperty {
      * Minimum and maximum property values (that is, minFloatValue, maxFloatValue)
      * are not applicable to this property.
      *
-     * @change_mode VehiclePropertyChangeMode:STATIC
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:KILOPASCAL
      */
     CRITICALLY_LOW_TIRE_PRESSURE = 0x030A + 0x10000000 + 0x07000000
@@ -429,8 +429,8 @@ enum VehicleProperty {
      * GEAR_1, GEAR_2,...} and for manual transmission the list must be
      * {GEAR_NEUTRAL, GEAR_REVERSE, GEAR_1, GEAR_2,...}
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleGear
      */
     GEAR_SELECTION = 0x0400 + 0x10000000 + 0x01000000
@@ -448,8 +448,8 @@ enum VehicleProperty {
      * {GEAR_NEUTRAL, GEAR_REVERSE, GEAR_1, GEAR_2,...}. This list need not be the
      * same as that of the supported gears reported in GEAR_SELECTION.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleGear
      */
     CURRENT_GEAR = 0x0401 + 0x10000000 + 0x01000000
@@ -457,16 +457,16 @@ enum VehicleProperty {
     /**
      * Parking brake state.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      */
     PARKING_BRAKE_ON = 0x0402 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
     /**
      * Auto-apply parking brake.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      */
     PARKING_BRAKE_AUTO_APPLY = 0x0403 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -483,8 +483,8 @@ enum VehicleProperty {
      *   For a hybrid vehicle, this property may be based on the combination of gas and battery
      *      levels, at the OEM's discretion.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      */
     FUEL_LEVEL_LOW = 0x0405 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -495,16 +495,16 @@ enum VehicleProperty {
      * low light. The platform could use this, for example, to enable appropriate UI for
      * better viewing in dark or low light environments.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      */
     NIGHT_MODE = 0x0407 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
     /**
      * State of the vehicles turn signals
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleTurnSignal
      */
     TURN_SIGNAL_STATE = 0x0408 + 0x10000000 + 0x01000000
@@ -512,8 +512,8 @@ enum VehicleProperty {
     /**
      * Represents ignition state
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleIgnitionState
      */
     IGNITION_STATE = 0x0409 + 0x10000000 + 0x01000000
@@ -525,8 +525,8 @@ enum VehicleProperty {
      * property may be intermittently set (pulsing) based on the real-time
      * state of the ABS system.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      */
     ABS_ACTIVE = 0x040A + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -537,8 +537,8 @@ enum VehicleProperty {
      * TC is off.  This property may be intermittently set (pulsing) based on
      * the real-time state of the TC system.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      */
     TRACTION_CONTROL_ACTIVE = 0x040B + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -580,16 +580,16 @@ enum VehicleProperty {
      *
      * Fan speed setting
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     HVAC_FAN_SPEED = 0x0500 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
     /**
      * Fan direction setting
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      * @data_enum VehicleHvacFanDirection
      */
     HVAC_FAN_DIRECTION = 0x0501 + 0x10000000 + 0x05000000
@@ -597,8 +597,8 @@ enum VehicleProperty {
     /**
      * HVAC current temperature.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:CELSIUS
      */
     HVAC_TEMPERATURE_CURRENT = 0x0502 + 0x10000000 + 0x05000000
@@ -624,8 +624,8 @@ enum VehicleProperty {
      * that property to get the suggested value before setting HVAC_TEMPERATURE_SET. Otherwise,
      * the application may choose the value in HVAC_TEMPERATURE_SET configArray by itself.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      * @unit VehicleUnit:CELSIUS
      */
     HVAC_TEMPERATURE_SET = 0x0503 + 0x10000000 + 0x05000000
@@ -633,16 +633,16 @@ enum VehicleProperty {
     /**
      * Fan-based defrost for designated window.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     HVAC_DEFROSTER = 0x0504 + 0x10000000 + 0x03000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:BOOLEAN
     /**
      * On/off AC for designated areaId
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      * @config_flags Supported areaIds
      */
     HVAC_AC_ON = 0x0505 + 0x10000000 + 0x05000000
@@ -655,8 +655,8 @@ enum VehicleProperty {
      * Any parameters modified as a side effect of turning on/off the MAX AC
      * parameter shall generate onPropertyEvent() callbacks to the VHAL.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     HVAC_MAX_AC_ON = 0x0506 + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
@@ -674,8 +674,8 @@ enum VehicleProperty {
      * areaConfig.areaId = {ROW_1_LEFT | ROW_1_RIGHT} indicates HVAC_MAX_DEFROST_ON
      * only can be controlled for the front rows.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     HVAC_MAX_DEFROST_ON = 0x0507 + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
@@ -687,8 +687,8 @@ enum VehicleProperty {
      * Recirc “off” means the majority of the airflow into the cabin is coming
      * from outside the car.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     HVAC_RECIRC_ON = 0x0508 + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
@@ -722,16 +722,16 @@ enum VehicleProperty {
      * onPropertyEvent() callbacks (i.e. HVAC_DUAL_ON = false,
      * HVAC_TEMPERATURE_SET[AreaID] = xxx, etc).
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     HVAC_DUAL_ON = 0x0509 + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
     /**
      * On/off automatic mode
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     HVAC_AUTO_ON = 0x050A + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
@@ -746,8 +746,8 @@ enum VehicleProperty {
      * min/max range defines the allowable range and number of steps in each
      * direction.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     HVAC_SEAT_TEMPERATURE = 0x050B + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -758,8 +758,8 @@ enum VehicleProperty {
      * The Max value in the config data represents the highest heating level.
      * The Min value in the config data MUST be zero and indicates no heating.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     HVAC_SIDE_MIRROR_HEAT = 0x050C + 0x10000000 + 0x04000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:MIRROR,VehiclePropertyType:INT32
@@ -772,8 +772,8 @@ enum VehicleProperty {
      * Negative value indicates cooling.
      * 0 indicates temperature control is off.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     HVAC_STEERING_WHEEL_HEAT = 0x050D + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -790,8 +790,8 @@ enum VehicleProperty {
      * Values must be one of VehicleUnit::CELSIUS or VehicleUnit::FAHRENHEIT
      * Note that internally, all temperatures are represented in floating point Celsius.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      * @data_enum VehicleUnit
      */
     HVAC_TEMPERATURE_DISPLAY_UNITS = 0x050E + 0x10000000 + 0x01000000
@@ -799,8 +799,8 @@ enum VehicleProperty {
     /**
      * Actual fan speed
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      */
     HVAC_ACTUAL_FAN_SPEED_RPM = 0x050F + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -841,8 +841,8 @@ enum VehicleProperty {
      *   - ROW_1_LEFT | ROW_1_RIGHT
      *   - ROW_2_LEFT | ROW_2_CENTER | ROW_2_RIGHT | ROW_3_LEFT | ROW_3_CENTER | ROW_3_RIGHT
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     HVAC_POWER_ON = 0x0510 + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
@@ -859,8 +859,8 @@ enum VehicleProperty {
      *   - FAN_DIRECTION_DEFROST (0x4)
      *   - FAN_DIRECTION_FLOOR | FAN_DIRECTION_DEFROST (0x6)
      *
-     * @change_mode VehiclePropertyChangeMode:STATIC
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleHvacFanDirection
      */
     HVAC_FAN_DIRECTION_AVAILABLE = 0x0511 + 0x10000000 + 0x05000000
@@ -872,8 +872,8 @@ enum VehicleProperty {
      * switch to recirculation mode if the vehicle detects poor incoming air
      * quality.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     HVAC_AUTO_RECIRC_ON = 0x0512 + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
@@ -887,16 +887,16 @@ enum VehicleProperty {
      * ventilation.  This is different than seating cooling. It can be on at the
      * same time as cooling, or not.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     HVAC_SEAT_VENTILATION = 0x0513 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
     /**
      * Electric defrosters' status
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     HVAC_ELECTRIC_DEFROSTER_ON = 0x0514 + 0x10000000 + 0x03000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:BOOLEAN
@@ -935,8 +935,8 @@ enum VehicleProperty {
      * callback with property value [21, (float)VehicleUnit:CELSIUS, 21.0, 70.0].
      * In this case, the application can know that the value is 70.0 Fahrenheit in the car’s UI.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     HVAC_TEMPERATURE_VALUE_SUGGESTION = 0x0515 + 0x10000000 + 0x01000000
             + 0x00610000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT_VEC
@@ -951,8 +951,8 @@ enum VehicleProperty {
      * For example: configArray[0] = METER
      *              configArray[1] = KILOMETER
      *              configArray[2] = MILE
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      * @data_enum VehicleUnit
      */
     DISTANCE_DISPLAY_UNITS = 0x0600 + 0x10000000 + 0x01000000
@@ -967,8 +967,8 @@ enum VehicleProperty {
      * Volume units are defined in VehicleUnit.
      * For example: configArray[0] = LITER
      *              configArray[1] = GALLON
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      * @data_enum VehicleUnit
      */
     FUEL_VOLUME_DISPLAY_UNITS = 0x0601 + 0x10000000 + 0x01000000
@@ -984,8 +984,8 @@ enum VehicleProperty {
      * For example: configArray[0] = KILOPASCAL
      *              configArray[1] = PSI
      *              configArray[2] = BAR
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      * @data_enum VehicleUnit
      */
     TIRE_PRESSURE_DISPLAY_UNITS = 0x0602 + 0x10000000 + 0x01000000
@@ -1001,8 +1001,8 @@ enum VehicleProperty {
      * For example: configArray[0] = WATT_HOUR
      *              configArray[1] = AMPERE_HOURS
      *              configArray[2] = KILOWATT_HOUR
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      * @data_enum VehicleUnit
      */
     EV_BATTERY_DISPLAY_UNITS = 0x0603 + 0x10000000 + 0x01000000
@@ -1014,8 +1014,8 @@ enum VehicleProperty {
      * True indicates units are distance over volume such as MPG.
      * False indicates units are volume over distance such as L/100KM.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     FUEL_CONSUMPTION_UNITS_DISTANCE_OVER_VOLUME = 0x0604 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -1029,8 +1029,8 @@ enum VehicleProperty {
      * For example: configArray[0] = METER_PER_SEC
      *              configArray[1] = MILES_PER_HOUR
      *              configArray[2] = KILOMETERS_PER_HOUR
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     VEHICLE_SPEED_DISPLAY_UNITS = 0x0605 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -1072,8 +1072,8 @@ enum VehicleProperty {
      * WARNING: The value available through this property should not be dependent
      * on value written by Android to ANDROID_EPOCH_TIME property in any way.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_ONLY
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:MILLI_SECS
      */
     EXTERNAL_CAR_TIME = 0x0608 + 0x10000000 // VehiclePropertyGroup:SYSTEM
@@ -1101,8 +1101,8 @@ enum VehicleProperty {
      *     drift = elapsedTime - PropValue.timestamp
      *     effectiveTime = PropValue.value.int64Values[0] + drift
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:WRITE_ONLY
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.WRITE
      * @unit VehicleUnit:MILLI_SECS
      */
     ANDROID_EPOCH_TIME = 0x0606 + 0x10000000 + 0x01000000
@@ -1116,16 +1116,16 @@ enum VehicleProperty {
      * AAOS will then read the property on subsequent boots. The binding seed is expected to be
      * reliably persisted. Any loss of the seed results in a factory reset of the IVI.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     STORAGE_ENCRYPTION_BINDING_SEED = 0x0607 + 0x10000000 + 0x01000000
             + 0x00700000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BYTES
     /**
      * Outside temperature
      *
-     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.CONTINUOUS
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:CELSIUS
      */
     ENV_OUTSIDE_TEMPERATURE = 0x0703 + 0x10000000 + 0x01000000
@@ -1143,8 +1143,8 @@ enum VehicleProperty {
      *   int32Values[1] : additional parameter relevant for each state,
      *                    0 if not used.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      */
     AP_POWER_STATE_REQ = 0x0A00 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
@@ -1158,8 +1158,8 @@ enum VehicleProperty {
      *   int32Values[1] : Time in ms to wake up, if necessary.  Otherwise 0.
 
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     AP_POWER_STATE_REPORT = 0x0A01 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
@@ -1172,8 +1172,8 @@ enum VehicleProperty {
      *
      * int32Values[0] must be VehicleApPowerBootupReason.
      *
-     * @change_mode VehiclePropertyChangeMode:STATIC
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
      */
     AP_POWER_BOOTUP_REASON = 0x0A02 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -1187,8 +1187,8 @@ enum VehicleProperty {
      * change display brightness from Settings, but that must not be reflected
      * to other displays.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     DISPLAY_BRIGHTNESS = 0x0A03 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -1203,8 +1203,8 @@ enum VehicleProperty {
      * int32Values[3] : [optional] Number of ticks. The value must be equal or
      *                  greater than 1. When omitted, Android will default to 1.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      * @config_flags
      */
     HW_KEY_INPUT = 0x0A10 + 0x10000000 + 0x01000000
@@ -1226,9 +1226,9 @@ enum VehicleProperty {
      *                             detents is > 1 or < -1, this is when the
      *                             first detent of rotation occurred.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @data_enum RotaryInputType
-     * @access VehiclePropertyAccess:READ
+     * @access VehiclePropertyAccess.READ
      */
     HW_ROTARY_INPUT = 0x0A20 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
@@ -1249,9 +1249,9 @@ enum VehicleProperty {
      * int32Values[2] : repeat counter, if 0 then event is not repeated. Values 1 or above means
      *                  how many times this event repeated.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
      * @data_enum CustomInputType
-     * @access VehiclePropertyAccess:READ
+     * @access VehiclePropertyAccess.READ
      */
     HW_CUSTOM_INPUT = 0X0A30 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
@@ -1282,16 +1282,16 @@ enum VehicleProperty {
      * Some vehicles (minivans) can open the door electronically.  Hence, the
      * ability to write this property.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     DOOR_POS = 0x0B00 + 0x10000000 + 0x06000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:DOOR,VehiclePropertyType:INT32
     /**
      * Door move
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     DOOR_MOVE = 0x0B01 + 0x10000000 + 0x06000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:DOOR,VehiclePropertyType:INT32
@@ -1300,8 +1300,8 @@ enum VehicleProperty {
      *
      * 'true' indicates door is locked
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     DOOR_LOCK = 0x0B02 + 0x10000000 + 0x06000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:DOOR,VehiclePropertyType:BOOLEAN
@@ -1310,8 +1310,8 @@ enum VehicleProperty {
      *
      * Positive value indicates tilt upwards, negative value is downwards
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     MIRROR_Z_POS = 0x0B40 + 0x10000000 + 0x04000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:MIRROR,VehiclePropertyType:INT32
@@ -1320,8 +1320,8 @@ enum VehicleProperty {
      *
      * Positive value indicates tilt upwards, negative value is downwards
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     MIRROR_Z_MOVE = 0x0B41 + 0x10000000 + 0x04000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:MIRROR,VehiclePropertyType:INT32
@@ -1330,8 +1330,8 @@ enum VehicleProperty {
      *
      * Positive value indicate tilt right, negative value is left
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     MIRROR_Y_POS = 0x0B42 + 0x10000000 + 0x04000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:MIRROR,VehiclePropertyType:INT32
@@ -1340,8 +1340,8 @@ enum VehicleProperty {
      *
      * Positive value indicate tilt right, negative value is left
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     MIRROR_Y_MOVE = 0x0B43 + 0x10000000 + 0x04000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:MIRROR,VehiclePropertyType:INT32
@@ -1350,8 +1350,8 @@ enum VehicleProperty {
      *
      * True indicates mirror positions are locked and not changeable
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     MIRROR_LOCK = 0x0B44 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -1360,8 +1360,8 @@ enum VehicleProperty {
      *
      * True indicates mirrors are folded
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     MIRROR_FOLD = 0x0B45 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -1376,8 +1376,8 @@ enum VehicleProperty {
      * will be 3. When the user wants to select a preset, the desired preset
      * number (1, 2, or 3) is set.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.WRITE
      */
     SEAT_MEMORY_SELECT = 0x0B80 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1388,8 +1388,8 @@ enum VehicleProperty {
      * into the selected preset slot.  The maxValue for each seat position
      * must match the maxValue for SEAT_MEMORY_SELECT.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.WRITE
      */
     SEAT_MEMORY_SET = 0x0B81 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1401,8 +1401,8 @@ enum VehicleProperty {
      * Write access indicates automatic seat buckling capabilities.  There are
      * no known cars at this time, but you never know...
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_BELT_BUCKLED = 0x0B82 + 0x10000000 + 0x05000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:BOOLEAN
@@ -1413,16 +1413,16 @@ enum VehicleProperty {
      * Max value indicates highest position
      * Min value indicates lowest position
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_BELT_HEIGHT_POS = 0x0B83 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
     /**
      * Seatbelt height move
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_BELT_HEIGHT_MOVE = 0x0B84 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1433,8 +1433,8 @@ enum VehicleProperty {
      * Max value indicates closest to wheel, min value indicates most rearward
      * position.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_FORE_AFT_POS = 0x0B85 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1443,8 +1443,8 @@ enum VehicleProperty {
      *
      * Moves the seat position forward and aft.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_FORE_AFT_MOVE = 0x0B86 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1455,8 +1455,8 @@ enum VehicleProperty {
      * Max value indicates angling forward towards the steering wheel.
      * Min value indicates full recline.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_BACKREST_ANGLE_1_POS = 0x0B87 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1465,8 +1465,8 @@ enum VehicleProperty {
      *
      * Moves the backrest forward or recline.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_BACKREST_ANGLE_1_MOVE = 0x0B88 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1477,8 +1477,8 @@ enum VehicleProperty {
      * Max value indicates angling forward towards the steering wheel.
      * Min value indicates full recline.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_BACKREST_ANGLE_2_POS = 0x0B89 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1487,8 +1487,8 @@ enum VehicleProperty {
      *
      * Moves the backrest forward or recline.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_BACKREST_ANGLE_2_MOVE = 0x0B8A + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1499,8 +1499,8 @@ enum VehicleProperty {
      * Max value indicates highest position.
      * Min value indicates lowest position.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_HEIGHT_POS = 0x0B8B + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1509,8 +1509,8 @@ enum VehicleProperty {
      *
      * Moves the seat height.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_HEIGHT_MOVE = 0x0B8C + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1521,8 +1521,8 @@ enum VehicleProperty {
      * Max value indicates longest depth position.
      * Min value indicates shortest position.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_DEPTH_POS = 0x0B8D + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1531,8 +1531,8 @@ enum VehicleProperty {
      *
      * Adjusts the seat depth.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_DEPTH_MOVE = 0x0B8E + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1543,8 +1543,8 @@ enum VehicleProperty {
      * Max value indicates front edge of seat higher than back edge.
      * Min value indicates front edge of seat lower than back edge.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_TILT_POS = 0x0B8F + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1553,8 +1553,8 @@ enum VehicleProperty {
      *
      * Tilts the seat.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_TILT_MOVE = 0x0B90 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1565,8 +1565,8 @@ enum VehicleProperty {
      * Max value indicates most forward position.
      * Min value indicates most rearward position.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_LUMBAR_FORE_AFT_POS = 0x0B91 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1575,8 +1575,8 @@ enum VehicleProperty {
      *
      * Adjusts the lumbar support.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_LUMBAR_FORE_AFT_MOVE = 0x0B92 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1587,8 +1587,8 @@ enum VehicleProperty {
      * Max value indicates widest lumbar setting (i.e. least support)
      * Min value indicates thinnest lumbar setting.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_LUMBAR_SIDE_SUPPORT_POS = 0x0B93 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1597,8 +1597,8 @@ enum VehicleProperty {
      *
      * Adjusts the amount of lateral lumbar support.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_LUMBAR_SIDE_SUPPORT_MOVE = 0x0B94 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1609,8 +1609,8 @@ enum VehicleProperty {
      * Max value indicates tallest setting.
      * Min value indicates shortest setting.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_HEADREST_HEIGHT_POS = 0x0B95 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -1619,8 +1619,8 @@ enum VehicleProperty {
      *
      * Moves the headrest up and down.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_HEADREST_HEIGHT_MOVE = 0x0B96 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1631,8 +1631,8 @@ enum VehicleProperty {
      * Max value indicates most upright angle.
      * Min value indicates shallowest headrest angle.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_HEADREST_ANGLE_POS = 0x0B97 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1641,8 +1641,8 @@ enum VehicleProperty {
      *
      * Adjusts the angle of the headrest
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_HEADREST_ANGLE_MOVE = 0x0B98 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1653,16 +1653,16 @@ enum VehicleProperty {
      * Max value indicates position closest to front of car.
      * Min value indicates position closest to rear of car.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_HEADREST_FORE_AFT_POS = 0x0B99 + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
     /**
      * Headrest fore/aft move
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SEAT_HEADREST_FORE_AFT_MOVE = 0x0B9A + 0x10000000 + 0x05000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:SEAT,VehiclePropertyType:INT32
@@ -1672,8 +1672,8 @@ enum VehicleProperty {
      * Indicates whether a particular seat is occupied or not, to the best of the car's ability
      * to determine. Valid values are from the VehicleSeatOccupancyState enum.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleSeatOccupancyState
      */
     SEAT_OCCUPANCY = 0x0BB0 + 0x10000000 + 0x05000000
@@ -1692,8 +1692,8 @@ enum VehicleProperty {
      *
      *  Note that in this mode, 0 indicates the window is closed.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     WINDOW_POS = 0x0BC0 + 0x10000000 + 0x03000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:INT32
@@ -1720,8 +1720,8 @@ enum VehicleProperty {
      *   Max = open the sunroof, automatically stop when sunroof is fully open.
      *   Min = open the vent, automatically stop when vent is fully open.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     WINDOW_MOVE = 0x0BC1 + 0x10000000 + 0x03000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:INT32
@@ -1730,8 +1730,8 @@ enum VehicleProperty {
      *
      * True indicates windows are locked and can't be moved.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     WINDOW_LOCK = 0x0BC4 + 0x10000000 + 0x03000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:WINDOW,VehiclePropertyType:BOOLEAN
@@ -1748,8 +1748,8 @@ enum VehicleProperty {
      *
      * IVehicle#get must always return StatusCode::NOT_AVAILABLE.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     VEHICLE_MAP_SERVICE = 0x0C00 + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
@@ -1791,8 +1791,8 @@ enum VehicleProperty {
      *   floatValues[4 and 5] are valid sensor values
      *   floatValues[6] is not a valid sensor value
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      */
     OBD2_LIVE_FRAME = 0x0D00 + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
@@ -1817,8 +1817,8 @@ enum VehicleProperty {
      * freeze frames, it is possible for a frame request to respond with NOT_AVAILABLE even if
      * the associated timestamp has been recently obtained via OBD2_FREEZE_FRAME_INFO.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      */
     OBD2_FREEZE_FRAME = 0x0D01 + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
@@ -1834,8 +1834,8 @@ enum VehicleProperty {
      * such element can be used as the key to OBD2_FREEZE_FRAME to retrieve
      * the corresponding freeze frame.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      */
     OBD2_FREEZE_FRAME_INFO = 0x0D02 + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
@@ -1856,8 +1856,8 @@ enum VehicleProperty {
      *   vehicle not support selective clearing of freeze frames, this latter mode must
      *   return NOT_AVAILABLE.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.WRITE
      */
     OBD2_FREEZE_FRAME_CLEAR = 0x0D03 + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
@@ -1866,8 +1866,8 @@ enum VehicleProperty {
      *
      * Return the current state of headlights.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightState
      */
     HEADLIGHTS_STATE = 0x0E00 + 0x10000000 + 0x01000000
@@ -1877,8 +1877,8 @@ enum VehicleProperty {
      *
      * Return the current state of high beam lights.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightState
      */
     HIGH_BEAM_LIGHTS_STATE = 0x0E01 + 0x10000000 + 0x01000000
@@ -1904,8 +1904,8 @@ enum VehicleProperty {
      * Only one of FOG_LIGHTS_STATE or REAR_FOG_LIGHTS_STATE must be implemented and not both.
      * FRONT_FOG_LIGHTS_STATE must not be implemented.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightState
      */
     FOG_LIGHTS_STATE = 0x0E02 + 0x10000000 + 0x01000000
@@ -1915,8 +1915,8 @@ enum VehicleProperty {
      *
      * Return the current status of hazard lights.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightState
      */
     HAZARD_LIGHTS_STATE = 0x0E03 + 0x10000000 + 0x01000000
@@ -1926,8 +1926,8 @@ enum VehicleProperty {
      *
      * The setting that the user wants.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      * @data_enum VehicleLightSwitch
      */
     HEADLIGHTS_SWITCH = 0x0E10 + 0x10000000 + 0x01000000
@@ -1937,8 +1937,8 @@ enum VehicleProperty {
      *
      * The setting that the user wants.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      * @data_enum VehicleLightSwitch
      */
     HIGH_BEAM_LIGHTS_SWITCH = 0x0E11 + 0x10000000 + 0x01000000
@@ -1964,8 +1964,8 @@ enum VehicleProperty {
      * Only one of FOG_LIGHTS_SWITCH or REAR_FOG_LIGHTS_SWITCH must be implemented and not both.
      * FRONT_FOG_LIGHTS_SWITCH must not be implemented.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      * @data_enum VehicleLightSwitch
      */
     FOG_LIGHTS_SWITCH = 0x0E12 + 0x10000000 + 0x01000000
@@ -1975,8 +1975,8 @@ enum VehicleProperty {
      *
      * The setting that the user wants.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      * @data_enum VehicleLightSwitch
      */
     HAZARD_LIGHTS_SWITCH = 0x0E13 + 0x10000000 + 0x01000000
@@ -1986,8 +1986,8 @@ enum VehicleProperty {
      *
      * Return current status of cabin lights.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightState
      */
     CABIN_LIGHTS_STATE = 0x0F01 + 0x10000000 + 0x01000000
@@ -2000,8 +2000,8 @@ enum VehicleProperty {
      * is open or because of a voice command.
      * For example, while the switch is in the "off" or "automatic" position.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      * @data_enum VehicleLightSwitch
      */
     CABIN_LIGHTS_SWITCH = 0x0F02 + 0x10000000 + 0x01000000
@@ -2011,8 +2011,8 @@ enum VehicleProperty {
      *
      * Return current status of reading lights.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightState
      */
     READING_LIGHTS_STATE = 0x0F03 + 0x10000000 + 0x05000000
@@ -2025,8 +2025,8 @@ enum VehicleProperty {
      * is open or because of a voice command.
      * For example, while the switch is in the "off" or "automatic" position.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      * @data_enum VehicleLightSwitch
      */
     READING_LIGHTS_SWITCH = 0x0F04 + 0x10000000 + 0x05000000
@@ -2054,8 +2054,8 @@ enum VehicleProperty {
      * If vendor chose PERMISSION_NOT_ACCESSIBLE, android will not have access to the property. In
      * the example, Android can not write value for vendor_prop_2.
      *
-     * @change_mode VehiclePropertyChangeMode:STATIC
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
      */
     SUPPORT_CUSTOMIZE_VENDOR_PERMISSION = 0x0F05 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -2070,8 +2070,8 @@ enum VehicleProperty {
      *
      * Value read should include all features disabled with ',' separation.
      * ex) "com.android.car.user.CarUserNoticeService,storage_monitoring"
-     * @change_mode VehiclePropertyChangeMode:STATIC
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
      */
     DISABLED_OPTIONAL_FEATURES = 0x0F06 + 0x10000000 + 0x01000000
             + 0x00100000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:STRING
@@ -2120,8 +2120,8 @@ enum VehicleProperty {
      * by the Android System). But if it supports user management, then it must support all core
      * user-related properties (INITIAL_USER_INFO, SWITCH_USER, CREATE_USER, and REMOVE_USER).
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     INITIAL_USER_INFO = 0x0F07 + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
@@ -2286,8 +2286,8 @@ enum VehicleProperty {
      *
      * Example: see VEHICLE_REQUEST section above.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     SWITCH_USER = 0x0F08 + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
@@ -2332,8 +2332,8 @@ enum VehicleProperty {
      * string: "D'OH!" // The meaning is a blackbox - it's passed to the caller (like Settings UI),
      *                 // which in turn can take the proper action.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     CREATE_USER = 0x0F09 + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
@@ -2363,8 +2363,8 @@ enum VehicleProperty {
      * int32[8]: 10  // 2nd user (user 10)
      * int32[9]: 0   // 2nd user flags (none)
      *
-     * @change_mode VehiclePropertyChangeMode:STATIC
-     * @access VehiclePropertyAccess:WRITE
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.WRITE
      */
     REMOVE_USER = 0x0F0A + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
@@ -2438,8 +2438,8 @@ enum VehicleProperty {
      * int32[5]: 101 (2nd type: UserIdentificationAssociationType::CUSTOM_1)
      * int32[6]: 1   (2nd value: UserIdentificationAssociationValue::ASSOCIATE_CURRENT_USER)
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     USER_IDENTIFICATION_ASSOCIATION = 0x0F0B + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
@@ -2457,8 +2457,8 @@ enum VehicleProperty {
      * For example, to enable rear view EVS service, android side can set the property value as
      * [EvsServiceType::REAR_VIEW, EvsServiceState::ON].
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      */
     EVS_SERVICE_REQUEST = 0x0F10 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
@@ -2473,8 +2473,8 @@ enum VehicleProperty {
      *
      *   string: "sample_policy_id" // power policy ID
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      */
     POWER_POLICY_REQ = 0x0F21 + 0x10000000 + 0x01000000
             + 0x00100000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:STRING
@@ -2492,8 +2492,8 @@ enum VehicleProperty {
      *
      *   string: "sample_policy_group_id" // power policy group ID
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      */
     POWER_POLICY_GROUP_REQ = 0x0F22 + 0x10000000 + 0x01000000
             + 0x00100000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:STRING
@@ -2504,8 +2504,8 @@ enum VehicleProperty {
      *
      *   string: "sample_policy_id" // power policy ID
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     CURRENT_POWER_POLICY = 0x0F23 + 0x10000000 + 0x01000000
             + 0x00100000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:STRING
@@ -2515,8 +2515,8 @@ enum VehicleProperty {
      * Car watchdog sets this property to system uptime in milliseconds at every 3 second.
      * During the boot, the update may take longer time.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.WRITE
      */
     WATCHDOG_ALIVE = 0xF31 + 0x10000000 + 0x01000000
             + 0x00500000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT64
@@ -2526,8 +2526,8 @@ enum VehicleProperty {
      *   int32Values[0]: 1         // ProcessTerminationReason showing why a process is terminated.
      *   string: "/system/bin/log" // Process execution command.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.WRITE
      */
     WATCHDOG_TERMINATED_PROCESS = 0x0F32 + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
@@ -2541,8 +2541,8 @@ enum VehicleProperty {
      * VHAL unhealthy and terminates it.
      * If this property is not supported by VHAL, car watchdog doesn't check VHAL health status.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      */
     VHAL_HEARTBEAT = 0x0F33 + 0x10000000 + 0x01000000
             + 0x00500000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT64
@@ -2554,8 +2554,8 @@ enum VehicleProperty {
      *        the default UI and a kind of launcher functionality for cluster display.
      *    the other values are followed by OEM's definition.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      */
     CLUSTER_SWITCH_UI = 0x0F34 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -2578,8 +2578,8 @@ enum VehicleProperty {
      * int32[7]: Inset - right:  same format with 'left'
      * int32[8]: Inset - bottom: same format with 'left'
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      */
     CLUSTER_DISPLAY_STATE = 0x0F35 + 0x10000000 + 0x01000000
             + 0x00410000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32_VEC
@@ -2613,8 +2613,8 @@ enum VehicleProperty {
      *     and it only supports CALL UI only when the cellular network is available. Then, if the
      *     nework is avaibale, it'll send [1 1 1], and if it's out of network, it'll send [1 1 0].
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.WRITE
      */
     CLUSTER_REPORT_STATE = 0x0F36 + 0x10000000 + 0x01000000
             + 0x00e00000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:MIXED
@@ -2627,8 +2627,8 @@ enum VehicleProperty {
      *
      * int32: the type of ClusterUI to show
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.WRITE
      */
     CLUSTER_REQUEST_DISPLAY = 0x0F37 + 0x10000000 + 0x01000000
             + 0x00400000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:INT32
@@ -2637,8 +2637,8 @@ enum VehicleProperty {
      *
      * bytes: the serialized message of NavigationStateProto.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.WRITE
      */
     CLUSTER_NAVIGATION_STATE = 0x0F38 + 0x10000000 + 0x01000000
             + 0x00700000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BYTES
@@ -2649,8 +2649,8 @@ enum VehicleProperty {
      * If the head unit is aware of an ETC card attached to the vehicle, this property should
      * return the type of card attached; otherwise, this property should be UNAVAILABLE.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      * @data_enum ElectronicTollCollectionCardType
      */
     ELECTRONIC_TOLL_COLLECTION_CARD_TYPE = 0x0F39 + 0x10000000 + 0x01000000
@@ -2663,8 +2663,8 @@ enum VehicleProperty {
      * ELECTRONIC_TOLL_COLLECTION_CARD_TYPE gives that status of the card; otherwise,
      * this property should be UNAVAILABLE.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      * @data_enum ElectronicTollCollectionCardStatus
      */
     ELECTRONIC_TOLL_COLLECTION_CARD_STATUS = 0x0F3A + 0x10000000 + 0x01000000
@@ -2676,8 +2676,8 @@ enum VehicleProperty {
      * Only one of FOG_LIGHTS_STATE or FRONT_FOG_LIGHTS_STATE must be implemented. Please refer to
      * the documentation on FOG_LIGHTS_STATE for more information.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightState
      */
     FRONT_FOG_LIGHTS_STATE = 0x0F3B + 0x10000000 + 0x01000000
@@ -2690,8 +2690,8 @@ enum VehicleProperty {
      * Only one of FOG_LIGHTS_SWITCH or FRONT_FOG_LIGHTS_SWITCH must be implemented. Please refer to
      * the documentation on FOG_LIGHTS_SWITCH for more information.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      * @data_enum VehicleLightSwitch
      */
     FRONT_FOG_LIGHTS_SWITCH = 0x0F3C + 0x10000000 + 0x01000000
@@ -2704,8 +2704,8 @@ enum VehicleProperty {
      * Only one of FOG_LIGHTS_STATE or REAR_FOG_LIGHTS_STATE must be implemented. Please refer to
      * the documentation on FOG_LIGHTS_STATE for more information.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      * @data_enum VehicleLightState
      */
     REAR_FOG_LIGHTS_STATE = 0x0F3D + 0x10000000 + 0x01000000
@@ -2718,8 +2718,8 @@ enum VehicleProperty {
      * Only one of FOG_LIGHTS_SWITCH or REAR_FOG_LIGHTS_SWITCH must be implemented. Please refer to
      * the documentation on FOG_LIGHTS_SWITCH for more information.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      * @data_enum VehicleLightSwitch
      */
     REAR_FOG_LIGHTS_SWITCH = 0x0F3E + 0x10000000 + 0x01000000
@@ -2731,8 +2731,8 @@ enum VehicleProperty {
      * configArray[0] is used to specify the max current draw allowed by
      * the vehicle in Amperes.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      * @unit VehicleUnit:AMPERE
      */
     EV_CHARGE_CURRENT_DRAW_LIMIT = 0x0F3F + 0x10000000 + 0x01000000
@@ -2749,8 +2749,8 @@ enum VehicleProperty {
      *   then the configArray should be {20, 40, 60, 80, 100}
      * If the configArray is empty then all values from 0 to 100 must be valid.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     EV_CHARGE_PERCENT_LIMIT = 0x0F40 + 0x10000000 + 0x01000000
             + 0x00600000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:FLOAT
@@ -2760,8 +2760,8 @@ enum VehicleProperty {
      *
      * Returns the current charging state of the car.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      * @data_enum EvChargeState
      */
     EV_CHARGE_STATE = 0x0F41 + 0x10000000 + 0x01000000
@@ -2773,8 +2773,8 @@ enum VehicleProperty {
      * The setting that the user wants. Setting this property to true starts the battery charging
      * and setting to false stops charging.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ_WRITE
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ_WRITE
      */
     EV_CHARGE_SWITCH = 0x0F42 + 0x10000000 + 0x01000000
             + 0x00200000, // VehiclePropertyGroup:SYSTEM,VehicleArea:GLOBAL,VehiclePropertyType:BOOLEAN
@@ -2784,8 +2784,8 @@ enum VehicleProperty {
      *
      * Returns 0 if the vehicle is not charging.
      *
-     * @change_mode VehiclePropertyChangeMode:CONTINUOUS
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.CONTINUOUS
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:SECS
      */
     EV_CHARGE_TIME_REMAINING = 0x0F43 + 0x10000000 + 0x01000000
@@ -2797,8 +2797,8 @@ enum VehicleProperty {
      * Returns the current state associated with the regenerative braking
      * setting in the car
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      * @data_enum EvRegenerativeBrakingState
      */
     EV_REGENERATIVE_BRAKING_STATE = 0x0F44 + 0x10000000 + 0x01000000
@@ -2809,8 +2809,8 @@ enum VehicleProperty {
      *
      * Returns the trailer state of the car.
      *
-     * @change_mode VehiclePropertyChangeMode:ON_CHANGE
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.ON_CHANGE
+     * @access VehiclePropertyAccess.READ
      * @data_enum TrailerState
      */
     TRAILER_PRESENT = 0x0F45 + 0x10000000 + 0x01000000
@@ -2832,8 +2832,8 @@ enum VehicleProperty {
      * engine fluids, fuel, accessories, driver, passengers and cargo but excluding
      * that of any trailers.
      *
-     * @change_mode VehiclePropertyChangeMode:STATIC
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
      * @unit VehicleUnit:KILOGRAM
      */
 
@@ -2846,8 +2846,8 @@ enum VehicleProperty {
      * Returns whether general security regulation compliance is required, if
      * so, what type of requirement.
      *
-     * @change_mode VehiclePropertyChangeMode:STATIC
-     * @access VehiclePropertyAccess:READ
+     * @change_mode VehiclePropertyChangeMode.STATIC
+     * @access VehiclePropertyAccess.READ
      * @data_enum GsrComplianceRequirementType
      */
     GENERAL_SAFETY_REGULATION_COMPLIANCE_REQUIREMENT = 0x0F47 + 0x10000000 + 0x01000000
