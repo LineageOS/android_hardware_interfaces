@@ -295,6 +295,8 @@ struct TunerTestingConfigAidlReader1_0 {
                         break;
                     case FrontendTypeEnum::ISDBT:
                         type = FrontendType::ISDBT;
+                        frontendMap[id].settings.set<FrontendSettings::Tag::isdbt>(
+                                readIsdbtFrontendSettings(feConfig));
                         break;
                     case FrontendTypeEnum::DTMB:
                         type = FrontendType::DTMB;
@@ -741,6 +743,43 @@ struct TunerTestingConfigAidlReader1_0 {
       isdbsSettings.streamIdType = static_cast<FrontendIsdbsStreamIdType>(
           isdbs->getStreamIdType());
       return isdbsSettings;
+    }
+
+    static FrontendIsdbtSettings readIsdbtFrontendSettings(Frontend& feConfig) {
+        ALOGW("[ConfigReader] fe type is isdbt");
+        FrontendIsdbtSettings isdbtSettings{
+                .frequency = (int64_t)feConfig.getFrequency(),
+        };
+        if (feConfig.hasEndFrequency()) {
+            isdbtSettings.endFrequency = (int64_t)feConfig.getEndFrequency();
+        }
+        if (!feConfig.hasIsdbtFrontendSettings_optional()) {
+            ALOGW("[ConfigReader] no more isdbt settings");
+            return isdbtSettings;
+        }
+        auto isdbt = feConfig.getFirstIsdbtFrontendSettings_optional();
+        isdbtSettings.inversion = static_cast<FrontendSpectralInversion>(isdbt->getInversion());
+        isdbtSettings.bandwidth = static_cast<FrontendIsdbtBandwidth>(isdbt->getBandwidth());
+        isdbtSettings.mode = static_cast<FrontendIsdbtMode>(isdbt->getMode());
+        isdbtSettings.guardInterval =
+                static_cast<FrontendIsdbtGuardInterval>(isdbt->getGuardInterval());
+        isdbtSettings.serviceAreaId = (int32_t)isdbt->getServiceAreaId();
+        isdbtSettings.partialReceptionFlag =
+                static_cast<FrontendIsdbtPartialReceptionFlag>(isdbt->getPartialReceptionFlag());
+        if (!isdbt->hasFrontendIsdbtLayerSettings()) {
+            ALOGW("[ConfigReader] no isdbt layer settings");
+            return isdbtSettings;
+        }
+        auto layerSettings = isdbt->getFirstFrontendIsdbtLayerSettings();
+        ::aidl::android::hardware::tv::tuner::FrontendIsdbtLayerSettings mLayerSettings;
+        mLayerSettings.modulation =
+                static_cast<FrontendIsdbtModulation>(layerSettings->getModulation());
+        mLayerSettings.coderate = static_cast<FrontendIsdbtCoderate>(layerSettings->getCoderate());
+        mLayerSettings.timeInterleave =
+                static_cast<FrontendIsdbtTimeInterleaveMode>(layerSettings->getTimeInterleave());
+        mLayerSettings.numOfSegment = (int32_t)layerSettings->getNumOfSegment();
+        isdbtSettings.layerSettings.push_back(mLayerSettings);
+        return isdbtSettings;
     }
 
     static bool readFilterTypeAndSettings(Filter filterConfig, DemuxFilterType& type,
