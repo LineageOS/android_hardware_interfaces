@@ -50,7 +50,9 @@ using ::android::AidlMessageQueue;
 using ::android::hardware::EventFlag;
 
 using FilterMQ = AidlMessageQueue<int8_t, SynchronizedReadWrite>;
-const uint32_t BUFFER_SIZE_16M = 0x1000000;
+// Large buffer size can lead to sudden crashes due to being de-allocated
+// by the memory management system. Change the buffer size when needed.
+const uint32_t BUFFER_SIZE = 0x800000;  // 8 MB
 
 class Demux;
 class Dvr;

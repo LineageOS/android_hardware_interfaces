@@ -432,12 +432,12 @@ Filter::~Filter() {
 
     if (mSharedAvMemHandle != nullptr) {
         *out_avMemory = ::android::dupToAidl(mSharedAvMemHandle);
-        *_aidl_return = BUFFER_SIZE_16M;
+        *_aidl_return = BUFFER_SIZE;
         mUsingSharedAvMem = true;
         return ::ndk::ScopedAStatus::ok();
     }
 
-    int av_fd = createAvIonFd(BUFFER_SIZE_16M);
+    int av_fd = createAvIonFd(BUFFER_SIZE);
     if (av_fd < 0) {
         return ::ndk::ScopedAStatus::fromServiceSpecificError(
                 static_cast<int32_t>(Result::OUT_OF_MEMORY));
@@ -454,7 +454,7 @@ Filter::~Filter() {
     mUsingSharedAvMem = true;
 
     *out_avMemory = ::android::dupToAidl(mSharedAvMemHandle);
-    *_aidl_return = BUFFER_SIZE_16M;
+    *_aidl_return = BUFFER_SIZE;
     return ::ndk::ScopedAStatus::ok();
 }
 
@@ -1168,7 +1168,7 @@ void Filter::createMediaEvent(vector<DemuxFilterEvent>& events) {
     mediaEvent.isPesPrivateData = true;
     mediaEvent.extraMetaData.set<DemuxFilterMediaEventExtraMetaData::Tag::audio>(audio);
 
-    int av_fd = createAvIonFd(BUFFER_SIZE_16M);
+    int av_fd = createAvIonFd(BUFFER_SIZE);
     if (av_fd == -1) {
         return;
     }
