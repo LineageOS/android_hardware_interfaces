@@ -33,9 +33,9 @@ parcelable SharedSecretParameters {
     byte[] seed;
 
     /**
-     * A 32-byte value which is guaranteed to be different each time
-     * getSharedSecretParameters() is called.  Probabilistic uniqueness (i.e. random) is acceptable,
-     * though a stronger uniqueness guarantee (e.g. counter) is recommended where possible.
+     * A 32-byte value which is guaranteed to be different each time getSharedSecretParameters() is
+     * called after a restart.  Probabilistic uniqueness (i.e. random) is acceptable, though a
+     * stronger uniqueness guarantee (e.g. counter) is recommended where possible.
      */
     byte[] nonce;
 }
