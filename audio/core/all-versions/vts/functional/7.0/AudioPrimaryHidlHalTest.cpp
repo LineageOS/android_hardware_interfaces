@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#include <fstream>
+#include <numeric>
+
 #include <android-base/chrono_utils.h>
 
 #include "Generators.h"
@@ -561,16 +564,22 @@ class PcmOnlyConfigOutputStreamTest : public OutputStreamTest {
         // Sometimes HAL doesn't have enough information until the audio data actually gets
         // consumed by the hardware.
         bool timedOut = false;
-        res = Result::INVALID_STATE;
-        for (android::base::Timer elapsed;
-             res != Result::OK && !writer.hasError() &&
-             !(timedOut = (elapsed.duration() >= kPositionChangeTimeout));) {
-            usleep(kWriteDurationUs);
-            ASSERT_OK(stream->getPresentationPosition(returnIn(res, framesInitial, ts)));
-            ASSERT_RESULT(okOrInvalidState, res);
+        if (!firstPosition || *firstPosition == std::numeric_limits<uint64_t>::max()) {
+            res = Result::INVALID_STATE;
+            for (android::base::Timer elapsed;
+                 res != Result::OK && !writer.hasError() &&
+                 !(timedOut = (elapsed.duration() >= kPositionChangeTimeout));) {
+                usleep(kWriteDurationUs);
+                ASSERT_OK(stream->getPresentationPosition(returnIn(res, framesInitial, ts)));
+                ASSERT_RESULT(okOrInvalidState, res);
+            }
+            ASSERT_FALSE(writer.hasError());
+            ASSERT_FALSE(timedOut);
+        } else {
+            // Use `firstPosition` instead of querying it from the HAL. This is used when
+            // `waitForPresentationPositionAdvance` is called in a loop.
+            framesInitial = *firstPosition;
         }
-        ASSERT_FALSE(writer.hasError());
-        ASSERT_FALSE(timedOut);
 
         uint64_t frames = framesInitial;
         for (android::base::Timer elapsed;
@@ -632,7 +641,7 @@ TEST_P(PcmOnlyConfigOutputStreamTest, PresentationPositionPreservedOnStandby) {
     ASSERT_OK(stream->standby());
     writer.resume();
 
-    uint64_t frames;
+    uint64_t frames = std::numeric_limits<uint64_t>::max();
     ASSERT_NO_FATAL_FAILURE(waitForPresentationPositionAdvance(writer, &frames));
     EXPECT_GT(frames, framesInitial);
 
@@ -700,11 +709,9 @@ class PcmOnlyConfigInputStreamTest : public InputStreamTest {
     }
 
     void releasePatchIfNeeded() {
-        if (getDevice()) {
-            if (areAudioPatchesSupported() && mHasPatch) {
-                EXPECT_OK(getDevice()->releaseAudioPatch(mPatchHandle));
-                mHasPatch = false;
-            }
+        if (getDevice() && areAudioPatchesSupported() && mHasPatch) {
+            EXPECT_OK(getDevice()->releaseAudioPatch(mPatchHandle));
+            mHasPatch = false;
         }
     }
 
@@ -853,3 +860,100 @@ INSTANTIATE_TEST_CASE_P(MicrophoneInfoInputStream, MicrophoneInfoInputStreamTest
                         ::testing::ValuesIn(getBuiltinMicConfigParameters()),
                         &DeviceConfigParameterToString);
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(MicrophoneInfoInputStreamTest);
+
+static const std::vector<DeviceConfigParameter>& getOutputDeviceCompressedConfigParameters(
+        const AudioConfigBase& configToMatch) {
+    static const std::vector<DeviceConfigParameter> parameters = [&] {
+        auto allParams = getOutputDeviceConfigParameters();
+        std::vector<DeviceConfigParameter> compressedParams;
+        std::copy_if(allParams.begin(), allParams.end(), std::back_inserter(compressedParams),
+                     [&](auto cfg) {
+                         if (std::get<PARAM_CONFIG>(cfg).base != configToMatch) return false;
+                         const auto& flags = std::get<PARAM_FLAGS>(cfg);
+                         return std::find_if(flags.begin(), flags.end(), [](const auto& flag) {
+                                    return flag ==
+                                           toString(xsd::AudioInOutFlag::
+                                                            AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD);
+                                }) != flags.end();
+                     });
+        return compressedParams;
+    }();
+    return parameters;
+}
+
+class CompressedOffloadOutputStreamTest : public PcmOnlyConfigOutputStreamTest {
+  public:
+    void loadData(const std::string& fileName, std::vector<uint8_t>* data) {
+        std::ifstream is(fileName, std::ios::in | std::ios::binary);
+        ASSERT_TRUE(is.good()) << "Failed to open file " << fileName;
+        is.seekg(0, is.end);
+        data->reserve(data->size() + is.tellg());
+        is.seekg(0, is.beg);
+        data->insert(data->end(), std::istreambuf_iterator<char>(is),
+                     std::istreambuf_iterator<char>());
+        ASSERT_TRUE(!is.fail()) << "Failed to read from file " << fileName;
+    }
+};
+
+TEST_P(CompressedOffloadOutputStreamTest, Mp3FormatGaplessOffload) {
+    doc::test("Check that compressed offload mix ports for MP3 implement gapless offload");
+    const auto& flags = getOutputFlags();
+    if (std::find_if(flags.begin(), flags.end(), [](const auto& flag) {
+            return flag == toString(xsd::AudioInOutFlag::AUDIO_OUTPUT_FLAG_GAPLESS_OFFLOAD);
+        }) == flags.end()) {
+        GTEST_SKIP() << "Compressed offload mix port does not support gapless offload";
+    }
+    // FIXME: The presentation position is not updated if there is no zero padding in data.
+    std::vector<uint8_t> offloadData(stream->getBufferSize());
+    ASSERT_NO_FATAL_FAILURE(loadData("/data/local/tmp/sine882hz3s.mp3", &offloadData));
+    ASSERT_FALSE(offloadData.empty());
+    ASSERT_NO_FATAL_FAILURE(createPatchIfNeeded());
+    const int presentationeEndPrecisionMs = 1000;
+    const int sampleRate = 44100;
+    const int significantSampleNumber = (presentationeEndPrecisionMs * sampleRate) / 1000;
+    const int delay = 576 + 1000;
+    const int padding = 756 + 1000;
+    const int durationMs = 3000 - 44;
+    // StreamWriter plays 'offloadData' in a loop, possibly using multiple calls to 'write',
+    // this depends on the relative sizes of 'offloadData' and the HAL buffer. Writer calls
+    // 'onDataWrap' callback each time it wraps around the buffer.
+    StreamWriter writer(
+            stream.get(), stream->getBufferSize(), std::move(offloadData), [&]() /* onDataWrap */ {
+                Parameters::set(stream,
+                                {{AUDIO_OFFLOAD_CODEC_DELAY_SAMPLES, std::to_string(delay)},
+                                 {AUDIO_OFFLOAD_CODEC_PADDING_SAMPLES, std::to_string(padding)}});
+                stream->drain(AudioDrain::EARLY_NOTIFY);
+            });
+    ASSERT_TRUE(writer.start());
+    ASSERT_TRUE(writer.waitForAtLeastOneCycle());
+    // Decrease the volume since the test plays a loud sine wave.
+    ASSERT_OK(stream->setVolume(0.1, 0.1));
+    // How many times to loop the track so that the sum of gapless delay and padding from
+    // the first presentation end to the last is at least 'presentationeEndPrecisionMs'.
+    const int playbackNumber = (int)(significantSampleNumber / ((float)delay + padding) + 1);
+    std::vector<float> presentationEndTimes;
+    uint64_t previousPosition = std::numeric_limits<uint64_t>::max();
+    for (int i = 0; i < playbackNumber; ++i) {
+        const auto start = std::chrono::steady_clock::now();
+        ASSERT_NO_FATAL_FAILURE(
+                waitForPresentationPositionAdvance(writer, &previousPosition, &previousPosition));
+        presentationEndTimes.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(
+                                               std::chrono::steady_clock::now() - start)
+                                               .count());
+    }
+    const float avgDuration =
+            std::accumulate(presentationEndTimes.begin(), presentationEndTimes.end(), 0.0) /
+            presentationEndTimes.size();
+    EXPECT_NEAR(durationMs, avgDuration, presentationeEndPrecisionMs * 0.1);
+    writer.stop();
+    releasePatchIfNeeded();
+}
+
+INSTANTIATE_TEST_CASE_P(
+        CompressedOffloadOutputStream, CompressedOffloadOutputStreamTest,
+        ::testing::ValuesIn(getOutputDeviceCompressedConfigParameters(AudioConfigBase{
+                .format = xsd::toString(xsd::AudioFormat::AUDIO_FORMAT_MP3),
+                .sampleRateHz = 44100,
+                .channelMask = xsd::toString(xsd::AudioChannelMask::AUDIO_CHANNEL_OUT_STEREO)})),
+        &DeviceConfigParameterToString);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(CompressedOffloadOutputStreamTest);
