@@ -84,6 +84,14 @@
         <xs:attribute name="inversion" type="xs:nonNegativeInteger" use="required"/>
         <xs:attribute name="modulation" type="xs:nonNegativeInteger" use="required"/>
     </xs:complexType>
+    <xs:complexType name="isdbsFrontendSettings">
+        <xs:attribute name="streamId" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="symbolRate" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="streamIdType" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="modulation" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="coderate" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="rolloff" type="xs:nonNegativeInteger" use="required"/>
+    </xs:complexType>
 
     <xs:complexType name="frontend">
         <xs:annotation>
@@ -119,8 +127,8 @@
             <xs:element name="dvbc" type="dvbcSettings"/-->
             <xs:element name="dvbsFrontendSettings" type="dvbsFrontendSettings"/>
             <xs:element name="dvbtFrontendSettings" type="dvbtFrontendSettings"/>
-            <!--xs:element name="isdbs" type="isdbsSettings"/>
-            <xs:element name="isdbs3" type="isdbs3Settings"/>
+            <xs:element name="isdbsFrontendSettings" type="isdbsFrontendSettings"/>
+            <!--xs:element name="isdbs3" type="isdbs3Settings"/>
             <xs:element name="isdbt" type="isdbtSettings"/>
             <xs:element name="dtmb" type="dtmbSettings"/-->
         </xs:choice>
