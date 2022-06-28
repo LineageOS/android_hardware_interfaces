@@ -146,12 +146,13 @@ struct ScanHardwareConnections {
 
 struct DvrPlaybackHardwareConnections {
     bool support;
+    bool hasExtraFilters = false;
     string frontendId;
     string dvrId;
     string audioFilterId;
     string videoFilterId;
     string sectionFilterId;
-    /* list string of extra filters; */
+    vector<string> extraFilters;
 };
 
 struct DvrRecordHardwareConnections {
@@ -532,6 +533,13 @@ struct TunerTestingConfigAidlReader1_0 {
             playback.sectionFilterId = playbackConfig.getSectionFilterConnection();
         } else {
             playback.sectionFilterId = emptyHardwareId;
+        }
+        if (playbackConfig.hasOptionalFilters() && !playback.hasExtraFilters) {
+            auto optionalFilters = playbackConfig.getFirstOptionalFilters()->getOptionalFilter();
+            for (size_t i = 0; i < optionalFilters.size(); ++i) {
+                playback.extraFilters.push_back(optionalFilters[i].getFilterId());
+            }
+            playback.hasExtraFilters = true;
         }
     }
 

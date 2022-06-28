@@ -664,7 +664,14 @@
                     <xs:attribute name="audioFilterConnection" type="filterId" use="required"/>
                     <xs:attribute name="videoFilterConnection" type="filterId" use="required"/>
                     <xs:attribute name="sectionFilterConnection" type="filterId" use="optional"/>
-                    <!-- TODO: b/182519645 allow the users to insert extra filters -->
+                    <xs:element name="optionalFilters" minOccurs="0" maxOccurs="1">
+                      <xs:complexType>
+                          <xs:sequence>
+                            <xs:element name="optionalFilter" type="optionalFilter" minOccurs="1" maxOccurs="unbounded"/>
+                          </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                    <!--TODO: b/182519645 allow the users to insert extra filters/-->
                 </xs:complexType>
             </xs:element>
             <xs:element name="dvrRecord" minOccurs="0" maxOccurs="1">
@@ -743,4 +750,7 @@
             <xs:field xpath="@id"/>
         </xs:key>
     </xs:element>
+    <xs:complexType name="optionalFilter">
+        <xs:attribute name="filterId" type="filterId" use="required"/>
+    </xs:complexType>
 </xs:schema>

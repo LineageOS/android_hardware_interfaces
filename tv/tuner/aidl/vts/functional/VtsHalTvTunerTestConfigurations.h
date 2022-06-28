@@ -191,6 +191,7 @@ inline void connectHardwaresToTestCases() {
     TunerTestingConfigAidlReader1_0::connectDescrambling(descrambling);
     TunerTestingConfigAidlReader1_0::connectLnbLive(lnbLive);
     TunerTestingConfigAidlReader1_0::connectLnbRecord(lnbRecord);
+    TunerTestingConfigAidlReader1_0::connectDvrPlayback(playback);
 };
 
 inline bool validateConnections() {
@@ -248,6 +249,8 @@ inline bool validateConnections() {
 
     dvrIsValid &= lnbRecord.support ? dvrMap.find(lnbRecord.dvrRecordId) != dvrMap.end() : true;
 
+    dvrIsValid &= playback.support ? dvrMap.find(playback.dvrId) != dvrMap.end() : true;
+
     if (!dvrIsValid) {
         ALOGW("[vts config] dynamic config dvr connection is invalid.");
         return false;
@@ -283,6 +286,19 @@ inline bool validateConnections() {
 
     for (auto& filterId : lnbLive.extraFilters) {
         filterIsValid &= filterMap.find(filterId) != filterMap.end();
+    }
+
+    filterIsValid &= playback.support
+                             ? filterMap.find(playback.audioFilterId) != filterMap.end() &&
+                                       filterMap.find(playback.videoFilterId) != filterMap.end()
+                             : true;
+    filterIsValid &= playback.sectionFilterId.compare(emptyHardwareId) == 0
+                             ? true
+                             : filterMap.find(playback.sectionFilterId) != filterMap.end();
+
+    for (auto& filterId : playback.extraFilters) {
+        filterIsValid &=
+                playback.hasExtraFilters ? filterMap.find(filterId) != filterMap.end() : true;
     }
 
     if (!filterIsValid) {

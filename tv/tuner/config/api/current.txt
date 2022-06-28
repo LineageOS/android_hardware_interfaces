@@ -83,12 +83,19 @@ package android.media.tuner.testing.configuration.V1_0 {
     ctor public DataFlowConfiguration.DvrPlayback();
     method @Nullable public String getAudioFilterConnection();
     method @Nullable public String getDvrConnection();
+    method @Nullable public android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.DvrPlayback.OptionalFilters getOptionalFilters();
     method @Nullable public String getSectionFilterConnection();
     method @Nullable public String getVideoFilterConnection();
     method public void setAudioFilterConnection(@Nullable String);
     method public void setDvrConnection(@Nullable String);
+    method public void setOptionalFilters(@Nullable android.media.tuner.testing.configuration.V1_0.DataFlowConfiguration.DvrPlayback.OptionalFilters);
     method public void setSectionFilterConnection(@Nullable String);
     method public void setVideoFilterConnection(@Nullable String);
+  }
+
+  public static class DataFlowConfiguration.DvrPlayback.OptionalFilters {
+    ctor public DataFlowConfiguration.DvrPlayback.OptionalFilters();
+    method @Nullable public java.util.List<android.media.tuner.testing.configuration.V1_0.OptionalFilter> getOptionalFilter();
   }
 
   public static class DataFlowConfiguration.DvrRecord {
@@ -494,6 +501,12 @@ package android.media.tuner.testing.configuration.V1_0 {
     enum_constant public static final android.media.tuner.testing.configuration.V1_0.LnbVoltageEnum VOLTAGE_18V;
     enum_constant public static final android.media.tuner.testing.configuration.V1_0.LnbVoltageEnum VOLTAGE_19V;
     enum_constant public static final android.media.tuner.testing.configuration.V1_0.LnbVoltageEnum VOLTAGE_5V;
+  }
+
+  public class OptionalFilter {
+    ctor public OptionalFilter();
+    method @Nullable public String getFilterId();
+    method public void setFilterId(@Nullable String);
   }
 
   public class RecordFilterSettings {
