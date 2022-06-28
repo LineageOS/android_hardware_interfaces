@@ -80,6 +80,10 @@
         <xs:attribute name="scanType" type="dvbsScanType" use="optional"/>
         <xs:attribute name="isDiseqcRxMessage" type="xs:boolean" use="optional"/>
     </xs:complexType>
+    <xs:complexType name="atscFrontendSettings">
+        <xs:attribute name="inversion" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="modulation" type="xs:nonNegativeInteger" use="required"/>
+    </xs:complexType>
 
     <xs:complexType name="frontend">
         <xs:annotation>
@@ -109,9 +113,9 @@
         </xs:annotation>
         <xs:choice minOccurs="0" maxOccurs="1">
             <!-- TODO: b/182519645 finish all the frontend settings structures. -->
-            <!--xs:element name="analog" type="analogSettings"/>
-            <xs:element name="atsc" type="atscSettings"/>
-            <xs:element name="atsc3" type="atsc3Settings"/>
+            <!--xs:element name="analog" type="analogSettings"/-->
+            <xs:element name="atscFrontendSettings" type="atscFrontendSettings"/>
+            <!--xs:element name="atsc3" type="atsc3Settings"/>
             <xs:element name="dvbc" type="dvbcSettings"/-->
             <xs:element name="dvbsFrontendSettings" type="dvbsFrontendSettings"/>
             <xs:element name="dvbtFrontendSettings" type="dvbtFrontendSettings"/>
